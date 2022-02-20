@@ -38,7 +38,12 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> implements
     return handle ? ElementHandle.from(handle) : null;
   }
 
-  constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.JSHandleInitializer) {
+  constructor(
+    parent: ChannelOwner,
+    type: string,
+    guid: string,
+    initializer: channels.JSHandleInitializer,
+  ) {
     super(parent, type, guid, initializer);
     this._elementChannel = this._channel as channels.ElementHandleChannel;
   }
@@ -125,8 +130,21 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> implements
     return await this._elementChannel.tap(options);
   }
 
-  async selectOption(values: string | api.ElementHandle | SelectOption | string[] | api.ElementHandle[] | SelectOption[] | null, options: SelectOptionOptions = {}): Promise<string[]> {
-    const result = await this._elementChannel.selectOption({ ...convertSelectOptionValues(values), ...options });
+  async selectOption(
+    values:
+      | string
+      | api.ElementHandle
+      | SelectOption
+      | string[]
+      | api.ElementHandle[]
+      | SelectOption[]
+      | null,
+    options: SelectOptionOptions = {},
+  ): Promise<string[]> {
+    const result = await this._elementChannel.selectOption({
+      ...convertSelectOptionValues(values),
+      ...options,
+    });
     return result.values;
   }
 
@@ -138,7 +156,10 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> implements
     await this._elementChannel.selectText(options);
   }
 
-  async setInputFiles(files: string | FilePayload | string[] | FilePayload[], options: channels.ElementHandleSetInputFilesOptions = {}) {
+  async setInputFiles(
+    files: string | FilePayload | string[] | FilePayload[],
+    options: channels.ElementHandleSetInputFilesOptions = {},
+  ) {
     await this._elementChannel.setInputFiles({ files: await convertInputFiles(files), ...options });
   }
 
@@ -163,10 +184,8 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> implements
   }
 
   async setChecked(checked: boolean, options?: channels.ElementHandleCheckOptions) {
-    if (checked)
-      await this.check(options);
-    else
-      await this.uncheck(options);
+    if (checked) await this.check(options);
+    else await this.uncheck(options);
   }
 
   async boundingBox(): Promise<Rect | null> {
@@ -174,12 +193,16 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> implements
     return value === undefined ? null : value;
   }
 
-  async screenshot(options: Omit<channels.ElementHandleScreenshotOptions, 'mask'> & { path?: string, mask?: Locator[] } = {}): Promise<Buffer> {
+  async screenshot(
+    options: Omit<channels.ElementHandleScreenshotOptions, 'mask'> & {
+      path?: string;
+      mask?: Locator[];
+    } = {},
+  ): Promise<Buffer> {
     const copy: channels.ElementHandleScreenshotOptions = { ...options, mask: undefined };
-    if (!copy.type)
-      copy.type = determineScreenshotType(options);
+    if (!copy.type) copy.type = determineScreenshotType(options);
     if (options.mask) {
-      copy.mask = options.mask.map(locator => ({
+      copy.mask = options.mask.map((locator) => ({
         frame: locator._frame._channel,
         selector: locator._selector,
       }));
@@ -194,79 +217,125 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> implements
   }
 
   async $(selector: string): Promise<ElementHandle<SVGElement | HTMLElement> | null> {
-    return ElementHandle.fromNullable((await this._elementChannel.querySelector({ selector })).element) as ElementHandle<SVGElement | HTMLElement> | null;
+    return ElementHandle.fromNullable(
+      (await this._elementChannel.querySelector({ selector })).element,
+    ) as ElementHandle<SVGElement | HTMLElement> | null;
   }
 
   async $$(selector: string): Promise<ElementHandle<SVGElement | HTMLElement>[]> {
     const result = await this._elementChannel.querySelectorAll({ selector });
-    return result.elements.map(h => ElementHandle.from(h) as ElementHandle<SVGElement | HTMLElement>);
+    return result.elements.map(
+      (h) => ElementHandle.from(h) as ElementHandle<SVGElement | HTMLElement>,
+    );
   }
 
-  async $eval<R, Arg>(selector: string, pageFunction: structs.PageFunctionOn<Element, Arg, R>, arg?: Arg): Promise<R> {
-    const result = await this._elementChannel.evalOnSelector({ selector, expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) });
+  async $eval<R, Arg>(
+    selector: string,
+    pageFunction: structs.PageFunctionOn<Element, Arg, R>,
+    arg?: Arg,
+  ): Promise<R> {
+    const result = await this._elementChannel.evalOnSelector({
+      selector,
+      expression: String(pageFunction),
+      isFunction: typeof pageFunction === 'function',
+      arg: serializeArgument(arg),
+    });
     return parseResult(result.value);
   }
 
-  async $$eval<R, Arg>(selector: string, pageFunction: structs.PageFunctionOn<Element[], Arg, R>, arg?: Arg): Promise<R> {
-    const result = await this._elementChannel.evalOnSelectorAll({ selector, expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) });
+  async $$eval<R, Arg>(
+    selector: string,
+    pageFunction: structs.PageFunctionOn<Element[], Arg, R>,
+    arg?: Arg,
+  ): Promise<R> {
+    const result = await this._elementChannel.evalOnSelectorAll({
+      selector,
+      expression: String(pageFunction),
+      isFunction: typeof pageFunction === 'function',
+      arg: serializeArgument(arg),
+    });
     return parseResult(result.value);
   }
 
-  async waitForElementState(state: 'visible' | 'hidden' | 'stable' | 'enabled' | 'disabled', options: channels.ElementHandleWaitForElementStateOptions = {}): Promise<void> {
+  async waitForElementState(
+    state: 'visible' | 'hidden' | 'stable' | 'enabled' | 'disabled',
+    options: channels.ElementHandleWaitForElementStateOptions = {},
+  ): Promise<void> {
     return await this._elementChannel.waitForElementState({ state, ...options });
   }
 
-  waitForSelector(selector: string, options: channels.ElementHandleWaitForSelectorOptions & { state: 'attached' | 'visible' }): Promise<ElementHandle<SVGElement | HTMLElement>>;
-  waitForSelector(selector: string, options?: channels.ElementHandleWaitForSelectorOptions): Promise<ElementHandle<SVGElement | HTMLElement> | null>;
-  async waitForSelector(selector: string, options: channels.ElementHandleWaitForSelectorOptions = {}): Promise<ElementHandle<SVGElement | HTMLElement> | null> {
+  waitForSelector(
+    selector: string,
+    options: channels.ElementHandleWaitForSelectorOptions & { state: 'attached' | 'visible' },
+  ): Promise<ElementHandle<SVGElement | HTMLElement>>;
+  waitForSelector(
+    selector: string,
+    options?: channels.ElementHandleWaitForSelectorOptions,
+  ): Promise<ElementHandle<SVGElement | HTMLElement> | null>;
+  async waitForSelector(
+    selector: string,
+    options: channels.ElementHandleWaitForSelectorOptions = {},
+  ): Promise<ElementHandle<SVGElement | HTMLElement> | null> {
     const result = await this._elementChannel.waitForSelector({ selector, ...options });
-    return ElementHandle.fromNullable(result.element) as ElementHandle<SVGElement | HTMLElement> | null;
+    return ElementHandle.fromNullable(result.element) as ElementHandle<
+      SVGElement | HTMLElement
+    > | null;
   }
 }
 
-export function convertSelectOptionValues(values: string | api.ElementHandle | SelectOption | string[] | api.ElementHandle[] | SelectOption[] | null): { elements?: channels.ElementHandleChannel[], options?: SelectOption[] } {
-  if (values === null)
-    return {};
-  if (!Array.isArray(values))
-    values = [ values as any ];
-  if (!values.length)
-    return {};
+export function convertSelectOptionValues(
+  values:
+    | string
+    | api.ElementHandle
+    | SelectOption
+    | string[]
+    | api.ElementHandle[]
+    | SelectOption[]
+    | null,
+): { elements?: channels.ElementHandleChannel[]; options?: SelectOption[] } {
+  if (values === null) return {};
+  if (!Array.isArray(values)) values = [values as any];
+  if (!values.length) return {};
   for (let i = 0; i < values.length; i++)
     assert(values[i] !== null, `options[${i}]: expected object, got null`);
   if (values[0] instanceof ElementHandle)
     return { elements: (values as ElementHandle[]).map((v: ElementHandle) => v._elementChannel) };
-  if (isString(values[0]))
-    return { options: (values as string[]).map(value => ({ value })) };
+  if (isString(values[0])) return { options: (values as string[]).map((value) => ({ value })) };
   return { options: values as SelectOption[] };
 }
 
 type SetInputFilesFiles = channels.ElementHandleSetInputFilesParams['files'];
-export async function convertInputFiles(files: string | FilePayload | string[] | FilePayload[]): Promise<SetInputFilesFiles> {
-  const items: (string | FilePayload)[] = Array.isArray(files) ? files : [ files ];
-  const filePayloads: SetInputFilesFiles = await Promise.all(items.map(async item => {
-    if (typeof item === 'string') {
-      return {
-        name: path.basename(item),
-        buffer: (await fs.promises.readFile(item)).toString('base64')
-      };
-    } else {
-      return {
-        name: item.name,
-        mimeType: item.mimeType,
-        buffer: item.buffer.toString('base64'),
-      };
-    }
-  }));
+export async function convertInputFiles(
+  files: string | FilePayload | string[] | FilePayload[],
+): Promise<SetInputFilesFiles> {
+  const items: (string | FilePayload)[] = Array.isArray(files) ? files : [files];
+  const filePayloads: SetInputFilesFiles = await Promise.all(
+    items.map(async (item) => {
+      if (typeof item === 'string') {
+        return {
+          name: path.basename(item),
+          buffer: (await fs.promises.readFile(item)).toString('base64'),
+        };
+      } else {
+        return {
+          name: item.name,
+          mimeType: item.mimeType,
+          buffer: item.buffer.toString('base64'),
+        };
+      }
+    }),
+  );
   return filePayloads;
 }
 
-export function determineScreenshotType(options: { path?: string, type?: 'png' | 'jpeg' }): 'png' | 'jpeg' | undefined {
+export function determineScreenshotType(options: {
+  path?: string;
+  type?: 'png' | 'jpeg';
+}): 'png' | 'jpeg' | undefined {
   if (options.path) {
     const mimeType = mime.getType(options.path);
-    if (mimeType === 'image/png')
-      return 'png';
-    else if (mimeType === 'image/jpeg')
-      return 'jpeg';
+    if (mimeType === 'image/png') return 'png';
+    else if (mimeType === 'image/jpeg') return 'jpeg';
     throw new Error(`path: unsupported mime type "${mimeType}"`);
   }
   return options.type;

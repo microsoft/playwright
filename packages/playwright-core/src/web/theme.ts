@@ -15,14 +15,21 @@
  */
 
 export function applyTheme() {
-  if ((document as any).playwrightThemeInitialized)
-    return;
+  if ((document as any).playwrightThemeInitialized) return;
   (document as any).playwrightThemeInitialized = true;
-  document!.defaultView!.addEventListener('focus', (event: any) => {
-    if (event.target.document.nodeType === Node.DOCUMENT_NODE)
-      document.body.classList.remove('inactive');
-  }, false);
-  document!.defaultView!.addEventListener('blur', event => {
-    document.body.classList.add('inactive');
-  }, false);
+  document!.defaultView!.addEventListener(
+    'focus',
+    (event: any) => {
+      if (event.target.document.nodeType === Node.DOCUMENT_NODE)
+        document.body.classList.remove('inactive');
+    },
+    false,
+  );
+  document!.defaultView!.addEventListener(
+    'blur',
+    (event) => {
+      document.body.classList.add('inactive');
+    },
+    false,
+  );
 }

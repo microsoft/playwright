@@ -26,8 +26,8 @@ import { ElementHandle } from '../../dom';
 import * as mime from 'mime';
 
 export type SnapshotterBlob = {
-  buffer: Buffer,
-  sha1: string,
+  buffer: Buffer;
+  sha1: string;
 };
 
 export interface SnapshotterDelegate {
@@ -64,8 +64,7 @@ export class Snapshotter {
   }
 
   async reset() {
-    if (this._started)
-      await this._runInAllFrames(`window["${this._snapshotStreamer}"].reset()`);
+    if (this._started) await this._runInAllFrames(`window["${this._snapshotStreamer}"].reset()`);
   }
 
   async stop() {
@@ -73,10 +72,13 @@ export class Snapshotter {
   }
 
   async _initialize() {
-    for (const page of this._context.pages())
-      this._onPage(page);
+    for (const page of this._context.pages()) this._onPage(page);
     this._eventListeners = [
-      eventsHelper.addEventListener(this._context, BrowserContext.Events.Page, this._onPage.bind(this)),
+      eventsHelper.addEventListener(
+        this._context,
+        BrowserContext.Events.Page,
+        this._onPage.bind(this),
+      ),
     ];
 
     const initScript = `(${frameSnapshotStreamer})("${this._snapshotStreamer}")`;
@@ -86,11 +88,14 @@ export class Snapshotter {
 
   private async _runInAllFrames(expression: string) {
     const frames = [];
-    for (const page of this._context.pages())
-      frames.push(...page.frames());
-    await Promise.all(frames.map(frame => {
-      return frame.nonStallingRawEvaluateInExistingMainContext(expression).catch(e => debugLogger.log('error', e));
-    }));
+    for (const page of this._context.pages()) frames.push(...page.frames());
+    await Promise.all(
+      frames.map((frame) => {
+        return frame
+          .nonStallingRawEvaluateInExistingMainContext(expression)
+          .catch((e) => debugLogger.log('error', e));
+      }),
+    );
   }
 
   dispose() {
@@ -99,7 +104,9 @@ export class Snapshotter {
 
   async captureSnapshot(page: Page, snapshotName: string, element?: ElementHandle): Promise<void> {
     // Prepare expression synchronously.
-    const expression = `window["${this._snapshotStreamer}"].captureSnapshot(${JSON.stringify(snapshotName)})`;
+    const expression = `window["${this._snapshotStreamer}"].captureSnapshot(${JSON.stringify(
+      snapshotName,
+    )})`;
 
     // In a best-effort manner, without waiting for it, mark target element.
     element?.callFunctionNoReply((element: Element, snapshotName: string) => {
@@ -107,11 +114,12 @@ export class Snapshotter {
     }, snapshotName);
 
     // In each frame, in a non-stalling manner, capture the snapshots.
-    const snapshots = page.frames().map(async frame => {
-      const data = await frame.nonStallingRawEvaluateInExistingMainContext(expression).catch(e => debugLogger.log('error', e)) as SnapshotData;
+    const snapshots = page.frames().map(async (frame) => {
+      const data = (await frame
+        .nonStallingRawEvaluateInExistingMainContext(expression)
+        .catch((e) => debugLogger.log('error', e))) as SnapshotData;
       // Something went wrong -> bail out, our snapshots are best-efforty.
-      if (!data || !this._started)
-        return;
+      if (!data || !this._started) return;
 
       const snapshot: FrameSnapshot = {
         snapshotName,
@@ -124,7 +132,7 @@ export class Snapshotter {
         timestamp: monotonicTime(),
         collectionTime: data.collectionTime,
         resourceOverrides: [],
-        isMainFrame: page.mainFrame() === frame
+        isMainFrame: page.mainFrame() === frame,
       };
       for (const { url, content, contentType } of data.resourceOverrides) {
         if (typeof content === 'string') {
@@ -143,23 +151,27 @@ export class Snapshotter {
 
   private _onPage(page: Page) {
     // Annotate frame hierarchy so that snapshots could include frame ids.
-    for (const frame of page.frames())
-      this._annotateFrameHierarchy(frame);
-    this._eventListeners.push(eventsHelper.addEventListener(page, Page.Events.FrameAttached, frame => this._annotateFrameHierarchy(frame)));
+    for (const frame of page.frames()) this._annotateFrameHierarchy(frame);
+    this._eventListeners.push(
+      eventsHelper.addEventListener(page, Page.Events.FrameAttached, (frame) =>
+        this._annotateFrameHierarchy(frame),
+      ),
+    );
   }
 
   private async _annotateFrameHierarchy(frame: Frame) {
     try {
       const frameElement = await frame.frameElement();
       const parent = frame.parentFrame();
-      if (!parent)
-        return;
+      if (!parent) return;
       const context = await parent._mainContext();
-      await context?.evaluate(({ snapshotStreamer, frameElement, frameId }) => {
-        (window as any)[snapshotStreamer].markIframe(frameElement, frameId);
-      }, { snapshotStreamer: this._snapshotStreamer, frameElement, frameId: frame.guid });
+      await context?.evaluate(
+        ({ snapshotStreamer, frameElement, frameId }) => {
+          (window as any)[snapshotStreamer].markIframe(frameElement, frameId);
+        },
+        { snapshotStreamer: this._snapshotStreamer, frameElement, frameId: frame.guid },
+      );
       frameElement.dispose();
-    } catch (e) {
-    }
+    } catch (e) {}
   }
 }

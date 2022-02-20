@@ -22,13 +22,16 @@ import * as mime from 'mime';
 import { assert } from './utils';
 import { VirtualFileSystem } from './vfs';
 
-export type ServerRouteHandler = (request: http.IncomingMessage, response: http.ServerResponse) => boolean;
+export type ServerRouteHandler = (
+  request: http.IncomingMessage,
+  response: http.ServerResponse,
+) => boolean;
 
 export class HttpServer {
   private _server: http.Server;
   private _urlPrefix: string;
   private _port: number = 0;
-  private _routes: { prefix?: string, exact?: string, handler: ServerRouteHandler }[] = [];
+  private _routes: { prefix?: string; exact?: string; handler: ServerRouteHandler }[] = [];
   private _activeSockets = new Set<import('net').Socket>();
   constructor() {
     this._urlPrefix = '';
@@ -53,12 +56,12 @@ export class HttpServer {
 
   async start(port?: number): Promise<string> {
     assert(!this._urlPrefix, 'server already started');
-    this._server.on('connection', socket => {
+    this._server.on('connection', (socket) => {
       this._activeSockets.add(socket);
       socket.once('close', () => this._activeSockets.delete(socket));
     });
     this._server.listen(port);
-    await new Promise(cb => this._server!.once('listening', cb));
+    await new Promise((cb) => this._server!.once('listening', cb));
     const address = this._server.address();
     if (typeof address === 'string') {
       this._urlPrefix = address;
@@ -71,23 +74,24 @@ export class HttpServer {
   }
 
   async stop() {
-    for (const socket of this._activeSockets)
-      socket.destroy();
-    await new Promise(cb => this._server!.close(cb));
+    for (const socket of this._activeSockets) socket.destroy();
+    await new Promise((cb) => this._server!.close(cb));
   }
 
   urlPrefix(): string {
     return this._urlPrefix;
   }
 
-  serveFile(request: http.IncomingMessage, response: http.ServerResponse, absoluteFilePath: string, headers?: { [name: string]: string }): boolean {
+  serveFile(
+    request: http.IncomingMessage,
+    response: http.ServerResponse,
+    absoluteFilePath: string,
+    headers?: { [name: string]: string },
+  ): boolean {
     try {
-      for (const [name, value] of Object.entries(headers || {}))
-        response.setHeader(name, value);
-      if (request.headers.range)
-        this._serveRangeFile(request, response, absoluteFilePath);
-      else
-        this._serveFile(response, absoluteFilePath);
+      for (const [name, value] of Object.entries(headers || {})) response.setHeader(name, value);
+      if (request.headers.range) this._serveRangeFile(request, response, absoluteFilePath);
+      else this._serveFile(response, absoluteFilePath);
       return true;
     } catch (e) {
       return false;
@@ -103,9 +107,18 @@ export class HttpServer {
     response.end(content);
   }
 
-  _serveRangeFile(request: http.IncomingMessage, response: http.ServerResponse, absoluteFilePath: string) {
+  _serveRangeFile(
+    request: http.IncomingMessage,
+    response: http.ServerResponse,
+    absoluteFilePath: string,
+  ) {
     const range = request.headers.range;
-    if (!range || !range.startsWith('bytes=') || range.includes(', ') || [...range].filter(char => char === '-').length !== 1) {
+    if (
+      !range ||
+      !range.startsWith('bytes=') ||
+      range.includes(', ') ||
+      [...range].filter((char) => char === '-').length !== 1
+    ) {
       response.statusCode = 400;
       return response.end('Bad request');
     }
@@ -134,7 +147,7 @@ export class HttpServer {
     if (Number.isNaN(start) || Number.isNaN(end) || start >= size || end >= size || start > end) {
       // Return the 416 Range Not Satisfiable: https://datatracker.ietf.org/doc/html/rfc7233#section-4.4
       response.writeHead(416, {
-        'Content-Range': `bytes */${size}`
+        'Content-Range': `bytes */${size}`,
       });
       return response.end();
     }
@@ -151,15 +164,19 @@ export class HttpServer {
     readable.pipe(response);
   }
 
-  async serveVirtualFile(response: http.ServerResponse, vfs: VirtualFileSystem, entry: string, headers?: { [name: string]: string }) {
+  async serveVirtualFile(
+    response: http.ServerResponse,
+    vfs: VirtualFileSystem,
+    entry: string,
+    headers?: { [name: string]: string },
+  ) {
     try {
       const content = await vfs.read(entry);
       response.statusCode = 200;
       const contentType = mime.getType(path.extname(entry)) || 'application/octet-stream';
       response.setHeader('Content-Type', contentType);
       response.setHeader('Content-Length', content.byteLength);
-      for (const [name, value] of Object.entries(headers || {}))
-        response.setHeader(name, value);
+      for (const [name, value] of Object.entries(headers || {})) response.setHeader(name, value);
       response.end(content);
       return true;
     } catch (e) {
@@ -188,9 +205,12 @@ export class HttpServer {
       }
       const url = new URL('http://localhost' + request.url);
       for (const route of this._routes) {
-        if (route.exact && url.pathname === route.exact && route.handler(request, response))
-          return;
-        if (route.prefix && url.pathname.startsWith(route.prefix) && route.handler(request, response))
+        if (route.exact && url.pathname === route.exact && route.handler(request, response)) return;
+        if (
+          route.prefix &&
+          url.pathname.startsWith(route.prefix) &&
+          route.handler(request, response)
+        )
           return;
       }
       response.statusCode = 404;

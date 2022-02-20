@@ -27,12 +27,12 @@ import { Selectors, SelectorsOwner } from './selectors';
 import { Size } from './types';
 
 type DeviceDescriptor = {
-  userAgent: string,
-  viewport: Size,
-  deviceScaleFactor: number,
-  isMobile: boolean,
-  hasTouch: boolean,
-  defaultBrowserType: 'chromium' | 'firefox' | 'webkit'
+  userAgent: string;
+  viewport: Size;
+  deviceScaleFactor: number;
+  isMobile: boolean;
+  hasTouch: boolean;
+  defaultBrowserType: 'chromium' | 'firefox' | 'webkit';
 };
 type Devices = { [name: string]: DeviceDescriptor };
 
@@ -49,7 +49,12 @@ export class Playwright extends ChannelOwner<channels.PlaywrightChannel> {
   _utils: LocalUtils;
   private _socksProxyHandler: socks.SocksProxyHandler | undefined;
 
-  constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.PlaywrightInitializer) {
+  constructor(
+    parent: ChannelOwner,
+    type: string,
+    guid: string,
+    initializer: channels.PlaywrightInitializer,
+  ) {
     super(parent, type, guid, initializer);
     this.request = new APIRequest(this);
     this.chromium = BrowserType.from(initializer.chromium);
@@ -90,18 +95,36 @@ export class Playwright extends ChannelOwner<channels.PlaywrightChannel> {
   // TODO: remove this methods together with PlaywrightClient.
   _enablePortForwarding(redirectPortForTest?: number) {
     const socksSupport = this._initializer.socksSupport;
-    if (!socksSupport)
-      return;
+    if (!socksSupport) return;
     const handler = new socks.SocksProxyHandler(redirectPortForTest);
     this._socksProxyHandler = handler;
-    handler.on(socks.SocksProxyHandler.Events.SocksConnected, (payload: socks.SocksSocketConnectedPayload) => socksSupport.socksConnected(payload).catch(() => {}));
-    handler.on(socks.SocksProxyHandler.Events.SocksData, (payload: socks.SocksSocketDataPayload) => socksSupport.socksData({ uid: payload.uid, data: payload.data.toString('base64') }).catch(() => {}));
-    handler.on(socks.SocksProxyHandler.Events.SocksError, (payload: socks.SocksSocketErrorPayload) => socksSupport.socksError(payload).catch(() => {}));
-    handler.on(socks.SocksProxyHandler.Events.SocksFailed, (payload: socks.SocksSocketFailedPayload) => socksSupport.socksFailed(payload).catch(() => {}));
-    handler.on(socks.SocksProxyHandler.Events.SocksEnd, (payload: socks.SocksSocketEndPayload) => socksSupport.socksEnd(payload).catch(() => {}));
-    socksSupport.on('socksRequested', payload => handler.socketRequested(payload));
-    socksSupport.on('socksClosed', payload => handler.socketClosed(payload));
-    socksSupport.on('socksData', payload => handler.sendSocketData({ uid: payload.uid, data: Buffer.from(payload.data, 'base64') }));
+    handler.on(
+      socks.SocksProxyHandler.Events.SocksConnected,
+      (payload: socks.SocksSocketConnectedPayload) =>
+        socksSupport.socksConnected(payload).catch(() => {}),
+    );
+    handler.on(socks.SocksProxyHandler.Events.SocksData, (payload: socks.SocksSocketDataPayload) =>
+      socksSupport
+        .socksData({ uid: payload.uid, data: payload.data.toString('base64') })
+        .catch(() => {}),
+    );
+    handler.on(
+      socks.SocksProxyHandler.Events.SocksError,
+      (payload: socks.SocksSocketErrorPayload) => socksSupport.socksError(payload).catch(() => {}),
+    );
+    handler.on(
+      socks.SocksProxyHandler.Events.SocksFailed,
+      (payload: socks.SocksSocketFailedPayload) =>
+        socksSupport.socksFailed(payload).catch(() => {}),
+    );
+    handler.on(socks.SocksProxyHandler.Events.SocksEnd, (payload: socks.SocksSocketEndPayload) =>
+      socksSupport.socksEnd(payload).catch(() => {}),
+    );
+    socksSupport.on('socksRequested', (payload) => handler.socketRequested(payload));
+    socksSupport.on('socksClosed', (payload) => handler.socketClosed(payload));
+    socksSupport.on('socksData', (payload) =>
+      handler.sendSocketData({ uid: payload.uid, data: Buffer.from(payload.data, 'base64') }),
+    );
   }
 
   static from(channel: channels.PlaywrightChannel): Playwright {

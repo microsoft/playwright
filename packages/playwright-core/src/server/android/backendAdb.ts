@@ -25,7 +25,7 @@ export class AdbBackend implements Backend {
   async devices(): Promise<DeviceBackend[]> {
     const result = await runCommand('host:devices');
     const lines = result.toString().trim().split('\n');
-    return lines.map(line => {
+    return lines.map((line) => {
       const [serial, status] = line.trim().split('\t');
       return new AdbDevice(serial, status);
     });
@@ -41,11 +41,9 @@ class AdbDevice implements DeviceBackend {
     this.status = status;
   }
 
-  async init() {
-  }
+  async init() {}
 
-  async close() {
-  }
+  async close() {}
 
   runCommand(command: string): Promise<Buffer> {
     return runCommand(command, this.serial);
@@ -94,7 +92,7 @@ async function open(command: string, serial?: string): Promise<BufferedSocketWra
 }
 
 function encodeMessage(message: string): Buffer {
-  let lenHex = (message.length).toString(16);
+  let lenHex = message.length.toString(16);
   lenHex = '0'.repeat(4 - lenHex.length) + lenHex;
   return Buffer.from(lenHex + message);
 }
@@ -113,36 +111,33 @@ class BufferedSocketWrapper extends EventEmitter implements SocketBackend {
     super();
     this._command = command;
     this._socket = socket;
-    this._connectPromise = new Promise(f => this._socket.on('connect', f));
-    this._socket.on('data', data => {
+    this._connectPromise = new Promise((f) => this._socket.on('connect', f));
+    this._socket.on('data', (data) => {
       debug('pw:adb:data')(data.toString());
       if (this._isSocket) {
         this.emit('data', data);
         return;
       }
       this._buffer = Buffer.concat([this._buffer, data]);
-      if (this._notifyReader)
-        this._notifyReader();
+      if (this._notifyReader) this._notifyReader();
     });
     this._socket.on('close', () => {
       this._isClosed = true;
-      if (this._notifyReader)
-        this._notifyReader();
+      if (this._notifyReader) this._notifyReader();
       this.close();
       this.emit('close');
     });
-    this._socket.on('error', error => this.emit('error', error));
+    this._socket.on('error', (error) => this.emit('error', error));
   }
 
   async write(data: Buffer) {
     debug('pw:adb:send')(data.toString().substring(0, 100) + '...');
     await this._connectPromise;
-    await new Promise(f => this._socket.write(data, f));
+    await new Promise((f) => this._socket.write(data, f));
   }
 
   close() {
-    if (this._isClosed)
-      return;
+    if (this._isClosed) return;
     debug('pw:adb')('Close ' + this._command);
     this._socket.destroy();
   }
@@ -150,8 +145,7 @@ class BufferedSocketWrapper extends EventEmitter implements SocketBackend {
   async read(length: number): Promise<Buffer> {
     await this._connectPromise;
     assert(!this._isSocket, 'Can not read by length in socket mode');
-    while (this._buffer.length < length)
-      await new Promise<void>(f => this._notifyReader = f);
+    while (this._buffer.length < length) await new Promise<void>((f) => (this._notifyReader = f));
     const result = this._buffer.slice(0, length);
     this._buffer = this._buffer.slice(length);
     debug('pw:adb:recv')(result.toString().substring(0, 100) + '...');
@@ -159,8 +153,7 @@ class BufferedSocketWrapper extends EventEmitter implements SocketBackend {
   }
 
   async readAll(): Promise<Buffer> {
-    while (!this._isClosed)
-      await new Promise<void>(f => this._notifyReader = f);
+    while (!this._isClosed) await new Promise<void>((f) => (this._notifyReader = f));
     return this._buffer;
   }
 

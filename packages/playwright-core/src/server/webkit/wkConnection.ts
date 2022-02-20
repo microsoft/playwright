@@ -33,7 +33,7 @@ export const kBrowserCloseMessageId = -9999;
 // We emulate kPageProxyMessageReceived message to unify it with Browser.pageProxyCreated
 // and Browser.pageProxyDestroyed for easier management.
 export const kPageProxyMessageReceived = 'kPageProxyMessageReceived';
-export type PageProxyMessageReceivedPayload = { pageProxyId: string, message: any };
+export type PageProxyMessageReceivedPayload = { pageProxyId: string; message: any };
 
 export class WKConnection {
   private readonly _transport: ConnectionTransport;
@@ -44,7 +44,12 @@ export class WKConnection {
   private _closed = false;
   readonly browserSession: WKSession;
 
-  constructor(transport: ConnectionTransport, onDisconnect: () => void, protocolLogger: ProtocolLogger, browserLogsCollector: RecentLogsCollector) {
+  constructor(
+    transport: ConnectionTransport,
+    onDisconnect: () => void,
+    protocolLogger: ProtocolLogger,
+    browserLogsCollector: RecentLogsCollector,
+  ) {
     this._transport = transport;
     this._transport.onmessage = this._dispatchMessage.bind(this);
     this._transport.onclose = this._onClose.bind(this);
@@ -67,10 +72,12 @@ export class WKConnection {
 
   private _dispatchMessage(message: ProtocolResponse) {
     this._protocolLogger('receive', message);
-    if (message.id === kBrowserCloseMessageId)
-      return;
+    if (message.id === kBrowserCloseMessageId) return;
     if (message.pageProxyId) {
-      const payload: PageProxyMessageReceivedPayload = { message: message, pageProxyId: message.pageProxyId };
+      const payload: PageProxyMessageReceivedPayload = {
+        message: message,
+        pageProxyId: message.pageProxyId,
+      };
       this.browserSession.dispatchMessage({ method: kPageProxyMessageReceived, params: payload });
       return;
     }
@@ -90,8 +97,7 @@ export class WKConnection {
   }
 
   close() {
-    if (!this._closed)
-      this._transport.close();
+    if (!this._closed) this._transport.close();
   }
 }
 
@@ -102,16 +108,64 @@ export class WKSession extends EventEmitter {
 
   private _disposed = false;
   private readonly _rawSend: (message: any) => void;
-  private readonly _callbacks = new Map<number, {resolve: (o: any) => void, reject: (e: ProtocolError) => void, error: ProtocolError, method: string}>();
+  private readonly _callbacks = new Map<
+    number,
+    {
+      resolve: (o: any) => void;
+      reject: (e: ProtocolError) => void;
+      error: ProtocolError;
+      method: string;
+    }
+  >();
   private _crashed: boolean = false;
 
-  override on: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
-  override addListener: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
-  override off: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
-  override removeListener: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
-  override once: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
+  override on: <T extends keyof Protocol.Events | symbol>(
+    event: T,
+    listener: (
+      payload: T extends symbol
+        ? any
+        : Protocol.Events[T extends keyof Protocol.Events ? T : never],
+    ) => void,
+  ) => this;
+  override addListener: <T extends keyof Protocol.Events | symbol>(
+    event: T,
+    listener: (
+      payload: T extends symbol
+        ? any
+        : Protocol.Events[T extends keyof Protocol.Events ? T : never],
+    ) => void,
+  ) => this;
+  override off: <T extends keyof Protocol.Events | symbol>(
+    event: T,
+    listener: (
+      payload: T extends symbol
+        ? any
+        : Protocol.Events[T extends keyof Protocol.Events ? T : never],
+    ) => void,
+  ) => this;
+  override removeListener: <T extends keyof Protocol.Events | symbol>(
+    event: T,
+    listener: (
+      payload: T extends symbol
+        ? any
+        : Protocol.Events[T extends keyof Protocol.Events ? T : never],
+    ) => void,
+  ) => this;
+  override once: <T extends keyof Protocol.Events | symbol>(
+    event: T,
+    listener: (
+      payload: T extends symbol
+        ? any
+        : Protocol.Events[T extends keyof Protocol.Events ? T : never],
+    ) => void,
+  ) => this;
 
-  constructor(connection: WKConnection, sessionId: string, errorText: string, rawSend: (message: any) => void) {
+  constructor(
+    connection: WKConnection,
+    sessionId: string,
+    errorText: string,
+    rawSend: (message: any) => void,
+  ) {
     super();
     this.setMaxListeners(0);
     this.connection = connection;
@@ -128,12 +182,10 @@ export class WKSession extends EventEmitter {
 
   async send<T extends keyof Protocol.CommandParameters>(
     method: T,
-    params?: Protocol.CommandParameters[T]
+    params?: Protocol.CommandParameters[T],
   ): Promise<Protocol.CommandReturnValues[T]> {
-    if (this._crashed)
-      throw new ProtocolError(true, 'Target crashed');
-    if (this._disposed)
-      throw new ProtocolError(true, `Target closed`);
+    if (this._crashed) throw new ProtocolError(true, 'Target crashed');
+    if (this._disposed) throw new ProtocolError(true, `Target closed`);
     const id = this.connection.nextMessageId();
     const messageObj = { id, method, params };
     this._rawSend(messageObj);
@@ -142,8 +194,11 @@ export class WKSession extends EventEmitter {
     });
   }
 
-  sendMayFail<T extends keyof Protocol.CommandParameters>(method: T, params?: Protocol.CommandParameters[T]): Promise<Protocol.CommandReturnValues[T] | void> {
-    return this.send(method, params).catch(error => debugLogger.log('error', error));
+  sendMayFail<T extends keyof Protocol.CommandParameters>(
+    method: T,
+    params?: Protocol.CommandParameters[T],
+  ): Promise<Protocol.CommandReturnValues[T] | void> {
+    return this.send(method, params).catch((error) => debugLogger.log('error', error));
   }
 
   markAsCrashed() {
@@ -156,7 +211,9 @@ export class WKSession extends EventEmitter {
 
   dispose(disconnected: boolean) {
     if (disconnected)
-      this.errorText = 'Browser closed.' + helper.formatBrowserLogs(this.connection._browserLogsCollector.recentLogs());
+      this.errorText =
+        'Browser closed.' +
+        helper.formatBrowserLogs(this.connection._browserLogsCollector.recentLogs());
     for (const callback of this._callbacks.values()) {
       callback.error.sessionClosed = true;
       callback.reject(rewriteErrorMessage(callback.error, this.errorText));
@@ -171,8 +228,7 @@ export class WKSession extends EventEmitter {
       this._callbacks.delete(object.id);
       if (object.error)
         callback.reject(createProtocolError(callback.error, callback.method, object.error));
-      else
-        callback.resolve(object.result);
+      else callback.resolve(object.result);
     } else if (object.id && !object.error) {
       // Response might come after session has been disposed and rejected all callbacks.
       assert(this.isDisposed());
@@ -182,9 +238,12 @@ export class WKSession extends EventEmitter {
   }
 }
 
-export function createProtocolError(error: ProtocolError, method: string, protocolError: { message: string; data: any; }): ProtocolError {
+export function createProtocolError(
+  error: ProtocolError,
+  method: string,
+  protocolError: { message: string; data: any },
+): ProtocolError {
   let message = `Protocol error (${method}): ${protocolError.message}`;
-  if ('data' in protocolError)
-    message += ` ${JSON.stringify(protocolError.data)}`;
+  if ('data' in protocolError) message += ` ${JSON.stringify(protocolError.data)}`;
   return rewriteErrorMessage(error, message);
 }

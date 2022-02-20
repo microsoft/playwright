@@ -19,22 +19,31 @@ import './treeItem.css';
 import * as icons from './icons';
 
 export const TreeItem: React.FunctionComponent<{
-  title: JSX.Element,
-  loadChildren?: () => JSX.Element[],
-  onClick?: () => void,
-  expandByDefault?: boolean,
-  depth: number,
-  selected?: boolean
+  title: JSX.Element;
+  loadChildren?: () => JSX.Element[];
+  onClick?: () => void;
+  expandByDefault?: boolean;
+  depth: number;
+  selected?: boolean;
 }> = ({ title, loadChildren, onClick, expandByDefault, depth, selected }) => {
   const [expanded, setExpanded] = React.useState(expandByDefault || false);
   const className = selected ? 'tree-item-title selected' : 'tree-item-title';
-  return <div className={'tree-item'}>
-    <span className={className} style={{ whiteSpace: 'nowrap', paddingLeft: depth * 22 + 4 }} onClick={() => { onClick?.(); setExpanded(!expanded); }} >
-      {loadChildren && !!expanded && icons.downArrow()}
-      {loadChildren && !expanded && icons.rightArrow()}
-      {!loadChildren && <span style={{ visibility: 'hidden' }}>{icons.rightArrow()}</span>}
-      {title}
-    </span>
-    {expanded && loadChildren?.()}
-  </div>;
+  return (
+    <div className={'tree-item'}>
+      <span
+        className={className}
+        style={{ whiteSpace: 'nowrap', paddingLeft: depth * 22 + 4 }}
+        onClick={() => {
+          onClick?.();
+          setExpanded(!expanded);
+        }}
+      >
+        {loadChildren && !!expanded && icons.downArrow()}
+        {loadChildren && !expanded && icons.rightArrow()}
+        {!loadChildren && <span style={{ visibility: 'hidden' }}>{icons.rightArrow()}</span>}
+        {title}
+      </span>
+      {expanded && loadChildren?.()}
+    </div>
+  );
 };

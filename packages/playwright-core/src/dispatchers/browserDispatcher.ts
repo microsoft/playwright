@@ -25,10 +25,19 @@ import { CallMetadata, internalCallMetadata } from '../server/instrumentation';
 import { BrowserContext } from '../server/browserContext';
 import { Selectors } from '../server/selectors';
 
-export class BrowserDispatcher extends Dispatcher<Browser, channels.BrowserChannel> implements channels.BrowserChannel {
+export class BrowserDispatcher
+  extends Dispatcher<Browser, channels.BrowserChannel>
+  implements channels.BrowserChannel
+{
   _type_Browser = true;
   constructor(scope: DispatcherScope, browser: Browser) {
-    super(scope, browser, 'Browser', { version: browser.version(), name: browser.options.name }, true);
+    super(
+      scope,
+      browser,
+      'Browser',
+      { version: browser.version(), name: browser.options.name },
+      true,
+    );
     browser.on(Browser.Events.Disconnected, () => this._didClose());
   }
 
@@ -37,10 +46,12 @@ export class BrowserDispatcher extends Dispatcher<Browser, channels.BrowserChann
     this._dispose();
   }
 
-  async newContext(params: channels.BrowserNewContextParams, metadata: CallMetadata): Promise<channels.BrowserNewContextResult> {
+  async newContext(
+    params: channels.BrowserNewContextParams,
+    metadata: CallMetadata,
+  ): Promise<channels.BrowserNewContextResult> {
     const context = await this._object.newContext(params);
-    if (params.storageState)
-      await context.setStorageState(metadata, params.storageState);
+    if (params.storageState) await context.setStorageState(metadata, params.storageState);
     return { context: new BrowserContextDispatcher(this._scope, context) };
   }
 
@@ -56,19 +67,22 @@ export class BrowserDispatcher extends Dispatcher<Browser, channels.BrowserChann
     if (!this._object.options.isChromium)
       throw new Error(`CDP session is only available in Chromium`);
     const crBrowser = this._object as CRBrowser;
-    return { session: new CDPSessionDispatcher(this._scope, await crBrowser.newBrowserCDPSession()) };
+    return {
+      session: new CDPSessionDispatcher(this._scope, await crBrowser.newBrowserCDPSession()),
+    };
   }
 
   async startTracing(params: channels.BrowserStartTracingParams): Promise<void> {
-    if (!this._object.options.isChromium)
-      throw new Error(`Tracing is only available in Chromium`);
+    if (!this._object.options.isChromium) throw new Error(`Tracing is only available in Chromium`);
     const crBrowser = this._object as CRBrowser;
-    await crBrowser.startTracing(params.page ? (params.page as PageDispatcher)._object : undefined, params);
+    await crBrowser.startTracing(
+      params.page ? (params.page as PageDispatcher)._object : undefined,
+      params,
+    );
   }
 
   async stopTracing(): Promise<channels.BrowserStopTracingResult> {
-    if (!this._object.options.isChromium)
-      throw new Error(`Tracing is only available in Chromium`);
+    if (!this._object.options.isChromium) throw new Error(`Tracing is only available in Chromium`);
     const crBrowser = this._object as CRBrowser;
     const buffer = await crBrowser.stopTracing();
     return { binary: buffer.toString('base64') };
@@ -76,27 +90,37 @@ export class BrowserDispatcher extends Dispatcher<Browser, channels.BrowserChann
 }
 
 // This class implements multiplexing browser dispatchers over a single Browser instance.
-export class ConnectedBrowserDispatcher extends Dispatcher<Browser, channels.BrowserChannel> implements channels.BrowserChannel {
+export class ConnectedBrowserDispatcher
+  extends Dispatcher<Browser, channels.BrowserChannel>
+  implements channels.BrowserChannel
+{
   _type_Browser = true;
   private _contexts = new Set<BrowserContext>();
   readonly selectors: Selectors;
 
   constructor(scope: DispatcherScope, browser: Browser) {
-    super(scope, browser, 'Browser', { version: browser.version(), name: browser.options.name }, true);
+    super(
+      scope,
+      browser,
+      'Browser',
+      { version: browser.version(), name: browser.options.name },
+      true,
+    );
     // When we have a remotely-connected browser, each client gets a fresh Selector instance,
     // so that two clients do not interfere between each other.
     this.selectors = new Selectors();
   }
 
-  async newContext(params: channels.BrowserNewContextParams, metadata: CallMetadata): Promise<channels.BrowserNewContextResult> {
-    if (params.recordVideo)
-      params.recordVideo.dir = this._object.options.artifactsDir;
+  async newContext(
+    params: channels.BrowserNewContextParams,
+    metadata: CallMetadata,
+  ): Promise<channels.BrowserNewContextResult> {
+    if (params.recordVideo) params.recordVideo.dir = this._object.options.artifactsDir;
     const context = await this._object.newContext(params);
     this._contexts.add(context);
     context._setSelectors(this.selectors);
     context.on(BrowserContext.Events.Close, () => this._contexts.delete(context));
-    if (params.storageState)
-      await context.setStorageState(metadata, params.storageState);
+    if (params.storageState) await context.setStorageState(metadata, params.storageState);
     return { context: new BrowserContextDispatcher(this._scope, context) };
   }
 
@@ -112,25 +136,30 @@ export class ConnectedBrowserDispatcher extends Dispatcher<Browser, channels.Bro
     if (!this._object.options.isChromium)
       throw new Error(`CDP session is only available in Chromium`);
     const crBrowser = this._object as CRBrowser;
-    return { session: new CDPSessionDispatcher(this._scope, await crBrowser.newBrowserCDPSession()) };
+    return {
+      session: new CDPSessionDispatcher(this._scope, await crBrowser.newBrowserCDPSession()),
+    };
   }
 
   async startTracing(params: channels.BrowserStartTracingParams): Promise<void> {
-    if (!this._object.options.isChromium)
-      throw new Error(`Tracing is only available in Chromium`);
+    if (!this._object.options.isChromium) throw new Error(`Tracing is only available in Chromium`);
     const crBrowser = this._object as CRBrowser;
-    await crBrowser.startTracing(params.page ? (params.page as PageDispatcher)._object : undefined, params);
+    await crBrowser.startTracing(
+      params.page ? (params.page as PageDispatcher)._object : undefined,
+      params,
+    );
   }
 
   async stopTracing(): Promise<channels.BrowserStopTracingResult> {
-    if (!this._object.options.isChromium)
-      throw new Error(`Tracing is only available in Chromium`);
+    if (!this._object.options.isChromium) throw new Error(`Tracing is only available in Chromium`);
     const crBrowser = this._object as CRBrowser;
     const buffer = await crBrowser.stopTracing();
     return { binary: buffer.toString('base64') };
   }
 
   async cleanupContexts() {
-    await Promise.all(Array.from(this._contexts).map(context => context.close(internalCallMetadata())));
+    await Promise.all(
+      Array.from(this._contexts).map((context) => context.close(internalCallMetadata())),
+    );
   }
 }

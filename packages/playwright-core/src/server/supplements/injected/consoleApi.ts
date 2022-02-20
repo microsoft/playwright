@@ -18,29 +18,33 @@ import { escapeWithQuotes } from '../../../utils/stringUtils';
 import type InjectedScript from '../../injected/injectedScript';
 import { generateSelector } from '../../injected/selectorGenerator';
 
-function createLocator(injectedScript: InjectedScript, initial: string, options?: { hasText?: string | RegExp }) {
+function createLocator(
+  injectedScript: InjectedScript,
+  initial: string,
+  options?: { hasText?: string | RegExp },
+) {
   class Locator {
     selector: string;
     element: Element | undefined;
     elements: Element[];
 
-    constructor(selector: string, options?: { hasText?: string | RegExp, has?: Locator }) {
+    constructor(selector: string, options?: { hasText?: string | RegExp; has?: Locator }) {
       this.selector = selector;
       if (options?.hasText) {
         const text = options.hasText;
         if (text instanceof RegExp)
-          this.selector += ` >> :scope:text-matches(${escapeWithQuotes(text.source, '"')}, "${text.flags}")`;
-        else
-          this.selector += ` >> :scope:has-text(${escapeWithQuotes(text)})`;
+          this.selector += ` >> :scope:text-matches(${escapeWithQuotes(text.source, '"')}, "${
+            text.flags
+          }")`;
+        else this.selector += ` >> :scope:has-text(${escapeWithQuotes(text)})`;
       }
-      if (options?.has)
-        this.selector += ` >> has=` + JSON.stringify(options.has.selector);
+      if (options?.has) this.selector += ` >> has=` + JSON.stringify(options.has.selector);
       const parsed = injectedScript.parseSelector(this.selector);
       this.element = injectedScript.querySelector(parsed, document, false);
       this.elements = injectedScript.querySelectorAll(parsed, document);
     }
 
-    locator(selector: string, options?: { hasText: string | RegExp, has?: Locator }): Locator {
+    locator(selector: string, options?: { hasText: string | RegExp; has?: Locator }): Locator {
       return new Locator(this.selector ? this.selector + ' >> ' + selector : selector, options);
     }
   }
@@ -50,7 +54,7 @@ function createLocator(injectedScript: InjectedScript, initial: string, options?
 type ConsoleAPIInterface = {
   $: (selector: string) => void;
   $$: (selector: string) => void;
-  locator: (selector: string, options?: { hasText: string | RegExp, has?: any }) => any;
+  locator: (selector: string, options?: { hasText: string | RegExp; has?: any }) => any;
   inspect: (selector: string) => void;
   selector: (element: Element) => void;
   resume: () => void;
@@ -69,19 +73,19 @@ export class ConsoleAPI {
 
   constructor(injectedScript: InjectedScript) {
     this._injectedScript = injectedScript;
-    if (window.playwright)
-      return;
+    if (window.playwright) return;
     window.playwright = {
       $: (selector: string, strict?: boolean) => this._querySelector(selector, !!strict),
       $$: (selector: string) => this._querySelectorAll(selector),
-      locator: (selector: string, options?: { hasText?: string | RegExp }) => createLocator(this._injectedScript, selector, options),
+      locator: (selector: string, options?: { hasText?: string | RegExp }) =>
+        createLocator(this._injectedScript, selector, options),
       inspect: (selector: string) => this._inspect(selector),
       selector: (element: Element) => this._selector(element),
       resume: () => this._resume(),
     };
   }
 
-  private _querySelector(selector: string, strict: boolean): (Element | undefined) {
+  private _querySelector(selector: string, strict: boolean): Element | undefined {
     if (typeof selector !== 'string')
       throw new Error(`Usage: playwright.query('Playwright >> selector').`);
     const parsed = this._injectedScript.parseSelector(selector);
@@ -102,8 +106,7 @@ export class ConsoleAPI {
   }
 
   private _selector(element: Element) {
-    if (!(element instanceof Element))
-      throw new Error(`Usage: playwright.selector(element).`);
+    if (!(element instanceof Element)) throw new Error(`Usage: playwright.selector(element).`);
     return generateSelector(this._injectedScript, element, true).selector;
   }
 

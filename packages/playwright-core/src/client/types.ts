@@ -22,82 +22,103 @@ export { Size, Point, Rect, Quad, URLMatch, TimeoutOptions, HeadersArray } from 
 type LoggerSeverity = 'verbose' | 'info' | 'warning' | 'error';
 export interface Logger {
   isEnabled(name: string, severity: LoggerSeverity): boolean;
-  log(name: string, severity: LoggerSeverity, message: string | Error, args: any[], hints: { color?: string }): void;
+  log(
+    name: string,
+    severity: LoggerSeverity,
+    message: string | Error,
+    args: any[],
+    hints: { color?: string },
+  ): void;
 }
 
 export type StrictOptions = { strict?: boolean };
 export type Headers = { [key: string]: string };
 export type Env = { [key: string]: string | number | boolean | undefined };
 
-export type WaitForEventOptions = Function | { predicate?: Function, timeout?: number };
-export type WaitForFunctionOptions = { timeout?: number, polling?: 'raf' | number };
+export type WaitForEventOptions = Function | { predicate?: Function; timeout?: number };
+export type WaitForFunctionOptions = { timeout?: number; polling?: 'raf' | number };
 
-export type SelectOption = { value?: string, label?: string, index?: number };
-export type SelectOptionOptions = { force?: boolean, timeout?: number, noWaitAfter?: boolean };
-export type FilePayload = { name: string, mimeType: string, buffer: Buffer };
+export type SelectOption = { value?: string; label?: string; index?: number };
+export type SelectOptionOptions = { force?: boolean; timeout?: number; noWaitAfter?: boolean };
+export type FilePayload = { name: string; mimeType: string; buffer: Buffer };
 export type StorageState = {
-  cookies: channels.NetworkCookie[],
-  origins: channels.OriginStorage[]
+  cookies: channels.NetworkCookie[];
+  origins: channels.OriginStorage[];
 };
 export type SetStorageState = {
-  cookies?: channels.SetNetworkCookie[],
-  origins?: channels.OriginStorage[]
+  cookies?: channels.SetNetworkCookie[];
+  origins?: channels.OriginStorage[];
 };
 
 export type LifecycleEvent = channels.LifecycleEvent;
-export const kLifecycleEvents: Set<LifecycleEvent> = new Set(['load', 'domcontentloaded', 'networkidle', 'commit']);
+export const kLifecycleEvents: Set<LifecycleEvent> = new Set([
+  'load',
+  'domcontentloaded',
+  'networkidle',
+  'commit',
+]);
 
-export type BrowserContextOptions = Omit<channels.BrowserNewContextOptions, 'viewport' | 'noDefaultViewport' | 'extraHTTPHeaders' | 'storageState'> & {
-  viewport?: Size | null,
-  extraHTTPHeaders?: Headers,
-  logger?: Logger,
-  videosPath?: string,
-  videoSize?: Size,
-  storageState?: string | SetStorageState,
+export type BrowserContextOptions = Omit<
+  channels.BrowserNewContextOptions,
+  'viewport' | 'noDefaultViewport' | 'extraHTTPHeaders' | 'storageState'
+> & {
+  viewport?: Size | null;
+  extraHTTPHeaders?: Headers;
+  logger?: Logger;
+  videosPath?: string;
+  videoSize?: Size;
+  storageState?: string | SetStorageState;
 };
 
 type LaunchOverrides = {
-  ignoreDefaultArgs?: boolean | string[],
-  env?: Env,
-  logger?: Logger,
+  ignoreDefaultArgs?: boolean | string[];
+  env?: Env;
+  logger?: Logger;
 };
 type FirefoxUserPrefs = {
-  firefoxUserPrefs?: { [key: string]: string | number | boolean },
+  firefoxUserPrefs?: { [key: string]: string | number | boolean };
 };
-type LaunchOptionsBase = Omit<channels.BrowserTypeLaunchOptions, 'ignoreAllDefaultArgs' | 'ignoreDefaultArgs' | 'env' | 'firefoxUserPrefs'> & LaunchOverrides;
+type LaunchOptionsBase = Omit<
+  channels.BrowserTypeLaunchOptions,
+  'ignoreAllDefaultArgs' | 'ignoreDefaultArgs' | 'env' | 'firefoxUserPrefs'
+> &
+  LaunchOverrides;
 export type LaunchOptions = LaunchOptionsBase & FirefoxUserPrefs;
-export type LaunchPersistentContextOptions = Omit<LaunchOptionsBase & BrowserContextOptions, 'storageState'>;
+export type LaunchPersistentContextOptions = Omit<
+  LaunchOptionsBase & BrowserContextOptions,
+  'storageState'
+>;
 
 export type ConnectOptions = {
-  wsEndpoint: string,
-  headers?: { [key: string]: string; };
-  slowMo?: number,
-  timeout?: number,
-  logger?: Logger,
+  wsEndpoint: string;
+  headers?: { [key: string]: string };
+  slowMo?: number;
+  timeout?: number;
+  logger?: Logger;
 };
 export type LaunchServerOptions = {
-  channel?: channels.BrowserTypeLaunchOptions['channel'],
-  executablePath?: string,
-  args?: string[],
-  ignoreDefaultArgs?: boolean | string[],
-  handleSIGINT?: boolean,
-  handleSIGTERM?: boolean,
-  handleSIGHUP?: boolean,
-  timeout?: number,
-  env?: Env,
-  headless?: boolean,
-  devtools?: boolean,
+  channel?: channels.BrowserTypeLaunchOptions['channel'];
+  executablePath?: string;
+  args?: string[];
+  ignoreDefaultArgs?: boolean | string[];
+  handleSIGINT?: boolean;
+  handleSIGTERM?: boolean;
+  handleSIGHUP?: boolean;
+  timeout?: number;
+  env?: Env;
+  headless?: boolean;
+  devtools?: boolean;
   proxy?: {
-    server: string,
-    bypass?: string,
-    username?: string,
-    password?: string
-  },
-  downloadsPath?: string,
-  chromiumSandbox?: boolean,
-  port?: number,
-  wsPath?: string,
-  logger?: Logger,
+    server: string;
+    bypass?: string;
+    username?: string;
+    password?: string;
+  };
+  downloadsPath?: string;
+  chromiumSandbox?: boolean;
+  port?: number;
+  wsPath?: string;
+  logger?: Logger;
 } & FirefoxUserPrefs;
 
 export type SelectorEngine = {

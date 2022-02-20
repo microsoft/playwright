@@ -38,14 +38,18 @@ export class PlaywrightClient {
     connection.markAsRemote();
     const ws = new WebSocket(wsEndpoint, { followRedirects });
     const waitForNextTask = makeWaitForNextTask();
-    connection.onmessage = message => {
+    connection.onmessage = (message) => {
       if (ws.readyState === 2 /** CLOSING */ || ws.readyState === 3 /** CLOSED */)
         throw new Error('PlaywrightClient: writing to closed WebSocket connection');
       ws.send(JSON.stringify(message));
     };
-    ws.on('message', message => waitForNextTask(() => connection.dispatch(JSON.parse(message.toString()))));
-    const errorPromise = new Promise((_, reject) => ws.on('error', error => reject(error)));
-    const closePromise = new Promise((_, reject) => ws.on('close', () => reject(new Error('Connection closed'))));
+    ws.on('message', (message) =>
+      waitForNextTask(() => connection.dispatch(JSON.parse(message.toString()))),
+    );
+    const errorPromise = new Promise((_, reject) => ws.on('error', (error) => reject(error)));
+    const closePromise = new Promise((_, reject) =>
+      ws.on('close', () => reject(new Error('Connection closed'))),
+    );
     const playwrightClientPromise = new Promise<PlaywrightClient>((resolve, reject) => {
       let playwright: Playwright;
       ws.on('open', async () => {
@@ -60,7 +64,13 @@ export class PlaywrightClient {
         playwrightClientPromise,
         errorPromise,
         closePromise,
-        new Promise((_, reject) => timer = setTimeout(() => reject(`Timeout of ${timeout}ms exceeded while connecting.`), timeout))
+        new Promise(
+          (_, reject) =>
+            (timer = setTimeout(
+              () => reject(`Timeout of ${timeout}ms exceeded while connecting.`),
+              timeout,
+            )),
+        ),
       ]);
       return await playwrightClientPromise;
     } finally {
@@ -71,7 +81,7 @@ export class PlaywrightClient {
   constructor(playwright: Playwright, ws: WebSocket) {
     this._playwright = playwright;
     this._ws = ws;
-    this._closePromise = new Promise(f => ws.on('close', f));
+    this._closePromise = new Promise((f) => ws.on('close', f));
   }
 
   playwright(): Playwright {

@@ -28,8 +28,8 @@ export function createInProcessPlaywright(): PlaywrightAPI {
   const dispatcherConnection = new DispatcherConnection();
 
   // Dispatch synchronously at first.
-  dispatcherConnection.onmessage = message => clientConnection.dispatch(message);
-  clientConnection.onmessage = message => dispatcherConnection.dispatch(message);
+  dispatcherConnection.onmessage = (message) => clientConnection.dispatch(message);
+  clientConnection.onmessage = (message) => dispatcherConnection.dispatch(message);
 
   const rootScope = new Root(dispatcherConnection);
 
@@ -41,9 +41,12 @@ export function createInProcessPlaywright(): PlaywrightAPI {
   playwrightAPI.webkit._serverLauncher = new BrowserServerLauncherImpl('webkit');
 
   // Switch to async dispatch after we got Playwright object.
-  dispatcherConnection.onmessage = message => setImmediate(() => clientConnection.dispatch(message));
-  clientConnection.onmessage = message => setImmediate(() => dispatcherConnection.dispatch(message));
+  dispatcherConnection.onmessage = (message) =>
+    setImmediate(() => clientConnection.dispatch(message));
+  clientConnection.onmessage = (message) =>
+    setImmediate(() => dispatcherConnection.dispatch(message));
 
-  (playwrightAPI as any)._toImpl = (x: any) => dispatcherConnection._dispatchers.get(x._guid)!._object;
+  (playwrightAPI as any)._toImpl = (x: any) =>
+    dispatcherConnection._dispatchers.get(x._guid)!._object;
   return playwrightAPI;
 }

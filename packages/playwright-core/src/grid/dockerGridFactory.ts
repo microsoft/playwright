@@ -29,7 +29,7 @@ const dockerFactory: GridFactory = {
     /* eslint-disable no-console */
     console.log(``);
     console.log(`✨ Running browsers inside docker container: ${vncUrl} ✨`);
-  }
+  },
 };
 
 export default dockerFactory;
@@ -47,38 +47,54 @@ interface DockerImage {
   VirtualSize: number;
 }
 
-async function launchDockerGridAgent(agentId: string, gridURL: string): Promise<{vncUrl: string }> {
+async function launchDockerGridAgent(
+  agentId: string,
+  gridURL: string,
+): Promise<{ vncUrl: string }> {
   const gridPort = new URL(gridURL).port || '80';
   const images: DockerImage[] | null = await getJSON('/images/json');
 
   if (!images) {
-    throw new Error(`\n` + utils.wrapInASCIIBox([
-      `Failed to list docker images`,
-      `Please ensure docker is running.`,
-      ``,
-      `<3 Playwright Team`,
-    ].join('\n'), 1));
+    throw new Error(
+      `\n` +
+        utils.wrapInASCIIBox(
+          [
+            `Failed to list docker images`,
+            `Please ensure docker is running.`,
+            ``,
+            `<3 Playwright Team`,
+          ].join('\n'),
+          1,
+        ),
+    );
   }
 
-  const imageName = process.env.PWTEST_IMAGE_NAME ?? `mcr.microsoft.com/playwright:v${require('../../package.json').version}-focal`;
-  const pwImage = images.find(image => image.RepoTags?.includes(imageName));
+  const imageName =
+    process.env.PWTEST_IMAGE_NAME ??
+    `mcr.microsoft.com/playwright:v${require('../../package.json').version}-focal`;
+  const pwImage = images.find((image) => image.RepoTags?.includes(imageName));
 
   if (!pwImage) {
-    throw new Error(`\n` + utils.wrapInASCIIBox([
-      `Failed to find ${imageName} docker image.`,
-      `Please pull docker image with the following command:`,
-      ``,
-      `    npx playwright install docker-image`,
-      ``,
-      `<3 Playwright Team`,
-    ].join('\n'), 1));
+    throw new Error(
+      `\n` +
+        utils.wrapInASCIIBox(
+          [
+            `Failed to find ${imageName} docker image.`,
+            `Please pull docker image with the following command:`,
+            ``,
+            `    npx playwright install docker-image`,
+            ``,
+            `<3 Playwright Team`,
+          ].join('\n'),
+          1,
+        ),
+    );
   }
   const Env = [
     'PW_SOCKS_PROXY_PORT=1', // Enable port forwarding over PlaywrightClient
   ];
   const forwardIfDefined = (envName: string) => {
-    if (process.env[envName])
-      Env.push(`CI=${process.env[envName]}`);
+    if (process.env[envName]) Env.push(`CI=${process.env[envName]}`);
   };
   forwardIfDefined('CI');
   forwardIfDefined('PWDEBUG');
@@ -89,22 +105,25 @@ async function launchDockerGridAgent(agentId: string, gridURL: string): Promise<
   const container = await postJSON('/containers/create', {
     Env,
     WorkingDir: '/ms-playwright-agent',
-    Cmd: [ 'bash', 'start_agent.sh', agentId, `http://host.docker.internal:${gridPort}` ],
+    Cmd: ['bash', 'start_agent.sh', agentId, `http://host.docker.internal:${gridPort}`],
     AttachStdout: true,
     AttachStderr: true,
     Image: pwImage.Id,
     ExposedPorts: {
-      '7900/tcp': { }
+      '7900/tcp': {},
     },
     HostConfig: {
       Init: true,
       AutoRemove: true,
       ShmSize: 2 * 1024 * 1024 * 1024,
-      ExtraHosts: process.platform === 'linux' ? [
-        'host.docker.internal:host-gateway', // Enable host.docker.internal on Linux.
-      ] : [],
+      ExtraHosts:
+        process.platform === 'linux'
+          ? [
+              'host.docker.internal:host-gateway', // Enable host.docker.internal on Linux.
+            ]
+          : [],
       PortBindings: {
-        '7900/tcp': [{ HostPort: '0' }]
+        '7900/tcp': [{ HostPort: '0' }],
       },
     },
   });
@@ -118,40 +137,46 @@ async function launchDockerGridAgent(agentId: string, gridURL: string): Promise<
 
 async function getJSON(url: string): Promise<any> {
   const result = await callDockerAPI('get', url);
-  if (!result)
-    return result;
+  if (!result) return result;
   return JSON.parse(result);
 }
 
 async function postJSON(url: string, json: any = undefined) {
   const result = await callDockerAPI('post', url, json ? JSON.stringify(json) : undefined);
-  if (!result)
-    return result;
+  if (!result) return result;
   return JSON.parse(result);
 }
 
-function callDockerAPI(method: 'post'|'get', url: string, body: Buffer|string|undefined = undefined): Promise<string|null> {
-  const dockerSocket = os.platform() === 'win32' ? '\\\\.\\pipe\\docker_engine' : '/var/run/docker.sock';
+function callDockerAPI(
+  method: 'post' | 'get',
+  url: string,
+  body: Buffer | string | undefined = undefined,
+): Promise<string | null> {
+  const dockerSocket =
+    os.platform() === 'win32' ? '\\\\.\\pipe\\docker_engine' : '/var/run/docker.sock';
   return new Promise((resolve, reject) => {
-    const request = http.request({
-      socketPath: dockerSocket,
-      path: url,
-      method,
-    }, (response: http.IncomingMessage) => {
-      let body = '';
-      response.on('data', function(chunk){
-        body += chunk;
-      });
-      response.on('end', function(){
-        if (!response.statusCode || response.statusCode < 200 || response.statusCode >= 300) {
-          console.error(`ERROR ${method} ${url}`, response.statusCode, body);
-          resolve(null);
-        } else {
-          resolve(body);
-        }
-      });
-    });
-    request.on('error', function(e){
+    const request = http.request(
+      {
+        socketPath: dockerSocket,
+        path: url,
+        method,
+      },
+      (response: http.IncomingMessage) => {
+        let body = '';
+        response.on('data', function (chunk) {
+          body += chunk;
+        });
+        response.on('end', function () {
+          if (!response.statusCode || response.statusCode < 200 || response.statusCode >= 300) {
+            console.error(`ERROR ${method} ${url}`, response.statusCode, body);
+            resolve(null);
+          } else {
+            resolve(body);
+          }
+        });
+      },
+    );
+    request.on('error', function (e) {
       console.error('Error fetching json: ' + e);
       resolve(null);
     });

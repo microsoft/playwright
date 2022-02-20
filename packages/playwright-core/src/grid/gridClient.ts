@@ -28,15 +28,14 @@ export class GridClient {
     params.set('pwVersion', getPlaywrightVersion(true /* majorMinorOnly */));
     const ws = new WebSocket(`${gridURL}/claimWorker?` + params.toString());
     const errorText = await Promise.race([
-      new Promise(f => ws.once('message', () => f(undefined))),
-      new Promise(f => ws.once('close', (code, reason) => f(reason))),
+      new Promise((f) => ws.once('message', () => f(undefined))),
+      new Promise((f) => ws.once('close', (code, reason) => f(reason))),
     ]);
-    if (errorText)
-      throw errorText;
+    if (errorText) throw errorText;
     const connection = new Connection();
     connection.markAsRemote();
     connection.onmessage = (message: Object) => ws.send(JSON.stringify(message));
-    ws.on('message', message => connection.dispatch(JSON.parse(message.toString())));
+    ws.on('message', (message) => connection.dispatch(JSON.parse(message.toString())));
     ws.on('close', (code, reason) => connection.close(reason.toString()));
     const playwright = await connection.initializePlaywright();
     playwright._enablePortForwarding();
@@ -56,5 +55,3 @@ export class GridClient {
     this._ws.close();
   }
 }
-
-

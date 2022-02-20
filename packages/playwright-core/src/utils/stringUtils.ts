@@ -14,14 +14,11 @@
  * limitations under the License.
  */
 
-export function escapeWithQuotes(text: string, char: string = '\'') {
+export function escapeWithQuotes(text: string, char: string = "'") {
   const stringified = JSON.stringify(text);
   const escapedText = stringified.substring(1, stringified.length - 1).replace(/\\"/g, '"');
-  if (char === '\'')
-    return char + escapedText.replace(/[']/g, '\\\'') + char;
-  if (char === '"')
-    return char + escapedText.replace(/["]/g, '\\"') + char;
-  if (char === '`')
-    return char + escapedText.replace(/[`]/g, '`') + char;
+  if (char === "'") return char + escapedText.replace(/[']/g, "\\'") + char;
+  if (char === '"') return char + escapedText.replace(/["]/g, '\\"') + char;
+  if (char === '`') return char + escapedText.replace(/[`]/g, '`') + char;
   throw new Error('Invalid escape char');
 }

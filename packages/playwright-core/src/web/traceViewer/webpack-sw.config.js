@@ -7,13 +7,13 @@ module.exports = {
     sw: path.join(__dirname, 'sw.ts'),
   },
   resolve: {
-    extensions: ['.ts', '.js']
+    extensions: ['.ts', '.js'],
   },
   devtool: mode === 'production' ? false : 'source-map',
   output: {
     globalObject: 'self',
     filename: '[name].bundle.js',
-    path: path.resolve(__dirname, '../../../lib/webpack/traceViewer')
+    path: path.resolve(__dirname, '../../../lib/webpack/traceViewer'),
   },
   module: {
     rules: [
@@ -21,12 +21,10 @@ module.exports = {
         test: /\.(j|t)sx?$/,
         loader: 'babel-loader',
         options: {
-          presets: [
-            "@babel/preset-typescript",
-          ]
+          presets: ['@babel/preset-typescript'],
         },
-        exclude: /node_modules/
+        exclude: /node_modules/,
       },
-    ]
+    ],
   },
 };

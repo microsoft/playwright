@@ -29,30 +29,35 @@ export class RawKeyboardImpl implements input.RawKeyboard {
     private _client: CRSession,
     private _isMac: boolean,
     private _dragManger: DragManager,
-  ) { }
+  ) {}
 
   _commandsForCode(code: string, modifiers: Set<types.KeyboardModifier>) {
-    if (!this._isMac)
-      return [];
+    if (!this._isMac) return [];
     const parts = [];
-    for (const modifier of (['Shift', 'Control', 'Alt', 'Meta']) as types.KeyboardModifier[]) {
-      if (modifiers.has(modifier))
-        parts.push(modifier);
+    for (const modifier of ['Shift', 'Control', 'Alt', 'Meta'] as types.KeyboardModifier[]) {
+      if (modifiers.has(modifier)) parts.push(modifier);
     }
     parts.push(code);
     const shortcut = parts.join('+');
     let commands = macEditingCommands[shortcut] || [];
-    if (isString(commands))
-      commands = [commands];
+    if (isString(commands)) commands = [commands];
     // Commands that insert text are not supported
-    commands = commands.filter(x => !x.startsWith('insert'));
+    commands = commands.filter((x) => !x.startsWith('insert'));
     // remove the trailing : to match the Chromium command names.
-    return commands.map(c => c.substring(0, c.length - 1));
+    return commands.map((c) => c.substring(0, c.length - 1));
   }
 
-  async keydown(modifiers: Set<types.KeyboardModifier>, code: string, keyCode: number, keyCodeWithoutLocation: number, key: string, location: number, autoRepeat: boolean, text: string | undefined): Promise<void> {
-    if (code === 'Escape' && await this._dragManger.cancelDrag())
-      return;
+  async keydown(
+    modifiers: Set<types.KeyboardModifier>,
+    code: string,
+    keyCode: number,
+    keyCodeWithoutLocation: number,
+    key: string,
+    location: number,
+    autoRepeat: boolean,
+    text: string | undefined,
+  ): Promise<void> {
+    if (code === 'Escape' && (await this._dragManger.cancelDrag())) return;
     const commands = this._commandsForCode(code, modifiers);
     await this._client.send('Input.dispatchKeyEvent', {
       type: text ? 'keyDown' : 'rawKeyDown',
@@ -65,18 +70,25 @@ export class RawKeyboardImpl implements input.RawKeyboard {
       unmodifiedText: text,
       autoRepeat,
       location,
-      isKeypad: location === input.keypadLocation
+      isKeypad: location === input.keypadLocation,
     });
   }
 
-  async keyup(modifiers: Set<types.KeyboardModifier>, code: string, keyCode: number, keyCodeWithoutLocation: number, key: string, location: number): Promise<void> {
+  async keyup(
+    modifiers: Set<types.KeyboardModifier>,
+    code: string,
+    keyCode: number,
+    keyCodeWithoutLocation: number,
+    key: string,
+    location: number,
+  ): Promise<void> {
     await this._client.send('Input.dispatchKeyEvent', {
       type: 'keyUp',
       modifiers: toModifiersMask(modifiers),
       key,
       windowsVirtualKeyCode: keyCodeWithoutLocation,
       code,
-      location
+      location,
     });
   }
 
@@ -96,7 +108,14 @@ export class RawMouseImpl implements input.RawMouse {
     this._dragManager = dragManager;
   }
 
-  async move(x: number, y: number, button: types.MouseButton | 'none', buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, forClick: boolean): Promise<void> {
+  async move(
+    x: number,
+    y: number,
+    button: types.MouseButton | 'none',
+    buttons: Set<types.MouseButton>,
+    modifiers: Set<types.KeyboardModifier>,
+    forClick: boolean,
+  ): Promise<void> {
     const actualMove = async () => {
       await this._client.send('Input.dispatchMouseEvent', {
         type: 'mouseMoved',
@@ -104,7 +123,7 @@ export class RawMouseImpl implements input.RawMouse {
         buttons: toButtonsMask(buttons),
         x,
         y,
-        modifiers: toModifiersMask(modifiers)
+        modifiers: toModifiersMask(modifiers),
       });
     };
     if (forClick) {
@@ -115,9 +134,15 @@ export class RawMouseImpl implements input.RawMouse {
     await this._dragManager.interceptDragCausedByMove(x, y, button, buttons, modifiers, actualMove);
   }
 
-  async down(x: number, y: number, button: types.MouseButton, buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, clickCount: number): Promise<void> {
-    if (this._dragManager.isDragging())
-      return;
+  async down(
+    x: number,
+    y: number,
+    button: types.MouseButton,
+    buttons: Set<types.MouseButton>,
+    modifiers: Set<types.KeyboardModifier>,
+    clickCount: number,
+  ): Promise<void> {
+    if (this._dragManager.isDragging()) return;
     await this._client.send('Input.dispatchMouseEvent', {
       type: 'mousePressed',
       button,
@@ -125,11 +150,18 @@ export class RawMouseImpl implements input.RawMouse {
       x,
       y,
       modifiers: toModifiersMask(modifiers),
-      clickCount
+      clickCount,
     });
   }
 
-  async up(x: number, y: number, button: types.MouseButton, buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, clickCount: number): Promise<void> {
+  async up(
+    x: number,
+    y: number,
+    button: types.MouseButton,
+    buttons: Set<types.MouseButton>,
+    modifiers: Set<types.KeyboardModifier>,
+    clickCount: number,
+  ): Promise<void> {
     if (this._dragManager.isDragging()) {
       await this._dragManager.drop(x, y, modifiers);
       return;
@@ -141,11 +173,18 @@ export class RawMouseImpl implements input.RawMouse {
       x,
       y,
       modifiers: toModifiersMask(modifiers),
-      clickCount
+      clickCount,
     });
   }
 
-  async wheel(x: number, y: number, buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, deltaX: number, deltaY: number): Promise<void> {
+  async wheel(
+    x: number,
+    y: number,
+    buttons: Set<types.MouseButton>,
+    modifiers: Set<types.KeyboardModifier>,
+    deltaX: number,
+    deltaY: number,
+  ): Promise<void> {
     await this._client.send('Input.dispatchMouseEvent', {
       type: 'mouseWheel',
       x,
@@ -168,14 +207,17 @@ export class RawTouchscreenImpl implements input.RawTouchscreen {
       this._client.send('Input.dispatchTouchEvent', {
         type: 'touchStart',
         modifiers: toModifiersMask(modifiers),
-        touchPoints: [{
-          x, y
-        }]
+        touchPoints: [
+          {
+            x,
+            y,
+          },
+        ],
       }),
       this._client.send('Input.dispatchTouchEvent', {
         type: 'touchEnd',
         modifiers: toModifiersMask(modifiers),
-        touchPoints: []
+        touchPoints: [],
       }),
     ]);
   }

@@ -50,8 +50,7 @@ export class ProjectImpl {
       parents.reverse();
 
       for (const parent of parents) {
-        if (parent._use.length)
-          pool = new FixturePool(parent._use, pool, parent._isDescribe);
+        if (parent._use.length) pool = new FixturePool(parent._use, pool, parent._isDescribe);
         for (const hook of parent._eachHooks)
           pool.validateFunction(hook.fn, hook.type + ' hook', hook.location);
         for (const hook of parent.hooks)
@@ -66,7 +65,12 @@ export class ProjectImpl {
     return this.testPools.get(test)!;
   }
 
-  private _cloneEntries(from: Suite, to: Suite, repeatEachIndex: number, filter: (test: TestCase) => boolean): boolean {
+  private _cloneEntries(
+    from: Suite,
+    to: Suite,
+    repeatEachIndex: number,
+    filter: (test: TestCase) => boolean,
+  ): boolean {
     for (const entry of from._entries) {
       if (entry instanceof Suite) {
         const suite = entry._clone();
@@ -92,8 +96,7 @@ export class ProjectImpl {
         }
       }
     }
-    if (!to._entries.length)
-      return false;
+    if (!to._entries.length) return false;
     for (const hook of from.hooks) {
       const clone = hook._clone();
       clone.retries = 1;
@@ -106,18 +109,21 @@ export class ProjectImpl {
     return true;
   }
 
-  cloneFileSuite(suite: Suite, repeatEachIndex: number, filter: (test: TestCase) => boolean): Suite | undefined {
+  cloneFileSuite(
+    suite: Suite,
+    repeatEachIndex: number,
+    filter: (test: TestCase) => boolean,
+  ): Suite | undefined {
     const result = suite._clone();
     return this._cloneEntries(suite, result, repeatEachIndex, filter) ? result : undefined;
   }
 
   private resolveFixtures(testType: TestTypeImpl, configUse: Fixtures): FixturesWithLocation[] {
-    return testType.fixtures.map(f => {
+    return testType.fixtures.map((f) => {
       const configKeys = new Set(Object.keys(configUse || {}));
       const resolved = { ...f.fixtures };
       for (const [key, value] of Object.entries(resolved)) {
-        if (!isFixtureOption(value) || !configKeys.has(key))
-          continue;
+        if (!isFixtureOption(value) || !configKeys.has(key)) continue;
         // Apply override from config file.
         const override = (configUse as any)[key];
         (resolved as any)[key] = [override, value[1]];

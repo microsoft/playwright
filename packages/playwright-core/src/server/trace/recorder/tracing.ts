@@ -20,10 +20,20 @@ import os from 'os';
 import path from 'path';
 import yazl from 'yazl';
 import { NameValue } from '../../../common/types';
-import { commandsWithTracingSnapshots, TracingTracingStopChunkParams } from '../../../protocol/channels';
+import {
+  commandsWithTracingSnapshots,
+  TracingTracingStopChunkParams,
+} from '../../../protocol/channels';
 import { ManualPromise } from '../../../utils/async';
 import { eventsHelper, RegisteredListener } from '../../../utils/eventsHelper';
-import { assert, calculateSha1, createGuid, mkdirIfNeeded, monotonicTime, removeFolders } from '../../../utils/utils';
+import {
+  assert,
+  calculateSha1,
+  createGuid,
+  mkdirIfNeeded,
+  monotonicTime,
+  removeFolders,
+} from '../../../utils/utils';
 import { Artifact } from '../../artifact';
 import { BrowserContext } from '../../browserContext';
 import { ElementHandle } from '../../dom';
@@ -45,22 +55,25 @@ export type TracerOptions = {
 };
 
 type RecordingState = {
-  options: TracerOptions,
-  traceName: string,
-  networkFile: string,
-  traceFile: string,
-  tracesDir: string,
-  resourcesDir: string,
-  filesCount: number,
-  networkSha1s: Set<string>,
-  traceSha1s: Set<string>,
-  sources: Set<string>,
+  options: TracerOptions;
+  traceName: string;
+  networkFile: string;
+  traceFile: string;
+  tracesDir: string;
+  resourcesDir: string;
+  filesCount: number;
+  networkSha1s: Set<string>;
+  traceSha1s: Set<string>;
+  sources: Set<string>;
   recording: boolean;
 };
 
 const kScreencastOptions = { width: 800, height: 600, quality: 90 };
 
-export class Tracing extends SdkObject implements InstrumentationListener, SnapshotterDelegate, HarTracerDelegate {
+export class Tracing
+  extends SdkObject
+  implements InstrumentationListener, SnapshotterDelegate, HarTracerDelegate
+{
   static Events = {
     Dispose: 'dispose',
   };
@@ -69,7 +82,16 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
   private _snapshotter?: Snapshotter;
   private _harTracer: HarTracer;
   private _screencastListeners: RegisteredListener[] = [];
-  private _pendingCalls = new Map<string, { sdkObject: SdkObject, metadata: CallMetadata, beforeSnapshot: Promise<void>, actionSnapshot?: Promise<void>, afterSnapshot?: Promise<void> }>();
+  private _pendingCalls = new Map<
+    string,
+    {
+      sdkObject: SdkObject;
+      metadata: CallMetadata;
+      beforeSnapshot: Promise<void>;
+      actionSnapshot?: Promise<void>;
+      afterSnapshot?: Promise<void>;
+    }
+  >();
   private _context: BrowserContext | APIRequestContext;
   private _state: RecordingState | undefined;
   private _isStopping = false;
@@ -104,11 +126,14 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
   }
 
   async start(options: TracerOptions) {
-    if (this._isStopping)
-      throw new Error('Cannot start tracing while stopping');
+    if (this._isStopping) throw new Error('Cannot start tracing while stopping');
     if (this._state) {
       const o = this._state.options;
-      if (o.name !== options.name || !o.screenshots !== !options.screenshots || !o.snapshots !== !options.snapshots)
+      if (
+        o.name !== options.name ||
+        !o.screenshots !== !options.screenshots ||
+        !o.snapshots !== !options.snapshots
+      )
         throw new Error('Tracing has been already started with different options');
       return;
     }
@@ -116,26 +141,36 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     // and conflict.
     const traceName = options.name || createGuid();
     // Init the state synchrounously.
-    this._state = { options, traceName, traceFile: '', networkFile: '', tracesDir: '', resourcesDir: '', filesCount: 0, traceSha1s: new Set(), networkSha1s: new Set(), sources: new Set(), recording: false };
+    this._state = {
+      options,
+      traceName,
+      traceFile: '',
+      networkFile: '',
+      tracesDir: '',
+      resourcesDir: '',
+      filesCount: 0,
+      traceSha1s: new Set(),
+      networkSha1s: new Set(),
+      sources: new Set(),
+      recording: false,
+    };
     const state = this._state;
 
     state.tracesDir = await this._createTracesDirIfNeeded();
     state.resourcesDir = path.join(state.tracesDir, 'resources');
     state.traceFile = path.join(state.tracesDir, traceName + '.trace');
     state.networkFile = path.join(state.tracesDir, traceName + '.network');
-    this._writeChain = fs.promises.mkdir(state.resourcesDir, { recursive: true }).then(() => fs.promises.writeFile(state.networkFile, ''));
-    if (options.snapshots)
-      this._harTracer.start();
+    this._writeChain = fs.promises
+      .mkdir(state.resourcesDir, { recursive: true })
+      .then(() => fs.promises.writeFile(state.networkFile, ''));
+    if (options.snapshots) this._harTracer.start();
   }
 
   async startChunk(options: { title?: string } = {}) {
-    if (this._state && this._state.recording)
-      await this.stopChunk({ mode: 'doNotSave' });
+    if (this._state && this._state.recording) await this.stopChunk({ mode: 'doNotSave' });
 
-    if (!this._state)
-      throw new Error('Must start tracing before starting a new chunk');
-    if (this._isStopping)
-      throw new Error('Cannot start a trace chunk while stopping');
+    if (!this._state) throw new Error('Must start tracing before starting a new chunk');
+    if (this._isStopping) throw new Error('Cannot start a trace chunk while stopping');
 
     const state = this._state;
     const suffix = state.filesCount ? `-${state.filesCount}` : ``;
@@ -145,54 +180,54 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
 
     this._appendTraceOperation(async () => {
       await mkdirIfNeeded(state.traceFile);
-      await fs.promises.appendFile(state.traceFile, JSON.stringify({ ...this._contextCreatedEvent, title: options.title, wallTime: Date.now() }) + '\n');
+      await fs.promises.appendFile(
+        state.traceFile,
+        JSON.stringify({
+          ...this._contextCreatedEvent,
+          title: options.title,
+          wallTime: Date.now(),
+        }) + '\n',
+      );
     });
 
     this._context.instrumentation.addListener(this, this._context);
-    if (state.options.screenshots)
-      this._startScreencast();
-    if (state.options.snapshots)
-      await this._snapshotter?.start();
+    if (state.options.screenshots) this._startScreencast();
+    if (state.options.snapshots) await this._snapshotter?.start();
   }
 
   private _startScreencast() {
-    if (!(this._context instanceof BrowserContext))
-      return;
-    for (const page of this._context.pages())
-      this._startScreencastInPage(page);
+    if (!(this._context instanceof BrowserContext)) return;
+    for (const page of this._context.pages()) this._startScreencastInPage(page);
     this._screencastListeners.push(
-        eventsHelper.addEventListener(this._context, BrowserContext.Events.Page, this._startScreencastInPage.bind(this)),
+      eventsHelper.addEventListener(
+        this._context,
+        BrowserContext.Events.Page,
+        this._startScreencastInPage.bind(this),
+      ),
     );
   }
 
   private _stopScreencast() {
     eventsHelper.removeEventListeners(this._screencastListeners);
-    if (!(this._context instanceof BrowserContext))
-      return;
-    for (const page of this._context.pages())
-      page.setScreencastOptions(null);
+    if (!(this._context instanceof BrowserContext)) return;
+    for (const page of this._context.pages()) page.setScreencastOptions(null);
   }
 
   async stop() {
-    if (!this._state)
-      return;
-    if (this._isStopping)
-      throw new Error(`Tracing is already stopping`);
-    if (this._state.recording)
-      throw new Error(`Must stop trace file before stopping tracing`);
+    if (!this._state) return;
+    if (this._isStopping) throw new Error(`Tracing is already stopping`);
+    if (this._state.recording) throw new Error(`Must stop trace file before stopping tracing`);
     this._harTracer.stop();
     await this._writeChain;
     this._state = undefined;
   }
 
   async deleteTmpTracesDir() {
-    if (this._tracesTmpDir)
-      await removeFolders([this._tracesTmpDir]);
+    if (this._tracesTmpDir) await removeFolders([this._tracesTmpDir]);
   }
 
   private async _createTracesDirIfNeeded() {
-    if (this._precreatedTracesDir)
-      return this._precreatedTracesDir;
+    if (this._precreatedTracesDir) return this._precreatedTracesDir;
     this._tracesTmpDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'playwright-tracing-'));
     return this._tracesTmpDir;
   }
@@ -207,24 +242,29 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     this.emit(Tracing.Events.Dispose);
   }
 
-  async stopChunk(params: TracingTracingStopChunkParams): Promise<{ artifact: Artifact | null, sourceEntries: NameValue[] | undefined }> {
-    if (this._isStopping)
-      throw new Error(`Tracing is already stopping`);
+  async stopChunk(
+    params: TracingTracingStopChunkParams,
+  ): Promise<{ artifact: Artifact | null; sourceEntries: NameValue[] | undefined }> {
+    if (this._isStopping) throw new Error(`Tracing is already stopping`);
     this._isStopping = true;
 
     if (!this._state || !this._state.recording) {
       this._isStopping = false;
-      if (params.mode !== 'doNotSave')
-        throw new Error(`Must start tracing before stopping`);
+      if (params.mode !== 'doNotSave') throw new Error(`Must start tracing before stopping`);
       return { artifact: null, sourceEntries: [] };
     }
 
     const state = this._state!;
     this._context.instrumentation.removeListener(this);
-    if (this._state?.options.screenshots)
-      this._stopScreencast();
+    if (this._state?.options.screenshots) this._stopScreencast();
 
-    for (const { sdkObject, metadata, beforeSnapshot, actionSnapshot, afterSnapshot } of this._pendingCalls.values()) {
+    for (const {
+      sdkObject,
+      metadata,
+      beforeSnapshot,
+      actionSnapshot,
+      afterSnapshot,
+    } of this._pendingCalls.values()) {
       await Promise.all([beforeSnapshot, actionSnapshot, afterSnapshot]);
       let callMetadata = metadata;
       if (!afterSnapshot) {
@@ -237,56 +277,57 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       await this.onAfterCall(sdkObject, callMetadata);
     }
 
-    if (state.options.snapshots)
-      await this._snapshotter?.stop();
+    if (state.options.snapshots) await this._snapshotter?.stop();
 
     // Chain the export operation against write operations,
     // so that neither trace files nor sha1s change during the export.
-    return await this._appendTraceOperation(async () => {
-      if (params.mode === 'doNotSave')
-        return { artifact: null, sourceEntries: undefined };
+    return (
+      (await this._appendTraceOperation(async () => {
+        if (params.mode === 'doNotSave') return { artifact: null, sourceEntries: undefined };
 
-      // Har files a live, make a snapshot before returning the resulting entries.
-      const networkFile = path.join(state.networkFile, '..', createGuid());
-      await fs.promises.copyFile(state.networkFile, networkFile);
+        // Har files a live, make a snapshot before returning the resulting entries.
+        const networkFile = path.join(state.networkFile, '..', createGuid());
+        await fs.promises.copyFile(state.networkFile, networkFile);
 
-      const entries: NameValue[] = [];
-      entries.push({ name: 'trace.trace', value: state.traceFile });
-      entries.push({ name: 'trace.network', value: networkFile });
-      for (const sha1 of new Set([...state.traceSha1s, ...state.networkSha1s]))
-        entries.push({ name: path.join('resources', sha1), value: path.join(state.resourcesDir, sha1) });
+        const entries: NameValue[] = [];
+        entries.push({ name: 'trace.trace', value: state.traceFile });
+        entries.push({ name: 'trace.network', value: networkFile });
+        for (const sha1 of new Set([...state.traceSha1s, ...state.networkSha1s]))
+          entries.push({
+            name: path.join('resources', sha1),
+            value: path.join(state.resourcesDir, sha1),
+          });
 
-      let sourceEntries: NameValue[] | undefined;
-      if (state.sources.size) {
-        sourceEntries = [];
-        for (const value of state.sources) {
-          const entry = { name: 'resources/src@' + calculateSha1(value) + '.txt', value };
-          if (params.mode === 'compressTraceAndSources') {
-            if (fs.existsSync(entry.value))
-              entries.push(entry);
-          } else {
-            sourceEntries.push(entry);
+        let sourceEntries: NameValue[] | undefined;
+        if (state.sources.size) {
+          sourceEntries = [];
+          for (const value of state.sources) {
+            const entry = { name: 'resources/src@' + calculateSha1(value) + '.txt', value };
+            if (params.mode === 'compressTraceAndSources') {
+              if (fs.existsSync(entry.value)) entries.push(entry);
+            } else {
+              sourceEntries.push(entry);
+            }
           }
         }
-      }
 
-      const artifact = await this._exportZip(entries, state).catch(() => null);
-      return { artifact, sourceEntries };
-    }).finally(() => {
-      // Only reset trace sha1s, network resources are preserved between chunks.
-      state.traceSha1s = new Set();
-      state.sources = new Set();
-      this._isStopping = false;
-      state.recording = false;
-    }) || { artifact: null, sourceEntries: undefined };
+        const artifact = await this._exportZip(entries, state).catch(() => null);
+        return { artifact, sourceEntries };
+      }).finally(() => {
+        // Only reset trace sha1s, network resources are preserved between chunks.
+        state.traceSha1s = new Set();
+        state.sources = new Set();
+        this._isStopping = false;
+        state.recording = false;
+      })) || { artifact: null, sourceEntries: undefined }
+    );
   }
 
   private async _exportZip(entries: NameValue[], state: RecordingState): Promise<Artifact | null> {
     const zipFile = new yazl.ZipFile();
     const result = new ManualPromise<Artifact | null>();
-    (zipFile as any as EventEmitter).on('error', error => result.reject(error));
-    for (const entry of entries)
-      zipFile.addFile(entry.value, entry.name);
+    (zipFile as any as EventEmitter).on('error', (error) => result.reject(error));
+    for (const entry of entries) zipFile.addFile(entry.value, entry.name);
     zipFile.end();
     const zipFileName = state.traceFile + '.zip';
     zipFile.outputStream.pipe(fs.createWriteStream(zipFileName)).on('close', () => {
@@ -297,22 +338,24 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     return result;
   }
 
-  async _captureSnapshot(name: 'before' | 'after' | 'action' | 'event', sdkObject: SdkObject, metadata: CallMetadata, element?: ElementHandle) {
-    if (!this._snapshotter)
-      return;
-    if (!sdkObject.attribution.page)
-      return;
-    if (!this._snapshotter.started())
-      return;
-    if (!shouldCaptureSnapshot(metadata))
-      return;
+  async _captureSnapshot(
+    name: 'before' | 'after' | 'action' | 'event',
+    sdkObject: SdkObject,
+    metadata: CallMetadata,
+    element?: ElementHandle,
+  ) {
+    if (!this._snapshotter) return;
+    if (!sdkObject.attribution.page) return;
+    if (!this._snapshotter.started()) return;
+    if (!shouldCaptureSnapshot(metadata)) return;
     const snapshotName = `${name}@${metadata.id}`;
     metadata.snapshots.push({ title: name, snapshotName });
     // We have |element| for input actions (page.click and handle.click)
     // and |sdkObject| element for accessors like handle.textContent.
-    if (!element && sdkObject instanceof ElementHandle)
-      element = sdkObject;
-    await this._snapshotter.captureSnapshot(sdkObject.attribution.page, snapshotName, element).catch(() => {});
+    if (!element && sdkObject instanceof ElementHandle) element = sdkObject;
+    await this._snapshotter
+      .captureSnapshot(sdkObject.attribution.page, snapshotName, element)
+      .catch(() => {});
   }
 
   async onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata) {
@@ -323,8 +366,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     const beforeSnapshot = this._captureSnapshot('before', sdkObject, metadata);
     this._pendingCalls.set(metadata.id, { sdkObject, metadata, beforeSnapshot });
     if (this._state?.options.sources) {
-      for (const frame of metadata.stack || [])
-        this._state.sources.add(frame.file);
+      for (const frame of metadata.stack || []) this._state.sources.add(frame.file);
     }
     await beforeSnapshot;
   }
@@ -339,8 +381,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
   async onAfterCall(sdkObject: SdkObject, metadata: CallMetadata) {
     sdkObject.attribution.page?.temporarlyDisableTracingScreencastThrottling();
     const pendingCall = this._pendingCalls.get(metadata.id);
-    if (!pendingCall || pendingCall.afterSnapshot)
-      return;
+    if (!pendingCall || pendingCall.afterSnapshot) return;
     if (!sdkObject.attribution.context) {
       this._pendingCalls.delete(metadata.id);
       return;
@@ -353,14 +394,12 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
   }
 
   onEvent(sdkObject: SdkObject, metadata: CallMetadata) {
-    if (!sdkObject.attribution.context)
-      return;
+    if (!sdkObject.attribution.context) return;
     const event: trace.ActionTraceEvent = { type: 'event', metadata };
     this._appendTraceEvent(event);
   }
 
-  onEntryStarted(entry: har.Entry) {
-  }
+  onEntryStarted(entry: har.Entry) {}
 
   onEntryFinished(entry: har.Entry) {
     const event: trace.ResourceSnapshotTraceEvent = { type: 'resource-snapshot', snapshot: entry };
@@ -387,21 +426,21 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     const prefix = page.guid;
     let frameSeq = 0;
     this._screencastListeners.push(
-        eventsHelper.addEventListener(page, Page.Events.ScreencastFrame, params => {
-          const suffix = String(++frameSeq).padStart(10, '0');
-          const sha1 = `${prefix}-${suffix}.jpeg`;
-          const event: trace.ScreencastFrameTraceEvent = {
-            type: 'screencast-frame',
-            pageId: page.guid,
-            sha1,
-            width: params.width,
-            height: params.height,
-            timestamp: monotonicTime()
-          };
-          // Make sure to write the screencast frame before adding a reference to it.
-          this._appendResource(sha1, params.buffer);
-          this._appendTraceEvent(event);
-        }),
+      eventsHelper.addEventListener(page, Page.Events.ScreencastFrame, (params) => {
+        const suffix = String(++frameSeq).padStart(10, '0');
+        const sha1 = `${prefix}-${suffix}.jpeg`;
+        const event: trace.ScreencastFrameTraceEvent = {
+          type: 'screencast-frame',
+          pageId: page.guid,
+          sha1,
+          width: params.width,
+          height: params.height,
+          timestamp: monotonicTime(),
+        };
+        // Make sure to write the screencast frame before adding a reference to it.
+        this._appendResource(sha1, params.buffer);
+        this._appendTraceEvent(event);
+      }),
     );
   }
 
@@ -413,8 +452,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
   }
 
   private _appendResource(sha1: string, buffer: Buffer) {
-    if (this._allResources.has(sha1))
-      return;
+    if (this._allResources.has(sha1)) return;
     this._allResources.add(sha1);
     const resourcePath = path.join(this._state!.resourcesDir, sha1);
     this._appendTraceOperation(async () => {
@@ -436,8 +474,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     this._writeChain = this._writeChain.then(async () => {
       // This check is here because closing the browser removes the tracesDir and tracing
       // dies trying to archive.
-      if (this._context instanceof BrowserContext && !this._context._browser.isConnected())
-        return;
+      if (this._context instanceof BrowserContext && !this._context._browser.isConnected()) return;
       try {
         result = await cb();
       } catch (e) {
@@ -445,23 +482,21 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       }
     });
     await this._writeChain;
-    if (error)
-      throw error;
+    if (error) throw error;
     return result;
   }
 }
 
 function visitSha1s(object: any, sha1s: Set<string>) {
   if (Array.isArray(object)) {
-    object.forEach(o => visitSha1s(o, sha1s));
+    object.forEach((o) => visitSha1s(o, sha1s));
     return;
   }
   if (typeof object === 'object') {
     for (const key in object) {
       if (key === 'sha1' || key === '_sha1' || key.endsWith('Sha1')) {
         const sha1 = object[key];
-        if (sha1)
-          sha1s.add(sha1);
+        if (sha1) sha1s.add(sha1);
       }
       visitSha1s(object[key], sha1s);
     }

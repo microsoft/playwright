@@ -19,7 +19,7 @@ const fs = require('fs');
 
 class InlineSource {
   /**
-   * @param {string[]} outFiles 
+   * @param {string[]} outFiles
    */
   constructor(outFiles) {
     this.outFiles = outFiles;
@@ -46,7 +46,7 @@ const entry = {
   injectedScriptSource: path.join(__dirname, 'injectedScript.ts'),
   consoleApiSource: path.join(__dirname, '..', 'supplements', 'injected', 'consoleApi.ts'),
   recorderSource: path.join(__dirname, '..', 'supplements', 'injected', 'recorder.ts'),
-}
+};
 
 /** @type {import('webpack').Configuration} */
 module.exports = {
@@ -58,23 +58,23 @@ module.exports = {
       {
         test: /\.(j|t)sx?$/,
         loader: 'babel-loader',
-        exclude: /node_modules/
-      }
-    ]
+        exclude: /node_modules/,
+      },
+    ],
   },
   resolve: {
-    extensions: [ '.tsx', '.ts', '.js' ]
+    extensions: ['.tsx', '.ts', '.js'],
   },
   output: {
     libraryTarget: 'var',
     library: 'pwExport',
     libraryExport: 'default',
     filename: '[name].js',
-    path: path.resolve(__dirname, '../../../lib/server/injected/packed')
+    path: path.resolve(__dirname, '../../../lib/server/injected/packed'),
   },
   plugins: [
     new InlineSource(
-      Object.keys(entry).map(x => path.join(__dirname, '..', '..', 'generated', x + '.ts'))
+      Object.keys(entry).map((x) => path.join(__dirname, '..', '..', 'generated', x + '.ts')),
     ),
-  ]
+  ],
 };

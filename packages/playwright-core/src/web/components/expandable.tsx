@@ -17,20 +17,38 @@
 import * as React from 'react';
 
 export const Expandable: React.FunctionComponent<{
-  title: JSX.Element,
-  body: JSX.Element,
-  setExpanded: Function,
-  expanded: Boolean,
-  style?: React.CSSProperties,
+  title: JSX.Element;
+  body: JSX.Element;
+  setExpanded: Function;
+  expanded: Boolean;
+  style?: React.CSSProperties;
 }> = ({ title, body, setExpanded, expanded, style }) => {
-  return <div style={{ ...style, display: 'flex', flexDirection: 'column' }}>
-    <div className='expandable-title' style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', whiteSpace: 'nowrap' }}>
+  return (
+    <div style={{ ...style, display: 'flex', flexDirection: 'column' }}>
       <div
-        className={'codicon codicon-' + (expanded ? 'chevron-down' : 'chevron-right')}
-        style={{ cursor: 'pointer', color: 'var(--color)', marginRight: '4px' }}
-        onClick={() => setExpanded(!expanded)} />
-      {title}
+        className="expandable-title"
+        style={{
+          display: 'flex',
+          flexDirection: 'row',
+          alignItems: 'center',
+          whiteSpace: 'nowrap',
+        }}
+      >
+        <div
+          className={'codicon codicon-' + (expanded ? 'chevron-down' : 'chevron-right')}
+          style={{ cursor: 'pointer', color: 'var(--color)', marginRight: '4px' }}
+          onClick={() => setExpanded(!expanded)}
+        />
+        {title}
+      </div>
+      {expanded && (
+        <div
+          className="expandable-body"
+          style={{ display: 'flex', flex: 'auto', margin: '5px 0 5px 20px' }}
+        >
+          {body}
+        </div>
+      )}
     </div>
-    { expanded && <div className='expandable-body' style={{ display: 'flex', flex: 'auto', margin: '5px 0 5px 20px' }}>{body}</div> }
-  </div>;
+  );
 };

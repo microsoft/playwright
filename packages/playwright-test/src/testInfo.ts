@@ -25,7 +25,14 @@ import { Loader } from './loader';
 import { ProjectImpl } from './project';
 import { TestCase } from './test';
 import { Annotations, TestStepInternal } from './types';
-import { addSuffixToFilePath, getContainedPath, monotonicTime, sanitizeForFilePath, serializeError, trimLongString } from './util';
+import {
+  addSuffixToFilePath,
+  getContainedPath,
+  monotonicTime,
+  sanitizeForFilePath,
+  serializeError,
+  trimLongString,
+} from './util';
 
 export class TestInfoImpl implements TestInfo {
   private _projectImpl: ProjectImpl;
@@ -67,12 +74,9 @@ export class TestInfoImpl implements TestInfo {
   }
 
   set error(e: TestError | undefined) {
-    if (e === undefined)
-      throw new Error('Cannot assign testInfo.error undefined value!');
-    if (!this.errors.length)
-      this.errors.push(e);
-    else
-      this.errors[0] = e;
+    if (e === undefined) throw new Error('Cannot assign testInfo.error undefined value!');
+    if (!this.errors.length) this.errors.push(e);
+    else this.errors[0] = e;
   }
 
   constructor(
@@ -91,7 +95,7 @@ export class TestInfoImpl implements TestInfo {
     this.repeatEachIndex = workerParams.repeatEachIndex;
     this.retry = retry;
     this.workerIndex = workerParams.workerIndex;
-    this.parallelIndex =  workerParams.parallelIndex;
+    this.parallelIndex = workerParams.parallelIndex;
     this.project = this._projectImpl.config;
     this.config = loader.fullConfig();
     this.title = test.title;
@@ -106,24 +110,34 @@ export class TestInfoImpl implements TestInfo {
     this._timeoutRunner = new TimeoutRunner(this.timeout);
 
     this.outputDir = (() => {
-      const sameName = loader.projects().filter(project => project.config.name === this.project.name);
+      const sameName = loader
+        .projects()
+        .filter((project) => project.config.name === this.project.name);
       let uniqueProjectNamePathSegment: string;
       if (sameName.length > 1)
-        uniqueProjectNamePathSegment = this.project.name + (sameName.indexOf(this._projectImpl) + 1);
-      else
-        uniqueProjectNamePathSegment = this.project.name;
+        uniqueProjectNamePathSegment =
+          this.project.name + (sameName.indexOf(this._projectImpl) + 1);
+      else uniqueProjectNamePathSegment = this.project.name;
 
-      const relativeTestFilePath = path.relative(this.project.testDir, test._requireFile.replace(/\.(spec|test)\.(js|ts|mjs)$/, ''));
-      const sanitizedRelativePath = relativeTestFilePath.replace(process.platform === 'win32' ? new RegExp('\\\\', 'g') : new RegExp('/', 'g'), '-');
-      const fullTitleWithoutSpec = test.titlePath().slice(1).join(' ') + (test._type === 'test' ? '' : '-worker' + this.workerIndex);
+      const relativeTestFilePath = path.relative(
+        this.project.testDir,
+        test._requireFile.replace(/\.(spec|test)\.(js|ts|mjs)$/, ''),
+      );
+      const sanitizedRelativePath = relativeTestFilePath.replace(
+        process.platform === 'win32' ? new RegExp('\\\\', 'g') : new RegExp('/', 'g'),
+        '-',
+      );
+      const fullTitleWithoutSpec =
+        test.titlePath().slice(1).join(' ') +
+        (test._type === 'test' ? '' : '-worker' + this.workerIndex);
 
-      let testOutputDir = trimLongString(sanitizedRelativePath + '-' + sanitizeForFilePath(fullTitleWithoutSpec));
+      let testOutputDir = trimLongString(
+        sanitizedRelativePath + '-' + sanitizeForFilePath(fullTitleWithoutSpec),
+      );
       if (uniqueProjectNamePathSegment)
         testOutputDir += '-' + sanitizeForFilePath(uniqueProjectNamePathSegment);
-      if (this.retry)
-        testOutputDir += '-retry' + this.retry;
-      if (this.repeatEachIndex)
-        testOutputDir += '-repeat' + this.repeatEachIndex;
+      if (this.retry) testOutputDir += '-retry' + this.retry;
+      if (this.repeatEachIndex) testOutputDir += '-repeat' + this.repeatEachIndex;
       return path.join(this.project.outputDir, testOutputDir);
     })();
 
@@ -133,19 +147,23 @@ export class TestInfoImpl implements TestInfo {
     })();
   }
 
-  private _modifier(type: 'skip' | 'fail' | 'fixme' | 'slow', modifierArgs: [arg?: any, description?: string]) {
+  private _modifier(
+    type: 'skip' | 'fail' | 'fixme' | 'slow',
+    modifierArgs: [arg?: any, description?: string],
+  ) {
     if (typeof modifierArgs[1] === 'function') {
-      throw new Error([
-        'It looks like you are calling test.skip() inside the test and pass a callback.',
-        'Pass a condition instead and optional description instead:',
-        `test('my test', async ({ page, isMobile }) => {`,
-        `  test.skip(isMobile, 'This test is not applicable on mobile');`,
-        `});`,
-      ].join('\n'));
+      throw new Error(
+        [
+          'It looks like you are calling test.skip() inside the test and pass a callback.',
+          'Pass a condition instead and optional description instead:',
+          `test('my test', async ({ page, isMobile }) => {`,
+          `  test.skip(isMobile, 'This test is not applicable on mobile');`,
+          `});`,
+        ].join('\n'),
+      );
     }
 
-    if (modifierArgs.length >= 1 && !modifierArgs[0])
-      return;
+    if (modifierArgs.length >= 1 && !modifierArgs[0]) return;
 
     const description = modifierArgs[1];
     this.annotations.push({ type, description });
@@ -155,8 +173,7 @@ export class TestInfoImpl implements TestInfo {
       this.expectedStatus = 'skipped';
       throw new SkipError('Test is skipped: ' + (description || ''));
     } else if (type === 'fail') {
-      if (this.expectedStatus !== 'skipped')
-        this.expectedStatus = 'failed';
+      if (this.expectedStatus !== 'skipped') this.expectedStatus = 'failed';
     }
   }
 
@@ -164,11 +181,9 @@ export class TestInfoImpl implements TestInfo {
     try {
       await this._timeoutRunner.run(cb);
     } catch (error) {
-      if (!(error instanceof TimeoutRunnerError))
-        throw error;
+      if (!(error instanceof TimeoutRunnerError)) throw error;
       // Do not overwrite existing failure upon hook/teardown timeout.
-      if (this.status === 'passed')
-        this.status = 'timedOut';
+      if (this.status === 'passed') this.status = 'timedOut';
     }
     this.duration = monotonicTime() - this._startTime;
   }
@@ -178,8 +193,7 @@ export class TestInfoImpl implements TestInfo {
       await fn();
     } catch (error) {
       if (skips === 'allowSkips' && error instanceof SkipError) {
-        if (this.status === 'passed')
-          this.status = 'skipped';
+        if (this.status === 'passed') this.status = 'skipped';
       } else {
         const serialized = serializeError(error);
         this._failWithError(serialized, true /* isHardError */);
@@ -197,18 +211,18 @@ export class TestInfoImpl implements TestInfo {
     // Some (but not all) scenarios include:
     //   - expect() that fails after uncaught exception.
     //   - fail after the timeout, e.g. due to fixture teardown.
-    if (isHardError && this._hasHardError)
-      return;
-    if (isHardError)
-      this._hasHardError = true;
-    if (this.status === 'passed')
-      this.status = 'failed';
+    if (isHardError && this._hasHardError) return;
+    if (isHardError) this._hasHardError = true;
+    if (this.status === 'passed') this.status = 'failed';
     this.errors.push(error);
   }
 
   // ------------ TestInfo methods ------------
 
-  async attach(name: string, options: { path?: string, body?: string | Buffer, contentType?: string } = {}) {
+  async attach(
+    name: string,
+    options: { path?: string; body?: string | Buffer; contentType?: string } = {},
+  ) {
     if ((options.path !== undefined ? 1 : 0) + (options.body !== undefined ? 1 : 0) !== 1)
       throw new Error(`Exactly one of "path" and "body" must be specified`);
     if (options.path !== undefined) {
@@ -216,35 +230,43 @@ export class TestInfoImpl implements TestInfo {
       const dest = this.outputPath('attachments', hash + path.extname(options.path));
       await fs.promises.mkdir(path.dirname(dest), { recursive: true });
       await fs.promises.copyFile(options.path, dest);
-      const contentType = options.contentType ?? (mime.getType(path.basename(options.path)) || 'application/octet-stream');
+      const contentType =
+        options.contentType ??
+        (mime.getType(path.basename(options.path)) || 'application/octet-stream');
       this.attachments.push({ name, contentType, path: dest });
     } else {
-      const contentType = options.contentType ?? (typeof options.body === 'string' ? 'text/plain' : 'application/octet-stream');
-      this.attachments.push({ name, contentType, body: typeof options.body === 'string' ? Buffer.from(options.body) : options.body });
+      const contentType =
+        options.contentType ??
+        (typeof options.body === 'string' ? 'text/plain' : 'application/octet-stream');
+      this.attachments.push({
+        name,
+        contentType,
+        body: typeof options.body === 'string' ? Buffer.from(options.body) : options.body,
+      });
     }
   }
 
-  outputPath(...pathSegments: string[]){
+  outputPath(...pathSegments: string[]) {
     fs.mkdirSync(this.outputDir, { recursive: true });
     const joinedPath = path.join(...pathSegments);
     const outputPath = getContainedPath(this.outputDir, joinedPath);
-    if (outputPath)
-      return outputPath;
-    throw new Error(`The outputPath is not allowed outside of the parent directory. Please fix the defined path.\n\n\toutputPath: ${joinedPath}`);
+    if (outputPath) return outputPath;
+    throw new Error(
+      `The outputPath is not allowed outside of the parent directory. Please fix the defined path.\n\n\toutputPath: ${joinedPath}`,
+    );
   }
 
   snapshotPath(...pathSegments: string[]) {
     let suffix = '';
     const projectNamePathSegment = sanitizeForFilePath(this.project.name);
-    if (projectNamePathSegment)
-      suffix += '-' + projectNamePathSegment;
-    if (this.snapshotSuffix)
-      suffix += '-' + this.snapshotSuffix;
+    if (projectNamePathSegment) suffix += '-' + projectNamePathSegment;
+    if (this.snapshotSuffix) suffix += '-' + this.snapshotSuffix;
     const subPath = addSuffixToFilePath(path.join(...pathSegments), suffix);
-    const snapshotPath =  getContainedPath(this.snapshotDir, subPath);
-    if (snapshotPath)
-      return snapshotPath;
-    throw new Error(`The snapshotPath is not allowed outside of the parent directory. Please fix the defined path.\n\n\tsnapshotPath: ${subPath}`);
+    const snapshotPath = getContainedPath(this.snapshotDir, subPath);
+    if (snapshotPath) return snapshotPath;
+    throw new Error(
+      `The snapshotPath is not allowed outside of the parent directory. Please fix the defined path.\n\n\tsnapshotPath: ${subPath}`,
+    );
   }
 
   skip(...args: [arg?: any, description?: string]) {
@@ -264,12 +286,10 @@ export class TestInfoImpl implements TestInfo {
   }
 
   setTimeout(timeout: number) {
-    if (!this.timeout)
-      return; // Zero timeout means some debug mode - do not set a timeout.
+    if (!this.timeout) return; // Zero timeout means some debug mode - do not set a timeout.
     this.timeout = timeout;
     this._timeoutRunner.updateTimeout(timeout);
   }
 }
 
-class SkipError extends Error {
-}
+class SkipError extends Error {}

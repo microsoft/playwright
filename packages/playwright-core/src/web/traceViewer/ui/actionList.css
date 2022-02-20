@@ -112,7 +112,8 @@
   padding: 0 2px;
 }
 
-.action-entry .codicon-error, .action-entry .codicon-issues {
+.action-entry .codicon-error,
+.action-entry .codicon-issues {
   color: red;
 }
 

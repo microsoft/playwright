@@ -17,11 +17,8 @@
 import './toolbar.css';
 import * as React from 'react';
 
-export interface ToolbarProps {
-}
+export interface ToolbarProps {}
 
-export const Toolbar: React.FC<ToolbarProps> = ({
-  children
-}) => {
-  return <div className='toolbar'>{children}</div>;
+export const Toolbar: React.FC<ToolbarProps> = ({ children }) => {
+  return <div className="toolbar">{children}</div>;
 };

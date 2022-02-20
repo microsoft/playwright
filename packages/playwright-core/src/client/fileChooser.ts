@@ -43,7 +43,10 @@ export class FileChooser implements api.FileChooser {
     return this._page;
   }
 
-  async setFiles(files: string | FilePayload | string[] | FilePayload[], options?: channels.ElementHandleSetInputFilesOptions) {
+  async setFiles(
+    files: string | FilePayload | string[] | FilePayload[],
+    options?: channels.ElementHandleSetInputFilesOptions,
+  ) {
     return this._elementHandle.setInputFiles(files, options);
   }
 }

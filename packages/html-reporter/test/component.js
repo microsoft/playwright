@@ -35,24 +35,28 @@ const checkerboardLight = {
   ...checkerboardCommon,
   backgroundColor: '#FFF',
   backgroundImage: `linear-gradient(45deg, #00000008 25%, transparent 25%, transparent 75%, #00000008 75%, #00000008),
-                    linear-gradient(45deg, #00000008 25%, transparent 25%, transparent 75%, #00000008 75%, #00000008)`
+                    linear-gradient(45deg, #00000008 25%, transparent 25%, transparent 75%, #00000008 75%, #00000008)`,
 };
 
 const checkerboardDark = {
   ...checkerboardCommon,
   backgroundColor: '#000',
   backgroundImage: `linear-gradient(45deg, #FFFFFF12 25%, transparent 25%, transparent 75%, #FFFFFF12 75%, #FFFFFF12),
-                    linear-gradient(45deg, #FFFFFF12 25%, transparent 25%, transparent 75%, #FFFFFF12 75%, #FFFFFF12)`
+                    linear-gradient(45deg, #FFFFFF12 25%, transparent 25%, transparent 75%, #FFFFFF12 75%, #FFFFFF12)`,
 };
 
 const Component = ({ style, children }) => {
-  const checkerboard = window.matchMedia('(prefers-color-scheme: dark)').matches ? checkerboardDark : checkerboardLight;
+  const checkerboard = window.matchMedia('(prefers-color-scheme: dark)').matches
+    ? checkerboardDark
+    : checkerboardLight;
   const bgStyle = { ...checkerboard };
   const fgStyle = { ...fillStyle, ...style };
   return React.createElement(
-      React.Fragment, null,
-      React.createElement('div', { style: bgStyle }),
-      React.createElement('div', { style: fgStyle, id: 'pw-root' }, children));
+    React.Fragment,
+    null,
+    React.createElement('div', { style: bgStyle }),
+    React.createElement('div', { style: fgStyle, id: 'pw-root' }, children),
+  );
 };
 
 const registry = new Map();
@@ -63,15 +67,19 @@ export const registerComponent = (name, componentFunc) => {
 
 function render(component) {
   const componentFunc = registry.get(component.type) || component.type;
-  return React.createElement(componentFunc, component.props, ...component.children.map(child => {
-    if (typeof child === 'string')
-      return child;
-    return render(child);
-  }));
+  return React.createElement(
+    componentFunc,
+    component.props,
+    ...component.children.map((child) => {
+      if (typeof child === 'string') return child;
+      return render(child);
+    }),
+  );
 }
 
-window.__playwright_render = component => {
+window.__playwright_render = (component) => {
   ReactDOM.render(
     React.createElement(Component, null, render(component)),
-    document.getElementById('root'));
+    document.getElementById('root'),
+  );
 };

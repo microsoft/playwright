@@ -27,11 +27,24 @@ export class Tracing extends ChannelOwner<channels.TracingChannel> implements ap
     return (channel as any)._object;
   }
 
-  constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.TracingInitializer) {
+  constructor(
+    parent: ChannelOwner,
+    type: string,
+    guid: string,
+    initializer: channels.TracingInitializer,
+  ) {
     super(parent, type, guid, initializer);
   }
 
-  async start(options: { name?: string, title?: string, snapshots?: boolean, screenshots?: boolean, sources?: boolean } = {}) {
+  async start(
+    options: {
+      name?: string;
+      title?: string;
+      snapshots?: boolean;
+      screenshots?: boolean;
+      sources?: boolean;
+    } = {},
+  ) {
     await this._wrapApiCall(async () => {
       await this._channel.tracingStart(options);
       await this._channel.tracingStartChunk({ title: options.title });
@@ -58,10 +71,8 @@ export class Tracing extends ChannelOwner<channels.TracingChannel> implements ap
 
     let mode: channels.TracingTracingStopChunkParams['mode'] = 'doNotSave';
     if (filePath) {
-      if (isLocal)
-        mode = 'compressTraceAndSources';
-      else
-        mode = 'compressTrace';
+      if (isLocal) mode = 'compressTraceAndSources';
+      else mode = 'compressTrace';
     }
 
     const result = await this._channel.tracingStopChunk({ mode });
@@ -71,8 +82,7 @@ export class Tracing extends ChannelOwner<channels.TracingChannel> implements ap
     }
 
     // The artifact may be missing if the browser closed while stopping tracing.
-    if (!result.artifact)
-      return;
+    if (!result.artifact) return;
 
     // Save trace to the final local file.
     const artifact = Artifact.from(result.artifact);
@@ -80,7 +90,6 @@ export class Tracing extends ChannelOwner<channels.TracingChannel> implements ap
     await artifact.delete();
 
     // Add local sources to the remote trace if necessary.
-    if (result.sourceEntries?.length)
-      await this._localUtils.zip(filePath, result.sourceEntries);
+    if (result.sourceEntries?.length) await this._localUtils.zip(filePath, result.sourceEntries);
   }
 }

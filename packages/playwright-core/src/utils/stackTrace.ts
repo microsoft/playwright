@@ -22,11 +22,10 @@ import { isUnderTest } from './utils';
 const stackUtils = new StackUtils();
 
 export function rewriteErrorMessage<E extends Error>(e: E, newMessage: string): E {
-  const lines: string[] = (e.stack?.split('\n') || []).filter(l => l.startsWith('    at '));
+  const lines: string[] = (e.stack?.split('\n') || []).filter((l) => l.startsWith('    at '));
   e.message = newMessage;
   const errorTitle = `${e.name}: ${e.message}`;
-  if (lines.length)
-    e.stack = `${errorTitle}\n${lines.join('\n')}`;
+  if (lines.length) e.stack = `${errorTitle}\n${lines.join('\n')}`;
   return e;
 }
 
@@ -56,16 +55,12 @@ export function captureRawStack(): string {
 
 export function isInternalFileName(file: string, functionName?: string): boolean {
   // Node 16+ has node:internal.
-  if (file.startsWith('internal') || file.startsWith('node:'))
-    return true;
+  if (file.startsWith('internal') || file.startsWith('node:')) return true;
   // EventEmitter.emit has 'events.js' file.
-  if (file === 'events.js' && functionName?.endsWith('emit'))
-    return true;
+  if (file === 'events.js' && functionName?.endsWith('emit')) return true;
   // Node 12
-  if (file === '_stream_readable.js' || file === '_stream_writable.js')
-    return true;
-  if (file.startsWith(WS_LIB))
-    return true;
+  if (file === '_stream_readable.js' || file === '_stream_writable.js') return true;
+  if (file.startsWith(WS_LIB)) return true;
   return false;
 }
 
@@ -78,33 +73,31 @@ export function captureStackTrace(rawStack?: string): ParsedStackTrace {
     frameText: string;
     inCore: boolean;
   };
-  let parsedFrames = stack.split('\n').map(line => {
-    const frame = stackUtils.parseLine(line);
-    if (!frame || !frame.file)
-      return null;
-    if (isInternalFileName(frame.file, frame.function))
-      return null;
-    // Workaround for https://github.com/tapjs/stack-utils/issues/60
-    let fileName: string;
-    if (frame.file.startsWith('file://'))
-      fileName = new URL(frame.file).pathname;
-    else
-      fileName = path.resolve(process.cwd(), frame.file);
-    if (isTesting && fileName.includes(COVERAGE_PATH))
-      return null;
-    const inCore = fileName.startsWith(CORE_LIB) || fileName.startsWith(CORE_SRC);
-    const parsed: ParsedFrame = {
-      frame: {
-        file: fileName,
-        line: frame.line,
-        column: frame.column,
-        function: frame.function,
-      },
-      frameText: line,
-      inCore
-    };
-    return parsed;
-  }).filter(Boolean) as ParsedFrame[];
+  let parsedFrames = stack
+    .split('\n')
+    .map((line) => {
+      const frame = stackUtils.parseLine(line);
+      if (!frame || !frame.file) return null;
+      if (isInternalFileName(frame.file, frame.function)) return null;
+      // Workaround for https://github.com/tapjs/stack-utils/issues/60
+      let fileName: string;
+      if (frame.file.startsWith('file://')) fileName = new URL(frame.file).pathname;
+      else fileName = path.resolve(process.cwd(), frame.file);
+      if (isTesting && fileName.includes(COVERAGE_PATH)) return null;
+      const inCore = fileName.startsWith(CORE_LIB) || fileName.startsWith(CORE_SRC);
+      const parsed: ParsedFrame = {
+        frame: {
+          file: fileName,
+          line: frame.line,
+          column: frame.column,
+          function: frame.function,
+        },
+        frameText: line,
+        inCore,
+      };
+      return parsed;
+    })
+    .filter(Boolean) as ParsedFrame[];
 
   let apiName = '';
   const allFrames = parsedFrames;
@@ -114,7 +107,7 @@ export function captureStackTrace(rawStack?: string): ParsedStackTrace {
   // at __EXTERNAL_MATCHER_TRAP__ (...)
   // at Object.throwingMatcher [as toHaveText] (...)
   const TRAP = '__PWTRAP__[';
-  const expectIndex = parsedFrames.findIndex(f => f.frameText.includes(TRAP));
+  const expectIndex = parsedFrames.findIndex((f) => f.frameText.includes(TRAP));
   if (expectIndex !== -1) {
     const text = parsedFrames[expectIndex].frameText;
     const aliasIndex = text.indexOf(TRAP);
@@ -134,11 +127,9 @@ export function captureStackTrace(rawStack?: string): ParsedStackTrace {
   }
 
   function normalizeAPIName(name?: string): string {
-    if (!name)
-      return '';
+    if (!name) return '';
     const match = name.match(/(API|JS|CDP|[A-Z])(.*)/);
-    if (!match)
-      return name;
+    if (!match) return name;
     return match[1].toLowerCase() + match[2];
   }
 
@@ -146,23 +137,25 @@ export function captureStackTrace(rawStack?: string): ParsedStackTrace {
   parsedFrames = parsedFrames.filter((f, i) => {
     if (f.frame.file.startsWith(TEST_DIR_SRC) || f.frame.file.startsWith(TEST_DIR_LIB))
       return false;
-    if (i && f.frame.file.startsWith(CORE_DIR))
-      return false;
+    if (i && f.frame.file.startsWith(CORE_DIR)) return false;
     return true;
   });
 
   return {
-    allFrames: allFrames.map(p => p.frame),
-    frames: parsedFrames.map(p => p.frame),
-    frameTexts: parsedFrames.map(p => p.frameText),
-    apiName
+    allFrames: allFrames.map((p) => p.frame),
+    frames: parsedFrames.map((p) => p.frame),
+    frameTexts: parsedFrames.map((p) => p.frameText),
+    apiName,
   };
 }
 
-export function splitErrorMessage(message: string): { name: string, message: string } {
+export function splitErrorMessage(message: string): { name: string; message: string } {
   const separationIdx = message.indexOf(':');
   return {
     name: separationIdx !== -1 ? message.slice(0, separationIdx) : '',
-    message: separationIdx !== -1 && separationIdx + 2 <= message.length ? message.substring(separationIdx + 2) : message,
+    message:
+      separationIdx !== -1 && separationIdx + 2 <= message.length
+        ? message.substring(separationIdx + 2)
+        : message,
   };
 }

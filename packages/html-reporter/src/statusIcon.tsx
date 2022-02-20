@@ -18,7 +18,9 @@ import * as icons from './icons';
 import './colors.css';
 import './common.css';
 
-export function statusIcon(status: 'failed' | 'timedOut' | 'skipped' | 'passed' | 'expected' | 'unexpected' | 'flaky'): JSX.Element {
+export function statusIcon(
+  status: 'failed' | 'timedOut' | 'skipped' | 'passed' | 'expected' | 'unexpected' | 'flaky',
+): JSX.Element {
   switch (status) {
     case 'failed':
     case 'unexpected':

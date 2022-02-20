@@ -20,7 +20,10 @@ import { Dispatcher, DispatcherScope } from './dispatcher';
 import { ElementHandleDispatcher } from './elementHandlerDispatcher';
 import { parseSerializedValue, serializeValue } from '../protocol/serializers';
 
-export class JSHandleDispatcher extends Dispatcher<js.JSHandle, channels.JSHandleChannel> implements channels.JSHandleChannel {
+export class JSHandleDispatcher
+  extends Dispatcher<js.JSHandle, channels.JSHandleChannel>
+  implements channels.JSHandleChannel
+{
   _type_JSHandle = true;
 
   protected constructor(scope: DispatcherScope, jsHandle: js.JSHandle) {
@@ -28,19 +31,39 @@ export class JSHandleDispatcher extends Dispatcher<js.JSHandle, channels.JSHandl
     super(scope, jsHandle, jsHandle.asElement() ? 'ElementHandle' : 'JSHandle', {
       preview: jsHandle.toString(),
     });
-    jsHandle._setPreviewCallback(preview => this._dispatchEvent('previewUpdated', { preview }));
+    jsHandle._setPreviewCallback((preview) => this._dispatchEvent('previewUpdated', { preview }));
   }
 
-  async evaluateExpression(params: channels.JSHandleEvaluateExpressionParams): Promise<channels.JSHandleEvaluateExpressionResult> {
-    return { value: serializeResult(await this._object.evaluateExpressionAndWaitForSignals(params.expression, params.isFunction, true /* returnByValue */, parseArgument(params.arg))) };
+  async evaluateExpression(
+    params: channels.JSHandleEvaluateExpressionParams,
+  ): Promise<channels.JSHandleEvaluateExpressionResult> {
+    return {
+      value: serializeResult(
+        await this._object.evaluateExpressionAndWaitForSignals(
+          params.expression,
+          params.isFunction,
+          true /* returnByValue */,
+          parseArgument(params.arg),
+        ),
+      ),
+    };
   }
 
-  async evaluateExpressionHandle(params: channels.JSHandleEvaluateExpressionHandleParams): Promise<channels.JSHandleEvaluateExpressionHandleResult> {
-    const jsHandle = await this._object.evaluateExpressionAndWaitForSignals(params.expression, params.isFunction, false /* returnByValue */, parseArgument(params.arg));
+  async evaluateExpressionHandle(
+    params: channels.JSHandleEvaluateExpressionHandleParams,
+  ): Promise<channels.JSHandleEvaluateExpressionHandleResult> {
+    const jsHandle = await this._object.evaluateExpressionAndWaitForSignals(
+      params.expression,
+      params.isFunction,
+      false /* returnByValue */,
+      parseArgument(params.arg),
+    );
     return { handle: ElementHandleDispatcher.fromJSHandle(this._scope, jsHandle) };
   }
 
-  async getProperty(params: channels.JSHandleGetPropertyParams): Promise<channels.JSHandleGetPropertyResult> {
+  async getProperty(
+    params: channels.JSHandleGetPropertyParams,
+  ): Promise<channels.JSHandleGetPropertyResult> {
     const jsHandle = await this._object.getProperty(params.name);
     return { handle: ElementHandleDispatcher.fromJSHandle(this._scope, jsHandle) };
   }
@@ -65,7 +88,10 @@ export class JSHandleDispatcher extends Dispatcher<js.JSHandle, channels.JSHandl
 // Generic channel parser converts guids to JSHandleDispatchers,
 // and this function takes care of coverting them into underlying JSHandles.
 export function parseArgument(arg: channels.SerializedArgument): any {
-  return parseSerializedValue(arg.value, arg.handles.map(a => (a as JSHandleDispatcher)._object));
+  return parseSerializedValue(
+    arg.value,
+    arg.handles.map((a) => (a as JSHandleDispatcher)._object),
+  );
 }
 
 export function parseValue(v: channels.SerializedValue): any {
@@ -73,5 +99,5 @@ export function parseValue(v: channels.SerializedValue): any {
 }
 
 export function serializeResult(arg: any): channels.SerializedValue {
-  return serializeValue(arg, value => ({ fallThrough: value }), new Set());
+  return serializeValue(arg, (value) => ({ fallThrough: value }), new Set());
 }

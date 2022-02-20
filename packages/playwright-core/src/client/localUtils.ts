@@ -22,7 +22,12 @@ export class LocalUtils extends ChannelOwner<channels.LocalUtilsChannel> {
     return (channel as any)._object;
   }
 
-  constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.LocalUtilsInitializer) {
+  constructor(
+    parent: ChannelOwner,
+    type: string,
+    guid: string,
+    initializer: channels.LocalUtilsInitializer,
+  ) {
     super(parent, type, guid, initializer);
   }
 

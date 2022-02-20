@@ -41,14 +41,14 @@ export const test = baseTest.extend<TestFixtures>({
     const outputPath = webpackConfig.output.path;
     const filename = webpackConfig.output.filename.replace('[name]', 'playwright');
     await use(async (component: Component) => {
-      await page.route('http://component/index.html', route => {
+      await page.route('http://component/index.html', (route) => {
         route.fulfill({
           body: `<html>
               <meta name='color-scheme' content='dark light'>
               <style>html, body { padding: 0; margin: 0; background: #aaa; }</style>
               <div id='root' style='width: 100%; height: 100%;'></div>
             </html>`,
-          contentType: 'text/html'
+          contentType: 'text/html',
         });
       });
       await page.goto('http://component/index.html');
@@ -63,14 +63,17 @@ export const test = baseTest.extend<TestFixtures>({
           (props as any)[key] = functionName;
         }
       }
-      await page.evaluate(v => {
-        const props = v.props;
-        for (const [key, value] of Object.entries(props)) {
-          if (typeof value === 'string' && (value as string).startsWith('__pw_func_'))
-            (props as any)[key] = (window as any)[value];
-        }
-        window.__playwright_render({ ...v, props });
-      }, { ...component, props });
+      await page.evaluate(
+        (v) => {
+          const props = v.props;
+          for (const [key, value] of Object.entries(props)) {
+            if (typeof value === 'string' && (value as string).startsWith('__pw_func_'))
+              (props as any)[key] = (window as any)[value];
+          }
+          window.__playwright_render({ ...v, props });
+        },
+        { ...component, props },
+      );
       return page.locator('#pw-root');
     });
   },

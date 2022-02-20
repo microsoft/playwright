@@ -25,9 +25,9 @@ import { MultiTraceModel } from './modelUtil';
 const tileSize = { width: 200, height: 45 };
 
 export const FilmStrip: React.FunctionComponent<{
-  context: MultiTraceModel,
-  boundaries: Boundaries,
-  previewPoint?: { x: number, clientY: number },
+  context: MultiTraceModel;
+  boundaries: Boundaries;
+  previewPoint?: { x: number; clientY: number };
 }> = ({ context, boundaries, previewPoint }) => {
   const [measure, ref] = useMeasure<HTMLDivElement>();
 
@@ -41,37 +41,51 @@ export const FilmStrip: React.FunctionComponent<{
   let previewImage = undefined;
   let previewSize = undefined;
   if (previewPoint !== undefined && screencastFrames) {
-    const previewTime = boundaries.minimum + (boundaries.maximum - boundaries.minimum) * previewPoint.x / measure.width;
+    const previewTime =
+      boundaries.minimum +
+      ((boundaries.maximum - boundaries.minimum) * previewPoint.x) / measure.width;
     previewImage = screencastFrames[upperBound(screencastFrames, previewTime, timeComparator) - 1];
 
-    previewSize = previewImage ? inscribe({ width: previewImage.width, height: previewImage.height }, { width: (window.innerWidth * 3 / 4) | 0, height: (window.innerHeight * 3 / 4) | 0 }) : undefined;
+    previewSize = previewImage
+      ? inscribe(
+          { width: previewImage.width, height: previewImage.height },
+          { width: ((window.innerWidth * 3) / 4) | 0, height: ((window.innerHeight * 3) / 4) | 0 },
+        )
+      : undefined;
   }
 
-  return <div className='film-strip' ref={ref}>{
-    context.pages.filter(p => p.screencastFrames.length).map((page, index) => <FilmStripLane
-      boundaries={boundaries}
-      page={page}
-      width={measure.width}
-      key={index}
-    />)
-  }
-  {previewImage && previewSize && previewPoint?.x !== undefined &&
-    <div className='film-strip-hover' style={{
-      width: previewSize.width,
-      height: previewSize.height,
-      top: measure.bottom + 5,
-      left: Math.min(previewPoint!.x, measure.width - previewSize.width - 10),
-    }}>
-      <img src={`sha1/${previewImage.sha1}`} width={previewSize.width} height={previewSize.height} />
+  return (
+    <div className="film-strip" ref={ref}>
+      {context.pages
+        .filter((p) => p.screencastFrames.length)
+        .map((page, index) => (
+          <FilmStripLane boundaries={boundaries} page={page} width={measure.width} key={index} />
+        ))}
+      {previewImage && previewSize && previewPoint?.x !== undefined && (
+        <div
+          className="film-strip-hover"
+          style={{
+            width: previewSize.width,
+            height: previewSize.height,
+            top: measure.bottom + 5,
+            left: Math.min(previewPoint!.x, measure.width - previewSize.width - 10),
+          }}
+        >
+          <img
+            src={`sha1/${previewImage.sha1}`}
+            width={previewSize.width}
+            height={previewSize.height}
+          />
+        </div>
+      )}
     </div>
-  }
-  </div>;
+  );
 };
 
 const FilmStripLane: React.FunctionComponent<{
-  boundaries: Boundaries,
-  page: PageEntry,
-  width: number,
+  boundaries: Boundaries;
+  page: PageEntry;
+  width: number;
 }> = ({ boundaries, page, width }) => {
   const viewportSize = { width: 0, height: 0 };
   const screencastFrames = page.screencastFrames;
@@ -85,9 +99,9 @@ const FilmStripLane: React.FunctionComponent<{
   const endTime = screencastFrames[screencastFrames.length - 1].timestamp;
 
   const boundariesDuration = boundaries.maximum - boundaries.minimum;
-  const gapLeft = (startTime - boundaries.minimum) / boundariesDuration * width;
-  const gapRight = (boundaries.maximum - endTime) / boundariesDuration * width;
-  const effectiveWidth = (endTime - startTime) / boundariesDuration * width;
+  const gapLeft = ((startTime - boundaries.minimum) / boundariesDuration) * width;
+  const gapRight = ((boundaries.maximum - endTime) / boundariesDuration) * width;
+  const effectiveWidth = ((endTime - startTime) / boundariesDuration) * width;
   const frameCount = (effectiveWidth / (frameSize.width + 2 * frameMargin)) | 0;
   const frameDuration = (endTime - startTime) / frameCount;
 
@@ -95,29 +109,48 @@ const FilmStripLane: React.FunctionComponent<{
   for (let i = 0; startTime && frameDuration && i < frameCount; ++i) {
     const time = startTime + frameDuration * i;
     const index = upperBound(screencastFrames, time, timeComparator) - 1;
-    frames.push(<div className='film-strip-frame' key={i} style={{
-      width: frameSize.width,
-      height: frameSize.height,
-      backgroundImage: `url(sha1/${screencastFrames[index].sha1})`,
-      backgroundSize: `${frameSize.width}px ${frameSize.height}px`,
-      margin: frameMargin,
-      marginRight: frameMargin,
-    }} />);
+    frames.push(
+      <div
+        className="film-strip-frame"
+        key={i}
+        style={{
+          width: frameSize.width,
+          height: frameSize.height,
+          backgroundImage: `url(sha1/${screencastFrames[index].sha1})`,
+          backgroundSize: `${frameSize.width}px ${frameSize.height}px`,
+          margin: frameMargin,
+          marginRight: frameMargin,
+        }}
+      />,
+    );
   }
   // Always append last frame to show endgame.
-  frames.push(<div className='film-strip-frame' key={frames.length} style={{
-    width: frameSize.width,
-    height: frameSize.height,
-    backgroundImage: `url(sha1/${screencastFrames[screencastFrames.length - 1].sha1})`,
-    backgroundSize: `${frameSize.width}px ${frameSize.height}px`,
-    margin: frameMargin,
-    marginRight: frameMargin,
-  }} />);
+  frames.push(
+    <div
+      className="film-strip-frame"
+      key={frames.length}
+      style={{
+        width: frameSize.width,
+        height: frameSize.height,
+        backgroundImage: `url(sha1/${screencastFrames[screencastFrames.length - 1].sha1})`,
+        backgroundSize: `${frameSize.width}px ${frameSize.height}px`,
+        margin: frameMargin,
+        marginRight: frameMargin,
+      }}
+    />,
+  );
 
-  return <div className='film-strip-lane' style={{
-    marginLeft: gapLeft + 'px',
-    marginRight: gapRight + 'px',
-  }}>{frames}</div>;
+  return (
+    <div
+      className="film-strip-lane"
+      style={{
+        marginLeft: gapLeft + 'px',
+        marginRight: gapRight + 'px',
+      }}
+    >
+      {frames}
+    </div>
+  );
 };
 
 function timeComparator(time: number, frame: { timestamp: number }): number {
@@ -127,7 +160,7 @@ function timeComparator(time: number, frame: { timestamp: number }): number {
 function inscribe(object: Size, area: Size): Size {
   const scale = Math.max(object.width / area.width, object.height / area.height);
   return {
-    width: object.width / scale | 0,
-    height: object.height / scale | 0
+    width: (object.width / scale) | 0,
+    height: (object.height / scale) | 0,
   };
 }

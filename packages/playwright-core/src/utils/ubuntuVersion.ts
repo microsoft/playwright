@@ -27,33 +27,29 @@ export async function getUbuntuVersion(): Promise<string> {
 }
 
 export function getUbuntuVersionSync(): string {
-  if (ubuntuVersionCached === undefined)
-    ubuntuVersionCached = getUbuntuVersionSyncInternal();
+  if (ubuntuVersionCached === undefined) ubuntuVersionCached = getUbuntuVersionSyncInternal();
   return ubuntuVersionCached;
 }
 
 async function getUbuntuVersionAsyncInternal(): Promise<string> {
-  if (os.platform() !== 'linux')
-    return '';
-  let osReleaseText = await fs.promises.readFile('/etc/upstream-release/lsb-release', 'utf8').catch(e => '');
+  if (os.platform() !== 'linux') return '';
+  let osReleaseText = await fs.promises
+    .readFile('/etc/upstream-release/lsb-release', 'utf8')
+    .catch((e) => '');
   if (!osReleaseText)
-    osReleaseText = await fs.promises.readFile('/etc/os-release', 'utf8').catch(e => '');
-  if (!osReleaseText)
-    return '';
+    osReleaseText = await fs.promises.readFile('/etc/os-release', 'utf8').catch((e) => '');
+  if (!osReleaseText) return '';
   return parseUbuntuVersion(osReleaseText);
 }
 
 function getUbuntuVersionSyncInternal(): string {
-  if (os.platform() !== 'linux')
-    return '';
+  if (os.platform() !== 'linux') return '';
   try {
     let osReleaseText: string;
     if (fs.existsSync('/etc/upstream-release/lsb-release'))
       osReleaseText = fs.readFileSync('/etc/upstream-release/lsb-release', 'utf8');
-    else
-      osReleaseText = fs.readFileSync('/etc/os-release', 'utf8');
-    if (!osReleaseText)
-      return '';
+    else osReleaseText = fs.readFileSync('/etc/os-release', 'utf8');
+    if (!osReleaseText) return '';
     return parseUbuntuVersion(osReleaseText);
   } catch (e) {
     return '';
@@ -66,10 +62,8 @@ export function parseOSReleaseText(osReleaseText: string): Map<string, string> {
     const tokens = line.split('=');
     const name = tokens.shift();
     let value = tokens.join('=').trim();
-    if (value.startsWith('"') && value.endsWith('"'))
-      value = value.substring(1, value.length - 1);
-    if (!name)
-      continue;
+    if (value.startsWith('"') && value.endsWith('"')) value = value.substring(1, value.length - 1);
+    if (!name) continue;
     fields.set(name.toLowerCase(), value);
   }
   return fields;
@@ -81,7 +75,6 @@ function parseUbuntuVersion(osReleaseText: string): string {
   if (fields.get('distrib_id') && fields.get('distrib_id')?.toLowerCase() === 'ubuntu')
     return fields.get('distrib_release') || '';
 
-  if (!fields.get('name') || fields.get('name')?.toLowerCase() !== 'ubuntu')
-    return '';
+  if (!fields.get('name') || fields.get('name')?.toLowerCase() !== 'ubuntu') return '';
   return fields.get('version_id') || '';
 }

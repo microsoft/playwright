@@ -34,7 +34,7 @@ global.console = new Console({
 process.stdout.write = (chunk: string | Buffer) => {
   const outPayload: TestOutputPayload = {
     testId: workerRunner?._currentTest?._test._id,
-    ...chunkToParams(chunk)
+    ...chunkToParams(chunk),
   };
   sendMessageToParent('stdOut', outPayload);
   return true;
@@ -44,7 +44,7 @@ if (!process.env.PW_RUNNER_DEBUG) {
   process.stderr.write = (chunk: string | Buffer) => {
     const outPayload: TestOutputPayload = {
       testId: workerRunner?._currentTest?._test._id,
-      ...chunkToParams(chunk)
+      ...chunkToParams(chunk),
     };
     sendMessageToParent('stdErr', outPayload);
     return true;
@@ -52,23 +52,21 @@ if (!process.env.PW_RUNNER_DEBUG) {
 }
 
 process.on('disconnect', gracefullyCloseAndExit);
-process.on('SIGINT',() => {});
-process.on('SIGTERM',() => {});
+process.on('SIGINT', () => {});
+process.on('SIGTERM', () => {});
 
 let workerRunner: WorkerRunner;
 let workerIndex: number | undefined;
 
 process.on('unhandledRejection', (reason, promise) => {
-  if (workerRunner)
-    workerRunner.unhandledError(reason);
+  if (workerRunner) workerRunner.unhandledError(reason);
 });
 
-process.on('uncaughtException', error => {
-  if (workerRunner)
-    workerRunner.unhandledError(error);
+process.on('uncaughtException', (error) => {
+  if (workerRunner) workerRunner.unhandledError(error);
 });
 
-process.on('message', async message => {
+process.on('message', async (message) => {
   if (message.method === 'init') {
     const initParams = message.params as WorkerInitParams;
     workerIndex = initParams.workerIndex;
@@ -89,8 +87,7 @@ process.on('message', async message => {
 });
 
 async function gracefullyCloseAndExit() {
-  if (closed)
-    return;
+  if (closed) return;
   closed = true;
   // Force exit after 30 seconds.
   setTimeout(() => process.exit(0), 30000);
@@ -100,8 +97,7 @@ async function gracefullyCloseAndExit() {
       await workerRunner.stop();
       await workerRunner.cleanup();
     }
-    if (workerIndex !== undefined)
-      await stopProfiling(workerIndex);
+    if (workerIndex !== undefined) await stopProfiling(workerIndex);
   } catch (e) {
     process.send!({ method: 'teardownError', params: { error: serializeError(e) } });
   }
@@ -116,10 +112,8 @@ function sendMessageToParent(method: string, params = {}) {
   }
 }
 
-function chunkToParams(chunk: Buffer | string):  { text?: string, buffer?: string } {
-  if (chunk instanceof Buffer)
-    return { buffer: chunk.toString('base64') };
-  if (typeof chunk !== 'string')
-    return { text: util.inspect(chunk) };
+function chunkToParams(chunk: Buffer | string): { text?: string; buffer?: string } {
+  if (chunk instanceof Buffer) return { buffer: chunk.toString('base64') };
+  if (typeof chunk !== 'string') return { text: util.inspect(chunk) };
   return { text: chunk };
 }

@@ -19,9 +19,9 @@ import { monotonicTime } from './utils';
 export class TimeoutRunnerError extends Error {}
 
 type TimeoutRunnerData = {
-  start: number,
-  timer: NodeJS.Timer | undefined,
-  timeoutPromise: ManualPromise<any>,
+  start: number;
+  timer: NodeJS.Timer | undefined;
+  timeoutPromise: ManualPromise<any>;
 };
 export class TimeoutRunner {
   private _running: TimeoutRunnerData | undefined;
@@ -34,35 +34,29 @@ export class TimeoutRunner {
   }
 
   async run<T>(cb: () => Promise<T>): Promise<T> {
-    const running = this._running = {
+    const running = (this._running = {
       start: monotonicTime(),
       timer: undefined,
       timeoutPromise: new ManualPromise(),
-    };
+    });
     try {
-      const resultPromise = Promise.race([
-        cb(),
-        running.timeoutPromise
-      ]);
+      const resultPromise = Promise.race([cb(), running.timeoutPromise]);
       this._updateTimeout(running, this._timeout);
       return await resultPromise;
     } finally {
       this._elapsed += monotonicTime() - running.start;
       this._updateTimeout(running, 0);
-      if (this._running === running)
-        this._running = undefined;
+      if (this._running === running) this._running = undefined;
     }
   }
 
   interrupt() {
-    if (this._running)
-      this._updateTimeout(this._running, -1);
+    if (this._running) this._updateTimeout(this._running, -1);
   }
 
   updateTimeout(timeout: number) {
     this._timeout = timeout;
-    if (this._running)
-      this._updateTimeout(this._running, timeout);
+    if (this._running) this._updateTimeout(this._running, timeout);
   }
 
   resetTimeout(timeout: number) {
@@ -75,24 +69,27 @@ export class TimeoutRunner {
       clearTimeout(running.timer);
       running.timer = undefined;
     }
-    if (timeout === 0)
-      return;
-    const elapsed = (monotonicTime() - running.start) + this._elapsed;
+    if (timeout === 0) return;
+    const elapsed = monotonicTime() - running.start + this._elapsed;
     timeout = timeout - elapsed;
-    if (timeout <= 0)
-      running.timeoutPromise.reject(new TimeoutRunnerError());
+    if (timeout <= 0) running.timeoutPromise.reject(new TimeoutRunnerError());
     else
-      running.timer = setTimeout(() => running.timeoutPromise.reject(new TimeoutRunnerError()), timeout);
+      running.timer = setTimeout(
+        () => running.timeoutPromise.reject(new TimeoutRunnerError()),
+        timeout,
+      );
   }
 }
 
-export async function raceAgainstTimeout<T>(cb: () => Promise<T>, timeout: number): Promise<{ result: T, timedOut: false } | { timedOut: true }> {
+export async function raceAgainstTimeout<T>(
+  cb: () => Promise<T>,
+  timeout: number,
+): Promise<{ result: T; timedOut: false } | { timedOut: true }> {
   const runner = new TimeoutRunner(timeout);
   try {
     return { result: await runner.run(cb), timedOut: false };
   } catch (e) {
-    if (e instanceof TimeoutRunnerError)
-      return { timedOut: true };
+    if (e instanceof TimeoutRunnerError) return { timedOut: true };
     throw e;
   }
 }

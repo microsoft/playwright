@@ -24,7 +24,7 @@ import { launchProcess } from 'playwright-core/lib/utils/processLauncher';
 import { Reporter } from '../types/testReporter';
 
 const DEFAULT_ENVIRONMENT_VARIABLES = {
-  'BROWSER': 'none', // Disable that create-react-app will open the page in the browser
+  BROWSER: 'none', // Disable that create-react-app will open the page in the browser
 };
 
 const debugWebServer = debug('pw:webserver');
@@ -51,14 +51,17 @@ export class WebServer {
   }
 
   private async _startProcess(): Promise<void> {
-    let processExitedReject = (error: Error) => { };
-    this._processExitedPromise = new Promise((_, reject) => processExitedReject = reject);
+    let processExitedReject = (error: Error) => {};
+    this._processExitedPromise = new Promise((_, reject) => (processExitedReject = reject));
 
     const isAlreadyAvailable = await this._isAvailable();
     if (isAlreadyAvailable) {
-      if (this.config.reuseExistingServer)
-        return;
-      throw new Error(`${this.config.url ?? `http://localhost:${this.config.port}`} is already used, make sure that nothing is running on the port/url or set strict:false in config.webServer.`);
+      if (this.config.reuseExistingServer) return;
+      throw new Error(
+        `${
+          this.config.url ?? `http://localhost:${this.config.port}`
+        } is already used, make sure that nothing is running on the port/url or set strict:false in config.webServer.`,
+      );
     }
 
     const { launchedProcess, kill } = await launchProcess({
@@ -73,15 +76,19 @@ export class WebServer {
       shell: true,
       attemptToGracefullyClose: async () => {},
       log: () => {},
-      onExit: code => processExitedReject(new Error(`Process from config.webServer was not able to start. Exit code: ${code}`)),
+      onExit: (code) =>
+        processExitedReject(
+          new Error(`Process from config.webServer was not able to start. Exit code: ${code}`),
+        ),
       tempDirectories: [],
     });
     this._killProcess = kill;
 
-    launchedProcess.stderr!.on('data', line => this.reporter.onStdErr?.('[WebServer] ' + line.toString()));
-    launchedProcess.stdout!.on('data', line => {
-      if (debugWebServer.enabled)
-        this.reporter.onStdOut?.('[WebServer] ' + line.toString());
+    launchedProcess.stderr!.on('data', (line) =>
+      this.reporter.onStdErr?.('[WebServer] ' + line.toString()),
+    );
+    launchedProcess.stdout!.on('data', (line) => {
+      if (debugWebServer.enabled) this.reporter.onStdOut?.('[WebServer] ' + line.toString());
     });
   }
 
@@ -94,13 +101,12 @@ export class WebServer {
   private async _waitForAvailability() {
     const launchTimeout = this.config.timeout || 60 * 1000;
     const cancellationToken = { canceled: false };
-    const { timedOut } = (await Promise.race([
+    const { timedOut } = await Promise.race([
       raceAgainstTimeout(() => waitFor(this._isAvailable, 100, cancellationToken), launchTimeout),
       this._processExitedPromise,
-    ]));
+    ]);
     cancellationToken.canceled = true;
-    if (timedOut)
-      throw new Error(`Timed out waiting ${launchTimeout}ms from config.webServer.`);
+    if (timedOut) throw new Error(`Timed out waiting ${launchTimeout}ms from config.webServer.`);
   }
   public async kill() {
     await this._killProcess?.();
@@ -108,8 +114,9 @@ export class WebServer {
 }
 
 async function isPortUsed(port: number): Promise<boolean> {
-  const innerIsPortUsed = (host: string) => new Promise<boolean>(resolve => {
-    const conn = net
+  const innerIsPortUsed = (host: string) =>
+    new Promise<boolean>((resolve) => {
+      const conn = net
         .connect(port, host)
         .on('error', () => {
           resolve(false);
@@ -118,28 +125,33 @@ async function isPortUsed(port: number): Promise<boolean> {
           conn.end();
           resolve(true);
         });
-  });
-  return await innerIsPortUsed('127.0.0.1') || await innerIsPortUsed('::1');
+    });
+  return (await innerIsPortUsed('127.0.0.1')) || (await innerIsPortUsed('::1'));
 }
 
 async function isURLAvailable(url: URL) {
-  return new Promise<boolean>(resolve => {
-    (url.protocol === 'https:' ? https : http).get(url, res => {
-      res.resume();
-      const statusCode = res.statusCode ?? 0;
-      resolve(statusCode >= 200 && statusCode < 300);
-    }).on('error', () => {
-      resolve(false);
-    });
+  return new Promise<boolean>((resolve) => {
+    (url.protocol === 'https:' ? https : http)
+      .get(url, (res) => {
+        res.resume();
+        const statusCode = res.statusCode ?? 0;
+        resolve(statusCode >= 200 && statusCode < 300);
+      })
+      .on('error', () => {
+        resolve(false);
+      });
   });
 }
 
-async function waitFor(waitFn: () => Promise<boolean>, delay: number, cancellationToken: { canceled: boolean }) {
+async function waitFor(
+  waitFn: () => Promise<boolean>,
+  delay: number,
+  cancellationToken: { canceled: boolean },
+) {
   while (!cancellationToken.canceled) {
     const connected = await waitFn();
-    if (connected)
-      return;
-    await new Promise(x => setTimeout(x, delay));
+    if (connected) return;
+    await new Promise((x) => setTimeout(x, delay));
   }
 }
 

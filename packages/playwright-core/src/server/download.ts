@@ -25,17 +25,29 @@ export class Download {
   private _page: Page;
   private _suggestedFilename: string | undefined;
 
-  constructor(page: Page, downloadsPath: string, uuid: string, url: string, suggestedFilename?: string) {
-    const unaccessibleErrorMessage = !page._browserContext._options.acceptDownloads ? 'Pass { acceptDownloads: true } when you are creating your browser context.' : undefined;
-    this.artifact = new Artifact(page, path.join(downloadsPath, uuid), unaccessibleErrorMessage, () => {
-      return this._page._browserContext._doCancelDownload(uuid);
-    });
+  constructor(
+    page: Page,
+    downloadsPath: string,
+    uuid: string,
+    url: string,
+    suggestedFilename?: string,
+  ) {
+    const unaccessibleErrorMessage = !page._browserContext._options.acceptDownloads
+      ? 'Pass { acceptDownloads: true } when you are creating your browser context.'
+      : undefined;
+    this.artifact = new Artifact(
+      page,
+      path.join(downloadsPath, uuid),
+      unaccessibleErrorMessage,
+      () => {
+        return this._page._browserContext._doCancelDownload(uuid);
+      },
+    );
     this._page = page;
     this.url = url;
     this._suggestedFilename = suggestedFilename;
     page._browserContext._downloads.add(this);
-    if (suggestedFilename !== undefined)
-      this._page.emit(Page.Events.Download, this);
+    if (suggestedFilename !== undefined) this._page.emit(Page.Events.Download, this);
   }
 
   _filenameSuggested(suggestedFilename: string) {

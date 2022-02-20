@@ -24,12 +24,18 @@ import { deps } from './nativeDeps';
 
 const BIN_DIRECTORY = path.join(__dirname, '..', '..', 'bin');
 
-const checkExecutable = (filePath: string) => fs.promises.access(filePath, fs.constants.X_OK).then(() => true).catch(e => false);
+const checkExecutable = (filePath: string) =>
+  fs.promises
+    .access(filePath, fs.constants.X_OK)
+    .then(() => true)
+    .catch((e) => false);
 
 function isSupportedWindowsVersion(): boolean {
-  if (os.platform() !== 'win32' || os.arch() !== 'x64')
-    return false;
-  const [major, minor] = os.release().split('.').map(token => parseInt(token, 10));
+  if (os.platform() !== 'win32' || os.arch() !== 'x64') return false;
+  const [major, minor] = os
+    .release()
+    .split('.')
+    .map((token) => parseInt(token, 10));
   // This is based on: https://stackoverflow.com/questions/42524606/how-to-get-windows-version-using-node-js/44916050#44916050
   // The table with versions is taken from: https://docs.microsoft.com/en-us/windows/win32/api/winnt/ns-winnt-osversioninfoexw#remarks
   // Windows 7 is not supported and is encoded as `6.1`.
@@ -38,17 +44,27 @@ function isSupportedWindowsVersion(): boolean {
 
 export type DependencyGroup = 'chromium' | 'firefox' | 'webkit' | 'tools';
 
-export async function installDependenciesWindows(targets: Set<DependencyGroup>, dryRun: boolean): Promise<void> {
+export async function installDependenciesWindows(
+  targets: Set<DependencyGroup>,
+  dryRun: boolean,
+): Promise<void> {
   if (targets.has('chromium')) {
     const command = 'powershell.exe';
-    const args = ['-ExecutionPolicy', 'Bypass', '-File', path.join(BIN_DIRECTORY, 'install_media_pack.ps1')];
+    const args = [
+      '-ExecutionPolicy',
+      'Bypass',
+      '-File',
+      path.join(BIN_DIRECTORY, 'install_media_pack.ps1'),
+    ];
     if (dryRun) {
       console.log(`${command} ${quoteProcessArgs(args).join(' ')}`); // eslint-disable-line no-console
       return;
     }
-    const { code } = await utils.spawnAsync(command, args, { cwd: BIN_DIRECTORY, stdio: 'inherit' });
-    if (code !== 0)
-      throw new Error('Failed to install windows dependencies!');
+    const { code } = await utils.spawnAsync(command, args, {
+      cwd: BIN_DIRECTORY,
+      stdio: 'inherit',
+    });
+    if (code !== 0) throw new Error('Failed to install windows dependencies!');
   }
 }
 
@@ -57,26 +73,24 @@ export async function installDependenciesLinux(targets: Set<DependencyGroup>, dr
   for (const target of targets) {
     const info = deps[utils.hostPlatform];
     if (!info) {
-      console.warn('Cannot install dependencies for this linux distribution!');  // eslint-disable-line no-console
+      console.warn('Cannot install dependencies for this linux distribution!'); // eslint-disable-line no-console
       return;
     }
     libraries.push(...info[target]);
   }
   const uniqueLibraries = Array.from(new Set(libraries));
-  if (!dryRun)
-    console.log('Installing Ubuntu dependencies...');  // eslint-disable-line no-console
+  if (!dryRun) console.log('Installing Ubuntu dependencies...'); // eslint-disable-line no-console
   const commands: string[] = [];
   commands.push('apt-get update');
-  commands.push(['apt-get', 'install', '-y', '--no-install-recommends',
-    ...uniqueLibraries,
-  ].join(' '));
-  const { command, args, elevatedPermissions } = await utils.transformCommandsForRoot(commands);
+  commands.push(
+    ['apt-get', 'install', '-y', '--no-install-recommends', ...uniqueLibraries].join(' '),
+  );
+  const { command, args, elevatedPermissions } = await utils.transformCommandsForRoot(commands);
   if (dryRun) {
     console.log(`${command} ${quoteProcessArgs(args).join(' ')}`); // eslint-disable-line no-console
     return;
   }
-  if (elevatedPermissions)
-    console.log('Switching to root user to install dependencies...'); // eslint-disable-line no-console
+  if (elevatedPermissions) console.log('Switching to root user to install dependencies...'); // eslint-disable-line no-console
   const child = childProcess.spawn(command, args, { stdio: 'inherit' });
   await new Promise((resolve, reject) => {
     child.on('exit', resolve);
@@ -89,22 +103,33 @@ export async function validateDependenciesWindows(windowsExeAndDllDirectories: s
   const lddPaths: string[] = [];
   for (const directoryPath of directoryPaths)
     lddPaths.push(...(await executablesOrSharedLibraries(directoryPath)));
-  const allMissingDeps = await Promise.all(lddPaths.map(lddPath => missingFileDependenciesWindows(lddPath)));
+  const allMissingDeps = await Promise.all(
+    lddPaths.map((lddPath) => missingFileDependenciesWindows(lddPath)),
+  );
   const missingDeps: Set<string> = new Set();
   for (const deps of allMissingDeps) {
-    for (const dep of deps)
-      missingDeps.add(dep);
+    for (const dep of deps) missingDeps.add(dep);
   }
 
-  if (!missingDeps.size)
-    return;
+  if (!missingDeps.size) return;
 
   let isCrtMissing = false;
   let isMediaFoundationMissing = false;
   for (const dep of missingDeps) {
-    if (dep.startsWith('api-ms-win-crt') || dep === 'vcruntime140.dll' || dep === 'vcruntime140_1.dll' || dep === 'msvcp140.dll')
+    if (
+      dep.startsWith('api-ms-win-crt') ||
+      dep === 'vcruntime140.dll' ||
+      dep === 'vcruntime140_1.dll' ||
+      dep === 'msvcp140.dll'
+    )
       isCrtMissing = true;
-    else if (dep === 'mf.dll' || dep === 'mfplat.dll' ||  dep === 'msmpeg2vdec.dll' || dep === 'evr.dll' || dep === 'avrt.dll')
+    else if (
+      dep === 'mf.dll' ||
+      dep === 'mfplat.dll' ||
+      dep === 'msmpeg2vdec.dll' ||
+      dep === 'evr.dll' ||
+      dep === 'avrt.dll'
+    )
       isMediaFoundationMissing = true;
   }
 
@@ -112,29 +137,28 @@ export async function validateDependenciesWindows(windowsExeAndDllDirectories: s
 
   if (isCrtMissing) {
     details.push(
-        `Some of the Universal C Runtime files cannot be found on the system. You can fix`,
-        `that by installing Microsoft Visual C++ Redistributable for Visual Studio from:`,
-        `https://support.microsoft.com/en-us/help/2977003/the-latest-supported-visual-c-downloads`,
-        ``);
+      `Some of the Universal C Runtime files cannot be found on the system. You can fix`,
+      `that by installing Microsoft Visual C++ Redistributable for Visual Studio from:`,
+      `https://support.microsoft.com/en-us/help/2977003/the-latest-supported-visual-c-downloads`,
+      ``,
+    );
   }
 
   if (isMediaFoundationMissing) {
     details.push(
-        `Some of the Media Foundation files cannot be found on the system. If you are`,
-        `on Windows Server try fixing this by running the following command in PowerShell`,
-        `as Administrator:`,
-        ``,
-        `    Install-WindowsFeature Server-Media-Foundation`,
-        ``,
-        `For Windows N editions visit:`,
-        `https://support.microsoft.com/en-us/help/3145500/media-feature-pack-list-for-windows-n-editions`,
-        ``);
+      `Some of the Media Foundation files cannot be found on the system. If you are`,
+      `on Windows Server try fixing this by running the following command in PowerShell`,
+      `as Administrator:`,
+      ``,
+      `    Install-WindowsFeature Server-Media-Foundation`,
+      ``,
+      `For Windows N editions visit:`,
+      `https://support.microsoft.com/en-us/help/3145500/media-feature-pack-list-for-windows-n-editions`,
+      ``,
+    );
   }
 
-  details.push(
-      `Full list of missing libraries:`,
-      `    ${[...missingDeps].join('\n    ')}`,
-      ``);
+  details.push(`Full list of missing libraries:`, `    ${[...missingDeps].join('\n    ')}`, ``);
 
   const message = `Host system is missing dependencies!\n\n${details.join('\n')}`;
   if (isSupportedWindowsVersion()) {
@@ -147,21 +171,24 @@ export async function validateDependenciesWindows(windowsExeAndDllDirectories: s
   }
 }
 
-export async function validateDependenciesLinux(sdkLanguage: string, linuxLddDirectories: string[], dlOpenLibraries: string[]) {
+export async function validateDependenciesLinux(
+  sdkLanguage: string,
+  linuxLddDirectories: string[],
+  dlOpenLibraries: string[],
+) {
   const directoryPaths = linuxLddDirectories;
   const lddPaths: string[] = [];
   for (const directoryPath of directoryPaths)
     lddPaths.push(...(await executablesOrSharedLibraries(directoryPath)));
-  const allMissingDeps = await Promise.all(lddPaths.map(lddPath => missingFileDependencies(lddPath, directoryPaths)));
+  const allMissingDeps = await Promise.all(
+    lddPaths.map((lddPath) => missingFileDependencies(lddPath, directoryPaths)),
+  );
   const missingDeps: Set<string> = new Set();
   for (const deps of allMissingDeps) {
-    for (const dep of deps)
-      missingDeps.add(dep);
+    for (const dep of deps) missingDeps.add(dep);
   }
-  for (const dep of (await missingDLOPENLibraries(dlOpenLibraries)))
-    missingDeps.add(dep);
-  if (!missingDeps.size)
-    return;
+  for (const dep of await missingDLOPENLibraries(dlOpenLibraries)) missingDeps.add(dep);
+  if (!missingDeps.size) return;
   // Check Ubuntu version.
   const missingPackages = new Set();
 
@@ -178,18 +205,24 @@ export async function validateDependenciesLinux(sdkLanguage: string, linuxLddDir
     }
   }
 
-  const maybeSudo = (process.getuid() !== 0) && os.platform() !== 'win32' ? 'sudo ' : '';
+  const maybeSudo = process.getuid() !== 0 && os.platform() !== 'win32' ? 'sudo ' : '';
   // Happy path: known dependencies are missing for browsers.
   // Suggest installation with a Playwright CLI.
   if (missingPackages.size && !missingDeps.size) {
-    throw new Error('\n' + utils.wrapInASCIIBox([
-      `Host system is missing a few dependencies to run browsers.`,
-      `Please install them with the following command:`,
-      ``,
-      `    ${maybeSudo}${buildPlaywrightCLICommand(sdkLanguage, 'install-deps')}`,
-      ``,
-      `<3 Playwright Team`,
-    ].join('\n'), 1));
+    throw new Error(
+      '\n' +
+        utils.wrapInASCIIBox(
+          [
+            `Host system is missing a few dependencies to run browsers.`,
+            `Please install them with the following command:`,
+            ``,
+            `    ${maybeSudo}${buildPlaywrightCLICommand(sdkLanguage, 'install-deps')}`,
+            ``,
+            `<3 Playwright Team`,
+          ].join('\n'),
+          1,
+        ),
+    );
   }
 
   // Unhappy path - unusual distribution configuration.
@@ -205,7 +238,9 @@ export async function validateDependenciesLinux(sdkLanguage: string, linuxLddDir
 
   let missingDependenciesMessage = '';
   if (missingDeps.size) {
-    const header = missingPackages.size ? `Missing libraries we didn't find packages for:` : `Missing libraries are:`;
+    const header = missingPackages.size
+      ? `Missing libraries we didn't find packages for:`
+      : `Missing libraries are:`;
     missingDependenciesMessage = [
       `  ${header}`,
       `      ${[...missingDeps].join('\n      ')}`,
@@ -213,7 +248,11 @@ export async function validateDependenciesLinux(sdkLanguage: string, linuxLddDir
     ].join('\n');
   }
 
-  throw new Error('Host system is missing dependencies!\n\n' + missingPackagesMessage + missingDependenciesMessage);
+  throw new Error(
+    'Host system is missing dependencies!\n\n' +
+      missingPackagesMessage +
+      missingDependenciesMessage,
+  );
 }
 
 function isSharedLib(basename: string) {
@@ -228,18 +267,22 @@ function isSharedLib(basename: string) {
 }
 
 async function executablesOrSharedLibraries(directoryPath: string): Promise<string[]> {
-  const allPaths = (await fs.promises.readdir(directoryPath)).map(file => path.resolve(directoryPath, file));
-  const allStats = await Promise.all(allPaths.map(aPath => fs.promises.stat(aPath)));
+  const allPaths = (await fs.promises.readdir(directoryPath)).map((file) =>
+    path.resolve(directoryPath, file),
+  );
+  const allStats = await Promise.all(allPaths.map((aPath) => fs.promises.stat(aPath)));
   const filePaths = allPaths.filter((aPath, index) => (allStats[index] as any).isFile());
 
-  const executablersOrLibraries = (await Promise.all(filePaths.map(async filePath => {
-    const basename = path.basename(filePath).toLowerCase();
-    if (isSharedLib(basename))
-      return filePath;
-    if (await checkExecutable(filePath))
-      return filePath;
-    return false;
-  }))).filter(Boolean);
+  const executablersOrLibraries = (
+    await Promise.all(
+      filePaths.map(async (filePath) => {
+        const basename = path.basename(filePath).toLowerCase();
+        if (isSharedLib(basename)) return filePath;
+        if (await checkExecutable(filePath)) return filePath;
+        return false;
+      }),
+    )
+  ).filter(Boolean);
 
   return executablersOrLibraries as string[];
 }
@@ -251,16 +294,24 @@ async function missingFileDependenciesWindows(filePath: string): Promise<Array<s
     cwd: dirname,
     env: {
       ...process.env,
-      LD_LIBRARY_PATH: process.env.LD_LIBRARY_PATH ? `${process.env.LD_LIBRARY_PATH}:${dirname}` : dirname,
+      LD_LIBRARY_PATH: process.env.LD_LIBRARY_PATH
+        ? `${process.env.LD_LIBRARY_PATH}:${dirname}`
+        : dirname,
     },
   });
-  if (code !== 0)
-    return [];
-  const missingDeps = stdout.split('\n').map(line => line.trim()).filter(line => line.endsWith('not found') && line.includes('=>')).map(line => line.split('=>')[0].trim().toLowerCase());
+  if (code !== 0) return [];
+  const missingDeps = stdout
+    .split('\n')
+    .map((line) => line.trim())
+    .filter((line) => line.endsWith('not found') && line.includes('=>'))
+    .map((line) => line.split('=>')[0].trim().toLowerCase());
   return missingDeps;
 }
 
-async function missingFileDependencies(filePath: string, extraLDPaths: string[]): Promise<Array<string>> {
+async function missingFileDependencies(
+  filePath: string,
+  extraLDPaths: string[],
+): Promise<Array<string>> {
   const dirname = path.dirname(filePath);
   let LD_LIBRARY_PATH = extraLDPaths.join(':');
   if (process.env.LD_LIBRARY_PATH)
@@ -272,26 +323,28 @@ async function missingFileDependencies(filePath: string, extraLDPaths: string[])
       LD_LIBRARY_PATH,
     },
   });
-  if (code !== 0)
-    return [];
-  const missingDeps = stdout.split('\n').map(line => line.trim()).filter(line => line.endsWith('not found') && line.includes('=>')).map(line => line.split('=>')[0].trim());
+  if (code !== 0) return [];
+  const missingDeps = stdout
+    .split('\n')
+    .map((line) => line.trim())
+    .filter((line) => line.endsWith('not found') && line.includes('=>'))
+    .map((line) => line.split('=>')[0].trim());
   return missingDeps;
 }
 
 async function missingDLOPENLibraries(libraries: string[]): Promise<string[]> {
-  if (!libraries.length)
-    return [];
+  if (!libraries.length) return [];
   // NOTE: Using full-qualified path to `ldconfig` since `/sbin` is not part of the
   // default PATH in CRON.
   // @see https://github.com/microsoft/playwright/issues/3397
   const { stdout, code, error } = await utils.spawnAsync('/sbin/ldconfig', ['-p'], {});
-  if (code !== 0 || error)
-    return [];
-  const isLibraryAvailable = (library: string) => stdout.toLowerCase().includes(library.toLowerCase());
-  return libraries.filter(library => !isLibraryAvailable(library));
+  if (code !== 0 || error) return [];
+  const isLibraryAvailable = (library: string) =>
+    stdout.toLowerCase().includes(library.toLowerCase());
+  return libraries.filter((library) => !isLibraryAvailable(library));
 }
 
-const MANUAL_LIBRARY_TO_PACKAGE_NAME_UBUNTU: { [s: string]: string} = {
+const MANUAL_LIBRARY_TO_PACKAGE_NAME_UBUNTU: { [s: string]: string } = {
   // libgstlibav.so (the only actual library provided by gstreamer1.0-libav) is not
   // in the ldconfig cache, so we detect the actual library required for playing h.264
   // and if it's missing recommend installing missing gstreamer lib.
@@ -300,9 +353,8 @@ const MANUAL_LIBRARY_TO_PACKAGE_NAME_UBUNTU: { [s: string]: string} = {
 };
 
 function quoteProcessArgs(args: string[]): string[] {
-  return args.map(arg => {
-    if (arg.includes(' '))
-      return `"${arg}"`;
+  return args.map((arg) => {
+    if (arg.includes(' ')) return `"${arg}"`;
     return arg;
   });
 }

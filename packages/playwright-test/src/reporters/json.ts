@@ -16,22 +16,33 @@
 
 import fs from 'fs';
 import path from 'path';
-import { FullConfig, TestCase, Suite, TestResult, TestError, TestStep, FullResult, TestStatus, Location, Reporter } from '../../types/testReporter';
+import {
+  FullConfig,
+  TestCase,
+  Suite,
+  TestResult,
+  TestError,
+  TestStep,
+  FullResult,
+  TestStatus,
+  Location,
+  Reporter,
+} from '../../types/testReporter';
 import { prepareErrorStack } from './base';
 
 export interface JSONReport {
   config: Omit<FullConfig, 'projects'> & {
     projects: {
-      outputDir: string,
-      repeatEach: number,
-      retries: number,
-      metadata: any,
-      name: string,
-      testDir: string,
-      testIgnore: string[],
-      testMatch: string[],
-      timeout: number,
-    }[],
+      outputDir: string;
+      repeatEach: number;
+      retries: number;
+      metadata: any;
+      name: string;
+      testDir: string;
+      testIgnore: string[];
+      testMatch: string[];
+      timeout: number;
+    }[];
   };
   suites: JSONReportSuite[];
   errors: TestError[];
@@ -45,7 +56,7 @@ export interface JSONReportSuite {
   suites?: JSONReportSuite[];
 }
 export interface JSONReportSpec {
-  tags: string[],
+  tags: string[];
   title: string;
   ok: boolean;
   tests: JSONReportTest[];
@@ -55,7 +66,7 @@ export interface JSONReportSpec {
 }
 export interface JSONReportTest {
   timeout: number;
-  annotations: { type: string, description?: string }[],
+  annotations: { type: string; description?: string }[];
   expectedStatus: TestStatus;
   projectName: string;
   results: JSONReportTestResult[];
@@ -122,7 +133,7 @@ class JSONReporter implements Reporter {
       config: {
         ...this.config,
         rootDir: toPosixPath(this.config.rootDir),
-        projects: this.config.projects.map(project => {
+        projects: this.config.projects.map((project) => {
           return {
             outputDir: toPosixPath(project.outputDir),
             repeatEach: project.repeatEach,
@@ -134,10 +145,10 @@ class JSONReporter implements Reporter {
             testMatch: serializePatterns(project.testMatch),
             timeout: project.timeout,
           };
-        })
+        }),
       },
       suites: this._mergeSuites(this.suite.suites),
-      errors: this._errors
+      errors: this._errors,
     };
   }
 
@@ -162,8 +173,7 @@ class JSONReporter implements Reporter {
   }
 
   private _relativeLocation(location: Location | undefined): Location {
-    if (!location)
-      return { file: '', line: 0, column: 0 };
+    if (!location) return { file: '', line: 0, column: 0 };
     return {
       file: toPosixPath(path.relative(this.config.rootDir, location.file)),
       line: location.line,
@@ -178,35 +188,41 @@ class JSONReporter implements Reporter {
 
   private _mergeTestsFromSuite(to: JSONReportSuite, from: Suite) {
     for (const fromSuite of from.suites) {
-      const toSuite = (to.suites || []).find(s => s.title === fromSuite.title && this._locationMatches(s, from.location));
+      const toSuite = (to.suites || []).find(
+        (s) => s.title === fromSuite.title && this._locationMatches(s, from.location),
+      );
       if (toSuite) {
         this._mergeTestsFromSuite(toSuite, fromSuite);
       } else {
         const serialized = this._serializeSuite(fromSuite);
         if (serialized) {
-          if (!to.suites)
-            to.suites = [];
+          if (!to.suites) to.suites = [];
           to.suites.push(serialized);
         }
       }
     }
     for (const test of from.tests) {
-      const toSpec = to.specs.find(s => s.title === test.title && s.file === toPosixPath(path.relative(this.config.rootDir, test.location.file)) && s.line === test.location.line && s.column === test.location.column);
-      if (toSpec)
-        toSpec.tests.push(this._serializeTest(test));
-      else
-        to.specs.push(this._serializeTestSpec(test));
+      const toSpec = to.specs.find(
+        (s) =>
+          s.title === test.title &&
+          s.file === toPosixPath(path.relative(this.config.rootDir, test.location.file)) &&
+          s.line === test.location.line &&
+          s.column === test.location.column,
+      );
+      if (toSpec) toSpec.tests.push(this._serializeTest(test));
+      else to.specs.push(this._serializeTestSpec(test));
     }
   }
 
   private _serializeSuite(suite: Suite): null | JSONReportSuite {
-    if (!suite.allTests().length)
-      return null;
-    const suites = suite.suites.map(suite => this._serializeSuite(suite)).filter(s => s) as JSONReportSuite[];
+    if (!suite.allTests().length) return null;
+    const suites = suite.suites
+      .map((suite) => this._serializeSuite(suite))
+      .filter((s) => s) as JSONReportSuite[];
     return {
       title: suite.title,
       ...this._relativeLocation(suite.location),
-      specs: suite.tests.map(test => this._serializeTestSpec(test)),
+      specs: suite.tests.map((test) => this._serializeTestSpec(test)),
       suites: suites.length ? suites : undefined,
     };
   }
@@ -215,8 +231,8 @@ class JSONReporter implements Reporter {
     return {
       title: test.title,
       ok: test.ok(),
-      tags: (test.title.match(/@[\S]+/g) || []).map(t => t.substring(1)),
-      tests: [ this._serializeTest(test) ],
+      tags: (test.title.match(/@[\S]+/g) || []).map((t) => t.substring(1)),
+      tests: [this._serializeTest(test)],
       ...this._relativeLocation(test.location),
     };
   }
@@ -227,27 +243,27 @@ class JSONReporter implements Reporter {
       annotations: test.annotations,
       expectedStatus: test.expectedStatus,
       projectName: test.titlePath()[1],
-      results: test.results.map(r => this._serializeTestResult(r, test)),
+      results: test.results.map((r) => this._serializeTestResult(r, test)),
       status: test.outcome(),
     };
   }
 
   private _serializeTestResult(result: TestResult, test: TestCase): JSONReportTestResult {
-    const steps = result.steps.filter(s => s.category === 'test.step');
+    const steps = result.steps.filter((s) => s.category === 'test.step');
     const jsonResult: JSONReportTestResult = {
       workerIndex: result.workerIndex,
       status: result.status,
       duration: result.duration,
       error: result.error,
-      stdout: result.stdout.map(s => stdioEntry(s)),
-      stderr: result.stderr.map(s => stdioEntry(s)),
+      stdout: result.stdout.map((s) => stdioEntry(s)),
+      stderr: result.stderr.map((s) => stdioEntry(s)),
       retry: result.retry,
-      steps: steps.length ? steps.map(s => this._serializeTestStep(s)) : undefined,
-      attachments: result.attachments.map(a => ({
+      steps: steps.length ? steps.map((s) => this._serializeTestStep(s)) : undefined,
+      attachments: result.attachments.map((a) => ({
         name: a.name,
         contentType: a.contentType,
         path: a.path,
-        body: a.body?.toString('base64')
+        body: a.body?.toString('base64'),
       })),
     };
     if (result.error?.stack)
@@ -256,12 +272,12 @@ class JSONReporter implements Reporter {
   }
 
   private _serializeTestStep(step: TestStep): JSONReportTestStep {
-    const steps = step.steps.filter(s => s.category === 'test.step');
+    const steps = step.steps.filter((s) => s.category === 'test.step');
     return {
       title: step.title,
       duration: step.duration,
       error: step.error,
-      steps: steps.length ? steps.map(s => this._serializeTestStep(s)) : undefined,
+      steps: steps.length ? steps.map((s) => this._serializeTestStep(s)) : undefined,
     };
   }
 }
@@ -277,15 +293,13 @@ function outputReport(report: JSONReport, outputFile: string | undefined) {
 }
 
 function stdioEntry(s: string | Buffer): any {
-  if (typeof s === 'string')
-    return { text: s };
+  if (typeof s === 'string') return { text: s };
   return { buffer: s.toString('base64') };
 }
 
 export function serializePatterns(patterns: string | RegExp | (string | RegExp)[]): string[] {
-  if (!Array.isArray(patterns))
-    patterns = [patterns];
-  return patterns.map(s => s.toString());
+  if (!Array.isArray(patterns)) patterns = [patterns];
+  return patterns.map((s) => s.toString());
 }
 
 export default JSONReporter;

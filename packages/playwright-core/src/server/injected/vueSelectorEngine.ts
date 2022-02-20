@@ -19,38 +19,37 @@ import { isInsideScope } from './selectorEvaluator';
 import { checkComponentAttribute, parseComponentSelector } from './componentUtils';
 
 type ComponentNode = {
-  name: string,
-  children: ComponentNode[],
-  rootElements: Element[],
-  props: any,
+  name: string;
+  children: ComponentNode[];
+  rootElements: Element[];
+  props: any;
 };
 
 type VueVNode = {
   // Vue3
-  type: any,
-  root?: any,
-  parent?: VueVNode,
-  appContext?: any,
-  _isBeingDestroyed?: any,
-  isUnmounted?: any,
-  subTree: any,
-  props: any,
+  type: any;
+  root?: any;
+  parent?: VueVNode;
+  appContext?: any;
+  _isBeingDestroyed?: any;
+  isUnmounted?: any;
+  subTree: any;
+  props: any;
 
   // Vue2
-  $children?: VueVNode[],
-  fnOptions?: any,
-  $options?: any,
-  $root?: VueVNode,
-  $el?: Element,
-  _props: any,
+  $children?: VueVNode[];
+  fnOptions?: any;
+  $options?: any;
+  $root?: VueVNode;
+  $el?: Element;
+  _props: any;
 };
 
 // @see https://github.com/vuejs/devtools/blob/14085e25313bcf8ffcb55f9092a40bc0fe3ac11c/packages/shared-utils/src/util.ts#L295
 function basename(filename: string, ext: string): string {
   const normalized = filename.replace(/^[a-zA-Z]:/, '').replace(/\\/g, '/');
   let result = normalized.substring(normalized.lastIndexOf('/') + 1);
-  if (ext && result.endsWith(ext))
-    result = result.substring(0, result.length - ext.length);
+  if (ext && result.endsWith(ext)) result = result.substring(0, result.length - ext.length);
   return result;
 }
 
@@ -67,13 +66,11 @@ const classify = (str: string) => {
 
 function buildComponentsTreeVue3(instance: VueVNode): ComponentNode {
   // @see https://github.com/vuejs/devtools/blob/e7132f3392b975e39e1d9a23cf30456c270099c2/packages/app-backend-vue3/src/components/util.ts#L47
-  function getComponentTypeName(options: any): string|undefined {
+  function getComponentTypeName(options: any): string | undefined {
     const name = options.name || options._componentTag || options.__playwright_guessedName;
-    if (name)
-      return name;
+    if (name) return name;
     const file = options.__file; // injected by vue-loader
-    if (file)
-      return classify(basename(file, '.vue'));
+    if (file) return classify(basename(file, '.vue'));
   }
 
   // @see https://github.com/vuejs/devtools/blob/e7132f3392b975e39e1d9a23cf30456c270099c2/packages/app-backend-vue3/src/components/util.ts#L42
@@ -88,9 +85,11 @@ function buildComponentsTreeVue3(instance: VueVNode): ComponentNode {
     if (name) return name;
     if (instance.root === instance) return 'Root';
     for (const key in instance.parent?.type?.components)
-      if (instance.parent?.type.components[key] === instance.type) return saveComponentName(instance, key);
+      if (instance.parent?.type.components[key] === instance.type)
+        return saveComponentName(instance, key);
     for (const key in instance.appContext?.components)
-      if (instance.appContext.components[key] === instance.type) return saveComponentName(instance, key);
+      if (instance.appContext.components[key] === instance.type)
+        return saveComponentName(instance, key);
     return 'Anonymous Component';
   }
 
@@ -107,25 +106,20 @@ function buildComponentsTreeVue3(instance: VueVNode): ComponentNode {
   // @see https://github.com/vuejs/devtools/blob/e7132f3392b975e39e1d9a23cf30456c270099c2/packages/app-backend-vue3/src/components/tree.ts#L79
   function getInternalInstanceChildren(subTree: any): VueVNode[] {
     const list = [];
-    if (subTree.component)
-      list.push(subTree.component);
-    if (subTree.suspense)
-      list.push(...getInternalInstanceChildren(subTree.suspense.activeBranch));
+    if (subTree.component) list.push(subTree.component);
+    if (subTree.suspense) list.push(...getInternalInstanceChildren(subTree.suspense.activeBranch));
     if (Array.isArray(subTree.children)) {
       subTree.children.forEach((childSubTree: any) => {
-        if (childSubTree.component)
-          list.push(childSubTree.component);
-        else
-          list.push(...getInternalInstanceChildren(childSubTree));
+        if (childSubTree.component) list.push(childSubTree.component);
+        else list.push(...getInternalInstanceChildren(childSubTree));
       });
     }
-    return list.filter(child => !isBeingDestroyed(child) && !child.type.devtools?.hide);
+    return list.filter((child) => !isBeingDestroyed(child) && !child.type.devtools?.hide);
   }
 
   // @see https://github.com/vuejs/devtools/blob/e7132f3392b975e39e1d9a23cf30456c270099c2/packages/app-backend-vue3/src/components/el.ts#L8
   function getRootElementsFromComponentInstance(instance: VueVNode): Element[] {
-    if (isFragment(instance))
-      return getFragmentRootElements(instance.subTree);
+    if (isFragment(instance)) return getFragmentRootElements(instance.subTree);
     return [instance.subTree.el];
   }
 
@@ -139,8 +133,7 @@ function buildComponentsTreeVue3(instance: VueVNode): ComponentNode {
       const childVnode = vnode.children[i];
       if (childVnode.component)
         list.push(...getRootElementsFromComponentInstance(childVnode.component));
-      else if (childVnode.el)
-        list.push(childVnode.el);
+      else if (childVnode.el) list.push(childVnode.el);
     }
     return list;
   }
@@ -159,29 +152,27 @@ function buildComponentsTreeVue3(instance: VueVNode): ComponentNode {
 
 function buildComponentsTreeVue2(instance: VueVNode): ComponentNode {
   // @see https://github.com/vuejs/devtools/blob/e7132f3392b975e39e1d9a23cf30456c270099c2/packages/shared-utils/src/util.ts#L302
-  function getComponentName(options: any): string|undefined {
+  function getComponentName(options: any): string | undefined {
     const name = options.displayName || options.name || options._componentTag;
-    if (name)
-      return name;
+    if (name) return name;
     const file = options.__file; // injected by vue-loader
-    if (file)
-      return classify(basename(file, '.vue'));
+    if (file) return classify(basename(file, '.vue'));
   }
 
   // @see https://github.com/vuejs/devtools/blob/e7132f3392b975e39e1d9a23cf30456c270099c2/packages/app-backend-vue2/src/components/util.ts#L10
   function getInstanceName(instance: VueVNode): string {
     const name = getComponentName(instance.$options || instance.fnOptions || {});
-    if (name)
-      return name;
+    if (name) return name;
     return instance.$root === instance ? 'Root' : 'Anonymous Component';
   }
 
   // @see https://github.com/vuejs/devtools/blob/14085e25313bcf8ffcb55f9092a40bc0fe3ac11c/packages/app-backend-vue2/src/components/tree.ts#L103
   function getInternalInstanceChildren(instance: VueVNode): VueVNode[] {
-    if (instance.$children)
-      return instance.$children;
+    if (instance.$children) return instance.$children;
     if (Array.isArray(instance.subTree.children))
-      return instance.subTree.children.filter((vnode: any) => !!vnode.component).map((vnode: any) => vnode.component);
+      return instance.subTree.children
+        .filter((vnode: any) => !!vnode.component)
+        .map((vnode: any) => vnode.component);
     return [];
   }
 
@@ -197,29 +188,29 @@ function buildComponentsTreeVue2(instance: VueVNode): ComponentNode {
   return buildComponentsTree(instance);
 }
 
-function filterComponentsTree(treeNode: ComponentNode, searchFn: (node: ComponentNode) => boolean, result: ComponentNode[] = []): ComponentNode[] {
-  if (searchFn(treeNode))
-    result.push(treeNode);
-  for (const child of treeNode.children)
-    filterComponentsTree(child, searchFn, result);
+function filterComponentsTree(
+  treeNode: ComponentNode,
+  searchFn: (node: ComponentNode) => boolean,
+  result: ComponentNode[] = [],
+): ComponentNode[] {
+  if (searchFn(treeNode)) result.push(treeNode);
+  for (const child of treeNode.children) filterComponentsTree(child, searchFn, result);
   return result;
 }
 
-type VueRoot = {version: number, root: VueVNode};
+type VueRoot = { version: number; root: VueVNode };
 function findVueRoots(root: Document | ShadowRoot, roots: VueRoot[] = []): VueRoot[] {
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT);
   // Vue2 roots are referred to from elements.
   const vue2Roots: Set<VueVNode> = new Set();
   do {
     const node = walker.currentNode;
-    if ((node as any).__vue__)
-      vue2Roots.add((node as any).__vue__.$root);
+    if ((node as any).__vue__) vue2Roots.add((node as any).__vue__.$root);
     // Vue3 roots are marked with __vue_app__.
     if ((node as any).__vue_app__ && (node as any)._vnode && (node as any)._vnode.component)
       roots.push({ root: (node as any)._vnode.component, version: 3 });
     const shadowRoot = node instanceof Element ? node.shadowRoot : null;
-    if (shadowRoot)
-      findVueRoots(shadowRoot, roots);
+    if (shadowRoot) findVueRoots(shadowRoot, roots);
   } while (walker.nextNode());
   for (const vue2root of vue2Roots) {
     roots.push({
@@ -234,23 +225,28 @@ export const VueEngine: SelectorEngine = {
   queryAll(scope: SelectorRoot, selector: string): Element[] {
     const { name, attributes } = parseComponentSelector(selector);
     const vueRoots = findVueRoots(document);
-    const trees = vueRoots.map(vueRoot => vueRoot.version === 3 ? buildComponentsTreeVue3(vueRoot.root) : buildComponentsTreeVue2(vueRoot.root));
-    const treeNodes = trees.map(tree => filterComponentsTree(tree, treeNode => {
-      if (name && treeNode.name !== name)
-        return false;
-      if (treeNode.rootElements.some(rootElement => !isInsideScope(scope, rootElement)))
-        return false;
-      for (const attr of attributes) {
-        if (!checkComponentAttribute(treeNode.props, attr))
-          return false;
-      }
-      return true;
-    })).flat();
+    const trees = vueRoots.map((vueRoot) =>
+      vueRoot.version === 3
+        ? buildComponentsTreeVue3(vueRoot.root)
+        : buildComponentsTreeVue2(vueRoot.root),
+    );
+    const treeNodes = trees
+      .map((tree) =>
+        filterComponentsTree(tree, (treeNode) => {
+          if (name && treeNode.name !== name) return false;
+          if (treeNode.rootElements.some((rootElement) => !isInsideScope(scope, rootElement)))
+            return false;
+          for (const attr of attributes) {
+            if (!checkComponentAttribute(treeNode.props, attr)) return false;
+          }
+          return true;
+        }),
+      )
+      .flat();
     const allRootElements: Set<Element> = new Set();
     for (const treeNode of treeNodes) {
-      for (const rootElement of treeNode.rootElements)
-        allRootElements.add(rootElement);
+      for (const rootElement of treeNode.rootElements) allRootElements.add(rootElement);
     }
     return [...allRootElements];
-  }
+  },
 };

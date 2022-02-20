@@ -34,43 +34,62 @@ export class WKWorkers {
     eventsHelper.removeEventListeners(this._sessionListeners);
     this.clear();
     this._sessionListeners = [
-      eventsHelper.addEventListener(session, 'Worker.workerCreated', (event: Protocol.Worker.workerCreatedPayload) => {
-        const worker = new Worker(this._page, event.url);
-        const workerSession = new WKSession(session.connection, event.workerId, 'Most likely the worker has been closed.', (message: any) => {
-          session.send('Worker.sendMessageToWorker', {
-            workerId: event.workerId,
-            message: JSON.stringify(message)
-          }).catch(e => {
-            workerSession.dispatchMessage({ id: message.id, error: { message: e.message } });
+      eventsHelper.addEventListener(
+        session,
+        'Worker.workerCreated',
+        (event: Protocol.Worker.workerCreatedPayload) => {
+          const worker = new Worker(this._page, event.url);
+          const workerSession = new WKSession(
+            session.connection,
+            event.workerId,
+            'Most likely the worker has been closed.',
+            (message: any) => {
+              session
+                .send('Worker.sendMessageToWorker', {
+                  workerId: event.workerId,
+                  message: JSON.stringify(message),
+                })
+                .catch((e) => {
+                  workerSession.dispatchMessage({ id: message.id, error: { message: e.message } });
+                });
+            },
+          );
+          this._workerSessions.set(event.workerId, workerSession);
+          worker._createExecutionContext(new WKExecutionContext(workerSession, undefined));
+          this._page._addWorker(event.workerId, worker);
+          workerSession.on('Console.messageAdded', (event) =>
+            this._onConsoleMessage(worker, event),
+          );
+          Promise.all([
+            workerSession.send('Runtime.enable'),
+            workerSession.send('Console.enable'),
+            session.send('Worker.initialized', { workerId: event.workerId }),
+          ]).catch((e) => {
+            // Worker can go as we are initializing it.
+            this._page._removeWorker(event.workerId);
           });
-        });
-        this._workerSessions.set(event.workerId, workerSession);
-        worker._createExecutionContext(new WKExecutionContext(workerSession, undefined));
-        this._page._addWorker(event.workerId, worker);
-        workerSession.on('Console.messageAdded', event => this._onConsoleMessage(worker, event));
-        Promise.all([
-          workerSession.send('Runtime.enable'),
-          workerSession.send('Console.enable'),
-          session.send('Worker.initialized', { workerId: event.workerId })
-        ]).catch(e => {
-          // Worker can go as we are initializing it.
+        },
+      ),
+      eventsHelper.addEventListener(
+        session,
+        'Worker.dispatchMessageFromWorker',
+        (event: Protocol.Worker.dispatchMessageFromWorkerPayload) => {
+          const workerSession = this._workerSessions.get(event.workerId)!;
+          if (!workerSession) return;
+          workerSession.dispatchMessage(JSON.parse(event.message));
+        },
+      ),
+      eventsHelper.addEventListener(
+        session,
+        'Worker.workerTerminated',
+        (event: Protocol.Worker.workerTerminatedPayload) => {
+          const workerSession = this._workerSessions.get(event.workerId)!;
+          if (!workerSession) return;
+          workerSession.dispose(false);
+          this._workerSessions.delete(event.workerId);
           this._page._removeWorker(event.workerId);
-        });
-      }),
-      eventsHelper.addEventListener(session, 'Worker.dispatchMessageFromWorker', (event: Protocol.Worker.dispatchMessageFromWorkerPayload) => {
-        const workerSession = this._workerSessions.get(event.workerId)!;
-        if (!workerSession)
-          return;
-        workerSession.dispatchMessage(JSON.parse(event.message));
-      }),
-      eventsHelper.addEventListener(session, 'Worker.workerTerminated', (event: Protocol.Worker.workerTerminatedPayload) => {
-        const workerSession = this._workerSessions.get(event.workerId)!;
-        if (!workerSession)
-          return;
-        workerSession.dispose(false);
-        this._workerSessions.delete(event.workerId);
-        this._page._removeWorker(event.workerId);
-      })
+        },
+      ),
     ];
   }
 
@@ -84,21 +103,32 @@ export class WKWorkers {
   }
 
   async _onConsoleMessage(worker: Worker, event: Protocol.Console.messageAddedPayload) {
-    const { type, level, text, parameters, url, line: lineNumber, column: columnNumber } = event.message;
+    const {
+      type,
+      level,
+      text,
+      parameters,
+      url,
+      line: lineNumber,
+      column: columnNumber,
+    } = event.message;
     let derivedType: string = type || '';
-    if (type === 'log')
-      derivedType = level;
-    else if (type === 'timing')
-      derivedType = 'timeEnd';
+    if (type === 'log') derivedType = level;
+    else if (type === 'timing') derivedType = 'timeEnd';
 
-    const handles = (parameters || []).map(p => {
+    const handles = (parameters || []).map((p) => {
       return worker._existingExecutionContext!.createHandle(p);
     });
     const location: types.ConsoleMessageLocation = {
       url: url || '',
       lineNumber: (lineNumber || 1) - 1,
-      columnNumber: (columnNumber || 1) - 1
+      columnNumber: (columnNumber || 1) - 1,
     };
-    this._page._addConsoleMessage(derivedType, handles, location, handles.length ? undefined : text);
+    this._page._addConsoleMessage(
+      derivedType,
+      handles,
+      location,
+      handles.length ? undefined : text,
+    );
   }
 }

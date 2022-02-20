@@ -21,14 +21,24 @@ import { NetworkResourceDetails } from './networkResourceDetails';
 import './networkTab.css';
 
 export const NetworkTab: React.FunctionComponent<{
-  action: ActionTraceEvent | undefined,
+  action: ActionTraceEvent | undefined;
 }> = ({ action }) => {
   const [selected, setSelected] = React.useState(0);
 
   const resources = action ? modelUtil.resourcesForAction(action) : [];
-  return <div className='network-tab'>{
-    resources.map((resource, index) => {
-      return <NetworkResourceDetails resource={resource} key={index} index={index} selected={selected === index} setSelected={setSelected} />;
-    })
-  }</div>;
+  return (
+    <div className="network-tab">
+      {resources.map((resource, index) => {
+        return (
+          <NetworkResourceDetails
+            resource={resource}
+            key={index}
+            index={index}
+            selected={selected === index}
+            setSelected={setSelected}
+          />
+        );
+      })}
+    </div>
+  );
 };

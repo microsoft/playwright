@@ -16,7 +16,15 @@
 
 import fs from 'fs';
 import path from 'path';
-import { FullConfig, Location, Suite, TestCase, TestResult, TestStatus, TestStep } from '../../types/testReporter';
+import {
+  FullConfig,
+  Location,
+  Suite,
+  TestCase,
+  TestResult,
+  TestStatus,
+  TestStep,
+} from '../../types/testReporter';
 import { assert, calculateSha1 } from 'playwright-core/lib/utils/utils';
 import { sanitizeForFilePath } from '../util';
 import { formatResultFailure } from './base';
@@ -26,26 +34,26 @@ import { codeFrameColumns } from '@babel/code-frame';
 
 export type JsonLocation = Location;
 export type JsonError = string;
-export type JsonStackFrame = { file: string, line: number, column: number };
+export type JsonStackFrame = { file: string; line: number; column: number };
 
 export type JsonReport = {
-  config: JsonConfig,
-  project: JsonProject,
-  suites: JsonSuite[],
+  config: JsonConfig;
+  project: JsonProject;
+  suites: JsonSuite[];
 };
 
 export type JsonConfig = Omit<FullConfig, 'projects'>;
 
 export type JsonProject = {
-  metadata: any,
-  name: string,
-  outputDir: string,
-  repeatEach: number,
-  retries: number,
-  testDir: string,
-  testIgnore: string[],
-  testMatch: string[],
-  timeout: number,
+  metadata: any;
+  name: string;
+  outputDir: string;
+  repeatEach: number;
+  retries: number;
+  testDir: string;
+  testIgnore: string[];
+  testMatch: string[];
+  timeout: number;
 };
 
 export type JsonSuite = {
@@ -63,7 +71,7 @@ export type JsonTestCase = {
   location: JsonLocation;
   expectedStatus: TestStatus;
   timeout: number;
-  annotations: { type: string, description?: string }[];
+  annotations: { type: string; description?: string }[];
   retries: number;
   results: JsonTestResult[];
   ok: boolean;
@@ -90,7 +98,7 @@ export type JsonTestResult = {
 
 export type JsonTestStep = {
   title: string;
-  category: string,
+  category: string;
   startTime: string;
   duration: number;
   error?: JsonError;
@@ -119,16 +127,16 @@ class RawReporter {
       fs.mkdirSync(reportFolder, { recursive: true });
       let reportFile: string | undefined;
       for (let i = 0; i < 10; ++i) {
-        reportFile = path.join(reportFolder, sanitizeForFilePath(project.name || 'project') + (i ? '-' + i : '') + '.report');
+        reportFile = path.join(
+          reportFolder,
+          sanitizeForFilePath(project.name || 'project') + (i ? '-' + i : '') + '.report',
+        );
         try {
-          if (fs.existsSync(reportFile))
-            continue;
-        } catch (e) {
-        }
+          if (fs.existsSync(reportFile)) continue;
+        } catch (e) {}
         break;
       }
-      if (!reportFile)
-        throw new Error('Internal error, could not create report file');
+      if (!reportFile) throw new Error('Internal error, could not create report file');
       const report = this.generateProjectReport(this.config, suite);
       fs.writeFileSync(reportFile, JSON.stringify(report, undefined, 2));
     }
@@ -151,13 +159,13 @@ class RawReporter {
         testMatch: serializePatterns(project.testMatch),
         timeout: project.timeout,
       },
-      suites: suite.suites.map(fileSuite => {
+      suites: suite.suites.map((fileSuite) => {
         // fileId is based on the location of the enclosing file suite.
         // Don't use the file in test/suite location, it can be different
         // due to the source map / require.
         const fileId = calculateSha1(fileSuite.location!.file.split(path.sep).join('/'));
         return this._serializeSuite(fileSuite, fileId);
-      })
+      }),
     };
     for (const file of this.stepsInFile.keys()) {
       let source: string;
@@ -167,18 +175,27 @@ class RawReporter {
         continue;
       }
       const lines = source.split('\n').length;
-      const highlighted = codeFrameColumns(source, { start: { line: lines, column: 1 } }, { highlightCode: true, linesAbove: lines, linesBelow: 0 });
+      const highlighted = codeFrameColumns(
+        source,
+        { start: { line: lines, column: 1 } },
+        { highlightCode: true, linesAbove: lines, linesBelow: 0 },
+      );
       const highlightedLines = highlighted.split('\n');
       const lineWithArrow = highlightedLines[highlightedLines.length - 1];
       for (const step of this.stepsInFile.get(file)) {
         // Don't bother with snippets that have less than 3 lines.
-        if (step.location!.line < 2 || step.location!.line >= lines)
-          continue;
+        if (step.location!.line < 2 || step.location!.line >= lines) continue;
         // Cut out snippet.
-        const snippetLines = highlightedLines.slice(step.location!.line - 2, step.location!.line + 1);
+        const snippetLines = highlightedLines.slice(
+          step.location!.line - 2,
+          step.location!.line + 1,
+        );
         // Relocate arrow.
         const index = lineWithArrow.indexOf('^');
-        const shiftedArrow = lineWithArrow.slice(0, index) + ' '.repeat(step.location!.column - 1) + lineWithArrow.slice(index);
+        const shiftedArrow =
+          lineWithArrow.slice(0, index) +
+          ' '.repeat(step.location!.column - 1) +
+          lineWithArrow.slice(index);
         // Insert arrow line.
         snippetLines.splice(2, 0, shiftedArrow);
         step.snippet = snippetLines.join('\n');
@@ -193,15 +210,17 @@ class RawReporter {
       title: suite.title,
       fileId,
       location,
-      suites: suite.suites.map(s => this._serializeSuite(s, fileId)),
-      tests: suite.tests.map(t => this._serializeTest(t, fileId)),
+      suites: suite.suites.map((s) => this._serializeSuite(s, fileId)),
+      tests: suite.tests.map((t) => this._serializeTest(t, fileId)),
       hooks: [],
     };
   }
 
   private _serializeTest(test: TestCase, fileId: string): JsonTestCase {
     const [, projectName, , ...titles] = test.titlePath();
-    const testIdExpression = `project:${projectName}|path:${titles.join('>')}|repeat:${test.repeatEachIndex}`;
+    const testIdExpression = `project:${projectName}|path:${titles.join('>')}|repeat:${
+      test.repeatEachIndex
+    }`;
     const testId = fileId + '-' + calculateSha1(testIdExpression);
     return {
       testId,
@@ -213,7 +232,7 @@ class RawReporter {
       retries: test.retries,
       ok: test.ok(),
       outcome: test.outcome(),
-      results: test.results.map(r => this._serializeResult(test, r)),
+      results: test.results.map((r) => this._serializeResult(test, r)),
     };
   }
 
@@ -224,9 +243,11 @@ class RawReporter {
       startTime: result.startTime.toISOString(),
       duration: result.duration,
       status: result.status,
-      errors: formatResultFailure(this.config, test, result, '', true).map(error => error.message),
+      errors: formatResultFailure(this.config, test, result, '', true).map(
+        (error) => error.message,
+      ),
       attachments: this._createAttachments(result),
-      steps: dedupeSteps(result.steps.map(step => this._serializeStep(test, step)))
+      steps: dedupeSteps(result.steps.map((step) => this._serializeStep(test, step))),
     };
   }
 
@@ -238,12 +259,11 @@ class RawReporter {
       duration: step.duration,
       error: step.error?.message,
       location: this._relativeLocation(step.location),
-      steps: dedupeSteps(step.steps.map(step => this._serializeStep(test, step))),
-      count: 1
+      steps: dedupeSteps(step.steps.map((step) => this._serializeStep(test, step))),
+      count: 1,
     };
 
-    if (step.location)
-      this.stepsInFile.set(step.location.file, result);
+    if (step.location) this.stepsInFile.set(step.location.file, result);
     return result;
   }
 
@@ -254,21 +274,19 @@ class RawReporter {
         attachments.push({
           name: attachment.name,
           contentType: attachment.contentType,
-          body: attachment.body
+          body: attachment.body,
         });
       } else if (attachment.path) {
         attachments.push({
           name: attachment.name,
           contentType: attachment.contentType,
-          path: attachment.path
+          path: attachment.path,
         });
       }
     }
 
-    for (const chunk of result.stdout)
-      attachments.push(this._stdioAttachment(chunk, 'stdout'));
-    for (const chunk of result.stderr)
-      attachments.push(this._stdioAttachment(chunk, 'stderr'));
+    for (const chunk of result.stdout) attachments.push(this._stdioAttachment(chunk, 'stdout'));
+    for (const chunk of result.stderr) attachments.push(this._stdioAttachment(chunk, 'stderr'));
     return attachments;
   }
 
@@ -277,19 +295,18 @@ class RawReporter {
       return {
         name: type,
         contentType: 'text/plain',
-        body: chunk
+        body: chunk,
       };
     }
     return {
       name: type,
       contentType: 'application/octet-stream',
-      body: chunk
+      body: chunk,
     };
   }
 
   private _relativeLocation(location: Location | undefined): Location | undefined {
-    if (!location)
-      return undefined;
+    if (!location) return undefined;
     const file = toPosixPath(path.relative(this.config.rootDir, location.file));
     return {
       file,
@@ -303,8 +320,17 @@ function dedupeSteps(steps: JsonTestStep[]): JsonTestStep[] {
   const result: JsonTestStep[] = [];
   let lastStep: JsonTestStep | undefined;
   for (const step of steps) {
-    const canDedupe = !step.error && step.duration >= 0 && step.location?.file && !step.steps.length;
-    if (canDedupe && lastStep && step.category === lastStep.category && step.title === lastStep.title && step.location?.file === lastStep.location?.file && step.location?.line === lastStep.location?.line && step.location?.column === lastStep.location?.column) {
+    const canDedupe =
+      !step.error && step.duration >= 0 && step.location?.file && !step.steps.length;
+    if (
+      canDedupe &&
+      lastStep &&
+      step.category === lastStep.category &&
+      step.title === lastStep.title &&
+      step.location?.file === lastStep.location?.file &&
+      step.location?.line === lastStep.location?.line &&
+      step.location?.column === lastStep.location?.column
+    ) {
       ++lastStep.count;
       lastStep.duration += step.duration;
       continue;

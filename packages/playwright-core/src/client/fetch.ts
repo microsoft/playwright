@@ -22,7 +22,14 @@ import * as api from '../../types/types';
 import { HeadersArray } from '../common/types';
 import * as channels from '../protocol/channels';
 import { kBrowserOrContextClosedError } from '../utils/errors';
-import { assert, headersObjectToArray, isFilePayload, isString, mkdirIfNeeded, objectToArray } from '../utils/utils';
+import {
+  assert,
+  headersObjectToArray,
+  isFilePayload,
+  isString,
+  mkdirIfNeeded,
+  objectToArray,
+} from '../utils/utils';
 import { ChannelOwner } from './channelOwner';
 import * as network from './network';
 import { RawHeaders } from './network';
@@ -32,24 +39,27 @@ import { createInstrumentation } from './clientInstrumentation';
 import { Tracing } from './tracing';
 
 export type FetchOptions = {
-  params?: { [key: string]: string; },
-  method?: string,
-  headers?: Headers,
-  data?: string | Buffer | Serializable,
-  form?: { [key: string]: string|number|boolean; };
-  multipart?: { [key: string]: string|number|boolean|fs.ReadStream|FilePayload; };
-  timeout?: number,
-  failOnStatusCode?: boolean,
-  ignoreHTTPSErrors?: boolean,
+  params?: { [key: string]: string };
+  method?: string;
+  headers?: Headers;
+  data?: string | Buffer | Serializable;
+  form?: { [key: string]: string | number | boolean };
+  multipart?: { [key: string]: string | number | boolean | fs.ReadStream | FilePayload };
+  timeout?: number;
+  failOnStatusCode?: boolean;
+  ignoreHTTPSErrors?: boolean;
 };
 
-type NewContextOptions = Omit<channels.PlaywrightNewRequestOptions, 'extraHTTPHeaders' | 'storageState'> & {
-  extraHTTPHeaders?: Headers,
-  storageState?: string | StorageState,
+type NewContextOptions = Omit<
+  channels.PlaywrightNewRequestOptions,
+  'extraHTTPHeaders' | 'storageState'
+> & {
+  extraHTTPHeaders?: Headers;
+  storageState?: string | StorageState;
 };
 
 type RequestWithBodyOptions = Omit<FetchOptions, 'method'>;
-type RequestWithoutBodyOptions = Omit<RequestWithBodyOptions, 'data'|'form'|'multipart'>;
+type RequestWithoutBodyOptions = Omit<RequestWithBodyOptions, 'data' | 'form' | 'multipart'>;
 
 export class APIRequest implements api.APIRequest {
   private _playwright: Playwright;
@@ -64,14 +74,21 @@ export class APIRequest implements api.APIRequest {
   }
 
   async newContext(options: NewContextOptions = {}): Promise<APIRequestContext> {
-    const storageState = typeof options.storageState === 'string' ?
-      JSON.parse(await fs.promises.readFile(options.storageState, 'utf8')) :
-      options.storageState;
-    const context = APIRequestContext.from((await this._playwright._channel.newRequest({
-      ...options,
-      extraHTTPHeaders: options.extraHTTPHeaders ? headersObjectToArray(options.extraHTTPHeaders) : undefined,
-      storageState,
-    })).request);
+    const storageState =
+      typeof options.storageState === 'string'
+        ? JSON.parse(await fs.promises.readFile(options.storageState, 'utf8'))
+        : options.storageState;
+    const context = APIRequestContext.from(
+      (
+        await this._playwright._channel.newRequest({
+          ...options,
+          extraHTTPHeaders: options.extraHTTPHeaders
+            ? headersObjectToArray(options.extraHTTPHeaders)
+            : undefined,
+          storageState,
+        })
+      ).request,
+    );
     context._tracing._localUtils = this._playwright._utils;
     this._contexts.add(context);
     context._request = this;
@@ -80,7 +97,10 @@ export class APIRequest implements api.APIRequest {
   }
 }
 
-export class APIRequestContext extends ChannelOwner<channels.APIRequestContextChannel> implements api.APIRequestContext {
+export class APIRequestContext
+  extends ChannelOwner<channels.APIRequestContextChannel>
+  implements api.APIRequestContext
+{
   _request?: APIRequest;
   readonly _tracing: Tracing;
 
@@ -88,7 +108,12 @@ export class APIRequestContext extends ChannelOwner<channels.APIRequestContextCh
     return (channel as any)._object;
   }
 
-  constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.APIRequestContextInitializer) {
+  constructor(
+    parent: ChannelOwner,
+    type: string,
+    guid: string,
+    initializer: channels.APIRequestContextInitializer,
+  ) {
     super(parent, type, guid, initializer, createInstrumentation());
     this._tracing = Tracing.from(initializer.tracing);
   }
@@ -141,16 +166,29 @@ export class APIRequestContext extends ChannelOwner<channels.APIRequestContextCh
     });
   }
 
-  async fetch(urlOrRequest: string | api.Request, options: FetchOptions = {}): Promise<APIResponse> {
+  async fetch(
+    urlOrRequest: string | api.Request,
+    options: FetchOptions = {},
+  ): Promise<APIResponse> {
     return this._wrapApiCall(async () => {
-      const request: network.Request | undefined = (urlOrRequest instanceof network.Request) ? urlOrRequest as network.Request : undefined;
-      assert(request || typeof urlOrRequest === 'string', 'First argument must be either URL string or Request');
-      assert((options.data === undefined ? 0 : 1) + (options.form === undefined ? 0 : 1) + (options.multipart === undefined ? 0 : 1) <= 1, `Only one of 'data', 'form' or 'multipart' can be specified`);
-      const url = request ? request.url() : urlOrRequest as string;
+      const request: network.Request | undefined =
+        urlOrRequest instanceof network.Request ? (urlOrRequest as network.Request) : undefined;
+      assert(
+        request || typeof urlOrRequest === 'string',
+        'First argument must be either URL string or Request',
+      );
+      assert(
+        (options.data === undefined ? 0 : 1) +
+          (options.form === undefined ? 0 : 1) +
+          (options.multipart === undefined ? 0 : 1) <=
+          1,
+        `Only one of 'data', 'form' or 'multipart' can be specified`,
+      );
+      const url = request ? request.url() : (urlOrRequest as string);
       const params = objectToArray(options.params);
       const method = options.method || request?.method();
       // Cannot call allHeaders() here as the request may be paused inside route handler.
-      const headersObj = options.headers || request?.headers() ;
+      const headersObj = options.headers || request?.headers();
       const headers = headersObj ? headersObjectToArray(headersObj) : undefined;
       let jsonData: any;
       let formData: channels.NameValue[] | undefined;
@@ -158,13 +196,15 @@ export class APIRequestContext extends ChannelOwner<channels.APIRequestContextCh
       let postDataBuffer: Buffer | undefined;
       if (options.data !== undefined) {
         if (isString(options.data)) {
-          if (isJsonContentType(headers))
-            jsonData = options.data;
-          else
-            postDataBuffer = Buffer.from(options.data, 'utf8');
+          if (isJsonContentType(headers)) jsonData = options.data;
+          else postDataBuffer = Buffer.from(options.data, 'utf8');
         } else if (Buffer.isBuffer(options.data)) {
           postDataBuffer = options.data;
-        } else if (typeof options.data === 'object' || typeof options.data === 'number' || typeof options.data === 'boolean') {
+        } else if (
+          typeof options.data === 'object' ||
+          typeof options.data === 'number' ||
+          typeof options.data === 'boolean'
+        ) {
           jsonData = options.data;
         } else {
           throw new Error(`Unexpected 'data' type`);
@@ -187,9 +227,14 @@ export class APIRequestContext extends ChannelOwner<channels.APIRequestContextCh
           }
         }
       }
-      if (postDataBuffer === undefined && jsonData === undefined && formData === undefined && multipartData === undefined)
+      if (
+        postDataBuffer === undefined &&
+        jsonData === undefined &&
+        formData === undefined &&
+        multipartData === undefined
+      )
         postDataBuffer = request?.postDataBuffer() || undefined;
-      const postData = (postDataBuffer ? postDataBuffer.toString('base64') : undefined);
+      const postData = postDataBuffer ? postDataBuffer.toString('base64') : undefined;
       const result = await this._channel.fetch({
         url,
         params,
@@ -255,8 +300,7 @@ export class APIResponse implements api.APIResponse {
   async body(): Promise<Buffer> {
     try {
       const result = await this._request._channel.fetchResponseBody({ fetchUid: this._fetchUid() });
-      if (result.binary === undefined)
-        throw new Error('Response has been disposed');
+      if (result.binary === undefined) throw new Error('Response has been disposed');
       return Buffer.from(result.binary!, 'base64');
     } catch (e) {
       if (e.message.includes(kBrowserOrContextClosedError))
@@ -307,11 +351,13 @@ function filePayloadToJson(payload: FilePayload): ServerFilePayload {
 async function readStreamToJson(stream: fs.ReadStream): Promise<ServerFilePayload> {
   const buffer = await new Promise<Buffer>((resolve, reject) => {
     const chunks: Buffer[] = [];
-    stream.on('data', chunk => chunks.push(chunk as Buffer));
+    stream.on('data', (chunk) => chunks.push(chunk as Buffer));
     stream.on('end', () => resolve(Buffer.concat(chunks)));
-    stream.on('error', err => reject(err));
+    stream.on('error', (err) => reject(err));
   });
-  const streamPath: string = Buffer.isBuffer(stream.path) ? stream.path.toString('utf8') : stream.path;
+  const streamPath: string = Buffer.isBuffer(stream.path)
+    ? stream.path.toString('utf8')
+    : stream.path;
   return {
     name: path.basename(streamPath),
     buffer: buffer.toString('base64'),
@@ -319,11 +365,9 @@ async function readStreamToJson(stream: fs.ReadStream): Promise<ServerFilePayloa
 }
 
 function isJsonContentType(headers?: HeadersArray): boolean {
-  if (!headers)
-    return false;
+  if (!headers) return false;
   for (const { name, value } of headers) {
-    if (name.toLocaleLowerCase() === 'content-type')
-      return value === 'application/json';
+    if (name.toLocaleLowerCase() === 'content-type') return value === 'application/json';
   }
   return false;
 }

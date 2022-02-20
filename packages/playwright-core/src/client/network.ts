@@ -33,26 +33,26 @@ import { MultiMap } from '../utils/multimap';
 import { APIResponse } from './fetch';
 
 export type NetworkCookie = {
-  name: string,
-  value: string,
-  domain: string,
-  path: string,
-  expires: number,
-  httpOnly: boolean,
-  secure: boolean,
-  sameSite: 'Strict' | 'Lax' | 'None'
+  name: string;
+  value: string;
+  domain: string;
+  path: string;
+  expires: number;
+  httpOnly: boolean;
+  secure: boolean;
+  sameSite: 'Strict' | 'Lax' | 'None';
 };
 
 export type SetNetworkCookieParam = {
-  name: string,
-  value: string,
-  url?: string,
-  domain?: string,
-  path?: string,
-  expires?: number,
-  httpOnly?: boolean,
-  secure?: boolean,
-  sameSite?: 'Strict' | 'Lax' | 'None'
+  name: string;
+  value: string;
+  url?: string;
+  domain?: string;
+  path?: string;
+  expires?: number;
+  httpOnly?: boolean;
+  secure?: boolean;
+  sameSite?: 'Strict' | 'Lax' | 'None';
 };
 
 export class Request extends ChannelOwner<channels.RequestChannel> implements api.Request {
@@ -72,13 +72,18 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
     return request ? Request.from(request) : null;
   }
 
-  constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.RequestInitializer) {
+  constructor(
+    parent: ChannelOwner,
+    type: string,
+    guid: string,
+    initializer: channels.RequestInitializer,
+  ) {
     super(parent, type, guid, initializer);
     this._redirectedFrom = Request.fromNullable(initializer.redirectedFrom);
-    if (this._redirectedFrom)
-      this._redirectedFrom._redirectedTo = this;
+    if (this._redirectedFrom) this._redirectedFrom._redirectedTo = this;
     this._provisionalHeaders = new RawHeaders(initializer.headers);
-    this._postData = initializer.postData !== undefined ? Buffer.from(initializer.postData, 'base64') : null;
+    this._postData =
+      initializer.postData !== undefined ? Buffer.from(initializer.postData, 'base64') : null;
     this._timing = {
       startTime: 0,
       domainLookupStart: -1,
@@ -114,15 +119,13 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
 
   postDataJSON(): Object | null {
     const postData = this.postData();
-    if (!postData)
-      return null;
+    if (!postData) return null;
 
     const contentType = this.headers()['content-type'];
     if (contentType === 'application/x-www-form-urlencoded') {
       const entries: Record<string, string> = {};
       const parsed = new URLSearchParams(postData);
-      for (const [k, v] of parsed.entries())
-        entries[k] = v;
+      for (const [k, v] of parsed.entries()) entries[k] = v;
       return entries;
     }
 
@@ -187,11 +190,10 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
     return this._redirectedTo;
   }
 
-  failure(): { errorText: string; } | null {
-    if (this._failureText === null)
-      return null;
+  failure(): { errorText: string } | null {
+    if (this._failureText === null) return null;
     return {
-      errorText: this._failureText
+      errorText: this._failureText,
     };
   }
 
@@ -201,8 +203,7 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
 
   async sizes(): Promise<RequestSizes> {
     const response = await this.response();
-    if (!response)
-      throw new Error('Unable to fetch sizes for failed request');
+    if (!response) throw new Error('Unable to fetch sizes for failed request');
     return (await response._channel.sizes()).sizes;
   }
 
@@ -216,7 +217,12 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
     return (route as any)._object;
   }
 
-  constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.RouteInitializer) {
+  constructor(
+    parent: ChannelOwner,
+    type: string,
+    guid: string,
+    initializer: channels.RouteInitializer,
+  ) {
     super(parent, type, guid, initializer);
   }
 
@@ -229,27 +235,36 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
     // When page closes or crashes, we catch any potential rejects from this Route.
     // Note that page could be missing when routing popup's initial request that
     // does not have a Page initialized just yet.
-    return Promise.race([
-      promise,
-      page ? page._closedOrCrashedPromise : Promise.resolve(),
-    ]);
+    return Promise.race([promise, page ? page._closedOrCrashedPromise : Promise.resolve()]);
   }
 
   async abort(errorCode?: string) {
     await this._raceWithPageClose(this._channel.abort({ errorCode }));
   }
 
-  async fulfill(options: { response?: api.APIResponse, status?: number, headers?: Headers, contentType?: string, body?: string | Buffer, path?: string } = {}) {
+  async fulfill(
+    options: {
+      response?: api.APIResponse;
+      status?: number;
+      headers?: Headers;
+      contentType?: string;
+      body?: string | Buffer;
+      path?: string;
+    } = {},
+  ) {
     let fetchResponseUid;
     let { status: statusOption, headers: headersOption, body } = options;
     if (options.response) {
       statusOption ||= options.response.status();
       headersOption ||= options.response.headers();
-      if (options.body === undefined && options.path === undefined && options.response instanceof APIResponse) {
+      if (
+        options.body === undefined &&
+        options.path === undefined &&
+        options.response instanceof APIResponse
+      ) {
         if (options.response._request._connection === this._connection)
           fetchResponseUid = (options.response as APIResponse)._fetchUid();
-        else
-          body = await options.response.body();
+        else body = await options.response.body();
       }
     }
 
@@ -272,39 +287,50 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
     const headers: Headers = {};
     for (const header of Object.keys(headersOption || {}))
       headers[header.toLowerCase()] = String(headersOption![header]);
-    if (options.contentType)
-      headers['content-type'] = String(options.contentType);
+    if (options.contentType) headers['content-type'] = String(options.contentType);
     else if (options.path)
       headers['content-type'] = mime.getType(options.path) || 'application/octet-stream';
-    if (length && !('content-length' in headers))
-      headers['content-length'] = String(length);
+    if (length && !('content-length' in headers)) headers['content-length'] = String(length);
 
-    await this._raceWithPageClose(this._channel.fulfill({
-      status: statusOption || 200,
-      headers: headersObjectToArray(headers),
-      body,
-      isBase64,
-      fetchResponseUid
-    }));
+    await this._raceWithPageClose(
+      this._channel.fulfill({
+        status: statusOption || 200,
+        headers: headersObjectToArray(headers),
+        body,
+        isBase64,
+        fetchResponseUid,
+      }),
+    );
   }
 
-  async continue(options: { url?: string, method?: string, headers?: Headers, postData?: string | Buffer } = {}) {
+  async continue(
+    options: { url?: string; method?: string; headers?: Headers; postData?: string | Buffer } = {},
+  ) {
     await this._continue(options);
   }
 
-  async _internalContinue(options: { url?: string, method?: string, headers?: Headers, postData?: string | Buffer } = {}) {
+  async _internalContinue(
+    options: { url?: string; method?: string; headers?: Headers; postData?: string | Buffer } = {},
+  ) {
     await this._continue(options, true).catch(() => {});
   }
 
-  private async _continue(options: { url?: string, method?: string, headers?: Headers, postData?: string | Buffer }, isInternal?: boolean) {
+  private async _continue(
+    options: { url?: string; method?: string; headers?: Headers; postData?: string | Buffer },
+    isInternal?: boolean,
+  ) {
     return await this._wrapApiCall(async () => {
-      const postDataBuffer = isString(options.postData) ? Buffer.from(options.postData, 'utf8') : options.postData;
-      await this._raceWithPageClose(this._channel.continue({
-        url: options.url,
-        method: options.method,
-        headers: options.headers ? headersObjectToArray(options.headers) : undefined,
-        postData: postDataBuffer ? postDataBuffer.toString('base64') : undefined,
-      }));
+      const postDataBuffer = isString(options.postData)
+        ? Buffer.from(options.postData, 'utf8')
+        : options.postData;
+      await this._raceWithPageClose(
+        this._channel.continue({
+          url: options.url,
+          method: options.method,
+          headers: options.headers ? headersObjectToArray(options.headers) : undefined,
+          postData: postDataBuffer ? postDataBuffer.toString('base64') : undefined,
+        }),
+      );
     }, isInternal);
   }
 }
@@ -344,7 +370,12 @@ export class Response extends ChannelOwner<channels.ResponseChannel> implements 
     return response ? Response.from(response) : null;
   }
 
-  constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.ResponseInitializer) {
+  constructor(
+    parent: ChannelOwner,
+    type: string,
+    guid: string,
+    initializer: channels.ResponseInitializer,
+  ) {
     super(parent, type, guid, initializer);
     this._provisionalHeaders = new RawHeaders(initializer.headers);
     this._request = Request.from(this._initializer.request);
@@ -357,7 +388,10 @@ export class Response extends ChannelOwner<channels.ResponseChannel> implements 
 
   ok(): boolean {
     // Status 0 is for file:// URLs
-    return this._initializer.status === 0 || (this._initializer.status >= 200 && this._initializer.status <= 299);
+    return (
+      this._initializer.status === 0 ||
+      (this._initializer.status >= 200 && this._initializer.status <= 299)
+    );
   }
 
   status(): number {
@@ -426,11 +460,11 @@ export class Response extends ChannelOwner<channels.ResponseChannel> implements 
     return this._request.frame();
   }
 
-  async serverAddr(): Promise<RemoteAddr|null> {
+  async serverAddr(): Promise<RemoteAddr | null> {
     return (await this._channel.serverAddr()).value || null;
   }
 
-  async securityDetails(): Promise<SecurityDetails|null> {
+  async securityDetails(): Promise<SecurityDetails | null> {
     return (await this._channel.securityDetails()).value || null;
   }
 }
@@ -443,19 +477,22 @@ export class WebSocket extends ChannelOwner<channels.WebSocketChannel> implement
     return (webSocket as any)._object;
   }
 
-  constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.WebSocketInitializer) {
+  constructor(
+    parent: ChannelOwner,
+    type: string,
+    guid: string,
+    initializer: channels.WebSocketInitializer,
+  ) {
     super(parent, type, guid, initializer);
     this._isClosed = false;
     this._page = parent as Page;
-    this._channel.on('frameSent', (event: { opcode: number, data: string }) => {
-      if (event.opcode === 1)
-        this.emit(Events.WebSocket.FrameSent, { payload: event.data });
+    this._channel.on('frameSent', (event: { opcode: number; data: string }) => {
+      if (event.opcode === 1) this.emit(Events.WebSocket.FrameSent, { payload: event.data });
       else if (event.opcode === 2)
         this.emit(Events.WebSocket.FrameSent, { payload: Buffer.from(event.data, 'base64') });
     });
-    this._channel.on('frameReceived', (event: { opcode: number, data: string }) => {
-      if (event.opcode === 1)
-        this.emit(Events.WebSocket.FrameReceived, { payload: event.data });
+    this._channel.on('frameReceived', (event: { opcode: number; data: string }) => {
+      if (event.opcode === 1) this.emit(Events.WebSocket.FrameReceived, { payload: event.data });
       else if (event.opcode === 2)
         this.emit(Events.WebSocket.FrameReceived, { payload: Buffer.from(event.data, 'base64') });
     });
@@ -476,10 +513,18 @@ export class WebSocket extends ChannelOwner<channels.WebSocketChannel> implement
 
   async waitForEvent(event: string, optionsOrPredicate: WaitForEventOptions = {}): Promise<any> {
     return this._wrapApiCall(async () => {
-      const timeout = this._page._timeoutSettings.timeout(typeof optionsOrPredicate === 'function' ? {} : optionsOrPredicate);
-      const predicate = typeof optionsOrPredicate === 'function' ? optionsOrPredicate : optionsOrPredicate.predicate;
+      const timeout = this._page._timeoutSettings.timeout(
+        typeof optionsOrPredicate === 'function' ? {} : optionsOrPredicate,
+      );
+      const predicate =
+        typeof optionsOrPredicate === 'function'
+          ? optionsOrPredicate
+          : optionsOrPredicate.predicate;
       const waiter = Waiter.createForEvent(this, event);
-      waiter.rejectOnTimeout(timeout, `Timeout ${timeout}ms exceeded while waiting for event "${event}"`);
+      waiter.rejectOnTimeout(
+        timeout,
+        `Timeout ${timeout}ms exceeded while waiting for event "${event}"`,
+      );
       if (event !== Events.WebSocket.Error)
         waiter.rejectOnEvent(this, Events.WebSocket.Error, new Error('Socket error'));
       if (event !== Events.WebSocket.Close)
@@ -496,7 +541,9 @@ export function validateHeaders(headers: Headers) {
   for (const key of Object.keys(headers)) {
     const value = headers[key];
     if (!Object.is(value, undefined) && !isString(value))
-      throw new Error(`Expected value of header "${key}" to be String, but "${typeof value}" is found.`);
+      throw new Error(
+        `Expected value of header "${key}" to be String, but "${typeof value}" is found.`,
+      );
   }
 }
 
@@ -507,7 +554,12 @@ export class RouteHandler {
   readonly url: URLMatch;
   readonly handler: RouteHandlerCallback;
 
-  constructor(baseURL: string | undefined, url: URLMatch, handler: RouteHandlerCallback, times: number = Number.MAX_SAFE_INTEGER) {
+  constructor(
+    baseURL: string | undefined,
+    url: URLMatch,
+    handler: RouteHandlerCallback,
+    times: number = Number.MAX_SAFE_INTEGER,
+  ) {
     this._baseURL = baseURL;
     this._times = times;
     this.url = url;
@@ -534,14 +586,12 @@ export class RawHeaders {
 
   constructor(headers: HeadersArray) {
     this._headersArray = headers;
-    for (const header of headers)
-      this._headersMap.set(header.name.toLowerCase(), header.value);
+    for (const header of headers) this._headersMap.set(header.name.toLowerCase(), header.value);
   }
 
   get(name: string): string | null {
     const values = this.getAll(name);
-    if (!values || !values.length)
-      return null;
+    if (!values || !values.length) return null;
     return values.join(name.toLowerCase() === 'set-cookie' ? '\n' : ', ');
   }
 
@@ -551,8 +601,7 @@ export class RawHeaders {
 
   headers(): Headers {
     const result: Headers = {};
-    for (const name of this._headersMap.keys())
-      result[name] = this.get(name)!;
+    for (const name of this._headersMap.keys()) result[name] = this.get(name)!;
     return result;
   }
 

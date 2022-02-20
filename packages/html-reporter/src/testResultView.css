@@ -64,13 +64,13 @@
   padding: 2px 8px;
 }
 
-@media(prefers-color-scheme: light) {
+@media (prefers-color-scheme: light) {
   .test-result-counter {
     background: var(--color-scale-gray-5);
   }
 }
 
-@media(prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark) {
   .test-result-counter {
     background: var(--color-scale-gray-3);
   }

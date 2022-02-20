@@ -48,39 +48,34 @@ export class TraceModel {
   async load(traceURL: string, progress: (done: number, total: number) => void) {
     this.contextEntry.traceUrl = traceURL;
     const zipReader = new zipjs.ZipReader( // @ts-ignore
-        new zipjs.HttpReader(this._formatUrl(traceURL), { mode: 'cors', preventHeadRequest: true }),
-        { useWebWorkers: false }) as zip.ZipReader;
+      new zipjs.HttpReader(this._formatUrl(traceURL), { mode: 'cors', preventHeadRequest: true }),
+      { useWebWorkers: false },
+    ) as zip.ZipReader;
     let traceEntry: zip.Entry | undefined;
     let networkEntry: zip.Entry | undefined;
     for (const entry of await zipReader.getEntries({ onprogress: progress })) {
-      if (entry.filename.endsWith('.trace'))
-        traceEntry = entry;
-      if (entry.filename.endsWith('.network'))
-        networkEntry = entry;
-      if (entry.filename.includes('src@'))
-        this.contextEntry.hasSource = true;
+      if (entry.filename.endsWith('.trace')) traceEntry = entry;
+      if (entry.filename.endsWith('.network')) networkEntry = entry;
+      if (entry.filename.includes('src@')) this.contextEntry.hasSource = true;
       this._entries.set(entry.filename, entry);
     }
     this._snapshotStorage = new PersistentSnapshotStorage(this._entries);
 
     const traceWriter = new zipjs.TextWriter() as zip.TextWriter;
     await traceEntry!.getData!(traceWriter);
-    for (const line of (await traceWriter.getData()).split('\n'))
-      this.appendEvent(line);
+    for (const line of (await traceWriter.getData()).split('\n')) this.appendEvent(line);
 
     if (networkEntry) {
       const networkWriter = new zipjs.TextWriter();
       await networkEntry.getData!(networkWriter);
-      for (const line of (await networkWriter.getData()).split('\n'))
-        this.appendEvent(line);
+      for (const line of (await networkWriter.getData()).split('\n')) this.appendEvent(line);
     }
     this._build();
   }
 
   async resourceForSha1(sha1: string): Promise<Blob | undefined> {
     const entry = this._entries.get('resources/' + sha1);
-    if (!entry)
-      return;
+    if (!entry) return;
     const blobWriter = new zipjs.BlobWriter() as zip.BlobWriter;
     await entry!.getData!(blobWriter);
     return await blobWriter.getData();
@@ -108,8 +103,7 @@ export class TraceModel {
   }
 
   appendEvent(line: string) {
-    if (!line)
-      return;
+    if (!line) return;
     const event = this._modernize(JSON.parse(line));
     switch (event.type) {
       case 'context-options': {
@@ -125,7 +119,8 @@ export class TraceModel {
         break;
       }
       case 'action': {
-        const include = !isTracing(event.metadata) && (!event.metadata.internal || event.metadata.apiName);
+        const include =
+          !isTracing(event.metadata) && (!event.metadata.internal || event.metadata.apiName);
         if (include) {
           if (!event.metadata.apiName)
             event.metadata.apiName = event.metadata.type + '.' + event.metadata.method;
@@ -138,8 +133,7 @@ export class TraceModel {
         if (metadata.pageId) {
           if (metadata.method === '__create__')
             this.contextEntry!.objects[metadata.params.guid] = metadata.params.initializer;
-          else
-            this.contextEntry!.events.push(event);
+          else this.contextEntry!.events.push(event);
         }
         break;
       }
@@ -151,14 +145,16 @@ export class TraceModel {
         break;
     }
     if (event.type === 'action' || event.type === 'event') {
-      this.contextEntry!.startTime = Math.min(this.contextEntry!.startTime, event.metadata.startTime);
+      this.contextEntry!.startTime = Math.min(
+        this.contextEntry!.startTime,
+        event.metadata.startTime,
+      );
       this.contextEntry!.endTime = Math.max(this.contextEntry!.endTime, event.metadata.endTime);
     }
   }
 
   private _modernize(event: any): trace.TraceEvent {
-    if (this._version === undefined)
-      return event;
+    if (this._version === undefined) return event;
     for (let version = this._version; version < trace.VERSION; ++version)
       event = (this as any)[`_modernize_${version}_to_${version + 1}`].call(this, event);
     return event;

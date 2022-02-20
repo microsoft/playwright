@@ -22,6 +22,6 @@ export async function installAppIcon(page: Page) {
   const icon = await fs.promises.readFile(require.resolve('./appIcon.png'));
   const crPage = page._delegate as CRPage;
   await crPage._mainFrameSession._client.send('Browser.setDockTile', {
-    image: icon.toString('base64')
+    image: icon.toString('base64'),
   });
 }

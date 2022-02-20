@@ -98,15 +98,17 @@ export class Highlight {
   }
 
   isInstalled(): boolean {
-    return this._outerGlassPaneElement.parentElement === document.documentElement && !this._outerGlassPaneElement.nextElementSibling;
+    return (
+      this._outerGlassPaneElement.parentElement === document.documentElement &&
+      !this._outerGlassPaneElement.nextElementSibling
+    );
   }
 
   showActionPoint(x: number, y: number) {
     this._actionPointElement.style.top = y + 'px';
     this._actionPointElement.style.left = x + 'px';
     this._actionPointElement.hidden = false;
-    if (this._isUnderTest)
-      console.error('Action point for test: ' + JSON.stringify({ x, y })); // eslint-disable-line no-console
+    if (this._isUnderTest) console.error('Action point for test: ' + JSON.stringify({ x, y })); // eslint-disable-line no-console
   }
 
   hideActionPoint() {
@@ -124,7 +126,7 @@ export class Highlight {
     this._tooltipElement.style.display = 'flex';
 
     // Trigger layout.
-    const boxes = elements.map(e => e.getBoundingClientRect());
+    const boxes = elements.map((e) => e.getBoundingClientRect());
     const tooltipWidth = this._tooltipElement.offsetWidth;
     const tooltipHeight = this._tooltipElement.offsetHeight;
     const totalWidth = this._innerGlassPaneElement.offsetWidth;
@@ -134,8 +136,7 @@ export class Highlight {
     if (boxes.length) {
       const primaryBox = boxes[0];
       let anchorLeft = primaryBox.left;
-      if (anchorLeft + tooltipWidth > totalWidth - 5)
-        anchorLeft = totalWidth - tooltipWidth - 5;
+      if (anchorLeft + tooltipWidth > totalWidth - 5) anchorLeft = totalWidth - tooltipWidth - 5;
       let anchorTop = primaryBox.bottom + 5;
       if (anchorTop + tooltipHeight > totalHeight - 5) {
         // If can't fit below, either position above...
@@ -166,7 +167,10 @@ export class Highlight {
       this._highlightElements.push(highlightElement);
 
       if (this._isUnderTest)
-        console.error('Highlight box for test: ' + JSON.stringify({ x: box.x, y: box.y, width: box.width, height: box.height })); // eslint-disable-line no-console
+        console.error(
+          'Highlight box for test: ' +
+            JSON.stringify({ x: box.x, y: box.y, width: box.width, height: box.height }),
+        ); // eslint-disable-line no-console
     }
 
     for (const highlightElement of pool) {
@@ -176,7 +180,7 @@ export class Highlight {
   }
 
   maskElements(elements: Element[]) {
-    const boxes = elements.map(e => e.getBoundingClientRect());
+    const boxes = elements.map((e) => e.getBoundingClientRect());
     const pool = this._highlightElements;
     this._highlightElements = [];
     for (const box of boxes) {
@@ -195,7 +199,6 @@ export class Highlight {
       this._highlightElements.push(highlightElement);
     }
   }
-
 
   private _createHighlightElement(): HTMLElement {
     const highlightElement = document.createElement('x-pw-highlight');

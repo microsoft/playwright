@@ -62,11 +62,20 @@ export class ElectronApplication extends SdkObject {
     });
     this._nodeConnection = nodeConnection;
     this._nodeSession = nodeConnection.rootSession;
-    this._nodeElectronHandlePromise = new Promise(f => {
+    this._nodeElectronHandlePromise = new Promise((f) => {
       this._nodeSession.on('Runtime.executionContextCreated', async (event: any) => {
         if (event.context.auxData && event.context.auxData.isDefault) {
-          this._nodeExecutionContext = new js.ExecutionContext(this, new CRExecutionContext(this._nodeSession, event.context));
-          f(await js.evaluate(this._nodeExecutionContext, false /* returnByValue */, `process.mainModule.require('electron')`));
+          this._nodeExecutionContext = new js.ExecutionContext(
+            this,
+            new CRExecutionContext(this._nodeSession, event.context),
+          );
+          f(
+            await js.evaluate(
+              this._nodeExecutionContext,
+              false /* returnByValue */,
+              `process.mainModule.require('electron')`,
+            ),
+          );
         }
       });
     });
@@ -74,7 +83,7 @@ export class ElectronApplication extends SdkObject {
       const electronHandle = await this._nodeElectronHandlePromise;
       await electronHandle.evaluate(({ app }) => app.quit());
     });
-    this._nodeSession.send('Runtime.enable', {}).catch(e => {});
+    this._nodeSession.send('Runtime.enable', {}).catch((e) => {});
   }
 
   context(): BrowserContext {
@@ -83,7 +92,9 @@ export class ElectronApplication extends SdkObject {
 
   async close() {
     const progressController = new ProgressController(internalCallMetadata(), this);
-    const closed = progressController.run(progress => helper.waitForEvent(progress, this, ElectronApplication.Events.Close).promise);
+    const closed = progressController.run(
+      (progress) => helper.waitForEvent(progress, this, ElectronApplication.Events.Close).promise,
+    );
     await this._browserContext.close(internalCallMetadata());
     this._nodeConnection.close();
     await closed;
@@ -109,12 +120,10 @@ export class Electron extends SdkObject {
   }
 
   async launch(options: channels.ElectronLaunchParams): Promise<ElectronApplication> {
-    const {
-      args = [],
-    } = options;
+    const { args = [] } = options;
     const controller = new ProgressController(internalCallMetadata(), this);
     controller.setLogName('browser');
-    return controller.run(async progress => {
+    return controller.run(async (progress) => {
       let app: ElectronApplication | undefined = undefined;
       const electronArguments = ['--inspect=0', '--remote-debugging-port=0', ...args];
 
@@ -142,7 +151,7 @@ export class Electron extends SdkObject {
         },
         stdio: 'pipe',
         cwd: options.cwd,
-        tempDirectories: [ artifactsDir ],
+        tempDirectories: [artifactsDir],
         attemptToGracefullyClose: () => app!.close(),
         handleSIGINT: true,
         handleSIGTERM: true,
@@ -151,31 +160,47 @@ export class Electron extends SdkObject {
       });
 
       const waitForXserverError = new Promise(async (resolve, reject) => {
-        waitForLine(progress, launchedProcess, /Unable to open X display/).then(() => reject(new Error([
-          'Unable to open X display!',
-          `================================`,
-          'Most likely this is because there is no X server available.',
-          "Use 'xvfb-run' on Linux to launch your tests with an emulated display server.",
-          "For example: 'xvfb-run npm run test:e2e'",
-          `================================`,
-          progress.metadata.log
-        ].join('\n')))).catch(() => {});
+        waitForLine(progress, launchedProcess, /Unable to open X display/)
+          .then(() =>
+            reject(
+              new Error(
+                [
+                  'Unable to open X display!',
+                  `================================`,
+                  'Most likely this is because there is no X server available.',
+                  "Use 'xvfb-run' on Linux to launch your tests with an emulated display server.",
+                  "For example: 'xvfb-run npm run test:e2e'",
+                  `================================`,
+                  progress.metadata.log,
+                ].join('\n'),
+              ),
+            ),
+          )
+          .catch(() => {});
       });
 
-      const nodeMatch = await waitForLine(progress, launchedProcess, /^Debugger listening on (ws:\/\/.*)$/);
+      const nodeMatch = await waitForLine(
+        progress,
+        launchedProcess,
+        /^Debugger listening on (ws:\/\/.*)$/,
+      );
       const nodeTransport = await WebSocketTransport.connect(progress, nodeMatch[1]);
-      const nodeConnection = new CRConnection(nodeTransport, helper.debugProtocolLogger(), browserLogsCollector);
+      const nodeConnection = new CRConnection(
+        nodeTransport,
+        helper.debugProtocolLogger(),
+        browserLogsCollector,
+      );
 
-      const chromeMatch = await Promise.race([
+      const chromeMatch = (await Promise.race([
         waitForLine(progress, launchedProcess, /^DevTools listening on (ws:\/\/.*)$/),
         waitForXserverError,
-      ]) as RegExpMatchArray;
+      ])) as RegExpMatchArray;
       const chromeTransport = await WebSocketTransport.connect(progress, chromeMatch[1]);
       const browserProcess: BrowserProcess = {
         onclose: undefined,
         process: launchedProcess,
         close: gracefullyClose,
-        kill
+        kill,
       };
       const contextOptions: BrowserContextOptions = {
         ...options,
@@ -202,7 +227,11 @@ export class Electron extends SdkObject {
   }
 }
 
-function waitForLine(progress: Progress, process: childProcess.ChildProcess, regex: RegExp): Promise<RegExpMatchArray> {
+function waitForLine(
+  progress: Progress,
+  process: childProcess.ChildProcess,
+  regex: RegExp,
+): Promise<RegExpMatchArray> {
   return new Promise((resolve, reject) => {
     const rl = readline.createInterface({ input: process.stderr! });
     const failError = new Error('Process failed to launch!');
@@ -211,15 +240,14 @@ function waitForLine(progress: Progress, process: childProcess.ChildProcess, reg
       eventsHelper.addEventListener(rl, 'close', reject.bind(null, failError)),
       eventsHelper.addEventListener(process, 'exit', reject.bind(null, failError)),
       // It is Ok to remove error handler because we did not create process and there is another listener.
-      eventsHelper.addEventListener(process, 'error', reject.bind(null, failError))
+      eventsHelper.addEventListener(process, 'error', reject.bind(null, failError)),
     ];
 
     progress.cleanupWhenAborted(cleanup);
 
     function onLine(line: string) {
       const match = line.match(regex);
-      if (!match)
-        return;
+      if (!match) return;
       cleanup();
       resolve(match);
     }

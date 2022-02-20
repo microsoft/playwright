@@ -17,7 +17,11 @@
 import fs from 'fs';
 import * as os from 'os';
 import path from 'path';
-import { BrowserContext, normalizeProxySettings, validateBrowserContextOptions } from './browserContext';
+import {
+  BrowserContext,
+  normalizeProxySettings,
+  validateBrowserContextOptions,
+} from './browserContext';
 import { registry, BrowserName } from '../utils/registry';
 import { ConnectionTransport, WebSocketTransport } from './transport';
 import { BrowserOptions, Browser, BrowserProcess, PlaywrightOptions } from './browser';
@@ -43,43 +47,75 @@ export abstract class BrowserType extends SdkObject {
   }
 
   executablePath(): string {
-    return registry.findExecutable(this._name).executablePath(this._playwrightOptions.sdkLanguage) || '';
+    return (
+      registry.findExecutable(this._name).executablePath(this._playwrightOptions.sdkLanguage) || ''
+    );
   }
 
   name(): string {
     return this._name;
   }
 
-  async launch(metadata: CallMetadata, options: types.LaunchOptions, protocolLogger?: types.ProtocolLogger): Promise<Browser> {
+  async launch(
+    metadata: CallMetadata,
+    options: types.LaunchOptions,
+    protocolLogger?: types.ProtocolLogger,
+  ): Promise<Browser> {
     options = this._validateLaunchOptions(options);
     const controller = new ProgressController(metadata, this);
     controller.setLogName('browser');
-    const browser = await controller.run(progress => {
-      const seleniumHubUrl = (options as any).__testHookSeleniumRemoteURL || process.env.SELENIUM_REMOTE_URL;
-      if (seleniumHubUrl)
-        return this._launchWithSeleniumHub(progress, seleniumHubUrl, options);
-      return this._innerLaunchWithRetries(progress, options, undefined, helper.debugProtocolLogger(protocolLogger)).catch(e => { throw this._rewriteStartupError(e); });
+    const browser = await controller.run((progress) => {
+      const seleniumHubUrl =
+        (options as any).__testHookSeleniumRemoteURL || process.env.SELENIUM_REMOTE_URL;
+      if (seleniumHubUrl) return this._launchWithSeleniumHub(progress, seleniumHubUrl, options);
+      return this._innerLaunchWithRetries(
+        progress,
+        options,
+        undefined,
+        helper.debugProtocolLogger(protocolLogger),
+      ).catch((e) => {
+        throw this._rewriteStartupError(e);
+      });
     }, TimeoutSettings.timeout(options));
     return browser;
   }
 
-  async launchPersistentContext(metadata: CallMetadata, userDataDir: string, options: types.LaunchPersistentOptions): Promise<BrowserContext> {
+  async launchPersistentContext(
+    metadata: CallMetadata,
+    userDataDir: string,
+    options: types.LaunchPersistentOptions,
+  ): Promise<BrowserContext> {
     options = this._validateLaunchOptions(options);
     const controller = new ProgressController(metadata, this);
     const persistent: types.BrowserContextOptions = options;
     controller.setLogName('browser');
-    const browser = await controller.run(progress => {
-      return this._innerLaunchWithRetries(progress, options, persistent, helper.debugProtocolLogger(), userDataDir).catch(e => { throw this._rewriteStartupError(e); });
+    const browser = await controller.run((progress) => {
+      return this._innerLaunchWithRetries(
+        progress,
+        options,
+        persistent,
+        helper.debugProtocolLogger(),
+        userDataDir,
+      ).catch((e) => {
+        throw this._rewriteStartupError(e);
+      });
     }, TimeoutSettings.timeout(options));
     return browser._defaultContext!;
   }
 
-  async _innerLaunchWithRetries(progress: Progress, options: types.LaunchOptions, persistent: types.BrowserContextOptions | undefined, protocolLogger: types.ProtocolLogger, userDataDir?: string): Promise<Browser> {
+  async _innerLaunchWithRetries(
+    progress: Progress,
+    options: types.LaunchOptions,
+    persistent: types.BrowserContextOptions | undefined,
+    protocolLogger: types.ProtocolLogger,
+    userDataDir?: string,
+  ): Promise<Browser> {
     try {
       return this._innerLaunch(progress, options, persistent, protocolLogger, userDataDir);
     } catch (error) {
       // @see https://github.com/microsoft/playwright/issues/5214
-      const errorMessage = typeof error === 'object' && typeof error.message === 'string' ? error.message : '';
+      const errorMessage =
+        typeof error === 'object' && typeof error.message === 'string' ? error.message : '';
       if (errorMessage.includes('Inconsistency detected by ld.so')) {
         progress.log(`<restarting browser due to hitting race condition in glibc>`);
         return this._innerLaunch(progress, options, persistent, protocolLogger, userDataDir);
@@ -88,10 +124,22 @@ export abstract class BrowserType extends SdkObject {
     }
   }
 
-  async _innerLaunch(progress: Progress, options: types.LaunchOptions, persistent: types.BrowserContextOptions | undefined, protocolLogger: types.ProtocolLogger, userDataDir?: string): Promise<Browser> {
+  async _innerLaunch(
+    progress: Progress,
+    options: types.LaunchOptions,
+    persistent: types.BrowserContextOptions | undefined,
+    protocolLogger: types.ProtocolLogger,
+    userDataDir?: string,
+  ): Promise<Browser> {
     options.proxy = options.proxy ? normalizeProxySettings(options.proxy) : undefined;
     const browserLogsCollector = new RecentLogsCollector();
-    const { browserProcess, artifactsDir, transport } = await this._launchProcess(progress, options, !!persistent, browserLogsCollector, userDataDir);
+    const { browserProcess, artifactsDir, transport } = await this._launchProcess(
+      progress,
+      options,
+      !!persistent,
+      browserLogsCollector,
+      userDataDir,
+    );
     if ((options as any).__testHookBeforeCreateBrowser)
       await (options as any).__testHookBeforeCreateBrowser();
     const browserOptions: BrowserOptions = {
@@ -112,8 +160,7 @@ export abstract class BrowserType extends SdkObject {
       browserLogsCollector,
       wsEndpoint: options.useWebSocket ? (transport as WebSocketTransport).wsEndpoint : undefined,
     };
-    if (persistent)
-      validateBrowserContextOptions(persistent, browserOptions);
+    if (persistent) validateBrowserContextOptions(persistent, browserOptions);
     copyTestHooks(options, browserOptions);
     const browser = await this._connectToTransport(transport, browserOptions);
     // We assume no control when using custom arguments, and do not prepare the default context in that case.
@@ -122,7 +169,17 @@ export abstract class BrowserType extends SdkObject {
     return browser;
   }
 
-  private async _launchProcess(progress: Progress, options: types.LaunchOptions, isPersistent: boolean, browserLogsCollector: RecentLogsCollector, userDataDir?: string): Promise<{ browserProcess: BrowserProcess, artifactsDir: string, transport: ConnectionTransport }> {
+  private async _launchProcess(
+    progress: Progress,
+    options: types.LaunchOptions,
+    isPersistent: boolean,
+    browserLogsCollector: RecentLogsCollector,
+    userDataDir?: string,
+  ): Promise<{
+    browserProcess: BrowserProcess;
+    artifactsDir: string;
+    transport: ConnectionTransport;
+  }> {
     const {
       ignoreDefaultArgs,
       ignoreAllDefaultArgs,
@@ -136,35 +193,39 @@ export abstract class BrowserType extends SdkObject {
     const env = options.env ? envArrayToObject(options.env) : process.env;
 
     const tempDirectories = [];
-    if (options.downloadsPath)
-      await fs.promises.mkdir(options.downloadsPath, { recursive: true });
-    if (options.tracesDir)
-      await fs.promises.mkdir(options.tracesDir, { recursive: true });
+    if (options.downloadsPath) await fs.promises.mkdir(options.downloadsPath, { recursive: true });
+    if (options.tracesDir) await fs.promises.mkdir(options.tracesDir, { recursive: true });
 
     const artifactsDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'playwright-artifacts-'));
     tempDirectories.push(artifactsDir);
 
     if (userDataDir) {
       // Firefox bails if the profile directory does not exist, Chrome creates it. We ensure consistent behavior here.
-      if (!await existsAsync(userDataDir))
+      if (!(await existsAsync(userDataDir)))
         await fs.promises.mkdir(userDataDir, { recursive: true, mode: 0o700 });
     } else {
-      userDataDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), `playwright_${this._name}dev_profile-`));
+      userDataDir = await fs.promises.mkdtemp(
+        path.join(os.tmpdir(), `playwright_${this._name}dev_profile-`),
+      );
       tempDirectories.push(userDataDir);
     }
 
     const browserArguments = [];
-    if (ignoreAllDefaultArgs)
-      browserArguments.push(...args);
+    if (ignoreAllDefaultArgs) browserArguments.push(...args);
     else if (ignoreDefaultArgs)
-      browserArguments.push(...this._defaultArgs(options, isPersistent, userDataDir).filter(arg => ignoreDefaultArgs.indexOf(arg) === -1));
-    else
-      browserArguments.push(...this._defaultArgs(options, isPersistent, userDataDir));
+      browserArguments.push(
+        ...this._defaultArgs(options, isPersistent, userDataDir).filter(
+          (arg) => ignoreDefaultArgs.indexOf(arg) === -1,
+        ),
+      );
+    else browserArguments.push(...this._defaultArgs(options, isPersistent, userDataDir));
 
     let executable: string;
     if (executablePath) {
       if (!(await existsAsync(executablePath)))
-        throw new Error(`Failed to launch ${this._name} because executable doesn't exist at ${executablePath}`);
+        throw new Error(
+          `Failed to launch ${this._name} because executable doesn't exist at ${executablePath}`,
+        );
       executable = executablePath;
     } else {
       const registryExecutable = registry.findExecutable(options.channel || this._name);
@@ -175,8 +236,11 @@ export abstract class BrowserType extends SdkObject {
     }
 
     let wsEndpointCallback: ((wsEndpoint: string) => void) | undefined;
-    const shouldWaitForWSListening = options.useWebSocket || options.args?.some(a => a.startsWith('--remote-debugging-port'));
-    const waitForWSEndpoint = shouldWaitForWSListening ? new Promise<string>(f => wsEndpointCallback = f) : undefined;
+    const shouldWaitForWSListening =
+      options.useWebSocket || options.args?.some((a) => a.startsWith('--remote-debugging-port'));
+    const waitForWSEndpoint = shouldWaitForWSListening
+      ? new Promise<string>((f) => (wsEndpointCallback = f))
+      : undefined;
     // Note: it is important to define these variables before launchProcess, so that we don't get
     // "Cannot access 'browserServer' before initialization" if something went wrong.
     let transport: ConnectionTransport | undefined = undefined;
@@ -191,8 +255,7 @@ export abstract class BrowserType extends SdkObject {
       log: (message: string) => {
         if (wsEndpointCallback) {
           const match = message.match(/DevTools listening on (.*)/);
-          if (match)
-            wsEndpointCallback(match[1]);
+          if (match) wsEndpointCallback(match[1]);
         }
         progress.log(message);
         browserLogsCollector.log(message);
@@ -208,8 +271,7 @@ export abstract class BrowserType extends SdkObject {
         this._attemptToGracefullyCloseBrowser(transport!);
       },
       onExit: (exitCode, signal) => {
-        if (browserProcess && browserProcess.onclose)
-          browserProcess.onclose(exitCode, signal);
+        if (browserProcess && browserProcess.onclose) browserProcess.onclose(exitCode, signal);
       },
     });
     async function closeOrKill(timeout: number): Promise<void> {
@@ -217,10 +279,10 @@ export abstract class BrowserType extends SdkObject {
       try {
         await Promise.race([
           gracefullyClose(),
-          new Promise((resolve, reject) => timer = setTimeout(reject, timeout)),
+          new Promise((resolve, reject) => (timer = setTimeout(reject, timeout))),
         ]);
       } catch (ignored) {
-        await kill().catch(ignored => {}); // Make sure to await actual process exit.
+        await kill().catch((ignored) => {}); // Make sure to await actual process exit.
       } finally {
         clearTimeout(timer!);
       }
@@ -229,34 +291,47 @@ export abstract class BrowserType extends SdkObject {
       onclose: undefined,
       process: launchedProcess,
       close: () => closeOrKill((options as any).__testHookBrowserCloseTimeout || DEFAULT_TIMEOUT),
-      kill
+      kill,
     };
     progress.cleanupWhenAborted(() => closeOrKill(progress.timeUntilDeadline()));
     let wsEndpoint: string | undefined;
-    if (shouldWaitForWSListening)
-      wsEndpoint = await waitForWSEndpoint;
+    if (shouldWaitForWSListening) wsEndpoint = await waitForWSEndpoint;
     if (options.useWebSocket) {
       transport = await WebSocketTransport.connect(progress, wsEndpoint!);
     } else {
-      const stdio = launchedProcess.stdio as unknown as [NodeJS.ReadableStream, NodeJS.WritableStream, NodeJS.WritableStream, NodeJS.WritableStream, NodeJS.ReadableStream];
+      const stdio = launchedProcess.stdio as unknown as [
+        NodeJS.ReadableStream,
+        NodeJS.WritableStream,
+        NodeJS.WritableStream,
+        NodeJS.WritableStream,
+        NodeJS.ReadableStream,
+      ];
       transport = new PipeTransport(stdio[3], stdio[4]);
     }
     return { browserProcess, artifactsDir, transport };
   }
 
-  async connectOverCDP(metadata: CallMetadata, endpointURL: string, options: { slowMo?: number }, timeout?: number): Promise<Browser> {
+  async connectOverCDP(
+    metadata: CallMetadata,
+    endpointURL: string,
+    options: { slowMo?: number },
+    timeout?: number,
+  ): Promise<Browser> {
     throw new Error('CDP connections are only supported by Chromium');
   }
 
-  async _launchWithSeleniumHub(progress: Progress, hubUrl: string, options: types.LaunchOptions): Promise<Browser> {
+  async _launchWithSeleniumHub(
+    progress: Progress,
+    hubUrl: string,
+    options: types.LaunchOptions,
+  ): Promise<Browser> {
     throw new Error('Connecting to SELENIUM_REMOTE_URL is only supported by Chromium');
   }
 
   private _validateLaunchOptions<Options extends types.LaunchOptions>(options: Options): Options {
     const { devtools = false } = options;
     let { headless = !devtools, downloadsPath, proxy } = options;
-    if (debugMode())
-      headless = false;
+    if (debugMode()) headless = false;
     if (downloadsPath && !path.isAbsolute(downloadsPath))
       downloadsPath = path.join(process.cwd(), downloadsPath);
     if (this._playwrightOptions.socksProxyPort)
@@ -264,16 +339,27 @@ export abstract class BrowserType extends SdkObject {
     return { ...options, devtools, headless, downloadsPath, proxy };
   }
 
-  abstract _defaultArgs(options: types.LaunchOptions, isPersistent: boolean, userDataDir: string): string[];
-  abstract _connectToTransport(transport: ConnectionTransport, options: BrowserOptions): Promise<Browser>;
-  abstract _amendEnvironment(env: Env, userDataDir: string, executable: string, browserArguments: string[]): Env;
+  abstract _defaultArgs(
+    options: types.LaunchOptions,
+    isPersistent: boolean,
+    userDataDir: string,
+  ): string[];
+  abstract _connectToTransport(
+    transport: ConnectionTransport,
+    options: BrowserOptions,
+  ): Promise<Browser>;
+  abstract _amendEnvironment(
+    env: Env,
+    userDataDir: string,
+    executable: string,
+    browserArguments: string[],
+  ): Env;
   abstract _rewriteStartupError(error: Error): Error;
   abstract _attemptToGracefullyCloseBrowser(transport: ConnectionTransport): void;
 }
 
 function copyTestHooks(from: object, to: object) {
   for (const [key, value] of Object.entries(from)) {
-    if (key.startsWith('__testHook'))
-      (to as any)[key] = value;
+    if (key.startsWith('__testHook')) (to as any)[key] = value;
   }
 }

@@ -36,10 +36,10 @@ export type ContextEntry = {
 
 export type PageEntry = {
   screencastFrames: {
-    sha1: string,
-    timestamp: number,
-    width: number,
-    height: number,
+    sha1: string;
+    timestamp: number;
+    width: number;
+    height: number;
   }[];
 };
 export function createEmptyContext(): ContextEntry {
@@ -58,6 +58,6 @@ export function createEmptyContext(): ContextEntry {
     actions: [],
     events: [],
     objects: {},
-    hasSource: false
+    hasSource: false,
   };
 }

@@ -21,42 +21,47 @@ import { Protocol } from './protocol';
 import * as dom from '../dom';
 import * as types from '../types';
 
-export async function getAccessibilityTree(session: FFSession, needle?: dom.ElementHandle): Promise<{tree: accessibility.AXNode, needle: accessibility.AXNode | null}> {
+export async function getAccessibilityTree(
+  session: FFSession,
+  needle?: dom.ElementHandle,
+): Promise<{ tree: accessibility.AXNode; needle: accessibility.AXNode | null }> {
   const objectId = needle ? needle._objectId : undefined;
   const { tree } = await session.send('Accessibility.getFullAXTree', { objectId });
   const axNode = new FFAXNode(tree);
   return {
     tree: axNode,
-    needle: needle ? axNode._findNeedle() : null
+    needle: needle ? axNode._findNeedle() : null,
   };
 }
 
-const FFRoleToARIARole = new Map(Object.entries({
-  'pushbutton': 'button',
-  'checkbutton': 'checkbox',
-  'editcombobox': 'combobox',
-  'content deletion': 'deletion',
-  'footnote': 'doc-footnote',
-  'non-native document': 'document',
-  'grouping': 'group',
-  'graphic': 'img',
-  'content insertion': 'insertion',
-  'animation': 'marquee',
-  'flat equation': 'math',
-  'menupopup': 'menu',
-  'check menu item': 'menuitemcheckbox',
-  'radio menu item': 'menuitemradio',
-  'listbox option': 'option',
-  'radiobutton': 'radio',
-  'statusbar': 'status',
-  'pagetab': 'tab',
-  'pagetablist': 'tablist',
-  'propertypage': 'tabpanel',
-  'entry': 'textbox',
-  'outline': 'tree',
-  'tree table': 'treegrid',
-  'outlineitem': 'treeitem',
-}));
+const FFRoleToARIARole = new Map(
+  Object.entries({
+    'pushbutton': 'button',
+    'checkbutton': 'checkbox',
+    'editcombobox': 'combobox',
+    'content deletion': 'deletion',
+    'footnote': 'doc-footnote',
+    'non-native document': 'document',
+    'grouping': 'group',
+    'graphic': 'img',
+    'content insertion': 'insertion',
+    'animation': 'marquee',
+    'flat equation': 'math',
+    'menupopup': 'menu',
+    'check menu item': 'menuitemcheckbox',
+    'radio menu item': 'menuitemradio',
+    'listbox option': 'option',
+    'radiobutton': 'radio',
+    'statusbar': 'status',
+    'pagetab': 'tab',
+    'pagetablist': 'tablist',
+    'propertypage': 'tabpanel',
+    'entry': 'textbox',
+    'outline': 'tree',
+    'tree table': 'treegrid',
+    'outlineitem': 'treeitem',
+  }),
+);
 
 class FFAXNode implements accessibility.AXNode {
   _children: FFAXNode[];
@@ -67,13 +72,13 @@ class FFAXNode implements accessibility.AXNode {
   private _expanded: boolean;
   private _name: string;
   private _role: string;
-  private _cachedHasFocusableChild: boolean|undefined;
+  private _cachedHasFocusableChild: boolean | undefined;
 
   constructor(payload: Protocol.Accessibility.AXTree) {
     this._payload = payload;
-    this._children = (payload.children || []).map(x => new FFAXNode(x));
+    this._children = (payload.children || []).map((x) => new FFAXNode(x));
     this._editable = !!payload.editable;
-    this._richlyEditable = this._editable && (payload.tag !== 'textarea' && payload.tag !== 'input');
+    this._richlyEditable = this._editable && payload.tag !== 'textarea' && payload.tag !== 'input';
     this._focusable = !!payload.focusable;
     this._expanded = !!payload.expanded;
     this._name = this._payload.name;
@@ -81,16 +86,14 @@ class FFAXNode implements accessibility.AXNode {
   }
 
   _isPlainTextField(): boolean {
-    if (this._richlyEditable)
-      return false;
-    if (this._editable)
-      return true;
+    if (this._richlyEditable) return false;
+    if (this._editable) return true;
     return this._role === 'entry';
   }
 
   _isTextOnlyObject(): boolean {
     const role = this._role;
-    return (role === 'text leaf' || role === 'text' || role === 'statictext');
+    return role === 'text leaf' || role === 'text' || role === 'statictext';
   }
 
   _hasFocusableChild(): boolean {
@@ -111,29 +114,25 @@ class FFAXNode implements accessibility.AXNode {
   }
 
   _findNeedle(): FFAXNode | null {
-    if (this._payload.foundObject)
-      return this;
+    if (this._payload.foundObject) return this;
     for (const child of this._children) {
       const found = child._findNeedle();
-      if (found)
-        return found;
+      if (found) return found;
     }
     return null;
   }
 
   isLeafNode(): boolean {
-    if (!this._children.length)
-      return true;
-      // These types of objects may have children that we use as internal
-      // implementation details, but we want to expose them as leaves to platform
-      // accessibility APIs because screen readers might be confused if they find
-      // any children.
-    if (this._isPlainTextField() || this._isTextOnlyObject())
-      return true;
-      // Roles whose children are only presentational according to the ARIA and
-      // HTML5 Specs should be hidden from screen readers.
-      // (Note that whilst ARIA buttons can have only presentational children, HTML5
-      // buttons are allowed to have content.)
+    if (!this._children.length) return true;
+    // These types of objects may have children that we use as internal
+    // implementation details, but we want to expose them as leaves to platform
+    // accessibility APIs because screen readers might be confused if they find
+    // any children.
+    if (this._isPlainTextField() || this._isTextOnlyObject()) return true;
+    // Roles whose children are only presentational according to the ARIA and
+    // HTML5 Specs should be hidden from screen readers.
+    // (Note that whilst ARIA buttons can have only presentational children, HTML5
+    // buttons are allowed to have content.)
     switch (this._role) {
       case 'graphic':
       case 'scrollbar':
@@ -145,12 +144,9 @@ class FFAXNode implements accessibility.AXNode {
         break;
     }
     // Here and below: Android heuristics
-    if (this._hasFocusableChild())
-      return false;
-    if (this._focusable && this._role !== 'document' && this._name)
-      return true;
-    if (this._role === 'heading' && this._name)
-      return true;
+    if (this._hasFocusableChild()) return false;
+    if (this._focusable && this._role !== 'document' && this._name) return true;
+    if (this._role === 'heading' && this._name) return true;
     return false;
   }
 
@@ -187,35 +183,29 @@ class FFAXNode implements accessibility.AXNode {
   }
 
   isInteresting(insideControl: boolean): boolean {
-    if (this._focusable || this._richlyEditable)
-      return true;
-      // If it's not focusable but has a control role, then it's interesting.
-    if (this.isControl())
-      return true;
-      // A non focusable child of a control is not interesting
-    if (insideControl)
-      return false;
+    if (this._focusable || this._richlyEditable) return true;
+    // If it's not focusable but has a control role, then it's interesting.
+    if (this.isControl()) return true;
+    // A non focusable child of a control is not interesting
+    if (insideControl) return false;
     return this.isLeafNode() && !!this._name.trim();
   }
 
   serialize(): types.SerializedAXNode {
-    const node: {[x in keyof types.SerializedAXNode]: any} = {
+    const node: { [x in keyof types.SerializedAXNode]: any } = {
       role: FFRoleToARIARole.get(this._role) || this._role,
       name: this._name || '',
     };
-    const userStringProperties: Array<keyof types.SerializedAXNode & keyof Protocol.Accessibility.AXTree> = [
-      'name',
-      'description',
-      'roledescription',
-      'valuetext',
-      'keyshortcuts',
-    ];
+    const userStringProperties: Array<
+      keyof types.SerializedAXNode & keyof Protocol.Accessibility.AXTree
+    > = ['name', 'description', 'roledescription', 'valuetext', 'keyshortcuts'];
     for (const userStringProperty of userStringProperties) {
-      if (!(userStringProperty in this._payload))
-        continue;
+      if (!(userStringProperty in this._payload)) continue;
       node[userStringProperty] = this._payload[userStringProperty];
     }
-    const booleanProperties: Array<keyof types.SerializedAXNode & keyof Protocol.Accessibility.AXTree> = [
+    const booleanProperties: Array<
+      keyof types.SerializedAXNode & keyof Protocol.Accessibility.AXTree
+    > = [
       'disabled',
       'expanded',
       'focused',
@@ -227,38 +217,36 @@ class FFAXNode implements accessibility.AXNode {
       'selected',
     ];
     for (const booleanProperty of booleanProperties) {
-      if (this._role === 'document' && booleanProperty === 'focused')
-        continue; // document focusing is strange
+      if (this._role === 'document' && booleanProperty === 'focused') continue; // document focusing is strange
       const value = this._payload[booleanProperty];
-      if (!value)
-        continue;
+      if (!value) continue;
       node[booleanProperty] = value;
     }
-    const numericalProperties: Array<keyof types.SerializedAXNode & keyof Protocol.Accessibility.AXTree> = [
-      'level'
-    ];
+    const numericalProperties: Array<
+      keyof types.SerializedAXNode & keyof Protocol.Accessibility.AXTree
+    > = ['level'];
     for (const numericalProperty of numericalProperties) {
-      if (!(numericalProperty in this._payload))
-        continue;
+      if (!(numericalProperty in this._payload)) continue;
       node[numericalProperty] = this._payload[numericalProperty];
     }
-    const tokenProperties: Array<keyof types.SerializedAXNode & keyof Protocol.Accessibility.AXTree> = [
-      'autocomplete',
-      'haspopup',
-      'invalid',
-      'orientation',
-    ];
+    const tokenProperties: Array<
+      keyof types.SerializedAXNode & keyof Protocol.Accessibility.AXTree
+    > = ['autocomplete', 'haspopup', 'invalid', 'orientation'];
     for (const tokenProperty of tokenProperties) {
       const value = this._payload[tokenProperty];
-      if (!value || value === 'false')
-        continue;
+      if (!value || value === 'false') continue;
       node[tokenProperty] = value;
     }
 
     const axNode = node as types.SerializedAXNode;
     axNode.valueString = this._payload.value;
     if ('checked' in this._payload)
-      axNode.checked = this._payload.checked === true ? 'checked' : this._payload.checked === 'mixed' ? 'mixed' : 'unchecked';
+      axNode.checked =
+        this._payload.checked === true
+          ? 'checked'
+          : this._payload.checked === 'mixed'
+          ? 'mixed'
+          : 'unchecked';
     if ('pressed' in this._payload)
       axNode.pressed = this._payload.pressed === true ? 'pressed' : 'released';
     return axNode;

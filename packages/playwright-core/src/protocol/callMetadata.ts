@@ -31,7 +31,7 @@ export type CallMetadata = {
   stack?: StackFrame[];
   log: string[];
   afterSnapshot?: string;
-  snapshots: { title: string, snapshotName: string }[];
+  snapshots: { title: string; snapshotName: string }[];
   error?: SerializedError;
   result?: any;
   point?: Point;

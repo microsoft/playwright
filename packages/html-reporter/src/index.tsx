@@ -27,8 +27,7 @@ const zipjs = (self as any).zip;
 const ReportLoader: React.FC = () => {
   const [report, setReport] = React.useState<LoadedReport | undefined>();
   React.useEffect(() => {
-    if (report)
-      return;
+    if (report) return;
     const zipReport = new ZipReport();
     zipReport.load().then(() => setReport(zipReport));
   }, [report]);
@@ -44,10 +43,12 @@ class ZipReport implements LoadedReport {
   private _json!: HTMLReport;
 
   async load() {
-    const zipReader = new zipjs.ZipReader(new zipjs.Data64URIReader(window.playwrightReportBase64), { useWebWorkers: false }) as zip.ZipReader;
-    for (const entry of await zipReader.getEntries())
-      this._entries.set(entry.filename, entry);
-    this._json = await this.entry('report.json') as HTMLReport;
+    const zipReader = new zipjs.ZipReader(
+      new zipjs.Data64URIReader(window.playwrightReportBase64),
+      { useWebWorkers: false },
+    ) as zip.ZipReader;
+    for (const entry of await zipReader.getEntries()) this._entries.set(entry.filename, entry);
+    this._json = (await this.entry('report.json')) as HTMLReport;
   }
 
   json(): HTMLReport {

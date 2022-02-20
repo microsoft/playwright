@@ -16,11 +16,7 @@
 
 import expectLibrary from 'expect';
 import path from 'path';
-import {
-  INVERTED_COLOR,
-  RECEIVED_COLOR,
-  printReceived,
-} from 'jest-matcher-utils';
+import { INVERTED_COLOR, RECEIVED_COLOR, printReceived } from 'jest-matcher-utils';
 import {
   toBeChecked,
   toBeDisabled,
@@ -41,7 +37,7 @@ import {
   toHaveText,
   toHaveTitle,
   toHaveURL,
-  toHaveValue
+  toHaveValue,
 } from './matchers/matchers';
 import { toMatchSnapshot } from './matchers/toMatchSnapshot';
 import type { Expect, TestError } from './types';
@@ -71,7 +67,7 @@ export const printReceivedStringContainExpectedSubstring = (
   length: number, // not end
 ): string =>
   RECEIVED_COLOR(
-      '"' +
+    '"' +
       printSubstring(received.slice(0, start)) +
       INVERTED_COLOR(printSubstring(received.slice(start, start + length))) +
       printSubstring(received.slice(start + length)) +
@@ -84,28 +80,30 @@ export const printReceivedStringContainExpectedResult = (
 ): string =>
   result === null
     ? printReceived(received)
-    : printReceivedStringContainExpectedSubstring(
-        received,
-        result.index,
-        result[0].length,
-    );
+    : printReceivedStringContainExpectedSubstring(received, result.index, result[0].length);
 
 // #endregion
 
-function createExpect(actual: unknown, message: string|undefined, isSoft: boolean) {
+function createExpect(actual: unknown, message: string | undefined, isSoft: boolean) {
   if (message !== undefined && typeof message !== 'string')
-    throw new Error('expect(actual, optionalErrorMessage): optional error message must be a string.');
+    throw new Error(
+      'expect(actual, optionalErrorMessage): optional error message must be a string.',
+    );
   return new Proxy(expectLibrary(actual), new ExpectMetaInfoProxyHandler(message || '', isSoft));
 }
 
 export const expect: Expect = new Proxy(expectLibrary as any, {
-  apply: function(target: any, thisArg: any, argumentsList: [actual: unknown, message: string|undefined]) {
+  apply: function (
+    target: any,
+    thisArg: any,
+    argumentsList: [actual: unknown, message: string | undefined],
+  ) {
     const [actual, message] = argumentsList;
     return createExpect(actual, message, false /* isSoft */);
-  }
+  },
 });
 
-expect.soft = (actual: unknown, message: string|undefined) => {
+expect.soft = (actual: unknown, message: string | undefined) => {
   return createExpect(actual, message, true /* isSoft */);
 };
 
@@ -139,7 +137,7 @@ type ExpectMetaInfo = {
   isSoft: boolean;
 };
 
-let expectCallMetaInfo: undefined|ExpectMetaInfo = undefined;
+let expectCallMetaInfo: undefined | ExpectMetaInfo = undefined;
 
 class ExpectMetaInfoProxyHandler {
   private _message: string;
@@ -152,17 +150,13 @@ class ExpectMetaInfoProxyHandler {
 
   get(target: any, prop: any, receiver: any): any {
     const value = Reflect.get(target, prop, receiver);
-    if (typeof value !== 'function')
-      return new Proxy(value, this);
+    if (typeof value !== 'function') return new Proxy(value, this);
     return (...args: any[]) => {
       const testInfo = currentTestInfo();
-      if (!testInfo)
-        return value.call(target, ...args);
+      if (!testInfo) return value.call(target, ...args);
       const handleError = (e: Error) => {
-        if (this._isSoft)
-          testInfo._failWithError(serializeError(e), false /* isHardError */);
-        else
-          throw e;
+        if (this._isSoft) testInfo._failWithError(serializeError(e), false /* isHardError */);
+        else throw e;
       };
       try {
         expectCallMetaInfo = {
@@ -170,8 +164,7 @@ class ExpectMetaInfoProxyHandler {
           isSoft: this._isSoft,
         };
         let result = value.call(target, ...args);
-        if ((result instanceof Promise))
-          result = result.catch(handleError);
+        if (result instanceof Promise) result = result.catch(handleError);
         return result;
       } catch (e) {
         handleError(e);
@@ -183,10 +176,9 @@ class ExpectMetaInfoProxyHandler {
 }
 
 function wrap(matcherName: string, matcher: any) {
-  const result = function(this: any, ...args: any[]) {
+  const result = function (this: any, ...args: any[]) {
     const testInfo = currentTestInfo();
-    if (!testInfo)
-      return matcher.call(this, ...args);
+    if (!testInfo) return matcher.call(this, ...args);
 
     const INTERNAL_STACK_LENGTH = 4;
     // at Object.__PWTRAP__[expect.toHaveText] (...)
@@ -199,11 +191,19 @@ function wrap(matcherName: string, matcher: any) {
     const customMessage = expectCallMetaInfo?.message ?? '';
     const isSoft = expectCallMetaInfo?.isSoft ?? false;
     const step = testInfo._addStep({
-      location: frame && frame.file ? { file: path.resolve(process.cwd(), frame.file), line: frame.line || 0, column: frame.column || 0 } : undefined,
+      location:
+        frame && frame.file
+          ? {
+              file: path.resolve(process.cwd(), frame.file),
+              line: frame.line || 0,
+              column: frame.column || 0,
+            }
+          : undefined,
       category: 'expect',
-      title: customMessage || `expect${isSoft ? '.soft' : ''}${this.isNot ? '.not' : ''}.${matcherName}`,
+      title:
+        customMessage || `expect${isSoft ? '.soft' : ''}${this.isNot ? '.not' : ''}.${matcherName}`,
       canHaveChildren: true,
-      forceNoParent: false
+      forceNoParent: false,
     });
 
     const reportStepEnd = (result: any) => {
@@ -216,19 +216,19 @@ function wrap(matcherName: string, matcher: any) {
           const messageLines = message.split('\n');
           // Jest adds something like the following error to all errors:
           //    expect(received).toBe(expected); // Object.is equality
-          const uselessMatcherLineIndex = messageLines.findIndex((line: string) => /expect.*\(.*received.*\)/.test(line));
+          const uselessMatcherLineIndex = messageLines.findIndex((line: string) =>
+            /expect.*\(.*received.*\)/.test(line),
+          );
           if (uselessMatcherLineIndex !== -1) {
             // if there's a newline after the matcher text, then remove it as well.
-            if (uselessMatcherLineIndex + 1 < messageLines.length && messageLines[uselessMatcherLineIndex + 1].trim() === '')
+            if (
+              uselessMatcherLineIndex + 1 < messageLines.length &&
+              messageLines[uselessMatcherLineIndex + 1].trim() === ''
+            )
               messageLines.splice(uselessMatcherLineIndex, 2);
-            else
-              messageLines.splice(uselessMatcherLineIndex, 1);
+            else messageLines.splice(uselessMatcherLineIndex, 1);
           }
-          const newMessage = [
-            customMessage,
-            '',
-            ...messageLines,
-          ].join('\n');
+          const newMessage = [customMessage, '', ...messageLines].join('\n');
           result.message = () => newMessage;
         }
       }
@@ -243,8 +243,7 @@ function wrap(matcherName: string, matcher: any) {
 
     try {
       const result = matcher.call(this, ...args);
-      if (result instanceof Promise)
-        return result.then(reportStepEnd).catch(reportStepError);
+      if (result instanceof Promise) return result.then(reportStepEnd).catch(reportStepError);
       return reportStepEnd(result);
     } catch (e) {
       reportStepError(e);

@@ -25,33 +25,37 @@ export async function getAccessibilityTree(session: WKSession, needle?: dom.Elem
   const tree = new WKAXNode(axNode);
   return {
     tree,
-    needle: needle ? tree._findNeedle() : null
+    needle: needle ? tree._findNeedle() : null,
   };
 }
 
-const WKRoleToARIARole = new Map(Object.entries({
-  'TextField': 'textbox',
-}));
+const WKRoleToARIARole = new Map(
+  Object.entries({
+    TextField: 'textbox',
+  }),
+);
 
 // WebKit localizes role descriptions on mac, but the english versions only add noise.
-const WKUnhelpfulRoleDescriptions = new Map(Object.entries({
-  'WebArea': 'HTML content',
-  'Summary': 'summary',
-  'DescriptionList': 'description list',
-  'ImageMap': 'image map',
-  'ListMarker': 'list marker',
-  'Video': 'video playback',
-  'Mark': 'highlighted',
-  'contentinfo': 'content information',
-  'Details': 'details',
-  'DescriptionListDetail': 'description',
-  'DescriptionListTerm': 'term',
-  'alertdialog': 'web alert dialog',
-  'dialog': 'web dialog',
-  'status': 'application status',
-  'tabpanel': 'tab panel',
-  'application': 'web application',
-}));
+const WKUnhelpfulRoleDescriptions = new Map(
+  Object.entries({
+    WebArea: 'HTML content',
+    Summary: 'summary',
+    DescriptionList: 'description list',
+    ImageMap: 'image map',
+    ListMarker: 'list marker',
+    Video: 'video playback',
+    Mark: 'highlighted',
+    contentinfo: 'content information',
+    Details: 'details',
+    DescriptionListDetail: 'description',
+    DescriptionListTerm: 'term',
+    alertdialog: 'web alert dialog',
+    dialog: 'web dialog',
+    status: 'application status',
+    tabpanel: 'tab panel',
+    application: 'web application',
+  }),
+);
 
 class WKAXNode implements accessibility.AXNode {
   private _payload: Protocol.Page.AXNode;
@@ -61,8 +65,7 @@ class WKAXNode implements accessibility.AXNode {
     this._payload = payload;
 
     this._children = [];
-    for (const payload of this._payload.children || [])
-      this._children.push(new WKAXNode(payload));
+    for (const payload of this._payload.children || []) this._children.push(new WKAXNode(payload));
   }
 
   children() {
@@ -70,12 +73,10 @@ class WKAXNode implements accessibility.AXNode {
   }
 
   _findNeedle(): WKAXNode | null {
-    if (this._payload.found)
-      return this;
+    if (this._payload.found) return this;
     for (const child of this._children) {
       const found = child._findNeedle();
-      if (found)
-        return found;
+      if (found) return found;
     }
     return null;
   }
@@ -121,49 +122,39 @@ class WKAXNode implements accessibility.AXNode {
   }
 
   _name(): string {
-    if (this._payload.role === 'text')
-      return this._payload.value || '';
+    if (this._payload.role === 'text') return this._payload.value || '';
     return this._payload.name || '';
   }
 
   isInteresting(insideControl: boolean): boolean {
     const { role, focusable } = this._payload;
     const name = this._name();
-    if (role === 'ScrollArea')
-      return false;
-    if (role === 'WebArea')
-      return true;
+    if (role === 'ScrollArea') return false;
+    if (role === 'WebArea') return true;
 
-    if (focusable || role === 'MenuListOption')
-      return true;
+    if (focusable || role === 'MenuListOption') return true;
 
     // If it's not focusable but has a control role, then it's interesting.
-    if (this.isControl())
-      return true;
+    if (this.isControl()) return true;
 
     // A non focusable child of a control is not interesting
-    if (insideControl)
-      return false;
+    if (insideControl) return false;
 
     return this.isLeafNode() && !!name;
   }
 
   _hasRendundantTextChild() {
-    if (this._children.length !== 1)
-      return false;
+    if (this._children.length !== 1) return false;
     const child = this._children[0];
     return child._payload.role === 'text' && this._payload.name === child._payload.value;
   }
 
   isLeafNode(): boolean {
-    if (!this._children.length)
-      return true;
-      // WebKit on Linux ignores everything inside text controls, normalize this behavior
-    if (this._isTextControl())
-      return true;
-      // WebKit for mac has text nodes inside heading, li, menuitem, a, and p nodes
-    if (this._hasRendundantTextChild())
-      return true;
+    if (!this._children.length) return true;
+    // WebKit on Linux ignores everything inside text controls, normalize this behavior
+    if (this._isTextControl()) return true;
+    // WebKit for mac has text nodes inside heading, li, menuitem, a, and p nodes
+    if (this._hasRendundantTextChild()) return true;
     return false;
   }
 
@@ -178,30 +169,40 @@ class WKAXNode implements accessibility.AXNode {
 
     if ('roledescription' in this._payload) {
       const roledescription = this._payload.roledescription;
-      if (roledescription !== this._payload.role && WKUnhelpfulRoleDescriptions.get(this._payload.role) !== roledescription)
+      if (
+        roledescription !== this._payload.role &&
+        WKUnhelpfulRoleDescriptions.get(this._payload.role) !== roledescription
+      )
         node.roledescription = roledescription;
     }
 
     if ('value' in this._payload && this._payload.role !== 'text') {
-      if (typeof this._payload.value === 'string')
-        node.valueString = this._payload.value;
-      else if (typeof this._payload.value === 'number')
-        node.valueNumber = this._payload.value;
+      if (typeof this._payload.value === 'string') node.valueString = this._payload.value;
+      else if (typeof this._payload.value === 'number') node.valueNumber = this._payload.value;
     }
 
     if ('checked' in this._payload)
-      node.checked = this._payload.checked === 'true' ? 'checked' : this._payload.checked === 'false' ? 'unchecked' : 'mixed';
+      node.checked =
+        this._payload.checked === 'true'
+          ? 'checked'
+          : this._payload.checked === 'false'
+          ? 'unchecked'
+          : 'mixed';
 
     if ('pressed' in this._payload)
-      node.pressed = this._payload.pressed === 'true' ? 'pressed' : this._payload.pressed === 'false' ? 'released' : 'mixed';
+      node.pressed =
+        this._payload.pressed === 'true'
+          ? 'pressed'
+          : this._payload.pressed === 'false'
+          ? 'released'
+          : 'mixed';
 
     const userStringProperties: Array<keyof types.SerializedAXNode & keyof Protocol.Page.AXNode> = [
       'keyshortcuts',
-      'valuetext'
+      'valuetext',
     ];
     for (const userStringProperty of userStringProperties) {
-      if (!(userStringProperty in this._payload))
-        continue;
+      if (!(userStringProperty in this._payload)) continue;
       (node as any)[userStringProperty] = this._payload[userStringProperty];
     }
 
@@ -219,11 +220,13 @@ class WKAXNode implements accessibility.AXNode {
     for (const booleanProperty of booleanProperties) {
       // WebArea and ScorllArea treat focus differently than other nodes. They report whether their frame  has focus,
       // not whether focus is specifically on the root node.
-      if (booleanProperty === 'focused' && (this._payload.role === 'WebArea' || this._payload.role === 'ScrollArea'))
+      if (
+        booleanProperty === 'focused' &&
+        (this._payload.role === 'WebArea' || this._payload.role === 'ScrollArea')
+      )
         continue;
       const value = this._payload[booleanProperty];
-      if (!value)
-        continue;
+      if (!value) continue;
       (node as any)[booleanProperty] = value;
     }
 
@@ -233,8 +236,7 @@ class WKAXNode implements accessibility.AXNode {
       'valuemin',
     ];
     for (const numericalProperty of numericalProperties) {
-      if (!(numericalProperty in this._payload))
-        continue;
+      if (!(numericalProperty in this._payload)) continue;
       (node as any)[numericalProperty] = (this._payload as any)[numericalProperty];
     }
     const tokenProperties: Array<keyof types.SerializedAXNode & keyof Protocol.Page.AXNode> = [
@@ -244,8 +246,7 @@ class WKAXNode implements accessibility.AXNode {
     ];
     for (const tokenProperty of tokenProperties) {
       const value = (this._payload as any)[tokenProperty];
-      if (!value || value === 'false')
-        continue;
+      if (!value || value === 'false') continue;
       (node as any)[tokenProperty] = value;
     }
 

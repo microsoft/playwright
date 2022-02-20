@@ -38,30 +38,22 @@ export class TimeoutSettings {
   }
 
   navigationTimeout(options: { timeout?: number }): number {
-    if (typeof options.timeout === 'number')
-      return options.timeout;
-    if (this._defaultNavigationTimeout !== undefined)
-      return this._defaultNavigationTimeout;
-    if (this._defaultTimeout !== undefined)
-      return this._defaultTimeout;
-    if (this._parent)
-      return this._parent.navigationTimeout(options);
+    if (typeof options.timeout === 'number') return options.timeout;
+    if (this._defaultNavigationTimeout !== undefined) return this._defaultNavigationTimeout;
+    if (this._defaultTimeout !== undefined) return this._defaultTimeout;
+    if (this._parent) return this._parent.navigationTimeout(options);
     return TIMEOUT;
   }
 
   timeout(options: { timeout?: number }): number {
-    if (typeof options.timeout === 'number')
-      return options.timeout;
-    if (this._defaultTimeout !== undefined)
-      return this._defaultTimeout;
-    if (this._parent)
-      return this._parent.timeout(options);
+    if (typeof options.timeout === 'number') return options.timeout;
+    if (this._defaultTimeout !== undefined) return this._defaultTimeout;
+    if (this._parent) return this._parent.timeout(options);
     return TIMEOUT;
   }
 
   static timeout(options: { timeout?: number }): number {
-    if (typeof options.timeout === 'number')
-      return options.timeout;
+    if (typeof options.timeout === 'number') return options.timeout;
     return TIMEOUT;
   }
 }

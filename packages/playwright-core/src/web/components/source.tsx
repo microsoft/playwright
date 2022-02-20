@@ -32,12 +32,7 @@ export interface SourceProps {
   revealLine?: number;
 }
 
-export const Source: React.FC<SourceProps> = ({
-  text,
-  language,
-  highlight = [],
-  revealLine
-}) => {
+export const Source: React.FC<SourceProps> = ({ text, language, highlight = [], revealLine }) => {
   const lines = React.useMemo<string[]>(() => {
     const result = [];
     let continuation: any;
@@ -55,15 +50,25 @@ export const Source: React.FC<SourceProps> = ({
       revealedLineRef.current.scrollIntoView({ block: 'center', inline: 'nearest' });
   }, [revealedLineRef, revealLine]);
 
-  return <div className='source'>{
-    lines.map((markup, index) => {
-      const lineNumber = index + 1;
-      const lineHighlight = highlight.find(h => h.line === lineNumber);
-      const lineClass = lineHighlight ? `source-line source-line-${lineHighlight.type}` : 'source-line';
-      return <div key={lineNumber} className={lineClass} ref={revealLine === lineNumber ? revealedLineRef : null}>
-        <div className='source-line-number'>{lineNumber}</div>
-        <div className='source-code' dangerouslySetInnerHTML={{ __html: markup }}></div>
-      </div>;
-    })
-  }</div>;
+  return (
+    <div className="source">
+      {lines.map((markup, index) => {
+        const lineNumber = index + 1;
+        const lineHighlight = highlight.find((h) => h.line === lineNumber);
+        const lineClass = lineHighlight
+          ? `source-line source-line-${lineHighlight.type}`
+          : 'source-line';
+        return (
+          <div
+            key={lineNumber}
+            className={lineClass}
+            ref={revealLine === lineNumber ? revealedLineRef : null}
+          >
+            <div className="source-line-number">{lineNumber}</div>
+            <div className="source-code" dangerouslySetInnerHTML={{ __html: markup }}></div>
+          </div>
+        );
+      })}
+    </div>
+  );
 };

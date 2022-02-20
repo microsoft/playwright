@@ -20,18 +20,18 @@ import { FixturesWithLocation, Location, WorkerInfo, TestInfo } from './types';
 import { ManualPromise } from 'playwright-core/lib/utils/async';
 
 type FixtureScope = 'test' | 'worker';
-type FixtureOptions = { auto?: boolean, scope?: FixtureScope, option?: boolean };
-type FixtureTuple = [ value: any, options: FixtureOptions ];
+type FixtureOptions = { auto?: boolean; scope?: FixtureScope; option?: boolean };
+type FixtureTuple = [value: any, options: FixtureOptions];
 type FixtureRegistration = {
-  location: Location;  // Fixutre registration location.
+  location: Location; // Fixutre registration location.
   name: string;
   scope: FixtureScope;
-  fn: Function | any;  // Either a fixture function, or a fixture value.
+  fn: Function | any; // Either a fixture function, or a fixture value.
   auto: boolean;
   option: boolean;
-  deps: string[];  // Names of the dependencies, ({ foo, bar }) => {...}
-  id: string;  // Unique id, to differentiate between fixtures with the same name.
-  super?: FixtureRegistration;  // A fixture override can use the previous version of the fixture.
+  deps: string[]; // Names of the dependencies, ({ foo, bar }) => {...}
+  id: string; // Unique id, to differentiate between fixtures with the same name.
+  super?: FixtureRegistration; // A fixture override can use the previous version of the fixture.
 };
 
 class Fixture {
@@ -69,8 +69,7 @@ class Fixture {
     const useFuncStarted = new ManualPromise<void>();
     debugTest(`setup ${this.registration.name}`);
     const useFunc = async (value: any) => {
-      if (called)
-        throw new Error(`Cannot provide fixture value for the second time`);
+      if (called) throw new Error(`Cannot provide fixture value for the second time`);
       called = true;
       this.value = value;
       this._useFuncFinished = new ManualPromise<void>();
@@ -78,27 +77,24 @@ class Fixture {
       await this._useFuncFinished;
     };
     const info = this.registration.scope === 'worker' ? workerInfo : testInfo;
-    this._selfTeardownComplete = Promise.resolve().then(() => this.registration.fn(params, useFunc, info)).catch((e: any) => {
-      if (!useFuncStarted.isDone())
-        useFuncStarted.reject(e);
-      else
-        throw e;
-    });
+    this._selfTeardownComplete = Promise.resolve()
+      .then(() => this.registration.fn(params, useFunc, info))
+      .catch((e: any) => {
+        if (!useFuncStarted.isDone()) useFuncStarted.reject(e);
+        else throw e;
+      });
     await useFuncStarted;
   }
 
   async teardown() {
-    if (!this._teardownWithDepsComplete)
-      this._teardownWithDepsComplete = this._teardownInternal();
+    if (!this._teardownWithDepsComplete) this._teardownWithDepsComplete = this._teardownInternal();
     await this._teardownWithDepsComplete;
   }
 
   private async _teardownInternal() {
-    if (typeof this.registration.fn !== 'function')
-      return;
+    if (typeof this.registration.fn !== 'function') return;
     try {
-      for (const fixture of this.usages)
-        await fixture.teardown();
+      for (const fixture of this.usages) await fixture.teardown();
       this.usages.clear();
       if (this._useFuncFinished) {
         debugTest(`teardown ${this.registration.name}`);
@@ -112,7 +108,11 @@ class Fixture {
 }
 
 function isFixtureTuple(value: any): value is FixtureTuple {
-  return Array.isArray(value) && typeof value[1] === 'object' && ('scope' in value[1] || 'auto' in value[1] || 'option' in value[1]);
+  return (
+    Array.isArray(value) &&
+    typeof value[1] === 'object' &&
+    ('scope' in value[1] || 'auto' in value[1] || 'option' in value[1])
+  );
 }
 
 export function isFixtureOption(value: any): value is FixtureTuple {
@@ -123,7 +123,11 @@ export class FixturePool {
   readonly digest: string;
   readonly registrations: Map<string, FixtureRegistration>;
 
-  constructor(fixturesList: FixturesWithLocation[], parentPool?: FixturePool, disallowWorkerFixtures?: boolean) {
+  constructor(
+    fixturesList: FixturesWithLocation[],
+    parentPool?: FixturePool,
+    disallowWorkerFixtures?: boolean,
+  ) {
     this.registrations = new Map(parentPool ? parentPool.registrations : []);
 
     for (const { fixtures, location } of fixturesList) {
@@ -139,14 +143,22 @@ export class FixturePool {
           };
           value = value[0];
         }
-        const fn = value as (Function | any);
+        const fn = value as Function | any;
 
         const previous = this.registrations.get(name);
         if (previous && options) {
           if (previous.scope !== options.scope)
-            throw errorWithLocations(`Fixture "${name}" has already been registered as a { scope: '${previous.scope}' } fixture.`, { location, name }, previous);
+            throw errorWithLocations(
+              `Fixture "${name}" has already been registered as a { scope: '${previous.scope}' } fixture.`,
+              { location, name },
+              previous,
+            );
           if (previous.auto !== options.auto)
-            throw errorWithLocations(`Fixture "${name}" has already been registered as a { auto: '${previous.scope}' } fixture.`, { location, name }, previous);
+            throw errorWithLocations(
+              `Fixture "${name}" has already been registered as a { auto: '${previous.scope}' } fixture.`,
+              { location, name },
+              previous,
+            );
         } else if (previous) {
           options = { auto: previous.auto, scope: previous.scope, option: previous.option };
         } else if (!options) {
@@ -154,12 +166,28 @@ export class FixturePool {
         }
 
         if (options.scope !== 'test' && options.scope !== 'worker')
-          throw errorWithLocations(`Fixture "${name}" has unknown { scope: '${options.scope}' }.`, { location, name });
+          throw errorWithLocations(`Fixture "${name}" has unknown { scope: '${options.scope}' }.`, {
+            location,
+            name,
+          });
         if (options.scope === 'worker' && disallowWorkerFixtures)
-          throw errorWithLocations(`Cannot use({ ${name} }) in a describe group, because it forces a new worker.\nMake it top-level in the test file or put in the configuration file.`, { location, name });
+          throw errorWithLocations(
+            `Cannot use({ ${name} }) in a describe group, because it forces a new worker.\nMake it top-level in the test file or put in the configuration file.`,
+            { location, name },
+          );
 
         const deps = fixtureParameterNames(fn, location);
-        const registration: FixtureRegistration = { id: '', name, location, scope: options.scope, fn, auto: options.auto, option: options.option, deps, super: previous };
+        const registration: FixtureRegistration = {
+          id: '',
+          name,
+          location,
+          scope: options.scope,
+          fn,
+          auto: options.auto,
+          option: options.option,
+          deps,
+          super: previous,
+        };
         registrationId(registration);
         this.registrations.set(name, registration);
       }
@@ -178,19 +206,32 @@ export class FixturePool {
         const dep = this.resolveDependency(registration, name);
         if (!dep) {
           if (name === registration.name)
-            throw errorWithLocations(`Fixture "${registration.name}" references itself, but does not have a base implementation.`, registration);
+            throw errorWithLocations(
+              `Fixture "${registration.name}" references itself, but does not have a base implementation.`,
+              registration,
+            );
           else
-            throw errorWithLocations(`Fixture "${registration.name}" has unknown parameter "${name}".`, registration);
+            throw errorWithLocations(
+              `Fixture "${registration.name}" has unknown parameter "${name}".`,
+              registration,
+            );
         }
         if (registration.scope === 'worker' && dep.scope === 'test')
-          throw errorWithLocations(`Worker fixture "${registration.name}" cannot depend on a test fixture "${name}".`, registration, dep);
+          throw errorWithLocations(
+            `Worker fixture "${registration.name}" cannot depend on a test fixture "${name}".`,
+            registration,
+            dep,
+          );
         if (!markers.has(dep)) {
           visit(dep);
         } else if (markers.get(dep) === 'visiting') {
           const index = stack.indexOf(dep);
           const regs = stack.slice(index, stack.length);
-          const names = regs.map(r => `"${r.name}"`);
-          throw errorWithLocations(`Fixtures ${names.join(' -> ')} -> "${dep.name}" form a dependency cycle.`, ...regs);
+          const names = regs.map((r) => `"${r.name}"`);
+          throw errorWithLocations(
+            `Fixtures ${names.join(' -> ')} -> "${dep.name}" form a dependency cycle.`,
+            ...regs,
+          );
         }
       }
       markers.set(registration, 'visited');
@@ -202,28 +243,32 @@ export class FixturePool {
     for (const name of names) {
       const registration = this.registrations.get(name)!;
       visit(registration);
-      if (registration.scope === 'worker')
-        hash.update(registration.id + ';');
+      if (registration.scope === 'worker') hash.update(registration.id + ';');
     }
     return hash.digest('hex');
   }
 
   validateFunction(fn: Function, prefix: string, location: Location) {
     const visit = (registration: FixtureRegistration) => {
-      for (const name of registration.deps)
-        visit(this.resolveDependency(registration, name)!);
+      for (const name of registration.deps) visit(this.resolveDependency(registration, name)!);
     };
     for (const name of fixtureParameterNames(fn, location)) {
       const registration = this.registrations.get(name);
       if (!registration)
-        throw errorWithLocations(`${prefix} has unknown parameter "${name}".`, { location, name: prefix, quoted: false });
+        throw errorWithLocations(`${prefix} has unknown parameter "${name}".`, {
+          location,
+          name: prefix,
+          quoted: false,
+        });
       visit(registration);
     }
   }
 
-  resolveDependency(registration: FixtureRegistration, name: string): FixtureRegistration | undefined {
-    if (name === registration.name)
-      return registration.super;
+  resolveDependency(
+    registration: FixtureRegistration,
+    name: string,
+  ): FixtureRegistration | undefined {
+    if (name === registration.name) return registration.super;
     return this.registrations.get(name);
   }
 }
@@ -234,10 +279,8 @@ export class FixtureRunner {
   instanceForId = new Map<string, Fixture>();
 
   setPool(pool: FixturePool) {
-    if (!this.testScopeClean)
-      throw new Error('Did not teardown test scope');
-    if (this.pool && pool.digest !== this.pool.digest)
-      throw new Error('Digests do not match');
+    if (!this.testScopeClean) throw new Error('Did not teardown test scope');
+    if (this.pool && pool.digest !== this.pool.digest) throw new Error('Digests do not match');
     this.pool = pool;
   }
 
@@ -250,18 +293,19 @@ export class FixtureRunner {
         try {
           await fixture.teardown();
         } catch (e) {
-          if (error === undefined)
-            error = e;
+          if (error === undefined) error = e;
         }
       }
     }
-    if (scope === 'test')
-      this.testScopeClean = true;
-    if (error !== undefined)
-      throw error;
+    if (scope === 'test') this.testScopeClean = true;
+    if (error !== undefined) throw error;
   }
 
-  async resolveParametersForFunction(fn: Function, workerInfo: WorkerInfo, testInfo: TestInfo | undefined): Promise<object> {
+  async resolveParametersForFunction(
+    fn: Function,
+    workerInfo: WorkerInfo,
+    testInfo: TestInfo | undefined,
+  ): Promise<object> {
     // Install all automatic fixtures.
     for (const registration of this.pool!.registrations.values()) {
       const shouldSkip = !testInfo && registration.scope === 'test';
@@ -280,18 +324,24 @@ export class FixtureRunner {
     return params;
   }
 
-  async resolveParametersAndRunFunction(fn: Function, workerInfo: WorkerInfo, testInfo: TestInfo | undefined) {
+  async resolveParametersAndRunFunction(
+    fn: Function,
+    workerInfo: WorkerInfo,
+    testInfo: TestInfo | undefined,
+  ) {
     const params = await this.resolveParametersForFunction(fn, workerInfo, testInfo);
     return fn(params, testInfo || workerInfo);
   }
 
-  async setupFixtureForRegistration(registration: FixtureRegistration, workerInfo: WorkerInfo, testInfo: TestInfo | undefined): Promise<Fixture> {
-    if (registration.scope === 'test')
-      this.testScopeClean = false;
+  async setupFixtureForRegistration(
+    registration: FixtureRegistration,
+    workerInfo: WorkerInfo,
+    testInfo: TestInfo | undefined,
+  ): Promise<Fixture> {
+    if (registration.scope === 'test') this.testScopeClean = false;
 
     let fixture = this.instanceForId.get(registration.id);
-    if (fixture)
-      return fixture;
+    if (fixture) return fixture;
 
     fixture = new Fixture(this, registration);
     this.instanceForId.set(registration.id, fixture);
@@ -303,8 +353,7 @@ export class FixtureRunner {
     const names = fixtureParameterNames(fn, location);
     for (const name of names) {
       const registration = this.pool!.registrations.get(name)!;
-      if (registration.scope !== 'worker')
-        return false;
+      if (registration.scope !== 'worker') return false;
     }
     return true;
   }
@@ -313,25 +362,24 @@ export class FixtureRunner {
 const signatureSymbol = Symbol('signature');
 
 function fixtureParameterNames(fn: Function | any, location: Location): string[] {
-  if (typeof fn !== 'function')
-    return [];
-  if (!fn[signatureSymbol])
-    fn[signatureSymbol] = innerFixtureParameterNames(fn, location);
+  if (typeof fn !== 'function') return [];
+  if (!fn[signatureSymbol]) fn[signatureSymbol] = innerFixtureParameterNames(fn, location);
   return fn[signatureSymbol];
 }
 
 function innerFixtureParameterNames(fn: Function, location: Location): string[] {
   const text = fn.toString();
   const match = text.match(/(?:async)?(?:\s+function)?[^(]*\(([^)]*)/);
-  if (!match)
-    return [];
+  if (!match) return [];
   const trimmedParams = match[1].trim();
-  if (!trimmedParams)
-    return [];
+  if (!trimmedParams) return [];
   const [firstParam] = splitByComma(trimmedParams);
   if (firstParam[0] !== '{' || firstParam[firstParam.length - 1] !== '}')
-    throw errorWithLocations('First argument must use the object destructuring pattern: '  + firstParam, { location });
-  const props = splitByComma(firstParam.substring(1, firstParam.length - 1)).map(prop => {
+    throw errorWithLocations(
+      'First argument must use the object destructuring pattern: ' + firstParam,
+      { location },
+    );
+  const props = splitByComma(firstParam.substring(1, firstParam.length - 1)).map((prop) => {
     const colon = prop.indexOf(':');
     return colon === -1 ? prop : prop.substring(0, colon).trim();
   });
@@ -349,14 +397,12 @@ function splitByComma(s: string) {
       stack.pop();
     } else if (!stack.length && s[i] === ',') {
       const token = s.substring(start, i).trim();
-      if (token)
-        result.push(token);
+      if (token) result.push(token);
       start = i + 1;
     }
   }
   const lastToken = s.substring(start).trim();
-  if (lastToken)
-    result.push(lastToken);
+  if (lastToken) result.push(lastToken);
   return result;
 }
 
@@ -365,27 +411,27 @@ const registrationIdMap = new Map<string, Map<Function | any, string>>();
 let lastId = 0;
 
 function registrationId(registration: FixtureRegistration): string {
-  if (registration.id)
-    return registration.id;
-  const key = registration.name + '@@@' + (registration.super ?  registrationId(registration.super) : '');
+  if (registration.id) return registration.id;
+  const key =
+    registration.name + '@@@' + (registration.super ? registrationId(registration.super) : '');
   let map = registrationIdMap.get(key);
   if (!map) {
     map = new Map();
     registrationIdMap.set(key, map);
   }
-  if (!map.has(registration.fn))
-    map.set(registration.fn, String(lastId++));
+  if (!map.has(registration.fn)) map.set(registration.fn, String(lastId++));
   registration.id = map.get(registration.fn)!;
   return registration.id;
 }
 
-function errorWithLocations(message: string, ...defined: { location: Location, name?: string, quoted?: boolean }[]): Error {
+function errorWithLocations(
+  message: string,
+  ...defined: { location: Location; name?: string; quoted?: boolean }[]
+): Error {
   for (const { name, location, quoted } of defined) {
     let prefix = '';
-    if (name && quoted === false)
-      prefix = name + ' ';
-    else if (name)
-      prefix = `"${name}" `;
+    if (name && quoted === false) prefix = name + ' ';
+    else if (name) prefix = `"${name}" `;
     message += `\n  ${prefix}defined at ${formatLocation(location)}`;
   }
   return new Error(message);

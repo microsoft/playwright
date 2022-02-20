@@ -19,11 +19,11 @@ import '../third_party/vscode/codicon.css';
 import * as React from 'react';
 
 export interface ToolbarButtonProps {
-  title: string,
-  icon: string,
-  disabled?: boolean,
-  toggled?: boolean,
-  onClick: () => void
+  title: string;
+  icon: string;
+  disabled?: boolean;
+  toggled?: boolean;
+  onClick: () => void;
 }
 
 export const ToolbarButton: React.FC<ToolbarButtonProps> = ({
@@ -35,7 +35,11 @@ export const ToolbarButton: React.FC<ToolbarButtonProps> = ({
   onClick = () => {},
 }) => {
   let className = `toolbar-button ${icon}`;
-  if (toggled)
-    className += ' toggled';
-  return <button className={className} onClick={onClick} title={title} disabled={!!disabled}><span className={`codicon codicon-${icon}`}></span>{ children }</button>;
+  if (toggled) className += ' toggled';
+  return (
+    <button className={className} onClick={onClick} title={title} disabled={!!disabled}>
+      <span className={`codicon codicon-${icon}`}></span>
+      {children}
+    </button>
+  );
 };

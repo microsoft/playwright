@@ -37,14 +37,26 @@ export class Playwright extends SdkObject {
   private _allPages = new Set<Page>();
 
   constructor(sdkLanguage: string, isInternal: boolean) {
-    super({ attribution: { isInternal }, instrumentation: createInstrumentation() } as any, undefined, 'Playwright');
-    this.instrumentation.addListener({
-      onPageOpen: page => this._allPages.add(page),
-      onPageClose: page => this._allPages.delete(page),
-      onCallLog: (sdkObject: SdkObject, metadata: CallMetadata, logName: string, message: string) => {
-        debugLogger.log(logName as any, message);
-      }
-    }, null);
+    super(
+      { attribution: { isInternal }, instrumentation: createInstrumentation() } as any,
+      undefined,
+      'Playwright',
+    );
+    this.instrumentation.addListener(
+      {
+        onPageOpen: (page) => this._allPages.add(page),
+        onPageClose: (page) => this._allPages.delete(page),
+        onCallLog: (
+          sdkObject: SdkObject,
+          metadata: CallMetadata,
+          logName: string,
+          message: string,
+        ) => {
+          debugLogger.log(logName as any, message);
+        },
+      },
+      null,
+    );
     this.options = {
       rootSdkObject: this,
       selectors: new Selectors(),
@@ -59,7 +71,7 @@ export class Playwright extends SdkObject {
   }
 
   async hideHighlight() {
-    await Promise.all([...this._allPages].map(p => p.hideHighlight().catch(() => {})));
+    await Promise.all([...this._allPages].map((p) => p.hideHighlight().catch(() => {})));
   }
 }
 

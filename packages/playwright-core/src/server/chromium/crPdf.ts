@@ -20,7 +20,7 @@ import * as types from '../types';
 import { CRSession } from './crConnection';
 import { readProtocolStream } from './crProtocolHelper';
 
-const PagePaperFormats: { [key: string]: { width: number, height: number }} = {
+const PagePaperFormats: { [key: string]: { width: number; height: number } } = {
   letter: { width: 8.5, height: 11 },
   legal: { width: 8.5, height: 14 },
   tabloid: { width: 11, height: 17 },
@@ -35,15 +35,14 @@ const PagePaperFormats: { [key: string]: { width: number, height: number }} = {
 };
 
 const unitToPixels: { [key: string]: number } = {
-  'px': 1,
-  'in': 96,
-  'cm': 37.8,
-  'mm': 3.78
+  px: 1,
+  in: 96,
+  cm: 37.8,
+  mm: 3.78,
 };
 
 function convertPrintParameterToInches(text: string | undefined): number | undefined {
-  if (text === undefined)
-    return undefined;
+  if (text === undefined) return undefined;
   let unit = text.substring(text.length - 2).toLowerCase();
   let valueText = '';
   if (unitToPixels.hasOwnProperty(unit)) {
@@ -112,7 +111,7 @@ export class CRPDF {
       marginLeft,
       marginRight,
       pageRanges,
-      preferCSSPageSize
+      preferCSSPageSize,
     });
     return await readProtocolStream(this._client, result.stream!, null);
   }

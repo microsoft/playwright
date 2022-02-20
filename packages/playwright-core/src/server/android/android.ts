@@ -70,18 +70,16 @@ export class Android extends SdkObject {
   }
 
   async devices(): Promise<AndroidDevice[]> {
-    const devices = (await this._backend.devices()).filter(d => d.status === 'device');
+    const devices = (await this._backend.devices()).filter((d) => d.status === 'device');
     const newSerials = new Set<string>();
     for (const d of devices) {
       newSerials.add(d.serial);
-      if (this._devices.has(d.serial))
-        continue;
+      if (this._devices.has(d.serial)) continue;
       const device = await AndroidDevice.create(this, d);
       this._devices.set(d.serial, device);
     }
     for (const d of this._devices.keys()) {
-      if (!newSerials.has(d))
-        this._devices.delete(d);
+      if (!newSerials.has(d)) this._devices.delete(d);
     }
     return [...this._devices.values()];
   }
@@ -97,7 +95,10 @@ export class AndroidDevice extends SdkObject {
   readonly serial: string;
   private _driverPromise: Promise<PipeTransport> | undefined;
   private _lastId = 0;
-  private _callbacks = new Map<number, { fulfill: (result: any) => void, reject: (error: Error) => void }>();
+  private _callbacks = new Map<
+    number,
+    { fulfill: (result: any) => void; reject: (error: Error) => void }
+  >();
   private _pollingWebViews: NodeJS.Timeout | undefined;
   readonly _timeoutSettings: TimeoutSettings;
   private _webViews = new Map<number, AndroidWebView>();
@@ -105,7 +106,7 @@ export class AndroidDevice extends SdkObject {
   static Events = {
     WebViewAdded: 'webViewAdded',
     WebViewRemoved: 'webViewRemoved',
-    Closed: 'closed'
+    Closed: 'closed',
   };
 
   private _browserConnections = new Set<AndroidBrowser>();
@@ -132,7 +133,13 @@ export class AndroidDevice extends SdkObject {
   async _init() {
     await this._refreshWebViews();
     const poll = () => {
-      this._pollingWebViews = setTimeout(() => this._refreshWebViews().then(poll).catch(() => {}), 500);
+      this._pollingWebViews = setTimeout(
+        () =>
+          this._refreshWebViews()
+            .then(poll)
+            .catch(() => {}),
+        500,
+      );
     };
     poll();
   }
@@ -156,8 +163,7 @@ export class AndroidDevice extends SdkObject {
   }
 
   private async _driver(): Promise<PipeTransport> {
-    if (!this._driverPromise)
-      this._driverPromise = this._installDriver();
+    if (!this._driverPromise) this._driverPromise = this._installDriver();
     return this._driverPromise;
   }
 
@@ -174,19 +180,18 @@ export class AndroidDevice extends SdkObject {
       await this.installApk(await fs.promises.readFile(require.resolve(`../../../bin/${file}`)));
 
     debug('pw:android')('Starting the new driver');
-    this.shell('am instrument -w com.microsoft.playwright.androiddriver.test/androidx.test.runner.AndroidJUnitRunner').catch(e => debug('pw:android')(e));
+    this.shell(
+      'am instrument -w com.microsoft.playwright.androiddriver.test/androidx.test.runner.AndroidJUnitRunner',
+    ).catch((e) => debug('pw:android')(e));
     const socket = await this._waitForLocalAbstract('playwright_android_driver_socket');
     const transport = new PipeTransport(socket, socket, socket, 'be');
-    transport.onmessage = message => {
+    transport.onmessage = (message) => {
       const response = JSON.parse(message);
       const { id, result, error } = response;
       const callback = this._callbacks.get(id);
-      if (!callback)
-        return;
-      if (error)
-        callback.reject(new Error(error));
-      else
-        callback.fulfill(result);
+      if (!callback) return;
+      if (error) callback.reject(new Error(error));
+      else callback.fulfill(result);
       this._callbacks.delete(id);
     };
     return transport;
@@ -199,7 +204,7 @@ export class AndroidDevice extends SdkObject {
       try {
         socket = await this._backend.open(`localabstract:${socketName}`);
       } catch (e) {
-        await new Promise(f => setTimeout(f, 250));
+        await new Promise((f) => setTimeout(f, 250));
       }
     }
     debug('pw:android')(`Connected to localabstract:${socketName}`);
@@ -218,10 +223,8 @@ export class AndroidDevice extends SdkObject {
 
   async close() {
     this._isClosed = true;
-    if (this._pollingWebViews)
-      clearTimeout(this._pollingWebViews);
-    for (const connection of this._browserConnections)
-      await connection.close();
+    if (this._pollingWebViews) clearTimeout(this._pollingWebViews);
+    for (const connection of this._browserConnections) await connection.close();
     if (this._driverPromise) {
       const driver = await this._driver();
       driver.close();
@@ -231,26 +234,35 @@ export class AndroidDevice extends SdkObject {
     this.emit(AndroidDevice.Events.Closed);
   }
 
-  async launchBrowser(pkg: string = 'com.android.chrome', options: types.BrowserContextOptions): Promise<BrowserContext> {
+  async launchBrowser(
+    pkg: string = 'com.android.chrome',
+    options: types.BrowserContextOptions,
+  ): Promise<BrowserContext> {
     debug('pw:android')('Force-stopping', pkg);
     await this._backend.runCommand(`shell:am force-stop ${pkg}`);
 
     const socketName = 'playwright-' + createGuid();
     const commandLine = `_ --disable-fre --no-default-browser-check --no-first-run --remote-debugging-socket-name=${socketName}`;
     debug('pw:android')('Starting', pkg, commandLine);
-    await this._backend.runCommand(`shell:echo "${commandLine}" > /data/local/tmp/chrome-command-line`);
-    await this._backend.runCommand(`shell:am start -n ${pkg}/com.google.android.apps.chrome.Main about:blank`);
+    await this._backend.runCommand(
+      `shell:echo "${commandLine}" > /data/local/tmp/chrome-command-line`,
+    );
+    await this._backend.runCommand(
+      `shell:am start -n ${pkg}/com.google.android.apps.chrome.Main about:blank`,
+    );
     return await this._connectToBrowser(socketName, options);
   }
 
   async connectToWebView(pid: number): Promise<BrowserContext> {
     const webView = this._webViews.get(pid);
-    if (!webView)
-      throw new Error('WebView has been closed');
+    if (!webView) throw new Error('WebView has been closed');
     return await this._connectToBrowser(`webview_devtools_remote_${pid}`);
   }
 
-  private async _connectToBrowser(socketName: string, options: types.BrowserContextOptions = {}): Promise<BrowserContext> {
+  private async _connectToBrowser(
+    socketName: string,
+    options: types.BrowserContextOptions = {},
+  ): Promise<BrowserContext> {
     const socket = await this._waitForLocalAbstract(socketName);
     const androidBrowser = new AndroidBrowser(this, socket);
     await androidBrowser._init();
@@ -268,14 +280,14 @@ export class AndroidDevice extends SdkObject {
       browserProcess: new ClankBrowserProcess(androidBrowser),
       proxy: options.proxy,
       protocolLogger: helper.debugProtocolLogger(),
-      browserLogsCollector: new RecentLogsCollector()
+      browserLogsCollector: new RecentLogsCollector(),
     };
     validateBrowserContextOptions(options, browserOptions);
 
     const browser = await CRBrowser.connect(androidBrowser, browserOptions);
     const controller = new ProgressController(internalCallMetadata(), this);
     const defaultContext = browser._defaultContext!;
-    await controller.run(async progress => {
+    await controller.run(async (progress) => {
       await defaultContext._loadDefaultContextAsIs(progress);
     });
     {
@@ -283,7 +295,12 @@ export class AndroidDevice extends SdkObject {
       // Force page scale factor update.
       const page = defaultContext.pages()[0];
       const crPage = page._delegate as CRPage;
-      await crPage._mainFrameSession._client.send('Emulation.setDeviceMetricsOverride', { mobile: false, width: 0, height: 0, deviceScaleFactor: 0 });
+      await crPage._mainFrameSession._client.send('Emulation.setDeviceMetricsOverride', {
+        mobile: false,
+        width: 0,
+        height: 0,
+        deviceScaleFactor: 0,
+      });
       await crPage._mainFrameSession._client.send('Emulation.clearDeviceMetricsOverride', {});
     }
     return defaultContext;
@@ -296,10 +313,12 @@ export class AndroidDevice extends SdkObject {
   async installApk(content: Buffer, options?: { args?: string[] }): Promise<void> {
     const args = options && options.args ? options.args : ['-r', '-t', '-S'];
     debug('pw:android')('Opening install socket');
-    const installSocket = await this._backend.open(`shell:cmd package install ${args.join(' ')} ${content.length}`);
+    const installSocket = await this._backend.open(
+      `shell:cmd package install ${args.join(' ')} ${content.length}`,
+    );
     debug('pw:android')('Writing driver bytes: ' + content.length);
     await installSocket.write(content);
-    const success = await new Promise(f => installSocket.on('data', f));
+    const success = await new Promise((f) => installSocket.on('data', f));
     debug('pw:android')('Written driver bytes: ' + success);
     installSocket.close();
   }
@@ -321,41 +340,40 @@ export class AndroidDevice extends SdkObject {
     for (let i = 0; i < content.length; i += maxChunk)
       await send('DATA', content.slice(i, i + maxChunk));
     await sendHeader('DONE', (Date.now() / 1000) | 0);
-    const result = await new Promise<Buffer>(f => socket.once('data', f));
+    const result = await new Promise<Buffer>((f) => socket.once('data', f));
     const code = result.slice(0, 4).toString();
-    if (code !== 'OKAY')
-      throw new Error('Could not push: ' + code);
+    if (code !== 'OKAY') throw new Error('Could not push: ' + code);
     socket.close();
   }
 
   private async _refreshWebViews() {
-    const sockets = (await this._backend.runCommand(`shell:cat /proc/net/unix | grep webview_devtools_remote`)).toString().split('\n');
-    if (this._isClosed)
-      return;
+    const sockets = (
+      await this._backend.runCommand(`shell:cat /proc/net/unix | grep webview_devtools_remote`)
+    )
+      .toString()
+      .split('\n');
+    if (this._isClosed) return;
 
     const newPids = new Set<number>();
     for (const line of sockets) {
       const match = line.match(/[^@]+@webview_devtools_remote_(\d+)/);
-      if (!match)
-        continue;
+      if (!match) continue;
       const pid = +match[1];
       newPids.add(pid);
     }
     for (const pid of newPids) {
-      if (this._webViews.has(pid))
-        continue;
+      if (this._webViews.has(pid)) continue;
 
-      const procs = (await this._backend.runCommand(`shell:ps -A | grep ${pid}`)).toString().split('\n');
-      if (this._isClosed)
-        return;
+      const procs = (await this._backend.runCommand(`shell:ps -A | grep ${pid}`))
+        .toString()
+        .split('\n');
+      if (this._isClosed) return;
       let pkg = '';
       for (const proc of procs) {
         const match = proc.match(/[^\s]+\s+(\d+).*$/);
-        if (!match)
-          continue;
+        if (!match) continue;
         const p = match[1];
-        if (+p !== pid)
-          continue;
+        if (+p !== pid) continue;
         pkg = proc.substring(proc.lastIndexOf(' ') + 1);
       }
       const webView = { pid, pkg };
@@ -387,32 +405,32 @@ class AndroidBrowser extends EventEmitter {
     this._socket = socket;
     this._socket.on('close', () => {
       this._waitForNextTask(() => {
-        if (this.onclose)
-          this.onclose();
+        if (this.onclose) this.onclose();
       });
     });
     this._receiver = new (ws as any).Receiver() as stream.Writable;
-    this._receiver.on('message', message => {
+    this._receiver.on('message', (message) => {
       this._waitForNextTask(() => {
-        if (this.onmessage)
-          this.onmessage(JSON.parse(message));
+        if (this.onmessage) this.onmessage(JSON.parse(message));
       });
     });
   }
 
   async _init() {
-    await this._socket.write(Buffer.from(`GET /devtools/browser HTTP/1.1\r
+    await this._socket.write(
+      Buffer.from(`GET /devtools/browser HTTP/1.1\r
 Upgrade: WebSocket\r
 Connection: Upgrade\r
 Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r
 Sec-WebSocket-Version: 13\r
 \r
-`));
+`),
+    );
     // HTTP Upgrade response.
-    await new Promise(f => this._socket!.once('data', f));
+    await new Promise((f) => this._socket!.once('data', f));
 
     // Start sending web frame to receiver.
-    this._socket.on('data', data => this._receiver._write(data, 'binary', () => {}));
+    this._socket.on('data', (data) => this._receiver._write(data, 'binary', () => {}));
   }
 
   async send(s: any) {
@@ -429,7 +447,7 @@ function encodeWebFrame(data: string): Buffer {
     opcode: 1,
     mask: true,
     fin: true,
-    readOnly: true
+    readOnly: true,
   })[0];
 }
 
@@ -442,8 +460,7 @@ class ClankBrowserProcess implements BrowserProcess {
 
   onclose: ((exitCode: number | null, signal: string | null) => void) | undefined;
 
-  async kill(): Promise<void> {
-  }
+  async kill(): Promise<void> {}
 
   async close(): Promise<void> {
     await this._browser.close();

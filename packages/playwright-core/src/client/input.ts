@@ -70,7 +70,11 @@ export class Mouse implements api.Mouse {
     await this._page._channel.mouseClick({ x, y, ...options });
   }
 
-  async dblclick(x: number, y: number, options: Omit<channels.PageMouseClickOptions, 'clickCount'> = {}) {
+  async dblclick(
+    x: number,
+    y: number,
+    options: Omit<channels.PageMouseClickOptions, 'clickCount'> = {},
+  ) {
     await this.click(x, y, { ...options, clickCount: 2 });
   }
 

@@ -51,9 +51,9 @@ export class FFPage implements PageDelegate {
   readonly _opener: FFPage | null;
   private readonly _contextIdToContext: Map<string, dom.FrameExecutionContext>;
   private _eventListeners: RegisteredListener[];
-  private _workers = new Map<string, { frameId: string, session: FFSession }>();
+  private _workers = new Map<string, { frameId: string; session: FFSession }>();
   private _screencastId: string | undefined;
-  private _initScripts: { script: string, worldName?: string }[] = [];
+  private _initScripts: { script: string; worldName?: string }[] = [];
 
   constructor(session: FFSession, browserContext: FFBrowserContext, opener: FFPage | null) {
     this._session = session;
@@ -66,36 +66,125 @@ export class FFPage implements PageDelegate {
     this._page = new Page(this, browserContext);
     this.rawMouse.setPage(this._page);
     this._networkManager = new FFNetworkManager(session, this._page);
-    this._page.on(Page.Events.FrameDetached, frame => this._removeContextsForFrame(frame));
+    this._page.on(Page.Events.FrameDetached, (frame) => this._removeContextsForFrame(frame));
     // TODO: remove Page.willOpenNewWindowAsynchronously from the protocol.
     this._eventListeners = [
-      eventsHelper.addEventListener(this._session, 'Page.eventFired', this._onEventFired.bind(this)),
-      eventsHelper.addEventListener(this._session, 'Page.frameAttached', this._onFrameAttached.bind(this)),
-      eventsHelper.addEventListener(this._session, 'Page.frameDetached', this._onFrameDetached.bind(this)),
-      eventsHelper.addEventListener(this._session, 'Page.navigationAborted', this._onNavigationAborted.bind(this)),
-      eventsHelper.addEventListener(this._session, 'Page.navigationCommitted', this._onNavigationCommitted.bind(this)),
-      eventsHelper.addEventListener(this._session, 'Page.navigationStarted', this._onNavigationStarted.bind(this)),
-      eventsHelper.addEventListener(this._session, 'Page.sameDocumentNavigation', this._onSameDocumentNavigation.bind(this)),
-      eventsHelper.addEventListener(this._session, 'Runtime.executionContextCreated', this._onExecutionContextCreated.bind(this)),
-      eventsHelper.addEventListener(this._session, 'Runtime.executionContextDestroyed', this._onExecutionContextDestroyed.bind(this)),
-      eventsHelper.addEventListener(this._session, 'Page.linkClicked', event => this._onLinkClicked(event.phase)),
-      eventsHelper.addEventListener(this._session, 'Page.uncaughtError', this._onUncaughtError.bind(this)),
+      eventsHelper.addEventListener(
+        this._session,
+        'Page.eventFired',
+        this._onEventFired.bind(this),
+      ),
+      eventsHelper.addEventListener(
+        this._session,
+        'Page.frameAttached',
+        this._onFrameAttached.bind(this),
+      ),
+      eventsHelper.addEventListener(
+        this._session,
+        'Page.frameDetached',
+        this._onFrameDetached.bind(this),
+      ),
+      eventsHelper.addEventListener(
+        this._session,
+        'Page.navigationAborted',
+        this._onNavigationAborted.bind(this),
+      ),
+      eventsHelper.addEventListener(
+        this._session,
+        'Page.navigationCommitted',
+        this._onNavigationCommitted.bind(this),
+      ),
+      eventsHelper.addEventListener(
+        this._session,
+        'Page.navigationStarted',
+        this._onNavigationStarted.bind(this),
+      ),
+      eventsHelper.addEventListener(
+        this._session,
+        'Page.sameDocumentNavigation',
+        this._onSameDocumentNavigation.bind(this),
+      ),
+      eventsHelper.addEventListener(
+        this._session,
+        'Runtime.executionContextCreated',
+        this._onExecutionContextCreated.bind(this),
+      ),
+      eventsHelper.addEventListener(
+        this._session,
+        'Runtime.executionContextDestroyed',
+        this._onExecutionContextDestroyed.bind(this),
+      ),
+      eventsHelper.addEventListener(this._session, 'Page.linkClicked', (event) =>
+        this._onLinkClicked(event.phase),
+      ),
+      eventsHelper.addEventListener(
+        this._session,
+        'Page.uncaughtError',
+        this._onUncaughtError.bind(this),
+      ),
       eventsHelper.addEventListener(this._session, 'Runtime.console', this._onConsole.bind(this)),
-      eventsHelper.addEventListener(this._session, 'Page.dialogOpened', this._onDialogOpened.bind(this)),
-      eventsHelper.addEventListener(this._session, 'Page.bindingCalled', this._onBindingCalled.bind(this)),
-      eventsHelper.addEventListener(this._session, 'Page.fileChooserOpened', this._onFileChooserOpened.bind(this)),
-      eventsHelper.addEventListener(this._session, 'Page.workerCreated', this._onWorkerCreated.bind(this)),
-      eventsHelper.addEventListener(this._session, 'Page.workerDestroyed', this._onWorkerDestroyed.bind(this)),
-      eventsHelper.addEventListener(this._session, 'Page.dispatchMessageFromWorker', this._onDispatchMessageFromWorker.bind(this)),
+      eventsHelper.addEventListener(
+        this._session,
+        'Page.dialogOpened',
+        this._onDialogOpened.bind(this),
+      ),
+      eventsHelper.addEventListener(
+        this._session,
+        'Page.bindingCalled',
+        this._onBindingCalled.bind(this),
+      ),
+      eventsHelper.addEventListener(
+        this._session,
+        'Page.fileChooserOpened',
+        this._onFileChooserOpened.bind(this),
+      ),
+      eventsHelper.addEventListener(
+        this._session,
+        'Page.workerCreated',
+        this._onWorkerCreated.bind(this),
+      ),
+      eventsHelper.addEventListener(
+        this._session,
+        'Page.workerDestroyed',
+        this._onWorkerDestroyed.bind(this),
+      ),
+      eventsHelper.addEventListener(
+        this._session,
+        'Page.dispatchMessageFromWorker',
+        this._onDispatchMessageFromWorker.bind(this),
+      ),
       eventsHelper.addEventListener(this._session, 'Page.crashed', this._onCrashed.bind(this)),
-      eventsHelper.addEventListener(this._session, 'Page.videoRecordingStarted', this._onVideoRecordingStarted.bind(this)),
+      eventsHelper.addEventListener(
+        this._session,
+        'Page.videoRecordingStarted',
+        this._onVideoRecordingStarted.bind(this),
+      ),
 
-      eventsHelper.addEventListener(this._session, 'Page.webSocketCreated', this._onWebSocketCreated.bind(this)),
-      eventsHelper.addEventListener(this._session, 'Page.webSocketClosed', this._onWebSocketClosed.bind(this)),
-      eventsHelper.addEventListener(this._session, 'Page.webSocketFrameReceived', this._onWebSocketFrameReceived.bind(this)),
-      eventsHelper.addEventListener(this._session, 'Page.webSocketFrameSent', this._onWebSocketFrameSent.bind(this)),
-      eventsHelper.addEventListener(this._session, 'Page.screencastFrame', this._onScreencastFrame.bind(this)),
-
+      eventsHelper.addEventListener(
+        this._session,
+        'Page.webSocketCreated',
+        this._onWebSocketCreated.bind(this),
+      ),
+      eventsHelper.addEventListener(
+        this._session,
+        'Page.webSocketClosed',
+        this._onWebSocketClosed.bind(this),
+      ),
+      eventsHelper.addEventListener(
+        this._session,
+        'Page.webSocketFrameReceived',
+        this._onWebSocketFrameReceived.bind(this),
+      ),
+      eventsHelper.addEventListener(
+        this._session,
+        'Page.webSocketFrameSent',
+        this._onWebSocketFrameSent.bind(this),
+      ),
+      eventsHelper.addEventListener(
+        this._session,
+        'Page.screencastFrame',
+        this._onScreencastFrame.bind(this),
+      ),
     ];
     session.once(FFSessionEvents.Disconnected, () => {
       this._markAsError(new Error('Page closed'));
@@ -103,8 +192,7 @@ export class FFPage implements PageDelegate {
     });
     this._session.once('Page.ready', async () => {
       await this._page.initOpener(this._opener);
-      if (this._initializationFailed)
-        return;
+      if (this._initializationFailed) return;
       // Note: it is important to call |reportAsNew| before resolving pageOrError promise,
       // so that anyone who awaits pageOrError got a ready and reported page.
       this._initializedPage = this._page;
@@ -113,13 +201,12 @@ export class FFPage implements PageDelegate {
     });
     // Ideally, we somehow ensure that utility world is created before Page.ready arrives, but currently it is racy.
     // Therefore, we can end up with an initialized page without utility world, although very unlikely.
-    this.evaluateOnNewDocument('', UTILITY_WORLD_NAME).catch(e => this._markAsError(e));
+    this.evaluateOnNewDocument('', UTILITY_WORLD_NAME).catch((e) => this._markAsError(e));
   }
 
   async _markAsError(error: Error) {
     // Same error may be report twice: channer disconnected and session.send fails.
-    if (this._initializationFailed)
-      return;
+    if (this._initializationFailed) return;
     this._initializationFailed = true;
 
     if (!this._initializedPage) {
@@ -134,7 +221,10 @@ export class FFPage implements PageDelegate {
   }
 
   _onWebSocketCreated(event: Protocol.Page.webSocketCreatedPayload) {
-    this._page._frameManager.onWebSocketCreated(webSocketId(event.frameId, event.wsid), event.requestURL);
+    this._page._frameManager.onWebSocketCreated(
+      webSocketId(event.frameId, event.wsid),
+      event.requestURL,
+    );
     this._page._frameManager.onWebSocketRequest(webSocketId(event.frameId, event.wsid));
   }
 
@@ -145,52 +235,52 @@ export class FFPage implements PageDelegate {
   }
 
   _onWebSocketFrameReceived(event: Protocol.Page.webSocketFrameReceivedPayload) {
-    this._page._frameManager.webSocketFrameReceived(webSocketId(event.frameId, event.wsid), event.opcode, event.data);
+    this._page._frameManager.webSocketFrameReceived(
+      webSocketId(event.frameId, event.wsid),
+      event.opcode,
+      event.data,
+    );
   }
 
   _onWebSocketFrameSent(event: Protocol.Page.webSocketFrameSentPayload) {
-    this._page._frameManager.onWebSocketFrameSent(webSocketId(event.frameId, event.wsid), event.opcode, event.data);
+    this._page._frameManager.onWebSocketFrameSent(
+      webSocketId(event.frameId, event.wsid),
+      event.opcode,
+      event.data,
+    );
   }
 
   _onExecutionContextCreated(payload: Protocol.Runtime.executionContextCreatedPayload) {
     const { executionContextId, auxData } = payload;
     const frame = this._page._frameManager.frame(auxData.frameId!);
-    if (!frame)
-      return;
+    if (!frame) return;
     const delegate = new FFExecutionContext(this._session, executionContextId);
-    let worldName: types.World|null = null;
-    if (auxData.name === UTILITY_WORLD_NAME)
-      worldName = 'utility';
-    else if (!auxData.name)
-      worldName = 'main';
+    let worldName: types.World | null = null;
+    if (auxData.name === UTILITY_WORLD_NAME) worldName = 'utility';
+    else if (!auxData.name) worldName = 'main';
     const context = new dom.FrameExecutionContext(delegate, frame, worldName);
     (context as any)[contextDelegateSymbol] = delegate;
-    if (worldName)
-      frame._contextCreated(worldName, context);
+    if (worldName) frame._contextCreated(worldName, context);
     this._contextIdToContext.set(executionContextId, context);
   }
 
   _onExecutionContextDestroyed(payload: Protocol.Runtime.executionContextDestroyedPayload) {
     const { executionContextId } = payload;
     const context = this._contextIdToContext.get(executionContextId);
-    if (!context)
-      return;
+    if (!context) return;
     this._contextIdToContext.delete(executionContextId);
     context.frame._contextDestroyed(context);
   }
 
   private _removeContextsForFrame(frame: frames.Frame) {
     for (const [contextId, context] of this._contextIdToContext) {
-      if (context.frame === frame)
-        this._contextIdToContext.delete(contextId);
+      if (context.frame === frame) this._contextIdToContext.delete(contextId);
     }
   }
 
   _onLinkClicked(phase: 'before' | 'after') {
-    if (phase === 'before')
-      this._page._frameManager.frameWillPotentiallyRequestNavigation();
-    else
-      this._page._frameManager.frameDidPotentiallyRequestNavigation();
+    if (phase === 'before') this._page._frameManager.frameWillPotentiallyRequestNavigation();
+    else this._page._frameManager.frameDidPotentiallyRequestNavigation();
   }
 
   _onNavigationStarted(params: Protocol.Page.navigationStartedPayload) {
@@ -198,15 +288,24 @@ export class FFPage implements PageDelegate {
   }
 
   _onNavigationAborted(params: Protocol.Page.navigationAbortedPayload) {
-    this._page._frameManager.frameAbortedNavigation(params.frameId, params.errorText, params.navigationId);
+    this._page._frameManager.frameAbortedNavigation(
+      params.frameId,
+      params.errorText,
+      params.navigationId,
+    );
   }
 
   _onNavigationCommitted(params: Protocol.Page.navigationCommittedPayload) {
     for (const [workerId, worker] of this._workers) {
-      if (worker.frameId === params.frameId)
-        this._onWorkerDestroyed({ workerId });
+      if (worker.frameId === params.frameId) this._onWorkerDestroyed({ workerId });
     }
-    this._page._frameManager.frameCommittedNewDocumentNavigation(params.frameId, params.url, params.name || '', params.navigationId || '', false);
+    this._page._frameManager.frameCommittedNewDocumentNavigation(
+      params.frameId,
+      params.url,
+      params.name || '',
+      params.navigationId || '',
+      false,
+    );
   }
 
   _onSameDocumentNavigation(params: Protocol.Page.sameDocumentNavigationPayload) {
@@ -223,8 +322,7 @@ export class FFPage implements PageDelegate {
 
   _onEventFired(payload: Protocol.Page.eventFiredPayload) {
     const { frameId, name } = payload;
-    if (name === 'load')
-      this._page._frameManager.frameLifecycleEvent(frameId, 'load');
+    if (name === 'load') this._page._frameManager.frameLifecycleEvent(frameId, 'load');
     if (name === 'DOMContentLoaded')
       this._page._frameManager.frameLifecycleEvent(frameId, 'domcontentloaded');
   }
@@ -232,7 +330,14 @@ export class FFPage implements PageDelegate {
   _onUncaughtError(params: Protocol.Page.uncaughtErrorPayload) {
     const { name, message } = splitErrorMessage(params.message);
     const error = new Error(message);
-    error.stack = params.message + '\n' + params.stack.split('\n').filter(Boolean).map(a => a.replace(/([^@]*)@(.*)/, '    at $1 ($2)')).join('\n');
+    error.stack =
+      params.message +
+      '\n' +
+      params.stack
+        .split('\n')
+        .filter(Boolean)
+        .map((a) => a.replace(/([^@]*)@(.*)/, '    at $1 ($2)'))
+        .join('\n');
     error.name = name;
     this._page.firePageError(error);
   }
@@ -240,36 +345,45 @@ export class FFPage implements PageDelegate {
   _onConsole(payload: Protocol.Runtime.consolePayload) {
     const { type, args, executionContextId, location } = payload;
     const context = this._contextIdToContext.get(executionContextId);
-    if (!context)
-      return;
-    this._page._addConsoleMessage(type, args.map(arg => context.createHandle(arg)), location);
+    if (!context) return;
+    this._page._addConsoleMessage(
+      type,
+      args.map((arg) => context.createHandle(arg)),
+      location,
+    );
   }
 
   _onDialogOpened(params: Protocol.Page.dialogOpenedPayload) {
-    this._page.emit(Page.Events.Dialog, new dialog.Dialog(
+    this._page.emit(
+      Page.Events.Dialog,
+      new dialog.Dialog(
         this._page,
         params.type,
         params.message,
         async (accept: boolean, promptText?: string) => {
-          await this._session.sendMayFail('Page.handleDialog', { dialogId: params.dialogId, accept, promptText });
+          await this._session.sendMayFail('Page.handleDialog', {
+            dialogId: params.dialogId,
+            accept,
+            promptText,
+          });
         },
-        params.defaultValue));
+        params.defaultValue,
+      ),
+    );
   }
 
   async _onBindingCalled(event: Protocol.Page.bindingCalledPayload) {
     const pageOrError = await this.pageOrError();
     if (!(pageOrError instanceof Error)) {
       const context = this._contextIdToContext.get(event.executionContextId);
-      if (context)
-        await this._page._onBindingCalled(event.payload, context);
+      if (context) await this._page._onBindingCalled(event.payload, context);
     }
   }
 
   async _onFileChooserOpened(payload: Protocol.Page.fileChooserOpenedPayload) {
     const { executionContextId, element } = payload;
     const context = this._contextIdToContext.get(executionContextId);
-    if (!context)
-      return;
+    if (!context) return;
     const handle = context.createHandle(element).asElement()!;
     await this._page._onFileChooserOpened(handle);
   }
@@ -278,23 +392,36 @@ export class FFPage implements PageDelegate {
     const workerId = event.workerId;
     const worker = new Worker(this._page, event.url);
     const workerSession = new FFSession(this._session._connection, workerId, (message: any) => {
-      this._session.send('Page.sendMessageToWorker', {
-        frameId: event.frameId,
-        workerId: workerId,
-        message: JSON.stringify(message)
-      }).catch(e => {
-        workerSession.dispatchMessage({ id: message.id, method: '', params: {}, error: { message: e.message, data: undefined } });
-      });
+      this._session
+        .send('Page.sendMessageToWorker', {
+          frameId: event.frameId,
+          workerId: workerId,
+          message: JSON.stringify(message),
+        })
+        .catch((e) => {
+          workerSession.dispatchMessage({
+            id: message.id,
+            method: '',
+            params: {},
+            error: { message: e.message, data: undefined },
+          });
+        });
     });
     this._workers.set(workerId, { session: workerSession, frameId: event.frameId });
     this._page._addWorker(workerId, worker);
-    workerSession.once('Runtime.executionContextCreated', event => {
-      worker._createExecutionContext(new FFExecutionContext(workerSession, event.executionContextId));
+    workerSession.once('Runtime.executionContextCreated', (event) => {
+      worker._createExecutionContext(
+        new FFExecutionContext(workerSession, event.executionContextId),
+      );
     });
-    workerSession.on('Runtime.console', event => {
+    workerSession.on('Runtime.console', (event) => {
       const { type, args, location } = event;
       const context = worker._existingExecutionContext!;
-      this._page._addConsoleMessage(type, args.map(arg => context.createHandle(arg)), location);
+      this._page._addConsoleMessage(
+        type,
+        args.map((arg) => context.createHandle(arg)),
+        location,
+      );
     });
     // Note: we receive worker exceptions directly from the page.
   }
@@ -302,8 +429,7 @@ export class FFPage implements PageDelegate {
   _onWorkerDestroyed(event: Protocol.Page.workerDestroyedPayload) {
     const workerId = event.workerId;
     const worker = this._workers.get(workerId);
-    if (!worker)
-      return;
+    if (!worker) return;
     worker.session.dispose();
     this._workers.delete(workerId);
     this._page._removeWorker(workerId);
@@ -311,8 +437,7 @@ export class FFPage implements PageDelegate {
 
   async _onDispatchMessageFromWorker(event: Protocol.Page.dispatchMessageFromWorkerPayload) {
     const worker = this._workers.get(event.workerId);
-    if (!worker)
-      return;
+    if (!worker) return;
     worker.session.dispatchMessage(JSON.parse(event.message));
   }
 
@@ -322,7 +447,12 @@ export class FFPage implements PageDelegate {
   }
 
   _onVideoRecordingStarted(event: Protocol.Page.videoRecordingStartedPayload) {
-    this._browserContext._browser._videoStarted(this._browserContext, event.screencastId, event.file, this.pageOrError());
+    this._browserContext._browser._videoStarted(
+      this._browserContext,
+      event.screencastId,
+      event.file,
+      this.pageOrError(),
+    );
   }
 
   async exposeBinding(binding: PageBinding) {
@@ -336,13 +466,23 @@ export class FFPage implements PageDelegate {
     this._page._didClose();
   }
 
-  async navigateFrame(frame: frames.Frame, url: string, referer: string | undefined): Promise<frames.GotoResult> {
-    const response = await this._session.send('Page.navigate', { url, referer, frameId: frame._id });
+  async navigateFrame(
+    frame: frames.Frame,
+    url: string,
+    referer: string | undefined,
+  ): Promise<frames.GotoResult> {
+    const response = await this._session.send('Page.navigate', {
+      url,
+      referer,
+      frameId: frame._id,
+    });
     return { newDocumentId: response.navigationId || undefined };
   }
 
   async updateExtraHTTPHeaders(): Promise<void> {
-    await this._session.send('Network.setExtraHTTPHeaders', { headers: this._page._state.extraHTTPHeaders || [] });
+    await this._session.send('Network.setExtraHTTPHeaders', {
+      headers: this._page._state.extraHTTPHeaders || [],
+    });
   }
 
   async setEmulatedSize(emulatedSize: types.EmulatedSize): Promise<void> {
@@ -360,9 +500,12 @@ export class FFPage implements PageDelegate {
   }
 
   async updateEmulateMedia(): Promise<void> {
-    const colorScheme = this._page._state.colorScheme === null ? undefined : this._page._state.colorScheme;
-    const reducedMotion = this._page._state.reducedMotion === null ? undefined : this._page._state.reducedMotion;
-    const forcedColors = this._page._state.forcedColors === null ? undefined : this._page._state.forcedColors;
+    const colorScheme =
+      this._page._state.colorScheme === null ? undefined : this._page._state.colorScheme;
+    const reducedMotion =
+      this._page._state.reducedMotion === null ? undefined : this._page._state.reducedMotion;
+    const forcedColors =
+      this._page._state.forcedColors === null ? undefined : this._page._state.forcedColors;
     await this._session.send('Page.setEmulatedMedia', {
       // Empty string means reset.
       type: this._page._state.mediaType === null ? '' : this._page._state.mediaType,
@@ -377,7 +520,7 @@ export class FFPage implements PageDelegate {
   }
 
   async setFileChooserIntercepted(enabled: boolean) {
-    await this._session.send('Page.setInterceptFileChooserDialog', { enabled }).catch(e => {}); // target can be closed.
+    await this._session.send('Page.setInterceptFileChooserDialog', { enabled }).catch((e) => {}); // target can be closed.
   }
 
   async reload(): Promise<void> {
@@ -385,12 +528,16 @@ export class FFPage implements PageDelegate {
   }
 
   async goBack(): Promise<boolean> {
-    const { success } = await this._session.send('Page.goBack', { frameId: this._page.mainFrame()._id });
+    const { success } = await this._session.send('Page.goBack', {
+      frameId: this._page.mainFrame()._id,
+    });
     return success;
   }
 
   async goForward(): Promise<boolean> {
-    const { success } = await this._session.send('Page.goForward', { frameId: this._page.mainFrame()._id });
+    const { success } = await this._session.send('Page.goForward', {
+      frameId: this._page.mainFrame()._id,
+    });
     return success;
   }
 
@@ -403,14 +550,21 @@ export class FFPage implements PageDelegate {
     await this._session.send('Page.close', { runBeforeUnload });
   }
 
-  async setBackgroundColor(color?: { r: number; g: number; b: number; a: number; }): Promise<void> {
-    if (color)
-      throw new Error('Not implemented');
+  async setBackgroundColor(color?: { r: number; g: number; b: number; a: number }): Promise<void> {
+    if (color) throw new Error('Not implemented');
   }
 
-  async takeScreenshot(progress: Progress, format: 'png' | 'jpeg', documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, quality: number | undefined): Promise<Buffer> {
+  async takeScreenshot(
+    progress: Progress,
+    format: 'png' | 'jpeg',
+    documentRect: types.Rect | undefined,
+    viewportRect: types.Rect | undefined,
+    quality: number | undefined,
+  ): Promise<Buffer> {
     if (!documentRect) {
-      const scrollOffset = await this._page.mainFrame().waitForFunctionValueInUtility(progress, () => ({ x: window.scrollX, y: window.scrollY }));
+      const scrollOffset = await this._page
+        .mainFrame()
+        .waitForFunctionValueInUtility(progress, () => ({ x: window.scrollX, y: window.scrollY }));
       documentRect = {
         x: viewportRect!.x + scrollOffset.x,
         y: viewportRect!.y + scrollOffset.y,
@@ -422,7 +576,7 @@ export class FFPage implements PageDelegate {
     // TODO: remove Page.getBoundingBox method.
     progress.throwIfAborted();
     const { data } = await this._session.send('Page.screenshot', {
-      mimeType: ('image/' + format) as ('image/png' | 'image/jpeg'),
+      mimeType: ('image/' + format) as 'image/png' | 'image/jpeg',
       clip: documentRect,
     });
     return Buffer.from(data, 'base64');
@@ -433,15 +587,14 @@ export class FFPage implements PageDelegate {
       frameId: handle._context.frame._id,
       objectId: handle._objectId,
     });
-    if (!contentFrameId)
-      return null;
+    if (!contentFrameId) return null;
     return this._page._frameManager.frame(contentFrameId);
   }
 
   async getOwnerFrame(handle: dom.ElementHandle): Promise<string | null> {
     const { ownerFrameId } = await this._session.send('Page.describeNode', {
       frameId: handle._context.frame._id,
-      objectId: handle._objectId
+      objectId: handle._objectId,
     });
     return ownerFrameId || null;
   }
@@ -452,8 +605,7 @@ export class FFPage implements PageDelegate {
 
   async getBoundingBox(handle: dom.ElementHandle): Promise<types.Rect | null> {
     const quads = await this.getContentQuads(handle);
-    if (!quads || !quads.length)
-      return null;
+    if (!quads || !quads.length) return null;
     let minX = Infinity;
     let maxX = -Infinity;
     let minY = Infinity;
@@ -469,21 +621,29 @@ export class FFPage implements PageDelegate {
     return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
   }
 
-  async scrollRectIntoViewIfNeeded(handle: dom.ElementHandle, rect?: types.Rect): Promise<'error:notvisible' | 'error:notconnected' | 'done'> {
-    return await this._session.send('Page.scrollIntoViewIfNeeded', {
-      frameId: handle._context.frame._id,
-      objectId: handle._objectId,
-      rect,
-    }).then(() => 'done' as const).catch(e => {
-      if (e instanceof Error && e.message.includes('Node is detached from document'))
-        return 'error:notconnected';
-      if (e instanceof Error && e.message.includes('Node does not have a layout object'))
-        return 'error:notvisible';
-      throw e;
-    });
+  async scrollRectIntoViewIfNeeded(
+    handle: dom.ElementHandle,
+    rect?: types.Rect,
+  ): Promise<'error:notvisible' | 'error:notconnected' | 'done'> {
+    return await this._session
+      .send('Page.scrollIntoViewIfNeeded', {
+        frameId: handle._context.frame._id,
+        objectId: handle._objectId,
+        rect,
+      })
+      .then(() => 'done' as const)
+      .catch((e) => {
+        if (e instanceof Error && e.message.includes('Node is detached from document'))
+          return 'error:notconnected';
+        if (e instanceof Error && e.message.includes('Node does not have a layout object'))
+          return 'error:notvisible';
+        throw e;
+      });
   }
 
-  async setScreencastOptions(options: { width: number, height: number, quality: number } | null): Promise<void> {
+  async setScreencastOptions(
+    options: { width: number; height: number; quality: number } | null,
+  ): Promise<void> {
     if (options) {
       const { screencastId } = await this._session.send('Page.startScreencast', options);
       this._screencastId = screencastId;
@@ -493,11 +653,12 @@ export class FFPage implements PageDelegate {
   }
 
   private _onScreencastFrame(event: Protocol.Page.screencastFramePayload) {
-    if (!this._screencastId)
-      return;
+    if (!this._screencastId) return;
     const screencastId = this._screencastId;
     this._page.throttleScreencastFrameAck(() => {
-      this._session.send('Page.screencastFrameAck', { screencastId }).catch(e => debugLogger.log('error', e));
+      this._session
+        .send('Page.screencastFrameAck', { screencastId })
+        .catch((e) => debugLogger.log('error', e));
     });
 
     const buffer = Buffer.from(event.data, 'base64');
@@ -517,24 +678,31 @@ export class FFPage implements PageDelegate {
       frameId: handle._context.frame._id,
       objectId: handle._objectId,
     });
-    if (!result)
-      return null;
-    return result.quads.map(quad => [ quad.p1, quad.p2, quad.p3, quad.p4 ]);
+    if (!result) return null;
+    return result.quads.map((quad) => [quad.p1, quad.p2, quad.p3, quad.p4]);
   }
 
-  async setInputFiles(handle: dom.ElementHandle<HTMLInputElement>, files: types.FilePayload[]): Promise<void> {
-    await handle.evaluateInUtility(([injected, node, files]) =>
-      injected.setInputFiles(node, files), files);
+  async setInputFiles(
+    handle: dom.ElementHandle<HTMLInputElement>,
+    files: types.FilePayload[],
+  ): Promise<void> {
+    await handle.evaluateInUtility(
+      ([injected, node, files]) => injected.setInputFiles(node, files),
+      files,
+    );
   }
 
-  async adoptElementHandle<T extends Node>(handle: dom.ElementHandle<T>, to: dom.FrameExecutionContext): Promise<dom.ElementHandle<T>> {
+  async adoptElementHandle<T extends Node>(
+    handle: dom.ElementHandle<T>,
+    to: dom.FrameExecutionContext,
+  ): Promise<dom.ElementHandle<T>> {
     const result = await this._session.send('Page.adoptNode', {
       frameId: handle._context.frame._id,
       objectId: handle._objectId,
-      executionContextId: ((to as any)[contextDelegateSymbol] as FFExecutionContext)._executionContextId
+      executionContextId: ((to as any)[contextDelegateSymbol] as FFExecutionContext)
+        ._executionContextId,
     });
-    if (!result.remoteObject)
-      throw new Error(dom.kUnableToAdoptErrorMessage);
+    if (!result.remoteObject) throw new Error(dom.kUnableToAdoptErrorMessage);
     return to.createHandle(result.remoteObject) as dom.ElementHandle<T>;
   }
 
@@ -542,23 +710,22 @@ export class FFPage implements PageDelegate {
     return getAccessibilityTree(this._session, needle);
   }
 
-  async inputActionEpilogue(): Promise<void> {
-  }
+  async inputActionEpilogue(): Promise<void> {}
 
   async getFrameElement(frame: frames.Frame): Promise<dom.ElementHandle> {
     const parent = frame.parentFrame();
-    if (!parent)
-      throw new Error('Frame has been detached.');
+    if (!parent) throw new Error('Frame has been detached.');
     const info = this._page.parseSelector('frame,iframe');
     const handles = await this._page.selectors._queryAll(parent, info);
-    const items = await Promise.all(handles.map(async handle => {
-      const frame = await handle.contentFrame().catch(e => null);
-      return { handle, frame };
-    }));
-    const result = items.find(item => item.frame === frame);
-    items.map(item => item === result ? Promise.resolve() : item.handle.dispose());
-    if (!result)
-      throw new Error('Frame has been detached.');
+    const items = await Promise.all(
+      handles.map(async (handle) => {
+        const frame = await handle.contentFrame().catch((e) => null);
+        return { handle, frame };
+      }),
+    );
+    const result = items.find((item) => item.frame === frame);
+    items.map((item) => (item === result ? Promise.resolve() : item.handle.dispose()));
+    if (!result) throw new Error('Frame has been detached.');
     return result.handle;
   }
 }

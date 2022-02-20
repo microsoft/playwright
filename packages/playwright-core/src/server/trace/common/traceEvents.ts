@@ -21,49 +21,49 @@ import type { FrameSnapshot, ResourceSnapshot } from './snapshotTypes';
 export const VERSION = 3;
 
 export type BrowserContextEventOptions = {
-  viewport?: Size,
-  deviceScaleFactor?: number,
-  isMobile?: boolean,
-  userAgent?: string,
+  viewport?: Size;
+  deviceScaleFactor?: number;
+  isMobile?: boolean;
+  userAgent?: string;
 };
 
 export type ContextCreatedTraceEvent = {
-  version: number,
-  type: 'context-options',
-  browserName: string,
-  platform: string,
-  wallTime: number,
-  title?: string,
-  options: BrowserContextEventOptions
+  version: number;
+  type: 'context-options';
+  browserName: string;
+  platform: string;
+  wallTime: number;
+  title?: string;
+  options: BrowserContextEventOptions;
 };
 
 export type ScreencastFrameTraceEvent = {
-  type: 'screencast-frame',
-  pageId: string,
-  sha1: string,
-  width: number,
-  height: number,
-  timestamp: number,
+  type: 'screencast-frame';
+  pageId: string;
+  sha1: string;
+  width: number;
+  height: number;
+  timestamp: number;
 };
 
 export type ActionTraceEvent = {
-  type: 'action' | 'event',
-  metadata: CallMetadata,
+  type: 'action' | 'event';
+  metadata: CallMetadata;
 };
 
 export type ResourceSnapshotTraceEvent = {
-  type: 'resource-snapshot',
-  snapshot: ResourceSnapshot,
+  type: 'resource-snapshot';
+  snapshot: ResourceSnapshot;
 };
 
 export type FrameSnapshotTraceEvent = {
-  type: 'frame-snapshot',
-  snapshot: FrameSnapshot,
+  type: 'frame-snapshot';
+  snapshot: FrameSnapshot;
 };
 
 export type TraceEvent =
-    ContextCreatedTraceEvent |
-    ScreencastFrameTraceEvent |
-    ActionTraceEvent |
-    ResourceSnapshotTraceEvent |
-    FrameSnapshotTraceEvent;
+  | ContextCreatedTraceEvent
+  | ScreencastFrameTraceEvent
+  | ActionTraceEvent
+  | ResourceSnapshotTraceEvent
+  | FrameSnapshotTraceEvent;

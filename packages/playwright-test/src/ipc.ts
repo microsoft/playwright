@@ -32,7 +32,7 @@ export type WorkerInitParams = {
 
 export type TestBeginPayload = {
   testId: string;
-  startWallTime: number;  // milliseconds since unix epoch
+  startWallTime: number; // milliseconds since unix epoch
 };
 
 export type TestEndPayload = {
@@ -41,9 +41,9 @@ export type TestEndPayload = {
   status: TestStatus;
   errors: TestError[];
   expectedStatus: TestStatus;
-  annotations: { type: string, description?: string }[];
+  annotations: { type: string; description?: string }[];
   timeout: number;
-  attachments: { name: string, path?: string, body?: string, contentType: string }[];
+  attachments: { name: string; path?: string; body?: string; contentType: string }[];
 };
 
 export type StepBeginPayload = {
@@ -53,14 +53,14 @@ export type StepBeginPayload = {
   category: string;
   canHaveChildren: boolean;
   forceNoParent: boolean;
-  wallTime: number;  // milliseconds since unix epoch
-  location?: { file: string, line: number, column: number };
+  wallTime: number; // milliseconds since unix epoch
+  location?: { file: string; line: number; column: number };
 };
 
 export type StepEndPayload = {
   testId: string;
   stepId: string;
-  wallTime: number;  // milliseconds since unix epoch
+  wallTime: number; // milliseconds since unix epoch
   error?: TestError;
 };
 

@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 import colors from 'colors/safe';
 import type { ExpectedTextValue } from 'playwright-core/lib/protocol/channels';
 import { isRegExp, isString } from 'playwright-core/lib/utils/utils';
@@ -23,7 +22,7 @@ import type { Expect } from '../types';
 import { expectType } from '../util';
 import {
   printReceivedStringContainExpectedResult,
-  printReceivedStringContainExpectedSubstring
+  printReceivedStringContainExpectedSubstring,
 } from '../expect';
 
 export async function toMatchText(
@@ -31,9 +30,12 @@ export async function toMatchText(
   matcherName: string,
   receiver: any,
   receiverType: string,
-  query: (isNot: boolean, timeout: number) => Promise<{ matches: boolean, received?: string, log?: string[] }>,
+  query: (
+    isNot: boolean,
+    timeout: number,
+  ) => Promise<{ matches: boolean; received?: string; log?: string[] }>,
   expected: string | RegExp,
-  options: { timeout?: number, matchSubstring?: boolean } = {},
+  options: { timeout?: number; matchSubstring?: boolean } = {},
 ) {
   expectType(receiver, receiverType, matcherName);
 
@@ -42,18 +44,13 @@ export async function toMatchText(
     promise: this.promise,
   };
 
-  if (
-    !(typeof expected === 'string') &&
-    !(expected && typeof expected.test === 'function')
-  ) {
+  if (!(typeof expected === 'string') && !(expected && typeof expected.test === 'function')) {
     throw new Error(
-        this.utils.matcherErrorMessage(
-            this.utils.matcherHint(matcherName, undefined, undefined, matcherOptions),
-            `${this.utils.EXPECTED_COLOR(
-                'expected',
-            )} value must be a string or regular expression`,
-            this.utils.printWithType('Expected', expected, this.utils.printExpected),
-        ),
+      this.utils.matcherErrorMessage(
+        this.utils.matcherHint(matcherName, undefined, undefined, matcherOptions),
+        `${this.utils.EXPECTED_COLOR('expected')} value must be a string or regular expression`,
+        this.utils.printWithType('Expected', expected, this.utils.printExpected),
+      ),
     );
   }
 
@@ -64,46 +61,52 @@ export async function toMatchText(
   const receivedString = received || '';
   const message = pass
     ? () =>
-      typeof expected === 'string'
-        ? this.utils.matcherHint(matcherName, undefined, undefined, matcherOptions) +
-        '\n\n' +
-        `Expected ${stringSubstring}: not ${this.utils.printExpected(expected)}\n` +
-        `Received string: ${printReceivedStringContainExpectedSubstring(
-            receivedString,
-            receivedString.indexOf(expected),
-            expected.length,
-        )}` + callLogText(log)
-        : this.utils.matcherHint(matcherName, undefined, undefined, matcherOptions) +
-        '\n\n' +
-        `Expected pattern: not ${this.utils.printExpected(expected)}\n` +
-        `Received string: ${printReceivedStringContainExpectedResult(
-            receivedString,
-            typeof expected.exec === 'function'
-              ? expected.exec(receivedString)
-              : null,
-        )}` + callLogText(log)
+        typeof expected === 'string'
+          ? this.utils.matcherHint(matcherName, undefined, undefined, matcherOptions) +
+            '\n\n' +
+            `Expected ${stringSubstring}: not ${this.utils.printExpected(expected)}\n` +
+            `Received string: ${printReceivedStringContainExpectedSubstring(
+              receivedString,
+              receivedString.indexOf(expected),
+              expected.length,
+            )}` +
+            callLogText(log)
+          : this.utils.matcherHint(matcherName, undefined, undefined, matcherOptions) +
+            '\n\n' +
+            `Expected pattern: not ${this.utils.printExpected(expected)}\n` +
+            `Received string: ${printReceivedStringContainExpectedResult(
+              receivedString,
+              typeof expected.exec === 'function' ? expected.exec(receivedString) : null,
+            )}` +
+            callLogText(log)
     : () => {
-      const labelExpected = `Expected ${typeof expected === 'string' ? stringSubstring : 'pattern'
-      }`;
-      const labelReceived = 'Received string';
+        const labelExpected = `Expected ${
+          typeof expected === 'string' ? stringSubstring : 'pattern'
+        }`;
+        const labelReceived = 'Received string';
 
-      return (
-        this.utils.matcherHint(matcherName, undefined, undefined, matcherOptions) +
-        '\n\n' +
-        this.utils.printDiffOrStringify(
+        return (
+          this.utils.matcherHint(matcherName, undefined, undefined, matcherOptions) +
+          '\n\n' +
+          this.utils.printDiffOrStringify(
             expected,
             receivedString,
             labelExpected,
             labelReceived,
             this.expand !== false,
-        )) + callLogText(log);
-    };
+          ) +
+          callLogText(log)
+        );
+      };
 
   return { message, pass };
 }
 
-export function toExpectedTextValues(items: (string | RegExp)[], options: { matchSubstring?: boolean, normalizeWhiteSpace?: boolean } = {}): ExpectedTextValue[] {
-  return items.map(i => ({
+export function toExpectedTextValues(
+  items: (string | RegExp)[],
+  options: { matchSubstring?: boolean; normalizeWhiteSpace?: boolean } = {},
+): ExpectedTextValue[] {
+  return items.map((i) => ({
     string: isString(i) ? i : undefined,
     regexSource: isRegExp(i) ? i.source : undefined,
     regexFlags: isRegExp(i) ? i.flags : undefined,
@@ -113,8 +116,7 @@ export function toExpectedTextValues(items: (string | RegExp)[], options: { matc
 }
 
 export function callLogText(log: string[] | undefined): string {
-  if (!log)
-    return '';
+  if (!log) return '';
   return `
 Call log:
   ${colors.dim('- ' + (log || []).join('\n  - '))}
@@ -123,10 +125,8 @@ Call log:
 
 export function currentExpectTimeout(options: { timeout?: number }) {
   const testInfo = currentTestInfo();
-  if (options.timeout !== undefined)
-    return options.timeout;
+  if (options.timeout !== undefined) return options.timeout;
   let defaultExpectTimeout = testInfo?.project.expect?.timeout;
-  if (typeof defaultExpectTimeout === 'undefined')
-    defaultExpectTimeout = 5000;
+  if (typeof defaultExpectTimeout === 'undefined') defaultExpectTimeout = 5000;
   return defaultExpectTimeout;
 }

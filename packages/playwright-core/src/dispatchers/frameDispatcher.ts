@@ -16,13 +16,21 @@
 
 import { Frame, NavigationEvent } from '../server/frames';
 import * as channels from '../protocol/channels';
-import { Dispatcher, DispatcherScope, lookupNullableDispatcher, existingDispatcher } from './dispatcher';
+import {
+  Dispatcher,
+  DispatcherScope,
+  lookupNullableDispatcher,
+  existingDispatcher,
+} from './dispatcher';
 import { ElementHandleDispatcher } from './elementHandlerDispatcher';
 import { parseArgument, serializeResult } from './jsHandleDispatcher';
 import { ResponseDispatcher, RequestDispatcher } from './networkDispatchers';
 import { CallMetadata } from '../server/instrumentation';
 
-export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel> implements channels.FrameChannel {
+export class FrameDispatcher
+  extends Dispatcher<Frame, channels.FrameChannel>
+  implements channels.FrameChannel
+{
   _type_Frame = true;
   private _frame: Frame;
 
@@ -32,8 +40,7 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel> im
   }
 
   static fromNullable(scope: DispatcherScope, frame: Frame | null): FrameDispatcher | undefined {
-    if (!frame)
-      return;
+    if (!frame) return;
     return FrameDispatcher.from(scope, frame);
   }
 
@@ -45,62 +52,155 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel> im
       loadStates: Array.from(frame._subtreeLifecycleEvents),
     });
     this._frame = frame;
-    frame.on(Frame.Events.AddLifecycle, lifecycleEvent => {
+    frame.on(Frame.Events.AddLifecycle, (lifecycleEvent) => {
       this._dispatchEvent('loadstate', { add: lifecycleEvent });
     });
-    frame.on(Frame.Events.RemoveLifecycle, lifecycleEvent => {
+    frame.on(Frame.Events.RemoveLifecycle, (lifecycleEvent) => {
       this._dispatchEvent('loadstate', { remove: lifecycleEvent });
     });
     frame.on(Frame.Events.Navigation, (event: NavigationEvent) => {
-      const params = { url: event.url, name: event.name, error: event.error ? event.error.message : undefined };
+      const params = {
+        url: event.url,
+        name: event.name,
+        error: event.error ? event.error.message : undefined,
+      };
       if (event.newDocument)
-        (params as any).newDocument = { request: RequestDispatcher.fromNullable(this._scope, event.newDocument.request || null) };
+        (params as any).newDocument = {
+          request: RequestDispatcher.fromNullable(this._scope, event.newDocument.request || null),
+        };
       this._dispatchEvent('navigated', params);
     });
   }
 
-  async goto(params: channels.FrameGotoParams, metadata: CallMetadata): Promise<channels.FrameGotoResult> {
-    return { response: lookupNullableDispatcher<ResponseDispatcher>(await this._frame.goto(metadata, params.url, params)) };
+  async goto(
+    params: channels.FrameGotoParams,
+    metadata: CallMetadata,
+  ): Promise<channels.FrameGotoResult> {
+    return {
+      response: lookupNullableDispatcher<ResponseDispatcher>(
+        await this._frame.goto(metadata, params.url, params),
+      ),
+    };
   }
 
   async frameElement(): Promise<channels.FrameFrameElementResult> {
     return { element: ElementHandleDispatcher.from(this._scope, await this._frame.frameElement()) };
   }
 
-  async evaluateExpression(params: channels.FrameEvaluateExpressionParams, metadata: CallMetadata): Promise<channels.FrameEvaluateExpressionResult> {
-    return { value: serializeResult(await this._frame.evaluateExpressionAndWaitForSignals(params.expression, params.isFunction, parseArgument(params.arg), 'main')) };
+  async evaluateExpression(
+    params: channels.FrameEvaluateExpressionParams,
+    metadata: CallMetadata,
+  ): Promise<channels.FrameEvaluateExpressionResult> {
+    return {
+      value: serializeResult(
+        await this._frame.evaluateExpressionAndWaitForSignals(
+          params.expression,
+          params.isFunction,
+          parseArgument(params.arg),
+          'main',
+        ),
+      ),
+    };
   }
 
-  async evaluateExpressionHandle(params: channels.FrameEvaluateExpressionHandleParams, metadata: CallMetadata): Promise<channels.FrameEvaluateExpressionHandleResult> {
-    return { handle: ElementHandleDispatcher.fromJSHandle(this._scope, await this._frame.evaluateExpressionHandleAndWaitForSignals(params.expression, params.isFunction, parseArgument(params.arg), 'main')) };
+  async evaluateExpressionHandle(
+    params: channels.FrameEvaluateExpressionHandleParams,
+    metadata: CallMetadata,
+  ): Promise<channels.FrameEvaluateExpressionHandleResult> {
+    return {
+      handle: ElementHandleDispatcher.fromJSHandle(
+        this._scope,
+        await this._frame.evaluateExpressionHandleAndWaitForSignals(
+          params.expression,
+          params.isFunction,
+          parseArgument(params.arg),
+          'main',
+        ),
+      ),
+    };
   }
 
-  async waitForSelector(params: channels.FrameWaitForSelectorParams, metadata: CallMetadata): Promise<channels.FrameWaitForSelectorResult> {
-    return { element: ElementHandleDispatcher.fromNullable(this._scope, await this._frame.waitForSelector(metadata, params.selector, params)) };
+  async waitForSelector(
+    params: channels.FrameWaitForSelectorParams,
+    metadata: CallMetadata,
+  ): Promise<channels.FrameWaitForSelectorResult> {
+    return {
+      element: ElementHandleDispatcher.fromNullable(
+        this._scope,
+        await this._frame.waitForSelector(metadata, params.selector, params),
+      ),
+    };
   }
 
-  async dispatchEvent(params: channels.FrameDispatchEventParams, metadata: CallMetadata): Promise<void> {
-    return this._frame.dispatchEvent(metadata, params.selector, params.type, parseArgument(params.eventInit), params);
+  async dispatchEvent(
+    params: channels.FrameDispatchEventParams,
+    metadata: CallMetadata,
+  ): Promise<void> {
+    return this._frame.dispatchEvent(
+      metadata,
+      params.selector,
+      params.type,
+      parseArgument(params.eventInit),
+      params,
+    );
   }
 
-  async evalOnSelector(params: channels.FrameEvalOnSelectorParams, metadata: CallMetadata): Promise<channels.FrameEvalOnSelectorResult> {
-    return { value: serializeResult(await this._frame.evalOnSelectorAndWaitForSignals(params.selector, !!params.strict, params.expression, params.isFunction, parseArgument(params.arg))) };
+  async evalOnSelector(
+    params: channels.FrameEvalOnSelectorParams,
+    metadata: CallMetadata,
+  ): Promise<channels.FrameEvalOnSelectorResult> {
+    return {
+      value: serializeResult(
+        await this._frame.evalOnSelectorAndWaitForSignals(
+          params.selector,
+          !!params.strict,
+          params.expression,
+          params.isFunction,
+          parseArgument(params.arg),
+        ),
+      ),
+    };
   }
 
-  async evalOnSelectorAll(params: channels.FrameEvalOnSelectorAllParams, metadata: CallMetadata): Promise<channels.FrameEvalOnSelectorAllResult> {
-    return { value: serializeResult(await this._frame.evalOnSelectorAllAndWaitForSignals(params.selector, params.expression, params.isFunction, parseArgument(params.arg))) };
+  async evalOnSelectorAll(
+    params: channels.FrameEvalOnSelectorAllParams,
+    metadata: CallMetadata,
+  ): Promise<channels.FrameEvalOnSelectorAllResult> {
+    return {
+      value: serializeResult(
+        await this._frame.evalOnSelectorAllAndWaitForSignals(
+          params.selector,
+          params.expression,
+          params.isFunction,
+          parseArgument(params.arg),
+        ),
+      ),
+    };
   }
 
-  async querySelector(params: channels.FrameQuerySelectorParams, metadata: CallMetadata): Promise<channels.FrameQuerySelectorResult> {
-    return { element: ElementHandleDispatcher.fromNullable(this._scope, await this._frame.querySelector(params.selector, params)) };
+  async querySelector(
+    params: channels.FrameQuerySelectorParams,
+    metadata: CallMetadata,
+  ): Promise<channels.FrameQuerySelectorResult> {
+    return {
+      element: ElementHandleDispatcher.fromNullable(
+        this._scope,
+        await this._frame.querySelector(params.selector, params),
+      ),
+    };
   }
 
-  async querySelectorAll(params: channels.FrameQuerySelectorAllParams, metadata: CallMetadata): Promise<channels.FrameQuerySelectorAllResult> {
+  async querySelectorAll(
+    params: channels.FrameQuerySelectorAllParams,
+    metadata: CallMetadata,
+  ): Promise<channels.FrameQuerySelectorAllResult> {
     const elements = await this._frame.querySelectorAll(params.selector);
-    return { elements: elements.map(e => ElementHandleDispatcher.from(this._scope, e)) };
+    return { elements: elements.map((e) => ElementHandleDispatcher.from(this._scope, e)) };
   }
 
-  async queryCount(params: channels.FrameQueryCountParams): Promise<channels.FrameQueryCountResult> {
+  async queryCount(
+    params: channels.FrameQueryCountParams,
+  ): Promise<channels.FrameQueryCountResult> {
     return { value: await this._frame.queryCount(params.selector) };
   }
 
@@ -112,12 +212,22 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel> im
     return await this._frame.setContent(metadata, params.html, params);
   }
 
-  async addScriptTag(params: channels.FrameAddScriptTagParams, metadata: CallMetadata): Promise<channels.FrameAddScriptTagResult> {
-    return { element: ElementHandleDispatcher.from(this._scope, await this._frame.addScriptTag(params)) };
+  async addScriptTag(
+    params: channels.FrameAddScriptTagParams,
+    metadata: CallMetadata,
+  ): Promise<channels.FrameAddScriptTagResult> {
+    return {
+      element: ElementHandleDispatcher.from(this._scope, await this._frame.addScriptTag(params)),
+    };
   }
 
-  async addStyleTag(params: channels.FrameAddStyleTagParams, metadata: CallMetadata): Promise<channels.FrameAddStyleTagResult> {
-    return { element: ElementHandleDispatcher.from(this._scope, await this._frame.addStyleTag(params)) };
+  async addStyleTag(
+    params: channels.FrameAddStyleTagParams,
+    metadata: CallMetadata,
+  ): Promise<channels.FrameAddStyleTagResult> {
+    return {
+      element: ElementHandleDispatcher.from(this._scope, await this._frame.addStyleTag(params)),
+    };
   }
 
   async click(params: channels.FrameClickParams, metadata: CallMetadata): Promise<void> {
@@ -128,7 +238,10 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel> im
     return await this._frame.dblclick(metadata, params.selector, params);
   }
 
-  async dragAndDrop(params: channels.FrameDragAndDropParams, metadata: CallMetadata): Promise<void> {
+  async dragAndDrop(
+    params: channels.FrameDragAndDropParams,
+    metadata: CallMetadata,
+  ): Promise<void> {
     return await this._frame.dragAndDrop(metadata, params.source, params.target, params);
   }
 
@@ -144,50 +257,83 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel> im
     await this._frame.focus(metadata, params.selector, params);
   }
 
-  async textContent(params: channels.FrameTextContentParams, metadata: CallMetadata): Promise<channels.FrameTextContentResult> {
+  async textContent(
+    params: channels.FrameTextContentParams,
+    metadata: CallMetadata,
+  ): Promise<channels.FrameTextContentResult> {
     const value = await this._frame.textContent(metadata, params.selector, params);
     return { value: value === null ? undefined : value };
   }
 
-  async innerText(params: channels.FrameInnerTextParams, metadata: CallMetadata): Promise<channels.FrameInnerTextResult> {
+  async innerText(
+    params: channels.FrameInnerTextParams,
+    metadata: CallMetadata,
+  ): Promise<channels.FrameInnerTextResult> {
     return { value: await this._frame.innerText(metadata, params.selector, params) };
   }
 
-  async innerHTML(params: channels.FrameInnerHTMLParams, metadata: CallMetadata): Promise<channels.FrameInnerHTMLResult> {
+  async innerHTML(
+    params: channels.FrameInnerHTMLParams,
+    metadata: CallMetadata,
+  ): Promise<channels.FrameInnerHTMLResult> {
     return { value: await this._frame.innerHTML(metadata, params.selector, params) };
   }
 
-  async getAttribute(params: channels.FrameGetAttributeParams, metadata: CallMetadata): Promise<channels.FrameGetAttributeResult> {
+  async getAttribute(
+    params: channels.FrameGetAttributeParams,
+    metadata: CallMetadata,
+  ): Promise<channels.FrameGetAttributeResult> {
     const value = await this._frame.getAttribute(metadata, params.selector, params.name, params);
     return { value: value === null ? undefined : value };
   }
 
-  async inputValue(params: channels.FrameInputValueParams, metadata: CallMetadata): Promise<channels.FrameInputValueResult> {
+  async inputValue(
+    params: channels.FrameInputValueParams,
+    metadata: CallMetadata,
+  ): Promise<channels.FrameInputValueResult> {
     const value = await this._frame.inputValue(metadata, params.selector, params);
     return { value };
   }
 
-  async isChecked(params: channels.FrameIsCheckedParams, metadata: CallMetadata): Promise<channels.FrameIsCheckedResult> {
+  async isChecked(
+    params: channels.FrameIsCheckedParams,
+    metadata: CallMetadata,
+  ): Promise<channels.FrameIsCheckedResult> {
     return { value: await this._frame.isChecked(metadata, params.selector, params) };
   }
 
-  async isDisabled(params: channels.FrameIsDisabledParams, metadata: CallMetadata): Promise<channels.FrameIsDisabledResult> {
+  async isDisabled(
+    params: channels.FrameIsDisabledParams,
+    metadata: CallMetadata,
+  ): Promise<channels.FrameIsDisabledResult> {
     return { value: await this._frame.isDisabled(metadata, params.selector, params) };
   }
 
-  async isEditable(params: channels.FrameIsEditableParams, metadata: CallMetadata): Promise<channels.FrameIsEditableResult> {
+  async isEditable(
+    params: channels.FrameIsEditableParams,
+    metadata: CallMetadata,
+  ): Promise<channels.FrameIsEditableResult> {
     return { value: await this._frame.isEditable(metadata, params.selector, params) };
   }
 
-  async isEnabled(params: channels.FrameIsEnabledParams, metadata: CallMetadata): Promise<channels.FrameIsEnabledResult> {
+  async isEnabled(
+    params: channels.FrameIsEnabledParams,
+    metadata: CallMetadata,
+  ): Promise<channels.FrameIsEnabledResult> {
     return { value: await this._frame.isEnabled(metadata, params.selector, params) };
   }
 
-  async isHidden(params: channels.FrameIsHiddenParams, metadata: CallMetadata): Promise<channels.FrameIsHiddenResult> {
+  async isHidden(
+    params: channels.FrameIsHiddenParams,
+    metadata: CallMetadata,
+  ): Promise<channels.FrameIsHiddenResult> {
     return { value: await this._frame.isHidden(metadata, params.selector, params) };
   }
 
-  async isVisible(params: channels.FrameIsVisibleParams, metadata: CallMetadata): Promise<channels.FrameIsVisibleResult> {
+  async isVisible(
+    params: channels.FrameIsVisibleParams,
+    metadata: CallMetadata,
+  ): Promise<channels.FrameIsVisibleResult> {
     return { value: await this._frame.isVisible(metadata, params.selector, params) };
   }
 
@@ -195,12 +341,28 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel> im
     return await this._frame.hover(metadata, params.selector, params);
   }
 
-  async selectOption(params: channels.FrameSelectOptionParams, metadata: CallMetadata): Promise<channels.FrameSelectOptionResult> {
-    const elements = (params.elements || []).map(e => (e as ElementHandleDispatcher)._elementHandle);
-    return { values: await this._frame.selectOption(metadata, params.selector, elements, params.options || [], params) };
+  async selectOption(
+    params: channels.FrameSelectOptionParams,
+    metadata: CallMetadata,
+  ): Promise<channels.FrameSelectOptionResult> {
+    const elements = (params.elements || []).map(
+      (e) => (e as ElementHandleDispatcher)._elementHandle,
+    );
+    return {
+      values: await this._frame.selectOption(
+        metadata,
+        params.selector,
+        elements,
+        params.options || [],
+        params,
+      ),
+    };
   }
 
-  async setInputFiles(params: channels.FrameSetInputFilesParams, metadata: CallMetadata): Promise<void> {
+  async setInputFiles(
+    params: channels.FrameSetInputFilesParams,
+    metadata: CallMetadata,
+  ): Promise<void> {
     return await this._frame.setInputFiles(metadata, params.selector, params.files, params);
   }
 
@@ -220,15 +382,35 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel> im
     return await this._frame.uncheck(metadata, params.selector, params);
   }
 
-  async waitForTimeout(params: channels.FrameWaitForTimeoutParams, metadata: CallMetadata): Promise<void> {
+  async waitForTimeout(
+    params: channels.FrameWaitForTimeoutParams,
+    metadata: CallMetadata,
+  ): Promise<void> {
     return await this._frame.waitForTimeout(metadata, params.timeout);
   }
 
-  async waitForFunction(params: channels.FrameWaitForFunctionParams, metadata: CallMetadata): Promise<channels.FrameWaitForFunctionResult> {
-    return { handle: ElementHandleDispatcher.fromJSHandle(this._scope, await this._frame._waitForFunctionExpression(metadata, params.expression, params.isFunction, parseArgument(params.arg), params)) };
+  async waitForFunction(
+    params: channels.FrameWaitForFunctionParams,
+    metadata: CallMetadata,
+  ): Promise<channels.FrameWaitForFunctionResult> {
+    return {
+      handle: ElementHandleDispatcher.fromJSHandle(
+        this._scope,
+        await this._frame._waitForFunctionExpression(
+          metadata,
+          params.expression,
+          params.isFunction,
+          parseArgument(params.arg),
+          params,
+        ),
+      ),
+    };
   }
 
-  async title(params: channels.FrameTitleParams, metadata: CallMetadata): Promise<channels.FrameTitleResult> {
+  async title(
+    params: channels.FrameTitleParams,
+    metadata: CallMetadata,
+  ): Promise<channels.FrameTitleResult> {
     return { value: await this._frame.title() };
   }
 
@@ -236,11 +418,16 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel> im
     return await this._frame.highlight(params.selector);
   }
 
-  async expect(params: channels.FrameExpectParams, metadata: CallMetadata): Promise<channels.FrameExpectResult> {
+  async expect(
+    params: channels.FrameExpectParams,
+    metadata: CallMetadata,
+  ): Promise<channels.FrameExpectResult> {
     const expectedValue = params.expectedValue ? parseArgument(params.expectedValue) : undefined;
-    const result = await this._frame.expect(metadata, params.selector, { ...params, expectedValue });
-    if (result.received !== undefined)
-      result.received = serializeResult(result.received);
+    const result = await this._frame.expect(metadata, params.selector, {
+      ...params,
+      expectedValue,
+    });
+    if (result.received !== undefined) result.received = serializeResult(result.received);
     if (result.matches === params.isNot)
       metadata.error = { error: { name: 'Expect', message: 'Expect failed' } };
     return result;

@@ -41,8 +41,8 @@ export type CallLog = {
   reveal?: boolean;
   duration?: number;
   params: {
-    url?: string,
-    selector?: string,
+    url?: string;
+    selector?: string;
   };
 };
 

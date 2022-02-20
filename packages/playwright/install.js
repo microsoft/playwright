@@ -22,5 +22,4 @@ try {
   // Dev build, don't install browsers by default.
 }
 
-if (install)
-  install();
+if (install) install();

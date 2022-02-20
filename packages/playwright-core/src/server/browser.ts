@@ -26,7 +26,7 @@ import { Artifact } from './artifact';
 import { Selectors } from './selectors';
 
 export interface BrowserProcess {
-  onclose?: ((exitCode: number | null, signal: string | null) => void);
+  onclose?: (exitCode: number | null, signal: string | null) => void;
   process?: ChildProcess;
   kill(): Promise<void>;
   close(): Promise<void>;
@@ -36,25 +36,25 @@ export type PlaywrightOptions = {
   rootSdkObject: SdkObject;
   selectors: Selectors;
   socksProxyPort?: number;
-  sdkLanguage: string,
+  sdkLanguage: string;
 };
 
 export type BrowserOptions = PlaywrightOptions & {
-  name: string,
-  isChromium: boolean,
-  channel?: string,
+  name: string;
+  isChromium: boolean;
+  channel?: string;
   artifactsDir: string;
-  downloadsPath: string,
-  tracesDir: string,
-  headful?: boolean,
-  persistent?: types.BrowserContextOptions,  // Undefined means no persistent context.
-  browserProcess: BrowserProcess,
+  downloadsPath: string;
+  tracesDir: string;
+  headful?: boolean;
+  persistent?: types.BrowserContextOptions; // Undefined means no persistent context.
+  browserProcess: BrowserProcess;
   customExecutablePath?: string;
-  proxy?: ProxySettings,
-  protocolLogger: types.ProtocolLogger,
-  browserLogsCollector: RecentLogsCollector,
+  proxy?: ProxySettings;
+  protocolLogger: types.ProtocolLogger;
+  browserLogsCollector: RecentLogsCollector;
   slowMo?: number;
-  wsEndpoint?: string;  // Only there when connected over web socket.
+  wsEndpoint?: string; // Only there when connected over web socket.
 };
 
 export abstract class Browser extends SdkObject {
@@ -66,7 +66,7 @@ export abstract class Browser extends SdkObject {
   private _downloads = new Map<string, Download>();
   _defaultContext: BrowserContext | null = null;
   private _startedClosing = false;
-  readonly _idToVideo = new Map<string, { context: BrowserContext, artifact: Artifact }>();
+  readonly _idToVideo = new Map<string, { context: BrowserContext; artifact: Artifact }>();
 
   constructor(options: BrowserOptions) {
     super(options.rootSdkObject, 'browser');
@@ -81,30 +81,39 @@ export abstract class Browser extends SdkObject {
   abstract userAgent(): string;
 
   _downloadCreated(page: Page, uuid: string, url: string, suggestedFilename?: string) {
-    const download = new Download(page, this.options.downloadsPath || '', uuid, url, suggestedFilename);
+    const download = new Download(
+      page,
+      this.options.downloadsPath || '',
+      uuid,
+      url,
+      suggestedFilename,
+    );
     this._downloads.set(uuid, download);
   }
 
   _downloadFilenameSuggested(uuid: string, suggestedFilename: string) {
     const download = this._downloads.get(uuid);
-    if (!download)
-      return;
+    if (!download) return;
     download._filenameSuggested(suggestedFilename);
   }
 
   _downloadFinished(uuid: string, error?: string) {
     const download = this._downloads.get(uuid);
-    if (!download)
-      return;
+    if (!download) return;
     download.artifact.reportFinished(error);
     this._downloads.delete(uuid);
   }
 
-  _videoStarted(context: BrowserContext, videoId: string, path: string, pageOrError: Promise<Page | Error>) {
+  _videoStarted(
+    context: BrowserContext,
+    videoId: string,
+    path: string,
+    pageOrError: Promise<Page | Error>,
+  ) {
     const artifact = new Artifact(context, path);
     this._idToVideo.set(videoId, { context, artifact });
     context.emit(BrowserContext.Events.VideoStarted, artifact);
-    pageOrError.then(page => {
+    pageOrError.then((page) => {
       if (page instanceof Page) {
         page._video = artifact;
         page.emit(Page.Events.Video, artifact);
@@ -119,10 +128,8 @@ export abstract class Browser extends SdkObject {
   }
 
   _didClose() {
-    for (const context of this.contexts())
-      context._browserClosed();
-    if (this._defaultContext)
-      this._defaultContext._browserClosed();
+    for (const context of this.contexts()) context._browserClosed();
+    if (this._defaultContext) this._defaultContext._browserClosed();
     this.emit(Browser.Events.Disconnected);
   }
 
@@ -131,8 +138,7 @@ export abstract class Browser extends SdkObject {
       this._startedClosing = true;
       await this.options.browserProcess.close();
     }
-    if (this.isConnected())
-      await new Promise(x => this.once(Browser.Events.Disconnected, x));
+    if (this.isConnected()) await new Promise((x) => this.once(Browser.Events.Disconnected, x));
   }
 
   async killForTests() {

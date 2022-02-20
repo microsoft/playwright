@@ -50,11 +50,7 @@ export interface TsConfigLoaderResult {
 export interface TsConfigLoaderParams {
   getEnv: (key: string) => string | undefined;
   cwd: string;
-  loadSync?(
-    cwd: string,
-    filename?: string,
-    baseUrl?: string
-  ): TsConfigLoaderResult;
+  loadSync?(cwd: string, filename?: string, baseUrl?: string): TsConfigLoaderResult;
 }
 
 export function tsConfigLoader({
@@ -62,8 +58,8 @@ export function tsConfigLoader({
   cwd,
   loadSync = loadSyncDefault,
 }: TsConfigLoaderParams): TsConfigLoaderResult {
-  const TS_NODE_PROJECT = getEnv("TS_NODE_PROJECT");
-  const TS_NODE_BASEURL = getEnv("TS_NODE_BASEURL");
+  const TS_NODE_PROJECT = getEnv('TS_NODE_PROJECT');
+  const TS_NODE_BASEURL = getEnv('TS_NODE_BASEURL');
 
   // tsconfig.loadSync handles if TS_NODE_PROJECT is a file or directory
   // and also overrides baseURL if TS_NODE_BASEURL is available.
@@ -72,11 +68,7 @@ export function tsConfigLoader({
   return loadResult;
 }
 
-function loadSyncDefault(
-  cwd: string,
-  filename?: string,
-  baseUrl?: string
-): TsConfigLoaderResult {
+function loadSyncDefault(cwd: string, filename?: string, baseUrl?: string): TsConfigLoaderResult {
   // Tsconfig.loadSync uses path.resolve. This is why we can use an absolute path as filename
 
   const configPath = resolveConfigPath(cwd, filename);
@@ -93,9 +85,7 @@ function loadSyncDefault(
 
   return {
     tsConfigPath: configPath,
-    baseUrl:
-      baseUrl ||
-      (config && config.compilerOptions && config.compilerOptions.baseUrl),
+    baseUrl: baseUrl || (config && config.compilerOptions && config.compilerOptions.baseUrl),
     paths: config && config.compilerOptions && config.compilerOptions.paths,
     serialized: undefined,
   };
@@ -104,7 +94,7 @@ function loadSyncDefault(
 function resolveConfigPath(cwd: string, filename?: string): string | undefined {
   if (filename) {
     const absolutePath = fs.lstatSync(filename).isDirectory()
-      ? path.resolve(filename, "./tsconfig.json")
+      ? path.resolve(filename, './tsconfig.json')
       : path.resolve(cwd, filename);
 
     return absolutePath;
@@ -120,14 +110,14 @@ function resolveConfigPath(cwd: string, filename?: string): string | undefined {
 
 export function walkForTsConfig(
   directory: string,
-  existsSync: (path: string) => boolean = fs.existsSync
+  existsSync: (path: string) => boolean = fs.existsSync,
 ): string | undefined {
-  const configPath = path.join(directory, "./tsconfig.json");
+  const configPath = path.join(directory, './tsconfig.json');
   if (existsSync(configPath)) {
     return configPath;
   }
 
-  const parentDirectory = path.join(directory, "../");
+  const parentDirectory = path.join(directory, '../');
 
   // If we reached the top
   if (directory === parentDirectory) {
@@ -141,7 +131,7 @@ export function loadTsconfig(
   configFilePath: string,
   existsSync: (path: string) => boolean = fs.existsSync,
   readFileSync: (filename: string) => string = (filename: string) =>
-    fs.readFileSync(filename, "utf8")
+    fs.readFileSync(filename, 'utf8'),
 ): Tsconfig | undefined {
   if (!existsSync(configFilePath)) {
     return undefined;
@@ -153,37 +143,26 @@ export function loadTsconfig(
   let extendedConfig = config.extends;
 
   if (extendedConfig) {
-    if (
-      typeof extendedConfig === "string" &&
-      extendedConfig.indexOf(".json") === -1
-    ) {
-      extendedConfig += ".json";
+    if (typeof extendedConfig === 'string' && extendedConfig.indexOf('.json') === -1) {
+      extendedConfig += '.json';
     }
     const currentDir = path.dirname(configFilePath);
     let extendedConfigPath = path.join(currentDir, extendedConfig);
     if (
-      extendedConfig.indexOf("/") !== -1 &&
-      extendedConfig.indexOf(".") !== -1 &&
+      extendedConfig.indexOf('/') !== -1 &&
+      extendedConfig.indexOf('.') !== -1 &&
       !existsSync(extendedConfigPath)
     ) {
-      extendedConfigPath = path.join(
-        currentDir,
-        "node_modules",
-        extendedConfig
-      );
+      extendedConfigPath = path.join(currentDir, 'node_modules', extendedConfig);
     }
 
-    const base =
-      loadTsconfig(extendedConfigPath, existsSync, readFileSync) || {};
+    const base = loadTsconfig(extendedConfigPath, existsSync, readFileSync) || {};
 
     // baseUrl should be interpreted as relative to the base tsconfig,
     // but we need to update it so it is relative to the original tsconfig being loaded
     if (base.compilerOptions && base.compilerOptions.baseUrl) {
       const extendsDir = path.dirname(extendedConfig);
-      base.compilerOptions.baseUrl = path.join(
-        extendsDir,
-        base.compilerOptions.baseUrl
-      );
+      base.compilerOptions.baseUrl = path.join(extendsDir, base.compilerOptions.baseUrl);
     }
 
     return {
@@ -199,15 +178,15 @@ export function loadTsconfig(
 }
 
 function StripBom(string: string) {
-	if (typeof string !== 'string') {
-		throw new TypeError(`Expected a string, got ${typeof string}`);
-	}
+  if (typeof string !== 'string') {
+    throw new TypeError(`Expected a string, got ${typeof string}`);
+  }
 
-	// Catches EFBBBF (UTF-8 BOM) because the buffer-to-string
-	// conversion translates it to FEFF (UTF-16 BOM).
-	if (string.charCodeAt(0) === 0xFEFF) {
-		return string.slice(1);
-	}
+  // Catches EFBBBF (UTF-8 BOM) because the buffer-to-string
+  // conversion translates it to FEFF (UTF-16 BOM).
+  if (string.charCodeAt(0) === 0xfeff) {
+    return string.slice(1);
+  }
 
-	return string;
+  return string;
 }

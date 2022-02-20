@@ -27,7 +27,14 @@ import { Worker } from './worker';
 import { Events } from './events';
 import { TimeoutSettings } from '../utils/timeoutSettings';
 import { Waiter } from './waiter';
-import { URLMatch, Headers, WaitForEventOptions, BrowserContextOptions, StorageState, LaunchOptions } from './types';
+import {
+  URLMatch,
+  Headers,
+  WaitForEventOptions,
+  BrowserContextOptions,
+  StorageState,
+  LaunchOptions,
+} from './types';
 import { headersObjectToArray, mkdirIfNeeded } from '../utils/utils';
 import { isSafeCloseError } from '../utils/errors';
 import * as api from '../../types/types';
@@ -39,7 +46,10 @@ import { Artifact } from './artifact';
 import { APIRequestContext } from './fetch';
 import { createInstrumentation } from './clientInstrumentation';
 
-export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel> implements api.BrowserContext {
+export class BrowserContext
+  extends ChannelOwner<channels.BrowserContextChannel>
+  implements api.BrowserContext
+{
   _pages = new Set<Page>();
   private _routes: network.RouteHandler[] = [];
   readonly _browser: Browser | null = null;
@@ -48,7 +58,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   _timeoutSettings = new TimeoutSettings();
   _ownerPage: Page | undefined;
   private _closedPromise: Promise<void>;
-  _options: channels.BrowserNewContextParams = { };
+  _options: channels.BrowserNewContextParams = {};
 
   readonly request: APIRequestContext;
   readonly tracing: Tracing;
@@ -64,10 +74,14 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     return context ? BrowserContext.from(context) : null;
   }
 
-  constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.BrowserContextInitializer) {
+  constructor(
+    parent: ChannelOwner,
+    type: string,
+    guid: string,
+    initializer: channels.BrowserContextInitializer,
+  ) {
     super(parent, type, guid, initializer, createInstrumentation());
-    if (parent instanceof Browser)
-      this._browser = parent;
+    if (parent instanceof Browser) this._browser = parent;
     this._isChromium = this._browser?._name === 'chromium';
     this.tracing = Tracing.from(initializer.tracing);
     this.request = APIRequestContext.from(initializer.APIRequestContext);
@@ -75,7 +89,9 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     this._channel.on('bindingCall', ({ binding }) => this._onBinding(BindingCall.from(binding)));
     this._channel.on('close', () => this._onClose());
     this._channel.on('page', ({ page }) => this._onPage(Page.from(page)));
-    this._channel.on('route', ({ route, request }) => this._onRoute(network.Route.from(route), network.Request.from(request)));
+    this._channel.on('route', ({ route, request }) =>
+      this._onRoute(network.Route.from(route), network.Request.from(request)),
+    );
     this._channel.on('backgroundPage', ({ page }) => {
       const backgroundPage = Page.from(page);
       this._backgroundPages.add(backgroundPage);
@@ -87,11 +103,22 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
       this._serviceWorkers.add(serviceWorker);
       this.emit(Events.BrowserContext.ServiceWorker, serviceWorker);
     });
-    this._channel.on('request', ({ request, page }) => this._onRequest(network.Request.from(request), Page.fromNullable(page)));
-    this._channel.on('requestFailed', ({ request, failureText, responseEndTiming, page }) => this._onRequestFailed(network.Request.from(request), responseEndTiming, failureText, Page.fromNullable(page)));
-    this._channel.on('requestFinished', params => this._onRequestFinished(params));
-    this._channel.on('response', ({ response, page }) => this._onResponse(network.Response.from(response), Page.fromNullable(page)));
-    this._closedPromise = new Promise(f => this.once(Events.BrowserContext.Close, f));
+    this._channel.on('request', ({ request, page }) =>
+      this._onRequest(network.Request.from(request), Page.fromNullable(page)),
+    );
+    this._channel.on('requestFailed', ({ request, failureText, responseEndTiming, page }) =>
+      this._onRequestFailed(
+        network.Request.from(request),
+        responseEndTiming,
+        failureText,
+        Page.fromNullable(page),
+      ),
+    );
+    this._channel.on('requestFinished', (params) => this._onRequestFinished(params));
+    this._channel.on('response', ({ response, page }) =>
+      this._onResponse(network.Response.from(response), Page.fromNullable(page)),
+    );
+    this._closedPromise = new Promise((f) => this.once(Events.BrowserContext.Close, f));
   }
 
   _setBrowserType(browserType: BrowserType) {
@@ -102,29 +129,29 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   private _onPage(page: Page): void {
     this._pages.add(page);
     this.emit(Events.BrowserContext.Page, page);
-    if (page._opener && !page._opener.isClosed())
-      page._opener.emit(Events.Page.Popup, page);
+    if (page._opener && !page._opener.isClosed()) page._opener.emit(Events.Page.Popup, page);
   }
 
   private _onRequest(request: network.Request, page: Page | null) {
     this.emit(Events.BrowserContext.Request, request);
-    if (page)
-      page.emit(Events.Page.Request, request);
+    if (page) page.emit(Events.Page.Request, request);
   }
 
   private _onResponse(response: network.Response, page: Page | null) {
     this.emit(Events.BrowserContext.Response, response);
-    if (page)
-      page.emit(Events.Page.Response, response);
+    if (page) page.emit(Events.Page.Response, response);
   }
 
-  private _onRequestFailed(request: network.Request, responseEndTiming: number, failureText: string | undefined, page: Page | null) {
+  private _onRequestFailed(
+    request: network.Request,
+    responseEndTiming: number,
+    failureText: string | undefined,
+    page: Page | null,
+  ) {
     request._failureText = failureText || null;
-    if (request._timing)
-      request._timing.responseEnd = responseEndTiming;
+    if (request._timing) request._timing.responseEnd = responseEndTiming;
     this.emit(Events.BrowserContext.RequestFailed, request);
-    if (page)
-      page.emit(Events.Page.RequestFailed, request);
+    if (page) page.emit(Events.Page.RequestFailed, request);
   }
 
   private _onRequestFinished(params: channels.BrowserContextRequestFinishedEvent) {
@@ -132,13 +159,10 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     const request = network.Request.from(params.request);
     const response = network.Response.fromNullable(params.response);
     const page = Page.fromNullable(params.page);
-    if (request._timing)
-      request._timing.responseEnd = responseEndTiming;
+    if (request._timing) request._timing.responseEnd = responseEndTiming;
     this.emit(Events.BrowserContext.RequestFinished, request);
-    if (page)
-      page.emit(Events.Page.RequestFinished, request);
-    if (response)
-      response._finishedPromise.resolve();
+    if (page) page.emit(Events.Page.RequestFinished, request);
+    if (response) response._finishedPromise.resolve();
   }
 
   _onRoute(route: network.Route, request: network.Request) {
@@ -162,8 +186,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
 
   async _onBinding(bindingCall: BindingCall) {
     const func = this._bindings.get(bindingCall._initializer.name);
-    if (!func)
-      return;
+    if (!func) return;
     await bindingCall.call(func);
   }
 
@@ -190,16 +213,13 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   }
 
   async newPage(): Promise<Page> {
-    if (this._ownerPage)
-      throw new Error('Please use browser.newContext()');
+    if (this._ownerPage) throw new Error('Please use browser.newContext()');
     return Page.from((await this._channel.newPage()).page);
   }
 
   async cookies(urls?: string | string[]): Promise<network.NetworkCookie[]> {
-    if (!urls)
-      urls = [];
-    if (urls && typeof urls === 'string')
-      urls = [ urls ];
+    if (!urls) urls = [];
+    if (urls && typeof urls === 'string') urls = [urls];
     return (await this._channel.cookies({ urls: urls as string[] })).cookies;
   }
 
@@ -219,7 +239,9 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     await this._channel.clearPermissions();
   }
 
-  async setGeolocation(geolocation: { longitude: number, latitude: number, accuracy?: number } | null): Promise<void> {
+  async setGeolocation(
+    geolocation: { longitude: number; latitude: number; accuracy?: number } | null,
+  ): Promise<void> {
     await this._channel.setGeolocation({ geolocation: geolocation || undefined });
   }
 
@@ -232,16 +254,25 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     await this._channel.setOffline({ offline });
   }
 
-  async setHTTPCredentials(httpCredentials: { username: string, password: string } | null): Promise<void> {
+  async setHTTPCredentials(
+    httpCredentials: { username: string; password: string } | null,
+  ): Promise<void> {
     await this._channel.setHTTPCredentials({ httpCredentials: httpCredentials || undefined });
   }
 
-  async addInitScript(script: Function | string | { path?: string, content?: string }, arg?: any): Promise<void> {
+  async addInitScript(
+    script: Function | string | { path?: string; content?: string },
+    arg?: any,
+  ): Promise<void> {
     const source = await evaluationScript(script, arg);
     await this._channel.addInitScript({ source });
   }
 
-  async exposeBinding(name: string, callback: (source: structs.BindingSource, ...args: any[]) => any, options: { handle?: boolean } = {}): Promise<void> {
+  async exposeBinding(
+    name: string,
+    callback: (source: structs.BindingSource, ...args: any[]) => any,
+    options: { handle?: boolean } = {},
+  ): Promise<void> {
     await this._channel.exposeBinding({ name, needsHandle: options.handle });
     this._bindings.set(name, callback);
   }
@@ -252,16 +283,23 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     this._bindings.set(name, binding);
   }
 
-  async route(url: URLMatch, handler: network.RouteHandlerCallback, options: { times?: number } = {}): Promise<void> {
-    this._routes.unshift(new network.RouteHandler(this._options.baseURL, url, handler, options.times));
+  async route(
+    url: URLMatch,
+    handler: network.RouteHandlerCallback,
+    options: { times?: number } = {},
+  ): Promise<void> {
+    this._routes.unshift(
+      new network.RouteHandler(this._options.baseURL, url, handler, options.times),
+    );
     if (this._routes.length === 1)
       await this._channel.setNetworkInterceptionEnabled({ enabled: true });
   }
 
   async unroute(url: URLMatch, handler?: network.RouteHandlerCallback): Promise<void> {
-    this._routes = this._routes.filter(route => route.url !== url || (handler && route.handler !== handler));
-    if (!this._routes.length)
-      await this._disableInterception();
+    this._routes = this._routes.filter(
+      (route) => route.url !== url || (handler && route.handler !== handler),
+    );
+    if (!this._routes.length) await this._disableInterception();
   }
 
   private async _disableInterception() {
@@ -270,10 +308,18 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
 
   async waitForEvent(event: string, optionsOrPredicate: WaitForEventOptions = {}): Promise<any> {
     return this._wrapApiCall(async () => {
-      const timeout = this._timeoutSettings.timeout(typeof optionsOrPredicate === 'function'  ? {} : optionsOrPredicate);
-      const predicate = typeof optionsOrPredicate === 'function'  ? optionsOrPredicate : optionsOrPredicate.predicate;
+      const timeout = this._timeoutSettings.timeout(
+        typeof optionsOrPredicate === 'function' ? {} : optionsOrPredicate,
+      );
+      const predicate =
+        typeof optionsOrPredicate === 'function'
+          ? optionsOrPredicate
+          : optionsOrPredicate.predicate;
       const waiter = Waiter.createForEvent(this, event);
-      waiter.rejectOnTimeout(timeout, `Timeout ${timeout}ms exceeded while waiting for event "${event}"`);
+      waiter.rejectOnTimeout(
+        timeout,
+        `Timeout ${timeout}ms exceeded while waiting for event "${event}"`,
+      );
       if (event !== Events.BrowserContext.Close)
         waiter.rejectOnEvent(this, Events.BrowserContext.Close, new Error('Context closed'));
       const result = await waiter.waitForEvent(this, event, predicate as any);
@@ -303,13 +349,14 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     // channelOwner.ts's validation messages don't handle the pseudo-union type, so we're explicit here
     if (!(page instanceof Page) && !(page instanceof Frame))
       throw new Error('page: expected Page or Frame');
-    const result = await this._channel.newCDPSession(page instanceof Page ? { page: page._channel } : { frame: page._channel });
+    const result = await this._channel.newCDPSession(
+      page instanceof Page ? { page: page._channel } : { frame: page._channel },
+    );
     return CDPSession.from(result.session);
   }
 
   _onClose() {
-    if (this._browser)
-      this._browser._contexts.delete(this);
+    if (this._browser) this._browser._contexts.delete(this);
     this._browserType?._contexts?.delete(this);
     this.emit(Events.BrowserContext.Close, this);
   }
@@ -318,7 +365,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     try {
       await this._wrapApiCall(async () => {
         await this._browserType?._onWillCloseContext?.(this);
-        if (this._options.recordHar)  {
+        if (this._options.recordHar) {
           const har = await this._channel.harExport();
           const artifact = Artifact.from(har.artifact);
           await artifact.saveAs(this._options.recordHar.path);
@@ -328,41 +375,46 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
       await this._channel.close();
       await this._closedPromise;
     } catch (e) {
-      if (isSafeCloseError(e))
-        return;
+      if (isSafeCloseError(e)) return;
       throw e;
     }
   }
 
   async _enableRecorder(params: {
-      language: string,
-      launchOptions?: LaunchOptions,
-      contextOptions?: BrowserContextOptions,
-      device?: string,
-      saveStorage?: string,
-      startRecording?: boolean,
-      outputFile?: string
+    language: string;
+    launchOptions?: LaunchOptions;
+    contextOptions?: BrowserContextOptions;
+    device?: string;
+    saveStorage?: string;
+    startRecording?: boolean;
+    outputFile?: string;
   }) {
     await this._channel.recorderSupplementEnable(params);
   }
 }
 
-export async function prepareBrowserContextParams(options: BrowserContextOptions): Promise<channels.BrowserNewContextParams> {
+export async function prepareBrowserContextParams(
+  options: BrowserContextOptions,
+): Promise<channels.BrowserNewContextParams> {
   if (options.videoSize && !options.videosPath)
     throw new Error(`"videoSize" option requires "videosPath" to be specified`);
-  if (options.extraHTTPHeaders)
-    network.validateHeaders(options.extraHTTPHeaders);
+  if (options.extraHTTPHeaders) network.validateHeaders(options.extraHTTPHeaders);
   const contextParams: channels.BrowserNewContextParams = {
     ...options,
     viewport: options.viewport === null ? undefined : options.viewport,
     noDefaultViewport: options.viewport === null,
-    extraHTTPHeaders: options.extraHTTPHeaders ? headersObjectToArray(options.extraHTTPHeaders) : undefined,
-    storageState: typeof options.storageState === 'string' ? JSON.parse(await fs.promises.readFile(options.storageState, 'utf8')) : options.storageState,
+    extraHTTPHeaders: options.extraHTTPHeaders
+      ? headersObjectToArray(options.extraHTTPHeaders)
+      : undefined,
+    storageState:
+      typeof options.storageState === 'string'
+        ? JSON.parse(await fs.promises.readFile(options.storageState, 'utf8'))
+        : options.storageState,
   };
   if (!contextParams.recordVideo && options.videosPath) {
     contextParams.recordVideo = {
       dir: options.videosPath,
-      size: options.videoSize
+      size: options.videoSize,
     };
   }
   return contextParams;

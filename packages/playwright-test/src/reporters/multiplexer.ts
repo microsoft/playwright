@@ -14,7 +14,16 @@
  * limitations under the License.
  */
 
-import { FullConfig, Suite, TestCase, TestError, TestResult, Reporter, FullResult, TestStep } from '../../types/testReporter';
+import {
+  FullConfig,
+  Suite,
+  TestCase,
+  TestError,
+  TestResult,
+  Reporter,
+  FullResult,
+  TestStep,
+} from '../../types/testReporter';
 
 export class Multiplexer implements Reporter {
   private _reporters: Reporter[];
@@ -24,42 +33,38 @@ export class Multiplexer implements Reporter {
   }
 
   printsToStdio() {
-    return this._reporters.some(r => r.printsToStdio ? r.printsToStdio() : true);
+    return this._reporters.some((r) => (r.printsToStdio ? r.printsToStdio() : true));
   }
 
   onBegin(config: FullConfig, suite: Suite) {
-    for (const reporter of this._reporters)
-      reporter.onBegin?.(config, suite);
+    for (const reporter of this._reporters) reporter.onBegin?.(config, suite);
   }
 
   onTestBegin(test: TestCase, result: TestResult) {
-    for (const reporter of this._reporters)
-      wrap(() => reporter.onTestBegin?.(test, result));
+    for (const reporter of this._reporters) wrap(() => reporter.onTestBegin?.(test, result));
   }
 
   onStdOut(chunk: string | Buffer, test?: TestCase, result?: TestResult) {
-    for (const reporter of this._reporters)
-      wrap(() => reporter.onStdOut?.(chunk, test, result));
+    for (const reporter of this._reporters) wrap(() => reporter.onStdOut?.(chunk, test, result));
   }
 
   onStdErr(chunk: string | Buffer, test?: TestCase, result?: TestResult) {
-    for (const reporter of this._reporters)
-      wrap(() => reporter.onStdErr?.(chunk, test, result));
+    for (const reporter of this._reporters) wrap(() => reporter.onStdErr?.(chunk, test, result));
   }
 
   onTestEnd(test: TestCase, result: TestResult) {
-    for (const reporter of this._reporters)
-      wrap(() => reporter.onTestEnd?.(test, result));
+    for (const reporter of this._reporters) wrap(() => reporter.onTestEnd?.(test, result));
   }
 
   async onEnd(result: FullResult) {
     for (const reporter of this._reporters)
-      await Promise.resolve().then(() => reporter.onEnd?.(result)).catch(e => console.error('Error in reporter', e));
+      await Promise.resolve()
+        .then(() => reporter.onEnd?.(result))
+        .catch((e) => console.error('Error in reporter', e));
   }
 
   onError(error: TestError) {
-    for (const reporter of this._reporters)
-      wrap(() => reporter.onError?.(error));
+    for (const reporter of this._reporters) wrap(() => reporter.onError?.(error));
   }
 
   onStepBegin(test: TestCase, result: TestResult, step: TestStep) {
@@ -68,8 +73,7 @@ export class Multiplexer implements Reporter {
   }
 
   onStepEnd(test: TestCase, result: TestResult, step: TestStep) {
-    for (const reporter of this._reporters)
-      (reporter as any).onStepEnd?.(test, result, step);
+    for (const reporter of this._reporters) (reporter as any).onStepEnd?.(test, result, step);
   }
 }
 

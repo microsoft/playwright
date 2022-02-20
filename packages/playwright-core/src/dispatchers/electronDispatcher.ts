@@ -22,7 +22,10 @@ import { PageDispatcher } from './pageDispatcher';
 import { parseArgument, serializeResult } from './jsHandleDispatcher';
 import { ElementHandleDispatcher } from './elementHandlerDispatcher';
 
-export class ElectronDispatcher extends Dispatcher<Electron, channels.ElectronChannel> implements channels.ElectronChannel {
+export class ElectronDispatcher
+  extends Dispatcher<Electron, channels.ElectronChannel>
+  implements channels.ElectronChannel
+{
   _type_Electron = true;
   constructor(scope: DispatcherScope, electron: Electron) {
     super(scope, electron, 'Electron', {}, true);
@@ -30,37 +33,68 @@ export class ElectronDispatcher extends Dispatcher<Electron, channels.ElectronCh
 
   async launch(params: channels.ElectronLaunchParams): Promise<channels.ElectronLaunchResult> {
     const electronApplication = await this._object.launch(params);
-    return { electronApplication: new ElectronApplicationDispatcher(this._scope, electronApplication) };
+    return {
+      electronApplication: new ElectronApplicationDispatcher(this._scope, electronApplication),
+    };
   }
 }
 
-export class ElectronApplicationDispatcher extends Dispatcher<ElectronApplication, channels.ElectronApplicationChannel> implements channels.ElectronApplicationChannel {
+export class ElectronApplicationDispatcher
+  extends Dispatcher<ElectronApplication, channels.ElectronApplicationChannel>
+  implements channels.ElectronApplicationChannel
+{
   _type_EventTarget = true;
   _type_ElectronApplication = true;
 
   constructor(scope: DispatcherScope, electronApplication: ElectronApplication) {
-    super(scope, electronApplication, 'ElectronApplication', {
-      context: new BrowserContextDispatcher(scope, electronApplication.context())
-    }, true);
+    super(
+      scope,
+      electronApplication,
+      'ElectronApplication',
+      {
+        context: new BrowserContextDispatcher(scope, electronApplication.context()),
+      },
+      true,
+    );
     electronApplication.on(ElectronApplication.Events.Close, () => {
       this._dispatchEvent('close');
       this._dispose();
     });
   }
 
-  async browserWindow(params: channels.ElectronApplicationBrowserWindowParams): Promise<channels.ElectronApplicationBrowserWindowResult> {
+  async browserWindow(
+    params: channels.ElectronApplicationBrowserWindowParams,
+  ): Promise<channels.ElectronApplicationBrowserWindowResult> {
     const handle = await this._object.browserWindow((params.page as PageDispatcher).page());
     return { handle: ElementHandleDispatcher.fromJSHandle(this._scope, handle) };
   }
 
-  async evaluateExpression(params: channels.ElectronApplicationEvaluateExpressionParams): Promise<channels.ElectronApplicationEvaluateExpressionResult> {
+  async evaluateExpression(
+    params: channels.ElectronApplicationEvaluateExpressionParams,
+  ): Promise<channels.ElectronApplicationEvaluateExpressionResult> {
     const handle = await this._object._nodeElectronHandlePromise;
-    return { value: serializeResult(await handle.evaluateExpressionAndWaitForSignals(params.expression, params.isFunction, true /* returnByValue */, parseArgument(params.arg))) };
+    return {
+      value: serializeResult(
+        await handle.evaluateExpressionAndWaitForSignals(
+          params.expression,
+          params.isFunction,
+          true /* returnByValue */,
+          parseArgument(params.arg),
+        ),
+      ),
+    };
   }
 
-  async evaluateExpressionHandle(params: channels.ElectronApplicationEvaluateExpressionHandleParams): Promise<channels.ElectronApplicationEvaluateExpressionHandleResult> {
+  async evaluateExpressionHandle(
+    params: channels.ElectronApplicationEvaluateExpressionHandleParams,
+  ): Promise<channels.ElectronApplicationEvaluateExpressionHandleResult> {
     const handle = await this._object._nodeElectronHandlePromise;
-    const result = await handle.evaluateExpressionAndWaitForSignals(params.expression, params.isFunction, false /* returnByValue */, parseArgument(params.arg));
+    const result = await handle.evaluateExpressionAndWaitForSignals(
+      params.expression,
+      params.isFunction,
+      false /* returnByValue */,
+      parseArgument(params.arg),
+    );
     return { handle: ElementHandleDispatcher.fromJSHandle(this._scope, result) };
   }
 

@@ -30,25 +30,43 @@ export const TestFileView: React.FC<{
   setFileExpanded: (fileId: string, expanded: boolean) => void;
   filter: Filter;
 }> = ({ file, report, isFileExpanded, setFileExpanded, filter }) => {
-  return <Chip
-    expanded={isFileExpanded(file.fileId)}
-    noInsets={true}
-    setExpanded={(expanded => setFileExpanded(file.fileId, expanded))}
-    header={<span>
-      <span style={{ float: 'right' }}>{msToString(file.stats.duration)}</span>
-      {file.fileName}
-    </span>}>
-    {[...file.tests, ...file.hooks].filter(t => filter.matches(t)).map(test =>
-      <div key={`test-${test.testId}`} className={'test-file-test test-file-test-outcome-' + test.outcome}>
-        <span style={{ float: 'right' }}>{msToString(test.duration)}</span>
-        {report.projectNames.length > 1 && !!test.projectName &&
-          <span style={{ float: 'right' }}><ProjectLink projectNames={report.projectNames} projectName={test.projectName}></ProjectLink></span>}
-        {statusIcon(test.outcome)}
-        <Link href={`#?testId=${test.testId}`} title={[...test.path, test.title].join(' › ')}>
-          {[...test.path, test.title].join(' › ')}
-          <span className='test-file-path'>— {test.location.file}:{test.location.line}</span>
-        </Link>
-      </div>
-    )}
-  </Chip>;
+  return (
+    <Chip
+      expanded={isFileExpanded(file.fileId)}
+      noInsets={true}
+      setExpanded={(expanded) => setFileExpanded(file.fileId, expanded)}
+      header={
+        <span>
+          <span style={{ float: 'right' }}>{msToString(file.stats.duration)}</span>
+          {file.fileName}
+        </span>
+      }
+    >
+      {[...file.tests, ...file.hooks]
+        .filter((t) => filter.matches(t))
+        .map((test) => (
+          <div
+            key={`test-${test.testId}`}
+            className={'test-file-test test-file-test-outcome-' + test.outcome}
+          >
+            <span style={{ float: 'right' }}>{msToString(test.duration)}</span>
+            {report.projectNames.length > 1 && !!test.projectName && (
+              <span style={{ float: 'right' }}>
+                <ProjectLink
+                  projectNames={report.projectNames}
+                  projectName={test.projectName}
+                ></ProjectLink>
+              </span>
+            )}
+            {statusIcon(test.outcome)}
+            <Link href={`#?testId=${test.testId}`} title={[...test.path, test.title].join(' › ')}>
+              {[...test.path, test.title].join(' › ')}
+              <span className="test-file-path">
+                — {test.location.file}:{test.location.line}
+              </span>
+            </Link>
+          </div>
+        ))}
+    </Chip>
+  );
 };

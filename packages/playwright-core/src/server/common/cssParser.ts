@@ -16,8 +16,7 @@
 
 import * as css from './cssTokenizer';
 
-export class InvalidSelectorError extends Error {
-}
+export class InvalidSelectorError extends Error {}
 
 export function isInvalidSelectorError(error: Error) {
   return error instanceof InvalidSelectorError;
@@ -31,55 +30,65 @@ type ClauseCombinator = '' | '>' | '+' | '~' | '>=';
 //   - <empty>~=value
 //   - argument modes: "parse all", "parse commas", "just a string"
 export type CSSFunctionArgument = CSSComplexSelector | number | string;
-export type CSSFunction = { name: string, args: CSSFunctionArgument[] };
-export type CSSSimpleSelector = { css?: string, functions: CSSFunction[] };
-export type CSSComplexSelector = { simples: { selector: CSSSimpleSelector, combinator: ClauseCombinator }[] };
+export type CSSFunction = { name: string; args: CSSFunctionArgument[] };
+export type CSSSimpleSelector = { css?: string; functions: CSSFunction[] };
+export type CSSComplexSelector = {
+  simples: { selector: CSSSimpleSelector; combinator: ClauseCombinator }[];
+};
 export type CSSComplexSelectorList = CSSComplexSelector[];
 
-export function parseCSS(selector: string, customNames: Set<string>): { selector: CSSComplexSelectorList, names: string[] } {
+export function parseCSS(
+  selector: string,
+  customNames: Set<string>,
+): { selector: CSSComplexSelectorList; names: string[] } {
   let tokens: css.CSSTokenInterface[];
   try {
     tokens = css.tokenize(selector);
-    if (!(tokens[tokens.length - 1] instanceof css.EOFToken))
-      tokens.push(new css.EOFToken());
+    if (!(tokens[tokens.length - 1] instanceof css.EOFToken)) tokens.push(new css.EOFToken());
   } catch (e) {
     const newMessage = e.message + ` while parsing selector "${selector}"`;
     const index = (e.stack || '').indexOf(e.message);
     if (index !== -1)
-      e.stack = e.stack.substring(0, index) + newMessage + e.stack.substring(index + e.message.length);
+      e.stack =
+        e.stack.substring(0, index) + newMessage + e.stack.substring(index + e.message.length);
     e.message = newMessage;
     throw e;
   }
-  const unsupportedToken = tokens.find(token => {
-    return (token instanceof css.AtKeywordToken) ||
-      (token instanceof css.BadStringToken) ||
-      (token instanceof css.BadURLToken) ||
-      (token instanceof css.ColumnToken) ||
-      (token instanceof css.CDOToken) ||
-      (token instanceof css.CDCToken) ||
-      (token instanceof css.SemicolonToken) ||
+  const unsupportedToken = tokens.find((token) => {
+    return (
+      token instanceof css.AtKeywordToken ||
+      token instanceof css.BadStringToken ||
+      token instanceof css.BadURLToken ||
+      token instanceof css.ColumnToken ||
+      token instanceof css.CDOToken ||
+      token instanceof css.CDCToken ||
+      token instanceof css.SemicolonToken ||
       // TODO: Consider using these for something, e.g. to escape complex strings.
       // For example :xpath{ (//div/bar[@attr="foo"])[2]/baz }
       // Or this way :xpath( {complex-xpath-goes-here("hello")} )
-      (token instanceof css.OpenCurlyToken) ||
-      (token instanceof css.CloseCurlyToken) ||
+      token instanceof css.OpenCurlyToken ||
+      token instanceof css.CloseCurlyToken ||
       // TODO: Consider treating these as strings?
-      (token instanceof css.URLToken) ||
-      (token instanceof css.PercentageToken);
+      token instanceof css.URLToken ||
+      token instanceof css.PercentageToken
+    );
   });
   if (unsupportedToken)
-    throw new InvalidSelectorError(`Unsupported token "${unsupportedToken.toSource()}" while parsing selector "${selector}"`);
+    throw new InvalidSelectorError(
+      `Unsupported token "${unsupportedToken.toSource()}" while parsing selector "${selector}"`,
+    );
 
   let pos = 0;
   const names = new Set<string>();
 
   function unexpected() {
-    return new InvalidSelectorError(`Unexpected token "${tokens[pos].toSource()}" while parsing selector "${selector}"`);
+    return new InvalidSelectorError(
+      `Unexpected token "${tokens[pos].toSource()}" while parsing selector "${selector}"`,
+    );
   }
 
   function skipWhitespace() {
-    while (tokens[pos] instanceof css.WhitespaceToken)
-      pos++;
+    while (tokens[pos] instanceof css.WhitespaceToken) pos++;
   }
 
   function isIdent(p = pos) {
@@ -103,7 +112,7 @@ export function parseCSS(selector: string, customNames: Set<string>): { selector
   }
 
   function isStar(p = pos) {
-    return (tokens[p] instanceof css.DelimToken) && tokens[p].value === '*';
+    return tokens[p] instanceof css.DelimToken && tokens[p].value === '*';
   }
 
   function isEOF(p = pos) {
@@ -111,19 +120,24 @@ export function parseCSS(selector: string, customNames: Set<string>): { selector
   }
 
   function isClauseCombinator(p = pos) {
-    return (tokens[p] instanceof css.DelimToken) && (['>', '+', '~'].includes(tokens[p].value));
+    return tokens[p] instanceof css.DelimToken && ['>', '+', '~'].includes(tokens[p].value);
   }
 
   function isSelectorClauseEnd(p = pos) {
-    return isComma(p) || isCloseParen(p) || isEOF(p) || isClauseCombinator(p) || (tokens[p] instanceof css.WhitespaceToken);
+    return (
+      isComma(p) ||
+      isCloseParen(p) ||
+      isEOF(p) ||
+      isClauseCombinator(p) ||
+      tokens[p] instanceof css.WhitespaceToken
+    );
   }
 
   function consumeFunctionArguments(): CSSFunctionArgument[] {
     const result = [consumeArgument()];
     while (true) {
       skipWhitespace();
-      if (!isComma())
-        break;
+      if (!isComma()) break;
       pos++;
       result.push(consumeArgument());
     }
@@ -132,10 +146,8 @@ export function parseCSS(selector: string, customNames: Set<string>): { selector
 
   function consumeArgument(): CSSFunctionArgument {
     skipWhitespace();
-    if (isNumber())
-      return tokens[pos++].value;
-    if (isString())
-      return tokens[pos++].value;
+    if (isNumber()) return tokens[pos++].value;
+    if (isString()) return tokens[pos++].value;
     return consumeComplexSelector();
   }
 
@@ -144,14 +156,18 @@ export function parseCSS(selector: string, customNames: Set<string>): { selector
     skipWhitespace();
     if (isClauseCombinator()) {
       // Put implicit ":scope" at the start. https://drafts.csswg.org/selectors-4/#absolutize
-      result.simples.push({ selector: { functions: [{ name: 'scope', args: [] }] }, combinator: '' });
+      result.simples.push({
+        selector: { functions: [{ name: 'scope', args: [] }] },
+        combinator: '',
+      });
     } else {
       result.simples.push({ selector: consumeSimpleSelector(), combinator: '' });
     }
     while (true) {
       skipWhitespace();
       if (isClauseCombinator()) {
-        result.simples[result.simples.length - 1].combinator = tokens[pos++].value as ClauseCombinator;
+        result.simples[result.simples.length - 1].combinator = tokens[pos++]
+          .value as ClauseCombinator;
         skipWhitespace();
       } else if (isSelectorClauseEnd()) {
         break;
@@ -170,12 +186,10 @@ export function parseCSS(selector: string, customNames: Set<string>): { selector
         rawCSSString += tokens[pos++].toSource();
       } else if (tokens[pos] instanceof css.HashToken) {
         rawCSSString += tokens[pos++].toSource();
-      } else if ((tokens[pos] instanceof css.DelimToken) && tokens[pos].value === '.') {
+      } else if (tokens[pos] instanceof css.DelimToken && tokens[pos].value === '.') {
         pos++;
-        if (isIdent())
-          rawCSSString += '.' + tokens[pos++].toSource();
-        else
-          throw unexpected();
+        if (isIdent()) rawCSSString += '.' + tokens[pos++].toSource();
+        else throw unexpected();
       } else if (tokens[pos] instanceof css.ColonToken) {
         pos++;
         if (isIdent()) {
@@ -195,8 +209,7 @@ export function parseCSS(selector: string, customNames: Set<string>): { selector
             names.add(name);
           }
           skipWhitespace();
-          if (!isCloseParen())
-            throw unexpected();
+          if (!isCloseParen()) throw unexpected();
           pos++;
         } else {
           throw unexpected();
@@ -206,46 +219,47 @@ export function parseCSS(selector: string, customNames: Set<string>): { selector
         pos++;
         while (!(tokens[pos] instanceof css.CloseSquareToken) && !isEOF())
           rawCSSString += tokens[pos++].toSource();
-        if (!(tokens[pos] instanceof css.CloseSquareToken))
-          throw unexpected();
+        if (!(tokens[pos] instanceof css.CloseSquareToken)) throw unexpected();
         rawCSSString += ']';
         pos++;
       } else {
         throw unexpected();
       }
     }
-    if (!rawCSSString && !functions.length)
-      throw unexpected();
+    if (!rawCSSString && !functions.length) throw unexpected();
     return { css: rawCSSString || undefined, functions };
   }
 
   function consumeBuiltinFunctionArguments(): string {
     let s = '';
-    while (!isCloseParen() && !isEOF())
-      s += tokens[pos++].toSource();
+    while (!isCloseParen() && !isEOF()) s += tokens[pos++].toSource();
     return s;
   }
 
   const result = consumeFunctionArguments();
-  if (!isEOF())
-    throw new InvalidSelectorError(`Error while parsing selector "${selector}"`);
-  if (result.some(arg => typeof arg !== 'object' || !('simples' in arg)))
+  if (!isEOF()) throw new InvalidSelectorError(`Error while parsing selector "${selector}"`);
+  if (result.some((arg) => typeof arg !== 'object' || !('simples' in arg)))
     throw new InvalidSelectorError(`Error while parsing selector "${selector}"`);
   return { selector: result as CSSComplexSelector[], names: Array.from(names) };
 }
 
 export function serializeSelector(args: CSSFunctionArgument[]) {
-  return args.map(arg => {
-    if (typeof arg === 'string')
-      return `"${arg}"`;
-    if (typeof arg === 'number')
-      return String(arg);
-    return arg.simples.map(({ selector, combinator }) => {
-      let s = selector.css || '';
-      s = s + selector.functions.map(func => `:${func.name}(${serializeSelector(func.args)})`).join('');
-      if (combinator)
-        s += ' ' + combinator;
-      return s;
-    }).join(' ');
-  }).join(', ');
+  return args
+    .map((arg) => {
+      if (typeof arg === 'string') return `"${arg}"`;
+      if (typeof arg === 'number') return String(arg);
+      return arg.simples
+        .map(({ selector, combinator }) => {
+          let s = selector.css || '';
+          s =
+            s +
+            selector.functions
+              .map((func) => `:${func.name}(${serializeSelector(func.args)})`)
+              .join('');
+          if (combinator) s += ' ' + combinator;
+          return s;
+        })
+        .join(' ');
+    })
+    .join(', ');
 }

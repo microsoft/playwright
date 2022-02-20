@@ -49,20 +49,26 @@ class Root extends ChannelOwner<channels.RootChannel> {
   }
 
   async initialize(): Promise<Playwright> {
-    return Playwright.from((await this._channel.initialize({
-      sdkLanguage: 'javascript',
-    })).playwright);
+    return Playwright.from(
+      (
+        await this._channel.initialize({
+          sdkLanguage: 'javascript',
+        })
+      ).playwright,
+    );
   }
 }
 
-class DummyChannelOwner<T> extends ChannelOwner<T> {
-}
+class DummyChannelOwner<T> extends ChannelOwner<T> {}
 
 export class Connection extends EventEmitter {
   readonly _objects = new Map<string, ChannelOwner>();
   onmessage = (message: object): void => {};
   private _lastId = 0;
-  private _callbacks = new Map<number, { resolve: (a: any) => void, reject: (a: Error) => void, stackTrace: ParsedStackTrace | null }>();
+  private _callbacks = new Map<
+    number,
+    { resolve: (a: any) => void; reject: (a: Error) => void; stackTrace: ParsedStackTrace | null }
+  >();
   private _rootObject: Root;
   private _closedErrorMessage: string | undefined;
   private _isRemote = false;
@@ -85,16 +91,22 @@ export class Connection extends EventEmitter {
   }
 
   pendingProtocolCalls(): ParsedStackTrace[] {
-    return Array.from(this._callbacks.values()).map(callback => callback.stackTrace).filter(Boolean) as ParsedStackTrace[];
+    return Array.from(this._callbacks.values())
+      .map((callback) => callback.stackTrace)
+      .filter(Boolean) as ParsedStackTrace[];
   }
 
   getObjectWithKnownName(guid: string): any {
     return this._objects.get(guid)!;
   }
 
-  async sendMessageToServer(object: ChannelOwner, method: string, params: any, stackTrace: ParsedStackTrace | null): Promise<any> {
-    if (this._closedErrorMessage)
-      throw new Error(this._closedErrorMessage);
+  async sendMessageToServer(
+    object: ChannelOwner,
+    method: string,
+    params: any,
+    stackTrace: ParsedStackTrace | null,
+  ): Promise<any> {
+    if (this._closedErrorMessage) throw new Error(this._closedErrorMessage);
 
     const { apiName, frames } = stackTrace || { apiName: '', frames: [] };
     const guid = object._guid;
@@ -105,7 +117,9 @@ export class Connection extends EventEmitter {
     const metadata: channels.Metadata = { stack: frames, apiName, internal: !apiName };
     this.onmessage({ ...converted, metadata });
 
-    return await new Promise((resolve, reject) => this._callbacks.set(id, { resolve, reject, stackTrace }));
+    return await new Promise((resolve, reject) =>
+      this._callbacks.set(id, { resolve, reject, stackTrace }),
+    );
   }
 
   _debugScopeState(): any {
@@ -113,20 +127,16 @@ export class Connection extends EventEmitter {
   }
 
   dispatch(message: object) {
-    if (this._closedErrorMessage)
-      return;
+    if (this._closedErrorMessage) return;
 
     const { id, guid, method, params, result, error } = message as any;
     if (id) {
       debugLogger.log('channel:response', message);
       const callback = this._callbacks.get(id);
-      if (!callback)
-        throw new Error(`Cannot find command to respond: ${id}`);
+      if (!callback) throw new Error(`Cannot find command to respond: ${id}`);
       this._callbacks.delete(id);
-      if (error && !result)
-        callback.reject(parseError(error));
-      else
-        callback.resolve(this._replaceGuidsWithChannels(result));
+      if (error && !result) callback.reject(parseError(error));
+      else callback.resolve(this._replaceGuidsWithChannels(result));
       return;
     }
 
@@ -137,30 +147,28 @@ export class Connection extends EventEmitter {
     }
     if (method === '__dispose__') {
       const object = this._objects.get(guid);
-      if (!object)
-        throw new Error(`Cannot find object to dispose: ${guid}`);
+      if (!object) throw new Error(`Cannot find object to dispose: ${guid}`);
       object._dispose();
       return;
     }
     const object = this._objects.get(guid);
-    if (!object)
-      throw new Error(`Cannot find object to emit "${method}": ${guid}`);
-    (object._channel as any).emit(method, object._type === 'JsonPipe' ? params : this._replaceGuidsWithChannels(params));
+    if (!object) throw new Error(`Cannot find object to emit "${method}": ${guid}`);
+    (object._channel as any).emit(
+      method,
+      object._type === 'JsonPipe' ? params : this._replaceGuidsWithChannels(params),
+    );
   }
 
   close(errorMessage: string = 'Connection closed') {
     this._closedErrorMessage = errorMessage;
-    for (const callback of this._callbacks.values())
-      callback.reject(new Error(errorMessage));
+    for (const callback of this._callbacks.values()) callback.reject(new Error(errorMessage));
     this._callbacks.clear();
     this.emit('close');
   }
 
   private _replaceGuidsWithChannels(payload: any): any {
-    if (!payload)
-      return payload;
-    if (Array.isArray(payload))
-      return payload.map(p => this._replaceGuidsWithChannels(p));
+    if (!payload) return payload;
+    if (Array.isArray(payload)) return payload.map((p) => this._replaceGuidsWithChannels(p));
     if (payload.guid && this._objects.has(payload.guid))
       return this._objects.get(payload.guid)!._channel;
     if (typeof payload === 'object') {
@@ -172,10 +180,14 @@ export class Connection extends EventEmitter {
     return payload;
   }
 
-  private _createRemoteObject(parentGuid: string, type: string, guid: string, initializer: any): any {
+  private _createRemoteObject(
+    parentGuid: string,
+    type: string,
+    guid: string,
+    initializer: any,
+  ): any {
     const parent = this._objects.get(parentGuid);
-    if (!parent)
-      throw new Error(`Cannot find parent object ${parentGuid} to create ${guid}`);
+    if (!parent) throw new Error(`Cannot find parent object ${parentGuid} to create ${guid}`);
     let result: ChannelOwner<any>;
     initializer = this._replaceGuidsWithChannels(initializer);
     switch (type) {

@@ -18,23 +18,27 @@ import * as React from 'react';
 import './contextSelector.css';
 
 export const ContextSelector: React.FunctionComponent<{
-  debugNames: string[],
-  debugName: string,
-  onChange: (debugName: string) => void,
+  debugNames: string[];
+  debugName: string;
+  onChange: (debugName: string) => void;
 }> = ({ debugNames, debugName, onChange }) => {
   return (
     <select
-      className='context-selector'
+      className="context-selector"
       style={{
         visibility: debugNames.length <= 1 ? 'hidden' : 'visible',
       }}
       value={debugName}
-      onChange={e => {
+      onChange={(e) => {
         const newIndex = e.target.selectedIndex;
         onChange(debugNames[newIndex]);
       }}
     >
-      {debugNames.map(debugName => <option value={debugName} key={debugName}>{debugName}</option>)}
+      {debugNames.map((debugName) => (
+        <option value={debugName} key={debugName}>
+          {debugName}
+        </option>
+      ))}
     </select>
   );
 };

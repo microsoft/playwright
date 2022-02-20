@@ -19,19 +19,24 @@ import * as channels from '../protocol/channels';
 import { ElementHandle } from './elementHandle';
 import * as api from '../../types/types';
 
-type SerializedAXNode = Omit<channels.AXNode, 'valueString' | 'valueNumber' | 'children' | 'checked' | 'pressed'> & {
-  value?: string|number,
-  checked?: boolean | 'mixed',
-  pressed?: boolean | 'mixed',
-  children?: SerializedAXNode[]
+type SerializedAXNode = Omit<
+  channels.AXNode,
+  'valueString' | 'valueNumber' | 'children' | 'checked' | 'pressed'
+> & {
+  value?: string | number;
+  checked?: boolean | 'mixed';
+  pressed?: boolean | 'mixed';
+  children?: SerializedAXNode[];
 };
 
 function axNodeFromProtocol(axNode: channels.AXNode): SerializedAXNode {
   const result: SerializedAXNode = {
     ...axNode,
     value: axNode.valueNumber !== undefined ? axNode.valueNumber : axNode.valueString,
-    checked: axNode.checked === 'checked' ? true : axNode.checked === 'unchecked' ? false : axNode.checked,
-    pressed: axNode.pressed === 'pressed' ? true : axNode.pressed === 'released' ? false : axNode.pressed,
+    checked:
+      axNode.checked === 'checked' ? true : axNode.checked === 'unchecked' ? false : axNode.checked,
+    pressed:
+      axNode.pressed === 'pressed' ? true : axNode.pressed === 'released' ? false : axNode.pressed,
     children: axNode.children ? axNode.children.map(axNodeFromProtocol) : undefined,
   };
   delete (result as any).valueNumber;
@@ -46,9 +51,14 @@ export class Accessibility implements api.Accessibility {
     this._channel = channel;
   }
 
-  async snapshot(options: { interestingOnly?: boolean; root?: ElementHandle } = {}): Promise<SerializedAXNode | null> {
+  async snapshot(
+    options: { interestingOnly?: boolean; root?: ElementHandle } = {},
+  ): Promise<SerializedAXNode | null> {
     const root = options.root ? options.root._elementChannel : undefined;
-    const result = await this._channel.accessibilitySnapshot({ interestingOnly: options.interestingOnly, root });
+    const result = await this._channel.accessibilitySnapshot({
+      interestingOnly: options.interestingOnly,
+      root,
+    });
     return result.rootAXNode ? axNodeFromProtocol(result.rootAXNode) : null;
   }
 }

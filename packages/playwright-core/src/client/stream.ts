@@ -23,7 +23,12 @@ export class Stream extends ChannelOwner<channels.StreamChannel> {
     return (Stream as any)._object;
   }
 
-  constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.StreamInitializer) {
+  constructor(
+    parent: ChannelOwner,
+    type: string,
+    guid: string,
+    initializer: channels.StreamInitializer,
+  ) {
     super(parent, type, guid, initializer);
   }
 
@@ -42,15 +47,16 @@ class StreamImpl extends Readable {
 
   override async _read(size: number) {
     const result = await this._channel.read({ size });
-    if (result.binary)
-      this.push(Buffer.from(result.binary, 'base64'));
-    else
-      this.push(null);
+    if (result.binary) this.push(Buffer.from(result.binary, 'base64'));
+    else this.push(null);
   }
 
-  override _destroy(error: Error | null, callback: (error: Error | null | undefined) => void): void {
+  override _destroy(
+    error: Error | null,
+    callback: (error: Error | null | undefined) => void,
+  ): void {
     // Stream might be destroyed after the connection was closed.
-    this._channel.close().catch(e => null);
+    this._channel.close().catch((e) => null);
     super._destroy(error, callback);
   }
 }

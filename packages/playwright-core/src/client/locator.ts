@@ -21,7 +21,14 @@ import * as util from 'util';
 import { isRegExp, monotonicTime } from '../utils/utils';
 import { ElementHandle } from './elementHandle';
 import { Frame } from './frame';
-import { FilePayload, FrameExpectOptions, Rect, SelectOption, SelectOptionOptions, TimeoutOptions } from './types';
+import {
+  FilePayload,
+  FrameExpectOptions,
+  Rect,
+  SelectOption,
+  SelectOptionOptions,
+  TimeoutOptions,
+} from './types';
 import { parseResult, serializeArgument } from './jsHandle';
 import { escapeWithQuotes } from '../utils/stringUtils';
 
@@ -29,16 +36,21 @@ export class Locator implements api.Locator {
   _frame: Frame;
   _selector: string;
 
-  constructor(frame: Frame, selector: string, options?: { hasText?: string | RegExp, has?: Locator }) {
+  constructor(
+    frame: Frame,
+    selector: string,
+    options?: { hasText?: string | RegExp; has?: Locator },
+  ) {
     this._frame = frame;
     this._selector = selector;
 
     if (options?.hasText) {
       const text = options.hasText;
       if (isRegExp(text))
-        this._selector += ` >> :scope:text-matches(${escapeWithQuotes(text.source, '"')}, "${text.flags}")`;
-      else
-        this._selector += ` >> :scope:has-text(${escapeWithQuotes(text, '"')})`;
+        this._selector += ` >> :scope:text-matches(${escapeWithQuotes(text.source, '"')}, "${
+          text.flags
+        }")`;
+      else this._selector += ` >> :scope:has-text(${escapeWithQuotes(text, '"')})`;
     }
 
     if (options?.has) {
@@ -48,15 +60,24 @@ export class Locator implements api.Locator {
     }
   }
 
-  private async _withElement<R>(task: (handle: ElementHandle<SVGElement | HTMLElement>, timeout?: number) => Promise<R>, timeout?: number): Promise<R> {
+  private async _withElement<R>(
+    task: (handle: ElementHandle<SVGElement | HTMLElement>, timeout?: number) => Promise<R>,
+    timeout?: number,
+  ): Promise<R> {
     timeout = this._frame.page()._timeoutSettings.timeout({ timeout });
     const deadline = timeout ? monotonicTime() + timeout : 0;
 
     return this._frame._wrapApiCall<R>(async () => {
-      const result = await this._frame._channel.waitForSelector({ selector: this._selector, strict: true, state: 'attached', timeout });
-      const handle = ElementHandle.fromNullable(result.element) as ElementHandle<SVGElement | HTMLElement> | null;
-      if (!handle)
-        throw new Error(`Could not resolve ${this._selector} to DOM Element`);
+      const result = await this._frame._channel.waitForSelector({
+        selector: this._selector,
+        strict: true,
+        state: 'attached',
+        timeout,
+      });
+      const handle = ElementHandle.fromNullable(result.element) as ElementHandle<
+        SVGElement | HTMLElement
+      > | null;
+      if (!handle) throw new Error(`Could not resolve ${this._selector} to DOM Element`);
       try {
         return await task(handle, deadline ? deadline - monotonicTime() : 0);
       } finally {
@@ -70,7 +91,7 @@ export class Locator implements api.Locator {
   }
 
   async boundingBox(options?: TimeoutOptions): Promise<Rect | null> {
-    return this._withElement(h => h.boundingBox(), options?.timeout);
+    return this._withElement((h) => h.boundingBox(), options?.timeout);
   }
 
   async check(options: channels.ElementHandleCheckOptions = {}) {
@@ -96,16 +117,27 @@ export class Locator implements api.Locator {
     });
   }
 
-  async evaluate<R, Arg>(pageFunction: structs.PageFunctionOn<SVGElement | HTMLElement, Arg, R>, arg?: Arg, options?: TimeoutOptions): Promise<R> {
-    return this._withElement(h => h.evaluate(pageFunction, arg), options?.timeout);
+  async evaluate<R, Arg>(
+    pageFunction: structs.PageFunctionOn<SVGElement | HTMLElement, Arg, R>,
+    arg?: Arg,
+    options?: TimeoutOptions,
+  ): Promise<R> {
+    return this._withElement((h) => h.evaluate(pageFunction, arg), options?.timeout);
   }
 
-  async evaluateAll<R, Arg>(pageFunction: structs.PageFunctionOn<Element[], Arg, R>, arg?: Arg): Promise<R> {
+  async evaluateAll<R, Arg>(
+    pageFunction: structs.PageFunctionOn<Element[], Arg, R>,
+    arg?: Arg,
+  ): Promise<R> {
     return this._frame.$$eval(this._selector, pageFunction, arg);
   }
 
-  async evaluateHandle<R, Arg>(pageFunction: structs.PageFunctionOn<any, Arg, R>, arg?: Arg, options?: TimeoutOptions): Promise<structs.SmartHandle<R>> {
-    return this._withElement(h => h.evaluateHandle(pageFunction, arg), options?.timeout);
+  async evaluateHandle<R, Arg>(
+    pageFunction: structs.PageFunctionOn<any, Arg, R>,
+    arg?: Arg,
+    options?: TimeoutOptions,
+  ): Promise<structs.SmartHandle<R>> {
+    return this._withElement((h) => h.evaluateHandle(pageFunction, arg), options?.timeout);
   }
 
   async fill(value: string, options: channels.ElementHandleFillOptions = {}): Promise<void> {
@@ -116,7 +148,7 @@ export class Locator implements api.Locator {
     return this._frame._highlight(this._selector);
   }
 
-  locator(selector: string, options?: { hasText?: string | RegExp, has?: Locator }): Locator {
+  locator(selector: string, options?: { hasText?: string | RegExp; has?: Locator }): Locator {
     return new Locator(this._frame, this._selector + ' >> ' + selector, options);
   }
 
@@ -125,7 +157,11 @@ export class Locator implements api.Locator {
   }
 
   async elementHandle(options?: TimeoutOptions): Promise<ElementHandle<SVGElement | HTMLElement>> {
-    return await this._frame.waitForSelector(this._selector, { strict: true, state: 'attached', ...options })!;
+    return await this._frame.waitForSelector(this._selector, {
+      strict: true,
+      state: 'attached',
+      ...options,
+    })!;
   }
 
   async elementHandles(): Promise<api.ElementHandle<SVGElement | HTMLElement>[]> {
@@ -200,30 +236,55 @@ export class Locator implements api.Locator {
     return this._frame.press(this._selector, key, { strict: true, ...options });
   }
 
-  async screenshot(options: Omit<channels.ElementHandleScreenshotOptions, 'mask'> & { path?: string, mask?: Locator[] } = {}): Promise<Buffer> {
-    return this._withElement((h, timeout) => h.screenshot({ ...options, timeout }), options.timeout);
+  async screenshot(
+    options: Omit<channels.ElementHandleScreenshotOptions, 'mask'> & {
+      path?: string;
+      mask?: Locator[];
+    } = {},
+  ): Promise<Buffer> {
+    return this._withElement(
+      (h, timeout) => h.screenshot({ ...options, timeout }),
+      options.timeout,
+    );
   }
 
   async scrollIntoViewIfNeeded(options: channels.ElementHandleScrollIntoViewIfNeededOptions = {}) {
-    return this._withElement((h, timeout) => h.scrollIntoViewIfNeeded({ ...options, timeout }), options.timeout);
+    return this._withElement(
+      (h, timeout) => h.scrollIntoViewIfNeeded({ ...options, timeout }),
+      options.timeout,
+    );
   }
 
-  async selectOption(values: string | api.ElementHandle | SelectOption | string[] | api.ElementHandle[] | SelectOption[] | null, options: SelectOptionOptions = {}): Promise<string[]> {
+  async selectOption(
+    values:
+      | string
+      | api.ElementHandle
+      | SelectOption
+      | string[]
+      | api.ElementHandle[]
+      | SelectOption[]
+      | null,
+    options: SelectOptionOptions = {},
+  ): Promise<string[]> {
     return this._frame.selectOption(this._selector, values, { strict: true, ...options });
   }
 
   async selectText(options: channels.ElementHandleSelectTextOptions = {}): Promise<void> {
-    return this._withElement((h, timeout) => h.selectText({ ...options, timeout }), options.timeout);
+    return this._withElement(
+      (h, timeout) => h.selectText({ ...options, timeout }),
+      options.timeout,
+    );
   }
 
   async setChecked(checked: boolean, options?: channels.ElementHandleCheckOptions) {
-    if (checked)
-      await this.check(options);
-    else
-      await this.uncheck(options);
+    if (checked) await this.check(options);
+    else await this.uncheck(options);
   }
 
-  async setInputFiles(files: string | FilePayload | string[] | FilePayload[], options: channels.ElementHandleSetInputFilesOptions = {}) {
+  async setInputFiles(
+    files: string | FilePayload | string[] | FilePayload[],
+    options: channels.ElementHandleSetInputFilesOptions = {},
+  ) {
     return this._frame.setInputFiles(this._selector, files, { strict: true, ...options });
   }
 
@@ -244,26 +305,39 @@ export class Locator implements api.Locator {
   }
 
   async allInnerTexts(): Promise<string[]> {
-    return this._frame.$$eval(this._selector, ee => ee.map(e => (e as HTMLElement).innerText));
+    return this._frame.$$eval(this._selector, (ee) => ee.map((e) => (e as HTMLElement).innerText));
   }
 
   async allTextContents(): Promise<string[]> {
-    return this._frame.$$eval(this._selector, ee => ee.map(e => e.textContent || ''));
+    return this._frame.$$eval(this._selector, (ee) => ee.map((e) => e.textContent || ''));
   }
 
-  waitFor(options: channels.FrameWaitForSelectorOptions & { state: 'attached' | 'visible' }): Promise<void>;
+  waitFor(
+    options: channels.FrameWaitForSelectorOptions & { state: 'attached' | 'visible' },
+  ): Promise<void>;
   waitFor(options?: channels.FrameWaitForSelectorOptions): Promise<void>;
   async waitFor(options?: channels.FrameWaitForSelectorOptions): Promise<void> {
-    await this._frame._channel.waitForSelector({ selector: this._selector, strict: true, omitReturnValue: true, ...options });
+    await this._frame._channel.waitForSelector({
+      selector: this._selector,
+      strict: true,
+      omitReturnValue: true,
+      ...options,
+    });
   }
 
-  async _expect(expression: string, options: Omit<FrameExpectOptions, 'expectedValue'> & { expectedValue?: any }): Promise<{ matches: boolean, received?: any, log?: string[] }> {
-    const params: channels.FrameExpectParams = { selector: this._selector, expression, ...options, isNot: !!options.isNot };
-    if (options.expectedValue)
-      params.expectedValue = serializeArgument(options.expectedValue);
-    const result = (await this._frame._channel.expect(params));
-    if (result.received !== undefined)
-      result.received = parseResult(result.received);
+  async _expect(
+    expression: string,
+    options: Omit<FrameExpectOptions, 'expectedValue'> & { expectedValue?: any },
+  ): Promise<{ matches: boolean; received?: any; log?: string[] }> {
+    const params: channels.FrameExpectParams = {
+      selector: this._selector,
+      expression,
+      ...options,
+      isNot: !!options.isNot,
+    };
+    if (options.expectedValue) params.expectedValue = serializeArgument(options.expectedValue);
+    const result = await this._frame._channel.expect(params);
+    if (result.received !== undefined) result.received = parseResult(result.received);
     return result;
   }
 
@@ -286,11 +360,18 @@ export class FrameLocator implements api.FrameLocator {
   }
 
   locator(selector: string, options?: { hasText?: string | RegExp }): Locator {
-    return new Locator(this._frame, this._frameSelector + ' >> control=enter-frame >> ' + selector, options);
+    return new Locator(
+      this._frame,
+      this._frameSelector + ' >> control=enter-frame >> ' + selector,
+      options,
+    );
   }
 
   frameLocator(selector: string): FrameLocator {
-    return new FrameLocator(this._frame, this._frameSelector + ' >> control=enter-frame >> ' + selector);
+    return new FrameLocator(
+      this._frame,
+      this._frameSelector + ' >> control=enter-frame >> ' + selector,
+    );
   }
 
   first(): FrameLocator {

@@ -35,20 +35,67 @@ export const kBrowserCloseMessageId = -9999;
 
 export class FFConnection extends EventEmitter {
   private _lastId: number;
-  private _callbacks: Map<number, {resolve: (o: any) => void, reject: (e: ProtocolError) => void, error: ProtocolError, method: string}>;
+  private _callbacks: Map<
+    number,
+    {
+      resolve: (o: any) => void;
+      reject: (e: ProtocolError) => void;
+      error: ProtocolError;
+      method: string;
+    }
+  >;
   private _transport: ConnectionTransport;
   private readonly _protocolLogger: ProtocolLogger;
   private readonly _browserLogsCollector: RecentLogsCollector;
   readonly _sessions: Map<string, FFSession>;
   _closed: boolean;
 
-  override on: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
-  override addListener: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
-  override off: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
-  override removeListener: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
-  override once: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
+  override on: <T extends keyof Protocol.Events | symbol>(
+    event: T,
+    listener: (
+      payload: T extends symbol
+        ? any
+        : Protocol.Events[T extends keyof Protocol.Events ? T : never],
+    ) => void,
+  ) => this;
+  override addListener: <T extends keyof Protocol.Events | symbol>(
+    event: T,
+    listener: (
+      payload: T extends symbol
+        ? any
+        : Protocol.Events[T extends keyof Protocol.Events ? T : never],
+    ) => void,
+  ) => this;
+  override off: <T extends keyof Protocol.Events | symbol>(
+    event: T,
+    listener: (
+      payload: T extends symbol
+        ? any
+        : Protocol.Events[T extends keyof Protocol.Events ? T : never],
+    ) => void,
+  ) => this;
+  override removeListener: <T extends keyof Protocol.Events | symbol>(
+    event: T,
+    listener: (
+      payload: T extends symbol
+        ? any
+        : Protocol.Events[T extends keyof Protocol.Events ? T : never],
+    ) => void,
+  ) => this;
+  override once: <T extends keyof Protocol.Events | symbol>(
+    event: T,
+    listener: (
+      payload: T extends symbol
+        ? any
+        : Protocol.Events[T extends keyof Protocol.Events ? T : never],
+    ) => void,
+  ) => this;
 
-  constructor(transport: ConnectionTransport, protocolLogger: ProtocolLogger, browserLogsCollector: RecentLogsCollector) {
+  constructor(
+    transport: ConnectionTransport,
+    protocolLogger: ProtocolLogger,
+    browserLogsCollector: RecentLogsCollector,
+  ) {
     super();
     this.setMaxListeners(0);
     this._transport = transport;
@@ -71,7 +118,7 @@ export class FFConnection extends EventEmitter {
 
   async send<T extends keyof Protocol.CommandParameters>(
     method: T,
-    params?: Protocol.CommandParameters[T]
+    params?: Protocol.CommandParameters[T],
   ): Promise<Protocol.CommandReturnValues[T]> {
     this._checkClosed(method);
     const id = this.nextMessageId();
@@ -87,7 +134,11 @@ export class FFConnection extends EventEmitter {
 
   _checkClosed(method: string) {
     if (this._closed)
-      throw new ProtocolError(true, `${method}): Browser closed.` + helper.formatBrowserLogs(this._browserLogsCollector.recentLogs()));
+      throw new ProtocolError(
+        true,
+        `${method}): Browser closed.` +
+          helper.formatBrowserLogs(this._browserLogsCollector.recentLogs()),
+      );
   }
 
   _rawSend(message: ProtocolRequest) {
@@ -97,12 +148,10 @@ export class FFConnection extends EventEmitter {
 
   async _onMessage(message: ProtocolResponse) {
     this._protocolLogger('receive', message);
-    if (message.id === kBrowserCloseMessageId)
-      return;
+    if (message.id === kBrowserCloseMessageId) return;
     if (message.sessionId) {
       const session = this._sessions.get(message.sessionId);
-      if (session)
-        session.dispatchMessage(message);
+      if (session) session.dispatchMessage(message);
     } else if (message.id) {
       const callback = this._callbacks.get(message.id);
       // Callbacks could be all rejected if someone has called `.dispose()`.
@@ -110,8 +159,7 @@ export class FFConnection extends EventEmitter {
         this._callbacks.delete(message.id);
         if (message.error)
           callback.reject(createProtocolError(callback.error, callback.method, message.error));
-        else
-          callback.resolve(message.result);
+        else callback.resolve(message.result);
       }
     } else {
       Promise.resolve().then(() => this.emit(message.method!, message.params));
@@ -123,12 +171,14 @@ export class FFConnection extends EventEmitter {
     this._transport.onmessage = undefined;
     this._transport.onclose = undefined;
     const formattedBrowserLogs = helper.formatBrowserLogs(this._browserLogsCollector.recentLogs());
-    for (const session of this._sessions.values())
-      session.dispose();
+    for (const session of this._sessions.values()) session.dispose();
     this._sessions.clear();
     for (const callback of this._callbacks.values()) {
-      const error = rewriteErrorMessage(callback.error, `Protocol error (${callback.method}): Browser closed.` + formattedBrowserLogs);
-      error.sessionClosed =  true;
+      const error = rewriteErrorMessage(
+        callback.error,
+        `Protocol error (${callback.method}): Browser closed.` + formattedBrowserLogs,
+      );
+      error.sessionClosed = true;
       callback.reject(error);
     }
     this._callbacks.clear();
@@ -136,33 +186,72 @@ export class FFConnection extends EventEmitter {
   }
 
   close() {
-    if (!this._closed)
-      this._transport.close();
+    if (!this._closed) this._transport.close();
   }
 
   createSession(sessionId: string): FFSession {
-    const session = new FFSession(this, sessionId, message => this._rawSend({ ...message, sessionId }));
+    const session = new FFSession(this, sessionId, (message) =>
+      this._rawSend({ ...message, sessionId }),
+    );
     this._sessions.set(sessionId, session);
     return session;
   }
 }
 
 export const FFSessionEvents = {
-  Disconnected: Symbol('Disconnected')
+  Disconnected: Symbol('Disconnected'),
 };
 
 export class FFSession extends EventEmitter {
   _connection: FFConnection;
   _disposed = false;
-  private _callbacks: Map<number, {resolve: Function, reject: Function, error: ProtocolError, method: string}>;
+  private _callbacks: Map<
+    number,
+    { resolve: Function; reject: Function; error: ProtocolError; method: string }
+  >;
   private _sessionId: string;
   private _rawSend: (message: any) => void;
   private _crashed: boolean = false;
-  override on: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
-  override addListener: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
-  override off: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
-  override removeListener: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
-  override once: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
+  override on: <T extends keyof Protocol.Events | symbol>(
+    event: T,
+    listener: (
+      payload: T extends symbol
+        ? any
+        : Protocol.Events[T extends keyof Protocol.Events ? T : never],
+    ) => void,
+  ) => this;
+  override addListener: <T extends keyof Protocol.Events | symbol>(
+    event: T,
+    listener: (
+      payload: T extends symbol
+        ? any
+        : Protocol.Events[T extends keyof Protocol.Events ? T : never],
+    ) => void,
+  ) => this;
+  override off: <T extends keyof Protocol.Events | symbol>(
+    event: T,
+    listener: (
+      payload: T extends symbol
+        ? any
+        : Protocol.Events[T extends keyof Protocol.Events ? T : never],
+    ) => void,
+  ) => this;
+  override removeListener: <T extends keyof Protocol.Events | symbol>(
+    event: T,
+    listener: (
+      payload: T extends symbol
+        ? any
+        : Protocol.Events[T extends keyof Protocol.Events ? T : never],
+    ) => void,
+  ) => this;
+  override once: <T extends keyof Protocol.Events | symbol>(
+    event: T,
+    listener: (
+      payload: T extends symbol
+        ? any
+        : Protocol.Events[T extends keyof Protocol.Events ? T : never],
+    ) => void,
+  ) => this;
 
   constructor(connection: FFConnection, sessionId: string, rawSend: (message: any) => void) {
     super();
@@ -185,13 +274,11 @@ export class FFSession extends EventEmitter {
 
   async send<T extends keyof Protocol.CommandParameters>(
     method: T,
-    params?: Protocol.CommandParameters[T]
+    params?: Protocol.CommandParameters[T],
   ): Promise<Protocol.CommandReturnValues[T]> {
-    if (this._crashed)
-      throw new ProtocolError(true, 'Target crashed');
+    if (this._crashed) throw new ProtocolError(true, 'Target crashed');
     this._connection._checkClosed(method);
-    if (this._disposed)
-      throw new ProtocolError(true, 'Target closed');
+    if (this._disposed) throw new ProtocolError(true, 'Target closed');
     const id = this._connection.nextMessageId();
     this._rawSend({ method, params, id });
     return new Promise((resolve, reject) => {
@@ -199,8 +286,11 @@ export class FFSession extends EventEmitter {
     });
   }
 
-  sendMayFail<T extends keyof Protocol.CommandParameters>(method: T, params?: Protocol.CommandParameters[T]): Promise<Protocol.CommandReturnValues[T] | void> {
-    return this.send(method, params).catch(error => debugLogger.log('error', error));
+  sendMayFail<T extends keyof Protocol.CommandParameters>(
+    method: T,
+    params?: Protocol.CommandParameters[T],
+  ): Promise<Protocol.CommandReturnValues[T] | void> {
+    return this.send(method, params).catch((error) => debugLogger.log('error', error));
   }
 
   dispatchMessage(object: ProtocolResponse) {
@@ -209,8 +299,7 @@ export class FFSession extends EventEmitter {
       this._callbacks.delete(object.id);
       if (object.error)
         callback.reject(createProtocolError(callback.error, callback.method, object.error));
-      else
-        callback.resolve(object.result);
+      else callback.resolve(object.result);
     } else {
       assert(!object.id);
       Promise.resolve().then(() => this.emit(object.method!, object.params));
@@ -229,9 +318,12 @@ export class FFSession extends EventEmitter {
   }
 }
 
-function createProtocolError(error: ProtocolError, method: string, protocolError: { message: string; data: any; }): ProtocolError {
+function createProtocolError(
+  error: ProtocolError,
+  method: string,
+  protocolError: { message: string; data: any },
+): ProtocolError {
   let message = `Protocol error (${method}): ${protocolError.message}`;
-  if ('data' in protocolError)
-    message += ` ${protocolError.data}`;
+  if ('data' in protocolError) message += ` ${protocolError.data}`;
   return rewriteErrorMessage(error, message);
 }

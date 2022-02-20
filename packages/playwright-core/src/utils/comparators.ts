@@ -18,14 +18,29 @@
 import colors from 'colors/safe';
 import jpeg from 'jpeg-js';
 import pixelmatch from 'pixelmatch';
-import { diff_match_patch, DIFF_INSERT, DIFF_DELETE, DIFF_EQUAL } from '../third_party/diff_match_patch';
+import {
+  diff_match_patch,
+  DIFF_INSERT,
+  DIFF_DELETE,
+  DIFF_EQUAL,
+} from '../third_party/diff_match_patch';
 
 // Note: we require the pngjs version of pixelmatch to avoid version mismatches.
-const { PNG } = require(require.resolve('pngjs', { paths: [require.resolve('pixelmatch')] })) as typeof import('pngjs');
+const { PNG } = require(require.resolve('pngjs', {
+  paths: [require.resolve('pixelmatch')],
+})) as typeof import('pngjs');
 
-export type ImageComparatorOptions = { threshold?: number, pixelCount?: number, pixelRatio?: number };
-export type ComparatorResult = { diff?: Buffer; errorMessage?: string; } | null;
-export type Comparator = (actualBuffer: Buffer | string, expectedBuffer: Buffer, options?: any) => ComparatorResult;
+export type ImageComparatorOptions = {
+  threshold?: number;
+  pixelCount?: number;
+  pixelRatio?: number;
+};
+export type ComparatorResult = { diff?: Buffer; errorMessage?: string } | null;
+export type Comparator = (
+  actualBuffer: Buffer | string,
+  expectedBuffer: Buffer,
+  options?: any,
+) => ComparatorResult;
 export const mimeTypeToComparator: { [key: string]: Comparator } = {
   'application/octet-string': compareBuffersOrStrings,
   'image/png': compareImages.bind(null, 'image/png'),
@@ -33,60 +48,74 @@ export const mimeTypeToComparator: { [key: string]: Comparator } = {
   'text/plain': compareText,
 };
 
-function compareBuffersOrStrings(actualBuffer: Buffer | string, expectedBuffer: Buffer): ComparatorResult {
-  if (typeof actualBuffer === 'string')
-    return compareText(actualBuffer, expectedBuffer);
+function compareBuffersOrStrings(
+  actualBuffer: Buffer | string,
+  expectedBuffer: Buffer,
+): ComparatorResult {
+  if (typeof actualBuffer === 'string') return compareText(actualBuffer, expectedBuffer);
   if (!actualBuffer || !(actualBuffer instanceof Buffer))
     return { errorMessage: 'Actual result should be a Buffer or a string.' };
-  if (Buffer.compare(actualBuffer, expectedBuffer))
-    return { errorMessage: 'Buffers differ' };
+  if (Buffer.compare(actualBuffer, expectedBuffer)) return { errorMessage: 'Buffers differ' };
   return null;
 }
 
-function compareImages(mimeType: string, actualBuffer: Buffer | string, expectedBuffer: Buffer, options: ImageComparatorOptions = {}): ComparatorResult {
+function compareImages(
+  mimeType: string,
+  actualBuffer: Buffer | string,
+  expectedBuffer: Buffer,
+  options: ImageComparatorOptions = {},
+): ComparatorResult {
   if (!actualBuffer || !(actualBuffer instanceof Buffer))
     return { errorMessage: 'Actual result should be a Buffer.' };
 
   const actual = mimeType === 'image/png' ? PNG.sync.read(actualBuffer) : jpeg.decode(actualBuffer);
-  const expected = mimeType === 'image/png' ? PNG.sync.read(expectedBuffer) : jpeg.decode(expectedBuffer);
+  const expected =
+    mimeType === 'image/png' ? PNG.sync.read(expectedBuffer) : jpeg.decode(expectedBuffer);
   if (expected.width !== actual.width || expected.height !== actual.height) {
     return {
-      errorMessage: `Sizes differ; expected image ${expected.width}px X ${expected.height}px, but got ${actual.width}px X ${actual.height}px. `
+      errorMessage: `Sizes differ; expected image ${expected.width}px X ${expected.height}px, but got ${actual.width}px X ${actual.height}px. `,
     };
   }
   const diff = new PNG({ width: expected.width, height: expected.height });
   const thresholdOptions = { threshold: 0.2, ...options };
-  const count = pixelmatch(expected.data, actual.data, diff.data, expected.width, expected.height, thresholdOptions);
+  const count = pixelmatch(
+    expected.data,
+    actual.data,
+    diff.data,
+    expected.width,
+    expected.height,
+    thresholdOptions,
+  );
 
   const pixelCount1 = options.pixelCount;
-  const pixelCount2 = options.pixelRatio !== undefined ? expected.width * expected.height * options.pixelRatio : undefined;
+  const pixelCount2 =
+    options.pixelRatio !== undefined
+      ? expected.width * expected.height * options.pixelRatio
+      : undefined;
   let pixelCount;
   if (pixelCount1 !== undefined && pixelCount2 !== undefined)
     pixelCount = Math.min(pixelCount1, pixelCount2);
-  else
-    pixelCount = pixelCount1 ?? pixelCount2 ?? 0;
+  else pixelCount = pixelCount1 ?? pixelCount2 ?? 0;
   return count > pixelCount ? { diff: PNG.sync.write(diff) } : null;
 }
 
 function compareText(actual: Buffer | string, expectedBuffer: Buffer): ComparatorResult {
-  if (typeof actual !== 'string')
-    return { errorMessage: 'Actual result should be a string' };
+  if (typeof actual !== 'string') return { errorMessage: 'Actual result should be a string' };
   const expected = expectedBuffer.toString('utf-8');
-  if (expected === actual)
-    return null;
+  if (expected === actual) return null;
   const dmp = new diff_match_patch();
   const d = dmp.diff_main(expected, actual);
   dmp.diff_cleanupSemantic(d);
   return {
-    errorMessage: diff_prettyTerminal(d)
+    errorMessage: diff_prettyTerminal(d),
   };
 }
 
 function diff_prettyTerminal(diffs: diff_match_patch.Diff[]) {
   const html = [];
   for (let x = 0; x < diffs.length; x++) {
-    const op = diffs[x][0];    // Operation (insert, delete, equal)
-    const data = diffs[x][1];  // Text of change.
+    const op = diffs[x][0]; // Operation (insert, delete, equal)
+    const data = diffs[x][1]; // Text of change.
     const text = data;
     switch (op) {
       case DIFF_INSERT:

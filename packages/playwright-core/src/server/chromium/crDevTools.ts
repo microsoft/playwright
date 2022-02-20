@@ -33,13 +33,11 @@ export class CRDevTools {
   }
 
   install(session: CRSession) {
-    session.on('Runtime.bindingCalled', async event => {
-      if (event.name !== kBindingName)
-        return;
+    session.on('Runtime.bindingCalled', async (event) => {
+      if (event.name !== kBindingName) return;
       const parsed = JSON.parse(event.payload);
       let result = undefined;
-      if (this.__testHookOnBinding)
-        this.__testHookOnBinding(parsed);
+      if (this.__testHookOnBinding) this.__testHookOnBinding(parsed);
       if (parsed.method === 'getPreferences') {
         if (this._prefs === undefined) {
           try {
@@ -60,16 +58,21 @@ export class CRDevTools {
         this._prefs = {};
         this._save();
       }
-      session.send('Runtime.evaluate', {
-        expression: `window.DevToolsAPI.embedderMessageAck(${parsed.id}, ${JSON.stringify(result)})`,
-        contextId: event.executionContextId
-      }).catch(e => null);
+      session
+        .send('Runtime.evaluate', {
+          expression: `window.DevToolsAPI.embedderMessageAck(${parsed.id}, ${JSON.stringify(
+            result,
+          )})`,
+          contextId: event.executionContextId,
+        })
+        .catch((e) => null);
     });
     Promise.all([
       session.send('Runtime.enable'),
       session.send('Runtime.addBinding', { name: kBindingName }),
       session.send('Page.enable'),
-      session.send('Page.addScriptToEvaluateOnNewDocument', { source: `
+      session.send('Page.addScriptToEvaluateOnNewDocument', {
+        source: `
         (() => {
           const init = () => {
             // Lazy init happens when InspectorFrontendHost is initialized.
@@ -91,15 +94,18 @@ export class CRDevTools {
             set(v) { value = v; init(); },
           });
         })()
-      ` }),
+      `,
+      }),
       session.send('Runtime.runIfWaitingForDebugger'),
-    ]).catch(e => null);
+    ]).catch((e) => null);
   }
 
   _save() {
     // Serialize saves to avoid corruption.
     this._savePromise = this._savePromise.then(async () => {
-      await fs.promises.writeFile(this._preferencesPath, JSON.stringify(this._prefs)).catch(e => null);
+      await fs.promises
+        .writeFile(this._preferencesPath, JSON.stringify(this._prefs))
+        .catch((e) => null);
     });
   }
 }

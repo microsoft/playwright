@@ -27,10 +27,13 @@ export interface SnapshotStorage {
 
 export abstract class BaseSnapshotStorage extends EventEmitter implements SnapshotStorage {
   protected _resources: ResourceSnapshot[] = [];
-  protected _frameSnapshots = new Map<string, {
-    raw: FrameSnapshot[],
-    renderer: SnapshotRenderer[]
-  }>();
+  protected _frameSnapshots = new Map<
+    string,
+    {
+      raw: FrameSnapshot[];
+      renderer: SnapshotRenderer[];
+    }
+  >();
 
   clear() {
     this._resources = [];
@@ -49,11 +52,14 @@ export abstract class BaseSnapshotStorage extends EventEmitter implements Snapsh
         renderer: [],
       };
       this._frameSnapshots.set(snapshot.frameId, frameSnapshots);
-      if (snapshot.isMainFrame)
-        this._frameSnapshots.set(snapshot.pageId, frameSnapshots);
+      if (snapshot.isMainFrame) this._frameSnapshots.set(snapshot.pageId, frameSnapshots);
     }
     frameSnapshots.raw.push(snapshot);
-    const renderer = new SnapshotRenderer(this._resources, frameSnapshots.raw, frameSnapshots.raw.length - 1);
+    const renderer = new SnapshotRenderer(
+      this._resources,
+      frameSnapshots.raw,
+      frameSnapshots.raw.length - 1,
+    );
     frameSnapshots.renderer.push(renderer);
     this.emit('snapshot', renderer);
   }
@@ -66,7 +72,7 @@ export abstract class BaseSnapshotStorage extends EventEmitter implements Snapsh
 
   snapshotByName(pageOrFrameId: string, snapshotName: string): SnapshotRenderer | undefined {
     const snapshot = this._frameSnapshots.get(pageOrFrameId);
-    return snapshot?.renderer.find(r => r.snapshotName === snapshotName);
+    return snapshot?.renderer.find((r) => r.snapshotName === snapshotName);
   }
 
   snapshotByIndex(frameId: string, index: number): SnapshotRenderer | undefined {

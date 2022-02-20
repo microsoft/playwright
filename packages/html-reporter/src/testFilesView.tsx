@@ -21,41 +21,44 @@ import { TestFileView } from './testFileView';
 import './testFileView.css';
 
 export const TestFilesView: React.FC<{
-  report?: HTMLReport,
-  expandedFiles: Map<string, boolean>,
-  setExpandedFiles: (value: Map<string, boolean>) => void,
-  filter: Filter,
+  report?: HTMLReport;
+  expandedFiles: Map<string, boolean>;
+  setExpandedFiles: (value: Map<string, boolean>) => void;
+  filter: Filter;
 }> = ({ report, filter, expandedFiles, setExpandedFiles }) => {
   const filteredFiles = React.useMemo(() => {
-    const result: { file: TestFileSummary, defaultExpanded: boolean }[] = [];
+    const result: { file: TestFileSummary; defaultExpanded: boolean }[] = [];
     let visibleTests = 0;
     for (const file of report?.files || []) {
-      const tests = file.tests.filter(t => filter.matches(t));
+      const tests = file.tests.filter((t) => filter.matches(t));
       visibleTests += tests.length;
-      if (tests.length)
-        result.push({ file, defaultExpanded: visibleTests < 200 });
+      if (tests.length) result.push({ file, defaultExpanded: visibleTests < 200 });
     }
     return result;
   }, [report, filter]);
-  return <>
-    {report && filteredFiles.map(({ file, defaultExpanded }) => {
-      return <TestFileView
-        key={`file-${file.fileId}`}
-        report={report}
-        file={file}
-        isFileExpanded={fileId => {
-          const value = expandedFiles.get(fileId);
-          if (value === undefined)
-            return defaultExpanded;
-          return !!value;
-        }}
-        setFileExpanded={(fileId, expanded) => {
-          const newExpanded = new Map(expandedFiles);
-          newExpanded.set(fileId, expanded);
-          setExpandedFiles(newExpanded);
-        }}
-        filter={filter}>
-      </TestFileView>;
-    })}
-  </>;
+  return (
+    <>
+      {report &&
+        filteredFiles.map(({ file, defaultExpanded }) => {
+          return (
+            <TestFileView
+              key={`file-${file.fileId}`}
+              report={report}
+              file={file}
+              isFileExpanded={(fileId) => {
+                const value = expandedFiles.get(fileId);
+                if (value === undefined) return defaultExpanded;
+                return !!value;
+              }}
+              setFileExpanded={(fileId, expanded) => {
+                const newExpanded = new Map(expandedFiles);
+                newExpanded.set(fileId, expanded);
+                setExpandedFiles(newExpanded);
+              }}
+              filter={filter}
+            ></TestFileView>
+          );
+        })}
+    </>
+  );
 };

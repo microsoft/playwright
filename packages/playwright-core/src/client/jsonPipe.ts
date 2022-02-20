@@ -22,7 +22,12 @@ export class JsonPipe extends ChannelOwner<channels.JsonPipeChannel> {
     return (jsonPipe as any)._object;
   }
 
-  constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.JsonPipeInitializer) {
+  constructor(
+    parent: ChannelOwner,
+    type: string,
+    guid: string,
+    initializer: channels.JsonPipeInitializer,
+  ) {
     super(parent, type, guid, initializer);
   }
 

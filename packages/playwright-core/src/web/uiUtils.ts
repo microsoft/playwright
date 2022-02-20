@@ -15,53 +15,55 @@
 */
 
 export function msToString(ms: number): string {
-  if (!isFinite(ms))
-    return '-';
+  if (!isFinite(ms)) return '-';
 
-  if (ms === 0)
-    return '0';
+  if (ms === 0) return '0';
 
-  if (ms < 1000)
-    return ms.toFixed(0) + 'ms';
+  if (ms < 1000) return ms.toFixed(0) + 'ms';
 
   const seconds = ms / 1000;
-  if (seconds < 60)
-    return seconds.toFixed(1) + 's';
+  if (seconds < 60) return seconds.toFixed(1) + 's';
 
   const minutes = seconds / 60;
-  if (minutes < 60)
-    return minutes.toFixed(1) + 'm';
+  if (minutes < 60) return minutes.toFixed(1) + 'm';
 
   const hours = minutes / 60;
-  if (hours < 24)
-    return hours.toFixed(1) + 'h';
+  if (hours < 24) return hours.toFixed(1) + 'h';
 
   const days = hours / 24;
   return days.toFixed(1) + 'd';
 }
 
-export function lowerBound<S, T>(array: S[], object: T, comparator: (object: T, b: S) => number, left?: number, right?: number): number {
+export function lowerBound<S, T>(
+  array: S[],
+  object: T,
+  comparator: (object: T, b: S) => number,
+  left?: number,
+  right?: number,
+): number {
   let l = left || 0;
   let r = right !== undefined ? right : array.length;
   while (l < r) {
     const m = (l + r) >> 1;
-    if (comparator(object, array[m]) > 0)
-      l = m + 1;
-    else
-      r = m;
+    if (comparator(object, array[m]) > 0) l = m + 1;
+    else r = m;
   }
   return r;
 }
 
-export function upperBound<S, T>(array: S[], object: T, comparator: (object: T, b: S) => number, left?: number, right?: number): number {
+export function upperBound<S, T>(
+  array: S[],
+  object: T,
+  comparator: (object: T, b: S) => number,
+  left?: number,
+  right?: number,
+): number {
   let l = left || 0;
   let r = right !== undefined ? right : array.length;
   while (l < r) {
     const m = (l + r) >> 1;
-    if (comparator(object, array[m]) >= 0)
-      l = m + 1;
-    else
-      r = m;
+    if (comparator(object, array[m]) >= 0) l = m + 1;
+    else r = m;
   }
   return r;
 }

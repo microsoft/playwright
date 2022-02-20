@@ -14,7 +14,12 @@
   limitations under the License.
 */
 
-import type { TestAttachment, TestCase, TestResult, TestStep } from '@playwright/test/src/reporters/html';
+import type {
+  TestAttachment,
+  TestCase,
+  TestResult,
+  TestStep,
+} from '@playwright/test/src/reporters/html';
 import ansi2html from 'ansi-to-html';
 import * as React from 'react';
 import { TreeItem } from './treeItem';
@@ -29,97 +34,160 @@ import './testResultView.css';
 const imageDiffNames = ['expected', 'actual', 'diff'];
 
 export const TestResultView: React.FC<{
-  test: TestCase,
-  result: TestResult,
+  test: TestCase;
+  result: TestResult;
 }> = ({ result }) => {
-
   const { screenshots, videos, traces, otherAttachments, attachmentsMap } = React.useMemo(() => {
     const attachmentsMap = new Map<string, TestAttachment>();
     const attachments = result?.attachments || [];
     const otherAttachments = new Set<TestAttachment>(attachments);
-    const screenshots = attachments.filter(a => a.contentType.startsWith('image/') && !imageDiffNames.includes(a.name));
-    const videos = attachments.filter(a => a.name === 'video');
-    const traces = attachments.filter(a => a.name === 'trace');
-    for (const a of attachments)
-      attachmentsMap.set(a.name, a);
-    [...screenshots, ...videos, ...traces].forEach(a => otherAttachments.delete(a));
+    const screenshots = attachments.filter(
+      (a) => a.contentType.startsWith('image/') && !imageDiffNames.includes(a.name),
+    );
+    const videos = attachments.filter((a) => a.name === 'video');
+    const traces = attachments.filter((a) => a.name === 'trace');
+    for (const a of attachments) attachmentsMap.set(a.name, a);
+    [...screenshots, ...videos, ...traces].forEach((a) => otherAttachments.delete(a));
     return { attachmentsMap, screenshots, videos, otherAttachments, traces };
-  }, [ result ]);
+  }, [result]);
 
   const expected = attachmentsMap.get('expected');
   const actual = attachmentsMap.get('actual');
   const diff = attachmentsMap.get('diff');
-  const hasImages = [actual?.contentType, expected?.contentType, diff?.contentType].some(v => v && /^image\//i.test(v));
-  return <div className='test-result'>
-    {!!result.errors.length && <AutoChip header='Errors'>
-      {result.errors.map((error, index) => <ErrorMessage key={'test-result-error-message-' + index} error={error}></ErrorMessage>)}
-    </AutoChip>}
-    {!!result.steps.length && <AutoChip header='Test Steps'>
-      {result.steps.map((step, i) => <StepTreeItem key={`step-${i}`} step={step} depth={0}></StepTreeItem>)}
-    </AutoChip>}
+  const hasImages = [actual?.contentType, expected?.contentType, diff?.contentType].some(
+    (v) => v && /^image\//i.test(v),
+  );
+  return (
+    <div className="test-result">
+      {!!result.errors.length && (
+        <AutoChip header="Errors">
+          {result.errors.map((error, index) => (
+            <ErrorMessage key={'test-result-error-message-' + index} error={error}></ErrorMessage>
+          ))}
+        </AutoChip>
+      )}
+      {!!result.steps.length && (
+        <AutoChip header="Test Steps">
+          {result.steps.map((step, i) => (
+            <StepTreeItem key={`step-${i}`} step={step} depth={0}></StepTreeItem>
+          ))}
+        </AutoChip>
+      )}
 
-    {expected && actual && <AutoChip header={`${hasImages ? 'Image' : 'Snapshot'} mismatch`}>
-      {hasImages && <ImageDiff actual={actual} expected={expected} diff={diff}></ImageDiff>}
-      <AttachmentLink key={`expected`} attachment={expected}></AttachmentLink>
-      <AttachmentLink key={`actual`} attachment={actual}></AttachmentLink>
-      {diff && <AttachmentLink key={`diff`} attachment={diff}></AttachmentLink>}
-    </AutoChip>}
+      {expected && actual && (
+        <AutoChip header={`${hasImages ? 'Image' : 'Snapshot'} mismatch`}>
+          {hasImages && <ImageDiff actual={actual} expected={expected} diff={diff}></ImageDiff>}
+          <AttachmentLink key={`expected`} attachment={expected}></AttachmentLink>
+          <AttachmentLink key={`actual`} attachment={actual}></AttachmentLink>
+          {diff && <AttachmentLink key={`diff`} attachment={diff}></AttachmentLink>}
+        </AutoChip>
+      )}
 
-    {!!screenshots.length && <AutoChip header='Screenshots'>
-      {screenshots.map((a, i) => {
-        return <div key={`screenshot-${i}`}>
-          <img src={a.path} />
-          <AttachmentLink attachment={a}></AttachmentLink>
-        </div>;
-      })}
-    </AutoChip>}
+      {!!screenshots.length && (
+        <AutoChip header="Screenshots">
+          {screenshots.map((a, i) => {
+            return (
+              <div key={`screenshot-${i}`}>
+                <img src={a.path} />
+                <AttachmentLink attachment={a}></AttachmentLink>
+              </div>
+            );
+          })}
+        </AutoChip>
+      )}
 
-    {!!traces.length && <AutoChip header='Traces'>
-      {<div>
-        <a href={`trace/index.html?${traces.map((a, i) => `trace=${new URL(a.path!, window.location.href)}`).join('&')}`}>
-          <img src={traceImage} style={{ width: 192, height: 117, marginLeft: 20 }} />
-        </a>
-        {traces.map((a, i) => <AttachmentLink key={`trace-${i}`} attachment={a} linkName={traces.length === 1 ? 'trace' : `trace-${i + 1}`}></AttachmentLink>)}
-      </div>}
-    </AutoChip>}
+      {!!traces.length && (
+        <AutoChip header="Traces">
+          {
+            <div>
+              <a
+                href={`trace/index.html?${traces
+                  .map((a, i) => `trace=${new URL(a.path!, window.location.href)}`)
+                  .join('&')}`}
+              >
+                <img src={traceImage} style={{ width: 192, height: 117, marginLeft: 20 }} />
+              </a>
+              {traces.map((a, i) => (
+                <AttachmentLink
+                  key={`trace-${i}`}
+                  attachment={a}
+                  linkName={traces.length === 1 ? 'trace' : `trace-${i + 1}`}
+                ></AttachmentLink>
+              ))}
+            </div>
+          }
+        </AutoChip>
+      )}
 
-    {!!videos.length && <AutoChip header='Videos'>
-      {videos.map((a, i) => <div key={`video-${i}`}>
-        <video controls>
-          <source src={a.path} type={a.contentType}/>
-        </video>
-        <AttachmentLink attachment={a}></AttachmentLink>
-      </div>)}
-    </AutoChip>}
+      {!!videos.length && (
+        <AutoChip header="Videos">
+          {videos.map((a, i) => (
+            <div key={`video-${i}`}>
+              <video controls>
+                <source src={a.path} type={a.contentType} />
+              </video>
+              <AttachmentLink attachment={a}></AttachmentLink>
+            </div>
+          ))}
+        </AutoChip>
+      )}
 
-    {!!otherAttachments.size && <AutoChip header='Attachments'>
-      {[...otherAttachments].map((a, i) => <AttachmentLink key={`attachment-link-${i}`} attachment={a}></AttachmentLink>)}
-    </AutoChip>}
-  </div>;
+      {!!otherAttachments.size && (
+        <AutoChip header="Attachments">
+          {[...otherAttachments].map((a, i) => (
+            <AttachmentLink key={`attachment-link-${i}`} attachment={a}></AttachmentLink>
+          ))}
+        </AutoChip>
+      )}
+    </div>
+  );
 };
 
 const StepTreeItem: React.FC<{
   step: TestStep;
-  depth: number,
+  depth: number;
 }> = ({ step, depth }) => {
-  return <TreeItem title={<span>
-    <span style={{ float: 'right' }}>{msToString(step.duration)}</span>
-    {statusIcon(step.error || step.duration === -1 ? 'failed' : 'passed')}
-    <span>{step.title}</span>
-    {step.count > 1 && <> ✕ <span className='test-result-counter'>{step.count}</span></>}
-    {step.location && <span className='test-result-path'>— {step.location.file}:{step.location.line}</span>}
-  </span>} loadChildren={step.steps.length + (step.snippet ? 1 : 0) ? () => {
-    const children = step.steps.map((s, i) => <StepTreeItem key={i} step={s} depth={depth + 1}></StepTreeItem>);
-    if (step.snippet)
-      children.unshift(<ErrorMessage key='line' error={step.snippet}></ErrorMessage>);
-    return children;
-  } : undefined} depth={depth}></TreeItem>;
+  return (
+    <TreeItem
+      title={
+        <span>
+          <span style={{ float: 'right' }}>{msToString(step.duration)}</span>
+          {statusIcon(step.error || step.duration === -1 ? 'failed' : 'passed')}
+          <span>{step.title}</span>
+          {step.count > 1 && (
+            <>
+              {' '}
+              ✕ <span className="test-result-counter">{step.count}</span>
+            </>
+          )}
+          {step.location && (
+            <span className="test-result-path">
+              — {step.location.file}:{step.location.line}
+            </span>
+          )}
+        </span>
+      }
+      loadChildren={
+        step.steps.length + (step.snippet ? 1 : 0)
+          ? () => {
+              const children = step.steps.map((s, i) => (
+                <StepTreeItem key={i} step={s} depth={depth + 1}></StepTreeItem>
+              ));
+              if (step.snippet)
+                children.unshift(<ErrorMessage key="line" error={step.snippet}></ErrorMessage>);
+              return children;
+            }
+          : undefined
+      }
+      depth={depth}
+    ></TreeItem>
+  );
 };
 
 const ImageDiff: React.FunctionComponent<{
- actual: TestAttachment,
- expected: TestAttachment,
- diff?: TestAttachment,
+  actual: TestAttachment;
+  expected: TestAttachment;
+  diff?: TestAttachment;
 }> = ({ actual, expected, diff }) => {
   const [selectedTab, setSelectedTab] = React.useState<string>('actual');
   const diffElement = React.useRef<HTMLImageElement>(null);
@@ -127,29 +195,41 @@ const ImageDiff: React.FunctionComponent<{
   tabs.push({
     id: 'actual',
     title: 'Actual',
-    render: () => <img src={actual.path} onLoad={() => {
-      if (diffElement.current)
-        diffElement.current.style.minHeight = diffElement.current.offsetHeight + 'px';
-    }}/>
+    render: () => (
+      <img
+        src={actual.path}
+        onLoad={() => {
+          if (diffElement.current)
+            diffElement.current.style.minHeight = diffElement.current.offsetHeight + 'px';
+        }}
+      />
+    ),
   });
   tabs.push({
     id: 'expected',
     title: 'Expected',
-    render: () => <img src={expected.path} onLoad={() => {
-      if (diffElement.current)
-        diffElement.current.style.minHeight = diffElement.current.offsetHeight + 'px';
-    }}/>
+    render: () => (
+      <img
+        src={expected.path}
+        onLoad={() => {
+          if (diffElement.current)
+            diffElement.current.style.minHeight = diffElement.current.offsetHeight + 'px';
+        }}
+      />
+    ),
   });
   if (diff) {
     tabs.push({
       id: 'diff',
       title: 'Diff',
-      render: () => <img src={diff.path}/>
+      render: () => <img src={diff.path} />,
     });
   }
-  return <div className='vbox' data-testid='test-result-image-mismatch' ref={diffElement}>
-    <TabbedPane tabs={tabs} selectedTab={selectedTab} setSelectedTab={setSelectedTab} />
-  </div>;
+  return (
+    <div className="vbox" data-testid="test-result-image-mismatch" ref={diffElement}>
+      <TabbedPane tabs={tabs} selectedTab={selectedTab} setSelectedTab={setSelectedTab} />
+    </div>
+  );
 };
 
 const ErrorMessage: React.FC<{
@@ -163,7 +243,12 @@ const ErrorMessage: React.FC<{
     config.colors = ansiColors;
     return new ansi2html(config).toHtml(escapeHTML(error));
   }, [error]);
-  return <div className='test-result-error-message' dangerouslySetInnerHTML={{ __html: html || '' }}></div>;
+  return (
+    <div
+      className="test-result-error-message"
+      dangerouslySetInnerHTML={{ __html: html || '' }}
+    ></div>
+  );
 };
 
 const ansiColors = {
@@ -182,9 +267,12 @@ const ansiColors = {
   12: '#55F',
   13: '#F5F',
   14: '#5FF',
-  15: '#FFF'
+  15: '#FFF',
 };
 
 function escapeHTML(text: string): string {
-  return text.replace(/[&"<>]/g, c => ({ '&': '&amp;', '"': '&quot;', '<': '&lt;', '>': '&gt;' }[c]!));
+  return text.replace(
+    /[&"<>]/g,
+    (c) => ({ '&': '&amp;', '"': '&quot;', '<': '&lt;', '>': '&gt;' }[c]!),
+  );
 }

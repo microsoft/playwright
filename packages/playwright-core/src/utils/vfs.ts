@@ -27,20 +27,18 @@ export interface VirtualFileSystem {
 }
 
 abstract class BaseFileSystem {
-
   abstract readStream(entryPath: string): Promise<stream.Readable>;
 
   async read(entryPath: string): Promise<Buffer> {
     const readStream = await this.readStream(entryPath);
     const buffers: Buffer[] = [];
-    return new Promise(f => {
-      readStream.on('data', d => buffers.push(d));
+    return new Promise((f) => {
+      readStream.on('data', (d) => buffers.push(d));
       readStream.on('end', () => f(Buffer.concat(buffers)));
     });
   }
 
-  close() {
-  }
+  close() {}
 }
 
 export class RealFileSystem extends BaseFileSystem implements VirtualFileSystem {
@@ -56,10 +54,8 @@ export class RealFileSystem extends BaseFileSystem implements VirtualFileSystem 
     const visit = (dir: string) => {
       for (const name of fs.readdirSync(dir)) {
         const fqn = path.join(dir, name);
-        if (fs.statSync(fqn).isDirectory())
-          visit(fqn);
-        if (fs.statSync(fqn).isFile())
-          result.push(fqn);
+        if (fs.statSync(fqn).isDirectory()) visit(fqn);
+        if (fs.statSync(fqn).isFile()) result.push(fqn);
       }
     };
     visit(this._folder);

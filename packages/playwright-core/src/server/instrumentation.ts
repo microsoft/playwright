@@ -25,7 +25,7 @@ import type { Frame } from './frames';
 import type { Page } from './page';
 
 export type Attribution = {
-  isInternal: boolean,
+  isInternal: boolean;
   browserType?: BrowserType;
   browser?: Browser;
   context?: BrowserContext | APIRequestContext;
@@ -51,10 +51,17 @@ export class SdkObject extends EventEmitter {
 }
 
 export interface Instrumentation {
-  addListener(listener: InstrumentationListener, context: BrowserContext | APIRequestContext | null): void;
+  addListener(
+    listener: InstrumentationListener,
+    context: BrowserContext | APIRequestContext | null,
+  ): void;
   removeListener(listener: InstrumentationListener): void;
   onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata): Promise<void>;
-  onBeforeInputAction(sdkObject: SdkObject, metadata: CallMetadata, element: ElementHandle): Promise<void>;
+  onBeforeInputAction(
+    sdkObject: SdkObject,
+    metadata: CallMetadata,
+    element: ElementHandle,
+  ): Promise<void>;
   onCallLog(sdkObject: SdkObject, metadata: CallMetadata, logName: string, message: string): void;
   onAfterCall(sdkObject: SdkObject, metadata: CallMetadata): Promise<void>;
   onEvent(sdkObject: SdkObject, metadata: CallMetadata): void;
@@ -64,7 +71,11 @@ export interface Instrumentation {
 
 export interface InstrumentationListener {
   onBeforeCall?(sdkObject: SdkObject, metadata: CallMetadata): Promise<void>;
-  onBeforeInputAction?(sdkObject: SdkObject, metadata: CallMetadata, element: ElementHandle): Promise<void>;
+  onBeforeInputAction?(
+    sdkObject: SdkObject,
+    metadata: CallMetadata,
+    element: ElementHandle,
+  ): Promise<void>;
   onCallLog?(sdkObject: SdkObject, metadata: CallMetadata, logName: string, message: string): void;
   onAfterCall?(sdkObject: SdkObject, metadata: CallMetadata): Promise<void>;
   onEvent?(sdkObject: SdkObject, metadata: CallMetadata): void;
@@ -74,22 +85,27 @@ export interface InstrumentationListener {
 
 export function createInstrumentation(): Instrumentation {
   const listeners = new Map<InstrumentationListener, BrowserContext | APIRequestContext | null>();
-  return new Proxy({}, {
-    get: (obj: any, prop: string) => {
-      if (prop === 'addListener')
-        return (listener: InstrumentationListener, context: BrowserContext | APIRequestContext | null) => listeners.set(listener, context);
-      if (prop === 'removeListener')
-        return (listener: InstrumentationListener) => listeners.delete(listener);
-      if (!prop.startsWith('on'))
-        return obj[prop];
-      return async (sdkObject: SdkObject, ...params: any[]) => {
-        for (const [listener, context] of listeners) {
-          if (!context || sdkObject.attribution.context === context)
-            await (listener as any)[prop]?.(sdkObject, ...params);
-        }
-      };
+  return new Proxy(
+    {},
+    {
+      get: (obj: any, prop: string) => {
+        if (prop === 'addListener')
+          return (
+            listener: InstrumentationListener,
+            context: BrowserContext | APIRequestContext | null,
+          ) => listeners.set(listener, context);
+        if (prop === 'removeListener')
+          return (listener: InstrumentationListener) => listeners.delete(listener);
+        if (!prop.startsWith('on')) return obj[prop];
+        return async (sdkObject: SdkObject, ...params: any[]) => {
+          for (const [listener, context] of listeners) {
+            if (!context || sdkObject.attribution.context === context)
+              await (listener as any)[prop]?.(sdkObject, ...params);
+          }
+        };
+      },
     },
-  });
+  );
 }
 
 export function internalCallMetadata(): CallMetadata {
@@ -102,6 +118,6 @@ export function internalCallMetadata(): CallMetadata {
     method: '',
     params: {},
     log: [],
-    snapshots: []
+    snapshots: [],
   };
 }

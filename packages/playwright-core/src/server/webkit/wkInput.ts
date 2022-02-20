@@ -25,25 +25,18 @@ import type { Page } from '../page';
 function toModifiersMask(modifiers: Set<types.KeyboardModifier>): number {
   // From Source/WebKit/Shared/WebEvent.h
   let mask = 0;
-  if (modifiers.has('Shift'))
-    mask |= 1;
-  if (modifiers.has('Control'))
-    mask |= 2;
-  if (modifiers.has('Alt'))
-    mask |= 4;
-  if (modifiers.has('Meta'))
-    mask |= 8;
+  if (modifiers.has('Shift')) mask |= 1;
+  if (modifiers.has('Control')) mask |= 2;
+  if (modifiers.has('Alt')) mask |= 4;
+  if (modifiers.has('Meta')) mask |= 8;
   return mask;
 }
 
 function toButtonsMask(buttons: Set<types.MouseButton>): number {
   let mask = 0;
-  if (buttons.has('left'))
-    mask |= 1;
-  if (buttons.has('right'))
-    mask |= 2;
-  if (buttons.has('middle'))
-    mask |= 4;
+  if (buttons.has('left')) mask |= 1;
+  if (buttons.has('right')) mask |= 2;
+  if (buttons.has('middle')) mask |= 4;
   return mask;
 }
 
@@ -59,17 +52,24 @@ export class RawKeyboardImpl implements input.RawKeyboard {
     this._session = session;
   }
 
-  async keydown(modifiers: Set<types.KeyboardModifier>, code: string, keyCode: number, keyCodeWithoutLocation: number, key: string, location: number, autoRepeat: boolean, text: string | undefined): Promise<void> {
+  async keydown(
+    modifiers: Set<types.KeyboardModifier>,
+    code: string,
+    keyCode: number,
+    keyCodeWithoutLocation: number,
+    key: string,
+    location: number,
+    autoRepeat: boolean,
+    text: string | undefined,
+  ): Promise<void> {
     const parts = [];
-    for (const modifier of (['Shift', 'Control', 'Alt', 'Meta']) as types.KeyboardModifier[]) {
-      if (modifiers.has(modifier))
-        parts.push(modifier);
+    for (const modifier of ['Shift', 'Control', 'Alt', 'Meta'] as types.KeyboardModifier[]) {
+      if (modifiers.has(modifier)) parts.push(modifier);
     }
     parts.push(code);
     const shortcut = parts.join('+');
     let commands = macEditingCommands[shortcut];
-    if (isString(commands))
-      commands = [commands];
+    if (isString(commands)) commands = [commands];
     await this._pageProxySession.send('Input.dispatchKeyEvent', {
       type: 'keyDown',
       modifiers: toModifiersMask(modifiers),
@@ -80,18 +80,25 @@ export class RawKeyboardImpl implements input.RawKeyboard {
       unmodifiedText: text,
       autoRepeat,
       macCommands: commands,
-      isKeypad: location === input.keypadLocation
+      isKeypad: location === input.keypadLocation,
     });
   }
 
-  async keyup(modifiers: Set<types.KeyboardModifier>, code: string, keyCode: number, keyCodeWithoutLocation: number, key: string, location: number): Promise<void> {
+  async keyup(
+    modifiers: Set<types.KeyboardModifier>,
+    code: string,
+    keyCode: number,
+    keyCodeWithoutLocation: number,
+    key: string,
+    location: number,
+  ): Promise<void> {
     await this._pageProxySession.send('Input.dispatchKeyEvent', {
       type: 'keyUp',
       modifiers: toModifiersMask(modifiers),
       key,
       windowsVirtualKeyCode: keyCode,
       code,
-      isKeypad: location === input.keypadLocation
+      isKeypad: location === input.keypadLocation,
     });
   }
 
@@ -113,18 +120,32 @@ export class RawMouseImpl implements input.RawMouse {
     this._session = session;
   }
 
-  async move(x: number, y: number, button: types.MouseButton | 'none', buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, forClick: boolean): Promise<void> {
+  async move(
+    x: number,
+    y: number,
+    button: types.MouseButton | 'none',
+    buttons: Set<types.MouseButton>,
+    modifiers: Set<types.KeyboardModifier>,
+    forClick: boolean,
+  ): Promise<void> {
     await this._pageProxySession.send('Input.dispatchMouseEvent', {
       type: 'move',
       button,
       buttons: toButtonsMask(buttons),
       x,
       y,
-      modifiers: toModifiersMask(modifiers)
+      modifiers: toModifiersMask(modifiers),
     });
   }
 
-  async down(x: number, y: number, button: types.MouseButton, buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, clickCount: number): Promise<void> {
+  async down(
+    x: number,
+    y: number,
+    button: types.MouseButton,
+    buttons: Set<types.MouseButton>,
+    modifiers: Set<types.KeyboardModifier>,
+    clickCount: number,
+  ): Promise<void> {
     await this._pageProxySession.send('Input.dispatchMouseEvent', {
       type: 'down',
       button,
@@ -132,11 +153,18 @@ export class RawMouseImpl implements input.RawMouse {
       x,
       y,
       modifiers: toModifiersMask(modifiers),
-      clickCount
+      clickCount,
     });
   }
 
-  async up(x: number, y: number, button: types.MouseButton, buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, clickCount: number): Promise<void> {
+  async up(
+    x: number,
+    y: number,
+    button: types.MouseButton,
+    buttons: Set<types.MouseButton>,
+    modifiers: Set<types.KeyboardModifier>,
+    clickCount: number,
+  ): Promise<void> {
     await this._pageProxySession.send('Input.dispatchMouseEvent', {
       type: 'up',
       button,
@@ -144,16 +172,28 @@ export class RawMouseImpl implements input.RawMouse {
       x,
       y,
       modifiers: toModifiersMask(modifiers),
-      clickCount
+      clickCount,
     });
   }
 
-  async wheel(x: number, y: number, buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, deltaX: number, deltaY: number): Promise<void> {
+  async wheel(
+    x: number,
+    y: number,
+    buttons: Set<types.MouseButton>,
+    modifiers: Set<types.KeyboardModifier>,
+    deltaX: number,
+    deltaY: number,
+  ): Promise<void> {
     if (this._page?._browserContext._options.isMobile)
       throw new Error('Mouse wheel is not supported in mobile WebKit');
     await this._session!.send('Page.updateScrollingState');
     // Wheel events hit the compositor first, so wait one frame for it to be synced.
-    await this._page!.mainFrame().evaluateExpression(`new Promise(requestAnimationFrame)`, false, false, 'utility');
+    await this._page!.mainFrame().evaluateExpression(
+      `new Promise(requestAnimationFrame)`,
+      false,
+      false,
+      'utility',
+    );
     await this._pageProxySession.send('Input.dispatchWheelEvent', {
       x,
       y,

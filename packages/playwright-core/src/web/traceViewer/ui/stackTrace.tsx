@@ -19,33 +19,30 @@ import './stackTrace.css';
 import { ActionTraceEvent } from '../../../server/trace/common/traceEvents';
 
 export const StackTraceView: React.FunctionComponent<{
-  action: ActionTraceEvent | undefined,
-  selectedFrame: number,
-  setSelectedFrame: (index: number) => void
+  action: ActionTraceEvent | undefined;
+  selectedFrame: number;
+  setSelectedFrame: (index: number) => void;
 }> = ({ action, setSelectedFrame, selectedFrame }) => {
   const frames = action?.metadata.stack || [];
-  return <div className='stack-trace'>{
-    frames.map((frame, index) => {
-      // Windows frames are E:\path\to\file
-      const pathSep = frame.file[1] === ':' ? '\\' : '/';
-      return <div
-        key={index}
-        className={'stack-trace-frame' + (selectedFrame === index ? ' selected' : '')}
-        onClick={() => {
-          setSelectedFrame(index);
-        }}
-      >
-        <span className='stack-trace-frame-function'>
-          {frame.function || '(anonymous)'}
-        </span>
-        <span className='stack-trace-frame-location'>
-          {frame.file.split(pathSep).pop()}
-        </span>
-        <span className='stack-trace-frame-line'>
-          {':' + frame.line}
-        </span>
-      </div>;
-    })
-  }
-  </div>;
+  return (
+    <div className="stack-trace">
+      {frames.map((frame, index) => {
+        // Windows frames are E:\path\to\file
+        const pathSep = frame.file[1] === ':' ? '\\' : '/';
+        return (
+          <div
+            key={index}
+            className={'stack-trace-frame' + (selectedFrame === index ? ' selected' : '')}
+            onClick={() => {
+              setSelectedFrame(index);
+            }}
+          >
+            <span className="stack-trace-frame-function">{frame.function || '(anonymous)'}</span>
+            <span className="stack-trace-frame-location">{frame.file.split(pathSep).pop()}</span>
+            <span className="stack-trace-frame-line">{':' + frame.line}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
 };

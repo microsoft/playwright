@@ -30,21 +30,19 @@ export class PipeTransport implements ConnectionTransport {
 
   constructor(pipeWrite: NodeJS.WritableStream, pipeRead: NodeJS.ReadableStream) {
     this._pipeWrite = pipeWrite;
-    pipeRead.on('data', buffer => this._dispatch(buffer));
+    pipeRead.on('data', (buffer) => this._dispatch(buffer));
     pipeRead.on('close', () => {
       this._closed = true;
-      if (this.onclose)
-        this.onclose.call(null);
+      if (this.onclose) this.onclose.call(null);
     });
-    pipeRead.on('error', e => debugLogger.log('error', e));
-    pipeWrite.on('error', e => debugLogger.log('error', e));
+    pipeRead.on('error', (e) => debugLogger.log('error', e));
+    pipeWrite.on('error', (e) => debugLogger.log('error', e));
     this.onmessage = undefined;
     this.onclose = undefined;
   }
 
   send(message: ProtocolRequest) {
-    if (this._closed)
-      throw new Error('Pipe has been closed');
+    if (this._closed) throw new Error('Pipe has been closed');
     this._pipeWrite.write(JSON.stringify(message));
     this._pipeWrite.write('\0');
   }
@@ -61,8 +59,7 @@ export class PipeTransport implements ConnectionTransport {
     }
     const message = this._pendingMessage + buffer.toString(undefined, 0, end);
     this._waitForNextTask(() => {
-      if (this.onmessage)
-        this.onmessage.call(null, JSON.parse(message));
+      if (this.onmessage) this.onmessage.call(null, JSON.parse(message));
     });
 
     let start = end + 1;
@@ -70,8 +67,7 @@ export class PipeTransport implements ConnectionTransport {
     while (end !== -1) {
       const message = buffer.toString(undefined, start, end);
       this._waitForNextTask(() => {
-        if (this.onmessage)
-          this.onmessage.call(null, JSON.parse(message));
+        if (this.onmessage) this.onmessage.call(null, JSON.parse(message));
       });
       start = end + 1;
       end = buffer.indexOf('\0', start);

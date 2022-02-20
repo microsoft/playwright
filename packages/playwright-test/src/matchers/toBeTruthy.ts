@@ -23,7 +23,7 @@ export async function toBeTruthy(
   matcherName: string,
   receiver: any,
   receiverType: string,
-  query: (isNot: boolean, timeout: number) => Promise<{ matches: boolean, log?: string[] }>,
+  query: (isNot: boolean, timeout: number) => Promise<{ matches: boolean; log?: string[] }>,
   options: { timeout?: number } = {},
 ) {
   expectType(receiver, receiverType, matcherName);

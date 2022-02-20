@@ -16,7 +16,11 @@
 
 import type { Expect } from '../types';
 import { currentTestInfo } from '../globals';
-import { mimeTypeToComparator, ComparatorResult, ImageComparatorOptions } from 'playwright-core/lib/utils/comparators';
+import {
+  mimeTypeToComparator,
+  ComparatorResult,
+  ImageComparatorOptions,
+} from 'playwright-core/lib/utils/comparators';
 import { addSuffixToFilePath, serializeError, sanitizeForFilePath, trimLongString } from '../util';
 import { UpdateSnapshots } from '../types';
 import colors from 'colors/safe';
@@ -37,7 +41,7 @@ const SNAPSHOT_COUNTER = Symbol('noname-snapshot-counter');
 function parseMatchSnapshotOptions(
   testInfo: TestInfoImpl,
   anonymousSnapshotExtension: string,
-  nameOrOptions: NameOrSegments | { name?: NameOrSegments } & ImageComparatorOptions,
+  nameOrOptions: NameOrSegments | ({ name?: NameOrSegments } & ImageComparatorOptions),
   optOptions: ImageComparatorOptions,
 ) {
   let options: ImageComparatorOptions;
@@ -56,7 +60,8 @@ function parseMatchSnapshotOptions(
       ...testInfo.titlePath.slice(1),
       (testInfo as any)[SNAPSHOT_COUNTER],
     ].join(' ');
-    name = sanitizeForFilePath(trimLongString(fullTitleWithoutSpec)) + '.' + anonymousSnapshotExtension;
+    name =
+      sanitizeForFilePath(trimLongString(fullTitleWithoutSpec)) + '.' + anonymousSnapshotExtension;
   }
 
   options = {
@@ -71,7 +76,9 @@ function parseMatchSnapshotOptions(
     throw new Error('`pixelRatio` option value must be between 0 and 1');
 
   // sanitizes path if string
-  const pathSegments = Array.isArray(name) ? name : [addSuffixToFilePath(name, '', undefined, true)];
+  const pathSegments = Array.isArray(name)
+    ? name
+    : [addSuffixToFilePath(name, '', undefined, true)];
   const snapshotPath = testInfo.snapshotPath(...pathSegments);
   const outputFile = testInfo.outputPath(...pathSegments);
   const expectedPath = addSuffixToFilePath(outputFile, '-expected');
@@ -101,12 +108,11 @@ function parseMatchSnapshotOptions(
 export function toMatchSnapshot(
   this: ReturnType<Expect['getState']>,
   received: Buffer | string,
-  nameOrOptions: NameOrSegments | { name?: NameOrSegments } & ImageComparatorOptions = {},
-  optOptions: ImageComparatorOptions = {}
+  nameOrOptions: NameOrSegments | ({ name?: NameOrSegments } & ImageComparatorOptions) = {},
+  optOptions: ImageComparatorOptions = {},
 ): SyncExpectationResult {
   const testInfo = currentTestInfo();
-  if (!testInfo)
-    throw new Error(`toMatchSnapshot() must be called during the test`);
+  if (!testInfo) throw new Error(`toMatchSnapshot() must be called during the test`);
   const {
     options,
     updateSnapshots,
@@ -117,23 +123,35 @@ export function toMatchSnapshot(
     diffPath,
     mimeType,
     comparator,
-  } = parseMatchSnapshotOptions(testInfo, determineFileExtension(received), nameOrOptions, optOptions);
+  } = parseMatchSnapshotOptions(
+    testInfo,
+    determineFileExtension(received),
+    nameOrOptions,
+    optOptions,
+  );
   if (!hasSnapshotFile)
-    return commitMissingSnapshot(testInfo, received, snapshotPath, actualPath, updateSnapshots, this.isNot);
+    return commitMissingSnapshot(
+      testInfo,
+      received,
+      snapshotPath,
+      actualPath,
+      updateSnapshots,
+      this.isNot,
+    );
   const expected = fs.readFileSync(snapshotPath);
   const result = comparator(received, expected, options);
   return commitComparatorResult(
-      testInfo,
-      expected,
-      received,
-      result,
-      mimeType,
-      snapshotPath,
-      expectedPath,
-      actualPath,
-      diffPath,
-      updateSnapshots,
-      this.isNot,
+    testInfo,
+    expected,
+    received,
+    result,
+    mimeType,
+    snapshotPath,
+    expectedPath,
+    actualPath,
+    diffPath,
+    updateSnapshots,
+    this.isNot,
   );
 }
 
@@ -148,14 +166,18 @@ function commitMissingSnapshot(
   const isWriteMissingMode = updateSnapshots === 'all' || updateSnapshots === 'missing';
   const commonMissingSnapshotMessage = `${snapshotPath} is missing in snapshots`;
   if (withNegateComparison) {
-    const message = `${commonMissingSnapshotMessage}${isWriteMissingMode ? ', matchers using ".not" won\'t write them automatically.' : '.'}`;
-    return { pass: true , message: () => message };
+    const message = `${commonMissingSnapshotMessage}${
+      isWriteMissingMode ? ', matchers using ".not" won\'t write them automatically.' : '.'
+    }`;
+    return { pass: true, message: () => message };
   }
   if (isWriteMissingMode) {
     writeFileSync(snapshotPath, actual);
     writeFileSync(actualPath, actual);
   }
-  const message = `${commonMissingSnapshotMessage}${isWriteMissingMode ? ', writing actual.' : '.'}`;
+  const message = `${commonMissingSnapshotMessage}${
+    isWriteMissingMode ? ', writing actual.' : '.'
+  }`;
   if (updateSnapshots === 'all') {
     /* eslint-disable no-console */
     console.log(message);
@@ -182,16 +204,17 @@ function commitComparatorResult(
   withNegateComparison: boolean,
 ) {
   if (!result) {
-    const message = withNegateComparison ? [
-      colors.red('Snapshot comparison failed:'),
-      '',
-      indent('Expected result should be different from the actual one.', '  '),
-    ].join('\n') : '';
+    const message = withNegateComparison
+      ? [
+          colors.red('Snapshot comparison failed:'),
+          '',
+          indent('Expected result should be different from the actual one.', '  '),
+        ].join('\n')
+      : '';
     return { pass: true, message: () => message };
   }
 
-  if (withNegateComparison)
-    return { pass: false, message: () => '' };
+  if (withNegateComparison) return { pass: false, message: () => '' };
 
   if (updateSnapshots === 'all') {
     writeFileSync(snapshotPath, actual);
@@ -199,18 +222,15 @@ function commitComparatorResult(
     console.log(snapshotPath + ' does not match, writing actual.');
     return {
       pass: true,
-      message: () => snapshotPath + ' running with --update-snapshots, writing actual.'
+      message: () => snapshotPath + ' running with --update-snapshots, writing actual.',
     };
   }
 
   writeAttachment(testInfo, 'expected', mimeType, expectedPath, expected);
   writeAttachment(testInfo, 'actual', mimeType, actualPath, actual);
-  if (result.diff)
-    writeAttachment(testInfo, 'diff', mimeType, diffPath, result.diff);
+  if (result.diff) writeAttachment(testInfo, 'diff', mimeType, diffPath, result.diff);
 
-  const output = [
-    colors.red(`Snapshot comparison failed:`),
-  ];
+  const output = [colors.red(`Snapshot comparison failed:`)];
   if (result.errorMessage) {
     output.push('');
     output.push(indent(result.errorMessage, '  '));
@@ -218,8 +238,7 @@ function commitComparatorResult(
   output.push('');
   output.push(`Expected: ${colors.yellow(expectedPath)}`);
   output.push(`Received: ${colors.yellow(actualPath)}`);
-  if (result.diff)
-    output.push(`    Diff: ${colors.yellow(diffPath)}`);
+  if (result.diff) output.push(`    Diff: ${colors.yellow(diffPath)}`);
 
   return {
     pass: false,
@@ -232,7 +251,13 @@ function writeFileSync(aPath: string, content: Buffer | string) {
   fs.writeFileSync(aPath, content);
 }
 
-function writeAttachment(testInfo: TestInfoImpl, name: string, contentType: string, aPath: string, body: Buffer | string) {
+function writeAttachment(
+  testInfo: TestInfoImpl,
+  name: string,
+  contentType: string,
+  aPath: string,
+  body: Buffer | string,
+) {
   writeFileSync(aPath, body);
   testInfo.attachments.push({ name, contentType, path: aPath });
 }
@@ -242,11 +267,14 @@ function indent(lines: string, tab: string) {
 }
 
 function determineFileExtension(file: string | Buffer): string {
-  if (typeof file === 'string')
-    return 'txt';
-  if (compareMagicBytes(file, [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))
-    return 'png';
-  if (compareMagicBytes(file, [0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0x01, 0x01]))
+  if (typeof file === 'string') return 'txt';
+  if (compareMagicBytes(file, [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])) return 'png';
+  if (
+    compareMagicBytes(
+      file,
+      [0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0x01, 0x01],
+    )
+  )
     return 'jpg';
   return 'dat';
 }

@@ -23,7 +23,12 @@ export class Dialog extends ChannelOwner<channels.DialogChannel> implements api.
     return (dialog as any)._object;
   }
 
-  constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.DialogInitializer) {
+  constructor(
+    parent: ChannelOwner,
+    type: string,
+    guid: string,
+    initializer: channels.DialogInitializer,
+  ) {
     super(parent, type, guid, initializer);
   }
 

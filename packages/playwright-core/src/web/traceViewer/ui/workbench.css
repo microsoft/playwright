@@ -91,9 +91,9 @@
 }
 
 .workbench tab-strip {
-  margin-left: calc(-1*var(--sidebar-width));
+  margin-left: calc(-1 * var(--sidebar-width));
   padding-left: var(--sidebar-width);
-	box-shadow: var(--box-shadow);
+  box-shadow: var(--box-shadow);
 }
 
 .workbench .logo {
@@ -117,4 +117,3 @@
 .tab-strip {
   background-color: var(--light-background);
 }
-

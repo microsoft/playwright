@@ -30,19 +30,19 @@ enum SocksAuth {
   NO_AUTHENTICATION_REQUIRED = 0x00,
   GSSAPI = 0x01,
   USERNAME_PASSWORD = 0x02,
-  NO_ACCEPTABLE_METHODS = 0xFF
+  NO_ACCEPTABLE_METHODS = 0xff,
 }
 
 enum SocksAddressType {
   IPv4 = 0x01,
   FqName = 0x03,
-  IPv6 = 0x04
+  IPv6 = 0x04,
 }
 
 enum SocksCommand {
   CONNECT = 0x01,
   BIND = 0x02,
-  UDP_ASSOCIATE = 0x03
+  UDP_ASSOCIATE = 0x03,
 }
 
 enum SocksReply {
@@ -54,14 +54,14 @@ enum SocksReply {
   ConnectionRefused = 0x05,
   TtlExpired = 0x06,
   CommandNotSupported = 0x07,
-  AddressTypeNotSupported = 0x08
+  AddressTypeNotSupported = 0x08,
 }
 
-export type SocksSocketRequestedPayload = { uid: string, host: string, port: number };
-export type SocksSocketConnectedPayload = { uid: string, host: string, port: number };
-export type SocksSocketDataPayload = { uid: string, data: Buffer };
-export type SocksSocketErrorPayload = { uid: string, error: string };
-export type SocksSocketFailedPayload = { uid: string, errorCode: string };
+export type SocksSocketRequestedPayload = { uid: string; host: string; port: number };
+export type SocksSocketConnectedPayload = { uid: string; host: string; port: number };
+export type SocksSocketDataPayload = { uid: string; data: Buffer };
+export type SocksSocketErrorPayload = { uid: string; error: string };
+export type SocksSocketFailedPayload = { uid: string; errorCode: string };
 export type SocksSocketClosedPayload = { uid: string };
 export type SocksSocketEndPayload = { uid: string };
 
@@ -97,14 +97,20 @@ class SocksConnection {
     assert(await this._authenticate());
     const { command, host, port } = await this._parseRequest();
     if (command !== SocksCommand.CONNECT) {
-      this._writeBytes(Buffer.from([
-        0x05,
-        SocksReply.CommandNotSupported,
-        0x00, // RSV
-        0x01, // IPv4
-        0x00, 0x00, 0x00, 0x00, // Address
-        0x00, 0x00 // Port
-      ]));
+      this._writeBytes(
+        Buffer.from([
+          0x05,
+          SocksReply.CommandNotSupported,
+          0x00, // RSV
+          0x01, // IPv4
+          0x00,
+          0x00,
+          0x00,
+          0x00, // Address
+          0x00,
+          0x00, // Port
+        ]),
+      );
       return;
     }
 
@@ -128,7 +134,10 @@ class SocksConnection {
     // +----+--------+
 
     const version = await this._readByte();
-    assert(version === 0x05, 'The VER field must be set to x05 for this version of the protocol, was ' + version);
+    assert(
+      version === 0x05,
+      'The VER field must be set to x05 for this version of the protocol, was ' + version,
+    );
 
     const nMethods = await this._readByte();
     assert(nMethods, 'No authentication methods specified');
@@ -144,7 +153,7 @@ class SocksConnection {
     return false;
   }
 
-  async _parseRequest(): Promise<{ host: string, port: number, command: SocksCommand }> {
+  async _parseRequest(): Promise<{ host: string; port: number; command: SocksCommand }> {
     // Request.
     // +----+-----+-------+------+----------+----------+
     // |VER | CMD |  RSV  | ATYP | DST.ADDR | DST.PORT |
@@ -160,10 +169,13 @@ class SocksConnection {
     // +----+-----+-------+------+----------+----------+
 
     const version = await this._readByte();
-    assert(version === 0x05, 'The VER field must be set to x05 for this version of the protocol, was ' + version);
+    assert(
+      version === 0x05,
+      'The VER field must be set to x05 for this version of the protocol, was ' + version,
+    );
 
     const command = await this._readByte();
-    await this._readByte();  // skip reserved.
+    await this._readByte(); // skip reserved.
     const addressType = await this._readByte();
     let host = '';
     switch (addressType) {
@@ -177,8 +189,7 @@ class SocksConnection {
       case SocksAddressType.IPv6:
         const bytes = await this._readBytes(16);
         const tokens = [];
-        for (let i = 0; i < 8; ++i)
-          tokens.push(bytes.readUInt16BE(i * 2));
+        for (let i = 0; i < 8; ++i) tokens.push(bytes.readUInt16BE(i * 2));
         host = tokens.join(':');
         break;
     }
@@ -191,7 +202,7 @@ class SocksConnection {
     return {
       command,
       host,
-      port
+      port,
     };
   }
 
@@ -203,14 +214,13 @@ class SocksConnection {
   private async _readBytes(length: number): Promise<Buffer> {
     this._fence = this._offset + length;
     if (!this._buffer || this._buffer.length < this._fence)
-      await new Promise<void>(f => this._fenceCallback = f);
+      await new Promise<void>((f) => (this._fenceCallback = f));
     this._offset += length;
     return this._buffer.slice(this._offset - length, this._offset);
   }
 
   private _writeBytes(buffer: Buffer) {
-    if (this._socket.writable)
-      this._socket.write(buffer);
+    if (this._socket.writable) this._socket.write(buffer);
   }
 
   private _onClose() {
@@ -227,15 +237,18 @@ class SocksConnection {
   }
 
   socketConnected(host: string, port: number) {
-    this._writeBytes(Buffer.from([
-      0x05,
-      SocksReply.Succeeded,
-      0x00, // RSV
-      0x01, // IPv4
-      ...parseIP(host), // Address
-      port << 8, port & 0xFF // Port
-    ]));
-    this._socket.on('data', data => this._client.onSocketData({ uid: this._uid, data }));
+    this._writeBytes(
+      Buffer.from([
+        0x05,
+        SocksReply.Succeeded,
+        0x00, // RSV
+        0x01, // IPv4
+        ...parseIP(host), // Address
+        port << 8,
+        port & 0xff, // Port
+      ]),
+    );
+    this._socket.on('data', (data) => this._client.onSocketData({ uid: this._uid, data }));
   }
 
   socketFailed(errorCode: string) {
@@ -245,7 +258,8 @@ class SocksConnection {
       0x00, // RSV
       0x01, // IPv4
       ...parseIP('0.0.0.0'), // Address
-      0, 0 // Port
+      0,
+      0, // Port
     ]);
     switch (errorCode) {
       case 'ENOENT':
@@ -279,9 +293,8 @@ class SocksConnection {
 }
 
 function parseIP(address: string): number[] {
-  if (!net.isIPv4(address))
-    throw new Error('IPv6 is not supported');
-  return address.split('.', 4).map(t => +t);
+  if (!net.isIPv4(address)) throw new Error('IPv6 is not supported');
+  return address.split('.', 4).map((t) => +t);
 }
 
 export class SocksProxy extends EventEmitter implements SocksConnectionClient {
@@ -304,7 +317,7 @@ export class SocksProxy extends EventEmitter implements SocksConnectionClient {
   }
 
   async listen(port: number): Promise<number> {
-    return new Promise(f => {
+    return new Promise((f) => {
       this._server.listen(port, () => {
         const port = (this._server.address() as AddressInfo).port;
         debugLogger.log('proxy', `Starting socks proxy server on port ${port}`);
@@ -314,7 +327,7 @@ export class SocksProxy extends EventEmitter implements SocksConnectionClient {
   }
 
   async close() {
-    await new Promise(f => this._server.close(f));
+    await new Promise((f) => this._server.close(f));
   }
 
   onSocketRequested(payload: SocksSocketRequestedPayload) {
@@ -368,23 +381,20 @@ export class SocksProxyHandler extends EventEmitter {
   }
 
   cleanup() {
-    for (const uid of this._sockets.keys())
-      this.socketClosed({ uid });
+    for (const uid of this._sockets.keys()) this.socketClosed({ uid });
   }
 
   async socketRequested({ uid, host, port }: SocksSocketRequestedPayload): Promise<void> {
-    if (host === 'local.playwright')
-      host = 'localhost';
+    if (host === 'local.playwright') host = 'localhost';
     try {
-      if (this._redirectPortForTest)
-        port = this._redirectPortForTest;
+      if (this._redirectPortForTest) port = this._redirectPortForTest;
       const { address } = await dnsLookupAsync(host);
       const socket = await createSocket(address, port);
-      socket.on('data', data => {
+      socket.on('data', (data) => {
         const payload: SocksSocketDataPayload = { uid, data };
         this.emit(SocksProxyHandler.Events.SocksData, payload);
       });
-      socket.on('error', error => {
+      socket.on('error', (error) => {
         const payload: SocksSocketErrorPayload = { uid, error: error.message };
         this.emit(SocksProxyHandler.Events.SocksError, payload);
         this._sockets.delete(uid);

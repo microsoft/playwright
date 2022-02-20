@@ -14,13 +14,22 @@
  * limitations under the License.
  */
 
-import { serializeAsCallArgument, parseEvaluationResultValue } from '../common/utilityScriptSerializers';
+import {
+  serializeAsCallArgument,
+  parseEvaluationResultValue,
+} from '../common/utilityScriptSerializers';
 
 export default class UtilityScript {
-  evaluate(isFunction: boolean | undefined, returnByValue: boolean, expression: string, argCount: number, ...argsAndHandles: any[]) {
+  evaluate(
+    isFunction: boolean | undefined,
+    returnByValue: boolean,
+    expression: string,
+    argCount: number,
+    ...argsAndHandles: any[]
+  ) {
     const args = argsAndHandles.slice(0, argCount);
     const handles = argsAndHandles.slice(argCount);
-    const parameters = args.map(a => parseEvaluationResultValue(a, handles));
+    const parameters = args.map((a) => parseEvaluationResultValue(a, handles));
     let result = global.eval(expression);
     if (isFunction === true) {
       result = result(...parameters);
@@ -28,16 +37,14 @@ export default class UtilityScript {
       result = result;
     } else {
       // auto detect.
-      if (typeof result === 'function')
-        result = result(...parameters);
+      if (typeof result === 'function') result = result(...parameters);
     }
     return returnByValue ? this._promiseAwareJsonValueNoThrow(result) : result;
   }
 
   jsonValue(returnByValue: true, value: any) {
     // Special handling of undefined to work-around multi-step returnByValue handling in WebKit.
-    if (Object.is(value, undefined))
-      return undefined;
+    if (Object.is(value, undefined)) return undefined;
     return serializeAsCallArgument(value, (value: any) => ({ fallThrough: value }));
   }
 

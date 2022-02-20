@@ -37,11 +37,16 @@ export function existingDispatcher<DispatcherType>(object: any): DispatcherType 
   return object[dispatcherSymbol];
 }
 
-export function lookupNullableDispatcher<DispatcherType>(object: any | null): DispatcherType | undefined {
+export function lookupNullableDispatcher<DispatcherType>(
+  object: any | null,
+): DispatcherType | undefined {
   return object ? lookupDispatcher(object) : undefined;
 }
 
-export class Dispatcher<Type extends { guid: string }, ChannelType> extends EventEmitter implements channels.Channel {
+export class Dispatcher<Type extends { guid: string }, ChannelType>
+  extends EventEmitter
+  implements channels.Channel
+{
   private _connection: DispatcherConnection;
   private _isScope: boolean;
   // Parent is always "isScope".
@@ -55,7 +60,13 @@ export class Dispatcher<Type extends { guid: string }, ChannelType> extends Even
   readonly _scope: Dispatcher<any, any>;
   _object: Type;
 
-  constructor(parent: Dispatcher<any, any> | DispatcherConnection, object: Type, type: string, initializer: channels.InitializerTraits<Type>, isScope?: boolean) {
+  constructor(
+    parent: Dispatcher<any, any> | DispatcherConnection,
+    object: Type,
+    type: string,
+    initializer: channels.InitializerTraits<Type>,
+    isScope?: boolean,
+  ) {
     super();
 
     this._connection = parent instanceof DispatcherConnection ? parent : parent._connection;
@@ -77,10 +88,19 @@ export class Dispatcher<Type extends { guid: string }, ChannelType> extends Even
 
     (object as any)[dispatcherSymbol] = this;
     if (this._parent)
-      this._connection.sendMessageToClient(this._parent._guid, type, '__create__', { type, initializer, guid }, this._parent._object);
+      this._connection.sendMessageToClient(
+        this._parent._guid,
+        type,
+        '__create__',
+        { type, initializer, guid },
+        this._parent._object,
+      );
   }
 
-  _dispatchEvent<T extends keyof channels.EventsTraits<ChannelType>>(method: T, params?: channels.EventsTraits<ChannelType>[T]) {
+  _dispatchEvent<T extends keyof channels.EventsTraits<ChannelType>>(
+    method: T,
+    params?: channels.EventsTraits<ChannelType>[T],
+  ) {
     if (this._disposed) {
       if (isUnderTest())
         throw new Error(`${this._guid} is sending "${method}" event after being disposed`);
@@ -88,7 +108,13 @@ export class Dispatcher<Type extends { guid: string }, ChannelType> extends Even
       return;
     }
     const sdkObject = this._object instanceof SdkObject ? this._object : undefined;
-    this._connection.sendMessageToClient(this._guid, this._type, method as string, params, sdkObject);
+    this._connection.sendMessageToClient(
+      this._guid,
+      this._type,
+      method as string,
+      params,
+      sdkObject,
+    );
   }
 
   protected _dispose() {
@@ -96,13 +122,11 @@ export class Dispatcher<Type extends { guid: string }, ChannelType> extends Even
     this._disposed = true;
 
     // Clean up from parent and connection.
-    if (this._parent)
-      this._parent._dispatchers.delete(this._guid);
+    if (this._parent) this._parent._dispatchers.delete(this._guid);
     this._connection._dispatchers.delete(this._guid);
 
     // Dispose all children.
-    for (const dispatcher of [...this._dispatchers.values()])
-      dispatcher._dispose();
+    for (const dispatcher of [...this._dispatchers.values()]) dispatcher._dispose();
     this._dispatchers.clear();
 
     if (this._isScope)
@@ -112,7 +136,7 @@ export class Dispatcher<Type extends { guid: string }, ChannelType> extends Even
   _debugScopeState(): any {
     return {
       _guid: this._guid,
-      objects: Array.from(this._dispatchers.values()).map(o => o._debugScopeState()),
+      objects: Array.from(this._dispatchers.values()).map((o) => o._debugScopeState()),
     };
   }
 
@@ -125,7 +149,13 @@ export type DispatcherScope = Dispatcher<any, any>;
 export class Root extends Dispatcher<{ guid: '' }, any> {
   private _initialized = false;
 
-  constructor(connection: DispatcherConnection, private readonly createPlaywright?: (scope: DispatcherScope, options: channels.RootInitializeParams) => Promise<PlaywrightDispatcher>) {
+  constructor(
+    connection: DispatcherConnection,
+    private readonly createPlaywright?: (
+      scope: DispatcherScope,
+      options: channels.RootInitializeParams,
+    ) => Promise<PlaywrightDispatcher>,
+  ) {
     super(connection, { guid: '' }, 'Root', {}, true);
   }
 
@@ -146,7 +176,13 @@ export class DispatcherConnection {
   private _validateMetadata: (metadata: any) => { stack?: channels.StackFrame[] };
   private _waitOperations = new Map<string, CallMetadata>();
 
-  sendMessageToClient(guid: string, type: string, method: string, params: any, sdkObject?: SdkObject) {
+  sendMessageToClient(
+    guid: string,
+    type: string,
+    method: string,
+    params: any,
+    sdkObject?: SdkObject,
+  ) {
     params = this._replaceDispatchersWithGuids(params);
     if (sdkObject) {
       const eventMetadata: CallMetadata = {
@@ -161,7 +197,7 @@ export class DispatcherConnection {
         method,
         params: params || {},
         log: [],
-        snapshots: []
+        snapshots: [],
       };
       sdkObject.instrumentation?.onEvent(sdkObject, eventMetadata);
     }
@@ -174,10 +210,11 @@ export class DispatcherConnection {
         if (arg && typeof arg === 'object' && typeof arg.guid === 'string') {
           const guid = arg.guid;
           const dispatcher = this._dispatchers.get(guid);
-          if (!dispatcher)
-            throw new ValidationError(`${path}: no object with guid ${guid}`);
+          if (!dispatcher) throw new ValidationError(`${path}: no object with guid ${guid}`);
           if (name !== '*' && dispatcher._type !== name)
-            throw new ValidationError(`${path}: object with guid ${guid} has type ${dispatcher._type}, expected ${name}`);
+            throw new ValidationError(
+              `${path}: object with guid ${guid} has type ${dispatcher._type}, expected ${name}`,
+            );
           return dispatcher;
         }
         throw new ValidationError(`${path}: expected ${name}`);
@@ -186,8 +223,7 @@ export class DispatcherConnection {
     const scheme = createScheme(tChannel);
     this._validateParams = (type: string, method: string, params: any): any => {
       const name = type + method[0].toUpperCase() + method.substring(1) + 'Params';
-      if (!scheme[name])
-        throw new ValidationError(`Unknown scheme for ${type}.${method}`);
+      if (!scheme[name]) throw new ValidationError(`Unknown scheme for ${type}.${method}`);
       return scheme[name](params, '');
     };
     this._validateMetadata = (metadata: any): any => {
@@ -214,7 +250,9 @@ export class DispatcherConnection {
       validParams = this._validateParams(dispatcher._type, method, params);
       validMetadata = this._validateMetadata(metadata);
       if (typeof (dispatcher as any)[method] !== 'function')
-        throw new Error(`Mismatching dispatcher: "${dispatcher._type}" does not implement "${method}"`);
+        throw new Error(
+          `Mismatching dispatcher: "${dispatcher._type}" does not implement "${method}"`,
+        );
     } catch (e) {
       this.onmessage({ id, error: serializeError(e) });
       return;
@@ -236,7 +274,7 @@ export class DispatcherConnection {
       method,
       params: params || {},
       log: [],
-      snapshots: []
+      snapshots: [],
     };
 
     if (sdkObject && params?.info?.waitId) {
@@ -248,16 +286,20 @@ export class DispatcherConnection {
           await sdkObject.instrumentation.onBeforeCall(sdkObject, callMetadata);
           this.onmessage({ id });
           return;
-        } case 'log': {
+        }
+        case 'log': {
           const originalMetadata = this._waitOperations.get(info.waitId)!;
           originalMetadata.log.push(info.message);
           sdkObject.instrumentation.onCallLog(sdkObject, originalMetadata, 'api', info.message);
           this.onmessage({ id });
           return;
-        } case 'after': {
+        }
+        case 'after': {
           const originalMetadata = this._waitOperations.get(info.waitId)!;
           originalMetadata.endTime = monotonicTime();
-          originalMetadata.error = info.error ? { error: { name: 'Error', message: info.error } } : undefined;
+          originalMetadata.error = info.error
+            ? { error: { name: 'Error', message: info.error } }
+            : undefined;
           this._waitOperations.delete(info.waitId);
           await sdkObject.instrumentation.onAfterCall(sdkObject, originalMetadata);
           this.onmessage({ id });
@@ -265,7 +307,6 @@ export class DispatcherConnection {
         }
       }
     }
-
 
     let error: any;
     await sdkObject?.instrumentation.onBeforeCall(sdkObject, callMetadata);
@@ -285,20 +326,15 @@ export class DispatcherConnection {
     }
 
     const response: any = { id };
-    if (callMetadata.result)
-      response.result = callMetadata.result;
-    if (error)
-      response.error = error;
+    if (callMetadata.result) response.result = callMetadata.result;
+    if (error) response.error = error;
     this.onmessage(response);
   }
 
   private _replaceDispatchersWithGuids(payload: any): any {
-    if (!payload)
-      return payload;
-    if (payload instanceof Dispatcher)
-      return { guid: payload._guid };
-    if (Array.isArray(payload))
-      return payload.map(p => this._replaceDispatchersWithGuids(p));
+    if (!payload) return payload;
+    if (payload instanceof Dispatcher) return { guid: payload._guid };
+    if (Array.isArray(payload)) return payload.map((p) => this._replaceDispatchersWithGuids(p));
     if (typeof payload === 'object') {
       const result: any = {};
       for (const key of Object.keys(payload))
@@ -310,13 +346,14 @@ export class DispatcherConnection {
 }
 
 function formatLogRecording(log: string[]): string {
-  if (!log.length)
-    return '';
+  if (!log.length) return '';
   const header = ` logs `;
   const headerLength = 60;
   const leftLength = (headerLength - header.length) / 2;
   const rightLength = headerLength - header.length - leftLength;
-  return `\n${'='.repeat(leftLength)}${header}${'='.repeat(rightLength)}\n${log.join('\n')}\n${'='.repeat(headerLength)}`;
+  return `\n${'='.repeat(leftLength)}${header}${'='.repeat(rightLength)}\n${log.join(
+    '\n',
+  )}\n${'='.repeat(headerLength)}`;
 }
 
 let lastEventId = 0;

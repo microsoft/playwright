@@ -51,7 +51,7 @@ export class Filter {
 
   private static tokenize(expression: string): string[] {
     const result: string[] = [];
-    let quote: '\'' | '"' | undefined;
+    let quote: "'" | '"' | undefined;
     let token: string[] = [];
     for (let i = 0; i < expression.length; ++i) {
       const c = expression[i];
@@ -60,7 +60,7 @@ export class Filter {
         ++i;
         continue;
       }
-      if (c === '"' || c === '\'') {
+      if (c === '"' || c === "'") {
         if (quote === c) {
           result.push(token.join('').toLowerCase());
           token = [];
@@ -85,44 +85,45 @@ export class Filter {
       }
       token.push(c);
     }
-    if (token.length)
-      result.push(token.join('').toLowerCase());
+    if (token.length) result.push(token.join('').toLowerCase());
     return result;
   }
 
   matches(test: TestCaseSummary): boolean {
     if (!(test as any).searchValues) {
       let status = 'passed';
-      if (test.outcome === 'unexpected')
-        status = 'failed';
-      if (test.outcome === 'flaky')
-        status = 'flaky';
-      if (test.outcome === 'skipped')
-        status = 'skipped';
+      if (test.outcome === 'unexpected') status = 'failed';
+      if (test.outcome === 'flaky') status = 'flaky';
+      if (test.outcome === 'skipped') status = 'skipped';
       const searchValues: SearchValues = {
-        text: (status + ' ' + test.projectName + ' ' + test.path.join(' ') + test.title).toLowerCase(),
+        text: (
+          status +
+          ' ' +
+          test.projectName +
+          ' ' +
+          test.path.join(' ') +
+          test.title
+        ).toLowerCase(),
         project: test.projectName.toLowerCase(),
-        status: status as any
+        status: status as any,
       };
       (test as any).searchValues = searchValues;
     }
 
     const searchValues = (test as any).searchValues as SearchValues;
     if (this.project.length) {
-      const matches = !!this.project.find(p => searchValues.project.includes(p));
-      if (!matches)
-        return false;
+      const matches = !!this.project.find((p) => searchValues.project.includes(p));
+      if (!matches) return false;
     }
     if (this.status.length) {
-      const matches = !!this.status.find(s => searchValues.status.includes(s));
-      if (!matches)
-        return false;
+      const matches = !!this.status.find((s) => searchValues.status.includes(s));
+      if (!matches) return false;
     }
 
     if (this.text.length) {
-      const matches = this.text.filter(t => searchValues.text.includes(t)).length === this.text.length;
-      if (!matches)
-        return false;
+      const matches =
+        this.text.filter((t) => searchValues.text.includes(t)).length === this.text.length;
+      if (!matches) return false;
     }
 
     return true;
@@ -134,4 +135,3 @@ type SearchValues = {
   project: string;
   status: 'passed' | 'failed' | 'flaky' | 'skipped';
 };
-

@@ -34,8 +34,8 @@ class GitHubLogger {
   private _log(message: string, type: GitHubLogType = 'notice', options: GitHubLogOptions = {}) {
     message = message.replace(/\n/g, '%0A');
     const configs = Object.entries(options)
-        .map(([key, option]) => `${key}=${option}`)
-        .join(',');
+      .map(([key, option]) => `${key}=${option}`)
+      .join(',');
     console.log(stripAnsiEscapes(`::${type} ${configs}::${message}`));
   }
 
@@ -76,8 +76,7 @@ export class GitHubReporter extends BaseReporter {
   private _printAnnotations() {
     const summary = this.generateSummary();
     const summaryMessage = this.generateSummaryMessage(summary);
-    if (summary.failuresToPrint.length)
-      this._printFailureAnnotations(summary.failuresToPrint);
+    if (summary.failuresToPrint.length) this._printFailureAnnotations(summary.failuresToPrint);
     this._printSlowTestAnnotations();
     this._printSummaryAnnotation(summaryMessage);
   }
@@ -92,9 +91,9 @@ export class GitHubReporter extends BaseReporter {
     });
   }
 
-  private _printSummaryAnnotation(summary: string){
+  private _printSummaryAnnotation(summary: string) {
     this.githubLogger.notice(summary, {
-      title: '🎭 Playwright Run Summary'
+      title: '🎭 Playwright Run Summary',
     });
   }
 

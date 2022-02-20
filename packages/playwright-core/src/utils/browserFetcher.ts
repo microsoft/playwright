@@ -22,7 +22,13 @@ import path from 'path';
 import { existsAsync, download, getUserAgent } from './utils';
 import { debugLogger } from './debugLogger';
 
-export async function downloadBrowserWithProgressBar(title: string, browserDirectory: string, executablePath: string, downloadURL: string, downloadFileName: string): Promise<boolean> {
+export async function downloadBrowserWithProgressBar(
+  title: string,
+  browserDirectory: string,
+  executablePath: string,
+  downloadURL: string,
+  downloadFileName: string,
+): Promise<boolean> {
   const progressBarName = `Playwright build of ${title}`;
   if (await existsAsync(browserDirectory)) {
     // Already downloaded.
@@ -49,18 +55,15 @@ export async function downloadBrowserWithProgressBar(title: string, browserDirec
     process.exitCode = 1;
     throw e;
   } finally {
-    if (await existsAsync(zipPath))
-      await fs.promises.unlink(zipPath);
+    if (await existsAsync(zipPath)) await fs.promises.unlink(zipPath);
   }
   logPolitely(`${progressBarName} downloaded to ${browserDirectory}`);
   return true;
 }
 
-
 export function logPolitely(toBeLogged: string) {
   const logLevel = process.env.npm_config_loglevel;
   const logLevelDisplay = ['silent', 'error', 'warn'].indexOf(logLevel || '') > -1;
 
-  if (!logLevelDisplay)
-    console.log(toBeLogged);  // eslint-disable-line no-console
+  if (!logLevelDisplay) console.log(toBeLogged); // eslint-disable-line no-console
 }

@@ -15,7 +15,12 @@
  */
 
 import type { BrowserContextOptions } from '../../../..';
-import { LanguageGenerator, LanguageGeneratorOptions, sanitizeDeviceOptions, toSignalMap } from './language';
+import {
+  LanguageGenerator,
+  LanguageGeneratorOptions,
+  sanitizeDeviceOptions,
+  toSignalMap,
+} from './language';
 import { ActionInContext } from './codeGenerator';
 import { Action, actionTitle } from './recorderActions';
 import { MouseClickOptions, toModifiers } from './utils';
@@ -36,8 +41,7 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
 
   generateAction(actionInContext: ActionInContext): string {
     const action = actionInContext.action;
-    if (this._isTest && (action.name === 'openPage' || action.name === 'closePage'))
-      return '';
+    if (this._isTest && (action.name === 'openPage' || action.name === 'closePage')) return '';
 
     const pageAlias = actionInContext.frame.pageAlias;
     const formatter = new JavaScriptFormatter(2);
@@ -55,7 +59,9 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
     if (actionInContext.frame.isMainFrame) {
       subject = pageAlias;
     } else if (actionInContext.frame.selectorsChain && action.name !== 'navigate') {
-      const locators = actionInContext.frame.selectorsChain.map(selector => '.' + asLocator(selector, 'frameLocator'));
+      const locators = actionInContext.frame.selectorsChain.map(
+        (selector) => '.' + asLocator(selector, 'frameLocator'),
+      );
       subject = `${pageAlias}${locators.join('')}`;
     } else if (actionInContext.frame.name) {
       subject = `${pageAlias}.frame(${formatObject({ name: actionInContext.frame.name })})`;
@@ -77,37 +83,39 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
       // Generate either await Promise.all([]) or
       // const [popup1] = await Promise.all([]).
       let leftHandSide = '';
-      if (signals.popup)
-        leftHandSide = `const [${signals.popup.popupAlias}] = `;
-      else if (signals.download)
-        leftHandSide = `const [download] = `;
+      if (signals.popup) leftHandSide = `const [${signals.popup.popupAlias}] = `;
+      else if (signals.download) leftHandSide = `const [download] = `;
       formatter.add(`${leftHandSide}await Promise.all([`);
     }
 
     // Popup signals.
-    if (signals.popup)
-      formatter.add(`${pageAlias}.waitForEvent('popup'),`);
+    if (signals.popup) formatter.add(`${pageAlias}.waitForEvent('popup'),`);
 
     // Navigation signal.
     if (signals.waitForNavigation)
-      formatter.add(`${pageAlias}.waitForNavigation(/*{ url: ${quote(signals.waitForNavigation.url)} }*/),`);
+      formatter.add(
+        `${pageAlias}.waitForNavigation(/*{ url: ${quote(signals.waitForNavigation.url)} }*/),`,
+      );
 
     // Download signals.
-    if (signals.download)
-      formatter.add(`${pageAlias}.waitForEvent('download'),`);
+    if (signals.download) formatter.add(`${pageAlias}.waitForEvent('download'),`);
 
-    const prefix = (signals.popup || signals.waitForNavigation || signals.download) ? '' : 'await ';
+    const prefix = signals.popup || signals.waitForNavigation || signals.download ? '' : 'await ';
     const actionCall = this._generateActionCall(action);
-    const suffix = (signals.waitForNavigation || emitPromiseAll) ? '' : ';';
+    const suffix = signals.waitForNavigation || emitPromiseAll ? '' : ';';
     formatter.add(`${prefix}${subject}.${actionCall}${suffix}`);
 
     if (emitPromiseAll) {
       formatter.add(`]);`);
     } else if (signals.assertNavigation) {
       if (this._isTest)
-        formatter.add(`  await expect(${pageAlias}).toHaveURL(${quote(signals.assertNavigation.url)});`);
+        formatter.add(
+          `  await expect(${pageAlias}).toHaveURL(${quote(signals.assertNavigation.url)});`,
+        );
       else
-        formatter.add(`  // assert.equal(${pageAlias}.url(), ${quote(signals.assertNavigation.url)});`);
+        formatter.add(
+          `  // assert.equal(${pageAlias}.url(), ${quote(signals.assertNavigation.url)});`,
+        );
     }
     return formatter.format();
   }
@@ -120,18 +128,13 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
         return 'close()';
       case 'click': {
         let method = 'click';
-        if (action.clickCount === 2)
-          method = 'dblclick';
+        if (action.clickCount === 2) method = 'dblclick';
         const modifiers = toModifiers(action.modifiers);
         const options: MouseClickOptions = {};
-        if (action.button !== 'left')
-          options.button = action.button;
-        if (modifiers.length)
-          options.modifiers = modifiers;
-        if (action.clickCount > 2)
-          options.clickCount = action.clickCount;
-        if (action.position)
-          options.position = action.position;
+        if (action.button !== 'left') options.button = action.button;
+        if (modifiers.length) options.modifiers = modifiers;
+        if (action.clickCount > 2) options.clickCount = action.clickCount;
+        if (action.position) options.position = action.position;
         const optionsString = formatOptions(options, false);
         return asLocator(action.selector) + `.${method}(${optionsString})`;
       }
@@ -142,7 +145,12 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
       case 'fill':
         return asLocator(action.selector) + `.fill(${quote(action.text)})`;
       case 'setInputFiles':
-        return asLocator(action.selector) + `.setInputFiles(${formatObject(action.files.length === 1 ? action.files[0] : action.files)})`;
+        return (
+          asLocator(action.selector) +
+          `.setInputFiles(${formatObject(
+            action.files.length === 1 ? action.files[0] : action.files,
+          )})`
+        );
       case 'press': {
         const modifiers = toModifiers(action.modifiers);
         const shortcut = [...modifiers, action.key].join('+');
@@ -151,19 +159,22 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
       case 'navigate':
         return `goto(${quote(action.url)})`;
       case 'select':
-        return asLocator(action.selector) + `.selectOption(${formatObject(action.options.length > 1 ? action.options : action.options[0])})`;
+        return (
+          asLocator(action.selector) +
+          `.selectOption(${formatObject(
+            action.options.length > 1 ? action.options : action.options[0],
+          )})`
+        );
     }
   }
 
   generateHeader(options: LanguageGeneratorOptions): string {
-    if (this._isTest)
-      return this.generateTestHeader(options);
+    if (this._isTest) return this.generateTestHeader(options);
     return this.generateStandaloneHeader(options);
   }
 
   generateFooter(saveStorage: string | undefined): string {
-    if (this._isTest)
-      return this.generateTestFooter(saveStorage);
+    if (this._isTest) return this.generateTestFooter(saveStorage);
     return this.generateStandaloneFooter(saveStorage);
   }
 
@@ -184,16 +195,25 @@ ${useText ? '\ntest.use(' + useText + ');\n' : ''}
   generateStandaloneHeader(options: LanguageGeneratorOptions): string {
     const formatter = new JavaScriptFormatter();
     formatter.add(`
-      const { ${options.browserName}${options.deviceName ? ', devices' : ''} } = require('playwright');
+      const { ${options.browserName}${
+      options.deviceName ? ', devices' : ''
+    } } = require('playwright');
 
       (async () => {
-        const browser = await ${options.browserName}.launch(${formatObjectOrVoid(options.launchOptions)});
-        const context = await browser.newContext(${formatContextOptions(options.contextOptions, options.deviceName)});`);
+        const browser = await ${options.browserName}.launch(${formatObjectOrVoid(
+      options.launchOptions,
+    )});
+        const context = await browser.newContext(${formatContextOptions(
+          options.contextOptions,
+          options.deviceName,
+        )});`);
     return formatter.format();
   }
 
   generateStandaloneFooter(saveStorage: string | undefined): string {
-    const storageStateLine = saveStorage ? `\n  await context.storageState({ path: ${quote(saveStorage)} });` : '';
+    const storageStateLine = saveStorage
+      ? `\n  await context.storageState({ path: ${quote(saveStorage)} });`
+      : '';
     return `\n  // ---------------------${storageStateLine}
   await context.close();
   await browser.close();
@@ -203,32 +223,25 @@ ${useText ? '\ntest.use(' + useText + ');\n' : ''}
 
 function asLocator(selector: string, locatorFn = 'locator') {
   const match = selector.match(/(.*)\s+>>\s+nth=(\d+)$/);
-  if (!match)
-    return `${locatorFn}(${quote(selector)})`;
-  if (+match[2] === 0)
-    return `${locatorFn}(${quote(match[1])}).first()`;
+  if (!match) return `${locatorFn}(${quote(selector)})`;
+  if (+match[2] === 0) return `${locatorFn}(${quote(match[1])}).first()`;
   return `${locatorFn}(${quote(match[1])}).nth(${match[2]})`;
 }
 
 function formatOptions(value: any, hasArguments: boolean): string {
   const keys = Object.keys(value);
-  if (!keys.length)
-    return '';
+  if (!keys.length) return '';
   return (hasArguments ? ', ' : '') + formatObject(value);
 }
 
 function formatObject(value: any, indent = '  '): string {
-  if (typeof value === 'string')
-    return quote(value);
-  if (Array.isArray(value))
-    return `[${value.map(o => formatObject(o)).join(', ')}]`;
+  if (typeof value === 'string') return quote(value);
+  if (Array.isArray(value)) return `[${value.map((o) => formatObject(o)).join(', ')}]`;
   if (typeof value === 'object') {
     const keys = Object.keys(value);
-    if (!keys.length)
-      return '{}';
+    if (!keys.length) return '{}';
     const tokens: string[] = [];
-    for (const key of keys)
-      tokens.push(`${key}: ${formatObject(value[key])}`);
+    for (const key of keys) tokens.push(`${key}: ${formatObject(value[key])}`);
     return `{\n${indent}${tokens.join(`,\n${indent}`)}\n}`;
   }
   return String(value);
@@ -239,15 +252,16 @@ function formatObjectOrVoid(value: any, indent = '  '): string {
   return result === '{}' ? '' : result;
 }
 
-function formatContextOptions(options: BrowserContextOptions, deviceName: string | undefined): string {
+function formatContextOptions(
+  options: BrowserContextOptions,
+  deviceName: string | undefined,
+): string {
   const device = deviceName && deviceDescriptors[deviceName];
-  if (!device)
-    return formatObjectOrVoid(options);
+  if (!device) return formatObjectOrVoid(options);
   // Filter out all the properties from the device descriptor.
   let serializedObject = formatObjectOrVoid(sanitizeDeviceOptions(device, options));
   // When there are no additional context options, we still want to spread the device inside.
-  if (!serializedObject)
-    serializedObject = '{\n}';
+  if (!serializedObject) serializedObject = '{\n}';
   const lines = serializedObject.split('\n');
   lines.splice(1, 0, `...devices[${quote(deviceName!)}],`);
   return lines.join('\n');
@@ -264,11 +278,20 @@ export class JavaScriptFormatter {
   }
 
   prepend(text: string) {
-    this._lines = text.trim().split('\n').map(line => line.trim()).concat(this._lines);
+    this._lines = text
+      .trim()
+      .split('\n')
+      .map((line) => line.trim())
+      .concat(this._lines);
   }
 
   add(text: string) {
-    this._lines.push(...text.trim().split('\n').map(line => line.trim()));
+    this._lines.push(
+      ...text
+        .trim()
+        .split('\n')
+        .map((line) => line.trim()),
+    );
   }
 
   newLine() {
@@ -278,24 +301,26 @@ export class JavaScriptFormatter {
   format(): string {
     let spaces = '';
     let previousLine = '';
-    return this._lines.map((line: string) => {
-      if (line === '')
-        return line;
-      if (line.startsWith('}') || line.startsWith(']'))
-        spaces = spaces.substring(this._baseIndent.length);
+    return this._lines
+      .map((line: string) => {
+        if (line === '') return line;
+        if (line.startsWith('}') || line.startsWith(']'))
+          spaces = spaces.substring(this._baseIndent.length);
 
-      const extraSpaces = /^(for|while|if|try).*\(.*\)$/.test(previousLine) ? this._baseIndent : '';
-      previousLine = line;
+        const extraSpaces = /^(for|while|if|try).*\(.*\)$/.test(previousLine)
+          ? this._baseIndent
+          : '';
+        previousLine = line;
 
-      const callCarryOver = line.startsWith('.set');
-      line = spaces + extraSpaces + (callCarryOver ? this._baseIndent : '') + line;
-      if (line.endsWith('{') || line.endsWith('['))
-        spaces += this._baseIndent;
-      return this._baseOffset + line;
-    }).join('\n');
+        const callCarryOver = line.startsWith('.set');
+        line = spaces + extraSpaces + (callCarryOver ? this._baseIndent : '') + line;
+        if (line.endsWith('{') || line.endsWith('[')) spaces += this._baseIndent;
+        return this._baseOffset + line;
+      })
+      .join('\n');
   }
 }
 
 function quote(text: string) {
-  return escapeWithQuotes(text, '\'');
+  return escapeWithQuotes(text, "'");
 }

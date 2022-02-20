@@ -18,17 +18,14 @@ import { SelectorEngine, SelectorRoot } from './selectorEngine';
 
 export const XPathEngine: SelectorEngine = {
   queryAll(root: SelectorRoot, selector: string): Element[] {
-    if (selector.startsWith('/'))
-      selector = '.' + selector;
+    if (selector.startsWith('/')) selector = '.' + selector;
     const result: Element[] = [];
     const document = root instanceof Document ? root : root.ownerDocument;
-    if (!document)
-      return result;
+    if (!document) return result;
     const it = document.evaluate(selector, root, null, XPathResult.ORDERED_NODE_ITERATOR_TYPE);
     for (let node = it.iterateNext(); node; node = it.iterateNext()) {
-      if (node.nodeType === Node.ELEMENT_NODE)
-        result.push(node as Element);
+      if (node.nodeType === Node.ELEMENT_NODE) result.push(node as Element);
     }
     return result;
-  }
+  },
 };

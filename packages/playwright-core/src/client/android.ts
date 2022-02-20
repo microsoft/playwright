@@ -37,7 +37,12 @@ export class Android extends ChannelOwner<channels.AndroidChannel> implements ap
     return (android as any)._object;
   }
 
-  constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.AndroidInitializer) {
+  constructor(
+    parent: ChannelOwner,
+    type: string,
+    guid: string,
+    initializer: channels.AndroidInitializer,
+  ) {
     super(parent, type, guid, initializer);
     this._timeoutSettings = new TimeoutSettings();
   }
@@ -49,11 +54,14 @@ export class Android extends ChannelOwner<channels.AndroidChannel> implements ap
 
   async devices(): Promise<AndroidDevice[]> {
     const { devices } = await this._channel.devices();
-    return devices.map(d => AndroidDevice.from(d));
+    return devices.map((d) => AndroidDevice.from(d));
   }
 }
 
-export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel> implements api.AndroidDevice {
+export class AndroidDevice
+  extends ChannelOwner<channels.AndroidDeviceChannel>
+  implements api.AndroidDevice
+{
   readonly _timeoutSettings: TimeoutSettings;
   private _webViews = new Map<number, AndroidWebView>();
 
@@ -63,7 +71,12 @@ export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel> i
 
   input: AndroidInput;
 
-  constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.AndroidDeviceInitializer) {
+  constructor(
+    parent: ChannelOwner,
+    type: string,
+    guid: string,
+    initializer: channels.AndroidDeviceInitializer,
+  ) {
     super(parent, type, guid, initializer);
     this.input = new AndroidInput(this);
     this._timeoutSettings = new TimeoutSettings((parent as Android)._timeoutSettings);
@@ -80,8 +93,7 @@ export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel> i
   private _onWebViewRemoved(pid: number) {
     const view = this._webViews.get(pid);
     this._webViews.delete(pid);
-    if (view)
-      view.emit(Events.AndroidWebView.Close);
+    if (view) view.emit(Events.AndroidWebView.Close);
   }
 
   setDefaultTimeout(timeout: number) {
@@ -101,13 +113,15 @@ export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel> i
     return [...this._webViews.values()];
   }
 
-  async webView(selector: { pkg: string }, options?: types.TimeoutOptions): Promise<AndroidWebView> {
-    const webView = [...this._webViews.values()].find(v => v.pkg() === selector.pkg);
-    if (webView)
-      return webView;
+  async webView(
+    selector: { pkg: string },
+    options?: types.TimeoutOptions,
+  ): Promise<AndroidWebView> {
+    const webView = [...this._webViews.values()].find((v) => v.pkg() === selector.pkg);
+    if (webView) return webView;
     return this.waitForEvent('webview', {
       ...options,
-      predicate: (view: AndroidWebView) => view.pkg() === selector.pkg
+      predicate: (view: AndroidWebView) => view.pkg() === selector.pkg,
     });
   }
 
@@ -128,11 +142,19 @@ export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel> i
     await this._channel.tap({ selector: toSelectorChannel(selector), ...options });
   }
 
-  async drag(selector: api.AndroidSelector, dest: types.Point, options?: SpeedOptions & types.TimeoutOptions) {
+  async drag(
+    selector: api.AndroidSelector,
+    dest: types.Point,
+    options?: SpeedOptions & types.TimeoutOptions,
+  ) {
     await this._channel.drag({ selector: toSelectorChannel(selector), dest, ...options });
   }
 
-  async fling(selector: api.AndroidSelector, direction: Direction, options?: SpeedOptions & types.TimeoutOptions) {
+  async fling(
+    selector: api.AndroidSelector,
+    direction: Direction,
+    options?: SpeedOptions & types.TimeoutOptions,
+  ) {
     await this._channel.fling({ selector: toSelectorChannel(selector), direction, ...options });
   }
 
@@ -140,20 +162,48 @@ export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel> i
     await this._channel.longTap({ selector: toSelectorChannel(selector), ...options });
   }
 
-  async pinchClose(selector: api.AndroidSelector, percent: number, options?: SpeedOptions & types.TimeoutOptions) {
+  async pinchClose(
+    selector: api.AndroidSelector,
+    percent: number,
+    options?: SpeedOptions & types.TimeoutOptions,
+  ) {
     await this._channel.pinchClose({ selector: toSelectorChannel(selector), percent, ...options });
   }
 
-  async pinchOpen(selector: api.AndroidSelector, percent: number, options?: SpeedOptions & types.TimeoutOptions) {
+  async pinchOpen(
+    selector: api.AndroidSelector,
+    percent: number,
+    options?: SpeedOptions & types.TimeoutOptions,
+  ) {
     await this._channel.pinchOpen({ selector: toSelectorChannel(selector), percent, ...options });
   }
 
-  async scroll(selector: api.AndroidSelector, direction: Direction, percent: number, options?: SpeedOptions & types.TimeoutOptions) {
-    await this._channel.scroll({ selector: toSelectorChannel(selector), direction, percent, ...options });
+  async scroll(
+    selector: api.AndroidSelector,
+    direction: Direction,
+    percent: number,
+    options?: SpeedOptions & types.TimeoutOptions,
+  ) {
+    await this._channel.scroll({
+      selector: toSelectorChannel(selector),
+      direction,
+      percent,
+      ...options,
+    });
   }
 
-  async swipe(selector: api.AndroidSelector, direction: Direction, percent: number, options?: SpeedOptions & types.TimeoutOptions) {
-    await this._channel.swipe({ selector: toSelectorChannel(selector), direction, percent, ...options });
+  async swipe(
+    selector: api.AndroidSelector,
+    direction: Direction,
+    percent: number,
+    options?: SpeedOptions & types.TimeoutOptions,
+  ) {
+    await this._channel.swipe({
+      selector: toSelectorChannel(selector),
+      direction,
+      percent,
+      ...options,
+    });
   }
 
   async info(selector: api.AndroidSelector): Promise<api.AndroidElementInfo> {
@@ -163,8 +213,7 @@ export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel> i
   async screenshot(options: { path?: string } = {}): Promise<Buffer> {
     const { binary } = await this._channel.screenshot();
     const buffer = Buffer.from(binary, 'base64');
-    if (options.path)
-      await fs.promises.writeFile(options.path, buffer);
+    if (options.path) await fs.promises.writeFile(options.path, buffer);
     return buffer;
   }
 
@@ -187,21 +236,38 @@ export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel> i
   }
 
   async push(file: string | Buffer, path: string, options?: { mode: number }): Promise<void> {
-    await this._channel.push({ file: await loadFile(file), path, mode: options ? options.mode : undefined });
+    await this._channel.push({
+      file: await loadFile(file),
+      path,
+      mode: options ? options.mode : undefined,
+    });
   }
 
-  async launchBrowser(options: types.BrowserContextOptions & { pkg?: string  } = {}): Promise<BrowserContext> {
+  async launchBrowser(
+    options: types.BrowserContextOptions & { pkg?: string } = {},
+  ): Promise<BrowserContext> {
     const contextOptions = await prepareBrowserContextParams(options);
     const { context } = await this._channel.launchBrowser(contextOptions);
     return BrowserContext.from(context) as BrowserContext;
   }
 
-  async waitForEvent(event: string, optionsOrPredicate: types.WaitForEventOptions = {}): Promise<any> {
+  async waitForEvent(
+    event: string,
+    optionsOrPredicate: types.WaitForEventOptions = {},
+  ): Promise<any> {
     return this._wrapApiCall(async () => {
-      const timeout = this._timeoutSettings.timeout(typeof optionsOrPredicate === 'function' ? {} : optionsOrPredicate);
-      const predicate = typeof optionsOrPredicate === 'function' ? optionsOrPredicate : optionsOrPredicate.predicate;
+      const timeout = this._timeoutSettings.timeout(
+        typeof optionsOrPredicate === 'function' ? {} : optionsOrPredicate,
+      );
+      const predicate =
+        typeof optionsOrPredicate === 'function'
+          ? optionsOrPredicate
+          : optionsOrPredicate.predicate;
       const waiter = Waiter.createForEvent(this, event);
-      waiter.rejectOnTimeout(timeout, `Timeout ${timeout}ms exceeded while waiting for event "${event}"`);
+      waiter.rejectOnTimeout(
+        timeout,
+        `Timeout ${timeout}ms exceeded while waiting for event "${event}"`,
+      );
       if (event !== Events.AndroidDevice.Close)
         waiter.rejectOnEvent(this, Events.AndroidDevice.Close, new Error('Device closed'));
       const result = await waiter.waitForEvent(this, event, predicate as any);
@@ -211,14 +277,24 @@ export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel> i
   }
 }
 
-export class AndroidSocket extends ChannelOwner<channels.AndroidSocketChannel> implements api.AndroidSocket {
+export class AndroidSocket
+  extends ChannelOwner<channels.AndroidSocketChannel>
+  implements api.AndroidSocket
+{
   static from(androidDevice: channels.AndroidSocketChannel): AndroidSocket {
     return (androidDevice as any)._object;
   }
 
-  constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.AndroidSocketInitializer) {
+  constructor(
+    parent: ChannelOwner,
+    type: string,
+    guid: string,
+    initializer: channels.AndroidSocketInitializer,
+  ) {
     super(parent, type, guid, initializer);
-    this._channel.on('data', ({ data }) => this.emit(Events.AndroidSocket.Data, Buffer.from(data, 'base64')));
+    this._channel.on('data', ({ data }) =>
+      this.emit(Events.AndroidSocket.Data, Buffer.from(data, 'base64')),
+    );
     this._channel.on('close', () => this.emit(Events.AndroidSocket.Close));
   }
 
@@ -232,8 +308,7 @@ export class AndroidSocket extends ChannelOwner<channels.AndroidSocketChannel> i
 }
 
 async function loadFile(file: string | Buffer): Promise<string> {
-  if (isString(file))
-    return fs.promises.readFile(file, { encoding: 'base64' }).toString();
+  if (isString(file)) return fs.promises.readFile(file, { encoding: 'base64' }).toString();
   return file.toString('base64');
 }
 
@@ -287,10 +362,8 @@ function toSelectorChannel(selector: api.AndroidSelector): channels.AndroidSelec
   } = selector;
 
   const toRegex = (value: RegExp | string | undefined): string | undefined => {
-    if (value === undefined)
-      return undefined;
-    if (isRegExp(value))
-      return value.source;
+    if (value === undefined) return undefined;
+    if (isRegExp(value)) return value.source;
     return '^' + value.replace(/[|\\{}()[\]^$+*?.]/g, '\\$&').replace(/-/g, '\\x2d') + '$';
   };
 
@@ -308,7 +381,9 @@ function toSelectorChannel(selector: api.AndroidSelector): channels.AndroidSelec
     focusable,
     focused,
     hasChild: hasChild ? { selector: toSelectorChannel(hasChild.selector) } : undefined,
-    hasDescendant: hasDescendant ? { selector: toSelectorChannel(hasDescendant.selector), maxDepth: hasDescendant.maxDepth } : undefined,
+    hasDescendant: hasDescendant
+      ? { selector: toSelectorChannel(hasDescendant.selector), maxDepth: hasDescendant.maxDepth }
+      : undefined,
     longClickable,
     scrollable,
     selected,
@@ -335,8 +410,7 @@ export class AndroidWebView extends EventEmitter implements api.AndroidWebView {
   }
 
   async page(): Promise<Page> {
-    if (!this._pagePromise)
-      this._pagePromise = this._fetchPage();
+    if (!this._pagePromise) this._pagePromise = this._fetchPage();
     return this._pagePromise;
   }
 

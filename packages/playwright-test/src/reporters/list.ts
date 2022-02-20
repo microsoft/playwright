@@ -18,10 +18,18 @@
 import colors from 'colors/safe';
 import milliseconds from 'ms';
 import { BaseReporter, formatTestTitle } from './base';
-import { FullConfig, FullResult, Suite, TestCase, TestResult, TestStep } from '../../types/testReporter';
+import {
+  FullConfig,
+  FullResult,
+  Suite,
+  TestCase,
+  TestResult,
+  TestStep,
+} from '../../types/testReporter';
 
 // Allow it in the Visual Studio Code Terminal and the new Windows Terminal
-const DOES_NOT_SUPPORT_UTF8_IN_TERMINAL = process.platform === 'win32' && process.env.TERM_PROGRAM !== 'vscode' && !process.env.WT_SESSION;
+const DOES_NOT_SUPPORT_UTF8_IN_TERMINAL =
+  process.platform === 'win32' && process.env.TERM_PROGRAM !== 'vscode' && !process.env.WT_SESSION;
 const POSITIVE_STATUS_MARK = DOES_NOT_SUPPORT_UTF8_IN_TERMINAL ? 'ok' : '✓';
 const NEGATIVE_STATUS_MARK = DOES_NOT_SUPPORT_UTF8_IN_TERMINAL ? 'x' : '✘';
 
@@ -33,7 +41,8 @@ class ListReporter extends BaseReporter {
 
   constructor(options: { omitFailures?: boolean } = {}) {
     super(options);
-    this._liveTerminal = process.stdout.isTTY || process.env.PWTEST_SKIP_TEST_OUTPUT || !!process.env.PWTEST_TTY_WIDTH;
+    this._liveTerminal =
+      process.stdout.isTTY || process.env.PWTEST_SKIP_TEST_OUTPUT || !!process.env.PWTEST_TTY_WIDTH;
   }
 
   printsToStdio() {
@@ -71,24 +80,31 @@ class ListReporter extends BaseReporter {
   }
 
   onStepBegin(test: TestCase, result: TestResult, step: TestStep) {
-    if (!this._liveTerminal)
-      return;
-    if (step.category !== 'test.step')
-      return;
-    this._updateTestLine(test, '     ' + colors.gray(formatTestTitle(this.config, test, step)), this._retrySuffix(result));
+    if (!this._liveTerminal) return;
+    if (step.category !== 'test.step') return;
+    this._updateTestLine(
+      test,
+      '     ' + colors.gray(formatTestTitle(this.config, test, step)),
+      this._retrySuffix(result),
+    );
   }
 
   onStepEnd(test: TestCase, result: TestResult, step: TestStep) {
-    if (!this._liveTerminal)
-      return;
-    if (step.category !== 'test.step')
-      return;
-    this._updateTestLine(test, '     ' + colors.gray(formatTestTitle(this.config, test, step.parent)), this._retrySuffix(result));
+    if (!this._liveTerminal) return;
+    if (step.category !== 'test.step') return;
+    this._updateTestLine(
+      test,
+      '     ' + colors.gray(formatTestTitle(this.config, test, step.parent)),
+      this._retrySuffix(result),
+    );
   }
 
-  private _dumpToStdio(test: TestCase | undefined, chunk: string | Buffer, stream: NodeJS.WriteStream) {
-    if (this.config.quiet)
-      return;
+  private _dumpToStdio(
+    test: TestCase | undefined,
+    chunk: string | Buffer,
+    stream: NodeJS.WriteStream,
+  ) {
+    if (this.config.quiet) return;
     const text = chunk.toString('utf-8');
     this._needNewLine = text[text.length - 1] !== '\n';
     if (this._liveTerminal) {
@@ -108,11 +124,12 @@ class ListReporter extends BaseReporter {
       text = colors.green('  -  ') + colors.cyan(title);
       duration = ''; // Do not show duration for skipped.
     } else {
-      const statusMark = ('  ' + (result.status === 'passed' ? POSITIVE_STATUS_MARK : NEGATIVE_STATUS_MARK)).padEnd(5);
+      const statusMark = (
+        '  ' + (result.status === 'passed' ? POSITIVE_STATUS_MARK : NEGATIVE_STATUS_MARK)
+      ).padEnd(5);
       if (result.status === test.expectedStatus)
         text = colors.green(statusMark) + colors.gray(title);
-      else
-        text = colors.red(statusMark + title);
+      else text = colors.red(statusMark + title);
     }
     const suffix = this._retrySuffix(result) + duration;
 
@@ -129,27 +146,23 @@ class ListReporter extends BaseReporter {
   }
 
   private _updateTestLine(test: TestCase, line: string, suffix: string) {
-    if (process.env.PWTEST_SKIP_TEST_OUTPUT)
-      this._updateTestLineForTest(test, line, suffix);
-    else
-      this._updateTestLineForTTY(test, line, suffix);
+    if (process.env.PWTEST_SKIP_TEST_OUTPUT) this._updateTestLineForTest(test, line, suffix);
+    else this._updateTestLineForTTY(test, line, suffix);
   }
 
   private _updateTestLineForTTY(test: TestCase, line: string, suffix: string) {
     const testRow = this._testRows.get(test)!;
     // Go up if needed
-    if (testRow !== this._lastRow)
-      process.stdout.write(`\u001B[${this._lastRow - testRow}A`);
+    if (testRow !== this._lastRow) process.stdout.write(`\u001B[${this._lastRow - testRow}A`);
     // Erase line, go to the start
     process.stdout.write('\u001B[2K\u001B[0G');
     process.stdout.write(this.fitToScreen(line, suffix) + suffix);
     // Go down if needed.
-    if (testRow !== this._lastRow)
-      process.stdout.write(`\u001B[${this._lastRow - testRow}E`);
+    if (testRow !== this._lastRow) process.stdout.write(`\u001B[${this._lastRow - testRow}E`);
   }
 
   private _retrySuffix(result: TestResult) {
-    return (result.retry ? colors.yellow(` (retry #${result.retry})`) : '');
+    return result.retry ? colors.yellow(` (retry #${result.retry})`) : '';
   }
 
   private _updateTestLineForTest(test: TestCase, line: string, suffix: string) {

@@ -37,21 +37,28 @@ function filterStackTrace(e: Error) {
   //
   // If `e.stack` has been accessed, this method will be NOOP.
   const oldPrepare = Error.prepareStackTrace;
-  const stackFormatter = oldPrepare || ((error, structuredStackTrace) => [
-    `${error.name}: ${error.message}`,
-    ...structuredStackTrace.map(callSite => '    at ' + callSite.toString()),
-  ].join('\n'));
+  const stackFormatter =
+    oldPrepare ||
+    ((error, structuredStackTrace) =>
+      [
+        `${error.name}: ${error.message}`,
+        ...structuredStackTrace.map((callSite) => '    at ' + callSite.toString()),
+      ].join('\n'));
   Error.prepareStackTrace = (error, structuredStackTrace) => {
-    return stackFormatter(error, structuredStackTrace.filter(callSite => {
-      const fileName = callSite.getFileName();
-      const functionName = callSite.getFunctionName() || undefined;
-      if (!fileName)
-        return true;
-      return !fileName.startsWith(PLAYWRIGHT_TEST_PATH) &&
-             !fileName.startsWith(PLAYWRIGHT_CORE_PATH) &&
-             !fileName.startsWith(EXPECT_PATH) &&
-             !isInternalFileName(fileName, functionName);
-    }));
+    return stackFormatter(
+      error,
+      structuredStackTrace.filter((callSite) => {
+        const fileName = callSite.getFileName();
+        const functionName = callSite.getFunctionName() || undefined;
+        if (!fileName) return true;
+        return (
+          !fileName.startsWith(PLAYWRIGHT_TEST_PATH) &&
+          !fileName.startsWith(PLAYWRIGHT_CORE_PATH) &&
+          !fileName.startsWith(EXPECT_PATH) &&
+          !isInternalFileName(fileName, functionName)
+        );
+      }),
+    );
   };
   // eslint-disable-next-line
   e.stack; // trigger Error.prepareStackTrace
@@ -63,17 +70,17 @@ export function serializeError(error: Error | any): TestError {
     filterStackTrace(error);
     return {
       message: error.message,
-      stack: error.stack
+      stack: error.stack,
     };
   }
   return {
-    value: util.inspect(error)
+    value: util.inspect(error),
   };
 }
 
 export function monotonicTime(): number {
   const [seconds, nanoseconds] = process.hrtime();
-  return seconds * 1000 + (nanoseconds / 1000000 | 0);
+  return seconds * 1000 + ((nanoseconds / 1000000) | 0);
 }
 
 export type Matcher = (value: string) => boolean;
@@ -92,15 +99,13 @@ export function createFileMatcher(patterns: string | RegExp | (string | RegExp)[
     } else {
       if (!pattern.startsWith('**/') && !pattern.startsWith('**/'))
         filePatterns.push('**/' + pattern);
-      else
-        filePatterns.push(pattern);
+      else filePatterns.push(pattern);
     }
   }
   return (filePath: string) => {
     for (const re of reList) {
       re.lastIndex = 0;
-      if (re.test(filePath))
-        return true;
+      if (re.test(filePath)) return true;
     }
     // Windows might still receive unix style paths from Cygwin or Git Bash.
     // Check against the file url as well.
@@ -108,13 +113,11 @@ export function createFileMatcher(patterns: string | RegExp | (string | RegExp)[
       const fileURL = url.pathToFileURL(filePath).href;
       for (const re of reList) {
         re.lastIndex = 0;
-        if (re.test(fileURL))
-          return true;
+        if (re.test(fileURL)) return true;
       }
     }
     for (const pattern of filePatterns) {
-      if (minimatch(filePath, pattern, { nocase: true, dot: true }))
-        return true;
+      if (minimatch(filePath, pattern, { nocase: true, dot: true })) return true;
     }
     return false;
   };
@@ -125,19 +128,20 @@ export function createTitleMatcher(patterns: RegExp | RegExp[]): Matcher {
   return (value: string) => {
     for (const re of reList) {
       re.lastIndex = 0;
-      if (re.test(value))
-        return true;
+      if (re.test(value)) return true;
     }
     return false;
   };
 }
 
-export function mergeObjects<A extends object, B extends object>(a: A | undefined | void, b: B | undefined | void): A & B {
+export function mergeObjects<A extends object, B extends object>(
+  a: A | undefined | void,
+  b: B | undefined | void,
+): A & B {
   const result = { ...a } as any;
   if (!Object.is(b, undefined)) {
     for (const [name, value] of Object.entries(b as B)) {
-      if (!Object.is(value, undefined))
-        result[name] = value;
+      if (!Object.is(value, undefined)) result[name] = value;
     }
   }
   return result as any;
@@ -145,14 +149,12 @@ export function mergeObjects<A extends object, B extends object>(a: A | undefine
 
 export function forceRegExp(pattern: string): RegExp {
   const match = pattern.match(/^\/(.*)\/([gi]*)$/);
-  if (match)
-    return new RegExp(match[1], match[2]);
+  if (match) return new RegExp(match[1], match[2]);
   return new RegExp(pattern, 'g');
 }
 
 export function relativeFilePath(file: string): string {
-  if (!path.isAbsolute(file))
-    return file;
+  if (!path.isAbsolute(file)) return file;
   return path.relative(process.cwd(), file);
 }
 
@@ -178,8 +180,7 @@ export function sanitizeForFilePath(s: string) {
 }
 
 export function trimLongString(s: string, length = 100) {
-  if (s.length <= length)
-    return s;
+  if (s.length <= length) return s;
   const hash = calculateSha1(s);
   const middle = `-${hash.substring(0, 5)}-`;
   const start = Math.floor((length - middle.length) / 2);
@@ -187,7 +188,12 @@ export function trimLongString(s: string, length = 100) {
   return s.substring(0, start) + middle + s.slice(-end);
 }
 
-export function addSuffixToFilePath(filePath: string, suffix: string, customExtension?: string, sanitize = false): string {
+export function addSuffixToFilePath(
+  filePath: string,
+  suffix: string,
+  customExtension?: string,
+  sanitize = false,
+): string {
   const dirname = path.dirname(filePath);
   const ext = path.extname(filePath);
   const name = path.basename(filePath, ext);
@@ -200,19 +206,22 @@ export function addSuffixToFilePath(filePath: string, suffix: string, customExte
  */
 export function getContainedPath(parentPath: string, subPath: string = ''): string | null {
   const resolvedPath = path.resolve(parentPath, subPath);
-  if (resolvedPath === parentPath || resolvedPath.startsWith(parentPath + path.sep)) return resolvedPath;
+  if (resolvedPath === parentPath || resolvedPath.startsWith(parentPath + path.sep))
+    return resolvedPath;
   return null;
 }
 
 export const debugTest = debug('pw:test');
 
-export function prependToTestError(testError: TestError | undefined, message: string, location?: Location): TestError {
+export function prependToTestError(
+  testError: TestError | undefined,
+  message: string,
+  location?: Location,
+): TestError {
   if (!testError) {
-    if (!location)
-      return { value: message };
+    if (!location) return { value: message };
     let stack = `    at ${location.file}:${location.line}:${location.column}`;
-    if (!message.endsWith('\n'))
-      stack = '\n' + stack;
+    if (!message.endsWith('\n')) stack = '\n' + stack;
     return { message: message, stack: message + stack };
   }
   if (testError.message) {

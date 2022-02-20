@@ -41,33 +41,37 @@ class Helper {
   }
 
   static getViewportSizeFromWindowFeatures(features: string[]): types.Size | null {
-    const widthString = features.find(f => f.startsWith('width='));
-    const heightString = features.find(f => f.startsWith('height='));
+    const widthString = features.find((f) => f.startsWith('width='));
+    const heightString = features.find((f) => f.startsWith('height='));
     const width = widthString ? parseInt(widthString.substring(6), 10) : NaN;
     const height = heightString ? parseInt(heightString.substring(7), 10) : NaN;
-    if (!Number.isNaN(width) && !Number.isNaN(height))
-      return { width, height };
+    if (!Number.isNaN(width) && !Number.isNaN(height)) return { width, height };
     return null;
   }
 
-  static waitForEvent(progress: Progress | null, emitter: EventEmitter, event: string | symbol, predicate?: Function): { promise: Promise<any>, dispose: () => void } {
+  static waitForEvent(
+    progress: Progress | null,
+    emitter: EventEmitter,
+    event: string | symbol,
+    predicate?: Function,
+  ): { promise: Promise<any>; dispose: () => void } {
     const listeners: RegisteredListener[] = [];
     const promise = new Promise((resolve, reject) => {
-      listeners.push(eventsHelper.addEventListener(emitter, event, eventArg => {
-        try {
-          if (predicate && !predicate(eventArg))
-            return;
-          eventsHelper.removeEventListeners(listeners);
-          resolve(eventArg);
-        } catch (e) {
-          eventsHelper.removeEventListeners(listeners);
-          reject(e);
-        }
-      }));
+      listeners.push(
+        eventsHelper.addEventListener(emitter, event, (eventArg) => {
+          try {
+            if (predicate && !predicate(eventArg)) return;
+            eventsHelper.removeEventListeners(listeners);
+            resolve(eventArg);
+          } catch (e) {
+            eventsHelper.removeEventListeners(listeners);
+            reject(e);
+          }
+        }),
+      );
     });
     const dispose = () => eventsHelper.removeEventListeners(listeners);
-    if (progress)
-      progress.cleanupWhenAborted(dispose);
+    if (progress) progress.cleanupWhenAborted(dispose);
     return { promise, dispose };
   }
 
@@ -81,16 +85,17 @@ class Helper {
 
   static debugProtocolLogger(protocolLogger?: types.ProtocolLogger): types.ProtocolLogger {
     return (direction: 'send' | 'receive', message: object) => {
-      if (protocolLogger)
-        protocolLogger(direction, message);
+      if (protocolLogger) protocolLogger(direction, message);
       if (debugLogger.isEnabled('protocol'))
-        debugLogger.log('protocol', (direction === 'send' ? 'SEND ► ' : '◀ RECV ') + JSON.stringify(message));
+        debugLogger.log(
+          'protocol',
+          (direction === 'send' ? 'SEND ► ' : '◀ RECV ') + JSON.stringify(message),
+        );
     };
   }
 
   static formatBrowserLogs(logs: string[]) {
-    if (!logs.length)
-      return '';
+    if (!logs.length) return '';
     return '\n' + '='.repeat(20) + ' Browser output: ' + '='.repeat(20) + '\n' + logs.join('\n');
   }
 }

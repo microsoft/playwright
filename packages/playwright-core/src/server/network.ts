@@ -22,30 +22,30 @@ import { SdkObject } from './instrumentation';
 import { NameValue } from '../common/types';
 import { APIRequestContext } from './fetch';
 
-export function filterCookies(cookies: types.NetworkCookie[], urls: string[]): types.NetworkCookie[] {
-  const parsedURLs = urls.map(s => new URL(s));
+export function filterCookies(
+  cookies: types.NetworkCookie[],
+  urls: string[],
+): types.NetworkCookie[] {
+  const parsedURLs = urls.map((s) => new URL(s));
   // Chromiums's cookies are missing sameSite when it is 'None'
-  return cookies.filter(c => {
-    if (!parsedURLs.length)
-      return true;
+  return cookies.filter((c) => {
+    if (!parsedURLs.length) return true;
     for (const parsedURL of parsedURLs) {
       let domain = c.domain;
-      if (!domain.startsWith('.'))
-        domain = '.' + domain;
-      if (!('.' + parsedURL.hostname).endsWith(domain))
-        continue;
-      if (!parsedURL.pathname.startsWith(c.path))
-        continue;
-      if (parsedURL.protocol !== 'https:' && c.secure)
-        continue;
+      if (!domain.startsWith('.')) domain = '.' + domain;
+      if (!('.' + parsedURL.hostname).endsWith(domain)) continue;
+      if (!parsedURL.pathname.startsWith(c.path)) continue;
+      if (parsedURL.protocol !== 'https:' && c.secure) continue;
       return true;
     }
     return false;
   });
 }
 
-export function rewriteCookies(cookies: types.SetNetworkCookieParam[]): types.SetNetworkCookieParam[] {
-  return cookies.map(c => {
+export function rewriteCookies(
+  cookies: types.SetNetworkCookieParam[],
+): types.SetNetworkCookieParam[] {
+  return cookies.map((c) => {
     assert(c.name, 'Cookie should have a name');
     assert(c.url || (c.domain && c.path), 'Cookie should have a url or a domain/path pair');
     assert(!(c.url && c.domain), 'Cookie should have either url or domain');
@@ -72,8 +72,7 @@ export function parsedURL(url: string): URL | null {
 }
 
 export function stripFragmentFromUrl(url: string): string {
-  if (!url.includes('#'))
-    return url;
+  if (!url.includes('#')) return url;
   return url.substring(0, url.indexOf('#'));
 }
 
@@ -100,24 +99,34 @@ export class Request extends SdkObject {
   private _frame: frames.Frame;
   private _waitForResponsePromise = new ManualPromise<Response | null>();
   _responseEndTiming = -1;
-  readonly responseSize: ResponseSize = { encodedBodySize: 0, transferSize: 0, responseHeadersSize: 0 };
+  readonly responseSize: ResponseSize = {
+    encodedBodySize: 0,
+    transferSize: 0,
+    responseHeadersSize: 0,
+  };
 
-  constructor(frame: frames.Frame, redirectedFrom: Request | null, documentId: string | undefined,
-    url: string, resourceType: string, method: string, postData: Buffer | null, headers: types.HeadersArray) {
+  constructor(
+    frame: frames.Frame,
+    redirectedFrom: Request | null,
+    documentId: string | undefined,
+    url: string,
+    resourceType: string,
+    method: string,
+    postData: Buffer | null,
+    headers: types.HeadersArray,
+  ) {
     super(frame, 'request');
     assert(!url.startsWith('data:'), 'Data urls should not fire requests');
     this._frame = frame;
     this._redirectedFrom = redirectedFrom;
-    if (redirectedFrom)
-      redirectedFrom._redirectedTo = this;
+    if (redirectedFrom) redirectedFrom._redirectedTo = this;
     this._documentId = documentId;
     this._url = stripFragmentFromUrl(url);
     this._resourceType = resourceType;
     this._method = method;
     this._postData = postData;
     this._headers = headers;
-    for (const { name, value } of this._headers)
-      this._headersMap.set(name.toLowerCase(), value);
+    for (const { name, value } of this._headers) this._headersMap.set(name.toLowerCase(), value);
     this._isFavicon = url.endsWith('/favicon.ico') || !!redirectedFrom?._isFavicon;
   }
 
@@ -151,13 +160,11 @@ export class Request extends SdkObject {
   }
 
   setWillReceiveExtraHeaders() {
-    if (!this._rawRequestHeadersPromise)
-      this._rawRequestHeadersPromise = new ManualPromise();
+    if (!this._rawRequestHeadersPromise) this._rawRequestHeadersPromise = new ManualPromise();
   }
 
   setRawRequestHeaders(headers: types.HeadersArray) {
-    if (!this._rawRequestHeadersPromise)
-      this._rawRequestHeadersPromise = new ManualPromise();
+    if (!this._rawRequestHeadersPromise) this._rawRequestHeadersPromise = new ManualPromise();
     this._rawRequestHeadersPromise!.resolve(headers);
   }
 
@@ -199,10 +206,9 @@ export class Request extends SdkObject {
   }
 
   failure(): { errorText: string } | null {
-    if (this._failureText === null)
-      return null;
+    if (this._failureText === null) return null;
     return {
-      errorText: this._failureText
+      errorText: this._failureText,
     };
   }
 
@@ -213,11 +219,12 @@ export class Request extends SdkObject {
   async requestHeadersSize(): Promise<number> {
     let headersSize = 4; // 4 = 2 spaces + 2 line breaks (GET /path \r\n)
     headersSize += this.method().length;
-    headersSize += (new URL(this.url())).pathname.length;
+    headersSize += new URL(this.url()).pathname.length;
     headersSize += 8; // httpVersion
-    const headers = this.rawRequestHeadersPromise() ? await this.rawRequestHeadersPromise()! : this._headers;
-    for (const header of headers)
-      headersSize += header.name.length + header.value.length + 4; // 4 = ': ' + '\r\n'
+    const headers = this.rawRequestHeadersPromise()
+      ? await this.rawRequestHeadersPromise()!
+      : this._headers;
+    for (const header of headers) headersSize += header.name.length + header.value.length + 4; // 4 = ': ' + '\r\n'
     return headersSize;
   }
 }
@@ -242,14 +249,23 @@ export class Route extends SdkObject {
     await this._delegate.abort(errorCode);
   }
 
-  async fulfill(overrides: { status?: number, headers?: types.HeadersArray, body?: string, isBase64?: boolean, useInterceptedResponseBody?: boolean, fetchResponseUid?: string }) {
+  async fulfill(overrides: {
+    status?: number;
+    headers?: types.HeadersArray;
+    body?: string;
+    isBase64?: boolean;
+    useInterceptedResponseBody?: boolean;
+    fetchResponseUid?: string;
+  }) {
     this._startHandling();
     let body = overrides.body;
     let isBase64 = overrides.isBase64 || false;
     if (body === undefined) {
       if (overrides.fetchResponseUid) {
         const context = this._request.frame()._page._browserContext;
-        const buffer = context.fetchRequest.fetchResponses.get(overrides.fetchResponseUid) || APIRequestContext.findResponseBody(overrides.fetchResponseUid);
+        const buffer =
+          context.fetchRequest.fetchResponses.get(overrides.fetchResponseUid) ||
+          APIRequestContext.findResponseBody(overrides.fetchResponseUid);
         assert(buffer, 'Fetch response has been disposed');
         body = buffer.toString('base64');
         isBase64 = true;
@@ -299,10 +315,10 @@ export type ResourceTiming = {
 };
 
 export type ResourceSizes = {
-  requestBodySize: number,
-  requestHeadersSize: number,
-  responseBodySize: number,
-  responseHeadersSize: number,
+  requestBodySize: number;
+  requestHeadersSize: number;
+  responseBodySize: number;
+  responseHeadersSize: number;
 };
 
 export type RemoteAddr = {
@@ -311,11 +327,11 @@ export type RemoteAddr = {
 };
 
 export type SecurityDetails = {
-    protocol?: string;
-    subjectName?: string;
-    issuer?: string;
-    validFrom?: number;
-    validTo?: number;
+  protocol?: string;
+  subjectName?: string;
+  issuer?: string;
+  validFrom?: number;
+  validTo?: number;
 };
 
 export class Response extends SdkObject {
@@ -334,7 +350,15 @@ export class Response extends SdkObject {
   private _rawResponseHeadersPromise: ManualPromise<types.HeadersArray> | undefined;
   private _httpVersion: string | undefined;
 
-  constructor(request: Request, status: number, statusText: string, headers: types.HeadersArray, timing: ResourceTiming, getResponseBodyCallback: GetResponseBodyCallback, httpVersion?: string) {
+  constructor(
+    request: Request,
+    status: number,
+    statusText: string,
+    headers: types.HeadersArray,
+    timing: ResourceTiming,
+    getResponseBodyCallback: GetResponseBodyCallback,
+    httpVersion?: string,
+  ) {
     super(request.frame(), 'response');
     this._request = request;
     this._timing = timing;
@@ -342,8 +366,7 @@ export class Response extends SdkObject {
     this._statusText = statusText;
     this._url = request.url();
     this._headers = headers;
-    for (const { name, value } of this._headers)
-      this._headersMap.set(name.toLowerCase(), value);
+    for (const { name, value } of this._headers) this._headersMap.set(name.toLowerCase(), value);
     this._getResponseBodyCallback = getResponseBodyCallback;
     this._request._setResponse(this);
     this._httpVersion = httpVersion;
@@ -396,8 +419,7 @@ export class Response extends SdkObject {
   }
 
   setRawResponseHeaders(headers: types.HeadersArray) {
-    if (!this._rawResponseHeadersPromise)
-      this._rawResponseHeadersPromise = new ManualPromise();
+    if (!this._rawResponseHeadersPromise) this._rawResponseHeadersPromise = new ManualPromise();
     this._rawResponseHeadersPromise!.resolve(headers);
   }
 
@@ -405,12 +427,12 @@ export class Response extends SdkObject {
     return this._timing;
   }
 
-  async serverAddr(): Promise<RemoteAddr|null> {
-    return await this._serverAddrPromise || null;
+  async serverAddr(): Promise<RemoteAddr | null> {
+    return (await this._serverAddrPromise) || null;
   }
 
-  async securityDetails(): Promise<SecurityDetails|null> {
-    return await this._securityDetailsPromise || null;
+  async securityDetails(): Promise<SecurityDetails | null> {
+    return (await this._securityDetailsPromise) || null;
   }
 
   body(): Promise<Buffer> {
@@ -433,12 +455,9 @@ export class Response extends SdkObject {
   }
 
   httpVersion(): string {
-    if (!this._httpVersion)
-      return 'HTTP/1.1';
-    if (this._httpVersion === 'http/1.1')
-      return 'HTTP/1.1';
-    if (this._httpVersion === 'h2')
-      return 'HTTP/2.0';
+    if (!this._httpVersion) return 'HTTP/1.1';
+    if (this._httpVersion === 'http/1.1') return 'HTTP/1.1';
+    if (this._httpVersion === 'h2') return 'HTTP/2.0';
     return this._httpVersion;
   }
 
@@ -450,8 +469,7 @@ export class Response extends SdkObject {
     headersSize += 3; // statusCode;
     headersSize += this.statusText().length;
     const headers = await this._bestEffortResponseHeaders();
-    for (const header of headers)
-      headersSize += header.name.length + header.value.length + 4; // 4 = ': ' + '\r\n'
+    for (const header of headers) headersSize += header.name.length + header.value.length + 4; // 4 = ': ' + '\r\n'
     headersSize += 2; // '\r\n'
     return headersSize;
   }
@@ -467,7 +485,7 @@ export class Response extends SdkObject {
     let { encodedBodySize } = this._request.responseSize;
     if (!encodedBodySize) {
       const headers = await this._bestEffortResponseHeaders();
-      const contentLength = headers.find(h => h.name.toLowerCase() === 'content-length')?.value;
+      const contentLength = headers.find((h) => h.name.toLowerCase() === 'content-length')?.value;
       encodedBodySize = contentLength ? +contentLength : 0;
     }
     return {
@@ -499,8 +517,7 @@ export class WebSocket extends SdkObject {
     // Sometimes we get "onWebSocketRequest" twice, at least in Chromium.
     // Perhaps websocket is restarted because of chrome.webRequest extensions api?
     // Or maybe the handshake response was a redirect?
-    if (this._notified)
-      return false;
+    if (this._notified) return false;
     this._notified = true;
     return true;
   }
@@ -575,7 +592,7 @@ export const STATUS_TEXTS: { [status: string]: string } = {
   '415': 'Unsupported Media Type',
   '416': 'Range Not Satisfiable',
   '417': 'Expectation Failed',
-  '418': 'I\'m a teapot',
+  '418': "I'm a teapot",
   '421': 'Misdirected Request',
   '422': 'Unprocessable Entity',
   '423': 'Locked',
@@ -603,12 +620,13 @@ export function singleHeader(name: string, value: string): types.HeadersArray {
   return [{ name, value }];
 }
 
-export function mergeHeaders(headers: (types.HeadersArray | undefined | null)[]): types.HeadersArray {
+export function mergeHeaders(
+  headers: (types.HeadersArray | undefined | null)[],
+): types.HeadersArray {
   const lowerCaseToValue = new Map<string, string>();
   const lowerCaseToOriginalCase = new Map<string, string>();
   for (const h of headers) {
-    if (!h)
-      continue;
+    if (!h) continue;
     for (const { name, value } of h) {
       const lower = name.toLowerCase();
       lowerCaseToOriginalCase.set(lower, name);

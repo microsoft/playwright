@@ -15,26 +15,20 @@
 */
 
 export function msToString(ms: number): string {
-  if (!isFinite(ms))
-    return '-';
+  if (!isFinite(ms)) return '-';
 
-  if (ms === 0)
-    return '0';
+  if (ms === 0) return '0';
 
-  if (ms < 1000)
-    return ms.toFixed(0) + 'ms';
+  if (ms < 1000) return ms.toFixed(0) + 'ms';
 
   const seconds = ms / 1000;
-  if (seconds < 60)
-    return seconds.toFixed(1) + 's';
+  if (seconds < 60) return seconds.toFixed(1) + 's';
 
   const minutes = seconds / 60;
-  if (minutes < 60)
-    return minutes.toFixed(1) + 'm';
+  if (minutes < 60) return minutes.toFixed(1) + 'm';
 
   const hours = minutes / 60;
-  if (hours < 24)
-    return hours.toFixed(1) + 'h';
+  if (hours < 24) return hours.toFixed(1) + 'h';
 
   const days = hours / 24;
   return days.toFixed(1) + 'd';

@@ -39,9 +39,18 @@ export class Firefox extends BrowserType {
     return error;
   }
 
-  _amendEnvironment(env: Env, userDataDir: string, executable: string, browserArguments: string[]): Env {
+  _amendEnvironment(
+    env: Env,
+    userDataDir: string,
+    executable: string,
+    browserArguments: string[],
+  ): Env {
     if (!path.isAbsolute(os.homedir()))
-      throw new Error(`Cannot launch Firefox with relative home directory. Did you set ${os.platform() === 'win32' ? 'USERPROFILE' : 'HOME'} to a relative path?`);
+      throw new Error(
+        `Cannot launch Firefox with relative home directory. Did you set ${
+          os.platform() === 'win32' ? 'USERPROFILE' : 'HOME'
+        } to a relative path?`,
+      );
     if (os.platform() === 'linux') {
       return {
         ...env,
@@ -59,10 +68,14 @@ export class Firefox extends BrowserType {
 
   _defaultArgs(options: types.LaunchOptions, isPersistent: boolean, userDataDir: string): string[] {
     const { args = [], headless } = options;
-    const userDataDirArg = args.find(arg => arg.startsWith('-profile') || arg.startsWith('--profile'));
+    const userDataDirArg = args.find(
+      (arg) => arg.startsWith('-profile') || arg.startsWith('--profile'),
+    );
     if (userDataDirArg)
-      throw new Error('Pass userDataDir parameter to `browserType.launchPersistentContext(userDataDir, ...)` instead of specifying --profile argument');
-    if (args.find(arg => arg.startsWith('-juggler')))
+      throw new Error(
+        'Pass userDataDir parameter to `browserType.launchPersistentContext(userDataDir, ...)` instead of specifying --profile argument',
+      );
+    if (args.find((arg) => arg.startsWith('-juggler')))
       throw new Error('Use the port parameter instead of -juggler argument');
     const firefoxUserPrefs = isPersistent ? undefined : options.firefoxUserPrefs;
     if (firefoxUserPrefs) {
@@ -81,10 +94,8 @@ export class Firefox extends BrowserType {
     firefoxArguments.push(`-profile`, userDataDir);
     firefoxArguments.push('-juggler-pipe');
     firefoxArguments.push(...args);
-    if (isPersistent)
-      firefoxArguments.push('about:blank');
-    else
-      firefoxArguments.push('-silent');
+    if (isPersistent) firefoxArguments.push('about:blank');
+    else firefoxArguments.push('-silent');
     return firefoxArguments;
   }
 }

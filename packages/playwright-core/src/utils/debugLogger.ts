@@ -36,10 +36,13 @@ class DebugLogger {
 
   constructor() {
     if (process.env.DEBUG_FILE) {
-      const ansiRegex = new RegExp([
-        '[\\u001B\\u009B][[\\]()#;?]*(?:(?:(?:[a-zA-Z\\d]*(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]*)*)?\\u0007)',
-        '(?:(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PR-TZcf-ntqry=><~]))'
-      ].join('|'), 'g');
+      const ansiRegex = new RegExp(
+        [
+          '[\\u001B\\u009B][[\\]()#;?]*(?:(?:(?:[a-zA-Z\\d]*(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]*)*)?\\u0007)',
+          '(?:(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PR-TZcf-ntqry=><~]))',
+        ].join('|'),
+        'g',
+      );
       const stream = fs.createWriteStream(process.env.DEBUG_FILE);
       (debug as any).log = (data: string) => {
         stream.write(data.replace(ansiRegex, ''));
@@ -71,13 +74,11 @@ export class RecentLogsCollector {
 
   log(message: string) {
     this._logs.push(message);
-    if (this._logs.length === kLogCount * 2)
-      this._logs.splice(0, kLogCount);
+    if (this._logs.length === kLogCount * 2) this._logs.splice(0, kLogCount);
   }
 
   recentLogs(): string[] {
-    if (this._logs.length > kLogCount)
-      return this._logs.slice(-kLogCount);
+    if (this._logs.length > kLogCount) return this._logs.slice(-kLogCount);
     return this._logs;
   }
 }

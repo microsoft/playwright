@@ -18,20 +18,20 @@
 export const Events = {
   AndroidDevice: {
     WebView: 'webview',
-    Close: 'close'
+    Close: 'close',
   },
 
   AndroidSocket: {
     Data: 'data',
-    Close: 'close'
+    Close: 'close',
   },
 
   AndroidWebView: {
-    Close: 'close'
+    Close: 'close',
   },
 
   Browser: {
-    Disconnected: 'disconnected'
+    Disconnected: 'disconnected',
   },
 
   BrowserContext: {

@@ -22,12 +22,12 @@ import { ActionTraceEvent } from '../../../server/trace/common/traceEvents';
 import { msToString } from '../../uiUtils';
 
 export interface ActionListProps {
-  actions: ActionTraceEvent[],
-  selectedAction: ActionTraceEvent | undefined,
-  highlightedAction: ActionTraceEvent | undefined,
-  onSelected: (action: ActionTraceEvent) => void,
-  onHighlighted: (action: ActionTraceEvent | undefined) => void,
-  setSelectedTab: (tab: string) => void,
+  actions: ActionTraceEvent[];
+  selectedAction: ActionTraceEvent | undefined;
+  highlightedAction: ActionTraceEvent | undefined;
+  onSelected: (action: ActionTraceEvent) => void;
+  onHighlighted: (action: ActionTraceEvent | undefined) => void;
+  setSelectedTab: (tab: string) => void;
 }
 
 export const ActionList: React.FC<ActionListProps> = ({
@@ -44,65 +44,83 @@ export const ActionList: React.FC<ActionListProps> = ({
     actionListRef.current?.focus();
   }, [selectedAction, actionListRef]);
 
-  return <div className='action-list vbox'>
-    <div
-      className='action-list-content'
-      tabIndex={0}
-      onKeyDown={event => {
-        if (event.key !== 'ArrowDown' &&  event.key !== 'ArrowUp')
-          return;
-        event.stopPropagation();
-        event.preventDefault();
-        const index = selectedAction ? actions.indexOf(selectedAction) : -1;
-        let newIndex = index;
-        if (event.key === 'ArrowDown') {
-          if (index === -1)
-            newIndex = 0;
-          else
-            newIndex = Math.min(index + 1, actions.length - 1);
-        }
-        if (event.key === 'ArrowUp') {
-          if (index === -1)
-            newIndex = actions.length - 1;
-          else
-            newIndex = Math.max(index - 1, 0);
-        }
-        const element = actionListRef.current?.children.item(newIndex);
-        if ((element as any)?.scrollIntoViewIfNeeded)
-          (element as any).scrollIntoViewIfNeeded(false);
-        else
-          element?.scrollIntoView();
-        onSelected(actions[newIndex]);
-      }}
-      ref={actionListRef}
-    >
-      {actions.length === 0 && <div className='no-actions-entry'>No actions recorded</div>}
-      {actions.map(action => {
-        const { metadata } = action;
-        const selectedSuffix = action === selectedAction ? ' selected' : '';
-        const highlightedSuffix = action === highlightedAction ? ' highlighted' : '';
-        const error = metadata.error?.error?.message;
-        const { errors, warnings } = modelUtil.stats(action);
-        return <div
-          className={'action-entry' + selectedSuffix + highlightedSuffix}
-          key={metadata.id}
-          onClick={() => onSelected(action)}
-          onMouseEnter={() => onHighlighted(action)}
-          onMouseLeave={() => (highlightedAction === action) && onHighlighted(undefined)}
-        >
-          <div className='action-title'>
-            <span>{metadata.apiName}</span>
-            {metadata.params.selector && <div className='action-selector' title={metadata.params.selector}>{metadata.params.selector}</div>}
-            {metadata.method === 'goto' && metadata.params.url && <div className='action-url' title={metadata.params.url}>{metadata.params.url}</div>}
-          </div>
-          <div className='action-duration' style={{ flex: 'none' }}>{metadata.endTime ? msToString(metadata.endTime - metadata.startTime) : 'Timed Out'}</div>
-          <div className='action-icons' onClick={() => setSelectedTab('console')}>
-            {!!errors && <div className='action-icon'><span className={'codicon codicon-error'}></span><span className="action-icon-value">{errors}</span></div>}
-            {!!warnings && <div className='action-icon'><span className={'codicon codicon-warning'}></span><span className="action-icon-value">{warnings}</span></div>}
-          </div>
-          {error && <div className='codicon codicon-issues' title={error} />}
-        </div>;
-      })}
+  return (
+    <div className="action-list vbox">
+      <div
+        className="action-list-content"
+        tabIndex={0}
+        onKeyDown={(event) => {
+          if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return;
+          event.stopPropagation();
+          event.preventDefault();
+          const index = selectedAction ? actions.indexOf(selectedAction) : -1;
+          let newIndex = index;
+          if (event.key === 'ArrowDown') {
+            if (index === -1) newIndex = 0;
+            else newIndex = Math.min(index + 1, actions.length - 1);
+          }
+          if (event.key === 'ArrowUp') {
+            if (index === -1) newIndex = actions.length - 1;
+            else newIndex = Math.max(index - 1, 0);
+          }
+          const element = actionListRef.current?.children.item(newIndex);
+          if ((element as any)?.scrollIntoViewIfNeeded)
+            (element as any).scrollIntoViewIfNeeded(false);
+          else element?.scrollIntoView();
+          onSelected(actions[newIndex]);
+        }}
+        ref={actionListRef}
+      >
+        {actions.length === 0 && <div className="no-actions-entry">No actions recorded</div>}
+        {actions.map((action) => {
+          const { metadata } = action;
+          const selectedSuffix = action === selectedAction ? ' selected' : '';
+          const highlightedSuffix = action === highlightedAction ? ' highlighted' : '';
+          const error = metadata.error?.error?.message;
+          const { errors, warnings } = modelUtil.stats(action);
+          return (
+            <div
+              className={'action-entry' + selectedSuffix + highlightedSuffix}
+              key={metadata.id}
+              onClick={() => onSelected(action)}
+              onMouseEnter={() => onHighlighted(action)}
+              onMouseLeave={() => highlightedAction === action && onHighlighted(undefined)}
+            >
+              <div className="action-title">
+                <span>{metadata.apiName}</span>
+                {metadata.params.selector && (
+                  <div className="action-selector" title={metadata.params.selector}>
+                    {metadata.params.selector}
+                  </div>
+                )}
+                {metadata.method === 'goto' && metadata.params.url && (
+                  <div className="action-url" title={metadata.params.url}>
+                    {metadata.params.url}
+                  </div>
+                )}
+              </div>
+              <div className="action-duration" style={{ flex: 'none' }}>
+                {metadata.endTime ? msToString(metadata.endTime - metadata.startTime) : 'Timed Out'}
+              </div>
+              <div className="action-icons" onClick={() => setSelectedTab('console')}>
+                {!!errors && (
+                  <div className="action-icon">
+                    <span className={'codicon codicon-error'}></span>
+                    <span className="action-icon-value">{errors}</span>
+                  </div>
+                )}
+                {!!warnings && (
+                  <div className="action-icon">
+                    <span className={'codicon codicon-warning'}></span>
+                    <span className="action-icon-value">{warnings}</span>
+                  </div>
+                )}
+              </div>
+              {error && <div className="codicon codicon-issues" title={error} />}
+            </div>
+          );
+        })}
+      </div>
     </div>
-  </div>;
+  );
 };

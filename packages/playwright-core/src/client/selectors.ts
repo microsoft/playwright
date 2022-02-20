@@ -24,11 +24,14 @@ export class Selectors implements api.Selectors {
   private _channels = new Set<SelectorsOwner>();
   private _registrations: channels.SelectorsRegisterParams[] = [];
 
-  async register(name: string, script: string | (() => SelectorEngine) | { path?: string, content?: string }, options: { contentScript?: boolean } = {}): Promise<void> {
+  async register(
+    name: string,
+    script: string | (() => SelectorEngine) | { path?: string; content?: string },
+    options: { contentScript?: boolean } = {},
+  ): Promise<void> {
     const source = await evaluationScript(script, undefined, false);
     const params = { ...options, name, source };
-    for (const channel of this._channels)
-      await channel._channel.register(params);
+    for (const channel of this._channels) await channel._channel.register(params);
     this._registrations.push(params);
   }
 
@@ -36,7 +39,7 @@ export class Selectors implements api.Selectors {
     this._channels.add(channel);
     for (const params of this._registrations) {
       // This should not fail except for connection closure, but just in case we catch.
-      channel._channel.register(params).catch(e => {});
+      channel._channel.register(params).catch((e) => {});
     }
   }
 

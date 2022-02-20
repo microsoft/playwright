@@ -20,12 +20,19 @@ import { Page } from '../../server/page';
 import { FrameSnapshot } from '../../server/trace/common/snapshotTypes';
 import { SnapshotRenderer } from './snapshotRenderer';
 import { BaseSnapshotStorage } from './snapshotStorage';
-import { Snapshotter, SnapshotterBlob, SnapshotterDelegate } from '../../server/trace/recorder/snapshotter';
+import {
+  Snapshotter,
+  SnapshotterBlob,
+  SnapshotterDelegate,
+} from '../../server/trace/recorder/snapshotter';
 import { ElementHandle } from '../../server/dom';
 import { HarTracer, HarTracerDelegate } from '../../server/supplements/har/harTracer';
 import * as har from '../../server/supplements/har/har';
 
-export class InMemorySnapshotter extends BaseSnapshotStorage implements SnapshotterDelegate, HarTracerDelegate {
+export class InMemorySnapshotter
+  extends BaseSnapshotStorage
+  implements SnapshotterDelegate, HarTracerDelegate
+{
   private _blobs = new Map<string, Buffer>();
   private _snapshotter: Snapshotter;
   private _harTracer: HarTracer;
@@ -33,7 +40,11 @@ export class InMemorySnapshotter extends BaseSnapshotStorage implements Snapshot
   constructor(context: BrowserContext) {
     super();
     this._snapshotter = new Snapshotter(context, this);
-    this._harTracer = new HarTracer(context, this, { content: 'sha1', waitForContentOnStop: false, skipScripts: true });
+    this._harTracer = new HarTracer(context, this, {
+      content: 'sha1',
+      waitForContentOnStop: false,
+      skipScripts: true,
+    });
   }
 
   async initialize(): Promise<void> {
@@ -55,23 +66,30 @@ export class InMemorySnapshotter extends BaseSnapshotStorage implements Snapshot
     this._harTracer.stop();
   }
 
-  async captureSnapshot(page: Page, snapshotName: string, element?: ElementHandle): Promise<SnapshotRenderer> {
+  async captureSnapshot(
+    page: Page,
+    snapshotName: string,
+    element?: ElementHandle,
+  ): Promise<SnapshotRenderer> {
     if (this._frameSnapshots.has(snapshotName))
       throw new Error('Duplicate snapshot name: ' + snapshotName);
 
     this._snapshotter.captureSnapshot(page, snapshotName, element).catch(() => {});
-    return new Promise<SnapshotRenderer>(fulfill => {
-      const listener = eventsHelper.addEventListener(this, 'snapshot', (renderer: SnapshotRenderer) => {
-        if (renderer.snapshotName === snapshotName) {
-          eventsHelper.removeEventListeners([listener]);
-          fulfill(renderer);
-        }
-      });
+    return new Promise<SnapshotRenderer>((fulfill) => {
+      const listener = eventsHelper.addEventListener(
+        this,
+        'snapshot',
+        (renderer: SnapshotRenderer) => {
+          if (renderer.snapshotName === snapshotName) {
+            eventsHelper.removeEventListeners([listener]);
+            fulfill(renderer);
+          }
+        },
+      );
     });
   }
 
-  onEntryStarted(entry: har.Entry) {
-  }
+  onEntryStarted(entry: har.Entry) {}
 
   onEntryFinished(entry: har.Entry) {
     this.addResource(entry);

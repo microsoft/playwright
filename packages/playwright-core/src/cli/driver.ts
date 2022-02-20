@@ -38,9 +38,11 @@ export function runDriver() {
     const playwright = createPlaywright(sdkLanguage);
     return new PlaywrightDispatcher(rootScope, playwright);
   });
-  const transport = process.send ? new IpcTransport(process) : new PipeTransport(process.stdout, process.stdin);
-  transport.onmessage = message => dispatcherConnection.dispatch(JSON.parse(message));
-  dispatcherConnection.onmessage = message => transport.send(JSON.stringify(message));
+  const transport = process.send
+    ? new IpcTransport(process)
+    : new PipeTransport(process.stdout, process.stdin);
+  transport.onmessage = (message) => dispatcherConnection.dispatch(JSON.parse(message));
+  dispatcherConnection.onmessage = (message) => transport.send(JSON.stringify(message));
   transport.onclose = async () => {
     // Drop any messages during shutdown on the floor.
     dispatcherConnection.onmessage = () => {};
@@ -56,13 +58,12 @@ export async function runServer(port: number | undefined) {
   const server = await PlaywrightServer.startDefault({ path: '/', maxClients: Infinity });
   const wsEndpoint = await server.listen(port);
   process.on('exit', () => server.close().catch(console.error));
-  console.log('Listening on ' + wsEndpoint);  // eslint-disable-line no-console
+  console.log('Listening on ' + wsEndpoint); // eslint-disable-line no-console
 }
 
 export async function launchBrowserServer(browserName: string, configFile?: string) {
   let options: LaunchServerOptions = {};
-  if (configFile)
-    options = JSON.parse(fs.readFileSync(configFile).toString());
+  if (configFile) options = JSON.parse(fs.readFileSync(configFile).toString());
   const browserType = (playwright as any)[browserName] as BrowserType;
   const server = await browserType.launchServer(options);
   console.log(server.wsEndpoint());

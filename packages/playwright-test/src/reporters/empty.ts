@@ -16,7 +16,6 @@
 
 import { Reporter } from '../../types/testReporter';
 
-class EmptyReporter implements Reporter {
-}
+class EmptyReporter implements Reporter {}
 
 export default EmptyReporter;

@@ -25,18 +25,20 @@ import { SocksProxy } from '../utils/socksProxy';
 function launchGridWorker(gridURL: string, agentId: string, workerId: string) {
   const log = debug(`pw:grid:worker${workerId}`);
   log('created');
-  const ws = new WebSocket(gridURL.replace('http://', 'ws://') + `/registerWorker?agentId=${agentId}&workerId=${workerId}`);
+  const ws = new WebSocket(
+    gridURL.replace('http://', 'ws://') + `/registerWorker?agentId=${agentId}&workerId=${workerId}`,
+  );
   const dispatcherConnection = new DispatcherConnection();
-  dispatcherConnection.onmessage = message => ws.send(JSON.stringify(message));
+  dispatcherConnection.onmessage = (message) => ws.send(JSON.stringify(message));
   ws.once('open', () => {
-    new Root(dispatcherConnection, async rootScope => {
+    new Root(dispatcherConnection, async (rootScope) => {
       const playwright = createPlaywright('javascript');
       const socksProxy = new SocksProxy();
       playwright.options.socksProxyPort = await socksProxy.listen(0);
       return new PlaywrightDispatcher(rootScope, playwright, socksProxy);
     });
   });
-  ws.on('message', message => dispatcherConnection.dispatch(JSON.parse(message.toString())));
+  ws.on('message', (message) => dispatcherConnection.dispatch(JSON.parse(message.toString())));
   ws.on('close', async () => {
     // Drop any messages during shutdown on the floor.
     dispatcherConnection.onmessage = () => {};

@@ -19,13 +19,13 @@ import type { Page, Locator, APIResponse } from 'playwright-core';
 
 export declare type AsymmetricMatcher = Record<string, any>;
 
-type IfAny<T, Y, N> = 0 extends (1 & T) ? Y : N;
+type IfAny<T, Y, N> = 0 extends 1 & T ? Y : N;
 type ExtraMatchers<T, Type, Matchers> = T extends Type ? Matchers : IfAny<T, Matchers, {}>;
 
 type MakeMatchers<T, ReturnValue = T> = PlaywrightTest.Matchers<ReturnValue> &
   ExtraMatchers<T, Page, PageMatchers> &
   ExtraMatchers<T, Locator, LocatorMatchers> &
-  ExtraMatchers<T, APIResponse, APIResponseMatchers>
+  ExtraMatchers<T, APIResponse, APIResponseMatchers>;
 
 export declare type Expect = {
   <T = unknown>(actual: T, message?: string): MakeMatchers<T>;
@@ -49,13 +49,13 @@ export declare type Expect = {
 type Awaited<T> = T extends PromiseLike<infer U> ? U : T;
 
 type OverriddenExpectProperties =
-  'not' |
-  'resolves' |
-  'rejects' |
-  'toMatchInlineSnapshot' |
-  'toThrowErrorMatchingInlineSnapshot' |
-  'toMatchSnapshot' |
-  'toThrowErrorMatchingSnapshot';
+  | 'not'
+  | 'resolves'
+  | 'rejects'
+  | 'toMatchInlineSnapshot'
+  | 'toThrowErrorMatchingInlineSnapshot'
+  | 'toMatchSnapshot'
+  | 'toThrowErrorMatchingSnapshot';
 
 declare global {
   export namespace PlaywrightTest {
@@ -70,25 +70,28 @@ declare global {
        */
       resolves: MakeMatchers<Awaited<R>, R>;
       /**
-      * Unwraps the reason of a rejected promise so any other matcher can be chained.
-      * If the promise is fulfilled the assertion fails.
-      */
+       * Unwraps the reason of a rejected promise so any other matcher can be chained.
+       * If the promise is fulfilled the assertion fails.
+       */
       rejects: MakeMatchers<Promise<R>>;
       /**
        * Match snapshot
        */
       toMatchSnapshot(options?: {
-        name?: string | string[],
-        threshold?: number,
-        pixelCount?: number,
-        pixelRatio?: number,
+        name?: string | string[];
+        threshold?: number;
+        pixelCount?: number;
+        pixelRatio?: number;
       }): R;
       /**
        * Match snapshot
        */
-      toMatchSnapshot(name: string | string[], options?: {
-        threshold?: number
-      }): R;
+      toMatchSnapshot(
+        name: string | string[],
+        options?: {
+          threshold?: number;
+        },
+      ): R;
     }
   }
 }
@@ -97,62 +100,76 @@ interface LocatorMatchers {
   /**
    * Asserts input is checked (or unchecked if { checked: false } is passed).
    */
-  toBeChecked(options?: { checked?: boolean, timeout?: number }): Promise<Locator>;
+  toBeChecked(options?: { checked?: boolean; timeout?: number }): Promise<Locator>;
 
   /**
-  * Asserts input is disabled.
-  */
+   * Asserts input is disabled.
+   */
   toBeDisabled(options?: { timeout?: number }): Promise<Locator>;
 
   /**
-  * Asserts input is editable.
-  */
+   * Asserts input is editable.
+   */
   toBeEditable(options?: { timeout?: number }): Promise<Locator>;
 
   /**
-  * Asserts given DOM node or input has no text content or no input value.
-  */
+   * Asserts given DOM node or input has no text content or no input value.
+   */
   toBeEmpty(options?: { timeout?: number }): Promise<Locator>;
 
   /**
-  * Asserts input is enabled.
-  */
+   * Asserts input is enabled.
+   */
   toBeEnabled(options?: { timeout?: number }): Promise<Locator>;
 
   /**
-  * Asserts given DOM is a focused (active) in document.
-  */
+   * Asserts given DOM is a focused (active) in document.
+   */
   toBeFocused(options?: { timeout?: number }): Promise<Locator>;
 
   /**
-  * Asserts given DOM node is hidden or detached from DOM.
-  */
+   * Asserts given DOM node is hidden or detached from DOM.
+   */
   toBeHidden(options?: { timeout?: number }): Promise<Locator>;
 
   /**
    * Asserts element's text content matches given pattern or contains given substring.
    */
-  toContainText(expected: string | RegExp | (string | RegExp)[], options?: { timeout?: number, useInnerText?: boolean }): Promise<Locator>;
+  toContainText(
+    expected: string | RegExp | (string | RegExp)[],
+    options?: { timeout?: number; useInnerText?: boolean },
+  ): Promise<Locator>;
 
   /**
    * Asserts element's attributes `name` matches expected value.
    */
-  toHaveAttribute(name: string, expected: string | RegExp, options?: { timeout?: number }): Promise<Locator>;
+  toHaveAttribute(
+    name: string,
+    expected: string | RegExp,
+    options?: { timeout?: number },
+  ): Promise<Locator>;
 
   /**
-  * Asserts that DOM node has a given CSS class.
-  */
-  toHaveClass(className: string | RegExp | (string | RegExp)[], options?: { timeout?: number }): Promise<Locator>;
+   * Asserts that DOM node has a given CSS class.
+   */
+  toHaveClass(
+    className: string | RegExp | (string | RegExp)[],
+    options?: { timeout?: number },
+  ): Promise<Locator>;
 
   /**
-  * Asserts number of DOM nodes matching given locator.
-  */
+   * Asserts number of DOM nodes matching given locator.
+   */
   toHaveCount(expected: number, options?: { timeout?: number }): Promise<Locator>;
 
   /**
    * Asserts element's computed CSS property `name` matches expected value.
    */
-  toHaveCSS(name: string, expected: string | RegExp, options?: { timeout?: number }): Promise<Locator>;
+  toHaveCSS(
+    name: string,
+    expected: string | RegExp,
+    options?: { timeout?: number },
+  ): Promise<Locator>;
 
   /**
    * Asserts element's `id` attribute matches expected value.
@@ -160,14 +177,17 @@ interface LocatorMatchers {
   toHaveId(expected: string | RegExp, options?: { timeout?: number }): Promise<Locator>;
 
   /**
-  * Asserts JavaScript object that corresponds to the Node has a property with given value.
-  */
+   * Asserts JavaScript object that corresponds to the Node has a property with given value.
+   */
   toHaveJSProperty(name: string, value: any, options?: { timeout?: number }): Promise<Locator>;
 
   /**
-  * Asserts element's text content.
-  */
-  toHaveText(expected: string | RegExp | (string | RegExp)[], options?: { timeout?: number, useInnerText?: boolean }): Promise<Locator>;
+   * Asserts element's text content.
+   */
+  toHaveText(
+    expected: string | RegExp | (string | RegExp)[],
+    options?: { timeout?: number; useInnerText?: boolean },
+  ): Promise<Locator>;
 
   /**
    * Asserts input element's value.
@@ -186,8 +206,8 @@ interface PageMatchers {
   toHaveTitle(expected: string | RegExp, options?: { timeout?: number }): Promise<Page>;
 
   /**
-  * Asserts page's URL.
-  */
+   * Asserts page's URL.
+   */
   toHaveURL(expected: string | RegExp, options?: { timeout?: number }): Promise<Page>;
 }
 
@@ -198,4 +218,4 @@ interface APIResponseMatchers {
   toBeOK(): Promise<APIResponse>;
 }
 
-export { };
+export {};

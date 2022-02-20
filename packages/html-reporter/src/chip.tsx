@@ -21,38 +21,40 @@ import './common.css';
 import * as icons from './icons';
 
 export const Chip: React.FunctionComponent<{
-  header: JSX.Element | string,
-  expanded?: boolean,
-  noInsets?: boolean,
-  setExpanded?: (expanded: boolean) => void,
-  children?: any,
+  header: JSX.Element | string;
+  expanded?: boolean;
+  noInsets?: boolean;
+  setExpanded?: (expanded: boolean) => void;
+  children?: any;
 }> = ({ header, expanded, setExpanded, children, noInsets }) => {
-  return <div className='chip'>
-    <div
-      className={'chip-header' + (setExpanded ? ' expanded-' + expanded : '')}
-      onClick={() => setExpanded?.(!expanded)}
-      title={typeof header === 'string' ? header : undefined}>
-      {setExpanded && !!expanded && icons.downArrow()}
-      {setExpanded && !expanded && icons.rightArrow()}
-      {header}
+  return (
+    <div className="chip">
+      <div
+        className={'chip-header' + (setExpanded ? ' expanded-' + expanded : '')}
+        onClick={() => setExpanded?.(!expanded)}
+        title={typeof header === 'string' ? header : undefined}
+      >
+        {setExpanded && !!expanded && icons.downArrow()}
+        {setExpanded && !expanded && icons.rightArrow()}
+        {header}
+      </div>
+      {(!setExpanded || expanded) && (
+        <div className={'chip-body' + (noInsets ? ' chip-body-no-insets' : '')}>{children}</div>
+      )}
     </div>
-    {(!setExpanded || expanded) && <div className={'chip-body' + (noInsets ? ' chip-body-no-insets' : '')}>{children}</div>}
-  </div>;
+  );
 };
 
 export const AutoChip: React.FC<{
-  header: JSX.Element | string,
-  initialExpanded?: boolean,
-  noInsets?: boolean,
-  children?: any,
+  header: JSX.Element | string;
+  initialExpanded?: boolean;
+  noInsets?: boolean;
+  children?: any;
 }> = ({ header, initialExpanded, noInsets, children }) => {
   const [expanded, setExpanded] = React.useState(initialExpanded || initialExpanded === undefined);
-  return <Chip
-    header={header}
-    expanded={expanded}
-    setExpanded={setExpanded}
-    noInsets={noInsets}
-  >
-    {children}
-  </Chip>;
+  return (
+    <Chip header={header} expanded={expanded} setExpanded={setExpanded} noInsets={noInsets}>
+      {children}
+    </Chip>
+  );
 };

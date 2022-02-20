@@ -52,7 +52,7 @@ export class ProgressController {
     this.metadata = metadata;
     this.sdkObject = sdkObject;
     this.instrumentation = sdkObject.instrumentation;
-    this._forceAbortPromise.catch(e => null);  // Prevent unhandled promise rejection.
+    this._forceAbortPromise.catch((e) => null); // Prevent unhandled promise rejection.
   }
 
   setLogName(logName: LogName) {
@@ -73,40 +73,38 @@ export class ProgressController {
     this._state = 'running';
 
     const progress: Progress = {
-      log: message => {
+      log: (message) => {
         progress.logEntry({ message });
       },
-      logEntry: entry => {
+      logEntry: (entry) => {
         if ('message' in entry) {
           const message = entry.message!;
-          if (this._state === 'running')
-            this.metadata.log.push(message);
+          if (this._state === 'running') this.metadata.log.push(message);
           // Note: we might be sending logs after progress has finished, for example browser logs.
           this.instrumentation.onCallLog(this.sdkObject, this.metadata, this._logName, message);
         }
-        if ('intermediateResult' in entry)
-          this._lastIntermediateResult = entry.intermediateResult;
+        if ('intermediateResult' in entry) this._lastIntermediateResult = entry.intermediateResult;
       },
-      timeUntilDeadline: () => this._deadline ? this._deadline - monotonicTime() : 2147483647, // 2^31-1 safe setTimeout in Node.
+      timeUntilDeadline: () => (this._deadline ? this._deadline - monotonicTime() : 2147483647), // 2^31-1 safe setTimeout in Node.
       isRunning: () => this._state === 'running',
       cleanupWhenAborted: (cleanup: () => any) => {
-        if (this._state === 'running')
-          this._cleanups.push(cleanup);
-        else
-          runCleanup(cleanup);
+        if (this._state === 'running') this._cleanups.push(cleanup);
+        else runCleanup(cleanup);
       },
       throwIfAborted: () => {
-        if (this._state === 'aborted')
-          throw new AbortedError();
+        if (this._state === 'aborted') throw new AbortedError();
       },
       beforeInputAction: async (element: ElementHandle) => {
         await this.instrumentation.onBeforeInputAction(this.sdkObject, this.metadata, element);
       },
-      metadata: this.metadata
+      metadata: this.metadata,
     };
 
     const timeoutError = new TimeoutError(`Timeout ${this._timeout}ms exceeded.`);
-    const timer = setTimeout(() => this._forceAbortPromise.reject(timeoutError), progress.timeUntilDeadline());
+    const timer = setTimeout(
+      () => this._forceAbortPromise.reject(timeoutError),
+      progress.timeUntilDeadline(),
+    );
     try {
       const promise = task(progress);
       const result = await Promise.race([promise, this._forceAbortPromise]);
@@ -125,8 +123,7 @@ export class ProgressController {
 async function runCleanup(cleanup: () => any) {
   try {
     await cleanup();
-  } catch (e) {
-  }
+  } catch (e) {}
 }
 
 class AbortedError extends Error {}

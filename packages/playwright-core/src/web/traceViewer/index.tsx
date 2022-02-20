@@ -26,14 +26,16 @@ import '../common.css';
   if (window.location.protocol !== 'file:') {
     navigator.serviceWorker.register('sw.bundle.js');
     if (!navigator.serviceWorker.controller) {
-      await new Promise<void>(f => {
+      await new Promise<void>((f) => {
         navigator.serviceWorker.oncontrollerchange = () => f();
       });
     }
 
     // Keep SW running.
-    setInterval(function() { fetch('ping'); }, 10000);
+    setInterval(function () {
+      fetch('ping');
+    }, 10000);
   }
 
-  ReactDOM.render(<Workbench/>, document.querySelector('#root'));
+  ReactDOM.render(<Workbench />, document.querySelector('#root'));
 })();

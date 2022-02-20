@@ -32,14 +32,12 @@ class DotReporter extends BaseReporter {
 
   override onStdOut(chunk: string | Buffer, test?: TestCase, result?: TestResult) {
     super.onStdOut(chunk, test, result);
-    if (!this.config.quiet)
-      process.stdout.write(chunk);
+    if (!this.config.quiet) process.stdout.write(chunk);
   }
 
   override onStdErr(chunk: string | Buffer, test?: TestCase, result?: TestResult) {
     super.onStdErr(chunk, test, result);
-    if (!this.config.quiet)
-      process.stderr.write(chunk);
+    if (!this.config.quiet) process.stderr.write(chunk);
   }
 
   override onTestEnd(test: TestCase, result: TestResult) {
@@ -58,9 +56,15 @@ class DotReporter extends BaseReporter {
       return;
     }
     switch (test.outcome()) {
-      case 'expected': process.stdout.write(colors.green('·')); break;
-      case 'unexpected': process.stdout.write(colors.red(result.status === 'timedOut' ? 'T' : 'F')); break;
-      case 'flaky': process.stdout.write(colors.yellow('±')); break;
+      case 'expected':
+        process.stdout.write(colors.green('·'));
+        break;
+      case 'unexpected':
+        process.stdout.write(colors.red(result.status === 'timedOut' ? 'T' : 'F'));
+        break;
+      case 'flaky':
+        process.stdout.write(colors.yellow('±'));
+        break;
     }
   }
 

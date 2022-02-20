@@ -43,29 +43,30 @@ export class PipeTransport {
   private _endian: 'be' | 'le';
   private _closeableStream: ClosableStream | undefined;
 
-  constructor(pipeWrite: WritableStream, pipeRead: ReadableStream, closeable?: ClosableStream, endian: 'be' | 'le' = 'le') {
+  constructor(
+    pipeWrite: WritableStream,
+    pipeRead: ReadableStream,
+    closeable?: ClosableStream,
+    endian: 'be' | 'le' = 'le',
+  ) {
     this._pipeWrite = pipeWrite;
     this._endian = endian;
     this._closeableStream = closeable;
-    pipeRead.on('data', buffer => this._dispatch(buffer));
+    pipeRead.on('data', (buffer) => this._dispatch(buffer));
     pipeRead.on('close', () => {
       this._closed = true;
-      if (this.onclose)
-        this.onclose();
+      if (this.onclose) this.onclose();
     });
     this.onmessage = undefined;
     this.onclose = undefined;
   }
 
   send(message: string) {
-    if (this._closed)
-      throw new Error('Pipe has been closed');
+    if (this._closed) throw new Error('Pipe has been closed');
     const data = Buffer.from(message, 'utf-8');
     const dataLength = Buffer.alloc(4);
-    if (this._endian === 'be')
-      dataLength.writeUInt32BE(data.length, 0);
-    else
-      dataLength.writeUInt32LE(data.length, 0);
+    if (this._endian === 'be') dataLength.writeUInt32BE(data.length, 0);
+    else dataLength.writeUInt32LE(data.length, 0);
     this._pipeWrite.write(dataLength);
     this._pipeWrite.write(data);
   }
@@ -84,7 +85,8 @@ export class PipeTransport {
       }
 
       if (!this._bytesLeft) {
-        this._bytesLeft = this._endian === 'be' ? this._data.readUInt32BE(0) : this._data.readUInt32LE(0);
+        this._bytesLeft =
+          this._endian === 'be' ? this._data.readUInt32BE(0) : this._data.readUInt32LE(0);
         this._data = this._data.slice(4);
       }
 
@@ -97,8 +99,7 @@ export class PipeTransport {
       this._data = this._data.slice(this._bytesLeft);
       this._bytesLeft = 0;
       this._waitForNextTask(() => {
-        if (this.onmessage)
-          this.onmessage(message.toString('utf-8'));
+        if (this.onmessage) this.onmessage(message.toString('utf-8'));
       });
     }
   }
@@ -111,11 +112,9 @@ export class IpcTransport {
 
   constructor(process: NodeJS.Process | ChildProcess) {
     this._process = process;
-    this._process.on('message', message => {
-      if (message === '<eof>')
-        this.onclose?.();
-      else
-        this.onmessage?.(message);
+    this._process.on('message', (message) => {
+      if (message === '<eof>') this.onclose?.();
+      else this.onmessage?.(message);
     });
   }
 

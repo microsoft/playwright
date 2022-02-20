@@ -15,7 +15,14 @@
  */
 
 import { installTransform, setCurrentlyLoadingTestFile } from './transform';
-import type { FullConfig, Config, FullProject, Project, ReporterDescription, PreserveOutput } from './types';
+import type {
+  FullConfig,
+  Config,
+  FullProject,
+  Project,
+  ReporterDescription,
+  PreserveOutput,
+} from './types';
 import { mergeObjects, errorWithFile } from './util';
 import { setCurrentlyLoadingFileSuite } from './globals';
 import { Suite } from './test';
@@ -40,7 +47,7 @@ export class Loader {
   private _config: Config = {};
   private _configFile: string | undefined;
   private _projects: ProjectImpl[] = [];
-  private _lastModuleInfo: { rootFolder: string, isModule: boolean } | null = null;
+  private _lastModuleInfo: { rootFolder: string; isModule: boolean } | null = null;
 
   constructor(defaultConfig: Config, configOverrides: Config) {
     this._defaultConfig = defaultConfig;
@@ -50,19 +57,15 @@ export class Loader {
 
   static async deserialize(data: SerializedLoaderData): Promise<Loader> {
     const loader = new Loader(data.defaultConfig, data.overrides);
-    if ('file' in data.configFile)
-      await loader.loadConfigFile(data.configFile.file);
-    else
-      loader.loadEmptyConfig(data.configFile.rootDir);
+    if ('file' in data.configFile) await loader.loadConfigFile(data.configFile.file);
+    else loader.loadEmptyConfig(data.configFile.rootDir);
     return loader;
   }
 
   async loadConfigFile(file: string): Promise<Config> {
-    if (this._configFile)
-      throw new Error('Cannot load two config files');
+    if (this._configFile) throw new Error('Cannot load two config files');
     let config = await this._requireOrImport(file);
-    if (config && typeof config === 'object' && ('default' in config))
-      config = config['default'];
+    if (config && typeof config === 'object' && 'default' in config) config = config['default'];
     this._config = config;
     this._configFile = file;
     const rawConfig = { ...config };
@@ -86,37 +89,101 @@ export class Loader {
       this._config.globalTeardown = resolveScript(this._config.globalTeardown, rootDir);
 
     const configUse = mergeObjects(this._defaultConfig.use, this._config.use);
-    this._config = mergeObjects(mergeObjects(this._defaultConfig, this._config), { use: configUse });
+    this._config = mergeObjects(mergeObjects(this._defaultConfig, this._config), {
+      use: configUse,
+    });
 
     if (this._config.testDir !== undefined)
       this._config.testDir = path.resolve(rootDir, this._config.testDir);
-    const projects: Project[] = ('projects' in this._config) && this._config.projects !== undefined ? this._config.projects : [this._config];
+    const projects: Project[] =
+      'projects' in this._config && this._config.projects !== undefined
+        ? this._config.projects
+        : [this._config];
 
     this._fullConfig.rootDir = this._config.testDir || rootDir;
-    this._fullConfig.forbidOnly = takeFirst(this._configOverrides.forbidOnly, this._config.forbidOnly, baseFullConfig.forbidOnly);
-    this._fullConfig.globalSetup = takeFirst(this._configOverrides.globalSetup, this._config.globalSetup, baseFullConfig.globalSetup);
-    this._fullConfig.globalTeardown = takeFirst(this._configOverrides.globalTeardown, this._config.globalTeardown, baseFullConfig.globalTeardown);
-    this._fullConfig.globalTimeout = takeFirst(this._configOverrides.globalTimeout, this._configOverrides.globalTimeout, this._config.globalTimeout, baseFullConfig.globalTimeout);
-    this._fullConfig.grep = takeFirst(this._configOverrides.grep, this._config.grep, baseFullConfig.grep);
-    this._fullConfig.grepInvert = takeFirst(this._configOverrides.grepInvert, this._config.grepInvert, baseFullConfig.grepInvert);
-    this._fullConfig.maxFailures = takeFirst(this._configOverrides.maxFailures, this._config.maxFailures, baseFullConfig.maxFailures);
-    this._fullConfig.preserveOutput = takeFirst<PreserveOutput>(this._configOverrides.preserveOutput, this._config.preserveOutput, baseFullConfig.preserveOutput);
-    this._fullConfig.reporter = takeFirst(toReporters(this._configOverrides.reporter as any), resolveReporters(this._config.reporter, rootDir), baseFullConfig.reporter);
-    this._fullConfig.reportSlowTests = takeFirst(this._configOverrides.reportSlowTests, this._config.reportSlowTests, baseFullConfig.reportSlowTests);
-    this._fullConfig.quiet = takeFirst(this._configOverrides.quiet, this._config.quiet, baseFullConfig.quiet);
-    this._fullConfig.shard = takeFirst(this._configOverrides.shard, this._config.shard, baseFullConfig.shard);
-    this._fullConfig.updateSnapshots = takeFirst(this._configOverrides.updateSnapshots, this._config.updateSnapshots, baseFullConfig.updateSnapshots);
-    this._fullConfig.workers = takeFirst(this._configOverrides.workers, this._config.workers, baseFullConfig.workers);
-    this._fullConfig.webServer = takeFirst(this._configOverrides.webServer, this._config.webServer, baseFullConfig.webServer);
+    this._fullConfig.forbidOnly = takeFirst(
+      this._configOverrides.forbidOnly,
+      this._config.forbidOnly,
+      baseFullConfig.forbidOnly,
+    );
+    this._fullConfig.globalSetup = takeFirst(
+      this._configOverrides.globalSetup,
+      this._config.globalSetup,
+      baseFullConfig.globalSetup,
+    );
+    this._fullConfig.globalTeardown = takeFirst(
+      this._configOverrides.globalTeardown,
+      this._config.globalTeardown,
+      baseFullConfig.globalTeardown,
+    );
+    this._fullConfig.globalTimeout = takeFirst(
+      this._configOverrides.globalTimeout,
+      this._configOverrides.globalTimeout,
+      this._config.globalTimeout,
+      baseFullConfig.globalTimeout,
+    );
+    this._fullConfig.grep = takeFirst(
+      this._configOverrides.grep,
+      this._config.grep,
+      baseFullConfig.grep,
+    );
+    this._fullConfig.grepInvert = takeFirst(
+      this._configOverrides.grepInvert,
+      this._config.grepInvert,
+      baseFullConfig.grepInvert,
+    );
+    this._fullConfig.maxFailures = takeFirst(
+      this._configOverrides.maxFailures,
+      this._config.maxFailures,
+      baseFullConfig.maxFailures,
+    );
+    this._fullConfig.preserveOutput = takeFirst<PreserveOutput>(
+      this._configOverrides.preserveOutput,
+      this._config.preserveOutput,
+      baseFullConfig.preserveOutput,
+    );
+    this._fullConfig.reporter = takeFirst(
+      toReporters(this._configOverrides.reporter as any),
+      resolveReporters(this._config.reporter, rootDir),
+      baseFullConfig.reporter,
+    );
+    this._fullConfig.reportSlowTests = takeFirst(
+      this._configOverrides.reportSlowTests,
+      this._config.reportSlowTests,
+      baseFullConfig.reportSlowTests,
+    );
+    this._fullConfig.quiet = takeFirst(
+      this._configOverrides.quiet,
+      this._config.quiet,
+      baseFullConfig.quiet,
+    );
+    this._fullConfig.shard = takeFirst(
+      this._configOverrides.shard,
+      this._config.shard,
+      baseFullConfig.shard,
+    );
+    this._fullConfig.updateSnapshots = takeFirst(
+      this._configOverrides.updateSnapshots,
+      this._config.updateSnapshots,
+      baseFullConfig.updateSnapshots,
+    );
+    this._fullConfig.workers = takeFirst(
+      this._configOverrides.workers,
+      this._config.workers,
+      baseFullConfig.workers,
+    );
+    this._fullConfig.webServer = takeFirst(
+      this._configOverrides.webServer,
+      this._config.webServer,
+      baseFullConfig.webServer,
+    );
 
-    for (const project of projects)
-      this._addProject(project, this._fullConfig.rootDir, rootDir);
-    this._fullConfig.projects = this._projects.map(p => p.config);
+    for (const project of projects) this._addProject(project, this._fullConfig.rootDir, rootDir);
+    this._fullConfig.projects = this._projects.map((p) => p.config);
   }
 
   async loadTestFile(file: string, environment: 'runner' | 'worker') {
-    if (cachedFileSuites.has(file))
-      return cachedFileSuites.get(file)!;
+    if (cachedFileSuites.has(file)) return cachedFileSuites.get(file)!;
     const suite = new Suite(path.relative(this._fullConfig.rootDir, file) || path.basename(file));
     suite._requireFile = file;
     suite.location = { file, line: 0, column: 0 };
@@ -127,8 +194,7 @@ export class Loader {
       await this._requireOrImport(file);
       cachedFileSuites.set(file, suite);
     } catch (e) {
-      if (environment === 'worker')
-        throw e;
+      if (environment === 'worker') throw e;
       suite._loadError = serializeError(e);
     } finally {
       setCurrentlyLoadingTestFile(null);
@@ -143,7 +209,7 @@ export class Loader {
       // Try fixing (a) w/o regressing (b).
 
       const files = new Set<string>();
-      suite.allTests().map(t => files.add(t.location.file));
+      suite.allTests().map((t) => files.add(t.location.file));
       if (files.size === 1) {
         // All tests point to one file.
         const mappedFile = files.values().next().value;
@@ -160,8 +226,7 @@ export class Loader {
 
   async loadGlobalHook(file: string, name: string): Promise<(config: FullConfig) => any> {
     let hook = await this._requireOrImport(file);
-    if (hook && typeof hook === 'object' && ('default' in hook))
-      hook = hook['default'];
+    if (hook && typeof hook === 'object' && 'default' in hook) hook = hook['default'];
     if (typeof hook !== 'function')
       throw errorWithFile(file, `${name} file must export a single function.`);
     return hook;
@@ -169,8 +234,7 @@ export class Loader {
 
   async loadReporter(file: string): Promise<new (arg?: any) => Reporter> {
     let func = await this._requireOrImport(path.resolve(this._fullConfig.rootDir, file));
-    if (func && typeof func === 'object' && ('default' in func))
-      func = func['default'];
+    if (func && typeof func === 'object' && 'default' in func) func = func['default'];
     if (typeof func !== 'function')
       throw errorWithFile(file, `reporter file must export a single class.`);
     return func;
@@ -187,38 +251,84 @@ export class Loader {
   serialize(): SerializedLoaderData {
     return {
       defaultConfig: this._defaultConfig,
-      configFile: this._configFile ? { file: this._configFile } : { rootDir: this._fullConfig.rootDir },
+      configFile: this._configFile
+        ? { file: this._configFile }
+        : { rootDir: this._fullConfig.rootDir },
       overrides: this._configOverrides,
     };
   }
 
   private _addProject(projectConfig: Project, rootDir: string, configDir: string) {
     let testDir = takeFirst(projectConfig.testDir, rootDir);
-    if (!path.isAbsolute(testDir))
-      testDir = path.resolve(configDir, testDir);
-    let outputDir = takeFirst(this._configOverrides.outputDir, projectConfig.outputDir, this._config.outputDir, path.resolve(process.cwd(), 'test-results'));
-    if (!path.isAbsolute(outputDir))
-      outputDir = path.resolve(configDir, outputDir);
-    let snapshotDir = takeFirst(this._configOverrides.snapshotDir, projectConfig.snapshotDir, this._config.snapshotDir, testDir);
-    if (!path.isAbsolute(snapshotDir))
-      snapshotDir = path.resolve(configDir, snapshotDir);
+    if (!path.isAbsolute(testDir)) testDir = path.resolve(configDir, testDir);
+    let outputDir = takeFirst(
+      this._configOverrides.outputDir,
+      projectConfig.outputDir,
+      this._config.outputDir,
+      path.resolve(process.cwd(), 'test-results'),
+    );
+    if (!path.isAbsolute(outputDir)) outputDir = path.resolve(configDir, outputDir);
+    let snapshotDir = takeFirst(
+      this._configOverrides.snapshotDir,
+      projectConfig.snapshotDir,
+      this._config.snapshotDir,
+      testDir,
+    );
+    if (!path.isAbsolute(snapshotDir)) snapshotDir = path.resolve(configDir, snapshotDir);
     const fullProject: FullProject = {
-      expect: takeFirst(this._configOverrides.expect, projectConfig.expect, this._config.expect, undefined),
+      expect: takeFirst(
+        this._configOverrides.expect,
+        projectConfig.expect,
+        this._config.expect,
+        undefined,
+      ),
       outputDir,
-      repeatEach: takeFirst(this._configOverrides.repeatEach, projectConfig.repeatEach, this._config.repeatEach, 1),
-      retries: takeFirst(this._configOverrides.retries, projectConfig.retries, this._config.retries, 0),
-      metadata: takeFirst(this._configOverrides.metadata, projectConfig.metadata, this._config.metadata, undefined),
+      repeatEach: takeFirst(
+        this._configOverrides.repeatEach,
+        projectConfig.repeatEach,
+        this._config.repeatEach,
+        1,
+      ),
+      retries: takeFirst(
+        this._configOverrides.retries,
+        projectConfig.retries,
+        this._config.retries,
+        0,
+      ),
+      metadata: takeFirst(
+        this._configOverrides.metadata,
+        projectConfig.metadata,
+        this._config.metadata,
+        undefined,
+      ),
       name: takeFirst(this._configOverrides.name, projectConfig.name, this._config.name, ''),
       testDir,
       snapshotDir,
-      testIgnore: takeFirst(this._configOverrides.testIgnore, projectConfig.testIgnore, this._config.testIgnore, []),
-      testMatch: takeFirst(this._configOverrides.testMatch, projectConfig.testMatch, this._config.testMatch, '**/?(*.)@(spec|test).*'),
-      timeout: takeFirst(this._configOverrides.timeout, projectConfig.timeout, this._config.timeout, 10000),
-      use: mergeObjects(mergeObjects(this._config.use, projectConfig.use), this._configOverrides.use),
+      testIgnore: takeFirst(
+        this._configOverrides.testIgnore,
+        projectConfig.testIgnore,
+        this._config.testIgnore,
+        [],
+      ),
+      testMatch: takeFirst(
+        this._configOverrides.testMatch,
+        projectConfig.testMatch,
+        this._config.testMatch,
+        '**/?(*.)@(spec|test).*',
+      ),
+      timeout: takeFirst(
+        this._configOverrides.timeout,
+        projectConfig.timeout,
+        this._config.timeout,
+        10000,
+      ),
+      use: mergeObjects(
+        mergeObjects(this._config.use, projectConfig.use),
+        this._configOverrides.use,
+      ),
     };
     this._projects.push(new ProjectImpl(fullProject, this._projects.length));
   }
-
 
   private async _requireOrImport(file: string) {
     const revertBabelRequire = installTransform();
@@ -250,11 +360,13 @@ export class Loader {
 
     try {
       const esmImport = () => eval(`import(${JSON.stringify(url.pathToFileURL(file))})`);
-      if (isModule)
-        return await esmImport();
+      if (isModule) return await esmImport();
       return require(file);
     } catch (error) {
-      if (error.code === 'ERR_MODULE_NOT_FOUND' && error.message.includes('Did you mean to import')) {
+      if (
+        error.code === 'ERR_MODULE_NOT_FOUND' &&
+        error.message.includes('Did you mean to import')
+      ) {
         const didYouMean = /Did you mean to import (.*)\?/.exec(error.message)?.[1];
         if (didYouMean?.endsWith('.ts'))
           throw errorWithFile(file, 'Cannot import a typescript file from an esmodule.');
@@ -262,7 +374,10 @@ export class Loader {
       if (error.code === 'ERR_UNKNOWN_FILE_EXTENSION' && error.message.includes('.ts'))
         throw errorWithFile(file, 'Cannot import a typescript file from an esmodule.');
 
-      if (error instanceof SyntaxError && error.message.includes('Cannot use import statement outside a module'))
+      if (
+        error instanceof SyntaxError &&
+        error.message.includes('Cannot use import statement outside a module')
+      )
         throw errorWithFile(file, 'JavaScript files must end with .mjs to use import.');
 
       throw error;
@@ -274,17 +389,16 @@ export class Loader {
 
 function takeFirst<T>(...args: (T | undefined)[]): T {
   for (const arg of args) {
-    if (arg !== undefined)
-      return arg;
+    if (arg !== undefined) return arg;
   }
   return undefined as any as T;
 }
 
-function toReporters(reporters: BuiltInReporter | ReporterDescription[] | undefined): ReporterDescription[] | undefined {
-  if (!reporters)
-    return;
-  if (typeof reporters === 'string')
-    return [ [reporters] ];
+function toReporters(
+  reporters: BuiltInReporter | ReporterDescription[] | undefined,
+): ReporterDescription[] | undefined {
+  if (!reporters) return;
+  if (typeof reporters === 'string') return [[reporters]];
   return reporters;
 }
 
@@ -317,8 +431,7 @@ function validateConfig(file: string, config: Config) {
   if ('grep' in config && config.grep !== undefined) {
     if (Array.isArray(config.grep)) {
       config.grep.forEach((item, index) => {
-        if (!isRegExp(item))
-          throw errorWithFile(file, `config.grep[${index}] must be a RegExp`);
+        if (!isRegExp(item)) throw errorWithFile(file, `config.grep[${index}] must be a RegExp`);
       });
     } else if (!isRegExp(config.grep)) {
       throw errorWithFile(file, `config.grep must be a RegExp`);
@@ -342,8 +455,14 @@ function validateConfig(file: string, config: Config) {
   }
 
   if ('preserveOutput' in config && config.preserveOutput !== undefined) {
-    if (typeof config.preserveOutput !== 'string' || !['always', 'never', 'failures-only'].includes(config.preserveOutput))
-      throw errorWithFile(file, `config.preserveOutput must be one of "always", "never" or "failures-only"`);
+    if (
+      typeof config.preserveOutput !== 'string' ||
+      !['always', 'never', 'failures-only'].includes(config.preserveOutput)
+    )
+      throw errorWithFile(
+        file,
+        `config.preserveOutput must be one of "always", "never" or "failures-only"`,
+      );
   }
 
   if ('projects' in config && config.projects !== undefined) {
@@ -362,34 +481,69 @@ function validateConfig(file: string, config: Config) {
   if ('reporter' in config && config.reporter !== undefined) {
     if (Array.isArray(config.reporter)) {
       config.reporter.forEach((item, index) => {
-        if (!Array.isArray(item) || item.length <= 0 || item.length > 2 || typeof item[0] !== 'string')
-          throw errorWithFile(file, `config.reporter[${index}] must be a tuple [name, optionalArgument]`);
+        if (
+          !Array.isArray(item) ||
+          item.length <= 0 ||
+          item.length > 2 ||
+          typeof item[0] !== 'string'
+        )
+          throw errorWithFile(
+            file,
+            `config.reporter[${index}] must be a tuple [name, optionalArgument]`,
+          );
       });
     } else if (typeof config.reporter !== 'string') {
       throw errorWithFile(file, `config.reporter must be a string`);
     }
   }
 
-  if ('reportSlowTests' in config && config.reportSlowTests !== undefined && config.reportSlowTests !== null) {
+  if (
+    'reportSlowTests' in config &&
+    config.reportSlowTests !== undefined &&
+    config.reportSlowTests !== null
+  ) {
     if (!config.reportSlowTests || typeof config.reportSlowTests !== 'object')
       throw errorWithFile(file, `config.reportSlowTests must be an object`);
-    if (!('max' in config.reportSlowTests) || typeof config.reportSlowTests.max !== 'number' || config.reportSlowTests.max < 0)
+    if (
+      !('max' in config.reportSlowTests) ||
+      typeof config.reportSlowTests.max !== 'number' ||
+      config.reportSlowTests.max < 0
+    )
       throw errorWithFile(file, `config.reportSlowTests.max must be a non-negative number`);
-    if (!('threshold' in config.reportSlowTests) || typeof config.reportSlowTests.threshold !== 'number' || config.reportSlowTests.threshold < 0)
+    if (
+      !('threshold' in config.reportSlowTests) ||
+      typeof config.reportSlowTests.threshold !== 'number' ||
+      config.reportSlowTests.threshold < 0
+    )
       throw errorWithFile(file, `config.reportSlowTests.threshold must be a non-negative number`);
   }
 
   if ('shard' in config && config.shard !== undefined && config.shard !== null) {
     if (!config.shard || typeof config.shard !== 'object')
       throw errorWithFile(file, `config.shard must be an object`);
-    if (!('total' in config.shard) || typeof config.shard.total !== 'number' || config.shard.total < 1)
+    if (
+      !('total' in config.shard) ||
+      typeof config.shard.total !== 'number' ||
+      config.shard.total < 1
+    )
       throw errorWithFile(file, `config.shard.total must be a positive number`);
-    if (!('current' in config.shard) || typeof config.shard.current !== 'number' || config.shard.current < 1 || config.shard.current > config.shard.total)
-      throw errorWithFile(file, `config.shard.current must be a positive number, not greater than config.shard.total`);
+    if (
+      !('current' in config.shard) ||
+      typeof config.shard.current !== 'number' ||
+      config.shard.current < 1 ||
+      config.shard.current > config.shard.total
+    )
+      throw errorWithFile(
+        file,
+        `config.shard.current must be a positive number, not greater than config.shard.total`,
+      );
   }
 
   if ('updateSnapshots' in config && config.updateSnapshots !== undefined) {
-    if (typeof config.updateSnapshots !== 'string' || !['all', 'none', 'missing'].includes(config.updateSnapshots))
+    if (
+      typeof config.updateSnapshots !== 'string' ||
+      !['all', 'none', 'missing'].includes(config.updateSnapshots)
+    )
       throw errorWithFile(file, `config.updateSnapshots must be one of "all", "none" or "missing"`);
   }
 
@@ -463,7 +617,7 @@ const baseFullConfig: FullConfig = {
   maxFailures: 0,
   preserveOutput: 'always',
   projects: [],
-  reporter: [ ['list'] ],
+  reporter: [['list']],
   reportSlowTests: null,
   rootDir: path.resolve(process.cwd()),
   quiet: false,
@@ -474,17 +628,18 @@ const baseFullConfig: FullConfig = {
   webServer: null,
 };
 
-function resolveReporters(reporters: Config['reporter'], rootDir: string): ReporterDescription[]|undefined {
+function resolveReporters(
+  reporters: Config['reporter'],
+  rootDir: string,
+): ReporterDescription[] | undefined {
   return toReporters(reporters as any)?.map(([id, arg]) => {
-    if (builtInReporters.includes(id as any))
-      return [id, arg];
-    return [require.resolve(id, { paths: [ rootDir ] }), arg];
+    if (builtInReporters.includes(id as any)) return [id, arg];
+    return [require.resolve(id, { paths: [rootDir] }), arg];
   });
 }
 
 function resolveScript(id: string, rootDir: string) {
   const localPath = path.resolve(rootDir, id);
-  if (fs.existsSync(localPath))
-    return localPath;
+  if (fs.existsSync(localPath)) return localPath;
   return require.resolve(id, { paths: [rootDir] });
 }

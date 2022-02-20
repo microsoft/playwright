@@ -21,55 +21,59 @@ import { eventsHelper } from './eventsHelper';
 import { isUnderTest, removeFolders } from './utils';
 import rimraf from 'rimraf';
 
-export type Env = {[key: string]: string | number | boolean | undefined};
+export type Env = { [key: string]: string | number | boolean | undefined };
 
 export type LaunchProcessOptions = {
-  command: string,
-  args?: string[],
-  env?: Env,
-  shell?: boolean,
+  command: string;
+  args?: string[];
+  env?: Env;
+  shell?: boolean;
 
-  handleSIGINT?: boolean,
-  handleSIGTERM?: boolean,
-  handleSIGHUP?: boolean,
-  stdio: 'pipe' | 'stdin',
-  tempDirectories: string[],
+  handleSIGINT?: boolean;
+  handleSIGTERM?: boolean;
+  handleSIGHUP?: boolean;
+  stdio: 'pipe' | 'stdin';
+  tempDirectories: string[];
 
-  cwd?: string,
+  cwd?: string;
 
   // Note: attemptToGracefullyClose should reject if it does not close the browser.
-  attemptToGracefullyClose: () => Promise<any>,
-  onExit: (exitCode: number | null, signal: string | null) => void,
-  log: (message: string) => void,
+  attemptToGracefullyClose: () => Promise<any>;
+  onExit: (exitCode: number | null, signal: string | null) => void;
+  log: (message: string) => void;
 };
 
 type LaunchResult = {
-  launchedProcess: childProcess.ChildProcess,
-  gracefullyClose: () => Promise<void>,
-  kill: () => Promise<void>,
+  launchedProcess: childProcess.ChildProcess;
+  gracefullyClose: () => Promise<void>;
+  kill: () => Promise<void>;
 };
 
 export const gracefullyCloseSet = new Set<() => Promise<void>>();
 
 export async function gracefullyCloseAll() {
-  await Promise.all(Array.from(gracefullyCloseSet).map(gracefullyClose => gracefullyClose().catch(e => {})));
+  await Promise.all(
+    Array.from(gracefullyCloseSet).map((gracefullyClose) => gracefullyClose().catch((e) => {})),
+  );
 }
 
 // We currently spawn a process per page when recording video in Chromium.
 //  This triggers "too many listeners" on the process object once you have more than 10 pages open.
 const maxListeners = process.getMaxListeners();
-if (maxListeners !== 0)
-  process.setMaxListeners(Math.max(maxListeners || 0, 100));
+if (maxListeners !== 0) process.setMaxListeners(Math.max(maxListeners || 0, 100));
 
 export async function launchProcess(options: LaunchProcessOptions): Promise<LaunchResult> {
-  const stdio: ('ignore' | 'pipe')[] = options.stdio === 'pipe' ? ['ignore', 'pipe', 'pipe', 'pipe', 'pipe'] : ['pipe', 'pipe', 'pipe'];
+  const stdio: ('ignore' | 'pipe')[] =
+    options.stdio === 'pipe'
+      ? ['ignore', 'pipe', 'pipe', 'pipe', 'pipe']
+      : ['pipe', 'pipe', 'pipe'];
   options.log(`<launching> ${options.command} ${options.args ? options.args.join(' ') : ''}`);
   const spawnOptions: childProcess.SpawnOptions = {
     // On non-windows platforms, `detached: true` makes child process a leader of a new
     // process group, making it possible to kill child process tree with `.kill(-pid)` command.
     // @see https://nodejs.org/api/child_process.html#child_process_options_detached
     detached: process.platform !== 'win32',
-    env: (options.env as {[key: string]: string}),
+    env: options.env as { [key: string]: string },
     cwd: options.cwd,
     shell: options.shell,
     stdio,
@@ -81,7 +85,11 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
     const errors = await removeFolders(options.tempDirectories);
     for (let i = 0; i < options.tempDirectories.length; ++i) {
       if (errors[i])
-        options.log(`[pid=${spawnedProcess.pid || 'N/A'}] exception while removing ${options.tempDirectories[i]}: ${errors[i]}`);
+        options.log(
+          `[pid=${spawnedProcess.pid || 'N/A'}] exception while removing ${
+            options.tempDirectories[i]
+          }: ${errors[i]}`,
+        );
     }
     options.log(`[pid=${spawnedProcess.pid || 'N/A'}] finished temporary directories cleanup`);
   };
@@ -91,11 +99,13 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
 
   if (!spawnedProcess.pid) {
     let failed: (e: Error) => void;
-    const failedPromise = new Promise<Error>((f, r) => failed = f);
-    spawnedProcess.once('error', error => {
+    const failedPromise = new Promise<Error>((f, r) => (failed = f));
+    spawnedProcess.once('error', (error) => {
       failed(new Error('Failed to launch: ' + error));
     });
-    return cleanup().then(() => failedPromise).then(e => Promise.reject(e));
+    return cleanup()
+      .then(() => failedPromise)
+      .then((e) => Promise.reject(e));
   }
   options.log(`<launched> pid=${spawnedProcess.pid}`);
 
@@ -111,11 +121,13 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
 
   let processClosed = false;
   let fulfillClose = () => {};
-  const waitForClose = new Promise<void>(f => fulfillClose = f);
+  const waitForClose = new Promise<void>((f) => (fulfillClose = f));
   let fulfillCleanup = () => {};
-  const waitForCleanup = new Promise<void>(f => fulfillCleanup = f);
+  const waitForCleanup = new Promise<void>((f) => (fulfillCleanup = f));
   spawnedProcess.once('exit', (exitCode, signal) => {
-    options.log(`[pid=${spawnedProcess.pid}] <process did exit: exitCode=${exitCode}, signal=${signal}>`);
+    options.log(
+      `[pid=${spawnedProcess.pid}] <process did exit: exitCode=${exitCode}, signal=${signal}>`,
+    );
     processClosed = true;
     eventsHelper.removeEventListeners(listeners);
     gracefullyCloseSet.delete(gracefullyClose);
@@ -125,17 +137,17 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
     cleanup().then(fulfillCleanup);
   });
 
-  const listeners = [ eventsHelper.addEventListener(process, 'exit', killProcessAndCleanup) ];
+  const listeners = [eventsHelper.addEventListener(process, 'exit', killProcessAndCleanup)];
   if (options.handleSIGINT) {
-    listeners.push(eventsHelper.addEventListener(process, 'SIGINT', () => {
-      gracefullyClose().then(() => {
-        // Give tests a chance to dispatch any async calls.
-        if (isUnderTest())
-          setTimeout(() => process.exit(130), 0);
-        else
-          process.exit(130);
-      });
-    }));
+    listeners.push(
+      eventsHelper.addEventListener(process, 'SIGINT', () => {
+        gracefullyClose().then(() => {
+          // Give tests a chance to dispatch any async calls.
+          if (isUnderTest()) setTimeout(() => process.exit(130), 0);
+          else process.exit(130);
+        });
+      }),
+    );
   }
   if (options.handleSIGTERM)
     listeners.push(eventsHelper.addEventListener(process, 'SIGTERM', gracefullyClose));
@@ -153,13 +165,13 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
     if (gracefullyClosing) {
       options.log(`[pid=${spawnedProcess.pid}] <forecefully close>`);
       killProcess();
-      await waitForClose;  // Ensure the process is dead and we called options.onkill.
+      await waitForClose; // Ensure the process is dead and we called options.onkill.
       return;
     }
     gracefullyClosing = true;
     options.log(`[pid=${spawnedProcess.pid}] <gracefully close start>`);
     await options.attemptToGracefullyClose().catch(() => killProcess());
-    await waitForCleanup;  // Ensure the process is dead and we have cleaned up.
+    await waitForCleanup; // Ensure the process is dead and we have cleaned up.
     options.log(`[pid=${spawnedProcess.pid}] <gracefully close end>`);
   }
 
@@ -172,12 +184,16 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
       // Force kill the browser.
       try {
         if (process.platform === 'win32') {
-          const taskkillProcess = childProcess.spawnSync(`taskkill /pid ${spawnedProcess.pid} /T /F /FI "MEMUSAGE gt 0"`, { shell: true });
-          const [stderr, stdout] = [taskkillProcess.stdout.toString(), taskkillProcess.stderr.toString()];
-          if (stdout)
-            options.log(`[pid=${spawnedProcess.pid}] taskkill stdout: ${stdout}`);
-          if (stderr)
-            options.log(`[pid=${spawnedProcess.pid}] taskkill stderr: ${stderr}`);
+          const taskkillProcess = childProcess.spawnSync(
+            `taskkill /pid ${spawnedProcess.pid} /T /F /FI "MEMUSAGE gt 0"`,
+            { shell: true },
+          );
+          const [stderr, stdout] = [
+            taskkillProcess.stdout.toString(),
+            taskkillProcess.stderr.toString(),
+          ];
+          if (stdout) options.log(`[pid=${spawnedProcess.pid}] taskkill stdout: ${stdout}`);
+          if (stderr) options.log(`[pid=${spawnedProcess.pid}] taskkill stderr: ${stderr}`);
         } else {
           process.kill(-spawnedProcess.pid, 'SIGKILL');
         }
@@ -186,7 +202,9 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
         // the process might have already stopped
       }
     } else {
-      options.log(`[pid=${spawnedProcess.pid}] <skipped force kill spawnedProcess.killed=${spawnedProcess.killed} processClosed=${processClosed}>`);
+      options.log(
+        `[pid=${spawnedProcess.pid}] <skipped force kill spawnedProcess.killed=${spawnedProcess.killed} processClosed=${processClosed}>`,
+      );
     }
   }
 
@@ -211,9 +229,8 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
   return { launchedProcess: spawnedProcess, gracefullyClose, kill: killAndWait };
 }
 
-export function envArrayToObject(env: { name: string, value: string }[]): Env {
+export function envArrayToObject(env: { name: string; value: string }[]): Env {
   const result: Env = {};
-  for (const { name, value } of env)
-    result[name] = value;
+  for (const { name, value } of env) result[name] = value;
   return result;
 }

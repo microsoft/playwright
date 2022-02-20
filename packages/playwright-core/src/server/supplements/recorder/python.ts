@@ -15,7 +15,12 @@
  */
 
 import type { BrowserContextOptions } from '../../../..';
-import { LanguageGenerator, LanguageGeneratorOptions, sanitizeDeviceOptions, toSignalMap } from './language';
+import {
+  LanguageGenerator,
+  LanguageGeneratorOptions,
+  sanitizeDeviceOptions,
+  toSignalMap,
+} from './language';
 import { ActionInContext } from './codeGenerator';
 import { actionTitle, Action } from './recorderActions';
 import { MouseClickOptions, toModifiers } from './utils';
@@ -57,7 +62,9 @@ export class PythonLanguageGenerator implements LanguageGenerator {
     if (actionInContext.frame.isMainFrame) {
       subject = pageAlias;
     } else if (actionInContext.frame.selectorsChain && action.name !== 'navigate') {
-      const locators = actionInContext.frame.selectorsChain.map(selector => '.' + asLocator(selector, 'frame_locator'));
+      const locators = actionInContext.frame.selectorsChain.map(
+        (selector) => '.' + asLocator(selector, 'frame_locator'),
+      );
       subject = `${pageAlias}${locators.join('')}`;
     } else if (actionInContext.frame.name) {
       subject = `${pageAlias}.frame(${formatOptions({ name: actionInContext.frame.name }, false)})`;
@@ -89,7 +96,9 @@ export class PythonLanguageGenerator implements LanguageGenerator {
 
     if (signals.waitForNavigation) {
       code = `
-      # ${this._asyncPrefix}with ${pageAlias}.expect_navigation(url=${quote(signals.waitForNavigation.url)}):
+      # ${this._asyncPrefix}with ${pageAlias}.expect_navigation(url=${quote(
+        signals.waitForNavigation.url,
+      )}):
       ${this._asyncPrefix}with ${pageAlias}.expect_navigation() {
         ${code}
       }`;
@@ -98,7 +107,11 @@ export class PythonLanguageGenerator implements LanguageGenerator {
     formatter.add(code);
 
     if (signals.assertNavigation)
-      formatter.add(`  # ${this._awaitPrefix}expect(${pageAlias}).to_have_url(${quote(signals.assertNavigation.url)})`);
+      formatter.add(
+        `  # ${this._awaitPrefix}expect(${pageAlias}).to_have_url(${quote(
+          signals.assertNavigation.url,
+        )})`,
+      );
     return formatter.format();
   }
 
@@ -110,18 +123,13 @@ export class PythonLanguageGenerator implements LanguageGenerator {
         return 'close()';
       case 'click': {
         let method = 'click';
-        if (action.clickCount === 2)
-          method = 'dblclick';
+        if (action.clickCount === 2) method = 'dblclick';
         const modifiers = toModifiers(action.modifiers);
         const options: MouseClickOptions = {};
-        if (action.button !== 'left')
-          options.button = action.button;
-        if (modifiers.length)
-          options.modifiers = modifiers;
-        if (action.clickCount > 2)
-          options.clickCount = action.clickCount;
-        if (action.position)
-          options.position = action.position;
+        if (action.button !== 'left') options.button = action.button;
+        if (modifiers.length) options.modifiers = modifiers;
+        if (action.clickCount > 2) options.clickCount = action.clickCount;
+        if (action.position) options.position = action.position;
         const optionsString = formatOptions(options, false);
         return asLocator(action.selector) + `.${method}(${optionsString})`;
       }
@@ -132,7 +140,12 @@ export class PythonLanguageGenerator implements LanguageGenerator {
       case 'fill':
         return asLocator(action.selector) + `.fill(${quote(action.text)})`;
       case 'setInputFiles':
-        return asLocator(action.selector) + `.set_input_files(${formatValue(action.files.length === 1 ? action.files[0] : action.files)})`;
+        return (
+          asLocator(action.selector) +
+          `.set_input_files(${formatValue(
+            action.files.length === 1 ? action.files[0] : action.files,
+          )})`
+        );
       case 'press': {
         const modifiers = toModifiers(action.modifiers);
         const shortcut = [...modifiers, action.key].join('+');
@@ -141,7 +154,12 @@ export class PythonLanguageGenerator implements LanguageGenerator {
       case 'navigate':
         return `goto(${quote(action.url)})`;
       case 'select':
-        return asLocator(action.selector) + `.select_option(${formatValue(action.options.length === 1 ? action.options[0] : action.options)})`;
+        return (
+          asLocator(action.selector) +
+          `.select_option(${formatValue(
+            action.options.length === 1 ? action.options[0] : action.options,
+          )})`
+        );
     }
   }
 
@@ -155,23 +173,37 @@ from playwright.async_api import Playwright, async_playwright, expect
 
 
 async def run(playwright: Playwright) -> None {
-    browser = await playwright.${options.browserName}.launch(${formatOptions(options.launchOptions, false)})
-    context = await browser.new_context(${formatContextOptions(options.contextOptions, options.deviceName)})`);
+    browser = await playwright.${options.browserName}.launch(${formatOptions(
+        options.launchOptions,
+        false,
+      )})
+    context = await browser.new_context(${formatContextOptions(
+      options.contextOptions,
+      options.deviceName,
+    )})`);
     } else {
       formatter.add(`
 from playwright.sync_api import Playwright, sync_playwright, expect
 
 
 def run(playwright: Playwright) -> None {
-    browser = playwright.${options.browserName}.launch(${formatOptions(options.launchOptions, false)})
-    context = browser.new_context(${formatContextOptions(options.contextOptions, options.deviceName)})`);
+    browser = playwright.${options.browserName}.launch(${formatOptions(
+        options.launchOptions,
+        false,
+      )})
+    context = browser.new_context(${formatContextOptions(
+      options.contextOptions,
+      options.deviceName,
+    )})`);
     }
     return formatter.format();
   }
 
   generateFooter(saveStorage: string | undefined): string {
     if (this._isAsync) {
-      const storageStateLine = saveStorage ? `\n    await context.storage_state(path=${quote(saveStorage)})` : '';
+      const storageStateLine = saveStorage
+        ? `\n    await context.storage_state(path=${quote(saveStorage)})`
+        : '';
       return `\n    # ---------------------${storageStateLine}
     await context.close()
     await browser.close()
@@ -185,7 +217,9 @@ async def main() -> None:
 asyncio.run(main())
 `;
     } else {
-      const storageStateLine = saveStorage ? `\n    context.storage_state(path=${quote(saveStorage)})` : '';
+      const storageStateLine = saveStorage
+        ? `\n    context.storage_state(path=${quote(saveStorage)})`
+        : '';
       return `\n    # ---------------------${storageStateLine}
     context.close()
     browser.close()
@@ -199,18 +233,12 @@ with sync_playwright() as playwright:
 }
 
 function formatValue(value: any): string {
-  if (value === false)
-    return 'False';
-  if (value === true)
-    return 'True';
-  if (value === undefined)
-    return 'None';
-  if (Array.isArray(value))
-    return `[${value.map(formatValue).join(', ')}]`;
-  if (typeof value === 'string')
-    return quote(value);
-  if (typeof value === 'object')
-    return JSON.stringify(value);
+  if (value === false) return 'False';
+  if (value === true) return 'True';
+  if (value === undefined) return 'None';
+  if (Array.isArray(value)) return `[${value.map(formatValue).join(', ')}]`;
+  if (typeof value === 'string') return quote(value);
+  if (typeof value === 'object') return JSON.stringify(value);
   return String(value);
 }
 
@@ -221,16 +249,23 @@ function toSnakeCase(name: string): string {
 
 function formatOptions(value: any, hasArguments: boolean): string {
   const keys = Object.keys(value);
-  if (!keys.length)
-    return '';
-  return (hasArguments ? ', ' : '') + keys.map(key => `${toSnakeCase(key)}=${formatValue(value[key])}`).join(', ');
+  if (!keys.length) return '';
+  return (
+    (hasArguments ? ', ' : '') +
+    keys.map((key) => `${toSnakeCase(key)}=${formatValue(value[key])}`).join(', ')
+  );
 }
 
-function formatContextOptions(options: BrowserContextOptions, deviceName: string | undefined): string {
+function formatContextOptions(
+  options: BrowserContextOptions,
+  deviceName: string | undefined,
+): string {
   const device = deviceName && deviceDescriptors[deviceName];
-  if (!device)
-    return formatOptions(options, false);
-  return `**playwright.devices[${quote(deviceName!)}]` + formatOptions(sanitizeDeviceOptions(device, options), true);
+  if (!device) return formatOptions(options, false);
+  return (
+    `**playwright.devices[${quote(deviceName!)}]` +
+    formatOptions(sanitizeDeviceOptions(device, options), true)
+  );
 }
 
 class PythonFormatter {
@@ -244,11 +279,20 @@ class PythonFormatter {
   }
 
   prepend(text: string) {
-    this._lines = text.trim().split('\n').map(line => line.trim()).concat(this._lines);
+    this._lines = text
+      .trim()
+      .split('\n')
+      .map((line) => line.trim())
+      .concat(this._lines);
   }
 
   add(text: string) {
-    this._lines.push(...text.trim().split('\n').map(line => line.trim()));
+    this._lines.push(
+      ...text
+        .trim()
+        .split('\n')
+        .map((line) => line.trim()),
+    );
   }
 
   newLine() {
@@ -259,14 +303,13 @@ class PythonFormatter {
     let spaces = '';
     const lines: string[] = [];
     this._lines.forEach((line: string) => {
-      if (line === '')
-        return lines.push(line);
+      if (line === '') return lines.push(line);
       if (line === '}') {
         spaces = spaces.substring(this._baseIndent.length);
         return;
       }
 
-      line = spaces  + line;
+      line = spaces + line;
       if (line.endsWith('{')) {
         spaces += this._baseIndent;
         line = line.substring(0, line.length - 1).trimEnd() + ':';
@@ -278,14 +321,12 @@ class PythonFormatter {
 }
 
 function quote(text: string) {
-  return escapeWithQuotes(text, '\"');
+  return escapeWithQuotes(text, '"');
 }
 
 function asLocator(selector: string, locatorFn = 'locator') {
   const match = selector.match(/(.*)\s+>>\s+nth=(\d+)$/);
-  if (!match)
-    return `${locatorFn}(${quote(selector)})`;
-  if (+match[2] === 0)
-    return `${locatorFn}(${quote(match[1])}).first`;
+  if (!match) return `${locatorFn}(${quote(selector)})`;
+  if (+match[2] === 0) return `${locatorFn}(${quote(match[1])}).first`;
   return `${locatorFn}(${quote(match[1])}).nth(${match[2]})`;
 }

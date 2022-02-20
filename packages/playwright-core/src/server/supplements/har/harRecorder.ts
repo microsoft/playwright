@@ -48,15 +48,12 @@ export class HarRecorder {
     this._entries.push(entry);
   }
 
-  onEntryFinished(entry: har.Entry) {
-  }
+  onEntryFinished(entry: har.Entry) {}
 
-  onContentBlob(sha1: string, buffer: Buffer) {
-  }
+  onContentBlob(sha1: string, buffer: Buffer) {}
 
   async flush() {
-    if (this._isFlushed)
-      return;
+    if (this._isFlushed) return;
     this._isFlushed = true;
     await this._tracer.flush();
     const log = this._tracer.stop();

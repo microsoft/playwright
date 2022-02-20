@@ -17,24 +17,23 @@
 import { NodeSnapshot } from '../common/snapshotTypes';
 
 export type SnapshotData = {
-  doctype?: string,
-  html: NodeSnapshot,
+  doctype?: string;
+  html: NodeSnapshot;
   resourceOverrides: {
-    url: string,
+    url: string;
     // String is the content. Number is "x snapshots ago", same url.
-    content: string | number,
-    contentType: 'text/css'
-  }[],
-  viewport: { width: number, height: number },
-  url: string,
-  timestamp: number,
-  collectionTime: number,
+    content: string | number;
+    contentType: 'text/css';
+  }[];
+  viewport: { width: number; height: number };
+  url: string;
+  timestamp: number;
+  collectionTime: number;
 };
 
 export function frameSnapshotStreamer(snapshotStreamer: string) {
   // Communication with Playwright.
-  if ((window as any)[snapshotStreamer])
-    return;
+  if ((window as any)[snapshotStreamer]) return;
 
   // Attributes present in the snapshot.
   const kShadowAttribute = '__playwright_shadow_root_';
@@ -48,11 +47,11 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
   const kCachedData = Symbol('__playwright_snapshot_cache_');
   const kEndOfList = Symbol('__playwright_end_of_list_');
   type CachedData = {
-    cached?: any[], // Cached values to determine whether the snapshot will be the same.
-    ref?: [number, number], // Previous snapshotNumber and nodeIndex.
-    attributesCached?: boolean, // Whether node attributes have not changed.
-    cssText?: string, // Text for stylesheets.
-    cssRef?: number, // Previous snapshotNumber for overridden stylesheets.
+    cached?: any[]; // Cached values to determine whether the snapshot will be the same.
+    ref?: [number, number]; // Previous snapshotNumber and nodeIndex.
+    attributesCached?: boolean; // Whether node attributes have not changed.
+    cssText?: string; // Text for stylesheets.
+    cssRef?: number; // Previous snapshotNumber for overridden stylesheets.
   };
 
   function resetCachedData(obj: any) {
@@ -60,8 +59,7 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
   }
 
   function ensureCachedData(obj: any): CachedData {
-    if (!obj[kCachedData])
-      obj[kCachedData] = {};
+    if (!obj[kCachedData]) obj[kCachedData] = {};
     return obj[kCachedData];
   }
 
@@ -79,54 +77,94 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
     private _removeNoScript = true;
     private _lastSnapshotNumber = 0;
     private _staleStyleSheets = new Set<CSSStyleSheet>();
-    private _readingStyleSheet = false;  // To avoid invalidating due to our own reads.
+    private _readingStyleSheet = false; // To avoid invalidating due to our own reads.
     private _fakeBase: HTMLBaseElement;
     private _observer: MutationObserver;
 
     constructor() {
-      this._interceptNativeMethod(window.CSSStyleSheet.prototype, 'insertRule', (sheet: CSSStyleSheet) => this._invalidateStyleSheet(sheet));
-      this._interceptNativeMethod(window.CSSStyleSheet.prototype, 'deleteRule', (sheet: CSSStyleSheet) => this._invalidateStyleSheet(sheet));
-      this._interceptNativeMethod(window.CSSStyleSheet.prototype, 'addRule', (sheet: CSSStyleSheet) => this._invalidateStyleSheet(sheet));
-      this._interceptNativeMethod(window.CSSStyleSheet.prototype, 'removeRule', (sheet: CSSStyleSheet) => this._invalidateStyleSheet(sheet));
-      this._interceptNativeGetter(window.CSSStyleSheet.prototype, 'rules', (sheet: CSSStyleSheet) => this._invalidateStyleSheet(sheet));
-      this._interceptNativeGetter(window.CSSStyleSheet.prototype, 'cssRules', (sheet: CSSStyleSheet) => this._invalidateStyleSheet(sheet));
-      this._interceptNativeMethod(window.CSSStyleSheet.prototype, 'replaceSync', (sheet: CSSStyleSheet) => this._invalidateStyleSheet(sheet));
-      this._interceptNativeAsyncMethod(window.CSSStyleSheet.prototype, 'replace', (sheet: CSSStyleSheet) => this._invalidateStyleSheet(sheet));
+      this._interceptNativeMethod(
+        window.CSSStyleSheet.prototype,
+        'insertRule',
+        (sheet: CSSStyleSheet) => this._invalidateStyleSheet(sheet),
+      );
+      this._interceptNativeMethod(
+        window.CSSStyleSheet.prototype,
+        'deleteRule',
+        (sheet: CSSStyleSheet) => this._invalidateStyleSheet(sheet),
+      );
+      this._interceptNativeMethod(
+        window.CSSStyleSheet.prototype,
+        'addRule',
+        (sheet: CSSStyleSheet) => this._invalidateStyleSheet(sheet),
+      );
+      this._interceptNativeMethod(
+        window.CSSStyleSheet.prototype,
+        'removeRule',
+        (sheet: CSSStyleSheet) => this._invalidateStyleSheet(sheet),
+      );
+      this._interceptNativeGetter(window.CSSStyleSheet.prototype, 'rules', (sheet: CSSStyleSheet) =>
+        this._invalidateStyleSheet(sheet),
+      );
+      this._interceptNativeGetter(
+        window.CSSStyleSheet.prototype,
+        'cssRules',
+        (sheet: CSSStyleSheet) => this._invalidateStyleSheet(sheet),
+      );
+      this._interceptNativeMethod(
+        window.CSSStyleSheet.prototype,
+        'replaceSync',
+        (sheet: CSSStyleSheet) => this._invalidateStyleSheet(sheet),
+      );
+      this._interceptNativeAsyncMethod(
+        window.CSSStyleSheet.prototype,
+        'replace',
+        (sheet: CSSStyleSheet) => this._invalidateStyleSheet(sheet),
+      );
 
       this._fakeBase = document.createElement('base');
 
-      this._observer = new MutationObserver(list => this._handleMutations(list));
+      this._observer = new MutationObserver((list) => this._handleMutations(list));
       const observerConfig = { attributes: true, subtree: true };
       this._observer.observe(document, observerConfig);
     }
 
-    private _interceptNativeMethod(obj: any, method: string, cb: (thisObj: any, result: any) => void) {
+    private _interceptNativeMethod(
+      obj: any,
+      method: string,
+      cb: (thisObj: any, result: any) => void,
+    ) {
       const native = obj[method] as Function;
-      if (!native)
-        return;
-      obj[method] = function(...args: any[]) {
+      if (!native) return;
+      obj[method] = function (...args: any[]) {
         const result = native.call(this, ...args);
         cb(this, result);
         return result;
       };
     }
 
-    private _interceptNativeAsyncMethod(obj: any, method: string, cb: (thisObj: any, result: any) => void) {
+    private _interceptNativeAsyncMethod(
+      obj: any,
+      method: string,
+      cb: (thisObj: any, result: any) => void,
+    ) {
       const native = obj[method] as Function;
-      if (!native)
-        return;
-      obj[method] = async function(...args: any[]) {
+      if (!native) return;
+      obj[method] = async function (...args: any[]) {
         const result = await native.call(this, ...args);
         cb(this, result);
         return result;
       };
     }
 
-    private _interceptNativeGetter(obj: any, prop: string, cb: (thisObj: any, result: any) => void) {
+    private _interceptNativeGetter(
+      obj: any,
+      prop: string,
+      cb: (thisObj: any, result: any) => void,
+    ) {
       const descriptor = Object.getOwnPropertyDescriptor(obj, prop)!;
       Object.defineProperty(obj, prop, {
         ...descriptor,
-        get: function() {
+        get: function () {
           const result = descriptor.get!.call(this);
           cb(this, result);
           return result;
@@ -135,17 +173,18 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
     }
 
     private _handleMutations(list: MutationRecord[]) {
-      for (const mutation of list)
-        ensureCachedData(mutation.target).attributesCached = undefined;
+      for (const mutation of list) ensureCachedData(mutation.target).attributesCached = undefined;
     }
 
     private _invalidateStyleSheet(sheet: CSSStyleSheet) {
-      if (this._readingStyleSheet)
-        return;
+      if (this._readingStyleSheet) return;
       this._staleStyleSheets.add(sheet);
     }
 
-    private _updateStyleElementStyleSheetTextIfNeeded(sheet: CSSStyleSheet, forceText?: boolean): string | undefined {
+    private _updateStyleElementStyleSheetTextIfNeeded(
+      sheet: CSSStyleSheet,
+      forceText?: boolean,
+    ): string | undefined {
       const data = ensureCachedData(sheet);
       if (this._staleStyleSheets.has(sheet) || (forceText && data.cssText === undefined)) {
         this._staleStyleSheets.delete(sheet);
@@ -160,7 +199,10 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
     }
 
     // Returns either content, ref, or no override.
-    private _updateLinkStyleSheetTextIfNeeded(sheet: CSSStyleSheet, snapshotNumber: number): string | number | undefined {
+    private _updateLinkStyleSheetTextIfNeeded(
+      sheet: CSSStyleSheet,
+      snapshotNumber: number,
+    ): string | number | undefined {
       const data = ensureCachedData(sheet);
       if (this._staleStyleSheets.has(sheet)) {
         this._staleStyleSheets.delete(sheet);
@@ -186,56 +228,49 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
         resetCachedData(node);
         if (node.nodeType === Node.ELEMENT_NODE) {
           const element = node as Element;
-          if (element.shadowRoot)
-            visitNode(element.shadowRoot);
+          if (element.shadowRoot) visitNode(element.shadowRoot);
         }
-        for (let child = node.firstChild; child; child = child.nextSibling)
-          visitNode(child);
+        for (let child = node.firstChild; child; child = child.nextSibling) visitNode(child);
       };
       visitNode(document.documentElement);
       visitNode(this._fakeBase);
     }
 
     private __sanitizeMetaAttribute(name: string, value: string, httpEquiv: string) {
-      if (name === 'charset')
-        return 'utf-8';
+      if (name === 'charset') return 'utf-8';
 
-      if (httpEquiv.toLowerCase() !== 'content-type' || name !== 'content')
-        return value;
+      if (httpEquiv.toLowerCase() !== 'content-type' || name !== 'content') return value;
 
       const [type, ...params] = value.split(';');
-      if (type !== 'text/html' || params.length <= 0)
-        return value;
+      if (type !== 'text/html' || params.length <= 0) return value;
 
-      const charsetParamIdx = params.findIndex(param => param.trim().startsWith('charset='));
-      if (charsetParamIdx > -1)
-        params[charsetParamIdx] = 'charset=utf-8';
+      const charsetParamIdx = params.findIndex((param) => param.trim().startsWith('charset='));
+      if (charsetParamIdx > -1) params[charsetParamIdx] = 'charset=utf-8';
 
       return `${type}; ${params.join('; ')}`;
     }
 
     private _sanitizeUrl(url: string): string {
-      if (url.startsWith('javascript:'))
-        return '';
+      if (url.startsWith('javascript:')) return '';
       // Rewrite blob urls so that Service Worker can intercept them.
-      if (url.startsWith('blob:'))
-        return kBlobUrlPrefix + url;
+      if (url.startsWith('blob:')) return kBlobUrlPrefix + url;
       return url;
     }
 
     private _sanitizeSrcSet(srcset: string): string {
-      return srcset.split(',').map(src => {
-        src = src.trim();
-        const spaceIndex = src.lastIndexOf(' ');
-        if (spaceIndex === -1)
-          return this._sanitizeUrl(src);
-        return this._sanitizeUrl(src.substring(0, spaceIndex).trim()) + src.substring(spaceIndex);
-      }).join(', ');
+      return srcset
+        .split(',')
+        .map((src) => {
+          src = src.trim();
+          const spaceIndex = src.lastIndexOf(' ');
+          if (spaceIndex === -1) return this._sanitizeUrl(src);
+          return this._sanitizeUrl(src.substring(0, spaceIndex).trim()) + src.substring(spaceIndex);
+        })
+        .join(', ');
     }
 
     private _resolveUrl(base: string, url: string): string {
-      if (url === '')
-        return '';
+      if (url === '') return '';
       try {
         return new URL(url, base).href;
       } catch (e) {
@@ -245,10 +280,8 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
 
     private _getSheetBase(sheet: CSSStyleSheet): string {
       let rootSheet = sheet;
-      while (rootSheet.parentStyleSheet)
-        rootSheet = rootSheet.parentStyleSheet;
-      if (rootSheet.ownerNode)
-        return rootSheet.ownerNode.baseURI;
+      while (rootSheet.parentStyleSheet) rootSheet = rootSheet.parentStyleSheet;
+      if (rootSheet.ownerNode) return rootSheet.ownerNode.baseURI;
       return document.baseURI;
     }
 
@@ -256,8 +289,7 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
       this._readingStyleSheet = true;
       try {
         const rules: string[] = [];
-        for (const rule of sheet.cssRules)
-          rules.push(rule.cssText);
+        for (const rule of sheet.cssRules) rules.push(rule.cssText);
         return rules.join('\n');
       } finally {
         this._readingStyleSheet = false;
@@ -274,30 +306,33 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
       // Ensure we are up to date.
       this._handleMutations(this._observer.takeRecords());
 
-      const visitNode = (node: Node | ShadowRoot): { equals: boolean, n: NodeSnapshot } | undefined => {
+      const visitNode = (
+        node: Node | ShadowRoot,
+      ): { equals: boolean; n: NodeSnapshot } | undefined => {
         const nodeType = node.nodeType;
         const nodeName = nodeType === Node.DOCUMENT_FRAGMENT_NODE ? 'template' : node.nodeName;
 
-        if (nodeType !== Node.ELEMENT_NODE &&
-            nodeType !== Node.DOCUMENT_FRAGMENT_NODE &&
-            nodeType !== Node.TEXT_NODE)
+        if (
+          nodeType !== Node.ELEMENT_NODE &&
+          nodeType !== Node.DOCUMENT_FRAGMENT_NODE &&
+          nodeType !== Node.TEXT_NODE
+        )
           return;
-        if (nodeName === 'SCRIPT')
-          return;
+        if (nodeName === 'SCRIPT') return;
         // Don't preload resources.
         if (nodeName === 'LINK' && nodeType === Node.ELEMENT_NODE) {
           const rel = (node as Element).getAttribute('rel')?.toLowerCase();
-          if (rel === 'preload' || rel === 'prefetch')
-            return;
+          if (rel === 'preload' || rel === 'prefetch') return;
         }
-        if (this._removeNoScript && nodeName === 'NOSCRIPT')
-          return;
-        if (nodeName === 'META' && (node as HTMLMetaElement).httpEquiv.toLowerCase() === 'content-security-policy')
+        if (this._removeNoScript && nodeName === 'NOSCRIPT') return;
+        if (
+          nodeName === 'META' &&
+          (node as HTMLMetaElement).httpEquiv.toLowerCase() === 'content-security-policy'
+        )
           return;
         // Skip iframes which are inside document's head as they are not visisble.
         // See https://github.com/microsoft/playwright/issues/12005.
-        if ((nodeName === 'IFRAME' || nodeName === 'FRAME') && headNesting)
-          return;
+        if ((nodeName === 'IFRAME' || nodeName === 'FRAME') && headNesting) return;
 
         const data = ensureCachedData(node);
         const values: any[] = [];
@@ -309,10 +344,9 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
           values.push(value);
         };
 
-        const checkAndReturn = (n: NodeSnapshot): { equals: boolean, n: NodeSnapshot } => {
+        const checkAndReturn = (n: NodeSnapshot): { equals: boolean; n: NodeSnapshot } => {
           data.attributesCached = true;
-          if (equals)
-            return { equals: true, n: [[ snapshotNumber - data.ref![0], data.ref![1] ]] };
+          if (equals) return { equals: true, n: [[snapshotNumber - data.ref![0], data.ref![1]]] };
           nodeCounter += extraNodes;
           data.ref = [snapshotNumber, nodeCounter++];
           data.cached = values;
@@ -328,8 +362,7 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
         if (nodeName === 'STYLE') {
           const sheet = (node as HTMLStyleElement).sheet;
           let cssText: string | undefined;
-          if (sheet)
-            cssText = this._updateStyleElementStyleSheetTextIfNeeded(sheet);
+          if (sheet) cssText = this._updateStyleElementStyleSheetTextIfNeeded(sheet);
           cssText = cssText || node.textContent || '';
           expectValue(cssText);
           // Compensate for the extra 'cssText' text node.
@@ -358,8 +391,7 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
           }
         };
 
-        if (nodeType === Node.DOCUMENT_FRAGMENT_NODE)
-          attrs[kShadowAttribute] = 'open';
+        if (nodeType === Node.DOCUMENT_FRAGMENT_NODE) attrs[kShadowAttribute] = 'open';
 
         if (nodeType === Node.ELEMENT_NODE) {
           const element = node as Element;
@@ -402,16 +434,13 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
             this._fakeBase.setAttribute('href', document.baseURI);
             visitChild(this._fakeBase);
           }
-          for (let child = node.firstChild; child; child = child.nextSibling)
-            visitChild(child);
-          if (nodeName === 'HEAD')
-            --headNesting;
+          for (let child = node.firstChild; child; child = child.nextSibling) visitChild(child);
+          if (nodeName === 'HEAD') --headNesting;
           expectValue(kEndOfList);
           let documentOrShadowRoot = null;
           if (node.ownerDocument!.documentElement === node)
             documentOrShadowRoot = node.ownerDocument;
-          else if (node.nodeType === Node.DOCUMENT_FRAGMENT_NODE)
-            documentOrShadowRoot = node;
+          else if (node.nodeType === Node.DOCUMENT_FRAGMENT_NODE) documentOrShadowRoot = node;
           if (documentOrShadowRoot) {
             for (const sheet of (documentOrShadowRoot as any).adoptedStyleSheets || [])
               visitChildStyleSheet(sheet);
@@ -432,34 +461,29 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
 
         // We can skip attributes comparison because nothing else has changed,
         // and mutation observer didn't tell us about the attributes.
-        if (equals && data.attributesCached && !shadowDomNesting)
-          return checkAndReturn(result);
+        if (equals && data.attributesCached && !shadowDomNesting) return checkAndReturn(result);
 
         if (nodeType === Node.ELEMENT_NODE) {
           const element = node as Element;
           for (let i = 0; i < element.attributes.length; i++) {
             const name = element.attributes[i].name;
-            if (name === 'value' && (nodeName === 'INPUT' || nodeName === 'TEXTAREA'))
-              continue;
-            if (nodeName === 'LINK' && name === 'integrity')
-              continue;
-            if (nodeName === 'IFRAME' && (name === 'src' || name === 'sandbox'))
-              continue;
-            if (nodeName === 'FRAME' && name === 'src')
-              continue;
+            if (name === 'value' && (nodeName === 'INPUT' || nodeName === 'TEXTAREA')) continue;
+            if (nodeName === 'LINK' && name === 'integrity') continue;
+            if (nodeName === 'IFRAME' && (name === 'src' || name === 'sandbox')) continue;
+            if (nodeName === 'FRAME' && name === 'src') continue;
             let value = element.attributes[i].value;
             if (nodeName === 'META')
-              value = this.__sanitizeMetaAttribute(name, value, (node as HTMLMetaElement).httpEquiv);
-            else if (name === 'src' && (nodeName === 'IMG'))
-              value = this._sanitizeUrl(value);
-            else if (name === 'srcset' && (nodeName === 'IMG'))
+              value = this.__sanitizeMetaAttribute(
+                name,
+                value,
+                (node as HTMLMetaElement).httpEquiv,
+              );
+            else if (name === 'src' && nodeName === 'IMG') value = this._sanitizeUrl(value);
+            else if (name === 'srcset' && nodeName === 'IMG') value = this._sanitizeSrcSet(value);
+            else if (name === 'srcset' && nodeName === 'SOURCE')
               value = this._sanitizeSrcSet(value);
-            else if (name === 'srcset' && (nodeName === 'SOURCE'))
-              value = this._sanitizeSrcSet(value);
-            else if (name === 'href' && (nodeName === 'LINK'))
-              value = this._sanitizeUrl(value);
-            else if (name.startsWith('on'))
-              value = '';
+            else if (name === 'href' && nodeName === 'LINK') value = this._sanitizeUrl(value);
+            else if (name.startsWith('on')) value = '';
             expectValue(name);
             expectValue(value);
             attrs[name] = value;
@@ -467,23 +491,28 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
           expectValue(kEndOfList);
         }
 
-        if (result.length === 2 && !Object.keys(attrs).length)
-          result.pop();  // Remove empty attrs when there are no children.
+        if (result.length === 2 && !Object.keys(attrs).length) result.pop(); // Remove empty attrs when there are no children.
         return checkAndReturn(result);
       };
 
       const visitStyleSheet = (sheet: CSSStyleSheet) => {
         const data = ensureCachedData(sheet);
         const oldCSSText = data.cssText;
-        const cssText = this._updateStyleElementStyleSheetTextIfNeeded(sheet, true /* forceText */)!;
+        const cssText = this._updateStyleElementStyleSheetTextIfNeeded(
+          sheet,
+          true /* forceText */,
+        )!;
         if (cssText === oldCSSText)
-          return { equals: true, n: [[ snapshotNumber - data.ref![0], data.ref![1] ]] };
+          return { equals: true, n: [[snapshotNumber - data.ref![0], data.ref![1]]] };
         data.ref = [snapshotNumber, nodeCounter++];
         return {
           equals: false,
-          n: ['template', {
-            [kStyleSheetAttribute]: cssText,
-          }]
+          n: [
+            'template',
+            {
+              [kStyleSheetAttribute]: cssText,
+            },
+          ],
         };
       };
 
@@ -509,8 +538,7 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
       };
 
       for (const sheet of this._staleStyleSheets) {
-        if (sheet.href === null)
-          continue;
+        if (sheet.href === null) continue;
         const content = this._updateLinkStyleSheetTextIfNeeded(sheet, snapshotNumber);
         if (content === undefined) {
           // Unable to capture stylesheet contents.
@@ -518,7 +546,7 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
         }
         const base = this._getSheetBase(sheet);
         const url = removeHash(this._resolveUrl(base, sheet.href!));
-        result.resourceOverrides.push({ url, content, contentType: 'text/css' },);
+        result.resourceOverrides.push({ url, content, contentType: 'text/css' });
       }
 
       result.collectionTime = performance.now() - result.timestamp;

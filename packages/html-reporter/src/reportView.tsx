@@ -34,7 +34,7 @@ declare global {
 }
 
 export const ReportView: React.FC<{
-  report: LoadedReport | undefined,
+  report: LoadedReport | undefined;
 }> = ({ report }) => {
   const searchParams = new URLSearchParams(window.location.hash.slice(1));
   const [expandedFiles, setExpandedFiles] = React.useState<Map<string, boolean>>(new Map());
@@ -42,36 +42,54 @@ export const ReportView: React.FC<{
 
   const filter = React.useMemo(() => Filter.parse(filterText), [filterText]);
 
-  return <div className='htmlreport vbox px-4 pb-4'>
-    {report?.json() && <HeaderView stats={report.json().stats} filterText={filterText} setFilterText={setFilterText}></HeaderView>}
-    {<>
-      <Route params=''>
-        <TestFilesView report={report?.json()} filter={filter} expandedFiles={expandedFiles} setExpandedFiles={setExpandedFiles}></TestFilesView>
-      </Route>
-      <Route params='q'>
-        <TestFilesView report={report?.json()} filter={filter} expandedFiles={expandedFiles} setExpandedFiles={setExpandedFiles}></TestFilesView>
-      </Route>
-      <Route params='testId'>
-        {!!report && <TestCaseViewLoader report={report}></TestCaseViewLoader>}
-      </Route>
-    </>}
-  </div>;
+  return (
+    <div className="htmlreport vbox px-4 pb-4">
+      {report?.json() && (
+        <HeaderView
+          stats={report.json().stats}
+          filterText={filterText}
+          setFilterText={setFilterText}
+        ></HeaderView>
+      )}
+      {
+        <>
+          <Route params="">
+            <TestFilesView
+              report={report?.json()}
+              filter={filter}
+              expandedFiles={expandedFiles}
+              setExpandedFiles={setExpandedFiles}
+            ></TestFilesView>
+          </Route>
+          <Route params="q">
+            <TestFilesView
+              report={report?.json()}
+              filter={filter}
+              expandedFiles={expandedFiles}
+              setExpandedFiles={setExpandedFiles}
+            ></TestFilesView>
+          </Route>
+          <Route params="testId">
+            {!!report && <TestCaseViewLoader report={report}></TestCaseViewLoader>}
+          </Route>
+        </>
+      }
+    </div>
+  );
 };
 
 const TestCaseViewLoader: React.FC<{
-  report: LoadedReport,
+  report: LoadedReport;
 }> = ({ report }) => {
   const searchParams = new URLSearchParams(window.location.hash.slice(1));
   const [test, setTest] = React.useState<TestCase | undefined>();
   const testId = searchParams.get('testId');
   React.useEffect(() => {
     (async () => {
-      if (!testId || testId === test?.testId)
-        return;
+      if (!testId || testId === test?.testId) return;
       const fileId = testId.split('-')[0];
-      if (!fileId)
-        return;
-      const file = await report.entry(`${fileId}.json`) as TestFile;
+      if (!fileId) return;
+      const file = (await report.entry(`${fileId}.json`)) as TestFile;
       for (const t of [...file.tests, ...file.hooks]) {
         if (t.testId === testId) {
           setTest(t);

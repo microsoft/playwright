@@ -18,8 +18,23 @@ import { SelectorEngine, SelectorRoot } from './selectorEngine';
 import { XPathEngine } from './xpathSelectorEngine';
 import { ReactEngine } from './reactSelectorEngine';
 import { VueEngine } from './vueSelectorEngine';
-import { allEngineNames, ParsedSelector, ParsedSelectorPart, parseSelector, stringifySelector } from '../common/selectorParser';
-import { SelectorEvaluatorImpl, isVisible, parentElementOrShadowHost, elementMatchesText, TextMatcher, createRegexTextMatcher, createStrictTextMatcher, createLaxTextMatcher } from './selectorEvaluator';
+import {
+  allEngineNames,
+  ParsedSelector,
+  ParsedSelectorPart,
+  parseSelector,
+  stringifySelector,
+} from '../common/selectorParser';
+import {
+  SelectorEvaluatorImpl,
+  isVisible,
+  parentElementOrShadowHost,
+  elementMatchesText,
+  TextMatcher,
+  createRegexTextMatcher,
+  createStrictTextMatcher,
+  createLaxTextMatcher,
+} from './selectorEvaluator';
 import { CSSComplexSelectorList } from '../common/cssParser';
 import { generateSelector } from './selectorGenerator';
 import type * as channels from '../../protocol/channels';
@@ -41,18 +56,27 @@ export type LogEntry = {
   intermediateResult?: string;
 };
 
-export type FrameExpectParams = Omit<channels.FrameExpectParams, 'expectedValue'> & { expectedValue?: any };
-
-export type InjectedScriptPoll<T> = {
-  run: () => Promise<T>,
-  // Takes more logs, waiting until at least one message is available.
-  takeNextLogs: () => Promise<LogEntry[]>,
-  // Takes all current logs without waiting.
-  takeLastLogs: () => LogEntry[],
-  cancel: () => void,
+export type FrameExpectParams = Omit<channels.FrameExpectParams, 'expectedValue'> & {
+  expectedValue?: any;
 };
 
-export type ElementStateWithoutStable = 'visible' | 'hidden' | 'enabled' | 'disabled' | 'editable' | 'checked' | 'unchecked';
+export type InjectedScriptPoll<T> = {
+  run: () => Promise<T>;
+  // Takes more logs, waiting until at least one message is available.
+  takeNextLogs: () => Promise<LogEntry[]>;
+  // Takes all current logs without waiting.
+  takeLastLogs: () => LogEntry[];
+  cancel: () => void;
+};
+
+export type ElementStateWithoutStable =
+  | 'visible'
+  | 'hidden'
+  | 'enabled'
+  | 'disabled'
+  | 'editable'
+  | 'checked'
+  | 'unchecked';
 export type ElementState = ElementStateWithoutStable | 'stable';
 
 export interface SelectorEngineV2 {
@@ -74,10 +98,16 @@ export class InjectedScript {
   private _stableRafCount: number;
   private _browserName: string;
   onGlobalListenersRemoved = new Set<() => void>();
-  private _hitTargetInterceptor: undefined | ((event: MouseEvent | PointerEvent | TouchEvent) => void);
+  private _hitTargetInterceptor:
+    | undefined
+    | ((event: MouseEvent | PointerEvent | TouchEvent) => void);
   private _highlight: Highlight | undefined;
 
-  constructor(stableRafCount: number, browserName: string, customEngines: { name: string, engine: SelectorEngine}[]) {
+  constructor(
+    stableRafCount: number,
+    browserName: string,
+    customEngines: { name: string; engine: SelectorEngine }[],
+  ) {
     this._evaluator = new SelectorEvaluatorImpl(new Map());
 
     this._engines = new Map();
@@ -101,8 +131,7 @@ export class InjectedScript {
     this._engines.set('control', this._createControlEngine());
     this._engines.set('has', this._createHasEngine());
 
-    for (const { name, engine } of customEngines)
-      this._engines.set(name, engine);
+    for (const { name, engine } of customEngines) this._engines.set(name, engine);
 
     this._stableRafCount = stableRafCount;
     this._browserName = browserName;
@@ -119,7 +148,9 @@ export class InjectedScript {
     const result = parseSelector(selector);
     for (const name of allEngineNames(result)) {
       if (!this._engines.has(name))
-        throw this.createStacklessError(`Unknown engine "${name}" while parsing selector ${selector}`);
+        throw this.createStacklessError(
+          `Unknown engine "${name}" while parsing selector ${selector}`,
+        );
     }
     return result;
   }
@@ -129,22 +160,33 @@ export class InjectedScript {
   }
 
   querySelector(selector: ParsedSelector, root: Node, strict: boolean): Element | undefined {
-    if (!(root as any)['querySelector'])
-      throw this.createStacklessError('Node is not queryable.');
+    if (!(root as any)['querySelector']) throw this.createStacklessError('Node is not queryable.');
     this._evaluator.begin();
     try {
-      const result = this._querySelectorRecursively([{ element: root as Element, capture: undefined }], selector, 0, new Map());
+      const result = this._querySelectorRecursively(
+        [{ element: root as Element, capture: undefined }],
+        selector,
+        0,
+        new Map(),
+      );
       if (strict && result.length > 1)
-        throw this.strictModeViolationError(selector, result.map(r => r.element));
+        throw this.strictModeViolationError(
+          selector,
+          result.map((r) => r.element),
+        );
       return result[0]?.capture || result[0]?.element;
     } finally {
       this._evaluator.end();
     }
   }
 
-  private _querySelectorRecursively(roots: ElementMatch[], selector: ParsedSelector, index: number, queryCache: Map<Element, Element[][]>): ElementMatch[] {
-    if (index === selector.parts.length)
-      return roots;
+  private _querySelectorRecursively(
+    roots: ElementMatch[],
+    selector: ParsedSelector,
+    index: number,
+    queryCache: Map<Element, Element[][]>,
+  ): ElementMatch[] {
+    if (index === selector.parts.length) return roots;
 
     const part = selector.parts[index];
     if (part.name === 'nth') {
@@ -152,17 +194,17 @@ export class InjectedScript {
       if (part.body === '0') {
         filtered = roots.slice(0, 1);
       } else if (part.body === '-1') {
-        if (roots.length)
-          filtered = roots.slice(roots.length - 1);
+        if (roots.length) filtered = roots.slice(roots.length - 1);
       } else {
         if (typeof selector.capture === 'number')
-          throw this.createStacklessError(`Can't query n-th element in a request with the capture.`);
+          throw this.createStacklessError(
+            `Can't query n-th element in a request with the capture.`,
+          );
         const nth = +part.body;
         const set = new Set<Element>();
         for (const root of roots) {
           set.add(root.element);
-          if (nth + 1 === set.size)
-            filtered = [root];
+          if (nth + 1 === set.size) filtered = [root];
         }
       }
       return this._querySelectorRecursively(filtered, selector, index + 1, queryCache);
@@ -170,7 +212,7 @@ export class InjectedScript {
 
     if (part.name === 'visible') {
       const visible = Boolean(part.body);
-      const filtered = roots.filter(match => visible === isVisible(match.element));
+      const filtered = roots.filter((match) => visible === isVisible(match.element));
       return this._querySelectorRecursively(filtered, selector, index + 1, queryCache);
     }
 
@@ -192,7 +234,9 @@ export class InjectedScript {
 
       for (const element of all) {
         if (!('nodeName' in element))
-          throw this.createStacklessError(`Expected a Node but got ${Object.prototype.toString.call(element)}`);
+          throw this.createStacklessError(
+            `Expected a Node but got ${Object.prototype.toString.call(element)}`,
+          );
         result.push({ element, capture });
       }
     }
@@ -204,10 +248,14 @@ export class InjectedScript {
       throw this.createStacklessError('Node is not queryable.');
     this._evaluator.begin();
     try {
-      const result = this._querySelectorRecursively([{ element: root as Element, capture: undefined }], selector, 0, new Map());
+      const result = this._querySelectorRecursively(
+        [{ element: root as Element, capture: undefined }],
+        selector,
+        0,
+        new Map(),
+      );
       const set = new Set<Element>();
-      for (const r of result)
-        set.add(r.capture || r.element);
+      for (const r of result) set.add(r.capture || r.element);
       return [...set];
     } finally {
       this._evaluator.end();
@@ -225,8 +273,11 @@ export class InjectedScript {
     };
     return {
       queryAll: (root: SelectorRoot, selector: string): Element[] => {
-        return this._evaluator.query({ scope: root as Document | Element, pierceShadow: shadow }, toCSS(selector));
-      }
+        return this._evaluator.query(
+          { scope: root as Document | Element, pierceShadow: shadow },
+          toCSS(selector),
+        );
+      },
     };
   }
 
@@ -235,7 +286,7 @@ export class InjectedScript {
     return {
       queryAll(root: SelectorRoot, body: any) {
         return evaluator.query({ scope: root as Document | Element, pierceShadow: true }, body);
-      }
+      },
     };
   }
 
@@ -250,43 +301,40 @@ export class InjectedScript {
         if (kind === 'lax' && lastDidNotMatchSelf && lastDidNotMatchSelf.contains(element))
           return false;
         const matches = elementMatchesText(this._evaluator, element, matcher);
-        if (matches === 'none')
-          lastDidNotMatchSelf = element;
+        if (matches === 'none') lastDidNotMatchSelf = element;
         if (matches === 'self' || (matches === 'selfAndChildren' && kind === 'strict'))
           result.push(element);
       };
 
-      if (root.nodeType === Node.ELEMENT_NODE)
-        appendElement(root as Element);
-      const elements = this._evaluator._queryCSS({ scope: root as Document | Element, pierceShadow: shadow }, '*');
-      for (const element of elements)
-        appendElement(element);
+      if (root.nodeType === Node.ELEMENT_NODE) appendElement(root as Element);
+      const elements = this._evaluator._queryCSS(
+        { scope: root as Document | Element, pierceShadow: shadow },
+        '*',
+      );
+      for (const element of elements) appendElement(element);
       return result;
     };
 
     return {
       queryAll: (root: SelectorRoot, selector: string): Element[] => {
         return queryList(root, selector);
-      }
+      },
     };
   }
 
   private _createControlEngine(): SelectorEngineV2 {
     return {
       queryAll(root: SelectorRoot, body: any) {
-        if (body === 'enter-frame')
-          return [];
-        if (body === 'return-empty')
-          return [];
+        if (body === 'enter-frame') return [];
+        if (body === 'return-empty') return [];
         throw new Error(`Internal error, unknown control selector ${body}`);
-      }
+      },
     };
   }
 
   private _createHasEngine(): SelectorEngineV2 {
     const queryAll = (root: SelectorRoot, body: ParsedSelector) => {
-      if (root.nodeType !== 1 /* Node.ELEMENT_NODE */)
-        return [];
+      if (root.nodeType !== 1 /* Node.ELEMENT_NODE */) return [];
       const has = !!this.querySelector(body, root, false);
       return has ? [root as Element] : [];
     };
@@ -307,34 +355,37 @@ export class InjectedScript {
   }
 
   pollRaf<T>(predicate: Predicate<T>): InjectedScriptPoll<T> {
-    return this.poll(predicate, next => requestAnimationFrame(next));
+    return this.poll(predicate, (next) => requestAnimationFrame(next));
   }
 
   pollInterval<T>(pollInterval: number, predicate: Predicate<T>): InjectedScriptPoll<T> {
-    return this.poll(predicate, next => setTimeout(next, pollInterval));
+    return this.poll(predicate, (next) => setTimeout(next, pollInterval));
   }
 
   pollLogScale<T>(predicate: Predicate<T>): InjectedScriptPoll<T> {
     const pollIntervals = [100, 250, 500];
     let attempts = 0;
-    return this.poll(predicate, next => setTimeout(next, pollIntervals[attempts++] || 1000));
+    return this.poll(predicate, (next) => setTimeout(next, pollIntervals[attempts++] || 1000));
   }
 
-  poll<T>(predicate: Predicate<T>, scheduleNext: (next: () => void) => void): InjectedScriptPoll<T> {
-    return this._runAbortableTask(progress => {
+  poll<T>(
+    predicate: Predicate<T>,
+    scheduleNext: (next: () => void) => void,
+  ): InjectedScriptPoll<T> {
+    return this._runAbortableTask((progress) => {
       let fulfill: (result: T) => void;
       let reject: (error: Error) => void;
-      const result = new Promise<T>((f, r) => { fulfill = f; reject = r; });
+      const result = new Promise<T>((f, r) => {
+        fulfill = f;
+        reject = r;
+      });
 
       const next = () => {
-        if (progress.aborted)
-          return;
+        if (progress.aborted) return;
         try {
           const success = predicate(progress);
-          if (success !== progress.continuePolling)
-            fulfill(success as T);
-          else
-            scheduleNext(next);
+          if (success !== progress.continuePolling) fulfill(success as T);
+          else scheduleNext(next);
         } catch (e) {
           progress.log('  ' + e.message);
           reject(e);
@@ -346,23 +397,24 @@ export class InjectedScript {
     });
   }
 
-  private _runAbortableTask<T>(task: (progess: InjectedScriptProgress) => Promise<T>): InjectedScriptPoll<T> {
+  private _runAbortableTask<T>(
+    task: (progess: InjectedScriptProgress) => Promise<T>,
+  ): InjectedScriptPoll<T> {
     let unsentLog: LogEntry[] = [];
     let takeNextLogsCallback: ((logs: LogEntry[]) => void) | undefined;
     let taskFinished = false;
     const logReady = () => {
-      if (!takeNextLogsCallback)
-        return;
+      if (!takeNextLogsCallback) return;
       takeNextLogsCallback(unsentLog);
       unsentLog = [];
       takeNextLogsCallback = undefined;
     };
 
-    const takeNextLogs = () => new Promise<LogEntry[]>(fulfill => {
-      takeNextLogsCallback = fulfill;
-      if (unsentLog.length || taskFinished)
-        logReady();
-    });
+    const takeNextLogs = () =>
+      new Promise<LogEntry[]>((fulfill) => {
+        takeNextLogsCallback = fulfill;
+        if (unsentLog.length || taskFinished) logReady();
+      });
 
     let lastMessage = '';
     let lastIntermediateResult: any = undefined;
@@ -376,12 +428,10 @@ export class InjectedScript {
         logReady();
       },
       logRepeating: (message: string) => {
-        if (message !== lastMessage)
-          progress.log(message);
+        if (message !== lastMessage) progress.log(message);
       },
       setIntermediateResult: (intermediateResult: any) => {
-        if (lastIntermediateResult === intermediateResult)
-          return;
+        if (lastIntermediateResult === intermediateResult) return;
         lastIntermediateResult = intermediateResult;
         unsentLog.push({ intermediateResult });
         logReady();
@@ -405,44 +455,59 @@ export class InjectedScript {
     return {
       takeNextLogs,
       run,
-      cancel: () => { progress.aborted = true; },
+      cancel: () => {
+        progress.aborted = true;
+      },
       takeLastLogs: () => unsentLog,
     };
   }
 
-  getElementBorderWidth(node: Node): { left: number; top: number; } {
-    if (node.nodeType !== Node.ELEMENT_NODE || !node.ownerDocument || !node.ownerDocument.defaultView)
+  getElementBorderWidth(node: Node): { left: number; top: number } {
+    if (
+      node.nodeType !== Node.ELEMENT_NODE ||
+      !node.ownerDocument ||
+      !node.ownerDocument.defaultView
+    )
       return { left: 0, top: 0 };
     const style = node.ownerDocument.defaultView.getComputedStyle(node as Element);
-    return { left: parseInt(style.borderLeftWidth || '', 10), top: parseInt(style.borderTopWidth || '', 10) };
+    return {
+      left: parseInt(style.borderLeftWidth || '', 10),
+      top: parseInt(style.borderTopWidth || '', 10),
+    };
   }
 
   retarget(node: Node, behavior: 'follow-label' | 'no-follow-label'): Element | null {
-    let element = node.nodeType === Node.ELEMENT_NODE ? node as Element : node.parentElement;
-    if (!element)
-      return null;
+    let element = node.nodeType === Node.ELEMENT_NODE ? (node as Element) : node.parentElement;
+    if (!element) return null;
     if (!element.matches('input, textarea, select'))
       element = element.closest('button, [role=button], [role=checkbox], [role=radio]') || element;
     if (behavior === 'follow-label') {
-      if (!element.matches('input, textarea, button, select, [role=button], [role=checkbox], [role=radio]') &&
-          !(element as any).isContentEditable) {
+      if (
+        !element.matches(
+          'input, textarea, button, select, [role=button], [role=checkbox], [role=radio]',
+        ) &&
+        !(element as any).isContentEditable
+      ) {
         // Go up to the label that might be connected to the input/textarea.
         element = element.closest('label') || element;
       }
-      if (element.nodeName === 'LABEL')
-        element = (element as HTMLLabelElement).control || element;
+      if (element.nodeName === 'LABEL') element = (element as HTMLLabelElement).control || element;
     }
     return element;
   }
 
-  waitForElementStatesAndPerformAction<T>(node: Node, states: ElementState[], force: boolean | undefined,
-    callback: (node: Node, progress: InjectedScriptProgress) => T | symbol): InjectedScriptPoll<T | 'error:notconnected'> {
-    let lastRect: { x: number, y: number, width: number, height: number } | undefined;
+  waitForElementStatesAndPerformAction<T>(
+    node: Node,
+    states: ElementState[],
+    force: boolean | undefined,
+    callback: (node: Node, progress: InjectedScriptProgress) => T | symbol,
+  ): InjectedScriptPoll<T | 'error:notconnected'> {
+    let lastRect: { x: number; y: number; width: number; height: number } | undefined;
     let counter = 0;
     let samePositionCounter = 0;
     let lastTime = 0;
 
-    return this.pollRaf(progress => {
+    return this.pollRaf((progress) => {
       if (force) {
         progress.log(`    forcing action`);
         return callback(node, progress);
@@ -451,8 +516,7 @@ export class InjectedScript {
       for (const state of states) {
         if (state !== 'stable') {
           const result = this.elementState(node, state);
-          if (typeof result !== 'boolean')
-            return result;
+          if (typeof result !== 'boolean') return result;
           if (!result) {
             progress.logRepeating(`    element is not ${state} - waiting...`);
             return progress.continuePolling;
@@ -461,35 +525,38 @@ export class InjectedScript {
         }
 
         const element = this.retarget(node, 'no-follow-label');
-        if (!element)
-          return 'error:notconnected';
+        if (!element) return 'error:notconnected';
 
         // First raf happens in the same animation frame as evaluation, so it does not produce
         // any client rect difference compared to synchronous call. We skip the synchronous call
         // and only force layout during actual rafs as a small optimisation.
-        if (++counter === 1)
-          return progress.continuePolling;
+        if (++counter === 1) return progress.continuePolling;
 
         // Drop frames that are shorter than 16ms - WebKit Win bug.
         const time = performance.now();
-        if (this._stableRafCount > 1 && time - lastTime < 15)
-          return progress.continuePolling;
+        if (this._stableRafCount > 1 && time - lastTime < 15) return progress.continuePolling;
         lastTime = time;
 
         const clientRect = element.getBoundingClientRect();
-        const rect = { x: clientRect.top, y: clientRect.left, width: clientRect.width, height: clientRect.height };
-        const samePosition = lastRect && rect.x === lastRect.x && rect.y === lastRect.y && rect.width === lastRect.width && rect.height === lastRect.height;
-        if (samePosition)
-          ++samePositionCounter;
-        else
-          samePositionCounter = 0;
+        const rect = {
+          x: clientRect.top,
+          y: clientRect.left,
+          width: clientRect.width,
+          height: clientRect.height,
+        };
+        const samePosition =
+          lastRect &&
+          rect.x === lastRect.x &&
+          rect.y === lastRect.y &&
+          rect.width === lastRect.width &&
+          rect.height === lastRect.height;
+        if (samePosition) ++samePositionCounter;
+        else samePositionCounter = 0;
         const isStable = samePositionCounter >= this._stableRafCount;
         const isStableForLogs = isStable || !lastRect;
         lastRect = rect;
-        if (!isStableForLogs)
-          progress.logRepeating(`    element is not stable - waiting...`);
-        if (!isStable)
-          return progress.continuePolling;
+        if (!isStableForLogs) progress.logRepeating(`    element is not stable - waiting...`);
+        if (!isStable) return progress.continuePolling;
       }
 
       return callback(node, progress);
@@ -497,27 +564,26 @@ export class InjectedScript {
   }
 
   elementState(node: Node, state: ElementStateWithoutStable): boolean | 'error:notconnected' {
-    const element = this.retarget(node, ['stable', 'visible', 'hidden'].includes(state) ? 'no-follow-label' : 'follow-label');
+    const element = this.retarget(
+      node,
+      ['stable', 'visible', 'hidden'].includes(state) ? 'no-follow-label' : 'follow-label',
+    );
     if (!element || !element.isConnected) {
-      if (state === 'hidden')
-        return true;
+      if (state === 'hidden') return true;
       return 'error:notconnected';
     }
 
-    if (state === 'visible')
-      return this.isVisible(element);
-    if (state === 'hidden')
-      return !this.isVisible(element);
+    if (state === 'visible') return this.isVisible(element);
+    if (state === 'hidden') return !this.isVisible(element);
 
     const disabled = isElementDisabled(element);
-    if (state === 'disabled')
-      return disabled;
-    if (state === 'enabled')
-      return !disabled;
+    if (state === 'disabled') return disabled;
+    if (state === 'enabled') return !disabled;
 
-    const editable = !(['INPUT', 'TEXTAREA', 'SELECT'].includes(element.nodeName) && element.hasAttribute('readonly'));
-    if (state === 'editable')
-      return !disabled && editable;
+    const editable = !(
+      ['INPUT', 'TEXTAREA', 'SELECT'].includes(element.nodeName) && element.hasAttribute('readonly')
+    );
+    if (state === 'editable') return !disabled && editable;
 
     if (state === 'checked' || state === 'unchecked') {
       if (['checkbox', 'radio'].includes(element.getAttribute('role') || '')) {
@@ -534,11 +600,13 @@ export class InjectedScript {
     throw this.createStacklessError(`Unexpected element state "${state}"`);
   }
 
-  selectOptions(optionsToSelect: (Node | { value?: string, label?: string, index?: number })[],
-    node: Node, progress: InjectedScriptProgress): string[] | 'error:notconnected' | symbol {
+  selectOptions(
+    optionsToSelect: (Node | { value?: string; label?: string; index?: number })[],
+    node: Node,
+    progress: InjectedScriptProgress,
+  ): string[] | 'error:notconnected' | symbol {
     const element = this.retarget(node, 'follow-label');
-    if (!element)
-      return 'error:notconnected';
+    if (!element) return 'error:notconnected';
     if (element.nodeName.toLowerCase() !== 'select')
       throw this.createStacklessError('Element is not a <select> element');
     const select = element as HTMLSelectElement;
@@ -547,23 +615,22 @@ export class InjectedScript {
     let remainingOptionsToSelect = optionsToSelect.slice();
     for (let index = 0; index < options.length; index++) {
       const option = options[index];
-      const filter = (optionToSelect: Node | { value?: string, label?: string, index?: number }) => {
-        if (optionToSelect instanceof Node)
-          return option === optionToSelect;
+      const filter = (
+        optionToSelect: Node | { value?: string; label?: string; index?: number },
+      ) => {
+        if (optionToSelect instanceof Node) return option === optionToSelect;
         let matches = true;
         if (optionToSelect.value !== undefined)
           matches = matches && optionToSelect.value === option.value;
         if (optionToSelect.label !== undefined)
           matches = matches && optionToSelect.label === option.label;
-        if (optionToSelect.index !== undefined)
-          matches = matches && optionToSelect.index === index;
+        if (optionToSelect.index !== undefined) matches = matches && optionToSelect.index === index;
         return matches;
       };
-      if (!remainingOptionsToSelect.some(filter))
-        continue;
+      if (!remainingOptionsToSelect.some(filter)) continue;
       selectedOptions.push(option);
       if (select.multiple) {
-        remainingOptionsToSelect = remainingOptionsToSelect.filter(o => !filter(o));
+        remainingOptionsToSelect = remainingOptionsToSelect.filter((o) => !filter(o));
       } else {
         remainingOptionsToSelect = [];
         break;
@@ -574,22 +641,43 @@ export class InjectedScript {
       return progress.continuePolling;
     }
     select.value = undefined as any;
-    selectedOptions.forEach(option => option.selected = true);
+    selectedOptions.forEach((option) => (option.selected = true));
     progress.log('    selected specified option(s)');
-    select.dispatchEvent(new Event('input', { 'bubbles': true }));
-    select.dispatchEvent(new Event('change', { 'bubbles': true }));
-    return selectedOptions.map(option => option.value);
+    select.dispatchEvent(new Event('input', { bubbles: true }));
+    select.dispatchEvent(new Event('change', { bubbles: true }));
+    return selectedOptions.map((option) => option.value);
   }
 
-  fill(value: string, node: Node, progress: InjectedScriptProgress): 'error:notconnected' | 'needsinput' | 'done' {
+  fill(
+    value: string,
+    node: Node,
+    progress: InjectedScriptProgress,
+  ): 'error:notconnected' | 'needsinput' | 'done' {
     const element = this.retarget(node, 'follow-label');
-    if (!element)
-      return 'error:notconnected';
+    if (!element) return 'error:notconnected';
     if (element.nodeName.toLowerCase() === 'input') {
       const input = element as HTMLInputElement;
       const type = input.type.toLowerCase();
-      const kInputTypesToSetValue = new Set(['color', 'date', 'time', 'datetime', 'datetime-local', 'month', 'range', 'week']);
-      const kInputTypesToTypeInto = new Set(['', 'email', 'number', 'password', 'search', 'tel', 'text', 'url']);
+      const kInputTypesToSetValue = new Set([
+        'color',
+        'date',
+        'time',
+        'datetime',
+        'datetime-local',
+        'month',
+        'range',
+        'week',
+      ]);
+      const kInputTypesToTypeInto = new Set([
+        '',
+        'email',
+        'number',
+        'password',
+        'search',
+        'tel',
+        'text',
+        'url',
+      ]);
       if (!kInputTypesToTypeInto.has(type) && !kInputTypesToSetValue.has(type)) {
         progress.log(`    input of type "${type}" cannot be filled`);
         throw this.createStacklessError(`Input of type "${type}" cannot be filled`);
@@ -603,25 +691,25 @@ export class InjectedScript {
         value = value.trim();
         input.focus();
         input.value = value;
-        if (input.value !== value)
-          throw this.createStacklessError('Malformed value');
-        element.dispatchEvent(new Event('input', { 'bubbles': true }));
-        element.dispatchEvent(new Event('change', { 'bubbles': true }));
-        return 'done';  // We have already changed the value, no need to input it.
+        if (input.value !== value) throw this.createStacklessError('Malformed value');
+        element.dispatchEvent(new Event('input', { bubbles: true }));
+        element.dispatchEvent(new Event('change', { bubbles: true }));
+        return 'done'; // We have already changed the value, no need to input it.
       }
     } else if (element.nodeName.toLowerCase() === 'textarea') {
       // Nothing to check here.
     } else if (!(element as HTMLElement).isContentEditable) {
-      throw this.createStacklessError('Element is not an <input>, <textarea> or [contenteditable] element');
+      throw this.createStacklessError(
+        'Element is not an <input>, <textarea> or [contenteditable] element',
+      );
     }
     this.selectText(element);
-    return 'needsinput';  // Still need to input the value.
+    return 'needsinput'; // Still need to input the value.
   }
 
   selectText(node: Node): 'error:notconnected' | 'done' {
     const element = this.retarget(node, 'follow-label');
-    if (!element)
-      return 'error:notconnected';
+    if (!element) return 'error:notconnected';
     if (element.nodeName.toLowerCase() === 'input') {
       const input = element as HTMLInputElement;
       input.select();
@@ -647,11 +735,13 @@ export class InjectedScript {
   }
 
   focusNode(node: Node, resetSelectionIfNotFocused?: boolean): 'error:notconnected' | 'done' {
-    if (!node.isConnected)
-      return 'error:notconnected';
+    if (!node.isConnected) return 'error:notconnected';
     if (node.nodeType !== Node.ELEMENT_NODE)
       throw this.createStacklessError('Node is not an element');
-    const wasFocused = (node.getRootNode() as (Document | ShadowRoot)).activeElement === node && node.ownerDocument && node.ownerDocument.hasFocus();
+    const wasFocused =
+      (node.getRootNode() as Document | ShadowRoot).activeElement === node &&
+      node.ownerDocument &&
+      node.ownerDocument.hasFocus();
     (node as HTMLElement | SVGElement).focus();
 
     if (resetSelectionIfNotFocused && !wasFocused && node.nodeName.toLowerCase() === 'input') {
@@ -665,33 +755,32 @@ export class InjectedScript {
     return 'done';
   }
 
-  setInputFiles(node: Node, payloads: { name: string, mimeType: string, buffer: string }[]) {
-    if (node.nodeType !== Node.ELEMENT_NODE)
-      return 'Node is not of type HTMLElement';
+  setInputFiles(node: Node, payloads: { name: string; mimeType: string; buffer: string }[]) {
+    if (node.nodeType !== Node.ELEMENT_NODE) return 'Node is not of type HTMLElement';
     const element: Element | undefined = node as Element;
-    if (element.nodeName !== 'INPUT')
-      return 'Not an <input> element';
+    if (element.nodeName !== 'INPUT') return 'Not an <input> element';
     const input = element as HTMLInputElement;
     const type = (input.getAttribute('type') || '').toLowerCase();
-    if (type !== 'file')
-      return 'Not an input[type=file] element';
+    if (type !== 'file') return 'Not an input[type=file] element';
 
-    const files = payloads.map(file => {
-      const bytes = Uint8Array.from(atob(file.buffer), c => c.charCodeAt(0));
+    const files = payloads.map((file) => {
+      const bytes = Uint8Array.from(atob(file.buffer), (c) => c.charCodeAt(0));
       return new File([bytes], file.name, { type: file.mimeType });
     });
     const dt = new DataTransfer();
-    for (const file of files)
-      dt.items.add(file);
+    for (const file of files) dt.items.add(file);
     input.files = dt.files;
-    input.dispatchEvent(new Event('input', { 'bubbles': true }));
-    input.dispatchEvent(new Event('change', { 'bubbles': true }));
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    input.dispatchEvent(new Event('change', { bubbles: true }));
   }
 
-  checkHitTargetAt(node: Node, point: { x: number, y: number }): 'error:notconnected' | 'done' | { hitTargetDescription: string } {
-    let element: Element | null | undefined = node.nodeType === Node.ELEMENT_NODE ? (node as Element) : node.parentElement;
-    if (!element || !element.isConnected)
-      return 'error:notconnected';
+  checkHitTargetAt(
+    node: Node,
+    point: { x: number; y: number },
+  ): 'error:notconnected' | 'done' | { hitTargetDescription: string } {
+    let element: Element | null | undefined =
+      node.nodeType === Node.ELEMENT_NODE ? (node as Element) : node.parentElement;
+    if (!element || !element.isConnected) return 'error:notconnected';
     element = element.closest('button, [role=button]') || element;
     const hitElement = this.deepElementFromPoint(document, point.x, point.y);
     return this._expectHitTargetParent(hitElement, element);
@@ -703,8 +792,7 @@ export class InjectedScript {
       hitParents.push(hitElement);
       hitElement = parentElementOrShadowHost(hitElement);
     }
-    if (hitElement === targetElement)
-      return 'done';
+    if (hitElement === targetElement) return 'done';
     const hitTargetDescription = this.previewNode(hitParents[0] || document.documentElement);
     // Root is the topmost element in the hitTarget's chain that is not in the
     // element's chain. For example, it might be a dialog element that overlays
@@ -714,42 +802,48 @@ export class InjectedScript {
     while (element) {
       const index = hitParents.indexOf(element);
       if (index !== -1) {
-        if (index > 1)
-          rootHitTargetDescription = this.previewNode(hitParents[index - 1]);
+        if (index > 1) rootHitTargetDescription = this.previewNode(hitParents[index - 1]);
         break;
       }
       element = parentElementOrShadowHost(element);
     }
     if (rootHitTargetDescription)
-      return { hitTargetDescription: `${hitTargetDescription} from ${rootHitTargetDescription} subtree` };
+      return {
+        hitTargetDescription: `${hitTargetDescription} from ${rootHitTargetDescription} subtree`,
+      };
     return { hitTargetDescription };
   }
 
-  setupHitTargetInterceptor(node: Node, action: 'hover' | 'tap' | 'mouse', blockAllEvents: boolean): HitTargetInterceptionResult | 'error:notconnected' {
-    const maybeElement: Element | null | undefined = node.nodeType === Node.ELEMENT_NODE ? (node as Element) : node.parentElement;
-    if (!maybeElement || !maybeElement.isConnected)
-      return 'error:notconnected';
+  setupHitTargetInterceptor(
+    node: Node,
+    action: 'hover' | 'tap' | 'mouse',
+    blockAllEvents: boolean,
+  ): HitTargetInterceptionResult | 'error:notconnected' {
+    const maybeElement: Element | null | undefined =
+      node.nodeType === Node.ELEMENT_NODE ? (node as Element) : node.parentElement;
+    if (!maybeElement || !maybeElement.isConnected) return 'error:notconnected';
     const element = maybeElement.closest('button, [role=button]') || maybeElement;
 
     const events = {
-      'hover': kHoverHitTargetInterceptorEvents,
-      'tap': kTapHitTargetInterceptorEvents,
-      'mouse': kMouseHitTargetInterceptorEvents,
+      hover: kHoverHitTargetInterceptorEvents,
+      tap: kTapHitTargetInterceptorEvents,
+      mouse: kMouseHitTargetInterceptorEvents,
     }[action];
     let result: 'done' | { hitTargetDescription: string } | undefined;
 
     const listener = (event: PointerEvent | MouseEvent | TouchEvent) => {
       // Ignore events that we do not expect to intercept.
-      if (!events.has(event.type))
-        return;
+      if (!events.has(event.type)) return;
 
       // Playwright only issues trusted events, so allow any custom events originating from
       // the page or content scripts.
-      if (!event.isTrusted)
-        return;
+      if (!event.isTrusted) return;
 
       // Determine the event point. Note that Firefox does not always have window.TouchEvent.
-      const point = (!!window.TouchEvent && (event instanceof window.TouchEvent)) ? event.touches[0] : (event as MouseEvent | PointerEvent);
+      const point =
+        !!window.TouchEvent && event instanceof window.TouchEvent
+          ? event.touches[0]
+          : (event as MouseEvent | PointerEvent);
 
       // Check that we hit the right element at the first event, and assume all
       // subsequent events will be fine.
@@ -766,8 +860,7 @@ export class InjectedScript {
     };
 
     const stop = () => {
-      if (this._hitTargetInterceptor === listener)
-        this._hitTargetInterceptor = undefined;
+      if (this._hitTargetInterceptor === listener) this._hitTargetInterceptor = undefined;
       // If we did not get any events, consider things working. Possible causes:
       // - JavaScript is disabled (webkit-only).
       // - Some <iframe> overlays the element from another frame.
@@ -785,13 +878,27 @@ export class InjectedScript {
     let event;
     eventInit = { bubbles: true, cancelable: true, composed: true, ...eventInit };
     switch (eventType.get(type)) {
-      case 'mouse': event = new MouseEvent(type, eventInit); break;
-      case 'keyboard': event = new KeyboardEvent(type, eventInit); break;
-      case 'touch': event = new TouchEvent(type, eventInit); break;
-      case 'pointer': event = new PointerEvent(type, eventInit); break;
-      case 'focus': event = new FocusEvent(type, eventInit); break;
-      case 'drag': event = new DragEvent(type, eventInit); break;
-      default: event = new Event(type, eventInit); break;
+      case 'mouse':
+        event = new MouseEvent(type, eventInit);
+        break;
+      case 'keyboard':
+        event = new KeyboardEvent(type, eventInit);
+        break;
+      case 'touch':
+        event = new TouchEvent(type, eventInit);
+        break;
+      case 'pointer':
+        event = new PointerEvent(type, eventInit);
+        break;
+      case 'focus':
+        event = new FocusEvent(type, eventInit);
+        break;
+      case 'drag':
+        event = new DragEvent(type, eventInit);
+        break;
+      default:
+        event = new Event(type, eventInit);
+        break;
     }
     node.dispatchEvent(event);
   }
@@ -804,8 +911,7 @@ export class InjectedScript {
       // so we use elementsFromPoint instead.
       const elements = (container as Document).elementsFromPoint(x, y);
       const innerElement = elements[0] as Element | undefined;
-      if (!innerElement || element === innerElement)
-        break;
+      if (!innerElement || element === innerElement) break;
       element = innerElement;
       container = element.shadowRoot;
     }
@@ -813,26 +919,20 @@ export class InjectedScript {
   }
 
   previewNode(node: Node): string {
-    if (node.nodeType === Node.TEXT_NODE)
-      return oneLine(`#text=${node.nodeValue || ''}`);
-    if (node.nodeType !== Node.ELEMENT_NODE)
-      return oneLine(`<${node.nodeName.toLowerCase()} />`);
+    if (node.nodeType === Node.TEXT_NODE) return oneLine(`#text=${node.nodeValue || ''}`);
+    if (node.nodeType !== Node.ELEMENT_NODE) return oneLine(`<${node.nodeName.toLowerCase()} />`);
     const element = node as Element;
 
     const attrs = [];
     for (let i = 0; i < element.attributes.length; i++) {
       const { name, value } = element.attributes[i];
-      if (name === 'style' || name.startsWith('__playwright'))
-        continue;
-      if (!value && booleanAttributes.has(name))
-        attrs.push(` ${name}`);
-      else
-        attrs.push(` ${name}="${value}"`);
+      if (name === 'style' || name.startsWith('__playwright')) continue;
+      if (!value && booleanAttributes.has(name)) attrs.push(` ${name}`);
+      else attrs.push(` ${name}="${value}"`);
     }
     attrs.sort((a, b) => a.length - b.length);
     let attrText = attrs.join('');
-    if (attrText.length > 50)
-      attrText = attrText.substring(0, 49) + '\u2026';
+    if (attrText.length > 50) attrText = attrText.substring(0, 49) + '\u2026';
     if (autoClosingTags.has(element.nodeName))
       return oneLine(`<${element.nodeName.toLowerCase()}${attrText}/>`);
 
@@ -843,21 +943,27 @@ export class InjectedScript {
       for (let i = 0; i < children.length; i++)
         onlyText = onlyText && children[i].nodeType === Node.TEXT_NODE;
     }
-    let text = onlyText ? (element.textContent || '') : (children.length ? '\u2026' : '');
-    if (text.length > 50)
-      text = text.substring(0, 49) + '\u2026';
-    return oneLine(`<${element.nodeName.toLowerCase()}${attrText}>${text}</${element.nodeName.toLowerCase()}>`);
+    let text = onlyText ? element.textContent || '' : children.length ? '\u2026' : '';
+    if (text.length > 50) text = text.substring(0, 49) + '\u2026';
+    return oneLine(
+      `<${element.nodeName.toLowerCase()}${attrText}>${text}</${element.nodeName.toLowerCase()}>`,
+    );
   }
 
   strictModeViolationError(selector: ParsedSelector, matches: Element[]): Error {
-    const infos = matches.slice(0, 10).map(m => ({
+    const infos = matches.slice(0, 10).map((m) => ({
       preview: this.previewNode(m),
       selector: this.generateSelector(m),
     }));
-    const lines = infos.map((info, i) => `\n    ${i + 1}) ${info.preview} aka playwright.$("${info.selector}")`);
-    if (infos.length < matches.length)
-      lines.push('\n    ...');
-    return this.createStacklessError(`strict mode violation: "${stringifySelector(selector)}" resolved to ${matches.length} elements:${lines.join('')}\n`);
+    const lines = infos.map(
+      (info, i) => `\n    ${i + 1}) ${info.preview} aka playwright.$("${info.selector}")`,
+    );
+    if (infos.length < matches.length) lines.push('\n    ...');
+    return this.createStacklessError(
+      `strict mode violation: "${stringifySelector(selector)}" resolved to ${
+        matches.length
+      } elements:${lines.join('')}\n`,
+    );
   }
 
   createStacklessError(message: string): Error {
@@ -874,8 +980,7 @@ export class InjectedScript {
   }
 
   maskSelectors(selectors: ParsedSelector[]) {
-    if (this._highlight)
-      this.hideHighlight();
+    if (this._highlight) this.hideHighlight();
     this._highlight = new Highlight(false);
     this._highlight.install();
     const elements = [];
@@ -893,9 +998,12 @@ export class InjectedScript {
   }
 
   _runHighlightOnRaf(selector: ParsedSelector) {
-    if (!this._highlight)
-      return;
-    this._highlight.updateHighlight(this.querySelectorAll(selector, document.documentElement), stringifySelector(selector), false);
+    if (!this._highlight) return;
+    this._highlight.updateHighlight(
+      this.querySelectorAll(selector, document.documentElement),
+      stringifySelector(selector),
+      false,
+    );
     requestAnimationFrame(() => this._runHighlightOnRaf(selector));
   }
 
@@ -910,29 +1018,29 @@ export class InjectedScript {
     const customEventName = '__playwright_global_listeners_check__';
 
     let seenEvent = false;
-    const handleCustomEvent = () => seenEvent = true;
+    const handleCustomEvent = () => (seenEvent = true);
     window.addEventListener(customEventName, handleCustomEvent);
 
-    new MutationObserver(entries => {
-      const newDocumentElement = entries.some(entry => Array.from(entry.addedNodes).includes(document.documentElement));
-      if (!newDocumentElement)
-        return;
+    new MutationObserver((entries) => {
+      const newDocumentElement = entries.some((entry) =>
+        Array.from(entry.addedNodes).includes(document.documentElement),
+      );
+      if (!newDocumentElement) return;
 
       // New documentElement - let's check whether listeners are still here.
       seenEvent = false;
       window.dispatchEvent(new CustomEvent(customEventName));
-      if (seenEvent)
-        return;
+      if (seenEvent) return;
 
       // Listener did not fire. Reattach the listener and notify.
       window.addEventListener(customEventName, handleCustomEvent);
-      for (const callback of this.onGlobalListenersRemoved)
-        callback();
+      for (const callback of this.onGlobalListenersRemoved) callback();
     }).observe(document, { childList: true });
   }
 
   private _setupHitTargetInterceptors() {
-    const listener = (event: PointerEvent | MouseEvent | TouchEvent) => this._hitTargetInterceptor?.(event);
+    const listener = (event: PointerEvent | MouseEvent | TouchEvent) =>
+      this._hitTargetInterceptor?.(event);
     const addHitTargetInterceptorListeners = () => {
       for (const event of kAllHitTargetInterceptorEvents)
         window.addEventListener(event as any, listener, { capture: true, passive: false });
@@ -941,7 +1049,11 @@ export class InjectedScript {
     this.onGlobalListenersRemoved.add(addHitTargetInterceptorListeners);
   }
 
-  expectSingleElement(progress: InjectedScriptProgress, element: Element, options: FrameExpectParams): { matches: boolean, received?: any } {
+  expectSingleElement(
+    progress: InjectedScriptProgress,
+    element: Element,
+    options: FrameExpectParams,
+  ): { matches: boolean; received?: any } {
     const injected = progress.injectedScript;
     const expression = options.expression;
 
@@ -959,8 +1071,7 @@ export class InjectedScript {
       } else if (expression === 'to.be.empty') {
         if (element.nodeName === 'INPUT' || element.nodeName === 'TEXTAREA')
           elementState = !(element as HTMLInputElement).value;
-        else
-          elementState = !element.textContent?.trim();
+        else elementState = !element.textContent?.trim();
       } else if (expression === 'to.be.enabled') {
         elementState = progress.injectedScript.elementState(element, 'enabled');
       } else if (expression === 'to.be.focused') {
@@ -1001,14 +1112,20 @@ export class InjectedScript {
       } else if (expression === 'to.have.id') {
         received = element.id;
       } else if (expression === 'to.have.text') {
-        received = options.useInnerText ? (element as HTMLElement).innerText : element.textContent || '';
+        received = options.useInnerText
+          ? (element as HTMLElement).innerText
+          : element.textContent || '';
       } else if (expression === 'to.have.title') {
         received = document.title;
       } else if (expression === 'to.have.url') {
         received = document.location.href;
       } else if (expression === 'to.have.value') {
         element = this.retarget(element, 'follow-label')!;
-        if (element.nodeName !== 'INPUT' && element.nodeName !== 'TEXTAREA' && element.nodeName !== 'SELECT')
+        if (
+          element.nodeName !== 'INPUT' &&
+          element.nodeName !== 'TEXTAREA' &&
+          element.nodeName !== 'SELECT'
+        )
           throw this.createStacklessError('Not an input element');
         received = (element as any).value;
       }
@@ -1022,7 +1139,10 @@ export class InjectedScript {
     throw this.createStacklessError('Unknown expect matcher: ' + expression);
   }
 
-  expectArray(elements: Element[], options: FrameExpectParams): { matches: boolean, received?: any } {
+  expectArray(
+    elements: Element[],
+    options: FrameExpectParams,
+  ): { matches: boolean; received?: any } {
     const expression = options.expression;
 
     if (expression === 'to.have.count') {
@@ -1034,24 +1154,23 @@ export class InjectedScript {
     // List of values.
     let received: string[] | undefined;
     if (expression === 'to.have.text.array' || expression === 'to.contain.text.array')
-      received = elements.map(e => options.useInnerText ? (e as HTMLElement).innerText : e.textContent || '');
-    else if (expression === 'to.have.class.array')
-      received = elements.map(e => e.className);
+      received = elements.map((e) =>
+        options.useInnerText ? (e as HTMLElement).innerText : e.textContent || '',
+      );
+    else if (expression === 'to.have.class.array') received = elements.map((e) => e.className);
 
     if (received && options.expectedText) {
       // "To match an array" is "to contain an array" + "equal length"
       const lengthShouldMatch = expression !== 'to.contain.text.array';
       const matchesLength = received.length === options.expectedText.length || !lengthShouldMatch;
-      if (!matchesLength)
-        return { received, matches: false };
+      if (!matchesLength) return { received, matches: false };
 
       // Each matcher should get a "received" that matches it, in order.
       let i = 0;
-      const matchers = options.expectedText.map(e => new ExpectedTextMatcher(e));
+      const matchers = options.expectedText.map((e) => new ExpectedTextMatcher(e));
       let allMatchesFound = true;
       for (const matcher of matchers) {
-        while (i < received.length && !matcher.matches(received[i]))
-          i++;
+        while (i < received.length && !matcher.matches(received[i])) i++;
         if (i >= received.length) {
           allMatchesFound = false;
           break;
@@ -1063,18 +1182,36 @@ export class InjectedScript {
   }
 }
 
-const autoClosingTags = new Set(['AREA', 'BASE', 'BR', 'COL', 'COMMAND', 'EMBED', 'HR', 'IMG', 'INPUT', 'KEYGEN', 'LINK', 'MENUITEM', 'META', 'PARAM', 'SOURCE', 'TRACK', 'WBR']);
+const autoClosingTags = new Set([
+  'AREA',
+  'BASE',
+  'BR',
+  'COL',
+  'COMMAND',
+  'EMBED',
+  'HR',
+  'IMG',
+  'INPUT',
+  'KEYGEN',
+  'LINK',
+  'MENUITEM',
+  'META',
+  'PARAM',
+  'SOURCE',
+  'TRACK',
+  'WBR',
+]);
 const booleanAttributes = new Set(['checked', 'selected', 'disabled', 'readonly', 'multiple']);
 
 function oneLine(s: string): string {
   return s.replace(/\n/g, '↵').replace(/\t/g, '⇆');
 }
 
-const eventType = new Map<string, 'mouse'|'keyboard'|'touch'|'pointer'|'focus'|'drag'>([
+const eventType = new Map<string, 'mouse' | 'keyboard' | 'touch' | 'pointer' | 'focus' | 'drag'>([
   ['auxclick', 'mouse'],
   ['click', 'mouse'],
   ['dblclick', 'mouse'],
-  ['mousedown','mouse'],
+  ['mousedown', 'mouse'],
   ['mouseeenter', 'mouse'],
   ['mouseleave', 'mouse'],
   ['mousemove', 'mouse'],
@@ -1119,27 +1256,50 @@ const eventType = new Map<string, 'mouse'|'keyboard'|'touch'|'pointer'|'focus'|'
 ]);
 
 const kHoverHitTargetInterceptorEvents = new Set(['mousemove']);
-const kTapHitTargetInterceptorEvents = new Set(['pointerdown', 'pointerup', 'touchstart', 'touchend', 'touchcancel']);
-const kMouseHitTargetInterceptorEvents = new Set(['mousedown', 'mouseup', 'pointerdown', 'pointerup', 'click', 'auxclick', 'dblclick', 'contextmenu']);
-const kAllHitTargetInterceptorEvents = new Set([...kHoverHitTargetInterceptorEvents, ...kTapHitTargetInterceptorEvents, ...kMouseHitTargetInterceptorEvents]);
+const kTapHitTargetInterceptorEvents = new Set([
+  'pointerdown',
+  'pointerup',
+  'touchstart',
+  'touchend',
+  'touchcancel',
+]);
+const kMouseHitTargetInterceptorEvents = new Set([
+  'mousedown',
+  'mouseup',
+  'pointerdown',
+  'pointerup',
+  'click',
+  'auxclick',
+  'dblclick',
+  'contextmenu',
+]);
+const kAllHitTargetInterceptorEvents = new Set([
+  ...kHoverHitTargetInterceptorEvents,
+  ...kTapHitTargetInterceptorEvents,
+  ...kMouseHitTargetInterceptorEvents,
+]);
 
 function unescape(s: string): string {
-  if (!s.includes('\\'))
-    return s;
+  if (!s.includes('\\')) return s;
   const r: string[] = [];
   let i = 0;
   while (i < s.length) {
-    if (s[i] === '\\' && i + 1 < s.length)
-      i++;
+    if (s[i] === '\\' && i + 1 < s.length) i++;
     r.push(s[i++]);
   }
   return r.join('');
 }
 
-function createTextMatcher(selector: string): { matcher: TextMatcher, kind: 'regex' | 'strict' | 'lax' } {
+function createTextMatcher(selector: string): {
+  matcher: TextMatcher;
+  kind: 'regex' | 'strict' | 'lax';
+} {
   if (selector[0] === '/' && selector.lastIndexOf('/') > 0) {
     const lastSlash = selector.lastIndexOf('/');
-    const matcher: TextMatcher = createRegexTextMatcher(selector.substring(1, lastSlash), selector.substring(lastSlash + 1));
+    const matcher: TextMatcher = createRegexTextMatcher(
+      selector.substring(1, lastSlash),
+      selector.substring(lastSlash + 1),
+    );
     return { matcher, kind: 'regex' };
   }
   let strict = false;
@@ -1164,107 +1324,91 @@ class ExpectedTextMatcher {
   constructor(expected: channels.ExpectedTextValue) {
     this._normalizeWhiteSpace = expected.normalizeWhiteSpace;
     this._string = expected.matchSubstring ? undefined : this.normalizeWhiteSpace(expected.string);
-    this._substring = expected.matchSubstring ? this.normalizeWhiteSpace(expected.string) : undefined;
-    this._regex = expected.regexSource ? new RegExp(expected.regexSource, expected.regexFlags) : undefined;
+    this._substring = expected.matchSubstring
+      ? this.normalizeWhiteSpace(expected.string)
+      : undefined;
+    this._regex = expected.regexSource
+      ? new RegExp(expected.regexSource, expected.regexFlags)
+      : undefined;
   }
 
   matches(text: string): boolean {
-    if (this._normalizeWhiteSpace && !this._regex)
-      text = this.normalizeWhiteSpace(text)!;
-    if (this._string !== undefined)
-      return text === this._string;
-    if (this._substring !== undefined)
-      return text.includes(this._substring);
-    if (this._regex)
-      return !!this._regex.test(text);
+    if (this._normalizeWhiteSpace && !this._regex) text = this.normalizeWhiteSpace(text)!;
+    if (this._string !== undefined) return text === this._string;
+    if (this._substring !== undefined) return text.includes(this._substring);
+    if (this._regex) return !!this._regex.test(text);
     return false;
   }
 
   private normalizeWhiteSpace(s: string | undefined): string | undefined {
-    if (!s)
-      return s;
-    return this._normalizeWhiteSpace ? s.trim().replace(/\u200b/g, '').replace(/\s+/g, ' ') : s;
+    if (!s) return s;
+    return this._normalizeWhiteSpace
+      ? s
+          .trim()
+          .replace(/\u200b/g, '')
+          .replace(/\s+/g, ' ')
+      : s;
   }
 }
 
 function deepEquals(a: any, b: any): boolean {
-  if (a === b)
-    return true;
+  if (a === b) return true;
 
   if (a && b && typeof a === 'object' && typeof b === 'object') {
-    if (a.constructor !== b.constructor)
-      return false;
+    if (a.constructor !== b.constructor) return false;
 
     if (Array.isArray(a)) {
-      if (a.length !== b.length)
-        return false;
+      if (a.length !== b.length) return false;
       for (let i = 0; i < a.length; ++i) {
-        if (!deepEquals(a[i], b[i]))
-          return false;
+        if (!deepEquals(a[i], b[i])) return false;
       }
       return true;
     }
 
-    if (a instanceof RegExp)
-      return a.source === b.source && a.flags === b.flags;
+    if (a instanceof RegExp) return a.source === b.source && a.flags === b.flags;
     // This covers Date.
-    if (a.valueOf !== Object.prototype.valueOf)
-      return a.valueOf() === b.valueOf();
+    if (a.valueOf !== Object.prototype.valueOf) return a.valueOf() === b.valueOf();
     // This covers custom objects.
-    if (a.toString !== Object.prototype.toString)
-      return a.toString() === b.toString();
+    if (a.toString !== Object.prototype.toString) return a.toString() === b.toString();
 
     const keys = Object.keys(a);
-    if (keys.length !== Object.keys(b).length)
-      return false;
+    if (keys.length !== Object.keys(b).length) return false;
 
     for (let i = 0; i < keys.length; ++i) {
-      if (!b.hasOwnProperty(keys[i]))
-        return false;
+      if (!b.hasOwnProperty(keys[i])) return false;
     }
 
     for (const key of keys) {
-      if (!deepEquals(a[key], b[key]))
-        return false;
+      if (!deepEquals(a[key], b[key])) return false;
     }
     return true;
   }
 
-  if (typeof a === 'number' && typeof b === 'number')
-    return isNaN(a) && isNaN(b);
+  if (typeof a === 'number' && typeof b === 'number') return isNaN(a) && isNaN(b);
 
   return false;
 }
 
 function isElementDisabled(element: Element): boolean {
   const isRealFormControl = ['BUTTON', 'INPUT', 'SELECT', 'TEXTAREA'].includes(element.nodeName);
-  if (isRealFormControl && element.hasAttribute('disabled'))
-    return true;
-  if (isRealFormControl && hasDisabledFieldSet(element))
-    return true;
-  if (hasAriaDisabled(element))
-    return true;
+  if (isRealFormControl && element.hasAttribute('disabled')) return true;
+  if (isRealFormControl && hasDisabledFieldSet(element)) return true;
+  if (hasAriaDisabled(element)) return true;
   return false;
 }
 
-function hasDisabledFieldSet(element: Element|null): boolean {
-  if (!element)
-    return false;
-  if (element.tagName === 'FIELDSET' && element.hasAttribute('disabled'))
-    return true;
+function hasDisabledFieldSet(element: Element | null): boolean {
+  if (!element) return false;
+  if (element.tagName === 'FIELDSET' && element.hasAttribute('disabled')) return true;
   // fieldset does not work across shadow boundaries
   return hasDisabledFieldSet(element.parentElement);
 }
-function hasAriaDisabled(element: Element|undefined): boolean {
-  if (!element)
-    return false;
+function hasAriaDisabled(element: Element | undefined): boolean {
+  if (!element) return false;
   const attribute = (element.getAttribute('aria-disabled') || '').toLowerCase();
-  if (attribute === 'true')
-    return true;
-  if (attribute === 'false')
-    return false;
+  if (attribute === 'true') return true;
+  if (attribute === 'false') return false;
   return hasAriaDisabled(parentElementOrShadowHost(element));
 }
-
 
 export default InjectedScript;

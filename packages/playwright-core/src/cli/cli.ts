@@ -18,12 +18,14 @@
 import { fork } from 'child_process';
 
 if (process.env.PW_EXPERIMENTAL_TS_ESM) {
-  const NODE_OPTIONS = (process.env.NODE_OPTIONS || '') + ` --experimental-loader=${require.resolve('@playwright/test/lib/experimentalLoader')}`;
+  const NODE_OPTIONS =
+    (process.env.NODE_OPTIONS || '') +
+    ` --experimental-loader=${require.resolve('@playwright/test/lib/experimentalLoader')}`;
   const innerProcess = fork(require.resolve('./innerCli'), process.argv.slice(2), {
-    env: { ...process.env, NODE_OPTIONS }
+    env: { ...process.env, NODE_OPTIONS },
   });
 
-  innerProcess.on('close', code => {
+  innerProcess.on('close', (code) => {
     if (code !== 0 && code !== null) process.exit(code);
   });
 } else {

@@ -25,33 +25,55 @@ import './testCaseView.css';
 import { TestResultView } from './testResultView';
 
 export const TestCaseView: React.FC<{
-  projectNames: string[],
-  test: TestCase | undefined,
+  projectNames: string[];
+  test: TestCase | undefined;
 }> = ({ projectNames, test }) => {
   const [selectedResultIndex, setSelectedResultIndex] = React.useState(0);
 
-  return <div className='test-case-column vbox'>
-    {test && <div className='test-case-path'>{test.path.join(' › ')}</div>}
-    {test && <div className='test-case-title'>{test?.title}</div>}
-    {test && <div className='test-case-location'>{test.location.file}:{test.location.line}</div>}
-    {test && !!test.projectName && <ProjectLink projectNames={projectNames} projectName={test.projectName}></ProjectLink>}
-    {test && !!test.annotations.length && <AutoChip header='Annotations'>
-      {test.annotations.map(a => <div className='test-case-annotation'>
-        <span style={{ fontWeight: 'bold' }}>{a.type}</span>
-        {a.description && <span>: {a.description}</span>}
-      </div>)}
-    </AutoChip>}
-    {test && <TabbedPane tabs={
-      test.results.map((result, index) => ({
-        id: String(index),
-        title: <div style={{ display: 'flex', alignItems: 'center' }}>{statusIcon(result.status)} {retryLabel(index)}</div>,
-        render: () => <TestResultView test={test!} result={result}></TestResultView>
-      })) || []} selectedTab={String(selectedResultIndex)} setSelectedTab={id => setSelectedResultIndex(+id)} />}
-  </div>;
+  return (
+    <div className="test-case-column vbox">
+      {test && <div className="test-case-path">{test.path.join(' › ')}</div>}
+      {test && <div className="test-case-title">{test?.title}</div>}
+      {test && (
+        <div className="test-case-location">
+          {test.location.file}:{test.location.line}
+        </div>
+      )}
+      {test && !!test.projectName && (
+        <ProjectLink projectNames={projectNames} projectName={test.projectName}></ProjectLink>
+      )}
+      {test && !!test.annotations.length && (
+        <AutoChip header="Annotations">
+          {test.annotations.map((a) => (
+            <div className="test-case-annotation">
+              <span style={{ fontWeight: 'bold' }}>{a.type}</span>
+              {a.description && <span>: {a.description}</span>}
+            </div>
+          ))}
+        </AutoChip>
+      )}
+      {test && (
+        <TabbedPane
+          tabs={
+            test.results.map((result, index) => ({
+              id: String(index),
+              title: (
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  {statusIcon(result.status)} {retryLabel(index)}
+                </div>
+              ),
+              render: () => <TestResultView test={test!} result={result}></TestResultView>,
+            })) || []
+          }
+          selectedTab={String(selectedResultIndex)}
+          setSelectedTab={(id) => setSelectedResultIndex(+id)}
+        />
+      )}
+    </div>
+  );
 };
 
 function retryLabel(index: number) {
-  if (!index)
-    return 'Run';
+  if (!index) return 'Run';
   return `Retry #${index}`;
 }

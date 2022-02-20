@@ -14,7 +14,12 @@
  * limitations under the License.
  */
 
-import { FrameSnapshot, NodeSnapshot, RenderedFrameSnapshot, ResourceSnapshot } from '../../server/trace/common/snapshotTypes';
+import {
+  FrameSnapshot,
+  NodeSnapshot,
+  RenderedFrameSnapshot,
+  ResourceSnapshot,
+} from '../../server/trace/common/snapshotTypes';
 
 export class SnapshotRenderer {
   private _snapshots: FrameSnapshot[];
@@ -35,15 +40,14 @@ export class SnapshotRenderer {
     return this._snapshots[this._index];
   }
 
-  viewport(): { width: number, height: number } {
+  viewport(): { width: number; height: number } {
     return this._snapshots[this._index].viewport;
   }
 
   render(): RenderedFrameSnapshot {
     const visit = (n: NodeSnapshot, snapshotIndex: number): string => {
       // Text node.
-      if (typeof n === 'string')
-        return escapeText(n);
+      if (typeof n === 'string') return escapeText(n);
 
       if (!(n as any)._string) {
         if (Array.isArray(n[0])) {
@@ -66,10 +70,8 @@ export class SnapshotRenderer {
             builder.push(' ', attrToSet, '="', escapeAttribute(value as string), '"');
           }
           builder.push('>');
-          for (let i = 2; i < n.length; i++)
-            builder.push(visit(n[i], snapshotIndex));
-          if (!autoClosing.has(n[0]))
-            builder.push('</', n[0], '>');
+          for (let i = 2; i < n.length; i++) builder.push(visit(n[i], snapshotIndex));
+          if (!autoClosing.has(n[0])) builder.push('</', n[0], '>');
           (n as any)._string = builder.join('');
         } else {
           // Why are we here? Let's not throw, just in case.
@@ -86,11 +88,14 @@ export class SnapshotRenderer {
 
     // Hide the document in order to prevent flickering. We will unhide once script has processed shadow.
     const prefix = snapshot.doctype ? `<!DOCTYPE ${snapshot.doctype}>` : '';
-    html = prefix + [
-      '<style>*,*::before,*::after { visibility: hidden }</style>',
-      `<style>*[__playwright_target__="${this.snapshotName}"] { background-color: #6fa8dc7f; }</style>`,
-      `<script>${snapshotScript()}</script>`
-    ].join('') + html;
+    html =
+      prefix +
+      [
+        '<style>*,*::before,*::after { visibility: hidden }</style>',
+        `<style>*[__playwright_target__="${this.snapshotName}"] { background-color: #6fa8dc7f; }</style>`,
+        `<script>${snapshotScript()}</script>`,
+      ].join('') +
+      html;
 
     return { html, pageId: snapshot.pageId, frameId: snapshot.frameId, index: this._index };
   }
@@ -101,10 +106,8 @@ export class SnapshotRenderer {
 
     // First try locating exact resource belonging to this frame.
     for (const resource of this._resources) {
-      if (resource._monotonicTime >= snapshot.timestamp)
-        break;
-      if (resource._frameref !== snapshot.frameId)
-        continue;
+      if (resource._monotonicTime >= snapshot.timestamp) break;
+      if (resource._frameref !== snapshot.frameId) continue;
       if (resource.request.url === url) {
         result = resource;
         break;
@@ -114,10 +117,8 @@ export class SnapshotRenderer {
     if (!result) {
       // Then fall back to resource with this URL to account for memory cache.
       for (const resource of this._resources) {
-        if (resource._monotonicTime >= snapshot.timestamp)
-          break;
-        if (resource.request.url === url)
-          return resource;
+        if (resource._monotonicTime >= snapshot.timestamp) break;
+        if (resource.request.url === url) return resource;
       }
     }
 
@@ -132,7 +133,7 @@ export class SnapshotRenderer {
               content: {
                 ...result.response.content,
                 _sha1: o.sha1,
-              }
+              },
             },
           };
           break;
@@ -144,14 +145,32 @@ export class SnapshotRenderer {
   }
 }
 
-const autoClosing = new Set(['AREA', 'BASE', 'BR', 'COL', 'COMMAND', 'EMBED', 'HR', 'IMG', 'INPUT', 'KEYGEN', 'LINK', 'MENUITEM', 'META', 'PARAM', 'SOURCE', 'TRACK', 'WBR']);
-const escaped = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', '\'': '&#39;' };
+const autoClosing = new Set([
+  'AREA',
+  'BASE',
+  'BR',
+  'COL',
+  'COMMAND',
+  'EMBED',
+  'HR',
+  'IMG',
+  'INPUT',
+  'KEYGEN',
+  'LINK',
+  'MENUITEM',
+  'META',
+  'PARAM',
+  'SOURCE',
+  'TRACK',
+  'WBR',
+]);
+const escaped = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
 
 function escapeAttribute(s: string): string {
-  return s.replace(/[&<>"']/ug, char => (escaped as any)[char]);
+  return s.replace(/[&<>"']/gu, (char) => (escaped as any)[char]);
 }
 function escapeText(s: string): string {
-  return s.replace(/[&<]/ug, char => (escaped as any)[char]);
+  return s.replace(/[&<]/gu, (char) => (escaped as any)[char]);
 }
 
 function snapshotNodes(snapshot: FrameSnapshot): NodeSnapshot[] {
@@ -161,8 +180,7 @@ function snapshotNodes(snapshot: FrameSnapshot): NodeSnapshot[] {
       if (typeof n === 'string') {
         nodes.push(n);
       } else if (typeof n[0] === 'string') {
-        for (let i = 2; i < n.length; i++)
-          visit(n[i]);
+        for (let i = 2; i < n.length; i++) visit(n[i]);
         nodes.push(n);
       }
     };
@@ -173,16 +191,19 @@ function snapshotNodes(snapshot: FrameSnapshot): NodeSnapshot[] {
 }
 
 function snapshotScript() {
-  function applyPlaywrightAttributes(shadowAttribute: string, scrollTopAttribute: string, scrollLeftAttribute: string, styleSheetAttribute: string) {
+  function applyPlaywrightAttributes(
+    shadowAttribute: string,
+    scrollTopAttribute: string,
+    scrollLeftAttribute: string,
+    styleSheetAttribute: string,
+  ) {
     const scrollTops: Element[] = [];
     const scrollLefts: Element[] = [];
 
     const visit = (root: Document | ShadowRoot) => {
       // Collect all scrolled elements for later use.
-      for (const e of root.querySelectorAll(`[${scrollTopAttribute}]`))
-        scrollTops.push(e);
-      for (const e of root.querySelectorAll(`[${scrollLeftAttribute}]`))
-        scrollLefts.push(e);
+      for (const e of root.querySelectorAll(`[${scrollTopAttribute}]`)) scrollTops.push(e);
+      for (const e of root.querySelectorAll(`[${scrollLeftAttribute}]`)) scrollLefts.push(e);
 
       for (const iframe of root.querySelectorAll('iframe, frame')) {
         const src = iframe.getAttribute('__playwright_src__');
@@ -195,8 +216,7 @@ function snapshotScript() {
           url.searchParams.delete('pointY');
           // We can be loading iframe from within iframe, reset base to be absolute.
           const index = url.pathname.lastIndexOf('/snapshot/');
-          if (index !== -1)
-            url.pathname = url.pathname.substring(0, index + 1);
+          if (index !== -1) url.pathname = url.pathname.substring(0, index + 1);
           url.pathname += src.substring(1);
           iframe.setAttribute('src', url.toString());
         }

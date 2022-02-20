@@ -22,15 +22,21 @@ test.use({ webpack: require.resolve('../webpack.config.js') });
 test.use({ viewport: { width: 720, height: 200 } });
 
 test('should render counters', async ({ mount }) => {
-  const component = await mount(<HeaderView stats={{
-    total: 100,
-    expected: 42,
-    unexpected: 31,
-    flaky: 17,
-    skipped: 10,
-    ok: false,
-    duration: 100000
-  }} filterText='' setFilterText={() => {}}></HeaderView>);
+  const component = await mount(
+    <HeaderView
+      stats={{
+        total: 100,
+        expected: 42,
+        unexpected: 31,
+        flaky: 17,
+        skipped: 10,
+        ok: false,
+        duration: 100000,
+      }}
+      filterText=""
+      setFilterText={() => {}}
+    ></HeaderView>,
+  );
   await expect(component.locator('a', { hasText: 'All' }).locator('.counter')).toHaveText('100');
   await expect(component.locator('a', { hasText: 'Passed' }).locator('.counter')).toHaveText('42');
   await expect(component.locator('a', { hasText: 'Failed' }).locator('.counter')).toHaveText('31');
@@ -40,19 +46,21 @@ test('should render counters', async ({ mount }) => {
 
 test('should toggle filters', async ({ page, mount: mount }) => {
   const filters: string[] = [];
-  const component = await mount(<HeaderView
-    stats={{
-      total: 100,
-      expected: 42,
-      unexpected: 31,
-      flaky: 17,
-      skipped: 10,
-      ok: false,
-      duration: 100000
-    }}
-    filterText=''
-    setFilterText={(filterText: string) => filters.push(filterText)}>
-  </HeaderView>);
+  const component = await mount(
+    <HeaderView
+      stats={{
+        total: 100,
+        expected: 42,
+        unexpected: 31,
+        flaky: 17,
+        skipped: 10,
+        ok: false,
+        duration: 100000,
+      }}
+      filterText=""
+      setFilterText={(filterText: string) => filters.push(filterText)}
+    ></HeaderView>,
+  );
   await component.locator('a', { hasText: 'All' }).click();
   await component.locator('a', { hasText: 'Passed' }).click();
   await expect(page).toHaveURL(/#\?q=s:passed/);

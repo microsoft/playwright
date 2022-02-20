@@ -43,17 +43,21 @@ export class Browser extends ChannelOwner<channels.BrowserChannel> implements ap
     return browser ? Browser.from(browser) : null;
   }
 
-  constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.BrowserInitializer) {
+  constructor(
+    parent: ChannelOwner,
+    type: string,
+    guid: string,
+    initializer: channels.BrowserInitializer,
+  ) {
     super(parent, type, guid, initializer);
     this._name = initializer.name;
     this._channel.on('close', () => this._didClose());
-    this._closedPromise = new Promise(f => this.once(Events.Browser.Disconnected, f));
+    this._closedPromise = new Promise((f) => this.once(Events.Browser.Disconnected, f));
   }
 
   _setBrowserType(browserType: BrowserType) {
     this._browserType = browserType;
-    for (const context of this._contexts)
-      context._setBrowserType(browserType);
+    for (const context of this._contexts) context._setBrowserType(browserType);
   }
 
   async newContext(options: BrowserContextOptions = {}): Promise<BrowserContext> {
@@ -93,7 +97,10 @@ export class Browser extends ChannelOwner<channels.BrowserChannel> implements ap
     return CDPSession.from((await this._channel.newBrowserCDPSession()).session);
   }
 
-  async startTracing(page?: Page, options: { path?: string; screenshots?: boolean; categories?: string[]; } = {}) {
+  async startTracing(
+    page?: Page,
+    options: { path?: string; screenshots?: boolean; categories?: string[] } = {},
+  ) {
     await this._channel.startTracing({ ...options, page: page ? page._channel : undefined });
   }
 
@@ -103,14 +110,11 @@ export class Browser extends ChannelOwner<channels.BrowserChannel> implements ap
 
   async close(): Promise<void> {
     try {
-      if (this._shouldCloseConnectionOnClose)
-        this._connection.close(kBrowserClosedError);
-      else
-        await this._channel.close();
+      if (this._shouldCloseConnectionOnClose) this._connection.close(kBrowserClosedError);
+      else await this._channel.close();
       await this._closedPromise;
     } catch (e) {
-      if (isSafeCloseError(e))
-        return;
+      if (isSafeCloseError(e)) return;
       throw e;
     }
   }

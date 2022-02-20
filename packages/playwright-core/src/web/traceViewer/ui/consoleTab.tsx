@@ -21,16 +21,17 @@ import * as channels from '../../../protocol/channels';
 import * as modelUtil from './modelUtil';
 
 export const ConsoleTab: React.FunctionComponent<{
-  action: ActionTraceEvent | undefined,
+  action: ActionTraceEvent | undefined;
 }> = ({ action }) => {
   const entries = React.useMemo(() => {
-    if (!action)
-      return [];
-    const entries: { message?: channels.ConsoleMessageInitializer, error?: channels.SerializedError }[] = [];
+    if (!action) return [];
+    const entries: {
+      message?: channels.ConsoleMessageInitializer;
+      error?: channels.SerializedError;
+    }[] = [];
     const context = modelUtil.context(action);
     for (const event of modelUtil.eventsForAction(action)) {
-      if (event.metadata.method !== 'console' && event.metadata.method !== 'pageError')
-        continue;
+      if (event.metadata.method !== 'console' && event.metadata.method !== 'pageError') continue;
       if (event.metadata.method === 'console') {
         const { guid } = event.metadata.params.message;
         entries.push({ message: context.objects[guid] });
@@ -41,42 +42,54 @@ export const ConsoleTab: React.FunctionComponent<{
     return entries;
   }, [action]);
 
-  return <div className='console-tab'>{
-    entries.map((entry, index) => {
-      const { message, error } = entry;
-      if (message) {
-        const url = message.location.url;
-        const filename = url ? url.substring(url.lastIndexOf('/') + 1) : '<anonymous>';
-        return <div className={'console-line ' + message.type} key={index}>
-          <span className='console-location'>{filename}:{message.location.lineNumber}</span>
-          <span className={'codicon codicon-' + iconClass(message)}></span>
-          <span className='console-line-message'>{message.text}</span>
-        </div>;
-      }
-      if (error) {
-        const { error: errorObject, value } = error;
-        if (errorObject) {
-          return <div className='console-line error' key={index}>
-            <span className={'codicon codicon-error'}></span>
-            <span className='console-line-message'>{errorObject.message}</span>
-            <div className='console-stack'>{errorObject.stack}</div>
-          </div>;
-        } else {
-          return <div className='console-line error' key={index}>
-            <span className={'codicon codicon-error'}></span>
-            <span className='console-line-message'>{value}</span>
-          </div>;
+  return (
+    <div className="console-tab">
+      {entries.map((entry, index) => {
+        const { message, error } = entry;
+        if (message) {
+          const url = message.location.url;
+          const filename = url ? url.substring(url.lastIndexOf('/') + 1) : '<anonymous>';
+          return (
+            <div className={'console-line ' + message.type} key={index}>
+              <span className="console-location">
+                {filename}:{message.location.lineNumber}
+              </span>
+              <span className={'codicon codicon-' + iconClass(message)}></span>
+              <span className="console-line-message">{message.text}</span>
+            </div>
+          );
         }
-      }
-      return null;
-    })
-  }</div>;
+        if (error) {
+          const { error: errorObject, value } = error;
+          if (errorObject) {
+            return (
+              <div className="console-line error" key={index}>
+                <span className={'codicon codicon-error'}></span>
+                <span className="console-line-message">{errorObject.message}</span>
+                <div className="console-stack">{errorObject.stack}</div>
+              </div>
+            );
+          } else {
+            return (
+              <div className="console-line error" key={index}>
+                <span className={'codicon codicon-error'}></span>
+                <span className="console-line-message">{value}</span>
+              </div>
+            );
+          }
+        }
+        return null;
+      })}
+    </div>
+  );
 };
 
 function iconClass(message: channels.ConsoleMessageInitializer): string {
   switch (message.type) {
-    case 'error': return 'error';
-    case 'warning': return 'warning';
+    case 'error':
+      return 'error';
+    case 'warning':
+      return 'warning';
   }
   return 'blank';
 }

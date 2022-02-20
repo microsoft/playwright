@@ -37,10 +37,26 @@ export class FFNetworkManager {
     this._page = page;
 
     this._eventListeners = [
-      eventsHelper.addEventListener(session, 'Network.requestWillBeSent', this._onRequestWillBeSent.bind(this)),
-      eventsHelper.addEventListener(session, 'Network.responseReceived', this._onResponseReceived.bind(this)),
-      eventsHelper.addEventListener(session, 'Network.requestFinished', this._onRequestFinished.bind(this)),
-      eventsHelper.addEventListener(session, 'Network.requestFailed', this._onRequestFailed.bind(this)),
+      eventsHelper.addEventListener(
+        session,
+        'Network.requestWillBeSent',
+        this._onRequestWillBeSent.bind(this),
+      ),
+      eventsHelper.addEventListener(
+        session,
+        'Network.responseReceived',
+        this._onResponseReceived.bind(this),
+      ),
+      eventsHelper.addEventListener(
+        session,
+        'Network.requestFinished',
+        this._onRequestFinished.bind(this),
+      ),
+      eventsHelper.addEventListener(
+        session,
+        'Network.requestFailed',
+        this._onRequestFailed.bind(this),
+      ),
     ];
   }
 
@@ -53,37 +69,40 @@ export class FFNetworkManager {
   }
 
   _onRequestWillBeSent(event: Protocol.Network.requestWillBeSentPayload) {
-    const redirectedFrom = event.redirectedFrom ? (this._requests.get(event.redirectedFrom) || null) : null;
-    const frame = redirectedFrom ? redirectedFrom.request.frame() : (event.frameId ? this._page._frameManager.frame(event.frameId) : null);
-    if (!frame)
-      return;
-    if (redirectedFrom)
-      this._requests.delete(redirectedFrom._id);
+    const redirectedFrom = event.redirectedFrom
+      ? this._requests.get(event.redirectedFrom) || null
+      : null;
+    const frame = redirectedFrom
+      ? redirectedFrom.request.frame()
+      : event.frameId
+      ? this._page._frameManager.frame(event.frameId)
+      : null;
+    if (!frame) return;
+    if (redirectedFrom) this._requests.delete(redirectedFrom._id);
     const request = new InterceptableRequest(frame, redirectedFrom, event);
     let route;
-    if (event.isIntercepted)
-      route = new FFRouteImpl(this._session, request);
+    if (event.isIntercepted) route = new FFRouteImpl(this._session, request);
     this._requests.set(request._id, request);
     this._page._frameManager.requestStarted(request.request, route);
   }
 
   _onResponseReceived(event: Protocol.Network.responseReceivedPayload) {
     const request = this._requests.get(event.requestId);
-    if (!request)
-      return;
+    if (!request) return;
     const getResponseBody = async () => {
       const response = await this._session.send('Network.getResponseBody', {
-        requestId: request._id
+        requestId: request._id,
       });
       if (response.evicted)
-        throw new Error(`Response body for ${request.request.method()} ${request.request.url()} was evicted!`);
+        throw new Error(
+          `Response body for ${request.request.method()} ${request.request.url()} was evicted!`,
+        );
       return Buffer.from(response.base64body, 'base64');
     };
 
     const startTime = event.timing.startTime;
     function relativeToStart(time: number): number {
-      if (!time)
-        return -1;
+      if (!time) return -1;
       return (time - startTime) / 1000;
     }
     const timing = {
@@ -96,7 +115,14 @@ export class FFNetworkManager {
       requestStart: relativeToStart(event.timing.requestStart),
       responseStart: relativeToStart(event.timing.responseStart),
     };
-    const response = new network.Response(request.request, event.status, event.statusText, parseMultivalueHeaders(event.headers), timing, getResponseBody);
+    const response = new network.Response(
+      request.request,
+      event.status,
+      event.statusText,
+      parseMultivalueHeaders(event.headers),
+      timing,
+      getResponseBody,
+    );
     if (event?.remoteIPAddress && typeof event?.remotePort === 'number') {
       response._serverAddrFinished({
         ipAddress: event.remoteIPAddress,
@@ -117,39 +143,40 @@ export class FFNetworkManager {
 
   _onRequestFinished(event: Protocol.Network.requestFinishedPayload) {
     const request = this._requests.get(event.requestId);
-    if (!request)
-      return;
+    if (!request) return;
     const response = request.request._existingResponse()!;
     request.request.responseSize.transferSize = event.transferSize;
 
     // Keep redirected requests in the map for future reference as redirectedFrom.
     const isRedirected = response.status() >= 300 && response.status() <= 399;
-    const responseEndTime = event.responseEndTime ? event.responseEndTime / 1000 - response.timing().startTime : -1;
+    const responseEndTime = event.responseEndTime
+      ? event.responseEndTime / 1000 - response.timing().startTime
+      : -1;
     if (isRedirected) {
       response._requestFinished(responseEndTime);
     } else {
       this._requests.delete(request._id);
       response._requestFinished(responseEndTime);
     }
-    if (event.protocolVersion)
-      response._setHttpVersion(event.protocolVersion);
+    if (event.protocolVersion) response._setHttpVersion(event.protocolVersion);
     this._page._frameManager.reportRequestFinished(request.request, response);
   }
 
   _onRequestFailed(event: Protocol.Network.requestFailedPayload) {
     const request = this._requests.get(event.requestId);
-    if (!request)
-      return;
+    if (!request) return;
     this._requests.delete(request._id);
     const response = request.request._existingResponse();
-    if (response)
-      response._requestFinished(-1);
+    if (response) response._requestFinished(-1);
     request.request._setFailureText(event.errorCode);
-    this._page._frameManager.requestFailed(request.request, event.errorCode === 'NS_BINDING_ABORTED');
+    this._page._frameManager.requestFailed(
+      request.request,
+      event.errorCode === 'NS_BINDING_ABORTED',
+    );
   }
 }
 
-const causeToResourceType: {[key: string]: string} = {
+const causeToResourceType: { [key: string]: string } = {
   TYPE_INVALID: 'other',
   TYPE_OTHER: 'other',
   TYPE_SCRIPT: 'script',
@@ -175,7 +202,7 @@ const causeToResourceType: {[key: string]: string} = {
   TYPE_WEB_MANIFEST: 'manifest',
 };
 
-const internalCauseToResourceType: {[key: string]: string} = {
+const internalCauseToResourceType: { [key: string]: string } = {
   TYPE_INTERNAL_EVENTSOURCE: 'eventsource',
 };
 
@@ -184,21 +211,32 @@ class InterceptableRequest {
   readonly _id: string;
   private _redirectedTo: InterceptableRequest | undefined;
 
-  constructor(frame: frames.Frame, redirectedFrom: InterceptableRequest | null, payload: Protocol.Network.requestWillBeSentPayload) {
+  constructor(
+    frame: frames.Frame,
+    redirectedFrom: InterceptableRequest | null,
+    payload: Protocol.Network.requestWillBeSentPayload,
+  ) {
     this._id = payload.requestId;
-    if (redirectedFrom)
-      redirectedFrom._redirectedTo = this;
+    if (redirectedFrom) redirectedFrom._redirectedTo = this;
     let postDataBuffer = null;
-    if (payload.postData)
-      postDataBuffer = Buffer.from(payload.postData, 'base64');
-    this.request = new network.Request(frame, redirectedFrom ? redirectedFrom.request : null, payload.navigationId,
-        payload.url, internalCauseToResourceType[payload.internalCause] || causeToResourceType[payload.cause] || 'other', payload.method, postDataBuffer, payload.headers);
+    if (payload.postData) postDataBuffer = Buffer.from(payload.postData, 'base64');
+    this.request = new network.Request(
+      frame,
+      redirectedFrom ? redirectedFrom.request : null,
+      payload.navigationId,
+      payload.url,
+      internalCauseToResourceType[payload.internalCause] ||
+        causeToResourceType[payload.cause] ||
+        'other',
+      payload.method,
+      postDataBuffer,
+      payload.headers,
+    );
   }
 
   _finalRequest(): InterceptableRequest {
     let request: InterceptableRequest = this;
-    while (request._redirectedTo)
-      request = request._redirectedTo;
+    while (request._redirectedTo) request = request._redirectedTo;
     return request;
   }
 }
@@ -223,7 +261,9 @@ class FFRouteImpl implements network.RouteDelegate {
   }
 
   async fulfill(response: types.NormalizedFulfillResponse) {
-    const base64body = response.isBase64 ? response.body : Buffer.from(response.body).toString('base64');
+    const base64body = response.isBase64
+      ? response.body
+      : Buffer.from(response.body).toString('base64');
 
     await this._session.sendMayFail('Network.fulfillInterceptedRequest', {
       requestId: this._request._id,
@@ -246,9 +286,8 @@ function parseMultivalueHeaders(headers: HeadersArray) {
   const result: HeadersArray = [];
   for (const header of headers) {
     const separator = header.name.toLowerCase() === 'set-cookie' ? '\n' : ',';
-    const tokens = header.value.split(separator).map(s => s.trim());
-    for (const token of tokens)
-      result.push({ name: header.name, value: token });
+    const tokens = header.value.split(separator).map((s) => s.trim());
+    for (const token of tokens) result.push({ name: header.name, value: token });
   }
   return result;
 }

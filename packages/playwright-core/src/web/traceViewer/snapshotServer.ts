@@ -31,21 +31,27 @@ export class SnapshotServer {
 
   serveSnapshot(pathname: string, searchParams: URLSearchParams, snapshotUrl: string): Response {
     const snapshot = this._snapshot(pathname.substring('/snapshot'.length), searchParams);
-    if (!snapshot)
-      return new Response(null, { status: 404 });
+    if (!snapshot) return new Response(null, { status: 404 });
     const renderedSnapshot = snapshot.render();
     this._snapshotIds.set(snapshotUrl, snapshot);
-    return new Response(renderedSnapshot.html, { status: 200, headers: { 'Content-Type': 'text/html' } });
+    return new Response(renderedSnapshot.html, {
+      status: 200,
+      headers: { 'Content-Type': 'text/html' },
+    });
   }
 
   serveSnapshotInfo(pathname: string, searchParams: URLSearchParams): Response {
     const snapshot = this._snapshot(pathname.substring('/snapshotInfo'.length), searchParams);
-    return this._respondWithJson(snapshot ? {
-      viewport: snapshot.viewport(),
-      url: snapshot.snapshot().frameUrl
-    } : {
-      error: 'No snapshot found'
-    });
+    return this._respondWithJson(
+      snapshot
+        ? {
+            viewport: snapshot.viewport(),
+            url: snapshot.snapshot().frameUrl,
+          }
+        : {
+            error: 'No snapshot found',
+          },
+    );
   }
 
   private _snapshot(pathname: string, params: URLSearchParams) {
@@ -58,20 +64,23 @@ export class SnapshotServer {
       status: 200,
       headers: {
         'Cache-Control': 'public, max-age=31536000',
-        'Content-Type': 'application/json'
-      }
+        'Content-Type': 'application/json',
+      },
     });
   }
 
   async serveResource(requestUrl: string, snapshotUrl: string): Promise<Response> {
     const snapshot = this._snapshotIds.get(snapshotUrl)!;
-    const url = requestUrl.startsWith(kBlobUrlPrefix) ? requestUrl.substring(kBlobUrlPrefix.length) : removeHash(requestUrl);
+    const url = requestUrl.startsWith(kBlobUrlPrefix)
+      ? requestUrl.substring(kBlobUrlPrefix.length)
+      : removeHash(requestUrl);
     const resource = snapshot?.resourceByUrl(url);
-    if (!resource)
-      return new Response(null, { status: 404 });
+    if (!resource) return new Response(null, { status: 404 });
 
     const sha1 = resource.response.content._sha1;
-    const content = sha1 ? await this._snapshotStorage.resourceContent(sha1) || new Blob([]) : new Blob([]);
+    const content = sha1
+      ? (await this._snapshotStorage.resourceContent(sha1)) || new Blob([])
+      : new Blob([]);
 
     let contentType = resource.response.content.mimeType;
     const isTextEncoding = /^text\/|^application\/(javascript|json)/.test(contentType);
@@ -80,8 +89,7 @@ export class SnapshotServer {
 
     const headers = new Headers();
     headers.set('Content-Type', contentType);
-    for (const { name, value } of resource.response.headers)
-      headers.set(name, value);
+    for (const { name, value } of resource.response.headers) headers.set(name, value);
     headers.delete('Content-Encoding');
     headers.delete('Access-Control-Allow-Origin');
     headers.set('Access-Control-Allow-Origin', '*');

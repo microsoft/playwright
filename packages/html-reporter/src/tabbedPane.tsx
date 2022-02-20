@@ -25,29 +25,35 @@ export interface TabbedPaneTab {
 }
 
 export const TabbedPane: React.FunctionComponent<{
-  tabs: TabbedPaneTab[],
-  selectedTab: string,
-  setSelectedTab: (tab: string) => void
+  tabs: TabbedPaneTab[];
+  selectedTab: string;
+  setSelectedTab: (tab: string) => void;
 }> = ({ tabs, selectedTab, setSelectedTab }) => {
-  return <div className='tabbed-pane'>
-    <div className='vbox'>
-      <div className='hbox' style={{ flex: 'none' }}>
-        <div className='tabbed-pane-tab-strip'>{
-          tabs.map(tab => (
-            <div className={'tabbed-pane-tab-element ' + (selectedTab === tab.id ? 'selected' : '')}
-              onClick={() => setSelectedTab(tab.id)}
-              key={tab.id}>
-              <div className='tabbed-pane-tab-label'>{tab.title}</div>
-            </div>
-          ))
-        }</div>
-      </div>
-      {
-        tabs.map(tab => {
+  return (
+    <div className="tabbed-pane">
+      <div className="vbox">
+        <div className="hbox" style={{ flex: 'none' }}>
+          <div className="tabbed-pane-tab-strip">
+            {tabs.map((tab) => (
+              <div
+                className={'tabbed-pane-tab-element ' + (selectedTab === tab.id ? 'selected' : '')}
+                onClick={() => setSelectedTab(tab.id)}
+                key={tab.id}
+              >
+                <div className="tabbed-pane-tab-label">{tab.title}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+        {tabs.map((tab) => {
           if (selectedTab === tab.id)
-            return <div key={tab.id} className='tab-content'>{tab.render()}</div>;
-        })
-      }
+            return (
+              <div key={tab.id} className="tab-content">
+                {tab.render()}
+              </div>
+            );
+        })}
+      </div>
     </div>
-  </div>;
+  );
 };

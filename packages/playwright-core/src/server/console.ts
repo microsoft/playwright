@@ -24,7 +24,13 @@ export class ConsoleMessage extends SdkObject {
   private _args: js.JSHandle[];
   private _location: ConsoleMessageLocation;
 
-  constructor(parent: SdkObject, type: string, text: string | undefined, args: js.JSHandle[], location?: ConsoleMessageLocation) {
+  constructor(
+    parent: SdkObject,
+    type: string,
+    text: string | undefined,
+    args: js.JSHandle[],
+    location?: ConsoleMessageLocation,
+  ) {
     super(parent, 'console-message');
     this._type = type;
     this._text = text;
@@ -37,8 +43,7 @@ export class ConsoleMessage extends SdkObject {
   }
 
   text(): string {
-    if (this._text === undefined)
-      this._text = this._args.map(arg => arg.preview()).join(' ');
+    if (this._text === undefined) this._text = this._args.map((arg) => arg.preview()).join(' ');
     return this._text;
   }
 

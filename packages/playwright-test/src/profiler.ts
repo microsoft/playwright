@@ -22,12 +22,11 @@ const profileDir = process.env.PWTEST_PROFILE_DIR || '';
 let session: import('inspector').Session;
 
 export async function startProfiling() {
-  if (!profileDir)
-    return;
+  if (!profileDir) return;
 
   session = new (require('inspector').Session)();
   session.connect();
-  await new Promise<void>(f => {
+  await new Promise<void>((f) => {
     session.post('Profiler.enable', () => {
       session.post('Profiler.start', f);
     });
@@ -35,14 +34,21 @@ export async function startProfiling() {
 }
 
 export async function stopProfiling(workerIndex: number | undefined) {
-  if (!profileDir)
-    return;
+  if (!profileDir) return;
 
-  await new Promise<void>(f => session.post('Profiler.stop', (err, { profile }) => {
-    if (!err) {
-      fs.mkdirSync(profileDir, { recursive: true });
-      fs.writeFileSync(path.join(profileDir, workerIndex === undefined ? 'runner.json' : 'worker' + workerIndex + '.json'), JSON.stringify(profile));
-    }
-    f();
-  }));
+  await new Promise<void>((f) =>
+    session.post('Profiler.stop', (err, { profile }) => {
+      if (!err) {
+        fs.mkdirSync(profileDir, { recursive: true });
+        fs.writeFileSync(
+          path.join(
+            profileDir,
+            workerIndex === undefined ? 'runner.json' : 'worker' + workerIndex + '.json',
+          ),
+          JSON.stringify(profile),
+        );
+      }
+      f();
+    }),
+  );
 }

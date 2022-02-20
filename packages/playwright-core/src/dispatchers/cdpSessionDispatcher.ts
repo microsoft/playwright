@@ -18,7 +18,10 @@ import { CRSession, CRSessionEvents } from '../server/chromium/crConnection';
 import * as channels from '../protocol/channels';
 import { Dispatcher, DispatcherScope } from './dispatcher';
 
-export class CDPSessionDispatcher extends Dispatcher<CRSession, channels.CDPSessionChannel> implements channels.CDPSessionChannel {
+export class CDPSessionDispatcher
+  extends Dispatcher<CRSession, channels.CDPSessionChannel>
+  implements channels.CDPSessionChannel
+{
   _type_CDPSession = true;
 
   constructor(scope: DispatcherScope, crSession: CRSession) {

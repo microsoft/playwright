@@ -21,7 +21,9 @@ import * as childProcess from 'child_process';
 import * as path from 'path';
 import { ManualPromise } from './utils/async';
 
-export async function start(env: any = {}): Promise<{ playwright: Playwright, stop: () => Promise<void> }> {
+export async function start(
+  env: any = {},
+): Promise<{ playwright: Playwright; stop: () => Promise<void> }> {
   const client = new PlaywrightClient(env);
   const playwright = await client._playwright;
   (playwright as any).driverProcess = client._driverProcess;
@@ -41,7 +43,7 @@ class PlaywrightClient {
       detached: true,
       env: {
         ...process.env,
-        ...env
+        ...env,
       },
     });
     this._driverProcess.unref();
@@ -49,8 +51,8 @@ class PlaywrightClient {
 
     const connection = new Connection();
     this._transport = new IpcTransport(this._driverProcess);
-    connection.onmessage = message => this._transport.send(JSON.stringify(message));
-    this._transport.onmessage = message => connection.dispatch(JSON.parse(message));
+    connection.onmessage = (message) => this._transport.send(JSON.stringify(message));
+    this._transport.onmessage = (message) => connection.dispatch(JSON.parse(message));
     this._transport.onclose = () => this._closePromise.resolve();
 
     this._playwright = connection.initializePlaywright();
@@ -63,10 +65,7 @@ class PlaywrightClient {
   }
 
   private _onExit(exitCode: number | null, signal: string | null) {
-    if (this._stopped)
-      this._closePromise.resolve();
-    else
-      throw new Error(`Server closed with exitCode=${exitCode} signal=${signal}`);
+    if (this._stopped) this._closePromise.resolve();
+    else throw new Error(`Server closed with exitCode=${exitCode} signal=${signal}`);
   }
-
 }

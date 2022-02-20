@@ -17,106 +17,116 @@
 import type { Point } from '../../../common/types';
 
 export type ActionName =
-  'check' |
-  'click' |
-  'closePage' |
-  'fill' |
-  'navigate' |
-  'openPage' |
-  'press' |
-  'select' |
-  'uncheck' |
-  'setInputFiles';
+  | 'check'
+  | 'click'
+  | 'closePage'
+  | 'fill'
+  | 'navigate'
+  | 'openPage'
+  | 'press'
+  | 'select'
+  | 'uncheck'
+  | 'setInputFiles';
 
 export type ActionBase = {
-  name: ActionName,
-  signals: Signal[],
+  name: ActionName;
+  signals: Signal[];
 };
 
 export type ClickAction = ActionBase & {
-  name: 'click',
-  selector: string,
-  button: 'left' | 'middle' | 'right',
-  modifiers: number,
-  clickCount: number,
-  position?: Point,
+  name: 'click';
+  selector: string;
+  button: 'left' | 'middle' | 'right';
+  modifiers: number;
+  clickCount: number;
+  position?: Point;
 };
 
 export type CheckAction = ActionBase & {
-  name: 'check',
-  selector: string,
+  name: 'check';
+  selector: string;
 };
 
 export type UncheckAction = ActionBase & {
-  name: 'uncheck',
-  selector: string,
+  name: 'uncheck';
+  selector: string;
 };
 
 export type FillAction = ActionBase & {
-  name: 'fill',
-  selector: string,
-  text: string,
+  name: 'fill';
+  selector: string;
+  text: string;
 };
 
 export type NavigateAction = ActionBase & {
-  name: 'navigate',
-  url: string,
+  name: 'navigate';
+  url: string;
 };
 
 export type OpenPageAction = ActionBase & {
-  name: 'openPage',
-  url: string,
+  name: 'openPage';
+  url: string;
 };
 
 export type ClosesPageAction = ActionBase & {
-  name: 'closePage',
+  name: 'closePage';
 };
 
 export type PressAction = ActionBase & {
-  name: 'press',
-  selector: string,
-  key: string,
-  modifiers: number,
+  name: 'press';
+  selector: string;
+  key: string;
+  modifiers: number;
 };
 
 export type SelectAction = ActionBase & {
-  name: 'select',
-  selector: string,
-  options: string[],
+  name: 'select';
+  selector: string;
+  options: string[];
 };
 
 export type SetInputFilesAction = ActionBase & {
-  name: 'setInputFiles',
-  selector: string,
-  files: string[],
+  name: 'setInputFiles';
+  selector: string;
+  files: string[];
 };
 
-export type Action = ClickAction | CheckAction | ClosesPageAction | OpenPageAction | UncheckAction | FillAction | NavigateAction | PressAction | SelectAction | SetInputFilesAction;
+export type Action =
+  | ClickAction
+  | CheckAction
+  | ClosesPageAction
+  | OpenPageAction
+  | UncheckAction
+  | FillAction
+  | NavigateAction
+  | PressAction
+  | SelectAction
+  | SetInputFilesAction;
 
 // Signals.
 
 export type BaseSignal = {
-  isAsync?: boolean,
+  isAsync?: boolean;
 };
 
 export type NavigationSignal = BaseSignal & {
-  name: 'navigation',
-  url: string,
+  name: 'navigation';
+  url: string;
 };
 
 export type PopupSignal = BaseSignal & {
-  name: 'popup',
-  popupAlias: string,
+  name: 'popup';
+  popupAlias: string;
 };
 
 export type DownloadSignal = BaseSignal & {
-  name: 'download',
-  downloadAlias: string,
+  name: 'download';
+  downloadAlias: string;
 };
 
 export type DialogSignal = BaseSignal & {
-  name: 'dialog',
-  dialogAlias: string,
+  name: 'dialog';
+  dialogAlias: string;
 };
 
 export type Signal = NavigationSignal | PopupSignal | DownloadSignal | DialogSignal;
@@ -140,21 +150,16 @@ export function actionTitle(action: Action): string {
     case 'uncheck':
       return `Uncheck ${action.selector}`;
     case 'click': {
-      if (action.clickCount === 1)
-        return `Click ${action.selector}`;
-      if (action.clickCount === 2)
-        return `Double click ${action.selector}`;
-      if (action.clickCount === 3)
-        return `Triple click ${action.selector}`;
+      if (action.clickCount === 1) return `Click ${action.selector}`;
+      if (action.clickCount === 2) return `Double click ${action.selector}`;
+      if (action.clickCount === 3) return `Triple click ${action.selector}`;
       return `${action.clickCount}× click`;
     }
     case 'fill':
       return `Fill ${action.selector}`;
     case 'setInputFiles':
-      if (action.files.length === 0)
-        return `Clear selected files`;
-      else
-        return `Upload ${action.files.join(', ')}`;
+      if (action.files.length === 0) return `Clear selected files`;
+      else return `Upload ${action.files.join(', ')}`;
     case 'navigate':
       return `Go to ${action.url}`;
     case 'press':

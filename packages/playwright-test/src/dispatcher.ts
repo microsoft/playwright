@@ -17,7 +17,17 @@
 import child_process from 'child_process';
 import path from 'path';
 import { EventEmitter } from 'events';
-import { RunPayload, TestBeginPayload, TestEndPayload, DonePayload, TestOutputPayload, WorkerInitParams, StepBeginPayload, StepEndPayload, SerializedLoaderData } from './ipc';
+import {
+  RunPayload,
+  TestBeginPayload,
+  TestEndPayload,
+  DonePayload,
+  TestOutputPayload,
+  WorkerInitParams,
+  StepBeginPayload,
+  StepEndPayload,
+  SerializedLoaderData,
+} from './ipc';
 import type { TestResult, Reporter, TestStep } from '../types/testReporter';
 import { Suite, TestCase } from './test';
 import { Loader } from './loader';
@@ -41,7 +51,7 @@ type TestData = {
   resultByWorkerIndex: Map<number, TestResultData>;
 };
 export class Dispatcher {
-  private _workerSlots: { busy: boolean, worker?: Worker }[] = [];
+  private _workerSlots: { busy: boolean; worker?: Worker }[] = [];
   private _queue: TestGroup[] = [];
   private _queueHashCount = new Map<string, number>();
   private _finished = new ManualPromise<void>();
@@ -58,7 +68,10 @@ export class Dispatcher {
     this._reporter = reporter;
     this._queue = testGroups;
     for (const group of testGroups) {
-      this._queueHashCount.set(group.workerHash, 1 + (this._queueHashCount.get(group.workerHash) || 0));
+      this._queueHashCount.set(
+        group.workerHash,
+        1 + (this._queueHashCount.get(group.workerHash) || 0),
+      );
       for (const test of group.tests) {
         this._testById.set(test._id, { test, resultByWorkerIndex: new Map() });
         for (let suite: Suite | undefined = test.parent; suite; suite = suite.parent) {
@@ -73,17 +86,16 @@ export class Dispatcher {
 
   private async _scheduleJob() {
     // 1. Find a job to run.
-    if (this._isStopped || !this._queue.length)
-      return;
+    if (this._isStopped || !this._queue.length) return;
     const job = this._queue[0];
 
     // 2. Find a worker with the same hash, or just some free worker.
-    let index = this._workerSlots.findIndex(w => !w.busy && w.worker && w.worker.hash() === job.workerHash && !w.worker.didSendStop());
-    if (index === -1)
-      index = this._workerSlots.findIndex(w => !w.busy);
+    let index = this._workerSlots.findIndex(
+      (w) => !w.busy && w.worker && w.worker.hash() === job.workerHash && !w.worker.didSendStop(),
+    );
+    if (index === -1) index = this._workerSlots.findIndex((w) => !w.busy);
     // No workers available, bail out.
-    if (index === -1)
-      return;
+    if (index === -1) return;
 
     // 3. Claim both the job and the worker, run the job and release the worker.
     this._queue.shift();
@@ -106,7 +118,8 @@ export class Dispatcher {
     if (worker && (worker.hash() !== job.workerHash || worker.didSendStop())) {
       await worker.stop();
       worker = undefined;
-      if (this._isStopped) // Check stopped signal after async hop.
+      if (this._isStopped)
+        // Check stopped signal after async hop.
         return;
     }
 
@@ -114,9 +127,10 @@ export class Dispatcher {
     if (!worker) {
       worker = this._createWorker(job.workerHash, index);
       this._workerSlots[index].worker = worker;
-      worker.on('exit', () => this._workerSlots[index].worker = undefined);
+      worker.on('exit', () => (this._workerSlots[index].worker = undefined));
       await worker.init(job, this._loader.serialize());
-      if (this._isStopped) // Check stopped signal after async hop.
+      if (this._isStopped)
+        // Check stopped signal after async hop.
         return;
     }
 
@@ -125,21 +139,17 @@ export class Dispatcher {
   }
 
   private _checkFinished() {
-    if (this._finished.isDone())
-      return;
+    if (this._finished.isDone()) return;
 
     // Check that we have no more work to do.
-    if (this._queue.length && !this._isStopped)
-      return;
+    if (this._queue.length && !this._isStopped) return;
 
     // Make sure all workers have finished the current job.
-    if (this._workerSlots.some(w => w.busy))
-      return;
+    if (this._workerSlots.some((w) => w.busy)) return;
 
     for (const { test } of this._testById.values()) {
       // Emulate skipped test run if we have stopped early.
-      if (!test.results.length)
-        test._appendTestResult().status = 'skipped';
+      if (!test.results.length) test._appendTestResult().status = 'skipped';
     }
     this._finished.resolve();
   }
@@ -159,8 +169,7 @@ export class Dispatcher {
     for (let i = 0; i < this._loader.fullConfig().workers; i++)
       this._workerSlots.push({ busy: false });
     // 2. Schedule enough jobs.
-    for (let i = 0; i < this._workerSlots.length; i++)
-      this._scheduleJob();
+    for (let i = 0; i < this._workerSlots.length; i++) this._scheduleJob();
     this._checkFinished();
     // 3. More jobs are scheduled when the worker becomes free, or a new job is added.
     // 4. Wait for all jobs to finish.
@@ -171,7 +180,7 @@ export class Dispatcher {
     worker.run(testGroup);
 
     let doneCallback = () => {};
-    const result = new Promise<void>(f => doneCallback = f);
+    const result = new Promise<void>((f) => (doneCallback = f));
     const doneWithJob = () => {
       worker.removeListener('testBegin', onTestBegin);
       worker.removeListener('testEnd', onTestEnd);
@@ -182,30 +191,30 @@ export class Dispatcher {
       doneCallback();
     };
 
-    const remainingByTestId = new Map(testGroup.tests.map(e => [ e._id, e ]));
+    const remainingByTestId = new Map(testGroup.tests.map((e) => [e._id, e]));
     const failedTestIds = new Set<string>();
     let runningHookId: string | undefined;
 
     const onTestBegin = (params: TestBeginPayload) => {
       const data = this._testById.get(params.testId)!;
-      if (data.test._type !== 'test')
-        runningHookId = params.testId;
-      if (this._hasReachedMaxFailures())
-        return;
+      if (data.test._type !== 'test') runningHookId = params.testId;
+      if (this._hasReachedMaxFailures()) return;
       const result = data.test._appendTestResult();
-      data.resultByWorkerIndex.set(worker.workerIndex, { result, stepStack: new Set(), steps: new Map() });
+      data.resultByWorkerIndex.set(worker.workerIndex, {
+        result,
+        stepStack: new Set(),
+        steps: new Map(),
+      });
       result.workerIndex = worker.workerIndex;
       result.startTime = new Date(params.startWallTime);
-      if (data.test._type === 'test')
-        this._reporter.onTestBegin?.(data.test, result);
+      if (data.test._type === 'test') this._reporter.onTestBegin?.(data.test, result);
     };
     worker.addListener('testBegin', onTestBegin);
 
     const onTestEnd = (params: TestEndPayload) => {
       runningHookId = undefined;
       remainingByTestId.delete(params.testId);
-      if (this._hasReachedMaxFailures())
-        return;
+      if (this._hasReachedMaxFailures()) return;
       const data = this._testById.get(params.testId)!;
       const test = data.test;
       const { result } = data.resultByWorkerIndex.get(worker.workerIndex)!;
@@ -213,19 +222,18 @@ export class Dispatcher {
       result.duration = params.duration;
       result.errors = params.errors;
       result.error = result.errors[0];
-      result.attachments = params.attachments.map(a => ({
+      result.attachments = params.attachments.map((a) => ({
         name: a.name,
         path: a.path,
         contentType: a.contentType,
-        body: a.body !== undefined ? Buffer.from(a.body, 'base64') : undefined
+        body: a.body !== undefined ? Buffer.from(a.body, 'base64') : undefined,
       }));
       result.status = params.status;
       test.expectedStatus = params.expectedStatus;
       test.annotations = params.annotations;
       test.timeout = params.timeout;
       const isFailure = result.status !== 'skipped' && result.status !== test.expectedStatus;
-      if (isFailure && test._type === 'test')
-        failedTestIds.add(params.testId);
+      if (isFailure && test._type === 'test') failedTestIds.add(params.testId);
       this._reportTestEnd(test, result);
     };
     worker.addListener('testEnd', onTestEnd);
@@ -255,8 +263,7 @@ export class Dispatcher {
       };
       steps.set(params.stepId, step);
       (parentStep || result).steps.push(step);
-      if (params.canHaveChildren)
-        stepStack.add(step);
+      if (params.canHaveChildren) stepStack.add(step);
       this._reporter.onStepBegin?.(data.test, result, step);
     };
     worker.on('stepBegin', onStepBegin);
@@ -271,12 +278,15 @@ export class Dispatcher {
       const { result, steps, stepStack } = runData;
       const step = steps.get(params.stepId);
       if (!step) {
-        this._reporter.onStdErr?.('Internal error: step end without step begin: ' + params.stepId, data.test, result);
+        this._reporter.onStdErr?.(
+          'Internal error: step end without step begin: ' + params.stepId,
+          data.test,
+          result,
+        );
         return;
       }
       step.duration = params.wallTime - step.startTime.getTime();
-      if (params.error)
-        step.error = params.error;
+      if (params.error) step.error = params.error;
       stepStack.delete(step);
       steps.delete(params.stepId);
       this._reporter.onStepEnd?.(data.test, result, step);
@@ -291,8 +301,7 @@ export class Dispatcher {
       // - we are here not because something failed
       // - no unrecoverable worker error
       if (!remaining.length && !failedTestIds.size && !params.fatalError) {
-        if (this._isWorkerRedundant(worker))
-          worker.stop();
+        if (this._isWorkerRedundant(worker)) worker.stop();
         doneWithJob();
         return;
       }
@@ -315,8 +324,7 @@ export class Dispatcher {
 
         let first = true;
         for (const test of remaining) {
-          if (this._hasReachedMaxFailures())
-            break;
+          if (this._hasReachedMaxFailures()) break;
           const data = this._testById.get(test._id)!;
           const runData = data.resultByWorkerIndex.get(worker.workerIndex);
           // There might be a single test that has started but has not finished yet.
@@ -325,8 +333,7 @@ export class Dispatcher {
             result = runData.result;
           } else {
             result = data.test._appendTestResult();
-            if (test._type === 'test')
-              this._reporter.onTestBegin?.(test, result);
+            if (test._type === 'test') this._reporter.onTestBegin?.(test, result);
           }
           result.errors = [params.fatalError];
           result.error = result.errors[0];
@@ -353,29 +360,28 @@ export class Dispatcher {
         retryCandidates.add(failedTestId);
 
         let outermostSerialSuite: Suite | undefined;
-        for (let parent: Suite | undefined = this._testById.get(failedTestId)!.test.parent; parent; parent = parent.parent) {
-          if (parent._parallelMode ===  'serial')
-            outermostSerialSuite = parent;
+        for (
+          let parent: Suite | undefined = this._testById.get(failedTestId)!.test.parent;
+          parent;
+          parent = parent.parent
+        ) {
+          if (parent._parallelMode === 'serial') outermostSerialSuite = parent;
         }
-        if (outermostSerialSuite)
-          serialSuitesWithFailures.add(outermostSerialSuite);
+        if (outermostSerialSuite) serialSuitesWithFailures.add(outermostSerialSuite);
       }
 
       // We have failed tests that belong to a serial suite.
       // We should skip all future tests from the same serial suite.
-      remaining = remaining.filter(test => {
+      remaining = remaining.filter((test) => {
         let parent: Suite | undefined = test.parent;
-        while (parent && !serialSuitesWithFailures.has(parent))
-          parent = parent.parent;
+        while (parent && !serialSuitesWithFailures.has(parent)) parent = parent.parent;
 
         // Does not belong to the failed serial suite, keep it.
-        if (!parent)
-          return true;
+        if (!parent) return true;
 
         // Emulate a "skipped" run, and drop this test from remaining.
         const result = test._appendTestResult();
-        if (test._type === 'test')
-          this._reporter.onTestBegin?.(test, result);
+        if (test._type === 'test') this._reporter.onTestBegin?.(test, result);
         result.status = 'skipped';
         this._reportTestEnd(test, result);
         return false;
@@ -385,7 +391,7 @@ export class Dispatcher {
         // Add all tests from faiiled serial suites for possible retry.
         // These will only be retried together, because they have the same
         // "retries" setting and the same number of previous runs.
-        serialSuite.allTests().forEach(test => retryCandidates.add(test._id));
+        serialSuite.allTests().forEach((test) => retryCandidates.add(test._id));
       }
 
       for (const testId of retryCandidates) {
@@ -396,7 +402,10 @@ export class Dispatcher {
 
       if (remaining.length) {
         this._queue.unshift({ ...testGroup, tests: remaining });
-        this._queueHashCount.set(testGroup.workerHash, this._queueHashCount.get(testGroup.workerHash)! + 1);
+        this._queueHashCount.set(
+          testGroup.workerHash,
+          this._queueHashCount.get(testGroup.workerHash)! + 1,
+        );
         // Perhaps we can immediately start the new job if there is a worker available?
         this._scheduleJob();
       }
@@ -424,10 +433,13 @@ export class Dispatcher {
         // the next retry.
         return { chunk };
       }
-      if (!params.testId)
-        return { chunk };
+      if (!params.testId) return { chunk };
       const data = this._testById.get(params.testId)!;
-      return { chunk, test: data.test, result: data.resultByWorkerIndex.get(worker.workerIndex)?.result };
+      return {
+        chunk,
+        test: data.test,
+        result: data.resultByWorkerIndex.get(worker.workerIndex)?.result,
+      };
     };
     worker.on('stdOut', (params: TestOutputPayload) => {
       const { chunk, test, result } = handleOutput(params);
@@ -458,13 +470,15 @@ export class Dispatcher {
   }
 
   private _reportTestEnd(test: TestCase, result: TestResult) {
-    if (test._type === 'test' && result.status !== 'skipped' && result.status !== test.expectedStatus)
+    if (
+      test._type === 'test' &&
+      result.status !== 'skipped' &&
+      result.status !== test.expectedStatus
+    )
       ++this._failureCount;
-    if (test._type === 'test')
-      this._reporter.onTestEnd?.(test, result);
+    if (test._type === 'test') this._reporter.onTestEnd?.(test, result);
     const maxFailures = this._loader.fullConfig().maxFailures;
-    if (maxFailures && this._failureCount === maxFailures)
-      this.stop().catch(e => {});
+    if (maxFailures && this._failureCount === maxFailures) this.stop().catch((e) => {});
   }
 
   hasWorkerErrors(): boolean {
@@ -496,16 +510,16 @@ class Worker extends EventEmitter {
         DEBUG_COLORS: '1',
         TEST_WORKER_INDEX: String(this.workerIndex),
         TEST_PARALLEL_INDEX: String(this.parallelIndex),
-        ...process.env
+        ...process.env,
       },
       // Can't pipe since piping slows down termination for some reason.
-      stdio: ['ignore', 'ignore', process.env.PW_RUNNER_DEBUG ? 'inherit' : 'ignore', 'ipc']
+      stdio: ['ignore', 'ignore', process.env.PW_RUNNER_DEBUG ? 'inherit' : 'ignore', 'ipc'],
     });
     this.process.on('exit', () => {
       this.didExit = true;
       this.emit('exit', this._didSendStop /* expectedly */);
     });
-    this.process.on('error', e => {});  // do not yell at a send to dead process.
+    this.process.on('error', (e) => {}); // do not yell at a send to dead process.
     this.process.on('message', (message: any) => {
       const { method, params } = message;
       this.emit(method, params);
@@ -521,13 +535,13 @@ class Worker extends EventEmitter {
       loader: loaderData,
     };
     this.process.send({ method: 'init', params });
-    await new Promise(f => this.process.once('message', f));  // Ready ack
+    await new Promise((f) => this.process.once('message', f)); // Ready ack
   }
 
   run(testGroup: TestGroup) {
     const runPayload: RunPayload = {
       file: testGroup.requireFile,
-      entries: testGroup.tests.map(test => {
+      entries: testGroup.tests.map((test) => {
         return { testId: test._id, retry: test.results.length };
       }),
     };
@@ -547,20 +561,17 @@ class Worker extends EventEmitter {
   }
 
   async stop(didFail?: boolean) {
-    if (didFail)
-      this._didFail = true;
-    if (this.didExit)
-      return;
+    if (didFail) this._didFail = true;
+    if (this.didExit) return;
     if (!this._didSendStop) {
       this.process.send({ method: 'stop' });
       this._didSendStop = true;
     }
-    await new Promise(f => this.once('exit', f));
+    await new Promise((f) => this.once('exit', f));
   }
 }
 
 function chunkFromParams(params: TestOutputPayload): string | Buffer {
-  if (typeof params.text === 'string')
-    return params.text;
+  if (typeof params.text === 'string') return params.text;
   return Buffer.from(params.buffer!, 'base64');
 }

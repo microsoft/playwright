@@ -31,7 +31,13 @@ export class Dialog extends SdkObject {
   private _handled = false;
   private _defaultValue: string;
 
-  constructor(page: Page, type: string, message: string, onHandle: OnHandle, defaultValue?: string) {
+  constructor(
+    page: Page,
+    type: string,
+    message: string,
+    onHandle: OnHandle,
+    defaultValue?: string,
+  ) {
     super(page, 'dialog');
     this._page = page;
     this._type = type;

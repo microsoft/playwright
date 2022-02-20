@@ -29,7 +29,7 @@
   font-weight: 600;
 }
 
-@media(prefers-color-scheme: light) {
+@media (prefers-color-scheme: light) {
   .label-color-0 {
     background-color: var(--color-scale-blue-0);
     color: var(--color-scale-blue-6);
@@ -62,7 +62,7 @@
   }
 }
 
-@media(prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark) {
   .label-color-0 {
     background-color: var(--color-scale-blue-9);
     color: var(--color-scale-blue-2);

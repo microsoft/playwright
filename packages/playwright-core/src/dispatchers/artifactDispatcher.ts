@@ -21,7 +21,10 @@ import fs from 'fs';
 import { mkdirIfNeeded } from '../utils/utils';
 import { Artifact } from '../server/artifact';
 
-export class ArtifactDispatcher extends Dispatcher<Artifact, channels.ArtifactChannel> implements channels.ArtifactChannel {
+export class ArtifactDispatcher
+  extends Dispatcher<Artifact, channels.ArtifactChannel>
+  implements channels.ArtifactChannel
+{
   _type_Artifact = true;
   constructor(scope: DispatcherScope, artifact: Artifact) {
     super(scope, artifact, 'Artifact', {
@@ -65,7 +68,7 @@ export class ArtifactDispatcher extends Dispatcher<Artifact, channels.ArtifactCh
           // Resolve with a stream, so that client starts saving the data.
           resolve({ stream });
           // Block the Artifact until the stream is consumed.
-          await new Promise<void>(resolve => {
+          await new Promise<void>((resolve) => {
             readable.on('close', resolve);
             readable.on('end', resolve);
             readable.on('error', resolve);
@@ -79,8 +82,7 @@ export class ArtifactDispatcher extends Dispatcher<Artifact, channels.ArtifactCh
 
   async stream(): Promise<channels.ArtifactStreamResult> {
     const fileName = await this._object.localPathAfterFinished();
-    if (!fileName)
-      return {};
+    if (!fileName) return {};
     const readable = fs.createReadStream(fileName);
     return { stream: new StreamDispatcher(this._scope, readable) };
   }

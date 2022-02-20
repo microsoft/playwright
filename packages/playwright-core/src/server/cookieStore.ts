@@ -28,19 +28,18 @@ class Cookie {
 
   // https://datatracker.ietf.org/doc/html/rfc6265#section-5.4
   matches(url: URL): boolean {
-    if (this._raw.secure && url.protocol !== 'https:')
-      return false;
-    if (!domainMatches(url.hostname, this._raw.domain))
-      return false;
-    if (!pathMatches(url.pathname, this._raw.path))
-      return false;
+    if (this._raw.secure && url.protocol !== 'https:') return false;
+    if (!domainMatches(url.hostname, this._raw.domain)) return false;
+    if (!pathMatches(url.pathname, this._raw.path)) return false;
     return true;
   }
 
   equals(other: Cookie) {
-    return this._raw.name === other._raw.name &&
+    return (
+      this._raw.name === other._raw.name &&
       this._raw.domain === other._raw.domain &&
-      this._raw.path === other._raw.path;
+      this._raw.path === other._raw.path
+    );
   }
 
   networkCookie(): types.NetworkCookie {
@@ -52,8 +51,7 @@ class Cookie {
   }
 
   expired() {
-    if (this._raw.expires === -1)
-      return false;
+    if (this._raw.expires === -1) return false;
     return this._raw.expires * 1000 < Date.now();
   }
 }
@@ -62,29 +60,25 @@ export class CookieStore {
   private readonly _nameToCookies: Map<string, Set<Cookie>> = new Map();
 
   addCookies(cookies: types.NetworkCookie[]) {
-    for (const cookie of cookies)
-      this._addCookie(new Cookie(cookie));
+    for (const cookie of cookies) this._addCookie(new Cookie(cookie));
   }
 
   cookies(url: URL): types.NetworkCookie[] {
     const result = [];
     for (const cookie of this._cookiesIterator()) {
-      if (cookie.matches(url))
-        result.push(cookie.networkCookie());
+      if (cookie.matches(url)) result.push(cookie.networkCookie());
     }
     return result;
   }
 
   allCookies(): types.NetworkCookie[] {
     const result = [];
-    for (const cookie of this._cookiesIterator())
-      result.push(cookie.networkCookie());
+    for (const cookie of this._cookiesIterator()) result.push(cookie.networkCookie());
     return result;
   }
 
   private _addCookie(cookie: Cookie) {
-    if (cookie.expired())
-      return;
+    if (cookie.expired()) return;
     let set = this._nameToCookies.get(cookie.name());
     if (!set) {
       set = new Set();
@@ -104,37 +98,29 @@ export class CookieStore {
   private *_cookiesIterator(): IterableIterator<Cookie> {
     for (const [name, cookies] of this._nameToCookies) {
       CookieStore.pruneExpired(cookies);
-      for (const cookie of cookies)
-        yield cookie;
-      if (cookies.size === 0)
-        this._nameToCookies.delete(name);
+      for (const cookie of cookies) yield cookie;
+      if (cookies.size === 0) this._nameToCookies.delete(name);
     }
   }
 
   private static pruneExpired(cookies: Set<Cookie>) {
     for (const cookie of cookies) {
-      if (cookie.expired())
-        cookies.delete(cookie);
+      if (cookie.expired()) cookies.delete(cookie);
     }
   }
 }
 
 export function domainMatches(value: string, domain: string): boolean {
-  if (value === domain)
-    return true;
+  if (value === domain) return true;
   // Only strict match is allowed if domain doesn't start with '.' (host-only-flag is true in the spec)
-  if (!domain.startsWith('.'))
-    return false;
+  if (!domain.startsWith('.')) return false;
   value = '.' + value;
   return value.endsWith(domain);
 }
 
 function pathMatches(value: string, path: string): boolean {
-  if (value === path)
-    return true;
-  if (!value.endsWith('/'))
-    value = value + '/';
-  if (!path.endsWith('/'))
-    path = path + '/';
+  if (value === path) return true;
+  if (!value.endsWith('/')) value = value + '/';
+  if (!path.endsWith('/')) path = path + '/';
   return value.startsWith(path);
 }

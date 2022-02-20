@@ -28,13 +28,13 @@ module.exports = {
     playwright: path.join(__dirname, 'playwright.components.tsx'),
   },
   resolve: {
-    extensions: ['.ts', '.js', '.tsx', '.jsx']
+    extensions: ['.ts', '.js', '.tsx', '.jsx'],
   },
   devtool: mode === 'production' ? false : 'source-map',
   output: {
     globalObject: 'self',
     filename: '[name].bundle.js',
-    path: path.resolve(__dirname, '..', 'playwright-core', 'lib', 'webpack', 'htmlReport')
+    path: path.resolve(__dirname, '..', 'playwright-core', 'lib', 'webpack', 'htmlReport'),
   },
   module: {
     rules: [
@@ -42,18 +42,15 @@ module.exports = {
         test: /\.(j|t)sx?$/,
         loader: 'babel-loader',
         options: {
-          presets: [
-            "@babel/preset-typescript",
-            "@babel/preset-react"
-          ]
+          presets: ['@babel/preset-typescript', '@babel/preset-react'],
         },
-        exclude: /node_modules/
+        exclude: /node_modules/,
       },
       {
         test: /\.css$/,
-        use: ['style-loader', 'css-loader']
+        use: ['style-loader', 'css-loader'],
       },
-    ]
+    ],
   },
   plugins: [
     new HtmlWebPackPlugin({
@@ -63,5 +60,5 @@ module.exports = {
       excludeChunks: ['playwright'],
     }),
     new BundleJsPlugin(),
-  ]
+  ],
 };

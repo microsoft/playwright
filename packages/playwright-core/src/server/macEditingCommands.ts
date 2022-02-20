@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-export const macEditingCommands: {[key: string]: string|string[]} = {
+export const macEditingCommands: { [key: string]: string | string[] } = {
   'Backspace': 'deleteBackward:',
   'Enter': 'insertNewline:',
   'NumpadEnter': 'insertNewline:',

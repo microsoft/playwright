@@ -67,19 +67,26 @@ export abstract class BrowserContext extends SdkObject {
   readonly fetchRequest: BrowserContextAPIRequestContext;
   private _customCloseHandler?: () => Promise<any>;
 
-  constructor(browser: Browser, options: types.BrowserContextOptions, browserContextId: string | undefined) {
+  constructor(
+    browser: Browser,
+    options: types.BrowserContextOptions,
+    browserContextId: string | undefined,
+  ) {
     super(browser, 'browser-context');
     this.attribution.context = this;
     this._browser = browser;
     this._options = options;
     this._browserContextId = browserContextId;
     this._isPersistentContext = !browserContextId;
-    this._closePromise = new Promise(fulfill => this._closePromiseFulfill = fulfill);
+    this._closePromise = new Promise((fulfill) => (this._closePromiseFulfill = fulfill));
 
     this.fetchRequest = new BrowserContextAPIRequestContext(this);
 
     if (this._options.recordHar)
-      this._harRecorder = new HarRecorder(this, { ...this._options.recordHar, path: path.join(this._browser.options.artifactsDir, `${createGuid()}.har`) });
+      this._harRecorder = new HarRecorder(this, {
+        ...this._options.recordHar,
+        path: path.join(this._browser.options.artifactsDir, `${createGuid()}.har`),
+      });
 
     this.tracing = new Tracing(this, browser.options.tracesDir);
   }
@@ -97,8 +104,7 @@ export abstract class BrowserContext extends SdkObject {
   }
 
   async _initialize() {
-    if (this.attribution.isInternal)
-      return;
+    if (this.attribution.isInternal) return;
     // Debugger will pause execution upon page.pause in headed mode.
     const contextDebugger = new Debugger(this);
     this.instrumentation.addListener(contextDebugger, this);
@@ -108,14 +114,12 @@ export abstract class BrowserContext extends SdkObject {
       await RecorderSupplement.show(this, { pauseOnNextStatement: true });
 
     // When paused, show inspector.
-    if (contextDebugger.isPaused())
-      RecorderSupplement.showInspector(this);
+    if (contextDebugger.isPaused()) RecorderSupplement.showInspector(this);
     contextDebugger.on(Debugger.Events.PausedStateChanged, () => {
       RecorderSupplement.showInspector(this);
     });
 
-    if (debugMode() === 'console')
-      await this.extendInjectedScript(consoleApiSource.source);
+    if (debugMode() === 'console') await this.extendInjectedScript(consoleApiSource.source);
   }
 
   async _ensureVideosPath() {
@@ -124,8 +128,7 @@ export abstract class BrowserContext extends SdkObject {
   }
 
   _browserClosed() {
-    for (const page of this.pages())
-      page._didClose();
+    for (const page of this.pages()) page._didClose();
     this._didCloseInternal();
   }
 
@@ -139,8 +142,7 @@ export abstract class BrowserContext extends SdkObject {
     this._deleteAllDownloads();
     this._downloads.clear();
     this.tracing.dispose();
-    if (this._isPersistentContext)
-      this._onClosePersistent();
+    if (this._isPersistentContext) this._onClosePersistent();
     this._closePromiseFulfill!(new Error('Context closed'));
     this.emit(BrowserContext.Events.Close);
   }
@@ -165,8 +167,7 @@ export abstract class BrowserContext extends SdkObject {
   abstract _doCancelDownload(uuid: string): Promise<void>;
 
   async cookies(urls: string | string[] | undefined = []): Promise<types.NetworkCookie[]> {
-    if (urls && !Array.isArray(urls))
-      urls = [ urls ];
+    if (urls && !Array.isArray(urls)) urls = [urls];
     return await this._doCookies(urls as string[]);
   }
 
@@ -174,7 +175,11 @@ export abstract class BrowserContext extends SdkObject {
     return this._doSetHTTPCredentials(httpCredentials);
   }
 
-  async exposeBinding(name: string, needsHandle: boolean, playwrightBinding: frames.FunctionWithSource): Promise<void> {
+  async exposeBinding(
+    name: string,
+    needsHandle: boolean,
+    playwrightBinding: frames.FunctionWithSource,
+  ): Promise<void> {
     if (this._pageBindings.has(name))
       throw new Error(`Function "${name}" has been already registered`);
     for (const page of this.pages()) {
@@ -193,7 +198,7 @@ export abstract class BrowserContext extends SdkObject {
       resolvedOrigin = url.origin;
     }
     const existing = new Set(this._permissions.get(resolvedOrigin) || []);
-    permissions.forEach(p => existing.add(p));
+    permissions.forEach((p) => existing.add(p));
     const list = [...existing.values()];
     this._permissions.set(resolvedOrigin, list);
     await this._doGrantPermissions(resolvedOrigin, list);
@@ -217,12 +222,10 @@ export abstract class BrowserContext extends SdkObject {
       const waitForEvent = helper.waitForEvent(progress, this, BrowserContext.Events.Page);
       progress.cleanupWhenAborted(() => waitForEvent.dispose);
       const page = (await waitForEvent.promise) as Page;
-      if (page._pageIsError)
-        throw page._pageIsError;
+      if (page._pageIsError) throw page._pageIsError;
     }
     const pages = this.pages();
-    if (pages[0]._pageIsError)
-      throw pages[0]._pageIsError;
+    if (pages[0]._pageIsError) throw pages[0]._pageIsError;
     await pages[0].mainFrame()._waitForLoadState(progress, 'load');
     return pages;
   }
@@ -240,7 +243,8 @@ export abstract class BrowserContext extends SdkObject {
   }
 
   protected _authenticateProxyViaHeader() {
-    const proxy = this._options.proxy || this._browser.options.proxy || { username: undefined, password: undefined };
+    const proxy = this._options.proxy ||
+      this._browser.options.proxy || { username: undefined, password: undefined };
     const { username, password } = proxy;
     if (username) {
       this._options.httpCredentials = { username, password: password! };
@@ -254,11 +258,9 @@ export abstract class BrowserContext extends SdkObject {
 
   protected _authenticateProxyViaCredentials() {
     const proxy = this._options.proxy || this._browser.options.proxy;
-    if (!proxy)
-      return;
+    if (!proxy) return;
     const { username, password } = proxy;
-    if (username)
-      this._options.httpCredentials = { username, password: password || '' };
+    if (username) this._options.httpCredentials = { username, password: password || '' };
   }
 
   async _setRequestInterceptor(handler: network.RouteHandler | undefined): Promise<void> {
@@ -271,7 +273,9 @@ export abstract class BrowserContext extends SdkObject {
   }
 
   private async _deleteAllDownloads(): Promise<void> {
-    await Promise.all(Array.from(this._downloads).map(download => download.artifact.deleteOnContextClose()));
+    await Promise.all(
+      Array.from(this._downloads).map((download) => download.artifact.deleteOnContextClose()),
+    );
   }
 
   setCustomCloseHandler(handler: (() => Promise<any>) | undefined) {
@@ -290,8 +294,7 @@ export abstract class BrowserContext extends SdkObject {
       const promises: Promise<void>[] = [];
       for (const { context, artifact } of this._browser._idToVideo.values()) {
         // Wait for the videos to finish.
-        if (context === this)
-          promises.push(artifact.finishedPromise());
+        if (context === this) promises.push(artifact.finishedPromise());
       }
 
       if (this._customCloseHandler) {
@@ -299,7 +302,7 @@ export abstract class BrowserContext extends SdkObject {
       } else if (this._isPersistentContext) {
         // Close all the pages instead of the context,
         // because we cannot close the default context.
-        await Promise.all(this.pages().map(page => page.close(metadata)));
+        await Promise.all(this.pages().map((page) => page.close(metadata)));
       } else {
         // Close the context.
         await this._doClose();
@@ -311,12 +314,10 @@ export abstract class BrowserContext extends SdkObject {
       await Promise.all(promises);
 
       // Custom handler should trigger didCloseInternal itself.
-      if (this._customCloseHandler)
-        return;
+      if (this._customCloseHandler) return;
 
       // Persistent context should also close the browser.
-      if (this._isPersistentContext)
-        await this._browser.close();
+      if (this._isPersistentContext) await this._browser.close();
 
       // Bookkeeping.
       this._didCloseInternal();
@@ -328,8 +329,7 @@ export abstract class BrowserContext extends SdkObject {
     const pageDelegate = await this.newPageDelegate();
     const pageOrError = await pageDelegate.pageOrError();
     if (pageOrError instanceof Page) {
-      if (pageOrError.isClosed())
-        throw new Error('Page has been closed.');
+      if (pageOrError.isClosed()) throw new Error('Page has been closed.');
       return pageOrError;
     }
     throw pageOrError;
@@ -342,24 +342,28 @@ export abstract class BrowserContext extends SdkObject {
   async storageState(): Promise<types.StorageState> {
     const result: types.StorageState = {
       cookies: await this.cookies(),
-      origins: []
+      origins: [],
     };
-    if (this._origins.size)  {
+    if (this._origins.size) {
       const internalMetadata = internalCallMetadata();
       const page = await this.newPage(internalMetadata);
-      await page._setServerRequestInterceptor(handler => {
+      await page._setServerRequestInterceptor((handler) => {
         handler.fulfill({ body: '<html></html>' }).catch(() => {});
       });
       for (const origin of this._origins) {
         const originStorage: types.OriginStorage = { origin, localStorage: [] };
         const frame = page.mainFrame();
         await frame.goto(internalMetadata, origin);
-        const storage = await frame.evaluateExpression(`({
+        const storage = await frame.evaluateExpression(
+          `({
           localStorage: Object.keys(localStorage).map(name => ({ name, value: localStorage.getItem(name) })),
-        })`, false, undefined, 'utility');
+        })`,
+          false,
+          undefined,
+          'utility',
+        );
         originStorage.localStorage = storage.localStorage;
-        if (storage.localStorage.length)
-          result.origins.push(originStorage);
+        if (storage.localStorage.length) result.origins.push(originStorage);
       }
       await page.close(internalMetadata);
     }
@@ -367,29 +371,34 @@ export abstract class BrowserContext extends SdkObject {
   }
 
   async setStorageState(metadata: CallMetadata, state: types.SetStorageState) {
-    if (state.cookies)
-      await this.addCookies(state.cookies);
-    if (state.origins && state.origins.length)  {
+    if (state.cookies) await this.addCookies(state.cookies);
+    if (state.origins && state.origins.length) {
       const internalMetadata = internalCallMetadata();
       const page = await this.newPage(internalMetadata);
-      await page._setServerRequestInterceptor(handler => {
+      await page._setServerRequestInterceptor((handler) => {
         handler.fulfill({ body: '<html></html>' }).catch(() => {});
       });
       for (const originState of state.origins) {
         const frame = page.mainFrame();
         await frame.goto(metadata, originState.origin);
-        await frame.evaluateExpression(`
+        await frame.evaluateExpression(
+          `
           originState => {
             for (const { name, value } of (originState.localStorage || []))
               localStorage.setItem(name, value);
-          }`, true, originState, 'utility');
+          }`,
+          true,
+          originState,
+          'utility',
+        );
       }
       await page.close(internalMetadata);
     }
   }
 
   async extendInjectedScript(source: string, arg?: any) {
-    const installInFrame = (frame: frames.Frame) => frame.extendInjectedScript(source, arg).catch(() => {});
+    const installInFrame = (frame: frames.Frame) =>
+      frame.extendInjectedScript(source, arg).catch(() => {});
     const installInPage = (page: Page) => {
       page.on(Page.Events.InternalFrameNavigatedToNewDocument, installInFrame);
       return Promise.all(page.frames().map(installInFrame));
@@ -402,17 +411,21 @@ export abstract class BrowserContext extends SdkObject {
 export function assertBrowserContextIsNotOwned(context: BrowserContext) {
   for (const page of context.pages()) {
     if (page._ownedContext)
-      throw new Error('Please use browser.newContext() for multi-page scripts that share the context.');
+      throw new Error(
+        'Please use browser.newContext() for multi-page scripts that share the context.',
+      );
   }
 }
 
-export function validateBrowserContextOptions(options: types.BrowserContextOptions, browserOptions: BrowserOptions) {
+export function validateBrowserContextOptions(
+  options: types.BrowserContextOptions,
+  browserOptions: BrowserOptions,
+) {
   if (options.noDefaultViewport && options.deviceScaleFactor !== undefined)
     throw new Error(`"deviceScaleFactor" option is not supported with null "viewport"`);
   if (options.noDefaultViewport && options.isMobile !== undefined)
     throw new Error(`"isMobile" option is not supported with null "viewport"`);
-  if (options.acceptDownloads === undefined)
-    options.acceptDownloads = true;
+  if (options.acceptDownloads === undefined) options.acceptDownloads = true;
   if (!options.viewport && !options.noDefaultViewport)
     options.viewport = { width: 1280, height: 720 };
   if (options.recordVideo) {
@@ -424,7 +437,7 @@ export function validateBrowserContextOptions(options: types.BrowserContextOptio
         const scale = Math.min(1, 800 / Math.max(size.width, size.height));
         options.recordVideo.size = {
           width: Math.floor(size.width * scale),
-          height: Math.floor(size.height * scale)
+          height: Math.floor(size.height * scale),
         };
       }
     }
@@ -434,25 +447,24 @@ export function validateBrowserContextOptions(options: types.BrowserContextOptio
   }
   if (options.proxy) {
     if (!browserOptions.proxy && browserOptions.isChromium && os.platform() === 'win32')
-      throw new Error(`Browser needs to be launched with the global proxy. If all contexts override the proxy, global proxy will be never used and can be any string, for example "launch({ proxy: { server: 'http://per-context' } })"`);
+      throw new Error(
+        `Browser needs to be launched with the global proxy. If all contexts override the proxy, global proxy will be never used and can be any string, for example "launch({ proxy: { server: 'http://per-context' } })"`,
+      );
     options.proxy = normalizeProxySettings(options.proxy);
   }
-  if (debugMode() === 'inspector')
-    options.bypassCSP = true;
+  if (debugMode() === 'inspector') options.bypassCSP = true;
   verifyGeolocation(options.geolocation);
 }
 
 export function verifyGeolocation(geolocation?: types.Geolocation) {
-  if (!geolocation)
-    return;
+  if (!geolocation) return;
   geolocation.accuracy = geolocation.accuracy || 0;
   const { longitude, latitude, accuracy } = geolocation;
   if (longitude < -180 || longitude > 180)
     throw new Error(`geolocation.longitude: precondition -180 <= LONGITUDE <= 180 failed.`);
   if (latitude < -90 || latitude > 90)
     throw new Error(`geolocation.latitude: precondition -90 <= LATITUDE <= 90 failed.`);
-  if (accuracy < 0)
-    throw new Error(`geolocation.accuracy: precondition 0 <= ACCURACY failed.`);
+  if (accuracy < 0) throw new Error(`geolocation.accuracy: precondition 0 <= ACCURACY failed.`);
 }
 
 export function normalizeProxySettings(proxy: types.ProxySettings): types.ProxySettings {
@@ -463,8 +475,7 @@ export function normalizeProxySettings(proxy: types.ProxySettings): types.ProxyS
     // new URL('localhost:8080') fails to parse host or protocol
     // In both of these cases, we need to try re-parse URL with `http://` prefix.
     url = new URL(server);
-    if (!url.host || !url.protocol)
-      url = new URL('http://' + server);
+    if (!url.host || !url.protocol) url = new URL('http://' + server);
   } catch (e) {
     url = new URL('http://' + server);
   }
@@ -474,6 +485,9 @@ export function normalizeProxySettings(proxy: types.ProxySettings): types.ProxyS
     throw new Error(`Browser does not support socks5 proxy authentication`);
   server = url.protocol + '//' + url.host;
   if (bypass)
-    bypass = bypass.split(',').map(t => t.trim()).join(',');
+    bypass = bypass
+      .split(',')
+      .map((t) => t.trim())
+      .join(',');
   return { ...proxy, server, bypass };
 }

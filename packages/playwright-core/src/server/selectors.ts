@@ -18,37 +18,52 @@ import * as dom from './dom';
 import * as frames from './frames';
 import * as js from './javascript';
 import * as types from './types';
-import { allEngineNames, InvalidSelectorError, ParsedSelector, parseSelector, stringifySelector } from './common/selectorParser';
+import {
+  allEngineNames,
+  InvalidSelectorError,
+  ParsedSelector,
+  parseSelector,
+  stringifySelector,
+} from './common/selectorParser';
 import { createGuid } from '../utils/utils';
 
 export type SelectorInfo = {
-  parsed: ParsedSelector,
-  world: types.World,
-  strict: boolean,
+  parsed: ParsedSelector;
+  world: types.World;
+  strict: boolean;
 };
 
 export class Selectors {
   readonly _builtinEngines: Set<string>;
   readonly _builtinEnginesInMainWorld: Set<string>;
-  readonly _engines: Map<string, { source: string, contentScript: boolean }>;
+  readonly _engines: Map<string, { source: string; contentScript: boolean }>;
   readonly guid = `selectors@${createGuid()}`;
 
   constructor() {
     // Note: keep in sync with InjectedScript class.
     this._builtinEngines = new Set([
-      'css', 'css:light',
-      'xpath', 'xpath:light',
-      '_react', '_vue',
-      'text', 'text:light',
-      'id', 'id:light',
-      'data-testid', 'data-testid:light',
-      'data-test-id', 'data-test-id:light',
-      'data-test', 'data-test:light',
-      'nth', 'visible', 'control', 'has',
+      'css',
+      'css:light',
+      'xpath',
+      'xpath:light',
+      '_react',
+      '_vue',
+      'text',
+      'text:light',
+      'id',
+      'id:light',
+      'data-testid',
+      'data-testid:light',
+      'data-test-id',
+      'data-test-id:light',
+      'data-test',
+      'data-test:light',
+      'nth',
+      'visible',
+      'control',
+      'has',
     ]);
-    this._builtinEnginesInMainWorld = new Set([
-      '_react', '_vue',
-    ]);
+    this._builtinEnginesInMainWorld = new Set(['_react', '_vue']);
     this._engines = new Map();
   }
 
@@ -67,12 +82,19 @@ export class Selectors {
     this._engines.clear();
   }
 
-  async query(frame: frames.Frame, info: SelectorInfo, scope?: dom.ElementHandle): Promise<dom.ElementHandle<Element> | null> {
+  async query(
+    frame: frames.Frame,
+    info: SelectorInfo,
+    scope?: dom.ElementHandle,
+  ): Promise<dom.ElementHandle<Element> | null> {
     const context = await frame._context(info.world);
     const injectedScript = await context.injectedScript();
-    const handle = await injectedScript.evaluateHandle((injected, { parsed, scope, strict }) => {
-      return injected.querySelector(parsed, scope || document, strict);
-    }, { parsed: info.parsed, scope, strict: info.strict });
+    const handle = await injectedScript.evaluateHandle(
+      (injected, { parsed, scope, strict }) => {
+        return injected.querySelector(parsed, scope || document, strict);
+      },
+      { parsed: info.parsed, scope, strict: info.strict },
+    );
     const elementHandle = handle.asElement() as dom.ElementHandle<Element> | null;
     if (!elementHandle) {
       handle.dispose();
@@ -82,30 +104,52 @@ export class Selectors {
     return this._adoptIfNeeded(elementHandle, mainContext);
   }
 
-  async _queryArrayInMainWorld(frame: frames.Frame, info: SelectorInfo, scope?: dom.ElementHandle): Promise<js.JSHandle<Element[]>> {
+  async _queryArrayInMainWorld(
+    frame: frames.Frame,
+    info: SelectorInfo,
+    scope?: dom.ElementHandle,
+  ): Promise<js.JSHandle<Element[]>> {
     const context = await frame._mainContext();
     const injectedScript = await context.injectedScript();
-    const arrayHandle = await injectedScript.evaluateHandle((injected, { parsed, scope }) => {
-      return injected.querySelectorAll(parsed, scope || document);
-    }, { parsed: info.parsed, scope });
+    const arrayHandle = await injectedScript.evaluateHandle(
+      (injected, { parsed, scope }) => {
+        return injected.querySelectorAll(parsed, scope || document);
+      },
+      { parsed: info.parsed, scope },
+    );
     return arrayHandle;
   }
 
-  async _queryCount(frame: frames.Frame, info: SelectorInfo, scope?: dom.ElementHandle): Promise<number> {
+  async _queryCount(
+    frame: frames.Frame,
+    info: SelectorInfo,
+    scope?: dom.ElementHandle,
+  ): Promise<number> {
     const context = await frame._utilityContext();
     const injectedScript = await context.injectedScript();
-    return await injectedScript.evaluate((injected, { parsed, scope }) => {
-      return injected.querySelectorAll(parsed, scope || document).length;
-    }, { parsed: info.parsed, scope });
+    return await injectedScript.evaluate(
+      (injected, { parsed, scope }) => {
+        return injected.querySelectorAll(parsed, scope || document).length;
+      },
+      { parsed: info.parsed, scope },
+    );
   }
 
-  async _queryAll(frame: frames.Frame, selector: SelectorInfo, scope?: dom.ElementHandle, adoptToMain?: boolean): Promise<dom.ElementHandle<Element>[]> {
+  async _queryAll(
+    frame: frames.Frame,
+    selector: SelectorInfo,
+    scope?: dom.ElementHandle,
+    adoptToMain?: boolean,
+  ): Promise<dom.ElementHandle<Element>[]> {
     const info = typeof selector === 'string' ? frame._page.parseSelector(selector) : selector;
     const context = await frame._context(info.world);
     const injectedScript = await context.injectedScript();
-    const arrayHandle = await injectedScript.evaluateHandle((injected, { parsed, scope }) => {
-      return injected.querySelectorAll(parsed, scope || document);
-    }, { parsed: info.parsed, scope });
+    const arrayHandle = await injectedScript.evaluateHandle(
+      (injected, { parsed, scope }) => {
+        return injected.querySelectorAll(parsed, scope || document);
+      },
+      { parsed: info.parsed, scope },
+    );
 
     const properties = await arrayHandle.getProperties();
     arrayHandle.dispose();
@@ -116,17 +160,17 @@ export class Selectors {
     const result: Promise<dom.ElementHandle<Element>>[] = [];
     for (const property of properties.values()) {
       const elementHandle = property.asElement() as dom.ElementHandle<Element>;
-      if (elementHandle)
-        result.push(this._adoptIfNeeded(elementHandle, targetContext));
-      else
-        property.dispose();
+      if (elementHandle) result.push(this._adoptIfNeeded(elementHandle, targetContext));
+      else property.dispose();
     }
     return Promise.all(result);
   }
 
-  private async _adoptIfNeeded<T extends Node>(handle: dom.ElementHandle<T>, context: dom.FrameExecutionContext): Promise<dom.ElementHandle<T>> {
-    if (handle._context === context)
-      return handle;
+  private async _adoptIfNeeded<T extends Node>(
+    handle: dom.ElementHandle<T>,
+    context: dom.FrameExecutionContext,
+  ): Promise<dom.ElementHandle<T>> {
+    if (handle._context === context) return handle;
     const adopted = handle._page._delegate.adoptElementHandle(handle, context);
     handle.dispose();
     return adopted;
@@ -138,11 +182,11 @@ export class Selectors {
     for (const name of allEngineNames(parsed)) {
       const custom = this._engines.get(name);
       if (!custom && !this._builtinEngines.has(name))
-        throw new InvalidSelectorError(`Unknown engine "${name}" while parsing selector ${stringifySelector(parsed)}`);
-      if (custom && !custom.contentScript)
-        needsMainWorld = true;
-      if (this._builtinEnginesInMainWorld.has(name))
-        needsMainWorld = true;
+        throw new InvalidSelectorError(
+          `Unknown engine "${name}" while parsing selector ${stringifySelector(parsed)}`,
+        );
+      if (custom && !custom.contentScript) needsMainWorld = true;
+      if (this._builtinEnginesInMainWorld.has(name)) needsMainWorld = true;
     }
     return {
       parsed,

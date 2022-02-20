@@ -27,21 +27,25 @@ const result: TestResult = {
   startTime: new Date(0).toUTCString(),
   duration: 100,
   errors: [],
-  steps: [{
-    title: 'Outer step',
-    startTime: new Date(100).toUTCString(),
-    duration: 10,
-    location: { file: 'test.spec.ts', line: 62, column: 0 },
-    count: 1,
-    steps: [{
-      title: 'Inner step',
-      startTime: new Date(200).toUTCString(),
+  steps: [
+    {
+      title: 'Outer step',
+      startTime: new Date(100).toUTCString(),
       duration: 10,
-      location: { file: 'test.spec.ts', line: 82, column: 0 },
-      steps: [],
+      location: { file: 'test.spec.ts', line: 62, column: 0 },
       count: 1,
-    }],
-  }],
+      steps: [
+        {
+          title: 'Inner step',
+          startTime: new Date(200).toUTCString(),
+          duration: 10,
+          location: { file: 'test.spec.ts', line: 82, column: 0 },
+          steps: [],
+          count: 1,
+        },
+      ],
+    },
+  ],
   attachments: [],
   status: 'passed',
 };
@@ -59,11 +63,13 @@ const testCase: TestCase = {
   outcome: 'expected',
   duration: 10,
   ok: true,
-  results: [result]
+  results: [result],
 };
 
 test('should render test case', async ({ mount }) => {
-  const component = await mount(<TestCaseView projectNames={['chromium', 'webkit']} test={testCase}></TestCaseView>);
+  const component = await mount(
+    <TestCaseView projectNames={['chromium', 'webkit']} test={testCase}></TestCaseView>,
+  );
   await expect(component.locator('text=Annotation text').first()).toBeVisible();
   await component.locator('text=Annotations').click();
   await expect(component.locator('text=Annotation text')).not.toBeVisible();

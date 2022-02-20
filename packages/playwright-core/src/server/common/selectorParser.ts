@@ -18,35 +18,52 @@ import { InvalidSelectorError, CSSComplexSelectorList, parseCSS } from './cssPar
 export { InvalidSelectorError, isInvalidSelectorError } from './cssParser';
 
 export type ParsedSelectorPart = {
-  name: string,
-  body: string | CSSComplexSelectorList | ParsedSelector,
-  source: string,
+  name: string;
+  body: string | CSSComplexSelectorList | ParsedSelector;
+  source: string;
 };
 
 export type ParsedSelector = {
-  parts: ParsedSelectorPart[],
-  capture?: number,
+  parts: ParsedSelectorPart[];
+  capture?: number;
 };
 
 type ParsedSelectorStrings = {
-  parts: { name: string, body: string }[],
-  capture?: number,
+  parts: { name: string; body: string }[];
+  capture?: number;
 };
 
-export const customCSSNames = new Set(['not', 'is', 'where', 'has', 'scope', 'light', 'visible', 'text', 'text-matches', 'text-is', 'has-text', 'above', 'below', 'right-of', 'left-of', 'near', 'nth-match']);
+export const customCSSNames = new Set([
+  'not',
+  'is',
+  'where',
+  'has',
+  'scope',
+  'light',
+  'visible',
+  'text',
+  'text-matches',
+  'text-is',
+  'has-text',
+  'above',
+  'below',
+  'right-of',
+  'left-of',
+  'near',
+  'nth-match',
+]);
 const kNestedSelectorNames = new Set(['has']);
 
 export function parseSelector(selector: string): ParsedSelector {
   const result = parseSelectorString(selector);
-  const parts: ParsedSelectorPart[] = result.parts.map(part => {
+  const parts: ParsedSelectorPart[] = result.parts.map((part) => {
     if (part.name === 'css' || part.name === 'css:light') {
-      if (part.name === 'css:light')
-        part.body = ':light(' + part.body + ')';
+      if (part.name === 'css:light') part.body = ':light(' + part.body + ')';
       const parsedCSS = parseCSS(part.body, customCSSNames);
       return {
         name: 'css',
         body: parsedCSS.selector,
-        source: part.body
+        source: part.body,
       };
     }
     if (kNestedSelectorNames.has(part.name)) {
@@ -60,7 +77,7 @@ export function parseSelector(selector: string): ParsedSelector {
         throw new Error(`Malformed selector: ${part.name}=` + part.body);
       }
       const result = { name: part.name, source: part.body, body: parseSelector(innerSelector) };
-      if (result.body.parts.some(part => part.name === 'control' && part.body === 'enter-frame'))
+      if (result.body.parts.some((part) => part.name === 'control' && part.body === 'enter-frame'))
         throw new Error(`Frames are not allowed inside "${part.name}" selectors`);
       return result;
     }
@@ -70,7 +87,7 @@ export function parseSelector(selector: string): ParsedSelector {
     throw new Error(`"${parts[0].name}" selector cannot be first`);
   return {
     capture: result.capture,
-    parts
+    parts,
   };
 }
 
@@ -85,31 +102,37 @@ export function splitSelectorByFrame(selectorText: string): ParsedSelector[] {
     const part = selector.parts[i];
     if (part.name === 'control' && part.body === 'enter-frame') {
       if (!chunk.parts.length)
-        throw new InvalidSelectorError('Selector cannot start with entering frame, select the iframe first');
+        throw new InvalidSelectorError(
+          'Selector cannot start with entering frame, select the iframe first',
+        );
       result.push(chunk);
       chunk = { parts: [] };
       chunkStartIndex = i + 1;
       continue;
     }
-    if (selector.capture === i)
-      chunk.capture = i - chunkStartIndex;
+    if (selector.capture === i) chunk.capture = i - chunkStartIndex;
     chunk.parts.push(part);
   }
   if (!chunk.parts.length)
-    throw new InvalidSelectorError(`Selector cannot end with entering frame, while parsing selector ${selectorText}`);
+    throw new InvalidSelectorError(
+      `Selector cannot end with entering frame, while parsing selector ${selectorText}`,
+    );
   result.push(chunk);
   if (typeof selector.capture === 'number' && typeof result[result.length - 1].capture !== 'number')
-    throw new InvalidSelectorError(`Can not capture the selector before diving into the frame. Only use * after the last frame has been selected`);
+    throw new InvalidSelectorError(
+      `Can not capture the selector before diving into the frame. Only use * after the last frame has been selected`,
+    );
   return result;
 }
 
 export function stringifySelector(selector: string | ParsedSelector): string {
-  if (typeof selector === 'string')
-    return selector;
-  return selector.parts.map((p, i) => {
-    const prefix = p.name === 'css' ? '' : p.name + '=';
-    return `${i === selector.capture ? '*' : ''}${prefix}${p.source}`;
-  }).join(' >> ');
+  if (typeof selector === 'string') return selector;
+  return selector.parts
+    .map((p, i) => {
+      const prefix = p.name === 'css' ? '' : p.name + '=';
+      return `${i === selector.capture ? '*' : ''}${prefix}${p.source}`;
+    })
+    .join(' >> ');
 }
 
 export function allEngineNames(selector: ParsedSelector): Set<string> {
@@ -117,8 +140,7 @@ export function allEngineNames(selector: ParsedSelector): Set<string> {
   const visit = (selector: ParsedSelector) => {
     for (const part of selector.parts) {
       result.add(part.name);
-      if (kNestedSelectorNames.has(part.name))
-        visit(part.body as ParsedSelector);
+      if (kNestedSelectorNames.has(part.name)) visit(part.body as ParsedSelector);
     }
   };
   visit(selector);
@@ -135,7 +157,13 @@ function parseSelectorString(selector: string): ParsedSelectorStrings {
     const eqIndex = part.indexOf('=');
     let name: string;
     let body: string;
-    if (eqIndex !== -1 && part.substring(0, eqIndex).trim().match(/^[a-zA-Z_0-9-+:*]+$/)) {
+    if (
+      eqIndex !== -1 &&
+      part
+        .substring(0, eqIndex)
+        .trim()
+        .match(/^[a-zA-Z_0-9-+:*]+$/)
+    ) {
       name = part.substring(0, eqIndex).trim();
       body = part.substring(eqIndex + 1);
     } else if (part.length > 1 && part[0] === '"' && part[part.length - 1] === '"') {
@@ -180,7 +208,7 @@ function parseSelectorString(selector: string): ParsedSelectorStrings {
     } else if (c === quote) {
       quote = undefined;
       index++;
-    } else if (!quote && (c === '"' || c === '\'' || c === '`')) {
+    } else if (!quote && (c === '"' || c === "'" || c === '`')) {
       quote = c;
       index++;
     } else if (!quote && c === '>' && selector[index + 1] === '>') {

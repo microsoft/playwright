@@ -38,19 +38,25 @@ export class MultiTraceModel {
   readonly hasSource: boolean;
 
   constructor(contexts: ContextEntry[]) {
-    contexts.forEach(contextEntry => indexModel(contextEntry));
+    contexts.forEach((contextEntry) => indexModel(contextEntry));
 
     this.browserName = contexts[0]?.browserName || '';
     this.platform = contexts[0]?.platform || '';
     this.title = contexts[0]?.title || '';
     this.options = contexts[0]?.options || {};
-    this.wallTime = contexts.map(c => c.wallTime).reduce((prev, cur) => Math.min(prev || Number.MAX_VALUE, cur!), Number.MAX_VALUE);
-    this.startTime = contexts.map(c => c.startTime).reduce((prev, cur) => Math.min(prev, cur), Number.MAX_VALUE);
-    this.endTime = contexts.map(c => c.endTime).reduce((prev, cur) => Math.max(prev, cur), Number.MIN_VALUE);
-    this.pages = ([] as PageEntry[]).concat(...contexts.map(c => c.pages));
-    this.actions = ([] as ActionTraceEvent[]).concat(...contexts.map(c => c.actions));
-    this.events = ([] as ActionTraceEvent[]).concat(...contexts.map(c => c.events));
-    this.hasSource = contexts.some(c => c.hasSource);
+    this.wallTime = contexts
+      .map((c) => c.wallTime)
+      .reduce((prev, cur) => Math.min(prev || Number.MAX_VALUE, cur!), Number.MAX_VALUE);
+    this.startTime = contexts
+      .map((c) => c.startTime)
+      .reduce((prev, cur) => Math.min(prev, cur), Number.MAX_VALUE);
+    this.endTime = contexts
+      .map((c) => c.endTime)
+      .reduce((prev, cur) => Math.max(prev, cur), Number.MIN_VALUE);
+    this.pages = ([] as PageEntry[]).concat(...contexts.map((c) => c.pages));
+    this.actions = ([] as ActionTraceEvent[]).concat(...contexts.map((c) => c.actions));
+    this.events = ([] as ActionTraceEvent[]).concat(...contexts.map((c) => c.events));
+    this.hasSource = contexts.some((c) => c.hasSource);
 
     this.actions.sort((a1, a2) => a1.metadata.startTime - a2.metadata.startTime);
     this.events.sort((a1, a2) => a1.metadata.startTime - a2.metadata.startTime);
@@ -58,15 +64,13 @@ export class MultiTraceModel {
 }
 
 function indexModel(context: ContextEntry) {
-  for (const page of context.pages)
-    (page as any)[contextSymbol] = context;
+  for (const page of context.pages) (page as any)[contextSymbol] = context;
   for (let i = 0; i < context.actions.length; ++i) {
     const action = context.actions[i] as any;
     action[contextSymbol] = context;
     action[nextSymbol] = context.actions[i + 1];
   }
-  for (const event of context.events)
-    (event as any)[contextSymbol] = context;
+  for (const event of context.events) (event as any)[contextSymbol] = context;
 }
 
 export function context(action: ActionTraceEvent): ContextEntry {
@@ -77,7 +81,7 @@ function next(action: ActionTraceEvent): ActionTraceEvent {
   return (action as any)[nextSymbol];
 }
 
-export function stats(action: ActionTraceEvent): { errors: number, warnings: number } {
+export function stats(action: ActionTraceEvent): { errors: number; warnings: number } {
   let errors = 0;
   let warnings = 0;
   const c = context(action);
@@ -85,25 +89,24 @@ export function stats(action: ActionTraceEvent): { errors: number, warnings: num
     if (event.metadata.method === 'console') {
       const { guid } = event.metadata.params.message;
       const type = c.objects[guid]?.type;
-      if (type === 'warning')
-        ++warnings;
-      else if (type === 'error')
-        ++errors;
+      if (type === 'warning') ++warnings;
+      else if (type === 'error') ++errors;
     }
-    if (event.metadata.method === 'pageError')
-      ++errors;
+    if (event.metadata.method === 'pageError') ++errors;
   }
   return { errors, warnings };
 }
 
 export function eventsForAction(action: ActionTraceEvent): ActionTraceEvent[] {
   let result: ActionTraceEvent[] = (action as any)[eventsSymbol];
-  if (result)
-    return result;
+  if (result) return result;
 
   const nextAction = next(action);
-  result = context(action).events.filter(event => {
-    return event.metadata.startTime >= action.metadata.startTime && (!nextAction || event.metadata.startTime < nextAction.metadata.startTime);
+  result = context(action).events.filter((event) => {
+    return (
+      event.metadata.startTime >= action.metadata.startTime &&
+      (!nextAction || event.metadata.startTime < nextAction.metadata.startTime)
+    );
   });
   (action as any)[eventsSymbol] = result;
   return result;
@@ -111,12 +114,14 @@ export function eventsForAction(action: ActionTraceEvent): ActionTraceEvent[] {
 
 export function resourcesForAction(action: ActionTraceEvent): ResourceSnapshot[] {
   let result: ResourceSnapshot[] = (action as any)[resourcesSymbol];
-  if (result)
-    return result;
+  if (result) return result;
 
   const nextAction = next(action);
-  result = context(action).resources.filter(resource => {
-    return resource._monotonicTime > action.metadata.startTime && (!nextAction || resource._monotonicTime < nextAction.metadata.startTime);
+  result = context(action).resources.filter((resource) => {
+    return (
+      resource._monotonicTime > action.metadata.startTime &&
+      (!nextAction || resource._monotonicTime < nextAction.metadata.startTime)
+    );
   });
   (action as any)[resourcesSymbol] = result;
   return result;

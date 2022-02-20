@@ -20,6 +20,6 @@ export async function createSocket(host: string, port: number): Promise<net.Sock
   return new Promise((resolve, reject) => {
     const socket = net.createConnection({ host, port });
     socket.on('connect', () => resolve(socket));
-    socket.on('error', error => reject(error));
+    socket.on('error', (error) => reject(error));
   });
 }

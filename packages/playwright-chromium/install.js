@@ -22,5 +22,4 @@ try {
   // Dev build, don't install browsers by default.
 }
 
-if (install)
-  install(['chromium', 'ffmpeg']);
+if (install) install(['chromium', 'ffmpeg']);

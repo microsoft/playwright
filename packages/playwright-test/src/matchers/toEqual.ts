@@ -30,9 +30,12 @@ export async function toEqual<T>(
   matcherName: string,
   receiver: any,
   receiverType: string,
-  query: (isNot: boolean, timeout: number) => Promise<{ matches: boolean, received?: any, log?: string[] }>,
+  query: (
+    isNot: boolean,
+    timeout: number,
+  ) => Promise<{ matches: boolean; received?: any; log?: string[] }>,
   expected: T,
-  options: { timeout?: number, contains?: boolean } = {},
+  options: { timeout?: number; contains?: boolean } = {},
 ) {
   expectType(receiver, receiverType, matcherName);
 
@@ -48,22 +51,24 @@ export async function toEqual<T>(
 
   const message = pass
     ? () =>
-      this.utils.matcherHint(matcherName, undefined, undefined, matcherOptions) +
-      '\n\n' +
-      `Expected: not ${this.utils.printExpected(expected)}\n` +
-      (this.utils.stringify(expected) !== this.utils.stringify(received)
-        ? `Received:     ${this.utils.printReceived(received)}`
-        : '') + callLogText(log)
+        this.utils.matcherHint(matcherName, undefined, undefined, matcherOptions) +
+        '\n\n' +
+        `Expected: not ${this.utils.printExpected(expected)}\n` +
+        (this.utils.stringify(expected) !== this.utils.stringify(received)
+          ? `Received:     ${this.utils.printReceived(received)}`
+          : '') +
+        callLogText(log)
     : () =>
-      this.utils.matcherHint(matcherName, undefined, undefined, matcherOptions) +
-      '\n\n' +
-      this.utils.printDiffOrStringify(
+        this.utils.matcherHint(matcherName, undefined, undefined, matcherOptions) +
+        '\n\n' +
+        this.utils.printDiffOrStringify(
           expected,
           received,
           EXPECTED_LABEL,
           RECEIVED_LABEL,
           isExpand(this.expand),
-      ) + callLogText(log);
+        ) +
+        callLogText(log);
 
   // Passing the actual and expected objects so that a custom reporter
   // could access them, for example in order to display a custom visual diff,

@@ -12,7 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
-*/
+ */
 import { CRPage } from './crPage';
 import * as types from '../types';
 import { assert } from '../../utils/utils';
@@ -34,22 +34,28 @@ export class DragManager {
   }
 
   async cancelDrag() {
-    if (!this._dragState)
-      return false;
+    if (!this._dragState) return false;
     await this._crPage._mainFrameSession._client.send('Input.dispatchDragEvent', {
       type: 'dragCancel',
       x: this._lastPosition.x,
       y: this._lastPosition.y,
       data: {
         items: [],
-        dragOperationsMask: 0xFFFF,
-      }
+        dragOperationsMask: 0xffff,
+      },
     });
     this._dragState = null;
     return true;
   }
 
-  async interceptDragCausedByMove(x: number, y: number, button: types.MouseButton | 'none', buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, moveCallback: () => Promise<void>): Promise<void> {
+  async interceptDragCausedByMove(
+    x: number,
+    y: number,
+    button: types.MouseButton | 'none',
+    buttons: Set<types.MouseButton>,
+    modifiers: Set<types.KeyboardModifier>,
+    moveCallback: () => Promise<void>,
+  ): Promise<void> {
     this._lastPosition = { x, y };
     if (this._dragState) {
       await this._crPage._mainFrameSession._client.send('Input.dispatchDragEvent', {
@@ -61,34 +67,43 @@ export class DragManager {
       });
       return;
     }
-    if (button !== 'left')
-      return moveCallback();
+    if (button !== 'left') return moveCallback();
 
     const client = this._crPage._mainFrameSession._client;
     let onDragIntercepted: (payload: Protocol.Input.dragInterceptedPayload) => void;
-    const dragInterceptedPromise = new Promise<Protocol.Input.dragInterceptedPayload>(x => onDragIntercepted = x);
+    const dragInterceptedPromise = new Promise<Protocol.Input.dragInterceptedPayload>(
+      (x) => (onDragIntercepted = x),
+    );
 
-    await Promise.all(this._crPage._page.frames().map(async frame => {
-      await frame.nonStallingEvaluateInExistingContext((function() {
-        let didStartDrag = Promise.resolve(false);
-        let dragEvent: Event|null = null;
-        const dragListener = (event: Event) => dragEvent = event;
-        const mouseListener = () => {
-          didStartDrag = new Promise<boolean>(callback => {
-            window.addEventListener('dragstart', dragListener, { once: true, capture: true });
-            setTimeout(() => callback(dragEvent ? !dragEvent.defaultPrevented : false), 0);
-          });
-        };
-        window.addEventListener('mousemove', mouseListener, { once: true, capture: true });
-        window.__cleanupDrag = async () => {
-          const val = await didStartDrag;
-          window.removeEventListener('mousemove', mouseListener, { capture: true });
-          window.removeEventListener('dragstart', dragListener, { capture: true });
-          delete window.__cleanupDrag;
-          return val;
-        };
-      }).toString(), true, 'utility').catch(() => {});
-    }));
+    await Promise.all(
+      this._crPage._page.frames().map(async (frame) => {
+        await frame
+          .nonStallingEvaluateInExistingContext(
+            function () {
+              let didStartDrag = Promise.resolve(false);
+              let dragEvent: Event | null = null;
+              const dragListener = (event: Event) => (dragEvent = event);
+              const mouseListener = () => {
+                didStartDrag = new Promise<boolean>((callback) => {
+                  window.addEventListener('dragstart', dragListener, { once: true, capture: true });
+                  setTimeout(() => callback(dragEvent ? !dragEvent.defaultPrevented : false), 0);
+                });
+              };
+              window.addEventListener('mousemove', mouseListener, { once: true, capture: true });
+              window.__cleanupDrag = async () => {
+                const val = await didStartDrag;
+                window.removeEventListener('mousemove', mouseListener, { capture: true });
+                window.removeEventListener('dragstart', dragListener, { capture: true });
+                delete window.__cleanupDrag;
+                return val;
+              };
+            }.toString(),
+            true,
+            'utility',
+          )
+          .catch(() => {});
+      }),
+    );
 
     client.on('Input.dragIntercepted', onDragIntercepted!);
     try {
@@ -101,13 +116,22 @@ export class DragManager {
     }
     await moveCallback();
 
-    const expectingDrag = (await Promise.all(this._crPage._page.frames().map(async frame => {
-      return frame.nonStallingEvaluateInExistingContext('window.__cleanupDrag && window.__cleanupDrag()', false, 'utility').catch(() => false);
-    }))).some(x => x);
+    const expectingDrag = (
+      await Promise.all(
+        this._crPage._page.frames().map(async (frame) => {
+          return frame
+            .nonStallingEvaluateInExistingContext(
+              'window.__cleanupDrag && window.__cleanupDrag()',
+              false,
+              'utility',
+            )
+            .catch(() => false);
+        }),
+      )
+    ).some((x) => x);
     this._dragState = expectingDrag ? (await dragInterceptedPromise).data : null;
     client.off('Input.dragIntercepted', onDragIntercepted!);
     await client.send('Input.setInterceptDrags', { enabled: false });
-
 
     if (this._dragState) {
       await this._crPage._mainFrameSession._client.send('Input.dispatchDragEvent', {

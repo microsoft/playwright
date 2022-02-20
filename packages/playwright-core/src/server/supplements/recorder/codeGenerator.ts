@@ -33,14 +33,28 @@ export class CodeGenerator extends EventEmitter {
   private _enabled: boolean;
   private _options: LanguageGeneratorOptions;
 
-  constructor(browserName: string, generateHeaders: boolean, launchOptions: LaunchOptions, contextOptions: BrowserContextOptions, deviceName: string | undefined, saveStorage: string | undefined) {
+  constructor(
+    browserName: string,
+    generateHeaders: boolean,
+    launchOptions: LaunchOptions,
+    contextOptions: BrowserContextOptions,
+    deviceName: string | undefined,
+    saveStorage: string | undefined,
+  ) {
     super();
 
     // Make a copy of options to modify them later.
     launchOptions = { headless: false, ...launchOptions };
     contextOptions = { ...contextOptions };
     this._enabled = generateHeaders;
-    this._options = { browserName, generateHeaders, launchOptions, contextOptions, deviceName, saveStorage };
+    this._options = {
+      browserName,
+      generateHeaders,
+      launchOptions,
+      contextOptions,
+      deviceName,
+      saveStorage,
+    };
     this.restart();
   }
 
@@ -56,36 +70,30 @@ export class CodeGenerator extends EventEmitter {
   }
 
   addAction(action: ActionInContext) {
-    if (!this._enabled)
-      return;
+    if (!this._enabled) return;
     this.willPerformAction(action);
     this.didPerformAction(action);
   }
 
   willPerformAction(action: ActionInContext) {
-    if (!this._enabled)
-      return;
+    if (!this._enabled) return;
     this._currentAction = action;
   }
 
   performedActionFailed(action: ActionInContext) {
-    if (!this._enabled)
-      return;
-    if (this._currentAction === action)
-      this._currentAction = null;
+    if (!this._enabled) return;
+    if (this._currentAction === action) this._currentAction = null;
   }
 
   didPerformAction(actionInContext: ActionInContext) {
-    if (!this._enabled)
-      return;
+    if (!this._enabled) return;
     const action = actionInContext.action;
     let eraseLastAction = false;
     if (this._lastAction && this._lastAction.frame.pageAlias === actionInContext.frame.pageAlias) {
       const lastAction = this._lastAction.action;
       // We augment last action based on the type.
       if (this._lastAction && action.name === 'fill' && lastAction.name === 'fill') {
-        if (action.selector === lastAction.selector)
-          eraseLastAction = true;
+        if (action.selector === lastAction.selector) eraseLastAction = true;
       }
       if (lastAction && action.name === 'click' && lastAction.name === 'click') {
         if (action.selector === lastAction.selector && action.clickCount > lastAction.clickCount)
@@ -99,31 +107,30 @@ export class CodeGenerator extends EventEmitter {
         }
       }
       // Check and uncheck erase click.
-      if (lastAction && (action.name === 'check' || action.name === 'uncheck') && lastAction.name === 'click') {
-        if (action.selector === lastAction.selector)
-          eraseLastAction = true;
+      if (
+        lastAction &&
+        (action.name === 'check' || action.name === 'uncheck') &&
+        lastAction.name === 'click'
+      ) {
+        if (action.selector === lastAction.selector) eraseLastAction = true;
       }
     }
 
     this._lastAction = actionInContext;
     this._currentAction = null;
-    if (eraseLastAction)
-      this._actions.pop();
+    if (eraseLastAction) this._actions.pop();
     this._actions.push(actionInContext);
     this.emit('change');
   }
 
   commitLastAction() {
-    if (!this._enabled)
-      return;
+    if (!this._enabled) return;
     const action = this._lastAction;
-    if (action)
-      action.committed = true;
+    if (action) action.committed = true;
   }
 
   signal(pageAlias: string, frame: Frame, signal: Signal) {
-    if (!this._enabled)
-      return;
+    if (!this._enabled) return;
 
     // Signal either arrives while action is being performed or shortly after.
     if (this._currentAction) {
@@ -132,9 +139,17 @@ export class CodeGenerator extends EventEmitter {
     }
     if (this._lastAction && !this._lastAction.committed) {
       const signals = this._lastAction.action.signals;
-      if (signal.name === 'navigation' && signals.length && signals[signals.length - 1].name === 'download')
+      if (
+        signal.name === 'navigation' &&
+        signals.length &&
+        signals[signals.length - 1].name === 'download'
+      )
         return;
-      if (signal.name === 'download' && signals.length && signals[signals.length - 1].name === 'navigation')
+      if (
+        signal.name === 'download' &&
+        signals.length &&
+        signals[signals.length - 1].name === 'navigation'
+      )
         signals.length = signals.length - 1;
       signal.isAsync = true;
       this._lastAction.action.signals.push(signal);
@@ -161,12 +176,10 @@ export class CodeGenerator extends EventEmitter {
 
   generateText(languageGenerator: LanguageGenerator) {
     const text = [];
-    if (this._options.generateHeaders)
-      text.push(languageGenerator.generateHeader(this._options));
+    if (this._options.generateHeaders) text.push(languageGenerator.generateHeader(this._options));
     for (const action of this._actions) {
       const actionText = languageGenerator.generateAction(action);
-      if (actionText)
-        text.push(actionText);
+      if (actionText) text.push(actionText);
     }
     if (this._options.generateHeaders)
       text.push(languageGenerator.generateFooter(this._options.saveStorage));

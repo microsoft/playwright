@@ -20,8 +20,7 @@ class ZoneManager {
   lastZoneId = 0;
   readonly _zones = new Map<number, Zone>();
 
-  constructor() {
-  }
+  constructor() {}
 
   async run<T, R>(type: string, data: T, func: () => Promise<R>): Promise<R> {
     const zone = new Zone(this, ++this.lastZoneId, type, data);
@@ -35,10 +34,9 @@ class ZoneManager {
     for (const line of stack.split('\n')) {
       const index = line.indexOf('__PWZONE__[');
       if (index !== -1) {
-        const zoneId = + line.substring(index + '__PWZONE__['.length, line.indexOf(']', index));
+        const zoneId = +line.substring(index + '__PWZONE__['.length, line.indexOf(']', index));
         const zone = this._zones.get(zoneId);
-        if (zone && zone.type === type)
-          return zone.data;
+        if (zone && zone.type === type) return zone.data;
       }
     }
     return null;

@@ -20,35 +20,34 @@ export type ResourceSnapshot = HAREntry;
 
 export type NodeSnapshot =
   // Text node.
-  string |
+  | string
   // Subtree reference, "x snapshots ago, node #y". Could point to a text node.
   // Only nodes that are not references are counted, starting from zero, using post-order traversal.
-  [ [number, number] ] |
+  | [[number, number]]
   // Just node name.
-  [ string ] |
+  | [string]
   // Node name, attributes, child nodes.
   // Unfortunately, we cannot make this type definition recursive, therefore "any".
-  [ string, { [attr: string]: string }, ...any ];
-
+  | [string, { [attr: string]: string }, ...any];
 
 export type ResourceOverride = {
-  url: string,
-  sha1?: string,
-  ref?: number
+  url: string;
+  sha1?: string;
+  ref?: number;
 };
 
 export type FrameSnapshot = {
-  snapshotName?: string,
-  pageId: string,
-  frameId: string,
-  frameUrl: string,
-  timestamp: number,
-  collectionTime: number,
-  doctype?: string,
-  html: NodeSnapshot,
-  resourceOverrides: ResourceOverride[],
-  viewport: { width: number, height: number },
-  isMainFrame: boolean,
+  snapshotName?: string;
+  pageId: string;
+  frameId: string;
+  frameUrl: string;
+  timestamp: number;
+  collectionTime: number;
+  doctype?: string;
+  html: NodeSnapshot;
+  resourceOverrides: ResourceOverride[];
+  viewport: { width: number; height: number };
+  isMainFrame: boolean;
 };
 
 export type RenderedFrameSnapshot = {

@@ -19,7 +19,10 @@ import { Tracing } from '../server/trace/recorder/tracing';
 import { ArtifactDispatcher } from './artifactDispatcher';
 import { Dispatcher, DispatcherScope, existingDispatcher } from './dispatcher';
 
-export class TracingDispatcher extends Dispatcher<Tracing, channels.TracingChannel> implements channels.TracingChannel {
+export class TracingDispatcher
+  extends Dispatcher<Tracing, channels.TracingChannel>
+  implements channels.TracingChannel
+{
   _type_Tracing = true;
 
   static from(scope: DispatcherScope, tracing: Tracing): TracingDispatcher {
@@ -32,21 +35,31 @@ export class TracingDispatcher extends Dispatcher<Tracing, channels.TracingChann
     tracing.on(Tracing.Events.Dispose, () => this._dispose());
   }
 
-  async tracingStart(params: channels.TracingTracingStartParams): Promise<channels.TracingTracingStartResult> {
+  async tracingStart(
+    params: channels.TracingTracingStartParams,
+  ): Promise<channels.TracingTracingStartResult> {
     await this._object.start(params);
   }
 
-  async tracingStartChunk(params: channels.TracingTracingStartChunkParams): Promise<channels.TracingTracingStartChunkResult> {
+  async tracingStartChunk(
+    params: channels.TracingTracingStartChunkParams,
+  ): Promise<channels.TracingTracingStartChunkResult> {
     await this._object.startChunk(params);
   }
 
-  async tracingStopChunk(params: channels.TracingTracingStopChunkParams): Promise<channels.TracingTracingStopChunkResult> {
+  async tracingStopChunk(
+    params: channels.TracingTracingStopChunkParams,
+  ): Promise<channels.TracingTracingStopChunkResult> {
     const { artifact, sourceEntries } = await this._object.stopChunk(params);
-    return { artifact: artifact ? new ArtifactDispatcher(this._scope, artifact) : undefined, sourceEntries };
+    return {
+      artifact: artifact ? new ArtifactDispatcher(this._scope, artifact) : undefined,
+      sourceEntries,
+    };
   }
 
-  async tracingStop(params: channels.TracingTracingStopParams): Promise<channels.TracingTracingStopResult> {
+  async tracingStop(
+    params: channels.TracingTracingStopParams,
+  ): Promise<channels.TracingTracingStopResult> {
     await this._object.stop();
   }
-
 }

@@ -28,7 +28,9 @@ export class Artifact extends ChannelOwner<channels.ArtifactChannel> {
 
   async pathAfterFinished(): Promise<string | null> {
     if (this._connection.isRemote())
-      throw new Error(`Path is not available when connecting remotely. Use saveAs() to save a local copy.`);
+      throw new Error(
+        `Path is not available when connecting remotely. Use saveAs() to save a local copy.`,
+      );
     return (await this._channel.pathAfterFinished()).value || null;
   }
 
@@ -42,9 +44,11 @@ export class Artifact extends ChannelOwner<channels.ArtifactChannel> {
     const stream = Stream.from(result.stream);
     await mkdirIfNeeded(path);
     await new Promise((resolve, reject) => {
-      stream.stream().pipe(fs.createWriteStream(path))
-          .on('finish' as any, resolve)
-          .on('error' as any, reject);
+      stream
+        .stream()
+        .pipe(fs.createWriteStream(path))
+        .on('finish' as any, resolve)
+        .on('error' as any, reject);
     });
   }
 
@@ -54,8 +58,7 @@ export class Artifact extends ChannelOwner<channels.ArtifactChannel> {
 
   async createReadStream(): Promise<Readable | null> {
     const result = await this._channel.stream();
-    if (!result.stream)
-      return null;
+    if (!result.stream) return null;
     const stream = Stream.from(result.stream);
     return stream.stream();
   }

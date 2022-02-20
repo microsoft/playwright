@@ -14,43 +14,35 @@
  * limitations under the License.
  */
 
-type Operator = '<truthy>'|'='|'*='|'|='|'^='|'$='|'~=';
+type Operator = '<truthy>' | '=' | '*=' | '|=' | '^=' | '$=' | '~=';
 export type ParsedComponentAttribute = {
-  jsonPath: string[],
-  op: Operator,
-  value: any,
-  caseSensitive: boolean,
+  jsonPath: string[];
+  op: Operator;
+  value: any;
+  caseSensitive: boolean;
 };
 
 export type ParsedComponentSelector = {
-  name: string,
-  attributes: ParsedComponentAttribute[],
+  name: string;
+  attributes: ParsedComponentAttribute[];
 };
 
 export function checkComponentAttribute(obj: any, attr: ParsedComponentAttribute) {
   for (const token of attr.jsonPath) {
-    if (obj !== undefined && obj !== null)
-      obj = obj[token];
+    if (obj !== undefined && obj !== null) obj = obj[token];
   }
   const objValue = typeof obj === 'string' && !attr.caseSensitive ? obj.toUpperCase() : obj;
-  const attrValue = typeof attr.value === 'string' && !attr.caseSensitive ? attr.value.toUpperCase() : attr.value;
+  const attrValue =
+    typeof attr.value === 'string' && !attr.caseSensitive ? attr.value.toUpperCase() : attr.value;
 
-  if (attr.op === '<truthy>')
-    return !!objValue;
-  if (attr.op === '=')
-    return objValue === attrValue;
-  if (typeof objValue !== 'string' || typeof attrValue !== 'string')
-    return false;
-  if (attr.op === '*=')
-    return objValue.includes(attrValue);
-  if (attr.op === '^=')
-    return objValue.startsWith(attrValue);
-  if (attr.op === '$=')
-    return objValue.endsWith(attrValue);
-  if (attr.op === '|=')
-    return objValue === attrValue || objValue.startsWith(attrValue + '-');
-  if (attr.op === '~=')
-    return objValue.split(' ').includes(attrValue);
+  if (attr.op === '<truthy>') return !!objValue;
+  if (attr.op === '=') return objValue === attrValue;
+  if (typeof objValue !== 'string' || typeof attrValue !== 'string') return false;
+  if (attr.op === '*=') return objValue.includes(attrValue);
+  if (attr.op === '^=') return objValue.startsWith(attrValue);
+  if (attr.op === '$=') return objValue.endsWith(attrValue);
+  if (attr.op === '|=') return objValue === attrValue || objValue.startsWith(attrValue + '-');
+  if (attr.op === '~=') return objValue.split(' ').includes(attrValue);
   return false;
 }
 
@@ -66,36 +58,33 @@ export function parseComponentSelector(selector: string): ParsedComponentSelecto
     return result;
   };
 
-  const syntaxError = (stage: string|undefined) => {
-    if (EOL)
-      throw new Error(`Unexpected end of selector while parsing selector \`${selector}\``);
-    throw new Error(`Error while parsing selector \`${selector}\` - unexpected symbol "${next()}" at position ${wp}` + (stage ? ' during ' + stage : ''));
+  const syntaxError = (stage: string | undefined) => {
+    if (EOL) throw new Error(`Unexpected end of selector while parsing selector \`${selector}\``);
+    throw new Error(
+      `Error while parsing selector \`${selector}\` - unexpected symbol "${next()}" at position ${wp}` +
+        (stage ? ' during ' + stage : ''),
+    );
   };
 
   function skipSpaces() {
-    while (!EOL && /\s/.test(next()))
-      eat1();
+    while (!EOL && /\s/.test(next())) eat1();
   }
 
   function readIdentifier() {
     let result = '';
     skipSpaces();
-    while (!EOL && /[-$0-9A-Z_]/i.test(next()))
-      result += eat1();
+    while (!EOL && /[-$0-9A-Z_]/i.test(next())) result += eat1();
     return result;
   }
 
   function readQuotedString(quote: string) {
     let result = eat1();
-    if (result !== quote)
-      syntaxError('parsing quoted string');
+    if (result !== quote) syntaxError('parsing quoted string');
     while (!EOL && next() !== quote) {
-      if (next() === '\\')
-        eat1();
+      if (next() === '\\') eat1();
       result += eat1();
     }
-    if (next() !== quote)
-      syntaxError('parsing quoted string');
+    if (next() !== quote) syntaxError('parsing quoted string');
     result += eat1();
     return result;
   }
@@ -103,25 +92,19 @@ export function parseComponentSelector(selector: string): ParsedComponentSelecto
   function readAttributeToken() {
     let token = '';
     skipSpaces();
-    if (next() === `'` || next() === `"`)
-      token = readQuotedString(next()).slice(1, -1);
-    else
-      token = readIdentifier();
-    if (!token)
-      syntaxError('parsing property path');
+    if (next() === `'` || next() === `"`) token = readQuotedString(next()).slice(1, -1);
+    else token = readIdentifier();
+    if (!token) syntaxError('parsing property path');
     return token;
   }
 
   function readOperator(): Operator {
     skipSpaces();
     let op = '';
-    if (!EOL)
-      op += eat1();
-    if (!EOL && (op !== '='))
-      op += eat1();
-    if (!['=', '*=', '^=', '$=', '|=', '~='].includes(op))
-      syntaxError('parsing operator');
-    return (op as Operator);
+    if (!EOL) op += eat1();
+    if (!EOL && op !== '=') op += eat1();
+    if (!['=', '*=', '^=', '$=', '|=', '~='].includes(op)) syntaxError('parsing operator');
+    return op as Operator;
   }
 
   function readAttribute(): ParsedComponentAttribute {
@@ -162,25 +145,24 @@ export function parseComponentSelector(selector: string): ParsedComponentSelecto
       }
     } else {
       value = '';
-      while (!EOL && !/\s/.test(next()) && next() !== ']')
-        value += eat1();
+      while (!EOL && !/\s/.test(next()) && next() !== ']') value += eat1();
       if (value === 'true') {
         value = true;
       } else if (value === 'false') {
         value = false;
       } else {
         value = +value;
-        if (isNaN(value))
-          syntaxError('parsing attribute value');
+        if (isNaN(value)) syntaxError('parsing attribute value');
       }
     }
     skipSpaces();
-    if (next() !== ']')
-      syntaxError('parsing attribute value');
+    if (next() !== ']') syntaxError('parsing attribute value');
 
     eat1();
     if (operator !== '=' && typeof value !== 'string')
-      throw new Error(`Error while parsing selector \`${selector}\` - cannot use ${operator} in attribute with non-string matching value - ${value}`);
+      throw new Error(
+        `Error while parsing selector \`${selector}\` - cannot use ${operator} in attribute with non-string matching value - ${value}`,
+      );
     return { jsonPath, op: operator, value, caseSensitive };
   }
 
@@ -194,8 +176,7 @@ export function parseComponentSelector(selector: string): ParsedComponentSelecto
     result.attributes.push(readAttribute());
     skipSpaces();
   }
-  if (!EOL)
-    syntaxError(undefined);
+  if (!EOL) syntaxError(undefined);
   if (!result.name && !result.attributes.length)
     throw new Error(`Error while parsing selector \`${selector}\` - selector cannot be empty`);
   return result;

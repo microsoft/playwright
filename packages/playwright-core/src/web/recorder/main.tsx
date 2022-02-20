@@ -29,8 +29,7 @@ declare global {
   }
 }
 
-export const Main: React.FC = ({
-}) => {
+export const Main: React.FC = ({}) => {
   const [sources, setSources] = React.useState<Source[]>([]);
   const [paused, setPaused] = React.useState(false);
   const [log, setLog] = React.useState(new Map<string, CallLog>());
@@ -39,7 +38,7 @@ export const Main: React.FC = ({
   window.playwrightSetMode = setMode;
   window.playwrightSetSources = setSources;
   window.playwrightSetPaused = setPaused;
-  window.playwrightUpdateLogs = callLogs => {
+  window.playwrightUpdateLogs = (callLogs) => {
     const newLog = new Map<string, CallLog>(log);
     for (const callLog of callLogs) {
       callLog.reveal = !log.has(callLog.id);
@@ -49,5 +48,5 @@ export const Main: React.FC = ({
   };
 
   window.playwrightSourcesEchoForTest = sources;
-  return <Recorder sources={sources} paused={paused} log={log} mode={mode}/>;
+  return <Recorder sources={sources} paused={paused} log={log} mode={mode} />;
 };

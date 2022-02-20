@@ -24,7 +24,10 @@ import { ManualPromise } from '../utils/async';
 import { assert, createGuid } from '../utils/utils';
 import { Dispatcher, DispatcherScope } from './dispatcher';
 
-export class LocalUtilsDispatcher extends Dispatcher<{ guid: string }, channels.LocalUtilsChannel> implements channels.LocalUtilsChannel {
+export class LocalUtilsDispatcher
+  extends Dispatcher<{ guid: string }, channels.LocalUtilsChannel>
+  implements channels.LocalUtilsChannel
+{
   _type_LocalUtils: boolean;
   constructor(scope: DispatcherScope) {
     super(scope, { guid: 'localUtils@' + createGuid() }, 'LocalUtils', {});
@@ -34,21 +37,21 @@ export class LocalUtilsDispatcher extends Dispatcher<{ guid: string }, channels.
   async zip(params: channels.LocalUtilsZipParams, metadata?: channels.Metadata): Promise<void> {
     const promise = new ManualPromise<void>();
     const zipFile = new yazl.ZipFile();
-    (zipFile as any as EventEmitter).on('error', error => promise.reject(error));
+    (zipFile as any as EventEmitter).on('error', (error) => promise.reject(error));
 
     for (const entry of params.entries) {
       try {
-        if (fs.statSync(entry.value).isFile())
-          zipFile.addFile(entry.value, entry.name);
-      } catch (e) {
-      }
+        if (fs.statSync(entry.value).isFile()) zipFile.addFile(entry.value, entry.name);
+      } catch (e) {}
     }
 
     if (!fs.existsSync(params.zipFile)) {
       // New file, just compress the entries.
       await fs.promises.mkdir(path.dirname(params.zipFile), { recursive: true });
       zipFile.end(undefined, () => {
-        zipFile.outputStream.pipe(fs.createWriteStream(params.zipFile)).on('close', () => promise.resolve());
+        zipFile.outputStream
+          .pipe(fs.createWriteStream(params.zipFile))
+          .on('close', () => promise.resolve());
       });
       return promise;
     }
@@ -64,7 +67,7 @@ export class LocalUtilsDispatcher extends Dispatcher<{ guid: string }, channels.
       }
       assert(inZipFile);
       let pendingEntries = inZipFile.entryCount;
-      inZipFile.on('entry', entry => {
+      inZipFile.on('entry', (entry) => {
         inZipFile.openReadStream(entry, (err, readStream) => {
           if (err) {
             promise.reject(err);

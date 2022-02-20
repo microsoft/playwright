@@ -22,12 +22,20 @@ import * as api from '../../types/types';
 
 type ConsoleMessageLocation = channels.ConsoleMessageInitializer['location'];
 
-export class ConsoleMessage extends ChannelOwner<channels.ConsoleMessageChannel> implements api.ConsoleMessage {
+export class ConsoleMessage
+  extends ChannelOwner<channels.ConsoleMessageChannel>
+  implements api.ConsoleMessage
+{
   static from(message: channels.ConsoleMessageChannel): ConsoleMessage {
     return (message as any)._object;
   }
 
-  constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.ConsoleMessageInitializer) {
+  constructor(
+    parent: ChannelOwner,
+    type: string,
+    guid: string,
+    initializer: channels.ConsoleMessageInitializer,
+  ) {
     super(parent, type, guid, initializer);
   }
 

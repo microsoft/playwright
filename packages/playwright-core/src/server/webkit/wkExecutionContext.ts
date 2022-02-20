@@ -35,10 +35,9 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
       const response = await this._session.send('Runtime.evaluate', {
         expression,
         contextId: this._contextId,
-        returnByValue: true
+        returnByValue: true,
       });
-      if (response.wasThrown)
-        throw new js.JavaScriptErrorInEvaluate(response.result.description);
+      if (response.wasThrown) throw new js.JavaScriptErrorInEvaluate(response.result.description);
       return response.result.value;
     } catch (error) {
       throw rewriteError(error);
@@ -50,10 +49,9 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
       const response = await this._session.send('Runtime.evaluate', {
         expression,
         contextId: this._contextId,
-        returnByValue: false
+        returnByValue: false,
       });
-      if (response.wasThrown)
-        throw new js.JavaScriptErrorInEvaluate(response.result.description);
+      if (response.wasThrown) throw new js.JavaScriptErrorInEvaluate(response.result.description);
       return response.result.objectId!;
     } catch (error) {
       throw rewriteError(error);
@@ -61,56 +59,75 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
   }
 
   rawCallFunctionNoReply(func: Function, ...args: any[]) {
-    this._session.send('Runtime.callFunctionOn', {
-      functionDeclaration: func.toString(),
-      objectId: args.find(a => a instanceof js.JSHandle)!._objectId,
-      arguments: args.map(a => a instanceof js.JSHandle ? { objectId: a._objectId } : { value: a }),
-      returnByValue: true,
-      emulateUserGesture: true
-    }).catch(() => {});
+    this._session
+      .send('Runtime.callFunctionOn', {
+        functionDeclaration: func.toString(),
+        objectId: args.find((a) => a instanceof js.JSHandle)!._objectId,
+        arguments: args.map((a) =>
+          a instanceof js.JSHandle ? { objectId: a._objectId } : { value: a },
+        ),
+        returnByValue: true,
+        emulateUserGesture: true,
+      })
+      .catch(() => {});
   }
 
-  async evaluateWithArguments(expression: string, returnByValue: boolean, utilityScript: js.JSHandle<any>, values: any[], objectIds: string[]): Promise<any> {
+  async evaluateWithArguments(
+    expression: string,
+    returnByValue: boolean,
+    utilityScript: js.JSHandle<any>,
+    values: any[],
+    objectIds: string[],
+  ): Promise<any> {
     try {
       const response = await this._session.send('Runtime.callFunctionOn', {
         functionDeclaration: expression,
         objectId: utilityScript._objectId!,
         arguments: [
           { objectId: utilityScript._objectId },
-          ...values.map(value => ({ value })),
-          ...objectIds.map(objectId => ({ objectId })),
+          ...values.map((value) => ({ value })),
+          ...objectIds.map((objectId) => ({ objectId })),
         ],
         returnByValue,
         emulateUserGesture: true,
-        awaitPromise: true
+        awaitPromise: true,
       });
-      if (response.wasThrown)
-        throw new js.JavaScriptErrorInEvaluate(response.result.description);
-      if (returnByValue)
-        return parseEvaluationResultValue(response.result.value);
+      if (response.wasThrown) throw new js.JavaScriptErrorInEvaluate(response.result.description);
+      if (returnByValue) return parseEvaluationResultValue(response.result.value);
       return utilityScript._context.createHandle(response.result);
     } catch (error) {
       throw rewriteError(error);
     }
   }
 
-  async getProperties(context: js.ExecutionContext, objectId: js.ObjectId): Promise<Map<string, js.JSHandle>> {
+  async getProperties(
+    context: js.ExecutionContext,
+    objectId: js.ObjectId,
+  ): Promise<Map<string, js.JSHandle>> {
     const response = await this._session.send('Runtime.getProperties', {
       objectId,
-      ownProperties: true
+      ownProperties: true,
     });
     const result = new Map();
     for (const property of response.properties) {
-      if (!property.enumerable || !property.value)
-        continue;
+      if (!property.enumerable || !property.value) continue;
       result.set(property.name, context.createHandle(property.value));
     }
     return result;
   }
 
-  createHandle(context: js.ExecutionContext, remoteObject: Protocol.Runtime.RemoteObject): js.JSHandle {
+  createHandle(
+    context: js.ExecutionContext,
+    remoteObject: Protocol.Runtime.RemoteObject,
+  ): js.JSHandle {
     const isPromise = remoteObject.className === 'Promise';
-    return new js.JSHandle(context, isPromise ? 'promise' : remoteObject.subtype || remoteObject.type, renderPreview(remoteObject), remoteObject.objectId, potentiallyUnserializableValue(remoteObject));
+    return new js.JSHandle(
+      context,
+      isPromise ? 'promise' : remoteObject.subtype || remoteObject.type,
+      renderPreview(remoteObject),
+      remoteObject.objectId,
+      potentiallyUnserializableValue(remoteObject),
+    );
   }
 
   async releaseHandle(objectId: js.ObjectId): Promise<void> {
@@ -120,7 +137,9 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
 
 function potentiallyUnserializableValue(remoteObject: Protocol.Runtime.RemoteObject): any {
   const value = remoteObject.value;
-  const isUnserializable = remoteObject.type === 'number' && ['NaN', '-Infinity', 'Infinity', '-0'].includes(remoteObject.description!);
+  const isUnserializable =
+    remoteObject.type === 'number' &&
+    ['NaN', '-Infinity', 'Infinity', '-0'].includes(remoteObject.description!);
   return isUnserializable ? js.parseUnserializableValue(remoteObject.description!) : value;
 }
 
@@ -131,21 +150,17 @@ function rewriteError(error: Error): Error {
 }
 
 function renderPreview(object: Protocol.Runtime.RemoteObject): string | undefined {
-  if (object.type === 'undefined')
-    return 'undefined';
-  if ('value' in object)
-    return String(object.value);
+  if (object.type === 'undefined') return 'undefined';
+  if ('value' in object) return String(object.value);
 
   if (object.description === 'Object' && object.preview) {
     const tokens = [];
-    for (const { name, value } of object.preview.properties!)
-      tokens.push(`${name}: ${value}`);
+    for (const { name, value } of object.preview.properties!) tokens.push(`${name}: ${value}`);
     return `{${tokens.join(', ')}}`;
   }
   if (object.subtype === 'array' && object.preview) {
     const result = [];
-    for (const { name, value } of object.preview.properties!)
-      result[+name] = value;
+    for (const { name, value } of object.preview.properties!) result[+name] = value;
     return '[' + String(result) + ']';
   }
   return object.description;

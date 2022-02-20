@@ -37,16 +37,25 @@ export class BrowserServerLauncherImpl implements BrowserServerLauncher {
     const playwright = createPlaywright('javascript');
     // 1. Pre-launch the browser
     const metadata = internalCallMetadata();
-    const browser = await playwright[this._browserName].launch(metadata, {
-      ...options,
-      ignoreDefaultArgs: Array.isArray(options.ignoreDefaultArgs) ? options.ignoreDefaultArgs : undefined,
-      ignoreAllDefaultArgs: !!options.ignoreDefaultArgs && !Array.isArray(options.ignoreDefaultArgs),
-      env: options.env ? envObjectToArray(options.env) : undefined,
-    }, toProtocolLogger(options.logger)).catch(e => {
-      const log = helper.formatBrowserLogs(metadata.log);
-      rewriteErrorMessage(e, `${e.message} Failed to launch browser.${log}`);
-      throw e;
-    });
+    const browser = await playwright[this._browserName]
+      .launch(
+        metadata,
+        {
+          ...options,
+          ignoreDefaultArgs: Array.isArray(options.ignoreDefaultArgs)
+            ? options.ignoreDefaultArgs
+            : undefined,
+          ignoreAllDefaultArgs:
+            !!options.ignoreDefaultArgs && !Array.isArray(options.ignoreDefaultArgs),
+          env: options.env ? envObjectToArray(options.env) : undefined,
+        },
+        toProtocolLogger(options.logger),
+      )
+      .catch((e) => {
+        const log = helper.formatBrowserLogs(metadata.log);
+        rewriteErrorMessage(e, `${e.message} Failed to launch browser.${log}`);
+        throw e;
+      });
 
     let path = `/${createGuid()}`;
     if (options.wsPath)
@@ -57,7 +66,7 @@ export class BrowserServerLauncherImpl implements BrowserServerLauncher {
     const wsEndpoint = await server.listen(options.port);
 
     // 3. Return the BrowserServer interface
-    const browserServer = new EventEmitter() as (BrowserServer & EventEmitter);
+    const browserServer = new EventEmitter() as BrowserServer & EventEmitter;
     browserServer.process = () => browser.options.browserProcess.process!;
     browserServer.wsEndpoint = () => wsEndpoint;
     browserServer.close = () => browser.options.browserProcess.close();
@@ -72,8 +81,16 @@ export class BrowserServerLauncherImpl implements BrowserServerLauncher {
 }
 
 function toProtocolLogger(logger: Logger | undefined): ProtocolLogger | undefined {
-  return logger ? (direction: 'send' | 'receive', message: object) => {
-    if (logger.isEnabled('protocol', 'verbose'))
-      logger.log('protocol', 'verbose', (direction === 'send' ? 'SEND ► ' : '◀ RECV ') + JSON.stringify(message), [], {});
-  } : undefined;
+  return logger
+    ? (direction: 'send' | 'receive', message: object) => {
+        if (logger.isEnabled('protocol', 'verbose'))
+          logger.log(
+            'protocol',
+            'verbose',
+            (direction === 'send' ? 'SEND ► ' : '◀ RECV ') + JSON.stringify(message),
+            [],
+            {},
+          );
+      }
+    : undefined;
 }

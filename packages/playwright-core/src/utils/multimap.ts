@@ -40,8 +40,7 @@ export class MultiMap<K, V> {
 
   hasValue(key: K, value: V): boolean {
     const values = this._map.get(key);
-    if (!values)
-      return false;
+    if (!values) return false;
     return values.includes(value);
   }
 
@@ -55,8 +54,7 @@ export class MultiMap<K, V> {
 
   values(): Iterable<V> {
     const result: V[] = [];
-    for (const key of this.keys())
-      result.push(...this.get(key));
+    for (const key of this.keys()) result.push(...this.get(key));
     return result;
   }
 

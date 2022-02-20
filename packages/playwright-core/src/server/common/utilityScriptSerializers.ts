@@ -15,13 +15,16 @@
  */
 
 export type SerializedValue =
-    undefined | boolean | number | string |
-    { v: 'null' | 'undefined' | 'NaN' | 'Infinity' | '-Infinity' | '-0' } |
-    { d: string } |
-    { r: { p: string, f: string} } |
-    { a: SerializedValue[] } |
-    { o: { k: string, v: SerializedValue }[] } |
-    { h: number };
+  | undefined
+  | boolean
+  | number
+  | string
+  | { v: 'null' | 'undefined' | 'NaN' | 'Infinity' | '-Infinity' | '-0' }
+  | { d: string }
+  | { r: { p: string; f: string } }
+  | { a: SerializedValue[] }
+  | { o: { k: string; v: SerializedValue }[] }
+  | { h: number };
 
 function isRegExp(obj: any): obj is RegExp {
   return obj instanceof RegExp || Object.prototype.toString.call(obj) === '[object RegExp]';
@@ -36,77 +39,59 @@ function isError(obj: any): obj is Error {
 }
 
 export function parseEvaluationResultValue(value: SerializedValue, handles: any[] = []): any {
-  if (Object.is(value, undefined))
-    return undefined;
+  if (Object.is(value, undefined)) return undefined;
   if (typeof value === 'object' && value) {
     if ('v' in value) {
-      if (value.v === 'undefined')
-        return undefined;
-      if (value.v === 'null')
-        return null;
-      if (value.v === 'NaN')
-        return NaN;
-      if (value.v === 'Infinity')
-        return Infinity;
-      if (value.v === '-Infinity')
-        return -Infinity;
-      if (value.v === '-0')
-        return -0;
+      if (value.v === 'undefined') return undefined;
+      if (value.v === 'null') return null;
+      if (value.v === 'NaN') return NaN;
+      if (value.v === 'Infinity') return Infinity;
+      if (value.v === '-Infinity') return -Infinity;
+      if (value.v === '-0') return -0;
       return undefined;
     }
-    if ('d' in value)
-      return new Date(value.d);
-    if ('r' in value)
-      return new RegExp(value.r.p, value.r.f);
-    if ('a' in value)
-      return value.a.map((a: any) => parseEvaluationResultValue(a, handles));
+    if ('d' in value) return new Date(value.d);
+    if ('r' in value) return new RegExp(value.r.p, value.r.f);
+    if ('a' in value) return value.a.map((a: any) => parseEvaluationResultValue(a, handles));
     if ('o' in value) {
       const result: any = {};
-      for (const { k, v } of value.o)
-        result[k] = parseEvaluationResultValue(v, handles);
+      for (const { k, v } of value.o) result[k] = parseEvaluationResultValue(v, handles);
       return result;
     }
-    if ('h' in value)
-      return handles[value.h];
+    if ('h' in value) return handles[value.h];
   }
   return value;
 }
 
 export type HandleOrValue = { h: number } | { fallThrough: any };
-export function serializeAsCallArgument(value: any, handleSerializer: (value: any) => HandleOrValue): SerializedValue {
+export function serializeAsCallArgument(
+  value: any,
+  handleSerializer: (value: any) => HandleOrValue,
+): SerializedValue {
   return serialize(value, handleSerializer, new Set());
 }
 
-function serialize(value: any, handleSerializer: (value: any) => HandleOrValue, visited: Set<any>): SerializedValue {
+function serialize(
+  value: any,
+  handleSerializer: (value: any) => HandleOrValue,
+  visited: Set<any>,
+): SerializedValue {
   const result = handleSerializer(value);
-  if ('fallThrough' in result)
-    value = result.fallThrough;
-  else
-    return result;
+  if ('fallThrough' in result) value = result.fallThrough;
+  else return result;
 
-  if (visited.has(value))
-    throw new Error('Argument is a circular structure');
-  if (typeof value === 'symbol')
-    return { v: 'undefined' };
-  if (Object.is(value, undefined))
-    return { v: 'undefined' };
-  if (Object.is(value, null))
-    return { v: 'null' };
-  if (Object.is(value, NaN))
-    return { v: 'NaN' };
-  if (Object.is(value, Infinity))
-    return { v: 'Infinity' };
-  if (Object.is(value, -Infinity))
-    return { v: '-Infinity' };
-  if (Object.is(value, -0))
-    return { v: '-0' };
+  if (visited.has(value)) throw new Error('Argument is a circular structure');
+  if (typeof value === 'symbol') return { v: 'undefined' };
+  if (Object.is(value, undefined)) return { v: 'undefined' };
+  if (Object.is(value, null)) return { v: 'null' };
+  if (Object.is(value, NaN)) return { v: 'NaN' };
+  if (Object.is(value, Infinity)) return { v: 'Infinity' };
+  if (Object.is(value, -Infinity)) return { v: '-Infinity' };
+  if (Object.is(value, -0)) return { v: '-0' };
 
-  if (typeof value === 'boolean')
-    return value;
-  if (typeof value === 'number')
-    return value;
-  if (typeof value === 'string')
-    return value;
+  if (typeof value === 'boolean') return value;
+  if (typeof value === 'number') return value;
+  if (typeof value === 'string') return value;
 
   if (isError(value)) {
     const error = value;
@@ -116,34 +101,29 @@ function serialize(value: any, handleSerializer: (value: any) => HandleOrValue, 
     }
     return `${error.name}: ${error.message}\n${error.stack}`;
   }
-  if (isDate(value))
-    return { d: value.toJSON() };
-  if (isRegExp(value))
-    return { r: { p: value.source, f: value.flags } };
+  if (isDate(value)) return { d: value.toJSON() };
+  if (isRegExp(value)) return { r: { p: value.source, f: value.flags } };
 
   if (Array.isArray(value)) {
     const a = [];
     visited.add(value);
-    for (let i = 0; i < value.length; ++i)
-      a.push(serialize(value[i], handleSerializer, visited));
+    for (let i = 0; i < value.length; ++i) a.push(serialize(value[i], handleSerializer, visited));
     visited.delete(value);
     return { a };
   }
 
   if (typeof value === 'object') {
-    const o: { k: string, v: SerializedValue }[] = [];
+    const o: { k: string; v: SerializedValue }[] = [];
     visited.add(value);
     for (const name of Object.keys(value)) {
       let item;
       try {
         item = value[name];
       } catch (e) {
-        continue;  // native bindings will throw sometimes
+        continue; // native bindings will throw sometimes
       }
-      if (name === 'toJSON' && typeof item === 'function')
-        o.push({ k: name, v: { o: [] } });
-      else
-        o.push({ k: name, v: serialize(item, handleSerializer, visited) });
+      if (name === 'toJSON' && typeof item === 'function') o.push({ k: name, v: { o: [] } });
+      else o.push({ k: name, v: serialize(item, handleSerializer, visited) });
     }
     visited.delete(value);
     return { o };

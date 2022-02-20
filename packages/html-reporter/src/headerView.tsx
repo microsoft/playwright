@@ -24,9 +24,9 @@ import { Link, navigate } from './links';
 import { statusIcon } from './statusIcon';
 
 export const HeaderView: React.FC<{
-  stats: Stats,
-  filterText: string,
-  setFilterText: (filterText: string) => void,
+  stats: Stats;
+  filterText: string;
+  setFilterText: (filterText: string) => void;
 }> = ({ stats, filterText, setFilterText }) => {
   React.useEffect(() => {
     (async () => {
@@ -37,43 +37,56 @@ export const HeaderView: React.FC<{
     })();
   });
 
-  return <div className='pt-3'>
-    <div className='header-view-status-container ml-2 pl-2 d-flex'>
-      <StatsNavView stats={stats}></StatsNavView>
+  return (
+    <div className="pt-3">
+      <div className="header-view-status-container ml-2 pl-2 d-flex">
+        <StatsNavView stats={stats}></StatsNavView>
+      </div>
+      <form
+        className="subnav-search"
+        onSubmit={(event) => {
+          event.preventDefault();
+          navigate(`#?q=${filterText ? encodeURIComponent(filterText) : ''}`);
+        }}
+      >
+        {icons.search()}
+        {/* Use navigationId to reset defaultValue */}
+        <input
+          type="search"
+          spellCheck={false}
+          className="form-control subnav-search-input input-contrast width-full"
+          value={filterText}
+          onChange={(e) => {
+            setFilterText(e.target.value);
+          }}
+        ></input>
+      </form>
     </div>
-    <form className='subnav-search' onSubmit={
-      event => {
-        event.preventDefault();
-        navigate(`#?q=${filterText ? encodeURIComponent(filterText) : ''}`);
-      }
-    }>
-      {icons.search()}
-      {/* Use navigationId to reset defaultValue */}
-      <input type='search' spellCheck={false} className='form-control subnav-search-input input-contrast width-full' value={filterText} onChange={e => {
-        setFilterText(e.target.value);
-      }}></input>
-    </form>
-  </div>;
+  );
 };
 
 const StatsNavView: React.FC<{
-  stats: Stats
+  stats: Stats;
 }> = ({ stats }) => {
-  return <nav className='d-flex no-wrap'>
-    <Link className='subnav-item' href='#?'>
-      All <span className='d-inline counter'>{stats.total}</span>
-    </Link>
-    <Link className='subnav-item' href='#?q=s:passed'>
-      Passed <span className='d-inline counter'>{stats.expected}</span>
-    </Link>
-    <Link className='subnav-item' href='#?q=s:failed'>
-      {!!stats.unexpected && statusIcon('unexpected')} Failed <span className='d-inline counter'>{stats.unexpected}</span>
-    </Link>
-    <Link className='subnav-item' href='#?q=s:flaky'>
-      {!!stats.flaky && statusIcon('flaky')} Flaky <span className='d-inline counter'>{stats.flaky}</span>
-    </Link>
-    <Link className='subnav-item' href='#?q=s:skipped'>
-      Skipped <span className='d-inline counter'>{stats.skipped}</span>
-    </Link>
-  </nav>;
+  return (
+    <nav className="d-flex no-wrap">
+      <Link className="subnav-item" href="#?">
+        All <span className="d-inline counter">{stats.total}</span>
+      </Link>
+      <Link className="subnav-item" href="#?q=s:passed">
+        Passed <span className="d-inline counter">{stats.expected}</span>
+      </Link>
+      <Link className="subnav-item" href="#?q=s:failed">
+        {!!stats.unexpected && statusIcon('unexpected')} Failed{' '}
+        <span className="d-inline counter">{stats.unexpected}</span>
+      </Link>
+      <Link className="subnav-item" href="#?q=s:flaky">
+        {!!stats.flaky && statusIcon('flaky')} Flaky{' '}
+        <span className="d-inline counter">{stats.flaky}</span>
+      </Link>
+      <Link className="subnav-item" href="#?q=s:skipped">
+        Skipped <span className="d-inline counter">{stats.skipped}</span>
+      </Link>
+    </nav>
+  );
 };

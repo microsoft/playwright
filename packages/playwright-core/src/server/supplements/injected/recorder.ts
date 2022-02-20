@@ -21,7 +21,6 @@ import type { Point } from '../../../common/types';
 import type { UIState } from '../recorder/recorderTypes';
 import { Highlight } from '../../injected/highlight';
 
-
 declare module globalThis {
   let _playwrightRecorderPerformAction: (action: actions.Action) => Promise<void>;
   let _playwrightRecorderRecordAction: (action: actions.Action) => Promise<void>;
@@ -42,7 +41,7 @@ export class Recorder {
   private _mode: 'none' | 'inspecting' | 'recording' = 'none';
   private _actionPoint: Point | undefined;
   private _actionSelector: string | undefined;
-  private _params: { isUnderTest: boolean; };
+  private _params: { isUnderTest: boolean };
   private _highlight: Highlight;
 
   constructor(injectedScript: InjectedScript, params: { isUnderTest: boolean }) {
@@ -54,43 +53,65 @@ export class Recorder {
     injectedScript.onGlobalListenersRemoved.add(() => this._refreshListenersIfNeeded());
 
     globalThis._playwrightRefreshOverlay = () => {
-      this._pollRecorderMode().catch(e => console.log(e)); // eslint-disable-line no-console
+      this._pollRecorderMode().catch((e) => console.log(e)); // eslint-disable-line no-console
     };
     globalThis._playwrightRefreshOverlay();
-    if (params.isUnderTest)
-      console.error('Recorder script ready for test'); // eslint-disable-line no-console
+    if (params.isUnderTest) console.error('Recorder script ready for test'); // eslint-disable-line no-console
   }
 
   private _refreshListenersIfNeeded() {
     // Ensure we are attached to the current document, and we are on top (last element);
-    if (this._highlight.isInstalled())
-      return;
+    if (this._highlight.isInstalled()) return;
     removeEventListeners(this._listeners);
     this._listeners = [
-      addEventListener(document, 'click', event => this._onClick(event as MouseEvent), true),
-      addEventListener(document, 'auxclick', event => this._onClick(event as MouseEvent), true),
-      addEventListener(document, 'input', event => this._onInput(event), true),
-      addEventListener(document, 'keydown', event => this._onKeyDown(event as KeyboardEvent), true),
-      addEventListener(document, 'keyup', event => this._onKeyUp(event as KeyboardEvent), true),
-      addEventListener(document, 'mousedown', event => this._onMouseDown(event as MouseEvent), true),
-      addEventListener(document, 'mouseup', event => this._onMouseUp(event as MouseEvent), true),
-      addEventListener(document, 'mousemove', event => this._onMouseMove(event as MouseEvent), true),
-      addEventListener(document, 'mouseleave', event => this._onMouseLeave(event as MouseEvent), true),
+      addEventListener(document, 'click', (event) => this._onClick(event as MouseEvent), true),
+      addEventListener(document, 'auxclick', (event) => this._onClick(event as MouseEvent), true),
+      addEventListener(document, 'input', (event) => this._onInput(event), true),
+      addEventListener(
+        document,
+        'keydown',
+        (event) => this._onKeyDown(event as KeyboardEvent),
+        true,
+      ),
+      addEventListener(document, 'keyup', (event) => this._onKeyUp(event as KeyboardEvent), true),
+      addEventListener(
+        document,
+        'mousedown',
+        (event) => this._onMouseDown(event as MouseEvent),
+        true,
+      ),
+      addEventListener(document, 'mouseup', (event) => this._onMouseUp(event as MouseEvent), true),
+      addEventListener(
+        document,
+        'mousemove',
+        (event) => this._onMouseMove(event as MouseEvent),
+        true,
+      ),
+      addEventListener(
+        document,
+        'mouseleave',
+        (event) => this._onMouseLeave(event as MouseEvent),
+        true,
+      ),
       addEventListener(document, 'focus', () => this._onFocus(), true),
-      addEventListener(document, 'scroll', () => {
-        this._hoveredModel = null;
-        this._highlight.hideActionPoint();
-        this._updateHighlight();
-      }, true),
+      addEventListener(
+        document,
+        'scroll',
+        () => {
+          this._hoveredModel = null;
+          this._highlight.hideActionPoint();
+          this._updateHighlight();
+        },
+        true,
+      ),
     ];
     this._highlight.install();
   }
 
   private async _pollRecorderMode() {
     const pollPeriod = 1000;
-    if (this._pollRecorderModeTimer)
-      clearTimeout(this._pollRecorderModeTimer);
-    const state = await globalThis._playwrightRecorderState().catch(e => null);
+    if (this._pollRecorderModeTimer) clearTimeout(this._pollRecorderModeTimer);
+    const state = await globalThis._playwrightRecorderState().catch((e) => null);
     if (!state) {
       this._pollRecorderModeTimer = setTimeout(() => this._pollRecorderMode(), pollPeriod);
       return;
@@ -101,15 +122,18 @@ export class Recorder {
       this._mode = mode;
       this._clearHighlight();
     }
-    if (actionPoint && this._actionPoint && actionPoint.x === this._actionPoint.x && actionPoint.y === this._actionPoint.y) {
+    if (
+      actionPoint &&
+      this._actionPoint &&
+      actionPoint.x === this._actionPoint.x &&
+      actionPoint.y === this._actionPoint.y
+    ) {
       // All good.
     } else if (!actionPoint && !this._actionPoint) {
       // All good.
     } else {
-      if (actionPoint)
-        this._highlight.showActionPoint(actionPoint.x, actionPoint.y);
-      else
-        this._highlight.hideActionPoint();
+      if (actionPoint) this._highlight.showActionPoint(actionPoint.x, actionPoint.y);
+      else this._highlight.hideActionPoint();
       this._actionPoint = actionPoint;
     }
 
@@ -118,7 +142,9 @@ export class Recorder {
       this._actionSelector = undefined;
 
     if (actionSelector !== this._actionSelector) {
-      this._hoveredModel = actionSelector ? querySelector(this._injectedScript, actionSelector, document) : null;
+      this._hoveredModel = actionSelector
+        ? querySelector(this._injectedScript, actionSelector, document)
+        : null;
       this._updateHighlight();
       this._actionSelector = actionSelector;
     }
@@ -133,16 +159,14 @@ export class Recorder {
 
   private _actionInProgress(event: Event): boolean {
     // If Playwright is performing action for us, bail.
-    if (this._performingAction)
-      return true;
+    if (this._performingAction) return true;
     // Consume as the first thing.
     consumeEvent(event);
     return false;
   }
 
   private _consumedDueToNoModel(event: Event, model: HighlightModel | null): boolean {
-    if (model)
-      return false;
+    if (model) return false;
     consumeEvent(event);
     return true;
   }
@@ -156,13 +180,12 @@ export class Recorder {
 
   private _onClick(event: MouseEvent) {
     if (this._mode === 'inspecting')
-      globalThis._playwrightRecorderSetSelector(this._hoveredModel ? this._hoveredModel.selector : '');
-    if (this._shouldIgnoreMouseEvent(event))
-      return;
-    if (this._actionInProgress(event))
-      return;
-    if (this._consumedDueToNoModel(event, this._hoveredModel))
-      return;
+      globalThis._playwrightRecorderSetSelector(
+        this._hoveredModel ? this._hoveredModel.selector : '',
+      );
+    if (this._shouldIgnoreMouseEvent(event)) return;
+    if (this._actionInProgress(event)) return;
+    if (this._consumedDueToNoModel(event, this._hoveredModel)) return;
 
     const checkbox = asCheckbox(this._deepEventTarget(event));
     if (checkbox) {
@@ -182,47 +205,38 @@ export class Recorder {
       signals: [],
       button: buttonForEvent(event),
       modifiers: modifiersForEvent(event),
-      clickCount: event.detail
+      clickCount: event.detail,
     });
   }
 
   private _shouldIgnoreMouseEvent(event: MouseEvent): boolean {
     const target = this._deepEventTarget(event);
-    if (this._mode === 'none')
-      return true;
+    if (this._mode === 'none') return true;
     if (this._mode === 'inspecting') {
       consumeEvent(event);
       return true;
     }
     const nodeName = target.nodeName;
-    if (nodeName === 'SELECT')
-      return true;
-    if (nodeName === 'INPUT' && ['date'].includes((target as HTMLInputElement).type))
-      return true;
+    if (nodeName === 'SELECT') return true;
+    if (nodeName === 'INPUT' && ['date'].includes((target as HTMLInputElement).type)) return true;
     return false;
   }
 
   private _onMouseDown(event: MouseEvent) {
-    if (this._shouldIgnoreMouseEvent(event))
-      return;
-    if (!this._performingAction)
-      consumeEvent(event);
+    if (this._shouldIgnoreMouseEvent(event)) return;
+    if (!this._performingAction) consumeEvent(event);
     this._activeModel = this._hoveredModel;
   }
 
   private _onMouseUp(event: MouseEvent) {
-    if (this._shouldIgnoreMouseEvent(event))
-      return;
-    if (!this._performingAction)
-      consumeEvent(event);
+    if (this._shouldIgnoreMouseEvent(event)) return;
+    if (!this._performingAction) consumeEvent(event);
   }
 
   private _onMouseMove(event: MouseEvent) {
-    if (this._mode === 'none')
-      return;
+    if (this._mode === 'none') return;
     const target = this._deepEventTarget(event);
-    if (this._hoveredElement === target)
-      return;
+    if (this._hoveredElement === target) return;
     this._hoveredElement = target;
     this._updateModelForHoveredElement();
   }
@@ -237,7 +251,9 @@ export class Recorder {
 
   private _onFocus() {
     const activeElement = this._deepActiveElement(document);
-    const result = activeElement ? generateSelector(this._injectedScript, activeElement, true) : null;
+    const result = activeElement
+      ? generateSelector(this._injectedScript, activeElement, true)
+      : null;
     this._activeModel = result && result.selector ? result : null;
     if (this._params.isUnderTest)
       console.error('Highlight updated for test: ' + (result ? result.selector : null)); // eslint-disable-line no-console
@@ -251,12 +267,14 @@ export class Recorder {
     }
     const hoveredElement = this._hoveredElement;
     const { selector, elements } = generateSelector(this._injectedScript, hoveredElement, true);
-    if ((this._hoveredModel && this._hoveredModel.selector === selector) || this._hoveredElement !== hoveredElement)
+    if (
+      (this._hoveredModel && this._hoveredModel.selector === selector) ||
+      this._hoveredElement !== hoveredElement
+    )
       return;
     this._hoveredModel = selector ? { selector, elements } : null;
     this._updateHighlight();
-    if (this._params.isUnderTest)
-      console.error('Highlight updated for test: ' + selector); // eslint-disable-line no-console
+    if (this._params.isUnderTest) console.error('Highlight updated for test: ' + selector); // eslint-disable-line no-console
   }
 
   private _updateHighlight() {
@@ -266,8 +284,7 @@ export class Recorder {
   }
 
   private _onInput(event: Event) {
-    if (this._mode !== 'recording')
-      return true;
+    if (this._mode !== 'recording') return true;
     const target = this._deepEventTarget(event);
     if (['INPUT', 'TEXTAREA'].includes(target.nodeName)) {
       const inputElement = target as HTMLInputElement;
@@ -282,14 +299,13 @@ export class Recorder {
           name: 'setInputFiles',
           selector: this._activeModel!.selector,
           signals: [],
-          files: [...(inputElement.files || [])].map(file => file.name),
+          files: [...(inputElement.files || [])].map((file) => file.name),
         });
         return;
       }
 
       // Non-navigating actions are simply recorded by Playwright.
-      if (this._consumedDueWrongTarget(event))
-        return;
+      if (this._consumedDueWrongTarget(event)) return;
       globalThis._playwrightRecorderRecordAction({
         name: 'fill',
         selector: this._activeModel!.selector,
@@ -300,39 +316,31 @@ export class Recorder {
 
     if (target.nodeName === 'SELECT') {
       const selectElement = target as HTMLSelectElement;
-      if (this._actionInProgress(event))
-        return;
+      if (this._actionInProgress(event)) return;
       this._performAction({
         name: 'select',
         selector: this._hoveredModel!.selector,
-        options: [...selectElement.selectedOptions].map(option => option.value),
-        signals: []
+        options: [...selectElement.selectedOptions].map((option) => option.value),
+        signals: [],
       });
     }
   }
 
   private _shouldGenerateKeyPressFor(event: KeyboardEvent): boolean {
     // Backspace, Delete, AltGraph are changing input, will handle it there.
-    if (['Backspace', 'Delete', 'AltGraph'].includes(event.key))
-      return false;
+    if (['Backspace', 'Delete', 'AltGraph'].includes(event.key)) return false;
     // Ignore the QWERTZ shortcut for creating a at sign on MacOS
-    if (event.key === '@' && event.code === 'KeyL')
-      return false;
+    if (event.key === '@' && event.code === 'KeyL') return false;
     // Allow and ignore common used shortcut for pasting.
     if (navigator.platform.includes('Mac')) {
-      if (event.key === 'v' && event.metaKey)
-        return false;
+      if (event.key === 'v' && event.metaKey) return false;
     } else {
-      if (event.key === 'v' && event.ctrlKey)
-        return false;
-      if (event.key === 'Insert' && event.shiftKey)
-        return false;
+      if (event.key === 'v' && event.ctrlKey) return false;
+      if (event.key === 'Insert' && event.shiftKey) return false;
     }
-    if (['Shift', 'Control', 'Meta', 'Alt'].includes(event.key))
-      return false;
+    if (['Shift', 'Control', 'Meta', 'Alt'].includes(event.key)) return false;
     const hasModifier = event.ctrlKey || event.altKey || event.metaKey;
-    if (event.key.length === 1 && !hasModifier)
-      return !!asCheckbox(this._deepEventTarget(event));
+    if (event.key.length === 1 && !hasModifier) return !!asCheckbox(this._deepEventTarget(event));
     return true;
   }
 
@@ -341,16 +349,13 @@ export class Recorder {
       consumeEvent(event);
       return;
     }
-    if (this._mode !== 'recording')
-      return;
-    if (!this._shouldGenerateKeyPressFor(event))
-      return;
+    if (this._mode !== 'recording') return;
+    if (!this._shouldGenerateKeyPressFor(event)) return;
     if (this._actionInProgress(event)) {
       this._expectProgrammaticKeyUp = true;
       return;
     }
-    if (this._consumedDueWrongTarget(event))
-      return;
+    if (this._consumedDueWrongTarget(event)) return;
     // Similarly to click, trigger checkbox on key event, not input.
     if (event.key === ' ') {
       const checkbox = asCheckbox(this._deepEventTarget(event));
@@ -374,10 +379,8 @@ export class Recorder {
   }
 
   private _onKeyUp(event: KeyboardEvent) {
-    if (this._mode === 'none')
-      return;
-    if (!this._shouldGenerateKeyPressFor(event))
-      return;
+    if (this._mode === 'none') return;
+    if (!this._shouldGenerateKeyPressFor(event)) return;
 
     // Only allow programmatic keyups, ignore user input.
     if (!this._expectProgrammaticKeyUp) {
@@ -400,10 +403,14 @@ export class Recorder {
     if (this._params.isUnderTest) {
       // Serialize all to string as we cannot attribute console message to isolated world
       // in Firefox.
-      console.error('Action performed for test: ' + JSON.stringify({ // eslint-disable-line no-console
-        hovered: this._hoveredModel ? this._hoveredModel.selector : null,
-        active: this._activeModel ? this._activeModel.selector : null,
-      }));
+      console.error(
+        'Action performed for test: ' +
+          JSON.stringify({
+            // eslint-disable-line no-console
+            hovered: this._hoveredModel ? this._hoveredModel.selector : null,
+            active: this._activeModel ? this._activeModel.selector : null,
+          }),
+      );
     }
   }
 
@@ -420,22 +427,29 @@ export class Recorder {
 }
 
 function modifiersForEvent(event: MouseEvent | KeyboardEvent): number {
-  return (event.altKey ? 1 : 0) | (event.ctrlKey ? 2 : 0) | (event.metaKey ? 4 : 0) | (event.shiftKey ? 8 : 0);
+  return (
+    (event.altKey ? 1 : 0) |
+    (event.ctrlKey ? 2 : 0) |
+    (event.metaKey ? 4 : 0) |
+    (event.shiftKey ? 8 : 0)
+  );
 }
 
 function buttonForEvent(event: MouseEvent): 'left' | 'middle' | 'right' {
   switch (event.which) {
-    case 1: return 'left';
-    case 2: return 'middle';
-    case 3: return 'right';
+    case 1:
+      return 'left';
+    case 2:
+      return 'middle';
+    case 3:
+      return 'right';
   }
   return 'left';
 }
 
-function positionForEvent(event: MouseEvent): Point |undefined {
-  const targetElement = (event.target as HTMLElement);
-  if (targetElement.nodeName !== 'CANVAS')
-    return;
+function positionForEvent(event: MouseEvent): Point | undefined {
+  const targetElement = event.target as HTMLElement;
+  if (targetElement.nodeName !== 'CANVAS') return;
   return {
     x: event.offsetX,
     y: event.offsetY,
@@ -454,13 +468,17 @@ type HighlightModel = {
 };
 
 function asCheckbox(node: Node | null): HTMLInputElement | null {
-  if (!node || node.nodeName !== 'INPUT')
-    return null;
+  if (!node || node.nodeName !== 'INPUT') return null;
   const inputElement = node as HTMLInputElement;
   return ['checkbox', 'radio'].includes(inputElement.type) ? inputElement : null;
 }
 
-function addEventListener(target: EventTarget, eventName: string, listener: EventListener, useCapture?: boolean): () => void {
+function addEventListener(
+  target: EventTarget,
+  eventName: string,
+  listener: EventListener,
+  useCapture?: boolean,
+): () => void {
   target.addEventListener(eventName, listener, useCapture);
   const remove = () => {
     target.removeEventListener(eventName, listener, useCapture);
@@ -469,8 +487,7 @@ function addEventListener(target: EventTarget, eventName: string, listener: Even
 }
 
 function removeEventListeners(listeners: (() => void)[]) {
-  for (const listener of listeners)
-    listener();
+  for (const listener of listeners) listener();
   listeners.splice(0, listeners.length);
 }
 

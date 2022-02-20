@@ -31,20 +31,21 @@ export interface ClientInstrumentationListener {
 
 export function createInstrumentation(): ClientInstrumentation {
   const listeners: ClientInstrumentationListener[] = [];
-  return new Proxy({}, {
-    get: (obj: any, prop: string) => {
-      if (prop === 'addListener')
-        return (listener: ClientInstrumentationListener) => listeners.push(listener);
-      if (prop === 'removeListener')
-        return (listener: ClientInstrumentationListener) => listeners.splice(listeners.indexOf(listener), 1);
-      if (prop === 'removeAllListeners')
-        return () => listeners.splice(0, listeners.length);
-      if (!prop.startsWith('on'))
-        return obj[prop];
-      return async (...params: any[]) => {
-        for (const listener of listeners)
-          await (listener as any)[prop]?.(...params);
-      };
+  return new Proxy(
+    {},
+    {
+      get: (obj: any, prop: string) => {
+        if (prop === 'addListener')
+          return (listener: ClientInstrumentationListener) => listeners.push(listener);
+        if (prop === 'removeListener')
+          return (listener: ClientInstrumentationListener) =>
+            listeners.splice(listeners.indexOf(listener), 1);
+        if (prop === 'removeAllListeners') return () => listeners.splice(0, listeners.length);
+        if (!prop.startsWith('on')) return obj[prop];
+        return async (...params: any[]) => {
+          for (const listener of listeners) await (listener as any)[prop]?.(...params);
+        };
+      },
     },
-  });
+  );
 }

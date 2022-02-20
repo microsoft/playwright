@@ -31,7 +31,7 @@ class JUnitReporter implements Reporter {
   private outputFile: string | undefined;
   private stripANSIControlSequences = false;
 
-  constructor(options: { outputFile?: string, stripANSIControlSequences?: boolean } = {}) {
+  constructor(options: { outputFile?: string; stripANSIControlSequences?: boolean } = {}) {
     this.outputFile = options.outputFile || process.env[`PLAYWRIGHT_JUNIT_OUTPUT_NAME`];
     this.stripANSIControlSequences = options.stripANSIControlSequences || false;
   }
@@ -51,8 +51,7 @@ class JUnitReporter implements Reporter {
     const duration = monotonicTime() - this.startTime;
     const children: XMLEntry[] = [];
     for (const projectSuite of this.suite.suites) {
-      for (const fileSuite of projectSuite.suites)
-        children.push(this._buildTestSuite(fileSuite));
+      for (const fileSuite of projectSuite.suites) children.push(this._buildTestSuite(fileSuite));
     }
     const tokens: string[] = [];
 
@@ -66,9 +65,9 @@ class JUnitReporter implements Reporter {
         failures: self.totalFailures,
         skipped: self.totalSkipped,
         errors: 0,
-        time: duration / 1000
+        time: duration / 1000,
       },
-      children
+      children,
     };
 
     serializeXML(root, tokens, this.stripANSIControlSequences);
@@ -88,14 +87,11 @@ class JUnitReporter implements Reporter {
     let duration = 0;
     const children: XMLEntry[] = [];
 
-    suite.allTests().forEach(test => {
+    suite.allTests().forEach((test) => {
       ++tests;
-      if (test.outcome() === 'skipped')
-        ++skipped;
-      if (!test.ok())
-        ++failures;
-      for (const result of test.results)
-        duration += result.duration;
+      if (test.outcome() === 'skipped') ++skipped;
+      if (!test.ok()) ++failures;
+      for (const result of test.results) duration += result.duration;
       this._addTestCase(test, children);
     });
     this.totalTests += tests;
@@ -114,7 +110,7 @@ class JUnitReporter implements Reporter {
         time: duration / 1000,
         errors: 0,
       },
-      children
+      children,
     };
 
     return entry;
@@ -127,9 +123,9 @@ class JUnitReporter implements Reporter {
         // Skip root, project, file
         name: test.titlePath().slice(3).join(' '),
         classname: formatTestTitle(this.config, test),
-        time: (test.results.reduce((acc, value) => acc + value.duration, 0)) / 1000
+        time: test.results.reduce((acc, value) => acc + value.duration, 0) / 1000,
       },
-      children: [] as XMLEntry[]
+      children: [] as XMLEntry[],
     };
     entries.push(entry);
 
@@ -142,37 +138,34 @@ class JUnitReporter implements Reporter {
       entry.children.push({
         name: 'failure',
         attributes: {
-          message: `${path.basename(test.location.file)}:${test.location.line}:${test.location.column} ${test.title}`,
+          message: `${path.basename(test.location.file)}:${test.location.line}:${
+            test.location.column
+          } ${test.title}`,
           type: 'FAILURE',
         },
-        text: stripAnsiEscapes(formatFailure(this.config, test).message)
+        text: stripAnsiEscapes(formatFailure(this.config, test).message),
       });
     }
 
     const systemOut: string[] = [];
     const systemErr: string[] = [];
     for (const result of test.results) {
-      systemOut.push(...result.stdout.map(item => item.toString()));
-      systemErr.push(...result.stderr.map(item => item.toString()));
+      systemOut.push(...result.stdout.map((item) => item.toString()));
+      systemErr.push(...result.stderr.map((item) => item.toString()));
       for (const attachment of result.attachments) {
-        if (!attachment.path)
-          continue;
+        if (!attachment.path) continue;
         try {
           const attachmentPath = path.relative(this.config.rootDir, attachment.path);
           if (fs.existsSync(attachment.path))
             systemOut.push(`\n[[ATTACHMENT|${attachmentPath}]]\n`);
-          else
-            systemErr.push(`\nWarning: attachment ${attachmentPath} is missing`);
-        } catch (e) {
-        }
+          else systemErr.push(`\nWarning: attachment ${attachmentPath} is missing`);
+        } catch (e) {}
       }
     }
     // Note: it is important to only produce a single system-out/system-err entry
     // so that parsers in the wild understand it.
-    if (systemOut.length)
-      entry.children.push({ name: 'system-out', text: systemOut.join('') });
-    if (systemErr.length)
-      entry.children.push({ name: 'system-err', text: systemErr.join('') });
+    if (systemOut.length) entry.children.push({ name: 'system-out', text: systemOut.join('') });
+    if (systemErr.length) entry.children.push({ name: 'system-err', text: systemErr.join('') });
   }
 }
 
@@ -188,23 +181,27 @@ function serializeXML(entry: XMLEntry, tokens: string[], stripANSIControlSequenc
   for (const [name, value] of Object.entries(entry.attributes || {}))
     attrs.push(`${name}="${escape(String(value), stripANSIControlSequences, false)}"`);
   tokens.push(`<${entry.name}${attrs.length ? ' ' : ''}${attrs.join(' ')}>`);
-  for (const child of entry.children || [])
-    serializeXML(child, tokens, stripANSIControlSequences);
-  if (entry.text)
-    tokens.push(escape(entry.text, stripANSIControlSequences, true));
+  for (const child of entry.children || []) serializeXML(child, tokens, stripANSIControlSequences);
+  if (entry.text) tokens.push(escape(entry.text, stripANSIControlSequences, true));
   tokens.push(`</${entry.name}>`);
 }
 
 // See https://en.wikipedia.org/wiki/Valid_characters_in_XML
-const discouragedXMLCharacters = /[\u0001-\u0008\u000b-\u000c\u000e-\u001f\u007f-\u0084\u0086-\u009f]/g;
+const discouragedXMLCharacters =
+  /[\u0001-\u0008\u000b-\u000c\u000e-\u001f\u007f-\u0084\u0086-\u009f]/g;
 
-function escape(text: string, stripANSIControlSequences: boolean, isCharacterData: boolean): string {
-  if (stripANSIControlSequences)
-    text = stripAnsiEscapes(text);
+function escape(
+  text: string,
+  stripANSIControlSequences: boolean,
+  isCharacterData: boolean,
+): string {
+  if (stripANSIControlSequences) text = stripAnsiEscapes(text);
   const escapeRe = isCharacterData ? /[&<]/g : /[&"<>]/g;
-  text = text.replace(escapeRe, c => ({ '&': '&amp;', '"': '&quot;', '<': '&lt;', '>': '&gt;' }[c]!));
-  if (isCharacterData)
-    text = text.replace(/]]>/g, ']]&gt;');
+  text = text.replace(
+    escapeRe,
+    (c) => ({ '&': '&amp;', '"': '&quot;', '<': '&lt;', '>': '&gt;' }[c]!),
+  );
+  if (isCharacterData) text = text.replace(/]]>/g, ']]&gt;');
   text = text.replace(discouragedXMLCharacters, '');
   return text;
 }

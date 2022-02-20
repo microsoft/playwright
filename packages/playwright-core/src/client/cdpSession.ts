@@ -24,7 +24,12 @@ export class CDPSession extends ChannelOwner<channels.CDPSessionChannel> impleme
     return (cdpSession as any)._object;
   }
 
-  constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.CDPSessionInitializer) {
+  constructor(
+    parent: ChannelOwner,
+    type: string,
+    guid: string,
+    initializer: channels.CDPSessionInitializer,
+  ) {
     super(parent, type, guid, initializer);
 
     this._channel.on('event', ({ method, params }) => {
@@ -40,7 +45,7 @@ export class CDPSession extends ChannelOwner<channels.CDPSessionChannel> impleme
 
   async send<T extends keyof Protocol.CommandParameters>(
     method: T,
-    params?: Protocol.CommandParameters[T]
+    params?: Protocol.CommandParameters[T],
   ): Promise<Protocol.CommandReturnValues[T]> {
     const result = await this._channel.send({ method, params });
     return result.result as Protocol.CommandReturnValues[T];

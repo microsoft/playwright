@@ -27,7 +27,7 @@ export class Video implements api.Video {
   constructor(page: Page, connection: Connection) {
     this._isRemote = connection.isRemote();
     this._artifact = Promise.race([
-      new Promise<Artifact>(f => this._artifactCallback = f),
+      new Promise<Artifact>((f) => (this._artifactCallback = f)),
       page._closedOrCrashedPromise.then(() => null),
     ]);
   }
@@ -38,23 +38,22 @@ export class Video implements api.Video {
 
   async path(): Promise<string> {
     if (this._isRemote)
-      throw new Error(`Path is not available when connecting remotely. Use saveAs() to save a local copy.`);
+      throw new Error(
+        `Path is not available when connecting remotely. Use saveAs() to save a local copy.`,
+      );
     const artifact = await this._artifact;
-    if (!artifact)
-      throw new Error('Page did not produce any video frames');
+    if (!artifact) throw new Error('Page did not produce any video frames');
     return artifact._initializer.absolutePath;
   }
 
   async saveAs(path: string): Promise<void> {
     const artifact = await this._artifact;
-    if (!artifact)
-      throw new Error('Page did not produce any video frames');
+    if (!artifact) throw new Error('Page did not produce any video frames');
     return artifact.saveAs(path);
   }
 
   async delete(): Promise<void> {
     const artifact = await this._artifact;
-    if (artifact)
-      await artifact.delete();
+    if (artifact) await artifact.delete();
   }
 }

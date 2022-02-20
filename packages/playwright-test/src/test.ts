@@ -31,10 +31,10 @@ class Base {
 }
 
 export type Modifier = {
-  type: 'slow' | 'fixme' | 'skip' | 'fail',
-  fn: Function,
-  location: Location,
-  description: string | undefined
+  type: 'slow' | 'fixme' | 'skip' | 'fail';
+  fn: Function;
+  location: Location;
+  description: string | undefined;
 };
 
 export class Suite extends Base implements reporterTypes.Suite {
@@ -46,7 +46,7 @@ export class Suite extends Base implements reporterTypes.Suite {
   _isDescribe = false;
   _entries: (Suite | TestCase)[] = [];
   hooks: TestCase[] = [];
-  _eachHooks: { type: 'beforeEach' | 'afterEach', fn: Function, location: Location }[] = [];
+  _eachHooks: { type: 'beforeEach' | 'afterEach'; fn: Function; location: Location }[] = [];
   _timeout: number | undefined;
   _annotations: Annotations = [];
   _modifiers: Modifier[] = [];
@@ -75,10 +75,8 @@ export class Suite extends Base implements reporterTypes.Suite {
     const result: TestCase[] = [];
     const visit = (suite: Suite) => {
       for (const entry of suite._entries) {
-        if (entry instanceof Suite)
-          visit(entry);
-        else
-          result.push(entry);
+        if (entry instanceof Suite) visit(entry);
+        else result.push(entry);
       }
     };
     visit(this);
@@ -93,11 +91,9 @@ export class Suite extends Base implements reporterTypes.Suite {
 
   _getOnlyItems(): (TestCase | Suite)[] {
     const items: (TestCase | Suite)[] = [];
-    if (this._only)
-      items.push(this);
-    for (const suite of this.suites)
-      items.push(...suite._getOnlyItems());
-    items.push(...this.tests.filter(test => test._only));
+    if (this._only) items.push(this);
+    for (const suite of this.suites) items.push(...suite._getOnlyItems());
+    items.push(...this.tests.filter((test) => test._only));
     return items;
   }
 
@@ -142,7 +138,14 @@ export class TestCase extends Base implements reporterTypes.TestCase {
   _pool: FixturePool | undefined;
   _projectIndex = 0;
 
-  constructor(type: TestCaseType, title: string, fn: Function, ordinalInFile: number, testType: TestTypeImpl, location: Location) {
+  constructor(
+    type: TestCaseType,
+    title: string,
+    fn: Function,
+    ordinalInFile: number,
+    testType: TestTypeImpl,
+    location: Location,
+  ) {
     super(title);
     this._type = type;
     this.fn = fn;
@@ -158,13 +161,10 @@ export class TestCase extends Base implements reporterTypes.TestCase {
   }
 
   outcome(): 'skipped' | 'expected' | 'unexpected' | 'flaky' {
-    const nonSkipped = this.results.filter(result => result.status !== 'skipped');
-    if (!nonSkipped.length)
-      return 'skipped';
-    if (nonSkipped.every(result => result.status === this.expectedStatus))
-      return 'expected';
-    if (nonSkipped.some(result => result.status === this.expectedStatus))
-      return 'flaky';
+    const nonSkipped = this.results.filter((result) => result.status !== 'skipped');
+    if (!nonSkipped.length) return 'skipped';
+    if (nonSkipped.every((result) => result.status === this.expectedStatus)) return 'expected';
+    if (nonSkipped.some((result) => result.status === this.expectedStatus)) return 'flaky';
     return 'unexpected';
   }
 
@@ -174,7 +174,14 @@ export class TestCase extends Base implements reporterTypes.TestCase {
   }
 
   _clone(): TestCase {
-    const test = new TestCase(this._type, this.title, this.fn, this._ordinalInFile, this._testType, this.location);
+    const test = new TestCase(
+      this._type,
+      this.title,
+      this.fn,
+      this._ordinalInFile,
+      this._testType,
+      this.location,
+    );
     test._only = this._only;
     test._requireFile = this._requireFile;
     test.expectedStatus = this.expectedStatus;

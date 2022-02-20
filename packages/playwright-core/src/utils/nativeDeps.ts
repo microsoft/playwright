@@ -294,7 +294,7 @@ export const deps: any = {
       'libxi6',
       'libxrender1',
       'libxt6',
-      'libxtst6'
+      'libxtst6',
     ],
     webkit: [
       'gstreamer1.0-libav',
@@ -468,7 +468,7 @@ export const deps: any = {
       'libxfixes3',
       'libxkbcommon0',
       'libxrandr2',
-      'libxshmfence1'
+      'libxshmfence1',
     ],
     firefox: [
       'ffmpeg',
@@ -498,7 +498,7 @@ export const deps: any = {
       'libxfixes3',
       'libxi6',
       'libxrender1',
-      'libxt6'
+      'libxt6',
     ],
     webkit: [
       'gstreamer1.0-libav',
@@ -551,7 +551,7 @@ export const deps: any = {
       'libxdamage1',
       'libxkbcommon0',
       'libxml2',
-      'libxslt1.1'
+      'libxslt1.1',
     ],
     lib2package: {
       'libasound.so.2': 'libasound2',
@@ -639,22 +639,16 @@ export const deps: any = {
       'libxslt.so.1': 'libxslt1.1',
       'libXt.so.6': 'libxt6',
     },
-  }
+  },
 };
 
 deps['ubuntu20.04-arm64'] = {
   tools: [...deps['ubuntu20.04'].tools],
   chromium: [...deps['ubuntu20.04'].chromium],
-  firefox: [
-    ...deps['ubuntu20.04'].firefox,
-  ],
-  webkit: [
-    ...deps['ubuntu20.04'].webkit,
-    'libevent-2.1-7',
-  ],
+  firefox: [...deps['ubuntu20.04'].firefox],
+  webkit: [...deps['ubuntu20.04'].webkit, 'libevent-2.1-7'],
   lib2package: {
     ...deps['ubuntu20.04'].lib2package,
     'libevent-2.1.so.7': 'libevent-2.1.so.7',
   },
 };
-

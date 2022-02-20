@@ -15,7 +15,12 @@
  */
 
 import type { BrowserContextOptions } from '../../../..';
-import { LanguageGenerator, LanguageGeneratorOptions, sanitizeDeviceOptions, toSignalMap } from './language';
+import {
+  LanguageGenerator,
+  LanguageGeneratorOptions,
+  sanitizeDeviceOptions,
+  toSignalMap,
+} from './language';
 import { ActionInContext } from './codeGenerator';
 import { actionTitle, Action } from './recorderActions';
 import { MouseClickOptions, toModifiers } from './utils';
@@ -45,7 +50,9 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
     if (actionInContext.frame.isMainFrame) {
       subject = pageAlias;
     } else if (actionInContext.frame.selectorsChain && action.name !== 'navigate') {
-      const locators = actionInContext.frame.selectorsChain.map(selector => '.' + asLocator(selector, 'FrameLocator'));
+      const locators = actionInContext.frame.selectorsChain.map(
+        (selector) => '.' + asLocator(selector, 'FrameLocator'),
+      );
       subject = `${pageAlias}${locators.join('')}`;
     } else if (actionInContext.frame.name) {
       subject = `${pageAlias}.Frame(${quote(actionInContext.frame.name)})`;
@@ -71,7 +78,9 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
       lines.push(`await ${pageAlias}.RunAndWaitForNavigationAsync(async () =>`);
       lines.push(`{`);
       lines.push(`    await ${subject}.${actionCall};`);
-      lines.push(`}/*, new ${actionInContext.frame.isMainFrame ? 'Page' : 'Frame'}WaitForNavigationOptions`);
+      lines.push(
+        `}/*, new ${actionInContext.frame.isMainFrame ? 'Page' : 'Frame'}WaitForNavigationOptions`,
+      );
       lines.push(`{`);
       lines.push(`    UrlString = ${quote(signals.waitForNavigation.url)}`);
       lines.push(`}*/);`);
@@ -80,20 +89,25 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
     }
 
     if (signals.download) {
-      lines.unshift(`var download${signals.download.downloadAlias} = await ${pageAlias}.RunAndWaitForDownloadAsync(async () =>\n{`);
+      lines.unshift(
+        `var download${signals.download.downloadAlias} = await ${pageAlias}.RunAndWaitForDownloadAsync(async () =>\n{`,
+      );
       lines.push(`});`);
     }
 
     if (signals.popup) {
-      lines.unshift(`var ${signals.popup.popupAlias} = await ${pageAlias}.RunAndWaitForPopupAsync(async () =>\n{`);
+      lines.unshift(
+        `var ${signals.popup.popupAlias} = await ${pageAlias}.RunAndWaitForPopupAsync(async () =>\n{`,
+      );
       lines.push(`});`);
     }
 
-    for (const line of lines)
-      formatter.add(line);
+    for (const line of lines) formatter.add(line);
 
     if (signals.assertNavigation)
-      formatter.add(`  // Assert.AreEqual(${quote(signals.assertNavigation.url)}, ${pageAlias}.Url);`);
+      formatter.add(
+        `  // Assert.AreEqual(${quote(signals.assertNavigation.url)}, ${pageAlias}.Url);`,
+      );
     return formatter.format();
   }
 
@@ -105,18 +119,13 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
         return 'CloseAsync()';
       case 'click': {
         let method = 'Click';
-        if (action.clickCount === 2)
-          method = 'DblClick';
+        if (action.clickCount === 2) method = 'DblClick';
         const modifiers = toModifiers(action.modifiers);
         const options: MouseClickOptions = {};
-        if (action.button !== 'left')
-          options.button = action.button;
-        if (modifiers.length)
-          options.modifiers = modifiers;
-        if (action.clickCount > 2)
-          options.clickCount = action.clickCount;
-        if (action.position)
-          options.position = action.position;
+        if (action.button !== 'left') options.button = action.button;
+        if (modifiers.length) options.modifiers = modifiers;
+        if (action.clickCount > 2) options.clickCount = action.clickCount;
+        if (action.position) options.position = action.position;
         if (!Object.entries(options).length)
           return asLocator(action.selector) + `.${method}Async()`;
         const optionsString = formatObject(options, '    ', 'Locator' + method + 'Options');
@@ -154,13 +163,26 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
           public static async Task Main()
           {
               using var playwright = await Playwright.CreateAsync();
-              await using var browser = await playwright.${toPascal(options.browserName)}.LaunchAsync(${formatObject(options.launchOptions, '    ', 'BrowserTypeLaunchOptions')});
-              var context = await browser.NewContextAsync(${formatContextOptions(options.contextOptions, options.deviceName)});`);
+              await using var browser = await playwright.${toPascal(
+                options.browserName,
+              )}.LaunchAsync(${formatObject(
+      options.launchOptions,
+      '    ',
+      'BrowserTypeLaunchOptions',
+    )});
+              var context = await browser.NewContextAsync(${formatContextOptions(
+                options.contextOptions,
+                options.deviceName,
+              )});`);
     return formatter.format();
   }
 
   generateFooter(saveStorage: string | undefined): string {
-    const storageStateLine = saveStorage ? `\n        await context.StorageStateAsync(new BrowserContextStorageStateOptions\n        {\n            Path = ${quote(saveStorage)}\n        });\n` : '';
+    const storageStateLine = saveStorage
+      ? `\n        await context.StorageStateAsync(new BrowserContextStorageStateOptions\n        {\n            Path = ${quote(
+          saveStorage,
+        )}\n        });\n`
+      : '';
     return `${storageStateLine}    }
 }\n`;
   }
@@ -173,11 +195,10 @@ function formatObject(value: any, indent = '    ', name = ''): string {
     return quote(value);
   }
   if (Array.isArray(value))
-    return `new[] { ${value.map(o => formatObject(o, indent, name)).join(', ')} }`;
+    return `new[] { ${value.map((o) => formatObject(o, indent, name)).join(', ')} }`;
   if (typeof value === 'object') {
     const keys = Object.keys(value);
-    if (!keys.length)
-      return name ? `new ${getClassName(name)}` : '';
+    if (!keys.length) return name ? `new ${getClassName(name)}` : '';
     const tokens: string[] = [];
     for (const key of keys) {
       const property = getPropertyName(key);
@@ -187,28 +208,36 @@ function formatObject(value: any, indent = '    ', name = ''): string {
       return `new ${getClassName(name)}\n{\n${indent}${tokens.join(`\n${indent}`)}\n${indent}}`;
     return `{\n${indent}${tokens.join(`\n${indent}`)}\n${indent}}`;
   }
-  if (name === 'latitude' || name === 'longitude')
-    return String(value) + 'm';
+  if (name === 'latitude' || name === 'longitude') return String(value) + 'm';
 
   return String(value);
 }
 
 function getClassName(value: string): string {
   switch (value) {
-    case 'viewport': return 'ViewportSize';
-    case 'proxy': return 'ProxySettings';
-    case 'permissions': return 'ContextPermission';
-    case 'modifiers': return 'KeyboardModifier';
-    case 'button': return 'MouseButton';
-    default: return toPascal(value);
+    case 'viewport':
+      return 'ViewportSize';
+    case 'proxy':
+      return 'ProxySettings';
+    case 'permissions':
+      return 'ContextPermission';
+    case 'modifiers':
+      return 'KeyboardModifier';
+    case 'button':
+      return 'MouseButton';
+    default:
+      return toPascal(value);
   }
 }
 
 function getPropertyName(key: string): string {
   switch (key) {
-    case 'storageState': return 'StorageStatePath';
-    case 'viewport': return 'ViewportSize';
-    default: return toPascal(key);
+    case 'storageState':
+      return 'StorageStatePath';
+    case 'viewport':
+      return 'ViewportSize';
+    default:
+      return toPascal(key);
   }
 }
 
@@ -216,19 +245,24 @@ function toPascal(value: string): string {
   return value[0].toUpperCase() + value.slice(1);
 }
 
-function formatContextOptions(options: BrowserContextOptions, deviceName: string | undefined): string {
+function formatContextOptions(
+  options: BrowserContextOptions,
+  deviceName: string | undefined,
+): string {
   const device = deviceName && deviceDescriptors[deviceName];
   if (!device) {
-    if (!Object.entries(options).length)
-      return '';
+    if (!Object.entries(options).length) return '';
     return formatObject(options, '    ', 'BrowserNewContextOptions');
   }
 
   options = sanitizeDeviceOptions(device, options);
-  if (!Object.entries(options).length)
-    return `playwright.Devices[${quote(deviceName!)}]`;
+  if (!Object.entries(options).length) return `playwright.Devices[${quote(deviceName!)}]`;
 
-  return formatObject(options, '    ', `BrowserNewContextOptions(playwright.Devices[${quote(deviceName!)}])`);
+  return formatObject(
+    options,
+    '    ',
+    `BrowserNewContextOptions(playwright.Devices[${quote(deviceName!)}])`,
+  );
 }
 
 class CSharpFormatter {
@@ -242,11 +276,20 @@ class CSharpFormatter {
   }
 
   prepend(text: string) {
-    this._lines = text.trim().split('\n').map(line => line.trim()).concat(this._lines);
+    this._lines = text
+      .trim()
+      .split('\n')
+      .map((line) => line.trim())
+      .concat(this._lines);
   }
 
   add(text: string) {
-    this._lines.push(...text.trim().split('\n').map(line => line.trim()));
+    this._lines.push(
+      ...text
+        .trim()
+        .split('\n')
+        .map((line) => line.trim()),
+    );
   }
 
   newLine() {
@@ -256,35 +299,33 @@ class CSharpFormatter {
   format(): string {
     let spaces = '';
     let previousLine = '';
-    return this._lines.map((line: string) => {
-      if (line === '')
-        return line;
-      if (line.startsWith('}') || line.startsWith(']') || line.includes('});') || line === ');')
-        spaces = spaces.substring(this._baseIndent.length);
+    return this._lines
+      .map((line: string) => {
+        if (line === '') return line;
+        if (line.startsWith('}') || line.startsWith(']') || line.includes('});') || line === ');')
+          spaces = spaces.substring(this._baseIndent.length);
 
-      const extraSpaces = /^(for|while|if).*\(.*\)$/.test(previousLine) ? this._baseIndent : '';
-      previousLine = line;
+        const extraSpaces = /^(for|while|if).*\(.*\)$/.test(previousLine) ? this._baseIndent : '';
+        previousLine = line;
 
-      line = spaces + extraSpaces + line;
-      if (line.endsWith('{') || line.endsWith('[') || line.endsWith('('))
-        spaces += this._baseIndent;
-      if (line.endsWith('));'))
-        spaces = spaces.substring(this._baseIndent.length);
+        line = spaces + extraSpaces + line;
+        if (line.endsWith('{') || line.endsWith('[') || line.endsWith('('))
+          spaces += this._baseIndent;
+        if (line.endsWith('));')) spaces = spaces.substring(this._baseIndent.length);
 
-      return this._baseOffset + line;
-    }).join('\n');
+        return this._baseOffset + line;
+      })
+      .join('\n');
   }
 }
 
 function quote(text: string) {
-  return escapeWithQuotes(text, '\"');
+  return escapeWithQuotes(text, '"');
 }
 
 function asLocator(selector: string, locatorFn = 'Locator') {
   const match = selector.match(/(.*)\s+>>\s+nth=(\d+)$/);
-  if (!match)
-    return `${locatorFn}(${quote(selector)})`;
-  if (+match[2] === 0)
-    return `${locatorFn}(${quote(match[1])}).First`;
+  if (!match) return `${locatorFn}(${quote(selector)})`;
+  if (+match[2] === 0) return `${locatorFn}(${quote(match[1])}).First`;
   return `${locatorFn}(${quote(match[1])}).Nth(${match[2]})`;
 }

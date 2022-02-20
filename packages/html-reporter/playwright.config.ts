@@ -21,11 +21,7 @@ const config: PlaywrightTestConfig = {
   snapshotDir: 'snapshots',
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  reporter: process.env.CI ? [
-    ['html', { open: 'never' }],
-  ] : [
-    ['html', { open: 'on-failure' }]
-  ],
+  reporter: process.env.CI ? [['html', { open: 'never' }]] : [['html', { open: 'on-failure' }]],
   use: {
     trace: 'on-first-retry',
   },
