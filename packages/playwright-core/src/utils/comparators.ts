@@ -18,17 +18,17 @@
 import colors from 'colors/safe';
 import jpeg from 'jpeg-js';
 import pixelmatch from 'pixelmatch';
-import ssim, {Options} from 'ssim.js';
-import {PNGWithMetadata} from 'pngjs';
+import ssim, { Options } from 'ssim.js';
+import { PNGWithMetadata } from 'pngjs';
 import { diff_match_patch, DIFF_INSERT, DIFF_DELETE, DIFF_EQUAL } from '../third_party/diff_match_patch';
 
 // Note: we require the pngjs version of pixelmatch to avoid version mismatches.
 const { PNG } = require(require.resolve('pngjs', { paths: [require.resolve('pixelmatch')] })) as typeof import('pngjs');
 
-export type ImageComparatorOptions = { threshold?: number, pixelCount?: number, pixelRatio?: number };
-export type ComparatorResult = { diff?: Buffer; errorMessage?: string; } | null;
+export type ImageComparatorOptions = {threshold?: number, pixelCount?: number, pixelRatio?: number};
+export type ComparatorResult = {diff?: Buffer; errorMessage?: string;} | null;
 export type Comparator = (actualBuffer: Buffer | string, expectedBuffer: Buffer, options?: any) => ComparatorResult;
-export const mimeTypeToComparator: { [key: string]: Comparator } = {
+export const mimeTypeToComparator: {[key: string]: Comparator} = {
   'application/octet-string': compareBuffersOrStrings,
   'image/png': compareImages.bind(null, 'image/png'),
   'image/jpeg': compareImages.bind(null, 'image/jpeg'),
@@ -121,11 +121,11 @@ function compareWithSsim(
       // initial value is transparent.  We'll add in the SSIM offset.
       const diffResult = Math.floor(
           0xff *
-          (1 -
-            ssim_map.data[
-                ssim_map.width * Math.round((ssim_map.height * ln) / height) +
-                Math.round((ssim_map.width * pos) / width)
-            ])
+        (1 -
+          ssim_map.data[
+              ssim_map.width * Math.round((ssim_map.height * ln) / height) +
+          Math.round((ssim_map.width * pos) / width)
+          ])
       );
       // red (ff) green (00) blue (00) alpha (00)
       const diffValue = handleTransparent(
