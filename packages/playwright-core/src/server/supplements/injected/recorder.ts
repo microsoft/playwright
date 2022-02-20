@@ -403,10 +403,10 @@ export class Recorder {
     if (this._params.isUnderTest) {
       // Serialize all to string as we cannot attribute console message to isolated world
       // in Firefox.
+      // eslint-disable-next-line no-console
       console.error(
         'Action performed for test: ' +
           JSON.stringify({
-            // eslint-disable-line no-console
             hovered: this._hoveredModel ? this._hoveredModel.selector : null,
             active: this._activeModel ? this._activeModel.selector : null,
           }),

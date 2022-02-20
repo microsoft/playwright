@@ -167,10 +167,11 @@ export class Highlight {
       this._highlightElements.push(highlightElement);
 
       if (this._isUnderTest)
+        // eslint-disable-next-line no-console
         console.error(
           'Highlight box for test: ' +
             JSON.stringify({ x: box.x, y: box.y, width: box.width, height: box.height }),
-        ); // eslint-disable-line no-console
+        );
     }
 
     for (const highlightElement of pool) {
