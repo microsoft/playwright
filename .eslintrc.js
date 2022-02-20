@@ -42,9 +42,7 @@ module.exports = {
             "setWithoutGet": false
         }],
         "brace-style": [2, "1tbs", {"allowSingleLine": true}],
-        "curly": [2, "multi-or-nest", "consistent"],
         "new-parens": 2,
-        "arrow-parens": [2, "as-needed"],
         "prefer-const": 2,
         "quote-props": [2, "consistent"],
 
@@ -107,7 +105,6 @@ module.exports = {
         "no-mixed-spaces-and-tabs": 2,
         "no-trailing-spaces": 2,
         "linebreak-style": [ process.platform === "win32" ? 0 : 2, "unix" ],
-        "indent": [2, 2, { "SwitchCase": 1, "CallExpression": {"arguments": 2}, "MemberExpression": 2 }],
         "key-spacing": [2, {
             "beforeColon": false
         }],
