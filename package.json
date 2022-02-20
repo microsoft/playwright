@@ -100,5 +100,9 @@
     "webpack-cli": "^4.9.2",
     "xml2js": "^0.4.23",
     "yaml": "^1.10.2"
+  },
+  "dependencies": {
+    "prettier": "^2.5.1",
+    "ssim.js": "^3.5.0"
   }
 }
