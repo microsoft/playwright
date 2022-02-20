@@ -30,7 +30,7 @@
     "lint-packages": "node utils/workspace.js --ensure-consistent",
     "lint-tests": "node utils/lint_tests.js",
     "flint": "concurrently \"npm run eslint\" \"npm run tsc\" \"npm run doc\" \"npm run check-deps\" \"node utils/generate_channels.js\" \"node utils/generate_types/ --check-clean\" \"npm run lint-tests\" \"npm run test-types\" \"npm run lint-packages\"",
-    "prettier": "prettier . -w",
+    "prettier": "prettier packages -w",
     "clean": "rimraf packages/playwright-core/lib && rimraf packages/playwright-test/lib && rimraf packages/playwright-core/src/generated/",
     "build": "node utils/build/build.js",
     "watch": "node utils/build/build.js --watch --lint",
