@@ -135,6 +135,7 @@ export const deps: any = {
       'libxkbcommon0',
       'libxml2',
       'libxslt1.1',
+      'libopengl0',
     ],
     lib2package: {
       'libasound.so.2': 'libasound2',
@@ -343,6 +344,7 @@ export const deps: any = {
       'libxkbcommon0',
       'libxml2',
       'libxslt1.1',
+      'libopengl0',
     ],
     lib2package: {
       'libasound.so.2': 'libasound2',
@@ -553,7 +555,8 @@ export const deps: any = {
       'libxdamage1',
       'libxkbcommon0',
       'libxml2',
-      'libxslt1.1'
+      'libxslt1.1',
+      'libopengl0',
     ],
     lib2package: {
       'libasound.so.2': 'libasound2',
@@ -640,6 +643,7 @@ export const deps: any = {
       'libxshmfence.so.1': 'libxshmfence1',
       'libxslt.so.1': 'libxslt1.1',
       'libXt.so.6': 'libxt6',
+      'libOpenGL.so.0': 'libopengl0',
     },
   }
 };
