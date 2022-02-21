@@ -1,5 +1,4 @@
 # class: PageAssertions
-* langs: java, python, js
 
 The [PageAssertions] class provides assertion methods that can be used to make assertions about the [Page] state in the tests. A new instance of [PageAssertions] is created by calling [`method: PlaywrightAssertions.expectPage`]:
 
@@ -48,9 +47,31 @@ def test_navigates_to_login_page(page: Page) -> None:
     expect(page).to_have_url(re.compile(r".*/login"))
 ```
 
+```csharp
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+using Microsoft.Playwright.NUnit;
+using NUnit.Framework;
+
+using static Microsoft.Playwright.Assertions;
+
+namespace PlaywrightTests
+{
+    public class ExampleTests : PageTest
+    {
+        [Test]
+        public async Task NavigatetoLoginPage()
+        {
+            // ..
+            await Page.ClickAsync("#login");
+            await Expect(Page.Locator("div#foobar")).ToHaveURL(new Regex(".*/login"));
+        }
+    }
+}
+```
 
 ## method: PageAssertions.not
-* langs: java, js
+* langs: java, js, csharp
 - returns: <[PageAssertions]>
 
 Makes the assertion check for the opposite condition. For example, this code tests that the page URL doesn't contain `"error"`:
@@ -63,7 +84,11 @@ await expect(page).not.toHaveURL('error');
 assertThat(page).not().hasURL("error");
 ```
 
-## method: PageAssertions.NotToHaveTitle
+```csharp
+await Expect(page).Not.ToHaveURL("error");
+```
+
+## async method: PageAssertions.NotToHaveTitle
 * langs: python
 
 The opposite of [`method: PageAssertions.toHaveTitle`].
@@ -76,7 +101,7 @@ Expected title or RegExp.
 
 ### option: PageAssertions.NotToHaveTitle.timeout = %%-assertions-timeout-%%
 
-## method: PageAssertions.NotToHaveURL
+## async method: PageAssertions.NotToHaveURL
 * langs: python
   - alias-java: hasURL
 
@@ -89,7 +114,7 @@ Expected substring or RegExp.
 
 ### option: PageAssertions.NotToHaveURL.timeout = %%-assertions-timeout-%%
 
-## method: PageAssertions.toHaveTitle
+## async method: PageAssertions.toHaveTitle
 * langs:
   - alias-java: hasTitle
 
@@ -119,6 +144,10 @@ from playwright.sync_api import expect
 expect(page).to_have_title(re.compile(r".*checkout"))
 ```
 
+```csharp
+await Expect(page).ToHaveTitle("Playwright");
+```
+
 ### param: PageAssertions.toHaveTitle.titleOrRegExp
 - `titleOrRegExp` <[string]|[RegExp]>
 
@@ -126,7 +155,7 @@ Expected title or RegExp.
 
 ### option: PageAssertions.toHaveTitle.timeout = %%-assertions-timeout-%%
 
-## method: PageAssertions.toHaveURL
+## async method: PageAssertions.toHaveURL
 * langs:
   - alias-java: hasURL
 
@@ -154,6 +183,10 @@ from playwright.sync_api import expect
 
 # ...
 expect(page).to_have_url(re.compile(".*checkout"))
+```
+
+```csharp
+await Expect(page).ToHaveURL(new Regex(".*checkout"));
 ```
 
 ### param: PageAssertions.toHaveURL.urlOrRegExp
