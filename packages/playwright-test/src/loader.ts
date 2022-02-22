@@ -40,7 +40,6 @@ export class Loader {
   private _config: Config = {};
   private _configFile: string | undefined;
   private _projects: ProjectImpl[] = [];
-  private _lastModuleInfo: { rootFolder: string, isModule: boolean } | null = null;
 
   constructor(defaultConfig: Config, configOverrides: Config) {
     this._defaultConfig = defaultConfig;
@@ -222,32 +221,7 @@ export class Loader {
 
   private async _requireOrImport(file: string) {
     const revertBabelRequire = installTransform();
-
-    // Figure out if we are importing or requiring.
-    let isModule: boolean;
-    if (file.endsWith('.mjs')) {
-      isModule = true;
-    } else {
-      if (!this._lastModuleInfo || !file.startsWith(this._lastModuleInfo.rootFolder)) {
-        this._lastModuleInfo = null;
-        try {
-          const pathSegments = file.split(path.sep);
-          for (let i = pathSegments.length - 1; i >= 0; --i) {
-            const rootFolder = pathSegments.slice(0, i).join(path.sep);
-            const packageJson = path.join(rootFolder, 'package.json');
-            if (fs.existsSync(packageJson)) {
-              isModule = require(packageJson).type === 'module';
-              this._lastModuleInfo = { rootFolder, isModule };
-              break;
-            }
-          }
-        } catch {
-          // Silent catch.
-        }
-      }
-      isModule = this._lastModuleInfo?.isModule || false;
-    }
-
+    const isModule = fileIsModule(file);
     try {
       const esmImport = () => eval(`import(${JSON.stringify(url.pathToFileURL(file))})`);
       if (isModule)
@@ -487,4 +461,35 @@ function resolveScript(id: string, rootDir: string) {
   if (fs.existsSync(localPath))
     return localPath;
   return require.resolve(id, { paths: [rootDir] });
+}
+
+export function fileIsModule(file: string): boolean {
+  if (file.endsWith('.mjs'))
+    return true;
+
+  const folder = path.dirname(file);
+  return folderIsModule(folder);
+}
+
+const folderToIsModuleCache = new Map<string, { isModule: boolean }>();
+
+export function folderIsModule(folder: string): boolean {
+  // Fast track.
+  const cached = folderToIsModuleCache.get(folder);
+  if (cached)
+    return cached.isModule;
+
+  const packageJson = path.join(folder, 'package.json');
+  let isModule = false;
+  if (fs.existsSync(packageJson)) {
+    isModule = require(packageJson).type === 'module';
+  } else {
+    const parentFolder = path.basename(folder);
+    if (parentFolder !== folder)
+      isModule = folderIsModule(parentFolder);
+    else
+      isModule = false;
+  }
+  folderToIsModuleCache.set(folder, { isModule });
+  return isModule;
 }
