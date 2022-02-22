@@ -181,3 +181,149 @@ export const test = base.test.extend<TestOptions>({
 :::note
 Parametrized projects behavior has changed in version 1.18. [Learn more](./release-notes#breaking-change-custom-config-options).
 :::
+
+## Passing Environment Variables
+
+You can use environment variables to configure tests from the command line.
+
+For example, consider the following test file that needs a username and a password. It is usually a good idea not to store your secrets in the source code, so we'll need a way to pass secrets from outside.
+
+```js js-flavor=js
+// example.spec.js
+test(`example test`, async ({ page }) => {
+  // ...
+  await page.locator('#username').fill(process.env.USERNAME);
+  await page.locator('#password').fill(process.env.PASSWORD);
+});
+```
+
+```js js-flavor=ts
+// example.spec.ts
+test(`example test`, async ({ page }) => {
+  // ...
+  await page.locator('#username').fill(process.env.USERNAME);
+  await page.locator('#password').fill(process.env.PASSWORD);
+});
+```
+
+You can run this test with your secrect username and password set in the command line.
+
+```bash bash-flavor=bash
+USERNAME=me PASSWORD=secret npx playwright test
+```
+
+```bash bash-flavor=batch
+set USERNAME=me
+set PASSWORD=secret
+npx playwright test
+```
+
+```bash bash-flavor=powershell
+$env:USERNAME=me
+$env:PASSWORD=secret
+npx playwright test
+```
+
+Similarly, configuration file can also read environment variables passed throught the command line.
+
+
+```js js-flavor=js
+// playwright.config.js
+// @ts-check
+
+/** @type {import('@playwright/test').PlaywrightTestConfig} */
+const config = {
+  use: {
+    baseURL: process.env.STAGING === '1' ? 'http://staging.example.test/' : 'http://example.test/',
+  }
+};
+
+module.exports = config;
+```
+
+```js js-flavor=ts
+// playwright.config.ts
+import { PlaywrightTestConfig } from '@playwright/test';
+
+const config: PlaywrightTestConfig = {
+  use: {
+    baseURL: process.env.STAGING === '1' ? 'http://staging.example.test/' : 'http://example.test/',
+  }
+};
+export default config;
+```
+
+Now, you can run tests against a staging or a production environment:
+
+```bash bash-flavor=bash
+STAGING=1 npx playwright test
+```
+
+```bash bash-flavor=batch
+set STAGING=1
+npx playwright test
+```
+
+```bash bash-flavor=powershell
+$env:STAGING=1
+npx playwright test
+```
+
+### .env files
+
+To make environment variables easier to manage, consider something like `.env` files. Here is an example that uses [`dotenv`](https://www.npmjs.com/package/dotenv) package to read environment variables directly in the configuration file.
+
+```js js-flavor=js
+// playwright.config.js
+// @ts-check
+
+// Read from default ".env" file.
+require('dotenv').config();
+
+// Alternatively, read from "../my.env" file.
+require('dotenv').config({ path: path.resolve(__dirname, '..', 'my.env') });
+
+/** @type {import('@playwright/test').PlaywrightTestConfig} */
+const config = {
+  use: {
+    baseURL: process.env.STAGING === '1' ? 'http://staging.example.test/' : 'http://example.test/',
+  }
+};
+
+module.exports = config;
+```
+
+```js js-flavor=ts
+// playwright.config.ts
+import { PlaywrightTestConfig } from '@playwright/test';
+import dotenv from 'dotenv';
+import path from 'path';
+
+// Read from default ".env" file.
+dotenv.config();
+
+// Alternatively, read from "../my.env" file.
+dotenv.config({ path: path.resolve(__dirname, '..', 'my.env') });
+
+const config: PlaywrightTestConfig = {
+  use: {
+    baseURL: process.env.STAGING === '1' ? 'http://staging.example.test/' : 'http://example.test/',
+  }
+};
+export default config;
+```
+
+Now, you can just edit `.env` file to set any variables you'd like.
+
+```bash
+# .env file
+STAGING=0
+USERNAME=me
+PASSWORD=secret
+```
+
+Run tests as usual, your environment variables should be picked up.
+
+```bash
+npx playwright test
+```
