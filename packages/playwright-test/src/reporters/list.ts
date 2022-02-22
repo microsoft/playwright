@@ -33,7 +33,7 @@ class ListReporter extends BaseReporter {
 
   constructor(options: { omitFailures?: boolean } = {}) {
     super(options);
-    this._liveTerminal = process.stdout.isTTY || process.env.PWTEST_SKIP_TEST_OUTPUT || !!process.env.PWTEST_TTY_WIDTH;
+    this._liveTerminal = process.stdout.isTTY || !!process.env.PWTEST_TTY_WIDTH;
   }
 
   printsToStdio() {
@@ -129,7 +129,7 @@ class ListReporter extends BaseReporter {
   }
 
   private _updateTestLine(test: TestCase, line: string, suffix: string) {
-    if (process.env.PWTEST_SKIP_TEST_OUTPUT)
+    if (process.env.PW_TEST_DEBUG_REPORTERS)
       this._updateTestLineForTest(test, line, suffix);
     else
       this._updateTestLineForTTY(test, line, suffix);

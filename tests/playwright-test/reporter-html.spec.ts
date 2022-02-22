@@ -51,7 +51,7 @@ test('should generate report', async ({ runInlineTest, showReport, page }) => {
         expect(testInfo.retry).toBe(1);
       });
     `,
-  }, { reporter: 'dot,html', retries: 1 });
+  }, { reporter: 'dot,html', retries: 1 }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
 
   await showReport();
 
@@ -80,7 +80,7 @@ test('should not throw when attachment is missing', async ({ runInlineTest, page
         testInfo.attachments.push({ name: 'screenshot', path: screenshot, contentType: 'image/png' });
       });
     `,
-  }, { reporter: 'dot,html' });
+  }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
 
@@ -108,7 +108,7 @@ test('should include image diff', async ({ runInlineTest, page, showReport }) =>
         await expect(screenshot).toMatchSnapshot('expected.png');
       });
     `,
-  }, { reporter: 'dot,html' });
+  }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
 
@@ -145,7 +145,7 @@ test('should not include image diff with non-images', async ({ runInlineTest, pa
         await expect(screenshot).toMatchSnapshot('expected');
       });
     `,
-  }, { reporter: 'dot,html' });
+  }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
 
@@ -173,7 +173,7 @@ test('should include screenshot on failure', async ({ runInlineTest, page, showR
         await expect(true).toBeFalsy();
       });
     `,
-  }, { reporter: 'dot,html' });
+  }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
 
@@ -196,7 +196,7 @@ test('should include stdio', async ({ runInlineTest, page, showReport }) => {
         await expect(true).toBeFalsy();
       });
     `,
-  }, { reporter: 'dot,html' });
+  }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
 
@@ -216,7 +216,7 @@ test('should highlight error', async ({ runInlineTest, page, showReport }) => {
         await expect(true).toBeFalsy();
       });
     `,
-  }, { reporter: 'dot,html' });
+  }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
 
@@ -236,7 +236,7 @@ test('should show trace source', async ({ runInlineTest, page, showReport }) => 
         await page.evaluate('2 + 2');
       });
     `,
-  }, { reporter: 'dot,html' });
+  }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
 
@@ -269,7 +269,7 @@ test('should show trace title', async ({ runInlineTest, page, showReport }) => {
         await page.evaluate('2 + 2');
       });
     `,
-  }, { reporter: 'dot,html' });
+  }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
 
@@ -293,7 +293,7 @@ test('should show multi trace source', async ({ runInlineTest, page, server, sho
         await request.dispose();
       });
     `,
-  }, { reporter: 'dot,html' });
+  }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
 
@@ -328,7 +328,7 @@ test('should show timed out steps', async ({ runInlineTest, page, showReport }) 
         });
       });
     `,
-  }, { reporter: 'dot,html' });
+  }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(0);
 
@@ -350,7 +350,7 @@ test('should render annotations', async ({ runInlineTest, page, showReport }) =>
         test.skip(true, 'I am not interested in this test');
       });
     `,
-  }, { reporter: 'dot,html' });
+  }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
   expect(result.exitCode).toBe(0);
   expect(result.skipped).toBe(1);
 
@@ -389,7 +389,7 @@ test('should render text attachments as text', async ({ runInlineTest, page, sho
         });
       });
     `,
-  }, { reporter: 'dot,html' });
+  }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
   expect(result.exitCode).toBe(0);
 
   await showReport();
@@ -417,7 +417,7 @@ test('should strikethough textual diff', async ({ runInlineTest, showReport, pag
         expect('new').toMatchSnapshot('snapshot.txt');
       });
     `
-  }, { reporter: 'dot,html' });
+  }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
   expect(result.exitCode).toBe(1);
   await showReport();
   await page.click('text="is a test"');
@@ -442,7 +442,7 @@ test('should strikethough textual diff with commonalities', async ({ runInlineTe
         expect('newcommon').toMatchSnapshot('snapshot.txt');
       });
     `
-  }, { reporter: 'dot,html' });
+  }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
   expect(result.exitCode).toBe(1);
   await showReport();
   await page.click('text="is a test"');
@@ -460,7 +460,7 @@ test('should differentiate repeat-each test cases', async ({ runInlineTest, show
           throw new Error('ouch');
       });
     `
-  }, { 'reporter': 'dot,html', 'repeat-each': 3 });
+  }, { 'reporter': 'dot,html', 'repeat-each': 3 }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
   expect(result.exitCode).toBe(1);
   await showReport();
 
@@ -485,7 +485,7 @@ test('should group similar / loop steps', async ({ runInlineTest, showReport, pa
           expect(2).toEqual(2);
       });
     `
-  }, { 'reporter': 'dot,html' });
+  }, { 'reporter': 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
   expect(result.exitCode).toBe(0);
   await showReport();
 
@@ -504,7 +504,7 @@ test('open tests from required file', async ({ runInlineTest, showReport, page }
       test('sample', async ({}) => { expect(2).toBe(2); });
     `,
     'a.spec.js': `require('./inner')`
-  }, { 'reporter': 'dot,html' });
+  }, { 'reporter': 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
   expect(result.exitCode).toBe(0);
   await showReport();
   await expect(page.locator('text=a.spec.js')).toBeVisible();

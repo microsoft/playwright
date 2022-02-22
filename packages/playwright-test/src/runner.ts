@@ -128,7 +128,7 @@ export class Runner {
       if (list)
         reporters.unshift(new ListModeReporter());
       else
-        reporters.unshift(process.stdout.isTTY && !process.env.CI ? new LineReporter({ omitFailures: true }) : new DotReporter({ omitFailures: true }));
+        reporters.unshift(!process.env.CI ? new LineReporter({ omitFailures: true }) : new DotReporter({ omitFailures: true }));
     }
     return new Multiplexer(reporters);
   }
