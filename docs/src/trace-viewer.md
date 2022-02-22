@@ -75,7 +75,8 @@ BrowserContext context = browser.newContext();
 // Start tracing before creating / navigating a page.
 context.tracing().start(new Tracing.StartOptions()
   .setScreenshots(true)
-  .setSnapshots(true));
+  .setSnapshots(true)
+  .setSources(true));
 
 Page page = context.newPage();
 page.navigate("https://playwright.dev");
@@ -90,7 +91,7 @@ browser = await chromium.launch()
 context = await browser.new_context()
 
 # Start tracing before creating / navigating a page.
-await context.tracing.start(screenshots=True, snapshots=True)
+await context.tracing.start(screenshots=True, snapshots=True, sources=True)
 
 await page.goto("https://playwright.dev")
 
@@ -103,7 +104,7 @@ browser = chromium.launch()
 context = browser.new_context()
 
 # Start tracing before creating / navigating a page.
-context.tracing.start(screenshots=True, snapshots=True)
+context.tracing.start(screenshots=True, snapshots=True, sources=True)
 
 page.goto("https://playwright.dev")
 
@@ -119,7 +120,8 @@ await using var context = await browser.NewContextAsync();
 await context.Tracing.StartAsync(new TracingStartOptions
 {
   Screenshots = true,
-  Snapshots = true
+  Snapshots = true,
+  Sources = true
 });
 
 var page = context.NewPageAsync();
