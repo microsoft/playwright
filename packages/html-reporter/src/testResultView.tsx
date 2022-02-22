@@ -26,7 +26,7 @@ import { AttachmentLink } from './links';
 import { statusIcon } from './statusIcon';
 import './testResultView.css';
 
-const imageDiffNames = ['expected', 'actual', 'diff'];
+const imageDiffNames = ['diff', 'expected', 'actual'];
 
 export const TestResultView: React.FC<{
   test: TestCase,
@@ -46,9 +46,9 @@ export const TestResultView: React.FC<{
     return { attachmentsMap, screenshots, videos, otherAttachments, traces };
   }, [ result ]);
 
+  const diff = attachmentsMap.get('diff');
   const expected = attachmentsMap.get('expected');
   const actual = attachmentsMap.get('actual');
-  const diff = attachmentsMap.get('diff');
   const hasImages = [actual?.contentType, expected?.contentType, diff?.contentType].some(v => v && /^image\//i.test(v));
   return <div className='test-result'>
     {!!result.errors.length && <AutoChip header='Errors'>
@@ -60,9 +60,9 @@ export const TestResultView: React.FC<{
 
     {expected && actual && <AutoChip header={`${hasImages ? 'Image' : 'Snapshot'} mismatch`}>
       {hasImages && <ImageDiff actual={actual} expected={expected} diff={diff}></ImageDiff>}
+      {diff && <AttachmentLink key={`diff`} attachment={diff}></AttachmentLink>}
       <AttachmentLink key={`expected`} attachment={expected}></AttachmentLink>
       <AttachmentLink key={`actual`} attachment={actual}></AttachmentLink>
-      {diff && <AttachmentLink key={`diff`} attachment={diff}></AttachmentLink>}
     </AutoChip>}
 
     {!!screenshots.length && <AutoChip header='Screenshots'>
@@ -124,6 +124,13 @@ const ImageDiff: React.FunctionComponent<{
   const [selectedTab, setSelectedTab] = React.useState<string>('actual');
   const diffElement = React.useRef<HTMLImageElement>(null);
   const tabs = [];
+  if (diff) {
+    tabs.push({
+      id: 'diff',
+      title: 'Diff',
+      render: () => <img src={diff.path}/>
+    });
+  }
   tabs.push({
     id: 'actual',
     title: 'Actual',
@@ -140,13 +147,6 @@ const ImageDiff: React.FunctionComponent<{
         diffElement.current.style.minHeight = diffElement.current.offsetHeight + 'px';
     }}/>
   });
-  if (diff) {
-    tabs.push({
-      id: 'diff',
-      title: 'Diff',
-      render: () => <img src={diff.path}/>
-    });
-  }
   return <div className='vbox' data-testid='test-result-image-mismatch' ref={diffElement}>
     <TabbedPane tabs={tabs} selectedTab={selectedTab} setSelectedTab={setSelectedTab} />
   </div>;
