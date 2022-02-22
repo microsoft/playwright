@@ -302,12 +302,7 @@ export class Runner {
     if (!total)
       fatalErrors.push(createNoTestsError());
 
-    // 8. Fail when output fails.
-    await Promise.all(Array.from(outputDirs).map(outputDir => removeFolderAsync(outputDir).catch(e => {
-      fatalErrors.push(serializeError(e));
-    })));
-
-    // 9. Compute shards.
+    // 8. Compute shards.
     let testGroups = createTestGroups(rootSuite);
 
     const shard = config.shard;
@@ -341,20 +336,27 @@ export class Runner {
     }
     (config as any).__testGroupsCount = testGroups.length;
 
-    // 10. Report begin
+    // 9. Report begin
     this._reporter.onBegin?.(config, rootSuite);
 
-    // 11. Bail out on errors prior to running global setup.
+    // 10. Bail out on errors prior to running global setup.
     if (fatalErrors.length) {
       for (const error of fatalErrors)
         this._reporter.onError?.(error);
       return { status: 'failed' };
     }
 
-    // 12. Bail out if list mode only, don't do any work.
+    // 11. Bail out if list mode only, don't do any work.
     if (list)
       return { status: 'passed' };
 
+    // 12. Remove output directores.
+    try {
+      await Promise.all(Array.from(outputDirs).map(outputDir => removeFolderAsync(outputDir)));
+    } catch (e) {
+      this._reporter.onError?.(serializeError(e));
+      return { status: 'failed' };
+    }
 
     // 13. Run Global setup.
     let globalTearDown: (() => Promise<void>) | undefined;
