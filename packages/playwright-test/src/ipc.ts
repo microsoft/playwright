@@ -75,11 +75,15 @@ export type RunPayload = {
 };
 
 export type DonePayload = {
-  fatalError?: TestError;
+  fatalErrors: TestError[];
 };
 
 export type TestOutputPayload = {
   testId?: string;
   text?: string;
   buffer?: string;
+};
+
+export type TeardownErrorsPayload = {
+  fatalErrors: TestError[];
 };
