@@ -561,7 +561,7 @@ test('numeric ranges', () => {
 
 For TypeScript, also add the following to `global.d.ts`. You don't need it for JavaScript.
 
-```js js-flavor=ts
+```js
 // global.d.ts
 declare global {
  namespace PlaywrightTest {
