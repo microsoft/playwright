@@ -430,7 +430,7 @@ export async function removeFolders(dirs: string[]): Promise<Array<Error|null|un
   return await Promise.all(dirs.map((dir: string) => {
     return new Promise<Error|null|undefined>(fulfill => {
       removeFolder(dir, { maxBusyTries: 10 }, async error => {
-        if (error?.code === 'EBUSY') {
+        if ((error as any)?.code === 'EBUSY') {
           // We failed to remove folder, might be due to the whole folder being mounted inside a container:
           //   https://github.com/microsoft/playwright/issues/12106
           // Do a best-effort to remove all files inside of it instead.
