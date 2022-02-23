@@ -16,7 +16,7 @@
 
 import { Console } from 'console';
 import * as util from 'util';
-import { RunPayload, TestOutputPayload, WorkerInitParams } from './ipc';
+import { RunPayload, TeardownErrorsPayload, TestOutputPayload, WorkerInitParams } from './ipc';
 import { startProfiling, stopProfiling } from './profiler';
 import { serializeError } from './util';
 import { WorkerRunner } from './workerRunner';
@@ -74,7 +74,7 @@ process.on('message', async message => {
     workerIndex = initParams.workerIndex;
     startProfiling();
     workerRunner = new WorkerRunner(initParams);
-    for (const event of ['testBegin', 'testEnd', 'stepBegin', 'stepEnd', 'done', 'teardownError'])
+    for (const event of ['testBegin', 'testEnd', 'stepBegin', 'stepEnd', 'done', 'teardownErrors'])
       workerRunner.on(event, sendMessageToParent.bind(null, event));
     return;
   }
@@ -103,7 +103,8 @@ async function gracefullyCloseAndExit() {
     if (workerIndex !== undefined)
       await stopProfiling(workerIndex);
   } catch (e) {
-    process.send!({ method: 'teardownError', params: { error: serializeError(e) } });
+    const payload: TeardownErrorsPayload = { fatalErrors: [serializeError(e)] };
+    process.send!({ method: 'teardownErrors', params: payload });
   }
   process.exit(0);
 }

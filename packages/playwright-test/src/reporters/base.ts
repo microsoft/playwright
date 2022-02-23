@@ -303,11 +303,7 @@ export function formatFailure(config: FullConfig, test: TestCase, options: {inde
 export function formatResultFailure(config: FullConfig, test: TestCase, result: TestResult, initialIndent: string, highlightCode: boolean): ErrorDetails[] {
   const errorDetails: ErrorDetails[] = [];
 
-  if (result.status === 'timedOut') {
-    errorDetails.push({
-      message: indent(colors.red(`Timeout of ${test.timeout}ms exceeded.`), initialIndent),
-    });
-  } else if (result.status === 'passed' && test.expectedStatus === 'failed') {
+  if (result.status === 'passed' && test.expectedStatus === 'failed') {
     errorDetails.push({
       message: indent(colors.red(`Expected to fail, but passed.`), initialIndent),
     });
