@@ -30,9 +30,9 @@ import { CRBrowser } from '../chromium/crBrowser';
 import { helper } from '../helper';
 import { PipeTransport } from '../../protocol/transport';
 import { RecentLogsCollector } from '../../utils/debugLogger';
+import { gracefullyCloseSet } from '../../utils/processLauncher';
 import { TimeoutSettings } from '../../utils/timeoutSettings';
 import { AndroidWebView } from '../../protocol/channels';
-import { CRPage } from '../chromium/crPage';
 import { SdkObject, internalCallMetadata } from '../instrumentation';
 
 const ARTIFACTS_FOLDER = path.join(os.tmpdir(), 'playwright-artifacts-');
@@ -261,10 +261,15 @@ export class AndroidDevice extends SdkObject {
     this._browserConnections.add(androidBrowser);
 
     const artifactsDir = await fs.promises.mkdtemp(ARTIFACTS_FOLDER);
-    socket.on('close', async () => {
+    const cleanupArtifactsDir = async () => {
       const errors = await removeFolders([artifactsDir]);
       for (let i = 0; i < (errors || []).length; ++i)
         debug('pw:android')(`exception while removing ${artifactsDir}: ${errors[i]}`);
+    };
+    gracefullyCloseSet.add(cleanupArtifactsDir);
+    socket.on('close', async () => {
+      gracefullyCloseSet.delete(cleanupArtifactsDir);
+      cleanupArtifactsDir().catch(e => debug('pw:android')(`could not cleanup artifacts dir: ${e}`));
     });
     const browserOptions: BrowserOptions = {
       ...this._android._playwrightOptions,
@@ -288,14 +293,6 @@ export class AndroidDevice extends SdkObject {
     await controller.run(async progress => {
       await defaultContext._loadDefaultContextAsIs(progress);
     });
-    {
-      // TODO: remove after rolling to r838157
-      // Force page scale factor update.
-      const page = defaultContext.pages()[0];
-      const crPage = page._delegate as CRPage;
-      await crPage._mainFrameSession._client.send('Emulation.setDeviceMetricsOverride', { mobile: false, width: 0, height: 0, deviceScaleFactor: 0 });
-      await crPage._mainFrameSession._client.send('Emulation.clearDeviceMetricsOverride', {});
-    }
     return defaultContext;
   }
 
