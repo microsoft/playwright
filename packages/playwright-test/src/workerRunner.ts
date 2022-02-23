@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-import rimraf from 'rimraf';
-import util from 'util';
 import colors from 'colors/safe';
 import { EventEmitter } from 'events';
 import { serializeError, prependToTestError, formatLocation } from './util';
@@ -27,9 +25,8 @@ import { Annotations, TestError, TestInfo, TestStepInternal, WorkerInfo } from '
 import { ProjectImpl } from './project';
 import { FixtureRunner } from './fixtures';
 import { raceAgainstTimeout } from 'playwright-core/lib/utils/async';
+import { removeFolders } from 'playwright-core/lib/utils/utils';
 import { TestInfoImpl } from './testInfo';
-
-const removeFolderAsync = util.promisify(rimraf);
 
 export class WorkerRunner extends EventEmitter {
   private _params: WorkerInitParams;
@@ -317,7 +314,7 @@ export class WorkerRunner extends EventEmitter {
     const preserveOutput = this._loader.fullConfig().preserveOutput === 'always' ||
       (this._loader.fullConfig().preserveOutput === 'failures-only' && isFailure);
     if (!preserveOutput)
-      await removeFolderAsync(testInfo.outputDir).catch(e => {});
+      await removeFolders([testInfo.outputDir]);
   }
 
   private async _runTestWithBeforeHooks(test: TestCase, testInfo: TestInfoImpl) {
