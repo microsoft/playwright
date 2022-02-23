@@ -352,7 +352,17 @@ export class Runner {
 
     // 12. Remove output directores.
     try {
-      await Promise.all(Array.from(outputDirs).map(outputDir => removeFolderAsync(outputDir)));
+      await Promise.all(Array.from(outputDirs).map(outputDir => removeFolderAsync(outputDir).catch(async error => {
+        if ((error as any).code === 'EBUSY') {
+          // We failed to remove folder, might be due to the whole folder being mounted inside a container:
+          //   https://github.com/microsoft/playwright/issues/12106
+          // Do a best-effort to remove all files inside of it instead.
+          const entries = await readDirAsync(outputDir).catch(e => []);
+          await Promise.all(entries.map(entry => removeFolderAsync(path.join(outputDir, entry))));
+        } else {
+          throw error;
+        }
+      })));
     } catch (e) {
       this._reporter.onError?.(serializeError(e));
       return { status: 'failed' };
