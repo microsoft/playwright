@@ -18,9 +18,11 @@ import debug from 'debug';
 import * as types from '../types';
 import { EventEmitter } from 'events';
 import fs from 'fs';
+import os from 'os';
+import path from 'path';
 import * as stream from 'stream';
 import * as ws from 'ws';
-import { createGuid, makeWaitForNextTask } from '../../utils/utils';
+import { createGuid, makeWaitForNextTask, removeFolders } from '../../utils/utils';
 import { BrowserOptions, BrowserProcess, PlaywrightOptions } from '../browser';
 import { BrowserContext, validateBrowserContextOptions } from '../browserContext';
 import { ProgressController } from '../progress';
@@ -32,6 +34,8 @@ import { TimeoutSettings } from '../../utils/timeoutSettings';
 import { AndroidWebView } from '../../protocol/channels';
 import { CRPage } from '../chromium/crPage';
 import { SdkObject, internalCallMetadata } from '../instrumentation';
+
+const ARTIFACTS_FOLDER = path.join(os.tmpdir(), 'playwright-artifacts-');
 
 export interface Backend {
   devices(): Promise<DeviceBackend[]>;
@@ -256,15 +260,23 @@ export class AndroidDevice extends SdkObject {
     await androidBrowser._init();
     this._browserConnections.add(androidBrowser);
 
+    const artifactsDir = await fs.promises.mkdtemp(ARTIFACTS_FOLDER);
+    socket.on('close', async () => {
+      const errors = await removeFolders([artifactsDir]);
+      if (errors) {
+        for (let i = 0; i < errors.length; ++i)
+          debug('pw:android')(`exception while removing ${artifactsDir}: ${errors[i]}`);
+      }
+    });
     const browserOptions: BrowserOptions = {
       ...this._android._playwrightOptions,
       name: 'clank',
       isChromium: true,
       slowMo: 0,
       persistent: { ...options, noDefaultViewport: true },
-      artifactsDir: '',
-      downloadsPath: '',
-      tracesDir: '',
+      artifactsDir,
+      downloadsPath: artifactsDir,
+      tracesDir: artifactsDir,
       browserProcess: new ClankBrowserProcess(androidBrowser),
       proxy: options.proxy,
       protocolLogger: helper.debugProtocolLogger(),
