@@ -15,8 +15,7 @@
  */
 
 import type { Expect } from '../types';
-import { expectType } from '../util';
-import { callLogText, currentExpectTimeout } from './toMatchText';
+import { expectType, callLogText, currentExpectTimeout } from '../util';
 
 export async function toBeTruthy(
   this: ReturnType<Expect['getState']>,

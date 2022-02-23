@@ -17,8 +17,7 @@
 import colors from 'colors/safe';
 import * as fs from 'fs';
 import * as path from 'path';
-import { PNG } from 'pngjs';
-import { test, expect, stripAnsi } from './playwright-test-fixtures';
+import { test, expect, stripAnsi, createWhiteImage, paintBlackPixels } from './playwright-test-fixtures';
 
 const files = {
   'helper.ts': `
@@ -165,21 +164,6 @@ test("doesn\'t create comparison artifacts in an output folder for passed negate
   expect(outputText).not.toContain(`Received: ${actualSnapshotArtifactPath}`);
   expect(fs.existsSync(expectedSnapshotArtifactPath)).toBe(false);
   expect(fs.existsSync(actualSnapshotArtifactPath)).toBe(false);
-});
-
-test('should pass on different snapshots with negate matcher', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    ...files,
-    'a.spec.js-snapshots/snapshot.txt': `Hello world`,
-    'a.spec.js': `
-      const { test } = require('./helper');
-      test('is a test', ({}) => {
-        expect('Hello world updated').not.toMatchSnapshot('snapshot.txt');
-      });
-    `
-  });
-
-  expect(result.exitCode).toBe(0);
 });
 
 test('should fail on same snapshots with negate matcher', async ({ runInlineTest }) => {
@@ -443,7 +427,8 @@ test('should throw for invalid pixelRatio values', async ({ runInlineTest }) => 
 test('should respect pixelCount option', async ({ runInlineTest }) => {
   const width = 20, height = 20;
   const BAD_PIXELS = 120;
-  const [image1, image2] = createImagesWithDifferentPixels(width, height, BAD_PIXELS);
+  const image1 = createWhiteImage(width, height);
+  const image2 = paintBlackPixels(image1, BAD_PIXELS);
 
   expect((await runInlineTest({
     ...files,
@@ -488,8 +473,10 @@ test('should respect pixelCount option', async ({ runInlineTest }) => {
 
 test('should respect pixelRatio option', async ({ runInlineTest }) => {
   const width = 20, height = 20;
-  const BAD_PERCENT = 0.25;
-  const [image1, image2] = createImagesWithDifferentPixels(width, height, width * height * BAD_PERCENT);
+  const BAD_RATIO = 0.25;
+  const BAD_PIXELS = Math.floor(width * height * BAD_RATIO);
+  const image1 = createWhiteImage(width, height);
+  const image2 = paintBlackPixels(image1, BAD_PIXELS);
 
   expect((await runInlineTest({
     ...files,
@@ -509,7 +496,7 @@ test('should respect pixelRatio option', async ({ runInlineTest }) => {
       const { test } = require('./helper');
       test('is a test', ({}) => {
         expect(Buffer.from('${image2.toString('base64')}', 'base64')).toMatchSnapshot('snapshot.png', {
-          pixelRatio: ${BAD_PERCENT}
+          pixelRatio: ${BAD_RATIO}
         });
       });
     `
@@ -519,7 +506,7 @@ test('should respect pixelRatio option', async ({ runInlineTest }) => {
     ...files,
     'playwright.config.ts': `
       module.exports = { projects: [
-        { expect: { toMatchSnapshot: { pixelRatio: ${BAD_PERCENT} } } },
+        { expect: { toMatchSnapshot: { pixelRatio: ${BAD_RATIO} } } },
       ]};
     `,
     'a.spec.js-snapshots/snapshot.png': image1,
@@ -534,9 +521,10 @@ test('should respect pixelRatio option', async ({ runInlineTest }) => {
 
 test('should satisfy both pixelRatio and pixelCount', async ({ runInlineTest }) => {
   const width = 20, height = 20;
-  const BAD_PERCENT = 0.25;
-  const BAD_COUNT = Math.floor(width * height * BAD_PERCENT);
-  const [image1, image2] = createImagesWithDifferentPixels(width, height, BAD_COUNT);
+  const BAD_RATIO = 0.25;
+  const BAD_COUNT = Math.floor(width * height * BAD_RATIO);
+  const image1 = createWhiteImage(width, height);
+  const image2 = paintBlackPixels(image1, BAD_COUNT);
 
   expect((await runInlineTest({
     ...files,
@@ -557,7 +545,7 @@ test('should satisfy both pixelRatio and pixelCount', async ({ runInlineTest }) 
       test('is a test', ({}) => {
         expect(Buffer.from('${image2.toString('base64')}', 'base64')).toMatchSnapshot('snapshot.png', {
           pixelCount: ${Math.floor(BAD_COUNT / 2)},
-          pixelRatio: ${BAD_PERCENT},
+          pixelRatio: ${BAD_RATIO},
         });
       });
     `
@@ -571,7 +559,7 @@ test('should satisfy both pixelRatio and pixelCount', async ({ runInlineTest }) 
       test('is a test', ({}) => {
         expect(Buffer.from('${image2.toString('base64')}', 'base64')).toMatchSnapshot('snapshot.png', {
           pixelCount: ${BAD_COUNT},
-          pixelRatio: ${BAD_PERCENT / 2},
+          pixelRatio: ${BAD_RATIO / 2},
         });
       });
     `
@@ -585,7 +573,7 @@ test('should satisfy both pixelRatio and pixelCount', async ({ runInlineTest }) 
       test('is a test', ({}) => {
         expect(Buffer.from('${image2.toString('base64')}', 'base64')).toMatchSnapshot('snapshot.png', {
           pixelCount: ${BAD_COUNT},
-          pixelRatio: ${BAD_PERCENT},
+          pixelRatio: ${BAD_RATIO},
         });
       });
     `
@@ -635,7 +623,6 @@ test('should compare different PNG images', async ({ runInlineTest }, testInfo) 
 });
 
 test('should respect threshold', async ({ runInlineTest }) => {
-  test.skip(!!process.env.PW_USE_BLINK_DIFF);
   const expected = fs.readFileSync(path.join(__dirname, 'assets/screenshot-canvas-expected.png'));
   const actual = fs.readFileSync(path.join(__dirname, 'assets/screenshot-canvas-actual.png'));
   const result = await runInlineTest({
@@ -656,7 +643,6 @@ test('should respect threshold', async ({ runInlineTest }) => {
 });
 
 test('should respect project threshold', async ({ runInlineTest }) => {
-  test.skip(!!process.env.PW_USE_BLINK_DIFF);
   const expected = fs.readFileSync(path.join(__dirname, 'assets/screenshot-canvas-expected.png'));
   const actual = fs.readFileSync(path.join(__dirname, 'assets/screenshot-canvas-actual.png'));
   const result = await runInlineTest({
@@ -1004,21 +990,3 @@ test('should allow comparing text with text without file extension', async ({ ru
   });
   expect(result.exitCode).toBe(0);
 });
-
-function createImagesWithDifferentPixels(width: number, height: number, differentPixels: number): [Buffer, Buffer] {
-  const image1 = new PNG({ width, height });
-  const image2 = new PNG({ width, height });
-  // Make both images red.
-  for (let i = 0; i < width * height; ++i) {
-    image1.data[i * 4] = 255; // red
-    image1.data[i * 4 + 3] = 255; // opacity
-    image2.data[i * 4] = 255; // red
-    image2.data[i * 4 + 3] = 255; // opacity
-  }
-  // Color some pixels blue.
-  for (let i = 0; i < differentPixels; ++i) {
-    image1.data[i * 4] = 0; // red
-    image1.data[i * 4 + 2] = 255; // blue
-  }
-  return [PNG.sync.write(image1), PNG.sync.write(image2)];
-}
