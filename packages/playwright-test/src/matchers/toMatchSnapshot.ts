@@ -16,8 +16,8 @@
 
 import type { Expect } from '../types';
 import { currentTestInfo } from '../globals';
-import { mimeTypeToComparator, ComparatorResult, ImageComparatorOptions } from 'playwright-core/lib/utils/comparators';
-import { addSuffixToFilePath, serializeError, sanitizeForFilePath, trimLongString } from '../util';
+import { mimeTypeToComparator, ImageComparatorOptions, Comparator } from 'playwright-core/lib/utils/comparators';
+import { addSuffixToFilePath, serializeError, sanitizeForFilePath, trimLongString, callLogText } from '../util';
 import { UpdateSnapshots } from '../types';
 import colors from 'colors/safe';
 import fs from 'fs';
@@ -34,68 +34,163 @@ type SyncExpectationResult = {
 type NameOrSegments = string | string[];
 const SNAPSHOT_COUNTER = Symbol('noname-snapshot-counter');
 
-function parseMatchSnapshotOptions(
-  testInfo: TestInfoImpl,
-  anonymousSnapshotExtension: string,
-  nameOrOptions: NameOrSegments | { name?: NameOrSegments } & ImageComparatorOptions,
-  optOptions: ImageComparatorOptions,
-) {
-  let options: ImageComparatorOptions;
-  let name: NameOrSegments | undefined;
-  if (Array.isArray(nameOrOptions) || typeof nameOrOptions === 'string') {
-    name = nameOrOptions;
-    options = optOptions;
-  } else {
-    name = nameOrOptions.name;
-    options = { ...nameOrOptions };
-    delete (options as any).name;
+class SnapshotHelper<T extends ImageComparatorOptions> {
+  readonly testInfo: TestInfoImpl;
+  readonly expectedPath: string;
+  readonly snapshotPath: string;
+  readonly actualPath: string;
+  readonly diffPath: string;
+  readonly mimeType: string;
+  readonly updateSnapshots: UpdateSnapshots;
+  readonly comparatorOptions: T;
+
+  constructor(
+    testInfo: TestInfoImpl,
+    anonymousSnapshotExtension: string,
+    nameOrOptions: NameOrSegments | { name?: NameOrSegments } & T,
+    optOptions: T,
+  ) {
+    let options: T;
+    let name: NameOrSegments | undefined;
+    if (Array.isArray(nameOrOptions) || typeof nameOrOptions === 'string') {
+      name = nameOrOptions;
+      options = optOptions;
+    } else {
+      name = nameOrOptions.name;
+      options = { ...nameOrOptions };
+      delete (options as any).name;
+    }
+    if (!name) {
+      (testInfo as any)[SNAPSHOT_COUNTER] = ((testInfo as any)[SNAPSHOT_COUNTER] || 0) + 1;
+      const fullTitleWithoutSpec = [
+        ...testInfo.titlePath.slice(1),
+        (testInfo as any)[SNAPSHOT_COUNTER],
+      ].join(' ');
+      name = sanitizeForFilePath(trimLongString(fullTitleWithoutSpec)) + '.' + anonymousSnapshotExtension;
+    }
+
+    options = {
+      ...(testInfo.project.expect?.toMatchSnapshot || {}),
+      ...options,
+    };
+
+    if (options.pixelCount !== undefined && options.pixelCount < 0)
+      throw new Error('`pixelCount` option value must be non-negative integer');
+
+    if (options.pixelRatio !== undefined && (options.pixelRatio < 0 || options.pixelRatio > 1))
+      throw new Error('`pixelRatio` option value must be between 0 and 1');
+
+    // sanitizes path if string
+    const pathSegments = Array.isArray(name) ? name : [addSuffixToFilePath(name, '', undefined, true)];
+    const snapshotPath = testInfo.snapshotPath(...pathSegments);
+    const outputFile = testInfo.outputPath(...pathSegments);
+    const expectedPath = addSuffixToFilePath(outputFile, '-expected');
+    const actualPath = addSuffixToFilePath(outputFile, '-actual');
+    const diffPath = addSuffixToFilePath(outputFile, '-diff');
+
+    let updateSnapshots = testInfo.config.updateSnapshots;
+    if (updateSnapshots === 'missing' && testInfo.retry < testInfo.project.retries)
+      updateSnapshots = 'none';
+    const mimeType = mime.getType(path.basename(snapshotPath)) ?? 'application/octet-string';
+    const comparator: Comparator = mimeTypeToComparator[mimeType];
+    if (!comparator)
+      throw new Error('Failed to find comparator with type ' + mimeType + ': ' + snapshotPath);
+
+    this.testInfo = testInfo;
+    this.mimeType = mimeType;
+    this.actualPath = actualPath;
+    this.expectedPath = expectedPath;
+    this.diffPath = diffPath;
+    this.snapshotPath = snapshotPath;
+    this.updateSnapshots = updateSnapshots;
+    this.comparatorOptions = options;
   }
-  if (!name) {
-    (testInfo as any)[SNAPSHOT_COUNTER] = ((testInfo as any)[SNAPSHOT_COUNTER] || 0) + 1;
-    const fullTitleWithoutSpec = [
-      ...testInfo.titlePath.slice(1),
-      (testInfo as any)[SNAPSHOT_COUNTER],
-    ].join(' ');
-    name = sanitizeForFilePath(trimLongString(fullTitleWithoutSpec)) + '.' + anonymousSnapshotExtension;
+
+  handleMissingNegated() {
+    const isWriteMissingMode = this.updateSnapshots === 'all' || this.updateSnapshots === 'missing';
+    const message = `${this.snapshotPath} is missing in snapshots${isWriteMissingMode ? ', matchers using ".not" won\'t write them automatically.' : '.'}`;
+    return {
+      // NOTE: 'isNot' matcher implies inversed value.
+      pass: true,
+      message: () => message,
+    };
   }
 
-  options = {
-    ...(testInfo.project.expect?.toMatchSnapshot || {}),
-    ...options,
-  };
+  handleDifferentNegated() {
+    // NOTE: 'isNot' matcher implies inversed value.
+    return { pass: false, message: () => '' };
+  }
 
-  if (options.pixelCount !== undefined && options.pixelCount < 0)
-    throw new Error('`pixelCount` option value must be non-negative integer');
+  handleMatchingNegated() {
+    const message = [
+      colors.red('Snapshot comparison failed:'),
+      '',
+      indent('Expected result should be different from the actual one.', '  '),
+    ].join('\n');
+    // NOTE: 'isNot' matcher implies inversed value.
+    return { pass: true, message: () => message };
+  }
 
-  if (options.pixelRatio !== undefined && (options.pixelRatio < 0 || options.pixelRatio > 1))
-    throw new Error('`pixelRatio` option value must be between 0 and 1');
+  handleMissing(actual: Buffer | string) {
+    const isWriteMissingMode = this.updateSnapshots === 'all' || this.updateSnapshots === 'missing';
+    if (isWriteMissingMode) {
+      writeFileSync(this.snapshotPath, actual);
+      writeFileSync(this.actualPath, actual);
+    }
+    const message = `${this.snapshotPath} is missing in snapshots${isWriteMissingMode ? ', writing actual.' : '.'}`;
+    if (this.updateSnapshots === 'all') {
+      /* eslint-disable no-console */
+      console.log(message);
+      return { pass: true, message: () => message };
+    }
+    if (this.updateSnapshots === 'missing') {
+      this.testInfo._failWithError(serializeError(new Error(message)), false /* isHardError */);
+      return { pass: true, message: () => '' };
+    }
+    return { pass: false, message: () => message };
+  }
 
-  // sanitizes path if string
-  const pathSegments = Array.isArray(name) ? name : [addSuffixToFilePath(name, '', undefined, true)];
-  const snapshotPath = testInfo.snapshotPath(...pathSegments);
-  const outputFile = testInfo.outputPath(...pathSegments);
-  const expectedPath = addSuffixToFilePath(outputFile, '-expected');
-  const actualPath = addSuffixToFilePath(outputFile, '-actual');
-  const diffPath = addSuffixToFilePath(outputFile, '-diff');
+  handleDifferent(
+    actual: Buffer | string | undefined,
+    expected: Buffer | string | undefined,
+    diff: Buffer | string | undefined,
+    diffError: string | undefined,
+    log: string[] | undefined,
+    title = `Snapshot comparison failed:`) {
+    const output = [
+      colors.red(title),
+      '',
+    ];
+    if (diffError) {
+      output.push(...[
+        indent(diffError, '  '),
+        '',
+      ]);
+    }
+    if (log)
+      output.push(callLogText(log));
 
-  let updateSnapshots = testInfo.config.updateSnapshots;
-  if (updateSnapshots === 'missing' && testInfo.retry < testInfo.project.retries)
-    updateSnapshots = 'none';
-  const mimeType = mime.getType(path.basename(snapshotPath)) ?? 'application/octet-string';
-  const comparator = mimeTypeToComparator[mimeType];
-  if (!comparator)
-    throw new Error('Failed to find comparator with type ' + mimeType + ': ' + snapshotPath);
-  return {
-    snapshotPath,
-    hasSnapshotFile: fs.existsSync(snapshotPath),
-    expectedPath,
-    actualPath,
-    diffPath,
-    comparator,
-    mimeType,
-    updateSnapshots,
-    options,
-  };
+    if (expected !== undefined) {
+      writeFileSync(this.expectedPath, expected);
+      this.testInfo.attachments.push({ name: 'expected', contentType: this.mimeType, path: this.expectedPath });
+      output.push(`Expected: ${colors.yellow(this.expectedPath)}`);
+    }
+    if (actual !== undefined) {
+      writeFileSync(this.actualPath, actual);
+      this.testInfo.attachments.push({ name: 'actual', contentType: this.mimeType, path: this.actualPath });
+      output.push(`Received: ${colors.yellow(this.actualPath)}`);
+    }
+    if (diff !== undefined) {
+      writeFileSync(this.diffPath, diff);
+      this.testInfo.attachments.push({ name: 'diff', contentType: this.mimeType, path: this.diffPath });
+      output.push(`    Diff: ${colors.yellow(this.diffPath)}`);
+    }
+    return { pass: false, message: () => output.join('\n'), };
+  }
+
+  handleMatching() {
+    return { pass: true, message: () => '' };
+  }
 }
 
 export function toMatchSnapshot(
@@ -107,134 +202,39 @@ export function toMatchSnapshot(
   const testInfo = currentTestInfo();
   if (!testInfo)
     throw new Error(`toMatchSnapshot() must be called during the test`);
-  const {
-    options,
-    updateSnapshots,
-    snapshotPath,
-    hasSnapshotFile,
-    expectedPath,
-    actualPath,
-    diffPath,
-    mimeType,
-    comparator,
-  } = parseMatchSnapshotOptions(testInfo, determineFileExtension(received), nameOrOptions, optOptions);
-  if (!hasSnapshotFile)
-    return commitMissingSnapshot(testInfo, received, snapshotPath, actualPath, updateSnapshots, this.isNot);
-  const expected = fs.readFileSync(snapshotPath);
-  const result = comparator(received, expected, options);
-  return commitComparatorResult(
-      testInfo,
-      expected,
-      received,
-      result,
-      mimeType,
-      snapshotPath,
-      expectedPath,
-      actualPath,
-      diffPath,
-      updateSnapshots,
-      this.isNot,
-  );
-}
+  const helper = new SnapshotHelper(testInfo, determineFileExtension(received), nameOrOptions, optOptions);
+  const comparator: Comparator = mimeTypeToComparator[helper.mimeType];
+  if (!comparator)
+    throw new Error('Failed to find comparator with type ' + helper.mimeType + ': ' + helper.snapshotPath);
 
-function commitMissingSnapshot(
-  testInfo: TestInfoImpl,
-  actual: Buffer | string,
-  snapshotPath: string,
-  actualPath: string,
-  updateSnapshots: UpdateSnapshots,
-  withNegateComparison: boolean,
-) {
-  const isWriteMissingMode = updateSnapshots === 'all' || updateSnapshots === 'missing';
-  const commonMissingSnapshotMessage = `${snapshotPath} is missing in snapshots`;
-  if (withNegateComparison) {
-    const message = `${commonMissingSnapshotMessage}${isWriteMissingMode ? ', matchers using ".not" won\'t write them automatically.' : '.'}`;
-    return { pass: true , message: () => message };
+  if (this.isNot) {
+    if (!fs.existsSync(helper.snapshotPath))
+      return helper.handleMissingNegated();
+    const isDifferent = !!comparator(received, fs.readFileSync(helper.snapshotPath), helper.comparatorOptions);
+    return isDifferent ? helper.handleDifferentNegated() : helper.handleMatchingNegated();
   }
-  if (isWriteMissingMode) {
-    writeFileSync(snapshotPath, actual);
-    writeFileSync(actualPath, actual);
-  }
-  const message = `${commonMissingSnapshotMessage}${isWriteMissingMode ? ', writing actual.' : '.'}`;
-  if (updateSnapshots === 'all') {
+
+  if (!fs.existsSync(helper.snapshotPath))
+    return helper.handleMissing(received);
+
+  const expected = fs.readFileSync(helper.snapshotPath);
+  const result = comparator(received, expected, helper.comparatorOptions);
+  if (!result)
+    return helper.handleMatching();
+
+  if (helper.updateSnapshots === 'all') {
+    writeFileSync(helper.snapshotPath, received);
     /* eslint-disable no-console */
-    console.log(message);
-    return { pass: true, message: () => message };
-  }
-  if (updateSnapshots === 'missing') {
-    testInfo._failWithError(serializeError(new Error(message)), false /* isHardError */);
-    return { pass: true, message: () => '' };
-  }
-  return { pass: false, message: () => message };
-}
-
-function commitComparatorResult(
-  testInfo: TestInfoImpl,
-  expected: Buffer | string,
-  actual: Buffer | string,
-  result: ComparatorResult,
-  mimeType: string,
-  snapshotPath: string,
-  expectedPath: string,
-  actualPath: string,
-  diffPath: string,
-  updateSnapshots: UpdateSnapshots,
-  withNegateComparison: boolean,
-) {
-  if (!result) {
-    const message = withNegateComparison ? [
-      colors.red('Snapshot comparison failed:'),
-      '',
-      indent('Expected result should be different from the actual one.', '  '),
-    ].join('\n') : '';
-    return { pass: true, message: () => message };
+    console.log(helper.snapshotPath + ' does not match, writing actual.');
+    return { pass: true, message: () => helper.snapshotPath + ' running with --update-snapshots, writing actual.' };
   }
 
-  if (withNegateComparison)
-    return { pass: false, message: () => '' };
-
-  if (updateSnapshots === 'all') {
-    writeFileSync(snapshotPath, actual);
-    /* eslint-disable no-console */
-    console.log(snapshotPath + ' does not match, writing actual.');
-    return {
-      pass: true,
-      message: () => snapshotPath + ' running with --update-snapshots, writing actual.'
-    };
-  }
-
-  writeAttachment(testInfo, 'expected', mimeType, expectedPath, expected);
-  writeAttachment(testInfo, 'actual', mimeType, actualPath, actual);
-  if (result.diff)
-    writeAttachment(testInfo, 'diff', mimeType, diffPath, result.diff);
-
-  const output = [
-    colors.red(`Snapshot comparison failed:`),
-  ];
-  if (result.errorMessage) {
-    output.push('');
-    output.push(indent(result.errorMessage, '  '));
-  }
-  output.push('');
-  output.push(`Expected: ${colors.yellow(expectedPath)}`);
-  output.push(`Received: ${colors.yellow(actualPath)}`);
-  if (result.diff)
-    output.push(`    Diff: ${colors.yellow(diffPath)}`);
-
-  return {
-    pass: false,
-    message: () => output.join('\n'),
-  };
+  return helper.handleDifferent(received, expected, result.diff, result.errorMessage, undefined);
 }
 
 function writeFileSync(aPath: string, content: Buffer | string) {
   fs.mkdirSync(path.dirname(aPath), { recursive: true });
   fs.writeFileSync(aPath, content);
-}
-
-function writeAttachment(testInfo: TestInfoImpl, name: string, contentType: string, aPath: string, body: Buffer | string) {
-  writeFileSync(aPath, body);
-  testInfo.attachments.push({ name, contentType, path: aPath });
 }
 
 function indent(lines: string, tab: string) {

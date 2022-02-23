@@ -18,6 +18,7 @@ import type { JSONReport, JSONReportSuite } from '@playwright/test/src/reporters
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
+import { PNG } from 'pngjs';
 import rimraf from 'rimraf';
 import { promisify } from 'util';
 import { CommonFixtures, commonFixtures } from '../config/commonFixtures';
@@ -264,4 +265,29 @@ export function countTimes(s: string, sub: string): number {
     }
   }
   return result;
+}
+
+export function createImage(width: number, height: number, r: number = 0, g: number = 0, b: number = 0): Buffer {
+  const image = new PNG({ width, height });
+  // Make both images red.
+  for (let i = 0; i < width * height; ++i) {
+    image.data[i * 4 + 0] = r;
+    image.data[i * 4 + 1] = g;
+    image.data[i * 4 + 2] = b;
+    image.data[i * 4 + 3] = 255;
+  }
+  return PNG.sync.write(image);
+}
+
+export function createWhiteImage(width: number, height: number) {
+  return createImage(width, height, 255, 255, 255);
+}
+
+export function paintBlackPixels(image: Buffer, blackPixelsCount: number): Buffer {
+  image = PNG.sync.read(image);
+  for (let i = 0; i < blackPixelsCount; ++i) {
+    for (let j = 0; j < 3; ++j)
+      image.data[i * 4 + j] = 0;
+  }
+  return PNG.sync.write(image);
 }
