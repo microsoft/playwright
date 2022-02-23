@@ -21,6 +21,7 @@ import removeFolder from 'rimraf';
 import * as crypto from 'crypto';
 import os from 'os';
 import http from 'http';
+import { promisify } from 'util';
 import https from 'https';
 import { spawn, SpawnOptions, execSync } from 'child_process';
 import { getProxyForUrl } from 'proxy-from-env';
@@ -29,6 +30,8 @@ import { getUbuntuVersionSync, parseOSReleaseText } from './ubuntuVersion';
 import { NameValue } from '../protocol/channels';
 import ProgressBar from 'progress';
 
+const removeFolderAsync = promisify(removeFolder);
+const readDirAsync = promisify(fs.readdir);
 // `https-proxy-agent` v5 is written in TypeScript and exposes generated types.
 // However, as of June 2020, its types are generated with tsconfig that enables
 // `esModuleInterop` option.
@@ -415,11 +418,32 @@ export function createGuid(): string {
   return crypto.randomBytes(16).toString('hex');
 }
 
+export async function removeFoldersOrDie(dirs: string[]): Promise<void> {
+  const errors = await removeFolders(dirs);
+  for (const error of errors) {
+    if (error)
+      throw error;
+  }
+}
+
 export async function removeFolders(dirs: string[]): Promise<Array<Error|null|undefined>> {
   return await Promise.all(dirs.map((dir: string) => {
     return new Promise<Error|null|undefined>(fulfill => {
-      removeFolder(dir, { maxBusyTries: 10 }, error => {
-        fulfill(error ?? undefined);
+      removeFolder(dir, { maxBusyTries: 10 }, async error => {
+        if ((error as any)?.code === 'EBUSY') {
+          // We failed to remove folder, might be due to the whole folder being mounted inside a container:
+          //   https://github.com/microsoft/playwright/issues/12106
+          // Do a best-effort to remove all files inside of it instead.
+          try {
+            const entries = await readDirAsync(dir).catch(e => []);
+            await Promise.all(entries.map(entry => removeFolderAsync(path.join(dir, entry))));
+            fulfill(undefined);
+          } catch (e) {
+            fulfill(e);
+          }
+        } else {
+          fulfill(error ?? undefined);
+        }
       });
     });
   }));
