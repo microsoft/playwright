@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+import rimraf from 'rimraf';
 import * as fs from 'fs';
 import * as path from 'path';
 import { promisify } from 'util';
@@ -37,8 +38,9 @@ import { Minimatch } from 'minimatch';
 import { Config, FullConfig } from './types';
 import { WebServer } from './webServer';
 import { raceAgainstTimeout } from 'playwright-core/lib/utils/async';
-import { removeFoldersOrDie, SigIntWatcher } from 'playwright-core/lib/utils/utils';
+import { SigIntWatcher } from 'playwright-core/lib/utils/utils';
 
+const removeFolderAsync = promisify(rimraf);
 const readDirAsync = promisify(fs.readdir);
 const readFileAsync = promisify(fs.readFile);
 export const kDefaultConfigFiles = ['playwright.config.ts', 'playwright.config.js', 'playwright.config.mjs'];
@@ -350,7 +352,7 @@ export class Runner {
 
     // 12. Remove output directores.
     try {
-      await removeFoldersOrDie(Array.from(outputDirs));
+      await Promise.all(Array.from(outputDirs).map(outputDir => removeFolderAsync(outputDir)));
     } catch (e) {
       this._reporter.onError?.(serializeError(e));
       return { status: 'failed' };
