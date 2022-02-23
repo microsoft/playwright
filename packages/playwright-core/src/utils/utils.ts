@@ -442,7 +442,7 @@ export async function removeFolders(dirs: string[]): Promise<Array<Error|null|un
             fulfill(e);
           }
         } else {
-          fulfill(error);
+          fulfill(error ?? undefined);
         }
       });
     });
