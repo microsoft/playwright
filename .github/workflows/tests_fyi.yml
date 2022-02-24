@@ -48,6 +48,7 @@ jobs:
       fail-fast: false
       matrix:
         shard: [1, 2]
+    # use mac build for emulator hardware accelerator
     runs-on: macos-11
     steps:
     - uses: actions/checkout@v2
