@@ -214,7 +214,7 @@ test('should write missing expectations locally twice and continue', async ({ ru
   expect(stackLines.length).toBe(0);
 });
 
-test('shouldn\'t write missing expectations locally for negated matcher', async ({ runInlineTest }, testInfo) => {
+test('should not write missing expectations for negated matcher', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     ...files,
     'a.spec.js': `
@@ -223,7 +223,7 @@ test('shouldn\'t write missing expectations locally for negated matcher', async 
         expect('Hello world').not.toMatchSnapshot('snapshot.txt');
       });
     `
-  }, {}, { CI: '' });
+  });
 
   expect(result.exitCode).toBe(1);
   const snapshotOutputPath = testInfo.outputPath('a.spec.js-snapshots/snapshot.txt');
@@ -690,7 +690,7 @@ test('should write missing expectations with sanitized snapshot name', async ({ 
         expect('Hello world').toMatchSnapshot('../../snapshot!.txt');
       });
     `
-  }, {}, { CI: '' });
+  });
 
   expect(result.exitCode).toBe(1);
   const snapshotOutputPath = testInfo.outputPath('a.spec.js-snapshots/-snapshot-.txt');

@@ -386,7 +386,7 @@ test('should work with undefined values and base', async ({ runInlineTest }) => 
         expect(testInfo.config.updateSnapshots).toBe('missing');
       });
     `
-  }, {}, { CI: '1' });
+  });
 
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);

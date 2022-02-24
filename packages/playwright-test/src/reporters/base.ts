@@ -108,7 +108,7 @@ export class BaseReporter implements Reporter  {
   }
 
   protected fitToScreen(line: string, suffix?: string): string {
-    const ttyWidth = this._ttyWidthForTest || (process.env.PWTEST_SKIP_TEST_OUTPUT ? 80 : process.stdout.columns || 0);
+    const ttyWidth = this._ttyWidthForTest || process.stdout.columns || 0;
     if (!ttyWidth) {
       // Guard against the case where we cannot determine available width.
       return line;

@@ -149,7 +149,7 @@ class HtmlReporter implements Reporter {
     const builder = new HtmlBuilder(reportFolder);
     const { ok, singleTestId } = await builder.build(reports);
 
-    if (process.env.PWTEST_SKIP_TEST_OUTPUT || process.env.CI)
+    if (process.env.CI)
       return;
 
     const shouldOpen = this._open === 'always' || (!ok && this._open === 'on-failure');
