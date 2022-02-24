@@ -250,7 +250,7 @@ test('should show params and return value', async ({ showTraceViewer, browserNam
     /page.evaluate/,
     /wall time: [0-9/:,APM ]+/,
     /duration: [\d]+ms/,
-    'expression: "({↵    a↵  }) => {↵    console.log(\'Info\');↵    console.warn(\'Warning\');↵    con…"',
+    /expression: "\({↵    a↵  }\) => {↵    console\.log\(\'Info\'\);↵    console\.warn\(\'Warning\'\);↵    console/,
     'isFunction: true',
     'arg: {"a":"paramA","b":4}',
     'value: "return paramA"'
