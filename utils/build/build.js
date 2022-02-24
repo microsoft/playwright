@@ -43,10 +43,11 @@ const { workspace } = require('../workspace');
 
 /**
  * @typedef {{
- *   committed: boolean,
+ *   runOnBuild: boolean,
  *   inputs: string[],
  *   mustExist?: string[],
  *   script: string,
+ *   args?: string[],
  * }} OnChange
  */
 
@@ -78,14 +79,20 @@ function quotePath(path) {
 }
 
 async function runWatch() {
-  function runOnChanges(paths, mustExist = [], nodeFile) {
+  /**
+   * @param {string[]} paths 
+   * @param {string[]} mustExist 
+   * @param {string} nodeFile 
+   * @param {string[]} args 
+   */
+  function runOnChanges(paths, mustExist = [], nodeFile, args = []) {
     nodeFile = filePath(nodeFile);
     function callback() {
       for (const fileMustExist of mustExist) {
         if (!fs.existsSync(filePath(fileMustExist)))
           return;
       }
-      child_process.spawnSync('node', [nodeFile], { stdio: 'inherit' });
+      child_process.spawnSync('node', [nodeFile, ...args], { stdio: 'inherit' });
     }
     chokidar.watch([...paths, ...mustExist, nodeFile].map(filePath)).on('all', callback);
     callback();
@@ -111,7 +118,7 @@ async function runWatch() {
     }));
   process.on('exit', () => spawns.forEach(s => s.kill()));
   for (const onChange of onChanges)
-    runOnChanges(onChange.inputs, onChange.mustExist, onChange.script);
+    runOnChanges(onChange.inputs, onChange.mustExist, onChange.script, onChange.args);
 }
 
 async function runBuild() {
@@ -145,7 +152,7 @@ async function runBuild() {
   for (const step of steps)
     runStep(step);
   for (const onChange of onChanges) {
-    if (!onChange.committed)
+    if (onChange.runOnBuild)
       runStep({ command: 'node', args: [filePath(onChange.script)], shell: false });
   }
 }
@@ -208,7 +215,7 @@ for (const pkg of workspace.packages()) {
 
 // Generate channels.
 onChanges.push({
-  committed: false,
+  runOnBuild: true,
   inputs: [
     'packages/playwright-core/src/protocol/protocol.yml'
   ],
@@ -217,7 +224,7 @@ onChanges.push({
 
 // Generate types.
 onChanges.push({
-  committed: false,
+  runOnBuild: true,
   inputs: [
     'docs/src/api/',
     'docs/src/test-api/',
@@ -265,6 +272,15 @@ copyFiles.push({
   ignored: ['**/injected/**/*'],
   from: 'packages/playwright-core/src',
   to: 'packages/playwright-core/lib',
+});
+
+onChanges.push({
+  runOnBuild: false,
+  inputs: [
+    'packages/playwright-core/browsers.json',
+  ],
+  script: 'packages/playwright-core/cli.js',
+  args: ['install'],
 });
 
 if (lintMode) {
