@@ -6,7 +6,9 @@ set +x
 trap "cd $(pwd -P)" EXIT
 cd "$(dirname "$0")"
 
+MCR_IMAGE_NAME="playwright"
 PW_VERSION=$(node -e 'console.log(require("../../package.json").version)')
+
 RELEASE_CHANNEL="$1"
 if [[ "${RELEASE_CHANNEL}" == "stable" ]]; then
   if [[ "${PW_VERSION}" == *-* ]]; then
@@ -50,6 +52,14 @@ if [[ "$RELEASE_CHANNEL" == "stable" ]]; then
   FOCAL_TAGS+=("focal")
 fi
 
+tag_and_push() {
+  local source="$1"
+  local target="$2"
+  echo "-- tagging: $target"
+  docker tag $source $target
+  docker push $target
+}
+
 publish_docker_images_with_arch_suffix() {
   local FLAVOR="$1"
   local TAGS=()
@@ -72,7 +82,7 @@ publish_docker_images_with_arch_suffix() {
 
   for ((i = 0; i < ${#TAGS[@]}; i++)) do
     local TAG="${TAGS[$i]}"
-    ./tag_and_push.sh playwright:localbuild "playwright.azurecr.io/public/playwright:${TAG}-${ARCH}"
+    tag_and_push playwright:localbuild "playwright.azurecr.io/public/${MCR_IMAGE_NAME}:${TAG}-${ARCH}"
   done
 }
 
@@ -90,7 +100,7 @@ publish_docker_manifest () {
 
   for ((i = 0; i < ${#TAGS[@]}; i++)) do
     local TAG="${TAGS[$i]}"
-    local BASE_IMAGE_TAG="playwright.azurecr.io/public/playwright:${TAG}"
+    local BASE_IMAGE_TAG="playwright.azurecr.io/public/${MCR_IMAGE_NAME}:${TAG}"
     local IMAGE_NAMES=""
     if [[ "$2" == "arm64" || "$2" == "amd64" ]]; then
         IMAGE_NAMES="${IMAGE_NAMES} ${BASE_IMAGE_TAG}-$2"
