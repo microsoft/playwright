@@ -299,8 +299,8 @@ export async function toHaveScreenshot(
     if (errorMessage) {
       // TODO(aslushnikov): rename attachments to "actual" and "previous". They still should be somehow shown in HTML reporter.
       const title = actual && previous ?
-        `Failed to generate screenshot in ${timeout}ms because ${locator ? 'element' : 'page'} keeps changing:` :
-        `Timed out ${timeout}ms while trying to generate screenshot:`;
+        `Timeout ${timeout}ms exceeded while generating screenshot because ${locator ? 'element' : 'page'} kept changing:` :
+        `Timeout ${timeout}ms exceeded while generating screenshot:`;
       return helper.handleDifferent(actual, previous, diff, undefined, log, title);
     }
 

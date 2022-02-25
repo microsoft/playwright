@@ -16,6 +16,7 @@
 
 import { mimeTypeToComparator } from 'playwright-core/lib/utils/comparators';
 import * as fs from 'fs';
+import { PNG } from 'pngjs';
 import * as path from 'path';
 import { pathToFileURL } from 'url';
 import { test, expect, stripAnsi, createImage, paintBlackPixels } from './playwright-test-fixtures';
@@ -55,11 +56,78 @@ test('should fail to screenshot a page with infinite animation', async ({ runInl
     `
   });
   expect(result.exitCode).toBe(1);
-  expect(stripAnsi(result.output)).toContain(`Failed to generate screenshot in 2000ms because page keeps changing`);
+  expect(stripAnsi(result.output)).toContain(`Timeout 2000ms exceeded while generating screenshot because page kept changing`);
   expect(fs.existsSync(testInfo.outputPath('test-results', 'a-is-a-test', 'is-a-test-1-actual.png'))).toBe(true);
   expect(fs.existsSync(testInfo.outputPath('test-results', 'a-is-a-test', 'is-a-test-1-expected.png'))).toBe(true);
   expect(fs.existsSync(testInfo.outputPath('test-results', 'a-is-a-test', 'is-a-test-1-diff.png'))).toBe(true);
   expect(fs.existsSync(testInfo.outputPath('a.spec.js-snapshots', 'is-a-test-1.png'))).toBe(false);
+});
+
+test('should successfully screenshot a page with infinite animation with disableAnimation: true', async ({ runInlineTest }, testInfo) => {
+  const infiniteAnimationURL = pathToFileURL(path.join(__dirname, '../assets/rotate-z.html'));
+  const result = await runInlineTest({
+    ...files,
+    'a.spec.js': `
+      const { test } = require('./helper');
+      test('is a test', async ({ page }) => {
+        await page.goto('${infiniteAnimationURL}');
+        await expect(page).toHaveScreenshot({
+          disableAnimations: true,
+        });
+      });
+    `
+  }, { 'update-snapshots': true });
+  expect(result.exitCode).toBe(0);
+  expect(fs.existsSync(testInfo.outputPath('a.spec.js-snapshots', 'is-a-test-1.png'))).toBe(true);
+});
+
+test('should support clip option for page', async ({ runInlineTest }, testInfo) => {
+  const infiniteAnimationURL = pathToFileURL(path.join(__dirname, '../assets/rotate-z.html'));
+  const result = await runInlineTest({
+    ...files,
+    'a.spec.js-snapshots/snapshot.png': createImage(50, 50, 255, 255, 255),
+    'a.spec.js': `
+      const { test } = require('./helper');
+      test('is a test', async ({ page }) => {
+        await expect(page).toHaveScreenshot({
+          name: 'snapshot.png',
+          clip: { x: 0, y: 0, width: 50, height: 50, },
+        });
+      });
+    `
+  });
+  expect(result.exitCode).toBe(0);
+});
+
+test('should support omitBackground option for locator', async ({ runInlineTest }, testInfo) => {
+  const infiniteAnimationURL = pathToFileURL(path.join(__dirname, '../assets/rotate-z.html'));
+  const image = createImage(100, 100, 255, 255, 255, 0);
+  const result = await runInlineTest({
+    ...files,
+    'a.spec.js': `
+      const { test } = require('./helper');
+      test('is a test', async ({ page }) => {
+        await page.evaluate(() => {
+          document.body.style.setProperty('width', '100px');
+          document.body.style.setProperty('height', '100px');
+        });
+        await expect(page.locator('body')).toHaveScreenshot({
+          name: 'snapshot.png',
+          omitBackground: true,
+        });
+      });
+    `
+  }, { 'update-snapshots': true });
+  expect(result.exitCode).toBe(0);
+  const snapshotPath = testInfo.outputPath('a.spec.js-snapshots', 'snapshot.png');
+  expect(fs.existsSync(snapshotPath)).toBe(true);
+  const png = PNG.sync.read(fs.readFileSync(snapshotPath));
+  expect.soft(png.width, 'image width must be 100').toBe(100);
+  expect.soft(png.height, 'image height must be 100').toBe(100);
+  expect.soft(png.data[0], 'image R must be 0').toBe(0);
+  expect.soft(png.data[1], 'image G must be 0').toBe(0);
+  expect.soft(png.data[2], 'image B must be 0').toBe(0);
+  expect.soft(png.data[3], 'image A must be 0').toBe(0);
 });
 
 test('should fail to screenshot an element with infinite animation', async ({ runInlineTest }, testInfo) => {
@@ -75,7 +143,7 @@ test('should fail to screenshot an element with infinite animation', async ({ ru
     `
   });
   expect(result.exitCode).toBe(1);
-  expect(stripAnsi(result.output)).toContain(`Failed to generate screenshot in 2000ms because element keeps changing`);
+  expect(stripAnsi(result.output)).toContain(`Timeout 2000ms exceeded while generating screenshot because element kept changing`);
   expect(fs.existsSync(testInfo.outputPath('test-results', 'a-is-a-test', 'is-a-test-1-actual.png'))).toBe(true);
   expect(fs.existsSync(testInfo.outputPath('test-results', 'a-is-a-test', 'is-a-test-1-expected.png'))).toBe(true);
   expect(fs.existsSync(testInfo.outputPath('test-results', 'a-is-a-test', 'is-a-test-1-diff.png'))).toBe(true);
@@ -95,7 +163,7 @@ test('should fail to screenshot an element that keeps moving', async ({ runInlin
     `
   });
   expect(result.exitCode).toBe(1);
-  expect(stripAnsi(result.output)).toContain(`Timed out 2000ms`);
+  expect(stripAnsi(result.output)).toContain(`Timeout 2000ms exceeded`);
   expect(stripAnsi(result.output)).toContain(`element is not stable - waiting`);
   expect(fs.existsSync(testInfo.outputPath('test-results', 'a-is-a-test', 'is-a-test-1-actual.png'))).toBe(false);
   expect(fs.existsSync(testInfo.outputPath('test-results', 'a-is-a-test', 'is-a-test-1-expected.png'))).toBe(false);
@@ -152,6 +220,7 @@ test('should fail when screenshot is different size', async ({ runInlineTest }) 
     `
   });
   expect(result.exitCode).toBe(1);
+  expect(result.output).toContain('Timeout 2000ms exceeded');
   expect(result.output).toContain('Sizes differ; expected image 22px X 33px, but got 1280px X 720px.');
 });
 
@@ -167,6 +236,7 @@ test('should fail when screenshot is different pixels', async ({ runInlineTest }
     `
   });
   expect(result.exitCode).toBe(1);
+  expect(result.output).toContain('Timeout 2000ms exceeded');
   expect(result.output).toContain('Screenshot comparison failed');
   expect(result.output).toContain('Expected:');
   expect(result.output).toContain('Received:');
@@ -207,6 +277,7 @@ test('should fail on same snapshots with negate matcher', async ({ runInlineTest
   });
 
   expect(result.exitCode).toBe(1);
+  expect(result.output).toContain('Timeout 2000ms exceeded');
   expect(result.output).toContain('Screenshot comparison failed:');
   expect(result.output).toContain('Expected result should be different from the actual one.');
 });
@@ -487,6 +558,7 @@ test('should attach expected/actual and no diff when sizes are different', async
 
   expect(result.exitCode).toBe(1);
   const outputText = stripAnsi(result.output);
+  expect(outputText).toContain('Timeout 2000ms exceeded');
   expect(outputText).toContain('Sizes differ; expected image 2px X 2px, but got 1280px X 720px.');
   const attachments = outputText.split('\n').filter(l => l.startsWith('## ')).map(l => l.substring(3)).map(l => JSON.parse(l))[0];
   for (const attachment of attachments)
