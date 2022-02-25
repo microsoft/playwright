@@ -239,7 +239,7 @@ test('should fail when screenshot is different size', async ({ runInlineTest }) 
     `
   });
   expect(result.exitCode).toBe(1);
-  expect(result.output).toContain('Sizes differ; expected image 22px X 33px, but got 1280px X 720px.');
+  expect(result.output).toContain('Expected an image 22px by 33px, received 1280px by 720px.');
 });
 
 test('should fail when screenshot is different pixels', async ({ runInlineTest }) => {
@@ -583,7 +583,7 @@ test('should attach expected/actual and no diff when sizes are different', async
   expect(result.exitCode).toBe(1);
   const outputText = stripAnsi(result.output);
   expect(outputText).toContain('Timeout 2000ms exceeded');
-  expect(outputText).toContain('Sizes differ; expected image 2px X 2px, but got 1280px X 720px.');
+  expect(outputText).toContain('Expected an image 2px by 2px, received 1280px by 720px.');
   const attachments = outputText.split('\n').filter(l => l.startsWith('## ')).map(l => l.substring(3)).map(l => JSON.parse(l))[0];
   for (const attachment of attachments)
     attachment.path = attachment.path.replace(/\\/g, '/').replace(/.*test-results\//, '');

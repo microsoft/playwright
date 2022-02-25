@@ -51,7 +51,7 @@ function compareImages(mimeType: string, actualBuffer: Buffer | string, expected
   const expected = mimeType === 'image/png' ? PNG.sync.read(expectedBuffer) : jpeg.decode(expectedBuffer);
   if (expected.width !== actual.width || expected.height !== actual.height) {
     return {
-      errorMessage: `Sizes differ; expected image ${expected.width}px X ${expected.height}px, but got ${actual.width}px X ${actual.height}px. `
+      errorMessage: `Expected an image ${expected.width}px by ${expected.height}px, received ${actual.width}px by ${actual.height}px. `
     };
   }
   const diff = new PNG({ width: expected.width, height: expected.height });
