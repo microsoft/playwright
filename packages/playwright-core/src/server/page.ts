@@ -440,10 +440,10 @@ export class Page extends SdkObject {
 
   async expectScreenshot(metadata: CallMetadata, options: ExpectScreenshotOptions = {}): Promise<{ actual?: Buffer, previous?: Buffer, diff?: Buffer, errorMessage?: string, log?: string[] }> {
     const locator = options.locator;
-    const rafrafScreenshot = locator ? async (progress: Progress) => {
-      return await locator.frame.rafrafScreenshotElementWithProgress(progress, locator.selector, options.screenshotOptions || {});
-    } : async (progress: Progress) => {
-      await this.mainFrame().rafraf();
+    const rafrafScreenshot = locator ? async (progress: Progress, timeout: number) => {
+      return await locator.frame.rafrafTimeoutScreenshotElementWithProgress(progress, locator.selector, timeout, options.screenshotOptions || {});
+    } : async (progress: Progress, timeout: number) => {
+      await this.mainFrame().rafrafTimeout(timeout);
       return await this._screenshotter.screenshotPage(progress, options.screenshotOptions || {});
     };
 
@@ -461,25 +461,27 @@ export class Page extends SdkObject {
     return controller.run(async progress => {
       let actual: Buffer | undefined;
       let previous: Buffer | undefined;
+      let screenshotTimeout = 0;
       while (true) {
-        let result: ComparatorResult | undefined;
+        progress.throwIfAborted();
+        if (this.isClosed())
+          throw new Error('The page has closed');
+        let comparatorResult: ComparatorResult | undefined;
         if (isGeneratingNewScreenshot) {
           previous = actual;
-          actual = await rafrafScreenshot(progress).catch(e => undefined);
-          result = actual && previous ? comparator(actual, previous, options.comparatorOptions) : undefined;
+          actual = await rafrafScreenshot(progress, screenshotTimeout);
+          comparatorResult = actual && previous ? comparator(actual, previous, options.comparatorOptions) : undefined;
         } else {
-          actual = await rafrafScreenshot(progress).catch(e => undefined);
-          result = actual && options.expected ? comparator(actual, options.expected, options.comparatorOptions) : undefined;
+          actual = await rafrafScreenshot(progress, screenshotTimeout);
+          comparatorResult = actual ? comparator(actual, options.expected!, options.comparatorOptions) : undefined;
         }
-        if (result !== undefined && !!result === !!options.isNot)
+        screenshotTimeout = 150;
+        if (comparatorResult !== undefined && !!comparatorResult === !!options.isNot)
           break;
-        if (result)
-          intermediateResult = { errorMessage: result.errorMessage, diff: result.diff, actual, previous };
-        progress.throwIfAborted();
-        // Wait before trying one more screenshot.
-        await new Promise(x => setTimeout(x, 150));
-        progress.throwIfAborted();
+        if (comparatorResult)
+          intermediateResult = { errorMessage: comparatorResult.errorMessage, diff: comparatorResult.diff, actual, previous };
       }
+
       return isGeneratingNewScreenshot ? { actual } : {};
     }, this._timeoutSettings.timeout(options)).catch(e => {
       // Q: Why not throw upon isSessionClosedError(e) as in other places?

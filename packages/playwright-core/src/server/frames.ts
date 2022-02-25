@@ -1058,9 +1058,9 @@ export class Frame extends SdkObject {
     });
   }
 
-  async rafrafScreenshotElementWithProgress(progress: Progress, selector: string, options: ScreenshotOptions): Promise<Buffer> {
+  async rafrafTimeoutScreenshotElementWithProgress(progress: Progress, selector: string, timeout: number, options: ScreenshotOptions): Promise<Buffer|undefined> {
     return await this._retryWithProgressIfNotConnected(progress, selector, true /* strict */, async handle => {
-      await handle._frame.rafraf();
+      await handle._frame.rafrafTimeout(timeout);
       return await this._page._screenshotter.screenshotElement(progress, handle, options);
     });
   }
@@ -1379,13 +1379,19 @@ export class Frame extends SdkObject {
     return context.evaluate(() => document.title);
   }
 
-  async rafraf(): Promise<void> {
+  async rafrafTimeout(timeout: number): Promise<void> {
+    if (timeout === 0)
+      return;
     const context = await this._utilityContext();
-    return context.evaluate(() => new Promise(x => {
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => x());
-      });
-    }));
+    await Promise.all([
+      // wait for double raf
+      context.evaluate(() => new Promise(x => {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(x);
+        });
+      })),
+      new Promise(fulfill => setTimeout(fulfill, timeout)),
+    ]);
   }
 
   _onDetached() {
