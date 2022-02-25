@@ -15,6 +15,8 @@
  */
 
 import { Locator, Page } from 'playwright-core';
+import type { Page as PageEx } from 'playwright-core/lib/client/page';
+import type { Locator as LocatorEx } from 'playwright-core/lib/client/locator';
 import type { Expect } from '../types';
 import { currentTestInfo } from '../globals';
 import { mimeTypeToComparator, ImageComparatorOptions, Comparator } from 'playwright-core/lib/utils/comparators';
@@ -35,10 +37,6 @@ type SyncExpectationResult = {
 
 type NameOrSegments = string | string[];
 const SNAPSHOT_COUNTER = Symbol('noname-snapshot-counter');
-
-interface PageEx extends Page {
-  _expectScreenshot(options: any): Promise<{ actual?: Buffer, previous?: Buffer, diff?: Buffer, errorMessage?: string, log?: string[] }>;
-}
 
 class SnapshotHelper<T extends ImageComparatorOptions> {
   readonly testInfo: TestInfoImpl;
@@ -258,7 +256,15 @@ export async function toHaveScreenshot(
   if (!testInfo)
     throw new Error(`toHaveScreenshot() must be called during the test`);
   const helper = new SnapshotHelper(testInfo, 'png', nameOrOptions, optOptions);
-  const [page, locator] = pageOrLocator.constructor.name === 'Page' ? [(pageOrLocator as PageEx), undefined] : [(pageOrLocator as Locator).page() as PageEx, pageOrLocator as Locator];
+  const [page, locator] = pageOrLocator.constructor.name === 'Page' ? [(pageOrLocator as PageEx), undefined] : [(pageOrLocator as Locator).page() as PageEx, pageOrLocator as LocatorEx];
+  const screenshotOptions = {
+    ...helper.allOptions,
+    mask: (helper.allOptions.mask || []) as LocatorEx[],
+    name: undefined,
+    threshold: undefined,
+    pixelCount: undefined,
+    pixelRatio: undefined,
+  };
 
   const hasSnapshot = fs.existsSync(helper.snapshotPath);
   if (this.isNot) {
@@ -273,7 +279,7 @@ export async function toHaveScreenshot(
       isNot: true,
       locator,
       comparatorOptions: helper.comparatorOptions,
-      screenshotOptions: helper.allOptions,
+      screenshotOptions,
       timeout: currentExpectTimeout(helper.allOptions),
     })).errorMessage;
     return isDifferent ? helper.handleDifferentNegated() : helper.handleMatchingNegated();
@@ -291,7 +297,7 @@ export async function toHaveScreenshot(
       isNot: false,
       locator,
       comparatorOptions: helper.comparatorOptions,
-      screenshotOptions: helper.allOptions,
+      screenshotOptions,
       timeout,
     });
     // We tried re-generating new snapshot but failed.
@@ -327,7 +333,7 @@ export async function toHaveScreenshot(
     isNot: false,
     locator,
     comparatorOptions: helper.comparatorOptions,
-    screenshotOptions: helper.allOptions,
+    screenshotOptions,
     timeout: currentExpectTimeout(helper.allOptions),
   });
 
