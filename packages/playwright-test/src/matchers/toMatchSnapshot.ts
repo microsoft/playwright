@@ -18,6 +18,7 @@ import { Locator, Page } from 'playwright-core';
 import type { Expect } from '../types';
 import { currentTestInfo } from '../globals';
 import { mimeTypeToComparator, ImageComparatorOptions, Comparator } from 'playwright-core/lib/utils/comparators';
+import type { PageScreenshotOptions } from 'playwright-core/types/types';
 import { addSuffixToFilePath, serializeError, sanitizeForFilePath, trimLongString, callLogText, currentExpectTimeout } from '../util';
 import { UpdateSnapshots } from '../types';
 import colors from 'colors/safe';
@@ -30,10 +31,6 @@ import { TestInfoImpl } from '../testInfo';
 type SyncExpectationResult = {
   pass: boolean;
   message: () => string;
-};
-
-type HaveScreenshotOptions = ImageComparatorOptions & {
-  timeout?: number,
 };
 
 type NameOrSegments = string | string[];
@@ -51,7 +48,8 @@ class SnapshotHelper<T extends ImageComparatorOptions> {
   readonly diffPath: string;
   readonly mimeType: string;
   readonly updateSnapshots: UpdateSnapshots;
-  readonly comparatorOptions: T;
+  readonly comparatorOptions: ImageComparatorOptions;
+  readonly allOptions: T;
 
   constructor(
     testInfo: TestInfoImpl,
@@ -112,7 +110,12 @@ class SnapshotHelper<T extends ImageComparatorOptions> {
     this.diffPath = diffPath;
     this.snapshotPath = snapshotPath;
     this.updateSnapshots = updateSnapshots;
-    this.comparatorOptions = options;
+    this.allOptions = options;
+    this.comparatorOptions = {
+      pixelCount: options.pixelCount,
+      pixelRatio: options.pixelRatio,
+      threshold: options.threshold,
+    };
   }
 
   handleMissingNegated() {
@@ -241,6 +244,8 @@ export function toMatchSnapshot(
   return helper.handleDifferent(received, expected, result.diff, result.errorMessage, undefined);
 }
 
+type HaveScreenshotOptions = ImageComparatorOptions & Omit<PageScreenshotOptions, 'type' | 'quality' | 'path'>;
+
 export async function toHaveScreenshot(
   this: ReturnType<Expect['getState']>,
   pageOrLocator: Page | Locator,
@@ -258,26 +263,28 @@ export async function toHaveScreenshot(
       return helper.handleMissingNegated();
 
     // Having `errorMessage` means we timed out while waiting
-    // for screenshots not to match, so screnshots
+    // for screenshots not to match, so screenshots
     // are actually the same in the end.
     const isDifferent = !(await page._expectScreenshot({
       expected: await fs.promises.readFile(helper.snapshotPath),
       isNot: true,
       locator,
       comparatorOptions: helper.comparatorOptions,
-      timeout: currentExpectTimeout(helper.comparatorOptions),
+      screenshotOptions: helper.allOptions,
+      timeout: currentExpectTimeout(helper.allOptions),
     })).errorMessage;
     return isDifferent ? helper.handleDifferentNegated() : helper.handleMatchingNegated();
   }
 
   if (helper.updateSnapshots === 'all' || !fs.existsSync(helper.snapshotPath)) {
     // Regenerate a new screenshot by waiting until two screenshots are the same.
-    const timeout = currentExpectTimeout(helper.comparatorOptions);
+    const timeout = currentExpectTimeout(helper.allOptions);
     const { actual, previous, diff, errorMessage, log } = await page._expectScreenshot({
       expected: undefined,
       isNot: false,
       locator,
       comparatorOptions: helper.comparatorOptions,
+      screenshotOptions: helper.allOptions,
       timeout,
     });
     // We tried re-generating new snapshot but failed.
@@ -313,7 +320,8 @@ export async function toHaveScreenshot(
     isNot: false,
     locator,
     comparatorOptions: helper.comparatorOptions,
-    timeout: currentExpectTimeout(helper.comparatorOptions),
+    screenshotOptions: helper.allOptions,
+    timeout: currentExpectTimeout(helper.allOptions),
   });
 
   return errorMessage ?
