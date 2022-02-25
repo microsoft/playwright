@@ -1383,7 +1383,7 @@ export class Frame extends SdkObject {
     const context = await this._utilityContext();
     return context.evaluate(() => new Promise(x => {
       requestAnimationFrame(() => {
-        requestAnimationFrame(x);
+        requestAnimationFrame(() => x());
       });
     }));
   }
