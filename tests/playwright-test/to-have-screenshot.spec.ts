@@ -431,12 +431,18 @@ test('should match multiple snapshots', async ({ runInlineTest }) => {
     'a.spec.js': `
       const { test } = require('./helper');
       test('is a test', async ({ page }) => {
-        await page.evaluate(() => document.documentElement.style.setProperty('background', '#f00'));
-        await expect(page).toHaveScreenshot('red.png');
-        await page.evaluate(() => document.documentElement.style.setProperty('background', '#0f0'));
-        await expect(page).toHaveScreenshot('green.png');
-        await page.evaluate(() => document.documentElement.style.setProperty('background', '#00f'));
-        await expect(page).toHaveScreenshot('blue.png');
+        await Promise.all([
+          page.evaluate(() => document.documentElement.style.setProperty('background', '#f00')),
+          expect(page).toHaveScreenshot('red.png'),
+        ]);
+        await Promise.all([
+          page.evaluate(() => document.documentElement.style.setProperty('background', '#0f0')),
+          expect(page).toHaveScreenshot('green.png'),
+        ]);
+        await Promise.all([
+          page.evaluate(() => document.documentElement.style.setProperty('background', '#00f')),
+          expect(page).toHaveScreenshot('blue.png'),
+        ]);
       });
     `
   });
