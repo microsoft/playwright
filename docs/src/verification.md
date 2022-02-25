@@ -3,7 +3,352 @@ id: verification
 title: "Verification"
 ---
 
+:::note
+Playwright has [Web-First Assertions](./api/class-playwrightassertions) which automatically retry until the expected condition is met. This helps to reduce flakiness and readability of tests.
+:::
+
 <!-- TOC -->
+
+## Text content
+
+```js
+const content = await page.locator('nav:first-child').textContent();
+expect(content).toBe('home');
+```
+
+```java
+String content = page.locator("nav:first-child").textContent();
+assertEquals("home", content);
+```
+
+```python async
+content = await page.locator("nav:first-child").text_content()
+assert content == "home"
+```
+
+```python sync
+content = page.locator("nav:first-child").text_content()
+assert content == "home"
+```
+
+```csharp
+var content = await page.Locator("nav:first-child").TextContentAsync();
+Assert.AreEqual("home", content);
+```
+
+### API reference
+- [`method: Page.textContent`]
+- [`method: ElementHandle.textContent`]
+
+## Inner text
+
+```js
+const text = await page.locator('.selected').innerText();
+expect(text).toBe('value');
+```
+
+```java
+String text = page.locator(".selected").innerText();
+assertEquals("value", text);
+```
+
+```python async
+text = await page.locator(".selected").inner_text()
+assert text == "value"
+```
+
+```python sync
+text = page.locator(".selected").inner_text()
+assert text == "value"
+```
+
+```csharp
+var content = await page.Locator(".selected").InnerTextAsync();
+Assert.AreEqual("value", content);
+```
+
+### API reference
+- [`method: Page.innerText`]
+- [`method: ElementHandle.innerText`]
+
+## Attribute value
+
+```js
+const alt = await page.locator('input').getAttribute('alt');
+expect(alt).toBe('Text');
+```
+
+```java
+String alt = page.locator("input").getAttribute("alt");
+assertEquals("Text", alt);
+```
+
+```python async
+alt = await page.locator("input").get_attribute("alt")
+assert alt == "Text"
+```
+
+```python sync
+alt = page.locator("input").get_attribute("alt")
+assert alt == "Text"
+```
+
+```csharp
+var value = await page.Locator("input").GetAttributeAsync("alt");
+Assert.AreEqual("Text", value);
+```
+
+## Checkbox state
+
+```js
+const checked = await page.locator('input').isChecked();
+expect(checked).toBeTruthy();
+```
+
+```java
+boolean checked = page.locator("input").isChecked();
+assertTrue(checked);
+```
+
+```python async
+checked = await page.locator("input").is_checked()
+assert checked
+```
+
+```python sync
+checked = page.locator("input").is_checked()
+assert checked
+```
+
+```csharp
+var checked = await page.Locator("input").IsCheckedAsync();
+Assert.True(checked);
+```
+
+### API reference
+- [`method: Page.isChecked`]
+- [`method: ElementHandle.isChecked`]
+
+## JS expression
+
+```js
+const content = await page.locator('nav:first-child').textContent();
+expect(content).toBe('home');
+```
+
+```java
+Object content = page.locator("nav:first-child").textContent();
+assertEquals("home", content);
+```
+
+```python async
+content = await page.locator("nav:first-child").text_content()
+assert content == "home"
+```
+
+```python sync
+content = page.locator("nav:first-child").text_content()
+assert content == "home"
+```
+
+```csharp
+var content = await page.locator("nav:first-child").TextContentAsync();
+Assert.AreEqual("home", content);
+```
+
+### API reference
+- [`method: Page.evalOnSelector`]
+- [`method: JSHandle.evaluate`]
+
+## Inner HTML
+
+```js
+const html = await page.locator('div.result').innerHTML();
+expect(html).toBe('<p>Result</p>');
+```
+
+```java
+String html = page.locator("div.result").innerHTML();
+assertEquals("<p>Result</p>", html);
+```
+
+```python async
+html = await page.locator("div.result").inner_html()
+assert html == "<p>Result</p>"
+```
+
+```python sync
+html = page.locator("div.result").inner_html()
+assert html == "<p>Result</p>"
+```
+
+```csharp
+var html = await page.Locator("div.result").InnerHTMLAsync();
+Assert.AreEqual("<p>Result</p>", html);
+```
+
+### API reference
+- [`method: Page.innerHTML`]
+- [`method: ElementHandle.innerHTML`]
+
+## Visibility
+
+```js
+const visible = await page.locator('input').isVisible();
+expect(visible).toBeTruthy();
+```
+
+```java
+boolean visible = page.locator("input").isVisible();
+assertTrue(visible);
+```
+
+```python async
+visible = await page.locator("input").is_visible()
+assert visible
+```
+
+```python sync
+visible = page.locator("input").is_visible()
+assert visible
+```
+
+```csharp
+var visibility = await page.Locator("input").IsVisibleAsync();
+Assert.True(visibility);
+```
+
+### API reference
+- [`method: Page.isVisible`]
+- [`method: ElementHandle.isVisible`]
+
+## Enabled state
+
+```js
+const enabled = await page.locator('input').isEnabled();
+expect(enabled).toBeTruthy();
+```
+
+```java
+boolean enabled = page.locator("input").isEnabled();
+assertTrue(enabled);
+```
+
+```python async
+enabled = await page.locator("input").is_enabled()
+assert enabled
+```
+
+```python sync
+enabled = page.locator("input").is_enabled()
+assert enabled
+```
+
+```csharp
+var enabled = await page.Locator("input").IsEnabledAsync();
+Assert.True(enabled);
+```
+
+### API reference
+- [`method: Page.isEnabled`]
+- [`method: ElementHandle.isEnabled`]
+
+## Custom assertions
+
+With Playwright, you can also write custom JavaScript to run in the context of
+the browser. This is useful in situations where you want to assert for values
+that are not covered by the convenience APIs above.
+
+```js
+// Assert local storage value
+const userId = page.evaluate(() => window.localStorage.getItem('userId'));
+expect(userId).toBeTruthy();
+
+// Assert value for input element
+const value = await page.locator('#search').inputValue();
+expect(value === 'query').toBeTruthy();
+
+// Assert computed style
+const fontSize = await page.locator('div').evaluate(el => window.getComputedStyle(el).fontSize);
+expect(fontSize === '16px').toBeTruthy();
+
+// Assert list length
+const length = await page.locator('li.selected').count();
+expect(length === 3).toBeTruthy();
+```
+
+```java
+// Assert local storage value
+Object userId = page.evaluate("() => window.localStorage.getItem('userId')");
+assertNotNull(userId);
+
+// Assert value for input element
+Object value = page.locator("#search").inputValue();
+assertEquals("query", value);
+
+// Assert computed style
+Object fontSize = page.locator("div").evaluate("el => window.getComputedStyle(el).fontSize");
+assertEquals("16px", fontSize);
+
+// Assert list length
+Object length = page.locator("li.selected").count();
+assertEquals(3, length);
+```
+
+```python async
+# Assert local storage value
+user_id = page.evaluate("() => window.localStorage.getItem('user_id')")
+assert user_id
+
+# Assert value for input element
+value = await page.locator('#search').input_value()
+assert value == 'query'
+
+# Assert computed style
+font_size = await page.locator('div').evaluate('el => window.getComputedStyle(el).fontSize')
+assert font_size == '16px'
+
+# Assert list length
+length = await page.locator('li.selected').count()
+assert length == 3
+```
+
+```python sync
+# Assert local storage value
+user_id = page.evaluate("() => window.localStorage.getItem('user_id')")
+assert user_id
+
+# Assert value for input element
+value = page.locator('#search').input_value()
+assert value == 'query'
+
+# Assert computed style
+font_size = page.locator('div').evaluate('el => window.getComputedStyle(el).fontSize')
+assert font_size == '16px'
+
+# Assert list length
+length = page.locator('li.selected').count()
+assert length == 3
+```
+
+```csharp
+// Assert local storage value
+var userId = await page.EvaluateAsync<string>("() => window.localStorage.getItem('userId')");
+Assert.NotNull(userId);
+
+// Assert value for input element
+var value = await page.Locator("#search").InputValueAsync();
+Assert.AreEqual("query", value);
+
+// Assert computed style
+var fontSize = await page.Locator("div").EvalOnSelectorAsync<string>("el => window.getComputedStyle(el).fontSize");
+Assert.AreEqual("16px", fontSize);
+
+// Assert list length
+var length = await page.Locator("li.selected").CountAsync();
+Assert.AreEqual(3, length);
+```
+
 
 ## Console logs
 
