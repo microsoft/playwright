@@ -95,7 +95,7 @@ test('should fail to screenshot an element that keeps moving', async ({ runInlin
     `
   });
   expect(result.exitCode).toBe(1);
-  expect(stripAnsi(result.output)).toContain(`Timeout 2000ms exceeded`);
+  expect(stripAnsi(result.output)).toContain(`Timed out 2000ms`);
   expect(stripAnsi(result.output)).toContain(`element is not stable - waiting`);
   expect(fs.existsSync(testInfo.outputPath('test-results', 'a-is-a-test', 'is-a-test-1-actual.png'))).toBe(false);
   expect(fs.existsSync(testInfo.outputPath('test-results', 'a-is-a-test', 'is-a-test-1-expected.png'))).toBe(false);
