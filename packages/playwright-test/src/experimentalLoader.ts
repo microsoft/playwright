@@ -15,28 +15,29 @@
  */
 
 import fs from 'fs';
+import path from 'path';
+import url from 'url';
 import { transformHook } from './transform';
 
 async function resolve(specifier: string, context: { parentURL: string }, defaultResolve: any) {
   if (specifier.endsWith('.js') || specifier.endsWith('.ts') || specifier.endsWith('.mjs'))
-    return defaultResolve(specifier, context, defaultResolve);
-  let url = new URL(specifier, context.parentURL).toString();
-  url = url.substring('file://'.length);
+    return defaultResolve(!specifier.startsWith('file://') && path.isAbsolute(specifier) ? url.pathToFileURL(specifier) : specifier, context, defaultResolve);
+  const fileName = url.fileURLToPath(new URL(specifier, context.parentURL).toString());
   for (const extension of ['.ts', '.js', '.tsx', '.jsx']) {
-    if (fs.existsSync(url + extension))
+    if (fs.existsSync(fileName + extension))
       return defaultResolve(specifier + extension, context, defaultResolve);
   }
   return defaultResolve(specifier, context, defaultResolve);
 }
 
-async function load(url: string, context: any, defaultLoad: any) {
-  if (url.endsWith('.ts') || url.endsWith('.tsx')) {
-    const filename = url.substring('file://'.length);
+async function load(givenURL: string, context: any, defaultLoad: any) {
+  if (givenURL.endsWith('.ts') || givenURL.endsWith('.tsx')) {
+    const filename = url.fileURLToPath(givenURL);
     const code = fs.readFileSync(filename, 'utf-8');
     const source = transformHook(code, filename, true);
     return { format: 'module', source };
   }
-  return defaultLoad(url, context, defaultLoad);
+  return defaultLoad(givenURL, context, defaultLoad);
 }
 
 module.exports = { resolve, load };

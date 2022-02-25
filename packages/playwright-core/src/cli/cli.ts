@@ -16,9 +16,10 @@
  * limitations under the License.
  */
 import { fork } from 'child_process';
+import url from 'url';
 
 if (process.env.PW_EXPERIMENTAL_TS_ESM) {
-  const NODE_OPTIONS = (process.env.NODE_OPTIONS || '') + ` --experimental-loader=${require.resolve('@playwright/test/lib/experimentalLoader')}`;
+  const NODE_OPTIONS = (process.env.NODE_OPTIONS || '') + ` --experimental-loader=${url.pathToFileURL(require.resolve('@playwright/test/lib/experimentalLoader'))}`;
   const innerProcess = fork(require.resolve('./innerCli'), process.argv.slice(2), {
     env: { ...process.env, NODE_OPTIONS }
   });
