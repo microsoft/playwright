@@ -581,3 +581,21 @@ playwright install-deps chromium
 ```bash csharp
 pwsh bin\Debug\netX\playwright.ps1 install-deps chromium
 ```
+
+It's also possible to combine `install-deps` with `install` and install by that the browsers and OS dependencies with a single command. This would do both for Chromium, but you can also leave it out.
+
+```bash js
+npx playwright install --with-deps chromium
+```
+
+```bash java
+mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install --with-deps chromium"
+```
+
+```bash python
+playwright install --with-deps chromium
+```
+
+```bash csharp
+pwsh bin\Debug\netX\playwright.ps1 install --with-deps chromium
+```
