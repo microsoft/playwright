@@ -23,16 +23,15 @@ import * as sourceMapSupport from 'source-map-support';
 import * as url from 'url';
 import type { Location } from './types';
 import { tsConfigLoader, TsConfigLoaderResult } from './third_party/tsconfig-loader';
+import Module from 'module';
 
-const version = 6;
+const version = 7;
 const cacheDir = process.env.PWTEST_CACHE_DIR || path.join(os.tmpdir(), 'playwright-transform-cache');
 const sourceMaps: Map<string, string> = new Map();
 
 type ParsedTsConfigData = {
-  absoluteBaseUrl: string,
-  singlePath: { [key: string]: string },
-  hash: string,
-  alias: { [key: string]: string | ((s: string[]) => string) },
+  absoluteBaseUrl: string;
+  paths: { key: string, values: string[] }[];
 };
 const cachedTSConfigs = new Map<string, ParsedTsConfigData | undefined>();
 
@@ -55,9 +54,8 @@ sourceMapSupport.install({
   }
 });
 
-function calculateCachePath(tsconfigData: ParsedTsConfigData | undefined, content: string, filePath: string): string {
+function calculateCachePath(content: string, filePath: string): string {
   const hash = crypto.createHash('sha1')
-      .update(tsconfigData?.hash || '')
       .update(process.env.PW_TEST_SOURCE_TRANSFORM || '')
       .update(process.env.PW_EXPERIMENTAL_TS_ESM ? 'esm' : 'no_esm')
       .update(content)
@@ -69,43 +67,12 @@ function calculateCachePath(tsconfigData: ParsedTsConfigData | undefined, conten
 }
 
 function validateTsConfig(tsconfig: TsConfigLoaderResult): ParsedTsConfigData | undefined {
-  if (!tsconfig.tsConfigPath || !tsconfig.paths || !tsconfig.baseUrl)
+  if (!tsconfig.tsConfigPath || !tsconfig.baseUrl)
     return;
-
-  const paths = tsconfig.paths;
-  // Path that only contains "*", ".", "/" and "\" is too ambiguous.
-  const ambiguousPath = Object.keys(paths).find(key => key.match(/^[*./\\]+$/));
-  if (ambiguousPath)
-    return;
-  const multiplePath = Object.keys(paths).find(key => paths[key].length > 1);
-  if (multiplePath)
-    return;
-  // Only leave a single path mapping.
-  const singlePath = Object.fromEntries(Object.entries(paths).map(([key, values]) => ([key, values[0]])));
   // Make 'baseUrl' absolute, because it is relative to the tsconfig.json, not to cwd.
   const absoluteBaseUrl = path.resolve(path.dirname(tsconfig.tsConfigPath), tsconfig.baseUrl);
-  const hash = JSON.stringify({ absoluteBaseUrl, singlePath });
-
-  const alias: ParsedTsConfigData['alias'] = {};
-  for (const [key, value] of Object.entries(singlePath)) {
-    const regexKey = '^' + key.replace('*', '.*');
-    alias[regexKey] = ([name]) => {
-      let relative: string;
-      if (key.endsWith('/*'))
-        relative = value.substring(0, value.length - 1) + name.substring(key.length - 1);
-      else
-        relative = value;
-      relative = relative.replace(/\//g, path.sep);
-      return path.resolve(absoluteBaseUrl, relative);
-    };
-  }
-
-  return {
-    absoluteBaseUrl,
-    singlePath,
-    hash,
-    alias,
-  };
+  const paths = tsconfig.paths || { '*': ['*'] };
+  return { absoluteBaseUrl, paths: Object.entries(paths).map(([key, values]) => ({ key, values })) };
 }
 
 function loadAndValidateTsconfigForFile(file: string): ParsedTsConfigData | undefined {
@@ -123,6 +90,35 @@ function loadAndValidateTsconfigForFile(file: string): ParsedTsConfigData | unde
 const pathSeparator = process.platform === 'win32' ? ';' : ':';
 const scriptPreprocessor = process.env.PW_TEST_SOURCE_TRANSFORM ?
   require(process.env.PW_TEST_SOURCE_TRANSFORM) : undefined;
+const builtins = new Set(Module.builtinModules);
+
+export function resolveHook(filename: string, specifier: string): string | undefined {
+  if (builtins.has(specifier))
+    return;
+  const isTypeScript = filename.endsWith('.ts') || filename.endsWith('.tsx');
+  if (!isTypeScript)
+    return;
+  const tsconfig = loadAndValidateTsconfigForFile(filename);
+  if (!tsconfig)
+    return;
+  for (const { key, values } of tsconfig.paths) {
+    const keyHasStar = key[key.length - 1] === '*';
+    const matches = specifier.startsWith(keyHasStar ? key.substring(0, key.length - 1) : key);
+    if (!matches)
+      continue;
+    for (const value of values) {
+      const valueHasStar = value[value.length - 1] === '*';
+      let candidate = valueHasStar ? value.substring(0, value.length - 1) : value;
+      if (valueHasStar && keyHasStar)
+        candidate += specifier.substring(key.length - 1);
+      candidate = path.resolve(tsconfig.absoluteBaseUrl, candidate.replace(/\//g, path.sep));
+      for (const ext of ['', '.js', '.ts', '.mjs', '.cjs', '.jsx', '.tsx']) {
+        if (fs.existsSync(candidate + ext))
+          return candidate;
+      }
+    }
+  }
+}
 
 export function transformHook(code: string, filename: string, isModule = false): string {
   if (isComponentImport(filename))
@@ -138,8 +134,7 @@ export function transformHook(code: string, filename: string, isModule = false):
   if (!isTypeScript && !hasPreprocessor)
     return code;
 
-  const tsconfigData = isTypeScript ? loadAndValidateTsconfigForFile(filename) : undefined;
-  const cachePath = calculateCachePath(tsconfigData, code, filename);
+  const cachePath = calculateCachePath(code, filename);
   const codePath = cachePath + '.js';
   const sourceMapPath = cachePath + '.map';
   sourceMaps.set(filename, sourceMapPath);
@@ -165,16 +160,6 @@ export function transformHook(code: string, filename: string, isModule = false):
         [require.resolve('@babel/plugin-syntax-object-rest-spread')],
         [require.resolve('@babel/plugin-proposal-export-namespace-from')]
     );
-
-    if (tsconfigData) {
-      plugins.push([require.resolve('babel-plugin-module-resolver'), {
-        root: ['./'],
-        alias: tsconfigData.alias,
-        // Silences warning 'Could not resovle ...' that we trigger because we resolve
-        // into 'foo/bar', and not 'foo/bar.ts'.
-        loglevel: 'silent',
-      }]);
-    }
 
     if (!isModule) {
       plugins.push([require.resolve('@babel/plugin-transform-modules-commonjs')]);
@@ -217,12 +202,30 @@ export function transformHook(code: string, filename: string, isModule = false):
 }
 
 export function installTransform(): () => void {
-  const exts = ['.ts', '.tsx'];
+  let reverted = false;
 
+  const originalResolveFilename = (Module as any)._resolveFilename;
+  function resolveFilename(this: any, specifier: string, parent: Module, ...rest: any[]) {
+    if (!reverted && parent) {
+      const resolved = resolveHook(parent.filename, specifier);
+      if (resolved !== undefined)
+        specifier = resolved;
+    }
+    return originalResolveFilename.call(this, specifier, parent, ...rest);
+  }
+  (Module as any)._resolveFilename = resolveFilename;
+
+  const exts = ['.ts', '.tsx'];
   // When script preprocessor is engaged, we transpile JS as well.
   if (scriptPreprocessor)
     exts.push('.js', '.mjs');
-  return pirates.addHook((code: string, filename: string) => transformHook(code, filename), { exts });
+  const revertPirates = pirates.addHook((code: string, filename: string) => transformHook(code, filename), { exts });
+
+  return () => {
+    reverted = true;
+    (Module as any)._resolveFilename = originalResolveFilename;
+    revertPirates();
+  };
 }
 
 export function wrapFunctionWithLocation<A extends any[], R>(func: (location: Location, ...args: A) => R): (...args: A) => R {
