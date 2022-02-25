@@ -295,7 +295,6 @@ test('should fail on same snapshots with negate matcher', async ({ runInlineTest
   });
 
   expect(result.exitCode).toBe(1);
-  expect(result.output).toContain('Timeout 2000ms exceeded');
   expect(result.output).toContain('Screenshot comparison failed:');
   expect(result.output).toContain('Expected result should be different from the actual one.');
 });
@@ -582,7 +581,6 @@ test('should attach expected/actual and no diff when sizes are different', async
 
   expect(result.exitCode).toBe(1);
   const outputText = stripAnsi(result.output);
-  expect(outputText).toContain('Timeout 2000ms exceeded');
   expect(outputText).toContain('Expected an image 2px by 2px, received 1280px by 720px.');
   const attachments = outputText.split('\n').filter(l => l.startsWith('## ')).map(l => l.substring(3)).map(l => JSON.parse(l))[0];
   for (const attachment of attachments)
