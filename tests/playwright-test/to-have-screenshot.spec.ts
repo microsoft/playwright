@@ -50,7 +50,7 @@ test('should fail to screenshot a page with infinite animation', async ({ runInl
       const { test } = require('./helper');
       test('is a test', async ({ page }) => {
         await page.goto('${infiniteAnimationURL}');
-        await expect(page).toHaveScreenshot();
+        await expect(page).toHaveScreenshot({ timeout: 2000 });
       });
     `
   });
@@ -172,7 +172,6 @@ test('should fail when screenshot is different pixels', async ({ runInlineTest }
   expect(result.output).toContain('Received:');
 });
 
-// TODO: should expectScreenshot also accept negation to speed-up comparison?
 test('doesn\'t create comparison artifacts in an output folder for passed negated snapshot matcher', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     ...files,
@@ -202,7 +201,7 @@ test('should fail on same snapshots with negate matcher', async ({ runInlineTest
     'a.spec.js': `
       const { test } = require('./helper');
       test('is a test', async ({ page }) => {
-        await expect(page).not.toHaveScreenshot('snapshot.png');
+        await expect(page).not.toHaveScreenshot('snapshot.png', { timeout: 2000 });
       });
     `
   });
@@ -352,36 +351,6 @@ test('should match multiple snapshots', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
 });
 
-test('should match snapshots from multiple projects', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    ...files,
-    'playwright.config.ts': `
-      import * as path from 'path';
-      module.exports = { projects: [
-        { testDir: path.join(__dirname, 'p1') },
-        { testDir: path.join(__dirname, 'p2') },
-      ]};
-    `,
-    'p1/a.spec.js': `
-      const { test } = require('../helper');
-      test('is a test', async ({ page }) => {
-        await page.evaluate(() => document.documentElement.style.setProperty('background', '#f00'));
-        await expect(page).toHaveScreenshot('red.png');
-      });
-    `,
-    'p1/a.spec.js-snapshots/red.png': redImage,
-    'p2/a.spec.js': `
-      const { test } = require('../helper');
-      test('is a test', async ({ page }) => {
-        await page.evaluate(() => document.documentElement.style.setProperty('background', '#0f0'));
-        await expect(page).toHaveScreenshot('green.png');
-      });
-    `,
-    'p2/a.spec.js-snapshots/green.png': greenImage,
-  });
-  expect(result.exitCode).toBe(0);
-});
-
 test('should use provided name', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     ...files,
@@ -408,24 +377,6 @@ test('should use provided name via options', async ({ runInlineTest }) => {
     `
   });
   expect(result.exitCode).toBe(0);
-});
-
-test('should throw for invalid pixelCount values', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    ...files,
-    'a.spec.js-snapshots/white.png': whiteImage,
-    'a.spec.js': `
-      const { test } = require('./helper');
-      test('is a test', async ({ page }) => {
-        await expect(page).toHaveScreenshot({
-          name: 'white.png',
-          pixelCount: -1,
-        });
-      });
-    `
-  });
-  expect(result.exitCode).toBe(1);
-  expect(result.output).toContain('`pixelCount` option value must be non-negative integer');
 });
 
 test('should throw for invalid pixelRatio values', async ({ runInlineTest }) => {
@@ -592,308 +543,6 @@ test('should satisfy both pixelRatio and pixelCount', async ({ runInlineTest }) 
       });
     `
   })).exitCode, 'make sure it passes when actualBadPixels < pixelRatio && actualBadPixels < pixelCount').toBe(0);
-});
-
-test('should yield expected, actual and diff', async ({ runInlineTest }, testInfo) => {
-  const result = await runInlineTest({
-    ...files,
-    'a.spec.js-snapshots/snapshot.png': redImage,
-    'a.spec.js': `
-      const { test } = require('./helper');
-      test('is a test', async ({ page }) => {
-        await expect(page).toHaveScreenshot('snapshot.png');
-      });
-    `
-  });
-
-  const outputText = stripAnsi(result.output);
-  expect(result.exitCode).toBe(1);
-  expect(outputText).toContain('Snapshot comparison failed:');
-  const expectedSnapshotArtifactPath = testInfo.outputPath('test-results', 'a-is-a-test', 'snapshot-expected.png');
-  const actualSnapshotArtifactPath = testInfo.outputPath('test-results', 'a-is-a-test', 'snapshot-actual.png');
-  const diffSnapshotArtifactPath = testInfo.outputPath('test-results', 'a-is-a-test', 'snapshot-diff.png');
-  expect(outputText).toContain(`Expected: ${expectedSnapshotArtifactPath}`);
-  expect(outputText).toContain(`Received: ${actualSnapshotArtifactPath}`);
-  expect(outputText).toContain(`Diff: ${diffSnapshotArtifactPath}`);
-  expect(fs.existsSync(expectedSnapshotArtifactPath)).toBe(true);
-  expect(fs.existsSync(actualSnapshotArtifactPath)).toBe(true);
-  expect(fs.existsSync(diffSnapshotArtifactPath)).toBe(true);
-});
-
-test('should respect threshold', async ({ runInlineTest }) => {
-  const expected = fs.readFileSync(path.join(__dirname, 'assets/screenshot-canvas-expected.png'));
-  const actualURL = pathToFileURL(path.join(__dirname, 'assets/screenshot-canvas-actual.png'));
-  const result = await runInlineTest({
-    ...files,
-    'a.spec.js-snapshots/snapshot.png': expected,
-    'a.spec.js-snapshots/snapshot2.png': expected,
-    'a.spec.js': `
-      const { test } = require('./helper');
-      test('is a test', async ({ page }) => {
-        await page.goto('${actualURL}');
-        await expect(page.locator('img')).toHaveScreenshot('snapshot.png', { threshold: 0.3 });
-        await expect(page.locator('img')).not.toHaveScreenshot('snapshot.png', { threshold: 0.2 });
-        await expect(page.locator('img')).toHaveScreenshot('snapshot2.png', { threshold: 0.3 });
-        await expect(page.locator('img')).toHaveScreenshot({ name: 'snapshot2.png', threshold: 0.3 });
-      });
-    `
-  });
-  expect(result.exitCode).toBe(0);
-});
-
-test('should respect project threshold', async ({ runInlineTest }) => {
-  const expected = fs.readFileSync(path.join(__dirname, 'assets/screenshot-canvas-expected.png'));
-  const actualURL = pathToFileURL(path.join(__dirname, 'assets/screenshot-canvas-actual.png'));
-  const result = await runInlineTest({
-    ...files,
-    'playwright.config.ts': `
-      module.exports = { projects: [
-        { expect: { toMatchSnapshot: { threshold: 0.2 } } },
-      ]};
-    `,
-    'a.spec.js-snapshots/snapshot.png': expected,
-    'a.spec.js-snapshots/snapshot2.png': expected,
-    'a.spec.js': `
-      const { test } = require('./helper');
-      test('is a test', async ({ page }) => {
-        await page.goto('${actualURL}');
-        await expect(page.locator('img')).toHaveScreenshot('snapshot.png', { threshold: 0.3 });
-        await expect(page.locator('img')).not.toHaveScreenshot('snapshot.png');
-        await expect(page.locator('img')).toHaveScreenshot('snapshot2.png', { threshold: 0.3 });
-        await expect(page.locator('img')).toHaveScreenshot({ name: 'snapshot2.png', threshold: 0.3 });
-      });
-    `
-  });
-  expect(result.exitCode).toBe(0);
-});
-
-test('should sanitize snapshot name when passed as string', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    ...files,
-    'a.spec.js-snapshots/-snapshot-.png': whiteImage,
-    'a.spec.js': `
-      const { test } = require('./helper');;
-      test('is a test', async ({ page }) => {
-        await expect(page).toHaveScreenshot('../../snapshot!.png');
-      });
-    `
-  });
-  expect(result.exitCode).toBe(0);
-});
-
-test('should write missing expectations with sanitized snapshot name', async ({ runInlineTest }, testInfo) => {
-  const result = await runInlineTest({
-    ...files,
-    'a.spec.js': `
-      const { test } = require('./helper');;
-      test('is a test', async ({ page }) => {
-        await expect(page).toHaveScreenshot('../../snapshot!.png');
-      });
-    `
-  }, {});
-
-  expect(result.exitCode).toBe(1);
-  const snapshotOutputPath = testInfo.outputPath('a.spec.js-snapshots/-snapshot-.png');
-  expect(result.output).toContain(`${snapshotOutputPath} is missing in snapshots, writing actual`);
-  const data = fs.readFileSync(snapshotOutputPath);
-  expect(pngComparator(data, whiteImage)).toBe(null);
-});
-
-test('should join array of snapshot path segments without sanitizing', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    ...files,
-    'a.spec.js-snapshots/test/path/snapshot.png': whiteImage,
-    'a.spec.js': `
-      const { test } = require('./helper');
-      test('is a test', async ({ page }) => {
-        await expect(page).toHaveScreenshot(['test', 'path', 'snapshot.png']);
-      });
-    `
-  });
-  expect(result.exitCode).toBe(0);
-});
-
-test('should use snapshotDir as snapshot base directory', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    ...files,
-    'playwright.config.ts': `
-      module.exports = {
-        snapshotDir: 'snaps',
-      };
-    `,
-    'snaps/a.spec.js-snapshots/snapshot.png': whiteImage,
-    'a.spec.js': `
-      const { test } = require('./helper');
-      test('is a test', async ({ page }) => {
-        await expect(page).toHaveScreenshot('snapshot.png');
-      });
-    `
-  });
-  expect(result.exitCode).toBe(0);
-});
-
-test('should use snapshotDir with path segments as snapshot directory', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    ...files,
-    'playwright.config.ts': `
-      module.exports = {
-        snapshotDir: 'snaps',
-      };
-    `,
-    'snaps/tests/a.spec.js-snapshots/test/path/snapshot.png': whiteImage,
-    'tests/a.spec.js': `
-      const { test } = require('../helper');
-      test('is a test', async ({ page }) => {
-        await expect(page).toHaveScreenshot(['test', 'path', 'snapshot.png']);
-      });
-    `
-  });
-  expect(result.exitCode).toBe(0);
-});
-
-test('should use snapshotDir with nested test suite and path segments', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    ...files,
-    'playwright.config.ts': `
-      module.exports = {
-        snapshotDir: 'snaps',
-      };
-    `,
-    'snaps/path/to/tests/a.spec.js-snapshots/path/to/snapshot.png': whiteImage,
-    'path/to/tests/a.spec.js': `
-      const { test } = require('../../../helper');
-      test('is a test', async ({ page }) => {
-        await expect(page).toHaveScreenshot(['path', 'to', 'snapshot.png']);
-      });
-    `
-  });
-  expect(result.exitCode).toBe(0);
-});
-
-test('should use project snapshotDir over base snapshotDir', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    'helper.ts': `
-      export const test = pwt.test.extend({
-        auto: [ async ({}, run, testInfo) => {
-          testInfo.snapshotSuffix = 'suffix';
-          await run();
-        }, { auto: true } ]
-      });
-    `,
-    'playwright.config.ts': `
-      module.exports = {
-        projects: [
-          {
-            name: 'foo',
-            snapshotDir: 'project_snaps',
-           },
-        ],
-        snapshotDir: 'snaps',
-      };
-    `,
-    'project_snaps/a.spec.js-snapshots/test/path/snapshot-foo-suffix.txt': whiteImage,
-    'a.spec.js': `
-      const { test } = require('./helper');
-      test('is a test', async ({ page }) => {
-        await expect(page).toHaveScreenshot(['test', 'path', 'snapshot.txt']);
-      });
-    `
-  });
-  expect(result.exitCode).toBe(0);
-});
-
-test('should update snapshot with array of path segments', async ({ runInlineTest }, testInfo) => {
-  const result = await runInlineTest({
-    ...files,
-    'a.spec.js': `
-      const { test } = require('./helper');
-      test('is a test', async ({ page }) => {
-        await expect(page).toHaveScreenshot(['test', 'path', 'snapshot.png']);
-      });
-    `
-  }, { 'update-snapshots': true });
-
-  expect(result.exitCode).toBe(0);
-  const snapshotOutputPath = testInfo.outputPath('a.spec.js-snapshots/test/path/snapshot.png');
-  expect(result.output).toContain(`${snapshotOutputPath} is missing in snapshots, writing actual`);
-  const data = fs.readFileSync(snapshotOutputPath);
-  expect(pngComparator(data, whiteImage)).toBe(null);
-});
-
-test('should attach expected/actual/diff with snapshot path', async ({ runInlineTest }, testInfo) => {
-  const result = await runInlineTest({
-    ...files,
-    'a.spec.js-snapshots/test/path/snapshot.png': blueImage,
-    'a.spec.js': `
-      const { test } = require('./helper');
-      test.afterEach(async ({}, testInfo) => {
-        console.log('## ' + JSON.stringify(testInfo.attachments));
-      });
-      test('is a test', async ({ page }) => {
-        await expect(page).toHaveScreenshot(['test', 'path', 'snapshot.png']);
-      });
-    `
-  });
-
-  const outputText = stripAnsi(result.output);
-  const attachments = outputText.split('\n').filter(l => l.startsWith('## ')).map(l => l.substring(3)).map(l => JSON.parse(l))[0];
-  for (const attachment of attachments)
-    attachment.path = attachment.path.replace(/\\/g, '/').replace(/.*test-results\//, '');
-  expect(attachments).toEqual([
-    {
-      name: 'expected',
-      contentType: 'image/png',
-      path: 'a-is-a-test/test/path/snapshot-expected.png'
-    },
-    {
-      name: 'actual',
-      contentType: 'image/png',
-      path: 'a-is-a-test/test/path/snapshot-actual.png'
-    },
-    {
-      name: 'diff',
-      contentType: 'image/png',
-      path: 'a-is-a-test/test/path/snapshot-diff.png'
-    }
-  ]);
-});
-
-test('should attach expected/actual/diff', async ({ runInlineTest }, testInfo) => {
-  const result = await runInlineTest({
-    ...files,
-    'a.spec.js-snapshots/snapshot.png': blueImage,
-    'a.spec.js': `
-      const { test } = require('./helper');
-      test.afterEach(async ({}, testInfo) => {
-        console.log('## ' + JSON.stringify(testInfo.attachments));
-      });
-      test('is a test', async ({ page }) => {
-        await expect(page).toHaveScreenshot('snapshot.png');
-      });
-    `
-  });
-
-  const outputText = stripAnsi(result.output);
-  const attachments = outputText.split('\n').filter(l => l.startsWith('## ')).map(l => l.substring(3)).map(l => JSON.parse(l))[0];
-  for (const attachment of attachments)
-    attachment.path = attachment.path.replace(/\\/g, '/').replace(/.*test-results\//, '');
-  expect(attachments).toEqual([
-    {
-      name: 'expected',
-      contentType: 'image/png',
-      path: 'a-is-a-test/snapshot-expected.png'
-    },
-    {
-      name: 'actual',
-      contentType: 'image/png',
-      path: 'a-is-a-test/snapshot-actual.png'
-    },
-    {
-      name: 'diff',
-      contentType: 'image/png',
-      path: 'a-is-a-test/snapshot-diff.png'
-    }
-  ]);
 });
 
 test('should attach expected/actual and no diff when sizes are different', async ({ runInlineTest }, testInfo) => {
