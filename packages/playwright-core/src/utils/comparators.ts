@@ -55,8 +55,9 @@ function compareImages(mimeType: string, actualBuffer: Buffer | string, expected
     };
   }
   const diff = new PNG({ width: expected.width, height: expected.height });
-  const thresholdOptions = { threshold: 0.2, ...options };
-  const count = pixelmatch(expected.data, actual.data, diff.data, expected.width, expected.height, thresholdOptions);
+  const count = pixelmatch(expected.data, actual.data, diff.data, expected.width, expected.height, {
+    threshold: options.threshold ?? 0.2,
+  });
 
   const pixelCount1 = options.pixelCount;
   const pixelCount2 = options.pixelRatio !== undefined ? expected.width * expected.height * options.pixelRatio : undefined;
