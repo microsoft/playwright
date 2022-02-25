@@ -129,7 +129,7 @@ Assert.True(checked);
 - [`method: Page.isChecked`]
 - [`method: ElementHandle.isChecked`]
 
-## JS expression
+## Text content
 
 ```js
 const content = await page.locator('nav:first-child').textContent();
