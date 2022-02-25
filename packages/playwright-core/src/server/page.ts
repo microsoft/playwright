@@ -486,7 +486,6 @@ export class Page extends SdkObject {
       // A: We want user to receive a friendly diff between actual and expected/previous.
       if (js.isJavaScriptErrorInEvaluate(e) || isInvalidSelectorError(e))
         throw e;
-      console.log(e);
       return {
         log: metadata.log,
         ...intermediateResult,

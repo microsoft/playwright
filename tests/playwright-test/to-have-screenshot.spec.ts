@@ -104,7 +104,6 @@ test('should successfully screenshot a page with infinite animation with disable
 });
 
 test('should support clip option for page', async ({ runInlineTest }, testInfo) => {
-  const infiniteAnimationURL = pathToFileURL(path.join(__dirname, '../assets/rotate-z.html'));
   const result = await runInlineTest({
     ...files,
     'a.spec.js-snapshots/snapshot.png': createImage(50, 50, 255, 255, 255),
@@ -122,8 +121,6 @@ test('should support clip option for page', async ({ runInlineTest }, testInfo) 
 });
 
 test('should support omitBackground option for locator', async ({ runInlineTest }, testInfo) => {
-  const infiniteAnimationURL = pathToFileURL(path.join(__dirname, '../assets/rotate-z.html'));
-  const image = createImage(100, 100, 255, 255, 255, 0);
   const result = await runInlineTest({
     ...files,
     'a.spec.js': `
