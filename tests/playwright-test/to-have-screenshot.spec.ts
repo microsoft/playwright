@@ -55,7 +55,7 @@ test('should fail to screenshot a page with infinite animation', async ({ runInl
     `
   });
   expect(result.exitCode).toBe(1);
-  expect(stripAnsi(result.output)).toContain(`Failed to generate new snapshot in 5000ms because page keeps changing`);
+  expect(stripAnsi(result.output)).toContain(`Failed to generate screenshot in 2000ms because page keeps changing`);
   expect(fs.existsSync(testInfo.outputPath('test-results', 'a-is-a-test', 'is-a-test-1-actual.png'))).toBe(true);
   expect(fs.existsSync(testInfo.outputPath('test-results', 'a-is-a-test', 'is-a-test-1-expected.png'))).toBe(true);
   expect(fs.existsSync(testInfo.outputPath('test-results', 'a-is-a-test', 'is-a-test-1-diff.png'))).toBe(true);
@@ -70,12 +70,12 @@ test('should fail to screenshot an element with infinite animation', async ({ ru
       const { test } = require('./helper');
       test('is a test', async ({ page }) => {
         await page.goto('${infiniteAnimationURL}');
-        await expect(page.locator('body')).toHaveScreenshot();
+        await expect(page.locator('body')).toHaveScreenshot({ timeout: 2000 });
       });
     `
   });
   expect(result.exitCode).toBe(1);
-  expect(stripAnsi(result.output)).toContain(`Failed to generate new snapshot in 5000ms because element keeps changing`);
+  expect(stripAnsi(result.output)).toContain(`Failed to generate screenshot in 2000ms because element keeps changing`);
   expect(fs.existsSync(testInfo.outputPath('test-results', 'a-is-a-test', 'is-a-test-1-actual.png'))).toBe(true);
   expect(fs.existsSync(testInfo.outputPath('test-results', 'a-is-a-test', 'is-a-test-1-expected.png'))).toBe(true);
   expect(fs.existsSync(testInfo.outputPath('test-results', 'a-is-a-test', 'is-a-test-1-diff.png'))).toBe(true);
@@ -90,12 +90,12 @@ test('should fail to screenshot an element that keeps moving', async ({ runInlin
       const { test } = require('./helper');
       test('is a test', async ({ page }) => {
         await page.goto('${infiniteAnimationURL}');
-        await expect(page.locator('div')).toHaveScreenshot();
+        await expect(page.locator('div')).toHaveScreenshot({ timeout: 2000 });
       });
     `
   });
   expect(result.exitCode).toBe(1);
-  expect(stripAnsi(result.output)).toContain(`Timeout 5000ms exceeded`);
+  expect(stripAnsi(result.output)).toContain(`Timeout 2000ms exceeded`);
   expect(stripAnsi(result.output)).toContain(`element is not stable - waiting`);
   expect(fs.existsSync(testInfo.outputPath('test-results', 'a-is-a-test', 'is-a-test-1-actual.png'))).toBe(false);
   expect(fs.existsSync(testInfo.outputPath('test-results', 'a-is-a-test', 'is-a-test-1-expected.png'))).toBe(false);
@@ -147,7 +147,7 @@ test('should fail when screenshot is different size', async ({ runInlineTest }) 
     'a.spec.js': `
       const { test } = require('./helper');
       test('is a test', async ({ page }) => {
-        await expect(page).toHaveScreenshot('snapshot.png');
+        await expect(page).toHaveScreenshot('snapshot.png', { timeout: 2000 });
       });
     `
   });
@@ -162,12 +162,12 @@ test('should fail when screenshot is different pixels', async ({ runInlineTest }
     'a.spec.js': `
       const { test } = require('./helper');
       test('is a test', async ({ page }) => {
-        await expect(page).toHaveScreenshot('snapshot.png');
+        await expect(page).toHaveScreenshot('snapshot.png', { timeout: 2000 });
       });
     `
   });
   expect(result.exitCode).toBe(1);
-  expect(result.output).toContain('Snapshot comparison failed');
+  expect(result.output).toContain('Screenshot comparison failed');
   expect(result.output).toContain('Expected:');
   expect(result.output).toContain('Received:');
 });
@@ -207,7 +207,7 @@ test('should fail on same snapshots with negate matcher', async ({ runInlineTest
   });
 
   expect(result.exitCode).toBe(1);
-  expect(result.output).toContain('Snapshot comparison failed:');
+  expect(result.output).toContain('Screenshot comparison failed:');
   expect(result.output).toContain('Expected result should be different from the actual one.');
 });
 
@@ -313,7 +313,7 @@ test('should silently write missing expectations locally with the update-snapsho
   expect(pngComparator(data, whiteImage)).toBe(null);
 });
 
-test('should silently write missing expectations locally with the update-snapshots flag for negated matcher', async ({ runInlineTest }, testInfo) => {
+test('should not write missing expectations locally with the update-snapshots flag for negated matcher', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     ...files,
     'a.spec.js': `
@@ -379,22 +379,6 @@ test('should use provided name via options', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
 });
 
-test('should throw for invalid pixelRatio values', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    ...files,
-    'a.spec.js': `
-      const { test } = require('./helper');
-      test('is a test', async ({ page }) => {
-        await expect(page).toHaveScreenshot({
-          pixelRatio: 12,
-        });
-      });
-    `
-  });
-  expect(result.exitCode).toBe(1);
-  expect(result.output).toContain('`pixelRatio` option value must be between 0 and 1');
-});
-
 test('should respect pixelCount option', async ({ runInlineTest }) => {
   const BAD_PIXELS = 120;
   const EXPECTED_SNAPSHOT = paintBlackPixels(whiteImage, BAD_PIXELS);
@@ -405,7 +389,7 @@ test('should respect pixelCount option', async ({ runInlineTest }) => {
     'a.spec.js': `
       const { test } = require('./helper');
       test('is a test', async ({ page }) => {
-        await expect(page).toHaveScreenshot('snapshot.png');
+        await expect(page).toHaveScreenshot('snapshot.png', { timeout: 2000 });
       });
     `
   })).exitCode, 'make sure default comparison fails').toBe(1);
@@ -451,7 +435,7 @@ test('should respect pixelRatio option', async ({ runInlineTest }) => {
     'a.spec.js': `
       const { test } = require('./helper');
       test('is a test', async ({ page }) => {
-        await expect(page).toHaveScreenshot('snapshot.png');
+        await expect(page).toHaveScreenshot('snapshot.png', { timeout: 2000 });
       });
     `
   })).exitCode, 'make sure default comparison fails').toBe(1);
@@ -486,65 +470,6 @@ test('should respect pixelRatio option', async ({ runInlineTest }) => {
   })).exitCode, 'make sure pixelCount option in project config is respected').toBe(0);
 });
 
-test('should satisfy both pixelRatio and pixelCount', async ({ runInlineTest }) => {
-  const BAD_RATIO = 0.25;
-  const BAD_PIXELS = IMG_WIDTH * IMG_HEIGHT * BAD_RATIO;
-  const EXPECTED_SNAPSHOT = paintBlackPixels(whiteImage, BAD_PIXELS);
-
-  expect((await runInlineTest({
-    ...files,
-    'a.spec.js-snapshots/snapshot.png': EXPECTED_SNAPSHOT,
-    'a.spec.js': `
-      const { test } = require('./helper');
-      test('is a test', async ({ page }) => {
-        await expect(page).toHaveScreenshot('snapshot.png');
-      });
-    `
-  })).exitCode, 'make sure default comparison fails').toBe(1);
-
-  expect((await runInlineTest({
-    ...files,
-    'a.spec.js-snapshots/snapshot.png': EXPECTED_SNAPSHOT,
-    'a.spec.js': `
-      const { test } = require('./helper');
-      test('is a test', async ({ page }) => {
-        await expect(page).toHaveScreenshot('snapshot.png', {
-          pixelCount: ${Math.floor(BAD_PIXELS / 2)},
-          pixelRatio: ${BAD_RATIO},
-        });
-      });
-    `
-  })).exitCode, 'make sure it fails when pixelCount < actualBadPixels < pixelRatio').toBe(1);
-
-  expect((await runInlineTest({
-    ...files,
-    'a.spec.js-snapshots/snapshot.png': EXPECTED_SNAPSHOT,
-    'a.spec.js': `
-      const { test } = require('./helper');
-      test('is a test', async ({ page }) => {
-        await expect(page).toHaveScreenshot('snapshot.png', {
-          pixelCount: ${BAD_PIXELS},
-          pixelRatio: ${BAD_RATIO / 2},
-        });
-      });
-    `
-  })).exitCode, 'make sure it fails when pixelRatio < actualBadPixels < pixelCount').toBe(1);
-
-  expect((await runInlineTest({
-    ...files,
-    'a.spec.js-snapshots/snapshot.png': EXPECTED_SNAPSHOT,
-    'a.spec.js': `
-      const { test } = require('./helper');
-      test('is a test', async ({ page }) => {
-        await expect(page).toHaveScreenshot('snapshot.png', {
-          pixelCount: ${BAD_PIXELS},
-          pixelRatio: ${BAD_RATIO},
-        });
-      });
-    `
-  })).exitCode, 'make sure it passes when actualBadPixels < pixelRatio && actualBadPixels < pixelCount').toBe(0);
-});
-
 test('should attach expected/actual and no diff when sizes are different', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     ...files,
@@ -555,11 +480,12 @@ test('should attach expected/actual and no diff when sizes are different', async
         console.log('## ' + JSON.stringify(testInfo.attachments));
       });
       test('is a test', async ({ page }) => {
-        await expect(page).toHaveScreenshot('snapshot.png');
+        await expect(page).toHaveScreenshot('snapshot.png', { timeout: 2000 });
       });
     `
   });
 
+  expect(result.exitCode).toBe(1);
   const outputText = stripAnsi(result.output);
   expect(outputText).toContain('Sizes differ; expected image 2px X 2px, but got 1280px X 720px.');
   const attachments = outputText.split('\n').filter(l => l.startsWith('## ')).map(l => l.substring(3)).map(l => JSON.parse(l))[0];

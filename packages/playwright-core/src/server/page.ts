@@ -490,9 +490,9 @@ export class Page extends SdkObject {
       if (js.isJavaScriptErrorInEvaluate(e) || isInvalidSelectorError(e))
         throw e;
       return {
-        errorMessage: e.message,
         log: metadata.log,
         ...intermediateResult,
+        errorMessage: intermediateResult?.errorMessage ?? e.message,
       };
     });
   }
