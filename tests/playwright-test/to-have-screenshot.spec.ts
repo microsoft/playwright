@@ -63,6 +63,28 @@ test('should fail to screenshot a page with infinite animation', async ({ runInl
   expect(fs.existsSync(testInfo.outputPath('a.spec.js-snapshots', 'is-a-test-1.png'))).toBe(false);
 });
 
+test('should not fail when racing with navigation', async ({ runInlineTest }, testInfo) => {
+  const infiniteAnimationURL = pathToFileURL(path.join(__dirname, '../assets/rotate-z.html'));
+  const result = await runInlineTest({
+    ...files,
+    'a.spec.js-snapshots/snapshot.png': createImage(10, 10, 255, 0, 0),
+    'a.spec.js': `
+      const { test } = require('./helper');
+      test('is a test', async ({ page }) => {
+        await Promise.all([
+          page.goto('${infiniteAnimationURL}'),
+          expect(page).toHaveScreenshot({
+            name: 'snapshot.png',
+            disableAnimations: true,
+            clip: { x: 0, y: 0, width: 10, height: 10 },
+          }),
+        ]);
+      });
+    `
+  });
+  expect(result.exitCode).toBe(0);
+});
+
 test('should successfully screenshot a page with infinite animation with disableAnimation: true', async ({ runInlineTest }, testInfo) => {
   const infiniteAnimationURL = pathToFileURL(path.join(__dirname, '../assets/rotate-z.html'));
   const result = await runInlineTest({
@@ -220,7 +242,6 @@ test('should fail when screenshot is different size', async ({ runInlineTest }) 
     `
   });
   expect(result.exitCode).toBe(1);
-  expect(result.output).toContain('Timeout 2000ms exceeded');
   expect(result.output).toContain('Sizes differ; expected image 22px X 33px, but got 1280px X 720px.');
 });
 

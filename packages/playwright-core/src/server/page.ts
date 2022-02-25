@@ -461,21 +461,18 @@ export class Page extends SdkObject {
     return controller.run(async progress => {
       let actual: Buffer | undefined;
       let previous: Buffer | undefined;
-      if (isGeneratingNewScreenshot) {
-        actual = await rafrafScreenshot(progress);
-        progress.throwIfAborted();
-        // Wait before trying one more screenshot.
-        await new Promise(x => setTimeout(x, 150));
-        progress.throwIfAborted();
-      }
       while (true) {
-        if (isGeneratingNewScreenshot)
+        let result: ComparatorResult | undefined;
+        if (isGeneratingNewScreenshot) {
           previous = actual;
-        actual = await rafrafScreenshot(progress);
-        const result = comparator(actual, isGeneratingNewScreenshot ? previous! : options.expected!, options.comparatorOptions);
-        if (!!result === !!options.isNot)
+          actual = await rafrafScreenshot(progress).catch(e => undefined);
+          result = actual && previous ? comparator(actual, previous, options.comparatorOptions) : undefined;
+        } else {
+          actual = await rafrafScreenshot(progress).catch(e => undefined);
+          result = actual && options.expected ? comparator(actual, options.expected, options.comparatorOptions) : undefined;
+        }
+        if (result !== undefined && !!result === !!options.isNot)
           break;
-        // In case of isNot matcher, images will be similar, so there will be no result.
         if (result)
           intermediateResult = { errorMessage: result.errorMessage, diff: result.diff, actual, previous };
         progress.throwIfAborted();
@@ -489,6 +486,7 @@ export class Page extends SdkObject {
       // A: We want user to receive a friendly diff between actual and expected/previous.
       if (js.isJavaScriptErrorInEvaluate(e) || isInvalidSelectorError(e))
         throw e;
+      console.log(e);
       return {
         log: metadata.log,
         ...intermediateResult,
