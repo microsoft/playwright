@@ -6,8 +6,6 @@ on:
       - release-*
     paths:
       - ".github/workflows/test_test_runner.yml"
-      - "!browser_patches/**"
-      - "!docs/**"
       - "tests/playwright-test/**/*"
       - "packages/playwright-test/**/*"
       - "package.json"
@@ -17,8 +15,6 @@ on:
       - release-*
     paths:
       - ".github/workflows/test_test_runner.yml"
-      - "!browser_patches/**"
-      - "!docs/**"
       - "tests/playwright-test/**/*"
       - "packages/playwright-test/**/*"
       - "package.json"

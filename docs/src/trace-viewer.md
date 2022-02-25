@@ -222,3 +222,19 @@ playwright show-trace https://example.com/trace.zip
 ```bash csharp
 pwsh bin\Debug\netX\playwright.ps1 show-trace https://example.com/trace.zip
 ```
+
+## Using [trace.playwright.dev](https://trace.playwright.dev)
+
+[trace.playwright.dev](https://trace.playwright.dev) is a statically hosted variant of the Trace Viewer. 
+
+### Viewing local traces
+
+When navigating to [trace.playwright.dev](https://trace.playwright.dev), you can upload trace files using drag and drop.
+
+### Remote traces
+
+You can also pass the URL of your uploaded trace (e.g. inside your CI) from some accessible storage as a parameter. CORS (Cross-Origin Resource Sharing) rules might apply.
+
+```txt
+https://trace.playwright.dev/?trace=https://demo.playwright.dev/reports/todomvc/data/cb0fa77ebd9487a5c899f3ae65a7ffdbac681182.zip
+```
