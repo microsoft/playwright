@@ -663,6 +663,36 @@
     "hasTouch": true,
     "defaultBrowserType": "webkit"
   },
+  "iPhone 12 Mini": {
+    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.4 Mobile/15E148 Safari/604.1",
+    "screen": {
+      "width": 375,
+      "height": 812
+    },
+    "viewport": {
+      "width": 375,
+      "height": 629
+    },
+    "deviceScaleFactor": 3,
+    "isMobile": true,
+    "hasTouch": true,
+    "defaultBrowserType": "webkit"
+  },
+  "iPhone 12 Mini landscape": {
+    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.4 Mobile/15E148 Safari/604.1",
+    "screen": {
+      "width": 375,
+      "height": 812
+    },
+    "viewport": {
+      "width": 712,
+      "height": 325
+    },
+    "deviceScaleFactor": 3,
+    "isMobile": true,
+    "hasTouch": true,
+    "defaultBrowserType": "webkit"
+  },
   "iPhone 13": {
     "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.4 Mobile/15E148 Safari/604.1",
     "screen": {
