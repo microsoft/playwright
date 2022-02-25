@@ -181,14 +181,14 @@ interface LocatorMatchers {
   toBeVisible(options?: { timeout?: number }): Promise<Locator>;
 
   /**
-   * Match snapshot
+   * Asserts element's screenshot is matching to the snapshot.
    */
   toHaveScreenshot(options?: Omit<LocatorScreenshotOptions, 'path' | 'type' | 'quality'> & ImageComparatorOptions & {
     name?: string | string[],
   }): Promise<Locator>;
 
   /**
-   * Match snapshot
+   * Asserts element's screenshot is matching to the snapshot.
    */
   toHaveScreenshot(name: string | string[], options?: Omit<LocatorScreenshotOptions, 'path' | 'type' | 'quality'> & ImageComparatorOptions): Promise<Locator>;
 }
@@ -204,14 +204,14 @@ interface PageMatchers {
   toHaveURL(expected: string | RegExp, options?: { timeout?: number }): Promise<Page>;
 
   /**
-   * Match snapshot
+   * Asserts page screenshot is matching to the snapshot.
    */
   toHaveScreenshot(options?: Omit<PageScreenshotOptions, 'path' | 'quality' | 'type'> & ImageComparatorOptions & {
     name?: string | string[],
   }): Promise<Page>;
 
   /**
-   * Match snapshot
+   * Asserts page screenshot is matching to the snapshot.
    */
   toHaveScreenshot(name: string | string[], options?: Omit<PageScreenshotOptions, 'path' | 'quality' | 'type'> & ImageComparatorOptions): Promise<Page>;
 }
