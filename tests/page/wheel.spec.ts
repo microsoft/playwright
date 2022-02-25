@@ -15,11 +15,10 @@
  */
 import type { Page } from 'playwright-core';
 import { test as it, expect } from './pageTest';
-import { contextTest } from '../config/browserTest';
 
-it.skip(({ isElectron, browserMajorVersion }) => {
+it.skip(({ isElectron, browserMajorVersion, isAndroid }) => {
   // Old Electron has flaky wheel events.
-  return isElectron && browserMajorVersion <= 11;
+  return (isElectron && browserMajorVersion <= 11) || isAndroid;
 });
 it('should dispatch wheel events #smoke', async ({ page, server }) => {
   await page.setContent(`<div style="width: 5000px; height: 5000px;"></div>`);
@@ -108,22 +107,6 @@ it('should work when the event is canceled', async ({ page }) => {
   await page.waitForTimeout(100);
   // Ensure that it did not.
   expect(await page.evaluate('window.scrollY')).toBe(0);
-});
-
-contextTest('should scroll when emulating a mobile viewport', async ({ contextFactory, server, browserName }) => {
-  contextTest.skip(browserName === 'firefox');
-  const context = await contextFactory({
-    viewport: { 'width': 1000, 'height': 600 },
-    isMobile: true,
-  });
-  const page = await context.newPage();
-  await page.goto(server.PREFIX + '/input/scrollable.html');
-  await page.mouse.move(50, 60);
-  const error = await page.mouse.wheel(0, 100).catch(e => e);
-  if (browserName === 'webkit')
-    expect(error.message).toContain('Mouse wheel is not supported in mobile WebKit');
-  else
-    await page.waitForFunction('window.scrollY === 100');
 });
 
 async function listenForWheelEvents(page: Page, selector: string) {

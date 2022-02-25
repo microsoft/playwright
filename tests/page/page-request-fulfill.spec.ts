@@ -15,8 +15,23 @@
  * limitations under the License.
  */
 
-import { test as it, expect } from './pageTest';
+import { test as base, expect } from './pageTest';
 import fs from 'fs';
+
+const it = base.extend<{
+  // We access test servers at 10.0.2.2 from inside the browser on Android,
+  // which is actually forwarded to the desktop localhost.
+  // To use request such an url with apiRequestContext on the desktop, we need to change it back to localhost.
+  rewriteAndroidLoopbackURL(url: string): string
+      }>({
+        rewriteAndroidLoopbackURL: ({ isAndroid }, use) => use(givenURL => {
+          if (!isAndroid)
+            return givenURL;
+          const requestURL = new URL(givenURL);
+          requestURL.hostname = 'localhost';
+          return requestURL.toString();
+        })
+      });
 
 it('should work', async ({ page, server }) => {
   await page.route('**/*', route => {
@@ -194,11 +209,11 @@ it('should include the origin header', async ({ page, server, isAndroid }) => {
   expect(interceptedRequest.headers()['origin']).toEqual(server.PREFIX);
 });
 
-it('should fulfill with global fetch result', async ({ playwright, page, server, isElectron }) => {
+it('should fulfill with global fetch result', async ({ playwright, page, server, isElectron, rewriteAndroidLoopbackURL }) => {
   it.fixme(isElectron, 'error: Browser context management is not supported.');
   await page.route('**/*', async route => {
     const request = await playwright.request.newContext();
-    const response = await request.get(server.PREFIX + '/simple.json');
+    const response = await request.get(rewriteAndroidLoopbackURL(server.PREFIX + '/simple.json'));
     route.fulfill({ response });
   });
   const response = await page.goto(server.EMPTY_PAGE);
@@ -206,10 +221,10 @@ it('should fulfill with global fetch result', async ({ playwright, page, server,
   expect(await response.json()).toEqual({ 'foo': 'bar' });
 });
 
-it('should fulfill with fetch result', async ({ page, server, isElectron }) => {
+it('should fulfill with fetch result', async ({ page, server, isElectron, rewriteAndroidLoopbackURL }) => {
   it.fixme(isElectron, 'error: Browser context management is not supported.');
   await page.route('**/*', async route => {
-    const response = await page.request.get(server.PREFIX + '/simple.json');
+    const response = await page.request.get(rewriteAndroidLoopbackURL(server.PREFIX + '/simple.json'));
     route.fulfill({ response });
   });
   const response = await page.goto(server.EMPTY_PAGE);
@@ -217,10 +232,10 @@ it('should fulfill with fetch result', async ({ page, server, isElectron }) => {
   expect(await response.json()).toEqual({ 'foo': 'bar' });
 });
 
-it('should fulfill with fetch result and overrides', async ({ page, server, isElectron }) => {
+it('should fulfill with fetch result and overrides', async ({ page, server, isElectron, rewriteAndroidLoopbackURL }) => {
   it.fixme(isElectron, 'error: Browser context management is not supported.');
   await page.route('**/*', async route => {
-    const response = await page.request.get(server.PREFIX + '/simple.json');
+    const response = await page.request.get(rewriteAndroidLoopbackURL(server.PREFIX + '/simple.json'));
     route.fulfill({
       response,
       status: 201,
@@ -236,8 +251,9 @@ it('should fulfill with fetch result and overrides', async ({ page, server, isEl
   expect(await response.json()).toEqual({ 'foo': 'bar' });
 });
 
-it('should fetch original request and fulfill', async ({ page, server, isElectron }) => {
+it('should fetch original request and fulfill', async ({ page, server, isElectron, isAndroid }) => {
   it.fixme(isElectron, 'error: Browser context management is not supported.');
+  it.skip(isAndroid, 'The internal Android localhost (10.0.0.2) != the localhost on the host');
   await page.route('**/*', async route => {
     const response = await page.request.fetch(route.request());
     route.fulfill({
@@ -249,8 +265,9 @@ it('should fetch original request and fulfill', async ({ page, server, isElectro
   expect(await page.title()).toEqual('Woof-Woof');
 });
 
-it('should fulfill with multiple set-cookie', async ({ page, server, browserName, isElectron }) => {
+it('should fulfill with multiple set-cookie', async ({ page, server, isAndroid, isElectron }) => {
   it.fixme(isElectron, 'Electron 14+ is required');
+  it.fixme(isAndroid);
   const cookies = ['a=b', 'c=d'];
   await page.route('**/empty.html', async route => {
     route.fulfill({
@@ -269,7 +286,8 @@ it('should fulfill with multiple set-cookie', async ({ page, server, browserName
   expect(await response.headerValue('X-Header-2')).toBe('v2');
 });
 
-it('should fulfill with fetch response that has multiple set-cookie', async ({ playwright, page, server, browserName }) => {
+it('should fulfill with fetch response that has multiple set-cookie', async ({ playwright, page, server, isAndroid }) => {
+  it.fixme(isAndroid);
   server.setRoute('/empty.html', (req, res) => {
     res.setHeader('Set-Cookie', ['a=b', 'c=d']);
     res.setHeader('Content-Type', 'text/html');

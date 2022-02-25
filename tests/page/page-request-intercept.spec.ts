@@ -16,12 +16,28 @@
  */
 
 import type { Route } from 'playwright-core';
-import { expect, test as it } from './pageTest';
+import { expect, test as base } from './pageTest';
 import fs from 'fs';
 import path from 'path';
 
-it('should fulfill intercepted response', async ({ page, server, isElectron }) => {
+const it = base.extend<{
+  // We access test servers at 10.0.2.2 from inside the browser on Android,
+  // which is actually forwarded to the desktop localhost.
+  // To use request such an url with apiRequestContext on the desktop, we need to change it back to localhost.
+  rewriteAndroidLoopbackURL(url: string): string
+      }>({
+        rewriteAndroidLoopbackURL: ({ isAndroid }, use) => use(givenURL => {
+          if (!isAndroid)
+            return givenURL;
+          const requestURL = new URL(givenURL);
+          requestURL.hostname = 'localhost';
+          return requestURL.toString();
+        })
+      });
+
+it('should fulfill intercepted response', async ({ page, server, isElectron, isAndroid }) => {
   it.fixme(isElectron, 'error: Browser context management is not supported.');
+  it.skip(isAndroid, 'The internal Android localhost (10.0.0.2) != the localhost on the host');
   await page.route('**/*', async route => {
     const response = await page.request.fetch(route.request());
     await route.fulfill({
@@ -41,8 +57,8 @@ it('should fulfill intercepted response', async ({ page, server, isElectron }) =
   expect(await page.evaluate(() => document.body.textContent)).toBe('Yo, page!');
 });
 
-it('should fulfill response with empty body', async ({ page, server, browserName, browserMajorVersion }) => {
-  it.skip(browserName === 'chromium' && browserMajorVersion <= 91, 'Fails in Electron that uses old Chromium');
+it('should fulfill response with empty body', async ({ page, server, isAndroid }) => {
+  it.skip(isAndroid, 'The internal Android localhost (10.0.0.2) != the localhost on the host');
   await page.route('**/*', async route => {
     const response = await page.request.fetch(route.request());
     await route.fulfill({
@@ -56,8 +72,9 @@ it('should fulfill response with empty body', async ({ page, server, browserName
   expect(await response.text()).toBe('');
 });
 
-it('should override with defaults when intercepted response not provided', async ({ page, server, browserName, isElectron }) => {
+it('should override with defaults when intercepted response not provided', async ({ page, server, browserName, isElectron, isAndroid }) => {
   it.fixme(isElectron, 'error: Browser context management is not supported.');
+  it.skip(isAndroid, 'The internal Android localhost (10.0.0.2) != the localhost on the host');
   server.setRoute('/empty.html', (req, res) => {
     res.setHeader('foo', 'bar');
     res.end('my content');
@@ -77,14 +94,14 @@ it('should override with defaults when intercepted response not provided', async
     expect(response.headers()).toEqual({ });
 });
 
-it('should fulfill with any response', async ({ page, server, isElectron }) => {
+it('should fulfill with any response', async ({ page, server, isElectron, rewriteAndroidLoopbackURL }) => {
   it.fixme(isElectron, 'error: Browser context management is not supported.');
 
   server.setRoute('/sample', (req, res) => {
     res.setHeader('foo', 'bar');
     res.end('Woo-hoo');
   });
-  const sampleResponse = await page.request.get(`${server.PREFIX}/sample`);
+  const sampleResponse = await page.request.get(rewriteAndroidLoopbackURL(`${server.PREFIX}/sample`));
 
   await page.route('**/*', async route => {
     await route.fulfill({
@@ -99,8 +116,9 @@ it('should fulfill with any response', async ({ page, server, isElectron }) => {
   expect(response.headers()['foo']).toBe('bar');
 });
 
-it('should support fulfill after intercept', async ({ page, server, isElectron }) => {
+it('should support fulfill after intercept', async ({ page, server, isElectron, isAndroid }) => {
   it.fixme(isElectron, 'error: Browser context management is not supported.');
+  it.skip(isAndroid, 'The internal Android localhost (10.0.0.2) != the localhost on the host');
   const requestPromise = server.waitForRequest('/title.html');
   await page.route('**', async route => {
     const response = await page.request.fetch(route.request());
@@ -113,8 +131,9 @@ it('should support fulfill after intercept', async ({ page, server, isElectron }
   expect(await response.text()).toBe(original);
 });
 
-it('should give access to the intercepted response', async ({ page, server, isElectron }) => {
+it('should give access to the intercepted response', async ({ page, server, isElectron, isAndroid }) => {
   it.fixme(isElectron, 'error: Browser context management is not supported.');
+  it.skip(isAndroid, 'The internal Android localhost (10.0.0.2) != the localhost on the host');
   await page.goto(server.EMPTY_PAGE);
 
   let routeCallback;
@@ -129,15 +148,16 @@ it('should give access to the intercepted response', async ({ page, server, isEl
   expect(response.status()).toBe(200);
   expect(response.statusText()).toBe('OK');
   expect(response.ok()).toBeTruthy();
-  expect(response.url()).toBe(server.PREFIX + '/title.html');
+  expect(response.url().endsWith('/title.html')).toBe(true);
   expect(response.headers()['content-type']).toBe('text/html; charset=utf-8');
-  expect(await (await response.headersArray()).filter(({ name }) => name.toLowerCase() === 'content-type')).toEqual([{ name: 'Content-Type', value: 'text/html; charset=utf-8' }]);
+  expect(response.headersArray().filter(({ name }) => name.toLowerCase() === 'content-type')).toEqual([{ name: 'Content-Type', value: 'text/html; charset=utf-8' }]);
 
   await Promise.all([route.fulfill({ response }), evalPromise]);
 });
 
-it('should give access to the intercepted response body', async ({ page, server, isElectron }) => {
+it('should give access to the intercepted response body', async ({ page, server, isElectron, isAndroid }) => {
   it.fixme(isElectron, 'error: Browser context management is not supported.');
+  it.skip(isAndroid, 'The internal Android localhost (10.0.0.2) != the localhost on the host');
   await page.goto(server.EMPTY_PAGE);
 
   let routeCallback;
@@ -149,7 +169,7 @@ it('should give access to the intercepted response body', async ({ page, server,
   const route = await routePromise;
   const response = await page.request.fetch(route.request());
 
-  expect((await response.text())).toBe('{"foo": "bar"}\n');
+  expect(await response.text()).toBe('{"foo": "bar"}\n');
 
   await Promise.all([route.fulfill({ response }), evalPromise]);
 });
