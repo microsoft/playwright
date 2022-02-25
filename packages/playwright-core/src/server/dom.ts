@@ -119,17 +119,13 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   declare readonly _context: FrameExecutionContext;
   readonly _page: Page;
   declare readonly _objectId: string;
-  private _frame: frames.Frame;
+  readonly _frame: frames.Frame;
 
   constructor(context: FrameExecutionContext, objectId: string) {
     super(context, 'node', undefined, objectId);
     this._page = context.frame._page;
     this._frame = context.frame;
     this._initializePreview().catch(e => {});
-  }
-
-  frame(): frames.Frame {
-    return this._frame;
   }
 
   async _initializePreview() {

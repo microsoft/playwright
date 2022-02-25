@@ -65,7 +65,7 @@ type Listener = (...args: any[]) => void;
 type ExpectScreenshotOptions = Omit<channels.PageExpectScreenshotOptions, 'screenshotOptions' | 'locator' | 'expected'> & {
   expected?: Buffer,
   locator?: Locator,
-  isNot?: boolean,
+  isNot: boolean,
   screenshotOptions: Omit<channels.PageExpectScreenshotOptions['screenshotOptions'], 'mask'> & { mask?: Locator[] }
 };
 

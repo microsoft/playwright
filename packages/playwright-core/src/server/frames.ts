@@ -1060,7 +1060,7 @@ export class Frame extends SdkObject {
 
   async rafrafScreenshotElementWithProgress(progress: Progress, selector: string, options: ScreenshotOptions): Promise<Buffer> {
     return await this._retryWithProgressIfNotConnected(progress, selector, true /* strict */, async handle => {
-      await handle.frame().rafraf();
+      await handle._frame.rafraf();
       return await this._page._screenshotter.screenshotElement(progress, handle, options);
     });
   }
@@ -1381,7 +1381,11 @@ export class Frame extends SdkObject {
 
   async rafraf(): Promise<void> {
     const context = await this._utilityContext();
-    return context.evaluate(() => new Promise(x => requestAnimationFrame(() => requestAnimationFrame(() => x()))));
+    return context.evaluate(() => new Promise(x => {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => x);
+      });
+    }));
   }
 
   _onDetached() {
