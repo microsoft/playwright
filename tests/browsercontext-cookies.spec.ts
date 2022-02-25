@@ -265,3 +265,31 @@ it('should return secure cookies based on HTTP(S) protocol', async ({ context, b
     sameSite: (browserName === 'webkit' && isWindows) ? 'None' : 'Lax',
   }]);
 });
+
+it('should add cookies with an expiration', async ({ context, browserName, platform }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/12226' });
+  it.fixme(browserName === 'webkit' && platform === 'linux', 'Protocol error');
+  const expires = Date.now() + 3600;
+  await context.addCookies([{
+    url: 'https://foo.com',
+    name: 'doggo',
+    value: 'woofs',
+    sameSite: 'None',
+    expires,
+  }]);
+  const cookies = await context.cookies(['https://foo.com']);
+  expect(cookies.length).toBe(1);
+  if (browserName === 'chromium')
+    // Chromium returns them sometimes as floats: https://crbug.com/1300178
+    cookies[0].expires = Math.round(cookies[0].expires);
+  expect(cookies).toEqual([{
+    name: 'doggo',
+    value: 'woofs',
+    domain: 'foo.com',
+    path: '/',
+    expires,
+    httpOnly: false,
+    secure: true,
+    sameSite: 'None',
+  }]);
+});
