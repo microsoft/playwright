@@ -47,6 +47,7 @@ class SnapshotHelper<T extends ImageComparatorOptions> {
   readonly actualPath: string;
   readonly diffPath: string;
   readonly mimeType: string;
+  readonly kind: 'Screenshot'|'Snapshot';
   readonly updateSnapshots: UpdateSnapshots;
   readonly comparatorOptions: ImageComparatorOptions;
   readonly allOptions: T;
@@ -116,6 +117,7 @@ class SnapshotHelper<T extends ImageComparatorOptions> {
       pixelRatio: options.pixelRatio,
       threshold: options.threshold,
     };
+    this.kind = this.mimeType.startsWith('image/') ? 'Screenshot' : 'Snapshot';
   }
 
   handleMissingNegated() {
@@ -135,7 +137,7 @@ class SnapshotHelper<T extends ImageComparatorOptions> {
 
   handleMatchingNegated() {
     const message = [
-      colors.red('Snapshot comparison failed:'),
+      colors.red(`${this.kind} comparison failed:`),
       '',
       indent('Expected result should be different from the actual one.', '  '),
     ].join('\n');
@@ -168,7 +170,7 @@ class SnapshotHelper<T extends ImageComparatorOptions> {
     diff: Buffer | string | undefined,
     diffError: string | undefined,
     log: string[] | undefined,
-    title = `Snapshot comparison failed:`) {
+    title = `${this.kind} comparison failed:`) {
     const output = [
       colors.red(title),
       '',
@@ -258,8 +260,9 @@ export async function toHaveScreenshot(
   const helper = new SnapshotHelper(testInfo, 'png', nameOrOptions, optOptions);
   const [page, locator] = pageOrLocator.constructor.name === 'Page' ? [(pageOrLocator as PageEx), undefined] : [(pageOrLocator as Locator).page() as PageEx, pageOrLocator as Locator];
 
+  const hasSnapshot = fs.existsSync(helper.snapshotPath);
   if (this.isNot) {
-    if (!fs.existsSync(helper.snapshotPath))
+    if (!hasSnapshot)
       return helper.handleMissingNegated();
 
     // Having `errorMessage` means we timed out while waiting
@@ -276,7 +279,11 @@ export async function toHaveScreenshot(
     return isDifferent ? helper.handleDifferentNegated() : helper.handleMatchingNegated();
   }
 
-  if (helper.updateSnapshots === 'all' || !fs.existsSync(helper.snapshotPath)) {
+  // Fast path: there's no screenshot and we don't intend to update it.
+  if (helper.updateSnapshots === 'none' && !hasSnapshot)
+    return { pass: false, message: () => `${helper.snapshotPath} is missing in snapshots.` };
+
+  if (helper.updateSnapshots === 'all' || !hasSnapshot) {
     // Regenerate a new screenshot by waiting until two screenshots are the same.
     const timeout = currentExpectTimeout(helper.allOptions);
     const { actual, previous, diff, errorMessage, log } = await page._expectScreenshot({
@@ -290,15 +297,15 @@ export async function toHaveScreenshot(
     // We tried re-generating new snapshot but failed.
     // This can be due to e.g. spinning animation, so we want to show it as a diff.
     if (errorMessage) {
-      return actual && previous ?
-        helper.handleDifferent(actual, previous, diff, undefined, log,
-            `Failed to generate new snapshot in ${timeout}ms because ${locator ? 'element' : 'page'} keeps changing:`) :
-        helper.handleDifferent(actual, previous, diff, errorMessage, log,
-            `Timed out while trying to generate new snapshot:`);
+      // TODO(aslushnikov): rename attachments to "actual" and "previous". They still should be somehow shown in HTML reporter.
+      const title = actual && previous ?
+        `Failed to generate new screenshot in ${timeout}ms because ${locator ? 'element' : 'page'} keeps changing:` :
+        `Timed out ${timeout}ms while trying to generate new screenshot:`;
+      return helper.handleDifferent(actual, previous, diff, undefined, log, title);
     }
 
-    // We successfully (re-)generated new snapshot.
-    if (!fs.existsSync(helper.snapshotPath))
+    // We successfully (re-)generated new screenshot.
+    if (!hasSnapshot)
       return helper.handleMissing(actual!);
 
     writeFileSync(helper.snapshotPath, actual!);
