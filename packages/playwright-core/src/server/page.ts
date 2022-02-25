@@ -449,13 +449,18 @@ export class Page extends SdkObject {
 
     const comparator = mimeTypeToComparator['image/png'];
     const controller = new ProgressController(metadata, this);
-    let actual: Buffer | undefined;
-    let previous: Buffer | undefined;
     const isGeneratingNewScreenshot = !options.expected;
     if (isGeneratingNewScreenshot && options.isNot)
       return { errorMessage: '"not" matcher requires expected result' };
-    let result: ComparatorResult = null;
+    let intermediateResult: {
+      actual?: Buffer,
+      previous?: Buffer,
+      errorMessage?: string,
+      diff?: Buffer,
+    } | undefined = undefined;
     return controller.run(async progress => {
+      let actual: Buffer | undefined;
+      let previous: Buffer | undefined;
       if (isGeneratingNewScreenshot) {
         actual = await rafrafScreenshot(progress);
         progress.throwIfAborted();
@@ -467,9 +472,12 @@ export class Page extends SdkObject {
         if (isGeneratingNewScreenshot)
           previous = actual;
         actual = await rafrafScreenshot(progress);
-        result = comparator(actual, isGeneratingNewScreenshot ? previous! : options.expected!, options.comparatorOptions);
+        const result = comparator(actual, isGeneratingNewScreenshot ? previous! : options.expected!, options.comparatorOptions);
         if (!!result === !!options.isNot)
           break;
+        // In case of isNot matcher, images will be similar, so there will be no result.
+        if (result)
+          intermediateResult = { errorMessage: result.errorMessage, diff: result.diff, actual, previous };
         progress.throwIfAborted();
         // Wait before trying one more screenshot.
         await new Promise(x => setTimeout(x, 150));
@@ -478,10 +486,14 @@ export class Page extends SdkObject {
       return isGeneratingNewScreenshot ? { actual } : {};
     }, this._timeoutSettings.timeout(options)).catch(e => {
       // Q: Why not throw upon isSessionClosedError(e) as in other places?
-      // A: We want user to receive a friendly message containing the last intermediate result.
+      // A: We want user to receive a friendly diff between actual and expected/previous.
       if (js.isJavaScriptErrorInEvaluate(e) || isInvalidSelectorError(e))
         throw e;
-      return { diff: result?.diff, errorMessage: result?.errorMessage ?? e.message, actual, previous, log: metadata.log };
+      return {
+        errorMessage: e.message,
+        log: metadata.log,
+        ...intermediateResult,
+      };
     });
   }
 
