@@ -92,11 +92,11 @@ test('afterEach failure should not prevent other hooks and fixtures teardown', a
       const { test } = require('./helper');
       test.describe('suite', () => {
         test.afterEach(async () => {
-          console.log('afterEach1');
-        });
-        test.afterEach(async () => {
           console.log('afterEach2');
           throw new Error('afterEach2');
+        });
+        test.afterEach(async () => {
+          console.log('afterEach1');
         });
         test('one', async ({foo}) => {
           console.log('test');
