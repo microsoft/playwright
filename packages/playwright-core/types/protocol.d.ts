@@ -1715,6 +1715,11 @@ The array enumerates container queries starting with the innermost one, going ou
 The array enumerates @supports at-rules starting with the innermost one, going outwards.
        */
       supports?: CSSSupports[];
+      /**
+       * Cascade layer array. Contains the layer hierarchy that this rule belongs to starting
+with the innermost layer and going outwards.
+       */
+      layers?: CSSLayer[];
     }
     /**
      * CSS coverage information.
@@ -1956,6 +1961,42 @@ available).
        * Identifier of the stylesheet containing this object (if exists).
        */
       styleSheetId?: StyleSheetId;
+    }
+    /**
+     * CSS Layer at-rule descriptor.
+     */
+    export interface CSSLayer {
+      /**
+       * Layer name.
+       */
+      text: string;
+      /**
+       * The associated rule header range in the enclosing stylesheet (if
+available).
+       */
+      range?: SourceRange;
+      /**
+       * Identifier of the stylesheet containing this object (if exists).
+       */
+      styleSheetId?: StyleSheetId;
+    }
+    /**
+     * CSS Layer data.
+     */
+    export interface CSSLayerData {
+      /**
+       * Layer name.
+       */
+      name: string;
+      /**
+       * Direct sub-layers
+       */
+      subLayers?: CSSLayerData[];
+      /**
+       * Layer order. The order determines the order of the layer in the cascade order.
+A higher number has higher priority in the cascade order.
+       */
+      order: number;
     }
     /**
      * Information about amount of glyphs that were rendered with given font.
@@ -2334,6 +2375,18 @@ node.
        * The stylesheet text.
        */
       text: string;
+    }
+    /**
+     * Returns all layers parsed by the rendering engine for the tree scope of a node.
+Given a DOM element identified by nodeId, getLayersForNode returns the root
+layer for the nearest ancestor document or shadow root. The layer root contains
+the full layer tree for the tree scope and their ordering.
+     */
+    export type getLayersForNodeParameters = {
+      nodeId: DOM.NodeId;
+    }
+    export type getLayersForNodeReturnValue = {
+      rootLayer: CSSLayerData;
     }
     /**
      * Starts tracking the given computed styles for updates. The specified array of properties
@@ -5482,6 +5535,17 @@ on Android.
       userAgentMetadata?: UserAgentMetadata;
     }
     export type setUserAgentOverrideReturnValue = {
+    }
+    /**
+     * Allows overriding the automation flag.
+     */
+    export type setAutomationOverrideParameters = {
+      /**
+       * Whether the override should be enabled.
+       */
+      enabled: boolean;
+    }
+    export type setAutomationOverrideReturnValue = {
     }
   }
   
@@ -17241,6 +17305,7 @@ Error was thrown.
     "CSS.getMediaQueries": CSS.getMediaQueriesParameters;
     "CSS.getPlatformFontsForNode": CSS.getPlatformFontsForNodeParameters;
     "CSS.getStyleSheetText": CSS.getStyleSheetTextParameters;
+    "CSS.getLayersForNode": CSS.getLayersForNodeParameters;
     "CSS.trackComputedStyleUpdates": CSS.trackComputedStyleUpdatesParameters;
     "CSS.takeComputedStyleUpdates": CSS.takeComputedStyleUpdatesParameters;
     "CSS.setEffectivePropertyValueForNode": CSS.setEffectivePropertyValueForNodeParameters;
@@ -17369,6 +17434,7 @@ Error was thrown.
     "Emulation.setVisibleSize": Emulation.setVisibleSizeParameters;
     "Emulation.setDisabledImageTypes": Emulation.setDisabledImageTypesParameters;
     "Emulation.setUserAgentOverride": Emulation.setUserAgentOverrideParameters;
+    "Emulation.setAutomationOverride": Emulation.setAutomationOverrideParameters;
     "HeadlessExperimental.beginFrame": HeadlessExperimental.beginFrameParameters;
     "HeadlessExperimental.disable": HeadlessExperimental.disableParameters;
     "HeadlessExperimental.enable": HeadlessExperimental.enableParameters;
@@ -17768,6 +17834,7 @@ Error was thrown.
     "CSS.getMediaQueries": CSS.getMediaQueriesReturnValue;
     "CSS.getPlatformFontsForNode": CSS.getPlatformFontsForNodeReturnValue;
     "CSS.getStyleSheetText": CSS.getStyleSheetTextReturnValue;
+    "CSS.getLayersForNode": CSS.getLayersForNodeReturnValue;
     "CSS.trackComputedStyleUpdates": CSS.trackComputedStyleUpdatesReturnValue;
     "CSS.takeComputedStyleUpdates": CSS.takeComputedStyleUpdatesReturnValue;
     "CSS.setEffectivePropertyValueForNode": CSS.setEffectivePropertyValueForNodeReturnValue;
@@ -17896,6 +17963,7 @@ Error was thrown.
     "Emulation.setVisibleSize": Emulation.setVisibleSizeReturnValue;
     "Emulation.setDisabledImageTypes": Emulation.setDisabledImageTypesReturnValue;
     "Emulation.setUserAgentOverride": Emulation.setUserAgentOverrideReturnValue;
+    "Emulation.setAutomationOverride": Emulation.setAutomationOverrideReturnValue;
     "HeadlessExperimental.beginFrame": HeadlessExperimental.beginFrameReturnValue;
     "HeadlessExperimental.disable": HeadlessExperimental.disableReturnValue;
     "HeadlessExperimental.enable": HeadlessExperimental.enableReturnValue;
