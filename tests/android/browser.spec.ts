@@ -55,3 +55,11 @@ test('should be able to send CDP messages', async ({ androidDevice }) => {
   const evalResponse = await client.send('Runtime.evaluate', { expression: '1 + 2', returnByValue: true });
   expect(evalResponse.result.value).toBe(3);
 });
+
+test('androidDeviceWithCustomPort.launchBrowser', async function({ androidDeviceWithCustomPort }) {
+  const context = await androidDeviceWithCustomPort.launchBrowser();
+  const [page] = context.pages();
+  await page.goto('data:text/html,<title>Hello world!</title>');
+  expect(await page.title()).toBe('Hello world!');
+  await context.close();
+});
