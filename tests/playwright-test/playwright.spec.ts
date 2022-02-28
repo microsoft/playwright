@@ -353,7 +353,7 @@ test('should report error on timeout with shared page', async ({ runInlineTest }
   expect(stripAnsi(result.output)).toContain(`14 |         await page.click('text=Missing');`);
 });
 
-test('should report error and pending operations from beforeAll timeout', async ({ runInlineTest }, testInfo) => {
+test('should report error from beforeAll timeout', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'a.test.ts': `
       const { test } = pwt;
@@ -373,9 +373,6 @@ test('should report error and pending operations from beforeAll timeout', async 
   expect(result.passed).toBe(0);
   expect(result.failed).toBe(1);
   expect(result.output).toContain('Timeout of 2000ms exceeded in beforeAll hook.');
-  expect(result.output).toContain('Pending operations:');
-  expect(result.output).toContain('- page.click at a.test.ts:10:16');
-  expect(result.output).toContain('- page.textContent at a.test.ts:11:16');
   expect(result.output).toContain('waiting for selector');
   expect(stripAnsi(result.output)).toContain(`11 |           page.textContent('text=More missing'),`);
 });
