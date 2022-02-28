@@ -115,6 +115,7 @@ Expected substring or RegExp.
 ### option: PageAssertions.NotToHaveURL.timeout = %%-assertions-timeout-%%
 
 ## async method: PageAssertions.toHaveScreenshot
+* langs: js
 
 Ensures that the page resolves to a given screenshot. This function will re-take
 screenshots until it matches with the saved expectation.

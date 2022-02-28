@@ -969,6 +969,7 @@ Property value.
 ### option: LocatorAssertions.toHaveJSProperty.timeout = %%-assertions-timeout-%%
 
 ## async method: LocatorAssertions.toHaveScreenshot
+* langs: js
 
 Ensures that [Locator] resolves to a given screenshot. This function will re-take
 screenshots until it matches with the saved expectation.

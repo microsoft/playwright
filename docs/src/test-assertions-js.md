@@ -367,9 +367,9 @@ expect(await page.screenshot()).toMatchSnapshot(['landing', 'step3.png']);
 
 Learn more about [visual comparisons](./test-snapshots.md).
 
-## expect(pageOrLocator).toHaveScreenshot(name[, options])
-- `name` <[string] | [Array]<[string]>> Snapshot name.
+## expect(pageOrLocator).toHaveScreenshot([options])
 - `options`
+  - `name` <[string] | [Array]<[string]>> Optional snapshot name.
   - `disableAnimations` <[boolean]> When true, stops CSS animations, CSS transitions and Web Animations. Animations get different treatment depending on their duration:
     - finite animations are fast-forwarded to completion, so they'll fire `transitionend` event.
     - infinite animations are canceled to initial state, and then played over after the screenshot.
@@ -391,8 +391,8 @@ Ensures that passed value, either a [string] or a [Buffer], matches the expected
 
 ```js
 // Basic usage.
-await expect(page).toHaveScreenshot('landing-page.png');
-await expect(page.locator('text=Submit')).toHaveScreenshot('submit-button.png');
+await expect(page).toHaveScreenshot({ name: 'landing-page.png' });
+await expect(page.locator('text=Submit')).toHaveScreenshot();
 
 // Take a full page screenshot and auto-generate screenshot name
 await expect(page).toHaveScreenshot({ fullPage: true });
