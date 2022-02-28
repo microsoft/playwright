@@ -1012,6 +1012,8 @@ Page:
               selector: string
       returns:
         binary: binary
+      tracing:
+        snapshot: true
 
     setExtraHTTPHeaders:
       parameters:
@@ -2171,6 +2173,8 @@ ElementHandle:
               selector: string
       returns:
         binary: binary
+      tracing:
+        snapshot: true
 
     scrollIntoViewIfNeeded:
       parameters:
