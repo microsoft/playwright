@@ -1335,7 +1335,15 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     steps: tNumber,
   });
   scheme.AndroidDeviceLaunchBrowserParams = tObject({
-    pkg: tOptional(tString),
+    noDefaultViewport: tOptional(tBoolean),
+    viewport: tOptional(tObject({
+      width: tNumber,
+      height: tNumber,
+    })),
+    screen: tOptional(tObject({
+      width: tNumber,
+      height: tNumber,
+    })),
     ignoreHTTPSErrors: tOptional(tBoolean),
     javaScriptEnabled: tOptional(tBoolean),
     bypassCSP: tOptional(tBoolean),
@@ -1361,6 +1369,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     reducedMotion: tOptional(tEnum(['reduce', 'no-preference'])),
     forcedColors: tOptional(tEnum(['active', 'none'])),
     acceptDownloads: tOptional(tBoolean),
+    baseURL: tOptional(tString),
     recordVideo: tOptional(tObject({
       dir: tString,
       size: tOptional(tObject({
@@ -1373,6 +1382,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
       path: tString,
     })),
     strictSelectors: tOptional(tBoolean),
+    pkg: tOptional(tString),
     proxy: tOptional(tObject({
       server: tString,
       bypass: tOptional(tString),
