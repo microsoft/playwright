@@ -5,6 +5,7 @@ let log = [];
 
 test.beforeEach(async ({page}) => {
   log = [];
+  // Expose function for pushing messages to the Node.js script.
   await page.exposeFunction('logCall', msg => log.push(msg));
 
   await page.addInitScript(() => {

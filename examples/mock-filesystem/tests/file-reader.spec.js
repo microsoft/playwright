@@ -18,7 +18,7 @@ test.beforeEach(async ({page}) => {
 
 test('show file picker with mock class', async ({ page }) => {
   await page.goto('/file-picker.html');
-  await page.locator('button').click();
+  await page.locator('button', { hasText: 'Open File' }).click();
   // Check that the content of the mock file has been loaded.
   await expect(page.locator('textarea')).toHaveValue('Test content.');
 });
