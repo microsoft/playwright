@@ -1330,6 +1330,7 @@ export interface PageChannel extends PageEventTarget, EventTargetChannel {
   goBack(params: PageGoBackParams, metadata?: Metadata): Promise<PageGoBackResult>;
   goForward(params: PageGoForwardParams, metadata?: Metadata): Promise<PageGoForwardResult>;
   reload(params: PageReloadParams, metadata?: Metadata): Promise<PageReloadResult>;
+  expectScreenshot(params: PageExpectScreenshotParams, metadata?: Metadata): Promise<PageExpectScreenshotResult>;
   screenshot(params: PageScreenshotParams, metadata?: Metadata): Promise<PageScreenshotResult>;
   setExtraHTTPHeaders(params: PageSetExtraHTTPHeadersParams, metadata?: Metadata): Promise<PageSetExtraHTTPHeadersResult>;
   setNetworkInterceptionEnabled(params: PageSetNetworkInterceptionEnabledParams, metadata?: Metadata): Promise<PageSetNetworkInterceptionEnabledResult>;
@@ -1485,6 +1486,60 @@ export type PageReloadOptions = {
 };
 export type PageReloadResult = {
   response?: ResponseChannel,
+};
+export type PageExpectScreenshotParams = {
+  expected?: Binary,
+  timeout?: number,
+  isNot: boolean,
+  locator?: {
+    frame: FrameChannel,
+    selector: string,
+  },
+  comparatorOptions?: {
+    pixelCount?: number,
+    pixelRatio?: number,
+    threshold?: number,
+  },
+  screenshotOptions?: {
+    omitBackground?: boolean,
+    fullPage?: boolean,
+    disableAnimations?: boolean,
+    clip?: Rect,
+    mask?: {
+      frame: FrameChannel,
+      selector: string,
+    }[],
+  },
+};
+export type PageExpectScreenshotOptions = {
+  expected?: Binary,
+  timeout?: number,
+  locator?: {
+    frame: FrameChannel,
+    selector: string,
+  },
+  comparatorOptions?: {
+    pixelCount?: number,
+    pixelRatio?: number,
+    threshold?: number,
+  },
+  screenshotOptions?: {
+    omitBackground?: boolean,
+    fullPage?: boolean,
+    disableAnimations?: boolean,
+    clip?: Rect,
+    mask?: {
+      frame: FrameChannel,
+      selector: string,
+    }[],
+  },
+};
+export type PageExpectScreenshotResult = {
+  diff?: Binary,
+  errorMessage?: string,
+  actual?: Binary,
+  previous?: Binary,
+  log?: string[],
 };
 export type PageScreenshotParams = {
   timeout?: number,

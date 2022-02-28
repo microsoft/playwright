@@ -9373,50 +9373,7 @@ export interface Locator {
    * screenshot. If the element is detached from DOM, the method throws an error.
    * @param options
    */
-  screenshot(options?: {
-    /**
-     * When true, stops CSS animations, CSS transitions and Web Animations. Animations get different treatment depending on
-     * their duration:
-     */
-    disableAnimations?: boolean;
-
-    /**
-     * Specify locators that should be masked when the screenshot is taken. Masked elements will be overlayed with a pink box
-     * `#FF00FF` that completely covers its bounding box.
-     */
-    mask?: Array<Locator>;
-
-    /**
-     * Hides default white background and allows capturing screenshots with transparency. Not applicable to `jpeg` images.
-     * Defaults to `false`.
-     */
-    omitBackground?: boolean;
-
-    /**
-     * The file path to save the image to. The screenshot type will be inferred from file extension. If `path` is a relative
-     * path, then it is resolved relative to the current working directory. If no path is provided, the image won't be saved to
-     * the disk.
-     */
-    path?: string;
-
-    /**
-     * The quality of the image, between 0-100. Not applicable to `png` images.
-     */
-    quality?: number;
-
-    /**
-     * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
-     * using the
-     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
-     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
-     */
-    timeout?: number;
-
-    /**
-     * Specify screenshot type, defaults to `png`.
-     */
-    type?: "png"|"jpeg";
-  }): Promise<Buffer>;
+  screenshot(options?: LocatorScreenshotOptions): Promise<Buffer>;
 
   /**
    * This method waits for [actionability](https://playwright.dev/docs/actionability) checks, then tries to scroll element into view, unless it is
@@ -15605,6 +15562,51 @@ export interface ConnectOptions {
    * disable timeout.
    */
   timeout?: number;
+}
+
+export interface LocatorScreenshotOptions {
+  /**
+   * When true, stops CSS animations, CSS transitions and Web Animations. Animations get different treatment depending on
+   * their duration:
+   */
+  disableAnimations?: boolean;
+
+  /**
+   * Specify locators that should be masked when the screenshot is taken. Masked elements will be overlayed with a pink box
+   * `#FF00FF` that completely covers its bounding box.
+   */
+  mask?: Array<Locator>;
+
+  /**
+   * Hides default white background and allows capturing screenshots with transparency. Not applicable to `jpeg` images.
+   * Defaults to `false`.
+   */
+  omitBackground?: boolean;
+
+  /**
+   * The file path to save the image to. The screenshot type will be inferred from file extension. If `path` is a relative
+   * path, then it is resolved relative to the current working directory. If no path is provided, the image won't be saved to
+   * the disk.
+   */
+  path?: string;
+
+  /**
+   * The quality of the image, between 0-100. Not applicable to `png` images.
+   */
+  quality?: number;
+
+  /**
+   * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
+   * using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+   */
+  timeout?: number;
+
+  /**
+   * Specify screenshot type, defaults to `png`.
+   */
+  type?: "png"|"jpeg";
 }
 
 interface ElementHandleWaitForSelectorOptions {

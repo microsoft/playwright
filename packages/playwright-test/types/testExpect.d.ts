@@ -15,7 +15,7 @@
  */
 
 import type * as expect from 'expect';
-import type { Page, Locator, APIResponse } from 'playwright-core';
+import type { Page, Locator, APIResponse, PageScreenshotOptions, LocatorScreenshotOptions } from 'playwright-core';
 
 export declare type AsymmetricMatcher = Record<string, any>;
 
@@ -44,6 +44,12 @@ export declare type Expect = {
   objectContaining(sample: Record<string, unknown>): AsymmetricMatcher;
   stringContaining(expected: string): AsymmetricMatcher;
   stringMatching(expected: string | RegExp): AsymmetricMatcher;
+};
+
+type ImageComparatorOptions = {
+  threshold?: number,
+  pixelCount?: number,
+  pixelRatio?: number,
 };
 
 type Awaited<T> = T extends PromiseLike<infer U> ? U : T;
@@ -77,18 +83,13 @@ declare global {
       /**
        * Match snapshot
        */
-      toMatchSnapshot(options?: {
+      toMatchSnapshot(options?: ImageComparatorOptions & {
         name?: string | string[],
-        threshold?: number,
-        pixelCount?: number,
-        pixelRatio?: number,
       }): R;
       /**
        * Match snapshot
        */
-      toMatchSnapshot(name: string | string[], options?: {
-        threshold?: number
-      }): R;
+      toMatchSnapshot(name: string | string[], options?: ImageComparatorOptions): R;
     }
   }
 }
@@ -178,6 +179,18 @@ interface LocatorMatchers {
    * Asserts given DOM node visible on the screen.
    */
   toBeVisible(options?: { timeout?: number }): Promise<Locator>;
+
+  /**
+   * Asserts element's screenshot is matching to the snapshot.
+   */
+  toHaveScreenshot(options?: Omit<LocatorScreenshotOptions, 'path' | 'type' | 'quality'> & ImageComparatorOptions & {
+    name?: string | string[],
+  }): Promise<Locator>;
+
+  /**
+   * Asserts element's screenshot is matching to the snapshot.
+   */
+  toHaveScreenshot(name: string | string[], options?: Omit<LocatorScreenshotOptions, 'path' | 'type' | 'quality'> & ImageComparatorOptions): Promise<Locator>;
 }
 interface PageMatchers {
   /**
@@ -189,6 +202,18 @@ interface PageMatchers {
   * Asserts page's URL.
   */
   toHaveURL(expected: string | RegExp, options?: { timeout?: number }): Promise<Page>;
+
+  /**
+   * Asserts page screenshot is matching to the snapshot.
+   */
+  toHaveScreenshot(options?: Omit<PageScreenshotOptions, 'path' | 'quality' | 'type'> & ImageComparatorOptions & {
+    name?: string | string[],
+  }): Promise<Page>;
+
+  /**
+   * Asserts page screenshot is matching to the snapshot.
+   */
+  toHaveScreenshot(name: string | string[], options?: Omit<PageScreenshotOptions, 'path' | 'quality' | 'type'> & ImageComparatorOptions): Promise<Page>;
 }
 
 interface APIResponseMatchers {

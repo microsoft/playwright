@@ -2650,21 +2650,9 @@ Returns the buffer with the captured screenshot.
 
 ### option: Page.screenshot.-inline- = %%-screenshot-options-common-list-%%
 
-### option: Page.screenshot.fullPage
-- `fullPage` <[boolean]>
+### option: Page.screenshot.fullPage = %%-screenshot-option-full-page-%%
 
-When true, takes a screenshot of the full scrollable page, instead of the currently visible viewport. Defaults to
-`false`.
-
-
-### option: Page.screenshot.clip
-- `clip` <[Object]>
-  - `x` <[float]> x-coordinate of top-left corner of clip area
-  - `y` <[float]> y-coordinate of top-left corner of clip area
-  - `width` <[float]> width of clipping area
-  - `height` <[float]> height of clipping area
-
-An object which specifies clipping of the resulting image. Should have the following fields:
+### option: Page.screenshot.clip = %%-screenshot-option-clip-%%
 
 ## async method: Page.selectOption
 - returns: <[Array]<[string]>>
