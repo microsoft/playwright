@@ -407,3 +407,52 @@ test('should filter stack even without default Error.prepareStackTrace', async (
   expect(stackLines.length).toBe(1);
 });
 
+test('should work with cross-imports - 1', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'test1.spec.ts': `
+      const { test } = pwt;
+      test('test 1', async ({}) => {
+        await new Promise(x => setTimeout(x, 500));
+        console.log('running TEST-1');
+      });
+    `,
+    'test2.spec.ts': `
+      import * as _ from './test1.spec';
+      const { test } = pwt;
+      test('test 2', async ({}) => {
+        await new Promise(x => setTimeout(x, 500));
+        console.log('running TEST-2');
+      });
+    `
+  }, { workers: 2 });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(2);
+  expect(result.failed).toBe(0);
+  expect(result.output).toContain('TEST-1');
+  expect(result.output).toContain('TEST-2');
+});
+
+test('should work with cross-imports - 2', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'test1.spec.ts': `
+      const { test } = pwt;
+      import * as _ from './test2.spec';
+      test('test 1', async ({}) => {
+        await new Promise(x => setTimeout(x, 500));
+        console.log('running TEST-1');
+      });
+    `,
+    'test2.spec.ts': `
+      const { test } = pwt;
+      test('test 2', async ({}) => {
+        await new Promise(x => setTimeout(x, 500));
+        console.log('running TEST-2');
+      });
+    `
+  }, { workers: 2, reporter: 'list' });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(2);
+  expect(result.failed).toBe(0);
+  expect(result.output).toContain('TEST-1');
+  expect(result.output).toContain('TEST-2');
+});

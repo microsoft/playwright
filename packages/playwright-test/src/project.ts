@@ -18,6 +18,7 @@ import type { FullProject, Fixtures, FixturesWithLocation } from './types';
 import { Suite, TestCase } from './test';
 import { FixturePool, isFixtureOption } from './fixtures';
 import { TestTypeImpl } from './testType';
+import { calculateSha1 } from 'playwright-core/lib/utils/utils';
 
 export class ProjectImpl {
   config: FullProject;
@@ -64,19 +65,21 @@ export class ProjectImpl {
     return this.testPools.get(test)!;
   }
 
-  private _cloneEntries(from: Suite, to: Suite, repeatEachIndex: number, filter: (test: TestCase) => boolean): boolean {
+  private _cloneEntries(from: Suite, to: Suite, repeatEachIndex: number, filter: (test: TestCase) => boolean, relativeTitlePath: string): boolean {
     for (const entry of from._entries) {
       if (entry instanceof Suite) {
         const suite = entry._clone();
         to._addSuite(suite);
-        if (!this._cloneEntries(entry, suite, repeatEachIndex, filter)) {
+        if (!this._cloneEntries(entry, suite, repeatEachIndex, filter, relativeTitlePath + ' ' + suite.title)) {
           to._entries.pop();
           to.suites.pop();
         }
       } else {
         const test = entry._clone();
         test.retries = this.config.retries;
-        test._id = `${entry._ordinalInFile}@${entry._requireFile}#run${this.index}-repeat${repeatEachIndex}`;
+        // We rely upon relative paths being unique.
+        // See `getClashingTestsPerSuite()` in `runner.ts`.
+        test._id = `${calculateSha1(relativeTitlePath + ' ' + entry.title)}@${entry._requireFile}#run${this.index}-repeat${repeatEachIndex}`;
         test.repeatEachIndex = repeatEachIndex;
         test._projectIndex = this.index;
         to._addTest(test);
@@ -97,7 +100,7 @@ export class ProjectImpl {
 
   cloneFileSuite(suite: Suite, repeatEachIndex: number, filter: (test: TestCase) => boolean): Suite | undefined {
     const result = suite._clone();
-    return this._cloneEntries(suite, result, repeatEachIndex, filter) ? result : undefined;
+    return this._cloneEntries(suite, result, repeatEachIndex, filter, '') ? result : undefined;
   }
 
   private resolveFixtures(testType: TestTypeImpl, configUse: Fixtures): FixturesWithLocation[] {
