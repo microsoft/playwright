@@ -464,7 +464,8 @@ it('should dispatch a click event on a button when Enter gets pressed', async ({
   expect((await actual.jsonValue()).clicked).toBe(true);
 });
 
-it('should support simple copy-pasting', async ({ page, isMac }) => {
+it('should support simple copy-pasting', async ({ page, isMac, browserName }) => {
+  it.fixme(browserName === 'webkit', 'https://github.com/microsoft/playwright/issues/12000');
   const modifier = isMac ? 'Meta' : 'Control';
   await page.setContent(`<div contenteditable>123</div>`);
   await page.focus('div');
