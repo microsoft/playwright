@@ -19,7 +19,7 @@ import { monotonicTime } from './utils';
 export class TimeoutRunnerError extends Error {}
 
 type TimeoutRunnerData = {
-  start: number,
+  lastElapsedSync: number,
   timer: NodeJS.Timer | undefined,
   timeoutPromise: ManualPromise<any>,
 };
@@ -35,7 +35,7 @@ export class TimeoutRunner {
 
   async run<T>(cb: () => Promise<T>): Promise<T> {
     const running = this._running = {
-      start: monotonicTime(),
+      lastElapsedSync: monotonicTime(),
       timer: undefined,
       timeoutPromise: new ManualPromise(),
     };
@@ -47,7 +47,6 @@ export class TimeoutRunner {
       this._updateTimeout(running, this._timeout);
       return await resultPromise;
     } finally {
-      this._elapsed += monotonicTime() - running.start;
       this._updateTimeout(running, 0);
       if (this._running === running)
         this._running = undefined;
@@ -59,15 +58,27 @@ export class TimeoutRunner {
       this._updateTimeout(this._running, -1);
   }
 
-  updateTimeout(timeout: number) {
+  elapsed() {
+    this._syncElapsedAndStart();
+    return this._elapsed;
+  }
+
+  updateTimeout(timeout: number, elapsed?: number) {
     this._timeout = timeout;
+    if (elapsed !== undefined) {
+      this._syncElapsedAndStart();
+      this._elapsed = elapsed;
+    }
     if (this._running)
       this._updateTimeout(this._running, timeout);
   }
 
-  resetTimeout(timeout: number) {
-    this._elapsed = 0;
-    this.updateTimeout(timeout);
+  private _syncElapsedAndStart() {
+    if (this._running) {
+      const now = monotonicTime();
+      this._elapsed += now - this._running.lastElapsedSync;
+      this._running.lastElapsedSync = now;
+    }
   }
 
   private _updateTimeout(running: TimeoutRunnerData, timeout: number) {
@@ -75,10 +86,10 @@ export class TimeoutRunner {
       clearTimeout(running.timer);
       running.timer = undefined;
     }
+    this._syncElapsedAndStart();
     if (timeout === 0)
       return;
-    const elapsed = (monotonicTime() - running.start) + this._elapsed;
-    timeout = timeout - elapsed;
+    timeout = timeout - this._elapsed;
     if (timeout <= 0)
       running.timeoutPromise.reject(new TimeoutRunnerError());
     else

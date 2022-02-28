@@ -31,6 +31,8 @@ import { addSuffixToFilePath, getContainedPath, monotonicTime, sanitizeForFilePa
 type RunnableDescription = {
   type: 'test' | 'beforeAll' | 'afterAll' | 'beforeEach' | 'afterEach' | 'slow' | 'skip' | 'fail' | 'fixme' | 'teardown';
   location?: Location;
+  // When runnable has a separate timeout, it does not count into the "shared time pool" for the test.
+  timeout?: number;
 };
 
 export class TestInfoImpl implements TestInfo {
@@ -41,7 +43,9 @@ export class TestInfoImpl implements TestInfo {
   readonly _startTime: number;
   readonly _startWallTime: number;
   private _hasHardError: boolean = false;
-  _currentRunnable: RunnableDescription | undefined;
+  private _currentRunnable: RunnableDescription = { type: 'test' };
+  // Holds elapsed time of the "time pool" shared between fixtures, each hooks and test itself.
+  private _elapsedTestTime = 0;
 
   // ------------ TestInfo fields ------------
   readonly repeatEachIndex: number;
@@ -167,6 +171,16 @@ export class TestInfoImpl implements TestInfo {
     }
   }
 
+  _setCurrentRunnable(runnable: RunnableDescription) {
+    if (this._currentRunnable.timeout === undefined)
+      this._elapsedTestTime = this._timeoutRunner.elapsed();
+    this._currentRunnable = runnable;
+    if (runnable.timeout === undefined)
+      this._timeoutRunner.updateTimeout(this.timeout, this._elapsedTestTime);
+    else
+      this._timeoutRunner.updateTimeout(runnable.timeout, 0);
+  }
+
   async _runWithTimeout(cb: () => Promise<any>): Promise<void> {
     try {
       await this._timeoutRunner.run(cb);
@@ -178,8 +192,8 @@ export class TestInfoImpl implements TestInfo {
         this.status = 'timedOut';
         const title = titleForRunnable(this._currentRunnable);
         const suffix = title ? ` in ${title}` : '';
-        const message = colors.red(`Timeout of ${this.timeout}ms exceeded${suffix}.`);
-        const location = this._currentRunnable?.location;
+        const message = colors.red(`Timeout of ${this._currentRunnable.timeout ?? this.timeout}ms exceeded${suffix}.`);
+        const location = this._currentRunnable.location;
         this.errors.push({
           message,
           // Include location for hooks and modifiers to distinguish between them.
@@ -281,19 +295,24 @@ export class TestInfoImpl implements TestInfo {
   }
 
   setTimeout(timeout: number) {
-    if (!this.timeout)
-      return; // Zero timeout means some debug mode - do not set a timeout.
-    this.timeout = timeout;
-    this._timeoutRunner.updateTimeout(timeout);
+    if (this._currentRunnable.timeout !== undefined) {
+      if (!this._currentRunnable.timeout)
+        return; // Zero timeout means some debug mode - do not set a timeout.
+      this._currentRunnable.timeout = timeout;
+      this._timeoutRunner.updateTimeout(timeout);
+    } else {
+      if (!this.timeout)
+        return; // Zero timeout means some debug mode - do not set a timeout.
+      this.timeout = timeout;
+      this._timeoutRunner.updateTimeout(timeout);
+    }
   }
 }
 
 class SkipError extends Error {
 }
 
-function titleForRunnable(runnable: RunnableDescription | undefined): string {
-  if (!runnable)
-    return '';
+function titleForRunnable(runnable: RunnableDescription): string {
   switch (runnable.type) {
     case 'test':
       return '';
