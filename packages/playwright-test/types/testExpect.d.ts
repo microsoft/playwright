@@ -31,15 +31,9 @@ export declare type Expect = {
   <T = unknown>(actual: T, message?: string): MakeMatchers<T>;
   soft: <T = unknown>(actual: T, message?: string) => MakeMatchers<T>;
 
-  // Sourced from node_modules/expect/build/types.d.ts
-  assertions(arg0: number): void;
   extend(arg0: any): void;
-  extractExpectedAssertionsErrors: typeof expect['extractExpectedAssertionsErrors'];
   getState(): expect.MatcherState;
-  hasAssertions(): void;
   setState(state: Partial<expect.MatcherState>): void;
-  any(expectedObject: any): AsymmetricMatcher;
-  anything(): AsymmetricMatcher;
   arrayContaining(sample: Array<unknown>): AsymmetricMatcher;
   objectContaining(sample: Record<string, unknown>): AsymmetricMatcher;
   stringContaining(expected: string): AsymmetricMatcher;
@@ -48,18 +42,34 @@ export declare type Expect = {
 
 type Awaited<T> = T extends PromiseLike<infer U> ? U : T;
 
-type OverriddenExpectProperties =
-  'not' |
-  'resolves' |
-  'rejects' |
-  'toMatchInlineSnapshot' |
-  'toThrowErrorMatchingInlineSnapshot' |
-  'toMatchSnapshot' |
-  'toThrowErrorMatchingSnapshot';
+type SupportedExpectProperties =
+  'toBe' |
+  'toBeCloseTo' |
+  'toBeDefined' |
+  'toBeFalsy' |
+  'toBeGreaterThan' |
+  'toBeGreaterThanOrEqual' |
+  'toBeInstanceOf' |
+  'toBeLessThan' |
+  'toBeLessThanOrEqual' |
+  'toBeNaN' |
+  'toBeNull' |
+  'toBeTruthy' |
+  'toBeUndefined' |
+  'toContain' |
+  'toContainEqual' |
+  'toEqual' |
+  'toHaveLength' |
+  'toHaveProperty' |
+  'toMatch' |
+  'toMatchObject' |
+  'toStrictEqual' |
+  'toThrow' |
+  'toThrowError'
 
 declare global {
   export namespace PlaywrightTest {
-    export interface Matchers<R> extends Omit<expect.Matchers<R>, OverriddenExpectProperties> {
+    export interface Matchers<R> extends Pick<expect.Matchers<R>, SupportedExpectProperties> {
       /**
        * If you know how to test something, `.not` lets you test its opposite.
        */
