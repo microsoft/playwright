@@ -17,11 +17,13 @@
 import util from 'util';
 import path from 'path';
 import url from 'url';
+import colors from 'colors/safe';
 import type { TestError, Location } from './types';
 import { default as minimatch } from 'minimatch';
 import debug from 'debug';
 import { calculateSha1, isRegExp } from 'playwright-core/lib/utils/utils';
 import { isInternalFileName } from 'playwright-core/lib/utils/stackTrace';
+import { currentTestInfo } from './globals';
 
 const PLAYWRIGHT_CORE_PATH = path.dirname(require.resolve('playwright-core'));
 const EXPECT_PATH = path.dirname(require.resolve('expect'));
@@ -206,23 +208,22 @@ export function getContainedPath(parentPath: string, subPath: string = ''): stri
 
 export const debugTest = debug('pw:test');
 
-export function prependToTestError(testError: TestError | undefined, message: string, location?: Location): TestError {
-  if (!testError) {
-    if (!location)
-      return { value: message };
-    let stack = `    at ${location.file}:${location.line}:${location.column}`;
-    if (!message.endsWith('\n'))
-      stack = '\n' + stack;
-    return { message: message, stack: message + stack };
-  }
-  if (testError.message) {
-    const stack = testError.stack ? message + testError.stack : testError.stack;
-    message = message + testError.message;
-    return {
-      value: testError.value,
-      message,
-      stack,
-    };
-  }
-  return testError;
+export function callLogText(log: string[] | undefined): string {
+  if (!log)
+    return '';
+  return `
+Call log:
+  ${colors.dim('- ' + (log || []).join('\n  - '))}
+`;
 }
+
+export function currentExpectTimeout(options: { timeout?: number }) {
+  const testInfo = currentTestInfo();
+  if (options.timeout !== undefined)
+    return options.timeout;
+  let defaultExpectTimeout = testInfo?.project.expect?.timeout;
+  if (typeof defaultExpectTimeout === 'undefined')
+    defaultExpectTimeout = 5000;
+  return defaultExpectTimeout;
+}
+

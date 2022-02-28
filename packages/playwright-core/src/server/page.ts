@@ -20,7 +20,7 @@ import * as frames from './frames';
 import * as input from './input';
 import * as js from './javascript';
 import * as network from './network';
-import { Screenshotter, ScreenshotMaskOption } from './screenshotter';
+import { Screenshotter, ScreenshotOptions } from './screenshotter';
 import { TimeoutSettings } from '../utils/timeoutSettings';
 import * as types from './types';
 import { BrowserContext } from './browserContext';
@@ -35,6 +35,7 @@ import { SelectorInfo, Selectors } from './selectors';
 import { CallMetadata, SdkObject } from './instrumentation';
 import { Artifact } from './artifact';
 import { ParsedSelector } from './common/selectorParser';
+import { TimeoutOptions } from '../common/types';
 
 export interface PageDelegate {
   readonly rawMouse: input.RawMouse;
@@ -424,7 +425,7 @@ export class Page extends SdkObject {
     route.continue();
   }
 
-  async screenshot(metadata: CallMetadata, options: types.ScreenshotOptions & ScreenshotMaskOption = {}): Promise<Buffer> {
+  async screenshot(metadata: CallMetadata, options: ScreenshotOptions & TimeoutOptions): Promise<Buffer> {
     const controller = new ProgressController(metadata, this);
     return controller.run(
         progress => this._screenshotter.screenshotPage(progress, options),

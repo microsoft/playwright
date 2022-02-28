@@ -710,7 +710,7 @@ using the [`method: AndroidDevice.setDefaultTimeout`] method.
 Time to retry the assertion for. Defaults to `timeout` in [`property: TestConfig.expect`].
 
 ## assertions-timeout
-* langs: java, python
+* langs: java, python, csharp
 - `timeout` <[float]>
 
 Time to retry the assertion for.

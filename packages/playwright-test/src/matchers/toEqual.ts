@@ -16,7 +16,7 @@
 
 import type { Expect } from '../types';
 import { expectType } from '../util';
-import { callLogText, currentExpectTimeout } from './toMatchText';
+import { callLogText, currentExpectTimeout } from '../util';
 
 // Omit colon and one or more spaces, so can call getLabelPrinter.
 const EXPECTED_LABEL = 'Expected';

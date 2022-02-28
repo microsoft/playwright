@@ -3204,11 +3204,12 @@ export interface Page {
    * [browser.newContext([options])](https://playwright.dev/docs/api/class-browser#browser-new-context) allows to set
    * viewport size (and more) for all pages in the context at once.
    *
-   * `page.setViewportSize` will resize the page. A lot of websites don't expect phones to change size, so you should set the
-   * viewport size before navigating to the page.
-   * [page.setViewportSize(viewportSize)](https://playwright.dev/docs/api/class-page#page-set-viewport-size) will also reset
-   * `screen` size, use [browser.newContext([options])](https://playwright.dev/docs/api/class-browser#browser-new-context)
-   * with `screen` and `viewport` parameters if you need better control of these properties.
+   * [page.setViewportSize(viewportSize)](https://playwright.dev/docs/api/class-page#page-set-viewport-size) will resize the
+   * page. A lot of websites don't expect phones to change size, so you should set the viewport size before navigating to the
+   * page. [page.setViewportSize(viewportSize)](https://playwright.dev/docs/api/class-page#page-set-viewport-size) will also
+   * reset `screen` size, use
+   * [browser.newContext([options])](https://playwright.dev/docs/api/class-browser#browser-new-context) with `screen` and
+   * `viewport` parameters if you need better control of these properties.
    *
    * ```js
    * const page = await browser.newPage();
@@ -15835,6 +15836,8 @@ type Devices = {
   "iPhone 12 Pro landscape": DeviceDescriptor;
   "iPhone 12 Pro Max": DeviceDescriptor;
   "iPhone 12 Pro Max landscape": DeviceDescriptor;
+  "iPhone 12 Mini": DeviceDescriptor;
+  "iPhone 12 Mini landscape": DeviceDescriptor;
   "iPhone 13": DeviceDescriptor;
   "iPhone 13 landscape": DeviceDescriptor;
   "iPhone 13 Pro": DeviceDescriptor;

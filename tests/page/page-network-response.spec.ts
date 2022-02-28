@@ -235,9 +235,9 @@ it('should report multiple set-cookie headers', async ({ page, server }) => {
   expect(await response.headerValues('set-cookie')).toEqual(['a=b', 'c=d']);
 });
 
-it('should behave the same way for headers and allHeaders', async ({ page, server, browserName, channel, platform }) => {
+it('should behave the same way for headers and allHeaders', async ({ page, server, browserName, channel, platform, isAndroid }) => {
   it.fixme(browserName === 'webkit' && platform === 'win32', 'libcurl does not support non-set-cookie multivalue headers');
-  it.skip(!!channel, 'Stable chrome uses \n as a header separator in non-raw headers');
+  it.fixme(isAndroid, 'Android uses \n as a header separator in non-raw headers');
   server.setRoute('/headers', (req, res) => {
     const headers = {
       'Set-Cookie': ['a=b', 'c=d'],

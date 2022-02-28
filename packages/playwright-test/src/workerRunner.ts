@@ -18,8 +18,8 @@ import rimraf from 'rimraf';
 import util from 'util';
 import colors from 'colors/safe';
 import { EventEmitter } from 'events';
-import { serializeError, prependToTestError, formatLocation } from './util';
-import { TestBeginPayload, TestEndPayload, RunPayload, TestEntry, DonePayload, WorkerInitParams, StepBeginPayload, StepEndPayload } from './ipc';
+import { serializeError, formatLocation } from './util';
+import { TestBeginPayload, TestEndPayload, RunPayload, TestEntry, DonePayload, WorkerInitParams, StepBeginPayload, StepEndPayload, TeardownErrorsPayload } from './ipc';
 import { setCurrentTestInfo } from './globals';
 import { Loader } from './loader';
 import { Modifier, Suite, TestCase } from './test';
@@ -39,7 +39,7 @@ export class WorkerRunner extends EventEmitter {
   private _fixtureRunner: FixtureRunner;
 
   private _failedTest: TestInfoImpl | undefined;
-  private _fatalError: TestError | undefined;
+  private _fatalErrors: TestError[] = [];
   private _entries = new Map<string, TestEntry>();
   private _isStopped = false;
   private _runFinished = Promise.resolve();
@@ -69,8 +69,10 @@ export class WorkerRunner extends EventEmitter {
     // We have to load the project to get the right deadline below.
     await this._loadIfNeeded();
     await this._teardownScopes();
-    if (this._fatalError)
-      this.emit('teardownError', { error: this._fatalError });
+    if (this._fatalErrors.length) {
+      const payload: TeardownErrorsPayload = { fatalErrors: this._fatalErrors };
+      this.emit('teardownErrors', payload);
+    }
   }
 
   private async _teardownScopes() {
@@ -79,8 +81,8 @@ export class WorkerRunner extends EventEmitter {
       await this._fixtureRunner.teardownScope('test');
       await this._fixtureRunner.teardownScope('worker');
     }, this._project.config.timeout);
-    if (result.timedOut && !this._fatalError)
-      this._fatalError = { message: colors.red(`Timeout of ${this._project.config.timeout}ms exceeded while shutting down environment`) };
+    if (result.timedOut)
+      this._fatalErrors.push({ message: colors.red(`Timeout of ${this._project.config.timeout}ms exceeded while shutting down environment`) });
   }
 
   unhandledError(error: Error | any) {
@@ -102,8 +104,8 @@ export class WorkerRunner extends EventEmitter {
       this._currentTest._failWithError(serializeError(error), true /* isHardError */);
     } else {
       // No current test - fatal error.
-      if (!this._fatalError)
-        this._fatalError = serializeError(error);
+      if (!this._fatalErrors.length)
+        this._fatalErrors.push(serializeError(error));
     }
     this.stop();
   }
@@ -180,8 +182,7 @@ export class WorkerRunner extends EventEmitter {
       // TODO: separate timeout for beforeAll modifiers?
       const result = await raceAgainstTimeout(() => this._fixtureRunner.resolveParametersAndRunFunction(beforeAllModifier.fn, this._workerInfo, undefined), this._project.config.timeout);
       if (result.timedOut) {
-        if (!this._fatalError)
-          this._fatalError = serializeError(new Error(`Timeout of ${this._project.config.timeout}ms exceeded while running ${beforeAllModifier.type} modifier\n    at ${formatLocation(beforeAllModifier.location)}`));
+        this._fatalErrors.push(serializeError(new Error(`Timeout of ${this._project.config.timeout}ms exceeded while running ${beforeAllModifier.type} modifier\n    at ${formatLocation(beforeAllModifier.location)}`)));
         this.stop();
       } else if (!!result.result) {
         annotations.push({ type: beforeAllModifier.type, description: beforeAllModifier.description });
@@ -303,11 +304,7 @@ export class WorkerRunner extends EventEmitter {
       this._failedTest = testInfo;
       if (test._type !== 'test') {
         // beforeAll/afterAll hook failure skips any remaining tests in the worker.
-        if (!this._fatalError)
-          this._fatalError = testInfo.error;
-        // Keep any error we have, and add "timeout" message.
-        if (testInfo.status === 'timedOut')
-          this._fatalError = prependToTestError(this._fatalError, colors.red(`Timeout of ${testInfo.timeout}ms exceeded in ${test._type} hook.\n`), test.location);
+        this._fatalErrors.push(...testInfo.errors);
       }
       this.stop();
     } else {
@@ -389,9 +386,9 @@ export class WorkerRunner extends EventEmitter {
   }
 
   private _reportDone() {
-    const donePayload: DonePayload = { fatalError: this._fatalError };
+    const donePayload: DonePayload = { fatalErrors: this._fatalErrors };
     this.emit('done', donePayload);
-    this._fatalError = undefined;
+    this._fatalErrors = [];
     this._failedTest = undefined;
   }
 }

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import colors from 'colors/safe';
 import fs from 'fs';
 import * as mime from 'mime';
 import path from 'path';
@@ -25,7 +26,7 @@ import { Loader } from './loader';
 import { ProjectImpl } from './project';
 import { TestCase } from './test';
 import { Annotations, TestStepInternal } from './types';
-import { addSuffixToFilePath, getContainedPath, monotonicTime, sanitizeForFilePath, serializeError, trimLongString } from './util';
+import { addSuffixToFilePath, formatLocation, getContainedPath, monotonicTime, sanitizeForFilePath, serializeError, trimLongString } from './util';
 
 export class TestInfoImpl implements TestInfo {
   private _projectImpl: ProjectImpl;
@@ -117,7 +118,7 @@ export class TestInfoImpl implements TestInfo {
       const sanitizedRelativePath = relativeTestFilePath.replace(process.platform === 'win32' ? new RegExp('\\\\', 'g') : new RegExp('/', 'g'), '-');
       const fullTitleWithoutSpec = test.titlePath().slice(1).join(' ') + (test._type === 'test' ? '' : '-worker' + this.workerIndex);
 
-      let testOutputDir = sanitizedRelativePath + '-' + sanitizeForFilePath(trimLongString(fullTitleWithoutSpec));
+      let testOutputDir = trimLongString(sanitizedRelativePath + '-' + sanitizeForFilePath(fullTitleWithoutSpec));
       if (uniqueProjectNamePathSegment)
         testOutputDir += '-' + sanitizeForFilePath(uniqueProjectNamePathSegment);
       if (this.retry)
@@ -167,8 +168,16 @@ export class TestInfoImpl implements TestInfo {
       if (!(error instanceof TimeoutRunnerError))
         throw error;
       // Do not overwrite existing failure upon hook/teardown timeout.
-      if (this.status === 'passed')
+      if (this.status === 'passed') {
         this.status = 'timedOut';
+        if (this._test._type === 'test') {
+          this.errors.push({ message: colors.red(`Timeout of ${this.timeout}ms exceeded.`) });
+        } else {
+          // Include location for the hook to distinguish between multiple hooks.
+          const message = colors.red(`Timeout of ${this.timeout}ms exceeded in ${this._test._type} hook.`);
+          this.errors.push({ message: message, stack: message + `\n    at ${formatLocation(this._test.location)}.` });
+        }
+      }
     }
     this.duration = monotonicTime() - this._startTime;
   }

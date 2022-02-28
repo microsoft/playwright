@@ -59,6 +59,7 @@ const config: Config<CoverageWorkerOptions & PlaywrightWorkerOptions & Playwrigh
     ['html', { open: 'on-failure' }]
   ],
   projects: [],
+  use: {},
 };
 
 if (mode === 'service') {
@@ -74,6 +75,9 @@ if (mode === 'service2') {
     command: 'npx playwright run-server --port=3333',
     port: 3333,
     reuseExistingServer: true,
+  };
+  config.use.connectOptions = {
+    wsEndpoint: 'ws://localhost:3333/',
   };
 }
 
@@ -101,9 +105,6 @@ for (const browserName of browserNames) {
       },
       trace: trace ? 'on' : undefined,
       coverageName: browserName,
-      connectOptions: mode === 'service2' ? {
-        wsEndpoint: 'ws://localhost:3333/?browser=' + (channel || browserName),
-      } : undefined,
     },
     metadata: {
       platform: process.platform,

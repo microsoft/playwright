@@ -108,7 +108,7 @@ export class BaseReporter implements Reporter  {
   }
 
   protected fitToScreen(line: string, suffix?: string): string {
-    const ttyWidth = this._ttyWidthForTest || (process.env.PWTEST_SKIP_TEST_OUTPUT ? 80 : process.stdout.columns || 0);
+    const ttyWidth = this._ttyWidthForTest || process.stdout.columns || 0;
     if (!ttyWidth) {
       // Guard against the case where we cannot determine available width.
       return line;
@@ -303,11 +303,7 @@ export function formatFailure(config: FullConfig, test: TestCase, options: {inde
 export function formatResultFailure(config: FullConfig, test: TestCase, result: TestResult, initialIndent: string, highlightCode: boolean): ErrorDetails[] {
   const errorDetails: ErrorDetails[] = [];
 
-  if (result.status === 'timedOut') {
-    errorDetails.push({
-      message: indent(colors.red(`Timeout of ${test.timeout}ms exceeded.`), initialIndent),
-    });
-  } else if (result.status === 'passed' && test.expectedStatus === 'failed') {
+  if (result.status === 'passed' && test.expectedStatus === 'failed') {
     errorDetails.push({
       message: indent(colors.red(`Expected to fail, but passed.`), initialIndent),
     });

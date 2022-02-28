@@ -17,7 +17,7 @@
 import child_process from 'child_process';
 import path from 'path';
 import { EventEmitter } from 'events';
-import { RunPayload, TestBeginPayload, TestEndPayload, DonePayload, TestOutputPayload, WorkerInitParams, StepBeginPayload, StepEndPayload, SerializedLoaderData } from './ipc';
+import { RunPayload, TestBeginPayload, TestEndPayload, DonePayload, TestOutputPayload, WorkerInitParams, StepBeginPayload, StepEndPayload, SerializedLoaderData, TeardownErrorsPayload } from './ipc';
 import type { TestResult, Reporter, TestStep } from '../types/testReporter';
 import { Suite, TestCase } from './test';
 import { Loader } from './loader';
@@ -290,7 +290,7 @@ export class Dispatcher {
       // - there are no remaining
       // - we are here not because something failed
       // - no unrecoverable worker error
-      if (!remaining.length && !failedTestIds.size && !params.fatalError) {
+      if (!remaining.length && !failedTestIds.size && !params.fatalErrors.length) {
         if (this._isWorkerRedundant(worker))
           worker.stop();
         doneWithJob();
@@ -302,12 +302,12 @@ export class Dispatcher {
 
       // In case of fatal error, report first remaining test as failing with this error,
       // and all others as skipped.
-      if (params.fatalError) {
+      if (params.fatalErrors.length) {
         // Perhaps we were running a hook - report it as failed.
         if (runningHookId) {
           const data = this._testById.get(runningHookId)!;
           const { result } = data.resultByWorkerIndex.get(worker.workerIndex)!;
-          result.errors = [params.fatalError];
+          result.errors = [...params.fatalErrors];
           result.error = result.errors[0];
           result.status = 'failed';
           this._reporter.onTestEnd?.(data.test, result);
@@ -328,7 +328,7 @@ export class Dispatcher {
             if (test._type === 'test')
               this._reporter.onTestBegin?.(test, result);
           }
-          result.errors = [params.fatalError];
+          result.errors = [...params.fatalErrors];
           result.error = result.errors[0];
           result.status = first ? 'failed' : 'skipped';
           this._reportTestEnd(test, result);
@@ -339,7 +339,8 @@ export class Dispatcher {
           // We had a fatal error after all tests have passed - most likely in the afterAll hook.
           // Let's just fail the test run.
           this._hasWorkerErrors = true;
-          this._reporter.onError?.(params.fatalError);
+          for (const error of params.fatalErrors)
+            this._reporter.onError?.(error);
         }
         // Since we pretend that all remaining tests failed, there is nothing else to run,
         // except for possible retries.
@@ -407,7 +408,7 @@ export class Dispatcher {
     worker.on('done', onDone);
 
     const onExit = (expectedly: boolean) => {
-      onDone(expectedly ? {} : { fatalError: { value: 'Worker process exited unexpectedly' } });
+      onDone({ fatalErrors: expectedly ? [] : [{ value: 'Worker process exited unexpectedly' }] });
     };
     worker.on('exit', onExit);
 
@@ -439,9 +440,10 @@ export class Dispatcher {
       result?.stderr.push(chunk);
       this._reporter.onStdErr?.(chunk, test, result);
     });
-    worker.on('teardownError', ({ error }) => {
+    worker.on('teardownErrors', (params: TeardownErrorsPayload) => {
       this._hasWorkerErrors = true;
-      this._reporter.onError?.(error);
+      for (const error of params.fatalErrors)
+        this._reporter.onError?.(error);
     });
     return worker;
   }

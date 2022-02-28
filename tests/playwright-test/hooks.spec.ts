@@ -197,7 +197,7 @@ test('beforeAll from a helper file should throw', async ({ runInlineTest }) => {
     `,
   });
   expect(result.exitCode).toBe(1);
-  expect(result.output).toContain('beforeAll hook can only be called in a test file');
+  expect(result.output).toContain('Playwright Test did not expect test.beforeAll() to be called here');
 });
 
 test('beforeAll hooks are skipped when no tests in the suite are run', async ({ runInlineTest }) => {
@@ -499,7 +499,7 @@ test('afterAll timeout should be reported', async ({ runInlineTest }, testInfo) 
     '%%afterAll',
   ]);
   expect(result.output).toContain('Timeout of 1000ms exceeded in afterAll hook.');
-  expect(result.output).toContain(`at ${testInfo.outputPath('a.test.js')}:6:12`);
+  expect(result.output).toContain(`at a.test.js:6:12`);
 });
 
 test('beforeAll and afterAll timeouts at the same time should be reported', async ({ runInlineTest }) => {

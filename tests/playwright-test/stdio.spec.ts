@@ -73,6 +73,6 @@ test('should ignore stdio when quiet', async ({ runInlineTest }) => {
         console.error('\\n%% stderr in a test');
       });
     `
-  }, { reporter: 'list' }, { PWTEST_SKIP_TEST_OUTPUT: '' });
+  }, { reporter: 'list' });
   expect(result.output).not.toContain('%%');
 });

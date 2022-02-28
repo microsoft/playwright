@@ -10,7 +10,7 @@ on:
 
 jobs:
   publish-canary:
-    name: "publish canary NPM & Trigger canary Docker"
+    name: "publish canary NPM & Publish canary Docker"
     runs-on: ubuntu-20.04
     if: github.repository == 'microsoft/playwright'
     steps:

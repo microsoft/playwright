@@ -18,9 +18,11 @@ import debug from 'debug';
 import * as types from '../types';
 import { EventEmitter } from 'events';
 import fs from 'fs';
+import os from 'os';
+import path from 'path';
 import * as stream from 'stream';
 import * as ws from 'ws';
-import { createGuid, makeWaitForNextTask } from '../../utils/utils';
+import { createGuid, makeWaitForNextTask, removeFolders } from '../../utils/utils';
 import { BrowserOptions, BrowserProcess, PlaywrightOptions } from '../browser';
 import { BrowserContext, validateBrowserContextOptions } from '../browserContext';
 import { ProgressController } from '../progress';
@@ -28,10 +30,12 @@ import { CRBrowser } from '../chromium/crBrowser';
 import { helper } from '../helper';
 import { PipeTransport } from '../../protocol/transport';
 import { RecentLogsCollector } from '../../utils/debugLogger';
+import { gracefullyCloseSet } from '../../utils/processLauncher';
 import { TimeoutSettings } from '../../utils/timeoutSettings';
 import { AndroidWebView } from '../../protocol/channels';
-import { CRPage } from '../chromium/crPage';
 import { SdkObject, internalCallMetadata } from '../instrumentation';
+
+const ARTIFACTS_FOLDER = path.join(os.tmpdir(), 'playwright-artifacts-');
 
 export interface Backend {
   devices(options: types.DeviceOptions): Promise<DeviceBackend[]>;
@@ -256,15 +260,26 @@ export class AndroidDevice extends SdkObject {
     await androidBrowser._init();
     this._browserConnections.add(androidBrowser);
 
+    const artifactsDir = await fs.promises.mkdtemp(ARTIFACTS_FOLDER);
+    const cleanupArtifactsDir = async () => {
+      const errors = await removeFolders([artifactsDir]);
+      for (let i = 0; i < (errors || []).length; ++i)
+        debug('pw:android')(`exception while removing ${artifactsDir}: ${errors[i]}`);
+    };
+    gracefullyCloseSet.add(cleanupArtifactsDir);
+    socket.on('close', async () => {
+      gracefullyCloseSet.delete(cleanupArtifactsDir);
+      cleanupArtifactsDir().catch(e => debug('pw:android')(`could not cleanup artifacts dir: ${e}`));
+    });
     const browserOptions: BrowserOptions = {
       ...this._android._playwrightOptions,
       name: 'clank',
       isChromium: true,
       slowMo: 0,
       persistent: { ...options, noDefaultViewport: true },
-      artifactsDir: '',
-      downloadsPath: '',
-      tracesDir: '',
+      artifactsDir,
+      downloadsPath: artifactsDir,
+      tracesDir: artifactsDir,
       browserProcess: new ClankBrowserProcess(androidBrowser),
       proxy: options.proxy,
       protocolLogger: helper.debugProtocolLogger(),
@@ -278,14 +293,6 @@ export class AndroidDevice extends SdkObject {
     await controller.run(async progress => {
       await defaultContext._loadDefaultContextAsIs(progress);
     });
-    {
-      // TODO: remove after rolling to r838157
-      // Force page scale factor update.
-      const page = defaultContext.pages()[0];
-      const crPage = page._delegate as CRPage;
-      await crPage._mainFrameSession._client.send('Emulation.setDeviceMetricsOverride', { mobile: false, width: 0, height: 0, deviceScaleFactor: 0 });
-      await crPage._mainFrameSession._client.send('Emulation.clearDeviceMetricsOverride', {});
-    }
     return defaultContext;
   }
 

@@ -21,7 +21,6 @@ import type { TestType, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWor
 import { rootTestType } from './testType';
 import { createGuid, removeFolders, debugMode } from 'playwright-core/lib/utils/utils';
 import { GridClient } from 'playwright-core/lib/grid/gridClient';
-import { prependToTestError } from './util';
 export { expect } from './expect';
 export const _baseTest: TestType<{}, {}> = rootTestType.test;
 import * as outOfProcess from 'playwright-core/lib/outofprocess';
@@ -106,11 +105,18 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
       (browserType as any)._defaultLaunchOptions = undefined;
   }, { scope: 'worker', auto: true }],
 
-  browser: [async ({ playwright, browserName, connectOptions }, use) => {
+  browser: [async ({ playwright, browserName, channel, headless, connectOptions }, use) => {
     if (!['chromium', 'firefox', 'webkit'].includes(browserName))
       throw new Error(`Unexpected browserName "${browserName}", must be one of "chromium", "firefox" or "webkit"`);
     if (connectOptions) {
-      const browser = await playwright[browserName].connect(connectOptions);
+      const browser = await playwright[browserName].connect({
+        wsEndpoint: connectOptions.wsEndpoint,
+        headers: {
+          'x-playwright-browser': channel || browserName,
+          'x-playwright-headless': headless ? '1' : '0',
+          ...connectOptions.headers,
+        }
+      });
       await use(browser);
       await browser.close();
       return;
@@ -422,7 +428,7 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
       const pendingCalls = anyContext ? formatPendingCalls((anyContext as any)._connection.pendingProtocolCalls()) : '';
       await Promise.all(leftoverContexts.filter(c => createdContexts.has(c)).map(c => c.close()));
       if (pendingCalls)
-        testInfo.error = prependToTestError(testInfo.error, pendingCalls);
+        testInfo.errors.push({ message: pendingCalls });
     }
   }, { auto: true }],
 
@@ -477,7 +483,7 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
     }));
 
     if (prependToError)
-      testInfo.error = prependToTestError(testInfo.error, prependToError);
+      testInfo.errors.push({ message: prependToError });
   },
 
   context: async ({ _contextFactory }, use) => {
@@ -504,7 +510,7 @@ function formatPendingCalls(calls: ParsedStackTrace[]) {
   return 'Pending operations:\n' + calls.map(call => {
     const frame = call.frames && call.frames[0] ? ' at ' + formatStackFrame(call.frames[0]) : '';
     return `  - ${call.apiName}${frame}\n`;
-  }).join('') + '\n';
+  }).join('');
 }
 
 function formatStackFrame(frame: StackFrame) {

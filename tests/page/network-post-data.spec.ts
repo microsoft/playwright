@@ -107,3 +107,17 @@ it('should get post data for file/blob', async ({ page, server, browserName }) =
   ]);
   expect(request.postData()).toBe('file-contents');
 });
+
+it('should get post data for navigator.sendBeacon api calls', async ({ page, server, browserName }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/12231' });
+  it.fail(browserName === 'chromium', 'postData is empty');
+  it.fail(browserName === 'webkit', 'postData is empty');
+  await page.goto(server.EMPTY_PAGE);
+  const [request] = await Promise.all([
+    page.waitForRequest('**/*'),
+    page.evaluate(() => navigator.sendBeacon(window.location.origin + '/api/foo', new Blob([JSON.stringify({ foo: 'bar' })])))
+  ]);
+  expect(request.method()).toBe('POST');
+  expect(request.url()).toBe(server.PREFIX + '/api/foo');
+  expect(request.postDataJSON()).toStrictEqual({ foo: 'bar' });
+});
