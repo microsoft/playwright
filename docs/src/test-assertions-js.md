@@ -349,7 +349,7 @@ await expect(page).toHaveURL(/.*checkout/);
 - `options`
   - `threshold` <[float]> an acceptable percieved color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between pixels in compared images, between zero (strict) and one (lax), default is configurable with [`property: TestConfig.expect`]. Defaults to `0.2`.
   - `pixelCount` <[int]> an acceptable amount of pixels that could be different, unset by default.
-  - `pixelRatio` <[float]> an acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1` , unset by default.
+  - `pixelRatio` <[float]> an acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1`, unset by default.
 
 Ensures that passed value, either a [string] or a [Buffer], matches the expected snapshot stored in the test snapshots directory.
 
@@ -366,3 +366,37 @@ expect(await page.screenshot()).toMatchSnapshot(['landing', 'step3.png']);
 ```
 
 Learn more about [visual comparisons](./test-snapshots.md).
+
+## expect(pageOrLocator).toHaveScreenshot(name[, options])
+- `name` <[string] | [Array]<[string]>> Snapshot name.
+- `options`
+  - `disableAnimations` <[boolean]> When true, stops CSS animations, CSS transitions and Web Animations. Animations get different treatment depending on their duration:
+    - finite animations are fast-forwarded to completion, so they'll fire `transitionend` event.
+    - infinite animations are canceled to initial state, and then played over after the screenshot.
+  - `omitBackground` <[boolean]> Hides default white background and allows capturing screenshots with transparency. Defaults to `false`.
+  - `fullPage` <[boolean]> When true, takes a screenshot of the full scrollable page, instead of the currently visible viewport. Defaults to `false`.
+  - `mask` <[Array]<[Locator]>> Specify locators that should be masked when the screenshot is taken. Masked elements will be overlayed with
+a pink box `#FF00FF` that completely covers its bounding box.
+  - `clip` <[Object]> An object which specifies clipping of the resulting image.
+    - `x` <[float]> x-coordinate of top-left corner of clip area
+    - `y` <[float]> y-coordinate of top-left corner of clip area
+    - `width` <[float]> width of clipping area
+    - `height` <[float]> height of clipping area
+  - `threshold` <[float]> an acceptable percieved color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between pixels in compared images, between zero (strict) and one (lax), default is configurable with [`property: TestConfig.expect`]. Defaults to `0.2`.
+  - `pixelCount` <[int]> an acceptable amount of pixels that could be different, unset by default.
+  - `pixelRatio` <[float]> an acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1`, unset by default.
+  - `timeout` <[number]> Time to retry assertion for, defaults to `timeout` in [`property: TestConfig.expect`].
+
+Ensures that passed value, either a [string] or a [Buffer], matches the expected snapshot stored in the test snapshots directory.
+
+```js
+// Basic usage.
+await expect(page).toHaveScreenshot('landing-page.png');
+await expect(page.locator('text=Submit')).toHaveScreenshot('submit-button.png');
+
+// Take a full page screenshot and auto-generate screenshot name
+await expect(page).toHaveScreenshot({ fullPage: true });
+
+// Configure image matching properties.
+await expect(page.locator('text=Submit').toHaveScreenshot({ pixelRatio: 0.01 });
+```

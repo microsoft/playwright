@@ -610,7 +610,7 @@ test('should compare different PNG images', async ({ runInlineTest }, testInfo) 
 
   const outputText = stripAnsi(result.output);
   expect(result.exitCode).toBe(1);
-  expect(outputText).toContain('Snapshot comparison failed:');
+  expect(outputText).toContain('Screenshot comparison failed:');
   const expectedSnapshotArtifactPath = testInfo.outputPath('test-results', 'a-is-a-test', 'snapshot-expected.png');
   const actualSnapshotArtifactPath = testInfo.outputPath('test-results', 'a-is-a-test', 'snapshot-actual.png');
   const diffSnapshotArtifactPath = testInfo.outputPath('test-results', 'a-is-a-test', 'snapshot-diff.png');
