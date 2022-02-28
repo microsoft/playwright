@@ -330,6 +330,38 @@ test('modifier timeout should be reported', async ({ runInlineTest }) => {
   }, { timeout: 2000 });
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
-  expect(result.output).toContain('Error: Timeout of 2000ms exceeded while running skip modifier');
+  expect(result.output).toContain('Timeout of 2000ms exceeded in skip modifier.');
   expect(stripAnsi(result.output)).toContain('6 |       test.skip(async () => new Promise(() => {}));');
+});
+
+test('should not run hooks if modifier throws', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      const { test } = pwt;
+      test.skip(() => {
+        console.log('%%modifier');
+        throw new Error('Oh my');
+      });
+      test.beforeAll(() => {
+        console.log('%%beforeEach');
+      });
+      test.beforeEach(() => {
+        console.log('%%beforeEach');
+      });
+      test.afterEach(() => {
+        console.log('%%afterEach');
+      });
+      test.afterAll(() => {
+        console.log('%%beforeEach');
+      });
+      test('skipped1', () => {
+        console.log('%%skipped1');
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
+    '%%modifier',
+  ]);
 });

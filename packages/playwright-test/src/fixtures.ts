@@ -51,7 +51,7 @@ class Fixture {
     this.value = null;
   }
 
-  async setup(workerInfo: WorkerInfo, testInfo: TestInfo | undefined) {
+  async setup(testInfo: TestInfo) {
     if (typeof this.registration.fn !== 'function') {
       this.value = this.registration.fn;
       return;
@@ -60,7 +60,7 @@ class Fixture {
     const params: { [key: string]: any } = {};
     for (const name of this.registration.deps) {
       const registration = this.runner.pool!.resolveDependency(this.registration, name)!;
-      const dep = await this.runner.setupFixtureForRegistration(registration, workerInfo, testInfo);
+      const dep = await this.runner.setupFixtureForRegistration(registration, testInfo);
       dep.usages.add(this);
       params[name] = dep.value;
     }
@@ -77,6 +77,7 @@ class Fixture {
       useFuncStarted.resolve();
       await this._useFuncFinished;
     };
+    const workerInfo: WorkerInfo = { config: testInfo.config, parallelIndex: testInfo.parallelIndex, workerIndex: testInfo.workerIndex, project: testInfo.project };
     const info = this.registration.scope === 'worker' ? workerInfo : testInfo;
     this._selfTeardownComplete = Promise.resolve().then(() => this.registration.fn(params, useFunc, info)).catch((e: any) => {
       if (!useFuncStarted.isDone())
@@ -261,12 +262,12 @@ export class FixtureRunner {
       throw error;
   }
 
-  async resolveParametersForFunction(fn: Function, workerInfo: WorkerInfo, testInfo: TestInfo | undefined): Promise<object> {
+  async resolveParametersForFunction(fn: Function, testInfo: TestInfo): Promise<object> {
     // Install all automatic fixtures.
     for (const registration of this.pool!.registrations.values()) {
       const shouldSkip = !testInfo && registration.scope === 'test';
       if (registration.auto && !shouldSkip)
-        await this.setupFixtureForRegistration(registration, workerInfo, testInfo);
+        await this.setupFixtureForRegistration(registration, testInfo);
     }
 
     // Install used fixtures.
@@ -274,18 +275,18 @@ export class FixtureRunner {
     const params: { [key: string]: any } = {};
     for (const name of names) {
       const registration = this.pool!.registrations.get(name)!;
-      const fixture = await this.setupFixtureForRegistration(registration, workerInfo, testInfo);
+      const fixture = await this.setupFixtureForRegistration(registration, testInfo);
       params[name] = fixture.value;
     }
     return params;
   }
 
-  async resolveParametersAndRunFunction(fn: Function, workerInfo: WorkerInfo, testInfo: TestInfo | undefined) {
-    const params = await this.resolveParametersForFunction(fn, workerInfo, testInfo);
-    return fn(params, testInfo || workerInfo);
+  async resolveParametersAndRunFunction(fn: Function, testInfo: TestInfo) {
+    const params = await this.resolveParametersForFunction(fn, testInfo);
+    return fn(params, testInfo);
   }
 
-  async setupFixtureForRegistration(registration: FixtureRegistration, workerInfo: WorkerInfo, testInfo: TestInfo | undefined): Promise<Fixture> {
+  async setupFixtureForRegistration(registration: FixtureRegistration, testInfo: TestInfo): Promise<Fixture> {
     if (registration.scope === 'test')
       this.testScopeClean = false;
 
@@ -295,7 +296,7 @@ export class FixtureRunner {
 
     fixture = new Fixture(this, registration);
     this.instanceForId.set(registration.id, fixture);
-    await fixture.setup(workerInfo, testInfo);
+    await fixture.setup(testInfo);
     return fixture;
   }
 
