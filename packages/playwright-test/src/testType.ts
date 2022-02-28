@@ -81,7 +81,7 @@ export class TestTypeImpl {
   private _createTest(type: 'default' | 'only' | 'skip' | 'fixme', location: Location, title: string, fn: Function) {
     throwIfRunningInsideJest();
     const suite = this._ensureCurrentSuite(location, 'test()');
-    const test = new TestCase(title, fn, nextOrdinalInFile(suite._requireFile), this, location);
+    const test = new TestCase(title, fn, this, location);
     test._requireFile = suite._requireFile;
     suite._addTest(test);
 
@@ -241,13 +241,6 @@ function throwIfRunningInsideJest() {
         `See https://playwright.dev/docs/intro for more information about Playwright Test.`,
     );
   }
-}
-
-const countByFile = new Map<string, number>();
-function nextOrdinalInFile(file: string) {
-  const ordinalInFile = countByFile.get(file) || 0;
-  countByFile.set(file, ordinalInFile + 1);
-  return ordinalInFile;
 }
 
 export const rootTestType = new TestTypeImpl([]);
