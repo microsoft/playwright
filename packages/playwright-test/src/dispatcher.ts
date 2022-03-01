@@ -18,7 +18,7 @@ import child_process from 'child_process';
 import path from 'path';
 import { EventEmitter } from 'events';
 import { RunPayload, TestBeginPayload, TestEndPayload, DonePayload, TestOutputPayload, WorkerInitParams, StepBeginPayload, StepEndPayload, SerializedLoaderData, TeardownErrorsPayload } from './ipc';
-import type { TestResult, Reporter, TestStep } from '../types/testReporter';
+import type { TestResult, Reporter, TestStep, TestError } from '../types/testReporter';
 import { Suite, TestCase } from './test';
 import { Loader } from './loader';
 import { ManualPromise } from 'playwright-core/lib/utils/async';
@@ -278,7 +278,7 @@ export class Dispatcher {
       // - there are no remaining
       // - we are here not because something failed
       // - no unrecoverable worker error
-      if (!remaining.length && !failedTestIds.size && !params.fatalErrors.length && !params.skipRemaining) {
+      if (!remaining.length && !failedTestIds.size && !params.fatalErrors.length && !params.skipTestsDueToSetupFailure.length) {
         if (this._isWorkerRedundant(worker))
           worker.stop();
         doneWithJob();
@@ -288,41 +288,46 @@ export class Dispatcher {
       // When worker encounters error, we will stop it and create a new one.
       worker.stop(true /* didFail */);
 
-      // In case of fatal error, report first remaining test as failing with this error,
-      // and all others as skipped.
-      if (params.fatalErrors.length || params.skipRemaining) {
-        let shouldAddFatalErrorsToNextTest = params.fatalErrors.length > 0;
-        for (const test of remaining) {
-          if (this._hasReachedMaxFailures())
-            break;
-          const data = this._testById.get(test._id)!;
-          const runData = data.resultByWorkerIndex.get(worker.workerIndex);
-          // There might be a single test that has started but has not finished yet.
-          let result: TestResult;
-          if (runData) {
-            result = runData.result;
-          } else {
-            result = data.test._appendTestResult();
-            this._reporter.onTestBegin?.(test, result);
+      const massSkipTestsFromRemaining = (testIds: Set<string>, errors: TestError[]) => {
+        remaining = remaining.filter(test => {
+          if (!testIds.has(test._id))
+            return true;
+          if (!this._hasReachedMaxFailures()) {
+            const data = this._testById.get(test._id)!;
+            const runData = data.resultByWorkerIndex.get(worker.workerIndex);
+            // There might be a single test that has started but has not finished yet.
+            let result: TestResult;
+            if (runData) {
+              result = runData.result;
+            } else {
+              result = data.test._appendTestResult();
+              this._reporter.onTestBegin?.(test, result);
+            }
+            result.errors = [...errors];
+            result.error = result.errors[0];
+            result.status = errors.length ? 'failed' : 'skipped';
+            this._reportTestEnd(test, result);
+            failedTestIds.add(test._id);
+            errors = []; // Only report errors for the first test.
           }
-          result.errors = shouldAddFatalErrorsToNextTest ? [...params.fatalErrors] : [];
-          result.error = result.errors[0];
-          result.status = shouldAddFatalErrorsToNextTest ? 'failed' : 'skipped';
-          this._reportTestEnd(test, result);
-          failedTestIds.add(test._id);
-          shouldAddFatalErrorsToNextTest = false;
-        }
-        if (shouldAddFatalErrorsToNextTest) {
-          // We had a fatal error after all tests have passed - most likely in the afterAll hook.
+          return false;
+        });
+        if (errors.length) {
+          // We had fatal errors after all tests have passed - most likely in some teardown.
           // Let's just fail the test run.
           this._hasWorkerErrors = true;
           for (const error of params.fatalErrors)
             this._reporter.onError?.(error);
         }
-        // Since we pretend that all remaining tests failed/skipped, there is nothing else to run,
-        // except for possible retries.
-        remaining = [];
+      };
+
+      if (params.fatalErrors.length) {
+        // In case of fatal errors, report first remaining test as failing with these errors,
+        // and all others as skipped.
+        massSkipTestsFromRemaining(new Set(remaining.map(test => test._id)), params.fatalErrors);
       }
+      // Handle tests that should be skipped because of the setup failure.
+      massSkipTestsFromRemaining(new Set(params.skipTestsDueToSetupFailure), []);
 
       const retryCandidates = new Set<string>();
       const serialSuitesWithFailures = new Set<Suite>();
@@ -384,7 +389,7 @@ export class Dispatcher {
     worker.on('done', onDone);
 
     const onExit = (expectedly: boolean) => {
-      onDone({ skipRemaining: false, fatalErrors: expectedly ? [] : [{ value: 'Worker process exited unexpectedly' }] });
+      onDone({ skipTestsDueToSetupFailure: [], fatalErrors: expectedly ? [] : [{ value: 'Worker process exited unexpectedly' }] });
     };
     worker.on('exit', onExit);
 
