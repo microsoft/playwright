@@ -62,17 +62,25 @@ export class Runner {
     this._loader = new Loader(options.defaultConfig || {}, configOverrides);
   }
 
-  async loadConfigFromFile(configFileOrDirectory: string): Promise<Config> {
-    const loadConfig = async (configFile: string) => {
+  async loadConfigFromResolvedFile(resolvedConfigFile: string): Promise<Config> {
+    return this._loader.loadConfigFile(resolvedConfigFile);
+  }
+
+  loadEmptyConfig(configFileOrDirectory: string): Config {
+    return this._loader.loadEmptyConfig(configFileOrDirectory);
+  }
+
+  static resolveConfigFile(configFileOrDirectory: string): string | null {
+    const resolveConfig = (configFile: string) => {
       if (fs.existsSync(configFile))
-        return await this._loader.loadConfigFile(configFile);
+        return configFile;
     };
 
-    const loadConfigFromDirectory = async (directory: string) => {
+    const resolveConfigFileFromDirectory = (directory: string) => {
       for (const configName of kDefaultConfigFiles) {
-        const config = await loadConfig(path.resolve(directory, configName));
-        if (config)
-          return config;
+        const configFile = resolveConfig(path.resolve(directory, configName));
+        if (configFile)
+          return configFile;
       }
     };
 
@@ -80,15 +88,15 @@ export class Runner {
       throw new Error(`${configFileOrDirectory} does not exist`);
     if (fs.statSync(configFileOrDirectory).isDirectory()) {
       // When passed a directory, look for a config file inside.
-      const config = await loadConfigFromDirectory(configFileOrDirectory);
-      if (config)
-        return config;
+      const configFile = resolveConfigFileFromDirectory(configFileOrDirectory);
+      if (configFile)
+        return configFile;
       // If there is no config, assume this as a root testing directory.
-      return this._loader.loadEmptyConfig(configFileOrDirectory);
+      return null;
     } else {
       // When passed a file, it must be a config file.
-      const config = await loadConfig(configFileOrDirectory);
-      return config!;
+      const configFile = resolveConfig(configFileOrDirectory);
+      return configFile!;
     }
   }
 
