@@ -41,7 +41,7 @@ function compressReports(reports) {
           delete project.metadata.headful;
         if (project.metadata.mode === 'default')
           delete project.metadata.mode;
-        if (project.metadata.platform.toLowerCase() !== 'android')
+        if (project.metadata.platform && project.metadata.platform.toLowerCase() !== 'android')
           delete project.metadata.platform;
         projectNameToMetadata.set(project.name, project.metadata);
       }
