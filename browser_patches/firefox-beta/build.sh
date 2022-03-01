@@ -96,6 +96,8 @@ if [[ $1 == "--full" || $2 == "--full" || $1 == "--bootstrap" ]]; then
   if [[ ! -z "${WIN32_REDIST_DIR}" ]]; then
     # Having this option in .mozconfig kills incremental compilation.
     echo "export WIN32_REDIST_DIR=\"$WIN32_REDIST_DIR\"" >> .mozconfig
+    echo "export MSVC_C_RUNTIME_DLL=vcruntime140.dll" >> .mozconfig
+    echo "export MSVC_CXX_RUNTIME_DLL=msvcp140.dll" >> .mozconfig
   fi
 fi
 
