@@ -1028,6 +1028,8 @@ Page:
         log:
           type: array?
           items: string
+      tracing:
+        snapshot: true
 
     screenshot:
       parameters:
