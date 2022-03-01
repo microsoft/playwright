@@ -8109,6 +8109,28 @@ index a8f57a72d0eacca7755be84fcaa1c9bf10958c0b..a5d67b8016a86b9184ded0904e317048
  }
  
  SocketStreamHandleImpl::~SocketStreamHandleImpl()
+diff --git a/Source/WebCore/platform/network/soup/CookieSoup.cpp b/Source/WebCore/platform/network/soup/CookieSoup.cpp
+index 9bb9c7124d40e2b0324401c89ff587ad556e7221..c1d4df0841a458e00d6507d977c8af98e107c28e 100644
+--- a/Source/WebCore/platform/network/soup/CookieSoup.cpp
++++ b/Source/WebCore/platform/network/soup/CookieSoup.cpp
+@@ -70,7 +70,7 @@ Cookie::Cookie(SoupCookie* cookie)
+     , domain(String::fromUTF8(soup_cookie_get_domain(cookie)))
+     , path(String::fromUTF8(soup_cookie_get_path(cookie)))
+ #if USE(SOUP2)
+-    , expires(soup_cookie_get_expires(cookie) ? std::make_optional(static_cast<double>(soup_date_to_time_t(soup_cookie_get_expires(cookie))) * 1000) : std::nullopt)
++    , expires(soup_cookie_get_expires(cookie) ? std::make_optional(static_cast<double>(soup_date_to_time_t(soup_cookie_get_expires(cookie))) * 1000 * 1000) : std::nullopt)
+ #else
+     , expires(soup_cookie_get_expires(cookie) ? std::make_optional(static_cast<double>(g_date_time_to_unix(soup_cookie_get_expires(cookie))) * 1000) : std::nullopt)
+ #endif
+@@ -113,7 +113,7 @@ SoupCookie* Cookie::toSoupCookie() const
+ 
+     if (!session && expires) {
+ #if USE(SOUP2)
+-        SoupDate* date = msToSoupDate(*expires);
++        SoupDate* date = msToSoupDate(*expires / 1000.);
+         soup_cookie_set_expires(soupCookie, date);
+         soup_date_free(date);
+ #else
 diff --git a/Source/WebCore/platform/network/soup/NetworkStorageSessionSoup.cpp b/Source/WebCore/platform/network/soup/NetworkStorageSessionSoup.cpp
 index fab574233fe00f4b0bf22e0baec09db116a4d3ce..79e4ba64115d88aec771175833e9d3ed71591692 100644
 --- a/Source/WebCore/platform/network/soup/NetworkStorageSessionSoup.cpp
