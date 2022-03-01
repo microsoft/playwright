@@ -18,7 +18,6 @@
 import { debugMode } from './utils';
 
 export const DEFAULT_TIMEOUT = 30000;
-const TIMEOUT = debugMode() ? 0 : DEFAULT_TIMEOUT;
 
 export class TimeoutSettings {
   private _parent: TimeoutSettings | undefined;
@@ -42,26 +41,32 @@ export class TimeoutSettings {
       return options.timeout;
     if (this._defaultNavigationTimeout !== undefined)
       return this._defaultNavigationTimeout;
+    if (debugMode())
+      return 0;
     if (this._defaultTimeout !== undefined)
       return this._defaultTimeout;
     if (this._parent)
       return this._parent.navigationTimeout(options);
-    return TIMEOUT;
+    return DEFAULT_TIMEOUT;
   }
 
   timeout(options: { timeout?: number }): number {
     if (typeof options.timeout === 'number')
       return options.timeout;
+    if (debugMode())
+      return 0;
     if (this._defaultTimeout !== undefined)
       return this._defaultTimeout;
     if (this._parent)
       return this._parent.timeout(options);
-    return TIMEOUT;
+    return DEFAULT_TIMEOUT;
   }
 
   static timeout(options: { timeout?: number }): number {
     if (typeof options.timeout === 'number')
       return options.timeout;
-    return TIMEOUT;
+    if (debugMode())
+      return 0;
+    return DEFAULT_TIMEOUT;
   }
 }
