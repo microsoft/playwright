@@ -442,6 +442,10 @@ Attribute name to get the value for.
 
 ### option: Locator.getAttribute.timeout = %%-input-timeout-%%
 
+## async method: Locator.highlight
+
+Highlight the corresponding element(s) on the screen. Useful for debugging, don't commit the code that uses [`method: Locator.highlight`].
+
 ## async method: Locator.hover
 
 This method hovers over the element by performing the following steps:
