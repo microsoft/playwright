@@ -71,7 +71,7 @@ it('should get value of input with label', async ({ page }) => {
 });
 
 it('should get value of input with span inside the label', async ({ page }) => {
-  await page.setContent(`<label for=target><span>Fill me</span></label><input id=targetvalue="some value">`);
+  await page.setContent(`<label for=target><span>Fill me</span></label><input id=target value="some value">`);
   expect(await page.inputValue('text=Fill me')).toBe('some value');
   await expect(page.locator('text=Fill me')).toHaveValue('some value');
 });
