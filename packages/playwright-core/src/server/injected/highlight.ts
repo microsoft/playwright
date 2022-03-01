@@ -44,7 +44,7 @@ export class Highlight {
     this._innerGlassPaneElement.appendChild(this._tooltipElement);
 
     // Use a closed shadow root to prevent selectors matching our internal previews.
-    this._glassPaneShadow = this._outerGlassPaneElement.attachShadow({ mode: 'closed' });
+    this._glassPaneShadow = this._outerGlassPaneElement.attachShadow({ mode: isUnderTest ? 'open' : 'closed' });
     this._glassPaneShadow.appendChild(this._innerGlassPaneElement);
     this._glassPaneShadow.appendChild(this._actionPointElement);
     const styleElement = document.createElement('style');

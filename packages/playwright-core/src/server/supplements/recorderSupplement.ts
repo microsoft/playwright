@@ -32,7 +32,7 @@ import { IRecorderApp, RecorderApp } from './recorder/recorderApp';
 import { CallMetadata, InstrumentationListener, SdkObject } from '../instrumentation';
 import { Point } from '../../common/types';
 import { CallLog, CallLogStatus, EventData, Mode, Source, UIState } from './recorder/recorderTypes';
-import { createGuid, isUnderTest, monotonicTime } from '../../utils/utils';
+import { createGuid, monotonicTime } from '../../utils/utils';
 import { metadataToCallLog } from './recorder/recorderUtils';
 import { Debugger } from './debugger';
 import { EventEmitter } from 'events';
@@ -362,7 +362,7 @@ class ContextRecorder extends EventEmitter {
     await this._context.exposeBinding('_playwrightRecorderRecordAction', false,
         (source: BindingSource, action: actions.Action) => this._recordAction(source.frame, action));
 
-    await this._context.extendInjectedScript(recorderSource.source, { isUnderTest: isUnderTest() });
+    await this._context.extendInjectedScript(recorderSource.source);
   }
 
   setEnabled(enabled: boolean) {

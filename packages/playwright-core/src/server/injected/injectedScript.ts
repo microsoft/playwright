@@ -76,8 +76,10 @@ export class InjectedScript {
   onGlobalListenersRemoved = new Set<() => void>();
   private _hitTargetInterceptor: undefined | ((event: MouseEvent | PointerEvent | TouchEvent) => void);
   private _highlight: Highlight | undefined;
+  readonly isUnderTest: boolean;
 
-  constructor(stableRafCount: number, browserName: string, customEngines: { name: string, engine: SelectorEngine}[]) {
+  constructor(isUnderTest: boolean, stableRafCount: number, browserName: string, customEngines: { name: string, engine: SelectorEngine}[]) {
+    this.isUnderTest = isUnderTest;
     this._evaluator = new SelectorEvaluatorImpl(new Map());
 
     this._engines = new Map();
@@ -876,7 +878,7 @@ export class InjectedScript {
   maskSelectors(selectors: ParsedSelector[]) {
     if (this._highlight)
       this.hideHighlight();
-    this._highlight = new Highlight(false);
+    this._highlight = new Highlight(this.isUnderTest);
     this._highlight.install();
     const elements = [];
     for (const selector of selectors)
@@ -886,7 +888,7 @@ export class InjectedScript {
 
   highlight(selector: ParsedSelector) {
     if (!this._highlight) {
-      this._highlight = new Highlight(false);
+      this._highlight = new Highlight(this.isUnderTest);
       this._highlight.install();
     }
     this._runHighlightOnRaf(selector);

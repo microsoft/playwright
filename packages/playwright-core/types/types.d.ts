@@ -9108,6 +9108,12 @@ export interface Locator {
   }): Promise<null|string>;
 
   /**
+   * Highlight the corresponding element(s) on the screen. Useful for debugging, don't commit the code that uses
+   * [locator.highlight()](https://playwright.dev/docs/api/class-locator#locator-highlight).
+   */
+  highlight(): Promise<void>;
+
+  /**
    * This method hovers over the element by performing the following steps:
    * 1. Wait for [actionability](https://playwright.dev/docs/actionability) checks on the element, unless `force` option is set.
    * 1. Scroll the element into view if needed.
