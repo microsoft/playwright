@@ -36,7 +36,7 @@ export function filterCookies(cookies: types.NetworkCookie[], urls: string[]): t
         continue;
       if (!parsedURL.pathname.startsWith(c.path))
         continue;
-      if (parsedURL.protocol !== 'https:' && c.secure)
+      if (parsedURL.protocol !== 'https:' && parsedURL.hostname !== 'localhost' && c.secure)
         continue;
       return true;
     }
