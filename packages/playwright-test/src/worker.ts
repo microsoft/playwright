@@ -84,7 +84,7 @@ process.on('message', async message => {
   }
   if (message.method === 'run') {
     const runPayload = message.params as RunPayload;
-    await workerRunner!.runTestGroup(runPayload);
+    await workerRunner!.run(runPayload);
   }
 });
 

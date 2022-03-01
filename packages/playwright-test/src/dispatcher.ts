@@ -59,8 +59,15 @@ export class Dispatcher {
     this._queue = testGroups;
     for (const group of testGroups) {
       this._queueHashCount.set(group.workerHash, 1 + (this._queueHashCount.get(group.workerHash) || 0));
-      for (const test of group.tests)
+      for (const test of group.tests) {
         this._testById.set(test._id, { test, resultByWorkerIndex: new Map() });
+        for (let suite: Suite | undefined = test.parent; suite; suite = suite.parent) {
+          for (const hook of suite.hooks) {
+            if (!this._testById.has(hook._id))
+              this._testById.set(hook._id, { test: hook, resultByWorkerIndex: new Map() });
+          }
+        }
+      }
     }
   }
 
@@ -177,20 +184,25 @@ export class Dispatcher {
 
     const remainingByTestId = new Map(testGroup.tests.map(e => [ e._id, e ]));
     const failedTestIds = new Set<string>();
+    let runningHookId: string | undefined;
 
     const onTestBegin = (params: TestBeginPayload) => {
       const data = this._testById.get(params.testId)!;
+      if (data.test._type !== 'test')
+        runningHookId = params.testId;
       if (this._hasReachedMaxFailures())
         return;
       const result = data.test._appendTestResult();
       data.resultByWorkerIndex.set(worker.workerIndex, { result, stepStack: new Set(), steps: new Map() });
       result.workerIndex = worker.workerIndex;
       result.startTime = new Date(params.startWallTime);
-      this._reporter.onTestBegin?.(data.test, result);
+      if (data.test._type === 'test')
+        this._reporter.onTestBegin?.(data.test, result);
     };
     worker.addListener('testBegin', onTestBegin);
 
     const onTestEnd = (params: TestEndPayload) => {
+      runningHookId = undefined;
       remainingByTestId.delete(params.testId);
       if (this._hasReachedMaxFailures())
         return;
@@ -212,7 +224,7 @@ export class Dispatcher {
       test.annotations = params.annotations;
       test.timeout = params.timeout;
       const isFailure = result.status !== 'skipped' && result.status !== test.expectedStatus;
-      if (isFailure)
+      if (isFailure && test._type === 'test')
         failedTestIds.add(params.testId);
       this._reportTestEnd(test, result);
     };
@@ -278,7 +290,7 @@ export class Dispatcher {
       // - there are no remaining
       // - we are here not because something failed
       // - no unrecoverable worker error
-      if (!remaining.length && !failedTestIds.size && !params.fatalErrors.length && !params.skipRemaining) {
+      if (!remaining.length && !failedTestIds.size && !params.fatalErrors.length) {
         if (this._isWorkerRedundant(worker))
           worker.stop();
         doneWithJob();
@@ -290,8 +302,18 @@ export class Dispatcher {
 
       // In case of fatal error, report first remaining test as failing with this error,
       // and all others as skipped.
-      if (params.fatalErrors.length || params.skipRemaining) {
-        let shouldAddFatalErrorsToNextTest = params.fatalErrors.length > 0;
+      if (params.fatalErrors.length) {
+        // Perhaps we were running a hook - report it as failed.
+        if (runningHookId) {
+          const data = this._testById.get(runningHookId)!;
+          const { result } = data.resultByWorkerIndex.get(worker.workerIndex)!;
+          result.errors = [...params.fatalErrors];
+          result.error = result.errors[0];
+          result.status = 'failed';
+          this._reporter.onTestEnd?.(data.test, result);
+        }
+
+        let first = true;
         for (const test of remaining) {
           if (this._hasReachedMaxFailures())
             break;
@@ -303,23 +325,24 @@ export class Dispatcher {
             result = runData.result;
           } else {
             result = data.test._appendTestResult();
-            this._reporter.onTestBegin?.(test, result);
+            if (test._type === 'test')
+              this._reporter.onTestBegin?.(test, result);
           }
-          result.errors = shouldAddFatalErrorsToNextTest ? [...params.fatalErrors] : [];
+          result.errors = [...params.fatalErrors];
           result.error = result.errors[0];
-          result.status = shouldAddFatalErrorsToNextTest ? 'failed' : 'skipped';
+          result.status = first ? 'failed' : 'skipped';
           this._reportTestEnd(test, result);
           failedTestIds.add(test._id);
-          shouldAddFatalErrorsToNextTest = false;
+          first = false;
         }
-        if (shouldAddFatalErrorsToNextTest) {
+        if (first) {
           // We had a fatal error after all tests have passed - most likely in the afterAll hook.
           // Let's just fail the test run.
           this._hasWorkerErrors = true;
           for (const error of params.fatalErrors)
             this._reporter.onError?.(error);
         }
-        // Since we pretend that all remaining tests failed/skipped, there is nothing else to run,
+        // Since we pretend that all remaining tests failed, there is nothing else to run,
         // except for possible retries.
         remaining = [];
       }
@@ -352,7 +375,8 @@ export class Dispatcher {
 
         // Emulate a "skipped" run, and drop this test from remaining.
         const result = test._appendTestResult();
-        this._reporter.onTestBegin?.(test, result);
+        if (test._type === 'test')
+          this._reporter.onTestBegin?.(test, result);
         result.status = 'skipped';
         this._reportTestEnd(test, result);
         return false;
@@ -384,7 +408,7 @@ export class Dispatcher {
     worker.on('done', onDone);
 
     const onExit = (expectedly: boolean) => {
-      onDone({ skipRemaining: false, fatalErrors: expectedly ? [] : [{ value: 'Worker process exited unexpectedly' }] });
+      onDone({ fatalErrors: expectedly ? [] : [{ value: 'Worker process exited unexpectedly' }] });
     };
     worker.on('exit', onExit);
 
@@ -436,9 +460,10 @@ export class Dispatcher {
   }
 
   private _reportTestEnd(test: TestCase, result: TestResult) {
-    if (result.status !== 'skipped' && result.status !== test.expectedStatus)
+    if (test._type === 'test' && result.status !== 'skipped' && result.status !== test.expectedStatus)
       ++this._failureCount;
-    this._reporter.onTestEnd?.(test, result);
+    if (test._type === 'test')
+      this._reporter.onTestEnd?.(test, result);
     const maxFailures = this._loader.fullConfig().maxFailures;
     if (maxFailures && this._failureCount === maxFailures)
       this.stop().catch(e => {});

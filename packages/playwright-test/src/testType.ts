@@ -81,7 +81,7 @@ export class TestTypeImpl {
   private _createTest(type: 'default' | 'only' | 'skip' | 'fixme', location: Location, title: string, fn: Function) {
     throwIfRunningInsideJest();
     const suite = this._ensureCurrentSuite(location, 'test()');
-    const test = new TestCase(title, fn, this, location);
+    const test = new TestCase('test', title, fn, nextOrdinalInFile(suite._requireFile), this, location);
     test._requireFile = suite._requireFile;
     suite._addTest(test);
 
@@ -130,7 +130,15 @@ export class TestTypeImpl {
 
   private _hook(name: 'beforeEach' | 'afterEach' | 'beforeAll' | 'afterAll', location: Location, fn: Function) {
     const suite = this._ensureCurrentSuite(location, `test.${name}()`);
-    suite._hooks.push({ type: name, fn, location });
+    if (name === 'beforeAll' || name === 'afterAll') {
+      const sameTypeCount = suite.hooks.filter(hook => hook._type === name).length;
+      const suffix = sameTypeCount ? String(sameTypeCount) : '';
+      const hook = new TestCase(name, name + suffix, fn, nextOrdinalInFile(suite._requireFile), this, location);
+      hook._requireFile = suite._requireFile;
+      suite._addAllHook(hook);
+    } else {
+      suite._eachHooks.push({ type: name, fn, location });
+    }
   }
 
   private _configure(location: Location, options: { mode?: 'parallel' | 'serial' }) {
@@ -241,6 +249,13 @@ function throwIfRunningInsideJest() {
         `See https://playwright.dev/docs/intro for more information about Playwright Test.`,
     );
   }
+}
+
+const countByFile = new Map<string, number>();
+function nextOrdinalInFile(file: string) {
+  const ordinalInFile = countByFile.get(file) || 0;
+  countByFile.set(file, ordinalInFile + 1);
+  return ordinalInFile;
 }
 
 export const rootTestType = new TestTypeImpl([]);

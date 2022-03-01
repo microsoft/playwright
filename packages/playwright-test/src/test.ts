@@ -17,7 +17,7 @@
 import type { FixturePool } from './fixtures';
 import * as reporterTypes from '../types/testReporter';
 import type { TestTypeImpl } from './testType';
-import { Annotation, FixturesWithLocation, Location } from './types';
+import { Annotations, FixturesWithLocation, Location, TestCaseType } from './types';
 import { FullProject } from './types';
 
 class Base {
@@ -45,9 +45,10 @@ export class Suite extends Base implements reporterTypes.Suite {
   _use: FixturesWithLocation[] = [];
   _isDescribe = false;
   _entries: (Suite | TestCase)[] = [];
-  _hooks: { type: 'beforeEach' | 'afterEach' | 'beforeAll' | 'afterAll', fn: Function, location: Location }[] = [];
+  hooks: TestCase[] = [];
+  _eachHooks: { type: 'beforeEach' | 'afterEach', fn: Function, location: Location }[] = [];
   _timeout: number | undefined;
-  _annotations: Annotation[] = [];
+  _annotations: Annotations = [];
   _modifiers: Modifier[] = [];
   _parallelMode: 'default' | 'serial' | 'parallel' = 'default';
   _projectConfig: FullProject | undefined;
@@ -63,6 +64,11 @@ export class Suite extends Base implements reporterTypes.Suite {
     suite.parent = this;
     this.suites.push(suite);
     this._entries.push(suite);
+  }
+
+  _addAllHook(hook: TestCase) {
+    hook.parent = this;
+    this.hooks.push(hook);
   }
 
   allTests(): TestCase[] {
@@ -101,7 +107,7 @@ export class Suite extends Base implements reporterTypes.Suite {
     suite.location = this.location;
     suite._requireFile = this._requireFile;
     suite._use = this._use.slice();
-    suite._hooks = this._hooks.slice();
+    suite._eachHooks = this._eachHooks.slice();
     suite._timeout = this._timeout;
     suite._annotations = this._annotations.slice();
     suite._modifiers = this._modifiers.slice();
@@ -124,19 +130,23 @@ export class TestCase extends Base implements reporterTypes.TestCase {
 
   expectedStatus: reporterTypes.TestStatus = 'passed';
   timeout = 0;
-  annotations: Annotation[] = [];
+  annotations: Annotations = [];
   retries = 0;
   repeatEachIndex = 0;
 
+  _type: TestCaseType;
+  _ordinalInFile: number;
   _testType: TestTypeImpl;
   _id = '';
   _workerHash = '';
   _pool: FixturePool | undefined;
   _projectIndex = 0;
 
-  constructor(title: string, fn: Function, testType: TestTypeImpl, location: Location) {
+  constructor(type: TestCaseType, title: string, fn: Function, ordinalInFile: number, testType: TestTypeImpl, location: Location) {
     super(title);
+    this._type = type;
     this.fn = fn;
+    this._ordinalInFile = ordinalInFile;
     this._testType = testType;
     this.location = location;
   }
@@ -164,7 +174,7 @@ export class TestCase extends Base implements reporterTypes.TestCase {
   }
 
   _clone(): TestCase {
-    const test = new TestCase(this.title, this.fn, this._testType, this.location);
+    const test = new TestCase(this._type, this.title, this.fn, this._ordinalInFile, this._testType, this.location);
     test._only = this._only;
     test._requireFile = this._requireFile;
     test.expectedStatus = this.expectedStatus;
