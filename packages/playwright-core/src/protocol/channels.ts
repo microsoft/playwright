@@ -4089,6 +4089,7 @@ export const commandsWithTracingSnapshots = new Set([
   'Page.goBack',
   'Page.goForward',
   'Page.reload',
+  'Page.expectScreenshot',
   'Page.screenshot',
   'Page.setViewportSize',
   'Page.keyboardDown',
