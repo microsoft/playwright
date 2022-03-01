@@ -36,6 +36,7 @@ function compressReports(reports) {
     const projectNameToMetadata = new Map();
     if (report.config && report.config.projects) {
       for (const project of report.config.projects) {
+        project.metadata = project.metadata || {};
         if (project.metadata.headful === false)
           delete project.metadata.headful;
         if (project.metadata.mode === 'default')
