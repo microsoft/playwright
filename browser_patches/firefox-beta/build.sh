@@ -2,7 +2,7 @@
 set -e
 set +x
 
-RUST_VERSION="1.53.0"
+RUST_VERSION="1.57.0"
 CBINDGEN_VERSION="0.19.0"
 
 trap "cd $(pwd -P)" EXIT
@@ -32,7 +32,6 @@ if [[ "$(uname)" == "Darwin" ]]; then
   echo "-- building on Mac"
 elif [[ "$(uname)" == "Linux" ]]; then
   echo "-- building on Linux"
-  echo "ac_add_options --disable-av1" >> .mozconfig
 elif [[ "$(uname)" == MINGW* ]]; then
   echo "ac_add_options --disable-update-agent" >> .mozconfig
   echo "ac_add_options --disable-default-browser-agent" >> .mozconfig
