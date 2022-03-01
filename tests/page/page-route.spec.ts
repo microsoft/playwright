@@ -413,7 +413,7 @@ it('should work with badly encoded server', async ({ page, server }) => {
   expect(response.status()).toBe(200);
 });
 
-it('should work with encoded server - 2', async ({ page, server }) => {
+it('should work with encoded server - 2', async ({ page, server, browserName, browserMajorVersion }) => {
   // The requestWillBeSent will report URL as-is, whereas interception will
   // report encoded URL for stylesheet. @see crbug.com/759388
   const requests = [];
@@ -423,7 +423,10 @@ it('should work with encoded server - 2', async ({ page, server }) => {
   });
   const response = await page.goto(`data:text/html,<link rel="stylesheet" href="${server.PREFIX}/fonts?helvetica|arial"/>`);
   expect(response).toBe(null);
-  expect(requests.length).toBe(1);
+  if (browserName === 'firefox' && browserMajorVersion >= 98)
+    expect(requests.length).toBe(2); // Firefox DevTools report to navigations in this case as well.
+  else
+    expect(requests.length).toBe(1);
   expect((await requests[0].response()).status()).toBe(404);
 });
 
