@@ -52,6 +52,7 @@ type Awaited<T> = T extends PromiseLike<infer U> ? U : T;
 
 /**
  * Removed methods require the jest.fn() integration from Jest to spy on function calls which we don't support:
+ * - lastCalledWith()
  * - lastReturnedWith()
  * - nthCalledWith()
  * - nthReturnedWith()
@@ -71,6 +72,8 @@ type Awaited<T> = T extends PromiseLike<infer U> ? U : T;
  * - toReturn()
  * - toReturnTimes()
  * - toReturnWith()
+ * - toThrowErrorMatchingSnapshot()
+ * - toThrowErrorMatchingInlineSnapshot()
  */
 type SupportedExpectProperties =
   'toBe' |
