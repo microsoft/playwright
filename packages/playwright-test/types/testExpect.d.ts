@@ -38,10 +38,40 @@ export declare type Expect = {
   objectContaining(sample: Record<string, unknown>): AsymmetricMatcher;
   stringContaining(expected: string): AsymmetricMatcher;
   stringMatching(expected: string | RegExp): AsymmetricMatcher;
+  /**
+   * Removed following methods because they rely on a test-runner integration from Jest which we don't support:
+   * - assertions()
+   * - extractExpectedAssertionsErrors()
+   * – hasAssertions()
+   * - any()
+   * - anything()
+   */
 };
 
 type Awaited<T> = T extends PromiseLike<infer U> ? U : T;
 
+/**
+ * Removed methods require the jest.fn() integration from Jest to spy on function calls which we don't support:
+ * - lastReturnedWith()
+ * - nthCalledWith()
+ * - nthReturnedWith()
+ * - toBeCalled()
+ * - toBeCalledTimes()
+ * - toBeCalledWith()
+ * - toHaveBeenCalled()
+ * - toHaveBeenCalledTimes()
+ * - toHaveBeenCalledWith()
+ * - toHaveBeenLastCalledWith()
+ * - toHaveBeenNthCalledWith()
+ * - toHaveLastReturnedWith()
+ * - toHaveNthReturnedWith()
+ * - toHaveReturned()
+ * - toHaveReturnedTimes()
+ * - toHaveReturnedWith()
+ * - toReturn()
+ * - toReturnTimes()
+ * - toReturnWith()
+ */
 type SupportedExpectProperties =
   'toBe' |
   'toBeCloseTo' |
