@@ -32,7 +32,7 @@ export class CRNetworkManager {
   private _parentManager: CRNetworkManager | null;
   private _requestIdToRequest = new Map<string, InterceptableRequest>();
   private _requestIdToRequestWillBeSentEvent = new Map<string, Protocol.Network.requestWillBeSentPayload>();
-  private _credentials: {username: string, password: string} | null = null;
+  private _credentials: { username: string, password: string } | null = null;
   private _attemptedAuthentications = new Set<string>();
   private _userRequestInterceptionEnabled = false;
   private _protocolRequestInterceptionEnabled = false;
@@ -472,7 +472,7 @@ class InterceptableRequest {
   }
 }
 
-class RouteImpl implements network.RouteDelegate {
+export class RouteImpl implements network.RouteDelegate {
   private readonly _client: CRSession;
   private _interceptionId: string;
   _wasFulfilled = false;

@@ -235,3 +235,120 @@ it('should overwrite post body with empty string', async ({ context, server, pag
   const body = (await req.postBody).toString();
   expect(body).toBe('');
 });
+
+it.only('should intercept initial service worker script', async ({ server, page, context }) => {
+  context.route('**', async route => {
+    if (route.request().url().endsWith('/worker.js')) {
+      await route.fulfill({
+        status: 200,
+        contentType: 'text/javascript',
+        body: `
+          addEventListener('message', event => {
+            console.log('worker got message');
+            event.source.postMessage("intercepted data from the worker");
+          });
+        `,
+      });
+      return;
+    }
+
+    await route.continue();
+  });
+
+  server.setRoute('/worker.js', (_req, res) => {
+    res.setHeader('content-type', 'text/javascript');
+    res.write(`
+      addEventListener('message', event => {
+        console.log('worker got message');
+        event.source.postMessage("data from the worker");
+      });
+    `);
+    res.end();
+  });
+
+  server.setRoute('/example.html', (_req, res) => {
+    res.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>SW Example</title>
+        </head>
+        <body>
+          <div id="content"></div>
+          <script>
+            if (navigator.serviceWorker) {
+              navigator.serviceWorker.register('/worker.js');
+              navigator.serviceWorker.addEventListener('message', event => {
+                console.log('main got message');
+                document.getElementById("content").innerText = event.data;
+              });
+
+              navigator.serviceWorker.ready.then(registration => {
+                registration.active.postMessage("init");
+              });
+            }
+          </script>
+        </body>
+      </html>
+    `);
+    res.end();
+  });
+
+  await page.goto(server.PREFIX + '/example.html');
+  await expect(page.locator('#content')).toHaveText('intercepted data from the worker');
+});
+
+it.only('should intercept request from inside service worker', async ({ server, page, context }) => {
+  context.route('**', async route => {
+    if (route.request().url() === server.EMPTY_PAGE) {
+      await route.fulfill({
+        body: 'intercepted data'
+      });
+    }
+    await route.continue();
+  });
+
+  server.setRoute('/worker.js', (_req, res) => {
+    console.log('got worker.js');
+    res.setHeader('content-type', 'text/javascript');
+    res.write(`
+      addEventListener('message', async event => {
+        console.log('worker got message');
+        const resp = await fetch('${server.EMPTY_PAGE}')
+        event.source.postMessage(await resp.text());
+      });
+    `);
+    res.end();
+  });
+
+  server.setRoute('/example.html', (_req, res) => {
+    res.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>SW Example</title>
+        </head>
+        <body>
+          <div id="content"></div>
+          <script>
+            if (navigator.serviceWorker) {
+              navigator.serviceWorker.register('/worker.js');
+              navigator.serviceWorker.addEventListener('message', event => {
+                console.log('main got message');
+                document.getElementById("content").innerText = event.data;
+              });
+
+              navigator.serviceWorker.ready.then(registration => {
+                registration.active.postMessage("init");
+              });
+            }
+          </script>
+        </body>
+      </html>
+    `);
+    res.end();
+  });
+
+  await page.goto(server.PREFIX + '/example.html');
+  await expect(page.locator('#content')).toHaveText('intercepted data');
+});

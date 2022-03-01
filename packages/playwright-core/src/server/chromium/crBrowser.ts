@@ -17,7 +17,7 @@
 
 import { Browser, BrowserOptions } from '../browser';
 import { assertBrowserContextIsNotOwned, BrowserContext, validateBrowserContextOptions, verifyGeolocation } from '../browserContext';
-import { assert } from '../../utils/utils';
+import { assert, headersObjectToArray } from '../../utils/utils';
 import * as network from '../network';
 import { Page, PageBinding, PageDelegate, Worker } from '../page';
 import { Frame } from '../frames';
@@ -30,6 +30,7 @@ import { readProtocolStream } from './crProtocolHelper';
 import { Protocol } from './protocol';
 import { CRExecutionContext } from './crExecutionContext';
 import { CRDevTools } from './crDevTools';
+import { RouteImpl } from './crNetworkManager';
 
 export class CRBrowser extends Browser {
   readonly _connection: CRConnection;
@@ -312,9 +313,28 @@ class CRServiceWorker extends Worker {
     session.once('Runtime.executionContextCreated', event => {
       this._createExecutionContext(new CRExecutionContext(session, event.context));
     });
+
+    // FIXME(raw): This will all be moved into a crServiceWorkerNetworkManager that will use shared bits that page/frame-level network mgr. (currently crNetworkManager) will depend on
+    //             It also needs to be a bit more complex based on if interception is needed or not. We'll also likley want to drive the firing of context._requestStarted on Network.requestWillBeSent
+    //             instead of what we are doing here.
+    session.send('Network.setCacheDisabled', { cacheDisabled: true }).catch(() => { });
+    session.send('Fetch.enable', {
+      handleAuthRequests: true,
+      patterns: [{ urlPattern: '*', requestStage: 'Request' }],
+    }).catch(() => { });
+
+    session.on('Fetch.requestPaused', payload => {
+      let postDataBuffer = null;
+      const postDataEntries = payload.request.postDataEntries;
+      if (postDataEntries && postDataEntries.length && postDataEntries[0].bytes)
+        postDataBuffer = Buffer.from(postDataEntries[0].bytes, 'base64');
+
+      this._browserContext._requestStarted(new network.Request(this._browserContext, null, undefined, payload.request.url, (payload.resourceType || '').toLowerCase(), payload.request.method, postDataBuffer, headersObjectToArray(payload.request.headers)), new RouteImpl(session, payload.requestId));
+    });
+
     // This might fail if the target is closed before we receive all execution contexts.
-    session.send('Runtime.enable', {}).catch(e => {});
-    session.send('Runtime.runIfWaitingForDebugger').catch(e => {});
+    session.send('Runtime.enable', {}).catch(e => { });
+    session.send('Runtime.runIfWaitingForDebugger').catch(e => { });
   }
 }
 
@@ -335,7 +355,7 @@ export class CRBrowserContext extends BrowserContext {
 
   override async _initialize() {
     assert(!Array.from(this._browser._crPages.values()).some(page => page._browserContext === this));
-    const promises: Promise<any>[] = [ super._initialize() ];
+    const promises: Promise<any>[] = [super._initialize()];
     if (this._browser.options.name !== 'electron' && this._browser.options.name !== 'clank') {
       promises.push(this._browser._session.send('Browser.setDownloadBehavior', {
         behavior: this._options.acceptDownloads ? 'allowAndName' : 'deny',
@@ -379,7 +399,7 @@ export class CRBrowserContext extends BrowserContext {
           newKeys.delete(key);
       }
       assert(newKeys.size === 1);
-      [ targetId ] = [...newKeys];
+      [targetId] = [...newKeys];
     }
     return this._browser._crPages.get(targetId)!;
   }

@@ -109,11 +109,13 @@ export class Request extends SdkObject {
   _responseEndTiming = -1;
   readonly responseSize: ResponseSize = { encodedBodySize: 0, transferSize: 0, responseHeadersSize: 0 };
 
-  constructor(frame: frames.Frame, redirectedFrom: Request | null, documentId: string | undefined,
+  constructor(parent: SdkObject, redirectedFrom: Request | null, documentId: string | undefined,
     url: string, resourceType: string, method: string, postData: Buffer | null, headers: types.HeadersArray) {
-    super(frame, 'request');
+    super(parent, 'request');
     assert(!url.startsWith('data:'), 'Data urls should not fire requests');
-    this._frame = frame;
+    // FIXME(raw): Let's change all request to have BrowserContext as parent, and think about request.frame() nullable?
+    // FIXME(raw): Also check/change Routes to be parent-ed by Context
+    this._frame = parent as frames.Frame;
     this._redirectedFrom = redirectedFrom;
     if (redirectedFrom)
       redirectedFrom._redirectedTo = this;
@@ -318,11 +320,11 @@ export type RemoteAddr = {
 };
 
 export type SecurityDetails = {
-    protocol?: string;
-    subjectName?: string;
-    issuer?: string;
-    validFrom?: number;
-    validTo?: number;
+  protocol?: string;
+  subjectName?: string;
+  issuer?: string;
+  validFrom?: number;
+  validTo?: number;
 };
 
 export class Response extends SdkObject {
@@ -412,11 +414,11 @@ export class Response extends SdkObject {
     return this._timing;
   }
 
-  async serverAddr(): Promise<RemoteAddr|null> {
+  async serverAddr(): Promise<RemoteAddr | null> {
     return await this._serverAddrPromise || null;
   }
 
-  async securityDetails(): Promise<SecurityDetails|null> {
+  async securityDetails(): Promise<SecurityDetails | null> {
     return await this._securityDetailsPromise || null;
   }
 
