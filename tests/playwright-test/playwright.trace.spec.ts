@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect, stripAnsi } from './playwright-test-fixtures';
+import { test, expect } from './playwright-test-fixtures';
 import { ZipFileSystem } from '../../packages/playwright-core/lib/utils/vfs';
 import fs from 'fs';
 
@@ -129,28 +129,6 @@ test('should not throw with trace: on-first-retry and two retries in the same wo
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(6);
   expect(result.flaky).toBe(6);
-});
-
-test('should not throw with trace and timeouts', async ({ runInlineTest }, testInfo) => {
-  const result = await runInlineTest({
-    'playwright.config.ts': `
-      module.exports = { timeout: 2000, repeatEach: 10, use: { trace: 'on' } };
-    `,
-    'a.spec.ts': `
-      const { test } = pwt;
-      test('launches browser', async ({ page }) => {
-      });
-      test('sometimes times out', async ({ page }) => {
-        test.setTimeout(1000);
-        await page.setContent('<div>Hello</div>');
-        await new Promise(f => setTimeout(f, 800 + Math.round(Math.random() * 200)));
-      });
-    `,
-  }, { workers: 2 });
-
-  expect(result.exitCode).toBe(1);
-  expect(stripAnsi(result.output)).not.toContain('tracing.stopChunk:');
-  expect(stripAnsi(result.output)).not.toContain('tracing.stop:');
 });
 
 test('should save sources when requested', async ({ runInlineTest }, testInfo) => {
