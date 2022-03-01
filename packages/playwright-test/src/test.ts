@@ -128,15 +128,17 @@ export class TestCase extends Base implements reporterTypes.TestCase {
   retries = 0;
   repeatEachIndex = 0;
 
+  _ordinalInFile: number;
   _testType: TestTypeImpl;
   _id = '';
   _workerHash = '';
   _pool: FixturePool | undefined;
   _projectIndex = 0;
 
-  constructor(title: string, fn: Function, testType: TestTypeImpl, location: Location) {
+  constructor(title: string, fn: Function, ordinalInFile: number, testType: TestTypeImpl, location: Location) {
     super(title);
     this.fn = fn;
+    this._ordinalInFile = ordinalInFile;
     this._testType = testType;
     this.location = location;
   }
@@ -164,7 +166,7 @@ export class TestCase extends Base implements reporterTypes.TestCase {
   }
 
   _clone(): TestCase {
-    const test = new TestCase(this.title, this.fn, this._testType, this.location);
+    const test = new TestCase(this.title, this.fn, this._ordinalInFile, this._testType, this.location);
     test._only = this._only;
     test._requireFile = this._requireFile;
     test.expectedStatus = this.expectedStatus;
