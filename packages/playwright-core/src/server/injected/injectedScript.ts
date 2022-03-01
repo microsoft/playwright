@@ -1237,7 +1237,7 @@ function deepEquals(a: any, b: any): boolean {
 }
 
 function isElementDisabled(element: Element): boolean {
-  const isRealFormControl = ['BUTTON', 'INPUT', 'SELECT', 'TEXTAREA'].includes(element.nodeName);
+  const isRealFormControl = ['BUTTON', 'INPUT', 'SELECT', 'TEXTAREA', 'OPTION', 'OPTGROUP'].includes(element.nodeName);
   if (isRealFormControl && element.hasAttribute('disabled'))
     return true;
   if (isRealFormControl && hasDisabledFieldSet(element))
