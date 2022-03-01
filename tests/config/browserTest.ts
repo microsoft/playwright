@@ -25,6 +25,7 @@ import { RemoteServer, RemoteServerOptions } from './remoteServer';
 
 export type BrowserTestWorkerFixtures = PageWorkerFixtures & {
   browserVersion: string;
+  defaultSameSiteCookieValue: string;
   browserMajorVersion: number;
   browserType: BrowserType;
   isAndroid: boolean;
