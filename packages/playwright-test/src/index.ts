@@ -519,9 +519,10 @@ function formatStackFrame(frame: StackFrame) {
 }
 
 function hookType(testInfo: TestInfo): 'beforeAll' | 'afterAll' | undefined {
-  if ((testInfo as any)._currentRunnable?.type === 'beforeAll')
+  const impl = testInfo as import('./testInfo').TestInfoImpl;
+  if (impl._currentRunnable?.type === 'beforeAll')
     return 'beforeAll';
-  if ((testInfo as any)._currentRunnable?.type === 'afterAll')
+  if (impl._currentRunnable?.type === 'afterAll')
     return 'afterAll';
 }
 

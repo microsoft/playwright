@@ -496,7 +496,6 @@ test('afterAll timeout should be reported, run other afterAll hooks, and continu
           await new Promise(f => setTimeout(f, 5000));
         });
         test('runs', () => {
-          test.setTimeout(2000);
           console.log('\\n%%test1');
         });
       });
@@ -670,85 +669,4 @@ test('unhandled rejection during beforeAll should be reported and prevent more t
   ]);
   expect(result.output).toContain('Error: Oh my');
   expect(stripAnsi(result.output)).toContain(`>  9 |           throw new Error('Oh my');`);
-});
-
-test('beforeAll and afterAll should have a separate timeout', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    'a.test.js': `
-      const { test } = pwt;
-      test.beforeAll(async () => {
-        console.log('\\n%%beforeAll');
-        await new Promise(f => setTimeout(f, 300));
-      });
-      test.beforeAll(async () => {
-        console.log('\\n%%beforeAll2');
-        await new Promise(f => setTimeout(f, 300));
-      });
-      test('passed', async () => {
-        console.log('\\n%%test');
-        await new Promise(f => setTimeout(f, 300));
-      });
-      test.afterAll(async () => {
-        console.log('\\n%%afterAll');
-        await new Promise(f => setTimeout(f, 300));
-      });
-      test.afterAll(async () => {
-        console.log('\\n%%afterAll2');
-        await new Promise(f => setTimeout(f, 300));
-      });
-    `,
-  }, { timeout: '500' });
-  expect(result.exitCode).toBe(0);
-  expect(result.passed).toBe(1);
-  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
-    '%%beforeAll',
-    '%%beforeAll2',
-    '%%test',
-    '%%afterAll',
-    '%%afterAll2',
-  ]);
-});
-
-test('test.setTimeout should work separately in beforeAll', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    'a.test.js': `
-      const { test } = pwt;
-      test.beforeAll(async () => {
-        console.log('\\n%%beforeAll');
-        test.setTimeout(100);
-      });
-      test('passed', async () => {
-        console.log('\\n%%test');
-        await new Promise(f => setTimeout(f, 800));
-      });
-    `,
-  }, { timeout: '1000' });
-  expect(result.exitCode).toBe(0);
-  expect(result.passed).toBe(1);
-  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
-    '%%beforeAll',
-    '%%test',
-  ]);
-});
-
-test('test.setTimeout should work separately in afterAll', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    'a.test.js': `
-      const { test } = pwt;
-      test('passed', async () => {
-        console.log('\\n%%test');
-      });
-      test.afterAll(async () => {
-        console.log('\\n%%afterAll');
-        test.setTimeout(1000);
-        await new Promise(f => setTimeout(f, 800));
-      });
-    `,
-  }, { timeout: '100' });
-  expect(result.exitCode).toBe(0);
-  expect(result.passed).toBe(1);
-  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
-    '%%test',
-    '%%afterAll',
-  ]);
 });
