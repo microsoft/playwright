@@ -3843,7 +3843,15 @@ export type AndroidDeviceInputDragOptions = {
 };
 export type AndroidDeviceInputDragResult = void;
 export type AndroidDeviceLaunchBrowserParams = {
-  pkg?: string,
+  noDefaultViewport?: boolean,
+  viewport?: {
+    width: number,
+    height: number,
+  },
+  screen?: {
+    width: number,
+    height: number,
+  },
   ignoreHTTPSErrors?: boolean,
   javaScriptEnabled?: boolean,
   bypassCSP?: boolean,
@@ -3869,6 +3877,7 @@ export type AndroidDeviceLaunchBrowserParams = {
   reducedMotion?: 'reduce' | 'no-preference',
   forcedColors?: 'active' | 'none',
   acceptDownloads?: boolean,
+  baseURL?: string,
   recordVideo?: {
     dir: string,
     size?: {
@@ -3881,6 +3890,7 @@ export type AndroidDeviceLaunchBrowserParams = {
     path: string,
   },
   strictSelectors?: boolean,
+  pkg?: string,
   proxy?: {
     server: string,
     bypass?: string,
@@ -3889,7 +3899,15 @@ export type AndroidDeviceLaunchBrowserParams = {
   },
 };
 export type AndroidDeviceLaunchBrowserOptions = {
-  pkg?: string,
+  noDefaultViewport?: boolean,
+  viewport?: {
+    width: number,
+    height: number,
+  },
+  screen?: {
+    width: number,
+    height: number,
+  },
   ignoreHTTPSErrors?: boolean,
   javaScriptEnabled?: boolean,
   bypassCSP?: boolean,
@@ -3915,6 +3933,7 @@ export type AndroidDeviceLaunchBrowserOptions = {
   reducedMotion?: 'reduce' | 'no-preference',
   forcedColors?: 'active' | 'none',
   acceptDownloads?: boolean,
+  baseURL?: string,
   recordVideo?: {
     dir: string,
     size?: {
@@ -3927,6 +3946,7 @@ export type AndroidDeviceLaunchBrowserOptions = {
     path: string,
   },
   strictSelectors?: boolean,
+  pkg?: string,
   proxy?: {
     server: string,
     bypass?: string,
