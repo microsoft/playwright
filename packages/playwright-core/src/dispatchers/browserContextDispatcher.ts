@@ -28,6 +28,10 @@ import { ArtifactDispatcher } from './artifactDispatcher';
 import { Artifact } from '../server/artifact';
 import { Request, Response } from '../server/network';
 import { TracingDispatcher } from './tracingDispatcher';
+import * as fs from 'fs';
+import * as path from 'path';
+import { createGuid } from '../utils/utils';
+import { WritableStreamDispatcher } from './writableStreamDispatcher';
 
 export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channels.BrowserContextChannel> implements channels.BrowserContextChannel {
   _type_EventTarget = true;
@@ -94,6 +98,15 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
       responseEndTiming: request._responseEndTiming,
       page: PageDispatcher.fromNullable(this._scope, request.frame()._page.initializedOrUndefined()),
     }));
+  }
+
+  async createTempFile(params: channels.BrowserContextCreateTempFileParams, metadata?: channels.Metadata): Promise<channels.BrowserContextCreateTempFileResult> {
+    const dir = this._context._browser.options.artifactsDir;
+    const tmpDir = path.join(dir, 'upload-' + createGuid());
+    await fs.promises.mkdir(tmpDir);
+    this._context._tempDirs.push(tmpDir);
+    const file = fs.createWriteStream(path.join(tmpDir, params.name));
+    return { writableStream: new WritableStreamDispatcher(this._scope, file) };
   }
 
   async setDefaultNavigationTimeoutNoReply(params: channels.BrowserContextSetDefaultNavigationTimeoutNoReplyParams) {

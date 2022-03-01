@@ -862,6 +862,13 @@ BrowserContext:
       returns:
         artifact: Artifact
 
+    createTempFile:
+      parameters:
+        name: string
+      returns:
+        writableStream: WritableStream
+
+
   events:
 
     bindingCall:
@@ -1740,7 +1747,10 @@ Frame:
             properties:
               name: string
               mimeType: string?
-              buffer: binary
+              # Only one of buffer, path or stream should be present.
+              buffer: binary?
+              path: string?
+              stream: WritableStream?
         timeout: number?
         noWaitAfter: boolean?
       tracing:
@@ -2265,7 +2275,10 @@ ElementHandle:
             properties:
               name: string
               mimeType: string?
-              buffer: binary
+              # Only one of buffer, path or stream should be present.
+              buffer: binary?
+              path: string?
+              stream: WritableStream?
         timeout: number?
         noWaitAfter: boolean?
       tracing:
@@ -2653,6 +2666,18 @@ Stream:
       parameters:
         size: number?
       returns:
+        binary: binary
+
+    close:
+
+
+WritableStream:
+  type: interface
+
+  commands:
+
+    write:
+      parameters:
         binary: binary
 
     close:

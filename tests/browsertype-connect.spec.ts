@@ -21,6 +21,7 @@ import { getUserAgent } from '../packages/playwright-core/lib/utils/utils';
 import WebSocket from 'ws';
 import { expect, playwrightTest as test } from './config/browserTest';
 import { parseTrace, suppressCertificateWarning } from './config/utils';
+import formidable from 'formidable';
 
 test.slow(true, 'All connect tests are slow');
 
@@ -572,3 +573,57 @@ test('should fulfill with global fetch result', async ({ browserType, startRemot
   expect(response.status()).toBe(200);
   expect(await response.json()).toEqual({ 'foo': 'bar' });
 });
+
+test('should upload large file', async ({ browserType, startRemoteServer, server, browserName }, testInfo) => {
+  test.skip(browserName !== 'chromium');
+  test.slow();
+  const remoteServer = await startRemoteServer();
+  const browser = await browserType.connect(remoteServer.wsEndpoint());
+  const context = await browser.newContext();
+  const page = await context.newPage();
+
+  await page.goto(server.PREFIX + '/input/fileupload.html');
+  const uploadFile = testInfo.outputPath('200MB.zip');
+  const str = 'A'.repeat(4 * 1024);
+  const stream = fs.createWriteStream(uploadFile);
+  for (let i = 0; i < 50 * 1024; i++) {
+    await new Promise<void>((fulfill, reject) => {
+      stream.write(str, err => {
+        if (err)
+          reject(err);
+        else
+          fulfill();
+      });
+    });
+  }
+  await new Promise(f => stream.end(f));
+  const input = page.locator('input[type="file"]');
+  const events = await input.evaluateHandle(e => {
+    const events = [];
+    e.addEventListener('input', () => events.push('input'));
+    e.addEventListener('change', () => events.push('change'));
+    return events;
+  });
+  await input.setInputFiles(uploadFile);
+  expect(await input.evaluate(e => (e as HTMLInputElement).files[0].name)).toBe('200MB.zip');
+  expect(await events.evaluate(e => e)).toEqual(['input', 'change']);
+  const serverFilePromise = new Promise<formidable.File>(fulfill => {
+    server.setRoute('/upload', async (req, res) => {
+      const form = new formidable.IncomingForm({ uploadDir: testInfo.outputPath() });
+      form.parse(req, function (err, fields, f) {
+        res.end();
+        const files = f as Record<string, formidable.File>;
+        fulfill(files.file1);
+      });
+    });
+  });
+  const [file1] = await Promise.all([
+    serverFilePromise,
+    page.click('input[type=submit]')
+  ]);
+  expect(file1.originalFilename).toBe('200MB.zip');
+  expect(file1.size).toBe(200 * 1024 * 1024);
+  await Promise.all([uploadFile, file1.filepath].map(fs.promises.unlink));
+});
+
+

@@ -200,7 +200,7 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel> im
     return { values: await this._frame.selectOption(metadata, params.selector, elements, params.options || [], params) };
   }
 
-  async setInputFiles(params: channels.FrameSetInputFilesParams, metadata: CallMetadata): Promise<void> {
+  async setInputFiles(params: channels.FrameSetInputFilesParams, metadata: CallMetadata): Promise<channels.FrameSetInputFilesResult> {
     return await this._frame.setInputFiles(metadata, params.selector, params.files, params);
   }
 

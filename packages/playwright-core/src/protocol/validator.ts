@@ -503,6 +503,9 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     frame: tOptional(tChannel('Frame')),
   });
   scheme.BrowserContextHarExportParams = tOptional(tObject({}));
+  scheme.BrowserContextCreateTempFileParams = tObject({
+    name: tString,
+  });
   scheme.PageSetDefaultNavigationTimeoutNoReplyParams = tObject({
     timeout: tOptional(tNumber),
   });
@@ -879,7 +882,9 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     files: tArray(tObject({
       name: tString,
       mimeType: tOptional(tString),
-      buffer: tBinary,
+      buffer: tOptional(tBinary),
+      path: tOptional(tString),
+      stream: tOptional(tChannel('WritableStream')),
     })),
     timeout: tOptional(tNumber),
     noWaitAfter: tOptional(tBoolean),
@@ -1099,7 +1104,9 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     files: tArray(tObject({
       name: tString,
       mimeType: tOptional(tString),
-      buffer: tBinary,
+      buffer: tOptional(tBinary),
+      path: tOptional(tString),
+      stream: tOptional(tChannel('WritableStream')),
     })),
     timeout: tOptional(tNumber),
     noWaitAfter: tOptional(tBoolean),
@@ -1222,6 +1229,10 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     size: tOptional(tNumber),
   });
   scheme.StreamCloseParams = tOptional(tObject({}));
+  scheme.WritableStreamWriteParams = tObject({
+    binary: tBinary,
+  });
+  scheme.WritableStreamCloseParams = tOptional(tObject({}));
   scheme.CDPSessionSendParams = tObject({
     method: tString,
     params: tOptional(tAny),

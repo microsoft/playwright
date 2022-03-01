@@ -26,6 +26,10 @@ import path from 'path';
 import { assert, isString, mkdirIfNeeded } from '../utils/utils';
 import * as api from '../../types/types';
 import * as structs from '../../types/structs';
+import { BrowserContext } from './browserContext';
+import { WritableStream } from './writableStream';
+import { pipeline } from 'stream';
+import { promisify } from 'util';
 
 export class ElementHandle<T extends Node = Node> extends JSHandle<T> implements api.ElementHandle {
   readonly _elementChannel: channels.ElementHandleChannel;
@@ -139,7 +143,10 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> implements
   }
 
   async setInputFiles(files: string | FilePayload | string[] | FilePayload[], options: channels.ElementHandleSetInputFilesOptions = {}) {
-    await this._elementChannel.setInputFiles({ files: await convertInputFiles(files), ...options });
+    const frame = await this.ownerFrame();
+    if (!frame)
+      throw new Error('Cannot set input files to detached element');
+    await this._elementChannel.setInputFiles({ files: await convertInputFiles(files, frame.page().context()), ...options });
   }
 
   async focus(): Promise<void> {
@@ -241,9 +248,37 @@ export function convertSelectOptionValues(values: string | api.ElementHandle | S
 }
 
 type SetInputFilesFiles = channels.ElementHandleSetInputFilesParams['files'];
-export async function convertInputFiles(files: string | FilePayload | string[] | FilePayload[]): Promise<SetInputFilesFiles> {
-  const items: (string | FilePayload)[] = Array.isArray(files) ? files : [ files ];
+export async function convertInputFiles(files: string | FilePayload | string[] | FilePayload[], context: BrowserContext): Promise<SetInputFilesFiles> {
+  const items: (string | FilePayload)[] = Array.isArray(files) ? files.slice() : [ files ];
+
+  const sizeLimit = 50 * 1024 * 1024;
+  const hasLargeBuffer = items.find(item => typeof item === 'object' && item.buffer && item.buffer.byteLength > sizeLimit);
+  if (hasLargeBuffer)
+    throw new Error('Cannot set buffer larger than 50Mb, please write it to a file and pass its path instead.');
+
+  const stats = await Promise.all(items.filter(f => typeof f === 'string').map(item => fs.promises.stat(item as string)));
+  const hasLargeFile = !!stats.find(s => s.size > sizeLimit);
+  if (hasLargeFile && items.find(f => typeof f !== 'string'))
+    throw new Error('Mixing large files and FailePayload as argument is not supported, please pass all items as file paths.');
+
   const filePayloads: SetInputFilesFiles = await Promise.all(items.map(async item => {
+    if (hasLargeFile) {
+      assert(typeof item === 'string');
+      if (context._browser?._connection.isRemote()) {
+        const { writableStream: stream } = await context._channel.createTempFile({ name: path.basename(item) });
+        const writable = WritableStream.from(stream);
+        const pipelineAsync = promisify(pipeline);
+        await pipelineAsync(fs.createReadStream(item), writable.stream());
+        return {
+          name: path.basename(item),
+          stream
+        };
+      }
+      return {
+        name: path.basename(item),
+        path: item
+      };
+    }
     if (typeof item === 'string') {
       return {
         name: path.basename(item),

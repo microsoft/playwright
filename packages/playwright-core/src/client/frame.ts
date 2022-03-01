@@ -355,7 +355,7 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
   }
 
   async setInputFiles(selector: string, files: string | FilePayload | string[] | FilePayload[], options: channels.FrameSetInputFilesOptions = {}): Promise<void> {
-    await this._channel.setInputFiles({ selector, files: await convertInputFiles(files), ...options });
+    await this._channel.setInputFiles({ selector, files: await convertInputFiles(files, this.page().context()), ...options });
   }
 
   async type(selector: string, text: string, options: channels.FrameTypeOptions = {}) {

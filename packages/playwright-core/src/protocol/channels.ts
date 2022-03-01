@@ -30,6 +30,7 @@ export type InitializerTraits<T> =
     T extends ElectronApplicationChannel ? ElectronApplicationInitializer :
     T extends ElectronChannel ? ElectronInitializer :
     T extends CDPSessionChannel ? CDPSessionInitializer :
+    T extends WritableStreamChannel ? WritableStreamInitializer :
     T extends StreamChannel ? StreamInitializer :
     T extends ArtifactChannel ? ArtifactInitializer :
     T extends TracingChannel ? TracingInitializer :
@@ -66,6 +67,7 @@ export type EventsTraits<T> =
     T extends ElectronApplicationChannel ? ElectronApplicationEvents :
     T extends ElectronChannel ? ElectronEvents :
     T extends CDPSessionChannel ? CDPSessionEvents :
+    T extends WritableStreamChannel ? WritableStreamEvents :
     T extends StreamChannel ? StreamEvents :
     T extends ArtifactChannel ? ArtifactEvents :
     T extends TracingChannel ? TracingEvents :
@@ -102,6 +104,7 @@ export type EventTargetTraits<T> =
     T extends ElectronApplicationChannel ? ElectronApplicationEventTarget :
     T extends ElectronChannel ? ElectronEventTarget :
     T extends CDPSessionChannel ? CDPSessionEventTarget :
+    T extends WritableStreamChannel ? WritableStreamEventTarget :
     T extends StreamChannel ? StreamEventTarget :
     T extends ArtifactChannel ? ArtifactEventTarget :
     T extends TracingChannel ? TracingEventTarget :
@@ -1072,6 +1075,7 @@ export interface BrowserContextChannel extends BrowserContextEventTarget, EventT
   recorderSupplementEnable(params: BrowserContextRecorderSupplementEnableParams, metadata?: Metadata): Promise<BrowserContextRecorderSupplementEnableResult>;
   newCDPSession(params: BrowserContextNewCDPSessionParams, metadata?: Metadata): Promise<BrowserContextNewCDPSessionResult>;
   harExport(params?: BrowserContextHarExportParams, metadata?: Metadata): Promise<BrowserContextHarExportResult>;
+  createTempFile(params: BrowserContextCreateTempFileParams, metadata?: Metadata): Promise<BrowserContextCreateTempFileResult>;
 }
 export type BrowserContextBindingCallEvent = {
   binding: BindingCallChannel,
@@ -1274,6 +1278,15 @@ export type BrowserContextHarExportParams = {};
 export type BrowserContextHarExportOptions = {};
 export type BrowserContextHarExportResult = {
   artifact: ArtifactChannel,
+};
+export type BrowserContextCreateTempFileParams = {
+  name: string,
+};
+export type BrowserContextCreateTempFileOptions = {
+
+};
+export type BrowserContextCreateTempFileResult = {
+  writableStream: WritableStreamChannel,
 };
 
 export interface BrowserContextEvents {
@@ -2337,7 +2350,9 @@ export type FrameSetInputFilesParams = {
   files: {
     name: string,
     mimeType?: string,
-    buffer: Binary,
+    buffer?: Binary,
+    path?: string,
+    stream?: WritableStreamChannel,
   }[],
   timeout?: number,
   noWaitAfter?: boolean,
@@ -2937,7 +2952,9 @@ export type ElementHandleSetInputFilesParams = {
   files: {
     name: string,
     mimeType?: string,
-    buffer: Binary,
+    buffer?: Binary,
+    path?: string,
+    stream?: WritableStreamChannel,
   }[],
   timeout?: number,
   noWaitAfter?: boolean,
@@ -3423,6 +3440,29 @@ export type StreamCloseOptions = {};
 export type StreamCloseResult = void;
 
 export interface StreamEvents {
+}
+
+// ----------- WritableStream -----------
+export type WritableStreamInitializer = {};
+export interface WritableStreamEventTarget {
+}
+export interface WritableStreamChannel extends WritableStreamEventTarget, Channel {
+  _type_WritableStream: boolean;
+  write(params: WritableStreamWriteParams, metadata?: Metadata): Promise<WritableStreamWriteResult>;
+  close(params?: WritableStreamCloseParams, metadata?: Metadata): Promise<WritableStreamCloseResult>;
+}
+export type WritableStreamWriteParams = {
+  binary: Binary,
+};
+export type WritableStreamWriteOptions = {
+
+};
+export type WritableStreamWriteResult = void;
+export type WritableStreamCloseParams = {};
+export type WritableStreamCloseOptions = {};
+export type WritableStreamCloseResult = void;
+
+export interface WritableStreamEvents {
 }
 
 // ----------- CDPSession -----------

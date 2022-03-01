@@ -28,6 +28,7 @@ import { Progress } from './progress';
 import { Selectors } from './selectors';
 import * as types from './types';
 import path from 'path';
+import fs from 'fs';
 import { CallMetadata, serverSideCallMetadata, SdkObject } from './instrumentation';
 import { Debugger } from './supplements/debugger';
 import { Tracing } from './trace/recorder/tracing';
@@ -66,6 +67,7 @@ export abstract class BrowserContext extends SdkObject {
   readonly tracing: Tracing;
   readonly fetchRequest: BrowserContextAPIRequestContext;
   private _customCloseHandler?: () => Promise<any>;
+  readonly _tempDirs: string[] = [];
 
   constructor(browser: Browser, options: types.BrowserContextOptions, browserContextId: string | undefined) {
     super(browser, 'browser-context');
@@ -274,6 +276,10 @@ export abstract class BrowserContext extends SdkObject {
     await Promise.all(Array.from(this._downloads).map(download => download.artifact.deleteOnContextClose()));
   }
 
+  private async _deleteAllTempDirs(): Promise<void> {
+    await Promise.all(this._tempDirs.map(async dir => await fs.promises.unlink(dir).catch(e => {})));
+  }
+
   setCustomCloseHandler(handler: (() => Promise<any>) | undefined) {
     this._customCloseHandler = handler;
   }
@@ -308,6 +314,7 @@ export abstract class BrowserContext extends SdkObject {
       // We delete downloads after context closure
       // so that browser does not write to the download file anymore.
       promises.push(this._deleteAllDownloads());
+      promises.push(this._deleteAllTempDirs());
       await Promise.all(promises);
 
       // Custom handler should trigger didCloseInternal itself.
