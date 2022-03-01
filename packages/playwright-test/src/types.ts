@@ -23,7 +23,7 @@ export type FixturesWithLocation = {
   fixtures: Fixtures;
   location: Location;
 };
-export type Annotation = { type: string, description?: string };
+export type Annotations = { type: string, description?: string }[];
 
 export interface TestStepInternal {
   complete(error?: Error | TestError): void;
@@ -33,3 +33,5 @@ export interface TestStepInternal {
   forceNoParent: boolean;
   location?: Location;
 }
+
+export type TestCaseType = 'beforeAll' | 'afterAll' | 'test';

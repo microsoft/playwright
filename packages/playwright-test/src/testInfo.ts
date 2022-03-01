@@ -25,13 +25,8 @@ import { WorkerInitParams } from './ipc';
 import { Loader } from './loader';
 import { ProjectImpl } from './project';
 import { TestCase } from './test';
-import { Annotation, TestStepInternal, Location } from './types';
-import { addSuffixToFilePath, getContainedPath, monotonicTime, sanitizeForFilePath, serializeError, trimLongString } from './util';
-
-type RunnableDescription = {
-  type: 'test' | 'beforeAll' | 'afterAll' | 'beforeEach' | 'afterEach' | 'slow' | 'skip' | 'fail' | 'fixme' | 'teardown';
-  location?: Location;
-};
+import { Annotations, TestStepInternal } from './types';
+import { addSuffixToFilePath, formatLocation, getContainedPath, monotonicTime, sanitizeForFilePath, serializeError, trimLongString } from './util';
 
 export class TestInfoImpl implements TestInfo {
   private _projectImpl: ProjectImpl;
@@ -41,7 +36,6 @@ export class TestInfoImpl implements TestInfo {
   readonly _startTime: number;
   readonly _startWallTime: number;
   private _hasHardError: boolean = false;
-  _currentRunnable: RunnableDescription | undefined;
 
   // ------------ TestInfo fields ------------
   readonly repeatEachIndex: number;
@@ -58,7 +52,7 @@ export class TestInfoImpl implements TestInfo {
   readonly fn: Function;
   expectedStatus: TestStatus;
   duration: number = 0;
-  readonly annotations: Annotation[] = [];
+  readonly annotations: Annotations = [];
   readonly attachments: TestInfo['attachments'] = [];
   status: TestStatus = 'passed';
   readonly stdout: TestInfo['stdout'] = [];
@@ -122,7 +116,7 @@ export class TestInfoImpl implements TestInfo {
 
       const relativeTestFilePath = path.relative(this.project.testDir, test._requireFile.replace(/\.(spec|test)\.(js|ts|mjs)$/, ''));
       const sanitizedRelativePath = relativeTestFilePath.replace(process.platform === 'win32' ? new RegExp('\\\\', 'g') : new RegExp('/', 'g'), '-');
-      const fullTitleWithoutSpec = test.titlePath().slice(1).join(' ');
+      const fullTitleWithoutSpec = test.titlePath().slice(1).join(' ') + (test._type === 'test' ? '' : '-worker' + this.workerIndex);
 
       let testOutputDir = trimLongString(sanitizedRelativePath + '-' + sanitizeForFilePath(fullTitleWithoutSpec));
       if (uniqueProjectNamePathSegment)
@@ -176,15 +170,13 @@ export class TestInfoImpl implements TestInfo {
       // Do not overwrite existing failure upon hook/teardown timeout.
       if (this.status === 'passed') {
         this.status = 'timedOut';
-        const title = titleForRunnable(this._currentRunnable);
-        const suffix = title ? ` in ${title}` : '';
-        const message = colors.red(`Timeout of ${this.timeout}ms exceeded${suffix}.`);
-        const location = this._currentRunnable?.location;
-        this.errors.push({
-          message,
-          // Include location for hooks and modifiers to distinguish between them.
-          stack: location ? message + `\n    at ${location.file}:${location.line}:${location.column}` : undefined,
-        });
+        if (this._test._type === 'test') {
+          this.errors.push({ message: colors.red(`Timeout of ${this.timeout}ms exceeded.`) });
+        } else {
+          // Include location for the hook to distinguish between multiple hooks.
+          const message = colors.red(`Timeout of ${this.timeout}ms exceeded in ${this._test._type} hook.`);
+          this.errors.push({ message: message, stack: message + `\n    at ${formatLocation(this._test.location)}.` });
+        }
       }
     }
     this.duration = monotonicTime() - this._startTime;
@@ -289,25 +281,4 @@ export class TestInfoImpl implements TestInfo {
 }
 
 class SkipError extends Error {
-}
-
-function titleForRunnable(runnable: RunnableDescription | undefined): string {
-  if (!runnable)
-    return '';
-  switch (runnable.type) {
-    case 'test':
-      return '';
-    case 'beforeAll':
-    case 'beforeEach':
-    case 'afterAll':
-    case 'afterEach':
-      return runnable.type + ' hook';
-    case 'teardown':
-      return 'fixtures teardown';
-    case 'skip':
-    case 'slow':
-    case 'fixme':
-    case 'fail':
-      return runnable.type + ' modifier';
-  }
 }

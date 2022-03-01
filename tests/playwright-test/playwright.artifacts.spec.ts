@@ -46,7 +46,6 @@ const testFiles = {
       });
 
       test.afterAll(async () => {
-        await page.setContent('Reset!');
         await page.close();
       });
 
@@ -146,6 +145,10 @@ test('should work with screenshot: on', async ({ runInlineTest }, testInfo) => {
     '  test-failed-1.png',
     'artifacts-persistent-passing',
     '  test-finished-1.png',
+    'artifacts-shared-afterAll-worker0',
+    '  test-finished-1.png',
+    'artifacts-shared-beforeAll-worker0',
+    '  test-finished-1.png',
     'artifacts-shared-shared-failing',
     '  test-failed-1.png',
     'artifacts-shared-shared-passing',
@@ -211,6 +214,10 @@ test('should work with trace: on', async ({ runInlineTest }, testInfo) => {
     '  trace.zip',
     'artifacts-persistent-passing',
     '  trace.zip',
+    'artifacts-shared-afterAll-worker0',
+    '  trace.zip',
+    'artifacts-shared-beforeAll-worker0',
+    '  trace.zip',
     'artifacts-shared-shared-failing',
     '  trace.zip',
     'artifacts-shared-shared-passing',
@@ -269,6 +276,8 @@ test('should work with trace: on-first-retry', async ({ runInlineTest }, testInf
     'artifacts-own-context-failing-retry1',
     '  trace.zip',
     'artifacts-persistent-failing-retry1',
+    '  trace.zip',
+    'artifacts-shared-beforeAll-worker1-retry1',
     '  trace.zip',
     'artifacts-shared-shared-failing-retry1',
     '  trace.zip',

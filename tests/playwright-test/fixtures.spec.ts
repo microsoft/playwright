@@ -316,23 +316,23 @@ test('automatic fixtures should work', async ({ runInlineTest }) => {
       });
       test.beforeEach(async ({}) => {
         expect(counterWorker).toBe(1);
-        expect(counterTest === 1 || counterTest === 2).toBe(true);
+        expect(counterTest === 2 || counterTest === 3).toBe(true);
       });
       test('test 1', async ({}) => {
         expect(counterWorker).toBe(1);
-        expect(counterTest).toBe(1);
+        expect(counterTest).toBe(2);
       });
       test('test 2', async ({}) => {
         expect(counterWorker).toBe(1);
-        expect(counterTest).toBe(2);
+        expect(counterTest).toBe(3);
       });
       test.afterEach(async ({}) => {
         expect(counterWorker).toBe(1);
-        expect(counterTest === 1 || counterTest === 2).toBe(true);
+        expect(counterTest === 2 || counterTest === 3).toBe(true);
       });
       test.afterAll(async ({}) => {
         expect(counterWorker).toBe(1);
-        expect(counterTest).toBe(2);
+        expect(counterTest).toBe(4);
       });
     `
   });
