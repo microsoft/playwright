@@ -116,6 +116,14 @@ Configuration for the `expect` assertion library.
 
 Use [`property: TestConfig.expect`] to change this option for all projects.
 
+## property: TestProject.fullyParallel
+- type: <[boolean]>
+
+Playwright Test runs tests in parallel. In order to achieve that, it runs several worker processes that run at the same time.
+By default, **test files** are run in parallel. Tests in a single file are run in order, in the same worker process.
+
+You can configure entire test project to concurrently run all tests in all files using this option.
+
 ## property: TestProject.metadata
 - type: <[Object]>
 

@@ -102,6 +102,14 @@ const config: PlaywrightTestConfig = {
 export default config;
 ```
 
+## property: TestConfig.fullyParallel
+- type: <[boolean]>
+
+Playwright Test runs tests in parallel. In order to achieve that, it runs several worker processes that run at the same time.
+By default, **test files** are run in parallel. Tests in a single file are run in order, in the same worker process.
+
+You can configure entire test run to concurrently execute all tests in all files using this option.
+
 ## property: TestConfig.globalSetup
 - type: <[string]>
 

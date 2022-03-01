@@ -278,6 +278,8 @@ export class Runner {
     for (const [project, files] of filesByProject) {
       const projectSuite = new Suite(project.config.name);
       projectSuite._projectConfig = project.config;
+      if (project.config.fullyParallel)
+        projectSuite._parallelMode = 'parallel';
       rootSuite._addSuite(projectSuite);
       for (const file of files) {
         const fileSuite = fileSuites.get(file);
