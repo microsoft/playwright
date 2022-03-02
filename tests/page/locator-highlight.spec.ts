@@ -16,6 +16,8 @@
 
 import { test as it, expect } from './pageTest';
 
+it.skip(({ mode }) => mode !== 'default', 'Highlight element has a closed shadow-root on != default');
+
 it('should highlight locator', async ({ page }) => {
   await page.setContent(`<input type='text' />`);
   await page.locator('input').highlight();
