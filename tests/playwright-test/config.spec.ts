@@ -391,3 +391,11 @@ test('should work with undefined values and base', async ({ runInlineTest }) => 
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
 });
+
+test('should throw when the config does not have a default export', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': '',
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain('No default export found in config file!');
+});

@@ -61,8 +61,12 @@ export class Loader {
     if (this._configFile)
       throw new Error('Cannot load two config files');
     let config = await this._requireOrImport(file);
-    if (config && typeof config === 'object' && ('default' in config))
-      config = config['default'];
+    if (config && typeof config === 'object') {
+      if ('default' in config)
+        config = config['default'];
+      else if (Object.keys(config).length === 0)
+        throw new Error('No default export found in config file!');
+    }
     this._config = config;
     this._configFile = file;
     const rawConfig = { ...config };
