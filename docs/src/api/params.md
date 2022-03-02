@@ -703,11 +703,17 @@ The default value can be changed by using the [`method: BrowserContext.setDefaul
 Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
 using the [`method: AndroidDevice.setDefaultTimeout`] method.
 
-## assertions-timeout
+## js-assertions-timeout
 * langs: js
 - `timeout` <[float]>
 
 Time to retry the assertion for. Defaults to `timeout` in [`property: TestConfig.expect`].
+
+## csharp-java-python-assertions-timeout
+* langs: java, python, csharp
+- `timeout` <[float]>
+
+Time to retry the assertion for.
 
 ## assertions-pixel-count
 * langs: js
@@ -721,12 +727,6 @@ Time to retry the assertion for. Defaults to `timeout` in [`property: TestConfig
 * langs: js
 - `threshold` <[float]> an acceptable percieved color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between pixels in compared images, between zero (strict) and one (lax), default is configurable with [`property: TestConfig.expect`]. Defaults to `0.2`.
 
-
-## assertions-timeout
-* langs: java, python, csharp
-- `timeout` <[float]>
-
-Time to retry the assertion for.
 
 ## shared-context-params-list
 - %%-context-option-acceptdownloads-%%

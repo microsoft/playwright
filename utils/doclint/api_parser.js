@@ -40,6 +40,7 @@ class ApiParser {
     }
     const body = md.parse(bodyParts.join('\n'));
     const params = paramsPath ? md.parse(fs.readFileSync(paramsPath).toString()) : null;
+    checkNoDuplicateParamEntries(params);
     const api = params ? applyTemplates(body, params) : body;
     /** @type {Map<string, Documentation.Class>} */
     this.classes = new Map();
@@ -369,6 +370,20 @@ function isTypeOverride(existingMember, member) {
     throw new Error(`Ambiguous language override for: ${member.name}`);
   }
   return false;
+}
+
+/**
+ * @param {MarkdownNode[]=} params
+ */
+function checkNoDuplicateParamEntries(params) {
+  if (!params)
+    return;
+  const entries = new Set();
+  for (const node of params) {
+    if (entries.has(node.text))
+      throw new Error('Duplicate param entry, for language-specific params use prefix (e.g. js-...): ' + node.text);
+    entries.add(node.text);
+  }
 }
 
 module.exports = { parseApi };
