@@ -47,7 +47,7 @@ def test_navigates_to_login_page(page: Page) -> None:
 ```
 
 
-## method: APIResponseAssertions.not
+## property: APIResponseAssertions.not
 * langs: java, js
 - returns: <[APIResponseAssertions]>
 
