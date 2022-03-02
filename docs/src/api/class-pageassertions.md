@@ -70,7 +70,7 @@ namespace PlaywrightTests
 }
 ```
 
-## method: PageAssertions.not
+## property: PageAssertions.not
 * langs: java, js, csharp
 - returns: <[PageAssertions]>
 

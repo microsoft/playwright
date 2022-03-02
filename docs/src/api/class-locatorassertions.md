@@ -68,7 +68,7 @@ namespace PlaywrightTests
 }
 ```
 
-## method: LocatorAssertions.not
+## property: LocatorAssertions.not
 * langs: java, js, csharp
 - returns: <[LocatorAssertions]>
 
