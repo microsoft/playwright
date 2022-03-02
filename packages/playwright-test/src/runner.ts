@@ -280,10 +280,10 @@ export class Runner {
       fileSuites.set(fileSuite._requireFile, fileSuite);
 
     const outputDirs = new Set<string>();
-    const grepMatcher = createTitleMatcher(config.grep);
-    const grepInvertMatcher = config.grepInvert ? createTitleMatcher(config.grepInvert) : null;
     const rootSuite = new Suite('');
     for (const [project, files] of filesByProject) {
+      const grepMatcher = createTitleMatcher(project.config.grep);
+      const grepInvertMatcher = project.config.grepInvert ? createTitleMatcher(project.config.grepInvert) : null;
       const projectSuite = new Suite(project.config.name);
       projectSuite._projectConfig = project.config;
       if (project.config.fullyParallel)

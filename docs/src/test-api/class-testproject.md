@@ -124,6 +124,20 @@ By default, **test files** are run in parallel. Tests in a single file are run i
 
 You can configure entire test project to concurrently run all tests in all files using this option.
 
+## property: TestProject.grep
+- type: <[RegExp]|[Array]<[RegExp]>>
+
+Filter to only run tests with a title matching one of the patterns. For example, passing `grep: /cart/` should only run tests with "cart" in the title. Also available globally and in the [command line](./test-cli.md) with the `-g` option.
+
+`grep` option is also useful for [tagging tests](./test-annotations.md#tag-tests).
+
+## property: TestProject.grepInvert
+- type: <[RegExp]|[Array]<[RegExp]>>
+
+Filter to only run tests with a title **not** matching one of the patterns. This is the opposite of [`property: TestProject.grep`]. Also available globally and in the [command line](./test-cli.md) with the `--grep-invert` option.
+
+`grepInvert` option is also useful for [tagging tests](./test-annotations.md#tag-tests).
+
 ## property: TestProject.metadata
 - type: <[Object]>
 
