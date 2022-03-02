@@ -138,6 +138,19 @@ it('should send secure cookie over https', async ({ request, server, httpsServer
   expect(serverRequest.headers.cookie).toBe('a=v; b=v');
 });
 
+it('should send secure cookie over http for localhost', async ({ request, server }) => {
+  server.setRoute('/setcookie.html', (req, res) => {
+    res.setHeader('Set-Cookie', ['a=v; secure', 'b=v']);
+    res.end();
+  });
+  await request.get(`${server.PREFIX}/setcookie.html`);
+  const [serverRequest] = await Promise.all([
+    server.waitForRequest('/empty.html'),
+    request.get(server.EMPTY_PAGE)
+  ]);
+  expect(serverRequest.headers.cookie).toBe('a=v; b=v');
+});
+
 it('should send not expired cookies', async ({ request, server }) => {
   server.setRoute('/setcookie.html', (req, res) => {
     const tomorrow = new Date();

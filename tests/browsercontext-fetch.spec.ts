@@ -900,6 +900,19 @@ it('context request should export same storage state as context', async ({ conte
   expect(pageState).toEqual(contextState);
 });
 
+it('should send secure cookie over http for localhost', async ({ page, server }) => {
+  server.setRoute('/setcookie.html', (req, res) => {
+    res.setHeader('Set-Cookie', ['a=v; secure']);
+    res.end();
+  });
+  await page.request.get(`${server.PREFIX}/setcookie.html`);
+  const [serverRequest] = await Promise.all([
+    server.waitForRequest('/empty.html'),
+    page.request.get(server.EMPTY_PAGE)
+  ]);
+  expect(serverRequest.headers.cookie).toBe('a=v');
+});
+
 it('should accept bool and numeric params', async ({ page, server }) => {
   let request;
   const url = new URL(server.EMPTY_PAGE);
