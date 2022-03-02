@@ -69,7 +69,7 @@ export class GitHubReporter extends BaseReporter {
   }
 
   override onError(error: TestError) {
-    const errorMessage = formatError(this.config, error, false).message;
+    const errorMessage = formatError(error, false).message;
     this.githubLogger.error(errorMessage);
   }
 
@@ -100,7 +100,7 @@ export class GitHubReporter extends BaseReporter {
 
   private _printFailureAnnotations(failures: TestCase[]) {
     failures.forEach((test, index) => {
-      const { annotations } = formatFailure(this.config, test, {
+      const { annotations } = formatFailure(test, {
         index: index + 1,
         includeStdio: true,
         includeAttachments: false,

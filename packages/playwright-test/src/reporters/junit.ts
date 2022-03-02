@@ -126,7 +126,7 @@ class JUnitReporter implements Reporter {
       attributes: {
         // Skip root, project, file
         name: test.titlePath().slice(3).join(' '),
-        classname: formatTestTitle(this.config, test),
+        classname: formatTestTitle(test),
         time: (test.results.reduce((acc, value) => acc + value.duration, 0)) / 1000
       },
       children: [] as XMLEntry[]
@@ -145,7 +145,7 @@ class JUnitReporter implements Reporter {
           message: `${path.basename(test.location.file)}:${test.location.line}:${test.location.column} ${test.title}`,
           type: 'FAILURE',
         },
-        text: stripAnsiEscapes(formatFailure(this.config, test).message)
+        text: stripAnsiEscapes(formatFailure(test).message)
       });
     }
 

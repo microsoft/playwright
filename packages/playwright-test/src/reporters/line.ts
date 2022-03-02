@@ -50,7 +50,7 @@ class LineReporter extends BaseReporter {
       stream.write(`\u001B[1A\u001B[2K`);
     if (test && this._lastTest !== test) {
       // Write new header for the output.
-      const title = colors.gray(formatTestTitle(this.config, test));
+      const title = colors.gray(formatTestTitle(test));
       stream.write(this.fitToScreen(title) + `\n`);
       this._lastTest = test;
     }
@@ -63,7 +63,7 @@ class LineReporter extends BaseReporter {
     super.onTestEnd(test, result);
     ++this._current;
     const retriesSuffix = this.totalTestCount < this._current ? ` (retries)` : ``;
-    const title = `[${this._current}/${this.totalTestCount}]${retriesSuffix} ${formatTestTitle(this.config, test)}`;
+    const title = `[${this._current}/${this.totalTestCount}]${retriesSuffix} ${formatTestTitle(test)}`;
     const suffix = result.retry ? ` (retry #${result.retry})` : '';
     if (process.env.PW_TEST_DEBUG_REPORTERS)
       process.stdout.write(`${title + suffix}\n`);
@@ -73,7 +73,7 @@ class LineReporter extends BaseReporter {
     if (!this.willRetry(test) && (test.outcome() === 'flaky' || test.outcome() === 'unexpected')) {
       if (!process.env.PW_TEST_DEBUG_REPORTERS)
         process.stdout.write(`\u001B[1A\u001B[2K`);
-      console.log(formatFailure(this.config, test, {
+      console.log(formatFailure(test, {
         index: ++this._failures
       }).message);
       console.log();

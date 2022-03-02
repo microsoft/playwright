@@ -53,7 +53,7 @@ class ListReporter extends BaseReporter {
         process.stdout.write('\n');
         this._lastRow++;
       }
-      const line = '     ' + colors.gray(formatTestTitle(this.config, test));
+      const line = '     ' + colors.gray(formatTestTitle(test));
       const suffix = this._retrySuffix(result);
       process.stdout.write(this.fitToScreen(line, suffix) + suffix + '\n');
     }
@@ -75,7 +75,7 @@ class ListReporter extends BaseReporter {
       return;
     if (step.category !== 'test.step')
       return;
-    this._updateTestLine(test, '     ' + colors.gray(formatTestTitle(this.config, test, step)), this._retrySuffix(result));
+    this._updateTestLine(test, '     ' + colors.gray(formatTestTitle(test, step)), this._retrySuffix(result));
   }
 
   onStepEnd(test: TestCase, result: TestResult, step: TestStep) {
@@ -83,7 +83,7 @@ class ListReporter extends BaseReporter {
       return;
     if (step.category !== 'test.step')
       return;
-    this._updateTestLine(test, '     ' + colors.gray(formatTestTitle(this.config, test, step.parent)), this._retrySuffix(result));
+    this._updateTestLine(test, '     ' + colors.gray(formatTestTitle(test, step.parent)), this._retrySuffix(result));
   }
 
   private _dumpToStdio(test: TestCase | undefined, chunk: string | Buffer, stream: NodeJS.WriteStream) {
@@ -102,7 +102,7 @@ class ListReporter extends BaseReporter {
     super.onTestEnd(test, result);
 
     let duration = colors.dim(` (${milliseconds(result.duration)})`);
-    const title = formatTestTitle(this.config, test);
+    const title = formatTestTitle(test);
     let text = '';
     if (result.status === 'skipped') {
       text = colors.green('  -  ') + colors.cyan(title);

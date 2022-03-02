@@ -92,14 +92,14 @@ export class BaseReporter implements Reporter  {
         return;
     }
     const projectName = test.titlePath()[1];
-    const relativePath = relativeTestPath(this.config, test);
+    const relativePath = relativeTestPath(test);
     const fileAndProject = (projectName ? `[${projectName}] › ` : '') + relativePath;
     const duration = this.fileDurations.get(fileAndProject) || 0;
     this.fileDurations.set(fileAndProject, duration + result.duration);
   }
 
   onError(error: TestError) {
-    console.log('\n' + formatError(this.config, error, colors.enabled).message);
+    console.log('\n' + formatError(error, colors.enabled).message);
   }
 
   async onEnd(result: FullResult) {
@@ -137,12 +137,12 @@ export class BaseReporter implements Reporter  {
     if (unexpected.length) {
       tokens.push(colors.red(`  ${unexpected.length} failed`));
       for (const test of unexpected)
-        tokens.push(colors.red(formatTestHeader(this.config, test, '    ')));
+        tokens.push(colors.red(formatTestHeader(test, '    ')));
     }
     if (flaky.length) {
       tokens.push(colors.yellow(`  ${flaky.length} flaky`));
       for (const test of flaky)
-        tokens.push(colors.yellow(formatTestHeader(this.config, test, '    ')));
+        tokens.push(colors.yellow(formatTestHeader(test, '    ')));
     }
     if (skipped)
       tokens.push(colors.yellow(`  ${skipped} skipped`));
@@ -198,7 +198,7 @@ export class BaseReporter implements Reporter  {
   private _printFailures(failures: TestCase[]) {
     console.log('');
     failures.forEach((test, index) => {
-      console.log(formatFailure(this.config, test, {
+      console.log(formatFailure(test, {
         index: index + 1,
       }).message);
     });
@@ -225,19 +225,19 @@ export class BaseReporter implements Reporter  {
   }
 }
 
-export function formatFailure(config: FullConfig, test: TestCase, options: {index?: number, includeStdio?: boolean, includeAttachments?: boolean} = {}): {
+export function formatFailure(test: TestCase, options: {index?: number, includeStdio?: boolean, includeAttachments?: boolean} = {}): {
   message: string,
   annotations: Annotation[]
 } {
   const { index, includeStdio, includeAttachments = true } = options;
   const lines: string[] = [];
-  const title = formatTestTitle(config, test);
+  const title = formatTestTitle(test);
   const annotations: Annotation[] = [];
-  const header = formatTestHeader(config, test, '  ', index);
+  const header = formatTestHeader(test, '  ', index);
   lines.push(colors.red(header));
   for (const result of test.results) {
     const resultLines: string[] = [];
-    const errors = formatResultFailure(config, test, result, '    ', colors.enabled);
+    const errors = formatResultFailure(test, result, '    ', colors.enabled);
     if (!errors.length)
       continue;
     const retryLines = [];
@@ -300,7 +300,7 @@ export function formatFailure(config: FullConfig, test: TestCase, options: {inde
   };
 }
 
-export function formatResultFailure(config: FullConfig, test: TestCase, result: TestResult, initialIndent: string, highlightCode: boolean): ErrorDetails[] {
+export function formatResultFailure(test: TestCase, result: TestResult, initialIndent: string, highlightCode: boolean): ErrorDetails[] {
   const errorDetails: ErrorDetails[] = [];
 
   if (result.status === 'passed' && test.expectedStatus === 'failed') {
@@ -310,7 +310,7 @@ export function formatResultFailure(config: FullConfig, test: TestCase, result: 
   }
 
   for (const error of result.errors) {
-    const formattedError = formatError(config, error, highlightCode, test.location.file);
+    const formattedError = formatError(error, highlightCode, test.location.file);
     errorDetails.push({
       message: indent(formattedError.message, initialIndent),
       location: formattedError.location,
@@ -319,12 +319,12 @@ export function formatResultFailure(config: FullConfig, test: TestCase, result: 
   return errorDetails;
 }
 
-function relativeFilePath(config: FullConfig, file: string): string {
-  return path.relative(config.rootDir, file) || path.basename(file);
+function relativeFilePath(file: string): string {
+  return path.relative(process.cwd(), file) || path.basename(file);
 }
 
-function relativeTestPath(config: FullConfig, test: TestCase): string {
-  return relativeFilePath(config, test.location.file);
+function relativeTestPath(test: TestCase): string {
+  return relativeFilePath(test.location.file);
 }
 
 function stepSuffix(step: TestStep | undefined) {
@@ -332,21 +332,21 @@ function stepSuffix(step: TestStep | undefined) {
   return stepTitles.map(t => ' › ' + t).join('');
 }
 
-export function formatTestTitle(config: FullConfig, test: TestCase, step?: TestStep): string {
+export function formatTestTitle(test: TestCase, step?: TestStep): string {
   // root, project, file, ...describes, test
   const [, projectName, , ...titles] = test.titlePath();
-  const location = `${relativeTestPath(config, test)}:${test.location.line}:${test.location.column}`;
+  const location = `${relativeTestPath(test)}:${test.location.line}:${test.location.column}`;
   const projectTitle = projectName ? `[${projectName}] › ` : '';
   return `${projectTitle}${location} › ${titles.join(' › ')}${stepSuffix(step)}`;
 }
 
-function formatTestHeader(config: FullConfig, test: TestCase, indent: string, index?: number): string {
-  const title = formatTestTitle(config, test);
+function formatTestHeader(test: TestCase, indent: string, index?: number): string {
+  const title = formatTestTitle(test);
   const header = `${indent}${index ? index + ') ' : ''}${title}`;
   return pad(header, '=');
 }
 
-export function formatError(config: FullConfig, error: TestError, highlightCode: boolean, file?: string): ErrorDetails {
+export function formatError(error: TestError, highlightCode: boolean, file?: string): ErrorDetails {
   const stack = error.stack;
   const tokens = [];
   let location: Location | undefined;
@@ -361,7 +361,7 @@ export function formatError(config: FullConfig, error: TestError, highlightCode:
         // Convert /var/folders to /private/var/folders on Mac.
         if (!file || fs.realpathSync(file) !== location.file) {
           tokens.push('');
-          tokens.push(colors.gray(`   at `) + `${relativeFilePath(config, location.file)}:${location.line}`);
+          tokens.push(colors.gray(`   at `) + `${relativeFilePath(location.file)}:${location.line}`);
         }
         tokens.push('');
         tokens.push(codeFrame);
