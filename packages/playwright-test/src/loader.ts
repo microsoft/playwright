@@ -205,6 +205,8 @@ export class Loader {
     const fullProject: FullProject = {
       fullyParallel: takeFirst(this._configOverrides.fullyParallel, projectConfig.fullyParallel, this._config.fullyParallel, undefined),
       expect: takeFirst(this._configOverrides.expect, projectConfig.expect, this._config.expect, undefined),
+      grep: takeFirst(this._configOverrides.grep, projectConfig.grep, this._config.grep, baseFullConfig.grep),
+      grepInvert: takeFirst(this._configOverrides.grepInvert, projectConfig.grepInvert, this._config.grepInvert, baseFullConfig.grepInvert),
       outputDir,
       repeatEach: takeFirst(this._configOverrides.repeatEach, projectConfig.repeatEach, this._config.repeatEach, 1),
       retries: takeFirst(this._configOverrides.retries, projectConfig.retries, this._config.retries, 0),

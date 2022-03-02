@@ -60,6 +60,8 @@ type ExpectSettings = {
 interface TestProject {
   expect?: ExpectSettings;
   fullyParallel?: boolean;
+  grep?: RegExp | RegExp[];
+  grepInvert?: RegExp | RegExp[] | null;
   metadata?: any;
   name?: string;
   snapshotDir?: string;

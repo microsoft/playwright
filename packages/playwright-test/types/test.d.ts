@@ -134,6 +134,21 @@ interface TestProject {
    */
   fullyParallel?: boolean;
   /**
+   * Filter to only run tests with a title matching one of the patterns. For example, passing `grep: /cart/` should only run
+   * tests with "cart" in the title. Also available globally and in the [command line](https://playwright.dev/docs/test-cli) with the `-g` option.
+   *
+   * `grep` option is also useful for [tagging tests](https://playwright.dev/docs/test-annotations#tag-tests).
+   */
+  grep?: RegExp | RegExp[];
+  /**
+   * Filter to only run tests with a title **not** matching one of the patterns. This is the opposite of
+   * [testProject.grep](https://playwright.dev/docs/api/class-testproject#test-project-grep). Also available globally and in
+   * the [command line](https://playwright.dev/docs/test-cli) with the `--grep-invert` option.
+   *
+   * `grepInvert` option is also useful for [tagging tests](https://playwright.dev/docs/test-annotations#tag-tests).
+   */
+  grepInvert?: RegExp | RegExp[] | null;
+  /**
    * Any JSON-serializable metadata that will be put directly to the test report.
    */
   metadata?: any;
