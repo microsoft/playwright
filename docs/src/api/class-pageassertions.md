@@ -227,7 +227,7 @@ await Expect(page).ToHaveURL(new Regex(".*checkout"));
 ### param: PageAssertions.toHaveURL.urlOrRegExp
 - `urlOrRegExp` <[string]|[RegExp]>
 
-Expected js-substring or RegExcsharp-java-python-p.
+Expected substring or RegExp.
 
 ### option: PageAssertions.toHaveURL.timeout = %%-js-assertions-timeout-%%
 ### option: PageAssertions.toHaveURL.timeout = %%-csharp-java-python-assertions-timeout-%%

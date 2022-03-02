@@ -1159,7 +1159,7 @@ await Expect(locator).ToHaveValueAsync(new Regex("[0-9]"));
 ```
 
 ### param: LocatorAssertions.toHaveValue.value
-- `value` <[string]|[charp-java-python-RegExp]>js-
+- `value` <[string]|[RegExp]>
 
 Expected value.
 
