@@ -13,7 +13,15 @@ This image is published on [Docker Hub].
 
 ### Pull the image
 
-```bash js python csharp
+```bash js
+docker pull mcr.microsoft.com/playwright:focal
+```
+
+```bash python
+docker pull mcr.microsoft.com/playwright:focal
+```
+
+```bash csharp
 docker pull mcr.microsoft.com/playwright:focal
 ```
 
@@ -21,14 +29,22 @@ docker pull mcr.microsoft.com/playwright:focal
 docker pull mcr.microsoft.com/playwright/java:focal
 ```
 
-or pinned to a specific Playwright version (recommended). Replace 1.15.0 with your Playwright version:
+or pinned to a specific Playwright version (recommended). Replace 1.20.0 with your Playwright version:
 
-```bash js python csharp
-docker pull mcr.microsoft.com/playwright:v1.15.0-focal
+```bash js
+docker pull mcr.microsoft.com/playwright:v1.20.0-focal
+```
+
+```bash python
+docker pull mcr.microsoft.com/playwright:v1.20.0-focal
+```
+
+```bash csharp
+docker pull mcr.microsoft.com/playwright:v1.20.0-focal
 ```
 
 ```bash java
-docker pull mcr.microsoft.com/playwright/java:v1.15.0-focal
+docker pull mcr.microsoft.com/playwright/java:v1.20.0-focal
 ```
 
 ### Run the image
@@ -39,7 +55,15 @@ By default, the Docker image will use the `root` user to run the browsers. This 
 
 On trusted websites, you can avoid creating a separate user and use root for it since you trust the code which will run on the browsers.
 
-```bash js python csharp
+```bash js
+docker run -it --rm --ipc=host mcr.microsoft.com/playwright:focal /bin/bash
+```
+
+```bash python
+docker run -it --rm --ipc=host mcr.microsoft.com/playwright:focal /bin/bash
+```
+
+```bash csharp
 docker run -it --rm --ipc=host mcr.microsoft.com/playwright:focal /bin/bash
 ```
 
@@ -51,7 +75,15 @@ docker run -it --rm --ipc=host mcr.microsoft.com/playwright/java:focal /bin/bash
 
 On untrusted websites, it's recommended to use a separate user for launching the browsers in combination with the seccomp profile. Inside the container or if you are using the Docker image as a base image you have to use `adduser` for it.
 
-```bash js python csharp
+```bash js
+docker run -it --rm --ipc=host --user pwuser --security-opt seccomp=seccomp_profile.json mcr.microsoft.com/playwright:focal /bin/bash
+```
+
+```bash python
+docker run -it --rm --ipc=host --user pwuser --security-opt seccomp=seccomp_profile.json mcr.microsoft.com/playwright:focal /bin/bash
+```
+
+```bash csharp
 docker run -it --rm --ipc=host --user pwuser --security-opt seccomp=seccomp_profile.json mcr.microsoft.com/playwright:focal /bin/bash
 ```
 
@@ -92,12 +124,12 @@ See our [Continuous Integration guides](./ci.md) for sample configs.
 See [all available image tags].
 
 Docker images are published automatically by GitHub Actions. We currently publish images with the
-following tags (`v1.15.0` in this case is an example:):
+following tags (`v1.20.0` in this case is an example:):
 - `:next` - tip-of-tree image version based on Ubuntu 20.04 LTS (Focal Fossa).
 - `:next-focal` - tip-of-tree image version based on Ubuntu 20.04 LTS (Focal Fossa).
 - `:focal` - last Playwright release docker image based on Ubuntu 20.04 LTS (Focal Fossa).
-- `:v1.15.0` - Playwright v1.15.0 release docker image based on Ubuntu 20.04 LTS (Focal Fossa).
-- `:v1.15.0-focal` - Playwright v1.15.0 release docker image based on Ubuntu 20.04 LTS (Focal Fossa).
+- `:v1.20.0` - Playwright v1.20.0 release docker image based on Ubuntu 20.04 LTS (Focal Fossa).
+- `:v1.20.0-focal` - Playwright v1.20.0 release docker image based on Ubuntu 20.04 LTS (Focal Fossa).
 - `:sha-XXXXXXX` - docker image for every commit that changed
   docker files or browsers, marked with a [short sha](https://git-scm.com/book/en/v2/Git-Tools-Revision-Selection#Short-SHA-1) (first 7 digits of the SHA commit).
 
