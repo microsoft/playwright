@@ -64,6 +64,29 @@ it('inputValue should work on label', async ({ page, server }) => {
   expect(await page.locator('label').inputValue()).toBe('foo');
 });
 
+it('should get value of input with label', async ({ page }) => {
+  await page.setContent(`<label for=target>Fill me</label><input id=target value="some value">`);
+  expect(await page.inputValue('text=Fill me')).toBe('some value');
+  await expect(page.locator('text=Fill me')).toHaveValue('some value');
+});
+
+it('should get value of input with span inside the label', async ({ page }) => {
+  await page.setContent(`<label for=target><span>Fill me</span></label><input id=target value="some value">`);
+  expect(await page.inputValue('text=Fill me')).toBe('some value');
+  await expect(page.locator('text=Fill me')).toHaveValue('some value');
+});
+
+it('should get value of textarea with label', async ({ page }) => {
+  await page.setContent(`<label for=target>Fill me</label><textarea id=target>hey</textarea>`);
+  expect(await page.inputValue('text=Fill me')).toBe('hey');
+  await expect(page.locator('text=Fill me')).toHaveValue('hey');
+
+  await page.fill('textarea', 'Look at this');
+  expect(await page.inputValue('text=Fill me')).toBe('Look at this');
+  await expect(page.locator('text=Fill me')).toHaveValue('Look at this');
+});
+
+
 it('innerHTML should work', async ({ page, server }) => {
   await page.goto(`${server.PREFIX}/dom.html`);
   const locator = page.locator('#outer');
