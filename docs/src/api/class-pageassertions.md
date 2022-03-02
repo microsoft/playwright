@@ -99,7 +99,8 @@ The opposite of [`method: PageAssertions.toHaveTitle`].
 
 Expected title or RegExp.
 
-### option: PageAssertions.NotToHaveTitle.timeout = %%-assertions-timeout-%%
+### option: PageAssertions.NotToHaveTitle.timeout = %%-js-assertions-timeout-%%
+### option: PageAssertions.NotToHaveTitle.timeout = %%-csharp-java-python-assertions-timeout-%%
 
 ## async method: PageAssertions.NotToHaveURL
 * langs: python
@@ -112,7 +113,8 @@ The opposite of [`method: PageAssertions.toHaveURL`].
 
 Expected substring or RegExp.
 
-### option: PageAssertions.NotToHaveURL.timeout = %%-assertions-timeout-%%
+### option: PageAssertions.NotToHaveURL.timeout = %%-js-assertions-timeout-%%
+### option: PageAssertions.NotToHaveURL.timeout = %%-csharp-java-python-assertions-timeout-%%
 
 ## async method: PageAssertions.toHaveScreenshot
 * langs: js
@@ -127,7 +129,8 @@ yield the same result, and save the last one as an expectation.
 await expect(page).toHaveScreenshot();
 ```
 
-### option: PageAssertions.toHaveScreenshot.timeout = %%-assertions-timeout-%%
+### option: PageAssertions.toHaveScreenshot.timeout = %%-js-assertions-timeout-%%
+### option: PageAssertions.toHaveScreenshot.timeout = %%-csharp-java-python-assertions-timeout-%%
 
 ### option: PageAssertions.toHaveScreenshot.disableAnimations = %%-screenshot-option-disable-animations-%%
 
@@ -184,7 +187,8 @@ await Expect(page).ToHaveTitle("Playwright");
 
 Expected title or RegExp.
 
-### option: PageAssertions.toHaveTitle.timeout = %%-assertions-timeout-%%
+### option: PageAssertions.toHaveTitle.timeout = %%-js-assertions-timeout-%%
+### option: PageAssertions.toHaveTitle.timeout = %%-csharp-java-python-assertions-timeout-%%
 
 ## async method: PageAssertions.toHaveURL
 * langs:
@@ -225,4 +229,5 @@ await Expect(page).ToHaveURL(new Regex(".*checkout"));
 
 Expected substring or RegExp.
 
-### option: PageAssertions.toHaveURL.timeout = %%-assertions-timeout-%%
+### option: PageAssertions.toHaveURL.timeout = %%-js-assertions-timeout-%%
+### option: PageAssertions.toHaveURL.timeout = %%-csharp-java-python-assertions-timeout-%%
