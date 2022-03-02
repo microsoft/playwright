@@ -263,10 +263,8 @@ it('should return secure cookies based on HTTP(S) protocol', async ({ context, b
   }]);
 });
 
-it('should add cookies with an expiration', async ({ context, browserName, platform }) => {
-  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/12226' });
-  it.fixme(browserName === 'webkit' && platform === 'linux', 'Protocol error');
-  const expires = Date.now() + 3600;
+it('should add cookies with an expiration', async ({ context }) => {
+  const expires = Math.floor((Date.now() / 1000)) + 3600;
   await context.addCookies([{
     url: 'https://foo.com',
     name: 'doggo',
@@ -276,9 +274,6 @@ it('should add cookies with an expiration', async ({ context, browserName, platf
   }]);
   const cookies = await context.cookies(['https://foo.com']);
   expect(cookies.length).toBe(1);
-  if (browserName === 'chromium')
-    // Chromium returns them sometimes as floats: https://crbug.com/1300178
-    cookies[0].expires = Math.round(cookies[0].expires);
   expect(cookies).toEqual([{
     name: 'doggo',
     value: 'woofs',
@@ -289,4 +284,29 @@ it('should add cookies with an expiration', async ({ context, browserName, platf
     secure: true,
     sameSite: 'None',
   }]);
+  {
+    // Rollover to 5-digit year
+    await context.addCookies([{
+      url: 'https://foo.com',
+      name: 'doggo',
+      value: 'woofs',
+      sameSite: 'None',
+      expires: 253402300799, // Fri, 31 Dec 9999 23:59:59 +0000 (UTC)
+    }]);
+    await expect(context.addCookies([{
+      url: 'https://foo.com',
+      name: 'doggo',
+      value: 'woofs',
+      sameSite: 'None',
+      expires: 253402300800, // Sat,  1 Jan 1000 00:00:00 +0000 (UTC)
+    }])).rejects.toThrow(/Cookie should have a valid expires/);
+  }
+
+  await expect(context.addCookies([{
+    url: 'https://foo.com',
+    name: 'doggo',
+    value: 'woofs',
+    sameSite: 'None',
+    expires: -42,
+  }])).rejects.toThrow(/Cookie should have a valid expires/);
 });
