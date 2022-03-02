@@ -707,7 +707,7 @@ using the [`method: AndroidDevice.setDefaultTimeout`] method.
 * langs: js
 - `timeout` <[float]>
 
-Time to retry the assertion for. Defaults to `timeout` in [`property: TestConfig.expect`].
+Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
 
 ## csharp-java-python-assertions-timeout
 * langs: java, python, csharp
@@ -717,16 +717,21 @@ Time to retry the assertion for.
 
 ## assertions-pixel-count
 * langs: js
-- `pixelCount` <[int]> an acceptable amount of pixels that could be different, unset by default.
+- `pixelCount` <[int]>
+
+An acceptable amount of pixels that could be different, unset by default.
 
 ## assertions-pixel-ratio
 * langs: js
-- `pixelRatio` <[float]> an acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1`, unset by default.
+- `pixelRatio` <[float]>
+
+An acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1`, unset by default.
 
 ## assertions-threshold
 * langs: js
-- `threshold` <[float]> an acceptable percieved color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between pixels in compared images, between zero (strict) and one (lax), default is configurable with [`property: TestConfig.expect`]. Defaults to `0.2`.
+- `threshold` <[float]>
 
+An acceptable percieved color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between pixels in compared images, between zero (strict) and one (lax), default is configurable with `TestConfig.expect`. Defaults to `0.2`.
 
 ## shared-context-params-list
 - %%-context-option-acceptdownloads-%%
