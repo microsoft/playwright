@@ -59,6 +59,7 @@ type ExpectSettings = {
 
 interface TestProject {
   expect?: ExpectSettings;
+  fullyParallel?: boolean;
   metadata?: any;
   name?: string;
   snapshotDir?: string;
@@ -117,6 +118,7 @@ type LiteralUnion<T extends U, U = string> = T | (U & { zz_IGNORE_ME?: never });
 
 interface TestConfig {
   forbidOnly?: boolean;
+  fullyParallel?: boolean;
   globalSetup?: string;
   globalTeardown?: string;
   globalTimeout?: number;
@@ -153,6 +155,7 @@ export interface Config<TestArgs = {}, WorkerArgs = {}> extends TestConfig {
 
 export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
   forbidOnly: boolean;
+  fullyParallel: boolean;
   globalSetup: string | null;
   globalTeardown: string | null;
   globalTimeout: number;
