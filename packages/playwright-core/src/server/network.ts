@@ -44,12 +44,19 @@ export function filterCookies(cookies: types.NetworkCookie[], urls: string[]): t
   });
 }
 
+// Rollover to 5-digit year:
+// 253402300799 == Fri, 31 Dec 9999 23:59:59 +0000 (UTC)
+// 253402300800 == Sat,  1 Jan 1000 00:00:00 +0000 (UTC)
+const kMaxCookieExpiresDateInSeconds = 253402300799;
+
 export function rewriteCookies(cookies: types.SetNetworkCookieParam[]): types.SetNetworkCookieParam[] {
   return cookies.map(c => {
     assert(c.name, 'Cookie should have a name');
     assert(c.url || (c.domain && c.path), 'Cookie should have a url or a domain/path pair');
     assert(!(c.url && c.domain), 'Cookie should have either url or domain');
     assert(!(c.url && c.path), 'Cookie should have either url or path');
+    assert(!(c.expires && c.expires < 0 && c.expires !== -1), 'Cookie should have a valid expires, only -1 or a positive number for the unix timestamp in seconds is allowed');
+    assert(!(c.expires && c.expires > 0 && c.expires > kMaxCookieExpiresDateInSeconds), 'Cookie should have a valid expires, only -1 or a positive number for the unix timestamp in seconds is allowed');
     const copy = { ...c };
     if (copy.url) {
       assert(copy.url !== 'about:blank', `Blank page can not have cookie "${c.name}"`);
