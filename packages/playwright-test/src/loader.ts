@@ -40,7 +40,6 @@ export class Loader {
   private _config: Config = {};
   private _configFile: string | undefined;
   private _projects: ProjectImpl[] = [];
-  private _lastModuleInfo: { rootFolder: string, isModule: boolean } | null = null;
 
   constructor(defaultConfig: Config, configOverrides: Config) {
     this._defaultConfig = defaultConfig;
@@ -94,6 +93,7 @@ export class Loader {
 
     this._fullConfig.rootDir = this._config.testDir || rootDir;
     this._fullConfig.forbidOnly = takeFirst(this._configOverrides.forbidOnly, this._config.forbidOnly, baseFullConfig.forbidOnly);
+    this._fullConfig.fullyParallel = takeFirst(this._configOverrides.fullyParallel, this._config.fullyParallel, baseFullConfig.fullyParallel);
     this._fullConfig.globalSetup = takeFirst(this._configOverrides.globalSetup, this._config.globalSetup, baseFullConfig.globalSetup);
     this._fullConfig.globalTeardown = takeFirst(this._configOverrides.globalTeardown, this._config.globalTeardown, baseFullConfig.globalTeardown);
     this._fullConfig.globalTimeout = takeFirst(this._configOverrides.globalTimeout, this._configOverrides.globalTimeout, this._config.globalTimeout, baseFullConfig.globalTimeout);
@@ -203,6 +203,7 @@ export class Loader {
     if (!path.isAbsolute(snapshotDir))
       snapshotDir = path.resolve(configDir, snapshotDir);
     const fullProject: FullProject = {
+      fullyParallel: takeFirst(this._configOverrides.fullyParallel, projectConfig.fullyParallel, this._config.fullyParallel, undefined),
       expect: takeFirst(this._configOverrides.expect, projectConfig.expect, this._config.expect, undefined),
       outputDir,
       repeatEach: takeFirst(this._configOverrides.repeatEach, projectConfig.repeatEach, this._config.repeatEach, 1),
@@ -222,32 +223,7 @@ export class Loader {
 
   private async _requireOrImport(file: string) {
     const revertBabelRequire = installTransform();
-
-    // Figure out if we are importing or requiring.
-    let isModule: boolean;
-    if (file.endsWith('.mjs')) {
-      isModule = true;
-    } else {
-      if (!this._lastModuleInfo || !file.startsWith(this._lastModuleInfo.rootFolder)) {
-        this._lastModuleInfo = null;
-        try {
-          const pathSegments = file.split(path.sep);
-          for (let i = pathSegments.length - 1; i >= 0; --i) {
-            const rootFolder = pathSegments.slice(0, i).join(path.sep);
-            const packageJson = path.join(rootFolder, 'package.json');
-            if (fs.existsSync(packageJson)) {
-              isModule = require(packageJson).type === 'module';
-              this._lastModuleInfo = { rootFolder, isModule };
-              break;
-            }
-          }
-        } catch {
-          // Silent catch.
-        }
-      }
-      isModule = this._lastModuleInfo?.isModule || false;
-    }
-
+    const isModule = fileIsModule(file);
     try {
       const esmImport = () => eval(`import(${JSON.stringify(url.pathToFileURL(file))})`);
       if (isModule)
@@ -455,6 +431,7 @@ function validateProject(file: string, project: Project, title: string) {
 
 const baseFullConfig: FullConfig = {
   forbidOnly: false,
+  fullyParallel: false,
   globalSetup: null,
   globalTeardown: null,
   globalTimeout: 0,
@@ -487,4 +464,35 @@ function resolveScript(id: string, rootDir: string) {
   if (fs.existsSync(localPath))
     return localPath;
   return require.resolve(id, { paths: [rootDir] });
+}
+
+export function fileIsModule(file: string): boolean {
+  if (file.endsWith('.mjs'))
+    return true;
+
+  const folder = path.dirname(file);
+  return folderIsModule(folder);
+}
+
+const folderToIsModuleCache = new Map<string, { isModule: boolean }>();
+
+export function folderIsModule(folder: string): boolean {
+  // Fast track.
+  const cached = folderToIsModuleCache.get(folder);
+  if (cached)
+    return cached.isModule;
+
+  const packageJson = path.join(folder, 'package.json');
+  let isModule = false;
+  if (fs.existsSync(packageJson)) {
+    isModule = require(packageJson).type === 'module';
+  } else {
+    const parentFolder = path.basename(folder);
+    if (parentFolder !== folder)
+      isModule = folderIsModule(parentFolder);
+    else
+      isModule = false;
+  }
+  folderToIsModuleCache.set(folder, { isModule });
+  return isModule;
 }

@@ -1,0 +1,35 @@
+<head>
+<style>
+div.directory::before {
+  content: '📁';
+}
+</style>
+<script>
+async function loadDir() {
+    const handle = await window.showDirectoryPicker();
+    for await (const entry of handle.values())
+        await listEntry(entry, 0);
+}
+// List filesystem entry recursively
+async function listEntry(e, offset) {
+    offset += 2;
+    printEntry(e.name, offset, e.kind);
+    if (e.kind !== 'directory')
+        return;
+    for await (const entry of e.values())
+        await listEntry(entry, offset);
+}
+function printEntry(text, offset, kind) {
+    const div = document.createElement('div');
+    div.style.paddingLeft = offset * 10;
+    div.classList.add(kind);
+    div.textContent = text;
+    document.getElementById('dir').appendChild(div);
+}
+</script>
+</head>
+<body>
+    <button id="ls-directory" onclick="loadDir()">Open directory</button>
+    <p>Directory contents:</p>
+    <div id="dir"></div>
+</body>

@@ -15,7 +15,9 @@
  */
 
 import { Config } from './stable-test-runner';
+import * as path from 'path';
 
+const outputDir = path.join(__dirname, '..', '..', 'test-results');
 const config: Config = {
   testDir: __dirname,
   testIgnore: ['assets/**', 'stable-test-runner/**'],
@@ -27,6 +29,12 @@ const config: Config = {
     { name: 'visual tests', testMatch: ['*.visual.ts'] },
   ] : [
     { name: 'playwright-test', testIgnore: ['*.visual.ts'] },
+  ],
+  reporter: process.env.CI ? [
+    ['dot'],
+    ['json', { outputFile: path.join(outputDir, 'report.json') }],
+  ] : [
+    ['list']
   ],
 };
 

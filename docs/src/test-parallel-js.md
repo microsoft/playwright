@@ -6,7 +6,8 @@ title: "Parallelism and sharding"
 Playwright Test runs tests in parallel. In order to achieve that, it runs several worker processes that run at the same time.
 
 - By default, **test files** are run in parallel. Tests in a single file are run in order, in the same worker process.
-- Group tests with [`test.describe.parallel`](#parallelize-tests-in-a-single-file) to run **tests in a single file** in parallel.
+- Configure tests using [`test.describe.configure`](#parallelize-tests-in-a-single-file) to run **tests in a single file** in parallel.
+- You can configure entire project to have all tests in all files to run in parallel using [`property: TestProject.fullyParallel`] or [`property: TestConfig.fullyParallel`]
 - To **disable** parallelism limit the number of [workers to one](#disable-parallelism).
 
 You can control the number of [parallel worker processes](#limit-workers) and [limit the number of failures](#limit-failures-and-fail-fast) in the whole test suite for efficiency.

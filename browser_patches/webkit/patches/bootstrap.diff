@@ -2047,6 +2047,35 @@ index 447a02d3cd2802e028ec16d549654a06adcaaae5..bf576a79f103fe43e375df9be49e0f6e
  				4131C3CF234B98420028A615 /* rtc_stats.cc in Sources */,
  				41323A1D2665288B00B38623 /* packet_sequencer.cc in Sources */,
  				4131BF2D234B88200028A615 /* rtc_stats_collector.cc in Sources */,
+diff --git a/Source/WTF/Scripts/GeneratePreferences.rb b/Source/WTF/Scripts/GeneratePreferences.rb
+index de0f2268b178cd2672408d21ab18659d093208e1..4555f317b5b0158d9ce53c492f7a53384a90e109 100644
+--- a/Source/WTF/Scripts/GeneratePreferences.rb
++++ b/Source/WTF/Scripts/GeneratePreferences.rb
+@@ -228,11 +228,23 @@ class Preferences
+     result
+   end
+ 
++  def createTemplate(templateString)
++    # Newer versions of ruby deprecate and/or drop passing non-keyword
++    # arguments for trim_mode and friends, so we need to call the constructor
++    # differently depending on what it expects. This solution is suggested by
++    # rubocop's Lint/ErbNewArguments.
++    if ERB.instance_method(:initialize).parameters.assoc(:key) # Ruby 2.6+
++      ERB.new(templateString, trim_mode:"-")
++    else
++      ERB.new(templateString, nil, "-")
++    end
++  end
++
+   def renderTemplate(templateFile, outputDirectory)
+     resultFile = File.join(outputDirectory, File.basename(templateFile, ".erb"))
+     tempResultFile = resultFile + ".tmp"
+ 
+-    output = ERB.new(File.read(templateFile), trim_mode:"-").result(binding)
++    output = createTemplate(File.read(templateFile)).result(binding)
+     File.open(tempResultFile, "w+") do |f|
+       f.write(output)
+     end
 diff --git a/Source/WTF/Scripts/Preferences/WebPreferences.yaml b/Source/WTF/Scripts/Preferences/WebPreferences.yaml
 index 4aa67a3129804da9ff8e6a4494596c4661ff9e16..4fcf5dd448703b5d6a2d738f3cd5c88e4a0de6ac 100644
 --- a/Source/WTF/Scripts/Preferences/WebPreferences.yaml

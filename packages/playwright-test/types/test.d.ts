@@ -126,6 +126,14 @@ interface TestProject {
    */
   expect?: ExpectSettings;
   /**
+   * Playwright Test runs tests in parallel. In order to achieve that, it runs several worker processes that run at the same
+   * time. By default, **test files** are run in parallel. Tests in a single file are run in order, in the same worker
+   * process.
+   *
+   * You can configure entire test project to concurrently run all tests in all files using this option.
+   */
+  fullyParallel?: boolean;
+  /**
    * Any JSON-serializable metadata that will be put directly to the test report.
    */
   metadata?: any;
@@ -437,6 +445,14 @@ interface TestConfig {
    *
    */
   forbidOnly?: boolean;
+  /**
+   * Playwright Test runs tests in parallel. In order to achieve that, it runs several worker processes that run at the same
+   * time. By default, **test files** are run in parallel. Tests in a single file are run in order, in the same worker
+   * process.
+   *
+   * You can configure entire test run to concurrently execute all tests in all files using this option.
+   */
+  fullyParallel?: boolean;
   /**
    * Path to the global setup file. This file will be required and run before all the tests. It must export a single function
    * that takes a [`TestConfig`] argument.
@@ -907,6 +923,14 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    *
    */
   forbidOnly: boolean;
+  /**
+   * Playwright Test runs tests in parallel. In order to achieve that, it runs several worker processes that run at the same
+   * time. By default, **test files** are run in parallel. Tests in a single file are run in order, in the same worker
+   * process.
+   *
+   * You can configure entire test run to concurrently execute all tests in all files using this option.
+   */
+  fullyParallel: boolean;
   /**
    * Path to the global setup file. This file will be required and run before all the tests. It must export a single function
    * that takes a [`TestConfig`] argument.

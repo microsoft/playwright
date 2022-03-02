@@ -28,6 +28,7 @@ import { Progress, ProgressController } from './progress';
 import { SelectorInfo } from './selectors';
 import * as types from './types';
 import { TimeoutOptions } from '../common/types';
+import { isUnderTest } from '../utils/utils';
 
 type SetInputFilesFiles = channels.ElementHandleSetInputFilesParams['files'];
 type ActionName = 'click' | 'hover' | 'dblclick' | 'tap' | 'move and up' | 'move and down';
@@ -99,6 +100,7 @@ export class FrameExecutionContext extends js.ExecutionContext {
         (() => {
         ${injectedScriptSource.source}
         return new pwExport(
+          ${isUnderTest()},
           ${this.frame._page._delegate.rafCountForStablePosition()},
           "${this.frame._page._browserContext._browser.options.name}",
           [${custom.join(',\n')}]
@@ -119,7 +121,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   declare readonly _context: FrameExecutionContext;
   readonly _page: Page;
   declare readonly _objectId: string;
-  private _frame: frames.Frame;
+  readonly _frame: frames.Frame;
 
   constructor(context: FrameExecutionContext, objectId: string) {
     super(context, 'node', undefined, objectId);

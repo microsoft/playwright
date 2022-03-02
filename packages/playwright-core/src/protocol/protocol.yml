@@ -990,6 +990,47 @@ Page:
       tracing:
         snapshot: true
 
+    expectScreenshot:
+      parameters:
+        expected: binary?
+        timeout: number?
+        isNot: boolean
+        locator:
+          type: object?
+          properties:
+            frame: Frame
+            selector: string
+        comparatorOptions:
+          type: object?
+          properties:
+            pixelCount: number?
+            pixelRatio: number?
+            threshold: number?
+        screenshotOptions:
+          type: object?
+          properties:
+            omitBackground: boolean?
+            fullPage: boolean?
+            disableAnimations: boolean?
+            clip: Rect?
+            mask:
+              type: array?
+              items:
+                type: object
+                properties:
+                  frame: Frame
+                  selector: string
+      returns:
+        diff: binary?
+        errorMessage: string?
+        actual: binary?
+        previous: binary?
+        log:
+          type: array?
+          items: string
+      tracing:
+        snapshot: true
+
     screenshot:
       parameters:
         timeout: number?
@@ -1012,6 +1053,8 @@ Page:
               selector: string
       returns:
         binary: binary
+      tracing:
+        snapshot: true
 
     setExtraHTTPHeaders:
       parameters:
@@ -2171,6 +2214,8 @@ ElementHandle:
               selector: string
       returns:
         binary: binary
+      tracing:
+        snapshot: true
 
     scrollIntoViewIfNeeded:
       parameters:
@@ -2901,66 +2946,8 @@ AndroidDevice:
 
     launchBrowser:
       parameters:
+        $mixin: ContextOptions
         pkg: string?
-        ignoreHTTPSErrors: boolean?
-        javaScriptEnabled: boolean?
-        bypassCSP: boolean?
-        userAgent: string?
-        locale: string?
-        timezoneId: string?
-        geolocation:
-          type: object?
-          properties:
-            longitude: number
-            latitude: number
-            accuracy: number?
-        permissions:
-          type: array?
-          items: string
-        extraHTTPHeaders:
-          type: array?
-          items: NameValue
-        offline: boolean?
-        httpCredentials:
-          type: object?
-          properties:
-            username: string
-            password: string
-        deviceScaleFactor: number?
-        isMobile: boolean?
-        hasTouch: boolean?
-        colorScheme:
-          type: enum?
-          literals:
-          - dark
-          - light
-          - no-preference
-        reducedMotion:
-          type: enum?
-          literals:
-          - reduce
-          - no-preference
-        forcedColors:
-          type: enum?
-          literals:
-          - active
-          - none
-        acceptDownloads: boolean?
-        recordVideo:
-          type: object?
-          properties:
-            dir: string
-            size:
-              type: object?
-              properties:
-                width: number
-                height: number
-        recordHar:
-          type: object?
-          properties:
-            omitContent: boolean?
-            path: string
-        strictSelectors: boolean?
         proxy:
           type: object?
           properties:

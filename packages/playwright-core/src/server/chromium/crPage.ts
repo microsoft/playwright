@@ -1005,8 +1005,6 @@ class FrameSession {
   }
 
   async _updateEmulateMedia(initial: boolean): Promise<void> {
-    if (this._crPage._browserContext._browser.isClank())
-      return;
     const colorScheme = this._page._state.colorScheme === null ? '' : this._page._state.colorScheme;
     const reducedMotion = this._page._state.reducedMotion === null ? '' : this._page._state.reducedMotion;
     const forcedColors = this._page._state.forcedColors === null ? '' : this._page._state.forcedColors;

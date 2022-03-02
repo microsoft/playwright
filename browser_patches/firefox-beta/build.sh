@@ -2,7 +2,7 @@
 set -e
 set +x
 
-RUST_VERSION="1.53.0"
+RUST_VERSION="1.57.0"
 CBINDGEN_VERSION="0.19.0"
 
 trap "cd $(pwd -P)" EXIT
@@ -32,7 +32,6 @@ if [[ "$(uname)" == "Darwin" ]]; then
   echo "-- building on Mac"
 elif [[ "$(uname)" == "Linux" ]]; then
   echo "-- building on Linux"
-  echo "ac_add_options --disable-av1" >> .mozconfig
 elif [[ "$(uname)" == MINGW* ]]; then
   echo "ac_add_options --disable-update-agent" >> .mozconfig
   echo "ac_add_options --disable-default-browser-agent" >> .mozconfig
@@ -97,6 +96,8 @@ if [[ $1 == "--full" || $2 == "--full" || $1 == "--bootstrap" ]]; then
   if [[ ! -z "${WIN32_REDIST_DIR}" ]]; then
     # Having this option in .mozconfig kills incremental compilation.
     echo "export WIN32_REDIST_DIR=\"$WIN32_REDIST_DIR\"" >> .mozconfig
+    echo "export MSVC_C_RUNTIME_DLL=vcruntime140.dll" >> .mozconfig
+    echo "export MSVC_CXX_RUNTIME_DLL=msvcp140.dll" >> .mozconfig
   fi
 fi
 

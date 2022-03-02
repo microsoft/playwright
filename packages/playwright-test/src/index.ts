@@ -285,8 +285,8 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
 
     const onDidCreateBrowserContext = async (context: BrowserContext) => {
       createdContexts.add(context);
-      context.setDefaultTimeout(testInfo.timeout === 0 ? 0 : (actionTimeout || 0));
-      context.setDefaultNavigationTimeout(testInfo.timeout === 0 ? 0 : (navigationTimeout || actionTimeout || 0));
+      context.setDefaultTimeout(actionTimeout || 0);
+      context.setDefaultNavigationTimeout(navigationTimeout || actionTimeout || 0);
       await startTracing(context.tracing);
       const listener = createInstrumentationListener(context);
       (context as any)._instrumentation.addListener(listener);

@@ -42,13 +42,11 @@ export class Recorder {
   private _mode: 'none' | 'inspecting' | 'recording' = 'none';
   private _actionPoint: Point | undefined;
   private _actionSelector: string | undefined;
-  private _params: { isUnderTest: boolean; };
   private _highlight: Highlight;
 
-  constructor(injectedScript: InjectedScript, params: { isUnderTest: boolean }) {
-    this._params = params;
+  constructor(injectedScript: InjectedScript) {
     this._injectedScript = injectedScript;
-    this._highlight = new Highlight(params.isUnderTest);
+    this._highlight = new Highlight(injectedScript.isUnderTest);
 
     this._refreshListenersIfNeeded();
     injectedScript.onGlobalListenersRemoved.add(() => this._refreshListenersIfNeeded());
@@ -57,7 +55,7 @@ export class Recorder {
       this._pollRecorderMode().catch(e => console.log(e)); // eslint-disable-line no-console
     };
     globalThis._playwrightRefreshOverlay();
-    if (params.isUnderTest)
+    if (injectedScript.isUnderTest)
       console.error('Recorder script ready for test'); // eslint-disable-line no-console
   }
 
@@ -239,7 +237,7 @@ export class Recorder {
     const activeElement = this._deepActiveElement(document);
     const result = activeElement ? generateSelector(this._injectedScript, activeElement, true) : null;
     this._activeModel = result && result.selector ? result : null;
-    if (this._params.isUnderTest)
+    if (this._injectedScript.isUnderTest)
       console.error('Highlight updated for test: ' + (result ? result.selector : null)); // eslint-disable-line no-console
   }
 
@@ -255,7 +253,7 @@ export class Recorder {
       return;
     this._hoveredModel = selector ? { selector, elements } : null;
     this._updateHighlight();
-    if (this._params.isUnderTest)
+    if (this._injectedScript.isUnderTest)
       console.error('Highlight updated for test: ' + selector); // eslint-disable-line no-console
   }
 
@@ -388,6 +386,7 @@ export class Recorder {
   }
 
   private async _performAction(action: actions.Action) {
+    this._clearHighlight();
     this._performingAction = true;
     await globalThis._playwrightRecorderPerformAction(action).catch(() => {});
     this._performingAction = false;
@@ -397,7 +396,7 @@ export class Recorder {
     // If that was a keyboard action, it similarly requires new selectors for active model.
     this._onFocus();
 
-    if (this._params.isUnderTest) {
+    if (this._injectedScript.isUnderTest) {
       // Serialize all to string as we cannot attribute console message to isolated world
       // in Firefox.
       console.error('Action performed for test: ' + JSON.stringify({ // eslint-disable-line no-console

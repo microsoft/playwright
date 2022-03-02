@@ -968,6 +968,35 @@ Property value.
 
 ### option: LocatorAssertions.toHaveJSProperty.timeout = %%-assertions-timeout-%%
 
+## async method: LocatorAssertions.toHaveScreenshot
+* langs: js
+
+Ensures that [Locator] resolves to a given screenshot. This function will re-take
+screenshots until it matches with the saved expectation.
+
+If there's no expectation yet, it will wait until two consecutive screenshots
+yield the same result, and save the last one as an expectation.
+
+```js
+const locator = page.locator('button');
+await expect(locator).toHaveScreenshot();
+```
+
+### option: LocatorAssertions.toHaveScreenshot.timeout = %%-assertions-timeout-%%
+
+### option: LocatorAssertions.toHaveScreenshot.disableAnimations = %%-screenshot-option-disable-animations-%%
+
+### option: LocatorAssertions.toHaveScreenshot.omitBackground = %%-screenshot-option-omit-background-%%
+
+### option: LocatorAssertions.toHaveScreenshot.mask = %%-screenshot-option-mask-%%
+
+### option: LocatorAssertions.toHaveScreenshot.pixelCount = %%-assertions-pixel-count-%%
+
+### option: LocatorAssertions.toHaveScreenshot.pixelRatio = %%-assertions-pixel-ratio-%%
+
+### option: LocatorAssertions.toHaveScreenshot.threshold = %%-assertions-threshold-%%
+
+
 ## async method: LocatorAssertions.toHaveText
 * langs:
   - alias-java: hasText

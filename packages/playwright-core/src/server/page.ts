@@ -31,11 +31,12 @@ import { Progress, ProgressController } from './progress';
 import { assert, isError } from '../utils/utils';
 import { ManualPromise } from '../utils/async';
 import { debugLogger } from '../utils/debugLogger';
+import { mimeTypeToComparator, ImageComparatorOptions, ComparatorResult } from '../utils/comparators';
 import { SelectorInfo, Selectors } from './selectors';
 import { CallMetadata, SdkObject } from './instrumentation';
 import { Artifact } from './artifact';
-import { ParsedSelector } from './common/selectorParser';
 import { TimeoutOptions } from '../common/types';
+import { isInvalidSelectorError, ParsedSelector } from './common/selectorParser';
 
 export interface PageDelegate {
   readonly rawMouse: input.RawMouse;
@@ -92,6 +93,18 @@ type PageState = {
   reducedMotion: types.ReducedMotion | null;
   forcedColors: types.ForcedColors | null;
   extraHTTPHeaders: types.HeadersArray | null;
+};
+
+type ExpectScreenshotOptions = {
+  timeout?: number,
+  expected?: Buffer,
+  isNot?: boolean,
+  locator?: {
+    frame: frames.Frame,
+    selector: string,
+  },
+  comparatorOptions?: ImageComparatorOptions,
+  screenshotOptions?: ScreenshotOptions,
 };
 
 export class Page extends SdkObject {
@@ -425,7 +438,65 @@ export class Page extends SdkObject {
     route.continue();
   }
 
-  async screenshot(metadata: CallMetadata, options: ScreenshotOptions & TimeoutOptions): Promise<Buffer> {
+  async expectScreenshot(metadata: CallMetadata, options: ExpectScreenshotOptions = {}): Promise<{ actual?: Buffer, previous?: Buffer, diff?: Buffer, errorMessage?: string, log?: string[] }> {
+    const locator = options.locator;
+    const rafrafScreenshot = locator ? async (progress: Progress, timeout: number) => {
+      return await locator.frame.rafrafTimeoutScreenshotElementWithProgress(progress, locator.selector, timeout, options.screenshotOptions || {});
+    } : async (progress: Progress, timeout: number) => {
+      await this.mainFrame().rafrafTimeout(timeout);
+      return await this._screenshotter.screenshotPage(progress, options.screenshotOptions || {});
+    };
+
+    const comparator = mimeTypeToComparator['image/png'];
+    const controller = new ProgressController(metadata, this);
+    const isGeneratingNewScreenshot = !options.expected;
+    if (isGeneratingNewScreenshot && options.isNot)
+      return { errorMessage: '"not" matcher requires expected result' };
+    let intermediateResult: {
+      actual?: Buffer,
+      previous?: Buffer,
+      errorMessage?: string,
+      diff?: Buffer,
+    } | undefined = undefined;
+    return controller.run(async progress => {
+      let actual: Buffer | undefined;
+      let previous: Buffer | undefined;
+      let screenshotTimeout = 0;
+      while (true) {
+        progress.throwIfAborted();
+        if (this.isClosed())
+          throw new Error('The page has closed');
+        let comparatorResult: ComparatorResult | undefined;
+        if (isGeneratingNewScreenshot) {
+          previous = actual;
+          actual = await rafrafScreenshot(progress, screenshotTimeout);
+          comparatorResult = actual && previous ? comparator(actual, previous, options.comparatorOptions) : undefined;
+        } else {
+          actual = await rafrafScreenshot(progress, screenshotTimeout);
+          comparatorResult = actual ? comparator(actual, options.expected!, options.comparatorOptions) : undefined;
+        }
+        screenshotTimeout = 150;
+        if (comparatorResult !== undefined && !!comparatorResult === !!options.isNot)
+          break;
+        if (comparatorResult)
+          intermediateResult = { errorMessage: comparatorResult.errorMessage, diff: comparatorResult.diff, actual, previous };
+      }
+
+      return isGeneratingNewScreenshot ? { actual } : {};
+    }, this._timeoutSettings.timeout(options)).catch(e => {
+      // Q: Why not throw upon isSessionClosedError(e) as in other places?
+      // A: We want user to receive a friendly diff between actual and expected/previous.
+      if (js.isJavaScriptErrorInEvaluate(e) || isInvalidSelectorError(e))
+        throw e;
+      return {
+        log: metadata.log,
+        ...intermediateResult,
+        errorMessage: intermediateResult?.errorMessage ?? e.message,
+      };
+    });
+  }
+
+  async screenshot(metadata: CallMetadata, options: ScreenshotOptions & TimeoutOptions = {}): Promise<Buffer> {
     const controller = new ProgressController(metadata, this);
     return controller.run(
         progress => this._screenshotter.screenshotPage(progress, options),

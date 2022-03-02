@@ -113,6 +113,11 @@ export class Locator implements api.Locator {
   }
 
   async _highlight() {
+    // VS Code extension uses this one, keep it for now.
+    return this._frame._highlight(this._selector);
+  }
+
+  async highlight() {
     return this._frame._highlight(this._selector);
   }
 

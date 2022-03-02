@@ -63,3 +63,24 @@ test('androidDeviceWithCustomPort.launchBrowser', async function({ androidDevice
   expect(await page.title()).toBe('Hello world!');
   await context.close();
 });
+
+test('should be able to pass context options', async ({ androidDevice, httpsServer }) => {
+  const context = await androidDevice.launchBrowser({
+    colorScheme: 'dark',
+    geolocation: { longitude: 10, latitude: 10 },
+    permissions: ['geolocation'],
+    ignoreHTTPSErrors: true,
+    baseURL: httpsServer.PREFIX,
+  });
+  const [page] = context.pages();
+
+  await page.goto('./empty.html');
+  expect(page.url()).toBe(httpsServer.PREFIX + '/empty.html');
+
+  expect(await page.evaluate(() => new Promise(resolve => navigator.geolocation.getCurrentPosition(position => {
+    resolve({ latitude: position.coords.latitude, longitude: position.coords.longitude });
+  })))).toEqual({ latitude: 10, longitude: 10 });
+
+  expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches)).toBe(true);
+  expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: light)').matches)).toBe(false);
+});

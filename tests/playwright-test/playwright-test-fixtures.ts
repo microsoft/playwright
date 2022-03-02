@@ -267,14 +267,14 @@ export function countTimes(s: string, sub: string): number {
   return result;
 }
 
-export function createImage(width: number, height: number, r: number = 0, g: number = 0, b: number = 0): Buffer {
+export function createImage(width: number, height: number, r: number = 0, g: number = 0, b: number = 0, a: number = 255): Buffer {
   const image = new PNG({ width, height });
   // Make both images red.
   for (let i = 0; i < width * height; ++i) {
     image.data[i * 4 + 0] = r;
     image.data[i * 4 + 1] = g;
     image.data[i * 4 + 2] = b;
-    image.data[i * 4 + 3] = 255;
+    image.data[i * 4 + 3] = a;
   }
   return PNG.sync.write(image);
 }

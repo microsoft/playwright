@@ -21,14 +21,13 @@ it('should return no cookies in pristine browser context', async ({ context, pag
   expect(await context.cookies()).toEqual([]);
 });
 
-it('should get a cookie #smoke', async ({ context, page, server, browserName, browserMajorVersion }) => {
+it('should get a cookie #smoke', async ({ context, page, server, defaultSameSiteCookieValue }) => {
   await page.goto(server.EMPTY_PAGE);
   const documentCookie = await page.evaluate(() => {
     document.cookie = 'username=John Doe';
     return document.cookie;
   });
   expect(documentCookie).toBe('username=John Doe');
-  const defaultSameSiteCookieValue = browserName === 'chromium' || (browserName === 'firefox' && browserMajorVersion >= 96) ? 'Lax' : 'None';
   expect(await context.cookies()).toEqual([{
     name: 'username',
     value: 'John Doe',
@@ -41,7 +40,7 @@ it('should get a cookie #smoke', async ({ context, page, server, browserName, br
   }]);
 });
 
-it('should get a non-session cookie', async ({ context, page, server, browserName, browserMajorVersion }) => {
+it('should get a non-session cookie', async ({ context, page, server, defaultSameSiteCookieValue }) => {
   await page.goto(server.EMPTY_PAGE);
   // @see https://en.wikipedia.org/wiki/Year_2038_problem
   const date = +(new Date('1/1/2038'));
@@ -51,7 +50,6 @@ it('should get a non-session cookie', async ({ context, page, server, browserNam
     return document.cookie;
   }, date);
   expect(documentCookie).toBe('username=John Doe');
-  const defaultSameSiteCookieValue = browserName === 'chromium' || (browserName === 'firefox' && browserMajorVersion >= 96) ? 'Lax' : 'None';
   expect(await context.cookies()).toEqual([{
     name: 'username',
     value: 'John Doe',
@@ -101,7 +99,7 @@ it('should properly report "Lax" sameSite cookie', async ({ context, page, serve
   expect(cookies[0].sameSite).toBe('Lax');
 });
 
-it('should get multiple cookies', async ({ context, page, server, browserName, browserMajorVersion }) => {
+it('should get multiple cookies', async ({ context, page, server, defaultSameSiteCookieValue }) => {
   await page.goto(server.EMPTY_PAGE);
   const documentCookie = await page.evaluate(() => {
     document.cookie = 'username=John Doe';
@@ -109,7 +107,6 @@ it('should get multiple cookies', async ({ context, page, server, browserName, b
     return document.cookie.split('; ').sort().join('; ');
   });
   const cookies = new Set(await context.cookies());
-  const defaultSameSiteCookieValue = browserName === 'chromium' || (browserName === 'firefox' && browserMajorVersion >= 96) ? 'Lax' : 'None';
   expect(documentCookie).toBe('password=1234; username=John Doe');
   expect(cookies).toEqual(new Set([
     {

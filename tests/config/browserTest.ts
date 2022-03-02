@@ -25,6 +25,7 @@ import { RemoteServer, RemoteServerOptions } from './remoteServer';
 
 export type BrowserTestWorkerFixtures = PageWorkerFixtures & {
   browserVersion: string;
+  defaultSameSiteCookieValue: string;
   browserMajorVersion: number;
   browserType: BrowserType;
   isAndroid: boolean;
@@ -45,6 +46,10 @@ const test = baseTest.extend<BrowserTestTestFixtures, BrowserTestWorkerFixtures>
 
   browserType: [async ({ playwright, browserName }, run) => {
     await run(playwright[browserName]);
+  }, { scope: 'worker' } ],
+
+  defaultSameSiteCookieValue: [async ({ browserName, browserMajorVersion }, run) => {
+    await run(browserName === 'chromium' || (browserName === 'firefox' && browserMajorVersion >= 96 && browserMajorVersion <= 97) ? 'Lax' : 'None');
   }, { scope: 'worker' } ],
 
   browserMajorVersion: [async ({ browserVersion }, run) => {

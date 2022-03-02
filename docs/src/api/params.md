@@ -709,6 +709,19 @@ using the [`method: AndroidDevice.setDefaultTimeout`] method.
 
 Time to retry the assertion for. Defaults to `timeout` in [`property: TestConfig.expect`].
 
+## assertions-pixel-count
+* langs: js
+- `pixelCount` <[int]> an acceptable amount of pixels that could be different, unset by default.
+
+## assertions-pixel-ratio
+* langs: js
+- `pixelRatio` <[float]> an acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1`, unset by default.
+
+## assertions-threshold
+* langs: js
+- `threshold` <[float]> an acceptable percieved color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between pixels in compared images, between zero (strict) and one (lax), default is configurable with [`property: TestConfig.expect`]. Defaults to `0.2`.
+
+
 ## assertions-timeout
 * langs: java, python, csharp
 - `timeout` <[float]>
@@ -918,6 +931,21 @@ Specify screenshot type, defaults to `png`.
 
 Specify locators that should be masked when the screenshot is taken. Masked elements will be overlayed with
 a pink box `#FF00FF` that completely covers its bounding box.
+
+## screenshot-option-full-page
+- `fullPage` <[boolean]>
+
+When true, takes a screenshot of the full scrollable page, instead of the currently visible viewport. Defaults to
+`false`.
+
+## screenshot-option-clip
+- `clip` <[Object]>
+  - `x` <[float]> x-coordinate of top-left corner of clip area
+  - `y` <[float]> y-coordinate of top-left corner of clip area
+  - `width` <[float]> width of clipping area
+  - `height` <[float]> height of clipping area
+
+An object which specifies clipping of the resulting image. Should have the following fields:
 
 ## screenshot-options-common-list
 - %%-screenshot-option-disable-animations-%%

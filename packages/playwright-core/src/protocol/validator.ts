@@ -540,6 +540,30 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     timeout: tOptional(tNumber),
     waitUntil: tOptional(tType('LifecycleEvent')),
   });
+  scheme.PageExpectScreenshotParams = tObject({
+    expected: tOptional(tBinary),
+    timeout: tOptional(tNumber),
+    isNot: tBoolean,
+    locator: tOptional(tObject({
+      frame: tChannel('Frame'),
+      selector: tString,
+    })),
+    comparatorOptions: tOptional(tObject({
+      pixelCount: tOptional(tNumber),
+      pixelRatio: tOptional(tNumber),
+      threshold: tOptional(tNumber),
+    })),
+    screenshotOptions: tOptional(tObject({
+      omitBackground: tOptional(tBoolean),
+      fullPage: tOptional(tBoolean),
+      disableAnimations: tOptional(tBoolean),
+      clip: tOptional(tType('Rect')),
+      mask: tOptional(tArray(tObject({
+        frame: tChannel('Frame'),
+        selector: tString,
+      }))),
+    })),
+  });
   scheme.PageScreenshotParams = tObject({
     timeout: tOptional(tNumber),
     type: tOptional(tEnum(['png', 'jpeg'])),
@@ -1337,7 +1361,15 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     steps: tNumber,
   });
   scheme.AndroidDeviceLaunchBrowserParams = tObject({
-    pkg: tOptional(tString),
+    noDefaultViewport: tOptional(tBoolean),
+    viewport: tOptional(tObject({
+      width: tNumber,
+      height: tNumber,
+    })),
+    screen: tOptional(tObject({
+      width: tNumber,
+      height: tNumber,
+    })),
     ignoreHTTPSErrors: tOptional(tBoolean),
     javaScriptEnabled: tOptional(tBoolean),
     bypassCSP: tOptional(tBoolean),
@@ -1363,6 +1395,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     reducedMotion: tOptional(tEnum(['reduce', 'no-preference'])),
     forcedColors: tOptional(tEnum(['active', 'none'])),
     acceptDownloads: tOptional(tBoolean),
+    baseURL: tOptional(tString),
     recordVideo: tOptional(tObject({
       dir: tString,
       size: tOptional(tObject({
@@ -1375,6 +1408,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
       path: tString,
     })),
     strictSelectors: tOptional(tBoolean),
+    pkg: tOptional(tString),
     proxy: tOptional(tObject({
       server: tString,
       bypass: tOptional(tString),

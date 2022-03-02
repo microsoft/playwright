@@ -114,6 +114,37 @@ Expected substring or RegExp.
 
 ### option: PageAssertions.NotToHaveURL.timeout = %%-assertions-timeout-%%
 
+## async method: PageAssertions.toHaveScreenshot
+* langs: js
+
+Ensures that the page resolves to a given screenshot. This function will re-take
+screenshots until it matches with the saved expectation.
+
+If there's no expectation yet, it will wait until two consecutive screenshots
+yield the same result, and save the last one as an expectation.
+
+```js
+await expect(page).toHaveScreenshot();
+```
+
+### option: PageAssertions.toHaveScreenshot.timeout = %%-assertions-timeout-%%
+
+### option: PageAssertions.toHaveScreenshot.disableAnimations = %%-screenshot-option-disable-animations-%%
+
+### option: PageAssertions.toHaveScreenshot.omitBackground = %%-screenshot-option-omit-background-%%
+
+### option: PageAssertions.toHaveScreenshot.fullPage = %%-screenshot-option-full-page-%%
+
+### option: PageAssertions.toHaveScreenshot.clip = %%-screenshot-option-clip-%%
+
+### option: PageAssertions.toHaveScreenshot.mask = %%-screenshot-option-mask-%%
+
+### option: PageAssertions.toHaveScreenshot.pixelCount = %%-assertions-pixel-count-%%
+
+### option: PageAssertions.toHaveScreenshot.pixelRatio = %%-assertions-pixel-ratio-%%
+
+### option: PageAssertions.toHaveScreenshot.threshold = %%-assertions-threshold-%%
+
 ## async method: PageAssertions.toHaveTitle
 * langs:
   - alias-java: hasTitle

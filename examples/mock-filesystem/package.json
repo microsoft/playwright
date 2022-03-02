@@ -1,0 +1,17 @@
+{
+  "name": "mock-filesystem",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "playwright test",
+    "start": "http-server -c-1 -p 9900 src/"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.19.1",
+    "http-server": "^14.1.0"
+  }
+}
