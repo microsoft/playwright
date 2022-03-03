@@ -328,7 +328,7 @@ Run tests as usual, your environment variables should be picked up.
 npx playwright test
 ```
 
-### Create tests via a CSV file
+## Create tests via a CSV file
 
 The Playwright test-runner runs in Node.js, this means you can directly read files from the file system and parse them with your preferred CSV library.
 
