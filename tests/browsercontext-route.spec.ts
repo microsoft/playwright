@@ -236,7 +236,7 @@ it('should overwrite post body with empty string', async ({ context, server, pag
   expect(body).toBe('');
 });
 
-it.only('should intercept initial service worker script', async ({ server, page, context }) => {
+it('should intercept initial service worker script', async ({ server, page, context }) => {
   context.route('**', async route => {
     if (route.request().url().endsWith('/worker.js')) {
       await route.fulfill({
@@ -298,7 +298,7 @@ it.only('should intercept initial service worker script', async ({ server, page,
   await expect(page.locator('#content')).toHaveText('intercepted data from the worker');
 });
 
-it.only('should intercept request from inside service worker', async ({ server, page, context }) => {
+it('should intercept request from inside service worker', async ({ server, page, context }) => {
   context.route('**', async route => {
     if (route.request().url() === server.EMPTY_PAGE) {
       await route.fulfill({
@@ -309,7 +309,6 @@ it.only('should intercept request from inside service worker', async ({ server, 
   });
 
   server.setRoute('/worker.js', (_req, res) => {
-    console.log('got worker.js');
     res.setHeader('content-type', 'text/javascript');
     res.write(`
       addEventListener('message', async event => {
