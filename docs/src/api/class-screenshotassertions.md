@@ -1,7 +1,7 @@
 # class: ScreenshotAssertions
 * langs: js
 
-Playwright provides methods for comapring page and element screenshots with
+Playwright provides methods for comparing page and element screenshots with
 expected values stored in files. See also [`method: PageAssertions.toHaveScreenshot`] and
 [`LocatorAssertions.toHaveScreenshot`].
 
