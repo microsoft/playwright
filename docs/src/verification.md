@@ -3,8 +3,8 @@ id: verification
 title: "Verification"
 ---
 
-:::note
-Playwright has [Web-First Assertions](./api/class-playwrightassertions) which automatically retry until the expected condition is met. This helps to reduce flakiness and readability of tests.
+:::caution
+We recommend [Web-First Assertions](./api/class-playwrightassertions) that automatically retry until the expected condition is met instead of asserting manually. This helps to reduce flakiness and readability of tests.
 :::
 
 <!-- TOC -->
