@@ -109,7 +109,7 @@ class TypesGenerator {
       return (!docsOnlyClassMapping && docClass) ? this.classBody(docClass) : '';
     });
 
-    const IGNORED_CLASSES = ['PlaywrightAssertions', 'LocatorAssertions', 'PageAssertions', 'APIResponseAssertions'];
+    const IGNORED_CLASSES = ['PlaywrightAssertions', 'LocatorAssertions', 'PageAssertions', 'APIResponseAssertions', 'ScreenshotAssertions'];
     const classes = this.documentation.classesArray.filter(cls => !IGNORED_CLASSES.includes(cls.name)).filter(cls => !handledClasses.has(cls.name));
     {
       const playwright = this.documentation.classesArray.find(c => c.name === 'Playwright');
