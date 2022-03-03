@@ -244,7 +244,7 @@ program
     .requiredOption('--browser <browserName>', 'Browser name, one of "chromium", "firefox" or "webkit"')
     .option('--config <path-to-config-file>', 'JSON file with launchServer options')
     .action(function(options) {
-      launchBrowserServer(options.browserName, options.config);
+      launchBrowserServer(options.browser, options.config);
     });
 
 program
