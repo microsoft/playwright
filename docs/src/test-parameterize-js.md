@@ -327,3 +327,57 @@ Run tests as usual, your environment variables should be picked up.
 ```bash
 npx playwright test
 ```
+
+### Create tests via a CSV file
+
+The Playwright test-runner runs in Node.js, this means you can directly read files from the file system and parse them with your preferred CSV library.
+
+See for example this CSV file, in our example `input.csv`:
+
+```txt
+"test_case","some_value","some_other_value"
+"value 1","value 11","foobar1"
+"value 2","value 22","foobar21"
+"value 3","value 33","foobar321"
+"value 4","value 44","foobar4321"
+```
+
+Based on this we'll generate some tests by using the [csv-parse](https://www.npmjs.com/package/csv-parse) library from NPM:
+
+```js js-flavor=ts
+// foo.spec.ts
+import fs from 'fs';
+import path from 'path';
+import { test } from '@playwright/test';
+import { parse } from 'csv-parse/sync';
+
+const records = parse(fs.readFileSync(path.join(__dirname, 'input.csv')), {
+  columns: true,
+  skip_empty_lines: true
+});
+
+for (const record of records) {
+  test(`fooo: ${record.test_case}`, async ({ page }) => {
+    console.log(record.test_case, record.some_value, record.some_other_value);
+  });
+}
+```
+
+```js js-flavor=js
+// foo.spec.js
+const fs = require('fs');
+const path = require('path');
+const { test } = require('@playwright/test');
+const { parse } = require('csv-parse/sync');
+
+const records = parse(fs.readFileSync(path.join(__dirname, 'input.csv')), {
+  columns: true,
+  skip_empty_lines: true
+});
+
+for (const record of records) {
+  test(`fooo: ${record.test_case}`, async ({ page }) => {
+    console.log(record.test_case, record.some_value, record.some_other_value);
+  });
+}
+```
