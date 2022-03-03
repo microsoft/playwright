@@ -22,23 +22,11 @@ export { expect } from '@playwright/test';
 type AndroidWorkerFixtures = PageWorkerFixtures & {
   androidDevice: AndroidDevice;
   androidContext: BrowserContext;
-  androidDeviceWithCustomPort: AndroidDevice;
 };
 
 export const androidTest = baseTest.extend<PageTestFixtures, AndroidWorkerFixtures>({
   androidDevice: [async ({ playwright }, run) => {
     const device = (await playwright._android.devices())[0];
-    await device.shell('am force-stop org.chromium.webview_shell');
-    await device.shell('am force-stop com.android.chrome');
-    device.setDefaultTimeout(90000);
-    await run(device);
-    await device.close();
-  }, { scope: 'worker' }],
-
-  androidDeviceWithCustomPort: [async ({ playwright }, run) => {
-    const device = (await playwright._android.devices({
-      port: 5037
-    }))[0];
     await device.shell('am force-stop org.chromium.webview_shell');
     await device.shell('am force-stop com.android.chrome');
     device.setDefaultTimeout(90000);
