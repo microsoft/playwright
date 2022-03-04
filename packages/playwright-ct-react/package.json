@@ -2,7 +2,7 @@
     "name": "@playwright/ct-react",
     "private": true,
     "exports": {
-        "./render": "./render.mjs",
+        "./register": "./register.mjs",
         "./test": "./test.js"
     }
 }

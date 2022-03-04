@@ -28,11 +28,13 @@ export async function mount(page: Page, jsxOrType: any, options: any): Promise<s
   wrapFunctions(component, page, callbacks);
 
 
-  const dispatchMethod = `__pw_dispatch_${createGuid}`;
-
+  const dispatchMethod = `__pw_dispatch_${createGuid()}`;
   await page.exposeFunction(dispatchMethod, (ordinal: number, args: any[]) => {
     callbacks[ordinal](...args);
   });
+
+  // WebKit does not wait for deferred scripts.
+  await page.waitForFunction(() => !!(window as any).playwrightMount);
 
   const selector = await page.evaluate(async ({ component, dispatchMethod }) => {
     const unwrapFunctions = (object: any) => {

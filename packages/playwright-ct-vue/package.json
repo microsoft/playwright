@@ -2,7 +2,7 @@
     "name": "@playwright/ct-vue",
     "private": true,
     "exports": {
-        "./render": "./render.mjs",
+        "./register": "./register.mjs",
         "./test": "./test.js"
     }
 }

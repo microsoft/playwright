@@ -10,7 +10,7 @@ node_modules/
 .idea
 yarn.lock
 /packages/playwright-core/src/generated/*
-lib/
+packages/*/lib/
 drivers/
 .android-sdk/
 .gradle/
