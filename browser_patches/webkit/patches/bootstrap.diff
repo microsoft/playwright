@@ -14665,10 +14665,10 @@ index 0000000000000000000000000000000000000000..d0e11ed81a6257c011df23d5870da740
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..653b372feb40867fd68f3934f38072d071b4d371
+index 0000000000000000000000000000000000000000..f9389996a68338891a6d8702ec302c98033d3fd5
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp
-@@ -0,0 +1,905 @@
+@@ -0,0 +1,950 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -14699,6 +14699,7 @@ index 0000000000000000000000000000000000000000..653b372feb40867fd68f3934f38072d0
 +
 +#if ENABLE(REMOTE_INSPECTOR)
 +
++#include "APIGeolocationProvider.h"
 +#include "APIPageConfiguration.h"
 +#include "FrameInfoData.h"
 +#include "InspectorPlaywrightAgentClient.h"
@@ -14792,7 +14793,47 @@ index 0000000000000000000000000000000000000000..653b372feb40867fd68f3934f38072d0
 +    WebPageProxy& m_page;
 +};
 +
++class OverridenGeolocationProvider final : public API::GeolocationProvider {
++public:
++    explicit OverridenGeolocationProvider(BrowserContext* browserContext)
++        : m_position(WebGeolocationPosition::create(WebCore::GeolocationPositionData()))
++        , m_browserContext(browserContext)
++    {
++        m_browserContext->geolocationProvider = this;
++    }
++
++    ~OverridenGeolocationProvider() override {
++        m_browserContext->geolocationProvider = nullptr;
++    }
++
++    void setPosition(const Ref<WebGeolocationPosition>& position) {
++        m_position = position;
++    }
++
++private:
++    void startUpdating(WebGeolocationManagerProxy& proxy) override
++    {
++        proxy.providerDidChangePosition(&m_position.get());
++    }
++
++    void stopUpdating(WebGeolocationManagerProxy&) override
++    {
++    }
++
++    void setEnableHighAccuracy(WebGeolocationManagerProxy&, bool enabled) override
++    {
++    }
++
++    Ref<WebGeolocationPosition> m_position;
++    BrowserContext* m_browserContext;
++};
++
 +namespace {
++
++void setGeolocationProvider(BrowserContext* browserContext) {
++    auto* geoManager = browserContext->processPool->supplement<WebGeolocationManagerProxy>();
++    geoManager->setProvider(makeUnique<OverridenGeolocationProvider>(browserContext));
++}
 +
 +String toBrowserContextIDProtocolString(const PAL::SessionID& sessionID)
 +{
@@ -15104,6 +15145,7 @@ index 0000000000000000000000000000000000000000..653b372feb40867fd68f3934f38072d0
 +        m_defaultContext = context.get();
 +        context->processPool = WebProcessPool::allProcessPools().first().ptr();
 +        context->dataStore = defaultDataStore;
++        setGeolocationProvider(context.get());
 +        // Add default context to the map so that we can easily find it for
 +        // created/deleted pages.
 +        PAL::SessionID sessionID = context->dataStore->sessionID();
@@ -15198,7 +15240,7 @@ index 0000000000000000000000000000000000000000..653b372feb40867fd68f3934f38072d0
 +    // Ensure network process.
 +    browserContext->dataStore->networkProcess();
 +    browserContext->dataStore->setDownloadInstrumentation(this);
-+
++    setGeolocationProvider(browserContext.get());
 +    PAL::SessionID sessionID = browserContext->dataStore->sessionID();
 +    String browserContextID = toBrowserContextIDProtocolString(sessionID);
 +    m_browserContexts.set(browserContextID, WTFMove(browserContext));
@@ -15501,6 +15543,9 @@ index 0000000000000000000000000000000000000000..653b372feb40867fd68f3934f38072d0
 +            return makeUnexpected("Invalid geolocation format"_s);
 +
 +        auto position = WebGeolocationPosition::create(WebCore::GeolocationPositionData(*timestamp, *latitude, *longitude, *accuracy));
++        if (!browserContext->geolocationProvider)
++            return makeUnexpected("Internal error: geolocation provider has been destroyed."_s);
++        browserContext->geolocationProvider->setPosition(position);
 +        geoManager->providerDidChangePosition(&position.get());
 +    } else {
 +        geoManager->providerDidFailToDeterminePosition("Position unavailable"_s);
@@ -15708,10 +15753,10 @@ index 0000000000000000000000000000000000000000..27e1bf3c7fd32d676a09605604936fa5
 +#endif // ENABLE(REMOTE_INSPECTOR)
 diff --git a/Source/WebKit/UIProcess/InspectorPlaywrightAgentClient.h b/Source/WebKit/UIProcess/InspectorPlaywrightAgentClient.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..11c8eadafca764aa549cb27c24967e15e6975774
+index 0000000000000000000000000000000000000000..c3ff5fb7028a03fd697fe78e3f92ef9e2527037d
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/InspectorPlaywrightAgentClient.h
-@@ -0,0 +1,66 @@
+@@ -0,0 +1,68 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -15750,6 +15795,7 @@ index 0000000000000000000000000000000000000000..11c8eadafca764aa549cb27c24967e15
 +
 +namespace WebKit {
 +
++class OverridenGeolocationProvider;
 +class WebsiteDataStore;
 +class WebPageProxy;
 +class WebProcessPool;
@@ -15764,6 +15810,7 @@ index 0000000000000000000000000000000000000000..11c8eadafca764aa549cb27c24967e15
 +    RefPtr<WebsiteDataStore> dataStore;
 +    RefPtr<WebProcessPool> processPool;
 +    HashSet<WebPageProxy*> pages;
++    OverridenGeolocationProvider* geolocationProvider { nullptr };
 +};
 +
 +class InspectorPlaywrightAgentClient {
