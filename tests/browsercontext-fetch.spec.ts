@@ -570,7 +570,7 @@ it('should support gzip compression', async function({ context, server }) {
   expect(await response.text()).toBe('Hello, world!');
 });
 
-it('should throw informatibe error on corrupted gzip body', async function({ context, server }) {
+it('should throw informative error on corrupted gzip body', async function({ context, server }) {
   server.setRoute('/corrupted', (req, res) => {
     res.writeHead(200, {
       'Content-Encoding': 'gzip',
@@ -604,7 +604,7 @@ it('should support brotli compression', async function({ context, server }) {
   expect(await response.text()).toBe('Hello, world!');
 });
 
-it('should throw informatibe error on corrupted brotli body', async function({ context, server }) {
+it('should throw informative error on corrupted brotli body', async function({ context, server }) {
   server.setRoute('/corrupted', (req, res) => {
     res.writeHead(200, {
       'Content-Encoding': 'br',
@@ -638,7 +638,7 @@ it('should support deflate compression', async function({ context, server }) {
   expect(await response.text()).toBe('Hello, world!');
 });
 
-it('should throw informatibe error on corrupted deflate body', async function({ context, server }) {
+it('should throw informative error on corrupted deflate body', async function({ context, server }) {
   server.setRoute('/corrupted', (req, res) => {
     res.writeHead(200, {
       'Content-Encoding': 'deflate',
