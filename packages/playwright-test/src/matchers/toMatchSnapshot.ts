@@ -53,6 +53,7 @@ class SnapshotHelper<T extends ImageComparatorOptions> {
   constructor(
     testInfo: TestInfoImpl,
     anonymousSnapshotExtension: string,
+    configOptions: ImageComparatorOptions,
     nameOrOptions: NameOrSegments | { name?: NameOrSegments } & T,
     optOptions: T,
   ) {
@@ -76,7 +77,7 @@ class SnapshotHelper<T extends ImageComparatorOptions> {
     }
 
     options = {
-      ...(testInfo.project.expect?.toMatchSnapshot || {}),
+      ...configOptions,
       ...options,
     };
 
@@ -214,7 +215,10 @@ export function toMatchSnapshot(
   const testInfo = currentTestInfo();
   if (!testInfo)
     throw new Error(`toMatchSnapshot() must be called during the test`);
-  const helper = new SnapshotHelper(testInfo, determineFileExtension(received), nameOrOptions, optOptions);
+  const helper = new SnapshotHelper(
+      testInfo, determineFileExtension(received),
+      testInfo.project.expect?.toMatchSnapshot || {},
+      nameOrOptions, optOptions);
   const comparator: Comparator = mimeTypeToComparator[helper.mimeType];
   if (!comparator)
     throw new Error('Failed to find comparator with type ' + helper.mimeType + ': ' + helper.snapshotPath);
@@ -255,7 +259,10 @@ export async function toHaveScreenshot(
   const testInfo = currentTestInfo();
   if (!testInfo)
     throw new Error(`toHaveScreenshot() must be called during the test`);
-  const helper = new SnapshotHelper(testInfo, 'png', nameOrOptions, optOptions);
+  const helper = new SnapshotHelper(
+      testInfo, 'png',
+      testInfo.project.expect?.toHaveScreenshot || {},
+      nameOrOptions, optOptions);
   const [page, locator] = pageOrLocator.constructor.name === 'Page' ? [(pageOrLocator as PageEx), undefined] : [(pageOrLocator as Locator).page() as PageEx, pageOrLocator as LocatorEx];
   const screenshotOptions = {
     ...helper.allOptions,

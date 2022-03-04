@@ -719,19 +719,19 @@ Time to retry the assertion for.
 * langs: js
 - `maxDiffPixels` <[int]>
 
-An acceptable amount of pixels that could be different, unset by default.
+An acceptable amount of pixels that could be different, default is configurable with `TestConfig.expect`. Default is configurable with `TestConfig.expect`. Unset by default.
 
 ## assertions-max-diff-pixel-ratio
 * langs: js
 - `maxDiffPixelRatio` <[float]>
 
-An acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1`, unset by default.
+An acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1`. Default is configurable with `TestConfig.expect`. Unset by default.
 
 ## assertions-threshold
 * langs: js
 - `threshold` <[float]>
 
-An acceptable percieved color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between the same pixel in compared images, between zero (strict) and one (lax), default is configurable with `TestConfig.expect`. Defaults to `0.2`.
+An acceptable perceived color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between the same pixel in compared images, between zero (strict) and one (lax), default is configurable with `TestConfig.expect`. Defaults to `0.2`.
 
 ## shared-context-params-list
 - %%-context-option-acceptdownloads-%%
