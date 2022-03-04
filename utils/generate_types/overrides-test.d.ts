@@ -49,11 +49,11 @@ type ExpectSettings = {
     /**
      * An acceptable amount of pixels that could be different, unset by default.
      */
-    pixelCount?: number,
+    maxDiffPixels?: number,
     /**
      * An acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1` , unset by default.
      */
-    pixelRatio?: number,
+    maxDiffPixelRatio?: number,
   }
 };
 

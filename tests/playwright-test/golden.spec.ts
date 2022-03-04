@@ -79,8 +79,8 @@ test('should compile with different option combinations', async ({ runTSC }) => 
       test('is a test', async ({ page }) => {
         expect('foo').toMatchSnapshot();
         expect('foo').toMatchSnapshot({ threshold: 0.2 });
-        expect('foo').toMatchSnapshot({ pixelRatio: 0.2 });
-        expect('foo').toMatchSnapshot({ pixelCount: 0.2 });
+        expect('foo').toMatchSnapshot({ maxDiffPixelRatio: 0.2 });
+        expect('foo').toMatchSnapshot({ maxDiffPixels: 0.2 });
       });
     `
   });
@@ -396,35 +396,35 @@ test('should compare binary', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
 });
 
-test('should throw for invalid pixelCount values', async ({ runInlineTest }) => {
+test('should throw for invalid maxDiffPixels values', async ({ runInlineTest }) => {
   expect((await runInlineTest({
     ...files,
     'a.spec.js': `
       const { test } = require('./helper');
       test('is a test', ({}) => {
         expect(Buffer.from([1,2,3,4])).toMatchSnapshot({
-          pixelCount: -1,
+          maxDiffPixels: -1,
         });
       });
     `
   })).exitCode).toBe(1);
 });
 
-test('should throw for invalid pixelRatio values', async ({ runInlineTest }) => {
+test('should throw for invalid maxDiffPixelRatio values', async ({ runInlineTest }) => {
   expect((await runInlineTest({
     ...files,
     'a.spec.js': `
       const { test } = require('./helper');
       test('is a test', ({}) => {
         expect(Buffer.from([1,2,3,4])).toMatchSnapshot({
-          pixelRatio: 12,
+          maxDiffPixelRatio: 12,
         });
       });
     `
   })).exitCode).toBe(1);
 });
 
-test('should respect pixelCount option', async ({ runInlineTest }) => {
+test('should respect maxDiffPixels option', async ({ runInlineTest }) => {
   const width = 20, height = 20;
   const BAD_PIXELS = 120;
   const image1 = createWhiteImage(width, height);
@@ -448,17 +448,17 @@ test('should respect pixelCount option', async ({ runInlineTest }) => {
       const { test } = require('./helper');
       test('is a test', ({}) => {
         expect(Buffer.from('${image2.toString('base64')}', 'base64')).toMatchSnapshot('snapshot.png', {
-          pixelCount: ${BAD_PIXELS}
+          maxDiffPixels: ${BAD_PIXELS}
         });
       });
     `
-  })).exitCode, 'make sure pixelCount option is respected').toBe(0);
+  })).exitCode, 'make sure maxDiffPixels option is respected').toBe(0);
 
   expect((await runInlineTest({
     ...files,
     'playwright.config.ts': `
       module.exports = { projects: [
-        { expect: { toMatchSnapshot: { pixelCount: ${BAD_PIXELS} } } },
+        { expect: { toMatchSnapshot: { maxDiffPixels: ${BAD_PIXELS} } } },
       ]};
     `,
     'a.spec.js-snapshots/snapshot.png': image1,
@@ -468,10 +468,10 @@ test('should respect pixelCount option', async ({ runInlineTest }) => {
         expect(Buffer.from('${image2.toString('base64')}', 'base64')).toMatchSnapshot('snapshot.png');
       });
     `
-  })).exitCode, 'make sure pixelCount option in project config is respected').toBe(0);
+  })).exitCode, 'make sure maxDiffPixels option in project config is respected').toBe(0);
 });
 
-test('should respect pixelRatio option', async ({ runInlineTest }) => {
+test('should respect maxDiffPixelRatio option', async ({ runInlineTest }) => {
   const width = 20, height = 20;
   const BAD_RATIO = 0.25;
   const BAD_PIXELS = Math.floor(width * height * BAD_RATIO);
@@ -496,17 +496,17 @@ test('should respect pixelRatio option', async ({ runInlineTest }) => {
       const { test } = require('./helper');
       test('is a test', ({}) => {
         expect(Buffer.from('${image2.toString('base64')}', 'base64')).toMatchSnapshot('snapshot.png', {
-          pixelRatio: ${BAD_RATIO}
+          maxDiffPixelRatio: ${BAD_RATIO}
         });
       });
     `
-  })).exitCode, 'make sure pixelRatio option is respected').toBe(0);
+  })).exitCode, 'make sure maxDiffPixelRatio option is respected').toBe(0);
 
   expect((await runInlineTest({
     ...files,
     'playwright.config.ts': `
       module.exports = { projects: [
-        { expect: { toMatchSnapshot: { pixelRatio: ${BAD_RATIO} } } },
+        { expect: { toMatchSnapshot: { maxDiffPixelRatio: ${BAD_RATIO} } } },
       ]};
     `,
     'a.spec.js-snapshots/snapshot.png': image1,
@@ -516,10 +516,10 @@ test('should respect pixelRatio option', async ({ runInlineTest }) => {
         expect(Buffer.from('${image2.toString('base64')}', 'base64')).toMatchSnapshot('snapshot.png');
       });
     `
-  })).exitCode, 'make sure pixelCount option in project config is respected').toBe(0);
+  })).exitCode, 'make sure maxDiffPixels option in project config is respected').toBe(0);
 });
 
-test('should satisfy both pixelRatio and pixelCount', async ({ runInlineTest }) => {
+test('should satisfy both maxDiffPixelRatio and maxDiffPixels', async ({ runInlineTest }) => {
   const width = 20, height = 20;
   const BAD_RATIO = 0.25;
   const BAD_COUNT = Math.floor(width * height * BAD_RATIO);
@@ -544,12 +544,12 @@ test('should satisfy both pixelRatio and pixelCount', async ({ runInlineTest }) 
       const { test } = require('./helper');
       test('is a test', ({}) => {
         expect(Buffer.from('${image2.toString('base64')}', 'base64')).toMatchSnapshot('snapshot.png', {
-          pixelCount: ${Math.floor(BAD_COUNT / 2)},
-          pixelRatio: ${BAD_RATIO},
+          maxDiffPixels: ${Math.floor(BAD_COUNT / 2)},
+          maxDiffPixelRatio: ${BAD_RATIO},
         });
       });
     `
-  })).exitCode, 'make sure it fails when pixelCount < actualBadPixels < pixelRatio').toBe(1);
+  })).exitCode, 'make sure it fails when maxDiffPixels < actualBadPixels < maxDiffPixelRatio').toBe(1);
 
   expect((await runInlineTest({
     ...files,
@@ -558,12 +558,12 @@ test('should satisfy both pixelRatio and pixelCount', async ({ runInlineTest }) 
       const { test } = require('./helper');
       test('is a test', ({}) => {
         expect(Buffer.from('${image2.toString('base64')}', 'base64')).toMatchSnapshot('snapshot.png', {
-          pixelCount: ${BAD_COUNT},
-          pixelRatio: ${BAD_RATIO / 2},
+          maxDiffPixels: ${BAD_COUNT},
+          maxDiffPixelRatio: ${BAD_RATIO / 2},
         });
       });
     `
-  })).exitCode, 'make sure it fails when pixelRatio < actualBadPixels < pixelCount').toBe(1);
+  })).exitCode, 'make sure it fails when maxDiffPixelRatio < actualBadPixels < maxDiffPixels').toBe(1);
 
   expect((await runInlineTest({
     ...files,
@@ -572,12 +572,12 @@ test('should satisfy both pixelRatio and pixelCount', async ({ runInlineTest }) 
       const { test } = require('./helper');
       test('is a test', ({}) => {
         expect(Buffer.from('${image2.toString('base64')}', 'base64')).toMatchSnapshot('snapshot.png', {
-          pixelCount: ${BAD_COUNT},
-          pixelRatio: ${BAD_RATIO},
+          maxDiffPixels: ${BAD_COUNT},
+          maxDiffPixelRatio: ${BAD_RATIO},
         });
       });
     `
-  })).exitCode, 'make sure it passes when actualBadPixels < pixelRatio && actualBadPixels < pixelCount').toBe(0);
+  })).exitCode, 'make sure it passes when actualBadPixels < maxDiffPixelRatio && actualBadPixels < maxDiffPixels').toBe(0);
 });
 
 test('should compare PNG images', async ({ runInlineTest }) => {

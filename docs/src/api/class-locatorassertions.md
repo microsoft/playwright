@@ -1021,9 +1021,9 @@ await expect(locator).toHaveScreenshot();
 
 ### option: LocatorAssertions.toHaveScreenshot.mask = %%-screenshot-option-mask-%%
 
-### option: LocatorAssertions.toHaveScreenshot.pixelCount = %%-assertions-pixel-count-%%
+### option: LocatorAssertions.toHaveScreenshot.maxDiffPixels = %%-assertions-max-diff-pixels-%%
 
-### option: LocatorAssertions.toHaveScreenshot.pixelRatio = %%-assertions-pixel-ratio-%%
+### option: LocatorAssertions.toHaveScreenshot.maxDiffPixelRatio = %%-assertions-max-diff-pixel-ratio-%%
 
 ### option: LocatorAssertions.toHaveScreenshot.threshold = %%-assertions-threshold-%%
 

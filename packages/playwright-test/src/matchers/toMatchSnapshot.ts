@@ -80,11 +80,11 @@ class SnapshotHelper<T extends ImageComparatorOptions> {
       ...options,
     };
 
-    if (options.pixelCount !== undefined && options.pixelCount < 0)
-      throw new Error('`pixelCount` option value must be non-negative integer');
+    if (options.maxDiffPixels !== undefined && options.maxDiffPixels < 0)
+      throw new Error('`maxDiffPixels` option value must be non-negative integer');
 
-    if (options.pixelRatio !== undefined && (options.pixelRatio < 0 || options.pixelRatio > 1))
-      throw new Error('`pixelRatio` option value must be between 0 and 1');
+    if (options.maxDiffPixelRatio !== undefined && (options.maxDiffPixelRatio < 0 || options.maxDiffPixelRatio > 1))
+      throw new Error('`maxDiffPixelRatio` option value must be between 0 and 1');
 
     // sanitizes path if string
     const pathSegments = Array.isArray(name) ? name : [addSuffixToFilePath(name, '', undefined, true)];
@@ -111,8 +111,8 @@ class SnapshotHelper<T extends ImageComparatorOptions> {
     this.updateSnapshots = updateSnapshots;
     this.allOptions = options;
     this.comparatorOptions = {
-      pixelCount: options.pixelCount,
-      pixelRatio: options.pixelRatio,
+      maxDiffPixels: options.maxDiffPixels,
+      maxDiffPixelRatio: options.maxDiffPixelRatio,
       threshold: options.threshold,
     };
     this.kind = this.mimeType.startsWith('image/') ? 'Screenshot' : 'Snapshot';
@@ -262,8 +262,8 @@ export async function toHaveScreenshot(
     mask: (helper.allOptions.mask || []) as LocatorEx[],
     name: undefined,
     threshold: undefined,
-    pixelCount: undefined,
-    pixelRatio: undefined,
+    maxDiffPixels: undefined,
+    maxDiffPixelRatio: undefined,
   };
 
   const hasSnapshot = fs.existsSync(helper.snapshotPath);

@@ -212,11 +212,11 @@ test('should compile with different option combinations', async ({ runTSC }) => 
       test('is a test', async ({ page }) => {
         await expect(page).toHaveScreenshot();
         await expect(page.locator('body')).toHaveScreenshot({ threshold: 0.2 });
-        await expect(page).toHaveScreenshot({ pixelRatio: 0.2 });
+        await expect(page).toHaveScreenshot({ maxDiffPixelRatio: 0.2 });
         await expect(page).toHaveScreenshot({
           threshold: 0.2,
-          pixelCount: 10,
-          pixelRatio: 0.2,
+          maxDiffPixels: 10,
+          maxDiffPixelRatio: 0.2,
           disableAnimations: true,
           omitBackground: true,
           timeout: 1000,
@@ -473,7 +473,7 @@ test('should use provided name via options', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
 });
 
-test('should respect pixelCount option', async ({ runInlineTest }) => {
+test('should respect maxDiffPixels option', async ({ runInlineTest }) => {
   const BAD_PIXELS = 120;
   const EXPECTED_SNAPSHOT = paintBlackPixels(whiteImage, BAD_PIXELS);
 
@@ -495,17 +495,17 @@ test('should respect pixelCount option', async ({ runInlineTest }) => {
       const { test } = require('./helper');
       test('is a test', async ({ page }) => {
         await expect(page).toHaveScreenshot('snapshot.png', {
-          pixelCount: ${BAD_PIXELS}
+          maxDiffPixels: ${BAD_PIXELS}
         });
       });
     `
-  })).exitCode, 'make sure pixelCount option is respected').toBe(0);
+  })).exitCode, 'make sure maxDiffPixels option is respected').toBe(0);
 
   expect((await runInlineTest({
     ...files,
     'playwright.config.ts': `
       module.exports = { projects: [
-        { expect: { toMatchSnapshot: { pixelCount: ${BAD_PIXELS} } } },
+        { expect: { toMatchSnapshot: { maxDiffPixels: ${BAD_PIXELS} } } },
       ]};
     `,
     'a.spec.js-snapshots/snapshot.png': EXPECTED_SNAPSHOT,
@@ -515,10 +515,10 @@ test('should respect pixelCount option', async ({ runInlineTest }) => {
         await expect(page).toHaveScreenshot('snapshot.png');
       });
     `
-  })).exitCode, 'make sure pixelCount option in project config is respected').toBe(0);
+  })).exitCode, 'make sure maxDiffPixels option in project config is respected').toBe(0);
 });
 
-test('should respect pixelRatio option', async ({ runInlineTest }) => {
+test('should respect maxDiffPixelRatio option', async ({ runInlineTest }) => {
   const BAD_RATIO = 0.25;
   const BAD_PIXELS = IMG_WIDTH * IMG_HEIGHT * BAD_RATIO;
   const EXPECTED_SNAPSHOT = paintBlackPixels(whiteImage, BAD_PIXELS);
@@ -541,17 +541,17 @@ test('should respect pixelRatio option', async ({ runInlineTest }) => {
       const { test } = require('./helper');
       test('is a test', async ({ page }) => {
         await expect(page).toHaveScreenshot('snapshot.png', {
-          pixelRatio: ${BAD_RATIO}
+          maxDiffPixelRatio: ${BAD_RATIO}
         });
       });
     `
-  })).exitCode, 'make sure pixelRatio option is respected').toBe(0);
+  })).exitCode, 'make sure maxDiffPixelRatio option is respected').toBe(0);
 
   expect((await runInlineTest({
     ...files,
     'playwright.config.ts': `
       module.exports = { projects: [
-        { expect: { toMatchSnapshot: { pixelRatio: ${BAD_RATIO} } } },
+        { expect: { toMatchSnapshot: { maxDiffPixelRatio: ${BAD_RATIO} } } },
       ]};
     `,
     'a.spec.js-snapshots/snapshot.png': EXPECTED_SNAPSHOT,
@@ -561,7 +561,7 @@ test('should respect pixelRatio option', async ({ runInlineTest }) => {
         await expect(page).toHaveScreenshot('snapshot.png');
       });
     `
-  })).exitCode, 'make sure pixelCount option in project config is respected').toBe(0);
+  })).exitCode, 'make sure maxDiffPixels option in project config is respected').toBe(0);
 });
 
 test('should attach expected/actual and no diff when sizes are different', async ({ runInlineTest }, testInfo) => {

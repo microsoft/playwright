@@ -75,7 +75,7 @@ const { test, expect } = require('@playwright/test');
 
 test('example test', async ({ page }) => {
   await page.goto('https://playwright.dev');
-  expect(await page.screenshot()).toMatchSnapshot('home.png', { pixelCount: 100 });
+  expect(await page.screenshot()).toMatchSnapshot('home.png', { maxDiffPixels: 100 });
 });
 ```
 
@@ -85,7 +85,7 @@ import { test, expect } from '@playwright/test';
 
 test('example test', async ({ page }) => {
   await page.goto('https://playwright.dev');
-  expect(await page.screenshot()).toMatchSnapshot('home.png', { pixelCount: 100 });
+  expect(await page.screenshot()).toMatchSnapshot('home.png', { maxDiffPixels: 100 });
 });
 ```
 
@@ -94,7 +94,7 @@ If you'd like to share the default value among all the tests in the project, you
 ```js js-flavor=js
 module.exports = {
   expect: {
-    toMatchSnapshot: { pixelCount: 100 },
+    toMatchSnapshot: { maxDiffPixels: 100 },
   },
 };
 ```
@@ -103,7 +103,7 @@ module.exports = {
 import { PlaywrightTestConfig } from '@playwright/test';
 const config: PlaywrightTestConfig = {
   expect: {
-    toMatchSnapshot: { pixelCount: 100 },
+    toMatchSnapshot: { maxDiffPixels: 100 },
   },
 };
 export default config;
