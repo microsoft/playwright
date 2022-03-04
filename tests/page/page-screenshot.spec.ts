@@ -452,12 +452,12 @@ it.describe('page screenshot animations', () => {
     await page.goto(server.PREFIX + '/rotate-z.html');
     const div = page.locator('div');
     const screenshot = await div.screenshot({
-      disableAnimations: true,
+      animations: 'disabled',
     });
     for (let i = 0; i < 10; ++i) {
       await rafraf(page);
       const newScreenshot = await div.screenshot({
-        disableAnimations: true,
+        animations: 'disabled',
       });
       expect(newScreenshot.equals(screenshot)).toBe(true);
     }
@@ -467,12 +467,12 @@ it.describe('page screenshot animations', () => {
     await page.goto(server.PREFIX + '/rotate-pseudo.html');
     const div = page.locator('div');
     const screenshot = await div.screenshot({
-      disableAnimations: true,
+      animations: 'disabled',
     });
     for (let i = 0; i < 10; ++i) {
       await rafraf(page);
       const newScreenshot = await div.screenshot({
-        disableAnimations: true,
+        animations: 'disabled',
       });
       expect(newScreenshot.equals(screenshot)).toBe(true);
     }
@@ -481,12 +481,12 @@ it.describe('page screenshot animations', () => {
   it('should not capture css animations in shadow DOM', async ({ page, server }) => {
     await page.goto(server.PREFIX + '/rotate-z-shadow-dom.html');
     const screenshot = await page.screenshot({
-      disableAnimations: true,
+      animations: 'disabled',
     });
     for (let i = 0; i < 4; ++i) {
       await rafraf(page);
       const newScreenshot = await page.screenshot({
-        disableAnimations: true,
+        animations: 'disabled',
       });
       expect(newScreenshot.equals(screenshot)).toBe(true);
     }
@@ -498,7 +498,7 @@ it.describe('page screenshot animations', () => {
     // Stop rotating bar.
     await page.$eval('div', el => el.style.setProperty('animation', 'none'));
     const buffer1 = await page.screenshot({
-      disableAnimations: true,
+      animations: 'disabled',
       // Start rotating bar right before screenshot.
       __testHookBeforeScreenshot: async () => {
         await page.$eval('div', el => el.style.removeProperty('animation'));
@@ -506,7 +506,7 @@ it.describe('page screenshot animations', () => {
     } as any);
     await rafraf(page);
     const buffer2 = await page.screenshot({
-      disableAnimations: true,
+      animations: 'disabled',
     });
     expect(buffer1.equals(buffer2)).toBe(true);
   });
@@ -514,7 +514,7 @@ it.describe('page screenshot animations', () => {
   it('should resume infinite animations', async ({ page, server }) => {
     await page.goto(server.PREFIX + '/rotate-z.html');
     await page.screenshot({
-      disableAnimations: true,
+      animations: 'disabled',
     });
     const buffer1 = await page.screenshot();
     await rafraf(page);
@@ -526,12 +526,12 @@ it.describe('page screenshot animations', () => {
     await page.goto(server.PREFIX + '/web-animation.html');
     const div = page.locator('div');
     const screenshot = await div.screenshot({
-      disableAnimations: true,
+      animations: 'disabled',
     });
     for (let i = 0; i < 10; ++i) {
       await rafraf(page);
       const newScreenshot = await div.screenshot({
-        disableAnimations: true,
+        animations: 'disabled',
       });
       expect(newScreenshot.equals(screenshot)).toBe(true);
     }
@@ -558,7 +558,7 @@ it.describe('page screenshot animations', () => {
 
     // Make a screenshot that finishes all finite animations.
     const screenshot1 = await div.screenshot({
-      disableAnimations: true,
+      animations: 'disabled',
     });
     await rafraf(page);
     // Make sure finite transition is not restarted.
@@ -592,7 +592,7 @@ it.describe('page screenshot animations', () => {
     // 1. Make a screenshot that finishes all finite animations
     //    and triggers layout.
     const screenshot1 = await page.screenshot({
-      disableAnimations: true,
+      animations: 'disabled',
     });
 
     // 2. Make a second screenshot after h1 is on screen.
@@ -616,11 +616,11 @@ it.describe('page screenshot animations', () => {
       window.animation.currentTime = 500;
     });
     const screenshot1 = await page.screenshot({
-      disableAnimations: true,
+      animations: 'disabled',
     });
     await rafraf(page);
     const screenshot2 = await page.screenshot({
-      disableAnimations: true,
+      animations: 'disabled',
     });
     expect(screenshot1.equals(screenshot2)).toBe(true);
     expect(await page.evaluate(() => ({
@@ -648,7 +648,7 @@ it.describe('page screenshot animations', () => {
       await animation.ready;
     });
     await Promise.all([
-      page.screenshot({ disableAnimations: true }),
+      page.screenshot({ animations: 'disabled' }),
       page.waitForEvent('console', msg => msg.text() === 'transitionend'),
     ]);
     expect(await page.evaluate(() => window._EVENTS)).toEqual([
@@ -672,7 +672,7 @@ it.describe('page screenshot animations', () => {
       await animation.ready;
     });
     await Promise.all([
-      page.screenshot({ disableAnimations: true }),
+      page.screenshot({ animations: 'disabled' }),
       page.waitForEvent('console', msg => msg.text() === 'animationcancel'),
     ]);
     expect(await page.evaluate(() => window._EVENTS)).toEqual([
@@ -700,7 +700,7 @@ it.describe('page screenshot animations', () => {
     // Ensure CSS animation is finite.
     expect(await div.evaluate(async el => Number.isFinite(el.getAnimations()[0].effect.getComputedTiming().endTime))).toBe(true);
     await Promise.all([
-      page.screenshot({ disableAnimations: true }),
+      page.screenshot({ animations: 'disabled' }),
       page.waitForEvent('console', msg => msg.text() === 'animationend'),
     ]);
     expect(await page.evaluate(() => window._EVENTS)).toEqual([

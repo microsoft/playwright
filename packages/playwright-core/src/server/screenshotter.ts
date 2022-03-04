@@ -36,7 +36,7 @@ export type ScreenshotOptions = {
   type?: 'png' | 'jpeg',
   quality?: number,
   omitBackground?: boolean,
-  disableAnimations?: boolean,
+  animations?: 'disabled',
   mask?: { frame: Frame, selector: string}[],
   fullPage?: boolean,
   clip?: Rect,
@@ -83,7 +83,7 @@ export class Screenshotter {
     const format = validateScreenshotOptions(options);
     return this._queue.postTask(async () => {
       const { viewportSize } = await this._originalViewportSize(progress);
-      await this._preparePageForScreenshot(progress, options.disableAnimations || false);
+      await this._preparePageForScreenshot(progress, options.animations === 'disabled');
       progress.throwIfAborted(); // Avoid restoring after failure - should be done by cleanup.
 
       if (options.fullPage) {
@@ -111,7 +111,7 @@ export class Screenshotter {
     return this._queue.postTask(async () => {
       const { viewportSize } = await this._originalViewportSize(progress);
 
-      await this._preparePageForScreenshot(progress, options.disableAnimations || false);
+      await this._preparePageForScreenshot(progress, options.animations === 'disabled');
       progress.throwIfAborted(); // Do not do extra work.
 
       await handle._waitAndScrollIntoViewIfNeeded(progress);
