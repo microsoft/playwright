@@ -254,8 +254,10 @@ test('should fail when screenshot is different pixels', async ({ runInlineTest }
     `
   });
   expect(result.exitCode).toBe(1);
-  expect(result.output).toContain('Timeout 2000ms exceeded');
   expect(result.output).toContain('Screenshot comparison failed');
+  expect(result.output).toContain('921600 pixels');
+  expect(result.output).not.toContain('Call log');
+  expect(result.output).toContain('ratio 1.00');
   expect(result.output).toContain('Expected:');
   expect(result.output).toContain('Received:');
 });

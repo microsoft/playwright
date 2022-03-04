@@ -179,7 +179,7 @@ class SnapshotHelper<T extends ImageComparatorOptions> {
         '',
       ]);
     }
-    if (log)
+    if (log?.length)
       output.push(callLogText(log));
 
     if (expected !== undefined) {

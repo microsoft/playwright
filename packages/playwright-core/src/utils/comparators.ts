@@ -66,7 +66,11 @@ function compareImages(mimeType: string, actualBuffer: Buffer | string, expected
     maxDiffPixels = Math.min(maxDiffPixels1, maxDiffPixels2);
   else
     maxDiffPixels = maxDiffPixels1 ?? maxDiffPixels2 ?? 0;
-  return count > maxDiffPixels ? { diff: PNG.sync.write(diff) } : null;
+  const ratio = count / (expected.width * expected.height);
+  return count > maxDiffPixels ? {
+    errorMessage: `${count} pixels (ratio ${ratio.toFixed(2)} of all image pixels) are different`,
+    diff: PNG.sync.write(diff),
+  } : null;
 }
 
 function compareText(actual: Buffer | string, expectedBuffer: Buffer): ComparatorResult {
