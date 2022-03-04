@@ -1015,7 +1015,7 @@ await expect(locator).toHaveScreenshot();
 ### option: LocatorAssertions.toHaveScreenshot.timeout = %%-js-assertions-timeout-%%
 ### option: LocatorAssertions.toHaveScreenshot.timeout = %%-csharp-java-python-assertions-timeout-%%
 
-### option: LocatorAssertions.toHaveScreenshot.disableAnimations = %%-screenshot-option-disable-animations-%%
+### option: LocatorAssertions.toHaveScreenshot.animations = %%-screenshot-option-animations-%%
 
 ### option: LocatorAssertions.toHaveScreenshot.omitBackground = %%-screenshot-option-omit-background-%%
 

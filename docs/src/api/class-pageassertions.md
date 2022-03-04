@@ -130,7 +130,7 @@ await expect(page).toHaveScreenshot();
 ### option: PageAssertions.toHaveScreenshot.timeout = %%-js-assertions-timeout-%%
 ### option: PageAssertions.toHaveScreenshot.timeout = %%-csharp-java-python-assertions-timeout-%%
 
-### option: PageAssertions.toHaveScreenshot.disableAnimations = %%-screenshot-option-disable-animations-%%
+### option: PageAssertions.toHaveScreenshot.animations = %%-screenshot-option-animations-%%
 
 ### option: PageAssertions.toHaveScreenshot.omitBackground = %%-screenshot-option-omit-background-%%
 

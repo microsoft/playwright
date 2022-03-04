@@ -8066,10 +8066,12 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    */
   screenshot(options?: {
     /**
-     * When true, stops CSS animations, CSS transitions and Web Animations. Animations get different treatment depending on
-     * their duration:
+     * When set to `"disabled"`, stops CSS animations, CSS transitions and Web Animations. Animations get different treatment
+     * depending on their duration:
+     * - finite animations are fast-forwarded to completion, so they'll fire `transitionend` event.
+     * - infinite animations are canceled to initial state, and then played over after the screenshot.
      */
-    disableAnimations?: boolean;
+    animations?: "disabled";
 
     /**
      * Specify locators that should be masked when the screenshot is taken. Masked elements will be overlayed with a pink box
@@ -15572,10 +15574,12 @@ export interface ConnectOptions {
 
 export interface LocatorScreenshotOptions {
   /**
-   * When true, stops CSS animations, CSS transitions and Web Animations. Animations get different treatment depending on
-   * their duration:
+   * When set to `"disabled"`, stops CSS animations, CSS transitions and Web Animations. Animations get different treatment
+   * depending on their duration:
+   * - finite animations are fast-forwarded to completion, so they'll fire `transitionend` event.
+   * - infinite animations are canceled to initial state, and then played over after the screenshot.
    */
-  disableAnimations?: boolean;
+  animations?: "disabled";
 
   /**
    * Specify locators that should be masked when the screenshot is taken. Masked elements will be overlayed with a pink box
@@ -15707,6 +15711,14 @@ interface PageWaitForFunctionOptions {
 
 export interface PageScreenshotOptions {
   /**
+   * When set to `"disabled"`, stops CSS animations, CSS transitions and Web Animations. Animations get different treatment
+   * depending on their duration:
+   * - finite animations are fast-forwarded to completion, so they'll fire `transitionend` event.
+   * - infinite animations are canceled to initial state, and then played over after the screenshot.
+   */
+  animations?: "disabled";
+
+  /**
    * An object which specifies clipping of the resulting image. Should have the following fields:
    */
   clip?: {
@@ -15730,12 +15742,6 @@ export interface PageScreenshotOptions {
      */
     height: number;
   };
-
-  /**
-   * When true, stops CSS animations, CSS transitions and Web Animations. Animations get different treatment depending on
-   * their duration:
-   */
-  disableAnimations?: boolean;
 
   /**
    * When true, takes a screenshot of the full scrollable page, instead of the currently visible viewport. Defaults to
