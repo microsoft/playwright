@@ -77,6 +77,7 @@ compile_chromium() {
     echo 'use_goma = true' >> ./out/Default/args.gn
     echo "goma_dir = \"${PLAYWRIGHT_GOMA_PATH}\"" >> ./out/Default/args.gn
   fi
+  echo 'enable_nacl = false' >> ./out/Default/args.gn
 
   echo "===== args.gn ====="
   cat ./out/Default/args.gn
