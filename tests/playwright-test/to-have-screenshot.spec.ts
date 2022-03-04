@@ -75,7 +75,7 @@ test('should not fail when racing with navigation', async ({ runInlineTest }, te
           page.goto('${infiniteAnimationURL}'),
           expect(page).toHaveScreenshot({
             name: 'snapshot.png',
-            disableAnimations: true,
+            animations: "disabled",
             clip: { x: 0, y: 0, width: 10, height: 10 },
           }),
         ]);
@@ -94,7 +94,7 @@ test('should successfully screenshot a page with infinite animation with disable
       test('is a test', async ({ page }) => {
         await page.goto('${infiniteAnimationURL}');
         await expect(page).toHaveScreenshot({
-          disableAnimations: true,
+          animations: "disabled",
         });
       });
     `
@@ -217,7 +217,7 @@ test('should compile with different option combinations', async ({ runTSC }) => 
           threshold: 0.2,
           maxDiffPixels: 10,
           maxDiffPixelRatio: 0.2,
-          disableAnimations: true,
+          animations: "disabled",
           omitBackground: true,
           timeout: 1000,
         });
@@ -254,8 +254,10 @@ test('should fail when screenshot is different pixels', async ({ runInlineTest }
     `
   });
   expect(result.exitCode).toBe(1);
-  expect(result.output).toContain('Timeout 2000ms exceeded');
   expect(result.output).toContain('Screenshot comparison failed');
+  expect(result.output).toContain('921600 pixels');
+  expect(result.output).not.toContain('Call log');
+  expect(result.output).toContain('ratio 1.00');
   expect(result.output).toContain('Expected:');
   expect(result.output).toContain('Received:');
 });

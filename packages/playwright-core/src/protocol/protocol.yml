@@ -1011,7 +1011,10 @@ Page:
           properties:
             omitBackground: boolean?
             fullPage: boolean?
-            disableAnimations: boolean?
+            animations:
+              type: enum?
+              literals:
+              - disabled
             clip: Rect?
             mask:
               type: array?
@@ -1042,7 +1045,10 @@ Page:
         quality: number?
         omitBackground: boolean?
         fullPage: boolean?
-        disableAnimations: boolean?
+        animations:
+          type: enum?
+          literals:
+          - disabled
         clip: Rect?
         mask:
           type: array?
@@ -2204,7 +2210,10 @@ ElementHandle:
           - jpeg
         quality: number?
         omitBackground: boolean?
-        disableAnimations: boolean?
+        animations:
+          type: enum?
+          literals:
+          - disabled
         mask:
           type: array?
           items:
@@ -2784,6 +2793,8 @@ Android:
   commands:
 
     devices:
+      parameters:
+        port: number?
       returns:
         devices:
           type: array

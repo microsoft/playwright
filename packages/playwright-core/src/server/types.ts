@@ -366,3 +366,7 @@ export type APIResponse = {
   headers: HeadersArray,
   body: Buffer,
 };
+
+export type AndroidDeviceOptions = {
+  port?: number
+};

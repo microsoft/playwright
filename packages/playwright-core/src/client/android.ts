@@ -47,8 +47,8 @@ export class Android extends ChannelOwner<channels.AndroidChannel> implements ap
     this._channel.setDefaultTimeoutNoReply({ timeout });
   }
 
-  async devices(): Promise<AndroidDevice[]> {
-    const { devices } = await this._channel.devices();
+  async devices(options: { port?: number }): Promise<AndroidDevice[]> {
+    const { devices } = await this._channel.devices(options);
     return devices.map(d => AndroidDevice.from(d));
   }
 }
@@ -190,7 +190,7 @@ export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel> i
     await this._channel.push({ file: await loadFile(file), path, mode: options ? options.mode : undefined });
   }
 
-  async launchBrowser(options: types.BrowserContextOptions & { pkg?: string  } = {}): Promise<BrowserContext> {
+  async launchBrowser(options: types.BrowserContextOptions & { pkg?: string } = {}): Promise<BrowserContext> {
     const contextOptions = await prepareBrowserContextParams(options);
     const { context } = await this._channel.launchBrowser(contextOptions);
     return BrowserContext.from(context) as BrowserContext;

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import net from 'net';
 import { androidTest as test, expect } from './androidTest';
 
 test('androidDevice.model', async function({ androidDevice }) {
@@ -54,6 +55,32 @@ test('should be able to send CDP messages', async ({ androidDevice }) => {
   await client.send('Runtime.enable');
   const evalResponse = await client.send('Runtime.evaluate', { expression: '1 + 2', returnByValue: true });
   expect(evalResponse.result.value).toBe(3);
+});
+
+test('should be able to use a custom port', async function({ playwright }) {
+  const proxyPort = 5038;
+  let countOfIncomingConnections = 0;
+  let countOfConnections = 0;
+  const server = net.createServer(socket => {
+    ++countOfIncomingConnections;
+    ++countOfConnections;
+    socket.on('close', () => countOfConnections--);
+    const client = net.connect(5037);
+    socket.pipe(client).pipe(socket);
+  });
+  await new Promise<void>(resolve => server.listen(proxyPort, resolve));
+
+  const devices = await playwright._android.devices({ port: proxyPort });
+  expect(countOfIncomingConnections).toBeGreaterThanOrEqual(1);
+  expect(devices).toHaveLength(1);
+  const device = devices[0];
+  const value = await device.shell('echo foobar');
+  expect(value.toString()).toBe('foobar\n');
+  await device.close();
+
+  await new Promise(resolve => server.close(resolve));
+  expect(countOfIncomingConnections).toBeGreaterThanOrEqual(1);
+  expect(countOfConnections).toBe(0);
 });
 
 test('should be able to pass context options', async ({ androidDevice, httpsServer }) => {

@@ -901,12 +901,12 @@ Note that outer and inner locators must belong to the same frame. Inner locator 
 - %%-locator-option-has-text-%%
 - %%-locator-option-has-%%
 
-## screenshot-option-disable-animations
-- `disableAnimations` <[boolean]>
+## screenshot-option-animations
+- `animations` <"disabled">
 
-When true, stops CSS animations, CSS transitions and Web Animations. Animations get different treatment depending on their duration:
-- finite animations are fast-forwarded to completion, so they'll fire `transitionend` event.
-- infinite animations are canceled to initial state, and then played over after the screenshot.
+When set to `"disabled"`, stops CSS animations, CSS transitions and Web Animations. Animations get different treatment depending on their duration:
+* finite animations are fast-forwarded to completion, so they'll fire `transitionend` event.
+* infinite animations are canceled to initial state, and then played over after the screenshot.
 
 ## screenshot-option-omit-background
 - `omitBackground` <[boolean]>
@@ -953,7 +953,7 @@ When true, takes a screenshot of the full scrollable page, instead of the curren
 An object which specifies clipping of the resulting image. Should have the following fields:
 
 ## screenshot-options-common-list
-- %%-screenshot-option-disable-animations-%%
+- %%-screenshot-option-animations-%%
 - %%-screenshot-option-omit-background-%%
 - %%-screenshot-option-quality-%%
 - %%-screenshot-option-path-%%

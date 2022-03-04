@@ -178,8 +178,6 @@ module.exports = async () => {
   await requestContext.storageState({ path: 'storageState.json' });
   await requestContext.dispose();
 }
-
-export default globalSetup;
 ```
 
 ```js js-flavor=ts

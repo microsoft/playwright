@@ -38,7 +38,7 @@ import { SdkObject, internalCallMetadata } from '../instrumentation';
 const ARTIFACTS_FOLDER = path.join(os.tmpdir(), 'playwright-artifacts-');
 
 export interface Backend {
-  devices(): Promise<DeviceBackend[]>;
+  devices(options: types.AndroidDeviceOptions): Promise<DeviceBackend[]>;
 }
 
 export interface DeviceBackend {
@@ -73,8 +73,8 @@ export class Android extends SdkObject {
     this._timeoutSettings.setDefaultTimeout(timeout);
   }
 
-  async devices(): Promise<AndroidDevice[]> {
-    const devices = (await this._backend.devices()).filter(d => d.status === 'device');
+  async devices(options: types.AndroidDeviceOptions): Promise<AndroidDevice[]> {
+    const devices = (await this._backend.devices(options)).filter(d => d.status === 'device');
     const newSerials = new Set<string>();
     for (const d of devices) {
       newSerials.add(d.serial);
