@@ -23,7 +23,7 @@ import { diff_match_patch, DIFF_INSERT, DIFF_DELETE, DIFF_EQUAL } from '../third
 // Note: we require the pngjs version of pixelmatch to avoid version mismatches.
 const { PNG } = require(require.resolve('pngjs', { paths: [require.resolve('pixelmatch')] })) as typeof import('pngjs');
 
-export type ImageComparatorOptions = { threshold?: number, pixelCount?: number, pixelRatio?: number };
+export type ImageComparatorOptions = { threshold?: number, maxDiffPixels?: number, maxDiffPixelRatio?: number };
 export type ComparatorResult = { diff?: Buffer; errorMessage?: string; } | null;
 export type Comparator = (actualBuffer: Buffer | string, expectedBuffer: Buffer, options?: any) => ComparatorResult;
 export const mimeTypeToComparator: { [key: string]: Comparator } = {
@@ -59,14 +59,14 @@ function compareImages(mimeType: string, actualBuffer: Buffer | string, expected
     threshold: options.threshold ?? 0.2,
   });
 
-  const pixelCount1 = options.pixelCount;
-  const pixelCount2 = options.pixelRatio !== undefined ? expected.width * expected.height * options.pixelRatio : undefined;
-  let pixelCount;
-  if (pixelCount1 !== undefined && pixelCount2 !== undefined)
-    pixelCount = Math.min(pixelCount1, pixelCount2);
+  const maxDiffPixels1 = options.maxDiffPixels;
+  const maxDiffPixels2 = options.maxDiffPixelRatio !== undefined ? expected.width * expected.height * options.maxDiffPixelRatio : undefined;
+  let maxDiffPixels;
+  if (maxDiffPixels1 !== undefined && maxDiffPixels2 !== undefined)
+    maxDiffPixels = Math.min(maxDiffPixels1, maxDiffPixels2);
   else
-    pixelCount = pixelCount1 ?? pixelCount2 ?? 0;
-  return count > pixelCount ? { diff: PNG.sync.write(diff) } : null;
+    maxDiffPixels = maxDiffPixels1 ?? maxDiffPixels2 ?? 0;
+  return count > maxDiffPixels ? { diff: PNG.sync.write(diff) } : null;
 }
 
 function compareText(actual: Buffer | string, expectedBuffer: Buffer): ComparatorResult {

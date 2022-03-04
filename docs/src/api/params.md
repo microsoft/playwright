@@ -715,15 +715,15 @@ Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
 
 Time to retry the assertion for.
 
-## assertions-pixel-count
+## assertions-max-diff-pixels
 * langs: js
-- `pixelCount` <[int]>
+- `maxDiffPixels` <[int]>
 
 An acceptable amount of pixels that could be different, unset by default.
 
-## assertions-pixel-ratio
+## assertions-max-diff-pixel-ratio
 * langs: js
-- `pixelRatio` <[float]>
+- `maxDiffPixelRatio` <[float]>
 
 An acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1`, unset by default.
 
@@ -731,7 +731,7 @@ An acceptable ratio of pixels that are different to the total amount of pixels, 
 * langs: js
 - `threshold` <[float]>
 
-An acceptable percieved color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between pixels in compared images, between zero (strict) and one (lax), default is configurable with `TestConfig.expect`. Defaults to `0.2`.
+An acceptable percieved color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between the same pixel in compared images, between zero (strict) and one (lax), default is configurable with `TestConfig.expect`. Defaults to `0.2`.
 
 ## shared-context-params-list
 - %%-context-option-acceptdownloads-%%

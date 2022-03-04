@@ -549,8 +549,8 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
       selector: tString,
     })),
     comparatorOptions: tOptional(tObject({
-      pixelCount: tOptional(tNumber),
-      pixelRatio: tOptional(tNumber),
+      maxDiffPixels: tOptional(tNumber),
+      maxDiffPixelRatio: tOptional(tNumber),
       threshold: tOptional(tNumber),
     })),
     screenshotOptions: tOptional(tObject({

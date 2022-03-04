@@ -50,8 +50,8 @@ export declare type Expect = {
 
 type ImageComparatorOptions = {
   threshold?: number,
-  pixelCount?: number,
-  pixelRatio?: number,
+  maxDiffPixels?: number,
+  maxDiffPixelRatio?: number,
 };
 
 type Awaited<T> = T extends PromiseLike<infer U> ? U : T;

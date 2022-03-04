@@ -1496,8 +1496,8 @@ export type PageExpectScreenshotParams = {
     selector: string,
   },
   comparatorOptions?: {
-    pixelCount?: number,
-    pixelRatio?: number,
+    maxDiffPixels?: number,
+    maxDiffPixelRatio?: number,
     threshold?: number,
   },
   screenshotOptions?: {
@@ -1519,8 +1519,8 @@ export type PageExpectScreenshotOptions = {
     selector: string,
   },
   comparatorOptions?: {
-    pixelCount?: number,
-    pixelRatio?: number,
+    maxDiffPixels?: number,
+    maxDiffPixelRatio?: number,
     threshold?: number,
   },
   screenshotOptions?: {

@@ -1003,8 +1003,8 @@ Page:
         comparatorOptions:
           type: object?
           properties:
-            pixelCount: number?
-            pixelRatio: number?
+            maxDiffPixels: number?
+            maxDiffPixelRatio: number?
             threshold: number?
         screenshotOptions:
           type: object?
