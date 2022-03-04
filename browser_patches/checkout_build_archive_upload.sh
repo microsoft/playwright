@@ -213,6 +213,8 @@ elif [[ "$BUILD_FLAVOR" == "firefox-win64" ]]; then
   EXTRA_BUILD_ARGS="--full"
   EXPECTED_HOST_OS="MINGW"
   BUILD_BLOB_NAME="firefox-win64.zip"
+  # This is the architecture that is set by mozilla-build bash.
+  EXPECTED_ARCH="i686"
 
 
 # ===============================
