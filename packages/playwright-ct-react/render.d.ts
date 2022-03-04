@@ -14,6 +14,4 @@
  * limitations under the License.
  */
 
-export * from 'playwright-core';
-export * from './types/test';
-export { default } from './types/test';
+export const registerComponent: (name: string, componentFunc: any) => void;

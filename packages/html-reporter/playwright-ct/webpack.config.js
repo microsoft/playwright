@@ -16,15 +16,13 @@
 
 const path = require('path');
 const HtmlWebPackPlugin = require('html-webpack-plugin');
-const BundleJsPlugin = require('./bundleJsPlugin');
 
 const mode = process.env.NODE_ENV === 'production' ? 'production' : 'development';
 
 module.exports = {
   mode,
   entry: {
-    zip: require.resolve('@zip.js/zip.js/dist/zip-no-worker-inflate.min.js'),
-    app: path.join(__dirname, 'src', 'index.tsx'),
+    index: path.join(__dirname, 'index.ts'),
   },
   resolve: {
     extensions: ['.ts', '.js', '.tsx', '.jsx']
@@ -33,7 +31,7 @@ module.exports = {
   output: {
     globalObject: 'self',
     filename: '[name].bundle.js',
-    path: path.resolve(__dirname, '..', 'playwright-core', 'lib', 'webpack', 'htmlReport')
+    path: path.resolve(__dirname, '..', 'out-ct')
   },
   module: {
     rules: [
@@ -56,10 +54,9 @@ module.exports = {
   },
   plugins: [
     new HtmlWebPackPlugin({
-      title: 'Playwright Test Report',
-      template: path.join(__dirname, 'src', 'index.html'),
+      title: 'Playwright CT',
+      template: path.join(__dirname, 'index.html'),
       inject: true,
     }),
-    new BundleJsPlugin(),
   ]
 };

@@ -15,10 +15,9 @@
  */
 
 import React from 'react';
-import { test, expect } from '../test/componentTest';
+import { test, expect } from '@playwright/ct-react/test';
 import { HeaderView } from './headerView';
 
-test.use({ webpack: require.resolve('../webpack.config.js') });
 test.use({ viewport: { width: 720, height: 200 } });
 
 test('should render counters', async ({ mount }) => {

@@ -15,10 +15,9 @@
  */
 
 import React from 'react';
-import { expect, test } from '../test/componentTest';
+import { expect, test } from '@playwright/ct-react/test';
 import { AutoChip, Chip } from './chip';
 
-test.use({ webpack: require.resolve('../webpack.config.js') });
 test.use({ viewport: { width: 500, height: 500 } });
 
 test('expand collapse', async ({ mount }) => {

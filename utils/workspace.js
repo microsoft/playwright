@@ -171,6 +171,21 @@ const workspace = new Workspace(ROOT_PATH, [
     path: path.join(ROOT_PATH, 'packages', 'html-reporter'),
     files: [],
   }),
+  new PWPackage({
+    name: '@playwright/ct-react',
+    path: path.join(ROOT_PATH, 'packages', 'playwright-ct-react'),
+    files: [],
+  }),
+  new PWPackage({
+    name: '@playwright/ct-svelte',
+    path: path.join(ROOT_PATH, 'packages', 'playwright-ct-svelte'),
+    files: [],
+  }),
+  new PWPackage({
+    name: '@playwright/ct-vue',
+    path: path.join(ROOT_PATH, 'packages', 'playwright-ct-vue'),
+    files: [],
+  }),
 ]);
 
 if (require.main === module) {

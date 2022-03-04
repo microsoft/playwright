@@ -17,6 +17,7 @@
     "./package.json": "./package.json",
     "./lib/cli": "./lib/cli.js",
     "./lib/experimentalLoader": "./lib/experimentalLoader.js",
+    "./lib/mount": "./lib/mount.js",
     "./reporter": "./reporter.js"
   },
   "bin": {

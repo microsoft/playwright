@@ -14,6 +14,21 @@
  * limitations under the License.
  */
 
-export * from 'playwright-core';
-export * from './types/test';
-export { default } from './types/test';
+import type {
+  TestType,
+  PlaywrightTestArgs,
+  PlaywrightTestOptions,
+  PlaywrightWorkerArgs,
+  PlaywrightWorkerOptions,
+  Locator,
+} from '@playwright/test';
+
+interface ComponentFixtures {
+  mount(component: JSX.Element): Promise<Locator>;
+}
+
+export const test: TestType<
+  PlaywrightTestArgs & PlaywrightTestOptions & ComponentFixtures,
+  PlaywrightWorkerArgs & PlaywrightWorkerOptions>;
+
+export { expect } from '@playwright/test';

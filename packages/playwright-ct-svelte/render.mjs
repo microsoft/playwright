@@ -14,6 +14,21 @@
  * limitations under the License.
  */
 
-export * from 'playwright-core';
-export * from './types/test';
-export { default } from './types/test';
+const registry = new Map();
+
+export const registerComponent = (name, componentClass) => {
+  registry.set(name, componentClass);
+};
+
+window.playwrightMount = component => {
+  const componentCtor = registry.get(component.type);
+
+  const wrapper = new componentCtor({
+    target: document.getElementById('app'),
+    props: component.options.props,
+  });
+
+  for (const [key, listener] of Object.entries(component.options.on || {}))
+    wrapper.$on(key, event => listener(event.detail));
+  return '#app';
+};
