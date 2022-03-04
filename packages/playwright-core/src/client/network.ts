@@ -172,6 +172,9 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
   }
 
   frame(): Frame {
+    if (!this._initializer.frame)
+      throw new Error('Service Worker requests do not have an associated frame.');
+
     return Frame.from(this._initializer.frame);
   }
 
@@ -225,7 +228,14 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
   }
 
   private _raceWithPageClose(promise: Promise<any>): Promise<void> {
-    const page = this.request().frame()._page;
+    // FIXME(raw): SW requests do not have an associated frame: we probably want to signal and check it is explicilty SW request
+    let page = null;
+    try {
+      page = this.request().frame()._page;
+    } catch {
+      return Promise.resolve();
+    }
+
     // When page closes or crashes, we catch any potential rejects from this Route.
     // Note that page could be missing when routing popup's initial request that
     // does not have a Page initialized just yet.

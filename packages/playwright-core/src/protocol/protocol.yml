@@ -2356,7 +2356,7 @@ Request:
   type: interface
 
   initializer:
-    frame: Frame
+    frame: Frame?
     url: string
     resourceType: string
     method: string

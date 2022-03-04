@@ -37,7 +37,7 @@ export class RequestDispatcher extends Dispatcher<Request, channels.RequestChann
   private constructor(scope: DispatcherScope, request: Request) {
     const postData = request.postDataBuffer();
     super(scope, request, 'Request', {
-      frame: FrameDispatcher.from(scope, request.frame()),
+      frame: FrameDispatcher.fromNullable(scope, request.frame()),
       url: request.url(),
       resourceType: request.resourceType(),
       method: request.method(),

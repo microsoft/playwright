@@ -186,13 +186,17 @@ export class HarTracer {
   }
 
   private _onRequest(request: network.Request) {
-    const page = request.frame()._page;
+    const frame = request.frame();
+    if (!frame)
+      return;
+
+    const page = frame._page;
     const url = network.parsedURL(request.url());
     if (!url)
       return;
 
     const pageEntry = this._ensurePageEntry(page);
-    const harEntry = createHarEntry(request.method(), url, request.guid, request.frame().guid);
+    const harEntry = createHarEntry(request.method(), url, request.guid, frame.guid);
     harEntry.pageref = pageEntry.id;
     harEntry.request.postData = postDataForRequest(request, this._options.content);
     harEntry.request.bodySize = request.bodySize();
@@ -209,7 +213,11 @@ export class HarTracer {
   private async _onRequestFinished(request: network.Request, response: network.Response | null) {
     if (!response)
       return;
-    const page = request.frame()._page;
+    const frame = request.frame();
+    if (!frame)
+      return;
+
+    const page = frame._page;
     const harEntry = this._entryForRequest(request);
     if (!harEntry)
       return;
@@ -299,7 +307,10 @@ export class HarTracer {
   }
 
   private _onResponse(response: network.Response) {
-    const page = response.frame()._page;
+    const page = response.frame()?._page;
+    if (!page)
+      return;
+
     const pageEntry = this._ensurePageEntry(page);
     const harEntry = this._entryForRequest(response.request());
     if (!harEntry)

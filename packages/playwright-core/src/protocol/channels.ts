@@ -3024,7 +3024,7 @@ export interface ElementHandleEvents {
 
 // ----------- Request -----------
 export type RequestInitializer = {
-  frame: FrameChannel,
+  frame?: FrameChannel,
   url: string,
   resourceType: string,
   method: string,

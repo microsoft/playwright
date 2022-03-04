@@ -16,6 +16,7 @@
 
 import * as frames from './frames';
 import * as types from './types';
+import * as contexts from './browserContext';
 import { assert } from '../utils/utils';
 import { ManualPromise } from '../utils/async';
 import { SdkObject } from './instrumentation';
@@ -104,18 +105,20 @@ export class Request extends SdkObject {
   readonly _headers: types.HeadersArray;
   private _headersMap = new Map<string, string>();
   private _rawRequestHeadersPromise: ManualPromise<types.HeadersArray> | undefined;
-  private _frame: frames.Frame;
+  private _frame: frames.Frame | null = null;
+  readonly _context: contexts.BrowserContext;
   private _waitForResponsePromise = new ManualPromise<Response | null>();
   _responseEndTiming = -1;
   readonly responseSize: ResponseSize = { encodedBodySize: 0, transferSize: 0, responseHeadersSize: 0 };
 
-  constructor(parent: SdkObject, redirectedFrom: Request | null, documentId: string | undefined,
+  constructor(parent: frames.Frame | contexts.BrowserContext, redirectedFrom: Request | null, documentId: string | undefined,
     url: string, resourceType: string, method: string, postData: Buffer | null, headers: types.HeadersArray) {
-    super(parent, 'request');
+    super(parent instanceof frames.Frame ? parent._page._browserContext : parent, 'request');
     assert(!url.startsWith('data:'), 'Data urls should not fire requests');
-    // FIXME(raw): Let's change all request to have BrowserContext as parent, and think about request.frame() nullable?
-    // FIXME(raw): Also check/change Routes to be parent-ed by Context
-    this._frame = parent as frames.Frame;
+    if (parent instanceof frames.Frame) {
+      this._frame = parent;
+      this._context = parent._page._browserContext;
+    } else {this._context = parent;}
     this._redirectedFrom = redirectedFrom;
     if (redirectedFrom)
       redirectedFrom._redirectedTo = this;
@@ -195,7 +198,7 @@ export class Request extends SdkObject {
     return this._redirectedTo ? this._redirectedTo._finalRequest() : this;
   }
 
-  frame(): frames.Frame {
+  frame(): frames.Frame | null {
     return this._frame;
   }
 
@@ -237,7 +240,7 @@ export class Route extends SdkObject {
   private _handled = false;
 
   constructor(request: Request, delegate: RouteDelegate) {
-    super(request.frame(), 'route');
+    super(request._context, 'route');
     this._request = request;
     this._delegate = delegate;
   }
@@ -257,8 +260,7 @@ export class Route extends SdkObject {
     let isBase64 = overrides.isBase64 || false;
     if (body === undefined) {
       if (overrides.fetchResponseUid) {
-        const context = this._request.frame()._page._browserContext;
-        const buffer = context.fetchRequest.fetchResponses.get(overrides.fetchResponseUid) || APIRequestContext.findResponseBody(overrides.fetchResponseUid);
+        const buffer = this._request._context.fetchRequest.fetchResponses.get(overrides.fetchResponseUid) || APIRequestContext.findResponseBody(overrides.fetchResponseUid);
         assert(buffer, 'Fetch response has been disposed');
         body = buffer.toString('base64');
         isBase64 = true;
@@ -344,7 +346,7 @@ export class Response extends SdkObject {
   private _httpVersion: string | undefined;
 
   constructor(request: Request, status: number, statusText: string, headers: types.HeadersArray, timing: ResourceTiming, getResponseBodyCallback: GetResponseBodyCallback, httpVersion?: string) {
-    super(request.frame(), 'response');
+    super(request._context, 'response');
     this._request = request;
     this._timing = timing;
     this._status = status;
@@ -437,7 +439,7 @@ export class Response extends SdkObject {
     return this._request;
   }
 
-  frame(): frames.Frame {
+  frame(): frames.Frame | null {
     return this._request.frame();
   }
 

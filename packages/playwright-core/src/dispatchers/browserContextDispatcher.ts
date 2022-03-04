@@ -75,24 +75,24 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     context.on(BrowserContext.Events.Request, (request: Request) =>  {
       return this._dispatchEvent('request', {
         request: RequestDispatcher.from(this._scope, request),
-        page: PageDispatcher.fromNullable(this._scope, request.frame()._page.initializedOrUndefined())
+        page: PageDispatcher.fromNullable(this._scope, request.frame()?._page.initializedOrUndefined())
       });
     });
     context.on(BrowserContext.Events.Response, (response: Response) => this._dispatchEvent('response', {
       response: ResponseDispatcher.from(this._scope, response),
-      page: PageDispatcher.fromNullable(this._scope, response.frame()._page.initializedOrUndefined())
+      page: PageDispatcher.fromNullable(this._scope, response.frame()?._page.initializedOrUndefined())
     }));
     context.on(BrowserContext.Events.RequestFailed, (request: Request) => this._dispatchEvent('requestFailed', {
       request: RequestDispatcher.from(this._scope, request),
       failureText: request._failureText || undefined,
       responseEndTiming: request._responseEndTiming,
-      page: PageDispatcher.fromNullable(this._scope, request.frame()._page.initializedOrUndefined())
+      page: PageDispatcher.fromNullable(this._scope, request.frame()?._page.initializedOrUndefined())
     }));
     context.on(BrowserContext.Events.RequestFinished, ({ request, response }: { request: Request, response: Response | null }) => this._dispatchEvent('requestFinished', {
       request: RequestDispatcher.from(scope, request),
       response: ResponseDispatcher.fromNullable(scope, response),
       responseEndTiming: request._responseEndTiming,
-      page: PageDispatcher.fromNullable(this._scope, request.frame()._page.initializedOrUndefined()),
+      page: PageDispatcher.fromNullable(this._scope, request.frame()?._page.initializedOrUndefined()),
     }));
   }
 

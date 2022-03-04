@@ -304,6 +304,7 @@ it('should intercept request from inside service worker', async ({ server, page,
       await route.fulfill({
         body: 'intercepted data'
       });
+      return;
     }
     await route.continue();
   });

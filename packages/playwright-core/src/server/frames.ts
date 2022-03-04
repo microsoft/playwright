@@ -268,7 +268,7 @@ export class FrameManager {
   }
 
   requestStarted(request: network.Request, route?: network.RouteDelegate) {
-    const frame = request.frame();
+    const frame = request.frame()!;
     this._inflightRequestStarted(request);
     if (request._documentId)
       frame.setPendingDocument({ documentId: request._documentId, request });
@@ -296,7 +296,7 @@ export class FrameManager {
   }
 
   requestFailed(request: network.Request, canceled: boolean) {
-    const frame = request.frame();
+    const frame = request.frame()!;
     this._inflightRequestFinished(request);
     if (frame.pendingDocument() && frame.pendingDocument()!.request === request) {
       let errorText = request.failure()!.errorText;
@@ -334,7 +334,7 @@ export class FrameManager {
   }
 
   private _inflightRequestFinished(request: network.Request) {
-    const frame = request.frame();
+    const frame = request.frame()!;
     if (request._isFavicon)
       return;
     if (!frame._inflightRequests.has(request))
@@ -345,7 +345,7 @@ export class FrameManager {
   }
 
   private _inflightRequestStarted(request: network.Request) {
-    const frame = request.frame();
+    const frame = request.frame()!;
     if (request._isFavicon)
       return;
     frame._inflightRequests.add(request);
