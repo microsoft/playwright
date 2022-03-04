@@ -58,7 +58,7 @@ export class WebServer {
     if (isAlreadyAvailable) {
       if (this.config.reuseExistingServer)
         return;
-      throw new Error(`${this.config.url ?? `http://localhost:${this.config.port}`} is already used, make sure that nothing is running on the port/url or set strict:false in config.webServer.`);
+      throw new Error(`${this.config.url ?? `http://localhost:${this.config.port}`} is already used, make sure that nothing is running on the port/url or set reuseExistingServer:true in config.webServer.`);
     }
 
     const { launchedProcess, kill } = await launchProcess({
