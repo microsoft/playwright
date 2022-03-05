@@ -206,11 +206,13 @@ class SnapshotHelper<T extends ImageComparatorOptions> {
   }
 }
 
+type MatchSnapshotOptions = Omit<ImageComparatorOptions, 'maxDiffPixels' | 'maxDiffPixelRatio'>;
+
 export function toMatchSnapshot(
   this: ReturnType<Expect['getState']>,
   received: Buffer | string,
-  nameOrOptions: NameOrSegments | { name?: NameOrSegments } & ImageComparatorOptions = {},
-  optOptions: ImageComparatorOptions = {}
+  nameOrOptions: NameOrSegments | { name?: NameOrSegments } & MatchSnapshotOptions = {},
+  optOptions: MatchSnapshotOptions = {}
 ): SyncExpectationResult {
   const testInfo = currentTestInfo();
   if (!testInfo)
