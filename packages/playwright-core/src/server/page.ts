@@ -461,21 +461,21 @@ export class Page extends SdkObject {
     return controller.run(async progress => {
       let actual: Buffer | undefined;
       let previous: Buffer | undefined;
-      let screenshotTimeout = 0;
+      const pollIntervals = [0, 100, 250, 500];
       while (true) {
         progress.throwIfAborted();
         if (this.isClosed())
           throw new Error('The page has closed');
         let comparatorResult: ComparatorResult | undefined;
+        const screenshotTimeout = pollIntervals.shift() || 1000;
         if (isGeneratingNewScreenshot) {
           previous = actual;
-          actual = await rafrafScreenshot(progress, screenshotTimeout);
+          actual = await rafrafScreenshot(progress, screenshotTimeout).catch(e => undefined);
           comparatorResult = actual && previous ? comparator(actual, previous, options.comparatorOptions) : undefined;
         } else {
-          actual = await rafrafScreenshot(progress, screenshotTimeout);
+          actual = await rafrafScreenshot(progress, screenshotTimeout).catch(e => undefined);
           comparatorResult = actual ? comparator(actual, options.expected!, options.comparatorOptions) : undefined;
         }
-        screenshotTimeout = 150;
         if (comparatorResult !== undefined && !!comparatorResult === !!options.isNot)
           break;
         if (comparatorResult)
