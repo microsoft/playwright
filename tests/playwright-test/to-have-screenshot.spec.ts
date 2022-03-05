@@ -507,7 +507,7 @@ test('should respect maxDiffPixels option', async ({ runInlineTest }) => {
     ...files,
     'playwright.config.ts': `
       module.exports = { projects: [
-        { expect: { toMatchSnapshot: { maxDiffPixels: ${BAD_PIXELS} } } },
+        { expect: { toHaveScreenshot: { maxDiffPixels: ${BAD_PIXELS} } } },
       ]};
     `,
     'a.spec.js-snapshots/snapshot.png': EXPECTED_SNAPSHOT,
@@ -553,7 +553,7 @@ test('should respect maxDiffPixelRatio option', async ({ runInlineTest }) => {
     ...files,
     'playwright.config.ts': `
       module.exports = { projects: [
-        { expect: { toMatchSnapshot: { maxDiffPixelRatio: ${BAD_RATIO} } } },
+        { expect: { toHaveScreenshot: { maxDiffPixelRatio: ${BAD_RATIO} } } },
       ]};
     `,
     'a.spec.js-snapshots/snapshot.png': EXPECTED_SNAPSHOT,
