@@ -66,7 +66,7 @@ function compareImages(mimeType: string, actualBuffer: Buffer | string, expected
     maxDiffPixels = Math.min(maxDiffPixels1, maxDiffPixels2);
   else
     maxDiffPixels = maxDiffPixels1 ?? maxDiffPixels2 ?? 0;
-  const ratio = count / (expected.width * expected.height);
+  const ratio = Math.ceil(count / (expected.width * expected.height) * 100) / 100;
   return count > maxDiffPixels ? {
     errorMessage: `${count} pixels (ratio ${ratio.toFixed(2)} of all image pixels) are different`,
     diff: PNG.sync.write(diff),

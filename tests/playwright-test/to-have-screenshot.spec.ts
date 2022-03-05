@@ -245,7 +245,7 @@ test('should fail when screenshot is different size', async ({ runInlineTest }) 
 test('should fail when screenshot is different pixels', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     ...files,
-    'a.spec.js-snapshots/snapshot.png': blueImage,
+    'a.spec.js-snapshots/snapshot.png': paintBlackPixels(whiteImage, 12345),
     'a.spec.js': `
       const { test } = require('./helper');
       test('is a test', async ({ page }) => {
@@ -255,9 +255,9 @@ test('should fail when screenshot is different pixels', async ({ runInlineTest }
   });
   expect(result.exitCode).toBe(1);
   expect(result.output).toContain('Screenshot comparison failed');
-  expect(result.output).toContain('921600 pixels');
+  expect(result.output).toContain('12345 pixels');
   expect(result.output).not.toContain('Call log');
-  expect(result.output).toContain('ratio 1.00');
+  expect(result.output).toContain('ratio 0.02');
   expect(result.output).toContain('Expected:');
   expect(result.output).toContain('Received:');
 });
