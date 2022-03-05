@@ -2910,6 +2910,32 @@ export module Protocol {
     export type hideGridOverlayReturnValue = {
     }
     /**
+     * Shows a flex overlay for a node that begins a 'flex' layout context. The command has no effect if <code>nodeId</code> is invalid or the associated node does not begin a 'flex' layout context. A node can only have one flex overlay at a time; subsequent calls with the same <code>nodeId</code> will override earlier calls.
+     */
+    export type showFlexOverlayParameters = {
+      /**
+       * The node for which a flex overlay should be shown.
+       */
+      nodeId: NodeId;
+      /**
+       * The primary color to use for the flex overlay.
+       */
+      flexColor: RGBAColor;
+    }
+    export type showFlexOverlayReturnValue = {
+    }
+    /**
+     * Hides a flex overlay for a node that begins a 'flex' layout context. The command has no effect if <code>nodeId</code> is specified and invalid, or if there is not currently an overlay set for the <code>nodeId</code>.
+     */
+    export type hideFlexOverlayParameters = {
+      /**
+       * The node for which a flex overlay should be hidden. If a <code>nodeId</code> is not specified, all flex overlays will be hidden.
+       */
+      nodeId?: NodeId;
+    }
+    export type hideFlexOverlayReturnValue = {
+    }
+    /**
      * Requests that the node is sent to the caller given its path.
      */
     export type pushNodeByPathToFrontendParameters = {
@@ -8895,6 +8921,8 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "DOM.highlightFrame": DOM.highlightFrameParameters;
     "DOM.showGridOverlay": DOM.showGridOverlayParameters;
     "DOM.hideGridOverlay": DOM.hideGridOverlayParameters;
+    "DOM.showFlexOverlay": DOM.showFlexOverlayParameters;
+    "DOM.hideFlexOverlay": DOM.hideFlexOverlayParameters;
     "DOM.pushNodeByPathToFrontend": DOM.pushNodeByPathToFrontendParameters;
     "DOM.resolveNode": DOM.resolveNodeParameters;
     "DOM.getAttributes": DOM.getAttributesParameters;
@@ -9193,6 +9221,8 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "DOM.highlightFrame": DOM.highlightFrameReturnValue;
     "DOM.showGridOverlay": DOM.showGridOverlayReturnValue;
     "DOM.hideGridOverlay": DOM.hideGridOverlayReturnValue;
+    "DOM.showFlexOverlay": DOM.showFlexOverlayReturnValue;
+    "DOM.hideFlexOverlay": DOM.hideFlexOverlayReturnValue;
     "DOM.pushNodeByPathToFrontend": DOM.pushNodeByPathToFrontendReturnValue;
     "DOM.resolveNode": DOM.resolveNodeReturnValue;
     "DOM.getAttributes": DOM.getAttributesReturnValue;
