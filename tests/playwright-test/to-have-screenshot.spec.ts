@@ -520,6 +520,67 @@ test('should respect maxDiffPixels option', async ({ runInlineTest }) => {
   })).exitCode, 'make sure maxDiffPixels option in project config is respected').toBe(0);
 });
 
+test('should satisfy both maxDiffPixelRatio and maxDiffPixels', async ({ runInlineTest }) => {
+  const BAD_RATIO = 0.25;
+  const BAD_COUNT = Math.floor(IMG_WIDTH * IMG_HEIGHT * BAD_RATIO);
+  const EXPECTED_SNAPSHOT = paintBlackPixels(whiteImage, BAD_COUNT);
+
+  expect((await runInlineTest({
+    ...files,
+    'a.spec.js-snapshots/snapshot.png': EXPECTED_SNAPSHOT,
+    'a.spec.js': `
+      const { test } = require('./helper');
+      test('is a test', async ({ page }) => {
+        await expect(page).toHaveScreenshot('snapshot.png', { timeout: 2000 });
+      });
+    `
+  })).exitCode, 'make sure default comparison fails').toBe(1);
+
+  expect((await runInlineTest({
+    ...files,
+    'a.spec.js-snapshots/snapshot.png': EXPECTED_SNAPSHOT,
+    'a.spec.js': `
+      const { test } = require('./helper');
+      test('is a test', async ({ page }) => {
+        await expect(page).toHaveScreenshot('snapshot.png', {
+          maxDiffPixels: ${Math.floor(BAD_COUNT / 2)},
+          maxDiffPixelRatio: ${BAD_RATIO},
+          timeout: 2000,
+        });
+      });
+    `
+  })).exitCode, 'make sure it fails when maxDiffPixels < actualBadPixels < maxDiffPixelRatio').toBe(1);
+
+  expect((await runInlineTest({
+    ...files,
+    'a.spec.js-snapshots/snapshot.png': EXPECTED_SNAPSHOT,
+    'a.spec.js': `
+      const { test } = require('./helper');
+      test('is a test', async ({ page }) => {
+        await expect(page).toHaveScreenshot('snapshot.png', {
+          maxDiffPixels: ${BAD_COUNT},
+          maxDiffPixelRatio: ${BAD_RATIO / 2},
+          timeout: 2000,
+        });
+      });
+    `
+  })).exitCode, 'make sure it fails when maxDiffPixelRatio < actualBadPixels < maxDiffPixels').toBe(1);
+
+  expect((await runInlineTest({
+    ...files,
+    'a.spec.js-snapshots/snapshot.png': EXPECTED_SNAPSHOT,
+    'a.spec.js': `
+      const { test } = require('./helper');
+      test('is a test', async ({ page }) => {
+        await expect(page).toHaveScreenshot('snapshot.png', {
+          maxDiffPixels: ${BAD_COUNT},
+          maxDiffPixelRatio: ${BAD_RATIO},
+        });
+      });
+    `
+  })).exitCode, 'make sure it passes when actualBadPixels < maxDiffPixelRatio && actualBadPixels < maxDiffPixels').toBe(0);
+});
+
 test('should respect maxDiffPixelRatio option', async ({ runInlineTest }) => {
   const BAD_RATIO = 0.25;
   const BAD_PIXELS = IMG_WIDTH * IMG_HEIGHT * BAD_RATIO;
@@ -565,6 +626,35 @@ test('should respect maxDiffPixelRatio option', async ({ runInlineTest }) => {
     `
   })).exitCode, 'make sure maxDiffPixels option in project config is respected').toBe(0);
 });
+
+test('should throw for invalid maxDiffPixels values', async ({ runInlineTest }) => {
+  expect((await runInlineTest({
+    ...files,
+    'a.spec.js': `
+      const { test } = require('./helper');
+      test('is a test', async ({ page }) => {
+        await expect(page).toHaveScreenshot({
+          maxDiffPixels: -1,
+        });
+      });
+    `
+  })).exitCode).toBe(1);
+});
+
+test('should throw for invalid maxDiffPixelRatio values', async ({ runInlineTest }) => {
+  expect((await runInlineTest({
+    ...files,
+    'a.spec.js': `
+      const { test } = require('./helper');
+      test('is a test', async ({ page }) => {
+        await expect(page).toHaveScreenshot({
+          maxDiffPixelRatio: 12,
+        });
+      });
+    `
+  })).exitCode).toBe(1);
+});
+
 
 test('should attach expected/actual and no diff when sizes are different', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
