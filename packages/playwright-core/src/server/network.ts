@@ -111,14 +111,12 @@ export class Request extends SdkObject {
   _responseEndTiming = -1;
   readonly responseSize: ResponseSize = { encodedBodySize: 0, transferSize: 0, responseHeadersSize: 0 };
 
-  constructor(parent: frames.Frame | contexts.BrowserContext, redirectedFrom: Request | null, documentId: string | undefined,
+  constructor(context: contexts.BrowserContext, frame: frames.Frame | null, redirectedFrom: Request | null, documentId: string | undefined,
     url: string, resourceType: string, method: string, postData: Buffer | null, headers: types.HeadersArray) {
-    super(parent instanceof frames.Frame ? parent._page._browserContext : parent, 'request');
+    super(context, 'request');
     assert(!url.startsWith('data:'), 'Data urls should not fire requests');
-    if (parent instanceof frames.Frame) {
-      this._frame = parent;
-      this._context = parent._page._browserContext;
-    } else {this._context = parent;}
+    this._context = context;
+    this._frame = frame;
     this._redirectedFrom = redirectedFrom;
     if (redirectedFrom)
       redirectedFrom._redirectedTo = this;

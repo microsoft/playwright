@@ -457,7 +457,7 @@ class InterceptableRequest {
     if (postDataEntries && postDataEntries.length && postDataEntries[0].bytes)
       postDataBuffer = Buffer.from(postDataEntries[0].bytes, 'base64');
 
-    this.request = new network.Request(frame, redirectedFrom?.request || null, documentId, url, type, method, postDataBuffer, headersObjectToArray(headers));
+    this.request = new network.Request(frame._page._browserContext, frame, redirectedFrom?.request || null, documentId, url, type, method, postDataBuffer, headersObjectToArray(headers));
   }
 
   _routeForRedirectChain(): RouteImpl | null {

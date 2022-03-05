@@ -149,7 +149,7 @@ export class FFNetworkManager {
   }
 }
 
-const causeToResourceType: {[key: string]: string} = {
+const causeToResourceType: { [key: string]: string } = {
   TYPE_INVALID: 'other',
   TYPE_OTHER: 'other',
   TYPE_SCRIPT: 'script',
@@ -175,7 +175,7 @@ const causeToResourceType: {[key: string]: string} = {
   TYPE_WEB_MANIFEST: 'manifest',
 };
 
-const internalCauseToResourceType: {[key: string]: string} = {
+const internalCauseToResourceType: { [key: string]: string } = {
   TYPE_INTERNAL_EVENTSOURCE: 'eventsource',
 };
 
@@ -191,7 +191,7 @@ class InterceptableRequest {
     let postDataBuffer = null;
     if (payload.postData)
       postDataBuffer = Buffer.from(payload.postData, 'base64');
-    this.request = new network.Request(frame, redirectedFrom ? redirectedFrom.request : null, payload.navigationId,
+    this.request = new network.Request(frame._page._browserContext, frame, redirectedFrom ? redirectedFrom.request : null, payload.navigationId,
         payload.url, internalCauseToResourceType[payload.internalCause] || causeToResourceType[payload.cause] || 'other', payload.method, postDataBuffer, payload.headers);
   }
 

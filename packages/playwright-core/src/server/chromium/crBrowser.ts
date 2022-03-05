@@ -329,7 +329,7 @@ class CRServiceWorker extends Worker {
       if (postDataEntries && postDataEntries.length && postDataEntries[0].bytes)
         postDataBuffer = Buffer.from(postDataEntries[0].bytes, 'base64');
 
-      this._browserContext._requestStarted(new network.Request(this._browserContext, null, undefined, payload.request.url, (payload.resourceType || '').toLowerCase(), payload.request.method, postDataBuffer, headersObjectToArray(payload.request.headers)), new RouteImpl(session, payload.requestId));
+      this._browserContext._requestStarted(new network.Request(this._browserContext, null, null, undefined, payload.request.url, (payload.resourceType || '').toLowerCase(), payload.request.method, postDataBuffer, headersObjectToArray(payload.request.headers)), new RouteImpl(session, payload.requestId));
     });
 
     // This might fail if the target is closed before we receive all execution contexts.
