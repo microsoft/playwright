@@ -236,7 +236,9 @@ it('should overwrite post body with empty string', async ({ context, server, pag
   expect(body).toBe('');
 });
 
-it('should intercept initial service worker script', async ({ server, page, context }) => {
+it('should intercept initial service worker script', async ({ server, page, context, browserName }) => {
+  it.fail(browserName === 'firefox');
+
   context.route('**', async route => {
     if (route.request().url().endsWith('/worker.js')) {
       await route.fulfill({
@@ -298,7 +300,9 @@ it('should intercept initial service worker script', async ({ server, page, cont
   await expect(page.locator('#content')).toHaveText('intercepted data from the worker');
 });
 
-it('should intercept request from inside service worker', async ({ server, page, context }) => {
+it('should intercept request from inside service worker', async ({ server, page, context, browserName }) => {
+  it.fail(browserName !== 'chromium');
+
   context.route('**', async route => {
     if (route.request().url() === server.EMPTY_PAGE) {
       await route.fulfill({
