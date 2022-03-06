@@ -183,7 +183,7 @@
   "websocketsbinary": true,
   "atobbtoa": true,
   "atob-btoa": true,
-  "sharedworkers": false,
+  "sharedworkers": true,
   "bdi": true,
   "xhrresponsetypearraybuffer": true,
   "xhrresponsetypeblob": true,
