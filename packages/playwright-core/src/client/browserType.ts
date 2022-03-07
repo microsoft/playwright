@@ -128,7 +128,8 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
     return await this._wrapApiCall(async () => {
       const deadline = params.timeout ? monotonicTime() + params.timeout : 0;
       let browser: Browser;
-      const connectParams: channels.BrowserTypeConnectParams = { wsEndpoint, headers: params.headers, slowMo: params.slowMo, timeout: params.timeout };
+      const headers = { 'x-playwright-browser': this.name(), ...params.headers };
+      const connectParams: channels.BrowserTypeConnectParams = { wsEndpoint, headers, slowMo: params.slowMo, timeout: params.timeout };
       if ((params as any).__testHookRedirectPortForwarding)
         connectParams.socksProxyRedirectPortForTest = (params as any).__testHookRedirectPortForwarding;
       const { pipe } = await this._channel.connect(connectParams);

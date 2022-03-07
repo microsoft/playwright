@@ -134,7 +134,7 @@ test('should send extra headers with connect request', async ({ browserType, sta
   expect(request.headers['foo']).toBe('bar');
 });
 
-test('should send default User-Agent header with connect request', async ({ browserType, startRemoteServer, server }) => {
+test('should send default User-Agent and X-Playwright-Browser headers with connect request', async ({ browserType, browserName, server }) => {
   const [request] = await Promise.all([
     server.waitForWebSocketConnectionRequest(),
     browserType.connect({
@@ -146,6 +146,7 @@ test('should send default User-Agent header with connect request', async ({ brow
     }).catch(() => {})
   ]);
   expect(request.headers['user-agent']).toBe(getUserAgent());
+  expect(request.headers['x-playwright-browser']).toBe(browserName);
   expect(request.headers['foo']).toBe('bar');
 });
 
