@@ -236,7 +236,11 @@ export function toMatchSnapshot(
     return helper.handleMissing(received);
 
   const expected = fs.readFileSync(helper.snapshotPath);
-  const result = comparator(received, expected, helper.comparatorOptions);
+  const result = comparator(received, expected, {
+    ...helper.comparatorOptions,
+    maxDiffPixels: undefined,
+    maxDiffPixelRatio: undefined,
+  });
   if (!result)
     return helper.handleMatching();
 
