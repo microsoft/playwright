@@ -105,7 +105,7 @@ export class Request extends SdkObject {
   readonly _headers: types.HeadersArray;
   private _headersMap = new Map<string, string>();
   private _rawRequestHeadersPromise: ManualPromise<types.HeadersArray> | undefined;
-  private _frame: frames.Frame | null = null;
+  readonly _frame: frames.Frame | null = null;
   readonly _context: contexts.BrowserContext;
   private _waitForResponsePromise = new ManualPromise<Response | null>();
   _responseEndTiming = -1;
@@ -113,7 +113,7 @@ export class Request extends SdkObject {
 
   constructor(context: contexts.BrowserContext, frame: frames.Frame | null, redirectedFrom: Request | null, documentId: string | undefined,
     url: string, resourceType: string, method: string, postData: Buffer | null, headers: types.HeadersArray) {
-    super(context, 'request');
+    super(frame || context, 'request');
     assert(!url.startsWith('data:'), 'Data urls should not fire requests');
     this._context = context;
     this._frame = frame;
@@ -238,7 +238,7 @@ export class Route extends SdkObject {
   private _handled = false;
 
   constructor(request: Request, delegate: RouteDelegate) {
-    super(request._context, 'route');
+    super(request._frame || request._context, 'route');
     this._request = request;
     this._delegate = delegate;
   }
@@ -344,7 +344,7 @@ export class Response extends SdkObject {
   private _httpVersion: string | undefined;
 
   constructor(request: Request, status: number, statusText: string, headers: types.HeadersArray, timing: ResourceTiming, getResponseBodyCallback: GetResponseBodyCallback, httpVersion?: string) {
-    super(request._context, 'response');
+    super(request._frame || request._context, 'response');
     this._request = request;
     this._timing = timing;
     this._status = status;
