@@ -188,6 +188,7 @@ export async function validateDependenciesLinux(sdkLanguage: string, linuxLddDir
       ``,
       `    ${maybeSudo}${buildPlaywrightCLICommand(sdkLanguage, 'install-deps')}`,
       ``,
+      `Missing: ${Array.from(missingPackages.values()).join(', ')}`
       `<3 Playwright Team`,
     ].join('\n'), 1));
   }
