@@ -124,9 +124,9 @@ The `npm init playwright` command is now generally available for your use:
 
 ```sh
 # Run from your project's root directory
-npm init playwright
+npm init playwright@latest
 # Or create a new project
-npm init playwright new-project
+npm init playwright@latest new-project
 ```
 
 This will create a Playwright Test configuration file, optionally add examples, a GitHub Action workflow and a first test `example.spec.ts`.

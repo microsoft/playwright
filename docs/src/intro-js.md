@@ -30,9 +30,9 @@ The easiest way to get started with Playwright Test is to run the init command.
 
 ```bash
 # Run from your project's root directory
-npm init playwright
+npm init playwright@latest
 # Or create a new project
-npm init playwright new-project
+npm init playwright@latest new-project
 ```
 
 This will create a configuration file, optionally add examples, a GitHub Action workflow and a first test `example.spec.ts`. You can now jump directly to [writing assertions](#writing-assertions) section.
