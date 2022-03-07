@@ -52,8 +52,8 @@ export function runDriver() {
   };
 }
 
-export async function runServer(port: number | undefined) {
-  const server = await PlaywrightServer.startDefault({ path: '/', maxClients: Infinity });
+export async function runServer(port: number | undefined, path: string = '/', maxClients: number = Infinity, enableSocksProxy: boolean = true) {
+  const server = await PlaywrightServer.startDefault({ path, maxClients, enableSocksProxy });
   const wsEndpoint = await server.listen(port);
   process.on('exit', () => server.close().catch(console.error));
   console.log('Listening on ' + wsEndpoint);  // eslint-disable-line no-console
