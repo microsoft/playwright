@@ -352,5 +352,8 @@ it.describe('service workers', () => {
   it('works with CORS requests', () => it.fixme());
   it('works with WebSockets', () => it.fixme());
 
+  it('works with preload', () => it.fixme(true, 'https://developer.mozilla.org/en-US/docs/Web/API/NavigationPreloadManager'));
+  it('works with cache API', () => it.fixme(true, 'https://developer.mozilla.org/en-US/docs/Web/API/caches'));
+
   it('should report requests in HAR file', () => it.fixme());
 });
