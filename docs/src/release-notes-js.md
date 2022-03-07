@@ -94,7 +94,7 @@ This version was also tested against the following stable channels:
 ### Locator Improvements
 
 - [`method: Locator.dragTo`]
-- [`expect(locator).toBeChecked({ checked })`](./api/class-locatorassertions#locator-assertions-to-be-checked)
+- [`expect(locator).toBeChecked({ checked })`](./api/class-playwrightassertions#locator-assertions-to-be-checked)
 - Each locator can now be optionally filtered by the text it contains:
     ```js
     await page.locator('li', { hasText: 'my item' }).locator('button').click();
@@ -104,7 +104,7 @@ This version was also tested against the following stable channels:
 
 ### Testing API improvements
 
-- [`expect(response).toBeOK()`](./api/class-apiresponseassertions)
+- [`expect(response).toBeOK()`](./api/class-playwrightassertions)
 - [`testInfo.attach()`](./api/class-testinfo#test-info-attach)
 - [`test.info()`](./api/class-test#test-info)
 
