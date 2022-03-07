@@ -236,123 +236,121 @@ it('should overwrite post body with empty string', async ({ context, server, pag
   expect(body).toBe('');
 });
 
-it('should intercept initial service worker script', async ({ server, page, context, browserName }) => {
-  it.fail(browserName === 'firefox');
+it.describe('service workers', () => {
+  it('intercepts initial script', async ({ server, page, context, browserName }) => {
+    it.fail(browserName === 'firefox');
 
-  context.route('**', async route => {
-    if (route.request().url().endsWith('/worker.js')) {
-      await route.fulfill({
-        status: 200,
-        contentType: 'text/javascript',
-        body: `
-          addEventListener('message', event => {
-            console.log('worker got message');
-            event.source.postMessage("intercepted data from the worker");
-          });
-        `,
-      });
-      return;
-    }
+    context.route('**', async route => {
+      if (route.request().url().endsWith('/worker.js')) {
+        await route.fulfill({
+          status: 200,
+          contentType: 'text/javascript',
+          body: `
+            addEventListener('message', event => {
+              console.log('worker got message');
+              event.source.postMessage("intercepted data from the worker");
+            });
+          `,
+        });
+        return;
+      }
 
-    await route.continue();
+      await route.continue();
+    });
+
+    server.setRoute('/example.html', (_req, res) => {
+      res.write(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>SW Example</title>
+          </head>
+          <body>
+            <div id="content"></div>
+            <script>
+              if (navigator.serviceWorker) {
+                navigator.serviceWorker.register('/worker.js');
+                navigator.serviceWorker.addEventListener('message', event => {
+                  console.log('main got message');
+                  document.getElementById("content").innerText = event.data;
+                });
+
+                navigator.serviceWorker.ready.then(registration => {
+                  registration.active.postMessage("init");
+                });
+              }
+            </script>
+          </body>
+        </html>
+      `);
+      res.end();
+    });
+
+    await page.goto(server.PREFIX + '/example.html');
+    await expect(page.locator('#content')).toHaveText('intercepted data from the worker');
   });
 
-  server.setRoute('/worker.js', (_req, res) => {
-    res.setHeader('content-type', 'text/javascript');
-    res.write(`
-      addEventListener('message', event => {
-        console.log('worker got message');
-        event.source.postMessage("data from the worker");
-      });
-    `);
-    res.end();
+  it('intercepts requests from within worker', async ({ server, page, context, browserName }) => {
+    it.fail(browserName !== 'chromium');
+
+    context.route('**', async route => {
+      if (route.request().url() === server.EMPTY_PAGE) {
+        await route.fulfill({
+          body: 'intercepted data'
+        });
+        return;
+      }
+      await route.continue();
+    });
+
+    server.setRoute('/worker.js', (_req, res) => {
+      res.setHeader('content-type', 'text/javascript');
+      res.write(`
+        addEventListener('message', async event => {
+          console.log('worker got message');
+          const resp = await fetch('${server.EMPTY_PAGE}')
+          event.source.postMessage(await resp.text());
+        });
+      `);
+      res.end();
+    });
+
+    server.setRoute('/example.html', (_req, res) => {
+      res.write(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>SW Example</title>
+          </head>
+          <body>
+            <div id="content"></div>
+            <script>
+              if (navigator.serviceWorker) {
+                navigator.serviceWorker.register('/worker.js');
+                navigator.serviceWorker.addEventListener('message', event => {
+                  console.log('main got message');
+                  document.getElementById("content").innerText = event.data;
+                });
+
+                navigator.serviceWorker.ready.then(registration => {
+                  registration.active.postMessage("init");
+                });
+              }
+            </script>
+          </body>
+        </html>
+      `);
+      res.end();
+    });
+
+    await page.goto(server.PREFIX + '/example.html');
+    await expect(page.locator('#content')).toHaveText('intercepted data');
   });
 
-  server.setRoute('/example.html', (_req, res) => {
-    res.write(`
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>SW Example</title>
-        </head>
-        <body>
-          <div id="content"></div>
-          <script>
-            if (navigator.serviceWorker) {
-              navigator.serviceWorker.register('/worker.js');
-              navigator.serviceWorker.addEventListener('message', event => {
-                console.log('main got message');
-                document.getElementById("content").innerText = event.data;
-              });
+  it('works with redirects on initial script load', () => it.fixme());
+  it('works with with redirects on requests within worker', () => it.fixme());
+  it('works with CORS requests', () => it.fixme());
+  it('works with WebSockets', () => it.fixme());
 
-              navigator.serviceWorker.ready.then(registration => {
-                registration.active.postMessage("init");
-              });
-            }
-          </script>
-        </body>
-      </html>
-    `);
-    res.end();
-  });
-
-  await page.goto(server.PREFIX + '/example.html');
-  await expect(page.locator('#content')).toHaveText('intercepted data from the worker');
-});
-
-it('should intercept request from inside service worker', async ({ server, page, context, browserName }) => {
-  it.fail(browserName !== 'chromium');
-
-  context.route('**', async route => {
-    if (route.request().url() === server.EMPTY_PAGE) {
-      await route.fulfill({
-        body: 'intercepted data'
-      });
-      return;
-    }
-    await route.continue();
-  });
-
-  server.setRoute('/worker.js', (_req, res) => {
-    res.setHeader('content-type', 'text/javascript');
-    res.write(`
-      addEventListener('message', async event => {
-        console.log('worker got message');
-        const resp = await fetch('${server.EMPTY_PAGE}')
-        event.source.postMessage(await resp.text());
-      });
-    `);
-    res.end();
-  });
-
-  server.setRoute('/example.html', (_req, res) => {
-    res.write(`
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>SW Example</title>
-        </head>
-        <body>
-          <div id="content"></div>
-          <script>
-            if (navigator.serviceWorker) {
-              navigator.serviceWorker.register('/worker.js');
-              navigator.serviceWorker.addEventListener('message', event => {
-                console.log('main got message');
-                document.getElementById("content").innerText = event.data;
-              });
-
-              navigator.serviceWorker.ready.then(registration => {
-                registration.active.postMessage("init");
-              });
-            }
-          </script>
-        </body>
-      </html>
-    `);
-    res.end();
-  });
-
-  await page.goto(server.PREFIX + '/example.html');
-  await expect(page.locator('#content')).toHaveText('intercepted data');
+  it('should report requests in HAR file', () => it.fixme());
 });
