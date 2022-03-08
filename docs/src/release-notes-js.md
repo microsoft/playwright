@@ -47,7 +47,20 @@ title: "Release notes"
   };
   ```
 
-- [`property: TestProject.grep`] and [`property: TestProject.grepInvert`] are now configurable per project.
+- [`property: TestProject.grep`] and [`property: TestProject.grepInvert`] are now configurable per project. For example, you can now
+  configure smoke tests project using `grep`:
+  ```ts
+  // playwright.config.ts
+  export default {
+    projects: [
+      {
+        name: 'smoke tests',
+        grep: '@smoke',
+      },
+    ],
+  };
+  ```
+
 - [Trace Viewer](./trace-viewer) now shows [API testing requests](./src/test-api-testing).
 - `expect().toMatchSnapshot()` now supports anonymous snapshots: when snapshot name is missing, Playwright Test will generate one
   automatically:
@@ -55,7 +68,15 @@ title: "Release notes"
   ```js
   expect('Web is Awesome <3').toMatchSnapshot();
   ```
+
 - [`method: Locator.highlight`] visually reveals element(s) for easier debugging.
+
+### Announcements
+
+- We now ship a designated Python docker image `mcr.microsoft.com/playwright/python`. Please switch over to it if you use
+  Python. This is the last release that includes Python inside our javascript `mcr.microsoft.com/playwright` docker image.
+- v1.20 is the last release that ships WebKit for macOS 10.15 Catalina. All future versions will support WebKit for macOS 11 BigSur
+  and up.
 
 ### Browser Versions
 
