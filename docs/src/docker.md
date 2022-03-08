@@ -139,7 +139,7 @@ Status of push to MCR can be [verified here](https://mcrflow-status-ui.azurewebs
 
 We currently publish images based on the following [Ubuntu](https://hub.docker.com/_/ubuntu) versions:
 - **Ubuntu 20.04 LTS** (Focal Fossa), image tags include `focal`
-- **Ubuntu 18.04 LTS** (Bionic Beaver), image tags include `bionic` (not published for Java and Python)
+- **Ubuntu 18.04 LTS** (Bionic Beaver), image tags include `bionic` (not published for Java)
 
 #### Alpine
 
