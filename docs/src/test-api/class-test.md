@@ -288,7 +288,7 @@ test('runs second', async ({ page }) => {});
 ```
 
 ### option: Test.describe.configure.mode
-- `mode` <"parallel"|"serial">
+- `mode` <[TestMode]<"parallel"|"serial">>
 
 
 
