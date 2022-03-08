@@ -30,13 +30,14 @@ class SearchPage {
    */
   constructor(page) {
     this.page = page;
+    this.searchTermInput = page.locator('[aria-label="Enter your search term"]');
   }
   async navigate() {
     await this.page.goto('https://bing.com');
   }
   async search(text) {
-    await this.page.fill('[aria-label="Enter your search term"]', text);
-    await this.page.press('[aria-label="Enter your search term"]', 'Enter');
+    await this.searchTermInput.fill(text);
+    await this.searchTermInput.press('Enter');
   }
 }
 module.exports = { SearchPage };
@@ -50,9 +51,11 @@ import com.microsoft.playwright;
 
 public class SearchPage {
   private final Page page;
+  private final Locator searchTermInput;
 
   public SearchPage(Page page) {
     this.page = page;
+    this.searchTermInput = page.locator("[aria-label='Enter your search term']");
   }
 
   public void navigate() {
@@ -60,8 +63,8 @@ public class SearchPage {
   }
 
   public void search(String text) {
-    page.fill("[aria-label='Enter your search term']", text);
-    page.press("[aria-label='Enter your search term']", "Enter");
+    searchTermInput.fill(text);
+    searchTermInput.press("Enter");
   }
 }
 ```
@@ -71,13 +74,14 @@ public class SearchPage {
 class SearchPage:
     def __init__(self, page):
         self.page = page
+        self.search_term_input = page.locator('[aria-label="Enter your search term"]')
 
     async def navigate(self):
         await self.page.goto("https://bing.com")
 
     async def search(self, text):
-        await self.page.fill('[aria-label="Enter your search term"]', text)
-        await self.page.press('[aria-label="Enter your search term"]', "Enter")
+        await self.search_term_input.fill(text)
+        await self.search_term_input.press("Enter")
 ```
 
 ```python sync
@@ -85,13 +89,14 @@ class SearchPage:
 class SearchPage:
     def __init__(self, page):
         self.page = page
+        self.search_term_input = page.locator('[aria-label="Enter your search term"]')
 
     def navigate(self):
         self.page.goto("https://bing.com")
 
     def search(self, text):
-        self.page.fill('[aria-label="Enter your search term"]', text)
-        self.page.press('[aria-label="Enter your search term"]', "Enter")
+        self.search_term_input.fill(text)
+        self.search_term_input.press("Enter")
 ```
 
 ```csharp
@@ -103,10 +108,12 @@ namespace BigEcommerceApp.Tests.Models
   public class SearchPage
   {
     private readonly IPage _page;
+    private readonly ILocator _searchTermInput;
 
     public SearchPage(IPage page)
     {
       _page = page;
+      _searchTermInput = page.Locator("[aria-label='Enter your search term']");
     }
 
     public async Task Goto()
@@ -116,8 +123,8 @@ namespace BigEcommerceApp.Tests.Models
 
     public async Task Search(string text)
     {
-      await _page.FillAsync("[aria-label='Enter your search term']", text);
-      await _page.PressAsync("[aria-label='Enter your search term']", "Enter");
+      await _searchTermInput.FillAsync(text);
+      await _searchTermInput.PressAsync("Enter");
     }
   }
 }
