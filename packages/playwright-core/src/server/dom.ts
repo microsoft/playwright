@@ -418,52 +418,6 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       return maybePoint;
     const point = roundPoint(maybePoint);
     progress.metadata.point = point;
-
-    if (process.env.PLAYWRIGHT_NO_LAYOUT_SHIFT_CHECK)
-      return this._finishPointerAction(progress, actionName, point, options, action);
-    else
-      return this._finishPointerActionDetectLayoutShift(progress, actionName, point, options, action);
-  }
-
-  private async _finishPointerAction(progress: Progress, actionName: ActionName, point: types.Point, options: types.PointerActionOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions, action: (point: types.Point) => Promise<void>): Promise<'error:notconnected' | { hitTargetDescription: string } | 'done'> {
-    if (!options.force) {
-      if ((options as any).__testHookBeforeHitTarget)
-        await (options as any).__testHookBeforeHitTarget();
-      progress.log(`  checking that element receives pointer events at (${point.x},${point.y})`);
-      const hitTargetResult = await this._checkHitTargetAt(point);
-      if (hitTargetResult !== 'done')
-        return hitTargetResult;
-      progress.log(`  element does receive pointer events`);
-    }
-
-    if (options.trial)  {
-      progress.log(`  trial ${actionName} has finished`);
-      return 'done';
-    }
-
-    await progress.beforeInputAction(this);
-    await this._page._frameManager.waitForSignalsCreatedBy(progress, options.noWaitAfter, async () => {
-      if ((options as any).__testHookBeforePointerAction)
-        await (options as any).__testHookBeforePointerAction();
-      progress.throwIfAborted();  // Avoid action that has side-effects.
-      let restoreModifiers: types.KeyboardModifier[] | undefined;
-      if (options && options.modifiers)
-        restoreModifiers = await this._page.keyboard._ensureModifiers(options.modifiers);
-      progress.log(`  performing ${actionName} action`);
-      await action(point);
-      progress.log(`  ${actionName} action done`);
-      progress.log('  waiting for scheduled navigations to finish');
-      if ((options as any).__testHookAfterPointerAction)
-        await (options as any).__testHookAfterPointerAction();
-      if (restoreModifiers)
-        await this._page.keyboard._ensureModifiers(restoreModifiers);
-    }, 'input');
-    progress.log('  navigations have finished');
-
-    return 'done';
-  }
-
-  private async _finishPointerActionDetectLayoutShift(progress: Progress, actionName: ActionName, point: types.Point, options: types.PointerActionOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions, action: (point: types.Point) => Promise<void>): Promise<'error:notconnected' | { hitTargetDescription: string } | 'done'> {
     await progress.beforeInputAction(this);
 
     let hitTargetInterceptionHandle: js.JSHandle<HitTargetInterceptionResult> | undefined;
