@@ -758,17 +758,17 @@ test('should attach expected/actual/diff with snapshot path', async ({ runInline
     attachment.path = attachment.path.replace(/\\/g, '/').replace(/.*test-results\//, '');
   expect(attachments).toEqual([
     {
-      name: 'expected',
+      name: 'snapshot-expected.png',
       contentType: 'image/png',
       path: 'a-is-a-test/test/path/snapshot-expected.png'
     },
     {
-      name: 'actual',
+      name: 'snapshot-actual.png',
       contentType: 'image/png',
       path: 'a-is-a-test/test/path/snapshot-actual.png'
     },
     {
-      name: 'diff',
+      name: 'snapshot-diff.png',
       contentType: 'image/png',
       path: 'a-is-a-test/test/path/snapshot-diff.png'
     }
@@ -797,17 +797,17 @@ test('should attach expected/actual/diff', async ({ runInlineTest }, testInfo) =
     attachment.path = attachment.path.replace(/\\/g, '/').replace(/.*test-results\//, '');
   expect(attachments).toEqual([
     {
-      name: 'expected',
+      name: 'snapshot-expected.png',
       contentType: 'image/png',
       path: 'a-is-a-test/snapshot-expected.png'
     },
     {
-      name: 'actual',
+      name: 'snapshot-actual.png',
       contentType: 'image/png',
       path: 'a-is-a-test/snapshot-actual.png'
     },
     {
-      name: 'diff',
+      name: 'snapshot-diff.png',
       contentType: 'image/png',
       path: 'a-is-a-test/snapshot-diff.png'
     }
@@ -837,12 +837,12 @@ test('should attach expected/actual and no diff', async ({ runInlineTest }, test
     attachment.path = attachment.path.replace(/\\/g, '/').replace(/.*test-results\//, '');
   expect(attachments).toEqual([
     {
-      name: 'expected',
+      name: 'snapshot-expected.png',
       contentType: 'image/png',
       path: 'a-is-a-test/snapshot-expected.png'
     },
     {
-      name: 'actual',
+      name: 'snapshot-actual.png',
       contentType: 'image/png',
       path: 'a-is-a-test/snapshot-actual.png'
     },
