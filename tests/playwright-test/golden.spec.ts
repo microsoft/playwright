@@ -417,7 +417,11 @@ test('should compare different PNG images', async ({ runInlineTest }, testInfo) 
     'a.spec.js': `
       const { test } = require('./helper');
       test('is a test', ({}) => {
-        expect(Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVQYV2NgYAAAAAMAAWgmWQ0AAAAASUVORK5CYII==', 'base64')).toMatchSnapshot('snapshot.png');
+        expect(Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVQYV2NgYAAAAAMAAWgmWQ0AAAAASUVORK5CYII==', 'base64')).toMatchSnapshot('snapshot.png', {
+          // make sure maxDiffPixelRatio is *not* respected.
+          // See https://github.com/microsoft/playwright/issues/12564
+          maxDiffPixelRatio: 1.0,
+        });
       });
     `
   });
