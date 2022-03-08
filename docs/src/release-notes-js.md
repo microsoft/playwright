@@ -9,17 +9,17 @@ title: "Release notes"
 
 ### Visual Regression Testing
 
-- new options for methods [`method: Page.screenshot`], [`method: Locator.screenshot`] and [`method: ElementHandle.screenshot`]:
-  * Option `animations: "disabled"` re-winds all CSS animations and transitions to a consistent state
+- New options for methods [`method: Page.screenshot`], [`method: Locator.screenshot`] and [`method: ElementHandle.screenshot`]:
+  * Option `animations: "disabled"` rewinds all CSS animations and transitions to a consistent state
   * Option `mask: Locator[]` masks given elements, overlaying them with pink `#FF00FF` boxes.
-- New web-first assertions for screenshots: [`method: PageAssertions.toHaveScreenshot`] and [`method: LocatorAssertions.toHaveScreenshot`]. These methods will re-take screenshot
-  until it matches the saved expectation. When generating a new expectation, the method will re-take screenshots
-  until 2 consecutive screenshots match.
+- New web-first assertions for screenshots: [`method: PageAssertions.toHaveScreenshot`] and [`method: LocatorAssertions.toHaveScreenshot`]. These methods will re-take screenshot until it matches the saved expectation. When generating a new expectation, the method will re-take screenshots until 2 consecutive screenshots match.
+
+  New methods support both named and anonymous (auto-named) expectations:
 
   ```js
-  // Take a full-page screenshot.
-  await expect(page).toHaveScreenshot('fullpage.png', { fullPage: true, });
-  // Take a screenshot of an element.
+  // Take a full-page screenshot with a named expectation `fullpage.png`.
+  await expect(page).toHaveScreenshot('fullpage.png', { fullPage: true });
+  // Take a screenshot of an element with anonymous expectation.
   await expect(page.locator('text=Booking')).toHaveScreenshot();
   ```
 
@@ -34,22 +34,28 @@ title: "Release notes"
   });
   ```
 
-- Both `expect().toMatchSnapshot()` and `expect().toHaveScreenshot()` now support anonymous snapshots:
-
-  ```js
-  // The screenshot name will be auto-generated with `.png` extension.
-  await expect(page.locator('text=Booking')).toHaveScreenshot();
-
-  // The snapshot name will be auto-generated with an extension matching
-  // data.
-  expect('some text').toMatchSnapshot();
-  ```
+  It is most convenient to specify `maxDiffPixels` or `maxDiffPixelRatio` once in [`property: TestConfig.expect`].
 
 ### Other Updates
 
-- Playwright Test now supports `--fully-parallel` command-line flag, [`property: TestProject.fullyParallel`] and [`property: TestConfig.fullyParallel`] configuration options. With this option, tests in all files will run in parallel. (by default, Playwrigh Test runs tests in the same file sequentially).
-- Support of test grepping per project configuration via [`property: TestProject.grep`] and [`property: TestProject.grepInvert`] options.
+- Playwright Test now adds [`property: TestConfig.fullyParallel`] mode. By default, Playwright Test parallelizes between files. In fully parallel mode, tests inside a single file are also run in parallel. You can also use `--fully-parallel` command line flag.
 
+  ```ts
+  // playwright.config.ts
+  export default {
+    fullyParallel: true,
+  };
+  ```
+
+- [`property: TestProject.grep`] and [`property: TestProject.grepInvert`] are now configurable per project.
+- [Trace Viewer](./trace-viewer) now shows [API testing requests](./src/test-api-testing).
+- `expect().toMatchSnapshot()` now supports anonymous snapshots: when snapshot name is missing, Playwright Test will generate one
+  automatically:
+
+  ```js
+  expect('Web is Awesome <3').toMatchSnapshot();
+  ```
+- [`method: Locator.highlight`] visually reveals element(s) for easier debugging.
 
 ### Browser Versions
 
