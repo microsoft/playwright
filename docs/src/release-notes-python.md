@@ -5,6 +5,34 @@ title: "Release notes"
 
 <!-- TOC -->
 
+## Version 1.20
+
+### Highlights
+
+- New options for methods [`method: Page.screenshot`], [`method: Locator.screenshot`] and [`method: ElementHandle.screenshot`]:
+  * Option `animations: "disabled"` rewinds all CSS animations and transitions to a consistent state
+  * Option `mask: Locator[]` masks given elements, overlaying them with pink `#FF00FF` boxes.
+- [Trace Viewer](./trace-viewer) now shows [API testing requests](./src/test-api-testing).
+- [`method: Locator.highlight`] visually reveals element(s) for easier debugging.
+
+### Announcements
+
+- We now ship a designated Python docker image `mcr.microsoft.com/playwright/python`. Please switch over to it if you use
+  Python. This is the last release that includes Python inside our javascript `mcr.microsoft.com/playwright` docker image.
+- v1.20 is the last release that ships WebKit for macOS 10.15 Catalina. All future versions will support WebKit for macOS 11 BigSur
+  and up.
+
+### Browser Versions
+
+- Chromium 101.0.4921.0
+- Mozilla Firefox 97.0.1
+- WebKit 15.4
+
+This version was also tested against the following stable channels:
+
+- Google Chrome 99
+- Microsoft Edge 99
+
 ## Version 1.19
 
 ### Highlights
