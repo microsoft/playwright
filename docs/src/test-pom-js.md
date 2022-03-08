@@ -9,7 +9,7 @@ We will create a `PlaywrightDevPage` helper class to encapsulate common operatio
 
 ```js js-flavor=js
 // playwright-dev-page.js
-const { expect } = require('@playwright/test');
+import { expect } from '@playwright/test';
 
 exports.PlaywrightDevPage = class PlaywrightDevPage {
 
@@ -18,8 +18,9 @@ exports.PlaywrightDevPage = class PlaywrightDevPage {
    */
   constructor(page) {
     this.page = page;
-    this.getStartedLink = page.locator('text=Get started');
-    this.coreConceptsLink = page.locator('text=Core concepts');
+    this.getStartedLink = page.locator('a', { hasText: 'Get started' });
+    this.gettingStartedHeader = page.locator('h1', { hasText: 'Getting started' });
+    this.pomLink = page.locator('li', { hasText: 'Playwright Test' }).locator('a', { hasText: 'Page Object Model' });
     this.tocList = page.locator('article ul > li > a');
   }
 
@@ -29,17 +30,14 @@ exports.PlaywrightDevPage = class PlaywrightDevPage {
 
   async getStarted() {
     await this.getStartedLink.first().click();
-    await expect(this.coreConceptsLink).toBeVisible();
+    await expect(this.gettingStartedHeader).toBeVisible();
   }
 
-  async coreConcepts() {
+  async pageObjectModel() {
     await this.getStarted();
-    await this.page.click('text=Guides');
-    await this.coreConceptsLink.click();
-    await expect(this.page.locator('h1').locator("text=Core concepts")).toBeVisible();
+    await this.pomLink.click();
   }
-}
-```
+}```
 
 ```js js-flavor=ts
 // playwright-dev-page.ts
@@ -48,13 +46,15 @@ import { expect, Locator, Page } from '@playwright/test';
 export class PlaywrightDevPage {
   readonly page: Page;
   readonly getStartedLink: Locator;
-  readonly coreConceptsLink: Locator;
+  readonly gettingStartedHeader: Locator;
+  readonly pomLink: Locator;
   readonly tocList: Locator;
 
   constructor(page: Page) {
     this.page = page;
-    this.getStartedLink = page.locator('text=Get started');
-    this.coreConceptsLink = page.locator('text=Core concepts');
+    this.getStartedLink = page.locator('a', { hasText: 'Get started' });
+    this.gettingStartedHeader = page.locator('h1', { hasText: 'Getting started' });
+    this.pomLink = page.locator('li', { hasText: 'Playwright Test' }).locator('a', { hasText: 'Page Object Model' });
     this.tocList = page.locator('article ul > li > a');
   }
 
@@ -64,17 +64,14 @@ export class PlaywrightDevPage {
 
   async getStarted() {
     await this.getStartedLink.first().click();
-    await expect(this.coreConceptsLink).toBeVisible();
+    await expect(this.gettingStartedHeader).toBeVisible();
   }
 
-  async coreConcepts() {
+  async pageObjectModel() {
     await this.getStarted();
-    await this.page.click('text=Guides');
-    await this.coreConceptsLink.click();
-    await expect(this.page.locator('h1').locator("text=Core concepts")).toBeVisible();
+    await this.pomLink.click();
   }
-}
-```
+}```
 
 Now we can use the `PlaywrightDevPage` class in our tests.
 
@@ -83,27 +80,28 @@ Now we can use the `PlaywrightDevPage` class in our tests.
 const { test, expect } = require('@playwright/test');
 const { PlaywrightDevPage } = require('./playwright-dev-page');
 
-test('Get Started table of contents', async ({ page }) => {
+test('getting started should contain table of contents', async ({ page }) => {
   const playwrightDev = new PlaywrightDevPage(page);
   await playwrightDev.goto();
   await playwrightDev.getStarted();
   await expect(playwrightDev.tocList).toHaveText([
     'Installation',
     'First test',
+    'Configuration file',
     'Writing assertions',
     'Using test fixtures',
     'Using test hooks',
-    'Learning the command line',
-    'Creating a configuration file',
-    'Release notes',
+    'Command line',
+    'Configure NPM scripts',
+    'Release notes'
   ]);
 });
 
-test('Core Concepts table of contents', async ({ page }) => {
+test('should show Page Object Model article', async ({ page }) => {
   const playwrightDev = new PlaywrightDevPage(page);
   await playwrightDev.goto();
-  await playwrightDev.coreConcepts();
-  await expect(playwrightDev.tocList.first()).toHaveText('Browser');
+  await playwrightDev.pageObjectModel();
+  await expect(page.locator('article')).toContainText('Page Object Model is a common pattern');
 });
 ```
 
@@ -112,26 +110,27 @@ test('Core Concepts table of contents', async ({ page }) => {
 import { test, expect } from '@playwright/test';
 import { PlaywrightDevPage } from './playwright-dev-page';
 
-test('Get Started table of contents', async ({ page }) => {
+test('getting started should contain table of contents', async ({ page }) => {
   const playwrightDev = new PlaywrightDevPage(page);
   await playwrightDev.goto();
   await playwrightDev.getStarted();
   await expect(playwrightDev.tocList).toHaveText([
     'Installation',
     'First test',
+    'Configuration file',
     'Writing assertions',
     'Using test fixtures',
     'Using test hooks',
-    'Learning the command line',
-    'Creating a configuration file',
-    'Release notes',
+    'Command line',
+    'Configure NPM scripts',
+    'Release notes'
   ]);
 });
 
-test('Core Concepts table of contents', async ({ page }) => {
+test('should show Page Object Model article', async ({ page }) => {
   const playwrightDev = new PlaywrightDevPage(page);
   await playwrightDev.goto();
-  await playwrightDev.coreConcepts();
-  await expect(playwrightDev.tocList.first()).toHaveText('Browser');
+  await playwrightDev.pageObjectModel();
+  await expect(page.locator('article')).toContainText('Page Object Model is a common pattern');
 });
 ```
