@@ -467,7 +467,7 @@ export class Page extends SdkObject {
         if (this.isClosed())
           throw new Error('The page has closed');
         let comparatorResult: ComparatorResult | undefined;
-        const screenshotTimeout = pollIntervals.shift() || 1000;
+        const screenshotTimeout = pollIntervals.shift() ?? 1000;
         if (isGeneratingNewScreenshot) {
           previous = actual;
           actual = await rafrafScreenshot(progress, screenshotTimeout).catch(e => undefined);
