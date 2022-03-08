@@ -9,7 +9,7 @@ We will create a `PlaywrightDevPage` helper class to encapsulate common operatio
 
 ```js js-flavor=js
 // playwright-dev-page.js
-import { expect } from '@playwright/test';
+const { expect } = require('@playwright/test');
 
 exports.PlaywrightDevPage = class PlaywrightDevPage {
 
