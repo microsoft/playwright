@@ -879,7 +879,7 @@ Should be updated alongside RequestIdTokenStatus in
 third_party/blink/public/mojom/devtools/inspector_issue.mojom to include
 all cases except for success.
      */
-    export type FederatedAuthRequestIssueReason = "ApprovalDeclined"|"TooManyRequests"|"ManifestHttpNotFound"|"ManifestNoResponse"|"ManifestInvalidResponse"|"ClientMetadataHttpNotFound"|"ClientMetadataNoResponse"|"ClientMetadataInvalidResponse"|"ErrorFetchingSignin"|"InvalidSigninResponse"|"AccountsHttpNotFound"|"AccountsNoResponse"|"AccountsInvalidResponse"|"IdTokenHttpNotFound"|"IdTokenNoResponse"|"IdTokenInvalidResponse"|"IdTokenInvalidRequest"|"ErrorIdToken"|"Canceled";
+    export type FederatedAuthRequestIssueReason = "ApprovalDeclined"|"TooManyRequests"|"ManifestHttpNotFound"|"ManifestNoResponse"|"ManifestInvalidResponse"|"ClientMetadataHttpNotFound"|"ClientMetadataNoResponse"|"ClientMetadataInvalidResponse"|"ClientMetadataMissingPrivacyPolicyUrl"|"ErrorFetchingSignin"|"InvalidSigninResponse"|"AccountsHttpNotFound"|"AccountsNoResponse"|"AccountsInvalidResponse"|"IdTokenHttpNotFound"|"IdTokenNoResponse"|"IdTokenInvalidResponse"|"IdTokenInvalidRequest"|"ErrorIdToken"|"Canceled";
     /**
      * This issue tracks client hints related issues. It's used to deprecate old
 features, encourage the use of new ones, and provide general guidance.
@@ -1559,6 +1559,15 @@ inspector" rules), "regular" for regular stylesheets.
        * Matches of CSS rules matching the ancestor node in the style inheritance chain.
        */
       matchedCSSRules: RuleMatch[];
+    }
+    /**
+     * Inherited pseudo element matches from pseudos of an ancestor node.
+     */
+    export interface InheritedPseudoElementMatches {
+      /**
+       * Matches of pseudo styles from the pseudos of an ancestor node.
+       */
+      pseudoElements: PseudoElementMatches[];
     }
     /**
      * Match data for a CSS rule.
@@ -2338,6 +2347,10 @@ attributes) for a DOM node identified by `nodeId`.
        * A chain of inherited styles (from the immediate node parent up to the DOM tree root).
        */
       inherited?: InheritedStyleEntry[];
+      /**
+       * A chain of inherited pseudo element styles (from the immediate node parent up to the DOM tree root).
+       */
+      inheritedPseudoElements?: InheritedPseudoElementMatches[];
       /**
        * A list of CSS keyframed animations matching this node.
        */
