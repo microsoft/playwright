@@ -49,7 +49,7 @@ const test = baseTest.extend<BrowserTestTestFixtures, BrowserTestWorkerFixtures>
   }, { scope: 'worker' } ],
 
   defaultSameSiteCookieValue: [async ({ browserName, browserMajorVersion }, run) => {
-    await run(browserName === 'chromium' || (browserName === 'firefox' && browserMajorVersion >= 96 && browserMajorVersion <= 97) ? 'Lax' : 'None');
+    await run(browserName === 'chromium' || (browserName === 'firefox' && browserMajorVersion >= 96 && browserMajorVersion < 97) ? 'Lax' : 'None');
   }, { scope: 'worker' } ],
 
   browserMajorVersion: [async ({ browserVersion }, run) => {
