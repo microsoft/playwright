@@ -18,7 +18,7 @@ docker pull mcr.microsoft.com/playwright:focal
 ```
 
 ```bash python
-docker pull mcr.microsoft.com/playwright:focal
+docker pull mcr.microsoft.com/playwright/python:focal
 ```
 
 ```bash csharp
@@ -36,7 +36,7 @@ docker pull mcr.microsoft.com/playwright:v1.20.0-focal
 ```
 
 ```bash python
-docker pull mcr.microsoft.com/playwright:v1.20.0-focal
+docker pull mcr.microsoft.com/playwright/python:v1.20.0-focal
 ```
 
 ```bash csharp
@@ -60,7 +60,7 @@ docker run -it --rm --ipc=host mcr.microsoft.com/playwright:focal /bin/bash
 ```
 
 ```bash python
-docker run -it --rm --ipc=host mcr.microsoft.com/playwright:focal /bin/bash
+docker run -it --rm --ipc=host mcr.microsoft.com/playwright/python:focal /bin/bash
 ```
 
 ```bash csharp
@@ -80,7 +80,7 @@ docker run -it --rm --ipc=host --user pwuser --security-opt seccomp=seccomp_prof
 ```
 
 ```bash python
-docker run -it --rm --ipc=host --user pwuser --security-opt seccomp=seccomp_profile.json mcr.microsoft.com/playwright:focal /bin/bash
+docker run -it --rm --ipc=host --user pwuser --security-opt seccomp=seccomp_profile.json mcr.microsoft.com/playwright/python:focal /bin/bash
 ```
 
 ```bash csharp
