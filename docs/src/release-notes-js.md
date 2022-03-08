@@ -11,7 +11,7 @@ title: "Release notes"
 
 - New options for methods [`method: Page.screenshot`], [`method: Locator.screenshot`] and [`method: ElementHandle.screenshot`]:
   * Option `animations: "disabled"` rewinds all CSS animations and transitions to a consistent state
-  * Option `mask: Locator[]` masks given elements, overlaying them with pink `#FF00FF` boxes.
+  * Option `mask: Locator[]` masks given elements, overlaying them with pink `#FF1493` boxes.
 - New web-first assertions for screenshots: [`method: PageAssertions.toHaveScreenshot`] and [`method: LocatorAssertions.toHaveScreenshot`]. These methods will re-take screenshot until it matches the saved expectation. When generating a new expectation, the method will re-take screenshots until 2 consecutive screenshots match.
 
   New methods support both named and anonymous (auto-named) expectations:

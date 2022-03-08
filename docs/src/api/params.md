@@ -935,7 +935,7 @@ Specify screenshot type, defaults to `png`.
 - `mask` <[Array]<[Locator]>>
 
 Specify locators that should be masked when the screenshot is taken. Masked elements will be overlayed with
-a pink box `#FF00FF` that completely covers its bounding box.
+a pink box `#FF1493` that completely covers its bounding box.
 
 ## screenshot-option-full-page
 - `fullPage` <[boolean]>

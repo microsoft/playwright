@@ -181,7 +181,7 @@ export class Highlight {
     this._highlightElements = [];
     for (const box of boxes) {
       const highlightElement = pool.length ? pool.shift()! : this._createHighlightElement();
-      highlightElement.style.backgroundColor = '#F0F';
+      highlightElement.style.backgroundColor = '#FF1493';
       highlightElement.style.left = box.x + 'px';
       highlightElement.style.top = box.y + 'px';
       highlightElement.style.width = box.width + 'px';
