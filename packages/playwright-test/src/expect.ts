@@ -43,7 +43,7 @@ import {
   toHaveURL,
   toHaveValue
 } from './matchers/matchers';
-import { toMatchSnapshot, toHaveScreenshot } from './matchers/toMatchSnapshot';
+import { toMatchSnapshot, toHaveScreenshot, getSnapshotName } from './matchers/toMatchSnapshot';
 import type { Expect, TestError } from './types';
 import matchers from 'expect/build/matchers';
 import { currentTestInfo } from './globals';
@@ -189,6 +189,12 @@ function wrap(matcherName: string, matcher: any) {
     if (!testInfo)
       return matcher.call(this, ...args);
 
+    let titleSuffix = '';
+    if (matcherName === 'toHaveScreenshot' || matcherName === 'toMatchSnapshot') {
+      const [received, nameOrOptions, optOptions] = args;
+      titleSuffix = `(${getSnapshotName(testInfo, received, nameOrOptions, optOptions)})`;
+    }
+
     const INTERNAL_STACK_LENGTH = 4;
     // at Object.__PWTRAP__[expect.toHaveText] (...)
     // at __EXTERNAL_MATCHER_TRAP__ (...)
@@ -202,7 +208,7 @@ function wrap(matcherName: string, matcher: any) {
     const step = testInfo._addStep({
       location: frame && frame.file ? { file: path.resolve(process.cwd(), frame.file), line: frame.line || 0, column: frame.column || 0 } : undefined,
       category: 'expect',
-      title: customMessage || `expect${isSoft ? '.soft' : ''}${this.isNot ? '.not' : ''}.${matcherName}`,
+      title: customMessage || `expect${isSoft ? '.soft' : ''}${this.isNot ? '.not' : ''}.${matcherName}${titleSuffix}`,
       canHaveChildren: true,
       forceNoParent: false
     });

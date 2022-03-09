@@ -63,6 +63,44 @@ test('should fail to screenshot a page with infinite animation', async ({ runInl
   expect(fs.existsSync(testInfo.outputPath('a.spec.js-snapshots', 'is-a-test-1.png'))).toBe(false);
 });
 
+test('should report toHaveScreenshot step with expectation name in title', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'reporter.ts': `
+      class Reporter {
+        onStepBegin(test, result, step) {
+          console.log('%% begin ' + step.title);
+        }
+      }
+      module.exports = Reporter;
+    `,
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: './reporter',
+      };
+    `,
+    ...files,
+    'a.spec.js': `
+      const { test } = require('./helper');
+      test('is a test', async ({ page }) => {
+        // Named expectation.
+        await expect(page).toHaveScreenshot('foo.png', { timeout: 2000 });
+        // Anonymous expectation.
+        await expect(page).toHaveScreenshot({ timeout: 2000 });
+      });
+    `
+  }, { 'reporter': '', 'workers': 1, 'update-snapshots': true });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
+    `%% begin Before Hooks`,
+    `%% begin browserContext.newPage`,
+    `%% begin expect.toHaveScreenshot(foo.png)`,
+    `%% begin expect.toHaveScreenshot(is-a-test-1.png)`,
+    `%% begin After Hooks`,
+    `%% begin browserContext.close`,
+  ]);
+});
+
 test('should not fail when racing with navigation', async ({ runInlineTest }, testInfo) => {
   const infiniteAnimationURL = pathToFileURL(path.join(__dirname, '../assets/rotate-z.html'));
   const result = await runInlineTest({
