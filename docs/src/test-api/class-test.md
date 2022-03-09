@@ -61,7 +61,7 @@ Test function that takes one or two arguments: an object with fixtures and optio
 
 ## method: Test.afterAll
 
-Declares an `afterAll` hook that is executed once per worker after all tests. When called in the scope of a test file, runs after all tests in the file. When called inside a [`method: Test.describe`] group, runs after all tests in the group.
+Declares an `afterAll` hook that is executed once per worker after all tests. When called in the scope of a test file, runs after all tests in the file. When called inside a [`method: Test.describe`] group, runs after all tests in the group. If multiple `afterAll` hooks are added, they will run in the order of their registration.
 
 Note that worker process is restarted on test failures, and `afterAll` hook runs again in the new worker. Learn more about [workers and failures](./test-retries.md).
 
@@ -74,7 +74,7 @@ Hook function that takes one or two arguments: an object with worker fixtures an
 
 ## method: Test.afterEach
 
-Declares an `afterEach` hook that is executed after each test. When called in the scope of a test file, runs after each test in the file. When called inside a [`method: Test.describe`] group, runs after each test in the group.
+Declares an `afterEach` hook that is executed after each test. When called in the scope of a test file, runs after each test in the file. When called inside a [`method: Test.describe`] group, runs after each test in the group. If multiple `afterEach` hooks are added, they will run in the order of their registration.
 
 You can access all the same [Fixtures] as the test function itself, and also the [TestInfo] object that gives a lot of useful information. For example, you can check whether the test succeeded or failed.
 
@@ -118,7 +118,7 @@ Hook function that takes one or two arguments: an object with fixtures and optio
 
 ## method: Test.beforeAll
 
-Declares a `beforeAll` hook that is executed once per worker process before all tests. When called in the scope of a test file, runs before all tests in the file. When called inside a [`method: Test.describe`] group, runs before all tests in the group.
+Declares a `beforeAll` hook that is executed once per worker process before all tests. When called in the scope of a test file, runs before all tests in the file. When called inside a [`method: Test.describe`] group, runs before all tests in the group. If multiple `beforeAll` hooks are added, they will run in the order of their registration.
 
 ```js js-flavor=js
 // example.spec.js
@@ -167,7 +167,7 @@ Hook function that takes one or two arguments: an object with worker fixtures an
 
 ## method: Test.beforeEach
 
-Declares a `beforeEach` hook that is executed before each test. When called in the scope of a test file, runs before each test in the file. When called inside a [`method: Test.describe`] group, runs before each test in the group.
+Declares a `beforeEach` hook that is executed before each test. When called in the scope of a test file, runs before each test in the file. When called inside a [`method: Test.describe`] group, runs before each test in the group.  If multiple `beforeEach` hooks are added, they will run in the order of their registration.
 
 You can access all the same [Fixtures] as the test function itself, and also the [TestInfo] object that gives a lot of useful information. For example, you can navigate the page before starting the test.
 
