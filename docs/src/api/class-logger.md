@@ -28,7 +28,7 @@ Determines whether sink is interested in the logger with the given name and seve
 logger name
 
 ### param: Logger.isEnabled.severity
-- `severity` <"verbose"|"info"|"warning"|"error">
+- `severity` <[LogSeverity]<"verbose"|"info"|"warning"|"error">>
 
 ## method: Logger.log
 
@@ -38,7 +38,7 @@ logger name
 logger name
 
 ### param: Logger.log.severity
-- `severity` <"verbose"|"info"|"warning"|"error">
+- `severity` <[LogSeverity]<"verbose"|"info"|"warning"|"error">>
 
 ### param: Logger.log.message
 - `message` <[string]|[Error]>
