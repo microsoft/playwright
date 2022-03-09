@@ -54,7 +54,6 @@ export type JsonSuite = {
   location?: JsonLocation;
   suites: JsonSuite[];
   tests: JsonTestCase[];
-  hooks: JsonTestCase[];
 };
 
 export type JsonTestCase = {
@@ -195,7 +194,6 @@ class RawReporter {
       location,
       suites: suite.suites.map(s => this._serializeSuite(s, fileId)),
       tests: suite.tests.map(t => this._serializeTest(t, fileId)),
-      hooks: [],
     };
   }
 

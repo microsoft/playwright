@@ -53,14 +53,12 @@ export type TestFile = {
   fileId: string;
   fileName: string;
   tests: TestCase[];
-  hooks: TestCase[];
 };
 
 export type TestFileSummary = {
   fileId: string;
   fileName: string;
   tests: TestCaseSummary[];
-  hooks: TestCaseSummary[];
   stats: Stats;
 };
 
@@ -240,22 +238,17 @@ class HtmlBuilder {
         let fileEntry = data.get(fileId);
         if (!fileEntry) {
           fileEntry = {
-            testFile: { fileId, fileName, tests: [], hooks: [] },
-            testFileSummary: { fileId, fileName, tests: [], hooks: [], stats: emptyStats() },
+            testFile: { fileId, fileName, tests: [] },
+            testFileSummary: { fileId, fileName, tests: [], stats: emptyStats() },
           };
           data.set(fileId, fileEntry);
         }
         const { testFile, testFileSummary } = fileEntry;
         const testEntries: TestEntry[] = [];
-        const hookEntries: TestEntry[] = [];
-        this._processJsonSuite(file, fileId, projectJson.project.name, [], testEntries, hookEntries);
+        this._processJsonSuite(file, fileId, projectJson.project.name, [], testEntries);
         for (const test of testEntries) {
           testFile.tests.push(test.testCase);
           testFileSummary.tests.push(test.testCaseSummary);
-        }
-        for (const hook of hookEntries) {
-          testFile.hooks.push(hook.testCase);
-          testFileSummary.hooks.push(hook.testCaseSummary);
         }
       }
     }
@@ -287,7 +280,6 @@ class HtmlBuilder {
         return t1.location.line - t2.location.line;
       };
       testFileSummary.tests.sort(testCaseSummaryComparator);
-      testFileSummary.hooks.sort(testCaseSummaryComparator);
 
       this._addDataFile(fileId + '.json', testFile);
     }
@@ -345,11 +337,10 @@ class HtmlBuilder {
     this._dataZipFile.addBuffer(Buffer.from(JSON.stringify(data)), fileName);
   }
 
-  private _processJsonSuite(suite: JsonSuite, fileId: string, projectName: string, path: string[], outTests: TestEntry[], outHooks: TestEntry[]) {
+  private _processJsonSuite(suite: JsonSuite, fileId: string, projectName: string, path: string[], outTests: TestEntry[]) {
     const newPath = [...path, suite.title];
-    suite.suites.map(s => this._processJsonSuite(s, fileId, projectName, newPath, outTests, outHooks));
+    suite.suites.map(s => this._processJsonSuite(s, fileId, projectName, newPath, outTests));
     suite.tests.forEach(t => outTests.push(this._createTestEntry(t, projectName, newPath)));
-    suite.hooks.forEach(t => outHooks.push(this._createTestEntry(t, projectName, newPath)));
   }
 
   private _createTestEntry(test: JsonTestCase, projectName: string, path: string[]): TestEntry {
