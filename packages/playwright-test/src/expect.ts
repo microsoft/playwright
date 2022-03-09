@@ -183,6 +183,29 @@ class ExpectMetaInfoProxyHandler {
   }
 }
 
+function callMatcher(matcher: any, thisArg: any, ...args: any[]) {
+  const [receivedOrGenerator, ...otherArgs] = args;
+  if (typeof receivedOrGenerator !== 'function')
+    return matcher.call(thisArg, ...args);
+  const generator = receivedOrGenerator;
+  return new Promise(async resolve => {
+    let result = undefined;
+    const startTime = Date.now();
+    while (Date.now() < startTime + 5000) {
+      const received = await generator();
+      result = matcher.call(thisArg, received, ...otherArgs);
+      const success = result.pass !== thisArg.isNot;
+      if (success) {
+        resolve(result);
+        break;
+      } else {
+        await new Promise(x => setTimeout(x, 100));
+      }
+    }
+    resolve(result);
+  });
+}
+
 function wrap(matcherName: string, matcher: any) {
   const result = function(this: any, ...args: any[]) {
     const testInfo = currentTestInfo();
@@ -243,7 +266,7 @@ function wrap(matcherName: string, matcher: any) {
     };
 
     try {
-      const result = matcher.call(this, ...args);
+      const result = callMatcher(matcher, this, ...args);
       if (result instanceof Promise)
         return result.then(reportStepEnd).catch(reportStepError);
       return reportStepEnd(result);
