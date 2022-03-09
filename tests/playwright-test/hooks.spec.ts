@@ -752,3 +752,34 @@ test('test.setTimeout should work separately in afterAll', async ({ runInlineTes
     '%%afterAll',
   ]);
 });
+
+test('beforeAll failure should only prevent tests that are affected', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      const { test } = pwt;
+      test.describe('suite', () => {
+        test.beforeAll(async () => {
+          console.log('\\n%%beforeAll');
+          throw new Error('oh my');
+        });
+        test('failed', () => {
+          console.log('\\n%%test1');
+        });
+        test('skipped', () => {
+          console.log('\\n%%test2');
+        });
+      });
+      test('passed', () => {
+        console.log('\\n%%test3');
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.skipped).toBe(1);
+  expect(result.passed).toBe(1);
+  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
+    '%%beforeAll',
+    '%%test3',
+  ]);
+});

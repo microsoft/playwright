@@ -39,9 +39,9 @@ export class WorkerRunner extends EventEmitter {
 
   // Accumulated fatal errors that cannot be attributed to a test.
   private _fatalErrors: TestError[] = [];
-  // Whether we should skip running remaining tests in the group because
+  // Whether we should skip running remaining tests in this suite because
   // of a setup error, usually beforeAll hook.
-  private _skipRemainingTests = false;
+  private _skipRemainingTestsInSuite: Suite | undefined;
   // The stage of the full cleanup. Once "finished", we can safely stop running anything.
   private _didRunFullCleanup = false;
   // Whether the worker was requested to stop.
@@ -134,8 +134,8 @@ export class WorkerRunner extends EventEmitter {
 
   async runTestGroup(runPayload: RunPayload) {
     this._runFinished = new ManualPromise<void>();
+    const entries = new Map(runPayload.entries.map(e => [ e.testId, e ]));
     try {
-      const entries = new Map(runPayload.entries.map(e => [ e.testId, e ]));
       await this._loadIfNeeded();
       const fileSuite = await this._loader.loadTestFile(runPayload.file, 'worker');
       const suite = this._project.cloneFileSuite(fileSuite, this._params.repeatEachIndex, test => {
@@ -148,8 +148,14 @@ export class WorkerRunner extends EventEmitter {
         this._activeSuites = new Set();
         this._didRunFullCleanup = false;
         const tests = suite.allTests().filter(test => entries.has(test._id));
-        for (let i = 0; i < tests.length; i++)
-          await this._runTest(tests[i], entries.get(tests[i]._id)!.retry, tests[i + 1]);
+        for (let i = 0; i < tests.length; i++) {
+          // Do not run tests after full cleanup, because we are entirely done.
+          if (this._isStopped && this._didRunFullCleanup)
+            break;
+          const entry = entries.get(tests[i]._id)!;
+          entries.delete(tests[i]._id);
+          await this._runTest(tests[i], entry.retry, tests[i + 1]);
+        }
       }
     } catch (e) {
       // In theory, we should run above code without any errors.
@@ -157,16 +163,22 @@ export class WorkerRunner extends EventEmitter {
       // but not in the runner, let's do a fatal error.
       this.unhandledError(e);
     } finally {
-      this._reportDone();
+      const donePayload: DonePayload = {
+        fatalErrors: this._fatalErrors,
+        skipTestsDueToSetupFailure: [],
+      };
+      for (const test of this._skipRemainingTestsInSuite?.allTests() || []) {
+        if (entries.has(test._id))
+          donePayload.skipTestsDueToSetupFailure.push(test._id);
+      }
+      this.emit('done', donePayload);
+      this._fatalErrors = [];
+      this._skipRemainingTestsInSuite = undefined;
       this._runFinished.resolve();
     }
   }
 
   private async _runTest(test: TestCase, retry: number, nextTest: TestCase | undefined) {
-    // Do not run tests after full cleanup, because we are entirely done.
-    if (this._isStopped && this._didRunFullCleanup)
-      return;
-
     let lastStepId = 0;
     const testInfo = new TestInfoImpl(this._loader, this._params, test, retry, data => {
       const stepId = `${data.category}@${data.title}@${++lastStepId}`;
@@ -254,8 +266,7 @@ export class WorkerRunner extends EventEmitter {
       return;
     }
 
-    // Assume beforeAll failed until we actually finish it successfully.
-    let didFailBeforeAll = true;
+    let didFailBeforeAllForSuite: Suite | undefined;
     let shouldRunAfterEachHooks = false;
 
     await testInfo._runWithTimeout(async () => {
@@ -263,7 +274,7 @@ export class WorkerRunner extends EventEmitter {
         // Getting here means that worker is requested to stop, but was not able to
         // run full cleanup yet. Skip the test, but run the cleanup.
         testInfo.status = 'skipped';
-        didFailBeforeAll = false;
+        didFailBeforeAllForSuite = undefined;
         return;
       }
 
@@ -283,14 +294,18 @@ export class WorkerRunner extends EventEmitter {
             continue;
           const extraAnnotations: Annotation[] = [];
           this._extraSuiteAnnotations.set(suite, extraAnnotations);
+          didFailBeforeAllForSuite = suite;  // Assume failure, unless reset below.
           await this._runModifiersForSuite(suite, testInfo, 'worker', extraAnnotations);
         }
 
         // Run "beforeAll" hooks, unless already run during previous tests.
-        for (const suite of suites)
+        for (const suite of suites) {
+          didFailBeforeAllForSuite = suite;  // Assume failure, unless reset below.
           await this._runBeforeAllHooksForSuite(suite, testInfo);
-        // Running "beforeAll" succeeded!
-        didFailBeforeAll = false;
+        }
+
+        // Running "beforeAll" succeeded for all suites!
+        didFailBeforeAllForSuite = undefined;
 
         // Run "beforeEach" modifiers.
         for (const suite of suites)
@@ -313,11 +328,11 @@ export class WorkerRunner extends EventEmitter {
       beforeHooksStep.complete(maybeError); // Second complete is a no-op.
     });
 
-    if (didFailBeforeAll) {
+    if (didFailBeforeAllForSuite) {
       // This will inform dispatcher that we should not run more tests from this group
       // because we had a beforeAll error.
       // This behavior avoids getting the same common error for each test.
-      this._skipRemainingTests = true;
+      this._skipRemainingTestsInSuite = didFailBeforeAllForSuite;
     }
 
     const afterHooksStep = testInfo._addStep({
@@ -456,13 +471,6 @@ export class WorkerRunner extends EventEmitter {
     }
     if (error)
       throw error;
-  }
-
-  private _reportDone() {
-    const donePayload: DonePayload = { fatalErrors: this._fatalErrors, skipRemaining: this._skipRemainingTests };
-    this.emit('done', donePayload);
-    this._fatalErrors = [];
-    this._skipRemainingTests = false;
   }
 }
 
