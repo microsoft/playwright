@@ -49,8 +49,6 @@ it('should block all events when hit target is wrong', async ({ page, server }) 
 });
 
 it('should block click when mousedown fails', async ({ page, server }) => {
-  it.skip(!!process.env.PLAYWRIGHT_NO_LAYOUT_SHIFT_CHECK);
-
   await page.goto(server.PREFIX + '/input/button.html');
   await page.$eval('button', button => {
     button.addEventListener('mousemove', () => {
@@ -118,8 +116,6 @@ it('should block all events when hit target is wrong and element detaches', asyn
 });
 
 it('should not block programmatic events', async ({ page, server }) => {
-  it.skip(!!process.env.PLAYWRIGHT_NO_LAYOUT_SHIFT_CHECK);
-
   await page.goto(server.PREFIX + '/input/button.html');
   await page.$eval('button', button => {
     button.addEventListener('mousemove', () => {
