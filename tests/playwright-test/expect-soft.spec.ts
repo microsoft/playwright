@@ -23,6 +23,7 @@ test('soft expects should compile', async ({ runTSC }) => {
       test('should work', () => {
         test.expect.soft(1+1).toBe(3);
         test.expect.soft(1+1, 'custom error message').toBe(3);
+        test.expect.soft(1+1, { message: 'custom error message' }).toBe(3);
       });
     `
   });
@@ -43,6 +44,19 @@ test('soft expects should work', async ({ runInlineTest }) => {
   expect(stripAnsi(result.output)).toContain('woof-woof');
 });
 
+test('should fail when passed in function', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      const { test } = pwt;
+      test('should work', () => {
+        test.expect.soft(() => 1+1).toBe(2);
+      });
+    `
+  });
+  expect(result.exitCode).toBe(1);
+  expect(stripAnsi(result.output)).toContain('Error: Cannot accept function as a first argument; use `expect.poll()` instead');
+});
+
 test('should report a mixture of soft and non-soft errors', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.ts': `
@@ -51,7 +65,7 @@ test('should report a mixture of soft and non-soft errors', async ({ runInlineTe
         test.expect.soft(1+1, 'one plus one').toBe(3);
         test.expect.soft(2*2, 'two times two').toBe(5);
         test.expect(3/3, 'three div three').toBe(7);
-        test.expect.soft(6-4, 'six minus four').toBe(3);
+        test.expect.soft(6-4, { message: 'six minus four' }).toBe(3);
       });
     `
   });

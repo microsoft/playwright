@@ -15,6 +15,7 @@
  */
 
 import expectLibrary from 'expect';
+import { raceAgainstTimeout } from 'playwright-core/lib/utils/async';
 import path from 'path';
 import {
   INVERTED_COLOR,
@@ -47,7 +48,8 @@ import { toMatchSnapshot, toHaveScreenshot, getSnapshotName } from './matchers/t
 import type { Expect, TestError } from './types';
 import matchers from 'expect/build/matchers';
 import { currentTestInfo } from './globals';
-import { serializeError, captureStackTrace } from './util';
+import { serializeError, captureStackTrace, currentExpectTimeout } from './util';
+import { monotonicTime } from 'playwright-core/lib/utils/utils';
 
 // #region
 // Mirrored from https://github.com/facebook/jest/blob/f13abff8df9a0e1148baf3584bcde6d1b479edc7/packages/expect/src/print.ts
@@ -89,21 +91,25 @@ export const printReceivedStringContainExpectedResult = (
 
 // #endregion
 
-function createExpect(actual: unknown, message: string|undefined, isSoft: boolean) {
-  if (message !== undefined && typeof message !== 'string')
-    throw new Error('expect(actual, optionalErrorMessage): optional error message must be a string.');
-  return new Proxy(expectLibrary(actual), new ExpectMetaInfoProxyHandler(message || '', isSoft));
+type ExpectMessageOrOptions = undefined | string | { message?: string, timeout?: number };
+
+function createExpect(actual: unknown, messageOrOptions: ExpectMessageOrOptions, isSoft: boolean, isPoll: boolean) {
+  return new Proxy(expectLibrary(actual), new ExpectMetaInfoProxyHandler(messageOrOptions, isSoft, isPoll));
 }
 
 export const expect: Expect = new Proxy(expectLibrary as any, {
-  apply: function(target: any, thisArg: any, argumentsList: [actual: unknown, message: string|undefined]) {
-    const [actual, message] = argumentsList;
-    return createExpect(actual, message, false /* isSoft */);
+  apply: function(target: any, thisArg: any, argumentsList: [actual: unknown, messageOrOptions: ExpectMessageOrOptions]) {
+    const [actual, messageOrOptions] = argumentsList;
+    return createExpect(actual, messageOrOptions, false /* isSoft */, false /* isPoll */);
   }
 });
 
-expect.soft = (actual: unknown, message: string|undefined) => {
-  return createExpect(actual, message, true /* isSoft */);
+expect.soft = (actual: unknown, messageOrOptions: ExpectMessageOrOptions) => {
+  return createExpect(actual, messageOrOptions, true /* isSoft */, false /* isPoll */);
+};
+
+expect.poll = (actual: unknown, messageOrOptions: ExpectMessageOrOptions) => {
+  return createExpect(actual, messageOrOptions, false /* isSoft */, true /* isPoll */);
 };
 
 expectLibrary.setState({ expand: false });
@@ -133,19 +139,29 @@ const customMatchers = {
 };
 
 type ExpectMetaInfo = {
-  message: string;
+  message?: string;
   isSoft: boolean;
+  isPoll: boolean;
+  pollTimeout?: number;
 };
 
 let expectCallMetaInfo: undefined|ExpectMetaInfo = undefined;
 
 class ExpectMetaInfoProxyHandler {
-  private _message: string;
+  private _message?: string;
   private _isSoft: boolean;
+  private _isPoll: boolean;
+  private _pollTimeout: number | undefined;
 
-  constructor(message: string, isSoft: boolean) {
-    this._message = message;
+  constructor(messageOrOptions: undefined | string | { message?: string, timeout?: number }, isSoft: boolean, isPoll: boolean) {
+    if (typeof messageOrOptions === 'string') {
+      this._message = messageOrOptions;
+    } else {
+      this._message = messageOrOptions?.message;
+      this._pollTimeout = messageOrOptions?.timeout;
+    }
     this._isSoft = isSoft;
+    this._isPoll = isPoll;
   }
 
   get(target: any, prop: any, receiver: any): any {
@@ -166,6 +182,8 @@ class ExpectMetaInfoProxyHandler {
         expectCallMetaInfo = {
           message: this._message,
           isSoft: this._isSoft,
+          isPoll: this._isPoll,
+          pollTimeout: this._pollTimeout,
         };
         let result = value.call(target, ...args);
         if ((result instanceof Promise))
@@ -178,6 +196,33 @@ class ExpectMetaInfoProxyHandler {
       }
     };
   }
+}
+
+async function pollMatcher(matcher: any, timeout: number, thisArg: any, generator: () => any, ...args: any[]) {
+  let result: { pass: boolean, message: () => string } | undefined = undefined;
+  const startTime = monotonicTime();
+  const pollIntervals = [100, 250, 500];
+  while (monotonicTime() - startTime <= timeout) {
+    const received = await raceAgainstTimeout(generator, timeout - (monotonicTime() - startTime));
+    if (received.timedOut)
+      break;
+    result = matcher.call(thisArg, received.result, ...args);
+    const success = result!.pass !== thisArg.isNot;
+    if (success)
+      return result;
+    await new Promise(x => setTimeout(x, pollIntervals.shift() ?? 1000));
+  }
+  const timeoutMessage = `Timeout ${timeout}ms exceeded while waiting on the predicate`;
+  const message = result ? [
+    result.message(),
+    '',
+    `Call Log:`,
+    `- ${timeoutMessage}`,
+  ].join('\n') : timeoutMessage;
+  return {
+    pass: thisArg.isNot,
+    message: () => message,
+  };
 }
 
 function wrap(matcherName: string, matcher: any) {
@@ -196,10 +241,12 @@ function wrap(matcherName: string, matcher: any) {
     const frame = stackTrace.frames[0];
     const customMessage = expectCallMetaInfo?.message ?? '';
     const isSoft = expectCallMetaInfo?.isSoft ?? false;
+    const isPoll = expectCallMetaInfo?.isPoll ?? false;
+    const pollTimeout = expectCallMetaInfo?.pollTimeout;
     const step = testInfo._addStep({
       location: frame && frame.file ? { file: path.resolve(process.cwd(), frame.file), line: frame.line || 0, column: frame.column || 0 } : undefined,
       category: 'expect',
-      title: customMessage || `expect${isSoft ? '.soft' : ''}${this.isNot ? '.not' : ''}.${matcherName}${titleSuffix}`,
+      title: customMessage || `expect${isPoll ? '.poll' : ''}${isSoft ? '.soft' : ''}${this.isNot ? '.not' : ''}.${matcherName}${titleSuffix}`,
       canHaveChildren: true,
       forceNoParent: false
     });
@@ -240,7 +287,19 @@ function wrap(matcherName: string, matcher: any) {
     };
 
     try {
-      const result = matcher.call(this, ...args);
+      let result;
+      const [receivedOrGenerator, ...otherArgs] = args;
+      if (isPoll) {
+        if (typeof receivedOrGenerator !== 'function')
+          throw new Error('`expect.poll()` accepts only function as a first argument');
+        if ((customMatchers as any)[matcherName] || matcherName === 'resolves' || matcherName === 'rejects')
+          throw new Error(`\`expect.poll()\` does not support "${matcherName}" matcher.`);
+        result = pollMatcher(matcher, currentExpectTimeout({ timeout: pollTimeout }), this, receivedOrGenerator, ...otherArgs);
+      } else {
+        if (typeof receivedOrGenerator === 'function')
+          throw new Error('Cannot accept function as a first argument; did you mean to use `expect.poll()`?');
+        result = matcher.call(this, ...args);
+      }
       if (result instanceof Promise)
         return result.then(reportStepEnd).catch(reportStepError);
       return reportStepEnd(result);

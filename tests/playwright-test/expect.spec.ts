@@ -67,20 +67,6 @@ test('should not expand huge arrays', async ({ runInlineTest }) => {
   expect(result.output.length).toBeLessThan(100000);
 });
 
-test('should fail when passed `null` instead of message', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    'expect-test.spec.ts': `
-      const { test } = pwt;
-      test('custom expect message', () => {
-        test.expect(1+1, null).toEqual(3);
-      });
-    `
-  });
-  expect(result.exitCode).toBe(1);
-  expect(result.passed).toBe(0);
-  expect(stripAnsi(result.output)).toContain(`optional error message must be a string.`);
-});
-
 test('should include custom error message', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'expect-test.spec.ts': `
@@ -105,7 +91,7 @@ test('should include custom error message with web-first assertions', async ({ r
     'expect-test.spec.ts': `
       const { test } = pwt;
       test('custom expect message', async ({page}) => {
-        await expect(page.locator('x-foo'), 'x-foo must be visible').toBeVisible({timeout: 1});
+        await expect(page.locator('x-foo'), { message: 'x-foo must be visible' }).toBeVisible({timeout: 1});
       });
     `
   });
