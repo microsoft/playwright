@@ -1549,6 +1549,7 @@ export type PageScreenshotParams = {
   fullPage?: boolean,
   animations?: 'disabled',
   clip?: Rect,
+  size?: 'css' | 'device',
   mask?: {
     frame: FrameChannel,
     selector: string,
@@ -1562,6 +1563,7 @@ export type PageScreenshotOptions = {
   fullPage?: boolean,
   animations?: 'disabled',
   clip?: Rect,
+  size?: 'css' | 'device',
   mask?: {
     frame: FrameChannel,
     selector: string,
@@ -2861,6 +2863,7 @@ export type ElementHandleScreenshotParams = {
   quality?: number,
   omitBackground?: boolean,
   animations?: 'disabled',
+  size?: 'css' | 'device',
   mask?: {
     frame: FrameChannel,
     selector: string,
@@ -2872,6 +2875,7 @@ export type ElementHandleScreenshotOptions = {
   quality?: number,
   omitBackground?: boolean,
   animations?: 'disabled',
+  size?: 'css' | 'device',
   mask?: {
     frame: FrameChannel,
     selector: string,
