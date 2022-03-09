@@ -250,6 +250,7 @@ Here is a list of the pre-defined fixtures that you are likely to use most of th
 
 You can use `test.beforeAll` and `test.afterAll` hooks to set up and tear down resources shared between tests.
 And you can use `test.beforeEach` and `test.afterEach` hooks to set up and tear down resources for each test individually.
+If multiple hooks of the same kind are added, they will run in the order of their registration.
 
 ```js js-flavor=js
 // example.spec.js

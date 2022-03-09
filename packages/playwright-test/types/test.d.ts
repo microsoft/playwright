@@ -2467,7 +2467,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * Declares a `beforeEach` hook that is executed before each test. When called in the scope of a test file, runs before
    * each test in the file. When called inside a
    * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) group, runs before each test
-   * in the group.
+   * in the group.  If multiple `beforeEach` hooks are added, they will run in the order of their registration.
    *
    * You can access all the same [Fixtures] as the test function itself, and also the [TestInfo] object that gives a lot of
    * useful information. For example, you can navigate the page before starting the test.
@@ -2495,7 +2495,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * Declares an `afterEach` hook that is executed after each test. When called in the scope of a test file, runs after each
    * test in the file. When called inside a
    * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) group, runs after each test
-   * in the group.
+   * in the group. If multiple `afterEach` hooks are added, they will run in the order of their registration.
    *
    * You can access all the same [Fixtures] as the test function itself, and also the [TestInfo] object that gives a lot of
    * useful information. For example, you can check whether the test succeeded or failed.
@@ -2523,7 +2523,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * Declares a `beforeAll` hook that is executed once per worker process before all tests. When called in the scope of a
    * test file, runs before all tests in the file. When called inside a
    * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) group, runs before all tests
-   * in the group.
+   * in the group. If multiple `beforeAll` hooks are added, they will run in the order of their registration.
    *
    * ```ts
    * // example.spec.ts
@@ -2554,7 +2554,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * Declares an `afterAll` hook that is executed once per worker after all tests. When called in the scope of a test file,
    * runs after all tests in the file. When called inside a
    * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) group, runs after all tests
-   * in the group.
+   * in the group. If multiple `afterAll` hooks are added, they will run in the order of their registration.
    *
    * Note that worker process is restarted on test failures, and `afterAll` hook runs again in the new worker. Learn more
    * about [workers and failures](https://playwright.dev/docs/test-retries).
