@@ -76,6 +76,7 @@ export type RunPayload = {
 
 export type DonePayload = {
   fatalErrors: TestError[];
+  skipRemaining: boolean;
 };
 
 export type TestOutputPayload = {

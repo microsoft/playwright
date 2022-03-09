@@ -423,7 +423,7 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
     }));
 
     // 7. Cleanup created contexts when we know it's safe - this will produce nice error message.
-    if (hookType(testInfo) === 'beforeAll' && testInfo.status === 'timedOut') {
+    if (testInfo.status === 'timedOut' && testInfo.errors.some(error => error.message?.match(/Timeout of \d+ms exceeded in beforeAll hook./))) {
       const anyContext = leftoverContexts[0];
       const pendingCalls = anyContext ? formatPendingCalls((anyContext as any)._connection.pendingProtocolCalls()) : '';
       await Promise.all(leftoverContexts.filter(c => createdContexts.has(c)).map(c => c.close()));
@@ -519,9 +519,10 @@ function formatStackFrame(frame: StackFrame) {
 }
 
 function hookType(testInfo: TestInfo): 'beforeAll' | 'afterAll' | undefined {
-  if (testInfo.title.startsWith('beforeAll'))
+  const impl = testInfo as import('./testInfo').TestInfoImpl;
+  if (impl._currentRunnable?.type === 'beforeAll')
     return 'beforeAll';
-  if (testInfo.title.startsWith('afterAll'))
+  if (impl._currentRunnable?.type === 'afterAll')
     return 'afterAll';
 }
 

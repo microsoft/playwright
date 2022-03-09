@@ -61,8 +61,7 @@ class LineReporter extends BaseReporter {
 
   override onTestEnd(test: TestCase, result: TestResult) {
     super.onTestEnd(test, result);
-    if (!test.title.startsWith('beforeAll') && !test.title.startsWith('afterAll'))
-      ++this._current;
+    ++this._current;
     const retriesSuffix = this.totalTestCount < this._current ? ` (retries)` : ``;
     const title = `[${this._current}/${this.totalTestCount}]${retriesSuffix} ${formatTestTitle(this.config, test)}`;
     const suffix = result.retry ? ` (retry #${result.retry})` : '';
