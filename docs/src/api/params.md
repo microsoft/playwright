@@ -902,7 +902,7 @@ Note that outer and inner locators must belong to the same frame. Inner locator 
 - %%-locator-option-has-%%
 
 ## screenshot-option-animations
-- `animations` <"disabled">
+- `animations` <[ScreenshotAnimations]<"disabled">>
 
 When set to `"disabled"`, stops CSS animations, CSS transitions and Web Animations. Animations get different treatment depending on their duration:
 * finite animations are fast-forwarded to completion, so they'll fire `transitionend` event.
