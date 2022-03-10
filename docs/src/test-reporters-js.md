@@ -502,15 +502,17 @@ export default config;
 
 ## Third party showcase
 
-- Allure reporter
+### Allure reporter
 
-  ```bash
-  # Install
-  npm i -D allure-playwright
+```bash
+# Install
+npm i -D allure-playwright
 
-  # Run tests
-  npx playwright test --reporter=line,allure-playwright
+# Run tests
+npx playwright test --reporter=line,allure-playwright
 
-  # Generate report
-  allure generate ./allure-results --clean && allure open ./allure-report
-  ```
+# Generate report
+allure generate ./allure-results --clean && allure open ./allure-report
+```
+
+See [here](https://www.npmjs.com/package/allure-playwright) for more information.
