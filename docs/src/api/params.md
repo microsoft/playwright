@@ -960,7 +960,7 @@ When set to `"css"`, screenshot will have a single pixel per each css pixel on t
 ## screenshot-option-fonts
 - `fonts` <[ScreenshotFonts]<"ready"|"nowait">>
 
-When set to `"ready"`, screenshot will wait for [`document.fonts.ready()`](https://developer.mozilla.org/en-US/docs/Web/API/FontFaceSet/ready) promise to resolve in all frames. Defaults to `"nowait"`.
+When set to `"ready"`, screenshot will wait for [`document.fonts.ready`](https://developer.mozilla.org/en-US/docs/Web/API/FontFaceSet/ready) promise to resolve in all frames. Defaults to `"nowait"`.
 
 ## screenshot-options-common-list
 - %%-screenshot-option-animations-%%
