@@ -107,13 +107,18 @@ Examples:
 async function runTests(args: string[], opts: { [key: string]: any }) {
   await startProfiling();
 
+  const os = require('os');
+  const cpus = os.cpus().length;
+  const isLikelyM1 = os.arch() === 'arm64' && os.platform() === 'darwin';
+  const workers = isLikelyM1 ? cpus : Math.ceil(cpus / 2);
+
   const defaultConfig: Config = {
     preserveOutput: 'always',
     reporter: [ [defaultReporter] ],
     reportSlowTests: { max: 5, threshold: 15000 },
     timeout: defaultTimeout,
     updateSnapshots: 'missing',
-    workers: Math.ceil(require('os').cpus().length / 2),
+    workers,
   };
 
   if (opts.browser) {
