@@ -17,7 +17,7 @@
 
 import { test as it, expect } from './pageTest';
 
-it('should respect first() and last() #smoke', async ({ page }) => {
+it('should respect first() and last() @smoke', async ({ page }) => {
   await page.setContent(`
   <section>
     <div><p>A</p></div>

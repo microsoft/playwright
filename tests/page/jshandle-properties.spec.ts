@@ -18,7 +18,7 @@
 import { test as it, expect } from './pageTest';
 import type { ElementHandle } from 'playwright-core';
 
-it('should work #smoke', async ({ page }) => {
+it('should work @smoke', async ({ page }) => {
   const aHandle = await page.evaluateHandle(() => ({
     one: 1,
     two: 2,

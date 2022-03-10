@@ -19,7 +19,7 @@ import { test as it, expect } from './pageTest';
 
 it.skip(({ isAndroid }) => isAndroid);
 
-it('should emulate type #smoke', async ({ page }) => {
+it('should emulate type @smoke', async ({ page }) => {
   expect(await page.evaluate(() => matchMedia('screen').matches)).toBe(true);
   expect(await page.evaluate(() => matchMedia('print').matches)).toBe(false);
   await page.emulateMedia({ media: 'print' });
@@ -40,7 +40,7 @@ it('should throw in case of bad media argument', async ({ page }) => {
   expect(error.message).toContain('media: expected one of (screen|print|null)');
 });
 
-it('should emulate colorScheme should work #smoke', async ({ page }) => {
+it('should emulate colorScheme should work @smoke', async ({ page }) => {
   await page.emulateMedia({ colorScheme: 'light' });
   expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: light)').matches)).toBe(true);
   expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches)).toBe(false);

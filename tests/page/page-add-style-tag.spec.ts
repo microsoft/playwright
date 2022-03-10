@@ -29,7 +29,7 @@ it('should throw an error if no options are provided', async ({ page, server }) 
   expect(error.message).toContain('Provide an object with a `url`, `path` or `content` property');
 });
 
-it('should work with a url #smoke', async ({ page, server }) => {
+it('should work with a url @smoke', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   const styleHandle = await page.addStyleTag({ url: '/injectedstyle.css' });
   expect(styleHandle.asElement()).not.toBeNull();

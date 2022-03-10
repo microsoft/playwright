@@ -65,7 +65,7 @@ async function routeAmbiguous(page: Page) {
   });
 }
 
-it('should work for iframe #smoke', async ({ page, server }) => {
+it('should work for iframe @smoke', async ({ page, server }) => {
   await routeIframe(page);
   await page.goto(server.EMPTY_PAGE);
   const button = page.frameLocator('iframe').locator('button');

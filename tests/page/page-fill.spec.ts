@@ -24,7 +24,7 @@ async function giveItAChanceToFill(page) {
     await page.evaluate(() => new Promise(f => requestAnimationFrame(() => requestAnimationFrame(f))));
 }
 
-it('should fill textarea #smoke', async ({ page, server }) => {
+it('should fill textarea @smoke', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/textarea.html');
   await page.fill('textarea', 'some value');
   expect(await page.evaluate(() => window['result'])).toBe('some value');

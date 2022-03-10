@@ -508,7 +508,7 @@ it.describe('screencast', () => {
     expect(videoPlayer.videoHeight).toBe(600);
   });
 
-  it('should capture static page in persistent context #smoke', async ({ launchPersistent, browserName, trace }, testInfo) => {
+  it('should capture static page in persistent context @smoke', async ({ launchPersistent, browserName, trace }, testInfo) => {
     it.fixme(browserName === 'firefox' && trace === 'on', 'https://github.com/microsoft/playwright/issues/10060');
     const size = { width: 320, height: 240 };
     const { context, page } = await launchPersistent({

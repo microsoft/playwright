@@ -35,7 +35,7 @@ function dumpFrames(frame: Frame, indentation: string = ''): string[] {
   return result;
 }
 
-it('should handle nested frames #smoke', async ({ page, server, isAndroid }) => {
+it('should handle nested frames @smoke', async ({ page, server, isAndroid }) => {
   it.skip(isAndroid, 'No cross-process on Android');
 
   await page.goto(server.PREFIX + '/frames/nested-frames.html');

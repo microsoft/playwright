@@ -18,7 +18,7 @@
 import { attachFrame, detachFrame } from '../config/utils';
 import { test as it, expect } from './pageTest';
 
-it('should work #smoke', async ({ page }) => {
+it('should work @smoke', async ({ page }) => {
   const result = await page.evaluate(() => 7 * 3);
   expect(result).toBe(21);
 });

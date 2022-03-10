@@ -21,7 +21,7 @@ it('should return no cookies in pristine browser context', async ({ context, pag
   expect(await context.cookies()).toEqual([]);
 });
 
-it('should get a cookie #smoke', async ({ context, page, server, defaultSameSiteCookieValue }) => {
+it('should get a cookie @smoke', async ({ context, page, server, defaultSameSiteCookieValue }) => {
   await page.goto(server.EMPTY_PAGE);
   const documentCookie = await page.evaluate(() => {
     document.cookie = 'username=John Doe';

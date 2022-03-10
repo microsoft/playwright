@@ -17,7 +17,7 @@
 
 import { test as it, expect } from './pageTest';
 
-it('should work #smoke', async ({ page, server }) => {
+it('should work @smoke', async ({ page, server }) => {
   await page.setExtraHTTPHeaders({
     foo: 'bar',
   });

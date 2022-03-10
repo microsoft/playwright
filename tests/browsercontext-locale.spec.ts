@@ -17,7 +17,7 @@
 
 import { browserTest as it, expect } from './config/browserTest';
 
-it('should affect accept-language header #smoke', async ({ browser, server }) => {
+it('should affect accept-language header @smoke', async ({ browser, server }) => {
   const context = await browser.newContext({ locale: 'fr-CH' });
   const page = await context.newPage();
   const [request] = await Promise.all([

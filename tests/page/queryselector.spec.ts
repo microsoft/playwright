@@ -22,7 +22,7 @@ it('should throw for non-string selector', async ({ page }) => {
   expect(error.message).toContain('selector: expected string, got object');
 });
 
-it('should query existing element with css selector #smoke', async ({ page, server }) => {
+it('should query existing element with css selector @smoke', async ({ page, server }) => {
   await page.setContent('<section>test</section>');
   const element = await page.$('css=section');
   expect(element).toBeTruthy();

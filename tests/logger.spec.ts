@@ -16,7 +16,7 @@
 
 import { playwrightTest as it, expect } from './config/browserTest';
 
-it('should log #smoke', async ({ browserType }) => {
+it('should log @smoke', async ({ browserType }) => {
   const log = [];
   const browser = await browserType.launch({ logger: {
     log: (name, severity, message) => log.push({ name, severity, message }),

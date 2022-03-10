@@ -20,7 +20,7 @@ import os from 'os';
 import { test as it, expect } from './pageTest';
 import { expectedSSLError } from '../config/utils';
 
-it('should work #smoke', async ({ page, server }) => {
+it('should work @smoke', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   expect(page.url()).toBe(server.EMPTY_PAGE);
 });

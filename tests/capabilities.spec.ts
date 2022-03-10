@@ -18,7 +18,7 @@ import os from 'os';
 import url from 'url';
 import { contextTest as it, expect } from './config/browserTest';
 
-it('SharedArrayBuffer should work #smoke', async function({ contextFactory, httpsServer, browserName }) {
+it('SharedArrayBuffer should work @smoke', async function({ contextFactory, httpsServer, browserName }) {
   it.fail(browserName === 'webkit', 'no shared array buffer on webkit');
   const context = await contextFactory({ ignoreHTTPSErrors: true });
   const page = await context.newPage();
@@ -31,14 +31,14 @@ it('SharedArrayBuffer should work #smoke', async function({ contextFactory, http
   expect(await page.evaluate(() => typeof SharedArrayBuffer)).toBe('function');
 });
 
-it('Web Assembly should work #smoke', async function({ page, server, browserName, platform }) {
+it('Web Assembly should work @smoke', async function({ page, server, browserName, platform }) {
   it.fail(browserName === 'webkit' && platform === 'win32');
 
   await page.goto(server.PREFIX + '/wasm/table2.html');
   expect(await page.evaluate('loadTable()')).toBe('42, 83');
 });
 
-it('WebSocket should work #smoke', async ({ page, server }) => {
+it('WebSocket should work @smoke', async ({ page, server }) => {
   server.sendOnWebSocketConnection('incoming');
   const value = await page.evaluate(port => {
     let cb;
@@ -51,7 +51,7 @@ it('WebSocket should work #smoke', async ({ page, server }) => {
   expect(value).toBe('incoming');
 });
 
-it('should respect CSP #smoke', async ({ page, server }) => {
+it('should respect CSP @smoke', async ({ page, server }) => {
   server.setRoute('/empty.html', async (req, res) => {
     res.setHeader('Content-Security-Policy', `script-src 'unsafe-inline';`);
     res.end(`
@@ -65,7 +65,7 @@ it('should respect CSP #smoke', async ({ page, server }) => {
   expect(await page.evaluate(() => window['testStatus'])).toBe('SUCCESS');
 });
 
-it('should play video #smoke', async ({ page, asset, browserName, platform }) => {
+it('should play video @smoke', async ({ page, asset, browserName, platform }) => {
   // TODO: the test passes on Windows locally but fails on GitHub Action bot,
   // apparently due to a Media Pack issue in the Windows Server.
   // Also the test is very flaky on Linux WebKit.
@@ -83,7 +83,7 @@ it('should play video #smoke', async ({ page, asset, browserName, platform }) =>
   await page.$eval('video', v => v.pause());
 });
 
-it('should play audio #smoke', async ({ page, server, browserName, platform }) => {
+it('should play audio @smoke', async ({ page, server, browserName, platform }) => {
   it.fixme(browserName === 'firefox' && platform === 'win32', 'https://github.com/microsoft/playwright/issues/10887');
   it.fixme(browserName === 'firefox' && platform === 'linux', 'https://github.com/microsoft/playwright/issues/10887');
   it.fixme(browserName === 'webkit' && platform === 'win32', 'https://github.com/microsoft/playwright/issues/10892');
@@ -95,7 +95,7 @@ it('should play audio #smoke', async ({ page, server, browserName, platform }) =
   expect(await page.$eval('audio', e => e.currentTime)).toBeGreaterThan(0.2);
 });
 
-it('should support webgl #smoke', async ({ page, browserName, headless }) => {
+it('should support webgl @smoke', async ({ page, browserName, headless }) => {
   it.fixme(browserName === 'firefox' && headless);
 
   const hasWebGL = await page.evaluate(() => {
@@ -105,7 +105,7 @@ it('should support webgl #smoke', async ({ page, browserName, headless }) => {
   expect(hasWebGL).toBe(true);
 });
 
-it('should support webgl 2 #smoke', async ({ page, browserName, headless }) => {
+it('should support webgl 2 @smoke', async ({ page, browserName, headless }) => {
   it.skip(browserName === 'webkit', 'WebKit doesn\'t have webgl2 enabled yet upstream.');
   it.fixme(browserName === 'firefox' && headless);
   it.fixme(browserName === 'chromium' && !headless, 'chromium doesn\'t like webgl2 when running under xvfb');
@@ -117,7 +117,7 @@ it('should support webgl 2 #smoke', async ({ page, browserName, headless }) => {
   expect(hasWebGL2).toBe(true);
 });
 
-it('should not crash on page with mp4 #smoke', async ({ page, server, platform, browserName }) => {
+it('should not crash on page with mp4 @smoke', async ({ page, server, platform, browserName }) => {
   it.fixme(browserName === 'webkit' && platform === 'win32', 'https://github.com/microsoft/playwright/issues/11009, times out in setContent');
   it.fixme(browserName === 'firefox', 'https://bugzilla.mozilla.org/show_bug.cgi?id=1697004');
   await page.setContent(`<video><source src="${server.PREFIX}/movie.mp4"/></video>`);

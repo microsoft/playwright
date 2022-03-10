@@ -39,7 +39,7 @@ it('should work for promises', async ({ page }) => {
   expect(bHandle.toString()).toBe('Promise');
 });
 
-it('should work with different subtypes #smoke', async ({ page, browserName }) => {
+it('should work with different subtypes @smoke', async ({ page, browserName }) => {
   expect((await page.evaluateHandle('(function(){})')).toString()).toContain('function');
   expect((await page.evaluateHandle('12')).toString()).toBe('12');
   expect((await page.evaluateHandle('true')).toString()).toBe('true');

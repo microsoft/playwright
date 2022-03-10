@@ -17,7 +17,7 @@
 
 import { browserTest as it, expect } from './config/browserTest';
 
-it('should work #smoke', async ({ server, contextFactory }) => {
+it('should work @smoke', async ({ server, contextFactory }) => {
   const context = await contextFactory();
   const page = await context.newPage();
   await context.grantPermissions(['geolocation']);
