@@ -61,7 +61,7 @@ title: "Release notes"
   };
   ```
 
-- [Trace Viewer](./trace-viewer) now shows [API testing requests](./src/test-api-testing).
+- [Trace Viewer](./trace-viewer) now shows [API testing requests](./test-api-testing).
 - `expect().toMatchSnapshot()` now supports anonymous snapshots: when snapshot name is missing, Playwright Test will generate one
   automatically:
 
