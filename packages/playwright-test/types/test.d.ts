@@ -190,7 +190,7 @@ interface TestProject {
    *
    * ```
    * smoke-tests/
-   * └── sanity.spec.ts
+   * └── basic.spec.ts
    * ```
    *
    * will result in the following screenshots folder structure:
@@ -200,11 +200,11 @@ interface TestProject {
    * └── darwin/
    *     ├── Mobile Safari/
    *     │   └── smoke-tests/
-   *     │       └── sanity.spec.ts/
+   *     │       └── basic.spec.ts/
    *     │           └── screenshot-expectation.png
    *     └── Desktop Chrome/
    *         └── smoke-tests/
-   *             └── sanity.spec.ts/
+   *             └── basic.spec.ts/
    *                 └── screenshot-expectation.png
    * ```
    *
@@ -783,7 +783,7 @@ interface TestConfig {
    *
    * ```
    * smoke-tests/
-   * └── sanity.spec.ts
+   * └── basic.spec.ts
    * ```
    *
    * will result in the following screenshots folder structure:
@@ -793,11 +793,11 @@ interface TestConfig {
    * └── darwin/
    *     ├── Mobile Safari/
    *     │   └── smoke-tests/
-   *     │       └── sanity.spec.ts/
+   *     │       └── basic.spec.ts/
    *     │           └── screenshot-expectation.png
    *     └── Desktop Chrome/
    *         └── smoke-tests/
-   *             └── sanity.spec.ts/
+   *             └── basic.spec.ts/
    *                 └── screenshot-expectation.png
    * ```
    *

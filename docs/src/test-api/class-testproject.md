@@ -165,7 +165,7 @@ This path will serve as the base directory for each test file screenshot directo
 
 ```
 smoke-tests/
-└── sanity.spec.ts
+└── basic.spec.ts
 ```
 
 will result in the following screenshots folder structure:
@@ -175,11 +175,11 @@ __screenshots__/
 └── darwin/
     ├── Mobile Safari/
     │   └── smoke-tests/
-    │       └── sanity.spec.ts/
+    │       └── basic.spec.ts/
     │           └── screenshot-expectation.png
     └── Desktop Chrome/
         └── smoke-tests/
-            └── sanity.spec.ts/
+            └── basic.spec.ts/
                 └── screenshot-expectation.png
 ```
 
