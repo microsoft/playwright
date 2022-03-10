@@ -556,7 +556,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     screenshotOptions: tOptional(tObject({
       omitBackground: tOptional(tBoolean),
       fullPage: tOptional(tBoolean),
-      animations: tOptional(tEnum(['disabled'])),
+      animations: tOptional(tEnum(['disabled', 'allow'])),
       clip: tOptional(tType('Rect')),
       mask: tOptional(tArray(tObject({
         frame: tChannel('Frame'),
@@ -570,7 +570,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     quality: tOptional(tNumber),
     omitBackground: tOptional(tBoolean),
     fullPage: tOptional(tBoolean),
-    animations: tOptional(tEnum(['disabled'])),
+    animations: tOptional(tEnum(['disabled', 'allow'])),
     clip: tOptional(tType('Rect')),
     size: tOptional(tEnum(['css', 'device'])),
     mask: tOptional(tArray(tObject({
@@ -1066,7 +1066,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     type: tOptional(tEnum(['png', 'jpeg'])),
     quality: tOptional(tNumber),
     omitBackground: tOptional(tBoolean),
-    animations: tOptional(tEnum(['disabled'])),
+    animations: tOptional(tEnum(['disabled', 'allow'])),
     size: tOptional(tEnum(['css', 'device'])),
     mask: tOptional(tArray(tObject({
       frame: tChannel('Frame'),

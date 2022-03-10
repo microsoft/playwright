@@ -1503,7 +1503,7 @@ export type PageExpectScreenshotParams = {
   screenshotOptions?: {
     omitBackground?: boolean,
     fullPage?: boolean,
-    animations?: 'disabled',
+    animations?: 'disabled' | 'allow',
     clip?: Rect,
     mask?: {
       frame: FrameChannel,
@@ -1526,7 +1526,7 @@ export type PageExpectScreenshotOptions = {
   screenshotOptions?: {
     omitBackground?: boolean,
     fullPage?: boolean,
-    animations?: 'disabled',
+    animations?: 'disabled' | 'allow',
     clip?: Rect,
     mask?: {
       frame: FrameChannel,
@@ -1547,7 +1547,7 @@ export type PageScreenshotParams = {
   quality?: number,
   omitBackground?: boolean,
   fullPage?: boolean,
-  animations?: 'disabled',
+  animations?: 'disabled' | 'allow',
   clip?: Rect,
   size?: 'css' | 'device',
   mask?: {
@@ -1561,7 +1561,7 @@ export type PageScreenshotOptions = {
   quality?: number,
   omitBackground?: boolean,
   fullPage?: boolean,
-  animations?: 'disabled',
+  animations?: 'disabled' | 'allow',
   clip?: Rect,
   size?: 'css' | 'device',
   mask?: {
@@ -2862,7 +2862,7 @@ export type ElementHandleScreenshotParams = {
   type?: 'png' | 'jpeg',
   quality?: number,
   omitBackground?: boolean,
-  animations?: 'disabled',
+  animations?: 'disabled' | 'allow',
   size?: 'css' | 'device',
   mask?: {
     frame: FrameChannel,
@@ -2874,7 +2874,7 @@ export type ElementHandleScreenshotOptions = {
   type?: 'png' | 'jpeg',
   quality?: number,
   omitBackground?: boolean,
-  animations?: 'disabled',
+  animations?: 'disabled' | 'allow',
   size?: 'css' | 'device',
   mask?: {
     frame: FrameChannel,
