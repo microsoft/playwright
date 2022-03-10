@@ -41,7 +41,6 @@ browserTest.describe('page screenshot', () => {
 
   browserTest('should work with a mobile viewport', async ({ browser, server, browserName }) => {
     browserTest.skip(browserName === 'firefox');
-    browserTest.fixme(browserName === 'chromium');
 
     const context = await browser.newContext({ viewport: { width: 320, height: 480 }, isMobile: true });
     const page = await context.newPage();
@@ -53,7 +52,6 @@ browserTest.describe('page screenshot', () => {
 
   browserTest('should work with a mobile viewport and clip', async ({ browser, server, browserName, channel }) => {
     browserTest.skip(browserName === 'firefox');
-    browserTest.skip(!!channel, 'Different result in stable/beta');
 
     const context = await browser.newContext({ viewport: { width: 320, height: 480 }, isMobile: true });
     const page = await context.newPage();
@@ -80,6 +78,33 @@ browserTest.describe('page screenshot', () => {
     await page.goto(server.PREFIX + '/grid.html');
     const screenshot = await page.screenshot();
     expect(screenshot).toMatchSnapshot('screenshot-device-scale-factor.png');
+    await context.close();
+  });
+
+  browserTest('should work with device scale factor and clip', async ({ browser, server }) => {
+    const context = await browser.newContext({ viewport: { width: 500, height: 500 }, deviceScaleFactor: 3 });
+    const page = await context.newPage();
+    await page.goto(server.PREFIX + '/grid.html');
+    const screenshot = await page.screenshot({ clip: { x: 50, y: 100, width: 150, height: 100 } });
+    expect(screenshot).toMatchSnapshot('screenshot-device-scale-factor-clip.png');
+    await context.close();
+  });
+
+  browserTest('should work with device scale factor and size:css', async ({ browser, server }) => {
+    const context = await browser.newContext({ viewport: { width: 320, height: 480 }, deviceScaleFactor: 2 });
+    const page = await context.newPage();
+    await page.goto(server.PREFIX + '/grid.html');
+    const screenshot = await page.screenshot({ size: 'css' });
+    expect(screenshot).toMatchSnapshot('screenshot-device-scale-factor-css-size.png');
+    await context.close();
+  });
+
+  browserTest('should work with device scale factor, clip and size:css', async ({ browser, server }) => {
+    const context = await browser.newContext({ viewport: { width: 500, height: 500 }, deviceScaleFactor: 3 });
+    const page = await context.newPage();
+    await page.goto(server.PREFIX + '/grid.html');
+    const screenshot = await page.screenshot({ clip: { x: 50, y: 100, width: 150, height: 100 }, size: 'css' });
+    expect(screenshot).toMatchSnapshot('screenshot-device-scale-factor-clip-css-size.png');
     await context.close();
   });
 
@@ -344,5 +369,55 @@ browserTest.describe('element screenshot', () => {
     } finally {
       await page.close();
     }
+  });
+
+  browserTest('should capture full element when larger than viewport with device scale factor', async ({ browser }) => {
+    const context = await browser.newContext({ viewport: { width: 501, height: 501 }, deviceScaleFactor: 2.5 });
+    const page = await context.newPage();
+    await page.setContent(`
+      <div style="height: 14px">oooo</div>
+      <style>
+      div.to-screenshot {
+        border: 4px solid red;
+        box-sizing: border-box;
+        width: 600px;
+        height: 600px;
+        margin-left: 50px;
+        background: rgb(0, 100, 200);
+      }
+      ::-webkit-scrollbar{
+        display: none;
+      }
+      </style>
+      <div class="to-screenshot"></div>
+    `);
+    const screenshot = await page.locator('div.to-screenshot').screenshot();
+    expect(screenshot).toMatchSnapshot('element-larger-than-viewport-dsf.png');
+    await context.close();
+  });
+
+  browserTest('should capture full element when larger than viewport with device scale factor and size:css', async ({ browser }) => {
+    const context = await browser.newContext({ viewport: { width: 501, height: 501 }, deviceScaleFactor: 2.5 });
+    const page = await context.newPage();
+    await page.setContent(`
+      <div style="height: 14px">oooo</div>
+      <style>
+      div.to-screenshot {
+        border: 4px solid red;
+        box-sizing: border-box;
+        width: 600px;
+        height: 600px;
+        margin-left: 50px;
+        background: rgb(0, 100, 200);
+      }
+      ::-webkit-scrollbar{
+        display: none;
+      }
+      </style>
+      <div class="to-screenshot"></div>
+    `);
+    const screenshot = await page.locator('div.to-screenshot').screenshot({ size: 'css' });
+    expect(screenshot).toMatchSnapshot('element-larger-than-viewport-dsf-css-size.png');
+    await context.close();
   });
 });

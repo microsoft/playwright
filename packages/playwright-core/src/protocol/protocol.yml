@@ -1050,6 +1050,11 @@ Page:
           literals:
           - disabled
         clip: Rect?
+        size:
+          type: enum?
+          literals:
+          - css
+          - device
         mask:
           type: array?
           items:
@@ -2214,6 +2219,11 @@ ElementHandle:
           type: enum?
           literals:
           - disabled
+        size:
+          type: enum?
+          literals:
+          - css
+          - device
         mask:
           type: array?
           items:
