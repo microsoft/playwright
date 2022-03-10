@@ -805,7 +805,6 @@ A permission or an array of permissions to grant. Permissions can be one of the 
 * `'midi'`
 * `'midi-sysex'` (system-exclusive midi)
 * `'notifications'`
-* `'push'`
 * `'camera'`
 * `'microphone'`
 * `'background-sync'`
