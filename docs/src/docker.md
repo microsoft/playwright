@@ -22,7 +22,7 @@ docker pull mcr.microsoft.com/playwright/python:focal
 ```
 
 ```bash csharp
-docker pull mcr.microsoft.com/playwright:focal
+docker pull mcr.microsoft.com/playwright/dotnet:focal
 ```
 
 ```bash java
@@ -64,7 +64,7 @@ docker run -it --rm --ipc=host mcr.microsoft.com/playwright/python:focal /bin/ba
 ```
 
 ```bash csharp
-docker run -it --rm --ipc=host mcr.microsoft.com/playwright:focal /bin/bash
+docker run -it --rm --ipc=host mcr.microsoft.com/playwright/dotnet:focal /bin/bash
 ```
 
 ```bash java
@@ -84,7 +84,7 @@ docker run -it --rm --ipc=host --user pwuser --security-opt seccomp=seccomp_prof
 ```
 
 ```bash csharp
-docker run -it --rm --ipc=host --user pwuser --security-opt seccomp=seccomp_profile.json mcr.microsoft.com/playwright:focal /bin/bash
+docker run -it --rm --ipc=host --user pwuser --security-opt seccomp=seccomp_profile.json mcr.microsoft.com/playwright/dotnet:focal /bin/bash
 ```
 
 ```bash java
@@ -139,7 +139,7 @@ Status of push to MCR can be [verified here](https://mcrflow-status-ui.azurewebs
 
 We currently publish images based on the following [Ubuntu](https://hub.docker.com/_/ubuntu) versions:
 - **Ubuntu 20.04 LTS** (Focal Fossa), image tags include `focal`
-- **Ubuntu 18.04 LTS** (Bionic Beaver), image tags include `bionic` (not published for Java)
+- **Ubuntu 18.04 LTS** (Bionic Beaver), image tags include `bionic` (not published for Java and .NET)
 
 #### Alpine
 
