@@ -91,7 +91,8 @@ function findFocusedNode(node) {
     return node;
   for (const child of node.children || []) {
     const foundNode = findFocusedNode(child);
-    return foundNode;
+    if (foundNode)
+      return foundNode;
   }
   return null;
 }
@@ -113,7 +114,8 @@ def find_focused_node(node):
         return node
     for child in (node.get("children") or []):
         found_node = find_focused_node(child)
-        return found_node
+        if (found_node)
+            return found_node
     return None
 
 snapshot = await page.accessibility.snapshot()
@@ -128,7 +130,8 @@ def find_focused_node(node):
         return node
     for child in (node.get("children") or []):
         found_node = find_focused_node(child)
-        return found_node
+        if (found_node)
+            return found_node
     return None
 
 snapshot = page.accessibility.snapshot()
