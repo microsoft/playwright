@@ -8070,8 +8070,10 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
      * depending on their duration:
      * - finite animations are fast-forwarded to completion, so they'll fire `transitionend` event.
      * - infinite animations are canceled to initial state, and then played over after the screenshot.
+     *
+     * Defaults to `"allow"`.
      */
-    animations?: "disabled";
+    animations?: "disabled"|"allow";
 
     /**
      * Specify locators that should be masked when the screenshot is taken. Masked elements will be overlayed with a pink box
@@ -15591,8 +15593,10 @@ export interface LocatorScreenshotOptions {
    * depending on their duration:
    * - finite animations are fast-forwarded to completion, so they'll fire `transitionend` event.
    * - infinite animations are canceled to initial state, and then played over after the screenshot.
+   *
+   * Defaults to `"allow"`.
    */
-  animations?: "disabled";
+  animations?: "disabled"|"allow";
 
   /**
    * Specify locators that should be masked when the screenshot is taken. Masked elements will be overlayed with a pink box
@@ -15735,8 +15739,10 @@ export interface PageScreenshotOptions {
    * depending on their duration:
    * - finite animations are fast-forwarded to completion, so they'll fire `transitionend` event.
    * - infinite animations are canceled to initial state, and then played over after the screenshot.
+   *
+   * Defaults to `"allow"`.
    */
-  animations?: "disabled";
+  animations?: "disabled"|"allow";
 
   /**
    * An object which specifies clipping of the resulting image. Should have the following fields:
