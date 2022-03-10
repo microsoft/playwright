@@ -288,7 +288,7 @@ export class TestInfoImpl implements TestInfo {
     const screenshotPath = getContainedPath(this._screenshotsDir, subPath);
     if (screenshotPath)
       return screenshotPath;
-    throw new Error(`The screenshotPath is not allowed outside of the parent directory. Please fix the defined path.\n\n\tscreenshotPath: ${subPath}`);
+    throw new Error(`Screenshot name "${subPath}" should not point outside of the parent directory.`);
   }
 
   skip(...args: [arg?: any, description?: string]) {
