@@ -1550,6 +1550,7 @@ export type PageScreenshotParams = {
   animations?: 'disabled',
   clip?: Rect,
   size?: 'css' | 'device',
+  fonts?: 'ready' | 'nowait',
   mask?: {
     frame: FrameChannel,
     selector: string,
@@ -1564,6 +1565,7 @@ export type PageScreenshotOptions = {
   animations?: 'disabled',
   clip?: Rect,
   size?: 'css' | 'device',
+  fonts?: 'ready' | 'nowait',
   mask?: {
     frame: FrameChannel,
     selector: string,
@@ -2864,6 +2866,7 @@ export type ElementHandleScreenshotParams = {
   omitBackground?: boolean,
   animations?: 'disabled',
   size?: 'css' | 'device',
+  fonts?: 'ready' | 'nowait',
   mask?: {
     frame: FrameChannel,
     selector: string,
@@ -2876,6 +2879,7 @@ export type ElementHandleScreenshotOptions = {
   omitBackground?: boolean,
   animations?: 'disabled',
   size?: 'css' | 'device',
+  fonts?: 'ready' | 'nowait',
   mask?: {
     frame: FrameChannel,
     selector: string,

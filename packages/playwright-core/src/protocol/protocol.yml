@@ -1055,6 +1055,11 @@ Page:
           literals:
           - css
           - device
+        fonts:
+          type: enum?
+          literals:
+          - ready
+          - nowait
         mask:
           type: array?
           items:
@@ -2224,6 +2229,11 @@ ElementHandle:
           literals:
           - css
           - device
+        fonts:
+          type: enum?
+          literals:
+          - ready
+          - nowait
         mask:
           type: array?
           items:

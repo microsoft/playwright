@@ -710,5 +710,27 @@ it.describe('page screenshot animations', () => {
       'onfinish', 'animationend'
     ]);
   });
+
+  it('should respect fonts option', async ({ page, server }) => {
+    await page.setViewportSize({ width: 500, height: 500 });
+    let serverRequest, serverResponse;
+    // Stall font loading.
+    server.setRoute('/webfont/iconfont.woff2', (req, res) => {
+      serverRequest = req;
+      serverResponse = res;
+    });
+    await page.goto(server.PREFIX + '/webfont/webfont.html', {
+      waitUntil: 'domcontentloaded', // 'load' will not happen if webfont is pending
+    });
+    // Make sure we can take screenshot.
+    const noIconsScreenshot = await page.screenshot();
+    const [iconsScreenshot] = await Promise.all([
+      page.screenshot({ fonts: 'ready' }),
+      server.serveFile(serverRequest, serverResponse),
+    ]);
+    expect(iconsScreenshot).toMatchSnapshot('screenshot-web-font.png');
+    expect(noIconsScreenshot).not.toMatchSnapshot('screenshot-web-font.png');
+  });
+
 });
 

@@ -41,6 +41,7 @@ export type ScreenshotOptions = {
   fullPage?: boolean,
   clip?: Rect,
   size?: 'css' | 'device',
+  fonts?: 'ready' | 'nowait',
 };
 
 export class Screenshotter {
@@ -84,7 +85,7 @@ export class Screenshotter {
     const format = validateScreenshotOptions(options);
     return this._queue.postTask(async () => {
       const { viewportSize } = await this._originalViewportSize(progress);
-      await this._preparePageForScreenshot(progress, options.animations === 'disabled');
+      await this._preparePageForScreenshot(progress, options.animations === 'disabled', options.fonts === 'ready');
       progress.throwIfAborted(); // Avoid restoring after failure - should be done by cleanup.
 
       if (options.fullPage) {
@@ -112,7 +113,7 @@ export class Screenshotter {
     return this._queue.postTask(async () => {
       const { viewportSize } = await this._originalViewportSize(progress);
 
-      await this._preparePageForScreenshot(progress, options.animations === 'disabled');
+      await this._preparePageForScreenshot(progress, options.animations === 'disabled', options.fonts === 'ready');
       progress.throwIfAborted(); // Do not do extra work.
 
       await handle._waitAndScrollIntoViewIfNeeded(progress);
@@ -136,9 +137,9 @@ export class Screenshotter {
     });
   }
 
-  async _preparePageForScreenshot(progress: Progress, disableAnimations: boolean) {
+  async _preparePageForScreenshot(progress: Progress, disableAnimations: boolean, waitForFonts: boolean) {
     await Promise.all(this._page.frames().map(async frame => {
-      await frame.nonStallingEvaluateInExistingContext('(' + (function(disableAnimations: boolean) {
+      await frame.nonStallingEvaluateInExistingContext('(' + (async function(disableAnimations: boolean, waitForFonts: boolean) {
         const styleTag = document.createElement('style');
         styleTag.textContent = `
           *:not(#playwright-aaaaaaaaaa.playwright-bbbbbbbbbbb.playwright-cccccccccc.playwright-dddddddddd.playwright-eeeeeeeee) {
@@ -212,7 +213,10 @@ export class Screenshotter {
             cleanupCallback();
           delete window.__cleanupScreenshot;
         };
-      }).toString() + `)(${disableAnimations || false})`, false, 'utility').catch(() => {});
+
+        if (waitForFonts)
+          await document.fonts.ready;
+      }).toString() + `)(${disableAnimations}, ${waitForFonts})`, false, 'utility').catch(() => {});
     }));
     progress.cleanupWhenAborted(() => this._restorePageAfterScreenshot());
   }
