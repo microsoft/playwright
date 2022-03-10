@@ -17,7 +17,7 @@
 
 import { test as it, expect } from './pageTest';
 
-it('should work with function #smoke', async ({ page }) => {
+it('should work with function @smoke', async ({ page }) => {
   const windowHandle = await page.evaluateHandle(() => {
     window['foo'] = [1, 2];
     return window;

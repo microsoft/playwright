@@ -25,7 +25,7 @@ it.describe('page screenshot', () => {
   it.skip(({ browserName, headless }) => browserName === 'firefox' && !headless, 'Firefox headed produces a different image.');
   it.skip(({ isAndroid }) => isAndroid, 'Different viewport');
 
-  it('should work #smoke', async ({ page, server }) => {
+  it('should work @smoke', async ({ page, server }) => {
     await page.setViewportSize({ width: 500, height: 500 });
     await page.goto(server.PREFIX + '/grid.html');
     const screenshot = await page.screenshot();

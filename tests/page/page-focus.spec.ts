@@ -16,7 +16,7 @@
 
 import { test as it, expect } from './pageTest';
 
-it('should work #smoke', async function({ page, browserName }) {
+it('should work @smoke', async function({ page, browserName }) {
   it.skip(browserName === 'firefox');
 
   await page.setContent(`<div id=d1 tabIndex=0></div>`);

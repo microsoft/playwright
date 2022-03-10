@@ -17,7 +17,7 @@
 
 import { test as it, expect } from './pageTest';
 
-it('should press #smoke', async ({ page }) => {
+it('should press @smoke', async ({ page }) => {
   await page.setContent(`<input type='text' />`);
   await page.locator('input').press('h');
   expect(await page.$eval('input', input => input.value)).toBe('h');

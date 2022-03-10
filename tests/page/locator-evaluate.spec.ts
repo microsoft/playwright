@@ -17,7 +17,7 @@
 
 import { test as it, expect } from './pageTest';
 
-it('should work #smoke', async ({ page, server }) => {
+it('should work @smoke', async ({ page, server }) => {
   await page.setContent('<html><body><div class="tweet"><div class="like">100</div><div class="retweets">10</div></div></body></html>');
   const tweet = page.locator('.tweet .like');
   const content = await tweet.evaluate(node => (node as HTMLElement).innerText);

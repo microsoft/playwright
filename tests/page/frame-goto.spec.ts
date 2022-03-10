@@ -18,7 +18,7 @@
 import { test as it, expect } from './pageTest';
 import { attachFrame } from '../config/utils';
 
-it('should navigate subframes #smoke', async ({ page, server }) => {
+it('should navigate subframes @smoke', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/frames/one-frame.html');
   expect(page.frames()[0].url()).toContain('/frames/one-frame.html');
   expect(page.frames()[1].url()).toContain('/frames/frame.html');

@@ -27,7 +27,7 @@ function dimensions() {
   };
 }
 
-it('should click the document #smoke', async ({ page, server }) => {
+it('should click the document @smoke', async ({ page, server }) => {
   await page.evaluate(() => {
     window['clickPromise'] = new Promise(resolve => {
       document.addEventListener('click', event => {

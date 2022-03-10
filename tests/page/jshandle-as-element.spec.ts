@@ -17,7 +17,7 @@
 
 import { test, expect } from './pageTest';
 
-test('should work #smoke', async ({ page }) => {
+test('should work @smoke', async ({ page }) => {
   const aHandle = await page.evaluateHandle(() => document.body);
   const element = aHandle.asElement();
   expect(element).toBeTruthy();

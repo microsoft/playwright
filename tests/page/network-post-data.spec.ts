@@ -36,7 +36,7 @@ it('should return correct postData buffer for utf-8 body', async ({ page, server
   expect(request.postDataJSON()).toBe(value);
 });
 
-it('should return post data w/o content-type #smoke', async ({ page, server }) => {
+it('should return post data w/o content-type @smoke', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   const [request] = await Promise.all([
     page.waitForRequest('**'),

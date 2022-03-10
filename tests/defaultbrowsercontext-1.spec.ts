@@ -19,7 +19,7 @@ import { playwrightTest as it, expect } from './config/browserTest';
 import { verifyViewport } from './config/utils';
 import fs from 'fs';
 
-it('context.cookies() should work #smoke', async ({ server, launchPersistent, defaultSameSiteCookieValue }) => {
+it('context.cookies() should work @smoke', async ({ server, launchPersistent, defaultSameSiteCookieValue }) => {
   const { page } = await launchPersistent();
   await page.goto(server.EMPTY_PAGE);
   const documentCookie = await page.evaluate(() => {

@@ -17,7 +17,7 @@
 
 import { contextTest as it, playwrightTest, expect } from './config/browserTest';
 
-it('should work #smoke', async ({ context, page, server }) => {
+it('should work @smoke', async ({ context, page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   await context.addCookies([{
     url: server.EMPTY_PAGE,

@@ -36,7 +36,7 @@ it('should upload the file', async ({ page, server, asset }) => {
   }, input)).toBe('contents of the file');
 });
 
-it('should work #smoke', async ({ page, asset }) => {
+it('should work @smoke', async ({ page, asset }) => {
   await page.setContent(`<input type=file>`);
   await page.setInputFiles('input', asset('file-to-upload.txt'));
   expect(await page.$eval('input', input => input.files.length)).toBe(1);

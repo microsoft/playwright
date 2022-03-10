@@ -17,7 +17,7 @@
 
 import { browserTest as it, expect } from './config/browserTest';
 
-it('should construct a new URL when a baseURL in browser.newContext is passed to page.goto #smoke', async function({ browser, server }) {
+it('should construct a new URL when a baseURL in browser.newContext is passed to page.goto @smoke', async function({ browser, server }) {
   const context = await browser.newContext({
     baseURL: server.PREFIX,
   });

@@ -17,7 +17,7 @@
 
 import { test as it, expect } from './pageTest';
 
-it('should query existing element #smoke', async ({ page, server }) => {
+it('should query existing element @smoke', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/playground.html');
   await page.setContent('<html><body><div class="second"><div class="inner">A</div></div></body></html>');
   const html = page.locator('html');

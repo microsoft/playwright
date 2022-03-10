@@ -19,7 +19,7 @@ import { test as it, expect } from './pageTest';
 import { globToRegex } from '../../packages/playwright-core/lib/client/clientHelper';
 import vm from 'vm';
 
-it('should work with navigation #smoke', async ({ page, server }) => {
+it('should work with navigation @smoke', async ({ page, server }) => {
   const requests = new Map();
   await page.route('**/*', route => {
     requests.set(route.request().url().split('/').pop(), route.request());

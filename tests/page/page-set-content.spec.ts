@@ -19,7 +19,7 @@ import { test as it, expect } from './pageTest';
 
 const expectedOutput = '<html><head></head><body><div>hello</div></body></html>';
 
-it('should work #smoke', async ({ page, server }) => {
+it('should work @smoke', async ({ page, server }) => {
   await page.setContent('<div>hello</div>');
   const result = await page.content();
   expect(result).toBe(expectedOutput);

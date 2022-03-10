@@ -35,7 +35,7 @@ it('should work for subframe navigation request', async ({ page, server }) => {
   expect(requests[0].frame()).toBe(page.frames()[1]);
 });
 
-it('should work for fetch requests #smoke', async ({ page, server }) => {
+it('should work for fetch requests @smoke', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   const requests = [];
   page.on('request', request => requests.push(request));
