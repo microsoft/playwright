@@ -59,54 +59,25 @@ test('screenshotPath should include platform and project name by default', async
       }],
     }),
     'a.spec.js': `
-      pwt.test('is a test', async ({}, testInfo) => {
-        console.log('%% A' + testInfo.screenshotPath('snapshot.png'));
+      pwt.test('is a test', async ({ page }, testInfo) => {
+        await pwt.expect(page).toHaveScreenshot('snapshot.png');
       });
     `,
     'foo/b.spec.js': `
-      pwt.test('is a test', async ({}, testInfo) => {
-        console.log('%% B' + testInfo.screenshotPath('snapshot.png'));
+      pwt.test('is a test', async ({ page }, testInfo) => {
+        await pwt.expect(page).toHaveScreenshot('snapshot.png');
       });
     `,
     'foo/bar/baz/c.spec.js': `
-      pwt.test('is a test', async ({}, testInfo) => {
-        console.log('%% C' + testInfo.screenshotPath('snapshot.png'));
+      pwt.test('is a test', async ({ page }, testInfo) => {
+        await pwt.expect(page).toHaveScreenshot('snapshot.png');
       });
     `,
-  }, { reporter: '' });
+  }, { 'update-snapshots': true });
   expect(result.exitCode).toBe(0);
-  const screenshotPaths = stripAnsi(result.output)
-      .split('\n')
-      .filter(line => line.startsWith('%% '))
-      .sort()
-      .map(line => line.substring(4));
-  expect(screenshotPaths.map(screenshotPath => path.relative(testInfo.outputPath(), screenshotPath).split(path.sep))).toEqual([
-    [
-      '__screenshots__',
-      process.platform,
-      PROJECT_NAME,
-      'a.spec.js',
-      'snapshot.png',
-    ],
-    [
-      '__screenshots__',
-      process.platform,
-      PROJECT_NAME,
-      'foo',
-      'b.spec.js',
-      'snapshot.png',
-    ],
-    [
-      '__screenshots__',
-      process.platform,
-      PROJECT_NAME,
-      'foo',
-      'bar',
-      'baz',
-      'c.spec.js',
-      'snapshot.png',
-    ],
-  ]);
+  expect(fs.existsSync(testInfo.outputPath('__screenshots__', process.platform, PROJECT_NAME, 'a.spec.js', 'snapshot.png'))).toBeTruthy();
+  expect(fs.existsSync(testInfo.outputPath('__screenshots__', process.platform, PROJECT_NAME, 'foo', 'b.spec.js', 'snapshot.png'))).toBeTruthy();
+  expect(fs.existsSync(testInfo.outputPath('__screenshots__', process.platform, PROJECT_NAME, 'foo', 'bar', 'baz', 'c.spec.js', 'snapshot.png'))).toBeTruthy();
 });
 
 test('should report toHaveScreenshot step with expectation name in title', async ({ runInlineTest }) => {

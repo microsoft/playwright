@@ -52,7 +52,7 @@ export function getSnapshotName(
     testInfo.snapshotPath.bind(testInfo),
   ] : [
     'png',
-    testInfo.screenshotPath.bind(testInfo),
+    testInfo._screenshotPath.bind(testInfo),
   ];
   const helper = new SnapshotHelper(
       testInfo, snapshotPathResolver, anonymousSnapshotExtension, {},
@@ -292,7 +292,7 @@ export async function toHaveScreenshot(
   if (!testInfo)
     throw new Error(`toHaveScreenshot() must be called during the test`);
   const helper = new SnapshotHelper(
-      testInfo, testInfo.screenshotPath.bind(testInfo), 'png',
+      testInfo, testInfo._screenshotPath.bind(testInfo), 'png',
       testInfo.project.expect?.toHaveScreenshot || {},
       nameOrOptions, optOptions);
   const [page, locator] = pageOrLocator.constructor.name === 'Page' ? [(pageOrLocator as PageEx), undefined] : [(pageOrLocator as Locator).page() as PageEx, pageOrLocator as LocatorEx];

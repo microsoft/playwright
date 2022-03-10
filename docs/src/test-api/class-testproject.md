@@ -159,8 +159,6 @@ The base directory, relative to the config file, for screenshot files created wi
 <directory-of-configuration-file>/__screenshots__/<platform name>/<project name>
 ```
 
-The directory for each test can be accessed by [`property: TestInfo.screenshotsDir`] and [`method: TestInfo.screenshotPath`].
-
 This path will serve as the base directory for each test file screenshot directory. For example, the following test structure:
 
 ```

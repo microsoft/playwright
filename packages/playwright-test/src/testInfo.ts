@@ -46,6 +46,7 @@ export class TestInfoImpl implements TestInfo {
   private _currentRunnable: RunnableDescription = { type: 'test' };
   // Holds elapsed time of the "time pool" shared between fixtures, each hooks and test itself.
   private _elapsedTestTime = 0;
+  readonly _screenshotsDir: string;
 
   // ------------ TestInfo fields ------------
   readonly repeatEachIndex: number;
@@ -71,7 +72,6 @@ export class TestInfoImpl implements TestInfo {
   snapshotSuffix: string = '';
   readonly outputDir: string;
   readonly snapshotDir: string;
-  readonly screenshotsDir: string;
   errors: TestError[] = [];
 
   get error(): TestError | undefined {
@@ -143,7 +143,7 @@ export class TestInfoImpl implements TestInfo {
       const relativeTestFilePath = path.relative(this.project.testDir, test._requireFile);
       return path.join(this.project.snapshotDir, relativeTestFilePath + '-snapshots');
     })();
-    this.screenshotsDir = (() => {
+    this._screenshotsDir = (() => {
       const relativeTestFilePath = path.relative(this.project.testDir, test._requireFile);
       return path.join(this.project.screenshotsDir, relativeTestFilePath);
     })();
@@ -283,9 +283,9 @@ export class TestInfoImpl implements TestInfo {
     throw new Error(`The snapshotPath is not allowed outside of the parent directory. Please fix the defined path.\n\n\tsnapshotPath: ${subPath}`);
   }
 
-  screenshotPath(...pathSegments: string[]) {
+  _screenshotPath(...pathSegments: string[]) {
     const subPath = path.join(...pathSegments);
-    const screenshotPath = getContainedPath(this.screenshotsDir, subPath);
+    const screenshotPath = getContainedPath(this._screenshotsDir, subPath);
     if (screenshotPath)
       return screenshotPath;
     throw new Error(`The screenshotPath is not allowed outside of the parent directory. Please fix the defined path.\n\n\tscreenshotPath: ${subPath}`);

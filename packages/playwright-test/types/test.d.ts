@@ -181,10 +181,6 @@ interface TestProject {
    * <directory-of-configuration-file>/__screenshots__/<platform name>/<project name>
    * ```
    *
-   * The directory for each test can be accessed by
-   * [testInfo.screenshotsDir](https://playwright.dev/docs/api/class-testinfo#test-info-screenshots-dir) and
-   * [testInfo.screenshotPath(pathSegments)](https://playwright.dev/docs/api/class-testinfo#test-info-screenshot-path).
-   *
    * This path will serve as the base directory for each test file screenshot directory. For example, the following test
    * structure:
    *
@@ -773,10 +769,6 @@ interface TestConfig {
    * ```
    * <directory-of-configuration-file>/__screenshots__/<platform name>/<project name>
    * ```
-   *
-   * The directory for each test can be accessed by
-   * [testInfo.screenshotsDir](https://playwright.dev/docs/api/class-testinfo#test-info-screenshots-dir) and
-   * [testInfo.screenshotPath(pathSegments)](https://playwright.dev/docs/api/class-testinfo#test-info-screenshot-path).
    *
    * This path will serve as the base directory for each test file screenshot directory. For example, the following test
    * structure:
@@ -1672,15 +1664,6 @@ export interface TestInfo {
    * @param pathSegments The name of the snapshot or the path segments to define the snapshot file path. Snapshots with the same name in the same test file are expected to be the same.
    */
   snapshotPath: (...pathSegments: string[]) => string;
-  /**
-   * Returns a path to a screenshot file with the given `pathSegments`.
-   *
-   * > Note that `pathSegments` accepts path segments to the screenshot file such as `testInfo.screenshotPath('relative',
-   * 'path', 'to', 'screenshot.png')`.
-   * > However, this path must stay within the screenshots directory for each test file, otherwise it will throw.
-   * @param pathSegments The name of the screenshot or the path segments to define the screenshot file path. Screenshots with the same name in the same test file are expected to be the same.
-   */
-  screenshotPath: (...pathSegments: string[]) => string;
   /**
    * Returns a path inside the [testInfo.outputDir](https://playwright.dev/docs/api/class-testinfo#test-info-output-dir)
    * where the test can safely put a temporary file. Guarantees that tests running in parallel will not interfere with each

@@ -246,7 +246,6 @@ export interface TestInfo {
   snapshotDir: string;
   outputDir: string;
   snapshotPath: (...pathSegments: string[]) => string;
-  screenshotPath: (...pathSegments: string[]) => string;
   outputPath: (...pathSegments: string[]) => string;
 }
 
