@@ -38,6 +38,19 @@ type SyncExpectationResult = {
 type NameOrSegments = string | string[];
 const SNAPSHOT_COUNTER = Symbol('noname-snapshot-counter');
 
+export function getSnapshotName(
+  testInfo: TestInfoImpl,
+  received: any,
+  nameOrOptions: NameOrSegments | { name?: NameOrSegments } & MatchSnapshotOptions = {},
+  optOptions: MatchSnapshotOptions = {}
+) {
+  const anonymousSnapshotExtension = typeof received === 'string' || Buffer.isBuffer(received) ? determineFileExtension(received) : 'png';
+  const helper = new SnapshotHelper(
+      testInfo, anonymousSnapshotExtension, {},
+      nameOrOptions, optOptions, true /* dryRun */);
+  return path.basename(helper.snapshotPath);
+}
+
 class SnapshotHelper<T extends ImageComparatorOptions> {
   readonly testInfo: TestInfoImpl;
   readonly expectedPath: string;
@@ -56,6 +69,7 @@ class SnapshotHelper<T extends ImageComparatorOptions> {
     configOptions: ImageComparatorOptions,
     nameOrOptions: NameOrSegments | { name?: NameOrSegments } & T,
     optOptions: T,
+    dryRun: boolean = false,
   ) {
     let options: T;
     let name: NameOrSegments | undefined;
@@ -68,11 +82,13 @@ class SnapshotHelper<T extends ImageComparatorOptions> {
       delete (options as any).name;
     }
     if (!name) {
-      (testInfo as any)[SNAPSHOT_COUNTER] = ((testInfo as any)[SNAPSHOT_COUNTER] || 0) + 1;
+      (testInfo as any)[SNAPSHOT_COUNTER] = ((testInfo as any)[SNAPSHOT_COUNTER] || 0);
       const fullTitleWithoutSpec = [
         ...testInfo.titlePath.slice(1),
-        (testInfo as any)[SNAPSHOT_COUNTER],
+        (testInfo as any)[SNAPSHOT_COUNTER] + 1,
       ].join(' ');
+      if (!dryRun)
+        ++(testInfo as any)[SNAPSHOT_COUNTER];
       name = sanitizeForFilePath(trimLongString(fullTitleWithoutSpec)) + '.' + anonymousSnapshotExtension;
     }
 
