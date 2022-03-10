@@ -6612,7 +6612,6 @@ export interface BrowserContext {
    * - `'midi'`
    * - `'midi-sysex'` (system-exclusive midi)
    * - `'notifications'`
-   * - `'push'`
    * - `'camera'`
    * - `'microphone'`
    * - `'background-sync'`
