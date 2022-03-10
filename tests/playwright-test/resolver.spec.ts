@@ -195,9 +195,7 @@ test('should respect path resolver in experimental mode @esm', async ({ runInlin
     'foo/bar/util/b.ts': `
       export const foo: string = 'foo';
     `,
-  }, {}, {
-    PW_EXPERIMENTAL_TS_ESM: true
-  });
+  }, {});
 
   expect(result.exitCode).toBe(0);
 });

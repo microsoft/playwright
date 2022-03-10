@@ -260,9 +260,7 @@ test('should import esm from ts when package.json has type module in experimenta
     'b.ts': `
       export const foo: string = 'foo';
     `
-  }, {}, {
-    PW_EXPERIMENTAL_TS_ESM: true
-  });
+  }, {});
 
   expect(result.exitCode).toBe(0);
 });
@@ -278,9 +276,7 @@ test('should propagate subprocess exit code in experimental mode @esm', async ({
         expect(1).toBe(2);
       });
     `,
-  }, {}, {
-    PW_EXPERIMENTAL_TS_ESM: true
-  });
+  }, {});
 
   expect(result.exitCode).toBe(1);
 });
