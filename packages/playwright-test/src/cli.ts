@@ -237,9 +237,9 @@ async function launchDockerContainer(): Promise<() => Promise<void>> {
 function restartWithExperimentalTsEsm(configFile: string | null): boolean {
   if (!configFile)
     return false;
-  if (!process.env.PW_EXPERIMENTAL_TS_ESM)
+  if (process.env.PW_DISABLE_TS_ESM)
     return false;
-  if (process.env.PW_EXPERIMENTAL_TS_ESM_ON)
+  if (process.env.PW_TS_ESM_ON)
     return false;
   if (!configFile.endsWith('.ts'))
     return false;
@@ -250,7 +250,7 @@ function restartWithExperimentalTsEsm(configFile: string | null): boolean {
     env: {
       ...process.env,
       NODE_OPTIONS,
-      PW_EXPERIMENTAL_TS_ESM_ON: '1',
+      PW_TS_ESM_ON: '1',
     }
   });
 
