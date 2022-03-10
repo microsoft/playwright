@@ -21,6 +21,7 @@ test.afterEach(async ({ androidDevice }) => {
 });
 
 test('androidDevice.webView', async function({ androidDevice }) {
+  test.slow();
   expect(androidDevice.webViews().length).toBe(0);
   await androidDevice.shell('am start org.chromium.webview_shell/.WebViewBrowserActivity');
   const webview = await androidDevice.webView({ pkg: 'org.chromium.webview_shell' });

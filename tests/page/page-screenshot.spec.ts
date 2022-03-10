@@ -478,7 +478,8 @@ it.describe('page screenshot animations', () => {
     }
   });
 
-  it('should not capture css animations in shadow DOM', async ({ page, server }) => {
+  it('should not capture css animations in shadow DOM', async ({ page, server, isAndroid }) => {
+    it.skip(isAndroid, 'Different viewport');
     await page.goto(server.PREFIX + '/rotate-z-shadow-dom.html');
     const screenshot = await page.screenshot({
       animations: 'disabled',
@@ -492,8 +493,9 @@ it.describe('page screenshot animations', () => {
     }
   });
 
-  it('should stop animations that happen right before screenshot', async ({ page, server, mode }) => {
+  it('should stop animations that happen right before screenshot', async ({ page, server, mode, isAndroid }) => {
     it.skip(mode !== 'default');
+    it.skip(isAndroid, 'Different viewport');
     await page.goto(server.PREFIX + '/rotate-z.html');
     // Stop rotating bar.
     await page.$eval('div', el => el.style.setProperty('animation', 'none'));
@@ -606,7 +608,8 @@ it.describe('page screenshot animations', () => {
     expect(screenshot1.equals(screenshot2)).toBe(true);
   });
 
-  it('should not change animation with playbackRate equal to 0', async ({ page, server }) => {
+  it('should not change animation with playbackRate equal to 0', async ({ page, server, isAndroid }) => {
+    it.skip(isAndroid, 'Different viewport');
     await page.goto(server.PREFIX + '/rotate-z.html');
     await page.evaluate(async () => {
       window.animation = document.getAnimations()[0];
