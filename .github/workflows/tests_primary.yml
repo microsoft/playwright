@@ -56,9 +56,6 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
         node-version: [12]
-        include:
-        - os: ubuntu-latest
-          node-version: 16
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v2
@@ -78,9 +75,13 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
 
-  test_test_runner_windows_esm:
-    name: Test Runner Windows ESM
-    runs-on: windows-latest
+  test_test_runner_esm:
+    name: Test Runner ESM
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v2
@@ -92,7 +93,7 @@ jobs:
         DEBUG: pw:install
     - run: npm run build
     - run: npx playwright install --with-deps
-    - run: npm run ttest -- --grep=esm
+    - run: npm run ttest -- --grep=@esm
 
   test_html_report:
     name: HTML Report

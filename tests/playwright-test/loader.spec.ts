@@ -241,7 +241,7 @@ test('should fail to load ts from esm when package.json has type module', async 
   expect(result.output).toContain('Cannot import a typescript file from an esmodule');
 });
 
-test('should import esm from ts when package.json has type module in experimental mode #esm', async ({ runInlineTest }) => {
+test('should import esm from ts when package.json has type module in experimental mode @esm', async ({ runInlineTest }) => {
   // We only support experimental esm mode on Node 16+
   test.skip(parseInt(process.version.slice(1), 10) < 16);
   const result = await runInlineTest({
@@ -267,7 +267,7 @@ test('should import esm from ts when package.json has type module in experimenta
   expect(result.exitCode).toBe(0);
 });
 
-test('should propagate subprocess exit code in experimental mode #esm', async ({ runInlineTest }) => {
+test('should propagate subprocess exit code in experimental mode @esm', async ({ runInlineTest }) => {
   // We only support experimental esm mode on Node 16+
   test.skip(parseInt(process.version.slice(1), 10) < 16);
   const result = await runInlineTest({
