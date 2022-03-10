@@ -37,7 +37,8 @@ exports.PlaywrightDevPage = class PlaywrightDevPage {
     await this.getStarted();
     await this.pomLink.click();
   }
-}```
+}
+```
 
 ```js js-flavor=ts
 // playwright-dev-page.ts
@@ -71,7 +72,8 @@ export class PlaywrightDevPage {
     await this.getStarted();
     await this.pomLink.click();
   }
-}```
+}
+```
 
 Now we can use the `PlaywrightDevPage` class in our tests.
 
