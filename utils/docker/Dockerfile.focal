@@ -36,6 +36,5 @@ RUN mkdir /ms-playwright && \
     npm i /tmp/playwright-core.tar.gz && \
     npx playwright install --with-deps && rm -rf /var/lib/apt/lists/* && \
     rm /tmp/playwright-core.tar.gz && \
-    npm cache clean --force && \
     rm -rf /ms-playwright-agent && \
     chmod -R 777 /ms-playwright
