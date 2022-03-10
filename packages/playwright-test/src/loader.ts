@@ -202,6 +202,10 @@ export class Loader {
     let snapshotDir = takeFirst(this._configOverrides.snapshotDir, projectConfig.snapshotDir, this._config.snapshotDir, testDir);
     if (!path.isAbsolute(snapshotDir))
       snapshotDir = path.resolve(configDir, snapshotDir);
+    const name = takeFirst(this._configOverrides.name, projectConfig.name, this._config.name, '');
+    let screenshotsDir = takeFirst(this._configOverrides.screenshotsDir, projectConfig.screenshotsDir, this._config.screenshotsDir, path.join(rootDir, '__screenshots__', process.platform, name));
+    if (!path.isAbsolute(screenshotsDir))
+      screenshotsDir = path.resolve(configDir, screenshotsDir);
     const fullProject: FullProject = {
       fullyParallel: takeFirst(this._configOverrides.fullyParallel, projectConfig.fullyParallel, this._config.fullyParallel, undefined),
       expect: takeFirst(this._configOverrides.expect, projectConfig.expect, this._config.expect, undefined),
@@ -211,9 +215,10 @@ export class Loader {
       repeatEach: takeFirst(this._configOverrides.repeatEach, projectConfig.repeatEach, this._config.repeatEach, 1),
       retries: takeFirst(this._configOverrides.retries, projectConfig.retries, this._config.retries, 0),
       metadata: takeFirst(this._configOverrides.metadata, projectConfig.metadata, this._config.metadata, undefined),
-      name: takeFirst(this._configOverrides.name, projectConfig.name, this._config.name, ''),
+      name,
       testDir,
       snapshotDir,
+      screenshotsDir,
       testIgnore: takeFirst(this._configOverrides.testIgnore, projectConfig.testIgnore, this._config.testIgnore, []),
       testMatch: takeFirst(this._configOverrides.testMatch, projectConfig.testMatch, this._config.testMatch, '**/?(*.)@(spec|test).*'),
       timeout: takeFirst(this._configOverrides.timeout, projectConfig.timeout, this._config.timeout, 10000),

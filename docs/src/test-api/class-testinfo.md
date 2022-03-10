@@ -209,6 +209,11 @@ Test function as passed to `test(title, testFunction)`.
 
 Line number where the currently running test is declared.
 
+## property: TestInfo.screenshotsDir
+- type: <[string]>
+
+Absolute path to the screenshot output directory for this specific test. Each test file gets its own directory so they cannot conflict.
+
 ## property: TestInfo.snapshotDir
 - type: <[string]>
 
@@ -366,6 +371,19 @@ Optional condition - the test is marked as "slow" when the condition is `true`.
 
 Optional description that will be reflected in a test report.
 
+## method: TestInfo.screenshotPath
+- returns: <[string]>
+
+Returns a path to a screenshot file with the given `pathSegments`.
+
+> Note that `pathSegments` accepts path segments to the screenshot file such as `testInfo.screenshotPath('relative', 'path', 'to', 'screenshot.png')`.
+> However, this path must stay within the screenshots directory for each test file, otherwise it will throw.
+
+### param: TestInfo.screenshotPath.pathSegments
+- `pathSegments` <[string...]>
+
+The name of the screenshot or the path segments to define the screenshot file path. Screenshots with the same name in the same test file are expected to be the same.
+
 ## method: TestInfo.snapshotPath
 - returns: <[string]>
 
@@ -382,7 +400,7 @@ The name of the snapshot or the path segments to define the snapshot file path. 
 ## property: TestInfo.snapshotSuffix
 - type: <[string]>
 
-Suffix used to differentiate snapshots between multiple test configurations. For example, if snapshots depend on the platform, you can set `testInfo.snapshotSuffix` equal to `process.platform`. In this case both `expect(value).toMatchSnapshot(snapshotName)` and `expect(page).toHaveScreenshot(snapshotName)` will use different snapshots depending on the platform. Learn more about [snapshots](./test-snapshots.md).
+Suffix used to differentiate snapshots between multiple test configurations. For example, if snapshots depend on the platform, you can set `testInfo.snapshotSuffix` equal to `process.platform`. In this case `expect(value).toMatchSnapshot(snapshotName)` will use different snapshots depending on the platform. Learn more about [snapshots](./test-snapshots.md).
 
 ## property: TestInfo.status
 - type: <[void]|[TestStatus]<"passed"|"failed"|"timedOut"|"skipped">>

@@ -44,9 +44,18 @@ export function getSnapshotName(
   nameOrOptions: NameOrSegments | { name?: NameOrSegments } & MatchSnapshotOptions = {},
   optOptions: MatchSnapshotOptions = {}
 ) {
-  const anonymousSnapshotExtension = typeof received === 'string' || Buffer.isBuffer(received) ? determineFileExtension(received) : 'png';
+  const [
+    anonymousSnapshotExtension,
+    snapshotPathResolver,
+  ] = typeof received === 'string' || Buffer.isBuffer(received) ? [
+    determineFileExtension(received),
+    testInfo.snapshotPath.bind(testInfo),
+  ] : [
+    'png',
+    testInfo.screenshotPath.bind(testInfo),
+  ];
   const helper = new SnapshotHelper(
-      testInfo, anonymousSnapshotExtension, {},
+      testInfo, snapshotPathResolver, anonymousSnapshotExtension, {},
       nameOrOptions, optOptions, true /* dryRun */);
   return path.basename(helper.snapshotPath);
 }
@@ -65,6 +74,7 @@ class SnapshotHelper<T extends ImageComparatorOptions> {
 
   constructor(
     testInfo: TestInfoImpl,
+    snapshotPathResolver: (...pathSegments: string[]) => string,
     anonymousSnapshotExtension: string,
     configOptions: ImageComparatorOptions,
     nameOrOptions: NameOrSegments | { name?: NameOrSegments } & T,
@@ -105,7 +115,7 @@ class SnapshotHelper<T extends ImageComparatorOptions> {
 
     // sanitizes path if string
     const pathSegments = Array.isArray(name) ? name : [addSuffixToFilePath(name, '', undefined, true)];
-    const snapshotPath = testInfo.snapshotPath(...pathSegments);
+    const snapshotPath = snapshotPathResolver(...pathSegments);
     const outputFile = testInfo.outputPath(...pathSegments);
     const expectedPath = addSuffixToFilePath(outputFile, '-expected');
     const actualPath = addSuffixToFilePath(outputFile, '-actual');
@@ -234,7 +244,7 @@ export function toMatchSnapshot(
   if (!testInfo)
     throw new Error(`toMatchSnapshot() must be called during the test`);
   const helper = new SnapshotHelper(
-      testInfo, determineFileExtension(received),
+      testInfo, testInfo.snapshotPath.bind(testInfo), determineFileExtension(received),
       testInfo.project.expect?.toMatchSnapshot || {},
       nameOrOptions, optOptions);
   const comparator: Comparator = mimeTypeToComparator[helper.mimeType];
@@ -282,7 +292,7 @@ export async function toHaveScreenshot(
   if (!testInfo)
     throw new Error(`toHaveScreenshot() must be called during the test`);
   const helper = new SnapshotHelper(
-      testInfo, 'png',
+      testInfo, testInfo.screenshotPath.bind(testInfo), 'png',
       testInfo.project.expect?.toHaveScreenshot || {},
       nameOrOptions, optOptions);
   const [page, locator] = pageOrLocator.constructor.name === 'Page' ? [(pageOrLocator as PageEx), undefined] : [(pageOrLocator as Locator).page() as PageEx, pageOrLocator as LocatorEx];

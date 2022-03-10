@@ -71,6 +71,7 @@ export class TestInfoImpl implements TestInfo {
   snapshotSuffix: string = '';
   readonly outputDir: string;
   readonly snapshotDir: string;
+  readonly screenshotsDir: string;
   errors: TestError[] = [];
 
   get error(): TestError | undefined {
@@ -141,6 +142,10 @@ export class TestInfoImpl implements TestInfo {
     this.snapshotDir = (() => {
       const relativeTestFilePath = path.relative(this.project.testDir, test._requireFile);
       return path.join(this.project.snapshotDir, relativeTestFilePath + '-snapshots');
+    })();
+    this.screenshotsDir = (() => {
+      const relativeTestFilePath = path.relative(this.project.testDir, test._requireFile);
+      return path.join(this.project.screenshotsDir, relativeTestFilePath);
     })();
   }
 
@@ -276,6 +281,14 @@ export class TestInfoImpl implements TestInfo {
     if (snapshotPath)
       return snapshotPath;
     throw new Error(`The snapshotPath is not allowed outside of the parent directory. Please fix the defined path.\n\n\tsnapshotPath: ${subPath}`);
+  }
+
+  screenshotPath(...pathSegments: string[]) {
+    const subPath = path.join(...pathSegments);
+    const screenshotPath = getContainedPath(this.screenshotsDir, subPath);
+    if (screenshotPath)
+      return screenshotPath;
+    throw new Error(`The screenshotPath is not allowed outside of the parent directory. Please fix the defined path.\n\n\tscreenshotPath: ${subPath}`);
   }
 
   skip(...args: [arg?: any, description?: string]) {
