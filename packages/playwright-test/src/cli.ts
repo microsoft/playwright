@@ -18,6 +18,7 @@
 
 import { Command } from 'commander';
 import fs from 'fs';
+import url from 'url';
 import path from 'path';
 import type { Config } from './types';
 import { Runner, builtInReporters, BuiltInReporter, kDefaultConfigFiles } from './runner';
@@ -245,7 +246,7 @@ function restartWithExperimentalTsEsm(configFile: string | null): boolean {
     return false;
   if (!fileIsModule(configFile))
     return false;
-  const NODE_OPTIONS = (process.env.NODE_OPTIONS || '') + ` --experimental-loader=${require.resolve('@playwright/test/lib/experimentalLoader')}`;
+  const NODE_OPTIONS = (process.env.NODE_OPTIONS || '') + ` --experimental-loader=${url.pathToFileURL(require.resolve('@playwright/test/lib/experimentalLoader')).toString()}`;
   const innerProcess = require('child_process').fork(require.resolve('playwright-core/cli'), process.argv.slice(2), {
     env: {
       ...process.env,
