@@ -4,7 +4,7 @@ title: "Verification"
 ---
 
 :::caution
-We recommend [Web-First Assertions](./api/class-playwrightassertions) that automatically retry until the expected condition is met instead. This helps reducing the flakiness of the tests.
+We recommend [Web-First Assertions](./test-assertions) that automatically retry until the expected condition is met instead. This helps reducing the flakiness of the tests.
 :::
 
 <!-- TOC -->
