@@ -309,6 +309,32 @@ LifecycleEvent:
   - networkidle
   - commit
 
+CommonScreenshotOptions:
+  type: mixin
+  properties:
+    omitBackground: boolean?
+    animations:
+      type: enum?
+      literals:
+      - disabled
+      - allow
+    size:
+      type: enum?
+      literals:
+      - css
+      - device
+    fonts:
+      type: enum?
+      literals:
+      - ready
+      - nowait
+    mask:
+      type: array?
+      items:
+        type: object
+        properties:
+          frame: Frame
+          selector: string
 
 LaunchOptions:
   type: mixin
@@ -1009,21 +1035,9 @@ Page:
         screenshotOptions:
           type: object?
           properties:
-            omitBackground: boolean?
             fullPage: boolean?
-            animations:
-              type: enum?
-              literals:
-              - disabled
-              - allow
             clip: Rect?
-            mask:
-              type: array?
-              items:
-                type: object
-                properties:
-                  frame: Frame
-                  selector: string
+            $mixin: CommonScreenshotOptions
       returns:
         diff: binary?
         errorMessage: string?
@@ -1044,31 +1058,9 @@ Page:
           - png
           - jpeg
         quality: number?
-        omitBackground: boolean?
         fullPage: boolean?
-        animations:
-          type: enum?
-          literals:
-          - disabled
-          - allow
         clip: Rect?
-        size:
-          type: enum?
-          literals:
-          - css
-          - device
-        fonts:
-          type: enum?
-          literals:
-          - ready
-          - nowait
-        mask:
-          type: array?
-          items:
-            type: object
-            properties:
-              frame: Frame
-              selector: string
+        $mixin: CommonScreenshotOptions
       returns:
         binary: binary
       tracing:
@@ -2221,29 +2213,7 @@ ElementHandle:
           - png
           - jpeg
         quality: number?
-        omitBackground: boolean?
-        animations:
-          type: enum?
-          literals:
-          - disabled
-          - allow
-        size:
-          type: enum?
-          literals:
-          - css
-          - device
-        fonts:
-          type: enum?
-          literals:
-          - ready
-          - nowait
-        mask:
-          type: array?
-          items:
-            type: object
-            properties:
-              frame: Frame
-              selector: string
+        $mixin: CommonScreenshotOptions
       returns:
         binary: binary
       tracing:
