@@ -30,7 +30,7 @@ import { readProtocolStream } from './crProtocolHelper';
 import { Protocol } from './protocol';
 import { CRExecutionContext } from './crExecutionContext';
 import { CRDevTools } from './crDevTools';
-import { RouteImpl } from './crNetworkManager';
+import { CRNetworkManager, RouteImpl } from './crNetworkManager';
 
 export class CRBrowser extends Browser {
   readonly _connection: CRConnection;
@@ -304,37 +304,46 @@ export class CRBrowser extends Browser {
   }
 }
 
-class CRServiceWorker extends Worker {
+export class CRServiceWorker extends Worker {
   readonly _browserContext: CRBrowserContext;
+  readonly _networkManager: CRNetworkManager;
 
   constructor(browserContext: CRBrowserContext, session: CRSession, url: string) {
     super(browserContext, url);
     this._browserContext = browserContext;
+    this._networkManager = new CRNetworkManager(session, null, this, null);
     session.once('Runtime.executionContextCreated', event => {
       this._createExecutionContext(new CRExecutionContext(session, event.context));
     });
 
-    // FIXME(raw): This will all be moved into a crServiceWorkerNetworkManager that will use shared bits that page/frame-level network mgr. (currently crNetworkManager) will depend on
-    //             It also needs to be a bit more complex based on if interception is needed or not. We'll also likley want to drive the firing of context._requestStarted on Network.requestWillBeSent
-    //             instead of what we are doing here.
-    session.send('Network.setCacheDisabled', { cacheDisabled: true }).catch(() => { });
-    session.send('Fetch.enable', {
-      handleAuthRequests: true,
-      patterns: [{ urlPattern: '*', requestStage: 'Request' }],
-    }).catch(() => { });
-
-    session.on('Fetch.requestPaused', payload => {
-      let postDataBuffer = null;
-      const postDataEntries = payload.request.postDataEntries;
-      if (postDataEntries && postDataEntries.length && postDataEntries[0].bytes)
-        postDataBuffer = Buffer.from(postDataEntries[0].bytes, 'base64');
-
-      this._browserContext._requestStarted(new network.Request(this._browserContext, null, null, undefined, payload.request.url, (payload.resourceType || '').toLowerCase(), payload.request.method, postDataBuffer, headersObjectToArray(payload.request.headers)), new RouteImpl(session, payload.requestId));
-    });
+    this._networkManager.initialize();
+    this._networkManager.setRequestInterception(true);
 
     // This might fail if the target is closed before we receive all execution contexts.
     session.send('Runtime.enable', {}).catch(e => { });
     session.send('Runtime.runIfWaitingForDebugger').catch(e => { });
+  }
+
+  _needsRequestInterception(): boolean {
+    return true;
+  }
+
+  reportRequestFinished(request: network.Request, response: network.Response | null) {
+    console.log('not implemented');
+  }
+
+  requestFailed(request: network.Request, canceled: boolean) {
+    console.log('not implemented');
+  }
+
+  requestReceivedResponse(response: network.Response) {
+    console.log('not implemented');
+  }
+
+  requestStarted(request: network.Request, route?: network.RouteDelegate) {
+    this._browserContext.emit(BrowserContext.Events.Request, request);
+    if (route)
+      this._browserContext._requestStarted(request, route);
   }
 }
 

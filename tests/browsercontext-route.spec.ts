@@ -236,7 +236,7 @@ it('should overwrite post body with empty string', async ({ context, server, pag
   expect(body).toBe('');
 });
 
-it.describe('service workers', () => {
+it.describe.only('service workers', () => {
   it('intercepts initial script', async ({ server, page, context, browserName }) => {
     it.fail(browserName === 'firefox');
 

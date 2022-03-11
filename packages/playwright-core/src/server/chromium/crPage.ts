@@ -379,7 +379,7 @@ class FrameSession {
     this._crPage = crPage;
     this._page = crPage._page;
     this._targetId = targetId;
-    this._networkManager = new CRNetworkManager(client, this._page, parentSession ? parentSession._networkManager : null);
+    this._networkManager = new CRNetworkManager(client, this._page, null, parentSession ? parentSession._networkManager : null);
     this._firstNonInitialNavigationCommittedPromise = new Promise((f, r) => {
       this._firstNonInitialNavigationCommittedFulfill = f;
       this._firstNonInitialNavigationCommittedReject = r;
@@ -694,6 +694,13 @@ class FrameSession {
       this._crPage._sessions.set(targetId, frameSession);
       frameSession._initialize(false).catch(e => e);
       return;
+    }
+
+    if (event.targetInfo.type === 'service_worker') {
+      // const work = this._networkManager
+      const worker = this._crPage._browserContext._browser._serviceWorkers.get(event.targetInfo.targetId)!;
+      assert(worker, `Expected to find a worker for ${event.targetInfo.url}`);
+      worker._networkManager.setParentManager(this._networkManager);
     }
 
     if (event.targetInfo.type !== 'worker') {
