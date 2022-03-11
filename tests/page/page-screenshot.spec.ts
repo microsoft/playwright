@@ -564,7 +564,7 @@ it.describe('page screenshot animations', () => {
     });
     await rafraf(page);
     // Make sure finite transition is not restarted.
-    const screenshot2 = await div.screenshot();
+    const screenshot2 = await div.screenshot({ animations: 'allow' });
     expect(screenshot1.equals(screenshot2)).toBe(true);
 
     expect(await page.evaluate(() => window['__TRANSITION_END'])).toBe(true);

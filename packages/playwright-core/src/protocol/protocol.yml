@@ -1015,6 +1015,7 @@ Page:
               type: enum?
               literals:
               - disabled
+              - allow
             clip: Rect?
             mask:
               type: array?
@@ -1049,6 +1050,7 @@ Page:
           type: enum?
           literals:
           - disabled
+          - allow
         clip: Rect?
         size:
           type: enum?
@@ -2224,6 +2226,7 @@ ElementHandle:
           type: enum?
           literals:
           - disabled
+          - allow
         size:
           type: enum?
           literals:
