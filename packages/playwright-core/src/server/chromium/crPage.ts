@@ -697,10 +697,22 @@ class FrameSession {
     }
 
     if (event.targetInfo.type === 'service_worker') {
-      // const work = this._networkManager
-      const worker = this._crPage._browserContext._browser._serviceWorkers.get(event.targetInfo.targetId)!;
-      assert(worker, `Expected to find a worker for ${event.targetInfo.url}`);
-      worker._networkManager.setParentManager(this._networkManager);
+      let worker = this._crPage._browserContext._browser._serviceWorkers.get(event.targetInfo.targetId);
+      if (worker) {worker._networkManager.setParentManager(this._networkManager);} else {
+        // We get Target.attachedToTarget on the BrowserContext (where the CRServiceWorker is created),
+        // as well as here, but the order is not guaranteed, so we might have to defer setting the parentManager.
+        // FIXME: Leak: This needs to be removed at some point(s)
+        this._page._browserContext.on(CRBrowserContext.CREvents.ServiceWorker, () => {
+          // FIXME: Leak: instead of this, remove listener
+          if (worker) return;
+
+          worker = this._crPage._browserContext._browser._serviceWorkers.get(event.targetInfo.targetId);
+          if (worker) {
+            console.log('OK: deferred worker creation');
+            worker._networkManager.setParentManager(this._networkManager);
+          }
+        });
+      }
     }
 
     if (event.targetInfo.type !== 'worker') {

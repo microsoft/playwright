@@ -17,7 +17,7 @@
 
 import { Browser, BrowserOptions } from '../browser';
 import { assertBrowserContextIsNotOwned, BrowserContext, validateBrowserContextOptions, verifyGeolocation } from '../browserContext';
-import { assert, headersObjectToArray } from '../../utils/utils';
+import { assert } from '../../utils/utils';
 import * as network from '../network';
 import { Page, PageBinding, PageDelegate, Worker } from '../page';
 import { Frame } from '../frames';
@@ -30,7 +30,7 @@ import { readProtocolStream } from './crProtocolHelper';
 import { Protocol } from './protocol';
 import { CRExecutionContext } from './crExecutionContext';
 import { CRDevTools } from './crDevTools';
-import { CRNetworkManager, RouteImpl } from './crNetworkManager';
+import { CRNetworkManager } from './crNetworkManager';
 
 export class CRBrowser extends Browser {
   readonly _connection: CRConnection;
@@ -188,6 +188,7 @@ export class CRBrowser extends Browser {
     }
 
     if (targetInfo.type === 'service_worker') {
+      console.log(`Creating worker for [targetId: ${targetInfo.targetId}]`);
       const serviceWorker = new CRServiceWorker(context, session, targetInfo.url);
       this._serviceWorkers.set(targetInfo.targetId, serviceWorker);
       context.emit(CRBrowserContext.CREvents.ServiceWorker, serviceWorker);
@@ -310,6 +311,7 @@ export class CRServiceWorker extends Worker {
 
   constructor(browserContext: CRBrowserContext, session: CRSession, url: string) {
     super(browserContext, url);
+    console.log(`[GUID: ${session.guid}] created worker for ${url}`);
     this._browserContext = browserContext;
     this._networkManager = new CRNetworkManager(session, null, this, null);
     session.once('Runtime.executionContextCreated', event => {
@@ -317,7 +319,7 @@ export class CRServiceWorker extends Worker {
     });
 
     this._networkManager.initialize();
-    this._networkManager.setRequestInterception(true);
+    this._networkManager.setRequestInterception(this._needsRequestInterception());
 
     // This might fail if the target is closed before we receive all execution contexts.
     session.send('Runtime.enable', {}).catch(e => { });
@@ -325,7 +327,7 @@ export class CRServiceWorker extends Worker {
   }
 
   _needsRequestInterception(): boolean {
-    return true;
+    return !!this._browserContext._requestInterceptor;
   }
 
   reportRequestFinished(request: network.Request, response: network.Response | null) {

@@ -695,4 +695,3 @@ test('should open two trace files', async ({ context, page, request, server, sho
   await expect(callLine.locator('text=actions')).toHaveText(/actions: 6/);
   await expect(callLine.locator('text=events')).toHaveText(/events: [\d]+/);
 });
-
