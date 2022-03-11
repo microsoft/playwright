@@ -212,3 +212,25 @@ test('user profile', async ({ page }) => {
   // ...
 });
 ```
+
+## Custom annotations
+
+It's also possible to add custom metadata in the form of annotations to your tests. This is key/value-based and gets reflected inside the HTML report. During the test execution it's accessible via [`test.info().annotations`](./api/class-testinfo#test-info-annotations) and after the test execution by reading [`testCase.annotations`](./api/class-testcase#test-case-annotations) inside a custom reporter.
+
+```js js-flavor=js
+// example.spec.js
+
+test('user profile', async ({ page }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/12600' });
+  // ...
+});
+```
+
+```js js-flavor=ts
+// example.spec.ts
+
+test('user profile', async ({ page }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/12600' });
+  // ...
+});
+```
