@@ -41,8 +41,8 @@ const SNAPSHOT_COUNTER = Symbol('noname-snapshot-counter');
 export function getSnapshotName(
   testInfo: TestInfoImpl,
   received: any,
-  nameOrOptions: NameOrSegments | { name?: NameOrSegments } & MatchSnapshotOptions = {},
-  optOptions: MatchSnapshotOptions = {}
+  nameOrOptions: NameOrSegments | { name?: NameOrSegments } = {},
+  optOptions: any = {}
 ) {
   const [
     anonymousSnapshotExtension,
