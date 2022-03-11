@@ -36,7 +36,7 @@ export type ScreenshotOptions = {
   type?: 'png' | 'jpeg',
   quality?: number,
   omitBackground?: boolean,
-  animations?: 'disabled',
+  animations?: 'disabled' | 'allow',
   mask?: { frame: Frame, selector: string}[],
   fullPage?: boolean,
   clip?: Rect,
