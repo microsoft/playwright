@@ -52,7 +52,8 @@ test('should fail to screenshot a page with infinite animation', async ({ runInl
   expect(result.exitCode).toBe(1);
   expect(stripAnsi(result.output)).toContain(`Timeout 2000ms exceeded while generating screenshot because page kept changing`);
   expect(fs.existsSync(testInfo.outputPath('test-results', 'a-is-a-test', 'is-a-test-1-actual.png'))).toBe(true);
-  expect(fs.existsSync(testInfo.outputPath('test-results', 'a-is-a-test', 'is-a-test-1-expected.png'))).toBe(true);
+  expect(fs.existsSync(testInfo.outputPath('test-results', 'a-is-a-test', 'is-a-test-1-expected.png'))).toBe(false);
+  expect(fs.existsSync(testInfo.outputPath('test-results', 'a-is-a-test', 'is-a-test-1-previous.png'))).toBe(true);
   expect(fs.existsSync(testInfo.outputPath('test-results', 'a-is-a-test', 'is-a-test-1-diff.png'))).toBe(true);
   expect(fs.existsSync(testInfo.outputPath('a.spec.js-snapshots', 'is-a-test-1.png'))).toBe(false);
 });
@@ -286,7 +287,8 @@ test('should fail to screenshot an element with infinite animation', async ({ ru
   expect(result.exitCode).toBe(1);
   expect(stripAnsi(result.output)).toContain(`Timeout 2000ms exceeded while generating screenshot because element kept changing`);
   expect(fs.existsSync(testInfo.outputPath('test-results', 'a-is-a-test', 'is-a-test-1-actual.png'))).toBe(true);
-  expect(fs.existsSync(testInfo.outputPath('test-results', 'a-is-a-test', 'is-a-test-1-expected.png'))).toBe(true);
+  expect(fs.existsSync(testInfo.outputPath('test-results', 'a-is-a-test', 'is-a-test-1-expected.png'))).toBe(false);
+  expect(fs.existsSync(testInfo.outputPath('test-results', 'a-is-a-test', 'is-a-test-1-previous.png'))).toBe(true);
   expect(fs.existsSync(testInfo.outputPath('test-results', 'a-is-a-test', 'is-a-test-1-diff.png'))).toBe(true);
   expect(fs.existsSync(testInfo.outputPath('__screenshots__', 'a.spec.js', 'is-a-test-1.png'))).toBe(false);
 });
@@ -788,12 +790,12 @@ test('should attach expected/actual and no diff when sizes are different', async
     attachment.path = attachment.path.replace(/\\/g, '/').replace(/.*test-results\//, '');
   expect(attachments).toEqual([
     {
-      name: 'expected',
+      name: 'snapshot-expected.png',
       contentType: 'image/png',
       path: 'a-is-a-test/snapshot-expected.png'
     },
     {
-      name: 'actual',
+      name: 'snapshot-actual.png',
       contentType: 'image/png',
       path: 'a-is-a-test/snapshot-actual.png'
     },

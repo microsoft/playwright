@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test as baseTest, expect } from './playwright-test-fixtures';
+import { test as baseTest, expect, createImage } from './playwright-test-fixtures';
 import { HttpServer } from '../../packages/playwright-core/lib/utils/httpServer';
 import { startHtmlReportServer } from '../../packages/playwright-test/lib/reporters/html';
 
@@ -125,6 +125,85 @@ test('should include image diff', async ({ runInlineTest, page, showReport }) =>
   await imageDiff.locator('text=Diff').click();
   const diffSrc = await image.getAttribute('src');
   const set = new Set([expectedSrc, actualSrc, diffSrc]);
+  expect(set.size).toBe(3);
+});
+
+test('should include multiple image diffs', async ({ runInlineTest, page, showReport }) => {
+  const IMG_WIDTH = 200;
+  const IMG_HEIGHT = 200;
+  const redImage = createImage(IMG_WIDTH, IMG_HEIGHT, 255, 0, 0);
+  const whiteImage = createImage(IMG_WIDTH, IMG_HEIGHT, 255, 255, 255);
+
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        screenshotsDir: '__screenshots__',
+        use: { viewport: { width: ${IMG_WIDTH}, height: ${IMG_HEIGHT} }}
+      };
+    `,
+    '__screenshots__/a.test.js/fails-1.png': redImage,
+    '__screenshots__/a.test.js/fails-2.png': whiteImage,
+    '__screenshots__/a.test.js/fails-3.png': redImage,
+    'a.test.js': `
+      const { test } = pwt;
+      test('fails', async ({ page }, testInfo) => {
+        testInfo.snapshotSuffix = '';
+        await expect.soft(page).toHaveScreenshot({ timeout: 1000 });
+        await expect.soft(page).toHaveScreenshot({ timeout: 1000 });
+        await expect.soft(page).toHaveScreenshot({ timeout: 1000 });
+      });
+    `,
+  }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+
+  await showReport();
+  await page.click('text=fails');
+  await expect(page.locator('text=Image mismatch')).toHaveCount(2);
+  await expect(page.locator('text=Snapshot mismatch')).toHaveCount(0);
+  await expect(page.locator('text=Screenshots')).toHaveCount(0);
+  for (let i = 0; i < 2; ++i) {
+    const imageDiff = page.locator('data-testid=test-result-image-mismatch').nth(i);
+    const image = imageDiff.locator('img');
+    await expect(image).toHaveAttribute('src', /.*png/);
+  }
+});
+
+test('should include image diff when screenshot failed to generate due to animation', async ({ runInlineTest, page, showReport }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { use: { viewport: { width: 200, height: 200 }} };
+    `,
+    'a.test.js': `
+      const { test } = pwt;
+      test('fails', async ({ page }, testInfo) => {
+        testInfo.snapshotSuffix = '';
+        await page.evaluate(() => {
+          setInterval(() => {
+            document.body.textContent = Date.now();
+          }, 50);
+        });
+        await expect.soft(page).toHaveScreenshot({ timeout: 1000 });
+      });
+    `,
+  }, { 'reporter': 'dot,html', 'update-snapshots': true }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+
+  await showReport();
+  await page.click('text=fails');
+  await expect(page.locator('text=Image mismatch')).toHaveCount(1);
+  await expect(page.locator('text=Snapshot mismatch')).toHaveCount(0);
+  await expect(page.locator('text=Screenshots')).toHaveCount(0);
+  const imageDiff = page.locator('data-testid=test-result-image-mismatch');
+  const image = imageDiff.locator('img');
+  await expect(image).toHaveAttribute('src', /.*png/);
+  const actualSrc = await image.getAttribute('src');
+  await imageDiff.locator('text=Previous').click();
+  const previousSrc = await image.getAttribute('src');
+  await imageDiff.locator('text=Diff').click();
+  const diffSrc = await image.getAttribute('src');
+  const set = new Set([previousSrc, actualSrc, diffSrc]);
   expect(set.size).toBe(3);
 });
 
@@ -393,10 +472,10 @@ test('should render text attachments as text', async ({ runInlineTest, page, sho
   expect(result.exitCode).toBe(0);
 
   await showReport();
-  await page.click('text=passing');
-  await page.click('text=example.txt');
-  await page.click('text=example.json');
-  await page.click('text=example-utf16.txt');
+  await page.locator('text=passing').click();
+  await page.locator('text=example.txt').click();
+  await page.locator('text=example.json').click();
+  await page.locator('text=example-utf16.txt').click();
   await expect(page.locator('.attachment-body')).toHaveText(['foo', '{"foo":1}', 'utf16 encoded']);
 });
 

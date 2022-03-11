@@ -26,30 +26,68 @@ import { AttachmentLink } from './links';
 import { statusIcon } from './statusIcon';
 import './testResultView.css';
 
-const imageDiffNames = ['diff', 'expected', 'actual'];
+type DiffTab = {
+  id: string,
+  title: string,
+  attachment: TestAttachment,
+};
+
+function classifyAttachments(attachments: TestAttachment[]) {
+  const screenshots = new Set(attachments.filter(a => a.contentType.startsWith('image/')));
+  const videos = attachments.filter(a => a.name === 'video');
+  const traces = attachments.filter(a => a.name === 'trace');
+
+  const otherAttachments = new Set<TestAttachment>(attachments);
+  [...screenshots, ...videos, ...traces].forEach(a => otherAttachments.delete(a));
+
+  const snapshotNameToDiffTabs = new Map<string, DiffTab[]>();
+  let tabId = 0;
+  for (const attachment of attachments) {
+    const match = attachment.name.match(/^(.*)-(\w+)(\.[^.]+)?$/);
+    if (!match)
+      continue;
+    const [, name, category, extension = ''] = match;
+    const snapshotName = name + extension;
+    let diffTabs = snapshotNameToDiffTabs.get(snapshotName);
+    if (!diffTabs) {
+      diffTabs = [];
+      snapshotNameToDiffTabs.set(snapshotName, diffTabs);
+    }
+    diffTabs.push({
+      id: 'tab-' + (++tabId),
+      title: category,
+      attachment,
+    });
+  }
+  const diffs = [...snapshotNameToDiffTabs].map(([snapshotName, diffTabs]) => {
+    diffTabs.sort((tab1: DiffTab, tab2: DiffTab) => {
+      if (tab1.title === 'diff' || tab2.title === 'diff')
+        return tab1.title === 'diff' ? -1 : 1;
+      if (tab1.title !== tab2.title)
+        return tab1.title < tab2.title ? -1 : 1;
+      return 0;
+    });
+    const isImageDiff = diffTabs.some(tab => screenshots.has(tab.attachment));
+    for (const tab of diffTabs)
+      screenshots.delete(tab.attachment);
+    return {
+      tabs: diffTabs,
+      isImageDiff,
+      snapshotName,
+    };
+  }).filter(diff => diff.tabs.some(tab => ['diff', 'actual', 'expected'].includes(tab.title.toLowerCase())));
+  return { diffs, screenshots: [...screenshots], videos, otherAttachments, traces };
+}
 
 export const TestResultView: React.FC<{
   test: TestCase,
   result: TestResult,
 }> = ({ result }) => {
 
-  const { screenshots, videos, traces, otherAttachments, attachmentsMap } = React.useMemo(() => {
-    const attachmentsMap = new Map<string, TestAttachment>();
-    const attachments = result?.attachments || [];
-    const otherAttachments = new Set<TestAttachment>(attachments);
-    const screenshots = attachments.filter(a => a.contentType.startsWith('image/') && !imageDiffNames.includes(a.name));
-    const videos = attachments.filter(a => a.name === 'video');
-    const traces = attachments.filter(a => a.name === 'trace');
-    for (const a of attachments)
-      attachmentsMap.set(a.name, a);
-    [...screenshots, ...videos, ...traces].forEach(a => otherAttachments.delete(a));
-    return { attachmentsMap, screenshots, videos, otherAttachments, traces };
+  const { screenshots, videos, traces, otherAttachments, diffs } = React.useMemo(() => {
+    return classifyAttachments(result?.attachments || []);
   }, [ result ]);
 
-  const diff = attachmentsMap.get('diff');
-  const expected = attachmentsMap.get('expected');
-  const actual = attachmentsMap.get('actual');
-  const hasImages = [actual?.contentType, expected?.contentType, diff?.contentType].some(v => v && /^image\//i.test(v));
   return <div className='test-result'>
     {!!result.errors.length && <AutoChip header='Errors'>
       {result.errors.map((error, index) => <ErrorMessage key={'test-result-error-message-' + index} error={error}></ErrorMessage>)}
@@ -58,12 +96,12 @@ export const TestResultView: React.FC<{
       {result.steps.map((step, i) => <StepTreeItem key={`step-${i}`} step={step} depth={0}></StepTreeItem>)}
     </AutoChip>}
 
-    {expected && actual && <AutoChip header={`${hasImages ? 'Image' : 'Snapshot'} mismatch`}>
-      {hasImages && <ImageDiff actual={actual} expected={expected} diff={diff}></ImageDiff>}
-      {diff && <AttachmentLink key={`diff`} attachment={diff}></AttachmentLink>}
-      <AttachmentLink key={`expected`} attachment={expected}></AttachmentLink>
-      <AttachmentLink key={`actual`} attachment={actual}></AttachmentLink>
-    </AutoChip>}
+    {diffs.map(({ tabs, snapshotName, isImageDiff }, index) =>
+      <AutoChip key={`diff-${index}`} header={`${isImageDiff ? 'Image' : 'Snapshot'} mismatch: ${snapshotName}`}>
+        {isImageDiff && <ImageDiff key='image-diff' tabs={tabs}></ImageDiff>}
+        {tabs.map((tab: DiffTab) => <AttachmentLink key={tab.id} attachment={tab.attachment}></AttachmentLink>)}
+      </AutoChip>
+    )}
 
     {!!screenshots.length && <AutoChip header='Screenshots'>
       {screenshots.map((a, i) => {
@@ -117,38 +155,22 @@ const StepTreeItem: React.FC<{
 };
 
 const ImageDiff: React.FunctionComponent<{
- actual: TestAttachment,
- expected: TestAttachment,
- diff?: TestAttachment,
-}> = ({ actual, expected, diff }) => {
-  const [selectedTab, setSelectedTab] = React.useState<string>('actual');
+ tabs: DiffTab[],
+}> = ({ tabs }) => {
+  // Pre-select a tab called "actual", if any.
+  const preselectedTab = tabs.find(tab => tab.title.toLowerCase() === 'actual') || tabs[0];
+  const [selectedTab, setSelectedTab] = React.useState<string>(preselectedTab.id);
   const diffElement = React.useRef<HTMLImageElement>(null);
-  const tabs = [];
-  if (diff) {
-    tabs.push({
-      id: 'diff',
-      title: 'Diff',
-      render: () => <img src={diff.path}/>
-    });
-  }
-  tabs.push({
-    id: 'actual',
-    title: 'Actual',
-    render: () => <img src={actual.path} onLoad={() => {
+  const paneTabs = tabs.map(tab => ({
+    id: tab.id,
+    title: tab.title,
+    render: () => <img src={tab.attachment.path} onLoad={() => {
       if (diffElement.current)
         diffElement.current.style.minHeight = diffElement.current.offsetHeight + 'px';
     }}/>
-  });
-  tabs.push({
-    id: 'expected',
-    title: 'Expected',
-    render: () => <img src={expected.path} onLoad={() => {
-      if (diffElement.current)
-        diffElement.current.style.minHeight = diffElement.current.offsetHeight + 'px';
-    }}/>
-  });
+  }));
   return <div className='vbox' data-testid='test-result-image-mismatch' ref={diffElement}>
-    <TabbedPane tabs={tabs} selectedTab={selectedTab} setSelectedTab={setSelectedTab} />
+    <TabbedPane tabs={paneTabs} selectedTab={selectedTab} setSelectedTab={setSelectedTab} />
   </div>;
 };
 
