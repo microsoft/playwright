@@ -28,7 +28,7 @@ const config: PlaywrightTestConfig = {
     ['html', { open: 'on-failure' }]
   ],
   use: {
-    baseURL: url.pathToFileURL(path.join(__dirname, 'out-ct', 'index.html')).toString(),
+    baseURL: url.pathToFileURL(path.join(__dirname, 'out', 'index.html')).toString(),
     trace: 'on-first-retry',
   },
   projects: [

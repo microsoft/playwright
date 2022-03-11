@@ -18,6 +18,20 @@ const { test: baseTest, expect } = require('@playwright/test');
 const { mount } = require('@playwright/test/lib/mount');
 
 const test = baseTest.extend({
+  _workerPage: [async ({ browser }, use) => {
+    const page = await browser.newPage();
+    await page.addInitScript('navigator.serviceWorker.register = () => {}');
+    await use(page);
+  }, { scope: 'worker' }],
+
+  context: async ({ page }, use) => {
+    await use(page.context());
+  },
+
+  page: async ({ _workerPage }, use) => {
+    await use(_workerPage);
+  },
+
   mount: async ({ page, baseURL }, use) => {
     await use(async (component, options) => {
       await page.goto(baseURL);
