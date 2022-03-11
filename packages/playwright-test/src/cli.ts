@@ -20,6 +20,7 @@ import { Command } from 'commander';
 import fs from 'fs';
 import url from 'url';
 import path from 'path';
+import os from 'os';
 import type { Config } from './types';
 import { Runner, builtInReporters, BuiltInReporter, kDefaultConfigFiles } from './runner';
 import { stopProfiling, startProfiling } from './profiler';
@@ -27,7 +28,7 @@ import { FilePatternFilter } from './util';
 import { showHTMLReport } from './reporters/html';
 import { GridServer } from 'playwright-core/lib/grid/gridServer';
 import dockerFactory from 'playwright-core/lib/grid/dockerGridFactory';
-import { createGuid } from 'playwright-core/lib/utils/utils';
+import { createGuid, hostPlatform } from 'playwright-core/lib/utils/utils';
 import { fileIsModule } from './loader';
 
 const defaultTimeout = 30000;
@@ -107,13 +108,16 @@ Examples:
 async function runTests(args: string[], opts: { [key: string]: any }) {
   await startProfiling();
 
+  const cpus = os.cpus().length;
+  const workers = hostPlatform.startsWith('mac') && hostPlatform.endsWith('arm64') ? cpus : Math.ceil(cpus / 2);
+
   const defaultConfig: Config = {
     preserveOutput: 'always',
     reporter: [ [defaultReporter] ],
     reportSlowTests: { max: 5, threshold: 15000 },
     timeout: defaultTimeout,
     updateSnapshots: 'missing',
-    workers: Math.ceil(require('os').cpus().length / 2),
+    workers,
   };
 
   if (opts.browser) {
