@@ -60,6 +60,14 @@ type ExpectSettings = {
     /** An acceptable perceived color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between pixels in compared images, between zero (strict) and one (lax). Defaults to `0.2`.
      */
     threshold?: number,
+    /**
+     * An acceptable amount of pixels that could be different, unset by default.
+     */
+    maxDiffPixels?: number,
+    /**
+     * An acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1` , unset by default.
+     */
+    maxDiffPixelRatio?: number,
   }
 };
 
