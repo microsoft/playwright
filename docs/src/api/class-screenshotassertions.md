@@ -34,4 +34,8 @@ Learn more about [visual comparisons](./test-snapshots.md).
 
 Snapshot name.
 
+### option: ScreenshotAssertions.toMatchSnapshot.maxDiffPixels = %%-assertions-max-diff-pixels-%%
+
+### option: ScreenshotAssertions.toMatchSnapshot.maxDiffPixelRatio = %%-assertions-max-diff-pixel-ratio-%%
+
 ### option: ScreenshotAssertions.toMatchSnapshot.threshold = %%-assertions-threshold-%%
