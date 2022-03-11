@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+import { config as loadEnv } from 'dotenv';
+loadEnv({ path: path.join(__dirname, '..', '..', '.env') });
+
 import { Config } from './stable-test-runner';
 import * as path from 'path';
 

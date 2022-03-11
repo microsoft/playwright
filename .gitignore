@@ -24,3 +24,4 @@ playwright-report
 /packages/*/NOTICE
 /packages/playwright/README.md
 /packages/playwright-core/api.json
+.env

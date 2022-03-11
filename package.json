@@ -79,6 +79,7 @@
     "copy-webpack-plugin": "^9.1.0",
     "cross-env": "^7.0.3",
     "css-loader": "^6.5.1",
+    "dotenv": "^16.0.0",
     "electron": "^12.2.1",
     "enquirer": "^2.3.6",
     "eslint": "^8.8.0",
