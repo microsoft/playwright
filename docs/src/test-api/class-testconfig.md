@@ -298,10 +298,46 @@ test('example test', async ({}, testInfo) => {
 });
 ```
 
+## property: TestConfig.screenshotsDir
+- type: <[string]>
+
+The base directory, relative to the config file, for screenshot files created with `toHaveScreenshot`. Defaults to
+
+```
+<directory-of-configuration-file>/__screenshots__/<platform name>/<project name>
+```
+
+This path will serve as the base directory for each test file screenshot directory. For example, the following test structure:
+
+```
+smoke-tests/
+└── basic.spec.ts
+```
+
+will result in the following screenshots folder structure:
+
+```
+__screenshots__/
+└── darwin/
+    ├── Mobile Safari/
+    │   └── smoke-tests/
+    │       └── basic.spec.ts/
+    │           └── screenshot-expectation.png
+    └── Desktop Chrome/
+        └── smoke-tests/
+            └── basic.spec.ts/
+                └── screenshot-expectation.png
+```
+
+where:
+* `darwin/` - a platform name folder
+* `Mobile Safari` and `Desktop Chrome` - project names
+
+
 ## property: TestConfig.snapshotDir
 - type: <[string]>
 
-The base directory, relative to the config file, for snapshot files created with `toMatchSnapshot` and `toHaveScreenshot`. Defaults to [`property: TestConfig.testDir`].
+The base directory, relative to the config file, for snapshot files created with `toMatchSnapshot`. Defaults to [`property: TestConfig.testDir`].
 
 The directory for each test can be accessed by [`property: TestInfo.snapshotDir`] and [`method: TestInfo.snapshotPath`].
 

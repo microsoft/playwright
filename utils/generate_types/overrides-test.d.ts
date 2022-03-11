@@ -70,6 +70,7 @@ interface TestProject {
   metadata?: any;
   name?: string;
   snapshotDir?: string;
+  screenshotsDir?: string;
   outputDir?: string;
   repeatEach?: number;
   retries?: number;
@@ -146,6 +147,7 @@ interface TestConfig {
   metadata?: any;
   name?: string;
   snapshotDir?: string;
+  screenshotsDir?: string;
   outputDir?: string;
   repeatEach?: number;
   retries?: number;

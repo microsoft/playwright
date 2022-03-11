@@ -162,8 +162,7 @@ interface TestProject {
    */
   name?: string;
   /**
-   * The base directory, relative to the config file, for snapshot files created with `toMatchSnapshot` and
-   * `toHaveScreenshot`. Defaults to
+   * The base directory, relative to the config file, for snapshot files created with `toMatchSnapshot`. Defaults to
    * [testProject.testDir](https://playwright.dev/docs/api/class-testproject#test-project-test-dir).
    *
    * The directory for each test can be accessed by
@@ -175,6 +174,41 @@ interface TestProject {
    * resolve to `snapshots/a.spec.js-snapshots`.
    */
   snapshotDir?: string;
+  /**
+   * The base directory, relative to the config file, for screenshot files created with `toHaveScreenshot`. Defaults to
+   *
+   * ```
+   * <directory-of-configuration-file>/__screenshots__/<platform name>/<project name>
+   * ```
+   *
+   * This path will serve as the base directory for each test file screenshot directory. For example, the following test
+   * structure:
+   *
+   * ```
+   * smoke-tests/
+   * └── basic.spec.ts
+   * ```
+   *
+   * will result in the following screenshots folder structure:
+   *
+   * ```
+   * __screenshots__/
+   * └── darwin/
+   *     ├── Mobile Safari/
+   *     │   └── smoke-tests/
+   *     │       └── basic.spec.ts/
+   *     │           └── screenshot-expectation.png
+   *     └── Desktop Chrome/
+   *         └── smoke-tests/
+   *             └── basic.spec.ts/
+   *                 └── screenshot-expectation.png
+   * ```
+   *
+   * where:
+   * - `darwin/` - a platform name folder
+   * - `Mobile Safari` and `Desktop Chrome` - project names
+   */
+  screenshotsDir?: string;
   /**
    * The output directory for files created during test execution. Defaults to `test-results`.
    *
@@ -717,8 +751,7 @@ interface TestConfig {
   metadata?: any;
   name?: string;
   /**
-   * The base directory, relative to the config file, for snapshot files created with `toMatchSnapshot` and
-   * `toHaveScreenshot`. Defaults to
+   * The base directory, relative to the config file, for snapshot files created with `toMatchSnapshot`. Defaults to
    * [testConfig.testDir](https://playwright.dev/docs/api/class-testconfig#test-config-test-dir).
    *
    * The directory for each test can be accessed by
@@ -730,6 +763,41 @@ interface TestConfig {
    * resolve to `snapshots/a.spec.js-snapshots`.
    */
   snapshotDir?: string;
+  /**
+   * The base directory, relative to the config file, for screenshot files created with `toHaveScreenshot`. Defaults to
+   *
+   * ```
+   * <directory-of-configuration-file>/__screenshots__/<platform name>/<project name>
+   * ```
+   *
+   * This path will serve as the base directory for each test file screenshot directory. For example, the following test
+   * structure:
+   *
+   * ```
+   * smoke-tests/
+   * └── basic.spec.ts
+   * ```
+   *
+   * will result in the following screenshots folder structure:
+   *
+   * ```
+   * __screenshots__/
+   * └── darwin/
+   *     ├── Mobile Safari/
+   *     │   └── smoke-tests/
+   *     │       └── basic.spec.ts/
+   *     │           └── screenshot-expectation.png
+   *     └── Desktop Chrome/
+   *         └── smoke-tests/
+   *             └── basic.spec.ts/
+   *                 └── screenshot-expectation.png
+   * ```
+   *
+   * where:
+   * - `darwin/` - a platform name folder
+   * - `Mobile Safari` and `Desktop Chrome` - project names
+   */
+  screenshotsDir?: string;
   /**
    * The output directory for files created during test execution. Defaults to `test-results`.
    *
@@ -1571,9 +1639,9 @@ export interface TestInfo {
   stderr: (string | Buffer)[];
   /**
    * Suffix used to differentiate snapshots between multiple test configurations. For example, if snapshots depend on the
-   * platform, you can set `testInfo.snapshotSuffix` equal to `process.platform`. In this case both
-   * `expect(value).toMatchSnapshot(snapshotName)` and `expect(page).toHaveScreenshot(snapshotName)` will use different
-   * snapshots depending on the platform. Learn more about [snapshots](https://playwright.dev/docs/test-snapshots).
+   * platform, you can set `testInfo.snapshotSuffix` equal to `process.platform`. In this case
+   * `expect(value).toMatchSnapshot(snapshotName)` will use different snapshots depending on the platform. Learn more about
+   * [snapshots](https://playwright.dev/docs/test-snapshots).
    */
   snapshotSuffix: string;
   /**

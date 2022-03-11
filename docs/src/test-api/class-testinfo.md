@@ -382,7 +382,7 @@ The name of the snapshot or the path segments to define the snapshot file path. 
 ## property: TestInfo.snapshotSuffix
 - type: <[string]>
 
-Suffix used to differentiate snapshots between multiple test configurations. For example, if snapshots depend on the platform, you can set `testInfo.snapshotSuffix` equal to `process.platform`. In this case both `expect(value).toMatchSnapshot(snapshotName)` and `expect(page).toHaveScreenshot(snapshotName)` will use different snapshots depending on the platform. Learn more about [snapshots](./test-snapshots.md).
+Suffix used to differentiate snapshots between multiple test configurations. For example, if snapshots depend on the platform, you can set `testInfo.snapshotSuffix` equal to `process.platform`. In this case `expect(value).toMatchSnapshot(snapshotName)` will use different snapshots depending on the platform. Learn more about [snapshots](./test-snapshots.md).
 
 ## property: TestInfo.status
 - type: <[void]|[TestStatus]<"passed"|"failed"|"timedOut"|"skipped">>
