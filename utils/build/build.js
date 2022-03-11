@@ -176,6 +176,7 @@ const webPackFiles = [
   'packages/playwright-core/src/web/traceViewer/webpack-sw.config.js',
   'packages/playwright-core/src/web/recorder/webpack.config.js',
   'packages/html-reporter/webpack.config.js',
+  'packages/html-reporter/playwright-ct/webpack.config.js',
 ];
 for (const file of webPackFiles) {
   steps.push({

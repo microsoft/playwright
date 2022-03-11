@@ -14,6 +14,25 @@
  * limitations under the License.
  */
 
-export * from 'playwright-core';
-export * from './types/test';
-export { default } from './types/test';
+import type {
+  TestType,
+  PlaywrightTestArgs,
+  PlaywrightTestOptions,
+  PlaywrightWorkerArgs,
+  PlaywrightWorkerOptions,
+  Locator,
+} from '@playwright/test';
+
+interface ComponentFixtures {
+  mount(component: any, options?: {
+    props?: { [key: string]: any },
+    slots?: { [key: string]: any },
+    on?: { [key: string]: Function },
+  }): Promise<Locator>;
+}
+
+export const test: TestType<
+  PlaywrightTestArgs & PlaywrightTestOptions & ComponentFixtures,
+  PlaywrightWorkerArgs & PlaywrightWorkerOptions>;
+
+export { expect } from '@playwright/test';

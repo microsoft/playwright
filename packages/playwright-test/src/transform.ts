@@ -25,7 +25,7 @@ import type { Location } from './types';
 import { tsConfigLoader, TsConfigLoaderResult } from './third_party/tsconfig-loader';
 import Module from 'module';
 
-const version = 7;
+const version = 8;
 const cacheDir = process.env.PWTEST_CACHE_DIR || path.join(os.tmpdir(), 'playwright-transform-cache');
 const sourceMaps: Map<string, string> = new Map();
 

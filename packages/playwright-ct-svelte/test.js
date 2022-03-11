@@ -14,29 +14,17 @@
  * limitations under the License.
  */
 
-import { PlaywrightTestConfig, devices } from '@playwright/test';
-import path from 'path';
-import url from 'url';
+const { test: baseTest, expect } = require('@playwright/test');
+const { mount } = require('@playwright/test/lib/mount');
 
-const config: PlaywrightTestConfig = {
-  testDir: 'src',
-  forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
-  reporter: process.env.CI ? [
-    ['html', { open: 'never' }],
-  ] : [
-    ['html', { open: 'on-failure' }]
-  ],
-  use: {
-    baseURL: url.pathToFileURL(path.join(__dirname, 'out-ct', 'index.html')).toString(),
-    trace: 'on-first-retry',
+const test = baseTest.extend({
+  mount: async ({ page, baseURL }, use) => {
+    await use(async (component, options) => {
+      await page.goto(baseURL);
+      const selector = await mount(page, component, options);
+      return page.locator(selector);
+    });
   },
-  projects: [
-    {
-      name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
-    },
-  ],
-};
+});
 
-export default config;
+module.exports = { test, expect };

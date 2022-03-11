@@ -1,0 +1,8 @@
+{
+    "name": "@playwright/ct-react",
+    "private": true,
+    "exports": {
+        "./render": "./render.mjs",
+        "./test": "./test.js"
+    }
+}

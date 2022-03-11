@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,13 +14,17 @@
  * limitations under the License.
  */
 
-import { AutoChip, Chip } from './src/chip';
-import { HeaderView } from './src/headerView';
-import { TestCaseView } from './src/testCaseView';
-import './src/theme.css';
-import { registerComponent } from './test/component';
+const { test: baseTest, expect } = require('@playwright/test');
+const { mount } = require('@playwright/test/lib/mount');
 
-registerComponent('HeaderView', HeaderView);
-registerComponent('Chip', Chip);
-registerComponent('TestCaseView', TestCaseView);
-registerComponent('AutoChip', AutoChip);
+const test = baseTest.extend({
+  mount: async ({ page, baseURL }, use) => {
+    await use(async (component, options) => {
+      await page.goto(baseURL);
+      const selector = await mount(page, component, options);
+      return page.locator(selector);
+    });
+  },
+});
+
+module.exports = { test, expect };
