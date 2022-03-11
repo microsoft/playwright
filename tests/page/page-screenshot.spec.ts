@@ -728,8 +728,12 @@ it.describe('page screenshot animations', () => {
       page.screenshot({ fonts: 'ready' }),
       server.serveFile(serverRequest, serverResponse),
     ]);
-    expect(iconsScreenshot).toMatchSnapshot('screenshot-web-font.png');
-    expect(noIconsScreenshot).not.toMatchSnapshot('screenshot-web-font.png');
+    expect(iconsScreenshot).toMatchSnapshot('screenshot-web-font.png', {
+      maxDiffPixels: 3,
+    });
+    expect(noIconsScreenshot).not.toMatchSnapshot('screenshot-web-font.png', {
+      maxDiffPixels: 3,
+    });
   });
 
 });
