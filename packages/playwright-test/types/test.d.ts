@@ -55,6 +55,27 @@ type ExpectSettings = {
      * An acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1` , unset by default.
      */
     maxDiffPixelRatio?: number,
+    /**
+     * When set to `"disabled"`, stops CSS animations, CSS transitions and Web Animations. Animations get different treatment
+     * depending on their duration:
+     * - finite animations are fast-forwarded to completion, so they'll fire `transitionend` event.
+     * - infinite animations are canceled to initial state, and then played over after the screenshot.
+     *
+     * Defaults to `"disabled"` that leaves animations untouched.
+     */
+    animations?: 'allow'|'disabled',
+    /**
+     * When set to `"ready"`, screenshot will wait for
+     * [`document.fonts.ready`](https://developer.mozilla.org/en-US/docs/Web/API/FontFaceSet/ready) promise to resolve in all
+     * frames. Defaults to `"ready"`.
+     */
+    fonts?: 'ready'|'nowait',
+    /**
+     * When set to `"css"`, screenshot will have a single pixel per each css pixel on the page. For high-dpi devices, this will
+     * keep screenshots small. Using `"device"` option will produce a single pixel per each device pixel, so screenhots of
+     * high-dpi devices will be twice as large or even larger. Defaults to `"css"`.
+     */
+    size?: 'css'|'device',
   }
   toMatchSnapshot?: {
     /** An acceptable perceived color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between pixels in compared images, between zero (strict) and one (lax). Defaults to `0.2`.

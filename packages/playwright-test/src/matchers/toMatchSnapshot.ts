@@ -285,12 +285,20 @@ export async function toHaveScreenshot(
   const testInfo = currentTestInfo();
   if (!testInfo)
     throw new Error(`toHaveScreenshot() must be called during the test`);
+  const config = testInfo.project.expect?.toHaveScreenshot;
   const helper = new SnapshotHelper(
       testInfo, testInfo._screenshotPath.bind(testInfo), 'png',
-      testInfo.project.expect?.toHaveScreenshot || {},
+      {
+        maxDiffPixels: config?.maxDiffPixels,
+        maxDiffPixelRatio: config?.maxDiffPixelRatio,
+        threshold: config?.threshold,
+      },
       nameOrOptions, optOptions);
   const [page, locator] = pageOrLocator.constructor.name === 'Page' ? [(pageOrLocator as PageEx), undefined] : [(pageOrLocator as Locator).page() as PageEx, pageOrLocator as LocatorEx];
   const screenshotOptions = {
+    animations: config?.animations ?? 'disabled',
+    fonts: config?.fonts ?? 'ready',
+    size: config?.size ?? 'css',
     ...helper.allOptions,
     mask: (helper.allOptions.mask || []) as LocatorEx[],
     name: undefined,

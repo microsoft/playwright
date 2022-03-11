@@ -40,6 +40,10 @@ export default config;
     - `threshold` <[float]> an acceptable perceived color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between the same pixel in compared images, between zero (strict) and one (lax). Defaults to `0.2`.
     - `maxDiffPixels` <[int]> an acceptable amount of pixels that could be different, unset by default.
     - `maxDiffPixelRatio` <[float]> an acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1` , unset by default.
+    - `animations` <[ScreenshotAnimations]<"allow"|"disable">> See [`option: animations`] in [`method: Page.screenshot`]. Defaults to `"disable"`.
+    - `fonts` <[ScreenshotFonts]<"ready"|"nowait">> See [`option: fonts`] in [`method: Page.screenshot`]. Defaults to `"ready"`.
+    - `size` <[ScreenshotSize]<"css"|"device">> See [`option: size`] in [`method: Page.screenshot`]. Defaults to `"css"`.
+
   - `toMatchSnapshot` <[Object]>
     - `threshold` <[float]> an acceptable perceived color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between the same pixel in compared images, between zero (strict) and one (lax). Defaults to `0.2`.
     - `maxDiffPixels` <[int]> an acceptable amount of pixels that could be different, unset by default.

@@ -35,6 +35,13 @@ const blueImage = createImage(IMG_WIDTH, IMG_HEIGHT, 0, 0, 255);
 test('should fail to screenshot a page with infinite animation', async ({ runInlineTest }, testInfo) => {
   const infiniteAnimationURL = pathToFileURL(path.join(__dirname, '../assets/rotate-z.html'));
   const result = await runInlineTest({
+    ...playwrightConfig({
+      expect: {
+        toHaveScreenshot: {
+          animations: 'allow',
+        },
+      },
+    }),
     'a.spec.js': `
       pwt.test('is a test', async ({ page }) => {
         await page.goto('${infiniteAnimationURL}');
@@ -48,6 +55,62 @@ test('should fail to screenshot a page with infinite animation', async ({ runInl
   expect(fs.existsSync(testInfo.outputPath('test-results', 'a-is-a-test', 'is-a-test-1-expected.png'))).toBe(true);
   expect(fs.existsSync(testInfo.outputPath('test-results', 'a-is-a-test', 'is-a-test-1-diff.png'))).toBe(true);
   expect(fs.existsSync(testInfo.outputPath('a.spec.js-snapshots', 'is-a-test-1.png'))).toBe(false);
+});
+
+test('should disable animations by default', async ({ runInlineTest }, testInfo) => {
+  const cssTransitionURL = pathToFileURL(path.join(__dirname, '../assets/css-transition.html'));
+  const result = await runInlineTest({
+    'a.spec.js': `
+      pwt.test('is a test', async ({ page }) => {
+        await page.goto('${cssTransitionURL}');
+        await expect(page).toHaveScreenshot({ timeout: 2000 });
+      });
+    `
+  }, { 'update-snapshots': true });
+  expect(result.exitCode).toBe(0);
+});
+
+test('should have size as css by default', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    ...playwrightConfig({ screenshotsDir: '__screenshots__' }),
+    'a.spec.js': `
+      pwt.test('is a test', async ({ browser }) => {
+        const context = await browser.newContext({
+          viewport: { width: ${IMG_WIDTH}, height: ${IMG_HEIGHT} },
+          deviceScaleFactor: 2,
+        });
+        const page = await context.newPage();
+        await expect(page).toHaveScreenshot('snapshot.png');
+        await context.close();
+      });
+    `
+  }, { 'update-snapshots': true });
+  expect(result.exitCode).toBe(0);
+
+  const snapshotOutputPath = testInfo.outputPath('__screenshots__', 'a.spec.js', 'snapshot.png');
+  expect(pngComparator(fs.readFileSync(snapshotOutputPath), whiteImage)).toBe(null);
+});
+
+test('should ignore non-documented options in toHaveScreenshot config', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    ...playwrightConfig({
+      screenshotsDir: '__screenshots__',
+      expect: {
+        toHaveScreenshot: {
+          clip: { x: 0, y: 0, width: 10, height: 10 },
+        },
+      },
+    }),
+    'a.spec.js': `
+      pwt.test('is a test', async ({ page }) => {
+        await expect(page).toHaveScreenshot('snapshot.png');
+      });
+    `
+  }, { 'update-snapshots': true });
+  expect(result.exitCode).toBe(0);
+
+  const snapshotOutputPath = testInfo.outputPath('__screenshots__', 'a.spec.js', 'snapshot.png');
+  expect(pngComparator(fs.readFileSync(snapshotOutputPath), whiteImage)).toBe(null);
 });
 
 test('screenshotPath should include platform and project name by default', async ({ runInlineTest }, testInfo) => {
@@ -203,7 +266,16 @@ test('should support omitBackground option for locator', async ({ runInlineTest 
 test('should fail to screenshot an element with infinite animation', async ({ runInlineTest }, testInfo) => {
   const infiniteAnimationURL = pathToFileURL(path.join(__dirname, '../assets/rotate-z.html'));
   const result = await runInlineTest({
-    ...playwrightConfig({ screenshotsDir: '__screenshots__' }),
+    ...playwrightConfig({
+      screenshotsDir: '__screenshots__',
+      projects: [{
+        expect: {
+          toHaveScreenshot: {
+            animations: 'allow',
+          },
+        },
+      }],
+    }),
     'a.spec.js': `
       pwt.test('is a test', async ({ page }) => {
         await page.goto('${infiniteAnimationURL}');
@@ -222,7 +294,14 @@ test('should fail to screenshot an element with infinite animation', async ({ ru
 test('should fail to screenshot an element that keeps moving', async ({ runInlineTest }, testInfo) => {
   const infiniteAnimationURL = pathToFileURL(path.join(__dirname, '../assets/rotate-z.html'));
   const result = await runInlineTest({
-    ...playwrightConfig({ screenshotsDir: '__screenshots__' }),
+    ...playwrightConfig({
+      screenshotsDir: '__screenshots__',
+      expect: {
+        toHaveScreenshot: {
+          animations: 'allow',
+        },
+      },
+    }),
     'a.spec.js': `
       pwt.test('is a test', async ({ page }) => {
         await page.goto('${infiniteAnimationURL}');
