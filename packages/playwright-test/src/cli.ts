@@ -20,6 +20,7 @@ import { Command } from 'commander';
 import fs from 'fs';
 import url from 'url';
 import path from 'path';
+import os from 'os';
 import type { Config } from './types';
 import { Runner, builtInReporters, BuiltInReporter, kDefaultConfigFiles } from './runner';
 import { stopProfiling, startProfiling } from './profiler';
@@ -107,7 +108,6 @@ Examples:
 async function runTests(args: string[], opts: { [key: string]: any }) {
   await startProfiling();
 
-  const os = require('os');
   const cpus = os.cpus().length;
   const workers = hostPlatform.startsWith('mac') && hostPlatform.endsWith('arm64') ? cpus : Math.ceil(cpus / 2);
 
