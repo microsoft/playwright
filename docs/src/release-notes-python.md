@@ -64,7 +64,7 @@ Read more in [our documentation](./api/class-apirequestcontext).
 
 ### Web-First Assertions
 
-Playwright for Python 1.18 introduces [Web-First Assertions](./api/test-assertions).
+Playwright for Python 1.18 introduces [Web-First Assertions](./test-assertions).
 
 Consider the following example:
 
@@ -91,7 +91,7 @@ fetched Node has the `"Submitted"` text. It will be re-fetching the node and
 checking it over and over, until the condition is met or until the timeout is
 reached. You can pass this timeout as an option.
 
-Read more in [our documentation](./api/test-assertions).
+Read more in [our documentation](./test-assertions).
 
 ### Locator Improvements
 
