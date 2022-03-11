@@ -8073,6 +8073,13 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
     animations?: "disabled";
 
     /**
+     * When set to `"ready"`, screenshot will wait for
+     * [`document.fonts.ready()`](https://developer.mozilla.org/en-US/docs/Web/API/FontFaceSet/ready) promise to resolve in all
+     * frames. Defaults to `"nowait"`.
+     */
+    fonts?: "ready"|"nowait";
+
+    /**
      * Specify locators that should be masked when the screenshot is taken. Masked elements will be overlayed with a pink box
      * `#FF00FF` that completely covers its bounding box.
      */
@@ -8097,9 +8104,9 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
     quality?: number;
 
     /**
-     * When set to `css`, screenshot will have a single pixel per each css pixel on the page. For high-dpi devices, this will
-     * keep screenshots small. Using `device` option will produce a single pixel per each device pixel, so screenhots of
-     * high-dpi devices will be twice as large or even larger. Defaults to `device`.
+     * When set to `"css"`, screenshot will have a single pixel per each css pixel on the page. For high-dpi devices, this will
+     * keep screenshots small. Using `"device"` option will produce a single pixel per each device pixel, so screenhots of
+     * high-dpi devices will be twice as large or even larger. Defaults to `"device"`.
      */
     size?: "css"|"device";
 
@@ -15594,6 +15601,13 @@ export interface LocatorScreenshotOptions {
   animations?: "disabled";
 
   /**
+   * When set to `"ready"`, screenshot will wait for
+   * [`document.fonts.ready()`](https://developer.mozilla.org/en-US/docs/Web/API/FontFaceSet/ready) promise to resolve in all
+   * frames. Defaults to `"nowait"`.
+   */
+  fonts?: "ready"|"nowait";
+
+  /**
    * Specify locators that should be masked when the screenshot is taken. Masked elements will be overlayed with a pink box
    * `#FF00FF` that completely covers its bounding box.
    */
@@ -15618,9 +15632,9 @@ export interface LocatorScreenshotOptions {
   quality?: number;
 
   /**
-   * When set to `css`, screenshot will have a single pixel per each css pixel on the page. For high-dpi devices, this will
-   * keep screenshots small. Using `device` option will produce a single pixel per each device pixel, so screenhots of
-   * high-dpi devices will be twice as large or even larger. Defaults to `device`.
+   * When set to `"css"`, screenshot will have a single pixel per each css pixel on the page. For high-dpi devices, this will
+   * keep screenshots small. Using `"device"` option will produce a single pixel per each device pixel, so screenhots of
+   * high-dpi devices will be twice as large or even larger. Defaults to `"device"`.
    */
   size?: "css"|"device";
 
@@ -15763,6 +15777,13 @@ export interface PageScreenshotOptions {
   };
 
   /**
+   * When set to `"ready"`, screenshot will wait for
+   * [`document.fonts.ready()`](https://developer.mozilla.org/en-US/docs/Web/API/FontFaceSet/ready) promise to resolve in all
+   * frames. Defaults to `"nowait"`.
+   */
+  fonts?: "ready"|"nowait";
+
+  /**
    * When true, takes a screenshot of the full scrollable page, instead of the currently visible viewport. Defaults to
    * `false`.
    */
@@ -15793,9 +15814,9 @@ export interface PageScreenshotOptions {
   quality?: number;
 
   /**
-   * When set to `css`, screenshot will have a single pixel per each css pixel on the page. For high-dpi devices, this will
-   * keep screenshots small. Using `device` option will produce a single pixel per each device pixel, so screenhots of
-   * high-dpi devices will be twice as large or even larger. Defaults to `device`.
+   * When set to `"css"`, screenshot will have a single pixel per each css pixel on the page. For high-dpi devices, this will
+   * keep screenshots small. Using `"device"` option will produce a single pixel per each device pixel, so screenhots of
+   * high-dpi devices will be twice as large or even larger. Defaults to `"device"`.
    */
   size?: "css"|"device";
 

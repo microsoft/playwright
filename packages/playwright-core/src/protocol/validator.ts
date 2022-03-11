@@ -573,6 +573,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     animations: tOptional(tEnum(['disabled'])),
     clip: tOptional(tType('Rect')),
     size: tOptional(tEnum(['css', 'device'])),
+    fonts: tOptional(tEnum(['ready', 'nowait'])),
     mask: tOptional(tArray(tObject({
       frame: tChannel('Frame'),
       selector: tString,
@@ -1068,6 +1069,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     omitBackground: tOptional(tBoolean),
     animations: tOptional(tEnum(['disabled'])),
     size: tOptional(tEnum(['css', 'device'])),
+    fonts: tOptional(tEnum(['ready', 'nowait'])),
     mask: tOptional(tArray(tObject({
       frame: tChannel('Frame'),
       selector: tString,
