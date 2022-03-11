@@ -8070,7 +8070,7 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
      * - finite animations are fast-forwarded to completion, so they'll fire `transitionend` event.
      * - infinite animations are canceled to initial state, and then played over after the screenshot.
      *
-     * Defaults to `"allow"`.
+     * Defaults to `"allow"` that leaves animations untouched.
      */
     animations?: "disabled"|"allow";
 
@@ -15600,7 +15600,7 @@ export interface LocatorScreenshotOptions {
    * - finite animations are fast-forwarded to completion, so they'll fire `transitionend` event.
    * - infinite animations are canceled to initial state, and then played over after the screenshot.
    *
-   * Defaults to `"allow"`.
+   * Defaults to `"allow"` that leaves animations untouched.
    */
   animations?: "disabled"|"allow";
 
@@ -15753,7 +15753,7 @@ export interface PageScreenshotOptions {
    * - finite animations are fast-forwarded to completion, so they'll fire `transitionend` event.
    * - infinite animations are canceled to initial state, and then played over after the screenshot.
    *
-   * Defaults to `"allow"`.
+   * Defaults to `"allow"` that leaves animations untouched.
    */
   animations?: "disabled"|"allow";
 
