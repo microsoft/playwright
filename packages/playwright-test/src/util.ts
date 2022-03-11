@@ -170,9 +170,13 @@ export function errorWithLocation(location: Location, message: string) {
   return new Error(`${formatLocation(location)}: ${message}`);
 }
 
-export function expectType(receiver: any, type: string, matcherName: string) {
-  if (typeof receiver !== 'object' || receiver.constructor.name !== type)
-    throw new Error(`${matcherName} can be only used with ${type} object`);
+export function expectTypes(receiver: any, types: string[], matcherName: string) {
+  if (typeof receiver !== 'object' || !types.includes(receiver.constructor.name)) {
+    const commaSeparated = types.slice();
+    const lastType = commaSeparated.pop();
+    const typesString = commaSeparated.length ? commaSeparated.join(', ') + ' or ' + lastType : lastType;
+    throw new Error(`${matcherName} can be only used with ${typesString} object${types.length > 1 ? 's' : ''}`);
+  }
 }
 
 export function sanitizeForFilePath(s: string) {

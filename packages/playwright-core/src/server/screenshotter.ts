@@ -84,6 +84,7 @@ export class Screenshotter {
   async screenshotPage(progress: Progress, options: ScreenshotOptions): Promise<Buffer> {
     const format = validateScreenshotOptions(options);
     return this._queue.postTask(async () => {
+      progress.log('taking page screenshot');
       const { viewportSize } = await this._originalViewportSize(progress);
       await this._preparePageForScreenshot(progress, options.animations === 'disabled', options.fonts === 'ready');
       progress.throwIfAborted(); // Avoid restoring after failure - should be done by cleanup.
@@ -111,6 +112,7 @@ export class Screenshotter {
   async screenshotElement(progress: Progress, handle: dom.ElementHandle, options: ScreenshotOptions): Promise<Buffer> {
     const format = validateScreenshotOptions(options);
     return this._queue.postTask(async () => {
+      progress.log('taking element screenshot');
       const { viewportSize } = await this._originalViewportSize(progress);
 
       await this._preparePageForScreenshot(progress, options.animations === 'disabled', options.fonts === 'ready');
@@ -138,6 +140,10 @@ export class Screenshotter {
   }
 
   async _preparePageForScreenshot(progress: Progress, disableAnimations: boolean, waitForFonts: boolean) {
+    if (disableAnimations)
+      progress.log('  disabled all CSS animations');
+    if (waitForFonts)
+      progress.log('  waiting for fonts to load...');
     await Promise.all(this._page.frames().map(async frame => {
       await frame.nonStallingEvaluateInExistingContext('(' + (async function(disableAnimations: boolean, waitForFonts: boolean) {
         const styleTag = document.createElement('style');
@@ -218,6 +224,8 @@ export class Screenshotter {
           await document.fonts.ready;
       }).toString() + `)(${disableAnimations}, ${waitForFonts})`, false, 'utility').catch(() => {});
     }));
+    if (waitForFonts)
+      progress.log('  fonts in all frames are loaded');
     progress.cleanupWhenAborted(() => this._restorePageAfterScreenshot());
   }
 

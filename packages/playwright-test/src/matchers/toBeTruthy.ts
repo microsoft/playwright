@@ -15,7 +15,7 @@
  */
 
 import type { Expect } from '../types';
-import { expectType, callLogText, currentExpectTimeout } from '../util';
+import { expectTypes, callLogText, currentExpectTimeout } from '../util';
 
 export async function toBeTruthy(
   this: ReturnType<Expect['getState']>,
@@ -25,7 +25,7 @@ export async function toBeTruthy(
   query: (isNot: boolean, timeout: number) => Promise<{ matches: boolean, log?: string[] }>,
   options: { timeout?: number } = {},
 ) {
-  expectType(receiver, receiverType, matcherName);
+  expectTypes(receiver, [receiverType], matcherName);
 
   const matcherOptions = {
     isNot: this.isNot,

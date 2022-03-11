@@ -15,7 +15,7 @@
  */
 
 import type { Expect } from '../types';
-import { expectType } from '../util';
+import { expectTypes } from '../util';
 import { callLogText, currentExpectTimeout } from '../util';
 
 // Omit colon and one or more spaces, so can call getLabelPrinter.
@@ -34,7 +34,7 @@ export async function toEqual<T>(
   expected: T,
   options: { timeout?: number, contains?: boolean } = {},
 ) {
-  expectType(receiver, receiverType, matcherName);
+  expectTypes(receiver, [receiverType], matcherName);
 
   const matcherOptions = {
     comment: options.contains ? '' : 'deep equality',
