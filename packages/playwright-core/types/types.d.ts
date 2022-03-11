@@ -8074,7 +8074,7 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
 
     /**
      * When set to `"ready"`, screenshot will wait for
-     * [`document.fonts.ready()`](https://developer.mozilla.org/en-US/docs/Web/API/FontFaceSet/ready) promise to resolve in all
+     * [`document.fonts.ready`](https://developer.mozilla.org/en-US/docs/Web/API/FontFaceSet/ready) promise to resolve in all
      * frames. Defaults to `"nowait"`.
      */
     fonts?: "ready"|"nowait";
@@ -15602,7 +15602,7 @@ export interface LocatorScreenshotOptions {
 
   /**
    * When set to `"ready"`, screenshot will wait for
-   * [`document.fonts.ready()`](https://developer.mozilla.org/en-US/docs/Web/API/FontFaceSet/ready) promise to resolve in all
+   * [`document.fonts.ready`](https://developer.mozilla.org/en-US/docs/Web/API/FontFaceSet/ready) promise to resolve in all
    * frames. Defaults to `"nowait"`.
    */
   fonts?: "ready"|"nowait";
@@ -15778,7 +15778,7 @@ export interface PageScreenshotOptions {
 
   /**
    * When set to `"ready"`, screenshot will wait for
-   * [`document.fonts.ready()`](https://developer.mozilla.org/en-US/docs/Web/API/FontFaceSet/ready) promise to resolve in all
+   * [`document.fonts.ready`](https://developer.mozilla.org/en-US/docs/Web/API/FontFaceSet/ready) promise to resolve in all
    * frames. Defaults to `"nowait"`.
    */
   fonts?: "ready"|"nowait";
