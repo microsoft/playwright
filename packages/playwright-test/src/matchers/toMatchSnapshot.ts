@@ -14,14 +14,10 @@
  * limitations under the License.
  */
 
-import { Locator, Page } from 'playwright-core';
-import type { Page as PageEx } from 'playwright-core/lib/client/page';
-import type { Locator as LocatorEx } from 'playwright-core/lib/client/locator';
 import type { Expect } from '../types';
 import { currentTestInfo } from '../globals';
 import { mimeTypeToComparator, ImageComparatorOptions, Comparator } from 'playwright-core/lib/utils/comparators';
-import type { PageScreenshotOptions } from 'playwright-core/types/types';
-import { addSuffixToFilePath, serializeError, sanitizeForFilePath, trimLongString, callLogText, currentExpectTimeout } from '../util';
+import { addSuffixToFilePath, serializeError, sanitizeForFilePath, trimLongString, callLogText } from '../util';
 import { UpdateSnapshots } from '../types';
 import colors from 'colors/safe';
 import fs from 'fs';
@@ -246,107 +242,6 @@ export function toMatchSnapshot(
   }
 
   return helper.handleDifferent(received, expected, result.diff, result.errorMessage, undefined);
-}
-
-type HaveScreenshotOptions = ImageComparatorOptions & Omit<PageScreenshotOptions, 'type' | 'quality' | 'path'>;
-
-export async function toHaveScreenshot(
-  this: ReturnType<Expect['getState']>,
-  pageOrLocator: Page | Locator,
-  nameOrOptions: NameOrSegments | { name?: NameOrSegments } & HaveScreenshotOptions = {},
-  optOptions: HaveScreenshotOptions = {}
-): Promise<SyncExpectationResult> {
-  const testInfo = currentTestInfo();
-  if (!testInfo)
-    throw new Error(`toHaveScreenshot() must be called during the test`);
-  const helper = new SnapshotHelper(
-      testInfo, 'png',
-      testInfo.project.expect?.toHaveScreenshot || {},
-      nameOrOptions, optOptions);
-  const [page, locator] = pageOrLocator.constructor.name === 'Page' ? [(pageOrLocator as PageEx), undefined] : [(pageOrLocator as Locator).page() as PageEx, pageOrLocator as LocatorEx];
-  const screenshotOptions = {
-    ...helper.allOptions,
-    mask: (helper.allOptions.mask || []) as LocatorEx[],
-    name: undefined,
-    threshold: undefined,
-    maxDiffPixels: undefined,
-    maxDiffPixelRatio: undefined,
-  };
-
-  const hasSnapshot = fs.existsSync(helper.snapshotPath);
-  if (this.isNot) {
-    if (!hasSnapshot)
-      return helper.handleMissingNegated();
-
-    // Having `errorMessage` means we timed out while waiting
-    // for screenshots not to match, so screenshots
-    // are actually the same in the end.
-    const isDifferent = !(await page._expectScreenshot({
-      expected: await fs.promises.readFile(helper.snapshotPath),
-      isNot: true,
-      locator,
-      comparatorOptions: helper.comparatorOptions,
-      screenshotOptions,
-      timeout: currentExpectTimeout(helper.allOptions),
-    })).errorMessage;
-    return isDifferent ? helper.handleDifferentNegated() : helper.handleMatchingNegated();
-  }
-
-  // Fast path: there's no screenshot and we don't intend to update it.
-  if (helper.updateSnapshots === 'none' && !hasSnapshot)
-    return { pass: false, message: () => `${helper.snapshotPath} is missing in snapshots.` };
-
-  if (helper.updateSnapshots === 'all' || !hasSnapshot) {
-    // Regenerate a new screenshot by waiting until two screenshots are the same.
-    const timeout = currentExpectTimeout(helper.allOptions);
-    const { actual, previous, diff, errorMessage, log } = await page._expectScreenshot({
-      expected: undefined,
-      isNot: false,
-      locator,
-      comparatorOptions: helper.comparatorOptions,
-      screenshotOptions,
-      timeout,
-    });
-    // We tried re-generating new snapshot but failed.
-    // This can be due to e.g. spinning animation, so we want to show it as a diff.
-    if (errorMessage) {
-      // TODO(aslushnikov): rename attachments to "actual" and "previous". They still should be somehow shown in HTML reporter.
-      const title = actual && previous ?
-        `Timeout ${timeout}ms exceeded while generating screenshot because ${locator ? 'element' : 'page'} kept changing:` :
-        `Timeout ${timeout}ms exceeded while generating screenshot:`;
-      return helper.handleDifferent(actual, previous, diff, undefined, log, title);
-    }
-
-    // We successfully (re-)generated new screenshot.
-    if (!hasSnapshot)
-      return helper.handleMissing(actual!);
-
-    writeFileSync(helper.snapshotPath, actual!);
-    /* eslint-disable no-console */
-    console.log(helper.snapshotPath + ' is re-generated, writing actual.');
-    return {
-      pass: true,
-      message: () => helper.snapshotPath + ' running with --update-snapshots, writing actual.'
-    };
-  }
-
-  // General case:
-  // - snapshot exists
-  // - regular matcher (i.e. not a `.not`)
-  // - no flags to update screenshots
-  const expected = await fs.promises.readFile(helper.snapshotPath);
-  const { actual, diff, errorMessage, log } = await page._expectScreenshot({
-    expected,
-    isNot: false,
-    locator,
-    comparatorOptions: helper.comparatorOptions,
-    screenshotOptions,
-    timeout: currentExpectTimeout(helper.allOptions),
-  });
-
-  return errorMessage ?
-    helper.handleDifferent(actual, expected, diff, errorMessage, log) :
-    helper.handleMatching();
 }
 
 function writeFileSync(aPath: string, content: Buffer | string) {
