@@ -308,9 +308,15 @@ test('should support toHaveCSS', async ({ runInlineTest }) => {
         const locator = page.locator('#node');
         await expect(locator).toHaveCSS('color', 'rgb(255, 0, 0)');
       });
+
+      test('pass with custom css properties', async ({ page }) => {
+        await page.setContent('<div id=node style="--custom-color-property:#FF00FF;">Text content</div>');
+        const locator = page.locator('#node');
+        await expect(locator).toHaveCSS('--custom-color-property', '#FF00FF');
+      });
       `,
   }, { workers: 1 });
-  expect(result.passed).toBe(1);
+  expect(result.passed).toBe(2);
   expect(result.exitCode).toBe(0);
 });
 

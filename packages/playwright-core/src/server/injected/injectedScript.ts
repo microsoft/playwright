@@ -999,7 +999,7 @@ export class InjectedScript {
       } else if (expression === 'to.have.class') {
         received = element.className;
       } else if (expression === 'to.have.css') {
-        received = (window.getComputedStyle(element) as any)[options.expressionArg];
+        received = window.getComputedStyle(element).getPropertyValue(options.expressionArg);
       } else if (expression === 'to.have.id') {
         received = element.id;
       } else if (expression === 'to.have.text') {
