@@ -13,5 +13,9 @@
     "@sveltejs/kit": "next",
     "svelte": "^3.44.0"
   },
+  "@standaloneDevDependencies": {
+    "@playwright/experimental-ct-svelte": "0.0.1",
+    "@playwright/test": "1.21.0-alpha-mar-12-2022"
+  },
   "type": "module"
 }

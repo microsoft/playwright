@@ -17,6 +17,10 @@
     "rollup-plugin-terser": "^7.0.0",
     "svelte": "^3.0.0"
   },
+  "@standaloneDevDependencies": {
+    "@playwright/experimental-ct-svelte": "0.0.1",
+    "@playwright/test": "1.21.0-alpha-mar-12-2022"
+  },
   "dependencies": {
     "sirv-cli": "^2.0.0"
   }

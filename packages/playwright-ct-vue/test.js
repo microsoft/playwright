@@ -29,6 +29,7 @@ const test = baseTest.extend({
   },
 
   page: async ({ _workerPage }, use) => {
+    await _workerPage.goto('about:blank');
     await use(_workerPage);
   },
 

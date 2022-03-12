@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect } from '@playwright/ct-svelte/test';
+import { test, expect } from '@playwright/experimental-ct-svelte/test';
 import App from './App.svelte';
 
 test.use({ viewport: { width: 500, height: 500 } });

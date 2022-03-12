@@ -12,5 +12,9 @@
   "devDependencies": {
     "@vitejs/plugin-vue": "^2.2.2",
     "vite": "^2.8.4"
+  },
+  "@standaloneDevDependencies": {
+    "@playwright/experimental-ct-vue": "0.0.1",
+    "@playwright/test": "1.21.0-alpha-mar-12-2022"
   }
 }

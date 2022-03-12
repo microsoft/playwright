@@ -1,4 +1,4 @@
-import register from '@playwright/ct-react/register';
+import register from '@playwright/experimental-ct-react/register';
 import App from './App';
 
 register({ App });
