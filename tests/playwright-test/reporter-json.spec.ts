@@ -230,8 +230,8 @@ test('should add line in addition to file json without CI', async ({ runInlineTe
         expect(1).toBe(1);
       });
     `,
-  }, { reporter: '' }, { PW_TEST_DEBUG_REPORTERS: '1' });
+  }, { reporter: '' }, { PLAYWRIGHT_LIVE_TERMINAL: '1' });
   expect(result.exitCode).toBe(0);
-  expect(stripAnsi(result.output)).toContain('[1/1] a.test.js:6:7 › one');
+  expect(stripAnsi(result.output)).toContain('a.test.js:6:7 › one');
   expect(fs.existsSync(testInfo.outputPath('a.json'))).toBeTruthy();
 });
