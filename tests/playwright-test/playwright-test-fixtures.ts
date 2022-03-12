@@ -255,6 +255,10 @@ export function stripAnsi(str: string): string {
   return str.replace(asciiRegex, '');
 }
 
+export function trimLineEnds(text: string): string {
+  return text.split('\n').map(line => line.trimEnd()).join('\n');
+}
+
 export function countTimes(s: string, sub: string): number {
   let result = 0;
   for (let index = 0; index !== -1;) {
