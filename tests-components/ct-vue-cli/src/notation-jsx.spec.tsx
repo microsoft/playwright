@@ -15,7 +15,7 @@ test('event should work', async ({ mount }) => {
   const component = await mount(<Button title='Submit' v-on:submit={data => {
     messages.push(data)
   }}></Button>)
-  await component.locator('button').click()
+  await component.click()
   expect(messages).toEqual(['hello'])
 })
 

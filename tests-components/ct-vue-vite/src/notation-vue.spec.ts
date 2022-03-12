@@ -25,7 +25,7 @@ test('event should work', async ({ mount }) => {
       submit: data => messages.push(data)
     }
   })
-  await component.locator('button').click()
+  await component.click()
   expect(messages).toEqual(['hello'])
 })
 

@@ -35,5 +35,5 @@ function render(component) {
 
 window.playwrightMount = component => {
   ReactDOM.render(render(component), document.getElementById('root'));
-  return '#root';
+  return '#root > *';
 };
