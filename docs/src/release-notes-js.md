@@ -7,36 +7,27 @@ title: "Release notes"
 
 ## Version 1.20
 
-### Visual Regression Testing
+### Highlights
 
 - New options for methods [`method: Page.screenshot`], [`method: Locator.screenshot`] and [`method: ElementHandle.screenshot`]:
   * Option `animations: "disabled"` rewinds all CSS animations and transitions to a consistent state
   * Option `mask: Locator[]` masks given elements, overlaying them with pink `#FF00FF` boxes.
-- New web-first assertions for screenshots: [`method: PageAssertions.toHaveScreenshot`] and [`method: LocatorAssertions.toHaveScreenshot`]. These methods will re-take screenshot until it matches the saved expectation. When generating a new expectation, the method will re-take screenshots until 2 consecutive screenshots match.
-
-  New methods support both named and anonymous (auto-named) expectations:
+- `expect().toMatchSnapshot()` now supports anonymous snapshots: when snapshot name is missing, Playwright Test will generate one
+  automatically:
 
   ```js
-  // Take a full-page screenshot with a named expectation `fullpage.png`.
-  await expect(page).toHaveScreenshot('fullpage.png', { fullPage: true });
-  // Take a screenshot of an element with anonymous expectation.
-  await expect(page.locator('text=Booking')).toHaveScreenshot();
+  expect('Web is Awesome <3').toMatchSnapshot();
   ```
-
-  Methods support all screenshot options from [`method: Page.screenshot`] and [`method: Locator.screenshot`].
-
-  These methods also support new `maxDiffPixels` and `maxDiffPixelRatio` options for fine-grained screenshot comparison:
+- New `maxDiffPixels` and `maxDiffPixelRatio` options for fine-grained screenshot comparison using `expect().toMatchSnapshot()`:
 
   ```js
-  await expect(page).toHaveScreenshot({
+  expect(await page.screenshot()).toMatchSnapshot({
     fullPage: true, // take a full page screenshot
     maxDiffPixels: 27, // allow no more than 27 different pixels.
   });
   ```
 
   It is most convenient to specify `maxDiffPixels` or `maxDiffPixelRatio` once in [`property: TestConfig.expect`].
-
-### Other Updates
 
 - Playwright Test now adds [`property: TestConfig.fullyParallel`] mode. By default, Playwright Test parallelizes between files. In fully parallel mode, tests inside a single file are also run in parallel. You can also use `--fully-parallel` command line flag.
 
@@ -62,13 +53,6 @@ title: "Release notes"
   ```
 
 - [Trace Viewer](./trace-viewer) now shows [API testing requests](./test-api-testing).
-- `expect().toMatchSnapshot()` now supports anonymous snapshots: when snapshot name is missing, Playwright Test will generate one
-  automatically:
-
-  ```js
-  expect('Web is Awesome <3').toMatchSnapshot();
-  ```
-
 - [`method: Locator.highlight`] visually reveals element(s) for easier debugging.
 
 ### Announcements

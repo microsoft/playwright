@@ -3,7 +3,7 @@ id: test-snapshots
 title: "Visual comparisons"
 ---
 
-Playwright Test includes the ability to produce and visually compare screenshots using `await expect(pageOrLocator).toHaveScreenshot()`. On first execution, Playwright test will generate reference screenshots. Subsequent runs will compare against the reference.
+Playwright Test includes the ability to produce and visually compare screenshots using `expect().toMatchSnapshot()`. On first execution, Playwright test will generate reference screenshots. Subsequent runs will compare against the reference.
 
 ```js js-flavor=js
 // example.spec.js
@@ -11,7 +11,7 @@ const { test, expect } = require('@playwright/test');
 
 test('example test', async ({ page }) => {
   await page.goto('https://playwright.dev');
-  await expect(page).toHaveScreenshot();
+  expect(await page.screenshot()).toMatchSnapshot();
 });
 ```
 
@@ -21,7 +21,7 @@ import { test, expect } from '@playwright/test';
 
 test('example test', async ({ page }) => {
   await page.goto('https://playwright.dev');
-  await expect(page).toHaveScreenshot();
+  expect(await page.screenshot()).toMatchSnapshot();
 });
 ```
 
@@ -45,10 +45,10 @@ drwxr-xr-x  3 user  group   96 Jun  4 11:46 example.spec.ts-snapshots
 The snapshot name `example-test-1-chromium-darwin.png` consists of a few parts:
 - `example-test-1.png` - an auto-generated name of the snapshot. Alternatively you can specify snapshot name as the first argument of the `toMatchSnapshot()` method:
     ```js js-flavor=js
-    await expect(page).toHaveScreenshot('landing.png');
+    expect(await page.screenshot()).toMatchSnapshot('landing.png');
     ```
     ```js js-flavor=ts
-    await expect(page).toHaveScreenshot('landing.png');
+    expect(await page.screenshot()).toMatchSnapshot('landing.png');
     ```
 
 - `chromium-darwin` - the browser name and the platform. Screenshots differ between browsers and platforms due to different rendering, fonts and more, so you will need different snapshots for them. If you use multiple projects in your [configuration file](./test-configuration.md), project name will be used instead of `chromium`.
@@ -67,10 +67,10 @@ Sometimes you need to update the reference screenshot, for example when the page
 npx playwright test --update-snapshots
 ```
 
-> Note that `snapshotName` also accepts an array of path segments to the snapshot file such as `await expect(page).toHaveScreenshot(['relative', 'path', 'to', 'snapshot.png'])`.
+> Note that `snapshotName` also accepts an array of path segments to the snapshot file such as `expect().toMatchSnapshot(['relative', 'path', 'to', 'snapshot.png'])`.
 > However, this path must stay within the snapshots directory for each test file (i.e. `a.spec.js-snapshots`), otherwise it will throw.
 
-Playwright Test uses the [pixelmatch](https://github.com/mapbox/pixelmatch) library. You can [pass various options](./test-assertions#expectpageorlocatortohavescreenshot-options) to modify its behavior:
+You can pass various options to modify image comparison behavior - see [`method: ScreenshotAssertions.toMatchSnapshot`]:
 
 ```js js-flavor=js
 // example.spec.js
@@ -78,7 +78,7 @@ const { test, expect } = require('@playwright/test');
 
 test('example test', async ({ page }) => {
   await page.goto('https://playwright.dev');
-  await expect(page).toHaveScreenshot({ maxDiffPixels: 100 });
+  expect(await page.screenshot()).toMatchSnapshot({ maxDiffPixels: 100 });
 });
 ```
 
@@ -88,7 +88,7 @@ import { test, expect } from '@playwright/test';
 
 test('example test', async ({ page }) => {
   await page.goto('https://playwright.dev');
-  await expect(page).toHaveScreenshot({ maxDiffPixels: 100 });
+  expect(await page.screenshot()).toMatchSnapshot({ maxDiffPixels: 100 });
 });
 ```
 
@@ -97,7 +97,7 @@ If you'd like to share the default value among all the tests in the project, you
 ```js js-flavor=js
 module.exports = {
   expect: {
-    toHaveScreenshot: { maxDiffPixels: 100 },
+    toMatchSnapshot: { maxDiffPixels: 100 },
   },
 };
 ```
@@ -106,7 +106,7 @@ module.exports = {
 import { PlaywrightTestConfig } from '@playwright/test';
 const config: PlaywrightTestConfig = {
   expect: {
-    toHaveScreenshot: { maxDiffPixels: 100 },
+    toMatchSnapshot: { maxDiffPixels: 100 },
   },
 };
 export default config;

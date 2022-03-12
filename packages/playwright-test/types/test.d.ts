@@ -43,19 +43,6 @@ type ExpectSettings = {
    * Default timeout for async expect matchers in milliseconds, defaults to 5000ms.
    */
   timeout?: number;
-  toHaveScreenshot?: {
-    /** An acceptable perceived color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between pixels in compared images, between zero (strict) and one (lax). Defaults to `0.2`.
-     */
-    threshold?: number,
-    /**
-     * An acceptable amount of pixels that could be different, unset by default.
-     */
-    maxDiffPixels?: number,
-    /**
-     * An acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1` , unset by default.
-     */
-    maxDiffPixelRatio?: number,
-  }
   toMatchSnapshot?: {
     /** An acceptable perceived color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between pixels in compared images, between zero (strict) and one (lax). Defaults to `0.2`.
      */
@@ -170,8 +157,7 @@ interface TestProject {
    */
   name?: string;
   /**
-   * The base directory, relative to the config file, for snapshot files created with `toMatchSnapshot` and
-   * `toHaveScreenshot`. Defaults to
+   * The base directory, relative to the config file, for snapshot files created with `toMatchSnapshot`. Defaults to
    * [testProject.testDir](https://playwright.dev/docs/api/class-testproject#test-project-test-dir).
    *
    * The directory for each test can be accessed by
@@ -709,7 +695,7 @@ interface TestConfig {
    * const config: PlaywrightTestConfig = {
    *   expect: {
    *     timeout: 10000,
-   *     toHaveScreenshot: {
+   *     toMatchSnapshot: {
    *       maxDiffPixels: 10,
    *     },
    *   },
@@ -725,8 +711,7 @@ interface TestConfig {
   metadata?: any;
   name?: string;
   /**
-   * The base directory, relative to the config file, for snapshot files created with `toMatchSnapshot` and
-   * `toHaveScreenshot`. Defaults to
+   * The base directory, relative to the config file, for snapshot files created with `toMatchSnapshot`. Defaults to
    * [testConfig.testDir](https://playwright.dev/docs/api/class-testconfig#test-config-test-dir).
    *
    * The directory for each test can be accessed by
@@ -1580,8 +1565,8 @@ export interface TestInfo {
   /**
    * Suffix used to differentiate snapshots between multiple test configurations. For example, if snapshots depend on the
    * platform, you can set `testInfo.snapshotSuffix` equal to `process.platform`. In this case both
-   * `expect(value).toMatchSnapshot(snapshotName)` and `expect(page).toHaveScreenshot(snapshotName)` will use different
-   * snapshots depending on the platform. Learn more about [snapshots](https://playwright.dev/docs/test-snapshots).
+   * `expect(value).toMatchSnapshot(snapshotName)` will use different snapshots depending on the platform. Learn more about
+   * [snapshots](https://playwright.dev/docs/test-snapshots).
    */
   snapshotSuffix: string;
   /**
