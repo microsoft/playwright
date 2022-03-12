@@ -194,7 +194,7 @@ test('should include image diff when screenshot failed to generate due to animat
   await page.click('text=fails');
   await expect(page.locator('text=Image mismatch')).toHaveCount(1);
   await expect(page.locator('text=Snapshot mismatch')).toHaveCount(0);
-  await expect(page.locator('text=Screenshots')).toHaveCount(0);
+  await expect(page.locator('.chip-header', { hasText: 'Screenshots' })).toHaveCount(0);
   const imageDiff = page.locator('data-testid=test-result-image-mismatch');
   const image = imageDiff.locator('img');
   await expect(image).toHaveAttribute('src', /.*png/);
