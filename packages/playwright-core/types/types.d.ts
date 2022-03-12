@@ -888,6 +888,12 @@ export interface Page {
    * [freeze](https://developer.mozilla.org/en-US/docs/Web/JavaScript/EventLoop#never_blocking) waiting for the dialog, and
    * actions like click will never finish.
    *
+   * ```js
+   * page.on('dialog', dialog => {
+   *   dialog.accept();
+   * });
+   * ```
+   *
    * > NOTE: When no [page.on('dialog')](https://playwright.dev/docs/api/class-page#page-event-dialog) listeners are present,
    * all dialogs are automatically dismissed.
    */
@@ -942,6 +948,17 @@ export interface Page {
 
   /**
    * Emitted when an uncaught exception happens within the page.
+   *
+   * ```js
+   * // Log all uncaught errors to the terminal
+   * page.on('pageerror', exception => {
+   *   console.log(`Uncaught exception: "${exception}"`);
+   * });
+   *
+   * // Navigate to a page with an exception.
+   * await page.goto('data:text/html,<script>throw new Error("Test")</script>');
+   * ```
+   *
    */
   on(event: 'pageerror', listener: (error: Error) => void): this;
 
@@ -981,6 +998,12 @@ export interface Page {
 
   /**
    * Emitted when a request fails, for example by timing out.
+   *
+   * ```js
+   * page.on('requestfailed', request => {
+   *   console.log(request.url() + ' ' + request.failure().errorText);
+   * });
+   * ```
    *
    * > NOTE: HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request will
    * complete with [page.on('requestfinished')](https://playwright.dev/docs/api/class-page#page-event-request-finished) event
@@ -1161,6 +1184,12 @@ export interface Page {
    * [freeze](https://developer.mozilla.org/en-US/docs/Web/JavaScript/EventLoop#never_blocking) waiting for the dialog, and
    * actions like click will never finish.
    *
+   * ```js
+   * page.on('dialog', dialog => {
+   *   dialog.accept();
+   * });
+   * ```
+   *
    * > NOTE: When no [page.on('dialog')](https://playwright.dev/docs/api/class-page#page-event-dialog) listeners are present,
    * all dialogs are automatically dismissed.
    */
@@ -1215,6 +1244,17 @@ export interface Page {
 
   /**
    * Emitted when an uncaught exception happens within the page.
+   *
+   * ```js
+   * // Log all uncaught errors to the terminal
+   * page.on('pageerror', exception => {
+   *   console.log(`Uncaught exception: "${exception}"`);
+   * });
+   *
+   * // Navigate to a page with an exception.
+   * await page.goto('data:text/html,<script>throw new Error("Test")</script>');
+   * ```
+   *
    */
   addListener(event: 'pageerror', listener: (error: Error) => void): this;
 
@@ -1254,6 +1294,12 @@ export interface Page {
 
   /**
    * Emitted when a request fails, for example by timing out.
+   *
+   * ```js
+   * page.on('requestfailed', request => {
+   *   console.log(request.url() + ' ' + request.failure().errorText);
+   * });
+   * ```
    *
    * > NOTE: HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request will
    * complete with [page.on('requestfinished')](https://playwright.dev/docs/api/class-page#page-event-request-finished) event
@@ -3528,6 +3574,12 @@ export interface Page {
    * [freeze](https://developer.mozilla.org/en-US/docs/Web/JavaScript/EventLoop#never_blocking) waiting for the dialog, and
    * actions like click will never finish.
    *
+   * ```js
+   * page.on('dialog', dialog => {
+   *   dialog.accept();
+   * });
+   * ```
+   *
    * > NOTE: When no [page.on('dialog')](https://playwright.dev/docs/api/class-page#page-event-dialog) listeners are present,
    * all dialogs are automatically dismissed.
    */
@@ -3582,6 +3634,17 @@ export interface Page {
 
   /**
    * Emitted when an uncaught exception happens within the page.
+   *
+   * ```js
+   * // Log all uncaught errors to the terminal
+   * page.on('pageerror', exception => {
+   *   console.log(`Uncaught exception: "${exception}"`);
+   * });
+   *
+   * // Navigate to a page with an exception.
+   * await page.goto('data:text/html,<script>throw new Error("Test")</script>');
+   * ```
+   *
    */
   waitForEvent(event: 'pageerror', optionsOrPredicate?: { predicate?: (error: Error) => boolean | Promise<boolean>, timeout?: number } | ((error: Error) => boolean | Promise<boolean>)): Promise<Error>;
 
@@ -3621,6 +3684,12 @@ export interface Page {
 
   /**
    * Emitted when a request fails, for example by timing out.
+   *
+   * ```js
+   * page.on('requestfailed', request => {
+   *   console.log(request.url() + ' ' + request.failure().errorText);
+   * });
+   * ```
    *
    * > NOTE: HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request will
    * complete with [page.on('requestfinished')](https://playwright.dev/docs/api/class-page#page-event-request-finished) event
@@ -13079,7 +13148,33 @@ export interface BrowserServer {
 
 /**
  * [ConsoleMessage] objects are dispatched by page via the
- * [page.on('console')](https://playwright.dev/docs/api/class-page#page-event-console) event.
+ * [page.on('console')](https://playwright.dev/docs/api/class-page#page-event-console) event. For each console messages
+ * logged in the page there will be corresponding event in the Playwright context.
+ *
+ * ```js
+ * // Listen for all console logs
+ * page.on('console', msg => console.log(msg.text()))
+ *
+ * // Listen for all console events and handle errors
+ * page.on('console', msg => {
+ *   if (msg.type() === 'error')
+ *     console.log(`Error text: "${msg.text()}"`);
+ * });
+ *
+ * // Get the next console log
+ * const [msg] = await Promise.all([
+ *   page.waitForEvent('console'),
+ *   // Issue console.log inside the page
+ *   page.evaluate(() => {
+ *     console.log('hello', 42, { foo: 'bar' });
+ *   }),
+ * ]);
+ *
+ * // Deconstruct console log arguments
+ * await msg.args[0].jsonValue() // hello
+ * await msg.args[1].jsonValue() // 42
+ * ```
+ *
  */
 export interface ConsoleMessage {
   /**

@@ -281,6 +281,29 @@ try {
 
 Emitted when a JavaScript dialog appears, such as `alert`, `prompt`, `confirm` or `beforeunload`. Listener **must** either [`method: Dialog.accept`] or [`method: Dialog.dismiss`] the dialog - otherwise the page will [freeze](https://developer.mozilla.org/en-US/docs/Web/JavaScript/EventLoop#never_blocking) waiting for the dialog, and actions like click will never finish.
 
+```js
+page.on('dialog', dialog => {
+  dialog.accept();
+});
+```
+
+```java
+page.onDialog(dialog -> {
+  dialog.accept();
+});
+```
+
+```python
+page.on("dialog", lambda dialog: dialog.accept())
+```
+
+```csharp
+page.RequestFailed += (_, request) =>
+{
+    Console.WriteLine(request.Url + " " + request.Failure);
+};
+```
+
 :::note
 When no [`event: Page.dialog`] listeners are present, all dialogs are automatically dismissed.
 :::
@@ -350,6 +373,50 @@ Emitted when the JavaScript [`load`](https://developer.mozilla.org/en-US/docs/We
 - argument: <[Error]>
 
 Emitted when an uncaught exception happens within the page.
+
+```js
+// Log all uncaught errors to the terminal
+page.on('pageerror', exception => {
+  console.log(`Uncaught exception: "${exception}"`);
+});
+
+// Navigate to a page with an exception.
+await page.goto('data:text/html,<script>throw new Error("Test")</script>');
+```
+
+```java
+// Log all uncaught errors to the terminal
+page.onPageError(exception -> {
+  System.out.println("Uncaught exception: " + exception);
+});
+
+// Navigate to a page with an exception.
+page.navigate("data:text/html,<script>throw new Error('Test')</script>");
+```
+
+```python async
+# Log all uncaught errors to the terminal
+page.on("pageerror", lambda exc: print(f"uncaught exception: {exc}"))
+
+# Navigate to a page with an exception.
+await page.goto("data:text/html,<script>throw new Error('test')</script>")
+```
+
+```python sync
+# Log all uncaught errors to the terminal
+page.on("pageerror", lambda exc: print(f"uncaught exception: {exc}"))
+
+# Navigate to a page with an exception.
+page.goto("data:text/html,<script>throw new Error('test')</script>")
+```
+
+```csharp
+// Log all uncaught errors to the terminal
+page.PageError += (_, exception) =>
+{
+  Console.WriteLine("Uncaught exception: " + exception);
+};
+```
 
 ## event: Page.pageError
 * langs: csharp, java
@@ -421,6 +488,22 @@ Emitted when a page issues a request. The [request] object is read-only. In orde
 - argument: <[Request]>
 
 Emitted when a request fails, for example by timing out.
+
+```js
+page.on('requestfailed', request => {
+  console.log(request.url() + ' ' + request.failure().errorText);
+});
+```
+
+```java
+page.onRequestFailed(request -> {
+  System.out.println(request.url() + " " + request.failure());
+});
+```
+
+```python
+page.on("requestfailed", lambda request: print(request.url + " " + request.failure.error_text))
+```
 
 :::note
 HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request will complete
