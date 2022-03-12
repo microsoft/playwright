@@ -711,7 +711,8 @@ it.describe('page screenshot animations', () => {
     ]);
   });
 
-  it('should respect fonts option', async ({ page, server }) => {
+  it('should respect fonts option', async ({ page, server, isWindows }) => {
+    it.fixme(isWindows, 'This requires a windows-specific test expectations. https://github.com/microsoft/playwright/issues/12707');
     await page.setViewportSize({ width: 500, height: 500 });
     let serverRequest, serverResponse;
     // Stall font loading.
