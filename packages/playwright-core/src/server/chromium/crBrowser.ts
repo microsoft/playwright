@@ -188,7 +188,6 @@ export class CRBrowser extends Browser {
     }
 
     if (targetInfo.type === 'service_worker') {
-      console.log(`Creating worker for [targetId: ${targetInfo.targetId}]`);
       const serviceWorker = new CRServiceWorker(context, session, targetInfo.url);
       this._serviceWorkers.set(targetInfo.targetId, serviceWorker);
       context.emit(CRBrowserContext.CREvents.ServiceWorker, serviceWorker);
@@ -311,17 +310,17 @@ export class CRServiceWorker extends Worker {
 
   constructor(browserContext: CRBrowserContext, session: CRSession, url: string) {
     super(browserContext, url);
-    console.log(`[GUID: ${session.guid}] created worker for ${url}`);
     this._browserContext = browserContext;
     this._networkManager = new CRNetworkManager(session, null, this, null);
     session.once('Runtime.executionContextCreated', event => {
       this._createExecutionContext(new CRExecutionContext(session, event.context));
     });
 
-    this._networkManager.initialize().catch(() => {});
-    this._networkManager.setRequestInterception(this._needsRequestInterception()).catch(() => {});
 
-    // This might fail if the target is closed before we receive all execution contexts.
+    // These might fail if the target is closed before we receive all execution contexts.
+    this._networkManager.initialize().catch(() => {});
+    // TODO(raw): We need to dynamically toggle interception based on current routing (or lack thereof)
+    this._networkManager.setRequestInterception(this._needsRequestInterception()).catch(() => {});
     session.send('Runtime.enable', {}).catch(e => { });
     session.send('Runtime.runIfWaitingForDebugger').catch(e => { });
   }
@@ -331,15 +330,15 @@ export class CRServiceWorker extends Worker {
   }
 
   reportRequestFinished(request: network.Request, response: network.Response | null) {
-    console.log('not implemented');
+    this._browserContext.emit(BrowserContext.Events.RequestFinished, { request, response });
   }
 
-  requestFailed(request: network.Request, canceled: boolean) {
-    console.log('not implemented');
+  requestFailed(request: network.Request, _canceled: boolean) {
+    this._browserContext.emit(BrowserContext.Events.RequestFailed, request);
   }
 
   requestReceivedResponse(response: network.Response) {
-    console.log('not implemented');
+    this._browserContext.emit(BrowserContext.Events.Response, response);
   }
 
   requestStarted(request: network.Request, route?: network.RouteDelegate) {
@@ -366,7 +365,7 @@ export class CRBrowserContext extends BrowserContext {
 
   override async _initialize() {
     assert(!Array.from(this._browser._crPages.values()).some(page => page._browserContext === this));
-    const promises: Promise<any>[] = [super._initialize()];
+    const promises: Promise<any>[] = [ super._initialize() ];
     if (this._browser.options.name !== 'electron' && this._browser.options.name !== 'clank') {
       promises.push(this._browser._session.send('Browser.setDownloadBehavior', {
         behavior: this._options.acceptDownloads ? 'allowAndName' : 'deny',
@@ -410,7 +409,7 @@ export class CRBrowserContext extends BrowserContext {
           newKeys.delete(key);
       }
       assert(newKeys.size === 1);
-      [targetId] = [...newKeys];
+      [ targetId ] = [...newKeys];
     }
     return this._browser._crPages.get(targetId)!;
   }

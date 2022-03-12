@@ -21,6 +21,7 @@ import http from 'http';
 import fs from 'fs';
 import { getUserAgent } from '../../packages/playwright-core/lib/utils/utils';
 import { suppressCertificateWarning } from '../config/utils';
+import { pageWithHar } from '../har.spec';
 
 test('should create a worker from a service worker', async ({ page, server }) => {
   const [worker] = await Promise.all([
@@ -28,6 +29,78 @@ test('should create a worker from a service worker', async ({ page, server }) =>
     page.goto(server.PREFIX + '/serviceworkers/empty/sw.html')
   ]);
   expect(await worker.evaluate(() => self.toString())).toBe('[object ServiceWorkerGlobalScope]');
+});
+
+test('should create a worker from service worker with noop routing', async ({ context, page, server }) => {
+  context.route('**', route => route.continue());
+  const [worker] = await Promise.all([
+    page.context().waitForEvent('serviceworker'),
+    page.goto(server.PREFIX + '/serviceworkers/empty/sw.html')
+  ]);
+  expect(await worker.evaluate(() => self.toString())).toBe('[object ServiceWorkerGlobalScope]');
+});
+
+test('should intercept service worker requests (main and within)', async ({ context, page, server }) => {
+  context.route('**/request-from-within-worker', route =>
+    route.fulfill({
+      contentType: 'application/json',
+      status: 200,
+      body: '"intercepted!"',
+    })
+  );
+
+  context.route('**/sw.js', route =>
+    route.fulfill({
+      contentType: 'text/javascript',
+      status: 200,
+      body: `
+        self.contentPromise = new Promise(res => fetch('/request-from-within-worker').then(r => r.json()).then(res));
+      `,
+    })
+  );
+
+  const [ sw ] = await Promise.all([
+    context.waitForEvent('serviceworker'),
+    page.goto(server.PREFIX + '/serviceworkers/empty/sw.html'),
+  ]);
+
+  await expect(sw.evaluate(() => self['contentPromise'])).resolves.toBe('intercepted!');
+});
+
+test('should report intercepted service worker requests in HAR', async ({ contextFactory, server }, testInfo) => {
+  const { context, page, getLog } = await pageWithHar(contextFactory, testInfo);
+  context.route('**/request-from-within-worker', route =>
+    route.fulfill({
+      contentType: 'application/json',
+      status: 200,
+      body: '"intercepted!"',
+    })
+  );
+
+  context.route('**/sw.js', route =>
+    route.fulfill({
+      contentType: 'text/javascript',
+      status: 200,
+      body: `
+        self.contentPromise = new Promise(res => fetch('/request-from-within-worker').then(r => r.json()).then(res));
+      `,
+    })
+  );
+
+  const [ sw ] = await Promise.all([
+    context.waitForEvent('serviceworker'),
+    page.goto(server.PREFIX + '/serviceworkers/empty/sw.html'),
+  ]);
+
+  await expect(sw.evaluate(() => self['contentPromise'])).resolves.toBe('intercepted!');
+
+  // FIXME(raw): There is a race here! We likely need a service worker barrier like we have for pages in the HAR tracer so we ensure body from
+  //             /request-from-within-worker makes it into the HAR nicely.
+  await page.waitForTimeout(1_000);
+  const log = await getLog();
+
+  expect.soft(log.entries.filter(e => e.request.url.endsWith('sw.js'))).toHaveLength(1);
+  expect.soft(log.entries.filter(e => e.request.url.endsWith('request-from-within-worker')).map(e => ({ content: Buffer.from(e.response.content.text, 'base64').toString() }))).toEqual([{ content: '"intercepted!"' }]);
 });
 
 test('serviceWorkers() should return current workers', async ({ page, server }) => {

@@ -23,7 +23,7 @@ import type { BrowserContext, BrowserContextOptions } from 'playwright-core';
 import type { AddressInfo } from 'net';
 import type { Log } from '../packages/playwright-core/src/server/supplements/har/har';
 
-async function pageWithHar(contextFactory: (options?: BrowserContextOptions) => Promise<BrowserContext>, testInfo: any, outputPath: string = 'test.har') {
+export async function pageWithHar(contextFactory: (options?: BrowserContextOptions) => Promise<BrowserContext>, testInfo: any, outputPath: string = 'test.har') {
   const harPath = testInfo.outputPath(outputPath);
   const context = await contextFactory({ recordHar: { path: harPath }, ignoreHTTPSErrors: true });
   const page = await context.newPage();
@@ -694,4 +694,3 @@ it('should not hang on resources served from cache', async ({ contextFactory, se
   else
     expect(entries.length).toBe(2);
 });
-

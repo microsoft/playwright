@@ -196,7 +196,7 @@ export class Request extends SdkObject {
     return this._redirectedTo ? this._redirectedTo._finalRequest() : this;
   }
 
-  frame(): frames.Frame | null {
+  frame(): frames.Frame|null {
     return this._frame;
   }
 
@@ -320,11 +320,11 @@ export type RemoteAddr = {
 };
 
 export type SecurityDetails = {
-  protocol?: string;
-  subjectName?: string;
-  issuer?: string;
-  validFrom?: number;
-  validTo?: number;
+    protocol?: string;
+    subjectName?: string;
+    issuer?: string;
+    validFrom?: number;
+    validTo?: number;
 };
 
 export class Response extends SdkObject {
@@ -338,7 +338,7 @@ export class Response extends SdkObject {
   private _headersMap = new Map<string, string>();
   private _getResponseBodyCallback: GetResponseBodyCallback;
   private _timing: ResourceTiming;
-  private _serverAddrPromise = new ManualPromise<RemoteAddr | undefined>();
+  private _serverAddrPromise = new ManualPromise<RemoteAddr|undefined>();
   private _securityDetailsPromise = new ManualPromise<SecurityDetails | undefined>();
   private _rawResponseHeadersPromise: ManualPromise<types.HeadersArray> | undefined;
   private _httpVersion: string | undefined;
@@ -414,11 +414,11 @@ export class Response extends SdkObject {
     return this._timing;
   }
 
-  async serverAddr(): Promise<RemoteAddr | null> {
+  async serverAddr(): Promise<RemoteAddr|null> {
     return await this._serverAddrPromise || null;
   }
 
-  async securityDetails(): Promise<SecurityDetails | null> {
+  async securityDetails(): Promise<SecurityDetails|null> {
     return await this._securityDetailsPromise || null;
   }
 

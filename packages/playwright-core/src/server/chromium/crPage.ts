@@ -698,19 +698,19 @@ class FrameSession {
 
     if (event.targetInfo.type === 'service_worker') {
       let worker = this._crPage._browserContext._browser._serviceWorkers.get(event.targetInfo.targetId);
-      if (worker) {worker._networkManager.setParentManager(this._networkManager);} else {
-        // We get Target.attachedToTarget on the BrowserContext (where the CRServiceWorker is created),
-        // as well as here, but the order is not guaranteed, so we might have to defer setting the parentManager.
-        // FIXME: Leak: This needs to be removed at some point(s)
-        this._page._browserContext.on(CRBrowserContext.CREvents.ServiceWorker, () => {
-          // FIXME: Leak: instead of this, remove listener
-          if (worker) return;
 
+      if (worker) {
+        worker._networkManager.setParentManager(this._networkManager);
+        assert(worker._browserContext === this._crPage._browserContext, 'Worker and BrowserContext were ambiguous.');
+      } else {
+        // FIXME(raw): This current impl. allows the listener to stay registered too long. In the future, fix so the listener
+        //             is removed once the correct worker is found.
+        this._page._browserContext.on(CRBrowserContext.CREvents.ServiceWorker, () => {
+          if (worker)
+            return;
           worker = this._crPage._browserContext._browser._serviceWorkers.get(event.targetInfo.targetId);
-          if (worker) {
-            console.log('OK: deferred worker creation');
+          if (worker)
             worker._networkManager.setParentManager(this._networkManager);
-          }
         });
       }
     }

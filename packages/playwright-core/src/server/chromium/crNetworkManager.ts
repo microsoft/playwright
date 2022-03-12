@@ -35,7 +35,7 @@ export class CRNetworkManager {
   private _parentManager: CRNetworkManager | null;
   private _requestIdToRequest = new Map<string, InterceptableRequest>();
   private _requestIdToRequestWillBeSentEvent = new Map<string, Protocol.Network.requestWillBeSentPayload>();
-  private _credentials: { username: string, password: string } | null = null;
+  private _credentials: {username: string, password: string} | null = null;
   private _attemptedAuthentications = new Set<string>();
   private _userRequestInterceptionEnabled = false;
   private _protocolRequestInterceptionEnabled = false;
@@ -52,6 +52,8 @@ export class CRNetworkManager {
   }
 
   setParentManager(parent: CRNetworkManager) {
+    // TODO(raw): More work needs to be done to see if this pre-condition holds true even in multi-page scenarios that are using the
+    //            same worker.
     if (this._parentManager && this._parentManager !== parent)
       throw new Error('A different parent manager was already set. Cannot overwrite.');
     this._parentManager = parent;
@@ -68,6 +70,7 @@ export class CRNetworkManager {
       eventsHelper.addEventListener(session, 'Network.responseReceivedExtraInfo', this._onResponseReceivedExtraInfo.bind(this)),
       eventsHelper.addEventListener(session, 'Network.loadingFinished', this._onLoadingFinished.bind(this)),
       eventsHelper.addEventListener(session, 'Network.loadingFailed', this._onLoadingFailed.bind(this, workerFrame)),
+      // TODO(raw): Instrument WebSocket for Service Workers.
       eventsHelper.addEventListener(session, 'Network.webSocketCreated', e => this._page?._frameManager.onWebSocketCreated(e.requestId, e.url)),
       eventsHelper.addEventListener(session, 'Network.webSocketWillSendHandshakeRequest', e => this._page?._frameManager.onWebSocketRequest(e.requestId)),
       eventsHelper.addEventListener(session, 'Network.webSocketHandshakeResponseReceived', e => this._page?._frameManager.onWebSocketResponse(e.requestId, e.response.status, e.response.statusText)),
@@ -177,7 +180,6 @@ export class CRNetworkManager {
     if (event) {
       this._parentManager?._requestIdToRequestWillBeSentEvent.delete(id);
       this._requestIdToRequestWillBeSentEvent.set(id, event);
-      this._onRequest(undefined, event, null);
     }
 
     return this._requestIdToRequest.get(id);
@@ -185,10 +187,6 @@ export class CRNetworkManager {
 
   _onRequestPaused(workerFrame: frames.Frame | undefined, event: Protocol.Fetch.requestPausedPayload) {
     if (!event.responseStatusCode && !event.responseErrorReason) {
-      // Request intercepted, deliver signal to the tracker.
-      if (this._serviceWorker)
-        console.log('sw');
-
       const request = this._requestIdToRequest.get(event.networkId!) || this._maybeAdoptServiceWorkerMainRequest(event.networkId!);
       if (request)
         this._responseExtraInfoTracker.requestPaused(request.request, event);
@@ -273,10 +271,6 @@ export class CRNetworkManager {
         this._client._sendMayFail('Fetch.continueRequest', { requestId: requestPausedEvent.requestId });
       return;
     }
-
-    if (requestPausedEvent?.request.url.endsWith('worker.js') || requestWillBeSentEvent.request.url.endsWith('worker.js'))
-      console.log('here');
-
 
     let route = null;
     if (requestPausedEvent) {

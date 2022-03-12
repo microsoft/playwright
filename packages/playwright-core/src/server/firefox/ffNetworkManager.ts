@@ -149,7 +149,7 @@ export class FFNetworkManager {
   }
 }
 
-const causeToResourceType: { [key: string]: string } = {
+const causeToResourceType: {[key: string]: string} = {
   TYPE_INVALID: 'other',
   TYPE_OTHER: 'other',
   TYPE_SCRIPT: 'script',
@@ -175,7 +175,7 @@ const causeToResourceType: { [key: string]: string } = {
   TYPE_WEB_MANIFEST: 'manifest',
 };
 
-const internalCauseToResourceType: { [key: string]: string } = {
+const internalCauseToResourceType: {[key: string]: string} = {
   TYPE_INTERNAL_EVENTSOURCE: 'eventsource',
 };
 

@@ -56,7 +56,8 @@ export type Entry = {
   serverIPAddress?: string;
   connection?: string;
   _requestref: string;
-  _frameref: string;
+  // FIXME(raw): Think through this as it might be a breaking change; if so, use '' for Service Workers
+  _frameref?: string;
   _monotonicTime: number;
   _serverPort?: number;
   _securityDetails?: SecurityDetails;
