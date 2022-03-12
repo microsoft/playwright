@@ -18,7 +18,7 @@
 import type { ExpectedTextValue } from 'playwright-core/lib/protocol/channels';
 import { isRegExp, isString } from 'playwright-core/lib/utils/utils';
 import type { Expect } from '../types';
-import { expectType, callLogText, currentExpectTimeout } from '../util';
+import { expectTypes, callLogText, currentExpectTimeout } from '../util';
 import {
   printReceivedStringContainExpectedResult,
   printReceivedStringContainExpectedSubstring
@@ -33,7 +33,7 @@ export async function toMatchText(
   expected: string | RegExp,
   options: { timeout?: number, matchSubstring?: boolean } = {},
 ) {
-  expectType(receiver, receiverType, matcherName);
+  expectTypes(receiver, [receiverType], matcherName);
 
   const matcherOptions = {
     isNot: this.isNot,

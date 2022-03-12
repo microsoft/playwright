@@ -21,7 +21,7 @@ import type { Expect } from '../types';
 import { currentTestInfo } from '../globals';
 import { mimeTypeToComparator, ImageComparatorOptions, Comparator } from 'playwright-core/lib/utils/comparators';
 import type { PageScreenshotOptions } from 'playwright-core/types/types';
-import { addSuffixToFilePath, serializeError, sanitizeForFilePath, trimLongString, callLogText, currentExpectTimeout } from '../util';
+import { addSuffixToFilePath, serializeError, sanitizeForFilePath, trimLongString, callLogText, currentExpectTimeout, expectTypes } from '../util';
 import { UpdateSnapshots } from '../types';
 import colors from 'colors/safe';
 import fs from 'fs';
@@ -197,14 +197,12 @@ class SnapshotHelper<T extends ImageComparatorOptions> {
       colors.red(title),
       '',
     ];
-    if (diffError) {
-      output.push(...[
-        indent(diffError, '  '),
-        '',
-      ]);
-    }
+    if (diffError)
+      output.push(indent(diffError, '  '));
     if (log?.length)
       output.push(callLogText(log));
+    else
+      output.push('');
 
     if (expected !== undefined) {
       writeFileSync(this.expectedPath, expected);
@@ -296,6 +294,9 @@ export async function toHaveScreenshot(
         threshold: config?.threshold,
       },
       nameOrOptions, optOptions);
+  if (!helper.snapshotPath.toLowerCase().endsWith('.png'))
+    throw new Error(`Screenshot name "${path.basename(helper.snapshotPath)}" must have '.png' extension`);
+  expectTypes(pageOrLocator, ['Page', 'Locator'], 'toHaveScreenshot');
   const [page, locator] = pageOrLocator.constructor.name === 'Page' ? [(pageOrLocator as PageEx), undefined] : [(pageOrLocator as Locator).page() as PageEx, pageOrLocator as LocatorEx];
   const screenshotOptions = {
     animations: config?.animations ?? 'disabled',
@@ -347,8 +348,8 @@ export async function toHaveScreenshot(
     // This can be due to e.g. spinning animation, so we want to show it as a diff.
     if (errorMessage) {
       const title = actual && previous ?
-        `Timeout ${timeout}ms exceeded while generating screenshot because ${locator ? 'element' : 'page'} kept changing:` :
-        `Timeout ${timeout}ms exceeded while generating screenshot:`;
+        `Timeout ${timeout}ms exceeded while generating screenshot because ${locator ? 'element' : 'page'} kept changing` :
+        `Timeout ${timeout}ms exceeded while generating screenshot`;
       return helper.handleDifferent(actual, undefined, previous, diff, undefined, log, title);
     }
 

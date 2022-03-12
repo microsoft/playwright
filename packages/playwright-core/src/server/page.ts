@@ -458,16 +458,24 @@ export class Page extends SdkObject {
       errorMessage?: string,
       diff?: Buffer,
     } | undefined = undefined;
+    const callTimeout = this._timeoutSettings.timeout(options);
     return controller.run(async progress => {
       let actual: Buffer | undefined;
       let previous: Buffer | undefined;
       const pollIntervals = [0, 100, 250, 500];
+      progress.log(`${metadata.apiName}${callTimeout ? ` with timeout ${callTimeout}ms` : ''}`);
+      if (isGeneratingNewScreenshot)
+        progress.log(`  generating new screenshot expectation: waiting for 2 consecutive screenshots to match`);
+      else
+        progress.log(`  waiting for screenshot to match expectation`);
       while (true) {
         progress.throwIfAborted();
         if (this.isClosed())
           throw new Error('The page has closed');
         let comparatorResult: ComparatorResult | undefined;
         const screenshotTimeout = pollIntervals.shift() ?? 1000;
+        if (screenshotTimeout)
+          progress.log(`waiting ${screenshotTimeout}ms before taking screenshot`);
         if (isGeneratingNewScreenshot) {
           previous = actual;
           actual = await rafrafScreenshot(progress, screenshotTimeout).catch(e => undefined);
@@ -478,18 +486,23 @@ export class Page extends SdkObject {
         }
         if (comparatorResult !== undefined && !!comparatorResult === !!options.isNot)
           break;
-        if (comparatorResult)
+        if (comparatorResult) {
+          if (isGeneratingNewScreenshot)
+            progress.log(`2 last screenshots do not match: ${comparatorResult.errorMessage}`);
+          else
+            progress.log(`screenshot does not match expectation: ${comparatorResult.errorMessage}`);
           intermediateResult = { errorMessage: comparatorResult.errorMessage, diff: comparatorResult.diff, actual, previous };
+        }
       }
 
       return isGeneratingNewScreenshot ? { actual } : {};
-    }, this._timeoutSettings.timeout(options)).catch(e => {
+    }, callTimeout).catch(e => {
       // Q: Why not throw upon isSessionClosedError(e) as in other places?
       // A: We want user to receive a friendly diff between actual and expected/previous.
       if (js.isJavaScriptErrorInEvaluate(e) || isInvalidSelectorError(e))
         throw e;
       return {
-        log: metadata.log,
+        log: e.message ? [...metadata.log, e.message] : metadata.log,
         ...intermediateResult,
         errorMessage: intermediateResult?.errorMessage ?? e.message,
       };
