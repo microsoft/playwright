@@ -19,7 +19,7 @@ import { HeaderView } from '../src/headerView';
 import { TestCaseView } from '../src/testCaseView';
 import '../src/theme.css';
 
-import register from '@playwright/ct-react/register';
+import register from '@playwright/experimental-ct-react/register';
 
 register({
   AutoChip,

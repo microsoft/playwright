@@ -15,6 +15,10 @@
     "react-scripts": "5.0.0",
     "typescript": "^4.6.2"
   },
+  "@standaloneDevDependencies": {
+    "@playwright/experimental-ct-react": "0.0.1",
+    "@playwright/test": "1.21.0-alpha-mar-12-2022"
+  },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",

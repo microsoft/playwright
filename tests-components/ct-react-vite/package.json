@@ -17,5 +17,9 @@
     "@vitejs/plugin-react": "^1.0.7",
     "typescript": "^4.5.4",
     "vite": "^2.8.0"
+  },
+  "@standaloneDevDependencies": {
+    "@playwright/experimental-ct-react": "0.0.1",
+    "@playwright/test": "1.21.0-alpha-mar-12-2022"
   }
 }
