@@ -318,8 +318,8 @@ export class CRServiceWorker extends Worker {
       this._createExecutionContext(new CRExecutionContext(session, event.context));
     });
 
-    this._networkManager.initialize();
-    this._networkManager.setRequestInterception(this._needsRequestInterception());
+    this._networkManager.initialize().catch(() => {});
+    this._networkManager.setRequestInterception(this._needsRequestInterception()).catch(() => {});
 
     // This might fail if the target is closed before we receive all execution contexts.
     session.send('Runtime.enable', {}).catch(e => { });
