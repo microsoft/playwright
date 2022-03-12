@@ -63,7 +63,7 @@ You can use browser developer tools in Chromium, Firefox and WebKit while runnin
 a Playwright script in headed mode. Developer tools help to:
 
 * Inspect the DOM tree and **find element selectors**
-* **See console logs** during execution (or learn how to [read logs via API](./verification.md#console-logs))
+* **See console logs** during execution (or learn how to [read logs via API](./api/class-page.md#page-event-console))
 * Check **network activity** and other developer tools features
 
 <a href="https://user-images.githubusercontent.com/284612/77234134-5f21a500-6b69-11ea-92ec-1c146e1333ec.png"><img src="https://user-images.githubusercontent.com/284612/77234134-5f21a500-6b69-11ea-92ec-1c146e1333ec.png" width="500" alt="Chromium Developer Tools"></img></a>

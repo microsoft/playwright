@@ -153,7 +153,7 @@ You can use browser developer tools in Chromium, Firefox and WebKit while runnin
 a Playwright script, with or without Playwright inspector. Developer tools help to:
 
 * Inspect the DOM tree
-* **See console logs** during execution (or learn how to [read logs via API](./verification.md#console-logs))
+* **See console logs** during execution (or learn how to [read logs via API](./api/class-page.md#page-event-console))
 * Check **network activity** and other developer tools features
 
 :::note
