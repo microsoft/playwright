@@ -101,14 +101,14 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
     return channel;
   }
 
-  async _wrapApiCall<R>(func: (apiZone: ApiZone) => Promise<R>, isInternal = false): Promise<R> {
+  async _wrapApiCall<R>(func: (apiZone: ApiZone) => Promise<R>, isInternal = false, customStackTrace?: ParsedStackTrace): Promise<R> {
     const logger = this._logger;
     const stack = captureRawStack();
     const apiZone = zones.zoneData<ApiZone>('apiZone', stack);
     if (apiZone)
       return func(apiZone);
 
-    const stackTrace = captureStackTrace(stack);
+    const stackTrace = customStackTrace || captureStackTrace(stack);
     if (isInternal)
       delete stackTrace.apiName;
     const csi = isInternal ? undefined : this._instrumentation;

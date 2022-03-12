@@ -23,13 +23,14 @@ import {
   printReceivedStringContainExpectedResult,
   printReceivedStringContainExpectedSubstring
 } from '../expect';
+import { ParsedStackTrace, captureStackTrace } from 'playwright-core/lib/utils/stackTrace';
 
 export async function toMatchText(
   this: ReturnType<Expect['getState']>,
   matcherName: string,
   receiver: any,
   receiverType: string,
-  query: (isNot: boolean, timeout: number) => Promise<{ matches: boolean, received?: string, log?: string[] }>,
+  query: (isNot: boolean, timeout: number, customStackTrace: ParsedStackTrace) => Promise<{ matches: boolean, received?: string, log?: string[] }>,
   expected: string | RegExp,
   options: { timeout?: number, matchSubstring?: boolean } = {},
 ) {
@@ -57,7 +58,9 @@ export async function toMatchText(
 
   const timeout = currentExpectTimeout(options);
 
-  const { matches: pass, received, log } = await query(this.isNot, timeout);
+  const customStackTrace = captureStackTrace();
+  customStackTrace.apiName = 'expect.' + matcherName;
+  const { matches: pass, received, log } = await query(this.isNot, timeout, customStackTrace);
   const stringSubstring = options.matchSubstring ? 'substring' : 'string';
   const receivedString = received || '';
   const message = pass

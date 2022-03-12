@@ -16,13 +16,14 @@
 
 import type { Expect } from '../types';
 import { expectTypes, callLogText, currentExpectTimeout } from '../util';
+import { ParsedStackTrace, captureStackTrace } from 'playwright-core/lib/utils/stackTrace';
 
 export async function toBeTruthy(
   this: ReturnType<Expect['getState']>,
   matcherName: string,
   receiver: any,
   receiverType: string,
-  query: (isNot: boolean, timeout: number) => Promise<{ matches: boolean, log?: string[] }>,
+  query: (isNot: boolean, timeout: number, customStackTrace: ParsedStackTrace) => Promise<{ matches: boolean, log?: string[] }>,
   options: { timeout?: number } = {},
 ) {
   expectTypes(receiver, [receiverType], matcherName);
@@ -34,7 +35,9 @@ export async function toBeTruthy(
 
   const timeout = currentExpectTimeout(options);
 
-  const { matches, log } = await query(this.isNot, timeout);
+  const customStackTrace = captureStackTrace();
+  customStackTrace.apiName = 'expect.' + matcherName;
+  const { matches, log } = await query(this.isNot, timeout, customStackTrace);
 
   const message = () => {
     return this.utils.matcherHint(matcherName, undefined, '', matcherOptions) + callLogText(log);
