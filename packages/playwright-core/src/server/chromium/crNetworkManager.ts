@@ -60,7 +60,7 @@ export class CRNetworkManager {
   }
 
   instrumentNetworkEvents(session: CRSession, workerFrame?: frames.Frame): RegisteredListener[] {
-    return [
+    const listeners = [
       eventsHelper.addEventListener(session, 'Fetch.requestPaused', this._onRequestPaused.bind(this, workerFrame)),
       eventsHelper.addEventListener(session, 'Fetch.authRequired', this._onAuthRequired.bind(this)),
       eventsHelper.addEventListener(session, 'Network.requestWillBeSent', this._onRequestWillBeSent.bind(this, workerFrame)),
@@ -70,15 +70,22 @@ export class CRNetworkManager {
       eventsHelper.addEventListener(session, 'Network.responseReceivedExtraInfo', this._onResponseReceivedExtraInfo.bind(this)),
       eventsHelper.addEventListener(session, 'Network.loadingFinished', this._onLoadingFinished.bind(this)),
       eventsHelper.addEventListener(session, 'Network.loadingFailed', this._onLoadingFailed.bind(this, workerFrame)),
-      // TODO(raw): Instrument WebSocket for Service Workers.
-      eventsHelper.addEventListener(session, 'Network.webSocketCreated', e => this._page?._frameManager.onWebSocketCreated(e.requestId, e.url)),
-      eventsHelper.addEventListener(session, 'Network.webSocketWillSendHandshakeRequest', e => this._page?._frameManager.onWebSocketRequest(e.requestId)),
-      eventsHelper.addEventListener(session, 'Network.webSocketHandshakeResponseReceived', e => this._page?._frameManager.onWebSocketResponse(e.requestId, e.response.status, e.response.statusText)),
-      eventsHelper.addEventListener(session, 'Network.webSocketFrameSent', e => e.response.payloadData && this._page?._frameManager.onWebSocketFrameSent(e.requestId, e.response.opcode, e.response.payloadData)),
-      eventsHelper.addEventListener(session, 'Network.webSocketFrameReceived', e => e.response.payloadData && this._page?._frameManager.webSocketFrameReceived(e.requestId, e.response.opcode, e.response.payloadData)),
-      eventsHelper.addEventListener(session, 'Network.webSocketClosed', e => this._page?._frameManager.webSocketClosed(e.requestId)),
-      eventsHelper.addEventListener(session, 'Network.webSocketFrameError', e => this._page?._frameManager.webSocketError(e.requestId, e.errorMessage)),
     ];
+
+    // TODO(raw): Instrument WebSocket for Service Workers.
+    if (this._page) {
+      listeners.push(...[
+        eventsHelper.addEventListener(session, 'Network.webSocketCreated', e => this._page?._frameManager.onWebSocketCreated(e.requestId, e.url)),
+        eventsHelper.addEventListener(session, 'Network.webSocketWillSendHandshakeRequest', e => this._page?._frameManager.onWebSocketRequest(e.requestId)),
+        eventsHelper.addEventListener(session, 'Network.webSocketHandshakeResponseReceived', e => this._page?._frameManager.onWebSocketResponse(e.requestId, e.response.status, e.response.statusText)),
+        eventsHelper.addEventListener(session, 'Network.webSocketFrameSent', e => e.response.payloadData && this._page?._frameManager.onWebSocketFrameSent(e.requestId, e.response.opcode, e.response.payloadData)),
+        eventsHelper.addEventListener(session, 'Network.webSocketFrameReceived', e => e.response.payloadData && this._page?._frameManager.webSocketFrameReceived(e.requestId, e.response.opcode, e.response.payloadData)),
+        eventsHelper.addEventListener(session, 'Network.webSocketClosed', e => this._page?._frameManager.webSocketClosed(e.requestId)),
+        eventsHelper.addEventListener(session, 'Network.webSocketFrameError', e => this._page?._frameManager.webSocketError(e.requestId, e.errorMessage)),
+      ]);
+    }
+
+    return listeners;
   }
 
   async initialize() {
