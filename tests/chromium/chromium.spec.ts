@@ -21,7 +21,6 @@ import http from 'http';
 import fs from 'fs';
 import { getUserAgent } from '../../packages/playwright-core/lib/utils/utils';
 import { suppressCertificateWarning } from '../config/utils';
-import { pageWithHar } from '../har.spec';
 
 test('should create a worker from a service worker', async ({ page, server }) => {
   const [worker] = await Promise.all([
@@ -95,8 +94,8 @@ test('should intercept service worker importScripts', async ({ context, page, se
   await expect(sw.evaluate(() => self['importedValue'])).resolves.toBe(47);
 });
 
-test('should report intercepted service worker requests in HAR', async ({ contextFactory, server }, testInfo) => {
-  const { context, page, getLog } = await pageWithHar(contextFactory, testInfo);
+test('should report intercepted service worker requests in HAR', async ({ pageWithHar, server }) => {
+  const { context, page, getLog } = await pageWithHar();
   context.route('**/request-from-within-worker', route =>
     route.fulfill({
       contentType: 'application/json',

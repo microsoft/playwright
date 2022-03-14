@@ -19,31 +19,15 @@ import { browserTest as it, expect } from './config/browserTest';
 import * as path from 'path';
 import fs from 'fs';
 import http2 from 'http2';
-import type { BrowserContext, BrowserContextOptions } from 'playwright-core';
 import type { AddressInfo } from 'net';
-import type { Log } from '../packages/playwright-core/src/server/supplements/har/har';
-
-export async function pageWithHar(contextFactory: (options?: BrowserContextOptions) => Promise<BrowserContext>, testInfo: any, outputPath: string = 'test.har') {
-  const harPath = testInfo.outputPath(outputPath);
-  const context = await contextFactory({ recordHar: { path: harPath }, ignoreHTTPSErrors: true });
-  const page = await context.newPage();
-  return {
-    page,
-    context,
-    getLog: async () => {
-      await context.close();
-      return JSON.parse(fs.readFileSync(harPath).toString())['log'] as Log;
-    }
-  };
-}
 
 it('should throw without path', async ({ browser }) => {
   const error = await browser.newContext({ recordHar: {} as any }).catch(e => e);
   expect(error.message).toContain('recordHar.path: expected string, got undefined');
 });
 
-it('should have version and creator', async ({ contextFactory, server }, testInfo) => {
-  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
+it('should have version and creator', async ({ pageWithHar, server }) => {
+  const { page, getLog } = await pageWithHar();
   await page.goto(server.EMPTY_PAGE);
   const log = await getLog();
   expect(log.version).toBe('1.2');
@@ -51,16 +35,16 @@ it('should have version and creator', async ({ contextFactory, server }, testInf
   expect(log.creator.version).toBe(require('../package.json')['version']);
 });
 
-it('should have browser', async ({ browserName, browser, contextFactory, server }, testInfo) => {
-  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
+it('should have browser', async ({ browserName, browser, pageWithHar, server }) => {
+  const { page, getLog } = await pageWithHar();
   await page.goto(server.EMPTY_PAGE);
   const log = await getLog();
   expect(log.browser.name.toLowerCase()).toBe(browserName);
   expect(log.browser.version).toBe(browser.version());
 });
 
-it('should have pages', async ({ contextFactory, server }, testInfo) => {
-  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
+it('should have pages', async ({ pageWithHar }) => {
+  const { page, getLog } = await pageWithHar();
   await page.goto('data:text/html,<title>Hello</title>');
   // For data: load comes before domcontentloaded...
   await page.waitForLoadState('domcontentloaded');
@@ -91,8 +75,8 @@ it('should have pages in persistent context', async ({ launchPersistent }, testI
   expect(pageEntry.title).toBe('Hello');
 });
 
-it('should include request', async ({ contextFactory, server }, testInfo) => {
-  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
+it('should include request', async ({ pageWithHar, server }) => {
+  const { page, getLog } = await pageWithHar();
   await page.goto(server.EMPTY_PAGE);
   const log = await getLog();
   expect(log.entries.length).toBe(1);
@@ -106,8 +90,8 @@ it('should include request', async ({ contextFactory, server }, testInfo) => {
   expect(entry.request.bodySize).toBe(0);
 });
 
-it('should include response', async ({ contextFactory, server }, testInfo) => {
-  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
+it('should include response', async ({ pageWithHar, server }) => {
+  const { page, getLog } = await pageWithHar();
   await page.goto(server.EMPTY_PAGE);
   const log = await getLog();
   const entry = log.entries[0];
@@ -118,9 +102,9 @@ it('should include response', async ({ contextFactory, server }, testInfo) => {
   expect(entry.response.headers.find(h => h.name.toLowerCase() === 'content-type').value).toContain('text/html');
 });
 
-it('should include redirectURL', async ({ contextFactory, server }, testInfo) => {
+it('should include redirectURL', async ({ pageWithHar, server }) => {
   server.setRedirect('/foo.html', '/empty.html');
-  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
+  const { page, getLog } = await pageWithHar();
   await page.goto(server.PREFIX + '/foo.html');
   const log = await getLog();
   expect(log.entries.length).toBe(2);
@@ -129,15 +113,15 @@ it('should include redirectURL', async ({ contextFactory, server }, testInfo) =>
   expect(entry.response.redirectURL).toBe(server.EMPTY_PAGE);
 });
 
-it('should include query params', async ({ contextFactory, server }, testInfo) => {
-  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
+it('should include query params', async ({ pageWithHar, server }) => {
+  const { page, getLog } = await pageWithHar();
   await page.goto(server.PREFIX + '/har.html?name=value');
   const log = await getLog();
   expect(log.entries[0].request.queryString).toEqual([{ name: 'name', value: 'value' }]);
 });
 
-it('should include postData', async ({ contextFactory, server }, testInfo) => {
-  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
+it('should include postData', async ({ pageWithHar, server }) => {
+  const { page, getLog } = await pageWithHar();
   await page.goto(server.EMPTY_PAGE);
   await page.evaluate(() => fetch('./post', { method: 'POST', body: 'Hello' }));
   const log = await getLog();
@@ -148,8 +132,8 @@ it('should include postData', async ({ contextFactory, server }, testInfo) => {
   });
 });
 
-it('should include binary postData', async ({ contextFactory, server }, testInfo) => {
-  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
+it('should include binary postData', async ({ pageWithHar, server }) => {
+  const { page, getLog } =  await pageWithHar();
   await page.goto(server.EMPTY_PAGE);
   await page.evaluate(async () => {
     await fetch('./post', { method: 'POST', body: new Uint8Array(Array.from(Array(16).keys())) });
@@ -162,8 +146,8 @@ it('should include binary postData', async ({ contextFactory, server }, testInfo
   });
 });
 
-it('should include form params', async ({ contextFactory, server }, testInfo) => {
-  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
+it('should include form params', async ({ pageWithHar, server }) => {
+  const { page, getLog } = await pageWithHar();
   await page.goto(server.EMPTY_PAGE);
   await page.setContent(`<form method='POST' action='/post'><input type='text' name='foo' value='bar'><input type='number' name='baz' value='123'><input type='submit'></form>`);
   await page.click('input[type=submit]');
@@ -178,8 +162,8 @@ it('should include form params', async ({ contextFactory, server }, testInfo) =>
   });
 });
 
-it('should include cookies', async ({ contextFactory, server }, testInfo) => {
-  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
+it('should include cookies', async ({ pageWithHar, server }) => {
+  const { page, getLog } = await pageWithHar();
   const context = page.context();
   await context.addCookies([
     { name: 'name1', value: '"value1"', domain: 'localhost', path: '/', httpOnly: true },
@@ -197,8 +181,8 @@ it('should include cookies', async ({ contextFactory, server }, testInfo) => {
   ]);
 });
 
-it('should include set-cookies', async ({ contextFactory, server }, testInfo) => {
-  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
+it('should include set-cookies', async ({ pageWithHar, server }) => {
+  const { page, getLog } = await pageWithHar();
   server.setRoute('/empty.html', (req, res) => {
     res.setHeader('Set-Cookie', [
       'name1=value1; HttpOnly',
@@ -215,9 +199,9 @@ it('should include set-cookies', async ({ contextFactory, server }, testInfo) =>
   expect(new Date(cookies[2].expires).valueOf()).toBeGreaterThan(Date.now());
 });
 
-it('should include set-cookies with comma', async ({ contextFactory, server, browserName }, testInfo) => {
+it('should include set-cookies with comma', async ({ pageWithHar, server, browserName }) => {
   it.fixme(browserName === 'webkit', 'We get "name1=val, ue1, name2=val, ue2" as a header value');
-  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
+  const { page, getLog } = await pageWithHar();
   server.setRoute('/empty.html', (req, res) => {
     res.setHeader('Set-Cookie', [
       'name1=val, ue1', 'name2=val, ue2',
@@ -231,8 +215,8 @@ it('should include set-cookies with comma', async ({ contextFactory, server, bro
   expect(cookies[1]).toEqual({ name: 'name2', value: 'val, ue2' });
 });
 
-it('should include secure set-cookies', async ({ contextFactory, httpsServer }, testInfo) => {
-  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
+it('should include secure set-cookies', async ({ pageWithHar, httpsServer }) => {
+  const { page, getLog } = await pageWithHar();
   httpsServer.setRoute('/empty.html', (req, res) => {
     res.setHeader('Set-Cookie', [
       'name1=value1; Secure',
@@ -245,8 +229,8 @@ it('should include secure set-cookies', async ({ contextFactory, httpsServer }, 
   expect(cookies[0]).toEqual({ name: 'name1', value: 'value1', secure: true });
 });
 
-it('should include content @smoke', async ({ contextFactory, server }, testInfo) => {
-  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
+it('should include content @smoke', async ({ pageWithHar, server }) => {
+  const { page, getLog } = await pageWithHar();
   await page.goto(server.PREFIX + '/har.html');
   const log = await getLog();
 
@@ -265,8 +249,8 @@ it('should include content @smoke', async ({ contextFactory, server }, testInfo)
   expect(log.entries[1].response.content.compression).toBe(0);
 });
 
-it('should include sizes', async ({ contextFactory, server, asset }, testInfo) => {
-  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
+it('should include sizes', async ({ pageWithHar, server, asset }) => {
+  const { page, getLog } = await pageWithHar();
   await page.goto(server.PREFIX + '/har.html');
   const log = await getLog();
   expect(log.entries.length).toBe(2);
@@ -282,8 +266,8 @@ it('should include sizes', async ({ contextFactory, server, asset }, testInfo) =
   expect(log.entries[1].response._transferSize).toBeGreaterThanOrEqual(150);
 });
 
-it('should work with gzip compression', async ({ contextFactory, server, browserName }, testInfo) => {
-  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
+it('should work with gzip compression', async ({ pageWithHar, server }) => {
+  const { page, getLog } = await pageWithHar();
   server.enableGzip('/simplezip.json');
   const response = await page.goto(server.PREFIX + '/simplezip.json');
   expect(response.headers()['content-encoding']).toBe('gzip');
@@ -292,15 +276,15 @@ it('should work with gzip compression', async ({ contextFactory, server, browser
   expect(log.entries[0].response.content.compression).toBeGreaterThan(4000);
 });
 
-it('should calculate time', async ({ contextFactory, server }, testInfo) => {
-  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
+it('should calculate time', async ({ pageWithHar, server }) => {
+  const { page, getLog } = await pageWithHar();
   await page.goto(server.PREFIX + '/har.html');
   const log = await getLog();
   expect(log.entries[0].time).toBeGreaterThan(0);
 });
 
-it('should report the correct _transferSize with PNG files', async ({ contextFactory, server, asset }, testInfo) => {
-  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
+it('should report the correct _transferSize with PNG files', async ({ pageWithHar, server, asset }) => {
+  const { page, getLog } = await pageWithHar();
   await page.goto(server.EMPTY_PAGE);
   await page.setContent(`
     <img src="${server.PREFIX}/pptr.png" />
@@ -309,8 +293,8 @@ it('should report the correct _transferSize with PNG files', async ({ contextFac
   expect(log.entries[1].response._transferSize).toBeGreaterThan(fs.statSync(asset('pptr.png')).size);
 });
 
-it('should have -1 _transferSize when its a failed request', async ({ contextFactory, server }, testInfo) => {
-  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
+it('should have -1 _transferSize when its a failed request', async ({ pageWithHar, server }) => {
+  const { page, getLog } = await pageWithHar();
   server.setRoute('/one-style.css', (req, res) => {
     res.setHeader('Content-Type', 'text/css');
     res.connection.destroy();
@@ -323,9 +307,9 @@ it('should have -1 _transferSize when its a failed request', async ({ contextFac
   expect(log.entries[1].response._transferSize).toBe(-1);
 });
 
-it('should report the correct request body size', async ({ contextFactory, server }, testInfo) => {
+it('should report the correct request body size', async ({ pageWithHar, server }) => {
   server.setRoute('/api', (req, res) => res.end());
-  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
+  const { page, getLog } = await pageWithHar();
   await page.goto(server.EMPTY_PAGE);
   await Promise.all([
     page.waitForResponse(server.PREFIX + '/api1'),
@@ -340,9 +324,9 @@ it('should report the correct request body size', async ({ contextFactory, serve
   expect(log.entries[1].request.bodySize).toBe(6);
 });
 
-it('should report the correct request body size when the bodySize is 0', async ({ contextFactory, server }, testInfo) => {
+it('should report the correct request body size when the bodySize is 0', async ({ pageWithHar, server }) => {
   server.setRoute('/api', (req, res) => res.end());
-  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
+  const { page, getLog } = await pageWithHar();
   await page.goto(server.EMPTY_PAGE);
   await Promise.all([
     page.waitForResponse(server.PREFIX + '/api2'),
@@ -357,16 +341,16 @@ it('should report the correct request body size when the bodySize is 0', async (
   expect(log.entries[1].request.bodySize).toBe(0);
 });
 
-it('should report the correct response body size when the bodySize is 0', async ({ contextFactory, server }, testInfo) => {
-  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
+it('should report the correct response body size when the bodySize is 0', async ({ pageWithHar, server }) => {
+  const { page, getLog } = await pageWithHar();
   const response = await page.goto(server.EMPTY_PAGE);
   await response.finished();
   const log = await getLog();
   expect(log.entries[0].response.bodySize).toBe(0);
 });
 
-it('should have popup requests', async ({ contextFactory, server }, testInfo) => {
-  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
+it('should have popup requests', async ({ pageWithHar, server }) => {
+  const { page, getLog } = await pageWithHar();
   await page.goto(server.EMPTY_PAGE);
   await page.setContent('<a target=_blank rel=noopener href="/one-style.html">yo</a>');
   const [popup] = await Promise.all([
@@ -386,14 +370,14 @@ it('should have popup requests', async ({ contextFactory, server }, testInfo) =>
   expect(entries[1].response.status).toBe(200);
 });
 
-it('should not contain internal pages', async ({ browserName, contextFactory, server }, testInfo) => {
+it('should not contain internal pages', async ({ browserName, pageWithHar, server }) => {
   it.fixme(true, 'https://github.com/microsoft/playwright/issues/6743');
   server.setRoute('/empty.html', (req, res) => {
     res.setHeader('Set-Cookie', 'name=value');
     res.end();
   });
 
-  const { page, context, getLog } = await pageWithHar(contextFactory, testInfo);
+  const { page, context, getLog } = await pageWithHar();
   await page.goto(server.EMPTY_PAGE);
 
   const cookies = await context.cookies();
@@ -405,8 +389,8 @@ it('should not contain internal pages', async ({ browserName, contextFactory, se
   expect(log.pages.length).toBe(1);
 });
 
-it('should have connection details', async ({ contextFactory, server, browserName, platform, mode }, testInfo) => {
-  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
+it('should have connection details', async ({ pageWithHar, server, browserName, platform, mode }) => {
+  const { page, getLog } = await pageWithHar();
   await page.goto(server.EMPTY_PAGE);
   const log = await getLog();
   const { serverIPAddress, _serverPort: port, _securityDetails: securityDetails } = log.entries[0];
@@ -416,11 +400,11 @@ it('should have connection details', async ({ contextFactory, server, browserNam
   expect(securityDetails).toEqual({});
 });
 
-it('should have security details', async ({ contextFactory, httpsServer, browserName, platform, mode }, testInfo) => {
+it('should have security details', async ({ pageWithHar, httpsServer, browserName, platform, mode }) => {
   it.fail(browserName === 'webkit' && platform === 'linux', 'https://github.com/microsoft/playwright/issues/6759');
   it.fail(browserName === 'webkit' && platform === 'win32');
 
-  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
+  const { page, getLog } = await pageWithHar();
   await page.goto(httpsServer.EMPTY_PAGE);
   const log = await getLog();
   const { serverIPAddress, _serverPort: port, _securityDetails: securityDetails } = log.entries[0];
@@ -433,9 +417,9 @@ it('should have security details', async ({ contextFactory, httpsServer, browser
     expect(securityDetails).toEqual({ issuer: 'puppeteer-tests', protocol: 'TLS 1.3', subjectName: 'puppeteer-tests', validFrom: 1550084863, validTo: 33086084863 });
 });
 
-it('should have connection details for redirects', async ({ contextFactory, server, browserName, mode }, testInfo) => {
+it('should have connection details for redirects', async ({ pageWithHar, server, browserName, mode }) => {
   server.setRedirect('/foo.html', '/empty.html');
-  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
+  const { page, getLog } = await pageWithHar();
   await page.goto(server.PREFIX + '/foo.html');
   const log = await getLog();
   expect(log.entries.length).toBe(2);
@@ -457,12 +441,12 @@ it('should have connection details for redirects', async ({ contextFactory, serv
     expect(detailsEmpty._serverPort).toBe(server.PORT);
 });
 
-it('should have connection details for failed requests', async ({ contextFactory, server, browserName, platform, mode }, testInfo) => {
+it('should have connection details for failed requests', async ({ pageWithHar, server, browserName, platform, mode }) => {
   server.setRoute('/one-style.css', (_, res) => {
     res.setHeader('Content-Type', 'text/css');
     res.connection.destroy();
   });
-  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
+  const { page, getLog } = await pageWithHar();
   await page.goto(server.PREFIX + '/one-style.html');
   const log = await getLog();
   const { serverIPAddress, _serverPort: port } = log.entries[0];
@@ -495,7 +479,7 @@ it('should return security details directly from response', async ({ contextFact
     expect(securityDetails).toEqual({ issuer: 'puppeteer-tests', protocol: 'TLS 1.3', subjectName: 'puppeteer-tests', validFrom: 1550084863, validTo: 33086084863 });
 });
 
-it('should contain http2 for http2 requests', async ({ contextFactory, browserName, platform }, testInfo) => {
+it('should contain http2 for http2 requests', async ({ pageWithHar, browserName, platform }) => {
   it.fixme(browserName === 'webkit' && platform === 'linux');
   it.fixme(browserName === 'webkit' && platform === 'win32');
 
@@ -512,7 +496,7 @@ it('should contain http2 for http2 requests', async ({ contextFactory, browserNa
   });
   server.listen(0);
 
-  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
+  const { page, getLog } = await pageWithHar();
   await page.goto(`https://localhost:${(server.address() as AddressInfo).port}`);
   const log = await getLog();
   expect(log.entries[0].request.httpVersion).toBe('HTTP/2.0');
@@ -521,11 +505,11 @@ it('should contain http2 for http2 requests', async ({ contextFactory, browserNa
   server.close();
 });
 
-it('should filter favicon and favicon redirects', async ({ server, browserName, channel, headless, asset, contextFactory }, testInfo) => {
+it('should filter favicon and favicon redirects', async ({ server, browserName, channel, headless, asset, pageWithHar }) => {
   it.skip(headless && browserName !== 'firefox', 'headless browsers, except firefox, do not request favicons');
   it.skip(!headless && browserName === 'webkit' && !channel, 'headed webkit does not have a favicon feature');
 
-  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
+  const { page, getLog } = await pageWithHar();
 
   // Browsers aggresively cache favicons, so force bust with the
   // `d` parameter to make iterating on this test more predictable and isolated.
@@ -569,12 +553,12 @@ it('should filter favicon and favicon redirects', async ({ server, browserName, 
   expect(entry.request.url).toBe(server.PREFIX + '/page.html');
 });
 
-it('should have different hars for concurrent contexts', async ({ contextFactory }, testInfo) => {
-  const session0 = await pageWithHar(contextFactory, testInfo, 'test-0.har');
+it('should have different hars for concurrent contexts', async ({ pageWithHar }) => {
+  const session0 = await pageWithHar('test-0.har');
   await session0.page.goto('data:text/html,<title>Zero</title>');
   await session0.page.waitForLoadState('domcontentloaded');
 
-  const session1 = await pageWithHar(contextFactory, testInfo, 'test-1.har');
+  const session1 = await pageWithHar('test-1.har');
   await session1.page.goto('data:text/html,<title>One</title>');
   await session1.page.waitForLoadState('domcontentloaded');
 
@@ -599,8 +583,8 @@ it('should have different hars for concurrent contexts', async ({ contextFactory
   }
 });
 
-it('should include _requestref', async ({ contextFactory, server }, testInfo) => {
-  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
+it('should include _requestref', async ({ pageWithHar, server }) => {
+  const { page, getLog } = await pageWithHar();
   const resp = await page.goto(server.EMPTY_PAGE);
   const log = await getLog();
   expect(log.entries.length).toBe(1);
@@ -609,11 +593,11 @@ it('should include _requestref', async ({ contextFactory, server }, testInfo) =>
   expect(entry._requestref).toBe((resp.request() as any)._guid);
 });
 
-it('should include _requestref for redirects', async ({ contextFactory, server }, testInfo) => {
+it('should include _requestref for redirects', async ({ pageWithHar, server }) => {
   server.setRedirect('/start', '/one-more');
   server.setRedirect('/one-more', server.EMPTY_PAGE);
 
-  const { page, getLog, context } = await pageWithHar(contextFactory, testInfo);
+  const { page, getLog, context } = await pageWithHar();
 
   const requests = new Map<string, string>();
   context.on('request', request => {
@@ -638,8 +622,8 @@ it('should include _requestref for redirects', async ({ contextFactory, server }
   expect(entryEmptyPage._requestref).toBe(requests.get(entryEmptyPage.request.url));
 });
 
-it('should include API request', async ({ contextFactory, server }, testInfo) => {
-  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
+it('should include API request', async ({ pageWithHar, server }) => {
+  const { page, getLog } = await pageWithHar();
   const url = server.PREFIX + '/simple.json';
   const response = await page.request.post(url, {
     headers: { cookie: 'a=b; c=d' },
@@ -674,7 +658,7 @@ it('should include API request', async ({ contextFactory, server }, testInfo) =>
   expect(entry.response.content.text).toBe(responseBody.toString('base64'));
 });
 
-it('should not hang on resources served from cache', async ({ contextFactory, server, browserName }, testInfo) => {
+it('should not hang on resources served from cache', async ({ pageWithHar, server, browserName }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/11435' });
   server.setRoute('/one-style.css', (req, res) => {
     res.writeHead(200, {
@@ -683,7 +667,7 @@ it('should not hang on resources served from cache', async ({ contextFactory, se
     });
     res.end(`body { background: red }`);
   });
-  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
+  const { page, getLog } = await pageWithHar();
   await page.goto(server.PREFIX + '/har.html');
   await page.goto(server.PREFIX + '/har.html');
   const log = await getLog();
