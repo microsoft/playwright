@@ -313,6 +313,11 @@ CommonScreenshotOptions:
   type: mixin
   properties:
     omitBackground: boolean?
+    caret:
+      type: enum?
+      literals:
+      - hide
+      - blink
     animations:
       type: enum?
       literals:

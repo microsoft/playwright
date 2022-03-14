@@ -42,6 +42,7 @@ export type ScreenshotOptions = {
   clip?: Rect,
   size?: 'css' | 'device',
   fonts?: 'ready' | 'nowait',
+  caret?: 'hide' | 'blink',
 };
 
 export class Screenshotter {
@@ -86,7 +87,7 @@ export class Screenshotter {
     return this._queue.postTask(async () => {
       progress.log('taking page screenshot');
       const { viewportSize } = await this._originalViewportSize(progress);
-      await this._preparePageForScreenshot(progress, options.animations === 'disabled', options.fonts === 'ready');
+      await this._preparePageForScreenshot(progress, options.caret !== 'blink', options.animations === 'disabled', options.fonts === 'ready');
       progress.throwIfAborted(); // Avoid restoring after failure - should be done by cleanup.
 
       if (options.fullPage) {
@@ -115,7 +116,7 @@ export class Screenshotter {
       progress.log('taking element screenshot');
       const { viewportSize } = await this._originalViewportSize(progress);
 
-      await this._preparePageForScreenshot(progress, options.animations === 'disabled', options.fonts === 'ready');
+      await this._preparePageForScreenshot(progress, options.caret !== 'blink', options.animations === 'disabled', options.fonts === 'ready');
       progress.throwIfAborted(); // Do not do extra work.
 
       await handle._waitAndScrollIntoViewIfNeeded(progress);
@@ -139,20 +140,22 @@ export class Screenshotter {
     });
   }
 
-  async _preparePageForScreenshot(progress: Progress, disableAnimations: boolean, waitForFonts: boolean) {
+  async _preparePageForScreenshot(progress: Progress, hideCaret: boolean, disableAnimations: boolean, waitForFonts: boolean) {
     if (disableAnimations)
       progress.log('  disabled all CSS animations');
     if (waitForFonts)
       progress.log('  waiting for fonts to load...');
     await Promise.all(this._page.frames().map(async frame => {
-      await frame.nonStallingEvaluateInExistingContext('(' + (async function(disableAnimations: boolean, waitForFonts: boolean) {
+      await frame.nonStallingEvaluateInExistingContext('(' + (async function(hideCaret: boolean, disableAnimations: boolean, waitForFonts: boolean) {
         const styleTag = document.createElement('style');
-        styleTag.textContent = `
-          *:not(#playwright-aaaaaaaaaa.playwright-bbbbbbbbbbb.playwright-cccccccccc.playwright-dddddddddd.playwright-eeeeeeeee) {
-            caret-color: transparent !important;
-          }
-        `;
-        document.documentElement.append(styleTag);
+        if (hideCaret) {
+          styleTag.textContent = `
+            *:not(#playwright-aaaaaaaaaa.playwright-bbbbbbbbbbb.playwright-cccccccccc.playwright-dddddddddd.playwright-eeeeeeeee) {
+              caret-color: transparent !important;
+            }
+          `;
+          document.documentElement.append(styleTag);
+        }
         const infiniteAnimationsToResume: Set<Animation> = new Set();
         const cleanupCallbacks: (() => void)[] = [];
 
@@ -222,7 +225,7 @@ export class Screenshotter {
 
         if (waitForFonts)
           await document.fonts.ready;
-      }).toString() + `)(${disableAnimations}, ${waitForFonts})`, false, 'utility').catch(() => {});
+      }).toString() + `)(${hideCaret}, ${disableAnimations}, ${waitForFonts})`, false, 'utility').catch(() => {});
     }));
     if (waitForFonts)
       progress.log('  fonts in all frames are loaded');

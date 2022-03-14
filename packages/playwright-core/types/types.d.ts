@@ -8144,6 +8144,12 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
     animations?: "disabled"|"allow";
 
     /**
+     * When set to `"hide"`, screenshot will hide text caret. When set to `"blink"`, text caret will remain blinking.  Defaults
+     * to `"hide"`.
+     */
+    caret?: "hide"|"blink";
+
+    /**
      * When set to `"ready"`, screenshot will wait for
      * [`document.fonts.ready`](https://developer.mozilla.org/en-US/docs/Web/API/FontFaceSet/ready) promise to resolve in all
      * frames. Defaults to `"nowait"`.
@@ -15700,6 +15706,12 @@ export interface LocatorScreenshotOptions {
   animations?: "disabled"|"allow";
 
   /**
+   * When set to `"hide"`, screenshot will hide text caret. When set to `"blink"`, text caret will remain blinking.  Defaults
+   * to `"hide"`.
+   */
+  caret?: "hide"|"blink";
+
+  /**
    * When set to `"ready"`, screenshot will wait for
    * [`document.fonts.ready`](https://developer.mozilla.org/en-US/docs/Web/API/FontFaceSet/ready) promise to resolve in all
    * frames. Defaults to `"nowait"`.
@@ -15851,6 +15863,12 @@ export interface PageScreenshotOptions {
    * Defaults to `"allow"` that leaves animations untouched.
    */
   animations?: "disabled"|"allow";
+
+  /**
+   * When set to `"hide"`, screenshot will hide text caret. When set to `"blink"`, text caret will remain blinking.  Defaults
+   * to `"hide"`.
+   */
+  caret?: "hide"|"blink";
 
   /**
    * An object which specifies clipping of the resulting image. Should have the following fields:

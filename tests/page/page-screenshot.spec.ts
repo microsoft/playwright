@@ -32,7 +32,7 @@ it.describe('page screenshot', () => {
     expect(screenshot).toMatchSnapshot('screenshot-sanity.png');
   });
 
-  it('should not capture blinking caret', async ({ page, server }) => {
+  it('should not capture blinking caret by default', async ({ page, server }) => {
     await page.setContent(`
       <!-- Refer to stylesheet from other origin. Accessing this
            stylesheet rules will throw.
@@ -57,6 +57,35 @@ it.describe('page screenshot', () => {
       const newScreenshot = await div.screenshot();
       expect(newScreenshot.equals(screenshot)).toBe(true);
     }
+  });
+
+  it('should capture blinking caret if explicitly asked for', async ({ page, server }) => {
+    await page.setContent(`
+      <!-- Refer to stylesheet from other origin. Accessing this
+           stylesheet rules will throw.
+      -->
+      <link rel=stylesheet href="${server.CROSS_PROCESS_PREFIX + '/injectedstyle.css'}">
+      <!-- make life harder: define caret color in stylesheet -->
+      <style>
+        div {
+          caret-color: #000 !important;
+        }
+      </style>
+      <div contenteditable="true"></div>
+    `);
+    const div = page.locator('div');
+    await div.type('foo bar');
+    const screenshot = await div.screenshot();
+    let hasDifferentScreenshots = false;
+    for (let i = 0; !hasDifferentScreenshots && i < 10; ++i) {
+      // Caret blinking time is set to 500ms.
+      // Try to capture variety of screenshots to make
+      // sure we capture blinking caret.
+      await new Promise(x => setTimeout(x, 150));
+      const newScreenshot = await div.screenshot({ caret: 'blink' });
+      hasDifferentScreenshots = !newScreenshot.equals(screenshot);
+    }
+    expect(hasDifferentScreenshots).toBe(true);
   });
 
   it('should clip rect', async ({ page, server }) => {

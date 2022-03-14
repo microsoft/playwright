@@ -964,6 +964,11 @@ When set to `"css"`, screenshot will have a single pixel per each css pixel on t
 
 When set to `"ready"`, screenshot will wait for [`document.fonts.ready`](https://developer.mozilla.org/en-US/docs/Web/API/FontFaceSet/ready) promise to resolve in all frames. Defaults to `"nowait"`.
 
+## screenshot-option-caret
+- `caret` <[ScreenshotCaret]<"hide"|"blink">>
+
+When set to `"hide"`, screenshot will hide text caret. When set to `"blink"`, text caret will remain blinking.  Defaults to `"hide"`.
+
 ## screenshot-options-common-list
 - %%-screenshot-option-animations-%%
 - %%-screenshot-option-omit-background-%%
@@ -971,6 +976,7 @@ When set to `"ready"`, screenshot will wait for [`document.fonts.ready`](https:/
 - %%-screenshot-option-path-%%
 - %%-screenshot-option-size-%%
 - %%-screenshot-option-fonts-%%
+- %%-screenshot-option-caret-%%
 - %%-screenshot-option-type-%%
 - %%-screenshot-option-mask-%%
 - %%-input-timeout-%%
