@@ -516,3 +516,20 @@ allure generate ./allure-results --clean && allure open ./allure-report
 ```
 
 See [here](https://www.npmjs.com/package/allure-playwright) for more information.
+
+### Tesults reporter
+
+```bash
+# Install
+npm i -D playwright-tesults-reporter 
+
+# Config (playwright.conf.js) - replace 'token' below with your Tesults token
+const conf = {
+  reporter: [['playwright-tesults-reporter', {'tesults-target': 'token'}]]
+}
+
+# Run tests as usual to generate a test report
+npx playwright test
+```
+
+See [here](https://www.tesults.com/docs/playwright) for more information.

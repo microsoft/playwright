@@ -45,6 +45,7 @@ title: "Community Showcase"
 * [test-real-styles](https://github.com/Xiphe/test-real-styles): Utility to test real styling of virtual DOM elements in a browser
 * [Testim Playground](https://www.testim.io/playground/): Record Playwright UI tests as code
 * [Try Playwright](https://try.playwright.tech/): Interactive playground for Playwright to run examples directly from your browser
+* [Tesults](https://www.tesults.com/docs/playwright): Test automation reporting application and dashboard with easy (no code required) integration with Playwright
 
 ## Frameworks
 
