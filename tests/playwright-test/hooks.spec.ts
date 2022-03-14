@@ -631,12 +631,12 @@ test('should not hang and report results when worker process suddenly exits duri
       test('failing due to afterall', () => {});
       test.afterAll(() => { process.exit(0); });
     `
-  }, { reporter: 'line' }, { PLAYWRIGHT_LIVE_TERMINAL: '1' });
+  }, { reporter: 'line' });
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(0);
   expect(result.failed).toBe(1);
   expect(result.output).toContain('Worker process exited unexpectedly');
-  expect(stripAnsi(result.output)).toContain('a.spec.js:6:7 › failing due to afterall');
+  expect(stripAnsi(result.output)).toContain('[1/1] a.spec.js:6:7 › failing due to afterall');
 });
 
 test('unhandled rejection during beforeAll should be reported and prevent more tests', async ({ runInlineTest }) => {
