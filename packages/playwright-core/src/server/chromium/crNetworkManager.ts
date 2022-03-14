@@ -292,6 +292,7 @@ export class CRNetworkManager {
     const request = new InterceptableRequest({
       context: (this._page?._browserContext || this._serviceWorker?._browserContext)!,
       frame: frame || null,
+      serviceWorker: this._serviceWorker || null,
       documentId,
       route,
       requestWillBeSentEvent,
@@ -466,13 +467,14 @@ class InterceptableRequest {
   constructor(options: {
     context: contexts.BrowserContext,
     frame: frames.Frame | null;
+    serviceWorker: CRServiceWorker | null;
     documentId?: string;
     route: RouteImpl | null;
     requestWillBeSentEvent: Protocol.Network.requestWillBeSentPayload;
     requestPausedEvent: Protocol.Fetch.requestPausedPayload | null;
     redirectedFrom: InterceptableRequest | null;
   }) {
-    const { frame, documentId, route, requestWillBeSentEvent, requestPausedEvent, redirectedFrom } = options;
+    const { frame, documentId, route, requestWillBeSentEvent, requestPausedEvent, redirectedFrom, serviceWorker } = options;
     this._timestamp = requestWillBeSentEvent.timestamp;
     this._wallTime = requestWillBeSentEvent.wallTime;
     this._requestId = requestWillBeSentEvent.requestId;
@@ -492,7 +494,7 @@ class InterceptableRequest {
     if (postDataEntries && postDataEntries.length && postDataEntries[0].bytes)
       postDataBuffer = Buffer.from(postDataEntries[0].bytes, 'base64');
 
-    this.request = new network.Request(options.context, frame, redirectedFrom?.request || null, documentId, url, type, method, postDataBuffer, headersObjectToArray(headers));
+    this.request = new network.Request(options.context, frame, serviceWorker, redirectedFrom?.request || null, documentId, url, type, method, postDataBuffer, headersObjectToArray(headers));
   }
 
   _routeForRedirectChain(): RouteImpl | null {

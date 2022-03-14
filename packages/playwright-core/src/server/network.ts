@@ -15,6 +15,7 @@
  */
 
 import * as frames from './frames';
+import * as pages from './page';
 import * as types from './types';
 import * as contexts from './browserContext';
 import { assert } from '../utils/utils';
@@ -106,17 +107,19 @@ export class Request extends SdkObject {
   private _headersMap = new Map<string, string>();
   private _rawRequestHeadersPromise: ManualPromise<types.HeadersArray> | undefined;
   readonly _frame: frames.Frame | null = null;
+  readonly _serviceWorker: pages.Worker | null = null;
   readonly _context: contexts.BrowserContext;
   private _waitForResponsePromise = new ManualPromise<Response | null>();
   _responseEndTiming = -1;
   readonly responseSize: ResponseSize = { encodedBodySize: 0, transferSize: 0, responseHeadersSize: 0 };
 
-  constructor(context: contexts.BrowserContext, frame: frames.Frame | null, redirectedFrom: Request | null, documentId: string | undefined,
+  constructor(context: contexts.BrowserContext, frame: frames.Frame | null, serviceWorker: pages.Worker | null, redirectedFrom: Request | null, documentId: string | undefined,
     url: string, resourceType: string, method: string, postData: Buffer | null, headers: types.HeadersArray) {
     super(frame || context, 'request');
     assert(!url.startsWith('data:'), 'Data urls should not fire requests');
     this._context = context;
     this._frame = frame;
+    this._serviceWorker = serviceWorker;
     this._redirectedFrom = redirectedFrom;
     if (redirectedFrom)
       redirectedFrom._redirectedTo = this;
@@ -198,6 +201,10 @@ export class Request extends SdkObject {
 
   frame(): frames.Frame|null {
     return this._frame;
+  }
+
+  serviceWorker(): pages.Worker | null {
+    return this._serviceWorker;
   }
 
   isNavigationRequest(): boolean {

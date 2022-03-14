@@ -191,7 +191,7 @@ class InterceptableRequest {
     let postDataBuffer = null;
     if (payload.postData)
       postDataBuffer = Buffer.from(payload.postData, 'base64');
-    this.request = new network.Request(frame._page._browserContext, frame, redirectedFrom ? redirectedFrom.request : null, payload.navigationId,
+    this.request = new network.Request(frame._page._browserContext, frame, null, redirectedFrom ? redirectedFrom.request : null, payload.navigationId,
         payload.url, internalCauseToResourceType[payload.internalCause] || causeToResourceType[payload.cause] || 'other', payload.method, postDataBuffer, payload.headers);
   }
 

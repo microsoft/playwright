@@ -100,6 +100,9 @@ test('should report intercepted service worker requests in HAR', async ({ contex
   context.route('**/request-from-within-worker', route =>
     route.fulfill({
       contentType: 'application/json',
+      headers: {
+        'x-pw-test': 'request-within-worker',
+      },
       status: 200,
       body: '"intercepted!"',
     })
@@ -108,6 +111,9 @@ test('should report intercepted service worker requests in HAR', async ({ contex
   context.route('**/sw.js', route =>
     route.fulfill({
       contentType: 'text/javascript',
+      headers: {
+        'x-pw-test': 'intercepted-main',
+      },
       status: 200,
       body: `
         self.contentPromise = new Promise(res => fetch('/request-from-within-worker').then(r => r.json()).then(res));
@@ -122,13 +128,19 @@ test('should report intercepted service worker requests in HAR', async ({ contex
 
   await expect(sw.evaluate(() => self['contentPromise'])).resolves.toBe('intercepted!');
 
-  // FIXME(raw): There is a race here! We likely need a service worker barrier like we have for pages in the HAR tracer so we ensure body from
-  //             /request-from-within-worker makes it into the HAR nicely.
-  await page.waitForTimeout(1_000);
   const log = await getLog();
-
-  expect.soft(log.entries.filter(e => e.request.url.endsWith('sw.js'))).toHaveLength(1);
-  expect.soft(log.entries.filter(e => e.request.url.endsWith('request-from-within-worker')).map(e => ({ content: Buffer.from(e.response.content.text, 'base64').toString() }))).toEqual([{ content: '"intercepted!"' }]);
+  {
+    const sw = log.entries.filter(e => e.request.url.endsWith('sw.js'));
+    expect.soft(sw).toHaveLength(1);
+    // FIXME(raw): Looks like we are missing these headers
+    // expect.soft(sw[0].response.headers.filter(v => v.name === 'x-pw-test')).toEqual([{ name: 'x-pw-test', value: 'intercepted-main' }]);
+  }
+  {
+    const req = log.entries.filter(e => e.request.url.endsWith('request-from-within-worker'));
+    expect.soft(req).toHaveLength(1);
+    expect.soft(req[0].response.headers.filter(v => v.name === 'x-pw-test')).toEqual([{ name: 'x-pw-test', value: 'request-within-worker' }]);
+    expect.soft(Buffer.from(req[0].response.content.text, 'base64').toString()).toBe('"intercepted!"');
+  }
 });
 
 test('serviceWorkers() should return current workers', async ({ page, server }) => {

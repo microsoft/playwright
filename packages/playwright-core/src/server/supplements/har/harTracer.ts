@@ -128,11 +128,14 @@ export class HarTracer {
     this._addBarrier(page, promise);
   }
 
-  private _addBarrier(page: Page, promise: Promise<void>) {
+  private _addBarrier(target: { on: (event: 'close', fn: () => void) => void } | null, promise: Promise<void>) {
+    if (!target)
+      return;
+
     if (!this._options.waitForContentOnStop)
       return;
     const race = Promise.race([
-      new Promise<void>(f => page.on('close', () => {
+      new Promise<void>(f => target.on('close', () => {
         this._barrierPromises.delete(race);
         f();
       })),
@@ -239,8 +242,8 @@ export class HarTracer {
         this._check();
       }
     };
-    // TODO(raw): account for service workers
-    if (page) this._addBarrier(page, compressionCalculationBarrier.barrier);
+
+    this._addBarrier(page || request.serviceWorker(), compressionCalculationBarrier.barrier);
 
     const promise = response.body().then(buffer => {
       if (this._options.skipScripts && request.resourceType() === 'script') {
@@ -263,18 +266,15 @@ export class HarTracer {
       if (this._started)
         this._delegate.onEntryFinished(harEntry);
     });
-    // TODO(raw): account for service workers
-    if (page) {
-      this._addBarrier(page, promise);
-      this._addBarrier(page, response.sizes().then(sizes => {
-        harEntry.response.bodySize = sizes.responseBodySize;
-        harEntry.response.headersSize = sizes.responseHeadersSize;
-        // Fallback for WebKit by calculating it manually
-        harEntry.response._transferSize = response.request().responseSize.transferSize || (sizes.responseHeadersSize + sizes.responseBodySize);
-        harEntry.request.headersSize = sizes.requestHeadersSize;
-        compressionCalculationBarrier.setEncodedBodySize(sizes.responseBodySize);
-      }));
-    }
+    this._addBarrier(page || request.serviceWorker(), promise);
+    this._addBarrier(page || request.serviceWorker(), response.sizes().then(sizes => {
+      harEntry.response.bodySize = sizes.responseBodySize;
+      harEntry.response.headersSize = sizes.responseHeadersSize;
+      // Fallback for WebKit by calculating it manually
+      harEntry.response._transferSize = response.request().responseSize.transferSize || (sizes.responseHeadersSize + sizes.responseBodySize);
+      harEntry.request.headersSize = sizes.requestHeadersSize;
+      compressionCalculationBarrier.setEncodedBodySize(sizes.responseBodySize);
+    }));
   }
 
   private async _onRequestFailed(request: network.Request) {
@@ -347,32 +347,29 @@ export class HarTracer {
       receive,
     };
     harEntry.time = [dns, connect, ssl, wait, receive].reduce((pre, cur) => cur > 0 ? cur + pre : pre, 0);
-    // TODO(raw): account for service workers
-    if (page) {
-      this._addBarrier(page, response.serverAddr().then(server => {
-        if (server?.ipAddress)
-          harEntry.serverIPAddress = server.ipAddress;
-        if (server?.port)
-          harEntry._serverPort = server.port;
-      }));
-      this._addBarrier(page, response.securityDetails().then(details => {
-        if (details)
-          harEntry._securityDetails = details;
-      }));
-      this._addBarrier(page, request.rawRequestHeaders().then(headers => {
-        for (const header of headers.filter(header => header.name.toLowerCase() === 'cookie'))
-          harEntry.request.cookies.push(...header.value.split(';').map(parseCookie));
-        harEntry.request.headers = headers;
-      }));
-      this._addBarrier(page, response.rawResponseHeaders().then(headers => {
-        for (const header of headers.filter(header => header.name.toLowerCase() === 'set-cookie'))
-          harEntry.response.cookies.push(parseCookie(header.value));
-        harEntry.response.headers = headers;
-        const contentType = headers.find(header => header.name.toLowerCase() === 'content-type');
-        if (contentType)
-          harEntry.response.content.mimeType = contentType.value;
-      }));
-    }
+    this._addBarrier(page || request.serviceWorker(), response.serverAddr().then(server => {
+      if (server?.ipAddress)
+        harEntry.serverIPAddress = server.ipAddress;
+      if (server?.port)
+        harEntry._serverPort = server.port;
+    }));
+    this._addBarrier(page || request.serviceWorker(), response.securityDetails().then(details => {
+      if (details)
+        harEntry._securityDetails = details;
+    }));
+    this._addBarrier(page || request.serviceWorker(), request.rawRequestHeaders().then(headers => {
+      for (const header of headers.filter(header => header.name.toLowerCase() === 'cookie'))
+        harEntry.request.cookies.push(...header.value.split(';').map(parseCookie));
+      harEntry.request.headers = headers;
+    }));
+    this._addBarrier(page || request.serviceWorker(), response.rawResponseHeaders().then(headers => {
+      for (const header of headers.filter(header => header.name.toLowerCase() === 'set-cookie'))
+        harEntry.response.cookies.push(parseCookie(header.value));
+      harEntry.response.headers = headers;
+      const contentType = headers.find(header => header.name.toLowerCase() === 'content-type');
+      if (contentType)
+        harEntry.response.content.mimeType = contentType.value;
+    }));
   }
 
   async flush() {
