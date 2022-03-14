@@ -52,7 +52,7 @@ export class CRNetworkManager {
   }
 
   setParentManager(parent: CRNetworkManager) {
-    // TODO(raw): More work needs to be done to see if this pre-condition holds true even in multi-page scenarios that are using the
+    // TODO(rwoll): More work needs to be done to see if this pre-condition holds true even in multi-page scenarios that are using the
     //            same worker.
     if (this._parentManager && this._parentManager !== parent)
       throw new Error('A different parent manager was already set. Cannot overwrite.');
@@ -72,7 +72,7 @@ export class CRNetworkManager {
       eventsHelper.addEventListener(session, 'Network.loadingFailed', this._onLoadingFailed.bind(this, workerFrame)),
     ];
 
-    // TODO(raw): Instrument WebSocket for Service Workers.
+    // TODO(rwoll): Instrument WebSocket for Service Workers.
     if (this._page) {
       listeners.push(...[
         eventsHelper.addEventListener(session, 'Network.webSocketCreated', e => this._page?._frameManager.onWebSocketCreated(e.requestId, e.url)),

@@ -703,7 +703,7 @@ class FrameSession {
         worker._networkManager.setParentManager(this._networkManager);
         assert(worker._browserContext === this._crPage._browserContext, 'Worker and BrowserContext were ambiguous.');
       } else {
-        // FIXME(raw): This current impl. allows the listener to stay registered too long. In the future, fix so the listener
+        // FIXME(rwoll): This current impl. allows the listener to stay registered too long. In the future, fix so the listener
         //             is removed once the correct worker is found.
         this._page._browserContext.on(CRBrowserContext.CREvents.ServiceWorker, () => {
           if (worker)
