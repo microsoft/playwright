@@ -510,9 +510,9 @@ function formatStackFrame(frame: StackFrame) {
 }
 
 function hookType(testInfo: TestInfo): 'beforeAll' | 'afterAll' | undefined {
-  if ((testInfo as any)._currentRunnable?.type === 'beforeAll')
+  if ((testInfo as any)._timeoutManager._runnable?.type === 'beforeAll')
     return 'beforeAll';
-  if ((testInfo as any)._currentRunnable?.type === 'afterAll')
+  if ((testInfo as any)._timeoutManager._runnable?.type === 'afterAll')
     return 'afterAll';
 }
 

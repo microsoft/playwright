@@ -22,7 +22,7 @@ test('should check types of fixtures', async ({ runTSC }) => {
       export type MyOptions = { foo: string, bar: number };
       export const test = pwt.test.extend<{ foo: string }, { bar: number }>({
         foo: 'foo',
-        bar: [ 42, { scope: 'worker' } ],
+        bar: [ 42, { scope: 'worker', timeout: 123 } ],
       });
 
       const good1 = test.extend<{}>({ foo: async ({ bar }, run) => run('foo') });
@@ -35,7 +35,7 @@ test('should check types of fixtures', async ({ runTSC }) => {
         foo: async ({ baz }, run) => run('foo')
       });
       const good7 = test.extend<{ baz: boolean }>({
-        baz: [ false, { auto: true } ],
+        baz: [ false, { auto: true, timeout: 0 } ],
       });
       const good8 = test.extend<{ foo: string }>({
         foo: [ async ({}, use) => {
@@ -81,6 +81,12 @@ test('should check types of fixtures', async ({ runTSC }) => {
           await use(42);
         // @ts-expect-error
         }, { scope: 'test' } ],
+      });
+      const fail11 = test.extend<{ yay: string }>({
+        yay: [ async ({}, use) => {
+          await use('foo');
+        // @ts-expect-error
+        }, { scope: 'test', timeout: 'str' } ],
       });
 
       type AssertNotAny<S> = {notRealProperty: number} extends S ? false : true;

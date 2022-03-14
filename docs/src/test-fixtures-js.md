@@ -466,6 +466,41 @@ export const test = base.extend<{ saveLogs: void }>({
 export { expect } from '@playwright/test';
 ```
 
+## Fixture timeout
+
+By default, fixture shares timeout with the test. However, for slow fixtures, especially [worker-scoped](#worker-scoped-fixtures) ones, it is convenient to have a separate timeout. This way you can keep the overall test timeout small, and give the slow fixture more time.
+
+```js js-flavor=js
+const { test: base, expect } = require('@playwright/test');
+
+const test = base.extend({
+  slowFixture: [async ({}, use) => {
+    // ... perform a slow operation ...
+    await use('hello');
+  }, { timeout: 60000 }]
+});
+
+test('example test', async ({ slowFixture }) => {
+  // ...
+});
+```
+
+```js js-flavor=ts
+import { test as base, expect } from '@playwright/test';
+
+const test = base.extend<{ slowFixture: string }>({
+  slowFixture: [async ({}, use) => {
+    // ... perform a slow operation ...
+    await use('hello');
+  }, { timeout: 60000 }]
+});
+
+test('example test', async ({ slowFixture }) => {
+  // ...
+});
+```
+
+
 ## Fixtures-options
 
 :::note
