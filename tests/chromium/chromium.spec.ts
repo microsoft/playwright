@@ -67,6 +67,34 @@ test('should intercept service worker requests (main and within)', async ({ cont
   await expect(sw.evaluate(() => self['contentPromise'])).resolves.toBe('intercepted!');
 });
 
+test('should intercept service worker importScripts', async ({ context, page, server }) => {
+  context.route('**/import.js', route =>
+    route.fulfill({
+      contentType: 'text/javascript',
+      status: 200,
+      body: 'self.exportedValue = 47;',
+    })
+  );
+
+  context.route('**/sw.js', route =>
+    route.fulfill({
+      contentType: 'text/javascript',
+      status: 200,
+      body: `
+        importScripts('/import.js');
+        self.importedValue = self.exportedValue;
+      `,
+    })
+  );
+
+  const [ sw ] = await Promise.all([
+    context.waitForEvent('serviceworker'),
+    page.goto(server.PREFIX + '/serviceworkers/empty/sw.html'),
+  ]);
+
+  await expect(sw.evaluate(() => self['importedValue'])).resolves.toBe(47);
+});
+
 test('should report intercepted service worker requests in HAR', async ({ contextFactory, server }, testInfo) => {
   const { context, page, getLog } = await pageWithHar(contextFactory, testInfo);
   context.route('**/request-from-within-worker', route =>
