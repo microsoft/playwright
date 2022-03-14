@@ -128,7 +128,7 @@ The method finds an element matching the specified selector in the FrameLocator'
 ## method: FrameLocator.nth
 - returns: <[FrameLocator]>
 
-Returns locator to the n-th matching frame. It's zero based and starts by that at `0`.
+Returns locator to the n-th matching frame. It's zero based, `nth(0)` selects the first element.
 
 ### param: FrameLocator.nth.index
 - `index` <[int]>
