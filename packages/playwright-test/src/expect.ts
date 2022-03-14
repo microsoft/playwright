@@ -47,8 +47,7 @@ import { toMatchSnapshot, toHaveScreenshot, getSnapshotName } from './matchers/t
 import type { Expect, TestError } from './types';
 import matchers from 'expect/build/matchers';
 import { currentTestInfo } from './globals';
-import { serializeError } from './util';
-import { captureStackTrace } from 'playwright-core/lib/utils/stackTrace';
+import { serializeError, captureStackTrace } from './util';
 
 // #region
 // Mirrored from https://github.com/facebook/jest/blob/f13abff8df9a0e1148baf3584bcde6d1b479edc7/packages/expect/src/print.ts

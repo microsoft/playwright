@@ -37,12 +37,6 @@ const TEST_DIR_SRC = path.resolve(CORE_DIR, '..', 'playwright-test');
 const TEST_DIR_LIB = path.resolve(CORE_DIR, '..', '@playwright', 'test');
 const COVERAGE_PATH = path.join(CORE_DIR, '..', '..', 'tests', 'config', 'coverage.js');
 const WS_LIB = path.relative(process.cwd(), path.dirname(require.resolve('ws')));
-let EXPECT_PATH = '';
-try {
-  EXPECT_PATH = require.resolve('expect');
-} catch (e) {
-  // might throw!
-}
 
 export type ParsedStackTrace = {
   allFrames: StackFrame[];
@@ -136,8 +130,7 @@ export function captureStackTrace(rawStack?: string): ParsedStackTrace {
 
   // Hide all test runner and library frames in the user stack (event handlers produce them).
   parsedFrames = parsedFrames.filter((f, i) => {
-    if (f.frame.file.startsWith(TEST_DIR_SRC) || f.frame.file.startsWith(TEST_DIR_LIB) ||
-       (EXPECT_PATH && f.frame.file.startsWith(EXPECT_PATH)))
+    if (f.frame.file.startsWith(TEST_DIR_SRC) || f.frame.file.startsWith(TEST_DIR_LIB))
       return false;
     if (i && f.frame.file.startsWith(CORE_DIR))
       return false;

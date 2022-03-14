@@ -21,14 +21,16 @@ import type { Expect } from '../types';
 import { currentTestInfo } from '../globals';
 import { mimeTypeToComparator, ImageComparatorOptions, Comparator } from 'playwright-core/lib/utils/comparators';
 import type { PageScreenshotOptions } from 'playwright-core/types/types';
-import { addSuffixToFilePath, serializeError, sanitizeForFilePath, trimLongString, callLogText, currentExpectTimeout, expectTypes } from '../util';
+import {
+  addSuffixToFilePath, serializeError, sanitizeForFilePath,
+  trimLongString, callLogText, currentExpectTimeout,
+  expectTypes, captureStackTrace  } from '../util';
 import { UpdateSnapshots } from '../types';
 import colors from 'colors/safe';
 import fs from 'fs';
 import path from 'path';
 import * as mime from 'mime';
 import { TestInfoImpl } from '../testInfo';
-import { captureStackTrace } from 'playwright-core/lib/utils/stackTrace';
 
 // from expect/build/types
 type SyncExpectationResult = {
@@ -311,8 +313,7 @@ export async function toHaveScreenshot(
     maxDiffPixelRatio: undefined,
   };
 
-  const customStackTrace = captureStackTrace();
-  customStackTrace.apiName = `expect.toHaveScreenshot`;
+  const customStackTrace = captureStackTrace(`expect.toHaveScreenshot`);
   const hasSnapshot = fs.existsSync(helper.snapshotPath);
   if (this.isNot) {
     if (!hasSnapshot)

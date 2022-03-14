@@ -18,12 +18,11 @@
 import type { ExpectedTextValue } from 'playwright-core/lib/protocol/channels';
 import { isRegExp, isString } from 'playwright-core/lib/utils/utils';
 import type { Expect } from '../types';
-import { expectTypes, callLogText, currentExpectTimeout } from '../util';
+import { expectTypes, callLogText, currentExpectTimeout, captureStackTrace, ParsedStackTrace } from '../util';
 import {
   printReceivedStringContainExpectedResult,
   printReceivedStringContainExpectedSubstring
 } from '../expect';
-import { ParsedStackTrace, captureStackTrace } from 'playwright-core/lib/utils/stackTrace';
 
 export async function toMatchText(
   this: ReturnType<Expect['getState']>,
@@ -58,9 +57,7 @@ export async function toMatchText(
 
   const timeout = currentExpectTimeout(options);
 
-  const customStackTrace = captureStackTrace();
-  customStackTrace.apiName = 'expect.' + matcherName;
-  const { matches: pass, received, log } = await query(this.isNot, timeout, customStackTrace);
+  const { matches: pass, received, log } = await query(this.isNot, timeout, captureStackTrace('expect.' + matcherName));
   const stringSubstring = options.matchSubstring ? 'substring' : 'string';
   const receivedString = received || '';
   const message = pass
