@@ -173,15 +173,15 @@ test('should render character data as CDATA sections', async ({ runInlineTest })
     'a.test.ts': `
       const { test } = pwt;
       test('one', async ({}) => {
-        process.stdout.write('Hello world]]>');
+        process.stdout.write('Hello world &"\\'<>]]>');
       });
     `,
   }, { reporter: '' });
   const xml = parseXML(result.output);
   const testcase = xml['testsuites']['testsuite'][0]['testcase'][0];
   expect(testcase['system-out'].length).toBe(1);
-  expect(testcase['system-out'][0].trim()).toBe('Hello world]]>');
-  expect(result.output).toContain(`<system-out>\n<![CDATA[Hello world]]>\n</system-out>`);
+  expect(testcase['system-out'][0].trim()).toBe('Hello world &"\'<>]]&gt;');
+  expect(result.output).toContain(`<system-out>\n<![CDATA[Hello world &"\'<>]]&gt;]]>\n</system-out>`);
   expect(result.exitCode).toBe(0);
 });
 
