@@ -36,10 +36,13 @@ export class CRServiceWorker extends Worker {
 
     // These might fail if the target is closed before we receive all execution contexts.
     this._networkManager.initialize().catch(() => {});
-    // TODO(raw): We need to dynamically toggle interception based on current routing (or lack thereof)
-    this._networkManager.setRequestInterception(this._needsRequestInterception()).catch(() => {});
+    this.updateRequestInterception();
     session.send('Runtime.enable', {}).catch(e => { });
     session.send('Runtime.runIfWaitingForDebugger').catch(e => { });
+  }
+
+  updateRequestInterception(): Promise<void> {
+    return this._networkManager.setRequestInterception(this._needsRequestInterception()).catch(e => { });
   }
 
   _needsRequestInterception(): boolean {

@@ -462,6 +462,9 @@ export class CRBrowserContext extends BrowserContext {
   async _doUpdateRequestInterception(): Promise<void> {
     for (const page of this.pages())
       await (page._delegate as CRPage).updateRequestInterception();
+
+    for (const sw of this.serviceWorkers())
+      await (sw as CRServiceWorker).updateRequestInterception();
   }
 
   async _doClose() {
