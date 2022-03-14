@@ -696,24 +696,9 @@ class FrameSession {
       return;
     }
 
-    if (event.targetInfo.type === 'service_worker') {
-      let worker = this._crPage._browserContext._browser._serviceWorkers.get(event.targetInfo.targetId);
+    if (event.targetInfo.type === 'service_worker')
+      this._setParentNetworkManagerForServiceWorker(event);
 
-      if (worker) {
-        worker._networkManager.setParentManager(this._networkManager);
-        assert(worker._browserContext === this._crPage._browserContext, 'Worker and BrowserContext were ambiguous.');
-      } else {
-        // FIXME(rwoll): This current impl. allows the listener to stay registered too long. In the future, fix so the listener
-        //             is removed once the correct worker is found.
-        this._page._browserContext.on(CRBrowserContext.CREvents.ServiceWorker, () => {
-          if (worker)
-            return;
-          worker = this._crPage._browserContext._browser._serviceWorkers.get(event.targetInfo.targetId);
-          if (worker)
-            worker._networkManager.setParentManager(this._networkManager);
-        });
-      }
-    }
 
     if (event.targetInfo.type !== 'worker') {
       // Ideally, detaching should resume any target, but there is a bug in the backend.
@@ -740,6 +725,23 @@ class FrameSession {
     session.on('Runtime.exceptionThrown', exception => this._page.emit(Page.Events.PageError, exceptionToError(exception.exceptionDetails)));
     // TODO: attribute workers to the right frame.
     this._networkManager.instrumentNetworkEvents(session, this._page._frameManager.frame(this._targetId)!);
+  }
+
+  private _setParentNetworkManagerForServiceWorker(event: Protocol.Target.attachedToTargetPayload) {
+    let worker = this._crPage._browserContext._browser._serviceWorkers.get(event.targetInfo.targetId);
+    if (worker) {
+      worker._networkManager.setParentManager(this._networkManager);
+      assert(worker._browserContext === this._crPage._browserContext, 'Worker and BrowserContext were ambiguous.');
+    } else {
+      const onNewWorker = () => {
+        worker = this._crPage._browserContext._browser._serviceWorkers.get(event.targetInfo.targetId);
+        if (worker) {
+          this._page._browserContext.off(CRBrowserContext.CREvents.ServiceWorker, onNewWorker);
+          worker._networkManager.setParentManager(this._networkManager);
+        }
+      };
+      this._page._browserContext.on(CRBrowserContext.CREvents.ServiceWorker, onNewWorker);
+    }
   }
 
   _onDetachedFromTarget(event: Protocol.Target.detachedFromTargetPayload) {
