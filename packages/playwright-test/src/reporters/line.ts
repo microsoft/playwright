@@ -18,13 +18,10 @@ import colors from 'colors/safe';
 import { BaseReporter, formatFailure, formatTestTitle } from './base';
 import { FullConfig, TestCase, Suite, TestResult, FullResult } from '../../types/testReporter';
 
-const lineUp = process.env.PW_TEST_DEBUG_REPORTERS ? '<lineup>' : '\u001B[1A';
-const erase = process.env.PW_TEST_DEBUG_REPORTERS ? '<erase>' : '\u001B[2K';
-
 class LineReporter extends BaseReporter {
+  private _current = 0;
   private _failures = 0;
   private _lastTest: TestCase | undefined;
-  private _lastPercent = -1;
 
   printsToStdio() {
     return true;
@@ -33,55 +30,49 @@ class LineReporter extends BaseReporter {
   override onBegin(config: FullConfig, suite: Suite) {
     super.onBegin(config, suite);
     console.log(this.generateStartingMessage());
-    if (this.liveTerminal)
-      console.log('\n');
+    console.log();
   }
 
   override onStdOut(chunk: string | Buffer, test?: TestCase, result?: TestResult) {
     super.onStdOut(chunk, test, result);
-    this._dumpToStdio(test, chunk, result, process.stdout);
+    this._dumpToStdio(test, chunk, process.stdout);
   }
 
   override onStdErr(chunk: string | Buffer, test?: TestCase, result?: TestResult) {
     super.onStdErr(chunk, test, result);
-    this._dumpToStdio(test, chunk, result, process.stderr);
+    this._dumpToStdio(test, chunk, process.stderr);
   }
 
-  private _testTitleLine(test: TestCase, result: TestResult | undefined) {
-    const title = formatTestTitle(this.config, test);
-    const titleSuffix = result?.retry ? ` (retry #${result.retry})` : '';
-    return this.fitToScreen(title, titleSuffix) + colors.yellow(titleSuffix);
-  }
-
-  private _dumpToStdio(test: TestCase | undefined, chunk: string | Buffer, result: TestResult | undefined, stream: NodeJS.WriteStream) {
+  private _dumpToStdio(test: TestCase | undefined, chunk: string | Buffer, stream: NodeJS.WriteStream) {
     if (this.config.quiet)
       return;
-    if (this.liveTerminal)
-      stream.write(lineUp + erase + lineUp + erase);
+    if (!process.env.PW_TEST_DEBUG_REPORTERS)
+      stream.write(`\u001B[1A\u001B[2K`);
     if (test && this._lastTest !== test) {
       // Write new header for the output.
-      stream.write(this._testTitleLine(test, result) + `\n`);
+      const title = colors.gray(formatTestTitle(this.config, test));
+      stream.write(this.fitToScreen(title) + `\n`);
       this._lastTest = test;
     }
 
     stream.write(chunk);
-    console.log('\n');
+    console.log();
   }
 
   override onTestEnd(test: TestCase, result: TestResult) {
     super.onTestEnd(test, result);
-    const stats = this.generateStatsMessage(false);
-    if (this.liveTerminal) {
-      process.stdout.write(lineUp + erase + lineUp + erase + `${this._testTitleLine(test, result)}\n${this.fitToScreen(stats.message)}\n`);
-    } else {
-      if (stats.percent !== this._lastPercent)
-        process.stdout.write(this.fitToScreen(stats.message) + '\n');
-    }
-    this._lastPercent = stats.percent;
+    ++this._current;
+    const retriesSuffix = this.totalTestCount < this._current ? ` (retries)` : ``;
+    const title = `[${this._current}/${this.totalTestCount}]${retriesSuffix} ${formatTestTitle(this.config, test)}`;
+    const suffix = result.retry ? ` (retry #${result.retry})` : '';
+    if (process.env.PW_TEST_DEBUG_REPORTERS)
+      process.stdout.write(`${title + suffix}\n`);
+    else
+      process.stdout.write(`\u001B[1A\u001B[2K${this.fitToScreen(title, suffix) + colors.yellow(suffix)}\n`);
 
     if (!this.willRetry(test) && (test.outcome() === 'flaky' || test.outcome() === 'unexpected')) {
-      if (this.liveTerminal)
-        process.stdout.write(lineUp + erase + lineUp + erase);
+      if (!process.env.PW_TEST_DEBUG_REPORTERS)
+        process.stdout.write(`\u001B[1A\u001B[2K`);
       console.log(formatFailure(this.config, test, {
         index: ++this._failures
       }).message);
@@ -90,9 +81,9 @@ class LineReporter extends BaseReporter {
   }
 
   override async onEnd(result: FullResult) {
+    if (!process.env.PW_TEST_DEBUG_REPORTERS)
+      process.stdout.write(`\u001B[1A\u001B[2K`);
     await super.onEnd(result);
-    if (this.liveTerminal)
-      process.stdout.write(lineUp + erase + lineUp + erase);
     this.epilogue(false);
   }
 }
