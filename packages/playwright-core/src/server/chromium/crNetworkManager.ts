@@ -26,7 +26,7 @@ import * as frames from '../frames';
 import * as types from '../types';
 import { CRPage } from './crPage';
 import { assert, headersObjectToArray } from '../../utils/utils';
-import { CRServiceWorker } from './crBrowser';
+import { CRServiceWorker } from './crServiceWorker';
 
 export class CRNetworkManager {
   private _client: CRSession;

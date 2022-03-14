@@ -28,9 +28,8 @@ import { ConnectionEvents, CRConnection, CRSession } from './crConnection';
 import { CRPage } from './crPage';
 import { readProtocolStream } from './crProtocolHelper';
 import { Protocol } from './protocol';
-import { CRExecutionContext } from './crExecutionContext';
 import { CRDevTools } from './crDevTools';
-import { CRNetworkManager } from './crNetworkManager';
+import { CRServiceWorker } from './crServiceWorker';
 
 export class CRBrowser extends Browser {
   readonly _connection: CRConnection;
@@ -301,50 +300,6 @@ export class CRBrowser extends Browser {
     if (!this._clientRootSessionPromise)
       this._clientRootSessionPromise = this._connection.createBrowserSession();
     return this._clientRootSessionPromise;
-  }
-}
-
-export class CRServiceWorker extends Worker {
-  readonly _browserContext: CRBrowserContext;
-  readonly _networkManager: CRNetworkManager;
-
-  constructor(browserContext: CRBrowserContext, session: CRSession, url: string) {
-    super(browserContext, url);
-    this._browserContext = browserContext;
-    this._networkManager = new CRNetworkManager(session, null, this, null);
-    session.once('Runtime.executionContextCreated', event => {
-      this._createExecutionContext(new CRExecutionContext(session, event.context));
-    });
-
-
-    // These might fail if the target is closed before we receive all execution contexts.
-    this._networkManager.initialize().catch(() => {});
-    // TODO(raw): We need to dynamically toggle interception based on current routing (or lack thereof)
-    this._networkManager.setRequestInterception(this._needsRequestInterception()).catch(() => {});
-    session.send('Runtime.enable', {}).catch(e => { });
-    session.send('Runtime.runIfWaitingForDebugger').catch(e => { });
-  }
-
-  _needsRequestInterception(): boolean {
-    return !!this._browserContext._requestInterceptor;
-  }
-
-  reportRequestFinished(request: network.Request, response: network.Response | null) {
-    this._browserContext.emit(BrowserContext.Events.RequestFinished, { request, response });
-  }
-
-  requestFailed(request: network.Request, _canceled: boolean) {
-    this._browserContext.emit(BrowserContext.Events.RequestFailed, request);
-  }
-
-  requestReceivedResponse(response: network.Response) {
-    this._browserContext.emit(BrowserContext.Events.Response, response);
-  }
-
-  requestStarted(request: network.Request, route?: network.RouteDelegate) {
-    this._browserContext.emit(BrowserContext.Events.Request, request);
-    if (route)
-      this._browserContext._requestStarted(request, route);
   }
 }
 
