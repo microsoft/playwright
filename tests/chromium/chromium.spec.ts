@@ -31,7 +31,7 @@ test('should create a worker from a service worker', async ({ page, server }) =>
 });
 
 test('should create a worker from service worker with noop routing', async ({ context, page, server }) => {
-  context.route('**', route => route.continue());
+  await context.route('**', route => route.continue());
   const [worker] = await Promise.all([
     page.context().waitForEvent('serviceworker'),
     page.goto(server.PREFIX + '/serviceworkers/empty/sw.html')
@@ -40,7 +40,7 @@ test('should create a worker from service worker with noop routing', async ({ co
 });
 
 test('should intercept service worker requests (main and within)', async ({ context, page, server }) => {
-  context.route('**/request-from-within-worker', route =>
+  await context.route('**/request-from-within-worker', route =>
     route.fulfill({
       contentType: 'application/json',
       status: 200,
@@ -48,7 +48,7 @@ test('should intercept service worker requests (main and within)', async ({ cont
     })
   );
 
-  context.route('**/sw.js', route =>
+  await context.route('**/sw.js', route =>
     route.fulfill({
       contentType: 'text/javascript',
       status: 200,
@@ -67,7 +67,7 @@ test('should intercept service worker requests (main and within)', async ({ cont
 });
 
 test('should intercept service worker importScripts', async ({ context, page, server }) => {
-  context.route('**/import.js', route =>
+  await context.route('**/import.js', route =>
     route.fulfill({
       contentType: 'text/javascript',
       status: 200,
@@ -75,7 +75,7 @@ test('should intercept service worker importScripts', async ({ context, page, se
     })
   );
 
-  context.route('**/sw.js', route =>
+  await context.route('**/sw.js', route =>
     route.fulfill({
       contentType: 'text/javascript',
       status: 200,
@@ -96,7 +96,7 @@ test('should intercept service worker importScripts', async ({ context, page, se
 
 test('should report intercepted service worker requests in HAR', async ({ pageWithHar, server }) => {
   const { context, page, getLog } = await pageWithHar();
-  context.route('**/request-from-within-worker', route =>
+  await context.route('**/request-from-within-worker', route =>
     route.fulfill({
       contentType: 'application/json',
       headers: {
@@ -107,7 +107,7 @@ test('should report intercepted service worker requests in HAR', async ({ pageWi
     })
   );
 
-  context.route('**/sw.js', route =>
+  await context.route('**/sw.js', route =>
     route.fulfill({
       contentType: 'text/javascript',
       headers: {
