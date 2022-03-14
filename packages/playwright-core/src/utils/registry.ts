@@ -116,7 +116,7 @@ const DOWNLOAD_PATHS = {
     'mac10.13': undefined,
     'mac10.14': 'builds/deprecated-webkit-mac-10.14/%s/deprecated-webkit-mac-10.14.zip',
     'mac10.15': 'builds/webkit/%s/webkit-mac-10.15.zip',
-    'mac11': 'builds/webkit/%s/webkit-mac-10.15.zip',
+    'mac11': 'builds/webkit/%s/webkit-mac-11.zip',
     'mac11-arm64': 'builds/webkit/%s/webkit-mac-11-arm64.zip',
     'mac12': 'builds/webkit/%s/webkit-mac-12.zip',
     'mac12-arm64': 'builds/webkit/%s/webkit-mac-12-arm64.zip',
