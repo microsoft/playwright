@@ -5,6 +5,61 @@ title: "Release notes"
 
 <!-- TOC -->
 
+## Version 1.20
+
+### Web-First Assertions
+
+Playwright for .NET 1.20 introduces [Web-First Assertions](./api/class-playwrightassertions).
+
+Consider the following example:
+
+```csharp
+using System.Threading.Tasks;
+using Microsoft.Playwright.NUnit;
+using NUnit.Framework;
+
+namespace Playwright.TestingHarnessTest.NUnit
+{
+    public class ExampleTests : PageTest
+    {
+        [Test]
+        public async Task StatusBecomesSubmitted()
+        {
+            await Expect(Page.Locator(".status")).ToHaveTextAsync("Submitted");
+        }
+    }
+}
+```
+
+Playwright will be re-testing the node with the selector `.status` until
+fetched Node has the `"Submitted"` text. It will be re-fetching the node and
+checking it over and over, until the condition is met or until the timeout is
+reached. You can pass this timeout as an option.
+
+Read more in [our documentation](./api/class-playwrightassertions).
+
+### Other Updates
+
+- New options for methods [`method: Page.screenshot`], [`method: Locator.screenshot`] and [`method: ElementHandle.screenshot`]:
+  * Option `ScreenshotAnimations.Disabled` rewinds all CSS animations and transitions to a consistent state
+  * Option `mask: Locator[]` masks given elements, overlaying them with pink `#FF00FF` boxes.
+- [`method: Locator.highlight`] visually reveals element(s) for easier debugging.
+
+### Announcements
+
+- v1.20 is the last release to receive WebKit update for macOS 10.15 Catalina. Please update MacOS to keep using latest & greatest WebKit!
+
+### Browser Versions
+
+- Chromium 101.0.4921.0
+- Mozilla Firefox 97.0.1
+- WebKit 15.4
+
+This version was also tested against the following stable channels:
+
+- Google Chrome 99
+- Microsoft Edge 99
+
 ## Version 1.19
 
 ### Highlights
