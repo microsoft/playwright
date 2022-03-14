@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { ChildProcess } from 'child_process';
 import { makeWaitForNextTask } from '../utils/utils';
 
 export interface WritableStream {
@@ -29,7 +30,7 @@ export interface ClosableStream {
   close(): void;
 }
 
-export class Transport {
+export class PipeTransport {
   private _pipeWrite: WritableStream;
   private _data = Buffer.from([]);
   private _waitForNextTask = makeWaitForNextTask();
@@ -100,5 +101,29 @@ export class Transport {
           this.onmessage(message.toString('utf-8'));
       });
     }
+  }
+}
+
+export class IpcTransport {
+  private _process: NodeJS.Process | ChildProcess;
+  onmessage?: (message: string) => void;
+  onclose?: () => void;
+
+  constructor(process: NodeJS.Process | ChildProcess) {
+    this._process = process;
+    this._process.on('message', message => {
+      if (message === '<eof>')
+        this.onclose?.();
+      else
+        this.onmessage?.(message);
+    });
+  }
+
+  send(message: string) {
+    this._process.send!(message);
+  }
+
+  close() {
+    this._process.send!('<eof>');
   }
 }

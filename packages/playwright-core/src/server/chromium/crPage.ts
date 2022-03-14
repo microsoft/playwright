@@ -15,32 +15,32 @@
  * limitations under the License.
  */
 
+import path from 'path';
+import { eventsHelper, RegisteredListener } from '../../utils/eventsHelper';
+import { registry } from '../../utils/registry';
+import { rewriteErrorMessage } from '../../utils/stackTrace';
+import { assert, createGuid, headersArrayToObject } from '../../utils/utils';
+import * as dialog from '../dialog';
 import * as dom from '../dom';
 import * as frames from '../frames';
 import { helper } from '../helper';
-import { eventsHelper, RegisteredListener } from '../../utils/eventsHelper';
 import * as network from '../network';
-import { CRSession, CRConnection, CRSessionEvents } from './crConnection';
-import { CRExecutionContext } from './crExecutionContext';
-import { CRNetworkManager } from './crNetworkManager';
-import { Page, Worker, PageBinding } from '../page';
-import { Protocol } from './protocol';
-import { toConsoleMessageLocation, exceptionToError, releaseObject } from './crProtocolHelper';
-import * as dialog from '../dialog';
-import { PageDelegate } from '../page';
-import path from 'path';
-import { RawMouseImpl, RawKeyboardImpl, RawTouchscreenImpl } from './crInput';
-import { getAccessibilityTree } from './crAccessibility';
-import { CRCoverage } from './crCoverage';
-import { CRPDF } from './crPdf';
-import { CRBrowserContext } from './crBrowser';
-import * as types from '../types';
-import { rewriteErrorMessage } from '../../utils/stackTrace';
-import { assert, headersArrayToObject, createGuid } from '../../utils/utils';
-import { VideoRecorder } from './videoRecorder';
+import { Page, PageBinding, PageDelegate, Worker } from '../page';
 import { Progress } from '../progress';
+import * as types from '../types';
+import { getAccessibilityTree } from './crAccessibility';
+import { CRBrowserContext } from './crBrowser';
+import { CRConnection, CRSession, CRSessionEvents } from './crConnection';
+import { CRCoverage } from './crCoverage';
 import { DragManager } from './crDragDrop';
-import { registry } from '../../utils/registry';
+import { CRExecutionContext } from './crExecutionContext';
+import { RawKeyboardImpl, RawMouseImpl, RawTouchscreenImpl } from './crInput';
+import { CRNetworkManager } from './crNetworkManager';
+import { CRPDF } from './crPdf';
+import { exceptionToError, releaseObject, toConsoleMessageLocation } from './crProtocolHelper';
+import { platformToFontFamilies } from './defaultFontFamilies';
+import { Protocol } from './protocol';
+import { VideoRecorder } from './videoRecorder';
 
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
@@ -79,7 +79,7 @@ export class CRPage implements PageDelegate {
     this._opener = opener;
     this._isBackgroundPage = isBackgroundPage;
     const dragManager = new DragManager(this);
-    this.rawKeyboard = new RawKeyboardImpl(client, browserContext._browser._isMac, dragManager);
+    this.rawKeyboard = new RawKeyboardImpl(client, browserContext._browser._platform() === 'mac', dragManager);
     this.rawMouse = new RawMouseImpl(this, client, dragManager);
     this.rawTouchscreen = new RawTouchscreenImpl(client);
     this._pdf = new CRPDF(client);
@@ -248,7 +248,7 @@ export class CRPage implements PageDelegate {
     await this._mainFrameSession._client.send('Emulation.setDefaultBackgroundColorOverride', { color });
   }
 
-  async takeScreenshot(progress: Progress, format: 'png' | 'jpeg', documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, quality: number | undefined, fitsViewport: boolean | undefined): Promise<Buffer> {
+  async takeScreenshot(progress: Progress, format: 'png' | 'jpeg', documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, quality: number | undefined, fitsViewport: boolean, size: 'css' | 'device'): Promise<Buffer> {
     const { visualViewport } = await this._mainFrameSession._client.send('Page.getLayoutMetrics');
     if (!documentRect) {
       documentRect = {
@@ -263,6 +263,10 @@ export class CRPage implements PageDelegate {
     // When taking screenshots with documentRect (based on the page content, not viewport),
     // ignore current page scale.
     const clip = { ...documentRect, scale: viewportRect ? visualViewport.scale : 1 };
+    if (size === 'css') {
+      const deviceScaleFactor = this._browserContext._options.deviceScaleFactor || 1;
+      clip.scale /= deviceScaleFactor;
+    }
     progress.throwIfAborted();
     const result = await this._mainFrameSession._client.send('Page.captureScreenshot', { format, quality, clip, captureBeyondViewport: !fitsViewport });
     return Buffer.from(result.data, 'base64');
@@ -512,6 +516,8 @@ class FrameSession {
       promises.push(emulateLocale(this._client, options.locale));
     if (options.timezoneId)
       promises.push(emulateTimezone(this._client, options.timezoneId));
+    if (!this._crPage._browserContext._browser.options.headful)
+      promises.push(this._setDefaultFontFamilies(this._client));
     promises.push(this._updateGeolocation(true));
     promises.push(this._updateExtraHTTPHeaders(true));
     promises.push(this._updateRequestInterception());
@@ -1003,8 +1009,6 @@ class FrameSession {
   }
 
   async _updateEmulateMedia(initial: boolean): Promise<void> {
-    if (this._crPage._browserContext._browser.isClank())
-      return;
     const colorScheme = this._page._state.colorScheme === null ? '' : this._page._state.colorScheme;
     const reducedMotion = this._page._state.reducedMotion === null ? '' : this._page._state.reducedMotion;
     const forcedColors = this._page._state.forcedColors === null ? '' : this._page._state.forcedColors;
@@ -1015,6 +1019,11 @@ class FrameSession {
     ];
     // Empty string disables the override.
     await this._client.send('Emulation.setEmulatedMedia', { media: this._page._state.mediaType || '', features });
+  }
+
+  private async _setDefaultFontFamilies(session: CRSession) {
+    const fontFamilies = platformToFontFamilies[this._crPage._browserContext._browser._platform()];
+    await session.send('Page.setFontFamilies', fontFamilies);
   }
 
   async _updateRequestInterception(): Promise<void> {

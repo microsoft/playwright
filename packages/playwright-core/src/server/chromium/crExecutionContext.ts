@@ -21,7 +21,7 @@ import { Protocol } from './protocol';
 import * as js from '../javascript';
 import { rewriteErrorMessage } from '../../utils/stackTrace';
 import { parseEvaluationResultValue } from '../common/utilityScriptSerializers';
-import { isSessionClosedError } from '../common/protocolError';
+import { isSessionClosedError } from '../protocolError';
 
 export class CRExecutionContext implements js.ExecutionContextDelegate {
   _client: CRSession;

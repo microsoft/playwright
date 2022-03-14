@@ -19,7 +19,7 @@ import { playwrightTest as it, expect } from './config/browserTest';
 import { verifyViewport } from './config/utils';
 import fs from 'fs';
 
-it('context.cookies() should work', async ({ server, launchPersistent, browserName, browserMajorVersion }) => {
+it('context.cookies() should work @smoke', async ({ server, launchPersistent, defaultSameSiteCookieValue }) => {
   const { page } = await launchPersistent();
   await page.goto(server.EMPTY_PAGE);
   const documentCookie = await page.evaluate(() => {
@@ -27,7 +27,6 @@ it('context.cookies() should work', async ({ server, launchPersistent, browserNa
     return document.cookie;
   });
   expect(documentCookie).toBe('username=John Doe');
-  const defaultSameSiteCookieValue = browserName === 'chromium' || (browserName === 'firefox' && browserMajorVersion >= 96) ? 'Lax' : 'None';
   expect(await page.context().cookies()).toEqual([{
     name: 'username',
     value: 'John Doe',
@@ -98,7 +97,7 @@ it('should(not) block third party cookies', async ({ server, launchPersistent, b
     return document.cookie;
   });
   await page.waitForTimeout(2000);
-  const allowsThirdParty = browserName === 'firefox' && browserMajorVersion <= 95;
+  const allowsThirdParty = browserName === 'firefox' && browserMajorVersion >= 97;
   expect(documentCookie).toBe(allowsThirdParty ? 'username=John Doe' : '');
   const cookies = await context.cookies(server.CROSS_PROCESS_PREFIX + '/grid.html');
   if (allowsThirdParty) {

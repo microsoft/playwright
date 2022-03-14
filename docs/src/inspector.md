@@ -60,6 +60,20 @@ configures Playwright for debugging and opens the inspector.
   pytest -s
   ```
 
+  ```bash bash-flavor=bash lang=csharp
+  PWDEBUG=1 dotnet test
+  ```
+
+  ```bash bash-flavor=batch lang=csharp
+  set PWDEBUG=1
+  dotnet test
+  ```
+
+  ```bash bash-flavor=powershell lang=csharp
+  $env:PWDEBUG=1
+  dotnet test
+  ```
+
   Additional useful defaults are configured when `PWDEBUG=1` is set:
   - Browsers launch in the headed mode
   - Default timeout is set to 0 (= no timeout)
@@ -105,6 +119,10 @@ configures Playwright for debugging and opens the inspector.
   playwright codegen wikipedia.org
   ```
 
+  ```bash csharp
+  pwsh bin\Debug\netX\playwright.ps1 codegen wikipedia.org
+  ```
+
 ## Stepping through the Playwright script
 
 When `PWDEBUG=1` is set, Playwright Inspector window will be opened and the script will be
@@ -135,7 +153,7 @@ You can use browser developer tools in Chromium, Firefox and WebKit while runnin
 a Playwright script, with or without Playwright inspector. Developer tools help to:
 
 * Inspect the DOM tree
-* **See console logs** during execution (or learn how to [read logs via API](./verification.md#console-logs))
+* **See console logs** during execution (or learn how to [read logs via API](./api/class-page.md#page-event-console))
 * Check **network activity** and other developer tools features
 
 :::note

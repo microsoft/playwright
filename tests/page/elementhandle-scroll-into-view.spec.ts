@@ -17,7 +17,7 @@
 
 import { test as it, expect } from './pageTest';
 
-it('should work', async ({ page, server, isAndroid }) => {
+it('should work @smoke', async ({ page, server, isAndroid }) => {
   it.fixme(isAndroid);
 
   await page.goto(server.PREFIX + '/offscreenbuttons.html');

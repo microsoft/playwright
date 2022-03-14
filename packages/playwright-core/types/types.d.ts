@@ -888,6 +888,12 @@ export interface Page {
    * [freeze](https://developer.mozilla.org/en-US/docs/Web/JavaScript/EventLoop#never_blocking) waiting for the dialog, and
    * actions like click will never finish.
    *
+   * ```js
+   * page.on('dialog', dialog => {
+   *   dialog.accept();
+   * });
+   * ```
+   *
    * > NOTE: When no [page.on('dialog')](https://playwright.dev/docs/api/class-page#page-event-dialog) listeners are present,
    * all dialogs are automatically dismissed.
    */
@@ -942,6 +948,17 @@ export interface Page {
 
   /**
    * Emitted when an uncaught exception happens within the page.
+   *
+   * ```js
+   * // Log all uncaught errors to the terminal
+   * page.on('pageerror', exception => {
+   *   console.log(`Uncaught exception: "${exception}"`);
+   * });
+   *
+   * // Navigate to a page with an exception.
+   * await page.goto('data:text/html,<script>throw new Error("Test")</script>');
+   * ```
+   *
    */
   on(event: 'pageerror', listener: (error: Error) => void): this;
 
@@ -955,8 +972,12 @@ export interface Page {
    * done and its response has started loading in the popup.
    *
    * ```js
+   * // Note that Promise.all prevents a race condition
+   * // between evaluating and waiting for the popup.
    * const [popup] = await Promise.all([
+   *   // It is important to call waitForEvent first.
    *   page.waitForEvent('popup'),
+   *   // Opens the popup.
    *   page.evaluate(() => window.open('https://example.com')),
    * ]);
    * console.log(await popup.evaluate('location.href'));
@@ -977,6 +998,12 @@ export interface Page {
 
   /**
    * Emitted when a request fails, for example by timing out.
+   *
+   * ```js
+   * page.on('requestfailed', request => {
+   *   console.log(request.url() + ' ' + request.failure().errorText);
+   * });
+   * ```
    *
    * > NOTE: HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request will
    * complete with [page.on('requestfinished')](https://playwright.dev/docs/api/class-page#page-event-request-finished) event
@@ -1157,6 +1184,12 @@ export interface Page {
    * [freeze](https://developer.mozilla.org/en-US/docs/Web/JavaScript/EventLoop#never_blocking) waiting for the dialog, and
    * actions like click will never finish.
    *
+   * ```js
+   * page.on('dialog', dialog => {
+   *   dialog.accept();
+   * });
+   * ```
+   *
    * > NOTE: When no [page.on('dialog')](https://playwright.dev/docs/api/class-page#page-event-dialog) listeners are present,
    * all dialogs are automatically dismissed.
    */
@@ -1211,6 +1244,17 @@ export interface Page {
 
   /**
    * Emitted when an uncaught exception happens within the page.
+   *
+   * ```js
+   * // Log all uncaught errors to the terminal
+   * page.on('pageerror', exception => {
+   *   console.log(`Uncaught exception: "${exception}"`);
+   * });
+   *
+   * // Navigate to a page with an exception.
+   * await page.goto('data:text/html,<script>throw new Error("Test")</script>');
+   * ```
+   *
    */
   addListener(event: 'pageerror', listener: (error: Error) => void): this;
 
@@ -1224,8 +1268,12 @@ export interface Page {
    * done and its response has started loading in the popup.
    *
    * ```js
+   * // Note that Promise.all prevents a race condition
+   * // between evaluating and waiting for the popup.
    * const [popup] = await Promise.all([
+   *   // It is important to call waitForEvent first.
    *   page.waitForEvent('popup'),
+   *   // Opens the popup.
    *   page.evaluate(() => window.open('https://example.com')),
    * ]);
    * console.log(await popup.evaluate('location.href'));
@@ -1246,6 +1294,12 @@ export interface Page {
 
   /**
    * Emitted when a request fails, for example by timing out.
+   *
+   * ```js
+   * page.on('requestfailed', request => {
+   *   console.log(request.url() + ' ' + request.failure().errorText);
+   * });
+   * ```
    *
    * > NOTE: HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request will
    * complete with [page.on('requestfinished')](https://playwright.dev/docs/api/class-page#page-event-request-finished) event
@@ -2563,6 +2617,14 @@ export interface Page {
    */
   locator(selector: string, options?: {
     /**
+     * Matches elements containing an element that matches an inner locator. Inner locator is queried against the outer one.
+     * For example, `article` that has `text=Playwright` matches `<article><div>Playwright</div></article>`.
+     *
+     * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
+     */
+    has?: Locator;
+
+    /**
      * Matches elements containing specified text somewhere inside, possibly in a child or a descendant element. For example,
      * `"Playwright"` matches `<article><div>Playwright</div></article>`.
      */
@@ -3188,11 +3250,12 @@ export interface Page {
    * [browser.newContext([options])](https://playwright.dev/docs/api/class-browser#browser-new-context) allows to set
    * viewport size (and more) for all pages in the context at once.
    *
-   * `page.setViewportSize` will resize the page. A lot of websites don't expect phones to change size, so you should set the
-   * viewport size before navigating to the page.
-   * [page.setViewportSize(viewportSize)](https://playwright.dev/docs/api/class-page#page-set-viewport-size) will also reset
-   * `screen` size, use [browser.newContext([options])](https://playwright.dev/docs/api/class-browser#browser-new-context)
-   * with `screen` and `viewport` parameters if you need better control of these properties.
+   * [page.setViewportSize(viewportSize)](https://playwright.dev/docs/api/class-page#page-set-viewport-size) will resize the
+   * page. A lot of websites don't expect phones to change size, so you should set the viewport size before navigating to the
+   * page. [page.setViewportSize(viewportSize)](https://playwright.dev/docs/api/class-page#page-set-viewport-size) will also
+   * reset `screen` size, use
+   * [browser.newContext([options])](https://playwright.dev/docs/api/class-browser#browser-new-context) with `screen` and
+   * `viewport` parameters if you need better control of these properties.
    *
    * ```js
    * const page = await browser.newPage();
@@ -3511,6 +3574,12 @@ export interface Page {
    * [freeze](https://developer.mozilla.org/en-US/docs/Web/JavaScript/EventLoop#never_blocking) waiting for the dialog, and
    * actions like click will never finish.
    *
+   * ```js
+   * page.on('dialog', dialog => {
+   *   dialog.accept();
+   * });
+   * ```
+   *
    * > NOTE: When no [page.on('dialog')](https://playwright.dev/docs/api/class-page#page-event-dialog) listeners are present,
    * all dialogs are automatically dismissed.
    */
@@ -3565,6 +3634,17 @@ export interface Page {
 
   /**
    * Emitted when an uncaught exception happens within the page.
+   *
+   * ```js
+   * // Log all uncaught errors to the terminal
+   * page.on('pageerror', exception => {
+   *   console.log(`Uncaught exception: "${exception}"`);
+   * });
+   *
+   * // Navigate to a page with an exception.
+   * await page.goto('data:text/html,<script>throw new Error("Test")</script>');
+   * ```
+   *
    */
   waitForEvent(event: 'pageerror', optionsOrPredicate?: { predicate?: (error: Error) => boolean | Promise<boolean>, timeout?: number } | ((error: Error) => boolean | Promise<boolean>)): Promise<Error>;
 
@@ -3578,8 +3658,12 @@ export interface Page {
    * done and its response has started loading in the popup.
    *
    * ```js
+   * // Note that Promise.all prevents a race condition
+   * // between evaluating and waiting for the popup.
    * const [popup] = await Promise.all([
+   *   // It is important to call waitForEvent first.
    *   page.waitForEvent('popup'),
+   *   // Opens the popup.
    *   page.evaluate(() => window.open('https://example.com')),
    * ]);
    * console.log(await popup.evaluate('location.href'));
@@ -3600,6 +3684,12 @@ export interface Page {
 
   /**
    * Emitted when a request fails, for example by timing out.
+   *
+   * ```js
+   * page.on('requestfailed', request => {
+   *   console.log(request.url() + ' ' + request.failure().errorText);
+   * });
+   * ```
    *
    * > NOTE: HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request will
    * complete with [page.on('requestfinished')](https://playwright.dev/docs/api/class-page#page-event-request-finished) event
@@ -3646,8 +3736,10 @@ export interface Page {
    *
    * ```js
    * const [popup] = await Promise.all([
+   *   // It is important to call waitForEvent before click to set up waiting.
    *   page.waitForEvent('popup'),
-   *   page.click('button'), // Click triggers a popup.
+   *   // Click triggers a popup.
+   *   page.locator('button').click(),
    * ])
    * await popup.waitForLoadState('domcontentloaded'); // The promise resolves after 'domcontentloaded' event.
    * console.log(await popup.title()); // Popup is ready to use.
@@ -3683,9 +3775,13 @@ export interface Page {
    * Consider this example:
    *
    * ```js
+   * // Note that Promise.all prevents a race condition
+   * // between clicking and waiting for the navigation.
    * const [response] = await Promise.all([
-   *   page.waitForNavigation(), // The promise resolves after navigation has finished
-   *   page.click('a.delayed-navigation'), // Clicking the link will indirectly cause a navigation
+   *   // It is important to call waitForNavigation before click to set up waiting.
+   *   page.waitForNavigation(),
+   *   // Clicking the link will indirectly cause a navigation.
+   *   page.locator('a.delayed-navigation').click(),
    * ]);
    * ```
    *
@@ -5336,6 +5432,14 @@ export interface Frame {
    */
   locator(selector: string, options?: {
     /**
+     * Matches elements containing an element that matches an inner locator. Inner locator is queried against the outer one.
+     * For example, `article` that has `text=Playwright` matches `<article><div>Playwright</div></article>`.
+     *
+     * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
+     */
+    has?: Locator;
+
+    /**
      * Matches elements containing specified text somewhere inside, possibly in a child or a descendant element. For example,
      * `"Playwright"` matches `<article><div>Playwright</div></article>`.
      */
@@ -6577,7 +6681,6 @@ export interface BrowserContext {
    * - `'midi'`
    * - `'midi-sysex'` (system-exclusive midi)
    * - `'notifications'`
-   * - `'push'`
    * - `'camera'`
    * - `'microphone'`
    * - `'background-sync'`
@@ -8031,6 +8134,29 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    */
   screenshot(options?: {
     /**
+     * When set to `"disabled"`, stops CSS animations, CSS transitions and Web Animations. Animations get different treatment
+     * depending on their duration:
+     * - finite animations are fast-forwarded to completion, so they'll fire `transitionend` event.
+     * - infinite animations are canceled to initial state, and then played over after the screenshot.
+     *
+     * Defaults to `"allow"` that leaves animations untouched.
+     */
+    animations?: "disabled"|"allow";
+
+    /**
+     * When set to `"ready"`, screenshot will wait for
+     * [`document.fonts.ready`](https://developer.mozilla.org/en-US/docs/Web/API/FontFaceSet/ready) promise to resolve in all
+     * frames. Defaults to `"nowait"`.
+     */
+    fonts?: "ready"|"nowait";
+
+    /**
+     * Specify locators that should be masked when the screenshot is taken. Masked elements will be overlayed with a pink box
+     * `#FF00FF` that completely covers its bounding box.
+     */
+    mask?: Array<Locator>;
+
+    /**
      * Hides default white background and allows capturing screenshots with transparency. Not applicable to `jpeg` images.
      * Defaults to `false`.
      */
@@ -8047,6 +8173,13 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
      * The quality of the image, between 0-100. Not applicable to `png` images.
      */
     quality?: number;
+
+    /**
+     * When set to `"css"`, screenshot will have a single pixel per each css pixel on the page. For high-dpi devices, this will
+     * keep screenshots small. Using `"device"` option will produce a single pixel per each device pixel, so screenhots of
+     * high-dpi devices will be twice as large or even larger. Defaults to `"device"`.
+     */
+    size?: "css"|"device";
 
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
@@ -9061,6 +9194,12 @@ export interface Locator {
   }): Promise<null|string>;
 
   /**
+   * Highlight the corresponding element(s) on the screen. Useful for debugging, don't commit the code that uses
+   * [locator.highlight()](https://playwright.dev/docs/api/class-locator#locator-highlight).
+   */
+  highlight(): Promise<void>;
+
+  /**
    * This method hovers over the element by performing the following steps:
    * 1. Wait for [actionability](https://playwright.dev/docs/actionability) checks on the element, unless `force` option is set.
    * 1. Scroll the element into view if needed.
@@ -9249,6 +9388,14 @@ export interface Locator {
    */
   locator(selector: string, options?: {
     /**
+     * Matches elements containing an element that matches an inner locator. Inner locator is queried against the outer one.
+     * For example, `article` that has `text=Playwright` matches `<article><div>Playwright</div></article>`.
+     *
+     * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
+     */
+    has?: Locator;
+
+    /**
      * Matches elements containing specified text somewhere inside, possibly in a child or a descendant element. For example,
      * `"Playwright"` matches `<article><div>Playwright</div></article>`.
      */
@@ -9260,6 +9407,11 @@ export interface Locator {
    * @param index
    */
   nth(index: number): Locator;
+
+  /**
+   * A page this locator belongs to.
+   */
+  page(): Page;
 
   /**
    * Focuses the element, and then uses [keyboard.down(key)](https://playwright.dev/docs/api/class-keyboard#keyboard-down)
@@ -9313,38 +9465,7 @@ export interface Locator {
    * screenshot. If the element is detached from DOM, the method throws an error.
    * @param options
    */
-  screenshot(options?: {
-    /**
-     * Hides default white background and allows capturing screenshots with transparency. Not applicable to `jpeg` images.
-     * Defaults to `false`.
-     */
-    omitBackground?: boolean;
-
-    /**
-     * The file path to save the image to. The screenshot type will be inferred from file extension. If `path` is a relative
-     * path, then it is resolved relative to the current working directory. If no path is provided, the image won't be saved to
-     * the disk.
-     */
-    path?: string;
-
-    /**
-     * The quality of the image, between 0-100. Not applicable to `png` images.
-     */
-    quality?: number;
-
-    /**
-     * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
-     * using the
-     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
-     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
-     */
-    timeout?: number;
-
-    /**
-     * Specify screenshot type, defaults to `png`.
-     */
-    type?: "png"|"jpeg";
-  }): Promise<Buffer>;
+  screenshot(options?: LocatorScreenshotOptions): Promise<Buffer>;
 
   /**
    * This method waits for [actionability](https://playwright.dev/docs/actionability) checks, then tries to scroll element into view, unless it is
@@ -9906,6 +10027,8 @@ export interface BrowserType<Unused = {}> {
      * constructor for building the corresponding URL. Examples:
      * - baseURL: `http://localhost:3000` and navigating to `/bar.html` results in `http://localhost:3000/bar.html`
      * - baseURL: `http://localhost:3000/foo/` and navigating to `./bar.html` results in `http://localhost:3000/foo/bar.html`
+     * - baseURL: `http://localhost:3000/foo` (without trailing slash) and navigating to `./bar.html` results in
+     *   `http://localhost:3000/bar.html`
      */
     baseURL?: string;
 
@@ -10981,8 +11104,14 @@ export {};
 export interface Android {
   /**
    * Returns the list of detected Android devices.
+   * @param options
    */
-  devices(): Promise<Array<AndroidDevice>>;
+  devices(options?: {
+    /**
+     * Optional port to establish ADB server connection.
+     */
+    port?: number;
+  }): Promise<Array<AndroidDevice>>;
 
   /**
    * This setting will change the default maximum time for all the methods accepting `timeout` option.
@@ -10993,7 +11122,7 @@ export interface Android {
 
 /**
  * [AndroidDevice] represents a connected device, either real hardware or emulated. Devices can be obtained using
- * [android.devices()](https://playwright.dev/docs/api/class-android#android-devices).
+ * [android.devices([options])](https://playwright.dev/docs/api/class-android#android-devices).
  */
 export interface AndroidDevice {
   /**
@@ -11128,6 +11257,8 @@ export interface AndroidDevice {
      * constructor for building the corresponding URL. Examples:
      * - baseURL: `http://localhost:3000` and navigating to `/bar.html` results in `http://localhost:3000/bar.html`
      * - baseURL: `http://localhost:3000/foo/` and navigating to `./bar.html` results in `http://localhost:3000/foo/bar.html`
+     * - baseURL: `http://localhost:3000/foo` (without trailing slash) and navigating to `./bar.html` results in
+     *   `http://localhost:3000/bar.html`
      */
     baseURL?: string;
 
@@ -11797,6 +11928,8 @@ export interface APIRequest {
      * - baseURL: `http://localhost:3000` and sending request to `/bar.html` results in `http://localhost:3000/bar.html`
      * - baseURL: `http://localhost:3000/foo/` and sending request to `./bar.html` results in
      *   `http://localhost:3000/foo/bar.html`
+     * - baseURL: `http://localhost:3000/foo` (without trailing slash) and navigating to `./bar.html` results in
+     *   `http://localhost:3000/bar.html`
      */
     baseURL?: string;
 
@@ -12595,6 +12728,8 @@ export interface Browser extends EventEmitter {
      * constructor for building the corresponding URL. Examples:
      * - baseURL: `http://localhost:3000` and navigating to `/bar.html` results in `http://localhost:3000/bar.html`
      * - baseURL: `http://localhost:3000/foo/` and navigating to `./bar.html` results in `http://localhost:3000/foo/bar.html`
+     * - baseURL: `http://localhost:3000/foo` (without trailing slash) and navigating to `./bar.html` results in
+     *   `http://localhost:3000/bar.html`
      */
     baseURL?: string;
 
@@ -13013,7 +13148,33 @@ export interface BrowserServer {
 
 /**
  * [ConsoleMessage] objects are dispatched by page via the
- * [page.on('console')](https://playwright.dev/docs/api/class-page#page-event-console) event.
+ * [page.on('console')](https://playwright.dev/docs/api/class-page#page-event-console) event. For each console messages
+ * logged in the page there will be corresponding event in the Playwright context.
+ *
+ * ```js
+ * // Listen for all console logs
+ * page.on('console', msg => console.log(msg.text()))
+ *
+ * // Listen for all console events and handle errors
+ * page.on('console', msg => {
+ *   if (msg.type() === 'error')
+ *     console.log(`Error text: "${msg.text()}"`);
+ * });
+ *
+ * // Get the next console log
+ * const [msg] = await Promise.all([
+ *   page.waitForEvent('console'),
+ *   // Issue console.log inside the page
+ *   page.evaluate(() => {
+ *     console.log('hello', 42, { foo: 'bar' });
+ *   }),
+ * ]);
+ *
+ * // Deconstruct console log arguments
+ * await msg.args[0].jsonValue() // hello
+ * await msg.args[1].jsonValue() // 42
+ * ```
+ *
  */
 export interface ConsoleMessage {
   /**
@@ -13249,9 +13410,13 @@ export interface Dialog {
  * Download event is emitted once the download starts. Download path becomes available once download completes:
  *
  * ```js
+ * // Note that Promise.all prevents a race condition
+ * // between clicking and waiting for the download.
  * const [ download ] = await Promise.all([
- *   page.waitForEvent('download'), // wait for download to start
- *   page.click('a')
+ *   // It is important to call waitForEvent before click to set up waiting.
+ *   page.waitForEvent('download'),
+ *   // Triggers the download.
+ *   page.locator('text=Download file').click(),
  * ]);
  * // wait for download to complete
  * const path = await download.path();
@@ -13362,6 +13527,10 @@ export interface Download {
  * PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm i -D playwright
  * ```
  *
+ * **Supported Electron versions are:**
+ * - v12.2.0+
+ * - v13.4.0+
+ * - v14+
  */
 export interface Electron {
   /**
@@ -13521,9 +13690,13 @@ export interface Electron {
  * [page.on('filechooser')](https://playwright.dev/docs/api/class-page#page-event-file-chooser) event.
  *
  * ```js
+ * // Note that Promise.all prevents a race condition
+ * // between clicking and waiting for the file chooser.
  * const [fileChooser] = await Promise.all([
+ *   // It is important to call waitForEvent before click to set up waiting.
  *   page.waitForEvent('filechooser'),
- *   page.click('upload')
+ *   // Opens the file chooser.
+ *   page.locator('text=Upload').click(),
  * ]);
  * await fileChooser.setFiles('myfile.pdf');
  * ```
@@ -13657,6 +13830,14 @@ export interface FrameLocator {
    * @param options
    */
   locator(selector: string, options?: {
+    /**
+     * Matches elements containing an element that matches an inner locator. Inner locator is queried against the outer one.
+     * For example, `article` that has `text=Playwright` matches `<article><div>Playwright</div></article>`.
+     *
+     * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
+     */
+    has?: Locator;
+
     /**
      * Matches elements containing specified text somewhere inside, possibly in a child or a descendant element. For example,
      * `"Playwright"` matches `<article><div>Playwright</div></article>`.
@@ -14669,7 +14850,9 @@ export interface Tracing {
     screenshots?: boolean;
 
     /**
-     * Whether to capture DOM snapshot on every action.
+     * If this option is true tracing will
+     * - capture DOM snapshot on every action
+     * - record network activity
      */
     snapshots?: boolean;
 
@@ -15002,6 +15185,8 @@ export interface BrowserContextOptions {
    * constructor for building the corresponding URL. Examples:
    * - baseURL: `http://localhost:3000` and navigating to `/bar.html` results in `http://localhost:3000/bar.html`
    * - baseURL: `http://localhost:3000/foo/` and navigating to `./bar.html` results in `http://localhost:3000/foo/bar.html`
+   * - baseURL: `http://localhost:3000/foo` (without trailing slash) and navigating to `./bar.html` results in
+   *   `http://localhost:3000/bar.html`
    */
   baseURL?: string;
 
@@ -15503,6 +15688,69 @@ export interface ConnectOptions {
   timeout?: number;
 }
 
+export interface LocatorScreenshotOptions {
+  /**
+   * When set to `"disabled"`, stops CSS animations, CSS transitions and Web Animations. Animations get different treatment
+   * depending on their duration:
+   * - finite animations are fast-forwarded to completion, so they'll fire `transitionend` event.
+   * - infinite animations are canceled to initial state, and then played over after the screenshot.
+   *
+   * Defaults to `"allow"` that leaves animations untouched.
+   */
+  animations?: "disabled"|"allow";
+
+  /**
+   * When set to `"ready"`, screenshot will wait for
+   * [`document.fonts.ready`](https://developer.mozilla.org/en-US/docs/Web/API/FontFaceSet/ready) promise to resolve in all
+   * frames. Defaults to `"nowait"`.
+   */
+  fonts?: "ready"|"nowait";
+
+  /**
+   * Specify locators that should be masked when the screenshot is taken. Masked elements will be overlayed with a pink box
+   * `#FF00FF` that completely covers its bounding box.
+   */
+  mask?: Array<Locator>;
+
+  /**
+   * Hides default white background and allows capturing screenshots with transparency. Not applicable to `jpeg` images.
+   * Defaults to `false`.
+   */
+  omitBackground?: boolean;
+
+  /**
+   * The file path to save the image to. The screenshot type will be inferred from file extension. If `path` is a relative
+   * path, then it is resolved relative to the current working directory. If no path is provided, the image won't be saved to
+   * the disk.
+   */
+  path?: string;
+
+  /**
+   * The quality of the image, between 0-100. Not applicable to `png` images.
+   */
+  quality?: number;
+
+  /**
+   * When set to `"css"`, screenshot will have a single pixel per each css pixel on the page. For high-dpi devices, this will
+   * keep screenshots small. Using `"device"` option will produce a single pixel per each device pixel, so screenhots of
+   * high-dpi devices will be twice as large or even larger. Defaults to `"device"`.
+   */
+  size?: "css"|"device";
+
+  /**
+   * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
+   * using the
+   * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+   * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+   */
+  timeout?: number;
+
+  /**
+   * Specify screenshot type, defaults to `png`.
+   */
+  type?: "png"|"jpeg";
+}
+
 interface ElementHandleWaitForSelectorOptions {
   /**
    * Defaults to `'visible'`. Can be either:
@@ -15595,6 +15843,16 @@ interface PageWaitForFunctionOptions {
 
 export interface PageScreenshotOptions {
   /**
+   * When set to `"disabled"`, stops CSS animations, CSS transitions and Web Animations. Animations get different treatment
+   * depending on their duration:
+   * - finite animations are fast-forwarded to completion, so they'll fire `transitionend` event.
+   * - infinite animations are canceled to initial state, and then played over after the screenshot.
+   *
+   * Defaults to `"allow"` that leaves animations untouched.
+   */
+  animations?: "disabled"|"allow";
+
+  /**
    * An object which specifies clipping of the resulting image. Should have the following fields:
    */
   clip?: {
@@ -15620,10 +15878,23 @@ export interface PageScreenshotOptions {
   };
 
   /**
+   * When set to `"ready"`, screenshot will wait for
+   * [`document.fonts.ready`](https://developer.mozilla.org/en-US/docs/Web/API/FontFaceSet/ready) promise to resolve in all
+   * frames. Defaults to `"nowait"`.
+   */
+  fonts?: "ready"|"nowait";
+
+  /**
    * When true, takes a screenshot of the full scrollable page, instead of the currently visible viewport. Defaults to
    * `false`.
    */
   fullPage?: boolean;
+
+  /**
+   * Specify locators that should be masked when the screenshot is taken. Masked elements will be overlayed with a pink box
+   * `#FF00FF` that completely covers its bounding box.
+   */
+  mask?: Array<Locator>;
 
   /**
    * Hides default white background and allows capturing screenshots with transparency. Not applicable to `jpeg` images.
@@ -15642,6 +15913,13 @@ export interface PageScreenshotOptions {
    * The quality of the image, between 0-100. Not applicable to `png` images.
    */
   quality?: number;
+
+  /**
+   * When set to `"css"`, screenshot will have a single pixel per each css pixel on the page. For high-dpi devices, this will
+   * keep screenshots small. Using `"device"` option will produce a single pixel per each device pixel, so screenhots of
+   * high-dpi devices will be twice as large or even larger. Defaults to `"device"`.
+   */
+  size?: "css"|"device";
 
   /**
    * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
@@ -15714,6 +15992,8 @@ type Devices = {
   "iPhone 12 Pro landscape": DeviceDescriptor;
   "iPhone 12 Pro Max": DeviceDescriptor;
   "iPhone 12 Pro Max landscape": DeviceDescriptor;
+  "iPhone 12 Mini": DeviceDescriptor;
+  "iPhone 12 Mini landscape": DeviceDescriptor;
   "iPhone 13": DeviceDescriptor;
   "iPhone 13 landscape": DeviceDescriptor;
   "iPhone 13 Pro": DeviceDescriptor;

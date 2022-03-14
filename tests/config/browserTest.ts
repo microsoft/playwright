@@ -19,12 +19,13 @@ import * as os from 'os';
 import { PageTestFixtures, PageWorkerFixtures } from '../page/pageTestApi';
 import * as path from 'path';
 import type { BrowserContext, BrowserContextOptions, BrowserType, Page } from 'playwright-core';
-import { removeFolders } from 'playwright-core/lib/utils/utils';
+import { removeFolders } from '../../packages/playwright-core/lib/utils/utils';
 import { baseTest } from './baseTest';
 import { RemoteServer, RemoteServerOptions } from './remoteServer';
 
 export type BrowserTestWorkerFixtures = PageWorkerFixtures & {
   browserVersion: string;
+  defaultSameSiteCookieValue: string;
   browserMajorVersion: number;
   browserType: BrowserType;
   isAndroid: boolean;
@@ -43,8 +44,12 @@ const test = baseTest.extend<BrowserTestTestFixtures, BrowserTestWorkerFixtures>
     await run(browser.version());
   }, { scope: 'worker' } ],
 
-  browserType: [async ({ _browserType }: any, run) => {
-    await run(_browserType);
+  browserType: [async ({ playwright, browserName }, run) => {
+    await run(playwright[browserName]);
+  }, { scope: 'worker' } ],
+
+  defaultSameSiteCookieValue: [async ({ browserName, browserMajorVersion }, run) => {
+    await run(browserName === 'chromium' || (browserName === 'firefox' && browserMajorVersion >= 96 && browserMajorVersion < 97) ? 'Lax' : 'None');
   }, { scope: 'worker' } ],
 
   browserMajorVersion: [async ({ browserVersion }, run) => {
@@ -97,8 +102,12 @@ const test = baseTest.extend<BrowserTestTestFixtures, BrowserTestWorkerFixtures>
       await remoteServer._start(childProcess, browserType, options);
       return remoteServer;
     });
-    if (remoteServer)
+    if (remoteServer) {
       await remoteServer.close();
+      // Give any connected browsers a chance to disconnect to avoid
+      // poisoning next test with quasy-alive browsers.
+      await new Promise(f => setTimeout(f, 1000));
+    }
   },
 });
 

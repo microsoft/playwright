@@ -144,7 +144,7 @@ class TargetRegistry {
           return;
 
         return {
-          scriptsToEvaluateOnNewDocument: target.browserContext().scriptsToEvaluateOnNewDocument,
+          initScripts: target.browserContext().initScripts,
           bindings: target.browserContext().bindings,
           settings: target.browserContext().settings,
         };
@@ -361,6 +361,7 @@ class PageTarget {
     this._screencastRecordingInfo = undefined;
     this._dialogs = new Map();
     this.forcedColors = 'no-override';
+    this._pageInitScripts = [];
 
     const navigationListener = {
       QueryInterface: ChromeUtils.generateQI([Ci.nsIWebProgressListener, Ci.nsISupportsWeakReference]),
@@ -523,8 +524,13 @@ class PageTarget {
     await this._channel.connect('').send('ensurePermissions', {}).catch(e => void e);
   }
 
-  async addScriptToEvaluateOnNewDocument(script) {
-    await this._channel.connect('').send('addScriptToEvaluateOnNewDocument', script).catch(e => void e);
+  async setInitScripts(scripts) {
+    this._pageInitScripts = scripts;
+    await this.pushInitScripts();
+  }
+
+  async pushInitScripts() {
+    await this._channel.connect('').send('setInitScripts', [...this._browserContext.initScripts, ...this._pageInitScripts]).catch(e => void e);
   }
 
   async addBinding(worldName, name, script) {
@@ -708,7 +714,7 @@ class BrowserContext {
     this.forcedColors = 'no-override';
     this.reducedMotion = 'none';
     this.videoRecordingOptions = undefined;
-    this.scriptsToEvaluateOnNewDocument = [];
+    this.initScripts = [];
     this.bindings = [];
     this.settings = {};
     this.pages = new Set();
@@ -804,9 +810,9 @@ class BrowserContext {
     await Promise.all(Array.from(this.pages).map(page => page.updateViewportSize()));
   }
 
-  async addScriptToEvaluateOnNewDocument(script) {
-    this.scriptsToEvaluateOnNewDocument.push(script);
-    await Promise.all(Array.from(this.pages).map(page => page.addScriptToEvaluateOnNewDocument(script)));
+  async setInitScripts(scripts) {
+    this.initScripts = scripts;
+    await Promise.all(Array.from(this.pages).map(page => page.pushInitScripts()));
   }
 
   async addBinding(worldName, name, script) {

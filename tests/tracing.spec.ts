@@ -205,6 +205,17 @@ test('should collect sources', async ({ context, page, server }, testInfo) => {
   expect(sourceFile).toEqual(thisFile);
 });
 
+test('should record network failures', async ({ context, page, server }, testInfo) => {
+  await context.tracing.start({ snapshots: true });
+  await page.route('**/*', route => route.abort('connectionaborted'));
+  await page.goto(server.EMPTY_PAGE).catch(e => {});
+  await context.tracing.stop({ path: testInfo.outputPath('trace1.zip') });
+
+  const { events } = await parseTrace(testInfo.outputPath('trace1.zip'));
+  const requestEvent = events.find(e => e.type === 'resource-snapshot' && !!e.snapshot.response._failureText);
+  expect(requestEvent).toBeTruthy();
+});
+
 test('should not stall on dialogs', async ({ page, context, server }) => {
   await context.tracing.start({ screenshots: true, snapshots: true });
   await page.goto(server.EMPTY_PAGE);
@@ -375,6 +386,27 @@ test('should not hang for clicks that open dialogs', async ({ context, page }) =
   await context.tracing.stop();
 });
 
+test('should ignore iframes in head', async ({ context, page, server }, testInfo) => {
+  await page.goto(server.PREFIX + '/input/button.html');
+  await page.evaluate(() => {
+    document.head.appendChild(document.createElement('iframe'));
+    // Add iframe in a shadow tree.
+    const div = document.createElement('div');
+    document.head.appendChild(div);
+    const shadow = div.attachShadow({ mode: 'open' });
+    shadow.appendChild(document.createElement('iframe'));
+  });
+
+  await context.tracing.start({ screenshots: true, snapshots: true });
+  await page.click('button');
+  await context.tracing.stopChunk({ path: testInfo.outputPath('trace.zip') });
+
+  const trace = await parseTrace(testInfo.outputPath('trace.zip'));
+  expect(trace.events.find(e => e.metadata?.apiName === 'page.click')).toBeTruthy();
+  expect(trace.events.find(e => e.type === 'frame-snapshot')).toBeTruthy();
+  expect(trace.events.find(e => e.type === 'frame-snapshot' && JSON.stringify(e.snapshot.html).includes('IFRAME'))).toBeFalsy();
+});
+
 test('should hide internal stack frames', async ({ context, page }, testInfo) => {
   await context.tracing.start({ screenshots: true, snapshots: true });
   let evalPromise;
@@ -414,6 +446,69 @@ test('should hide internal stack frames in expect', async ({ context, page }, te
   expect(actions).toHaveLength(5);
   for (const action of actions)
     expect(relativeStack(action)).toEqual(['tracing.spec.ts']);
+});
+
+test('should record global request trace', async ({ request, context, server }, testInfo) => {
+  await (request as any)._tracing.start({ snapshots: true });
+  const url = server.PREFIX + '/simple.json';
+  await request.get(url);
+  const tracePath = testInfo.outputPath('trace.zip');
+  await (request as any)._tracing.stop({ path: tracePath });
+
+  const trace = await parseTrace(tracePath);
+  const actions = trace.events.filter(e => e.type === 'resource-snapshot');
+  expect(actions).toHaveLength(1);
+  expect(actions[0].snapshot.request).toEqual(expect.objectContaining({
+    method: 'GET',
+    url
+  }));
+  expect(actions[0].snapshot.response).toEqual(expect.objectContaining({
+    status: 200,
+    statusText: 'OK',
+    headers: expect.arrayContaining([
+      expect.objectContaining({
+        'name': 'Content-Length',
+        'value': '15'
+      })
+    ])
+  }));
+});
+
+test('should store global request traces separately', async ({ request, context, server, playwright }, testInfo) => {
+  const request2 = await playwright.request.newContext();
+  await Promise.all([
+    (request as any)._tracing.start({ snapshots: true }),
+    (request2 as any)._tracing.start({ snapshots: true })
+  ]);
+  const url = server.PREFIX + '/simple.json';
+  await Promise.all([
+    request.get(url),
+    request2.post(url)
+  ]);
+  const tracePath = testInfo.outputPath('trace.zip');
+  const trace2Path = testInfo.outputPath('trace2.zip');
+  await Promise.all([
+    (request as any)._tracing.stop({ path: tracePath }),
+    (request2 as any)._tracing.stop({ path: trace2Path })
+  ]);
+  {
+    const trace = await parseTrace(tracePath);
+    const actions = trace.events.filter(e => e.type === 'resource-snapshot');
+    expect(actions).toHaveLength(1);
+    expect(actions[0].snapshot.request).toEqual(expect.objectContaining({
+      method: 'GET',
+      url
+    }));
+  }
+  {
+    const trace = await parseTrace(trace2Path);
+    const actions = trace.events.filter(e => e.type === 'resource-snapshot');
+    expect(actions).toHaveLength(1);
+    expect(actions[0].snapshot.request).toEqual(expect.objectContaining({
+      method: 'POST',
+      url
+    }));
+  }
 });
 
 function expectRed(pixels: Buffer, offset: number) {

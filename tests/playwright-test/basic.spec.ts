@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect, stripAscii } from './playwright-test-fixtures';
+import { test, expect, stripAnsi } from './playwright-test-fixtures';
 
 test('should fail', async ({ runInlineTest }) => {
   const result = await runInlineTest({
@@ -286,7 +286,7 @@ test('should work with test wrapper', async ({ runInlineTest }) => {
   }, { workers: 1, reporter: 'line' });
   expect(result.passed).toBe(4);
   expect(result.exitCode).toBe(0);
-  expect(stripAscii(result.output).split('\n').filter(line => line.startsWith('%%'))).toEqual([
+  expect(stripAnsi(result.output).split('\n').filter(line => line.startsWith('%%'))).toEqual([
     '%%a.spec',
     '%%helper',
     '%%b.spec',
@@ -335,7 +335,7 @@ test('should work with test helper', async ({ runInlineTest }) => {
   }, { workers: 1, reporter: 'line' });
   expect(result.passed).toBe(4);
   expect(result.exitCode).toBe(0);
-  expect(stripAscii(result.output).split('\n').filter(line => line.startsWith('%%'))).toEqual([
+  expect(stripAnsi(result.output).split('\n').filter(line => line.startsWith('%%'))).toEqual([
     '%%a.spec',
     '%%helper-a',
     '%%b.spec',
@@ -425,4 +425,20 @@ test('should not reuse worker after unhandled rejection in test.fail', async ({ 
   expect(result.skipped).toBe(1);
   expect(result.output).toContain(`Error: Oh my!`);
   expect(result.output).not.toContain(`Did not teardown test scope`);
+});
+
+test('should allow unhandled expects in test.fail', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      const { test } = pwt;
+      test('failing1', async ({}) => {
+        test.fail();
+        Promise.resolve().then(() => expect(1).toBe(2));
+        await new Promise(f => setTimeout(f, 100));
+      });
+    `
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  expect(result.output).not.toContain(`Error: expect`);
 });

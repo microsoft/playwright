@@ -18,14 +18,10 @@ import { EventEmitter } from 'events';
 import type { BrowserContextOptions, LaunchOptions } from '../../../..';
 import { Frame } from '../../frames';
 import { LanguageGenerator, LanguageGeneratorOptions } from './language';
-import { Action, Signal } from './recorderActions';
-import { describeFrame } from './utils';
+import { Action, Signal, FrameDescription } from './recorderActions';
 
 export type ActionInContext = {
-  pageAlias: string;
-  frameName?: string;
-  frameUrl: string;
-  isMainFrame: boolean;
+  frame: FrameDescription;
   action: Action;
   committed?: boolean;
 };
@@ -82,10 +78,10 @@ export class CodeGenerator extends EventEmitter {
   didPerformAction(actionInContext: ActionInContext) {
     if (!this._enabled)
       return;
-    const { action, pageAlias } = actionInContext;
+    const action = actionInContext.action;
     let eraseLastAction = false;
-    if (this._lastAction && this._lastAction.pageAlias === pageAlias) {
-      const { action: lastAction } = this._lastAction;
+    if (this._lastAction && this._lastAction.frame.pageAlias === actionInContext.frame.pageAlias) {
+      const lastAction = this._lastAction.action;
       // We augment last action based on the type.
       if (this._lastAction && action.name === 'fill' && lastAction.name === 'fill') {
         if (action.selector === lastAction.selector)
@@ -148,8 +144,11 @@ export class CodeGenerator extends EventEmitter {
 
     if (signal.name === 'navigation') {
       this.addAction({
-        pageAlias,
-        ...describeFrame(frame),
+        frame: {
+          pageAlias,
+          isMainFrame: frame._page.mainFrame() === frame,
+          url: frame.url(),
+        },
         committed: true,
         action: {
           name: 'navigate',

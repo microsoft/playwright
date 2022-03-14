@@ -22,11 +22,18 @@ import * as pirates from 'pirates';
 import * as sourceMapSupport from 'source-map-support';
 import * as url from 'url';
 import type { Location } from './types';
-import { TsConfigLoaderResult } from './third_party/tsconfig-loader';
+import { tsConfigLoader, TsConfigLoaderResult } from './third_party/tsconfig-loader';
+import Module from 'module';
 
-const version = 5;
+const version = 8;
 const cacheDir = process.env.PWTEST_CACHE_DIR || path.join(os.tmpdir(), 'playwright-transform-cache');
 const sourceMaps: Map<string, string> = new Map();
+
+type ParsedTsConfigData = {
+  absoluteBaseUrl: string;
+  paths: { key: string, values: string[] }[];
+};
+const cachedTSConfigs = new Map<string, ParsedTsConfigData | undefined>();
 
 const kStackTraceLimit = 15;
 Error.stackTraceLimit = kStackTraceLimit;
@@ -47,93 +54,178 @@ sourceMapSupport.install({
   }
 });
 
-function calculateCachePath(content: string, filePath: string): string {
-  const hash = crypto.createHash('sha1').update(content).update(filePath).update(String(version)).digest('hex');
+function calculateCachePath(content: string, filePath: string, isModule: boolean): string {
+  const hash = crypto.createHash('sha1')
+      .update(process.env.PW_TEST_SOURCE_TRANSFORM || '')
+      .update(isModule ? 'esm' : 'no_esm')
+      .update(content)
+      .update(filePath)
+      .update(String(version))
+      .digest('hex');
   const fileName = path.basename(filePath, path.extname(filePath)).replace(/\W/g, '') + '_' + hash;
   return path.join(cacheDir, hash[0] + hash[1], fileName);
 }
 
-export function transformHook(code: string, filename: string, tsconfig: TsConfigLoaderResult, isModule = false): string {
+function validateTsConfig(tsconfig: TsConfigLoaderResult): ParsedTsConfigData | undefined {
+  if (!tsconfig.tsConfigPath || !tsconfig.baseUrl)
+    return;
+  // Make 'baseUrl' absolute, because it is relative to the tsconfig.json, not to cwd.
+  const absoluteBaseUrl = path.resolve(path.dirname(tsconfig.tsConfigPath), tsconfig.baseUrl);
+  const paths = tsconfig.paths || { '*': ['*'] };
+  return { absoluteBaseUrl, paths: Object.entries(paths).map(([key, values]) => ({ key, values })) };
+}
+
+function loadAndValidateTsconfigForFile(file: string): ParsedTsConfigData | undefined {
+  const cwd = path.dirname(file);
+  if (!cachedTSConfigs.has(cwd)) {
+    const loaded = tsConfigLoader({
+      getEnv: (name: string) => process.env[name],
+      cwd
+    });
+    cachedTSConfigs.set(cwd, validateTsConfig(loaded));
+  }
+  return cachedTSConfigs.get(cwd);
+}
+
+const pathSeparator = process.platform === 'win32' ? ';' : ':';
+const scriptPreprocessor = process.env.PW_TEST_SOURCE_TRANSFORM ?
+  require(process.env.PW_TEST_SOURCE_TRANSFORM) : undefined;
+const builtins = new Set(Module.builtinModules);
+
+export function resolveHook(filename: string, specifier: string): string | undefined {
+  if (builtins.has(specifier))
+    return;
+  const isTypeScript = filename.endsWith('.ts') || filename.endsWith('.tsx');
+  if (!isTypeScript)
+    return;
+  const tsconfig = loadAndValidateTsconfigForFile(filename);
+  if (!tsconfig)
+    return;
+  for (const { key, values } of tsconfig.paths) {
+    const keyHasStar = key[key.length - 1] === '*';
+    const matches = specifier.startsWith(keyHasStar ? key.substring(0, key.length - 1) : key);
+    if (!matches)
+      continue;
+    for (const value of values) {
+      const valueHasStar = value[value.length - 1] === '*';
+      let candidate = valueHasStar ? value.substring(0, value.length - 1) : value;
+      if (valueHasStar && keyHasStar)
+        candidate += specifier.substring(key.length - 1);
+      candidate = path.resolve(tsconfig.absoluteBaseUrl, candidate.replace(/\//g, path.sep));
+      for (const ext of ['', '.js', '.ts', '.mjs', '.cjs', '.jsx', '.tsx']) {
+        if (fs.existsSync(candidate + ext))
+          return candidate;
+      }
+    }
+  }
+}
+
+export function transformHook(code: string, filename: string, isModule = false): string {
   if (isComponentImport(filename))
     return componentStub();
-  const cachePath = calculateCachePath(code, filename);
+
+  // If we are not TypeScript and there is no applicable preprocessor - bail out.
+  const isTypeScript = filename.endsWith('.ts') || filename.endsWith('.tsx');
+  const hasPreprocessor =
+      process.env.PW_TEST_SOURCE_TRANSFORM &&
+      process.env.PW_TEST_SOURCE_TRANSFORM_SCOPE &&
+      process.env.PW_TEST_SOURCE_TRANSFORM_SCOPE.split(pathSeparator).some(f => filename.startsWith(f));
+
+  if (!isTypeScript && !hasPreprocessor)
+    return code;
+
+  const cachePath = calculateCachePath(code, filename, isModule);
   const codePath = cachePath + '.js';
   const sourceMapPath = cachePath + '.map';
   sourceMaps.set(filename, sourceMapPath);
-  if (fs.existsSync(codePath))
+  if (!process.env.PW_IGNORE_COMPILE_CACHE && fs.existsSync(codePath))
     return fs.readFileSync(codePath, 'utf8');
   // We don't use any browserslist data, but babel checks it anyway.
   // Silence the annoying warning.
   process.env.BROWSERSLIST_IGNORE_OLD_DATA = 'true';
   const babel: typeof import('@babel/core') = require('@babel/core');
+  const plugins = [];
 
-  const extensions = ['', '.js', '.ts', '.mjs', ...(process.env.PW_COMPONENT_TESTING ? ['.tsx', '.jsx'] : [])];  const alias: { [key: string]: string | ((s: string[]) => string) } = {};
-  for (const [key, values] of Object.entries(tsconfig.paths || {})) {
-    const regexKey = '^' + key.replace('*', '.*');
-    alias[regexKey] = ([name]) => {
-      for (const value of values) {
-        const relative = (key.endsWith('/*') ? value.substring(0, value.length - 1) + name.substring(key.length - 1) : value)
-            .replace(/\//g, path.sep);
-        const result = path.resolve(tsconfig.baseUrl || '', relative);
-        for (const extension of extensions) {
-          if (fs.existsSync(result + extension))
-            return result;
-        }
-      }
-      return name;
-    };
+  if (isTypeScript) {
+    plugins.push(
+        [require.resolve('@babel/plugin-proposal-class-properties')],
+        [require.resolve('@babel/plugin-proposal-numeric-separator')],
+        [require.resolve('@babel/plugin-proposal-logical-assignment-operators')],
+        [require.resolve('@babel/plugin-proposal-nullish-coalescing-operator')],
+        [require.resolve('@babel/plugin-proposal-optional-chaining')],
+        [require.resolve('@babel/plugin-proposal-private-methods')],
+        [require.resolve('@babel/plugin-syntax-json-strings')],
+        [require.resolve('@babel/plugin-syntax-optional-catch-binding')],
+        [require.resolve('@babel/plugin-syntax-async-generators')],
+        [require.resolve('@babel/plugin-syntax-object-rest-spread')],
+        [require.resolve('@babel/plugin-proposal-export-namespace-from')]
+    );
+
+    if (!isModule) {
+      plugins.push([require.resolve('@babel/plugin-transform-modules-commonjs')]);
+      plugins.push([require.resolve('@babel/plugin-proposal-dynamic-import')]);
+    }
   }
 
-  const plugins = [
-    [require.resolve('@babel/plugin-proposal-class-properties')],
-    [require.resolve('@babel/plugin-proposal-numeric-separator')],
-    [require.resolve('@babel/plugin-proposal-logical-assignment-operators')],
-    [require.resolve('@babel/plugin-proposal-nullish-coalescing-operator')],
-    [require.resolve('@babel/plugin-proposal-optional-chaining')],
-    [require.resolve('@babel/plugin-syntax-json-strings')],
-    [require.resolve('@babel/plugin-syntax-optional-catch-binding')],
-    [require.resolve('@babel/plugin-syntax-async-generators')],
-    [require.resolve('@babel/plugin-syntax-object-rest-spread')],
-    [require.resolve('@babel/plugin-proposal-export-namespace-from')],
-    [require.resolve('babel-plugin-module-resolver'), {
-      root: ['./'],
-      alias
-    }],
-  ];
+  plugins.unshift([require.resolve('./tsxTransform')]);
 
-  if (process.env.PW_COMPONENT_TESTING)
-    plugins.unshift([require.resolve('@babel/plugin-transform-react-jsx')]);
+  if (hasPreprocessor)
+    plugins.push([scriptPreprocessor]);
 
-  if (!isModule) {
-    plugins.push([require.resolve('@babel/plugin-transform-modules-commonjs')]);
-    plugins.push([require.resolve('@babel/plugin-proposal-dynamic-import')]);
+  try {
+    const result = babel.transformFileSync(filename, {
+      babelrc: false,
+      configFile: false,
+      assumptions: {
+        // Without this, babel defines a top level function that
+        // breaks playwright evaluates.
+        setPublicClassFields: true,
+      },
+      presets: [
+        [require.resolve('@babel/preset-typescript'), { onlyRemoveTypeImports: true }],
+      ],
+      plugins,
+      sourceMaps: 'both',
+    } as babel.TransformOptions)!;
+    if (result.code) {
+      fs.mkdirSync(path.dirname(cachePath), { recursive: true });
+      if (result.map)
+        fs.writeFileSync(sourceMapPath, JSON.stringify(result.map), 'utf8');
+      fs.writeFileSync(codePath, result.code, 'utf8');
+    }
+    return result.code || '';
+  } catch (e) {
+    // Re-throw error with a playwright-test stack
+    // that could be filtered out.
+    throw new Error(e.message);
   }
-
-  const result = babel.transformFileSync(filename, {
-    babelrc: false,
-    configFile: false,
-    assumptions: {
-      // Without this, babel defines a top level function that
-      // breaks playwright evaluates.
-      setPublicClassFields: true,
-    },
-    presets: [
-      [require.resolve('@babel/preset-typescript'), { onlyRemoveTypeImports: true }],
-    ],
-    plugins,
-    sourceMaps: 'both',
-  } as babel.TransformOptions)!;
-  if (result.code) {
-    fs.mkdirSync(path.dirname(cachePath), { recursive: true });
-    if (result.map)
-      fs.writeFileSync(sourceMapPath, JSON.stringify(result.map), 'utf8');
-    fs.writeFileSync(codePath, result.code, 'utf8');
-  }
-  return result.code || '';
 }
 
-export function installTransform(tsconfig: TsConfigLoaderResult): () => void {
-  return pirates.addHook((code: string, filename: string) => transformHook(code, filename, tsconfig), { exts: ['.ts', '.tsx'] });
+export function installTransform(): () => void {
+  let reverted = false;
+
+  const originalResolveFilename = (Module as any)._resolveFilename;
+  function resolveFilename(this: any, specifier: string, parent: Module, ...rest: any[]) {
+    if (!reverted && parent) {
+      const resolved = resolveHook(parent.filename, specifier);
+      if (resolved !== undefined)
+        specifier = resolved;
+    }
+    return originalResolveFilename.call(this, specifier, parent, ...rest);
+  }
+  (Module as any)._resolveFilename = resolveFilename;
+
+  const exts = ['.ts', '.tsx'];
+  // When script preprocessor is engaged, we transpile JS as well.
+  if (scriptPreprocessor)
+    exts.push('.js', '.mjs');
+  const revertPirates = pirates.addHook((code: string, filename: string) => transformHook(code, filename), { exts });
+
+  return () => {
+    reverted = true;
+    (Module as any)._resolveFilename = originalResolveFilename;
+    revertPirates();
+  };
 }
 
 export function wrapFunctionWithLocation<A extends any[], R>(func: (location: Location, ...args: A) => R): (...args: A) => R {
@@ -160,15 +252,17 @@ export function wrapFunctionWithLocation<A extends any[], R>(func: (location: Lo
   };
 }
 
-// Experimental components support for internal testing.
+
+let currentlyLoadingTestFile: string | null = null;
+
+export function setCurrentlyLoadingTestFile(file: string | null) {
+  currentlyLoadingTestFile = file;
+}
+
 function isComponentImport(filename: string): boolean {
-  if (!process.env.PW_COMPONENT_TESTING)
+  if (filename === currentlyLoadingTestFile)
     return false;
-  if (filename.endsWith('.tsx') && !filename.endsWith('spec.tsx') && !filename.endsWith('test.tsx'))
-    return true;
-  if (filename.endsWith('.jsx') && !filename.endsWith('spec.jsx') && !filename.endsWith('test.jsx'))
-    return true;
-  return false;
+  return filename.endsWith('.tsx') || filename.endsWith('.jsx');
 }
 
 function componentStub(): string {

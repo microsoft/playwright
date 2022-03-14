@@ -1,5 +1,4 @@
 # class: PageAssertions
-* langs: java, python, js
 
 The [PageAssertions] class provides assertion methods that can be used to make assertions about the [Page] state in the tests. A new instance of [PageAssertions] is created by calling [`method: PlaywrightAssertions.expectPage`]:
 
@@ -48,9 +47,29 @@ def test_navigates_to_login_page(page: Page) -> None:
     expect(page).to_have_url(re.compile(r".*/login"))
 ```
 
+```csharp
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+using Microsoft.Playwright.NUnit;
+using NUnit.Framework;
 
-## method: PageAssertions.not
-* langs: java, js
+namespace PlaywrightTests
+{
+    public class ExampleTests : PageTest
+    {
+        [Test]
+        public async Task NavigatetoLoginPage()
+        {
+            // ..
+            await Page.ClickAsync("#login");
+            await Expect(Page.Locator("div#foobar")).ToHaveURL(new Regex(".*/login"));
+        }
+    }
+}
+```
+
+## property: PageAssertions.not
+* langs: java, js, csharp
 - returns: <[PageAssertions]>
 
 Makes the assertion check for the opposite condition. For example, this code tests that the page URL doesn't contain `"error"`:
@@ -63,7 +82,11 @@ await expect(page).not.toHaveURL('error');
 assertThat(page).not().hasURL("error");
 ```
 
-## method: PageAssertions.NotToHaveTitle
+```csharp
+await Expect(page).Not.ToHaveURL("error");
+```
+
+## async method: PageAssertions.NotToHaveTitle
 * langs: python
 
 The opposite of [`method: PageAssertions.toHaveTitle`].
@@ -74,9 +97,10 @@ The opposite of [`method: PageAssertions.toHaveTitle`].
 
 Expected title or RegExp.
 
-### option: PageAssertions.NotToHaveTitle.timeout = %%-assertions-timeout-%%
+### option: PageAssertions.NotToHaveTitle.timeout = %%-js-assertions-timeout-%%
+### option: PageAssertions.NotToHaveTitle.timeout = %%-csharp-java-python-assertions-timeout-%%
 
-## method: PageAssertions.NotToHaveURL
+## async method: PageAssertions.NotToHaveURL
 * langs: python
   - alias-java: hasURL
 
@@ -87,9 +111,42 @@ The opposite of [`method: PageAssertions.toHaveURL`].
 
 Expected substring or RegExp.
 
-### option: PageAssertions.NotToHaveURL.timeout = %%-assertions-timeout-%%
+### option: PageAssertions.NotToHaveURL.timeout = %%-js-assertions-timeout-%%
+### option: PageAssertions.NotToHaveURL.timeout = %%-csharp-java-python-assertions-timeout-%%
 
-## method: PageAssertions.toHaveTitle
+## async method: PageAssertions.toHaveScreenshot
+* langs: js
+
+Ensures that the page resolves to a given screenshot. This function will re-take
+screenshots until it matches with the saved expectation.
+
+If there's no expectation yet, it will wait until two consecutive screenshots
+yield the same result, and save the last one as an expectation.
+
+```js
+await expect(page).toHaveScreenshot();
+```
+
+### option: PageAssertions.toHaveScreenshot.timeout = %%-js-assertions-timeout-%%
+### option: PageAssertions.toHaveScreenshot.timeout = %%-csharp-java-python-assertions-timeout-%%
+
+### option: PageAssertions.toHaveScreenshot.animations = %%-screenshot-option-animations-%%
+
+### option: PageAssertions.toHaveScreenshot.omitBackground = %%-screenshot-option-omit-background-%%
+
+### option: PageAssertions.toHaveScreenshot.fullPage = %%-screenshot-option-full-page-%%
+
+### option: PageAssertions.toHaveScreenshot.clip = %%-screenshot-option-clip-%%
+
+### option: PageAssertions.toHaveScreenshot.mask = %%-screenshot-option-mask-%%
+
+### option: PageAssertions.toHaveScreenshot.maxDiffPixels = %%-assertions-max-diff-pixels-%%
+
+### option: PageAssertions.toHaveScreenshot.maxDiffPixelRatio = %%-assertions-max-diff-pixel-ratio-%%
+
+### option: PageAssertions.toHaveScreenshot.threshold = %%-assertions-threshold-%%
+
+## async method: PageAssertions.toHaveTitle
 * langs:
   - alias-java: hasTitle
 
@@ -119,14 +176,19 @@ from playwright.sync_api import expect
 expect(page).to_have_title(re.compile(r".*checkout"))
 ```
 
+```csharp
+await Expect(page).ToHaveTitle("Playwright");
+```
+
 ### param: PageAssertions.toHaveTitle.titleOrRegExp
 - `titleOrRegExp` <[string]|[RegExp]>
 
 Expected title or RegExp.
 
-### option: PageAssertions.toHaveTitle.timeout = %%-assertions-timeout-%%
+### option: PageAssertions.toHaveTitle.timeout = %%-js-assertions-timeout-%%
+### option: PageAssertions.toHaveTitle.timeout = %%-csharp-java-python-assertions-timeout-%%
 
-## method: PageAssertions.toHaveURL
+## async method: PageAssertions.toHaveURL
 * langs:
   - alias-java: hasURL
 
@@ -156,9 +218,14 @@ from playwright.sync_api import expect
 expect(page).to_have_url(re.compile(".*checkout"))
 ```
 
+```csharp
+await Expect(page).ToHaveURL(new Regex(".*checkout"));
+```
+
 ### param: PageAssertions.toHaveURL.urlOrRegExp
 - `urlOrRegExp` <[string]|[RegExp]>
 
 Expected substring or RegExp.
 
-### option: PageAssertions.toHaveURL.timeout = %%-assertions-timeout-%%
+### option: PageAssertions.toHaveURL.timeout = %%-js-assertions-timeout-%%
+### option: PageAssertions.toHaveURL.timeout = %%-csharp-java-python-assertions-timeout-%%

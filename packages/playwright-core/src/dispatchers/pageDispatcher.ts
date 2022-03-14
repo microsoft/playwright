@@ -150,8 +150,40 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel> imple
     });
   }
 
+  async expectScreenshot(params: channels.PageExpectScreenshotParams, metadata: CallMetadata): Promise<channels.PageExpectScreenshotResult> {
+    const mask: { frame: Frame, selector: string }[] = (params.screenshotOptions?.mask || []).map(({ frame, selector }) => ({
+      frame: (frame as FrameDispatcher)._object,
+      selector,
+    }));
+    const locator: { frame: Frame, selector: string } | undefined = params.locator ? {
+      frame: (params.locator.frame as FrameDispatcher)._object,
+      selector: params.locator.selector,
+    } : undefined;
+    const expected = params.expected ? Buffer.from(params.expected, 'base64') : undefined;
+    const result = await this._page.expectScreenshot(metadata, {
+      ...params,
+      expected,
+      locator,
+      screenshotOptions: {
+        ...params.screenshotOptions,
+        mask,
+      },
+    });
+    return {
+      diff: result.diff?.toString('base64'),
+      errorMessage: result.errorMessage,
+      actual: result.actual?.toString('base64'),
+      previous: result.previous?.toString('base64'),
+      log: result.log,
+    };
+  }
+
   async screenshot(params: channels.PageScreenshotParams, metadata: CallMetadata): Promise<channels.PageScreenshotResult> {
-    return { binary: (await this._page.screenshot(metadata, params)).toString('base64') };
+    const mask: { frame: Frame, selector: string }[] = (params.mask || []).map(({ frame, selector }) => ({
+      frame: (frame as FrameDispatcher)._object,
+      selector,
+    }));
+    return { binary: (await this._page.screenshot(metadata, { ...params, mask })).toString('base64') };
   }
 
   async close(params: channels.PageCloseParams, metadata: CallMetadata): Promise<void> {

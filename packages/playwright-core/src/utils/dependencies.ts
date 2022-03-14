@@ -78,8 +78,8 @@ export async function installDependenciesLinux(targets: Set<DependencyGroup>, dr
   if (elevatedPermissions)
     console.log('Switching to root user to install dependencies...'); // eslint-disable-line no-console
   const child = childProcess.spawn(command, args, { stdio: 'inherit' });
-  await new Promise((resolve, reject) => {
-    child.on('exit', resolve);
+  await new Promise<void>((resolve, reject) => {
+    child.on('exit', (code: number) => code === 0 ? resolve() : reject(new Error(`Installation process exited with code: ${code}`)));
     child.on('error', reject);
   });
 }
@@ -140,7 +140,9 @@ export async function validateDependenciesWindows(windowsExeAndDllDirectories: s
   if (isSupportedWindowsVersion()) {
     throw new Error(message);
   } else {
+    // eslint-disable-next-line no-console
     console.warn(`WARNING: running on unsupported windows version!`);
+    // eslint-disable-next-line no-console
     console.warn(message);
   }
 }

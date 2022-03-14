@@ -15,8 +15,9 @@
  */
 
 import http from 'http';
+import os from 'os';
 import * as util from 'util';
-import { getPlaywrightVersion } from 'playwright-core/lib/utils/utils';
+import { getPlaywrightVersion } from '../packages/playwright-core/lib/utils/utils';
 import { expect, playwrightTest as it } from './config/browserTest';
 
 it.skip(({ mode }) => mode !== 'default');
@@ -40,7 +41,7 @@ it.afterAll(() => {
 });
 
 for (const method of ['fetch', 'delete', 'get', 'head', 'patch', 'post', 'put'] as const) {
-  it(`${method} should work`, async ({ playwright, server }) => {
+  it(`${method} should work @smoke`, async ({ playwright, server }) => {
     const request = await playwright.request.newContext();
     const response = await request[method](server.PREFIX + '/simple.json');
     expect(response.url()).toBe(server.PREFIX + '/simple.json');
@@ -49,7 +50,7 @@ for (const method of ['fetch', 'delete', 'get', 'head', 'patch', 'post', 'put'] 
     expect(response.ok()).toBeTruthy();
     expect(response.headers()['content-type']).toBe('application/json; charset=utf-8');
     expect(response.headersArray()).toContainEqual({ name: 'Content-Type', value: 'application/json; charset=utf-8' });
-    expect(await response.text()).toBe(method === 'head' ? '' : '{"foo": "bar"}\n');
+    expect(await response.text()).toBe('head' === method ? '' : '{"foo": "bar"}\n');
   });
 }
 
@@ -177,13 +178,23 @@ it('should resolve url relative to gobal baseURL option', async ({ playwright, s
   expect(response.url()).toBe(server.EMPTY_PAGE);
 });
 
-it('should set playwright as user-agent', async ({ playwright, server }) => {
+it('should set playwright as user-agent', async ({ playwright, server, isWindows, isLinux, isMac }) => {
   const request = await playwright.request.newContext();
   const [serverRequest] = await Promise.all([
     server.waitForRequest('/empty.html'),
     request.get(server.EMPTY_PAGE)
   ]);
-  expect(serverRequest.headers['user-agent']).toBe('Playwright/' + getPlaywrightVersion());
+  const userAgentMasked = serverRequest.headers['user-agent']
+      .replace(os.arch(), '<ARCH>')
+      .replace(getPlaywrightVersion(), 'X.X.X')
+      .replace(/\d+/g, 'X');
+
+  if (isWindows)
+    expect(userAgentMasked).toBe('Playwright/X.X.X (<ARCH>; windows X.X) node/X.X');
+  else if (isLinux)
+    expect(userAgentMasked).toBe('Playwright/X.X.X (<ARCH>; ubuntu X.X) node/X.X');
+  else if (isMac)
+    expect(userAgentMasked).toBe('Playwright/X.X.X (<ARCH>; macOS X.X) node/X.X');
 });
 
 it('should be able to construct with context options', async ({ playwright, browserType, server }) => {
@@ -255,12 +266,17 @@ it('should remove content-length from reidrected post requests', async ({ playwr
 });
 
 
-const serialization = [
+const serialization: [string, any][] = [
   ['object', { 'foo': 'bar' }],
   ['array', ['foo', 'bar', 2021]],
   ['string', 'foo'],
+  ['string (falsey)', ''],
   ['bool', true],
+  ['bool (false)', false],
   ['number', 2021],
+  ['number (falsey)', 0],
+  ['null', null],
+  ['literal string undefined', 'undefined'],
 ];
 for (const [type, value] of serialization) {
   const stringifiedValue = JSON.stringify(value);
@@ -326,5 +342,39 @@ it(`should have nice toString`, async ({ playwright, server }) => {
   expect(str).toContain('APIResponse: 200 OK');
   for (const { name, value } of response.headersArray())
     expect(str).toContain(`  ${name}: ${value}`);
+  await request.dispose();
+});
+
+it('should not fail on empty body with encoding', async ({ playwright, server }) => {
+  const request = await playwright.request.newContext();
+  for (const method of ['head', 'put']) {
+    for (const encoding of ['br', 'gzip', 'deflate']) {
+      server.setRoute('/empty.html', (req, res) => {
+        res.writeHead(200, {
+          'Content-Encoding': encoding,
+          'Content-Type': 'text/plain',
+        });
+        res.end();
+      });
+      const response = await request[method](server.EMPTY_PAGE);
+      expect(response.status()).toBe(200);
+      expect((await response.body()).length).toBe(0);
+    }
+  }
+  await request.dispose();
+});
+
+it('should return body for failing requests', async ({ playwright, server }) => {
+  const request = await playwright.request.newContext();
+  for (const method of ['head', 'put', 'trace']) {
+    server.setRoute('/empty.html', (req, res) => {
+      res.writeHead(404, { 'Content-Length': 10, 'Content-Type': 'text/plain' });
+      res.end('Not found.');
+    });
+    const response = await request.fetch(server.EMPTY_PAGE, { method });
+    expect(response.status()).toBe(404);
+    // HEAD response returns empty body in node http module.
+    expect(await response.text()).toBe(method === 'head' ? '' : 'Not found.');
+  }
   await request.dispose();
 });

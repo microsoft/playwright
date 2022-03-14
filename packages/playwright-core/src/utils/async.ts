@@ -16,50 +16,96 @@
 
 import { monotonicTime } from './utils';
 
-export class DeadlineRunner<T> {
-  private _timer: NodeJS.Timer | undefined;
-  readonly result = new ManualPromise<{ timedOut: true } | { result: T, timedOut: false }>();
+export class TimeoutRunnerError extends Error {}
 
-  constructor(promise: Promise<T>, deadline: number) {
-    promise.then(result => {
-      this._finish({ result, timedOut: false });
-    }).catch(e => {
-      this._finish(undefined, e);
-    });
-    this.updateDeadline(deadline);
+type TimeoutRunnerData = {
+  lastElapsedSync: number,
+  timer: NodeJS.Timer | undefined,
+  timeoutPromise: ManualPromise<any>,
+};
+export class TimeoutRunner {
+  private _running: TimeoutRunnerData | undefined;
+  private _timeout: number;
+  private _elapsed: number;
+
+  constructor(timeout: number) {
+    this._timeout = timeout;
+    this._elapsed = 0;
   }
 
-  private _finish(success?: { timedOut: true } | { result: T, timedOut: false }, error?: any) {
-    if (this.result.isDone())
-      return;
-    this.updateDeadline(0);
-    if (success)
-      this.result.resolve(success);
-    else
-      this.result.reject(error);
+  async run<T>(cb: () => Promise<T>): Promise<T> {
+    const running = this._running = {
+      lastElapsedSync: monotonicTime(),
+      timer: undefined,
+      timeoutPromise: new ManualPromise(),
+    };
+    try {
+      const resultPromise = Promise.race([
+        cb(),
+        running.timeoutPromise
+      ]);
+      this._updateTimeout(running, this._timeout);
+      return await resultPromise;
+    } finally {
+      this._updateTimeout(running, 0);
+      if (this._running === running)
+        this._running = undefined;
+    }
   }
 
   interrupt() {
-    this.updateDeadline(-1);
+    if (this._running)
+      this._updateTimeout(this._running, -1);
   }
 
-  updateDeadline(deadline: number) {
-    if (this._timer) {
-      clearTimeout(this._timer);
-      this._timer = undefined;
+  elapsed() {
+    this._syncElapsedAndStart();
+    return this._elapsed;
+  }
+
+  updateTimeout(timeout: number, elapsed?: number) {
+    this._timeout = timeout;
+    if (elapsed !== undefined) {
+      this._syncElapsedAndStart();
+      this._elapsed = elapsed;
     }
-    if (deadline === 0)
+    if (this._running)
+      this._updateTimeout(this._running, timeout);
+  }
+
+  private _syncElapsedAndStart() {
+    if (this._running) {
+      const now = monotonicTime();
+      this._elapsed += now - this._running.lastElapsedSync;
+      this._running.lastElapsedSync = now;
+    }
+  }
+
+  private _updateTimeout(running: TimeoutRunnerData, timeout: number) {
+    if (running.timer) {
+      clearTimeout(running.timer);
+      running.timer = undefined;
+    }
+    this._syncElapsedAndStart();
+    if (timeout === 0)
       return;
-    const timeout = deadline - monotonicTime();
+    timeout = timeout - this._elapsed;
     if (timeout <= 0)
-      this._finish({ timedOut: true });
+      running.timeoutPromise.reject(new TimeoutRunnerError());
     else
-      this._timer = setTimeout(() => this._finish({ timedOut: true }), timeout);
+      running.timer = setTimeout(() => running.timeoutPromise.reject(new TimeoutRunnerError()), timeout);
   }
 }
 
-export async function raceAgainstDeadline<T>(promise: Promise<T>, deadline: number) {
-  return (new DeadlineRunner(promise, deadline)).result;
+export async function raceAgainstTimeout<T>(cb: () => Promise<T>, timeout: number): Promise<{ result: T, timedOut: false } | { timedOut: true }> {
+  const runner = new TimeoutRunner(timeout);
+  try {
+    return { result: await runner.run(cb), timedOut: false };
+  } catch (e) {
+    if (e instanceof TimeoutRunnerError)
+      return { timedOut: true };
+    throw e;
+  }
 }
 
 export class ManualPromise<T> extends Promise<T> {

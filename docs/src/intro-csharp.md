@@ -19,8 +19,11 @@ cd PlaywrightDemo
 dotnet add package Microsoft.Playwright
 # Build the project
 dotnet build
-# Install required browsers
+# Install required browsers - replace netX with actual output folder name, f.ex. net6.0.
 pwsh bin\Debug\netX\playwright.ps1 install
+
+# If the pwsh command does not work (throws TypeNotFound), make sure to use an up-to-date version of PowerShell.
+dotnet tool update --global PowerShell
 ```
 
 Create a `Program.cs` that will navigate to `https://playwright.dev/dotnet` and take a screenshot in Chromium.
@@ -51,10 +54,10 @@ dotnet run
 By default, Playwright runs the browsers in headless mode. To see the browser UI, pass the `Headless = false` flag while launching the browser. You can also use [`option: slowMo`] to slow down execution. Learn more in the debugging tools [section](./debug.md).
 
 ```csharp
-await playwright.Firefox.LaunchAsync(new BrowserTypeLaunchOptions 
-{ 
-    Headless = false, 
-    SlowMo = 50, 
+await playwright.Firefox.LaunchAsync(new BrowserTypeLaunchOptions
+{
+    Headless = false,
+    SlowMo = 50,
 });
 ```
 
@@ -117,6 +120,37 @@ dotnet test -- NUnit.NumberOfTestWorkers=5
 
 ```bash
 pwsh bin\Debug\netX\playwright.ps1 codegen
+```
+
+## Install browsers via API
+
+It's possible to run [Command line tools](./cli.md) commands via the .NET API:
+
+```csharp
+var exitCode = Microsoft.Playwright.Program.Main(new[] {"install"});
+if (exitCode != 0)
+{
+    throw new Exception($"Playwright exited with code {exitCode}");
+}
+```
+
+## Bundle drivers for different platforms
+
+Playwright by default does bundle only the driver for the .NET publish target runtime. If you want to bundle for additional platforms, you can
+override this behavior by using either `all`, `none` or `linux`, `win`, `osx` in your project file.
+
+```xml
+<PropertyGroup>
+  <PlaywrightPlatform>all</PlaywrightPlatform>
+</PropertyGroup>
+```
+
+or:
+
+```xml
+<PropertyGroup>
+  <PlaywrightPlatform>osx;linux</PlaywrightPlatform>
+</PropertyGroup>
 ```
 
 ## System requirements

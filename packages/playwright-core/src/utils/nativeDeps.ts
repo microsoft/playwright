@@ -88,6 +88,7 @@ export const deps: any = {
       'libxi6',
       'libxrender1',
       'libxt6',
+      'libxtst6',
     ],
     webkit: [
       'gstreamer1.0-libav',
@@ -294,6 +295,7 @@ export const deps: any = {
       'libxi6',
       'libxrender1',
       'libxt6',
+      'libxtst6'
     ],
     webkit: [
       'gstreamer1.0-libav',
@@ -322,6 +324,7 @@ export const deps: any = {
       'libicu66',
       'libjpeg-turbo8',
       'libnotify4',
+      'libopengl0',
       'libopenjp2-7',
       'libopus0',
       'libpango-1.0-0',
@@ -392,6 +395,7 @@ export const deps: any = {
       'libnspr4.so': 'libnspr4',
       'libnss3.so': 'libnss3',
       'libnssutil3.so': 'libnss3',
+      'libOpenGL.so.0': 'libopengl0',
       'libopenjp2.so.7': 'libopenjp2-7',
       'libopus.so.0': 'libopus0',
       'libpango-1.0.so.0': 'libpango-1.0-0',
@@ -644,7 +648,9 @@ export const deps: any = {
 deps['ubuntu20.04-arm64'] = {
   tools: [...deps['ubuntu20.04'].tools],
   chromium: [...deps['ubuntu20.04'].chromium],
-  firefox: [...deps['ubuntu20.04'].firefox],
+  firefox: [
+    ...deps['ubuntu20.04'].firefox,
+  ],
   webkit: [
     ...deps['ubuntu20.04'].webkit,
     'libevent-2.1-7',

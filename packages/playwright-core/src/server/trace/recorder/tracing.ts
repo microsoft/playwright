@@ -16,16 +16,18 @@
 
 import { EventEmitter } from 'events';
 import fs from 'fs';
+import os from 'os';
 import path from 'path';
 import yazl from 'yazl';
 import { NameValue } from '../../../common/types';
-import { commandsWithTracingSnapshots, BrowserContextTracingStopChunkParams } from '../../../protocol/channels';
+import { commandsWithTracingSnapshots, TracingTracingStopChunkParams } from '../../../protocol/channels';
 import { ManualPromise } from '../../../utils/async';
 import { eventsHelper, RegisteredListener } from '../../../utils/eventsHelper';
-import { calculateSha1, createGuid, mkdirIfNeeded, monotonicTime } from '../../../utils/utils';
+import { assert, calculateSha1, createGuid, mkdirIfNeeded, monotonicTime, removeFolders } from '../../../utils/utils';
 import { Artifact } from '../../artifact';
 import { BrowserContext } from '../../browserContext';
 import { ElementHandle } from '../../dom';
+import { APIRequestContext } from '../../fetch';
 import { CallMetadata, InstrumentationListener, SdkObject } from '../../instrumentation';
 import { Page } from '../../page';
 import * as har from '../../supplements/har/har';
@@ -47,6 +49,8 @@ type RecordingState = {
   traceName: string,
   networkFile: string,
   traceFile: string,
+  tracesDir: string,
+  resourcesDir: string,
   filesCount: number,
   networkSha1s: Set<string>,
   traceSha1s: Set<string>,
@@ -56,25 +60,28 @@ type RecordingState = {
 
 const kScreencastOptions = { width: 800, height: 600, quality: 90 };
 
-export class Tracing implements InstrumentationListener, SnapshotterDelegate, HarTracerDelegate {
+export class Tracing extends SdkObject implements InstrumentationListener, SnapshotterDelegate, HarTracerDelegate {
+  static Events = {
+    Dispose: 'dispose',
+  };
+
   private _writeChain = Promise.resolve();
-  private _snapshotter: Snapshotter;
+  private _snapshotter?: Snapshotter;
   private _harTracer: HarTracer;
   private _screencastListeners: RegisteredListener[] = [];
   private _pendingCalls = new Map<string, { sdkObject: SdkObject, metadata: CallMetadata, beforeSnapshot: Promise<void>, actionSnapshot?: Promise<void>, afterSnapshot?: Promise<void> }>();
-  private _context: BrowserContext;
-  private _resourcesDir: string;
+  private _context: BrowserContext | APIRequestContext;
   private _state: RecordingState | undefined;
   private _isStopping = false;
-  private _tracesDir: string;
+  private _precreatedTracesDir: string | undefined;
+  private _tracesTmpDir: string | undefined;
   private _allResources = new Set<string>();
   private _contextCreatedEvent: trace.ContextCreatedTraceEvent;
 
-  constructor(context: BrowserContext) {
+  constructor(context: BrowserContext | APIRequestContext, tracesDir: string | undefined) {
+    super(context, 'Tracing');
     this._context = context;
-    this._tracesDir = context._browser.options.tracesDir;
-    this._resourcesDir = path.join(this._tracesDir, 'resources');
-    this._snapshotter = new Snapshotter(context, this);
+    this._precreatedTracesDir = tracesDir;
     this._harTracer = new HarTracer(context, this, {
       content: 'sha1',
       waitForContentOnStop: false,
@@ -83,14 +90,20 @@ export class Tracing implements InstrumentationListener, SnapshotterDelegate, Ha
     this._contextCreatedEvent = {
       version: VERSION,
       type: 'context-options',
-      browserName: this._context._browser.options.name,
-      options: this._context._options,
+      browserName: '',
+      options: {},
       platform: process.platform,
       wallTime: 0,
     };
+    if (context instanceof BrowserContext) {
+      this._snapshotter = new Snapshotter(context, this);
+      assert(tracesDir, 'tracesDir must be specified for BrowserContext');
+      this._contextCreatedEvent.browserName = context._browser.options.name;
+      this._contextCreatedEvent.options = context._options;
+    }
   }
 
-  start(options: TracerOptions) {
+  async start(options: TracerOptions) {
     if (this._isStopping)
       throw new Error('Cannot start tracing while stopping');
     if (this._state) {
@@ -99,14 +112,18 @@ export class Tracing implements InstrumentationListener, SnapshotterDelegate, Ha
         throw new Error('Tracing has been already started with different options');
       return;
     }
-
     // TODO: passing the same name for two contexts makes them write into a single file
     // and conflict.
     const traceName = options.name || createGuid();
-    const traceFile = path.join(this._tracesDir, traceName + '.trace');
-    const networkFile = path.join(this._tracesDir, traceName + '.network');
-    this._state = { options, traceName, traceFile, networkFile, filesCount: 0, traceSha1s: new Set(), networkSha1s: new Set(), sources: new Set(), recording: false };
-    this._writeChain = fs.promises.mkdir(this._resourcesDir, { recursive: true }).then(() => fs.promises.writeFile(networkFile, ''));
+    // Init the state synchrounously.
+    this._state = { options, traceName, traceFile: '', networkFile: '', tracesDir: '', resourcesDir: '', filesCount: 0, traceSha1s: new Set(), networkSha1s: new Set(), sources: new Set(), recording: false };
+    const state = this._state;
+
+    state.tracesDir = await this._createTracesDirIfNeeded();
+    state.resourcesDir = path.join(state.tracesDir, 'resources');
+    state.traceFile = path.join(state.tracesDir, traceName + '.trace');
+    state.networkFile = path.join(state.tracesDir, traceName + '.network');
+    this._writeChain = fs.promises.mkdir(state.resourcesDir, { recursive: true }).then(() => fs.promises.writeFile(state.networkFile, ''));
     if (options.snapshots)
       this._harTracer.start();
   }
@@ -123,7 +140,7 @@ export class Tracing implements InstrumentationListener, SnapshotterDelegate, Ha
     const state = this._state;
     const suffix = state.filesCount ? `-${state.filesCount}` : ``;
     state.filesCount++;
-    state.traceFile = path.join(this._tracesDir, `${state.traceName}${suffix}.trace`);
+    state.traceFile = path.join(state.tracesDir, `${state.traceName}${suffix}.trace`);
     state.recording = true;
 
     this._appendTraceOperation(async () => {
@@ -131,14 +148,16 @@ export class Tracing implements InstrumentationListener, SnapshotterDelegate, Ha
       await fs.promises.appendFile(state.traceFile, JSON.stringify({ ...this._contextCreatedEvent, title: options.title, wallTime: Date.now() }) + '\n');
     });
 
-    this._context.instrumentation.addListener(this);
+    this._context.instrumentation.addListener(this, this._context);
     if (state.options.screenshots)
       this._startScreencast();
     if (state.options.snapshots)
-      await this._snapshotter.start();
+      await this._snapshotter?.start();
   }
 
   private _startScreencast() {
+    if (!(this._context instanceof BrowserContext))
+      return;
     for (const page of this._context.pages())
       this._startScreencastInPage(page);
     this._screencastListeners.push(
@@ -148,6 +167,8 @@ export class Tracing implements InstrumentationListener, SnapshotterDelegate, Ha
 
   private _stopScreencast() {
     eventsHelper.removeEventListeners(this._screencastListeners);
+    if (!(this._context instanceof BrowserContext))
+      return;
     for (const page of this._context.pages())
       page.setScreencastOptions(null);
   }
@@ -164,12 +185,29 @@ export class Tracing implements InstrumentationListener, SnapshotterDelegate, Ha
     this._state = undefined;
   }
 
-  async dispose() {
-    this._snapshotter.dispose();
+  async deleteTmpTracesDir() {
+    if (this._tracesTmpDir)
+      await removeFolders([this._tracesTmpDir]);
+  }
+
+  private async _createTracesDirIfNeeded() {
+    if (this._precreatedTracesDir)
+      return this._precreatedTracesDir;
+    this._tracesTmpDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'playwright-tracing-'));
+    return this._tracesTmpDir;
+  }
+
+  async flush() {
+    this._snapshotter?.dispose();
     await this._writeChain;
   }
 
-  async stopChunk(params: BrowserContextTracingStopChunkParams): Promise<{ artifact: Artifact | null, sourceEntries: NameValue[] | undefined }> {
+  async dispose() {
+    this._snapshotter?.dispose();
+    this.emit(Tracing.Events.Dispose);
+  }
+
+  async stopChunk(params: TracingTracingStopChunkParams): Promise<{ artifact: Artifact | null, sourceEntries: NameValue[] | undefined }> {
     if (this._isStopping)
       throw new Error(`Tracing is already stopping`);
     this._isStopping = true;
@@ -200,7 +238,7 @@ export class Tracing implements InstrumentationListener, SnapshotterDelegate, Ha
     }
 
     if (state.options.snapshots)
-      await this._snapshotter.stop();
+      await this._snapshotter?.stop();
 
     // Chain the export operation against write operations,
     // so that neither trace files nor sha1s change during the export.
@@ -216,7 +254,7 @@ export class Tracing implements InstrumentationListener, SnapshotterDelegate, Ha
       entries.push({ name: 'trace.trace', value: state.traceFile });
       entries.push({ name: 'trace.network', value: networkFile });
       for (const sha1 of new Set([...state.traceSha1s, ...state.networkSha1s]))
-        entries.push({ name: path.join('resources', sha1), value: path.join(this._resourcesDir, sha1) });
+        entries.push({ name: path.join('resources', sha1), value: path.join(state.resourcesDir, sha1) });
 
       let sourceEntries: NameValue[] | undefined;
       if (state.sources.size) {
@@ -260,6 +298,8 @@ export class Tracing implements InstrumentationListener, SnapshotterDelegate, Ha
   }
 
   async _captureSnapshot(name: 'before' | 'after' | 'action' | 'event', sdkObject: SdkObject, metadata: CallMetadata, element?: ElementHandle) {
+    if (!this._snapshotter)
+      return;
     if (!sdkObject.attribution.page)
       return;
     if (!this._snapshotter.started())
@@ -376,8 +416,8 @@ export class Tracing implements InstrumentationListener, SnapshotterDelegate, Ha
     if (this._allResources.has(sha1))
       return;
     this._allResources.add(sha1);
+    const resourcePath = path.join(this._state!.resourcesDir, sha1);
     this._appendTraceOperation(async () => {
-      const resourcePath = path.join(this._resourcesDir, sha1);
       try {
         // Perhaps we've already written this resource?
         await fs.promises.access(resourcePath);
@@ -394,7 +434,9 @@ export class Tracing implements InstrumentationListener, SnapshotterDelegate, Ha
     let error: Error | undefined;
     let result: T | undefined;
     this._writeChain = this._writeChain.then(async () => {
-      if (!this._context._browser.isConnected())
+      // This check is here because closing the browser removes the tracesDir and tracing
+      // dies trying to archive.
+      if (this._context instanceof BrowserContext && !this._context._browser.isConnected())
         return;
       try {
         result = await cb();

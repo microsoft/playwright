@@ -17,7 +17,7 @@
 import fs from 'fs';
 import path from 'path';
 import { FullConfig, TestCase, Suite, TestResult, TestError, TestStep, FullResult, TestStatus, Location, Reporter } from '../../types/testReporter';
-import { PositionInFile, prepareErrorStack } from './base';
+import { prepareErrorStack } from './base';
 
 export interface JSONReport {
   config: Omit<FullConfig, 'projects'> & {
@@ -42,7 +42,6 @@ export interface JSONReportSuite {
   column: number;
   line: number;
   specs: JSONReportSpec[];
-  hooks: JSONReportSpec[];
   suites?: JSONReportSuite[];
 }
 export interface JSONReportSpec {
@@ -77,7 +76,7 @@ export interface JSONReportTestResult {
     body?: string;
     contentType: string;
   }[];
-  errorLocation?: PositionInFile
+  errorLocation?: Location;
 }
 export interface JSONReportTestStep {
   title: string;
@@ -208,7 +207,6 @@ class JSONReporter implements Reporter {
       title: suite.title,
       ...this._relativeLocation(suite.location),
       specs: suite.tests.map(test => this._serializeTestSpec(test)),
-      hooks: suite.hooks.map(test => this._serializeTestSpec(test)),
       suites: suites.length ? suites : undefined,
     };
   }
@@ -229,12 +227,12 @@ class JSONReporter implements Reporter {
       annotations: test.annotations,
       expectedStatus: test.expectedStatus,
       projectName: test.titlePath()[1],
-      results: test.results.map(r => this._serializeTestResult(r, test.location.file)),
+      results: test.results.map(r => this._serializeTestResult(r, test)),
       status: test.outcome(),
     };
   }
 
-  private _serializeTestResult(result: TestResult, file: string): JSONReportTestResult {
+  private _serializeTestResult(result: TestResult, test: TestCase): JSONReportTestResult {
     const steps = result.steps.filter(s => s.category === 'test.step');
     const jsonResult: JSONReportTestResult = {
       workerIndex: result.workerIndex,
@@ -252,14 +250,8 @@ class JSONReporter implements Reporter {
         body: a.body?.toString('base64')
       })),
     };
-    if (result.error?.stack) {
-      const { position } = prepareErrorStack(
-          result.error.stack,
-          file
-      );
-      if (position)
-        jsonResult.errorLocation = position;
-    }
+    if (result.error?.stack)
+      jsonResult.errorLocation = prepareErrorStack(result.error.stack, test.location.file).location;
     return jsonResult;
   }
 

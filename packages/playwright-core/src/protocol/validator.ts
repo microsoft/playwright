@@ -196,26 +196,6 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   scheme.RootInitializeParams = tObject({
     sdkLanguage: tString,
   });
-  scheme.PlaywrightSocksConnectedParams = tObject({
-    uid: tString,
-    host: tString,
-    port: tNumber,
-  });
-  scheme.PlaywrightSocksFailedParams = tObject({
-    uid: tString,
-    errorCode: tString,
-  });
-  scheme.PlaywrightSocksDataParams = tObject({
-    uid: tString,
-    data: tBinary,
-  });
-  scheme.PlaywrightSocksErrorParams = tObject({
-    uid: tString,
-    error: tString,
-  });
-  scheme.PlaywrightSocksEndParams = tObject({
-    uid: tString,
-  });
   scheme.PlaywrightNewRequestParams = tObject({
     baseURL: tOptional(tString),
     userAgent: tOptional(tString),
@@ -236,6 +216,28 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
       cookies: tArray(tType('NetworkCookie')),
       origins: tArray(tType('OriginStorage')),
     })),
+    tracesDir: tOptional(tString),
+  });
+  scheme.PlaywrightHideHighlightParams = tOptional(tObject({}));
+  scheme.SocksSupportSocksConnectedParams = tObject({
+    uid: tString,
+    host: tString,
+    port: tNumber,
+  });
+  scheme.SocksSupportSocksFailedParams = tObject({
+    uid: tString,
+    errorCode: tString,
+  });
+  scheme.SocksSupportSocksDataParams = tObject({
+    uid: tString,
+    data: tBinary,
+  });
+  scheme.SocksSupportSocksErrorParams = tObject({
+    uid: tString,
+    error: tString,
+  });
+  scheme.SocksSupportSocksEndParams = tObject({
+    uid: tString,
   });
   scheme.SelectorsRegisterParams = tObject({
     name: tString,
@@ -247,6 +249,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     headers: tOptional(tAny),
     slowMo: tOptional(tNumber),
     timeout: tOptional(tNumber),
+    socksProxyRedirectPortForTest: tOptional(tNumber),
   });
   scheme.BrowserTypeLaunchParams = tObject({
     channel: tOptional(tString),
@@ -499,19 +502,6 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     page: tOptional(tChannel('Page')),
     frame: tOptional(tChannel('Frame')),
   });
-  scheme.BrowserContextTracingStartParams = tObject({
-    name: tOptional(tString),
-    snapshots: tOptional(tBoolean),
-    screenshots: tOptional(tBoolean),
-    sources: tOptional(tBoolean),
-  });
-  scheme.BrowserContextTracingStartChunkParams = tObject({
-    title: tOptional(tString),
-  });
-  scheme.BrowserContextTracingStopChunkParams = tObject({
-    mode: tEnum(['doNotSave', 'compressTrace', 'compressTraceAndSources']),
-  });
-  scheme.BrowserContextTracingStopParams = tOptional(tObject({}));
   scheme.BrowserContextHarExportParams = tOptional(tObject({}));
   scheme.PageSetDefaultNavigationTimeoutNoReplyParams = tObject({
     timeout: tOptional(tNumber),
@@ -550,13 +540,46 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     timeout: tOptional(tNumber),
     waitUntil: tOptional(tType('LifecycleEvent')),
   });
+  scheme.PageExpectScreenshotParams = tObject({
+    expected: tOptional(tBinary),
+    timeout: tOptional(tNumber),
+    isNot: tBoolean,
+    locator: tOptional(tObject({
+      frame: tChannel('Frame'),
+      selector: tString,
+    })),
+    comparatorOptions: tOptional(tObject({
+      maxDiffPixels: tOptional(tNumber),
+      maxDiffPixelRatio: tOptional(tNumber),
+      threshold: tOptional(tNumber),
+    })),
+    screenshotOptions: tOptional(tObject({
+      fullPage: tOptional(tBoolean),
+      clip: tOptional(tType('Rect')),
+      omitBackground: tOptional(tBoolean),
+      animations: tOptional(tEnum(['disabled', 'allow'])),
+      size: tOptional(tEnum(['css', 'device'])),
+      fonts: tOptional(tEnum(['ready', 'nowait'])),
+      mask: tOptional(tArray(tObject({
+        frame: tChannel('Frame'),
+        selector: tString,
+      }))),
+    })),
+  });
   scheme.PageScreenshotParams = tObject({
     timeout: tOptional(tNumber),
     type: tOptional(tEnum(['png', 'jpeg'])),
     quality: tOptional(tNumber),
-    omitBackground: tOptional(tBoolean),
     fullPage: tOptional(tBoolean),
     clip: tOptional(tType('Rect')),
+    omitBackground: tOptional(tBoolean),
+    animations: tOptional(tEnum(['disabled', 'allow'])),
+    size: tOptional(tEnum(['css', 'device'])),
+    fonts: tOptional(tEnum(['ready', 'nowait'])),
+    mask: tOptional(tArray(tObject({
+      frame: tChannel('Frame'),
+      selector: tString,
+    }))),
   });
   scheme.PageSetExtraHTTPHeadersParams = tObject({
     headers: tArray(tType('NameValue')),
@@ -747,6 +770,9 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     timeout: tOptional(tNumber),
   });
   scheme.FrameFrameElementParams = tOptional(tObject({}));
+  scheme.FrameHighlightParams = tObject({
+    selector: tString,
+  });
   scheme.FrameGetAttributeParams = tObject({
     selector: tString,
     strict: tOptional(tBoolean),
@@ -824,6 +850,9 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     strict: tOptional(tBoolean),
   });
   scheme.FrameQuerySelectorAllParams = tObject({
+    selector: tString,
+  });
+  scheme.FrameQueryCountParams = tObject({
     selector: tString,
   });
   scheme.FrameSelectOptionParams = tObject({
@@ -1040,6 +1069,13 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     type: tOptional(tEnum(['png', 'jpeg'])),
     quality: tOptional(tNumber),
     omitBackground: tOptional(tBoolean),
+    animations: tOptional(tEnum(['disabled', 'allow'])),
+    size: tOptional(tEnum(['css', 'device'])),
+    fonts: tOptional(tEnum(['ready', 'nowait'])),
+    mask: tOptional(tArray(tObject({
+      frame: tChannel('Frame'),
+      selector: tString,
+    }))),
   });
   scheme.ElementHandleScrollIntoViewIfNeededParams = tObject({
     timeout: tOptional(tNumber),
@@ -1160,6 +1196,19 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     promptText: tOptional(tString),
   });
   scheme.DialogDismissParams = tOptional(tObject({}));
+  scheme.TracingTracingStartParams = tObject({
+    name: tOptional(tString),
+    snapshots: tOptional(tBoolean),
+    screenshots: tOptional(tBoolean),
+    sources: tOptional(tBoolean),
+  });
+  scheme.TracingTracingStartChunkParams = tObject({
+    title: tOptional(tString),
+  });
+  scheme.TracingTracingStopChunkParams = tObject({
+    mode: tEnum(['doNotSave', 'compressTrace', 'compressTraceAndSources']),
+  });
+  scheme.TracingTracingStopParams = tOptional(tObject({}));
   scheme.ArtifactPathAfterFinishedParams = tOptional(tObject({}));
   scheme.ArtifactSaveAsParams = tObject({
     path: tString,
@@ -1228,7 +1277,9 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     arg: tType('SerializedArgument'),
   });
   scheme.ElectronApplicationCloseParams = tOptional(tObject({}));
-  scheme.AndroidDevicesParams = tOptional(tObject({}));
+  scheme.AndroidDevicesParams = tObject({
+    port: tOptional(tNumber),
+  });
   scheme.AndroidSetDefaultTimeoutNoReplyParams = tObject({
     timeout: tNumber,
   });
@@ -1316,7 +1367,15 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     steps: tNumber,
   });
   scheme.AndroidDeviceLaunchBrowserParams = tObject({
-    pkg: tOptional(tString),
+    noDefaultViewport: tOptional(tBoolean),
+    viewport: tOptional(tObject({
+      width: tNumber,
+      height: tNumber,
+    })),
+    screen: tOptional(tObject({
+      width: tNumber,
+      height: tNumber,
+    })),
     ignoreHTTPSErrors: tOptional(tBoolean),
     javaScriptEnabled: tOptional(tBoolean),
     bypassCSP: tOptional(tBoolean),
@@ -1342,6 +1401,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     reducedMotion: tOptional(tEnum(['reduce', 'no-preference'])),
     forcedColors: tOptional(tEnum(['active', 'none'])),
     acceptDownloads: tOptional(tBoolean),
+    baseURL: tOptional(tString),
     recordVideo: tOptional(tObject({
       dir: tString,
       size: tOptional(tObject({
@@ -1354,6 +1414,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
       path: tString,
     })),
     strictSelectors: tOptional(tBoolean),
+    pkg: tOptional(tString),
     proxy: tOptional(tObject({
       server: tString,
       bypass: tOptional(tString),

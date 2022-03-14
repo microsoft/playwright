@@ -16,9 +16,10 @@
 
 import { SelectorEngine, SelectorRoot } from './selectorEngine';
 import { isInsideScope } from './selectorEvaluator';
-import { checkComponentAttribute, parseComponentSelector } from '../common/componentUtils';
+import { checkComponentAttribute, parseComponentSelector } from './componentUtils';
 
 type ComponentNode = {
+  key?: any,
   name: string,
   children: ComponentNode[],
   rootElements: Element[],
@@ -26,6 +27,7 @@ type ComponentNode = {
 };
 
 type ReactVNode = {
+  key?: any,
   // React 16+
   type: any,
   child?: ReactVNode,
@@ -58,6 +60,10 @@ function getComponentName(reactElement: ReactVNode): string {
       return elementType.displayName || elementType.name || 'Anonymous';
   }
   return '';
+}
+
+function getComponentKey(reactElement: ReactVNode): any {
+  return reactElement.key ?? reactElement._currentElement?.key;
 }
 
 function getChildren(reactElement: ReactVNode): ReactVNode[] {
@@ -104,6 +110,7 @@ function getProps(reactElement: ReactVNode) {
 
 function buildComponentsTree(reactElement: ReactVNode): ComponentNode {
   const treeNode: ComponentNode = {
+    key: getComponentKey(reactElement),
     name: getComponentName(reactElement),
     children: getChildren(reactElement).map(buildComponentsTree),
     rootElements: [],
@@ -165,12 +172,17 @@ export const ReactEngine: SelectorEngine = {
     const reactRoots = findReactRoots(document);
     const trees = reactRoots.map(reactRoot => buildComponentsTree(reactRoot));
     const treeNodes = trees.map(tree => filterComponentsTree(tree, treeNode => {
+      const props = treeNode.props ?? {};
+
+      if (treeNode.key !== undefined)
+        props.key = treeNode.key;
+
       if (name && treeNode.name !== name)
         return false;
       if (treeNode.rootElements.some(domNode => !isInsideScope(scope, domNode)))
         return false;
       for (const attr of attributes) {
-        if (!checkComponentAttribute(treeNode.props, attr))
+        if (!checkComponentAttribute(props, attr))
           return false;
       }
       return true;

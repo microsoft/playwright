@@ -62,6 +62,13 @@ type PDFOptions = Omit<channels.PagePdfParams, 'width' | 'height' | 'margin'> & 
 };
 type Listener = (...args: any[]) => void;
 
+type ExpectScreenshotOptions = Omit<channels.PageExpectScreenshotOptions, 'screenshotOptions' | 'locator' | 'expected'> & {
+  expected?: Buffer,
+  locator?: Locator,
+  isNot: boolean,
+  screenshotOptions: Omit<channels.PageExpectScreenshotOptions['screenshotOptions'], 'mask'> & { mask?: Locator[] }
+};
+
 export class Page extends ChannelOwner<channels.PageChannel> implements api.Page {
   private _browserContext: BrowserContext;
   _ownedContext: BrowserContext | undefined;
@@ -170,10 +177,14 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   private _onRoute(route: Route, request: Request) {
     for (const routeHandler of this._routes) {
       if (routeHandler.matches(request.url())) {
-        if (routeHandler.handle(route, request)) {
-          this._routes.splice(this._routes.indexOf(routeHandler), 1);
-          if (!this._routes.length)
-            this._wrapApiCall(() => this._disableInterception(), true).catch(() => {});
+        try {
+          routeHandler.handle(route, request);
+        } finally {
+          if (!routeHandler.isActive()) {
+            this._routes.splice(this._routes.indexOf(routeHandler), 1);
+            if (!this._routes.length)
+              this._wrapApiCall(() => this._disableInterception(), true).catch(() => {});
+          }
         }
         return;
       }
@@ -382,19 +393,21 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   }
 
   private async _waitForEvent(event: string, optionsOrPredicate: WaitForEventOptions, logLine?: string): Promise<any> {
-    const timeout = this._timeoutSettings.timeout(typeof optionsOrPredicate === 'function' ? {} : optionsOrPredicate);
-    const predicate = typeof optionsOrPredicate === 'function' ? optionsOrPredicate : optionsOrPredicate.predicate;
-    const waiter = Waiter.createForEvent(this, event);
-    if (logLine)
-      waiter.log(logLine);
-    waiter.rejectOnTimeout(timeout, `Timeout ${timeout}ms exceeded while waiting for event "${event}"`);
-    if (event !== Events.Page.Crash)
-      waiter.rejectOnEvent(this, Events.Page.Crash, new Error('Page crashed'));
-    if (event !== Events.Page.Close)
-      waiter.rejectOnEvent(this, Events.Page.Close, new Error('Page closed'));
-    const result = await waiter.waitForEvent(this, event, predicate as any);
-    waiter.dispose();
-    return result;
+    return this._wrapApiCall(async () => {
+      const timeout = this._timeoutSettings.timeout(typeof optionsOrPredicate === 'function' ? {} : optionsOrPredicate);
+      const predicate = typeof optionsOrPredicate === 'function' ? optionsOrPredicate : optionsOrPredicate.predicate;
+      const waiter = Waiter.createForEvent(this, event);
+      if (logLine)
+        waiter.log(logLine);
+      waiter.rejectOnTimeout(timeout, `Timeout ${timeout}ms exceeded while waiting for event "${event}"`);
+      if (event !== Events.Page.Crash)
+        waiter.rejectOnEvent(this, Events.Page.Crash, new Error('Page crashed'));
+      if (event !== Events.Page.Close)
+        waiter.rejectOnEvent(this, Events.Page.Close, new Error('Page closed'));
+      const result = await waiter.waitForEvent(this, event, predicate as any);
+      waiter.dispose();
+      return result;
+    });
   }
 
   async goBack(options: channels.PageGoBackOptions = {}): Promise<Response | null> {
@@ -451,10 +464,16 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     await this._channel.setNetworkInterceptionEnabled({ enabled: false });
   }
 
-  async screenshot(options: channels.PageScreenshotOptions & { path?: string } = {}): Promise<Buffer> {
-    const copy = { ...options };
+  async screenshot(options: Omit<channels.PageScreenshotOptions, 'mask'> & { path?: string, mask?: Locator[] } = {}): Promise<Buffer> {
+    const copy: channels.PageScreenshotOptions = { ...options, mask: undefined };
     if (!copy.type)
       copy.type = determineScreenshotType(options);
+    if (options.mask) {
+      copy.mask = options.mask.map(locator => ({
+        frame: locator._frame._channel,
+        selector: locator._selector,
+      }));
+    }
     const result = await this._channel.screenshot(copy);
     const buffer = Buffer.from(result.binary, 'base64');
     if (options.path) {
@@ -462,6 +481,36 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
       await fs.promises.writeFile(options.path, buffer);
     }
     return buffer;
+  }
+
+  async _expectScreenshot(options: ExpectScreenshotOptions): Promise<{ actual?: Buffer, previous?: Buffer, diff?: Buffer, errorMessage?: string, log?: string[]}> {
+    const mask = options.screenshotOptions?.mask ? options.screenshotOptions?.mask.map(locator => ({
+      frame: locator._frame._channel,
+      selector: locator._selector,
+    })) : undefined;
+    const locator = options.locator ? {
+      frame: options.locator._frame._channel,
+      selector: options.locator._selector,
+    } : undefined;
+    const expected = options.expected ? options.expected.toString('base64') : undefined;
+
+    const result = await this._channel.expectScreenshot({
+      ...options,
+      isNot: !!options.isNot,
+      expected,
+      locator,
+      screenshotOptions: {
+        ...options.screenshotOptions,
+        mask,
+      }
+    });
+    return {
+      log: result.log,
+      actual: result.actual ? Buffer.from(result.actual, 'base64') : undefined,
+      previous: result.previous ? Buffer.from(result.previous, 'base64') : undefined,
+      diff: result.diff ? Buffer.from(result.diff, 'base64') : undefined,
+      errorMessage: result.errorMessage,
+    };
   }
 
   async title(): Promise<string> {
@@ -509,7 +558,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     return this._mainFrame.fill(selector, value, options);
   }
 
-  locator(selector: string, options?: { hasText?: string | RegExp }): Locator {
+  locator(selector: string, options?: { hasText?: string | RegExp, has?: Locator }): Locator {
     return this.mainFrame().locator(selector, options);
   }
 
@@ -638,7 +687,8 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   }
 
   async pause() {
-    await this.context()._channel.pause();
+    if (!require('inspector').url())
+      await this.context()._channel.pause();
   }
 
   async pdf(options: PDFOptions = {}): Promise<Buffer> {

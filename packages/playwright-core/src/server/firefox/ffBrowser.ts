@@ -154,6 +154,7 @@ export class FFBrowser extends Browser {
 
 export class FFBrowserContext extends BrowserContext {
   declare readonly _browser: FFBrowser;
+  private _initScripts: string[] = [];
 
   constructor(browser: FFBrowser, browserContextId: string | undefined, options: types.BrowserContextOptions) {
     super(browser, options, browserContextId);
@@ -322,7 +323,8 @@ export class FFBrowserContext extends BrowserContext {
   }
 
   async _doAddInitScript(source: string) {
-    await this._browser._connection.send('Browser.addScriptToEvaluateOnNewDocument', { browserContextId: this._browserContextId, script: source });
+    this._initScripts.push(source);
+    await this._browser._connection.send('Browser.setInitScripts', { browserContextId: this._browserContextId, scripts: this._initScripts.map(script => ({ script })) });
   }
 
   async _doExposeBinding(binding: PageBinding) {

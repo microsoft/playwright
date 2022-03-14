@@ -65,7 +65,7 @@ class GridWorker extends EventEmitter {
 
   constructor(clientSocket: WebSocket) {
     super();
-    this._log = debug(`[worker ${this.workerId}]`);
+    this._log = debug(`pw:grid:worker${this.workerId}`);
     this._clientSocket = clientSocket;
     clientSocket.on('close', (code: number, reason: string) => this.closeWorker(WSErrors.NO_ERROR));
     clientSocket.on('error', (error: Error) => this.closeWorker(WSErrors.CLIENT_SOCKET_ERROR));
@@ -110,7 +110,7 @@ class GridAgent extends EventEmitter {
   constructor(capacity = Infinity, creationTimeout = 5 * 60000, retireTimeout = 30000) {
     super();
     this._capacity = capacity;
-    this._log = debug(`[agent ${this.agentId}]`);
+    this._log = debug(`pw:grid:agent${this.agentId}`);
     this.setStatus('created');
     this._retireTimeout = retireTimeout;
     this._agentCreationTimeoutId = setTimeout(() => {
@@ -196,7 +196,7 @@ export class GridServer {
   private _pwVersion: string;
 
   constructor(factory: GridFactory, authToken: string = '') {
-    this._log = debug(`[grid]`);
+    this._log = debug(`pw:grid:server`);
     this._authToken = authToken || '';
     this._server = new HttpServer();
     this._factory = factory;
@@ -307,6 +307,7 @@ export class GridServer {
           return { error: undefined };
         }).catch(error => {
           this._log('failed to launch agent ' + agent.agentId);
+          // eslint-disable-next-line no-console
           console.error(error);
           agent.closeAgent(WSErrors.AGENT_CREATION_FAILED);
           return { error };

@@ -39,11 +39,56 @@ export type UpdateSnapshots = 'all' | 'none' | 'missing';
 type UseOptions<TestArgs, WorkerArgs> = { [K in keyof WorkerArgs]?: WorkerArgs[K] } & { [K in keyof TestArgs]?: TestArgs[K] };
 
 type ExpectSettings = {
-  // Default timeout for async expect matchers in milliseconds, defaults to 5000ms.
+  /**
+   * Default timeout for async expect matchers in milliseconds, defaults to 5000ms.
+   */
   timeout?: number;
+  toHaveScreenshot?: {
+    /** An acceptable perceived color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between pixels in compared images, between zero (strict) and one (lax). Defaults to `0.2`.
+     */
+    threshold?: number,
+    /**
+     * An acceptable amount of pixels that could be different, unset by default.
+     */
+    maxDiffPixels?: number,
+    /**
+     * An acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1` , unset by default.
+     */
+    maxDiffPixelRatio?: number,
+    /**
+     * When set to `"disabled"`, stops CSS animations, CSS transitions and Web Animations. Animations get different treatment
+     * depending on their duration:
+     * - finite animations are fast-forwarded to completion, so they'll fire `transitionend` event.
+     * - infinite animations are canceled to initial state, and then played over after the screenshot.
+     *
+     * Defaults to `"disabled"` that leaves animations untouched.
+     */
+    animations?: 'allow'|'disabled',
+    /**
+     * When set to `"ready"`, screenshot will wait for
+     * [`document.fonts.ready`](https://developer.mozilla.org/en-US/docs/Web/API/FontFaceSet/ready) promise to resolve in all
+     * frames. Defaults to `"ready"`.
+     */
+    fonts?: 'ready'|'nowait',
+    /**
+     * When set to `"css"`, screenshot will have a single pixel per each css pixel on the page. For high-dpi devices, this will
+     * keep screenshots small. Using `"device"` option will produce a single pixel per each device pixel, so screenhots of
+     * high-dpi devices will be twice as large or even larger. Defaults to `"css"`.
+     */
+    size?: 'css'|'device',
+  }
   toMatchSnapshot?: {
-    // Pixel match threshold.
-    threshold?: number
+    /** An acceptable perceived color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between pixels in compared images, between zero (strict) and one (lax). Defaults to `0.2`.
+     */
+    threshold?: number,
+    /**
+     * An acceptable amount of pixels that could be different, unset by default.
+     */
+    maxDiffPixels?: number,
+    /**
+     * An acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1` , unset by default.
+     */
+    maxDiffPixelRatio?: number,
   }
 };
 
@@ -115,6 +160,29 @@ interface TestProject {
    */
   expect?: ExpectSettings;
   /**
+   * Playwright Test runs tests in parallel. In order to achieve that, it runs several worker processes that run at the same
+   * time. By default, **test files** are run in parallel. Tests in a single file are run in order, in the same worker
+   * process.
+   *
+   * You can configure entire test project to concurrently run all tests in all files using this option.
+   */
+  fullyParallel?: boolean;
+  /**
+   * Filter to only run tests with a title matching one of the patterns. For example, passing `grep: /cart/` should only run
+   * tests with "cart" in the title. Also available globally and in the [command line](https://playwright.dev/docs/test-cli) with the `-g` option.
+   *
+   * `grep` option is also useful for [tagging tests](https://playwright.dev/docs/test-annotations#tag-tests).
+   */
+  grep?: RegExp | RegExp[];
+  /**
+   * Filter to only run tests with a title **not** matching one of the patterns. This is the opposite of
+   * [testProject.grep](https://playwright.dev/docs/api/class-testproject#test-project-grep). Also available globally and in
+   * the [command line](https://playwright.dev/docs/test-cli) with the `--grep-invert` option.
+   *
+   * `grepInvert` option is also useful for [tagging tests](https://playwright.dev/docs/test-annotations#tag-tests).
+   */
+  grepInvert?: RegExp | RegExp[] | null;
+  /**
    * Any JSON-serializable metadata that will be put directly to the test report.
    */
   metadata?: any;
@@ -135,6 +203,41 @@ interface TestProject {
    * resolve to `snapshots/a.spec.js-snapshots`.
    */
   snapshotDir?: string;
+  /**
+   * The base directory, relative to the config file, for screenshot files created with `toHaveScreenshot`. Defaults to
+   *
+   * ```
+   * <directory-of-configuration-file>/__screenshots__/<platform name>/<project name>
+   * ```
+   *
+   * This path will serve as the base directory for each test file screenshot directory. For example, the following test
+   * structure:
+   *
+   * ```
+   * smoke-tests/
+   * └── basic.spec.ts
+   * ```
+   *
+   * will result in the following screenshots folder structure:
+   *
+   * ```
+   * __screenshots__/
+   * └── darwin/
+   *     ├── Mobile Safari/
+   *     │   └── smoke-tests/
+   *     │       └── basic.spec.ts/
+   *     │           └── screenshot-expectation.png
+   *     └── Desktop Chrome/
+   *         └── smoke-tests/
+   *             └── basic.spec.ts/
+   *                 └── screenshot-expectation.png
+   * ```
+   *
+   * where:
+   * - `darwin/` - a platform name folder
+   * - `Mobile Safari` and `Desktop Chrome` - project names
+   */
+  screenshotsDir?: string;
   /**
    * The output directory for files created during test execution. Defaults to `test-results`.
    *
@@ -355,16 +458,22 @@ export type WebServerConfig = {
   command: string,
   /**
    * The port that your http server is expected to appear on. It does wait until it accepts connections.
+   * Exactly one of `port` or `url` is required.
    */
-  port: number,
+  port?: number,
+  /**
+   * The url on your http server that is expected to return a 2xx status code when the server is ready to accept connections.
+   * Exactly one of `port` or `url` is required.
+   */
+  url?: string,
   /**
    * How long to wait for the process to start up and be available in milliseconds. Defaults to 60000.
    */
   timeout?: number,
   /**
-   * If true, it will re-use an existing server on the port when available. If no server is running
-   * on that port, it will run the command to start a new server.
-   * If false, it will throw if an existing process is listening on the port.
+   * If true, it will re-use an existing server on the port or url when available. If no server is running
+   * on that port or url, it will run the command to start a new server.
+   * If false, it will throw if an existing process is listening on the port or url.
    * This should commonly set to !process.env.CI to allow the local dev server when running tests locally.
    */
   reuseExistingServer?: boolean
@@ -420,6 +529,14 @@ interface TestConfig {
    *
    */
   forbidOnly?: boolean;
+  /**
+   * Playwright Test runs tests in parallel. In order to achieve that, it runs several worker processes that run at the same
+   * time. By default, **test files** are run in parallel. Tests in a single file are run in order, in the same worker
+   * process.
+   *
+   * You can configure entire test run to concurrently execute all tests in all files using this option.
+   */
+  fullyParallel?: boolean;
   /**
    * Path to the global setup file. This file will be required and run before all the tests. It must export a single function
    * that takes a [`TestConfig`] argument.
@@ -570,14 +687,19 @@ interface TestConfig {
   /**
    * Launch a development web server during the tests.
    *
-   * The server will wait for it to be available on `127.0.0.1` or `::1` before running the tests. For continuous
-   * integration, you may want to use the `reuseExistingServer: !process.env.CI` option which does not use an existing server
-   * on the CI.
+   * If the port is specified, the server will wait for it to be available on `127.0.0.1` or `::1`, before running the tests.
+   * If the url is specified, the server will wait for the URL to return a 2xx status code before running the tests.
    *
-   * The port gets then passed over to Playwright as a `baseURL` when creating the context
-   * [browser.newContext([options])](https://playwright.dev/docs/api/class-browser#browser-new-context). For example `8080`
-   * ends up in `baseURL` to be `http://localhost:8080`. If you want to use `https://` you need to manually specify the
-   * `baseURL` inside `use`.
+   * For continuous integration, you may want to use the `reuseExistingServer: !process.env.CI` option which does not use an
+   * existing server on the CI. To see the stdout, you can set the `DEBUG=pw:webserver` environment variable.
+   *
+   * The `port` (but not the `url`) gets passed over to Playwright as a
+   * [testOptions.baseURL](https://playwright.dev/docs/api/class-testoptions#test-options-base-url). For example port `8080`
+   * produces `baseURL` equal `http://localhost:8080`.
+   *
+   * > NOTE: It is also recommended to specify
+   * [testOptions.baseURL](https://playwright.dev/docs/api/class-testoptions#test-options-base-url) in the config, so that
+   * tests could use relative urls.
    *
    * ```ts
    * // playwright.config.ts
@@ -589,22 +711,21 @@ interface TestConfig {
    *     timeout: 120 * 1000,
    *     reuseExistingServer: !process.env.CI,
    *   },
+   *   use: {
+   *     baseURL: 'http://localhost:3000/',
+   *   },
    * };
    * export default config;
    * ```
    *
-   * Now you can use a relative path when navigating the page, or use `baseURL` fixture:
+   * Now you can use a relative path when navigating the page:
    *
    * ```ts
    * // test.spec.ts
    * import { test } from '@playwright/test';
-   * test('test', async ({ page, baseURL }) => {
-   *   // baseURL is taken directly from your web server,
-   *   // e.g. http://localhost:3000
-   *   await page.goto(baseURL + '/bar');
-   *   // Alternatively, just use relative path, because baseURL is already
-   *   // set for the default context and page.
-   *   // For example, this will result in http://localhost:3000/foo
+   *
+   * test('test', async ({ page }) => {
+   *   // This will result in http://localhost:3000/foo
    *   await page.goto('/foo');
    * });
    * ```
@@ -643,8 +764,8 @@ interface TestConfig {
    * const config: PlaywrightTestConfig = {
    *   expect: {
    *     timeout: 10000,
-   *     toMatchSnapshot: {
-   *       threshold: 0.3,
+   *     toHaveScreenshot: {
+   *       maxDiffPixels: 10,
    *     },
    *   },
    * };
@@ -671,6 +792,41 @@ interface TestConfig {
    * resolve to `snapshots/a.spec.js-snapshots`.
    */
   snapshotDir?: string;
+  /**
+   * The base directory, relative to the config file, for screenshot files created with `toHaveScreenshot`. Defaults to
+   *
+   * ```
+   * <directory-of-configuration-file>/__screenshots__/<platform name>/<project name>
+   * ```
+   *
+   * This path will serve as the base directory for each test file screenshot directory. For example, the following test
+   * structure:
+   *
+   * ```
+   * smoke-tests/
+   * └── basic.spec.ts
+   * ```
+   *
+   * will result in the following screenshots folder structure:
+   *
+   * ```
+   * __screenshots__/
+   * └── darwin/
+   *     ├── Mobile Safari/
+   *     │   └── smoke-tests/
+   *     │       └── basic.spec.ts/
+   *     │           └── screenshot-expectation.png
+   *     └── Desktop Chrome/
+   *         └── smoke-tests/
+   *             └── basic.spec.ts/
+   *                 └── screenshot-expectation.png
+   * ```
+   *
+   * where:
+   * - `darwin/` - a platform name folder
+   * - `Mobile Safari` and `Desktop Chrome` - project names
+   */
+  screenshotsDir?: string;
   /**
    * The output directory for files created during test execution. Defaults to `test-results`.
    *
@@ -887,6 +1043,14 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    */
   forbidOnly: boolean;
   /**
+   * Playwright Test runs tests in parallel. In order to achieve that, it runs several worker processes that run at the same
+   * time. By default, **test files** are run in parallel. Tests in a single file are run in order, in the same worker
+   * process.
+   *
+   * You can configure entire test run to concurrently execute all tests in all files using this option.
+   */
+  fullyParallel: boolean;
+  /**
    * Path to the global setup file. This file will be required and run before all the tests. It must export a single function
    * that takes a [`TestConfig`] argument.
    *
@@ -1059,14 +1223,19 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
   /**
    * Launch a development web server during the tests.
    *
-   * The server will wait for it to be available on `127.0.0.1` or `::1` before running the tests. For continuous
-   * integration, you may want to use the `reuseExistingServer: !process.env.CI` option which does not use an existing server
-   * on the CI.
+   * If the port is specified, the server will wait for it to be available on `127.0.0.1` or `::1`, before running the tests.
+   * If the url is specified, the server will wait for the URL to return a 2xx status code before running the tests.
    *
-   * The port gets then passed over to Playwright as a `baseURL` when creating the context
-   * [browser.newContext([options])](https://playwright.dev/docs/api/class-browser#browser-new-context). For example `8080`
-   * ends up in `baseURL` to be `http://localhost:8080`. If you want to use `https://` you need to manually specify the
-   * `baseURL` inside `use`.
+   * For continuous integration, you may want to use the `reuseExistingServer: !process.env.CI` option which does not use an
+   * existing server on the CI. To see the stdout, you can set the `DEBUG=pw:webserver` environment variable.
+   *
+   * The `port` (but not the `url`) gets passed over to Playwright as a
+   * [testOptions.baseURL](https://playwright.dev/docs/api/class-testoptions#test-options-base-url). For example port `8080`
+   * produces `baseURL` equal `http://localhost:8080`.
+   *
+   * > NOTE: It is also recommended to specify
+   * [testOptions.baseURL](https://playwright.dev/docs/api/class-testoptions#test-options-base-url) in the config, so that
+   * tests could use relative urls.
    *
    * ```ts
    * // playwright.config.ts
@@ -1078,22 +1247,21 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    *     timeout: 120 * 1000,
    *     reuseExistingServer: !process.env.CI,
    *   },
+   *   use: {
+   *     baseURL: 'http://localhost:3000/',
+   *   },
    * };
    * export default config;
    * ```
    *
-   * Now you can use a relative path when navigating the page, or use `baseURL` fixture:
+   * Now you can use a relative path when navigating the page:
    *
    * ```ts
    * // test.spec.ts
    * import { test } from '@playwright/test';
-   * test('test', async ({ page, baseURL }) => {
-   *   // baseURL is taken directly from your web server,
-   *   // e.g. http://localhost:3000
-   *   await page.goto(baseURL + '/bar');
-   *   // Alternatively, just use relative path, because baseURL is already
-   *   // set for the default context and page.
-   *   // For example, this will result in http://localhost:3000/foo
+   *
+   * test('test', async ({ page }) => {
+   *   // This will result in http://localhost:3000/foo
    *   await page.goto('/foo');
    * });
    * ```
@@ -1389,15 +1557,14 @@ export interface TestInfo {
   /**
    * The list of files or buffers attached to the current test. Some reporters show test attachments.
    *
-   * To safely add a file from disk as an attachment, please use
-   * [testInfo.attach(path[, options])](https://playwright.dev/docs/api/class-testinfo#test-info-attach-1) instead of
-   * directly pushing onto this array. For inline attachments, use
-   * [testInfo.attach(path[, options])](https://playwright.dev/docs/api/class-testinfo#test-info-attach-1).
+   * To add an attachment, use
+   * [testInfo.attach(name[, options])](https://playwright.dev/docs/api/class-testinfo#test-info-attach) instead of directly
+   * pushing onto this array.
    */
   attachments: { name: string, path?: string, body?: Buffer, contentType: string }[];
   /**
-   * Attach a file from disk to the current test. Some reporters show test attachments. The `name` and `contentType` will be
-   * inferred by default from the `path`, but you can optionally override either of these.
+   * Attach a value or a file from disk to the current test. Some reporters show test attachments. Either `path` or `body`
+   * must be specified, but not both.
    *
    * For example, you can attach a screenshot to the test:
    *
@@ -1406,15 +1573,8 @@ export interface TestInfo {
    *
    * test('basic test', async ({ page }, testInfo) => {
    *   await page.goto('https://playwright.dev');
-   *
-   *   // Capture a screenshot and attach it.
-   *   const path = testInfo.outputPath('screenshot.png');
-   *   await page.screenshot({ path });
-   *   await testInfo.attach(path);
-   *   // Optionally override the name.
-   *   await testInfo.attach(path, { name: 'example.png' });
-   *   // Optionally override the contentType.
-   *   await testInfo.attach(path, { name: 'example.custom-file', contentType: 'x-custom-content-type' });
+   *   const screenshot = await page.screenshot();
+   *   await testInfo.attach('screenshot', { body: screenshot, contentType: 'image/png' });
    * });
    * ```
    *
@@ -1426,24 +1586,17 @@ export interface TestInfo {
    * test('basic test', async ({}, testInfo) => {
    *   const { download } = require('./my-custom-helpers');
    *   const tmpPath = await download('a');
-   *   await testInfo.attach(tmpPath, { name: 'example.json' });
+   *   await testInfo.attach('downloaded', { path: tmpPath });
    * });
    * ```
    *
-   * > NOTE: [testInfo.attach(path[, options])](https://playwright.dev/docs/api/class-testinfo#test-info-attach-1)
-   * automatically takes care of copying attachments to a location that is accessible to reporters, even if you were to
-   * delete the attachment after awaiting the attach call.
-   * @param path
-   * @param options
-   */
-  attach(path: string, options?: { contentType?: string, name?: string}): Promise<void>;
-  /**
-   * Attach data to the current test, either a `string` or a `Buffer`. Some reporters show test attachments.
-   * @param body
+   * > NOTE: [testInfo.attach(name[, options])](https://playwright.dev/docs/api/class-testinfo#test-info-attach)
+   * automatically takes care of copying attached files to a location that is accessible to reporters. You can safely remove
+   * the attachment after awaiting the attach call.
    * @param name
    * @param options
    */
-  attach(body: string | Buffer, name: string, options?: { contentType?: string }): Promise<void>;
+  attach(name: string, options?: { contentType?: string, path?: string, body?: string | Buffer }): Promise<void>;
   /**
    * Specifies a unique repeat index when running in "repeat each" mode. This mode is enabled by passing `--repeat-each` to
    * the [command line](https://playwright.dev/docs/test-cli).
@@ -1497,9 +1650,14 @@ export interface TestInfo {
    */
   status?: TestStatus;
   /**
-   * An error thrown during test execution, if any.
+   * First error thrown during test execution, if any. This is equal to the first element in
+   * [testInfo.errors](https://playwright.dev/docs/api/class-testinfo#test-info-errors).
    */
   error?: TestError;
+  /**
+   * Errors thrown during test execution, if any.
+   */
+  errors: TestError[];
   /**
    * Output written to `process.stdout` or `console.log` during the test execution.
    */
@@ -1640,15 +1798,15 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * Declares a group of tests that should always be run serially. If one of the tests fails, all subsequent tests are
    * skipped. All tests in a group are retried together.
    *
+   * > NOTE: See [test.describe.configure([options])](https://playwright.dev/docs/api/class-test#test-describe-configure) for
+   * the preferred way of configuring the execution mode.
    * > NOTE: Using serial is not recommended. It is usually better to make your tests isolated, so they can be run
    * independently.
    *
    * ```ts
    * test.describe.serial('group', () => {
-   *   test('runs first', async ({ page }) => {
-   *   });
-   *   test('runs second', async ({ page }) => {
-   *   });
+   *   test('runs first', async ({ page }) => {});
+   *   test('runs second', async ({ page }) => {});
    * });
    * ```
    *
@@ -1685,12 +1843,13 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * but using [test.describe.parallel(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-parallel)
    * allows them to run in parallel.
    *
+   * > NOTE: See [test.describe.configure([options])](https://playwright.dev/docs/api/class-test#test-describe-configure) for
+   * the preferred way of configuring the execution mode.
+   *
    * ```ts
    * test.describe.parallel('group', () => {
-   *   test('runs in parallel 1', async ({ page }) => {
-   *   });
-   *   test('runs in parallel 2', async ({ page }) => {
-   *   });
+   *   test('runs in parallel 1', async ({ page }) => {});
+   *   test('runs in parallel 2', async ({ page }) => {});
    * });
    * ```
    *
@@ -1711,6 +1870,33 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    */
   only: SuiteFunction;
     };
+    /**
+   * Set execution mode of execution for the enclosing scope. Can be executed either on the top level or inside a describe.
+   * Configuration applies to the entire scope, regardless of whether it run before or after the test declaration.
+   *
+   * Learn more about the execution modes [here](https://playwright.dev/docs/test-parallel).
+   *
+   * Running tests in parallel:
+   *
+   * ```ts
+   * // Run all the tests in the file concurrently using parallel workers.
+   * test.describe.configure({ mode: 'parallel' });
+   * test('runs in parallel 1', async ({ page }) => {});
+   * test('runs in parallel 2', async ({ page }) => {});
+   * ```
+   *
+   * Running tests sequentially:
+   *
+   * ```ts
+   * // Annotate tests as inter-dependent.
+   * test.describe.configure({ mode: 'serial' });
+   * test('runs first', async ({ page }) => {});
+   * test('runs second', async ({ page }) => {});
+   * ```
+   *
+   * @param options
+   */
+  configure: (options: { mode?: 'parallel' | 'serial' }) => void;
   };
   /**
    * Declares a skipped test, similarly to
@@ -2378,7 +2564,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * Declares a `beforeEach` hook that is executed before each test. When called in the scope of a test file, runs before
    * each test in the file. When called inside a
    * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) group, runs before each test
-   * in the group.
+   * in the group.  If multiple `beforeEach` hooks are added, they will run in the order of their registration.
    *
    * You can access all the same [Fixtures] as the test function itself, and also the [TestInfo] object that gives a lot of
    * useful information. For example, you can navigate the page before starting the test.
@@ -2406,7 +2592,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * Declares an `afterEach` hook that is executed after each test. When called in the scope of a test file, runs after each
    * test in the file. When called inside a
    * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) group, runs after each test
-   * in the group.
+   * in the group. If multiple `afterEach` hooks are added, they will run in the order of their registration.
    *
    * You can access all the same [Fixtures] as the test function itself, and also the [TestInfo] object that gives a lot of
    * useful information. For example, you can check whether the test succeeded or failed.
@@ -2434,7 +2620,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * Declares a `beforeAll` hook that is executed once per worker process before all tests. When called in the scope of a
    * test file, runs before all tests in the file. When called inside a
    * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) group, runs before all tests
-   * in the group.
+   * in the group. If multiple `beforeAll` hooks are added, they will run in the order of their registration.
    *
    * ```ts
    * // example.spec.ts
@@ -2465,7 +2651,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * Declares an `afterAll` hook that is executed once per worker after all tests. When called in the scope of a test file,
    * runs after all tests in the file. When called inside a
    * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) group, runs after all tests
-   * in the group.
+   * in the group. If multiple `afterAll` hooks are added, they will run in the order of their registration.
    *
    * Note that worker process is restarted on test failures, and `afterAll` hook runs again in the new worker. Learn more
    * about [workers and failures](https://playwright.dev/docs/test-retries).
@@ -2598,7 +2784,6 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * @param fixtures An object containing fixtures and/or options. Learn more about [fixtures format](https://playwright.dev/docs/test-fixtures).
    */
   extend<T, W extends KeyValue = {}>(fixtures: Fixtures<T, W, TestArgs, WorkerArgs>): TestType<TestArgs & T, WorkerArgs & W>;
-  extendTest<T, W>(other: TestType<T, W>): TestType<TestArgs & T, WorkerArgs & W>;
   /**
    * Returns information about the currently running test. This method can only be called during the test execution,
    * otherwise it throws.
@@ -2627,6 +2812,17 @@ type ColorScheme = Exclude<BrowserContextOptions['colorScheme'], undefined>;
 type ExtraHTTPHeaders = Exclude<BrowserContextOptions['extraHTTPHeaders'], undefined>;
 type Proxy = Exclude<BrowserContextOptions['proxy'], undefined>;
 type StorageState = Exclude<BrowserContextOptions['storageState'], undefined>;
+type ConnectOptions = {
+  /**
+   * A browser websocket endpoint to connect to.
+   */
+  wsEndpoint: string;
+
+  /**
+   * Additional HTTP headers to be sent with web socket connect request.
+   */
+  headers?: { [key: string]: string; };
+};
 
 /**
  * Playwright Test provides many options to configure test environment, [Browser], [BrowserContext] and more.
@@ -2704,6 +2900,16 @@ export interface PlaywrightWorkerOptions {
    * [testOptions.channel](https://playwright.dev/docs/api/class-testoptions#test-options-channel) take priority over this.
    */
   launchOptions: LaunchOptions;
+  /**
+   * When connect options are specified, default
+   * [fixtures.browser](https://playwright.dev/docs/api/class-fixtures#fixtures-browser),
+   * [fixtures.context](https://playwright.dev/docs/api/class-fixtures#fixtures-context) and
+   * [fixtures.page](https://playwright.dev/docs/api/class-fixtures#fixtures-page) use the remote browser instead of
+   * launching a browser locally, and any launch options like
+   * [testOptions.headless](https://playwright.dev/docs/api/class-testoptions#test-options-headless) or
+   * [testOptions.channel](https://playwright.dev/docs/api/class-testoptions#test-options-channel) are ignored.
+   */
+  connectOptions: ConnectOptions | undefined;
   /**
    * Whether to automatically capture a screenshot after each test. Defaults to `'off'`.
    * - `'off'`: Do not capture screenshots.
@@ -2876,6 +3082,8 @@ export interface PlaywrightTestOptions {
    * constructor for building the corresponding URL. Examples:
    * - baseURL: `http://localhost:3000` and navigating to `/bar.html` results in `http://localhost:3000/bar.html`
    * - baseURL: `http://localhost:3000/foo/` and navigating to `./bar.html` results in `http://localhost:3000/foo/bar.html`
+   * - baseURL: `http://localhost:3000/foo` (without trailing slash) and navigating to `./bar.html` results in
+   *   `http://localhost:3000/bar.html`
    */
   baseURL: string | undefined;
   /**

@@ -61,7 +61,7 @@ Test function that takes one or two arguments: an object with fixtures and optio
 
 ## method: Test.afterAll
 
-Declares an `afterAll` hook that is executed once per worker after all tests. When called in the scope of a test file, runs after all tests in the file. When called inside a [`method: Test.describe`] group, runs after all tests in the group.
+Declares an `afterAll` hook that is executed once per worker after all tests. When called in the scope of a test file, runs after all tests in the file. When called inside a [`method: Test.describe`] group, runs after all tests in the group. If multiple `afterAll` hooks are added, they will run in the order of their registration.
 
 Note that worker process is restarted on test failures, and `afterAll` hook runs again in the new worker. Learn more about [workers and failures](./test-retries.md).
 
@@ -74,7 +74,7 @@ Hook function that takes one or two arguments: an object with worker fixtures an
 
 ## method: Test.afterEach
 
-Declares an `afterEach` hook that is executed after each test. When called in the scope of a test file, runs after each test in the file. When called inside a [`method: Test.describe`] group, runs after each test in the group.
+Declares an `afterEach` hook that is executed after each test. When called in the scope of a test file, runs after each test in the file. When called inside a [`method: Test.describe`] group, runs after each test in the group. If multiple `afterEach` hooks are added, they will run in the order of their registration.
 
 You can access all the same [Fixtures] as the test function itself, and also the [TestInfo] object that gives a lot of useful information. For example, you can check whether the test succeeded or failed.
 
@@ -118,7 +118,7 @@ Hook function that takes one or two arguments: an object with fixtures and optio
 
 ## method: Test.beforeAll
 
-Declares a `beforeAll` hook that is executed once per worker process before all tests. When called in the scope of a test file, runs before all tests in the file. When called inside a [`method: Test.describe`] group, runs before all tests in the group.
+Declares a `beforeAll` hook that is executed once per worker process before all tests. When called in the scope of a test file, runs before all tests in the file. When called inside a [`method: Test.describe`] group, runs before all tests in the group. If multiple `beforeAll` hooks are added, they will run in the order of their registration.
 
 ```js js-flavor=js
 // example.spec.js
@@ -167,7 +167,7 @@ Hook function that takes one or two arguments: an object with worker fixtures an
 
 ## method: Test.beforeEach
 
-Declares a `beforeEach` hook that is executed before each test. When called in the scope of a test file, runs before each test in the file. When called inside a [`method: Test.describe`] group, runs before each test in the group.
+Declares a `beforeEach` hook that is executed before each test. When called in the scope of a test file, runs before each test in the file. When called inside a [`method: Test.describe`] group, runs before each test in the group.  If multiple `beforeEach` hooks are added, they will run in the order of their registration.
 
 You can access all the same [Fixtures] as the test function itself, and also the [TestInfo] object that gives a lot of useful information. For example, you can navigate the page before starting the test.
 
@@ -248,6 +248,50 @@ Group title.
 A callback that is run immediately when calling [`method: Test.describe`]. Any tests added in this callback will belong to the group.
 
 
+## method: Test.describe.configure
+
+Set execution mode of execution for the enclosing scope. Can be executed either on the top level or inside a describe. Configuration applies to the entire scope, regardless of whether it run before or after the test
+declaration.
+
+Learn more about the execution modes [here](./test-parallel.md).
+
+Running tests in parallel:
+
+```js js-flavor=js
+// Run all the tests in the file concurrently using parallel workers.
+test.describe.configure({ mode: 'parallel' });
+test('runs in parallel 1', async ({ page }) => {});
+test('runs in parallel 2', async ({ page }) => {});
+```
+
+```js js-flavor=ts
+// Run all the tests in the file concurrently using parallel workers.
+test.describe.configure({ mode: 'parallel' });
+test('runs in parallel 1', async ({ page }) => {});
+test('runs in parallel 2', async ({ page }) => {});
+```
+
+Running tests sequentially:
+
+```js js-flavor=js
+// Annotate tests as inter-dependent.
+test.describe.configure({ mode: 'serial' });
+test('runs first', async ({ page }) => {});
+test('runs second', async ({ page }) => {});
+```
+
+```js js-flavor=ts
+// Annotate tests as inter-dependent.
+test.describe.configure({ mode: 'serial' });
+test('runs first', async ({ page }) => {});
+test('runs second', async ({ page }) => {});
+```
+
+### option: Test.describe.configure.mode
+- `mode` <[TestMode]<"parallel"|"serial">>
+
+
+
 ## method: Test.describe.only
 
 Declares a focused group of tests. If there are some focused tests or suites, all of them will be run but nothing else.
@@ -290,21 +334,21 @@ A callback that is run immediately when calling [`method: Test.describe.only`]. 
 
 Declares a group of tests that could be run in parallel. By default, tests in a single test file run one after another, but using [`method: Test.describe.parallel`] allows them to run in parallel.
 
+:::note
+See [`method: Test.describe.configure`] for the preferred way of configuring the execution mode.
+:::
+
 ```js js-flavor=js
 test.describe.parallel('group', () => {
-  test('runs in parallel 1', async ({ page }) => {
-  });
-  test('runs in parallel 2', async ({ page }) => {
-  });
+  test('runs in parallel 1', async ({ page }) => {});
+  test('runs in parallel 2', async ({ page }) => {});
 });
 ```
 
 ```js js-flavor=ts
 test.describe.parallel('group', () => {
-  test('runs in parallel 1', async ({ page }) => {
-  });
-  test('runs in parallel 2', async ({ page }) => {
-  });
+  test('runs in parallel 1', async ({ page }) => {});
+  test('runs in parallel 2', async ({ page }) => {});
 });
 ```
 
@@ -343,24 +387,24 @@ A callback that is run immediately when calling [`method: Test.describe.parallel
 Declares a group of tests that should always be run serially. If one of the tests fails, all subsequent tests are skipped. All tests in a group are retried together.
 
 :::note
+See [`method: Test.describe.configure`] for the preferred way of configuring the execution mode.
+:::
+
+:::note
 Using serial is not recommended. It is usually better to make your tests isolated, so they can be run independently.
 :::
 
 ```js js-flavor=js
 test.describe.serial('group', () => {
-  test('runs first', async ({ page }) => {
-  });
-  test('runs second', async ({ page }) => {
-  });
+  test('runs first', async ({ page }) => {});
+  test('runs second', async ({ page }) => {});
 });
 ```
 
 ```js js-flavor=ts
 test.describe.serial('group', () => {
-  test('runs first', async ({ page }) => {
-  });
-  test('runs second', async ({ page }) => {
-  });
+  test('runs first', async ({ page }) => {});
+  test('runs second', async ({ page }) => {});
 });
 ```
 

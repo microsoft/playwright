@@ -17,7 +17,7 @@
 
 import { test as it, expect } from './pageTest';
 
-it('should press', async ({ page }) => {
+it('should press @smoke', async ({ page }) => {
   await page.setContent(`<input type='text' />`);
   await page.locator('input').press('h');
   expect(await page.$eval('input', input => input.value)).toBe('h');
@@ -112,4 +112,11 @@ it('should combine visible with other selectors', async ({ page }) => {
   const locator = page.locator('.item >> visible=true').nth(1);
   await expect(locator).toHaveText('visible data2');
   await expect(page.locator('.item >> visible=true >> text=data3')).toHaveText('visible data3');
+});
+
+it('locator.count should work with deleted Map in main world', async ({ page }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/11254' });
+  await page.evaluate('Map = 1');
+  await page.locator('#searchResultTableDiv .x-grid3-row').count();
+  await expect(page.locator('#searchResultTableDiv .x-grid3-row')).toHaveCount(0);
 });

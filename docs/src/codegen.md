@@ -22,7 +22,7 @@ playwright codegen wikipedia.org
 ```
 
 ```bash csharp
-playwright codegen wikipedia.org
+pwsh bin\Debug\netX\playwright.ps1 codegen wikipedia.org
 ```
 
 Run `codegen` and perform actions in the browser. Playwright will generate the code for the user interactions. `codegen` will attempt to generate resilient text-based selectors.
@@ -52,7 +52,7 @@ playwright codegen --save-storage=auth.json
 ```
 
 ```bash csharp
-playwright codegen --save-storage=auth.json
+pwsh bin\Debug\netX\playwright.ps1 codegen --save-storage=auth.json
 # Perform authentication and exit.
 # auth.json will contain the storage state.
 ```
@@ -79,8 +79,8 @@ playwright codegen --load-storage=auth.json my.web.app
 ```
 
 ```bash csharp
-playwright open --load-storage=auth.json my.web.app
-playwright codegen --load-storage=auth.json my.web.app
+pwsh bin\Debug\netX\playwright.ps1 open --load-storage=auth.json my.web.app
+pwsh bin\Debug\netX\playwright.ps1 codegen --load-storage=auth.json my.web.app
 # Perform actions in authenticated state.
 ```
 
@@ -206,7 +206,7 @@ playwright codegen --device="iPhone 11" wikipedia.org
 
 ```bash csharp
 # Emulate iPhone 11.
-playwright codegen --device="iPhone 11" wikipedia.org
+pwsh bin\Debug\netX\playwright.ps1 codegen --device="iPhone 11" wikipedia.org
 ```
 
 ## Emulate color scheme and viewport size
@@ -230,7 +230,7 @@ playwright codegen --viewport-size=800,600 --color-scheme=dark twitter.com
 
 ```bash csharp
 # Emulate screen size and color scheme.
-playwright codegen --viewport-size=800,600 --color-scheme=dark twitter.com
+pwsh bin\Debug\netX\playwright.ps1 codegen --viewport-size=800,600 --color-scheme=dark twitter.com
 ```
 
 ## Emulate geolocation, language and timezone
@@ -256,5 +256,5 @@ playwright codegen --timezone="Europe/Rome" --geolocation="41.890221,12.492348" 
 ```bash csharp
 # Emulate timezone, language & location
 # Once page opens, click the "my location" button to see geolocation in action
-playwright codegen --timezone="Europe/Rome" --geolocation="41.890221,12.492348" --lang="it-IT" maps.google.com
+pwsh bin\Debug\netX\playwright.ps1 codegen --timezone="Europe/Rome" --geolocation="41.890221,12.492348" --lang="it-IT" maps.google.com
 ```

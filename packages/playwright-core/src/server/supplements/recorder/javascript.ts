@@ -35,24 +35,33 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
   }
 
   generateAction(actionInContext: ActionInContext): string {
-    const { action, pageAlias } = actionInContext;
+    const action = actionInContext.action;
+    if (this._isTest && (action.name === 'openPage' || action.name === 'closePage'))
+      return '';
+
+    const pageAlias = actionInContext.frame.pageAlias;
     const formatter = new JavaScriptFormatter(2);
     formatter.newLine();
     formatter.add('// ' + actionTitle(action));
 
     if (action.name === 'openPage') {
-      if (this._isTest)
-        return '';
       formatter.add(`const ${pageAlias} = await context.newPage();`);
       if (action.url && action.url !== 'about:blank' && action.url !== 'chrome://newtab/')
         formatter.add(`await ${pageAlias}.goto(${quote(action.url)});`);
       return formatter.format();
     }
 
-    const subject = actionInContext.isMainFrame ? pageAlias :
-      (actionInContext.frameName ?
-        `${pageAlias}.frame(${formatObject({ name: actionInContext.frameName })})` :
-        `${pageAlias}.frame(${formatObject({ url: actionInContext.frameUrl })})`);
+    let subject: string;
+    if (actionInContext.frame.isMainFrame) {
+      subject = pageAlias;
+    } else if (actionInContext.frame.selectorsChain && action.name !== 'navigate') {
+      const locators = actionInContext.frame.selectorsChain.map(selector => '.' + asLocator(selector, 'frameLocator'));
+      subject = `${pageAlias}${locators.join('')}`;
+    } else if (actionInContext.frame.name) {
+      subject = `${pageAlias}.frame(${formatObject({ name: actionInContext.frame.name })})`;
+    } else {
+      subject = `${pageAlias}.frame(${formatObject({ url: actionInContext.frame.url })})`;
+    }
 
     const signals = toSignalMap(action);
 
@@ -123,26 +132,26 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
           options.clickCount = action.clickCount;
         if (action.position)
           options.position = action.position;
-        const optionsString = formatOptions(options);
-        return `${method}(${quote(action.selector)}${optionsString})`;
+        const optionsString = formatOptions(options, false);
+        return asLocator(action.selector) + `.${method}(${optionsString})`;
       }
       case 'check':
-        return `check(${quote(action.selector)})`;
+        return asLocator(action.selector) + `.check()`;
       case 'uncheck':
-        return `uncheck(${quote(action.selector)})`;
+        return asLocator(action.selector) + `.uncheck()`;
       case 'fill':
-        return `fill(${quote(action.selector)}, ${quote(action.text)})`;
+        return asLocator(action.selector) + `.fill(${quote(action.text)})`;
       case 'setInputFiles':
-        return `setInputFiles(${quote(action.selector)}, ${formatObject(action.files.length === 1 ? action.files[0] : action.files)})`;
+        return asLocator(action.selector) + `.setInputFiles(${formatObject(action.files.length === 1 ? action.files[0] : action.files)})`;
       case 'press': {
         const modifiers = toModifiers(action.modifiers);
         const shortcut = [...modifiers, action.key].join('+');
-        return `press(${quote(action.selector)}, ${quote(shortcut)})`;
+        return asLocator(action.selector) + `.press(${quote(shortcut)})`;
       }
       case 'navigate':
         return `goto(${quote(action.url)})`;
       case 'select':
-        return `selectOption(${quote(action.selector)}, ${formatObject(action.options.length > 1 ? action.options : action.options[0])})`;
+        return asLocator(action.selector) + `.selectOption(${formatObject(action.options.length > 1 ? action.options : action.options[0])})`;
     }
   }
 
@@ -192,11 +201,20 @@ ${useText ? '\ntest.use(' + useText + ');\n' : ''}
   }
 }
 
-function formatOptions(value: any): string {
+function asLocator(selector: string, locatorFn = 'locator') {
+  const match = selector.match(/(.*)\s+>>\s+nth=(\d+)$/);
+  if (!match)
+    return `${locatorFn}(${quote(selector)})`;
+  if (+match[2] === 0)
+    return `${locatorFn}(${quote(match[1])}).first()`;
+  return `${locatorFn}(${quote(match[1])}).nth(${match[2]})`;
+}
+
+function formatOptions(value: any, hasArguments: boolean): string {
   const keys = Object.keys(value);
   if (!keys.length)
     return '';
-  return ', ' + formatObject(value);
+  return (hasArguments ? ', ' : '') + formatObject(value);
 }
 
 function formatObject(value: any, indent = '  '): string {

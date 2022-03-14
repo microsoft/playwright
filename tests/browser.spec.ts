@@ -16,7 +16,7 @@
 
 import { browserTest as test, expect } from './config/browserTest';
 
-test('should create new page', async function({ browser }) {
+test('should create new page @smoke', async function({ browser }) {
   const page1 = await browser.newPage();
   expect(browser.contexts().length).toBe(1);
 

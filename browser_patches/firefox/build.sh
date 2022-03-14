@@ -2,7 +2,7 @@
 set -e
 set +x
 
-RUST_VERSION="1.53.0"
+RUST_VERSION="1.57.0"
 CBINDGEN_VERSION="0.19.0"
 
 trap "cd $(pwd -P)" EXIT
@@ -32,10 +32,10 @@ if [[ "$(uname)" == "Darwin" ]]; then
   echo "-- building on Mac"
 elif [[ "$(uname)" == "Linux" ]]; then
   echo "-- building on Linux"
-  echo "ac_add_options --disable-av1" >> .mozconfig
 elif [[ "$(uname)" == MINGW* ]]; then
   echo "ac_add_options --disable-update-agent" >> .mozconfig
   echo "ac_add_options --disable-default-browser-agent" >> .mozconfig
+  echo "ac_add_options --disable-maintenance-service" >> .mozconfig
 
   echo "-- building win64 build on MINGW"
   echo "ac_add_options --target=x86_64-pc-mingw32" >> .mozconfig
@@ -114,19 +114,15 @@ if [[ "$(uname)" == "Darwin" ]]; then
   export MOZ_FETCHES_DIR=$HOME/.mozbuild
 fi
 
-if ! [[ -f "$HOME/.mozbuild/_virtualenvs/mach/bin/python" ]]; then
-  ./mach create-mach-environment
-fi
-
 if [[ $1 == "--juggler" ]]; then
   ./mach build faster
 else
   ./mach build
+  if [[ "$(uname)" == "Darwin" ]]; then
+    node "${SCRIPT_FOLDER}"/install-preferences.js "$PWD"/${OBJ_FOLDER}/dist
+  else
+    node "${SCRIPT_FOLDER}"/install-preferences.js "$PWD"/${OBJ_FOLDER}/dist/bin
+  fi
 fi
 
-if [[ "$(uname)" == "Darwin" ]]; then
-  node "${SCRIPT_FOLDER}"/install-preferences.js "$PWD"/${OBJ_FOLDER}/dist
-else
-  node "${SCRIPT_FOLDER}"/install-preferences.js "$PWD"/${OBJ_FOLDER}/dist/bin
-fi
 

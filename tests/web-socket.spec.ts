@@ -18,7 +18,7 @@
 import { contextTest as it, expect } from './config/browserTest';
 import { Server as WebSocketServer } from 'ws';
 
-it('should work', async ({ page, server }) => {
+it('should work @smoke', async ({ page, server }) => {
   server.sendOnWebSocketConnection('incoming');
   const value = await page.evaluate(port => {
     let cb;

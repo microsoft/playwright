@@ -157,7 +157,7 @@ export class Keyboard {
 }
 
 export interface RawMouse {
-  move(x: number, y: number, button: types.MouseButton | 'none', buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>): Promise<void>;
+  move(x: number, y: number, button: types.MouseButton | 'none', buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, forClick: boolean): Promise<void>;
   down(x: number, y: number, button: types.MouseButton, buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, clickCount: number): Promise<void>;
   up(x: number, y: number, button: types.MouseButton, buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, clickCount: number): Promise<void>;
   wheel(x: number, y: number, buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, deltaX: number, deltaY: number): Promise<void>;
@@ -178,7 +178,7 @@ export class Mouse {
     this._keyboard = this._page.keyboard;
   }
 
-  async move(x: number, y: number, options: { steps?: number } = {}) {
+  async move(x: number, y: number, options: { steps?: number, forClick?: boolean } = {}) {
     const { steps = 1 } = options;
     const fromX = this._x;
     const fromY = this._y;
@@ -187,7 +187,7 @@ export class Mouse {
     for (let i = 1; i <= steps; i++) {
       const middleX = fromX + (x - fromX) * (i / steps);
       const middleY = fromY + (y - fromY) * (i / steps);
-      await this._raw.move(middleX, middleY, this._lastButton, this._buttons, this._keyboard._modifiers());
+      await this._raw.move(middleX, middleY, this._lastButton, this._buttons, this._keyboard._modifiers(), !!options.forClick);
       await this._page._doSlowMo();
     }
   }
@@ -211,7 +211,7 @@ export class Mouse {
   async click(x: number, y: number, options: { delay?: number, button?: types.MouseButton, clickCount?: number } = {}) {
     const { delay = null, clickCount = 1 } = options;
     if (delay) {
-      this.move(x, y);
+      this.move(x, y, { forClick: true });
       for (let cc = 1; cc <= clickCount; ++cc) {
         await this.down({ ...options, clickCount: cc });
         await new Promise(f => setTimeout(f, delay));
@@ -221,7 +221,7 @@ export class Mouse {
       }
     } else {
       const promises = [];
-      promises.push(this.move(x, y));
+      promises.push(this.move(x, y, { forClick: true }));
       for (let cc = 1; cc <= clickCount; ++cc) {
         promises.push(this.down({ ...options, clickCount: cc }));
         promises.push(this.up({ ...options, clickCount: cc }));

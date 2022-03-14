@@ -8,9 +8,13 @@ browser context is closed.
 Download event is emitted once the download starts. Download path becomes available once download completes:
 
 ```js
+// Note that Promise.all prevents a race condition
+// between clicking and waiting for the download.
 const [ download ] = await Promise.all([
-  page.waitForEvent('download'), // wait for download to start
-  page.click('a')
+  // It is important to call waitForEvent before click to set up waiting.
+  page.waitForEvent('download'),
+  // Triggers the download.
+  page.locator('text=Download file').click(),
 ]);
 // wait for download to complete
 const path = await download.path();

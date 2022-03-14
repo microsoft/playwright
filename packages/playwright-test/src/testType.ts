@@ -36,6 +36,7 @@ export class TestTypeImpl {
     test.only = wrapFunctionWithLocation(this._createTest.bind(this, 'only'));
     test.describe = wrapFunctionWithLocation(this._describe.bind(this, 'default'));
     test.describe.only = wrapFunctionWithLocation(this._describe.bind(this, 'only'));
+    test.describe.configure = wrapFunctionWithLocation(this._configure.bind(this));
     test.describe.parallel = wrapFunctionWithLocation(this._describe.bind(this, 'parallel'));
     test.describe.parallel.only = wrapFunctionWithLocation(this._describe.bind(this, 'parallel.only'));
     test.describe.serial = wrapFunctionWithLocation(this._describe.bind(this, 'serial'));
@@ -52,7 +53,7 @@ export class TestTypeImpl {
     test.step = wrapFunctionWithLocation(this._step.bind(this));
     test.use = wrapFunctionWithLocation(this._use.bind(this));
     test.extend = wrapFunctionWithLocation(this._extend.bind(this));
-    test.extendTest = wrapFunctionWithLocation(this._extendTest.bind(this));
+    test._extendTest = wrapFunctionWithLocation(this._extendTest.bind(this));
     test.info = () => {
       const result = currentTestInfo();
       if (!result)
@@ -62,13 +63,25 @@ export class TestTypeImpl {
     this.test = test;
   }
 
+  private _ensureCurrentSuite(location: Location, title: string): Suite {
+    const suite = currentlyLoadingFileSuite();
+    if (!suite) {
+      throw errorWithLocation(location, [
+        `Playwright Test did not expect ${title} to be called here.`,
+        `Most common reasons include:`,
+        `- You are calling ${title} in a configuration file.`,
+        `- You are calling ${title} in a file that is imported by the configuration file.`,
+        `- You have two different versions of @playwright/test. This usually happens`,
+        `  when one of the dependenices in your package.json depends on @playwright/test.`,
+      ].join('\n'));
+    }
+    return suite;
+  }
+
   private _createTest(type: 'default' | 'only' | 'skip' | 'fixme', location: Location, title: string, fn: Function) {
     throwIfRunningInsideJest();
-    const suite = currentlyLoadingFileSuite();
-    if (!suite)
-      throw errorWithLocation(location, `test() can only be called in a test file`);
-
-    const test = new TestCase('test', title, fn, nextOrdinalInFile(suite._requireFile), this, location);
+    const suite = this._ensureCurrentSuite(location, 'test()');
+    const test = new TestCase(title, fn, this, location);
     test._requireFile = suite._requireFile;
     suite._addTest(test);
 
@@ -80,10 +93,7 @@ export class TestTypeImpl {
 
   private _describe(type: 'default' | 'only' | 'serial' | 'serial.only' | 'parallel' | 'parallel.only', location: Location, title: string, fn: Function) {
     throwIfRunningInsideJest();
-    const suite = currentlyLoadingFileSuite();
-    if (!suite)
-      throw errorWithLocation(location, `describe() can only be called in a test file`);
-
+    const suite = this._ensureCurrentSuite(location, 'test.describe()');
     if (typeof title === 'function') {
       throw errorWithLocation(location, [
         'It looks like you are calling describe() without the title. Pass the title as a first argument:',
@@ -119,17 +129,24 @@ export class TestTypeImpl {
   }
 
   private _hook(name: 'beforeEach' | 'afterEach' | 'beforeAll' | 'afterAll', location: Location, fn: Function) {
-    const suite = currentlyLoadingFileSuite();
-    if (!suite)
-      throw errorWithLocation(location, `${name} hook can only be called in a test file`);
-    if (name === 'beforeAll' || name === 'afterAll') {
-      const sameTypeCount = suite.hooks.filter(hook => hook._type === name).length;
-      const suffix = sameTypeCount ? String(sameTypeCount) : '';
-      const hook = new TestCase(name, name + suffix, fn, nextOrdinalInFile(suite._requireFile), this, location);
-      hook._requireFile = suite._requireFile;
-      suite._addAllHook(hook);
-    } else {
-      suite._eachHooks.push({ type: name, fn, location });
+    const suite = this._ensureCurrentSuite(location, `test.${name}()`);
+    suite._hooks.push({ type: name, fn, location });
+  }
+
+  private _configure(location: Location, options: { mode?: 'parallel' | 'serial' }) {
+    throwIfRunningInsideJest();
+    const suite = this._ensureCurrentSuite(location, `test.describe.configure()`);
+    if (!options.mode)
+      return;
+    if (suite._parallelMode !== 'default')
+      throw errorWithLocation(location, 'Parallel mode is already assigned for the enclosing scope.');
+    suite._parallelMode = options.mode;
+
+    for (let parent: Suite | undefined = suite.parent; parent; parent = parent.parent) {
+      if (parent._parallelMode === 'serial' && suite._parallelMode === 'parallel')
+        throw errorWithLocation(location, 'describe.parallel cannot be nested inside describe.serial');
+      if (parent._parallelMode === 'parallel' && suite._parallelMode === 'serial')
+        throw errorWithLocation(location, 'describe.serial cannot be nested inside describe.parallel');
     }
   }
 
@@ -175,9 +192,7 @@ export class TestTypeImpl {
   }
 
   private _use(location: Location, fixtures: Fixtures) {
-    const suite = currentlyLoadingFileSuite();
-    if (!suite)
-      throw errorWithLocation(location, `test.use() can only be called in a test file and can only be nested in test.describe()`);
+    const suite = this._ensureCurrentSuite(location, `test.use()`);
     suite._use.push({ fixtures, location });
   }
 
@@ -203,7 +218,7 @@ export class TestTypeImpl {
 
   private _extend(location: Location, fixtures: Fixtures) {
     if ((fixtures as any)[testTypeSymbol])
-      throw new Error(`test.extend() accepts fixtures object, not a test object.\nDid you mean to call test.extendTest()?`);
+      throw new Error(`test.extend() accepts fixtures object, not a test object.\nDid you mean to call test._extendTest()?`);
     const fixturesWithLocation: FixturesWithLocation = { fixtures, location };
     return new TestTypeImpl([...this.fixtures, fixturesWithLocation]).test;
   }
@@ -211,7 +226,7 @@ export class TestTypeImpl {
   private _extendTest(location: Location, test: TestType<any, any>) {
     const testTypeImpl = (test as any)[testTypeSymbol] as TestTypeImpl;
     if (!testTypeImpl)
-      throw new Error(`test.extendTest() accepts a single "test" parameter.\nDid you mean to call test.extend() with fixtures instead?`);
+      throw new Error(`test._extendTest() accepts a single "test" parameter.\nDid you mean to call test.extend() with fixtures instead?`);
     // Filter out common ancestor fixtures.
     const newFixtures = testTypeImpl.fixtures.filter(theirs => !this.fixtures.find(ours => ours.fixtures === theirs.fixtures));
     return new TestTypeImpl([...this.fixtures, ...newFixtures]).test;
@@ -223,16 +238,9 @@ function throwIfRunningInsideJest() {
     throw new Error(
         `Playwright Test needs to be invoked via 'npx playwright test' and excluded from Jest test runs.\n` +
         `Creating one directory for Playwright tests and one for Jest is the recommended way of doing it.\n` +
-        `See https://playwright.dev/docs/intro/ for more information about Playwright Test.`,
+        `See https://playwright.dev/docs/intro for more information about Playwright Test.`,
     );
   }
-}
-
-const countByFile = new Map<string, number>();
-function nextOrdinalInFile(file: string) {
-  const ordinalInFile = countByFile.get(file) || 0;
-  countByFile.set(file, ordinalInFile + 1);
-  return ordinalInFile;
 }
 
 export const rootTestType = new TestTypeImpl([]);

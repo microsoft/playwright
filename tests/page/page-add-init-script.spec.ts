@@ -31,7 +31,7 @@ it('should work with a path', async ({ page, server, asset }) => {
   expect(await page.evaluate(() => window['result'])).toBe(123);
 });
 
-it('should work with content', async ({ page, server }) => {
+it('should work with content @smoke', async ({ page, server }) => {
   await page.addInitScript({ content: 'window["injected"] = 123' });
   await page.goto(server.PREFIX + '/tamperable.html');
   expect(await page.evaluate(() => window['result'])).toBe(123);

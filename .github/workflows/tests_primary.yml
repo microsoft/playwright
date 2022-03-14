@@ -32,7 +32,7 @@ jobs:
     - uses: actions/setup-node@v2
       with:
         node-version: 12
-    - run: npm i -g npm@8
+    - run: npm i -g npm@8.3
     - run: npm ci
       env:
         DEBUG: pw:install
@@ -56,16 +56,13 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
         node-version: [12]
-        include:
-        - os: ubuntu-latest
-          node-version: 16
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v2
       with:
         node-version: ${{matrix.node-version}}
-    - run: npm i -g npm@8
+    - run: npm i -g npm@8.3
     - run: npm ci
       env:
         DEBUG: pw:install
@@ -75,6 +72,28 @@ jobs:
       if: matrix.os != 'ubuntu-latest'
     - run: xvfb-run npm run ttest
       if: matrix.os == 'ubuntu-latest'
+    - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
+      if: always()
+
+  test_test_runner_esm:
+    name: Test Runner ESM
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-node@v2
+      with:
+        node-version: 16
+    - run: npm i -g npm@8.3
+    - run: npm ci
+      env:
+        DEBUG: pw:install
+    - run: npm run build
+    - run: npx playwright install --with-deps
+    - run: npm run ttest -- --grep=@esm
 
   test_html_report:
     name: HTML Report
@@ -84,7 +103,7 @@ jobs:
     - uses: actions/setup-node@v2
       with:
         node-version: 12
-    - run: npm i -g npm@8
+    - run: npm i -g npm@8.3
     - run: npm ci
       env:
         DEBUG: pw:install

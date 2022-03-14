@@ -18,7 +18,7 @@
 import { test as it, expect } from './pageTest';
 import util from 'util';
 
-it('should work', async ({ page, browserName }) => {
+it('should work @smoke', async ({ page, browserName }) => {
   let message = null;
   page.once('console', m => message = m);
   await Promise.all([

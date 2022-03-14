@@ -18,30 +18,21 @@
 
 import { Command } from 'commander';
 import fs from 'fs';
+import url from 'url';
 import path from 'path';
+import os from 'os';
 import type { Config } from './types';
-import { Runner, builtInReporters, BuiltInReporter } from './runner';
+import { Runner, builtInReporters, BuiltInReporter, kDefaultConfigFiles } from './runner';
 import { stopProfiling, startProfiling } from './profiler';
 import { FilePatternFilter } from './util';
-import { Loader } from './loader';
 import { showHTMLReport } from './reporters/html';
 import { GridServer } from 'playwright-core/lib/grid/gridServer';
 import dockerFactory from 'playwright-core/lib/grid/dockerGridFactory';
-import { createGuid } from 'playwright-core/lib/utils/utils';
+import { createGuid, hostPlatform } from 'playwright-core/lib/utils/utils';
+import { fileIsModule } from './loader';
 
 const defaultTimeout = 30000;
 const defaultReporter: BuiltInReporter = process.env.CI ? 'dot' : 'list';
-const tsConfig = 'playwright.config.ts';
-const jsConfig = 'playwright.config.js';
-const mjsConfig = 'playwright.config.mjs';
-const defaultConfig: Config = {
-  preserveOutput: 'always',
-  reporter: [ [defaultReporter] ],
-  reportSlowTests: { max: 5, threshold: 15000 },
-  timeout: defaultTimeout,
-  updateSnapshots: 'missing',
-  workers: Math.ceil(require('os').cpus().length / 2),
-};
 
 export function addTestCommand(program: Command) {
   const command = program.command('test [test-filter...]');
@@ -49,8 +40,9 @@ export function addTestCommand(program: Command) {
   command.option('--browser <browser>', `Browser to use for tests, one of "all", "chromium", "firefox" or "webkit" (default: "chromium")`);
   command.option('--headed', `Run tests in headed browsers (default: headless)`);
   command.option('--debug', `Run tests with Playwright Inspector. Shortcut for "PWDEBUG=1" environment variable and "--timeout=0 --maxFailures=1 --headed --workers=1" options`);
-  command.option('-c, --config <file>', `Configuration file, or a test directory with optional "${tsConfig}"/"${jsConfig}"`);
+  command.option('-c, --config <file>', `Configuration file, or a test directory with optional ${kDefaultConfigFiles.map(file => `"${file}"`).join('/')}`);
   command.option('--forbid-only', `Fail if test.only is called (default: false)`);
+  command.option('--fully-parallel', `Run all tests in parallel (default: false)`);
   command.option('-g, --grep <grep>', `Only run tests matching this regular expression (default: ".*")`);
   command.option('-gv, --grep-invert <grep>', `Only run tests that do not match this regular expression`);
   command.option('--global-timeout <timeout>', `Maximum time this test suite can run in milliseconds (default: unlimited)`);
@@ -85,6 +77,21 @@ Examples:
   $ npx playwright test --browser=webkit`);
 }
 
+export function addListFilesCommand(program: Command) {
+  const command = program.command('list-files [file-filter...]', { hidden: true });
+  command.description('List files with Playwright Test tests');
+  command.option('-c, --config <file>', `Configuration file, or a test directory with optional ${kDefaultConfigFiles.map(file => `"${file}"`).join('/')}`);
+  command.option('--project <project-name...>', `Only run tests from the specified list of projects (default: list all projects)`);
+  command.action(async (args, opts) => {
+    try {
+      await listTestFiles(opts);
+    } catch (e) {
+      console.error(e);
+      process.exit(1);
+    }
+  });
+}
+
 export function addShowReportCommand(program: Command) {
   const command = program.command('show-report [report]');
   command.description('show HTML report');
@@ -98,7 +105,21 @@ Examples:
   $ npx playwright show-report playwright-report`);
 }
 
-async function createLoader(opts: { [key: string]: any }): Promise<Loader> {
+async function runTests(args: string[], opts: { [key: string]: any }) {
+  await startProfiling();
+
+  const cpus = os.cpus().length;
+  const workers = hostPlatform.startsWith('mac') && hostPlatform.endsWith('arm64') ? cpus : Math.ceil(cpus / 2);
+
+  const defaultConfig: Config = {
+    preserveOutput: 'always',
+    reporter: [ [defaultReporter] ],
+    reportSlowTests: { max: 5, threshold: 15000 },
+    timeout: defaultTimeout,
+    updateSnapshots: 'missing',
+    workers,
+  };
+
   if (opts.browser) {
     const browserOpt = opts.browser.toLowerCase();
     if (!['all', 'chromium', 'firefox', 'webkit'].includes(browserOpt))
@@ -122,56 +143,18 @@ async function createLoader(opts: { [key: string]: any }): Promise<Loader> {
     process.env.PWDEBUG = '1';
   }
 
-  const loader = new Loader(defaultConfig, overrides);
+  // When no --config option is passed, let's look for the config file in the current directory.
+  const configFileOrDirectory = opts.config ? path.resolve(process.cwd(), opts.config) : process.cwd();
+  const resolvedConfigFile = Runner.resolveConfigFile(configFileOrDirectory);
+  if (restartWithExperimentalTsEsm(resolvedConfigFile))
+    return;
 
-  async function loadConfig(configFile: string) {
-    if (fs.existsSync(configFile)) {
-      if (process.stdout.isTTY)
-        console.log(`Using config at ` + configFile);
-      const loadedConfig = await loader.loadConfigFile(configFile);
-      if (('projects' in loadedConfig) && opts.browser)
-        throw new Error(`Cannot use --browser option when configuration file defines projects. Specify browserName in the projects instead.`);
-      return true;
-    }
-    return false;
-  }
+  const runner = new Runner(overrides, { defaultConfig });
+  const config = resolvedConfigFile ? await runner.loadConfigFromResolvedFile(resolvedConfigFile) : runner.loadEmptyConfig(configFileOrDirectory);
+  if (('projects' in config) && opts.browser)
+    throw new Error(`Cannot use --browser option when configuration file defines projects. Specify browserName in the projects instead.`);
 
-  async function loadConfigFromDirectory(directory: string) {
-    const configNames = [tsConfig, jsConfig, mjsConfig];
-    for (const configName of configNames) {
-      if (await loadConfig(path.resolve(directory, configName)))
-        return true;
-    }
-    return false;
-  }
-
-  if (opts.config) {
-    const configFile = path.resolve(process.cwd(), opts.config);
-    if (!fs.existsSync(configFile))
-      throw new Error(`${opts.config} does not exist`);
-    if (fs.statSync(configFile).isDirectory()) {
-      // When passed a directory, look for a config file inside.
-      if (!await loadConfigFromDirectory(configFile)) {
-        // If there is no config, assume this as a root testing directory.
-        loader.loadEmptyConfig(configFile);
-      }
-    } else {
-      // When passed a file, it must be a config file.
-      await loadConfig(configFile);
-    }
-  } else if (!await loadConfigFromDirectory(process.cwd())) {
-    // No --config option, let's look for the config file in the current directory.
-    // If not, scan the world.
-    loader.loadEmptyConfig(process.cwd());
-  }
-  return loader;
-}
-
-async function runTests(args: string[], opts: { [key: string]: any }) {
-  await startProfiling();
-
-  const loader = await createLoader(opts);
-  const filePatternFilters: FilePatternFilter[] = args.map(arg => {
+  const filePatternFilter: FilePatternFilter[] = args.map(arg => {
     const match = /^(.*):(\d+)$/.exec(arg);
     return {
       re: forceRegExp(match ? match[1] : arg),
@@ -179,21 +162,33 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
     };
   });
 
-  const runner = new Runner(loader);
   if (process.env.PLAYWRIGHT_DOCKER)
     runner.addInternalGlobalSetup(launchDockerContainer);
-  const result = await runner.run(!!opts.list, filePatternFilters, opts.project || undefined);
+  const result = await runner.runAllTests({
+    listOnly: !!opts.list,
+    filePatternFilter,
+    projectFilter: opts.project || undefined,
+  });
   await stopProfiling(undefined);
-
-  // Calling process.exit() might truncate large stdout/stderr output.
-  // See https://github.com/nodejs/node/issues/6456.
-  // See https://github.com/nodejs/node/issues/12921
-  await new Promise<void>(resolve => process.stdout.write('', () => resolve()));
-  await new Promise<void>(resolve => process.stderr.write('', () => resolve()));
 
   if (result.status === 'interrupted')
     process.exit(130);
   process.exit(result.status === 'passed' ? 0 : 1);
+}
+
+
+async function listTestFiles(opts: { [key: string]: any }) {
+  const configFileOrDirectory = opts.config ? path.resolve(process.cwd(), opts.config) : process.cwd();
+  const resolvedConfigFile = Runner.resolveConfigFile(configFileOrDirectory)!;
+  if (restartWithExperimentalTsEsm(resolvedConfigFile))
+    return;
+
+  const runner = new Runner({}, { defaultConfig: {} });
+  await runner.loadConfigFromResolvedFile(resolvedConfigFile);
+  const report = await runner.listTestFiles(resolvedConfigFile, opts.project);
+  process.stdout.write(JSON.stringify(report), () => {
+    process.exit(0);
+  });
 }
 
 function forceRegExp(pattern: string): RegExp {
@@ -204,11 +199,11 @@ function forceRegExp(pattern: string): RegExp {
 }
 
 function overridesFromOptions(options: { [key: string]: any }): Config {
-  const isDebuggerAttached = !!require('inspector').url();
   const shardPair = options.shard ? options.shard.split('/').map((t: string) => parseInt(t, 10)) : undefined;
   return {
     forbidOnly: options.forbidOnly ? true : undefined,
-    globalTimeout: isDebuggerAttached ? 0 : (options.globalTimeout ? parseInt(options.globalTimeout, 10) : undefined),
+    fullyParallel: options.fullyParallel ? true : undefined,
+    globalTimeout: options.globalTimeout ? parseInt(options.globalTimeout, 10) : undefined,
     grep: options.grep ? forceRegExp(options.grep) : undefined,
     grepInvert: options.grepInvert ? forceRegExp(options.grepInvert) : undefined,
     maxFailures: options.x ? 1 : (options.maxFailures ? parseInt(options.maxFailures, 10) : undefined),
@@ -218,7 +213,7 @@ function overridesFromOptions(options: { [key: string]: any }): Config {
     retries: options.retries ? parseInt(options.retries, 10) : undefined,
     reporter: (options.reporter && options.reporter.length) ? options.reporter.split(',').map((r: string) => [resolveReporter(r)]) : undefined,
     shard: shardPair ? { current: shardPair[0], total: shardPair[1] } : undefined,
-    timeout: isDebuggerAttached ? 0 : (options.timeout ? parseInt(options.timeout, 10) : undefined),
+    timeout: options.timeout ? parseInt(options.timeout, 10) : undefined,
     updateSnapshots: options.updateSnapshots ? 'all' as const : undefined,
     workers: options.workers ? parseInt(options.workers, 10) : undefined,
   };
@@ -242,4 +237,31 @@ async function launchDockerContainer(): Promise<() => Promise<void>> {
     throw error;
   process.env.PW_GRID = gridServer.urlPrefix().substring(0, gridServer.urlPrefix().length - 1);
   return async () => await gridServer.stop();
+}
+
+function restartWithExperimentalTsEsm(configFile: string | null): boolean {
+  if (!configFile)
+    return false;
+  if (process.env.PW_DISABLE_TS_ESM)
+    return false;
+  if (process.env.PW_TS_ESM_ON)
+    return false;
+  if (!configFile.endsWith('.ts'))
+    return false;
+  if (!fileIsModule(configFile))
+    return false;
+  const NODE_OPTIONS = (process.env.NODE_OPTIONS || '') + ` --experimental-loader=${url.pathToFileURL(require.resolve('@playwright/test/lib/experimentalLoader')).toString()}`;
+  const innerProcess = require('child_process').fork(require.resolve('playwright-core/cli'), process.argv.slice(2), {
+    env: {
+      ...process.env,
+      NODE_OPTIONS,
+      PW_TS_ESM_ON: '1',
+    }
+  });
+
+  innerProcess.on('close', (code: number | null) => {
+    if (code !== 0 && code !== null)
+      process.exit(code);
+  });
+  return true;
 }

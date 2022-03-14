@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { installTransform } from './transform';
+import { installTransform, setCurrentlyLoadingTestFile } from './transform';
 import type { FullConfig, Config, FullProject, Project, ReporterDescription, PreserveOutput } from './types';
 import { mergeObjects, errorWithFile } from './util';
 import { setCurrentlyLoadingFileSuite } from './globals';
@@ -27,7 +27,11 @@ import { ProjectImpl } from './project';
 import { Reporter } from '../types/testReporter';
 import { BuiltInReporter, builtInReporters } from './runner';
 import { isRegExp } from 'playwright-core/lib/utils/utils';
-import { tsConfigLoader, TsConfigLoaderResult } from './third_party/tsconfig-loader';
+import { serializeError } from './util';
+
+// To allow multiple loaders in the same process without clearing require cache,
+// we make these maps global.
+const cachedFileSuites = new Map<string, Suite>();
 
 export class Loader {
   private _defaultConfig: Config;
@@ -36,9 +40,6 @@ export class Loader {
   private _config: Config = {};
   private _configFile: string | undefined;
   private _projects: ProjectImpl[] = [];
-  private _fileSuites = new Map<string, Suite>();
-  private _lastModuleInfo: { rootFolder: string, isModule: boolean } | null = null;
-  private _tsConfigCache = new Map<string, TsConfigLoaderResult>();
 
   constructor(defaultConfig: Config, configOverrides: Config) {
     this._defaultConfig = defaultConfig;
@@ -68,9 +69,10 @@ export class Loader {
     return rawConfig;
   }
 
-  loadEmptyConfig(rootDir: string) {
+  loadEmptyConfig(rootDir: string): Config {
     this._config = {};
     this._processConfigObject(rootDir);
+    return {};
   }
 
   private _processConfigObject(rootDir: string) {
@@ -91,6 +93,7 @@ export class Loader {
 
     this._fullConfig.rootDir = this._config.testDir || rootDir;
     this._fullConfig.forbidOnly = takeFirst(this._configOverrides.forbidOnly, this._config.forbidOnly, baseFullConfig.forbidOnly);
+    this._fullConfig.fullyParallel = takeFirst(this._configOverrides.fullyParallel, this._config.fullyParallel, baseFullConfig.fullyParallel);
     this._fullConfig.globalSetup = takeFirst(this._configOverrides.globalSetup, this._config.globalSetup, baseFullConfig.globalSetup);
     this._fullConfig.globalTeardown = takeFirst(this._configOverrides.globalTeardown, this._config.globalTeardown, baseFullConfig.globalTeardown);
     this._fullConfig.globalTimeout = takeFirst(this._configOverrides.globalTimeout, this._configOverrides.globalTimeout, this._config.globalTimeout, baseFullConfig.globalTimeout);
@@ -111,20 +114,48 @@ export class Loader {
     this._fullConfig.projects = this._projects.map(p => p.config);
   }
 
-  async loadTestFile(file: string) {
-    if (this._fileSuites.has(file))
-      return this._fileSuites.get(file)!;
+  async loadTestFile(file: string, environment: 'runner' | 'worker') {
+    if (cachedFileSuites.has(file))
+      return cachedFileSuites.get(file)!;
+    const suite = new Suite(path.relative(this._fullConfig.rootDir, file) || path.basename(file));
+    suite._requireFile = file;
+    suite.location = { file, line: 0, column: 0 };
+
+    setCurrentlyLoadingTestFile(file);
+    setCurrentlyLoadingFileSuite(suite);
     try {
-      const suite = new Suite(path.relative(this._fullConfig.rootDir, file) || path.basename(file));
-      suite._requireFile = file;
-      suite.location = { file, line: 0, column: 0 };
-      setCurrentlyLoadingFileSuite(suite);
       await this._requireOrImport(file);
-      this._fileSuites.set(file, suite);
-      return suite;
+      cachedFileSuites.set(file, suite);
+    } catch (e) {
+      if (environment === 'worker')
+        throw e;
+      suite._loadError = serializeError(e);
     } finally {
+      setCurrentlyLoadingTestFile(null);
       setCurrentlyLoadingFileSuite(undefined);
     }
+
+    {
+      // Test locations that we discover potentially have different file name.
+      // This could be due to either
+      //   a) use of source maps or due to
+      //   b) require of one file from another.
+      // Try fixing (a) w/o regressing (b).
+
+      const files = new Set<string>();
+      suite.allTests().map(t => files.add(t.location.file));
+      if (files.size === 1) {
+        // All tests point to one file.
+        const mappedFile = files.values().next().value;
+        if (suite.location.file !== mappedFile) {
+          // The file is different, check for a likely source map case.
+          if (path.extname(mappedFile) !== path.extname(suite.location.file))
+            suite.location.file = mappedFile;
+        }
+      }
+    }
+
+    return suite;
   }
 
   async loadGlobalHook(file: string, name: string): Promise<(config: FullConfig) => any> {
@@ -153,10 +184,6 @@ export class Loader {
     return this._projects;
   }
 
-  fileSuites() {
-    return this._fileSuites;
-  }
-
   serialize(): SerializedLoaderData {
     return {
       defaultConfig: this._defaultConfig,
@@ -175,15 +202,23 @@ export class Loader {
     let snapshotDir = takeFirst(this._configOverrides.snapshotDir, projectConfig.snapshotDir, this._config.snapshotDir, testDir);
     if (!path.isAbsolute(snapshotDir))
       snapshotDir = path.resolve(configDir, snapshotDir);
+    const name = takeFirst(this._configOverrides.name, projectConfig.name, this._config.name, '');
+    let screenshotsDir = takeFirst(this._configOverrides.screenshotsDir, projectConfig.screenshotsDir, this._config.screenshotsDir, path.join(rootDir, '__screenshots__', process.platform, name));
+    if (!path.isAbsolute(screenshotsDir))
+      screenshotsDir = path.resolve(configDir, screenshotsDir);
     const fullProject: FullProject = {
+      fullyParallel: takeFirst(this._configOverrides.fullyParallel, projectConfig.fullyParallel, this._config.fullyParallel, undefined),
       expect: takeFirst(this._configOverrides.expect, projectConfig.expect, this._config.expect, undefined),
+      grep: takeFirst(this._configOverrides.grep, projectConfig.grep, this._config.grep, baseFullConfig.grep),
+      grepInvert: takeFirst(this._configOverrides.grepInvert, projectConfig.grepInvert, this._config.grepInvert, baseFullConfig.grepInvert),
       outputDir,
       repeatEach: takeFirst(this._configOverrides.repeatEach, projectConfig.repeatEach, this._config.repeatEach, 1),
       retries: takeFirst(this._configOverrides.retries, projectConfig.retries, this._config.retries, 0),
       metadata: takeFirst(this._configOverrides.metadata, projectConfig.metadata, this._config.metadata, undefined),
-      name: takeFirst(this._configOverrides.name, projectConfig.name, this._config.name, ''),
+      name,
       testDir,
       snapshotDir,
+      screenshotsDir,
       testIgnore: takeFirst(this._configOverrides.testIgnore, projectConfig.testIgnore, this._config.testIgnore, []),
       testMatch: takeFirst(this._configOverrides.testMatch, projectConfig.testMatch, this._config.testMatch, '**/?(*.)@(spec|test).*'),
       timeout: takeFirst(this._configOverrides.timeout, projectConfig.timeout, this._config.timeout, 10000),
@@ -194,44 +229,8 @@ export class Loader {
 
 
   private async _requireOrImport(file: string) {
-    // Respect tsconfig paths.
-    const cwd = path.dirname(file);
-    let tsconfig = this._tsConfigCache.get(cwd);
-    if (!tsconfig) {
-      tsconfig = tsConfigLoader({
-        getEnv: (name: string) => process.env[name],
-        cwd
-      });
-      this._tsConfigCache.set(cwd, tsconfig);
-    }
-
-    const revertBabelRequire = installTransform(tsconfig);
-
-    // Figure out if we are importing or requiring.
-    let isModule: boolean;
-    if (file.endsWith('.mjs')) {
-      isModule = true;
-    } else {
-      if (!this._lastModuleInfo || !file.startsWith(this._lastModuleInfo.rootFolder)) {
-        this._lastModuleInfo = null;
-        try {
-          const pathSegments = file.split(path.sep);
-          for (let i = pathSegments.length - 1; i >= 0; --i) {
-            const rootFolder = pathSegments.slice(0, i).join(path.sep);
-            const packageJson = path.join(rootFolder, 'package.json');
-            if (fs.existsSync(packageJson)) {
-              isModule = require(packageJson).type === 'module';
-              this._lastModuleInfo = { rootFolder, isModule };
-              break;
-            }
-          }
-        } catch {
-          // Silent catch.
-        }
-      }
-      isModule = this._lastModuleInfo?.isModule || false;
-    }
-
+    const revertBabelRequire = installTransform();
+    const isModule = fileIsModule(file);
     try {
       const esmImport = () => eval(`import(${JSON.stringify(url.pathToFileURL(file))})`);
       if (isModule)
@@ -439,6 +438,7 @@ function validateProject(file: string, project: Project, title: string) {
 
 const baseFullConfig: FullConfig = {
   forbidOnly: false,
+  fullyParallel: false,
   globalSetup: null,
   globalTeardown: null,
   globalTimeout: 0,
@@ -471,4 +471,35 @@ function resolveScript(id: string, rootDir: string) {
   if (fs.existsSync(localPath))
     return localPath;
   return require.resolve(id, { paths: [rootDir] });
+}
+
+export function fileIsModule(file: string): boolean {
+  if (file.endsWith('.mjs'))
+    return true;
+
+  const folder = path.dirname(file);
+  return folderIsModule(folder);
+}
+
+const folderToIsModuleCache = new Map<string, { isModule: boolean }>();
+
+export function folderIsModule(folder: string): boolean {
+  // Fast track.
+  const cached = folderToIsModuleCache.get(folder);
+  if (cached)
+    return cached.isModule;
+
+  const packageJson = path.join(folder, 'package.json');
+  let isModule = false;
+  if (fs.existsSync(packageJson)) {
+    isModule = require(packageJson).type === 'module';
+  } else {
+    const parentFolder = path.basename(folder);
+    if (parentFolder !== folder)
+      isModule = folderIsModule(parentFolder);
+    else
+      isModule = false;
+  }
+  folderToIsModuleCache.set(folder, { isModule });
+  return isModule;
 }

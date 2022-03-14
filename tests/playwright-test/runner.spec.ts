@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import path from 'path';
-import { test, expect, stripAscii } from './playwright-test-fixtures';
+import { test, expect, stripAnsi } from './playwright-test-fixtures';
 
 test('it should not allow multiple tests with the same name per suite', async ({ runInlineTest }) => {
   const result = await runInlineTest({
@@ -194,11 +194,49 @@ test('should not stall when workers are available', async ({ runInlineTest }) =>
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(2);
   expect(result.failed).toBe(1);
-  expect(stripAscii(result.output).split('\n').filter(line => line.startsWith('%%'))).toEqual([
+  expect(stripAnsi(result.output).split('\n').filter(line => line.startsWith('%%'))).toEqual([
     '%%fails-1-started',
     '%%passes-2-started',
     '%%fails-1-done',
     '%%passes-1',
     '%%passes-2-done',
+  ]);
+});
+
+test('should teardown workers that are redundant', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'helper.js': `
+      module.exports = pwt.test.extend({
+        w: [async ({}, use) => {
+          console.log('\\n%%worker setup');
+          await use('worker');
+          console.log('\\n%%worker teardown');
+        }, { scope: 'worker' }],
+      });
+    `,
+    'a.spec.js': `
+      const test = require('./helper');
+      test('test1', async ({ w }) => {
+        await new Promise(f => setTimeout(f, 1500));
+        console.log('\\n%%test-done');
+      });
+    `,
+    'b.spec.js': `
+      const test = require('./helper');
+      test('test2', async ({ w }) => {
+        await new Promise(f => setTimeout(f, 3000));
+        console.log('\\n%%test-done');
+      });
+    `,
+  }, { workers: 2 });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(2);
+  expect(stripAnsi(result.output).split('\n').filter(line => line.startsWith('%%'))).toEqual([
+    '%%worker setup',
+    '%%worker setup',
+    '%%test-done',
+    '%%worker teardown',
+    '%%test-done',
+    '%%worker teardown',
   ]);
 });

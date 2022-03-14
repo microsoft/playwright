@@ -18,8 +18,7 @@ import * as dom from './dom';
 import * as frames from './frames';
 import * as js from './javascript';
 import * as types from './types';
-import { ParsedSelector, parseSelector, stringifySelector } from './common/selectorParser';
-import { InvalidSelectorError } from './common/selectorErrors';
+import { allEngineNames, InvalidSelectorError, ParsedSelector, parseSelector, stringifySelector } from './common/selectorParser';
 import { createGuid } from '../utils/utils';
 
 export type SelectorInfo = {
@@ -45,7 +44,7 @@ export class Selectors {
       'data-testid', 'data-testid:light',
       'data-test-id', 'data-test-id:light',
       'data-test', 'data-test:light',
-      'nth', 'visible', 'control'
+      'nth', 'visible', 'control', 'has',
     ]);
     this._builtinEnginesInMainWorld = new Set([
       '_react', '_vue',
@@ -83,13 +82,21 @@ export class Selectors {
     return this._adoptIfNeeded(elementHandle, mainContext);
   }
 
-  async _queryArray(frame: frames.Frame, info: SelectorInfo, scope?: dom.ElementHandle): Promise<js.JSHandle<Element[]>> {
+  async _queryArrayInMainWorld(frame: frames.Frame, info: SelectorInfo, scope?: dom.ElementHandle): Promise<js.JSHandle<Element[]>> {
     const context = await frame._mainContext();
     const injectedScript = await context.injectedScript();
     const arrayHandle = await injectedScript.evaluateHandle((injected, { parsed, scope }) => {
       return injected.querySelectorAll(parsed, scope || document);
     }, { parsed: info.parsed, scope });
     return arrayHandle;
+  }
+
+  async _queryCount(frame: frames.Frame, info: SelectorInfo, scope?: dom.ElementHandle): Promise<number> {
+    const context = await frame._utilityContext();
+    const injectedScript = await context.injectedScript();
+    return await injectedScript.evaluate((injected, { parsed, scope }) => {
+      return injected.querySelectorAll(parsed, scope || document).length;
+    }, { parsed: info.parsed, scope });
   }
 
   async _queryAll(frame: frames.Frame, selector: SelectorInfo, scope?: dom.ElementHandle, adoptToMain?: boolean): Promise<dom.ElementHandle<Element>[]> {
@@ -128,13 +135,13 @@ export class Selectors {
   parseSelector(selector: string | ParsedSelector, strict: boolean): SelectorInfo {
     const parsed = typeof selector === 'string' ? parseSelector(selector) : selector;
     let needsMainWorld = false;
-    for (const part of parsed.parts) {
-      const custom = this._engines.get(part.name);
-      if (!custom && !this._builtinEngines.has(part.name))
-        throw new InvalidSelectorError(`Unknown engine "${part.name}" while parsing selector ${stringifySelector(parsed)}`);
+    for (const name of allEngineNames(parsed)) {
+      const custom = this._engines.get(name);
+      if (!custom && !this._builtinEngines.has(name))
+        throw new InvalidSelectorError(`Unknown engine "${name}" while parsing selector ${stringifySelector(parsed)}`);
       if (custom && !custom.contentScript)
         needsMainWorld = true;
-      if (this._builtinEnginesInMainWorld.has(part.name))
+      if (this._builtinEnginesInMainWorld.has(name))
         needsMainWorld = true;
     }
     return {

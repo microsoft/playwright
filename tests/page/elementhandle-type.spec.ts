@@ -51,7 +51,8 @@ it('should not modify selection when focused', async ({ page }) => {
   expect(await page.$eval('input', input => input.value)).toBe('heworldo');
 });
 
-it('should work with number input', async ({ page }) => {
+it('should work with number input', async ({ page, browserName }) => {
+  it.fail(browserName === 'webkit', 'Started failing after https://github.com/WebKit/WebKit/commit/c92a2aea185d63b5e9998608a9c0321a461c496c');
   await page.setContent(`<input type='number' value=2 />`);
   await page.type('input', '13');
   expect(await page.$eval('input', input => input.value)).toBe('132');

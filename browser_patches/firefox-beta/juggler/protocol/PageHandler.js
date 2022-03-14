@@ -334,8 +334,8 @@ class PageHandler {
     return await this._contentPage.send('scrollIntoViewIfNeeded', options);
   }
 
-  async ['Page.addScriptToEvaluateOnNewDocument'](options) {
-    return await this._contentPage.send('addScriptToEvaluateOnNewDocument', options);
+  async ['Page.setInitScripts']({ scripts }) {
+    return await this._pageTarget.setInitScripts(scripts);
   }
 
   async ['Page.dispatchKeyEvent'](options) {

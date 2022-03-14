@@ -40,7 +40,7 @@ type HarTracerOptions = {
 };
 
 export class HarTracer {
-  private _context: BrowserContext;
+  private _context: BrowserContext | APIRequestContext;
   private _barrierPromises = new Set<Promise<void>>();
   private _delegate: HarTracerDelegate;
   private _options: HarTracerOptions;
@@ -49,7 +49,7 @@ export class HarTracer {
   private _started = false;
   private _entrySymbol: symbol;
 
-  constructor(context: BrowserContext, delegate: HarTracerDelegate, options: HarTracerOptions) {
+  constructor(context: BrowserContext | APIRequestContext, delegate: HarTracerDelegate, options: HarTracerOptions) {
     this._context = context;
     this._delegate = delegate;
     this._options = options;
@@ -60,14 +60,20 @@ export class HarTracer {
     if (this._started)
       return;
     this._started = true;
+    const apiRequest = this._context instanceof APIRequestContext ? this._context : this._context.fetchRequest;
     this._eventListeners = [
-      eventsHelper.addEventListener(this._context, BrowserContext.Events.Page, (page: Page) => this._ensurePageEntry(page)),
-      eventsHelper.addEventListener(this._context, BrowserContext.Events.Request, (request: network.Request) => this._onRequest(request)),
-      eventsHelper.addEventListener(this._context, BrowserContext.Events.RequestFinished, ({ request, response }) => this._onRequestFinished(request, response).catch(() => {})),
-      eventsHelper.addEventListener(this._context, BrowserContext.Events.Response, (response: network.Response) => this._onResponse(response)),
-      eventsHelper.addEventListener(this._context.fetchRequest, APIRequestContext.Events.Request, (event: APIRequestEvent) => this._onAPIRequest(event)),
-      eventsHelper.addEventListener(this._context.fetchRequest, APIRequestContext.Events.RequestFinished, (event: APIRequestFinishedEvent) => this._onAPIRequestFinished(event)),
+      eventsHelper.addEventListener(apiRequest, APIRequestContext.Events.Request, (event: APIRequestEvent) => this._onAPIRequest(event)),
+      eventsHelper.addEventListener(apiRequest, APIRequestContext.Events.RequestFinished, (event: APIRequestFinishedEvent) => this._onAPIRequestFinished(event)),
     ];
+    if (this._context instanceof BrowserContext) {
+      this._eventListeners.push(
+          eventsHelper.addEventListener(this._context, BrowserContext.Events.Page, (page: Page) => this._ensurePageEntry(page)),
+          eventsHelper.addEventListener(this._context, BrowserContext.Events.Request, (request: network.Request) => this._onRequest(request)),
+          eventsHelper.addEventListener(this._context, BrowserContext.Events.RequestFinished, ({ request, response }) => this._onRequestFinished(request, response).catch(() => {})),
+          eventsHelper.addEventListener(this._context, BrowserContext.Events.RequestFailed, request => this._onRequestFailed(request)),
+          eventsHelper.addEventListener(this._context, BrowserContext.Events.Response, (response: network.Response) => this._onResponse(response)));
+    }
+
   }
 
   private _entryForRequest(request: network.Request | APIRequestEvent): har.Entry | undefined {
@@ -133,6 +139,7 @@ export class HarTracer {
       promise
     ]) as Promise<void>;
     this._barrierPromises.add(race);
+    race.then(() => this._barrierPromises.delete(race));
   }
 
   private _onAPIRequest(event: APIRequestEvent) {
@@ -264,6 +271,17 @@ export class HarTracer {
     }));
   }
 
+  private async _onRequestFailed(request: network.Request) {
+    const harEntry = this._entryForRequest(request);
+    if (!harEntry)
+      return;
+
+    if (request._failureText !== null)
+      harEntry.response._failureText = request._failureText;
+    if (this._started)
+      this._delegate.onEntryFinished(harEntry);
+  }
+
   private _storeResponseContent(buffer: Buffer | undefined, content: har.Content) {
     if (!buffer) {
       content.size = 0;
@@ -357,6 +375,7 @@ export class HarTracer {
     eventsHelper.removeEventListeners(this._eventListeners);
     this._barrierPromises.clear();
 
+    const context = this._context instanceof BrowserContext ? this._context : undefined;
     const log: har.Log = {
       version: '1.2',
       creator: {
@@ -364,8 +383,8 @@ export class HarTracer {
         version: require('../../../../package.json')['version'],
       },
       browser: {
-        name: this._context._browser.options.name,
-        version: this._context._browser.version()
+        name: context?._browser.options.name || '',
+        version: context?._browser.version() || ''
       },
       pages: Array.from(this._pageEntries.values()),
       entries: [],

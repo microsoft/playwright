@@ -162,7 +162,7 @@ export module Protocol {
       animationId: AnimationId;
     }
     export type requestEffectTargetReturnValue = {
-      nodeId: DOM.NodeId;
+      effectTarget: DOM.Styleable;
     }
     /**
      * Resolves JavaScript `WebAnimation` object for given `AnimationId`.
@@ -906,7 +906,7 @@ export module Protocol {
     /**
      * The layout context type of a node.
      */
-    export type LayoutContextType = "grid";
+    export type LayoutContextType = "flex"|"grid";
     /**
      * The mode for how layout context type changes are handled (default: <code>Observed</code>). <code>Observed</code> limits handling to those nodes already known to the frontend by other means (generally, this means the node is a visible item in the Elements tab). <code>All</code> informs the frontend of all layout context type changes and all nodes with a known layout context are sent to the frontend.
      */
@@ -2086,6 +2086,13 @@ export module Protocol {
       marginColor?: RGBAColor;
     }
     /**
+     * An object referencing a node and a pseudo-element, primarily used to identify an animation effect target.
+     */
+    export interface Styleable {
+      nodeId: NodeId;
+      pseudoId?: CSS.PseudoId;
+    }
+    /**
      * Data to construct File object.
      */
     export interface FilePayload {
@@ -2901,6 +2908,32 @@ export module Protocol {
       nodeId?: NodeId;
     }
     export type hideGridOverlayReturnValue = {
+    }
+    /**
+     * Shows a flex overlay for a node that begins a 'flex' layout context. The command has no effect if <code>nodeId</code> is invalid or the associated node does not begin a 'flex' layout context. A node can only have one flex overlay at a time; subsequent calls with the same <code>nodeId</code> will override earlier calls.
+     */
+    export type showFlexOverlayParameters = {
+      /**
+       * The node for which a flex overlay should be shown.
+       */
+      nodeId: NodeId;
+      /**
+       * The primary color to use for the flex overlay.
+       */
+      flexColor: RGBAColor;
+    }
+    export type showFlexOverlayReturnValue = {
+    }
+    /**
+     * Hides a flex overlay for a node that begins a 'flex' layout context. The command has no effect if <code>nodeId</code> is specified and invalid, or if there is not currently an overlay set for the <code>nodeId</code>.
+     */
+    export type hideFlexOverlayParameters = {
+      /**
+       * The node for which a flex overlay should be hidden. If a <code>nodeId</code> is not specified, all flex overlays will be hidden.
+       */
+      nodeId?: NodeId;
+    }
+    export type hideFlexOverlayReturnValue = {
     }
     /**
      * Requests that the node is sent to the caller given its path.
@@ -6404,16 +6437,26 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
       appearance: Appearance;
     }
     /**
-     * Fired when page tries to open a new window.
+     * Fired when page is about to check policy for newly triggered navigation.
      */
-    export type willRequestOpenWindowPayload = {
-      url: string;
+    export type willCheckNavigationPolicyPayload = {
+      /**
+       * Id of the frame.
+       */
+      frameId: Network.FrameId;
     }
     /**
-     * Fired after page did try to open a new window.
+     * Fired when page has received navigation policy decision.
      */
-    export type didRequestOpenWindowPayload = {
-      opened: boolean;
+    export type didCheckNavigationPolicyPayload = {
+      /**
+       * Id of the frame.
+       */
+      frameId: Network.FrameId;
+      /**
+       * True if the navigation will not continue in this frame.
+       */
+      cancel?: boolean;
     }
     /**
      * Fired when the page shows file chooser for it's <input type=file>.
@@ -7255,36 +7298,6 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
       browserContextId?: ContextID;
     }
     export type deleteAllCookiesReturnValue = {
-    }
-    /**
-     * Returns all local storage data in the given browser context.
-     */
-    export type getLocalStorageDataParameters = {
-      /**
-       * Browser context id.
-       */
-      browserContextId?: ContextID;
-    }
-    export type getLocalStorageDataReturnValue = {
-      /**
-       * Local storage data.
-       */
-      origins: OriginStorage[];
-    }
-    /**
-     * Populates local storage data in the given browser context.
-     */
-    export type setLocalStorageDataParameters = {
-      /**
-       * Browser context id.
-       */
-      browserContextId?: ContextID;
-      /**
-       * Local storage data.
-       */
-      origins: OriginStorage[];
-    }
-    export type setLocalStorageDataReturnValue = {
     }
     /**
      * Overrides the geolocation position or error.
@@ -8790,8 +8803,8 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Page.frameClearedScheduledNavigation": Page.frameClearedScheduledNavigationPayload;
     "Page.navigatedWithinDocument": Page.navigatedWithinDocumentPayload;
     "Page.defaultAppearanceDidChange": Page.defaultAppearanceDidChangePayload;
-    "Page.willRequestOpenWindow": Page.willRequestOpenWindowPayload;
-    "Page.didRequestOpenWindow": Page.didRequestOpenWindowPayload;
+    "Page.willCheckNavigationPolicy": Page.willCheckNavigationPolicyPayload;
+    "Page.didCheckNavigationPolicy": Page.didCheckNavigationPolicyPayload;
     "Page.fileChooserOpened": Page.fileChooserOpenedPayload;
     "Playwright.pageProxyCreated": Playwright.pageProxyCreatedPayload;
     "Playwright.pageProxyDestroyed": Playwright.pageProxyDestroyedPayload;
@@ -8908,6 +8921,8 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "DOM.highlightFrame": DOM.highlightFrameParameters;
     "DOM.showGridOverlay": DOM.showGridOverlayParameters;
     "DOM.hideGridOverlay": DOM.hideGridOverlayParameters;
+    "DOM.showFlexOverlay": DOM.showFlexOverlayParameters;
+    "DOM.hideFlexOverlay": DOM.hideFlexOverlayParameters;
     "DOM.pushNodeByPathToFrontend": DOM.pushNodeByPathToFrontendParameters;
     "DOM.resolveNode": DOM.resolveNodeParameters;
     "DOM.getAttributes": DOM.getAttributesParameters;
@@ -9068,8 +9083,6 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Playwright.getAllCookies": Playwright.getAllCookiesParameters;
     "Playwright.setCookies": Playwright.setCookiesParameters;
     "Playwright.deleteAllCookies": Playwright.deleteAllCookiesParameters;
-    "Playwright.getLocalStorageData": Playwright.getLocalStorageDataParameters;
-    "Playwright.setLocalStorageData": Playwright.setLocalStorageDataParameters;
     "Playwright.setGeolocationOverride": Playwright.setGeolocationOverrideParameters;
     "Playwright.setLanguages": Playwright.setLanguagesParameters;
     "Playwright.setDownloadBehavior": Playwright.setDownloadBehaviorParameters;
@@ -9208,6 +9221,8 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "DOM.highlightFrame": DOM.highlightFrameReturnValue;
     "DOM.showGridOverlay": DOM.showGridOverlayReturnValue;
     "DOM.hideGridOverlay": DOM.hideGridOverlayReturnValue;
+    "DOM.showFlexOverlay": DOM.showFlexOverlayReturnValue;
+    "DOM.hideFlexOverlay": DOM.hideFlexOverlayReturnValue;
     "DOM.pushNodeByPathToFrontend": DOM.pushNodeByPathToFrontendReturnValue;
     "DOM.resolveNode": DOM.resolveNodeReturnValue;
     "DOM.getAttributes": DOM.getAttributesReturnValue;
@@ -9368,8 +9383,6 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Playwright.getAllCookies": Playwright.getAllCookiesReturnValue;
     "Playwright.setCookies": Playwright.setCookiesReturnValue;
     "Playwright.deleteAllCookies": Playwright.deleteAllCookiesReturnValue;
-    "Playwright.getLocalStorageData": Playwright.getLocalStorageDataReturnValue;
-    "Playwright.setLocalStorageData": Playwright.setLocalStorageDataReturnValue;
     "Playwright.setGeolocationOverride": Playwright.setGeolocationOverrideReturnValue;
     "Playwright.setLanguages": Playwright.setLanguagesReturnValue;
     "Playwright.setDownloadBehavior": Playwright.setDownloadBehaviorReturnValue;

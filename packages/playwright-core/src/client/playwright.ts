@@ -14,12 +14,9 @@
  * limitations under the License.
  */
 
-import dns from 'dns';
-import net from 'net';
-import util from 'util';
 import * as channels from '../protocol/channels';
 import { TimeoutError } from '../utils/errors';
-import { createSocket } from '../utils/netUtils';
+import * as socks from '../utils/socksProxy';
 import { Android } from './android';
 import { BrowserType } from './browserType';
 import { ChannelOwner } from './channelOwner';
@@ -28,7 +25,6 @@ import { APIRequest } from './fetch';
 import { LocalUtils } from './localUtils';
 import { Selectors, SelectorsOwner } from './selectors';
 import { Size } from './types';
-const dnsLookupAsync = util.promisify(dns.lookup);
 
 type DeviceDescriptor = {
   userAgent: string,
@@ -51,8 +47,7 @@ export class Playwright extends ChannelOwner<channels.PlaywrightChannel> {
   readonly request: APIRequest;
   readonly errors: { TimeoutError: typeof TimeoutError };
   _utils: LocalUtils;
-  private _sockets = new Map<string, net.Socket>();
-  private _redirectPortForTest: number | undefined;
+  private _socksProxyHandler: socks.SocksProxyHandler | undefined;
 
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.PlaywrightInitializer) {
     super(parent, type, guid, initializer);
@@ -76,9 +71,13 @@ export class Playwright extends ChannelOwner<channels.PlaywrightChannel> {
     this.selectors._addChannel(selectorsOwner);
     this._connection.on('close', () => {
       this.selectors._removeChannel(selectorsOwner);
-      for (const uid of this._sockets.keys())
-        this._onSocksClosed(uid);
+      this._socksProxyHandler?.cleanup();
     });
+    (global as any)._playwrightInstance = this;
+  }
+
+  async _hideHighlight() {
+    await this._channel.hideHighlight();
   }
 
   _setSelectors(selectors: Selectors) {
@@ -88,49 +87,24 @@ export class Playwright extends ChannelOwner<channels.PlaywrightChannel> {
     this.selectors._addChannel(selectorsOwner);
   }
 
+  // TODO: remove this methods together with PlaywrightClient.
   _enablePortForwarding(redirectPortForTest?: number) {
-    this._redirectPortForTest = redirectPortForTest;
-    this._channel.on('socksRequested', ({ uid, host, port }) => this._onSocksRequested(uid, host, port));
-    this._channel.on('socksData', ({ uid, data }) => this._onSocksData(uid, Buffer.from(data, 'base64')));
-    this._channel.on('socksClosed', ({ uid }) => this._onSocksClosed(uid));
-  }
-
-  private async _onSocksRequested(uid: string, host: string, port: number): Promise<void> {
-    if (host === 'local.playwright')
-      host = 'localhost';
-    try {
-      if (this._redirectPortForTest)
-        port = this._redirectPortForTest;
-      const { address } = await dnsLookupAsync(host);
-      const socket = await createSocket(address, port);
-      socket.on('data', data => this._channel.socksData({ uid, data: data.toString('base64') }).catch(() => {}));
-      socket.on('error', error => {
-        this._channel.socksError({ uid, error: error.message }).catch(() => { });
-        this._sockets.delete(uid);
-      });
-      socket.on('end', () => {
-        this._channel.socksEnd({ uid }).catch(() => {});
-        this._sockets.delete(uid);
-      });
-      const localAddress = socket.localAddress;
-      const localPort = socket.localPort;
-      this._sockets.set(uid, socket);
-      this._channel.socksConnected({ uid, host: localAddress, port: localPort }).catch(() => {});
-    } catch (error) {
-      this._channel.socksFailed({ uid, errorCode: error.code }).catch(() => {});
-    }
-  }
-
-  private _onSocksData(uid: string, data: Buffer): void {
-    this._sockets.get(uid)?.write(data);
+    const socksSupport = this._initializer.socksSupport;
+    if (!socksSupport)
+      return;
+    const handler = new socks.SocksProxyHandler(redirectPortForTest);
+    this._socksProxyHandler = handler;
+    handler.on(socks.SocksProxyHandler.Events.SocksConnected, (payload: socks.SocksSocketConnectedPayload) => socksSupport.socksConnected(payload).catch(() => {}));
+    handler.on(socks.SocksProxyHandler.Events.SocksData, (payload: socks.SocksSocketDataPayload) => socksSupport.socksData({ uid: payload.uid, data: payload.data.toString('base64') }).catch(() => {}));
+    handler.on(socks.SocksProxyHandler.Events.SocksError, (payload: socks.SocksSocketErrorPayload) => socksSupport.socksError(payload).catch(() => {}));
+    handler.on(socks.SocksProxyHandler.Events.SocksFailed, (payload: socks.SocksSocketFailedPayload) => socksSupport.socksFailed(payload).catch(() => {}));
+    handler.on(socks.SocksProxyHandler.Events.SocksEnd, (payload: socks.SocksSocketEndPayload) => socksSupport.socksEnd(payload).catch(() => {}));
+    socksSupport.on('socksRequested', payload => handler.socketRequested(payload));
+    socksSupport.on('socksClosed', payload => handler.socketClosed(payload));
+    socksSupport.on('socksData', payload => handler.sendSocketData({ uid: payload.uid, data: Buffer.from(payload.data, 'base64') }));
   }
 
   static from(channel: channels.PlaywrightChannel): Playwright {
     return (channel as any)._object;
-  }
-
-  private _onSocksClosed(uid: string): void {
-    this._sockets.get(uid)?.destroy();
-    this._sockets.delete(uid);
   }
 }

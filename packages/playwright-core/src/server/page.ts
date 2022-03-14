@@ -20,7 +20,7 @@ import * as frames from './frames';
 import * as input from './input';
 import * as js from './javascript';
 import * as network from './network';
-import { Screenshotter } from './screenshotter';
+import { Screenshotter, ScreenshotOptions } from './screenshotter';
 import { TimeoutSettings } from '../utils/timeoutSettings';
 import * as types from './types';
 import { BrowserContext } from './browserContext';
@@ -31,10 +31,12 @@ import { Progress, ProgressController } from './progress';
 import { assert, isError } from '../utils/utils';
 import { ManualPromise } from '../utils/async';
 import { debugLogger } from '../utils/debugLogger';
+import { mimeTypeToComparator, ImageComparatorOptions, ComparatorResult } from '../utils/comparators';
 import { SelectorInfo, Selectors } from './selectors';
 import { CallMetadata, SdkObject } from './instrumentation';
 import { Artifact } from './artifact';
-import { ParsedSelector } from './common/selectorParser';
+import { TimeoutOptions } from '../common/types';
+import { isInvalidSelectorError, ParsedSelector } from './common/selectorParser';
 
 export interface PageDelegate {
   readonly rawMouse: input.RawMouse;
@@ -59,7 +61,7 @@ export interface PageDelegate {
   bringToFront(): Promise<void>;
 
   setBackgroundColor(color?: { r: number; g: number; b: number; a: number; }): Promise<void>;
-  takeScreenshot(progress: Progress, format: string, documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, quality: number | undefined, fitsViewport: boolean | undefined): Promise<Buffer>;
+  takeScreenshot(progress: Progress, format: string, documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, quality: number | undefined, fitsViewport: boolean, size: 'css' | 'device'): Promise<Buffer>;
 
   isElementHandle(remoteObject: any): boolean;
   adoptElementHandle<T extends Node>(handle: dom.ElementHandle<T>, to: dom.FrameExecutionContext): Promise<dom.ElementHandle<T>>;
@@ -91,6 +93,18 @@ type PageState = {
   reducedMotion: types.ReducedMotion | null;
   forcedColors: types.ForcedColors | null;
   extraHTTPHeaders: types.HeadersArray | null;
+};
+
+type ExpectScreenshotOptions = {
+  timeout?: number,
+  expected?: Buffer,
+  isNot?: boolean,
+  locator?: {
+    frame: frames.Frame,
+    selector: string,
+  },
+  comparatorOptions?: ImageComparatorOptions,
+  screenshotOptions?: ScreenshotOptions,
 };
 
 export class Page extends SdkObject {
@@ -169,6 +183,7 @@ export class Page extends SdkObject {
       this.pdf = delegate.pdf.bind(delegate);
     this.coverage = delegate.coverage ? delegate.coverage() : null;
     this.selectors = browserContext.selectors();
+    this.instrumentation.onPageOpen(this);
   }
 
   async initOpener(opener: PageDelegate | null) {
@@ -208,6 +223,7 @@ export class Page extends SdkObject {
   }
 
   _didClose() {
+    this.instrumentation.onPageClose(this);
     this._frameManager.dispose();
     this._frameThrottler.setEnabled(false);
     assert(this._closedState !== 'closed', 'Page closed twice');
@@ -217,6 +233,7 @@ export class Page extends SdkObject {
   }
 
   _didCrash() {
+    this.instrumentation.onPageClose(this);
     this._frameManager.dispose();
     this._frameThrottler.setEnabled(false);
     this.emit(Page.Events.Crash);
@@ -224,6 +241,7 @@ export class Page extends SdkObject {
   }
 
   _didDisconnect() {
+    this.instrumentation.onPageClose(this);
     this._frameManager.dispose();
     this._frameThrottler.setEnabled(false);
     assert(!this._disconnected, 'Page disconnected twice');
@@ -420,7 +438,78 @@ export class Page extends SdkObject {
     route.continue();
   }
 
-  async screenshot(metadata: CallMetadata, options: types.ScreenshotOptions = {}): Promise<Buffer> {
+  async expectScreenshot(metadata: CallMetadata, options: ExpectScreenshotOptions = {}): Promise<{ actual?: Buffer, previous?: Buffer, diff?: Buffer, errorMessage?: string, log?: string[] }> {
+    const locator = options.locator;
+    const rafrafScreenshot = locator ? async (progress: Progress, timeout: number) => {
+      return await locator.frame.rafrafTimeoutScreenshotElementWithProgress(progress, locator.selector, timeout, options.screenshotOptions || {});
+    } : async (progress: Progress, timeout: number) => {
+      await this.mainFrame().rafrafTimeout(timeout);
+      return await this._screenshotter.screenshotPage(progress, options.screenshotOptions || {});
+    };
+
+    const comparator = mimeTypeToComparator['image/png'];
+    const controller = new ProgressController(metadata, this);
+    const isGeneratingNewScreenshot = !options.expected;
+    if (isGeneratingNewScreenshot && options.isNot)
+      return { errorMessage: '"not" matcher requires expected result' };
+    let intermediateResult: {
+      actual?: Buffer,
+      previous?: Buffer,
+      errorMessage?: string,
+      diff?: Buffer,
+    } | undefined = undefined;
+    const callTimeout = this._timeoutSettings.timeout(options);
+    return controller.run(async progress => {
+      let actual: Buffer | undefined;
+      let previous: Buffer | undefined;
+      const pollIntervals = [0, 100, 250, 500];
+      progress.log(`${metadata.apiName}${callTimeout ? ` with timeout ${callTimeout}ms` : ''}`);
+      if (isGeneratingNewScreenshot)
+        progress.log(`  generating new screenshot expectation: waiting for 2 consecutive screenshots to match`);
+      else
+        progress.log(`  waiting for screenshot to match expectation`);
+      while (true) {
+        progress.throwIfAborted();
+        if (this.isClosed())
+          throw new Error('The page has closed');
+        let comparatorResult: ComparatorResult | undefined;
+        const screenshotTimeout = pollIntervals.shift() ?? 1000;
+        if (screenshotTimeout)
+          progress.log(`waiting ${screenshotTimeout}ms before taking screenshot`);
+        if (isGeneratingNewScreenshot) {
+          previous = actual;
+          actual = await rafrafScreenshot(progress, screenshotTimeout).catch(e => undefined);
+          comparatorResult = actual && previous ? comparator(actual, previous, options.comparatorOptions) : undefined;
+        } else {
+          actual = await rafrafScreenshot(progress, screenshotTimeout).catch(e => undefined);
+          comparatorResult = actual ? comparator(actual, options.expected!, options.comparatorOptions) : undefined;
+        }
+        if (comparatorResult !== undefined && !!comparatorResult === !!options.isNot)
+          break;
+        if (comparatorResult) {
+          if (isGeneratingNewScreenshot)
+            progress.log(`2 last screenshots do not match: ${comparatorResult.errorMessage}`);
+          else
+            progress.log(`screenshot does not match expectation: ${comparatorResult.errorMessage}`);
+          intermediateResult = { errorMessage: comparatorResult.errorMessage, diff: comparatorResult.diff, actual, previous };
+        }
+      }
+
+      return isGeneratingNewScreenshot ? { actual } : {};
+    }, callTimeout).catch(e => {
+      // Q: Why not throw upon isSessionClosedError(e) as in other places?
+      // A: We want user to receive a friendly diff between actual and expected/previous.
+      if (js.isJavaScriptErrorInEvaluate(e) || isInvalidSelectorError(e))
+        throw e;
+      return {
+        log: e.message ? [...metadata.log, e.message] : metadata.log,
+        ...intermediateResult,
+        errorMessage: intermediateResult?.errorMessage ?? e.message,
+      };
+    });
+  }
+
+  async screenshot(metadata: CallMetadata, options: ScreenshotOptions & TimeoutOptions = {}): Promise<Buffer> {
     const controller = new ProgressController(metadata, this);
     return controller.run(
         progress => this._screenshotter.screenshotPage(progress, options),
@@ -517,6 +606,10 @@ export class Page extends SdkObject {
   parseSelector(selector: string | ParsedSelector, options?: types.StrictOptions): SelectorInfo {
     const strict = typeof options?.strict === 'boolean' ? options.strict : !!this.context()._options.strictSelectors;
     return this.selectors.parseSelector(selector, strict);
+  }
+
+  async hideHighlight() {
+    await Promise.all(this.frames().map(frame => frame.hideHighlight().catch(() => {})));
   }
 }
 

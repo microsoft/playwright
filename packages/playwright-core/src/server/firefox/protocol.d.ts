@@ -208,11 +208,14 @@ export module Protocol {
       hidden: boolean;
     };
     export type setScrollbarsHiddenReturnValue = void;
-    export type addScriptToEvaluateOnNewDocumentParameters = {
+    export type setInitScriptsParameters = {
       browserContextId?: string;
-      script: string;
+      scripts: {
+        script: string;
+        worldName?: string;
+      }[];
     };
-    export type addScriptToEvaluateOnNewDocumentReturnValue = void;
+    export type setInitScriptsReturnValue = void;
     export type addBindingParameters = {
       browserContextId?: string;
       worldName?: string;
@@ -353,6 +356,10 @@ export module Protocol {
       y: number;
       width: number;
       height: number;
+    };
+    export type InitScript = {
+      script: string;
+      worldName?: string;
     };
     export type readyPayload = {
     }
@@ -528,11 +535,13 @@ export module Protocol {
       };
     };
     export type scrollIntoViewIfNeededReturnValue = void;
-    export type addScriptToEvaluateOnNewDocumentParameters = {
-      script: string;
-      worldName?: string;
+    export type setInitScriptsParameters = {
+      scripts: {
+        script: string;
+        worldName?: string;
+      }[];
     };
-    export type addScriptToEvaluateOnNewDocumentReturnValue = void;
+    export type setInitScriptsReturnValue = void;
     export type navigateParameters = {
       frameId: string;
       url: string;
@@ -901,7 +910,7 @@ export module Protocol {
       responseEndTime: number;
       transferSize: number;
       encodedBodySize: number;
-      protocolVersion: string;
+      protocolVersion?: string;
     }
     export type requestFailedPayload = {
       requestId: string;
@@ -1086,7 +1095,7 @@ export module Protocol {
     "Browser.setTouchOverride": Browser.setTouchOverrideParameters;
     "Browser.setDefaultViewport": Browser.setDefaultViewportParameters;
     "Browser.setScrollbarsHidden": Browser.setScrollbarsHiddenParameters;
-    "Browser.addScriptToEvaluateOnNewDocument": Browser.addScriptToEvaluateOnNewDocumentParameters;
+    "Browser.setInitScripts": Browser.setInitScriptsParameters;
     "Browser.addBinding": Browser.addBindingParameters;
     "Browser.grantPermissions": Browser.grantPermissionsParameters;
     "Browser.resetPermissions": Browser.resetPermissionsParameters;
@@ -1108,7 +1117,7 @@ export module Protocol {
     "Page.setCacheDisabled": Page.setCacheDisabledParameters;
     "Page.describeNode": Page.describeNodeParameters;
     "Page.scrollIntoViewIfNeeded": Page.scrollIntoViewIfNeededParameters;
-    "Page.addScriptToEvaluateOnNewDocument": Page.addScriptToEvaluateOnNewDocumentParameters;
+    "Page.setInitScripts": Page.setInitScriptsParameters;
     "Page.navigate": Page.navigateParameters;
     "Page.goBack": Page.goBackParameters;
     "Page.goForward": Page.goForwardParameters;
@@ -1165,7 +1174,7 @@ export module Protocol {
     "Browser.setTouchOverride": Browser.setTouchOverrideReturnValue;
     "Browser.setDefaultViewport": Browser.setDefaultViewportReturnValue;
     "Browser.setScrollbarsHidden": Browser.setScrollbarsHiddenReturnValue;
-    "Browser.addScriptToEvaluateOnNewDocument": Browser.addScriptToEvaluateOnNewDocumentReturnValue;
+    "Browser.setInitScripts": Browser.setInitScriptsReturnValue;
     "Browser.addBinding": Browser.addBindingReturnValue;
     "Browser.grantPermissions": Browser.grantPermissionsReturnValue;
     "Browser.resetPermissions": Browser.resetPermissionsReturnValue;
@@ -1187,7 +1196,7 @@ export module Protocol {
     "Page.setCacheDisabled": Page.setCacheDisabledReturnValue;
     "Page.describeNode": Page.describeNodeReturnValue;
     "Page.scrollIntoViewIfNeeded": Page.scrollIntoViewIfNeededReturnValue;
-    "Page.addScriptToEvaluateOnNewDocument": Page.addScriptToEvaluateOnNewDocumentReturnValue;
+    "Page.setInitScripts": Page.setInitScriptsReturnValue;
     "Page.navigate": Page.navigateReturnValue;
     "Page.goBack": Page.goBackReturnValue;
     "Page.goForward": Page.goForwardReturnValue;

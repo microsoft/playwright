@@ -22,6 +22,7 @@ import { helper } from './helper';
 import { eventsHelper, RegisteredListener } from '../utils/eventsHelper';
 import * as js from './javascript';
 import * as network from './network';
+import { Dialog } from './dialog';
 import { Page } from './page';
 import * as types from './types';
 import { BrowserContext } from './browserContext';
@@ -32,10 +33,10 @@ import { debugLogger } from '../utils/debugLogger';
 import { CallMetadata, internalCallMetadata, SdkObject } from './instrumentation';
 import type InjectedScript from './injected/injectedScript';
 import type { ElementStateWithoutStable, FrameExpectParams, InjectedScriptPoll, InjectedScriptProgress } from './injected/injectedScript';
-import { isSessionClosedError } from './common/protocolError';
-import { splitSelectorByFrame, stringifySelector } from './common/selectorParser';
+import { isSessionClosedError } from './protocolError';
+import { isInvalidSelectorError, splitSelectorByFrame, stringifySelector, ParsedSelector } from './common/selectorParser';
 import { SelectorInfo } from './selectors';
-import { isInvalidSelectorError } from './common/selectorErrors';
+import { ScreenshotOptions } from './screenshotter';
 
 type ContextData = {
   contextPromise: ManualPromise<dom.FrameExecutionContext | Error>;
@@ -86,7 +87,7 @@ export class FrameManager {
   readonly _consoleMessageTags = new Map<string, ConsoleTagHandler>();
   readonly _signalBarriers = new Set<SignalBarrier>();
   private _webSockets = new Map<string, network.WebSocket>();
-  _dialogCounter = 0;
+  _openedDialogs: Set<Dialog> = new Set();
 
   constructor(page: Page) {
     this._page = page;
@@ -308,15 +309,15 @@ export class FrameManager {
     this._page._browserContext.emit(BrowserContext.Events.RequestFailed, request);
   }
 
-  dialogDidOpen() {
+  dialogDidOpen(dialog: Dialog) {
     // Any ongoing evaluations will be stalled until the dialog is closed.
     for (const frame of this._frames.values())
       frame._invalidateNonStallingEvaluations('JavaScript dialog interrupted evaluation');
-    this._dialogCounter++;
+    this._openedDialogs.add(dialog);
   }
 
-  dialogWillClose() {
-    this._dialogCounter--;
+  dialogWillClose(dialog: Dialog) {
+    this._openedDialogs.delete(dialog);
   }
 
   removeChildFramesRecursively(frame: Frame) {
@@ -509,7 +510,7 @@ export class Frame extends SdkObject {
   async nonStallingRawEvaluateInExistingMainContext(expression: string): Promise<any> {
     if (this._pendingDocument)
       throw new Error('Frame is currently attempting a navigation');
-    if (this._page._frameManager._dialogCounter)
+    if (this._page._frameManager._openedDialogs.size)
       throw new Error('Open JavaScript dialog prevents evaluation');
     const context = this._existingMainContext();
     if (!context)
@@ -780,10 +781,18 @@ export class Frame extends SdkObject {
     const pair = await this.resolveFrameForSelectorNoWait(selector, {});
     if (!pair)
       throw new Error(`Error: failed to find frame for selector "${selector}"`);
-    const arrayHandle = await this._page.selectors._queryArray(pair.frame, pair.info);
+    const arrayHandle = await this._page.selectors._queryArrayInMainWorld(pair.frame, pair.info);
     const result = await arrayHandle.evaluateExpressionAndWaitForSignals(expression, isFunction, true, arg);
     arrayHandle.dispose();
     return result;
+  }
+
+  async maskSelectors(selectors: ParsedSelector[]): Promise<void> {
+    const context = await this._utilityContext();
+    const injectedScript = await context.injectedScript();
+    await injectedScript.evaluate((injected, { parsed }) => {
+      injected.maskSelectors(parsed);
+    }, { parsed: selectors });
   }
 
   async querySelectorAll(selector: string): Promise<dom.ElementHandle<Element>[]> {
@@ -791,6 +800,13 @@ export class Frame extends SdkObject {
     if (!pair)
       return [];
     return this._page.selectors._queryAll(pair.frame, pair.info, undefined, true /* adoptToMain */);
+  }
+
+  async queryCount(selector: string): Promise<number> {
+    const pair = await this.resolveFrameForSelectorNoWait(selector);
+    if (!pair)
+      throw new Error(`Error: failed to find frame for selector "${selector}"`);
+    return await this._page.selectors._queryCount(pair.frame, pair.info);
   }
 
   async content(): Promise<string> {
@@ -998,10 +1014,18 @@ export class Frame extends SdkObject {
         // Always fail on JavaScript errors or when the main connection is closed.
         if (js.isJavaScriptErrorInEvaluate(e) || isSessionClosedError(e))
           throw e;
-        // If error has happened in the detached inner frame, ignore it, keep polling.
-        if (selectorInFrame?.frame !== this && selectorInFrame?.frame.isDetached())
-          continue;
-        throw e;
+        // Certain error opt-out of the retries, throw.
+        if (dom.isNonRecoverableDOMError(e))
+          throw e;
+        // If the call is made on the detached frame - throw.
+        if (this.isDetached())
+          throw e;
+        // If there is scope, and scope is within the frame we use to select, assume context is destroyed and
+        // operation is not recoverable.
+        if (scope && scope._context.frame === selectorInFrame?.frame)
+          throw e;
+        // Retry upon all other errors.
+        continue;
       }
     }
     progress.throwIfAborted();
@@ -1031,6 +1055,13 @@ export class Frame extends SdkObject {
       } finally {
         element?.dispose();
       }
+    });
+  }
+
+  async rafrafTimeoutScreenshotElementWithProgress(progress: Progress, selector: string, timeout: number, options: ScreenshotOptions): Promise<Buffer> {
+    return await this._retryWithProgressIfNotConnected(progress, selector, true /* strict */, async handle => {
+      await handle._frame.rafrafTimeout(timeout);
+      return await this._page._screenshotter.screenshotElement(progress, handle, options);
     });
   }
 
@@ -1123,6 +1154,25 @@ export class Frame extends SdkObject {
         throw progress.injectedScript.createStacklessError('Node is not an <input>, <textarea> or <select> element');
       return (element as any).value;
     }, undefined, options);
+  }
+
+  async highlight(selector: string) {
+    const pair = await this.resolveFrameForSelectorNoWait(selector);
+    if (!pair)
+      return;
+    const context = await pair.frame._utilityContext();
+    const injectedScript = await context.injectedScript();
+    return await injectedScript.evaluate((injected, { parsed }) => {
+      return injected.highlight(parsed);
+    }, { parsed: pair.info.parsed });
+  }
+
+  async hideHighlight() {
+    const context = await this._utilityContext();
+    const injectedScript = await context.injectedScript();
+    return await injectedScript.evaluate(injected => {
+      return injected.hideHighlight();
+    });
   }
 
   private async _elementState(metadata: CallMetadata, selector: string, state: ElementStateWithoutStable, options: types.QueryOnSelectorOptions = {}): Promise<boolean> {
@@ -1329,6 +1379,21 @@ export class Frame extends SdkObject {
     return context.evaluate(() => document.title);
   }
 
+  async rafrafTimeout(timeout: number): Promise<void> {
+    if (timeout === 0)
+      return;
+    const context = await this._utilityContext();
+    await Promise.all([
+      // wait for double raf
+      context.evaluate(() => new Promise(x => {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(x);
+        });
+      })),
+      new Promise(fulfill => setTimeout(fulfill, timeout)),
+    ]);
+  }
+
   _onDetached() {
     this._stopNetworkIdleTimer();
     this._detached = true;
@@ -1528,7 +1593,7 @@ export class Frame extends SdkObject {
     return { frame, info: this._page.parseSelector(frameChunks[frameChunks.length - 1], options) };
   }
 
-  async resolveFrameForSelectorNoWait(selector: string, options: types.StrictOptions & types.TimeoutOptions, scope?: dom.ElementHandle): Promise<SelectorInFrame | null> {
+  async resolveFrameForSelectorNoWait(selector: string, options: types.StrictOptions & types.TimeoutOptions = {}, scope?: dom.ElementHandle): Promise<SelectorInFrame | null> {
     let frame: Frame | null = this;
     const frameChunks = splitSelectorByFrame(selector);
 

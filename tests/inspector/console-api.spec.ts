@@ -54,6 +54,15 @@ it('should support playwright.locator.value', async ({ page }) => {
 
 it('should support playwright.locator.values', async ({ page }) => {
   await page.setContent('<div>Hello<div>Bar</div></div>');
-  const length = await page.evaluate(`playwright.locator('div', { hasText: 'Hello' }).elements.length`);
-  expect(length).toBe(1);
+  expect(await page.evaluate(`playwright.locator('div', { hasText: 'Hello' }).elements.length`)).toBe(1);
+  expect(await page.evaluate(`playwright.locator('div', { hasText: 'HElLo' }).elements.length`)).toBe(1);
+  expect(await page.evaluate(`playwright.locator('div', { hasText: /ELL/ }).elements.length`)).toBe(0);
+  expect(await page.evaluate(`playwright.locator('div', { hasText: /ELL/i }).elements.length`)).toBe(1);
+  expect(await page.evaluate(`playwright.locator('div', { hasText: /Hello/ }).elements.length`)).toBe(1);
+});
+
+it('should support playwright.locator({ has })', async ({ page }) => {
+  await page.setContent('<div>Hi</div><div><span>Hello</span></div>');
+  expect(await page.evaluate(`playwright.locator('div', { has: playwright.locator('span') }).element.innerHTML`)).toContain('Hello');
+  expect(await page.evaluate(`playwright.locator('div', { has: playwright.locator('text=Hello') }).element.innerHTML`)).toContain('span');
 });

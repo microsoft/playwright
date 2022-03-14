@@ -15,41 +15,27 @@
  */
 
 import fs from 'fs';
-import path from 'path';
-import { tsConfigLoader, TsConfigLoaderResult } from './third_party/tsconfig-loader';
-import { transformHook } from './transform';
-
-const tsConfigCache = new Map<string, TsConfigLoaderResult>();
+import url from 'url';
+import { transformHook, resolveHook } from './transform';
 
 async function resolve(specifier: string, context: { parentURL: string }, defaultResolve: any) {
-  if (specifier.endsWith('.js') || specifier.endsWith('.ts') || specifier.endsWith('.mjs'))
-    return defaultResolve(specifier, context, defaultResolve);
-  let url = new URL(specifier, context.parentURL).toString();
-  url = url.substring('file://'.length);
-  for (const extension of ['.ts', '.js', '.tsx', '.jsx']) {
-    if (fs.existsSync(url + extension))
-      return defaultResolve(specifier + extension, context, defaultResolve);
+  if (context.parentURL && context.parentURL.startsWith('file://')) {
+    const filename = url.fileURLToPath(context.parentURL);
+    const resolved = resolveHook(filename, specifier);
+    if (resolved !== undefined)
+      specifier = url.pathToFileURL(resolved).toString();
   }
   return defaultResolve(specifier, context, defaultResolve);
 }
 
-async function load(url: string, context: any, defaultLoad: any) {
-  if (url.endsWith('.ts') || url.endsWith('.tsx')) {
-    const filename = url.substring('file://'.length);
-    const cwd = path.dirname(filename);
-    let tsconfig = tsConfigCache.get(cwd);
-    if (!tsconfig) {
-      tsconfig = tsConfigLoader({
-        getEnv: (name: string) => process.env[name],
-        cwd
-      });
-      tsConfigCache.set(cwd, tsconfig);
-    }
+async function load(moduleUrl: string, context: any, defaultLoad: any) {
+  if (moduleUrl.startsWith('file://') && (moduleUrl.endsWith('.ts') || moduleUrl.endsWith('.tsx'))) {
+    const filename = url.fileURLToPath(moduleUrl);
     const code = fs.readFileSync(filename, 'utf-8');
-    const source = transformHook(code, filename, tsconfig, true);
+    const source = transformHook(code, filename, true);
     return { format: 'module', source };
   }
-  return defaultLoad(url, context, defaultLoad);
+  return defaultLoad(moduleUrl, context, defaultLoad);
 }
 
 module.exports = { resolve, load };

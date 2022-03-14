@@ -58,6 +58,8 @@ class Reporter {
   onStepEnd(test, result, step) {
     if (step.error?.stack)
       step.error.stack = '<stack>';
+    if (step.error?.message.includes('getaddrinfo'))
+      step.error.message = '<message>';
     console.log('%%%% end', JSON.stringify(this.distillStep(step)));
   }
 }
@@ -174,6 +176,35 @@ test('should work without a file extension', async ({ runInlineTest }) => {
   ]);
 });
 
+test('should report onEnd after global teardown', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'reporter.ts': smallReporterJS,
+    'globalSetup.ts': `
+      module.exports = () => {
+        return () => console.log('\\n%%global teardown');
+      };
+    `,
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: './reporter',
+        globalSetup: './globalSetup',
+      };
+    `,
+    'a.test.ts': `
+      const { test } = pwt;
+      test('pass', async ({}) => {
+      });
+    `
+  }, { reporter: '', workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
+    '%%begin',
+    '%%global teardown',
+    '%%end',
+  ]);
+});
+
 test('should load reporter from node_modules', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'node_modules/my-reporter/index.js': smallReporterJS,
@@ -258,12 +289,14 @@ test('should report api steps', async ({ runInlineTest }) => {
     `,
     'a.test.ts': `
       const { test } = pwt;
-      test('pass', async ({ page }) => {
+      test('pass', async ({ page, request }) => {
         await Promise.all([
           page.waitForNavigation(),
           page.goto('data:text/html,<button></button>'),
         ]);
         await page.click('button');
+        await page.request.get('http://localhost2').catch(() => {});
+        await request.get('http://localhost2').catch(() => {});
       });
 
       test.describe('suite', () => {
@@ -299,20 +332,22 @@ test('should report api steps', async ({ runInlineTest }) => {
     `%% end {\"title\":\"page.goto(data:text/html,<button></button>)\",\"category\":\"pw:api\"}`,
     `%% begin {\"title\":\"page.click(button)\",\"category\":\"pw:api\"}`,
     `%% end {\"title\":\"page.click(button)\",\"category\":\"pw:api\"}`,
+    `%% begin {"title":"apiRequestContext.get(http://localhost2)","category":"pw:api"}`,
+    `%% end {"title":"apiRequestContext.get(http://localhost2)","category":"pw:api","error":{"message":"<message>","stack":"<stack>"}}`,
+    `%% begin {"title":"apiRequestContext.get(http://localhost2)","category":"pw:api"}`,
+    `%% end {"title":"apiRequestContext.get(http://localhost2)","category":"pw:api","error":{"message":"<message>","stack":"<stack>"}}`,
     `%% begin {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
+    `%% begin {\"title\":\"apiRequestContext.dispose\",\"category\":\"pw:api\"}`,
+    `%% end {\"title\":\"apiRequestContext.dispose\",\"category\":\"pw:api\"}`,
     `%% begin {\"title\":\"browserContext.close\",\"category\":\"pw:api\"}`,
     `%% end {\"title\":\"browserContext.close\",\"category\":\"pw:api\"}`,
-    `%% end {\"title\":\"After Hooks\",\"category\":\"hook\",\"steps\":[{\"title\":\"browserContext.close\",\"category\":\"pw:api\"}]}`,
+    `%% end {\"title\":\"After Hooks\",\"category\":\"hook\",\"steps\":[{\"title\":\"apiRequestContext.dispose\",\"category\":\"pw:api\"},{\"title\":\"browserContext.close\",\"category\":\"pw:api\"}]}`,
     `%% begin {\"title\":\"Before Hooks\",\"category\":\"hook\"}`,
-    `%% end {\"title\":\"Before Hooks\",\"category\":\"hook\"}`,
     `%% begin {\"title\":\"browser.newPage\",\"category\":\"pw:api\"}`,
     `%% end {\"title\":\"browser.newPage\",\"category\":\"pw:api\"}`,
     `%% begin {\"title\":\"page.setContent\",\"category\":\"pw:api\"}`,
     `%% end {\"title\":\"page.setContent\",\"category\":\"pw:api\"}`,
-    `%% begin {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
-    `%% end {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
-    `%% begin {\"title\":\"Before Hooks\",\"category\":\"hook\"}`,
-    `%% end {\"title\":\"Before Hooks\",\"category\":\"hook\"}`,
+    `%% end {\"title\":\"Before Hooks\",\"category\":\"hook\",\"steps\":[{\"title\":\"browser.newPage\",\"category\":\"pw:api\"},{\"title\":\"page.setContent\",\"category\":\"pw:api\"}]}`,
     `%% begin {\"title\":\"page.click(button)\",\"category\":\"pw:api\"}`,
     `%% end {\"title\":\"page.click(button)\",\"category\":\"pw:api\"}`,
     `%% begin {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
@@ -322,13 +357,9 @@ test('should report api steps', async ({ runInlineTest }) => {
     `%% begin {\"title\":\"page.click(button)\",\"category\":\"pw:api\"}`,
     `%% end {\"title\":\"page.click(button)\",\"category\":\"pw:api\"}`,
     `%% begin {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
-    `%% end {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
-    `%% begin {\"title\":\"Before Hooks\",\"category\":\"hook\"}`,
-    `%% end {\"title\":\"Before Hooks\",\"category\":\"hook\"}`,
     `%% begin {\"title\":\"page.close\",\"category\":\"pw:api\"}`,
     `%% end {\"title\":\"page.close\",\"category\":\"pw:api\"}`,
-    `%% begin {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
-    `%% end {\"title\":\"After Hooks\",\"category\":\"hook\"}`,
+    `%% end {\"title\":\"After Hooks\",\"category\":\"hook\",\"steps\":[{\"title\":\"page.close\",\"category\":\"pw:api\"}]}`,
   ]);
 });
 
@@ -525,6 +556,51 @@ test('should report correct tests/suites when using grep', async ({ runInlineTes
   expect(fileSuite.suites.length).toBe(1);
   expect(fileSuite.suites[0].specs.length).toBe(2);
   expect(fileSuite.specs.length).toBe(0);
+});
+
+test('should use sourceMap-based file suite names', async ({ runInlineTest }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/11028' });
+  const result = await runInlineTest({
+    'reporter.js': `
+      class Reporter {
+        onBegin(config, suite) {
+          console.log(suite.suites[0].suites[0].location.file);
+        }
+      }
+      module.exports = Reporter;
+    `,
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: './reporter',
+      };
+    `,
+    'a.spec.js':
+`var __create = Object.create;//@no-header
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __getProtoOf = Object.getPrototypeOf;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __markAsModule = (target) => __defProp(target, "__esModule", { value: true });
+var __reExport = (target, module2, desc) => {
+  if (module2 && typeof module2 === "object" || typeof module2 === "function") {
+    for (let key of __getOwnPropNames(module2))
+      if (!__hasOwnProp.call(target, key) && key !== "default")
+        __defProp(target, key, { get: () => module2[key], enumerable: !(desc = __getOwnPropDesc(module2, key)) || desc.enumerable });
+  }
+  return target;
+};
+var __toModule = (module2) => {
+  return __reExport(__markAsModule(__defProp(module2 != null ? __create(__getProtoOf(module2)) : {}, "default", module2 && module2.__esModule && "default" in module2 ? { get: () => module2.default, enumerable: true } : { value: module2, enumerable: true })), module2);
+};
+var import_test = __toModule(require("@playwright/test"));
+(0, import_test.test)("pass", async () => {
+});
+//# sourceMappingURL=data:application/json;base64,ewogICJ2ZXJzaW9uIjogMywKICAic291cmNlcyI6IFsiLi4vc3JjL2Euc3BlYy50cyJdLAogICJzb3VyY2VzQ29udGVudCI6IFsiaW1wb3J0IHsgdGVzdCB9IGZyb20gXCJAcGxheXdyaWdodC90ZXN0XCI7XG5cbnRlc3QoJ3Bhc3MnLCBhc3luYyAoKSA9PiB7fSk7Il0sCiAgIm1hcHBpbmdzIjogIjs7Ozs7Ozs7Ozs7Ozs7Ozs7O0FBQUEsa0JBQXFCO0FBRXJCLHNCQUFLLFFBQVEsWUFBWTtBQUFBOyIsCiAgIm5hbWVzIjogW10KfQo=`,
+  }, { 'reporter': '' });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.output).toContain('a.spec.ts');
 });
 
 function stripEscapedAscii(str: string) {

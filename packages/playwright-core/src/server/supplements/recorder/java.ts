@@ -29,7 +29,8 @@ export class JavaLanguageGenerator implements LanguageGenerator {
   highlighter = 'java';
 
   generateAction(actionInContext: ActionInContext): string {
-    const { action, pageAlias } = actionInContext;
+    const action = actionInContext.action;
+    const pageAlias = actionInContext.frame.pageAlias;
     const formatter = new JavaScriptFormatter(6);
     formatter.newLine();
     formatter.add('// ' + actionTitle(action));
@@ -41,10 +42,17 @@ export class JavaLanguageGenerator implements LanguageGenerator {
       return formatter.format();
     }
 
-    const subject = actionInContext.isMainFrame ? pageAlias :
-      (actionInContext.frameName ?
-        `${pageAlias}.frame(${quote(actionInContext.frameName)})` :
-        `${pageAlias}.frameByUrl(${quote(actionInContext.frameUrl)})`);
+    let subject: string;
+    if (actionInContext.frame.isMainFrame) {
+      subject = pageAlias;
+    } else if (actionInContext.frame.selectorsChain && action.name !== 'navigate') {
+      const locators = actionInContext.frame.selectorsChain.map(selector => '.' + asLocator(selector, 'frameLocator'));
+      subject = `${pageAlias}${locators.join('')}`;
+    } else if (actionInContext.frame.name) {
+      subject = `${pageAlias}.frame(${quote(actionInContext.frame.name)})`;
+    } else {
+      subject = `${pageAlias}.frameByUrl(${quote(actionInContext.frame.url)})`;
+    }
 
     const signals = toSignalMap(action);
 
@@ -55,7 +63,7 @@ export class JavaLanguageGenerator implements LanguageGenerator {
       });`);
     }
 
-    const actionCall = this._generateActionCall(action, actionInContext.isMainFrame);
+    const actionCall = this._generateActionCall(action);
     let code = `${subject}.${actionCall};`;
 
     if (signals.popup) {
@@ -81,11 +89,11 @@ export class JavaLanguageGenerator implements LanguageGenerator {
     formatter.add(code);
 
     if (signals.assertNavigation)
-      formatter.add(`// assert ${pageAlias}.url().equals(${quote(signals.assertNavigation.url)});`);
+      formatter.add(`// assertThat(${pageAlias}).hasURL(${quote(signals.assertNavigation.url)});`);
     return formatter.format();
   }
 
-  private _generateActionCall(action: Action, isPage: boolean): string {
+  private _generateActionCall(action: Action): string {
     switch (action.name) {
       case 'openPage':
         throw Error('Not reached');
@@ -105,26 +113,26 @@ export class JavaLanguageGenerator implements LanguageGenerator {
           options.clickCount = action.clickCount;
         if (action.position)
           options.position = action.position;
-        const optionsText = formatClickOptions(options, isPage);
-        return `${method}(${quote(action.selector)}${optionsText ? ', ' : ''}${optionsText})`;
+        const optionsText = formatClickOptions(options);
+        return asLocator(action.selector) + `.${method}(${optionsText})`;
       }
       case 'check':
-        return `check(${quote(action.selector)})`;
+        return asLocator(action.selector) + `.check()`;
       case 'uncheck':
-        return `uncheck(${quote(action.selector)})`;
+        return asLocator(action.selector) + `.uncheck()`;
       case 'fill':
-        return `fill(${quote(action.selector)}, ${quote(action.text)})`;
+        return asLocator(action.selector) + `.fill(${quote(action.text)})`;
       case 'setInputFiles':
-        return `setInputFiles(${quote(action.selector)}, ${formatPath(action.files.length === 1 ? action.files[0] : action.files)})`;
+        return asLocator(action.selector) + `.setInputFiles(${formatPath(action.files.length === 1 ? action.files[0] : action.files)})`;
       case 'press': {
         const modifiers = toModifiers(action.modifiers);
         const shortcut = [...modifiers, action.key].join('+');
-        return `press(${quote(action.selector)}, ${quote(shortcut)})`;
+        return asLocator(action.selector) + `.press(${quote(shortcut)})`;
       }
       case 'navigate':
         return `navigate(${quote(action.url)})`;
       case 'select':
-        return `selectOption(${quote(action.selector)}, ${formatSelectOption(action.options.length > 1 ? action.options : action.options[0])})`;
+        return asLocator(action.selector) + `.selectOption(${formatSelectOption(action.options.length > 1 ? action.options : action.options[0])})`;
     }
   }
 
@@ -133,6 +141,7 @@ export class JavaLanguageGenerator implements LanguageGenerator {
     formatter.add(`
     import com.microsoft.playwright.*;
     import com.microsoft.playwright.options.*;
+    import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
     import java.util.*;
 
     public class Example {
@@ -217,7 +226,7 @@ function formatContextOptions(contextOptions: BrowserContextOptions, deviceName:
   return lines.join('\n');
 }
 
-function formatClickOptions(options: MouseClickOptions, isPage: boolean) {
+function formatClickOptions(options: MouseClickOptions) {
   const lines = [];
   if (options.button)
     lines.push(`  .setButton(MouseButton.${options.button.toUpperCase()})`);
@@ -229,10 +238,19 @@ function formatClickOptions(options: MouseClickOptions, isPage: boolean) {
     lines.push(`  .setPosition(${options.position.x}, ${options.position.y})`);
   if (!lines.length)
     return '';
-  lines.unshift(`new ${isPage ? 'Page' : 'Frame'}.ClickOptions()`);
+  lines.unshift(`new Locator.ClickOptions()`);
   return lines.join('\n');
 }
 
 function quote(text: string) {
   return escapeWithQuotes(text, '\"');
+}
+
+function asLocator(selector: string, locatorFn = 'locator') {
+  const match = selector.match(/(.*)\s+>>\s+nth=(\d+)$/);
+  if (!match)
+    return `${locatorFn}(${quote(selector)})`;
+  if (+match[2] === 0)
+    return `${locatorFn}(${quote(match[1])}).first()`;
+  return `${locatorFn}(${quote(match[1])}).nth(${match[2]})`;
 }

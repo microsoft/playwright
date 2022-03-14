@@ -115,6 +115,7 @@ it.describe('pause', () => {
   });
 
   it('should highlight pointer', async ({ page, recorderPageGetter }) => {
+    const actionPointPromise = waitForTestLog<{ x: number, y: number }>(page, 'Action point for test: ');
     await page.setContent('<button>Submit</button>');
     const scriptPromise = (async () => {
       await page.pause();
@@ -123,18 +124,15 @@ it.describe('pause', () => {
     const recorderPage = await recorderPageGetter();
     await recorderPage.click('[title="Step over"]');
 
-    const point = await page.waitForSelector('x-pw-action-point');
+    const { x, y } = await actionPointPromise;
     const button = await page.waitForSelector('button');
     const box1 = await button.boundingBox();
-    const box2 = await point.boundingBox();
 
     const x1 = box1.x + box1.width / 2;
     const y1 = box1.y + box1.height / 2;
-    const x2 = box2.x + box2.width / 2;
-    const y2 = box2.y + box2.height / 2;
 
-    expect(Math.abs(x1 - x2) < 2).toBeTruthy();
-    expect(Math.abs(y1 - y2) < 2).toBeTruthy();
+    expect(Math.abs(x1 - x) < 2).toBeTruthy();
+    expect(Math.abs(y1 - y) < 2).toBeTruthy();
 
     await recorderPage.click('[title=Resume]');
     await scriptPromise;
@@ -331,14 +329,13 @@ it.describe('pause', () => {
       await page.pause();
     })();
     const recorderPage = await recorderPageGetter();
-    const [element] = await Promise.all([
-      page.waitForSelector('x-pw-highlight:visible'),
+    const [box1] = await Promise.all([
+      waitForTestLog<Box>(page, 'Highlight box for test: '),
       recorderPage.fill('input[placeholder="Playwright Selector"]', 'text=Submit'),
     ]);
     const button = await page.$('text=Submit');
-    const box1 = await element.boundingBox();
     const box2 = await button.boundingBox();
-    expect(box1).toEqual(box2);
+    expect(roundBox(box1)).toEqual(roundBox(box2));
     await recorderPage.click('[title=Resume]');
     await scriptPromise;
   });
@@ -394,4 +391,26 @@ async function sanitizeLog(recorderPage: Page): Promise<string[]> {
     })));
   }
   return results;
+}
+
+function waitForTestLog<T>(page: Page, prefix: string): Promise<T> {
+  return new Promise<T>(resolve => {
+    page.on('console', message => {
+      const text = message.text();
+      if (text.startsWith(prefix)) {
+        const json = text.substring(prefix.length);
+        resolve(JSON.parse(json));
+      }
+    });
+  });
+}
+
+type Box = { x: number, y: number, width: number, height: number };
+function roundBox(box: Box): Box {
+  return {
+    x: Math.round(box.x * 1000),
+    y: Math.round(box.y * 1000),
+    width: Math.round(box.width * 1000),
+    height: Math.round(box.height * 1000),
+  };
 }

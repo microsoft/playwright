@@ -108,7 +108,7 @@ it('should fall back to context.route', async ({ browser, server }) => {
   await context.close();
 });
 
-it('should support Set-Cookie header', async ({ contextFactory, server, browserName, browserMajorVersion }) => {
+it('should support Set-Cookie header', async ({ contextFactory, server, browserName, defaultSameSiteCookieValue }) => {
   it.fixme(browserName === 'webkit');
 
   const context = await contextFactory();
@@ -123,7 +123,6 @@ it('should support Set-Cookie header', async ({ contextFactory, server, browserN
     });
   });
   await page.goto('https://example.com');
-  const defaultSameSiteCookieValue = browserName === 'chromium' || (browserName === 'firefox' && browserMajorVersion >= 96) ? 'Lax' : 'None';
   expect(await context.cookies()).toEqual([{
     sameSite: defaultSameSiteCookieValue,
     name: 'name',
@@ -154,7 +153,7 @@ it('should ignore secure Set-Cookie header for insecure requests', async ({ cont
   expect(await context.cookies()).toEqual([]);
 });
 
-it('should use Set-Cookie header in future requests', async ({ contextFactory, server, browserName, browserMajorVersion }) => {
+it('should use Set-Cookie header in future requests', async ({ contextFactory, server, browserName, defaultSameSiteCookieValue }) => {
   it.fixme(browserName === 'webkit');
 
   const context = await contextFactory();
@@ -170,7 +169,6 @@ it('should use Set-Cookie header in future requests', async ({ contextFactory, s
     });
   });
   await page.goto(server.EMPTY_PAGE);
-  const defaultSameSiteCookieValue = browserName === 'chromium' || (browserName === 'firefox' && browserMajorVersion >= 96) ? 'Lax' : 'None';
   expect(await context.cookies()).toEqual([{
     sameSite: defaultSameSiteCookieValue,
     name: 'name',
@@ -211,4 +209,29 @@ it('should support the times parameter with route matching', async ({ context, p
   await page.goto(server.EMPTY_PAGE);
   await page.goto(server.EMPTY_PAGE);
   expect(intercepted).toHaveLength(1);
+});
+
+it('should overwrite post body with empty string', async ({ context, server, page, browserName }) => {
+  await context.route('**/empty.html', route => {
+    route.continue({
+      postData: '',
+    });
+  });
+
+  const [req] = await Promise.all([
+    server.waitForRequest('/empty.html'),
+    page.setContent(`
+      <script>
+        (async () => {
+            await fetch('${server.EMPTY_PAGE}', {
+              method: 'POST',
+              body: 'original',
+            });
+        })()
+      </script>
+    `),
+  ]);
+
+  const body = (await req.postBody).toString();
+  expect(body).toBe('');
 });

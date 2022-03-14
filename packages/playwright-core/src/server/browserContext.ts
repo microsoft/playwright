@@ -28,7 +28,7 @@ import { Progress } from './progress';
 import { Selectors } from './selectors';
 import * as types from './types';
 import path from 'path';
-import { CallMetadata, internalCallMetadata, createInstrumentation, SdkObject } from './instrumentation';
+import { CallMetadata, internalCallMetadata, SdkObject } from './instrumentation';
 import { Debugger } from './supplements/debugger';
 import { Tracing } from './trace/recorder/tracing';
 import { HarRecorder } from './supplements/har/harRecorder';
@@ -76,15 +76,12 @@ export abstract class BrowserContext extends SdkObject {
     this._isPersistentContext = !browserContextId;
     this._closePromise = new Promise(fulfill => this._closePromiseFulfill = fulfill);
 
-    // Create instrumentation per context.
-    this.instrumentation = createInstrumentation();
-
     this.fetchRequest = new BrowserContextAPIRequestContext(this);
 
     if (this._options.recordHar)
       this._harRecorder = new HarRecorder(this, { ...this._options.recordHar, path: path.join(this._browser.options.artifactsDir, `${createGuid()}.har`) });
 
-    this.tracing = new Tracing(this);
+    this.tracing = new Tracing(this, browser.options.tracesDir);
   }
 
   isPersistentContext(): boolean {
@@ -104,7 +101,7 @@ export abstract class BrowserContext extends SdkObject {
       return;
     // Debugger will pause execution upon page.pause in headed mode.
     const contextDebugger = new Debugger(this);
-    this.instrumentation.addListener(contextDebugger);
+    this.instrumentation.addListener(contextDebugger, this);
 
     // When PWDEBUG=1, show inspector for each context.
     if (debugMode() === 'inspector')
@@ -141,6 +138,7 @@ export abstract class BrowserContext extends SdkObject {
     this._closedStatus = 'closed';
     this._deleteAllDownloads();
     this._downloads.clear();
+    this.tracing.dispose();
     if (this._isPersistentContext)
       this._onClosePersistent();
     this._closePromiseFulfill!(new Error('Context closed'));
@@ -286,7 +284,7 @@ export abstract class BrowserContext extends SdkObject {
       this._closedStatus = 'closing';
 
       await this._harRecorder?.flush();
-      await this.tracing.dispose();
+      await this.tracing.flush();
 
       // Cleanup.
       const promises: Promise<void>[] = [];

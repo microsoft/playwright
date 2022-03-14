@@ -18,23 +18,27 @@ import debug from 'debug';
 import * as types from '../types';
 import { EventEmitter } from 'events';
 import fs from 'fs';
+import os from 'os';
+import path from 'path';
 import * as stream from 'stream';
 import * as ws from 'ws';
-import { createGuid, makeWaitForNextTask } from '../../utils/utils';
+import { createGuid, makeWaitForNextTask, removeFolders } from '../../utils/utils';
 import { BrowserOptions, BrowserProcess, PlaywrightOptions } from '../browser';
 import { BrowserContext, validateBrowserContextOptions } from '../browserContext';
 import { ProgressController } from '../progress';
 import { CRBrowser } from '../chromium/crBrowser';
 import { helper } from '../helper';
-import { Transport } from '../../protocol/transport';
+import { PipeTransport } from '../../protocol/transport';
 import { RecentLogsCollector } from '../../utils/debugLogger';
+import { gracefullyCloseSet } from '../../utils/processLauncher';
 import { TimeoutSettings } from '../../utils/timeoutSettings';
 import { AndroidWebView } from '../../protocol/channels';
-import { CRPage } from '../chromium/crPage';
 import { SdkObject, internalCallMetadata } from '../instrumentation';
 
+const ARTIFACTS_FOLDER = path.join(os.tmpdir(), 'playwright-artifacts-');
+
 export interface Backend {
-  devices(): Promise<DeviceBackend[]>;
+  devices(options: types.AndroidDeviceOptions): Promise<DeviceBackend[]>;
 }
 
 export interface DeviceBackend {
@@ -69,8 +73,8 @@ export class Android extends SdkObject {
     this._timeoutSettings.setDefaultTimeout(timeout);
   }
 
-  async devices(): Promise<AndroidDevice[]> {
-    const devices = (await this._backend.devices()).filter(d => d.status === 'device');
+  async devices(options: types.AndroidDeviceOptions): Promise<AndroidDevice[]> {
+    const devices = (await this._backend.devices(options)).filter(d => d.status === 'device');
     const newSerials = new Set<string>();
     for (const d of devices) {
       newSerials.add(d.serial);
@@ -95,7 +99,7 @@ export class AndroidDevice extends SdkObject {
   readonly _backend: DeviceBackend;
   readonly model: string;
   readonly serial: string;
-  private _driverPromise: Promise<Transport> | undefined;
+  private _driverPromise: Promise<PipeTransport> | undefined;
   private _lastId = 0;
   private _callbacks = new Map<number, { fulfill: (result: any) => void, reject: (error: Error) => void }>();
   private _pollingWebViews: NodeJS.Timeout | undefined;
@@ -155,13 +159,13 @@ export class AndroidDevice extends SdkObject {
     return await this._backend.runCommand(`shell:screencap -p`);
   }
 
-  private async _driver(): Promise<Transport> {
+  private async _driver(): Promise<PipeTransport> {
     if (!this._driverPromise)
       this._driverPromise = this._installDriver();
     return this._driverPromise;
   }
 
-  private async _installDriver(): Promise<Transport> {
+  private async _installDriver(): Promise<PipeTransport> {
     debug('pw:android')('Stopping the old driver');
     await this.shell(`am force-stop com.microsoft.playwright.androiddriver`);
 
@@ -176,7 +180,7 @@ export class AndroidDevice extends SdkObject {
     debug('pw:android')('Starting the new driver');
     this.shell('am instrument -w com.microsoft.playwright.androiddriver.test/androidx.test.runner.AndroidJUnitRunner').catch(e => debug('pw:android')(e));
     const socket = await this._waitForLocalAbstract('playwright_android_driver_socket');
-    const transport = new Transport(socket, socket, socket, 'be');
+    const transport = new PipeTransport(socket, socket, socket, 'be');
     transport.onmessage = message => {
       const response = JSON.parse(message);
       const { id, result, error } = response;
@@ -256,15 +260,26 @@ export class AndroidDevice extends SdkObject {
     await androidBrowser._init();
     this._browserConnections.add(androidBrowser);
 
+    const artifactsDir = await fs.promises.mkdtemp(ARTIFACTS_FOLDER);
+    const cleanupArtifactsDir = async () => {
+      const errors = await removeFolders([artifactsDir]);
+      for (let i = 0; i < (errors || []).length; ++i)
+        debug('pw:android')(`exception while removing ${artifactsDir}: ${errors[i]}`);
+    };
+    gracefullyCloseSet.add(cleanupArtifactsDir);
+    socket.on('close', async () => {
+      gracefullyCloseSet.delete(cleanupArtifactsDir);
+      cleanupArtifactsDir().catch(e => debug('pw:android')(`could not cleanup artifacts dir: ${e}`));
+    });
     const browserOptions: BrowserOptions = {
       ...this._android._playwrightOptions,
       name: 'clank',
       isChromium: true,
       slowMo: 0,
       persistent: { ...options, noDefaultViewport: true },
-      artifactsDir: '',
-      downloadsPath: '',
-      tracesDir: '',
+      artifactsDir,
+      downloadsPath: artifactsDir,
+      tracesDir: artifactsDir,
       browserProcess: new ClankBrowserProcess(androidBrowser),
       proxy: options.proxy,
       protocolLogger: helper.debugProtocolLogger(),
@@ -278,14 +293,6 @@ export class AndroidDevice extends SdkObject {
     await controller.run(async progress => {
       await defaultContext._loadDefaultContextAsIs(progress);
     });
-    {
-      // TODO: remove after rolling to r838157
-      // Force page scale factor update.
-      const page = defaultContext.pages()[0];
-      const crPage = page._delegate as CRPage;
-      await crPage._mainFrameSession._client.send('Emulation.setDeviceMetricsOverride', { mobile: false, width: 0, height: 0, deviceScaleFactor: 0 });
-      await crPage._mainFrameSession._client.send('Emulation.clearDeviceMetricsOverride', {});
-    }
     return defaultContext;
   }
 

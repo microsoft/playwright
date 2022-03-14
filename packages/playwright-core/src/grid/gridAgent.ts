@@ -20,12 +20,12 @@ import { fork } from 'child_process';
 import { getPlaywrightVersion } from '../utils/utils';
 
 export function launchGridAgent(agentId: string, gridURL: string) {
-  const log = debug(`[agent ${agentId}]`);
+  const log = debug(`pw:grid:agent:${agentId}`);
   log('created');
   const params = new URLSearchParams();
   params.set('pwVersion', getPlaywrightVersion(true /* majorMinorOnly */));
   params.set('agentId', agentId);
-  const ws = new WebSocket(gridURL + `/registerAgent?` + params.toString());
+  const ws = new WebSocket(gridURL.replace('http://', 'ws://') + `/registerAgent?` + params.toString());
   ws.on('message', (workerId: string) => {
     log('Worker requested ' + workerId);
     fork(require.resolve('./gridWorker.js'), [gridURL, agentId, workerId], { detached: true });

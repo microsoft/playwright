@@ -134,7 +134,6 @@ class PageAgent {
       this._runtime.events.onBindingCalled(this._onBindingCalled.bind(this)),
       browserChannel.register('page', {
         addBinding: ({ worldName, name, script }) => this._frameTree.addBinding(worldName, name, script),
-        addScriptToEvaluateOnNewDocument: ({script, worldName}) => this._frameTree.addScriptToEvaluateOnNewDocument(script, worldName),
         adoptNode: this._adoptNode.bind(this),
         crash: this._crash.bind(this),
         describeNode: this._describeNode.bind(this),

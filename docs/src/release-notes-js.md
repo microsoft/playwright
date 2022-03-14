@@ -5,6 +5,258 @@ title: "Release notes"
 
 <!-- TOC -->
 
+## Version 1.20
+
+### Highlights
+
+- New options for methods [`method: Page.screenshot`], [`method: Locator.screenshot`] and [`method: ElementHandle.screenshot`]:
+  * Option `animations: "disabled"` rewinds all CSS animations and transitions to a consistent state
+  * Option `mask: Locator[]` masks given elements, overlaying them with pink `#FF00FF` boxes.
+- `expect().toMatchSnapshot()` now supports anonymous snapshots: when snapshot name is missing, Playwright Test will generate one
+  automatically:
+
+  ```js
+  expect('Web is Awesome <3').toMatchSnapshot();
+  ```
+- New `maxDiffPixels` and `maxDiffPixelRatio` options for fine-grained screenshot comparison using `expect().toMatchSnapshot()`:
+
+  ```js
+  expect(await page.screenshot()).toMatchSnapshot({
+    fullPage: true, // take a full page screenshot
+    maxDiffPixels: 27, // allow no more than 27 different pixels.
+  });
+  ```
+
+  It is most convenient to specify `maxDiffPixels` or `maxDiffPixelRatio` once in [`property: TestConfig.expect`].
+
+- Playwright Test now adds [`property: TestConfig.fullyParallel`] mode. By default, Playwright Test parallelizes between files. In fully parallel mode, tests inside a single file are also run in parallel. You can also use `--fully-parallel` command line flag.
+
+  ```ts
+  // playwright.config.ts
+  export default {
+    fullyParallel: true,
+  };
+  ```
+
+- [`property: TestProject.grep`] and [`property: TestProject.grepInvert`] are now configurable per project. For example, you can now
+  configure smoke tests project using `grep`:
+  ```ts
+  // playwright.config.ts
+  export default {
+    projects: [
+      {
+        name: 'smoke tests',
+        grep: '@smoke',
+      },
+    ],
+  };
+  ```
+
+- [Trace Viewer](./trace-viewer) now shows [API testing requests](./test-api-testing).
+- [`method: Locator.highlight`] visually reveals element(s) for easier debugging.
+
+### Announcements
+
+- We now ship a designated Python docker image `mcr.microsoft.com/playwright/python`. Please switch over to it if you use
+  Python. This is the last release that includes Python inside our javascript `mcr.microsoft.com/playwright` docker image.
+- v1.20 is the last release to receive WebKit update for macOS 10.15 Catalina. Please update MacOS to keep using latest & greatest WebKit!
+
+### Browser Versions
+
+- Chromium 101.0.4921.0
+- Mozilla Firefox 97.0.1
+- WebKit 15.4
+
+This version was also tested against the following stable channels:
+
+- Google Chrome 99
+- Microsoft Edge 99
+
+## Version 1.19
+
+### Playwright Test Update
+
+- Playwright Test v1.19 now supports *soft assertions*. Failed soft assertions
+  **do not** terminate test execution, but mark the test as failed.
+
+  ```js
+  // Make a few checks that will not stop the test when failed...
+  await expect.soft(page.locator('#status')).toHaveText('Success');
+  await expect.soft(page.locator('#eta')).toHaveText('1 day');
+
+  // ... and continue the test to check more things.
+  await page.locator('#next-page').click();
+  await expect.soft(page.locator('#title')).toHaveText('Make another order');
+  ```
+
+  Read more in [our documentation](./test-assertions#soft-assertions)
+
+- You can now specify a **custom error message** as a second argument to the `expect` and `expect.soft` functions, for example:
+
+  ```js
+  await expect(page.locator('text=Name'), 'should be logged in').toBeVisible();
+  ```
+
+  The error would look like this:
+
+  ```bash
+      Error: should be logged in
+
+      Call log:
+        - expect.toBeVisible with timeout 5000ms
+        - waiting for selector "text=Name"
+
+
+        2 |
+        3 | test('example test', async({ page }) => {
+      > 4 |   await expect(page.locator('text=Name'), 'should be logged in').toBeVisible();
+          |                                                                  ^
+        5 | });
+        6 |
+  ```
+
+  Read more in [our documentation](./test-assertions#custom-error-message)
+- By default, tests in a single file are run in order. If you have many independent tests in a single file, you can now
+  run them in parallel with [`method: Test.describe.configure`].
+
+### Other Updates
+
+- Locator now supports a `has` option that makes sure it contains another locator inside:
+
+  ```js
+  await page.locator('article', {
+    has: page.locator('.highlight'),
+  }).click();
+  ```
+
+  Read more in [locator documentation](./api/class-locator#locator-locator-option-has)
+
+- New [`method: Locator.page`]
+- [`method: Page.screenshot`] and [`method: Locator.screenshot`] now automatically hide blinking caret
+- Playwright Codegen now generates locators and frame locators
+- New option `url`  in [`property: TestConfig.webServer`] to ensure your web server is ready before running the tests
+- New [`property: TestInfo.errors`] and [`property: TestResult.errors`] that contain all failed assertions and soft assertions.
+
+
+### Potentially breaking change in Playwright Test Global Setup
+
+It is unlikely that this change will affect you, no action is required if your tests keep running as they did.
+
+We've noticed that in rare cases, the set of tests to be executed was configured in the global setup by means of the environment variables. We also noticed some applications that were post processing the reporters' output in the global teardown. If you are doing one of the two, [learn more](https://github.com/microsoft/playwright/issues/12018)
+
+### Browser Versions
+
+- Chromium 100.0.4863.0
+- Mozilla Firefox 96.0.1
+- WebKit 15.4
+
+This version was also tested against the following stable channels:
+
+- Google Chrome 98
+- Microsoft Edge 98
+
+
+## Version 1.18
+
+### Locator Improvements
+
+- [`method: Locator.dragTo`]
+- [`expect(locator).toBeChecked({ checked })`](./test-assertions#locator-assertions-to-be-checked)
+- Each locator can now be optionally filtered by the text it contains:
+    ```js
+    await page.locator('li', { hasText: 'my item' }).locator('button').click();
+    ```
+    Read more in [locator documentation](./api/class-locator#locator-locator-option-has-text)
+
+
+### Testing API improvements
+
+- [`expect(response).toBeOK()`](./test-assertions)
+- [`testInfo.attach()`](./api/class-testinfo#test-info-attach)
+- [`test.info()`](./api/class-test#test-info)
+
+### Improved TypeScript Support
+
+1. Playwright Test now respects `tsconfig.json`'s [`baseUrl`](https://www.typescriptlang.org/tsconfig#baseUrl) and [`paths`](https://www.typescriptlang.org/tsconfig#paths), so you can use aliases
+1. There is a new environment variable `PW_EXPERIMENTAL_TS_ESM` that allows importing ESM modules in your TS code, without the need for the compile step. Don't forget the `.js` suffix when you are importing your esm modules. Run your tests as follows:
+
+```bash
+npm i --save-dev @playwright/test@1.18.0-rc1
+PW_EXPERIMENTAL_TS_ESM=1 npx playwright test
+```
+
+### Create Playwright
+
+The `npm init playwright` command is now generally available for your use:
+
+```sh
+# Run from your project's root directory
+npm init playwright@latest
+# Or create a new project
+npm init playwright@latest new-project
+```
+
+This will create a Playwright Test configuration file, optionally add examples, a GitHub Action workflow and a first test `example.spec.ts`.
+
+### New APIs & changes
+
+- new [`testCase.repeatEachIndex`](./api/class-testcase#test-case-repeat-each-index) API
+- [`acceptDownloads`](./api/class-browser#browser-new-context-option-accept-downloads) option now defaults to `true`
+
+### Breaking change: custom config options
+
+Custom config options are a convenient way to parametrize projects with different values. Learn more in [this guide](./test-parameterize#parameterized-projects).
+
+Previously, any fixture introduced through [`method: Test.extend`] could be overridden in the [`property: TestProject.use`] config section. For example,
+
+```js
+// WRONG: THIS SNIPPET DOES NOT WORK SINCE v1.18.
+
+// fixtures.js
+const test = base.extend({
+  myParameter: 'default',
+});
+
+// playwright.config.js
+module.exports = {
+  use: {
+    myParameter: 'value',
+  },
+};
+```
+
+The proper way to make a fixture parametrized in the config file is to specify `option: true` when defining the fixture. For example,
+
+```js
+// CORRECT: THIS SNIPPET WORKS SINCE v1.18.
+
+// fixtures.js
+const test = base.extend({
+  // Fixtures marked as "option: true" will get a value specified in the config,
+  // or fallback to the default value.
+  myParameter: ['default', { option: true }],
+});
+
+// playwright.config.js
+module.exports = {
+  use: {
+    myParameter: 'value',
+  },
+};
+```
+
+### Browser Versions
+
+- Chromium 99.0.4812.0
+- Mozilla Firefox 95.0
+- WebKit 15.4
+
+This version was also tested against the following stable channels:
+
+- Google Chrome 97
+- Microsoft Edge 97
+
+
 ## Version 1.17
 
 ### Frame Locators
@@ -387,8 +639,8 @@ import { PlaywrightTestConfig } from '@playwright/test';
 const config: PlaywrightTestConfig = {
   webServer: {
     command: 'npm run start', // command to launch
-    port: 3000, // port to await for 
-    timeout: 120 * 1000, 
+    port: 3000, // port to await for
+    timeout: 120 * 1000,
     reuseExistingServer: !process.env.CI,
   },
 };
@@ -427,7 +679,7 @@ Learn more in the [documentation](./test-advanced#launching-a-development-web-se
 
 - [Intro](./intro.md)
 - [Authentication](./auth.md)
-- [Chome Extensions](./chrome-extensions.md)
+- [Chrome Extensions](./chrome-extensions.md)
 - [Playwright Test Annotations](./test-annotations.md)
 - [Playwright Test Configuration](./test-configuration.md)
 - [Playwright Test Fixtures](./test-fixtures.md)

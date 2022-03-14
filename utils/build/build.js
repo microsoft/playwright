@@ -20,7 +20,7 @@ const child_process = require('child_process');
 const path = require('path');
 const chokidar = require('chokidar');
 const fs = require('fs');
-const { packages } = require('../list_packages');
+const { workspace } = require('../workspace');
 
 /**
  * @typedef {{
@@ -62,11 +62,19 @@ const lintMode = process.argv.slice(2).includes('--lint');
 const ROOT = path.join(__dirname, '..', '..');
 
 /**
- * @param {string} relative 
+ * @param {string} relative
  * @returns {string}
  */
 function filePath(relative) {
   return path.join(ROOT, ...relative.split('/'));
+}
+
+/**
+ * @param {string} path
+ * @returns {string}
+ */
+function quotePath(path) {
+  return "\"" + path + "\"";
 }
 
 async function runWatch() {
@@ -108,7 +116,7 @@ async function runWatch() {
 
 async function runBuild() {
   /**
-   * @param {Step} step 
+   * @param {Step} step
    */
   function runStep(step) {
     const out = child_process.spawnSync(step.command, step.args, {
@@ -143,15 +151,23 @@ async function runBuild() {
 }
 
 /**
- * @param {string} file 
- * @param {string} from 
- * @param {string} to 
+ * @param {string} file
+ * @param {string} from
+ * @param {string} to
  */
 function copyFile(file, from, to) {
   const destination = path.resolve(filePath(to), path.relative(filePath(from), file));
   fs.mkdirSync(path.dirname(destination), { recursive: true });
   fs.copyFileSync(file, destination);
 }
+
+// Update test runner.
+steps.push({
+  command: 'npm',
+  args: ['ci', '--save=false', '--fund=false', '--audit=false'],
+  shell: true,
+  cwd: path.join(__dirname, '..', '..', 'tests', 'playwright-test', 'stable-test-runner'),
+});
 
 // Build injected scripts.
 const webPackFiles = [
@@ -160,11 +176,12 @@ const webPackFiles = [
   'packages/playwright-core/src/web/traceViewer/webpack-sw.config.js',
   'packages/playwright-core/src/web/recorder/webpack.config.js',
   'packages/html-reporter/webpack.config.js',
+  'packages/html-reporter/tests/webpack.config.js',
 ];
 for (const file of webPackFiles) {
   steps.push({
     command: 'npx',
-    args: ['webpack', '--config', filePath(file), ...(watchMode ? ['--watch', '--stats', 'none'] : [])],
+    args: ['webpack', '--config', quotePath(filePath(file)), ...(watchMode ? ['--watch', '--stats', 'none'] : [])],
     shell: true,
     env: {
       NODE_ENV: watchMode ? 'development' : 'production'
@@ -173,8 +190,8 @@ for (const file of webPackFiles) {
 }
 
 // Run Babel.
-for (const packageDir of packages) {
-  if (!fs.existsSync(path.join(packageDir, 'src')))
+for (const pkg of workspace.packages()) {
+  if (!fs.existsSync(path.join(pkg.path, 'src')))
     continue;
   steps.push({
     command: 'npx',
@@ -182,9 +199,9 @@ for (const packageDir of packages) {
       'babel',
       ...(watchMode ? ['-w', '--source-maps'] : []),
       '--extensions', '.ts',
-      '--out-dir', path.join(packageDir, 'lib'),
+      '--out-dir', quotePath(path.join(pkg.path, 'lib')),
       '--ignore', '"packages/playwright-core/src/server/injected/**/*"',
-      path.join(packageDir, 'src')],
+      quotePath(path.join(pkg.path, 'src'))],
     shell: true,
   });
 }
@@ -255,7 +272,7 @@ if (lintMode) {
   // Run TypeScript for type chekcing.
   steps.push({
     command: 'npx',
-    args: ['tsc', ...(watchMode ? ['-w'] : []), '-p', filePath('.')],
+    args: ['tsc', ...(watchMode ? ['-w'] : []), '-p', quotePath(filePath('.'))],
     shell: true,
   });
 }

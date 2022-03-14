@@ -100,6 +100,10 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel> im
     return { elements: elements.map(e => ElementHandleDispatcher.from(this._scope, e)) };
   }
 
+  async queryCount(params: channels.FrameQueryCountParams): Promise<channels.FrameQueryCountResult> {
+    return { value: await this._frame.queryCount(params.selector) };
+  }
+
   async content(): Promise<channels.FrameContentResult> {
     return { value: await this._frame.content() };
   }
@@ -226,6 +230,10 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel> im
 
   async title(params: channels.FrameTitleParams, metadata: CallMetadata): Promise<channels.FrameTitleResult> {
     return { value: await this._frame.title() };
+  }
+
+  async highlight(params: channels.FrameHighlightParams, metadata: CallMetadata): Promise<void> {
+    return await this._frame.highlight(params.selector);
   }
 
   async expect(params: channels.FrameExpectParams, metadata: CallMetadata): Promise<channels.FrameExpectResult> {

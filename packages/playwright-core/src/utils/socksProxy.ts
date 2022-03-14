@@ -14,8 +14,15 @@
  * limitations under the License.
  */
 
-import net from 'net';
-import { assert } from './utils';
+import dns from 'dns';
+import EventEmitter from 'events';
+import net, { AddressInfo } from 'net';
+import util from 'util';
+import { debugLogger } from './debugLogger';
+import { createSocket } from './netUtils';
+import { assert, createGuid } from './utils';
+
+const dnsLookupAsync = util.promisify(dns.lookup);
 
 // https://tools.ietf.org/html/rfc1928
 
@@ -50,13 +57,21 @@ enum SocksReply {
   AddressTypeNotSupported = 0x08
 }
 
-export interface SocksConnectionClient {
-  onSocketRequested(uid: string, host: string, port: number): void;
-  onSocketData(uid: string, data: Buffer): void;
-  onSocketClosed(uid: string): void;
+export type SocksSocketRequestedPayload = { uid: string, host: string, port: number };
+export type SocksSocketConnectedPayload = { uid: string, host: string, port: number };
+export type SocksSocketDataPayload = { uid: string, data: Buffer };
+export type SocksSocketErrorPayload = { uid: string, error: string };
+export type SocksSocketFailedPayload = { uid: string, errorCode: string };
+export type SocksSocketClosedPayload = { uid: string };
+export type SocksSocketEndPayload = { uid: string };
+
+interface SocksConnectionClient {
+  onSocketRequested(payload: SocksSocketRequestedPayload): void;
+  onSocketData(payload: SocksSocketDataPayload): void;
+  onSocketClosed(payload: SocksSocketClosedPayload): void;
 }
 
-export class SocksConnection {
+class SocksConnection {
   private _buffer = Buffer.from([]);
   private _offset = 0;
   private _fence = 0;
@@ -94,7 +109,7 @@ export class SocksConnection {
     }
 
     this._socket.off('data', this._boundOnData);
-    this._client.onSocketRequested(this._uid, host, port);
+    this._client.onSocketRequested({ uid: this._uid, host, port });
   }
 
   async _authenticate(): Promise<boolean> {
@@ -199,7 +214,7 @@ export class SocksConnection {
   }
 
   private _onClose() {
-    this._client.onSocketClosed(this._uid);
+    this._client.onSocketClosed({ uid: this._uid });
   }
 
   private _onData(buffer: Buffer) {
@@ -220,7 +235,7 @@ export class SocksConnection {
       ...parseIP(host), // Address
       port << 8, port & 0xFF // Port
     ]));
-    this._socket.on('data', data => this._client.onSocketData(this._uid, data));
+    this._socket.on('data', data => this._client.onSocketData({ uid: this._uid, data }));
   }
 
   socketFailed(errorCode: string) {
@@ -267,4 +282,135 @@ function parseIP(address: string): number[] {
   if (!net.isIPv4(address))
     throw new Error('IPv6 is not supported');
   return address.split('.', 4).map(t => +t);
+}
+
+export class SocksProxy extends EventEmitter implements SocksConnectionClient {
+  static Events = {
+    SocksRequested: 'socksRequested',
+    SocksData: 'socksData',
+    SocksClosed: 'socksClosed',
+  };
+
+  private _server: net.Server;
+  private _connections = new Map<string, SocksConnection>();
+
+  constructor() {
+    super();
+    this._server = new net.Server((socket: net.Socket) => {
+      const uid = createGuid();
+      const connection = new SocksConnection(uid, socket, this);
+      this._connections.set(uid, connection);
+    });
+  }
+
+  async listen(port: number): Promise<number> {
+    return new Promise(f => {
+      this._server.listen(port, () => {
+        const port = (this._server.address() as AddressInfo).port;
+        debugLogger.log('proxy', `Starting socks proxy server on port ${port}`);
+        f(port);
+      });
+    });
+  }
+
+  async close() {
+    await new Promise(f => this._server.close(f));
+  }
+
+  onSocketRequested(payload: SocksSocketRequestedPayload) {
+    this.emit(SocksProxy.Events.SocksRequested, payload);
+  }
+
+  onSocketData(payload: SocksSocketDataPayload): void {
+    this.emit(SocksProxy.Events.SocksData, payload);
+  }
+
+  onSocketClosed(payload: SocksSocketClosedPayload): void {
+    this.emit(SocksProxy.Events.SocksClosed, payload);
+  }
+
+  socketConnected({ uid, host, port }: SocksSocketConnectedPayload) {
+    this._connections.get(uid)?.socketConnected(host, port);
+  }
+
+  socketFailed({ uid, errorCode }: SocksSocketFailedPayload) {
+    this._connections.get(uid)?.socketFailed(errorCode);
+  }
+
+  sendSocketData({ uid, data }: SocksSocketDataPayload) {
+    this._connections.get(uid)?.sendData(data);
+  }
+
+  sendSocketEnd({ uid }: SocksSocketEndPayload) {
+    this._connections.get(uid)?.end();
+  }
+
+  sendSocketError({ uid, error }: SocksSocketErrorPayload) {
+    this._connections.get(uid)?.error(error);
+  }
+}
+
+export class SocksProxyHandler extends EventEmitter {
+  static Events = {
+    SocksConnected: 'socksConnected',
+    SocksData: 'socksData',
+    SocksError: 'socksError',
+    SocksFailed: 'socksFailed',
+    SocksEnd: 'socksEnd',
+  };
+
+  private _sockets = new Map<string, net.Socket>();
+  private _redirectPortForTest: number | undefined;
+
+  constructor(redirectPortForTest?: number) {
+    super();
+    this._redirectPortForTest = redirectPortForTest;
+  }
+
+  cleanup() {
+    for (const uid of this._sockets.keys())
+      this.socketClosed({ uid });
+  }
+
+  async socketRequested({ uid, host, port }: SocksSocketRequestedPayload): Promise<void> {
+    if (host === 'local.playwright')
+      host = 'localhost';
+    try {
+      if (this._redirectPortForTest)
+        port = this._redirectPortForTest;
+      const { address } = await dnsLookupAsync(host);
+      const socket = await createSocket(address, port);
+      socket.on('data', data => {
+        const payload: SocksSocketDataPayload = { uid, data };
+        this.emit(SocksProxyHandler.Events.SocksData, payload);
+      });
+      socket.on('error', error => {
+        const payload: SocksSocketErrorPayload = { uid, error: error.message };
+        this.emit(SocksProxyHandler.Events.SocksError, payload);
+        this._sockets.delete(uid);
+      });
+      socket.on('end', () => {
+        const payload: SocksSocketEndPayload = { uid };
+        this.emit(SocksProxyHandler.Events.SocksEnd, payload);
+        this._sockets.delete(uid);
+      });
+      const localAddress = socket.localAddress;
+      const localPort = socket.localPort;
+      this._sockets.set(uid, socket);
+      const payload: SocksSocketConnectedPayload = { uid, host: localAddress, port: localPort };
+      this.emit(SocksProxyHandler.Events.SocksConnected, payload);
+    } catch (error) {
+      const payload: SocksSocketFailedPayload = { uid, errorCode: error.code };
+      this.emit(SocksProxyHandler.Events.SocksFailed, payload);
+    }
+  }
+
+  sendSocketData({ uid, data }: SocksSocketDataPayload): void {
+    this._sockets.get(uid)?.write(data);
+  }
+
+  socketClosed({ uid }: SocksSocketClosedPayload): void {
+    this._sockets.get(uid)?.destroy();
+    this._sockets.delete(uid);
+  }
 }

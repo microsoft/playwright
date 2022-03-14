@@ -3,7 +3,7 @@ id: test-snapshots
 title: "Visual comparisons"
 ---
 
-Playwright Test includes the ability to produce and visually compare screenshots using `expect(value).toMatchSnapshot(snapshotName)`. On first execution, Playwright test will generate reference screenshots. Subsequent runs will compare against the reference.
+Playwright Test includes the ability to produce and visually compare screenshots using `await expect(pageOrLocator).toHaveScreenshot()`. On first execution, Playwright test will generate reference screenshots. Subsequent runs will compare against the reference.
 
 ```js js-flavor=js
 // example.spec.js
@@ -11,7 +11,7 @@ const { test, expect } = require('@playwright/test');
 
 test('example test', async ({ page }) => {
   await page.goto('https://playwright.dev');
-  expect(await page.screenshot()).toMatchSnapshot('landing.png');
+  await expect(page).toHaveScreenshot();
 });
 ```
 
@@ -21,16 +21,19 @@ import { test, expect } from '@playwright/test';
 
 test('example test', async ({ page }) => {
   await page.goto('https://playwright.dev');
-  expect(await page.screenshot()).toMatchSnapshot('landing.png');
+  await expect(page).toHaveScreenshot();
 });
 ```
 
 When you run above for the first time, test runner will say:
 ```
-Error: example.spec.ts-snapshots/landing-chromium-darwin.png is missing in snapshots, writing actual.
+Error: example.spec.ts-snapshots/example-test-1-chromium-darwin.png is missing in snapshots, writing actual.
 ```
 
-That's because there was no golden file for your `landing.png` snapshot. It is now created and is ready to be added to the repository. The name of the folder with the golden expectations starts with the name of your test file:
+That's because there was no golden file yet. This method took a bunch of screenshots until two consecutive
+screenshots matched, and saved the last screenshot to file system. It is now ready to be added to the repository.
+
+The name of the folder with the golden expectations starts with the name of your test file:
 
 ```bash
 drwxr-xr-x  5 user  group  160 Jun  4 11:46 .
@@ -39,12 +42,21 @@ drwxr-xr-x  6 user  group  192 Jun  4 11:45 ..
 drwxr-xr-x  3 user  group   96 Jun  4 11:46 example.spec.ts-snapshots
 ```
 
-Note the `chromium-darwin` in the generated snapshot file name - it contains the browser name and the platform. Screenshots differ between browsers and platforms due to different rendering, fonts and more, so you will need different snapshots for them. If you use multiple projects in your [configuration file](./test-configuration.md), project name will be used instead of `chromium`.
+The snapshot name `example-test-1-chromium-darwin.png` consists of a few parts:
+- `example-test-1.png` - an auto-generated name of the snapshot. Alternatively you can specify snapshot name as the first argument of the `toMatchSnapshot()` method:
+    ```js js-flavor=js
+    await expect(page).toHaveScreenshot('landing.png');
+    ```
+    ```js js-flavor=ts
+    await expect(page).toHaveScreenshot('landing.png');
+    ```
+
+- `chromium-darwin` - the browser name and the platform. Screenshots differ between browsers and platforms due to different rendering, fonts and more, so you will need different snapshots for them. If you use multiple projects in your [configuration file](./test-configuration.md), project name will be used instead of `chromium`.
 
 If you are not on the same operating system as your CI system, you can use Docker to generate/update the screenshots:
 
 ```bash
-docker run --rm --network host -v $(pwd):/work/ -w /work/ -it mcr.microsoft.com/playwright:v1.12.3-focal /bin/bash
+docker run --rm --network host -v $(pwd):/work/ -w /work/ -it mcr.microsoft.com/playwright:v1.20.0-focal /bin/bash
 npm install
 npx playwright test --update-snapshots
 ```
@@ -55,10 +67,10 @@ Sometimes you need to update the reference screenshot, for example when the page
 npx playwright test --update-snapshots
 ```
 
-> Note that `snapshotName` also accepts an array of path segments to the snapshot file such as `expect(value).toMatchSnapshot(['relative', 'path', 'to', 'snapshot.png'])`.
+> Note that `snapshotName` also accepts an array of path segments to the snapshot file such as `await expect(page).toHaveScreenshot(['relative', 'path', 'to', 'snapshot.png'])`.
 > However, this path must stay within the snapshots directory for each test file (i.e. `a.spec.js-snapshots`), otherwise it will throw.
 
-Playwright Test uses the [pixelmatch](https://github.com/mapbox/pixelmatch) library. You can pass comparison `threshold` as an option.
+Playwright Test uses the [pixelmatch](https://github.com/mapbox/pixelmatch) library. You can [pass various options](./test-assertions#expectpageorlocatortohavescreenshot-options) to modify its behavior:
 
 ```js js-flavor=js
 // example.spec.js
@@ -66,7 +78,7 @@ const { test, expect } = require('@playwright/test');
 
 test('example test', async ({ page }) => {
   await page.goto('https://playwright.dev');
-  expect(await page.screenshot()).toMatchSnapshot('home.png', { threshold: 0.2 });
+  await expect(page).toHaveScreenshot({ maxDiffPixels: 100 });
 });
 ```
 
@@ -76,7 +88,7 @@ import { test, expect } from '@playwright/test';
 
 test('example test', async ({ page }) => {
   await page.goto('https://playwright.dev');
-  expect(await page.screenshot()).toMatchSnapshot('home.png', { threshold: 0.2 });
+  await expect(page).toHaveScreenshot({ maxDiffPixels: 100 });
 });
 ```
 
@@ -85,7 +97,7 @@ If you'd like to share the default value among all the tests in the project, you
 ```js js-flavor=js
 module.exports = {
   expect: {
-    toMatchSnapshot: { threshold: 0.1 },
+    toHaveScreenshot: { maxDiffPixels: 100 },
   },
 };
 ```
@@ -94,13 +106,13 @@ module.exports = {
 import { PlaywrightTestConfig } from '@playwright/test';
 const config: PlaywrightTestConfig = {
   expect: {
-    toMatchSnapshot: { threshold: 0.1 },
+    toHaveScreenshot: { maxDiffPixels: 100 },
   },
 };
 export default config;
 ```
 
-Apart from screenshots, `expect(value).toMatchSnapshot(snapshotName)` can also be used to compare text, png and jpeg images, or arbitrary binary data. Playwright Test auto-detects the content type and uses the appropriate comparison algorithm.
+Apart from screenshots, you can use `expect(value).toMatchSnapshot(snapshotName)` to compare text or arbitrary binary data. Playwright Test auto-detects the content type and uses the appropriate comparison algorithm.
 
 Here we compare text content against the reference.
 

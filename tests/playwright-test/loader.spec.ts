@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-import { test, expect } from './playwright-test-fixtures';
+import { test, expect, stripAnsi } from './playwright-test-fixtures';
+import path from 'path';
 
 test('should return the location of a syntax error', async ({ runInlineTest }) => {
   const result = await runInlineTest({
@@ -240,7 +241,7 @@ test('should fail to load ts from esm when package.json has type module', async 
   expect(result.output).toContain('Cannot import a typescript file from an esmodule');
 });
 
-test('should import esm from ts when package.json has type module in experimental mode', async ({ runInlineTest }) => {
+test('should import esm from ts when package.json has type module in experimental mode @esm', async ({ runInlineTest }) => {
   // We only support experimental esm mode on Node 16+
   test.skip(parseInt(process.version.slice(1), 10) < 16);
   const result = await runInlineTest({
@@ -259,9 +260,195 @@ test('should import esm from ts when package.json has type module in experimenta
     'b.ts': `
       export const foo: string = 'foo';
     `
-  }, {}, {
-    PW_EXPERIMENTAL_TS_ESM: true
-  });
+  }, {});
 
   expect(result.exitCode).toBe(0);
+});
+
+test('should propagate subprocess exit code in experimental mode @esm', async ({ runInlineTest }) => {
+  // We only support experimental esm mode on Node 16+
+  test.skip(parseInt(process.version.slice(1), 10) < 16);
+  const result = await runInlineTest({
+    'package.json': JSON.stringify({ type: 'module' }),
+    'a.test.ts': `
+      const { test } = pwt;
+      test('failing test', ({}, testInfo) => {
+        expect(1).toBe(2);
+      });
+    `,
+  }, {});
+
+  expect(result.exitCode).toBe(1);
+});
+
+test('should filter stack trace for simple expect', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'expect-test.spec.ts': `
+      const { test } = pwt;
+      test('should work', () => {
+        test.expect(1+1).toEqual(3);
+      });
+    `
+  });
+  expect(result.exitCode).toBe(1);
+  expect(stripAnsi(result.output)).not.toContain(path.sep + `playwright-test`);
+  expect(stripAnsi(result.output)).not.toContain(path.sep + `playwright-core`);
+  expect(stripAnsi(result.output)).not.toContain('internal');
+});
+
+test('should filter stack trace for web-first assertions', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'expect-test.spec.ts': `
+      const { test } = pwt;
+      test('should work', async ({page}) => {
+        await expect(page.locator('x-foo'), 'x-foo must be visible').toBeVisible({timeout: 1});
+      });
+    `
+  });
+  expect(result.exitCode).toBe(1);
+  expect(stripAnsi(result.output)).not.toContain(path.sep + `playwright-test`);
+  expect(stripAnsi(result.output)).not.toContain(path.sep + `playwright-core`);
+  expect(stripAnsi(result.output)).not.toContain('internal');
+});
+
+test('should filter out event emitter from stack traces', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'expect-test.spec.ts': `
+      const { test } = pwt;
+      const EventEmitter = require('events');
+      test('should work', async ({}) => {
+        const emitter = new EventEmitter();
+        emitter.on('event', function handle() { expect(1).toBe(2); });
+        emitter.emit('event');
+      });
+    `
+  });
+  expect(result.exitCode).toBe(1);
+  const outputWithoutGoodStackFrames = stripAnsi(result.output).split('\n').filter(line => !line.includes(testInfo.outputPath())).join('\n');
+  expect(outputWithoutGoodStackFrames).not.toContain('EventEmitter.emit');
+});
+
+test('should filter out syntax error stack traces', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'expect-test.spec.ts': `
+      const { test } = pwt;
+      test('should work', ({}) => {
+        // syntax error: cannot have await in non-async function
+        await Proimse.resolve();
+      });
+    `
+  });
+  expect(result.exitCode).toBe(1);
+  expect(stripAnsi(result.output)).not.toContain('babel');
+  expect(stripAnsi(result.output)).not.toContain('    at ');
+});
+
+test('should filter stack trace for raw errors', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'expect-test.spec.ts': `
+      const { test } = pwt;
+      test('should work', async ({}) => {
+        throw new Error('foobar!');
+      });
+    `
+  });
+  expect(result.exitCode).toBe(1);
+  expect(stripAnsi(result.output)).toContain('foobar!');
+  expect(stripAnsi(result.output)).not.toContain(path.sep + `playwright-test`);
+  expect(stripAnsi(result.output)).not.toContain(path.sep + `playwright-core`);
+  expect(stripAnsi(result.output)).not.toContain('internal');
+});
+
+test('should not filter out POM', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'helper.ts': `
+      export function foo() {
+        throw new Error('foo');
+      }
+    `,
+    'expect-test.spec.ts': `
+      const { test } = pwt;
+      const { foo } = require('./helper');
+      test('should work', ({}) => {
+        foo();
+      });
+    `
+  });
+  expect(result.exitCode).toBe(1);
+  expect(stripAnsi(result.output)).toContain('foo');
+  expect(stripAnsi(result.output)).toContain('helper.ts');
+  expect(stripAnsi(result.output)).toContain('expect-test.spec.ts');
+  expect(stripAnsi(result.output)).not.toContain(path.sep + `playwright-test`);
+  expect(stripAnsi(result.output)).not.toContain(path.sep + `playwright-core`);
+  expect(stripAnsi(result.output)).not.toContain('internal');
+});
+
+test('should filter stack even without default Error.prepareStackTrace', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'expect-test.spec.ts': `
+      const { test } = pwt;
+      test('should work', ({}) => {
+        Error.prepareStackTrace = undefined;
+        throw new Error('foobar');
+      });
+    `
+  });
+  expect(result.exitCode).toBe(1);
+  expect(stripAnsi(result.output)).toContain('foobar');
+  expect(stripAnsi(result.output)).toContain('expect-test.spec.ts');
+  expect(stripAnsi(result.output)).not.toContain(path.sep + `playwright-test`);
+  expect(stripAnsi(result.output)).not.toContain(path.sep + `playwright-core`);
+  expect(stripAnsi(result.output)).not.toContain('internal');
+  const stackLines = stripAnsi(result.output).split('\n').filter(line => line.includes('    at '));
+  expect(stackLines.length).toBe(1);
+});
+
+test('should work with cross-imports - 1', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'test1.spec.ts': `
+      const { test } = pwt;
+      test('test 1', async ({}) => {
+        await new Promise(x => setTimeout(x, 500));
+        console.log('running TEST-1');
+      });
+    `,
+    'test2.spec.ts': `
+      import * as _ from './test1.spec';
+      const { test } = pwt;
+      test('test 2', async ({}) => {
+        await new Promise(x => setTimeout(x, 500));
+        console.log('running TEST-2');
+      });
+    `
+  }, { workers: 2 });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(2);
+  expect(result.failed).toBe(0);
+  expect(result.output).toContain('TEST-1');
+  expect(result.output).toContain('TEST-2');
+});
+
+test('should work with cross-imports - 2', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'test1.spec.ts': `
+      const { test } = pwt;
+      import * as _ from './test2.spec';
+      test('test 1', async ({}) => {
+        await new Promise(x => setTimeout(x, 500));
+        console.log('running TEST-1');
+      });
+    `,
+    'test2.spec.ts': `
+      const { test } = pwt;
+      test('test 2', async ({}) => {
+        await new Promise(x => setTimeout(x, 500));
+        console.log('running TEST-2');
+      });
+    `
+  }, { workers: 2, reporter: 'list' });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(2);
+  expect(result.failed).toBe(0);
+  expect(result.output).toContain('TEST-1');
+  expect(result.output).toContain('TEST-2');
 });

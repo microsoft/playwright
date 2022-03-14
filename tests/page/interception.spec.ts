@@ -19,7 +19,7 @@ import { test as it, expect } from './pageTest';
 import { globToRegex } from '../../packages/playwright-core/lib/client/clientHelper';
 import vm from 'vm';
 
-it('should work with navigation', async ({ page, server }) => {
+it('should work with navigation @smoke', async ({ page, server }) => {
   const requests = new Map();
   await page.route('**/*', route => {
     requests.set(route.request().url().split('/').pop(), route.request());
@@ -108,7 +108,6 @@ it('should intercept network activity from worker', async function({ page, serve
 it('should intercept network activity from worker 2', async function({ page, server, isElectron, isAndroid, browserName, browserMajorVersion }) {
   it.skip(isAndroid);
   it.fixme(isElectron);
-  it.fixme(browserName === 'chromium' && browserMajorVersion === 97, '@see https://github.com/microsoft/playwright/issues/10048');
 
   const url = server.PREFIX + '/worker/worker.js';
   await page.route(url, route => {

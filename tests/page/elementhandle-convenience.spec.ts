@@ -260,6 +260,29 @@ it('isEnabled and isDisabled should work', async ({ page }) => {
   expect(await page.isDisabled(':text("button2")')).toBe(false);
 });
 
+it('isEnabled and isDisabled should work with <select/> option/optgroup correctly', async ({ page }) => {
+  await page.setContent(`
+    <select name="select">
+      <option id="enabled1" value="1">Enabled</option>
+      <option id="disabled1" value="2" disabled>Disabled</option>
+      <optgroup label="Foo1">
+        <option value="mercedes">Mercedes</option>
+      </optgroup>
+      <optgroup label="Foo2" disabled>
+        <option value="mercedes">Mercedes</option>
+      </optgroup>
+    </select>
+  `);
+  expect((await (await page.$('#enabled1')).isEnabled())).toBe(true);
+  expect((await (await page.$('#enabled1')).isDisabled())).toBe(false);
+  expect((await (await page.$('#disabled1')).isEnabled())).toBe(false);
+  expect((await (await page.$('#disabled1')).isDisabled())).toBe(true);
+  expect((await (await page.$('optgroup >> nth=0')).isEnabled())).toBe(true);
+  expect((await (await page.$('optgroup >> nth=0')).isDisabled())).toBe(false);
+  expect((await (await page.$('optgroup >> nth=1')).isEnabled())).toBe(false);
+  expect((await (await page.$('optgroup >> nth=1')).isDisabled())).toBe(true);
+});
+
 it('isEditable should work', async ({ page }) => {
   await page.setContent(`<input id=input1 disabled><textarea></textarea><input id=input2>`);
   await page.$eval('textarea', t => t.readOnly = true);

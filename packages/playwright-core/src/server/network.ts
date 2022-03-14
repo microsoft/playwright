@@ -36,7 +36,7 @@ export function filterCookies(cookies: types.NetworkCookie[], urls: string[]): t
         continue;
       if (!parsedURL.pathname.startsWith(c.path))
         continue;
-      if (parsedURL.protocol !== 'https:' && c.secure)
+      if (parsedURL.protocol !== 'https:' && parsedURL.hostname !== 'localhost' && c.secure)
         continue;
       return true;
     }
@@ -44,12 +44,19 @@ export function filterCookies(cookies: types.NetworkCookie[], urls: string[]): t
   });
 }
 
+// Rollover to 5-digit year:
+// 253402300799 == Fri, 31 Dec 9999 23:59:59 +0000 (UTC)
+// 253402300800 == Sat,  1 Jan 1000 00:00:00 +0000 (UTC)
+const kMaxCookieExpiresDateInSeconds = 253402300799;
+
 export function rewriteCookies(cookies: types.SetNetworkCookieParam[]): types.SetNetworkCookieParam[] {
   return cookies.map(c => {
     assert(c.name, 'Cookie should have a name');
     assert(c.url || (c.domain && c.path), 'Cookie should have a url or a domain/path pair');
     assert(!(c.url && c.domain), 'Cookie should have either url or domain');
     assert(!(c.url && c.path), 'Cookie should have either url or path');
+    assert(!(c.expires && c.expires < 0 && c.expires !== -1), 'Cookie should have a valid expires, only -1 or a positive number for the unix timestamp in seconds is allowed');
+    assert(!(c.expires && c.expires > 0 && c.expires > kMaxCookieExpiresDateInSeconds), 'Cookie should have a valid expires, only -1 or a positive number for the unix timestamp in seconds is allowed');
     const copy = { ...c };
     if (copy.url) {
       assert(copy.url !== 'about:blank', `Blank page can not have cookie "${c.name}"`);
@@ -238,14 +245,12 @@ export class Route extends SdkObject {
   }
 
   async abort(errorCode: string = 'failed') {
-    assert(!this._handled, 'Route is already handled!');
-    this._handled = true;
+    this._startHandling();
     await this._delegate.abort(errorCode);
   }
 
   async fulfill(overrides: { status?: number, headers?: types.HeadersArray, body?: string, isBase64?: boolean, useInterceptedResponseBody?: boolean, fetchResponseUid?: string }) {
-    assert(!this._handled, 'Route is already handled!');
-    this._handled = true;
+    this._startHandling();
     let body = overrides.body;
     let isBase64 = overrides.isBase64 || false;
     if (body === undefined) {
@@ -269,7 +274,7 @@ export class Route extends SdkObject {
   }
 
   async continue(overrides: types.NormalizedContinueOverrides = {}) {
-    assert(!this._handled, 'Route is already handled!');
+    this._startHandling();
     if (overrides.url) {
       const newUrl = new URL(overrides.url);
       const oldUrl = new URL(this._request.url());
@@ -277,6 +282,11 @@ export class Route extends SdkObject {
         throw new Error('New URL must have same protocol as overridden URL');
     }
     await this._delegate.continue(this._request, overrides);
+  }
+
+  private _startHandling() {
+    assert(!this._handled, 'Route is already handled!');
+    this._handled = true;
   }
 }
 

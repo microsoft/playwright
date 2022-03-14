@@ -121,6 +121,14 @@ export type DialogSignal = BaseSignal & {
 
 export type Signal = NavigationSignal | PopupSignal | DownloadSignal | DialogSignal;
 
+export type FrameDescription = {
+  pageAlias: string;
+  isMainFrame: boolean;
+  url: string;
+  name?: string;
+  selectorsChain?: string[];
+};
+
 export function actionTitle(action: Action): string {
   switch (action.name) {
     case 'openPage':

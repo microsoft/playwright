@@ -16,7 +16,7 @@
 
 import * as path from 'path';
 import * as fs from 'fs';
-import { test, expect, stripAscii } from './playwright-test-fixtures';
+import { test, expect, stripAnsi } from './playwright-test-fixtures';
 
 test('should support spec.ok', async ({ runInlineTest }) => {
   const result = await runInlineTest({
@@ -202,7 +202,7 @@ test('should have error position in results', async ({
   expect(result.report.suites[0].specs[0].tests[0].results[0].errorLocation.column).toBe(23);
 });
 
-test('should add dot in addition to file json', async ({ runInlineTest }, testInfo) => {
+test('should add dot in addition to file json with CI', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       module.exports = { reporter: [['json', { outputFile: 'a.json' }]] };
@@ -213,8 +213,25 @@ test('should add dot in addition to file json', async ({ runInlineTest }, testIn
         expect(1).toBe(1);
       });
     `,
-  }, { reporter: '' });
+  }, { reporter: '' }, { CI: '1' });
   expect(result.exitCode).toBe(0);
-  expect(stripAscii(result.output)).toContain('·');
+  expect(stripAnsi(result.output)).toContain('·');
+  expect(fs.existsSync(testInfo.outputPath('a.json'))).toBeTruthy();
+});
+
+test('should add line in addition to file json without CI', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { reporter: [['json', { outputFile: 'a.json' }]] };
+    `,
+    'a.test.js': `
+      const { test } = pwt;
+      test('one', async ({}) => {
+        expect(1).toBe(1);
+      });
+    `,
+  }, { reporter: '' }, { PW_TEST_DEBUG_REPORTERS: '1' });
+  expect(result.exitCode).toBe(0);
+  expect(stripAnsi(result.output)).toContain('[1/1] a.test.js:6:7 › one');
   expect(fs.existsSync(testInfo.outputPath('a.json'))).toBeTruthy();
 });

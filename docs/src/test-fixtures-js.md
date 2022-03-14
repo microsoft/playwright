@@ -468,6 +468,10 @@ export { expect } from '@playwright/test';
 
 ## Fixtures-options
 
+:::note
+Overriding custom fixtures in the config file has changed in version 1.18. [Learn more](./release-notes#breaking-change-custom-config-options).
+:::
+
 Playwright Test supports running multiple test projects that can be separately configured. You can use "option" fixtures to make your configuration options declarative and type-checked. Learn more about [parametrizing tests](./test-parameterize.md).
 
 Below we'll create a `defaultItem` option in addition to the `todoPage` fixture from other examples. This option will be set in configuration file. Note the tuple syntax and `{ option: true }` argument.

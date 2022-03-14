@@ -328,7 +328,7 @@ Waits for the specific [`param: selector`] to either appear or disappear, depend
 Selector to wait for.
 
 ### option: AndroidDevice.wait.state
-- `state` <"gone">
+- `state` <[AndroidDeviceState]<"gone">>
 
 Optional state. Can be either:
 * default - wait for element to be present.

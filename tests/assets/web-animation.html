@@ -1,0 +1,23 @@
+<!DOCTYPE HTML>
+<style>
+  div {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 200px;
+    height: 100px;
+    background-color: red;
+  }
+</style>
+<div></div>
+<script>
+  document.querySelector('div').animate(
+    [
+      { transform: 'rotate(0deg)' },
+      { transform: 'rotate(360deg)' }
+    ], {
+      duration: 3000,
+      iterations: Infinity
+    }
+  );
+</script>

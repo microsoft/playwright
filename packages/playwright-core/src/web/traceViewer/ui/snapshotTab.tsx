@@ -19,6 +19,7 @@ import './tabbedPane.css';
 import * as React from 'react';
 import { useMeasure } from './helpers';
 import { ActionTraceEvent } from '../../../server/trace/common/traceEvents';
+import { context } from './modelUtil';
 
 export const SnapshotTab: React.FunctionComponent<{
   action: ActionTraceEvent | undefined,
@@ -39,9 +40,11 @@ export const SnapshotTab: React.FunctionComponent<{
   if (action) {
     const snapshot = snapshots[snapshotIndex];
     if (snapshot && snapshot.snapshotName) {
-      const traceUrl = new URL(window.location.href).searchParams.get('trace');
-      snapshotUrl = new URL(`snapshot/${action.metadata.pageId}?trace=${traceUrl}&name=${snapshot.snapshotName}`, window.location.href).toString();
-      snapshotInfoUrl = new URL(`snapshotInfo/${action.metadata.pageId}?trace=${traceUrl}&name=${snapshot.snapshotName}`, window.location.href).toString();
+      const params = new URLSearchParams();
+      params.set('trace', context(action).traceUrl);
+      params.set('name', snapshot.snapshotName);
+      snapshotUrl = new URL(`snapshot/${action.metadata.pageId}?${params.toString()}`, window.location.href).toString();
+      snapshotInfoUrl = new URL(`snapshotInfo/${action.metadata.pageId}?${params.toString()}`, window.location.href).toString();
       if (snapshot.snapshotName.includes('action')) {
         pointX = action.metadata.point?.x;
         pointY = action.metadata.point?.y;
@@ -101,13 +104,14 @@ export const SnapshotTab: React.FunctionComponent<{
     </div>
     <div className='snapshot-url' title={snapshotInfo.url}>{snapshotInfo.url}</div>
     <div ref={ref} className='snapshot-wrapper'>
-      <div className='snapshot-container' style={{
+      { snapshots.length ? <div className='snapshot-container' style={{
         width: snapshotSize.width + 'px',
         height: snapshotSize.height + 'px',
         transform: `translate(${-snapshotSize.width * (1 - scale) / 2 + (measure.width - scaledSize.width) / 2}px, ${-snapshotSize.height * (1 - scale) / 2  + (measure.height - scaledSize.height) / 2}px) scale(${scale})`,
       }}>
         <iframe ref={iframeRef} id='snapshot' name='snapshot'></iframe>
-      </div>
+      </div> : <div className='no-snapshot'>Action does not have snapshots</div>
+      }
     </div>
   </div>;
 };

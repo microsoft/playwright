@@ -46,7 +46,7 @@ async function routeIframe(page: Page) {
   });
 }
 
-it('should work for iframe', async ({ page, server }) => {
+it('should work for iframe @smoke', async ({ page, server }) => {
   await routeIframe(page);
   await page.goto(server.EMPTY_PAGE);
   const button = page.locator('iframe >> control=enter-frame >> button');

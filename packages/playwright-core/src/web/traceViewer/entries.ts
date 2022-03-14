@@ -18,6 +18,7 @@ import type { ResourceSnapshot } from '../../server/trace/common/snapshotTypes';
 import * as trace from '../../server/trace/common/traceEvents';
 
 export type ContextEntry = {
+  traceUrl: string;
   startTime: number;
   endTime: number;
   browserName: string;
@@ -43,6 +44,7 @@ export type PageEntry = {
 };
 export function createEmptyContext(): ContextEntry {
   return {
+    traceUrl: '',
     startTime: Number.MAX_SAFE_INTEGER,
     endTime: 0,
     browserName: '',

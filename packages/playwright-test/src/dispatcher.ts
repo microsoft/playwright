@@ -17,8 +17,8 @@
 import child_process from 'child_process';
 import path from 'path';
 import { EventEmitter } from 'events';
-import { RunPayload, TestBeginPayload, TestEndPayload, DonePayload, TestOutputPayload, WorkerInitParams, StepBeginPayload, StepEndPayload, SerializedLoaderData } from './ipc';
-import type { TestResult, Reporter, TestStep } from '../types/testReporter';
+import { RunPayload, TestBeginPayload, TestEndPayload, DonePayload, TestOutputPayload, WorkerInitParams, StepBeginPayload, StepEndPayload, SerializedLoaderData, TeardownErrorsPayload } from './ipc';
+import type { TestResult, Reporter, TestStep, TestError } from '../types/testReporter';
 import { Suite, TestCase } from './test';
 import { Loader } from './loader';
 import { ManualPromise } from 'playwright-core/lib/utils/async';
@@ -43,6 +43,7 @@ type TestData = {
 export class Dispatcher {
   private _workerSlots: { busy: boolean, worker?: Worker }[] = [];
   private _queue: TestGroup[] = [];
+  private _queueHashCount = new Map<string, number>();
   private _finished = new ManualPromise<void>();
   private _isStopped = false;
 
@@ -57,15 +58,9 @@ export class Dispatcher {
     this._reporter = reporter;
     this._queue = testGroups;
     for (const group of testGroups) {
-      for (const test of group.tests) {
+      this._queueHashCount.set(group.workerHash, 1 + (this._queueHashCount.get(group.workerHash) || 0));
+      for (const test of group.tests)
         this._testById.set(test._id, { test, resultByWorkerIndex: new Map() });
-        for (let suite: Suite | undefined = test.parent; suite; suite = suite.parent) {
-          for (const hook of suite.hooks) {
-            if (!this._testById.has(hook._id))
-              this._testById.set(hook._id, { test: hook, resultByWorkerIndex: new Map() });
-          }
-        }
-      }
     }
   }
 
@@ -85,6 +80,7 @@ export class Dispatcher {
 
     // 3. Claim both the job and the worker, run the job and release the worker.
     this._queue.shift();
+    this._queueHashCount.set(job.workerHash, this._queueHashCount.get(job.workerHash)! - 1);
     this._workerSlots[index].busy = true;
     await this._startJobInWorker(index, job);
     this._workerSlots[index].busy = false;
@@ -141,6 +137,15 @@ export class Dispatcher {
     this._finished.resolve();
   }
 
+  private _isWorkerRedundant(worker: Worker) {
+    let workersWithSameHash = 0;
+    for (const slot of this._workerSlots) {
+      if (slot.worker && !slot.worker.didSendStop() && slot.worker.hash() === worker.hash())
+        workersWithSameHash++;
+    }
+    return workersWithSameHash > this._queueHashCount.get(worker.hash())!;
+  }
+
   async run() {
     this._workerSlots = [];
     // 1. Allocate workers.
@@ -172,12 +177,9 @@ export class Dispatcher {
 
     const remainingByTestId = new Map(testGroup.tests.map(e => [ e._id, e ]));
     const failedTestIds = new Set<string>();
-    let runningHookId: string | undefined;
 
     const onTestBegin = (params: TestBeginPayload) => {
       const data = this._testById.get(params.testId)!;
-      if (data.test._type !== 'test')
-        runningHookId = params.testId;
       if (this._hasReachedMaxFailures())
         return;
       const result = data.test._appendTestResult();
@@ -189,7 +191,6 @@ export class Dispatcher {
     worker.addListener('testBegin', onTestBegin);
 
     const onTestEnd = (params: TestEndPayload) => {
-      runningHookId = undefined;
       remainingByTestId.delete(params.testId);
       if (this._hasReachedMaxFailures())
         return;
@@ -198,19 +199,20 @@ export class Dispatcher {
       const { result } = data.resultByWorkerIndex.get(worker.workerIndex)!;
       data.resultByWorkerIndex.delete(worker.workerIndex);
       result.duration = params.duration;
-      result.error = params.error;
+      result.errors = params.errors;
+      result.error = result.errors[0];
       result.attachments = params.attachments.map(a => ({
         name: a.name,
         path: a.path,
         contentType: a.contentType,
-        body: a.body ? Buffer.from(a.body, 'base64') : undefined
+        body: a.body !== undefined ? Buffer.from(a.body, 'base64') : undefined
       }));
       result.status = params.status;
       test.expectedStatus = params.expectedStatus;
       test.annotations = params.annotations;
       test.timeout = params.timeout;
       const isFailure = result.status !== 'skipped' && result.status !== test.expectedStatus;
-      if (isFailure && test._type === 'test')
+      if (isFailure)
         failedTestIds.add(params.testId);
       this._reportTestEnd(test, result);
     };
@@ -276,7 +278,9 @@ export class Dispatcher {
       // - there are no remaining
       // - we are here not because something failed
       // - no unrecoverable worker error
-      if (!remaining.length && !failedTestIds.size && !params.fatalError) {
+      if (!remaining.length && !failedTestIds.size && !params.fatalErrors.length && !params.skipTestsDueToSetupFailure.length) {
+        if (this._isWorkerRedundant(worker))
+          worker.stop();
         doneWithJob();
         return;
       }
@@ -284,48 +288,46 @@ export class Dispatcher {
       // When worker encounters error, we will stop it and create a new one.
       worker.stop(true /* didFail */);
 
-      // In case of fatal error, report first remaining test as failing with this error,
-      // and all others as skipped.
-      if (params.fatalError) {
-        // Perhaps we were running a hook - report it as failed.
-        if (runningHookId) {
-          const data = this._testById.get(runningHookId)!;
-          const { result } = data.resultByWorkerIndex.get(worker.workerIndex)!;
-          result.error = params.fatalError;
-          result.status = 'failed';
-          this._reporter.onTestEnd?.(data.test, result);
-        }
-
-        let first = true;
-        for (const test of remaining) {
-          if (this._hasReachedMaxFailures())
-            break;
-          const data = this._testById.get(test._id)!;
-          const runData = data.resultByWorkerIndex.get(worker.workerIndex);
-          // There might be a single test that has started but has not finished yet.
-          let result: TestResult;
-          if (runData) {
-            result = runData.result;
-          } else {
-            result = data.test._appendTestResult();
-            this._reporter.onTestBegin?.(test, result);
+      const massSkipTestsFromRemaining = (testIds: Set<string>, errors: TestError[]) => {
+        remaining = remaining.filter(test => {
+          if (!testIds.has(test._id))
+            return true;
+          if (!this._hasReachedMaxFailures()) {
+            const data = this._testById.get(test._id)!;
+            const runData = data.resultByWorkerIndex.get(worker.workerIndex);
+            // There might be a single test that has started but has not finished yet.
+            let result: TestResult;
+            if (runData) {
+              result = runData.result;
+            } else {
+              result = data.test._appendTestResult();
+              this._reporter.onTestBegin?.(test, result);
+            }
+            result.errors = [...errors];
+            result.error = result.errors[0];
+            result.status = errors.length ? 'failed' : 'skipped';
+            this._reportTestEnd(test, result);
+            failedTestIds.add(test._id);
+            errors = []; // Only report errors for the first test.
           }
-          result.error = params.fatalError;
-          result.status = first ? 'failed' : 'skipped';
-          this._reportTestEnd(test, result);
-          failedTestIds.add(test._id);
-          first = false;
-        }
-        if (first) {
-          // We had a fatal error after all tests have passed - most likely in the afterAll hook.
+          return false;
+        });
+        if (errors.length) {
+          // We had fatal errors after all tests have passed - most likely in some teardown.
           // Let's just fail the test run.
           this._hasWorkerErrors = true;
-          this._reporter.onError?.(params.fatalError);
+          for (const error of params.fatalErrors)
+            this._reporter.onError?.(error);
         }
-        // Since we pretend that all remaining tests failed, there is nothing else to run,
-        // except for possible retries.
-        remaining = [];
+      };
+
+      if (params.fatalErrors.length) {
+        // In case of fatal errors, report first remaining test as failing with these errors,
+        // and all others as skipped.
+        massSkipTestsFromRemaining(new Set(remaining.map(test => test._id)), params.fatalErrors);
       }
+      // Handle tests that should be skipped because of the setup failure.
+      massSkipTestsFromRemaining(new Set(params.skipTestsDueToSetupFailure), []);
 
       const retryCandidates = new Set<string>();
       const serialSuitesWithFailures = new Set<Suite>();
@@ -354,8 +356,7 @@ export class Dispatcher {
           return true;
 
         // Emulate a "skipped" run, and drop this test from remaining.
-        const data = this._testById.get(test._id)!;
-        const result = data.test._appendTestResult();
+        const result = test._appendTestResult();
         this._reporter.onTestBegin?.(test, result);
         result.status = 'skipped';
         this._reportTestEnd(test, result);
@@ -377,6 +378,7 @@ export class Dispatcher {
 
       if (remaining.length) {
         this._queue.unshift({ ...testGroup, tests: remaining });
+        this._queueHashCount.set(testGroup.workerHash, this._queueHashCount.get(testGroup.workerHash)! + 1);
         // Perhaps we can immediately start the new job if there is a worker available?
         this._scheduleJob();
       }
@@ -387,7 +389,7 @@ export class Dispatcher {
     worker.on('done', onDone);
 
     const onExit = (expectedly: boolean) => {
-      onDone(expectedly ? {} : { fatalError: { value: 'Worker process exited unexpectedly' } });
+      onDone({ skipTestsDueToSetupFailure: [], fatalErrors: expectedly ? [] : [{ value: 'Worker process exited unexpectedly' }] });
     };
     worker.on('exit', onExit);
 
@@ -419,9 +421,10 @@ export class Dispatcher {
       result?.stderr.push(chunk);
       this._reporter.onStdErr?.(chunk, test, result);
     });
-    worker.on('teardownError', ({ error }) => {
+    worker.on('teardownErrors', (params: TeardownErrorsPayload) => {
       this._hasWorkerErrors = true;
-      this._reporter.onError?.(error);
+      for (const error of params.fatalErrors)
+        this._reporter.onError?.(error);
     });
     return worker;
   }
@@ -438,7 +441,7 @@ export class Dispatcher {
   }
 
   private _reportTestEnd(test: TestCase, result: TestResult) {
-    if (test._type === 'test' && result.status !== 'skipped' && result.status !== test.expectedStatus)
+    if (result.status !== 'skipped' && result.status !== test.expectedStatus)
       ++this._failureCount;
     this._reporter.onTestEnd?.(test, result);
     const maxFailures = this._loader.fullConfig().maxFailures;
@@ -471,8 +474,8 @@ class Worker extends EventEmitter {
     this.process = child_process.fork(path.join(__dirname, 'worker.js'), {
       detached: false,
       env: {
-        FORCE_COLOR: process.stdout.isTTY ? '1' : '0',
-        DEBUG_COLORS: process.stdout.isTTY ? '1' : '0',
+        FORCE_COLOR: '1',
+        DEBUG_COLORS: '1',
         TEST_WORKER_INDEX: String(this.workerIndex),
         TEST_PARALLEL_INDEX: String(this.parallelIndex),
         ...process.env
@@ -499,7 +502,7 @@ class Worker extends EventEmitter {
       projectIndex: testGroup.projectIndex,
       loader: loaderData,
     };
-    this.process.send({ method: 'init', params });
+    this.send({ method: 'init', params });
     await new Promise(f => this.process.once('message', f));  // Ready ack
   }
 
@@ -510,7 +513,7 @@ class Worker extends EventEmitter {
         return { testId: test._id, retry: test.results.length };
       }),
     };
-    this.process.send({ method: 'run', params: runPayload });
+    this.send({ method: 'run', params: runPayload });
   }
 
   didFail() {
@@ -531,10 +534,15 @@ class Worker extends EventEmitter {
     if (this.didExit)
       return;
     if (!this._didSendStop) {
-      this.process.send({ method: 'stop' });
+      this.send({ method: 'stop' });
       this._didSendStop = true;
     }
     await new Promise(f => this.once('exit', f));
+  }
+
+  private send(message: any) {
+    // This is a great place for debug logging.
+    this.process.send(message);
   }
 }
 

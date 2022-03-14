@@ -169,7 +169,7 @@ for (const statusCode of [200, 401, 404, 500]) {
 }
 
 it('should have correct responseBodySize for 404 with content', async ({ page, server, browserName }) => {
-  it.fail(browserName === 'chromium');
+  it.fixme(browserName === 'chromium');
 
   server.setRoute('/broken-image.png', (req, resp) => {
     resp.writeHead(404);

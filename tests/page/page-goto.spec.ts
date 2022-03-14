@@ -20,7 +20,7 @@ import os from 'os';
 import { test as it, expect } from './pageTest';
 import { expectedSSLError } from '../config/utils';
 
-it('should work', async ({ page, server }) => {
+it('should work @smoke', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   expect(page.url()).toBe(server.EMPTY_PAGE);
 });
@@ -405,7 +405,7 @@ it('should fail when replaced by another navigation', async ({ page, server, bro
   if (browserName === 'chromium')
     expect(error.message).toContain('net::ERR_ABORTED');
   else if (browserName === 'webkit')
-    expect(error.message).toContain('cancelled');
+    expect(error.message).toContain('Navigation interrupted by another one');
   else
     expect(error.message).toContain('NS_BINDING_ABORTED');
 });

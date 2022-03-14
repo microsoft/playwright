@@ -622,27 +622,7 @@ Returns the buffer with the captured screenshot.
 This method waits for the [actionability](./actionability.md) checks, then scrolls element into view before taking a
 screenshot. If the element is detached from DOM, the method throws an error.
 
-### option: ElementHandle.screenshot.path
-- `path` <[path]>
-
-The file path to save the image to. The screenshot type will be inferred from file extension. If [`option: path`] is a
-relative path, then it is resolved relative to the current working directory. If no path is provided, the image won't be
-saved to the disk.
-
-### option: ElementHandle.screenshot.type = %%-screenshot-type-%%
-
-### option: ElementHandle.screenshot.quality
-- `quality` <[int]>
-
-The quality of the image, between 0-100. Not applicable to `png` images.
-
-### option: ElementHandle.screenshot.omitBackground
-- `omitBackground` <[boolean]>
-
-Hides default white background and allows capturing screenshots with transparency. Not applicable to `jpeg` images.
-Defaults to `false`.
-
-### option: ElementHandle.screenshot.timeout = %%-input-timeout-%%
+### option: ElementHandle.screenshot.-inline- = %%-screenshot-options-common-list-%%
 
 ## async method: ElementHandle.scrollIntoViewIfNeeded
 

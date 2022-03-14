@@ -11,20 +11,16 @@ const config = configs.find(config => config.gcs_path.includes('chrome-linux.zip
 const excludeList = new Set([
   // We do not need interactive tests in our archive.
   'interactive_ui_tests.exe',
+  // We no longer compile nacl with Chromium.
+  'nacl_helper_bootstrap',
+  'nacl_helper',
+  'nacl_irt_x86_64.nexe',
 ]);
-
-// There is no upstream configuration for packaging Linux Arm64 builds,
-// so we build one by replacing x86_64-specific nacl binary with arm one.
-const replaceMap = {
-  '--linux-arm64': {
-    'nacl_irt_x86_64.nexe': 'nacl_irt_arm.nexe',
-  },
-}[process.argv[3]] || {};
 
 const entries = [
   ...(config.files || []),
   ...(config.dirs || []),
-].filter(entry => !excludeList.has(entry)).map(entry => replaceMap[entry] || entry);
+].filter(entry => !excludeList.has(entry));
 
 for (const entry of entries)
   console.log(entry);

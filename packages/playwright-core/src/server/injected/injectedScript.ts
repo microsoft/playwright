@@ -18,11 +18,12 @@ import { SelectorEngine, SelectorRoot } from './selectorEngine';
 import { XPathEngine } from './xpathSelectorEngine';
 import { ReactEngine } from './reactSelectorEngine';
 import { VueEngine } from './vueSelectorEngine';
-import { ParsedSelector, ParsedSelectorPart, parseSelector, stringifySelector } from '../common/selectorParser';
+import { allEngineNames, ParsedSelector, ParsedSelectorPart, parseSelector, stringifySelector } from '../common/selectorParser';
 import { SelectorEvaluatorImpl, isVisible, parentElementOrShadowHost, elementMatchesText, TextMatcher, createRegexTextMatcher, createStrictTextMatcher, createLaxTextMatcher } from './selectorEvaluator';
 import { CSSComplexSelectorList } from '../common/cssParser';
 import { generateSelector } from './selectorGenerator';
 import type * as channels from '../../protocol/channels';
+import { Highlight } from './highlight';
 
 type Predicate<T> = (progress: InjectedScriptProgress) => T | symbol;
 
@@ -74,8 +75,11 @@ export class InjectedScript {
   private _browserName: string;
   onGlobalListenersRemoved = new Set<() => void>();
   private _hitTargetInterceptor: undefined | ((event: MouseEvent | PointerEvent | TouchEvent) => void);
+  private _highlight: Highlight | undefined;
+  readonly isUnderTest: boolean;
 
-  constructor(stableRafCount: number, browserName: string, customEngines: { name: string, engine: SelectorEngine}[]) {
+  constructor(isUnderTest: boolean, stableRafCount: number, browserName: string, customEngines: { name: string, engine: SelectorEngine}[]) {
+    this.isUnderTest = isUnderTest;
     this._evaluator = new SelectorEvaluatorImpl(new Map());
 
     this._engines = new Map();
@@ -97,6 +101,7 @@ export class InjectedScript {
     this._engines.set('nth', { queryAll: () => [] });
     this._engines.set('visible', { queryAll: () => [] });
     this._engines.set('control', this._createControlEngine());
+    this._engines.set('has', this._createHasEngine());
 
     for (const { name, engine } of customEngines)
       this._engines.set(name, engine);
@@ -114,11 +119,15 @@ export class InjectedScript {
 
   parseSelector(selector: string): ParsedSelector {
     const result = parseSelector(selector);
-    for (const part of result.parts) {
-      if (!this._engines.has(part.name))
-        throw this.createStacklessError(`Unknown engine "${part.name}" while parsing selector ${selector}`);
+    for (const name of allEngineNames(result)) {
+      if (!this._engines.has(name))
+        throw this.createStacklessError(`Unknown engine "${name}" while parsing selector ${selector}`);
     }
     return result;
+  }
+
+  generateSelector(targetElement: Element): string {
+    return generateSelector(this, targetElement, true).selector;
   }
 
   querySelector(selector: ParsedSelector, root: Node, strict: boolean): Element | undefined {
@@ -179,7 +188,7 @@ export class InjectedScript {
       }
       let all = queryResults[index];
       if (!all) {
-        all = this._queryEngineAll(selector.parts[index], root.element);
+        all = this._queryEngineAll(part, root.element);
         queryResults[index] = all;
       }
 
@@ -274,6 +283,16 @@ export class InjectedScript {
         throw new Error(`Internal error, unknown control selector ${body}`);
       }
     };
+  }
+
+  private _createHasEngine(): SelectorEngineV2 {
+    const queryAll = (root: SelectorRoot, body: ParsedSelector) => {
+      if (root.nodeType !== 1 /* Node.ELEMENT_NODE */)
+        return [];
+      const has = !!this.querySelector(body, root, false);
+      return has ? [root as Element] : [];
+    };
+    return { queryAll };
   }
 
   extend(source: string, params: any): any {
@@ -731,19 +750,17 @@ export class InjectedScript {
       if (!event.isTrusted)
         return;
 
-      // Element was detached during the action, for example in some event handler.
-      // If events before that were correctly pointing to it, consider this a valid scenario.
-      if (!element.isConnected)
-        return;
-
       // Determine the event point. Note that Firefox does not always have window.TouchEvent.
       const point = (!!window.TouchEvent && (event instanceof window.TouchEvent)) ? event.touches[0] : (event as MouseEvent | PointerEvent);
-      if (!!point && (result === undefined || result === 'done')) {
-        // Determine whether we hit the target element, unless we have already failed.
+
+      // Check that we hit the right element at the first event, and assume all
+      // subsequent events will be fine.
+      if (result === undefined && point) {
         const hitElement = this.deepElementFromPoint(document, point.clientX, point.clientY);
         result = this._expectHitTargetParent(hitElement, element);
       }
-      if (blockAllEvents || result !== 'done') {
+
+      if (blockAllEvents || (result !== 'done' && result !== undefined)) {
         event.preventDefault();
         event.stopPropagation();
         event.stopImmediatePropagation();
@@ -837,7 +854,7 @@ export class InjectedScript {
   strictModeViolationError(selector: ParsedSelector, matches: Element[]): Error {
     const infos = matches.slice(0, 10).map(m => ({
       preview: this.previewNode(m),
-      selector: generateSelector(this, m).selector
+      selector: this.generateSelector(m),
     }));
     const lines = infos.map((info, i) => `\n    ${i + 1}) ${info.preview} aka playwright.$("${info.selector}")`);
     if (infos.length < matches.length)
@@ -856,6 +873,39 @@ export class InjectedScript {
     // Chromium/WebKit should delete the stack instead.
     delete error.stack;
     return error;
+  }
+
+  maskSelectors(selectors: ParsedSelector[]) {
+    if (this._highlight)
+      this.hideHighlight();
+    this._highlight = new Highlight(this.isUnderTest);
+    this._highlight.install();
+    const elements = [];
+    for (const selector of selectors)
+      elements.push(this.querySelectorAll(selector, document.documentElement));
+    this._highlight.maskElements(elements.flat());
+  }
+
+  highlight(selector: ParsedSelector) {
+    if (!this._highlight) {
+      this._highlight = new Highlight(this.isUnderTest);
+      this._highlight.install();
+    }
+    this._runHighlightOnRaf(selector);
+  }
+
+  _runHighlightOnRaf(selector: ParsedSelector) {
+    if (!this._highlight)
+      return;
+    this._highlight.updateHighlight(this.querySelectorAll(selector, document.documentElement), stringifySelector(selector), false);
+    requestAnimationFrame(() => this._runHighlightOnRaf(selector));
+  }
+
+  hideHighlight() {
+    if (this._highlight) {
+      this._highlight.uninstall();
+      delete this._highlight;
+    }
   }
 
   private _setupGlobalListenersRemovalDetection() {
@@ -949,7 +999,7 @@ export class InjectedScript {
       } else if (expression === 'to.have.class') {
         received = element.className;
       } else if (expression === 'to.have.css') {
-        received = (window.getComputedStyle(element) as any)[options.expressionArg];
+        received = window.getComputedStyle(element).getPropertyValue(options.expressionArg);
       } else if (expression === 'to.have.id') {
         received = element.id;
       } else if (expression === 'to.have.text') {
@@ -1189,7 +1239,7 @@ function deepEquals(a: any, b: any): boolean {
 }
 
 function isElementDisabled(element: Element): boolean {
-  const isRealFormControl = ['BUTTON', 'INPUT', 'SELECT', 'TEXTAREA'].includes(element.nodeName);
+  const isRealFormControl = ['BUTTON', 'INPUT', 'SELECT', 'TEXTAREA', 'OPTION', 'OPTGROUP'].includes(element.nodeName);
   if (isRealFormControl && element.hasAttribute('disabled'))
     return true;
   if (isRealFormControl && hasDisabledFieldSet(element))

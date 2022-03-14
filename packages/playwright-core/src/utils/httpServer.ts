@@ -52,7 +52,7 @@ export class HttpServer {
   }
 
   async start(port?: number): Promise<string> {
-    console.assert(!this._urlPrefix, 'server already started');
+    assert(!this._urlPrefix, 'server already started');
     this._server.on('connection', socket => {
       this._activeSockets.add(socket);
       socket.once('close', () => this._activeSockets.delete(socket));

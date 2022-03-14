@@ -62,7 +62,7 @@ function inlineType(type, indent = '', wrapEnums = false) {
     if (optional)
       type = type.substring(0, type.length - 1);
     if (type === 'binary')
-      return { ts: 'string', scheme: 'tString', optional };
+      return { ts: 'byte[]', scheme: 'tArray(tByte)', optional };
     if (type === 'json')
       return { ts: 'any', scheme: 'tAny', optional };
     if (['string', 'boolean', 'number', 'undefined'].includes(type)) {

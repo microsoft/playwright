@@ -107,12 +107,43 @@ export default config;
 ## property: TestProject.expect
 - type: <[Object]>
   - `timeout` <[int]> Default timeout for async expect matchers in milliseconds, defaults to 5000ms.
+  - `toHaveScreenshot` <[Object]>
+    - `threshold` <[float]> an acceptable perceived color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between the same pixel in compared images, between zero (strict) and one (lax). Defaults to `0.2`.
+    - `maxDiffPixels` <[int]> an acceptable amount of pixels that could be different, unset by default.
+    - `maxDiffPixelRatio` <[float]> an acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1` , unset by default.
+    - `animations` <[ScreenshotAnimations]<"allow"|"disable">> See [`option: animations`] in [`method: Page.screenshot`]. Defaults to `"disable"`.
+    - `fonts` <[ScreenshotFonts]<"ready"|"nowait">> See [`option: fonts`] in [`method: Page.screenshot`]. Defaults to `"ready"`.
+    - `size` <[ScreenshotSize]<"css"|"device">> See [`option: size`] in [`method: Page.screenshot`]. Defaults to `"css"`.
   - `toMatchSnapshot` <[Object]>
-    - `threshold` <[float]> Image matching threshold between zero (strict) and one (lax).
+    - `threshold` <[float]> an acceptable perceived color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between the same pixel in compared images, between zero (strict) and one (lax). Defaults to `0.2`.
+    - `maxDiffPixels` <[int]> an acceptable amount of pixels that could be different, unset by default.
+    - `maxDiffPixelRatio` <[float]> an acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1` , unset by default.
 
 Configuration for the `expect` assertion library.
 
 Use [`property: TestConfig.expect`] to change this option for all projects.
+
+## property: TestProject.fullyParallel
+- type: <[boolean]>
+
+Playwright Test runs tests in parallel. In order to achieve that, it runs several worker processes that run at the same time.
+By default, **test files** are run in parallel. Tests in a single file are run in order, in the same worker process.
+
+You can configure entire test project to concurrently run all tests in all files using this option.
+
+## property: TestProject.grep
+- type: <[RegExp]|[Array]<[RegExp]>>
+
+Filter to only run tests with a title matching one of the patterns. For example, passing `grep: /cart/` should only run tests with "cart" in the title. Also available globally and in the [command line](./test-cli.md) with the `-g` option.
+
+`grep` option is also useful for [tagging tests](./test-annotations.md#tag-tests).
+
+## property: TestProject.grepInvert
+- type: <[RegExp]|[Array]<[RegExp]>>
+
+Filter to only run tests with a title **not** matching one of the patterns. This is the opposite of [`property: TestProject.grep`]. Also available globally and in the [command line](./test-cli.md) with the `--grep-invert` option.
+
+`grepInvert` option is also useful for [tagging tests](./test-annotations.md#tag-tests).
 
 ## property: TestProject.metadata
 - type: <[Object]>
@@ -123,6 +154,41 @@ Any JSON-serializable metadata that will be put directly to the test report.
 - type: <[string]>
 
 Project name is visible in the report and during test execution.
+
+## property: TestProject.screenshotsDir
+- type: <[string]>
+
+The base directory, relative to the config file, for screenshot files created with `toHaveScreenshot`. Defaults to
+
+```
+<directory-of-configuration-file>/__screenshots__/<platform name>/<project name>
+```
+
+This path will serve as the base directory for each test file screenshot directory. For example, the following test structure:
+
+```
+smoke-tests/
+└── basic.spec.ts
+```
+
+will result in the following screenshots folder structure:
+
+```
+__screenshots__/
+└── darwin/
+    ├── Mobile Safari/
+    │   └── smoke-tests/
+    │       └── basic.spec.ts/
+    │           └── screenshot-expectation.png
+    └── Desktop Chrome/
+        └── smoke-tests/
+            └── basic.spec.ts/
+                └── screenshot-expectation.png
+```
+
+where:
+* `darwin/` - a platform name folder
+* `Mobile Safari` and `Desktop Chrome` - project names
 
 ## property: TestProject.snapshotDir
 - type: <[string]>

@@ -68,7 +68,7 @@ export const CallTab: React.FunctionComponent<{
 
 function renderLine(metadata: CallMetadata, name: string, value: any, key: string) {
   const { title, type } = toString(metadata, name, value);
-  let text = trimRight(title.replace(/\n/g, '↵'), 80);
+  let text = title.replace(/\n/g, '↵');
   if (type === 'string')
     text = `"${text}"`;
   return <div key={key} className='call-line'>{name}: <span className={type} title={title}>{text}</span></div>;
@@ -82,15 +82,9 @@ function toString(metadata: CallMetadata, name: string, value: any): { title: st
       value = parseSerializedValue(value, new Array(10).fill({ handle: '<handle>' }));
   }
   const type = typeof value;
-  if (type !== 'object')
+  if (type !== 'object' || value === null)
     return { title: String(value), type };
   if (value.guid)
     return { title: '<handle>', type: 'handle' };
   return { title: JSON.stringify(value), type: 'object' };
-}
-
-function trimRight(text: string, max: number): string {
-  if (text.length > max)
-    return text.substr(0, max) + '\u2026';
-  return text;
 }

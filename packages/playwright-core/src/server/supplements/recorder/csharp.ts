@@ -28,7 +28,8 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
   highlighter = 'csharp';
 
   generateAction(actionInContext: ActionInContext): string {
-    const { action, pageAlias } = actionInContext;
+    const action = actionInContext.action;
+    const pageAlias = actionInContext.frame.pageAlias;
     const formatter = new CSharpFormatter(8);
     formatter.newLine();
     formatter.add('// ' + actionTitle(action));
@@ -40,10 +41,17 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
       return formatter.format();
     }
 
-    const subject = actionInContext.isMainFrame ? pageAlias :
-      (actionInContext.frameName ?
-        `${pageAlias}.Frame(${quote(actionInContext.frameName)})` :
-        `${pageAlias}.FrameByUrl(${quote(actionInContext.frameUrl)})`);
+    let subject: string;
+    if (actionInContext.frame.isMainFrame) {
+      subject = pageAlias;
+    } else if (actionInContext.frame.selectorsChain && action.name !== 'navigate') {
+      const locators = actionInContext.frame.selectorsChain.map(selector => '.' + asLocator(selector, 'FrameLocator'));
+      subject = `${pageAlias}${locators.join('')}`;
+    } else if (actionInContext.frame.name) {
+      subject = `${pageAlias}.Frame(${quote(actionInContext.frame.name)})`;
+    } else {
+      subject = `${pageAlias}.FrameByUrl(${quote(actionInContext.frame.url)})`;
+    }
 
     const signals = toSignalMap(action);
 
@@ -58,12 +66,12 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
     }
 
     const lines: string[] = [];
-    const actionCall = this._generateActionCall(action, actionInContext.isMainFrame);
+    const actionCall = this._generateActionCall(action, actionInContext.frame.isMainFrame);
     if (signals.waitForNavigation) {
       lines.push(`await ${pageAlias}.RunAndWaitForNavigationAsync(async () =>`);
       lines.push(`{`);
       lines.push(`    await ${subject}.${actionCall};`);
-      lines.push(`}/*, new ${actionInContext.isMainFrame ? 'Page' : 'Frame'}WaitForNavigationOptions`);
+      lines.push(`}/*, new ${actionInContext.frame.isMainFrame ? 'Page' : 'Frame'}WaitForNavigationOptions`);
       lines.push(`{`);
       lines.push(`    UrlString = ${quote(signals.waitForNavigation.url)}`);
       lines.push(`}*/);`);
@@ -110,27 +118,27 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
         if (action.position)
           options.position = action.position;
         if (!Object.entries(options).length)
-          return `${method}Async(${quote(action.selector)})`;
-        const optionsString = formatObject(options, '    ', (isPage ? 'Page' : 'Frame') + method + 'Options');
-        return `${method}Async(${quote(action.selector)}, ${optionsString})`;
+          return asLocator(action.selector) + `.${method}Async()`;
+        const optionsString = formatObject(options, '    ', 'Locator' + method + 'Options');
+        return asLocator(action.selector) + `.${method}Async(${optionsString})`;
       }
       case 'check':
-        return `CheckAsync(${quote(action.selector)})`;
+        return asLocator(action.selector) + `.CheckAsync()`;
       case 'uncheck':
-        return `UncheckAsync(${quote(action.selector)})`;
+        return asLocator(action.selector) + `.UncheckAsync()`;
       case 'fill':
-        return `FillAsync(${quote(action.selector)}, ${quote(action.text)})`;
+        return asLocator(action.selector) + `.FillAsync(${quote(action.text)})`;
       case 'setInputFiles':
-        return `SetInputFilesAsync(${quote(action.selector)}, ${formatObject(action.files)})`;
+        return asLocator(action.selector) + `.SetInputFilesAsync(${formatObject(action.files)})`;
       case 'press': {
         const modifiers = toModifiers(action.modifiers);
         const shortcut = [...modifiers, action.key].join('+');
-        return `PressAsync(${quote(action.selector)}, ${quote(shortcut)})`;
+        return asLocator(action.selector) + `.PressAsync(${quote(shortcut)})`;
       }
       case 'navigate':
         return `GotoAsync(${quote(action.url)})`;
       case 'select':
-        return `SelectOptionAsync(${quote(action.selector)}, ${formatObject(action.options)})`;
+        return asLocator(action.selector) + `.SelectOptionAsync(${formatObject(action.options)})`;
     }
   }
 
@@ -270,4 +278,13 @@ class CSharpFormatter {
 
 function quote(text: string) {
   return escapeWithQuotes(text, '\"');
+}
+
+function asLocator(selector: string, locatorFn = 'Locator') {
+  const match = selector.match(/(.*)\s+>>\s+nth=(\d+)$/);
+  if (!match)
+    return `${locatorFn}(${quote(selector)})`;
+  if (+match[2] === 0)
+    return `${locatorFn}(${quote(match[1])}).First`;
+  return `${locatorFn}(${quote(match[1])}).Nth(${match[2]})`;
 }

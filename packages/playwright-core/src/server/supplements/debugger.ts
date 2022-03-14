@@ -18,7 +18,6 @@ import { EventEmitter } from 'events';
 import { debugMode, isUnderTest, monotonicTime } from '../../utils/utils';
 import { BrowserContext } from '../browserContext';
 import { CallMetadata, InstrumentationListener, SdkObject } from '../instrumentation';
-import { debugLogger } from '../../utils/debugLogger';
 import { commandsWithTracingSnapshots, pausesBeforeInputActions } from '../../protocol/channels';
 
 const symbol = Symbol('Debugger');
@@ -65,10 +64,6 @@ export class Debugger extends EventEmitter implements InstrumentationListener {
       return;
     if (this._enabled && this._pauseOnNextStatement)
       await this.pause(sdkObject, metadata);
-  }
-
-  async onCallLog(logName: string, message: string, sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
-    debugLogger.log(logName as any, message);
   }
 
   async pause(sdkObject: SdkObject, metadata: CallMetadata) {

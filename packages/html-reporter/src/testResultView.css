@@ -55,6 +55,25 @@
   border-radius: 6px;
   padding: 16px;
   line-height: initial;
+  margin-bottom: 6px;
+}
+
+.test-result-counter {
+  border-radius: 12px;
+  color: var(--color-canvas-default);
+  padding: 2px 8px;
+}
+
+@media(prefers-color-scheme: light) {
+  .test-result-counter {
+    background: var(--color-scale-gray-5);
+  }
+}
+
+@media(prefers-color-scheme: dark) {
+  .test-result-counter {
+    background: var(--color-scale-gray-3);
+  }
 }
 
 @media only screen and (max-width: 600px) {

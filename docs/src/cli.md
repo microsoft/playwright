@@ -22,10 +22,8 @@ playwright
 ```
 
 ```bash csharp
-# Install the CLI once.
-dotnet tool install --global Microsoft.Playwright.CLI
 # Use the tools.
-playwright
+pwsh bin\Debug\netX\playwright.ps1 --help
 ```
 
 ```json js
@@ -58,7 +56,7 @@ playwright install
 
 ```bash csharp
 # Running without arguments will install default browsers
-playwright install
+pwsh bin\Debug\netX\playwright.ps1 install
 ```
 
 You can also install specific browsers by providing an argument:
@@ -80,7 +78,7 @@ playwright install webkit
 
 ```bash csharp
 # Install WebKit
-playwright install webkit
+pwsh bin\Debug\netX\playwright.ps1 install webkit
 ```
 
 See all supported browsers:
@@ -174,7 +172,7 @@ playwright codegen --load-storage=auth.json my.web.app
 
 ```bash csharp
 pwsh bin\Debug\netX\playwright.ps1 open --load-storage=auth.json my.web.app
-playwright codegen --load-storage=auth.json my.web.app
+pwsh bin\Debug\netX\playwright.ps1 codegen --load-storage=auth.json my.web.app
 # Perform actions in authenticated state.
 ```
 
@@ -300,7 +298,7 @@ playwright open example.com
 
 ```bash csharp
 # Open page in Chromium
-playwright open example.com
+pwsh bin\Debug\netX\playwright.ps1 open example.com
 ```
 
 ```bash js
@@ -320,7 +318,7 @@ playwright wk example.com
 
 ```bash csharp
 # Open page in WebKit
-playwright wk example.com
+pwsh bin\Debug\netX\playwright.ps1 wk example.com
 ```
 
 ### Emulate devices
@@ -343,7 +341,7 @@ playwright open --device="iPhone 11" wikipedia.org
 
 ```bash csharp
 # Emulate iPhone 11.
-playwright open --device="iPhone 11" wikipedia.org
+pwsh bin\Debug\netX\playwright.ps1 open --device="iPhone 11" wikipedia.org
 ```
 
 ### Emulate color scheme and viewport size
@@ -365,7 +363,7 @@ playwright open --viewport-size=800,600 --color-scheme=dark twitter.com
 
 ```bash csharp
 # Emulate screen size and color scheme.
-playwright open --viewport-size=800,600 --color-scheme=dark twitter.com
+pwsh bin\Debug\netX\playwright.ps1 open --viewport-size=800,600 --color-scheme=dark twitter.com
 ```
 
 ### Emulate geolocation, language and timezone
@@ -391,7 +389,7 @@ playwright open --timezone="Europe/Rome" --geolocation="41.890221,12.492348" --l
 ```bash csharp
 # Emulate timezone, language & location
 # Once page opens, click the "my location" button to see geolocation in action
-playwright open --timezone="Europe/Rome" --geolocation="41.890221,12.492348" --lang="it-IT" maps.google.com
+pwsh bin\Debug\netX\playwright.ps1 open --timezone="Europe/Rome" --geolocation="41.890221,12.492348" --lang="it-IT" maps.google.com
 ```
 
 ## Inspect selectors
@@ -491,7 +489,7 @@ playwright screenshot \
 
 ```bash csharp
 # Wait 3 seconds before capturing a screenshot after page loads ('load' event fires)
-playwright screenshot \
+pwsh bin\Debug\netX\playwright.ps1 screenshot \
     --device="iPhone 11" \
     --color-scheme=dark \
     --wait-for-timeout=3000 \
@@ -515,7 +513,7 @@ playwright screenshot --full-page en.wikipedia.org wiki-full.png
 
 ```bash csharp
 # Capture a full page screenshot
-playwright screenshot --full-page en.wikipedia.org wiki-full.png
+pwsh bin\Debug\netX\playwright.ps1 screenshot --full-page en.wikipedia.org wiki-full.png
 ```
 
 ## Generate PDF
@@ -539,7 +537,7 @@ playwright pdf https://en.wikipedia.org/wiki/PDF wiki.pdf
 
 ```bash csharp
 # See command help
-playwright pdf https://en.wikipedia.org/wiki/PDF wiki.pdf
+pwsh bin\Debug\netX\playwright.ps1 pdf https://en.wikipedia.org/wiki/PDF wiki.pdf
 ```
 
 ## Install system dependencies
@@ -563,7 +561,7 @@ playwright install-deps
 
 ```bash csharp
 # See command help
-playwright install-deps
+pwsh bin\Debug\netX\playwright.ps1 install-deps
 ```
 
 You can also install the dependencies for a single browser only by passing it as an argument:
@@ -582,4 +580,22 @@ playwright install-deps chromium
 
 ```bash csharp
 pwsh bin\Debug\netX\playwright.ps1 install-deps chromium
+```
+
+It's also possible to combine `install-deps` with `install` and install by that the browsers and OS dependencies with a single command. This would do both for Chromium, but you can also leave it out.
+
+```bash js
+npx playwright install --with-deps chromium
+```
+
+```bash java
+mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install --with-deps chromium"
+```
+
+```bash python
+playwright install --with-deps chromium
+```
+
+```bash csharp
+pwsh bin\Debug\netX\playwright.ps1 install --with-deps chromium
 ```

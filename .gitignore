@@ -10,7 +10,7 @@ node_modules/
 .idea
 yarn.lock
 /packages/playwright-core/src/generated/*
-lib/
+packages/*/lib/
 drivers/
 .android-sdk/
 .gradle/
@@ -24,3 +24,4 @@ playwright-report
 /packages/*/NOTICE
 /packages/playwright/README.md
 /packages/playwright-core/api.json
+.env
