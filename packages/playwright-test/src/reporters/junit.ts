@@ -30,10 +30,17 @@ class JUnitReporter implements Reporter {
   private totalSkipped = 0;
   private outputFile: string | undefined;
   private stripANSIControlSequences = false;
+  private embedAnnotationsAsProperties = false;
+  private textContentAnnotations: string[] | undefined;
+  private embedAttachmentsAsProperty: string | undefined;
 
-  constructor(options: { outputFile?: string, stripANSIControlSequences?: boolean } = {}) {
+
+  constructor(options: { outputFile?: string, stripANSIControlSequences?: boolean, embedAnnotationsAsProperties?: boolean, textContentAnnotations?: string[], embedAttachmentsAsProperty?: string } = {}) {
     this.outputFile = options.outputFile || process.env[`PLAYWRIGHT_JUNIT_OUTPUT_NAME`];
     this.stripANSIControlSequences = options.stripANSIControlSequences || false;
+    this.embedAnnotationsAsProperties = options.embedAnnotationsAsProperties || false;
+    this.textContentAnnotations = options.textContentAnnotations || [];
+    this.embedAttachmentsAsProperty = options.embedAttachmentsAsProperty;
   }
 
   printsToStdio() {
@@ -134,55 +141,43 @@ class JUnitReporter implements Reporter {
     entries.push(entry);
 
     // Xray Test Management supports testcase level properties, where additional metadata may be provided
-    // some annotations are encoded as value attributes, other as cdata content
+    // some annotations are encoded as value attributes, other as cdata content; this implementation supports
+    // Xray JUnit extensions but it also agnostic, so other tools can also take advantage of this format
     const properties: XMLEntry = {
       name: 'properties',
       children: [] as XMLEntry[]
     };
 
-    const textValueBasedAnnotations = ['test_id', 'test_key', 'test_summary', 'requirements'];
-    for (const annotationType of textValueBasedAnnotations) {
-      const annotation = test.annotations.find(annotation => {
-        return annotation.type === annotationType;
-      });
-      if (annotation !== undefined) {
-        const property: XMLEntry = {
-          name: 'property',
-          attributes: {
-            name: annotationType,
-            value: (annotation?.description ? annotation.description : '')
-          }
-        };
-        properties.children?.push(property);
+    if (this.embedAnnotationsAsProperties && test.annotations) {
+      for (const annotation of test.annotations) {
+        if (this.textContentAnnotations?.includes(annotation.type)) {
+          const property: XMLEntry = {
+            name: 'property',
+            attributes: {
+              name: annotation.type
+            },
+            text: annotation.description
+          };
+          properties.children?.push(property);
+        } else {
+          const property: XMLEntry = {
+            name: 'property',
+            attributes: {
+              name: annotation.type,
+              value: (annotation?.description ? annotation.description : '')
+            }
+          };
+          properties.children?.push(property);
+        }
       }
     }
 
-    const textContentBasedAnnotations = ['test_description'];
-    for (const annotationType of textContentBasedAnnotations) {
-      const annotation = test.annotations.find(annotation => {
-        return annotation.type === annotationType;
-      });
-      if (annotation !== undefined) {
-        const property: XMLEntry = {
-          name: 'property',
-          attributes: {
-            name: annotationType
-          },
-          text: annotation.description
-        };
-        properties.children?.push(property);
-      }
-    }
-
-    // attachments are optionally embed as base64 encoded content on inner elements
-    const embedAttachments = test.annotations.find(annotation => {
-      return annotation.type === 'embed_attachments_in_report';
-    });
-    if (embedAttachments?.description === 'true') {
+    // attachments are optionally embed as base64 encoded content on inner <item> elements
+    if (this.embedAttachmentsAsProperty) {
       const evidence: XMLEntry = {
         name: 'property',
         attributes: {
-          name: 'testrun_evidence'
+          name: this.embedAttachmentsAsProperty
         },
         children: [] as XMLEntry[]
       };
@@ -242,16 +237,18 @@ class JUnitReporter implements Reporter {
     for (const result of test.results) {
       systemOut.push(...result.stdout.map(item => item.toString()));
       systemErr.push(...result.stderr.map(item => item.toString()));
-      for (const attachment of result.attachments) {
-        if (!attachment.path)
-          continue;
-        try {
-          const attachmentPath = path.relative(this.config.rootDir, attachment.path);
-          if (fs.existsSync(attachment.path))
-            systemOut.push(`\n[[ATTACHMENT|${attachmentPath}]]\n`);
-          else
-            systemErr.push(`\nWarning: attachment ${attachmentPath} is missing`);
-        } catch (e) {
+      if (!this.embedAttachmentsAsProperty) {
+        for (const attachment of result.attachments) {
+          if (!attachment.path)
+            continue;
+          try {
+            const attachmentPath = path.relative(this.config.rootDir, attachment.path);
+            if (fs.existsSync(attachment.path))
+              systemOut.push(`\n[[ATTACHMENT|${attachmentPath}]]\n`);
+            else
+              systemErr.push(`\nWarning: attachment ${attachmentPath} is missing`);
+          } catch (e) {
+          }
         }
       }
     }
@@ -292,7 +289,7 @@ function escape(text: string, stripANSIControlSequences: boolean, isCharacterDat
   const escapeRe = isCharacterData ? /[&<]/g : /[&"<>]/g;
   text = text.replace(escapeRe, c => ({ '&': '&amp;', '"': '&quot;', '<': '&lt;', '>': '&gt;' }[c]!));
   if (isCharacterData)
-    text = '<![CDATA[' + text.replace(/]]>/g, ']]&gt;') + ']]>';
+    text = text.replace(/]]>/g, ']]&gt;');
   text = text.replace(discouragedXMLCharacters, '');
   return text;
 }
