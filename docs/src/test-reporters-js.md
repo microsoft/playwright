@@ -442,6 +442,7 @@ Embedding attachments can be used to attach screenshots or any other relevant ev
 const config = {
   reporter: [ ['junit', { embedAttachmentsAsProperty: 'testrun_evidence', outputFile: 'results.xml' }] ],
 };
+```
 
 ```js js-flavor=js
 test('embed attachments, including its content, on the JUnit report', async ({}, testInfo) => {
