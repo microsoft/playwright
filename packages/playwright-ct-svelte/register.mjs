@@ -35,5 +35,5 @@ const playwrightMount = component => {
 
   for (const [key, listener] of Object.entries(component.options?.on || {}))
     wrapper.$on(key, event => listener(event.detail));
-  return '#app';
+  return '#app > *';
 };

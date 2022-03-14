@@ -30,6 +30,6 @@ test('should work', async ({ mount }) => {
     }
   });
   await expect(component).toContainText('my suffix');
-  await component.locator('button').click();
+  await component.click();
   expect(values).toEqual([{ count: 1 }]);
 });

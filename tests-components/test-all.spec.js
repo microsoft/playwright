@@ -1,4 +1,4 @@
-const { test } = require('@playwright/test');
+const { test, expect } = require('@playwright/test');
 
 const { spawn } = require('child_process');
 const fs = require('fs');
@@ -9,14 +9,14 @@ for (const dir of fs.readdirSync(__dirname)) {
   if (!fs.statSync(folder).isDirectory())
     continue;
   test.describe.serial(path.basename(folder), () => {
-    test.slow();
+    test.setTimeout(120000);
     test('install', async () => {
       await run('npm', ['i'], folder);
     });
 
     for (const project of ['chromium', 'firefox', 'webkit']) {
       test(project, async () => {
-        test.slow();
+        test.setTimeout(120000);
         await run('npx', ['playwright', 'test', '--project=' + project, '--reporter=list'], folder);
       });
     }
@@ -35,5 +35,6 @@ async function run(command, args, folder) {
   process.on('exit', () => {
     child.kill();
   });
-  await new Promise(f => child.on('close', f));
+  const code = await new Promise(f => child.on('close', f));
+  expect(code).toEqual(0);
 }
