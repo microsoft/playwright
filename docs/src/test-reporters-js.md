@@ -410,6 +410,7 @@ import { PlaywrightTestConfig } from '@playwright/test';
 const config: PlaywrightTestConfig = {
   reporter: [ ['junit', { useCDATAsections: true, outputFile: 'results.xml' }] ],
 };
+```
 
 ### GitHub Actions annotations
 
