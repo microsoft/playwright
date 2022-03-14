@@ -550,7 +550,7 @@ The method finds an element matching the specified selector in the `Locator`'s s
 ## method: Locator.nth
 - returns: <[Locator]>
 
-Returns locator to the n-th matching element.
+Returns locator to the n-th matching element. It's zero based and starts by that at `0`.
 
 ### param: Locator.nth.index
 - `index` <[int]>
