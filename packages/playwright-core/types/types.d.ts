@@ -9403,7 +9403,7 @@ export interface Locator {
   }): Locator;
 
   /**
-   * Returns locator to the n-th matching element.
+   * Returns locator to the n-th matching element. It's zero based, `nth(0)` selects the first element.
    * @param index
    */
   nth(index: number): Locator;
@@ -13846,7 +13846,7 @@ export interface FrameLocator {
   }): Locator;
 
   /**
-   * Returns locator to the n-th matching frame.
+   * Returns locator to the n-th matching frame. It's zero based, `nth(0)` selects the first frame.
    * @param index
    */
   nth(index: number): FrameLocator;
