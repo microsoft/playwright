@@ -1,0 +1,15 @@
+<head>
+<script>
+async function loadFile() {
+    const [fileHandle] = await window.showOpenFilePicker();
+    const file = await fileHandle.getFile();
+    const contents = await file.text();
+    document.getElementById('contents').textContent = contents
+}
+</script>
+</head>
+<body>
+    <button onclick="loadFile()">Open File</button>
+    <p>Pick a text file and its contents will be shown below</p>
+    <textarea id="contents" placeholder="File contents"></textarea>
+</body>

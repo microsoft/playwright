@@ -1,0 +1,44 @@
+<style>
+div {
+  position: relative;
+  user-select: none;
+}
+#from {
+  cursor: pointer;
+}
+</style>
+<body>
+  <div id="container">
+    <div id="to">
+      Drop here
+    </div>
+    <div id="from">
+      Drag me
+    </div>
+  </div>
+</body>
+<script>
+  const from = document.querySelector('#from');
+  const to = document.querySelector('#to');
+
+  let start = null;
+  from.addEventListener('mousedown', e => {
+    start = { x: e.clientX, y: e.clientY };
+  });
+
+  document.body.addEventListener('mousemove', e => {
+    if (start) {
+      from.style.top = (e.clientY - start.y) + 'px';
+      from.style.left = (e.clientX - start.x) + 'px';
+    }
+  });
+
+  document.body.addEventListener('mouseup', e => {
+    const box = to.getBoundingClientRect();
+    if (start && box.left < e.clientX && box.right > e.clientX && box.top < e.clientY && box.bottom > e.clientY)
+      to.textContent = 'Dropped';
+    start = null;
+    from.style.top = '0';
+    from.style.left = '0';
+  });
+</script>

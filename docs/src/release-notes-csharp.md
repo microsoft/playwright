@@ -5,6 +5,120 @@ title: "Release notes"
 
 <!-- TOC -->
 
+## Version 1.20
+
+### Web-First Assertions
+
+Playwright for .NET 1.20 introduces [Web-First Assertions](./api/class-playwrightassertions).
+
+Consider the following example:
+
+```csharp
+using System.Threading.Tasks;
+using Microsoft.Playwright.NUnit;
+using NUnit.Framework;
+
+namespace Playwright.TestingHarnessTest.NUnit
+{
+    public class ExampleTests : PageTest
+    {
+        [Test]
+        public async Task StatusBecomesSubmitted()
+        {
+            await Expect(Page.Locator(".status")).ToHaveTextAsync("Submitted");
+        }
+    }
+}
+```
+
+Playwright will be re-testing the node with the selector `.status` until
+fetched Node has the `"Submitted"` text. It will be re-fetching the node and
+checking it over and over, until the condition is met or until the timeout is
+reached. You can pass this timeout as an option.
+
+Read more in [our documentation](./api/class-playwrightassertions).
+
+### Other Updates
+
+- New options for methods [`method: Page.screenshot`], [`method: Locator.screenshot`] and [`method: ElementHandle.screenshot`]:
+  * Option `ScreenshotAnimations.Disabled` rewinds all CSS animations and transitions to a consistent state
+  * Option `mask: Locator[]` masks given elements, overlaying them with pink `#FF00FF` boxes.
+- [`method: Locator.highlight`] visually reveals element(s) for easier debugging.
+
+### Announcements
+
+- v1.20 is the last release to receive WebKit update for macOS 10.15 Catalina. Please update MacOS to keep using latest & greatest WebKit!
+
+### Browser Versions
+
+- Chromium 101.0.4921.0
+- Mozilla Firefox 97.0.1
+- WebKit 15.4
+
+This version was also tested against the following stable channels:
+
+- Google Chrome 99
+- Microsoft Edge 99
+
+## Version 1.19
+
+### Highlights
+
+- Locator now supports a `has` option that makes sure it contains another locator inside:
+
+  ```csharp
+  await Page.Locator("article", new () { Has = Page.Locator(".highlight") }).ClickAsync();
+  ```
+
+  Read more in [locator documentation](./api/class-locator#locator-locator-option-has)
+
+- New [`method: Locator.page`]
+- [`method: Page.screenshot`] and [`method: Locator.screenshot`] now automatically hide blinking caret
+- Playwright Codegen now generates locators and frame locators
+
+### Browser Versions
+
+- Chromium 100.0.4863.0
+- Mozilla Firefox 96.0.1
+- WebKit 15.4
+
+This version was also tested against the following stable channels:
+
+- Google Chrome 98
+- Microsoft Edge 98
+
+
+## Version 1.18
+
+### Locator Improvements
+
+- [`method: Locator.dragTo`]
+- Each locator can now be optionally filtered by the text it contains:
+    ```csharp
+    await Page.Locator("li", new () { HasTextString = "My Item" })
+              .Locator("button").click();
+    ```
+    Read more in [locator documentation](./api/class-locator#locator-locator-option-has-text)
+
+
+### New APIs & changes
+
+- [`AcceptDownloads`](./api/class-browser#browser-new-context-option-accept-downloads) option now defaults to `true`.
+- [`Sources`](./api/class-tracing#tracing-start-option-sources) option to embed sources into traces.
+
+### Browser Versions
+
+- Chromium 99.0.4812.0
+- Mozilla Firefox 95.0
+- WebKit 15.4
+
+This version was also tested against the following stable channels:
+
+- Google Chrome 97
+- Microsoft Edge 97
+
+
+
 ## Version 1.17
 
 ### Frame Locators
@@ -47,7 +161,7 @@ Playwright Trace Viewer is now **available online** at https://trace.playwright.
 - Playwright now supports **Ubuntu 20.04 ARM64**. You can now run Playwright tests inside Docker on Apple M1 and on Raspberry Pi.
 - You can now use Playwright to install stable version of Edge on Linux:
     ```bash
-    npx playwright install msedge
+    pwsh bin\Debug\netX\playwright.ps1 install msedge
     ```
 
 
@@ -74,7 +188,7 @@ Read more about [`method: Locator.waitFor`].
 
 ### 🎭 Playwright Trace Viewer
 
-- run trace viewer with `npx playwright show-trace` and drop trace files to the trace viewer PWA
+- run trace viewer with `pwsh bin\Debug\netX\playwright.ps1 show-trace` and drop trace files to the trace viewer PWA
 - better visual attribution of action targets
 
 Read more about [Trace Viewer](./trace-viewer).

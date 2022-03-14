@@ -14,14 +14,12 @@
  * limitations under the License.
  */
 
-import net, { AddressInfo } from 'net';
 import * as channels from '../protocol/channels';
+import { Browser } from '../server/browser';
 import { GlobalAPIRequestContext } from '../server/fetch';
 import { Playwright } from '../server/playwright';
+import { SocksProxy, SocksSocketClosedPayload, SocksSocketDataPayload, SocksSocketRequestedPayload } from '../utils/socksProxy';
 import * as types from '../server/types';
-import { debugLogger } from '../utils/debugLogger';
-import { SocksConnection, SocksConnectionClient } from '../utils/socksProxy';
-import { createGuid } from '../utils/utils';
 import { AndroidDispatcher } from './androidDispatcher';
 import { BrowserTypeDispatcher } from './browserTypeDispatcher';
 import { Dispatcher, DispatcherScope } from './dispatcher';
@@ -29,15 +27,18 @@ import { ElectronDispatcher } from './electronDispatcher';
 import { LocalUtilsDispatcher } from './localUtilsDispatcher';
 import { APIRequestContextDispatcher } from './networkDispatchers';
 import { SelectorsDispatcher } from './selectorsDispatcher';
+import { ConnectedBrowserDispatcher } from './browserDispatcher';
+import { createGuid } from '../utils/utils';
 
 export class PlaywrightDispatcher extends Dispatcher<Playwright, channels.PlaywrightChannel> implements channels.PlaywrightChannel {
   _type_Playwright;
-  private _socksProxy: SocksProxy | undefined;
+  private _browserDispatcher: ConnectedBrowserDispatcher | undefined;
 
-  constructor(scope: DispatcherScope, playwright: Playwright, customSelectors?: channels.SelectorsChannel, preLaunchedBrowser?: channels.BrowserChannel) {
+  constructor(scope: DispatcherScope, playwright: Playwright, socksProxy?: SocksProxy, preLaunchedBrowser?: Browser) {
     const descriptors = require('../server/deviceDescriptors') as types.Devices;
     const deviceDescriptors = Object.entries(descriptors)
         .map(([name, descriptor]) => ({ name, descriptor }));
+    const browserDispatcher = preLaunchedBrowser ? new ConnectedBrowserDispatcher(scope, preLaunchedBrowser) : undefined;
     super(scope, playwright, 'Playwright', {
       chromium: new BrowserTypeDispatcher(scope, playwright.chromium),
       firefox: new BrowserTypeDispatcher(scope, playwright.firefox),
@@ -46,95 +47,59 @@ export class PlaywrightDispatcher extends Dispatcher<Playwright, channels.Playwr
       electron: new ElectronDispatcher(scope, playwright.electron),
       utils: new LocalUtilsDispatcher(scope),
       deviceDescriptors,
-      selectors: customSelectors || new SelectorsDispatcher(scope, playwright.selectors),
-      preLaunchedBrowser,
+      selectors: new SelectorsDispatcher(scope, browserDispatcher?.selectors || playwright.selectors),
+      preLaunchedBrowser: browserDispatcher,
+      socksSupport: socksProxy ? new SocksSupportDispatcher(scope, socksProxy) : undefined,
     }, false);
     this._type_Playwright = true;
-  }
-
-  async enableSocksProxy() {
-    this._socksProxy = new SocksProxy(this);
-    this._object.options.socksProxyPort = await this._socksProxy.listen(0);
-    debugLogger.log('proxy', `Starting socks proxy server on port ${this._object.options.socksProxyPort}`);
-  }
-
-  async socksConnected(params: channels.PlaywrightSocksConnectedParams): Promise<void> {
-    this._socksProxy?.socketConnected(params);
-  }
-
-  async socksFailed(params: channels.PlaywrightSocksFailedParams): Promise<void> {
-    this._socksProxy?.socketFailed(params);
-  }
-
-  async socksData(params: channels.PlaywrightSocksDataParams): Promise<void> {
-    this._socksProxy?.sendSocketData(params);
-  }
-
-  async socksError(params: channels.PlaywrightSocksErrorParams): Promise<void> {
-    this._socksProxy?.sendSocketError(params);
-  }
-
-  async socksEnd(params: channels.PlaywrightSocksEndParams): Promise<void> {
-    this._socksProxy?.sendSocketEnd(params);
+    this._browserDispatcher = browserDispatcher;
   }
 
   async newRequest(params: channels.PlaywrightNewRequestParams, metadata?: channels.Metadata): Promise<channels.PlaywrightNewRequestResult> {
     const request = new GlobalAPIRequestContext(this._object, params);
     return { request: APIRequestContextDispatcher.from(this._scope, request) };
   }
+
+  async hideHighlight(params: channels.PlaywrightHideHighlightParams, metadata?: channels.Metadata): Promise<channels.PlaywrightHideHighlightResult> {
+    await this._object.hideHighlight();
+  }
+
+  async cleanup() {
+    // Cleanup contexts upon disconnect.
+    await this._browserDispatcher?.cleanupContexts();
+  }
 }
 
-class SocksProxy implements SocksConnectionClient {
-  private _server: net.Server;
-  private _connections = new Map<string, SocksConnection>();
-  private _dispatcher: PlaywrightDispatcher;
+class SocksSupportDispatcher extends Dispatcher<{ guid: string }, channels.SocksSupportChannel> implements channels.SocksSupportChannel {
+  _type_SocksSupport: boolean;
+  private _socksProxy: SocksProxy;
 
-  constructor(dispatcher: PlaywrightDispatcher) {
-    this._dispatcher = dispatcher;
-    this._server = new net.Server((socket: net.Socket) => {
-      const uid = createGuid();
-      const connection = new SocksConnection(uid, socket, this);
-      this._connections.set(uid, connection);
-    });
+  constructor(scope: DispatcherScope, socksProxy: SocksProxy) {
+    super(scope, { guid: 'socksSupport@' + createGuid() }, 'SocksSupport', {});
+    this._type_SocksSupport = true;
+    this._socksProxy = socksProxy;
+    socksProxy.on(SocksProxy.Events.SocksRequested, (payload: SocksSocketRequestedPayload) => this._dispatchEvent('socksRequested', payload));
+    socksProxy.on(SocksProxy.Events.SocksData, (payload: SocksSocketDataPayload) => this._dispatchEvent('socksData', { uid: payload.uid, data: payload.data.toString('base64') }));
+    socksProxy.on(SocksProxy.Events.SocksClosed, (payload: SocksSocketClosedPayload) => this._dispatchEvent('socksClosed', payload));
   }
 
-  async listen(port: number): Promise<number> {
-    return new Promise(f => {
-      this._server.listen(port, () => {
-        f((this._server.address() as AddressInfo).port);
-      });
-    });
+  async socksConnected(params: channels.SocksSupportSocksConnectedParams): Promise<void> {
+    this._socksProxy?.socketConnected(params);
   }
 
-  onSocketRequested(uid: string, host: string, port: number): void {
-    this._dispatcher._dispatchEvent('socksRequested', { uid, host, port });
+  async socksFailed(params: channels.SocksSupportSocksFailedParams): Promise<void> {
+    this._socksProxy?.socketFailed(params);
   }
 
-  onSocketData(uid: string, data: Buffer): void {
-    this._dispatcher._dispatchEvent('socksData', { uid, data: data.toString('base64') });
+  async socksData(params: channels.SocksSupportSocksDataParams): Promise<void> {
+    this._socksProxy?.sendSocketData({ uid: params.uid, data: Buffer.from(params.data, 'base64') });
   }
 
-  onSocketClosed(uid: string): void {
-    this._dispatcher._dispatchEvent('socksClosed', { uid });
+  async socksError(params: channels.SocksSupportSocksErrorParams): Promise<void> {
+    this._socksProxy?.sendSocketError(params);
   }
 
-  socketConnected(params: channels.PlaywrightSocksConnectedParams) {
-    this._connections.get(params.uid)?.socketConnected(params.host, params.port);
-  }
-
-  socketFailed(params: channels.PlaywrightSocksFailedParams) {
-    this._connections.get(params.uid)?.socketFailed(params.errorCode);
-  }
-
-  sendSocketData(params: channels.PlaywrightSocksDataParams) {
-    this._connections.get(params.uid)?.sendData(Buffer.from(params.data, 'base64'));
-  }
-
-  sendSocketEnd(params: channels.PlaywrightSocksEndParams) {
-    this._connections.get(params.uid)?.end();
-  }
-
-  sendSocketError(params: channels.PlaywrightSocksErrorParams) {
-    this._connections.get(params.uid)?.error(params.error);
+  async socksEnd(params: channels.SocksSupportSocksEndParams): Promise<void> {
+    this._socksProxy?.sendSocketEnd(params);
   }
 }

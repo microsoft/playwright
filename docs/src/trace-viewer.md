@@ -75,7 +75,8 @@ BrowserContext context = browser.newContext();
 // Start tracing before creating / navigating a page.
 context.tracing().start(new Tracing.StartOptions()
   .setScreenshots(true)
-  .setSnapshots(true));
+  .setSnapshots(true)
+  .setSources(true));
 
 Page page = context.newPage();
 page.navigate("https://playwright.dev");
@@ -90,7 +91,7 @@ browser = await chromium.launch()
 context = await browser.new_context()
 
 # Start tracing before creating / navigating a page.
-await context.tracing.start(screenshots=True, snapshots=True)
+await context.tracing.start(screenshots=True, snapshots=True, sources=True)
 
 await page.goto("https://playwright.dev")
 
@@ -103,7 +104,7 @@ browser = chromium.launch()
 context = browser.new_context()
 
 # Start tracing before creating / navigating a page.
-context.tracing.start(screenshots=True, snapshots=True)
+context.tracing.start(screenshots=True, snapshots=True, sources=True)
 
 page.goto("https://playwright.dev")
 
@@ -119,7 +120,8 @@ await using var context = await browser.NewContextAsync();
 await context.Tracing.StartAsync(new TracingStartOptions
 {
   Screenshots = true,
-  Snapshots = true
+  Snapshots = true,
+  Sources = true
 });
 
 var page = context.NewPageAsync();
@@ -151,7 +153,7 @@ playwright show-trace trace.zip
 ```
 
 ```bash csharp
-playwright show-trace trace.zip
+pwsh bin\Debug\netX\playwright.ps1 show-trace trace.zip
 ```
 
 ## Actions
@@ -218,5 +220,21 @@ playwright show-trace https://example.com/trace.zip
 ```
 
 ```bash csharp
-playwright show-trace https://example.com/trace.zip
+pwsh bin\Debug\netX\playwright.ps1 show-trace https://example.com/trace.zip
+```
+
+## Using [trace.playwright.dev](https://trace.playwright.dev)
+
+[trace.playwright.dev](https://trace.playwright.dev) is a statically hosted variant of the Trace Viewer. 
+
+### Viewing local traces
+
+When navigating to [trace.playwright.dev](https://trace.playwright.dev), you can upload trace files using drag and drop.
+
+### Remote traces
+
+You can also pass the URL of your uploaded trace (e.g. inside your CI) from some accessible storage as a parameter. CORS (Cross-Origin Resource Sharing) rules might apply.
+
+```txt
+https://trace.playwright.dev/?trace=https://demo.playwright.dev/reports/todomvc/data/cb0fa77ebd9487a5c899f3ae65a7ffdbac681182.zip
 ```

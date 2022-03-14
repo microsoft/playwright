@@ -36,8 +36,18 @@ export default config;
 ## property: TestConfig.expect
 - type: <[Object]>
   - `timeout` <[int]> Default timeout for async expect matchers in milliseconds, defaults to 5000ms.
+  - `toHaveScreenshot` <[Object]>
+    - `threshold` <[float]> an acceptable perceived color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between the same pixel in compared images, between zero (strict) and one (lax). Defaults to `0.2`.
+    - `maxDiffPixels` <[int]> an acceptable amount of pixels that could be different, unset by default.
+    - `maxDiffPixelRatio` <[float]> an acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1` , unset by default.
+    - `animations` <[ScreenshotAnimations]<"allow"|"disable">> See [`option: animations`] in [`method: Page.screenshot`]. Defaults to `"disable"`.
+    - `fonts` <[ScreenshotFonts]<"ready"|"nowait">> See [`option: fonts`] in [`method: Page.screenshot`]. Defaults to `"ready"`.
+    - `size` <[ScreenshotSize]<"css"|"device">> See [`option: size`] in [`method: Page.screenshot`]. Defaults to `"css"`.
+
   - `toMatchSnapshot` <[Object]>
-    - `threshold` <[float]> Image matching threshold between zero (strict) and one (lax).
+    - `threshold` <[float]> an acceptable perceived color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between the same pixel in compared images, between zero (strict) and one (lax). Defaults to `0.2`.
+    - `maxDiffPixels` <[int]> an acceptable amount of pixels that could be different, unset by default.
+    - `maxDiffPixelRatio` <[float]> an acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1` , unset by default.
 
 Configuration for the `expect` assertion library. Learn more about [various timeouts](./test-timeouts.md).
 
@@ -49,8 +59,8 @@ Configuration for the `expect` assertion library. Learn more about [various time
 const config = {
   expect: {
     timeout: 10000,
-    toMatchSnapshot: {
-      threshold: 0.3,
+    toHaveScreenshot: {
+      maxDiffPixels: 10,
     },
   },
 };
@@ -65,8 +75,8 @@ import { PlaywrightTestConfig } from '@playwright/test';
 const config: PlaywrightTestConfig = {
   expect: {
     timeout: 10000,
-    toMatchSnapshot: {
-      threshold: 0.3,
+    toHaveScreenshot: {
+      maxDiffPixels: 10,
     },
   },
 };
@@ -99,6 +109,14 @@ const config: PlaywrightTestConfig = {
 };
 export default config;
 ```
+
+## property: TestConfig.fullyParallel
+- type: <[boolean]>
+
+Playwright Test runs tests in parallel. In order to achieve that, it runs several worker processes that run at the same time.
+By default, **test files** are run in parallel. Tests in a single file are run in order, in the same worker process.
+
+You can configure entire test run to concurrently execute all tests in all files using this option.
 
 ## property: TestConfig.globalSetup
 - type: <[string]>
@@ -285,6 +303,42 @@ test('example test', async ({}, testInfo) => {
   await fs.promises.writeFile(file, 'Put some data to the file', 'utf8');
 });
 ```
+
+## property: TestConfig.screenshotsDir
+- type: <[string]>
+
+The base directory, relative to the config file, for screenshot files created with `toHaveScreenshot`. Defaults to
+
+```
+<directory-of-configuration-file>/__screenshots__/<platform name>/<project name>
+```
+
+This path will serve as the base directory for each test file screenshot directory. For example, the following test structure:
+
+```
+smoke-tests/
+└── basic.spec.ts
+```
+
+will result in the following screenshots folder structure:
+
+```
+__screenshots__/
+└── darwin/
+    ├── Mobile Safari/
+    │   └── smoke-tests/
+    │       └── basic.spec.ts/
+    │           └── screenshot-expectation.png
+    └── Desktop Chrome/
+        └── smoke-tests/
+            └── basic.spec.ts/
+                └── screenshot-expectation.png
+```
+
+where:
+* `darwin/` - a platform name folder
+* `Mobile Safari` and `Desktop Chrome` - project names
+
 
 ## property: TestConfig.snapshotDir
 - type: <[string]>
@@ -559,7 +613,8 @@ export default config;
 ## property: TestConfig.webServer
 - type: <[Object]>
   - `command` <[string]> Command which gets executed
-  - `port` <[int]> Port to wait on for the web server
+  - `port` <[int]> Port to wait on for the web server (exactly one of `port` or `url` is required)
+  - `url` <[string]> URL to wait on for the web server (exactly one of `port` or `url` is required)
   - `timeout` <[int]> Maximum duration to wait on until the web server is ready
   - `reuseExistingServer` <[boolean]> If true, reuse the existing server if it is already running, otherwise it will fail
   - `cwd` <[boolean]> Working directory to run the command in
@@ -567,11 +622,15 @@ export default config;
 
 Launch a development web server during the tests.
 
-The server will wait for it to be available on `127.0.0.1` or `::1` before running the tests. For continuous integration, you may want to use the `reuseExistingServer: !process.env.CI` option which does not use an existing server on the CI.
+If the port is specified, the server will wait for it to be available on `127.0.0.1` or `::1`, before running the tests. If the url is specified, the server will wait for the URL to return a 2xx status code before running the tests.
 
-The port gets then passed over to Playwright as a `baseURL` when creating the context [`method: Browser.newContext`].
-For example `8080` ends up in `baseURL` to be `http://localhost:8080`. If you want to use `https://` you need to manually specify
-the `baseURL` inside `use`.
+For continuous integration, you may want to use the `reuseExistingServer: !process.env.CI` option which does not use an existing server on the CI. To see the stdout, you can set the `DEBUG=pw:webserver` environment variable.
+
+The `port` (but not the `url`) gets passed over to Playwright as a [`property: TestOptions.baseURL`]. For example port `8080` produces `baseURL` equal `http://localhost:8080`.
+
+:::note
+It is also recommended to specify [`property: TestOptions.baseURL`] in the config, so that tests could use relative urls.
+:::
 
 ```js js-flavor=ts
 // playwright.config.ts
@@ -582,6 +641,9 @@ const config: PlaywrightTestConfig = {
     port: 3000,
     timeout: 120 * 1000,
     reuseExistingServer: !process.env.CI,
+  },
+  use: {
+    baseURL: 'http://localhost:3000/',
   },
 };
 export default config;
@@ -598,22 +660,21 @@ const config = {
     timeout: 120 * 1000,
     reuseExistingServer: !process.env.CI,
   },
+  use: {
+    baseURL: 'http://localhost:3000/',
+  },
 };
 module.exports = config;
 ```
 
-Now you can use a relative path when navigating the page, or use `baseURL` fixture:
+Now you can use a relative path when navigating the page:
 
 ```js js-flavor=ts
 // test.spec.ts
 import { test } from '@playwright/test';
-test('test', async ({ page, baseURL }) => {
-  // baseURL is taken directly from your web server,
-  // e.g. http://localhost:3000
-  await page.goto(baseURL + '/bar');
-  // Alternatively, just use relative path, because baseURL is already
-  // set for the default context and page.
-  // For example, this will result in http://localhost:3000/foo
+
+test('test', async ({ page }) => {
+  // This will result in http://localhost:3000/foo
   await page.goto('/foo');
 });
 ```
@@ -621,13 +682,9 @@ test('test', async ({ page, baseURL }) => {
 ```js js-flavor=js
 // test.spec.js
 const { test } = require('@playwright/test');
-test('test', async ({ page, baseURL }) => {
-  // baseURL is taken directly from your web server,
-  // e.g. http://localhost:3000
-  await page.goto(baseURL + '/bar');
-  // Alternatively, just use relative path, because baseURL is already
-  // set for the default context and page.
-  // For example, this will result in http://localhost:3000/foo
+
+test('test', async ({ page }) => {
+  // This will result in http://localhost:3000/foo
   await page.goto('/foo');
 });
 ```

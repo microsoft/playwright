@@ -22,7 +22,7 @@ async function giveItAChanceToResolve(page) {
     await page.evaluate(() => new Promise(f => requestAnimationFrame(() => requestAnimationFrame(f))));
 }
 
-it('should select single option', async ({ page, server }) => {
+it('should select single option @smoke', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/select.html');
   await page.selectOption('select', 'blue');
   expect(await page.evaluate(() => window['result'].onInput)).toEqual(['blue']);

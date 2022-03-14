@@ -39,7 +39,7 @@ export type TestEndPayload = {
   testId: string;
   duration: number;
   status: TestStatus;
-  error?: TestError;
+  errors: TestError[];
   expectedStatus: TestStatus;
   annotations: { type: string, description?: string }[];
   timeout: number;
@@ -75,11 +75,16 @@ export type RunPayload = {
 };
 
 export type DonePayload = {
-  fatalError?: TestError;
+  fatalErrors: TestError[];
+  skipTestsDueToSetupFailure: string[];  // test ids
 };
 
 export type TestOutputPayload = {
   testId?: string;
   text?: string;
   buffer?: string;
+};
+
+export type TeardownErrorsPayload = {
+  fatalErrors: TestError[];
 };

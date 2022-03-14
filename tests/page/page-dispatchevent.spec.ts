@@ -16,7 +16,7 @@
 
 import { test as it, expect } from './pageTest';
 
-it('should dispatch click event', async ({ page, server }) => {
+it('should dispatch click event @smoke', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/button.html');
   await page.dispatchEvent('button', 'click');
   expect(await page.evaluate(() => window['result'])).toBe('Clicked');

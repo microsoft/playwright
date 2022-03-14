@@ -20,7 +20,13 @@ Running time in milliseconds.
 ## property: TestResult.error
 - type: <[void]|[TestError]>
 
-An error thrown during the test execution, if any.
+First error thrown during test execution, if any. This is equal to the first
+element in [`property: TestResult.errors`].
+
+## property: TestResult.errors
+- type: <[Array]<[TestError]>>
+
+Errors thrown during the test execution.
 
 ## property: TestResult.retry
 - type: <[int]>

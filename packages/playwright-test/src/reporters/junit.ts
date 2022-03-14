@@ -203,6 +203,7 @@ const discouragedXMLCharacters = /[\u0001-\u0008\u000b-\u000c\u000e-\u001f\u007f
 function escape(text: string, stripANSIControlSequences: boolean, isCharacterData: boolean, useCDATAsections: boolean): string {
   if (stripANSIControlSequences)
     text = stripAnsiEscapes(text);
+
   if (isCharacterData) {
     if (useCDATAsections)
       text = '<![CDATA[' + text.replace(/]]>/g, ']]&gt;') + ']]>';

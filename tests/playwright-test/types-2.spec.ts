@@ -81,7 +81,9 @@ test('test.extend options should check types', async ({ runTSC }) => {
         // @ts-expect-error
         bar: async ({ baz }, run) => { await run(42); }
       });
-      export const test4 = test1.extendTest(test1b);
+      // TODO: enable when _extendTest is out of experiment.
+      // export const test4 = test1._extendTest(test1b);
+      export const test4 = test1;
     `,
     'playwright.config.ts': `
       import { Params } from './helper';
@@ -114,7 +116,8 @@ test('test.extend options should check types', async ({ runTSC }) => {
       test2('my test', async ({ foo, bar }) => {});
       // @ts-expect-error
       test2('my test', async ({ foo, baz }) => {});
-      test4('my test', async ({ foo, bar }) => {});
+      // TODO: enable when _extendTest is out of experiment.
+      // test4('my test', async ({ foo, bar }) => {});
     `
   });
   expect(result.exitCode).toBe(0);

@@ -16,7 +16,7 @@
 
 import { Console } from 'console';
 import * as util from 'util';
-import { RunPayload, TestOutputPayload, WorkerInitParams } from './ipc';
+import { RunPayload, TeardownErrorsPayload, TestOutputPayload, WorkerInitParams } from './ipc';
 import { startProfiling, stopProfiling } from './profiler';
 import { serializeError } from './util';
 import { WorkerRunner } from './workerRunner';
@@ -33,7 +33,7 @@ global.console = new Console({
 
 process.stdout.write = (chunk: string | Buffer) => {
   const outPayload: TestOutputPayload = {
-    testId: workerRunner?._currentTest?.testId,
+    testId: workerRunner?._currentTest?._test._id,
     ...chunkToParams(chunk)
   };
   sendMessageToParent('stdOut', outPayload);
@@ -43,7 +43,7 @@ process.stdout.write = (chunk: string | Buffer) => {
 if (!process.env.PW_RUNNER_DEBUG) {
   process.stderr.write = (chunk: string | Buffer) => {
     const outPayload: TestOutputPayload = {
-      testId: workerRunner?._currentTest?.testId,
+      testId: workerRunner?._currentTest?._test._id,
       ...chunkToParams(chunk)
     };
     sendMessageToParent('stdErr', outPayload);
@@ -74,7 +74,7 @@ process.on('message', async message => {
     workerIndex = initParams.workerIndex;
     startProfiling();
     workerRunner = new WorkerRunner(initParams);
-    for (const event of ['testBegin', 'testEnd', 'stepBegin', 'stepEnd', 'done', 'teardownError'])
+    for (const event of ['testBegin', 'testEnd', 'stepBegin', 'stepEnd', 'done', 'teardownErrors'])
       workerRunner.on(event, sendMessageToParent.bind(null, event));
     return;
   }
@@ -84,7 +84,7 @@ process.on('message', async message => {
   }
   if (message.method === 'run') {
     const runPayload = message.params as RunPayload;
-    await workerRunner!.run(runPayload);
+    await workerRunner!.runTestGroup(runPayload);
   }
 });
 
@@ -103,7 +103,8 @@ async function gracefullyCloseAndExit() {
     if (workerIndex !== undefined)
       await stopProfiling(workerIndex);
   } catch (e) {
-    process.send!({ method: 'teardownError', params: { error: serializeError(e) } });
+    const payload: TeardownErrorsPayload = { fatalErrors: [serializeError(e)] };
+    process.send!({ method: 'teardownErrors', params: payload });
   }
   process.exit(0);
 }

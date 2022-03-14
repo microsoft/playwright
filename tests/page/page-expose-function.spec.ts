@@ -18,7 +18,7 @@
 import { test as it, expect } from './pageTest';
 import type { ElementHandle } from 'playwright-core';
 
-it('exposeBinding should work', async ({ page }) => {
+it('exposeBinding should work @smoke', async ({ page }) => {
   let bindingSource;
   await page.exposeBinding('add', (source, a, b) => {
     bindingSource = source;

@@ -6,7 +6,8 @@ title: "Parallelism and sharding"
 Playwright Test runs tests in parallel. In order to achieve that, it runs several worker processes that run at the same time.
 
 - By default, **test files** are run in parallel. Tests in a single file are run in order, in the same worker process.
-- Group tests with [`test.describe.parallel`](#parallelize-tests-in-a-single-file) to run **tests in a single file** in parallel.
+- Configure tests using [`test.describe.configure`](#parallelize-tests-in-a-single-file) to run **tests in a single file** in parallel.
+- You can configure entire project to have all tests in all files to run in parallel using [`property: TestProject.fullyParallel`] or [`property: TestConfig.fullyParallel`]
 - To **disable** parallelism limit the number of [workers to one](#disable-parallelism).
 
 You can control the number of [parallel worker processes](#limit-workers) and [limit the number of failures](#limit-failures-and-fail-fast) in the whole test suite for efficiency.
@@ -72,18 +73,81 @@ Note that parallel tests are executed in separate worker processes and cannot sh
 ```js js-flavor=js
 const { test } = require('@playwright/test');
 
-test.describe.parallel('suite', () => {
-  test('runs in parallel 1', async ({ page }) => { /* ... */ });
-  test('runs in parallel 2', async ({ page }) => { /* ... */ });
-});
+test.describe.configure({ mode: 'parallel' });
+
+test('runs in parallel 1', async ({ page }) => { /* ... */ });
+test('runs in parallel 2', async ({ page }) => { /* ... */ });
 ```
 
 ```js js-flavor=ts
 import { test } from '@playwright/test';
 
-test.describe.parallel('suite', () => {
-  test('runs in parallel 1', async ({ page }) => { /* ... */ });
-  test('runs in parallel 2', async ({ page }) => { /* ... */ });
+test.describe.configure({ mode: 'parallel' });
+
+test('runs in parallel 1', async ({ page }) => { /* ... */ });
+test('runs in parallel 2', async ({ page }) => { /* ... */ });
+```
+
+## Serial mode
+
+You can annotate inter-dependent tests as serial. If one of the serial tests
+fails, all subsequent tests are skipped. All tests in a group are retried together.
+
+:::note
+Using serial is not recommended. It is usually better to make your tests isolated, so they can be run independently.
+:::
+
+```js js-flavor=js
+// @ts-check
+
+const { test } = require('@playwright/test');
+
+test.describe.configure({ mode: 'serial' });
+
+/** @type {import('@playwright/test').Page} */
+let page;
+
+test.beforeAll(async ({ browser }) => {
+  page = await browser.newPage();
+});
+
+test.afterAll(async () => {
+  await page.close();
+});
+
+test('runs first', async () => {
+  await page.goto('https://playwright.dev/');
+});
+
+test('runs second', async () => {
+  await page.click('text=Get Started');
+});
+```
+
+```js js-flavor=ts
+// example.spec.ts
+
+import { test, Page } from '@playwright/test';
+
+// Annotate entire file as serial.
+test.describe.configure({ mode: 'serial' });
+
+let page: Page;
+
+test.beforeAll(async ({ browser }) => {
+  page = await browser.newPage();
+});
+
+test.afterAll(async () => {
+  await page.close();
+});
+
+test('runs first', async () => {
+  await page.goto('https://playwright.dev/');
+});
+
+test('runs second', async () => {
+  await page.click('text=Get Started');
 });
 ```
 

@@ -43,7 +43,7 @@ import {
   toHaveURL,
   toHaveValue
 } from './matchers/matchers';
-import { toMatchSnapshot } from './matchers/toMatchSnapshot';
+import { toMatchSnapshot, toHaveScreenshot, getSnapshotName } from './matchers/toMatchSnapshot';
 import type { Expect, TestError } from './types';
 import matchers from 'expect/build/matchers';
 import { currentTestInfo } from './globals';
@@ -92,7 +92,23 @@ export const printReceivedStringContainExpectedResult = (
 
 // #endregion
 
-export const expect: Expect = expectLibrary as any;
+function createExpect(actual: unknown, message: string|undefined, isSoft: boolean) {
+  if (message !== undefined && typeof message !== 'string')
+    throw new Error('expect(actual, optionalErrorMessage): optional error message must be a string.');
+  return new Proxy(expectLibrary(actual), new ExpectMetaInfoProxyHandler(message || '', isSoft));
+}
+
+export const expect: Expect = new Proxy(expectLibrary as any, {
+  apply: function(target: any, thisArg: any, argumentsList: [actual: unknown, message: string|undefined]) {
+    const [actual, message] = argumentsList;
+    return createExpect(actual, message, false /* isSoft */);
+  }
+});
+
+expect.soft = (actual: unknown, message: string|undefined) => {
+  return createExpect(actual, message, true /* isSoft */);
+};
+
 expectLibrary.setState({ expand: false });
 const customMatchers = {
   toBeChecked,
@@ -116,7 +132,56 @@ const customMatchers = {
   toHaveURL,
   toHaveValue,
   toMatchSnapshot,
+  toHaveScreenshot,
 };
+
+type ExpectMetaInfo = {
+  message: string;
+  isSoft: boolean;
+};
+
+let expectCallMetaInfo: undefined|ExpectMetaInfo = undefined;
+
+class ExpectMetaInfoProxyHandler {
+  private _message: string;
+  private _isSoft: boolean;
+
+  constructor(message: string, isSoft: boolean) {
+    this._message = message;
+    this._isSoft = isSoft;
+  }
+
+  get(target: any, prop: any, receiver: any): any {
+    const value = Reflect.get(target, prop, receiver);
+    if (typeof value !== 'function')
+      return new Proxy(value, this);
+    return (...args: any[]) => {
+      const testInfo = currentTestInfo();
+      if (!testInfo)
+        return value.call(target, ...args);
+      const handleError = (e: Error) => {
+        if (this._isSoft)
+          testInfo._failWithError(serializeError(e), false /* isHardError */);
+        else
+          throw e;
+      };
+      try {
+        expectCallMetaInfo = {
+          message: this._message,
+          isSoft: this._isSoft,
+        };
+        let result = value.call(target, ...args);
+        if ((result instanceof Promise))
+          result = result.catch(handleError);
+        return result;
+      } catch (e) {
+        handleError(e);
+      } finally {
+        expectCallMetaInfo = undefined;
+      }
+    };
+  }
+}
 
 function wrap(matcherName: string, matcher: any) {
   const result = function(this: any, ...args: any[]) {
@@ -124,17 +189,26 @@ function wrap(matcherName: string, matcher: any) {
     if (!testInfo)
       return matcher.call(this, ...args);
 
-    const INTERNAL_STACK_LENGTH = 3;
+    let titleSuffix = '';
+    if (matcherName === 'toHaveScreenshot' || matcherName === 'toMatchSnapshot') {
+      const [received, nameOrOptions, optOptions] = args;
+      titleSuffix = `(${getSnapshotName(testInfo, received, nameOrOptions, optOptions)})`;
+    }
+
+    const INTERNAL_STACK_LENGTH = 4;
     // at Object.__PWTRAP__[expect.toHaveText] (...)
     // at __EXTERNAL_MATCHER_TRAP__ (...)
     // at Object.throwingMatcher [as toHaveText] (...)
+    // at Proxy.<anonymous>
     // at <test function> (...)
     const stackLines = new Error().stack!.split('\n').slice(INTERNAL_STACK_LENGTH + 1);
     const frame = stackLines[0] ? stackUtils.parseLine(stackLines[0]) : undefined;
+    const customMessage = expectCallMetaInfo?.message ?? '';
+    const isSoft = expectCallMetaInfo?.isSoft ?? false;
     const step = testInfo._addStep({
       location: frame && frame.file ? { file: path.resolve(process.cwd(), frame.file), line: frame.line || 0, column: frame.column || 0 } : undefined,
       category: 'expect',
-      title: `expect${this.isNot ? '.not' : ''}.${matcherName}`,
+      title: customMessage || `expect${isSoft ? '.soft' : ''}${this.isNot ? '.not' : ''}.${matcherName}${titleSuffix}`,
       canHaveChildren: true,
       forceNoParent: false
     });
@@ -145,6 +219,25 @@ function wrap(matcherName: string, matcher: any) {
       if (!success) {
         const message = result.message();
         error = { message, stack: message + '\n' + stackLines.join('\n') };
+        if (customMessage) {
+          const messageLines = message.split('\n');
+          // Jest adds something like the following error to all errors:
+          //    expect(received).toBe(expected); // Object.is equality
+          const uselessMatcherLineIndex = messageLines.findIndex((line: string) => /expect.*\(.*received.*\)/.test(line));
+          if (uselessMatcherLineIndex !== -1) {
+            // if there's a newline after the matcher text, then remove it as well.
+            if (uselessMatcherLineIndex + 1 < messageLines.length && messageLines[uselessMatcherLineIndex + 1].trim() === '')
+              messageLines.splice(uselessMatcherLineIndex, 2);
+            else
+              messageLines.splice(uselessMatcherLineIndex, 1);
+          }
+          const newMessage = [
+            customMessage,
+            '',
+            ...messageLines,
+          ].join('\n');
+          result.message = () => newMessage;
+        }
       }
       step.complete(error);
       return result;

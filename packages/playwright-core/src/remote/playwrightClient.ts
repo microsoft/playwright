@@ -19,9 +19,12 @@ import { Connection } from '../client/connection';
 import { Playwright } from '../client/playwright';
 import { makeWaitForNextTask } from '../utils/utils';
 
+// TODO: this file should be removed because it uses the old protocol.
+
 export type PlaywrightClientConnectOptions = {
   wsEndpoint: string;
-  timeout?: number
+  timeout?: number;
+  followRedirects?: boolean;
 };
 
 export class PlaywrightClient {
@@ -30,10 +33,10 @@ export class PlaywrightClient {
   private _closePromise: Promise<void>;
 
   static async connect(options: PlaywrightClientConnectOptions): Promise<PlaywrightClient> {
-    const { wsEndpoint, timeout = 30000 } = options;
+    const { wsEndpoint, timeout = 30000, followRedirects = true } = options;
     const connection = new Connection();
     connection.markAsRemote();
-    const ws = new WebSocket(wsEndpoint);
+    const ws = new WebSocket(wsEndpoint, { followRedirects });
     const waitForNextTask = makeWaitForNextTask();
     connection.onmessage = message => {
       if (ws.readyState === 2 /** CLOSING */ || ws.readyState === 3 /** CLOSED */)
@@ -49,7 +52,7 @@ export class PlaywrightClient {
         playwright = await connection.initializePlaywright();
         resolve(new PlaywrightClient(playwright, ws));
       });
-      ws.on('close', (code, reason) => connection.close(reason));
+      ws.on('close', (code, reason) => connection.close(reason.toString()));
     });
     let timer: NodeJS.Timeout;
     try {

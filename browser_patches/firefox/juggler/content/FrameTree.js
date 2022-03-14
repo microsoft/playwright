@@ -73,15 +73,20 @@ class FrameTree {
     return this._runtime;
   }
 
-  addScriptToEvaluateOnNewDocument(script, worldName) {
-    worldName = worldName || '';
-    const existing = this._isolatedWorlds.has(worldName);
-    const world = this._ensureWorld(worldName);
-    world._scriptsToEvaluateOnNewDocument.push(script);
-    // FIXME: 'should inherit http credentials from browser context' fails without this
-    if (worldName && !existing) {
-      for (const frame of this.frames())
-        frame._createIsolatedContext(worldName);
+  setInitScripts(scripts) {
+    for (const world of this._isolatedWorlds.values())
+      world._scriptsToEvaluateOnNewDocument = [];
+
+    for (let { worldName, script } of scripts) {
+      worldName = worldName || '';
+      const existing = this._isolatedWorlds.has(worldName);
+      const world = this._ensureWorld(worldName);
+      world._scriptsToEvaluateOnNewDocument.push(script);
+      // FIXME: 'should inherit http credentials from browser context' fails without this
+      if (worldName && !existing) {
+        for (const frame of this.frames())
+          frame._createIsolatedContext(worldName);
+      }
     }
   }
 

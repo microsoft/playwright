@@ -15,38 +15,34 @@
  */
 
 import React from 'react';
-import { expect, test } from '../test/componentTest';
+import { expect, test } from '@playwright/experimental-ct-react/test';
 import { AutoChip, Chip } from './chip';
 
-test.use({ webpack: require.resolve('../webpack.config.js') });
 test.use({ viewport: { width: 500, height: 500 } });
 
-test('expand collapse', async ({ render, capture }) => {
-  const component = await render(<AutoChip header='title'>
+test('expand collapse', async ({ mount }) => {
+  const component = await mount(<AutoChip header='title'>
     Chip body
   </AutoChip>);
   await expect(component.locator('text=Chip body')).toBeVisible();
-  await capture(component, 'expanded');
   await component.locator('text=Title').click();
   await expect(component.locator('text=Chip body')).not.toBeVisible();
-  await capture(component, 'collapsed');
   await component.locator('text=Title').click();
   await expect(component.locator('text=Chip body')).toBeVisible();
 });
 
-test('render long title', async ({ render, capture }) => {
+test('render long title', async ({ mount }) => {
   const title = 'Extremely long title. '.repeat(10);
-  const component = await render(<AutoChip header={title}>
+  const component = await mount(<AutoChip header={title}>
     Chip body
   </AutoChip>);
   await expect(component).toContainText('Extremely long title.');
   await expect(component.locator('text=Extremely long title.')).toHaveAttribute('title', title);
-  await capture(component, 'long-title');
 });
 
-test('setExpanded is called', async ({ render, capture }) => {
+test('setExpanded is called', async ({ mount }) => {
   const expandedValues: boolean[] = [];
-  const component = await render(<Chip header='Title'
+  const component = await mount(<Chip header='Title'
     setExpanded={(expanded: boolean) => expandedValues.push(expanded)}>
   </Chip>);
 

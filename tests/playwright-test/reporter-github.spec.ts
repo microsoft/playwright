@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect, stripAscii } from './playwright-test-fixtures';
+import { test, expect, stripAnsi } from './playwright-test-fixtures';
 import path from 'path';
 
 function relativeFilePath(file: string): string {
@@ -32,7 +32,7 @@ test('print GitHub annotations for success', async ({ runInlineTest }) => {
       });
     `
   }, { reporter: 'github' });
-  const text = stripAscii(result.output);
+  const text = stripAnsi(result.output);
   expect(text).not.toContain('::error');
   expect(text).toContain('::notice title=🎭 Playwright Run Summary::  1 passed');
   expect(result.exitCode).toBe(0);
@@ -47,7 +47,7 @@ test('print GitHub annotations for failed tests', async ({ runInlineTest }, test
       });
     `
   }, { retries: 3, reporter: 'github' }, { GITHUB_WORKSPACE: process.cwd() });
-  const text = stripAscii(result.output);
+  const text = stripAnsi(result.output);
   const testPath = relativeFilePath(testInfo.outputPath('a.test.js'));
   expect(text).toContain(`::error file=${testPath},title=a.test.js:6:7 › example,line=7,col=23::  1) a.test.js:6:7 › example =======================================================================%0A%0A    Retry #1`);
   expect(text).toContain(`::error file=${testPath},title=a.test.js:6:7 › example,line=7,col=23::  1) a.test.js:6:7 › example =======================================================================%0A%0A    Retry #2`);
@@ -69,7 +69,7 @@ test('print GitHub annotations for slow tests', async ({ runInlineTest }) => {
       });
     `
   }, { retries: 3, reporter: 'github' }, { GITHUB_WORKSPACE: '' });
-  const text = stripAscii(result.output);
+  const text = stripAnsi(result.output);
   expect(text).toContain('::warning title=Slow Test,file=a.test.js::a.test.js took');
   expect(text).toContain('::notice title=🎭 Playwright Run Summary::  1 passed');
   expect(result.exitCode).toBe(0);
@@ -88,7 +88,7 @@ test('print GitHub annotations for global error', async ({ runInlineTest }) => {
       });
     `,
   }, { reporter: 'github' });
-  const text = stripAscii(result.output);
-  expect(text).toContain('::error ::%0AError: Oh my!%0A%0A');
+  const text = stripAnsi(result.output);
+  expect(text).toContain('::error ::Error: Oh my!%0A%0A');
   expect(result.exitCode).toBe(1);
 });

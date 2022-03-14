@@ -18,7 +18,7 @@
 import type { ServerResponse } from '../../utils/testserver';
 import { test as it, expect } from './pageTest';
 
-it('Page.Events.Request', async ({ page, server }) => {
+it('Page.Events.Request @smoke', async ({ page, server }) => {
   const requests = [];
   page.on('request', request => requests.push(request));
   await page.goto(server.EMPTY_PAGE);
@@ -31,7 +31,7 @@ it('Page.Events.Request', async ({ page, server }) => {
   expect(requests[0].frame().url()).toBe(server.EMPTY_PAGE);
 });
 
-it('Page.Events.Response', async ({ page, server }) => {
+it('Page.Events.Response @smoke', async ({ page, server }) => {
   const responses = [];
   page.on('response', response => responses.push(response));
   await page.goto(server.EMPTY_PAGE);
@@ -42,7 +42,7 @@ it('Page.Events.Response', async ({ page, server }) => {
   expect(responses[0].request()).toBeTruthy();
 });
 
-it('Page.Events.RequestFailed', async ({ page, server, browserName, isMac, isWindows }) => {
+it('Page.Events.RequestFailed @smoke', async ({ page, server, browserName, isMac, isWindows }) => {
   server.setRoute('/one-style.css', (req, res) => {
     res.setHeader('Content-Type', 'text/css');
     res.connection.destroy();
@@ -69,7 +69,7 @@ it('Page.Events.RequestFailed', async ({ page, server, browserName, isMac, isWin
   expect(failedRequests[0].frame()).toBeTruthy();
 });
 
-it('Page.Events.RequestFinished', async ({ page, server }) => {
+it('Page.Events.RequestFinished @smoke', async ({ page, server }) => {
   const [response] = await Promise.all([
     page.goto(server.EMPTY_PAGE),
     page.waitForEvent('requestfinished')

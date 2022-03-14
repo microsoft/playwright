@@ -15,7 +15,7 @@
  */
 
 import colors from 'colors/safe';
-import { test, expect, stripAscii } from './playwright-test-fixtures';
+import { test, expect, stripAnsi } from './playwright-test-fixtures';
 
 test('render expected', async ({ runInlineTest }) => {
   const result = await runInlineTest({
@@ -52,7 +52,7 @@ test('render unexpected after retry', async ({ runInlineTest }) => {
       });
     `,
   }, { retries: 3 });
-  const text = stripAscii(result.output);
+  const text = stripAnsi(result.output);
   expect(text).toContain('×××F');
   expect(result.output).toContain(colors.red('F'));
   expect(result.exitCode).toBe(1);
@@ -67,7 +67,7 @@ test('render flaky', async ({ runInlineTest }) => {
       });
     `,
   }, { retries: 3 });
-  const text = stripAscii(result.output);
+  const text = stripAnsi(result.output);
   expect(text).toContain('×××±');
   expect(result.output).toContain(colors.yellow('±'));
   expect(text).toContain('1 flaky');

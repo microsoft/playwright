@@ -21,6 +21,7 @@ import { assert } from '../../utils/utils';
 import * as network from '../network';
 import { Page, PageBinding, PageDelegate, Worker } from '../page';
 import { Frame } from '../frames';
+import { Dialog } from '../dialog';
 import { ConnectionTransport } from '../transport';
 import * as types from '../types';
 import { ConnectionEvents, CRConnection, CRSession } from './crConnection';
@@ -39,7 +40,6 @@ export class CRBrowser extends Browser {
   _backgroundPages = new Map<string, CRPage>();
   _serviceWorkers = new Map<string, CRServiceWorker>();
   _devtools?: CRDevTools;
-  _isMac = false;
   private _version = '';
 
   private _tracingRecording = false;
@@ -48,6 +48,8 @@ export class CRBrowser extends Browser {
   private _userAgent: string = '';
 
   static async connect(transport: ConnectionTransport, options: BrowserOptions, devtools?: CRDevTools): Promise<CRBrowser> {
+    // Make a copy in case we need to update `headful` property below.
+    options = { ...options };
     const connection = new CRConnection(transport, options.protocolLogger, options.browserLogsCollector);
     const browser = new CRBrowser(connection, options);
     browser._devtools = devtools;
@@ -56,9 +58,11 @@ export class CRBrowser extends Browser {
       await (options as any).__testHookOnConnectToBrowser();
 
     const version = await session.send('Browser.getVersion');
-    browser._isMac = version.userAgent.includes('Macintosh');
     browser._version = version.product.substring(version.product.indexOf('/') + 1);
     browser._userAgent = version.userAgent;
+    // We don't trust the option as it may lie in case of connectOverCDP where remote browser
+    // may have been launched with different options.
+    browser.options.headful = !version.userAgent.includes('Headless');
     if (!options.persistent) {
       await session.send('Target.setAutoAttach', { autoAttach: true, waitForDebuggerOnStart: true, flatten: true });
       return browser;
@@ -122,6 +126,14 @@ export class CRBrowser extends Browser {
     return this._userAgent;
   }
 
+  _platform(): 'mac' | 'linux' | 'win' {
+    if (this._userAgent.includes('Windows'))
+      return 'win';
+    if (this._userAgent.includes('Macintosh'))
+      return 'mac';
+    return 'linux';
+  }
+
   isClank(): boolean {
     return this.options.name === 'clank';
   }
@@ -180,8 +192,6 @@ export class CRBrowser extends Browser {
       context.emit(CRBrowserContext.CREvents.ServiceWorker, serviceWorker);
       return;
     }
-
-    assert(false, 'Unknown target type: ' + targetInfo.type);
   }
 
   _onDetachedFromTarget(payload: Protocol.Target.detachFromTargetParameters) {
@@ -471,6 +481,18 @@ export class CRBrowserContext extends BrowserContext {
 
   async _doClose() {
     assert(this._browserContextId);
+    // Headful chrome cannot dispose browser context with opened 'beforeunload'
+    // dialogs, so we should close all that are currently opened.
+    // We also won't get new ones since `Target.disposeBrowserContext` does not trigger
+    // beforeunload.
+    const openedBeforeUnloadDialogs: Dialog[] = [];
+    for (const crPage of this._browser._crPages.values()) {
+      if (crPage._browserContext !== this)
+        continue;
+      const dialogs = [...crPage._page._frameManager._openedDialogs].filter(dialog => dialog.type() === 'beforeunload');
+      openedBeforeUnloadDialogs.push(...dialogs);
+    }
+    await Promise.all(openedBeforeUnloadDialogs.map(dialog => dialog.dismiss()));
     await this._browser._session.send('Target.disposeBrowserContext', { browserContextId: this._browserContextId });
     this._browser._contexts.delete(this._browserContextId);
     for (const [targetId, serviceWorker] of this._browser._serviceWorkers) {

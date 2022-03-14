@@ -418,7 +418,7 @@ await locator.click()
 ```
 
 ```python sync
-locator = page.frame_locator("text=Submit").locator("text=Submit")
+locator = page.frame_locator("iframe").locator("text=Submit")
 locator.click()
 ```
 
@@ -441,6 +441,10 @@ Returns element attribute value.
 Attribute name to get the value for.
 
 ### option: Locator.getAttribute.timeout = %%-input-timeout-%%
+
+## async method: Locator.highlight
+
+Highlight the corresponding element(s) on the screen. Useful for debugging, don't commit the code that uses [`method: Locator.highlight`].
 
 ## async method: Locator.hover
 
@@ -551,6 +555,11 @@ Returns locator to the n-th matching element.
 ### param: Locator.nth.index
 - `index` <[int]>
 
+## method: Locator.page
+- returns: <[Page]>
+
+A page this locator belongs to.
+
 ## async method: Locator.press
 
 Focuses the element, and then uses [`method: Keyboard.down`] and [`method: Keyboard.up`].
@@ -595,27 +604,7 @@ Returns the buffer with the captured screenshot.
 This method waits for the [actionability](./actionability.md) checks, then scrolls element into view before taking a
 screenshot. If the element is detached from DOM, the method throws an error.
 
-### option: Locator.screenshot.path
-- `path` <[path]>
-
-The file path to save the image to. The screenshot type will be inferred from file extension. If [`option: path`] is a
-relative path, then it is resolved relative to the current working directory. If no path is provided, the image won't be
-saved to the disk.
-
-### option: Locator.screenshot.type = %%-screenshot-type-%%
-
-### option: Locator.screenshot.quality
-- `quality` <[int]>
-
-The quality of the image, between 0-100. Not applicable to `png` images.
-
-### option: Locator.screenshot.omitBackground
-- `omitBackground` <[boolean]>
-
-Hides default white background and allows capturing screenshots with transparency. Not applicable to `jpeg` images.
-Defaults to `false`.
-
-### option: Locator.screenshot.timeout = %%-input-timeout-%%
+### option: Locator.screenshot.-inline- = %%-screenshot-options-common-list-%%
 
 ## async method: Locator.scrollIntoViewIfNeeded
 

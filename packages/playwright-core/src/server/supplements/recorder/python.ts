@@ -40,7 +40,8 @@ export class PythonLanguageGenerator implements LanguageGenerator {
   }
 
   generateAction(actionInContext: ActionInContext): string {
-    const { action, pageAlias } = actionInContext;
+    const action = actionInContext.action;
+    const pageAlias = actionInContext.frame.pageAlias;
     const formatter = new PythonFormatter(4);
     formatter.newLine();
     formatter.add('# ' + actionTitle(action));
@@ -52,10 +53,17 @@ export class PythonLanguageGenerator implements LanguageGenerator {
       return formatter.format();
     }
 
-    const subject = actionInContext.isMainFrame ? pageAlias :
-      (actionInContext.frameName ?
-        `${pageAlias}.frame(${formatOptions({ name: actionInContext.frameName }, false)})` :
-        `${pageAlias}.frame(${formatOptions({ url: actionInContext.frameUrl }, false)})`);
+    let subject: string;
+    if (actionInContext.frame.isMainFrame) {
+      subject = pageAlias;
+    } else if (actionInContext.frame.selectorsChain && action.name !== 'navigate') {
+      const locators = actionInContext.frame.selectorsChain.map(selector => '.' + asLocator(selector, 'frame_locator'));
+      subject = `${pageAlias}${locators.join('')}`;
+    } else if (actionInContext.frame.name) {
+      subject = `${pageAlias}.frame(${formatOptions({ name: actionInContext.frame.name }, false)})`;
+    } else {
+      subject = `${pageAlias}.frame(${formatOptions({ url: actionInContext.frame.url }, false)})`;
+    }
 
     const signals = toSignalMap(action);
 
@@ -90,7 +98,7 @@ export class PythonLanguageGenerator implements LanguageGenerator {
     formatter.add(code);
 
     if (signals.assertNavigation)
-      formatter.add(`  # assert ${pageAlias}.url == ${quote(signals.assertNavigation.url)}`);
+      formatter.add(`  # ${this._awaitPrefix}expect(${pageAlias}).to_have_url(${quote(signals.assertNavigation.url)})`);
     return formatter.format();
   }
 
@@ -114,26 +122,26 @@ export class PythonLanguageGenerator implements LanguageGenerator {
           options.clickCount = action.clickCount;
         if (action.position)
           options.position = action.position;
-        const optionsString = formatOptions(options, true);
-        return `${method}(${quote(action.selector)}${optionsString})`;
+        const optionsString = formatOptions(options, false);
+        return asLocator(action.selector) + `.${method}(${optionsString})`;
       }
       case 'check':
-        return `check(${quote(action.selector)})`;
+        return asLocator(action.selector) + `.check()`;
       case 'uncheck':
-        return `uncheck(${quote(action.selector)})`;
+        return asLocator(action.selector) + `.uncheck()`;
       case 'fill':
-        return `fill(${quote(action.selector)}, ${quote(action.text)})`;
+        return asLocator(action.selector) + `.fill(${quote(action.text)})`;
       case 'setInputFiles':
-        return `set_input_files(${quote(action.selector)}, ${formatValue(action.files.length === 1 ? action.files[0] : action.files)})`;
+        return asLocator(action.selector) + `.set_input_files(${formatValue(action.files.length === 1 ? action.files[0] : action.files)})`;
       case 'press': {
         const modifiers = toModifiers(action.modifiers);
         const shortcut = [...modifiers, action.key].join('+');
-        return `press(${quote(action.selector)}, ${quote(shortcut)})`;
+        return asLocator(action.selector) + `.press(${quote(shortcut)})`;
       }
       case 'navigate':
         return `goto(${quote(action.url)})`;
       case 'select':
-        return `select_option(${quote(action.selector)}, ${formatValue(action.options.length === 1 ? action.options[0] : action.options)})`;
+        return asLocator(action.selector) + `.select_option(${formatValue(action.options.length === 1 ? action.options[0] : action.options)})`;
     }
   }
 
@@ -143,7 +151,7 @@ export class PythonLanguageGenerator implements LanguageGenerator {
       formatter.add(`
 import asyncio
 
-from playwright.async_api import Playwright, async_playwright
+from playwright.async_api import Playwright, async_playwright, expect
 
 
 async def run(playwright: Playwright) -> None {
@@ -151,7 +159,7 @@ async def run(playwright: Playwright) -> None {
     context = await browser.new_context(${formatContextOptions(options.contextOptions, options.deviceName)})`);
     } else {
       formatter.add(`
-from playwright.sync_api import Playwright, sync_playwright
+from playwright.sync_api import Playwright, sync_playwright, expect
 
 
 def run(playwright: Playwright) -> None {
@@ -271,4 +279,13 @@ class PythonFormatter {
 
 function quote(text: string) {
   return escapeWithQuotes(text, '\"');
+}
+
+function asLocator(selector: string, locatorFn = 'locator') {
+  const match = selector.match(/(.*)\s+>>\s+nth=(\d+)$/);
+  if (!match)
+    return `${locatorFn}(${quote(selector)})`;
+  if (+match[2] === 0)
+    return `${locatorFn}(${quote(match[1])}).first`;
+  return `${locatorFn}(${quote(match[1])}).nth(${match[2]})`;
 }

@@ -230,6 +230,9 @@ FormField:
 APIRequestContext:
   type: interface
 
+  initializer:
+    tracing: Tracing
+
   commands:
 
     fetch:
@@ -306,6 +309,32 @@ LifecycleEvent:
   - networkidle
   - commit
 
+CommonScreenshotOptions:
+  type: mixin
+  properties:
+    omitBackground: boolean?
+    animations:
+      type: enum?
+      literals:
+      - disabled
+      - allow
+    size:
+      type: enum?
+      literals:
+      - css
+      - device
+    fonts:
+      type: enum?
+      literals:
+      - ready
+      - nowait
+    mask:
+      type: array?
+      items:
+        type: object
+        properties:
+          frame: Frame
+          selector: string
 
 LaunchOptions:
   type: mixin
@@ -480,34 +509,10 @@ Playwright:
     selectors: Selectors
     # Only present when connecting remotely via BrowserType.connect() method.
     preLaunchedBrowser: Browser?
+    # Only present when socks proxy is supported.
+    socksSupport: SocksSupport?
 
   commands:
-
-    socksConnected:
-      parameters:
-        uid: string
-        host: string
-        port: number
-
-    socksFailed:
-      parameters:
-        uid: string
-        errorCode: string
-
-    socksData:
-      parameters:
-        uid: string
-        data: binary
-
-    socksError:
-      parameters:
-        uid: string
-        error: string
-
-    socksEnd:
-      parameters:
-        uid: string
-
     newRequest:
       parameters:
         baseURL: string?
@@ -538,9 +543,41 @@ Playwright:
             origins:
               type: array
               items: OriginStorage
+        tracesDir: string?
 
       returns:
         request: APIRequestContext
+
+    hideHighlight:
+
+SocksSupport:
+  type: interface
+
+  commands:
+    socksConnected:
+      parameters:
+        uid: string
+        host: string
+        port: number
+
+    socksFailed:
+      parameters:
+        uid: string
+        errorCode: string
+
+    socksData:
+      parameters:
+        uid: string
+        data: binary
+
+    socksError:
+      parameters:
+        uid: string
+        error: string
+
+    socksEnd:
+      parameters:
+        uid: string
 
   events:
     socksRequested:
@@ -557,7 +594,6 @@ Playwright:
     socksClosed:
       parameters:
         uid: string
-
 
 Selectors:
   type: interface
@@ -586,6 +622,7 @@ BrowserType:
         headers: json?
         slowMo: number?
         timeout: number?
+        socksProxyRedirectPortForTest: number?
       returns:
         pipe: JsonPipe
 
@@ -705,6 +742,7 @@ BrowserContext:
   initializer:
     isChromium: boolean
     APIRequestContext: APIRequestContext
+    tracing: Tracing
 
   commands:
 
@@ -819,34 +857,6 @@ BrowserContext:
         frame: Frame?
       returns:
         session: CDPSession
-
-    tracingStart:
-      parameters:
-        name: string?
-        snapshots: boolean?
-        screenshots: boolean?
-        sources: boolean?
-
-    tracingStartChunk:
-      parameters:
-        title: string?
-
-    tracingStopChunk:
-      parameters:
-        mode:
-          type: enum
-          literals:
-          - doNotSave
-          - compressTrace
-          - compressTraceAndSources
-      returns:
-        # The artifact may be missing if the browser closes while tracing is beeing stopped.
-        artifact: Artifact?
-        sourceEntries:
-          type: array?
-          items: NameValue
-
-    tracingStop:
 
     harExport:
       returns:
@@ -1006,6 +1016,39 @@ Page:
       tracing:
         snapshot: true
 
+    expectScreenshot:
+      parameters:
+        expected: binary?
+        timeout: number?
+        isNot: boolean
+        locator:
+          type: object?
+          properties:
+            frame: Frame
+            selector: string
+        comparatorOptions:
+          type: object?
+          properties:
+            maxDiffPixels: number?
+            maxDiffPixelRatio: number?
+            threshold: number?
+        screenshotOptions:
+          type: object?
+          properties:
+            fullPage: boolean?
+            clip: Rect?
+            $mixin: CommonScreenshotOptions
+      returns:
+        diff: binary?
+        errorMessage: string?
+        actual: binary?
+        previous: binary?
+        log:
+          type: array?
+          items: string
+      tracing:
+        snapshot: true
+
     screenshot:
       parameters:
         timeout: number?
@@ -1015,11 +1058,13 @@ Page:
           - png
           - jpeg
         quality: number?
-        omitBackground: boolean?
         fullPage: boolean?
         clip: Rect?
+        $mixin: CommonScreenshotOptions
       returns:
         binary: binary
+      tracing:
+        snapshot: true
 
     setExtraHTTPHeaders:
       parameters:
@@ -1482,6 +1527,10 @@ Frame:
       returns:
         element: ElementHandle
 
+    highlight:
+      parameters:
+        selector: string
+
     getAttribute:
       parameters:
         selector: string
@@ -1639,6 +1688,12 @@ Frame:
         elements:
           type: array
           items: ElementHandle
+
+    queryCount:
+      parameters:
+        selector: string
+      returns:
+        value: number
 
     selectOption:
       parameters:
@@ -2158,9 +2213,11 @@ ElementHandle:
           - png
           - jpeg
         quality: number?
-        omitBackground: boolean?
+        $mixin: CommonScreenshotOptions
       returns:
         binary: binary
+      tracing:
+        snapshot: true
 
     scrollIntoViewIfNeeded:
       parameters:
@@ -2518,6 +2575,39 @@ Dialog:
     dismiss:
 
 
+Tracing:
+  type: interface
+
+  commands:
+
+    tracingStart:
+      parameters:
+        name: string?
+        snapshots: boolean?
+        screenshots: boolean?
+        sources: boolean?
+
+    tracingStartChunk:
+      parameters:
+        title: string?
+
+    tracingStopChunk:
+      parameters:
+        mode:
+          type: enum
+          literals:
+          - doNotSave
+          - compressTrace
+          - compressTraceAndSources
+      returns:
+        # The artifact may be missing if the browser closes while tracing is beeing stopped.
+        artifact: Artifact?
+        sourceEntries:
+          type: array?
+          items: NameValue
+
+    tracingStop:
+
 
 Artifact:
   type: interface
@@ -2696,6 +2786,8 @@ Android:
   commands:
 
     devices:
+      parameters:
+        port: number?
       returns:
         devices:
           type: array
@@ -2856,66 +2948,8 @@ AndroidDevice:
 
     launchBrowser:
       parameters:
+        $mixin: ContextOptions
         pkg: string?
-        ignoreHTTPSErrors: boolean?
-        javaScriptEnabled: boolean?
-        bypassCSP: boolean?
-        userAgent: string?
-        locale: string?
-        timezoneId: string?
-        geolocation:
-          type: object?
-          properties:
-            longitude: number
-            latitude: number
-            accuracy: number?
-        permissions:
-          type: array?
-          items: string
-        extraHTTPHeaders:
-          type: array?
-          items: NameValue
-        offline: boolean?
-        httpCredentials:
-          type: object?
-          properties:
-            username: string
-            password: string
-        deviceScaleFactor: number?
-        isMobile: boolean?
-        hasTouch: boolean?
-        colorScheme:
-          type: enum?
-          literals:
-          - dark
-          - light
-          - no-preference
-        reducedMotion:
-          type: enum?
-          literals:
-          - reduce
-          - no-preference
-        forcedColors:
-          type: enum?
-          literals:
-          - active
-          - none
-        acceptDownloads: boolean?
-        recordVideo:
-          type: object?
-          properties:
-            dir: string
-            size:
-              type: object?
-              properties:
-                width: number
-                height: number
-        recordHar:
-          type: object?
-          properties:
-            omitContent: boolean?
-            path: string
-        strictSelectors: boolean?
         proxy:
           type: object?
           properties:

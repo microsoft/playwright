@@ -21,14 +21,14 @@ import * as network from './network';
 import * as channels from '../protocol/channels';
 import fs from 'fs';
 import { ChannelOwner } from './channelOwner';
-import { deprecate, evaluationScript } from './clientHelper';
+import { evaluationScript } from './clientHelper';
 import { Browser } from './browser';
 import { Worker } from './worker';
 import { Events } from './events';
 import { TimeoutSettings } from '../utils/timeoutSettings';
 import { Waiter } from './waiter';
 import { URLMatch, Headers, WaitForEventOptions, BrowserContextOptions, StorageState, LaunchOptions } from './types';
-import { isUnderTest, headersObjectToArray, mkdirIfNeeded } from '../utils/utils';
+import { headersObjectToArray, mkdirIfNeeded } from '../utils/utils';
 import { isSafeCloseError } from '../utils/errors';
 import * as api from '../../types/types';
 import * as structs from '../../types/structs';
@@ -38,14 +38,12 @@ import type { BrowserType } from './browserType';
 import { Artifact } from './artifact';
 import { APIRequestContext } from './fetch';
 import { createInstrumentation } from './clientInstrumentation';
-import { LocalUtils } from './localUtils';
 
 export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel> implements api.BrowserContext {
   _pages = new Set<Page>();
   private _routes: network.RouteHandler[] = [];
   readonly _browser: Browser | null = null;
   private _browserType: BrowserType | undefined;
-  _localUtils!: LocalUtils;
   readonly _bindings = new Map<string, (source: structs.BindingSource, ...args: any[]) => any>();
   _timeoutSettings = new TimeoutSettings();
   _ownerPage: Page | undefined;
@@ -71,7 +69,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     if (parent instanceof Browser)
       this._browser = parent;
     this._isChromium = this._browser?._name === 'chromium';
-    this.tracing = new Tracing(this);
+    this.tracing = Tracing.from(initializer.tracing);
     this.request = APIRequestContext.from(initializer.APIRequestContext);
 
     this._channel.on('bindingCall', ({ binding }) => this._onBinding(BindingCall.from(binding)));
@@ -146,10 +144,14 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   _onRoute(route: network.Route, request: network.Request) {
     for (const routeHandler of this._routes) {
       if (routeHandler.matches(request.url())) {
-        if (routeHandler.handle(route, request)) {
-          this._routes.splice(this._routes.indexOf(routeHandler), 1);
-          if (!this._routes.length)
-            this._wrapApiCall(() => this._disableInterception(), true).catch(() => {});
+        try {
+          routeHandler.handle(route, request);
+        } finally {
+          if (!routeHandler.isActive()) {
+            this._routes.splice(this._routes.indexOf(routeHandler), 1);
+            if (!this._routes.length)
+              this._wrapApiCall(() => this._disableInterception(), true).catch(() => {});
+          }
         }
         return;
       }
@@ -231,8 +233,6 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   }
 
   async setHTTPCredentials(httpCredentials: { username: string, password: string } | null): Promise<void> {
-    if (!isUnderTest())
-      deprecate(`context.setHTTPCredentials`, `warning: method |context.setHTTPCredentials()| is deprecated. Instead of changing credentials, create another browser context with new credentials.`);
     await this._channel.setHTTPCredentials({ httpCredentials: httpCredentials || undefined });
   }
 

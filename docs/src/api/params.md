@@ -268,6 +268,7 @@ Toggles bypassing page's Content-Security-Policy.
 When using [`method: Page.goto`], [`method: Page.route`], [`method: Page.waitForURL`], [`method: Page.waitForRequest`], or [`method: Page.waitForResponse`] it takes the base URL in consideration by using the [`URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor for building the corresponding URL. Examples:
 * baseURL: `http://localhost:3000` and navigating to `/bar.html` results in `http://localhost:3000/bar.html`
 * baseURL: `http://localhost:3000/foo/` and navigating to `./bar.html` results in `http://localhost:3000/foo/bar.html`
+* baseURL: `http://localhost:3000/foo` (without trailing slash) and navigating to `./bar.html` results in `http://localhost:3000/bar.html`
 
 ## context-option-viewport
 * langs: js, java
@@ -645,11 +646,6 @@ method resolves immediately. Can be one of:
   * `'domcontentloaded'` - wait for the `DOMContentLoaded` event to be fired.
   * `'networkidle'` - wait until there are no network connections for at least `500` ms.
 
-## screenshot-type
-- `type` <[ScreenshotType]<"png"|"jpeg">>
-
-Specify screenshot type, defaults to `png`.
-
 ## java-wait-for-event-callback
 * langs: java
 - `callback` <[Runnable]>
@@ -707,17 +703,35 @@ The default value can be changed by using the [`method: BrowserContext.setDefaul
 Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
 using the [`method: AndroidDevice.setDefaultTimeout`] method.
 
-## assertions-timeout
+## js-assertions-timeout
 * langs: js
 - `timeout` <[float]>
 
-Time to retry the assertion for. Defaults to `timeout` in [`property: TestConfig.expect`].
+Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
 
-## assertions-timeout
-* langs: java, python
+## csharp-java-python-assertions-timeout
+* langs: java, python, csharp
 - `timeout` <[float]>
 
 Time to retry the assertion for.
+
+## assertions-max-diff-pixels
+* langs: js
+- `maxDiffPixels` <[int]>
+
+An acceptable amount of pixels that could be different, default is configurable with `TestConfig.expect`. Default is configurable with `TestConfig.expect`. Unset by default.
+
+## assertions-max-diff-pixel-ratio
+* langs: js
+- `maxDiffPixelRatio` <[float]>
+
+An acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1`. Default is configurable with `TestConfig.expect`. Unset by default.
+
+## assertions-threshold
+* langs: js
+- `threshold` <[float]>
+
+An acceptable perceived color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between the same pixel in compared images, between zero (strict) and one (lax), default is configurable with `TestConfig.expect`. Defaults to `0.2`.
 
 ## shared-context-params-list
 - %%-context-option-acceptdownloads-%%
@@ -875,5 +889,89 @@ Slows down Playwright operations by the specified amount of milliseconds. Useful
 Matches elements containing specified text somewhere inside, possibly in a child or a descendant element.
 For example, `"Playwright"` matches `<article><div>Playwright</div></article>`.
 
+## locator-option-has
+- `has` <[Locator]>
+
+Matches elements containing an element that matches an inner locator. Inner locator is queried against the outer one.
+For example, `article` that has `text=Playwright` matches `<article><div>Playwright</div></article>`.
+
+Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
+
 ## locator-options-list
 - %%-locator-option-has-text-%%
+- %%-locator-option-has-%%
+
+## screenshot-option-animations
+- `animations` <[ScreenshotAnimations]<"disabled"|"allow">>
+
+When set to `"disabled"`, stops CSS animations, CSS transitions and Web Animations. Animations get different treatment depending on their duration:
+* finite animations are fast-forwarded to completion, so they'll fire `transitionend` event.
+* infinite animations are canceled to initial state, and then played over after the screenshot.
+
+Defaults to `"allow"` that leaves animations untouched.
+
+## screenshot-option-omit-background
+- `omitBackground` <[boolean]>
+
+Hides default white background and allows capturing screenshots with transparency. Not applicable to `jpeg` images.
+Defaults to `false`.
+
+## screenshot-option-quality
+- `quality` <[int]>
+
+The quality of the image, between 0-100. Not applicable to `png` images.
+
+## screenshot-option-path
+- `path` <[path]>
+
+The file path to save the image to. The screenshot type will be inferred from file extension. If [`option: path`] is a
+relative path, then it is resolved relative to the current working directory. If no path is provided, the image won't be
+saved to the disk.
+
+## screenshot-option-type
+- `type` <[ScreenshotType]<"png"|"jpeg">>
+
+Specify screenshot type, defaults to `png`.
+
+## screenshot-option-mask
+- `mask` <[Array]<[Locator]>>
+
+Specify locators that should be masked when the screenshot is taken. Masked elements will be overlayed with
+a pink box `#FF00FF` that completely covers its bounding box.
+
+## screenshot-option-full-page
+- `fullPage` <[boolean]>
+
+When true, takes a screenshot of the full scrollable page, instead of the currently visible viewport. Defaults to
+`false`.
+
+## screenshot-option-clip
+- `clip` <[Object]>
+  - `x` <[float]> x-coordinate of top-left corner of clip area
+  - `y` <[float]> y-coordinate of top-left corner of clip area
+  - `width` <[float]> width of clipping area
+  - `height` <[float]> height of clipping area
+
+An object which specifies clipping of the resulting image. Should have the following fields:
+
+## screenshot-option-size
+- `size` <[ScreenshotSize]<"css"|"device">>
+
+When set to `"css"`, screenshot will have a single pixel per each css pixel on the page. For high-dpi devices, this will keep screenshots small. Using `"device"` option will produce a single pixel per each device pixel, so screenhots of high-dpi devices will be twice as large or even larger. Defaults to `"device"`.
+
+## screenshot-option-fonts
+- `fonts` <[ScreenshotFonts]<"ready"|"nowait">>
+
+When set to `"ready"`, screenshot will wait for [`document.fonts.ready`](https://developer.mozilla.org/en-US/docs/Web/API/FontFaceSet/ready) promise to resolve in all frames. Defaults to `"nowait"`.
+
+## screenshot-options-common-list
+- %%-screenshot-option-animations-%%
+- %%-screenshot-option-omit-background-%%
+- %%-screenshot-option-quality-%%
+- %%-screenshot-option-path-%%
+- %%-screenshot-option-size-%%
+- %%-screenshot-option-fonts-%%
+- %%-screenshot-option-type-%%
+- %%-screenshot-option-mask-%%
+- %%-input-timeout-%%
+

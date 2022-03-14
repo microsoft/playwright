@@ -38,7 +38,18 @@ declare global {
   }
 }
 
-export class RecorderApp extends EventEmitter {
+export interface IRecorderApp extends EventEmitter {
+  close(): Promise<void>;
+  setPaused(paused: boolean): Promise<void>;
+  setMode(mode: 'none' | 'recording' | 'inspecting'): Promise<void>;
+  setFile(file: string): Promise<void>;
+  setSelector(selector: string, focus?: boolean): Promise<void>;
+  updateCallLogs(callLogs: CallLog[]): Promise<void>;
+  bringToFront(): void;
+  setSources(sources: Source[]): Promise<void>;
+}
+
+export class RecorderApp extends EventEmitter implements IRecorderApp {
   private _page: Page;
   readonly wsEndpoint: string | undefined;
 
@@ -78,19 +89,21 @@ export class RecorderApp extends EventEmitter {
 
     this._page.once('close', () => {
       this.emit('close');
-      this._page.context().close(internalCallMetadata()).catch(e => console.error(e));
+      this._page.context().close(internalCallMetadata()).catch(() => {});
     });
 
     const mainFrame = this._page.mainFrame();
     await mainFrame.goto(internalCallMetadata(), 'https://playwright/index.html');
   }
 
-  static async open(sdkLanguage: string, headed: boolean): Promise<RecorderApp> {
+  static async open(sdkLanguage: string, headed: boolean): Promise<IRecorderApp> {
+    if (process.env.PW_CODEGEN_NO_INSPECTOR)
+      return new HeadlessRecorderApp();
     const recorderPlaywright = (require('../../playwright').createPlaywright as typeof import('../../playwright').createPlaywright)('javascript', true);
     const args = [
       '--app=data:text/html,',
       '--window-size=600,600',
-      '--window-position=1280,10',
+      '--window-position=1020,10',
       '--test-type=',
     ];
     if (process.env.PWTEST_RECORDER_PORT)
@@ -162,4 +175,15 @@ export class RecorderApp extends EventEmitter {
   async bringToFront() {
     await this._page.bringToFront();
   }
+}
+
+class HeadlessRecorderApp extends EventEmitter implements IRecorderApp {
+  async close(): Promise<void> {}
+  async setPaused(paused: boolean): Promise<void> {}
+  async setMode(mode: 'none' | 'recording' | 'inspecting'): Promise<void> {}
+  async setFile(file: string): Promise<void> {}
+  async setSelector(selector: string, focus?: boolean): Promise<void> {}
+  async updateCallLogs(callLogs: CallLog[]): Promise<void> {}
+  bringToFront(): void {}
+  async setSources(sources: Source[]): Promise<void> {}
 }

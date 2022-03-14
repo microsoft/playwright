@@ -78,7 +78,7 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
     if (this._redirectedFrom)
       this._redirectedFrom._redirectedTo = this;
     this._provisionalHeaders = new RawHeaders(initializer.headers);
-    this._postData = initializer.postData ? Buffer.from(initializer.postData, 'base64') : null;
+    this._postData = initializer.postData !== undefined ? Buffer.from(initializer.postData, 'base64') : null;
     this._timing = {
       startTime: 0,
       domainLookupStart: -1,
@@ -245,8 +245,12 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
     if (options.response) {
       statusOption ||= options.response.status();
       headersOption ||= options.response.headers();
-      if (options.body === undefined && options.path === undefined && options.response instanceof APIResponse)
-        fetchResponseUid = (options.response as APIResponse)._fetchUid();
+      if (options.body === undefined && options.path === undefined && options.response instanceof APIResponse) {
+        if (options.response._request._connection === this._connection)
+          fetchResponseUid = (options.response as APIResponse)._fetchUid();
+        else
+          body = await options.response.body();
+      }
     }
 
     let isBase64 = false;
@@ -514,12 +518,13 @@ export class RouteHandler {
     return urlMatches(this._baseURL, requestURL, this.url);
   }
 
-  public handle(route: Route, request: Request): boolean {
-    try {
-      this.handler(route, request);
-    } finally {
-      return ++this.handledCount >= this._times;
-    }
+  public handle(route: Route, request: Request): void {
+    ++this.handledCount;
+    this.handler(route, request);
+  }
+
+  public isActive(): boolean {
+    return this.handledCount < this._times;
   }
 }
 

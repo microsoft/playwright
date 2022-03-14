@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect, stripAscii } from './playwright-test-fixtures';
+import { test, expect, stripAnsi } from './playwright-test-fixtures';
 
 test('render each test with project name', async ({ runInlineTest }) => {
   const result = await runInlineTest({
@@ -36,7 +36,7 @@ test('render each test with project name', async ({ runInlineTest }) => {
       });
     `,
   }, { reporter: 'list' });
-  const text = stripAscii(result.output);
+  const text = stripAnsi(result.output);
   const positiveStatusMarkPrefix = process.platform === 'win32' ? 'ok' : '✓ ';
   const negativateStatusMarkPrefix = process.platform === 'win32' ? 'x ' : '✘ ';
   expect(text).toContain(`${negativateStatusMarkPrefix} [foo] › a.test.ts:6:7 › fails`);
@@ -63,8 +63,8 @@ test('render steps', async ({ runInlineTest }) => {
         });
       });
     `,
-  }, { reporter: 'list' });
-  const text = stripAscii(result.output);
+  }, { reporter: 'list' }, { PW_TEST_DEBUG_REPORTERS: '1', PWTEST_TTY_WIDTH: '80' });
+  const text = stripAnsi(result.output);
   const lines = text.split('\n').filter(l => l.startsWith('0 :'));
   lines.pop(); // Remove last item that contains [v] and time in ms.
   expect(lines).toEqual([
@@ -91,8 +91,8 @@ test('render retries', async ({ runInlineTest }) => {
         expect(testInfo.retry).toBe(1);
       });
     `,
-  }, { reporter: 'list', retries: '1' });
-  const text = stripAscii(result.output);
+  }, { reporter: 'list', retries: '1' }, { PW_TEST_DEBUG_REPORTERS: '1', PWTEST_TTY_WIDTH: '80' });
+  const text = stripAnsi(result.output);
   const lines = text.split('\n').filter(l => l.startsWith('0 :') || l.startsWith('1 :')).map(l => l.replace(/[\dm]+s/, 'XXms'));
   const positiveStatusMarkPrefix = process.platform === 'win32' ? 'ok' : '✓ ';
   const negativateStatusMarkPrefix = process.platform === 'win32' ? 'x ' : '✘ ';
@@ -121,8 +121,8 @@ test('should truncate long test names', async ({ runInlineTest }) => {
       test.skip('skipped very long name', async () => {
       });
     `,
-  }, { reporter: 'list', retries: 0 }, { PWTEST_TTY_WIDTH: 50, PWTEST_SKIP_TEST_OUTPUT: undefined });
-  const text = stripAscii(result.output);
+  }, { reporter: 'list', retries: 0 }, { PWTEST_TTY_WIDTH: 50 });
+  const text = stripAnsi(result.output);
   const positiveStatusMarkPrefix = process.platform === 'win32' ? 'ok' : '✓ ';
   const negativateStatusMarkPrefix = process.platform === 'win32' ? 'x ' : '✘ ';
   expect(text).toContain(`${negativateStatusMarkPrefix} [foo] › a.test.ts:6:7 › fails very`);

@@ -22,7 +22,7 @@ import { BrowserType } from '../client/browserType';
 import { LaunchServerOptions } from '../client/types';
 import { DispatcherConnection, Root } from '../dispatchers/dispatcher';
 import { PlaywrightDispatcher } from '../dispatchers/playwrightDispatcher';
-import { Transport } from '../protocol/transport';
+import { IpcTransport, PipeTransport } from '../protocol/transport';
 import { PlaywrightServer } from '../remote/playwrightServer';
 import { createPlaywright } from '../server/playwright';
 import { gracefullyCloseAll } from '../utils/processLauncher';
@@ -38,7 +38,7 @@ export function runDriver() {
     const playwright = createPlaywright(sdkLanguage);
     return new PlaywrightDispatcher(rootScope, playwright);
   });
-  const transport = new Transport(process.stdout, process.stdin);
+  const transport = process.send ? new IpcTransport(process) : new PipeTransport(process.stdout, process.stdin);
   transport.onmessage = message => dispatcherConnection.dispatch(JSON.parse(message));
   dispatcherConnection.onmessage = message => transport.send(JSON.stringify(message));
   transport.onclose = async () => {
@@ -52,8 +52,8 @@ export function runDriver() {
   };
 }
 
-export async function runServer(port: number | undefined) {
-  const server = await PlaywrightServer.startDefault();
+export async function runServer(port: number | undefined, path: string = '/', maxClients: number = Infinity, enableSocksProxy: boolean = true) {
+  const server = await PlaywrightServer.startDefault({ path, maxClients, enableSocksProxy });
   const wsEndpoint = await server.listen(port);
   process.on('exit', () => server.close().catch(console.error));
   console.log('Listening on ' + wsEndpoint);  // eslint-disable-line no-console

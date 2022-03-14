@@ -17,7 +17,7 @@
 import { contextTest } from '../config/browserTest';
 import type { Page } from 'playwright-core';
 import * as path from 'path';
-import type { Source } from 'playwright-core/lib/server/supplements/recorder/recorderTypes';
+import type { Source } from '../../packages/playwright-core/src/server/supplements/recorder/recorderTypes';
 import { CommonFixtures, TestChildProcess } from '../config/commonFixtures';
 export { expect } from '@playwright/test';
 
@@ -216,7 +216,7 @@ class CLIMock {
       this.waitForCallback = f;
       if (timeout) {
         setTimeout(() => {
-          r(new Error('Timed out waiting for text:\n' + text + '\n\nRecieved:\n' + this.text()));
+          r(new Error('Timed out waiting for text:\n' + text + '\n\nReceived:\n' + this.text()));
         }, timeout);
       }
     });

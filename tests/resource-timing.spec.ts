@@ -17,7 +17,7 @@
 
 import { browserTest as it, expect } from './config/browserTest';
 
-it('should work', async ({ contextFactory, server }) => {
+it('should work @smoke', async ({ contextFactory, server }) => {
   const context = await contextFactory();
   const page = await context.newPage();
   const [request] = await Promise.all([

@@ -22,7 +22,7 @@ import { macEditingCommands } from '../macEditingCommands';
 import { isString } from '../../utils/utils';
 import { DragManager } from './crDragDrop';
 import { CRPage } from './crPage';
-import { toModifiersMask } from './crProtocolHelper';
+import { toButtonsMask, toModifiersMask } from './crProtocolHelper';
 
 export class RawKeyboardImpl implements input.RawKeyboard {
   constructor(
@@ -96,16 +96,23 @@ export class RawMouseImpl implements input.RawMouse {
     this._dragManager = dragManager;
   }
 
-  async move(x: number, y: number, button: types.MouseButton | 'none', buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>): Promise<void> {
-    await this._dragManager.interceptDragCausedByMove(x, y, button, buttons, modifiers, async () => {
+  async move(x: number, y: number, button: types.MouseButton | 'none', buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, forClick: boolean): Promise<void> {
+    const actualMove = async () => {
       await this._client.send('Input.dispatchMouseEvent', {
         type: 'mouseMoved',
         button,
+        buttons: toButtonsMask(buttons),
         x,
         y,
         modifiers: toModifiersMask(modifiers)
       });
-    });
+    };
+    if (forClick) {
+      // Avoid extra protocol calls related to drag and drop, because click relies on
+      // move-down-up protocol commands being sent synchronously.
+      return actualMove();
+    }
+    await this._dragManager.interceptDragCausedByMove(x, y, button, buttons, modifiers, actualMove);
   }
 
   async down(x: number, y: number, button: types.MouseButton, buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, clickCount: number): Promise<void> {
@@ -114,6 +121,7 @@ export class RawMouseImpl implements input.RawMouse {
     await this._client.send('Input.dispatchMouseEvent', {
       type: 'mousePressed',
       button,
+      buttons: toButtonsMask(buttons),
       x,
       y,
       modifiers: toModifiersMask(modifiers),
@@ -129,6 +137,7 @@ export class RawMouseImpl implements input.RawMouse {
     await this._client.send('Input.dispatchMouseEvent', {
       type: 'mouseReleased',
       button,
+      buttons: toButtonsMask(buttons),
       x,
       y,
       modifiers: toModifiersMask(modifiers),

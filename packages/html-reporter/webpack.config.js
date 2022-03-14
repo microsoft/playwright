@@ -25,7 +25,6 @@ module.exports = {
   entry: {
     zip: require.resolve('@zip.js/zip.js/dist/zip-no-worker-inflate.min.js'),
     app: path.join(__dirname, 'src', 'index.tsx'),
-    playwright: path.join(__dirname, 'playwright.components.tsx'),
   },
   resolve: {
     extensions: ['.ts', '.js', '.tsx', '.jsx']
@@ -60,7 +59,6 @@ module.exports = {
       title: 'Playwright Test Report',
       template: path.join(__dirname, 'src', 'index.html'),
       inject: true,
-      excludeChunks: ['playwright'],
     }),
     new BundleJsPlugin(),
   ]

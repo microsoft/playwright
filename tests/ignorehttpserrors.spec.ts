@@ -17,7 +17,7 @@
 
 import { browserTest as it, expect } from './config/browserTest';
 
-it('should work', async ({ browser, httpsServer }) => {
+it('should work @smoke', async ({ browser, httpsServer }) => {
   let error = null;
   const context = await browser.newContext({ ignoreHTTPSErrors: true });
   const page = await context.newPage();

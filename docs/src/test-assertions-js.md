@@ -11,38 +11,7 @@ expect(success).toBeTruthy();
 ```
 
 Playwright also extends it with convenience async matchers that will wait until
-the expected condition is met. In general, we can expect the opposite to be true by adding a `.not` to the front
-of the matchers:
-
-```js
-expect(value).not.toEqual(0);
-await expect(locator).not.toContainText("some text");
-```
-
-<!-- TOC -->
-- [`method: LocatorAssertions.toBeChecked`]
-- [`method: LocatorAssertions.toBeDisabled`]
-- [`method: LocatorAssertions.toBeEditable`]
-- [`method: LocatorAssertions.toBeEmpty`]
-- [`method: LocatorAssertions.toBeEnabled`]
-- [`method: LocatorAssertions.toBeFocused`]
-- [`method: LocatorAssertions.toBeHidden`]
-- [`method: LocatorAssertions.toBeVisible`]
-- [`method: LocatorAssertions.toContainText`]
-- [`method: LocatorAssertions.toHaveAttribute`]
-- [`method: LocatorAssertions.toHaveClass`]
-- [`method: LocatorAssertions.toHaveCount`]
-- [`method: LocatorAssertions.toHaveCSS`]
-- [`method: LocatorAssertions.toHaveId`]
-- [`method: LocatorAssertions.toHaveJSProperty`]
-- [`method: LocatorAssertions.toHaveText`]
-- [`method: LocatorAssertions.toHaveValue`]
-- [`method: PageAssertions.toHaveTitle`]
-- [`method: PageAssertions.toHaveURL`]
-
-## Matching
-
-Consider the following example:
+the expected condition is met. Consider the following example:
 
 ```js
 await expect(page.locator('.status')).toHaveText('Submitted');
@@ -55,23 +24,81 @@ in test config.
 
 By default, the timeout for assertions is set to 5 seconds. Learn more about [various timeouts](./test-timeouts.md).
 
-## expect(value).toMatchSnapshot(name[, options])
-- `name` <[string] | [Array]<[string]>> Snapshot name.
-- `options`
-  - `threshold` <[float]> Image matching threshold between zero (strict) and one (lax), default is configurable with [`property: TestConfig.expect`].
+<!-- TOC -->
 
-Ensures that passed value, either a [string] or a [Buffer], matches the expected snapshot stored in the test snapshots directory.
+## Negating Matchers
+
+In general, we can expect the opposite to be true by adding a `.not` to the front
+of the matchers:
 
 ```js
-// Basic usage.
-expect(await page.screenshot()).toMatchSnapshot('landing-page.png');
-
-// Configure image matching threshold.
-expect(await page.screenshot()).toMatchSnapshot('landing-page.png', { threshold: 0.3 });
-
-// Bring some structure to your snapshot files by passing file path segments.
-expect(await page.screenshot()).toMatchSnapshot(['landing', 'step2.png']);
-expect(await page.screenshot()).toMatchSnapshot(['landing', 'step3.png']);
+expect(value).not.toEqual(0);
+await expect(locator).not.toContainText("some text");
 ```
 
-Learn more about [visual comparisons](./test-snapshots.md).
+## Soft Assertions
+
+By default, failed assertion will terminate test execution. Playwright also
+supports *soft assertions*: failed soft assertions **do not** terminate test execution,
+but mark the test as failed.
+
+```js
+// Make a few checks that will not stop the test when failed...
+await expect.soft(page.locator('#status')).toHaveText('Success');
+await expect.soft(page.locator('#eta')).toHaveText('1 day');
+
+// ... and continue the test to check more things.
+await page.locator('#next-page').click();
+await expect.soft(page.locator('#title')).toHaveText('Make another order');
+```
+
+At any point during test execution, you can check whether there were any
+soft assertion failures:
+
+```js
+// Make a few checks that will not stop the test when failed...
+await expect.soft(page.locator('#status')).toHaveText('Success');
+await expect.soft(page.locator('#eta')).toHaveText('1 day');
+
+// Avoid running further if there were soft assertion failures.
+expect(test.info().errors).toBeEmpty();
+```
+
+## Custom Expect Message
+
+You can specify a custom error message as a second argument to the `expect` function, for example:
+
+```js
+await expect(page.locator('text=Name'), 'should be logged in').toBeVisible();
+```
+
+The error would look like this:
+
+```bash
+    Error: should be logged in
+
+    Call log:
+      - expect.toBeVisible with timeout 5000ms
+      - waiting for selector "text=Name"
+
+
+      2 |
+      3 | test('example test', async({ page }) => {
+    > 4 |   await expect(page.locator('text=Name'), 'should be logged in').toBeVisible();
+        |                                                                  ^
+      5 | });
+      6 |
+```
+
+The same works with soft assertions:
+
+```js
+expect.soft(value, 'my soft assertion').toBe(56);
+```
+
+## API reference
+See the following pages for Playwright-specific assertions:
+- [APIResponseAssertions] assertions for [APIResponse]
+- [LocatorAssertions] assertions for [Locator]
+- [PageAssertions] assertions for [Page]
+- [ScreenshotAssertions] for comparing screenshot with stored value

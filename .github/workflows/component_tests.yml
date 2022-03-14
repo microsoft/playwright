@@ -1,0 +1,35 @@
+name: "components"
+
+on:
+  push:
+    branches:
+      - main
+      - release-*
+  pull_request:
+    paths-ignore:
+      - 'browser_patches/**'
+      - 'docs/**'
+    branches:
+      - main
+      - release-*
+
+env:
+  FORCE_COLOR: 1
+
+jobs:
+  test_components:
+    name: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-node@v2
+      with:
+        node-version: 16
+    - run: npm ci
+    - run: npm run build
+    - run: npx playwright install --with-deps
+    - run: npm run ct

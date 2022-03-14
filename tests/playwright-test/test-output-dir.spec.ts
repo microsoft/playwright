@@ -63,7 +63,7 @@ test('should work and remove non-failures', async ({ runInlineTest }, testInfo) 
 
   expect(fs.existsSync(testInfo.outputPath('test-results', 'my-test-test-1-chromium'))).toBe(true);
   expect(fs.existsSync(testInfo.outputPath('test-results', 'my-test-test-1-chromium-retry1'))).toBe(true);
-  // Last retry is successfull, so output dir should be removed.
+  // Last retry is successful, so output dir should be removed.
   expect(fs.existsSync(testInfo.outputPath('test-results', 'my-test-test-1-chromium-retry2'))).toBe(false);
 });
 
@@ -83,53 +83,27 @@ test('should include repeat token', async ({ runInlineTest }) => {
   expect(result.passed).toBe(3);
 });
 
-test('should be unique for beforeAll and afterAll hooks', async ({ runInlineTest }, testInfo) => {
+test('should be unique for beforeAll hook from different workers', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'a.spec.js': `
       const { test } = pwt;
       test.beforeAll(({}, testInfo) => {
         console.log('\\n%%' + testInfo.outputDir);
       });
-      test.beforeAll(({}, testInfo) => {
-        console.log('\\n%%' + testInfo.outputDir);
+      test('fails', ({}, testInfo) => {
+        expect(1).toBe(2);
       });
-      test.afterAll(({}, testInfo) => {
-        console.log('\\n%%' + testInfo.outputDir);
-      });
-      test.afterAll(({}, testInfo) => {
-        console.log('\\n%%' + testInfo.outputDir);
-      });
-      test.describe('suite', () => {
-        test.beforeAll(({}, testInfo) => {
-          console.log('\\n%%' + testInfo.outputDir);
-        });
-        test.afterAll(({}, testInfo) => {
-          console.log('\\n%%' + testInfo.outputDir);
-        });
-        test('fails', ({}, testInfo) => {
-          expect(1).toBe(2);
-        });
-        test('passes', ({}, testInfo) => {
-        });
+      test('passes', ({}, testInfo) => {
       });
     `
-  });
+  }, { retries: '1' });
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(1);
   expect(result.failed).toBe(1);
   expect(result.output.split('\n').filter(x => x.startsWith('%%'))).toEqual([
-    `%%${testInfo.outputPath('test-results', 'a-beforeAll-worker0')}`,
-    `%%${testInfo.outputPath('test-results', 'a-beforeAll1-worker0')}`,
-    `%%${testInfo.outputPath('test-results', 'a-suite-beforeAll-worker0')}`,
-    `%%${testInfo.outputPath('test-results', 'a-suite-afterAll-worker0')}`,
-    `%%${testInfo.outputPath('test-results', 'a-afterAll-worker0')}`,
-    `%%${testInfo.outputPath('test-results', 'a-afterAll1-worker0')}`,
-    `%%${testInfo.outputPath('test-results', 'a-beforeAll-worker1')}`,
-    `%%${testInfo.outputPath('test-results', 'a-beforeAll1-worker1')}`,
-    `%%${testInfo.outputPath('test-results', 'a-suite-beforeAll-worker1')}`,
-    `%%${testInfo.outputPath('test-results', 'a-suite-afterAll-worker1')}`,
-    `%%${testInfo.outputPath('test-results', 'a-afterAll-worker1')}`,
-    `%%${testInfo.outputPath('test-results', 'a-afterAll1-worker1')}`,
+    `%%${testInfo.outputPath('test-results', 'a-fails')}`,
+    `%%${testInfo.outputPath('test-results', 'a-fails-retry1')}`,
+    `%%${testInfo.outputPath('test-results', 'a-passes')}`,
   ]);
 });
 
@@ -431,7 +405,7 @@ test('should allow nonAscii characters in the output dir', async ({ runInlineTes
 
 test('should allow shorten long output dirs characters in the output dir', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
-    'my-test.spec.js': `
+    'very/deep/and/long/file/name/that/i/want/to/be/trimmed/my-test.spec.js': `
       const { test } = pwt;
       test.describe('this is a really long description that would be too long for a file path', () => {
         test('and this is an even longer test name that just keeps going and going and we should shorten it', async ({}, testInfo) => {
@@ -441,7 +415,7 @@ test('should allow shorten long output dirs characters in the output dir', async
     `,
   });
   const outputDir = result.output.split('\n').filter(x => x.startsWith('%%'))[0].slice('%%'.length);
-  expect(outputDir).toBe(path.join(testInfo.outputDir, 'test-results', 'my-test-this-is-a-really-long-description-that-would-b-6d724--keeps-going-and-going-and-we-should-shorten-it'));
+  expect(outputDir).toBe(path.join(testInfo.outputDir, 'test-results', 'very-deep-and-long-file-name-that-i-want-to-be-99202--keeps-going-and-going-and-we-should-shorten-it'));
 });
 
 test('should not mangle double dashes', async ({ runInlineTest }, testInfo) => {

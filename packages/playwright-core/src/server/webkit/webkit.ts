@@ -46,9 +46,7 @@ export class WebKit extends BrowserType {
   }
 
   _defaultArgs(options: types.LaunchOptions, isPersistent: boolean, userDataDir: string): string[] {
-    const { args = [], proxy, devtools, headless } = options;
-    if (devtools)
-      console.warn('devtools parameter as a launch argument in WebKit is not supported. Also starting Web Inspector manually will terminate the execution in WebKit.');
+    const { args = [], proxy, headless } = options;
     const userDataDirArg = args.find(arg => arg.startsWith('--user-data-dir'));
     if (userDataDirArg)
       throw new Error('Pass userDataDir parameter to `browserType.launchPersistentContext(userDataDir, ...)` instead of specifying --user-data-dir argument');

@@ -129,7 +129,6 @@ it('should create userDataDir if it does not exist', async ({ createUserDataDir,
 
 it('should restore cookies from userDataDir', async ({ browserType, server, createUserDataDir, platform, channel, browserName }) => {
   it.fixme(platform === 'win32' && channel === 'chrome');
-  it.fixme(platform === 'win32' && browserName === 'chromium', 'https://github.com/microsoft/playwright/issues/10811');
   it.slow();
 
   const userDataDir = await createUserDataDir();

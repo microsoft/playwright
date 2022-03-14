@@ -15,7 +15,7 @@
  */
 
 import path from 'path';
-import { test, expect, stripAscii } from './playwright-test-fixtures';
+import { test, expect, stripAnsi } from './playwright-test-fixtures';
 
 test('should support toHaveCount', async ({ runInlineTest }) => {
   const result = await runInlineTest({
@@ -80,7 +80,7 @@ test('should support toHaveCount', async ({ runInlineTest }) => {
       });
       `,
   }, { workers: 1 });
-  const output = stripAscii(result.output);
+  const output = stripAnsi(result.output);
   expect(result.passed).toBe(5);
   expect(result.failed).toBe(2);
   expect(result.exitCode).toBe(1);
@@ -109,7 +109,7 @@ test('should support toHaveJSProperty', async ({ runInlineTest }) => {
       });
       `,
   }, { workers: 1 });
-  const output = stripAscii(result.output);
+  const output = stripAnsi(result.output);
   expect(output).toContain('-   "c"');
   expect(result.passed).toBe(1);
   expect(result.failed).toBe(1);
@@ -165,7 +165,7 @@ test('should support toHaveJSProperty with builtin types', async ({ runInlineTes
       });
       `,
   }, { workers: 1 });
-  const output = stripAscii(result.output);
+  const output = stripAnsi(result.output);
   expect(result.passed).toBe(3);
   expect(result.failed).toBe(3);
   expect(result.exitCode).toBe(1);
@@ -196,7 +196,7 @@ test('should support toHaveClass', async ({ runInlineTest }) => {
       });
       `,
   }, { workers: 1 });
-  const output = stripAscii(result.output);
+  const output = stripAnsi(result.output);
   expect(output).toContain('expect(locator).toHaveClass');
   expect(output).toContain('Expected string: \"foo bar baz\"');
   expect(result.passed).toBe(1);
@@ -222,7 +222,7 @@ test('should support toHaveClass w/ array', async ({ runInlineTest }) => {
       });
       `,
   }, { workers: 1 });
-  const output = stripAscii(result.output);
+  const output = stripAnsi(result.output);
   expect(output).toContain('expect(received).toHaveClass(expected)');
   expect(output).toContain('-   /[a-z]az/,');
   expect(result.passed).toBe(1);
@@ -246,7 +246,7 @@ test('should support toHaveTitle', async ({ runInlineTest }) => {
       });
       `,
   }, { workers: 1 });
-  const output = stripAscii(result.output);
+  const output = stripAnsi(result.output);
   expect(output).toContain('expect(page).toHaveTitle');
   expect(output).toContain('Expected string: \"Hello\"');
   expect(result.passed).toBe(1);
@@ -270,7 +270,7 @@ test('should support toHaveURL', async ({ runInlineTest }) => {
       });
       `,
   }, { workers: 1 });
-  const output = stripAscii(result.output);
+  const output = stripAnsi(result.output);
   expect(output).toContain('expect(page).toHaveURL');
   expect(output).toContain('Expected string: \"wrong\"');
   expect(result.passed).toBe(1);
@@ -304,7 +304,7 @@ test('should support toHaveURL with baseURL from webServer', async ({ runInlineT
       };
   `,
   }, { workers: 1 });
-  const output = stripAscii(result.output);
+  const output = stripAnsi(result.output);
   expect(output).toContain('expect(page).toHaveURL');
   expect(output).toContain(`Expected string: \"http://localhost:${port}/kek\"`);
   expect(result.passed).toBe(1);
@@ -327,7 +327,7 @@ test('should respect expect.timeout', async ({ runInlineTest }) => {
       });
       `,
   }, { workers: 1 });
-  const output = stripAscii(result.output);
+  const output = stripAnsi(result.output);
   expect(output).toContain('expect(received).toHaveURL(expected)');
   expect(output).toContain('expect.toHaveURL with timeout 1000ms');
   expect(result.failed).toBe(1);
@@ -345,7 +345,7 @@ test('should log scale the time', async ({ runInlineTest }) => {
       });
       `,
   }, { workers: 1 });
-  const output = stripAscii(result.output);
+  const output = stripAnsi(result.output);
   const tokens = output.split('unexpected value');
   // Log scale: 0, 100, 250, 500, 1000, 1000, should be less than 8.
   expect(tokens.length).toBeGreaterThan(1);

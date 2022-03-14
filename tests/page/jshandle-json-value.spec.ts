@@ -17,7 +17,7 @@
 
 import { test as it, expect } from './pageTest';
 
-it('should work', async ({ page }) => {
+it('should work @smoke', async ({ page }) => {
   const aHandle = await page.evaluateHandle(() => ({ foo: 'bar' }));
   const json = await aHandle.jsonValue();
   expect(json).toEqual({ foo: 'bar' });

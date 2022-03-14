@@ -35,7 +35,7 @@ it('should work for subframe navigation request', async ({ page, server }) => {
   expect(requests[0].frame()).toBe(page.frames()[1]);
 });
 
-it('should work for fetch requests', async ({ page, server }) => {
+it('should work for fetch requests @smoke', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   const requests = [];
   page.on('request', request => requests.push(request));
@@ -272,8 +272,21 @@ it('should report raw headers', async ({ page, server, browserName, platform }) 
     expectedHeaders = [];
     for (let i = 0; i < req.rawHeaders.length; i += 2)
       expectedHeaders.push({ name: req.rawHeaders[i], value: req.rawHeaders[i + 1] });
-    if (browserName === 'webkit' && platform === 'win32')
-      expectedHeaders = expectedHeaders.filter(({ name }) => name.toLowerCase() !== 'accept-encoding' && name.toLowerCase() !== 'accept-language');
+    if (browserName === 'webkit' && platform === 'win32') {
+      expectedHeaders = expectedHeaders.filter(({ name }) => name.toLowerCase() !== 'accept-encoding');
+      // Convert "value": "en-US, en-US" => "en-US"
+      expectedHeaders = expectedHeaders.map(e => {
+        const { name, value } = e;
+        if (name.toLowerCase() !== 'accept-language')
+          return e;
+        const values = value.split(',').map(v => v.trim());
+        if (values.length === 1)
+          return e;
+        if (values[0] !== values[1])
+          return e;
+        return { name, value: values[0] };
+      });
+    }
     res.end();
   });
   await page.goto(server.EMPTY_PAGE);

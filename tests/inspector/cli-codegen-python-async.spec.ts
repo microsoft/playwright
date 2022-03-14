@@ -27,7 +27,7 @@ test('should print the correct imports and context options', async ({ browserNam
   const cli = runCLI(['--target=python-async', emptyHTML]);
   const expectedResult = `import asyncio
 
-from playwright.async_api import Playwright, async_playwright
+from playwright.async_api import Playwright, async_playwright, expect
 
 
 async def run(playwright: Playwright) -> None:
@@ -41,7 +41,7 @@ test('should print the correct context options for custom settings', async ({ br
   const cli = runCLI(['--color-scheme=light', '--target=python-async', emptyHTML]);
   const expectedResult = `import asyncio
 
-from playwright.async_api import Playwright, async_playwright
+from playwright.async_api import Playwright, async_playwright, expect
 
 
 async def run(playwright: Playwright) -> None:
@@ -57,7 +57,7 @@ test('should print the correct context options when using a device', async ({ br
   const cli = runCLI(['--device=Pixel 2', '--target=python-async', emptyHTML]);
   const expectedResult = `import asyncio
 
-from playwright.async_api import Playwright, async_playwright
+from playwright.async_api import Playwright, async_playwright, expect
 
 
 async def run(playwright: Playwright) -> None:
@@ -73,7 +73,7 @@ test('should print the correct context options when using a device and additiona
   const cli = runCLI(['--color-scheme=light', '--device=iPhone 11', '--target=python-async', emptyHTML]);
   const expectedResult = `import asyncio
 
-from playwright.async_api import Playwright, async_playwright
+from playwright.async_api import Playwright, async_playwright, expect
 
 
 async def run(playwright: Playwright) -> None:
@@ -87,10 +87,10 @@ test('should save the codegen output to a file if specified', async ({ browserNa
   const tmpFile = testInfo.outputPath('script.js');
   const cli = runCLI(['--target=python-async', '--output', tmpFile, emptyHTML]);
   await cli.exited;
-  const content = await fs.readFileSync(tmpFile);
+  const content = fs.readFileSync(tmpFile);
   expect(content.toString()).toBe(`import asyncio
 
-from playwright.async_api import Playwright, async_playwright
+from playwright.async_api import Playwright, async_playwright, expect
 
 
 async def run(playwright: Playwright) -> None:
@@ -127,7 +127,7 @@ test('should print load/save storage_state', async ({ browserName, channel, runC
   const cli = runCLI([`--load-storage=${loadFileName}`, `--save-storage=${saveFileName}`, '--target=python-async', emptyHTML]);
   const expectedResult1 = `import asyncio
 
-from playwright.async_api import Playwright, async_playwright
+from playwright.async_api import Playwright, async_playwright, expect
 
 
 async def run(playwright: Playwright) -> None:

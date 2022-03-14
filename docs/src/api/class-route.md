@@ -221,7 +221,7 @@ File path to respond with. The content type will be inferred from file extension
 is resolved relative to the current working directory.
 
 ### option: Route.fulfill.response
-* langs: js
+* langs: js, java, python
 - `response` <[APIResponse]>
 
 [APIResponse] to fulfill route's request with. Individual fields of the response (such as headers) can be overridden using fulfill options.

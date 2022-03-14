@@ -173,4 +173,20 @@ it.describe('mobile viewport', () => {
     expect(await page.evaluate('result')).toEqual({ x: 30, y: 40 });
     await context.close();
   });
+
+  it('should scroll when emulating a mobile viewport', async ({ browser, server, browserName }) => {
+    const context = await browser.newContext({
+      viewport: { 'width': 1000, 'height': 600 },
+      isMobile: true,
+    });
+    const page = await context.newPage();
+    await page.goto(server.PREFIX + '/input/scrollable.html');
+    await page.mouse.move(50, 60);
+    const error = await page.mouse.wheel(0, 100).catch(e => e);
+    if (browserName === 'webkit')
+      expect(error.message).toContain('Mouse wheel is not supported in mobile WebKit');
+    else
+      await page.waitForFunction('window.scrollY === 100');
+    await context.close();
+  });
 });

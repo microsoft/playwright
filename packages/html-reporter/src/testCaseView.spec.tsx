@@ -15,28 +15,30 @@
  */
 
 import React from 'react';
-import { test, expect } from '../test/componentTest';
+import { test, expect } from '@playwright/experimental-ct-react/test';
 import { TestCaseView } from './testCaseView';
 import type { TestCase, TestResult } from '../../playwright-test/src/reporters/html';
 
-test.use({ webpack: require.resolve('../webpack.config.js') });
 test.use({ viewport: { width: 800, height: 600 } });
 
 const result: TestResult = {
   retry: 0,
   startTime: new Date(0).toUTCString(),
   duration: 100,
+  errors: [],
   steps: [{
     title: 'Outer step',
     startTime: new Date(100).toUTCString(),
     duration: 10,
     location: { file: 'test.spec.ts', line: 62, column: 0 },
+    count: 1,
     steps: [{
       title: 'Inner step',
       startTime: new Date(200).toUTCString(),
       duration: 10,
       location: { file: 'test.spec.ts', line: 82, column: 0 },
       steps: [],
+      count: 1,
     }],
   }],
   attachments: [],
@@ -59,9 +61,8 @@ const testCase: TestCase = {
   results: [result]
 };
 
-test('should render test case', async ({ render, capture }) => {
-  const component = await render(<TestCaseView projectNames={['chromium', 'webkit']} test={testCase}></TestCaseView>);
-  await capture(component, 'testcase');
+test('should render test case', async ({ mount }) => {
+  const component = await mount(<TestCaseView projectNames={['chromium', 'webkit']} test={testCase}></TestCaseView>);
   await expect(component.locator('text=Annotation text').first()).toBeVisible();
   await component.locator('text=Annotations').click();
   await expect(component.locator('text=Annotation text')).not.toBeVisible();
@@ -71,5 +72,4 @@ test('should render test case', async ({ render, capture }) => {
   await expect(component.locator('text=Inner step')).toBeVisible();
   await expect(component.locator('text=test.spec.ts:42')).toBeVisible();
   await expect(component.locator('text=My test')).toBeVisible();
-  await capture(component, 'testcase-expanded');
 });

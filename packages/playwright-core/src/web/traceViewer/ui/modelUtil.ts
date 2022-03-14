@@ -16,14 +16,48 @@
 
 import { ResourceSnapshot } from '../../../server/trace/common/snapshotTypes';
 import { ActionTraceEvent } from '../../../server/trace/common/traceEvents';
-import { ContextEntry } from '../entries';
+import { ContextEntry, PageEntry } from '../entries';
+import * as trace from '../../../server/trace/common/traceEvents';
 
 const contextSymbol = Symbol('context');
 const nextSymbol = Symbol('next');
 const eventsSymbol = Symbol('events');
 const resourcesSymbol = Symbol('resources');
 
-export function indexModel(context: ContextEntry) {
+export class MultiTraceModel {
+  readonly startTime: number;
+  readonly endTime: number;
+  readonly browserName: string;
+  readonly platform?: string;
+  readonly wallTime?: number;
+  readonly title?: string;
+  readonly options: trace.BrowserContextEventOptions;
+  readonly pages: PageEntry[];
+  readonly actions: trace.ActionTraceEvent[];
+  readonly events: trace.ActionTraceEvent[];
+  readonly hasSource: boolean;
+
+  constructor(contexts: ContextEntry[]) {
+    contexts.forEach(contextEntry => indexModel(contextEntry));
+
+    this.browserName = contexts[0]?.browserName || '';
+    this.platform = contexts[0]?.platform || '';
+    this.title = contexts[0]?.title || '';
+    this.options = contexts[0]?.options || {};
+    this.wallTime = contexts.map(c => c.wallTime).reduce((prev, cur) => Math.min(prev || Number.MAX_VALUE, cur!), Number.MAX_VALUE);
+    this.startTime = contexts.map(c => c.startTime).reduce((prev, cur) => Math.min(prev, cur), Number.MAX_VALUE);
+    this.endTime = contexts.map(c => c.endTime).reduce((prev, cur) => Math.max(prev, cur), Number.MIN_VALUE);
+    this.pages = ([] as PageEntry[]).concat(...contexts.map(c => c.pages));
+    this.actions = ([] as ActionTraceEvent[]).concat(...contexts.map(c => c.actions));
+    this.events = ([] as ActionTraceEvent[]).concat(...contexts.map(c => c.events));
+    this.hasSource = contexts.some(c => c.hasSource);
+
+    this.actions.sort((a1, a2) => a1.metadata.startTime - a2.metadata.startTime);
+    this.events.sort((a1, a2) => a1.metadata.startTime - a2.metadata.startTime);
+  }
+}
+
+function indexModel(context: ContextEntry) {
   for (const page of context.pages)
     (page as any)[contextSymbol] = context;
   for (let i = 0; i < context.actions.length; ++i) {
@@ -39,7 +73,7 @@ export function context(action: ActionTraceEvent): ContextEntry {
   return (action as any)[contextSymbol];
 }
 
-export function next(action: ActionTraceEvent): ActionTraceEvent {
+function next(action: ActionTraceEvent): ActionTraceEvent {
   return (action as any)[nextSymbol];
 }
 

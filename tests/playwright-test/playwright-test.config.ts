@@ -14,18 +14,30 @@
  * limitations under the License.
  */
 
-import { Config } from './stable-test-runner';
+import { config as loadEnv } from 'dotenv';
+loadEnv({ path: path.join(__dirname, '..', '..', '.env') });
 
+import { Config } from './stable-test-runner';
+import * as path from 'path';
+
+const outputDir = path.join(__dirname, '..', '..', 'test-results');
 const config: Config = {
   testDir: __dirname,
   testIgnore: ['assets/**', 'stable-test-runner/**'],
   timeout: 30000,
   forbidOnly: !!process.env.CI,
+  workers: process.env.CI ? 1 : undefined,
   preserveOutput: process.env.CI ? 'failures-only' : 'always',
   projects: process.env.PLAYWRIGHT_DOCKER ? [
     { name: 'visual tests', testMatch: ['*.visual.ts'] },
   ] : [
     { name: 'playwright-test', testIgnore: ['*.visual.ts'] },
+  ],
+  reporter: process.env.CI ? [
+    ['dot'],
+    ['json', { outputFile: path.join(outputDir, 'report.json') }],
+  ] : [
+    ['list']
   ],
 };
 

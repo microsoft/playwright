@@ -28,7 +28,7 @@ class Cookie {
 
   // https://datatracker.ietf.org/doc/html/rfc6265#section-5.4
   matches(url: URL): boolean {
-    if (this._raw.secure && url.protocol !== 'https:')
+    if (this._raw.secure && (url.protocol !== 'https:' && url.hostname !== 'localhost'))
       return false;
     if (!domainMatches(url.hostname, this._raw.domain))
       return false;

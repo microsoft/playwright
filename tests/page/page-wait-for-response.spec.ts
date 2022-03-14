@@ -39,8 +39,11 @@ it('should respect timeout', async ({ page, playwright }) => {
 it('should respect default timeout', async ({ page, playwright }) => {
   let error = null;
   page.setDefaultTimeout(1);
-  await page.waitForEvent('response', () => false).catch(e => error = e);
+  await page.waitForResponse(() => false).catch(e => error = e);
   expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
+  // Error stack should point to the api call.
+  const firstFrame = error.stack.split('\n').find(line => line.startsWith('    at '));
+  expect(firstFrame).toContain(__filename);
 });
 
 it('should log the url', async ({ page }) => {
@@ -112,4 +115,18 @@ it('should work with no timeout', async ({ page, server }) => {
     }, 50))
   ]);
   expect(response.url()).toBe(server.PREFIX + '/digits/2.png');
+});
+
+it('should work with re-rendered cached IMG elements', async ({ page, server, browserName }) => {
+  it.fixme(browserName === 'webkit');
+  it.fixme(browserName === 'firefox');
+  await page.goto(server.EMPTY_PAGE);
+  await page.setContent(`<img src="pptr.png">`);
+  await page.$eval('img', img => img.remove());
+  const [response] = await Promise.all([
+    page.waitForRequest(/pptr/),
+    page.waitForResponse(/pptr/),
+    page.setContent(`<img src="pptr.png">`)
+  ]);
+  expect(response.url()).toBe(server.PREFIX + '/pptr.png');
 });

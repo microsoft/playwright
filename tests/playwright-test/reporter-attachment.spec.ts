@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect, stripAscii } from './playwright-test-fixtures';
+import { test, expect, stripAnsi } from './playwright-test-fixtures';
 
 test('render text attachment', async ({ runInlineTest }) => {
   const result = await runInlineTest({
@@ -30,7 +30,7 @@ test('render text attachment', async ({ runInlineTest }) => {
       });
     `,
   }, { reporter: 'line' });
-  const text = stripAscii(result.output);
+  const text = stripAnsi(result.output);
   expect(text).toContain('    attachment #1: attachment (text/plain) ---------------------------------------------------------');
   expect(text).toContain('    Hello world');
   expect(text).toContain('    ------------------------------------------------------------------------------------------------');
@@ -51,7 +51,7 @@ test('render screenshot attachment', async ({ runInlineTest }) => {
       });
     `,
   }, { reporter: 'line' });
-  const text = stripAscii(result.output).replace(/\\/g, '/');
+  const text = stripAnsi(result.output).replace(/\\/g, '/');
   expect(text).toContain('    attachment #1: screenshot (image/png) ----------------------------------------------------------');
   expect(text).toContain('    test-results/a-one/some/path.png');
   expect(text).toContain('    ------------------------------------------------------------------------------------------------');
@@ -72,7 +72,7 @@ test('render trace attachment', async ({ runInlineTest }) => {
       });
     `,
   }, { reporter: 'line' });
-  const text = stripAscii(result.output).replace(/\\/g, '/');
+  const text = stripAnsi(result.output).replace(/\\/g, '/');
   expect(text).toContain('    attachment #1: trace (application/zip) ---------------------------------------------------------');
   expect(text).toContain('    test-results/a-one/trace.zip');
   expect(text).toContain('npx playwright show-trace test-results/a-one/trace.zip');
@@ -80,34 +80,109 @@ test('render trace attachment', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(1);
 });
 
-
-test(`testInfo.attach throws an error when attaching a non-existent attachment`, async ({ runInlineTest }) => {
+test(`testInfo.attach errors`, async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
       const { test } = pwt;
-      test('all options specified', async ({}, testInfo) => {
-        await testInfo.attach('non-existent-path-all-options', { contentType: 'text/plain', name: 'foo.txt'});
+      test('fail1', async ({}, testInfo) => {
+        await testInfo.attach('name', { path: 'foo.txt' });
       });
-
-      test('no options specified', async ({}, testInfo) => {
-        await testInfo.attach('non-existent-path-no-options');
+      test('fail2', async ({}, testInfo) => {
+        await testInfo.attach('name', { path: 'foo.txt', body: 'bar' });
       });
-
-      test('partial options - contentType', async ({}, testInfo) => {
-        await testInfo.attach('non-existent-path-partial-options-content-type', { contentType: 'text/plain'});
-      });
-
-      test('partial options - name', async ({}, testInfo) => {
-        await testInfo.attach('non-existent-path-partial-options-name', { name: 'foo.txt'});
+      test('fail3', async ({}, testInfo) => {
+        await testInfo.attach('name', {});
       });
     `,
   }, { reporter: 'line', workers: 1 });
-  const text = stripAscii(result.output).replace(/\\/g, '/');
-  expect(text).toMatch(/Error: ENOENT: no such file or directory, open '.*non-existent-path-all-options.*'/);
-  expect(text).toMatch(/Error: ENOENT: no such file or directory, open '.*non-existent-path-no-options.*'/);
-  expect(text).toMatch(/Error: ENOENT: no such file or directory, open '.*non-existent-path-partial-options-content-type.*'/);
-  expect(text).toMatch(/Error: ENOENT: no such file or directory, open '.*non-existent-path-partial-options-name.*'/);
+  const text = stripAnsi(result.output).replace(/\\/g, '/');
+  expect(text).toMatch(/Error: ENOENT: no such file or directory, copyfile '.*foo.txt.*'/);
+  expect(text).toContain(`Exactly one of "path" and "body" must be specified`);
   expect(result.passed).toBe(0);
-  expect(result.failed).toBe(4);
+  expect(result.failed).toBe(3);
   expect(result.exitCode).toBe(1);
+});
+
+test(`testInfo.attach errors with empty path`, async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      const { test } = pwt;
+      test('fail', async ({}, testInfo) => {
+        await testInfo.attach('name', { path: '' });
+      });
+    `,
+  }, { reporter: 'line', workers: 1 });
+  expect(stripAnsi(result.output)).toMatch(/Error: ENOENT: no such file or directory, copyfile ''/);
+  expect(result.exitCode).toBe(1);
+});
+
+test(`testInfo.attach error in fixture`, async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      const test = pwt.test.extend({
+        fixture: async ({}, use, testInfo) => {
+          await use();
+          await testInfo.attach('name', { path: 'foo.txt' });
+        },
+      });
+      test('fail1', async ({ fixture }) => {
+      });
+    `,
+  }, { reporter: 'line', workers: 1 });
+  const text = stripAnsi(result.output).replace(/\\/g, '/');
+  expect(text).toMatch(/Error: ENOENT: no such file or directory, copyfile '.*foo.txt.*'/);
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(0);
+  expect(result.failed).toBe(1);
+});
+
+test(`testInfo.attach success in fixture`, async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      const test = pwt.test.extend({
+        fixture: async ({}, use, testInfo) => {
+          const filePath = testInfo.outputPath('foo.txt');
+          require('fs').writeFileSync(filePath, 'hello');
+          await use();
+          await testInfo.attach('name', { path: filePath });
+        },
+      });
+      test('success', async ({ fixture }) => {
+        expect(true).toBe(false);
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(stripAnsi(result.output)).toContain('attachment #1: name (text/plain)');
+});
+
+test(`testInfo.attach allow empty string body`, async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      const { test } = pwt;
+      test('success', async ({}, testInfo) => {
+        await testInfo.attach('name', { body: '', contentType: 'text/plain' });
+        expect(0).toBe(1);
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(stripAnsi(result.output)).toMatch(/^.*attachment #1: name \(text\/plain\).*\n.*\n.*------/gm);
+});
+
+test(`testInfo.attach allow empty buffer body`, async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      const { test } = pwt;
+      test('success', async ({}, testInfo) => {
+        await testInfo.attach('name', { body: Buffer.from(''), contentType: 'text/plain' });
+        expect(0).toBe(1);
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(stripAnsi(result.output)).toMatch(/^.*attachment #1: name \(text\/plain\).*\n.*\n.*------/gm);
 });

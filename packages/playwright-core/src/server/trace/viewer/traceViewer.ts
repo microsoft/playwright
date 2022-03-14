@@ -26,10 +26,13 @@ import { internalCallMetadata } from '../../instrumentation';
 import { createPlaywright } from '../../playwright';
 import { ProgressController } from '../../progress';
 
-export async function showTraceViewer(traceUrl: string, browserName: string, headless = false, port?: number): Promise<BrowserContext | undefined> {
-  if (traceUrl && !traceUrl.startsWith('http://') && !traceUrl.startsWith('https://') && !fs.existsSync(traceUrl)) {
-    console.error(`Trace file ${traceUrl} does not exist!`);
-    process.exit(1);
+export async function showTraceViewer(traceUrls: string[], browserName: string, headless = false, port?: number): Promise<BrowserContext | undefined> {
+  for (const traceUrl of traceUrls) {
+    if (!traceUrl.startsWith('http://') && !traceUrl.startsWith('https://') && !fs.existsSync(traceUrl)) {
+      // eslint-disable-next-line no-console
+      console.error(`Trace file ${traceUrl} does not exist!`);
+      process.exit(1);
+    }
   }
   const server = new HttpServer();
   server.routePrefix('/trace', (request, response) => {
@@ -83,6 +86,7 @@ export async function showTraceViewer(traceUrl: string, browserName: string, hea
   else
     page.on('close', () => process.exit());
 
-  await page.mainFrame().goto(internalCallMetadata(), urlPrefix + `/trace/index.html${traceUrl ? '?trace=' + traceUrl : ''}`);
+  const searchQuery = traceUrls.length ? '?' + traceUrls.map(t => `trace=${t}`).join('&') : '';
+  await page.mainFrame().goto(internalCallMetadata(), urlPrefix + `/trace/index.html${searchQuery}`);
   return context;
 }

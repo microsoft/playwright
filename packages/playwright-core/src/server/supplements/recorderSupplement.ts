@@ -18,7 +18,7 @@ import * as fs from 'fs';
 import * as actions from './recorder/recorderActions';
 import type * as channels from '../../protocol/channels';
 import { CodeGenerator, ActionInContext } from './recorder/codeGenerator';
-import { describeFrame, toClickOptions, toModifiers } from './recorder/utils';
+import { toClickOptions, toModifiers } from './recorder/utils';
 import { Page } from '../page';
 import { Frame } from '../frames';
 import { BrowserContext } from '../browserContext';
@@ -28,14 +28,15 @@ import { CSharpLanguageGenerator } from './recorder/csharp';
 import { PythonLanguageGenerator } from './recorder/python';
 import * as recorderSource from '../../generated/recorderSource';
 import * as consoleApiSource from '../../generated/consoleApiSource';
-import { RecorderApp } from './recorder/recorderApp';
+import { IRecorderApp, RecorderApp } from './recorder/recorderApp';
 import { CallMetadata, InstrumentationListener, SdkObject } from '../instrumentation';
 import { Point } from '../../common/types';
 import { CallLog, CallLogStatus, EventData, Mode, Source, UIState } from './recorder/recorderTypes';
-import { createGuid, isUnderTest, monotonicTime } from '../../utils/utils';
+import { createGuid, monotonicTime } from '../../utils/utils';
 import { metadataToCallLog } from './recorder/recorderUtils';
 import { Debugger } from './debugger';
 import { EventEmitter } from 'events';
+import { raceAgainstTimeout } from '../../utils/async';
 
 type BindingSource = { frame: Frame, page: Page };
 
@@ -45,7 +46,7 @@ export class RecorderSupplement implements InstrumentationListener {
   private _context: BrowserContext;
   private _mode: Mode;
   private _highlightedSelector = '';
-  private _recorderApp: RecorderApp | null = null;
+  private _recorderApp: IRecorderApp | null = null;
   private _currentCallsMetadata = new Map<CallMetadata, SdkObject>();
   private _recorderSources: Source[] = [];
   private _userSources = new Map<string, Source>();
@@ -72,7 +73,7 @@ export class RecorderSupplement implements InstrumentationListener {
     this._contextRecorder = new ContextRecorder(context, params);
     this._context = context;
     this._debugger = Debugger.lookup(context)!;
-    context.instrumentation.addListener(this);
+    context.instrumentation.addListener(this, context);
   }
 
   async install() {
@@ -248,7 +249,7 @@ export class RecorderSupplement implements InstrumentationListener {
   async onBeforeInputAction(sdkObject: SdkObject, metadata: CallMetadata) {
   }
 
-  async onCallLog(logName: string, message: string, sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
+  async onCallLog(sdkObject: SdkObject, metadata: CallMetadata, logName: string, message: string): Promise<void> {
     this.updateCallLog([metadata]);
   }
 
@@ -316,7 +317,7 @@ class ContextRecorder extends EventEmitter {
 
     this._recorderSources = [];
     const generator = new CodeGenerator(context._browser.options.name, !!params.startRecording, params.launchOptions || {}, params.contextOptions || {}, params.device, params.saveStorage);
-    let text = '';
+    const throttledOutputFile = params.outputFile ? new ThrottledFile(params.outputFile) : null;
     generator.on('change', () => {
       this._recorderSources = [];
       for (const languageGenerator of orderedLanguages) {
@@ -329,21 +330,19 @@ class ContextRecorder extends EventEmitter {
         source.revealLine = source.text.split('\n').length - 1;
         this._recorderSources.push(source);
         if (languageGenerator === orderedLanguages[0])
-          text = source.text;
+          throttledOutputFile?.setContent(source.text);
       }
       this.emit(ContextRecorder.Events.Change, {
         sources: this._recorderSources,
         primaryFileName: primaryLanguage.fileName
       });
     });
-    if (params.outputFile) {
+    if (throttledOutputFile) {
       context.on(BrowserContext.Events.BeforeClose, () => {
-        fs.writeFileSync(params.outputFile!, text);
-        text = '';
+        throttledOutputFile.flush();
       });
       process.on('exit', () => {
-        if (text)
-          fs.writeFileSync(params.outputFile!, text);
+        throttledOutputFile.flush();
       });
     }
     this._generator = generator;
@@ -363,7 +362,7 @@ class ContextRecorder extends EventEmitter {
     await this._context.exposeBinding('_playwrightRecorderRecordAction', false,
         (source: BindingSource, action: actions.Action) => this._recordAction(source.frame, action));
 
-    await this._context.extendInjectedScript(recorderSource.source, { isUnderTest: isUnderTest() });
+    await this._context.extendInjectedScript(recorderSource.source);
   }
 
   setEnabled(enabled: boolean) {
@@ -380,16 +379,15 @@ class ContextRecorder extends EventEmitter {
     // First page is called page, others are called popup1, popup2, etc.
     const frame = page.mainFrame();
     page.on('close', () => {
-      this._pageAliases.delete(page);
       this._generator.addAction({
-        pageAlias,
-        ...describeFrame(page.mainFrame()),
+        frame: this._describeMainFrame(page),
         committed: true,
         action: {
           name: 'closePage',
           signals: [],
         }
       });
+      this._pageAliases.delete(page);
     });
     frame.on(Frame.Events.Navigation, () => this._onFrameNavigated(frame, page));
     page.on(Page.Events.Download, () => this._onDownload(page));
@@ -402,8 +400,7 @@ class ContextRecorder extends EventEmitter {
       this._onPopup(page.opener()!, page);
     } else {
       this._generator.addAction({
-        pageAlias,
-        ...describeFrame(page.mainFrame()),
+        frame: this._describeMainFrame(page),
         committed: true,
         action: {
           name: 'openPage',
@@ -422,14 +419,69 @@ class ContextRecorder extends EventEmitter {
     }
   }
 
+  private _describeMainFrame(page: Page): actions.FrameDescription {
+    return {
+      pageAlias: this._pageAliases.get(page)!,
+      isMainFrame: true,
+      url: page.mainFrame().url(),
+    };
+  }
+
+  private async _describeFrame(frame: Frame): Promise<actions.FrameDescription> {
+    const page = frame._page;
+    const pageAlias = this._pageAliases.get(page)!;
+    const chain: Frame[] = [];
+    for (let ancestor: Frame | null = frame; ancestor; ancestor = ancestor.parentFrame())
+      chain.push(ancestor);
+    chain.reverse();
+
+    if (chain.length === 1)
+      return this._describeMainFrame(page);
+
+    const hasUniqueName = page.frames().filter(f => f.name() === frame.name()).length === 1;
+    const fallback: actions.FrameDescription = {
+      pageAlias,
+      isMainFrame: false,
+      url: frame.url(),
+      name: frame.name() && hasUniqueName ? frame.name() : undefined,
+    };
+    if (chain.length > 3)
+      return fallback;
+
+    const selectorPromises: Promise<string | undefined>[] = [];
+    for (let i = 0; i < chain.length - 1; i++)
+      selectorPromises.push(this._findFrameSelector(chain[i + 1], chain[i]));
+
+    const result = await raceAgainstTimeout(() => Promise.all(selectorPromises), 2000);
+    if (!result.timedOut && result.result.every(selector => !!selector)) {
+      return {
+        ...fallback,
+        selectorsChain: result.result as string[],
+      };
+    }
+    return fallback;
+  }
+
+  private async _findFrameSelector(frame: Frame, parent: Frame): Promise<string | undefined> {
+    try {
+      const frameElement = await frame.frameElement();
+      if (!frameElement)
+        return;
+      const utility = await parent._utilityContext();
+      const injected = await utility.injectedScript();
+      const selector = await injected.evaluate((injected, element) => injected.generateSelector(element as Element), frameElement);
+      return selector;
+    } catch (e) {
+    }
+  }
+
   private async _performAction(frame: Frame, action: actions.Action) {
     // Commit last action so that no further signals are added to it.
     this._generator.commitLastAction();
 
-    const page = frame._page;
+    const frameDescription = await this._describeFrame(frame);
     const actionInContext: ActionInContext = {
-      pageAlias: this._pageAliases.get(page)!,
-      ...describeFrame(frame),
+      frame: frameDescription,
       action
     };
 
@@ -476,20 +528,20 @@ class ContextRecorder extends EventEmitter {
     const kActionTimeout = 5000;
     if (action.name === 'click') {
       const { options } = toClickOptions(action);
-      await perform('click', { selector: action.selector }, callMetadata => frame.click(callMetadata, action.selector, { ...options, timeout: kActionTimeout }));
+      await perform('click', { selector: action.selector }, callMetadata => frame.click(callMetadata, action.selector, { ...options, timeout: kActionTimeout, strict: true }));
     }
     if (action.name === 'press') {
       const modifiers = toModifiers(action.modifiers);
       const shortcut = [...modifiers, action.key].join('+');
-      await perform('press', { selector: action.selector, key: shortcut }, callMetadata => frame.press(callMetadata, action.selector, shortcut, { timeout: kActionTimeout }));
+      await perform('press', { selector: action.selector, key: shortcut }, callMetadata => frame.press(callMetadata, action.selector, shortcut, { timeout: kActionTimeout, strict: true }));
     }
     if (action.name === 'check')
-      await perform('check', { selector: action.selector }, callMetadata => frame.check(callMetadata, action.selector, { timeout: kActionTimeout }));
+      await perform('check', { selector: action.selector }, callMetadata => frame.check(callMetadata, action.selector, { timeout: kActionTimeout, strict: true }));
     if (action.name === 'uncheck')
-      await perform('uncheck', { selector: action.selector }, callMetadata => frame.uncheck(callMetadata, action.selector, { timeout: kActionTimeout }));
+      await perform('uncheck', { selector: action.selector }, callMetadata => frame.uncheck(callMetadata, action.selector, { timeout: kActionTimeout, strict: true }));
     if (action.name === 'select') {
       const values = action.options.map(value => ({ value }));
-      await perform('selectOption', { selector: action.selector, values }, callMetadata => frame.selectOption(callMetadata, action.selector, [], values, { timeout: kActionTimeout }));
+      await perform('selectOption', { selector: action.selector, values }, callMetadata => frame.selectOption(callMetadata, action.selector, [], values, { timeout: kActionTimeout, strict: true }));
     }
   }
 
@@ -497,11 +549,12 @@ class ContextRecorder extends EventEmitter {
     // Commit last action so that no further signals are added to it.
     this._generator.commitLastAction();
 
-    this._generator.addAction({
-      pageAlias: this._pageAliases.get(frame._page)!,
-      ...describeFrame(frame),
+    const frameDescription = await this._describeFrame(frame);
+    const actionInContext: ActionInContext = {
+      frame: frameDescription,
       action
-    });
+    };
+    this._generator.addAction(actionInContext);
   }
 
   private _onFrameNavigated(frame: Frame, page: Page) {
@@ -534,4 +587,30 @@ function languageForFile(file: string) {
   if (file.endsWith('.cs'))
     return 'csharp';
   return 'javascript';
+}
+
+class ThrottledFile {
+  private _file: string;
+  private _timer: NodeJS.Timeout | undefined;
+  private _text: string | undefined;
+
+  constructor(file: string) {
+    this._file = file;
+  }
+
+  setContent(text: string) {
+    this._text = text;
+    if (!this._timer)
+      this._timer = setTimeout(() => this.flush(), 1000);
+  }
+
+  flush(): void {
+    if (this._timer) {
+      clearTimeout(this._timer);
+      this._timer = undefined;
+    }
+    if (this._text)
+      fs.writeFileSync(this._file, this._text);
+    this._text = undefined;
+  }
 }

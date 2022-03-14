@@ -27,7 +27,7 @@ function dimensions() {
   };
 }
 
-it('should click the document', async ({ page, server }) => {
+it('should click the document @smoke', async ({ page, server }) => {
   await page.evaluate(() => {
     window['clickPromise'] = new Promise(resolve => {
       document.addEventListener('click', event => {
@@ -108,6 +108,40 @@ it('should pointerdown the div with a custom button', async ({ page, server, bro
   expect(event.button).toBe(1);
   expect(event.buttons).toBe(4);
   expect(event.pointerId).toBe(browserName === 'firefox' ? 0 : 1);
+});
+
+it('should report correct buttons property', async ({ page }) => {
+  await page.evaluate(() => {
+    (window as any).__EVENTS = [];
+    const handler = event => {
+      (window as any).__EVENTS.push({
+        type: event.type,
+        button: event.button,
+        buttons: event.buttons,
+      });
+    };
+    window.addEventListener('mousedown', handler, false);
+    window.addEventListener('mouseup', handler, false);
+  });
+  await page.mouse.move(50, 60);
+  await page.mouse.down({
+    button: 'middle',
+  });
+  await page.mouse.down({
+    button: 'left',
+  });
+  await page.mouse.up({
+    button: 'middle',
+  });
+  await page.mouse.up({
+    button: 'left',
+  });
+  expect(await page.evaluate(() => (window as any).__EVENTS)).toEqual([
+    { type: 'mousedown', button: 1, buttons: 4 },
+    { type: 'mousedown', button: 0, buttons: 5 },
+    { type: 'mouseup', button: 1, buttons: 1 },
+    { type: 'mouseup', button: 0, buttons: 0 },
+  ]);
 });
 
 it('should select the text with mouse', async ({ page, server }) => {

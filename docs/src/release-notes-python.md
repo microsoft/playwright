@@ -5,6 +5,154 @@ title: "Release notes"
 
 <!-- TOC -->
 
+## Version 1.20
+
+### Highlights
+
+- New options for methods [`method: Page.screenshot`], [`method: Locator.screenshot`] and [`method: ElementHandle.screenshot`]:
+  * Option `animations: "disabled"` rewinds all CSS animations and transitions to a consistent state
+  * Option `mask: Locator[]` masks given elements, overlaying them with pink `#FF00FF` boxes.
+- [Trace Viewer](./trace-viewer) now shows [API testing requests](./src/test-api-testing).
+- [`method: Locator.highlight`] visually reveals element(s) for easier debugging.
+
+### Announcements
+
+- We now ship a designated Python docker image `mcr.microsoft.com/playwright/python`. Please switch over to it if you use
+  Python. This is the last release that includes Python inside our javascript `mcr.microsoft.com/playwright` docker image.
+- v1.20 is the last release to receive WebKit update for macOS 10.15 Catalina. Please update MacOS to keep using latest & greatest WebKit!
+
+### Browser Versions
+
+- Chromium 101.0.4921.0
+- Mozilla Firefox 97.0.1
+- WebKit 15.4
+
+This version was also tested against the following stable channels:
+
+- Google Chrome 99
+- Microsoft Edge 99
+
+## Version 1.19
+
+### Highlights
+
+- Locator now supports a `has` option that makes sure it contains another locator inside:
+
+  ```python async
+  await page.locator("article", has=page.locator(".highlight")).click()
+  ```
+
+  ```python sync
+  page.locator("article", has=page.locator(".highlight")).click()
+  ```
+
+  Read more in [locator documentation](./api/class-locator#locator-locator-option-has)
+
+- New [`method: Locator.page`]
+- [`method: Page.screenshot`] and [`method: Locator.screenshot`] now automatically hide blinking caret
+- Playwright Codegen now generates locators and frame locators
+
+### Browser Versions
+
+- Chromium 100.0.4863.0
+- Mozilla Firefox 96.0.1
+- WebKit 15.4
+
+This version was also tested against the following stable channels:
+
+- Google Chrome 98
+- Microsoft Edge 98
+
+
+## Version 1.18
+
+### API Testing
+
+Playwright for Python 1.18 introduces new [API Testing](./api/class-apirequestcontext) that lets you send requests to the server directly from Python!
+Now you can:
+
+- test your server API
+- prepare server side state before visiting the web application in a test
+- validate server side post-conditions after running some actions in the browser
+
+To do a request on behalf of Playwright's Page, use **new [`property: Page.request`] API**:
+
+```python async
+# Do a GET request on behalf of page
+res = await page.request.get("http://example.com/foo.json")
+```
+
+```python sync
+# Do a GET request on behalf of page
+res = page.request.get("http://example.com/foo.json")
+```
+
+Read more in [our documentation](./api/class-apirequestcontext).
+
+### Web-First Assertions
+
+Playwright for Python 1.18 introduces [Web-First Assertions](./test-assertions).
+
+Consider the following example:
+
+```python async
+from playwright.async_api import Page, expect
+
+async def test_status_becomes_submitted(page: Page) -> None:
+    # ..
+    await page.click("#submit-button")
+    await expect(page.locator(".status")).to_have_text("Submitted")
+```
+
+```python sync
+from playwright.sync_api import Page, expect
+
+def test_status_becomes_submitted(page: Page) -> None:
+    # ..
+    page.click("#submit-button")
+    expect(page.locator(".status")).to_have_text("Submitted")
+```
+
+Playwright will be re-testing the node with the selector `.status` until
+fetched Node has the `"Submitted"` text. It will be re-fetching the node and
+checking it over and over, until the condition is met or until the timeout is
+reached. You can pass this timeout as an option.
+
+Read more in [our documentation](./test-assertions).
+
+### Locator Improvements
+
+- [`method: Locator.dragTo`]
+- Each locator can now be optionally filtered by the text it contains:
+    ```python async
+    await page.locator("li", has_text="my item").locator("button").click()
+    ```
+
+    ```python sync
+    page.locator("li", has_text="my item").locator("button").click()
+    ```
+
+    Read more in [locator documentation](./api/class-locator#locator-locator-option-has-text)
+
+
+### New APIs & changes
+
+- [`accept_downloads`](./api/class-browser#browser-new-context-option-accept-downloads) option now defaults to `True`.
+- [`sources`](./api/class-tracing#tracing-start-option-sources) option to embed sources into traces.
+
+### Browser Versions
+
+- Chromium 99.0.4812.0
+- Mozilla Firefox 95.0
+- WebKit 15.4
+
+This version was also tested against the following stable channels:
+
+- Google Chrome 97
+- Microsoft Edge 97
+
+
+
 ## Version 1.17
 
 ### Frame Locators
@@ -211,7 +359,7 @@ button.click("button >> visible=true")
 
 - [Intro](./intro.md)
 - [Authentication](./auth.md)
-- [Chome Extensions](./chrome-extensions.md)
+- [Chrome Extensions](./chrome-extensions.md)
 
 
 #### Browser Versions

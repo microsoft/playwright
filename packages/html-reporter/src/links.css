@@ -95,10 +95,11 @@
   }
 }
 
-.attachment-link {
+.attachment-body {
   white-space: pre-wrap;
   background-color: var(--color-canvas-subtle);
   margin-left: 24px;
   line-height: normal;
   padding: 8px;
+  font-family: monospace;
 }

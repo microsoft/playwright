@@ -202,7 +202,7 @@ Selectors are strings that are used to create [Locator]s. Locators are used to p
   page.locator("_vue=list-item[text *= 'milk' i]").click();
   ```
   ```python async
-  await page.locator("_vue=list-item[text *= "milk" i]").click()
+  await page.locator("_vue=list-item[text *= 'milk' i]").click()
   ```
   ```python sync
   page.locator("_vue=list-item[text *= 'milk' i]").click()
@@ -370,7 +370,7 @@ Text selector has a few variations:
 * `#nav-bar :text-matches("reg?ex", "i")` - the `:text-matches()` pseudo-class can be used inside a [css] selector, for regex-based match. This example is equivalent to `text=/reg?ex/i`, but inside the `#nav-bar` element.
 
 :::note
-Matching always normalizes whitespace, for example it turns multiple spaces into one, turns line breaks into spaces and ignores leading and trailing whitespace.
+Matching always normalizes whitespace. For example, it turns multiple spaces into one, turns line breaks into spaces and ignores leading and trailing whitespace.
 :::
 
 :::note
@@ -409,7 +409,7 @@ There are two ways of selecting only [visible](./actionability.md#visible) eleme
 - `:visible` pseudo-class in CSS selectors
 - `visible=` selector engine
 
-If you prefer your selectors to be CSS and don't want to rely on [chaining selectors](#chaining-selectors), use `:visible` pseudo class like so: `input:visible`. If you prefer combining selector engines, use `input >> visible=true`. The latter allows you combining `text=`, `xpath=` and other selector engines with the visibility filter.
+If you prefer your selectors to be CSS and don't want to rely on [chaining selectors](#chaining-selectors), use `:visible` pseudo class like so: `input:visible`. If you prefer combining selector engines, use `input >> visible=true`. The latter allows you to combine `text=`, `xpath=` and other selector engines with the visibility filter.
 
 For example, `input` matches all the inputs on the page, while
 `input:visible` and `input >> visible=true` only match visible inputs. This is useful to distinguish elements
@@ -427,7 +427,7 @@ Consider a page with two buttons, first invisible and second visible.
 <button>Visible</button>
 ```
 
-* This will find the first button, because it is the first one in DOM order. Then it will wait for the button to become visible before clicking, or timeout while waiting:
+* This will find the first button because it is the first element in DOM order. Then it will wait for the button to become visible before clicking, or timeout while waiting:
 
   ```js
   await page.locator('button').click();
@@ -503,7 +503,7 @@ await page.Locator("article:has(div.promo)").TextContentAsync();
 
 ### CSS selector list
 
-Comma separated list of CSS selectors will match all elements that can be selected by
+Comma-separated list of CSS selectors will match all elements that can be selected by
 one of the selectors in that list.
 
 ```js
@@ -575,7 +575,7 @@ or [Child combinator](https://developer.mozilla.org/en-US/docs/Web/CSS/Child_com
 arbitrary number of open shadow roots, including the implicit descendant combinator at the start of the
 selector. It does not search inside closed shadow roots or iframes.
 
-If you'd like to opt-out of this behavior, you can use `:light` CSS extension or `text:light` selector engine. They do not pierce shadow roots.
+If you'd like to opt out of this behavior, you can use `:light` CSS extension or `text:light` selector engine. They do not pierce shadow roots.
 
 ```js
 await page.locator(':light(.article > .header)').click();
@@ -645,7 +645,7 @@ to compute distance and relative position of the elements.
 
 ```js
 // Fill an input to the right of "Username".
-await page.locator('input:right-of(:text("Username"))', 'value').fill();
+await page.locator('input:right-of(:text("Username"))').fill('value');
 
 // Click a button near the promo card.
 await page.locator('button:near(.promo-card)').click();
@@ -653,7 +653,7 @@ await page.locator('button:near(.promo-card)').click();
 
 ```java
 // Fill an input to the right of "Username".
-page.locator("input:right-of(:text(\"Username\"))", "value").fill();
+page.locator("input:right-of(:text(\"Username\"))").fill("value");
 
 // Click a button near the promo card.
 page.locator("button:near(.promo-card)").click();
@@ -661,7 +661,7 @@ page.locator("button:near(.promo-card)").click();
 
 ```python async
 # Fill an input to the right of "Username".
-await page.locator('input:right-of(:text("Username"))', 'value').fill()
+await page.locator('input:right-of(:text("Username"))').fill('value')
 
 # Click a button near the promo card.
 await page.locator('button:near(.promo-card)').click()
@@ -669,7 +669,7 @@ await page.locator('button:near(.promo-card)').click()
 
 ```python sync
 # Fill an input to the right of "Username".
-page.locator('input:right-of(:text("Username"))', 'value').fill()
+page.locator('input:right-of(:text("Username"))').fill('value')
 
 # Click a button near the promo card.
 page.locator('button:near(.promo-card)').click()
@@ -677,7 +677,7 @@ page.locator('button:near(.promo-card)').click()
 
 ```csharp
 // Fill an input to the right of "Username".
-await page.Locator("input:right-of(:text(\"Username\"))", "value").FillAsync();
+await page.Locator("input:right-of(:text(\"Username\"))").FillAsync("value");
 
 // Click a button near the promo card.
 await page.Locator("button:near(.promo-card)").ClickAsync();
@@ -748,15 +748,15 @@ await page.Locator("button >> nth=-1").ClickAsync();
 React selectors are experimental and prefixed with `_`. The functionality might change in future.
 :::
 
-React selectors allow selecting elements by its component name and property values. The syntax is very similar to [attribute selectors](https://developer.mozilla.org/en-US/docs/Web/CSS/Attribute_selectors) and supports all attribute selector operators.
+React selectors allow selecting elements by their component name and property values. The syntax is very similar to [attribute selectors](https://developer.mozilla.org/en-US/docs/Web/CSS/Attribute_selectors) and supports all attribute selector operators.
 
 In react selectors, component names are transcribed with **CamelCase**.
 
 Selector examples:
 
 - match by **component**: `_react=BookItem`
-- match by component and **exact property value**, case-sensetive: `_react=BookItem[author = "Steven King"]`
-- match by property value only, **case-insensetive**: `_react=[author = "steven king" i]`
+- match by component and **exact property value**, case-sensitive: `_react=BookItem[author = "Steven King"]`
+- match by property value only, **case-insensitive**: `_react=[author = "steven king" i]`
 - match by component and **truthy property value**: `_react=MyButton[enabled]`
 - match by component and **boolean value**: `_react=MyButton[enabled = false]`
 - match by property **value substring**: `_react=[author *= "King"]`
@@ -764,6 +764,7 @@ Selector examples:
 - match by **nested** property value: `_react=[some.nested.value = 12]`
 - match by component and property value **prefix**: `_react=BookItem[author ^= "Steven"]`
 - match by component and property value **suffix**: `_react=BookItem[author $= "Steven"]`
+- match by component and **key**: `_react=BookItem[key = '2']`
 
 
 
@@ -784,15 +785,15 @@ React selectors, as well as [React DevTools](https://chrome.google.com/webstore/
 Vue selectors are experimental and prefixed with `_`. The functionality might change in future.
 :::
 
-Vue selectors allow selecting elements by its component name and property values. The syntax is very similar to [attribute selectors](https://developer.mozilla.org/en-US/docs/Web/CSS/Attribute_selectors) and supports all attribute selector operators.
+Vue selectors allow selecting elements by their component name and property values. The syntax is very similar to [attribute selectors](https://developer.mozilla.org/en-US/docs/Web/CSS/Attribute_selectors) and supports all attribute selector operators.
 
-In vue selectors, component names are transcribed with **kebab-case**.
+In Vue selectors, component names are transcribed with **kebab-case**.
 
 Selector examples:
 
 - match by **component**: `_vue=book-item`
-- match by component and **exact property value**, case-sensetive: `_vue=book-item[author = "Steven King"]`
-- match by property value only, **case-insensetive**: `_vue=[author = "steven king" i]`
+- match by component and **exact property value**, case-sensitive: `_vue=book-item[author = "Steven King"]`
+- match by property value only, **case-insensitive**: `_vue=[author = "steven king" i]`
 - match by component and **truthy property value**: `_vue=my-button[enabled]`
 - match by component and **boolean value**: `_vue=my-button[enabled = false]`
 - match by property **value substring**: `_vue=[author *= "King"]`
@@ -814,7 +815,7 @@ Vue selectors, as well as [Vue DevTools](https://chrome.google.com/webstore/deta
 
 ## id, data-testid, data-test-id, data-test selectors
 
-Playwright supports a shorthand for selecting elements using certain attributes. Currently, only
+Playwright supports shorthand for selecting elements using certain attributes. Currently, only
 the following attributes are supported:
 
 - `id`
@@ -824,7 +825,7 @@ the following attributes are supported:
 
 ```js
 // Fill an input with the id "username"
-await page.locator('id=username', 'value').fill();
+await page.locator('id=username').fill('value');
 
 // Click an element with data-test-id "submit"
 await page.locator('data-test-id=submit').click();
@@ -832,7 +833,7 @@ await page.locator('data-test-id=submit').click();
 
 ```java
 // Fill an input with the id "username"
-page.locator("id=username", "value").fill();
+page.locator("id=username").fill("value");
 
 // Click an element with data-test-id "submit"
 page.locator("data-test-id=submit").click();
@@ -840,7 +841,7 @@ page.locator("data-test-id=submit").click();
 
 ```python async
 # Fill an input with the id "username"
-await page.locator('id=username', 'value').fill()
+await page.locator('id=username').fill('value')
 
 # Click an element with data-test-id "submit"
 await page.locator('data-test-id=submit').click()
@@ -848,7 +849,7 @@ await page.locator('data-test-id=submit').click()
 
 ```python sync
 # Fill an input with the id "username"
-page.locator('id=username', 'value').fill()
+page.locator('id=username').fill('value')
 
 # Click an element with data-test-id "submit"
 page.locator('data-test-id=submit').click()
@@ -856,7 +857,7 @@ page.locator('data-test-id=submit').click()
 
 ```csharp
 // Fill an input with the id "username"
-await page.Locator("id=username", "value").FillAsync();
+await page.Locator("id=username").FillAsync("value");
 
 // Click an element with data-test-id "submit"
 await page.Locator("data-test-id=submit").ClickAsync();
@@ -895,12 +896,12 @@ page.locator(":nth-match(:text('Buy'), 3)").click();
 
 ```python async
 # Click the third "Buy" button
-await page.locator(":nth-match(:text('Buy'), 3).click()"
+await page.locator(":nth-match(:text('Buy'), 3)").click()
 ```
 
 ```python sync
 # Click the third "Buy" button
-page.locator(":nth-match(:text('Buy'), 3).click()"
+page.locator(":nth-match(:text('Buy'), 3)").click()
 ```
 
 ```csharp
@@ -946,7 +947,7 @@ prefer using [text] or [css] selectors over the `:nth-match()`.
 
 ## Chaining selectors
 
-Selectors defined as `engine=body` or in short-form can be combined with the `>>` token, e.g. `selector1 >> selector2 >> selectors3`. When selectors are chained, next one is queried relative to the previous one's result.
+Selectors defined as `engine=body` or in short-form can be combined with the `>>` token, e.g. `selector1 >> selector2 >> selectors3`. When selectors are chained, the next one is queried relative to the previous one's result.
 
 For example,
 ```
@@ -984,8 +985,8 @@ await page.locator('text="Login"').click();
 await page.locator('"Login"').click(); // short-form
 
 // queries "Search GitHub" placeholder attribute
-await page.locator('css=[placeholder="Search GitHub"]', 'query').fill();
-await page.locator('[placeholder="Search GitHub"]', 'query').fill(); // short-form
+await page.locator('css=[placeholder="Search GitHub"]').fill('query');
+await page.locator('[placeholder="Search GitHub"]').fill('query'); // short-form
 
 // queries "Close" accessibility label
 await page.locator('css=[aria-label="Close"]').click();
@@ -1001,8 +1002,8 @@ page.locator("text=\"Login\"").click();
 page.locator("\"Login\"").click(); // short-form
 
 // queries "Search GitHub" placeholder attribute
-page.locator("css=[placeholder='Search GitHub']", "query").fill();
-page.locator("[placeholder='Search GitHub']", "query").fill(); // short-form
+page.locator("css=[placeholder='Search GitHub']").fill("query");
+page.locator("[placeholder='Search GitHub']").fill("query"); // short-form
 
 // queries "Close" accessibility label
 page.locator("css=[aria-label='Close']").click();
@@ -1018,8 +1019,8 @@ await page.locator('text="Login"').click()
 await page.locator('"Login"').click() # short-form
 
 # queries "Search GitHub" placeholder attribute
-await page.locator('css=[placeholder="Search GitHub"]', 'query').fill()
-await page.locator('[placeholder="Search GitHub"]', 'query').fill() # short-form
+await page.locator('css=[placeholder="Search GitHub"]').fill('query')
+await page.locator('[placeholder="Search GitHub"]').fill('query') # short-form
 
 # queries "Close" accessibility label
 await page.locator('css=[aria-label="Close"]').click()
@@ -1035,8 +1036,8 @@ page.locator('text="Login"').click()
 page.locator('"Login"').click() # short-form
 
 # queries "Search GitHub" placeholder attribute
-page.locator('css=[placeholder="Search GitHub"]').fill()
-page.locator('[placeholder="Search GitHub"]').fill() # short-form
+page.locator('css=[placeholder="Search GitHub"]').fill('query')
+page.locator('[placeholder="Search GitHub"]').fill('query') # short-form
 
 # queries "Close" accessibility label
 page.locator('css=[aria-label="Close"]').click()
@@ -1052,8 +1053,8 @@ await page.Locator("text=\"Login\"").ClickAsync();
 await page.Locator("\"Login\"").ClickAsync(); // short-form
 
 // queries "Search GitHub" placeholder attribute
-await page.Locator("css=[placeholder='Search GitHub']", "query").FillAsync();
-await page.Locator("[placeholder='Search GitHub']", "query").FillAsync(); // short-form
+await page.Locator("css=[placeholder='Search GitHub']").FillAsync("query");
+await page.Locator("[placeholder='Search GitHub']").FillAsync("query"); // short-form
 
 // queries "Close" accessibility label
 await page.Locator("css=[aria-label='Close']").ClickAsync();

@@ -17,12 +17,14 @@
 
 import { test as it, expect } from './pageTest';
 
+it.skip(({ isAndroid }) => isAndroid);
+
 async function giveItAChanceToFill(page) {
   for (let i = 0; i < 5; i++)
     await page.evaluate(() => new Promise(f => requestAnimationFrame(() => requestAnimationFrame(f))));
 }
 
-it('should fill textarea', async ({ page, server }) => {
+it('should fill textarea @smoke', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/textarea.html');
   await page.fill('textarea', 'some value');
   expect(await page.evaluate(() => window['result'])).toBe('some value');

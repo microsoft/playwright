@@ -1,4 +1,5 @@
 const { TestServer } = require('../../../utils/testserver/');
+console.error('error from server');
 // delay creating the server to test waiting for it
 setTimeout(() => {
   TestServer.create(__dirname, process.argv[2] || 3000).then(server => {

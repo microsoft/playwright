@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect } from './playwright-test-fixtures';
+import { test, expect, countTimes, stripAnsi } from './playwright-test-fixtures';
 
 test('should handle fixture timeout', async ({ runInlineTest }) => {
   const result = await runInlineTest({
@@ -434,4 +434,67 @@ test('should not teardown when setup times out', async ({ runInlineTest }) => {
   expect(result.output).toContain('Timeout of 1000ms exceeded');
   expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
   ]);
+});
+
+test('should not report fixture teardown error twice', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      const test = pwt.test.extend({
+        fixture: async ({ }, use) => {
+          await use();
+          throw new Error('Oh my error');
+        },
+      });
+      test('good', async ({ fixture }) => {
+      });
+    `,
+  }, { reporter: 'list' });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.output).toContain('Error: Oh my error');
+  expect(stripAnsi(result.output)).toContain(`throw new Error('Oh my error')`);
+  expect(countTimes(stripAnsi(result.output), 'Oh my error')).toBe(2);
+});
+
+test('should not report fixture teardown timeout twice', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      const test = pwt.test.extend({
+        fixture: async ({ }, use) => {
+          await use();
+          await new Promise(() => {});
+        },
+      });
+      test('good', async ({ fixture }) => {
+      });
+    `,
+  }, { reporter: 'list', timeout: 1000 });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.output).toContain('while shutting down environment');
+  expect(countTimes(result.output, 'while shutting down environment')).toBe(1);
+});
+
+test('should handle fixture teardown error after test timeout and continue', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      const test = pwt.test.extend({
+        fixture: async ({ }, use) => {
+          await use();
+          throw new Error('Oh my error');
+        },
+      });
+      test('bad', async ({ fixture }) => {
+        test.setTimeout(100);
+        await new Promise(f => setTimeout(f, 500));
+      });
+      test('good', async ({}) => {
+      });
+    `,
+  }, { reporter: 'list', workers: '1' });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.passed).toBe(1);
+  expect(result.output).toContain('Timeout of 100ms exceeded');
+  expect(result.output).toContain('Error: Oh my error');
 });

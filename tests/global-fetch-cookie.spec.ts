@@ -138,6 +138,19 @@ it('should send secure cookie over https', async ({ request, server, httpsServer
   expect(serverRequest.headers.cookie).toBe('a=v; b=v');
 });
 
+it('should send secure cookie over http for localhost', async ({ request, server }) => {
+  server.setRoute('/setcookie.html', (req, res) => {
+    res.setHeader('Set-Cookie', ['a=v; secure', 'b=v']);
+    res.end();
+  });
+  await request.get(`${server.PREFIX}/setcookie.html`);
+  const [serverRequest] = await Promise.all([
+    server.waitForRequest('/empty.html'),
+    request.get(server.EMPTY_PAGE)
+  ]);
+  expect(serverRequest.headers.cookie).toBe('a=v; b=v');
+});
+
 it('should send not expired cookies', async ({ request, server }) => {
   server.setRoute('/setcookie.html', (req, res) => {
     const tomorrow = new Date();
@@ -164,6 +177,33 @@ it('should remove expired cookies', async ({ request, server }) => {
     request.get(server.EMPTY_PAGE)
   ]);
   expect(serverRequest.headers.cookie).toBe('a=v');
+});
+
+it('should store cookie from Set-Cookie header even if it contains equal signs', async ({ request, server }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/11612' });
+
+  server.setRoute('/setcookie.html', (req, res) => {
+    res.setHeader('Set-Cookie', ['f=value == value=; secure; httpOnly; path=/some=value']);
+    res.end();
+  });
+
+  await request.get(`http://a.b.one.com:${server.PORT}/setcookie.html`);
+  const state = await request.storageState();
+  expect(state).toEqual({
+    'cookies': [
+      {
+        domain: 'a.b.one.com',
+        expires: -1,
+        name: 'f',
+        path: '/some=value',
+        sameSite: 'Lax',
+        httpOnly: true,
+        secure: true,
+        value: 'value == value=',
+      }
+    ],
+    'origins': []
+  });
 });
 
 it('should export cookies to storage state', async ({ request, server }) => {

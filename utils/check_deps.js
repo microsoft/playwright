@@ -67,7 +67,7 @@ async function innerCheckDeps(root, checkDepsFile) {
   }
 
   for (const dep of deps) {
-    const resolved = require.resolve(dep);
+    const resolved = require.resolve(dep, { paths: [root] });
     if (dep === resolved || !resolved.includes('node_modules'))
       deps.delete(dep);
   }
@@ -181,7 +181,7 @@ DEPS['src/protocol/'] = ['src/utils/'];
 
 // Client depends on chromium protocol for types.
 DEPS['src/client/'] = ['src/common/', 'src/utils/', 'src/protocol/', 'src/server/chromium/protocol.d.ts'];
-DEPS['src/outofprocess.ts'] = ['src/client/', 'src/protocol/'];
+DEPS['src/outofprocess.ts'] = ['src/client/', 'src/protocol/', 'src/utils/'];
 
 DEPS['src/dispatchers/'] = ['src/common/', 'src/utils/', 'src/protocol/', 'src/server/**'];
 
@@ -210,6 +210,7 @@ DEPS['src/server/electron/'] = [...DEPS['src/server/'], 'src/server/chromium/'];
 
 DEPS['src/server/playwright.ts'] = [...DEPS['src/server/'], 'src/server/chromium/', 'src/server/webkit/', 'src/server/firefox/', 'src/server/android/', 'src/server/electron/'];
 DEPS['src/server/browserContext.ts'] = [...DEPS['src/server/'], 'src/server/trace/recorder/tracing.ts'];
+DEPS['src/server/fetch.ts'] = [...DEPS['src/server/'], 'src/server/trace/recorder/tracing.ts'];
 DEPS['src/cli/driver.ts'] = DEPS['src/inProcessFactory.ts'] = DEPS['src/browserServerImpl.ts'] = ['src/**'];
 
 // Tracing is a client/server plugin, nothing should depend on it.

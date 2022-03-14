@@ -16,7 +16,7 @@
 
 import { browserTest as it, expect } from './config/browserTest';
 
-it('should inherit user agent from browser context', async function({ browser, server }) {
+it('should inherit user agent from browser context @smoke', async function({ browser, server }) {
   const context = await browser.newContext({
     userAgent: 'hey'
   });

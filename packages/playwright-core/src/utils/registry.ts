@@ -30,52 +30,24 @@ const BIN_PATH = path.join(__dirname, '..', '..', 'bin');
 
 const EXECUTABLE_PATHS = {
   'chromium': {
-    'ubuntu18.04': ['chrome-linux', 'chrome'],
-    'ubuntu20.04': ['chrome-linux', 'chrome'],
-    'ubuntu18.04-arm64': ['chrome-linux', 'chrome'],
-    'ubuntu20.04-arm64': ['chrome-linux', 'chrome'],
-    'mac10.13': ['chrome-mac', 'Chromium.app', 'Contents', 'MacOS', 'Chromium'],
-    'mac10.14': ['chrome-mac', 'Chromium.app', 'Contents', 'MacOS', 'Chromium'],
-    'mac10.15': ['chrome-mac', 'Chromium.app', 'Contents', 'MacOS', 'Chromium'],
-    'mac11': ['chrome-mac', 'Chromium.app', 'Contents', 'MacOS', 'Chromium'],
-    'mac11-arm64': ['chrome-mac', 'Chromium.app', 'Contents', 'MacOS', 'Chromium'],
-    'win64': ['chrome-win', 'chrome.exe'],
+    'linux': ['chrome-linux', 'chrome'],
+    'mac': ['chrome-mac', 'Chromium.app', 'Contents', 'MacOS', 'Chromium'],
+    'win': ['chrome-win', 'chrome.exe'],
   },
   'firefox': {
-    'ubuntu18.04': ['firefox', 'firefox'],
-    'ubuntu20.04': ['firefox', 'firefox'],
-    'ubuntu18.04-arm64': undefined,
-    'ubuntu20.04-arm64': ['firefox', 'firefox'],
-    'mac10.13': ['firefox', 'Nightly.app', 'Contents', 'MacOS', 'firefox'],
-    'mac10.14': ['firefox', 'Nightly.app', 'Contents', 'MacOS', 'firefox'],
-    'mac10.15': ['firefox', 'Nightly.app', 'Contents', 'MacOS', 'firefox'],
-    'mac11': ['firefox', 'Nightly.app', 'Contents', 'MacOS', 'firefox'],
-    'mac11-arm64': ['firefox', 'Nightly.app', 'Contents', 'MacOS', 'firefox'],
-    'win64': ['firefox', 'firefox.exe'],
+    'linux': ['firefox', 'firefox'],
+    'mac': ['firefox', 'Nightly.app', 'Contents', 'MacOS', 'firefox'],
+    'win': ['firefox', 'firefox.exe'],
   },
   'webkit': {
-    'ubuntu18.04': ['pw_run.sh'],
-    'ubuntu20.04': ['pw_run.sh'],
-    'ubuntu18.04-arm64': undefined,
-    'ubuntu20.04-arm64': ['pw_run.sh'],
-    'mac10.13': undefined,
-    'mac10.14': ['pw_run.sh'],
-    'mac10.15': ['pw_run.sh'],
-    'mac11': ['pw_run.sh'],
-    'mac11-arm64': ['pw_run.sh'],
-    'win64': ['Playwright.exe'],
+    'linux': ['pw_run.sh'],
+    'mac': ['pw_run.sh'],
+    'win': ['Playwright.exe'],
   },
   'ffmpeg': {
-    'ubuntu18.04': ['ffmpeg-linux'],
-    'ubuntu20.04': ['ffmpeg-linux'],
-    'ubuntu18.04-arm64': ['ffmpeg-linux-arm64'],
-    'ubuntu20.04-arm64': ['ffmpeg-linux-arm64'],
-    'mac10.13': ['ffmpeg-mac'],
-    'mac10.14': ['ffmpeg-mac'],
-    'mac10.15': ['ffmpeg-mac'],
-    'mac11': ['ffmpeg-mac'],
-    'mac11-arm64': ['ffmpeg-mac'],
-    'win64': ['ffmpeg-win64.exe'],
+    'linux': ['ffmpeg-linux'],
+    'mac': ['ffmpeg-mac'],
+    'win': ['ffmpeg-win64.exe'],
   },
 };
 
@@ -90,6 +62,8 @@ const DOWNLOAD_PATHS = {
     'mac10.15': 'builds/chromium/%s/chromium-mac.zip',
     'mac11': 'builds/chromium/%s/chromium-mac.zip',
     'mac11-arm64': 'builds/chromium/%s/chromium-mac-arm64.zip',
+    'mac12': 'builds/chromium/%s/chromium-mac.zip',
+    'mac12-arm64': 'builds/chromium/%s/chromium-mac-arm64.zip',
     'win64': 'builds/chromium/%s/chromium-win64.zip',
   },
   'chromium-with-symbols': {
@@ -102,6 +76,8 @@ const DOWNLOAD_PATHS = {
     'mac10.15': 'builds/chromium/%s/chromium-with-symbols-mac.zip',
     'mac11': 'builds/chromium/%s/chromium-with-symbols-mac.zip',
     'mac11-arm64': 'builds/chromium/%s/chromium-with-symbols-mac-arm64.zip',
+    'mac12': 'builds/chromium/%s/chromium-with-symbols-mac.zip',
+    'mac12-arm64': 'builds/chromium/%s/chromium-with-symbols-mac-arm64.zip',
     'win64': 'builds/chromium/%s/chromium-with-symbols-win64.zip',
   },
   'firefox': {
@@ -114,6 +90,8 @@ const DOWNLOAD_PATHS = {
     'mac10.15': 'builds/firefox/%s/firefox-mac-11.zip',
     'mac11': 'builds/firefox/%s/firefox-mac-11.zip',
     'mac11-arm64': 'builds/firefox/%s/firefox-mac-11-arm64.zip',
+    'mac12': 'builds/firefox/%s/firefox-mac-11.zip',
+    'mac12-arm64': 'builds/firefox/%s/firefox-mac-11-arm64.zip',
     'win64': 'builds/firefox/%s/firefox-win64.zip',
   },
   'firefox-beta': {
@@ -126,6 +104,8 @@ const DOWNLOAD_PATHS = {
     'mac10.15': 'builds/firefox-beta/%s/firefox-beta-mac-11.zip',
     'mac11': 'builds/firefox-beta/%s/firefox-beta-mac-11.zip',
     'mac11-arm64': 'builds/firefox-beta/%s/firefox-beta-mac-11-arm64.zip',
+    'mac12': 'builds/firefox-beta/%s/firefox-beta-mac-11.zip',
+    'mac12-arm64': 'builds/firefox-beta/%s/firefox-beta-mac-11-arm64.zip',
     'win64': 'builds/firefox-beta/%s/firefox-beta-win64.zip',
   },
   'webkit': {
@@ -138,6 +118,8 @@ const DOWNLOAD_PATHS = {
     'mac10.15': 'builds/webkit/%s/webkit-mac-10.15.zip',
     'mac11': 'builds/webkit/%s/webkit-mac-10.15.zip',
     'mac11-arm64': 'builds/webkit/%s/webkit-mac-11-arm64.zip',
+    'mac12': 'builds/webkit/%s/webkit-mac-12.zip',
+    'mac12-arm64': 'builds/webkit/%s/webkit-mac-12-arm64.zip',
     'win64': 'builds/webkit/%s/webkit-win64.zip',
   },
   'ffmpeg': {
@@ -149,7 +131,9 @@ const DOWNLOAD_PATHS = {
     'mac10.14': 'builds/ffmpeg/%s/ffmpeg-mac.zip',
     'mac10.15': 'builds/ffmpeg/%s/ffmpeg-mac.zip',
     'mac11': 'builds/ffmpeg/%s/ffmpeg-mac.zip',
-    'mac11-arm64': 'builds/ffmpeg/%s/ffmpeg-mac.zip',
+    'mac11-arm64': 'builds/ffmpeg/%s/ffmpeg-mac-arm64.zip',
+    'mac12': 'builds/ffmpeg/%s/ffmpeg-mac.zip',
+    'mac12-arm64': 'builds/ffmpeg/%s/ffmpeg-mac-arm64.zip',
     'win64': 'builds/ffmpeg/%s/ffmpeg-win64.zip',
   },
 };
@@ -260,7 +244,13 @@ export class Registry {
   constructor(browsersJSON: BrowsersJSON) {
     const descriptors = readDescriptors(browsersJSON);
     const findExecutablePath = (dir: string, name: keyof typeof EXECUTABLE_PATHS) => {
-      const tokens = EXECUTABLE_PATHS[name][hostPlatform];
+      let tokens = undefined;
+      if (hostPlatform.startsWith('ubuntu'))
+        tokens = EXECUTABLE_PATHS[name]['linux'];
+      else if (hostPlatform.startsWith('mac'))
+        tokens = EXECUTABLE_PATHS[name]['mac'];
+      else if (hostPlatform.startsWith('win'))
+        tokens = EXECUTABLE_PATHS[name]['win'];
       return tokens ? path.join(dir, ...tokens) : undefined;
     };
     const executablePathOrDie = (name: string, e: string | undefined, installByDefault: boolean, sdkLanguage: string) => {
@@ -657,7 +647,7 @@ export class Registry {
       if (code !== 0)
         throw new Error(`Failed to install ${channel}`);
     } else {
-      const { command, args, elevatedPermissions } = await transformCommandsForRoot([`bash ${path.join(BIN_PATH, scriptName)} ${scriptArgs.join('')}`]);
+      const { command, args, elevatedPermissions } = await transformCommandsForRoot([`bash "${path.join(BIN_PATH, scriptName)}" ${scriptArgs.join('')}`]);
       if (elevatedPermissions)
         console.log('Switching to root user to install dependencies...'); // eslint-disable-line no-console
       const { code } = await spawnAsync(command, args, { cwd, stdio: 'inherit' });
@@ -726,7 +716,7 @@ export function buildPlaywrightCLICommand(sdkLanguage: string, parameters: strin
     case 'java':
       return `mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="${parameters}"`;
     case 'csharp':
-      return `playwright ${parameters}`;
+      return `pwsh bin\\Debug\\netX\\playwright.ps1 ${parameters}`;
     default:
       return `npx playwright ${parameters}`;
   }

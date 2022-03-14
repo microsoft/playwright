@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Battery Status API - Demo</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <meta http-equiv="cleartype" content="on">
+    <meta name="HandheldFriendly" content="True">
+    <link rel="stylesheet" href="src/styles.css">
+  </head>
+  <body>
+
+    <header class="demo-header">
+      <h1 class="demo-title">Battery Status API</h1>
+      <p class="not-support" hidden>Your browser doesn't support the Battery Status API :(</p>
+    </header>
+
+    <article class="battery-card">
+      <h1 class="battery-title">Battery Status</h1>
+
+      <div class="battery-box">
+        <strong class="battery-percentage"></strong>
+        <i class="battery"></i>
+      </div>
+
+      <dl class="battery-info">
+        <dt>Power Source</dt>
+        <dd class="battery-status">---</dd>
+
+        <dt>Level percentage</dt>
+        <dd class="battery-level">---</dd>
+
+        <dt>Fully charged in</dt>
+        <dd class="battery-fully">---</dd>
+
+        <dt>Remaining time</dt>
+        <dd class="battery-remaining">---</dd>
+      </dl>
+
+    </article>
+
+    <footer>
+      <a href="https://github.com/pazguille/demo-battery-api" id="github-ribbon"><img width="149" height="149" src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub"></a>
+      by <a href="http://pazguille.me/">Guille Paz</a> with <span class="heart">❤</span>
+      <iframe id="github-button" src="https://ghbtns.com/github-btn.html?user=pazguille&amp;repo=demo-battery-api&amp;type=watch&amp;count=true" allowtransparency="true" frameborder="0" scrolling="0" width="152" height="30"></iframe>
+    </footer>
+
+    <script src="src/index.js" async></script>
+  </body>
+</html>

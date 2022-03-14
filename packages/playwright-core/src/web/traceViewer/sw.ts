@@ -37,11 +37,7 @@ async function loadTrace(trace: string, clientId: string, progress: (done: numbe
   if (entry)
     return entry.traceModel;
   const traceModel = new TraceModel();
-  let url = trace.startsWith('http') || trace.startsWith('blob') ? trace : `file?path=${trace}`;
-  // Dropbox does not support cors.
-  if (url.startsWith('https://www.dropbox.com/'))
-    url = 'https://dl.dropboxusercontent.com/' + url.substring('https://www.dropbox.com/'.length);
-  await traceModel.load(url, progress);
+  await traceModel.load(trace, progress);
   const snapshotServer = new SnapshotServer(traceModel.storage());
   loadedTraces.set(trace, { traceModel, snapshotServer, clientId });
   return traceModel;
@@ -73,6 +69,7 @@ async function doFetch(event: FetchEvent): Promise<Response> {
           headers: { 'Content-Type': 'application/json' }
         });
       } catch (error: unknown) {
+        // eslint-disable-next-line no-console
         console.error(error);
         const traceFileName = url.searchParams.get('traceFileName')!;
         return new Response(JSON.stringify({

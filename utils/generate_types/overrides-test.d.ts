@@ -38,19 +38,68 @@ export type UpdateSnapshots = 'all' | 'none' | 'missing';
 type UseOptions<TestArgs, WorkerArgs> = { [K in keyof WorkerArgs]?: WorkerArgs[K] } & { [K in keyof TestArgs]?: TestArgs[K] };
 
 type ExpectSettings = {
-  // Default timeout for async expect matchers in milliseconds, defaults to 5000ms.
+  /**
+   * Default timeout for async expect matchers in milliseconds, defaults to 5000ms.
+   */
   timeout?: number;
+  toHaveScreenshot?: {
+    /** An acceptable perceived color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between pixels in compared images, between zero (strict) and one (lax). Defaults to `0.2`.
+     */
+    threshold?: number,
+    /**
+     * An acceptable amount of pixels that could be different, unset by default.
+     */
+    maxDiffPixels?: number,
+    /**
+     * An acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1` , unset by default.
+     */
+    maxDiffPixelRatio?: number,
+    /**
+     * When set to `"disabled"`, stops CSS animations, CSS transitions and Web Animations. Animations get different treatment
+     * depending on their duration:
+     * - finite animations are fast-forwarded to completion, so they'll fire `transitionend` event.
+     * - infinite animations are canceled to initial state, and then played over after the screenshot.
+     *
+     * Defaults to `"disabled"` that leaves animations untouched.
+     */
+    animations?: 'allow'|'disabled',
+    /**
+     * When set to `"ready"`, screenshot will wait for
+     * [`document.fonts.ready`](https://developer.mozilla.org/en-US/docs/Web/API/FontFaceSet/ready) promise to resolve in all
+     * frames. Defaults to `"ready"`.
+     */
+    fonts?: 'ready'|'nowait',
+    /**
+     * When set to `"css"`, screenshot will have a single pixel per each css pixel on the page. For high-dpi devices, this will
+     * keep screenshots small. Using `"device"` option will produce a single pixel per each device pixel, so screenhots of
+     * high-dpi devices will be twice as large or even larger. Defaults to `"css"`.
+     */
+    size?: 'css'|'device',
+  }
   toMatchSnapshot?: {
-    // Pixel match threshold.
-    threshold?: number
+    /** An acceptable perceived color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between pixels in compared images, between zero (strict) and one (lax). Defaults to `0.2`.
+     */
+    threshold?: number,
+    /**
+     * An acceptable amount of pixels that could be different, unset by default.
+     */
+    maxDiffPixels?: number,
+    /**
+     * An acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1` , unset by default.
+     */
+    maxDiffPixelRatio?: number,
   }
 };
 
 interface TestProject {
   expect?: ExpectSettings;
+  fullyParallel?: boolean;
+  grep?: RegExp | RegExp[];
+  grepInvert?: RegExp | RegExp[] | null;
   metadata?: any;
   name?: string;
   snapshotDir?: string;
+  screenshotsDir?: string;
   outputDir?: string;
   repeatEach?: number;
   retries?: number;
@@ -73,16 +122,22 @@ export type WebServerConfig = {
   command: string,
   /**
    * The port that your http server is expected to appear on. It does wait until it accepts connections.
+   * Exactly one of `port` or `url` is required.
    */
-  port: number,
+  port?: number,
+  /**
+   * The url on your http server that is expected to return a 2xx status code when the server is ready to accept connections.
+   * Exactly one of `port` or `url` is required.
+   */
+  url?: string,
   /**
    * How long to wait for the process to start up and be available in milliseconds. Defaults to 60000.
    */
   timeout?: number,
   /**
-   * If true, it will re-use an existing server on the port when available. If no server is running
-   * on that port, it will run the command to start a new server.
-   * If false, it will throw if an existing process is listening on the port.
+   * If true, it will re-use an existing server on the port or url when available. If no server is running
+   * on that port or url, it will run the command to start a new server.
+   * If false, it will throw if an existing process is listening on the port or url.
    * This should commonly set to !process.env.CI to allow the local dev server when running tests locally.
    */
   reuseExistingServer?: boolean
@@ -100,6 +155,7 @@ type LiteralUnion<T extends U, U = string> = T | (U & { zz_IGNORE_ME?: never });
 
 interface TestConfig {
   forbidOnly?: boolean;
+  fullyParallel?: boolean;
   globalSetup?: string;
   globalTeardown?: string;
   globalTimeout?: number;
@@ -120,6 +176,7 @@ interface TestConfig {
   metadata?: any;
   name?: string;
   snapshotDir?: string;
+  screenshotsDir?: string;
   outputDir?: string;
   repeatEach?: number;
   retries?: number;
@@ -136,6 +193,7 @@ export interface Config<TestArgs = {}, WorkerArgs = {}> extends TestConfig {
 
 export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
   forbidOnly: boolean;
+  fullyParallel: boolean;
   globalSetup: string | null;
   globalTeardown: string | null;
   globalTimeout: number;
@@ -204,13 +262,13 @@ export interface TestInfo {
   timeout: number;
   annotations: { type: string, description?: string }[];
   attachments: { name: string, path?: string, body?: Buffer, contentType: string }[];
-  attach(path: string, options?: { contentType?: string, name?: string}): Promise<void>;
-  attach(body: string | Buffer, name: string, options?: { contentType?: string }): Promise<void>;
+  attach(name: string, options?: { contentType?: string, path?: string, body?: string | Buffer }): Promise<void>;
   repeatEachIndex: number;
   retry: number;
   duration: number;
   status?: TestStatus;
   error?: TestError;
+  errors: TestError[];
   stdout: (string | Buffer)[];
   stderr: (string | Buffer)[];
   snapshotSuffix: string;
@@ -238,6 +296,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
     parallel: SuiteFunction & {
       only: SuiteFunction;
     };
+    configure: (options: { mode?: 'parallel' | 'serial' }) => void;
   };
   skip(title: string, testFunction: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<void> | void): void;
   skip(): void;
@@ -266,7 +325,6 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
   step(title: string, body: () => Promise<any>): Promise<any>;
   expect: Expect;
   extend<T, W extends KeyValue = {}>(fixtures: Fixtures<T, W, TestArgs, WorkerArgs>): TestType<TestArgs & T, WorkerArgs & W>;
-  extendTest<T, W>(other: TestType<T, W>): TestType<TestArgs & T, WorkerArgs & W>;
   info(): TestInfo;
 }
 
@@ -291,6 +349,17 @@ type ColorScheme = Exclude<BrowserContextOptions['colorScheme'], undefined>;
 type ExtraHTTPHeaders = Exclude<BrowserContextOptions['extraHTTPHeaders'], undefined>;
 type Proxy = Exclude<BrowserContextOptions['proxy'], undefined>;
 type StorageState = Exclude<BrowserContextOptions['storageState'], undefined>;
+type ConnectOptions = {
+  /**
+   * A browser websocket endpoint to connect to.
+   */
+  wsEndpoint: string;
+
+  /**
+   * Additional HTTP headers to be sent with web socket connect request.
+   */
+  headers?: { [key: string]: string; };
+};
 
 export interface PlaywrightWorkerOptions {
   browserName: BrowserName;
@@ -298,6 +367,7 @@ export interface PlaywrightWorkerOptions {
   headless: boolean | undefined;
   channel: BrowserChannel | undefined;
   launchOptions: LaunchOptions;
+  connectOptions: ConnectOptions | undefined;
   screenshot: 'off' | 'on' | 'only-on-failure';
   trace: TraceMode | /** deprecated */ 'retry-with-trace' | { mode: TraceMode, snapshots?: boolean, screenshots?: boolean, sources?: boolean };
   video: VideoMode | /** deprecated */ 'retry-with-video' | { mode: VideoMode, size?: ViewportSize };

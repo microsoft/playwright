@@ -20,7 +20,7 @@ import { browserTest as it, expect } from './config/browserTest';
 it.describe('device', () => {
   it.skip(({ browserName }) => browserName === 'firefox');
 
-  it('should work', async ({ playwright, browser, server }) => {
+  it('should work @smoke', async ({ playwright, browser, server }) => {
     const iPhone = playwright.devices['iPhone 6'];
     const context = await browser.newContext({ ...iPhone });
     const page = await context.newPage();

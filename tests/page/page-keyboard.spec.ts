@@ -20,7 +20,7 @@ import { attachFrame } from '../config/utils';
 
 it.skip(({ isAndroid }) => isAndroid);
 
-it('should type into a textarea', async ({ page }) => {
+it('should type into a textarea @smoke', async ({ page }) => {
   await page.evaluate(() => {
     const textarea = document.createElement('textarea');
     document.body.appendChild(textarea);
@@ -462,6 +462,18 @@ it('should dispatch a click event on a button when Enter gets pressed', async ({
   await page.focus('button');
   await page.keyboard.press('Enter');
   expect((await actual.jsonValue()).clicked).toBe(true);
+});
+
+it('should support simple copy-pasting', async ({ page, isMac, browserName }) => {
+  it.fixme(browserName === 'webkit', 'https://github.com/microsoft/playwright/issues/12000');
+  const modifier = isMac ? 'Meta' : 'Control';
+  await page.setContent(`<div contenteditable>123</div>`);
+  await page.focus('div');
+  await page.keyboard.press(`${modifier}+KeyA`);
+  await page.keyboard.press(`${modifier}+KeyC`);
+  await page.keyboard.press(`${modifier}+KeyV`);
+  await page.keyboard.press(`${modifier}+KeyV`);
+  expect(await page.evaluate(() => document.querySelector('div').textContent)).toBe('123123');
 });
 
 async function captureLastKeydown(page) {

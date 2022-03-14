@@ -34,41 +34,49 @@ export class Multiplexer implements Reporter {
 
   onTestBegin(test: TestCase, result: TestResult) {
     for (const reporter of this._reporters)
-      reporter.onTestBegin?.(test, result);
+      wrap(() => reporter.onTestBegin?.(test, result));
   }
 
   onStdOut(chunk: string | Buffer, test?: TestCase, result?: TestResult) {
     for (const reporter of this._reporters)
-      reporter.onStdOut?.(chunk, test, result);
+      wrap(() => reporter.onStdOut?.(chunk, test, result));
   }
 
   onStdErr(chunk: string | Buffer, test?: TestCase, result?: TestResult) {
     for (const reporter of this._reporters)
-      reporter.onStdErr?.(chunk, test, result);
+      wrap(() => reporter.onStdErr?.(chunk, test, result));
   }
 
   onTestEnd(test: TestCase, result: TestResult) {
     for (const reporter of this._reporters)
-      reporter.onTestEnd?.(test, result);
+      wrap(() => reporter.onTestEnd?.(test, result));
   }
 
   async onEnd(result: FullResult) {
     for (const reporter of this._reporters)
-      await reporter.onEnd?.(result);
+      await Promise.resolve().then(() => reporter.onEnd?.(result)).catch(e => console.error('Error in reporter', e));
   }
 
   onError(error: TestError) {
     for (const reporter of this._reporters)
-      reporter.onError?.(error);
+      wrap(() => reporter.onError?.(error));
   }
 
   onStepBegin(test: TestCase, result: TestResult, step: TestStep) {
     for (const reporter of this._reporters)
-      (reporter as any).onStepBegin?.(test, result, step);
+      wrap(() => (reporter as any).onStepBegin?.(test, result, step));
   }
 
   onStepEnd(test: TestCase, result: TestResult, step: TestStep) {
     for (const reporter of this._reporters)
       (reporter as any).onStepEnd?.(test, result, step);
+  }
+}
+
+function wrap(callback: () => void) {
+  try {
+    callback();
+  } catch (e) {
+    console.error('Error in reporter', e);
   }
 }

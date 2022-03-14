@@ -20,15 +20,14 @@ import path from 'path';
 import net from 'net';
 
 import { contextTest, expect } from './config/browserTest';
-import { PlaywrightClient } from '../packages/playwright-core/lib/remote/playwrightClient';
-import type { Page } from 'playwright-core';
+import type { Page, Browser } from 'playwright-core';
 
 class OutOfProcessPlaywrightServer {
   private _driverProcess: childProcess.ChildProcess;
   private _receivedPortPromise: Promise<string>;
 
   constructor(port: number, proxyPort: number) {
-    this._driverProcess = childProcess.fork(path.join(__dirname, '..', 'packages', 'playwright-core', 'lib', 'cli', 'cli.js'), ['run-server', port.toString()], {
+    this._driverProcess = childProcess.fork(path.join(__dirname, '..', 'packages', 'playwright-core', 'lib', 'cli', 'cli.js'), ['run-server', '--port', port.toString()], {
       stdio: 'pipe',
       detached: true,
       env: {
@@ -61,21 +60,25 @@ class OutOfProcessPlaywrightServer {
 }
 
 const it = contextTest.extend<{ pageFactory: (redirectPortForTest?: number) => Promise<Page> }>({
-  pageFactory: async ({ browserName, browserType }, run, testInfo) => {
+  pageFactory: async ({ browserType, browserName, channel }, run, testInfo) => {
     const playwrightServers: OutOfProcessPlaywrightServer[] = [];
+    const browsers: Browser[] = [];
     await run(async (redirectPortForTest?: number): Promise<Page> => {
       const server = new OutOfProcessPlaywrightServer(0, 3200 + testInfo.workerIndex);
       playwrightServers.push(server);
-      const service = await PlaywrightClient.connect({
-        wsEndpoint: await server.wsEndpoint(),
-      });
-      const playwright = service.playwright();
-      playwright._enablePortForwarding(redirectPortForTest);
-      const browser = await playwright[browserName].launch((browserType as any)._defaultLaunchOptions);
+      const browser = await browserType.connect({
+        wsEndpoint: await server.wsEndpoint() + '?proxy=*&browser=' + (channel || browserName),
+        __testHookRedirectPortForwarding: redirectPortForTest,
+      } as any);
+      browsers.push(browser);
       return await browser.newPage();
     });
     for (const playwrightServer of playwrightServers)
       await playwrightServer.kill();
+    await Promise.all(browsers.map(async browser => {
+      if (browser.isConnected())
+        await new Promise(f => browser.once('disconnected', f));
+    }));
   },
 });
 
@@ -105,7 +108,7 @@ it('should forward non-forwarded requests', async ({ pageFactory, server }) => {
   expect(reachedOriginalTarget).toBe(true);
 });
 
-it('should proxy localhost requests', async ({ pageFactory, server, browserName, platform }, workerInfo) => {
+it('should proxy localhost requests @smoke', async ({ pageFactory, server, browserName, platform }, workerInfo) => {
   it.skip(browserName === 'webkit' && platform === 'darwin');
   const { testServerPort, stopTestServer } = await startTestServer();
   let reachedOriginalTarget = false;
@@ -117,6 +120,24 @@ it('should proxy localhost requests', async ({ pageFactory, server, browserName,
   const page = await pageFactory(testServerPort);
   await page.goto(`http://localhost:${examplePort}/foo.html`);
   expect(await page.content()).toContain('from-retargeted-server');
+  expect(reachedOriginalTarget).toBe(false);
+  stopTestServer();
+});
+
+it('should proxy localhost requests from fetch api', async ({ pageFactory, server, browserName, platform }, workerInfo) => {
+  it.skip(browserName === 'webkit' && platform === 'darwin');
+
+  const { testServerPort, stopTestServer } = await startTestServer();
+  let reachedOriginalTarget = false;
+  server.setRoute('/foo.html', async (req, res) => {
+    reachedOriginalTarget = true;
+    res.end('<html><body></body></html>');
+  });
+  const examplePort = 20_000 + workerInfo.workerIndex * 3;
+  const page = await pageFactory(testServerPort);
+  const response = await page.request.get(`http://localhost:${examplePort}/foo.html`);
+  expect(response.status()).toBe(200);
+  expect(await response.text()).toContain('from-retargeted-server');
   expect(reachedOriginalTarget).toBe(false);
   stopTestServer();
 });

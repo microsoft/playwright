@@ -15,9 +15,10 @@
  * limitations under the License.
  */
 
+import { Route } from 'playwright-core';
 import { test as it, expect } from './pageTest';
 
-it('should intercept', async ({ page, server }) => {
+it('should intercept @smoke', async ({ page, server }) => {
   let intercepted = false;
   await page.route('**/empty.html', (route, request) => {
     expect(route.request()).toBe(request);
@@ -412,7 +413,7 @@ it('should work with badly encoded server', async ({ page, server }) => {
   expect(response.status()).toBe(200);
 });
 
-it('should work with encoded server - 2', async ({ page, server }) => {
+it('should work with encoded server - 2', async ({ page, server, browserName, browserMajorVersion }) => {
   // The requestWillBeSent will report URL as-is, whereas interception will
   // report encoded URL for stylesheet. @see crbug.com/759388
   const requests = [];
@@ -422,7 +423,10 @@ it('should work with encoded server - 2', async ({ page, server }) => {
   });
   const response = await page.goto(`data:text/html,<link rel="stylesheet" href="${server.PREFIX}/fonts?helvetica|arial"/>`);
   expect(response).toBe(null);
-  expect(requests.length).toBe(1);
+  if (browserName === 'firefox' && browserMajorVersion >= 97)
+    expect(requests.length).toBe(2); // Firefox DevTools report to navigations in this case as well.
+  else
+    expect(requests.length).toBe(1);
   expect((await requests[0].response()).status()).toBe(404);
 });
 
@@ -710,3 +714,16 @@ it('should contain raw response header after fulfill', async ({ page, server }) 
   const headers = await response.allHeaders();
   expect(headers['content-type']).toBeTruthy();
 });
+
+for (const method of ['fulfill', 'continue', 'abort'] as const) {
+  it(`route.${method} should throw if called twice`, async ({ page, server }) => {
+    const routePromise = new Promise<Route>(async resove => {
+      await page.route('**/*', resove);
+    });
+    page.goto(server.PREFIX + '/empty.html').catch(() => {});
+    const route = await routePromise;
+    await route[method]();
+    const e = await route[method]().catch(e => e);
+    expect(e.message).toContain('Route is already handled!');
+  });
+}

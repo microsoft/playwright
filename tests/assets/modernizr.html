@@ -10,6 +10,11 @@ for (const name in Modernizr) {
   let value = Modernizr[name];
   report[name] = value;
 }
+
+report['devicemotion2'] = 'ondevicemotion' in window;
+report['deviceorientation2'] = 'orientation' in window;
+report['deviceorientation3'] = 'ondeviceorientation' in window;
+
 document.body.style.whiteSpace = 'pre';
 document.body.textContent = JSON.stringify(report, undefined, 4);
 window.report = JSON.parse(document.body.textContent);

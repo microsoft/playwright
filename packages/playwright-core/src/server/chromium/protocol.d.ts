@@ -240,10 +240,6 @@ If omitted, the full tree is returned.
        */
       depth?: number;
       /**
-       * Deprecated. This parameter has been renamed to `depth`. If depth is not provided, max_depth will be used.
-       */
-      max_depth?: number;
-      /**
        * The frame for whose document the AX tree should be retrieved.
 If omited, the root frame is used.
        */
@@ -646,15 +642,15 @@ animation/transition.
     export interface AffectedFrame {
       frameId: Page.FrameId;
     }
-    export type SameSiteCookieExclusionReason = "ExcludeSameSiteUnspecifiedTreatedAsLax"|"ExcludeSameSiteNoneInsecure"|"ExcludeSameSiteLax"|"ExcludeSameSiteStrict"|"ExcludeInvalidSameParty"|"ExcludeSamePartyCrossPartyContext";
-    export type SameSiteCookieWarningReason = "WarnSameSiteUnspecifiedCrossSiteContext"|"WarnSameSiteNoneInsecure"|"WarnSameSiteUnspecifiedLaxAllowUnsafe"|"WarnSameSiteStrictLaxDowngradeStrict"|"WarnSameSiteStrictCrossDowngradeStrict"|"WarnSameSiteStrictCrossDowngradeLax"|"WarnSameSiteLaxCrossDowngradeStrict"|"WarnSameSiteLaxCrossDowngradeLax";
-    export type SameSiteCookieOperation = "SetCookie"|"ReadCookie";
+    export type CookieExclusionReason = "ExcludeSameSiteUnspecifiedTreatedAsLax"|"ExcludeSameSiteNoneInsecure"|"ExcludeSameSiteLax"|"ExcludeSameSiteStrict"|"ExcludeInvalidSameParty"|"ExcludeSamePartyCrossPartyContext";
+    export type CookieWarningReason = "WarnSameSiteUnspecifiedCrossSiteContext"|"WarnSameSiteNoneInsecure"|"WarnSameSiteUnspecifiedLaxAllowUnsafe"|"WarnSameSiteStrictLaxDowngradeStrict"|"WarnSameSiteStrictCrossDowngradeStrict"|"WarnSameSiteStrictCrossDowngradeLax"|"WarnSameSiteLaxCrossDowngradeStrict"|"WarnSameSiteLaxCrossDowngradeLax"|"WarnAttributeValueExceedsMaxSize";
+    export type CookieOperation = "SetCookie"|"ReadCookie";
     /**
      * This information is currently necessary, as the front-end has a difficult
 time finding a specific cookie. With this, we can convey specific error
 information without the cookie.
      */
-    export interface SameSiteCookieIssueDetails {
+    export interface CookieIssueDetails {
       /**
        * If AffectedCookie is not set then rawCookieLine contains the raw
 Set-Cookie header string. This hints at a problem where the
@@ -663,19 +659,19 @@ that no valid cookie could be created.
        */
       cookie?: AffectedCookie;
       rawCookieLine?: string;
-      cookieWarningReasons: SameSiteCookieWarningReason[];
-      cookieExclusionReasons: SameSiteCookieExclusionReason[];
+      cookieWarningReasons: CookieWarningReason[];
+      cookieExclusionReasons: CookieExclusionReason[];
       /**
        * Optionally identifies the site-for-cookies and the cookie url, which
 may be used by the front-end as additional context.
        */
-      operation: SameSiteCookieOperation;
+      operation: CookieOperation;
       siteForCookies?: string;
       cookieUrl?: string;
       request?: AffectedRequest;
     }
     export type MixedContentResolutionStatus = "MixedContentBlocked"|"MixedContentAutomaticallyUpgraded"|"MixedContentWarning";
-    export type MixedContentResourceType = "Audio"|"Beacon"|"CSPReport"|"Download"|"EventSource"|"Favicon"|"Font"|"Form"|"Frame"|"Image"|"Import"|"Manifest"|"Ping"|"PluginData"|"PluginResource"|"Prefetch"|"Resource"|"Script"|"ServiceWorker"|"SharedWorker"|"Stylesheet"|"Track"|"Video"|"Worker"|"XMLHttpRequest"|"XSLT";
+    export type MixedContentResourceType = "AttributionSrc"|"Audio"|"Beacon"|"CSPReport"|"Download"|"EventSource"|"Favicon"|"Font"|"Form"|"Frame"|"Image"|"Import"|"Manifest"|"Ping"|"PluginData"|"PluginResource"|"Prefetch"|"Resource"|"Script"|"ServiceWorker"|"SharedWorker"|"Stylesheet"|"Track"|"Video"|"Worker"|"XMLHttpRequest"|"XSLT";
     export interface MixedContentIssueDetails {
       /**
        * The type of resource causing the mixed content issue (css, js, iframe,
@@ -842,12 +838,6 @@ instead of "limited-quirks".
       url: string;
       location?: SourceCodeLocation;
     }
-    export interface WasmCrossOriginModuleSharingIssueDetails {
-      wasmModuleUrl: string;
-      sourceOrigin: string;
-      targetOrigin: string;
-      isWarning: boolean;
-    }
     export type GenericIssueErrorType = "CrossOriginPortalPostMessageError";
     /**
      * Depending on the concrete errorType, different properties are set.
@@ -870,15 +860,29 @@ https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/publi
       affectedFrame?: AffectedFrame;
       sourceCodeLocation: SourceCodeLocation;
       /**
-       * The content of the deprecation issue (this won't be translated),
+       * The content of an untranslated deprecation issue,
 e.g. "window.inefficientLegacyStorageMethod will be removed in M97,
 around January 2022. Please use Web Storage or Indexed Database
 instead. This standard was abandoned in January, 1970. See
 https://www.chromestatus.com/feature/5684870116278272 for more details."
        */
       message?: string;
+      /**
+       * The id of an untranslated deprecation issue e.g. PrefixedStorageInfo.
+       */
+      deprecationType: string;
     }
     export type ClientHintIssueReason = "MetaTagAllowListInvalidOrigin"|"MetaTagModifiedHTML";
+    export interface FederatedAuthRequestIssueDetails {
+      federatedAuthRequestIssueReason: FederatedAuthRequestIssueReason;
+    }
+    /**
+     * Represents the failure reason when a federated authentication reason fails.
+Should be updated alongside RequestIdTokenStatus in
+third_party/blink/public/mojom/devtools/inspector_issue.mojom to include
+all cases except for success.
+     */
+    export type FederatedAuthRequestIssueReason = "ApprovalDeclined"|"TooManyRequests"|"ManifestHttpNotFound"|"ManifestNoResponse"|"ManifestInvalidResponse"|"ClientMetadataHttpNotFound"|"ClientMetadataNoResponse"|"ClientMetadataInvalidResponse"|"ClientMetadataMissingPrivacyPolicyUrl"|"DisabledInSettings"|"ErrorFetchingSignin"|"InvalidSigninResponse"|"AccountsHttpNotFound"|"AccountsNoResponse"|"AccountsInvalidResponse"|"IdTokenHttpNotFound"|"IdTokenNoResponse"|"IdTokenInvalidResponse"|"IdTokenInvalidRequest"|"ErrorIdToken"|"Canceled";
     /**
      * This issue tracks client hints related issues. It's used to deprecate old
 features, encourage the use of new ones, and provide general guidance.
@@ -892,14 +896,14 @@ features, encourage the use of new ones, and provide general guidance.
 optional fields in InspectorIssueDetails to convey more specific
 information about the kind of issue.
      */
-    export type InspectorIssueCode = "SameSiteCookieIssue"|"MixedContentIssue"|"BlockedByResponseIssue"|"HeavyAdIssue"|"ContentSecurityPolicyIssue"|"SharedArrayBufferIssue"|"TrustedWebActivityIssue"|"LowTextContrastIssue"|"CorsIssue"|"AttributionReportingIssue"|"QuirksModeIssue"|"NavigatorUserAgentIssue"|"WasmCrossOriginModuleSharingIssue"|"GenericIssue"|"DeprecationIssue"|"ClientHintIssue";
+    export type InspectorIssueCode = "CookieIssue"|"MixedContentIssue"|"BlockedByResponseIssue"|"HeavyAdIssue"|"ContentSecurityPolicyIssue"|"SharedArrayBufferIssue"|"TrustedWebActivityIssue"|"LowTextContrastIssue"|"CorsIssue"|"AttributionReportingIssue"|"QuirksModeIssue"|"NavigatorUserAgentIssue"|"GenericIssue"|"DeprecationIssue"|"ClientHintIssue"|"FederatedAuthRequestIssue";
     /**
      * This struct holds a list of optional fields with additional information
 specific to the kind of issue. When adding a new issue code, please also
 add a new optional field to this type.
      */
     export interface InspectorIssueDetails {
-      sameSiteCookieIssueDetails?: SameSiteCookieIssueDetails;
+      cookieIssueDetails?: CookieIssueDetails;
       mixedContentIssueDetails?: MixedContentIssueDetails;
       blockedByResponseIssueDetails?: BlockedByResponseIssueDetails;
       heavyAdIssueDetails?: HeavyAdIssueDetails;
@@ -911,10 +915,10 @@ add a new optional field to this type.
       attributionReportingIssueDetails?: AttributionReportingIssueDetails;
       quirksModeIssueDetails?: QuirksModeIssueDetails;
       navigatorUserAgentIssueDetails?: NavigatorUserAgentIssueDetails;
-      wasmCrossOriginModuleSharingIssue?: WasmCrossOriginModuleSharingIssueDetails;
       genericIssueDetails?: GenericIssueDetails;
       deprecationIssueDetails?: DeprecationIssueDetails;
       clientHintIssueDetails?: ClientHintIssueDetails;
+      federatedAuthRequestIssueDetails?: FederatedAuthRequestIssueDetails;
     }
     /**
      * A unique id for a DevTools inspector issue. Allows other entities (e.g.
@@ -1560,6 +1564,15 @@ inspector" rules), "regular" for regular stylesheets.
       matchedCSSRules: RuleMatch[];
     }
     /**
+     * Inherited pseudo element matches from pseudos of an ancestor node.
+     */
+    export interface InheritedPseudoElementMatches {
+      /**
+       * Matches of pseudo styles from the pseudos of an ancestor node.
+       */
+      pseudoElements: PseudoElementMatches[];
+    }
+    /**
      * Match data for a CSS rule.
      */
     export interface RuleMatch {
@@ -1709,6 +1722,16 @@ starting with the innermost one, going outwards.
 The array enumerates container queries starting with the innermost one, going outwards.
        */
       containerQueries?: CSSContainerQuery[];
+      /**
+       * @supports CSS at-rule array.
+The array enumerates @supports at-rules starting with the innermost one, going outwards.
+       */
+      supports?: CSSSupports[];
+      /**
+       * Cascade layer array. Contains the layer hierarchy that this rule belongs to starting
+with the innermost layer and going outwards.
+       */
+      layers?: CSSLayer[];
     }
     /**
      * CSS coverage information.
@@ -1932,6 +1955,60 @@ available).
        * Optional name for the container.
        */
       name?: string;
+    }
+    /**
+     * CSS Supports at-rule descriptor.
+     */
+    export interface CSSSupports {
+      /**
+       * Supports rule text.
+       */
+      text: string;
+      /**
+       * The associated rule header range in the enclosing stylesheet (if
+available).
+       */
+      range?: SourceRange;
+      /**
+       * Identifier of the stylesheet containing this object (if exists).
+       */
+      styleSheetId?: StyleSheetId;
+    }
+    /**
+     * CSS Layer at-rule descriptor.
+     */
+    export interface CSSLayer {
+      /**
+       * Layer name.
+       */
+      text: string;
+      /**
+       * The associated rule header range in the enclosing stylesheet (if
+available).
+       */
+      range?: SourceRange;
+      /**
+       * Identifier of the stylesheet containing this object (if exists).
+       */
+      styleSheetId?: StyleSheetId;
+    }
+    /**
+     * CSS Layer data.
+     */
+    export interface CSSLayerData {
+      /**
+       * Layer name.
+       */
+      name: string;
+      /**
+       * Direct sub-layers
+       */
+      subLayers?: CSSLayerData[];
+      /**
+       * Layer order. The order determines the order of the layer in the cascade order.
+A higher number has higher priority in the cascade order.
+       */
+      order: number;
     }
     /**
      * Information about amount of glyphs that were rendered with given font.
@@ -2274,6 +2351,10 @@ attributes) for a DOM node identified by `nodeId`.
        */
       inherited?: InheritedStyleEntry[];
       /**
+       * A chain of inherited pseudo element styles (from the immediate node parent up to the DOM tree root).
+       */
+      inheritedPseudoElements?: InheritedPseudoElementMatches[];
+      /**
        * A list of CSS keyframed animations matching this node.
        */
       cssKeyframesRules?: CSSKeyframesRule[];
@@ -2310,6 +2391,18 @@ node.
        * The stylesheet text.
        */
       text: string;
+    }
+    /**
+     * Returns all layers parsed by the rendering engine for the tree scope of a node.
+Given a DOM element identified by nodeId, getLayersForNode returns the root
+layer for the nearest ancestor document or shadow root. The layer root contains
+the full layer tree for the tree scope and their ordering.
+     */
+    export type getLayersForNodeParameters = {
+      nodeId: DOM.NodeId;
+    }
+    export type getLayersForNodeReturnValue = {
+      rootLayer: CSSLayerData;
     }
     /**
      * Starts tracking the given computed styles for updates. The specified array of properties
@@ -2390,6 +2483,20 @@ property
        * The resulting CSS container query rule after modification.
        */
       containerQuery: CSSContainerQuery;
+    }
+    /**
+     * Modifies the expression of a supports at-rule.
+     */
+    export type setSupportsTextParameters = {
+      styleSheetId: StyleSheetId;
+      range: SourceRange;
+      text: string;
+    }
+    export type setSupportsTextReturnValue = {
+      /**
+       * The resulting CSS Supports rule after modification.
+       */
+      supports: CSSSupports;
     }
     /**
      * Modifies the rule selector.
@@ -2768,7 +2875,7 @@ front-end.
     /**
      * Pseudo element type.
      */
-    export type PseudoType = "first-line"|"first-letter"|"before"|"after"|"marker"|"backdrop"|"selection"|"target-text"|"spelling-error"|"grammar-error"|"highlight"|"first-line-inherited"|"scrollbar"|"scrollbar-thumb"|"scrollbar-button"|"scrollbar-track"|"scrollbar-track-piece"|"scrollbar-corner"|"resizer"|"input-list-button"|"transition"|"transition-container"|"transition-old-content"|"transition-new-content";
+    export type PseudoType = "first-line"|"first-letter"|"before"|"after"|"marker"|"backdrop"|"selection"|"target-text"|"spelling-error"|"grammar-error"|"highlight"|"first-line-inherited"|"scrollbar"|"scrollbar-thumb"|"scrollbar-button"|"scrollbar-track"|"scrollbar-track-piece"|"scrollbar-corner"|"resizer"|"input-list-button"|"page-transition"|"page-transition-container"|"page-transition-image-wrapper"|"page-transition-outgoing-image"|"page-transition-incoming-image";
     /**
      * Shadow root type.
      */
@@ -3309,6 +3416,10 @@ be called for that search.
      * Enables DOM agent for the given page.
      */
     export type enableParameters = {
+      /**
+       * Whether to include whitespaces in the children array of returned Nodes.
+       */
+      includeWhitespace?: "none"|"all";
     }
     export type enableReturnValue = {
     }
@@ -5359,11 +5470,6 @@ forwards to prevent deadlock.
        */
       maxVirtualTimeTaskStarvationCount?: number;
       /**
-       * If set the virtual time policy change should be deferred until any frame starts navigating.
-Note any previous deferred policy change is superseded.
-       */
-      waitForNavigation?: boolean;
-      /**
        * If set, base::Time::Now will be overridden to initially return this value.
        */
       initialVirtualTime?: Network.TimeSinceEpoch;
@@ -5445,6 +5551,17 @@ on Android.
       userAgentMetadata?: UserAgentMetadata;
     }
     export type setUserAgentOverrideReturnValue = {
+    }
+    /**
+     * Allows overriding the automation flag.
+     */
+    export type setAutomationOverrideParameters = {
+      /**
+       * Whether the override should be enabled.
+       */
+      enabled: boolean;
+    }
+    export type setAutomationOverrideReturnValue = {
     }
   }
   
@@ -6107,7 +6224,7 @@ modifiers, keyboard layout, etc (e.g., 'AltGr') (default: "").
       /**
        * Editing commands to send with the key event (e.g., 'selectAll') (default: []).
 These are related to but not equal the command names used in `document.execCommand` and NSStandardKeyBindingResponding.
-See https://source.chromium.org/chromium/chromium/src/+/master:third_party/blink/renderer/core/editing/commands/editor_command_names.h for valid command names.
+See https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/editing/commands/editor_command_names.h for valid command names.
        */
       commands?: string[];
     }
@@ -7942,7 +8059,7 @@ the same request (but not for redirected requests).
       initiatorIPAddressSpace: IPAddressSpace;
       privateNetworkRequestPolicy: PrivateNetworkRequestPolicy;
     }
-    export type CrossOriginOpenerPolicyValue = "SameOrigin"|"SameOriginAllowPopups"|"UnsafeNone"|"SameOriginPlusCoep";
+    export type CrossOriginOpenerPolicyValue = "SameOrigin"|"SameOriginAllowPopups"|"UnsafeNone"|"SameOriginPlusCoep"|"SameOriginAllowPopupsPlusCoep";
     export interface CrossOriginOpenerPolicyStatus {
       value: CrossOriginOpenerPolicyValue;
       reportOnlyValue: CrossOriginOpenerPolicyValue;
@@ -9494,7 +9611,7 @@ should be omitted for worker targets.
        */
       containerQueryContainerHighlightConfig?: ContainerQueryContainerHighlightConfig;
     }
-    export type ColorFormat = "rgb"|"hsl"|"hex";
+    export type ColorFormat = "rgb"|"hsl"|"hwb"|"hex";
     /**
      * Configurations for Persistent Grid Highlight
      */
@@ -9972,7 +10089,7 @@ Backend then generates 'inspectNodeRequested' event upon element selection.
     export type setShowScrollBottleneckRectsReturnValue = {
     }
     /**
-     * Requests that backend shows hit-test borders on layers
+     * Deprecated, no longer has any effect.
      */
     export type setShowHitTestBordersParameters = {
       /**
@@ -10058,11 +10175,11 @@ Backend then generates 'inspectNodeRequested' event upon element selection.
      * All Permissions Policy features. This enum should match the one defined
 in third_party/blink/renderer/core/permissions_policy/permissions_policy_features.json5.
      */
-    export type PermissionsPolicyFeature = "accelerometer"|"ambient-light-sensor"|"attribution-reporting"|"autoplay"|"camera"|"ch-dpr"|"ch-device-memory"|"ch-downlink"|"ch-ect"|"ch-prefers-color-scheme"|"ch-rtt"|"ch-ua"|"ch-ua-arch"|"ch-ua-bitness"|"ch-ua-platform"|"ch-ua-model"|"ch-ua-mobile"|"ch-ua-full-version"|"ch-ua-full-version-list"|"ch-ua-platform-version"|"ch-ua-reduced"|"ch-viewport-height"|"ch-viewport-width"|"ch-width"|"clipboard-read"|"clipboard-write"|"cross-origin-isolated"|"direct-sockets"|"display-capture"|"document-domain"|"encrypted-media"|"execution-while-out-of-viewport"|"execution-while-not-rendered"|"focus-without-user-activation"|"fullscreen"|"frobulate"|"gamepad"|"geolocation"|"gyroscope"|"hid"|"idle-detection"|"interest-cohort"|"join-ad-interest-group"|"keyboard-map"|"magnetometer"|"microphone"|"midi"|"otp-credentials"|"payment"|"picture-in-picture"|"publickey-credentials-get"|"run-ad-auction"|"screen-wake-lock"|"serial"|"shared-autofill"|"storage-access-api"|"sync-xhr"|"trust-token-redemption"|"usb"|"vertical-scroll"|"web-share"|"window-placement"|"xr-spatial-tracking";
+    export type PermissionsPolicyFeature = "accelerometer"|"ambient-light-sensor"|"attribution-reporting"|"autoplay"|"camera"|"ch-dpr"|"ch-device-memory"|"ch-downlink"|"ch-ect"|"ch-prefers-color-scheme"|"ch-rtt"|"ch-ua"|"ch-ua-arch"|"ch-ua-bitness"|"ch-ua-platform"|"ch-ua-model"|"ch-ua-mobile"|"ch-ua-full"|"ch-ua-full-version"|"ch-ua-full-version-list"|"ch-ua-platform-version"|"ch-ua-reduced"|"ch-ua-wow64"|"ch-viewport-height"|"ch-viewport-width"|"ch-width"|"ch-partitioned-cookies"|"clipboard-read"|"clipboard-write"|"cross-origin-isolated"|"direct-sockets"|"display-capture"|"document-domain"|"encrypted-media"|"execution-while-out-of-viewport"|"execution-while-not-rendered"|"focus-without-user-activation"|"fullscreen"|"frobulate"|"gamepad"|"geolocation"|"gyroscope"|"hid"|"idle-detection"|"join-ad-interest-group"|"keyboard-map"|"magnetometer"|"microphone"|"midi"|"otp-credentials"|"payment"|"picture-in-picture"|"publickey-credentials-get"|"run-ad-auction"|"screen-wake-lock"|"serial"|"shared-autofill"|"storage-access-api"|"sync-xhr"|"trust-token-redemption"|"usb"|"vertical-scroll"|"web-share"|"window-placement"|"xr-spatial-tracking";
     /**
      * Reason for a permissions policy feature to be disabled.
      */
-    export type PermissionsPolicyBlockReason = "Header"|"IframeAttribute";
+    export type PermissionsPolicyBlockReason = "Header"|"IframeAttribute"|"InFencedFrameTree";
     export interface PermissionsPolicyBlockLocator {
       frameId: FrameId;
       blockReason: PermissionsPolicyBlockReason;
@@ -10448,6 +10565,19 @@ Example URLs: http://www.google.com/file.html -> "google.com"
       pictograph?: string;
     }
     /**
+     * Font families collection for a script.
+     */
+    export interface ScriptFontFamilies {
+      /**
+       * Name of the script which these font families are defined for.
+       */
+      script: string;
+      /**
+       * Generic font families collection for the script.
+       */
+      fontFamilies: FontFamilies;
+    }
+    /**
      * Default font sizes.
      */
     export interface FontSizes {
@@ -10510,7 +10640,7 @@ Example URLs: http://www.google.com/file.html -> "google.com"
     /**
      * List of not restored reasons for back-forward cache.
      */
-    export type BackForwardCacheNotRestoredReason = "NotMainFrame"|"BackForwardCacheDisabled"|"RelatedActiveContentsExist"|"HTTPStatusNotOK"|"SchemeNotHTTPOrHTTPS"|"Loading"|"WasGrantedMediaAccess"|"DisableForRenderFrameHostCalled"|"DomainNotAllowed"|"HTTPMethodNotGET"|"SubframeIsNavigating"|"Timeout"|"CacheLimit"|"JavaScriptExecution"|"RendererProcessKilled"|"RendererProcessCrashed"|"GrantedMediaStreamAccess"|"SchedulerTrackedFeatureUsed"|"ConflictingBrowsingInstance"|"CacheFlushed"|"ServiceWorkerVersionActivation"|"SessionRestored"|"ServiceWorkerPostMessage"|"EnteredBackForwardCacheBeforeServiceWorkerHostAdded"|"RenderFrameHostReused_SameSite"|"RenderFrameHostReused_CrossSite"|"ServiceWorkerClaim"|"IgnoreEventAndEvict"|"HaveInnerContents"|"TimeoutPuttingInCache"|"BackForwardCacheDisabledByLowMemory"|"BackForwardCacheDisabledByCommandLine"|"NetworkRequestDatapipeDrainedAsBytesConsumer"|"NetworkRequestRedirected"|"NetworkRequestTimeout"|"NetworkExceedsBufferLimit"|"NavigationCancelledWhileRestoring"|"NotMostRecentNavigationEntry"|"BackForwardCacheDisabledForPrerender"|"UserAgentOverrideDiffers"|"ForegroundCacheLimit"|"BrowsingInstanceNotSwapped"|"BackForwardCacheDisabledForDelegate"|"OptInUnloadHeaderNotPresent"|"UnloadHandlerExistsInMainFrame"|"UnloadHandlerExistsInSubFrame"|"ServiceWorkerUnregistration"|"CacheControlNoStore"|"CacheControlNoStoreCookieModified"|"CacheControlNoStoreHTTPOnlyCookieModified"|"NoResponseHead"|"Unknown"|"ActivationNavigationsDisallowedForBug1234857"|"WebSocket"|"WebTransport"|"WebRTC"|"MainResourceHasCacheControlNoStore"|"MainResourceHasCacheControlNoCache"|"SubresourceHasCacheControlNoStore"|"SubresourceHasCacheControlNoCache"|"ContainsPlugins"|"DocumentLoaded"|"DedicatedWorkerOrWorklet"|"OutstandingNetworkRequestOthers"|"OutstandingIndexedDBTransaction"|"RequestedNotificationsPermission"|"RequestedMIDIPermission"|"RequestedAudioCapturePermission"|"RequestedVideoCapturePermission"|"RequestedBackForwardCacheBlockedSensors"|"RequestedBackgroundWorkPermission"|"BroadcastChannel"|"IndexedDBConnection"|"WebXR"|"SharedWorker"|"WebLocks"|"WebHID"|"WebShare"|"RequestedStorageAccessGrant"|"WebNfc"|"OutstandingNetworkRequestFetch"|"OutstandingNetworkRequestXHR"|"AppBanner"|"Printing"|"WebDatabase"|"PictureInPicture"|"Portal"|"SpeechRecognizer"|"IdleManager"|"PaymentManager"|"SpeechSynthesis"|"KeyboardLock"|"WebOTPService"|"OutstandingNetworkRequestDirectSocket"|"InjectedJavascript"|"InjectedStyleSheet"|"Dummy"|"ContentSecurityHandler"|"ContentWebAuthenticationAPI"|"ContentFileChooser"|"ContentSerial"|"ContentFileSystemAccess"|"ContentMediaDevicesDispatcherHost"|"ContentWebBluetooth"|"ContentWebUSB"|"ContentMediaSession"|"ContentMediaSessionService"|"ContentScreenReader"|"EmbedderPopupBlockerTabHelper"|"EmbedderSafeBrowsingTriggeredPopupBlocker"|"EmbedderSafeBrowsingThreatDetails"|"EmbedderAppBannerManager"|"EmbedderDomDistillerViewerSource"|"EmbedderDomDistillerSelfDeletingRequestDelegate"|"EmbedderOomInterventionTabHelper"|"EmbedderOfflinePage"|"EmbedderChromePasswordManagerClientBindCredentialManager"|"EmbedderPermissionRequestManager"|"EmbedderModalDialog"|"EmbedderExtensions"|"EmbedderExtensionMessaging"|"EmbedderExtensionMessagingForOpenPort"|"EmbedderExtensionSentMessageToCachedFrame";
+    export type BackForwardCacheNotRestoredReason = "NotPrimaryMainFrame"|"BackForwardCacheDisabled"|"RelatedActiveContentsExist"|"HTTPStatusNotOK"|"SchemeNotHTTPOrHTTPS"|"Loading"|"WasGrantedMediaAccess"|"DisableForRenderFrameHostCalled"|"DomainNotAllowed"|"HTTPMethodNotGET"|"SubframeIsNavigating"|"Timeout"|"CacheLimit"|"JavaScriptExecution"|"RendererProcessKilled"|"RendererProcessCrashed"|"GrantedMediaStreamAccess"|"SchedulerTrackedFeatureUsed"|"ConflictingBrowsingInstance"|"CacheFlushed"|"ServiceWorkerVersionActivation"|"SessionRestored"|"ServiceWorkerPostMessage"|"EnteredBackForwardCacheBeforeServiceWorkerHostAdded"|"RenderFrameHostReused_SameSite"|"RenderFrameHostReused_CrossSite"|"ServiceWorkerClaim"|"IgnoreEventAndEvict"|"HaveInnerContents"|"TimeoutPuttingInCache"|"BackForwardCacheDisabledByLowMemory"|"BackForwardCacheDisabledByCommandLine"|"NetworkRequestDatapipeDrainedAsBytesConsumer"|"NetworkRequestRedirected"|"NetworkRequestTimeout"|"NetworkExceedsBufferLimit"|"NavigationCancelledWhileRestoring"|"NotMostRecentNavigationEntry"|"BackForwardCacheDisabledForPrerender"|"UserAgentOverrideDiffers"|"ForegroundCacheLimit"|"BrowsingInstanceNotSwapped"|"BackForwardCacheDisabledForDelegate"|"OptInUnloadHeaderNotPresent"|"UnloadHandlerExistsInMainFrame"|"UnloadHandlerExistsInSubFrame"|"ServiceWorkerUnregistration"|"CacheControlNoStore"|"CacheControlNoStoreCookieModified"|"CacheControlNoStoreHTTPOnlyCookieModified"|"NoResponseHead"|"Unknown"|"ActivationNavigationsDisallowedForBug1234857"|"WebSocket"|"WebTransport"|"WebRTC"|"MainResourceHasCacheControlNoStore"|"MainResourceHasCacheControlNoCache"|"SubresourceHasCacheControlNoStore"|"SubresourceHasCacheControlNoCache"|"ContainsPlugins"|"DocumentLoaded"|"DedicatedWorkerOrWorklet"|"OutstandingNetworkRequestOthers"|"OutstandingIndexedDBTransaction"|"RequestedNotificationsPermission"|"RequestedMIDIPermission"|"RequestedAudioCapturePermission"|"RequestedVideoCapturePermission"|"RequestedBackForwardCacheBlockedSensors"|"RequestedBackgroundWorkPermission"|"BroadcastChannel"|"IndexedDBConnection"|"WebXR"|"SharedWorker"|"WebLocks"|"WebHID"|"WebShare"|"RequestedStorageAccessGrant"|"WebNfc"|"OutstandingNetworkRequestFetch"|"OutstandingNetworkRequestXHR"|"AppBanner"|"Printing"|"WebDatabase"|"PictureInPicture"|"Portal"|"SpeechRecognizer"|"IdleManager"|"PaymentManager"|"SpeechSynthesis"|"KeyboardLock"|"WebOTPService"|"OutstandingNetworkRequestDirectSocket"|"InjectedJavascript"|"InjectedStyleSheet"|"Dummy"|"ContentSecurityHandler"|"ContentWebAuthenticationAPI"|"ContentFileChooser"|"ContentSerial"|"ContentFileSystemAccess"|"ContentMediaDevicesDispatcherHost"|"ContentWebBluetooth"|"ContentWebUSB"|"ContentMediaSession"|"ContentMediaSessionService"|"ContentScreenReader"|"EmbedderPopupBlockerTabHelper"|"EmbedderSafeBrowsingTriggeredPopupBlocker"|"EmbedderSafeBrowsingThreatDetails"|"EmbedderAppBannerManager"|"EmbedderDomDistillerViewerSource"|"EmbedderDomDistillerSelfDeletingRequestDelegate"|"EmbedderOomInterventionTabHelper"|"EmbedderOfflinePage"|"EmbedderChromePasswordManagerClientBindCredentialManager"|"EmbedderPermissionRequestManager"|"EmbedderModalDialog"|"EmbedderExtensions"|"EmbedderExtensionMessaging"|"EmbedderExtensionMessagingForOpenPort"|"EmbedderExtensionSentMessageToCachedFrame";
     /**
      * Types of not restored reasons for back-forward cache.
      */
@@ -10524,6 +10654,26 @@ Example URLs: http://www.google.com/file.html -> "google.com"
        * Not restored reason
        */
       reason: BackForwardCacheNotRestoredReason;
+      /**
+       * Context associated with the reason. The meaning of this context is
+dependent on the reason:
+- EmbedderExtensionSentMessageToCachedFrame: the extension ID.
+       */
+      context?: string;
+    }
+    export interface BackForwardCacheNotRestoredExplanationTree {
+      /**
+       * URL of each frame
+       */
+      url: string;
+      /**
+       * Not restored reasons of each frame
+       */
+      explanations: BackForwardCacheNotRestoredExplanation[];
+      /**
+       * Array of children frame
+       */
+      children: BackForwardCacheNotRestoredExplanationTree[];
     }
     
     export type domContentEventFiredPayload = {
@@ -10792,6 +10942,10 @@ when bfcache navigation fails.
        * Array of reasons why the page could not be cached. This must not be empty.
        */
       notRestoredExplanations: BackForwardCacheNotRestoredExplanation[];
+      /**
+       * Tree structure of reasons why the page could not be cached for each frame.
+       */
+      notRestoredExplanationsTree?: BackForwardCacheNotRestoredExplanationTree;
     }
     export type loadEventFiredPayload = {
       timestamp: Network.MonotonicTime;
@@ -11540,6 +11694,10 @@ autosizing and more.
        * Specifies font families to set. If a font family is not specified, it won't be changed.
        */
       fontFamilies: FontFamilies;
+      /**
+       * Specifies font families to set for individual scripts.
+       */
+      forScripts?: ScriptFontFamilies[];
     }
     export type setFontFamiliesReturnValue = {
     }
@@ -12379,7 +12537,7 @@ For cached script it is the last time the cache entry was validated.
     /**
      * Enum of possible storage types.
      */
-    export type StorageType = "appcache"|"cookies"|"file_systems"|"indexeddb"|"local_storage"|"shader_cache"|"websql"|"service_workers"|"cache_storage"|"all"|"other";
+    export type StorageType = "appcache"|"cookies"|"file_systems"|"indexeddb"|"local_storage"|"shader_cache"|"websql"|"service_workers"|"cache_storage"|"interest_groups"|"all"|"other";
     /**
      * Usage for a storage type.
      */
@@ -12400,6 +12558,34 @@ Tokens from that issuer.
     export interface TrustTokens {
       issuerOrigin: string;
       count: number;
+    }
+    /**
+     * Enum of interest group access types.
+     */
+    export type InterestGroupAccessType = "join"|"leave"|"update"|"bid"|"win";
+    /**
+     * Ad advertising element inside an interest group.
+     */
+    export interface InterestGroupAd {
+      renderUrl: string;
+      metadata?: string;
+    }
+    /**
+     * The full details of an interest group.
+     */
+    export interface InterestGroupDetails {
+      ownerOrigin: string;
+      name: string;
+      expirationTime: Network.TimeSinceEpoch;
+      joiningOrigin: string;
+      biddingUrl?: string;
+      biddingWasmHelperUrl?: string;
+      updateUrl?: string;
+      trustedBiddingSignalsUrl?: string;
+      trustedBiddingSignalsKeys: string[];
+      userBiddingSignals?: string;
+      ads: InterestGroupAd[];
+      adComponents: InterestGroupAd[];
     }
     
     /**
@@ -12449,6 +12635,15 @@ Tokens from that issuer.
        * Origin to update.
        */
       origin: string;
+    }
+    /**
+     * One of the interest groups was accessed by the associated page.
+     */
+    export type interestGroupAccessedPayload = {
+      accessTime: Network.TimeSinceEpoch;
+      type: InterestGroupAccessType;
+      ownerOrigin: string;
+      name: string;
     }
     
     /**
@@ -12620,6 +12815,24 @@ Leaves other stored data, including the issuer's Redemption Records, intact.
        * True if any tokens were deleted, false otherwise.
        */
       didDeleteTokens: boolean;
+    }
+    /**
+     * Gets details for a named interest group.
+     */
+    export type getInterestGroupDetailsParameters = {
+      ownerOrigin: string;
+      name: string;
+    }
+    export type getInterestGroupDetailsReturnValue = {
+      details: InterestGroupDetails;
+    }
+    /**
+     * Enables/Disables issuing of interestGroupAccessed events.
+     */
+    export type setInterestGroupTrackingParameters = {
+      enable: boolean;
+    }
+    export type setInterestGroupTrackingReturnValue = {
     }
   }
   
@@ -14110,6 +14323,12 @@ https://fidoalliance.org/specs/fido-v2.1-rd-20201208/fido-client-to-authenticato
 Defaults to false.
        */
       hasCredBlob?: boolean;
+      /**
+       * If set to true, the authenticator will support the minPinLength extension.
+https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html#sctn-minpinlength-extension
+Defaults to false.
+       */
+      hasMinPinLength?: boolean;
       /**
        * If set to true, tests of user presence will succeed immediately.
 Otherwise, they will not be resolved. Defaults to true.
@@ -16828,6 +17047,22 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     }
     export type removeBindingReturnValue = {
     }
+    /**
+     * This method tries to lookup and populate exception details for a
+JavaScript Error object.
+Note that the stackTrace portion of the resulting exceptionDetails will
+only be populated if the Runtime domain was enabled at the time when the
+Error was thrown.
+     */
+    export type getExceptionDetailsParameters = {
+      /**
+       * The error object for which to resolve the exception details.
+       */
+      errorObjectId: RemoteObjectId;
+    }
+    export type getExceptionDetailsReturnValue = {
+      exceptionDetails?: ExceptionDetails;
+    }
   }
   
   /**
@@ -16980,6 +17215,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Storage.cacheStorageListUpdated": Storage.cacheStorageListUpdatedPayload;
     "Storage.indexedDBContentUpdated": Storage.indexedDBContentUpdatedPayload;
     "Storage.indexedDBListUpdated": Storage.indexedDBListUpdatedPayload;
+    "Storage.interestGroupAccessed": Storage.interestGroupAccessedPayload;
     "Target.attachedToTarget": Target.attachedToTargetPayload;
     "Target.detachedFromTarget": Target.detachedFromTargetPayload;
     "Target.receivedMessageFromTarget": Target.receivedMessageFromTargetPayload;
@@ -17091,12 +17327,14 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "CSS.getMediaQueries": CSS.getMediaQueriesParameters;
     "CSS.getPlatformFontsForNode": CSS.getPlatformFontsForNodeParameters;
     "CSS.getStyleSheetText": CSS.getStyleSheetTextParameters;
+    "CSS.getLayersForNode": CSS.getLayersForNodeParameters;
     "CSS.trackComputedStyleUpdates": CSS.trackComputedStyleUpdatesParameters;
     "CSS.takeComputedStyleUpdates": CSS.takeComputedStyleUpdatesParameters;
     "CSS.setEffectivePropertyValueForNode": CSS.setEffectivePropertyValueForNodeParameters;
     "CSS.setKeyframeKey": CSS.setKeyframeKeyParameters;
     "CSS.setMediaText": CSS.setMediaTextParameters;
     "CSS.setContainerQueryText": CSS.setContainerQueryTextParameters;
+    "CSS.setSupportsText": CSS.setSupportsTextParameters;
     "CSS.setRuleSelector": CSS.setRuleSelectorParameters;
     "CSS.setStyleSheetText": CSS.setStyleSheetTextParameters;
     "CSS.setStyleTexts": CSS.setStyleTextsParameters;
@@ -17218,6 +17456,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Emulation.setVisibleSize": Emulation.setVisibleSizeParameters;
     "Emulation.setDisabledImageTypes": Emulation.setDisabledImageTypesParameters;
     "Emulation.setUserAgentOverride": Emulation.setUserAgentOverrideParameters;
+    "Emulation.setAutomationOverride": Emulation.setAutomationOverrideParameters;
     "HeadlessExperimental.beginFrame": HeadlessExperimental.beginFrameParameters;
     "HeadlessExperimental.disable": HeadlessExperimental.disableParameters;
     "HeadlessExperimental.enable": HeadlessExperimental.enableParameters;
@@ -17425,6 +17664,8 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Storage.untrackIndexedDBForOrigin": Storage.untrackIndexedDBForOriginParameters;
     "Storage.getTrustTokens": Storage.getTrustTokensParameters;
     "Storage.clearTrustTokens": Storage.clearTrustTokensParameters;
+    "Storage.getInterestGroupDetails": Storage.getInterestGroupDetailsParameters;
+    "Storage.setInterestGroupTracking": Storage.setInterestGroupTrackingParameters;
     "SystemInfo.getInfo": SystemInfo.getInfoParameters;
     "SystemInfo.getProcessInfo": SystemInfo.getProcessInfoParameters;
     "Target.activateTarget": Target.activateTargetParameters;
@@ -17555,6 +17796,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Runtime.terminateExecution": Runtime.terminateExecutionParameters;
     "Runtime.addBinding": Runtime.addBindingParameters;
     "Runtime.removeBinding": Runtime.removeBindingParameters;
+    "Runtime.getExceptionDetails": Runtime.getExceptionDetailsParameters;
     "Schema.getDomains": Schema.getDomainsParameters;
   }
   export interface CommandReturnValues {
@@ -17614,12 +17856,14 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "CSS.getMediaQueries": CSS.getMediaQueriesReturnValue;
     "CSS.getPlatformFontsForNode": CSS.getPlatformFontsForNodeReturnValue;
     "CSS.getStyleSheetText": CSS.getStyleSheetTextReturnValue;
+    "CSS.getLayersForNode": CSS.getLayersForNodeReturnValue;
     "CSS.trackComputedStyleUpdates": CSS.trackComputedStyleUpdatesReturnValue;
     "CSS.takeComputedStyleUpdates": CSS.takeComputedStyleUpdatesReturnValue;
     "CSS.setEffectivePropertyValueForNode": CSS.setEffectivePropertyValueForNodeReturnValue;
     "CSS.setKeyframeKey": CSS.setKeyframeKeyReturnValue;
     "CSS.setMediaText": CSS.setMediaTextReturnValue;
     "CSS.setContainerQueryText": CSS.setContainerQueryTextReturnValue;
+    "CSS.setSupportsText": CSS.setSupportsTextReturnValue;
     "CSS.setRuleSelector": CSS.setRuleSelectorReturnValue;
     "CSS.setStyleSheetText": CSS.setStyleSheetTextReturnValue;
     "CSS.setStyleTexts": CSS.setStyleTextsReturnValue;
@@ -17741,6 +17985,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Emulation.setVisibleSize": Emulation.setVisibleSizeReturnValue;
     "Emulation.setDisabledImageTypes": Emulation.setDisabledImageTypesReturnValue;
     "Emulation.setUserAgentOverride": Emulation.setUserAgentOverrideReturnValue;
+    "Emulation.setAutomationOverride": Emulation.setAutomationOverrideReturnValue;
     "HeadlessExperimental.beginFrame": HeadlessExperimental.beginFrameReturnValue;
     "HeadlessExperimental.disable": HeadlessExperimental.disableReturnValue;
     "HeadlessExperimental.enable": HeadlessExperimental.enableReturnValue;
@@ -17948,6 +18193,8 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Storage.untrackIndexedDBForOrigin": Storage.untrackIndexedDBForOriginReturnValue;
     "Storage.getTrustTokens": Storage.getTrustTokensReturnValue;
     "Storage.clearTrustTokens": Storage.clearTrustTokensReturnValue;
+    "Storage.getInterestGroupDetails": Storage.getInterestGroupDetailsReturnValue;
+    "Storage.setInterestGroupTracking": Storage.setInterestGroupTrackingReturnValue;
     "SystemInfo.getInfo": SystemInfo.getInfoReturnValue;
     "SystemInfo.getProcessInfo": SystemInfo.getProcessInfoReturnValue;
     "Target.activateTarget": Target.activateTargetReturnValue;
@@ -18078,6 +18325,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Runtime.terminateExecution": Runtime.terminateExecutionReturnValue;
     "Runtime.addBinding": Runtime.addBindingReturnValue;
     "Runtime.removeBinding": Runtime.removeBindingReturnValue;
+    "Runtime.getExceptionDetails": Runtime.getExceptionDetailsReturnValue;
     "Schema.getDomains": Schema.getDomainsReturnValue;
   }
 }

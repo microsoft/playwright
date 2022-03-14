@@ -70,8 +70,8 @@ await locator.ClickAsync();
 ## Strictness
 
 Locators are strict. This means that all operations on locators that imply
-some target DOM element will throw if more than one element matches given
-selector.
+some target DOM element will throw an exception if more than one element matches 
+given selector.
 
 ```js
 // Throws if there are several buttons in DOM:

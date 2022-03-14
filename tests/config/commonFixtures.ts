@@ -100,7 +100,7 @@ export class TestChildProcess {
     if (r.exitCode)
       throw new Error(`Process failed with exit code ${r.exitCode}`);
     if (r.signal)
-      throw new Error(`Process recieved signal: ${r.signal}`);
+      throw new Error(`Process received signal: ${r.signal}`);
   }
 
   async waitForOutput(substring: string) {

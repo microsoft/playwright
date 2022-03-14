@@ -242,7 +242,7 @@ context.add_init_script("""(storage => {
 
 ```csharp
 // Get session storage and store as env variable
-var sessionStorage = await page.EvaluateAsync<string>("() => JSON.stringify(sessionStorage");
+var sessionStorage = await page.EvaluateAsync<string>("() => JSON.stringify(sessionStorage)");
 Environment.SetEnvironmentVariable("SESSION_STORAGE", sessionStorage);
 
 // Set session storage in a new context

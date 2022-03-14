@@ -1,0 +1,156 @@
+/*! normalize.css v3.0.2 | MIT License | git.io/normalize */html{font-family:sans-serif;-ms-text-size-adjust:100%;-webkit-text-size-adjust:100%}body{margin:0}article,aside,details,figcaption,figure,footer,header,hgroup,main,menu,nav,section,summary{display:block}audio,canvas,progress,video{display:inline-block;vertical-align:baseline}audio:not([controls]){display:none;height:0}[hidden],template{display:none}a{background-color:transparent}a:active,a:hover{outline:0}abbr[title]{border-bottom:1px dotted}b,strong{font-weight:700}dfn{font-style:italic}h1{font-size:2em;margin:.67em 0}mark{background:#ff0;color:#000}small{font-size:80%}sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}sup{top:-.5em}sub{bottom:-.25em}img{border:0}svg:not(:root){overflow:hidden}figure{margin:1em 40px}hr{-moz-box-sizing:content-box;box-sizing:content-box;height:0}pre{overflow:auto}code,kbd,pre,samp{font-family:monospace,monospace;font-size:1em}button,input,optgroup,select,textarea{color:inherit;font:inherit;margin:0}button{overflow:visible}button,select{text-transform:none}button,html input[type=button],input[type=reset],input[type=submit]{-webkit-appearance:button;cursor:pointer}button[disabled],html input[disabled]{cursor:default}button::-moz-focus-inner,input::-moz-focus-inner{border:0;padding:0}input{line-height:normal}input[type=checkbox],input[type=radio]{box-sizing:border-box;padding:0}input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{height:auto}input[type=search]{-webkit-appearance:textfield;-moz-box-sizing:content-box;-webkit-box-sizing:content-box;box-sizing:content-box}input[type=search]::-webkit-search-cancel-button,input[type=search]::-webkit-search-decoration{-webkit-appearance:none}fieldset{border:1px solid silver;margin:0 2px;padding:.35em .625em .75em}legend{border:0;padding:0}textarea{overflow:auto}optgroup{font-weight:700}table{border-collapse:collapse;border-spacing:0}td,th{padding:0}
+/**
+ * Mobile First
+ */
+body {
+    font: 100%/1.4em "Helvetica Neue", "Helvetica", "Arial", sans-serif;
+    margin: 0 auto;
+    padding: 0 0.625em;
+    color: #444;
+    -webkit-text-size-adjust: none;
+}
+
+/**
+ * Small Screens
+ */
+
+.demo-header {
+  margin-bottom: 80px;
+  text-align: center;
+}
+
+.demo-title {
+  font-size: 4em;
+  line-height: 1em;
+  text-align: center;
+}
+
+.battery-card {
+  font-family: "Helvetica", Arial, sans-serif;
+  display: block;
+  width: 300px;
+  overflow: hidden;
+  border: 1px solid #D5D5D5;
+  border-radius: 6px;
+  font-weight: 100;
+  margin: 0 auto;
+}
+
+.battery-title {
+  background: #4c4c4c url('bolt.png') no-repeat 95% 15px;
+  color: #fff;
+  font-size: .9em;
+  line-height: 50px;
+  padding: 0 15px;
+  font-weight: 100;
+  margin: 0;
+}
+
+.battery-percentage {
+  font-size: 2.5em;
+  line-height: 50px;
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 10px;
+}
+
+.battery-box {
+  margin: 0 auto;
+  padding: 50px 0;
+  text-align: center;
+  border-bottom: 1px solid #D5D5D5;
+}
+
+.battery {
+  display: inline-block;
+  position: relative;
+  border: 4px solid #000;
+  width: 85px;
+  height: 40px;
+  border-radius: 4px;
+  vertical-align: middle;
+}
+
+.battery:before {
+  content: '';
+  display: block;
+  box-sizing: border-box;
+  background: #000;
+  height: 40px;
+  position: absolute;
+  border: 1px solid #fff;
+}
+
+.battery:after {
+  content: '';
+  display: block;
+  background: #000;
+  width: 6px;
+  height: 16px;
+  position: absolute;
+  top: 50%;
+  right: -11px;
+  margin-top: -8px;
+  border-radius: 0 4px 4px 0;
+}
+
+.battery-info {
+  font-size: 12px;
+  margin: 0 auto;
+  padding: 15px 45px;
+  overflow: hidden;
+}
+
+.battery-info dd {
+  float: right;
+  margin-top: -22px;
+  text-align: left;
+  width: 35%;
+}
+
+footer {
+  margin: 70px auto 0;
+  text-align: center;
+}
+
+.heart {
+  font-style: normal;
+  font-weight: 500;
+  color: #c0392b;
+  text-decoration: none;
+}
+
+#github-button {
+  display: block;
+  margin: 30px auto 0;
+  position: relative;
+  left: 40px;
+}
+
+#github-ribbon {
+  display: inline-block;
+  position: fixed;
+  top: 0;
+  right: 0;
+  z-index: 100;
+  border: 0;
+  width: 149px;
+  height: 149px;
+}
+
+.github-buttons {
+  text-align: center;
+  margin: 1em 0;
+}
+
+
+
+/**
+ * Medium Screens
+ */
+@media all and (min-width:40em) {}
+
+/**
+ * Large Screens
+ */
+@media all and (min-width: 54em) {}

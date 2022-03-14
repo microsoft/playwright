@@ -202,6 +202,9 @@ export class SelectorEvaluatorImpl implements SelectorEvaluator {
       let firstIndex = -1;
       if (css !== undefined) {
         elements = this._queryCSS(context, css);
+        const hasScopeClause = funcs.some(f => f.name === 'scope');
+        if (hasScopeClause && context.scope.nodeType === 1 /* Node.ELEMENT_NODE */)
+          elements.unshift(context.scope as Element);
       } else {
         firstIndex = funcs.findIndex(func => this._getEngine(func.name).query !== undefined);
         if (firstIndex === -1)
@@ -660,7 +663,25 @@ export function isVisible(element: Element): boolean {
   const style = element.ownerDocument.defaultView.getComputedStyle(element);
   if (!style || style.visibility === 'hidden')
     return false;
+  if (style.display === 'contents') {
+    // display:contents is not rendered itself, but its child nodes are.
+    for (let child = element.firstChild; child; child = child.nextSibling) {
+      if (child.nodeType === 1 /* Node.ELEMENT_NODE */ && isVisible(child as Element))
+        return true;
+      if (child.nodeType === 3 /* Node.TEXT_NODE */ && isVisibleTextNode(child as Text))
+        return true;
+    }
+    return false;
+  }
   const rect = element.getBoundingClientRect();
+  return rect.width > 0 && rect.height > 0;
+}
+
+function isVisibleTextNode(node: Text) {
+  // https://stackoverflow.com/questions/1461059/is-there-an-equivalent-to-getboundingclientrect-for-text-nodes
+  const range = document.createRange();
+  range.selectNode(node);
+  const rect = range.getBoundingClientRect();
   return rect.width > 0 && rect.height > 0;
 }
 

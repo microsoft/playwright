@@ -85,11 +85,6 @@ export interface Suite {
    */
   tests: TestCase[];
   /**
-   * `beforeAll` and `afterAll` hooks in the suite. Note that other hooks such as `beforeEach` and `afterEach` are reported
-   * as the steps within the test.
-   */
-  hooks: TestCase[];
-  /**
    * Returns a list of titles from the root down to this suite.
    */
   titlePath(): string[];
@@ -167,6 +162,11 @@ export interface TestCase {
    */
   retries: number;
   /**
+   * Contains the repeat index when running in "repeat each" mode. This mode is enabled by passing `--repeat-each` to the
+   * [command line](https://playwright.dev/docs/test-cli).
+   */
+  repeatEachIndex: number;
+  /**
    * Results for each run of this test.
    */
   results: TestResult[];
@@ -213,9 +213,14 @@ export interface TestResult {
    */
   status: TestStatus;
   /**
-   * An error thrown during the test execution, if any.
+   * First error thrown during test execution, if any. This is equal to the first element in
+   * [testResult.errors](https://playwright.dev/docs/api/class-testresult#test-result-errors).
    */
   error?: TestError;
+  /**
+   * Errors thrown during the test execution.
+   */
+  errors: TestError[];
   /**
    * The list of files or buffers attached during the test execution through
    * [testInfo.attachments](https://playwright.dev/docs/api/class-testinfo#test-info-attachments).

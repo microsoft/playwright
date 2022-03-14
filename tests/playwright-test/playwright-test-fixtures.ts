@@ -18,6 +18,7 @@ import type { JSONReport, JSONReportSuite } from '@playwright/test/src/reporters
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
+import { PNG } from 'pngjs';
 import rimraf from 'rimraf';
 import { promisify } from 'util';
 import { CommonFixtures, commonFixtures } from '../config/commonFixtures';
@@ -119,10 +120,17 @@ async function runPlaywrightTest(childProcess: CommonFixtures['childProcess'], b
       ...process.env,
       PLAYWRIGHT_JSON_OUTPUT_NAME: reportFile,
       PWTEST_CACHE_DIR: cacheDir,
-      PWTEST_SKIP_TEST_OUTPUT: '1',
-      ...env,
+      CI: undefined,
+      PW_TEST_HTML_REPORT_OPEN: undefined,
       PLAYWRIGHT_DOCKER: undefined,
       PW_GRID: undefined,
+      PW_TEST_REPORTER: undefined,
+      PW_TEST_REPORTER_WS_ENDPOINT: undefined,
+      PW_TEST_SOURCE_TRANSFORM: undefined,
+      PW_TEST_SOURCE_TRANSFORM_SCOPE: undefined,
+      PW_OUT_OF_PROCESS_DRIVER: undefined,
+      NODE_OPTIONS: undefined,
+      ...env,
     },
     cwd: baseDir,
   });
@@ -197,7 +205,7 @@ type Fixtures = {
 
 export const test = base
     .extend<CommonFixtures>(commonFixtures)
-    .extend<ServerFixtures, ServerWorkerOptions>(serverFixtures as any)
+    .extend<ServerFixtures, ServerWorkerOptions>(serverFixtures)
     .extend<Fixtures>({
       writeFiles: async ({}, use, testInfo) => {
         await use(files => writeFiles(testInfo, files));
@@ -243,11 +251,11 @@ const TSCONFIG = {
 export { expect } from './stable-test-runner';
 
 const asciiRegex = new RegExp('[\\u001B\\u009B][[\\]()#;?]*(?:(?:(?:[a-zA-Z\\d]*(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]*)*)?\\u0007)|(?:(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PR-TZcf-ntqry=><~]))', 'g');
-export function stripAscii(str: string): string {
+export function stripAnsi(str: string): string {
   return str.replace(asciiRegex, '');
 }
 
-function countTimes(s: string, sub: string): number {
+export function countTimes(s: string, sub: string): number {
   let result = 0;
   for (let index = 0; index !== -1;) {
     index = s.indexOf(sub, index);
@@ -257,4 +265,29 @@ function countTimes(s: string, sub: string): number {
     }
   }
   return result;
+}
+
+export function createImage(width: number, height: number, r: number = 0, g: number = 0, b: number = 0, a: number = 255): Buffer {
+  const image = new PNG({ width, height });
+  // Make both images red.
+  for (let i = 0; i < width * height; ++i) {
+    image.data[i * 4 + 0] = r;
+    image.data[i * 4 + 1] = g;
+    image.data[i * 4 + 2] = b;
+    image.data[i * 4 + 3] = a;
+  }
+  return PNG.sync.write(image);
+}
+
+export function createWhiteImage(width: number, height: number) {
+  return createImage(width, height, 255, 255, 255);
+}
+
+export function paintBlackPixels(image: Buffer, blackPixelsCount: number): Buffer {
+  const png = PNG.sync.read(image);
+  for (let i = 0; i < blackPixelsCount; ++i) {
+    for (let j = 0; j < 3; ++j)
+      png.data[i * 4 + j] = 0;
+  }
+  return PNG.sync.write(png);
 }

@@ -17,7 +17,7 @@
 
 import { test as it, expect } from './pageTest';
 
-it('should work with large DOM', async ({ page, server }) => {
+it('should work with large DOM @smoke', async ({ page, server }) => {
   await page.evaluate(() => {
     let id = 0;
     const next = (tag: string) => {
@@ -383,6 +383,13 @@ it('should work with :scope', async ({ page, server }) => {
     expect(await scope.$$eval(`css=* > :scope`, els => els.length)).toBe(0);
     expect(await scope.$$eval(`css=* ~ :scope`, els => els.length)).toBe(0);
   }
+
+  await page.setContent(`<article><div class=target>hello<span></span></div></article>`);
+  // 'scope' should allow additional native css modifiers
+  expect(await page.$eval(`div >> :scope.target`, e => e.textContent)).toBe('hello');
+  expect(await page.$eval(`div >> :scope:nth-child(1)`, e => e.textContent)).toBe('hello');
+  expect(await page.$eval(`div >> :scope.target:has(span)`, e => e.textContent)).toBe('hello');
+  expect(await page.$eval(`html:scope`, e => e.nodeName)).toBe('HTML');
 });
 
 it('should absolutize relative selectors', async ({ page, server }) => {

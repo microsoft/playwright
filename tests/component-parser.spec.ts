@@ -15,8 +15,7 @@
  */
 
 import { playwrightTest as it, expect } from './config/browserTest';
-import type { ParsedComponentSelector } from '../packages/playwright-core/src/server/common/componentUtils';
-import { parseComponentSelector } from '../packages/playwright-core/lib/server/common/componentUtils';
+import { ParsedComponentSelector, parseComponentSelector } from '../packages/playwright-core/src/server/injected/componentUtils';
 
 const parse = parseComponentSelector;
 const serialize = (parsed: ParsedComponentSelector) => {
@@ -24,7 +23,7 @@ const serialize = (parsed: ParsedComponentSelector) => {
     const path = attr.jsonPath.map(token => /^[a-zA-Z0-9]+$/i.test(token) ? token : JSON.stringify(token)).join('.');
     if (attr.op === '<truthy>')
       return '[' + path + ']';
-    return '[' + path + ' ' + attr.op + ' ' + JSON.stringify(attr.value) + (attr.caseSensetive ? ']' : ' i]');
+    return '[' + path + ' ' + attr.op + ' ' + JSON.stringify(attr.value) + (attr.caseSensitive ? ']' : ' i]');
   }).join('');
 };
 

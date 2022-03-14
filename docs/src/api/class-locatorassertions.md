@@ -1,5 +1,4 @@
 # class: LocatorAssertions
-* langs: java, python, js
 
 The [LocatorAssertions] class provides assertion methods that can be used to make assertions about the [Locator] state in the tests. A new instance of [LocatorAssertions] is created by calling [`method: PlaywrightAssertions.expectLocator`]:
 
@@ -46,8 +45,29 @@ def test_status_becomes_submitted(page: Page) -> None:
     expect(page.locator(".status")).to_have_text("Submitted")
 ```
 
-## method: LocatorAssertions.not
-* langs: java, js
+```csharp
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+using Microsoft.Playwright.NUnit;
+using NUnit.Framework;
+
+namespace PlaywrightTests
+{
+    public class ExampleTests : PageTest
+    {
+        [Test]
+        public async Task StatusBecomesSubmitted()
+        {
+            // ..
+            await Page.ClickAsync("#submit-button");
+            await Expect(Page.Locator(".status")).ToHaveTextAsync("Submitted");
+        }
+    }
+}
+```
+
+## property: LocatorAssertions.not
+* langs: java, js, csharp
 - returns: <[LocatorAssertions]>
 
 Makes the assertion check for the opposite condition. For example, this code tests that the Locator doesn't contain text `"error"`:
@@ -60,64 +80,76 @@ await expect(locator).not.toContainText('error');
 assertThat(locator).not().containsText("error");
 ```
 
-## method: LocatorAssertions.NotToBeChecked
+```csharp
+await Expect(locator).Not.ToContainTextAsync("error");
+```
+
+## async method: LocatorAssertions.NotToBeChecked
 * langs: python
 
 The opposite of [`method: LocatorAssertions.toBeChecked`].
 
-### option: LocatorAssertions.NotToBeChecked.timeout = %%-assertions-timeout-%%
+### option: LocatorAssertions.NotToBeChecked.timeout = %%-js-assertions-timeout-%%
+### option: LocatorAssertions.NotToBeChecked.timeout = %%-csharp-java-python-assertions-timeout-%%
 
-## method: LocatorAssertions.NotToBeDisabled
+## async method: LocatorAssertions.NotToBeDisabled
 * langs: python
 
 The opposite of [`method: LocatorAssertions.toBeDisabled`].
 
-### option: LocatorAssertions.NotToBeDisabled.timeout = %%-assertions-timeout-%%
+### option: LocatorAssertions.NotToBeDisabled.timeout = %%-js-assertions-timeout-%%
+### option: LocatorAssertions.NotToBeDisabled.timeout = %%-csharp-java-python-assertions-timeout-%%
 
-## method: LocatorAssertions.NotToBeEditable
+## async method: LocatorAssertions.NotToBeEditable
 * langs: python
 
 The opposite of [`method: LocatorAssertions.toBeEditable`].
 
-### option: LocatorAssertions.NotToBeEditable.timeout = %%-assertions-timeout-%%
+### option: LocatorAssertions.NotToBeEditable.timeout = %%-js-assertions-timeout-%%
+### option: LocatorAssertions.NotToBeEditable.timeout = %%-csharp-java-python-assertions-timeout-%%
 
-## method: LocatorAssertions.NotToBeEmpty
+## async method: LocatorAssertions.NotToBeEmpty
 * langs: python
 
 The opposite of [`method: LocatorAssertions.toBeEmpty`].
 
-### option: LocatorAssertions.NotToBeEmpty.timeout = %%-assertions-timeout-%%
+### option: LocatorAssertions.NotToBeEmpty.timeout = %%-js-assertions-timeout-%%
+### option: LocatorAssertions.NotToBeEmpty.timeout = %%-csharp-java-python-assertions-timeout-%%
 
-## method: LocatorAssertions.NotToBeEnabled
+## async method: LocatorAssertions.NotToBeEnabled
 * langs: python
 
 The opposite of [`method: LocatorAssertions.toBeEnabled`].
 
-### option: LocatorAssertions.NotToBeEnabled.timeout = %%-assertions-timeout-%%
+### option: LocatorAssertions.NotToBeEnabled.timeout = %%-js-assertions-timeout-%%
+### option: LocatorAssertions.NotToBeEnabled.timeout = %%-csharp-java-python-assertions-timeout-%%
 
-## method: LocatorAssertions.NotToBeFocused
+## async method: LocatorAssertions.NotToBeFocused
 * langs: python
 
 The opposite of [`method: LocatorAssertions.toBeFocused`].
 
-### option: LocatorAssertions.NotToBeFocused.timeout = %%-assertions-timeout-%%
+### option: LocatorAssertions.NotToBeFocused.timeout = %%-js-assertions-timeout-%%
+### option: LocatorAssertions.NotToBeFocused.timeout = %%-csharp-java-python-assertions-timeout-%%
 
-## method: LocatorAssertions.NotToBeHidden
+## async method: LocatorAssertions.NotToBeHidden
 * langs: python
 
 The opposite of [`method: LocatorAssertions.toBeHidden`].
 
-### option: LocatorAssertions.NotToBeHidden.timeout = %%-assertions-timeout-%%
+### option: LocatorAssertions.NotToBeHidden.timeout = %%-js-assertions-timeout-%%
+### option: LocatorAssertions.NotToBeHidden.timeout = %%-csharp-java-python-assertions-timeout-%%
 
-## method: LocatorAssertions.NotToBeVisible
+## async method: LocatorAssertions.NotToBeVisible
 * langs: python
 
 The opposite of [`method: LocatorAssertions.toBeVisible`].
 
-### option: LocatorAssertions.NotToBeVisible.timeout = %%-assertions-timeout-%%
+### option: LocatorAssertions.NotToBeVisible.timeout = %%-js-assertions-timeout-%%
+### option: LocatorAssertions.NotToBeVisible.timeout = %%-csharp-java-python-assertions-timeout-%%
 
 
-## method: LocatorAssertions.NotToContainText
+## async method: LocatorAssertions.NotToContainText
 * langs: python
 
 The opposite of [`method: LocatorAssertions.toContainText`].
@@ -132,9 +164,10 @@ Expected substring or RegExp or a list of those.
 
 Whether to use `element.innerText` instead of `element.textContent` when retrieving DOM node text.
 
-### option: LocatorAssertions.NotToContainText.timeout = %%-assertions-timeout-%%
+### option: LocatorAssertions.NotToContainText.timeout = %%-js-assertions-timeout-%%
+### option: LocatorAssertions.NotToContainText.timeout = %%-csharp-java-python-assertions-timeout-%%
 
-## method: LocatorAssertions.NotToHaveAttribute
+## async method: LocatorAssertions.NotToHaveAttribute
 * langs: python
 
 The opposite of [`method: LocatorAssertions.toHaveAttribute`].
@@ -149,9 +182,10 @@ Attribute name.
 
 Expected attribute value.
 
-### option: LocatorAssertions.NotToHaveAttribute.timeout = %%-assertions-timeout-%%
+### option: LocatorAssertions.NotToHaveAttribute.timeout = %%-js-assertions-timeout-%%
+### option: LocatorAssertions.NotToHaveAttribute.timeout = %%-csharp-java-python-assertions-timeout-%%
 
-## method: LocatorAssertions.NotToHaveClass
+## async method: LocatorAssertions.NotToHaveClass
 * langs: python
 
 The opposite of [`method: LocatorAssertions.toHaveClass`].
@@ -161,9 +195,10 @@ The opposite of [`method: LocatorAssertions.toHaveClass`].
 
 Expected class or RegExp or a list of those.
 
-### option: LocatorAssertions.NotToHaveClass.timeout = %%-assertions-timeout-%%
+### option: LocatorAssertions.NotToHaveClass.timeout = %%-js-assertions-timeout-%%
+### option: LocatorAssertions.NotToHaveClass.timeout = %%-csharp-java-python-assertions-timeout-%%
 
-## method: LocatorAssertions.NotToHaveCount
+## async method: LocatorAssertions.NotToHaveCount
 * langs: python
 
 The opposite of [`method: LocatorAssertions.toHaveCount`].
@@ -173,9 +208,10 @@ The opposite of [`method: LocatorAssertions.toHaveCount`].
 
 Expected count.
 
-### option: LocatorAssertions.NotToHaveCount.timeout = %%-assertions-timeout-%%
+### option: LocatorAssertions.NotToHaveCount.timeout = %%-js-assertions-timeout-%%
+### option: LocatorAssertions.NotToHaveCount.timeout = %%-csharp-java-python-assertions-timeout-%%
 
-## method: LocatorAssertions.NotToHaveCSS
+## async method: LocatorAssertions.NotToHaveCSS
 * langs: python
 
 The opposite of [`method: LocatorAssertions.toHaveCSS`].
@@ -190,9 +226,10 @@ CSS property name.
 
 CSS property value.
 
-### option: LocatorAssertions.NotToHaveCSS.timeout = %%-assertions-timeout-%%
+### option: LocatorAssertions.NotToHaveCSS.timeout = %%-js-assertions-timeout-%%
+### option: LocatorAssertions.NotToHaveCSS.timeout = %%-csharp-java-python-assertions-timeout-%%
 
-## method: LocatorAssertions.NotToHaveId
+## async method: LocatorAssertions.NotToHaveId
 * langs: python
 
 The opposite of [`method: LocatorAssertions.toHaveId`].
@@ -202,9 +239,10 @@ The opposite of [`method: LocatorAssertions.toHaveId`].
 
 Element id.
 
-### option: LocatorAssertions.NotToHaveId.timeout = %%-assertions-timeout-%%
+### option: LocatorAssertions.NotToHaveId.timeout = %%-js-assertions-timeout-%%
+### option: LocatorAssertions.NotToHaveId.timeout = %%-csharp-java-python-assertions-timeout-%%
 
-## method: LocatorAssertions.NotToHaveJSProperty
+## async method: LocatorAssertions.NotToHaveJSProperty
 * langs: python
 
 The opposite of [`method: LocatorAssertions.toHaveJSProperty`].
@@ -215,13 +253,14 @@ The opposite of [`method: LocatorAssertions.toHaveJSProperty`].
 Property name.
 
 ### param: LocatorAssertions.NotToHaveJSProperty.value
-- `value` <[Serializable]>
+- `value` <[any]>
 
 Property value.
 
-### option: LocatorAssertions.NotToHaveJSProperty.timeout = %%-assertions-timeout-%%
+### option: LocatorAssertions.NotToHaveJSProperty.timeout = %%-js-assertions-timeout-%%
+### option: LocatorAssertions.NotToHaveJSProperty.timeout = %%-csharp-java-python-assertions-timeout-%%
 
-## method: LocatorAssertions.NotToHaveText
+## async method: LocatorAssertions.NotToHaveText
 * langs: python
 
 The opposite of [`method: LocatorAssertions.toHaveText`].
@@ -236,9 +275,10 @@ Expected substring or RegExp or a list of those.
 
 Whether to use `element.innerText` instead of `element.textContent` when retrieving DOM node text.
 
-### option: LocatorAssertions.NotToHaveText.timeout = %%-assertions-timeout-%%
+### option: LocatorAssertions.NotToHaveText.timeout = %%-js-assertions-timeout-%%
+### option: LocatorAssertions.NotToHaveText.timeout = %%-csharp-java-python-assertions-timeout-%%
 
-## method: LocatorAssertions.NotToHaveValue
+## async method: LocatorAssertions.NotToHaveValue
 * langs: python
 
 The opposite of [`method: LocatorAssertions.toHaveValue`].
@@ -248,10 +288,11 @@ The opposite of [`method: LocatorAssertions.toHaveValue`].
 
 Expected value.
 
-### option: LocatorAssertions.NotToHaveValue.timeout = %%-assertions-timeout-%%
+### option: LocatorAssertions.NotToHaveValue.timeout = %%-js-assertions-timeout-%%
+### option: LocatorAssertions.NotToHaveValue.timeout = %%-csharp-java-python-assertions-timeout-%%
 
 
-## method: LocatorAssertions.toBeChecked
+## async method: LocatorAssertions.toBeChecked
 * langs:
   - alias-java: isChecked
 
@@ -280,13 +321,19 @@ locator = page.locator(".subscribe")
 expect(locator).to_be_checked()
 ```
 
+```csharp
+var locator = Page.Locator(".subscribe");
+await Expect(locator).ToBeCheckedAsync();
+```
+
 ### option: LocatorAssertions.toBeChecked.checked
 - `checked` <[boolean]>
 
-### option: LocatorAssertions.toBeChecked.timeout = %%-assertions-timeout-%%
+### option: LocatorAssertions.toBeChecked.timeout = %%-js-assertions-timeout-%%
+### option: LocatorAssertions.toBeChecked.timeout = %%-csharp-java-python-assertions-timeout-%%
 
 
-## method: LocatorAssertions.toBeDisabled
+## async method: LocatorAssertions.toBeDisabled
 * langs:
   - alias-java: isDisabled
 
@@ -315,10 +362,16 @@ locator = page.locator("button.submit")
 expect(locator).to_be_disabled()
 ```
 
-### option: LocatorAssertions.toBeDisabled.timeout = %%-assertions-timeout-%%
+```csharp
+var locator = Page.Locator("button.submit");
+await Expect(locator).ToBeDisabledAsync();
+```
+
+### option: LocatorAssertions.toBeDisabled.timeout = %%-js-assertions-timeout-%%
+### option: LocatorAssertions.toBeDisabled.timeout = %%-csharp-java-python-assertions-timeout-%%
 
 
-## method: LocatorAssertions.toBeEditable
+## async method: LocatorAssertions.toBeEditable
 * langs:
   - alias-java: isEditable
 
@@ -347,10 +400,16 @@ locator = page.locator(".input")
 expect(locator).to_be_editable()
 ```
 
-### option: LocatorAssertions.toBeEditable.timeout = %%-assertions-timeout-%%
+```csharp
+var locator = Page.Locator("input");
+await Expect(locator).ToBeEditableAsync();
+```
+
+### option: LocatorAssertions.toBeEditable.timeout = %%-js-assertions-timeout-%%
+### option: LocatorAssertions.toBeEditable.timeout = %%-csharp-java-python-assertions-timeout-%%
 
 
-## method: LocatorAssertions.toBeEmpty
+## async method: LocatorAssertions.toBeEmpty
 * langs:
   - alias-java: isEmpty
 
@@ -379,10 +438,16 @@ locator = page.locator("div.warning")
 expect(locator).to_be_empty()
 ```
 
-### option: LocatorAssertions.toBeEmpty.timeout = %%-assertions-timeout-%%
+```csharp
+var locator = Page.Locator("div.warning");
+await Expect(locator).ToBeEmptyAsync();
+```
+
+### option: LocatorAssertions.toBeEmpty.timeout = %%-js-assertions-timeout-%%
+### option: LocatorAssertions.toBeEmpty.timeout = %%-csharp-java-python-assertions-timeout-%%
 
 
-## method: LocatorAssertions.toBeEnabled
+## async method: LocatorAssertions.toBeEnabled
 * langs:
   - alias-java: isEnabled
 
@@ -411,10 +476,16 @@ locator = page.locator("button.submit")
 expect(locator).to_be_enabled()
 ```
 
-### option: LocatorAssertions.toBeEnabled.timeout = %%-assertions-timeout-%%
+```csharp
+var locator = Page.Locator("button.submit");
+await Expect(locator).toBeEnabledAsync();
+```
+
+### option: LocatorAssertions.toBeEnabled.timeout = %%-js-assertions-timeout-%%
+### option: LocatorAssertions.toBeEnabled.timeout = %%-csharp-java-python-assertions-timeout-%%
 
 
-## method: LocatorAssertions.toBeFocused
+## async method: LocatorAssertions.toBeFocused
 * langs:
   - alias-java: isFocused
 
@@ -443,10 +514,16 @@ locator = page.locator('input')
 expect(locator).to_be_focused()
 ```
 
-### option: LocatorAssertions.toBeFocused.timeout = %%-assertions-timeout-%%
+```csharp
+var locator = Page.Locator("input");
+await Expect(locator).ToBeFocusedAsync();
+```
+
+### option: LocatorAssertions.toBeFocused.timeout = %%-js-assertions-timeout-%%
+### option: LocatorAssertions.toBeFocused.timeout = %%-csharp-java-python-assertions-timeout-%%
 
 
-## method: LocatorAssertions.toBeHidden
+## async method: LocatorAssertions.toBeHidden
 * langs:
   - alias-java: isHidden
 
@@ -475,10 +552,16 @@ locator = page.locator('.my-element')
 expect(locator).to_be_hidden()
 ```
 
-### option: LocatorAssertions.toBeHidden.timeout = %%-assertions-timeout-%%
+```csharp
+var locator = Page.Locator(".my-element");
+await Expect(locator).ToBeHiddenAsync();
+```
+
+### option: LocatorAssertions.toBeHidden.timeout = %%-js-assertions-timeout-%%
+### option: LocatorAssertions.toBeHidden.timeout = %%-csharp-java-python-assertions-timeout-%%
 
 
-## method: LocatorAssertions.toBeVisible
+## async method: LocatorAssertions.toBeVisible
 * langs:
   - alias-java: isVisible
 
@@ -507,9 +590,15 @@ locator = page.locator('.my-element')
 expect(locator).to_be_visible()
 ```
 
-### option: LocatorAssertions.toBeVisible.timeout = %%-assertions-timeout-%%
+```csharp
+var locator = Page.Locator(".my-element");
+await Expect(locator).ToBeVisibleAsync();
+```
 
-## method: LocatorAssertions.toContainText
+### option: LocatorAssertions.toBeVisible.timeout = %%-js-assertions-timeout-%%
+### option: LocatorAssertions.toBeVisible.timeout = %%-csharp-java-python-assertions-timeout-%%
+
+## async method: LocatorAssertions.toContainText
 * langs:
   - alias-java: containsText
 
@@ -543,7 +632,13 @@ expect(locator).to_contain_text("substring")
 expect(locator).to_contain_text(re.compile(r"\d messages"))
 ```
 
-Note that if array is passed as an expected value, entire lists can be asserted:
+```csharp
+var locator = Page.Locator(".title");
+await Expect(locator).ToContainTextAsync("substring");
+await Expect(locator).ToContainTextAsync(new Regex("\\d messages"));
+```
+
+Note that if array is passed as an expected value, entire lists of elements can be asserted:
 
 ```js
 const locator = page.locator('list > .list-item');
@@ -570,6 +665,11 @@ locator = page.locator("list > .list-item")
 expect(locator).to_contain_text(["Text 1", "Text 4", "Text 5"])
 ```
 
+```csharp
+var locator = Page.Locator("list > .list-item");
+await Expect(locator).ToContainTextAsync(new string[] { "Text 1", "Text 4", "Text 5" });
+```
+
 ### param: LocatorAssertions.toContainText.expected
 * langs: python, js
 - `expected` <[string]|[RegExp]|[Array]<[string]|[RegExp]>>
@@ -577,7 +677,7 @@ expect(locator).to_contain_text(["Text 1", "Text 4", "Text 5"])
 Expected substring or RegExp or a list of those.
 
 ### param: LocatorAssertions.toContainText.expected
-* langs: java
+* langs: java, csharp
 - `expected` <[string]|[RegExp]|[Array]<[string]>|[Array]<[RegExp]>>
 
 Expected substring or RegExp or a list of those.
@@ -587,10 +687,11 @@ Expected substring or RegExp or a list of those.
 
 Whether to use `element.innerText` instead of `element.textContent` when retrieving DOM node text.
 
-### option: LocatorAssertions.toContainText.timeout = %%-assertions-timeout-%%
+### option: LocatorAssertions.toContainText.timeout = %%-js-assertions-timeout-%%
+### option: LocatorAssertions.toContainText.timeout = %%-csharp-java-python-assertions-timeout-%%
 
 
-## method: LocatorAssertions.toHaveAttribute
+## async method: LocatorAssertions.toHaveAttribute
 * langs:
   - alias-java: hasAttribute
 
@@ -619,6 +720,11 @@ locator = page.locator("input")
 expect(locator).to_have_attribute("type", "text")
 ```
 
+```csharp
+var locator = Page.Locator("input");
+await Expect(locator).ToHaveAttributeAsync("type", "text");
+```
+
 ### param: LocatorAssertions.toHaveAttribute.name
 - `name` <[string]>
 
@@ -629,9 +735,10 @@ Attribute name.
 
 Expected attribute value.
 
-### option: LocatorAssertions.toHaveAttribute.timeout = %%-assertions-timeout-%%
+### option: LocatorAssertions.toHaveAttribute.timeout = %%-js-assertions-timeout-%%
+### option: LocatorAssertions.toHaveAttribute.timeout = %%-csharp-java-python-assertions-timeout-%%
 
-## method: LocatorAssertions.toHaveClass
+## async method: LocatorAssertions.toHaveClass
 * langs:
   - alias-java: hasClass
 
@@ -660,7 +767,12 @@ locator = page.locator("#component")
 expect(locator).to_have_class(re.compile(r"selected"))
 ```
 
-Note that if array is passed as an expected value, entire lists can be asserted:
+```csharp
+var locator = Page.Locator("#component");
+await Expect(locator).ToHaveClassAsync(new Regex("selected"));
+```
+
+Note that if array is passed as an expected value, entire lists of elements can be asserted:
 
 ```js
 const locator = page.locator('list > .component');
@@ -685,6 +797,11 @@ locator = page.locator("list > .component")
 expect(locator).to_have_class(["component", "component selected", "component"])
 ```
 
+```csharp
+var locator = Page.Locator("list > .component");
+await Expect(locator).ToHaveClassAsync(new string[]{"component", "component selected", "component"});
+```
+
 ### param: LocatorAssertions.toHaveClass.expected
 * langs: python, js
 - `expected` <[string]|[RegExp]|[Array]<[string]|[RegExp]>>
@@ -692,15 +809,16 @@ expect(locator).to_have_class(["component", "component selected", "component"])
 Expected class or RegExp or a list of those.
 
 ### param: LocatorAssertions.toHaveClass.expected
-* langs: java
+* langs: java, csharp
 - `expected` <[string]|[RegExp]|[Array]<[string]>|[Array]<[RegExp]>>
 
 Expected class or RegExp or a list of those.
 
-### option: LocatorAssertions.toHaveClass.timeout = %%-assertions-timeout-%%
+### option: LocatorAssertions.toHaveClass.timeout = %%-js-assertions-timeout-%%
+### option: LocatorAssertions.toHaveClass.timeout = %%-csharp-java-python-assertions-timeout-%%
 
 
-## method: LocatorAssertions.toHaveCount
+## async method: LocatorAssertions.toHaveCount
 * langs:
   - alias-java: hasCount
 
@@ -729,14 +847,20 @@ locator = page.locator("list > .component")
 expect(locator).to_have_count(3)
 ```
 
+```csharp
+var locator = Page.Locator("list > .component");
+await Expect(locator).ToHaveCountAsync(3);
+```
+
 ### param: LocatorAssertions.toHaveCount.count
 - `count` <[int]>
 
 Expected count.
 
-### option: LocatorAssertions.toHaveCount.timeout = %%-assertions-timeout-%%
+### option: LocatorAssertions.toHaveCount.timeout = %%-js-assertions-timeout-%%
+### option: LocatorAssertions.toHaveCount.timeout = %%-csharp-java-python-assertions-timeout-%%
 
-## method: LocatorAssertions.toHaveCSS
+## async method: LocatorAssertions.toHaveCSS
 * langs:
   - alias-java: hasCSS
 
@@ -765,6 +889,11 @@ locator = page.locator("button")
 expect(locator).to_have_css("display", "flex")
 ```
 
+```csharp
+var locator = Page.Locator("button");
+await Expect(locator).ToHaveCSSAsync("display", "flex");
+```
+
 ### param: LocatorAssertions.toHaveCSS.name
 - `name` <[string]>
 
@@ -775,9 +904,10 @@ CSS property name.
 
 CSS property value.
 
-### option: LocatorAssertions.toHaveCSS.timeout = %%-assertions-timeout-%%
+### option: LocatorAssertions.toHaveCSS.timeout = %%-js-assertions-timeout-%%
+### option: LocatorAssertions.toHaveCSS.timeout = %%-csharp-java-python-assertions-timeout-%%
 
-## method: LocatorAssertions.toHaveId
+## async method: LocatorAssertions.toHaveId
 * langs:
   - alias-java: hasId
 
@@ -806,15 +936,21 @@ locator = page.locator("input")
 expect(locator).to_have_id("lastname")
 ```
 
+```csharp
+var locator = Page.Locator("input");
+await Expect(locator).ToHaveIdAsync("lastname");
+```
+
 ### param: LocatorAssertions.toHaveId.id
 - `id` <[string]|[RegExp]>
 
 Element id.
 
-### option: LocatorAssertions.toHaveId.timeout = %%-assertions-timeout-%%
+### option: LocatorAssertions.toHaveId.timeout = %%-js-assertions-timeout-%%
+### option: LocatorAssertions.toHaveId.timeout = %%-csharp-java-python-assertions-timeout-%%
 
 
-## method: LocatorAssertions.toHaveJSProperty
+## async method: LocatorAssertions.toHaveJSProperty
 * langs:
   - alias-java: hasJSProperty
 
@@ -844,19 +980,55 @@ locator = page.locator(".component")
 expect(locator).to_have_js_property("loaded", True)
 ```
 
+```csharp
+var locator = Page.Locator(".component");
+await Expect(locator).ToHaveJSPropertyAsync("loaded", true);
+```
+
 ### param: LocatorAssertions.toHaveJSProperty.name
 - `name` <[string]>
 
 Property name.
 
 ### param: LocatorAssertions.toHaveJSProperty.value
-- `value` <[Serializable]>
+- `value` <[any]>
 
 Property value.
 
-### option: LocatorAssertions.toHaveJSProperty.timeout = %%-assertions-timeout-%%
+### option: LocatorAssertions.toHaveJSProperty.timeout = %%-js-assertions-timeout-%%
+### option: LocatorAssertions.toHaveJSProperty.timeout = %%-csharp-java-python-assertions-timeout-%%
 
-## method: LocatorAssertions.toHaveText
+## async method: LocatorAssertions.toHaveScreenshot
+* langs: js
+
+Ensures that [Locator] resolves to a given screenshot. This function will re-take
+screenshots until it matches with the saved expectation.
+
+If there's no expectation yet, it will wait until two consecutive screenshots
+yield the same result, and save the last one as an expectation.
+
+```js
+const locator = page.locator('button');
+await expect(locator).toHaveScreenshot();
+```
+
+### option: LocatorAssertions.toHaveScreenshot.timeout = %%-js-assertions-timeout-%%
+### option: LocatorAssertions.toHaveScreenshot.timeout = %%-csharp-java-python-assertions-timeout-%%
+
+### option: LocatorAssertions.toHaveScreenshot.animations = %%-screenshot-option-animations-%%
+
+### option: LocatorAssertions.toHaveScreenshot.omitBackground = %%-screenshot-option-omit-background-%%
+
+### option: LocatorAssertions.toHaveScreenshot.mask = %%-screenshot-option-mask-%%
+
+### option: LocatorAssertions.toHaveScreenshot.maxDiffPixels = %%-assertions-max-diff-pixels-%%
+
+### option: LocatorAssertions.toHaveScreenshot.maxDiffPixelRatio = %%-assertions-max-diff-pixel-ratio-%%
+
+### option: LocatorAssertions.toHaveScreenshot.threshold = %%-assertions-threshold-%%
+
+
+## async method: LocatorAssertions.toHaveText
 * langs:
   - alias-java: hasText
 
@@ -891,7 +1063,14 @@ expect(locator).to_have_text(re.compile(r"Welcome, Test User"))
 expect(locator).to_have_text(re.compile(r"Welcome, .*"))
 ```
 
-Note that if array is passed as an expected value, entire lists can be asserted:
+```csharp
+var locator = Page.Locator(".title");
+await Expect(locator).ToHaveTextAsync(new Regex("Welcome, Test User"));
+await Expect(locator).ToHaveTextAsync(new Regex("Welcome, .*"));
+```
+
+
+Note that if array is passed as an expected value, entire lists of elements can be asserted:
 
 ```js
 const locator = page.locator('list > .component');
@@ -916,6 +1095,11 @@ locator = page.locator("list > .component")
 expect(locator).to_have_text(["Text 1", "Text 2", "Text 3"])
 ```
 
+```csharp
+var locator = Page.Locator("list > .component");
+await Expect(locator).toHaveTextAsync(new string[]{ "Text 1", "Text 2", "Text 3" });
+```
+
 ### param: LocatorAssertions.toHaveText.expected
 * langs: python, js
 - `expected` <[string]|[RegExp]|[Array]<[string]|[RegExp]>>
@@ -923,7 +1107,7 @@ expect(locator).to_have_text(["Text 1", "Text 2", "Text 3"])
 Expected substring or RegExp or a list of those.
 
 ### param: LocatorAssertions.toHaveText.expected
-* langs: java
+* langs: java, csharp
 - `expected` <[string]|[RegExp]|[Array]<[string]>|[Array]<[RegExp]>>
 
 Expected substring or RegExp or a list of those.
@@ -933,9 +1117,10 @@ Expected substring or RegExp or a list of those.
 
 Whether to use `element.innerText` instead of `element.textContent` when retrieving DOM node text.
 
-### option: LocatorAssertions.toHaveText.timeout = %%-assertions-timeout-%%
+### option: LocatorAssertions.toHaveText.timeout = %%-js-assertions-timeout-%%
+### option: LocatorAssertions.toHaveText.timeout = %%-csharp-java-python-assertions-timeout-%%
 
-## method: LocatorAssertions.toHaveValue
+## async method: LocatorAssertions.toHaveValue
 * langs:
   - alias-java: hasValue
 
@@ -966,9 +1151,15 @@ locator = page.locator("input[type=number]")
 expect(locator).to_have_value(re.compile(r"[0-9]"))
 ```
 
+```csharp
+var locator = Page.Locator("input[type=number]");
+await Expect(locator).ToHaveValueAsync(new Regex("[0-9]"));
+```
+
 ### param: LocatorAssertions.toHaveValue.value
 - `value` <[string]|[RegExp]>
 
 Expected value.
 
-### option: LocatorAssertions.toHaveValue.timeout = %%-assertions-timeout-%%
+### option: LocatorAssertions.toHaveValue.timeout = %%-js-assertions-timeout-%%
+### option: LocatorAssertions.toHaveValue.timeout = %%-csharp-java-python-assertions-timeout-%%

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect, stripAscii } from './playwright-test-fixtures';
+import { test, expect, stripAnsi } from './playwright-test-fixtures';
 
 function monotonicTime(): number {
   const [seconds, nanoseconds] = process.hrtime();
@@ -46,7 +46,7 @@ test('should work with not defined errors', async ({ runInlineTest }) => {
       foo();
     `
   });
-  expect(stripAscii(result.output)).toContain('foo is not defined');
+  expect(stripAnsi(result.output)).toContain('foo is not defined');
   expect(result.exitCode).toBe(1);
 });
 
@@ -141,7 +141,7 @@ test('should exit with code 1 if the specified folder does not exist', async ({ 
     `,
   });
   expect(result.exitCode).toBe(1);
-  expect(result.output).toContain(`111111111111.js does not exist`);
+  expect(result.output).toContain(`no tests found.`);
 });
 
 test('should exit with code 1 if passed a file name', async ({ runInlineTest }) => {
@@ -153,7 +153,7 @@ test('should exit with code 1 if passed a file name', async ({ runInlineTest }) 
     `,
   });
   expect(result.exitCode).toBe(1);
-  expect(result.output).toContain(`test.spec.js is not a directory`);
+  expect(result.output).toContain(`no tests found.`);
 });
 
 test('should exit with code 1 when config is not found', async ({ runInlineTest }) => {

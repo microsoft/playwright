@@ -15,12 +15,10 @@
  */
 
 
-import colors from 'colors/safe';
 import type { ExpectedTextValue } from 'playwright-core/lib/protocol/channels';
 import { isRegExp, isString } from 'playwright-core/lib/utils/utils';
-import { currentTestInfo } from '../globals';
 import type { Expect } from '../types';
-import { expectType } from '../util';
+import { expectTypes, callLogText, currentExpectTimeout } from '../util';
 import {
   printReceivedStringContainExpectedResult,
   printReceivedStringContainExpectedSubstring
@@ -35,7 +33,7 @@ export async function toMatchText(
   expected: string | RegExp,
   options: { timeout?: number, matchSubstring?: boolean } = {},
 ) {
-  expectType(receiver, receiverType, matcherName);
+  expectTypes(receiver, [receiverType], matcherName);
 
   const matcherOptions = {
     isNot: this.isNot,
@@ -110,25 +108,4 @@ export function toExpectedTextValues(items: (string | RegExp)[], options: { matc
     matchSubstring: options.matchSubstring,
     normalizeWhiteSpace: options.normalizeWhiteSpace,
   }));
-}
-
-export function callLogText(log: string[] | undefined): string {
-  if (!log)
-    return '';
-  return `
-Call log:
-  ${colors.dim('- ' + (log || []).join('\n  - '))}
-`;
-}
-
-export function currentExpectTimeout(options: { timeout?: number }) {
-  const testInfo = currentTestInfo();
-  if (testInfo && !testInfo.timeout)
-    return 0;
-  if (options.timeout !== undefined)
-    return options.timeout;
-  let defaultExpectTimeout = testInfo?.project.expect?.timeout;
-  if (typeof defaultExpectTimeout === 'undefined')
-    defaultExpectTimeout = 5000;
-  return defaultExpectTimeout;
 }

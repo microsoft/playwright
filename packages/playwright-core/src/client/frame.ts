@@ -213,6 +213,10 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
     return result.elements.map(e => ElementHandle.from(e) as ElementHandle<SVGElement | HTMLElement>);
   }
 
+  async _queryCount(selector: string): Promise<number> {
+    return (await this._channel.queryCount({ selector })).value;
+  }
+
   async content(): Promise<string> {
     return (await this._channel.content()).value;
   }
@@ -280,7 +284,11 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
     return await this._channel.fill({ selector, value, ...options });
   }
 
-  locator(selector: string, options?: { hasText?: string | RegExp }): Locator {
+  async _highlight(selector: string) {
+    return await this._channel.highlight({ selector });
+  }
+
+  locator(selector: string, options?: { hasText?: string | RegExp, has?: Locator }): Locator {
     return new Locator(this, selector, options);
   }
 
