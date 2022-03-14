@@ -30,10 +30,12 @@ class JUnitReporter implements Reporter {
   private totalSkipped = 0;
   private outputFile: string | undefined;
   private stripANSIControlSequences = false;
+  private useCDATAsections = false;
 
-  constructor(options: { outputFile?: string, stripANSIControlSequences?: boolean } = {}) {
+  constructor(options: { outputFile?: string, stripANSIControlSequences?: boolean, useCDATAsections?: boolean } = {}) {
     this.outputFile = options.outputFile || process.env[`PLAYWRIGHT_JUNIT_OUTPUT_NAME`];
     this.stripANSIControlSequences = options.stripANSIControlSequences || false;
+    this.useCDATAsections = options.useCDATAsections || false;
   }
 
   printsToStdio() {
@@ -71,7 +73,7 @@ class JUnitReporter implements Reporter {
       children
     };
 
-    serializeXML(root, tokens, this.stripANSIControlSequences);
+    serializeXML(root, tokens, this.stripANSIControlSequences, this.useCDATAsections);
     const reportString = tokens.join('\n');
     if (this.outputFile) {
       fs.mkdirSync(path.dirname(this.outputFile), { recursive: true });
@@ -183,15 +185,15 @@ type XMLEntry = {
   text?: string;
 };
 
-function serializeXML(entry: XMLEntry, tokens: string[], stripANSIControlSequences: boolean) {
+function serializeXML(entry: XMLEntry, tokens: string[], stripANSIControlSequences: boolean, useCDATAsections: boolean) {
   const attrs: string[] = [];
   for (const [name, value] of Object.entries(entry.attributes || {}))
-    attrs.push(`${name}="${escape(String(value), stripANSIControlSequences, false)}"`);
+    attrs.push(`${name}="${escape(String(value), stripANSIControlSequences, false, false)}"`);
   tokens.push(`<${entry.name}${attrs.length ? ' ' : ''}${attrs.join(' ')}>`);
   for (const child of entry.children || [])
-    serializeXML(child, tokens, stripANSIControlSequences);
+    serializeXML(child, tokens, stripANSIControlSequences, useCDATAsections);
   if (entry.text)
-    tokens.push(escape(entry.text, stripANSIControlSequences, true));
+    tokens.push(escape(entry.text, stripANSIControlSequences, true, useCDATAsections));
   tokens.push(`</${entry.name}>`);
 }
 
@@ -199,13 +201,19 @@ function serializeXML(entry: XMLEntry, tokens: string[], stripANSIControlSequenc
 const discouragedXMLCharacters = /[\u0001-\u0008\u000b-\u000c\u000e-\u001f\u007f-\u0084\u0086-\u009f]/g;
 const ansiControlSequence = new RegExp('[\\u001B\\u009B][[\\]()#;?]*(?:(?:(?:[a-zA-Z\\d]*(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]*)*)?\\u0007)|(?:(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PR-TZcf-ntqry=><~]))', 'g');
 
-function escape(text: string, stripANSIControlSequences: boolean, isCharacterData: boolean): string {
+function escape(text: string, stripANSIControlSequences: boolean, isCharacterData: boolean, useCDATAsections: boolean): string {
   if (stripANSIControlSequences)
     text = text.replace(ansiControlSequence, '');
-  const escapeRe = isCharacterData ? /[&<]/g : /[&"<>]/g;
-  text = text.replace(escapeRe, c => ({ '&': '&amp;', '"': '&quot;', '<': '&lt;', '>': '&gt;' }[c]!));
-  if (isCharacterData)
-    text = text.replace(/]]>/g, ']]&gt;');
+  if (isCharacterData) {
+    if (useCDATAsections)
+      text = '<![CDATA[' + text.replace(/]]>/g, ']]&gt;') + ']]>';
+    else
+      text = text.replace(/]]>/g, ']]&gt;');
+  } else {
+    const escapeRe = /[&"'<>]/g;
+    text = text.replace(escapeRe, c => ({ '&': '&amp;', '"': '&quot;', "'": '&apos;', '<': '&lt;', '>': '&gt;' }[c]!));
+  }
+
   text = text.replace(discouragedXMLCharacters, '');
   return text;
 }
