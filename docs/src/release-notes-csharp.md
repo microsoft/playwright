@@ -43,7 +43,6 @@ Read more in [our documentation](./api/class-playwrightassertions).
 - New options for methods [`method: Page.screenshot`], [`method: Locator.screenshot`] and [`method: ElementHandle.screenshot`]:
   * Option `ScreenshotAnimations.Disabled` rewinds all CSS animations and transitions to a consistent state
   * Option `mask: Locator[]` masks given elements, overlaying them with pink `#FF00FF` boxes.
-- [Trace Viewer](./trace-viewer) now shows [API testing requests](./src/test-api-testing).
 - [`method: Locator.highlight`] visually reveals element(s) for easier debugging.
 
 ### Announcements
