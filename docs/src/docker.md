@@ -13,7 +13,7 @@ This image is published on [Docker Hub].
 
 ### Pull the image
 
-Pinned to a specific Playwright version. Replace 1.20.0 with your Playwright version:
+Replace 1.20.0 with your Playwright version:
 
 ```bash js
 docker pull mcr.microsoft.com/playwright:v1.20.0-focal
