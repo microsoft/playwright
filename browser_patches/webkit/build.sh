@@ -48,7 +48,7 @@ if [[ "$(uname)" == "Darwin" ]]; then
   if [[ "${CURRENT_HOST_OS_VERSION}" == "10.15" ]]; then
     selectXcodeVersionOrDie "11.7"
   elif [[ "${CURRENT_HOST_OS_VERSION}" == "11."* ]]; then
-    selectXcodeVersionOrDie "13.2"
+    selectXcodeVersionOrDie "12.5"
   elif [[ "${CURRENT_HOST_OS_VERSION}" == "12."* ]]; then
     selectXcodeVersionOrDie "13.2"
   else
