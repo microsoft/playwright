@@ -278,8 +278,23 @@ export class FrameManager {
       return;
     }
     this._page._browserContext.emit(BrowserContext.Events.Request, request);
-    if (route)
-      this._page._requestStarted(request, route);
+
+    if (route) {
+      const r = new network.Route(request, route);
+      if (this._page._serverRequestInterceptor) {
+        this._page._serverRequestInterceptor(r, request);
+        return;
+      }
+      if (this._page._clientRequestInterceptor) {
+        this._page._clientRequestInterceptor(r, request);
+        return;
+      }
+      if (this._page._browserContext._requestInterceptor) {
+        this._page._browserContext._requestInterceptor(r, request);
+        return;
+      }
+      r.continue();
+    }
   }
 
   requestReceivedResponse(response: network.Response) {
@@ -1737,4 +1752,3 @@ function verifyLifecycle(name: string, waitUntil: types.LifecycleEvent): types.L
     throw new Error(`${name}: expected one of (load|domcontentloaded|networkidle|commit)`);
   return waitUntil;
 }
-

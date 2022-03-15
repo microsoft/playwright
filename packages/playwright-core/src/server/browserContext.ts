@@ -239,15 +239,6 @@ export abstract class BrowserContext extends SdkObject {
     }
   }
 
-  _requestStarted(request: network.Request, routeDelegate: network.RouteDelegate) {
-    const route = new network.Route(request, routeDelegate);
-    if (this._requestInterceptor) {
-      this._requestInterceptor(route, request);
-      return;
-    }
-    route.continue();
-  }
-
   protected _authenticateProxyViaHeader() {
     const proxy = this._options.proxy || this._browser.options.proxy || { username: undefined, password: undefined };
     const { username, password } = proxy;

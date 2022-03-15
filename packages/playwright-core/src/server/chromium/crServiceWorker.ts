@@ -63,7 +63,13 @@ export class CRServiceWorker extends Worker {
 
   requestStarted(request: network.Request, route?: network.RouteDelegate) {
     this._browserContext.emit(BrowserContext.Events.Request, request);
-    if (route)
-      this._browserContext._requestStarted(request, route);
+    if (route) {
+      const r = new network.Route(request, route);
+      if (this._browserContext._requestInterceptor) {
+        this._browserContext._requestInterceptor(r, request);
+        return;
+      }
+      r.continue();
+    }
   }
 }
