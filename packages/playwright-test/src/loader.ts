@@ -196,7 +196,7 @@ export class Loader {
     let testDir = takeFirst(projectConfig.testDir, rootDir);
     if (!path.isAbsolute(testDir))
       testDir = path.resolve(configDir, testDir);
-    let outputDir = takeFirst(this._configOverrides.outputDir, projectConfig.outputDir, this._config.outputDir, path.resolve(process.cwd(), 'test-results'));
+    let outputDir = takeFirst(this._configOverrides.outputDir, projectConfig.outputDir, this._config.outputDir, path.resolve(rootDir, 'test-results'));
     if (!path.isAbsolute(outputDir))
       outputDir = path.resolve(configDir, outputDir);
     let snapshotDir = takeFirst(this._configOverrides.snapshotDir, projectConfig.snapshotDir, this._config.snapshotDir, testDir);
