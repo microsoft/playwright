@@ -71,14 +71,15 @@ export class CRNetworkManager {
     ];
 
     if (this._page) {
+      const page = this._page;
       listeners.push(...[
-        eventsHelper.addEventListener(session, 'Network.webSocketCreated', e => this._page?._frameManager.onWebSocketCreated(e.requestId, e.url)),
-        eventsHelper.addEventListener(session, 'Network.webSocketWillSendHandshakeRequest', e => this._page?._frameManager.onWebSocketRequest(e.requestId)),
-        eventsHelper.addEventListener(session, 'Network.webSocketHandshakeResponseReceived', e => this._page?._frameManager.onWebSocketResponse(e.requestId, e.response.status, e.response.statusText)),
-        eventsHelper.addEventListener(session, 'Network.webSocketFrameSent', e => e.response.payloadData && this._page?._frameManager.onWebSocketFrameSent(e.requestId, e.response.opcode, e.response.payloadData)),
-        eventsHelper.addEventListener(session, 'Network.webSocketFrameReceived', e => e.response.payloadData && this._page?._frameManager.webSocketFrameReceived(e.requestId, e.response.opcode, e.response.payloadData)),
-        eventsHelper.addEventListener(session, 'Network.webSocketClosed', e => this._page?._frameManager.webSocketClosed(e.requestId)),
-        eventsHelper.addEventListener(session, 'Network.webSocketFrameError', e => this._page?._frameManager.webSocketError(e.requestId, e.errorMessage)),
+        eventsHelper.addEventListener(session, 'Network.webSocketCreated', e => page._frameManager.onWebSocketCreated(e.requestId, e.url)),
+        eventsHelper.addEventListener(session, 'Network.webSocketWillSendHandshakeRequest', e => page._frameManager.onWebSocketRequest(e.requestId)),
+        eventsHelper.addEventListener(session, 'Network.webSocketHandshakeResponseReceived', e => page._frameManager.onWebSocketResponse(e.requestId, e.response.status, e.response.statusText)),
+        eventsHelper.addEventListener(session, 'Network.webSocketFrameSent', e => e.response.payloadData && page._frameManager.onWebSocketFrameSent(e.requestId, e.response.opcode, e.response.payloadData)),
+        eventsHelper.addEventListener(session, 'Network.webSocketFrameReceived', e => e.response.payloadData && page._frameManager.webSocketFrameReceived(e.requestId, e.response.opcode, e.response.payloadData)),
+        eventsHelper.addEventListener(session, 'Network.webSocketClosed', e => page._frameManager.webSocketClosed(e.requestId)),
+        eventsHelper.addEventListener(session, 'Network.webSocketFrameError', e => page._frameManager.webSocketError(e.requestId, e.errorMessage)),
       ]);
     }
 

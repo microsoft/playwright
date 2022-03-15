@@ -2357,7 +2357,6 @@ Request:
 
   initializer:
     frame: Frame?
-    serviceWorker: Worker?
     url: string
     resourceType: string
     method: string

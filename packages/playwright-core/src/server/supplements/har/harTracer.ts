@@ -18,7 +18,7 @@ import { BrowserContext } from '../../browserContext';
 import { APIRequestContext, APIRequestEvent, APIRequestFinishedEvent } from '../../fetch';
 import { helper } from '../../helper';
 import * as network from '../../network';
-import { Page } from '../../page';
+import { Page, Worker } from '../../page';
 import * as har from './har';
 import { calculateSha1, monotonicTime } from '../../../utils/utils';
 import { eventsHelper, RegisteredListener } from '../../../utils/eventsHelper';
@@ -128,7 +128,7 @@ export class HarTracer {
     this._addBarrier(page, promise);
   }
 
-  private _addBarrier(target: { on: (event: 'close', fn: () => void) => void } | null, promise: Promise<void>) {
+  private _addBarrier(target: Page | Worker | null, promise: Promise<void>) {
     if (!target)
       return;
 
@@ -410,7 +410,6 @@ export class HarTracer {
   }
 }
 
-// TODO(rwoll): Consider adding _serviceworkerref
 function createHarEntry(method: string, url: URL, requestref: string, frameref?: string): har.Entry {
   const harEntry: har.Entry = {
     _requestref: requestref,
