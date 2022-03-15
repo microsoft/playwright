@@ -697,7 +697,7 @@ class FrameSession {
     }
 
     if (event.targetInfo.type === 'service_worker')
-      this._setParentNetworkManagerForServiceWorker(event);
+      this._crPage._browserContext._setParentNetworkManagerForServiceWorker(this._networkManager, event);
 
 
     if (event.targetInfo.type !== 'worker') {
@@ -725,23 +725,6 @@ class FrameSession {
     session.on('Runtime.exceptionThrown', exception => this._page.emit(Page.Events.PageError, exceptionToError(exception.exceptionDetails)));
     // TODO: attribute workers to the right frame.
     this._networkManager.instrumentNetworkEvents(session, this._page._frameManager.frame(this._targetId)!);
-  }
-
-  private _setParentNetworkManagerForServiceWorker(event: Protocol.Target.attachedToTargetPayload) {
-    let worker = this._crPage._browserContext._browser._serviceWorkers.get(event.targetInfo.targetId);
-    if (worker) {
-      worker._networkManager.setParentManager(this._networkManager);
-      assert(worker._browserContext === this._crPage._browserContext, 'Worker and BrowserContext were ambiguous.');
-    } else {
-      const onNewWorker = () => {
-        worker = this._crPage._browserContext._browser._serviceWorkers.get(event.targetInfo.targetId);
-        if (worker) {
-          this._page._browserContext.off(CRBrowserContext.CREvents.ServiceWorker, onNewWorker);
-          worker._networkManager.setParentManager(this._networkManager);
-        }
-      };
-      this._page._browserContext.on(CRBrowserContext.CREvents.ServiceWorker, onNewWorker);
-    }
   }
 
   _onDetachedFromTarget(event: Protocol.Target.detachedFromTargetPayload) {

@@ -30,6 +30,7 @@ import { readProtocolStream } from './crProtocolHelper';
 import { Protocol } from './protocol';
 import { CRDevTools } from './crDevTools';
 import { CRServiceWorker } from './crServiceWorker';
+import { CRNetworkManager } from './crNetworkManager';
 
 export class CRBrowser extends Browser {
   readonly _connection: CRConnection;
@@ -465,6 +466,23 @@ export class CRBrowserContext extends BrowserContext {
 
     for (const sw of this.serviceWorkers())
       await (sw as CRServiceWorker).updateRequestInterception();
+  }
+
+  _setParentNetworkManagerForServiceWorker(parent: CRNetworkManager, event: Protocol.Target.attachedToTargetPayload) {
+    const worker = this._browser._serviceWorkers.get(event.targetInfo.targetId);
+    if (worker) {
+      worker._networkManager.setParentManager(parent);
+      return;
+    }
+
+    const onNewWorker = () => {
+      const worker = this._browser._serviceWorkers.get(event.targetInfo.targetId);
+      if (worker) {
+        this.off(CRBrowserContext.CREvents.ServiceWorker, onNewWorker);
+        worker._networkManager.setParentManager(parent);
+      }
+    };
+    this.on(CRBrowserContext.CREvents.ServiceWorker, onNewWorker);
   }
 
   async _doClose() {
