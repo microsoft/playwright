@@ -51,3 +51,12 @@ test('named slots should work', async ({ mount }) => {
   await expect(component).toContainText('Main Content')
   await expect(component).toContainText('Footer')
 })
+
+test('slot should emit events', async ({ mount }) => {
+  let clickFired = false;
+  const component = await mount(<DefaultSlot>
+    <span v-on:click={() => clickFired = true}>Main Content</span>
+  </DefaultSlot>);
+  await component.locator('text=Main Content').click();
+  expect(clickFired).toBeTruthy();
+})

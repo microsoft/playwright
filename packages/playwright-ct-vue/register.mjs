@@ -32,6 +32,7 @@ function render(component) {
   if (typeof component === 'string')
     return component;
   const componentFunc = registry.get(component.type) || component.type;
+  const isVueComponent = componentFunc !== component.type;
 
   const children = [];
   const slots = {};
@@ -50,10 +51,15 @@ function render(component) {
     }
 
     for (const [key, value] of Object.entries(component.props)) {
-      if (key.startsWith('v-on:'))
-        listeners[key.substring('v-on:'.length)] = value;
-      else
+      if (key.startsWith('v-on:')) {
+        const event = key.substring('v-on:'.length);
+        if (isVueComponent)
+          listeners[event] = value;
+        else
+          props[`on${event[0].toUpperCase()}${event.substring(1)}`] = value;
+      } else {
         props[key] = value;
+      }
     }
   }
 
