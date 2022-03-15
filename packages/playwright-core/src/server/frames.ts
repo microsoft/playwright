@@ -441,7 +441,7 @@ export class Frame extends SdkObject {
   private _setContentCounter = 0;
   readonly _detachedPromise: Promise<void>;
   private _detachedCallback = () => {};
-  private _nonStallingEvaluations = new Set<(error: Error) => void>();
+  private _raceAgainstEvaluationStallingEventsPromises = new Set<ManualPromise<any>>();
 
   constructor(page: Page, id: string, parentFrame: Frame | null) {
     super(page, 'frame');
@@ -500,53 +500,47 @@ export class Frame extends SdkObject {
   }
 
   _invalidateNonStallingEvaluations(message: string) {
-    if (!this._nonStallingEvaluations)
+    if (!this._raceAgainstEvaluationStallingEventsPromises.size)
       return;
     const error = new Error(message);
-    for (const callback of this._nonStallingEvaluations)
-      callback(error);
+    for (const promise of this._raceAgainstEvaluationStallingEventsPromises)
+      promise.reject(error);
   }
 
-  async nonStallingRawEvaluateInExistingMainContext(expression: string): Promise<any> {
+  async raceAgainstEvaluationStallingEvents<T>(cb: () => Promise<T>): Promise<T> {
     if (this._pendingDocument)
       throw new Error('Frame is currently attempting a navigation');
     if (this._page._frameManager._openedDialogs.size)
       throw new Error('Open JavaScript dialog prevents evaluation');
-    const context = this._existingMainContext();
-    if (!context)
-      throw new Error('Frame does not yet have a main execution context');
 
-    let callback = () => {};
-    const frameInvalidated = new Promise<void>((f, r) => callback = r);
-    this._nonStallingEvaluations.add(callback);
+    const promise = new ManualPromise<T>();
+    this._raceAgainstEvaluationStallingEventsPromises.add(promise);
     try {
       return await Promise.race([
-        context.rawEvaluateJSON(expression),
-        frameInvalidated
+        cb(),
+        promise
       ]);
     } finally {
-      this._nonStallingEvaluations.delete(callback);
+      this._raceAgainstEvaluationStallingEventsPromises.delete(promise);
     }
   }
 
-  async nonStallingEvaluateInExistingContext(expression: string, isFunction: boolean|undefined, world: types.World): Promise<any> {
-    if (this._pendingDocument)
-      throw new Error('Frame is currently attempting a navigation');
-    const context = this._contextData.get(world)?.context;
-    if (!context)
-      throw new Error('Frame does not yet have the execution context');
+  nonStallingRawEvaluateInExistingMainContext(expression: string): Promise<any> {
+    return this.raceAgainstEvaluationStallingEvents(() => {
+      const context = this._existingMainContext();
+      if (!context)
+        throw new Error('Frame does not yet have a main execution context');
+      return context.rawEvaluateJSON(expression);
+    });
+  }
 
-    let callback = () => {};
-    const frameInvalidated = new Promise<void>((f, r) => callback = r);
-    this._nonStallingEvaluations.add(callback);
-    try {
-      return await Promise.race([
-        context.evaluateExpression(expression, isFunction),
-        frameInvalidated
-      ]);
-    } finally {
-      this._nonStallingEvaluations.delete(callback);
-    }
+  nonStallingEvaluateInExistingContext(expression: string, isFunction: boolean|undefined, world: types.World): Promise<any> {
+    return this.raceAgainstEvaluationStallingEvents(() => {
+      const context = this._contextData.get(world)?.context;
+      if (!context)
+        throw new Error('Frame does not yet have the execution context');
+      return context.evaluateExpression(expression, isFunction);
+    });
   }
 
   private _recalculateLifecycle() {
@@ -1168,10 +1162,12 @@ export class Frame extends SdkObject {
   }
 
   async hideHighlight() {
-    const context = await this._utilityContext();
-    const injectedScript = await context.injectedScript();
-    return await injectedScript.evaluate(injected => {
-      return injected.hideHighlight();
+    return this.raceAgainstEvaluationStallingEvents(async () => {
+      const context = await this._utilityContext();
+      const injectedScript = await context.injectedScript();
+      return await injectedScript.evaluate(injected => {
+        return injected.hideHighlight();
+      });
     });
   }
 
