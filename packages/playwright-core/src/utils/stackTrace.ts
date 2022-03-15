@@ -108,28 +108,14 @@ export function captureStackTrace(rawStack?: string): ParsedStackTrace {
 
   let apiName = '';
   const allFrames = parsedFrames;
-
-  // expect matchers have the following stack structure:
-  // at Object.__PWTRAP__[expect.toHaveText] (...)
-  // at __EXTERNAL_MATCHER_TRAP__ (...)
-  // at Object.throwingMatcher [as toHaveText] (...)
-  const TRAP = '__PWTRAP__[';
-  const expectIndex = parsedFrames.findIndex(f => f.frameText.includes(TRAP));
-  if (expectIndex !== -1) {
-    const text = parsedFrames[expectIndex].frameText;
-    const aliasIndex = text.indexOf(TRAP);
-    apiName = text.substring(aliasIndex + TRAP.length, text.indexOf(']'));
-    parsedFrames = parsedFrames.slice(expectIndex + 3);
-  } else {
-    // Deepest transition between non-client code calling into client code
-    // is the api entry.
-    for (let i = 0; i < parsedFrames.length - 1; i++) {
-      if (parsedFrames[i].inCore && !parsedFrames[i + 1].inCore) {
-        const frame = parsedFrames[i].frame;
-        apiName = normalizeAPIName(frame.function);
-        parsedFrames = parsedFrames.slice(i + 1);
-        break;
-      }
+  // Deepest transition between non-client code calling into client code
+  // is the api entry.
+  for (let i = 0; i < parsedFrames.length - 1; i++) {
+    if (parsedFrames[i].inCore && !parsedFrames[i + 1].inCore) {
+      const frame = parsedFrames[i].frame;
+      apiName = normalizeAPIName(frame.function);
+      parsedFrames = parsedFrames.slice(i + 1);
+      break;
     }
   }
 

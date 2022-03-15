@@ -21,7 +21,10 @@ import type { Expect } from '../types';
 import { currentTestInfo } from '../globals';
 import { mimeTypeToComparator, ImageComparatorOptions, Comparator } from 'playwright-core/lib/utils/comparators';
 import type { PageScreenshotOptions } from 'playwright-core/types/types';
-import { addSuffixToFilePath, serializeError, sanitizeForFilePath, trimLongString, callLogText, currentExpectTimeout, expectTypes } from '../util';
+import {
+  addSuffixToFilePath, serializeError, sanitizeForFilePath,
+  trimLongString, callLogText, currentExpectTimeout,
+  expectTypes, captureStackTrace  } from '../util';
 import { UpdateSnapshots } from '../types';
 import colors from 'colors/safe';
 import fs from 'fs';
@@ -310,6 +313,7 @@ export async function toHaveScreenshot(
     maxDiffPixelRatio: undefined,
   };
 
+  const customStackTrace = captureStackTrace(`expect.toHaveScreenshot`);
   const hasSnapshot = fs.existsSync(helper.snapshotPath);
   if (this.isNot) {
     if (!hasSnapshot)
@@ -318,7 +322,7 @@ export async function toHaveScreenshot(
     // Having `errorMessage` means we timed out while waiting
     // for screenshots not to match, so screenshots
     // are actually the same in the end.
-    const isDifferent = !(await page._expectScreenshot({
+    const isDifferent = !(await page._expectScreenshot(customStackTrace, {
       expected: await fs.promises.readFile(helper.snapshotPath),
       isNot: true,
       locator,
@@ -336,7 +340,7 @@ export async function toHaveScreenshot(
   if (helper.updateSnapshots === 'all' || !hasSnapshot) {
     // Regenerate a new screenshot by waiting until two screenshots are the same.
     const timeout = currentExpectTimeout(helper.allOptions);
-    const { actual, previous, diff, errorMessage, log } = await page._expectScreenshot({
+    const { actual, previous, diff, errorMessage, log } = await page._expectScreenshot(customStackTrace, {
       expected: undefined,
       isNot: false,
       locator,
@@ -371,7 +375,7 @@ export async function toHaveScreenshot(
   // - regular matcher (i.e. not a `.not`)
   // - no flags to update screenshots
   const expected = await fs.promises.readFile(helper.snapshotPath);
-  const { actual, diff, errorMessage, log } = await page._expectScreenshot({
+  const { actual, diff, errorMessage, log } = await page._expectScreenshot(customStackTrace, {
     expected,
     isNot: false,
     locator,

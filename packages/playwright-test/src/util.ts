@@ -24,6 +24,9 @@ import debug from 'debug';
 import { calculateSha1, isRegExp } from 'playwright-core/lib/utils/utils';
 import { isInternalFileName } from 'playwright-core/lib/utils/stackTrace';
 import { currentTestInfo } from './globals';
+import { captureStackTrace as coreCaptureStackTrace, ParsedStackTrace } from 'playwright-core/lib/utils/stackTrace';
+
+export { ParsedStackTrace };
 
 const PLAYWRIGHT_CORE_PATH = path.dirname(require.resolve('playwright-core'));
 const EXPECT_PATH = path.dirname(require.resolve('expect'));
@@ -58,6 +61,25 @@ function filterStackTrace(e: Error) {
   // eslint-disable-next-line
   e.stack; // trigger Error.prepareStackTrace
   Error.prepareStackTrace = oldPrepare;
+}
+
+export function captureStackTrace(customApiName?: string): ParsedStackTrace {
+  const stackTrace: ParsedStackTrace = coreCaptureStackTrace();
+  const frames = [];
+  const frameTexts = [];
+  for (let i = 0; i < stackTrace.frames.length; ++i) {
+    const frame = stackTrace.frames[i];
+    if (frame.file.startsWith(EXPECT_PATH))
+      continue;
+    frames.push(frame);
+    frameTexts.push(stackTrace.frameTexts[i]);
+  }
+  return {
+    allFrames: stackTrace.allFrames,
+    frames,
+    frameTexts,
+    apiName: customApiName ?? stackTrace.apiName,
+  };
 }
 
 export function serializeError(error: Error | any): TestError {

@@ -288,9 +288,10 @@ test('should fail to screenshot an element with infinite animation', async ({ ru
   });
   expect(result.exitCode).toBe(1);
   expect(stripAnsi(result.output)).toContain(`Timeout 2000ms exceeded while generating screenshot because element kept changing`);
+  expect(stripAnsi(result.output)).toContain(`expect.toHaveScreenshot with timeout 2000ms`);
+  expect(fs.existsSync(testInfo.outputPath('test-results', 'a-is-a-test', 'is-a-test-1-previous.png'))).toBe(true);
   expect(fs.existsSync(testInfo.outputPath('test-results', 'a-is-a-test', 'is-a-test-1-actual.png'))).toBe(true);
   expect(fs.existsSync(testInfo.outputPath('test-results', 'a-is-a-test', 'is-a-test-1-expected.png'))).toBe(false);
-  expect(fs.existsSync(testInfo.outputPath('test-results', 'a-is-a-test', 'is-a-test-1-previous.png'))).toBe(true);
   expect(fs.existsSync(testInfo.outputPath('test-results', 'a-is-a-test', 'is-a-test-1-diff.png'))).toBe(true);
   expect(fs.existsSync(testInfo.outputPath('__screenshots__', 'a.spec.js', 'is-a-test-1.png'))).toBe(false);
 });

@@ -47,10 +47,7 @@ import { toMatchSnapshot, toHaveScreenshot, getSnapshotName } from './matchers/t
 import type { Expect, TestError } from './types';
 import matchers from 'expect/build/matchers';
 import { currentTestInfo } from './globals';
-import { serializeError } from './util';
-import StackUtils from 'stack-utils';
-
-const stackUtils = new StackUtils();
+import { serializeError, captureStackTrace } from './util';
 
 // #region
 // Mirrored from https://github.com/facebook/jest/blob/f13abff8df9a0e1148baf3584bcde6d1b479edc7/packages/expect/src/print.ts
@@ -184,7 +181,7 @@ class ExpectMetaInfoProxyHandler {
 }
 
 function wrap(matcherName: string, matcher: any) {
-  const result = function(this: any, ...args: any[]) {
+  return function(this: any, ...args: any[]) {
     const testInfo = currentTestInfo();
     if (!testInfo)
       return matcher.call(this, ...args);
@@ -194,15 +191,9 @@ function wrap(matcherName: string, matcher: any) {
       const [received, nameOrOptions, optOptions] = args;
       titleSuffix = `(${getSnapshotName(testInfo, received, nameOrOptions, optOptions)})`;
     }
-
-    const INTERNAL_STACK_LENGTH = 4;
-    // at Object.__PWTRAP__[expect.toHaveText] (...)
-    // at __EXTERNAL_MATCHER_TRAP__ (...)
-    // at Object.throwingMatcher [as toHaveText] (...)
-    // at Proxy.<anonymous>
-    // at <test function> (...)
-    const stackLines = new Error().stack!.split('\n').slice(INTERNAL_STACK_LENGTH + 1);
-    const frame = stackLines[0] ? stackUtils.parseLine(stackLines[0]) : undefined;
+    const stackTrace = captureStackTrace();
+    const stackLines = stackTrace.frameTexts;
+    const frame = stackTrace.frames[0];
     const customMessage = expectCallMetaInfo?.message ?? '';
     const isSoft = expectCallMetaInfo?.isSoft ?? false;
     const step = testInfo._addStep({
@@ -257,8 +248,6 @@ function wrap(matcherName: string, matcher: any) {
       reportStepError(e);
     }
   };
-  Object.defineProperty(result, 'name', { value: '__PWTRAP__[expect.' + matcherName + ']' });
-  return result;
 }
 
 const wrappedMatchers: any = {};
