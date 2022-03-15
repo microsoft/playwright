@@ -27,7 +27,20 @@ const {chromium, webkit, firefox} = require('playwright');
 
 (async () => {
   const browser = await chromium.launch();
-  // ...
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  
+  // Please include a snippet of HTML that shows an example of the content
+  // you are testing.
+  await page.setContent(`
+    <div>
+      …
+    </div>
+  `);
+  // Alternatively, if you are testing a public application, include the URL:
+  // await page.goto('https://example.com/')
+  
+  await page.locator(…);
 })();
 ```
 
