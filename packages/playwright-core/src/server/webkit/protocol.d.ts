@@ -2921,10 +2921,6 @@ export module Protocol {
        * The primary color to use for the flex overlay.
        */
       flexColor: RGBAColor;
-      /**
-       * Show labels for flex order. If not specified, the default value is false.
-       */
-      showOrderNumbers?: boolean;
     }
     export type showFlexOverlayReturnValue = {
     }
@@ -4092,14 +4088,6 @@ might return multiple quads for inline nodes.
       isRegex?: boolean;
     }
     export type setShouldBlackboxURLReturnValue = {
-    }
-    /**
-     * Sets whether evaluation of breakpoint conditions, ignore counts, and actions happen at the location of the breakpoint or are deferred due to blackboxing.
-     */
-    export type setBlackboxBreakpointEvaluationsParameters = {
-      blackboxBreakpointEvaluations: boolean;
-    }
-    export type setBlackboxBreakpointEvaluationsReturnValue = {
     }
   }
   
@@ -8990,7 +8978,6 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Debugger.setPauseForInternalScripts": Debugger.setPauseForInternalScriptsParameters;
     "Debugger.evaluateOnCallFrame": Debugger.evaluateOnCallFrameParameters;
     "Debugger.setShouldBlackboxURL": Debugger.setShouldBlackboxURLParameters;
-    "Debugger.setBlackboxBreakpointEvaluations": Debugger.setBlackboxBreakpointEvaluationsParameters;
     "Dialog.enable": Dialog.enableParameters;
     "Dialog.disable": Dialog.disableParameters;
     "Dialog.handleJavaScriptDialog": Dialog.handleJavaScriptDialogParameters;
@@ -9291,7 +9278,6 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Debugger.setPauseForInternalScripts": Debugger.setPauseForInternalScriptsReturnValue;
     "Debugger.evaluateOnCallFrame": Debugger.evaluateOnCallFrameReturnValue;
     "Debugger.setShouldBlackboxURL": Debugger.setShouldBlackboxURLReturnValue;
-    "Debugger.setBlackboxBreakpointEvaluations": Debugger.setBlackboxBreakpointEvaluationsReturnValue;
     "Dialog.enable": Dialog.enableReturnValue;
     "Dialog.disable": Dialog.disableReturnValue;
     "Dialog.handleJavaScriptDialog": Dialog.handleJavaScriptDialogReturnValue;
