@@ -181,6 +181,7 @@ interface TestConfig {
   repeatEach?: number;
   retries?: number;
   testDir?: string;
+  rootDir?: string;
   testIgnore?: string | RegExp | (string | RegExp)[];
   testMatch?: string | RegExp | (string | RegExp)[];
   timeout?: number;

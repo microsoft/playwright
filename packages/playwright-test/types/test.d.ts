@@ -796,7 +796,7 @@ interface TestConfig {
    * The base directory, relative to the config file, for screenshot files created with `toHaveScreenshot`. Defaults to
    *
    * ```
-   * <directory-of-configuration-file>/__screenshots__/<platform name>/<project name>
+   * <rootDir>/__screenshots__/<platform name>/<project name>
    * ```
    *
    * This path will serve as the base directory for each test file screenshot directory. For example, the following test
@@ -828,7 +828,7 @@ interface TestConfig {
    */
   screenshotsDir?: string;
   /**
-   * The output directory for files created during test execution. Defaults to `test-results`.
+   * The output directory for files created during test execution. Defaults to `<rootDir>/test-results`.
    *
    * ```ts
    * // playwright.config.ts
@@ -883,7 +883,8 @@ interface TestConfig {
    */
   retries?: number;
   /**
-   * Directory that will be recursively scanned for test files. Defaults to the directory of the configuration file.
+   * Directory that will be recursively scanned for test files. Defaults to
+   * [testConfig.rootDir](https://playwright.dev/docs/api/class-testconfig#test-config-root-dir).
    *
    * ```ts
    * // playwright.config.ts
@@ -897,6 +898,26 @@ interface TestConfig {
    *
    */
   testDir?: string;
+  /**
+   * All test paths will be shown relative to this dir. `rootDir` also affects the following defaults:
+   * - [testConfig.outputDir](https://playwright.dev/docs/api/class-testconfig#test-config-output-dir) defaults to
+   *   `<rootDir>/test-results`
+   * - [testConfig.screenshotsDir](https://playwright.dev/docs/api/class-testconfig#test-config-screenshots-dir) defaults
+   *   to `<rootDir>/__screenshots__/<platform>/<project>`
+   * - [testConfig.testDir](https://playwright.dev/docs/api/class-testconfig#test-config-test-dir) defaults to `<rootDir>`
+   *
+   * ```ts
+   * // playwright.config.ts
+   * import { PlaywrightTestConfig } from '@playwright/test';
+   *
+   * const config: PlaywrightTestConfig = {
+   *   rootDir: './',
+   * };
+   * export default config;
+   * ```
+   *
+   */
+  rootDir?: string;
   /**
    * Files matching one of these patterns are not executed as test files. Matching is performed against the absolute file
    * path. Strings are treated as glob patterns.
@@ -1178,6 +1199,25 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    * than `max` number of them. Passing zero as `max` reports all test files that exceed the threshold.
    */
   reportSlowTests: ReportSlowTests;
+  /**
+   * All test paths will be shown relative to this dir. `rootDir` also affects the following defaults:
+   * - [testConfig.outputDir](https://playwright.dev/docs/api/class-testconfig#test-config-output-dir) defaults to
+   *   `<rootDir>/test-results`
+   * - [testConfig.screenshotsDir](https://playwright.dev/docs/api/class-testconfig#test-config-screenshots-dir) defaults
+   *   to `<rootDir>/__screenshots__/<platform>/<project>`
+   * - [testConfig.testDir](https://playwright.dev/docs/api/class-testconfig#test-config-test-dir) defaults to `<rootDir>`
+   *
+   * ```ts
+   * // playwright.config.ts
+   * import { PlaywrightTestConfig } from '@playwright/test';
+   *
+   * const config: PlaywrightTestConfig = {
+   *   rootDir: './',
+   * };
+   * export default config;
+   * ```
+   *
+   */
   rootDir: string;
   /**
    * Whether to suppress stdio and stderr output from the tests.

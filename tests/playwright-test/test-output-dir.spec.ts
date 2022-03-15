@@ -67,6 +67,29 @@ test('should work and remove non-failures', async ({ runInlineTest }, testInfo) 
   expect(fs.existsSync(testInfo.outputPath('test-results', 'my-test-test-1-chromium-retry2'))).toBe(false);
 });
 
+test('rootDir should define defaults', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'playwright.config.js': `
+      module.exports = {
+        rootDir: 'rootdir',
+        testDir: '.',
+      };
+    `,
+    'a.spec.js': `
+      const { test } = pwt;
+      test('test', async ({ page }, testInfo) => {
+        await expect(page).toHaveScreenshot();
+        console.log(testInfo.outputPath());
+      });
+    `
+  }, { 'reporter': '', 'update-snapshots': true }, {}, { usesCustomOutputDir: true });
+  expect(result.exitCode).toBe(0);
+  expect(fs.existsSync(testInfo.outputPath('test-results'))).toBe(false);
+  expect(fs.existsSync(testInfo.outputPath('rootdir'))).toBe(true);
+  expect(fs.existsSync(testInfo.outputPath('rootdir', 'test-results'))).toBe(true);
+  expect(fs.existsSync(testInfo.outputPath('rootdir', '__screenshots__'))).toBe(true);
+});
+
 test('should include repeat token', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.js': `

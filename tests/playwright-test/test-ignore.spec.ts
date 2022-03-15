@@ -163,7 +163,7 @@ test('should match absolute path', async ({ runInlineTest }) => {
     `
   });
   expect(result.passed).toBe(1);
-  expect(result.report.suites.map(s => s.file).sort()).toEqual(['a.test.ts']);
+  expect(result.report.suites.map(s => s.file).sort()).toEqual([path.join('dir', 'a.test.ts')]);
   expect(result.exitCode).toBe(0);
 });
 
@@ -187,7 +187,7 @@ test('should match cli string argument', async ({ runInlineTest }) => {
     `
   }, {}, {}, { additionalArgs: [`dir\\${path.sep}a`] });
   expect(result.passed).toBe(1);
-  expect(result.report.suites.map(s => s.file).sort()).toEqual(['a.test.ts']);
+  expect(result.report.suites.map(s => s.file).sort()).toEqual([path.join('dir', 'a.test.ts')]);
   expect(result.exitCode).toBe(0);
 });
 
@@ -368,6 +368,6 @@ test('should always work with unix separators', async ({ runInlineTest }) => {
     `
   }, {}, {}, { additionalArgs: [`dir/a`] });
   expect(result.passed).toBe(1);
-  expect(result.report.suites.map(s => s.file).sort()).toEqual(['a.test.ts']);
+  expect(result.report.suites.map(s => s.file).sort()).toEqual([path.join('dir', 'a.test.ts')]);
   expect(result.exitCode).toBe(0);
 });

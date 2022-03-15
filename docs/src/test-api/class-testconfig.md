@@ -256,7 +256,7 @@ Any JSON-serializable metadata that will be put directly to the test report.
 ## property: TestConfig.outputDir
 - type: <[string]>
 
-The output directory for files created during test execution. Defaults to `test-results`.
+The output directory for files created during test execution. Defaults to `<rootDir>/test-results`.
 
 ```js js-flavor=js
 // playwright.config.js
@@ -310,7 +310,7 @@ test('example test', async ({}, testInfo) => {
 The base directory, relative to the config file, for screenshot files created with `toHaveScreenshot`. Defaults to
 
 ```
-<directory-of-configuration-file>/__screenshots__/<platform name>/<project name>
+<rootDir>/__screenshots__/<platform name>/<project name>
 ```
 
 This path will serve as the base directory for each test file screenshot directory. For example, the following test structure:
@@ -455,10 +455,40 @@ Shard tests and execute only the selected shard. Specify in the one-based form l
 
 Learn more about [parallelism and sharding](./test-parallel.md) with Playwright Test.
 
+## property: TestConfig.rootDir
+- type: <[string]>
+
+All test paths will be shown relative to this dir. `rootDir` also affects the following defaults:
+* [`property: TestConfig.outputDir`] defaults to `<rootDir>/test-results`
+* [`property: TestConfig.screenshotsDir`] defaults to `<rootDir>/__screenshots__/<platform>/<project>`
+* [`property: TestConfig.testDir`] defaults to `<rootDir>`
+
+```js js-flavor=js
+// playwright.config.js
+// @ts-check
+
+/** @type {import('@playwright/test').PlaywrightTestConfig} */
+const config = {
+  rootDir: './',
+};
+
+module.exports = config;
+```
+
+```js js-flavor=ts
+// playwright.config.ts
+import { PlaywrightTestConfig } from '@playwright/test';
+
+const config: PlaywrightTestConfig = {
+  rootDir: './',
+};
+export default config;
+```
+
 ## property: TestConfig.testDir
 - type: <[string]>
 
-Directory that will be recursively scanned for test files. Defaults to the directory of the configuration file.
+Directory that will be recursively scanned for test files. Defaults to [`property: TestConfig.rootDir`].
 
 ```js js-flavor=js
 // playwright.config.js

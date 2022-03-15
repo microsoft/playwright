@@ -95,7 +95,7 @@ test('should read config from --config, resolve relative testDir', async ({ runI
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
   expect(result.report.suites.length).toBe(1);
-  expect(result.report.suites[0].file).toBe('b.test.ts');
+  expect(result.report.suites[0].file).toBe(path.join('dir', '/b.test.ts'));
 });
 
 test('should default testDir to the config file', async ({ runInlineTest }) => {
@@ -203,7 +203,7 @@ test('should allow root testDir and use it for relative paths', async ({ runInli
   expect(result.passed).toBe(0);
   expect(result.skipped).toBe(0);
   expect(result.failed).toBe(1);
-  expect(result.output).toContain(`1) ${path.join('dir', 'a.test.ts')}:6:7 › fails`);
+  expect(result.output).toContain(`1) ${path.join('..', 'dir', 'a.test.ts')}:6:7 › fails`);
 });
 
 test('should throw when test() is called in config file', async ({ runInlineTest }) => {

@@ -20,7 +20,7 @@ import type { Config, TestStatus } from './types';
 export type SerializedLoaderData = {
   defaultConfig: Config;
   overrides: Config;
-  configFile: { file: string } | { rootDir: string };
+  configFile: { file: string } | { configDir: string };
 };
 export type WorkerInitParams = {
   workerIndex: number;
