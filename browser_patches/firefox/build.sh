@@ -24,7 +24,7 @@ if [[ "$(uname)" == "Darwin" ]]; then
   CURRENT_HOST_OS_VERSION=$(getMacVersion)
   # As of Oct 2021, building Firefox requires XCode 13
   if [[ "${CURRENT_HOST_OS_VERSION}" != "10."* ]]; then
-    selectXcodeVersionOrDie "13"
+    selectXcodeVersionOrDie "13.2"
   else
     echo "ERROR: ${CURRENT_HOST_OS_VERSION} is not supported"
     exit 1
