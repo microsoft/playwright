@@ -33,7 +33,7 @@ if [[ "${CURRENT_HOST_OS_VERSION}" == "10."* ]]; then
   echo "ERROR: ${CURRENT_HOST_OS_VERSION} is not supported"
   exit 1
 else
-  selectXcodeVersionOrDie "13"
+  selectXcodeVersionOrDie "13.2"
 fi
 
 source ./CONFIG.sh
