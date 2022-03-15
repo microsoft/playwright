@@ -136,6 +136,19 @@ export class CRNetworkManager {
   }
 
   _onRequestWillBeSent(workerFrame: frames.Frame | undefined, event: Protocol.Network.requestWillBeSentPayload) {
+    if (isServiceWorkerMainRequest(event) && this._page) {
+      const sw = (this._page._delegate as CRPage)._browserContext.serviceWorkers().find(v => (v as CRServiceWorker)._networkManager._parentManager === this);
+      if (sw) {
+        // Service Worker Network.requestWillBeSent event fires on the parent frame session,
+        // but the Fetch.requestPaused comes in on the Service Worker session.
+        // We assume these came in the the same session (on the Service Worker), so shuffle things around.
+        // In the future, this may be resolved; see https://crbug.com/1304536
+        (sw as CRServiceWorker)._networkManager._onRequestWillBeSent(undefined, event);
+      }
+
+      return;
+    }
+
     this._responseExtraInfoTracker.requestWillBeSent(event);
 
     // Request interception doesn't happen for data URLs with Network Service.
@@ -176,23 +189,9 @@ export class CRNetworkManager {
     });
   }
 
-  // Service Worker Network.requestWillBeSent event fires on the parent frame session,
-  // but the Fetch.requestPaused comes in on the Service Worker session.
-  // We assume these came in the the same session (on the Service Worker), so shuffle things around.
-  // In the future, this may be resolved; see https://crbug.com/1304536
-  _maybeAdoptServiceWorkerMainRequest(id: string) {
-    const event = this._parentManager?._requestIdToRequestWillBeSentEvent.get(id);
-    if (event && isServiceWorkerMainRequest(event)) {
-      this._parentManager?._requestIdToRequestWillBeSentEvent.delete(id);
-      this._requestIdToRequestWillBeSentEvent.set(id, event);
-    }
-
-    return this._requestIdToRequest.get(id);
-  }
-
   _onRequestPaused(workerFrame: frames.Frame | undefined, event: Protocol.Fetch.requestPausedPayload) {
     if (!event.responseStatusCode && !event.responseErrorReason) {
-      const request = this._requestIdToRequest.get(event.networkId!) || this._maybeAdoptServiceWorkerMainRequest(event.networkId!);
+      const request = this._requestIdToRequest.get(event.networkId!);
       if (request)
         this._responseExtraInfoTracker.requestPaused(request.request, event);
     }
