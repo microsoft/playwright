@@ -1179,6 +1179,7 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    */
   reportSlowTests: ReportSlowTests;
   rootDir: string;
+  configDir: string;
   /**
    * Whether to suppress stdio and stderr output from the tests.
    */

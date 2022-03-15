@@ -52,7 +52,7 @@ export class Loader {
     if ('file' in data.configFile)
       await loader.loadConfigFile(data.configFile.file);
     else
-      loader.loadEmptyConfig(data.configFile.rootDir);
+      loader.loadEmptyConfig(data.configFile.configDir);
     return loader;
   }
 
@@ -69,29 +69,30 @@ export class Loader {
     return rawConfig;
   }
 
-  loadEmptyConfig(rootDir: string): Config {
+  loadEmptyConfig(configDir: string): Config {
     this._config = {};
-    this._processConfigObject(rootDir);
+    this._processConfigObject(configDir);
     return {};
   }
 
-  private _processConfigObject(rootDir: string) {
+  private _processConfigObject(configDir: string) {
     validateConfig(this._configFile || '<default config>', this._config);
 
     // Resolve script hooks relative to the root dir.
     if (this._config.globalSetup)
-      this._config.globalSetup = resolveScript(this._config.globalSetup, rootDir);
+      this._config.globalSetup = resolveScript(this._config.globalSetup, configDir);
     if (this._config.globalTeardown)
-      this._config.globalTeardown = resolveScript(this._config.globalTeardown, rootDir);
+      this._config.globalTeardown = resolveScript(this._config.globalTeardown, configDir);
 
     const configUse = mergeObjects(this._defaultConfig.use, this._config.use);
     this._config = mergeObjects(mergeObjects(this._defaultConfig, this._config), { use: configUse });
 
     if (this._config.testDir !== undefined)
-      this._config.testDir = path.resolve(rootDir, this._config.testDir);
+      this._config.testDir = path.resolve(configDir, this._config.testDir);
     const projects: Project[] = ('projects' in this._config) && this._config.projects !== undefined ? this._config.projects : [this._config];
 
-    this._fullConfig.rootDir = this._config.testDir || rootDir;
+    this._fullConfig.configDir = configDir;
+    this._fullConfig.rootDir = this._config.testDir || configDir;
     this._fullConfig.forbidOnly = takeFirst(this._configOverrides.forbidOnly, this._config.forbidOnly, baseFullConfig.forbidOnly);
     this._fullConfig.fullyParallel = takeFirst(this._configOverrides.fullyParallel, this._config.fullyParallel, baseFullConfig.fullyParallel);
     this._fullConfig.globalSetup = takeFirst(this._configOverrides.globalSetup, this._config.globalSetup, baseFullConfig.globalSetup);
@@ -101,7 +102,7 @@ export class Loader {
     this._fullConfig.grepInvert = takeFirst(this._configOverrides.grepInvert, this._config.grepInvert, baseFullConfig.grepInvert);
     this._fullConfig.maxFailures = takeFirst(this._configOverrides.maxFailures, this._config.maxFailures, baseFullConfig.maxFailures);
     this._fullConfig.preserveOutput = takeFirst<PreserveOutput>(this._configOverrides.preserveOutput, this._config.preserveOutput, baseFullConfig.preserveOutput);
-    this._fullConfig.reporter = takeFirst(toReporters(this._configOverrides.reporter as any), resolveReporters(this._config.reporter, rootDir), baseFullConfig.reporter);
+    this._fullConfig.reporter = takeFirst(toReporters(this._configOverrides.reporter as any), resolveReporters(this._config.reporter, configDir), baseFullConfig.reporter);
     this._fullConfig.reportSlowTests = takeFirst(this._configOverrides.reportSlowTests, this._config.reportSlowTests, baseFullConfig.reportSlowTests);
     this._fullConfig.quiet = takeFirst(this._configOverrides.quiet, this._config.quiet, baseFullConfig.quiet);
     this._fullConfig.shard = takeFirst(this._configOverrides.shard, this._config.shard, baseFullConfig.shard);
@@ -110,7 +111,7 @@ export class Loader {
     this._fullConfig.webServer = takeFirst(this._configOverrides.webServer, this._config.webServer, baseFullConfig.webServer);
 
     for (const project of projects)
-      this._addProject(project, this._fullConfig.rootDir, rootDir);
+      this._addProject(project, configDir);
     this._fullConfig.projects = this._projects.map(p => p.config);
   }
 
@@ -187,23 +188,23 @@ export class Loader {
   serialize(): SerializedLoaderData {
     return {
       defaultConfig: this._defaultConfig,
-      configFile: this._configFile ? { file: this._configFile } : { rootDir: this._fullConfig.rootDir },
+      configFile: this._configFile ? { file: this._configFile } : { configDir: this._fullConfig.configDir },
       overrides: this._configOverrides,
     };
   }
 
-  private _addProject(projectConfig: Project, rootDir: string, configDir: string) {
-    let testDir = takeFirst(projectConfig.testDir, rootDir);
+  private _addProject(projectConfig: Project, configDir: string) {
+    let testDir = takeFirst(projectConfig.testDir, configDir);
     if (!path.isAbsolute(testDir))
       testDir = path.resolve(configDir, testDir);
-    let outputDir = takeFirst(this._configOverrides.outputDir, projectConfig.outputDir, this._config.outputDir, path.resolve(rootDir, 'test-results'));
+    let outputDir = takeFirst(this._configOverrides.outputDir, projectConfig.outputDir, this._config.outputDir, path.resolve(configDir, 'test-results'));
     if (!path.isAbsolute(outputDir))
       outputDir = path.resolve(configDir, outputDir);
     let snapshotDir = takeFirst(this._configOverrides.snapshotDir, projectConfig.snapshotDir, this._config.snapshotDir, testDir);
     if (!path.isAbsolute(snapshotDir))
       snapshotDir = path.resolve(configDir, snapshotDir);
     const name = takeFirst(this._configOverrides.name, projectConfig.name, this._config.name, '');
-    let screenshotsDir = takeFirst(this._configOverrides.screenshotsDir, projectConfig.screenshotsDir, this._config.screenshotsDir, path.join(rootDir, '__screenshots__', process.platform, name));
+    let screenshotsDir = takeFirst(this._configOverrides.screenshotsDir, projectConfig.screenshotsDir, this._config.screenshotsDir, path.join(configDir, '__screenshots__', process.platform, name));
     if (!path.isAbsolute(screenshotsDir))
       screenshotsDir = path.resolve(configDir, screenshotsDir);
     const fullProject: FullProject = {
@@ -450,6 +451,7 @@ const baseFullConfig: FullConfig = {
   reporter: [ ['list'] ],
   reportSlowTests: null,
   rootDir: path.resolve(process.cwd()),
+  configDir: path.resolve(process.cwd()),
   quiet: false,
   shard: null,
   updateSnapshots: 'missing',
