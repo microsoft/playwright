@@ -182,7 +182,7 @@ export class CRNetworkManager {
   // In the future, this may be resolved; see https://crbug.com/1304536
   _maybeAdoptServiceWorkerMainRequest(id: string) {
     const event = this._parentManager?._requestIdToRequestWillBeSentEvent.get(id);
-    if (event) {
+    if (event && isServiceWorkerMainRequest(event)) {
       this._parentManager?._requestIdToRequestWillBeSentEvent.delete(id);
       this._requestIdToRequestWillBeSentEvent.set(id, event);
     }
@@ -741,4 +741,9 @@ class ResponseExtraInfoTracker {
   private _stopTracking(requestId: string) {
     this._requests.delete(requestId);
   }
+}
+
+function isServiceWorkerMainRequest(event: Protocol.Network.requestWillBeSentPayload): boolean {
+  // https://www.w3.org/TR/service-workers/#service-worker-script-request
+  return !!Object.entries(event.request.headers).filter(([key, value]) => key.toLowerCase() === 'service-worker' && value.toLowerCase() === 'script').length;
 }
