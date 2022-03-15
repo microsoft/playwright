@@ -60,6 +60,22 @@ async function run() {
     writeAssumeNoop(path.join(PROJECT_DIR, 'README.md'), content, dirtyFiles);
   }
 
+  // Patch docker version in docs
+  {
+    let playwrightVersion = require(path.join(PROJECT_DIR, 'package.json')).version;
+    if (playwrightVersion.endsWith('-next'))
+      playwrightVersion = playwrightVersion.substring(0, playwrightVersion.indexOf('-next'));
+    const regex = new RegExp("(mcr.microsoft.com/playwright[^: ]*):?([^ ]*)");
+    for (const fileName of ['ci.md', 'docker.md', 'test-snapshots-js.md']) {
+      const filePath = path.join(PROJECT_DIR, 'docs', 'src', fileName);
+      let content = fs.readFileSync(filePath).toString();
+      content = content.replace(new RegExp('(mcr.microsoft.com/playwright[^:]*):([\\w\\d-.]+)', 'ig'), (match, imageName, imageVersion) => {
+        return `${imageName}:v${playwrightVersion}-focal`;
+      });
+      writeAssumeNoop(filePath, content, dirtyFiles);
+    }
+  }
+
   // Update device descriptors
   {
     const devicesDescriptorsSourceFile = path.join(PROJECT_DIR, 'packages', 'playwright-core', 'src', 'server', 'deviceDescriptorsSource.json')
