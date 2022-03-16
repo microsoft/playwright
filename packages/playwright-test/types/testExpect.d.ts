@@ -34,6 +34,8 @@ export declare type Expect = {
   extend(arg0: any): void;
   getState(): expect.MatcherState;
   setState(state: Partial<expect.MatcherState>): void;
+  any(expectedObject: any): AsymmetricMatcher;
+  anything(): AsymmetricMatcher;
   arrayContaining(sample: Array<unknown>): AsymmetricMatcher;
   objectContaining(sample: Record<string, unknown>): AsymmetricMatcher;
   stringContaining(expected: string): AsymmetricMatcher;
@@ -43,8 +45,6 @@ export declare type Expect = {
    * - assertions()
    * - extractExpectedAssertionsErrors()
    * – hasAssertions()
-   * - any()
-   * - anything()
    */
 };
 
