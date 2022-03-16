@@ -119,44 +119,6 @@ jobs:
 We have a [pre-built Docker image](./docker.md) which can either be used directly, or as a reference to update your existing Docker definitions.
 
 Suggested configuration
-1. By default, Docker runs a container with a `/dev/shm` shared memory space 64MB.
-   This is [typically too small](https://github.com/c0b/chrome-in-docker/issues/1) for Chromium
-   and will cause Chromium to crash when rendering large pages. To fix, run the container with
-   `docker run --shm-size=1gb` to increase the size of `/dev/shm`. Since Chromium 65, this is no
-   longer necessary. Instead, launch the browser with the `--disable-dev-shm-usage` flag:
-
-   ```js
-   const browser = await playwright.chromium.launch({
-     args: ['--disable-dev-shm-usage']
-   });
-   ```
-
-   ```java
-   Browser browser = playwright.chromium().launch(new BrowserType.LaunchOptions()
-     .setArgs(Arrays.asList("--disable-dev-shm-usage")));
-   ```
-
-   ```python async
-   browser = await playwright.chromium.launch(
-      args=['--disable-dev-shm-usage']
-   )
-   ```
-
-   ```python sync
-   browser = playwright.chromium.launch({
-      args=['--disable-dev-shm-usage']
-   })
-   ```
-
-   ```csharp
-   await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
-   {
-        Args = new[] { "--disable-dev-shm-usage" }
-   });
-   ```
-
-   This will write shared memory files into `/tmp` instead of `/dev/shm`. See
-   [crbug.com/736452](https://bugs.chromium.org/p/chromium/issues/detail?id=736452) for more details.
 1. Using `--ipc=host` is also recommended when using Chromium—without it Chromium can run out of memory
    and crash. Learn more about this option in [Docker docs](https://docs.docker.com/engine/reference/run/#ipc-settings---ipc).
 1. Seeing other weird errors when launching Chromium? Try running your container
