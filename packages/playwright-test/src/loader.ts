@@ -494,7 +494,7 @@ export function folderIsModule(folder: string): boolean {
   if (fs.existsSync(packageJson)) {
     isModule = require(packageJson).type === 'module';
   } else {
-    const parentFolder = path.basename(folder);
+    const parentFolder = path.dirname(folder);
     if (parentFolder !== folder)
       isModule = folderIsModule(parentFolder);
     else
