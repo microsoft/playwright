@@ -36,6 +36,16 @@ run().catch(e => {
   process.exit(1);
 });;
 
+function getAllMarkdownFiles(dirPath, filePaths = []) {
+  for (const entry of fs.readdirSync(dirPath, { withFileTypes: true })) {
+    if (entry.isFile() && entry.name.toLowerCase().endsWith('.md'))
+      filePaths.push(path.join(dirPath, entry.name));
+    else if (entry.isDirectory())
+      getAllMarkdownFiles(path.join(dirPath, entry.name), filePaths);
+  }
+  return filePaths;
+}
+
 async function run() {
   // Patch README.md
   const versions = await getBrowserVersions();
@@ -58,6 +68,21 @@ async function run() {
       return `<!-- GEN:${p1} -->${params.get(p1)}<!-- GEN:stop -->`;
     });
     writeAssumeNoop(path.join(PROJECT_DIR, 'README.md'), content, dirtyFiles);
+  }
+
+  // Patch docker version in docs
+  {
+    let playwrightVersion = require(path.join(PROJECT_DIR, 'package.json')).version;
+    if (playwrightVersion.endsWith('-next'))
+      playwrightVersion = playwrightVersion.substring(0, playwrightVersion.indexOf('-next'));
+    const regex = new RegExp("(mcr.microsoft.com/playwright[^: ]*):?([^ ]*)");
+    for (const filePath of getAllMarkdownFiles(path.join(PROJECT_DIR, 'docs'))) {
+      let content = fs.readFileSync(filePath).toString();
+      content = content.replace(new RegExp('(mcr.microsoft.com/playwright[^:]*):([\\w\\d-.]+)', 'ig'), (match, imageName, imageVersion) => {
+        return `${imageName}:v${playwrightVersion}-focal`;
+      });
+      writeAssumeNoop(filePath, content, dirtyFiles);
+    }
   }
 
   // Update device descriptors
@@ -112,12 +137,10 @@ async function run() {
         // This validates member links.
         documentation.setLinkRenderer(() => undefined);
 
-        for (const file of fs.readdirSync(path.join(PROJECT_DIR, 'docs', 'src'))) {
-          if (!file.endsWith('.md'))
+        for (const filePath of getAllMarkdownFiles(path.join(PROJECT_DIR, 'docs', 'src'))) {
+          if (langs.some(other => other !== lang && filePath.endsWith(`-${other}.md`)))
             continue;
-          if (langs.some(other => other !== lang && file.endsWith(`-${other}.md`)))
-            continue;
-          const data = fs.readFileSync(path.join(PROJECT_DIR, 'docs', 'src', file)).toString();
+          const data = fs.readFileSync(filePath, 'utf-8');
           documentation.renderLinksInText(md.filterNodesForLanguage(md.parse(data), lang));
         }
       } catch (e) {
