@@ -617,7 +617,7 @@ export default config;
   - `url` <[string]> URL to wait on for the web server (exactly one of `port` or `url` is required)
   - `timeout` <[int]> Maximum duration to wait on until the web server is ready
   - `reuseExistingServer` <[boolean]> If true, reuse the existing server if it is already running, otherwise it will fail
-  - `cwd` <[boolean]> Working directory to run the command in
+  - `cwd` <[string]> Working directory to run the command in
   - `env` <[Object]<[string], [string]>> Environment variables to set for the command
 
 Launch a development web server during the tests.
