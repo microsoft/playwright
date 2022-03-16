@@ -696,10 +696,6 @@ class FrameSession {
       return;
     }
 
-    if (event.targetInfo.type === 'service_worker')
-      this._crPage._browserContext._setParentNetworkManagerForServiceWorker(this._networkManager, event);
-
-
     if (event.targetInfo.type !== 'worker') {
       // Ideally, detaching should resume any target, but there is a bug in the backend.
       session._sendMayFail('Runtime.runIfWaitingForDebugger').then(() => {

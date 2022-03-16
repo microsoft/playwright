@@ -33,7 +33,6 @@ export class CRServiceWorker extends Worker {
       this._createExecutionContext(new CRExecutionContext(session, event.context));
     });
 
-
     // These might fail if the target is closed before we receive all execution contexts.
     this._networkManager.initialize().catch(() => {});
     this.updateRequestInterception();

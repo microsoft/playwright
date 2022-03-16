@@ -51,12 +51,6 @@ export class CRNetworkManager {
     this._eventListeners = this.instrumentNetworkEvents(client);
   }
 
-  setParentManager(parent: CRNetworkManager) {
-    if (this._parentManager && this._parentManager !== parent)
-      throw new Error('A different parent manager was already set. Cannot overwrite.');
-    this._parentManager = parent;
-  }
-
   instrumentNetworkEvents(session: CRSession, workerFrame?: frames.Frame): RegisteredListener[] {
     const listeners = [
       eventsHelper.addEventListener(session, 'Fetch.requestPaused', this._onRequestPaused.bind(this, workerFrame)),
@@ -136,19 +130,6 @@ export class CRNetworkManager {
   }
 
   _onRequestWillBeSent(workerFrame: frames.Frame | undefined, event: Protocol.Network.requestWillBeSentPayload) {
-    if (isServiceWorkerMainRequest(event) && this._page) {
-      const sw = (this._page._delegate as CRPage)._browserContext.serviceWorkers().find(v => (v as CRServiceWorker)._networkManager._parentManager === this);
-      if (sw) {
-        // Service Worker Network.requestWillBeSent event fires on the parent frame session,
-        // but the Fetch.requestPaused comes in on the Service Worker session.
-        // We assume these came in the the same session (on the Service Worker), so shuffle things around.
-        // In the future, this may be resolved; see https://crbug.com/1304536
-        (sw as CRServiceWorker)._networkManager._onRequestWillBeSent(undefined, event);
-      }
-
-      return;
-    }
-
     this._responseExtraInfoTracker.requestWillBeSent(event);
 
     // Request interception doesn't happen for data URLs with Network Service.
@@ -740,9 +721,4 @@ class ResponseExtraInfoTracker {
   private _stopTracking(requestId: string) {
     this._requests.delete(requestId);
   }
-}
-
-function isServiceWorkerMainRequest(event: Protocol.Network.requestWillBeSentPayload): boolean {
-  // https://www.w3.org/TR/service-workers/#service-worker-script-request
-  return !!Object.entries(event.request.headers).filter(([key, value]) => key.toLowerCase() === 'service-worker' && value.toLowerCase() === 'script').length;
 }
