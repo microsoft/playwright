@@ -46,7 +46,7 @@ title: "Release notes"
     projects: [
       {
         name: 'smoke tests',
-        grep: '@smoke',
+        grep: /@smoke/,
       },
     ],
   };
