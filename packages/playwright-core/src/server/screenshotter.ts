@@ -223,6 +223,9 @@ export class Screenshotter {
   }
 
   async _maskElements(progress: Progress, options: ScreenshotOptions) {
+    if (!options.mask || !options.mask.length)
+      return false;
+
     const framesToParsedSelectors: MultiMap<Frame, ParsedSelector> = new MultiMap();
     await Promise.all((options.mask || []).map(async ({ frame, selector }) => {
       const pair = await frame.resolveFrameForSelectorNoWait(selector);
@@ -235,6 +238,7 @@ export class Screenshotter {
       await frame.maskSelectors(framesToParsedSelectors.get(frame));
     }));
     progress.cleanupWhenAborted(() => this._page.hideHighlight());
+    return true;
   }
 
   private async _screenshot(progress: Progress, format: 'png' | 'jpeg', documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, fitsViewport: boolean | undefined, options: ScreenshotOptions): Promise<Buffer> {
@@ -248,13 +252,14 @@ export class Screenshotter {
     }
     progress.throwIfAborted(); // Avoid extra work.
 
-    await this._maskElements(progress, options);
+    const hasHighlight = await this._maskElements(progress, options);
     progress.throwIfAborted(); // Avoid extra work.
 
     const buffer = await this._page._delegate.takeScreenshot(progress, format, documentRect, viewportRect, options.quality, fitsViewport);
     progress.throwIfAborted(); // Avoid restoring after failure - should be done by cleanup.
 
-    await this._page.hideHighlight();
+    if (hasHighlight)
+      await this._page.hideHighlight();
     progress.throwIfAborted(); // Avoid restoring after failure - should be done by cleanup.
 
     if (shouldSetDefaultBackground)

@@ -17,6 +17,7 @@
 
 import { test as it, expect } from './pageTest';
 import { verifyViewport, attachFrame } from '../config/utils';
+import type { Route } from 'playwright-core';
 import path from 'path';
 import fs from 'fs';
 import os from 'os';
@@ -428,6 +429,20 @@ it.describe('page screenshot', () => {
       });
       const screenshot2 = await page.screenshot();
       expect(screenshot1.equals(screenshot2)).toBe(true);
+    });
+
+    it('should work when subframe has stalled navigation', async ({ page, server }) => {
+      let cb;
+      const routeReady = new Promise<Route>(f => cb = f);
+      await page.route('**/subframe.html', cb); // Stalling subframe.
+
+      await page.goto(server.EMPTY_PAGE);
+      const done = page.setContent(`<iframe src='/subframe.html'></iframe>`);
+      const route = await routeReady;
+
+      await page.screenshot({ mask: [ page.locator('non-existent') ] });
+      await route.fulfill({ body: '' });
+      await done;
     });
   });
 });
