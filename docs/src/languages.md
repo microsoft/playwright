@@ -42,7 +42,3 @@ The Playwright API is available in multiple languages.
 * [API](https://playwright.dev/dotnet/docs/api/class-playwright)
 * [GitHub repo](https://github.com/microsoft/playwright-dotnet)
 * [Playwright on NuGet](https://www.nuget.org/packages/Microsoft.Playwright)
-
-```
-dotnet add package Microsoft.Playwright
-```
