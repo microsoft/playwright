@@ -118,17 +118,31 @@ test('should include custom error message with web-first assertions', async ({ r
   ].join('\n'));
 });
 
-test('should work with default expect prototype functions', async ({ runTSC }) => {
-  const result = await runTSC({
-    'a.spec.ts': `
-      const { test } = pwt;
+test('should work with default expect prototype functions', async ({ runTSC, runInlineTest }) => {
+  const spec = `
+    const { test } = pwt;
+    test('pass', async () => {
       const expected = [1, 2, 3, 4, 5, 6];
       test.expect([4, 1, 6, 7, 3, 5, 2, 5, 4, 6]).toEqual(
         expect.arrayContaining(expected),
       );
-    `
-  });
-  expect(result.exitCode).toBe(0);
+      expect('foo').toEqual(expect.any(String));
+      expect('foo').toEqual(expect.anything());
+    });
+  `;
+  {
+    const result = await runTSC({
+      'a.spec.ts': spec,
+    });
+    expect(result.exitCode).toBe(0);
+  }
+  {
+    const result = await runInlineTest({
+      'a.spec.ts': spec,
+    });
+    expect(result.exitCode).toBe(0);
+    expect(result.passed).toBe(1);
+  }
 });
 
 test('should work with default expect matchers', async ({ runTSC }) => {
