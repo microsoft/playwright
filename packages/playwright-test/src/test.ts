@@ -44,6 +44,7 @@ export class Suite extends Base implements reporterTypes.Suite {
   parent?: Suite;
   _use: FixturesWithLocation[] = [];
   _isDescribe = false;
+  _skipped = false;
   _entries: (Suite | TestCase)[] = [];
   _hooks: { type: 'beforeEach' | 'afterEach' | 'beforeAll' | 'afterAll', fn: Function, location: Location }[] = [];
   _timeout: number | undefined;
@@ -108,6 +109,7 @@ export class Suite extends Base implements reporterTypes.Suite {
     suite._isDescribe = this._isDescribe;
     suite._parallelMode = this._parallelMode;
     suite._projectConfig = this._projectConfig;
+    suite._skipped = this._skipped;
     return suite;
   }
 

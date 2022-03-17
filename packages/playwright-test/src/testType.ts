@@ -41,6 +41,7 @@ export class TestTypeImpl {
     test.describe.parallel.only = wrapFunctionWithLocation(this._describe.bind(this, 'parallel.only'));
     test.describe.serial = wrapFunctionWithLocation(this._describe.bind(this, 'serial'));
     test.describe.serial.only = wrapFunctionWithLocation(this._describe.bind(this, 'serial.only'));
+    test.describe.skip = wrapFunctionWithLocation(this._describe.bind(this, 'skip'));
     test.beforeEach = wrapFunctionWithLocation(this._hook.bind(this, 'beforeEach'));
     test.afterEach = wrapFunctionWithLocation(this._hook.bind(this, 'afterEach'));
     test.beforeAll = wrapFunctionWithLocation(this._hook.bind(this, 'beforeAll'));
@@ -89,9 +90,13 @@ export class TestTypeImpl {
       test._only = true;
     if (type === 'skip' || type === 'fixme')
       test.expectedStatus = 'skipped';
+    for (let parent: Suite | undefined = suite; parent; parent = parent.parent) {
+      if (parent._skipped)
+        test.expectedStatus = 'skipped';
+    }
   }
 
-  private _describe(type: 'default' | 'only' | 'serial' | 'serial.only' | 'parallel' | 'parallel.only', location: Location, title: string, fn: Function) {
+  private _describe(type: 'default' | 'only' | 'serial' | 'serial.only' | 'parallel' | 'parallel.only' | 'skip', location: Location, title: string, fn: Function) {
     throwIfRunningInsideJest();
     const suite = this._ensureCurrentSuite(location, 'test.describe()');
     if (typeof title === 'function') {
@@ -115,6 +120,8 @@ export class TestTypeImpl {
       child._parallelMode = 'serial';
     if (type === 'parallel' || type === 'parallel.only')
       child._parallelMode = 'parallel';
+    if (type === 'skip')
+      child._skipped = true;
 
     for (let parent: Suite | undefined = suite; parent; parent = parent.parent) {
       if (parent._parallelMode === 'serial' && child._parallelMode === 'parallel')
