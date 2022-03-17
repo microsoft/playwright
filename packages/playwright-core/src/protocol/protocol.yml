@@ -1747,10 +1747,25 @@ Frame:
             properties:
               name: string
               mimeType: string?
-              # Only one of buffer, path or stream should be present.
-              buffer: binary?
-              path: string?
-              stream: WritableStream?
+              buffer: binary
+        timeout: number?
+        noWaitAfter: boolean?
+      tracing:
+        snapshot: true
+        pausesBeforeInput: true
+
+    # This method should be used if one of the files is large (>50Mb).
+    setInputFilePaths:
+      parameters:
+        selector: string
+        strict: boolean?
+        # Only one of localPaths and streams should be present.
+        localPaths:
+          type: array?
+          items: string
+        streams:
+          type: array?
+          items: WritableStream
         timeout: number?
         noWaitAfter: boolean?
       tracing:
@@ -2275,10 +2290,23 @@ ElementHandle:
             properties:
               name: string
               mimeType: string?
-              # Only one of buffer, path or stream should be present.
-              buffer: binary?
-              path: string?
-              stream: WritableStream?
+              buffer: binary
+        timeout: number?
+        noWaitAfter: boolean?
+      tracing:
+        snapshot: true
+        pausesBeforeInput: true
+
+    # This method should be used if one of the files is large (>50Mb).
+    setInputFilePaths:
+      parameters:
+        # Only one of localPaths and streams should be present.
+        localPaths:
+          type: array?
+          items: string
+        streams:
+          type: array?
+          items: WritableStream
         timeout: number?
         noWaitAfter: boolean?
       tracing:

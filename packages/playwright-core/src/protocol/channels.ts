@@ -1877,6 +1877,7 @@ export interface FrameChannel extends FrameEventTarget, Channel {
   selectOption(params: FrameSelectOptionParams, metadata?: Metadata): Promise<FrameSelectOptionResult>;
   setContent(params: FrameSetContentParams, metadata?: Metadata): Promise<FrameSetContentResult>;
   setInputFiles(params: FrameSetInputFilesParams, metadata?: Metadata): Promise<FrameSetInputFilesResult>;
+  setInputFilePaths(params: FrameSetInputFilePathsParams, metadata?: Metadata): Promise<FrameSetInputFilePathsResult>;
   tap(params: FrameTapParams, metadata?: Metadata): Promise<FrameTapResult>;
   textContent(params: FrameTextContentParams, metadata?: Metadata): Promise<FrameTextContentResult>;
   title(params?: FrameTitleParams, metadata?: Metadata): Promise<FrameTitleResult>;
@@ -2350,9 +2351,7 @@ export type FrameSetInputFilesParams = {
   files: {
     name: string,
     mimeType?: string,
-    buffer?: Binary,
-    path?: string,
-    stream?: WritableStreamChannel,
+    buffer: Binary,
   }[],
   timeout?: number,
   noWaitAfter?: boolean,
@@ -2363,6 +2362,22 @@ export type FrameSetInputFilesOptions = {
   noWaitAfter?: boolean,
 };
 export type FrameSetInputFilesResult = void;
+export type FrameSetInputFilePathsParams = {
+  selector: string,
+  strict?: boolean,
+  localPaths?: string[],
+  streams?: WritableStreamChannel[],
+  timeout?: number,
+  noWaitAfter?: boolean,
+};
+export type FrameSetInputFilePathsOptions = {
+  strict?: boolean,
+  localPaths?: string[],
+  streams?: WritableStreamChannel[],
+  timeout?: number,
+  noWaitAfter?: boolean,
+};
+export type FrameSetInputFilePathsResult = void;
 export type FrameTapParams = {
   selector: string,
   strict?: boolean,
@@ -2648,6 +2663,7 @@ export interface ElementHandleChannel extends ElementHandleEventTarget, JSHandle
   selectOption(params: ElementHandleSelectOptionParams, metadata?: Metadata): Promise<ElementHandleSelectOptionResult>;
   selectText(params: ElementHandleSelectTextParams, metadata?: Metadata): Promise<ElementHandleSelectTextResult>;
   setInputFiles(params: ElementHandleSetInputFilesParams, metadata?: Metadata): Promise<ElementHandleSetInputFilesResult>;
+  setInputFilePaths(params: ElementHandleSetInputFilePathsParams, metadata?: Metadata): Promise<ElementHandleSetInputFilePathsResult>;
   tap(params: ElementHandleTapParams, metadata?: Metadata): Promise<ElementHandleTapResult>;
   textContent(params?: ElementHandleTextContentParams, metadata?: Metadata): Promise<ElementHandleTextContentResult>;
   type(params: ElementHandleTypeParams, metadata?: Metadata): Promise<ElementHandleTypeResult>;
@@ -2952,9 +2968,7 @@ export type ElementHandleSetInputFilesParams = {
   files: {
     name: string,
     mimeType?: string,
-    buffer?: Binary,
-    path?: string,
-    stream?: WritableStreamChannel,
+    buffer: Binary,
   }[],
   timeout?: number,
   noWaitAfter?: boolean,
@@ -2964,6 +2978,19 @@ export type ElementHandleSetInputFilesOptions = {
   noWaitAfter?: boolean,
 };
 export type ElementHandleSetInputFilesResult = void;
+export type ElementHandleSetInputFilePathsParams = {
+  localPaths?: string[],
+  streams?: WritableStreamChannel[],
+  timeout?: number,
+  noWaitAfter?: boolean,
+};
+export type ElementHandleSetInputFilePathsOptions = {
+  localPaths?: string[],
+  streams?: WritableStreamChannel[],
+  timeout?: number,
+  noWaitAfter?: boolean,
+};
+export type ElementHandleSetInputFilePathsResult = void;
 export type ElementHandleTapParams = {
   force?: boolean,
   noWaitAfter?: boolean,
@@ -4208,6 +4235,7 @@ export const commandsWithTracingSnapshots = new Set([
   'Frame.selectOption',
   'Frame.setContent',
   'Frame.setInputFiles',
+  'Frame.setInputFilePaths',
   'Frame.tap',
   'Frame.textContent',
   'Frame.type',
@@ -4243,6 +4271,7 @@ export const commandsWithTracingSnapshots = new Set([
   'ElementHandle.selectOption',
   'ElementHandle.selectText',
   'ElementHandle.setInputFiles',
+  'ElementHandle.setInputFilePaths',
   'ElementHandle.tap',
   'ElementHandle.textContent',
   'ElementHandle.type',
@@ -4261,6 +4290,7 @@ export const pausesBeforeInputActions = new Set([
   'Frame.press',
   'Frame.selectOption',
   'Frame.setInputFiles',
+  'Frame.setInputFilePaths',
   'Frame.tap',
   'Frame.type',
   'Frame.uncheck',
@@ -4272,6 +4302,7 @@ export const pausesBeforeInputActions = new Set([
   'ElementHandle.press',
   'ElementHandle.selectOption',
   'ElementHandle.setInputFiles',
+  'ElementHandle.setInputFilePaths',
   'ElementHandle.tap',
   'ElementHandle.type',
   'ElementHandle.uncheck'

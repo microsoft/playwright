@@ -28,10 +28,10 @@ import { Progress, ProgressController } from './progress';
 import { SelectorInfo } from './selectors';
 import * as types from './types';
 import { TimeoutOptions } from '../common/types';
-import { assert, isUnderTest } from '../utils/utils';
-import { WritableStreamDispatcher } from '../dispatchers/writableStreamDispatcher';
+import { isUnderTest } from '../utils/utils';
 
 type SetInputFilesFiles = channels.ElementHandleSetInputFilesParams['files'];
+export type InputFilesItems = { files?: SetInputFilesFiles, localPaths?: string[] };
 type ActionName = 'click' | 'hover' | 'dblclick' | 'tap' | 'move and up' | 'move and down';
 
 export class NonRecoverableDOMError extends Error {
@@ -603,29 +603,23 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     }, this._page._timeoutSettings.timeout(options));
   }
 
-  async setInputFiles(metadata: CallMetadata, files: SetInputFilesFiles, options: types.NavigatingActionWaitOptions) {
+  async setInputFiles(metadata: CallMetadata, items: InputFilesItems, options: types.NavigatingActionWaitOptions) {
     const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
-      const result = await this._setInputFiles(progress, files, options);
+      const result = await this._setInputFiles(progress, items, options);
       return assertDone(throwRetargetableDOMError(result));
     }, this._page._timeoutSettings.timeout(options));
   }
 
-  async _setInputFiles(progress: Progress, files: SetInputFilesFiles, options: types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
-    for (const payload of files) {
-      if (!payload.mimeType)
-        payload.mimeType = mime.getType(payload.name) || 'application/octet-stream';
+  async _setInputFiles(progress: Progress, items: InputFilesItems, options: types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
+    const { files, localPaths } = items;
+    if (files) {
+      for (const payload of files) {
+        if (!payload.mimeType)
+          payload.mimeType = mime.getType(payload.name) || 'application/octet-stream';
+      }
     }
-    const localFiles = files.filter(f => f.path || f.stream);
-    if (localFiles.length && localFiles.length !== files.length)
-      throw new Error('Cannot mix local file paths and buffers');
-    const paths = localFiles.map(f => {
-      if (f.path)
-        return f.path;
-      assert(f.stream instanceof WritableStreamDispatcher);
-      const writable = f.stream as WritableStreamDispatcher;
-      return writable.path();
-    });
+    const multiple = files && files.length > 1 || localPaths && localPaths.length > 1;
     const result = await this.evaluateHandleInUtility(([injected, node, multiple]): Element | undefined => {
       const element = injected.retarget(node, 'follow-label');
       if (!element)
@@ -635,15 +629,15 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       if (multiple && !(element as HTMLInputElement).multiple)
         throw injected.createStacklessError('Non-multiple file input can only accept single file');
       return element;
-    }, files.length > 1);
+    }, multiple);
     if (result === 'error:notconnected' || !result.asElement())
       return 'error:notconnected';
     const retargeted = result.asElement() as ElementHandle<HTMLInputElement>;
     await progress.beforeInputAction(this);
     await this._page._frameManager.waitForSignalsCreatedBy(progress, options.noWaitAfter, async () => {
       progress.throwIfAborted();  // Avoid action that has side-effects.
-      if (paths.length)
-        await this._page._delegate.setInputFilePaths(retargeted, paths);
+      if (localPaths)
+        await this._page._delegate.setInputFilePaths(retargeted, localPaths);
       else
         await this._page._delegate.setInputFiles(retargeted, files as types.FilePayload[]);
     });

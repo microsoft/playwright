@@ -22,6 +22,7 @@ import { DispatcherScope, existingDispatcher, lookupNullableDispatcher } from '.
 import { JSHandleDispatcher, serializeResult, parseArgument } from './jsHandleDispatcher';
 import { FrameDispatcher } from './frameDispatcher';
 import { CallMetadata } from '../server/instrumentation';
+import { WritableStreamDispatcher } from './writableStreamDispatcher';
 
 export class ElementHandleDispatcher extends JSHandleDispatcher implements channels.ElementHandleChannel {
   _type_ElementHandle = true;
@@ -143,7 +144,17 @@ export class ElementHandleDispatcher extends JSHandleDispatcher implements chann
   }
 
   async setInputFiles(params: channels.ElementHandleSetInputFilesParams, metadata: CallMetadata): Promise<void> {
-    return await this._elementHandle.setInputFiles(metadata, params.files, params);
+    return await this._elementHandle.setInputFiles(metadata, { files: params.files }, params);
+  }
+
+  async setInputFilePaths(params: channels.ElementHandleSetInputFilePathsParams, metadata: CallMetadata): Promise<void> {
+    let { localPaths } = params;
+    if (!localPaths) {
+      if (!params.streams)
+        throw new Error('Neither localPaths nor streams is specified');
+      localPaths = params.streams.map(c => (c as WritableStreamDispatcher).path());
+    }
+    return await this._elementHandle.setInputFiles(metadata, { localPaths }, params);
   }
 
   async focus(params: channels.ElementHandleFocusParams, metadata: CallMetadata): Promise<void> {

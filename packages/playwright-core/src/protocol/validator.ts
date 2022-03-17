@@ -882,10 +882,16 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     files: tArray(tObject({
       name: tString,
       mimeType: tOptional(tString),
-      buffer: tOptional(tBinary),
-      path: tOptional(tString),
-      stream: tOptional(tChannel('WritableStream')),
+      buffer: tBinary,
     })),
+    timeout: tOptional(tNumber),
+    noWaitAfter: tOptional(tBoolean),
+  });
+  scheme.FrameSetInputFilePathsParams = tObject({
+    selector: tString,
+    strict: tOptional(tBoolean),
+    localPaths: tOptional(tArray(tString)),
+    streams: tOptional(tArray(tChannel('WritableStream'))),
     timeout: tOptional(tNumber),
     noWaitAfter: tOptional(tBoolean),
   });
@@ -1104,10 +1110,14 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     files: tArray(tObject({
       name: tString,
       mimeType: tOptional(tString),
-      buffer: tOptional(tBinary),
-      path: tOptional(tString),
-      stream: tOptional(tChannel('WritableStream')),
+      buffer: tBinary,
     })),
+    timeout: tOptional(tNumber),
+    noWaitAfter: tOptional(tBoolean),
+  });
+  scheme.ElementHandleSetInputFilePathsParams = tObject({
+    localPaths: tOptional(tArray(tString)),
+    streams: tOptional(tArray(tChannel('WritableStream'))),
     timeout: tOptional(tNumber),
     noWaitAfter: tOptional(tBoolean),
   });
