@@ -241,7 +241,8 @@ const TSCONFIG = {
     'esModuleInterop': true,
     'allowSyntheticDefaultImports': true,
     'rootDir': '.',
-    'lib': ['esnext', 'dom', 'DOM.Iterable']
+    'lib': ['esnext', 'dom', 'DOM.Iterable'],
+    'noEmit': true,
   },
   'exclude': [
     'node_modules'
