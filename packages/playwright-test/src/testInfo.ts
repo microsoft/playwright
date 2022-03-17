@@ -14,38 +14,27 @@
  * limitations under the License.
  */
 
-import colors from 'colors/safe';
 import fs from 'fs';
 import * as mime from 'mime';
 import path from 'path';
-import { TimeoutRunner, TimeoutRunnerError } from 'playwright-core/lib/utils/async';
 import { calculateSha1 } from 'playwright-core/lib/utils/utils';
 import type { FullConfig, FullProject, TestError, TestInfo, TestStatus } from '../types/test';
 import { WorkerInitParams } from './ipc';
 import { Loader } from './loader';
 import { ProjectImpl } from './project';
 import { TestCase } from './test';
-import { Annotation, TestStepInternal, Location } from './types';
+import { TimeoutManager } from './timeoutManager';
+import { Annotation, TestStepInternal } from './types';
 import { addSuffixToFilePath, getContainedPath, monotonicTime, sanitizeForFilePath, serializeError, trimLongString } from './util';
-
-type RunnableDescription = {
-  type: 'test' | 'beforeAll' | 'afterAll' | 'beforeEach' | 'afterEach' | 'slow' | 'skip' | 'fail' | 'fixme' | 'teardown';
-  location?: Location;
-  // When runnable has a separate timeout, it does not count into the "shared time pool" for the test.
-  timeout?: number;
-};
 
 export class TestInfoImpl implements TestInfo {
   private _projectImpl: ProjectImpl;
   private _addStepImpl: (data: Omit<TestStepInternal, 'complete'>) => TestStepInternal;
   readonly _test: TestCase;
-  readonly _timeoutRunner: TimeoutRunner;
+  readonly _timeoutManager: TimeoutManager;
   readonly _startTime: number;
   readonly _startWallTime: number;
   private _hasHardError: boolean = false;
-  private _currentRunnable: RunnableDescription = { type: 'test' };
-  // Holds elapsed time of the "time pool" shared between fixtures, each hooks and test itself.
-  private _elapsedTestTime = 0;
   readonly _screenshotsDir: string;
 
   // ------------ TestInfo fields ------------
@@ -68,7 +57,6 @@ export class TestInfoImpl implements TestInfo {
   status: TestStatus = 'passed';
   readonly stdout: TestInfo['stdout'] = [];
   readonly stderr: TestInfo['stderr'] = [];
-  timeout: number;
   snapshotSuffix: string = '';
   readonly outputDir: string;
   readonly snapshotDir: string;
@@ -85,6 +73,14 @@ export class TestInfoImpl implements TestInfo {
       this.errors.push(e);
     else
       this.errors[0] = e;
+  }
+
+  get timeout(): number {
+    return this._timeoutManager.defaultTimeout();
+  }
+
+  set timeout(timeout: number) {
+    // Ignored.
   }
 
   constructor(
@@ -113,9 +109,8 @@ export class TestInfoImpl implements TestInfo {
     this.column = test.location.column;
     this.fn = test.fn;
     this.expectedStatus = test.expectedStatus;
-    this.timeout = this.project.timeout;
 
-    this._timeoutRunner = new TimeoutRunner(this.timeout);
+    this._timeoutManager = new TimeoutManager(this.project.timeout);
 
     this.outputDir = (() => {
       const sameName = loader.projects().filter(project => project.config.name === this.project.name);
@@ -166,7 +161,7 @@ export class TestInfoImpl implements TestInfo {
     const description = modifierArgs[1];
     this.annotations.push({ type, description });
     if (type === 'slow') {
-      this.setTimeout(this.timeout * 3);
+      this._timeoutManager.slow();
     } else if (type === 'skip' || type === 'fixme') {
       this.expectedStatus = 'skipped';
       throw new SkipError('Test is skipped: ' + (description || ''));
@@ -176,35 +171,12 @@ export class TestInfoImpl implements TestInfo {
     }
   }
 
-  _setCurrentRunnable(runnable: RunnableDescription) {
-    if (this._currentRunnable.timeout === undefined)
-      this._elapsedTestTime = this._timeoutRunner.elapsed();
-    this._currentRunnable = runnable;
-    if (runnable.timeout === undefined)
-      this._timeoutRunner.updateTimeout(this.timeout, this._elapsedTestTime);
-    else
-      this._timeoutRunner.updateTimeout(runnable.timeout, 0);
-  }
-
   async _runWithTimeout(cb: () => Promise<any>): Promise<void> {
-    try {
-      await this._timeoutRunner.run(cb);
-    } catch (error) {
-      if (!(error instanceof TimeoutRunnerError))
-        throw error;
-      // Do not overwrite existing failure upon hook/teardown timeout.
-      if (this.status === 'passed') {
-        this.status = 'timedOut';
-        const title = titleForRunnable(this._currentRunnable);
-        const suffix = title ? ` in ${title}` : '';
-        const message = colors.red(`Timeout of ${this._currentRunnable.timeout ?? this.timeout}ms exceeded${suffix}.`);
-        const location = this._currentRunnable.location;
-        this.errors.push({
-          message,
-          // Include location for hooks and modifiers to distinguish between them.
-          stack: location ? message + `\n    at ${location.file}:${location.line}:${location.column}` : undefined,
-        });
-      }
+    const timeoutError = await this._timeoutManager.runWithTimeout(cb);
+    // Do not overwrite existing failure upon hook/teardown timeout.
+    if (timeoutError && this.status === 'passed') {
+      this.status = 'timedOut';
+      this.errors.push(timeoutError);
     }
     this.duration = monotonicTime() - this._startTime;
   }
@@ -308,38 +280,10 @@ export class TestInfoImpl implements TestInfo {
   }
 
   setTimeout(timeout: number) {
-    if (this._currentRunnable.timeout !== undefined) {
-      if (!this._currentRunnable.timeout)
-        return; // Zero timeout means some debug mode - do not set a timeout.
-      this._currentRunnable.timeout = timeout;
-      this._timeoutRunner.updateTimeout(timeout);
-    } else {
-      if (!this.timeout)
-        return; // Zero timeout means some debug mode - do not set a timeout.
-      this.timeout = timeout;
-      this._timeoutRunner.updateTimeout(timeout);
-    }
+    this._timeoutManager.setTimeout(timeout);
   }
 }
 
 class SkipError extends Error {
 }
 
-function titleForRunnable(runnable: RunnableDescription): string {
-  switch (runnable.type) {
-    case 'test':
-      return '';
-    case 'beforeAll':
-    case 'beforeEach':
-    case 'afterAll':
-    case 'afterEach':
-      return runnable.type + ' hook';
-    case 'teardown':
-      return 'fixtures teardown';
-    case 'skip':
-    case 'slow':
-    case 'fixme':
-    case 'fail':
-      return runnable.type + ' modifier';
-  }
-}

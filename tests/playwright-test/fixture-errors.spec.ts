@@ -456,7 +456,7 @@ test('should not report fixture teardown error twice', async ({ runInlineTest })
   expect(countTimes(stripAnsi(result.output), 'Oh my error')).toBe(2);
 });
 
-test('should not report fixture teardown timeout twice', async ({ runInlineTest }) => {
+test.fixme('should not report fixture teardown timeout twice', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.ts': `
       const test = pwt.test.extend({
@@ -471,8 +471,8 @@ test('should not report fixture teardown timeout twice', async ({ runInlineTest 
   }, { reporter: 'list', timeout: 1000 });
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
-  expect(result.output).toContain('while shutting down environment');
-  expect(countTimes(result.output, 'while shutting down environment')).toBe(1);
+  expect(result.output).toContain('in fixtures teardown');
+  expect(countTimes(result.output, 'in fixtures teardown')).toBe(1);
 });
 
 test('should handle fixture teardown error after test timeout and continue', async ({ runInlineTest }) => {

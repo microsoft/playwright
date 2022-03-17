@@ -16,6 +16,7 @@ Playwright Test has multiple configurable timeouts for various tasks.
 |Action timeout| no timeout |Timeout for each action:<br/><span style={{textTransform:'uppercase',fontSize:'smaller',fontWeight:'bold',opacity:'0.6'}}>Set default</span><br/><code>{`config = { use: { actionTimeout: 10000 } }`}</code><br/><span style={{textTransform: 'uppercase',fontSize: 'smaller', fontWeight: 'bold', opacity: '0.6'}}>Override</span><br/><code>{`locator.click({ timeout: 10000 })`}</code>|
 |Navigation timeout| no timeout |Timeout for each navigation action:<br/><span style={{textTransform:'uppercase',fontSize:'smaller',fontWeight:'bold',opacity:'0.6'}}>Set default</span><br/><code>{`config = { use: { navigationTimeout: 30000 } }`}</code><br/><span style={{textTransform: 'uppercase',fontSize: 'smaller', fontWeight: 'bold', opacity: '0.6'}}>Override</span><br/><code>{`page.goto('/', { timeout: 30000 })`}</code>|
 |Global timeout|no timeout |Global timeout for the whole test run:<br/><span style={{textTransform:'uppercase',fontSize:'smaller',fontWeight:'bold',opacity:'0.6'}}>Set in config</span><br/><code>{`config = { globalTimeout: 60*60*1000 }`}</code><br/>|
+|Fixture timeout|no timeout |Timeout for an individual fixture:<br/><span style={{textTransform:'uppercase',fontSize:'smaller',fontWeight:'bold',opacity:'0.6'}}>Set in fixture</span><br/><code>{`{ scope: 'test', timeout: 30000 }`}</code><br/>|
 
 ## Test timeout
 
@@ -89,7 +90,7 @@ test('very slow test', async ({ page }) => {
 
 API reference: [`method: Test.setTimeout`] and [`method: Test.slow`].
 
-### Change timeout from a hook or fixture
+### Change timeout from a hook
 
 ```js js-flavor=js
 const { test, expect } = require('@playwright/test');
@@ -279,3 +280,39 @@ export default config;
 ```
 
 API reference: [`property: TestConfig.globalTimeout`].
+
+## Fixture timeout
+
+By default, [fixture](./test-fixtures) shares timeout with the test. However, for slow fixtures, especially [worker-scoped](./test-fixtures#worker-scoped-fixtures) ones, it is convenient to have a separate timeout. This way you can keep the overall test timeout small, and give the slow fixture more time.
+
+```js js-flavor=js
+const { test: base, expect } = require('@playwright/test');
+
+const test = base.extend({
+  slowFixture: [async ({}, use) => {
+    // ... perform a slow operation ...
+    await use('hello');
+  }, { timeout: 60000 }]
+});
+
+test('example test', async ({ slowFixture }) => {
+  // ...
+});
+```
+
+```js js-flavor=ts
+import { test as base, expect } from '@playwright/test';
+
+const test = base.extend<{ slowFixture: string }>({
+  slowFixture: [async ({}, use) => {
+    // ... perform a slow operation ...
+    await use('hello');
+  }, { timeout: 60000 }]
+});
+
+test('example test', async ({ slowFixture }) => {
+  // ...
+});
+```
+
+API reference: [`method: Test.extend`].
