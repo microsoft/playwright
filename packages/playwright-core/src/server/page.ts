@@ -49,6 +49,7 @@ export interface PageDelegate {
   exposeBinding(binding: PageBinding): Promise<void>;
   evaluateOnNewDocument(source: string): Promise<void>;
   closePage(runBeforeUnload: boolean): Promise<void>;
+  potentiallyUninitializedPage(): Page;
   pageOrError(): Promise<Page | Error>;
 
   navigateFrame(frame: frames.Frame, url: string, referrer: string | undefined): Promise<frames.GotoResult>;
@@ -158,6 +159,7 @@ export class Page extends SdkObject {
   _video: Artifact | null = null;
   _opener: Page | undefined;
   private _frameThrottler = new FrameThrottler(10, 200);
+  private _isServerSideOnly = false;
 
   constructor(delegate: PageDelegate, browserContext: BrowserContext) {
     super(browserContext, 'page');
@@ -203,8 +205,8 @@ export class Page extends SdkObject {
       this._setIsError(error);
     }
     this._initialized = true;
-    this._browserContext.emit(BrowserContext.Events.Page, this);
-    // I may happen that page iniatialization finishes after Close event has already been sent,
+    this.emitOnContext(BrowserContext.Events.Page, this);
+    // I may happen that page initialization finishes after Close event has already been sent,
     // in that case we fire another Close event to ensure that each reported Page will have
     // corresponding Close event after it is reported on the context.
     if (this.isClosed())
@@ -213,6 +215,12 @@ export class Page extends SdkObject {
 
   initializedOrUndefined() {
     return this._initialized ? this : undefined;
+  }
+
+  emitOnContext(event: string | symbol, ...args: any[]) {
+    if (this._isServerSideOnly)
+      return;
+    this._browserContext.emit(event, ...args);
   }
 
   async _doSlowMo() {
@@ -610,6 +618,10 @@ export class Page extends SdkObject {
 
   async hideHighlight() {
     await Promise.all(this.frames().map(frame => frame.hideHighlight().catch(() => {})));
+  }
+
+  markAsServerSideOnly() {
+    this._isServerSideOnly = true;
   }
 }
 

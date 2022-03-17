@@ -30,7 +30,7 @@ import { Progress, ProgressController } from './progress';
 import { assert, constructURLBasedOnBaseURL, makeWaitForNextTask } from '../utils/utils';
 import { ManualPromise } from '../utils/async';
 import { debugLogger } from '../utils/debugLogger';
-import { CallMetadata, internalCallMetadata, SdkObject } from './instrumentation';
+import { CallMetadata, serverSideCallMetadata, SdkObject } from './instrumentation';
 import type InjectedScript from './injected/injectedScript';
 import type { ElementStateWithoutStable, FrameExpectParams, InjectedScriptPoll, InjectedScriptProgress } from './injected/injectedScript';
 import { isSessionClosedError } from './protocolError';
@@ -277,7 +277,7 @@ export class FrameManager {
         route.continue(request, {});
       return;
     }
-    this._page._browserContext.emit(BrowserContext.Events.Request, request);
+    this._page.emitOnContext(BrowserContext.Events.Request, request);
     if (route)
       this._page._requestStarted(request, route);
   }
@@ -285,14 +285,14 @@ export class FrameManager {
   requestReceivedResponse(response: network.Response) {
     if (response.request()._isFavicon)
       return;
-    this._page._browserContext.emit(BrowserContext.Events.Response, response);
+    this._page.emitOnContext(BrowserContext.Events.Response, response);
   }
 
   reportRequestFinished(request: network.Request, response: network.Response | null) {
     this._inflightRequestFinished(request);
     if (request._isFavicon)
       return;
-    this._page._browserContext.emit(BrowserContext.Events.RequestFinished, { request, response });
+    this._page.emitOnContext(BrowserContext.Events.RequestFinished, { request, response });
   }
 
   requestFailed(request: network.Request, canceled: boolean) {
@@ -306,7 +306,7 @@ export class FrameManager {
     }
     if (request._isFavicon)
       return;
-    this._page._browserContext.emit(BrowserContext.Events.RequestFailed, request);
+    this._page.emitOnContext(BrowserContext.Events.RequestFailed, request);
   }
 
   dialogDidOpen(dialog: Dialog) {
@@ -1366,7 +1366,7 @@ export class Frame extends SdkObject {
         return result;
       return JSON.stringify(result);
     }`;
-    const handle = await this._waitForFunctionExpression(internalCallMetadata(), expression, true, undefined, { timeout: progress.timeUntilDeadline() }, 'utility');
+    const handle = await this._waitForFunctionExpression(serverSideCallMetadata(), expression, true, undefined, { timeout: progress.timeUntilDeadline() }, 'utility');
     return JSON.parse(handle.rawValue()) as R;
   }
 

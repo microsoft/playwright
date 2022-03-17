@@ -19,7 +19,7 @@ import path from 'path';
 import { Page } from '../../page';
 import { ProgressController } from '../../progress';
 import { EventEmitter } from 'events';
-import { internalCallMetadata } from '../../instrumentation';
+import { serverSideCallMetadata } from '../../instrumentation';
 import type { CallLog, EventData, Mode, Source } from './recorderTypes';
 import { isUnderTest } from '../../../utils/utils';
 import * as mime from 'mime';
@@ -61,7 +61,7 @@ export class RecorderApp extends EventEmitter implements IRecorderApp {
   }
 
   async close() {
-    await this._page.context().close(internalCallMetadata());
+    await this._page.context().close(serverSideCallMetadata());
   }
 
   private async _init() {
@@ -89,11 +89,11 @@ export class RecorderApp extends EventEmitter implements IRecorderApp {
 
     this._page.once('close', () => {
       this.emit('close');
-      this._page.context().close(internalCallMetadata()).catch(() => {});
+      this._page.context().close(serverSideCallMetadata()).catch(() => {});
     });
 
     const mainFrame = this._page.mainFrame();
-    await mainFrame.goto(internalCallMetadata(), 'https://playwright/index.html');
+    await mainFrame.goto(serverSideCallMetadata(), 'https://playwright/index.html');
   }
 
   static async open(sdkLanguage: string, headed: boolean): Promise<IRecorderApp> {
@@ -108,7 +108,7 @@ export class RecorderApp extends EventEmitter implements IRecorderApp {
     ];
     if (process.env.PWTEST_RECORDER_PORT)
       args.push(`--remote-debugging-port=${process.env.PWTEST_RECORDER_PORT}`);
-    const context = await recorderPlaywright.chromium.launchPersistentContext(internalCallMetadata(), '', {
+    const context = await recorderPlaywright.chromium.launchPersistentContext(serverSideCallMetadata(), '', {
       channel: findChromiumChannel(sdkLanguage),
       args,
       noDefaultViewport: true,
@@ -116,7 +116,7 @@ export class RecorderApp extends EventEmitter implements IRecorderApp {
       headless: !!process.env.PWTEST_CLI_HEADLESS || (isUnderTest() && !headed),
       useWebSocket: !!process.env.PWTEST_RECORDER_PORT
     });
-    const controller = new ProgressController(internalCallMetadata(), context._browser);
+    const controller = new ProgressController(serverSideCallMetadata(), context._browser);
     await controller.run(async progress => {
       await context._browser._defaultContext!._loadDefaultContextAsIs(progress);
     });

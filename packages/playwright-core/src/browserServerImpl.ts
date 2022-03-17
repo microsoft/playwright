@@ -20,7 +20,7 @@ import { BrowserServerLauncher, BrowserServer } from './client/browserType';
 import { envObjectToArray } from './client/clientHelper';
 import { createGuid } from './utils/utils';
 import { ProtocolLogger } from './server/types';
-import { internalCallMetadata } from './server/instrumentation';
+import { serverSideCallMetadata } from './server/instrumentation';
 import { createPlaywright } from './server/playwright';
 import { PlaywrightServer } from './remote/playwrightServer';
 import { helper } from './server/helper';
@@ -36,7 +36,7 @@ export class BrowserServerLauncherImpl implements BrowserServerLauncher {
   async launchServer(options: LaunchServerOptions = {}): Promise<BrowserServer> {
     const playwright = createPlaywright('javascript');
     // 1. Pre-launch the browser
-    const metadata = internalCallMetadata();
+    const metadata = serverSideCallMetadata();
     const browser = await playwright[this._browserName].launch(metadata, {
       ...options,
       ignoreDefaultArgs: Array.isArray(options.ignoreDefaultArgs) ? options.ignoreDefaultArgs : undefined,

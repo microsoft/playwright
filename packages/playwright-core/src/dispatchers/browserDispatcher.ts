@@ -21,7 +21,7 @@ import { CDPSessionDispatcher } from './cdpSessionDispatcher';
 import { Dispatcher, DispatcherScope } from './dispatcher';
 import { CRBrowser } from '../server/chromium/crBrowser';
 import { PageDispatcher } from './pageDispatcher';
-import { CallMetadata, internalCallMetadata } from '../server/instrumentation';
+import { CallMetadata, serverSideCallMetadata } from '../server/instrumentation';
 import { BrowserContext } from '../server/browserContext';
 import { Selectors } from '../server/selectors';
 
@@ -131,6 +131,6 @@ export class ConnectedBrowserDispatcher extends Dispatcher<Browser, channels.Bro
   }
 
   async cleanupContexts() {
-    await Promise.all(Array.from(this._contexts).map(context => context.close(internalCallMetadata())));
+    await Promise.all(Array.from(this._contexts).map(context => context.close(serverSideCallMetadata())));
   }
 }

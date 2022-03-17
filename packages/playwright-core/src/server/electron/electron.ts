@@ -35,7 +35,7 @@ import { BrowserOptions, BrowserProcess, PlaywrightOptions } from '../browser';
 import * as childProcess from 'child_process';
 import * as readline from 'readline';
 import { RecentLogsCollector } from '../../utils/debugLogger';
-import { internalCallMetadata, SdkObject } from '../instrumentation';
+import { serverSideCallMetadata, SdkObject } from '../instrumentation';
 import * as channels from '../../protocol/channels';
 import { BrowserContextOptions } from '../types';
 
@@ -82,9 +82,9 @@ export class ElectronApplication extends SdkObject {
   }
 
   async close() {
-    const progressController = new ProgressController(internalCallMetadata(), this);
+    const progressController = new ProgressController(serverSideCallMetadata(), this);
     const closed = progressController.run(progress => helper.waitForEvent(progress, this, ElectronApplication.Events.Close).promise);
-    await this._browserContext.close(internalCallMetadata());
+    await this._browserContext.close(serverSideCallMetadata());
     this._nodeConnection.close();
     await closed;
   }
@@ -112,7 +112,7 @@ export class Electron extends SdkObject {
     const {
       args = [],
     } = options;
-    const controller = new ProgressController(internalCallMetadata(), this);
+    const controller = new ProgressController(serverSideCallMetadata(), this);
     controller.setLogName('browser');
     return controller.run(async progress => {
       let app: ElectronApplication | undefined = undefined;

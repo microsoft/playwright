@@ -141,3 +141,24 @@ it('should capture cookies', async ({ server, context, page, contextFactory }) =
     'empty=',
   ]);
 });
+
+it('should not emit events about internal page', async ({ contextFactory }) => {
+  const context = await contextFactory();
+  const page = await context.newPage();
+  await page.route('**/*', route => {
+    route.fulfill({ body: '<html></html>' });
+  });
+  await page.goto('https://www.example.com');
+  await page.evaluate(() => localStorage['name1'] = 'value1');
+  await page.goto('https://www.domain.com');
+  await page.evaluate(() => localStorage['name2'] = 'value2');
+
+  const events = [];
+  context.on('page', e => events.push(e));
+  context.on('request', e => events.push(e));
+  context.on('requestfailed', e => events.push(e));
+  context.on('requestfinished', e => events.push(e));
+  context.on('response', e => events.push(e));
+  await context.storageState();
+  expect(events).toHaveLength(0);
+});

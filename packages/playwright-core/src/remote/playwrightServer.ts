@@ -18,7 +18,7 @@ import debug from 'debug';
 import * as http from 'http';
 import WebSocket from 'ws';
 import { DispatcherConnection, DispatcherScope, Root } from '../dispatchers/dispatcher';
-import { internalCallMetadata } from '../server/instrumentation';
+import { serverSideCallMetadata } from '../server/instrumentation';
 import { createPlaywright, Playwright } from '../server/playwright';
 import { Browser } from '../server/browser';
 import { gracefullyCloseAll } from '../utils/processLauncher';
@@ -169,7 +169,7 @@ class Connection {
 
     const playwright = createPlaywright('javascript');
     const socksProxy = enableSocksProxy ? await this._enableSocksProxy(playwright) : undefined;
-    const browser = await playwright[executable.browserName].launch(internalCallMetadata(), {
+    const browser = await playwright[executable.browserName].launch(serverSideCallMetadata(), {
       channel: executable.type === 'browser' ? undefined : executable.name,
     });
 

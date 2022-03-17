@@ -36,8 +36,8 @@ export class Playwright extends SdkObject {
   readonly options: PlaywrightOptions;
   private _allPages = new Set<Page>();
 
-  constructor(sdkLanguage: string, isInternal: boolean) {
-    super({ attribution: { isInternal }, instrumentation: createInstrumentation() } as any, undefined, 'Playwright');
+  constructor(sdkLanguage: string, isInternalPlaywright: boolean) {
+    super({ attribution: { isInternalPlaywright }, instrumentation: createInstrumentation() } as any, undefined, 'Playwright');
     this.instrumentation.addListener({
       onPageOpen: page => this._allPages.add(page),
       onPageClose: page => this._allPages.delete(page),
@@ -63,6 +63,6 @@ export class Playwright extends SdkObject {
   }
 }
 
-export function createPlaywright(sdkLanguage: string, isInternal: boolean = false) {
-  return new Playwright(sdkLanguage, isInternal);
+export function createPlaywright(sdkLanguage: string, isInternalPlaywright: boolean = false) {
+  return new Playwright(sdkLanguage, isInternalPlaywright);
 }

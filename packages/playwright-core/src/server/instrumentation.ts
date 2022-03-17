@@ -25,7 +25,7 @@ import type { Frame } from './frames';
 import type { Page } from './page';
 
 export type Attribution = {
-  isInternal: boolean,
+  isInternalPlaywright: boolean,
   browserType?: BrowserType;
   browser?: Browser;
   context?: BrowserContext | APIRequestContext;
@@ -92,7 +92,7 @@ export function createInstrumentation(): Instrumentation {
   });
 }
 
-export function internalCallMetadata(): CallMetadata {
+export function serverSideCallMetadata(): CallMetadata {
   return {
     id: '',
     wallTime: 0,
@@ -102,6 +102,7 @@ export function internalCallMetadata(): CallMetadata {
     method: '',
     params: {},
     log: [],
-    snapshots: []
+    snapshots: [],
+    isServerSide: true,
   };
 }
