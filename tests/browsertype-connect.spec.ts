@@ -610,7 +610,7 @@ test('should upload large file', async ({ browserType, startRemoteServer, server
   const serverFilePromise = new Promise<formidable.File>(fulfill => {
     server.setRoute('/upload', async (req, res) => {
       const form = new formidable.IncomingForm({ uploadDir: testInfo.outputPath() });
-      form.parse(req, function (err, fields, f) {
+      form.parse(req, function(err, fields, f) {
         res.end();
         const files = f as Record<string, formidable.File>;
         fulfill(files.file1);
