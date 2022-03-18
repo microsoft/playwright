@@ -78,8 +78,8 @@ export const info = async (gitDir: string): Promise<Attachment> => {
   };
 
   return {
-    name: 'CI Info',
-    contentType: 'application/vnd.microsoft.playwright.ci-info+json',
+    name: 'ci-info',
+    contentType: 'application/json',
     body: Buffer.from(JSON.stringify(metadata)),
   };
 

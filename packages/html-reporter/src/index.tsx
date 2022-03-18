@@ -22,6 +22,26 @@ import './colors.css';
 import { LoadedReport } from './loadedReport';
 import { ReportView } from './reportView';
 
+export type Metadata = {
+  generatedAt: number;
+  git: {
+      commit: {
+          author: {
+              name: string;
+              email: string;
+          };
+          sha: string;
+          subject: string;
+          timestamp: number;
+          link: string | undefined;
+      };
+      clean: boolean;
+  };
+  ci: {
+      link: string | undefined;
+  };
+};
+
 const zipjs = (self as any).zip;
 
 const ReportLoader: React.FC = () => {
@@ -41,13 +61,16 @@ window.onload = () => {
 
 class ZipReport implements LoadedReport {
   private _entries = new Map<string, zip.Entry>();
-  private _json!: HTMLReport;
+  private _json!: HTMLReport & { metadata?: Metadata };
 
   async load() {
     const zipReader = new zipjs.ZipReader(new zipjs.Data64URIReader(window.playwrightReportBase64), { useWebWorkers: false }) as zip.ZipReader;
     for (const entry of await zipReader.getEntries())
       this._entries.set(entry.filename, entry);
     this._json = await this.entry('report.json') as HTMLReport;
+    const rawMetadata = this._json.attachments.find(v => v.name === 'ci-info')?.body;
+    if (rawMetadata)
+      this._json.metadata = JSON.parse(rawMetadata);
   }
 
   json(): HTMLReport {

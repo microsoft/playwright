@@ -26,6 +26,8 @@ import './reportView.css';
 import { TestCaseView } from './testCaseView';
 import { TestFilesView } from './testFilesView';
 import './theme.css';
+import * as icons from './icons';
+import { Metadata } from '.';
 
 declare global {
   interface Window {
@@ -43,8 +45,10 @@ export const ReportView: React.FC<{
   const filter = React.useMemo(() => Filter.parse(filterText), [filterText]);
 
   return <div className='htmlreport vbox px-4 pb-4'>
-    {report?.json() && <HeaderView stats={report.json().stats} filterText={filterText} setFilterText={setFilterText}></HeaderView>}
-    {<>
+
+    {report?.json().metadata && <MetadataView {...report?.json().metadata!} />}
+    <main>
+      {report?.json() && <HeaderView stats={report.json().stats} filterText={filterText} setFilterText={setFilterText}></HeaderView>}
       <Route params=''>
         <TestFilesView report={report?.json()} filter={filter} expandedFiles={expandedFiles} setExpandedFiles={setExpandedFiles}></TestFilesView>
       </Route>
@@ -54,8 +58,58 @@ export const ReportView: React.FC<{
       <Route params='testId'>
         {!!report && <TestCaseViewLoader report={report}></TestCaseViewLoader>}
       </Route>
-    </>}
+    </main>
   </div>;
+};
+
+const MetadataView: React.FC<Metadata> = ({ generatedAt, git, ci }) => {
+  return (
+    <header className='metadata-view pt-3'>
+      <h1>{git.commit.subject}</h1>
+      {git && <>
+        <MetadatViewItem
+          content={<span style={{ fontFamily: 'monospace' }}>{git.commit.sha.substring(0, 7)}</span>}
+          href={git.commit.link}
+          icon='commit'
+        />
+        <MetadatViewItem
+          content={<>{git.commit.author.name}<br/>{git.commit.author.email}</>}
+          icon='person'
+        />
+        <MetadatViewItem
+          content={
+            <>
+              {Intl.DateTimeFormat(undefined, { dateStyle: 'full' }).format(git.commit.timestamp)}
+              <br />
+              {Intl.DateTimeFormat(undefined, { timeStyle: 'long' }).format(git.commit.timestamp)}
+            </>
+          }
+          icon='calendar'
+        />
+        {ci.link &&
+          <MetadatViewItem
+            content='CI/CD Logs'
+            href={ci.link}
+            icon='externalLink'
+          />
+        }
+      </>}
+      <p style={{ fontStyle: 'italic', color: 'var(--color-fg-subtle)' }}>Report generated on {Intl.DateTimeFormat(undefined, { dateStyle: 'full', timeStyle: 'long' }).format(generatedAt)}</p>
+    </header>
+  );
+};
+
+const MetadatViewItem: React.FC<{ content: JSX.Element | string; icon: keyof typeof icons, href?: string }> = ({ content, icon, href }) => {
+  return (
+    <div className='mt-2 hbox'>
+      <div className='mr-2'>
+        {icons[icon]()}
+      </div>
+      <div style={{ flex: 1 }}>
+        {href ? <a href={href} target='_blank' rel='noopener noreferrer'>{content}</a> : content}
+      </div>
+    </div>
+  );
 };
 
 const TestCaseViewLoader: React.FC<{
