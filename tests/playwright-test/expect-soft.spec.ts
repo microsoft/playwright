@@ -54,7 +54,7 @@ test('should fail when passed in function', async ({ runInlineTest }) => {
     `
   });
   expect(result.exitCode).toBe(1);
-  expect(stripAnsi(result.output)).toContain('Error: Cannot accept function as a first argument; use `expect.poll()` instead');
+  expect(stripAnsi(result.output)).toContain('Cannot accept function as a first argument; did you mean to use `expect.poll()`?');
 });
 
 test('should report a mixture of soft and non-soft errors', async ({ runInlineTest }) => {
