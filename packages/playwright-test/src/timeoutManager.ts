@@ -121,10 +121,11 @@ export class TimeoutManager {
       case 'fail':
         suffix = ` in ${this._runnable.type} modifier`; break;
     }
-    if (this._fixture && this._fixture.slot)
-      suffix = ` in fixture "${this._fixture.fixture}"`;
+    const fixtureWithSlot = this._fixture?.slot ? this._fixture : undefined;
+    if (fixtureWithSlot)
+      suffix = ` in fixture "${fixtureWithSlot.fixture}"`;
     const message = colors.red(`Timeout of ${this._currentSlot().timeout}ms exceeded${suffix}.`);
-    const location = (this._fixture || this._runnable).location;
+    const location = (fixtureWithSlot || this._runnable).location;
     return {
       message,
       // Include location for hooks, modifiers and fixtures to distinguish between them.
