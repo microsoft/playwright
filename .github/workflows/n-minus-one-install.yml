@@ -5,7 +5,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - run: nvm use 16
+    - run: curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash;nvm use 16
     - run: cd examples/todomvc; npm install
     - run: cd examples/todomvc; npx playwright install
     - run: cd examples/todomvc; npm test
