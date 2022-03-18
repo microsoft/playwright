@@ -62,11 +62,14 @@ createZipForLinux() {
 
   # Generate and unpack MiniBrowser bundles for each port
   for port in gtk wpe; do
-    WEBKIT_OUTPUTDIR=$(pwd)/WebKitBuild/${port^^} Tools/Scripts/generate-bundle \
-        --bundle=MiniBrowser --release \
-        --platform=${port} --destination="${tmpdir}"
-     unzip "${tmpdir}"/MiniBrowser_${port}_release.zip -d "${tmpdir}"/minibrowser-${port}
-     rm -f "${tmpdir}"/MiniBrowser_${port}_release.zip
+    WEBKIT_OUTPUTDIR=$(pwd)/WebKitBuild/${port^^}
+    if [[ -f "$WEBKIT_OUTPUTDIR/Release/bin/MiniBrowser" ]]; then
+      WEBKIT_OUTPUTDIR=$WEBKIT_OUTPUTDIR Tools/Scripts/generate-bundle \
+         --bundle=MiniBrowser --release \
+         --platform=${port} --destination="${tmpdir}"
+      unzip "${tmpdir}"/MiniBrowser_${port}_release.zip -d "${tmpdir}"/minibrowser-${port}
+      rm -f "${tmpdir}"/MiniBrowser_${port}_release.zip
+    fi
   done
 
   # tar resulting directory and cleanup TMP.
