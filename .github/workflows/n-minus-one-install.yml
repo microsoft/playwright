@@ -5,6 +5,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
+      with:
+        key: ${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('package.json') }}
     - uses: actions/setup-node@v2
       with:
         node-version: 16
