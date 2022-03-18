@@ -74,10 +74,10 @@ export class CRPage implements PageDelegate {
     return crPage._mainFrameSession;
   }
 
-  constructor(client: CRSession, targetId: string, browserContext: CRBrowserContext, opener: CRPage | null, hasUIWindow: boolean, isBackgroundPage: boolean) {
+  constructor(client: CRSession, targetId: string, browserContext: CRBrowserContext, opener: CRPage | null, bits: { hasUIWindow: boolean, isBackgroundPage: boolean }) {
     this._targetId = targetId;
     this._opener = opener;
-    this._isBackgroundPage = isBackgroundPage;
+    this._isBackgroundPage = bits.isBackgroundPage;
     const dragManager = new DragManager(this);
     this.rawKeyboard = new RawKeyboardImpl(client, browserContext._browser._platform() === 'mac', dragManager);
     this.rawMouse = new RawMouseImpl(this, client, dragManager);
@@ -97,7 +97,7 @@ export class CRPage implements PageDelegate {
     }
     // Note: it is important to call |reportAsNew| before resolving pageOrError promise,
     // so that anyone who awaits pageOrError got a ready and reported page.
-    this._pagePromise = this._mainFrameSession._initialize(hasUIWindow).then(async r => {
+    this._pagePromise = this._mainFrameSession._initialize(bits.hasUIWindow).then(async r => {
       await this._page.initOpener(this._opener);
       return r;
     }).catch(async e => {
@@ -111,6 +111,10 @@ export class CRPage implements PageDelegate {
       this._reportAsNew(e);
       return e;
     });
+  }
+
+  potentiallyUninitializedPage(): Page {
+    return this._page;
   }
 
   private _reportAsNew(error?: Error) {

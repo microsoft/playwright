@@ -103,10 +103,10 @@ export abstract class Browser extends SdkObject {
   _videoStarted(context: BrowserContext, videoId: string, path: string, pageOrError: Promise<Page | Error>) {
     const artifact = new Artifact(context, path);
     this._idToVideo.set(videoId, { context, artifact });
-    context.emit(BrowserContext.Events.VideoStarted, artifact);
     pageOrError.then(page => {
       if (page instanceof Page) {
         page._video = artifact;
+        page.emitOnContext(BrowserContext.Events.VideoStarted, artifact);
         page.emit(Page.Events.Video, artifact);
       }
     });

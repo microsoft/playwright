@@ -109,6 +109,10 @@ export class WKPage implements PageDelegate {
     }
   }
 
+  potentiallyUninitializedPage(): Page {
+    return this._page;
+  }
+
   private async _initializePageProxySession() {
     const promises: Promise<any>[] = [
       this._pageProxySession.send('Dialog.enable'),

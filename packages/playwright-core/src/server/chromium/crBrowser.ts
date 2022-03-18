@@ -174,14 +174,14 @@ export class CRBrowser extends Browser {
     assert(!this._serviceWorkers.has(targetInfo.targetId), 'Duplicate target ' + targetInfo.targetId);
 
     if (targetInfo.type === 'background_page') {
-      const backgroundPage = new CRPage(session, targetInfo.targetId, context, null, false, true);
+      const backgroundPage = new CRPage(session, targetInfo.targetId, context, null, { hasUIWindow: false, isBackgroundPage: true });
       this._backgroundPages.set(targetInfo.targetId, backgroundPage);
       return;
     }
 
     if (targetInfo.type === 'page') {
       const opener = targetInfo.openerId ? this._crPages.get(targetInfo.openerId) || null : null;
-      const crPage = new CRPage(session, targetInfo.targetId, context, opener, true, false);
+      const crPage = new CRPage(session, targetInfo.targetId, context, opener, { hasUIWindow: true, isBackgroundPage: false });
       this._crPages.set(targetInfo.targetId, crPage);
       return;
     }

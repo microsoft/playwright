@@ -33,7 +33,7 @@ import { RecentLogsCollector } from '../../utils/debugLogger';
 import { gracefullyCloseSet } from '../../utils/processLauncher';
 import { TimeoutSettings } from '../../utils/timeoutSettings';
 import { AndroidWebView } from '../../protocol/channels';
-import { SdkObject, internalCallMetadata } from '../instrumentation';
+import { SdkObject, serverSideCallMetadata } from '../instrumentation';
 
 const ARTIFACTS_FOLDER = path.join(os.tmpdir(), 'playwright-artifacts-');
 
@@ -288,7 +288,7 @@ export class AndroidDevice extends SdkObject {
     validateBrowserContextOptions(options, browserOptions);
 
     const browser = await CRBrowser.connect(androidBrowser, browserOptions);
-    const controller = new ProgressController(internalCallMetadata(), this);
+    const controller = new ProgressController(serverSideCallMetadata(), this);
     const defaultContext = browser._defaultContext!;
     await controller.run(async progress => {
       await defaultContext._loadDefaultContextAsIs(progress);
