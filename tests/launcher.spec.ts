@@ -45,6 +45,10 @@ it('should throw a friendly error if its headed and there is no xserver on linux
   it.skip(platform !== 'linux');
   const error: Error = await browserType.launch({
     headless: false,
+    env: {
+      ...process.env,
+      DISPLAY: undefined,
+    },
   }).catch(e => e);
   expect(error).toBeInstanceOf(Error);
   expect(error.message).toMatch(/Looks like you launched a headed browser without having a XServer running./);
