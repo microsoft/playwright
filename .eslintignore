@@ -15,3 +15,4 @@ output/
 test-results/
 tests-components/
 examples/
+/docs/tests/generated/**/*
