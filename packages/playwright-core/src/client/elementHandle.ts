@@ -270,12 +270,12 @@ export async function convertInputFiles(files: string | FilePayload | string[] |
   if (hasLargeBuffer)
     throw new Error('Cannot set buffer larger than 50Mb, please write it to a file and pass its path instead.');
 
-  const stats = await Promise.all(items.filter(f => typeof f === 'string').map(item => fs.promises.stat(item as string)));
+  const stats = await Promise.all(items.filter(isString).map(item => fs.promises.stat(item as string)));
   const hasLargeFile = !!stats.find(s => s.size > sizeLimit);
   if (hasLargeFile) {
-    if (context._browser?._connection.isRemote()) {
+    if (context._connection.isRemote()) {
       const streams: channels.WritableStreamChannel[] = await Promise.all(items.map(async item => {
-        assert(typeof item === 'string');
+        assert(isString(item));
         const { writableStream: stream } = await context._channel.createTempFile({ name: path.basename(item) });
         const writable = WritableStream.from(stream);
         await pipelineAsync(fs.createReadStream(item), writable.stream());
