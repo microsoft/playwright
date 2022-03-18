@@ -148,20 +148,16 @@ type ExpectMetaInfo = {
 let expectCallMetaInfo: undefined|ExpectMetaInfo = undefined;
 
 class ExpectMetaInfoProxyHandler {
-  private _message?: string;
-  private _isSoft: boolean;
-  private _isPoll: boolean;
-  private _pollTimeout: number | undefined;
+  private _info: ExpectMetaInfo;
 
-  constructor(messageOrOptions: undefined | string | { message?: string, timeout?: number }, isSoft: boolean, isPoll: boolean) {
+  constructor(messageOrOptions: ExpectMessageOrOptions, isSoft: boolean, isPoll: boolean) {
+    this._info = { isSoft, isPoll };
     if (typeof messageOrOptions === 'string') {
-      this._message = messageOrOptions;
+      this._info.message = messageOrOptions;
     } else {
-      this._message = messageOrOptions?.message;
-      this._pollTimeout = messageOrOptions?.timeout;
+      this._info.message = messageOrOptions?.message;
+      this._info.pollTimeout = messageOrOptions?.timeout;
     }
-    this._isSoft = isSoft;
-    this._isPoll = isPoll;
   }
 
   get(target: any, prop: any, receiver: any): any {
@@ -173,17 +169,17 @@ class ExpectMetaInfoProxyHandler {
       if (!testInfo)
         return value.call(target, ...args);
       const handleError = (e: Error) => {
-        if (this._isSoft)
+        if (this._info.isSoft)
           testInfo._failWithError(serializeError(e), false /* isHardError */);
         else
           throw e;
       };
       try {
         expectCallMetaInfo = {
-          message: this._message,
-          isSoft: this._isSoft,
-          isPoll: this._isPoll,
-          pollTimeout: this._pollTimeout,
+          message: this._info.message,
+          isSoft: this._info.isSoft,
+          isPoll: this._info.isPoll,
+          pollTimeout: this._info.pollTimeout,
         };
         let result = value.call(target, ...args);
         if ((result instanceof Promise))
@@ -202,8 +198,11 @@ async function pollMatcher(matcher: any, timeout: number, thisArg: any, generato
   let result: { pass: boolean, message: () => string } | undefined = undefined;
   const startTime = monotonicTime();
   const pollIntervals = [100, 250, 500];
-  while (monotonicTime() - startTime <= timeout) {
-    const received = await raceAgainstTimeout(generator, timeout - (monotonicTime() - startTime));
+  while (true) {
+    const elapsed = monotonicTime() - startTime;
+    if (timeout !== 0 && elapsed > timeout)
+      break;
+    const received = timeout !== 0 ? await raceAgainstTimeout(generator, timeout - elapsed) : await generator();
     if (received.timedOut)
       break;
     result = matcher.call(thisArg, received.result, ...args);
