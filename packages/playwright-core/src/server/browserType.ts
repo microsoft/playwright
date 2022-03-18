@@ -31,6 +31,9 @@ import { helper } from './helper';
 import { RecentLogsCollector } from '../utils/debugLogger';
 import { CallMetadata, SdkObject } from './instrumentation';
 
+export const kNoXServerRunningError = 'Looks like you launched a headed browser without having a XServer running.\n' +
+  'Set either \'headless: false\' or use \'xvfb-run <your-playwright-app>\' before running Playwright.\n\n<3 Playwright Team';
+
 export abstract class BrowserType extends SdkObject {
   private _name: BrowserName;
   readonly _playwrightOptions: PlaywrightOptions;
@@ -76,7 +79,7 @@ export abstract class BrowserType extends SdkObject {
 
   async _innerLaunchWithRetries(progress: Progress, options: types.LaunchOptions, persistent: types.BrowserContextOptions | undefined, protocolLogger: types.ProtocolLogger, userDataDir?: string): Promise<Browser> {
     try {
-      return this._innerLaunch(progress, options, persistent, protocolLogger, userDataDir);
+      return await this._innerLaunch(progress, options, persistent, protocolLogger, userDataDir);
     } catch (error) {
       // @see https://github.com/microsoft/playwright/issues/5214
       const errorMessage = typeof error === 'object' && typeof error.message === 'string' ? error.message : '';

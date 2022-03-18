@@ -20,11 +20,13 @@ import fs from 'fs';
 import path from 'path';
 import { FFBrowser } from './ffBrowser';
 import { kBrowserCloseMessageId } from './ffConnection';
-import { BrowserType } from '../browserType';
+import { BrowserType, kNoXServerRunningError } from '../browserType';
 import { Env } from '../../utils/processLauncher';
 import { ConnectionTransport } from '../transport';
 import { BrowserOptions, PlaywrightOptions } from '../browser';
 import * as types from '../types';
+import { rewriteErrorMessage } from '../../utils/stackTrace';
+import { wrapInASCIIBox } from '../../utils/utils';
 
 export class Firefox extends BrowserType {
   constructor(playwrightOptions: PlaywrightOptions) {
@@ -36,6 +38,8 @@ export class Firefox extends BrowserType {
   }
 
   _rewriteStartupError(error: Error): Error {
+    if (error.message.includes('no DISPLAY environment variable specified'))
+      return rewriteErrorMessage(error, '\n' + wrapInASCIIBox(kNoXServerRunningError, 1));
     return error;
   }
 

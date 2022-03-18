@@ -19,10 +19,12 @@ import { WKBrowser } from '../webkit/wkBrowser';
 import { Env } from '../../utils/processLauncher';
 import path from 'path';
 import { kBrowserCloseMessageId } from './wkConnection';
-import { BrowserType } from '../browserType';
+import { BrowserType, kNoXServerRunningError } from '../browserType';
 import { ConnectionTransport } from '../transport';
 import { BrowserOptions, PlaywrightOptions } from '../browser';
 import * as types from '../types';
+import { rewriteErrorMessage } from '../../utils/stackTrace';
+import { wrapInASCIIBox } from '../../utils/utils';
 
 export class WebKit extends BrowserType {
   constructor(playwrightOptions: PlaywrightOptions) {
@@ -38,6 +40,8 @@ export class WebKit extends BrowserType {
   }
 
   _rewriteStartupError(error: Error): Error {
+    if (error.message.includes('cannot open display'))
+      return rewriteErrorMessage(error, '\n' + wrapInASCIIBox(kNoXServerRunningError, 1));
     return error;
   }
 
