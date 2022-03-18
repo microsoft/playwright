@@ -5,8 +5,21 @@ set -x
 trap "cd $(pwd -P)" EXIT
 cd "$(dirname "$0")"
 
+ELECTRON_BUILD_TOOLS_REQUIRED_VERSION=6ba8962529c37727a778691b89c92ab0eb1d9d87
+if [[ -d ./electron-build-tools ]]; then
+  cd ./electron-build-tools
+  # Make sure required commit is part of electron-build-tools.
+  if ! git merge-base --is-ancestor "${ELECTRON_BUILD_TOOLS_REQUIRED_VERSION}" HEAD; then
+    cd ..
+    rm -rf ./electron-build-tools
+    echo "Updating electron-build-tools"
+  else
+    cd ..
+  fi
+fi
+
 if [[ ! -d ./electron-build-tools ]]; then
-  git clone --single-branch --branch master https://github.com/electron/build-tools/ electron-build-tools
+  git clone --single-branch --branch main https://github.com/electron/build-tools/ electron-build-tools
   cd electron-build-tools
   npm install
   mkdir -p third_party
