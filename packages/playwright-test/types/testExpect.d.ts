@@ -28,8 +28,9 @@ type MakeMatchers<T, ReturnValue = T> = PlaywrightTest.Matchers<ReturnValue> &
   ExtraMatchers<T, APIResponse, APIResponseMatchers>
 
 export declare type Expect = {
-  <T = unknown>(actual: T, message?: string): MakeMatchers<T>;
-  soft: <T = unknown>(actual: T, message?: string) => MakeMatchers<T>;
+  <T = unknown>(actual: T, messageOrOptions?: string | { message?: string }): MakeMatchers<T>;
+  soft: <T = unknown>(actual: T, messageOrOptions?: string | { message?: string }) => MakeMatchers<T>;
+  poll: <T = unknown>(actual: () => T | Promise<T>, messageOrOptions?: string | { message?: string, timeout?: number }) => Omit<PlaywrightTest.Matchers<T>, 'rejects' | 'resolves'>;
 
   extend(arg0: any): void;
   getState(): expect.MatcherState;
