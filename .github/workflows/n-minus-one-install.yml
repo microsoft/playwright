@@ -10,4 +10,4 @@ jobs:
         node-version: '16'
     - run: cd examples/todomvc; npm install
     - run: cd examples/todomvc; npx playwright install
-    - run: cd examples/todomvc; npm ctest
+    - run: cd examples/todomvc; npm run ctest
