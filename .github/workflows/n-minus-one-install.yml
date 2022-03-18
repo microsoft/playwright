@@ -1,5 +1,5 @@
-name: "N-1"
-
+name: "N-1 on example"
+on: workflow_dispatch
 jobs:
   test_n_minus_one:
     runs-on: ubuntu-latest
