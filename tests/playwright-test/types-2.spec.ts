@@ -22,11 +22,21 @@ test('basics should work', async ({ runTSC }) => {
       const { test } = pwt;
       test.describe('suite', () => {
         test.beforeEach(async () => {});
+        test.afterEach(async () => {});
+        test.beforeAll(async () => {});
+        test.afterAll(async () => {});
         test('my test', async({}, testInfo) => {
           expect(testInfo.title).toBe('my test');
           testInfo.annotations[0].type;
         });
+        test.skip('my test', async () => {});
+        test.fixme('my test', async () => {});
       });
+      test.describe.parallel('suite', () => {});
+      test.describe.parallel.only('suite', () => {});
+      test.describe.serial('suite', () => {});
+      test.describe.serial.only('suite', () => {});
+      test.describe.skip('suite', () => {});
       // @ts-expect-error
       test.foo();
     `

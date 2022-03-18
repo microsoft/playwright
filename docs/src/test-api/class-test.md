@@ -459,6 +459,38 @@ A callback that is run immediately when calling [`method: Test.describe.serial.o
 
 
 
+## method: Test.describe.skip
+
+Declares a skipped test group, similarly to [`method: Test.describe`]. Tests in the skipped group are never run.
+
+```js js-flavor=js
+test.describe.skip('skipped group', () => {
+  test('example', async ({ page }) => {
+    // This test will not run
+  });
+});
+```
+
+```js js-flavor=ts
+test.describe.skip('skipped group', () => {
+  test('example', async ({ page }) => {
+    // This test will not run
+  });
+});
+```
+
+### param: Test.describe.skip.title
+- `title` <[string]>
+
+Group title.
+
+### param: Test.describe.skip.callback
+- `callback` <[function]>
+
+A callback that is run immediately when calling [`method: Test.describe.skip`]. Any tests added in this callback will belong to the group, and will not be run.
+
+
+
 ## property: Test.expect
 - type: <[Object]>
 
