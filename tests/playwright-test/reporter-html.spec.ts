@@ -392,13 +392,31 @@ test('should show multi trace source', async ({ runInlineTest, page, server, sho
   await expect(page.locator('.source-line-running')).toContainText('request.get');
 });
 
-test('should show timed out steps', async ({ runInlineTest, page, showReport }) => {
+test('should show timed out steps and hooks', async ({ runInlineTest, page, showReport }) => {
   const result = await runInlineTest({
     'playwright.config.js': `
       module.exports = { timeout: 3000 };
     `,
     'a.test.js': `
       const { test } = pwt;
+      test.beforeAll(() => {
+        console.log('beforeAll 1');
+      });
+      test.beforeAll(() => {
+        console.log('beforeAll 2');
+      });
+      test.beforeEach(() => {
+        console.log('beforeEach 1');
+      });
+      test.beforeEach(() => {
+        console.log('beforeEach 2');
+      });
+      test.afterEach(() => {
+        console.log('afterEach 1');
+      });
+      test.afterAll(() => {
+        console.log('afterAll 1');
+      });
       test('fails', async ({ page }) => {
         await test.step('outer step', async () => {
           await test.step('inner step', async () => {
@@ -416,6 +434,20 @@ test('should show timed out steps', async ({ runInlineTest, page, showReport }) 
   await page.click('text=outer step');
   await expect(page.locator('.tree-item:has-text("outer step") svg.color-text-danger')).toHaveCount(2);
   await expect(page.locator('.tree-item:has-text("inner step") svg.color-text-danger')).toHaveCount(2);
+  await page.click('text=Before Hooks');
+  await expect(page.locator('.tree-item:has-text("Before Hooks") .tree-item')).toContainText([
+    /beforeAll hook/,
+    /beforeAll hook/,
+    /beforeEach hook/,
+    /beforeEach hook/,
+  ]);
+  await page.locator('text=beforeAll hook').nth(1).click();
+  await expect(page.locator('text=console.log(\'beforeAll 2\');')).toBeVisible();
+  await page.click('text=After Hooks');
+  await expect(page.locator('.tree-item:has-text("After Hooks") .tree-item')).toContainText([
+    /afterEach hook/,
+    /afterAll hook/,
+  ]);
 });
 
 test('should render annotations', async ({ runInlineTest, page, showReport }) => {

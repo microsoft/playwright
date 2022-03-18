@@ -214,6 +214,18 @@ export class TestInfoImpl implements TestInfo {
     this.errors.push(error);
   }
 
+  async _runAsStep<T>(cb: () => Promise<T>, stepInfo: Omit<TestStepInternal, 'complete'>): Promise<T> {
+    const step = this._addStep(stepInfo);
+    try {
+      const result = await cb();
+      step.complete();
+      return result;
+    } catch (e) {
+      step.complete(e instanceof SkipError ? undefined : serializeError(e));
+      throw e;
+    }
+  }
+
   // ------------ TestInfo methods ------------
 
   async attach(name: string, options: { path?: string, body?: string | Buffer, contentType?: string } = {}) {
