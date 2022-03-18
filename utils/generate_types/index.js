@@ -313,7 +313,7 @@ class TypesGenerator {
         let flavor = 'ts';
         if (match[3]) {
           flavor = match[3];
-          line = line.replace(/js-flavor=\w+/, '').replace(/```\w+/, '```ts');
+          line = line.replace(/js-flavor=\w+/, '').replace('RUNNABLE', '').replace(/```\w+/, '```ts');
         }
         skipExample = !["html", "yml", "bash", "js"].includes(lang) || flavor !== 'ts';
       } else if (skipExample && line.trim().startsWith('```')) {

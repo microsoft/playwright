@@ -22,6 +22,7 @@
  *    codeLang?: string,
  *    noteType?: string,
  *    lines?: string[],
+ *    lineNo?: number,
  *    liType?: 'default' | 'bullet' | 'ordinal',
  *    children?: MarkdownNode[]
  *  }} MarkdownNode */
@@ -122,7 +123,8 @@ function buildTree(lines) {
       const node = {
         type: 'code',
         lines: [],
-        codeLang: content.substring(3)
+        codeLang: content.substring(3),
+        lineNo: i + 1,
       };
       line = lines[++i];
       while (!line.trim().startsWith('```')) {
@@ -205,9 +207,10 @@ function buildTree(lines) {
 
 /**
  * @param {string} content
+ * @param {boolean?} flatten
  */
-function parse(content) {
-  return buildTree(flattenWrappedLines(content));
+function parse(content, flatten = true) {
+  return buildTree(flatten ? flattenWrappedLines(content) : content.replace(/\r\n/g, '\n').split('\n'));
 }
 
 /**

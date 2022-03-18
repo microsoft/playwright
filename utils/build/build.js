@@ -236,6 +236,14 @@ onChanges.push({
   script: 'utils/generate_types/index.js',
 });
 
+onChanges.push({
+  committed: false,
+  inputs: [
+    'docs/src/',
+  ],
+  script: 'utils/generate_doc_tests/index.js',
+});
+
 // The recorder and trace viewer have an app_icon.png that needs to be copied.
 copyFiles.push({
   files: 'packages/playwright-core/src/server/chromium/*.png',

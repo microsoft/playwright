@@ -21,6 +21,7 @@
     "htest": "playwright test --config=packages/html-reporter",
     "ttest": "node ./tests/playwright-test/stable-test-runner/node_modules/@playwright/test/cli test --config=tests/playwright-test/playwright-test.config.ts",
     "vtest": "cross-env PLAYWRIGHT_DOCKER=1 node ./tests/playwright-test/stable-test-runner/node_modules/@playwright/test/cli test --config=tests/playwright-test/playwright-test.config.ts",
+    "dtest": "PWTEST_DISABLE_AUTOIGNORE=1 npx playwright test docs/tests/generated/**",
     "ct": "npx playwright test tests-components/test-all.spec.js --reporter=list",
     "test": "playwright test --config=tests/config/default.playwright.config.ts",
     "eslint": "eslint --ext ts,tsx .",

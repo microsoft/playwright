@@ -557,7 +557,7 @@ async function collectFiles(testDir: string): Promise<string[]> {
     entries.sort((a, b) => a.name.localeCompare(b.name));
 
     const gitignore = entries.find(e => e.isFile() && e.name === '.gitignore');
-    if (gitignore) {
+    if (gitignore && !process.env.PWTEST_DISABLE_AUTOIGNORE) {
       const content = await readFileAsync(path.join(dir, gitignore.name), 'utf8');
       const newRules: Rule[] = content.split(/\r?\n/).map(s => {
         s = s.trim();

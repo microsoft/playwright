@@ -7,17 +7,40 @@ browser context is closed.
 
 Download event is emitted once the download starts. Download path becomes available once download completes:
 
-```js
-// Note that Promise.all prevents a race condition
-// between clicking and waiting for the download.
-const [ download ] = await Promise.all([
-  // It is important to call waitForEvent before click to set up waiting.
-  page.waitForEvent('download'),
-  // Triggers the download.
-  page.locator('text=Download file').click(),
-]);
-// wait for download to complete
-const path = await download.path();
+```js js-flavor=js RUNNABLE
+const { test, expect } = require('@playwright/test');
+
+test('downlad example', async ({ page }) => {
+  await page.setContent(`<a href='data:application/json;base64,ImV4YW1wbGUgZGF0YSIK' download>Download file</a>`);
+  // Note that Promise.all prevents a race condition
+  // between clicking and waiting for the download.
+  const [ download ] = await Promise.all([
+    // It is important to call waitForEvent before click to set up waiting.
+    page.waitForEvent('download'),
+    // Triggers the download.
+    page.locator('text=Download file').click(),
+  ]);
+  // wait for download to complete
+  await expect(download.path()).resolves.toBeTruthy();
+});
+```
+
+```js js-flavor=ts RUNNABLE
+import { test, expect } from '@playwright/test';
+
+test('downlad example', async ({ page }) => {
+  await page.setContent(`<a href='data:application/json;base64,ImV4YW1wbGUgZGF0YSIK' download>Download file</a>`);
+  // Note that Promise.all prevents a race condition
+  // between clicking and waiting for the download.
+  const [ download ] = await Promise.all([
+    // It is important to call waitForEvent before click to set up waiting.
+    page.waitForEvent('download'),
+    // Triggers the download.
+    page.locator('text=Download file').click(),
+  ]);
+  // wait for download to complete
+  await expect(download.path()).resolves.toBeTruthy();
+});
 ```
 
 ```java
