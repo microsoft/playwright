@@ -1,7 +1,12 @@
 name: "N-1 on example"
-on: workflow_dispatch
+on: 
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+  
 jobs:
-  test_n_minus_one:
+  test_n_minus_one: #test that an older, pinned playwright/test dependency is able to use npx playwright install
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
