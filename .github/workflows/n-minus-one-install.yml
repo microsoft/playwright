@@ -8,6 +8,6 @@ jobs:
     - uses: actions/setup-node@v2
       with:
         node-version: 16
-    - run: cd examples/github-api; npm install
-    - run: cd examples/github-api; npx playwright install
-    - run: cd examples/github-api; npm test
+    - run: cd examples/todomvc; npm install
+    - run: cd examples/todomvc; npx playwright install
+    - run: cd examples/todomvc; npm test
