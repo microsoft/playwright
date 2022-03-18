@@ -18,6 +18,7 @@
     "./lib/cli": "./lib/cli.js",
     "./lib/experimentalLoader": "./lib/experimentalLoader.js",
     "./lib/mount": "./lib/mount.js",
+    "./lib/ci": "./lib/ci.js",
     "./reporter": "./reporter.js"
   },
   "bin": {
