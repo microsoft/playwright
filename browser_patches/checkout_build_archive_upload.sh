@@ -280,7 +280,6 @@ elif [[ "$BUILD_FLAVOR" == "webkit-win64" ]]; then
   BROWSER_NAME="webkit"
   EXPECTED_HOST_OS="MINGW"
   BUILD_BLOB_NAME="webkit-win64.zip"
-  EXPECTED_ARCH="i686"
 elif [[ "$BUILD_FLAVOR" == "webkit-mac-10.15" ]]; then
   BROWSER_NAME="webkit"
   EXPECTED_HOST_OS="Darwin"
