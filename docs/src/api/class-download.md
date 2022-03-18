@@ -10,7 +10,7 @@ Download event is emitted once the download starts. Download path becomes availa
 ```js js-flavor=js RUNNABLE
 const { test, expect } = require('@playwright/test');
 
-test('downlad example', async ({ page }) => {
+test('download example', async ({ page }) => {
   await page.setContent(`<a href='data:application/json;base64,ImV4YW1wbGUgZGF0YSIK' download>Download file</a>`);
   // Note that Promise.all prevents a race condition
   // between clicking and waiting for the download.
@@ -28,7 +28,7 @@ test('downlad example', async ({ page }) => {
 ```js js-flavor=ts RUNNABLE
 import { test, expect } from '@playwright/test';
 
-test('downlad example', async ({ page }) => {
+test('download example', async ({ page }) => {
   await page.setContent(`<a href='data:application/json;base64,ImV4YW1wbGUgZGF0YSIK' download>Download file</a>`);
   // Note that Promise.all prevents a race condition
   // between clicking and waiting for the download.

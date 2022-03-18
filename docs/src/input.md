@@ -9,21 +9,50 @@ title: "Input"
 
 This is the easiest way to fill out the form fields. It focuses the element and triggers an `input` event with the entered text. It works for `<input>`, `<textarea>`, `[contenteditable]` and `<label>` associated with an input or textarea.
 
-```js
-// Text input
-await page.fill('#name', 'Peter');
+```js js-flavor=ts RUNNABLE
+import { test, expect } from '@playwright/test';
 
-// Date input
-await page.fill('#date', '2020-02-02');
+test('form examples', async ({ page }) => {
+  await page.goto('https://rwoll.github.io/gh-pages-examples/');
 
-// Time input
-await page.fill('#time', '13:15');
+  // Text input
+  await page.fill('#input-text', 'Peter');
 
-// Local datetime input
-await page.fill('#local', '2020-03-02T05:15');
+  // Date input
+  await page.fill('#input-date', '2020-02-02');
 
-// Input through label
-await page.fill('text=First Name', 'Peter');
+  // Time input
+  await page.fill('#input-time', '13:15');
+
+  // Local datetime input
+  await page.fill('#input-local-datetime', '2020-03-02T05:15');
+
+  // Input through label
+  await page.fill('text=Text Input', 'Peter');
+});
+```
+
+```js js-flavor=js RUNNABLE
+const { test, expect } = require('@playwright/test');
+
+test('form examples', async ({ page }) => {
+  await page.goto('https://rwoll.github.io/gh-pages-examples/');
+
+  // Text input
+  await page.fill('#input-text', 'Peter');
+
+  // Date input
+  await page.fill('#input-date', '2020-02-02');
+
+  // Time input
+  await page.fill('#input-time', '13:15');
+
+  // Local datetime input
+  await page.fill('#input-local-datetime', '2020-03-02T05:15');
+
+  // Input through label
+  await page.fill('text=Text Input', 'Peter');
+});
 ```
 
 ```java
@@ -106,19 +135,46 @@ await page.FillAsync("text=First Name", "Peter");
 
 This is the easiest way to check and uncheck a checkbox or a radio button. This method can be used with `input[type=checkbox]`, `input[type=radio]`, `[role=checkbox]` or `label` associated with checkbox or radio button.
 
-```js
-// Check the checkbox
-await page.check('#agree');
+```js js-flavor=ts RUNNABLE
+import { test, expect } from '@playwright/test';
 
-// Assert the checked state
-expect(await page.isChecked('#agree')).toBeTruthy()
+test('form examples', async ({ page }) => {
+  await page.goto('https://rwoll.github.io/gh-pages-examples/');
 
-// Uncheck by input <label>.
-await page.uncheck('#subscribe-label');
+  // Check the checkbox
+  await page.check('#input-checkbox');
 
-// Select the radio button
-await page.check('text=XL');
+  // Assert the checked state
+  expect(await page.isChecked('#input-checkbox')).toBeTruthy()
+
+  // Uncheck by input <label>.
+  await page.uncheck('text=Checkbox Input');
+
+  // Select the radio button
+  // await page.check('text=XL');
+});
 ```
+
+```js js-flavor=js RUNNABLE
+const { test, expect } = require('@playwright/test');
+
+test('form examples', async ({ page }) => {
+  await page.goto('https://rwoll.github.io/gh-pages-examples/');
+
+  // Check the checkbox
+  await page.check('#input-checkbox');
+
+  // Assert the checked state
+  expect(await page.isChecked('#input-checkbox')).toBeTruthy()
+
+  // Uncheck by input <label>.
+  await page.uncheck('text=Checkbox Input');
+
+  // Select the radio button
+  // await page.check('text=XL');
+});
+```
+
 
 ```java
 // Check the checkbox
@@ -192,19 +248,46 @@ await page.CheckAsync("text=XL");
 Selects one or multiple options in the `<select>` element.
 You can specify option `value`, `label` or `elementHandle` to select. Multiple options can be selected.
 
-```js
-// Single selection matching the value
-await page.selectOption('select#colors', 'blue');
+```js js-flavor=js RUNNABLE
+const { test, expect } = require('@playwright/test');
 
-// Single selection matching the label
-await page.selectOption('select#colors', { label: 'Blue' });
+test('form examples', async ({ page }) => {
+  await page.goto('https://rwoll.github.io/gh-pages-examples/');
 
-// Multiple selected items
-await page.selectOption('select#colors', ['red', 'green', 'blue']);
+  // Single selection matching the value
+  await page.selectOption('select#favorite-color', 'blue');
 
-// Select the option via element handle
-const option = await page.$('#best-option');
-await page.selectOption('select#colors', option);
+  // Single selection matching the label
+  await page.selectOption('select#favorite-color', { label: 'Blue' });
+
+  // Multiple selected items
+  await page.selectOption('select#favorite-color', ['red', 'green', 'blue']);
+
+  // Select the option via element handle
+  // const option = await page.$('#best-option');
+  // await page.selectOption('select#colors', option);
+});
+```
+
+```js js-flavor=ts RUNNABLE
+import { test, expect } from '@playwright/test';
+
+test('form examples', async ({ page }) => {
+  await page.goto('https://rwoll.github.io/gh-pages-examples/');
+
+  // Single selection matching the value
+  await page.selectOption('select#favorite-color', 'blue');
+
+  // Single selection matching the label
+  await page.selectOption('select#favorite-color', { label: 'Blue' });
+
+  // Multiple selected items
+  await page.selectOption('select#favorite-color', ['red', 'green', 'blue']);
+
+  // Select the option via element handle
+  // const option = await page.$('#best-option');
+  // await page.selectOption('select#colors', option);
+});
 ```
 
 ```java

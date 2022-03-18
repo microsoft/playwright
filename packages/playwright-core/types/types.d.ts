@@ -13412,7 +13412,7 @@ export interface Dialog {
  * ```ts
  * import { test, expect } from '@playwright/test';
  *
- * test('downlad example', async ({ page }) => {
+ * test('download example', async ({ page }) => {
  *   await page.setContent(`<a href='data:application/json;base64,ImV4YW1wbGUgZGF0YSIK' download>Download file</a>`);
  *   // Note that Promise.all prevents a race condition
  *   // between clicking and waiting for the download.
