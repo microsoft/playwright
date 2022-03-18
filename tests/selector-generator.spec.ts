@@ -306,4 +306,35 @@ it.describe('selector generator', () => {
     });
     expect(await generate(page, 'button')).toBe(`button[name="-tricky\\1 name"]`);
   });
+
+  it('should ignore empty aria-label for candidate consideration', async ({ page }) => {
+    await page.setContent(`<button aria-label="" id="buttonId"></button>`);
+    expect(await generate(page, 'button')).toBe('#buttonId');
+  });
+
+  it('should accept valid aria-label for candidate consideration', async ({ page }) => {
+    await page.setContent(`<button aria-label="ariaLabel" id="buttonId"></button>`);
+    expect(await generate(page, 'button')).toBe('[aria-label="ariaLabel"]');
+  });
+
+  it('should ignore empty role for candidate consideration', async ({ page }) => {
+    await page.setContent(`<button role="" id="buttonId"></button>`);
+    expect(await generate(page, 'button')).toBe('#buttonId');
+  });
+
+  it('should accept valid role for candidate consideration', async ({ page }) => {
+    await page.setContent(`<button role="roleDescription" id="buttonId"></button>`);
+    expect(await generate(page, 'button')).toBe('button[role="roleDescription"]');
+  });
+
+  it('should ignore empty data-test-id for candidate consideration', async ({ page }) => {
+    await page.setContent(`<button data-test-id="" id="buttonId"></button>`);
+    expect(await generate(page, 'button')).toBe('#buttonId');
+  });
+
+  it('should accept valid data-test-id for candidate consideration', async ({ page }) => {
+    await page.setContent(`<button data-test-id="testId" id="buttonId"></button>`);
+    expect(await generate(page, 'button')).toBe('[data-test-id="testId"]');
+  });
+
 });
