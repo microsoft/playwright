@@ -1,0 +1,13 @@
+name: "N-1"
+
+jobs:
+  test_n_minus_one:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-node@v2
+      with:
+        node-version: 16
+    - run: cd examples/github-api; npm install
+    - run: cd examples/github-api; npx playwright install
+    - run: cd examples/github-api; npm test
