@@ -389,29 +389,6 @@ const config: PlaywrightTestConfig = {
 export default config;
 ```
 
-It is possible to force the encoding of content as CDATA sections `<![CDATA[...]]>` in the JUnit report, so that elements such as `<sytem-out>...</system-out>` will be created as `<sytem-out><![CDATA[...]]></system-out>` ; the default behavior escapes special chars (i.e., `&"'<>`) in character data and doesn't use CDATA sections.
-
-```js js-flavor=js
-// playwright.config.js
-// @ts-check
-
-/** @type {import('@playwright/test').PlaywrightTestConfig} */
-const config = {
-  reporter: [ ['junit', { useCDATAsections: true, outputFile: 'results.xml' }] ],
-};
-
-module.exports = config;
-```
-
-```js js-flavor=ts
-// playwright.config.ts
-import { PlaywrightTestConfig } from '@playwright/test';
-
-const config: PlaywrightTestConfig = {
-  reporter: [ ['junit', { useCDATAsections: true, outputFile: 'results.xml' }] ],
-};
-```
-
 ### GitHub Actions annotations
 
 You can use the built in `github` reporter to get automatic failure annotations when running in GitHub actions.
