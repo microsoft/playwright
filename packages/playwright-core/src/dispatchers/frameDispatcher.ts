@@ -213,7 +213,7 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel> im
       localPaths = params.streams.map(c => (c as WritableStreamDispatcher).path());
     }
     return await this._frame.setInputFiles(metadata, params.selector, { localPaths }, params);
-  };
+  }
 
   async type(params: channels.FrameTypeParams, metadata: CallMetadata): Promise<void> {
     return await this._frame.type(metadata, params.selector, params.text, params);
