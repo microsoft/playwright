@@ -67,6 +67,13 @@ function build {
     echo "Unsupported RUN_DRIVER ${RUN_DRIVER}"
     exit 1
   fi
+
+  # NPM install does intentionally set the modification date back to 1985 for all the files. This confuses language binding
+  # update mechanisms, which expect the modification date to be recent to decide which file to override. See:
+  # - https://github.com/npm/npm/issues/20439#issuecomment-385121133
+  # - https://github.com/microsoft/playwright-dotnet/issues/2069
+  find . -type f -exec touch {} +
+
   zip -q -r ../playwright-${PACKAGE_VERSION}-${SUFFIX}.zip .
 }
 
