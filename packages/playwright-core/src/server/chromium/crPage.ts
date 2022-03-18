@@ -439,7 +439,8 @@ class FrameSession {
   }
 
   async _initialize(hasUIWindow: boolean) {
-    if (hasUIWindow &&
+    const isSettingStorageState = this._page._browserContext.isSettingStorageState();
+    if (!isSettingStorageState && hasUIWindow &&
       !this._crPage._browserContext._browser.isClank() &&
       !this._crPage._browserContext._options.noDefaultViewport) {
       const { windowId } = await this._client.send('Browser.getWindowForTarget');
@@ -447,7 +448,7 @@ class FrameSession {
     }
 
     let screencastOptions: types.PageScreencastOptions | undefined;
-    if (this._isMainFrame() && this._crPage._browserContext._options.recordVideo && hasUIWindow) {
+    if (!isSettingStorageState && this._isMainFrame() && this._crPage._browserContext._options.recordVideo && hasUIWindow) {
       const screencastId = createGuid();
       const outputFile = path.join(this._crPage._browserContext._options.recordVideo.dir, screencastId + '.webm');
       screencastOptions = {
@@ -512,41 +513,43 @@ class FrameSession {
       this._networkManager.initialize(),
       this._client.send('Target.setAutoAttach', { autoAttach: true, waitForDebuggerOnStart: true, flatten: true }),
     ];
-    if (this._isMainFrame())
-      promises.push(this._client.send('Emulation.setFocusEmulationEnabled', { enabled: true }));
-    const options = this._crPage._browserContext._options;
-    if (options.bypassCSP)
-      promises.push(this._client.send('Page.setBypassCSP', { enabled: true }));
-    if (options.ignoreHTTPSErrors)
-      promises.push(this._client.send('Security.setIgnoreCertificateErrors', { ignore: true }));
-    if (this._isMainFrame())
-      promises.push(this._updateViewport());
-    if (options.hasTouch)
-      promises.push(this._client.send('Emulation.setTouchEmulationEnabled', { enabled: true }));
-    if (options.javaScriptEnabled === false)
-      promises.push(this._client.send('Emulation.setScriptExecutionDisabled', { value: true }));
-    if (options.userAgent || options.locale)
-      promises.push(this._client.send('Emulation.setUserAgentOverride', { userAgent: options.userAgent || '', acceptLanguage: options.locale }));
-    if (options.locale)
-      promises.push(emulateLocale(this._client, options.locale));
-    if (options.timezoneId)
-      promises.push(emulateTimezone(this._client, options.timezoneId));
-    if (!this._crPage._browserContext._browser.options.headful)
-      promises.push(this._setDefaultFontFamilies(this._client));
-    promises.push(this._updateGeolocation(true));
-    promises.push(this._updateExtraHTTPHeaders(true));
-    promises.push(this._updateRequestInterception());
-    promises.push(this._updateOffline(true));
-    promises.push(this._updateHttpCredentials(true));
-    promises.push(this._updateEmulateMedia(true));
-    for (const binding of this._crPage._page.allBindings())
-      promises.push(this._initBinding(binding));
-    for (const source of this._crPage._browserContext._evaluateOnNewDocumentSources)
-      promises.push(this._evaluateOnNewDocument(source, 'main'));
-    for (const source of this._crPage._page._evaluateOnNewDocumentSources)
-      promises.push(this._evaluateOnNewDocument(source, 'main'));
-    if (screencastOptions)
-      promises.push(this._startVideoRecording(screencastOptions));
+    if (!isSettingStorageState) {
+      if (this._isMainFrame())
+        promises.push(this._client.send('Emulation.setFocusEmulationEnabled', { enabled: true }));
+      const options = this._crPage._browserContext._options;
+      if (options.bypassCSP)
+        promises.push(this._client.send('Page.setBypassCSP', { enabled: true }));
+      if (options.ignoreHTTPSErrors)
+        promises.push(this._client.send('Security.setIgnoreCertificateErrors', { ignore: true }));
+      if (this._isMainFrame())
+        promises.push(this._updateViewport());
+      if (options.hasTouch)
+        promises.push(this._client.send('Emulation.setTouchEmulationEnabled', { enabled: true }));
+      if (options.javaScriptEnabled === false)
+        promises.push(this._client.send('Emulation.setScriptExecutionDisabled', { value: true }));
+      if (options.userAgent || options.locale)
+        promises.push(this._client.send('Emulation.setUserAgentOverride', { userAgent: options.userAgent || '', acceptLanguage: options.locale }));
+      if (options.locale)
+        promises.push(emulateLocale(this._client, options.locale));
+      if (options.timezoneId)
+        promises.push(emulateTimezone(this._client, options.timezoneId));
+      if (!this._crPage._browserContext._browser.options.headful)
+        promises.push(this._setDefaultFontFamilies(this._client));
+      promises.push(this._updateGeolocation(true));
+      promises.push(this._updateExtraHTTPHeaders(true));
+      promises.push(this._updateRequestInterception());
+      promises.push(this._updateOffline(true));
+      promises.push(this._updateHttpCredentials(true));
+      promises.push(this._updateEmulateMedia(true));
+      for (const binding of this._crPage._page.allBindings())
+        promises.push(this._initBinding(binding));
+      for (const source of this._crPage._browserContext._evaluateOnNewDocumentSources)
+        promises.push(this._evaluateOnNewDocument(source, 'main'));
+      for (const source of this._crPage._page._evaluateOnNewDocumentSources)
+        promises.push(this._evaluateOnNewDocument(source, 'main'));
+      if (screencastOptions)
+        promises.push(this._startVideoRecording(screencastOptions));
+    }
     promises.push(this._client.send('Runtime.runIfWaitingForDebugger'));
     promises.push(this._firstNonInitialNavigationCommittedPromise);
     await Promise.all(promises);

@@ -18,7 +18,7 @@
 import { kBrowserClosedError } from '../../utils/errors';
 import { assert } from '../../utils/utils';
 import { Browser, BrowserOptions } from '../browser';
-import { assertBrowserContextIsNotOwned, BrowserContext, validateBrowserContextOptions, verifyGeolocation } from '../browserContext';
+import { assertBrowserContextIsNotOwned, BrowserContext, verifyGeolocation } from '../browserContext';
 import * as network from '../network';
 import { Page, PageBinding, PageDelegate } from '../page';
 import { ConnectionTransport } from '../transport';
@@ -76,8 +76,7 @@ export class FFBrowser extends Browser {
     return !this._connection._closed;
   }
 
-  async newContext(options: types.BrowserContextOptions): Promise<BrowserContext> {
-    validateBrowserContextOptions(options, this.options);
+  async doCreateNewContext(options: types.BrowserContextOptions): Promise<BrowserContext> {
     if (options.isMobile)
       throw new Error('options.isMobile is not supported in Firefox');
     const { browserContextId } = await this._connection.send('Browser.createBrowserContext', { removeOnDetach: true });

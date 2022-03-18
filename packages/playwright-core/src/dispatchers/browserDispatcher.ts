@@ -38,9 +38,7 @@ export class BrowserDispatcher extends Dispatcher<Browser, channels.BrowserChann
   }
 
   async newContext(params: channels.BrowserNewContextParams, metadata: CallMetadata): Promise<channels.BrowserNewContextResult> {
-    const context = await this._object.newContext(params);
-    if (params.storageState)
-      await context.setStorageState(metadata, params.storageState);
+    const context = await this._object.newContext(metadata, params);
     return { context: new BrowserContextDispatcher(this._scope, context) };
   }
 
@@ -91,12 +89,10 @@ export class ConnectedBrowserDispatcher extends Dispatcher<Browser, channels.Bro
   async newContext(params: channels.BrowserNewContextParams, metadata: CallMetadata): Promise<channels.BrowserNewContextResult> {
     if (params.recordVideo)
       params.recordVideo.dir = this._object.options.artifactsDir;
-    const context = await this._object.newContext(params);
+    const context = await this._object.newContext(metadata, params);
     this._contexts.add(context);
     context._setSelectors(this.selectors);
     context.on(BrowserContext.Events.Close, () => this._contexts.delete(context));
-    if (params.storageState)
-      await context.setStorageState(metadata, params.storageState);
     return { context: new BrowserContextDispatcher(this._scope, context) };
   }
 

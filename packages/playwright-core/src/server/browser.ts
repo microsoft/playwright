@@ -15,13 +15,13 @@
  */
 
 import * as types from './types';
-import { BrowserContext } from './browserContext';
+import { BrowserContext, validateBrowserContextOptions } from './browserContext';
 import { Page } from './page';
 import { Download } from './download';
 import { ProxySettings } from './types';
 import { ChildProcess } from 'child_process';
 import { RecentLogsCollector } from '../utils/debugLogger';
-import { SdkObject } from './instrumentation';
+import { CallMetadata, SdkObject } from './instrumentation';
 import { Artifact } from './artifact';
 import { Selectors } from './selectors';
 
@@ -74,11 +74,19 @@ export abstract class Browser extends SdkObject {
     this.options = options;
   }
 
-  abstract newContext(options: types.BrowserContextOptions): Promise<BrowserContext>;
+  abstract doCreateNewContext(options: types.BrowserContextOptions): Promise<BrowserContext>;
   abstract contexts(): BrowserContext[];
   abstract isConnected(): boolean;
   abstract version(): string;
   abstract userAgent(): string;
+
+  async newContext(metadata: CallMetadata, options: types.BrowserContextOptions): Promise<BrowserContext> {
+    validateBrowserContextOptions(options, this.options);
+    const context = await this.doCreateNewContext(options);
+    if (options.storageState)
+      await context.setStorageState(metadata, options.storageState);
+    return context;
+  }
 
   _downloadCreated(page: Page, uuid: string, url: string, suggestedFilename?: string) {
     const download = new Download(page, this.options.downloadsPath || '', uuid, url, suggestedFilename);

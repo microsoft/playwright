@@ -257,6 +257,7 @@ export type BrowserContextOptions = {
     omitContent?: boolean,
     path: string
   },
+  storageState?: SetStorageState,
   strictSelectors?: boolean,
   proxy?: ProxySettings,
   baseURL?: string,
