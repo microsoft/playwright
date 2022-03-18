@@ -502,7 +502,7 @@ index e81573fd0fffaaf6fd2af36635c78fcdf8608c69..4169e227b5fb5a3a7fb51396c4679100
      // FrontendChannel
      FrontendChannel::ConnectionType connectionType() const;
 diff --git a/Source/JavaScriptCore/inspector/protocol/DOM.json b/Source/JavaScriptCore/inspector/protocol/DOM.json
-index b8447e3420fd09df651a6f1e9131473b07bc38ab..36def64e91c93729e13781d137e65d3fb3203faa 100644
+index b8447e3420fd09df651a6f1e9131473b07bc38ab..717101483796e3cb019f76c5f0560238766b5e33 100644
 --- a/Source/JavaScriptCore/inspector/protocol/DOM.json
 +++ b/Source/JavaScriptCore/inspector/protocol/DOM.json
 @@ -80,6 +80,16 @@
@@ -550,7 +550,7 @@ index b8447e3420fd09df651a6f1e9131473b07bc38ab..36def64e91c93729e13781d137e65d3f
                  { "name": "objectGroup", "type": "string", "optional": true, "description": "Symbolic group name that can be used to release multiple objects." }
              ],
              "returns": [
-@@ -626,6 +648,45 @@
+@@ -626,6 +648,46 @@
              "parameters": [
                  { "name": "allow", "type": "boolean" }
              ]
@@ -591,7 +591,8 @@ index b8447e3420fd09df651a6f1e9131473b07bc38ab..36def64e91c93729e13781d137e65d3f
 +            "description": "Sets input files for given <input type=file>",
 +            "parameters": [
 +                { "name": "objectId", "$ref": "Runtime.RemoteObjectId", "description": "Input element handle." },
-+                { "name": "files", "type": "array", "items": { "$ref": "FilePayload" }, "description": "Files to set" }
++                { "name": "files", "type": "array", "items": { "$ref": "FilePayload" }, "optional": true, "description": "Files to set" },
++                { "name": "paths", "type": "array", "items": { "type": "string" }, "optional": true, "description": "File paths to set" }
 +            ]
          }
      ],
@@ -3314,7 +3315,7 @@ index 51badf49a6ce08975d655efa01cca9cd877e8f6b..ea4240cf72670cedfbd8b38d4d013676
  {
      return context ? instrumentingAgents(*context) : nullptr;
 diff --git a/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp b/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp
-index 0e186bcea701c6631985df40bc9a9b1e8784f0af..69a5fe6821b1fe7cfc502bbc93059df9f74b7463 100644
+index 0e186bcea701c6631985df40bc9a9b1e8784f0af..5e4b051b882433075148723e6a1258d18c559b73 100644
 --- a/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp
 +++ b/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp
 @@ -62,12 +62,16 @@
@@ -3579,11 +3580,11 @@ index 0e186bcea701c6631985df40bc9a9b1e8784f0af..69a5fe6821b1fe7cfc502bbc93059df9
  }
  
  Node* InspectorDOMAgent::scriptValueAsNode(JSC::JSValue value)
-@@ -2984,4 +3123,42 @@ Protocol::ErrorStringOr<void> InspectorDOMAgent::setAllowEditingUserAgentShadowT
+@@ -2984,4 +3123,57 @@ Protocol::ErrorStringOr<void> InspectorDOMAgent::setAllowEditingUserAgentShadowT
      return { };
  }
  
-+Protocol::ErrorStringOr<void> InspectorDOMAgent::setInputFiles(const String& objectId, Ref<JSON::Array>&& files) {
++Protocol::ErrorStringOr<void> InspectorDOMAgent::setInputFiles(const String& objectId, RefPtr<JSON::Array>&& files, RefPtr<JSON::Array>&& paths) {
 +    InjectedScript injectedScript = m_injectedScriptManager.injectedScriptForObjectId(objectId);
 +    if (injectedScript.hasNoValue())
 +        return makeUnexpected("Can not find element's context for given id"_s);
@@ -3595,26 +3596,41 @@ index 0e186bcea701c6631985df40bc9a9b1e8784f0af..69a5fe6821b1fe7cfc502bbc93059df9
 +    if (node->nodeType() != Node::ELEMENT_NODE || node->nodeName() != "INPUT")
 +        return makeUnexpected("Not an input node"_s);
 +
++    if (!(bool(files) ^ bool(paths)))
++        return makeUnexpected("Exactly one of files and paths should be specified"_s);
++
 +    HTMLInputElement* element = static_cast<HTMLInputElement*>(node);
 +    Vector<Ref<File>> fileObjects;
-+    for (unsigned i = 0; i < files->length(); ++i) {
-+        RefPtr<JSON::Value> item = files->get(i);
-+        RefPtr<JSON::Object> obj = item->asObject();
-+        if (!obj)
-+            return makeUnexpected("Invalid file payload format"_s);
++    if (files) {
++        for (unsigned i = 0; i < files->length(); ++i) {
++            RefPtr<JSON::Value> item = files->get(i);
++            RefPtr<JSON::Object> obj = item->asObject();
++            if (!obj)
++                return makeUnexpected("Invalid file payload format"_s);
 +
-+        String name;
-+        String type;
-+        String data;
-+        if (!obj->getString("name", name) || !obj->getString("type", type) || !obj->getString("data", data))
-+            return makeUnexpected("Invalid file payload format"_s);
++            String name;
++            String type;
++            String data;
++            if (!obj->getString("name", name) || !obj->getString("type", type) || !obj->getString("data", data))
++                return makeUnexpected("Invalid file payload format"_s);
 +
-+        std::optional<Vector<uint8_t>> buffer = base64Decode(data);
-+        if (!buffer)
-+            return makeUnexpected("Unable to decode given content"_s);
++            std::optional<Vector<uint8_t>> buffer = base64Decode(data);
++            if (!buffer)
++                return makeUnexpected("Unable to decode given content"_s);
 +
-+        ScriptExecutionContext* context = element->scriptExecutionContext();
-+        fileObjects.append(File::create(context, Blob::create(context, WTFMove(*buffer), type), name));
++            ScriptExecutionContext* context = element->scriptExecutionContext();
++            fileObjects.append(File::create(context, Blob::create(context, WTFMove(*buffer), type), name));
++        }
++    } else {
++        for (unsigned i = 0; i < paths->length(); ++i) {
++            RefPtr<JSON::Value> item = paths->get(i);
++            String path = item->asString();
++            if (path.isEmpty())
++                return makeUnexpected("Invalid file path"_s);
++
++            ScriptExecutionContext* context = element->scriptExecutionContext();
++            fileObjects.append(File::create(context, path));
++        }
 +    }
 +    RefPtr<FileList> fileList = FileList::create(WTFMove(fileObjects));
 +    element->setFiles(WTFMove(fileList));
@@ -3623,7 +3639,7 @@ index 0e186bcea701c6631985df40bc9a9b1e8784f0af..69a5fe6821b1fe7cfc502bbc93059df9
 +
  } // namespace WebCore
 diff --git a/Source/WebCore/inspector/agents/InspectorDOMAgent.h b/Source/WebCore/inspector/agents/InspectorDOMAgent.h
-index 2d073147ff54937b4ea0ce3f8ea3af61ad9761c4..e1f6eaf09510e6b1876fd1173d62b387675e147e 100644
+index 2d073147ff54937b4ea0ce3f8ea3af61ad9761c4..373ea5f0205a7bb7ec2cac6c1aca8e663226f2e3 100644
 --- a/Source/WebCore/inspector/agents/InspectorDOMAgent.h
 +++ b/Source/WebCore/inspector/agents/InspectorDOMAgent.h
 @@ -57,6 +57,7 @@ namespace WebCore {
@@ -3658,7 +3674,7 @@ index 2d073147ff54937b4ea0ce3f8ea3af61ad9761c4..e1f6eaf09510e6b1876fd1173d62b387
 +    Inspector::Protocol::ErrorStringOr<std::tuple<String /* contentFrameId */, String /* ownerFrameId */>> describeNode(const String& objectId);
 +    Inspector::Protocol::ErrorStringOr<void> scrollIntoViewIfNeeded(const String& objectId, RefPtr<JSON::Object>&& rect);
 +    Inspector::Protocol::ErrorStringOr<Ref<JSON::ArrayOf<Inspector::Protocol::DOM::Quad>>> getContentQuads(const String& objectId);
-+    Inspector::Protocol::ErrorStringOr<void> setInputFiles(const String& objectId, Ref<JSON::Array>&& files);
++    Inspector::Protocol::ErrorStringOr<void> setInputFiles(const String& objectId, RefPtr<JSON::Array>&& files, RefPtr<JSON::Array>&& paths);
  
      // InspectorInstrumentation
      Inspector::Protocol::DOM::NodeId identifierForNode(Node&);
