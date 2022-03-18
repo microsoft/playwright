@@ -503,6 +503,9 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     frame: tOptional(tChannel('Frame')),
   });
   scheme.BrowserContextHarExportParams = tOptional(tObject({}));
+  scheme.BrowserContextCreateTempFileParams = tObject({
+    name: tString,
+  });
   scheme.PageSetDefaultNavigationTimeoutNoReplyParams = tObject({
     timeout: tOptional(tNumber),
   });
@@ -884,6 +887,14 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     timeout: tOptional(tNumber),
     noWaitAfter: tOptional(tBoolean),
   });
+  scheme.FrameSetInputFilePathsParams = tObject({
+    selector: tString,
+    strict: tOptional(tBoolean),
+    localPaths: tOptional(tArray(tString)),
+    streams: tOptional(tArray(tChannel('WritableStream'))),
+    timeout: tOptional(tNumber),
+    noWaitAfter: tOptional(tBoolean),
+  });
   scheme.FrameTapParams = tObject({
     selector: tString,
     strict: tOptional(tBoolean),
@@ -1104,6 +1115,12 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     timeout: tOptional(tNumber),
     noWaitAfter: tOptional(tBoolean),
   });
+  scheme.ElementHandleSetInputFilePathsParams = tObject({
+    localPaths: tOptional(tArray(tString)),
+    streams: tOptional(tArray(tChannel('WritableStream'))),
+    timeout: tOptional(tNumber),
+    noWaitAfter: tOptional(tBoolean),
+  });
   scheme.ElementHandleTapParams = tObject({
     force: tOptional(tBoolean),
     noWaitAfter: tOptional(tBoolean),
@@ -1222,6 +1239,10 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     size: tOptional(tNumber),
   });
   scheme.StreamCloseParams = tOptional(tObject({}));
+  scheme.WritableStreamWriteParams = tObject({
+    binary: tBinary,
+  });
+  scheme.WritableStreamCloseParams = tOptional(tObject({}));
   scheme.CDPSessionSendParams = tObject({
     method: tString,
     params: tOptional(tAny),

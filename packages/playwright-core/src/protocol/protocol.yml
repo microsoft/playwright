@@ -862,6 +862,13 @@ BrowserContext:
       returns:
         artifact: Artifact
 
+    createTempFile:
+      parameters:
+        name: string
+      returns:
+        writableStream: WritableStream
+
+
   events:
 
     bindingCall:
@@ -1747,6 +1754,24 @@ Frame:
         snapshot: true
         pausesBeforeInput: true
 
+    # This method should be used if one of the files is large (>50Mb).
+    setInputFilePaths:
+      parameters:
+        selector: string
+        strict: boolean?
+        # Only one of localPaths and streams should be present.
+        localPaths:
+          type: array?
+          items: string
+        streams:
+          type: array?
+          items: WritableStream
+        timeout: number?
+        noWaitAfter: boolean?
+      tracing:
+        snapshot: true
+        pausesBeforeInput: true
+
     tap:
       parameters:
         selector: string
@@ -2272,6 +2297,22 @@ ElementHandle:
         snapshot: true
         pausesBeforeInput: true
 
+    # This method should be used if one of the files is large (>50Mb).
+    setInputFilePaths:
+      parameters:
+        # Only one of localPaths and streams should be present.
+        localPaths:
+          type: array?
+          items: string
+        streams:
+          type: array?
+          items: WritableStream
+        timeout: number?
+        noWaitAfter: boolean?
+      tracing:
+        snapshot: true
+        pausesBeforeInput: true
+
     tap:
       parameters:
         force: boolean?
@@ -2653,6 +2694,18 @@ Stream:
       parameters:
         size: number?
       returns:
+        binary: binary
+
+    close:
+
+
+WritableStream:
+  type: interface
+
+  commands:
+
+    write:
+      parameters:
         binary: binary
 
     close:

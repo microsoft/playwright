@@ -31,6 +31,7 @@ import { LifecycleEvent, URLMatch, SelectOption, SelectOptionOptions, FilePayloa
 import { urlMatches } from './clientHelper';
 import * as api from '../../types/types';
 import * as structs from '../../types/structs';
+import { debugLogger } from '../utils/debugLogger';
 
 export type WaitForNavigationOptions = {
   timeout?: number,
@@ -355,7 +356,13 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
   }
 
   async setInputFiles(selector: string, files: string | FilePayload | string[] | FilePayload[], options: channels.FrameSetInputFilesOptions = {}): Promise<void> {
-    await this._channel.setInputFiles({ selector, files: await convertInputFiles(files), ...options });
+    const converted = await convertInputFiles(files, this.page().context());
+    if (converted.files) {
+      await this._channel.setInputFiles({ selector, files: converted.files, ...options });
+    } else {
+      debugLogger.log('api', 'switching to large files mode');
+      await this._channel.setInputFilePaths({ selector, ...converted, ...options });
+    }
   }
 
   async type(selector: string, text: string, options: channels.FrameTypeOptions = {}) {

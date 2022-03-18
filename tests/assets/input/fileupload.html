@@ -4,8 +4,8 @@
     <title>File upload test</title>
   </head>
   <body>
-    <form action="/input/fileupload.html">
-      <input type="file">
+    <form action="/upload" method="post" enctype="multipart/form-data">
+      <input type="file" name="file1">
       <input type="submit">
     </form>
   </body>

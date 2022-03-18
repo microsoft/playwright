@@ -32,6 +32,7 @@ import { Playwright } from './playwright';
 import { Electron, ElectronApplication } from './electron';
 import * as channels from '../protocol/channels';
 import { Stream } from './stream';
+import { WritableStream } from './writableStream';
 import { debugLogger } from '../utils/debugLogger';
 import { SelectorsOwner } from './selectors';
 import { Android, AndroidSocket, AndroidDevice } from './android';
@@ -268,6 +269,9 @@ export class Connection extends EventEmitter {
         break;
       case 'Worker':
         result = new Worker(parent, type, guid, initializer);
+        break;
+      case 'WritableStream':
+        result = new WritableStream(parent, type, guid, initializer);
         break;
       default:
         throw new Error('Missing type ' + type);
