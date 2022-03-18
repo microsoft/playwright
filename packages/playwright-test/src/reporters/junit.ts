@@ -172,6 +172,7 @@ class JUnitReporter implements Reporter {
       }
     }
 
+    const systemErr: string[] = [];
     // attachments are optionally embed as base64 encoded content on inner <item> elements
     if (this.embedAttachmentsAsProperty) {
       const evidence: XMLEntry = {
@@ -193,6 +194,8 @@ class JUnitReporter implements Reporter {
               const attachmentPath = path.relative(this.config.rootDir, attachment.path);
               if (fs.existsSync(attachmentPath))
                 contents = fs.readFileSync(attachmentPath, { encoding: 'base64' });
+              else
+                systemErr.push(`\nWarning: attachment ${attachmentPath} is missing`);
             } catch (e) {
             }
           }
@@ -233,7 +236,6 @@ class JUnitReporter implements Reporter {
     }
 
     const systemOut: string[] = [];
-    const systemErr: string[] = [];
     for (const result of test.results) {
       systemOut.push(...result.stdout.map(item => item.toString()));
       systemErr.push(...result.stderr.map(item => item.toString()));
