@@ -27,6 +27,35 @@ if [[ $# == 0 ]]; then
   exit 1
 fi
 
+update_base_revision() {
+    local browser="$1"
+    local base_revision="$2"
+
+    sed -i -r "s|^BASE_REVISION=\"[^\"]+\"$|BASE_REVISION=\"$base_revision\"|" "./$browser/UPSTREAM_CONFIG.sh"
+}
+
+apply_patch_failsafe() {
+    set +e;
+    git apply --3way --whitespace=nowarn "$PATCHES_PATH"/*
+    if [[ "$?" -ne 0 ]]; then
+        echo -e "\033[31mWARNING\033[m: Patch apply failed!"
+        dump_conflicts
+    fi
+    set -e;
+}
+
+dump_conflicts() {
+    local conflicts="$CHECKOUT_PATH/conflicts"
+
+    if [[ -f "$conflicts" ]]; then
+        rm -rf  "$conflicts"
+    fi
+    pushd .
+    cd "$CHECKOUT_PATH"
+    git status | grep -i "both modified:" | cut -d : -f2 | tr -d " " | sort -u > "$conflicts"
+    popd
+}
+
 function prepare_chromium_checkout {
   cd "${SCRIPT_PATH}"
 
@@ -67,6 +96,11 @@ function prepare_chromium_checkout {
   git checkout "${CRSHA}"
   gclient sync -D
 }
+
+if [[ "$1" == "webkit" && -n "$2" ]]; then
+    update_base_revision "$1" "$2"
+    APPLY_PATCH_FAILSAFE=1
+fi
 
 # FRIENDLY_CHECKOUT_PATH is used only for logging.
 FRIENDLY_CHECKOUT_PATH="";
@@ -216,7 +250,11 @@ if git show-ref --verify --quiet refs/heads/playwright-build; then
 fi
 git checkout -b playwright-build
 echo "-- applying patches"
-git apply --index --whitespace=nowarn "$PATCHES_PATH"/*
+if [[ "$1" == "webkit" && -n "$APPLY_PATCH_FAILSAFE" ]]; then
+    apply_patch_failsafe "$1"
+else
+    git apply --index --whitespace=nowarn "$PATCHES_PATH"/*
+fi
 
 if [[ ! -z "${WEBKIT_EXTRA_FOLDER_PATH}" ]]; then
   echo "-- adding WebKit embedders"
