@@ -305,8 +305,7 @@ test('should render all annotations to testcase value based properties, if reque
   const result = await runInlineTest({
     'playwright.config.ts': `
       const xrayOptions = {
-        embedAnnotationsAsProperties: true,
-        textContentAnnotations: ['test_description']
+        embedAnnotationsAsProperties: true
       }
       module.exports = {
         reporter: [ ['junit', xrayOptions] ],
@@ -350,11 +349,12 @@ test('should embed attachments to a custom testcase property, if explictly reque
     'a.test.js': `
       const { test } = pwt;
       test('one', async ({}, testInfo) => {
-        testInfo.annotations.push({ type: 'embed_attachments_in_report', description: 'true' });
         const file = testInfo.outputPath('evidence1.txt');
         require('fs').writeFileSync(file, 'hello', 'utf8');
         testInfo.attachments.push({ name: 'evidence1.txt', path: file, contentType: 'text/plain' });
         testInfo.attachments.push({ name: 'evidence2.txt', body: Buffer.from('world'), contentType: 'text/plain' });
+        // await testInfo.attach('evidence1.txt', { path: file, contentType: 'text/plain' });
+        // await testInfo.attach('evidence2.txt', { body: Buffer.from('world'), contentType: 'text/plain' });
         console.log('log here');
       });
     `
@@ -384,6 +384,8 @@ test('should not embed attachments to a custom testcase property, if not explict
         require('fs').writeFileSync(file, 'hello', 'utf8');
         testInfo.attachments.push({ name: 'evidence1.txt', path: file, contentType: 'text/plain' });
         testInfo.attachments.push({ name: 'evidence2.txt', body: Buffer.from('world'), contentType: 'text/plain' });
+        // await testInfo.attach('evidence1.txt', { path: file, contentType: 'text/plain' });
+        // await testInfo.attach('evidence2.txt', { body: Buffer.from('world'), contentType: 'text/plain' });
       });
     `
   }, { reporter: 'junit' });
