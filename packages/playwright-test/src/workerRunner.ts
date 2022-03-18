@@ -418,7 +418,13 @@ export class WorkerRunner extends EventEmitter {
       if (actualScope !== scope)
         continue;
       testInfo._timeoutManager.setCurrentRunnable({ type: modifier.type, location: modifier.location, slot: timeSlot });
-      const result = await this._fixtureRunner.resolveParametersAndRunFunction(modifier.fn, testInfo);
+      const result = await testInfo._runAsStep(() => this._fixtureRunner.resolveParametersAndRunFunction(modifier.fn, testInfo), {
+        category: 'hook',
+        title: `${modifier.type} modifier`,
+        canHaveChildren: true,
+        forceNoParent: false,
+        location: modifier.location,
+      });
       if (result && extraAnnotations)
         extraAnnotations.push({ type: modifier.type, description: modifier.description });
       testInfo[modifier.type](!!result, modifier.description);
@@ -437,7 +443,13 @@ export class WorkerRunner extends EventEmitter {
         // Separate time slot for each "beforeAll" hook.
         const timeSlot = { timeout: this._project.config.timeout, elapsed: 0 };
         testInfo._timeoutManager.setCurrentRunnable({ type: 'beforeAll', location: hook.location, slot: timeSlot });
-        await this._fixtureRunner.resolveParametersAndRunFunction(hook.fn, testInfo);
+        await testInfo._runAsStep(() => this._fixtureRunner.resolveParametersAndRunFunction(hook.fn, testInfo), {
+          category: 'hook',
+          title: `${hook.type} hook`,
+          canHaveChildren: true,
+          forceNoParent: false,
+          location: hook.location,
+        });
       } catch (e) {
         // Always run all the hooks, and capture the first error.
         beforeAllError = beforeAllError || e;
@@ -459,7 +471,13 @@ export class WorkerRunner extends EventEmitter {
         // Separate time slot for each "afterAll" hook.
         const timeSlot = { timeout: this._project.config.timeout, elapsed: 0 };
         testInfo._timeoutManager.setCurrentRunnable({ type: 'afterAll', location: hook.location, slot: timeSlot });
-        await this._fixtureRunner.resolveParametersAndRunFunction(hook.fn, testInfo);
+        await testInfo._runAsStep(() => this._fixtureRunner.resolveParametersAndRunFunction(hook.fn, testInfo), {
+          category: 'hook',
+          title: `${hook.type} hook`,
+          canHaveChildren: true,
+          forceNoParent: false,
+          location: hook.location,
+        });
       });
       firstError = firstError || afterAllError;
     }
@@ -472,7 +490,13 @@ export class WorkerRunner extends EventEmitter {
     for (const hook of hooks) {
       try {
         testInfo._timeoutManager.setCurrentRunnable({ type, location: hook.location, slot: timeSlot });
-        await this._fixtureRunner.resolveParametersAndRunFunction(hook.fn, testInfo);
+        await testInfo._runAsStep(() => this._fixtureRunner.resolveParametersAndRunFunction(hook.fn, testInfo), {
+          category: 'hook',
+          title: `${hook.type} hook`,
+          canHaveChildren: true,
+          forceNoParent: false,
+          location: hook.location,
+        });
       } catch (e) {
         // Always run all the hooks, and capture the first error.
         error = error || e;
