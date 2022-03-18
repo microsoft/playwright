@@ -1268,6 +1268,7 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    *
    */
   webServer: WebServerConfig | null;
+  attachments: { name: string, path?: string, body?: Buffer, contentType: string }[];
 }
 
 export type TestStatus = 'passed' | 'failed' | 'timedOut' | 'skipped';
