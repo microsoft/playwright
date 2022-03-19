@@ -31,9 +31,7 @@ test('should support multi-window electron app with requestSingleInstanceLock', 
       args: [path.join(__dirname, 'electron-multi-window-app.js')],
     });
   } catch (error) {
-    if (error.message !== 'electron.launch: canceled') {
-      throw error;
-    }
+    if (error.message !== 'electron.launch: canceled') throw error;
   }
   await firstApp.waitForEvent('window');
   expect(firstApp.windows()).toHaveLength(2);

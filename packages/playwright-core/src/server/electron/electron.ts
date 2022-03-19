@@ -199,7 +199,7 @@ export class Electron extends SdkObject {
         waitForLine(progress, launchedProcess, /^Waiting for the debugger to disconnect...$/),
         CRBrowser.connect(chromeTransport, browserOptions),
       ]);
-      if (!browser || !(browser instanceof CRBrowser)) throw new Error("canceled");
+      if (!browser || !(browser instanceof CRBrowser)) throw new Error('canceled');
       app = new ElectronApplication(this, browser, nodeConnection);
       return app;
     }, TimeoutSettings.timeout(options));
