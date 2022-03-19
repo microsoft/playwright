@@ -387,3 +387,32 @@ await requestContext.storageState({ path: 'state.json' });
 // Create a new context with the saved storage state.
 const context = await browser.newContext({ storageState: 'state.json' });
 ```
+
+### Manually setting cookies
+
+If there is a development API that returns auth cookies in the response body you
+can manually set them on the browser context:
+
+```js
+test('obtain auth cookies via API', async ({ page, context }) => {
+  // Fetch auth cookie values via API.
+  const authResponse = await context.request.get('https://api.example.com/path');
+  const body = await authResponse.json();
+  const cookies = body.pass.cookies;
+
+  // Inject them into context.
+  await context.addCookies(Object.entries(cookies).map(([key, value]) => {
+    return {
+      name: key,
+      value,
+      domain: 'https://example.com/',
+      httpOnly: true,
+      secure: true
+    };
+  }));
+
+  // Navigate to the landing page and check that we are logged in.
+  await page.goto('https://example.com/');
+  await expect(page.locator('#logout')).toBeVisible();
+});
+```
