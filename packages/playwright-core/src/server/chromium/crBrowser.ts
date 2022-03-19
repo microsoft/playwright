@@ -16,7 +16,7 @@
  */
 
 import { Browser, BrowserOptions } from '../browser';
-import { assertBrowserContextIsNotOwned, BrowserContext, validateBrowserContextOptions, verifyGeolocation } from '../browserContext';
+import { assertBrowserContextIsNotOwned, BrowserContext, verifyGeolocation } from '../browserContext';
 import { assert } from '../../utils/utils';
 import * as network from '../network';
 import { Page, PageBinding, PageDelegate, Worker } from '../page';
@@ -92,9 +92,7 @@ export class CRBrowser extends Browser {
     this._session.on('Browser.downloadProgress', this._onDownloadProgress.bind(this));
   }
 
-  async newContext(options: types.BrowserContextOptions): Promise<BrowserContext> {
-    validateBrowserContextOptions(options, this.options);
-
+  async doCreateNewContext(options: types.BrowserContextOptions): Promise<BrowserContext> {
     let proxyBypassList = undefined;
     if (options.proxy) {
       if (process.env.PLAYWRIGHT_DISABLE_FORCED_CHROMIUM_PROXIED_LOOPBACK)

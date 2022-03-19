@@ -48,8 +48,8 @@ it('should capture local storage', async ({ contextFactory }) => {
   }]);
 });
 
-it('should set local storage', async ({ browser }) => {
-  const context = await browser.newContext({
+it('should set local storage', async ({ contextFactory }) => {
+  const context = await contextFactory({
     storageState: {
       cookies: [],
       origins: [
@@ -161,4 +161,36 @@ it('should not emit events about internal page', async ({ contextFactory }) => {
   context.on('response', e => events.push(e));
   await context.storageState();
   expect(events).toHaveLength(0);
+});
+
+it('should not restore localStorage twice', async ({ contextFactory }) => {
+  const context = await contextFactory({
+    storageState: {
+      cookies: [],
+      origins: [
+        {
+          origin: 'https://www.example.com',
+          localStorage: [{
+            name: 'name1',
+            value: 'value1'
+          }]
+        },
+      ]
+    }
+  });
+  const page = await context.newPage();
+  await page.route('**/*', route => {
+    route.fulfill({ body: '<html></html>' }).catch(() => {});
+  });
+  await page.goto('https://www.example.com');
+  const localStorage1 = await page.evaluate('window.localStorage');
+  expect(localStorage1).toEqual({ name1: 'value1' });
+
+  await page.evaluate(() => window.localStorage['name1'] = 'value2');
+
+  await page.goto('https://www.example.com');
+  const localStorage2 = await page.evaluate('window.localStorage');
+  expect(localStorage2).toEqual({ name1: 'value2' });
+
+  await context.close();
 });

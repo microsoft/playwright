@@ -16,7 +16,7 @@
  */
 
 import { Browser, BrowserOptions } from '../browser';
-import { assertBrowserContextIsNotOwned, BrowserContext, validateBrowserContextOptions, verifyGeolocation } from '../browserContext';
+import { assertBrowserContextIsNotOwned, BrowserContext, verifyGeolocation } from '../browserContext';
 import { eventsHelper, RegisteredListener } from '../../utils/eventsHelper';
 import { assert } from '../../utils/utils';
 import * as network from '../network';
@@ -79,8 +79,7 @@ export class WKBrowser extends Browser {
     this._didClose();
   }
 
-  async newContext(options: types.BrowserContextOptions): Promise<BrowserContext> {
-    validateBrowserContextOptions(options, this.options);
+  async doCreateNewContext(options: types.BrowserContextOptions): Promise<BrowserContext> {
     const createOptions = options.proxy ? {
       proxyServer: options.proxy.server,
       proxyBypassList: options.proxy.bypass

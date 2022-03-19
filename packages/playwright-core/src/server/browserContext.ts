@@ -68,6 +68,7 @@ export abstract class BrowserContext extends SdkObject {
   readonly fetchRequest: BrowserContextAPIRequestContext;
   private _customCloseHandler?: () => Promise<any>;
   readonly _tempDirs: string[] = [];
+  private _settingStorageState = false;
 
   constructor(browser: Browser, options: types.BrowserContextOptions, browserContextId: string | undefined) {
     super(browser, 'browser-context');
@@ -375,25 +376,34 @@ export abstract class BrowserContext extends SdkObject {
     return result;
   }
 
+  isSettingStorageState(): boolean {
+    return this._settingStorageState;
+  }
+
   async setStorageState(metadata: CallMetadata, state: types.SetStorageState) {
-    if (state.cookies)
-      await this.addCookies(state.cookies);
-    if (state.origins && state.origins.length)  {
-      const internalMetadata = serverSideCallMetadata();
-      const page = await this.newPage(internalMetadata);
-      await page._setServerRequestInterceptor(handler => {
-        handler.fulfill({ body: '<html></html>' }).catch(() => {});
-      });
-      for (const originState of state.origins) {
-        const frame = page.mainFrame();
-        await frame.goto(metadata, originState.origin);
-        await frame.evaluateExpression(`
-          originState => {
-            for (const { name, value } of (originState.localStorage || []))
-              localStorage.setItem(name, value);
-          }`, true, originState, 'utility');
+    this._settingStorageState = true;
+    try {
+      if (state.cookies)
+        await this.addCookies(state.cookies);
+      if (state.origins && state.origins.length)  {
+        const internalMetadata = serverSideCallMetadata();
+        const page = await this.newPage(internalMetadata);
+        await page._setServerRequestInterceptor(handler => {
+          handler.fulfill({ body: '<html></html>' }).catch(() => {});
+        });
+        for (const originState of state.origins) {
+          const frame = page.mainFrame();
+          await frame.goto(metadata, originState.origin);
+          await frame.evaluateExpression(`
+            originState => {
+              for (const { name, value } of (originState.localStorage || []))
+                localStorage.setItem(name, value);
+            }`, true, originState, 'utility');
+        }
+        await page.close(internalMetadata);
       }
-      await page.close(internalMetadata);
+    } finally {
+      this._settingStorageState = false;
     }
   }
 
