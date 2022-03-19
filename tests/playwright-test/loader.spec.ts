@@ -198,6 +198,26 @@ test('should load esm when package.json has type module', async ({ runInlineTest
   expect(result.passed).toBe(1);
 });
 
+test('should load nested as esm when package.json has type module @esm', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.js': `
+      //@no-header
+      import * as fs from 'fs';
+      export default { projects: [{name: 'foo'}] };
+    `,
+    'package.json': JSON.stringify({ type: 'module' }),
+    'nested/folder/a.esm.test.js': `
+      const { test } = pwt;
+      test('check project name', ({}, testInfo) => {
+        expect(testInfo.project.name).toBe('foo');
+      });
+    `
+  });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
+
 test('should load esm config files', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.mjs': `
