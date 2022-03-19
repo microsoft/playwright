@@ -26,7 +26,6 @@ test("should support multi-window electron app with requestSingleInstanceLock", 
   expect(firstApp.windows()).toHaveLength(1);
   const firstWindow = firstApp.windows()[0];
   await expect(firstWindow).toHaveTitle("Window 1");
-  console.log("before second launch");
   try {
     await playwright._electron.launch({
       args: [path.join(__dirname, "electron-multi-window-app.js")],
@@ -36,12 +35,9 @@ test("should support multi-window electron app with requestSingleInstanceLock", 
       throw error;
     }
   }
-  console.log("after second launch");
   await firstApp.waitForEvent("window");
   expect(firstApp.windows()).toHaveLength(2);
   const secondWindow = firstApp.windows()[1];
-  console.log("after second launch");
   await expect(secondWindow).toHaveTitle("Window 2");
-  console.log("done");
   await firstApp.close();
 });
