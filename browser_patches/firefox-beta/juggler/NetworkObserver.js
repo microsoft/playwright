@@ -754,16 +754,11 @@ function readRequestPostData(httpChannel) {
   }
 
   // Read data from the stream.
-  let result = undefined;
+  let result = '';
   try {
-    const buffer = NetUtil.readInputStream(iStream, iStream.available());
-    const bytes = new Uint8Array(buffer);
-    let binary = '';
-    for (let i = 0; i < bytes.byteLength; i++)
-        binary += String.fromCharCode(bytes[i]);
-    result = btoa(binary);
+    const buffer = NetUtil.readInputStreamToString(iStream, iStream.available());
+    result = btoa(buffer);
   } catch (err) {
-    result = '';
   }
 
   // Seek locks the file, so seek to the beginning only if necko hasn't
