@@ -30,10 +30,14 @@ for (const [name, url] of Object.entries(vues)) {
 
     it('should work with single-root elements #smoke', async ({ page }) => {
       expect(await page.$$eval(`_vue=book-list`, els => els.length)).toBe(1);
+      expect(await page.locator(`_vue=book-list`).count()).toBe(1);
+      await expect(page.locator(`_vue=book-list`)).toHaveCount(1);
       expect(await page.$$eval(`_vue=book-item`, els => els.length)).toBe(3);
+      expect(await page.locator(`_vue=book-item`).count()).toBe(3);
+      await expect(page.locator(`_vue=book-item`)).toHaveCount(3);
       expect(await page.$$eval(`_vue=book-list >> _vue=book-item`, els => els.length)).toBe(3);
+      expect(await page.locator(`_vue=book-list >> _vue=book-item`).count()).toBe(3);
       expect(await page.$$eval(`_vue=book-item >> _vue=book-list`, els => els.length)).toBe(0);
-
     });
 
     it('should work with multi-root elements (fragments)', async ({ page }) => {

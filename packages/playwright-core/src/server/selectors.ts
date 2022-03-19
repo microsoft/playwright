@@ -92,7 +92,7 @@ export class Selectors {
   }
 
   async _queryCount(frame: frames.Frame, info: SelectorInfo, scope?: dom.ElementHandle): Promise<number> {
-    const context = await frame._utilityContext();
+    const context = await frame._context(info.world);
     const injectedScript = await context.injectedScript();
     return await injectedScript.evaluate((injected, { parsed, scope }) => {
       return injected.querySelectorAll(parsed, scope || document).length;
