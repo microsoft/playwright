@@ -244,6 +244,8 @@ export function toMatchSnapshot(
   const testInfo = currentTestInfo();
   if (!testInfo)
     throw new Error(`toMatchSnapshot() must be called during the test`);
+  if (received instanceof Promise)
+    throw new Error('An unresolved Promise was passed to toMatchSnapshot(), make sure to resolve it by adding await to it.');
   const helper = new SnapshotHelper(
       testInfo, testInfo.snapshotPath.bind(testInfo), determineFileExtension(received),
       testInfo.project.expect?.toMatchSnapshot || {},

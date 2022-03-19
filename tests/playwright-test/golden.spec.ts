@@ -906,3 +906,17 @@ test('should allow comparing text with text without file extension', async ({ ru
   });
   expect(result.exitCode).toBe(0);
 });
+
+test('should throw if a Promise was passed to toMatchSnapshot', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    ...files,
+    'a.spec.js': `
+      const { test } = require('./helper');
+      test('is a test', ({}) => {
+        expect(() => expect(new Promise(() => {})).toMatchSnapshot('foobar')).toThrow(/An unresolved Promise was passed to toMatchSnapshot\\(\\), make sure to resolve it by adding await to it./);
+      });
+    `
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
