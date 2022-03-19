@@ -463,10 +463,10 @@ export class Page extends SdkObject {
     let intermediateResult: {
       actual?: Buffer,
       previous?: Buffer,
-      errorMessage?: string,
+      errorMessage: string,
       diff?: Buffer,
     } | undefined = undefined;
-    const isEqualScreenshots = (actual: Buffer | undefined, expected: Buffer | undefined, previous: Buffer | undefined) => {
+    const areEqualScreenshots = (actual: Buffer | undefined, expected: Buffer | undefined, previous: Buffer | undefined) => {
       const comparatorResult = actual && expected ? comparator(actual, expected, options.comparatorOptions) : undefined;
       if (comparatorResult !== undefined && !!comparatorResult === !!options.isNot)
         return true;
@@ -480,13 +480,10 @@ export class Page extends SdkObject {
       let previous: Buffer | undefined;
       const pollIntervals = [0, 100, 250, 500];
       progress.log(`${metadata.apiName}${callTimeout ? ` with timeout ${callTimeout}ms` : ''}`);
-      if (options.expected) {
+      if (options.expected)
         progress.log(`  verifying given screenshot expectation`);
-        progress.log(`fast-path: checking first screenshot to match expectation`);
-      } else {
-        progress.log(`  generating new screenshot expectation`);
-        progress.log(`waiting for 2 consecutive screenshots to match`);
-      }
+      else
+        progress.log(`  generating new stable screenshot expectation`);
       let isFirstIteration = true;
       while (true) {
         progress.throwIfAborted();
@@ -495,8 +492,7 @@ export class Page extends SdkObject {
         const screenshotTimeout = pollIntervals.shift() ?? 1000;
         if (screenshotTimeout)
           progress.log(`waiting ${screenshotTimeout}ms before taking screenshot`);
-        // Update to the last successful screenshot.
-        previous = actual ?? previous;
+        previous = actual;
         actual = await rafrafScreenshot(progress, screenshotTimeout).catch(e => {
           progress.log(`failed to take screenshot - ` + e.message);
           return undefined;
@@ -505,36 +501,28 @@ export class Page extends SdkObject {
           continue;
         // Compare against expectation for the first iteration.
         const expectation = options.expected && isFirstIteration ? options.expected : previous;
-        if (isEqualScreenshots(actual, expectation, previous))
+        if (areEqualScreenshots(actual, expectation, previous))
           break;
-        if (isFirstIteration && options.expected) {
-          progress.log(`fast-path failed: first screenshot did not match expectation - ${intermediateResult?.errorMessage}`);
-          progress.log(`waiting for 2 consecutive screenshots to match`);
-        } else if (intermediateResult) {
-          progress.log(`2 last screenshots did not match - ${intermediateResult?.errorMessage}`);
-        }
+        if (intermediateResult)
+          progress.log(intermediateResult.errorMessage);
         isFirstIteration = false;
       }
 
       if (!isFirstIteration)
-        progress.log(`2 consecutive screenshots matched`);
+        progress.log(`captured a stable screenshot`);
 
-      if (!options.expected) {
-        progress.log(`accepting last screenshot as a new expectation`);
+      if (!options.expected)
         return { actual };
-      }
 
       if (isFirstIteration) {
-        progress.log(`first screenshot matched expectation`);
+        progress.log(`screenshot matched expectation`);
         return {};
       }
 
-      if (isEqualScreenshots(actual, options.expected, previous)) {
-        progress.log(`final screenshot matched expectation`);
+      if (areEqualScreenshots(actual, options.expected, previous)) {
+        progress.log(`screenshot matched expectation`);
         return {};
       }
-
-      progress.log(`final screenshot did not match expectation - ${intermediateResult!.errorMessage}`);
       throw new Error(intermediateResult!.errorMessage);
     }, callTimeout).catch(e => {
       // Q: Why not throw upon isSessionClosedError(e) as in other places?
