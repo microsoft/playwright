@@ -195,13 +195,8 @@ export class Electron extends SdkObject {
         tracesDir: artifactsDir,
       };
       validateBrowserContextOptions(contextOptions, browserOptions);
-      const debuggerDisconnectMatch = waitForLine(
-        progress,
-        launchedProcess,
-        /^Waiting for the debugger to disconnect...$/
-      );
       const browser = await Promise.race([
-        debuggerDisconnectMatch,
+        waitForLine(progress, launchedProcess, /^Waiting for the debugger to disconnect...$/),
         CRBrowser.connect(chromeTransport, browserOptions),
       ]);
       if (!browser || !(browser instanceof CRBrowser)) {
