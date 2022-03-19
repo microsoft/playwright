@@ -1,5 +1,5 @@
-const { app, BrowserWindow } = require("electron");
-const { join } = require("path");
+const { app, BrowserWindow } = require('electron');
+const { join } = require('path');
 
 let i = 0;
 
@@ -8,7 +8,7 @@ const createWindow = () => {
     width: 800,
     height: 600,
   });
-  win.loadFile(join(__dirname, "electron-multi-window-app.html"), {
+  win.loadFile(join(__dirname, 'electron-multi-window-app.html'), {
     query: { i: `${++i}` },
   });
 };
@@ -18,7 +18,7 @@ const main = async () => {
   if (hasLock) {
     await app.whenReady();
     createWindow();
-    app.on("second-instance", createWindow);
+    app.on('second-instance', createWindow);
   } else {
     app.quit();
   }
