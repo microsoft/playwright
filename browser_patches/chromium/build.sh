@@ -1,32 +1,46 @@
 #!/bin/bash
 set -e
-set +x
+set -x
 
 trap "cd $(pwd -P)" EXIT
 cd "$(dirname "$0")"
+SCRIPT_FOLDER=$(pwd -P)
 
 USAGE=$(cat<<EOF
-  usage: $(basename "$0") [--compile-mac-arm64|--compile-linux|--compile-linux-arm64|--compile-win64|--compile-mac] [--symbols] [--full]
+  usage: $(basename "$0") [--arm64] [--symbols] [--full] [--goma] <custom targets to compile>
 
-  Compiles chromium.
+  --arm64     cross-compile for arm64
+  --symbols   compile with symbols
+  --full      install build dependencies
+  --goma      use goma when compiling. Make sure to pre-start goma client beforehand with './goma.sh start'.
+
+  On Linux & MacOS, it is possible to specify custom compilation targets:
+
+    ./build.sh --goma blink_tests
+
 EOF
 )
 
-SCRIPT_FOLDER=$(pwd -P)
 source "${SCRIPT_FOLDER}/../utils.sh"
 
-main() {
-  if [[ $1 == "--help" || $1 == "-h" ]]; then
-    echo "$USAGE"
-    exit 0
-  elif [[ $1 == "--compile"* ]]; then
-    compile_chromium "$1" "$2" "$3"
-  else
-    echo "ERROR: unknown first argument. Use --help for details."
-    exit 1
-  fi
-}
+if [[ $1 == "--help" || $1 == "-h" ]]; then
+  echo "$USAGE"
+  exit 0
+fi
 
+args=("$@")
+IS_ARM64=""
+IS_SYMBOLS_BUILD=""
+IS_FULL=""
+USE_GOMA=""
+for ((i=0; i<="${#args[@]}"; ++i)); do
+    case ${args[i]} in
+        --arm64) IS_ARM64="1"; unset args[i]; ;;
+        --symbols) IS_SYMBOLS_BUILD="1"; unset args[i]; ;;
+        --full) IS_FULL="1"; unset args[i]; ;;
+        --goma) USE_GOMA="1"; unset args[i]; ;;
+    esac
+done
 
 compile_chromium() {
   if [[ -z "${CR_CHECKOUT_PATH}" ]]; then
@@ -40,15 +54,9 @@ compile_chromium() {
 
   source "${SCRIPT_FOLDER}/ensure_depot_tools.sh"
 
-  if [[ $1 == "--compile-mac"* ]]; then
+  if [[ $(uname) == "Darwin" ]]; then
     # As of Feb, 2022 Chromium mac compilation requires Xcode13.2
     selectXcodeVersionOrDie "13.2"
-    # As of Jan, 2021 Chromium mac compilation is only possible on Intel macbooks.
-    # See https://chromium.googlesource.com/chromium/src.git/+/main/docs/mac_arm64.md
-    if [[ $1 == "--compile-mac-arm64" && $(uname -m) != "x86_64" ]]; then
-      echo "ERROR: chromium mac arm64 compilation is (ironically) only supported on Intel Macbooks"
-      exit 1
-    fi
   fi
 
   cd "${CR_CHECKOUT_PATH}/src"
@@ -57,25 +65,18 @@ compile_chromium() {
   mkdir -p "./out/Default"
   echo "is_debug = false" > ./out/Default/args.gn
   echo "dcheck_always_on = false" >> ./out/Default/args.gn
-  if [[ $2 == "--symbols" || $3 == "--symbols" ]]; then
+  if [[ -n "${IS_SYMBOLS_BUILD}" ]]; then
     echo "symbol_level = 1" >> ./out/Default/args.gn
   else
     echo "symbol_level = 0" >> ./out/Default/args.gn
   fi
 
-  if [[ $1 == "--compile-mac-arm64" ]]; then
-    echo 'target_cpu = "arm64"' >> ./out/Default/args.gn
-  elif [[ $1 == "--compile-linux-arm64" ]]; then
+  if [[ -n "${IS_ARM64}" ]]; then
     echo 'target_cpu = "arm64"' >> ./out/Default/args.gn
   fi
 
   if [[ ! -z "$USE_GOMA" ]]; then
-    PLAYWRIGHT_GOMA_PATH="${SCRIPT_FOLDER}/electron-build-tools/third_party/goma"
-    if [[ $1 == "--compile-win"* ]]; then
-      PLAYWRIGHT_GOMA_PATH=$(cygpath -w "${PLAYWRIGHT_GOMA_PATH}")
-    fi
-    echo 'use_goma = true' >> ./out/Default/args.gn
-    echo "goma_dir = \"${PLAYWRIGHT_GOMA_PATH}\"" >> ./out/Default/args.gn
+    "${SCRIPT_FOLDER}/goma.sh" args >> ./out/Default/args.gn
   fi
   echo 'enable_nacl = false' >> ./out/Default/args.gn
 
@@ -83,17 +84,23 @@ compile_chromium() {
   cat ./out/Default/args.gn
   echo "===== ======= ====="
 
-  if [[ $2 == "--full" || $3 == "--full" ]]; then
-    if [[ $(uname) == "--compile-linux" ]]; then
+  if [[ -n "$IS_FULL" ]]; then
+    if [[ $(uname) == "Linux" ]]; then
       ./build/install-build-deps.sh
-    elif [[ $1 == "--compile-linux-arm64" ]]; then
-      ./build/install-build-deps.sh
-      # Install sysroot image, see https://chromium.googlesource.com/chromium/src/+/refs/heads/main/docs/linux/chromium_arm.md
-      ./build/linux/sysroot_scripts/install-sysroot.py --arch=arm64
+      if [[ -n "$IS_ARM64" ]]; then
+        # Install sysroot image, see https://chromium.googlesource.com/chromium/src/+/refs/heads/main/docs/linux/chromium_arm.md
+        ./build/linux/sysroot_scripts/install-sysroot.py --arch=arm64
+      fi
     fi
   fi
 
-  if [[ $1 == "--compile-win"* ]]; then
+  TARGETS="$@"
+  if [[ $(uname) == "MINGW" ]]; then
+    if [[ -n "$TARGETS" ]]; then
+      echo "ERROR: cannot compile custom targets on windows yet."
+      echo "Requested to compile chromium targets - ${TARGETS}"
+      exit 1
+    fi
     if [[ -z "$USE_GOMA" ]]; then
       /c/Windows/System32/cmd.exe "/c $(cygpath -w "${SCRIPT_FOLDER}"/buildwin.bat)"
     else
@@ -101,10 +108,12 @@ compile_chromium() {
     fi
   else
     gn gen out/Default
-    if [[ $1 == "--compile-linux"* ]]; then
-      TARGETS="chrome chrome_sandbox clear_key_cdm"
-    else
-      TARGETS="chrome"
+    if [[ -z "$TARGETS" ]]; then
+      if [[ $(uname) == "Linux" ]]; then
+        TARGETS="chrome chrome_sandbox clear_key_cdm"
+      else
+        TARGETS="chrome"
+      fi
     fi
     if [[ -z "$USE_GOMA" ]]; then
       autoninja -C out/Default $TARGETS
@@ -114,4 +123,4 @@ compile_chromium() {
   fi
 }
 
-main "$1" "$2" "$3"
+compile_chromium "${args[@]}"
