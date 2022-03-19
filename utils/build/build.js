@@ -16,11 +16,11 @@
 
 // @ts-check
 
-const child_process = require("child_process");
-const path = require("path");
-const chokidar = require("chokidar");
-const fs = require("fs");
-const { workspace } = require("../workspace");
+const child_process = require('child_process');
+const path = require('path');
+const chokidar = require('chokidar');
+const fs = require('fs');
+const { workspace } = require('../workspace');
 
 /**
  * @typedef {{
@@ -57,16 +57,16 @@ const onChanges = [];
 /** @type {CopyFile[]} */
 const copyFiles = [];
 
-const watchMode = process.argv.slice(2).includes("--watch");
-const lintMode = process.argv.slice(2).includes("--lint");
-const ROOT = path.join(__dirname, "..", "..");
+const watchMode = process.argv.slice(2).includes('--watch');
+const lintMode = process.argv.slice(2).includes('--lint');
+const ROOT = path.join(__dirname, '..', '..');
 
 /**
  * @param {string} relative
  * @returns {string}
  */
 function filePath(relative) {
-  return path.join(ROOT, ...relative.split("/"));
+  return path.join(ROOT, ...relative.split('/'));
 }
 
 /**
@@ -74,7 +74,7 @@ function filePath(relative) {
  * @returns {string}
  */
 function quotePath(path) {
-  return '"' + path + '"';
+  return "\"" + path + "\"";
 }
 
 async function runWatch() {
@@ -82,37 +82,34 @@ async function runWatch() {
     nodeFile = filePath(nodeFile);
     function callback() {
       for (const fileMustExist of mustExist) {
-        if (!fs.existsSync(filePath(fileMustExist))) return;
+        if (!fs.existsSync(filePath(fileMustExist)))
+          return;
       }
-      child_process.spawnSync("node", [nodeFile], { stdio: "inherit" });
+      child_process.spawnSync('node', [nodeFile], { stdio: 'inherit' });
     }
-    chokidar
-      .watch([...paths, ...mustExist, nodeFile].map(filePath))
-      .on("all", callback);
+    chokidar.watch([...paths, ...mustExist, nodeFile].map(filePath)).on('all', callback);
     callback();
   }
 
   for (const { files, from, to, ignored } of copyFiles) {
     const watcher = chokidar.watch([filePath(files)], { ignored });
-    watcher.on("all", (event, file) => {
+    watcher.on('all', (event, file) => {
       copyFile(file, from, to);
     });
   }
   /** @type{import('child_process').ChildProcess[]} */
   const spawns = [];
   for (const step of steps)
-    spawns.push(
-      child_process.spawn(step.command, step.args, {
-        stdio: "inherit",
-        shell: step.shell,
-        env: {
-          ...process.env,
-          ...step.env,
-        },
-        cwd: step.cwd,
-      })
-    );
-  process.on("exit", () => spawns.forEach((s) => s.kill()));
+    spawns.push(child_process.spawn(step.command, step.args, {
+      stdio: 'inherit',
+      shell: step.shell,
+      env: {
+        ...process.env,
+        ...step.env,
+      },
+      cwd: step.cwd,
+    }));
+  process.on('exit', () => spawns.forEach(s => s.kill()));
   for (const onChange of onChanges)
     runOnChanges(onChange.inputs, onChange.mustExist, onChange.script);
 }
@@ -123,35 +120,33 @@ async function runBuild() {
    */
   function runStep(step) {
     const out = child_process.spawnSync(step.command, step.args, {
-      stdio: "inherit",
+      stdio: 'inherit',
       shell: step.shell,
       env: {
         ...process.env,
-        ...step.env,
+        ...step.env
       },
       cwd: step.cwd,
     });
-    if (out.status) process.exit(out.status);
+    if (out.status)
+      process.exit(out.status);
   }
 
   for (const { files, from, to, ignored } of copyFiles) {
     const watcher = chokidar.watch([filePath(files)], {
-      ignored,
+      ignored
     });
-    watcher.on("add", (file) => {
+    watcher.on('add', file => {
       copyFile(file, from, to);
     });
-    await new Promise((x) => watcher.once("ready", x));
+    await new Promise(x => watcher.once('ready', x));
     watcher.close();
   }
-  for (const step of steps) runStep(step);
+  for (const step of steps)
+    runStep(step);
   for (const onChange of onChanges) {
     if (!onChange.committed)
-      runStep({
-        command: "node",
-        args: [filePath(onChange.script)],
-        shell: false,
-      });
+      runStep({ command: 'node', args: [filePath(onChange.script)], shell: false });
   }
 }
 
@@ -161,138 +156,123 @@ async function runBuild() {
  * @param {string} to
  */
 function copyFile(file, from, to) {
-  const destination = path.resolve(
-    filePath(to),
-    path.relative(filePath(from), file)
-  );
+  const destination = path.resolve(filePath(to), path.relative(filePath(from), file));
   fs.mkdirSync(path.dirname(destination), { recursive: true });
   fs.copyFileSync(file, destination);
 }
 
 // Update test runner.
 steps.push({
-  command: "npm",
-  args: ["ci", "--save=false", "--fund=false", "--audit=false"],
+  command: 'npm',
+  args: ['ci', '--save=false', '--fund=false', '--audit=false'],
   shell: true,
-  cwd: path.join(
-    __dirname,
-    "..",
-    "..",
-    "tests",
-    "playwright-test",
-    "stable-test-runner"
-  ),
+  cwd: path.join(__dirname, '..', '..', 'tests', 'playwright-test', 'stable-test-runner'),
 });
 
 // Build injected scripts.
 const webPackFiles = [
-  // 'packages/playwright-core/src/server/injected/webpack.config.js',
-  // 'packages/playwright-core/src/web/traceViewer/webpack.config.js',
-  // 'packages/playwright-core/src/web/traceViewer/webpack-sw.config.js',
-  // 'packages/playwright-core/src/web/recorder/webpack.config.js',
-  // 'packages/html-reporter/webpack.config.js',
-  // 'packages/html-reporter/tests/webpack.config.js',
+  'packages/playwright-core/src/server/injected/webpack.config.js',
+  'packages/playwright-core/src/web/traceViewer/webpack.config.js',
+  'packages/playwright-core/src/web/traceViewer/webpack-sw.config.js',
+  'packages/playwright-core/src/web/recorder/webpack.config.js',
+  'packages/html-reporter/webpack.config.js',
+  'packages/html-reporter/tests/webpack.config.js',
 ];
 for (const file of webPackFiles) {
   steps.push({
-    command: "npx",
-    args: [
-      "webpack",
-      "--config",
-      quotePath(filePath(file)),
-      ...(watchMode ? ["--watch", "--stats", "none"] : []),
-    ],
+    command: 'npx',
+    args: ['webpack', '--config', quotePath(filePath(file)), ...(watchMode ? ['--watch', '--stats', 'none'] : [])],
     shell: true,
     env: {
-      NODE_ENV: watchMode ? "development" : "production",
-    },
+      NODE_ENV: watchMode ? 'development' : 'production'
+    }
   });
 }
 
 // Run Babel.
 for (const pkg of workspace.packages()) {
-  if (!fs.existsSync(path.join(pkg.path, "src"))) continue;
+  if (!fs.existsSync(path.join(pkg.path, 'src')))
+    continue;
   steps.push({
-    command: "npx",
+    command: 'npx',
     args: [
-      "babel",
-      ...(watchMode ? ["-w", "--source-maps"] : []),
-      "--extensions",
-      ".ts",
-      "--out-dir",
-      quotePath(path.join(pkg.path, "lib")),
-      "--ignore",
-      '"packages/playwright-core/src/server/injected/**/*"',
-      quotePath(path.join(pkg.path, "src")),
-    ],
+      'babel',
+      ...(watchMode ? ['-w', '--source-maps'] : []),
+      '--extensions', '.ts',
+      '--out-dir', quotePath(path.join(pkg.path, 'lib')),
+      '--ignore', '"packages/playwright-core/src/server/injected/**/*"',
+      quotePath(path.join(pkg.path, 'src'))],
     shell: true,
   });
 }
 
+
 // Generate channels.
 onChanges.push({
   committed: false,
-  inputs: ["packages/playwright-core/src/protocol/protocol.yml"],
-  script: "utils/generate_channels.js",
+  inputs: [
+    'packages/playwright-core/src/protocol/protocol.yml'
+  ],
+  script: 'utils/generate_channels.js',
 });
 
 // Generate types.
 onChanges.push({
   committed: false,
   inputs: [
-    "docs/src/api/",
-    "docs/src/test-api/",
-    "docs/src/test-reporter-api/",
-    "utils/generate_types/overrides.d.ts",
-    "utils/generate_types/overrides-test.d.ts",
-    "utils/generate_types/overrides-testReporter.d.ts",
-    "utils/generate_types/exported.json",
-    "packages/playwright-core/src/server/chromium/protocol.d.ts",
+    'docs/src/api/',
+    'docs/src/test-api/',
+    'docs/src/test-reporter-api/',
+    'utils/generate_types/overrides.d.ts',
+    'utils/generate_types/overrides-test.d.ts',
+    'utils/generate_types/overrides-testReporter.d.ts',
+    'utils/generate_types/exported.json',
+    'packages/playwright-core/src/server/chromium/protocol.d.ts',
   ],
   mustExist: [
-    "packages/playwright-core/lib/server/deviceDescriptors.js",
-    "packages/playwright-core/lib/server/deviceDescriptorsSource.json",
+    'packages/playwright-core/lib/server/deviceDescriptors.js',
+    'packages/playwright-core/lib/server/deviceDescriptorsSource.json',
   ],
-  script: "utils/generate_types/index.js",
+  script: 'utils/generate_types/index.js',
 });
 
 // The recorder and trace viewer have an app_icon.png that needs to be copied.
 copyFiles.push({
-  files: "packages/playwright-core/src/server/chromium/*.png",
-  from: "packages/playwright-core/src",
-  to: "packages/playwright-core/lib",
+  files: 'packages/playwright-core/src/server/chromium/*.png',
+  from: 'packages/playwright-core/src',
+  to: 'packages/playwright-core/lib',
 });
 
 // Babel doesn't touch JS files, so copy them manually.
 // For example: diff_match_patch.js
 copyFiles.push({
-  files: "packages/playwright-core/src/**/*.js",
-  from: "packages/playwright-core/src",
-  to: "packages/playwright-core/lib",
-  ignored: ["**/.eslintrc.js", "**/webpack*.config.js", "**/injected/**/*"],
+  files: 'packages/playwright-core/src/**/*.js',
+  from: 'packages/playwright-core/src',
+  to: 'packages/playwright-core/lib',
+  ignored: ['**/.eslintrc.js', '**/webpack*.config.js', '**/injected/**/*']
 });
 
 copyFiles.push({
-  files: "packages/playwright-test/src/**/*.js",
-  from: "packages/playwright-test/src",
-  to: "packages/playwright-test/lib",
-  ignored: ["**/.eslintrc.js"],
+  files: 'packages/playwright-test/src/**/*.js',
+  from: 'packages/playwright-test/src',
+  to: 'packages/playwright-test/lib',
+  ignored: ['**/.eslintrc.js']
 });
 
 // Sometimes we require JSON files that babel ignores.
 // For example, deviceDescriptorsSource.json
 copyFiles.push({
-  files: "packages/playwright-core/src/**/*.json",
-  ignored: ["**/injected/**/*"],
-  from: "packages/playwright-core/src",
-  to: "packages/playwright-core/lib",
+  files: 'packages/playwright-core/src/**/*.json',
+  ignored: ['**/injected/**/*'],
+  from: 'packages/playwright-core/src',
+  to: 'packages/playwright-core/lib',
 });
 
 if (lintMode) {
   // Run TypeScript for type chekcing.
   steps.push({
-    command: "npx",
-    args: ["tsc", ...(watchMode ? ["-w"] : []), "-p", quotePath(filePath("."))],
+    command: 'npx',
+    args: ['tsc', ...(watchMode ? ['-w'] : []), '-p', quotePath(filePath('.'))],
     shell: true,
   });
 }
