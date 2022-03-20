@@ -24,7 +24,7 @@ it('should affect accept-language header @smoke', async ({ browser, server }) =>
     server.waitForRequest('/empty.html'),
     page.goto(server.EMPTY_PAGE),
   ]);
-  expect((request.headers['accept-language'] as string).substr(0, 5)).toBe('fr-CH');
+  expect((request.headers['accept-language'] as string).slice(0, 5)).toBe('fr-CH');
   await context.close();
 });
 

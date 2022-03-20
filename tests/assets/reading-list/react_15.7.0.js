@@ -722,7 +722,7 @@ if (canUseCollections) {
     return '.' + id;
   };
   var getIDFromKey = function (key) {
-    return parseInt(key.substr(1), 10);
+    return parseInt(key.slice(1), 10);
   };
 
   setItem = function (id, item) {

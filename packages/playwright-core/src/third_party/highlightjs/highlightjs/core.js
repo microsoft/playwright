@@ -1433,7 +1433,7 @@ function mergeStreams(original, highlighted, value) {
       render(stream.splice(0, 1)[0]);
     }
   }
-  return result + escapeHTML(value.substr(processed));
+  return result + escapeHTML(value.slice(processed));
 }
 
 /*
@@ -1635,7 +1635,7 @@ const HLJS = function(hljs) {
         lastIndex = top.keywordPatternRe.lastIndex;
         match = top.keywordPatternRe.exec(modeBuffer);
       }
-      buf += modeBuffer.substr(lastIndex);
+      buf += modeBuffer.slice(lastIndex);
       emitter.addText(buf);
     }
 
@@ -1783,7 +1783,7 @@ const HLJS = function(hljs) {
      */
     function doEndMatch(match) {
       const lexeme = match[0];
-      const matchPlusRemainder = codeToHighlight.substr(match.index);
+      const matchPlusRemainder = codeToHighlight.slice(match.index);
 
       const endMode = endOfMode(top, match, matchPlusRemainder);
       if (!endMode) { return NO_MATCH; }
@@ -1957,7 +1957,7 @@ const HLJS = function(hljs) {
         const processedCount = processLexeme(beforeMatch, match);
         index = match.index + processedCount;
       }
-      processLexeme(codeToHighlight.substr(index));
+      processLexeme(codeToHighlight.slice(index));
       emitter.closeAllNodes();
       emitter.finalize();
       result = emitter.toHTML();

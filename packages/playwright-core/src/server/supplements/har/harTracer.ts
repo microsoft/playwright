@@ -489,8 +489,8 @@ function parseCookie(c: string): har.Cookie {
   let first = true;
   for (const pair of c.split(/; */)) {
     const indexOfEquals = pair.indexOf('=');
-    const name = indexOfEquals !== -1 ? pair.substr(0, indexOfEquals).trim() : pair.trim();
-    const value = indexOfEquals !== -1 ? pair.substr(indexOfEquals + 1, pair.length).trim() : '';
+    const name = indexOfEquals !== -1 ? pair.slice(0, indexOfEquals).trim() : pair.trim();
+    const value = indexOfEquals !== -1 ? pair.slice(indexOfEquals + 1).trim() : '';
     if (first) {
       first = false;
       cookie.name = name;

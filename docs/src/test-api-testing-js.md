@@ -306,7 +306,7 @@ test('last created issue should be on the server', async ({ page, request }) => 
   await page.fill('[aria-label="Title"]', 'Bug report 1');
   await page.fill('[aria-label="Comment body"]', 'Bug description');
   await page.click('text=Submit new issue');
-  const issueId = page.url().substr(page.url().lastIndexOf('/'));
+  const issueId = page.url().slice(page.url().lastIndexOf('/'));
 
   const newIssue = await request.get(`https://api.github.com/repos/${USER}/${REPO}/issues/${issueId}`);
   expect(newIssue.ok()).toBeTruthy();
@@ -351,7 +351,7 @@ test('last created issue should be on the server', async ({ page, request }) => 
   await page.fill('[aria-label="Title"]', 'Bug report 1');
   await page.fill('[aria-label="Comment body"]', 'Bug description');
   await page.click('text=Submit new issue');
-  const issueId = page.url().substr(page.url().lastIndexOf('/'));
+  const issueId = page.url().slice(page.url().lastIndexOf('/'));
 
   const newIssue = await request.get(`https://api.github.com/repos/${USER}/${REPO}/issues/${issueId}`);
   expect(newIssue.ok()).toBeTruthy();

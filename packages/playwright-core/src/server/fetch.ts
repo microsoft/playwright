@@ -196,7 +196,7 @@ export abstract class APIRequestContext extends SdkObject {
       return [];
     const url = new URL(responseUrl);
     // https://datatracker.ietf.org/doc/html/rfc6265#section-5.1.4
-    const defaultPath = '/' + url.pathname.substr(1).split('/').slice(0, -1).join('/');
+    const defaultPath = '/' + url.pathname.slice(1).split('/').slice(0, -1).join('/');
     const cookies: types.NetworkCookie[] = [];
     for (const header of setCookie) {
       // Decode cookie value?

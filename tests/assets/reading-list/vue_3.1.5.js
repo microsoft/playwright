@@ -10708,7 +10708,7 @@ var Vue = (function (exports) {
       return !currentOpenBracketCount && !currentOpenParensCount;
   };
   function getInnerRange(loc, offset, length) {
-      const source = loc.source.substr(offset, length);
+      const source = loc.source.slice(offset, offset + length);
       const newLoc = {
           source,
           start: advancePositionWithClone(loc.start, loc.source, offset),
@@ -11441,7 +11441,7 @@ var Vue = (function (exports) {
                   if (!content.endsWith(']')) {
                       emitError(context, 26 /* X_MISSING_DYNAMIC_DIRECTIVE_ARGUMENT_END */);
                   }
-                  content = content.substr(1, content.length - 2);
+                  content = content.slice(1, -1);
               }
               else if (isSlot) {
                   // #1241 special case for v-slot: vuetify relies extensively on slot
@@ -11466,7 +11466,7 @@ var Vue = (function (exports) {
               valueLoc.end = advancePositionWithClone(valueLoc.start, value.content);
               valueLoc.source = valueLoc.source.slice(1, -1);
           }
-          const modifiers = match[3] ? match[3].substr(1).split('.') : [];
+          const modifiers = match[3] ? match[3].slice(1).split('.') : [];
           return {
               type: 7 /* DIRECTIVE */,
               name: dirName,
@@ -11673,7 +11673,7 @@ var Vue = (function (exports) {
   }
   function startsWithEndTagOpen(source, tag) {
       return (startsWith(source, '</') &&
-          source.substr(2, tag.length).toLowerCase() === tag.toLowerCase() &&
+          source.slice(2, 2 + tag.length).toLowerCase() === tag.toLowerCase() &&
           /[\t\r\n\f />]/.test(source[2 + tag.length] || '>'));
   }
 

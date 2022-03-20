@@ -143,7 +143,7 @@ class Recorder {
       const prefix = 'Highlight updated for test: ';
       if (msg.text().startsWith(prefix)) {
         this.page.off('console', listener);
-        callback(msg.text().substr(prefix.length));
+        callback(msg.text().slice(prefix.length));
       }
     };
     this.page.on('console', listener);
@@ -160,7 +160,7 @@ class Recorder {
       const prefix = 'Action performed for test: ';
       if (msg.text().startsWith(prefix)) {
         this.page.off('console', listener);
-        const arg = JSON.parse(msg.text().substr(prefix.length));
+        const arg = JSON.parse(msg.text().slice(prefix.length));
         callback(arg);
       }
     };

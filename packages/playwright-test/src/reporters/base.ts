@@ -450,5 +450,5 @@ function fitToWidth(line: string, width: number, suffix?: string): string {
     ansiLen += m[0].length;
   }
   // Truncate and reset all colors.
-  return line.substr(0, width + ansiLen) + '\u001b[0m';
+  return line.slice(0, width + ansiLen) + '\u001b[0m';
 }

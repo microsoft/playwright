@@ -142,7 +142,7 @@ for (const method of ['fetch', 'delete', 'get', 'head', 'patch', 'post', 'put'] 
         }
       }),
     ]);
-    const params = new URLSearchParams(request.url.substr(request.url.indexOf('?')));
+    const params = new URLSearchParams(request.url.slice(request.url.indexOf('?')));
     expect(params.get('p1')).toEqual('v1');
     expect(params.get('парам2')).toEqual('знач2');
   });
@@ -932,7 +932,7 @@ it('should accept bool and numeric params', async ({ page, server }) => {
       'bool2': false,
     }
   });
-  const params = new URLSearchParams(request.url.substr(request.url.indexOf('?')));
+  const params = new URLSearchParams(request.url.slice(request.url.indexOf('?')));
   expect(params.get('str')).toEqual('s');
   expect(params.get('num')).toEqual('10');
   expect(params.get('bool')).toEqual('true');

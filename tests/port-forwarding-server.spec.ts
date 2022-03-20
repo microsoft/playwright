@@ -41,7 +41,7 @@ class OutOfProcessPlaywrightServer {
         const prefix = 'Listening on ';
         const line = data.toString();
         if (line.startsWith(prefix))
-          resolve(line.substr(prefix.length));
+          resolve(line.slice(prefix.length));
       });
       this._driverProcess.stderr.on('data', (data: Buffer) => {
         console.log(data.toString());
