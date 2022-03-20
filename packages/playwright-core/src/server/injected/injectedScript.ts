@@ -24,6 +24,7 @@ import { CSSComplexSelectorList } from '../common/cssParser';
 import { generateSelector } from './selectorGenerator';
 import type * as channels from '../../protocol/channels';
 import { Highlight } from './highlight';
+import { getElementAccessibleName } from './roleUtils';
 
 type Predicate<T> = (progress: InjectedScriptProgress) => T | symbol;
 
@@ -111,6 +112,9 @@ export class InjectedScript {
 
     this._setupGlobalListenersRemovalDetection();
     this._setupHitTargetInterceptors();
+
+    if (isUnderTest)
+      (window as any).__injectedScript = this;
   }
 
   eval(expression: string): any {
@@ -1065,6 +1069,11 @@ export class InjectedScript {
       return { received, matches: allMatchesFound };
     }
     throw this.createStacklessError('Unknown expect matcher: ' + expression);
+  }
+
+  getElementAccessibleName(element: Element, includeHidden?: boolean): string {
+    const hiddenCache = new Map<Element, boolean>();
+    return getElementAccessibleName(element, !!includeHidden, hiddenCache);
   }
 }
 
