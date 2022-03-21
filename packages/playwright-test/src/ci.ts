@@ -16,7 +16,8 @@
 import { spawnAsync } from 'playwright-core/lib/utils/utils';
 
 const GIT_OPERATIONS_TIMEOUT_MS = 1_500;
-
+const kContentTypePlainText = 'text/plain';
+const kContentTypeJSON = 'application/json';
 export interface Attachment {
     name: string;
     contentType: string;
@@ -24,7 +25,7 @@ export interface Attachment {
     body?: Buffer;
 }
 
-export const info = async (gitDir: string): Promise<Attachment> => {
+export const gitStatusFromCLI = async (gitDir: string): Promise<Attachment[]> => {
   const execGit = async (args: string[]) => {
     const { code, stdout } = await spawnAsync('git', args, { stdio: 'pipe', cwd: gitDir, timeout: GIT_OPERATIONS_TIMEOUT_MS });
     if (!!code)
@@ -32,18 +33,6 @@ export const info = async (gitDir: string): Promise<Attachment> => {
 
     return stdout.trim();
   };
-
-  let jobLink: string | undefined;
-  let commitLink: string | undefined;
-  if (process.env.GITHUB_SERVER_URL) {
-    jobLink = `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`;
-    commitLink = `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/commit/${process.env.GITHUB_SHA}`;
-  } else if (process.env.CI_PROJECT_URL && process.env.CI_JOB_URL) { // GitLab: https://docs.gitlab.com/ee/ci/variables/predefined_variables.html
-    jobLink = process.env.CI_JOB_URL;
-    commitLink = `${process.env.CI_PROJECT_URL}/-/commit/${process.env.CI_COMMIT_SHA}`;
-  } else if (process.env.BUILD_URL) { // Jenkins: https://www.jenkins.io/doc/book/pipeline/jenkinsfile/#using-environment-variables
-    jobLink = process.env.BUILD_URL;
-  }
 
   await execGit(['--help']).catch(() => { throw new Error('git --help failed; is git installed?');});
   const [ status, sha, subject, authorName, authorEmail, rawTimestamp ] = await Promise.all([
@@ -57,30 +46,46 @@ export const info = async (gitDir: string): Promise<Attachment> => {
 
   let timestamp: number = Number.parseInt(rawTimestamp, 10);
   timestamp = Number.isInteger(timestamp) ? timestamp * 1000 : 0;
-  const metadata = {
-    generatedAt: Date.now(),
-    git: {
-      commit: {
-        author: {
-          name: authorName,
-          email: authorEmail,
-        },
-        sha,
-        subject,
-        timestamp,
-        link: commitLink,
-      },
-      clean: !status,
-    },
-    ci: {
-      link: jobLink
-    },
-  };
 
-  return {
-    name: 'ci-info',
-    contentType: 'application/json',
-    body: Buffer.from(JSON.stringify(metadata)),
-  };
+  return [
+    { name: 'revision.id', body: Buffer.from(sha), contentType: kContentTypePlainText },
+    { name: 'revision.author', body: Buffer.from(authorName), contentType: kContentTypePlainText },
+    { name: 'revision.email', body: Buffer.from(authorEmail), contentType: kContentTypePlainText },
+    { name: 'revision.subject', body: Buffer.from(subject), contentType: kContentTypePlainText },
+    { name: 'revision.timestamp', body: Buffer.from(JSON.stringify(timestamp)),  contentType: kContentTypeJSON },
+    { name: 'revision.localPendingChanges', body: Buffer.from(!!status + ''), contentType: kContentTypePlainText },
+  ];
+};
 
+export const linksFromEnv = async (): Promise<Attachment[]> => {
+  let commitLink: string | undefined;
+  if (process.env.GITHUB_SERVER_URL && process.env.GITHUB_REPOSITORY && process.env.GITHUB_SHA) {
+    commitLink = `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/commit/${process.env.GITHUB_SHA}`;
+  } else if (process.env.CI_PROJECT_URL && process.env.CI_COMMIT_SHA) { // GitLab: https://docs.gitlab.com/ee/ci/variables/predefined_variables.html
+    commitLink = `${process.env.CI_PROJECT_URL}/-/commit/${process.env.CI_COMMIT_SHA}`;
+  }
+
+  let jobLink: string | undefined;
+  if (process.env.GITHUB_SERVER_URL && process.env.GITHUB_REPOSITORY && process.env.GITHUB_RUN_ID) {
+    jobLink = `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`;
+  } else if (process.env.CI_JOB_URL) { // GitLab: https://docs.gitlab.com/ee/ci/variables/predefined_variables.html
+    jobLink = process.env.CI_JOB_URL;
+  } else if (process.env.BUILD_URL) { // Jenkins: https://www.jenkins.io/doc/book/pipeline/jenkinsfile/#using-environment-variables
+    jobLink = process.env.BUILD_URL;
+  }
+
+  const out: Attachment[] = [];
+  if (jobLink)
+    out.push({ name: 'ci.link', body: Buffer.from(jobLink), contentType: kContentTypePlainText });
+
+
+  if (commitLink)
+    out.push({ name: 'revision.link', body: Buffer.from(commitLink), contentType: kContentTypePlainText });
+
+
+  return out;
+};
+
+export const generationTimestamp = async (): Promise<Attachment[]> => {
+  return [{ name: 'generatedAt', body: Buffer.from(JSON.stringify(Date.now())), contentType: kContentTypeJSON }];
 };

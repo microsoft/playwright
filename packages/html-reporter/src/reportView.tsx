@@ -62,39 +62,52 @@ export const ReportView: React.FC<{
   </div>;
 };
 
-const MetadataView: React.FC<Metadata> = ({ generatedAt, git, ci }) => {
+const MetadataView: React.FC<Metadata> = metadata => {
   return (
     <header className='metadata-view pt-3'>
-      <h1>{git.commit.subject}</h1>
-      {git && <>
+      <h1>{metadata['revision.subject'] || 'Playwright Test Report'}</h1>
+      {metadata['revision.id'] &&
         <MetadatViewItem
-          content={<span style={{ fontFamily: 'monospace' }}>{git.commit.sha.substring(0, 7)}</span>}
-          href={git.commit.link}
+          content={<span style={{ fontFamily: 'monospace' }}>{metadata['revision.id'].slice(0, 7)}</span>}
+          href={metadata['revision.link']}
           icon='commit'
         />
+      }
+      {(metadata['revision.author'] || metadata['revision.email']) &&
         <MetadatViewItem
-          content={<>{git.commit.author.name}<br/>{git.commit.author.email}</>}
+          content={(
+            metadata['revision.author'] && metadata['revision.email']
+              ? <>{metadata['revision.author']}<br/>{metadata['revision.email']}</>
+              : (metadata['revision.author'] || metadata['revision.email'])
+            )!}
           icon='person'
         />
+      }
+      {metadata['revision.timestamp'] &&
         <MetadatViewItem
           content={
             <>
-              {Intl.DateTimeFormat(undefined, { dateStyle: 'full' }).format(git.commit.timestamp)}
+              {Intl.DateTimeFormat(undefined, { dateStyle: 'full' }).format(metadata['revision.timestamp'])}
               <br />
-              {Intl.DateTimeFormat(undefined, { timeStyle: 'long' }).format(git.commit.timestamp)}
+              {Intl.DateTimeFormat(undefined, { timeStyle: 'long' }).format(metadata['revision.timestamp'])}
             </>
           }
           icon='calendar'
         />
-        {ci.link &&
-          <MetadatViewItem
-            content='CI/CD Logs'
-            href={ci.link}
-            icon='externalLink'
-          />
-        }
-      </>}
-      <p style={{ fontStyle: 'italic', color: 'var(--color-fg-subtle)' }}>Report generated on {Intl.DateTimeFormat(undefined, { dateStyle: 'full', timeStyle: 'long' }).format(generatedAt)}</p>
+      }
+      {metadata['ci.link'] &&
+        <MetadatViewItem
+          content='CI/CD Logs'
+          href={metadata['ci.link']}
+          icon='externalLink'
+        />
+      }
+      {metadata['revision.localPendingChanges'] &&
+        <p style={{ fontStyle: 'italic', color: 'var(--color-fg-subtle)' }}>This report was generated with <strong>uncommitted changes</strong>.</p>
+      }
+      {metadata['generatedAt'] &&
+        <p style={{ fontStyle: 'italic', color: 'var(--color-fg-subtle)' }}>Report generated on {Intl.DateTimeFormat(undefined, { dateStyle: 'full', timeStyle: 'long' }).format(metadata['generatedAt'])}</p>
+      }
     </header>
   );
 };

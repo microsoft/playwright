@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { HTMLReport } from '@playwright/test/src/reporters/html';
+import type { HTMLReport, TestAttachment } from '@playwright/test/src/reporters/html';
 import type zip from '@zip.js/zip.js';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
@@ -22,24 +22,40 @@ import './colors.css';
 import { LoadedReport } from './loadedReport';
 import { ReportView } from './reportView';
 
-export type Metadata = {
-  generatedAt: number;
-  git: {
-      commit: {
-          author: {
-              name: string;
-              email: string;
-          };
-          sha: string;
-          subject: string;
-          timestamp: number;
-          link: string | undefined;
-      };
-      clean: boolean;
+export type Metadata = Partial<{
+  'generatedAt': number;
+  'revision.id': string;
+  'revision.author': string;
+  'revision.email': string;
+  'revision.subject': string;
+  'revision.timestamp': number;
+  'revision.link': string;
+  'revision.localPendingChanges': boolean;
+  'ci.link': string;
+}>;
+
+const extractMetadata = (attachments: TestAttachment[]): Metadata | undefined => {
+  const field = (name: string) => attachments.find(({ name: n }) => n === name)?.body;
+  const fieldAsJSON = (name: string) => {
+    const raw = field(name);
+    if (raw !== undefined)
+      return JSON.parse(raw);
   };
-  ci: {
-      link: string | undefined;
+
+  const out = {
+    'generatedAt': fieldAsJSON('generatedAt'),
+    'revision.id': field('revision.id'),
+    'revision.author': field('revision.author'),
+    'revision.email': field('revision.email'),
+    'revision.subject': field('revision.subject'),
+    'revision.timestamp': fieldAsJSON('revision.timestamp'),
+    'revision.link': field('revision.link'),
+    'revision.localPendingChanges': fieldAsJSON('revision.localPendingChanges'),
+    'ci.link': field('ci.link'),
   };
+
+  if (Object.entries(out).filter(([_, v]) => v !== undefined).length)
+    return out;
 };
 
 const zipjs = (self as any).zip;
@@ -68,9 +84,7 @@ class ZipReport implements LoadedReport {
     for (const entry of await zipReader.getEntries())
       this._entries.set(entry.filename, entry);
     this._json = await this.entry('report.json') as HTMLReport;
-    const rawMetadata = this._json.attachments.find(v => v.name === 'ci-info')?.body;
-    if (rawMetadata)
-      this._json.metadata = JSON.parse(rawMetadata);
+    this._json.metadata = extractMetadata(this._json.attachments);
   }
 
   json(): HTMLReport {

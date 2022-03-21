@@ -26,6 +26,7 @@ process.env.PWPAGE_IMPL = 'electron';
 const outputDir = path.join(__dirname, '..', '..', 'test-results');
 const testDir = path.join(__dirname, '..');
 const config: Config<CoverageWorkerOptions & PlaywrightWorkerOptions & PlaywrightTestOptions> = {
+  globalSetup: path.join(__dirname, './globalSetup'),
   testDir,
   outputDir,
   timeout: 30000,
