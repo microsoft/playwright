@@ -2,9 +2,23 @@
 * langs: js, java, python
 
 This API is used for the Web API testing. You can use it to trigger API endpoints, configure micro-services, prepare
-environment or the service to your e2e test. When used on [Page] or a [BrowserContext], this API will automatically use
-the cookies from the corresponding [BrowserContext]. This means that if you log in using this API, your e2e test
-will be logged in and vice versa.
+environment or the service to your e2e test.
+
+Each Playwright browser context has associated with it [APIRequestContext] instance which shares cookie storage with
+the browser context and can be accessed via [`property: BrowserContext.request`] or [`property: Page.request`].
+It is also possible to create a new APIRequestContext instance manually by calling [`method: APIRequest.newContext`].
+
+**Cookie management**
+
+[APIRequestContext] retuned by [`property: BrowserContext.request`] and [`property: Page.request`] shares cookie
+storage with the corresponding [BrowserContext]. Each API request will have `Cookie` header populated with the
+values from the browser context. If the API response contains `Set-Cookie` header it will automatically update
+[BrowserContext] cookies and requests made from the page will pick them up. This means that if you log in using
+this API, your e2e test will be logged in and vice versa.
+
+If you want API requests to not interfere with the browser cookies you shoud create a new [APIRequestContext] by
+calling [`method: APIRequest.newContext`]. Such `APIRequestContext` object will have its own isolated cookie
+storage.
 
 ```python async
 import os

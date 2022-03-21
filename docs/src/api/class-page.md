@@ -2475,7 +2475,8 @@ last redirect.
 * langs: js, java, python
 - type: <[APIRequestContext]>
 
-API testing helper associated with this page. Requests made with this API will use page cookies.
+API testing helper associated with this page. This method returns the same instance as
+[`property: BrowserContext.request`] on the page's context. See [`property: BrowserContext.request`] for more details.
 
 ## async method: Page.route
 
