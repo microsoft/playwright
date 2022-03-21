@@ -388,31 +388,72 @@ await requestContext.storageState({ path: 'state.json' });
 const context = await browser.newContext({ storageState: 'state.json' });
 ```
 
-### Manually setting cookies
+## Context request vs global request
 
-If there is a development API that returns auth cookies in the response body you
-can manually set them on the browser context:
+There are two types of [APIRequestContext]:
+* associated with a [BrowserContext]
+* isolated instance, created via [`method: APIRequest.newContext`]
+
+The main difference is that [APIRequestConxtext] accessible via [`property: BrowserContext.request`] and
+[`property: Page.request`] will populate request's `Cookie` header from the browser context and will
+automatically update browser cookies if [APIResponse] has `Set-Cookie` header:
 
 ```js
-test('obtain auth cookies via API', async ({ page, context }) => {
-  // Fetch auth cookie values via API.
-  const authResponse = await context.request.get('https://api.example.com/path');
-  const body = await authResponse.json();
-  const cookies = body.pass.cookies;
+test('context request will share cookie storage with its browser context', async ({ page, context }) => {
+  await context.route('https://www.github.com/', async (route) => {
+    // Send an API request that shares cookie storage with the browser context.
+    const response = await context.request.fetch(route.request());
+    const responseHeaders = response.headers();
 
-  // Inject them into context.
-  await context.addCookies(Object.entries(cookies).map(([key, value]) => {
-    return {
-      name: key,
-      value,
-      domain: 'https://example.com/',
-      httpOnly: true,
-      secure: true
-    };
-  }));
+    // The response will have 'Set-Cookie' header.
+    const responseCookies = new Map(responseHeaders['set-cookie'].split('\n').map(c => c.split(';', 2)[0].split('=')));
+    // The response will have 3 cookies in 'Set-Cookie' header.
+    expect(responseCookies.size).toBe(3);
+    const contextCookies = await context.cookies();
+    // The browser context will already contain all the cookies from the API response.
+    expect(new Map(contextCookies.map(({name, value}) => [name, value]))).toEqual(responseCookies);
 
-  // Navigate to the landing page and check that we are logged in.
-  await page.goto('https://example.com/');
-  await expect(page.locator('#logout')).toBeVisible();
+    route.fulfill({
+      response,
+      headers: {...responseHeaders, foo: 'bar'},
+    });
+  });
+  await page.goto('https://www.github.com/');
+});
+```
+
+If you don't want [APIRequestContext] to use and update cookies from the browser context, you can manually
+create a new instance of [APIRequestContext] which will have its own isolated cookies:
+
+```js
+test('global context request has isolated cookie storage', async ({ page, context, browser, playwright }) => {
+  // Create a new instance of APIRequestContext with isolated cookie storage.
+  const request = await playwright.request.newContext();
+  await context.route('https://www.github.com/', async (route) => {
+    const response = await request.fetch(route.request());
+    const responseHeaders = response.headers();
+
+    const responseCookies = new Map(responseHeaders['set-cookie'].split('\n').map(c => c.split(';', 2)[0].split('=')));
+    // The response will have 3 cookies in 'Set-Cookie' header.
+    expect(responseCookies.size).toBe(3);
+    const contextCookies = await context.cookies();
+    // The browser context will not have any cookies from the isolated API request.
+    expect(contextCookies.length).toBe(0);
+
+    // Manually export cookie storage.
+    const storageState = await request.storageState();
+    // Create a new context and initialize it with the cookies from the global request.
+    const browserContext2 = await browser.newContext({ storageState });
+    const contextCookies2 = await browserContext2.cookies();
+    // The new browser context will already contain all the cookies from the API response.
+    expect(new Map(contextCookies2.map(({name, value}) => [name, value]))).toEqual(responseCookies);
+
+    route.fulfill({
+      response,
+      headers: {...responseHeaders, foo: 'bar'},
+    });
+  });
+  await page.goto('https://www.github.com/');
+  await request.dispose();
 });
 ```
