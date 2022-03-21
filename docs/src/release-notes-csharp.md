@@ -3,8 +3,6 @@ id: release-notes
 title: "Release notes"
 ---
 
-<!-- TOC -->
-
 ## Version 1.20
 
 ### Web-First Assertions

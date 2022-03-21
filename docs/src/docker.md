@@ -5,8 +5,6 @@ title: "Docker"
 
 [Dockerfile.focal] can be used to run Playwright scripts in Docker environment. These image includes all the dependencies needed to run browsers in a Docker container, and also include the browsers themselves.
 
-<!-- TOC -->
-
 ## Usage
 
 This image is published on [Docker Hub].

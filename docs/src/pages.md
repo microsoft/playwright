@@ -3,8 +3,6 @@ id: pages
 title: "Pages"
 ---
 
-<!-- TOC -->
-
 ## Pages
 
 Each [BrowserContext] can have multiple pages. A [Page] refers to a single tab or a popup window within a browser

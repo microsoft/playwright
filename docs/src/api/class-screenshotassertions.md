@@ -9,8 +9,6 @@ expected values stored in files. See also [`method: PageAssertions.toHaveScreens
 expect(screenshot).toMatchSnapshot('landing-page.png');
 ```
 
-<!-- TOC -->
-
 ## method: ScreenshotAssertions.toMatchSnapshot
 
 Ensures that passed value, either a [string] or a [Buffer], matches the expected snapshot stored in the test snapshots directory.

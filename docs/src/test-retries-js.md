@@ -3,8 +3,6 @@ id: test-retries
 title: "Test retry"
 ---
 
-<!-- TOC -->
-
 ## Failures
 
 Playwright Test runs tests in worker processes. These processes are OS processes, running independently, orchestrated by the test runner. All workers have identical environments and each starts its own browser.

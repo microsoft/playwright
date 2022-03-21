@@ -3,8 +3,6 @@ id: input
 title: "Input"
 ---
 
-<!-- TOC -->
-
 ## Text input
 
 This is the easiest way to fill out the form fields. It focuses the element and triggers an `input` event with the entered text. It works for `<input>`, `<textarea>`, `[contenteditable]` and `<label>` associated with an input or textarea.

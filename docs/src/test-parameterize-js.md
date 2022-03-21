@@ -5,8 +5,6 @@ title: "Parametrize tests"
 
 You can either parametrize tests on a test level or on a project level.
 
-<!-- TOC -->
-
 ## Parameterized Tests
 
 ```js js-flavor=js

@@ -7,8 +7,6 @@ Playwright allows listening to various types of events happening in the web page
 as network requests, creation of child pages, dedicated workers etc. There are several
 ways to subscribe to such events:
 
-<!-- TOC -->
-
 ## Waiting for event
 
 Most of the time, scripts will need to wait for a particular event to happen. Below are some of the typical event

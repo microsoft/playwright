@@ -3,8 +3,6 @@ id: test-cli
 title: "Command line"
 ---
 
-<!-- TOC -->
-
 ## Examples
 
 Here are the most common options available in the command line.

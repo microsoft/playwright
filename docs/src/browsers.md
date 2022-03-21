@@ -7,8 +7,6 @@ Each version of Playwright needs specific versions of browser binaries to operat
 
 With every release, Playwright updates the versions of the browsers it supports, so that the latest Playwright would support the latest browsers at any moment. It means that every time you update playwright, you might need to re-run the `install` CLI command.
 
-<!-- TOC -->
-
 ## Chromium
 
 For Google Chrome, Microsoft Edge and other Chromium-based browsers, by default, Playwright uses open source Chromium builds.

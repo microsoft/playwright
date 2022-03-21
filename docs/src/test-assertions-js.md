@@ -24,8 +24,6 @@ in test config.
 
 By default, the timeout for assertions is set to 5 seconds. Learn more about [various timeouts](./test-timeouts.md).
 
-<!-- TOC -->
-
 ## Negating Matchers
 
 In general, we can expect the opposite to be true by adding a `.not` to the front

@@ -5,9 +5,6 @@ title: "Why Playwright?"
 
 Playwright enables fast, reliable and capable testing and automation across all modern browsers. This guide covers those key differentiators to help you decide on the right tool for your automated tests.
 
-<!-- TOC -->
-- [Release notes](./release-notes.md)
-
 ## Support for all browsers
 * **Test on Chromium, Firefox and WebKit**. Playwright has full API coverage for all modern browsers, including Google Chrome and Microsoft Edge (with [Chromium](https://www.chromium.org/)), Apple Safari (with [WebKit](https://webkit.org/)) and Mozilla Firefox.
 

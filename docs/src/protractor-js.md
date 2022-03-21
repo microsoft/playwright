@@ -3,8 +3,6 @@ id: protractor
 title: "Migrating from Protractor"
 ---
 
-<!-- TOC -->
-
 ## Migration Principes
 
 - No need for "webdriver-manager" / Selenium.

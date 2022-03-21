@@ -12,10 +12,6 @@ Playwright allows overriding various parameters of the device where the browser 
 Most of these parameters are configured during the browser context construction, but some of them such as viewport size
 can be changed for individual pages.
 
-<!-- TOC -->
-
-<br/>
-
 ## Devices
 * langs: js, python, csharp
 

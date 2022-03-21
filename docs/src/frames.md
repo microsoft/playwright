@@ -3,8 +3,6 @@ id: frames
 title: "Frames"
 ---
 
-<!-- TOC -->
-
 ## Frames
 
 A [Page] can have one or more [Frame] objects attached to it. Each page has a main frame and page-level interactions

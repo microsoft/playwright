@@ -8,8 +8,6 @@ and APIs which are not (yet) fully supported by all browsers. Playwright usually
 atomation APIs in such cases. You can use mocks to test behavior of your application in such cases. This guide
 gives a few examples.
 
-<!-- TOC -->
-
 ## Introduction
 
 Let's consider a web app that uses [battery API](https://developer.mozilla.org/en-US/docs/Web/API/Navigator/getBattery)

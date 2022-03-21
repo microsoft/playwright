@@ -12,8 +12,6 @@ Playwright Test runs tests in parallel. In order to achieve that, it runs severa
 
 You can control the number of [parallel worker processes](#limit-workers) and [limit the number of failures](#limit-failures-and-fail-fast) in the whole test suite for efficiency.
 
-<!-- TOC -->
-
 ## Worker processes
 
 All tests run in worker processes. These processes are OS processes, running independently, orchestrated by the test runner. All workers have identical environments and each starts its own browser.

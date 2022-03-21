@@ -14,8 +14,6 @@ login in every context and speeds up test execution.
 > Note: This guide covers cookie/token-based authentication (logging in via the
 app UI). For [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication) use [`method: Browser.newContext`].
 
-<!-- TOC -->
-
 ## Automate logging in
 
 The Playwright API can automate interaction with a login form. See

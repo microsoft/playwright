@@ -3,8 +3,6 @@ id: troubleshooting
 title: "Troubleshooting"
 ---
 
-<!-- TOC -->
-
 ## Browser dependencies
 
 Playwright does self-inspection every time it runs to make sure the browsers can be launched successfully. If there are missing

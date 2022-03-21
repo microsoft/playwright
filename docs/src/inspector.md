@@ -7,8 +7,6 @@ Playwright Inspector is a GUI tool that helps authoring and debugging Playwright
 
 <img width="712" alt="Playwright Inspector" src="https://user-images.githubusercontent.com/883973/108614092-8c478a80-73ac-11eb-9597-67dfce110e00.png"></img>
 
-<!-- TOC -->
-
 ## Open Playwright Inspector
 
 There are several ways of opening Playwright Inspector:

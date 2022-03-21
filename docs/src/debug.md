@@ -7,8 +7,6 @@ Playwright scripts work with existing debugging tools, like Node.js debuggers
 and browser developer tools. Playwright also introduces new debugging features
 for browser automation.
 
-<!-- TOC -->
-
 ## Playwright Inspector
 
 [Playwright Inspector](./inspector.md) is a GUI tool that helps authoring and debugging Playwright scripts. That's our default recommended tool for scripts troubleshooting.

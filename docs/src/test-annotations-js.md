@@ -3,8 +3,6 @@ id: test-annotations
 title: "Annotations"
 ---
 
-<!-- TOC -->
-
 ## Annotations
 
 Playwright Test supports test annotations to deal with failures, flakiness, skip, focus and tag tests:

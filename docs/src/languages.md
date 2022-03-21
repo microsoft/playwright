@@ -5,8 +5,6 @@ title: "Supported languages"
 
 The Playwright API is available in multiple languages.
 
-<!-- TOC -->
-
 ## JavaScript and TypeScript
 
 [Playwright for Node.js](https://playwright.dev/docs/intro) is available.

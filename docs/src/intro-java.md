@@ -3,9 +3,6 @@ id: intro
 title: "Getting started"
 ---
 
-<!-- TOC -->
-- [Release notes](./release-notes.md)
-
 ## Installation
 
 Playwright is distributed as a set of [Maven](https://maven.apache.org/what-is-maven.html) modules. The easiest way to use it is to add one dependency to your project's `pom.xml` as described below. If you're not familiar with Maven please refer to its [documentation](https://maven.apache.org/guides/getting-started/maven-in-five-minutes.html).

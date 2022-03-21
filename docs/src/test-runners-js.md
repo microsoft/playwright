@@ -5,8 +5,6 @@ title: "Third party runners"
 
 With a few lines of code, you can hook up Playwright to your existing JavaScript test runner.
 
-<!-- TOC -->
-
 ## Playwright Test
 
 [Playwright Test](./intro.md) is our first-party recommended test runner to be used with Playwright. Learn more about it [here](./intro.md).

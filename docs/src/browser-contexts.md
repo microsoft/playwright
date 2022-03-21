@@ -3,8 +3,6 @@ id: browser-contexts
 title: "Browser Contexts"
 ---
 
-<!-- TOC -->
-
 ## Browser context
 
 A [BrowserContext] is an isolated incognito-alike session within a browser instance. Browser contexts are fast and

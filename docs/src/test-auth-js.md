@@ -10,8 +10,6 @@ and prevents cascading test failures.
 
 Below are the typical strategies for implementing the signed-in scenarios.
 
-<!-- TOC -->
-
 ## Sign in with beforeEach
 
 This is the simplest way where each test signs in inside the `beforeEach` hook. It also is the

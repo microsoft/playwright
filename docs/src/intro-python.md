@@ -3,10 +3,6 @@ id: intro
 title: "Getting started"
 ---
 
-<!-- TOC -->
-
-- [Release notes](./release-notes.md)
-
 ## Installation
 
 See [system requirements](#system-requirements).

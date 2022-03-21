@@ -5,8 +5,6 @@ title: "Pytest plugin"
 
 Write end-to-end tests for your web apps with [Pytest](https://docs.pytest.org/en/stable/).
 
-<!-- TOC -->
-
 ## Usage
 
 ```bash

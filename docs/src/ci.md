@@ -6,8 +6,6 @@ title: "Continuous Integration"
 Playwright tests can be executed in CI environments. We have created sample
 configurations for common CI providers.
 
-<!-- TOC -->
-
 ## Introduction
 
 3 steps to get your tests running on CI:

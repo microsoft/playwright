@@ -5,8 +5,6 @@ title: "Test Generator"
 
 Playwright comes with the ability to generate tests out of the box.
 
-<!-- TOC -->
-
 ## Generate tests
 
 ```bash js

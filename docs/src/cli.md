@@ -5,8 +5,6 @@ title: "Command line tools"
 
 Playwright comes with the command line tools.
 
-<!-- TOC -->
-
 ## Usage
 
 ```bash js

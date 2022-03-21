@@ -13,13 +13,6 @@ Playwright Test was created specifically to accommodate the needs of the end-to-
 - Capture videos, screenshots and other artifacts on failure.
 - Integrate your POMs as extensible fixtures.
 
-<br/>
-
-<!-- TOC -->
-- [Release notes](./release-notes.md)
-
-<br/>
-
 ## Installation
 
 Playwright has its own test runner for end-to-end tests, we call it Playwright Test.

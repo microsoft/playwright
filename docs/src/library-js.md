@@ -5,9 +5,6 @@ title: "Library"
 
 Playwright can either be used as a part of the [Playwright Test](./intro.md), or as a Playwright Library (this guide). If you are working on an application that utilizes Playwright capabilities or you are using Playwright with another test runner, read on.
 
-<!-- TOC -->
-- [Release notes](./release-notes.md)
-
 ## Usage
 
 Use npm or Yarn to install Playwright library in your Node.js project. See [system requirements](#system-requirements).

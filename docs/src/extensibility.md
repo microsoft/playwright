@@ -3,8 +3,6 @@ id: extensibility
 title: "Extensibility"
 ---
 
-<!-- TOC -->
-
 ## Custom selector engines
 
 Playwright supports custom selector engines, registered with [`method: Selectors.register`].

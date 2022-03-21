@@ -3,9 +3,6 @@ id: intro
 title: "Getting started"
 ---
 
-<!-- TOC -->
-- [Release notes](./release-notes.md)
-
 ## First project
 
 Create a console project and add the Playwright dependency.
