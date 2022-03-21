@@ -37,7 +37,6 @@ it('should upload the file', async ({ page, server, asset }) => {
 });
 
 it('should upload large file', async ({ page, server, browserName }, testInfo) => {
-  it.skip(browserName !== 'chromium');
   it.slow();
   await page.goto(server.PREFIX + '/input/fileupload.html');
   const uploadFile = testInfo.outputPath('200MB.zip');

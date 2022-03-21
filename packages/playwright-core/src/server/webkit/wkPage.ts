@@ -936,8 +936,9 @@ export class WKPage implements PageDelegate {
     await this._session.send('DOM.setInputFiles', { objectId, files: protocolFiles });
   }
 
-  async setInputFilePaths(handle: dom.ElementHandle<HTMLInputElement>, files: string[]): Promise<void> {
-    throw new Error('Not implemented');
+  async setInputFilePaths(handle: dom.ElementHandle<HTMLInputElement>, paths: string[]): Promise<void> {
+    const objectId = handle._objectId;
+    await this._session.send('DOM.setInputFiles', { objectId, paths });
   }
 
   async adoptElementHandle<T extends Node>(handle: dom.ElementHandle<T>, to: dom.FrameExecutionContext): Promise<dom.ElementHandle<T>> {
