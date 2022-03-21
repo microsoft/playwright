@@ -52,7 +52,7 @@ test('should fail to screenshot a page with infinite animation', async ({ runInl
   expect(result.exitCode).toBe(1);
   expect(stripAnsi(result.output)).toContain(`Timeout 2000ms exceeded while generating screenshot because page kept changing`);
   expect(stripAnsi(result.output)).toContain(`expect.toHaveScreenshot with timeout 2000ms`);
-  expect(stripAnsi(result.output)).toContain(`generating new screenshot expectation: waiting for 2 consecutive screenshots to match`);
+  expect(stripAnsi(result.output)).toContain(`generating new stable screenshot expectation`);
   expect(fs.existsSync(testInfo.outputPath('test-results', 'a-is-a-test', 'is-a-test-1-actual.png'))).toBe(true);
   expect(fs.existsSync(testInfo.outputPath('test-results', 'a-is-a-test', 'is-a-test-1-expected.png'))).toBe(false);
   expect(fs.existsSync(testInfo.outputPath('test-results', 'a-is-a-test', 'is-a-test-1-previous.png'))).toBe(true);
@@ -370,8 +370,8 @@ test('should fail when screenshot is different size', async ({ runInlineTest }) 
     `
   });
   expect(result.exitCode).toBe(1);
-  expect(stripAnsi(result.output)).toContain(`Timeout 2000ms exceeded`);
-  expect(stripAnsi(result.output)).toContain(`waiting for screenshot to match expectation`);
+  expect(stripAnsi(result.output)).toContain(`verifying given screenshot expectation`);
+  expect(stripAnsi(result.output)).toContain(`captured a stable screenshot`);
   expect(result.output).toContain('Expected an image 22px by 33px, received 1280px by 720px.');
 });
 
@@ -411,7 +411,6 @@ test('should fail when screenshot is different pixels', async ({ runInlineTest }
   });
   expect(result.exitCode).toBe(1);
   expect(result.output).toContain('Screenshot comparison failed');
-  expect(result.output).toContain(`Timeout 2000ms exceeded`);
   expect(result.output).toContain('12345 pixels');
   expect(result.output).toContain('Call log');
   expect(result.output).toContain('ratio 0.02');

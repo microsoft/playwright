@@ -31,7 +31,7 @@ import { Progress, ProgressController } from './progress';
 import { assert, isError } from '../utils/utils';
 import { ManualPromise } from '../utils/async';
 import { debugLogger } from '../utils/debugLogger';
-import { mimeTypeToComparator, ImageComparatorOptions, ComparatorResult } from '../utils/comparators';
+import { mimeTypeToComparator, ImageComparatorOptions } from '../utils/comparators';
 import { SelectorInfo, Selectors } from './selectors';
 import { CallMetadata, SdkObject } from './instrumentation';
 import { Artifact } from './artifact';
@@ -458,53 +458,72 @@ export class Page extends SdkObject {
 
     const comparator = mimeTypeToComparator['image/png'];
     const controller = new ProgressController(metadata, this);
-    const isGeneratingNewScreenshot = !options.expected;
-    if (isGeneratingNewScreenshot && options.isNot)
+    if (!options.expected && options.isNot)
       return { errorMessage: '"not" matcher requires expected result' };
     let intermediateResult: {
       actual?: Buffer,
       previous?: Buffer,
-      errorMessage?: string,
+      errorMessage: string,
       diff?: Buffer,
     } | undefined = undefined;
+    const areEqualScreenshots = (actual: Buffer | undefined, expected: Buffer | undefined, previous: Buffer | undefined) => {
+      const comparatorResult = actual && expected ? comparator(actual, expected, options.comparatorOptions) : undefined;
+      if (comparatorResult !== undefined && !!comparatorResult === !!options.isNot)
+        return true;
+      if (comparatorResult)
+        intermediateResult = { errorMessage: comparatorResult.errorMessage, diff: comparatorResult.diff, actual, previous };
+      return false;
+    };
     const callTimeout = this._timeoutSettings.timeout(options);
     return controller.run(async progress => {
       let actual: Buffer | undefined;
       let previous: Buffer | undefined;
       const pollIntervals = [0, 100, 250, 500];
       progress.log(`${metadata.apiName}${callTimeout ? ` with timeout ${callTimeout}ms` : ''}`);
-      if (isGeneratingNewScreenshot)
-        progress.log(`  generating new screenshot expectation: waiting for 2 consecutive screenshots to match`);
+      if (options.expected)
+        progress.log(`  verifying given screenshot expectation`);
       else
-        progress.log(`  waiting for screenshot to match expectation`);
+        progress.log(`  generating new stable screenshot expectation`);
+      let isFirstIteration = true;
       while (true) {
         progress.throwIfAborted();
         if (this.isClosed())
           throw new Error('The page has closed');
-        let comparatorResult: ComparatorResult | undefined;
         const screenshotTimeout = pollIntervals.shift() ?? 1000;
         if (screenshotTimeout)
           progress.log(`waiting ${screenshotTimeout}ms before taking screenshot`);
-        if (isGeneratingNewScreenshot) {
-          previous = actual;
-          actual = await rafrafScreenshot(progress, screenshotTimeout).catch(e => undefined);
-          comparatorResult = actual && previous ? comparator(actual, previous, options.comparatorOptions) : undefined;
-        } else {
-          actual = await rafrafScreenshot(progress, screenshotTimeout).catch(e => undefined);
-          comparatorResult = actual ? comparator(actual, options.expected!, options.comparatorOptions) : undefined;
-        }
-        if (comparatorResult !== undefined && !!comparatorResult === !!options.isNot)
+        previous = actual;
+        actual = await rafrafScreenshot(progress, screenshotTimeout).catch(e => {
+          progress.log(`failed to take screenshot - ` + e.message);
+          return undefined;
+        });
+        if (!actual)
+          continue;
+        // Compare against expectation for the first iteration.
+        const expectation = options.expected && isFirstIteration ? options.expected : previous;
+        if (areEqualScreenshots(actual, expectation, previous))
           break;
-        if (comparatorResult) {
-          if (isGeneratingNewScreenshot)
-            progress.log(`2 last screenshots do not match: ${comparatorResult.errorMessage}`);
-          else
-            progress.log(`screenshot does not match expectation: ${comparatorResult.errorMessage}`);
-          intermediateResult = { errorMessage: comparatorResult.errorMessage, diff: comparatorResult.diff, actual, previous };
-        }
+        if (intermediateResult)
+          progress.log(intermediateResult.errorMessage);
+        isFirstIteration = false;
       }
 
-      return isGeneratingNewScreenshot ? { actual } : {};
+      if (!isFirstIteration)
+        progress.log(`captured a stable screenshot`);
+
+      if (!options.expected)
+        return { actual };
+
+      if (isFirstIteration) {
+        progress.log(`screenshot matched expectation`);
+        return {};
+      }
+
+      if (areEqualScreenshots(actual, options.expected, previous)) {
+        progress.log(`screenshot matched expectation`);
+        return {};
+      }
+      throw new Error(intermediateResult!.errorMessage);
     }, callTimeout).catch(e => {
       // Q: Why not throw upon isSessionClosedError(e) as in other places?
       // A: We want user to receive a friendly diff between actual and expected/previous.

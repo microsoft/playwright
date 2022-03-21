@@ -24,7 +24,7 @@ import { diff_match_patch, DIFF_INSERT, DIFF_DELETE, DIFF_EQUAL } from '../third
 const { PNG } = require(require.resolve('pngjs', { paths: [require.resolve('pixelmatch')] })) as typeof import('pngjs');
 
 export type ImageComparatorOptions = { threshold?: number, maxDiffPixels?: number, maxDiffPixelRatio?: number };
-export type ComparatorResult = { diff?: Buffer; errorMessage?: string; } | null;
+export type ComparatorResult = { diff?: Buffer; errorMessage: string; } | null;
 export type Comparator = (actualBuffer: Buffer | string, expectedBuffer: Buffer, options?: any) => ComparatorResult;
 export const mimeTypeToComparator: { [key: string]: Comparator } = {
   'application/octet-string': compareBuffersOrStrings,
