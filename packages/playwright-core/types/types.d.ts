@@ -2891,7 +2891,10 @@ export interface Page {
   }): Promise<null|Response>;
 
   /**
-   * API testing helper associated with this page. Requests made with this API will use page cookies.
+   * API testing helper associated with this page. This method returns the same instance as
+   * [browserContext.request](https://playwright.dev/docs/api/class-browsercontext#browser-context-request) on the page's
+   * context. See [browserContext.request](https://playwright.dev/docs/api/class-browsercontext#browser-context-request) for
+   * more details.
    */
   request: APIRequestContext;
 
@@ -11910,9 +11913,10 @@ export interface AndroidWebView {
 }
 
 /**
- * Exposes API that can be used for the Web API testing. Each Playwright browser context has a APIRequestContext instance
- * attached which shares cookies with the page context. Its also possible to create a new APIRequestContext instance
- * manually. For more information see [here](https://playwright.dev/docs/class-apirequestcontext).
+ * Exposes API that can be used for the Web API testing. This class is used for creating [APIRequestContext] instance which
+ * in turn can be used for sending web requests. An instance of this class can be obtained via
+ * [playwright.request](https://playwright.dev/docs/api/class-playwright#playwright-request). For more information see
+ * [APIRequestContext].
  */
 export interface APIRequest {
   /**
@@ -12037,9 +12041,28 @@ export interface APIRequest {
 
 /**
  * This API is used for the Web API testing. You can use it to trigger API endpoints, configure micro-services, prepare
- * environment or the service to your e2e test. When used on [Page] or a [BrowserContext], this API will automatically use
- * the cookies from the corresponding [BrowserContext]. This means that if you log in using this API, your e2e test will be
- * logged in and vice versa.
+ * environment or the service to your e2e test.
+ *
+ * Each Playwright browser context has associated with it [APIRequestContext] instance which shares cookie storage with the
+ * browser context and can be accessed via
+ * [browserContext.request](https://playwright.dev/docs/api/class-browsercontext#browser-context-request) or
+ * [page.request](https://playwright.dev/docs/api/class-page#page-request). It is also possible to create a new
+ * APIRequestContext instance manually by calling
+ * [apiRequest.newContext([options])](https://playwright.dev/docs/api/class-apirequest#api-request-new-context).
+ *
+ * **Cookie management**
+ *
+ * [APIRequestContext] retuned by
+ * [browserContext.request](https://playwright.dev/docs/api/class-browsercontext#browser-context-request) and
+ * [page.request](https://playwright.dev/docs/api/class-page#page-request) shares cookie storage with the corresponding
+ * [BrowserContext]. Each API request will have `Cookie` header populated with the values from the browser context. If the
+ * API response contains `Set-Cookie` header it will automatically update [BrowserContext] cookies and requests made from
+ * the page will pick them up. This means that if you log in using this API, your e2e test will be logged in and vice
+ * versa.
+ *
+ * If you want API requests to not interfere with the browser cookies you shoud create a new [APIRequestContext] by calling
+ * [apiRequest.newContext([options])](https://playwright.dev/docs/api/class-apirequest#api-request-new-context). Such
+ * `APIRequestContext` object will have its own isolated cookie storage.
  *
  */
 export interface APIRequestContext {
