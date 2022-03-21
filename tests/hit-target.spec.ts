@@ -184,3 +184,62 @@ it('should work with drag and drop that moves the element under cursor', async (
   await page.dragAndDrop('#from', '#to');
   await expect(page.locator('#to')).toHaveText('Dropped');
 });
+
+it('should work with block inside inline', async ({ page, server }) => {
+  await page.goto(server.EMPTY_PAGE);
+  await page.setContent(`
+    <div>
+      <span>
+        <div id="target" onclick="window._clicked=true">
+          Romimine
+        </div>
+      </span>
+    </div>
+  `);
+  await page.locator('#target').click();
+  expect(await page.evaluate('window._clicked')).toBe(true);
+});
+
+it('should work with block-block-block inside inline-inline', async ({ page, server }) => {
+  await page.goto(server.EMPTY_PAGE);
+  await page.setContent(`
+    <div>
+      <a href="#ney">
+        <div>
+          <span>
+            <a href="#yay">
+              <div>
+                <h3 id="target">
+                  Romimine
+                </h3>
+              </div>
+            </a>
+          </span>
+        </div>
+      </a>
+    </div>
+  `);
+  await page.locator('#target').click();
+  await expect(page).toHaveURL(server.EMPTY_PAGE + '#yay');
+});
+
+it('should work with block inside inline in shadow dom', async ({ page, server }) => {
+  await page.goto(server.EMPTY_PAGE);
+  await page.setContent(`
+    <div>
+    </div>
+    <script>
+      const root = document.querySelector('div');
+      const shadowRoot = root.attachShadow({ mode: 'open' });
+      const span = document.createElement('span');
+      shadowRoot.appendChild(span);
+      const div = document.createElement('div');
+      span.appendChild(div);
+      div.id = 'target';
+      div.addEventListener('click', () => window._clicked = true);
+      div.textContent = 'Hello';
+    </script>
+  `);
+  await page.locator('#target').click();
+  expect(await page.evaluate('window._clicked')).toBe(true);
+});
