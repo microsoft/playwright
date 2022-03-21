@@ -31,7 +31,7 @@ import { Progress, ProgressController } from './progress';
 import { assert, isError } from '../utils/utils';
 import { ManualPromise } from '../utils/async';
 import { debugLogger } from '../utils/debugLogger';
-import { mimeTypeToComparator, ImageComparatorOptions, ComparatorResult } from '../utils/comparators';
+import { getComparator, ImageComparatorOptions, ComparatorResult } from '../utils/comparators';
 import { SelectorInfo, Selectors } from './selectors';
 import { CallMetadata, SdkObject } from './instrumentation';
 import { Artifact } from './artifact';
@@ -447,7 +447,7 @@ export class Page extends SdkObject {
       return await this._screenshotter.screenshotPage(progress, options.screenshotOptions || {});
     };
 
-    const comparator = mimeTypeToComparator['image/png'];
+    const comparator = getComparator('image/png');
     const controller = new ProgressController(metadata, this);
     const isGeneratingNewScreenshot = !options.expected;
     if (isGeneratingNewScreenshot && options.isNot)
