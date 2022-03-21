@@ -3131,7 +3131,11 @@ might return multiple quads for inline nodes.
       /**
        * Files to set
        */
-      files: FilePayload[];
+      files?: FilePayload[];
+      /**
+       * File paths to set
+       */
+      paths?: string[];
     }
     export type setInputFilesReturnValue = {
     }
