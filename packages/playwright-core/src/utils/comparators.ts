@@ -26,12 +26,16 @@ const { PNG } = require(require.resolve('pngjs', { paths: [require.resolve('pixe
 export type ImageComparatorOptions = { threshold?: number, maxDiffPixels?: number, maxDiffPixelRatio?: number };
 export type ComparatorResult = { diff?: Buffer; errorMessage: string; } | null;
 export type Comparator = (actualBuffer: Buffer | string, expectedBuffer: Buffer, options?: any) => ComparatorResult;
-export const mimeTypeToComparator: { [key: string]: Comparator } = {
-  'application/octet-string': compareBuffersOrStrings,
-  'image/png': compareImages.bind(null, 'image/png'),
-  'image/jpeg': compareImages.bind(null, 'image/jpeg'),
-  'text/plain': compareText,
-};
+
+export function getComparator(mimeType: string): Comparator {
+  if (mimeType === 'image/png')
+    return compareImages.bind(null, 'image/png');
+  if (mimeType === 'image/jpeg')
+    return compareImages.bind(null, 'image/jpeg');
+  if (mimeType === 'text/plain')
+    return compareText;
+  return compareBuffersOrStrings;
+}
 
 function compareBuffersOrStrings(actualBuffer: Buffer | string, expectedBuffer: Buffer): ComparatorResult {
   if (typeof actualBuffer === 'string')

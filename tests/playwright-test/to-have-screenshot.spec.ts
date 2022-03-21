@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-import { mimeTypeToComparator } from 'playwright-core/lib/utils/comparators';
+import { getComparator } from 'playwright-core/lib/utils/comparators';
 import * as fs from 'fs';
 import { PNG } from 'pngjs';
 import * as path from 'path';
 import { pathToFileURL } from 'url';
 import { test, expect, stripAnsi, createImage, paintBlackPixels } from './playwright-test-fixtures';
 
-const pngComparator = mimeTypeToComparator['image/png'];
+const pngComparator = getComparator('image/png');
 
 test.describe.configure({ mode: 'parallel' });
 
