@@ -1268,6 +1268,13 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    *
    */
   webServer: WebServerConfig | null;
+  /**
+   * > NOTE: This does not include test-level attachments. See
+   * [testInfo.attach(name[, options])](https://playwright.dev/docs/api/class-testinfo#test-info-attach) for working with
+   * test-level attachments.
+   *
+   * The list of files or buffers attached at the top-level. Some reporters show test attachments.
+   */
   attachments: { name: string, path?: string, body?: Buffer, contentType: string }[];
 }
 

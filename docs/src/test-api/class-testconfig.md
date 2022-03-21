@@ -719,3 +719,16 @@ const config: PlaywrightTestConfig = {
 };
 export default config;
 ```
+
+## property: TestConfig.attachments
+- type: <[Array]<[Object]>>
+  - `name` <[string]> Attachment name.
+  - `contentType` <[string]> Content type of this attachment to properly present in the report, for example `'application/json'` or `'image/png'`.
+  - `path` <[void]|[string]> Optional path on the filesystem to the attached file.
+  - `body` <[void]|[Buffer]> Optional attachment body used instead of a file.
+
+:::note
+This does not include test-level attachments. See [`method: TestInfo.attach`] for working with test-level attachments.
+:::
+
+The list of files or buffers attached at the top-level. Some reporters show test attachments.
