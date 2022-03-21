@@ -78,20 +78,18 @@ docker run -it --rm --ipc=host --user pwuser --security-opt seccomp=seccomp_prof
 [`seccomp_profile.json`](https://github.com/microsoft/playwright/blob/main/utils/docker/seccomp_profile.json) is needed to run Chromium with sandbox. This is a [default Docker seccomp profile](https://github.com/docker/engine/blob/d0d99b04cf6e00ed3fc27e81fc3d94e7eda70af3/profiles/seccomp/default.json) with extra user namespace cloning permissions:
 
 ```json
-[
-  {
-    "comment": "Allow create user namespaces",
-    "names": [
-      "clone",
-      "setns",
-      "unshare"
-    ],
-    "action": "SCMP_ACT_ALLOW",
-    "args": [],
-    "includes": {},
-    "excludes": {}
-  }
-]
+{
+  "comment": "Allow create user namespaces",
+  "names": [
+    "clone",
+    "setns",
+    "unshare"
+  ],
+  "action": "SCMP_ACT_ALLOW",
+  "args": [],
+  "includes": {},
+  "excludes": {}
+}
 ```
 
 :::note
