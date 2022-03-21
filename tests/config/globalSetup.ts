@@ -21,13 +21,13 @@ import * as ci from '@playwright/test/lib/ci';
 async function globalSetup(config: FullConfig) {
   config.attachments = [
     ...await ci.generationTimestamp(),
-    ...await ci.gitStatusFromCLI().catch(() => []),
+    ...await ci.gitStatusFromCLI(config.rootDir).catch(() => []),
     ...await ci.linksFromEnv(),
     // In the future, we would add some additional plugins like:
     // ...await ci.azurePipelinePlugin(),
     // (and these would likley all get bundled into one call and controlled with one config instead
     // of manually manipulating the attachments array)
   ];
-};
+}
 
 export default globalSetup;

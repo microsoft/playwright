@@ -120,7 +120,17 @@ async function runPlaywrightTest(childProcess: CommonFixtures['childProcess'], b
       ...process.env,
       PLAYWRIGHT_JSON_OUTPUT_NAME: reportFile,
       PWTEST_CACHE_DIR: cacheDir,
+      // BEGIN: Reserved CI
       CI: undefined,
+      BUILD_URL: undefined,
+      CI_COMMIT_SHA: undefined,
+      CI_JOB_URL: undefined,
+      CI_PROJECT_URL: undefined,
+      GITHUB_REPOSITORY: undefined,
+      GITHUB_RUN_ID: undefined,
+      GITHUB_SERVER_URL: undefined,
+      GITHUB_SHA: undefined,
+      // END: Reserved CI
       PW_TEST_HTML_REPORT_OPEN: undefined,
       PLAYWRIGHT_DOCKER: undefined,
       PW_GRID: undefined,
@@ -199,7 +209,7 @@ type RunOptions = {
 };
 type Fixtures = {
   writeFiles: (files: Files) => Promise<string>;
-  runInlineTest: (files: Files, params?: Params, env?: Env, options?: RunOptions) => Promise<RunResult>;
+  runInlineTest: (files: Files, params?: Params, env?: Env, options?: RunOptions, beforeRunPlaywrightTest?: ({ baseDir }: { baseDir: string }) => Promise<void>) => Promise<RunResult>;
   runTSC: (files: Files) => Promise<TSCResult>;
 };
 
@@ -212,8 +222,10 @@ export const test = base
       },
 
       runInlineTest: async ({ childProcess }, use, testInfo: TestInfo) => {
-        await use(async (files: Files, params: Params = {}, env: Env = {}, options: RunOptions = {}) => {
+        await use(async (files: Files, params: Params = {}, env: Env = {}, options: RunOptions = {}, beforeRunPlaywrightTest?: ({ baseDir: string }) => Promise<void>) => {
           const baseDir = await writeFiles(testInfo, files);
+          if (beforeRunPlaywrightTest)
+            await beforeRunPlaywrightTest({ baseDir });
           return await runPlaywrightTest(childProcess, baseDir, params, env, options);
         });
       },

@@ -728,7 +728,7 @@ export default config;
   - `body` <[void]|[Buffer]> Optional attachment body used instead of a file.
 
 :::note
-This does not include test-level attachments. See [`method: TestInfo.attach`] for working with test-level attachments.
+This does not include test-level attachments. See [`method: TestInfo.attach`] and [`property: TestInfo.attachments`] for working with test-level attachments.
 :::
 
-The list of files or buffers attached at the top-level. Some reporters show test attachments.
+The list of files or buffers attached for the overall Playwright Test run. Some reporters show attachments.

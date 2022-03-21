@@ -68,6 +68,7 @@ const MetadataView: React.FC<Metadata> = metadata => {
       <h1>{metadata['revision.subject'] || 'Playwright Test Report'}</h1>
       {metadata['revision.id'] &&
         <MetadatViewItem
+          testId='revision.id'
           content={<span style={{ fontFamily: 'monospace' }}>{metadata['revision.id'].slice(0, 7)}</span>}
           href={metadata['revision.link']}
           icon='commit'
@@ -85,6 +86,7 @@ const MetadataView: React.FC<Metadata> = metadata => {
       }
       {metadata['revision.timestamp'] &&
         <MetadatViewItem
+          testId='revision.timestamp'
           content={
             <>
               {Intl.DateTimeFormat(undefined, { dateStyle: 'full' }).format(metadata['revision.timestamp'])}
@@ -112,9 +114,9 @@ const MetadataView: React.FC<Metadata> = metadata => {
   );
 };
 
-const MetadatViewItem: React.FC<{ content: JSX.Element | string; icon: keyof typeof icons, href?: string }> = ({ content, icon, href }) => {
+const MetadatViewItem: React.FC<{ content: JSX.Element | string; icon: keyof typeof icons, href?: string, testId?: string }> = ({ content, icon, href, testId }) => {
   return (
-    <div className='mt-2 hbox'>
+    <div className='mt-2 hbox' data-test-id={testId} >
       <div className='mr-2'>
         {icons[icon]()}
       </div>

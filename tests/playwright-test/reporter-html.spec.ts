@@ -17,6 +17,7 @@
 import { test as baseTest, expect, createImage } from './playwright-test-fixtures';
 import { HttpServer } from '../../packages/playwright-core/lib/utils/httpServer';
 import { startHtmlReportServer } from '../../packages/playwright-test/lib/reporters/html';
+import { spawnAsync } from 'playwright-core/lib/utils/utils';
 
 const test = baseTest.extend<{ showReport: () => Promise<void> }>({
   showReport: async ({ page }, use, testInfo) => {
@@ -65,6 +66,8 @@ test('should generate report', async ({ runInlineTest, showReport, page }) => {
   await expect(page.locator('.test-file-test-outcome-flaky >> text=flaky')).toBeVisible();
   await expect(page.locator('.test-file-test-outcome-expected >> text=passes')).toBeVisible();
   await expect(page.locator('.test-file-test-outcome-skipped >> text=skipped')).toBeVisible();
+
+  await expect(page.locator('.metadata-view')).not.toBeVisible();
 });
 
 test('should not throw when attachment is missing', async ({ runInlineTest, page, showReport }, testInfo) => {
@@ -623,4 +626,64 @@ test('open tests from required file', async ({ runInlineTest, showReport, page }
   await expect(page.locator('.tree-item-title')).toContainText([
     /expect\.toBe/,
   ]);
+});
+
+test('should include metadata', async ({ runInlineTest, showReport, page }) => {
+  const beforeRunPlaywrightTest = async ({ baseDir }: { baseDir: string }) => {
+    const execGit = async (args: string[]) => {
+      const { code, stdout, stderr } = await spawnAsync('git', args, { stdio: 'pipe', cwd: baseDir });
+      if (!!code)
+        throw new Error(`Non-zero exit of:\n$ git ${args.join(' ')}\nConsole:\nstdout:\n${stdout}\n\nstderr:\n${stderr}\n\n`);
+      return;
+    };
+
+    await execGit(['init']);
+    await execGit(['config', '--local', 'user.email', 'shakespeare@example.local']);
+    await execGit(['config', '--local', 'user.name', 'William']);
+    await execGit(['add', '.']);
+    await execGit(['commit', '-m', 'awesome commit message']);
+  };
+
+  const result = await runInlineTest({
+    'globalSetup.ts': `
+      import * as ci from '@playwright/test/lib/ci';
+      import { FullConfig } from '@playwright/test';
+
+      async function globalSetup(config: FullConfig) {
+        config.attachments = [
+          ...await ci.generationTimestamp(),
+          ...await ci.gitStatusFromCLI(config.rootDir).catch(() => []),
+          ...await ci.linksFromEnv(),
+        ];
+      };
+
+      export default globalSetup;
+    `,
+    'playwright.config.ts': `
+      import path from 'path';
+      const config = {
+        globalSetup: path.join(__dirname, './globalSetup'),
+      }
+
+      export default config;
+    `,
+    'example.spec.ts': `
+      const { test } = pwt;
+      test('sample', async ({}) => { expect(2).toBe(2); });
+    `,
+  }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never', GITHUB_REPOSITORY: 'microsoft/playwright-example-for-test', GITHUB_RUN_ID: 'example-run-id', GITHUB_SERVER_URL: 'https://playwright.dev', GITHUB_SHA: 'example-sha' }, undefined, beforeRunPlaywrightTest);
+
+  await showReport();
+
+  expect(result.exitCode).toBe(0);
+  const metadata = page.locator('.metadata-view');
+  await expect.soft(metadata.locator('data-test-id=revision.id')).toContainText(/^[a-f\d]{7}$/i);
+  await expect.soft(metadata.locator('data-test-id=revision.id >> a')).toHaveAttribute('href', 'https://playwright.dev/microsoft/playwright-example-for-test/commit/example-sha');
+  await expect.soft(metadata.locator('data-test-id=revision.timestamp')).toContainText(/AM|PM/);
+  await expect.soft(metadata).toContainText('awesome commit message');
+  await expect.soft(metadata).toContainText('William');
+  await expect.soft(metadata).toContainText('shakespeare@example.local');
+  await expect.soft(metadata.locator('text=CI/CD Logs')).toHaveAttribute('href', 'https://playwright.dev/microsoft/playwright-example-for-test/actions/runs/example-run-id');
+  await expect.soft(metadata).toContainText('uncommitted changes');
+  await expect.soft(metadata.locator('text=Report generated on')).toContainText(/AM|PM/);
 });
