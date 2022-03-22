@@ -34,8 +34,10 @@ const loadedTraces = new Map<string, { traceModel: TraceModel, snapshotServer: S
 
 async function loadTrace(trace: string, clientId: string, progress: (done: number, total: number) => void): Promise<TraceModel> {
   const entry = loadedTraces.get(trace);
-  if (entry)
+  if (entry) {
+    entry.clientId = clientId;
     return entry.traceModel;
+  }
   const traceModel = new TraceModel();
   await traceModel.load(trace, progress);
   const snapshotServer = new SnapshotServer(traceModel.storage());
