@@ -16,7 +16,7 @@
 
 import type { Expect } from '../types';
 import { currentTestInfo } from '../globals';
-import { mimeTypeToComparator, ImageComparatorOptions, Comparator } from 'playwright-core/lib/utils/comparators';
+import { getComparator, ImageComparatorOptions, Comparator } from 'playwright-core/lib/utils/comparators';
 import { addSuffixToFilePath, serializeError, sanitizeForFilePath, trimLongString, callLogText } from '../util';
 import { UpdateSnapshots } from '../types';
 import colors from 'colors/safe';
@@ -44,6 +44,7 @@ class SnapshotHelper<T extends ImageComparatorOptions> {
   readonly kind: 'Screenshot'|'Snapshot';
   readonly updateSnapshots: UpdateSnapshots;
   readonly comparatorOptions: ImageComparatorOptions;
+  readonly comparator: Comparator;
   readonly allOptions: T;
 
   constructor(
@@ -95,10 +96,7 @@ class SnapshotHelper<T extends ImageComparatorOptions> {
     if (updateSnapshots === 'missing' && testInfo.retry < testInfo.project.retries)
       updateSnapshots = 'none';
     const mimeType = mime.getType(path.basename(snapshotPath)) ?? 'application/octet-string';
-    const comparator: Comparator = mimeTypeToComparator[mimeType];
-    if (!comparator)
-      throw new Error('Failed to find comparator with type ' + mimeType + ': ' + snapshotPath);
-
+    this.comparator = getComparator(mimeType);
     this.testInfo = testInfo;
     this.mimeType = mimeType;
     this.actualPath = actualPath;
@@ -215,14 +213,11 @@ export function toMatchSnapshot(
       testInfo, determineFileExtension(received),
       testInfo.project.expect?.toMatchSnapshot || {},
       nameOrOptions, optOptions);
-  const comparator: Comparator = mimeTypeToComparator[helper.mimeType];
-  if (!comparator)
-    throw new Error('Failed to find comparator with type ' + helper.mimeType + ': ' + helper.snapshotPath);
 
   if (this.isNot) {
     if (!fs.existsSync(helper.snapshotPath))
       return helper.handleMissingNegated();
-    const isDifferent = !!comparator(received, fs.readFileSync(helper.snapshotPath), helper.comparatorOptions);
+    const isDifferent = !!helper.comparator(received, fs.readFileSync(helper.snapshotPath), helper.comparatorOptions);
     return isDifferent ? helper.handleDifferentNegated() : helper.handleMatchingNegated();
   }
 
@@ -230,7 +225,7 @@ export function toMatchSnapshot(
     return helper.handleMissing(received);
 
   const expected = fs.readFileSync(helper.snapshotPath);
-  const result = comparator(received, expected, helper.comparatorOptions);
+  const result = helper.comparator(received, expected, helper.comparatorOptions);
   if (!result)
     return helper.handleMatching();
 
