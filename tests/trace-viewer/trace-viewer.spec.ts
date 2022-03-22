@@ -484,6 +484,59 @@ test('should restore scroll positions', async ({ page, runAndTrace, browserName 
   expect(await div.evaluate(div => div.scrollTop)).toBe(136);
 });
 
+test('should restore control values', async ({ page, runAndTrace }) => {
+  const traceViewer = await runAndTrace(async () => {
+    await page.setContent(`
+      <input type=text value=old>
+      <input type=checkbox checked>
+      <input type=radio>
+      <textarea>old</textarea>
+      <select multiple>
+        <option value=opt1>Hi</option>
+        <option value=opt2 selected>Bye</option>
+        <option value=opt3>Hello</option>
+      </select>
+      <script>
+        document.querySelector('[type=text]').value = 'hi';
+        document.querySelector('[type=checkbox]').checked = false;
+        document.querySelector('[type=radio]').checked = true;
+        document.querySelector('textarea').value = 'hello';
+        document.querySelector('[value=opt1]').selected = true;
+        document.querySelector('[value=opt2]').selected = false;
+        document.querySelector('[value=opt3]').selected = true;
+      </script>
+    `);
+    await page.click('input');
+  });
+
+  // Render snapshot, check expectations.
+  const frame = await traceViewer.snapshotFrame('page.click');
+
+  const text = frame.locator('[type=text]');
+  await expect(text).toHaveAttribute('value', 'old');
+  await expect(text).toHaveValue('hi');
+
+  const checkbox = frame.locator('[type=checkbox]');
+  await expect(checkbox).not.toBeChecked();
+  expect(await checkbox.evaluate(c => c.hasAttribute('checked'))).toBe(true);
+
+  const radio = frame.locator('[type=radio]');
+  await expect(radio).toBeChecked();
+  expect(await radio.evaluate(c => c.hasAttribute('checked'))).toBe(false);
+
+  const textarea = frame.locator('textarea');
+  await expect(textarea).toHaveText('old');
+  await expect(textarea).toHaveValue('hello');
+
+  expect(await frame.$eval('option >> nth=0', o => o.hasAttribute('selected'))).toBe(false);
+  expect(await frame.$eval('option >> nth=1', o => o.hasAttribute('selected'))).toBe(true);
+  expect(await frame.$eval('option >> nth=2', o => o.hasAttribute('selected'))).toBe(false);
+  expect(await frame.locator('select').evaluate(s => {
+    const options = [...(s as HTMLSelectElement).selectedOptions];
+    return options.map(option => option.value);
+  })).toEqual(['opt1', 'opt3']);
+});
+
 test('should work with meta CSP', async ({ page, runAndTrace, browserName }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.setContent(`
