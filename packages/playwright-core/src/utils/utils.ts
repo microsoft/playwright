@@ -508,7 +508,9 @@ export type HostPlatform = 'win64' |
                            'mac11' | 'mac11-arm64' |
                            'mac12' | 'mac12-arm64' |
                            'ubuntu18.04' | 'ubuntu18.04-arm64' |
-                           'ubuntu20.04' | 'ubuntu20.04-arm64';
+                           'ubuntu20.04' | 'ubuntu20.04-arm64' |
+                           'generic-linux' | 'generic-linux-arm64' |
+                           '<unknown>';
 
 export const hostPlatform = ((): HostPlatform => {
   const platform = os.platform();
@@ -534,15 +536,17 @@ export const hostPlatform = ((): HostPlatform => {
     return macVersion as HostPlatform;
   }
   if (platform === 'linux') {
-    const ubuntuVersion = getUbuntuVersionSync();
     const archSuffix = os.arch() === 'arm64' ? '-arm64' : '';
+    const ubuntuVersion = getUbuntuVersionSync();
+    if (!ubuntuVersion)
+      return ('generic-linux' + archSuffix) as HostPlatform;
     if (parseInt(ubuntuVersion, 10) <= 19)
       return ('ubuntu18.04' + archSuffix) as HostPlatform;
     return ('ubuntu20.04' + archSuffix) as HostPlatform;
   }
   if (platform === 'win32')
     return 'win64';
-  return platform as HostPlatform;
+  return '<unknown>';
 })();
 
 export function wrapInASCIIBox(text: string, padding = 0): string {
