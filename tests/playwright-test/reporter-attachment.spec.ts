@@ -96,7 +96,7 @@ test(`testInfo.attach errors`, async ({ runInlineTest }) => {
     `,
   }, { reporter: 'line', workers: 1 });
   const text = stripAnsi(result.output).replace(/\\/g, '/');
-  expect(text).toMatch(/Error: ENOENT: no such file or directory, copyfile '.*foo.txt.*'/);
+  expect(text).toMatch(/Error: Cannot access file ".*foo.txt.*"/);
   expect(text).toContain(`Exactly one of "path" and "body" must be specified`);
   expect(result.passed).toBe(0);
   expect(result.failed).toBe(3);
@@ -112,7 +112,7 @@ test(`testInfo.attach errors with empty path`, async ({ runInlineTest }) => {
       });
     `,
   }, { reporter: 'line', workers: 1 });
-  expect(stripAnsi(result.output)).toMatch(/Error: ENOENT: no such file or directory, copyfile ''/);
+  expect(stripAnsi(result.output)).toMatch(/Error: Cannot access file ""/);
   expect(result.exitCode).toBe(1);
 });
 
@@ -130,7 +130,7 @@ test(`testInfo.attach error in fixture`, async ({ runInlineTest }) => {
     `,
   }, { reporter: 'line', workers: 1 });
   const text = stripAnsi(result.output).replace(/\\/g, '/');
-  expect(text).toMatch(/Error: ENOENT: no such file or directory, copyfile '.*foo.txt.*'/);
+  expect(text).toMatch(/Error: Cannot access file ".*foo.txt.*"/);
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(0);
   expect(result.failed).toBe(1);
@@ -216,4 +216,193 @@ test(`TestConfig.attachments works`, async ({ runInlineTest }) => {
   expect(result.report.config.attachments).toHaveLength(1);
   expect(result.report.config.attachments[0].name).toBe('my-attachment.txt');
   expect(Buffer.from(result.report.config.attachments[0].body, 'base64').toString()).toBe('example data');
+});
+
+test(`testInfo.attach use original filename as prefix`, async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        attachmentConfig: {
+          useOriginalFilenameAsPrefix: true
+        }
+      };
+    `,
+    'a.test.js': `
+      const test = pwt.test.extend({
+        fixture: async ({}, use, testInfo) => {
+          const filePath = testInfo.outputPath('foo.txt');
+          require('fs').writeFileSync(filePath, 'hello');
+          await use();
+          await testInfo.attach('name', { path: filePath });
+        },
+      });
+      test('success', async ({ fixture }) => {
+        expect(true).toBe(false);
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+
+  expect(stripAnsi(result.output)).toContain('attachment #1: name (text/plain)');
+  expect(stripAnsi(result.output)).toContain('foo-');
+});
+
+test(`testInfo.attach use name as prefix`, async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        attachmentConfig: {
+          useNameAsPrefix: true
+        }
+      };
+    `,
+    'a.test.js': `
+      const test = pwt.test.extend({
+        fixture: async ({}, use, testInfo) => {
+          const filePath = testInfo.outputPath('foo.txt');
+          require('fs').writeFileSync(filePath, 'hello');
+          await use();
+          await testInfo.attach('some random string', { path: filePath });
+        },
+      });
+      test('success', async ({ fixture }) => {
+        expect(true).toBe(false);
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+
+  expect(stripAnsi(result.output)).toContain('attachment #1: some random string (text/plain)');
+  expect(stripAnsi(result.output)).toContain('some random string-');
+});
+
+test(`testInfo.attach use name and filename as prefix`, async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        attachmentConfig: {
+          useNameAsPrefix: true,
+          useOriginalFilenameAsPrefix: true
+        }
+      };
+    `,
+    'a.test.js': `
+      const test = pwt.test.extend({
+        fixture: async ({}, use, testInfo) => {
+          const filePath = testInfo.outputPath('foo.txt');
+          require('fs').writeFileSync(filePath, 'hello');
+          await use();
+          await testInfo.attach('some random string', { path: filePath });
+        },
+      });
+      test('success', async ({ fixture }) => {
+        expect(true).toBe(false);
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+
+  expect(stripAnsi(result.output)).toContain('attachment #1: some random string (text/plain)');
+  expect(stripAnsi(result.output)).toContain('some random string-foo-');
+});
+
+test(`testInfo.attach save string body as file`, async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        attachmentConfig: {
+          saveBodyAsFile: true
+        }
+      };
+    `,
+    'a.test.js': `
+      const { test } = pwt;
+      test('success', async ({}, testInfo) => {
+        await testInfo.attach('name', { body: 'This is a test', contentType: 'text/plain' });
+        expect(0).toBe(1);
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+
+  expect(stripAnsi(result.output)).toMatch(/^.*attachment #1: name \(text\/plain\).*\n.*\n.*------/gm);
+  expect(stripAnsi(result.output)).toContain('.txt');
+});
+
+test(`testInfo.attach save buffer body as file`, async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        attachmentConfig: {
+          saveBodyAsFile: true
+        }
+      };
+    `,
+    'a.test.js': `
+      const { test } = pwt;
+      test('success', async ({}, testInfo) => {
+        await testInfo.attach('name', { body: Buffer.from('This is a test'), contentType: 'text/plain' });
+        expect(0).toBe(1);
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+
+  expect(stripAnsi(result.output)).toMatch(/^.*attachment #1: name \(text\/plain\).*\n.*\n.*------/gm);
+  expect(stripAnsi(result.output)).toContain('.txt');
+});
+
+test(`testInfo.attach save buffer body as file without content type`, async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        attachmentConfig: {
+          saveBodyAsFile: true
+        }
+      };
+    `,
+    'a.test.js': `
+      const { test } = pwt;
+      test('success', async ({}, testInfo) => {
+        await testInfo.attach('name', { body: Buffer.from('This is a test') });
+        expect(0).toBe(1);
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+
+  expect(stripAnsi(result.output)).toContain('attachment #1: name (application/octet-stream)');
+  expect(stripAnsi(result.output)).toContain('.bin');
+});
+
+
+test(`testInfo.attach save buffer body as file with name as prefix`, async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        attachmentConfig: {
+          useNameAsPrefix: true,
+          saveBodyAsFile: true
+        }
+      };
+    `,
+    'a.test.js': `
+      const { test } = pwt;
+      test('success', async ({}, testInfo) => {
+        await testInfo.attach('name', { body: Buffer.from('This is a test') });
+        expect(0).toBe(1);
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+
+  expect(stripAnsi(result.output)).toContain('attachment #1: name (application/octet-stream)');
+  expect(stripAnsi(result.output)).toMatch(/^.*name-.*\.bin.*/gm);
 });

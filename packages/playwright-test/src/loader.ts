@@ -218,6 +218,7 @@ export class Loader {
     const name = takeFirst(this._configOverrides.name, projectConfig.name, config.name, '');
     const screenshotsDir = takeFirst(this._configOverrides.screenshotsDir, projectConfig.screenshotsDir, config.screenshotsDir, path.join(testDir, '__screenshots__', process.platform, name));
     const fullProject: FullProject = {
+      attachmentConfig: takeFirst(this._configOverrides.attachmentConfig, projectConfig.attachmentConfig, config.attachmentConfig, {}),
       fullyParallel: takeFirst(this._configOverrides.fullyParallel, projectConfig.fullyParallel, config.fullyParallel, undefined),
       expect: takeFirst(this._configOverrides.expect, projectConfig.expect, config.expect, undefined),
       grep: takeFirst(this._configOverrides.grep, projectConfig.grep, config.grep, baseFullConfig.grep),
@@ -277,7 +278,7 @@ function toReporters(reporters: BuiltInReporter | ReporterDescription[] | undefi
   if (!reporters)
     return;
   if (typeof reporters === 'string')
-    return [ [reporters] ];
+    return [[reporters]];
   return reporters;
 }
 
@@ -286,6 +287,17 @@ function validateConfig(file: string, config: Config) {
     throw errorWithFile(file, `Configuration file must export a single object`);
 
   validateProject(file, config, 'config');
+
+  if ('attachmentConfig' in config && config.attachmentConfig !== undefined && config.attachmentConfig !== null) {
+    if (!config.attachmentConfig || typeof config.attachmentConfig !== 'object')
+      throw errorWithFile(file, `config.attachmentConfig must be an object`);
+    if ('useNameAsPrefix' in config.attachmentConfig && config.attachmentConfig.useNameAsPrefix !== undefined && typeof config.attachmentConfig.useNameAsPrefix !== 'boolean')
+      throw errorWithFile(file, `config.attachmentConfig.useNameAsPrefix must be a boolean`);
+    if ('useOriginalFilenameAsPrefix' in config.attachmentConfig && config.attachmentConfig.useOriginalFilenameAsPrefix !== undefined && typeof config.attachmentConfig.useOriginalFilenameAsPrefix !== 'boolean')
+      throw errorWithFile(file, `config.attachmentConfig.useOriginalFilenameAsPrefix must be a non-negative number`);
+    if ('saveBodyAsFile' in config.attachmentConfig && config.attachmentConfig.saveBodyAsFile !== undefined && typeof config.attachmentConfig.saveBodyAsFile !== 'boolean')
+      throw errorWithFile(file, `config.attachmentConfig.saveBodyAsFile must be a non-negative number`);
+  }
 
   if ('forbidOnly' in config && config.forbidOnly !== undefined) {
     if (typeof config.forbidOnly !== 'boolean')
@@ -457,7 +469,7 @@ const baseFullConfig: FullConfig = {
   maxFailures: 0,
   preserveOutput: 'always',
   projects: [],
-  reporter: [ ['list'] ],
+  reporter: [['list']],
   reportSlowTests: null,
   rootDir: path.resolve(process.cwd()),
   quiet: false,
@@ -469,11 +481,11 @@ const baseFullConfig: FullConfig = {
   attachments: [],
 };
 
-function resolveReporters(reporters: Config['reporter'], rootDir: string): ReporterDescription[]|undefined {
+function resolveReporters(reporters: Config['reporter'], rootDir: string): ReporterDescription[] | undefined {
   return toReporters(reporters as any)?.map(([id, arg]) => {
     if (builtInReporters.includes(id as any))
       return [id, arg];
-    return [require.resolve(id, { paths: [ rootDir ] }), arg];
+    return [require.resolve(id, { paths: [rootDir] }), arg];
   });
 }
 

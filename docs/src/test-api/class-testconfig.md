@@ -33,6 +33,52 @@ const config: PlaywrightTestConfig = {
 export default config;
 ```
 
+## property: TestConfig.attachmentConfig
+- type: <[Object]>
+  - `useNameAsPrefix` <[boolean]>: Whether to use the attachment name as prefix for the attachment filename, defaults to false.
+  - `useOriginalFilenameAsPrefix` <[boolean]>: Whether to use original filename as saved filename prefix, defaults to false.
+  - `saveBodyAsFile` <[boolean]>: Whether to save body as file. This is useful for reporters such as junit, defaults to false.
+
+Configuration for the [`method: TestInfo.attach`] behaviour.
+
+By default, attachments are saved to the test result directory with hashed path as filename. `useNameAsPrefix` and `useOriginalFilenameAsPrefix` control whether to append the attachment name or the original filename to the filename.
+
+If `useNameAsPrefix` is true, the filename will be `${attach name}-${hashed path}.${extension}`. If `useOriginalFilenameAsPrefix` is true, the filename will be `${original filename}-${hashed path}.${extension}`.
+
+If `saveBodyAsFile` is set to true, the attachment body will be saved to a file. This is useful for reporters such as junit, and if you need to upload all attachments to another service. Be noted that if you have this enabled, the reporter will no longer report the body, but the saved path instead.
+
+
+```js js-flavor=js
+// playwright.config.js
+// @ts-check
+
+/** @type {import('@playwright/test').PlaywrightTestConfig} */
+const config = {
+  attachmentConfig: {
+    useNameAsPrefix: true,
+    useOriginalFilenameAsPrefix: true,
+    saveBodyAsFile: true,
+  },
+};
+
+module.exports = config;
+```
+
+```js js-flavor=ts
+// playwright.config.ts
+import { PlaywrightTestConfig } from '@playwright/test';
+
+const config: PlaywrightTestConfig = {
+  attachmentConfig: {
+    useNameAsPrefix: true,
+    useOriginalFilenameAsPrefix: true,
+    saveBodyAsFile: true,
+  },
+};
+
+export default config;
+```
+
 ## property: TestConfig.expect
 - type: <[Object]>
   - `timeout` <[int]> Default timeout for async expect matchers in milliseconds, defaults to 5000ms.

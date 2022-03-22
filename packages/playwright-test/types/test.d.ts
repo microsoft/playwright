@@ -153,6 +153,23 @@ type ExpectSettings = {
  */
 interface TestProject {
   /**
+   * Configuration for the
+   * [testInfo.attach(name[, options])](https://playwright.dev/docs/api/class-testinfo#test-info-attach) behaviour. Use
+   * [testConfig.attachmentConfig](https://playwright.dev/docs/api/class-testconfig#test-config-attachment-config) to change
+   * this option for all projects.
+   *
+   * By default, attachments are saved to the test result directory with hashed filename. `useNameAsPrefix` and
+   * `useOriginalFilenameAsPrefix` control whether to append the attachment name or the original filename to the filename.
+   *
+   * If `useNameAsPrefix` is true, the filename will be `${attach name}-${hashed path}.${extension}`. If
+   * `useOriginalFilenameAsPrefix` is true, the filename will be `${original filename}-${hashed path}.${extension}`.
+   *
+   * If `saveBodyAsFile` is set to true, the attachment body will be saved to a file. This is useful for reporters such as
+   * junit, and if you need to upload all attachments to another service. Be noted that if you have this enabled, the
+   * reporter will no longer report the body, but the saved path instead.
+   */
+  attachmentConfig?: AttachmentConfig;
+  /**
    * Configuration for the `expect` assertion library.
    *
    * Use [testConfig.expect](https://playwright.dev/docs/api/class-testconfig#test-config-expect) to change this option for
@@ -487,6 +504,15 @@ export type WebServerConfig = {
   cwd?: string,
 };
 
+export type AttachmentConfig = {
+  // Whether to add name to attachment filename.
+  useNameAsPrefix?: boolean;
+  // Whether to use original filename as saved filename prefix.
+  useOriginalFilenameAsPrefix?: boolean;
+  // Whether to save body as file. This is useful for reporters such as junit.
+  saveBodyAsFile?: boolean;
+}
+
 type LiteralUnion<T extends U, U = string> = T | (U & { zz_IGNORE_ME?: never });
 
 /**
@@ -512,6 +538,37 @@ type LiteralUnion<T extends U, U = string> = T | (U & { zz_IGNORE_ME?: never });
  *
  */
 interface TestConfig {
+  /**
+   * Configuration for the
+   * [testInfo.attach(name[, options])](https://playwright.dev/docs/api/class-testinfo#test-info-attach) behaviour.
+   *
+   * By default, attachments are saved to the test result directory with hashed path as filename. `useNameAsPrefix` and
+   * `useOriginalFilenameAsPrefix` control whether to append the attachment name or the original filename to the filename.
+   *
+   * If `useNameAsPrefix` is true, the filename will be `${attach name}-${hashed path}.${extension}`. If
+   * `useOriginalFilenameAsPrefix` is true, the filename will be `${original filename}-${hashed path}.${extension}`.
+   *
+   * If `saveBodyAsFile` is set to true, the attachment body will be saved to a file. This is useful for reporters such as
+   * junit, and if you need to upload all attachments to another service. Be noted that if you have this enabled, the
+   * reporter will no longer report the body, but the saved path instead.
+   *
+   * ```ts
+   * // playwright.config.ts
+   * import { PlaywrightTestConfig } from '@playwright/test';
+   *
+   * const config: PlaywrightTestConfig = {
+   *   attachmentConfig: {
+   *     useNameAsPrefix: true,
+   *     useOriginalFilenameAsPrefix: true,
+   *     saveBodyAsFile: true,
+   *   },
+   * };
+   *
+   * export default config;
+   * ```
+   *
+   */
+  attachmentConfig?: AttachmentConfig;
   /**
    * Whether to exit with an error if any tests or groups are marked as
    * [test.only(title, testFunction)](https://playwright.dev/docs/api/class-test#test-only) or

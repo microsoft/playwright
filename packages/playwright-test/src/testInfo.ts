@@ -17,7 +17,7 @@
 import fs from 'fs';
 import * as mime from 'mime';
 import path from 'path';
-import { calculateSha1 } from 'playwright-core/lib/utils/utils';
+import { calculateSha1, canAccessFile, getFilenameWithoutExtension } from 'playwright-core/lib/utils/utils';
 import type { FullConfig, FullProject, TestError, TestInfo, TestStatus } from '../types/test';
 import { WorkerInitParams } from './ipc';
 import { Loader } from './loader';
@@ -99,7 +99,7 @@ export class TestInfoImpl implements TestInfo {
     this.repeatEachIndex = workerParams.repeatEachIndex;
     this.retry = retry;
     this.workerIndex = workerParams.workerIndex;
-    this.parallelIndex =  workerParams.parallelIndex;
+    this.parallelIndex = workerParams.parallelIndex;
     this.project = this._projectImpl.config;
     this.config = loader.fullConfig();
     this.title = test.title;
@@ -231,20 +231,60 @@ export class TestInfoImpl implements TestInfo {
   async attach(name: string, options: { path?: string, body?: string | Buffer, contentType?: string } = {}) {
     if ((options.path !== undefined ? 1 : 0) + (options.body !== undefined ? 1 : 0) !== 1)
       throw new Error(`Exactly one of "path" and "body" must be specified`);
+
+    const useNameAsPrefix = this.project.attachmentConfig?.useNameAsPrefix;
+    const useOriginalFilenameAsPrefix = this.project.attachmentConfig?.useOriginalFilenameAsPrefix;
+
     if (options.path !== undefined) {
+      if (!canAccessFile(options.path))
+        throw new Error(`Cannot access file "${options.path}".`);
+
       const hash = calculateSha1(options.path);
-      const dest = this.outputPath('attachments', hash + path.extname(options.path));
+
+      let filename = hash + path.extname(options.path);
+
+      if (useOriginalFilenameAsPrefix) {
+        const filenameWithoutExtension = getFilenameWithoutExtension(path.basename(options.path));
+        filename = filenameWithoutExtension + '-' + filename;
+      }
+
+      if (useNameAsPrefix) {
+        const filenameWithoutExtension = getFilenameWithoutExtension(path.basename(name));
+        filename = filenameWithoutExtension + '-' + filename;
+      }
+
+      const dest = this.outputPath('attachments', filename);
       await fs.promises.mkdir(path.dirname(dest), { recursive: true });
       await fs.promises.copyFile(options.path, dest);
       const contentType = options.contentType ?? (mime.getType(path.basename(options.path)) || 'application/octet-stream');
       this.attachments.push({ name, contentType, path: dest });
-    } else {
+    } else if (options.body !== undefined) {
       const contentType = options.contentType ?? (typeof options.body === 'string' ? 'text/plain' : 'application/octet-stream');
-      this.attachments.push({ name, contentType, body: typeof options.body === 'string' ? Buffer.from(options.body) : options.body });
+      const bodyAsBuffer = typeof options.body === 'string' ? Buffer.from(options.body) : options.body;
+
+      if (this.project.attachmentConfig?.saveBodyAsFile) {
+        const hash = calculateSha1(bodyAsBuffer);
+
+        let filename = hash + ((options.contentType === 'text/plain' || typeof options.body === 'string') ? '.txt' : '.bin');
+
+        if (useNameAsPrefix) {
+          const filenameWithoutExtension = getFilenameWithoutExtension(path.basename(name));
+          filename = filenameWithoutExtension + '-' + filename;
+        }
+
+        const dest = this.outputPath('attachments', filename);
+
+        await fs.promises.mkdir(path.dirname(dest), { recursive: true });
+        await fs.promises.writeFile(dest, bodyAsBuffer);
+
+        this.attachments.push({ name, contentType, path: dest });
+      } else {
+        this.attachments.push({ name, contentType, body: bodyAsBuffer });
+      }
     }
   }
 
-  outputPath(...pathSegments: string[]){
+  outputPath(...pathSegments: string[]) {
     fs.mkdirSync(this.outputDir, { recursive: true });
     const joinedPath = path.join(...pathSegments);
     const outputPath = getContainedPath(this.outputDir, joinedPath);
@@ -261,7 +301,7 @@ export class TestInfoImpl implements TestInfo {
     if (this.snapshotSuffix)
       suffix += '-' + this.snapshotSuffix;
     const subPath = addSuffixToFilePath(path.join(...pathSegments), suffix);
-    const snapshotPath =  getContainedPath(this.snapshotDir, subPath);
+    const snapshotPath = getContainedPath(this.snapshotDir, subPath);
     if (snapshotPath)
       return snapshotPath;
     throw new Error(`The snapshotPath is not allowed outside of the parent directory. Please fix the defined path.\n\n\tsnapshotPath: ${subPath}`);

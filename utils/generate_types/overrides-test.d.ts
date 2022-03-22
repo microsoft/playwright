@@ -92,6 +92,7 @@ type ExpectSettings = {
 };
 
 interface TestProject {
+  attachmentConfig?: AttachmentConfig;
   expect?: ExpectSettings;
   fullyParallel?: boolean;
   grep?: RegExp | RegExp[];
@@ -151,9 +152,19 @@ export type WebServerConfig = {
   cwd?: string,
 };
 
+export type AttachmentConfig = {
+  // Whether to add name to attachment filename.
+  useNameAsPrefix?: boolean;
+  // Whether to use original filename as saved filename prefix.
+  useOriginalFilenameAsPrefix?: boolean;
+  // Whether to save body as file. This is useful for reporters such as junit.
+  saveBodyAsFile?: boolean;
+}
+
 type LiteralUnion<T extends U, U = string> = T | (U & { zz_IGNORE_ME?: never });
 
 interface TestConfig {
+  attachmentConfig?: AttachmentConfig;
   forbidOnly?: boolean;
   fullyParallel?: boolean;
   globalSetup?: string;

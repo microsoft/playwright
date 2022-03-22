@@ -624,3 +624,9 @@ export class SigIntWatcher {
   }
 }
 
+export function getFilenameWithoutExtension(filename: string) {
+  if (filename.includes('.'))
+    return filename.split('.').slice(0, -1).join('.');
+  else
+    return filename;
+}
