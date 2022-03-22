@@ -1310,10 +1310,10 @@ index db52479a72d459be23d4d8d080c0ed15ea9fc4c0..658937fdc58425b9a164d9bc368a9e61
  }
 diff --git a/Source/JavaScriptCore/inspector/protocol/Playwright.json b/Source/JavaScriptCore/inspector/protocol/Playwright.json
 new file mode 100644
-index 0000000000000000000000000000000000000000..b608b7e5c6007cfc0d47a5ea8d3cdefd2dda8f0e
+index 0000000000000000000000000000000000000000..91bdeadaeb77d223cd4dc47b8bb90850d54a9056
 --- /dev/null
 +++ b/Source/JavaScriptCore/inspector/protocol/Playwright.json
-@@ -0,0 +1,269 @@
+@@ -0,0 +1,277 @@
 +{
 +    "domain": "Playwright",
 +    "availability": ["web"],
@@ -1448,6 +1448,14 @@ index 0000000000000000000000000000000000000000..b608b7e5c6007cfc0d47a5ea8d3cdefd
 +            ],
 +            "returns": [
 +                { "name": "loaderId", "$ref": "Network.LoaderId", "optional": true, "description": "Identifier of the loader associated with the navigation." }
++            ]
++        },
++        {
++            "name": "grantFileReadAccess",
++            "description": "Grants read access for the specified files to the web process of the page.",
++            "parameters": [
++                { "name": "pageProxyId", "$ref": "PageProxyID", "description": "Unique identifier of the page proxy." },
++                { "name": "paths", "type": "array", "items": { "type": "string" }, "description": "Id of the frame to navigate."}
 +            ]
 +        },
 +        {
@@ -14630,10 +14638,10 @@ index 0000000000000000000000000000000000000000..d0e11ed81a6257c011df23d5870da740
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..f9389996a68338891a6d8702ec302c98033d3fd5
+index 0000000000000000000000000000000000000000..3979cd916a8a2821fa5ee5fe018a7ffc9d8cb2e1
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp
-@@ -0,0 +1,950 @@
+@@ -0,0 +1,974 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -14672,6 +14680,7 @@ index 0000000000000000000000000000000000000000..f9389996a68338891a6d8702ec302c98
 +#include "NetworkProcessMessages.h"
 +#include "NetworkProcessProxy.h"
 +#include "PageClient.h"
++#include "SandboxExtension.h"
 +#include "StorageNamespaceIdentifier.h"
 +#include "WebAutomationSession.h"
 +#include "WebGeolocationManagerProxy.h"
@@ -14680,6 +14689,7 @@ index 0000000000000000000000000000000000000000..f9389996a68338891a6d8702ec302c98
 +#include "WebPageGroup.h"
 +#include "WebPageInspectorController.h"
 +#include "WebPageInspectorTarget.h"
++#include "WebPageMessages.h"
 +#include "WebPageProxy.h"
 +#include "WebProcessPool.h"
 +#include "WebProcessProxy.h"
@@ -15333,6 +15343,28 @@ index 0000000000000000000000000000000000000000..f9389996a68338891a6d8702ec302c98
 +    });
 +}
 +
++Inspector::Protocol::ErrorStringOr<void> InspectorPlaywrightAgent::grantFileReadAccess(const String& pageProxyID, Ref<JSON::Array>&& paths)
++{
++#if ENABLE(SANDBOX_EXTENSIONS)
++    auto* pageProxyChannel = m_pageProxyChannels.get(pageProxyID);
++    if (!pageProxyChannel)
++        return makeUnexpected("Unknown pageProxyID"_s);
++
++    Vector<String> files;
++    for (const auto& value : paths.get()) {
++        String path;
++        if (!value->asString(path))
++            return makeUnexpected("Filr path must be a string"_s);
++
++        files.append(path);
++    }
++
++    auto sandboxExtensionHandles = SandboxExtension::createReadOnlyHandlesForFiles("InspectorPlaywrightAgent::grantFileReadAccess"_s, files);
++    pageProxyChannel->page().send(Messages::WebPage::ExtendSandboxForFilesFromOpenPanel(WTFMove(sandboxExtensionHandles)));
++#endif
++    return { };
++}
++
 +Inspector::Protocol::ErrorStringOr<void> InspectorPlaywrightAgent::setIgnoreCertificateErrors(const String& browserContextID, bool ignore)
 +{
 +    String errorString;
@@ -15586,10 +15618,10 @@ index 0000000000000000000000000000000000000000..f9389996a68338891a6d8702ec302c98
 +#endif // ENABLE(REMOTE_INSPECTOR)
 diff --git a/Source/WebKit/UIProcess/InspectorPlaywrightAgent.h b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..27e1bf3c7fd32d676a09605604936fa505c6ad05
+index 0000000000000000000000000000000000000000..8522b4942343d9a6f2473ea9a133d1ff5267e8ed
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.h
-@@ -0,0 +1,126 @@
+@@ -0,0 +1,127 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -15678,6 +15710,7 @@ index 0000000000000000000000000000000000000000..27e1bf3c7fd32d676a09605604936fa5
 +    void deleteContext(const String& browserContextID, Ref<DeleteContextCallback>&& callback) override;
 +    Inspector::Protocol::ErrorStringOr<String /* pageProxyID */> createPage(const String& browserContextID) override;
 +    void navigate(const String& url, const String& pageProxyID, const String& frameId, const String& referrer, Ref<NavigateCallback>&&) override;
++    Inspector::Protocol::ErrorStringOr<void> grantFileReadAccess(const String& pageProxyID, Ref<JSON::Array>&& paths) override;
 +    Inspector::Protocol::ErrorStringOr<void> setIgnoreCertificateErrors(const String& browserContextID, bool ignore) override;
 +
 +    void getAllCookies(const String& browserContextID, Ref<GetAllCookiesCallback>&&) override;
