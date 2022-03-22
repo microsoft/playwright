@@ -1372,7 +1372,7 @@ a_handle = page.evaluate_handle("document") # handle for the "document"
 ```
 
 ```csharp
-var docHandle = await page.EvalueHandleAsync("document"); // Handle for the `document`
+var docHandle = await page.EvaluateHandleAsync("document"); // Handle for the `document`
 ```
 
 [JSHandle] instances can be passed as an argument to the [`method: Page.evaluateHandle`]:
