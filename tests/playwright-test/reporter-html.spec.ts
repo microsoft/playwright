@@ -640,11 +640,12 @@ test('should include metadata', async ({ runInlineTest, showReport, page }) => {
     await execGit(['init']);
     await execGit(['config', '--local', 'user.email', 'shakespeare@example.local']);
     await execGit(['config', '--local', 'user.name', 'William']);
-    await execGit(['add', '.']);
+    await execGit(['add', '*.ts']);
     await execGit(['commit', '-m', 'awesome commit message']);
   };
 
   const result = await runInlineTest({
+    'uncommitted.txt': `uncommitted file`,
     'globalSetup.ts': `
       import * as ci from '@playwright/test/lib/ci';
       import { FullConfig } from '@playwright/test';
