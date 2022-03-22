@@ -274,7 +274,7 @@ class RawReporter {
         out.push(this._stdioAttachment(chunk, 'stderr'));
     }
 
-    return attachments;
+    return out;
   }
 
   private _stdioAttachment(chunk: Buffer | string, type: 'stdout' | 'stderr'): JsonAttachment {
