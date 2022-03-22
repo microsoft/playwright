@@ -16,6 +16,7 @@
  */
 
 import fs from 'fs';
+import os from 'os';
 import * as path from 'path';
 import { getUserAgent } from '../packages/playwright-core/lib/utils/utils';
 import WebSocket from 'ws';
@@ -574,8 +575,9 @@ test('should fulfill with global fetch result', async ({ browserType, startRemot
   expect(await response.json()).toEqual({ 'foo': 'bar' });
 });
 
-test('should upload large file', async ({ browserType, startRemoteServer, server, browserName }, testInfo) => {
-  test.skip(browserName !== 'chromium');
+test('should upload large file', async ({ browserType, startRemoteServer, server, browserName, isMac }, testInfo) => {
+  it.skip(browserName === 'webkit' && isMac, 'Fails for big file on macOS');
+  it.skip(browserName === 'webkit' && isMac && parseInt(os.release(), 10) < 20, 'WebKit for macOS 10.15 is frozen and does not have corresponding protocol features.');
   test.slow();
   const remoteServer = await startRemoteServer();
   const browser = await browserType.connect(remoteServer.wsEndpoint());
