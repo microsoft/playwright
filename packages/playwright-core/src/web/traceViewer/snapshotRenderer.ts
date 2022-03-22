@@ -173,16 +173,29 @@ function snapshotNodes(snapshot: FrameSnapshot): NodeSnapshot[] {
 }
 
 function snapshotScript() {
-  function applyPlaywrightAttributes(shadowAttribute: string, scrollTopAttribute: string, scrollLeftAttribute: string, styleSheetAttribute: string) {
+  function applyPlaywrightAttributes() {
     const scrollTops: Element[] = [];
     const scrollLefts: Element[] = [];
 
     const visit = (root: Document | ShadowRoot) => {
       // Collect all scrolled elements for later use.
-      for (const e of root.querySelectorAll(`[${scrollTopAttribute}]`))
+      for (const e of root.querySelectorAll(`[__playwright_scroll_top_]`))
         scrollTops.push(e);
-      for (const e of root.querySelectorAll(`[${scrollLeftAttribute}]`))
+      for (const e of root.querySelectorAll(`[__playwright_scroll_left_]`))
         scrollLefts.push(e);
+
+      for (const element of root.querySelectorAll(`[__playwright_value_]`)) {
+        (element as HTMLInputElement | HTMLTextAreaElement).value = element.getAttribute('__playwright_value_')!;
+        element.removeAttribute('__playwright_value_');
+      }
+      for (const element of root.querySelectorAll(`[__playwright_checked_]`)) {
+        (element as HTMLInputElement).checked = element.getAttribute('__playwright_checked_') === 'true';
+        element.removeAttribute('__playwright_checked_');
+      }
+      for (const element of root.querySelectorAll(`[__playwright_selected_]`)) {
+        (element as HTMLOptionElement).selected = element.getAttribute('__playwright_selected_') === 'true';
+        element.removeAttribute('__playwright_selected_');
+      }
 
       for (const iframe of root.querySelectorAll('iframe, frame')) {
         const src = iframe.getAttribute('__playwright_src__');
@@ -202,7 +215,7 @@ function snapshotScript() {
         }
       }
 
-      for (const element of root.querySelectorAll(`template[${shadowAttribute}]`)) {
+      for (const element of root.querySelectorAll(`template[__playwright_shadow_root_]`)) {
         const template = element as HTMLTemplateElement;
         const shadowRoot = template.parentElement!.attachShadow({ mode: 'open' });
         shadowRoot.appendChild(template.content);
@@ -212,10 +225,10 @@ function snapshotScript() {
 
       if ('adoptedStyleSheets' in (root as any)) {
         const adoptedSheets: CSSStyleSheet[] = [...(root as any).adoptedStyleSheets];
-        for (const element of root.querySelectorAll(`template[${styleSheetAttribute}]`)) {
+        for (const element of root.querySelectorAll(`template[__playwright_style_sheet_]`)) {
           const template = element as HTMLTemplateElement;
           const sheet = new CSSStyleSheet();
-          (sheet as any).replaceSync(template.getAttribute(styleSheetAttribute));
+          (sheet as any).replaceSync(template.getAttribute('__playwright_style_sheet_'));
           adoptedSheets.push(sheet);
         }
         (root as any).adoptedStyleSheets = adoptedSheets;
@@ -225,12 +238,12 @@ function snapshotScript() {
     const onLoad = () => {
       window.removeEventListener('load', onLoad);
       for (const element of scrollTops) {
-        element.scrollTop = +element.getAttribute(scrollTopAttribute)!;
-        element.removeAttribute(scrollTopAttribute);
+        element.scrollTop = +element.getAttribute('__playwright_scroll_top_')!;
+        element.removeAttribute('__playwright_scroll_top_');
       }
       for (const element of scrollLefts) {
-        element.scrollLeft = +element.getAttribute(scrollLeftAttribute)!;
-        element.removeAttribute(scrollLeftAttribute);
+        element.scrollLeft = +element.getAttribute('__playwright_scroll_left_')!;
+        element.removeAttribute('__playwright_scroll_left_');
       }
 
       const search = new URL(window.location.href).searchParams;
@@ -258,9 +271,5 @@ function snapshotScript() {
     window.addEventListener('DOMContentLoaded', onDOMContentLoaded);
   }
 
-  const kShadowAttribute = '__playwright_shadow_root_';
-  const kScrollTopAttribute = '__playwright_scroll_top_';
-  const kScrollLeftAttribute = '__playwright_scroll_left_';
-  const kStyleSheetAttribute = '__playwright_style_sheet_';
-  return `\n(${applyPlaywrightAttributes.toString()})('${kShadowAttribute}', '${kScrollTopAttribute}', '${kScrollLeftAttribute}', '${kStyleSheetAttribute}')`;
+  return `\n(${applyPlaywrightAttributes.toString()})()`;
 }

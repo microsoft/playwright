@@ -38,6 +38,9 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
 
   // Attributes present in the snapshot.
   const kShadowAttribute = '__playwright_shadow_root_';
+  const kValueAttribute = '__playwright_value_';
+  const kCheckedAttribute = '__playwright_checked_';
+  const kSelectedAttribute = '__playwright_selected_';
   const kScrollTopAttribute = '__playwright_scroll_top_';
   const kScrollLeftAttribute = '__playwright_scroll_left_';
   const kStyleSheetAttribute = '__playwright_style_sheet_';
@@ -363,15 +366,23 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
 
         if (nodeType === Node.ELEMENT_NODE) {
           const element = node as Element;
-          if (nodeName === 'INPUT') {
+          if (nodeName === 'INPUT' || nodeName === 'TEXTAREA') {
             const value = (element as HTMLInputElement).value;
-            expectValue('value');
+            expectValue(kValueAttribute);
             expectValue(value);
-            attrs['value'] = value;
-            if ((element as HTMLInputElement).checked) {
-              expectValue('checked');
-              attrs['checked'] = '';
-            }
+            attrs[kValueAttribute] = value;
+          }
+          if (nodeName === 'INPUT' && ['checkbox', 'radio'].includes((element as HTMLInputElement).type)) {
+            const value = (element as HTMLInputElement).checked ? 'true' : 'false';
+            expectValue(kCheckedAttribute);
+            expectValue(value);
+            attrs[kCheckedAttribute] = value;
+          }
+          if (nodeName === 'OPTION') {
+            const value = (element as HTMLOptionElement).selected ? 'true' : 'false';
+            expectValue(kSelectedAttribute);
+            expectValue(value);
+            attrs[kSelectedAttribute] = value;
           }
           if (element.scrollTop) {
             expectValue(kScrollTopAttribute);
@@ -390,33 +401,26 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
           }
         }
 
-        if (nodeName === 'TEXTAREA') {
-          const value = (node as HTMLTextAreaElement).value;
-          expectValue(value);
-          extraNodes++; // Compensate for the extra text node.
-          result.push(value);
-        } else {
-          if (nodeName === 'HEAD') {
-            ++headNesting;
-            // Insert fake <base> first, to ensure all <link> elements use the proper base uri.
-            this._fakeBase.setAttribute('href', document.baseURI);
-            visitChild(this._fakeBase);
-          }
-          for (let child = node.firstChild; child; child = child.nextSibling)
-            visitChild(child);
-          if (nodeName === 'HEAD')
-            --headNesting;
+        if (nodeName === 'HEAD') {
+          ++headNesting;
+          // Insert fake <base> first, to ensure all <link> elements use the proper base uri.
+          this._fakeBase.setAttribute('href', document.baseURI);
+          visitChild(this._fakeBase);
+        }
+        for (let child = node.firstChild; child; child = child.nextSibling)
+          visitChild(child);
+        if (nodeName === 'HEAD')
+          --headNesting;
+        expectValue(kEndOfList);
+        let documentOrShadowRoot = null;
+        if (node.ownerDocument!.documentElement === node)
+          documentOrShadowRoot = node.ownerDocument;
+        else if (node.nodeType === Node.DOCUMENT_FRAGMENT_NODE)
+          documentOrShadowRoot = node;
+        if (documentOrShadowRoot) {
+          for (const sheet of (documentOrShadowRoot as any).adoptedStyleSheets || [])
+            visitChildStyleSheet(sheet);
           expectValue(kEndOfList);
-          let documentOrShadowRoot = null;
-          if (node.ownerDocument!.documentElement === node)
-            documentOrShadowRoot = node.ownerDocument;
-          else if (node.nodeType === Node.DOCUMENT_FRAGMENT_NODE)
-            documentOrShadowRoot = node;
-          if (documentOrShadowRoot) {
-            for (const sheet of (documentOrShadowRoot as any).adoptedStyleSheets || [])
-              visitChildStyleSheet(sheet);
-            expectValue(kEndOfList);
-          }
         }
 
         // Process iframe src attribute before bailing out since it depends on a symbol, not the DOM.
@@ -439,8 +443,6 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
           const element = node as Element;
           for (let i = 0; i < element.attributes.length; i++) {
             const name = element.attributes[i].name;
-            if (name === 'value' && (nodeName === 'INPUT' || nodeName === 'TEXTAREA'))
-              continue;
             if (nodeName === 'LINK' && name === 'integrity')
               continue;
             if (nodeName === 'IFRAME' && (name === 'src' || name === 'sandbox'))
