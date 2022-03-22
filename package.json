@@ -81,7 +81,7 @@
     "cross-env": "^7.0.3",
     "css-loader": "^6.5.1",
     "dotenv": "^16.0.0",
-    "electron": "^12.2.1",
+    "electron": "^13.6.6",
     "enquirer": "^2.3.6",
     "eslint": "^8.8.0",
     "eslint-plugin-notice": "^0.9.10",
