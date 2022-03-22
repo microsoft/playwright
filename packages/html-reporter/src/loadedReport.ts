@@ -15,8 +15,9 @@
  */
 
 import { HTMLReport } from '@playwright/test/src/reporters/html';
+import { Metadata } from '.';
 
 export interface LoadedReport {
-  json(): HTMLReport;
+  json(): HTMLReport & { metadata?: Metadata };
   entry(name: string): Promise<Object | undefined>;
 }

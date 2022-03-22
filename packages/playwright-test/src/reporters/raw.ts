@@ -34,7 +34,7 @@ export type JsonReport = {
   suites: JsonSuite[],
 };
 
-export type JsonConfig = Omit<FullConfig, 'projects'>;
+export type JsonConfig = Omit<FullConfig, 'projects' | 'attachments'>;
 
 export type JsonProject = {
   metadata: any,
@@ -133,6 +133,10 @@ class RawReporter {
     }
   }
 
+  generateAttachments(config: FullConfig): JsonAttachment[] {
+    return this._createAttachments(config.attachments);
+  }
+
   generateProjectReport(config: FullConfig, suite: Suite): JsonReport {
     this.config = config;
     const project = suite.project();
@@ -223,7 +227,7 @@ class RawReporter {
       duration: result.duration,
       status: result.status,
       errors: formatResultFailure(this.config, test, result, '', true).map(error => error.message),
-      attachments: this._createAttachments(result),
+      attachments: this._createAttachments(result.attachments, result),
       steps: dedupeSteps(result.steps.map(step => this._serializeStep(test, step)))
     };
   }
@@ -245,17 +249,17 @@ class RawReporter {
     return result;
   }
 
-  private _createAttachments(result: TestResult): JsonAttachment[] {
-    const attachments: JsonAttachment[] = [];
-    for (const attachment of result.attachments) {
+  private _createAttachments(attachments: TestResult['attachments'], ioStreams?: Pick<TestResult, 'stdout' | 'stderr'>): JsonAttachment[] {
+    const out: JsonAttachment[] = [];
+    for (const attachment of attachments) {
       if (attachment.body) {
-        attachments.push({
+        out.push({
           name: attachment.name,
           contentType: attachment.contentType,
           body: attachment.body
         });
       } else if (attachment.path) {
-        attachments.push({
+        out.push({
           name: attachment.name,
           contentType: attachment.contentType,
           path: attachment.path
@@ -263,11 +267,14 @@ class RawReporter {
       }
     }
 
-    for (const chunk of result.stdout)
-      attachments.push(this._stdioAttachment(chunk, 'stdout'));
-    for (const chunk of result.stderr)
-      attachments.push(this._stdioAttachment(chunk, 'stderr'));
-    return attachments;
+    if (ioStreams) {
+      for (const chunk of ioStreams.stdout)
+        out.push(this._stdioAttachment(chunk, 'stdout'));
+      for (const chunk of ioStreams.stderr)
+        out.push(this._stdioAttachment(chunk, 'stderr'));
+    }
+
+    return out;
   }
 
   private _stdioAttachment(chunk: Buffer | string, type: 'stdout' | 'stderr'): JsonAttachment {

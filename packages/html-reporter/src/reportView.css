@@ -24,7 +24,6 @@ html, body {
 
 body {
   overflow: auto;
-  max-width: 1024px;
   margin: 0 auto;
   width: 100%;
 }
@@ -33,8 +32,58 @@ body {
   border-top: 1px solid var(--color-border-default);
 }
 
+.htmlreport {
+  gap: 24px;
+
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+}
+
+.htmlreport header {
+  width: 300px;
+  order: 2;
+}
+
+.htmlreport main {
+  max-width: 1024px;
+  width: 100%;
+  order: 1;
+}
+
+.metadata-view a {
+  color: var(--color-accent-fg);
+  text-decoration: none;
+}
+
+.metadata-view a:hover {
+  text-decoration: underline;
+}
+
+.metadata-view h1 {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  margin-top: 0;
+  line-height: 1.5;
+}
+
 @media only screen and (max-width: 600px) {
   .report {
     padding: 0 !important;
+  }
+}
+
+@media only screen and (max-width: 900px) {
+  .htmlreport {
+    flex-direction: column;
+  }
+
+  .htmlreport header {
+    order: 1;
+  }
+
+  .htmlreport main {
+    order: 2;
   }
 }

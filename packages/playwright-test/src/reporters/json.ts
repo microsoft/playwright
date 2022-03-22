@@ -20,7 +20,13 @@ import { FullConfig, TestCase, Suite, TestResult, TestError, TestStep, FullResul
 import { prepareErrorStack } from './base';
 
 export interface JSONReport {
-  config: Omit<FullConfig, 'projects'> & {
+  config: Omit<FullConfig, 'projects' | 'attachments'> & {
+    attachments: {
+      name: string;
+      path?: string;
+      body?: string;
+      contentType: string;
+    }[];
     projects: {
       outputDir: string,
       repeatEach: number,
@@ -121,6 +127,12 @@ class JSONReporter implements Reporter {
     return {
       config: {
         ...this.config,
+        attachments: this.config.attachments.map(a => ({
+          name: a.name,
+          contentType: a.contentType,
+          path: a.path,
+          body: a.body?.toString('base64')
+        })),
         rootDir: toPosixPath(this.config.rootDir),
         projects: this.config.projects.map(project => {
           return {

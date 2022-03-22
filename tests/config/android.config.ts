@@ -26,6 +26,7 @@ process.env.PWPAGE_IMPL = 'android';
 const outputDir = path.join(__dirname, '..', '..', 'test-results');
 const testDir = path.join(__dirname, '..');
 const config: Config<ServerWorkerOptions & PlaywrightWorkerOptions & PlaywrightTestOptions> = {
+  globalSetup: path.join(__dirname, './globalSetup'),
   testDir,
   outputDir,
   timeout: 120000,

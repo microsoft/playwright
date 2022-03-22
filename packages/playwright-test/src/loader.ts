@@ -456,6 +456,7 @@ const baseFullConfig: FullConfig = {
   version: require('../package.json').version,
   workers: 1,
   webServer: null,
+  attachments: [],
 };
 
 function resolveReporters(reporters: Config['reporter'], rootDir: string): ReporterDescription[]|undefined {
