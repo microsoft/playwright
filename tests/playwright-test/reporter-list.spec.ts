@@ -16,6 +16,10 @@
 
 import { test, expect, stripAnsi } from './playwright-test-fixtures';
 
+const DOES_NOT_SUPPORT_UTF8_IN_TERMINAL = process.platform === 'win32' && process.env.TERM_PROGRAM !== 'vscode' && !process.env.WT_SESSION;
+const POSITIVE_STATUS_MARK = DOES_NOT_SUPPORT_UTF8_IN_TERMINAL ? 'ok' : '✓ ';
+const NEGATIVE_STATUS_MARK = DOES_NOT_SUPPORT_UTF8_IN_TERMINAL ? 'x ' : '✘ ';
+
 test('render each test with project name', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
@@ -37,12 +41,11 @@ test('render each test with project name', async ({ runInlineTest }) => {
     `,
   }, { reporter: 'list' });
   const text = stripAnsi(result.output);
-  const positiveStatusMarkPrefix = process.platform === 'win32' ? 'ok' : '✓ ';
-  const negativateStatusMarkPrefix = process.platform === 'win32' ? 'x ' : '✘ ';
-  expect(text).toContain(`${negativateStatusMarkPrefix} [foo] › a.test.ts:6:7 › fails`);
-  expect(text).toContain(`${negativateStatusMarkPrefix} [bar] › a.test.ts:6:7 › fails`);
-  expect(text).toContain(`${positiveStatusMarkPrefix} [foo] › a.test.ts:9:7 › passes`);
-  expect(text).toContain(`${positiveStatusMarkPrefix} [bar] › a.test.ts:9:7 › passes`);
+
+  expect(text).toContain(`${NEGATIVE_STATUS_MARK} [foo] › a.test.ts:6:7 › fails`);
+  expect(text).toContain(`${NEGATIVE_STATUS_MARK} [bar] › a.test.ts:6:7 › fails`);
+  expect(text).toContain(`${POSITIVE_STATUS_MARK} [foo] › a.test.ts:9:7 › passes`);
+  expect(text).toContain(`${POSITIVE_STATUS_MARK} [bar] › a.test.ts:9:7 › passes`);
   expect(text).toContain(`-  [foo] › a.test.ts:12:12 › skipped`);
   expect(text).toContain(`-  [bar] › a.test.ts:12:12 › skipped`);
   expect(result.exitCode).toBe(1);
@@ -94,11 +97,10 @@ test('render retries', async ({ runInlineTest }) => {
   }, { reporter: 'list', retries: '1' }, { PW_TEST_DEBUG_REPORTERS: '1', PWTEST_TTY_WIDTH: '80' });
   const text = stripAnsi(result.output);
   const lines = text.split('\n').filter(l => l.startsWith('0 :') || l.startsWith('1 :')).map(l => l.replace(/[\dm]+s/, 'XXms'));
-  const positiveStatusMarkPrefix = process.platform === 'win32' ? 'ok' : '✓ ';
-  const negativateStatusMarkPrefix = process.platform === 'win32' ? 'x ' : '✘ ';
+
   expect(lines).toEqual([
-    `0 :   ${negativateStatusMarkPrefix} a.test.ts:6:7 › flaky (XXms)`,
-    `1 :   ${positiveStatusMarkPrefix} a.test.ts:6:7 › flaky (retry #1) (XXms)`,
+    `0 :   ${NEGATIVE_STATUS_MARK} a.test.ts:6:7 › flaky (XXms)`,
+    `1 :   ${POSITIVE_STATUS_MARK} a.test.ts:6:7 › flaky (retry #1) (XXms)`,
   ]);
 });
 
@@ -123,13 +125,12 @@ test('should truncate long test names', async ({ runInlineTest }) => {
     `,
   }, { reporter: 'list', retries: 0 }, { PWTEST_TTY_WIDTH: 50 });
   const text = stripAnsi(result.output);
-  const positiveStatusMarkPrefix = process.platform === 'win32' ? 'ok' : '✓ ';
-  const negativateStatusMarkPrefix = process.platform === 'win32' ? 'x ' : '✘ ';
-  expect(text).toContain(`${negativateStatusMarkPrefix} [foo] › a.test.ts:6:7 › fails very`);
-  expect(text).not.toContain(`${negativateStatusMarkPrefix} [foo] › a.test.ts:6:7 › fails very long name (`);
-  expect(text).toContain(`${positiveStatusMarkPrefix} [foo] › a.test.ts:9:7 › passes (`);
-  expect(text).toContain(`${positiveStatusMarkPrefix} [foo] › a.test.ts:11:7 › passes 2 long`);
-  expect(text).not.toContain(`${positiveStatusMarkPrefix} [foo] › a.test.ts:11:7 › passes 2 long name (`);
+
+  expect(text).toContain(`${NEGATIVE_STATUS_MARK} [foo] › a.test.ts:6:7 › fails very`);
+  expect(text).not.toContain(`${NEGATIVE_STATUS_MARK} [foo] › a.test.ts:6:7 › fails very long name (`);
+  expect(text).toContain(`${POSITIVE_STATUS_MARK} [foo] › a.test.ts:9:7 › passes (`);
+  expect(text).toContain(`${POSITIVE_STATUS_MARK} [foo] › a.test.ts:11:7 › passes 2 long`);
+  expect(text).not.toContain(`${POSITIVE_STATUS_MARK} [foo] › a.test.ts:11:7 › passes 2 long name (`);
   expect(text).toContain(`-  [foo] › a.test.ts:13:12 › skipped very long n`);
   expect(text).not.toContain(`-  [foo] › a.test.ts:13:12 › skipped very long na`);
   expect(result.exitCode).toBe(1);
