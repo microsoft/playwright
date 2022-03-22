@@ -32,13 +32,20 @@ export function checkComponentAttribute(obj: any, attr: ParsedComponentAttribute
     if (obj !== undefined && obj !== null)
       obj = obj[token];
   }
-  const objValue = typeof obj === 'string' && !attr.caseSensitive ? obj.toUpperCase() : obj;
+  return matchesAttribute(obj, attr);
+}
+
+export function matchesAttribute(value: any, attr: ParsedComponentAttribute) {
+  const objValue = typeof value === 'string' && !attr.caseSensitive ? value.toUpperCase() : value;
   const attrValue = typeof attr.value === 'string' && !attr.caseSensitive ? attr.value.toUpperCase() : attr.value;
 
   if (attr.op === '<truthy>')
     return !!objValue;
-  if (attr.op === '=')
+  if (attr.op === '=') {
+    if (attrValue instanceof RegExp)
+      return typeof objValue === 'string' && !!objValue.match(attrValue);
     return objValue === attrValue;
+  }
   if (typeof objValue !== 'string' || typeof attrValue !== 'string')
     return false;
   if (attr.op === '*=')
@@ -100,6 +107,39 @@ export function parseComponentSelector(selector: string): ParsedComponentSelecto
     return result;
   }
 
+  function readRegularExpression() {
+    if (eat1() !== '/')
+      syntaxError('parsing regular expression');
+    let source = '';
+    let inClass = false;
+    // https://262.ecma-international.org/11.0/#sec-literals-regular-expression-literals
+    while (!EOL) {
+      if (next() === '\\') {
+        source += eat1();
+        if (EOL)
+          syntaxError('parsing regular expressiion');
+      } else if (inClass && next() === ']') {
+        inClass = false;
+      } else if (!inClass && next() === '[') {
+        inClass = true;
+      } else if (!inClass && next() === '/') {
+        break;
+      }
+      source += eat1();
+    }
+    if (eat1() !== '/')
+      syntaxError('parsing regular expression');
+    let flags = '';
+    // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions
+    while (!EOL && next().match(/[dgimsuy]/))
+      flags += eat1();
+    try {
+      return new RegExp(source, flags);
+    } catch (e) {
+      throw new Error(`Error while parsing selector \`${selector}\`: ${e.message}`);
+    }
+  }
+
   function readAttributeToken() {
     let token = '';
     skipSpaces();
@@ -150,7 +190,11 @@ export function parseComponentSelector(selector: string): ParsedComponentSelecto
     let value = undefined;
     let caseSensitive = true;
     skipSpaces();
-    if (next() === `'` || next() === `"`) {
+    if (next() === '/') {
+      if (operator !== '=')
+        throw new Error(`Error while parsing selector \`${selector}\` - cannot use ${operator} in attribute with regular expression`);
+      value = readRegularExpression();
+    } else if (next() === `'` || next() === `"`) {
       value = readQuotedString(next()).slice(1, -1);
       skipSpaces();
       if (next() === 'i' || next() === 'I') {
