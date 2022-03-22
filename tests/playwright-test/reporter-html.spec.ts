@@ -628,7 +628,7 @@ test('open tests from required file', async ({ runInlineTest, showReport, page }
   ]);
 });
 
-test('should include metadata', async ({ runInlineTest, showReport, page }) => {
+test.only('should include metadata', async ({ runInlineTest, showReport, page }) => {
   const beforeRunPlaywrightTest = async ({ baseDir }: { baseDir: string }) => {
     const execGit = async (args: string[]) => {
       const { code, stdout, stderr } = await spawnAsync('git', args, { stdio: 'pipe', cwd: baseDir });
@@ -653,7 +653,7 @@ test('should include metadata', async ({ runInlineTest, showReport, page }) => {
         config.attachments = [
           ...await ci.generationTimestamp(),
           ...await ci.gitStatusFromCLI(config.rootDir).catch(() => []),
-          ...await ci.linksFromEnv(),
+          ...await ci.githubEnv(),
         ];
       };
 

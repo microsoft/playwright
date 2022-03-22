@@ -146,7 +146,7 @@ class HtmlReporter implements Reporter {
     const reportFolder = htmlReportFolder(this._outputFolder);
     await removeFolders([reportFolder]);
     const builder = new HtmlBuilder(reportFolder);
-    const { ok, singleTestId } = await builder.build({ attachments: new RawReporter().generateAttachments(this.config) }, reports);
+    const { ok, singleTestId } = await builder.build(new RawReporter().generateAttachments(this.config), reports);
 
     if (process.env.CI)
       return;
@@ -229,7 +229,7 @@ class HtmlBuilder {
     this._dataZipFile = new yazl.ZipFile();
   }
 
-  async build(runLevelReport: { attachments: JsonAttachment[] }, rawReports: JsonReport[]): Promise<{ ok: boolean, singleTestId: string | undefined }> {
+  async build(testReportAttachments: JsonAttachment[], rawReports: JsonReport[]): Promise<{ ok: boolean, singleTestId: string | undefined }> {
 
     const data = new Map<string, { testFile: TestFile, testFileSummary: TestFileSummary }>();
     for (const projectJson of rawReports) {
@@ -285,7 +285,7 @@ class HtmlBuilder {
       this._addDataFile(fileId + '.json', testFile);
     }
     const htmlReport: HTMLReport = {
-      attachments: this._serializeAttachments(runLevelReport.attachments),
+      attachments: this._serializeAttachments(testReportAttachments),
       files: [...data.values()].map(e => e.testFileSummary),
       projectNames: rawReports.map(r => r.project.name),
       stats: [...data.values()].reduce((a, e) => addStats(a, e.testFileSummary.stats), emptyStats())

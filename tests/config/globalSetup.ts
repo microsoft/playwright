@@ -22,7 +22,7 @@ async function globalSetup(config: FullConfig) {
   config.attachments = [
     ...await ci.generationTimestamp(),
     ...await ci.gitStatusFromCLI(config.rootDir).catch(() => []),
-    ...await ci.linksFromEnv(),
+    ...await ci.githubEnv(),
     // In the future, we would add some additional plugins like:
     // ...await ci.azurePipelinePlugin(),
     // (and these would likley all get bundled into one call and controlled with one config instead

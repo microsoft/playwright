@@ -35,22 +35,39 @@ export type Metadata = Partial<{
 }>;
 
 const extractMetadata = (attachments: TestAttachment[]): Metadata | undefined => {
+  // The last plugin to register for a given key will take precedence
+  attachments = [...attachments];
+  attachments.reverse();
   const field = (name: string) => attachments.find(({ name: n }) => n === name)?.body;
   const fieldAsJSON = (name: string) => {
     const raw = field(name);
     if (raw !== undefined)
       return JSON.parse(raw);
   };
+  const fieldAsNumber = (name: string) => {
+    const v = fieldAsJSON(name);
+    if (v !== undefined && typeof v !== 'number')
+      throw new Error(`Invalid value for field '${name}'. Expected type 'number', but got ${typeof v}.`);
+
+    return v;
+  };
+  const fieldAsBool = (name: string) => {
+    const v = fieldAsJSON(name);
+    if (v !== undefined && typeof v !== 'boolean')
+      throw new Error(`Invalid value for field '${name}'. Expected type 'boolean', but got ${typeof v}.`);
+
+    return v;
+  };
 
   const out = {
-    'generatedAt': fieldAsJSON('generatedAt'),
+    'generatedAt': fieldAsNumber('generatedAt'),
     'revision.id': field('revision.id'),
     'revision.author': field('revision.author'),
     'revision.email': field('revision.email'),
     'revision.subject': field('revision.subject'),
-    'revision.timestamp': fieldAsJSON('revision.timestamp'),
+    'revision.timestamp': fieldAsNumber('revision.timestamp'),
     'revision.link': field('revision.link'),
-    'revision.localPendingChanges': fieldAsJSON('revision.localPendingChanges'),
+    'revision.localPendingChanges': fieldAsBool('revision.localPendingChanges'),
     'ci.link': field('ci.link'),
   };
 

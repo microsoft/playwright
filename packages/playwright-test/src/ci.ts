@@ -15,7 +15,7 @@
  */
 import { spawnAsync } from 'playwright-core/lib/utils/utils';
 
-const GIT_OPERATIONS_TIMEOUT_MS = 1_500;
+const GIT_OPERATIONS_TIMEOUT_MS = 1500;
 const kContentTypePlainText = 'text/plain';
 const kContentTypeJSON = 'application/json';
 export interface Attachment {
@@ -57,31 +57,34 @@ export const gitStatusFromCLI = async (gitDir: string): Promise<Attachment[]> =>
   ];
 };
 
-export const linksFromEnv = async (): Promise<Attachment[]> => {
-  let commitLink: string | undefined;
-  if (process.env.GITHUB_SERVER_URL && process.env.GITHUB_REPOSITORY && process.env.GITHUB_SHA) {
-    commitLink = `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/commit/${process.env.GITHUB_SHA}`;
-  } else if (process.env.CI_PROJECT_URL && process.env.CI_COMMIT_SHA) { // GitLab: https://docs.gitlab.com/ee/ci/variables/predefined_variables.html
-    commitLink = `${process.env.CI_PROJECT_URL}/-/commit/${process.env.CI_COMMIT_SHA}`;
-  }
-
-  let jobLink: string | undefined;
-  if (process.env.GITHUB_SERVER_URL && process.env.GITHUB_REPOSITORY && process.env.GITHUB_RUN_ID) {
-    jobLink = `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`;
-  } else if (process.env.CI_JOB_URL) { // GitLab: https://docs.gitlab.com/ee/ci/variables/predefined_variables.html
-    jobLink = process.env.CI_JOB_URL;
-  } else if (process.env.BUILD_URL) { // Jenkins: https://www.jenkins.io/doc/book/pipeline/jenkinsfile/#using-environment-variables
-    jobLink = process.env.BUILD_URL;
-  }
-
+export const githubEnv = async (): Promise<Attachment[]> => {
   const out: Attachment[] = [];
-  if (jobLink)
-    out.push({ name: 'ci.link', body: Buffer.from(jobLink), contentType: kContentTypePlainText });
+  if (process.env.GITHUB_SERVER_URL && process.env.GITHUB_REPOSITORY && process.env.GITHUB_SHA)
+    out.push({ name: 'revision.link', body: Buffer.from(`${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/commit/${process.env.GITHUB_SHA}`), contentType: kContentTypePlainText });
 
+  if (process.env.GITHUB_SERVER_URL && process.env.GITHUB_REPOSITORY && process.env.GITHUB_RUN_ID)
+    out.push({ name: 'ci.link', body: Buffer.from(`${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`), contentType: kContentTypePlainText });
 
-  if (commitLink)
-    out.push({ name: 'revision.link', body: Buffer.from(commitLink), contentType: kContentTypePlainText });
+  return out;
+};
 
+export const gitlabEnv = async (): Promise<Attachment[]> => {
+  // GitLab: https://docs.gitlab.com/ee/ci/variables/predefined_variables.html
+  const out: Attachment[] = [];
+  if (process.env.CI_PROJECT_URL && process.env.CI_COMMIT_SHA)
+    out.push({ name: 'revision.link', body: Buffer.from(`${process.env.CI_PROJECT_URL}/-/commit/${process.env.CI_COMMIT_SHA}`), contentType: kContentTypePlainText });
+
+  if (process.env.CI_JOB_URL)
+    out.push({ name: 'ci.link', body: Buffer.from(process.env.CI_JOB_URL), contentType: kContentTypePlainText });
+
+  return out;
+};
+
+export const jenkinsEnv = async (): Promise<Attachment[]> => {
+  // Jenkins: https://www.jenkins.io/doc/book/pipeline/jenkinsfile/#using-environment-variables
+  const out: Attachment[] = [];
+  if (process.env.BUILD_URL)
+    out.push({ name: 'ci.link', body: Buffer.from(process.env.BUILD_URL), contentType: kContentTypePlainText });
 
   return out;
 };
