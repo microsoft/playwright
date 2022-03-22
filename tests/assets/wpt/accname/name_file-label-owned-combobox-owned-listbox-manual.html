@@ -1,0 +1,83 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Name file-label-owned-combobox-owned-listbox</title>
+    <meta content="text/html; charset=utf-8" http-equiv="Content-Type"/>
+    <link rel="stylesheet" href="/wai-aria/scripts/manual.css">
+    <script src="/resources/testharness.js"></script>
+    <script src="/resources/testharnessreport.js"></script>
+    <script src="/wai-aria/scripts/ATTAcomm.js"></script>
+    <script>
+    setup({explicit_timeout: true, explicit_done: true });
+
+    var theTest = new ATTAcomm(
+    {
+   "steps" : [
+      {
+         "element" : "test",
+         "test" : {
+            "ATK" : [
+               [
+                  "property",
+                  "name",
+                  "is",
+                  "Flash the screen 2 times."
+               ]
+            ],
+            "AXAPI" : [
+               [
+                  "property",
+                  "AXDescription",
+                  "is",
+                  "Flash the screen 2 times."
+               ]
+            ],
+            "IAccessible2" : [
+               [
+                  "property",
+                  "accName",
+                  "is",
+                  "Flash the screen 2 times."
+               ]
+            ],
+            "UIA" : [
+               [
+                  "property",
+                  "Name",
+                  "is",
+                  "Flash the screen 2 times."
+               ]
+            ]
+         },
+         "title" : "step 1",
+         "type" : "test"
+      }
+   ],
+   "title" : "Name file-label-owned-combobox-owned-listbox"
+}
+
+    ) ;
+    </script>
+  </head>
+  <body>
+  <p>This test examines the ARIA properties for Name file-label-owned-combobox-owned-listbox.</p>
+    <input type="file" id="test" />
+  <label for="test">Flash <span aria-owns="id1">the screen</span> times.</label>
+  <div>
+    <div id="id1" role="combobox" aria-owns="id2">
+      <div role="textbox"></div>
+    </div>
+  </div>
+  <div>
+    <ul id="id2" role="listbox" style="list-style-type: none;">
+      <li role="option" >1 </li>
+      <li role="option" aria-selected="true">2 </li>
+      <li role="option">3 </li>
+    </ul>
+  </div>
+
+  <div id="manualMode"></div>
+  <div id="log"></div>
+  <div id="ATTAmessages"></div>
+  </body>
+</html>

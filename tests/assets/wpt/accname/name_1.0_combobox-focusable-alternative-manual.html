@@ -1,0 +1,70 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Name 1.0 combobox-focusable-alternative</title>
+    <meta content="text/html; charset=utf-8" http-equiv="Content-Type"/>
+    <link rel="stylesheet" href="/wai-aria/scripts/manual.css">
+    <script src="/resources/testharness.js"></script>
+    <script src="/resources/testharnessreport.js"></script>
+    <script src="/wai-aria/scripts/ATTAcomm.js"></script>
+    <script>
+    setup({explicit_timeout: true, explicit_done: true });
+
+    var theTest = new ATTAcomm(
+    {
+   "steps" : [
+      {
+         "element" : "test",
+         "test" : {
+            "ATK" : [
+               [
+                  "property",
+                  "name",
+                  "is",
+                  "Choose your language"
+               ]
+            ],
+            "AXAPI" : [
+               [
+                  "property",
+                  "AXDescription",
+                  "is",
+                  "Choose your language"
+               ]
+            ],
+            "IAccessible2" : [
+               [
+                  "property",
+                  "accName",
+                  "is",
+                  "Choose your language"
+               ]
+            ],
+            "UIA" : [
+               [
+                  "property",
+                  "Name",
+                  "is",
+                  "Choose your language"
+               ]
+            ]
+         },
+         "title" : "step 1",
+         "type" : "test"
+      }
+   ],
+   "title" : "Name 1.0 combobox-focusable-alternative"
+}
+
+    ) ;
+    </script>
+  </head>
+  <body>
+  <p>This test examines the ARIA properties for Name 1.0 combobox-focusable-alternative.</p>
+    <input id="test" role="combobox" type="text" title="Choose your language" value="English">
+
+  <div id="manualMode"></div>
+  <div id="log"></div>
+  <div id="ATTAmessages"></div>
+  </body>
+</html>
