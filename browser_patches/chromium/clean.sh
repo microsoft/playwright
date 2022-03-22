@@ -13,5 +13,3 @@ fi
 if [[ ! -d "${CR_CHECKOUT_PATH}/src" ]]; then
   rm -rf "${CR_CHECKOUT_PATH}/src/out"
 fi
-
-
