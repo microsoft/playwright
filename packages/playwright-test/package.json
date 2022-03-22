@@ -50,7 +50,7 @@
     "debug": "4.3.3",
     "expect": "27.2.5",
     "jest-matcher-utils": "27.2.5",
-    "json5": "2.2.0",
+    "json5": "2.2.1",
     "mime": "3.0.0",
     "minimatch": "3.0.4",
     "ms": "2.1.3",
