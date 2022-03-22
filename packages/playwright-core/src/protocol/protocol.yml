@@ -2449,6 +2449,7 @@ Route:
         headers:
           type: array?
           items: NameValue
+        cors: boolean?
         body: string?
         isBase64: boolean?
         fetchResponseUid: string?

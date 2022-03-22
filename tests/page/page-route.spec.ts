@@ -519,6 +519,7 @@ it('should support cors with GET', async ({ page, server, browserName }) => {
     const headers = request.url().endsWith('allow') ? { 'access-control-allow-origin': '*' } : {};
     await route.fulfill({
       contentType: 'application/json',
+      cors: false,
       headers,
       status: 200,
       body: JSON.stringify(['electric', 'gas']),
@@ -546,6 +547,62 @@ it('should support cors with GET', async ({ page, server, browserName }) => {
       expect(error.message).toContain('NetworkError');
   }
 });
+
+it('should add Access-Control-Allow-Origin by default when fulfill', async ({ page, server }) => {
+  await page.goto(server.EMPTY_PAGE);
+  await page.route('**/cars', async route => {
+    await route.fulfill({
+      contentType: 'application/json',
+      status: 200,
+      body: JSON.stringify(['electric', 'gas']),
+    });
+  });
+
+  const [result, response] = await Promise.all([
+    page.evaluate(async () => {
+      const response = await fetch('https://example.com/cars', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        mode: 'cors',
+        body: JSON.stringify({ 'number': 1 })
+      });
+      return response.json();
+    }),
+    page.waitForResponse('https://example.com/cars')
+  ]);
+  expect(result).toEqual(['electric', 'gas']);
+  expect(await response.headerValue('Access-Control-Allow-Origin')).toBe(server.PREFIX);
+});
+
+it('should respect cors false', async ({ page, server }) => {
+  await page.route('**/one-style.css', async route => {
+    await route.fulfill({
+      contentType: 'text/css',
+      status: 200,
+      body: '',
+    });
+  });
+  const [response1] = await Promise.all([
+    page.waitForResponse(server.PREFIX + '/one-style.css'),
+    page.goto(server.PREFIX + '/one-style.html')
+  ]);
+  expect(await response1.headerValue('Access-Control-Allow-Origin')).toBe('*');
+
+  await page.route('**/one-style.css', async route => {
+    await route.fulfill({
+      contentType: 'text/css',
+      cors: false,
+      status: 200,
+      body: '',
+    });
+  });
+  const [response2] = await Promise.all([
+    page.waitForResponse(server.PREFIX + '/one-style.css'),
+    page.goto(server.PREFIX + '/one-style.html')
+  ]);
+  expect(await response2.headerValue('Access-Control-Allow-Origin')).toBeFalsy();
+});
+
 
 it('should support cors with POST', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);

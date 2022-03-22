@@ -248,7 +248,7 @@ export class Route extends SdkObject {
     await this._delegate.abort(errorCode);
   }
 
-  async fulfill(overrides: { status?: number, headers?: types.HeadersArray, body?: string, isBase64?: boolean, useInterceptedResponseBody?: boolean, fetchResponseUid?: string }) {
+  async fulfill(overrides: { status?: number, headers?: types.HeadersArray, cors?: boolean, body?: string, isBase64?: boolean, useInterceptedResponseBody?: boolean, fetchResponseUid?: string }) {
     this._startHandling();
     let body = overrides.body;
     let isBase64 = overrides.isBase64 || false;
@@ -264,9 +264,18 @@ export class Route extends SdkObject {
         isBase64 = false;
       }
     }
+    const headers = [...(overrides.headers || [])];
+    if (overrides.cors !== false) {
+      const corsHeader = headers.find(({ name, value }) => name === 'access-control-allow-origin');
+      // See https://github.com/microsoft/playwright/issues/12929
+      if (!corsHeader) {
+        const origin = this._request.headerValue('origin') || '*';
+        headers.push({ name: 'access-control-allow-origin', value: origin });
+      }
+    }
     await this._delegate.fulfill({
       status: overrides.status || 200,
-      headers: overrides.headers || [],
+      headers,
       body,
       isBase64,
     });
