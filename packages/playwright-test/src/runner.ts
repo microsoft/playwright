@@ -25,6 +25,7 @@ import { TestCase, Suite } from './test';
 import { Loader } from './loader';
 import { FullResult, Reporter, TestError } from '../types/testReporter';
 import { Multiplexer } from './reporters/multiplexer';
+import { formatError } from './reporters/base';
 import DotReporter from './reporters/dot';
 import GitHubReporter from './reporters/github';
 import LineReporter from './reporters/line';
@@ -684,7 +685,10 @@ function createTestGroups(rootSuite: Suite): TestGroup[] {
 }
 
 class ListModeReporter implements Reporter {
+  private config!: FullConfig;
+
   onBegin(config: FullConfig, suite: Suite): void {
+    this.config = config;
     // eslint-disable-next-line no-console
     console.log(`Listing tests:`);
     const tests = suite.allTests();
@@ -700,6 +704,11 @@ class ListModeReporter implements Reporter {
     }
     // eslint-disable-next-line no-console
     console.log(`Total: ${tests.length} ${tests.length === 1 ? 'test' : 'tests'} in ${files.size} ${files.size === 1 ? 'file' : 'files'}`);
+  }
+
+  onError(error: TestError) {
+    // eslint-disable-next-line no-console
+    console.error('\n' + formatError(this.config, error, false).message);
   }
 }
 
