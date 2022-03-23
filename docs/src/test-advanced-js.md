@@ -156,9 +156,12 @@ import { PlaywrightTestConfig } from '@playwright/test';
 const config: PlaywrightTestConfig = {
   webServer: {
     command: 'npm run start',
-    port: 3000,
+    url: 'http://localhost:3000/app/',
     timeout: 120 * 1000,
     reuseExistingServer: !process.env.CI,
+  },
+  use: {
+    baseURL: 'http://localhost:3000/app/',
   },
 };
 export default config;
@@ -171,41 +174,36 @@ export default config;
 const config = {
   webServer: {
     command: 'npm run start',
-    port: 3000,
+    url: 'http://localhost:3000/app/',
     timeout: 120 * 1000,
     reuseExistingServer: !process.env.CI,
+  },
+  use: {
+    baseURL: 'http://localhost:3000/app/',
   },
 };
 module.exports = config;
 ```
 
-Now you can use a relative path when navigating the page, or use `baseURL` fixture:
+Now you can use a relative path when navigating the page:
 
 ```js js-flavor=ts
 // test.spec.ts
 import { test } from '@playwright/test';
-test('test', async ({ page, baseURL }) => {
-  // baseURL is taken directly from your web server,
-  // e.g. http://localhost:3000
-  await page.goto(baseURL + '/bar');
-  // Alternatively, just use relative path, because baseURL is already
-  // set for the default context and page.
-  // For example, this will result in http://localhost:3000/foo
-  await page.goto('/foo');
+test('test', async ({ page }) => {
+  // baseURL is set in the config to http://localhost:3000/app/
+  // This will navigate to http://localhost:3000/app/login
+  await page.goto('./login');
 });
 ```
 
 ```js js-flavor=js
 // test.spec.js
 const { test } = require('@playwright/test');
-test('test', async ({ page, baseURL }) => {
-  // baseURL is taken directly from your web server,
-  // e.g. http://localhost:3000
-  await page.goto(baseURL + '/bar');
-  // Alternatively, just use relative path, because baseURL is already
-  // set for the default context and page.
-  // For example, this will result in http://localhost:3000/foo
-  await page.goto('/foo');
+test('test', async ({ page }) => {
+  // baseURL is set in the config to http://localhost:3000/app/
+  // This will navigate to http://localhost:3000/app/login
+  await page.goto('./login');
 });
 ```
 
