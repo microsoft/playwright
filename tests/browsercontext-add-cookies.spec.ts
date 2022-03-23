@@ -421,3 +421,32 @@ it('should not block third party SameSite=None cookies', async ({ contextFactory
   await page.goto(httpsServer.EMPTY_PAGE);
   expect(await cookie).toBe('a=b');
 });
+
+it('should allow unnamed cookies', async ({ page, context, server, browserName }) => {
+  server.setRoute('/cookies', (req, res) => {
+    res.write(req.headers.cookie ?? 'undefined-on-server');
+    res.end();
+  });
+  await context.addCookies([{
+    url: server.EMPTY_PAGE,
+    name: '',
+    value: 'unnamed-via-add-cookies',
+  }]);
+  // Round-trip behavior
+  const resp = await page.goto(server.PREFIX + '/cookies');
+  if (browserName === 'webkit') {
+    expect.soft(await resp.text()).toBe('undefined-on-server');
+    expect.soft(await page.evaluate('document.cookie')).toBe('');
+  } else {
+    expect.soft(await resp.text()).toBe('unnamed-via-add-cookies');
+    expect.soft(await page.evaluate('document.cookie')).toBe('unnamed-via-add-cookies');
+  }
+  // Within PW behavior
+  await page.goto(server.EMPTY_PAGE);
+  await page.evaluate(() => document.cookie = '=unnamed-via-js;');
+  await context.addCookies(await context.cookies());
+  if (browserName === "webkit")
+    expect.soft(await page.evaluate('document.cookie')).toBe('');
+  else
+    expect.soft(await page.evaluate('document.cookie')).toBe('unnamed-via-js');
+});
