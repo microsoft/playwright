@@ -1784,6 +1784,35 @@ index c2d49da98a660bc62b04afe19c578f2592fd4bb9..f27c12db93e099a2dea9ffeb57be72a0
  #include <wtf/text/StringBuilder.h>
  #include <wtf/unicode/icu/ICUHelpers.h>
  
+diff --git a/Source/JavaScriptCore/runtime/JSCustomGetterFunction.h b/Source/JavaScriptCore/runtime/JSCustomGetterFunction.h
+index cac76ea1ef17bc1d79f4b79525a6fd03ebd93ad2..e6afd5ceac4243b64ac07677a62eb894651c1272 100644
+--- a/Source/JavaScriptCore/runtime/JSCustomGetterFunction.h
++++ b/Source/JavaScriptCore/runtime/JSCustomGetterFunction.h
+@@ -59,6 +59,12 @@ public:
+     CustomFunctionPointer getter() const { return m_getter; };
+     CustomFunctionPointer customFunctionPointer() const { return m_getter; };
+     std::optional<DOMAttributeAnnotation> domAttribute() const { return m_domAttribute; };
++    const ClassInfo* slotBaseClassInfoIfExists() const
++    {
++        if (m_domAttribute)
++            return m_domAttribute->classInfo;
++        return nullptr;
++    }
+ 
+ private:
+     JSCustomGetterFunction(VM&, NativeExecutable*, JSGlobalObject*, Structure*, const PropertyName&, CustomFunctionPointer, std::optional<DOMAttributeAnnotation>);
+diff --git a/Source/JavaScriptCore/runtime/JSCustomSetterFunction.h b/Source/JavaScriptCore/runtime/JSCustomSetterFunction.h
+index 076c9308fcc08c5b553504c0fe743c206ff112a4..6a6c4dd83c5a440a7ad2ad29613896f956259608 100644
+--- a/Source/JavaScriptCore/runtime/JSCustomSetterFunction.h
++++ b/Source/JavaScriptCore/runtime/JSCustomSetterFunction.h
+@@ -58,6 +58,7 @@ public:
+     const Identifier& propertyName() const { return m_propertyName; }
+     CustomFunctionPointer setter() const { return m_setter; };
+     CustomFunctionPointer customFunctionPointer() const { return m_setter; };
++    const ClassInfo* slotBaseClassInfoIfExists() const { return nullptr; }
+ 
+ private:
+     JSCustomSetterFunction(VM&, NativeExecutable*, JSGlobalObject*, Structure*, const PropertyName&, CustomFunctionPointer);
 diff --git a/Source/JavaScriptCore/runtime/JSDateMath.cpp b/Source/JavaScriptCore/runtime/JSDateMath.cpp
 index fc6fd38ecb392e9d5ea54d5702578562289434fb..6d4be8e5288a5a3307d7803246dcc16b69c8f9ea 100644
 --- a/Source/JavaScriptCore/runtime/JSDateMath.cpp
@@ -1841,6 +1870,103 @@ index fc6fd38ecb392e9d5ea54d5702578562289434fb..6d4be8e5288a5a3307d7803246dcc16b
      // Do not use icu::TimeZone::createDefault. ICU internally has a cache for timezone and createDefault returns this cached value.
      m_timeZoneCache = std::unique_ptr<OpaqueICUTimeZone, OpaqueICUTimeZoneDeleter>(bitwise_cast<OpaqueICUTimeZone*>(icu::TimeZone::detectHostTimeZone()));
  #endif
+diff --git a/Source/JavaScriptCore/runtime/JSGlobalObject.h b/Source/JavaScriptCore/runtime/JSGlobalObject.h
+index d9da1e466b9c987d76310a2a673983756714d311..56a437fe0162a24e39db61ad1b1802298752c888 100644
+--- a/Source/JavaScriptCore/runtime/JSGlobalObject.h
++++ b/Source/JavaScriptCore/runtime/JSGlobalObject.h
+@@ -599,7 +599,7 @@ public:
+     struct WeakCustomGetterOrSetterHash {
+         static unsigned hash(const Weak<T>&);
+         static bool equal(const Weak<T>&, const Weak<T>&);
+-        static unsigned hash(const PropertyName&, typename T::CustomFunctionPointer);
++        static unsigned hash(const PropertyName&, typename T::CustomFunctionPointer, const ClassInfo*);
+ 
+         static constexpr bool safeToCompareToEmptyOrDeleted = false;
+     };
+diff --git a/Source/JavaScriptCore/runtime/JSGlobalObjectInlines.h b/Source/JavaScriptCore/runtime/JSGlobalObjectInlines.h
+index 171f88e9e784e14b70ed2894a02e30f6dc10ba12..b9c4f2758fd9c8e073845eab246877bdac1a77a8 100644
+--- a/Source/JavaScriptCore/runtime/JSGlobalObjectInlines.h
++++ b/Source/JavaScriptCore/runtime/JSGlobalObjectInlines.h
+@@ -34,6 +34,7 @@
+ #include "JSFunction.h"
+ #include "LinkTimeConstant.h"
+ #include "ObjectPrototype.h"
++#include <wtf/Hasher.h>
+ 
+ namespace JSC {
+ 
+@@ -153,7 +154,7 @@ inline unsigned JSGlobalObject::WeakCustomGetterOrSetterHash<T>::hash(const Weak
+ {
+     if (!value)
+         return 0;
+-    return hash(value->propertyName(), value->customFunctionPointer());
++    return hash(value->propertyName(), value->customFunctionPointer(), value->slotBaseClassInfoIfExists());
+ }
+ 
+ template<typename T>
+@@ -165,12 +166,11 @@ inline bool JSGlobalObject::WeakCustomGetterOrSetterHash<T>::equal(const Weak<T>
+ }
+ 
+ template<typename T>
+-inline unsigned JSGlobalObject::WeakCustomGetterOrSetterHash<T>::hash(const PropertyName& propertyName, typename T::CustomFunctionPointer functionPointer)
++inline unsigned JSGlobalObject::WeakCustomGetterOrSetterHash<T>::hash(const PropertyName& propertyName, typename T::CustomFunctionPointer functionPointer, const ClassInfo* classInfo)
+ {
+-    unsigned hash = DefaultHash<typename T::CustomFunctionPointer>::hash(functionPointer);
+     if (!propertyName.isNull())
+-        hash = WTF::pairIntHash(hash, propertyName.uid()->existingSymbolAwareHash());
+-    return hash;
++        return WTF::computeHash(functionPointer, propertyName.uid()->existingSymbolAwareHash(), classInfo);
++    return WTF::computeHash(functionPointer, classInfo);
+ }
+ 
+ } // namespace JSC
+diff --git a/Source/JavaScriptCore/runtime/JSObject.cpp b/Source/JavaScriptCore/runtime/JSObject.cpp
+index d544a43ba19ea327fbd2815adc7af3416c561a66..039c46505311fca71b4295f1ba693b302103a945 100644
+--- a/Source/JavaScriptCore/runtime/JSObject.cpp
++++ b/Source/JavaScriptCore/runtime/JSObject.cpp
+@@ -3621,18 +3621,18 @@ template<typename T>
+ struct WeakCustomGetterOrSetterHashTranslator {
+     using BaseHash = JSGlobalObject::WeakCustomGetterOrSetterHash<T>;
+ 
+-    using Key = std::pair<PropertyName, typename T::CustomFunctionPointer>;
++    using Key = std::tuple<PropertyName, typename T::CustomFunctionPointer, const ClassInfo*>;
+ 
+     static unsigned hash(const Key& key)
+     {
+-        return BaseHash::hash(std::get<0>(key), std::get<1>(key));
++        return BaseHash::hash(std::get<0>(key), std::get<1>(key), std::get<2>(key));
+     }
+ 
+     static bool equal(const Weak<T>& a, const Key& b)
+     {
+         if (!a)
+             return false;
+-        return a->propertyName() == std::get<0>(b) && a->customFunctionPointer() == std::get<1>(b);
++        return a->propertyName() == std::get<0>(b) && a->customFunctionPointer() == std::get<1>(b) && a->slotBaseClassInfoIfExists() == std::get<2>(b);
+     }
+ };
+ 
+@@ -3643,7 +3643,10 @@ static JSCustomGetterFunction* createCustomGetterFunction(JSGlobalObject* global
+     // WeakGCSet::ensureValue's functor must not invoke GC since GC can modify WeakGCSet in the middle of HashSet::ensure.
+     // We use DeferGC here (1) not to invoke GC when executing WeakGCSet::ensureValue and (2) to avoid looking up HashSet twice.
+     DeferGC deferGC(vm);
+-    return globalObject->customGetterFunctionSet().ensureValue<Translator>(std::make_pair(propertyName, getValueFunc), [&] {
++    const ClassInfo* classInfo = nullptr;
++    if (domAttribute)
++        classInfo = domAttribute->classInfo;
++    return globalObject->customGetterFunctionSet().ensureValue<Translator>(std::tuple { propertyName, getValueFunc, classInfo }, [&] {
+         return JSCustomGetterFunction::create(vm, globalObject, propertyName, getValueFunc, domAttribute);
+     });
+ }
+@@ -3655,7 +3658,7 @@ static JSCustomSetterFunction* createCustomSetterFunction(JSGlobalObject* global
+     // WeakGCSet::ensureValue's functor must not invoke GC since GC can modify WeakGCSet in the middle of HashSet::ensure.
+     // We use DeferGC here (1) not to invoke GC when executing WeakGCSet::ensureValue and (2) to avoid looking up HashSet twice.
+     DeferGC deferGC(vm);
+-    return globalObject->customSetterFunctionSet().ensureValue<Translator>(std::make_pair(propertyName, putValueFunc), [&] {
++    return globalObject->customSetterFunctionSet().ensureValue<Translator>(std::tuple { propertyName, putValueFunc, nullptr }, [&] {
+         return JSCustomSetterFunction::create(vm, globalObject, propertyName, putValueFunc);
+     });
+ }
 diff --git a/Source/JavaScriptCore/wasm/WasmCompilationMode.h b/Source/JavaScriptCore/wasm/WasmCompilationMode.h
 index 6f134e33eb8ebdd3888fdb068df7bfcd0c4225fd..1e3f2f08ee3bcb1d4a52009907a2dd9e622c4c67 100644
 --- a/Source/JavaScriptCore/wasm/WasmCompilationMode.h
