@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
-import { Size, Point, TimeoutOptions } from '../common/types';
-export { Size, Point, Rect, Quad, URLMatch, TimeoutOptions } from '../common/types';
+import type { Size, Point, TimeoutOptions } from '../common/types';
+export type { Size, Point, Rect, Quad, URLMatch, TimeoutOptions } from '../common/types';
 
 export type StrictOptions = {
   strict?: boolean,

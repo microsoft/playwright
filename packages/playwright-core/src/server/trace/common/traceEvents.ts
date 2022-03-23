@@ -18,6 +18,7 @@ import type { Size } from '../../../common/types';
 import type { CallMetadata } from '../../instrumentation';
 import type { FrameSnapshot, ResourceSnapshot } from './snapshotTypes';
 
+// Make sure you add _modernize_N_to_N1(event: any) to traceModel.ts.
 export const VERSION = 3;
 
 export type BrowserContextEventOptions = {

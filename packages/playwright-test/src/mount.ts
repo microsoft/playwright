@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Page } from '@playwright/test';
+import type { Page } from '@playwright/test';
 import { createGuid } from 'playwright-core/lib/utils/utils';
 
 export async function mount(page: Page, jsxOrType: any, options: any): Promise<string> {

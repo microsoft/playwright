@@ -1,0 +1,12 @@
+module.exports = {
+  '/': [
+    '@web/**',
+    'ui/',
+  ],
+
+  'ui/': [
+    '@web/**',
+    'geometry.ts',
+    'entries.ts',
+  ]
+};
