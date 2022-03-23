@@ -102,6 +102,15 @@ for (const [name, url] of Object.entries(reacts)) {
       expect(await page.$$eval(`_react=BookItem[name *= " gatsby" i]`, els => els.length)).toBe(1);
     });
 
+    it('should support regex', async ({ page }) => {
+      expect(await page.$$eval(`_react=ColorButton[color = /red/]`, els => els.length)).toBe(3);
+      expect(await page.$$eval(`_react=ColorButton[color = /^red$/]`, els => els.length)).toBe(3);
+      expect(await page.$$eval(`_react=ColorButton[color = /RED/i]`, els => els.length)).toBe(3);
+      expect(await page.$$eval(`_react=ColorButton[color = /[pqr]ed/]`, els => els.length)).toBe(3);
+      expect(await page.$$eval(`_react=ColorButton[color = /[pq]ed/]`, els => els.length)).toBe(0);
+      expect(await page.$$eval(`_react=BookItem[name = /gat.by/i]`, els => els.length)).toBe(1);
+    });
+
     it('should support truthy querying', async ({ page }) => {
       expect(await page.$$eval(`_react=ColorButton[enabled]`, els => els.length)).toBe(5);
     });

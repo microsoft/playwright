@@ -765,7 +765,7 @@ Selector examples:
 - match by component and property value **prefix**: `_react=BookItem[author ^= "Steven"]`
 - match by component and property value **suffix**: `_react=BookItem[author $= "Steven"]`
 - match by component and **key**: `_react=BookItem[key = '2']`
-
+- match by property value **regex**: `_react=[author = /Steven(\\s+King)?/i]`
 
 
 To find React element names in a tree use [React DevTools](https://chrome.google.com/webstore/detail/react-developer-tools/fmkadmapgofadopljbjfkapdkoienihi).
@@ -801,6 +801,7 @@ Selector examples:
 - match by **nested** property value: `_vue=[some.nested.value = 12]`
 - match by component and property value **prefix**: `_vue=book-item[author ^= "Steven"]`
 - match by component and property value **suffix**: `_vue=book-item[author $= "Steven"]`
+- match by property value **regex**: `_vue=[author = /Steven(\\s+King)?/i]`
 
 To find Vue element names in a tree use [Vue DevTools](https://chrome.google.com/webstore/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd?hl=en).
 

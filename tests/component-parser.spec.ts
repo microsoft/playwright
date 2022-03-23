@@ -23,7 +23,8 @@ const serialize = (parsed: ParsedComponentSelector) => {
     const path = attr.jsonPath.map(token => /^[a-zA-Z0-9]+$/i.test(token) ? token : JSON.stringify(token)).join('.');
     if (attr.op === '<truthy>')
       return '[' + path + ']';
-    return '[' + path + ' ' + attr.op + ' ' + JSON.stringify(attr.value) + (attr.caseSensitive ? ']' : ' i]');
+    const value = attr.value instanceof RegExp ? attr.value.toString() : JSON.stringify(attr.value);
+    return '[' + path + ' ' + attr.op + ' ' + value + (attr.caseSensitive ? ']' : ' i]');
   }).join('');
 };
 
@@ -99,6 +100,13 @@ it('shoulud parse bool', async () => {
   expect(serialize(parse(`ColorButton[ enabled  =true][ color = "red"i][nested.index =  6]`))).toBe('ColorButton[enabled = true][color = "red" i][nested.index = 6]');
 });
 
+it('should parse regex', async () => {
+  expect(serialize(parse(`ColorButton[color =  /red$/]`))).toBe('ColorButton[color = /red$/]');
+  expect(serialize(parse(`ColorButton[color=/red/ig]`))).toBe('ColorButton[color = /red/gi]');
+  expect(serialize(parse(`ColorButton[color=  / \\/ [/]/  ]`))).toBe('ColorButton[color = / \\/ [/]/]');
+  expect(serialize(parse(`ColorButton[color=/[\\]/][[/]/]`))).toBe('ColorButton[color = /[\\]/][[/]/]');
+});
+
 it('should throw on malformed selector', async () => {
   expectError('foo[');
   expectError('foo[');
@@ -129,4 +137,10 @@ it('should throw on malformed selector', async () => {
   expectError('[foo=abc \s]');
   expectError('[foo=abc"\s"]');
   expectError('[foo="\\"]');
+  expectError('[foo s]');
+  expectError('[foo*=/bar/]');
+  expectError('[foo=/bar/ s]');
+  expectError('[foo=/bar//]');
+  expectError('[foo=/bar/pt]');
+  expectError('[foo=/[\\]/');
 });
