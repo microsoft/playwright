@@ -7,7 +7,7 @@ Playwright Test runs tests in parallel. In order to achieve that, it runs severa
 
 - By default, **test files** are run in parallel. Tests in a single file are run in order, in the same worker process.
 - Configure tests using [`test.describe.configure`](#parallelize-tests-in-a-single-file) to run **tests in a single file** in parallel.
-- You can configure entire project to have all tests in all files to run in parallel using [`property: TestProject.fullyParallel`] or [`property: TestConfig.fullyParallel`]
+- You can configure **entire project** to have all tests in all files to run in parallel using [`property: TestProject.fullyParallel`] or [`property: TestConfig.fullyParallel`].
 - To **disable** parallelism limit the number of [workers to one](#disable-parallelism).
 
 You can control the number of [parallel worker processes](#limit-workers) and [limit the number of failures](#limit-failures-and-fail-fast) in the whole test suite for efficiency.
@@ -66,7 +66,7 @@ npx playwright test --workers=1
 
 ## Parallelize tests in a single file
 
-By default, tests in a single file are run in order. If you have many independent tests in a single file, you might want to run them in parallel with [`method: Test.describe.parallel`].
+By default, tests in a single file are run in order. If you have many independent tests in a single file, you might want to run them in parallel with [`method: Test.describe.configure`].
 
 Note that parallel tests are executed in separate worker processes and cannot share any state or global variables. Each test executes all relevant hooks just for itself, including `beforeAll` and `afterAll`.
 
@@ -86,6 +86,30 @@ test.describe.configure({ mode: 'parallel' });
 
 test('runs in parallel 1', async ({ page }) => { /* ... */ });
 test('runs in parallel 2', async ({ page }) => { /* ... */ });
+```
+
+Alternatively, you can opt-in all tests (or just a few projects) into this fully-parallel mode in the configuration file:
+
+```js js-flavor=js
+// playwright.config.js
+// @ts-check
+
+/** @type {import('@playwright/test').PlaywrightTestConfig} */
+const config = {
+  fullyParallel: true,
+};
+
+module.exports = config;
+```
+
+```js js-flavor=ts
+// playwright.config.ts
+import { PlaywrightTestConfig } from '@playwright/test';
+
+const config: PlaywrightTestConfig = {
+  fullyParallel: true,
+};
+export default config;
 ```
 
 ## Serial mode
