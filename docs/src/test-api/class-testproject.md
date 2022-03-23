@@ -202,7 +202,7 @@ This path will serve as the base directory for each test file snapshot directory
 ## property: TestProject.outputDir
 - type: <[string]>
 
-The output directory for files created during test execution. Defaults to `test-results`.
+The output directory for files created during test execution. Defaults to `<package.json-directory>/test-results`.
 
 This directory is cleaned at the start. When running a test, a unique subdirectory inside the [`property: TestProject.outputDir`] is created, guaranteeing that test running in parallel do not conflict. This directory can be accessed by [`property: TestInfo.outputDir`] and [`method: TestInfo.outputPath`].
 

@@ -239,7 +239,7 @@ interface TestProject {
    */
   screenshotsDir?: string;
   /**
-   * The output directory for files created during test execution. Defaults to `test-results`.
+   * The output directory for files created during test execution. Defaults to `<package.json-directory>/test-results`.
    *
    * This directory is cleaned at the start. When running a test, a unique subdirectory inside the
    * [testProject.outputDir](https://playwright.dev/docs/api/class-testproject#test-project-output-dir) is created,
@@ -828,7 +828,7 @@ interface TestConfig {
    */
   screenshotsDir?: string;
   /**
-   * The output directory for files created during test execution. Defaults to `test-results`.
+   * The output directory for files created during test execution. Defaults to `<package.json-directory>/test-results`.
    *
    * ```ts
    * // playwright.config.ts

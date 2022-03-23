@@ -69,6 +69,12 @@ async function writeFiles(testInfo: TestInfo, files: Files) {
       `,
     };
   }
+  if (!Object.keys(files).some(name => name.includes('package.json'))) {
+    files = {
+      ...files,
+      'package.json': `{ "name": "test-project" }`,
+    };
+  }
 
   await Promise.all(Object.keys(files).map(async name => {
     const fullName = path.join(baseDir, name);
@@ -142,7 +148,7 @@ async function runPlaywrightTest(childProcess: CommonFixtures['childProcess'], b
       NODE_OPTIONS: undefined,
       ...env,
     },
-    cwd: baseDir,
+    cwd: options.cwd ? path.resolve(baseDir, options.cwd) : baseDir,
   });
   let didSendSigint = false;
   testProcess.onOutput = () => {
@@ -206,6 +212,7 @@ type RunOptions = {
   sendSIGINTAfter?: number;
   usesCustomOutputDir?: boolean;
   additionalArgs?: string[];
+  cwd?: string,
 };
 type Fixtures = {
   writeFiles: (files: Files) => Promise<string>;
