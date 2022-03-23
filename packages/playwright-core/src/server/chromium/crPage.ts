@@ -317,11 +317,6 @@ export class CRPage implements PageDelegate {
     return this._sessionForHandle(handle)._getContentQuads(handle);
   }
 
-  async setInputFiles(handle: dom.ElementHandle<HTMLInputElement>, files: types.FilePayload[]): Promise<void> {
-    await handle.evaluateInUtility(([injected, node, files]) =>
-      injected.setInputFiles(node, files), files);
-  }
-
   async setInputFilePaths(handle: dom.ElementHandle<HTMLInputElement>, files: string[]): Promise<void> {
     const frame = await handle.ownerFrame();
     if (!frame)
