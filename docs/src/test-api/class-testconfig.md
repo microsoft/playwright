@@ -256,7 +256,7 @@ Any JSON-serializable metadata that will be put directly to the test report.
 ## property: TestConfig.outputDir
 - type: <[string]>
 
-The output directory for files created during test execution. Defaults to `test-results`.
+The output directory for files created during test execution. Defaults to `<package.json-directory>/test-results`.
 
 ```js js-flavor=js
 // playwright.config.js
