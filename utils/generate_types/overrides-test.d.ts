@@ -169,7 +169,7 @@ interface TestConfig {
   reportSlowTests?: ReportSlowTests;
   shard?: Shard;
   updateSnapshots?: UpdateSnapshots;
-  webServer?: WebServerConfig;
+  webServer?: WebServerConfig | WebServerConfig[];
   workers?: number;
 
   expect?: ExpectSettings;
@@ -210,7 +210,7 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
   shard: Shard;
   updateSnapshots: UpdateSnapshots;
   workers: number;
-  webServer: WebServerConfig | null;
+  webServer: WebServerConfig[];
   attachments: { name: string, path?: string, body?: Buffer, contentType: string }[];
 }
 

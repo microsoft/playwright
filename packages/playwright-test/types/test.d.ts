@@ -685,7 +685,8 @@ interface TestConfig {
    */
   updateSnapshots?: UpdateSnapshots;
   /**
-   * Launch a development web server during the tests.
+   * Launch a development web server during the tests. If your tests require multiple servers (e.g. UI dev server and an HTTP
+   * Proxy), you can specifiy an array of configs.
    *
    * If the port is specified, the server will wait for it to be available on `127.0.0.1` or `::1`, before running the tests.
    * If the url is specified, the server will wait for the URL to return a 2xx status code before running the tests.
@@ -730,8 +731,33 @@ interface TestConfig {
    * });
    * ```
    *
+   * You can also use multiple servers:
+   *
+   * ```ts
+   * // playwright.config.ts
+   * import { PlaywrightTestConfig } from '@playwright/test';
+   * const config: PlaywrightTestConfig = {
+   *   webServer: [
+   *     {
+   *       command: 'npm run start',
+   *       port: 3000,
+   *       timeout: 120 * 1000,
+   *       reuseExistingServer: !process.env.CI,
+   *     },
+   *     {
+   *       command: 'npm run proxy',
+   *       port: 3001,
+   *     },
+   *   ],
+   *   use: {
+   *     baseURL: 'http://localhost:3000/',
+   *   },
+   * };
+   * export default config;
+   * ```
+   *
    */
-  webServer?: WebServerConfig;
+  webServer?: WebServerConfig | WebServerConfig[];
   /**
    * The maximum number of concurrent worker processes to use for parallelizing tests.
    *
@@ -1221,7 +1247,8 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    */
   workers: number;
   /**
-   * Launch a development web server during the tests.
+   * Launch a development web server during the tests. If your tests require multiple servers (e.g. UI dev server and an HTTP
+   * Proxy), you can specifiy an array of configs.
    *
    * If the port is specified, the server will wait for it to be available on `127.0.0.1` or `::1`, before running the tests.
    * If the url is specified, the server will wait for the URL to return a 2xx status code before running the tests.
@@ -1266,8 +1293,33 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    * });
    * ```
    *
+   * You can also use multiple servers:
+   *
+   * ```ts
+   * // playwright.config.ts
+   * import { PlaywrightTestConfig } from '@playwright/test';
+   * const config: PlaywrightTestConfig = {
+   *   webServer: [
+   *     {
+   *       command: 'npm run start',
+   *       port: 3000,
+   *       timeout: 120 * 1000,
+   *       reuseExistingServer: !process.env.CI,
+   *     },
+   *     {
+   *       command: 'npm run proxy',
+   *       port: 3001,
+   *     },
+   *   ],
+   *   use: {
+   *     baseURL: 'http://localhost:3000/',
+   *   },
+   * };
+   * export default config;
+   * ```
+   *
    */
-  webServer: WebServerConfig | null;
+  webServer: WebServerConfig[];
   /**
    * > NOTE: This does not include test-level attachments. See
    * [testInfo.attach(name[, options])](https://playwright.dev/docs/api/class-testinfo#test-info-attach) and

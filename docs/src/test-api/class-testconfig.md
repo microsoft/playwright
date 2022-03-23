@@ -611,7 +611,7 @@ export default config;
 ```
 
 ## property: TestConfig.webServer
-- type: <[Object]>
+- type: <[Object]|Array<[Object]>>
   - `command` <[string]> Command which gets executed
   - `port` <[int]> Port to wait on for the web server (exactly one of `port` or `url` is required)
   - `url` <[string]> URL to wait on for the web server (exactly one of `port` or `url` is required)
@@ -620,7 +620,7 @@ export default config;
   - `cwd` <[string]> Working directory to run the command in
   - `env` <[Object]<[string], [string]>> Environment variables to set for the command
 
-Launch a development web server during the tests.
+Launch a development web server during the tests. If your tests require multiple servers (e.g. UI dev server and an HTTP Proxy), you can specifiy an array of configs.
 
 If the port is specified, the server will wait for it to be available on `127.0.0.1` or `::1`, before running the tests. If the url is specified, the server will wait for the URL to return a 2xx status code before running the tests.
 
@@ -687,6 +687,55 @@ test('test', async ({ page }) => {
   // This will result in http://localhost:3000/foo
   await page.goto('/foo');
 });
+```
+
+You can also use multiple servers:
+
+```js js-flavor=ts
+// playwright.config.ts
+import { PlaywrightTestConfig } from '@playwright/test';
+const config: PlaywrightTestConfig = {
+  webServer: [
+    {
+      command: 'npm run start',
+      port: 3000,
+      timeout: 120 * 1000,
+      reuseExistingServer: !process.env.CI,
+    },
+    {
+      command: 'npm run proxy',
+      port: 3001,
+    },
+  ],
+  use: {
+    baseURL: 'http://localhost:3000/',
+  },
+};
+export default config;
+```
+
+```js js-flavor=js
+// playwright.config.js
+// @ts-check
+/** @type {import('@playwright/test').PlaywrightTestConfig} */
+const config = {
+  webServer: [
+    {
+      command: 'npm run start',
+      port: 3000,
+      timeout: 120 * 1000,
+      reuseExistingServer: !process.env.CI,
+    },
+    {
+      command: 'npm run proxy',
+      port: 3001,
+    },
+  ],
+  use: {
+    baseURL: 'http://localhost:3000/',
+  },
+};
+module.exports = config;
 ```
 
 ## property: TestConfig.workers

@@ -107,7 +107,7 @@ export class Loader {
     this._fullConfig.shard = takeFirst(this._configOverrides.shard, this._config.shard, baseFullConfig.shard);
     this._fullConfig.updateSnapshots = takeFirst(this._configOverrides.updateSnapshots, this._config.updateSnapshots, baseFullConfig.updateSnapshots);
     this._fullConfig.workers = takeFirst(this._configOverrides.workers, this._config.workers, baseFullConfig.workers);
-    this._fullConfig.webServer = takeFirst(this._configOverrides.webServer, this._config.webServer, baseFullConfig.webServer);
+    this._fullConfig.webServer = takeFirst(normalizeWebServerConfig(this._configOverrides.webServer), normalizeWebServerConfig(this._config.webServer), baseFullConfig.webServer);
 
     for (const project of projects)
       this._addProject(project, this._fullConfig.rootDir, rootDir);
@@ -455,7 +455,7 @@ const baseFullConfig: FullConfig = {
   updateSnapshots: 'missing',
   version: require('../package.json').version,
   workers: 1,
-  webServer: null,
+  webServer: [],
   attachments: [],
 };
 
@@ -503,4 +503,10 @@ export function folderIsModule(folder: string): boolean {
   }
   folderToIsModuleCache.set(folder, { isModule });
   return isModule;
+}
+
+function normalizeWebServerConfig(configs: Config['webServer']) {
+  if (!configs)
+    return;
+  return Array.isArray(configs) ? configs : [configs];
 }

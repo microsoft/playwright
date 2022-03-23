@@ -38,6 +38,24 @@ export class WebServer {
     this._isAvailable = getIsAvailableFunction(config);
   }
 
+  public static async createAll(configs: WebServerConfig[], reporter: Reporter): Promise<() => Promise<void>> {
+    const webServers: WebServer[] = [];
+    const killAll =  async () => {
+      for (const server of webServers)
+        await server.kill();
+    };
+
+    try {
+      for (const config of configs)
+        webServers.push(await WebServer.create(config, reporter));
+    } catch (error) {
+      await killAll();
+      throw error;
+    }
+
+    return killAll;
+  }
+
   public static async create(config: WebServerConfig, reporter: Reporter): Promise<WebServer> {
     const webServer = new WebServer(config, reporter);
     try {

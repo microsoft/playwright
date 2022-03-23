@@ -422,7 +422,7 @@ export class Runner {
     const result: FullResult = { status: 'passed' };
     const internalGlobalTeardowns: (() => Promise<void>)[] = [];
     let globalSetupResult: any;
-    let webServer: WebServer | undefined;
+    let teardownWebServers = async () => {};
 
     const tearDown = async () => {
       await this._runAndReportError(async () => {
@@ -436,7 +436,7 @@ export class Runner {
       }, result);
 
       await this._runAndReportError(async () => {
-        await webServer?.kill();
+        await teardownWebServers();
       }, result);
 
       await this._runAndReportError(async () => {
@@ -448,7 +448,7 @@ export class Runner {
     await this._runAndReportError(async () => {
       for (const internalGlobalSetup of this._internalGlobalSetups)
         internalGlobalTeardowns.push(await internalGlobalSetup());
-      webServer = config.webServer ? await WebServer.create(config.webServer, this._reporter) : undefined;
+      teardownWebServers = config.webServer ? await WebServer.createAll(config.webServer, this._reporter) : async () => {};
       if (config.globalSetup)
         globalSetupResult = await (await this._loader.loadGlobalHook(config.globalSetup, 'globalSetup'))(this._loader.fullConfig());
     }, result);

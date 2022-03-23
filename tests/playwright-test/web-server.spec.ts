@@ -82,6 +82,39 @@ test('should create a server', async ({ runInlineTest }, { workerIndex }) => {
   expect(actualLogMessages).toStrictEqual(expectedLogMessages);
 });
 
+test('should create multiple servers', async ({ runInlineTest }, { workerIndex }) => {
+  const port0 = workerIndex + 10500;
+  const port1 = workerIndex + 10500 + 1;
+
+  const results = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        webServer: [
+          {
+            command: 'node ${JSON.stringify(path.join(__dirname, 'assets', 'simple-server.js'))} ${port0}',
+            port: ${port0},
+          },
+          {
+            command: 'node ${JSON.stringify(path.join(__dirname, 'assets', 'simple-server.js'))} ${port1}',
+            port: ${port1},
+          },
+        ],
+      };
+    `,
+    'test.spec.ts': `
+      const { test } = pwt;
+      test('connect to the server', async ({ page }) => {
+        await page.goto('http://localhost:${port0}/port');
+        expect(await page.textContent('body')).toBe('${port0}');
+        await page.goto('http://localhost:${port1}/port');
+        expect(await page.textContent('body')).toBe('${port1}');
+      });
+    `
+  });
+
+  expect(results.exitCode).toBe(0);
+});
+
 test('should create a server with environment variables', async ({ runInlineTest }, { workerIndex }) => {
   const port = workerIndex + 10500;
   const result = await runInlineTest({
