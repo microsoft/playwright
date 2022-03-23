@@ -754,10 +754,14 @@ function readRequestPostData(httpChannel) {
   }
 
   // Read data from the stream.
-  let result = '';
+  let result = undefined;
   try {
-    const buffer = NetUtil.readInputStreamToString(iStream, iStream.available());
-    result = btoa(buffer);
+    const maxLen = iStream.available();
+    // Cap at 10Mb.
+    if (maxLen <= 10 * 1024 * 1024) {
+      const buffer = NetUtil.readInputStreamToString(iStream, maxLen);
+      result = btoa(buffer);
+    }
   } catch (err) {
   }
 
