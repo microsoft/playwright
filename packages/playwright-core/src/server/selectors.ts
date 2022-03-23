@@ -19,7 +19,7 @@ import * as frames from './frames';
 import * as js from './javascript';
 import * as types from './types';
 import { allEngineNames, InvalidSelectorError, ParsedSelector, parseSelector, stringifySelector } from './common/selectorParser';
-import { createGuid } from '../utils/utils';
+import { createGuid, experimentalFeaturesEnabled } from '../utils/utils';
 
 export type SelectorInfo = {
   parsed: ParsedSelector,
@@ -133,6 +133,8 @@ export class Selectors {
   }
 
   parseSelector(selector: string | ParsedSelector, strict: boolean): SelectorInfo {
+    if (experimentalFeaturesEnabled())
+      this._builtinEngines.add('role');
     const parsed = typeof selector === 'string' ? parseSelector(selector) : selector;
     let needsMainWorld = false;
     for (const name of allEngineNames(parsed)) {

@@ -18,13 +18,14 @@ import { SelectorEngine, SelectorRoot } from './selectorEngine';
 import { XPathEngine } from './xpathSelectorEngine';
 import { ReactEngine } from './reactSelectorEngine';
 import { VueEngine } from './vueSelectorEngine';
+import { RoleEngine } from './roleSelectorEngine';
 import { allEngineNames, ParsedSelector, ParsedSelectorPart, parseSelector, stringifySelector } from '../common/selectorParser';
 import { SelectorEvaluatorImpl, isVisible, parentElementOrShadowHost, elementMatchesText, TextMatcher, createRegexTextMatcher, createStrictTextMatcher, createLaxTextMatcher } from './selectorEvaluator';
 import { CSSComplexSelectorList } from '../common/cssParser';
 import { generateSelector } from './selectorGenerator';
 import type * as channels from '../../protocol/channels';
 import { Highlight } from './highlight';
-import { getElementAccessibleName } from './roleUtils';
+import { getAriaDisabled, getElementAccessibleName } from './roleUtils';
 
 type Predicate<T> = (progress: InjectedScriptProgress) => T | symbol;
 
@@ -79,7 +80,7 @@ export class InjectedScript {
   private _highlight: Highlight | undefined;
   readonly isUnderTest: boolean;
 
-  constructor(isUnderTest: boolean, stableRafCount: number, browserName: string, customEngines: { name: string, engine: SelectorEngine}[]) {
+  constructor(isUnderTest: boolean, stableRafCount: number, browserName: string, experimentalFeaturesEnabled: boolean, customEngines: { name: string, engine: SelectorEngine}[]) {
     this.isUnderTest = isUnderTest;
     this._evaluator = new SelectorEvaluatorImpl(new Map());
 
@@ -88,6 +89,8 @@ export class InjectedScript {
     this._engines.set('xpath:light', XPathEngine);
     this._engines.set('_react', ReactEngine);
     this._engines.set('_vue', VueEngine);
+    if (experimentalFeaturesEnabled)
+      this._engines.set('role', RoleEngine);
     this._engines.set('text', this._createTextEngine(true));
     this._engines.set('text:light', this._createTextEngine(false));
     this._engines.set('id', this._createAttributeEngine('id', true));
@@ -515,7 +518,7 @@ export class InjectedScript {
     if (state === 'hidden')
       return !this.isVisible(element);
 
-    const disabled = isElementDisabled(element);
+    const disabled = getAriaDisabled(element);
     if (state === 'disabled')
       return disabled;
     if (state === 'enabled')
@@ -1249,36 +1252,5 @@ function deepEquals(a: any, b: any): boolean {
 
   return false;
 }
-
-function isElementDisabled(element: Element): boolean {
-  const isRealFormControl = ['BUTTON', 'INPUT', 'SELECT', 'TEXTAREA', 'OPTION', 'OPTGROUP'].includes(element.nodeName);
-  if (isRealFormControl && element.hasAttribute('disabled'))
-    return true;
-  if (isRealFormControl && hasDisabledFieldSet(element))
-    return true;
-  if (hasAriaDisabled(element))
-    return true;
-  return false;
-}
-
-function hasDisabledFieldSet(element: Element|null): boolean {
-  if (!element)
-    return false;
-  if (element.tagName === 'FIELDSET' && element.hasAttribute('disabled'))
-    return true;
-  // fieldset does not work across shadow boundaries
-  return hasDisabledFieldSet(element.parentElement);
-}
-function hasAriaDisabled(element: Element|undefined): boolean {
-  if (!element)
-    return false;
-  const attribute = (element.getAttribute('aria-disabled') || '').toLowerCase();
-  if (attribute === 'true')
-    return true;
-  if (attribute === 'false')
-    return false;
-  return hasAriaDisabled(parentElementOrShadowHost(element));
-}
-
 
 export default InjectedScript;

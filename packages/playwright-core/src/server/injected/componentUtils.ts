@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-type Operator = '<truthy>'|'='|'*='|'|='|'^='|'$='|'~=';
+export type ParsedAttributeOperator = '<truthy>'|'='|'*='|'|='|'^='|'$='|'~=';
 export type ParsedComponentAttribute = {
+  name: string,
   jsonPath: string[],
-  op: Operator,
+  op: ParsedAttributeOperator,
   value: any,
   caseSensitive: boolean,
 };
@@ -152,7 +153,7 @@ export function parseComponentSelector(selector: string): ParsedComponentSelecto
     return token;
   }
 
-  function readOperator(): Operator {
+  function readOperator(): ParsedAttributeOperator {
     skipSpaces();
     let op = '';
     if (!EOL)
@@ -161,7 +162,7 @@ export function parseComponentSelector(selector: string): ParsedComponentSelecto
       op += eat1();
     if (!['=', '*=', '^=', '$=', '|=', '~='].includes(op))
       syntaxError('parsing operator');
-    return (op as Operator);
+    return (op as ParsedAttributeOperator);
   }
 
   function readAttribute(): ParsedComponentAttribute {
@@ -182,7 +183,7 @@ export function parseComponentSelector(selector: string): ParsedComponentSelecto
     // check property is truthy: [enabled]
     if (next() === ']') {
       eat1();
-      return { jsonPath, op: '<truthy>', value: null, caseSensitive: false };
+      return { name: jsonPath.join('.'), jsonPath, op: '<truthy>', value: null, caseSensitive: false };
     }
 
     const operator = readOperator();
@@ -225,7 +226,7 @@ export function parseComponentSelector(selector: string): ParsedComponentSelecto
     eat1();
     if (operator !== '=' && typeof value !== 'string')
       throw new Error(`Error while parsing selector \`${selector}\` - cannot use ${operator} in attribute with non-string matching value - ${value}`);
-    return { jsonPath, op: operator, value, caseSensitive };
+    return { name: jsonPath.join('.'), jsonPath, op: operator, value, caseSensitive };
   }
 
   const result: ParsedComponentSelector = {
