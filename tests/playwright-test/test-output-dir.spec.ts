@@ -83,6 +83,32 @@ test('should include repeat token', async ({ runInlineTest }) => {
   expect(result.passed).toBe(3);
 });
 
+test('should default to package.json directory', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'foo/package.json': `{ "name": "foo" }`,
+    'foo/bar/playwright.config.js': `
+      module.exports = { projects: [ {} ] };
+    `,
+    'foo/bar/baz/tests/a.spec.js': `
+      const { test } = pwt;
+      const fs = require('fs');
+      test('pass', ({}, testInfo) => {
+        expect(process.cwd()).toBe(__dirname);
+        fs.writeFileSync(testInfo.outputPath('foo.ts'), 'foobar');
+      });
+    `
+  }, { 'reporter': '' }, {}, {
+    cwd: 'foo/bar/baz/tests',
+    usesCustomOutputDir: true
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  expect(fs.existsSync(testInfo.outputPath('test-results'))).toBe(false);
+  expect(fs.existsSync(testInfo.outputPath('foo', 'test-results'))).toBe(true);
+  expect(fs.existsSync(testInfo.outputPath('foo', 'bar', 'test-results'))).toBe(false);
+  expect(fs.existsSync(testInfo.outputPath('foo', 'bar', 'baz', 'tests', 'test-results'))).toBe(false);
+});
+
 test('should be unique for beforeAll hook from different workers', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'a.spec.js': `

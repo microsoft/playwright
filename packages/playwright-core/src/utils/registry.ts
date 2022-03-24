@@ -53,6 +53,9 @@ const EXECUTABLE_PATHS = {
 
 const DOWNLOAD_PATHS = {
   'chromium': {
+    '<unknown>': undefined,
+    'generic-linux': 'builds/chromium/%s/chromium-linux.zip',
+    'generic-linux-arm64': 'builds/chromium/%s/chromium-linux-arm64.zip',
     'ubuntu18.04': 'builds/chromium/%s/chromium-linux.zip',
     'ubuntu20.04': 'builds/chromium/%s/chromium-linux.zip',
     'ubuntu18.04-arm64': 'builds/chromium/%s/chromium-linux-arm64.zip',
@@ -67,6 +70,9 @@ const DOWNLOAD_PATHS = {
     'win64': 'builds/chromium/%s/chromium-win64.zip',
   },
   'chromium-with-symbols': {
+    '<unknown>': undefined,
+    'generic-linux': 'builds/chromium/%s/chromium-with-symbols-linux.zip',
+    'generic-linux-arm64': 'builds/chromium/%s/chromium-with-symbols-linux-arm64.zip',
     'ubuntu18.04': 'builds/chromium/%s/chromium-with-symbols-linux.zip',
     'ubuntu20.04': 'builds/chromium/%s/chromium-with-symbols-linux.zip',
     'ubuntu18.04-arm64': 'builds/chromium/%s/chromium-with-symbols-linux-arm64.zip',
@@ -81,6 +87,9 @@ const DOWNLOAD_PATHS = {
     'win64': 'builds/chromium/%s/chromium-with-symbols-win64.zip',
   },
   'firefox': {
+    '<unknown>': undefined,
+    'generic-linux': 'builds/firefox/%s/firefox-ubuntu-20.04.zip',
+    'generic-linux-arm64': 'builds/firefox/%s/firefox-ubuntu-20.04-arm64.zip',
     'ubuntu18.04': 'builds/firefox/%s/firefox-ubuntu-18.04.zip',
     'ubuntu20.04': 'builds/firefox/%s/firefox-ubuntu-20.04.zip',
     'ubuntu18.04-arm64': undefined,
@@ -95,6 +104,9 @@ const DOWNLOAD_PATHS = {
     'win64': 'builds/firefox/%s/firefox-win64.zip',
   },
   'firefox-beta': {
+    '<unknown>': undefined,
+    'generic-linux': 'builds/firefox-beta/%s/firefox-beta-ubuntu-20.04.zip',
+    'generic-linux-arm64': undefined,
     'ubuntu18.04': 'builds/firefox-beta/%s/firefox-beta-ubuntu-18.04.zip',
     'ubuntu20.04': 'builds/firefox-beta/%s/firefox-beta-ubuntu-20.04.zip',
     'ubuntu18.04-arm64': undefined,
@@ -109,6 +121,9 @@ const DOWNLOAD_PATHS = {
     'win64': 'builds/firefox-beta/%s/firefox-beta-win64.zip',
   },
   'webkit': {
+    '<unknown>': undefined,
+    'generic-linux': 'builds/webkit/%s/webkit-ubuntu-20.04.zip',
+    'generic-linux-arm64': 'builds/webkit/%s/webkit-ubuntu-20.04-arm64.zip',
     'ubuntu18.04': 'builds/webkit/%s/webkit-ubuntu-18.04.zip',
     'ubuntu20.04': 'builds/webkit/%s/webkit-ubuntu-20.04.zip',
     'ubuntu18.04-arm64': undefined,
@@ -123,6 +138,9 @@ const DOWNLOAD_PATHS = {
     'win64': 'builds/webkit/%s/webkit-win64.zip',
   },
   'ffmpeg': {
+    '<unknown>': undefined,
+    'generic-linux': 'builds/ffmpeg/%s/ffmpeg-linux.zip',
+    'generic-linux-arm64': 'builds/ffmpeg/%s/ffmpeg-linux-arm64.zip',
     'ubuntu18.04': 'builds/ffmpeg/%s/ffmpeg-linux.zip',
     'ubuntu20.04': 'builds/ffmpeg/%s/ffmpeg-linux.zip',
     'ubuntu18.04-arm64': 'builds/ffmpeg/%s/ffmpeg-linux-arm64.zip',
@@ -593,6 +611,8 @@ export class Registry {
   private async _downloadExecutable(descriptor: BrowsersJSONDescriptor, executablePath: string | undefined, downloadPathTemplate: string | undefined, downloadHostEnv: string) {
     if (!downloadPathTemplate || !executablePath)
       throw new Error(`ERROR: Playwright does not support ${descriptor.name} on ${hostPlatform}`);
+    if (hostPlatform === 'generic-linux' || hostPlatform === 'generic-linux-arm64')
+      logPolitely('BEWARE: your OS is not officially supported by Playwright; downloading Ubuntu build as a fallback.');
     const downloadHost =
         (downloadHostEnv && getFromENV(downloadHostEnv)) ||
         getFromENV('PLAYWRIGHT_DOWNLOAD_HOST') ||

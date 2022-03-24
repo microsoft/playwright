@@ -51,7 +51,6 @@ const kMaxCookieExpiresDateInSeconds = 253402300799;
 
 export function rewriteCookies(cookies: types.SetNetworkCookieParam[]): types.SetNetworkCookieParam[] {
   return cookies.map(c => {
-    assert(c.name, 'Cookie should have a name');
     assert(c.url || (c.domain && c.path), 'Cookie should have a url or a domain/path pair');
     assert(!(c.url && c.domain), 'Cookie should have either url or domain');
     assert(!(c.url && c.path), 'Cookie should have either url or path');

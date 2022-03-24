@@ -155,9 +155,9 @@ export async function validateDependenciesLinux(sdkLanguage: string, linuxLddDir
   const lddPaths: string[] = [];
   for (const directoryPath of directoryPaths)
     lddPaths.push(...(await executablesOrSharedLibraries(directoryPath)));
-  const allMissingDeps = await Promise.all(lddPaths.map(lddPath => missingFileDependencies(lddPath, directoryPaths)));
+  const missingDepsPerFile = await Promise.all(lddPaths.map(lddPath => missingFileDependencies(lddPath, directoryPaths)));
   const missingDeps: Set<string> = new Set();
-  for (const deps of allMissingDeps) {
+  for (const deps of missingDepsPerFile) {
     for (const dep of deps)
       missingDeps.add(dep);
   }
@@ -165,6 +165,7 @@ export async function validateDependenciesLinux(sdkLanguage: string, linuxLddDir
     missingDeps.add(dep);
   if (!missingDeps.size)
     return;
+  const allMissingDeps = new Set(missingDeps);
   // Check Ubuntu version.
   const missingPackages = new Set();
 
@@ -182,41 +183,33 @@ export async function validateDependenciesLinux(sdkLanguage: string, linuxLddDir
   }
 
   const maybeSudo = (process.getuid() !== 0) && os.platform() !== 'win32' ? 'sudo ' : '';
-  // Happy path: known dependencies are missing for browsers.
-  // Suggest installation with a Playwright CLI.
+  const errorLines = [
+    `Host system is missing dependencies to run browsers.`,
+  ];
   if (missingPackages.size && !missingDeps.size) {
-    throw new Error('\n' + utils.wrapInASCIIBox([
-      `Host system is missing a few dependencies to run browsers.`,
+    // Happy path: known dependencies are missing for browsers.
+    // Suggest installation with a Playwright CLI.
+    errorLines.push(...[
       `Please install them with the following command:`,
       ``,
       `    ${maybeSudo}${buildPlaywrightCLICommand(sdkLanguage, 'install-deps')}`,
       ``,
+      `Alternatively, use Aptitude:`,
+      `    ${maybeSudo}apt-get install ${[...missingPackages].join('\\\n        ')}`,
+      ``,
       `<3 Playwright Team`,
-    ].join('\n'), 1));
+    ]);
+  } else {
+    // Unhappy path: we either run on unknown distribution, or we failed to resolve all missing
+    // libraries to package names.
+    // Print missing libraries only:
+    errorLines.push(...[
+      `Missing libraries:`,
+      ...[...allMissingDeps].map(dep => '    ' + dep),
+    ]);
   }
 
-  // Unhappy path - unusual distribution configuration.
-  let missingPackagesMessage = '';
-  if (missingPackages.size) {
-    missingPackagesMessage = [
-      `  Install missing packages with:`,
-      `      ${maybeSudo}apt-get install ${[...missingPackages].join('\\\n          ')}`,
-      ``,
-      ``,
-    ].join('\n');
-  }
-
-  let missingDependenciesMessage = '';
-  if (missingDeps.size) {
-    const header = missingPackages.size ? `Missing libraries we didn't find packages for:` : `Missing libraries are:`;
-    missingDependenciesMessage = [
-      `  ${header}`,
-      `      ${[...missingDeps].join('\n      ')}`,
-      ``,
-    ].join('\n');
-  }
-
-  throw new Error('Host system is missing dependencies!\n\n' + missingPackagesMessage + missingDependenciesMessage);
+  throw new Error('\n' + utils.wrapInASCIIBox(errorLines.join('\n'), 1));
 }
 
 function isSharedLib(basename: string) {
