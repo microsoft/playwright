@@ -16,6 +16,7 @@
 
 import * as frames from './frames';
 import * as types from './types';
+import * as channels from '../protocol/channels';
 import { assert } from '../utils/utils';
 import { ManualPromise } from '../utils/async';
 import { SdkObject } from './instrumentation';
@@ -248,7 +249,7 @@ export class Route extends SdkObject {
     await this._delegate.abort(errorCode);
   }
 
-  async fulfill(overrides: { status?: number, headers?: types.HeadersArray, cors?: boolean, body?: string, isBase64?: boolean, useInterceptedResponseBody?: boolean, fetchResponseUid?: string }) {
+  async fulfill(overrides: channels.RouteFulfillParams) {
     this._startHandling();
     let body = overrides.body;
     let isBase64 = overrides.isBase64 || false;
@@ -265,12 +266,18 @@ export class Route extends SdkObject {
       }
     }
     const headers = [...(overrides.headers || [])];
-    if (overrides.cors !== false) {
+    if (overrides.cors !== 'none') {
       const corsHeader = headers.find(({ name, value }) => name === 'access-control-allow-origin');
       // See https://github.com/microsoft/playwright/issues/12929
       if (!corsHeader) {
-        const origin = this._request.headerValue('origin') || '*';
-        headers.push({ name: 'access-control-allow-origin', value: origin });
+        const origin = this._request.headerValue('origin');
+        if (origin) {
+          headers.push({ name: 'access-control-allow-origin', value: origin });
+          headers.push({ name: 'access-control-allow-credentials', value: 'true' });
+          headers.push({ name: 'vary', value: 'Origin' });
+        } else {
+          headers.push({ name: 'access-control-allow-origin', value: '*' });
+        }
       }
     }
     await this._delegate.fulfill({

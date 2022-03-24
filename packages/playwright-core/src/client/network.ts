@@ -239,7 +239,7 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
     await this._raceWithPageClose(this._channel.abort({ errorCode }));
   }
 
-  async fulfill(options: { response?: api.APIResponse, status?: number, headers?: Headers, contentType?: string, cors?: boolean, body?: string | Buffer, path?: string } = {}) {
+  async fulfill(options: { response?: api.APIResponse, status?: number, headers?: Headers, contentType?: string, cors?: 'allow' | 'none', body?: string | Buffer, path?: string } = {}) {
     let fetchResponseUid;
     let { status: statusOption, headers: headersOption, body } = options;
     if (options.response) {
