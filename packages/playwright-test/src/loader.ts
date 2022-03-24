@@ -278,7 +278,7 @@ function toReporters(reporters: BuiltInReporter | ReporterDescription[] | undefi
   if (!reporters)
     return;
   if (typeof reporters === 'string')
-    return [[reporters]];
+    return [ [reporters] ];
   return reporters;
 }
 
@@ -469,7 +469,7 @@ const baseFullConfig: FullConfig = {
   maxFailures: 0,
   preserveOutput: 'always',
   projects: [],
-  reporter: [['list']],
+  reporter: [ ['list'] ],
   reportSlowTests: null,
   rootDir: path.resolve(process.cwd()),
   quiet: false,
@@ -481,11 +481,11 @@ const baseFullConfig: FullConfig = {
   attachments: [],
 };
 
-function resolveReporters(reporters: Config['reporter'], rootDir: string): ReporterDescription[] | undefined {
+function resolveReporters(reporters: Config['reporter'], rootDir: string): ReporterDescription[]|undefined {
   return toReporters(reporters as any)?.map(([id, arg]) => {
     if (builtInReporters.includes(id as any))
       return [id, arg];
-    return [require.resolve(id, { paths: [rootDir] }), arg];
+    return [require.resolve(id, { paths: [ rootDir ] }), arg];
   });
 }
 
