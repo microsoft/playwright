@@ -389,7 +389,8 @@ const config: PlaywrightTestConfig = {
 export default config;
 ```
 
-By default, if you have attachments in test result, the attachment path is relative to the [`property: TestConfig.outputDir`].
+By default, if you have attachments in test result, the attachment path is relative to the [`property: TestConfig.testDir`] or, if not set,
+configuration file location.
 In some case, you may want to set the attachment path to be relative to other path. You can do that by passing the `attachmentRelativeTo` option
 to the absolute path you want to use as the base path. Alternatively, you may set `attachmentRelativeToWorkingDirectory` to `true` to use
 working directory as the root of the path.
