@@ -134,7 +134,7 @@ async function isURLAvailable(url: URL, ignoreHTTPSErrors: boolean | undefined, 
       resolve(statusCode >= 200 && statusCode < 300);
     }).on('error', error => {
       if ((error as NodeJS.ErrnoException).code === 'DEPTH_ZERO_SELF_SIGNED_CERT')
-        onStdErr?.(`[WebServer] Self-signed certificate detected, Try adding ignoreHTTPSErrors: true to config.webServer.`);
+        onStdErr?.(`[WebServer] Self-signed certificate detected. Try adding ignoreHTTPSErrors: true to config.webServer.`);
       else
         debugWebServer(`Error while checking if ${url} is available: ${error.message}`);
       resolve(false);
