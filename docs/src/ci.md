@@ -13,7 +13,7 @@ configurations for common CI providers.
 3 steps to get your tests running on CI:
 
 1. **Ensure CI agent can run browsers**: Use [our Docker image](./docker.md)
-   in Linux agents or install your dependencies using the [CLI](./cli.md#install-system-dependencies). Windows and macOS agents do not require any additional dependencies.
+   in Linux agents or install your dependencies using the [CLI](./cli.md#install-system-dependencies).
 1. **Install Playwright**:
    ```bash js
    # Install NPM packages
@@ -21,12 +21,18 @@ configurations for common CI providers.
    # or
    npm install
 
-   # Install Playwright browsers
-   npx playwright install
+   # Install Playwright browsers and dependencies
+   npx playwright install --with-deps
    ```
    ```bash python
    pip install playwright
-   playwright install
+   playwright install --with-deps
+   ```
+   ```bash java
+   mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install --with-deps"
+   ```
+   ```bash csharp
+   pwsh bin\Debug\netX\playwright.ps1 install --with-deps
    ```
 
 1. **Run your tests**:
@@ -59,8 +65,8 @@ steps:
     if: always()
     uses: actions/upload-artifact@v2
     with:
-      name: playwright-results
-      path: test-results
+      name: playwright-report
+      path: playwright-report
 ```
 
 ```yml python
@@ -75,9 +81,7 @@ steps:
       pip install playwright
       pip install -e .
   - name: Ensure browsers are installed
-    run: python -m playwright install
-  - name: Install operating system dependencies
-    run: python -m playwright install-deps
+    run: python -m playwright install --with-deps
   - name: Run your tests
     run: pytest
 ```
@@ -123,16 +127,17 @@ Suggested configuration
    and crash. Learn more about this option in [Docker docs](https://docs.docker.com/engine/reference/run/#ipc-settings---ipc).
 1. Seeing other weird errors when launching Chromium? Try running your container
    with `docker run --cap-add=SYS_ADMIN` when developing locally.
-1. [dumb-init](https://github.com/Yelp/dumb-init) is worth checking out if you're
-   experiencing a lot of zombies Chromium processes sticking around. There's special
-   treatment for processes with PID=1, which makes it hard to terminate Chromium
-   properly in some cases (e.g. in Docker).
+1. Using `--init` Docker flag or [dumb-init](https://github.com/Yelp/dumb-init) is recommended to avoid special
+   treatment for processes with PID=1. This is a common reason for zombie processes.
 
 ### Azure Pipelines
 
 For Windows or macOS agents, no additional configuration required, just install Playwright and run your tests.
 
-For Linux agents, you can use [our Docker container](./docker.md) with Azure Pipelines support for [running containerized jobs](https://docs.microsoft.com/en-us/azure/devops/pipelines/process/container-phases?view=azure-devops). Alternatively, you can refer to the [Dockerfile](./docker.md) to see additional dependencies that need to be installed on a Ubuntu agent.
+For Linux agents, you can use [our Docker container](./docker.md) with Azure
+Pipelines support [running containerized
+jobs](https://docs.microsoft.com/en-us/azure/devops/pipelines/process/container-phases?view=azure-devops).
+Alternatively, you can use [Command line tools](./cli.md#install-system-dependencies) to install all necessary dependencies.
 
 ```yml
 pool:
@@ -142,60 +147,6 @@ container: mcr.microsoft.com/playwright:v1.21.0-focal
 
 steps:
 ...
-```
-
-### Travis CI
-
-Suggested configuration
-1. [User namespace cloning](http://man7.org/linux/man-pages/man7/user_namespaces.7.html)
-   should be enabled to support proper sandboxing
-1. [xvfb](https://en.wikipedia.org/wiki/Xvfb) should be launched in order to run
-   Chromium in non-headless mode (e.g. to test Chrome Extensions)
-1. If your project does not have `package-lock.json`, Travis would be auto-caching
-   `node_modules` directory. If you run `npm install` (instead of `npm ci`), it is
-   possible that the browser binaries are not downloaded. Fix this with [these steps](#exception-node_modules-are-cached) outlined below.
-
-To sum up, your `.travis.yml` might look like this:
-
-```yml
-language: node_js
-dist: bionic
-addons:
-  apt:
-    packages:
-    # These are required to run webkit
-    - libwoff1
-    - libopus0
-    - libwebp6
-    - libwebpdemux2
-    - libenchant1c2a
-    - libgudev-1.0-0
-    - libsecret-1-0
-    - libhyphen0
-    - libgdk-pixbuf2.0-0
-    - libegl1
-    - libgles2
-    - libevent-2.1-6
-    - libnotify4
-    - libxslt1.1
-    - libvpx5
-    # gstreamer and plugins to support video playback in WebKit.
-    - gstreamer1.0-gl
-    - gstreamer1.0-plugins-base
-    - gstreamer1.0-plugins-good
-    - gstreamer1.0-plugins-bad
-    # This is required to run chromium
-    - libgbm1
-    # this is needed for running headed tests
-    - xvfb
-
-# allow headed tests
-before_install:
-  # Enable user namespace cloning
-  - "sysctl kernel.unprivileged_userns_clone=1"
-  # Launch XVFB
-  - "export DISPLAY=:99.0"
-  - "sh -e /etc/init.d/xvfb start"
 ```
 
 ### CircleCI
@@ -246,51 +197,6 @@ Bitbucket Pipelines can use public [Docker images as build environments](https:/
 
 ```yml
 image: mcr.microsoft.com/playwright:v1.21.0-focal
-```
-
-While the Docker image supports sandboxing for Chromium, it does not work in the Bitbucket Pipelines environment. To launch Chromium on Bitbucket Pipelines, use the `chromiumSandbox: false` launch argument.
-
-```js
-const { chromium } = require('playwright');
-const browser = await chromium.launch({ chromiumSandbox: false });
-```
-
-```java
-import com.microsoft.playwright.*;
-
-public class Example {
-  public static void main(String[] args) {
-    try (Playwright playwright = Playwright.create()) {
-      BrowserType chromium = playwright.chromium();
-      Browser browser = chromium.launch(new BrowserType.LaunchOptions().setChromiumSandbox(false));
-    }
-  }
-}
-```
-
-```python async
-browser = await playwright.chromium.launch(chromium_sandbox=False)
-```
-
-```python sync
-browser = playwright.chromium.launch(chromium_sandbox=False)
-```
-
-```csharp
-using Microsoft.Playwright;
-using System.Threading.Tasks;
-
-class Program
-{
-    public static async Task Main()
-    {
-        using var playwright = await Playwright.CreateAsync();
-        await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
-        {
-            ChromiumSandbox = false
-        });
-    }
-}
 ```
 
 ### GitLab CI

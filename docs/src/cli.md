@@ -542,7 +542,7 @@ pwsh bin\Debug\netX\playwright.ps1 pdf https://en.wikipedia.org/wiki/PDF wiki.pd
 
 ## Install system dependencies
 
-Ubuntu 18.04 and Ubuntu 20.04 system dependencies can get installed automatically. This is useful for CI environments.
+System dependencies can get installed automatically. This is useful for CI environments.
 
 ```bash js
 # See command help
