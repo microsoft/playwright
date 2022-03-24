@@ -31,14 +31,16 @@ class JUnitReporter implements Reporter {
   private totalSkipped = 0;
   private outputFile: string | undefined;
   private stripANSIControlSequences = false;
+  private attachmentRelativeTo: string | undefined;
   private embedAnnotationsAsProperties = false;
   private textContentAnnotations: string[] | undefined;
   private embedAttachmentsAsProperty: string | undefined;
 
 
-  constructor(options: { outputFile?: string, stripANSIControlSequences?: boolean, embedAnnotationsAsProperties?: boolean, textContentAnnotations?: string[], embedAttachmentsAsProperty?: string } = {}) {
+  constructor(options: { outputFile?: string, stripANSIControlSequences?: boolean, embedAnnotationsAsProperties?: boolean, textContentAnnotations?: string[], embedAttachmentsAsProperty?: string, attachmentRelativeTo?: string } = {}) {
     this.outputFile = options.outputFile || reportOutputNameFromEnv();
     this.stripANSIControlSequences = options.stripANSIControlSequences || false;
+    this.attachmentRelativeTo = options.attachmentRelativeTo;
     this.embedAnnotationsAsProperties = options.embedAnnotationsAsProperties || false;
     this.textContentAnnotations = options.textContentAnnotations || [];
     this.embedAttachmentsAsProperty = options.embedAttachmentsAsProperty;
@@ -246,7 +248,13 @@ class JUnitReporter implements Reporter {
           if (!attachment.path)
             continue;
           try {
-            const attachmentPath = path.relative(this.config.rootDir, attachment.path);
+            let baseDir: string;
+            if (this.attachmentRelativeTo)
+              baseDir = this.attachmentRelativeTo;
+            else
+              baseDir = this.config.rootDir;
+
+            const attachmentPath = path.relative(baseDir, attachment.path);
             if (fs.existsSync(attachment.path))
               systemOut.push(`\n[[ATTACHMENT|${attachmentPath}]]\n`);
             else

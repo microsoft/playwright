@@ -5,7 +5,6 @@ title: "Reporters"
 
 Playwright Test comes with a few built-in reporters for different needs and ability to provide custom reporters. The easiest way to try out built-in reporters is to pass `--reporter` [command line option](./test-cli.md).
 
-
 ```bash
 npx playwright test --reporter=line
 ```
@@ -18,7 +17,7 @@ For more control, you can specify reporters programmatically in the [configurati
 
 /** @type {import('@playwright/test').PlaywrightTestConfig} */
 const config = {
-  reporter: 'line',
+  reporter: "line",
 };
 
 module.exports = config;
@@ -26,17 +25,17 @@ module.exports = config;
 
 ```js tab=js-ts
 // playwright.config.ts
-import type { PlaywrightTestConfig } from '@playwright/test';
+import type { PlaywrightTestConfig } from "@playwright/test";
 
 const config: PlaywrightTestConfig = {
-  reporter: 'line',
+  reporter: "line",
 };
 export default config;
 ```
 
 ### Multiple reporters
 
-You can use multiple reporters at the same time. For example  you can use `'list'` for nice terminal output and `'json'` to get a comprehensive json file with the test results.
+You can use multiple reporters at the same time. For example you can use `'list'` for nice terminal output and `'json'` to get a comprehensive json file with the test results.
 
 ```js tab=js-js
 // playwright.config.js
@@ -44,10 +43,7 @@ You can use multiple reporters at the same time. For example  you can use `'list
 
 /** @type {import('@playwright/test').PlaywrightTestConfig} */
 const config = {
-  reporter: [
-    ['list'],
-    ['json', {  outputFile: 'test-results.json' }]
-  ],
+  reporter: [["list"], ["json", { outputFile: "test-results.json" }]],
 };
 
 module.exports = config;
@@ -55,13 +51,10 @@ module.exports = config;
 
 ```js tab=js-ts
 // playwright.config.ts
-import type { PlaywrightTestConfig } from '@playwright/test';
+import type { PlaywrightTestConfig } from "@playwright/test";
 
 const config: PlaywrightTestConfig = {
-  reporter: [
-    ['list'],
-    ['json', {  outputFile: 'test-results.json' }]
-  ],
+  reporter: [["list"], ["json", { outputFile: "test-results.json" }]],
 };
 export default config;
 ```
@@ -77,7 +70,7 @@ You can use different reporters locally and on CI. For example, using concise `'
 /** @type {import('@playwright/test').PlaywrightTestConfig} */
 const config = {
   // Concise 'dot' for CI, default 'list' when running locally
-  reporter: process.env.CI ? 'dot' : 'list',
+  reporter: process.env.CI ? "dot" : "list",
 };
 
 module.exports = config;
@@ -85,11 +78,11 @@ module.exports = config;
 
 ```js tab=js-ts
 // playwright.config.ts
-import type { PlaywrightTestConfig } from '@playwright/test';
+import type { PlaywrightTestConfig } from "@playwright/test";
 
 const config: PlaywrightTestConfig = {
   // Concise 'dot' for CI, default 'list' when running locally
-  reporter: process.env.CI ? 'dot' : 'list',
+  reporter: process.env.CI ? "dot" : "list",
 };
 export default config;
 ```
@@ -112,7 +105,7 @@ npx playwright test --reporter=list
 
 /** @type {import('@playwright/test').PlaywrightTestConfig} */
 const config = {
-  reporter: 'list',
+  reporter: "list",
 };
 
 module.exports = config;
@@ -120,15 +113,16 @@ module.exports = config;
 
 ```js tab=js-ts
 // playwright.config.ts
-import type { PlaywrightTestConfig } from '@playwright/test';
+import type { PlaywrightTestConfig } from "@playwright/test";
 
 const config: PlaywrightTestConfig = {
-  reporter: 'list',
+  reporter: "list",
 };
 export default config;
 ```
 
 Here is an example output in the middle of a test run. Failures will be listed at the end.
+
 ```bash
 npx playwright test --reporter=list
 Running 124 tests using 6 workers
@@ -183,7 +177,7 @@ npx playwright test --reporter=line
 
 /** @type {import('@playwright/test').PlaywrightTestConfig} */
 const config = {
-  reporter: 'line',
+  reporter: "line",
 };
 
 module.exports = config;
@@ -191,15 +185,16 @@ module.exports = config;
 
 ```js tab=js-ts
 // playwright.config.ts
-import type { PlaywrightTestConfig } from '@playwright/test';
+import type { PlaywrightTestConfig } from "@playwright/test";
 
 const config: PlaywrightTestConfig = {
-  reporter: 'line',
+  reporter: "line",
 };
 export default config;
 ```
 
 Here is an example output in the middle of a test run. Failures are reported inline.
+
 ```bash
 npx playwright test --reporter=line
 Running 124 tests using 6 workers
@@ -227,7 +222,7 @@ npx playwright test --reporter=dot
 
 /** @type {import('@playwright/test').PlaywrightTestConfig} */
 const config = {
-  reporter: 'dot',
+  reporter: "dot",
 };
 
 module.exports = config;
@@ -235,15 +230,16 @@ module.exports = config;
 
 ```js tab=js-ts
 // playwright.config.ts
-import type { PlaywrightTestConfig } from '@playwright/test';
+import type { PlaywrightTestConfig } from "@playwright/test";
 
 const config: PlaywrightTestConfig = {
-  reporter: 'dot',
+  reporter: "dot",
 };
 export default config;
 ```
 
 Here is an example output in the middle of a test run. Failures will be listed at the end.
+
 ```bash
 npx playwright test --reporter=dot
 Running 124 tests using 6 workers
@@ -270,11 +266,16 @@ You can also configure `host` and `port` that are used to serve the HTML report.
 
 /** @type {import('@playwright/test').PlaywrightTestConfig} */
 const config = {
-  reporter: [['html', {
-    open: 'never',
-    host: '0.0.0.0',
-    port: 9223,
-  }]],
+  reporter: [
+    [
+      "html",
+      {
+        open: "never",
+        host: "0.0.0.0",
+        port: 9223,
+      },
+    ],
+  ],
 };
 
 module.exports = config;
@@ -282,10 +283,10 @@ module.exports = config;
 
 ```js tab=js-ts
 // playwright.config.ts
-import type { PlaywrightTestConfig } from '@playwright/test';
+import type { PlaywrightTestConfig } from "@playwright/test";
 
 const config: PlaywrightTestConfig = {
-  reporter: [['html', { open: 'never' }]],
+  reporter: [["html", { open: "never" }]],
 };
 export default config;
 ```
@@ -294,13 +295,14 @@ By default, report is written into the `playwright-report` folder in the current
 that location using the `PLAYWRIGHT_HTML_REPORT` environment variable or a reporter configuration.
 
 In configuration file, pass options directly:
+
 ```js tab=js-js
 // playwright.config.js
 // @ts-check
 
 /** @type {import('@playwright/test').PlaywrightTestConfig} */
 const config = {
-  reporter: [['html', { outputFolder: 'my-report' }]],
+  reporter: [["html", { outputFolder: "my-report" }]],
 };
 
 module.exports = config;
@@ -308,10 +310,10 @@ module.exports = config;
 
 ```js tab=js-ts
 // playwright.config.ts
-import type { PlaywrightTestConfig } from '@playwright/test';
+import type { PlaywrightTestConfig } from "@playwright/test";
 
 const config: PlaywrightTestConfig = {
-  reporter: [['html', { outputFolder: 'my-report' }]],
+  reporter: [["html", { outputFolder: "my-report" }]],
 };
 export default config;
 ```
@@ -329,7 +331,6 @@ npx playwright show-report my-report
 ```
 
 > The `html` reporter currently does not support merging reports generated across multiple [`--shards`](./test-parallel.md#shard-tests-between-multiple-machines) into a single report. See [this](https://github.com/microsoft/playwright/issues/10437) issue for available third party solutions.
-
 
 ### JSON reporter
 
@@ -352,13 +353,14 @@ npx playwright test --reporter=json
 ```
 
 In configuration file, pass options directly:
+
 ```js tab=js-js
 // playwright.config.js
 // @ts-check
 
 /** @type {import('@playwright/test').PlaywrightTestConfig} */
 const config = {
-  reporter: [['json', { outputFile: 'results.json' }]],
+  reporter: [["json", { outputFile: "results.json" }]],
 };
 
 module.exports = config;
@@ -366,10 +368,10 @@ module.exports = config;
 
 ```js tab=js-ts
 // playwright.config.ts
-import type { PlaywrightTestConfig } from '@playwright/test';
+import type { PlaywrightTestConfig } from "@playwright/test";
 
 const config: PlaywrightTestConfig = {
-  reporter: [['json', { outputFile: 'results.json' }]],
+  reporter: [["json", { outputFile: "results.json" }]],
 };
 export default config;
 ```
@@ -395,13 +397,14 @@ npx playwright test --reporter=junit
 ```
 
 In configuration file, pass options directly:
+
 ```js tab=js-js
 // playwright.config.js
 // @ts-check
 
 /** @type {import('@playwright/test').PlaywrightTestConfig} */
 const config = {
-  reporter: [['junit', { outputFile: 'results.xml' }]],
+  reporter: [["junit", { outputFile: "results.xml" }]],
 };
 
 module.exports = config;
@@ -409,10 +412,10 @@ module.exports = config;
 
 ```js tab=js-ts
 // playwright.config.ts
-import type { PlaywrightTestConfig } from '@playwright/test';
+import type { PlaywrightTestConfig } from "@playwright/test";
 
 const config: PlaywrightTestConfig = {
-  reporter: [['junit', { outputFile: 'results.xml' }]],
+  reporter: [["junit", { outputFile: "results.xml" }]],
 };
 export default config;
 ```
@@ -434,18 +437,18 @@ const xrayOptions = {
 
   // By default, annotation is reported as <property name='' value=''>.
   // These annotations are reported as <property name=''>value</property>.
-  textContentAnnotations: ['test_description'],
+  textContentAnnotations: ["test_description"],
 
   // This will create a "testrun_evidence" property that contains all attachments. Each attachment is added as an inner <item> element.
   // Disables [[ATTACHMENT|path]] in the <system-out>.
-  embedAttachmentsAsProperty: 'testrun_evidence',
+  embedAttachmentsAsProperty: "testrun_evidence",
 
   // Where to put the report.
-  outputFile: './xray-report.xml'
+  outputFile: "./xray-report.xml",
 };
 
 const config = {
-  reporter: [['junit', xrayOptions]]
+  reporter: [["junit", xrayOptions]],
 };
 
 module.exports = config;
@@ -453,7 +456,7 @@ module.exports = config;
 
 ```js tab=js-ts
 // playwright.config.ts
-import { PlaywrightTestConfig } from '@playwright/test';
+import { PlaywrightTestConfig } from "@playwright/test";
 
 // JUnit reporter config for Xray
 const xrayOptions = {
@@ -462,18 +465,18 @@ const xrayOptions = {
 
   // By default, annotation is reported as <property name='' value=''>.
   // These annotations are reported as <property name=''>value</property>.
-  textContentAnnotations: ['test_description'],
+  textContentAnnotations: ["test_description"],
 
   // This will create a "testrun_evidence" property that contains all attachments. Each attachment is added as an inner <item> element.
   // Disables [[ATTACHMENT|path]] in the <system-out>.
-  embedAttachmentsAsProperty: 'testrun_evidence',
+  embedAttachmentsAsProperty: "testrun_evidence",
 
   // Where to put the report.
-  outputFile: './xray-report.xml'
+  outputFile: "./xray-report.xml",
 };
 
 const config: PlaywrightTestConfig = {
-  reporter: [['junit', xrayOptions]]
+  reporter: [["junit", xrayOptions]],
 };
 
 export default config;
@@ -484,26 +487,44 @@ Annotations can be used to, for example, link a Playwright test with an existing
 
 ```js tab=js-js
 // @ts-check
-const { test } = require('@playwright/test');
+const { test } = require("@playwright/test");
 
-test('using specific annotations for passing test metadata to Xray', async ({}, testInfo) => {
-  testInfo.annotations.push({ type: 'test_id', description: '1234' });
-  testInfo.annotations.push({ type: 'test_key', description: 'CALC-2' });
-  testInfo.annotations.push({ type: 'test_summary', description: 'sample summary' });
-  testInfo.annotations.push({ type: 'requirements', description: 'CALC-5,CALC-6' });
-  testInfo.annotations.push({ type: 'test_description', description: 'sample description' });
+test("using specific annotations for passing test metadata to Xray", async ({}, testInfo) => {
+  testInfo.annotations.push({ type: "test_id", description: "1234" });
+  testInfo.annotations.push({ type: "test_key", description: "CALC-2" });
+  testInfo.annotations.push({
+    type: "test_summary",
+    description: "sample summary",
+  });
+  testInfo.annotations.push({
+    type: "requirements",
+    description: "CALC-5,CALC-6",
+  });
+  testInfo.annotations.push({
+    type: "test_description",
+    description: "sample description",
+  });
 });
 ```
 
 ```js tab=js-ts
-import { test } from '@playwright/test';
+import { test } from "@playwright/test";
 
-test('using specific annotations for passing test metadata to Xray', async ({}, testInfo) => {
-  testInfo.annotations.push({ type: 'test_id', description: '1234' });
-  testInfo.annotations.push({ type: 'test_key', description: 'CALC-2' });
-  testInfo.annotations.push({ type: 'test_summary', description: 'sample summary' });
-  testInfo.annotations.push({ type: 'requirements', description: 'CALC-5,CALC-6' });
-  testInfo.annotations.push({ type: 'test_description', description: 'sample description' });
+test("using specific annotations for passing test metadata to Xray", async ({}, testInfo) => {
+  testInfo.annotations.push({ type: "test_id", description: "1234" });
+  testInfo.annotations.push({ type: "test_key", description: "CALC-2" });
+  testInfo.annotations.push({
+    type: "test_summary",
+    description: "sample summary",
+  });
+  testInfo.annotations.push({
+    type: "requirements",
+    description: "CALC-5,CALC-6",
+  });
+  testInfo.annotations.push({
+    type: "test_description",
+    description: "sample description",
+  });
 });
 ```
 
@@ -520,7 +541,15 @@ The following configuration sample enables embedding attachments by using the `t
 
 /** @type {import('@playwright/test').PlaywrightTestConfig} */
 const config = {
-  reporter: [['junit', { embedAttachmentsAsProperty: 'testrun_evidence', outputFile: 'results.xml' }]],
+  reporter: [
+    [
+      "junit",
+      {
+        embedAttachmentsAsProperty: "testrun_evidence",
+        outputFile: "results.xml",
+      },
+    ],
+  ],
 };
 
 module.exports = config;
@@ -529,9 +558,17 @@ module.exports = config;
 ```js tab=js-ts
 // playwright.config.js
 
-import { PlaywrightTestConfig } from '@playwright/test';
+import { PlaywrightTestConfig } from "@playwright/test";
 const config: PlaywrightTestConfig = {
-  reporter: [['junit', { embedAttachmentsAsProperty: 'testrun_evidence', outputFile: 'results.xml' }]],
+  reporter: [
+    [
+      "junit",
+      {
+        embedAttachmentsAsProperty: "testrun_evidence",
+        outputFile: "results.xml",
+      },
+    ],
+  ],
 };
 
 export default config;
@@ -541,25 +578,83 @@ The following test adds attachments:
 
 ```js tab=js-js
 // @ts-check
-const { test } = require('@playwright/test');
+const { test } = require("@playwright/test");
 
-test('embed attachments, including its content, on the JUnit report', async ({}, testInfo) => {
-  const file = testInfo.outputPath('evidence1.txt');
-  require('fs').writeFileSync(file, 'hello', 'utf8');
-  await testInfo.attach('evidence1.txt', { path: file, contentType: 'text/plain' });
-  await testInfo.attach('evidence2.txt', { body: Buffer.from('world'), contentType: 'text/plain' });
+test("embed attachments, including its content, on the JUnit report", async ({}, testInfo) => {
+  const file = testInfo.outputPath("evidence1.txt");
+  require("fs").writeFileSync(file, "hello", "utf8");
+  await testInfo.attach("evidence1.txt", {
+    path: file,
+    contentType: "text/plain",
+  });
+  await testInfo.attach("evidence2.txt", {
+    body: Buffer.from("world"),
+    contentType: "text/plain",
+  });
 });
 ```
 
 ```js tab=js-ts
-import { test } from '@playwright/test';
+import { test } from "@playwright/test";
 
-test('embed attachments, including its content, on the JUnit report', async ({}, testInfo) => {
-  const file = testInfo.outputPath('evidence1.txt');
-  require('fs').writeFileSync(file, 'hello', 'utf8');
-  await testInfo.attach('evidence1.txt', { path: file, contentType: 'text/plain' });
-  await testInfo.attach('evidence2.txt', { body: Buffer.from('world'), contentType: 'text/plain' });
+test("embed attachments, including its content, on the JUnit report", async ({}, testInfo) => {
+  const file = testInfo.outputPath("evidence1.txt");
+  require("fs").writeFileSync(file, "hello", "utf8");
+  await testInfo.attach("evidence1.txt", {
+    path: file,
+    contentType: "text/plain",
+  });
+  await testInfo.attach("evidence2.txt", {
+    body: Buffer.from("world"),
+    contentType: "text/plain",
+  });
 });
+```
+
+By default, if you have attachments in test result and the configuration option `embedAttachmentsAsProperty` is not defined, the generated `system-out` attachment path is relative to the [`property: TestConfig.outputDir`].
+In some case, you may want to set the attachment path to be relative to other path. You can do that by passing the `attachmentRelativeTo` option
+to the absolute path you want to use as the base path.
+
+For example, if you use GitLab CI, you may want to set the `attachmentRelativeTo` to `process.env.CI_PROJECT_DIR` so screenshot paths are correct
+on test result page. See [GitLab document](https://docs.gitlab.com/ee/ci/unit_test_reports.html#viewing-junit-screenshots-on-gitlab) for more details.
+
+```js tab=js-ts
+// playwright.config.js
+
+/** @type {import('@playwright/test').PlaywrightTestConfig} */
+const config = {
+  reporter: [
+    [
+      "junit",
+      {
+        outputFile: "results.xml",
+        attachmentRelativeToWorkingDirectory: true,
+        attachmentRelativeTo: "/some/path/",
+      },
+    ],
+  ],
+};
+
+module.exports = config;
+```
+
+```js tab=js-ts
+// playwright.config.js
+import { PlaywrightTestConfig } from "@playwright/test";
+
+const config: PlaywrightTestConfig = {
+  reporter: [
+    [
+      "junit",
+      {
+        outputFile: "results.xml",
+        attachmentRelativeToWorkingDirectory: true,
+        attachmentRelativeTo: "/some/path/",
+      },
+    ],
+  ],
+};
+export default config;
 ```
 
 ### GitHub Actions annotations
@@ -576,7 +671,7 @@ Note that all other reporters work on GitHub Actions as well, but do not provide
 const config = {
   // 'github' for GitHub Actions CI to generate annotations, plus a concise 'dot'
   // default 'list' when running locally
-  reporter: process.env.CI ? 'github' : 'list',
+  reporter: process.env.CI ? "github" : "list",
 };
 
 module.exports = config;
@@ -584,12 +679,12 @@ module.exports = config;
 
 ```js tab=js-ts
 // playwright.config.ts
-import type { PlaywrightTestConfig } from '@playwright/test';
+import type { PlaywrightTestConfig } from "@playwright/test";
 
 const config: PlaywrightTestConfig = {
   // 'github' for GitHub Actions CI to generate annotations, plus a concise 'dot'
   // default 'list' when running locally
-  reporter: process.env.CI ? 'github' : 'list',
+  reporter: process.env.CI ? "github" : "list",
 };
 export default config;
 ```
@@ -626,7 +721,7 @@ module.exports = MyReporter;
 
 ```js tab=js-ts
 // my-awesome-reporter.ts
-import { Reporter } from '@playwright/test/reporter';
+import { Reporter } from "@playwright/test/reporter";
 
 class MyReporter implements Reporter {
   onBegin(config, suite) {
@@ -656,7 +751,7 @@ Now use this reporter with [`property: TestConfig.reporter`].
 
 /** @type {import('@playwright/test').PlaywrightTestConfig} */
 const config = {
-  reporter: './my-awesome-reporter.js',
+  reporter: "./my-awesome-reporter.js",
 };
 
 module.exports = config;
@@ -664,19 +759,17 @@ module.exports = config;
 
 ```js tab=js-ts
 // playwright.config.ts
-import type { PlaywrightTestConfig } from '@playwright/test';
+import type { PlaywrightTestConfig } from "@playwright/test";
 
 const config: PlaywrightTestConfig = {
-  reporter: './my-awesome-reporter.ts',
+  reporter: "./my-awesome-reporter.ts",
 };
 export default config;
 ```
 
-
 ## Third party reporter showcase
 
-* [Allure](https://www.npmjs.com/package/allure-playwright)
-* [Monocart](https://github.com/cenfun/monocart-reporter)
-* [Tesults](https://www.tesults.com/docs/playwright)
-* [ReportPortal](https://github.com/reportportal/agent-js-playwright)
-
+- [Allure](https://www.npmjs.com/package/allure-playwright)
+- [Monocart](https://github.com/cenfun/monocart-reporter)
+- [Tesults](https://www.tesults.com/docs/playwright)
+- [ReportPortal](https://github.com/reportportal/agent-js-playwright)
