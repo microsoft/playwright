@@ -527,6 +527,11 @@ export class FFPage implements PageDelegate {
     return result.quads.map(quad => [ quad.p1, quad.p2, quad.p3, quad.p4 ]);
   }
 
+  async setInputFiles(handle: dom.ElementHandle<HTMLInputElement>, files: types.FilePayload[]): Promise<void> {
+    await handle.evaluateInUtility(([injected, node, files]) =>
+      injected.setInputFiles(node, files), files);
+  }
+
   async setInputFilePaths(handle: dom.ElementHandle<HTMLInputElement>, files: string[]): Promise<void> {
     throw new Error('Not implemented');
   }
