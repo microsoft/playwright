@@ -467,6 +467,10 @@ export type WebServerConfig = {
    */
   url?: string,
   /**
+   * Whether to ignore HTTPS errors when fetching the `url`. Defaults to `false`.
+   */
+   ignoreHTTPSErrors?: boolean,
+  /**
    * How long to wait for the process to start up and be available in milliseconds. Defaults to 60000.
    */
   timeout?: number,

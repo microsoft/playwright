@@ -35,7 +35,7 @@ export class WebServer {
   private _processExitedPromise!: Promise<any>;
 
   constructor(private readonly config: WebServerConfig, private readonly reporter: Reporter) {
-    this._isAvailable = getIsAvailableFunction(config);
+    this._isAvailable = getIsAvailableFunction(config, reporter.onStdErr?.bind(reporter));
   }
 
   public static async create(config: WebServerConfig, reporter: Reporter): Promise<WebServer> {
@@ -122,13 +122,21 @@ async function isPortUsed(port: number): Promise<boolean> {
   return await innerIsPortUsed('127.0.0.1') || await innerIsPortUsed('::1');
 }
 
-async function isURLAvailable(url: URL) {
+async function isURLAvailable(url: URL, ignoreHTTPSErrors: boolean | undefined, onStdErr: Reporter['onStdErr']) {
+  const isHttps = url.protocol === 'https:';
+  const requestOptions = isHttps ? {
+    rejectUnauthorized: !ignoreHTTPSErrors,
+  } : {};
   return new Promise<boolean>(resolve => {
-    (url.protocol === 'https:' ? https : http).get(url, res => {
+    (isHttps ? https : http).get(url, requestOptions, res => {
       res.resume();
       const statusCode = res.statusCode ?? 0;
       resolve(statusCode >= 200 && statusCode < 300);
-    }).on('error', () => {
+    }).on('error', error => {
+      if ((error as NodeJS.ErrnoException).code === 'DEPTH_ZERO_SELF_SIGNED_CERT')
+        onStdErr?.(`[WebServer] Self-signed certificate detected. Try adding ignoreHTTPSErrors: true to config.webServer.`);
+      else
+        debugWebServer(`Error while checking if ${url} is available: ${error.message}`);
       resolve(false);
     });
   });
@@ -143,10 +151,10 @@ async function waitFor(waitFn: () => Promise<boolean>, delay: number, cancellati
   }
 }
 
-function getIsAvailableFunction({ url, port }: Pick<WebServerConfig, 'port' | 'url'>) {
+function getIsAvailableFunction({ url, port, ignoreHTTPSErrors }: Pick<WebServerConfig, 'port' | 'url' | 'ignoreHTTPSErrors'>, onStdErr: Reporter['onStdErr']) {
   if (url !== undefined && port === undefined) {
     const urlObject = new URL(url);
-    return () => isURLAvailable(urlObject);
+    return () => isURLAvailable(urlObject, ignoreHTTPSErrors, onStdErr);
   } else if (port !== undefined && url === undefined) {
     return () => isPortUsed(port);
   } else {

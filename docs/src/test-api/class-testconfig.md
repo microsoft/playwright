@@ -615,6 +615,7 @@ export default config;
   - `command` <[string]> Command which gets executed
   - `port` <[int]> Port to wait on for the web server (exactly one of `port` or `url` is required)
   - `url` <[string]> URL to wait on for the web server (exactly one of `port` or `url` is required)
+  - `ignoreHTTPSErrors` <[boolean]> Whether to ignore HTTPS errors when fetching the `url`. Defaults to `false`.
   - `timeout` <[int]> Maximum duration to wait on until the web server is ready
   - `reuseExistingServer` <[boolean]> If true, reuse the existing server if it is already running, otherwise it will fail
   - `cwd` <[string]> Working directory to run the command in

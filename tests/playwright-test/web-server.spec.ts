@@ -347,3 +347,22 @@ for (const host of ['localhost', '127.0.0.1', '0.0.0.0']) {
     }
   });
 }
+
+test(`should suport self signed certificate`, async ({ runInlineTest, httpsServer }) => {
+  const result = await runInlineTest({
+    'test.spec.js': `
+      const { test } = pwt;
+      test('pass', async ({}) => { });
+    `,
+    'playwright.config.js': `
+    module.exports = {
+      webServer: {
+        url: '${httpsServer.EMPTY_PAGE}',
+        ignoreHTTPSErrors: true,
+        reuseExistingServer: true,
+      },
+    };
+  `,
+  });
+  expect(result.exitCode).toBe(0);
+});
