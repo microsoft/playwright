@@ -191,6 +191,7 @@ export interface Config<TestArgs = {}, WorkerArgs = {}> extends TestConfig {
   use?: UseOptions<TestArgs, WorkerArgs>;
 }
 
+// !!! DO NOT ADD MORE TO THE FULL CONFIG - IT'S PART OF THE PUBLIC API !!!
 export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
   forbidOnly: boolean;
   fullyParallel: boolean;
@@ -212,6 +213,7 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
   workers: number;
   webServer: WebServerConfig | null;
   attachments: { name: string, path?: string, body?: Buffer, contentType: string }[];
+  // !!! DO NOT ADD MORE TO THE FULL CONFIG - IT'S PART OF THE PUBLIC API !!!
 }
 
 export type TestStatus = 'passed' | 'failed' | 'timedOut' | 'skipped';

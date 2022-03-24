@@ -1002,6 +1002,7 @@ export interface Config<TestArgs = {}, WorkerArgs = {}> extends TestConfig {
   use?: UseOptions<TestArgs, WorkerArgs>;
 }
 
+// !!! DO NOT ADD MORE TO THE FULL CONFIG - IT'S PART OF THE PUBLIC API !!!
 /**
  * Playwright Test provides many options to configure how your tests are collected and executed, for example `timeout` or
  * `testDir`. These options are described in the [TestConfig] object in the [configuration file](https://playwright.dev/docs/test-configuration).
@@ -1277,6 +1278,7 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    * The list of files or buffers attached for the overall Playwright Test run. Some reporters show attachments.
    */
   attachments: { name: string, path?: string, body?: Buffer, contentType: string }[];
+  // !!! DO NOT ADD MORE TO THE FULL CONFIG - IT'S PART OF THE PUBLIC API !!!
 }
 
 export type TestStatus = 'passed' | 'failed' | 'timedOut' | 'skipped';
