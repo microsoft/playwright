@@ -24,7 +24,7 @@ docker pull mcr.microsoft.com/playwright/python:v1.21.0-focal
 ```
 
 ```bash csharp
-docker pull mcr.microsoft.com/playwright:v1.21.0-focal
+docker pull mcr.microsoft.com/playwright/dotnet:v1.21.0-focal
 ```
 
 ```bash java
