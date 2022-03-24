@@ -639,7 +639,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       if (localPaths)
         await this._page._delegate.setInputFilePaths(retargeted, localPaths);
       else
-        await retargeted.evaluateInUtility(([injected, node, files]) => injected.setInputFiles(node, files), files as types.FilePayload[]);
+        await this._page._delegate.setInputFiles(retargeted, files as types.FilePayload[]);
     });
     await this._page._doSlowMo();
     return 'done';
