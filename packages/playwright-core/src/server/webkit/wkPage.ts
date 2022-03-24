@@ -937,8 +937,12 @@ export class WKPage implements PageDelegate {
   }
 
   async setInputFilePaths(handle: dom.ElementHandle<HTMLInputElement>, paths: string[]): Promise<void> {
+    const pageProxyId = this._pageProxySession.sessionId;
     const objectId = handle._objectId;
-    await this._session.send('DOM.setInputFiles', { objectId, paths });
+    await Promise.all([
+      this._pageProxySession.connection.browserSession.send('Playwright.grantFileReadAccess', { pageProxyId, paths }),
+      this._session.send('DOM.setInputFiles', { objectId, paths })
+    ]);
   }
 
   async adoptElementHandle<T extends Node>(handle: dom.ElementHandle<T>, to: dom.FrameExecutionContext): Promise<dom.ElementHandle<T>> {
