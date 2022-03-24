@@ -194,3 +194,20 @@ it('should not restore localStorage twice', async ({ contextFactory }) => {
 
   await context.close();
 });
+
+it('should handle missing file', async ({ contextFactory }, testInfo) => {
+  const file = testInfo.outputPath('does-not-exist.json');
+  const error = await contextFactory({
+    storageState: file,
+  }).catch(e => e);
+  expect(error.message).toContain(`Error reading storage state from ${file}:\nENOENT`);
+});
+
+it('should handle malformed file', async ({ contextFactory }, testInfo) => {
+  const file = testInfo.outputPath('state.json');
+  fs.writeFileSync(file, 'not-json', 'utf-8');
+  const error = await contextFactory({
+    storageState: file,
+  }).catch(e => e);
+  expect(error.message).toContain(`Error reading storage state from ${file}:\nUnexpected token o in JSON at position 1`);
+});

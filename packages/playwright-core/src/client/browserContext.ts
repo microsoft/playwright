@@ -38,6 +38,7 @@ import type { BrowserType } from './browserType';
 import { Artifact } from './artifact';
 import { APIRequestContext } from './fetch';
 import { createInstrumentation } from './clientInstrumentation';
+import { rewriteErrorMessage } from '../utils/stackTrace';
 
 export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel> implements api.BrowserContext {
   _pages = new Set<Page>();
@@ -347,6 +348,17 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   }
 }
 
+async function prepareStorageState(options: BrowserContextOptions): Promise<channels.BrowserNewContextParams['storageState']> {
+  if (typeof options.storageState !== 'string')
+    return options.storageState;
+  try {
+    return JSON.parse(await fs.promises.readFile(options.storageState, 'utf8'));
+  } catch (e) {
+    rewriteErrorMessage(e, `Error reading storage state from ${options.storageState}:\n` + e.message);
+    throw e;
+  }
+}
+
 export async function prepareBrowserContextParams(options: BrowserContextOptions): Promise<channels.BrowserNewContextParams> {
   if (options.videoSize && !options.videosPath)
     throw new Error(`"videoSize" option requires "videosPath" to be specified`);
@@ -357,7 +369,7 @@ export async function prepareBrowserContextParams(options: BrowserContextOptions
     viewport: options.viewport === null ? undefined : options.viewport,
     noDefaultViewport: options.viewport === null,
     extraHTTPHeaders: options.extraHTTPHeaders ? headersObjectToArray(options.extraHTTPHeaders) : undefined,
-    storageState: typeof options.storageState === 'string' ? JSON.parse(await fs.promises.readFile(options.storageState, 'utf8')) : options.storageState,
+    storageState: await prepareStorageState(options),
   };
   if (!contextParams.recordVideo && options.videosPath) {
     contextParams.recordVideo = {
