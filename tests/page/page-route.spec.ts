@@ -519,7 +519,7 @@ it('should support cors with GET', async ({ page, server, browserName }) => {
     const headers = request.url().endsWith('allow') ? { 'access-control-allow-origin': '*' } : {};
     await route.fulfill({
       contentType: 'application/json',
-      cors: false,
+      cors: 'none',
       headers,
       status: 200,
       body: JSON.stringify(['electric', 'gas']),
@@ -591,7 +591,7 @@ it('should respect cors false', async ({ page, server }) => {
   await page.route('**/one-style.css', async route => {
     await route.fulfill({
       contentType: 'text/css',
-      cors: false,
+      cors: 'none',
       status: 200,
       body: '',
     });
