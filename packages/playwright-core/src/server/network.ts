@@ -267,7 +267,7 @@ export class Route extends SdkObject {
     }
     const headers = [...(overrides.headers || [])];
     if (overrides.cors !== 'none') {
-      const corsHeader = headers.find(({ name, value }) => name === 'access-control-allow-origin');
+      const corsHeader = headers.find(({ name }) => name === 'access-control-allow-origin');
       // See https://github.com/microsoft/playwright/issues/12929
       if (!corsHeader) {
         const origin = this._request.headerValue('origin');
@@ -275,8 +275,6 @@ export class Route extends SdkObject {
           headers.push({ name: 'access-control-allow-origin', value: origin });
           headers.push({ name: 'access-control-allow-credentials', value: 'true' });
           headers.push({ name: 'vary', value: 'Origin' });
-        } else {
-          headers.push({ name: 'access-control-allow-origin', value: '*' });
         }
       }
     }

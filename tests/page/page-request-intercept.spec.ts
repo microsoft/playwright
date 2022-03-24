@@ -90,9 +90,9 @@ it('should override with defaults when intercepted response not provided', async
   expect(response.status()).toBe(201);
   expect(await response.text()).toBe('');
   if (browserName === 'webkit')
-    expect(response.headers()).toEqual({ 'content-type': 'text/plain', 'access-control-allow-origin': '*' });
+    expect(response.headers()).toEqual({ 'content-type': 'text/plain' });
   else
-    expect(response.headers()).toEqual({ 'access-control-allow-origin': '*' });
+    expect(response.headers()).toEqual({ });
 });
 
 it('should fulfill with any response', async ({ page, server, isElectron, rewriteAndroidLoopbackURL }) => {

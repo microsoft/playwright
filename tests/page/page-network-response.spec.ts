@@ -312,7 +312,6 @@ it('should return headers after route.fulfill', async ({ page, server }) => {
   });
   const response = await page.goto(server.EMPTY_PAGE);
   expect(await response.allHeaders()).toEqual({
-    'access-control-allow-origin': '*',
     'foo': 'bar',
     'content-type': 'text/plain',
     'content-length': '4',
