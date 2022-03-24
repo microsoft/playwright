@@ -243,7 +243,7 @@ Previously it was not possible to get multiple header values of a response. This
 - [Response.allHeaders()](https://playwright.dev/java/docs/api/class-response#response-all-headers)
 - [Response.headersArray()](https://playwright.dev/java/docs/api/class-response#response-headers-array)
 - [Response.headerValue(name: string)](https://playwright.dev/java/docs/api/class-response#response-header-value)
-- [Response.headerValues(name: string)](https://playwright.dev/java/docs/api/class-response/#response-header-values)
+- [Response.headerValues(name: string)](https://playwright.dev/java/docs/api/class-response#response-header-values)
 
 ### 🌈 Forced-Colors emulation
 

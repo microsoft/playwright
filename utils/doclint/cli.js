@@ -122,14 +122,15 @@ async function run() {
   // Validate links
   {
     const langs = ['js', 'java', 'python', 'csharp'];
+    const documentationRoot = path.join(PROJECT_DIR, 'docs', 'src');
     for (const lang of langs) {
       try {
-        let documentation = parseApi(path.join(PROJECT_DIR, 'docs', 'src', 'api'));
+        let documentation = parseApi(path.join(documentationRoot, 'api'));
         documentation.filterForLanguage(lang);
         if (lang === 'js') {
-          const testDocumentation = parseApi(path.join(PROJECT_DIR, 'docs', 'src', 'test-api'), path.join(PROJECT_DIR, 'docs', 'src', 'api', 'params.md'));
+          const testDocumentation = parseApi(path.join(documentationRoot, 'test-api'), path.join(documentationRoot, 'api', 'params.md'));
           testDocumentation.filterForLanguage('js');
-          const testRerpoterDocumentation = parseApi(path.join(PROJECT_DIR, 'docs', 'src', 'test-reporter-api'));
+          const testRerpoterDocumentation = parseApi(path.join(documentationRoot, 'test-reporter-api'));
           testRerpoterDocumentation.filterForLanguage('js');
           documentation = documentation.mergeWith(testDocumentation).mergeWith(testRerpoterDocumentation);
         }
@@ -137,11 +138,89 @@ async function run() {
         // This validates member links.
         documentation.setLinkRenderer(() => undefined);
 
-        for (const filePath of getAllMarkdownFiles(path.join(PROJECT_DIR, 'docs', 'src'))) {
+        const relevantMarkdownFiles = getAllMarkdownFiles(documentationRoot)
+          // filter out unrelevant files
+          .filter(filePath => {
+            const matches = filePath.match(/(-(js|python|csharp|java))+?/g);
+            // no language specific document
+            if (!matches)
+              return true;
+            // there is a language, lets filter for it
+            return matches.includes(`-${lang}`);
+          })
+          // Standardise naming and remove the filter in the file name
+          .map(filePath => filePath.replace(/(-(js|python|csharp|java))+/, ''))
+          // Internally we merge test-api and test-reporter-api into api.
+          .map(filePath => filePath.replace(/\/(test-api|test-reporter-api)\//, '/api/'))
+          // Strip off the root
+          .map(filePath => filePath.substring(documentationRoot.length + 1))
+
+        /**
+         * @param {string} filePath
+         * @returns {boolean}
+         */
+        function hasDocFile(filePath) {
+          const kIgnoreDocFiles = ['test-assertions.md'];
+          // We generate it inside the generator
+          if (kIgnoreDocFiles.includes(filePath))
+            return true;
+          return relevantMarkdownFiles.some(other => {
+            if (other === filePath)
+              return true;
+            if (other === path.join('api', filePath))
+              return true;
+            if (lang === 'js') {
+              if (other === path.join('test-api', filePath))
+                return true;
+              if (other === path.join('test-reporter-api', filePath))
+                return true;
+            }
+            return false;
+          });
+        }
+
+        for (const filePath of getAllMarkdownFiles(documentationRoot)) {
           if (langs.some(other => other !== lang && filePath.endsWith(`-${other}.md`)))
             continue;
           const data = fs.readFileSync(filePath, 'utf-8');
-          documentation.renderLinksInText(md.filterNodesForLanguage(md.parse(data), lang));
+          const rootNode = md.filterNodesForLanguage(md.parse(data), lang);
+          documentation.renderLinksInText(rootNode);
+
+          // Validate links:
+          {
+            md.visitAll(rootNode, node => {
+              if (!node.text)
+                return;
+              for (const match of node.text.matchAll(/\[(.*?)\]\((.*?)\)/g)) {
+                const [, linkName, linkRef] = match;
+                const isExternal = linkRef.startsWith('http://') || linkRef.startsWith('https://');
+                if (isExternal)
+                  continue
+                if (linkRef.startsWith('./')) {
+                  const linkRefHash = linkRef.indexOf('#');
+                  if (linkRefHash !== -1)
+                    assertFileExists(filePath, linkRef.substring(0, linkRefHash), linkName);
+                  else
+                    assertFileExists(filePath, linkRef, linkName);
+                }
+              }
+            });
+
+            /**
+             * @param {string} filePath 
+             * @param {string} linkRef
+             * @param {string} linkName
+             */
+            function assertFileExists(filePath, linkRef, linkName) {
+              if (path.extname(linkRef) !== '.md')
+                linkRef += '.md';
+              if (linkRef.startsWith('./'))
+                linkRef = linkRef.substring(2);
+              if (!hasDocFile(linkRef)) {
+                throw new Error(`${filePath} references to '${linkRef}' as '${linkName}' which does not exist.`);
+              }
+            }
+          }
         }
       } catch (e) {
         e.message = `While processing "${lang}"\n` + e.message;

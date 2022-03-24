@@ -395,7 +395,7 @@ trace and image artifacts.
 
 ![html reporter](https://user-images.githubusercontent.com/746130/138324311-94e68b39-b51a-4776-a446-f60037a77f32.png)
 
-Read more about [our reporters](./test-reporters/#html-reporter).
+Read more about [our reporters](./test-reporters#html-reporter).
 
 ### 🎭 Playwright Library
 
@@ -463,7 +463,7 @@ Previously it was not possible to get multiple header values of a response. This
 - [Response.allHeaders()](https://playwright.dev/docs/api/class-response#response-all-headers)
 - [Response.headersArray()](https://playwright.dev/docs/api/class-response#response-headers-array)
 - [Response.headerValue(name: string)](https://playwright.dev/docs/api/class-response#response-header-value)
-- [Response.headerValues(name: string)](https://playwright.dev/docs/api/class-response/#response-header-values)
+- [Response.headerValues(name: string)](https://playwright.dev/docs/api/class-response#response-header-values)
 
 #### 🌈 Forced-Colors emulation
 
@@ -571,7 +571,7 @@ Consider the following example:
 await expect(page.locator('.status')).toHaveText('Submitted');
 ```
 
-Playwright Test will be re-testing the node with the selector `.status` until fetched Node has the `"Submitted"` text. It will be re-fetching the node and checking it over and over, until the condition is met or until the timeout is reached. You can either pass this timeout or configure it once via the [`testProject.expect`](./api/class-testproject/#test-project-expect) value in test config.
+Playwright Test will be re-testing the node with the selector `.status` until fetched Node has the `"Submitted"` text. It will be re-fetching the node and checking it over and over, until the condition is met or until the timeout is reached. You can either pass this timeout or configure it once via the [`testProject.expect`](./api/class-testproject#test-project-expect) value in test config.
 
 By default, the timeout for assertions is not set, so it'll wait forever, until the whole test times out.
 
@@ -631,7 +631,7 @@ Step information is exposed in reporters API.
 
 #### 🌎 Launch web server before running tests
 
-To launch a server during the tests, use the [`webServer`](./test-advanced/#launching-a-development-web-server-during-the-tests) option in the configuration file. The server will wait for a given port to be available before running the tests, and the port will be passed over to Playwright as a [`baseURL`](./api/class-fixtures#fixtures-base-url) when creating a context.
+To launch a server during the tests, use the [`webServer`](./test-advanced#launching-a-development-web-server-during-the-tests) option in the configuration file. The server will wait for a given port to be available before running the tests, and the port will be passed over to Playwright as a [`baseURL`](./api/class-fixtures#fixtures-base-url) when creating a context.
 
 ```ts
 // playwright.config.ts
