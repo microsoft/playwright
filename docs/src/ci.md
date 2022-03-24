@@ -28,6 +28,12 @@ configurations for common CI providers.
    pip install playwright
    playwright install --with-deps
    ```
+   ```bash java
+   mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install --with-deps"
+   ```
+   ```bash csharp
+   pwsh bin\Debug\netX\playwright.ps1 install --with-deps
+   ```
 
 1. **Run your tests**:
    ```bash js
@@ -59,8 +65,8 @@ steps:
     if: always()
     uses: actions/upload-artifact@v2
     with:
-      name: test-results
-      path: test-results
+      name: playwright-report
+      path: playwright-report
 ```
 
 ```yml python
@@ -129,10 +135,9 @@ Suggested configuration
 For Windows or macOS agents, no additional configuration required, just install Playwright and run your tests.
 
 For Linux agents, you can use [our Docker container](./docker.md) with Azure
-Pipelines support for [running containerized
+Pipelines support [running containerized
 jobs](https://docs.microsoft.com/en-us/azure/devops/pipelines/process/container-phases?view=azure-devops).
-Alternatively, you can use [Command line tools](./cli.md#install-system-dependencies) to install all necessary dependencies for Ubuntu 18.04
-or Ubuntu 20.04.
+Alternatively, you can use [Command line tools](./cli.md#install-system-dependencies) to install all necessary dependencies.
 
 ```yml
 pool:
