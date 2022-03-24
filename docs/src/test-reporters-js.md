@@ -389,6 +389,36 @@ const config: PlaywrightTestConfig = {
 export default config;
 ```
 
+By default, if you have attachments in test result, the attachment path is relative to the [`property: TestConfig.outputDir`].
+In some case, you may want to set the attachment path to be relative to other path. You can do that by passing the `attachmentRelativeTo` option
+to the absolute path you want to use as the base path. Alternatively, you may set `attachmentRelativeToWorkingDirectory` to `true` to use
+working directory as the root of the path.
+
+For example, if you use GitLab CI, you may want to set the `attachmentRelativeTo` to `process.env.CI_PROJECT_DIR` so screenshot paths are correct
+on test result page. See [GitLab document](https://docs.gitlab.com/ee/ci/unit_test_reports.html#viewing-junit-screenshots-on-gitlab) for more details.
+
+```js js-flavor=js
+// playwright.config.js
+// @ts-check
+
+/** @type {import('@playwright/test').PlaywrightTestConfig} */
+const config = {
+  reporter: [ ['junit', { outputFile: 'results.xml', attachmentRelativeToWorkingDirectory: true, attachmentRelativeTo: "/some/path/" }] ],
+};
+
+module.exports = config;
+```
+
+```js js-flavor=ts
+// playwright.config.ts
+import { PlaywrightTestConfig } from '@playwright/test';
+
+const config: PlaywrightTestConfig = {
+  reporter: [ ['junit', { outputFile: 'results.xml', attachmentRelativeToWorkingDirectory: true, attachmentRelativeTo: "/some/path/" }] ],
+};
+export default config;
+```
+
 ### GitHub Actions annotations
 
 You can use the built in `github` reporter to get automatic failure annotations when running in GitHub actions.

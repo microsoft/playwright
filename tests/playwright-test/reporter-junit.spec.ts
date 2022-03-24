@@ -250,6 +250,37 @@ test('should render existing attachments, but not missing ones', async ({ runInl
   expect(result.exitCode).toBe(0);
 });
 
+test('should render attachments using given attachment root', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      const path = require('path');
+      module.exports = {
+        reporter: [ ['junit', { attachmentRelativeTo: path.resolve(process.cwd(), "../") }] ],
+      };
+    `,
+    'a.test.js': `
+      const { test } = pwt;
+      test.use({ screenshot: 'on' });
+      test('one', async ({ page }, testInfo) => {
+        await page.setContent('hello');
+        const file = testInfo.outputPath('file.txt');
+        require('fs').writeFileSync(file, 'my file', 'utf8');
+        testInfo.attachments.push({ name: 'my-file', path: file, contentType: 'text/plain' });
+        console.log('log here');
+      });
+    `,
+  }, { reporter: '' });
+  const xml = parseXML(result.output);
+  const testcase = xml['testsuites']['testsuite'][0]['testcase'][0];
+  expect(testcase['system-out'].length).toBe(1);
+  expect(testcase['system-out'][0].trim()).toBe([
+    `log here`,
+    `\n[[ATTACHMENT|reporter-junit-should-render-attachments-using-given-attachment-root-playwright-test${path.sep}test-results${path.sep}a-one${path.sep}file.txt]]`,
+    `\n[[ATTACHMENT|reporter-junit-should-render-attachments-using-given-attachment-root-playwright-test${path.sep}test-results${path.sep}a-one${path.sep}test-finished-1.png]]`,
+  ].join('\n'));
+  expect(result.exitCode).toBe(0);
+});
+
 function parseXML(xml: string): any {
   let result: any;
   xml2js.parseString(xml, (err, r) => result = r);

@@ -30,10 +30,14 @@ class JUnitReporter implements Reporter {
   private totalSkipped = 0;
   private outputFile: string | undefined;
   private stripANSIControlSequences = false;
+  private attachmentRelativeToWorkingDirectory = false;
+  private attachmentRelativeTo: string | undefined;
 
-  constructor(options: { outputFile?: string, stripANSIControlSequences?: boolean } = {}) {
+  constructor(options: { outputFile?: string, stripANSIControlSequences?: boolean, attachmentRelativeToWorkingDirectory?: boolean, attachmentRelativeTo?: string } = {}) {
     this.outputFile = options.outputFile || process.env[`PLAYWRIGHT_JUNIT_OUTPUT_NAME`];
     this.stripANSIControlSequences = options.stripANSIControlSequences || false;
+    this.attachmentRelativeToWorkingDirectory = options.attachmentRelativeToWorkingDirectory || false;
+    this.attachmentRelativeTo = options.attachmentRelativeTo;
   }
 
   printsToStdio() {
@@ -158,7 +162,16 @@ class JUnitReporter implements Reporter {
         if (!attachment.path)
           continue;
         try {
-          const attachmentPath = path.relative(this.config.rootDir, attachment.path);
+          let baseDir: string;
+          if (this.attachmentRelativeTo)
+            baseDir = this.attachmentRelativeTo;
+          else if (this.attachmentRelativeToWorkingDirectory)
+            baseDir = process.cwd();
+          else
+            baseDir = this.config.rootDir;
+
+          const attachmentPath = path.relative(baseDir, attachment.path);
+
           if (fs.existsSync(attachment.path))
             systemOut.push(`\n[[ATTACHMENT|${attachmentPath}]]\n`);
           else
