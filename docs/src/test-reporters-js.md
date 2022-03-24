@@ -611,15 +611,16 @@ test("embed attachments, including its content, on the JUnit report", async ({},
 });
 ```
 
-By default, if you have attachments in test result and the configuration option `embedAttachmentsAsProperty` is not defined, the generated `system-out` attachment path is relative to the [`property: TestConfig.outputDir`].
+By default, if you have attachments in test result and the configuration option `embedAttachmentsAsProperty` is not defined, the attachment path is relative to the [`property: TestConfig.testDir`] or, if not set, configuration file location.
 In some case, you may want to set the attachment path to be relative to other path. You can do that by passing the `attachmentRelativeTo` option
 to the absolute path you want to use as the base path.
 
 For example, if you use GitLab CI, you may want to set the `attachmentRelativeTo` to `process.env.CI_PROJECT_DIR` so screenshot paths are correct
-on test result page. See [GitLab document](https://docs.gitlab.com/ee/ci/unit_test_reports.html#viewing-junit-screenshots-on-gitlab) for more details.
+on test result page. See [GitLab document](https://docs.gitlab.com/ee/ci/testing/unit_test_reports.html#view-junit-screenshots-on-gitlab) for more details.
 
-```js tab=js-ts
+```js tab=js-js
 // playwright.config.js
+// @ts-check
 
 /** @type {import('@playwright/test').PlaywrightTestConfig} */
 const config = {
@@ -628,7 +629,6 @@ const config = {
       "junit",
       {
         outputFile: "results.xml",
-        attachmentRelativeToWorkingDirectory: true,
         attachmentRelativeTo: "/some/path/",
       },
     ],
@@ -639,7 +639,7 @@ module.exports = config;
 ```
 
 ```js tab=js-ts
-// playwright.config.js
+// playwright.config.ts
 import { PlaywrightTestConfig } from "@playwright/test";
 
 const config: PlaywrightTestConfig = {
@@ -648,7 +648,6 @@ const config: PlaywrightTestConfig = {
       "junit",
       {
         outputFile: "results.xml",
-        attachmentRelativeToWorkingDirectory: true,
         attachmentRelativeTo: "/some/path/",
       },
     ],
