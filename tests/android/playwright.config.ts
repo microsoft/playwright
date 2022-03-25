@@ -19,14 +19,14 @@ loadEnv({ path: path.join(__dirname, '..', '..', '.env') });
 
 import type { Config, PlaywrightTestOptions, PlaywrightWorkerOptions } from '@playwright/test';
 import * as path from 'path';
-import { ServerWorkerOptions } from './serverFixtures';
+import { ServerWorkerOptions } from '../config/serverFixtures';
 
 process.env.PWPAGE_IMPL = 'android';
 
 const outputDir = path.join(__dirname, '..', '..', 'test-results');
 const testDir = path.join(__dirname, '..');
 const config: Config<ServerWorkerOptions & PlaywrightWorkerOptions & PlaywrightTestOptions> = {
-  globalSetup: path.join(__dirname, './globalSetup'),
+  globalSetup: path.join(__dirname, '../config/globalSetup'),
   testDir,
   outputDir,
   timeout: 120000,

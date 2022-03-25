@@ -28,10 +28,8 @@ const config: Config = {
   forbidOnly: !!process.env.CI,
   workers: process.env.CI ? 1 : undefined,
   preserveOutput: process.env.CI ? 'failures-only' : 'always',
-  projects: process.env.PLAYWRIGHT_DOCKER ? [
-    { name: 'visual tests', testMatch: ['*.visual.ts'] },
-  ] : [
-    { name: 'playwright-test', testIgnore: ['*.visual.ts'] },
+  projects: [
+    { name: 'playwright-test' },
   ],
   reporter: process.env.CI ? [
     ['dot'],

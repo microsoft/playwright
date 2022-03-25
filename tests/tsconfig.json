@@ -15,5 +15,5 @@
         },
     },
     "include": ["**/*.spec.js", "**/*.ts", "index.d.ts"],
-    "exclude": ["playwright-test/"]
+    "exclude": ["playwright-test/", "components/"]
 }
