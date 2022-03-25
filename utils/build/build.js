@@ -80,14 +80,22 @@ function quotePath(path) {
 async function runWatch() {
   function runOnChanges(paths, mustExist = [], nodeFile) {
     nodeFile = filePath(nodeFile);
-    function callback() {
+    let timeout;
+    const callback = () => {
+      timeout = undefined;
       for (const fileMustExist of mustExist) {
         if (!fs.existsSync(filePath(fileMustExist)))
           return;
       }
       child_process.spawnSync('node', [nodeFile], { stdio: 'inherit' });
-    }
-    chokidar.watch([...paths, ...mustExist, nodeFile].map(filePath)).on('all', callback);
+    };
+    // chokidar will report all files as added in a sync loop, throttle those.
+    const reschedule = () => {
+      if (timeout)
+        clearTimeout(timeout);
+      timeout = setTimeout(callback, 500);
+    };
+    chokidar.watch([...paths, ...mustExist, nodeFile].map(filePath)).on('all', reschedule);
     callback();
   }
 
