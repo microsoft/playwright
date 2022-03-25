@@ -16,14 +16,19 @@
  * limitations under the License.
  */
 
+// @ts-check
+
 const fs = require('fs');
 const ts = require('typescript');
 const path = require('path');
 
+const packagesDir = path.normalize(path.join(__dirname, '..', 'packages'));
+const packages = fs.readdirSync(packagesDir);
+const peerDependencies = ['electron', 'react', 'react-dom'];
+
 async function checkDeps() {
-  const packages = path.normalize(path.join(__dirname, '..', 'packages'));
-  const corePackageJson = await innerCheckDeps(path.join(packages, 'playwright-core'), true);
-  const testPackageJson = await innerCheckDeps(path.join(packages, 'playwright-test'), false);
+  const corePackageJson = await innerCheckDeps(path.join(packagesDir, 'playwright-core'), true, true);
+  const testPackageJson = await innerCheckDeps(path.join(packagesDir, 'playwright-test'), true, true);
 
   let hasVersionMismatch = false;
   for (const [key, value] of Object.entries(corePackageJson.dependencies)) {
@@ -36,9 +41,11 @@ async function checkDeps() {
   process.exit(hasVersionMismatch ? 1 : 0);
 }
 
-async function innerCheckDeps(root, checkDepsFile) {
+async function innerCheckDeps(root, checkDepsFile, checkPackageJson) {
+  console.log('Testing', root);
   const deps = new Set();
   const src = path.join(root, 'src');
+  const depsFile = checkDepsFile ? loadDEPSFile(src) : {};
   const packageJSON = require(path.join(root, 'package.json'));
   const program = ts.createProgram({
     options: {
@@ -50,10 +57,10 @@ async function innerCheckDeps(root, checkDepsFile) {
   });
   const sourceFiles = program.getSourceFiles();
   const errors = [];
-  const usedDeps = new Set();
+  const usedDeps = new Set(['/']);
   sourceFiles.filter(x => !x.fileName.includes('node_modules')).map(x => visit(x, x.fileName));
-  for (const key of Object.keys(DEPS)) {
-    if (!usedDeps.has(key) && DEPS[key].length)
+  for (const key of Object.keys(depsFile)) {
+    if (!usedDeps.has(key) && depsFile[key].length)
       errors.push(`Stale DEPS entry "${key}"`);
   }
   if (checkDepsFile && errors.length) {
@@ -61,68 +68,87 @@ async function innerCheckDeps(root, checkDepsFile) {
       console.log(error);
     console.log(`--------------------------------------------------------`);
     console.log(`Changing the project structure or adding new components?`);
-    console.log(`Update DEPS in ./${path.relative(root, __filename)}`);
+    console.log(`Update DEPS in ${root}`);
     console.log(`--------------------------------------------------------`);
     process.exit(1);
   }
 
-  for (const dep of deps) {
-    const resolved = require.resolve(dep, { paths: [root] });
-    if (dep === resolved || !resolved.includes('node_modules'))
+  if (checkPackageJson) {
+    for (const dep of peerDependencies)
       deps.delete(dep);
-  }
-  for (const dep of Object.keys(packageJSON.dependencies))
-    deps.delete(dep);
-
-  if (deps.size) {
-    console.log('Dependencies are not declared in package.json:');
-    for (const dep of deps)
-      console.log(`  ${dep}`);
-    process.exit(1);
+    for (const dep of deps) {
+      const resolved = require.resolve(dep, { paths: [root] });
+      if (dep === resolved || !resolved.includes('node_modules'))
+        deps.delete(dep);
+    }
+    for (const dep of Object.keys(packageJSON.dependencies || {}))
+      deps.delete(dep);
+  
+    if (deps.size) {
+      console.log('Dependencies are not declared in package.json:');
+      for (const dep of deps)
+        console.log(`  ${dep}`);
+      process.exit(1);
+    }  
   }
 
   return packageJSON;
 
   function visit(node, fileName) {
     if (ts.isImportDeclaration(node) && ts.isStringLiteral(node.moduleSpecifier)) {
+      if (node.importClause && node.importClause.isTypeOnly)
+        return;
       const importName = node.moduleSpecifier.text;
-      if (!importName.startsWith('.') && !node.importClause.isTypeOnly && !fileName.includes(path.sep + 'web' + path.sep)) {
-        if (importName.startsWith('@'))
-          deps.add(importName.split('/').slice(0, 2).join('/'));
-        else
-          deps.add(importName.split('/')[0]);
+      let importPath;
+      if (importName.startsWith('.')) {
+        importPath = path.resolve(path.dirname(fileName), importName);
+      } else if (importName.startsWith('@')) {
+        const tokens = importName.substring(1).split('/');
+        const package = tokens[0];
+        if (packages.includes(package))
+          importPath = packagesDir + '/' + tokens[0] + '/src/' + tokens.slice(1).join('/');
       }
-      const importPath = path.resolve(path.dirname(fileName), importName) + '.ts';
-      if (checkDepsFile && !allowImport(fileName, importPath))
-        errors.push(`Disallowed import ${path.relative(root, importPath)} in ${path.relative(root, fileName)}`);
-      if (checkDepsFile && !allowExternalImport(fileName, importPath, importName))
+
+      if (importPath) {
+        if (!fs.existsSync(importPath)) {
+          if (fs.existsSync(importPath + '.ts'))
+            importPath = importPath + '.ts';
+          else if (fs.existsSync(importPath + '.tsx'))
+            importPath = importPath + '.tsx';
+        }
+
+        if (checkDepsFile && !allowImport(depsFile, fileName, importPath))
+          errors.push(`Disallowed import ${path.relative(root, importPath)} in ${path.relative(root, fileName)}`);
+        return;
+      }
+
+      if (importName.startsWith('@'))
+        deps.add(importName.split('/').slice(0, 2).join('/'));
+      else
+        deps.add(importName.split('/')[0]);
+
+      if (checkDepsFile && !allowExternalImport(importName, packageJSON))
         errors.push(`Disallowed external dependency ${importName} from ${path.relative(root, fileName)}`);
     }
     ts.forEachChild(node, x => visit(x, fileName));
   }
 
-  function allowImport(from, to) {
+  function allowImport(depsFile, from, to) {
     if (!to.startsWith(src + path.sep))
       return true;
-    if (!fs.existsSync(to))
-      return true;
-    from = path.relative(root, from).replace(/\\/g, '/');
-    to = path.relative(root, to).replace(/\\/g, '/');
-    const fromDirectory = from.substring(0, from.lastIndexOf('/') + 1);
-    const toDirectory = to.substring(0, to.lastIndexOf('/') + 1);
+    const fromDirectory = path.dirname(from);
+    const toDirectory = path.dirname(to);
     if (fromDirectory === toDirectory)
       return true;
 
-    while (!DEPS[from]) {
-      if (from.endsWith('/'))
-        from = from.substring(0, from.length - 1);
+    while (!depsFile[from]) {
       if (from.lastIndexOf('/') === -1)
         throw new Error(`Cannot find DEPS for ${fromDirectory}`);
-      from = from.substring(0, from.lastIndexOf('/') + 1);
+      from = from.substring(0, from.lastIndexOf('/'));
     }
 
     usedDeps.add(from);
-    for (const dep of DEPS[from]) {
+    for (const dep of depsFile[from]) {
       if (to === dep || toDirectory === dep)
         return true;
       if (dep.endsWith('**')) {
@@ -135,12 +161,11 @@ async function innerCheckDeps(root, checkDepsFile) {
   }
 
 
-  function allowExternalImport(from, importPath, importName) {
-    const EXTERNAL_IMPORT_ALLOWLIST = ['electron'];
+  function allowExternalImport(importName, packageJSON) {
     // Only external imports are relevant. Files in src/web are bundled via webpack.
-    if (importName.startsWith('.') || importPath.startsWith(path.join(src, 'web')))
+    if (importName.startsWith('.') || importName.startsWith('@'))
       return true;
-    if (EXTERNAL_IMPORT_ALLOWLIST.includes(importName))
+    if (peerDependencies.includes(importName))
       return true;
     try {
       const resolvedImport = require.resolve(importName);
@@ -148,17 +173,11 @@ async function innerCheckDeps(root, checkDepsFile) {
       // Filter out internal Node.js modules
       if (!resolvedImportRelativeToNodeModules.startsWith(importName))
         return true;
-      const resolvedImportRelativeToNodeModulesParts = resolvedImportRelativeToNodeModules.split(path.sep);
-      if (packageJSON.dependencies[resolvedImportRelativeToNodeModulesParts[0]])
-        return true;
-      // handle e.g. @babel/code-frame
-      if (resolvedImportRelativeToNodeModulesParts.length >= 2 && packageJSON.dependencies[resolvedImportRelativeToNodeModulesParts.splice(0, 2).join(path.sep)])
-        return true;
-      return false;
     } catch (error) {
       if (error.code !== 'MODULE_NOT_FOUND')
         throw error;
     }
+    return !!packageJSON.dependencies[importName];
   }
 }
 
@@ -175,72 +194,22 @@ function listAllFiles(dir) {
   return result;
 }
 
-const DEPS = {};
-
-DEPS['src/protocol/'] = ['src/utils/'];
-
-// Client depends on chromium protocol for types.
-DEPS['src/client/'] = ['src/common/', 'src/utils/', 'src/protocol/', 'src/server/chromium/protocol.d.ts'];
-DEPS['src/outofprocess.ts'] = ['src/client/', 'src/protocol/', 'src/utils/'];
-
-DEPS['src/dispatchers/'] = ['src/common/', 'src/utils/', 'src/protocol/', 'src/server/**'];
-
-// Generic dependencies for server-side code.
-DEPS['src/server/'] = [
-  'src/common/',
-  'src/utils/',
-  'src/generated/',
-  // Can depend on files directly in the server directory.
-  'src/server/',
-  // Can depend on any files in these subdirectories.
-  'src/server/common/**',
-  'src/server/injected/**',
-  'src/server/supplements/**',
-  'src/protocol/**',
-];
-
-// No dependencies for code shared between node and page.
-DEPS['src/server/common/'] = [];
-// Strict dependencies for injected code.
-DEPS['src/server/injected/'] = ['src/server/common/', 'src/protocol/channels.ts'];
-
-// Electron and Clank use chromium internally.
-DEPS['src/server/android/'] = [...DEPS['src/server/'], 'src/server/chromium/', 'src/protocol/'];
-DEPS['src/server/electron/'] = [...DEPS['src/server/'], 'src/server/chromium/'];
-
-DEPS['src/server/playwright.ts'] = [...DEPS['src/server/'], 'src/server/chromium/', 'src/server/webkit/', 'src/server/firefox/', 'src/server/android/', 'src/server/electron/'];
-DEPS['src/server/browserContext.ts'] = [...DEPS['src/server/'], 'src/server/trace/recorder/tracing.ts'];
-DEPS['src/server/fetch.ts'] = [...DEPS['src/server/'], 'src/server/trace/recorder/tracing.ts'];
-DEPS['src/cli/driver.ts'] = DEPS['src/inProcessFactory.ts'] = DEPS['src/browserServerImpl.ts'] = ['src/**'];
-
-// Tracing is a client/server plugin, nothing should depend on it.
-DEPS['src/web/recorder/'] = ['src/common/', 'src/web/', 'src/web/components/', 'src/server/supplements/recorder/recorderTypes.ts'];
-DEPS['src/web/traceViewer/'] = ['src/common/', 'src/web/', 'src/server/trace/common/', 'src/protocol/callMetadata.ts'];
-DEPS['src/web/traceViewer/ui/'] = ['src/common/', 'src/protocol/', 'src/web/traceViewer/', 'src/web/', 'src/server/trace/viewer/', 'src/server/trace/', 'src/server/trace/common/', 'src/server/snapshot/snapshotTypes.ts', 'src/protocol/channels.ts'];
-DEPS['src/web/traceViewer/inMemorySnapshotter.ts'] = ['src/**'];
-
-// The service is a cross-cutting feature, and so it depends on a bunch of things.
-DEPS['src/remote/'] = ['src/client/', 'src/debug/', 'src/dispatchers/', 'src/server/', 'src/server/supplements/', 'src/server/electron/', 'src/server/trace/', 'src/utils/**'];
-
-// CLI should only use client-side features.
-DEPS['src/cli/'] = ['src/cli/**', 'src/client/**', 'src/generated/', 'src/server/injected/', 'src/debug/injected/', 'src/server/trace/**', 'src/utils/**', 'src/grid/**'];
-
-DEPS['src/server/supplements/recorder/recorderApp.ts'] = ['src/common/', 'src/utils/', 'src/server/', 'src/server/chromium/'];
-DEPS['src/server/supplements/recorderSupplement.ts'] = ['src/server/snapshot/', ...DEPS['src/server/']];
-DEPS['src/utils/'] = ['src/common/', 'src/protocol/'];
-
-// Trace viewer
-DEPS['src/server/trace/common/'] = ['src/server/snapshot/', ...DEPS['src/server/']];
-DEPS['src/server/trace/recorder/'] = ['src/server/trace/common/', ...DEPS['src/server/trace/common/']];
-DEPS['src/server/trace/viewer/'] = ['src/server/trace/common/', 'src/server/trace/recorder/', 'src/server/chromium/', ...DEPS['src/server/trace/common/']];
-
-// TODO(einbinder) re-enable these checks
-// // Playwright Test
-// DEPS['src/test/'] = ['src/test/**', 'src/utils/utils.ts', 'src/utils/**', 'src/protocol/channels.ts'];
-// DEPS['src/test/index.ts'] = [... DEPS['src/test/'], 'src/grid/gridClient.ts' ];
-
-// Grid
-DEPS['src/grid/'] = ['src/utils/**', 'src/dispatchers/**', 'src/server/', 'src/client/'];
+function loadDEPSFile(src) {
+  const deps = require(path.join(src, 'DEPS'));
+  const resolved = {};
+  for (let [key, values] of Object.entries(deps)) {
+    if (key === '/')
+      key = '';
+    resolved[path.resolve(src, key)] = values.map(v => {
+      if (v.startsWith('@')) {
+        const tokens = v.substring(1).split('/');
+        return path.resolve(packagesDir, tokens[0], 'src', ...tokens.slice(1));
+      }
+      return path.resolve(src, v);
+    });
+  }
+  return resolved;
+}
 
 checkDeps().catch(e => {
   console.error(e && e.stack ? e.stack : e);
