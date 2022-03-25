@@ -38,7 +38,6 @@ it('should upload the file', async ({ page, server, asset }) => {
 });
 
 it('should upload large file', async ({ page, server, browserName, isMac }, testInfo) => {
-  it.skip(browserName === 'webkit' && isMac, 'Fails for big file on macOS');
   it.skip(browserName === 'webkit' && isMac && parseInt(os.release(), 10) < 20, 'WebKit for macOS 10.15 is frozen and does not have corresponding protocol features.');
   it.slow();
   await page.goto(server.PREFIX + '/input/fileupload.html');
