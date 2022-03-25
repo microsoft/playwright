@@ -1,7 +1,7 @@
 # class: Fixtures
 * langs: js
 
-Playwright Test is based on the concept of the [test fixtures](./test-fixtures.md). Test fixtures are used to establish environment for each test, giving the test everything it needs and nothing else.
+Playwright Test is based on the concept of the [test fixtures](../test-fixtures.md). Test fixtures are used to establish environment for each test, giving the test everything it needs and nothing else.
 
 Playwright Test looks at each test declaration, analyses the set of fixtures the test needs and prepares those fixtures specifically for the test. Values prepared by the fixtures are merged into a single object that is available to the `test`, hooks, annotations and other fixtures as a first parameter.
 
@@ -28,14 +28,14 @@ Playwright Test comes with builtin fixtures listed below, and you can add your o
 ## property: Fixtures.browser
 - type: <[Browser]>
 
-[Browser] instance is shared between all tests in the [same worker](./test-parallel.md) - this makes testing efficient. However, each test runs in an isolated [BrowserContext]  and gets a fresh environment.
+[Browser] instance is shared between all tests in the [same worker](../test-parallel.md) - this makes testing efficient. However, each test runs in an isolated [BrowserContext]  and gets a fresh environment.
 
-Learn how to [configure browser](./test-configuration.md) and see [available options][TestOptions].
+Learn how to [configure browser](../test-configuration.md) and see [available options][TestOptions].
 
 ## property: Fixtures.browserName
 - type: <[BrowserName]<"chromium"|"firefox"|"webkit">>
 
-Name of the browser that runs tests. Defaults to `'chromium'`. Useful to [annotate tests](./test-annotations.md) based on the browser.
+Name of the browser that runs tests. Defaults to `'chromium'`. Useful to [annotate tests](../test-annotations.md) based on the browser.
 
 ```js js-flavor=js
 test('skip this test in Firefox', async ({ page, browserName }) => {
@@ -56,7 +56,7 @@ test('skip this test in Firefox', async ({ page, browserName }) => {
 
 Isolated [BrowserContext] instance, created for each test. Since contexts are isolated between each other, every test gets a fresh environment, even when multiple tests run in a single [Browser] for maximum efficiency.
 
-Learn how to [configure context](./test-configuration.md) and see [available options][TestOptions].
+Learn how to [configure context](../test-configuration.md) and see [available options][TestOptions].
 
 Default [`property: Fixtures.page`] belongs to this context.
 

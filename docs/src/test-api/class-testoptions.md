@@ -3,7 +3,7 @@
 
 Playwright Test provides many options to configure test environment, [Browser], [BrowserContext] and more.
 
-These options are usually provided in the [configuration file](./test-configuration.md) through [`property: TestConfig.use`] and [`property: TestProject.use`].
+These options are usually provided in the [configuration file](../test-configuration.md) through [`property: TestConfig.use`] and [`property: TestProject.use`].
 
 ```js js-flavor=js
 // @ts-check
@@ -102,7 +102,7 @@ Default timeout for each Playwright action in milliseconds, defaults to 0 (no ti
 
 This is a default timeout for all Playwright actions, same as configured via [`method: Page.setDefaultTimeout`].
 
-Learn more about [various timeouts](./test-timeouts.md).
+Learn more about [various timeouts](../test-timeouts.md).
 
 ## property: TestOptions.bypassCSP = %%-context-option-bypasscsp-%%
 
@@ -154,7 +154,7 @@ Timeout for each navigation action in milliseconds. Defaults to 0 (no timeout).
 
 This is a default navigation timeout, same as configured via [`method: Page.setDefaultNavigationTimeout`].
 
-Learn more about [various timeouts](./test-timeouts.md).
+Learn more about [various timeouts](../test-timeouts.md).
 
 ## property: TestOptions.offline = %%-context-option-offline-%%
 
@@ -170,7 +170,7 @@ Whether to automatically capture a screenshot after each test. Defaults to `'off
 * `'on'`: Capture screenshot after each test.
 * `'only-on-failure'`: Capture screenshot after each test failure.
 
-Learn more about [automatic screenshots](./test-configuration.md#automatic-screenshots).
+Learn more about [automatic screenshots](../test-configuration.md#automatic-screenshots).
 
 ## property: TestOptions.storageState = %%-js-python-context-option-storage-state-%%
 
@@ -191,7 +191,7 @@ Whether to record trace for each test. Defaults to `'off'`.
 
 For more control, pass an object that specifies `mode` and trace features to enable.
 
-Learn more about [recording trace](./test-configuration.md#record-test-trace).
+Learn more about [recording trace](../test-configuration.md#record-test-trace).
 
 ## property: TestOptions.userAgent = %%-context-option-useragent-%%
 
@@ -210,7 +210,7 @@ Whether to record video for each test. Defaults to `'off'`.
 
 To control video size, pass an object with `mode` and `size` properties. If video size is not specified, it will be equal to [`property: TestOptions.viewport`] scaled down to fit into 800x800. If `viewport` is not configured explicitly the video size defaults to 800x450. Actual picture of each page will be scaled down if necessary to fit the specified size.
 
-Learn more about [recording video](./test-configuration.md#record-video).
+Learn more about [recording video](../test-configuration.md#record-video).
 
 ## property: TestOptions.viewport = %%-context-option-viewport-%%
 

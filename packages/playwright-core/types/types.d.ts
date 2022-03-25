@@ -8592,8 +8592,8 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
   /**
    * Returns when the element satisfies the `state`.
    *
-   * Depending on the `state` parameter, this method waits for one of the [actionability](https://playwright.dev/docs/actionability) checks to pass.
-   * This method throws when the element is detached while waiting, unless waiting for the `"hidden"` state.
+   * Depending on the `state` parameter, this method waits for one of the [actionability](https://playwright.dev/docs/actionability) checks to
+   * pass. This method throws when the element is detached while waiting, unless waiting for the `"hidden"` state.
    * - `"visible"` Wait until the element is [visible](https://playwright.dev/docs/actionability#visible).
    * - `"hidden"` Wait until the element is [not visible](https://playwright.dev/docs/actionability#visible) or
    *   [not attached](https://playwright.dev/docs/actionability#attached). Note that waiting for hidden does not throw when the element detaches.
@@ -13071,8 +13071,8 @@ export interface Browser extends EventEmitter {
 
   /**
    * > NOTE: This API controls [Chromium Tracing](https://www.chromium.org/developers/how-tos/trace-event-profiling-tool)
-   * which is a low-level chromium-specific debugging tool. API to control [Playwright Tracing](../trace-viewer) could be
-   * found [here](https://playwright.dev/docs/class-tracing).
+   * which is a low-level chromium-specific debugging tool. API to control [Playwright Tracing](https://playwright.dev/docs/trace-viewer) could be
+   * found [here](https://playwright.dev/docs/api/class-tracing).
    *
    * You can use [browser.startTracing([page, options])](https://playwright.dev/docs/api/class-browser#browser-start-tracing)
    * and [browser.stopTracing()](https://playwright.dev/docs/api/class-browser#browser-stop-tracing) to create a trace file
@@ -13106,8 +13106,8 @@ export interface Browser extends EventEmitter {
 
   /**
    * > NOTE: This API controls [Chromium Tracing](https://www.chromium.org/developers/how-tos/trace-event-profiling-tool)
-   * which is a low-level chromium-specific debugging tool. API to control [Playwright Tracing](../trace-viewer) could be
-   * found [here](https://playwright.dev/docs/class-tracing).
+   * which is a low-level chromium-specific debugging tool. API to control [Playwright Tracing](https://playwright.dev/docs/trace-viewer) could be
+   * found [here](https://playwright.dev/docs/api/class-tracing).
    *
    * Returns the buffer with trace data.
    */

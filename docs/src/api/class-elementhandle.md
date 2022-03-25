@@ -155,7 +155,7 @@ await page.Mouse.ClickAsync(box.X + box.Width / 2, box.Y + box.Height / 2);
 This method checks the element by performing the following steps:
 1. Ensure that element is a checkbox or a radio input. If not, this method throws. If the element is already
    checked, this method returns immediately.
-1. Wait for [actionability](./actionability.md) checks on the element, unless [`option: force`] option is set.
+1. Wait for [actionability](../actionability.md) checks on the element, unless [`option: force`] option is set.
 1. Scroll the element into view if needed.
 1. Use [`property: Page.mouse`] to click in the center of the element.
 1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`] option is set.
@@ -179,7 +179,7 @@ When all steps combined have not finished during the specified [`option: timeout
 ## async method: ElementHandle.click
 
 This method clicks the element by performing the following steps:
-1. Wait for [actionability](./actionability.md) checks on the element, unless [`option: force`] option is set.
+1. Wait for [actionability](../actionability.md) checks on the element, unless [`option: force`] option is set.
 1. Scroll the element into view if needed.
 1. Use [`property: Page.mouse`] to click in the center of the element, or the specified [`option: position`].
 1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`] option is set.
@@ -217,7 +217,7 @@ Returns the content frame for element handles referencing iframe nodes, or `null
   - alias-csharp: DblClickAsync
 
 This method double clicks the element by performing the following steps:
-1. Wait for [actionability](./actionability.md) checks on the element, unless [`option: force`] option is set.
+1. Wait for [actionability](../actionability.md) checks on the element, unless [`option: force`] option is set.
 1. Scroll the element into view if needed.
 1. Use [`property: Page.mouse`] to double click in the center of the element, or the specified [`option: position`].
 1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`] option is set. Note that
@@ -343,7 +343,7 @@ Optional event-specific initialization properties.
 Returns the return value of [`param: expression`].
 
 The method finds an element matching the specified selector in the `ElementHandle`s subtree and passes it as a first
-argument to [`param: expression`]. See [Working with selectors](./selectors.md) for more
+argument to [`param: expression`]. See [Working with selectors](../selectors.md) for more
 details. If no elements match the selector, the method throws an error.
 
 If [`param: expression`] returns a [Promise], then [`method: ElementHandle.evalOnSelector`] would wait for the promise to resolve and return its
@@ -400,7 +400,7 @@ Returns the return value of [`param: expression`].
 
 The method finds all elements matching the specified selector in the `ElementHandle`'s subtree and passes an array of
 matched elements as a first argument to [`param: expression`]. See
-[Working with selectors](./selectors.md) for more details.
+[Working with selectors](../selectors.md) for more details.
 
 If [`param: expression`] returns a [Promise], then [`method: ElementHandle.evalOnSelectorAll`] would wait for the promise to resolve and return its
 value.
@@ -450,7 +450,7 @@ Optional argument to pass to [`param: expression`].
 
 ## async method: ElementHandle.fill
 
-This method waits for [actionability](./actionability.md) checks, focuses the element, fills it and triggers an `input` event after filling. Note that you can pass an empty string to clear the input field.
+This method waits for [actionability](../actionability.md) checks, focuses the element, fills it and triggers an `input` event after filling. Note that you can pass an empty string to clear the input field.
 
 If the target element is not an `<input>`, `<textarea>` or `[contenteditable]` element, this method throws an error. However, if the element is inside the `<label>` element that has an associated [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), the control will be filled instead.
 
@@ -482,7 +482,7 @@ Attribute name to get the value for.
 ## async method: ElementHandle.hover
 
 This method hovers over the element by performing the following steps:
-1. Wait for [actionability](./actionability.md) checks on the element, unless [`option: force`] option is set.
+1. Wait for [actionability](../actionability.md) checks on the element, unless [`option: force`] option is set.
 1. Scroll the element into view if needed.
 1. Use [`property: Page.mouse`] to hover over the center of the element, or the specified [`option: position`].
 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
@@ -527,27 +527,27 @@ Returns whether the element is checked. Throws if the element is not a checkbox 
 ## async method: ElementHandle.isDisabled
 - returns: <[boolean]>
 
-Returns whether the element is disabled, the opposite of [enabled](./actionability.md#enabled).
+Returns whether the element is disabled, the opposite of [enabled](../actionability.md#enabled).
 
 ## async method: ElementHandle.isEditable
 - returns: <[boolean]>
 
-Returns whether the element is [editable](./actionability.md#editable).
+Returns whether the element is [editable](../actionability.md#editable).
 
 ## async method: ElementHandle.isEnabled
 - returns: <[boolean]>
 
-Returns whether the element is [enabled](./actionability.md#enabled).
+Returns whether the element is [enabled](../actionability.md#enabled).
 
 ## async method: ElementHandle.isHidden
 - returns: <[boolean]>
 
-Returns whether the element is hidden, the opposite of [visible](./actionability.md#visible).
+Returns whether the element is hidden, the opposite of [visible](../actionability.md#visible).
 
 ## async method: ElementHandle.isVisible
 - returns: <[boolean]>
 
-Returns whether the element is [visible](./actionability.md#visible).
+Returns whether the element is [visible](../actionability.md#visible).
 
 ## async method: ElementHandle.ownerFrame
 - returns: <[null]|[Frame]>
@@ -597,7 +597,7 @@ Time to wait between `keydown` and `keyup` in milliseconds. Defaults to 0.
 - returns: <[null]|[ElementHandle]>
 
 The method finds an element matching the specified selector in the `ElementHandle`'s subtree. See
-[Working with selectors](./selectors.md) for more details. If no elements match the selector,
+[Working with selectors](../selectors.md) for more details. If no elements match the selector,
 returns `null`.
 
 ### param: ElementHandle.querySelector.selector = %%-query-selector-%%
@@ -609,7 +609,7 @@ returns `null`.
 - returns: <[Array]<[ElementHandle]>>
 
 The method finds all elements matching the specified selector in the `ElementHandle`s subtree. See
-[Working with selectors](./selectors.md) for more details. If no elements match the selector,
+[Working with selectors](../selectors.md) for more details. If no elements match the selector,
 returns empty array.
 
 ### param: ElementHandle.querySelectorAll.selector = %%-query-selector-%%
@@ -619,14 +619,14 @@ returns empty array.
 
 Returns the buffer with the captured screenshot.
 
-This method waits for the [actionability](./actionability.md) checks, then scrolls element into view before taking a
+This method waits for the [actionability](../actionability.md) checks, then scrolls element into view before taking a
 screenshot. If the element is detached from DOM, the method throws an error.
 
 ### option: ElementHandle.screenshot.-inline- = %%-screenshot-options-common-list-%%
 
 ## async method: ElementHandle.scrollIntoViewIfNeeded
 
-This method waits for [actionability](./actionability.md) checks, then tries to scroll element into view, unless it is
+This method waits for [actionability](../actionability.md) checks, then tries to scroll element into view, unless it is
 completely visible as defined by
 [IntersectionObserver](https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API)'s `ratio`.
 
@@ -638,7 +638,7 @@ Throws when `elementHandle` does not point to an element
 ## async method: ElementHandle.selectOption
 - returns: <[Array]<[string]>>
 
-This method waits for [actionability](./actionability.md) checks, waits until all specified options are present in the `<select>` element and selects these options.
+This method waits for [actionability](../actionability.md) checks, waits until all specified options are present in the `<select>` element and selects these options.
 
 If the target element is not a `<select>` element, this method throws an error. However, if the element is inside the `<label>` element that has an associated [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), the control will be used instead.
 
@@ -716,7 +716,7 @@ await handle.SelectOptionAsync(new[] {
 
 ## async method: ElementHandle.selectText
 
-This method waits for [actionability](./actionability.md) checks, then focuses the element and selects all its text
+This method waits for [actionability](../actionability.md) checks, then focuses the element and selects all its text
 content.
 
 ### option: ElementHandle.selectText.force = %%-input-force-%%
@@ -727,7 +727,7 @@ content.
 This method checks or unchecks an element by performing the following steps:
 1. Ensure that element is a checkbox or a radio input. If not, this method throws.
 1. If the element already has the right checked state, this method returns immediately.
-1. Wait for [actionability](./actionability.md) checks on the matched element, unless [`option: force`] option is
+1. Wait for [actionability](../actionability.md) checks on the matched element, unless [`option: force`] option is
    set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
 1. Use [`property: Page.mouse`] to click in the center of the element.
@@ -761,7 +761,7 @@ are resolved relative to the the current working directory. For empty array, cle
 ## async method: ElementHandle.tap
 
 This method taps the element by performing the following steps:
-1. Wait for [actionability](./actionability.md) checks on the element, unless [`option: force`] option is set.
+1. Wait for [actionability](../actionability.md) checks on the element, unless [`option: force`] option is set.
 1. Scroll the element into view if needed.
 1. Use [`property: Page.touchscreen`] to tap the center of the element, or the specified [`option: position`].
 1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`] option is set.
@@ -874,7 +874,7 @@ Time to wait between key presses in milliseconds. Defaults to 0.
 This method checks the element by performing the following steps:
 1. Ensure that element is a checkbox or a radio input. If not, this method throws. If the element is already
    unchecked, this method returns immediately.
-1. Wait for [actionability](./actionability.md) checks on the element, unless [`option: force`] option is set.
+1. Wait for [actionability](../actionability.md) checks on the element, unless [`option: force`] option is set.
 1. Scroll the element into view if needed.
 1. Use [`property: Page.mouse`] to click in the center of the element.
 1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`] option is set.
@@ -899,16 +899,16 @@ When all steps combined have not finished during the specified [`option: timeout
 
 Returns when the element satisfies the [`param: state`].
 
-Depending on the [`param: state`] parameter, this method waits for one of the [actionability](./actionability.md) checks
+Depending on the [`param: state`] parameter, this method waits for one of the [actionability](../actionability.md) checks
 to pass. This method throws when the element is detached while waiting, unless waiting for the `"hidden"` state.
-* `"visible"` Wait until the element is [visible](./actionability.md#visible).
-* `"hidden"` Wait until the element is [not visible](./actionability.md#visible) or
-  [not attached](./actionability.md#attached). Note that waiting for hidden does not throw when the element detaches.
-* `"stable"` Wait until the element is both [visible](./actionability.md#visible) and
-  [stable](./actionability.md#stable).
-* `"enabled"` Wait until the element is [enabled](./actionability.md#enabled).
-* `"disabled"` Wait until the element is [not enabled](./actionability.md#enabled).
-* `"editable"` Wait until the element is [editable](./actionability.md#editable).
+* `"visible"` Wait until the element is [visible](../actionability.md#visible).
+* `"hidden"` Wait until the element is [not visible](../actionability.md#visible) or
+  [not attached](../actionability.md#attached). Note that waiting for hidden does not throw when the element detaches.
+* `"stable"` Wait until the element is both [visible](../actionability.md#visible) and
+  [stable](../actionability.md#stable).
+* `"enabled"` Wait until the element is [enabled](../actionability.md#enabled).
+* `"disabled"` Wait until the element is [not enabled](../actionability.md#enabled).
+* `"editable"` Wait until the element is [editable](../actionability.md#editable).
 
 If the element does not satisfy the condition for the [`option: timeout`] milliseconds, this method will throw.
 

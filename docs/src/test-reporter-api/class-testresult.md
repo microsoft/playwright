@@ -33,7 +33,7 @@ Errors thrown during the test execution.
 
 When test is retries multiple times, each retry attempt is given a sequential number.
 
-Learn more about [test retries](./test-retries.md#retries).
+Learn more about [test retries](../test-retries.md#retries).
 
 ## property: TestResult.startTime
 - type: <[Date]>
@@ -65,4 +65,4 @@ List of steps inside this test run.
 
 Index of the worker where the test was run.
 
-Learn more about [parallelism and sharding](./test-parallel.md) with Playwright Test.
+Learn more about [parallelism and sharding](../test-parallel.md) with Playwright Test.

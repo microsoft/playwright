@@ -1,6 +1,6 @@
 # class: Selectors
 
-Selectors can be used to install custom selector engines. See [Working with selectors](./selectors.md) for more
+Selectors can be used to install custom selector engines. See [Working with selectors](../selectors.md) for more
 information.
 
 ## async method: Selectors.register

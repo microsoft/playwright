@@ -122,14 +122,15 @@ async function run() {
   // Validate links
   {
     const langs = ['js', 'java', 'python', 'csharp'];
+    const documentationRoot = path.join(PROJECT_DIR, 'docs', 'src');
     for (const lang of langs) {
       try {
-        let documentation = parseApi(path.join(PROJECT_DIR, 'docs', 'src', 'api'));
+        let documentation = parseApi(path.join(documentationRoot, 'api'));
         documentation.filterForLanguage(lang);
         if (lang === 'js') {
-          const testDocumentation = parseApi(path.join(PROJECT_DIR, 'docs', 'src', 'test-api'), path.join(PROJECT_DIR, 'docs', 'src', 'api', 'params.md'));
+          const testDocumentation = parseApi(path.join(documentationRoot, 'test-api'), path.join(documentationRoot, 'api', 'params.md'));
           testDocumentation.filterForLanguage('js');
-          const testRerpoterDocumentation = parseApi(path.join(PROJECT_DIR, 'docs', 'src', 'test-reporter-api'));
+          const testRerpoterDocumentation = parseApi(path.join(documentationRoot, 'test-reporter-api'));
           testRerpoterDocumentation.filterForLanguage('js');
           documentation = documentation.mergeWith(testDocumentation).mergeWith(testRerpoterDocumentation);
         }
@@ -137,11 +138,63 @@ async function run() {
         // This validates member links.
         documentation.setLinkRenderer(() => undefined);
 
-        for (const filePath of getAllMarkdownFiles(path.join(PROJECT_DIR, 'docs', 'src'))) {
+        const relevantMarkdownFiles = new Set([...getAllMarkdownFiles(documentationRoot)
+          // filter out language specific files
+          .filter(filePath => {
+            const matches = filePath.match(/(-(js|python|csharp|java))+?/g);
+            // no language specific document
+            if (!matches)
+              return true;
+            // there is a language, lets filter for it
+            return matches.includes(`-${lang}`);
+          })
+          // Standardise naming and remove the filter in the file name
+          .map(filePath => filePath.replace(/(-(js|python|csharp|java))+/, ''))
+          // Internally (playwright.dev generator) we merge test-api and test-reporter-api into api.
+          .map(filePath => filePath.replace(/(\/|\\)(test-api|test-reporter-api)(\/|\\)/, `${path.sep}api${path.sep}`))]);
+
+        for (const filePath of getAllMarkdownFiles(documentationRoot)) {
           if (langs.some(other => other !== lang && filePath.endsWith(`-${other}.md`)))
             continue;
           const data = fs.readFileSync(filePath, 'utf-8');
-          documentation.renderLinksInText(md.filterNodesForLanguage(md.parse(data), lang));
+          const rootNode = md.filterNodesForLanguage(md.parse(data), lang);
+          documentation.renderLinksInText(rootNode);
+          // Validate links
+          {
+            md.visitAll(rootNode, node => {
+              if (!node.text)
+                return;
+              for (const [, mdLinkName, mdLink] of node.text.matchAll(/\[([\w\s\d]+)\]\((.*?)\)/g)) {
+                const isExternal = mdLink.startsWith('http://') || mdLink.startsWith('https://');
+                if (isExternal)
+                  continue;
+                // ignore links with only a hash (same file)
+                if (mdLink.startsWith('#'))
+                  continue;
+
+                // The assertion classes are "virtual files" which get merged into test-assertions.md inside our docs generator
+                let markdownBasePath = path.dirname(filePath);
+                if ([
+                  'class-screenshotassertions.md',
+                  'class-locatorassertions.md',
+                  'class-pageassertions.md'
+                ].includes(path.basename(filePath))) {
+                  markdownBasePath = documentationRoot;
+                }
+
+                let linkWithoutHash = path.join(markdownBasePath, mdLink.split('#')[0]);
+                if (path.extname(linkWithoutHash) !== '.md')
+                  linkWithoutHash += '.md';
+
+                // We generate it inside the generator (playwright.dev)
+                if (path.basename(linkWithoutHash) === 'test-assertions.md')
+                  return;
+
+                if (!relevantMarkdownFiles.has(linkWithoutHash))
+                  throw new Error(`${path.relative(PROJECT_DIR, filePath)} references to '${linkWithoutHash}' as '${mdLinkName}' which does not exist.`);
+              }
+            });
+          }
         }
       } catch (e) {
         e.message = `While processing "${lang}"\n` + e.message;

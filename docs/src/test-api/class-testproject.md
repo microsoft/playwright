@@ -3,7 +3,7 @@
 
 Playwright Test supports running multiple test projects at the same time. This is useful for running tests in multiple configurations. For example, consider running tests against multiple browsers.
 
-`TestProject` encapsulates configuration specific to a single project. Projects are configured in [`property: TestConfig.projects`] specified in the [configuration file](./test-configuration.md). Note that all properties of [TestProject] are available in the top-level [TestConfig], in which case they are shared between all projects.
+`TestProject` encapsulates configuration specific to a single project. Projects are configured in [`property: TestConfig.projects`] specified in the [configuration file](../test-configuration.md). Note that all properties of [TestProject] are available in the top-level [TestConfig], in which case they are shared between all projects.
 
 Here is an example configuration that runs every test in Chromium, Firefox and WebKit, both Desktop and Mobile versions.
 
@@ -134,16 +134,16 @@ You can configure entire test project to concurrently run all tests in all files
 ## property: TestProject.grep
 - type: <[RegExp]|[Array]<[RegExp]>>
 
-Filter to only run tests with a title matching one of the patterns. For example, passing `grep: /cart/` should only run tests with "cart" in the title. Also available globally and in the [command line](./test-cli.md) with the `-g` option.
+Filter to only run tests with a title matching one of the patterns. For example, passing `grep: /cart/` should only run tests with "cart" in the title. Also available globally and in the [command line](../test-cli.md) with the `-g` option.
 
-`grep` option is also useful for [tagging tests](./test-annotations.md#tag-tests).
+`grep` option is also useful for [tagging tests](../test-annotations.md#tag-tests).
 
 ## property: TestProject.grepInvert
 - type: <[RegExp]|[Array]<[RegExp]>>
 
-Filter to only run tests with a title **not** matching one of the patterns. This is the opposite of [`property: TestProject.grep`]. Also available globally and in the [command line](./test-cli.md) with the `--grep-invert` option.
+Filter to only run tests with a title **not** matching one of the patterns. This is the opposite of [`property: TestProject.grep`]. Also available globally and in the [command line](../test-cli.md) with the `--grep-invert` option.
 
-`grepInvert` option is also useful for [tagging tests](./test-annotations.md#tag-tests).
+`grepInvert` option is also useful for [tagging tests](../test-annotations.md#tag-tests).
 
 ## property: TestProject.metadata
 - type: <[Object]>
@@ -240,7 +240,7 @@ Use [`property: TestConfig.repeatEach`] to change this option for all projects.
 ## property: TestProject.retries
 - type: <[int]>
 
-The maximum number of retry attempts given to failed tests. Learn more about [test retries](./test-retries.md#retries).
+The maximum number of retry attempts given to failed tests. Learn more about [test retries](../test-retries.md#retries).
 
 Use [`property: TestConfig.retries`] to change this option for all projects.
 
@@ -365,7 +365,7 @@ Use [`property: TestConfig.timeout`] to change this option for all projects.
 ## property: TestProject.use
 - type: <[Fixtures]>
 
-Options for all tests in this project, for example [`property: TestOptions.browserName`]. Learn more about [configuration](./test-configuration.md) and see [available options][TestOptions].
+Options for all tests in this project, for example [`property: TestOptions.browserName`]. Learn more about [configuration](../test-configuration.md) and see [available options][TestOptions].
 
 ```js js-flavor=js
 // playwright.config.js
