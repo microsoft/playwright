@@ -195,6 +195,9 @@ export interface Config<TestArgs = {}, WorkerArgs = {}> extends TestConfig {
   use?: UseOptions<TestArgs, WorkerArgs>;
 }
 
+// [internal] !!! DO NOT ADD TO THIS !!!
+// [internal] It is part of the public API and is computed from the user's config.
+// [internal] If you need new fields internally, add them to InternalFullConfig instead.
 export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
   forbidOnly: boolean;
   fullyParallel: boolean;
@@ -216,6 +219,7 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
   workers: number;
   webServer: WebServerConfig | null;
   attachments: { name: string, path?: string, body?: Buffer, contentType: string }[];
+  // [internal] !!! DO NOT ADD TO THIS !!! See prior note.
 }
 
 export type TestStatus = 'passed' | 'failed' | 'timedOut' | 'skipped';

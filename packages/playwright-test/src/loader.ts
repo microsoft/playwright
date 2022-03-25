@@ -15,7 +15,8 @@
  */
 
 import { installTransform, setCurrentlyLoadingTestFile } from './transform';
-import type { FullConfig, Config, FullProject, Project, ReporterDescription, PreserveOutput } from './types';
+import type { Config, FullProject, Project, ReporterDescription, PreserveOutput } from './types';
+import type { InternalFullConfig as FullConfig } from './fullConfig';
 import { mergeObjects, errorWithFile } from './util';
 import { setCurrentlyLoadingFileSuite } from './globals';
 import { Suite } from './test';
@@ -528,4 +529,3 @@ export function folderIsModule(folder: string): boolean {
   // Rely on `require` internal caching logic.
   return require(packageJsonPath).type === 'module';
 }
-
