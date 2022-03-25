@@ -1167,6 +1167,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   scheme.RouteFulfillParams = tObject({
     status: tOptional(tNumber),
     headers: tOptional(tArray(tType('NameValue'))),
+    cors: tOptional(tEnum(['allow', 'none'])),
     body: tOptional(tString),
     isBase64: tOptional(tBoolean),
     fetchResponseUid: tOptional(tString),

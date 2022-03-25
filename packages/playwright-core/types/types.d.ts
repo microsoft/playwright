@@ -14723,6 +14723,15 @@ export interface Route {
     contentType?: string;
 
     /**
+     * Wheb set to "allow" or omitted, the fulfilled response will have
+     * ["Access-Control-Allow-Origin"](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Allow-Origin)
+     * header set to request's origin. If the option is set to "none" then
+     * [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS) headers won't be added to the response. Note that all
+     * CORS headers configured via `headers` option will take precedence.
+     */
+    cors?: "allow"|"none";
+
+    /**
      * Response headers. Header values will be converted to a string.
      */
     headers?: { [key: string]: string; };

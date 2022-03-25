@@ -519,6 +519,7 @@ it('should support cors with GET', async ({ page, server, browserName }) => {
     const headers = request.url().endsWith('allow') ? { 'access-control-allow-origin': '*' } : {};
     await route.fulfill({
       contentType: 'application/json',
+      cors: 'none',
       headers,
       status: 200,
       body: JSON.stringify(['electric', 'gas']),
@@ -544,6 +545,98 @@ it('should support cors with GET', async ({ page, server, browserName }) => {
       expect(error.message).toContain('TypeError');
     if (browserName === 'firefox')
       expect(error.message).toContain('NetworkError');
+  }
+});
+
+it('should add Access-Control-Allow-Origin by default when fulfill', async ({ page, server }) => {
+  await page.goto(server.EMPTY_PAGE);
+  await page.route('**/cars', async route => {
+    await route.fulfill({
+      contentType: 'application/json',
+      status: 200,
+      body: JSON.stringify(['electric', 'gas']),
+    });
+  });
+
+  const [result, response] = await Promise.all([
+    page.evaluate(async () => {
+      const response = await fetch('https://example.com/cars', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        mode: 'cors',
+        body: JSON.stringify({ 'number': 1 })
+      });
+      return response.json();
+    }),
+    page.waitForResponse('https://example.com/cars')
+  ]);
+  expect(result).toEqual(['electric', 'gas']);
+  expect(await response.headerValue('Access-Control-Allow-Origin')).toBe(server.PREFIX);
+});
+
+it('should respect cors false', async ({ page, server, browserName }) => {
+  server.setRoute('/something', (request, response) => {
+    if (request.method === 'OPTIONS') {
+      response.writeHead(204, {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, GET, OPTIONS, DELETE',
+        'Access-Control-Allow-Headers': '*',
+        'Cache-Control': 'no-cache'
+      });
+      response.end();
+      return;
+    }
+    response.writeHead(404, { 'Access-Control-Allow-Origin': '*' });
+    response.end('NOT FOUND');
+  });
+  // First check the browser will send preflight request when interception is OFF.
+  {
+    await page.route('**/something', async route => {
+      await route.fulfill({
+        contentType: 'text/plain',
+        status: 200,
+        body: 'done',
+      });
+    });
+
+    const [response, text] = await Promise.all([
+      page.waitForResponse(server.CROSS_PROCESS_PREFIX + '/something'),
+      page.evaluate(async url => {
+        const data = await fetch(url, {
+          method: 'GET',
+          headers: { 'X-PINGOTHER': 'pingpong' }
+        });
+        return data.text();
+      }, server.CROSS_PROCESS_PREFIX + '/something')
+    ]);
+    expect(text).toBe('done');
+    expect(await response.headerValue('Access-Control-Allow-Origin')).toBe('null');
+  }
+
+  // Fetch request should when CORS headers are missing on the response.
+  {
+    await page.route('**/something', async route => {
+      await route.fulfill({
+        contentType: 'text/plain',
+        status: 200,
+        cors: 'none',
+        body: 'done',
+      });
+    });
+
+    const error = await page.evaluate(async url => {
+      const data = await fetch(url, {
+        method: 'GET',
+        headers: { 'X-PINGOTHER': 'pingpong' }
+      });
+      return data.text();
+    }, server.CROSS_PROCESS_PREFIX + '/something').catch(e => e);
+    if (browserName === 'chromium')
+      expect(error.message).toContain('Failed to fetch');
+    else if (browserName === 'webkit')
+      expect(error.message).toContain('Load failed');
+    else if (browserName === 'firefox')
+      expect(error.message).toContain('NetworkError when attempting to fetch resource.');
   }
 });
 
