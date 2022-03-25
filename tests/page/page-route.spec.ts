@@ -574,35 +574,71 @@ it('should add Access-Control-Allow-Origin by default when fulfill', async ({ pa
   expect(await response.headerValue('Access-Control-Allow-Origin')).toBe(server.PREFIX);
 });
 
-it('should respect cors false', async ({ page, server }) => {
-  await page.route('**/one-style.css', async route => {
-    await route.fulfill({
-      contentType: 'text/css',
-      status: 200,
-      body: '',
-    });
+it('should respect cors false', async ({ page, server, browserName }) => {
+  server.setRoute('/something', (request, response) => {
+    if (request.method === 'OPTIONS') {
+      response.writeHead(204, {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, GET, OPTIONS, DELETE',
+        'Access-Control-Allow-Headers': '*',
+        'Cache-Control': 'no-cache'
+      });
+      response.end();
+      return;
+    }
+    response.writeHead(404, { 'Access-Control-Allow-Origin': '*' });
+    response.end('NOT FOUND');
   });
-  const [response1] = await Promise.all([
-    page.waitForResponse(server.PREFIX + '/one-style.css'),
-    page.goto(server.PREFIX + '/one-style.html')
-  ]);
-  expect(await response1.headerValue('Access-Control-Allow-Origin')).toBe('*');
+  // First check the browser will send preflight request when interception is OFF.
+  {
+    await page.route('**/something', async route => {
+      await route.fulfill({
+        contentType: 'text/plain',
+        status: 200,
+        body: 'done',
+      });
+    });
 
-  await page.route('**/one-style.css', async route => {
-    await route.fulfill({
-      contentType: 'text/css',
-      cors: 'none',
-      status: 200,
-      body: '',
+    const [response, text] = await Promise.all([
+      page.waitForResponse(server.CROSS_PROCESS_PREFIX + '/something'),
+      page.evaluate(async url => {
+        const data = await fetch(url, {
+          method: 'GET',
+          headers: { 'X-PINGOTHER': 'pingpong' }
+        });
+        return data.text();
+      }, server.CROSS_PROCESS_PREFIX + '/something')
+    ]);
+    expect(text).toBe('done');
+    expect(await response.headerValue('Access-Control-Allow-Origin')).toBe('null');
+  }
+
+  // Fetch request should when CORS headers are missing on the response.
+  {
+    await page.route('**/something', async route => {
+      await route.fulfill({
+        contentType: 'text/plain',
+        status: 200,
+        cors: 'none',
+        body: 'done',
+      });
     });
-  });
-  const [response2] = await Promise.all([
-    page.waitForResponse(server.PREFIX + '/one-style.css'),
-    page.goto(server.PREFIX + '/one-style.html')
-  ]);
-  expect(await response2.headerValue('Access-Control-Allow-Origin')).toBeFalsy();
+
+    const error = await page.evaluate(async url => {
+      const data = await fetch(url, {
+        method: 'GET',
+        headers: { 'X-PINGOTHER': 'pingpong' }
+      });
+      return data.text();
+    }, server.CROSS_PROCESS_PREFIX + '/something').catch(e => e);
+    if (browserName === 'chromium')
+      expect(error.message).toContain('Failed to fetch');
+    else if (browserName === 'webkit')
+      expect(error.message).toContain('Load failed');
+    else if (browserName === 'firefox')
+      expect(error.message).toContain('NetworkError when attempting to fetch resource.');
+  }
 });
-
 
 it('should support cors with POST', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
