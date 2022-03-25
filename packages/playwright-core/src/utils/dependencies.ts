@@ -207,7 +207,7 @@ export async function validateDependenciesLinux(sdkLanguage: string, linuxLddDir
   ];
   // Ignore patch versions when comparing docker container version and Playwright version:
   // we **NEVER** roll browsers in patch releases, so native dependencies do not change.
-  if (dockerInfo && !dockerInfo.driverVersion.startsWith(utils.getPlaywrightVersion(true /* majorMinorOnly */))) {
+  if (dockerInfo && !dockerInfo.driverVersion.startsWith(utils.getPlaywrightVersion(true /* majorMinorOnly */) + '.')) {
     // We are running in a docker container with unmatching version.
     // In this case, we know how to install dependencies in it.
     const pwVersion = utils.getPlaywrightVersion();
