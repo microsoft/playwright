@@ -151,7 +151,7 @@ async function run() {
           // Standardise naming and remove the filter in the file name
           .map(filePath => filePath.replace(/(-(js|python|csharp|java))+/, ''))
           // Internally (playwright.dev generator) we merge test-api and test-reporter-api into api.
-          .map(filePath => filePath.replace(/\/(test-api|test-reporter-api)\//, '/api/'))]);
+          .map(filePath => filePath.replace(/(\/|\\)(test-api|test-reporter-api)(\/|\\)/, `${path.sep}api${path.sep}`))]);
 
         for (const filePath of getAllMarkdownFiles(documentationRoot)) {
           if (langs.some(other => other !== lang && filePath.endsWith(`-${other}.md`)))
@@ -178,8 +178,9 @@ async function run() {
                   'class-screenshotassertions.md',
                   'class-locatorassertions.md',
                   'class-pageassertions.md'
-                ].includes(path.basename(filePath)))
-                  markdownBasePath = path.join(path.dirname(filePath), '..');
+                ].includes(path.basename(filePath))) {
+                  markdownBasePath = documentationRoot;
+                }
 
                 let linkWithoutHash = path.join(markdownBasePath, mdLink.split('#')[0]);
                 if (path.extname(linkWithoutHash) !== '.md')

@@ -325,7 +325,7 @@ class TypesGenerator {
     }
     comment = out.join('\n');
     comment = comment.replace(/\[([^\]]+)\]\((\.[^\)]+)\)/g, (match, p1, p2) => {
-      return `[${p1}](https://playwright.dev/docs/${path.join('api', p2).replace('.md', '')})`;
+      return `[${p1}](${new URL(p2.replace('.md', ''), 'https://playwright.dev/docs/api/').toString()})`;
     });
 
     parts.push(indent + '/**');
