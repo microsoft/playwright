@@ -2,6 +2,7 @@ FROM ubuntu:bionic
 
 ARG DEBIAN_FRONTEND=noninteractive
 ARG TZ=America/Los_Angeles
+ARG DOCKER_IMAGE_NAME_TEMPLATE="mcr.microsoft.com/playwright:v%version%-bionic"
 
 # === INSTALL Node.js ===
 
@@ -34,7 +35,9 @@ RUN mkdir /ms-playwright && \
     mkdir /ms-playwright-agent && \
     cd /ms-playwright-agent && npm init -y && \
     npm i /tmp/playwright-core.tar.gz && \
+    npx playwright mark-docker-image "${DOCKER_IMAGE_NAME_TEMPLATE}" && \
     npx playwright install --with-deps && rm -rf /var/lib/apt/lists/* && \
     rm /tmp/playwright-core.tar.gz && \
     rm -rf /ms-playwright-agent && \
     chmod -R 777 /ms-playwright
+

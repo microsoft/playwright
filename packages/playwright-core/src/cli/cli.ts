@@ -33,6 +33,7 @@ import { BrowserContextOptions, LaunchOptions } from '../client/types';
 import { spawn } from 'child_process';
 import { registry, Executable } from '../utils/registry';
 import { spawnAsync, getPlaywrightVersion } from '../utils/utils';
+import { writeDockerVersion } from '../utils/dependencies';
 import { launchGridAgent } from '../grid/gridAgent';
 import { GridServer, GridFactory } from '../grid/gridServer';
 
@@ -41,6 +42,14 @@ const packageJSON = require('../../package.json');
 program
     .version('Version ' + (process.env.PW_CLI_DISPLAY_VERSION || packageJSON.version))
     .name(buildBasePlaywrightCLICommand(process.env.PW_LANG_NAME));
+
+program
+    .command('mark-docker-image > [args...]', { hidden: true })
+    .description('mark docker image')
+    .allowUnknownOption(true)
+    .action(function(dockerImageNameTemplate) {
+      writeDockerVersion(dockerImageNameTemplate);
+    });
 
 commandWithOpenOptions('open [url]', 'open page in browser specified via -b, --browser', [])
     .action(function(url, options) {

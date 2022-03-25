@@ -56,6 +56,11 @@ class Workspace {
     return this._packages;
   }
 
+  async version() {
+    const workspacePackageJSON = await readJSON(path.join(this._rootDir, 'package.json'));
+    return workspacePackageJSON.version;
+  }
+
   /**
    * @param {string} version
    */
@@ -209,6 +214,9 @@ async function parseCLI() {
         if (!pkg.isPrivate)
           console.log(pkg.path);
       }
+    },
+    '--get-version': async (version) => {
+      console.log(await workspace.version());
     },
     '--set-version': async (version) => {
       if (!version)

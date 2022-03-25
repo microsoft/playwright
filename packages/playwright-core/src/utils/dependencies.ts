@@ -24,6 +24,24 @@ import { deps } from './nativeDeps';
 import { getUbuntuVersion } from './ubuntuVersion';
 
 const BIN_DIRECTORY = path.join(__dirname, '..', '..', 'bin');
+const packageJSON = require('../../package.json');
+
+const dockerVersionFilePath = '/ms-playwright/.docker-info';
+export async function writeDockerVersion(dockerImageNameTemplate: string) {
+  await fs.promises.mkdir(path.dirname(dockerVersionFilePath), { recursive: true });
+  await fs.promises.writeFile(dockerVersionFilePath, JSON.stringify({
+    driverVersion: packageJSON.version,
+    dockerImageName: dockerImageNameTemplate.replace('%version%', packageJSON.version),
+  }, null, 2), 'utf8');
+  // Make sure version file is globally accessible.
+  await fs.promises.chmod(dockerVersionFilePath, 0o777);
+}
+
+async function readDockerVersion(): Promise<null | { driverVersion: string, dockerImageName: string }> {
+  return await fs.promises.readFile(dockerVersionFilePath, 'utf8')
+      .then(text => JSON.parse(text))
+      .catch(e => null);
+}
 
 const checkExecutable = (filePath: string) => fs.promises.access(filePath, fs.constants.X_OK).then(() => true).catch(e => false);
 
@@ -183,11 +201,36 @@ export async function validateDependenciesLinux(sdkLanguage: string, linuxLddDir
   }
 
   const maybeSudo = (process.getuid() !== 0) && os.platform() !== 'win32' ? 'sudo ' : '';
+  const dockerInfo = await readDockerVersion();
   const errorLines = [
     `Host system is missing dependencies to run browsers.`,
   ];
-  if (missingPackages.size && !missingDeps.size) {
-    // Happy path: known dependencies are missing for browsers.
+  // Ignore patch versions when comparing docker container version and Playwright version:
+  // we **NEVER** roll browsers in patch releases, so native dependencies do not change.
+  if (dockerInfo && !dockerInfo.driverVersion.startsWith(utils.getPlaywrightVersion(true /* majorMinorOnly */))) {
+    // We are running in a docker container with unmatching version.
+    // In this case, we know how to install dependencies in it.
+    const pwVersion = utils.getPlaywrightVersion();
+    const requiredDockerImage = dockerInfo.dockerImageName.replace(dockerInfo.driverVersion, pwVersion);
+    errorLines.push(...[
+      `This is most likely due to docker image version not matching Playwright version:`,
+      `- Playwright: ${pwVersion}`,
+      `-     Docker: ${dockerInfo.driverVersion}`,
+      ``,
+      `Either:`,
+      `- (recommended) use docker image "${requiredDockerImage}"`,
+      `- (alternative 1) run the following command inside docker to install missing dependencies:`,
+      ``,
+      `    ${maybeSudo}${buildPlaywrightCLICommand(sdkLanguage, 'install-deps')}`,
+      ``,
+      `- (alternative 2) use Aptitude inside docker:`,
+      ``,
+      `    ${maybeSudo}apt-get install ${[...missingPackages].join('\\\n        ')}`,
+      ``,
+      `<3 Playwright Team`,
+    ]);
+  } else if (missingPackages.size && !missingDeps.size) {
+    // Only known dependencies are missing for browsers.
     // Suggest installation with a Playwright CLI.
     errorLines.push(...[
       `Please install them with the following command:`,
