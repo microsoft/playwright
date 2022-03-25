@@ -55,7 +55,7 @@ class MyReporter implements Reporter {
 export default MyReporter;
 ```
 
-Now use this reporter with [`property: TestConfig.reporter`]. Learn more about [using reporters](./test-reporters.md).
+Now use this reporter with [`property: TestConfig.reporter`]. Learn more about [using reporters](../test-reporters.md).
 
 ```js js-flavor=js
 // playwright.config.js

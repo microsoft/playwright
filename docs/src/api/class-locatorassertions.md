@@ -527,7 +527,7 @@ await Expect(locator).ToBeFocusedAsync();
 * langs:
   - alias-java: isHidden
 
-Ensures the [Locator] points to a hidden DOM node, which is the opposite of [visible](./actionability.md#visible).
+Ensures the [Locator] points to a hidden DOM node, which is the opposite of [visible](../actionability.md#visible).
 
 ```js
 const locator = page.locator('.my-element');
@@ -565,7 +565,7 @@ await Expect(locator).ToBeHiddenAsync();
 * langs:
   - alias-java: isVisible
 
-Ensures the [Locator] points to a [visible](./actionability.md#visible) DOM node.
+Ensures the [Locator] points to a [visible](../actionability.md#visible) DOM node.
 
 ```js
 const locator = page.locator('.my-element');

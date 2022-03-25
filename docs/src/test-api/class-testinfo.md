@@ -29,7 +29,7 @@ test('basic test', async ({ page }, testInfo) => {
 
 The list of annotations applicable to the current test. Includes annotations from the test, annotations from all [`method: Test.describe`] groups the test belongs to and file-level annotations for the test file.
 
-Learn more about [test annotations](./test-annotations.md).
+Learn more about [test annotations](../test-annotations.md).
 
 ## property: TestInfo.attachments
 - type: <[Array]<[Object]>>
@@ -118,7 +118,7 @@ Column number where the currently running test is declared.
 ## property: TestInfo.config
 - type: <[TestConfig]>
 
-Processed configuration from the [configuration file](./test-configuration.md).
+Processed configuration from the [configuration file](../test-configuration.md).
 
 
 ## property: TestInfo.duration
@@ -257,23 +257,23 @@ Path segments to append at the end of the resulting path.
 
 The index of the worker between `0` and `workers - 1`. It is guaranteed that workers running at the same time have a different `parallelIndex`. When a worker is restarted, for example after a failure, the new worker process has the same `parallelIndex`.
 
-Also available as `process.env.TEST_PARALLEL_INDEX`. Learn more about [parallelism and sharding](./test-parallel.md) with Playwright Test.
+Also available as `process.env.TEST_PARALLEL_INDEX`. Learn more about [parallelism and sharding](../test-parallel.md) with Playwright Test.
 
 ## property: TestInfo.project
 - type: <[TestProject]>
 
-Processed project configuration from the [configuration file](./test-configuration.md).
+Processed project configuration from the [configuration file](../test-configuration.md).
 
 
 ## property: TestInfo.repeatEachIndex
 - type: <[int]>
 
-Specifies a unique repeat index when running in "repeat each" mode. This mode is enabled by passing `--repeat-each` to the [command line](./test-cli.md).
+Specifies a unique repeat index when running in "repeat each" mode. This mode is enabled by passing `--repeat-each` to the [command line](../test-cli.md).
 
 ## property: TestInfo.retry
 - type: <[int]>
 
-Specifies the retry number when the test is retried after a failure. The first test run has [`property: TestInfo.retry`] equal to zero, the first retry has it equal to one, and so on. Learn more about [retries](./test-retries.md#retries).
+Specifies the retry number when the test is retried after a failure. The first test run has [`property: TestInfo.retry`] equal to zero, the first retry has it equal to one, and so on. Learn more about [retries](../test-retries.md#retries).
 
 ```js js-flavor=js
 const { test, expect } = require('@playwright/test');
@@ -311,9 +311,9 @@ test('my test', async ({ page }, testInfo) => {
 
 ## method: TestInfo.setTimeout
 
-Changes the timeout for the currently running test. Zero means no timeout. Learn more about [various timeouts](./test-timeouts.md).
+Changes the timeout for the currently running test. Zero means no timeout. Learn more about [various timeouts](../test-timeouts.md).
 
-Timeout is usually specified in the [configuration file](./test-configuration.md), but it could be useful to change the timeout in certain scenarios:
+Timeout is usually specified in the [configuration file](../test-configuration.md), but it could be useful to change the timeout in certain scenarios:
 
 ```js js-flavor=js
 const { test, expect } = require('@playwright/test');
@@ -369,7 +369,7 @@ Optional description that will be reflected in a test report.
 ## method: TestInfo.snapshotPath
 - returns: <[string]>
 
-Returns a path to a snapshot file with the given `pathSegments`. Learn more about [snapshots](./test-snapshots.md).
+Returns a path to a snapshot file with the given `pathSegments`. Learn more about [snapshots](../test-snapshots.md).
 
 > Note that `pathSegments` accepts path segments to the snapshot file such as `testInfo.snapshotPath('relative', 'path', 'to', 'snapshot.png')`.
 > However, this path must stay within the snapshots directory for each test file (i.e. `a.spec.js-snapshots`), otherwise it will throw.
@@ -382,7 +382,7 @@ The name of the snapshot or the path segments to define the snapshot file path. 
 ## property: TestInfo.snapshotSuffix
 - type: <[string]>
 
-Suffix used to differentiate snapshots between multiple test configurations. For example, if snapshots depend on the platform, you can set `testInfo.snapshotSuffix` equal to `process.platform`. In this case `expect(value).toMatchSnapshot(snapshotName)` will use different snapshots depending on the platform. Learn more about [snapshots](./test-snapshots.md).
+Suffix used to differentiate snapshots between multiple test configurations. For example, if snapshots depend on the platform, you can set `testInfo.snapshotSuffix` equal to `process.platform`. In this case `expect(value).toMatchSnapshot(snapshotName)` will use different snapshots depending on the platform. Learn more about [snapshots](../test-snapshots.md).
 
 ## property: TestInfo.status
 - type: <[void]|[TestStatus]<"passed"|"failed"|"timedOut"|"skipped">>
@@ -422,9 +422,9 @@ Output written to `process.stdout` or `console.log` during the test execution.
 ## property: TestInfo.timeout
 - type: <[int]>
 
-Timeout in milliseconds for the currently running test. Zero means no timeout. Learn more about [various timeouts](./test-timeouts.md).
+Timeout in milliseconds for the currently running test. Zero means no timeout. Learn more about [various timeouts](../test-timeouts.md).
 
-Timeout is usually specified in the [configuration file](./test-configuration.md)
+Timeout is usually specified in the [configuration file](../test-configuration.md)
 
 ```js js-flavor=js
 const { test, expect } = require('@playwright/test');
@@ -459,4 +459,4 @@ The full title path starting with the project.
 
 The unique index of the worker process that is running the test. When a worker is restarted, for example after a failure, the new worker process gets a new unique `workerIndex`.
 
-Also available as `process.env.TEST_WORKER_INDEX`. Learn more about [parallelism and sharding](./test-parallel.md) with Playwright Test.
+Also available as `process.env.TEST_WORKER_INDEX`. Learn more about [parallelism and sharding](../test-parallel.md) with Playwright Test.

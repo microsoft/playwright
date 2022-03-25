@@ -46,23 +46,23 @@ to inaccessible pages. Defaults to `false`.
 ## input-force
 - `force` <[boolean]>
 
-Whether to bypass the [actionability](./actionability.md) checks. Defaults to `false`.
+Whether to bypass the [actionability](../actionability.md) checks. Defaults to `false`.
 
 ## input-selector
 - `selector` <[string]>
 
 A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See
-[working with selectors](./selectors.md) for more details.
+[working with selectors](../selectors.md) for more details.
 
 ## input-source
 - `source` <[string]>
 A selector to search for an element to drag. If there are multiple elements satisfying the selector, the first will be used. See
-[working with selectors](./selectors.md) for more details.
+[working with selectors](../selectors.md) for more details.
 
 ## input-target
 - `target` <[string]>
 A selector to search for an element to drop onto. If there are multiple elements satisfying the selector, the first will be used. See
-[working with selectors](./selectors.md) for more details.
+[working with selectors](../selectors.md) for more details.
 
 ## input-position
 - `position` <[Object]>
@@ -102,7 +102,7 @@ defaults to 1. See [UIEvent.detail].
 ## input-trial
 - `trial` <[boolean]>
 
-When set, this method only performs the [actionability](./actionability.md) checks and skips the action. Defaults to `false`. Useful to wait until the element is ready for the action without performing it.
+When set, this method only performs the [actionability](../actionability.md) checks and skips the action. Defaults to `false`. Useful to wait until the element is ready for the action without performing it.
 
 ## input-source-position
 - `sourcePosition` <[Object]>
@@ -128,12 +128,12 @@ Whether to check or uncheck the checkbox.
 ## query-selector
 - `selector` <[string]>
 
-A selector to query for. See [working with selectors](./selectors.md) for more details.
+A selector to query for. See [working with selectors](../selectors.md) for more details.
 
 ## find-selector
 - `selector` <[string]>
 
-A selector to use when resolving DOM element. See [working with selectors](./selectors.md) for more details.
+A selector to use when resolving DOM element. See [working with selectors](../selectors.md) for more details.
 
 ## wait-for-selector-state
 - `state` <[WaitForSelectorState]<"attached"|"detached"|"visible"|"hidden">>
@@ -778,7 +778,7 @@ Additional arguments to pass to the browser instance. The list of Chromium flags
 ## browser-option-channel
 - `channel` <[string]>
 
-Browser distribution channel.  Supported values are "chrome", "chrome-beta", "chrome-dev", "chrome-canary", "msedge", "msedge-beta", "msedge-dev", "msedge-canary". Read more about using [Google Chrome and Microsoft Edge](./browsers.md#google-chrome--microsoft-edge).
+Browser distribution channel.  Supported values are "chrome", "chrome-beta", "chrome-dev", "chrome-canary", "msedge", "msedge-beta", "msedge-dev", "msedge-canary". Read more about using [Google Chrome and Microsoft Edge](../browsers.md#google-chrome--microsoft-edge).
 
 ## browser-option-chromiumsandbox
 - `chromiumSandbox` <[boolean]>

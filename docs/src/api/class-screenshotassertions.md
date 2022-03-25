@@ -27,7 +27,7 @@ expect(await page.screenshot()).toMatchSnapshot(['landing', 'step2.png']);
 expect(await page.screenshot()).toMatchSnapshot(['landing', 'step3.png']);
 ```
 
-Learn more about [visual comparisons](./test-snapshots.md).
+Learn more about [visual comparisons](../test-snapshots.md).
 
 ### param: ScreenshotAssertions.toMatchSnapshot.name
 - `name` <[string]|[Array]<[string]>>

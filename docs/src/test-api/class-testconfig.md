@@ -1,7 +1,7 @@
 # class: TestConfig
 * langs: js
 
-Playwright Test provides many options to configure how your tests are collected and executed, for example `timeout` or `testDir`. These options are described in the [TestConfig] object in the [configuration file](./test-configuration.md).
+Playwright Test provides many options to configure how your tests are collected and executed, for example `timeout` or `testDir`. These options are described in the [TestConfig] object in the [configuration file](../test-configuration.md).
 
 Playwright Test supports running multiple test projects at the same time. Project-specific options should be put to [`property: TestConfig.projects`], but top-level [TestConfig] can also define base options shared between all projects.
 
@@ -49,7 +49,7 @@ export default config;
     - `maxDiffPixels` <[int]> an acceptable amount of pixels that could be different, unset by default.
     - `maxDiffPixelRatio` <[float]> an acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1` , unset by default.
 
-Configuration for the `expect` assertion library. Learn more about [various timeouts](./test-timeouts.md).
+Configuration for the `expect` assertion library. Learn more about [various timeouts](../test-timeouts.md).
 
 ```js js-flavor=js
 // playwright.config.js
@@ -123,7 +123,7 @@ You can configure entire test run to concurrently execute all tests in all files
 
 Path to the global setup file. This file will be required and run before all the tests. It must export a single function that takes a [`TestConfig`] argument.
 
-Learn more about [global setup and teardown](./test-advanced.md#global-setup-and-teardown).
+Learn more about [global setup and teardown](../test-advanced.md#global-setup-and-teardown).
 
 ```js js-flavor=js
 // playwright.config.js
@@ -152,7 +152,7 @@ export default config;
 
 Path to the global teardown file. This file will be required and run after all the tests. It must export a single function. See also [`property: TestConfig.globalSetup`].
 
-Learn more about [global setup and teardown](./test-advanced.md#global-setup-and-teardown).
+Learn more about [global setup and teardown](../test-advanced.md#global-setup-and-teardown).
 
 ```js js-flavor=js
 // playwright.config.js
@@ -179,7 +179,7 @@ export default config;
 ## property: TestConfig.globalTimeout
 - type: <[int]>
 
-Maximum time in milliseconds the whole test suite can run. Zero timeout (default) disables this behavior. Useful on CI to prevent broken setup from running too long and wasting resources. Learn more about [various timeouts](./test-timeouts.md).
+Maximum time in milliseconds the whole test suite can run. Zero timeout (default) disables this behavior. Useful on CI to prevent broken setup from running too long and wasting resources. Learn more about [various timeouts](../test-timeouts.md).
 
 ```js js-flavor=js
 // playwright.config.js
@@ -206,17 +206,17 @@ export default config;
 ## property: TestConfig.grep
 - type: <[RegExp]|[Array]<[RegExp]>>
 
-Filter to only run tests with a title matching one of the patterns. For example, passing `grep: /cart/` should only run tests with "cart" in the title. Also available in the [command line](./test-cli.md) with the `-g` option.
+Filter to only run tests with a title matching one of the patterns. For example, passing `grep: /cart/` should only run tests with "cart" in the title. Also available in the [command line](../test-cli.md) with the `-g` option.
 
-`grep` option is also useful for [tagging tests](./test-annotations.md#tag-tests).
+`grep` option is also useful for [tagging tests](../test-annotations.md#tag-tests).
 
 
 ## property: TestConfig.grepInvert
 - type: <[RegExp]|[Array]<[RegExp]>>
 
-Filter to only run tests with a title **not** matching one of the patterns. This is the opposite of [`property: TestConfig.grep`]. Also available in the [command line](./test-cli.md) with the `--grep-invert` option.
+Filter to only run tests with a title **not** matching one of the patterns. This is the opposite of [`property: TestConfig.grep`]. Also available in the [command line](../test-cli.md) with the `--grep-invert` option.
 
-`grepInvert` option is also useful for [tagging tests](./test-annotations.md#tag-tests).
+`grepInvert` option is also useful for [tagging tests](../test-annotations.md#tag-tests).
 
 
 ## property: TestConfig.maxFailures
@@ -224,7 +224,7 @@ Filter to only run tests with a title **not** matching one of the patterns. This
 
 The maximum number of test failures for the whole test suite run. After reaching this number, testing will stop and exit with an error. Setting to zero (default) disables this behavior.
 
-Also available in the [command line](./test-cli.md) with the `--max-failures` and `-x` options.
+Also available in the [command line](../test-cli.md) with the `--max-failures` and `-x` options.
 
 ```js js-flavor=js
 // playwright.config.js
@@ -386,7 +386,7 @@ The list of reporters to use. Each reporter can be:
 
 You can pass options to the reporter in a tuple like `['json', { outputFile: './report.json' }]`.
 
-Learn more in the [reporters guide](./test-reporters.md).
+Learn more in the [reporters guide](../test-reporters.md).
 
 ```js js-flavor=js
 // playwright.config.js
@@ -422,7 +422,7 @@ Test files that took more than `threshold` milliseconds are considered slow, and
 ## property: TestConfig.retries
 - type: <[int]>
 
-The maximum number of retry attempts given to failed tests. By default failing tests are not retried. Learn more about [test retries](./test-retries.md#retries).
+The maximum number of retry attempts given to failed tests. By default failing tests are not retried. Learn more about [test retries](../test-retries.md#retries).
 
 ```js js-flavor=js
 // playwright.config.js
@@ -453,7 +453,7 @@ export default config;
 
 Shard tests and execute only the selected shard. Specify in the one-based form like `{ total: 5, current: 2 }`.
 
-Learn more about [parallelism and sharding](./test-parallel.md) with Playwright Test.
+Learn more about [parallelism and sharding](../test-parallel.md) with Playwright Test.
 
 ## property: TestConfig.testDir
 - type: <[string]>
@@ -545,7 +545,7 @@ export default config;
 
 Timeout for each test in milliseconds. Defaults to 30 seconds.
 
-This is a base timeout for all tests. In addition, each test can configure its own timeout with [`method: Test.setTimeout`]. Learn more about [various timeouts](./test-timeouts.md).
+This is a base timeout for all tests. In addition, each test can configure its own timeout with [`method: Test.setTimeout`]. Learn more about [various timeouts](../test-timeouts.md).
 
 ```js js-flavor=js
 // playwright.config.js
@@ -577,12 +577,12 @@ Whether to update expected snapshots with the actual results produced by the tes
 * `'none'` - No snapshots are updated.
 * `'missing'` - Missing snapshots are created, for example when authoring a new test and running it for the first time. This is the default.
 
-Learn more about [snapshots](./test-snapshots.md).
+Learn more about [snapshots](../test-snapshots.md).
 
 ## property: TestConfig.use
 - type: <[TestOptions]>
 
-Global options for all tests, for example [`property: TestOptions.browserName`]. Learn more about [configuration](./test-configuration.md) and see [available options][TestOptions].
+Global options for all tests, for example [`property: TestOptions.browserName`]. Learn more about [configuration](../test-configuration.md) and see [available options][TestOptions].
 
 ```js js-flavor=js
 // playwright.config.js
@@ -697,7 +697,7 @@ The maximum number of concurrent worker processes to use for parallelizing tests
 
 Playwright Test uses worker processes to run tests. There is always at least one worker process, but more can be used to speed up test execution.
 
-Defaults to one half of the number of CPU cores. Learn more about [parallelism and sharding](./test-parallel.md) with Playwright Test.
+Defaults to one half of the number of CPU cores. Learn more about [parallelism and sharding](../test-parallel.md) with Playwright Test.
 
 ```js js-flavor=js
 // playwright.config.js

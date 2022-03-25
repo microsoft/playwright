@@ -183,7 +183,7 @@ This method checks an element matching [`param: selector`] by performing the fol
    the DOM.
 1. Ensure that matched element is a checkbox or a radio input. If not, this method throws. If the element is already
    checked, this method returns immediately.
-1. Wait for [actionability](./actionability.md) checks on the matched element, unless [`option: force`] option is
+1. Wait for [actionability](../actionability.md) checks on the matched element, unless [`option: force`] option is
    set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
 1. Use [`property: Page.mouse`] to click in the center of the element.
@@ -210,7 +210,7 @@ When all steps combined have not finished during the specified [`option: timeout
 This method clicks an element matching [`param: selector`] by performing the following steps:
 1. Find an element matching [`param: selector`]. If there is none, wait until a matching element is attached to
    the DOM.
-1. Wait for [actionability](./actionability.md) checks on the matched element, unless [`option: force`] option is
+1. Wait for [actionability](../actionability.md) checks on the matched element, unless [`option: force`] option is
    set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
 1. Use [`property: Page.mouse`] to click in the center of the element, or the specified [`option: position`].
@@ -244,7 +244,7 @@ Gets the full HTML contents of the frame, including the doctype.
 This method double clicks an element matching [`param: selector`] by performing the following steps:
 1. Find an element matching [`param: selector`]. If there is none, wait until a matching element is attached to
    the DOM.
-1. Wait for [actionability](./actionability.md) checks on the matched element, unless [`option: force`] option is
+1. Wait for [actionability](../actionability.md) checks on the matched element, unless [`option: force`] option is
    set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
 1. Use [`property: Page.mouse`] to double click in the center of the element, or the specified [`option: position`].
@@ -389,7 +389,7 @@ the flaky tests. Use [`method: Locator.evaluate`], other [Locator] helper method
 :::
 
 The method finds an element matching the specified selector within the frame and passes it as a first argument to
-[`param: expression`]. See [Working with selectors](./selectors.md) for more details. If no
+[`param: expression`]. See [Working with selectors](../selectors.md) for more details. If no
 elements match the selector, the method throws an error.
 
 If [`param: expression`] returns a [Promise], then [`method: Frame.evalOnSelector`] would wait for the promise to resolve and return its
@@ -449,7 +449,7 @@ In most cases, [`method: Locator.evaluateAll`], other [Locator] helper methods a
 :::
 
 The method finds all elements matching the specified selector within the frame and passes an array of matched elements
-as a first argument to [`param: expression`]. See [Working with selectors](./selectors.md) for
+as a first argument to [`param: expression`]. See [Working with selectors](../selectors.md) for
 more details.
 
 If [`param: expression`] returns a [Promise], then [`method: Frame.evalOnSelectorAll`] would wait for the promise to resolve and return its
@@ -695,7 +695,7 @@ Optional argument to pass to [`param: expression`].
 
 ## async method: Frame.fill
 
-This method waits for an element matching [`param: selector`], waits for [actionability](./actionability.md) checks, focuses the element, fills it and triggers an `input` event after filling. Note that you can pass an empty string to clear the input field.
+This method waits for an element matching [`param: selector`], waits for [actionability](../actionability.md) checks, focuses the element, fills it and triggers an `input` event after filling. Note that you can pass an empty string to clear the input field.
 
 If the target element is not an `<input>`, `<textarea>` or `[contenteditable]` element, this method throws an error. However, if the element is inside the `<label>` element that has an associated [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), the control will be filled instead.
 
@@ -863,7 +863,7 @@ Referer header value. If provided it will take preference over the referer heade
 This method hovers over an element matching [`param: selector`] by performing the following steps:
 1. Find an element matching [`param: selector`]. If there is none, wait until a matching element is attached to
    the DOM.
-1. Wait for [actionability](./actionability.md) checks on the matched element, unless [`option: force`] option is
+1. Wait for [actionability](../actionability.md) checks on the matched element, unless [`option: force`] option is
    set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
 1. Use [`property: Page.mouse`] to hover over the center of the element, or the specified [`option: position`].
@@ -929,7 +929,7 @@ Returns `true` if the frame has been detached, or `false` otherwise.
 ## async method: Frame.isDisabled
 - returns: <[boolean]>
 
-Returns whether the element is disabled, the opposite of [enabled](./actionability.md#enabled).
+Returns whether the element is disabled, the opposite of [enabled](../actionability.md#enabled).
 
 ### param: Frame.isDisabled.selector = %%-input-selector-%%
 
@@ -939,7 +939,7 @@ Returns whether the element is disabled, the opposite of [enabled](./actionabili
 ## async method: Frame.isEditable
 - returns: <[boolean]>
 
-Returns whether the element is [editable](./actionability.md#editable).
+Returns whether the element is [editable](../actionability.md#editable).
 
 ### param: Frame.isEditable.selector = %%-input-selector-%%
 
@@ -949,7 +949,7 @@ Returns whether the element is [editable](./actionability.md#editable).
 ## async method: Frame.isEnabled
 - returns: <[boolean]>
 
-Returns whether the element is [enabled](./actionability.md#enabled).
+Returns whether the element is [enabled](../actionability.md#enabled).
 
 ### param: Frame.isEnabled.selector = %%-input-selector-%%
 
@@ -959,7 +959,7 @@ Returns whether the element is [enabled](./actionability.md#enabled).
 ## async method: Frame.isHidden
 - returns: <[boolean]>
 
-Returns whether the element is hidden, the opposite of [visible](./actionability.md#visible).  [`option: selector`] that does not match any elements is considered hidden.
+Returns whether the element is hidden, the opposite of [visible](../actionability.md#visible).  [`option: selector`] that does not match any elements is considered hidden.
 
 ### param: Frame.isHidden.selector = %%-input-selector-%%
 
@@ -972,7 +972,7 @@ Returns whether the element is hidden, the opposite of [visible](./actionability
 ## async method: Frame.isVisible
 - returns: <[boolean]>
 
-Returns whether the element is [visible](./actionability.md#visible). [`option: selector`] that does not match any elements is considered not visible.
+Returns whether the element is [visible](../actionability.md#visible). [`option: selector`] that does not match any elements is considered not visible.
 
 ### param: Frame.isVisible.selector = %%-input-selector-%%
 
@@ -1061,7 +1061,7 @@ The use of [ElementHandle] is discouraged, use [Locator] objects and web-first a
 :::
 
 The method finds an element matching the specified selector within the frame. See
-[Working with selectors](./selectors.md) for more details. If no elements match the selector,
+[Working with selectors](../selectors.md) for more details. If no elements match the selector,
 returns `null`.
 
 ### param: Frame.querySelector.selector = %%-query-selector-%%
@@ -1081,7 +1081,7 @@ The use of [ElementHandle] is discouraged, use [Locator] objects instead.
 :::
 
 The method finds all elements matching the specified selector within the frame. See
-[Working with selectors](./selectors.md) for more details. If no elements match the selector,
+[Working with selectors](../selectors.md) for more details. If no elements match the selector,
 returns empty array.
 
 ### param: Frame.querySelectorAll.selector = %%-query-selector-%%
@@ -1089,7 +1089,7 @@ returns empty array.
 ## async method: Frame.selectOption
 - returns: <[Array]<[string]>>
 
-This method waits for an element matching [`param: selector`], waits for [actionability](./actionability.md) checks, waits until all specified options are present in the `<select>` element and selects these options.
+This method waits for an element matching [`param: selector`], waits for [actionability](../actionability.md) checks, waits until all specified options are present in the `<select>` element and selects these options.
 
 If the target element is not a `<select>` element, this method throws an error. However, if the element is inside the `<label>` element that has an associated [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), the control will be used instead.
 
@@ -1159,7 +1159,7 @@ This method checks or unchecks an element matching [`param: selector`] by perfor
    the DOM.
 1. Ensure that matched element is a checkbox or a radio input. If not, this method throws.
 1. If the element already has the right checked state, this method returns immediately.
-1. Wait for [actionability](./actionability.md) checks on the matched element, unless [`option: force`] option is
+1. Wait for [actionability](../actionability.md) checks on the matched element, unless [`option: force`] option is
    set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
 1. Use [`property: Page.mouse`] to click in the center of the element.
@@ -1209,7 +1209,7 @@ are resolved relative to the the current working directory. For empty array, cle
 This method taps an element matching [`param: selector`] by performing the following steps:
 1. Find an element matching [`param: selector`]. If there is none, wait until a matching element is attached to
    the DOM.
-1. Wait for [actionability](./actionability.md) checks on the matched element, unless [`option: force`] option is
+1. Wait for [actionability](../actionability.md) checks on the matched element, unless [`option: force`] option is
    set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
 1. Use [`property: Page.touchscreen`] to tap the center of the element, or the specified [`option: position`].
@@ -1304,7 +1304,7 @@ This method checks an element matching [`param: selector`] by performing the fol
    the DOM.
 1. Ensure that matched element is a checkbox or a radio input. If not, this method throws. If the element is already
    unchecked, this method returns immediately.
-1. Wait for [actionability](./actionability.md) checks on the matched element, unless [`option: force`] option is
+1. Wait for [actionability](../actionability.md) checks on the matched element, unless [`option: force`] option is
    set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
 1. Use [`property: Page.mouse`] to click in the center of the element.
