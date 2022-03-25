@@ -1,0 +1,17 @@
+module.exports = {
+  '/': [
+    'reporters/',
+    'third_party/',
+    'matchers/',
+  ],
+  'matchers': [
+    'expect.ts',
+    'globals.ts',
+    'testInfo.ts',
+    'types.ts',
+    'util.ts',
+  ],
+  'reporters': [
+    'util.ts'
+  ],
+};
