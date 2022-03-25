@@ -82,13 +82,20 @@ var context = await browser.NewContextAsync(new BrowserNewContextOptions
 await context.CloseAsync();
 ```
 
-Saved video files will appear in the specified folder. They all have generated unique names.
-For the multi-page scenarios, you can access the video file associated with the page via the
-[`method: Page.video`].
-
+By default, the video file is saved in the `dir` specified in the context configuration, with a unique random filename.
+This can be viewed or overridden with [`method: Page.video`]:
 
 ```js
-const path = await page.video().path();
+const video = page.video();
+if (video === null) {
+  throw new Error("Expected page to have video");
+}
+
+// Video will be saved here when context is closed
+const defaultSavePath = await page.video().path();
+
+// Override save path
+video.saveAs("./videos/demo.webm");
 ```
 
 ```java
