@@ -252,8 +252,13 @@ export class Loader {
         if (didYouMean?.endsWith('.ts'))
           throw errorWithFile(file, 'Cannot import a typescript file from an esmodule.');
       }
-      if (error.code === 'ERR_UNKNOWN_FILE_EXTENSION' && error.message.includes('.ts'))
-        throw errorWithFile(file, 'Cannot import a typescript file from an esmodule.');
+      if (error.code === 'ERR_UNKNOWN_FILE_EXTENSION' && error.message.includes('.ts')) {
+        throw errorWithFile(file, `Cannot import a typescript file from an esmodule.\n${'='.repeat(80)}\nMake sure that:
+  - you are using Node.js 16+,
+  - your package.json contains "type": "module",
+  - you are using TypeScript for playwright.config.ts.
+${'='.repeat(80)}\n`);
+      }
 
       if (error instanceof SyntaxError && error.message.includes('Cannot use import statement outside a module'))
         throw errorWithFile(file, 'JavaScript files must end with .mjs to use import.');

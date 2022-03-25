@@ -243,6 +243,10 @@ async function launchDockerContainer(): Promise<() => Promise<void>> {
 }
 
 function restartWithExperimentalTsEsm(configFile: string | null): boolean {
+  const nodeVersion = +process.versions.node.split('.')[0];
+  // New experimental loader is only supported on Node 16+.
+  if (nodeVersion < 16)
+    return false;
   if (!configFile)
     return false;
   if (process.env.PW_DISABLE_TS_ESM)
