@@ -172,12 +172,23 @@ async function run() {
                 if (mdLink.startsWith('#'))
                   continue;
 
-                let linkWithoutHash = path.join(path.dirname(filePath), mdLink.split('#')[0]);
+                // The assertion classes are "virtual files" which get merged into test-assertions.md inside our docs generator
+                let markdownBasePath = path.dirname(filePath);
+                if ([
+                  'class-screenshotassertions.md',
+                  'class-locatorassertions.md',
+                  'class-pageassertions.md'
+                ].includes(path.basename(filePath)))
+                  markdownBasePath = path.join(path.dirname(filePath), '..');
+
+                let linkWithoutHash = path.join(markdownBasePath, mdLink.split('#')[0]);
                 if (path.extname(linkWithoutHash) !== '.md')
                   linkWithoutHash += '.md';
+
                 // We generate it inside the generator (playwright.dev)
                 if (path.basename(linkWithoutHash) === 'test-assertions.md')
                   return;
+
                 if (!relevantMarkdownFiles.has(linkWithoutHash))
                   throw new Error(`${path.relative(PROJECT_DIR, filePath)} references to '${linkWithoutHash}' as '${mdLinkName}' which does not exist.`);
               }
