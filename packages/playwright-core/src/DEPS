@@ -3,6 +3,7 @@ module.exports = {
 
   // CLI should only use client-side features.
   'cli/': [
+    '..',
     'cli/**',
     'client/**',
     'debug/injected/',
@@ -13,10 +14,14 @@ module.exports = {
     'utils/**',
   ],
 
-  'cli/driver.ts': [ '**' ],
+  'cli/driver.ts': [
+    '..',
+    '**',
+  ],
 
   // Client depends on chromium protocol for types.
   'client/': [
+    '../types/**',
     'common/',
     'protocol/',
     'server/chromium/protocol.d.ts',
@@ -52,6 +57,7 @@ module.exports = {
 
   // Generic dependencies for server-side code.
   'server/': [
+    '../types/types.d.ts',
     'common/',
     'generated/',
     'protocol/**',
@@ -61,6 +67,8 @@ module.exports = {
     'server/common/**',
     'server/injected/**',
     'server/supplements/**',
+    // For fetch ?!?
+    'server/trace/recorder/tracing.ts',
     'utils/',
   ],
 
@@ -107,18 +115,6 @@ module.exports = {
     'server/common/**',
     'server/injected/**',
     'server/supplements/**',
-    'utils/',
-  ],
-
-  'server/fetch.ts': [
-    'common/',
-    'generated/',
-    'protocol/**',
-    'server/',
-    'server/common/**',
-    'server/injected/**',
-    'server/supplements/**',
-    'server/trace/recorder/tracing.ts',
     'utils/',
   ],
 
@@ -171,6 +167,12 @@ module.exports = {
     'utils/',
   ],
 
+  // For testing
+  'server/trace/test/': [
+    '@trace-viewer/**',
+    '**',
+  ],
+
   'server/trace/recorder/': [
     'common/',
     'generated/',
@@ -216,43 +218,4 @@ module.exports = {
     'protocol/',
     'third_party/diff_match_patch',
   ],
-
-  // Tracing is a client/server plugin, nothing should depend on it.
- 'web/components/': [
-    'third_party/highlightjs/**',
-    'web/third_party/vscode/',
-  ],
-
-  'web/recorder/': [
-    'common/',
-    'server/supplements/recorder/recorderTypes.ts',
-    'web/',
-    'web/components/',
-    'web/third_party/vscode/',
-  ],
-
-  'web/traceViewer/': [
-    'common/',
-    'protocol/callMetadata.ts',
-    'server/trace/common/',
-    'web/',
-    'web/third_party/vscode/',
-    'web/traceViewer/ui/',
-  ],
-
-  'web/traceViewer/ui/': [
-    'common/',
-    'protocol/',
-    'protocol/channels.ts',
-    'server/snapshot/snapshotTypes.ts',
-    'server/trace/',
-    'server/trace/common/',
-    'server/trace/viewer/',
-    'third_party/**',
-    'web/',
-    'web/components/',
-    'web/traceViewer/',
-  ],
-
-  'web/traceViewer/inMemorySnapshotter.ts': [ '**' ],
-}
+};

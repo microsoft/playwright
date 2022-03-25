@@ -24,9 +24,12 @@ const path = require('path');
 
 const packagesDir = path.normalize(path.join(__dirname, '..', 'packages'));
 const packages = fs.readdirSync(packagesDir);
-const peerDependencies = ['electron', 'react', 'react-dom'];
+const peerDependencies = ['electron', 'react', 'react-dom', '@zip.js/zip.js'];
 
 async function checkDeps() {
+  await innerCheckDeps(path.join(packagesDir, 'recorder'), true, true);
+  await innerCheckDeps(path.join(packagesDir, 'trace-viewer'), true, true);
+
   const corePackageJson = await innerCheckDeps(path.join(packagesDir, 'playwright-core'), true, true);
   const testPackageJson = await innerCheckDeps(path.join(packagesDir, 'playwright-test'), true, true);
 
@@ -115,6 +118,8 @@ async function innerCheckDeps(root, checkDepsFile, checkPackageJson) {
             importPath = importPath + '.ts';
           else if (fs.existsSync(importPath + '.tsx'))
             importPath = importPath + '.tsx';
+          else if (fs.existsSync(importPath + '.d.ts'))
+            importPath = importPath + '.d.ts';
         }
 
         if (checkDepsFile && !allowImport(depsFile, fileName, importPath))
@@ -134,8 +139,6 @@ async function innerCheckDeps(root, checkDepsFile, checkPackageJson) {
   }
 
   function allowImport(depsFile, from, to) {
-    if (!to.startsWith(src + path.sep))
-      return true;
     const fromDirectory = path.dirname(from);
     const toDirectory = path.dirname(to);
     if (fromDirectory === toDirectory)

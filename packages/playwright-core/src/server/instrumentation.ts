@@ -33,8 +33,8 @@ export type Attribution = {
   frame?: Frame;
 };
 
-import { CallMetadata } from '../protocol/callMetadata';
-export { CallMetadata } from '../protocol/callMetadata';
+import type { CallMetadata } from '../protocol/callMetadata';
+export type { CallMetadata } from '../protocol/callMetadata';
 
 export class SdkObject extends EventEmitter {
   guid: string;

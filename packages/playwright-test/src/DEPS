@@ -1,8 +1,9 @@
 module.exports = {
   '/': [
+    '../types/testReporter.d.ts',
+    'matchers/',
     'reporters/',
     'third_party/',
-    'matchers/',
   ],
   'matchers': [
     'expect.ts',
@@ -12,6 +13,7 @@ module.exports = {
     'util.ts',
   ],
   'reporters': [
-    'util.ts'
+    '../types/testReporter.d.ts',
+    'util.ts',
   ],
 };

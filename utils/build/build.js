@@ -46,7 +46,10 @@ const { workspace } = require('../workspace');
  *   committed: boolean,
  *   inputs: string[],
  *   mustExist?: string[],
- *   script: string,
+ *   script?: string,
+ *   command?: string,
+ *   args?: string[],
+ *   cwd?: string,
  * }} OnChange
  */
 
@@ -78,24 +81,29 @@ function quotePath(path) {
 }
 
 async function runWatch() {
-  function runOnChanges(paths, mustExist = [], nodeFile) {
-    nodeFile = filePath(nodeFile);
+  /** @param {OnChange} onChange */
+  function runOnChange(onChange) {
+    const paths = onChange.inputs;
+    const mustExist = onChange.mustExist || [];
     let timeout;
-    const callback = () => {
+    function callback() {
       timeout = undefined;
       for (const fileMustExist of mustExist) {
         if (!fs.existsSync(filePath(fileMustExist)))
           return;
       }
-      child_process.spawnSync('node', [nodeFile], { stdio: 'inherit' });
-    };
+      if (onChange.script)
+        child_process.spawnSync('node', [onChange.script], { stdio: 'inherit' });
+      else
+        child_process.spawnSync(onChange.command, onChange.args || [], { stdio: 'inherit', cwd: onChange.cwd });
+    }
     // chokidar will report all files as added in a sync loop, throttle those.
     const reschedule = () => {
       if (timeout)
         clearTimeout(timeout);
       timeout = setTimeout(callback, 500);
     };
-    chokidar.watch([...paths, ...mustExist, nodeFile].map(filePath)).on('all', reschedule);
+    chokidar.watch([...paths, ...mustExist, onChange.script].filter(Boolean).map(filePath)).on('all', reschedule);
     callback();
   }
 
@@ -119,7 +127,7 @@ async function runWatch() {
     }));
   process.on('exit', () => spawns.forEach(s => s.kill()));
   for (const onChange of onChanges)
-    runOnChanges(onChange.inputs, onChange.mustExist, onChange.script);
+    runOnChange(onChange);
 }
 
 async function runBuild() {
@@ -153,8 +161,12 @@ async function runBuild() {
   for (const step of steps)
     runStep(step);
   for (const onChange of onChanges) {
-    if (!onChange.committed)
+    if (onChange.committed)
+      continue;
+    if (onChange.script)
       runStep({ command: 'node', args: [filePath(onChange.script)], shell: false });
+    else
+      runStep({ command: onChange.command, args: onChange.args, shell: false, cwd: onChange.cwd });
   }
 }
 
@@ -180,9 +192,6 @@ steps.push({
 // Build injected scripts.
 const webPackFiles = [
   'packages/playwright-core/src/server/injected/webpack.config.js',
-  'packages/playwright-core/src/web/traceViewer/webpack.config.js',
-  'packages/playwright-core/src/web/traceViewer/webpack-sw.config.js',
-  'packages/playwright-core/src/web/recorder/webpack.config.js',
   'packages/html-reporter/webpack.config.js',
   'packages/html-reporter/tests/webpack.config.js',
 ];
@@ -244,6 +253,35 @@ onChanges.push({
   script: 'utils/generate_types/index.js',
 });
 
+// Update web clients.
+onChanges.push({
+  committed: false,
+  inputs: [
+    'packages/trace-viewer/index.html',
+    'packages/trace-viewer/pubic/',
+    'packages/trace-viewer/src/',
+    'packages/trace-viewer/view.config.ts',
+    'packages/web/src/',
+  ],
+  command: 'npx',
+  args: ['vite', 'build'],
+  cwd: 'packages/trace-viewer',
+});
+
+onChanges.push({
+  committed: false,
+  inputs: [
+    'packages/recorder/index.html',
+    'packages/recorder/pubic/',
+    'packages/recorder/src/',
+    'packages/recorder/view.config.ts',
+    'packages/web/src/',
+  ],
+  command: 'npx',
+  args: ['vite', 'build'],
+  cwd: 'packages/recorder',
+});
+
 // The recorder and trace viewer have an app_icon.png that needs to be copied.
 copyFiles.push({
   files: 'packages/playwright-core/src/server/chromium/*.png',
@@ -277,10 +315,20 @@ copyFiles.push({
 });
 
 if (lintMode) {
-  // Run TypeScript for type chekcing.
+  // Run TypeScript for type checking.
   steps.push({
     command: 'npx',
     args: ['tsc', ...(watchMode ? ['-w'] : []), '-p', quotePath(filePath('.'))],
+    shell: true,
+  });
+  steps.push({
+    command: 'npx',
+    args: ['tsc', ...(watchMode ? ['-w'] : []), '-p', quotePath(filePath('packages/recorder'))],
+    shell: true,
+  });
+  steps.push({
+    command: 'npx',
+    args: ['tsc', ...(watchMode ? ['-w'] : []), '-p', quotePath(filePath('packages/trace-viewer'))],
     shell: true,
   });
 }
