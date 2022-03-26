@@ -95,7 +95,7 @@ async function runWatch() {
       if (onChange.script)
         child_process.spawnSync('node', [onChange.script], { stdio: 'inherit' });
       else
-        child_process.spawnSync(onChange.command, onChange.args || [], { stdio: 'inherit', cwd: onChange.cwd });
+        child_process.spawnSync(onChange.command, onChange.args || [], { stdio: 'inherit', cwd: onChange.cwd, shell: true });
     }
     // chokidar will report all files as added in a sync loop, throttle those.
     const reschedule = () => {
@@ -166,7 +166,7 @@ async function runBuild() {
     if (onChange.script)
       runStep({ command: 'node', args: [filePath(onChange.script)], shell: false });
     else
-      runStep({ command: onChange.command, args: onChange.args, shell: false, cwd: onChange.cwd });
+      runStep({ command: onChange.command, args: onChange.args, shell: true, cwd: onChange.cwd });
   }
 }
 
@@ -265,7 +265,7 @@ onChanges.push({
   ],
   command: 'npx',
   args: ['vite', 'build'],
-  cwd: 'packages/trace-viewer',
+  cwd: path.join(__dirname, '..', '..', 'packages', 'trace-viewer'),
 });
 
 onChanges.push({
@@ -279,7 +279,7 @@ onChanges.push({
   ],
   command: 'npx',
   args: ['vite', 'build'],
-  cwd: 'packages/recorder',
+  cwd: path.join(__dirname, '..', '..', 'packages', 'recorder'),
 });
 
 // The recorder and trace viewer have an app_icon.png that needs to be copied.

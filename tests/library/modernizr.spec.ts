@@ -22,7 +22,7 @@ async function checkFeatures(name: string, context: any, server: any) {
     const page = await context.newPage();
     await page.goto(server.PREFIX + '/modernizr.html');
     const actual = await page.evaluate('window.report');
-    const expected = JSON.parse(fs.readFileSync(require.resolve(`./assets/modernizr/${name}.json`), 'utf-8'));
+    const expected = JSON.parse(fs.readFileSync(require.resolve(`../assets/modernizr/${name}.json`), 'utf-8'));
     return { actual, expected };
   } finally {
     await context.close();
