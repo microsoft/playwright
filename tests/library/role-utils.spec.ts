@@ -79,3 +79,25 @@ test('wpt accname', async ({ page, asset, server, browserName }) => {
     });
   }
 });
+
+test('axe-core implicit role', async ({ page, asset, server }) => {
+  await page.goto(server.EMPTY_PAGE);
+  const testCases = require(asset('axe-core/implicit-role'));
+  for (const testCase of testCases) {
+    await test.step(`checking ${JSON.stringify(testCase)}`, async () => {
+      await page.setContent(`
+        <body>
+          ${testCase.html}
+        </body>
+      `);
+      // Use $eval to force injected script.
+      const received = await page.$eval('body', (_, selector) => {
+        const element = document.querySelector(selector);
+        if (!element)
+          throw new Error(`Unable to resolve "${selector}"`);
+        return (window as any).__injectedScript.getAriaRole(element);
+      }, testCase.target);
+      expect(received, `checking ${JSON.stringify(testCase)}`).toBe(testCase.role);
+    });
+  }
+});

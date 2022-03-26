@@ -87,13 +87,16 @@ const kImplicitRoleByTagName: { [tagName: string]: (e: Element) => string | null
   'HEADER': (e: Element) => closestCrossShadow(e, kAncestorPreventingLandmark) ? null : 'banner',
   'HR': () => 'separator',
   'HTML': () => 'document',
-  'IMG': (e: Element) => e.getAttribute('alt') || hasGlobalAriaAttribute(e) ? 'img' : 'presentation',
+  'IMG': (e: Element) => (e.getAttribute('alt') === '') && !hasGlobalAriaAttribute(e) && Number.isNaN(Number(String(e.getAttribute('tabindex')))) ? 'presentation' : 'img',
   'INPUT': (e: Element) => {
     const type = (e as HTMLInputElement).type.toLowerCase();
     if (type === 'search')
       return e.hasAttribute('list') ? 'combobox' : 'searchbox';
-    if (['email', 'tel', 'text', 'url', ''].includes(type))
-      return e.hasAttribute('list') ? 'combobox' : 'textbox';
+    if (['email', 'tel', 'text', 'url', ''].includes(type)) {
+      // https://html.spec.whatwg.org/multipage/input.html#concept-input-list
+      const list = getIdRefs(e, e.getAttribute('list'))[0];
+      return (list && list.tagName === 'DATALIST') ? 'combobox' : 'textbox';
+    }
     if (type === 'hidden')
       return '';
     return {
