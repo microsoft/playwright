@@ -19,8 +19,8 @@ loadEnv({ path: path.join(__dirname, '..', '..', '.env') });
 
 import type { Config, PlaywrightTestOptions, PlaywrightWorkerOptions } from '@playwright/test';
 import * as path from 'path';
-import { TestModeWorkerOptions } from './testModeFixtures';
-import { CoverageWorkerOptions } from './coverageFixtures';
+import { TestModeWorkerOptions } from '../config/testModeFixtures';
+import { CoverageWorkerOptions } from '../config/coverageFixtures';
 
 type BrowserName = 'chromium' | 'firefox' | 'webkit';
 
@@ -44,7 +44,7 @@ const trace = !!process.env.PWTEST_TRACE;
 const outputDir = path.join(__dirname, '..', '..', 'test-results');
 const testDir = path.join(__dirname, '..');
 const config: Config<CoverageWorkerOptions & PlaywrightWorkerOptions & PlaywrightTestOptions & TestModeWorkerOptions> = {
-  globalSetup: path.join(__dirname, './globalSetup'),
+  globalSetup: path.join(__dirname, '../config/globalSetup'),
   testDir,
   outputDir,
   expect: {
@@ -93,35 +93,36 @@ for (const browserName of browserNames) {
     console.error(`Using executable at ${executablePath}`);
   const devtools = process.env.DEVTOOLS === '1';
   const testIgnore: RegExp[] = browserNames.filter(b => b !== browserName).map(b => new RegExp(b));
-  testIgnore.push(/android/, /electron/, /playwright-test/);
-  config.projects.push({
-    name: browserName,
-    testDir,
-    testIgnore,
-    use: {
-      mode,
-      browserName,
-      headless: !headed,
-      channel,
-      video: video ? 'on' : undefined,
-      launchOptions: {
-        executablePath,
-        devtools
+  for (const folder of ['library', 'page']) {
+    config.projects.push({
+      name: browserName,
+      testDir: path.join(testDir, folder),
+      testIgnore,
+      use: {
+        mode,
+        browserName,
+        headless: !headed,
+        channel,
+        video: video ? 'on' : undefined,
+        launchOptions: {
+          executablePath,
+          devtools
+        },
+        trace: trace ? 'on' : undefined,
+        coverageName: browserName,
       },
-      trace: trace ? 'on' : undefined,
-      coverageName: browserName,
-    },
-    metadata: {
-      platform: process.platform,
-      docker: !!process.env.INSIDE_DOCKER,
-      headful: !!headed,
-      browserName,
-      channel,
-      mode,
-      video: !!video,
-      trace: !!trace,
-    },
-  });
+      metadata: {
+        platform: process.platform,
+        docker: !!process.env.INSIDE_DOCKER,
+        headful: !!headed,
+        browserName,
+        channel,
+        mode,
+        video: !!video,
+        trace: !!trace,
+      },
+    });
+  }
 }
 
 export default config;
