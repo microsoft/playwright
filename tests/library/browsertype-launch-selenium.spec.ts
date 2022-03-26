@@ -21,12 +21,12 @@ import fs from 'fs';
 import { start } from '../../packages/playwright-core/lib/outofprocess';
 
 const chromeDriver = process.env.PWTEST_CHROMEDRIVER;
-const brokenDriver = path.join(__dirname, 'assets', 'selenium-grid', 'broken-selenium-driver.js');
-const standalone_3_141_59 = path.join(__dirname, 'assets', 'selenium-grid', 'selenium-server-standalone-3.141.59.jar');
-const selenium_4_0_0_rc1 = path.join(__dirname, 'assets', 'selenium-grid', 'selenium-server-4.0.0-rc-1.jar');
+const brokenDriver = path.join(__dirname, '..', 'assets', 'selenium-grid', 'broken-selenium-driver.js');
+const standalone_3_141_59 = path.join(__dirname, '..', 'assets', 'selenium-grid', 'selenium-server-standalone-3.141.59.jar');
+const selenium_4_0_0_rc1 = path.join(__dirname, '..', 'assets', 'selenium-grid', 'selenium-server-4.0.0-rc-1.jar');
 
 function writeSeleniumConfig(testInfo: TestInfo, port: number) {
-  const template = path.join(__dirname, 'assets', 'selenium-grid', `selenium-config-standalone.json`);
+  const template = path.join(__dirname, '..', 'assets', 'selenium-grid', `selenium-config-standalone.json`);
   const content = fs.readFileSync(template, 'utf8').replace(/4444/g, String(port));
   const file = testInfo.outputPath(`selenium-config-standalone.json`);
   fs.writeFileSync(file, content, 'utf8');

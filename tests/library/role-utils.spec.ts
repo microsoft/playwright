@@ -17,6 +17,8 @@
 import { contextTest as test, expect } from '../config/browserTest';
 import fs from 'fs';
 
+test.skip(({ mode }) => mode !== 'default');
+
 test('wpt accname', async ({ page, asset, server, browserName }) => {
   const skipped = [
     // Spec clearly says to only use control's value when embedded in a label (step 2C).

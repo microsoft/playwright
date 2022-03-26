@@ -9,14 +9,13 @@ for (const dir of fs.readdirSync(__dirname)) {
   if (!fs.statSync(folder).isDirectory())
     continue;
   test.describe.serial(path.basename(folder), () => {
-    test.setTimeout(120000);
+    test.setTimeout(180000);
     test('install', async () => {
       await run('npm', ['i'], folder);
     });
 
     for (const project of ['chromium', 'firefox', 'webkit']) {
       test(project, async () => {
-        test.setTimeout(120000);
         await run('npx', ['playwright', 'test', '--project=' + project, '--reporter=list'], folder);
       });
     }
