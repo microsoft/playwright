@@ -1186,6 +1186,20 @@ Page:
       tracing:
         snapshot: true
 
+    touchscreenMove:
+      parameters:
+        x: number
+        y: number
+        endX: number
+        endY: number
+
+    touchscreenDown:
+      parameters:
+        x: number
+        y: number
+
+    touchscreenUp:
+
     accessibilitySnapshot:
       parameters:
         interestingOnly: boolean?

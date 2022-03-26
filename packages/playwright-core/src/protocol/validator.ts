@@ -641,6 +641,17 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     x: tNumber,
     y: tNumber,
   });
+  scheme.PageTouchscreenMoveParams = tObject({
+    x: tNumber,
+    y: tNumber,
+    endX: tNumber,
+    endY: tNumber,
+  });
+  scheme.PageTouchscreenDownParams = tObject({
+    x: tNumber,
+    y: tNumber,
+  });
+  scheme.PageTouchscreenUpParams = tOptional(tObject({}));
   scheme.PageAccessibilitySnapshotParams = tObject({
     interestingOnly: tOptional(tBoolean),
     root: tOptional(tChannel('ElementHandle')),

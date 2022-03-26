@@ -238,6 +238,18 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel> imple
     await this._page.touchscreen.tap(params.x, params.y);
   }
 
+  async touchscreenMove(params: channels.PageTouchscreenMoveParams, metadata?: CallMetadata): Promise<void> {
+    await this._page.touchscreen.move(params.x, params.y, params.endX, params.endY);
+  }
+
+  async touchscreenDown(params: channels.PageTouchscreenDownParams, metadata?: CallMetadata): Promise<void> {
+    await this._page.touchscreen.down(params.x, params.y);
+  }
+
+  async touchscreenUp(params: channels.PageTouchscreenUpParams, metadata?: CallMetadata): Promise<void> {
+    await this._page.touchscreen.up();
+  }
+
   async accessibilitySnapshot(params: channels.PageAccessibilitySnapshotParams, metadata: CallMetadata): Promise<channels.PageAccessibilitySnapshotResult> {
     const rootAXNode = await this._page.accessibility.snapshot({
       interestingOnly: params.interestingOnly,
