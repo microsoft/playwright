@@ -120,7 +120,7 @@ Maximum time in milliseconds to wait for the connection to be established. Defau
 ## async method: BrowserType.connectOverCDP
 - returns: <[Browser]>
 
-This methods attaches Playwright to an existing browser instance using the Chrome DevTools Protocol.
+This method attaches Playwright to an existing browser instance using the Chrome DevTools Protocol.
 
 The default browser context is accessible via [`method: Browser.contexts`].
 
