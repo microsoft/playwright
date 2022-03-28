@@ -101,6 +101,7 @@ it('hidden should wait for removal', async ({ page, server }) => {
 });
 
 it('hidden should wait for out-of-viewport', async ({ page }) => {
+  it.setTimeout(3000);
   it.fail(true, 'https://github.com/microsoft/playwright/issues/13131');
   await page.setContent(`
     <style>
@@ -118,7 +119,7 @@ it('hidden should wait for out-of-viewport', async ({ page }) => {
   `);
 
   const cover = page.locator('.cover');
-  await expect.soft(cover).not.toBeVisible();
+  await expect(cover).not.toBeVisible();
   // Below is not web-first, but is included to mirror original snippet from https://github.com/microsoft/playwright/issues/13131
   await cover.waitFor({ state: 'hidden' });
 });
