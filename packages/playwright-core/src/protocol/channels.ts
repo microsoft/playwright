@@ -1732,7 +1732,6 @@ export type PageTouchscreenDownResult = void;
 export type PageTouchscreenUpParams = {};
 export type PageTouchscreenUpOptions = {};
 export type PageTouchscreenUpResult = void;
-
 export type PageAccessibilitySnapshotParams = {
   interestingOnly?: boolean,
   root?: ElementHandleChannel,

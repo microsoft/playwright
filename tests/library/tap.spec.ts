@@ -28,7 +28,7 @@ it('should send all of the correct events @smoke', async ({ page }) => {
   await page.tap('#a');
   const eventsHandle = await trackEvents(await page.$('#b'));
   await page.tap('#b');
-  // webkit doesnt saend pointerenter or pointerleave or mouseout
+  // webkit doesnt send pointerenter or pointerleave or mouseout
   expect(await eventsHandle.jsonValue()).toEqual([
     'pointerover',  'pointerenter',
     'pointerdown',  'touchstart',
