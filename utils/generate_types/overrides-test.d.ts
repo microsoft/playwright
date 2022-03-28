@@ -197,7 +197,7 @@ export interface Config<TestArgs = {}, WorkerArgs = {}> extends TestConfig {
 
 // [internal] !!! DO NOT ADD TO THIS !!!
 // [internal] It is part of the public API and is computed from the user's config.
-// [internal] If you need new fields internally, add them to InternalFullConfig instead.
+// [internal] If you need new fields internally, add them to FullConfigInternal instead.
 export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
   forbidOnly: boolean;
   fullyParallel: boolean;

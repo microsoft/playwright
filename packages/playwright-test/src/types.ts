@@ -37,7 +37,7 @@ export interface TestStepInternal {
 
 /**
  * FullConfigInternal allows the plumbing of configuration details throughout the Test Runner without
- * increasing the surface aread of the public API type called FullConfig.
+ * increasing the surface area of the public API type called FullConfig.
  */
 export interface FullConfigInternal extends FullConfigPublic {
 }

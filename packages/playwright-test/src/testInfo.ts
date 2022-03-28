@@ -19,7 +19,7 @@ import * as mime from 'mime';
 import path from 'path';
 import { calculateSha1 } from 'playwright-core/lib/utils/utils';
 import type { FullProject, TestError, TestInfo, TestStatus } from '../types/test';
-import type { FullConfigInternal as FullConfig } from './types';
+import type { FullConfigInternal } from './types';
 import { WorkerInitParams } from './ipc';
 import { Loader } from './loader';
 import { ProjectImpl } from './project';
@@ -44,7 +44,7 @@ export class TestInfoImpl implements TestInfo {
   readonly workerIndex: number;
   readonly parallelIndex: number;
   readonly project: FullProject;
-  config: FullConfig;
+  config: FullConfigInternal;
   readonly title: string;
   readonly titlePath: string[];
   readonly file: string;
