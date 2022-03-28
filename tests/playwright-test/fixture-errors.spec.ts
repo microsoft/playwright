@@ -500,3 +500,35 @@ test('should handle fixture teardown error after test timeout and continue', asy
   expect(result.output).toContain('Timeout of 100ms exceeded');
   expect(result.output).toContain('Error: Oh my error');
 });
+
+test('should report worker fixture teardown with debug info', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      const test = pwt.test.extend({
+        fixture: [ async ({ }, use) => {
+          await use();
+          await new Promise(() => {});
+        }, { scope: 'worker' } ],
+      });
+      for (let i = 0; i < 20; i++)
+        test('good' + i, async ({ fixture }) => {});
+    `,
+  }, { reporter: 'list', timeout: 1000 });
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(20);
+  expect(stripAnsi(result.output)).toContain([
+    'Worker teardown error. This worker ran 20 tests, last 10 tests were:',
+    'a.spec.ts:12:9 › good10',
+    'a.spec.ts:12:9 › good11',
+    'a.spec.ts:12:9 › good12',
+    'a.spec.ts:12:9 › good13',
+    'a.spec.ts:12:9 › good14',
+    'a.spec.ts:12:9 › good15',
+    'a.spec.ts:12:9 › good16',
+    'a.spec.ts:12:9 › good17',
+    'a.spec.ts:12:9 › good18',
+    'a.spec.ts:12:9 › good19',
+    '',
+    'Timeout of 1000ms exceeded in fixtures teardown.',
+  ].join('\n'));
+});

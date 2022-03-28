@@ -103,8 +103,11 @@ async function gracefullyCloseAndExit() {
     if (workerIndex !== undefined)
       await stopProfiling(workerIndex);
   } catch (e) {
-    const payload: TeardownErrorsPayload = { fatalErrors: [serializeError(e)] };
-    process.send!({ method: 'teardownErrors', params: payload });
+    try {
+      const payload: TeardownErrorsPayload = { fatalErrors: [serializeError(e)] };
+      process.send!({ method: 'teardownErrors', params: payload });
+    } catch {
+    }
   }
   process.exit(0);
 }

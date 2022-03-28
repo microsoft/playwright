@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
+import colors from 'colors/safe';
 import rimraf from 'rimraf';
 import util from 'util';
 import { EventEmitter } from 'events';
-import { serializeError } from './util';
+import { relativeFilePath, serializeError } from './util';
 import { TestBeginPayload, TestEndPayload, RunPayload, DonePayload, WorkerInitParams, StepBeginPayload, StepEndPayload, TeardownErrorsPayload } from './ipc';
 import { setCurrentTestInfo } from './globals';
 import { Loader } from './loader';
@@ -49,6 +50,8 @@ export class WorkerRunner extends EventEmitter {
   // This promise resolves once the single "run test group" call finishes.
   private _runFinished = new ManualPromise<void>();
   _currentTest: TestInfoImpl | null = null;
+  private _lastRunningTests: TestInfoImpl[] = [];
+  private _totalRunningTests = 0;
   // Dynamic annotations originated by modifiers with a callback, e.g. `test.skip(() => true)`.
   private _extraSuiteAnnotations = new Map<Suite, Annotation[]>();
   // Suites that had their beforeAll hooks, but not afterAll hooks executed.
@@ -84,9 +87,26 @@ export class WorkerRunner extends EventEmitter {
     await this._loadIfNeeded();
     await this._teardownScopes();
     if (this._fatalErrors.length) {
+      const diagnostics = this._createWorkerTeardownDiagnostics();
+      if (diagnostics)
+        this._fatalErrors.unshift(diagnostics);
       const payload: TeardownErrorsPayload = { fatalErrors: this._fatalErrors };
       this.emit('teardownErrors', payload);
     }
+  }
+
+  private _createWorkerTeardownDiagnostics(): TestError | undefined {
+    if (!this._lastRunningTests.length)
+      return;
+    const count = this._totalRunningTests === 1 ? '1 test' : `${this._totalRunningTests} tests`;
+    let lastMessage = '';
+    if (this._lastRunningTests.length < this._totalRunningTests)
+      lastMessage = `, last ${this._lastRunningTests.length} tests were`;
+    const message = [
+      colors.red(`Worker teardown error. This worker ran ${count}${lastMessage}:`),
+      ...this._lastRunningTests.map(testInfo => formatTestTitle(testInfo._test, testInfo.project.name)),
+    ].join('\n');
+    return { message };
   }
 
   private async _teardownScopes() {
@@ -268,6 +288,10 @@ export class WorkerRunner extends EventEmitter {
       return;
     }
 
+    this._totalRunningTests++;
+    this._lastRunningTests.push(testInfo);
+    if (this._lastRunningTests.length > 10)
+      this._lastRunningTests.shift();
     let didFailBeforeAllForSuite: Suite | undefined;
     let shouldRunAfterEachHooks = false;
 
@@ -538,4 +562,12 @@ function getSuites(test: TestCase | undefined): Suite[] {
     suites.push(suite);
   suites.reverse();  // Put root suite first.
   return suites;
+}
+
+function formatTestTitle(test: TestCase, projectName: string) {
+  // file, ...describes, test
+  const [, ...titles] = test.titlePath();
+  const location = `${relativeFilePath(test.location.file)}:${test.location.line}:${test.location.column}`;
+  const projectTitle = projectName ? `[${projectName}] › ` : '';
+  return `${projectTitle}${location} › ${titles.join(' › ')}`;
 }
