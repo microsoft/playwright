@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import type { TestCase, TestFile } from '@playwright/test/src/reporters/html';
+import type { TestCase, TestFile } from '@playwright-test/reporters/html';
 import * as React from 'react';
 import './colors.css';
 import './common.css';
@@ -27,7 +27,7 @@ import { TestCaseView } from './testCaseView';
 import { TestFilesView } from './testFilesView';
 import './theme.css';
 import * as icons from './icons';
-import { Metadata } from '.';
+import { Metadata } from './index';
 
 declare global {
   interface Window {

@@ -15,8 +15,6 @@
  */
 
 import { PlaywrightTestConfig, devices } from '@playwright/test';
-import path from 'path';
-import url from 'url';
 
 const config: PlaywrightTestConfig = {
   testDir: 'src',
@@ -27,8 +25,14 @@ const config: PlaywrightTestConfig = {
   ] : [
     ['html', { open: 'on-failure' }]
   ],
+  webServer: {
+    url: 'http://localhost:3101/tests.html',
+    command: 'npm run dev',
+    cwd: __dirname,
+    reuseExistingServer: !process.env.CI,
+  },
   use: {
-    baseURL: url.pathToFileURL(path.join(__dirname, 'out', 'index.html')).toString(),
+    baseURL: 'http://localhost:3101/tests.html',
     trace: 'on-first-retry',
   },
   projects: [

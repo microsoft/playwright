@@ -146,7 +146,7 @@ async function innerCheckDeps(root, checkDepsFile, checkPackageJson) {
 
     while (!depsFile[from]) {
       if (from.lastIndexOf('/') === -1)
-        throw new Error(`Cannot find DEPS for ${fromDirectory}`);
+        return false;
       from = from.substring(0, from.lastIndexOf('/'));
     }
 
@@ -180,7 +180,7 @@ async function innerCheckDeps(root, checkDepsFile, checkPackageJson) {
       if (error.code !== 'MODULE_NOT_FOUND')
         throw error;
     }
-    return !!packageJSON.dependencies[importName];
+    return !!(packageJSON.dependencies || {})[importName];
   }
 }
 
