@@ -19,7 +19,7 @@ import * as mime from 'mime';
 import path from 'path';
 import { calculateSha1 } from 'playwright-core/lib/utils/utils';
 import type { FullProject, TestError, TestInfo, TestStatus } from '../types/test';
-import type { InternalFullConfig as FullConfig } from './fullConfig';
+import type { FullConfigInternal as FullConfig } from './types';
 import { WorkerInitParams } from './ipc';
 import { Loader } from './loader';
 import { ProjectImpl } from './project';

@@ -16,7 +16,7 @@
 
 import { installTransform, setCurrentlyLoadingTestFile } from './transform';
 import type { Config, FullProject, Project, ReporterDescription, PreserveOutput } from './types';
-import type { InternalFullConfig as FullConfig } from './fullConfig';
+import type { FullConfigInternal as FullConfig } from './types';
 import { mergeObjects, errorWithFile } from './util';
 import { setCurrentlyLoadingFileSuite } from './globals';
 import { Suite } from './test';

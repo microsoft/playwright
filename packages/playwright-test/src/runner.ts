@@ -37,7 +37,7 @@ import HtmlReporter from './reporters/html';
 import { ProjectImpl } from './project';
 import { Minimatch } from 'minimatch';
 import { Config } from './types';
-import { InternalFullConfig as FullConfig } from './fullConfig';
+import type { FullConfigInternal as FullConfig } from './types';
 import { WebServer } from './webServer';
 import { raceAgainstTimeout } from 'playwright-core/lib/utils/async';
 import { SigIntWatcher } from 'playwright-core/lib/utils/utils';
