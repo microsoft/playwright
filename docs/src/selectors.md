@@ -254,7 +254,7 @@ Text selector has a few variations:
   await page.Locator("text=Log in").ClickAsync();
   ```
 
-- `text="Log in"` - text body can be escaped with single or double quotes to search for a text node with exact content. For example, `text="Log"` does not match `<button>Log in</button>` because `<button>` contains a single text node `"Log in"` that is not equal to `"Log"`. However, `text="Log"` matches `<button>Log<span>in</span></button>`, because `<button>` contains a text node `"Log"`.
+- `text="Log in"` - text body can be escaped with single or double quotes to search for a text node with exact content. For example, `text="Log"` does not match `<button>Log in</button>` because `<button>` contains a single text node `"Log in"` that is not equal to `"Log"`. However, `text="Log"` matches `<button>Log<span>in</span></button>`, because `<button>` contains a text node `"Log"`. This exact mode implies case-sensitive matching, so `text="Download"` will not match `<button>download</button>`.
 
   Quoted body follows the usual escaping rules, e.g. use `\"` to escape double quote in a double-quoted string: `text="foo\"bar"`.
 
