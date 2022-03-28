@@ -199,8 +199,8 @@ const validRoles = allRoles.filter(role => !abstractRoles.includes(role));
 
 function getExplicitAriaRole(element: Element): string | null {
   // https://www.w3.org/TR/wai-aria-1.2/#document-handling_author-errors_roles
-  const explicitRole = (element.getAttribute('role') || '').trim().split(' ')[0];
-  return validRoles.includes(explicitRole) ? explicitRole : null;
+  const roles = (element.getAttribute('role') || '').split(' ').map(role => role.trim());
+  return roles.find(role => validRoles.includes(role)) || null;
 }
 
 function hasPresentationConflictResolution(element: Element) {
@@ -209,7 +209,7 @@ function hasPresentationConflictResolution(element: Element) {
   return !hasGlobalAriaAttribute(element);
 }
 
-function getAriaRole(element: Element): string | null {
+export function getAriaRole(element: Element): string | null {
   const explicitRole = getExplicitAriaRole(element);
   if (!explicitRole)
     return getImplicitAriaRole(element);
@@ -226,27 +226,29 @@ function getComputedStyle(element: Element, pseudo?: string): CSSStyleDeclaratio
   return element.ownerDocument && element.ownerDocument.defaultView ? element.ownerDocument.defaultView.getComputedStyle(element, pseudo) : undefined;
 }
 
+// https://www.w3.org/TR/wai-aria-1.2/#tree_exclusion, but including "none" and "presentation" roles
+// https://www.w3.org/TR/wai-aria-1.2/#aria-hidden
 export function isElementHiddenForAria(element: Element, cache: Map<Element, boolean>): boolean {
   if (['STYLE', 'SCRIPT', 'NOSCRIPT', 'TEMPLATE'].includes(element.tagName))
     return true;
-
-  let style: CSSStyleDeclaration | undefined = getComputedStyle(element);
+  const style: CSSStyleDeclaration | undefined = getComputedStyle(element);
   if (!style || style.visibility === 'hidden')
     return true;
+  return belongsToDisplayNoneOrAriaHidden(element, cache);
+}
 
-  let parent: Element | undefined = element;
-  while (parent) {
-    if (!cache.has(parent)) {
-      if (!style)
-        style = getComputedStyle(parent);
-      const hidden = !style || style.display === 'none' || getAriaBoolean(parent.getAttribute('aria-hidden')) === true;
-      cache.set(parent, hidden);
+function belongsToDisplayNoneOrAriaHidden(element: Element, cache: Map<Element, boolean>): boolean {
+  if (!cache.has(element)) {
+    const style = getComputedStyle(element);
+    let hidden = !style || style.display === 'none' || getAriaBoolean(element.getAttribute('aria-hidden')) === true;
+    if (!hidden) {
+      const parent = parentElementOrShadowHost(element);
+      if (parent)
+        hidden = hidden || belongsToDisplayNoneOrAriaHidden(parent, cache);
     }
-    if (cache.get(parent)!)
-      return true;
-    parent = parentElementOrShadowHost(parent);
+    cache.set(element, hidden);
   }
-  return false;
+  return cache.get(element)!;
 }
 
 function getIdRefs(element: Element, ref: string | null): Element[] {
@@ -608,4 +610,107 @@ function getElementAccessibleNameInternal(element: Element, options: AccessibleN
 
   options.visitedElements.add(element);
   return '';
+}
+
+export const kAriaSelectedRoles = ['gridcell', 'option', 'row', 'tab', 'rowheader', 'columnheader', 'treeitem'];
+export function getAriaSelected(element: Element): boolean {
+  // https://www.w3.org/TR/wai-aria-1.2/#aria-selected
+  // https://www.w3.org/TR/html-aam-1.0/#html-attribute-state-and-property-mappings
+  if (element.tagName === 'OPTION')
+    return (element as HTMLOptionElement).selected;
+  if (kAriaSelectedRoles.includes(getAriaRole(element) || ''))
+    return getAriaBoolean(element.getAttribute('aria-selected')) === true;
+  return false;
+}
+
+export const kAriaCheckedRoles = ['checkbox', 'menuitemcheckbox', 'option', 'radio', 'switch', 'menuitemradio', 'treeitem'];
+export function getAriaChecked(element: Element): boolean | 'mixed' {
+  // https://www.w3.org/TR/wai-aria-1.2/#aria-checked
+  // https://www.w3.org/TR/html-aam-1.0/#html-attribute-state-and-property-mappings
+  if (element.tagName === 'INPUT' && (element as HTMLInputElement).indeterminate)
+    return 'mixed';
+  if (element.tagName === 'INPUT' && ['checkbox', 'radio'].includes((element as HTMLInputElement).type))
+    return (element as HTMLInputElement).checked;
+  if (kAriaCheckedRoles.includes(getAriaRole(element) || '')) {
+    const checked = element.getAttribute('aria-checked');
+    if (checked === 'true')
+      return true;
+    if (checked === 'mixed')
+      return 'mixed';
+  }
+  return false;
+}
+
+export const kAriaPressedRoles = ['button'];
+export function getAriaPressed(element: Element): boolean | 'mixed' {
+  // https://www.w3.org/TR/wai-aria-1.2/#aria-pressed
+  if (kAriaPressedRoles.includes(getAriaRole(element) || '')) {
+    const pressed = element.getAttribute('aria-pressed');
+    if (pressed === 'true')
+      return true;
+    if (pressed === 'mixed')
+      return 'mixed';
+  }
+  return false;
+}
+
+export const kAriaExpandedRoles = ['application', 'button', 'checkbox', 'combobox', 'gridcell', 'link', 'listbox', 'menuitem', 'row', 'rowheader', 'tab', 'treeitem', 'columnheader', 'menuitemcheckbox', 'menuitemradio', 'rowheader', 'switch'];
+export function getAriaExpanded(element: Element): boolean {
+  // https://www.w3.org/TR/wai-aria-1.2/#aria-expanded
+  // https://www.w3.org/TR/html-aam-1.0/#html-attribute-state-and-property-mappings
+  if (element.tagName === 'DETAILS')
+    return (element as HTMLDetailsElement).open;
+  if (kAriaExpandedRoles.includes(getAriaRole(element) || ''))
+    return getAriaBoolean(element.getAttribute('aria-expanded')) === true;
+  return false;
+}
+
+export const kAriaLevelRoles = ['heading', 'listitem', 'row', 'treeitem'];
+export function getAriaLevel(element: Element) {
+  // https://www.w3.org/TR/wai-aria-1.2/#aria-level
+  // https://www.w3.org/TR/html-aam-1.0/#html-attribute-state-and-property-mappings
+  const native = { 'H1': 1, 'H2': 2, 'H3': 3, 'H4': 4, 'H5': 5, 'H6': 6 }[element.tagName];
+  if (native)
+    return native;
+  if (kAriaLevelRoles.includes(getAriaRole(element) || '')) {
+    const attr = element.getAttribute('aria-level');
+    const value = attr === null ? Number.NaN : Number(attr);
+    if (Number.isInteger(value) && value >= 1)
+      return value;
+  }
+  return 0;
+}
+
+export const kAriaDisabledRoles = ['application', 'button', 'composite', 'gridcell', 'group', 'input', 'link', 'menuitem', 'scrollbar', 'separator', 'tab', 'checkbox', 'columnheader', 'combobox', 'grid', 'listbox', 'menu', 'menubar', 'menuitemcheckbox', 'menuitemradio', 'option', 'radio', 'radiogroup', 'row', 'rowheader', 'searchbox', 'select', 'slider', 'spinbutton', 'switch', 'tablist', 'textbox', 'toolbar', 'tree', 'treegrid', 'treeitem'];
+export function getAriaDisabled(element: Element): boolean {
+  // https://www.w3.org/TR/wai-aria-1.2/#aria-disabled
+  // https://www.w3.org/TR/html-aam-1.0/#html-attribute-state-and-property-mappings
+  // Note that aria-disabled applies to all descendants, so we look up the hierarchy.
+  const isNativeFormControl = ['BUTTON', 'INPUT', 'SELECT', 'TEXTAREA', 'OPTION', 'OPTGROUP'].includes(element.tagName);
+  if (isNativeFormControl && (element.hasAttribute('disabled') || belongsToDisabledFieldSet(element)))
+    return true;
+  return hasExplicitAriaDisabled(element);
+}
+
+function belongsToDisabledFieldSet(element: Element | null): boolean {
+  if (!element)
+    return false;
+  if (element.tagName === 'FIELDSET' && element.hasAttribute('disabled'))
+    return true;
+  // fieldset does not work across shadow boundaries.
+  return belongsToDisabledFieldSet(element.parentElement);
+}
+
+function hasExplicitAriaDisabled(element: Element | undefined): boolean {
+  if (!element)
+    return false;
+  if (kAriaDisabledRoles.includes(getAriaRole(element) || '')) {
+    const attribute = (element.getAttribute('aria-disabled') || '').toLowerCase();
+    if (attribute === 'true')
+      return true;
+    if (attribute === 'false')
+      return false;
+  }
+  // aria-disabled works across shadow boundaries.
+  return hasExplicitAriaDisabled(parentElementOrShadowHost(element));
 }

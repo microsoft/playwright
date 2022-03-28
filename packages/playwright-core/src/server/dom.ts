@@ -28,7 +28,7 @@ import { Progress, ProgressController } from './progress';
 import { SelectorInfo } from './selectors';
 import * as types from './types';
 import { TimeoutOptions } from '../common/types';
-import { isUnderTest } from '../utils/utils';
+import { experimentalFeaturesEnabled, isUnderTest } from '../utils/utils';
 
 type SetInputFilesFiles = channels.ElementHandleSetInputFilesParams['files'];
 export type InputFilesItems = { files?: SetInputFilesFiles, localPaths?: string[] };
@@ -104,6 +104,7 @@ export class FrameExecutionContext extends js.ExecutionContext {
           ${isUnderTest()},
           ${this.frame._page._delegate.rafCountForStablePosition()},
           "${this.frame._page._browserContext._browser.options.name}",
+          ${experimentalFeaturesEnabled()},
           [${custom.join(',\n')}]
         );
         })();
