@@ -28,7 +28,7 @@ it('should send all of the correct events @smoke', async ({ page }) => {
   await page.tap('#a');
   const eventsHandle = await trackEvents(await page.$('#b'));
   await page.tap('#b');
-  // webkit doesnt send pointerenter or pointerleave or mouseout
+  // webkit doesnt saend pointerenter or pointerleave or mouseout
   expect(await eventsHandle.jsonValue()).toEqual([
     'pointerover',  'pointerenter',
     'pointerdown',  'touchstart',
@@ -188,7 +188,7 @@ it('should wait until an element is visible to tap it', async ({ page }) => {
   expect(await div.textContent()).toBe('clicked');
 });
 
-it.only('should move in touchscreen.move', async ({ page }) => {
+it('should move in touchscreen.move', async ({ page }) => {
 
   await page.setContent(`
     <div id="a" style="background: lightblue; width: 300px; height: 5000px">a</div>
@@ -227,7 +227,7 @@ it.only('should move in touchscreen.move', async ({ page }) => {
 });
 
 
-it.only('should send all of the correct events @touchscreen.down', async ({ page }) => {
+it('should send all of the correct events @touchscreen.down', async ({ page }) => {
 
   await page.setContent(`
     <div id="a" style="background: lightblue; width: 200px; height: 2000px">a</div>
@@ -245,7 +245,7 @@ it.only('should send all of the correct events @touchscreen.down', async ({ page
   ]);
 });
 
-it.only('should send all of the correct events @touchscreen.up', async ({ page }) => {
+it('should send all of the correct events @touchscreen.up', async ({ page }) => {
 
   await page.setContent(`
     <div id="a" style="background: lightblue; width: 200px; height: 2000px">a</div>
