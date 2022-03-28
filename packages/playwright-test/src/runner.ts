@@ -36,7 +36,8 @@ import EmptyReporter from './reporters/empty';
 import HtmlReporter from './reporters/html';
 import { ProjectImpl } from './project';
 import { Minimatch } from 'minimatch';
-import { Config, FullConfig } from './types';
+import { Config } from './types';
+import type { FullConfigInternal } from './types';
 import { WebServer } from './webServer';
 import { raceAgainstTimeout } from 'playwright-core/lib/utils/async';
 import { SigIntWatcher } from 'playwright-core/lib/utils/utils';
@@ -419,7 +420,7 @@ export class Runner {
     return result;
   }
 
-  private async _performGlobalSetup(config: FullConfig): Promise<(() => Promise<void>) | undefined> {
+  private async _performGlobalSetup(config: FullConfigInternal): Promise<(() => Promise<void>) | undefined> {
     const result: FullResult = { status: 'passed' };
     const internalGlobalTeardowns: (() => Promise<void>)[] = [];
     let globalSetupResult: any;
@@ -685,9 +686,9 @@ function createTestGroups(rootSuite: Suite): TestGroup[] {
 }
 
 class ListModeReporter implements Reporter {
-  private config!: FullConfig;
+  private config!: FullConfigInternal;
 
-  onBegin(config: FullConfig, suite: Suite): void {
+  onBegin(config: FullConfigInternal, suite: Suite): void {
     this.config = config;
     // eslint-disable-next-line no-console
     console.log(`Listing tests:`);
@@ -712,7 +713,7 @@ class ListModeReporter implements Reporter {
   }
 }
 
-function createForbidOnlyError(config: FullConfig, onlyTestsAndSuites: (TestCase | Suite)[]): TestError {
+function createForbidOnlyError(config: FullConfigInternal, onlyTestsAndSuites: (TestCase | Suite)[]): TestError {
   const errorMessage = [
     '=====================================',
     ' --forbid-only found a focused test.',
@@ -726,7 +727,7 @@ function createForbidOnlyError(config: FullConfig, onlyTestsAndSuites: (TestCase
   return createStacklessError(errorMessage.join('\n'));
 }
 
-function createDuplicateTitlesError(config: FullConfig, clashingTests: Map<string, TestCase[]>): TestError {
+function createDuplicateTitlesError(config: FullConfigInternal, clashingTests: Map<string, TestCase[]>): TestError {
   const errorMessage = [
     '========================================',
     ' duplicate test titles are not allowed.',

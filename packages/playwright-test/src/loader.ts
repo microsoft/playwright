@@ -15,7 +15,8 @@
  */
 
 import { installTransform, setCurrentlyLoadingTestFile } from './transform';
-import type { FullConfig, Config, FullProject, Project, ReporterDescription, PreserveOutput } from './types';
+import type { Config, FullProject, Project, ReporterDescription, PreserveOutput } from './types';
+import type { FullConfigInternal } from './types';
 import { mergeObjects, errorWithFile } from './util';
 import { setCurrentlyLoadingFileSuite } from './globals';
 import { Suite } from './test';
@@ -36,7 +37,7 @@ const cachedFileSuites = new Map<string, Suite>();
 export class Loader {
   private _defaultConfig: Config;
   private _configOverrides: Config;
-  private _fullConfig: FullConfig;
+  private _fullConfig: FullConfigInternal;
   private _configDir: string = '';
   private _configFile: string | undefined;
   private _projects: ProjectImpl[] = [];
@@ -166,7 +167,7 @@ export class Loader {
     return suite;
   }
 
-  async loadGlobalHook(file: string, name: string): Promise<(config: FullConfig) => any> {
+  async loadGlobalHook(file: string, name: string): Promise<(config: FullConfigInternal) => any> {
     let hook = await this._requireOrImport(file);
     if (hook && typeof hook === 'object' && ('default' in hook))
       hook = hook['default'];
@@ -184,7 +185,7 @@ export class Loader {
     return func;
   }
 
-  fullConfig(): FullConfig {
+  fullConfig(): FullConfigInternal {
     return this._fullConfig;
   }
 
@@ -451,7 +452,7 @@ function validateProject(file: string, project: Project, title: string) {
   }
 }
 
-const baseFullConfig: FullConfig = {
+const baseFullConfig: FullConfigInternal = {
   forbidOnly: false,
   fullyParallel: false,
   globalSetup: null,
@@ -528,4 +529,3 @@ export function folderIsModule(folder: string): boolean {
   // Rely on `require` internal caching logic.
   return require(packageJsonPath).type === 'module';
 }
-
