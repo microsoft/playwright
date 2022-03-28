@@ -179,14 +179,14 @@ export class RawTouchscreenImpl implements input.RawTouchscreen {
       }),
     ]);
   }
-  async move(startX: number, startY: number, endX: number, endY: number, modifiers: Set<types.KeyboardModifier>) {
+  async move(x: number, y: number, endX: number, endY: number, modifiers: Set<types.KeyboardModifier>) {
     await Promise.all([
       this._client.send('Input.dispatchTouchEvent', {
         type: 'touchStart',
         modifiers: toModifiersMask(modifiers),
         touchPoints: [{
-          x: startX,
-          y: startY
+          x: x,
+          y: y
         }]
       }),
       this._client.send('Input.dispatchTouchEvent', {
@@ -194,7 +194,8 @@ export class RawTouchscreenImpl implements input.RawTouchscreen {
         modifiers: toModifiersMask(modifiers),
         touchPoints: [{
           x: endX,
-          y: endY
+          y: endY,
+          tangentialPressure: -1
         }]
       }),
       this._client.send('Input.dispatchTouchEvent', {

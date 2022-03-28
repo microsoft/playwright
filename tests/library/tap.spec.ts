@@ -15,7 +15,7 @@
  */
 
 import { contextTest as it, expect } from '../config/browserTest';
-import { ElementHandle } from 'playwright-core';
+import { ElementHandle, Page } from 'playwright-core';
 import type { ServerResponse } from 'http';
 
 it.use({ hasTouch: true });
@@ -188,6 +188,90 @@ it('should wait until an element is visible to tap it', async ({ page }) => {
   expect(await div.textContent()).toBe('clicked');
 });
 
+it.only('should move in touchscreen.move', async ({ page }) => {
+
+  await page.setContent(`
+    <div id="a" style="background: lightblue; width: 300px; height: 5000px">a</div>
+  `);
+
+  const eventsHandle = await trackEvents(await page.$('#a'));
+
+  let rect = await getRect(page);
+  expect(rect).toEqual({ x: 0, y: 0 });
+
+  await page.evaluate(() => {
+    window.scrollTo(0, 100);
+  });
+
+  await wait(500);
+  await page.touchscreen.move(200, 200, 200, 180);
+
+  await wait(500);
+  rect = await getRect(page);
+  expect(rect.x).toEqual(0);
+  // scroll direction is determined by mac user setting, so can not only judge less or greater
+  expect(rect.y).not.toEqual(100);
+
+  expect(await eventsHandle.jsonValue()).toEqual([
+    'pointerover',
+    'pointerenter',
+    'pointerdown',
+    'touchstart',
+    'pointermove',
+    'touchmove',
+    'pointerup',
+    'pointerout',
+    'pointerleave',
+    'touchend'
+  ]);
+});
+
+
+it.only('should send all of the correct events @touchscreen.down', async ({ page }) => {
+
+  await page.setContent(`
+    <div id="a" style="background: lightblue; width: 200px; height: 2000px">a</div>
+  `);
+
+  const eventsHandle = await trackEvents(await page.$('#a'));
+
+  await page.touchscreen.down(100, 100);
+
+  expect(await eventsHandle.jsonValue()).toEqual([
+    'pointerover',
+    'pointerenter',
+    'pointerdown',
+    'touchstart',
+  ]);
+});
+
+it.only('should send all of the correct events @touchscreen.up', async ({ page }) => {
+
+  await page.setContent(`
+    <div id="a" style="background: lightblue; width: 200px; height: 2000px">a</div>
+  `);
+
+  await page.touchscreen.down(100, 100);
+
+  const eventsHandle = await trackEvents(await page.$('#a'));
+  await page.touchscreen.up();
+
+  expect(await eventsHandle.jsonValue()).toEqual([
+    'pointerover',
+    'pointerenter',
+    'pointerup',
+    'pointerout',
+    'pointerleave',
+    "mouseover",
+    "mouseenter",
+    "mousemove",
+    "mousedown",
+    "mouseup",
+    "click",
+  ]);
+});
+
+
 async function trackEvents(target: ElementHandle) {
   const eventsHandle = await target.evaluateHandle(target => {
     const events: string[] = [];
@@ -200,6 +284,23 @@ async function trackEvents(target: ElementHandle) {
     return events;
   });
   return eventsHandle;
+}
+
+function wait(ms: number) {
+  return new Promise(re => {
+    setTimeout(() => {
+      re('');
+    }, ms)
+  })
+}
+
+async function getRect(page: Page) {
+  return page.evaluate(() => {
+    const {x, y} = document.documentElement.getBoundingClientRect();
+    return {
+      x, y
+    };
+  });
 }
 
 it.describe('locators', () => {
