@@ -59,50 +59,40 @@ test('androidDevice.fill', async function({ androidDevice }) {
   expect((await androidDevice.info({ res: 'org.chromium.webview_shell:id/url_field' })).text).toBe('Hello');
 });
 
-test('androidDevice.options.autoInstallDriver', async function({ playwright }) {
+function wait(ms: number) {
+  return new Promise(resolve => {
+    setTimeout(() => {
+      resolve('');
+    }, ms);
+  });
+}
+
+test.only('androidDevice.options.autoInstallDriver', async function({ playwright }) {
   const devices = await playwright._android.devices({ autoInstallDriver: false });
 
   const androidDevice = devices[0];
   await androidDevice.shell(`cmd package uninstall com.microsoft.playwright.androiddriver`);
-  await androidDevice.shell(`cmd package uninstall com.microsoft.playwright.androiddriver.test`)
+  await androidDevice.shell(`cmd package uninstall com.microsoft.playwright.androiddriver.test`);
+
+  await androidDevice.shell('am start -n com.android.chrome/com.google.android.apps.chrome.Main about:blank');
 
   let fillEnd = false;
-  try {
-    await androidDevice.shell('am start -n com.android.chrome/com.google.android.apps.chrome.Main about:blank');
+  const fillPromise = androidDevice.fill({ res: 'com.android.chrome:id/url_bar' }, 'Hello').then(() => {
+    fillEnd = true;
+  });
 
-    // parallel
-    await Promise.all([
-      // 1. hang on opening socket
-      // 2. install and start driver
-      // 3. finish operation
-      androidDevice.fill({ res: 'com.android.chrome:id/url_bar' }, 'Hello').then(() => {
-        fillEnd = true
-      }),
+  await wait(2000);
+  expect(fillEnd).toBe(false);
 
-      // 1. check false
-      // 2. install and start driver
-      // 3. check true
-      new Promise(resolve => {
-        setTimeout(async () => {
-          expect(fillEnd).toBe(false);
-
-          // install and start driver
-          for (const file of ['android-driver.apk', 'android-driver-target.apk']) {
-            const filePath = join(require.resolve('playwright-core'), '..', 'bin', file);
-            console.log('file', filePath);
-            await androidDevice.installApk(await fs.promises.readFile(filePath));
-          }
-          androidDevice.shell('am instrument -w com.microsoft.playwright.androiddriver.test/androidx.test.runner.AndroidJUnitRunner').catch(e => console.error);
-
-          setTimeout(() => {
-            resolve('');
-          }, 4000)
-        }, 2000)
-      })
-    ])
+  // install and start driver
+  for (const file of ['android-driver.apk', 'android-driver-target.apk']) {
+    const filePath = join(require.resolve('playwright-core'), '..', 'bin', file);
+    console.log('file', filePath);
+    await androidDevice.installApk(await fs.promises.readFile(filePath));
   }
-  catch (e) {
-    console.error(e);
-  }
+  androidDevice.shell('am instrument -w com.microsoft.playwright.androiddriver.test/androidx.test.runner.AndroidJUnitRunner').catch(e => console.error);
+
+  await wait(2000);
+  await fillPromise;
   expect(fillEnd).toBe(true);
 });
