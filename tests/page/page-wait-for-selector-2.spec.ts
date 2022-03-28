@@ -67,6 +67,27 @@ it('should wait for visible recursively', async ({ page, server }) => {
   expect(divVisible).toBe(true);
 });
 
+it('should consider outside of viewport visible', async ({ page }) => {
+  await page.setContent(`
+    <style>
+      .cover {
+        position: fixed;
+        left: 0;
+        top: 0;
+        width: 100px;
+        height: 100px;
+        background-color: red;
+        transform: translateX(-200px);
+      }
+    </style>
+    <div class="cover">cover</div>
+  `);
+
+  const cover = page.locator('.cover');
+  await cover.waitFor({ state: 'visible' });
+  await expect(cover).toBeVisible();
+});
+
 it('hidden should wait for hidden', async ({ page, server }) => {
   let divHidden = false;
   await page.setContent(`<div style='display: block;'>content</div>`);
