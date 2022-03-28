@@ -3,14 +3,13 @@
 The Touchscreen class operates in main-frame CSS pixels relative to the top-left corner of the viewport. Methods on the
 touchscreen can only be used in browser contexts that have been initialized with `hasTouch` set to true.
 
-## async method: Touchscreen.tap
+## async method: Touchscreen.down
+Dispatches a `touchstart` event with a single touch at the position ([`param: x`],[`param: y`]).
 
-Dispatches a `touchstart` and `touchend` event with a single touch at the position ([`param: x`],[`param: y`]).
-
-### param: Touchscreen.tap.x
+### param: Touchscreen.down.x
 - `x` <[float]>
 
-### param: Touchscreen.tap.y
+### param: Touchscreen.down.y
 - `y` <[float]>
 
 ## async method: Touchscreen.move
@@ -27,11 +26,16 @@ Dispatches a `touchstart` and `touchmove` and `touchend` event with a single tou
 ### param: Touchscreen.move.endY
 - `endY` <[float]>
 
-## async method: Touchscreen.down
-### param: Touchscreen.down.x
+## async method: Touchscreen.tap
+
+Dispatches a `touchstart` and `touchend` event with a single touch at the position ([`param: x`],[`param: y`]).
+
+### param: Touchscreen.tap.x
 - `x` <[float]>
 
-### param: Touchscreen.down.y
+### param: Touchscreen.tap.y
 - `y` <[float]>
 
 ## async method: Touchscreen.up
+
+Dispatches a `touchend` event

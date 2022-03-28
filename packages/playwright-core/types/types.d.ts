@@ -14834,11 +14834,11 @@ export interface Selectors {
  */
 export interface Touchscreen {
   /**
-   * Dispatches a `touchstart` and `touchend` event with a single touch at the position (`x`,`y`).
+   * Dispatches a `touchstart` event with a single touch at the position (`x`,`y`).
    * @param x
    * @param y
    */
-  tap(x: number, y: number): Promise<void>;
+  down(x: number, y: number): Promise<void>;
 
   /**
    * Dispatches a `touchstart` and `touchmove` and `touchend` event with a single touch at the position
@@ -14851,11 +14851,15 @@ export interface Touchscreen {
   move(x: number, y: number, endX: number, endY: number): Promise<void>;
 
   /**
+   * Dispatches a `touchstart` and `touchend` event with a single touch at the position (`x`,`y`).
    * @param x
    * @param y
    */
-  down(x: number, y: number): Promise<void>;
+  tap(x: number, y: number): Promise<void>;
 
+  /**
+   * Dispatches a `touchend` event
+   */
   up(): Promise<void>;
 }
 
