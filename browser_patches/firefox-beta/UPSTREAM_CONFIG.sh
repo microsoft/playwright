@@ -1,3 +1,3 @@
 REMOTE_URL="https://github.com/mozilla/gecko-dev"
 BASE_BRANCH="beta"
-BASE_REVISION="5f0e950782580c06295753dbf69afd87a747dea3"
+BASE_REVISION="b98f0adbce7b259b1d929b8b9461c2830297daf9"
