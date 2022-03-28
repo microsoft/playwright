@@ -18,6 +18,7 @@ import { androidTest as test, expect } from './androidTest';
 
 test.afterEach(async ({ androidDevice }) => {
   await androidDevice.shell('am force-stop org.chromium.webview_shell');
+  await androidDevice.shell('am force-stop com.android.chrome');
 });
 
 test('androidDevice.webView', async function({ androidDevice }) {
@@ -61,3 +62,23 @@ test('should navigate page externally', async function({ androidDevice }) {
   ]);
   expect(await page.title()).toBe('Hello world!');
 });
+
+test('select webview from socketName', async function({ androidDevice }) {
+  test.slow();
+  await androidDevice.shell('am start -n com.android.chrome/com.google.android.apps.chrome.Main about:blank');
+  const webview = await androidDevice.webView({ socketName: 'chrome_devtools_remote' });
+  expect(webview.pkg()).toBe('');
+  expect(webview.socketName()).toBe('chrome_devtools_remote');
+  const page = await webview.page();
+  expect(page.url()).toBe('about:blank');
+});
+
+test('webview.pages', async function({ androidDevice }) {
+  test.slow();
+  await androidDevice.shell('am start -n com.android.chrome/com.google.android.apps.chrome.Main about:blank');
+  const webview = await androidDevice.webView({ socketName: 'chrome_devtools_remote' });
+  const pages = await webview.pages();
+  expect(pages.length).toBe(1);
+  expect(pages[0].url()).toBe('about:blank');
+});
+

@@ -1301,6 +1301,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   scheme.ElectronApplicationCloseParams = tOptional(tObject({}));
   scheme.AndroidDevicesParams = tObject({
     port: tOptional(tNumber),
+    autoInstallDriver: tOptional(tBoolean),
   });
   scheme.AndroidSetDefaultTimeoutNoReplyParams = tObject({
     timeout: tNumber,
@@ -1463,12 +1464,13 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     timeout: tNumber,
   });
   scheme.AndroidDeviceConnectToWebViewParams = tObject({
-    pid: tNumber,
+    socketName: tString,
   });
   scheme.AndroidDeviceCloseParams = tOptional(tObject({}));
   scheme.AndroidWebView = tObject({
     pid: tNumber,
     pkg: tString,
+    socketName: tString,
   });
   scheme.AndroidSelector = tObject({
     checkable: tOptional(tBoolean),

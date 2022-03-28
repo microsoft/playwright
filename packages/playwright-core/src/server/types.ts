@@ -369,5 +369,6 @@ export type APIResponse = {
 };
 
 export type AndroidDeviceOptions = {
-  port?: number
+  port?: number,
+  autoInstallDriver?: boolean,
 };

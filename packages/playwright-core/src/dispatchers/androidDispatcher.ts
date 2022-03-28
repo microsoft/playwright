@@ -55,7 +55,7 @@ export class AndroidDeviceDispatcher extends Dispatcher<AndroidDevice, channels.
     for (const webView of device.webViews())
       this._dispatchEvent('webViewAdded', { webView });
     device.on(AndroidDevice.Events.WebViewAdded, webView => this._dispatchEvent('webViewAdded', { webView }));
-    device.on(AndroidDevice.Events.WebViewRemoved, pid => this._dispatchEvent('webViewRemoved', { pid }));
+    device.on(AndroidDevice.Events.WebViewRemoved, socketName => this._dispatchEvent('webViewRemoved', { socketName }));
   }
 
   async wait(params: channels.AndroidDeviceWaitParams) {
@@ -168,7 +168,7 @@ export class AndroidDeviceDispatcher extends Dispatcher<AndroidDevice, channels.
   }
 
   async connectToWebView(params: channels.AndroidDeviceConnectToWebViewParams): Promise<channels.AndroidDeviceConnectToWebViewResult> {
-    return { context: new BrowserContextDispatcher(this._scope, await this._object.connectToWebView(params.pid)) };
+    return { context: new BrowserContextDispatcher(this._scope, await this._object.connectToWebView(params.socketName)) };
   }
 }
 

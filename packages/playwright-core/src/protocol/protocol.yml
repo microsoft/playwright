@@ -2846,6 +2846,7 @@ Android:
     devices:
       parameters:
         port: number?
+        autoInstallDriver: boolean?
       returns:
         devices:
           type: array
@@ -3050,7 +3051,7 @@ AndroidDevice:
 
     connectToWebView:
       parameters:
-        pid: number
+        socketName: string
       returns:
         context: BrowserContext
 
@@ -3063,7 +3064,7 @@ AndroidDevice:
 
     webViewRemoved:
       parameters:
-        pid: number
+        socketName: string
 
 
 AndroidWebView:
@@ -3071,6 +3072,7 @@ AndroidWebView:
   properties:
     pid: number
     pkg: string
+    socketName: string
 
 
 AndroidSelector:
