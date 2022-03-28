@@ -198,26 +198,6 @@ test('should load esm when package.json has type module', async ({ runInlineTest
   expect(result.passed).toBe(1);
 });
 
-test('should load nested as esm when package.json has type module @esm', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    'playwright.config.js': `
-      //@no-header
-      import * as fs from 'fs';
-      export default { projects: [{name: 'foo'}] };
-    `,
-    'package.json': JSON.stringify({ type: 'module' }),
-    'nested/folder/a.esm.test.js': `
-      const { test } = pwt;
-      test('check project name', ({}, testInfo) => {
-        expect(testInfo.project.name).toBe('foo');
-      });
-    `
-  });
-
-  expect(result.exitCode).toBe(0);
-  expect(result.passed).toBe(1);
-});
-
 test('should load esm config files', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.mjs': `
@@ -259,46 +239,6 @@ test('should fail to load ts from esm when package.json has type module', async 
 
   expect(result.exitCode).toBe(1);
   expect(result.output).toContain('Cannot import a typescript file from an esmodule');
-});
-
-test('should import esm from ts when package.json has type module in experimental mode @esm', async ({ runInlineTest }) => {
-  // We only support experimental esm mode on Node 16+
-  test.skip(parseInt(process.version.slice(1), 10) < 16);
-  const result = await runInlineTest({
-    'playwright.config.ts': `
-      import * as fs from 'fs';
-      export default { projects: [{name: 'foo'}] };
-    `,
-    'package.json': JSON.stringify({ type: 'module' }),
-    'a.test.ts': `
-      import { foo } from './b.ts';
-      const { test } = pwt;
-      test('check project name', ({}, testInfo) => {
-        expect(testInfo.project.name).toBe('foo');
-      });
-    `,
-    'b.ts': `
-      export const foo: string = 'foo';
-    `
-  }, {});
-
-  expect(result.exitCode).toBe(0);
-});
-
-test('should propagate subprocess exit code in experimental mode @esm', async ({ runInlineTest }) => {
-  // We only support experimental esm mode on Node 16+
-  test.skip(parseInt(process.version.slice(1), 10) < 16);
-  const result = await runInlineTest({
-    'package.json': JSON.stringify({ type: 'module' }),
-    'a.test.ts': `
-      const { test } = pwt;
-      test('failing test', ({}, testInfo) => {
-        expect(1).toBe(2);
-      });
-    `,
-  }, {});
-
-  expect(result.exitCode).toBe(1);
 });
 
 test('should filter stack trace for simple expect', async ({ runInlineTest }) => {
