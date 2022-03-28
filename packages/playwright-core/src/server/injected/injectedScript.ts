@@ -25,7 +25,7 @@ import { CSSComplexSelectorList } from '../common/cssParser';
 import { generateSelector } from './selectorGenerator';
 import type * as channels from '../../protocol/channels';
 import { Highlight } from './highlight';
-import { getAriaDisabled, getElementAccessibleName } from './roleUtils';
+import { getAriaDisabled, getAriaRole, getElementAccessibleName } from './roleUtils';
 
 type Predicate<T> = (progress: InjectedScriptProgress) => T | symbol;
 
@@ -1077,6 +1077,10 @@ export class InjectedScript {
   getElementAccessibleName(element: Element, includeHidden?: boolean): string {
     const hiddenCache = new Map<Element, boolean>();
     return getElementAccessibleName(element, !!includeHidden, hiddenCache);
+  }
+
+  getAriaRole(element: Element) {
+    return getAriaRole(element);
   }
 }
 
