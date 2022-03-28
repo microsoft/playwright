@@ -192,7 +192,9 @@ it('should set playwright as user-agent', async ({ playwright, server, isWindows
   if (isWindows)
     expect(userAgentMasked).toBe('Playwright/X.X.X (<ARCH>; windows X.X) node/X.X');
   else if (isLinux)
-    expect(userAgentMasked).toBe('Playwright/X.X.X (<ARCH>; ubuntu X.X) node/X.X');
+    // on ubuntu: distro is 'ubuntu' and version is 'X.X'
+    // on manjaro: distro is 'Manjaro' and version is 'unknown'
+    expect(userAgentMasked.replace(/<ARCH>; \w+ [^)]+/, '<ARCH>; distro version')).toBe('Playwright/X.X.X (<ARCH>; distro version) node/X.X');
   else if (isMac)
     expect(userAgentMasked).toBe('Playwright/X.X.X (<ARCH>; macOS X.X) node/X.X');
 });
