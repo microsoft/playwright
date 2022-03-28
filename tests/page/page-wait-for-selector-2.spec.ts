@@ -100,6 +100,29 @@ it('hidden should wait for removal', async ({ page, server }) => {
   expect(divRemoved).toBe(true);
 });
 
+it('hidden should wait for out-of-viewport', async ({ page }) => {
+  it.fail(true, 'https://github.com/microsoft/playwright/issues/13131');
+  await page.setContent(`
+    <style>
+      .cover {
+        position: fixed;
+        left: 0;
+        top: 0;
+        width: 100px;
+        height: 100px;
+        background-color: red;
+        transform: translateX(-200px);
+      }
+    </style>
+    <div class="cover">cover</div>
+  `);
+
+  const cover = page.locator('.cover');
+  await expect.soft(cover).not.toBeVisible();
+  // Below is not web-first, but is included to mirror original snippet from https://github.com/microsoft/playwright/issues/13131
+  await cover.waitFor({ state: 'hidden' });
+});
+
 it('should return null if waiting to hide non-existing element', async ({ page, server }) => {
   const handle = await page.waitForSelector('non-existing', { state: 'hidden' });
   expect(handle).toBe(null);
