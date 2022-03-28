@@ -262,12 +262,12 @@ it('should send all of the correct events @touchscreen.up', async ({ page }) => 
     'pointerup',
     'pointerout',
     'pointerleave',
-    "mouseover",
-    "mouseenter",
-    "mousemove",
-    "mousedown",
-    "mouseup",
-    "click",
+    'mouseover',
+    'mouseenter',
+    'mousemove',
+    'mousedown',
+    'mouseup',
+    'click',
   ]);
 });
 
@@ -287,16 +287,16 @@ async function trackEvents(target: ElementHandle) {
 }
 
 function wait(ms: number) {
-  return new Promise(re => {
+  return new Promise(resolve => {
     setTimeout(() => {
-      re('');
-    }, ms)
-  })
+      resolve('');
+    }, ms);
+  });
 }
 
 async function getRect(page: Page) {
   return page.evaluate(() => {
-    const {x, y} = document.documentElement.getBoundingClientRect();
+    const { x, y } = document.documentElement.getBoundingClientRect();
     return {
       x, y
     };
