@@ -263,7 +263,7 @@ export class Registry {
     const descriptors = readDescriptors(browsersJSON);
     const findExecutablePath = (dir: string, name: keyof typeof EXECUTABLE_PATHS) => {
       let tokens = undefined;
-      if (hostPlatform.startsWith('ubuntu'))
+      if (hostPlatform.startsWith('ubuntu') || hostPlatform.startsWith('generic-linux'))
         tokens = EXECUTABLE_PATHS[name]['linux'];
       else if (hostPlatform.startsWith('mac'))
         tokens = EXECUTABLE_PATHS[name]['mac'];
