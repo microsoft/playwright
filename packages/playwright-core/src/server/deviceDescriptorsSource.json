@@ -814,7 +814,7 @@
     "defaultBrowserType": "webkit"
   },
   "JioPhone 2": {
-    "userAgent": "Mozilla/5.0 (Mobile; LYF/F300B/LYF-F300B-001-01-15-130718-i;Android; rv:97.0.1) Gecko/48.0 Firefox/97.0.1 KAIOS/2.5",
+    "userAgent": "Mozilla/5.0 (Mobile; LYF/F300B/LYF-F300B-001-01-15-130718-i;Android; rv:98.0.2) Gecko/48.0 Firefox/98.0.2 KAIOS/2.5",
     "viewport": {
       "width": 240,
       "height": 320
@@ -825,7 +825,7 @@
     "defaultBrowserType": "firefox"
   },
   "JioPhone 2 landscape": {
-    "userAgent": "Mozilla/5.0 (Mobile; LYF/F300B/LYF-F300B-001-01-15-130718-i;Android; rv:97.0.1) Gecko/48.0 Firefox/97.0.1 KAIOS/2.5",
+    "userAgent": "Mozilla/5.0 (Mobile; LYF/F300B/LYF-F300B-001-01-15-130718-i;Android; rv:98.0.2) Gecko/48.0 Firefox/98.0.2 KAIOS/2.5",
     "viewport": {
       "width": 320,
       "height": 240
@@ -1322,7 +1322,7 @@
     "defaultBrowserType": "chromium"
   },
   "Desktop Firefox HiDPI": {
-    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:97.0.1) Gecko/20100101 Firefox/97.0.1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:98.0.2) Gecko/20100101 Firefox/98.0.2",
     "screen": {
       "width": 1792,
       "height": 1120
@@ -1382,7 +1382,7 @@
     "defaultBrowserType": "chromium"
   },
   "Desktop Firefox": {
-    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:97.0.1) Gecko/20100101 Firefox/97.0.1",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:98.0.2) Gecko/20100101 Firefox/98.0.2",
     "screen": {
       "width": 1920,
       "height": 1080
