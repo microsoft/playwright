@@ -56,11 +56,13 @@ export class WebServer {
 
     const isAlreadyAvailable = await this._isAvailable();
     if (isAlreadyAvailable) {
+      debugWebServer(`WebServer is already available`);
       if (this.config.reuseExistingServer)
         return;
       throw new Error(`${this.config.url ?? `http://localhost:${this.config.port}`} is already used, make sure that nothing is running on the port/url or set reuseExistingServer:true in config.webServer.`);
     }
 
+    debugWebServer(`Starting WebServer process ${this.config.command}...`);
     const { launchedProcess, kill } = await launchProcess({
       command: this.config.command,
       env: {
@@ -78,6 +80,8 @@ export class WebServer {
     });
     this._killProcess = kill;
 
+    debugWebServer(`Process started`);
+
     launchedProcess.stderr!.on('data', line => this.reporter.onStdErr?.('[WebServer] ' + line.toString()));
     launchedProcess.stdout!.on('data', line => {
       if (debugWebServer.enabled)
@@ -86,7 +90,9 @@ export class WebServer {
   }
 
   private async _waitForProcess() {
+    debugWebServer(`Waiting for availability...`);
     await this._waitForAvailability();
+    debugWebServer(`WebServer available`);
     if (this.config.port !== undefined)
       process.env.PLAYWRIGHT_TEST_BASE_URL = `http://localhost:${this.config.port}`;
   }
@@ -95,7 +101,7 @@ export class WebServer {
     const launchTimeout = this.config.timeout || 60 * 1000;
     const cancellationToken = { canceled: false };
     const { timedOut } = (await Promise.race([
-      raceAgainstTimeout(() => waitFor(this._isAvailable, 100, cancellationToken), launchTimeout),
+      raceAgainstTimeout(() => waitFor(this._isAvailable, cancellationToken), launchTimeout),
       this._processExitedPromise,
     ]));
     cancellationToken.canceled = true;
@@ -123,30 +129,44 @@ async function isPortUsed(port: number): Promise<boolean> {
 }
 
 async function isURLAvailable(url: URL, ignoreHTTPSErrors: boolean | undefined, onStdErr: Reporter['onStdErr']) {
+  let statusCode = await httpStatusCode(url, ignoreHTTPSErrors, onStdErr);
+  if (statusCode === 404 && url.pathname === '/') {
+    const indexUrl = new URL(url);
+    indexUrl.pathname = '/index.html';
+    statusCode = await httpStatusCode(indexUrl, ignoreHTTPSErrors, onStdErr);
+  }
+  return statusCode >= 200 && statusCode < 300;
+}
+
+async function httpStatusCode(url: URL, ignoreHTTPSErrors: boolean | undefined, onStdErr: Reporter['onStdErr']): Promise<number> {
   const isHttps = url.protocol === 'https:';
   const requestOptions = isHttps ? {
     rejectUnauthorized: !ignoreHTTPSErrors,
   } : {};
-  return new Promise<boolean>(resolve => {
+  return new Promise(resolve => {
+    debugWebServer(`HTTP GET: ${url}`);
     (isHttps ? https : http).get(url, requestOptions, res => {
       res.resume();
       const statusCode = res.statusCode ?? 0;
-      resolve(statusCode >= 200 && statusCode < 300);
+      debugWebServer(`HTTP Status: ${statusCode}`);
+      resolve(statusCode);
     }).on('error', error => {
       if ((error as NodeJS.ErrnoException).code === 'DEPTH_ZERO_SELF_SIGNED_CERT')
         onStdErr?.(`[WebServer] Self-signed certificate detected. Try adding ignoreHTTPSErrors: true to config.webServer.`);
-      else
-        debugWebServer(`Error while checking if ${url} is available: ${error.message}`);
-      resolve(false);
+      debugWebServer(`Error while checking if ${url} is available: ${error.message}`);
+      resolve(0);
     });
   });
 }
 
-async function waitFor(waitFn: () => Promise<boolean>, delay: number, cancellationToken: { canceled: boolean }) {
+async function waitFor(waitFn: () => Promise<boolean>, cancellationToken: { canceled: boolean }) {
+  const logScale = [100, 250, 500];
   while (!cancellationToken.canceled) {
     const connected = await waitFn();
     if (connected)
       return;
+    const delay = logScale.shift() || 1000;
+    debugWebServer(`Waiting ${delay}ms`);
     await new Promise(x => setTimeout(x, delay));
   }
 }
