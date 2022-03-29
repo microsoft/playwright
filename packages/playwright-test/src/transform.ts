@@ -99,23 +99,31 @@ export function resolveHook(filename: string, specifier: string): string | undef
   if (!isTypeScript)
     return;
   const tsconfig = loadAndValidateTsconfigForFile(filename);
-  if (!tsconfig)
-    return;
-  for (const { key, values } of tsconfig.paths) {
-    const keyHasStar = key[key.length - 1] === '*';
-    const matches = specifier.startsWith(keyHasStar ? key.substring(0, key.length - 1) : key);
-    if (!matches)
-      continue;
-    for (const value of values) {
-      const valueHasStar = value[value.length - 1] === '*';
-      let candidate = valueHasStar ? value.substring(0, value.length - 1) : value;
-      if (valueHasStar && keyHasStar)
-        candidate += specifier.substring(key.length - 1);
-      candidate = path.resolve(tsconfig.absoluteBaseUrl, candidate.replace(/\//g, path.sep));
-      for (const ext of ['', '.js', '.ts', '.mjs', '.cjs', '.jsx', '.tsx']) {
-        if (fs.existsSync(candidate + ext))
-          return candidate;
+  if (tsconfig) {
+    for (const { key, values } of tsconfig.paths) {
+      const keyHasStar = key[key.length - 1] === '*';
+      const matches = specifier.startsWith(keyHasStar ? key.substring(0, key.length - 1) : key);
+      if (!matches)
+        continue;
+      for (const value of values) {
+        const valueHasStar = value[value.length - 1] === '*';
+        let candidate = valueHasStar ? value.substring(0, value.length - 1) : value;
+        if (valueHasStar && keyHasStar)
+          candidate += specifier.substring(key.length - 1);
+        candidate = path.resolve(tsconfig.absoluteBaseUrl, candidate.replace(/\//g, path.sep));
+        for (const ext of ['', '.js', '.ts', '.mjs', '.cjs', '.jsx', '.tsx']) {
+          if (fs.existsSync(candidate + ext))
+            return candidate;
+        }
       }
+    }
+  }
+  if (specifier.endsWith('.js')) {
+    const resolved = path.resolve(path.dirname(filename), specifier);
+    if (resolved.endsWith('.js')) {
+      const tsResolved = resolved.substring(0, resolved.length - 3) + '.ts';
+      if (!fs.existsSync(resolved) && fs.existsSync(tsResolved))
+        return tsResolved;
     }
   }
 }

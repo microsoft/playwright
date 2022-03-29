@@ -93,7 +93,7 @@ jobs:
         DEBUG: pw:install
     - run: npm run build
     - run: npx playwright install --with-deps
-    - run: npm run ttest -- --grep=@esm
+    - run: npm run ttest -- esm.spec.ts
 
   test_html_report:
     name: HTML Report
