@@ -218,7 +218,6 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
   updateSnapshots: UpdateSnapshots;
   workers: number;
   webServer: WebServerConfig | null;
-  attachments: { name: string, path?: string, body?: Buffer, contentType: string }[];
   // [internal] !!! DO NOT ADD TO THIS !!! See prior note.
 }
 
@@ -287,6 +286,10 @@ export interface TestInfo {
   outputPath: (...pathSegments: string[]) => string;
 }
 
+export interface GlobalInfo {
+  attachments: { name: string, path?: string, body?: Buffer, contentType: string }[];
+  attach(name: string, options?: { contentType?: string, path?: string, body?: string | Buffer }): Promise<void>;
+}
 interface SuiteFunction {
   (title: string, callback: () => void): void;
 }

@@ -29,6 +29,7 @@ export interface Suite {
   location?: Location;
   suites: Suite[];
   tests: TestCase[];
+  attachments: { name: string, path?: string, body?: Buffer, contentType: string }[];
   titlePath(): string[];
   allTests(): TestCase[];
   project(): FullProject | undefined;

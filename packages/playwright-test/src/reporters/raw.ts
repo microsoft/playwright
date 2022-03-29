@@ -133,8 +133,8 @@ class RawReporter {
     }
   }
 
-  generateAttachments(config: FullConfig): JsonAttachment[] {
-    return this._createAttachments(config.attachments);
+  generateAttachments(attachments: Suite['attachments']): JsonAttachment[] {
+    return this._createAttachments(attachments);
   }
 
   generateProjectReport(config: FullConfig, suite: Suite): JsonReport {

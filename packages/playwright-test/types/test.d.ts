@@ -1272,15 +1272,6 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    *
    */
   webServer: WebServerConfig | null;
-  /**
-   * > NOTE: This does not include test-level attachments. See
-   * [testInfo.attach(name[, options])](https://playwright.dev/docs/api/class-testinfo#test-info-attach) and
-   * [testInfo.attachments](https://playwright.dev/docs/api/class-testinfo#test-info-attachments) for working with test-level
-   * attachments.
-   *
-   * The list of files or buffers attached for the overall Playwright Test run. Some reporters show attachments.
-   */
-  attachments: { name: string, path?: string, body?: Buffer, contentType: string }[];
 }
 
 export type TestStatus = 'passed' | 'failed' | 'timedOut' | 'skipped';
@@ -1731,6 +1722,10 @@ export interface TestInfo {
   outputPath: (...pathSegments: string[]) => string;
 }
 
+export interface GlobalInfo {
+  attachments: { name: string, path?: string, body?: Buffer, contentType: string }[];
+  attach(name: string, options?: { contentType?: string, path?: string, body?: string | Buffer }): Promise<void>;
+}
 interface SuiteFunction {
   (title: string, callback: () => void): void;
 }

@@ -84,6 +84,7 @@ export interface Suite {
    * listed in the child [suite.suites](https://playwright.dev/docs/api/class-suite#suite-suites).
    */
   tests: TestCase[];
+  attachments: { name: string, path?: string, body?: Buffer, contentType: string }[];
   /**
    * Returns a list of titles from the root down to this suite.
    */

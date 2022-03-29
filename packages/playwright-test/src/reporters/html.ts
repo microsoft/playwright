@@ -161,7 +161,7 @@ class HtmlReporter implements Reporter {
     });
     await removeFolders([outputFolder]);
     const builder = new HtmlBuilder(outputFolder);
-    const { ok, singleTestId } = await builder.build(new RawReporter().generateAttachments(this.config), reports);
+    const { ok, singleTestId } = await builder.build(new RawReporter().generateAttachments(this.suite.attachments), reports);
 
     if (process.env.CI)
       return;

@@ -187,13 +187,13 @@ test(`testInfo.attach allow empty buffer body`, async ({ runInlineTest }) => {
   expect(stripAnsi(result.output)).toMatch(/^.*attachment #1: name \(text\/plain\).*\n.*\n.*------/gm);
 });
 
-test(`TestConfig.attachments works`, async ({ runInlineTest }) => {
+test(`GlobalInfo.attach works`, async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'globalSetup.ts': `
-      import { FullConfig } from '@playwright/test';
+      import { FullConfig, GlobalInfo } from '@playwright/test';
 
-      async function globalSetup(config: FullConfig) {
-        config.attachments = [{ contentType: 'text/plain', body: Buffer.from('example data'), name: 'my-attachment.txt' }];
+      async function globalSetup(config: FullConfig, globalInfo: GlobalInfo) {
+        await globalInfo.attach('my-attachment.txt', { body: Buffer.from('example data') });
       };
 
       export default globalSetup;

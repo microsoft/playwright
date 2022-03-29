@@ -127,7 +127,7 @@ class JSONReporter implements Reporter {
     return {
       config: {
         ...this.config,
-        attachments: this.config.attachments.map(a => ({
+        attachments: this.suite.attachments.map(a => ({
           name: a.name,
           contentType: a.contentType,
           path: a.path,

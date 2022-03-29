@@ -37,10 +37,11 @@ import HtmlReporter from './reporters/html';
 import { ProjectImpl } from './project';
 import { Minimatch } from 'minimatch';
 import { Config } from './types';
-import type { FullConfigInternal } from './types';
+import type { FullConfigInternal, GlobalInfo } from './types';
 import { WebServer } from './webServer';
 import { raceAgainstTimeout } from 'playwright-core/lib/utils/async';
 import { SigIntWatcher } from 'playwright-core/lib/utils/utils';
+import { GlobalInfoImpl } from './globalInfo';
 
 const removeFolderAsync = promisify(rimraf);
 const readDirAsync = promisify(fs.readdir);
@@ -59,9 +60,13 @@ export class Runner {
   private _loader: Loader;
   private _reporter!: Reporter;
   private _internalGlobalSetups: Array<InternalGlobalSetupFunction> = [];
+  private _globalInfo: GlobalInfo;
 
   constructor(configOverrides: Config, options: { defaultConfig?: Config } = {}) {
     this._loader = new Loader(options.defaultConfig || {}, configOverrides);
+    // FIXME(rwoll): This should be somewhere else. Discuss with Lusha since he recently sorted out all
+    //               paths in our configs.
+    this._globalInfo = new GlobalInfoImpl(process.cwd());
   }
 
   async loadConfigFromResolvedFile(resolvedConfigFile: string): Promise<Config> {
@@ -283,6 +288,7 @@ export class Runner {
 
     const outputDirs = new Set<string>();
     const rootSuite = new Suite('');
+    rootSuite.attachments = this._globalInfo.attachments;
     for (const [project, files] of filesByProject) {
       const grepMatcher = createTitleMatcher(project.config.grep);
       const grepInvertMatcher = project.config.grepInvert ? createTitleMatcher(project.config.grepInvert) : null;
@@ -434,7 +440,7 @@ export class Runner {
 
       await this._runAndReportError(async () => {
         if (config.globalTeardown)
-          await (await this._loader.loadGlobalHook(config.globalTeardown, 'globalTeardown'))(this._loader.fullConfig());
+          await (await this._loader.loadGlobalHook(config.globalTeardown, 'globalTeardown'))(this._loader.fullConfig(), this._globalInfo);
       }, result);
 
       await this._runAndReportError(async () => {
@@ -452,7 +458,7 @@ export class Runner {
         internalGlobalTeardowns.push(await internalGlobalSetup());
       webServer = config.webServer ? await WebServer.create(config.webServer, this._reporter) : undefined;
       if (config.globalSetup)
-        globalSetupResult = await (await this._loader.loadGlobalHook(config.globalSetup, 'globalSetup'))(this._loader.fullConfig());
+        globalSetupResult = await (await this._loader.loadGlobalHook(config.globalSetup, 'globalSetup'))(this._loader.fullConfig(), this._globalInfo);
     }, result);
 
     if (result.status !== 'passed') {
