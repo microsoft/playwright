@@ -30,6 +30,10 @@ function render(component) {
     if (typeof child === 'string')
       return child;
     return render(child);
+  }).filter(child => {
+    if (typeof child === 'string')
+      return !!child.trim();
+    return true;
   }));
 }
 
