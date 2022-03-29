@@ -21,7 +21,7 @@ import * as ci from '@playwright/test/lib/ci';
 async function globalSetup(config: FullConfig) {
   config.attachments = [
     ...await ci.generationTimestamp(),
-    ...await ci.gitStatusFromCLI(config.rootDir).catch(() => []),
+    ...await ci.gitStatusFromCLI(config.rootDir),
     ...await ci.githubEnv(),
     // In the future, we would add some additional plugins like:
     // ...await ci.azurePipelinePlugin(),

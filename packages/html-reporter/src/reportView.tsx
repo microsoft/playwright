@@ -104,9 +104,6 @@ const MetadataView: React.FC<Metadata> = metadata => {
           icon='externalLink'
         />
       }
-      {metadata['revision.localPendingChanges'] &&
-        <p style={{ fontStyle: 'italic', color: 'var(--color-fg-subtle)' }}>This report was generated with <strong>uncommitted changes</strong>.</p>
-      }
       {metadata['generatedAt'] &&
         <p style={{ fontStyle: 'italic', color: 'var(--color-fg-subtle)' }}>Report generated on {Intl.DateTimeFormat(undefined, { dateStyle: 'full', timeStyle: 'long' }).format(metadata['generatedAt'])}</p>
       }
