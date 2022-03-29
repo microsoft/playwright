@@ -24,7 +24,6 @@
 
 .stack-trace-frame {
   flex: 0 0 20px;
-  font-size: smaller;
   display: flex;
   flex-direction: row;
   align-items: center;
