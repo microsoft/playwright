@@ -15,9 +15,8 @@
  */
 import fs from 'fs';
 import path from 'path';
-import * as mime from 'mime';
-import { calculateSha1 } from 'playwright-core/lib/utils/utils';
 import { GlobalInfo } from './types';
+import { attach, getContainedPath } from './util';
 
 export class GlobalInfoImpl implements GlobalInfo {
   private _outputDir: string;
@@ -28,19 +27,15 @@ export class GlobalInfoImpl implements GlobalInfo {
 
   attachments: { name: string; path?: string | undefined; body?: Buffer | undefined; contentType: string; }[] = [];
   async attach(name: string, options: { path?: string, body?: string | Buffer, contentType?: string } = {}) {
-    if ((options.path !== undefined ? 1 : 0) + (options.body !== undefined ? 1 : 0) !== 1)
-      throw new Error(`Exactly one of "path" and "body" must be specified`);
-    if (options.path !== undefined) {
-      const hash = calculateSha1(options.path);
-      // FIXME(rwoll): For now, we use 'tmp', but once we sort out what path this should be, we will remove.
-      const dest = path.join(this._outputDir, 'tmp', 'attachments', hash + path.extname(options.path));
-      await fs.promises.mkdir(path.dirname(dest), { recursive: true });
-      await fs.promises.copyFile(options.path, dest);
-      const contentType = options.contentType ?? (mime.getType(path.basename(options.path)) || 'application/octet-stream');
-      this.attachments.push({ name, contentType, path: dest });
-    } else {
-      const contentType = options.contentType ?? (typeof options.body === 'string' ? 'text/plain' : 'application/octet-stream');
-      this.attachments.push({ name, contentType, body: typeof options.body === 'string' ? Buffer.from(options.body) : options.body });
-    }
+    this.attachments.push(await attach((...segments: string[]) => this._outputPath(...segments), name, options));
+  }
+
+  private _outputPath(...pathSegments: string[]){
+    fs.mkdirSync(this._outputDir, { recursive: true });
+    const joinedPath = path.join(...pathSegments);
+    const outputPath = getContainedPath(this._outputDir, joinedPath);
+    if (outputPath)
+      return outputPath;
+    throw new Error(`The outputPath is not allowed outside of the parent directory. Please fix the defined path.\n\n\toutputPath: ${joinedPath}`);
   }
 }

@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-import util from 'util';
 import fs from 'fs';
+import * as mime from 'mime';
+import util from 'util';
 import path from 'path';
 import url from 'url';
 import colors from 'colors/safe';
@@ -278,3 +279,18 @@ export function getPackageJsonPath(folderPath: string): string {
   return result;
 }
 
+export async function attach(outputPath: (...pathSegments: string[]) => string, name: string, options: { path?: string, body?: string | Buffer, contentType?: string } = {}): Promise<{ name: string; path?: string | undefined; body?: Buffer | undefined; contentType: string; }>  {
+  if ((options.path !== undefined ? 1 : 0) + (options.body !== undefined ? 1 : 0) !== 1)
+    throw new Error(`Exactly one of "path" and "body" must be specified`);
+  if (options.path !== undefined) {
+    const hash = calculateSha1(options.path);
+    const dest = outputPath('attachments', hash + path.extname(options.path));
+    await fs.promises.mkdir(path.dirname(dest), { recursive: true });
+    await fs.promises.copyFile(options.path, dest);
+    const contentType = options.contentType ?? (mime.getType(path.basename(options.path)) || 'application/octet-stream');
+    return { name, contentType, path: dest };
+  } else {
+    const contentType = options.contentType ?? (typeof options.body === 'string' ? 'text/plain' : 'application/octet-stream');
+    return { name, contentType, body: typeof options.body === 'string' ? Buffer.from(options.body) : options.body };
+  }
+}

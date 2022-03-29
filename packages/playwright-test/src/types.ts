@@ -40,4 +40,5 @@ export interface TestStepInternal {
  * increasing the surface area of the public API type called FullConfig.
  */
 export interface FullConfigInternal extends FullConfigPublic {
+  globalOutputDir: string;
 }

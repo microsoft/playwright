@@ -64,9 +64,7 @@ export class Runner {
 
   constructor(configOverrides: Config, options: { defaultConfig?: Config } = {}) {
     this._loader = new Loader(options.defaultConfig || {}, configOverrides);
-    // FIXME(rwoll): This should be somewhere else. Discuss with Lusha since he recently sorted out all
-    //               paths in our configs.
-    this._globalInfo = new GlobalInfoImpl(process.cwd());
+    this._globalInfo = new GlobalInfoImpl(this._loader.fullConfig().globalOutputDir);
   }
 
   async loadConfigFromResolvedFile(resolvedConfigFile: string): Promise<Config> {
