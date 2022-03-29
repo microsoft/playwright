@@ -2853,6 +2853,11 @@ type ConnectOptions = {
    * Additional HTTP headers to be sent with web socket connect request.
    */
   headers?: { [key: string]: string; };
+
+  /**
+   * Timeout in milliseconds for the connection to be established. Optional, defaults to no timeout.
+   */
+  timeout?: number;
 };
 
 /**

@@ -114,6 +114,7 @@ Learn more about [various timeouts](../test-timeouts.md).
 - type: <[void]|[Object]>
   - `wsEndpoint` <[string]> A browser websocket endpoint to connect to.
   - `headers` <[void]|[Object]<[string], [string]>> Additional HTTP headers to be sent with web socket connect request. Optional.
+  - `timeout` <[int]> Timeout in milliseconds for the connection to be established. Optional, defaults to no timeout.
 
 When connect options are specified, default [`property: Fixtures.browser`], [`property: Fixtures.context`] and [`property: Fixtures.page`] use the remote browser instead of launching a browser locally, and any launch options like [`property: TestOptions.headless`] or [`property: TestOptions.channel`] are ignored.
 
