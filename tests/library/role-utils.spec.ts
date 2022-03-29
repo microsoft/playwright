@@ -80,7 +80,7 @@ test('wpt accname', async ({ page, asset, server, browserName }) => {
   }
 });
 
-test('axe-core implicit role', async ({ page, asset, server }) => {
+test('axe-core implicit-role', async ({ page, asset, server }) => {
   await page.goto(server.EMPTY_PAGE);
   const testCases = require(asset('axe-core/implicit-role'));
   for (const testCase of testCases) {
@@ -101,3 +101,41 @@ test('axe-core implicit role', async ({ page, asset, server }) => {
     });
   }
 });
+
+test('axe-core accessible-text', async ({ page, asset, server }) => {
+  await page.goto(server.EMPTY_PAGE);
+  const testCases = require(asset('axe-core/accessible-text'));
+  for (const testCase of testCases) {
+    await test.step(`checking ${JSON.stringify(testCase)}`, async () => {
+      await page.setContent(`
+        <body>
+          ${testCase.html}
+        </body>
+        <script>
+          for (const template of document.querySelectorAll("template[shadow]")) {
+            const shadowRoot = template.parentElement.attachShadow({ mode: 'open' });
+            shadowRoot.appendChild(template.content);
+            template.remove();
+          }
+        </script>
+      `);
+      // Use $eval to force injected script.
+      const targets = toArray(testCase.target);
+      const expected = toArray(testCase.accessibleText);
+      const received = await page.$eval('body', (_, selectors) => {
+        return selectors.map(selector => {
+          const injected = (window as any).__injectedScript;
+          const element = injected.querySelector(injected.parseSelector('css=' + selector), document, false);
+          if (!element)
+            throw new Error(`Unable to resolve "${selector}"`);
+          return injected.getElementAccessibleName(element);
+        });
+      }, targets);
+      expect(received, `checking ${JSON.stringify(testCase)}`).toEqual(expected);
+    });
+  }
+});
+
+function toArray(x: any): any[] {
+  return Array.isArray(x) ? x : [x];
+}

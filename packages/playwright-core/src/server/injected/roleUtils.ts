@@ -459,7 +459,9 @@ function getElementAccessibleNameInternal(element: Element, options: AccessibleN
       const title = element.getAttribute('title') || '';
       if (title.trim())
         return title;
-      return 'Submit Query';
+      // SPEC DIFFERENCE.
+      // Spec says return localized "Submit Query", but browsers and axe-core insist on "Sumbit".
+      return 'Submit';
     }
 
     // https://w3c.github.io/html-aam/#input-type-text-input-type-password-input-type-search-input-type-tel-input-type-url-and-textarea-element
@@ -537,6 +539,11 @@ function getElementAccessibleNameInternal(element: Element, options: AccessibleN
           });
         }
       }
+      // SPEC DIFFERENCE.
+      // Spec does not say a word about <table summary="...">, but all browsers actually support it.
+      const summary = element.getAttribute('summary') || '';
+      if (summary)
+        return summary;
       // SPEC DIFFERENCE.
       // Spec says "if the table element has a title attribute, then use that attribute".
       // We ignore title to pass "name_from_content-manual.html".
