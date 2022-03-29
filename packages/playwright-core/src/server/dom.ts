@@ -99,8 +99,9 @@ export class FrameExecutionContext extends js.ExecutionContext {
         custom.push(`{ name: '${name}', engine: (${source}) }`);
       const source = `
         (() => {
+        const module = {};
         ${injectedScriptSource.source}
-        return new pwExport(
+        return new module.exports(
           ${isUnderTest()},
           ${this.frame._page._delegate.rafCountForStablePosition()},
           "${this.frame._page._browserContext._browser.options.name}",

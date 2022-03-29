@@ -15,7 +15,6 @@
  */
 
 import { BrowserContext } from '../../browserContext';
-import { eventsHelper } from '../../../utils/eventsHelper';
 import { Page } from '../../page';
 import { FrameSnapshot } from '../common/snapshotTypes';
 import { SnapshotRenderer } from '../../../../../trace-viewer/src/snapshotRenderer';
@@ -61,9 +60,9 @@ export class InMemorySnapshotter extends BaseSnapshotStorage implements Snapshot
 
     this._snapshotter.captureSnapshot(page, snapshotName, element).catch(() => {});
     return new Promise<SnapshotRenderer>(fulfill => {
-      const listener = eventsHelper.addEventListener(this, 'snapshot', (renderer: SnapshotRenderer) => {
+      const disposable = this.onSnapshotEvent((renderer: SnapshotRenderer) => {
         if (renderer.snapshotName === snapshotName) {
-          eventsHelper.removeEventListeners([listener]);
+          disposable.dispose();
           fulfill(renderer);
         }
       });

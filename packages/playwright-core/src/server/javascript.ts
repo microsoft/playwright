@@ -17,7 +17,7 @@
 import * as dom from './dom';
 import * as utilityScriptSource from '../generated/utilityScriptSource';
 import { serializeAsCallArgument } from './common/utilityScriptSerializers';
-import type UtilityScript from './injected/utilityScript';
+import { type UtilityScript } from './injected/utilityScript';
 import { SdkObject } from './instrumentation';
 import { ManualPromise } from '../utils/async';
 
@@ -114,8 +114,9 @@ export class ExecutionContext extends SdkObject {
     if (!this._utilityScriptPromise) {
       const source = `
       (() => {
+        const module = {};
         ${utilityScriptSource.source}
-        return new pwExport();
+        return new module.exports();
       })();`;
       this._utilityScriptPromise = this._raceAgainstContextDestroyed(this._delegate.rawEvaluateHandle(source).then(objectId => new JSHandle(this, 'object', undefined, objectId)));
     }
