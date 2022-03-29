@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { spawnAsync } from 'playwright-core/lib/utils/utils';
+import { createGuid, spawnAsync } from 'playwright-core/lib/utils/utils';
 
 const GIT_OPERATIONS_TIMEOUT_MS = 1500;
 const kContentTypePlainText = 'text/plain';
@@ -26,24 +26,16 @@ export interface Attachment {
 }
 
 export const gitStatusFromCLI = async (gitDir: string): Promise<Attachment[]> => {
-  const execGit = async (args: string[]) => {
-    const { code, stdout } = await spawnAsync('git', args, { stdio: 'pipe', cwd: gitDir, timeout: GIT_OPERATIONS_TIMEOUT_MS });
-    if (!!code)
-      throw new Error('Exited with non-zero code.');
-
-    return stdout.trim();
-  };
-
-  await execGit(['--help']).catch(() => { throw new Error('git --help failed; is git installed?');});
-  const [ status, sha, subject, authorName, authorEmail, rawTimestamp ] = await Promise.all([
-    execGit(['status', '--porcelain=v1']),
-    execGit(['rev-parse', 'HEAD']),
-    execGit(['show', '-s', '--format=%s', 'HEAD']),
-    execGit(['show', '-s', '--format=%an', 'HEAD']),
-    execGit(['show', '-s', '--format=%ae', 'HEAD']),
-    execGit(['show', '-s', '--format=%ct', 'HEAD']),
-  ]).catch(() => { throw new Error('one or more git commands failed');});
-
+  const separator = `:${createGuid().slice(0, 4)}:`;
+  const { code, stdout } = await spawnAsync(
+      'git',
+      ['show', '-s', `--format=%H${separator}%s${separator}%an${separator}%ae${separator}%ct`, 'HEAD'],
+      { stdio: 'pipe', cwd: gitDir, timeout: GIT_OPERATIONS_TIMEOUT_MS }
+  );
+  if (code)
+    return [];
+  const showOutput = stdout.trim();
+  const [sha, subject, authorName, authorEmail, rawTimestamp] = showOutput.split(separator);
   let timestamp: number = Number.parseInt(rawTimestamp, 10);
   timestamp = Number.isInteger(timestamp) ? timestamp * 1000 : 0;
 
@@ -53,7 +45,6 @@ export const gitStatusFromCLI = async (gitDir: string): Promise<Attachment[]> =>
     { name: 'revision.email', body: Buffer.from(authorEmail), contentType: kContentTypePlainText },
     { name: 'revision.subject', body: Buffer.from(subject), contentType: kContentTypePlainText },
     { name: 'revision.timestamp', body: Buffer.from(JSON.stringify(timestamp)),  contentType: kContentTypeJSON },
-    { name: 'revision.localPendingChanges', body: Buffer.from(!!status + ''), contentType: kContentTypePlainText },
   ];
 };
 

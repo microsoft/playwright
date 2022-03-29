@@ -679,7 +679,7 @@ test('should include metadata', async ({ runInlineTest, showReport, page }) => {
       async function globalSetup(config: FullConfig) {
         config.attachments = [
           ...await ci.generationTimestamp(),
-          ...await ci.gitStatusFromCLI(config.rootDir).catch(() => []),
+          ...await ci.gitStatusFromCLI(config.rootDir),
           ...await ci.githubEnv(),
         ];
       };
@@ -711,6 +711,5 @@ test('should include metadata', async ({ runInlineTest, showReport, page }) => {
   await expect.soft(metadata).toContainText('William');
   await expect.soft(metadata).toContainText('shakespeare@example.local');
   await expect.soft(metadata.locator('text=CI/CD Logs')).toHaveAttribute('href', 'https://playwright.dev/microsoft/playwright-example-for-test/actions/runs/example-run-id');
-  await expect.soft(metadata).toContainText('uncommitted changes');
   await expect.soft(metadata.locator('text=Report generated on')).toContainText(/AM|PM/);
 });
