@@ -59,7 +59,7 @@ it.describe('snapshots', () => {
   it('should collect multiple', async ({ page, toImpl, snapshotter }) => {
     await page.setContent('<button>Hello</button>');
     const snapshots = [];
-    snapshotter.on('snapshot', snapshot => snapshots.push(snapshot));
+    snapshotter.onSnapshotEvent(snapshot => snapshots.push(snapshot));
     await snapshotter.captureSnapshot(toImpl(page), 'snapshot1');
     await snapshotter.captureSnapshot(toImpl(page), 'snapshot2');
     expect(snapshots.length).toBe(2);

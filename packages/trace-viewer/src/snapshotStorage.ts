@@ -15,7 +15,7 @@
  */
 
 import type { FrameSnapshot, ResourceSnapshot } from '@playwright-core/server/trace/common/snapshotTypes';
-import { EventEmitter } from 'events';
+import { EventEmitter } from './events';
 import { SnapshotRenderer } from './snapshotRenderer';
 
 export interface SnapshotStorage {
@@ -25,12 +25,14 @@ export interface SnapshotStorage {
   snapshotByIndex(frameId: string, index: number): SnapshotRenderer | undefined;
 }
 
-export abstract class BaseSnapshotStorage extends EventEmitter implements SnapshotStorage {
+export abstract class BaseSnapshotStorage  implements SnapshotStorage {
   protected _resources: ResourceSnapshot[] = [];
   protected _frameSnapshots = new Map<string, {
     raw: FrameSnapshot[],
     renderer: SnapshotRenderer[]
   }>();
+  private _didSnapshot = new EventEmitter<SnapshotRenderer>();
+  readonly onSnapshotEvent = this._didSnapshot.event;
 
   clear() {
     this._resources = [];
@@ -55,7 +57,7 @@ export abstract class BaseSnapshotStorage extends EventEmitter implements Snapsh
     frameSnapshots.raw.push(snapshot);
     const renderer = new SnapshotRenderer(this._resources, frameSnapshots.raw, frameSnapshots.raw.length - 1);
     frameSnapshots.renderer.push(renderer);
-    this.emit('snapshot', renderer);
+    this._didSnapshot.fire(renderer);
   }
 
   abstract resourceContent(sha1: string): Promise<Blob | undefined>;

@@ -15,7 +15,7 @@
  */
 
 import { escapeWithQuotes } from '../../../utils/stringUtils';
-import type InjectedScript from '../../injected/injectedScript';
+import { type InjectedScript } from '../../injected/injectedScript';
 import { generateSelector } from '../../injected/selectorGenerator';
 
 function createLocator(injectedScript: InjectedScript, initial: string, options?: { hasText?: string | RegExp }) {
@@ -64,7 +64,7 @@ declare global {
   }
 }
 
-export class ConsoleAPI {
+class ConsoleAPI {
   private _injectedScript: InjectedScript;
 
   constructor(injectedScript: InjectedScript) {
@@ -112,4 +112,4 @@ export class ConsoleAPI {
   }
 }
 
-export default ConsoleAPI;
+module.exports = ConsoleAPI;

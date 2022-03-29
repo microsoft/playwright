@@ -15,7 +15,7 @@
  */
 
 import type * as actions from '../recorder/recorderActions';
-import type InjectedScript from '../../injected/injectedScript';
+import { type InjectedScript } from '../../injected/injectedScript';
 import { generateSelector, querySelector } from '../../injected/selectorGenerator';
 import type { Point } from '../../../common/types';
 import type { UIState } from '../recorder/recorderTypes';
@@ -30,7 +30,7 @@ declare module globalThis {
   let _playwrightRefreshOverlay: () => void;
 }
 
-export class Recorder {
+class Recorder {
   private _injectedScript: InjectedScript;
   private _performingAction = false;
   private _listeners: (() => void)[] = [];
@@ -473,4 +473,4 @@ function removeEventListeners(listeners: (() => void)[]) {
   listeners.splice(0, listeners.length);
 }
 
-export default Recorder;
+module.exports = Recorder;

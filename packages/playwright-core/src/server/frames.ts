@@ -31,7 +31,7 @@ import { assert, constructURLBasedOnBaseURL, makeWaitForNextTask } from '../util
 import { ManualPromise } from '../utils/async';
 import { debugLogger } from '../utils/debugLogger';
 import { CallMetadata, serverSideCallMetadata, SdkObject } from './instrumentation';
-import type InjectedScript from './injected/injectedScript';
+import { type InjectedScript } from './injected/injectedScript';
 import type { ElementStateWithoutStable, FrameExpectParams, InjectedScriptPoll, InjectedScriptProgress } from './injected/injectedScript';
 import { isSessionClosedError } from './protocolError';
 import { isInvalidSelectorError, splitSelectorByFrame, stringifySelector, ParsedSelector } from './common/selectorParser';

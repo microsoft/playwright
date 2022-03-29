@@ -121,7 +121,7 @@ export class InjectedScript {
   }
 
   eval(expression: string): any {
-    return global.eval(expression);
+    return globalThis.eval(expression);
   }
 
   parseSelector(selector: string): ParsedSelector {
@@ -303,10 +303,11 @@ export class InjectedScript {
   }
 
   extend(source: string, params: any): any {
-    const constrFunction = global.eval(`
+    const constrFunction = globalThis.eval(`
     (() => {
+      const module = {};
       ${source}
-      return pwExport;
+      return module.exports;
     })()`);
     return new constrFunction(this, params);
   }
@@ -1257,4 +1258,4 @@ function deepEquals(a: any, b: any): boolean {
   return false;
 }
 
-export default InjectedScript;
+module.exports = InjectedScript;

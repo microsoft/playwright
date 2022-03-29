@@ -190,19 +190,11 @@ steps.push({
 });
 
 // Build injected scripts.
-const webPackFiles = [
-  'packages/playwright-core/src/server/injected/webpack.config.js',
-];
-for (const file of webPackFiles) {
-  steps.push({
-    command: 'npx',
-    args: ['webpack', '--config', quotePath(filePath(file)), ...(watchMode ? ['--watch', '--stats', 'none'] : [])],
-    shell: true,
-    env: {
-      NODE_ENV: watchMode ? 'development' : 'production'
-    }
-  });
-}
+steps.push({
+  command: 'node',
+  args: ['utils/generate_injected.js'],
+  shell: true,
+});
 
 // Run Babel.
 for (const pkg of workspace.packages()) {
@@ -216,11 +208,22 @@ for (const pkg of workspace.packages()) {
       '--extensions', '.ts',
       '--out-dir', quotePath(path.join(pkg.path, 'lib')),
       '--ignore', '"packages/playwright-core/src/server/injected/**/*"',
+      '--ignore', '"packages/playwright-core/src/server/supplements/injected/**/*"',
       quotePath(path.join(pkg.path, 'src'))],
     shell: true,
   });
 }
 
+// Generate injected.
+onChanges.push({
+  committed: false,
+  inputs: [
+    'packages/playwright-core/src/server/injected/**',
+    'packages/playwright-core/src/supplements/injected/**',
+    'utils/generate_injected.js',
+  ],
+  script: 'utils/generate_injected.js',
+});
 
 // Generate channels.
 onChanges.push({

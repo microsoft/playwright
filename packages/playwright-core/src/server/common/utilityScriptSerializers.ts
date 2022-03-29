@@ -110,7 +110,7 @@ function serialize(value: any, handleSerializer: (value: any) => HandleOrValue, 
 
   if (isError(value)) {
     const error = value;
-    if ('captureStackTrace' in global.Error) {
+    if ('captureStackTrace' in globalThis.Error) {
       // v8
       return error.stack || '';
     }
