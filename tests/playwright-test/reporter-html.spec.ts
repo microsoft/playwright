@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import fs from 'fs';
 import { test as baseTest, expect, createImage } from './playwright-test-fixtures';
 import { HttpServer } from '../../packages/playwright-core/lib/utils/httpServer';
 import { startHtmlReportServer } from '../../packages/playwright-test/lib/reporters/html';
@@ -69,6 +70,31 @@ test('should generate report', async ({ runInlineTest, showReport, page }) => {
 
   await expect(page.locator('.metadata-view')).not.toBeVisible();
 });
+
+test('should generate report wrt package.json', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'foo/package.json': `{ "name": "foo" }`,
+    'foo/bar/playwright.config.js': `
+      module.exports = { projects: [ {} ] };
+    `,
+    'foo/bar/baz/tests/a.spec.js': `
+      const { test } = pwt;
+      const fs = require('fs');
+      test('pass', ({}, testInfo) => {
+      });
+    `
+  }, { 'reporter': 'html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' }, {
+    cwd: 'foo/bar/baz/tests',
+    usesCustomOutputDir: true
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  expect(fs.existsSync(testInfo.outputPath('playwright-report'))).toBe(false);
+  expect(fs.existsSync(testInfo.outputPath('foo', 'playwright-report'))).toBe(true);
+  expect(fs.existsSync(testInfo.outputPath('foo', 'bar', 'playwright-report'))).toBe(false);
+  expect(fs.existsSync(testInfo.outputPath('foo', 'bar', 'baz', 'tests', 'playwright-report'))).toBe(false);
+});
+
 
 test('should not throw when attachment is missing', async ({ runInlineTest, page, showReport }, testInfo) => {
   const result = await runInlineTest({

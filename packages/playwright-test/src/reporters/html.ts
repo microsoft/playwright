@@ -26,6 +26,7 @@ import RawReporter, { JsonAttachment, JsonReport, JsonSuite, JsonTestCase, JsonT
 import assert from 'assert';
 import yazl from 'yazl';
 import { stripAnsiEscapes } from './base';
+import { getPackageJsonPath } from '../util';
 
 export type Stats = {
   total: number;
@@ -115,16 +116,19 @@ type TestEntry = {
 
 const kMissingContentType = 'x-playwright/missing';
 
+type HtmlReportOpenOption = 'always' | 'never' | 'on-failure';
+type HtmlReporterOptions = {
+  outputFolder?: string,
+  open?: HtmlReportOpenOption,
+};
+
 class HtmlReporter implements Reporter {
   private config!: FullConfig;
   private suite!: Suite;
-  private _outputFolder: string | undefined;
-  private _open: 'always' | 'never' | 'on-failure';
+  private _options: HtmlReporterOptions;
 
-  constructor(options: { outputFolder?: string, open?: 'always' | 'never' | 'on-failure' } = {}) {
-    // TODO: resolve relative to config.
-    this._outputFolder = options.outputFolder;
-    this._open = process.env.PW_TEST_HTML_REPORT_OPEN as any || options.open || 'on-failure';
+  constructor(options: HtmlReporterOptions = {}) {
+    this._options = options;
   }
 
   printsToStdio() {
@@ -136,49 +140,68 @@ class HtmlReporter implements Reporter {
     this.suite = suite;
   }
 
+  _resolveOptions(): { outputFolder: string, open: HtmlReportOpenOption } {
+    let { outputFolder } = this._options;
+    const configDir: string = (this.config as any).__configDir;
+    if (outputFolder)
+      outputFolder = path.resolve(configDir, outputFolder);
+    return {
+      outputFolder: reportFolderFromEnv() ?? outputFolder ?? defaultReportFolder(configDir),
+      open: process.env.PW_TEST_HTML_REPORT_OPEN as any || this._options.open || 'on-failure',
+    };
+  }
+
   async onEnd() {
+    const { open, outputFolder } = this._resolveOptions();
     const projectSuites = this.suite.suites;
     const reports = projectSuites.map(suite => {
       const rawReporter = new RawReporter();
       const report = rawReporter.generateProjectReport(this.config, suite);
       return report;
     });
-    const reportFolder = htmlReportFolder(this._outputFolder);
-    await removeFolders([reportFolder]);
-    const builder = new HtmlBuilder(reportFolder);
+    await removeFolders([outputFolder]);
+    const builder = new HtmlBuilder(outputFolder);
     const { ok, singleTestId } = await builder.build(new RawReporter().generateAttachments(this.config), reports);
 
     if (process.env.CI)
       return;
 
-    const shouldOpen = this._open === 'always' || (!ok && this._open === 'on-failure');
+
+    const shouldOpen = open === 'always' || (!ok && open === 'on-failure');
     if (shouldOpen) {
-      await showHTMLReport(reportFolder, singleTestId);
+      await showHTMLReport(outputFolder, singleTestId);
     } else {
-      const outputFolderPath = htmlReportFolder(this._outputFolder) === defaultReportFolder() ? '' : ' ' + path.relative(process.cwd(), htmlReportFolder(this._outputFolder));
+      const relativeReportPath = outputFolder === standaloneDefaultFolder() ? '' : ' ' + path.relative(process.cwd(), outputFolder);
       console.log('');
       console.log('To open last HTML report run:');
       console.log(colors.cyan(`
-  npx playwright show-report${outputFolderPath}
+  npx playwright show-report${relativeReportPath}
 `));
     }
   }
 }
 
-export function htmlReportFolder(outputFolder?: string): string {
+function reportFolderFromEnv(): string | undefined {
   if (process.env[`PLAYWRIGHT_HTML_REPORT`])
     return path.resolve(process.cwd(), process.env[`PLAYWRIGHT_HTML_REPORT`]);
-  if (outputFolder)
-    return outputFolder;
-  return defaultReportFolder();
+  return undefined;
 }
 
-function defaultReportFolder(): string {
-  return path.resolve(process.cwd(), 'playwright-report');
+function defaultReportFolder(searchForPackageJson: string): string {
+  let basePath = getPackageJsonPath(searchForPackageJson);
+  if (basePath)
+    basePath = path.dirname(basePath);
+  else
+    basePath = process.cwd();
+  return path.resolve(basePath, 'playwright-report');
+}
+
+function standaloneDefaultFolder(): string {
+  return reportFolderFromEnv() ?? defaultReportFolder(process.cwd());
 }
 
 export async function showHTMLReport(reportFolder: string | undefined, testId?: string) {
-  const folder = reportFolder || htmlReportFolder();
+  const folder = reportFolder ?? standaloneDefaultFolder();
   try {
     assert(fs.statSync(folder).isDirectory());
   } catch (e) {
@@ -224,7 +247,7 @@ class HtmlBuilder {
   private _hasTraces = false;
 
   constructor(outputDir: string) {
-    this._reportFolder = path.resolve(process.cwd(), outputDir);
+    this._reportFolder = outputDir;
     fs.mkdirSync(this._reportFolder, { recursive: true });
     this._dataZipFile = new yazl.ZipFile();
   }

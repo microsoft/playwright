@@ -15,6 +15,7 @@
  */
 
 import util from 'util';
+import fs from 'fs';
 import path from 'path';
 import url from 'url';
 import colors from 'colors/safe';
@@ -251,5 +252,29 @@ export function currentExpectTimeout(options: { timeout?: number }) {
   if (typeof defaultExpectTimeout === 'undefined')
     defaultExpectTimeout = 5000;
   return defaultExpectTimeout;
+}
+
+const folderToPackageJsonPath = new Map<string, string>();
+
+export function getPackageJsonPath(folderPath: string): string {
+  const cached = folderToPackageJsonPath.get(folderPath);
+  if (cached !== undefined)
+    return cached;
+
+  const packageJsonPath = path.join(folderPath, 'package.json');
+  if (fs.existsSync(packageJsonPath)) {
+    folderToPackageJsonPath.set(folderPath, packageJsonPath);
+    return packageJsonPath;
+  }
+
+  const parentFolder = path.dirname(folderPath);
+  if (folderPath === parentFolder) {
+    folderToPackageJsonPath.set(folderPath, '');
+    return '';
+  }
+
+  const result = getPackageJsonPath(parentFolder);
+  folderToPackageJsonPath.set(folderPath, result);
+  return result;
 }
 

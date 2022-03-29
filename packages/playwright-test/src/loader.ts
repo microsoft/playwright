@@ -17,7 +17,7 @@
 import { installTransform, setCurrentlyLoadingTestFile } from './transform';
 import type { Config, FullProject, Project, ReporterDescription, PreserveOutput } from './types';
 import type { FullConfigInternal } from './types';
-import { mergeObjects, errorWithFile } from './util';
+import { getPackageJsonPath, mergeObjects, errorWithFile } from './util';
 import { setCurrentlyLoadingFileSuite } from './globals';
 import { Suite } from './test';
 import { SerializedLoaderData } from './ipc';
@@ -99,6 +99,7 @@ export class Loader {
     const configUse = mergeObjects(this._defaultConfig.use, config.use);
     config = mergeObjects(mergeObjects(this._defaultConfig, config), { use: configUse });
 
+    (this._fullConfig as any).__configDir = configDir;
     this._fullConfig.rootDir = config.testDir || this._configDir;
     this._fullConfig.forbidOnly = takeFirst(this._configOverrides.forbidOnly, config.forbidOnly, baseFullConfig.forbidOnly);
     this._fullConfig.fullyParallel = takeFirst(this._configOverrides.fullyParallel, config.fullyParallel, baseFullConfig.fullyParallel);
@@ -496,30 +497,6 @@ export function fileIsModule(file: string): boolean {
 
   const folder = path.dirname(file);
   return folderIsModule(folder);
-}
-
-const folderToPackageJsonPath = new Map<string, string>();
-
-function getPackageJsonPath(folderPath: string): string {
-  const cached = folderToPackageJsonPath.get(folderPath);
-  if (cached !== undefined)
-    return cached;
-
-  const packageJsonPath = path.join(folderPath, 'package.json');
-  if (fs.existsSync(packageJsonPath)) {
-    folderToPackageJsonPath.set(folderPath, packageJsonPath);
-    return packageJsonPath;
-  }
-
-  const parentFolder = path.dirname(folderPath);
-  if (folderPath === parentFolder) {
-    folderToPackageJsonPath.set(folderPath, '');
-    return '';
-  }
-
-  const result = getPackageJsonPath(parentFolder);
-  folderToPackageJsonPath.set(folderPath, result);
-  return result;
 }
 
 export function folderIsModule(folder: string): boolean {
