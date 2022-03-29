@@ -313,7 +313,7 @@ export class Runner {
       fatalErrors.push(createNoTestsError());
 
     // 8. Compute shards.
-    let testGroups = createTestGroups(rootSuite);
+    let testGroups = createTestGroups(rootSuite, config.workers);
 
     const shard = config.shard;
     if (shard) {
@@ -619,7 +619,7 @@ function buildItemLocation(rootDir: string, testOrSuite: Suite | TestCase) {
   return `${path.relative(rootDir, testOrSuite.location.file)}:${testOrSuite.location.line}`;
 }
 
-function createTestGroups(rootSuite: Suite): TestGroup[] {
+function createTestGroups(rootSuite: Suite, workers: number): TestGroup[] {
   // This function groups tests that can be run together.
   // Tests cannot be run together when:
   // - They belong to different projects - requires different workers.
@@ -630,7 +630,15 @@ function createTestGroups(rootSuite: Suite): TestGroup[] {
 
   // Using the map "workerHash -> requireFile -> group" makes us preserve the natural order
   // of worker hashes and require files for the simple cases.
-  const groups = new Map<string, Map<string, { general: TestGroup, parallel: TestGroup[] }>>();
+  const groups = new Map<string, Map<string, {
+    // Tests that must be run in order are in the same group.
+    general: TestGroup,
+    // Tests that may be run independently each has a dedicated group with a single test.
+    parallel: TestGroup[],
+    // Tests that are marked as parallel but have beforeAll/afterAll hooks should be grouped
+    // as much as possible. We split them into equally sized groups, one per worker.
+    parallelWithHooks: TestGroup,
+  }>>();
 
   const createGroup = (test: TestCase): TestGroup => {
     return {
@@ -654,18 +662,26 @@ function createTestGroups(rootSuite: Suite): TestGroup[] {
         withRequireFile = {
           general: createGroup(test),
           parallel: [],
+          parallelWithHooks: createGroup(test),
         };
         withWorkerHash.set(test._requireFile, withRequireFile);
       }
 
       let insideParallel = false;
-      for (let parent: Suite | undefined = test.parent; parent; parent = parent.parent)
+      let hasAllHooks = false;
+      for (let parent: Suite | undefined = test.parent; parent; parent = parent.parent) {
         insideParallel = insideParallel || parent._parallelMode === 'parallel';
+        hasAllHooks = hasAllHooks || parent.hooks.length > 0;
+      }
 
       if (insideParallel) {
-        const group = createGroup(test);
-        group.tests.push(test);
-        withRequireFile.parallel.push(group);
+        if (hasAllHooks) {
+          withRequireFile.parallelWithHooks.tests.push(test);
+        } else {
+          const group = createGroup(test);
+          group.tests.push(test);
+          withRequireFile.parallel.push(group);
+        }
       } else {
         withRequireFile.general.tests.push(test);
       }
@@ -678,6 +694,16 @@ function createTestGroups(rootSuite: Suite): TestGroup[] {
       if (withRequireFile.general.tests.length)
         result.push(withRequireFile.general);
       result.push(...withRequireFile.parallel);
+
+      const parallelWithHooksGroupSize = Math.ceil(withRequireFile.parallelWithHooks.tests.length / workers);
+      let lastGroup: TestGroup | undefined;
+      for (const test of withRequireFile.parallelWithHooks.tests) {
+        if (!lastGroup || lastGroup.tests.length >= parallelWithHooksGroupSize) {
+          lastGroup = createGroup(test);
+          result.push(lastGroup);
+        }
+        lastGroup.tests.push(test);
+      }
     }
   }
   return result;
