@@ -80,7 +80,8 @@ export class WebSocketTransport implements ConnectionTransport {
     this._ws = new WebSocket(url, [], {
       perMessageDeflate: false,
       maxPayload: 256 * 1024 * 1024, // 256Mb,
-      handshakeTimeout: progress.timeUntilDeadline(),
+      // Prevent internal http client error when passing negative timeout.
+      handshakeTimeout: Math.max(progress.timeUntilDeadline(), 1),
       headers,
       followRedirects,
     });

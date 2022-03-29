@@ -15715,8 +15715,7 @@ export interface ConnectOptions {
   slowMo?: number;
 
   /**
-   * Maximum time in milliseconds to wait for the connection to be established. Defaults to `30000` (30 seconds). Pass `0` to
-   * disable timeout.
+   * Maximum time in milliseconds to wait for the connection to be established. Defaults to `0` (no timeout).
    */
   timeout?: number;
 }

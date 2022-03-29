@@ -115,7 +115,7 @@ Logger sink for Playwright logging. Optional.
 - `timeout` <[float]>
 
 Maximum time in milliseconds to wait for the connection to be established. Defaults to
-`30000` (30 seconds). Pass `0` to disable timeout.
+`0` (no timeout).
 
 ## async method: BrowserType.connectOverCDP
 - returns: <[Browser]>

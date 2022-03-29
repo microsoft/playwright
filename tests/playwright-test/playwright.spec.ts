@@ -620,3 +620,26 @@ test('should throw with bad connectOptions', async ({ runInlineTest }) => {
   expect(result.passed).toBe(0);
   expect(result.output).toContain('browserType.connect:');
 });
+
+test('should respect connectOptions.timeout', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.js': `
+      module.exports = {
+        use: {
+          connectOptions: {
+            wsEndpoint: 'wss://locahost:5678',
+            timeout: 1,
+          },
+        },
+      };
+    `,
+    'a.test.ts': `
+      const { test } = pwt;
+      test('pass', async ({ page }) => {
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(0);
+  expect(result.output).toContain('browserType.connect: Timeout 1ms exceeded.');
+});
