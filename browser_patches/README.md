@@ -141,6 +141,10 @@ In `Source\WTF\wtf\win\DbgHelperWin.cpp` replace
 
 Then regular `WTFReportBacktrace()` works.
 
+#### Debugging linux
+
+`WTFReportBacktrace()` has been broken since [r283707](https://github.com/WebKit/WebKit/commit/de4ba48c8f229bc45042b543a514f6d88b551a64), see [this comment](https://bugs.webkit.org/show_bug.cgi?id=181916#c96). Revert that change locally to make backtraces work again. Otherwise addr2line -f can still be used to map addresses to function names.
+
 #### Enable core dumps on Linux
 
 ```bash
