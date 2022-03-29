@@ -4,4 +4,5 @@ Includes:
 - `LICENSE`
 
 Modifed:
-- `implicit-role.js` contains extracted test cases from `/test/commons/aria/implicit-role.js`
+- `implicit-role.js` contains test cases extracted from `/test/commons/aria/implicit-role.js`
+- `accessible-text.js` contains test cases extracted from `/test/commons/aria/accessible-text.js`
