@@ -21,8 +21,8 @@
   white-space: pre;
   overflow: auto;
   font-family: var(--monospace-font);
-  font-size: 11px;
-  line-height: 16px;
+  font-size: 12px;
+  line-height: 20px;
   background: white;
   user-select: text;
 }
@@ -35,13 +35,11 @@
 .source-line-number {
   color: #555;
   padding: 0 8px;
-  width: 30px;
+  width: 40px;
+  margin-right: 3px;
   text-align: right;
   background: #f6f5f4;
   user-select: none;
-}
-
-.source-line-number {
   flex: none;
 }
 
