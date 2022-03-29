@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import type { TestCase } from '@playwright/test/src/reporters/html';
+import type { TestCase } from '@playwright-test/reporters/html';
 import * as React from 'react';
 import { TabbedPane } from './tabbedPane';
 import { AutoChip } from './chip';

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { HTMLReport } from '@playwright/test/src/reporters/html';
-import { Metadata } from '.';
+import { HTMLReport } from '@playwright-test/reporters/html';
+import { Metadata } from './index';
 
 export interface LoadedReport {
   json(): HTMLReport & { metadata?: Metadata };

@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import type { TestAttachment } from '@playwright/test/src/reporters/html';
+import type { TestAttachment } from '@playwright-test/reporters/html';
 import * as React from 'react';
 import * as icons from './icons';
 import { TreeItem } from './treeItem';

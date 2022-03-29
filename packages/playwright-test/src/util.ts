@@ -26,7 +26,7 @@ import { isInternalFileName } from 'playwright-core/lib/utils/stackTrace';
 import { currentTestInfo } from './globals';
 import { captureStackTrace as coreCaptureStackTrace, ParsedStackTrace } from 'playwright-core/lib/utils/stackTrace';
 
-export { ParsedStackTrace };
+export type { ParsedStackTrace };
 
 const PLAYWRIGHT_CORE_PATH = path.dirname(require.resolve('playwright-core'));
 const EXPECT_PATH = path.dirname(require.resolve('expect'));

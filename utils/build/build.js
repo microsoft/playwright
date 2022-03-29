@@ -192,8 +192,6 @@ steps.push({
 // Build injected scripts.
 const webPackFiles = [
   'packages/playwright-core/src/server/injected/webpack.config.js',
-  'packages/html-reporter/webpack.config.js',
-  'packages/html-reporter/tests/webpack.config.js',
 ];
 for (const file of webPackFiles) {
   steps.push({
@@ -253,34 +251,22 @@ onChanges.push({
   script: 'utils/generate_types/index.js',
 });
 
-// Update web clients.
-onChanges.push({
-  committed: false,
-  inputs: [
-    'packages/trace-viewer/index.html',
-    'packages/trace-viewer/pubic/',
-    'packages/trace-viewer/src/',
-    'packages/trace-viewer/view.config.ts',
-    'packages/web/src/',
-  ],
-  command: 'npx',
-  args: ['vite', 'build'],
-  cwd: path.join(__dirname, '..', '..', 'packages', 'trace-viewer'),
-});
-
-onChanges.push({
-  committed: false,
-  inputs: [
-    'packages/recorder/index.html',
-    'packages/recorder/pubic/',
-    'packages/recorder/src/',
-    'packages/recorder/view.config.ts',
-    'packages/web/src/',
-  ],
-  command: 'npx',
-  args: ['vite', 'build'],
-  cwd: path.join(__dirname, '..', '..', 'packages', 'recorder'),
-});
+// Rebuild web projects on change.
+for (const webPackage of ['html-reporter', 'recorder', 'trace-viewer']) {
+  onChanges.push({
+    committed: false,
+    inputs: [
+      `packages/${webPackage}/index.html`,
+      `packages/${webPackage}/pubic/`,
+      `packages/${webPackage}/src/`,
+      `packages/${webPackage}/view.config.ts`,
+      `packages/web/src/`,
+    ],
+    command: 'npx',
+    args: ['vite', 'build'],
+    cwd: path.join(__dirname, '..', '..', 'packages', webPackage),
+  });
+}
 
 // The recorder and trace viewer have an app_icon.png that needs to be copied.
 copyFiles.push({
@@ -321,16 +307,13 @@ if (lintMode) {
     args: ['tsc', ...(watchMode ? ['-w'] : []), '-p', quotePath(filePath('.'))],
     shell: true,
   });
-  steps.push({
-    command: 'npx',
-    args: ['tsc', ...(watchMode ? ['-w'] : []), '-p', quotePath(filePath('packages/recorder'))],
-    shell: true,
-  });
-  steps.push({
-    command: 'npx',
-    args: ['tsc', ...(watchMode ? ['-w'] : []), '-p', quotePath(filePath('packages/trace-viewer'))],
-    shell: true,
-  });
+  for (const webPackage of ['html-reporter', 'recorder', 'trace-viewer']) {
+    steps.push({
+      command: 'npx',
+      args: ['tsc', ...(watchMode ? ['-w'] : []), '-p', quotePath(filePath(`packages/${webPackage}`))],
+      shell: true,
+    });  
+  }
 }
 
 watchMode ? runWatch() : runBuild();

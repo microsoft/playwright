@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import type { TestAttachment, TestCase, TestResult, TestStep } from '@playwright/test/src/reporters/html';
+import type { TestAttachment, TestCase, TestResult, TestStep } from '@playwright-test/reporters/html';
 import ansi2html from 'ansi-to-html';
 import * as React from 'react';
 import { TreeItem } from './treeItem';
