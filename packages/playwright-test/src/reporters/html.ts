@@ -141,7 +141,7 @@ class HtmlReporter implements Reporter {
   }
 
   _resolveOptions(): { outputFolder: string, open: HtmlReportOpenOption } {
-    let { outputFolder, open } = this._options;
+    const { outputFolder, open } = this._options;
     const configDir: string = (this.config as any).__configDir;
     if (outputFolder)
       outputFolder = path.resolve(configDir, outputFolder);
