@@ -1257,6 +1257,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     acceptDownloads: tOptional(tBoolean),
     bypassCSP: tOptional(tBoolean),
     colorScheme: tOptional(tEnum(['dark', 'light', 'no-preference'])),
+    stdio: tOptional(tEnum(['inherit'])),
     extraHTTPHeaders: tOptional(tArray(tType('NameValue'))),
     geolocation: tOptional(tObject({
       longitude: tNumber,

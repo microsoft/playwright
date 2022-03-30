@@ -77,6 +77,11 @@ Current working directory to launch application from.
 
 Specifies environment variables that will be visible to Electron. Defaults to `process.env`.
 
+### option: Electron.launch.stdio
+- `stdio` <[string]>
+
+Specifies where output is printed to.
+
 ### option: Electron.launch.timeout
 - `timeout` <[float]>
 

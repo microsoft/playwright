@@ -2757,6 +2757,10 @@ Electron:
           - dark
           - light
           - no-preference
+        stdio:
+          type: enum?
+          literals:
+          - inherit
         extraHTTPHeaders:
           type: array?
           items: NameValue

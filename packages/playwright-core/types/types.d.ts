@@ -13671,6 +13671,11 @@ export interface Electron {
     };
 
     /**
+     * Specifies where output is printed to.
+     */
+    stdio?: string;
+
+    /**
      * Maximum time in milliseconds to wait for the application to start. Defaults to `30000` (30 seconds). Pass `0` to disable
      * timeout.
      */

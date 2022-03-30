@@ -3541,6 +3541,7 @@ export type ElectronLaunchParams = {
   acceptDownloads?: boolean,
   bypassCSP?: boolean,
   colorScheme?: 'dark' | 'light' | 'no-preference',
+  stdio?: 'inherit',
   extraHTTPHeaders?: NameValue[],
   geolocation?: {
     longitude: number,
@@ -3577,6 +3578,7 @@ export type ElectronLaunchOptions = {
   acceptDownloads?: boolean,
   bypassCSP?: boolean,
   colorScheme?: 'dark' | 'light' | 'no-preference',
+  stdio?: 'inherit',
   extraHTTPHeaders?: NameValue[],
   geolocation?: {
     longitude: number,

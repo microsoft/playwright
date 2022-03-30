@@ -111,6 +111,7 @@ export class Electron extends SdkObject {
   async launch(options: channels.ElectronLaunchParams): Promise<ElectronApplication> {
     const {
       args = [],
+      stdio = undefined
     } = options;
     const controller = new ProgressController(serverSideCallMetadata(), this);
     controller.setLogName('browser');
@@ -149,6 +150,19 @@ export class Electron extends SdkObject {
         handleSIGHUP: true,
         onExit: () => {},
       });
+
+      if(stdio === 'inherit'){
+        if(launchedProcess.stdout){
+          launchedProcess.stdout.on('data', data=>{
+            process.stdout.write(data)
+          })
+        }
+        if(launchedProcess.stderr){
+          launchedProcess.stderr.on('data', data=>{
+            process.stderr.write(data)
+          })
+        }
+      }
 
       const waitForXserverError = new Promise(async (resolve, reject) => {
         waitForLine(progress, launchedProcess, /Unable to open X display/).then(() => reject(new Error([
