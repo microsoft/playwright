@@ -703,13 +703,13 @@ test('should include metadata', async ({ runInlineTest, showReport, page }) => {
   await showReport();
 
   expect(result.exitCode).toBe(0);
-  const metadata = page.locator('.metadata-view');
-  await expect.soft(metadata.locator('data-test-id=revision.id')).toContainText(/^[a-f\d]{7}$/i);
-  await expect.soft(metadata.locator('data-test-id=revision.id >> a')).toHaveAttribute('href', 'https://playwright.dev/microsoft/playwright-example-for-test/commit/example-sha');
-  await expect.soft(metadata.locator('data-test-id=revision.timestamp')).toContainText(/AM|PM/);
-  await expect.soft(metadata).toContainText('awesome commit message');
-  await expect.soft(metadata).toContainText('William');
-  await expect.soft(metadata).toContainText('shakespeare@example.local');
-  await expect.soft(metadata.locator('text=CI/CD Logs')).toHaveAttribute('href', 'https://playwright.dev/microsoft/playwright-example-for-test/actions/runs/example-run-id');
-  await expect.soft(metadata.locator('text=Report generated on')).toContainText(/AM|PM/);
+  await page.click('text=awesome commit message');
+  await expect.soft(page.locator('data-test-id=revision.id')).toContainText(/^[a-f\d]+$/i);
+  await expect.soft(page.locator('data-test-id=revision.id >> a')).toHaveAttribute('href', 'https://playwright.dev/microsoft/playwright-example-for-test/commit/example-sha');
+  await expect.soft(page.locator('data-test-id=revision.timestamp')).toContainText(/AM|PM/);
+  await expect.soft(page.locator('text=awesome commit message')).toHaveCount(2);
+  await expect.soft(page.locator('text=William')).toBeVisible();
+  await expect.soft(page.locator('text=shakespeare@example.local')).toBeVisible();
+  await expect.soft(page.locator('text=CI/CD Logs')).toHaveAttribute('href', 'https://playwright.dev/microsoft/playwright-example-for-test/actions/runs/example-run-id');
+  await expect.soft(page.locator('text=Report generated on')).toContainText(/AM|PM/);
 });
