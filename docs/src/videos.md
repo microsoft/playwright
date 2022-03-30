@@ -41,7 +41,7 @@ var context = await browser.NewContextAsync(new BrowserNewContextOptions
 await context.CloseAsync();
 ```
 
-You can also specify video size, it defaults to viewport size scaled down to fit 800x800.
+You can also specify video size. The video size defaults to the viewport size scaled down to fit 800x800. The video of the viewport is placed in the top-left corner of the output video, scaled down to fit if necessary. You may need to set the viewport size to match your desired video size.
 
 ```js
 const context = await browser.newContext({
