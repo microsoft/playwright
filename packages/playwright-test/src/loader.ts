@@ -169,7 +169,7 @@ export class Loader {
     return suite;
   }
 
-  async loadGlobalHook(file: string, name: string): Promise<(config: FullConfigInternal, globalInfo: GlobalInfo) => any> {
+  async loadGlobalHook(file: string, name: string): Promise<(config: FullConfigInternal, globalInfo?: GlobalInfo) => any> {
     let hook = await this._requireOrImport(file);
     if (hook && typeof hook === 'object' && ('default' in hook))
       hook = hook['default'];

@@ -30,6 +30,7 @@ export type JsonStackFrame = { file: string, line: number, column: number };
 
 export type JsonReport = {
   config: JsonConfig,
+  attachments: JsonAttachment[],
   project: JsonProject,
   suites: JsonSuite[],
 };
@@ -111,6 +112,7 @@ class RawReporter {
 
   async onEnd() {
     const projectSuites = this.suite.suites;
+    const globalAttachments = this.generateAttachments(this.suite.attachments);
     for (const suite of projectSuites) {
       const project = suite.project();
       assert(project, 'Internal Error: Invalid project structure');
@@ -128,7 +130,7 @@ class RawReporter {
       }
       if (!reportFile)
         throw new Error('Internal error, could not create report file');
-      const report = this.generateProjectReport(this.config, suite);
+      const report = this.generateProjectReport(this.config, suite, globalAttachments);
       fs.writeFileSync(reportFile, JSON.stringify(report, undefined, 2));
     }
   }
@@ -137,12 +139,13 @@ class RawReporter {
     return this._createAttachments(attachments);
   }
 
-  generateProjectReport(config: FullConfig, suite: Suite): JsonReport {
+  generateProjectReport(config: FullConfig, suite: Suite, attachments: JsonAttachment[]): JsonReport {
     this.config = config;
     const project = suite.project();
     assert(project, 'Internal Error: Invalid project structure');
     const report: JsonReport = {
       config,
+      attachments,
       project: {
         metadata: project.metadata,
         name: project.name,

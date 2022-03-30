@@ -238,6 +238,53 @@ test(`testInfo.attach should save attachments via inline attachment`, async ({ r
   }
 });
 
+test(`GlobalInfo.attach works`, async ({ runInlineTest }, testInfo) => {
+  const external = testInfo.outputPath('external.txt');
+  const result = await runInlineTest({
+    'globalSetup.ts': `
+      import fs from 'fs';
+      import { FullConfig, GlobalInfo } from '@playwright/test';
+
+      async function globalSetup(config: FullConfig, globalInfo: GlobalInfo) {
+        const external = '${external}';
+        await fs.promises.writeFile(external, 'external');
+        await globalInfo.attach('inline.txt', { body: Buffer.from('inline'), contentType: 'text/plain' });
+        await globalInfo.attach('external.txt', { path: external, contentType: 'text/plain' });
+      };
+
+      export default globalSetup;
+    `,
+    'playwright.config.ts': `
+      import path from 'path';
+      const config = {
+        globalSetup: path.join(__dirname, './globalSetup'),
+      }
+
+      export default config;
+    `,
+    'example.spec.ts': `
+      const { test } = pwt;
+      test('sample', async ({}) => { expect(2).toBe(2); });
+    `,
+  }, { reporter: 'dot,' + kRawReporterPath, workers: 1 }, {}, { usesCustomOutputDir: true });
+
+  expect(result.exitCode).toBe(0);
+  const json = JSON.parse(fs.readFileSync(testInfo.outputPath('test-results', 'report', 'project.report'), 'utf-8'));
+  {
+    const attachment = json.attachments[0];
+    expect(attachment.name).toBe('inline.txt');
+    expect(attachment.contentType).toBe('text/plain');
+    expect(Buffer.from(attachment.body, 'base64').toString()).toEqual('inline');
+  }
+  {
+    const attachment = json.attachments[1];
+    expect(attachment.name).toBe('external.txt');
+    expect(attachment.contentType).toBe('text/plain');
+    const contents = fs.readFileSync(attachment.path);
+    expect(contents.toString()).toEqual('external');
+  }
+});
+
 test('dupe project names', async ({ runInlineTest }, testInfo) => {
   await runInlineTest({
     'playwright.config.ts': `

@@ -235,3 +235,50 @@ test('should add line in addition to file json without CI', async ({ runInlineTe
   expect(stripAnsi(result.output)).toContain('[1/1] a.test.js:6:7 › one');
   expect(fs.existsSync(testInfo.outputPath('a.json'))).toBeTruthy();
 });
+
+test(`GlobalInfo.attach works`, async ({ runInlineTest }, testInfo) => {
+  const external = testInfo.outputPath('external.txt');
+  const result = await runInlineTest({
+    'globalSetup.ts': `
+      import fs from 'fs';
+      import { FullConfig, GlobalInfo } from '@playwright/test';
+
+      async function globalSetup(config: FullConfig, globalInfo: GlobalInfo) {
+        const external = '${external}';
+        await fs.promises.writeFile(external, 'external');
+        await globalInfo.attach('inline.txt', { body: Buffer.from('inline'), contentType: 'text/plain' });
+        await globalInfo.attach('external.txt', { path: external, contentType: 'text/plain' });
+      };
+
+      export default globalSetup;
+    `,
+    'playwright.config.ts': `
+      import path from 'path';
+      const config = {
+        globalSetup: path.join(__dirname, './globalSetup'),
+      }
+
+      export default config;
+    `,
+    'example.spec.ts': `
+      const { test } = pwt;
+      test('sample', async ({}) => { expect(2).toBe(2); });
+    `,
+  }, { reporter: 'json', workers: 1 }, {}, { usesCustomOutputDir: true });
+
+  expect(result.exitCode).toBe(0);
+  {
+    const { name, body, path, contentType } = result.report.attachments[0];
+    expect(name).toBe('inline.txt');
+    expect(contentType).toBe('text/plain');
+    expect(Buffer.from(body, 'base64').toString()).toBe('inline');
+    expect(path).toBeUndefined();
+  }
+  {
+    const { name, body, path, contentType } = result.report.attachments[1];
+    expect(name).toBe('external.txt');
+    expect(contentType).toBe('text/plain');
+    expect(body).toBeUndefined();
+    expect(fs.readFileSync(path).toString()).toBe('external');
+  }
+});

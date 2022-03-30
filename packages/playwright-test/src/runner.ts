@@ -438,7 +438,7 @@ export class Runner {
 
       await this._runAndReportError(async () => {
         if (config.globalTeardown)
-          await (await this._loader.loadGlobalHook(config.globalTeardown, 'globalTeardown'))(this._loader.fullConfig(), this._globalInfo);
+          await (await this._loader.loadGlobalHook(config.globalTeardown, 'globalTeardown'))(this._loader.fullConfig());
       }, result);
 
       await this._runAndReportError(async () => {

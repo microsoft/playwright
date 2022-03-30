@@ -156,7 +156,7 @@ class HtmlReporter implements Reporter {
     const projectSuites = this.suite.suites;
     const reports = projectSuites.map(suite => {
       const rawReporter = new RawReporter();
-      const report = rawReporter.generateProjectReport(this.config, suite);
+      const report = rawReporter.generateProjectReport(this.config, suite, []);
       return report;
     });
     await removeFolders([outputFolder]);
