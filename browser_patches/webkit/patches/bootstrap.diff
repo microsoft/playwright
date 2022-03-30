@@ -17663,10 +17663,20 @@ index bfc7956c02ee5ace2d557343c507537a85cfd4fc..230d21c78633d1bd47c326d66fd92f4a
      WebConnection* webConnection() const { return m_webConnection.get(); }
  
 diff --git a/Source/WebKit/UIProcess/WebsiteData/WebsiteDataStore.cpp b/Source/WebKit/UIProcess/WebsiteData/WebsiteDataStore.cpp
-index 50c9352b669c5869c7748c399ba21c8b7d590a13..29e31be2e732dc64a89a519929f7eadf1018c8d1 100644
+index 50c9352b669c5869c7748c399ba21c8b7d590a13..48e26325d5a6165fd0a175d74eae04ea99cb6ee3 100644
 --- a/Source/WebKit/UIProcess/WebsiteData/WebsiteDataStore.cpp
 +++ b/Source/WebKit/UIProcess/WebsiteData/WebsiteDataStore.cpp
-@@ -1988,6 +1988,17 @@ void WebsiteDataStore::renameOriginInWebsiteData(URL&& oldName, URL&& newName, O
+@@ -150,7 +150,8 @@ WebsiteDataStore::~WebsiteDataStore()
+ 
+     ASSERT(allDataStores().get(m_sessionID) == this);
+     allDataStores().remove(m_sessionID);
+-    networkProcess().removeSession(*this);
++    if (m_networkProcess)
++        m_networkProcess->removeSession(*this);
+ #if ENABLE(GPU_PROCESS)
+     if (auto* gpuProcessProxy = GPUProcessProxy::singletonIfCreated())
+         gpuProcessProxy->removeSession(m_sessionID);
+@@ -1988,6 +1989,17 @@ void WebsiteDataStore::renameOriginInWebsiteData(URL&& oldName, URL&& newName, O
      networkProcess().renameOriginInWebsiteData(m_sessionID, oldName, newName, dataTypes, WTFMove(completionHandler));
  }
  
