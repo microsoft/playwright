@@ -2918,10 +2918,28 @@ index a2906d7ce7a65e1ac4ceaf8e6426e1d013469e44..7e9aec8d1acc676e502cfb7c86ed9594
          return;
  
 diff --git a/Source/WebCore/inspector/InspectorController.cpp b/Source/WebCore/inspector/InspectorController.cpp
-index ea02ba6e973b974da0c4a2985ed057a6c62f2b37..559b14d71f32a086d2631eee7880880c9b341a00 100644
+index ea02ba6e973b974da0c4a2985ed057a6c62f2b37..8574670b289d5fc5c57b60c8b261199ddc1eb4c3 100644
 --- a/Source/WebCore/inspector/InspectorController.cpp
 +++ b/Source/WebCore/inspector/InspectorController.cpp
-@@ -392,8 +392,8 @@ void InspectorController::inspect(Node* node)
+@@ -285,6 +285,8 @@ void InspectorController::disconnectFrontend(FrontendChannel& frontendChannel)
+ 
+         // Unplug all instrumentations since they aren't needed now.
+         InspectorInstrumentation::unregisterInstrumentingAgents(m_instrumentingAgents.get());
++
++        m_pauseWhenShown = false;
+     }
+ 
+     m_inspectorClient->frontendCountChanged(m_frontendRouter->frontendCount());
+@@ -304,6 +306,8 @@ void InspectorController::disconnectAllFrontends()
+     // The frontend should call setInspectorFrontendClient(nullptr) under closeWindow().
+     ASSERT(!m_inspectorFrontendClient);
+ 
++    m_pauseWhenShown = false;
++
+     if (!m_frontendRouter->hasFrontends())
+         return;
+ 
+@@ -392,8 +396,8 @@ void InspectorController::inspect(Node* node)
      if (!enabled())
          return;
  
@@ -2932,7 +2950,7 @@ index ea02ba6e973b974da0c4a2985ed057a6c62f2b37..559b14d71f32a086d2631eee7880880c
  
      ensureDOMAgent().inspect(node);
  }
-@@ -534,4 +534,24 @@ void InspectorController::didComposite(Frame& frame)
+@@ -534,4 +538,24 @@ void InspectorController::didComposite(Frame& frame)
      InspectorInstrumentation::didComposite(frame);
  }
  
