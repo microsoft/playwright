@@ -332,7 +332,7 @@ if [[ "$CURRENT_HOST_OS_VERSION" != "$EXPECTED_HOST_OS_VERSION" ]]; then
   exit 1
 fi
 
-if [[ $(uname) == MINGW* ]]; then
+if [[ $(uname) == MINGW* || "$(uname)" == MSYS* ]]; then
   ZIP_PATH="$PWD/archive-$BROWSER_NAME.zip"
   LOG_PATH="$PWD/log-$BROWSER_NAME.zip"
 else

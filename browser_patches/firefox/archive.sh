@@ -58,7 +58,7 @@ fi
 # TODO(aslushnikov): this won't be needed with official builds.
 if [[ "$(uname)" == "Linux" ]]; then
   cp /usr/lib/x86_64-linux-gnu/libstdc++.so.6 "${OBJ_FOLDER}/dist/firefox/libstdc++.so.6"
-elif [[ "$(uname)" == MINGW* || "$(uname)" == MSYS* ]]; then
+elif [[ "$(uname)" == MINGW* || "$(uname)" == MSYS* || "$(uname)" == MSYS* ]]; then
   # Bundle vcruntime14_1.dll - see https://github.com/microsoft/playwright/issues/9974
   cd "$(printMSVCRedistDir)"
   cp -t "${OBJ_FOLDER}/dist/firefox" vcruntime140_1.dll

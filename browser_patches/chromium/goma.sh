@@ -34,7 +34,7 @@ export GOMA_START_COMPILER_PROXY=true
 
 function print_gn_args() {
   PLAYWRIGHT_GOMA_PATH="${SCRIPT_FOLDER}/electron-build-tools/third_party/goma"
-  if [[ $(uname) == MINGW* ]]; then
+  if [[ $(uname) == MINGW* || "$(uname)" == MSYS* ]]; then
     PLAYWRIGHT_GOMA_PATH=$(cygpath -w "${PLAYWRIGHT_GOMA_PATH}")
   fi
   echo 'use_goma = true'

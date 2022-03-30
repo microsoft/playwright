@@ -10,7 +10,7 @@ if [[ ("$1" == "-h") || ("$1" == "--help") ]]; then
   exit 0
 fi
 
-if [[ "$(uname)" != MINGW* ]]; then
+if [[ "$(uname)" != MINGW* || "$(uname)" == MSYS* ]]; then
   echo "ERROR: this script only supports MINGW (windows)"
   exit 1
 fi

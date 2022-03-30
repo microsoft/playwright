@@ -62,7 +62,7 @@ if [[ "${ZIP_PATH}" != *.zip && "${ZIP_PATH}" != *.gz ]]; then
   echo "ERROR: ${ZIP_PATH} is not an archive (must have a .zip or .gz extension)"
   exit 1
 fi
-if [[ $(uname) == MINGW* ]]; then
+if [[ $(uname) == MINGW* || "$(uname)" == MSYS* ]]; then
   # Convert POSIX path to MSYS
   WIN_PATH=$({ cd $(dirname "$ZIP_PATH") && pwd -W; } | sed 's|/|\\|g')
   WIN_PATH="${WIN_PATH}\\$(basename "$ZIP_PATH")"
