@@ -303,6 +303,7 @@ it('should be case sensitive if quotes are specified', async ({ page }) => {
   await page.setContent(`<div>yo</div><div>ya</div><div>\nye  </div>`);
   expect(await page.$eval(`text=yA`, e => e.outerHTML)).toBe('<div>ya</div>');
   expect(await page.$(`text="yA"`)).toBe(null);
+  expect(await page.$(`text= "ya"`)).toBe(null);
 });
 
 it('should search for a substring without quotes', async ({ page }) => {
@@ -410,4 +411,31 @@ it('should work with leading and trailing spaces', async ({ page }) => {
   await page.setContent(`<button> Add widget </button>`);
   await expect(page.locator('text=Add widget')).toBeVisible();
   await expect(page.locator('text= Add widget ')).toBeVisible();
+});
+
+it('should work with unpaired quotes when not at the start', async ({ page }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/12719' });
+  await page.setContent(`
+    <div>hello"world<span>yay</span></div>
+    <div>hello'world<span>nay</span></div>
+    <div>hello\`world<span>oh</span></div>
+    <div>hello\`world<span>oh2</span></div>
+  `);
+  expect(await page.$eval('text=lo" >> span', e => e.outerHTML)).toBe('<span>yay</span>');
+  expect(await page.$eval('  text=lo" >> span', e => e.outerHTML)).toBe('<span>yay</span>');
+  expect(await page.$eval('text  =lo" >> span', e => e.outerHTML)).toBe('<span>yay</span>');
+  expect(await page.$eval('text=  lo" >> span', e => e.outerHTML)).toBe('<span>yay</span>');
+  expect(await page.$eval(' text = lo" >> span', e => e.outerHTML)).toBe('<span>yay</span>');
+  expect(await page.$eval('text=o"wor >> span', e => e.outerHTML)).toBe('<span>yay</span>');
+
+  expect(await page.$eval(`text=lo'wor >> span`, e => e.outerHTML)).toBe('<span>nay</span>');
+  expect(await page.$eval(`text=o' >> span`, e => e.outerHTML)).toBe('<span>nay</span>');
+
+  expect(await page.$eval(`text=ello\`wor >> span`, e => e.outerHTML)).toBe('<span>oh</span>');
+  await expect(page.locator(`text=ello\`wor`).locator('span').first()).toHaveText('oh');
+  await expect(page.locator(`text=ello\`wor`).locator('span').nth(1)).toHaveText('oh2');
+
+  expect(await page.$(`text='wor >> span`)).toBe(null);
+  expect(await page.$(`text=" >> span`)).toBe(null);
+  expect(await page.$(`text=\` >> span`)).toBe(null);
 });

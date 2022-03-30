@@ -173,6 +173,13 @@ function parseSelectorString(selector: string): ParsedSelectorStrings {
     return result;
   }
 
+  const shouldIgnoreTextSelectorQuote = () => {
+    const prefix = selector.substring(start, index);
+    const match = prefix.match(/^\s*text\s*=(.*)$/);
+    // Must be a text selector with some text before the quote.
+    return !!match && !!match[1];
+  };
+
   while (index < selector.length) {
     const c = selector[index];
     if (c === '\\' && index + 1 < selector.length) {
@@ -180,7 +187,7 @@ function parseSelectorString(selector: string): ParsedSelectorStrings {
     } else if (c === quote) {
       quote = undefined;
       index++;
-    } else if (!quote && (c === '"' || c === '\'' || c === '`')) {
+    } else if (!quote && (c === '"' || c === '\'' || c === '`') && !shouldIgnoreTextSelectorQuote()) {
       quote = c;
       index++;
     } else if (!quote && c === '>' && selector[index + 1] === '>') {
