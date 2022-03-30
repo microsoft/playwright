@@ -75,6 +75,11 @@ type ExpectSettings = {
      * high-dpi devices will be twice as large or even larger. Defaults to `"css"`.
      */
     size?: 'css'|'device',
+    /**
+     * When set to `"hide"`, screenshot will hide text caret.
+     * When set to `"initial"`, text caret behavior will not be changed. Defaults to `"hide"`.
+     */
+    caret?: 'hide'|'initia',
   }
   toMatchSnapshot?: {
     /** An acceptable perceived color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between pixels in compared images, between zero (strict) and one (lax). Defaults to `0.2`.
