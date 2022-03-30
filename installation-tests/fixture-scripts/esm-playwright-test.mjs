@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { chromium, firefox, webkit, selectors, devices, errors, test, expect } from '@playwright/test';
+import { chromium, firefox, webkit, selectors, devices, errors, request, test, expect } from '@playwright/test';
 import * as playwright from '@playwright/test';
 import defaultExport from '@playwright/test';
 import testESM from './esm.mjs';
@@ -35,4 +35,4 @@ if (typeof expect !== 'function') {
 }
 expect(1).toBe(1);
 
-testESM({ chromium, firefox, webkit, selectors, devices, errors, playwright }, [chromium, firefox, webkit]);
+testESM({ chromium, firefox, webkit, selectors, devices, errors, request, playwright }, [chromium, firefox, webkit]);
