@@ -18,18 +18,18 @@ import path from 'path';
 import { electronTest as test, expect } from './electronTest';
 
 test('should print errors to stderr', async ({ playwright }) => {
-  let stderr=''
-  const originalWrite = process.stderr.write.bind(process.stderr)
-  process.stderr.write = (buffer,)=>{
-    stderr += buffer
-    return true
-  }
+  let stderr = '';
+  const originalWrite = process.stderr.write.bind(process.stderr);
+  process.stderr.write = buffer => {
+    stderr += buffer;
+    return true;
+  };
   await playwright._electron.launch({
     args: [path.join(__dirname, 'electron-app-error.js')],
     stdio: 'inherit',
-    executablePath:''
+    executablePath: ''
 
   });
-  expect(stderr).toContain('TypeError: Cannot read properties of undefined (reading \'close\')')
-  process.stderr.write = originalWrite
+  expect(stderr).toContain('TypeError: Cannot read properties of undefined (reading \'close\')');
+  process.stderr.write = originalWrite;
 });

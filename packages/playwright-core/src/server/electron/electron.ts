@@ -151,16 +151,16 @@ export class Electron extends SdkObject {
         onExit: () => {},
       });
 
-      if(stdio === 'inherit'){
-        if(launchedProcess.stdout){
-          launchedProcess.stdout.on('data', data=>{
-            process.stdout.write(data)
-          })
+      if (stdio === 'inherit'){
+        if (launchedProcess.stdout){
+          launchedProcess.stdout.on('data', data => {
+            process.stdout.write(data);
+          });
         }
-        if(launchedProcess.stderr){
-          launchedProcess.stderr.on('data', data=>{
-            process.stderr.write(data)
-          })
+        if (launchedProcess.stderr){
+          launchedProcess.stderr.on('data', data => {
+            process.stderr.write(data);
+          });
         }
       }
 
