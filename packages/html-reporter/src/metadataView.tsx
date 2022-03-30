@@ -49,11 +49,7 @@ export const MetadataView: React.FC<Metadata> = metadata => {
       }
       {(metadata['revision.author'] || metadata['revision.email']) &&
         <MetadatViewItem
-          content={(
-            metadata['revision.author'] && metadata['revision.email']
-              ? <>{metadata['revision.author']} {metadata['revision.email']}</>
-              : (metadata['revision.author'] || metadata['revision.email'])
-            )!}
+          content={`${metadata['revision.author']} ${metadata['revision.email']}`}
           icon='person'
         />
       }
