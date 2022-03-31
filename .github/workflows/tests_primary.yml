@@ -80,6 +80,7 @@ jobs:
       if: matrix.os == 'ubuntu-latest'
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
+      shell: bash
 
   test_test_runner_esm:
     name: Test Runner ESM
