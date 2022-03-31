@@ -152,6 +152,10 @@ export class TraceModel {
       this.contextEntry!.startTime = Math.min(this.contextEntry!.startTime, event.metadata.startTime);
       this.contextEntry!.endTime = Math.max(this.contextEntry!.endTime, event.metadata.endTime);
     }
+    if (event.type === 'screencast-frame') {
+      this.contextEntry!.startTime = Math.min(this.contextEntry!.startTime, event.timestamp);
+      this.contextEntry!.endTime = Math.max(this.contextEntry!.endTime, event.timestamp);
+    }
   }
 
   private _modernize(event: any): trace.TraceEvent {
