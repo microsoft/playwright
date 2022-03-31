@@ -19,7 +19,7 @@ import { FullConfig } from '@playwright/test';
 import * as ci from '@playwright/test/lib/ci';
 
 async function globalSetup(config: FullConfig) {
-  config.attachments = [
+  (config as any)._attachments = [
     ...await ci.generationTimestamp(),
     ...await ci.gitStatusFromCLI(config.rootDir),
     ...await ci.githubEnv(),

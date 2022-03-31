@@ -193,7 +193,7 @@ test(`TestConfig.attachments works`, async ({ runInlineTest }) => {
       import { FullConfig } from '@playwright/test';
 
       async function globalSetup(config: FullConfig) {
-        config.attachments = [{ contentType: 'text/plain', body: Buffer.from('example data'), name: 'my-attachment.txt' }];
+        (config as any)._attachments = [{ contentType: 'text/plain', body: Buffer.from('example data'), name: 'my-attachment.txt' }];
       };
 
       export default globalSetup;
@@ -213,7 +213,7 @@ test(`TestConfig.attachments works`, async ({ runInlineTest }) => {
   }, { reporter: 'json' });
 
   expect(result.exitCode).toBe(0);
-  expect(result.report.config.attachments).toHaveLength(1);
-  expect(result.report.config.attachments[0].name).toBe('my-attachment.txt');
-  expect(Buffer.from(result.report.config.attachments[0].body, 'base64').toString()).toBe('example data');
+  expect((result.report.config as any)._attachments).toHaveLength(1);
+  expect((result.report.config as any)._attachments[0].name).toBe('my-attachment.txt');
+  expect(Buffer.from((result.report.config as any)._attachments[0].body, 'base64').toString()).toBe('example data');
 });

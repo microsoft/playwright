@@ -711,7 +711,7 @@ test('should include metadata', async ({ runInlineTest, showReport, page }) => {
       import { FullConfig } from '@playwright/test';
 
       async function globalSetup(config: FullConfig) {
-        config.attachments = [
+        (config as any)._attachments = [
           ...await ci.generationTimestamp(),
           ...await ci.gitStatusFromCLI(config.rootDir),
           ...await ci.githubEnv(),
