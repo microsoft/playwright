@@ -774,17 +774,17 @@ test('should attach expected/actual/diff with snapshot path', async ({ runInline
     attachment.path = attachment.path.replace(/\\/g, '/').replace(/.*test-results\//, '');
   expect(attachments).toEqual([
     {
-      name: 'snapshot-expected.png',
+      name: 'test/path/snapshot-expected.png',
       contentType: 'image/png',
       path: 'a-is-a-test/test/path/snapshot-expected.png'
     },
     {
-      name: 'snapshot-actual.png',
+      name: 'test/path/snapshot-actual.png',
       contentType: 'image/png',
       path: 'a-is-a-test/test/path/snapshot-actual.png'
     },
     {
-      name: 'snapshot-diff.png',
+      name: 'test/path/snapshot-diff.png',
       contentType: 'image/png',
       path: 'a-is-a-test/test/path/snapshot-diff.png'
     }

@@ -34,10 +34,16 @@ import { TestInfoImpl } from '../testInfo';
 import { SyncExpectationResult } from '../expect';
 
 type NameOrSegments = string | string[];
-const SNAPSHOT_COUNTER = Symbol('noname-snapshot-counter');
+const snapshotNamesSymbol = Symbol('snapshotNames');
+
+type SnapshotNames = {
+  anonymousSnapshotIndex: number;
+  namedSnapshotIndex: { [key: string]: number };
+};
 
 class SnapshotHelper<T extends ImageComparatorOptions> {
   readonly testInfo: TestInfoImpl;
+  readonly snapshotName: string;
   readonly expectedPath: string;
   readonly previousPath: string;
   readonly snapshotPath: string;
@@ -68,14 +74,40 @@ class SnapshotHelper<T extends ImageComparatorOptions> {
       options = { ...nameOrOptions };
       delete (options as any).name;
     }
+
+    let snapshotNames = (testInfo as any)[snapshotNamesSymbol] as SnapshotNames;
+    if (!(testInfo as any)[snapshotNamesSymbol]) {
+      snapshotNames = {
+        anonymousSnapshotIndex: 0,
+        namedSnapshotIndex: {},
+      };
+      (testInfo as any)[snapshotNamesSymbol] = snapshotNames;
+    }
+
+    // Consider the use case below. We should save actual to different paths.
+    //
+    //   expect.toMatchSnapshot('a.png')
+    //   // noop
+    //   expect.toMatchSnapshot('a.png')
+
+    let actualModifier = '';
     if (!name) {
-      (testInfo as any)[SNAPSHOT_COUNTER] = ((testInfo as any)[SNAPSHOT_COUNTER] || 0);
       const fullTitleWithoutSpec = [
         ...testInfo.titlePath.slice(1),
-        (testInfo as any)[SNAPSHOT_COUNTER] + 1,
+        ++snapshotNames.anonymousSnapshotIndex,
       ].join(' ');
-      ++(testInfo as any)[SNAPSHOT_COUNTER];
       name = sanitizeForFilePath(trimLongString(fullTitleWithoutSpec)) + '.' + anonymousSnapshotExtension;
+      this.snapshotName = name;
+    } else {
+      const joinedName = Array.isArray(name) ? name.join(path.sep) : name;
+      snapshotNames.namedSnapshotIndex[joinedName] = (snapshotNames.namedSnapshotIndex[joinedName] || 0) + 1;
+      const index = snapshotNames.namedSnapshotIndex[joinedName];
+      if (index > 1) {
+        actualModifier = `-${index - 1}`;
+        this.snapshotName = `${joinedName}-${index - 1}`;
+      } else {
+        this.snapshotName = joinedName;
+      }
     }
 
     options = {
@@ -90,10 +122,12 @@ class SnapshotHelper<T extends ImageComparatorOptions> {
       throw new Error('`maxDiffPixelRatio` option value must be between 0 and 1');
 
     // sanitizes path if string
-    const pathSegments = Array.isArray(name) ? name : [addSuffixToFilePath(name, '', undefined, true)];
-    this.snapshotPath = snapshotPathResolver(...pathSegments);
-    const outputFile = testInfo.outputPath(...pathSegments);
-    this.expectedPath = addSuffixToFilePath(outputFile, '-expected');
+    const inputPathSegments = Array.isArray(name) ? name : [addSuffixToFilePath(name, '', undefined, true)];
+    const outputPathSegments = Array.isArray(name) ? name : [addSuffixToFilePath(name, actualModifier, undefined, true)];
+    this.snapshotPath = snapshotPathResolver(...inputPathSegments);
+    const inputFile = testInfo.outputPath(...inputPathSegments);
+    const outputFile = testInfo.outputPath(...outputPathSegments);
+    this.expectedPath = addSuffixToFilePath(inputFile, '-expected');
     this.previousPath = addSuffixToFilePath(outputFile, '-previous');
     this.actualPath = addSuffixToFilePath(outputFile, '-actual');
     this.diffPath = addSuffixToFilePath(outputFile, '-diff');
@@ -115,7 +149,7 @@ class SnapshotHelper<T extends ImageComparatorOptions> {
   }
 
   decorateTitle(result: SyncExpectationResult): SyncExpectationResult & { titleSuffix: string } {
-    return { ...result, titleSuffix: `(${path.basename(this.snapshotPath)})` };
+    return { ...result, titleSuffix: `(${path.basename(this.snapshotName)})` };
   }
 
   handleMissingNegated() {
@@ -183,22 +217,22 @@ class SnapshotHelper<T extends ImageComparatorOptions> {
 
     if (expected !== undefined) {
       writeFileSync(this.expectedPath, expected);
-      this.testInfo.attachments.push({ name: path.basename(this.expectedPath), contentType: this.mimeType, path: this.expectedPath });
+      this.testInfo.attachments.push({ name: addSuffixToFilePath(this.snapshotName, '-expected'), contentType: this.mimeType, path: this.expectedPath });
       output.push(`Expected: ${colors.yellow(this.expectedPath)}`);
     }
     if (previous !== undefined) {
       writeFileSync(this.previousPath, previous);
-      this.testInfo.attachments.push({ name: path.basename(this.previousPath), contentType: this.mimeType, path: this.previousPath });
+      this.testInfo.attachments.push({ name: addSuffixToFilePath(this.snapshotName, '-previous'), contentType: this.mimeType, path: this.previousPath });
       output.push(`Previous: ${colors.yellow(this.previousPath)}`);
     }
     if (actual !== undefined) {
       writeFileSync(this.actualPath, actual);
-      this.testInfo.attachments.push({ name: path.basename(this.actualPath), contentType: this.mimeType, path: this.actualPath });
+      this.testInfo.attachments.push({ name: addSuffixToFilePath(this.snapshotName, '-actual'), contentType: this.mimeType, path: this.actualPath });
       output.push(`Received: ${colors.yellow(this.actualPath)}`);
     }
     if (diff !== undefined) {
       writeFileSync(this.diffPath, diff);
-      this.testInfo.attachments.push({ name: path.basename(this.diffPath), contentType: this.mimeType, path: this.diffPath });
+      this.testInfo.attachments.push({ name: addSuffixToFilePath(this.snapshotName, '-diff'), contentType: this.mimeType, path: this.diffPath });
       output.push(`    Diff: ${colors.yellow(this.diffPath)}`);
     }
     return this.decorateTitle({ pass: false, message: () => output.join('\n'), });

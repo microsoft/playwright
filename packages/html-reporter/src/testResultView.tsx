@@ -179,6 +179,9 @@ const ImageDiffView: React.FunctionComponent<{
   }
   return <div className='vbox' data-testid='test-result-image-mismatch' ref={diffElement}>
     <TabbedPane tabs={tabs} selectedTab={selectedTab} setSelectedTab={setSelectedTab} />
+    <AttachmentLink attachment={diff.left!.attachment}></AttachmentLink>
+    <AttachmentLink attachment={diff.right!.attachment}></AttachmentLink>
+    {diff.diff && <AttachmentLink attachment={diff.diff.attachment}></AttachmentLink>}
   </div>;
 };
 
