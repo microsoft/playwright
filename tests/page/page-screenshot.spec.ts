@@ -473,6 +473,19 @@ it.describe('page screenshot', () => {
       await route.fulfill({ body: '' });
       await done;
     });
+
+    it('should work when subframe used document.open after a weird url', async ({ page, server }) => {
+      await page.goto(server.EMPTY_PAGE);
+      await page.evaluate(() => {
+        const iframe = document.createElement('iframe');
+        iframe.src = 'javascript:hi';
+        document.body.appendChild(iframe);
+        iframe.contentDocument.open();
+        iframe.contentDocument.write('Hello');
+        iframe.contentDocument.close();
+      });
+      await page.screenshot({ mask: [ page.locator('non-existent') ] });
+    });
   });
 });
 
