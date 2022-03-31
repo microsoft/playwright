@@ -278,3 +278,67 @@ export function getPackageJsonPath(folderPath: string): string {
   return result;
 }
 
+export const levenshteinDistance = (s: string, t: string) => {
+  // See https://en.wikipedia.org/wiki/Levenshtein_distance for reference.
+  // This is a DP implementation variant.
+  const n = s.length;
+  const m = t.length;
+
+  if (n === 0)
+    return m;
+  if (m === 0)
+    return n;
+
+  const d: number[][] = [];
+  // m rows, n cols
+  for (let i = 0; i < m + 1; i++) {
+    const row = [];
+    for (let j = 0; j < n + 1; j++)
+      row.push(0);
+
+    d.push(row);
+  }
+
+  // init row
+  for (let i = 0; i < d[0].length; i++)
+    d[0][i] = i;
+
+  // init column
+  for (let i = 0; i < d.length; i++)
+    d[i][0] = i;
+
+  for (let col = 1; col < n + 1; col++) {
+    for (let row = 1; row < m + 1; row++) {
+      const cost = s[col - 1] === t[row - 1] ? 0 : 1;
+
+      const above = d[row - 1][col];
+      const left = d[row][col - 1];
+      const diag = d[row - 1][col - 1];
+
+      d[row][col] = Math.min(
+          above + 1,
+          left + 1,
+          diag + cost,
+      );
+    }
+  }
+
+  return d[m][n];
+};
+
+export const suggest = (original: string, candidates: string[]) => {
+  const scored = candidates.map(candidate => (
+    {
+      candidate,
+      cost: levenshteinDistance(original, candidate)
+    })
+  );
+
+  scored.sort((a, b) => {
+    if (a.cost === b.cost)
+      return a.candidate.localeCompare(b.candidate);
+    return a.cost < b.cost ? -1 : 1;
+  });
+
+  return scored;
+};

@@ -233,3 +233,73 @@ test('should propose only the relevant matchers when custom expect matcher class
   });
   expect(result.exitCode).toBe(0);
 });
+
+
+test.describe('helpful expect errors', () => {
+  test('top-level', async ({ runInlineTest }) => {
+    const result = await runInlineTest({
+      'a.spec.ts': `
+        const { test } = pwt;
+        test('explodes', () => {
+          expect(1).toBeLessThen();
+        });
+      `
+    });
+
+    expect(result.output).toContain(`Did you mean 'toBeLessThan'?`);
+  });
+
+  test('soft', async ({ runInlineTest }) => {
+    const result = await runInlineTest({
+      'a.spec.ts': `
+        const { test } = pwt;
+        test('explodes', () => {
+          expect.soft(1).toBeLessThen();
+        });
+      `
+    });
+
+    expect(result.output).toContain(`Did you mean 'toBeLessThan'?`);
+  });
+
+  test('poll', async ({ runInlineTest }) => {
+    const result = await runInlineTest({
+      'a.spec.ts': `
+        const { test } = pwt;
+        test('explodes', () => {
+          expect.poll(() => {}).toBeLessThen();
+        });
+      `
+    });
+
+    expect(result.output).toContain(`Did you mean 'toBeLessThan'?`);
+  });
+
+  test('not', async ({ runInlineTest }) => {
+    const result = await runInlineTest({
+      'a.spec.ts': `
+        const { test } = pwt;
+        test('explodes', () => {
+          expect(1).not.toBeLessThen();
+        });
+      `
+    });
+
+    expect(result.output).toContain(`Did you mean 'toBeLessThan'?`);
+  });
+
+
+  test('bare', async ({ runInlineTest }) => {
+    const result = await runInlineTest({
+      'a.spec.ts': `
+        const { test } = pwt;
+        test('explodes', () => {
+          expect('');
+        });
+      `
+    });
+
+    expect(result.exitCode).toBe(0);
+    expect(result.passed).toBe(1);
+  });
+});
