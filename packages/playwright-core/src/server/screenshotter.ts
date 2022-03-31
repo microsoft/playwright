@@ -222,11 +222,18 @@ export class Screenshotter {
     }));
   }
 
-  async _maskElements(progress: Progress, options: ScreenshotOptions) {
-    if (!options.mask || !options.mask.length)
-      return false;
-
+  async _maskElements(progress: Progress, options: ScreenshotOptions): Promise<() => Promise<void>> {
     const framesToParsedSelectors: MultiMap<Frame, ParsedSelector> = new MultiMap();
+
+    const cleanup = async () => {
+      await Promise.all([...framesToParsedSelectors.keys()].map(async frame => {
+        await frame.hideHighlight();
+      }));
+    };
+
+    if (!options.mask || !options.mask.length)
+      return cleanup;
+
     await Promise.all((options.mask || []).map(async ({ frame, selector }) => {
       const pair = await frame.resolveFrameForSelectorNoWait(selector);
       if (pair)
@@ -237,8 +244,8 @@ export class Screenshotter {
     await Promise.all([...framesToParsedSelectors.keys()].map(async frame => {
       await frame.maskSelectors(framesToParsedSelectors.get(frame));
     }));
-    progress.cleanupWhenAborted(() => this._page.hideHighlight());
-    return true;
+    progress.cleanupWhenAborted(cleanup);
+    return cleanup;
   }
 
   private async _screenshot(progress: Progress, format: 'png' | 'jpeg', documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, fitsViewport: boolean | undefined, options: ScreenshotOptions): Promise<Buffer> {
@@ -252,14 +259,13 @@ export class Screenshotter {
     }
     progress.throwIfAborted(); // Avoid extra work.
 
-    const hasHighlight = await this._maskElements(progress, options);
+    const cleanupHighlight = await this._maskElements(progress, options);
     progress.throwIfAborted(); // Avoid extra work.
 
     const buffer = await this._page._delegate.takeScreenshot(progress, format, documentRect, viewportRect, options.quality, fitsViewport);
     progress.throwIfAborted(); // Avoid restoring after failure - should be done by cleanup.
 
-    if (hasHighlight)
-      await this._page.hideHighlight();
+    await cleanupHighlight();
     progress.throwIfAborted(); // Avoid restoring after failure - should be done by cleanup.
 
     if (shouldSetDefaultBackground)
