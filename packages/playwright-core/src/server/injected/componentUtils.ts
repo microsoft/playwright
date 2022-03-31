@@ -62,7 +62,7 @@ export function matchesAttribute(value: any, attr: ParsedComponentAttribute) {
   return false;
 }
 
-export function parseComponentSelector(selector: string): ParsedComponentSelector {
+export function parseComponentSelector(selector: string, allowUnquotedStrings: boolean): ParsedComponentSelector {
   let wp = 0;
   let EOL = selector.length === 0;
 
@@ -85,10 +85,21 @@ export function parseComponentSelector(selector: string): ParsedComponentSelecto
       eat1();
   }
 
+  function isCSSNameChar(char: string) {
+    // https://www.w3.org/TR/css-syntax-3/#ident-token-diagram
+    return (char >= '\u0080')  // non-ascii
+        || (char >= '\u0030' && char <= '\u0039')  // digit
+        || (char >= '\u0041' && char <= '\u005a')  // uppercase letter
+        || (char >= '\u0061' && char <= '\u007a')  // lowercase letter
+        || (char >= '\u0030' && char <= '\u0039')  // digit
+        || char === '\u005f'  // "_"
+        || char === '\u002d';  // "-"
+  }
+
   function readIdentifier() {
     let result = '';
     skipSpaces();
-    while (!EOL && /[-$0-9A-Z_]/i.test(next()))
+    while (!EOL && isCSSNameChar(next()))
       result += eat1();
     return result;
   }
@@ -207,16 +218,18 @@ export function parseComponentSelector(selector: string): ParsedComponentSelecto
       }
     } else {
       value = '';
-      while (!EOL && !/\s/.test(next()) && next() !== ']')
+      while (!EOL && (isCSSNameChar(next()) || next() === '+' || next() === '.'))
         value += eat1();
       if (value === 'true') {
         value = true;
       } else if (value === 'false') {
         value = false;
       } else {
-        value = +value;
-        if (isNaN(value))
-          syntaxError('parsing attribute value');
+        if (!allowUnquotedStrings) {
+          value = +value;
+          if (Number.isNaN(value))
+            syntaxError('parsing attribute value');
+        }
       }
     }
     skipSpaces();
