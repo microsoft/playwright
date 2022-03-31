@@ -310,10 +310,6 @@ export class Route extends SdkObject {
   }
 }
 
-function sameOrigin(url1: URL, url2: URL): boolean {
-  return url1.protocol === url2.protocol && url1.host === url2.host && url1.port === url2.port;
-}
-
 export type RouteHandler = (route: Route, request: Request) => void;
 
 type GetResponseBodyCallback = () => Promise<Buffer>;
