@@ -32,7 +32,7 @@ if [[ "$(uname)" == "Darwin" ]]; then
   echo "-- building on Mac"
 elif [[ "$(uname)" == "Linux" ]]; then
   echo "-- building on Linux"
-elif [[ "$(uname)" == MINGW* ]]; then
+elif [[ "$(uname)" == MINGW* || "$(uname)" == MSYS* ]]; then
   echo "ac_add_options --disable-update-agent" >> .mozconfig
   echo "ac_add_options --disable-default-browser-agent" >> .mozconfig
   echo "ac_add_options --disable-maintenance-service" >> .mozconfig
@@ -67,7 +67,7 @@ else
   echo "ac_add_options --enable-release" >> .mozconfig
 fi
 
-if [[ "$(uname)" == MINGW* || "$(uname)" == "Darwin" ]]; then
+if [[ "$(uname)" == MINGW* || "$(uname)" == "Darwin" || "$(uname)" == MSYS* ]]; then
   # This options is only available on win and mac.
   echo "ac_add_options --disable-update-agent" >> .mozconfig
 fi

@@ -41,7 +41,7 @@ main() {
     createZipForMac
   elif [[ "$(uname)" == "Linux" ]]; then
     createZipForLinux
-  elif [[ "$(uname)" == MINGW* ]]; then
+  elif [[ "$(uname)" == MINGW* || "$(uname)" == MSYS* ]]; then
     createZipForWindows
   else
     echo "ERROR: cannot upload on this platform!" 1>&2

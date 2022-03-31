@@ -39,7 +39,7 @@ mirror_chromium() {
       PLATFORM="--mac"
     elif [[ "${CURRENT_HOST_OS}" == "Linux" ]]; then
       PLATFORM="--linux"
-    elif [[ "${CURRENT_HOST_OS}" == MINGW* ]]; then
+    elif [[ "${CURRENT_HOST_OS}" == MINGW* || "${CURRENT_HOST_OS}" == MSYS* ]]; then
       PLATFORM="--win64"
     else
       echo "ERROR: unsupported host platform - ${CURRENT_HOST_OS}"
