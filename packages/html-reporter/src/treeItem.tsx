@@ -24,11 +24,12 @@ export const TreeItem: React.FunctionComponent<{
   onClick?: () => void,
   expandByDefault?: boolean,
   depth: number,
-  selected?: boolean
-}> = ({ title, loadChildren, onClick, expandByDefault, depth, selected }) => {
+  selected?: boolean,
+  style?:  React.CSSProperties,
+}> = ({ title, loadChildren, onClick, expandByDefault, depth, selected, style }) => {
   const [expanded, setExpanded] = React.useState(expandByDefault || false);
   const className = selected ? 'tree-item-title selected' : 'tree-item-title';
-  return <div className={'tree-item'}>
+  return <div className={'tree-item'} style={style}>
     <span className={className} style={{ whiteSpace: 'nowrap', paddingLeft: depth * 22 + 4 }} onClick={() => { onClick?.(); setExpanded(!expanded); }} >
       {loadChildren && !!expanded && icons.downArrow()}
       {loadChildren && !expanded && icons.rightArrow()}
