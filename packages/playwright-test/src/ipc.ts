@@ -60,6 +60,7 @@ export type StepBeginPayload = {
 export type StepEndPayload = {
   testId: string;
   stepId: string;
+  refinedTitle?: string;
   wallTime: number;  // milliseconds since unix epoch
   error?: TestError;
 };

@@ -264,7 +264,7 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
         },
         onApiCallEnd: (userData: any, error?: Error) => {
           const step = userData.userObject;
-          step?.complete(error);
+          step?.complete({ error });
         },
       };
     };

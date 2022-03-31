@@ -150,8 +150,8 @@ test('should report toHaveScreenshot step with expectation name in title', async
   const result = await runInlineTest({
     'reporter.ts': `
       class Reporter {
-        onStepBegin(test, result, step) {
-          console.log('%% begin ' + step.title);
+        onStepEnd(test, result, step) {
+          console.log('%% end ' + step.title);
         }
       }
       module.exports = Reporter;
@@ -173,12 +173,12 @@ test('should report toHaveScreenshot step with expectation name in title', async
 
   expect(result.exitCode).toBe(0);
   expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
-    `%% begin Before Hooks`,
-    `%% begin browserContext.newPage`,
-    `%% begin expect.toHaveScreenshot(foo.png)`,
-    `%% begin expect.toHaveScreenshot(is-a-test-1.png)`,
-    `%% begin After Hooks`,
-    `%% begin browserContext.close`,
+    `%% end browserContext.newPage`,
+    `%% end Before Hooks`,
+    `%% end expect.toHaveScreenshot(foo.png)`,
+    `%% end expect.toHaveScreenshot(is-a-test-1.png)`,
+    `%% end browserContext.close`,
+    `%% end After Hooks`,
   ]);
 });
 

@@ -207,14 +207,14 @@ export class WorkerRunner extends EventEmitter {
       let callbackHandled = false;
       const step: TestStepInternal = {
         ...data,
-        complete: (error?: Error | TestError) => {
+        complete: result => {
           if (callbackHandled)
             return;
           callbackHandled = true;
-          if (error instanceof Error)
-            error = serializeError(error);
+          const error = result.error instanceof Error ? serializeError(result.error) : result.error;
           const payload: StepEndPayload = {
             testId: test._id,
+            refinedTitle: result.refinedTitle,
             stepId,
             wallTime: Date.now(),
             error,
@@ -346,14 +346,14 @@ export class WorkerRunner extends EventEmitter {
         // Setup fixtures required by the test.
         testInfo._timeoutManager.setCurrentRunnable({ type: 'test' });
         const params = await this._fixtureRunner.resolveParametersForFunction(test.fn, testInfo);
-        beforeHooksStep.complete(); // Report fixture hooks step as completed.
+        beforeHooksStep.complete({}); // Report fixture hooks step as completed.
 
         // Now run the test itself.
         const fn = test.fn; // Extract a variable to get a better stack trace ("myTest" vs "TestCase.myTest [as fn]").
         await fn(params, testInfo);
       }, 'allowSkips');
 
-      beforeHooksStep.complete(maybeError); // Second complete is a no-op.
+      beforeHooksStep.complete({ error: maybeError }); // Second complete is a no-op.
     });
 
     if (didFailBeforeAllForSuite) {
@@ -425,7 +425,7 @@ export class WorkerRunner extends EventEmitter {
       });
     }
 
-    afterHooksStep.complete(firstAfterHooksError);
+    afterHooksStep.complete({ error: firstAfterHooksError });
     this._currentTest = null;
     setCurrentTestInfo(null);
     this.emit('testEnd', buildTestEndPayload(testInfo));

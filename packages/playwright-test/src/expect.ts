@@ -44,12 +44,18 @@ import {
   toHaveURL,
   toHaveValue
 } from './matchers/matchers';
-import { toMatchSnapshot, toHaveScreenshot, getSnapshotName } from './matchers/toMatchSnapshot';
+import { toMatchSnapshot, toHaveScreenshot } from './matchers/toMatchSnapshot';
 import type { Expect, TestError } from './types';
 import matchers from 'expect/build/matchers';
 import { currentTestInfo } from './globals';
 import { serializeError, captureStackTrace, currentExpectTimeout } from './util';
 import { monotonicTime } from 'playwright-core/lib/utils/utils';
+
+// from expect/build/types
+export type SyncExpectationResult = {
+  pass: boolean;
+  message: () => string;
+};
 
 // #region
 // Mirrored from https://github.com/facebook/jest/blob/f13abff8df9a0e1148baf3584bcde6d1b479edc7/packages/expect/src/print.ts
@@ -230,11 +236,6 @@ function wrap(matcherName: string, matcher: any) {
     if (!testInfo)
       return matcher.call(this, ...args);
 
-    let titleSuffix = '';
-    if (matcherName === 'toHaveScreenshot' || matcherName === 'toMatchSnapshot') {
-      const [received, nameOrOptions, optOptions] = args;
-      titleSuffix = `(${getSnapshotName(testInfo, received, nameOrOptions, optOptions)})`;
-    }
     const stackTrace = captureStackTrace();
     const stackLines = stackTrace.frameTexts;
     const frame = stackTrace.frames[0];
@@ -242,15 +243,16 @@ function wrap(matcherName: string, matcher: any) {
     const isSoft = expectCallMetaInfo?.isSoft ?? false;
     const isPoll = expectCallMetaInfo?.isPoll ?? false;
     const pollTimeout = expectCallMetaInfo?.pollTimeout;
+    const defaultTitle = `expect${isPoll ? '.poll' : ''}${isSoft ? '.soft' : ''}${this.isNot ? '.not' : ''}.${matcherName}`;
     const step = testInfo._addStep({
       location: frame && frame.file ? { file: path.resolve(process.cwd(), frame.file), line: frame.line || 0, column: frame.column || 0 } : undefined,
       category: 'expect',
-      title: customMessage || `expect${isPoll ? '.poll' : ''}${isSoft ? '.soft' : ''}${this.isNot ? '.not' : ''}.${matcherName}${titleSuffix}`,
+      title: customMessage || defaultTitle,
       canHaveChildren: true,
       forceNoParent: false
     });
 
-    const reportStepEnd = (result: any) => {
+    const reportStepEnd = (result: any, options: { refinedTitle?: string }) => {
       const success = result.pass !== this.isNot;
       let error: TestError | undefined;
       if (!success) {
@@ -276,13 +278,17 @@ function wrap(matcherName: string, matcher: any) {
           result.message = () => newMessage;
         }
       }
-      step.complete(error);
+      step.complete({ ...options, error });
       return result;
     };
 
     const reportStepError = (error: Error) => {
-      step.complete(serializeError(error));
+      step.complete({ error: serializeError(error) });
       throw error;
+    };
+
+    const refineTitle = (result: SyncExpectationResult & { titleSuffix?: string }): string | undefined => {
+      return !customMessage && result.titleSuffix ? defaultTitle + result.titleSuffix : undefined;
     };
 
     try {
@@ -300,8 +306,8 @@ function wrap(matcherName: string, matcher: any) {
         result = matcher.call(this, ...args);
       }
       if (result instanceof Promise)
-        return result.then(reportStepEnd).catch(reportStepError);
-      return reportStepEnd(result);
+        return result.then(result => reportStepEnd(result, { refinedTitle: refineTitle(result) })).catch(reportStepError);
+      return reportStepEnd(result, { refinedTitle: refineTitle(result) });
     } catch (e) {
       reportStepError(e);
     }

@@ -216,9 +216,9 @@ export class TestTypeImpl {
     });
     try {
       await body();
-      step.complete();
+      step.complete({});
     } catch (e) {
-      step.complete(serializeError(e));
+      step.complete({ error: serializeError(e) });
       throw e;
     }
   }
