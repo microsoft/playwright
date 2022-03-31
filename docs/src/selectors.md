@@ -814,6 +814,76 @@ Vue selectors, as well as [Vue DevTools](https://chrome.google.com/webstore/deta
 :::
 
 
+## Role selector
+
+:::note
+Role selector is experimental, only available when running with `PLAYWRIGHT_EXPERIMENTAL_FEATURES=1` enviroment variable.
+:::
+
+Role selector allows selecting elements by their [ARIA role](https://www.w3.org/TR/wai-aria-1.2/#roles), [ARIA attributes](https://www.w3.org/TR/wai-aria-1.2/#aria-attributes) and [accessible name](https://w3c.github.io/accname/#dfn-accessible-name). Note that role selector **does not replace** accessibility audits and conformance tests, but rather gives early feedback about the ARIA guidelines.
+
+The syntax is very similar to [CSS attribute selectors](https://developer.mozilla.org/en-US/docs/Web/CSS/Attribute_selectors). For example, `role=button[name="Click me"][pressed]` selects a pressed button that has accessible name "Click me".
+
+Note that many html elements have an implicitly [defined role](https://w3c.github.io/html-aam/#html-element-role-mappings) that is recognized by the role selector. You can find all the [supported roles here](https://www.w3.org/TR/wai-aria-1.2/#role_definitions). ARIA guidelines **do not recommend** duplicating implicit roles and attributes by setting `role` and/or `aria-*` attributes to default values.
+
+Attributes supported by the role selector:
+* `checked` - an attribute that is usually set by `aria-checked` or native `<input type=checkbox>` controls. Available values for checked are `true`, `false` and `"mixed"`. Examples:
+  - `role=checkbox[checked=true]`, equivalent to `role=checkbox[checked]`
+  - `role=checkbox[checked=false]`
+  - `role=checkbox[checked="mixed"]`
+
+  Learn more about [`aria-checked`](https://www.w3.org/TR/wai-aria-1.2/#aria-checked).
+
+* `disabled` - a boolean attribute that is usually set by `aria-disabled` or `disabled`. Examples:
+  - `role=button[disabled=true]`, equivalent to `role=button[disabled]`
+  - `role=button[disabled=false]`
+
+  Note that unlike most other attributes, `disabled` is inherited through the DOM hierarchy.
+  Learn more about [`aria-disabled`](https://www.w3.org/TR/wai-aria-1.2/#aria-disabled).
+
+* `expanded` - a boolean attribute that is usually set by `aria-expanded`. Examples:
+  - `role=button[expanded=true]`, equivalent to `role=button[expanded]`
+  - `role=button[expanded=false]`
+
+  Learn more about [`aria-expanded`](https://www.w3.org/TR/wai-aria-1.2/#aria-expanded).
+
+* `include-hidden` - a boolean attribute that controls whether hidden elements are matched. By default, only non-hidden elements, as [defined by ARIA](https://www.w3.org/TR/wai-aria-1.2/#tree_exclusion), are matched by role selector. With `[include-hidden]`, both hidden and non-hidden elements are matched. Examples:
+  - `role=button[include-hidden=true]`, equivalent to `role=button[include-hidden]`
+  - `role=button[include-hidden=false]`
+
+  Learn more about [`aria-hidden`](https://www.w3.org/TR/wai-aria-1.2/#aria-hidden).
+
+* `level` - a number attribute that is usually present for roles `heading`, `listitem`, `row`, `treeitem`, with default values for `<h1>-<h6>` elements. Examples:
+  - `role=heading[level=1]`
+
+  Learn more about [`aria-level`](https://www.w3.org/TR/wai-aria-1.2/#aria-level).
+
+* `name` - a string attribute that matches [accessible name](https://w3c.github.io/accname/#dfn-accessible-name). Supports attribute operators like `=` and `*=`, and regular expressions.
+  - `role=button[name="Click me"]`
+  - `role=button[name*="Click"]`
+  - `role=button[name=/Click( me)?/]`
+
+  Learn more about [accessible name](https://w3c.github.io/accname/#dfn-accessible-name).
+
+* `pressed` - an attribute that is usually set by `aria-pressed`. Available values for pressed are `true`, `false` and `"mixed"`. Examples:
+  - `role=button[pressed=true]`, equivalent to `role=button[pressed]`
+  - `role=button[pressed=false]`
+  - `role=button[pressed="mixed"]`
+
+  Learn more about [`aria-pressed`](https://www.w3.org/TR/wai-aria-1.2/#aria-pressed).
+
+* `selected` - a boolean attribute that is usually set by `aria-selected`. Examples:
+  - `role=option[selected=true]`, equivalent to `role=option[selected]`
+  - `role=option[selected=false]`
+
+  Learn more about [`aria-selected`](https://www.w3.org/TR/wai-aria-1.2/#aria-selected).
+
+Examples:
+* `role=button` matches all buttons;
+* `role=button[name="Click me"]` matches buttons with "Click me" accessible name;
+* `role=checkbox[checked][include-hidden]` matches checkboxes that are checked, including those that are currently hidden.
+
+
 ## id, data-testid, data-test-id, data-test selectors
 
 Playwright supports shorthand for selecting elements using certain attributes. Currently, only
