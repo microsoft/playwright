@@ -3139,7 +3139,6 @@ export type RouteContinueResult = void;
 export type RouteFulfillParams = {
   status?: number,
   headers?: NameValue[],
-  cors?: 'allow' | 'none',
   body?: string,
   isBase64?: boolean,
   fetchResponseUid?: string,
@@ -3147,7 +3146,6 @@ export type RouteFulfillParams = {
 export type RouteFulfillOptions = {
   status?: number,
   headers?: NameValue[],
-  cors?: 'allow' | 'none',
   body?: string,
   isBase64?: boolean,
   fetchResponseUid?: string,
