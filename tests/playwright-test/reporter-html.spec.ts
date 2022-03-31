@@ -259,9 +259,10 @@ test('should not include image diff with non-images', async ({ runInlineTest, pa
 
   await showReport();
   await page.click('text=fails');
-  await expect(page.locator('text=Snapshot mismatch')).toBeVisible();
   await expect(page.locator('text=Image mismatch')).toHaveCount(0);
   await expect(page.locator('img')).toHaveCount(0);
+  await expect(page.locator('a', { hasText: 'expected-actual' })).toBeVisible();
+  await expect(page.locator('a', { hasText: 'expected-expected' })).toBeVisible();
 });
 
 test('should include screenshot on failure', async ({ runInlineTest, page, showReport }) => {
