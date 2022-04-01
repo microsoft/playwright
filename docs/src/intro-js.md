@@ -30,11 +30,11 @@ Install the VS Code extension from the [marketplace](https://marketplace.visuals
 
 If you don't have the Playwright Test npm package installed in your project, or if you are starting with a new testing project, "Install Playwright" action will help you get started.
 
-<img width="446" alt="Install Playwright" src="https://user-images.githubusercontent.com/883973/153693073-a83fc6e6-a17a-4011-b11e-2423f75ce584.png">
+<img width="446" alt="Install Playwright" src="https://user-images.githubusercontent.com/883973/153693073-a83fc6e6-a17a-4011-b11e-2423f75ce584.png"></img>
 
 Pick the browsers you'd like to use by default, don't worry, you'll be able to change them later to add or configure the browsers used.
 
-<img width="579" alt="Choose browsers" src="https://user-images.githubusercontent.com/883973/153693126-258646eb-0d4c-41eb-8c4a-7ac248384078.png">
+<img width="579" alt="Choose browsers" src="https://user-images.githubusercontent.com/883973/153693126-258646eb-0d4c-41eb-8c4a-7ac248384078.png"></img>
 
 The extension automatically detects if you have [Playwright Test] installed and loads the [Playwright Test] projects into Visual Studio Code. By default it will select the first project as a run profile and inside the test explorer you can change this behavior to run a single test in multiple or different browsers.
 
