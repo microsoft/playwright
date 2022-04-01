@@ -6512,46 +6512,7 @@ export interface BrowserContext {
    *
    * @param cookies
    */
-  addCookies(cookies: Array<{
-    name: string;
-
-    value: string;
-
-    /**
-     * either url or domain / path are required. Optional.
-     */
-    url?: string;
-
-    /**
-     * either url or domain / path are required Optional.
-     */
-    domain?: string;
-
-    /**
-     * either url or domain / path are required Optional.
-     */
-    path?: string;
-
-    /**
-     * Unix time in seconds. Optional.
-     */
-    expires?: number;
-
-    /**
-     * Optional.
-     */
-    httpOnly?: boolean;
-
-    /**
-     * Optional.
-     */
-    secure?: boolean;
-
-    /**
-     * Optional.
-     */
-    sameSite?: "Strict"|"Lax"|"None";
-  }>): Promise<void>;
+  addCookies(cookies: Array<NewCookie>): Promise<void>;
 
   /**
    * Adds a script which would be evaluated in one of the following scenarios:
@@ -15832,6 +15793,49 @@ export interface Cookie {
   secure: boolean;
 
   sameSite: "Strict"|"Lax"|"None";
+}
+
+export type CookieSameSite = "Strict"|"Lax"|"None";
+
+export interface NewCookie {
+    name: string;
+
+    value: string;
+
+    /**
+     * either url or domain / path are required. Optional.
+     */
+    url?: string;
+
+    /**
+     * either url or domain / path are required Optional.
+     */
+    domain?: string;
+
+    /**
+     * either url or domain / path are required Optional.
+     */
+    path?: string;
+
+    /**
+     * Unix time in seconds. Optional.
+     */
+    expires?: number;
+
+    /**
+     * Optional.
+     */
+    httpOnly?: boolean;
+
+    /**
+     * Optional.
+     */
+    secure?: boolean;
+
+    /**
+     * Optional.
+     */
+    sameSite?: CookieSameSite;
 }
 
 interface PageWaitForSelectorOptions {
