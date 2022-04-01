@@ -75,12 +75,12 @@ type ExpectSettings = {
      * keep screenshots small. Using `"device"` option will produce a single pixel per each device pixel, so screenhots of
      * high-dpi devices will be twice as large or even larger. Defaults to `"css"`.
      */
-    size?: 'css'|'device',
+    scale?: 'css'|'device',
     /**
      * When set to `"hide"`, screenshot will hide text caret.
      * When set to `"initial"`, text caret behavior will not be changed. Defaults to `"hide"`.
      */
-    caret?: 'hide'|'initia',
+    caret?: 'hide'|'initial',
   }
   toMatchSnapshot?: {
     /** An acceptable perceived color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between pixels in compared images, between zero (strict) and one (lax). Defaults to `0.2`.
@@ -1277,15 +1277,6 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    *
    */
   webServer: WebServerConfig | null;
-  /**
-   * > NOTE: This does not include test-level attachments. See
-   * [testInfo.attach(name[, options])](https://playwright.dev/docs/api/class-testinfo#test-info-attach) and
-   * [testInfo.attachments](https://playwright.dev/docs/api/class-testinfo#test-info-attachments) for working with test-level
-   * attachments.
-   *
-   * The list of files or buffers attached for the overall Playwright Test run. Some reporters show attachments.
-   */
-  attachments: { name: string, path?: string, body?: Buffer, contentType: string }[];
 }
 
 export type TestStatus = 'passed' | 'failed' | 'timedOut' | 'skipped';

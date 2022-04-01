@@ -323,7 +323,7 @@ CommonScreenshotOptions:
       literals:
       - disabled
       - allow
-    size:
+    scale:
       type: enum?
       literals:
       - css

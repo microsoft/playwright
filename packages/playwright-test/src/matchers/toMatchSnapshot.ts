@@ -311,7 +311,8 @@ export async function toHaveScreenshot(
   const screenshotOptions = {
     animations: config?.animations ?? 'disabled',
     fonts: config?.fonts ?? 'ready',
-    size: config?.size ?? 'css',
+    scale: config?.scale ?? 'css',
+    caret: config?.caret ?? 'hide',
     ...helper.allOptions,
     mask: (helper.allOptions.mask || []) as LocatorEx[],
     name: undefined,

@@ -90,20 +90,20 @@ browserTest.describe('page screenshot', () => {
     await context.close();
   });
 
-  browserTest('should work with device scale factor and size:css', async ({ browser, server }) => {
+  browserTest('should work with device scale factor and scale:css', async ({ browser, server }) => {
     const context = await browser.newContext({ viewport: { width: 320, height: 480 }, deviceScaleFactor: 2 });
     const page = await context.newPage();
     await page.goto(server.PREFIX + '/grid.html');
-    const screenshot = await page.screenshot({ size: 'css' });
+    const screenshot = await page.screenshot({ scale: 'css' });
     expect(screenshot).toMatchSnapshot('screenshot-device-scale-factor-css-size.png');
     await context.close();
   });
 
-  browserTest('should work with device scale factor, clip and size:css', async ({ browser, server }) => {
+  browserTest('should work with device scale factor, clip and scale:css', async ({ browser, server }) => {
     const context = await browser.newContext({ viewport: { width: 500, height: 500 }, deviceScaleFactor: 3 });
     const page = await context.newPage();
     await page.goto(server.PREFIX + '/grid.html');
-    const screenshot = await page.screenshot({ clip: { x: 50, y: 100, width: 150, height: 100 }, size: 'css' });
+    const screenshot = await page.screenshot({ clip: { x: 50, y: 100, width: 150, height: 100 }, scale: 'css' });
     expect(screenshot).toMatchSnapshot('screenshot-device-scale-factor-clip-css-size.png');
     await context.close();
   });
@@ -396,7 +396,7 @@ browserTest.describe('element screenshot', () => {
     await context.close();
   });
 
-  browserTest('should capture full element when larger than viewport with device scale factor and size:css', async ({ browser }) => {
+  browserTest('should capture full element when larger than viewport with device scale factor and scale:css', async ({ browser }) => {
     const context = await browser.newContext({ viewport: { width: 501, height: 501 }, deviceScaleFactor: 2.5 });
     const page = await context.newPage();
     await page.setContent(`
@@ -416,7 +416,7 @@ browserTest.describe('element screenshot', () => {
       </style>
       <div class="to-screenshot"></div>
     `);
-    const screenshot = await page.locator('div.to-screenshot').screenshot({ size: 'css' });
+    const screenshot = await page.locator('div.to-screenshot').screenshot({ scale: 'css' });
     expect(screenshot).toMatchSnapshot('element-larger-than-viewport-dsf-css-size.png');
     await context.close();
   });

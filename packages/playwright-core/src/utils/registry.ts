@@ -21,7 +21,7 @@ import * as util from 'util';
 import * as fs from 'fs';
 import lockfile from 'proper-lockfile';
 import { getUbuntuVersion } from './ubuntuVersion';
-import { getFromENV, getAsBooleanFromENV, calculateSha1, removeFolders, existsAsync, hostPlatform, canAccessFile, spawnAsync, fetchData, wrapInASCIIBox, transformCommandsForRoot } from './utils';
+import { getFromENV, getAsBooleanFromENV, getClientLanguage, calculateSha1, removeFolders, existsAsync, hostPlatform, canAccessFile, spawnAsync, fetchData, wrapInASCIIBox, transformCommandsForRoot } from './utils';
 import { DependencyGroup, installDependenciesLinux, installDependenciesWindows, validateDependenciesLinux, validateDependenciesWindows } from './dependencies';
 import { downloadBrowserWithProgressBar, logPolitely } from './browserFetcher';
 
@@ -254,6 +254,7 @@ export interface Executable {
 interface ExecutableImpl extends Executable {
   _install?: () => Promise<void>;
   _dependencyGroup?: DependencyGroup;
+  _isHermeticInstallation?: boolean;
 }
 
 export class Registry {
@@ -303,6 +304,7 @@ export class Registry {
       validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, 'chromium', chromium.dir, ['chrome-linux'], [], ['chrome-win']),
       _install: () => this._downloadExecutable(chromium, chromiumExecutable, DOWNLOAD_PATHS['chromium'][hostPlatform], 'PLAYWRIGHT_CHROMIUM_DOWNLOAD_HOST'),
       _dependencyGroup: 'chromium',
+      _isHermeticInstallation: true,
     });
 
     const chromiumWithSymbols = descriptors.find(d => d.name === 'chromium-with-symbols')!;
@@ -318,6 +320,7 @@ export class Registry {
       validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, 'chromium', chromiumWithSymbols.dir, ['chrome-linux'], [], ['chrome-win']),
       _install: () => this._downloadExecutable(chromiumWithSymbols, chromiumWithSymbolsExecutable, DOWNLOAD_PATHS['chromium-with-symbols'][hostPlatform], 'PLAYWRIGHT_CHROMIUM_DOWNLOAD_HOST'),
       _dependencyGroup: 'chromium',
+      _isHermeticInstallation: true,
     });
 
     this._executables.push(this._createChromiumChannel('chrome', {
@@ -401,6 +404,7 @@ export class Registry {
       validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, 'firefox', firefox.dir, ['firefox'], [], ['firefox']),
       _install: () => this._downloadExecutable(firefox, firefoxExecutable, DOWNLOAD_PATHS['firefox'][hostPlatform], 'PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST'),
       _dependencyGroup: 'firefox',
+      _isHermeticInstallation: true,
     });
 
     const firefoxBeta = descriptors.find(d => d.name === 'firefox-beta')!;
@@ -416,6 +420,7 @@ export class Registry {
       validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, 'firefox', firefoxBeta.dir, ['firefox'], [], ['firefox']),
       _install: () => this._downloadExecutable(firefoxBeta, firefoxBetaExecutable, DOWNLOAD_PATHS['firefox-beta'][hostPlatform], 'PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST'),
       _dependencyGroup: 'firefox',
+      _isHermeticInstallation: true,
     });
 
     const webkit = descriptors.find(d => d.name === 'webkit')!;
@@ -439,6 +444,7 @@ export class Registry {
       validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, 'webkit', webkit.dir, webkitLinuxLddDirectories, ['libGLESv2.so.2', 'libx264.so'], ['']),
       _install: () => this._downloadExecutable(webkit, webkitExecutable, DOWNLOAD_PATHS['webkit'][hostPlatform], 'PLAYWRIGHT_WEBKIT_DOWNLOAD_HOST'),
       _dependencyGroup: 'webkit',
+      _isHermeticInstallation: true,
     });
 
     const ffmpeg = descriptors.find(d => d.name === 'ffmpeg')!;
@@ -454,6 +460,7 @@ export class Registry {
       validateHostRequirements: () => Promise.resolve(),
       _install: () => this._downloadExecutable(ffmpeg, ffmpegExecutable, DOWNLOAD_PATHS['ffmpeg'][hostPlatform], 'PLAYWRIGHT_FFMPEG_DOWNLOAD_HOST'),
       _dependencyGroup: 'tools',
+      _isHermeticInstallation: true,
     });
   }
 
@@ -491,6 +498,7 @@ export class Registry {
       executablePathOrDie: (sdkLanguage: string) => executablePath(sdkLanguage, true)!,
       installType: install ? 'install-script' : 'none',
       validateHostRequirements: () => Promise.resolve(),
+      _isHermeticInstallation: false,
       _install: install,
     };
   }
@@ -548,7 +556,7 @@ export class Registry {
       return await installDependenciesLinux(targets, dryRun);
   }
 
-  async install(executablesToInstall: Executable[]) {
+  async install(executablesToInstall: Executable[], forceReinstall: boolean) {
     const executables = this._addRequirementsAndDedupe(executablesToInstall);
     await fs.promises.mkdir(registryDirectory, { recursive: true });
     const lockfilePath = path.join(registryDirectory, '__dirlock');
@@ -578,10 +586,29 @@ export class Registry {
 
       // Install browsers for this package.
       for (const executable of executables) {
-        if (executable._install)
-          await executable._install();
-        else
+        if (!executable._install)
           throw new Error(`ERROR: Playwright does not support installing ${executable.name}`);
+
+        const { langName } = getClientLanguage();
+        if (!executable._isHermeticInstallation && !forceReinstall && executable.executablePath(langName)) {
+          const command = buildPlaywrightCLICommand(langName, 'install --force ' + executable.name);
+          throw new Error('\n' + wrapInASCIIBox([
+            `ATTENTION: "${executable.name}" is already installed on the system!`,
+            ``,
+            `"${executable.name}" installation is not hermetic; installing newer version`,
+            `requires *removal* of a current installation first.`,
+            ``,
+            `To *uninstall* current version and re-install latest "${executable.name}":`,
+            ``,
+            `- Close all running instances of "${executable.name}", if any`,
+            `- Use "--force" to install browser:`,
+            ``,
+            `    ${command}`,
+            ``,
+            `<3 Playwright Team`,
+          ].join('\n'), 1));
+        }
+        await executable._install();
       }
     } catch (e) {
       if (e.code === 'ELOCKED') {
@@ -761,7 +788,7 @@ export async function installBrowsersForNpmInstall(browsers: string[]) {
     executables.push(executable);
   }
 
-  await registry.install(executables);
+  await registry.install(executables, false /* forceReinstall */);
 }
 
 export function findChromiumChannel(sdkLanguage: string): string | undefined {

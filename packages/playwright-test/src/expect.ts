@@ -168,6 +168,8 @@ class ExpectMetaInfoProxyHandler {
 
   get(target: any, prop: any, receiver: any): any {
     const value = Reflect.get(target, prop, receiver);
+    if (value === undefined)
+      throw new Error(`expect: Property '${prop}' not found.`);
     if (typeof value !== 'function')
       return new Proxy(value, this);
     return (...args: any[]) => {

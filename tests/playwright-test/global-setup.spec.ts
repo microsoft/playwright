@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect } from './playwright-test-fixtures';
+import { test, expect, stripAnsi } from './playwright-test-fixtures';
 
 for (const mode of ['legacy', 'default']) {
   test.describe(`${mode} mode`, () => {
@@ -141,6 +141,35 @@ for (const mode of ['legacy', 'default']) {
         `,
       }, undefined, env);
       expect(passed).toBe(1);
+    });
+
+    test('globalSetup error should prevent tests from executing', async ({ runInlineTest }) => {
+      const { passed, output } = await runInlineTest({
+        'playwright.config.ts': `
+          import * as path from 'path';
+          module.exports = {
+            globalSetup: './globalSetup.ts',
+          };
+        `,
+        'globalSetup.ts': `
+          module.exports = () => {
+            throw new Error('failure in global setup!');
+          };
+        `,
+        'a.test.js': `
+          const { test } = pwt;
+          test('a', async ({}) => {
+            console.log('this test ran');
+          });
+
+          test('b', async ({}) => {
+            console.log('this test ran');
+          });
+        `,
+      }, { reporter: 'line' }, env);
+
+      expect(stripAnsi(output)).not.toContain('this test ran');
+      expect(passed).toBe(0);
     });
 
     test('globalSetup should throw when passed non-function', async ({ runInlineTest }) => {

@@ -1519,7 +1519,7 @@ export type PageExpectScreenshotParams = {
     omitBackground?: boolean,
     caret?: 'hide' | 'initial',
     animations?: 'disabled' | 'allow',
-    size?: 'css' | 'device',
+    scale?: 'css' | 'device',
     fonts?: 'ready' | 'nowait',
     mask?: {
       frame: FrameChannel,
@@ -1545,7 +1545,7 @@ export type PageExpectScreenshotOptions = {
     omitBackground?: boolean,
     caret?: 'hide' | 'initial',
     animations?: 'disabled' | 'allow',
-    size?: 'css' | 'device',
+    scale?: 'css' | 'device',
     fonts?: 'ready' | 'nowait',
     mask?: {
       frame: FrameChannel,
@@ -1569,7 +1569,7 @@ export type PageScreenshotParams = {
   omitBackground?: boolean,
   caret?: 'hide' | 'initial',
   animations?: 'disabled' | 'allow',
-  size?: 'css' | 'device',
+  scale?: 'css' | 'device',
   fonts?: 'ready' | 'nowait',
   mask?: {
     frame: FrameChannel,
@@ -1585,7 +1585,7 @@ export type PageScreenshotOptions = {
   omitBackground?: boolean,
   caret?: 'hide' | 'initial',
   animations?: 'disabled' | 'allow',
-  size?: 'css' | 'device',
+  scale?: 'css' | 'device',
   fonts?: 'ready' | 'nowait',
   mask?: {
     frame: FrameChannel,
@@ -2905,7 +2905,7 @@ export type ElementHandleScreenshotParams = {
   omitBackground?: boolean,
   caret?: 'hide' | 'initial',
   animations?: 'disabled' | 'allow',
-  size?: 'css' | 'device',
+  scale?: 'css' | 'device',
   fonts?: 'ready' | 'nowait',
   mask?: {
     frame: FrameChannel,
@@ -2919,7 +2919,7 @@ export type ElementHandleScreenshotOptions = {
   omitBackground?: boolean,
   caret?: 'hide' | 'initial',
   animations?: 'disabled' | 'allow',
-  size?: 'css' | 'device',
+  scale?: 'css' | 'device',
   fonts?: 'ready' | 'nowait',
   mask?: {
     frame: FrameChannel,

@@ -74,12 +74,12 @@ type ExpectSettings = {
      * keep screenshots small. Using `"device"` option will produce a single pixel per each device pixel, so screenhots of
      * high-dpi devices will be twice as large or even larger. Defaults to `"css"`.
      */
-    size?: 'css'|'device',
+    scale?: 'css'|'device',
     /**
      * When set to `"hide"`, screenshot will hide text caret.
      * When set to `"initial"`, text caret behavior will not be changed. Defaults to `"hide"`.
      */
-    caret?: 'hide'|'initia',
+    caret?: 'hide'|'initial',
   }
   toMatchSnapshot?: {
     /** An acceptable perceived color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between pixels in compared images, between zero (strict) and one (lax). Defaults to `0.2`.
@@ -223,7 +223,6 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
   updateSnapshots: UpdateSnapshots;
   workers: number;
   webServer: WebServerConfig | null;
-  attachments: { name: string, path?: string, body?: Buffer, contentType: string }[];
   // [internal] !!! DO NOT ADD TO THIS !!! See prior note.
 }
 

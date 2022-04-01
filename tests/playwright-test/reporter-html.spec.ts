@@ -145,16 +145,35 @@ test('should include image diff', async ({ runInlineTest, page, showReport }) =>
   await page.click('text=fails');
   await expect(page.locator('text=Image mismatch')).toBeVisible();
   await expect(page.locator('text=Snapshot mismatch')).toHaveCount(0);
+
+  const set = new Set();
+
   const imageDiff = page.locator('data-testid=test-result-image-mismatch');
-  const image = imageDiff.locator('img');
-  await expect(image).toHaveAttribute('src', /.*png/);
-  const actualSrc = await image.getAttribute('src');
+  const expectedImage = imageDiff.locator('img').first();
+  const actualImage = imageDiff.locator('img').last();
+  await expect(expectedImage).toHaveAttribute('src', /.*png/);
+  await expect(actualImage).toHaveAttribute('src', /.*png/);
+  set.add(await expectedImage.getAttribute('src'));
+  set.add(await actualImage.getAttribute('src'));
+  expect(set.size, 'Should be two images overlaid').toBe(2);
+
+  const sliderElement = imageDiff.locator('data-testid=test-result-image-mismatch-grip');
+  await expect.poll(async () => {
+    return await sliderElement.evaluate(e => e.style.left);
+  }, 'Actual slider is on the right').toBe('590px');
+
   await imageDiff.locator('text="Expected"').click();
-  const expectedSrc = await image.getAttribute('src');
+  set.add(await expectedImage.getAttribute('src'));
+  set.add(await actualImage.getAttribute('src'));
+  expect(set.size).toBe(2);
+
+  await expect.poll(async () => {
+    return await sliderElement.evaluate(e => e.style.left);
+  }, 'Actual slider is on the right').toBe('350px');
+
   await imageDiff.locator('text="Diff"').click();
-  const diffSrc = await image.getAttribute('src');
-  const set = new Set([expectedSrc, actualSrc, diffSrc]);
-  expect(set.size).toBe(3);
+  set.add(await imageDiff.locator('img').getAttribute('src'));
+  expect(set.size, 'Should be three images altogether').toBe(3);
 });
 
 test('should include multiple image diffs', async ({ runInlineTest, page, showReport }) => {
@@ -193,7 +212,7 @@ test('should include multiple image diffs', async ({ runInlineTest, page, showRe
   await expect(page.locator('text=Screenshots')).toHaveCount(0);
   for (let i = 0; i < 2; ++i) {
     const imageDiff = page.locator('data-testid=test-result-image-mismatch').nth(i);
-    const image = imageDiff.locator('img');
+    const image = imageDiff.locator('img').first();
     await expect(image).toHaveAttribute('src', /.*png/);
   }
 });
@@ -259,10 +278,11 @@ test('should include image diff when screenshot failed to generate due to animat
   await expect(page.locator('.chip-header', { hasText: 'Screenshots' })).toHaveCount(0);
   const imageDiff = page.locator('data-testid=test-result-image-mismatch');
   const image = imageDiff.locator('img');
-  await expect(image).toHaveAttribute('src', /.*png/);
-  const actualSrc = await image.getAttribute('src');
+  await expect(image.first()).toHaveAttribute('src', /.*png/);
+  await expect(image.last()).toHaveAttribute('src', /.*png/);
+  const previousSrc = await image.first().getAttribute('src');
+  const actualSrc = await image.last().getAttribute('src');
   await imageDiff.locator('text="Previous"').click();
-  const previousSrc = await image.getAttribute('src');
   await imageDiff.locator('text="Diff"').click();
   const diffSrc = await image.getAttribute('src');
   const set = new Set([previousSrc, actualSrc, diffSrc]);
@@ -711,7 +731,7 @@ test('should include metadata', async ({ runInlineTest, showReport, page }) => {
       import { FullConfig } from '@playwright/test';
 
       async function globalSetup(config: FullConfig) {
-        config.attachments = [
+        (config as any)._attachments = [
           ...await ci.generationTimestamp(),
           ...await ci.gitStatusFromCLI(config.rootDir),
           ...await ci.githubEnv(),
