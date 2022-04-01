@@ -105,7 +105,7 @@ export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel> i
     const webView = [...this._webViews.values()].find(v => {
       if (selector.pkg)
         return v.pkg() === selector.pkg;
-      else if (selector.socketName)
+      if (selector.socketName)
         return v.socketName() === selector.socketName;
       return false;
     });
@@ -117,10 +117,8 @@ export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel> i
       predicate: (view: AndroidWebView) => {
         if (selector.pkg)
           return view.pkg() === selector.pkg;
-
-        else if (selector.socketName)
+        if (selector.socketName)
           return view.socketName() === selector.socketName;
-
         return false;
       }
     });
