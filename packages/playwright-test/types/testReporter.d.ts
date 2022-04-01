@@ -17,7 +17,6 @@
 
 import type { FullConfig, FullProject, TestStatus, TestError } from './test';
 export type { FullConfig, TestStatus, TestError } from './test';
-export type {}
 
 /**
  * Represents a location in the source code where [TestCase] or [Suite] is defined.

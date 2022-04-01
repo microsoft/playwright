@@ -16,7 +16,6 @@
 
 import type { FullConfig, FullProject, TestStatus, TestError } from './test';
 export type { FullConfig, TestStatus, TestError } from './test';
-export type {}
 
 export interface Location {
   file: string;
