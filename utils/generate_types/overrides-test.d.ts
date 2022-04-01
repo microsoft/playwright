@@ -223,7 +223,6 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
   updateSnapshots: UpdateSnapshots;
   workers: number;
   webServer: WebServerConfig | null;
-  attachments: { name: string, path?: string, body?: Buffer, contentType: string }[];
   // [internal] !!! DO NOT ADD TO THIS !!! See prior note.
 }
 
