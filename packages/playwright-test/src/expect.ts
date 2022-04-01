@@ -48,7 +48,7 @@ import { toMatchSnapshot, toHaveScreenshot } from './matchers/toMatchSnapshot';
 import type { Expect, TestError } from './types';
 import matchers from 'expect/build/matchers';
 import { currentTestInfo } from './globals';
-import { serializeError, captureStackTrace, currentExpectTimeout, suggest } from './util';
+import { serializeError, captureStackTrace, currentExpectTimeout } from './util';
 import { monotonicTime } from 'playwright-core/lib/utils/utils';
 
 // from expect/build/types
@@ -169,7 +169,7 @@ class ExpectMetaInfoProxyHandler {
   get(target: any, prop: any, receiver: any): any {
     const value = Reflect.get(target, prop, receiver);
     if (value === undefined)
-      throw new Error(ExpectMetaInfoProxyHandler._friendlyExpectError(prop, Object.keys(receiver)));
+      throw new Error(`expect: Property '${prop}' not found.`);
     if (typeof value !== 'function')
       return new Proxy(value, this);
     return (...args: any[]) => {
@@ -199,16 +199,6 @@ class ExpectMetaInfoProxyHandler {
         expectCallMetaInfo = undefined;
       }
     };
-  }
-
-  private static _friendlyExpectError(entered: string, options: string[]) {
-    const SCORE_THRESHOLD = 4;
-
-    const option = suggest(entered, options)[0];
-    let suggestion = '';
-    if (option && option.cost < SCORE_THRESHOLD)
-      suggestion = option.candidate;
-    return `expect: Property '${entered}' not found.` + (suggestion ? `\n\nDid you mean '${suggestion}'?` : '');
   }
 }
 

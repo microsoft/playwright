@@ -241,12 +241,12 @@ test.describe('helpful expect errors', () => {
       'a.spec.ts': `
         const { test } = pwt;
         test('explodes', () => {
-          expect(1).toBeLessThen();
+          expect(1).nope();
         });
       `
     });
 
-    expect(result.output).toContain(`Did you mean 'toBeLessThan'?`);
+    expect(result.output).toContain(`expect: Property 'nope' not found.`);
   });
 
   test('soft', async ({ runInlineTest }) => {
@@ -254,12 +254,12 @@ test.describe('helpful expect errors', () => {
       'a.spec.ts': `
         const { test } = pwt;
         test('explodes', () => {
-          expect.soft(1).toBeLessThen();
+          expect.soft(1).nope();
         });
       `
     });
 
-    expect(result.output).toContain(`Did you mean 'toBeLessThan'?`);
+    expect(result.output).toContain(`expect: Property 'nope' not found.`);
   });
 
   test('poll', async ({ runInlineTest }) => {
@@ -267,12 +267,12 @@ test.describe('helpful expect errors', () => {
       'a.spec.ts': `
         const { test } = pwt;
         test('explodes', () => {
-          expect.poll(() => {}).toBeLessThen();
+          expect.poll(() => {}).nope();
         });
       `
     });
 
-    expect(result.output).toContain(`Did you mean 'toBeLessThan'?`);
+    expect(result.output).toContain(`expect: Property 'nope' not found.`);
   });
 
   test('not', async ({ runInlineTest }) => {
@@ -280,12 +280,12 @@ test.describe('helpful expect errors', () => {
       'a.spec.ts': `
         const { test } = pwt;
         test('explodes', () => {
-          expect(1).not.toBeLessThen();
+          expect(1).not.nope();
         });
       `
     });
 
-    expect(result.output).toContain(`Did you mean 'toBeLessThan'?`);
+    expect(result.output).toContain(`expect: Property 'nope' not found.`);
   });
 
 
