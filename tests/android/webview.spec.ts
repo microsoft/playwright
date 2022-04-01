@@ -18,6 +18,7 @@ import { androidTest as test, expect } from './androidTest';
 
 test.afterEach(async ({ androidDevice }) => {
   await androidDevice.shell('am force-stop org.chromium.webview_shell');
+  await androidDevice.shell('am force-stop com.android.chrome');
 });
 
 test('androidDevice.webView', async function({ androidDevice }) {
@@ -60,4 +61,20 @@ test('should navigate page externally', async function({ androidDevice }) {
     androidDevice.press({ res: 'org.chromium.webview_shell:id/url_field' }, 'Enter')
   ]);
   expect(await page.title()).toBe('Hello world!');
+});
+
+test('select webview from socketName', async function({ androidDevice }) {
+  test.slow();
+  const context = await androidDevice.launchBrowser();
+  const newPage = await context.newPage();
+  newPage.goto('about:blank');
+
+  const webview = await androidDevice.webView({ socketName: 'chrome_devtools_remote' });
+  expect(webview.pkg()).toBe('');
+  expect(webview.socketName()).toBe('chrome_devtools_remote');
+  const page = await webview.page();
+  expect(page.url()).toBe('about:blank');
+
+  await newPage.close();
+  await context.close();
 });
