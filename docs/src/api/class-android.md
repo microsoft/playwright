@@ -87,6 +87,11 @@ Returns the list of detected Android devices.
 
 Optional port to establish ADB server connection.
 
+### option: Android.devices.omitDriverInstall
+- `omitDriverInstall` <[boolean]>
+
+Optional install latest playwright driver automatically. if true, firstly you should install android-driver.apk and android-driver-target.apk which are in bin directory of playwright-core.  Default to false.
+
 ## method: Android.setDefaultTimeout
 
 This setting will change the default maximum time for all the methods accepting [`param: timeout`] option.

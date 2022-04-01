@@ -1304,6 +1304,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   scheme.ElectronApplicationCloseParams = tOptional(tObject({}));
   scheme.AndroidDevicesParams = tObject({
     port: tOptional(tNumber),
+    omitDriverInstall: tOptional(tBoolean),
   });
   scheme.AndroidSetDefaultTimeoutNoReplyParams = tObject({
     timeout: tNumber,

@@ -2846,6 +2846,7 @@ Android:
     devices:
       parameters:
         port: number?
+        omitDriverInstall: boolean?
       returns:
         devices:
           type: array

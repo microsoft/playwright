@@ -3682,9 +3682,11 @@ export interface AndroidChannel extends AndroidEventTarget, Channel {
 }
 export type AndroidDevicesParams = {
   port?: number,
+  omitDriverInstall?: boolean,
 };
 export type AndroidDevicesOptions = {
   port?: number,
+  omitDriverInstall?: boolean,
 };
 export type AndroidDevicesResult = {
   devices: AndroidDeviceChannel[],

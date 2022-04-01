@@ -11118,6 +11118,12 @@ export interface Android {
    */
   devices(options?: {
     /**
+     * Optional install latest playwright driver automatically. if true, firstly you should install android-driver.apk and
+     * android-driver-target.apk which are in bin directory of playwright-core.  Default to false.
+     */
+    omitDriverInstall?: boolean;
+
+    /**
      * Optional port to establish ADB server connection.
      */
     port?: number;
