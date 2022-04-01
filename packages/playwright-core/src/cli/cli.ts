@@ -113,13 +113,14 @@ program
     .command('install [browser...]')
     .description('ensure browsers necessary for this version of Playwright are installed')
     .option('--with-deps', 'install system dependencies for browsers')
-    .action(async function(args: string[], options: { withDeps?: boolean }) {
+    .option('--force', 'force reinstall of stable browser channels')
+    .action(async function(args: string[], options: { withDeps?: boolean, force?: boolean }) {
       try {
         if (!args.length) {
           const executables = registry.defaultExecutables();
           if (options.withDeps)
             await registry.installDeps(executables, false);
-          await registry.install(executables);
+          await registry.install(executables, false /* forceReinstall */);
         } else {
           const installDockerImage = args.some(arg => arg === 'docker-image');
           args = args.filter(arg => arg !== 'docker-image');
@@ -135,7 +136,7 @@ program
           const executables = checkBrowsersToInstall(args);
           if (options.withDeps)
             await registry.installDeps(executables, false);
-          await registry.install(executables);
+          await registry.install(executables, !!options.force /* forceReinstall */);
         }
       } catch (e) {
         console.log(`Failed to install browsers\n${e}`);

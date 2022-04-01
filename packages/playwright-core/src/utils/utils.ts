@@ -479,6 +479,11 @@ function determineUserAgent(): string {
     }
   }
 
+  const { langName, langVersion } = getClientLanguage();
+  return `Playwright/${getPlaywrightVersion()} (${os.arch()}; ${osIdentifier} ${osVersion}) ${langName}/${langVersion}`;
+}
+
+export function getClientLanguage(): { langName: string, langVersion: string } {
   let langName = 'unknown';
   let langVersion = 'unknown';
   if (!process.env.PW_LANG_NAME) {
@@ -488,8 +493,7 @@ function determineUserAgent(): string {
     langName = process.env.PW_LANG_NAME;
     langVersion = process.env.PW_LANG_NAME_VERSION ?? 'unknown';
   }
-
-  return `Playwright/${getPlaywrightVersion()} (${os.arch()}; ${osIdentifier} ${osVersion}) ${langName}/${langVersion}`;
+  return { langName, langVersion };
 }
 
 export function getPlaywrightVersion(majorMinorOnly = false) {
