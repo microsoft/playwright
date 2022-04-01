@@ -75,7 +75,10 @@ function validateAttributes(attrs: ParsedComponentAttribute[], role: string) {
       }
       case 'level': {
         validateSupportedRole(attr.name, kAriaLevelRoles, role);
-        if (attr.op !== '=' || typeof attr.value !== 'number')
+        // Level is a number, convert it from string.
+        if (typeof attr.value === 'string')
+          attr.value = +attr.value;
+        if (attr.op !== '=' || typeof attr.value !== 'number' || Number.isNaN(attr.value))
           throw new Error(`"level" attribute must be compared to a number`);
         break;
       }
@@ -105,7 +108,7 @@ function validateAttributes(attrs: ParsedComponentAttribute[], role: string) {
 
 export const RoleEngine: SelectorEngine = {
   queryAll(scope: SelectorRoot, selector: string): Element[] {
-    const parsed = parseComponentSelector(selector);
+    const parsed = parseComponentSelector(selector, true);
     const role = parsed.name.toLowerCase();
     if (!role)
       throw new Error(`Role must not be empty`);

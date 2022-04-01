@@ -167,7 +167,7 @@ function findReactRoots(root: Document | ShadowRoot, roots: ReactVNode[] = []): 
 
 export const ReactEngine: SelectorEngine = {
   queryAll(scope: SelectorRoot, selector: string): Element[] {
-    const { name, attributes } = parseComponentSelector(selector);
+    const { name, attributes } = parseComponentSelector(selector, false);
 
     const reactRoots = findReactRoots(document);
     const trees = reactRoots.map(reactRoot => buildComponentsTree(reactRoot));

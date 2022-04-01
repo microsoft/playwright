@@ -17,7 +17,7 @@
 import { playwrightTest as it, expect } from '../config/browserTest';
 import { ParsedComponentSelector, parseComponentSelector } from '../../packages/playwright-core/src/server/injected/componentUtils';
 
-const parse = parseComponentSelector;
+const parse = (selector: string) => parseComponentSelector(selector, false);
 const serialize = (parsed: ParsedComponentSelector) => {
   return parsed.name + parsed.attributes.map(attr => {
     const path = attr.jsonPath.map(token => /^[a-zA-Z0-9]+$/i.test(token) ? token : JSON.stringify(token)).join('.');
@@ -105,6 +105,18 @@ it('should parse regex', async () => {
   expect(serialize(parse(`ColorButton[color=/red/ig]`))).toBe('ColorButton[color = /red/gi]');
   expect(serialize(parse(`ColorButton[color=  / \\/ [/]/  ]`))).toBe('ColorButton[color = / \\/ [/]/]');
   expect(serialize(parse(`ColorButton[color=/[\\]/][[/]/]`))).toBe('ColorButton[color = /[\\]/][[/]/]');
+});
+
+it('should parse identifiers', async () => {
+  expect(serialize(parse('[привет=true]'))).toBe('["привет" = true]');
+  expect(serialize(parse('[__-__=true]'))).toBe('["__-__" = true]');
+  expect(serialize(parse('[😀=true]'))).toBe('["😀" = true]');
+});
+
+it('should parse unqouted string', async () => {
+  expect(serialize(parseComponentSelector('[hey=foo]', true))).toBe('[hey = "foo"]');
+  expect(serialize(parseComponentSelector('[yay=and😀more]', true))).toBe('[yay = "and😀more"]');
+  expect(serialize(parseComponentSelector('[yay= trims  ]', true))).toBe('[yay = "trims"]');
 });
 
 it('should throw on malformed selector', async () => {

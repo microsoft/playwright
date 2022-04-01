@@ -16,6 +16,8 @@
 
 import { test, expect } from './pageTest';
 
+test.skip(({ mode }) => mode !== 'default', 'Experimental features only work in default mode');
+
 test('should detect roles', async ({ page }) => {
   await page.setContent(`
     <button>Hello</button>
@@ -267,6 +269,7 @@ test('should support name', async ({ page }) => {
     <div role="button" aria-label="Hello"></div>
     <div role="button" aria-label="Hallo"></div>
     <div role="button" aria-label="Hello" aria-hidden="true"></div>
+    <div role="button" aria-label="123" aria-hidden="true"></div>
   `);
   expect(await page.$$eval(`role=button[name="Hello"]`, els => els.map(e => e.outerHTML))).toEqual([
     `<div role="button" aria-label="Hello"></div>`,
@@ -285,6 +288,12 @@ test('should support name', async ({ page }) => {
   expect(await page.$$eval(`role=button[name="Hello"][include-hidden]`, els => els.map(e => e.outerHTML))).toEqual([
     `<div role="button" aria-label="Hello"></div>`,
     `<div role="button" aria-label="Hello" aria-hidden="true"></div>`,
+  ]);
+  expect(await page.$$eval(`role=button[name=Hello]`, els => els.map(e => e.outerHTML))).toEqual([
+    `<div role="button" aria-label="Hello"></div>`,
+  ]);
+  expect(await page.$$eval(`role=button[name=123][include-hidden]`, els => els.map(e => e.outerHTML))).toEqual([
+    `<div role="button" aria-label="123" aria-hidden="true"></div>`,
   ]);
 });
 
