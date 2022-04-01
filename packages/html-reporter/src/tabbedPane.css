@@ -20,12 +20,6 @@
   overflow: hidden;
 }
 
-.tabbed-pane-tab-content {
-  display: flex;
-  flex: auto;
-  overflow: hidden;
-}
-
 .tabbed-pane-tab-strip {
   display: flex;
   align-items: center;
