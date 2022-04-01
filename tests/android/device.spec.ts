@@ -83,9 +83,8 @@ test('androidDevice.options.omitDriverInstall', async function({ playwright }) {
   androidDevice.shell('am instrument -w com.microsoft.playwright.androiddriver.test/androidx.test.runner.AndroidJUnitRunner').catch(e => console.error);
 
   // wait for finishing fill operation
-  while (!fillStatus) {
+  while (!fillStatus)
     await new Promise(f => setTimeout(f, 200));
-  }
 
   expect(fillStatus).toBe('success');
 });
