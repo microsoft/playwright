@@ -8188,7 +8188,7 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
      * keep screenshots small. Using `"device"` option will produce a single pixel per each device pixel, so screenhots of
      * high-dpi devices will be twice as large or even larger. Defaults to `"device"`.
      */
-    size?: "css"|"device";
+    scale?: "css"|"device";
 
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
@@ -15770,7 +15770,7 @@ export interface LocatorScreenshotOptions {
    * keep screenshots small. Using `"device"` option will produce a single pixel per each device pixel, so screenhots of
    * high-dpi devices will be twice as large or even larger. Defaults to `"device"`.
    */
-  size?: "css"|"device";
+  scale?: "css"|"device";
 
   /**
    * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
@@ -15960,7 +15960,7 @@ export interface PageScreenshotOptions {
    * keep screenshots small. Using `"device"` option will produce a single pixel per each device pixel, so screenhots of
    * high-dpi devices will be twice as large or even larger. Defaults to `"device"`.
    */
-  size?: "css"|"device";
+  scale?: "css"|"device";
 
   /**
    * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by

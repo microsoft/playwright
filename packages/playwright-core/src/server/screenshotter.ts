@@ -40,7 +40,7 @@ export type ScreenshotOptions = {
   mask?: { frame: Frame, selector: string}[],
   fullPage?: boolean,
   clip?: Rect,
-  size?: 'css' | 'device',
+  scale?: 'css' | 'device',
   fonts?: 'ready' | 'nowait',
   caret?: 'hide' | 'initial',
 };
@@ -278,7 +278,7 @@ export class Screenshotter {
     const cleanupHighlight = await this._maskElements(progress, options);
     progress.throwIfAborted(); // Avoid extra work.
 
-    const buffer = await this._page._delegate.takeScreenshot(progress, format, documentRect, viewportRect, options.quality, fitsViewport, options.size || 'device');
+    const buffer = await this._page._delegate.takeScreenshot(progress, format, documentRect, viewportRect, options.quality, fitsViewport, options.scale || 'device');
     progress.throwIfAborted(); // Avoid restoring after failure - should be done by cleanup.
 
     await cleanupHighlight();
