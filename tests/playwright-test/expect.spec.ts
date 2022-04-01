@@ -234,7 +234,6 @@ test('should propose only the relevant matchers when custom expect matcher class
   expect(result.exitCode).toBe(0);
 });
 
-
 test.describe('helpful expect errors', () => {
   test('top-level', async ({ runInlineTest }) => {
     const result = await runInlineTest({
@@ -287,7 +286,6 @@ test.describe('helpful expect errors', () => {
 
     expect(result.output).toContain(`expect: Property 'nope' not found.`);
   });
-
 
   test('bare', async ({ runInlineTest }) => {
     const result = await runInlineTest({
