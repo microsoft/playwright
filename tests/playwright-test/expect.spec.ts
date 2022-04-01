@@ -233,3 +233,71 @@ test('should propose only the relevant matchers when custom expect matcher class
   });
   expect(result.exitCode).toBe(0);
 });
+
+test.describe('helpful expect errors', () => {
+  test('top-level', async ({ runInlineTest }) => {
+    const result = await runInlineTest({
+      'a.spec.ts': `
+        const { test } = pwt;
+        test('explodes', () => {
+          expect(1).nope();
+        });
+      `
+    });
+
+    expect(result.output).toContain(`expect: Property 'nope' not found.`);
+  });
+
+  test('soft', async ({ runInlineTest }) => {
+    const result = await runInlineTest({
+      'a.spec.ts': `
+        const { test } = pwt;
+        test('explodes', () => {
+          expect.soft(1).nope();
+        });
+      `
+    });
+
+    expect(result.output).toContain(`expect: Property 'nope' not found.`);
+  });
+
+  test('poll', async ({ runInlineTest }) => {
+    const result = await runInlineTest({
+      'a.spec.ts': `
+        const { test } = pwt;
+        test('explodes', () => {
+          expect.poll(() => {}).nope();
+        });
+      `
+    });
+
+    expect(result.output).toContain(`expect: Property 'nope' not found.`);
+  });
+
+  test('not', async ({ runInlineTest }) => {
+    const result = await runInlineTest({
+      'a.spec.ts': `
+        const { test } = pwt;
+        test('explodes', () => {
+          expect(1).not.nope();
+        });
+      `
+    });
+
+    expect(result.output).toContain(`expect: Property 'nope' not found.`);
+  });
+
+  test('bare', async ({ runInlineTest }) => {
+    const result = await runInlineTest({
+      'a.spec.ts': `
+        const { test } = pwt;
+        test('explodes', () => {
+          expect('');
+        });
+      `
+    });
+
+    expect(result.exitCode).toBe(0);
+    expect(result.passed).toBe(1);
+  });
+});

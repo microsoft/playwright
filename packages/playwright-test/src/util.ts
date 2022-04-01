@@ -277,4 +277,3 @@ export function getPackageJsonPath(folderPath: string): string {
   folderToPackageJsonPath.set(folderPath, result);
   return result;
 }
-
