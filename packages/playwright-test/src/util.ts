@@ -280,50 +280,58 @@ export function getPackageJsonPath(folderPath: string): string {
 
 export const levenshteinDistance = (s: string, t: string) => {
   // See https://en.wikipedia.org/wiki/Levenshtein_distance for reference.
+  //
   // This is a DP implementation variant.
-  const n = s.length;
-  const m = t.length;
+  //
+  //  Given a word s, compute the Levenshtein Distance from t.
 
-  if (n === 0)
-    return m;
-  if (m === 0)
-    return n;
+  if (!s)
+    return t.length;
+  if (!t)
+    return s.length;
 
+  // This is the matrix we initialize below:
+  //
+  //              [s]
+  //           w e i r d
+  //         0 1 2 3 4 5
+  //         ___________
+  //       0|0 1 2 3 4 5
+  //     f 1|1
+  // [t] u 2|2
+  //     n 3|3
+  //
+  //
+  //  A cell d[row = 3][col = 5], is the minimum number of ops to edit
+  //  "weird" (t[0…row-1]) into "fun" (s[0…col-1]).
   const d: number[][] = [];
-  // m rows, n cols
-  for (let i = 0; i < m + 1; i++) {
+  for (let rowIdx = 0; rowIdx < t.length + 1; rowIdx++) {
     const row = [];
-    for (let j = 0; j < n + 1; j++)
+    for (let colIdx = 0; colIdx < s.length + 1; colIdx++)
       row.push(0);
 
     d.push(row);
   }
+  for (let col = 0; col < s.length + 1; col++)
+    d[0][col] = col;
+  for (let row = 0; row < t.length + 1; row++)
+    d[row][0] = row;
 
-  // init row
-  for (let i = 0; i < d[0].length; i++)
-    d[0][i] = i;
-
-  // init column
-  for (let i = 0; i < d.length; i++)
-    d[i][0] = i;
-
-  for (let col = 1; col < n + 1; col++) {
-    for (let row = 1; row < m + 1; row++) {
+  // Fill in each column top-to-bottom, left-to-right, so we always have a valid lookup
+  for (let col = 1; col < s.length + 1; col++) {
+    for (let row = 1; row < t.length + 1; row++) {
+      // NB: In the matrix, the strings are 1-indexed, but looking up the actual character from
+      // the original word, is 0-indexed.
       const cost = s[col - 1] === t[row - 1] ? 0 : 1;
-
-      const above = d[row - 1][col];
-      const left = d[row][col - 1];
-      const diag = d[row - 1][col - 1];
-
       d[row][col] = Math.min(
-          above + 1,
-          left + 1,
-          diag + cost,
+          d[row - 1][col] + 1, // cell above => insertion
+          d[row][col - 1] + 1, // cell left => deletion
+          d[row - 1][col - 1] + cost, // cell above+left => diagonal => replacement
       );
     }
   }
 
-  return d[m][n];
+  return d[t.length][s.length];
 };
 
 export const suggest = (original: string, candidates: string[]) => {
