@@ -208,13 +208,7 @@ class ExpectMetaInfoProxyHandler {
     let suggestion = '';
     if (option && option.cost < SCORE_THRESHOLD)
       suggestion = option.candidate;
-
-    let msg = `expect: Property '${entered}' not found.`;
-    if (suggestion)
-      msg += `\n\nDid you mean '${suggestion}'?`;
-    msg += `\n\nSee https://playwright.dev/docs/test-assertions for available options and documentation.`;
-
-    return msg;
+    return `expect: Property '${entered}' not found.` + (suggestion ? `\n\nDid you mean '${suggestion}'?` : '');
   }
 }
 
