@@ -23,7 +23,6 @@ import { WorkerRunner } from './workerRunner';
 
 let closed = false;
 
-sendMessageToParent('ready');
 
 global.console = new Console({
   stdout: process.stdout,
@@ -87,6 +86,8 @@ process.on('message', async message => {
     await workerRunner!.runTestGroup(runPayload);
   }
 });
+
+sendMessageToParent('ready');
 
 async function gracefullyCloseAndExit() {
   if (closed)
