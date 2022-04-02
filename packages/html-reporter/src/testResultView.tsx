@@ -40,20 +40,20 @@ function groupImageDiffs(screenshots: Set<TestAttachment>): ImageDiff[] {
       snapshotNameToImageDiff.set(snapshotName, imageDiff);
     }
     if (category === 'actual')
-      imageDiff.left = { attachment, title: 'Actual' };
+      imageDiff.actual = { attachment };
     if (category === 'expected')
-      imageDiff.right = { attachment, title: 'Expected' };
+      imageDiff.expected = { attachment, title: 'Expected' };
     if (category === 'previous')
-      imageDiff.right = { attachment, title: 'Previous' };
+      imageDiff.expected = { attachment, title: 'Previous' };
     if (category === 'diff')
-      imageDiff.diff = { attachment, title: 'Diff' };
+      imageDiff.diff = { attachment };
   }
   for (const [name, diff] of snapshotNameToImageDiff) {
-    if (!diff.left || !diff.right) {
+    if (!diff.actual || !diff.expected) {
       snapshotNameToImageDiff.delete(name);
     } else {
-      screenshots.delete(diff.left.attachment);
-      screenshots.delete(diff.right.attachment);
+      screenshots.delete(diff.actual.attachment);
+      screenshots.delete(diff.expected.attachment);
       screenshots.delete(diff.diff?.attachment!);
     }
   }

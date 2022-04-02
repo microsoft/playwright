@@ -16,6 +16,7 @@
 
 import { AutoChip, Chip } from './chip';
 import { HeaderView } from './headerView';
+import { ImageDiffView } from './imageDiffView';
 import { TestCaseView } from './testCaseView';
 import './theme.css';
 
@@ -25,5 +26,6 @@ register({
   AutoChip,
   Chip,
   HeaderView,
+  ImageDiffView,
   TestCaseView,
 });

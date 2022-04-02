@@ -21,13 +21,6 @@
   margin-bottom: 24px;
 }
 
-.test-result .tabbed-pane .tab-content {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-}
-
 .test-result > div {
   flex: none;
 }

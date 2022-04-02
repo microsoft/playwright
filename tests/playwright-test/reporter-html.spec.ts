@@ -158,18 +158,14 @@ test('should include image diff', async ({ runInlineTest, page, showReport }) =>
   expect(set.size, 'Should be two images overlaid').toBe(2);
 
   const sliderElement = imageDiff.locator('data-testid=test-result-image-mismatch-grip');
-  await expect.poll(async () => {
-    return await sliderElement.evaluate(e => e.style.left);
-  }, 'Actual slider is on the right').toBe('590px');
+  await expect.poll(() => sliderElement.evaluate(e => e.style.left), 'Actual slider is on the right').toBe('590px');
 
   await imageDiff.locator('text="Expected"').click();
   set.add(await expectedImage.getAttribute('src'));
   set.add(await actualImage.getAttribute('src'));
   expect(set.size).toBe(2);
 
-  await expect.poll(async () => {
-    return await sliderElement.evaluate(e => e.style.left);
-  }, 'Actual slider is on the right').toBe('350px');
+  await expect.poll(() => sliderElement.evaluate(e => e.style.left), 'Expected slider is on the left').toBe('350px');
 
   await imageDiff.locator('text="Diff"').click();
   set.add(await imageDiff.locator('img').getAttribute('src'));
