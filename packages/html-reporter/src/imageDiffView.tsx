@@ -18,12 +18,14 @@ import type { TestAttachment } from '@playwright-test/reporters/html';
 import * as React from 'react';
 import { AttachmentLink } from './links';
 import { TabbedPane, TabbedPaneTab } from './tabbedPane';
+import './imageDiffView.css';
+import './tabbedPane.css';
 
 export type ImageDiff = {
   name: string,
-  left?: { attachment: TestAttachment, title: string },
-  right?: { attachment: TestAttachment, title: string },
-  diff?: { attachment: TestAttachment, title: string },
+  expected?: { attachment: TestAttachment, title: string },
+  actual?: { attachment: TestAttachment },
+  diff?: { attachment: TestAttachment },
 };
 
 export const ImageDiffView: React.FunctionComponent<{
@@ -51,28 +53,28 @@ export const ImageDiffView: React.FunctionComponent<{
       id: 'actual',
       title: 'Actual',
       render: () => <ImageDiffSlider sliderPosition={sliderPosition} setSliderPosition={setSliderPosition}>
-        <img src={diff.left!.attachment.path!} onLoad={() => onImageLoaded('right')} ref={imageElement} />
-        <img src={diff.right!.attachment.path!} style={{ boxShadow: 'none' }} />
+        <img src={diff.expected!.attachment.path!} onLoad={() => onImageLoaded('right')} ref={imageElement} />
+        <img src={diff.actual!.attachment.path!} />
       </ImageDiffSlider>,
     });
     tabs.push({
       id: 'expected',
-      title: diff.right!.title,
+      title: diff.expected!.title,
       render: () => <ImageDiffSlider sliderPosition={sliderPosition} setSliderPosition={setSliderPosition}>
-        <img src={diff.left!.attachment.path!} onLoad={() => onImageLoaded('left')} ref={imageElement} />
-        <img src={diff.right!.attachment.path!} style={{ boxShadow: 'none' }} />
+        <img src={diff.expected!.attachment.path!} onLoad={() => onImageLoaded('left')} ref={imageElement} />
+        <img src={diff.actual!.attachment.path!} style={{ boxShadow: 'none' }} />
       </ImageDiffSlider>,
     });
   } else {
     tabs.push({
       id: 'actual',
       title: 'Actual',
-      render: () => <img src={diff.left!.attachment.path!} onLoad={() => onImageLoaded()} />
+      render: () => <img src={diff.actual!.attachment.path!} onLoad={() => onImageLoaded()} />
     });
     tabs.push({
       id: 'expected',
-      title: diff.right!.title,
-      render: () => <img src={diff.right!.attachment.path!} onLoad={() => onImageLoaded()} />
+      title: diff.expected!.title,
+      render: () => <img src={diff.expected!.attachment.path!} onLoad={() => onImageLoaded()} />
     });
   }
   if (diff.diff) {
@@ -82,10 +84,10 @@ export const ImageDiffView: React.FunctionComponent<{
       render: () => <img src={diff.diff!.attachment.path} onLoad={() => onImageLoaded()} />
     });
   }
-  return <div className='vbox' data-testid='test-result-image-mismatch' ref={diffElement}>
+  return <div className='vbox image-diff-view' data-testid='test-result-image-mismatch' ref={diffElement}>
     <TabbedPane tabs={tabs} selectedTab={selectedTab} setSelectedTab={setSelectedTab} />
-    <AttachmentLink attachment={diff.left!.attachment}></AttachmentLink>
-    <AttachmentLink attachment={diff.right!.attachment}></AttachmentLink>
+    <AttachmentLink attachment={diff.actual!.attachment}></AttachmentLink>
+    <AttachmentLink attachment={diff.expected!.attachment}></AttachmentLink>
     {diff.diff && <AttachmentLink attachment={diff.diff.attachment}></AttachmentLink>}
   </div>;
 };
@@ -112,7 +114,13 @@ export const ImageDiffSlider: React.FC<{
   return <>
     {childrenArray[0]}
     <div style={{ ...absolute }}>
-      <div style={{ ...absolute, display: 'flex', zIndex: 50, clip: `rect(0, ${size}px, auto, 0)` }}>
+      <div style={{
+        ...absolute,
+        display: 'flex',
+        zIndex: 50,
+        clip: `rect(0, ${size}px, auto, 0)`,
+        backgroundColor: 'var(--color-canvas-default)',
+      }}>
         {childrenArray[1]}
       </div>
       <div
