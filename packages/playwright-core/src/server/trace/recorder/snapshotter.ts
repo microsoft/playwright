@@ -80,7 +80,7 @@ export class Snapshotter {
     ];
 
     const initScript = `(${frameSnapshotStreamer})("${this._snapshotStreamer}")`;
-    await this._context._doAddInitScript(initScript);
+    await this._context.addInitScript(initScript);
     await this._runInAllFrames(initScript);
   }
 

@@ -47,7 +47,7 @@ export interface PageDelegate {
   goBack(): Promise<boolean>;
   goForward(): Promise<boolean>;
   exposeBinding(binding: PageBinding): Promise<void>;
-  evaluateOnNewDocument(source: string): Promise<void>;
+  addInitScript(source: string): Promise<void>;
   closePage(runBeforeUnload: boolean): Promise<void>;
   potentiallyUninitializedPage(): Page;
   pageOrError(): Promise<Page | Error>;
@@ -145,7 +145,7 @@ export class Page extends SdkObject {
   readonly _delegate: PageDelegate;
   readonly _state: PageState;
   private readonly _pageBindings = new Map<string, PageBinding>();
-  readonly _evaluateOnNewDocumentSources: string[] = [];
+  readonly initScripts: string[] = [];
   readonly _screenshotter: Screenshotter;
   readonly _frameManager: frames.FrameManager;
   readonly accessibility: accessibility.Accessibility;
@@ -411,16 +411,16 @@ export class Page extends SdkObject {
     await this._delegate.bringToFront();
   }
 
-  async _addInitScriptExpression(source: string) {
-    this._evaluateOnNewDocumentSources.push(source);
-    await this._delegate.evaluateOnNewDocument(source);
+  async addInitScript(source: string) {
+    this.initScripts.push(source);
+    await this._delegate.addInitScript(source);
   }
 
   _needsRequestInterception(): boolean {
     return !!this._clientRequestInterceptor || !!this._serverRequestInterceptor || !!this._browserContext._requestInterceptor;
   }
 
-  async _setClientRequestInterceptor(handler: network.RouteHandler | undefined): Promise<void> {
+  async setClientRequestInterceptor(handler: network.RouteHandler | undefined): Promise<void> {
     this._clientRequestInterceptor = handler;
     await this._delegate.updateRequestInterception();
   }
@@ -591,7 +591,7 @@ export class Page extends SdkObject {
     }
   }
 
-  async _setFileChooserIntercepted(enabled: boolean): Promise<void> {
+  async setFileChooserIntercepted(enabled: boolean): Promise<void> {
     await this._delegate.setFileChooserIntercepted(enabled);
   }
 

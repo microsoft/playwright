@@ -202,11 +202,9 @@ export class WKBrowser extends Browser {
 
 export class WKBrowserContext extends BrowserContext {
   declare readonly _browser: WKBrowser;
-  readonly _evaluateOnNewDocumentSources: string[];
 
   constructor(browser: WKBrowser, browserContextId: string | undefined, options: types.BrowserContextOptions) {
     super(browser, options, browserContextId);
-    this._evaluateOnNewDocumentSources = [];
     this._authenticateProxyViaHeader();
   }
 
@@ -248,7 +246,7 @@ export class WKBrowserContext extends BrowserContext {
     return this._browser._wkPages.get(pageProxyId)!;
   }
 
-  async _doCookies(urls: string[]): Promise<types.NetworkCookie[]> {
+  async doGetCookies(urls: string[]): Promise<types.NetworkCookie[]> {
     const { cookies } = await this._browser._browserSession.send('Playwright.getAllCookies', { browserContextId: this._browserContextId });
     return network.filterCookies(cookies.map((c: types.NetworkCookie) => {
       const copy: any = { ... c };
@@ -271,11 +269,11 @@ export class WKBrowserContext extends BrowserContext {
     await this._browser._browserSession.send('Playwright.deleteAllCookies', { browserContextId: this._browserContextId });
   }
 
-  async _doGrantPermissions(origin: string, permissions: string[]) {
+  async doGrantPermissions(origin: string, permissions: string[]) {
     await Promise.all(this.pages().map(page => (page._delegate as WKPage)._grantPermissions(origin, permissions)));
   }
 
-  async _doClearPermissions() {
+  async doClearPermissions() {
     await Promise.all(this.pages().map(page => (page._delegate as WKPage)._clearPermissions()));
   }
 
@@ -298,37 +296,36 @@ export class WKBrowserContext extends BrowserContext {
       await (page._delegate as WKPage).updateOffline();
   }
 
-  async _doSetHTTPCredentials(httpCredentials?: types.Credentials): Promise<void> {
+  async doSetHTTPCredentials(httpCredentials?: types.Credentials): Promise<void> {
     this._options.httpCredentials = httpCredentials;
     for (const page of this.pages())
       await (page._delegate as WKPage).updateHttpCredentials();
   }
 
-  async _doAddInitScript(source: string) {
-    this._evaluateOnNewDocumentSources.push(source);
+  async doAddInitScript(source: string) {
     for (const page of this.pages())
       await (page._delegate as WKPage)._updateBootstrapScript();
   }
 
-  async _doExposeBinding(binding: PageBinding) {
+  async doExposeBinding(binding: PageBinding) {
     for (const page of this.pages())
       await (page._delegate as WKPage).exposeBinding(binding);
   }
 
-  async _doUpdateRequestInterception(): Promise<void> {
+  async doUpdateRequestInterception(): Promise<void> {
     for (const page of this.pages())
       await (page._delegate as WKPage).updateRequestInterception();
   }
 
-  _onClosePersistent() {}
+  onClosePersistent() {}
 
-  async _doClose() {
+  async doClose() {
     assert(this._browserContextId);
     await this._browser._browserSession.send('Playwright.deleteContext', { browserContextId: this._browserContextId });
     this._browser._contexts.delete(this._browserContextId);
   }
 
-  async _doCancelDownload(uuid: string) {
+  async cancelDownload(uuid: string) {
     await this._browser._browserSession.send('Playwright.cancelDownload', { uuid });
   }
 }

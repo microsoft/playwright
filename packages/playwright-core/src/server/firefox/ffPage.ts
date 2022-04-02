@@ -113,7 +113,7 @@ export class FFPage implements PageDelegate {
     });
     // Ideally, we somehow ensure that utility world is created before Page.ready arrives, but currently it is racy.
     // Therefore, we can end up with an initialized page without utility world, although very unlikely.
-    this.evaluateOnNewDocument('', UTILITY_WORLD_NAME).catch(e => this._markAsError(e));
+    this.addInitScript('', UTILITY_WORLD_NAME).catch(e => this._markAsError(e));
   }
 
   potentiallyUninitializedPage(): Page {
@@ -398,7 +398,7 @@ export class FFPage implements PageDelegate {
     return success;
   }
 
-  async evaluateOnNewDocument(script: string, worldName?: string): Promise<void> {
+  async addInitScript(script: string, worldName?: string): Promise<void> {
     this._initScripts.push({ script, worldName });
     await this._session.send('Page.setInitScripts', { scripts: this._initScripts });
   }
