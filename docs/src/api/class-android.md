@@ -87,6 +87,11 @@ Returns the list of detected Android devices.
 
 Optional port to establish ADB server connection.
 
+### option: Android.devices.omitDriverInstall
+- `omitDriverInstall` <[boolean]>
+
+Prevents automatic playwright driver installation on attach. Assumes that the drivers have been installed already.
+
 ## method: Android.setDefaultTimeout
 
 This setting will change the default maximum time for all the methods accepting [`param: timeout`] option.

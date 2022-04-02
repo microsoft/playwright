@@ -11118,6 +11118,11 @@ export interface Android {
    */
   devices(options?: {
     /**
+     * Prevents automatic playwright driver installation on attach. Assumes that the drivers have been installed already.
+     */
+    omitDriverInstall?: boolean;
+
+    /**
      * Optional port to establish ADB server connection.
      */
     port?: number;
