@@ -90,7 +90,7 @@ Optional port to establish ADB server connection.
 ### option: Android.devices.omitDriverInstall
 - `omitDriverInstall` <[boolean]>
 
-Optional install latest playwright driver automatically. if true, firstly you should install android-driver.apk and android-driver-target.apk which are in bin directory of playwright-core.  Default to false.
+Prevents automatic playwright driver installation on attach. Assumes that the drivers have been installed already.
 
 ## method: Android.setDefaultTimeout
 

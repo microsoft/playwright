@@ -181,6 +181,9 @@ export class AndroidDevice extends SdkObject {
       for (const file of ['android-driver.apk', 'android-driver-target.apk'])
         await this.installApk(await fs.promises.readFile(require.resolve(`../../../bin/${file}`)));
     }
+    else {
+      debug('pw:android')('Skipping the driver installation');
+    }
 
     debug('pw:android')('Starting the new driver');
     this.shell('am instrument -w com.microsoft.playwright.androiddriver.test/androidx.test.runner.AndroidJUnitRunner').catch(e => debug('pw:android')(e));
