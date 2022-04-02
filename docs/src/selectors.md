@@ -474,6 +474,50 @@ Consider a page with two buttons, first invisible and second visible.
 
 ## Selecting elements that contain other elements
 
+### Filter by text
+
+Locators support an option to only select elements that have some text somewhere inside, possibly in a descendant element.
+
+  ```js
+  await page.locator('button', { hasText: 'Click me' }).click();
+  ```
+  ```java
+  page.locator("button", new Page.LocatorOptions().setHasText("Click me")).click();
+  ```
+  ```python async
+  await page.locator("button", has_text="Click me").click()
+  ```
+  ```python sync
+  page.locator("button", has_text="Click me").click()
+  ```
+  ```csharp
+  await page.Locator("button", new PageLocatorOptions { HasText = "Click me" }).ClickAsync();
+  ```
+
+### Filter by another locator
+
+Locators support an option to only select elements that have a descendant matching antoher locator.
+
+  ```js
+  page.locator('article', { has: page.locator('button.subscribe') })
+  ```
+  ```java
+  page.locator("article", new Page.LocatorOptions().setHas(page.locator("button.subscribe")))
+  ```
+  ```python async
+  page.locator("article", has=page.locator("button.subscribe"))
+  ```
+  ```python sync
+  page.locator("article", has=page.locator("button.subscribe"))
+  ```
+  ```csharp
+  page.Locator("article", new PageLocatorOptions { Has = page.Locator("button.subscribe") })
+  ```
+
+Note that inner locator is matched starting from the outer one, not from the document root.
+
+### Inside CSS selector
+
 The `:has()` pseudo-class is an [experimental CSS pseudo-class](https://developer.mozilla.org/en-US/docs/Web/CSS/:has). It returns an element if any of the selectors passed as parameters
 relative to the :scope of the given element match at least one element.
 
@@ -498,6 +542,36 @@ page.locator("article:has(div.promo)").text_content()
 ```csharp
 await page.Locator("article:has(div.promo)").TextContentAsync();
 ```
+
+## Augmenting existing locators
+
+You can add filtering to any locator by passing `:scope` selector to [`method: Locator.locator`] and specifying desired options. For example, given the locator `row` that selects some rows in the table, you can filter to just those that contain text "Hello".
+
+  ```js
+  const row = page.locator('.row');
+  // ... later on ...
+  await row.locator(':scope', { hasText: 'Hello' }).click();
+  ```
+  ```java
+  Locator row = page.locator(".row");
+  // ... later on ...
+  row.locator(":scope", new Locator.LocatorOptions().setHasText("Hello")).click();
+  ```
+  ```python async
+  row = page.locator(".row")
+  # ... later on ...
+  await row.locator(":scope", has_text="Hello").click()
+  ```
+  ```python sync
+  row = page.locator(".row")
+  # ... later on ...
+  row.locator(":scope", has_text="Hello").click()
+  ```
+  ```csharp
+  var locator = page.Locator(".row");
+  // ... later on ...
+  await locator.Locator(":scope", new LocatorLocatorOptions { HasText = "Hello" }).ClickAsync();
+  ```
 
 ## Selecting elements matching one of the conditions
 
