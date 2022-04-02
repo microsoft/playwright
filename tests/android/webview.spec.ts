@@ -69,9 +69,9 @@ test('select webview from socketName', async function({ androidDevice }) {
   const newPage = await context.newPage();
   newPage.goto('about:blank');
 
-  const webview = await androidDevice.webView({ socketName: 'chrome_devtools_remote' });
+  const webview = await androidDevice.webView({ socketName: 'webview_devtools_remote_playwright_test' });
   expect(webview.pkg()).toBe('');
-  expect(webview.socketName()).toBe('chrome_devtools_remote');
+  expect(webview.pid()).toBe(-1);
   const page = await webview.page();
   expect(page.url()).toBe('about:blank');
 

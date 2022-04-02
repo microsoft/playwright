@@ -11918,11 +11918,6 @@ export interface AndroidWebView {
    * WebView package identifier.
    */
   pkg(): string;
-
-  /**
-   * WebView socket name.
-   */
-  socketName(): string;
 }
 
 /**

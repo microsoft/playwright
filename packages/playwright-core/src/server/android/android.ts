@@ -246,7 +246,7 @@ export class AndroidDevice extends SdkObject {
   async launchBrowser(pkg: string = 'com.android.chrome', options: types.BrowserContextOptions): Promise<BrowserContext> {
     debug('pw:android')('Force-stopping', pkg);
     await this._backend.runCommand(`shell:am force-stop ${pkg}`);
-    const socketName = isUnderTest() ? 'chrome_devtools_remote' : ('playwright-' + createGuid());
+    const socketName = isUnderTest() ? 'webview_devtools_remote_playwright_test' : ('playwright-' + createGuid());
     const commandLine = `_ --disable-fre --no-default-browser-check --no-first-run --remote-debugging-socket-name=${socketName}`;
     debug('pw:android')('Starting', pkg, commandLine);
     await this._backend.runCommand(`shell:echo "${commandLine}" > /data/local/tmp/chrome-command-line`);
@@ -343,24 +343,23 @@ export class AndroidDevice extends SdkObject {
   }
 
   private async _refreshWebViews() {
-    // possible socketName, eg: webview_devtools_remote_32327, webview_devtools_remote_32327_zeus, chrome_devtools_remote, content_shell_devtools_remote
-    const sockets = (await this._backend.runCommand(`shell:cat /proc/net/unix | grep devtools_remote`)).toString().split('\n');
+    // possible socketName, eg: webview_devtools_remote_32327, webview_devtools_remote_32327_zeus, webview_devtools_remote_zeus
+    const sockets = (await this._backend.runCommand(`shell:cat /proc/net/unix | grep webview_devtools_remote`)).toString().split('\n');
     if (this._isClosed)
       return;
 
     const newPids = new Set<number>();
     const socketNames = new Set<string>();
     for (const line of sockets) {
-      const match = line.match(/[^@]+@.*?devtools_remote_?(\d*)/);
-      const matchSocketName = line.match(/[^@]+@(.*?_devtools_remote_?.*)/);
+      const match = line.match(/[^@]+@.*?webview_devtools_remote_?(\d*)/);
+      const matchSocketName = line.match(/[^@]+@(.*?webview_devtools_remote_?.*)/);
 
       if (!matchSocketName)
         continue;
 
       const socketName = matchSocketName[1];
       socketNames.add(socketName);
-
-      // possible line: 0000000000000000: 00000002 00000000 00010000 0001 01 5841881 @chrome_devtools_remote
+      // possible line: 0000000000000000: 00000002 00000000 00010000 0001 01 5841881 @webview_devtools_remote_zeus
       // the result: match[1] = ''
       if (!match || !match[1]) {
         if (this._webViews.has(socketName))

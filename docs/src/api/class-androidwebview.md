@@ -21,8 +21,3 @@ WebView process PID.
 - returns: <[string]>
 
 WebView package identifier.
-
-## method: AndroidWebView.socketName
-- returns: <[string]>
-
-WebView socket name.

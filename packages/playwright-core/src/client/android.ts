@@ -102,26 +102,17 @@ export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel> i
   }
 
   async webView(selector: { pkg?: string; socketName?: string; }, options?: types.TimeoutOptions): Promise<AndroidWebView> {
-    const webView = [...this._webViews.values()].find(v => {
+    const predicate = (v: AndroidWebView) => {
       if (selector.pkg)
         return v.pkg() === selector.pkg;
       if (selector.socketName)
         return v.socketName() === selector.socketName;
       return false;
-    });
-
+    };
+    const webView = [...this._webViews.values()].find(predicate);
     if (webView)
       return webView;
-    return this.waitForEvent('webview', {
-      ...options,
-      predicate: (view: AndroidWebView) => {
-        if (selector.pkg)
-          return view.pkg() === selector.pkg;
-        if (selector.socketName)
-          return view.socketName() === selector.socketName;
-        return false;
-      }
-    });
+    return this.waitForEvent('webview', { ...options, predicate });
   }
 
   async wait(selector: api.AndroidSelector, options?: { state?: 'gone' } & types.TimeoutOptions) {
