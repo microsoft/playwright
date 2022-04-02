@@ -180,8 +180,7 @@ export class AndroidDevice extends SdkObject {
       debug('pw:android')('Installing the new driver');
       for (const file of ['android-driver.apk', 'android-driver-target.apk'])
         await this.installApk(await fs.promises.readFile(require.resolve(`../../../bin/${file}`)));
-    }
-    else {
+    } else {
       debug('pw:android')('Skipping the driver installation');
     }
 
