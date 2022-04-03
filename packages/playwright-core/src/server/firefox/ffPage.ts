@@ -333,6 +333,10 @@ export class FFPage implements PageDelegate {
     await this._session.send('Page.addBinding', { name: binding.name, script: binding.source });
   }
 
+  async removeExposedBindings() {
+    // TODO: implement me.
+  }
+
   didClose() {
     this._session.dispose();
     eventsHelper.removeEventListeners(this._eventListeners);
@@ -401,6 +405,11 @@ export class FFPage implements PageDelegate {
   async addInitScript(script: string, worldName?: string): Promise<void> {
     this._initScripts.push({ script, worldName });
     await this._session.send('Page.setInitScripts', { scripts: this._initScripts });
+  }
+
+  async removeInitScripts() {
+    this._initScripts = [];
+    await this._session.send('Page.setInitScripts', { scripts: [] });
   }
 
   async closePage(runBeforeUnload: boolean): Promise<void> {

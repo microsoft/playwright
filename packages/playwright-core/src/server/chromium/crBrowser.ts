@@ -464,9 +464,19 @@ export class CRBrowserContext extends BrowserContext {
       await (page._delegate as CRPage).addInitScript(source);
   }
 
+  async doRemoveInitScripts() {
+    for (const page of this.pages())
+      await (page._delegate as CRPage).removeInitScripts();
+  }
+
   async doExposeBinding(binding: PageBinding) {
     for (const page of this.pages())
       await (page._delegate as CRPage).exposeBinding(binding);
+  }
+
+  async doRemoveExposedBindings() {
+    for (const page of this.pages())
+      await (page._delegate as CRPage).removeExposedBindings();
   }
 
   async doUpdateRequestInterception(): Promise<void> {

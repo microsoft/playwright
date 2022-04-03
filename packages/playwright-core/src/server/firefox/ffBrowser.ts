@@ -324,8 +324,16 @@ export class FFBrowserContext extends BrowserContext {
     await this._browser._connection.send('Browser.setInitScripts', { browserContextId: this._browserContextId, scripts: this.initScripts.map(script => ({ script })) });
   }
 
+  async doRemoveInitScripts() {
+    await this._browser._connection.send('Browser.setInitScripts', { browserContextId: this._browserContextId, scripts: [] });
+  }
+
   async doExposeBinding(binding: PageBinding) {
     await this._browser._connection.send('Browser.addBinding', { browserContextId: this._browserContextId, name: binding.name, script: binding.source });
+  }
+
+  async doRemoveExposedBindings() {
+    // TODO: implement me.
   }
 
   async doUpdateRequestInterception(): Promise<void> {
