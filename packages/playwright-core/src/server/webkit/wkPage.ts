@@ -777,7 +777,7 @@ export class WKPage implements PageDelegate {
       scripts.push(this._bindingToScript(binding));
     scripts.push(...this._browserContext.initScripts);
     scripts.push(...this._page.initScripts);
-    return scripts.join(';');
+    return scripts.join(';\n');
   }
 
   async _updateBootstrapScript(): Promise<void> {
