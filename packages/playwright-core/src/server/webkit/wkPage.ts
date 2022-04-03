@@ -758,7 +758,7 @@ export class WKPage implements PageDelegate {
     await Promise.all(this._page.frames().map(frame => frame.evaluateExpression(script, false, {}).catch(e => {})));
   }
 
-  async evaluateOnNewDocument(script: string): Promise<void> {
+  async addInitScript(script: string): Promise<void> {
     await this._updateBootstrapScript();
   }
 
@@ -775,8 +775,8 @@ export class WKPage implements PageDelegate {
     }
     for (const binding of this._page.allBindings())
       scripts.push(this._bindingToScript(binding));
-    scripts.push(...this._browserContext._evaluateOnNewDocumentSources);
-    scripts.push(...this._page._evaluateOnNewDocumentSources);
+    scripts.push(...this._browserContext.initScripts);
+    scripts.push(...this._page.initScripts);
     return scripts.join(';');
   }
 

@@ -91,7 +91,7 @@ export class ConnectedBrowserDispatcher extends Dispatcher<Browser, channels.Bro
       params.recordVideo.dir = this._object.options.artifactsDir;
     const context = await this._object.newContext(metadata, params);
     this._contexts.add(context);
-    context._setSelectors(this.selectors);
+    context.setSelectors(this.selectors);
     context.on(BrowserContext.Events.Close, () => this._contexts.delete(context));
     return { context: new BrowserContextDispatcher(this._scope, context) };
   }

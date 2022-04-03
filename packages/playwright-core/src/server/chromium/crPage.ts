@@ -213,7 +213,7 @@ export class CRPage implements PageDelegate {
   }
 
   async setFileChooserIntercepted(enabled: boolean) {
-    await this._forAllFrameSessions(frame => frame._setFileChooserIntercepted(enabled));
+    await this._forAllFrameSessions(frame => frame.setFileChooserIntercepted(enabled));
   }
 
   async reload(): Promise<void> {
@@ -237,7 +237,7 @@ export class CRPage implements PageDelegate {
     return this._go(+1);
   }
 
-  async evaluateOnNewDocument(source: string, world: types.World = 'main'): Promise<void> {
+  async addInitScript(source: string, world: types.World = 'main'): Promise<void> {
     await this._forAllFrameSessions(frame => frame._evaluateOnNewDocument(source, world));
   }
 
@@ -487,7 +487,7 @@ class FrameSession {
           });
           for (const binding of this._crPage._browserContext._pageBindings.values())
             frame.evaluateExpression(binding.source, false, undefined).catch(e => {});
-          for (const source of this._crPage._browserContext._evaluateOnNewDocumentSources)
+          for (const source of this._crPage._browserContext.initScripts)
             frame.evaluateExpression(source, false, undefined, 'main').catch(e => {});
         }
         const isInitialEmptyPage = this._isMainFrame() && this._page.mainFrame().url() === ':';
@@ -543,9 +543,9 @@ class FrameSession {
       promises.push(this._updateEmulateMedia(true));
       for (const binding of this._crPage._page.allBindings())
         promises.push(this._initBinding(binding));
-      for (const source of this._crPage._browserContext._evaluateOnNewDocumentSources)
+      for (const source of this._crPage._browserContext.initScripts)
         promises.push(this._evaluateOnNewDocument(source, 'main'));
-      for (const source of this._crPage._page._evaluateOnNewDocumentSources)
+      for (const source of this._crPage._page.initScripts)
         promises.push(this._evaluateOnNewDocument(source, 'main'));
       if (screencastOptions)
         promises.push(this._startVideoRecording(screencastOptions));
@@ -1048,7 +1048,7 @@ class FrameSession {
     await this._networkManager.setRequestInterception(this._page._needsRequestInterception());
   }
 
-  async _setFileChooserIntercepted(enabled: boolean) {
+  async setFileChooserIntercepted(enabled: boolean) {
     await this._client.send('Page.setInterceptFileChooserDialog', { enabled }).catch(e => {}); // target can be closed.
   }
 

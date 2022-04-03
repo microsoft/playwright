@@ -166,15 +166,15 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   }
 
   async addInitScript(params: channels.BrowserContextAddInitScriptParams): Promise<void> {
-    await this._context._doAddInitScript(params.source);
+    await this._context.addInitScript(params.source);
   }
 
   async setNetworkInterceptionEnabled(params: channels.BrowserContextSetNetworkInterceptionEnabledParams): Promise<void> {
     if (!params.enabled) {
-      await this._context._setRequestInterceptor(undefined);
+      await this._context.setRequestInterceptor(undefined);
       return;
     }
-    await this._context._setRequestInterceptor((route, request) => {
+    await this._context.setRequestInterceptor((route, request) => {
       this._dispatchEvent('route', { route: RouteDispatcher.from(this._scope, route), request: RequestDispatcher.from(this._scope, request) });
     });
   }
