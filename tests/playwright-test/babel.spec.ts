@@ -36,3 +36,43 @@ test('should succeed', async ({ runInlineTest }) => {
   expect(result.passed).toBe(1);
   expect(result.failed).toBe(0);
 });
+
+test('should treat enums equally', async ({ runInlineTest }) => {
+  test.fail(true, 'https://github.com/microsoft/playwright/issues/13265');
+  const result = await runInlineTest({
+    'component.tsx': `
+      export enum MyEnum {
+        Value = "value",
+      };
+
+      export const enum MyConstEnum {
+        Value = "value",
+      }
+    `,
+    'regular.ts': `
+      export enum MyEnum {
+        Value = "value",
+      };
+
+      export const enum MyConstEnum {
+        Value = "value",
+      }
+    `,
+    'example.spec.ts': `
+      const { test } = pwt;
+
+      import * as components from './component';
+      import * as regular from './regular';
+
+      test('works', () => {
+        expect.soft(components.MyEnum.Value).toBe("value");
+        expect.soft(components.MyConstEnum.Value).toBe("value");
+        expect.soft(regular.MyEnum.Value).toBe("value");
+        expect.soft(regular.MyConstEnum.Value).toBe("value");
+      })
+    `,
+  });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
