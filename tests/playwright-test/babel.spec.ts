@@ -38,7 +38,7 @@ test('should succeed', async ({ runInlineTest }) => {
 });
 
 test('should treat enums equally', async ({ runInlineTest }) => {
-  test.fail(true, 'https://github.com/microsoft/playwright/issues/13265');
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/13265' }); 
   const result = await runInlineTest({
     'component.tsx': `
       export enum MyEnum {
