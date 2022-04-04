@@ -886,7 +886,7 @@ Slows down Playwright operations by the specified amount of milliseconds. Useful
 ## locator-option-has-text
 - `hasText` <[string]|[RegExp]>
 
-Matches elements containing specified text somewhere inside, possibly in a child or a descendant element.
+Matches elements containing specified text somewhere inside, possibly in a child or a descendant element. When passed a [string], matching is case-insensitive and searches for a substring.
 For example, `"Playwright"` matches `<article><div>Playwright</div></article>`.
 
 ## locator-option-has

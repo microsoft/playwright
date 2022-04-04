@@ -310,7 +310,7 @@ Text selector has a few variations:
   await page.Locator("text=/Log\\s*in/i").ClickAsync();
   ```
 
-- `article:has-text("Playwright")` - the `:has-text()` pseudo-class can be used inside a [css] selector. It matches any element containing specified text somewhere inside, possibly in a child or a descendant element. For example, `article:has-text("Playwright")` matches `<article><div>Playwright</div></article>`.
+- `article:has-text("Playwright")` - the `:has-text()` pseudo-class can be used inside a [css] selector. It matches any element containing specified text somewhere inside, possibly in a child or a descendant element. Matching is case-insensitive and searches for a substring. For example, `article:has-text("Playwright")` matches `<article><div>Playwright</div></article>`.
 
   Note that `:has-text()` should be used together with other `css` specifiers, otherwise it will match all the elements containing specified text, including the `<body>`.
   ```js
@@ -476,7 +476,7 @@ Consider a page with two buttons, first invisible and second visible.
 
 ### Filter by text
 
-Locators support an option to only select elements that have some text somewhere inside, possibly in a descendant element.
+Locators support an option to only select elements that have some text somewhere inside, possibly in a descendant element. Matching is case-insensitive and searches for a substring.
 
   ```js
   await page.locator('button', { hasText: 'Click me' }).click();
@@ -493,6 +493,8 @@ Locators support an option to only select elements that have some text somewhere
   ```csharp
   await page.Locator("button", new PageLocatorOptions { HasText = "Click me" }).ClickAsync();
   ```
+
+You can also pass a regular expression.
 
 ### Filter by another locator
 

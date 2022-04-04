@@ -2625,8 +2625,9 @@ export interface Page {
     has?: Locator;
 
     /**
-     * Matches elements containing specified text somewhere inside, possibly in a child or a descendant element. For example,
-     * `"Playwright"` matches `<article><div>Playwright</div></article>`.
+     * Matches elements containing specified text somewhere inside, possibly in a child or a descendant element. When passed a
+     * [string], matching is case-insensitive and searches for a substring. For example, `"Playwright"` matches
+     * `<article><div>Playwright</div></article>`.
      */
     hasText?: string|RegExp;
   }): Locator;
@@ -5443,8 +5444,9 @@ export interface Frame {
     has?: Locator;
 
     /**
-     * Matches elements containing specified text somewhere inside, possibly in a child or a descendant element. For example,
-     * `"Playwright"` matches `<article><div>Playwright</div></article>`.
+     * Matches elements containing specified text somewhere inside, possibly in a child or a descendant element. When passed a
+     * [string], matching is case-insensitive and searches for a substring. For example, `"Playwright"` matches
+     * `<article><div>Playwright</div></article>`.
      */
     hasText?: string|RegExp;
   }): Locator;
@@ -9405,8 +9407,9 @@ export interface Locator {
     has?: Locator;
 
     /**
-     * Matches elements containing specified text somewhere inside, possibly in a child or a descendant element. For example,
-     * `"Playwright"` matches `<article><div>Playwright</div></article>`.
+     * Matches elements containing specified text somewhere inside, possibly in a child or a descendant element. When passed a
+     * [string], matching is case-insensitive and searches for a substring. For example, `"Playwright"` matches
+     * `<article><div>Playwright</div></article>`.
      */
     hasText?: string|RegExp;
   }): Locator;
@@ -13879,8 +13882,9 @@ export interface FrameLocator {
     has?: Locator;
 
     /**
-     * Matches elements containing specified text somewhere inside, possibly in a child or a descendant element. For example,
-     * `"Playwright"` matches `<article><div>Playwright</div></article>`.
+     * Matches elements containing specified text somewhere inside, possibly in a child or a descendant element. When passed a
+     * [string], matching is case-insensitive and searches for a substring. For example, `"Playwright"` matches
+     * `<article><div>Playwright</div></article>`.
      */
     hasText?: string|RegExp;
   }): Locator;
