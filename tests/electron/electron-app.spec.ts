@@ -180,3 +180,14 @@ test('should record video', async ({ playwright }, testInfo) => {
   const videoPath = await page.video().path();
   expect(fs.statSync(videoPath).size).toBeGreaterThan(0);
 });
+
+test('should detach debugger on app-initiated exit', async ({ playwright }) => {
+  const electronApp = await playwright._electron.launch({
+    args: [path.join(__dirname, 'electron-app.js')],
+  });
+  const closePromise = new Promise(f => electronApp.process().on('close', f));
+  await electronApp.evaluate(({ app }) => {
+    app.quit();
+  });
+  await closePromise;
+});

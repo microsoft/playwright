@@ -67,6 +67,8 @@ export class Connection extends EventEmitter {
   private _rootObject: Root;
   private _closedErrorMessage: string | undefined;
   private _isRemote = false;
+  // Some connections allow resolving in-process dispatchers.
+  toImpl: ((client: ChannelOwner) => any) | undefined;
 
   constructor() {
     super();

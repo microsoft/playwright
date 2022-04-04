@@ -52,9 +52,11 @@ export class ElectronApplication extends SdkObject {
   private _nodeExecutionContext: js.ExecutionContext | undefined;
   _nodeElectronHandlePromise: Promise<js.JSHandle<any>>;
   readonly _timeoutSettings = new TimeoutSettings();
+  private _process: childProcess.ChildProcess;
 
-  constructor(parent: SdkObject, browser: CRBrowser, nodeConnection: CRConnection) {
+  constructor(parent: SdkObject, browser: CRBrowser, nodeConnection: CRConnection, process: childProcess.ChildProcess) {
     super(parent, 'electron-app');
+    this._process = process;
     this._browserContext = browser._defaultContext as CRBrowserContext;
     this._browserContext.on(BrowserContext.Events.Close, () => {
       // Emit application closed after context closed.
@@ -75,6 +77,10 @@ export class ElectronApplication extends SdkObject {
       await electronHandle.evaluate(({ app }) => app.quit());
     });
     this._nodeSession.send('Runtime.enable', {}).catch(e => {});
+  }
+
+  process(): childProcess.ChildProcess {
+    return this._process;
   }
 
   context(): BrowserContext {
@@ -166,6 +172,10 @@ export class Electron extends SdkObject {
       const nodeTransport = await WebSocketTransport.connect(progress, nodeMatch[1]);
       const nodeConnection = new CRConnection(nodeTransport, helper.debugProtocolLogger(), browserLogsCollector);
 
+      // Immediately release exiting process under debug.
+      waitForLine(progress, launchedProcess, /Waiting for the debugger to disconnect\.\.\./).then(() => {
+        nodeTransport.close();
+      }).catch(() => {});
       const chromeMatch = await Promise.race([
         waitForLine(progress, launchedProcess, /^DevTools listening on (ws:\/\/.*)$/),
         waitForXserverError,
@@ -196,7 +206,7 @@ export class Electron extends SdkObject {
       };
       validateBrowserContextOptions(contextOptions, browserOptions);
       const browser = await CRBrowser.connect(chromeTransport, browserOptions);
-      app = new ElectronApplication(this, browser, nodeConnection);
+      app = new ElectronApplication(this, browser, nodeConnection, launchedProcess);
       return app;
     }, TimeoutSettings.timeout(options));
   }

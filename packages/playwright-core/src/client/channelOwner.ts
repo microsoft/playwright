@@ -135,6 +135,10 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
     }
   }
 
+  _toImpl(): any {
+    return this._connection.toImpl?.(this);
+  }
+
   private toJSON() {
     // Jest's expect library tries to print objects sometimes.
     // RPC objects can contain links to lots of other objects,
