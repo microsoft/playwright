@@ -350,7 +350,7 @@ export class Runner {
       filterSuiteWithOnlySemantics(rootSuite, () => false, test => shardTests.has(test));
       total = rootSuite.allTests().length;
     }
-    (config as any).__testGroupsCount = testGroups.length;
+    config._testGroupsCount = testGroups.length;
 
     // 9. Report begin
     this._reporter.onBegin?.(config, rootSuite);

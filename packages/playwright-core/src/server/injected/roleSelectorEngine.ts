@@ -18,7 +18,7 @@ import { SelectorEngine, SelectorRoot } from './selectorEngine';
 import { matchesAttribute, parseComponentSelector, ParsedComponentAttribute, ParsedAttributeOperator } from './componentUtils';
 import { getAriaChecked, getAriaDisabled, getAriaExpanded, getAriaLevel, getAriaPressed, getAriaRole, getAriaSelected, getElementAccessibleName, isElementHiddenForAria, kAriaCheckedRoles, kAriaExpandedRoles, kAriaLevelRoles, kAriaPressedRoles, kAriaSelectedRoles } from './roleUtils';
 
-const kSupportedAttributes = ['selected', 'checked', 'pressed', 'expanded', 'level', 'disabled', 'name', 'includeHidden'];
+const kSupportedAttributes = ['selected', 'checked', 'pressed', 'expanded', 'level', 'disabled', 'name', 'include-hidden'];
 kSupportedAttributes.sort();
 
 function validateSupportedRole(attr: string, roles: string[], role: string) {
@@ -43,12 +43,22 @@ function validateAttributes(attrs: ParsedComponentAttribute[], role: string) {
         validateSupportedRole(attr.name, kAriaCheckedRoles, role);
         validateSupportedValues(attr, [true, false, 'mixed']);
         validateSupportedOp(attr, ['<truthy>', '=']);
+        if (attr.op === '<truthy>') {
+          // Do not match "mixed" in "option[checked]".
+          attr.op = '=';
+          attr.value = true;
+        }
         break;
       }
       case 'pressed': {
         validateSupportedRole(attr.name, kAriaPressedRoles, role);
         validateSupportedValues(attr, [true, false, 'mixed']);
         validateSupportedOp(attr, ['<truthy>', '=']);
+        if (attr.op === '<truthy>') {
+          // Do not match "mixed" in "button[pressed]".
+          attr.op = '=';
+          attr.value = true;
+        }
         break;
       }
       case 'selected': {
@@ -65,7 +75,10 @@ function validateAttributes(attrs: ParsedComponentAttribute[], role: string) {
       }
       case 'level': {
         validateSupportedRole(attr.name, kAriaLevelRoles, role);
-        if (attr.op !== '=' || typeof attr.value !== 'number')
+        // Level is a number, convert it from string.
+        if (typeof attr.value === 'string')
+          attr.value = +attr.value;
+        if (attr.op !== '=' || typeof attr.value !== 'number' || Number.isNaN(attr.value))
           throw new Error(`"level" attribute must be compared to a number`);
         break;
       }
@@ -75,11 +88,13 @@ function validateAttributes(attrs: ParsedComponentAttribute[], role: string) {
         break;
       }
       case 'name': {
-        if (attr.op !== '<truthy>' && typeof attr.value !== 'string' && !(attr.value instanceof RegExp))
+        if (attr.op === '<truthy>')
+          throw new Error(`"name" attribute must have a value`);
+        if (typeof attr.value !== 'string' && !(attr.value instanceof RegExp))
           throw new Error(`"name" attribute must be a string or a regular expression`);
         break;
       }
-      case 'includeHidden': {
+      case 'include-hidden': {
         validateSupportedValues(attr, [true, false]);
         validateSupportedOp(attr, ['<truthy>', '=']);
         break;
@@ -93,7 +108,7 @@ function validateAttributes(attrs: ParsedComponentAttribute[], role: string) {
 
 export const RoleEngine: SelectorEngine = {
   queryAll(scope: SelectorRoot, selector: string): Element[] {
-    const parsed = parseComponentSelector(selector);
+    const parsed = parseComponentSelector(selector, true);
     const role = parsed.name.toLowerCase();
     if (!role)
       throw new Error(`Role must not be empty`);
@@ -107,7 +122,7 @@ export const RoleEngine: SelectorEngine = {
       let includeHidden = false;  // By default, hidden elements are excluded.
       let nameAttr: ParsedComponentAttribute | undefined;
       for (const attr of parsed.attributes) {
-        if (attr.name === 'includeHidden') {
+        if (attr.name === 'include-hidden') {
           includeHidden = attr.op === '<truthy>' || !!attr.value;
           continue;
         }

@@ -140,6 +140,8 @@ await expect(page).toHaveScreenshot();
 
 ### option: PageAssertions.toHaveScreenshot.mask = %%-screenshot-option-mask-%%
 
+### option: PageAssertions.toHaveScreenshot.caret = %%-screenshot-option-caret-%%
+
 ### option: PageAssertions.toHaveScreenshot.maxDiffPixels = %%-assertions-max-diff-pixels-%%
 
 ### option: PageAssertions.toHaveScreenshot.maxDiffPixelRatio = %%-assertions-max-diff-pixel-ratio-%%

@@ -15,6 +15,7 @@
  */
 
 import type { BrowserWindow } from 'electron';
+import * as childProcess from 'child_process';
 import * as structs from '../../types/structs';
 import * as api from '../../types/types';
 import * as channels from '../protocol/channels';
@@ -73,6 +74,10 @@ export class ElectronApplication extends ChannelOwner<channels.ElectronApplicati
       this._onPage(page);
     this._context.on(Events.BrowserContext.Page, page => this._onPage(page));
     this._channel.on('close', () => this.emit(Events.ElectronApplication.Close));
+  }
+
+  process(): childProcess.ChildProcess {
+    return this._toImpl().process();
   }
 
   _onPage(page: Page) {

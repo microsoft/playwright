@@ -16,6 +16,8 @@
 
 import { test, expect } from './pageTest';
 
+test.skip(({ mode }) => mode !== 'default', 'Experimental features only work in default mode');
+
 test('should detect roles', async ({ page }) => {
   await page.setContent(`
     <button>Hello</button>
@@ -84,7 +86,6 @@ test('should support checked', async ({ page }) => {
   await page.$eval('[indeterminate]', input => (input as HTMLInputElement).indeterminate = true);
   expect(await page.$$eval(`role=checkbox[checked]`, els => els.map(e => e.outerHTML))).toEqual([
     `<input type="checkbox" checked="">`,
-    `<input type="checkbox" indeterminate="">`,
     `<div role="checkbox" aria-checked="true">Hi</div>`,
   ]);
   expect(await page.$$eval(`role=checkbox[checked=true]`, els => els.map(e => e.outerHTML))).toEqual([
@@ -95,6 +96,9 @@ test('should support checked', async ({ page }) => {
     `<input type="checkbox">`,
     `<div role="checkbox" aria-checked="false">Hello</div>`,
     `<div role="checkbox">Unknown</div>`,
+  ]);
+  expect(await page.$$eval(`role=checkbox[checked="mixed"]`, els => els.map(e => e.outerHTML))).toEqual([
+    `<input type="checkbox" indeterminate="">`,
   ]);
   expect(await page.$$eval(`role=checkbox`, els => els.map(e => e.outerHTML))).toEqual([
     `<input type="checkbox">`,
@@ -115,7 +119,6 @@ test('should support pressed', async ({ page }) => {
   `);
   expect(await page.$$eval(`role=button[pressed]`, els => els.map(e => e.outerHTML))).toEqual([
     `<button aria-pressed="true">Hello</button>`,
-    `<button aria-pressed="mixed">Mixed</button>`,
   ]);
   expect(await page.$$eval(`role=button[pressed=true]`, els => els.map(e => e.outerHTML))).toEqual([
     `<button aria-pressed="true">Hello</button>`,
@@ -125,6 +128,12 @@ test('should support pressed', async ({ page }) => {
     `<button aria-pressed="false">Bye</button>`,
   ]);
   expect(await page.$$eval(`role=button[pressed="mixed"]`, els => els.map(e => e.outerHTML))).toEqual([
+    `<button aria-pressed="mixed">Mixed</button>`,
+  ]);
+  expect(await page.$$eval(`role=button`, els => els.map(e => e.outerHTML))).toEqual([
+    `<button>Hi</button>`,
+    `<button aria-pressed="true">Hello</button>`,
+    `<button aria-pressed="false">Bye</button>`,
     `<button aria-pressed="mixed">Mixed</button>`,
   ]);
 });
@@ -223,7 +232,7 @@ test('should filter hidden, unless explicitly asked for', async ({ page }) => {
     `<button style="visibility:visible">Still here</button>`,
     `<button>Shadow1</button>`,
   ]);
-  expect(await page.$$eval(`role=button[includeHidden]`, els => els.map(e => e.outerHTML))).toEqual([
+  expect(await page.$$eval(`role=button[include-hidden]`, els => els.map(e => e.outerHTML))).toEqual([
     `<button>Hi</button>`,
     `<button hidden="">Hello</button>`,
     `<button aria-hidden="true">Yay</button>`,
@@ -235,7 +244,7 @@ test('should filter hidden, unless explicitly asked for', async ({ page }) => {
     `<button>Shadow1</button>`,
     `<button>Shadow2</button>`,
   ]);
-  expect(await page.$$eval(`role=button[includeHidden=true]`, els => els.map(e => e.outerHTML))).toEqual([
+  expect(await page.$$eval(`role=button[include-hidden=true]`, els => els.map(e => e.outerHTML))).toEqual([
     `<button>Hi</button>`,
     `<button hidden="">Hello</button>`,
     `<button aria-hidden="true">Yay</button>`,
@@ -247,7 +256,7 @@ test('should filter hidden, unless explicitly asked for', async ({ page }) => {
     `<button>Shadow1</button>`,
     `<button>Shadow2</button>`,
   ]);
-  expect(await page.$$eval(`role=button[includeHidden=false]`, els => els.map(e => e.outerHTML))).toEqual([
+  expect(await page.$$eval(`role=button[include-hidden=false]`, els => els.map(e => e.outerHTML))).toEqual([
     `<button>Hi</button>`,
     `<button aria-hidden="false">Nay</button>`,
     `<button style="visibility:visible">Still here</button>`,
@@ -260,6 +269,7 @@ test('should support name', async ({ page }) => {
     <div role="button" aria-label="Hello"></div>
     <div role="button" aria-label="Hallo"></div>
     <div role="button" aria-label="Hello" aria-hidden="true"></div>
+    <div role="button" aria-label="123" aria-hidden="true"></div>
   `);
   expect(await page.$$eval(`role=button[name="Hello"]`, els => els.map(e => e.outerHTML))).toEqual([
     `<div role="button" aria-label="Hello"></div>`,
@@ -275,9 +285,15 @@ test('should support name', async ({ page }) => {
     `<div role="button" aria-label="Hello"></div>`,
     `<div role="button" aria-label="Hallo"></div>`,
   ]);
-  expect(await page.$$eval(`role=button[name="Hello"][includeHidden]`, els => els.map(e => e.outerHTML))).toEqual([
+  expect(await page.$$eval(`role=button[name="Hello"][include-hidden]`, els => els.map(e => e.outerHTML))).toEqual([
     `<div role="button" aria-label="Hello"></div>`,
     `<div role="button" aria-label="Hello" aria-hidden="true"></div>`,
+  ]);
+  expect(await page.$$eval(`role=button[name=Hello]`, els => els.map(e => e.outerHTML))).toEqual([
+    `<div role="button" aria-label="Hello"></div>`,
+  ]);
+  expect(await page.$$eval(`role=button[name=123][include-hidden]`, els => els.map(e => e.outerHTML))).toEqual([
+    `<div role="button" aria-label="123" aria-hidden="true"></div>`,
   ]);
 });
 
@@ -286,7 +302,7 @@ test('errors', async ({ page }) => {
   expect(e0.message).toContain(`Role must not be empty`);
 
   const e1 = await page.$('role=foo[sElected]').catch(e => e);
-  expect(e1.message).toContain(`Unknown attribute "sElected", must be one of "checked", "disabled", "expanded", "includeHidden", "level", "name", "pressed", "selected"`);
+  expect(e1.message).toContain(`Unknown attribute "sElected", must be one of "checked", "disabled", "expanded", "include-hidden", "level", "name", "pressed", "selected"`);
 
   const e2 = await page.$('role=foo[bar . qux=true]').catch(e => e);
   expect(e2.message).toContain(`Unknown attribute "bar.qux"`);
@@ -302,4 +318,7 @@ test('errors', async ({ page }) => {
 
   const e6 = await page.$('role=button[level=3]').catch(e => e);
   expect(e6.message).toContain(`"level" attribute is only supported for roles: "heading", "listitem", "row", "treeitem"`);
+
+  const e7 = await page.$('role=button[name]').catch(e => e);
+  expect(e7.message).toContain(`"name" attribute must have a value`);
 });

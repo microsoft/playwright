@@ -179,6 +179,10 @@ export class CRPage implements PageDelegate {
     await Promise.all(this._page.frames().map(frame => frame.evaluateExpression(binding.source, false, {}).catch(e => {})));
   }
 
+  async removeExposedBindings() {
+    await this._forAllFrameSessions(frame => frame._removeExposedBindings());
+  }
+
   async updateExtraHTTPHeaders(): Promise<void> {
     await this._forAllFrameSessions(frame => frame._updateExtraHTTPHeaders(false));
   }
@@ -213,7 +217,7 @@ export class CRPage implements PageDelegate {
   }
 
   async setFileChooserIntercepted(enabled: boolean) {
-    await this._forAllFrameSessions(frame => frame._setFileChooserIntercepted(enabled));
+    await this._forAllFrameSessions(frame => frame.setFileChooserIntercepted(enabled));
   }
 
   async reload(): Promise<void> {
@@ -237,8 +241,12 @@ export class CRPage implements PageDelegate {
     return this._go(+1);
   }
 
-  async evaluateOnNewDocument(source: string, world: types.World = 'main'): Promise<void> {
+  async addInitScript(source: string, world: types.World = 'main'): Promise<void> {
     await this._forAllFrameSessions(frame => frame._evaluateOnNewDocument(source, world));
+  }
+
+  async removeInitScripts() {
+    await this._forAllFrameSessions(frame => frame._removeEvaluatesOnNewDocument());
   }
 
   async closePage(runBeforeUnload: boolean): Promise<void> {
@@ -252,7 +260,7 @@ export class CRPage implements PageDelegate {
     await this._mainFrameSession._client.send('Emulation.setDefaultBackgroundColorOverride', { color });
   }
 
-  async takeScreenshot(progress: Progress, format: 'png' | 'jpeg', documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, quality: number | undefined, fitsViewport: boolean, size: 'css' | 'device'): Promise<Buffer> {
+  async takeScreenshot(progress: Progress, format: 'png' | 'jpeg', documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, quality: number | undefined, fitsViewport: boolean, scale: 'css' | 'device'): Promise<Buffer> {
     const { visualViewport } = await this._mainFrameSession._client.send('Page.getLayoutMetrics');
     if (!documentRect) {
       documentRect = {
@@ -267,7 +275,7 @@ export class CRPage implements PageDelegate {
     // When taking screenshots with documentRect (based on the page content, not viewport),
     // ignore current page scale.
     const clip = { ...documentRect, scale: viewportRect ? visualViewport.scale : 1 };
-    if (size === 'css') {
+    if (scale === 'css') {
       const deviceScaleFactor = this._browserContext._options.deviceScaleFactor || 1;
       clip.scale /= deviceScaleFactor;
     }
@@ -388,6 +396,8 @@ class FrameSession {
   private _videoRecorder: VideoRecorder | null = null;
   private _screencastId: string | null = null;
   private _screencastClients = new Set<any>();
+  private _evaluateOnNewDocumentIdentifiers: string[] = [];
+  private _exposedBindingNames: string[] = [];
 
   constructor(crPage: CRPage, client: CRSession, targetId: string, parentSession: FrameSession | null) {
     this._client = client;
@@ -487,7 +497,7 @@ class FrameSession {
           });
           for (const binding of this._crPage._browserContext._pageBindings.values())
             frame.evaluateExpression(binding.source, false, undefined).catch(e => {});
-          for (const source of this._crPage._browserContext._evaluateOnNewDocumentSources)
+          for (const source of this._crPage._browserContext.initScripts)
             frame.evaluateExpression(source, false, undefined, 'main').catch(e => {});
         }
         const isInitialEmptyPage = this._isMainFrame() && this._page.mainFrame().url() === ':';
@@ -543,9 +553,9 @@ class FrameSession {
       promises.push(this._updateEmulateMedia(true));
       for (const binding of this._crPage._page.allBindings())
         promises.push(this._initBinding(binding));
-      for (const source of this._crPage._browserContext._evaluateOnNewDocumentSources)
+      for (const source of this._crPage._browserContext.initScripts)
         promises.push(this._evaluateOnNewDocument(source, 'main'));
-      for (const source of this._crPage._page._evaluateOnNewDocumentSources)
+      for (const source of this._crPage._page.initScripts)
         promises.push(this._evaluateOnNewDocument(source, 'main'));
       if (screencastOptions)
         promises.push(this._startVideoRecording(screencastOptions));
@@ -798,10 +808,18 @@ class FrameSession {
   }
 
   async _initBinding(binding: PageBinding) {
-    await Promise.all([
+    const [ , response ] = await Promise.all([
       this._client.send('Runtime.addBinding', { name: binding.name }),
       this._client.send('Page.addScriptToEvaluateOnNewDocument', { source: binding.source })
     ]);
+    this._exposedBindingNames.push(binding.name);
+    this._evaluateOnNewDocumentIdentifiers.push(response.identifier);
+  }
+
+  async _removeExposedBindings() {
+    const names = this._exposedBindingNames;
+    this._exposedBindingNames = [];
+    await Promise.all(names.map(name => this._client.send('Runtime.removeBinding', { name })));
   }
 
   async _onBindingCalled(event: Protocol.Runtime.bindingCalledPayload) {
@@ -1048,13 +1066,20 @@ class FrameSession {
     await this._networkManager.setRequestInterception(this._page._needsRequestInterception());
   }
 
-  async _setFileChooserIntercepted(enabled: boolean) {
+  async setFileChooserIntercepted(enabled: boolean) {
     await this._client.send('Page.setInterceptFileChooserDialog', { enabled }).catch(e => {}); // target can be closed.
   }
 
   async _evaluateOnNewDocument(source: string, world: types.World): Promise<void> {
     const worldName = world === 'utility' ? UTILITY_WORLD_NAME : undefined;
-    await this._client.send('Page.addScriptToEvaluateOnNewDocument', { source, worldName });
+    const { identifier } = await this._client.send('Page.addScriptToEvaluateOnNewDocument', { source, worldName });
+    this._evaluateOnNewDocumentIdentifiers.push(identifier);
+  }
+
+  async _removeEvaluatesOnNewDocument(): Promise<void> {
+    const identifiers = this._evaluateOnNewDocumentIdentifiers;
+    this._evaluateOnNewDocumentIdentifiers = [];
+    await Promise.all(identifiers.map(identifier => this._client.send('Page.removeScriptToEvaluateOnNewDocument', { identifier })));
   }
 
   async _getContentFrame(handle: dom.ElementHandle): Promise<frames.Frame | null> {

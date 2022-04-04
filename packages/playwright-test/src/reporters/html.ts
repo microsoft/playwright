@@ -27,6 +27,7 @@ import assert from 'assert';
 import yazl from 'yazl';
 import { stripAnsiEscapes } from './base';
 import { getPackageJsonPath } from '../util';
+import { FullConfigInternal } from '../types';
 
 export type Stats = {
   total: number;
@@ -123,7 +124,7 @@ type HtmlReporterOptions = {
 };
 
 class HtmlReporter implements Reporter {
-  private config!: FullConfig;
+  private config!: FullConfigInternal;
   private suite!: Suite;
   private _options: HtmlReporterOptions;
 
@@ -136,17 +137,16 @@ class HtmlReporter implements Reporter {
   }
 
   onBegin(config: FullConfig, suite: Suite) {
-    this.config = config;
+    this.config = config as FullConfigInternal;
     this.suite = suite;
   }
 
   _resolveOptions(): { outputFolder: string, open: HtmlReportOpenOption } {
     let { outputFolder } = this._options;
-    const configDir: string = (this.config as any).__configDir;
     if (outputFolder)
-      outputFolder = path.resolve(configDir, outputFolder);
+      outputFolder = path.resolve(this.config._configDir, outputFolder);
     return {
-      outputFolder: reportFolderFromEnv() ?? outputFolder ?? defaultReportFolder(configDir),
+      outputFolder: reportFolderFromEnv() ?? outputFolder ?? defaultReportFolder(this.config._configDir),
       open: process.env.PW_TEST_HTML_REPORT_OPEN as any || this._options.open || 'on-failure',
     };
   }

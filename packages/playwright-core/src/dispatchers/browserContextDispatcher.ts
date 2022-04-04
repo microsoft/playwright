@@ -125,6 +125,10 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     });
   }
 
+  async removeExposedBindings() {
+    await this._context.removeExposedBindings();
+  }
+
   async newPage(params: channels.BrowserContextNewPageParams, metadata: CallMetadata): Promise<channels.BrowserContextNewPageResult> {
     return { page: lookupDispatcher<PageDispatcher>(await this._context.newPage(metadata)) };
   }
@@ -166,15 +170,19 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   }
 
   async addInitScript(params: channels.BrowserContextAddInitScriptParams): Promise<void> {
-    await this._context._doAddInitScript(params.source);
+    await this._context.addInitScript(params.source);
+  }
+
+  async removeInitScripts(): Promise<void> {
+    await this._context.removeInitScripts();
   }
 
   async setNetworkInterceptionEnabled(params: channels.BrowserContextSetNetworkInterceptionEnabledParams): Promise<void> {
     if (!params.enabled) {
-      await this._context._setRequestInterceptor(undefined);
+      await this._context.setRequestInterceptor(undefined);
       return;
     }
-    await this._context._setRequestInterceptor((route, request) => {
+    await this._context.setRequestInterceptor((route, request) => {
       this._dispatchEvent('route', { route: RouteDispatcher.from(this._scope, route), request: RequestDispatcher.from(this._scope, request) });
     });
   }

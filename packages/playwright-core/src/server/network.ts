@@ -266,24 +266,31 @@ export class Route extends SdkObject {
       }
     }
     const headers = [...(overrides.headers || [])];
-    if (overrides.cors !== 'none') {
-      const corsHeader = headers.find(({ name }) => name === 'access-control-allow-origin');
-      // See https://github.com/microsoft/playwright/issues/12929
-      if (!corsHeader) {
-        const origin = this._request.headerValue('origin');
-        if (origin) {
-          headers.push({ name: 'access-control-allow-origin', value: origin });
-          headers.push({ name: 'access-control-allow-credentials', value: 'true' });
-          headers.push({ name: 'vary', value: 'Origin' });
-        }
-      }
-    }
+    this._maybeAddCorsHeaders(headers);
     await this._delegate.fulfill({
       status: overrides.status || 200,
       headers,
       body,
       isBase64,
     });
+  }
+
+  // See https://github.com/microsoft/playwright/issues/12929
+  private _maybeAddCorsHeaders(headers: NameValue[]) {
+    const origin = this._request.headerValue('origin');
+    if (!origin)
+      return;
+    const requestUrl = new URL(this._request.url());
+    if (!requestUrl.protocol.startsWith('http'))
+      return;
+    if (requestUrl.origin === origin.trim())
+      return;
+    const corsHeader = headers.find(({ name }) => name === 'access-control-allow-origin');
+    if (corsHeader)
+      return;
+    headers.push({ name: 'access-control-allow-origin', value: origin });
+    headers.push({ name: 'access-control-allow-credentials', value: 'true' });
+    headers.push({ name: 'vary', value: 'Origin' });
   }
 
   async continue(overrides: types.NormalizedContinueOverrides = {}) {

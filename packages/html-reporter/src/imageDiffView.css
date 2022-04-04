@@ -14,27 +14,17 @@
   limitations under the License.
 */
 
-html, body {
-  width: 100%;
-  height: 100%;
-  padding: 0;
-  margin: 0;
-  overscroll-behavior-x: none;
+.image-diff-view .tabbed-pane .tab-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
 }
 
-body {
-  overflow: auto;
-  max-width: 1024px;
-  margin: 0 auto;
-  width: 100%;
-}
-
-.test-file-test:not(:first-child) {
-  border-top: 1px solid var(--color-border-default);
-}
-
-@media only screen and (max-width: 600px) {
-  .report {
-    padding: 0 !important;
-  }
+.image-diff-view img {
+  flex: none;
+  box-shadow: var(--box-shadow-thick);
+  margin: 24px auto;
+  min-width: 200px;
+  max-width: 80%;
 }

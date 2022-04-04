@@ -47,7 +47,9 @@ export interface PageDelegate {
   goBack(): Promise<boolean>;
   goForward(): Promise<boolean>;
   exposeBinding(binding: PageBinding): Promise<void>;
-  evaluateOnNewDocument(source: string): Promise<void>;
+  removeExposedBindings(): Promise<void>;
+  addInitScript(source: string): Promise<void>;
+  removeInitScripts(): Promise<void>;
   closePage(runBeforeUnload: boolean): Promise<void>;
   potentiallyUninitializedPage(): Page;
   pageOrError(): Promise<Page | Error>;
@@ -62,7 +64,7 @@ export interface PageDelegate {
   bringToFront(): Promise<void>;
 
   setBackgroundColor(color?: { r: number; g: number; b: number; a: number; }): Promise<void>;
-  takeScreenshot(progress: Progress, format: string, documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, quality: number | undefined, fitsViewport: boolean, size: 'css' | 'device'): Promise<Buffer>;
+  takeScreenshot(progress: Progress, format: string, documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, quality: number | undefined, fitsViewport: boolean, scale: 'css' | 'device'): Promise<Buffer>;
 
   isElementHandle(remoteObject: any): boolean;
   adoptElementHandle<T extends Node>(handle: dom.ElementHandle<T>, to: dom.FrameExecutionContext): Promise<dom.ElementHandle<T>>;
@@ -145,7 +147,7 @@ export class Page extends SdkObject {
   readonly _delegate: PageDelegate;
   readonly _state: PageState;
   private readonly _pageBindings = new Map<string, PageBinding>();
-  readonly _evaluateOnNewDocumentSources: string[] = [];
+  readonly initScripts: string[] = [];
   readonly _screenshotter: Screenshotter;
   readonly _frameManager: frames.FrameManager;
   readonly accessibility: accessibility.Accessibility;
@@ -308,6 +310,11 @@ export class Page extends SdkObject {
     await this._delegate.exposeBinding(binding);
   }
 
+  async removeExposedBindings() {
+    this._pageBindings.clear();
+    await this._delegate.removeExposedBindings();
+  }
+
   setExtraHTTPHeaders(headers: types.HeadersArray) {
     this._state.extraHTTPHeaders = headers;
     return this._delegate.updateExtraHTTPHeaders();
@@ -411,16 +418,21 @@ export class Page extends SdkObject {
     await this._delegate.bringToFront();
   }
 
-  async _addInitScriptExpression(source: string) {
-    this._evaluateOnNewDocumentSources.push(source);
-    await this._delegate.evaluateOnNewDocument(source);
+  async addInitScript(source: string) {
+    this.initScripts.push(source);
+    await this._delegate.addInitScript(source);
+  }
+
+  async removeInitScripts() {
+    this.initScripts.splice(0, this.initScripts.length);
+    await this._delegate.removeInitScripts();
   }
 
   _needsRequestInterception(): boolean {
     return !!this._clientRequestInterceptor || !!this._serverRequestInterceptor || !!this._browserContext._requestInterceptor;
   }
 
-  async _setClientRequestInterceptor(handler: network.RouteHandler | undefined): Promise<void> {
+  async setClientRequestInterceptor(handler: network.RouteHandler | undefined): Promise<void> {
     this._clientRequestInterceptor = handler;
     await this._delegate.updateRequestInterception();
   }
@@ -591,7 +603,7 @@ export class Page extends SdkObject {
     }
   }
 
-  async _setFileChooserIntercepted(enabled: boolean): Promise<void> {
+  async setFileChooserIntercepted(enabled: boolean): Promise<void> {
     await this._delegate.setFileChooserIntercepted(enabled);
   }
 

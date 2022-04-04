@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-export default async function testESM({ chromium, firefox, webkit, selectors, devices, errors, playwright }, browsers) {
+export default async function testESM({ chromium, firefox, webkit, selectors, devices, errors, request, playwright }, browsers) {
   if (playwright.chromium !== chromium)
     process.exit(1);
   if (playwright.firefox !== firefox)
@@ -22,6 +22,8 @@ export default async function testESM({ chromium, firefox, webkit, selectors, de
   if (playwright.webkit !== webkit)
     process.exit(1);
   if (playwright.errors !== errors)
+    process.exit(1);
+  if (playwright.request !== request)
     process.exit(1);
 
   try {

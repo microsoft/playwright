@@ -74,7 +74,12 @@ type ExpectSettings = {
      * keep screenshots small. Using `"device"` option will produce a single pixel per each device pixel, so screenhots of
      * high-dpi devices will be twice as large or even larger. Defaults to `"css"`.
      */
-    size?: 'css'|'device',
+    scale?: 'css'|'device',
+    /**
+     * When set to `"hide"`, screenshot will hide text caret.
+     * When set to `"initial"`, text caret behavior will not be changed. Defaults to `"hide"`.
+     */
+    caret?: 'hide'|'initial',
   }
   toMatchSnapshot?: {
     /** An acceptable perceived color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between pixels in compared images, between zero (strict) and one (lax). Defaults to `0.2`.
@@ -337,15 +342,15 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
   use(fixtures: Fixtures<{}, {}, TestArgs, WorkerArgs>): void;
   step(title: string, body: () => Promise<any>): Promise<any>;
   expect: Expect;
-  extend<T, W extends KeyValue = {}>(fixtures: Fixtures<T, W, TestArgs, WorkerArgs>): TestType<TestArgs & T, WorkerArgs & W>;
+  extend<T extends KeyValue, W extends KeyValue = {}>(fixtures: Fixtures<T, W, TestArgs, WorkerArgs>): TestType<TestArgs & T, WorkerArgs & W>;
   info(): TestInfo;
 }
 
 type KeyValue = { [key: string]: any };
 export type TestFixture<R, Args extends KeyValue> = (args: Args, use: (r: R) => Promise<void>, testInfo: TestInfo) => any;
 export type WorkerFixture<R, Args extends KeyValue> = (args: Args, use: (r: R) => Promise<void>, workerInfo: WorkerInfo) => any;
-type TestFixtureValue<R, Args> = Exclude<R, Function> | TestFixture<R, Args>;
-type WorkerFixtureValue<R, Args> = Exclude<R, Function> | WorkerFixture<R, Args>;
+type TestFixtureValue<R, Args extends KeyValue> = Exclude<R, Function> | TestFixture<R, Args>;
+type WorkerFixtureValue<R, Args extends KeyValue> = Exclude<R, Function> | WorkerFixture<R, Args>;
 export type Fixtures<T extends KeyValue = {}, W extends KeyValue = {}, PT extends KeyValue = {}, PW extends KeyValue = {}> = {
   [K in keyof PW]?: WorkerFixtureValue<PW[K], W & PW> | [WorkerFixtureValue<PW[K], W & PW>, { scope: 'worker', timeout?: number | undefined }];
 } & {

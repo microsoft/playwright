@@ -27,7 +27,7 @@ export type FixturesWithLocation = {
 export type Annotation = { type: string, description?: string };
 
 export interface TestStepInternal {
-  complete(error?: Error | TestError): void;
+  complete(result: { refinedTitle?: string, error?: Error | TestError }): void;
   title: string;
   category: string;
   canHaveChildren: boolean;
@@ -41,4 +41,7 @@ export interface TestStepInternal {
  */
 export interface FullConfigInternal extends FullConfigPublic {
   globalOutputDir: string;
+  _configDir: string;
+  _testGroupsCount: number;
+  _attachments: { name: string, path?: string, body?: Buffer, contentType: string }[];
 }

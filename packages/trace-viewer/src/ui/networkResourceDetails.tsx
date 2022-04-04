@@ -125,7 +125,7 @@ export const NetworkResourceDetails: React.FunctionComponent<{
 
   return <div
     className={'network-request ' + (selected ? 'selected' : '')} onClick={() => setSelected(index)}>
-    <Expandable expanded={expanded} setExpanded={setExpanded} style={{ width: '100%' }} title={ renderTitle() } body={
+    <Expandable expanded={expanded} setExpanded={setExpanded} style={{ width: '100%' }} title={ renderTitle() }>
       <div className='network-request-details'>
         <div className='network-request-details-header'>URL</div>
         <div className='network-request-details-url'>{resource.request.url}</div>
@@ -140,6 +140,6 @@ export const NetworkResourceDetails: React.FunctionComponent<{
         {responseBody !== null && responseBody.dataUrl ? <img src={responseBody.dataUrl} /> : ''}
         {responseBody !== null && responseBody.text ? <div className='network-request-response-body'>{formatBody(responseBody.text, resource.response.content.mimeType)}</div> : ''}
       </div>
-    }/>
+    </Expandable>
   </div>;
 };

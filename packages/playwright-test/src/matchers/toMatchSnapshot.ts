@@ -31,40 +31,19 @@ import fs from 'fs';
 import path from 'path';
 import * as mime from 'mime';
 import { TestInfoImpl } from '../testInfo';
-
-// from expect/build/types
-type SyncExpectationResult = {
-  pass: boolean;
-  message: () => string;
-};
+import { SyncExpectationResult } from '../expect';
 
 type NameOrSegments = string | string[];
-const SNAPSHOT_COUNTER = Symbol('noname-snapshot-counter');
+const snapshotNamesSymbol = Symbol('snapshotNames');
 
-export function getSnapshotName(
-  testInfo: TestInfoImpl,
-  received: any,
-  nameOrOptions: NameOrSegments | { name?: NameOrSegments } = {},
-  optOptions: any = {}
-) {
-  const [
-    anonymousSnapshotExtension,
-    snapshotPathResolver,
-  ] = typeof received === 'string' || Buffer.isBuffer(received) ? [
-    determineFileExtension(received),
-    testInfo.snapshotPath.bind(testInfo),
-  ] : [
-    'png',
-    testInfo._screenshotPath.bind(testInfo),
-  ];
-  const helper = new SnapshotHelper(
-      testInfo, snapshotPathResolver, anonymousSnapshotExtension, {},
-      nameOrOptions, optOptions, true /* dryRun */);
-  return path.basename(helper.snapshotPath);
-}
+type SnapshotNames = {
+  anonymousSnapshotIndex: number;
+  namedSnapshotIndex: { [key: string]: number };
+};
 
 class SnapshotHelper<T extends ImageComparatorOptions> {
   readonly testInfo: TestInfoImpl;
+  readonly snapshotName: string;
   readonly expectedPath: string;
   readonly previousPath: string;
   readonly snapshotPath: string;
@@ -84,7 +63,6 @@ class SnapshotHelper<T extends ImageComparatorOptions> {
     configOptions: ImageComparatorOptions,
     nameOrOptions: NameOrSegments | { name?: NameOrSegments } & T,
     optOptions: T,
-    dryRun: boolean = false,
   ) {
     let options: T;
     let name: NameOrSegments | undefined;
@@ -96,15 +74,40 @@ class SnapshotHelper<T extends ImageComparatorOptions> {
       options = { ...nameOrOptions };
       delete (options as any).name;
     }
+
+    let snapshotNames = (testInfo as any)[snapshotNamesSymbol] as SnapshotNames;
+    if (!(testInfo as any)[snapshotNamesSymbol]) {
+      snapshotNames = {
+        anonymousSnapshotIndex: 0,
+        namedSnapshotIndex: {},
+      };
+      (testInfo as any)[snapshotNamesSymbol] = snapshotNames;
+    }
+
+    // Consider the use case below. We should save actual to different paths.
+    //
+    //   expect.toMatchSnapshot('a.png')
+    //   // noop
+    //   expect.toMatchSnapshot('a.png')
+
+    let actualModifier = '';
     if (!name) {
-      (testInfo as any)[SNAPSHOT_COUNTER] = ((testInfo as any)[SNAPSHOT_COUNTER] || 0);
       const fullTitleWithoutSpec = [
         ...testInfo.titlePath.slice(1),
-        (testInfo as any)[SNAPSHOT_COUNTER] + 1,
+        ++snapshotNames.anonymousSnapshotIndex,
       ].join(' ');
-      if (!dryRun)
-        ++(testInfo as any)[SNAPSHOT_COUNTER];
       name = sanitizeForFilePath(trimLongString(fullTitleWithoutSpec)) + '.' + anonymousSnapshotExtension;
+      this.snapshotName = name;
+    } else {
+      const joinedName = Array.isArray(name) ? name.join(path.sep) : name;
+      snapshotNames.namedSnapshotIndex[joinedName] = (snapshotNames.namedSnapshotIndex[joinedName] || 0) + 1;
+      const index = snapshotNames.namedSnapshotIndex[joinedName];
+      if (index > 1) {
+        actualModifier = `-${index - 1}`;
+        this.snapshotName = `${joinedName}-${index - 1}`;
+      } else {
+        this.snapshotName = joinedName;
+      }
     }
 
     options = {
@@ -119,10 +122,12 @@ class SnapshotHelper<T extends ImageComparatorOptions> {
       throw new Error('`maxDiffPixelRatio` option value must be between 0 and 1');
 
     // sanitizes path if string
-    const pathSegments = Array.isArray(name) ? name : [addSuffixToFilePath(name, '', undefined, true)];
-    this.snapshotPath = snapshotPathResolver(...pathSegments);
-    const outputFile = testInfo.outputPath(...pathSegments);
-    this.expectedPath = addSuffixToFilePath(outputFile, '-expected');
+    const inputPathSegments = Array.isArray(name) ? name : [addSuffixToFilePath(name, '', undefined, true)];
+    const outputPathSegments = Array.isArray(name) ? name : [addSuffixToFilePath(name, actualModifier, undefined, true)];
+    this.snapshotPath = snapshotPathResolver(...inputPathSegments);
+    const inputFile = testInfo.outputPath(...inputPathSegments);
+    const outputFile = testInfo.outputPath(...outputPathSegments);
+    this.expectedPath = addSuffixToFilePath(inputFile, '-expected');
     this.previousPath = addSuffixToFilePath(outputFile, '-previous');
     this.actualPath = addSuffixToFilePath(outputFile, '-actual');
     this.diffPath = addSuffixToFilePath(outputFile, '-diff');
@@ -143,19 +148,23 @@ class SnapshotHelper<T extends ImageComparatorOptions> {
     this.kind = this.mimeType.startsWith('image/') ? 'Screenshot' : 'Snapshot';
   }
 
+  decorateTitle(result: SyncExpectationResult): SyncExpectationResult & { titleSuffix: string } {
+    return { ...result, titleSuffix: `(${path.basename(this.snapshotName)})` };
+  }
+
   handleMissingNegated() {
     const isWriteMissingMode = this.updateSnapshots === 'all' || this.updateSnapshots === 'missing';
     const message = `${this.snapshotPath} is missing in snapshots${isWriteMissingMode ? ', matchers using ".not" won\'t write them automatically.' : '.'}`;
-    return {
+    return this.decorateTitle({
       // NOTE: 'isNot' matcher implies inversed value.
       pass: true,
       message: () => message,
-    };
+    });
   }
 
   handleDifferentNegated() {
     // NOTE: 'isNot' matcher implies inversed value.
-    return { pass: false, message: () => '' };
+    return this.decorateTitle({ pass: false, message: () => '' });
   }
 
   handleMatchingNegated() {
@@ -165,7 +174,7 @@ class SnapshotHelper<T extends ImageComparatorOptions> {
       indent('Expected result should be different from the actual one.', '  '),
     ].join('\n');
     // NOTE: 'isNot' matcher implies inversed value.
-    return { pass: true, message: () => message };
+    return this.decorateTitle({ pass: true, message: () => message });
   }
 
   handleMissing(actual: Buffer | string) {
@@ -178,13 +187,13 @@ class SnapshotHelper<T extends ImageComparatorOptions> {
     if (this.updateSnapshots === 'all') {
       /* eslint-disable no-console */
       console.log(message);
-      return { pass: true, message: () => message };
+      return this.decorateTitle({ pass: true, message: () => message });
     }
     if (this.updateSnapshots === 'missing') {
       this.testInfo._failWithError(serializeError(new Error(message)), false /* isHardError */);
-      return { pass: true, message: () => '' };
+      return this.decorateTitle({ pass: true, message: () => '' });
     }
-    return { pass: false, message: () => message };
+    return this.decorateTitle({ pass: false, message: () => message });
   }
 
   handleDifferent(
@@ -208,29 +217,29 @@ class SnapshotHelper<T extends ImageComparatorOptions> {
 
     if (expected !== undefined) {
       writeFileSync(this.expectedPath, expected);
-      this.testInfo.attachments.push({ name: path.basename(this.expectedPath), contentType: this.mimeType, path: this.expectedPath });
+      this.testInfo.attachments.push({ name: addSuffixToFilePath(this.snapshotName, '-expected'), contentType: this.mimeType, path: this.expectedPath });
       output.push(`Expected: ${colors.yellow(this.expectedPath)}`);
     }
     if (previous !== undefined) {
       writeFileSync(this.previousPath, previous);
-      this.testInfo.attachments.push({ name: path.basename(this.previousPath), contentType: this.mimeType, path: this.previousPath });
+      this.testInfo.attachments.push({ name: addSuffixToFilePath(this.snapshotName, '-previous'), contentType: this.mimeType, path: this.previousPath });
       output.push(`Previous: ${colors.yellow(this.previousPath)}`);
     }
     if (actual !== undefined) {
       writeFileSync(this.actualPath, actual);
-      this.testInfo.attachments.push({ name: path.basename(this.actualPath), contentType: this.mimeType, path: this.actualPath });
+      this.testInfo.attachments.push({ name: addSuffixToFilePath(this.snapshotName, '-actual'), contentType: this.mimeType, path: this.actualPath });
       output.push(`Received: ${colors.yellow(this.actualPath)}`);
     }
     if (diff !== undefined) {
       writeFileSync(this.diffPath, diff);
-      this.testInfo.attachments.push({ name: path.basename(this.diffPath), contentType: this.mimeType, path: this.diffPath });
+      this.testInfo.attachments.push({ name: addSuffixToFilePath(this.snapshotName, '-diff'), contentType: this.mimeType, path: this.diffPath });
       output.push(`    Diff: ${colors.yellow(this.diffPath)}`);
     }
-    return { pass: false, message: () => output.join('\n'), };
+    return this.decorateTitle({ pass: false, message: () => output.join('\n'), });
   }
 
   handleMatching() {
-    return { pass: true, message: () => '' };
+    return this.decorateTitle({ pass: true, message: () => '' });
   }
 }
 
@@ -239,7 +248,7 @@ export function toMatchSnapshot(
   received: Buffer | string,
   nameOrOptions: NameOrSegments | { name?: NameOrSegments } & ImageComparatorOptions = {},
   optOptions: ImageComparatorOptions = {}
-): SyncExpectationResult {
+): SyncExpectationResult & { titleSuffix: string } {
   const testInfo = currentTestInfo();
   if (!testInfo)
     throw new Error(`toMatchSnapshot() must be called during the test`);
@@ -269,7 +278,7 @@ export function toMatchSnapshot(
     writeFileSync(helper.snapshotPath, received);
     /* eslint-disable no-console */
     console.log(helper.snapshotPath + ' does not match, writing actual.');
-    return { pass: true, message: () => helper.snapshotPath + ' running with --update-snapshots, writing actual.' };
+    return helper.decorateTitle({ pass: true, message: () => helper.snapshotPath + ' running with --update-snapshots, writing actual.' });
   }
 
   return helper.handleDifferent(received, expected, undefined, result.diff, result.errorMessage, undefined);
@@ -302,7 +311,8 @@ export async function toHaveScreenshot(
   const screenshotOptions = {
     animations: config?.animations ?? 'disabled',
     fonts: config?.fonts ?? 'ready',
-    size: config?.size ?? 'css',
+    scale: config?.scale ?? 'css',
+    caret: config?.caret ?? 'hide',
     ...helper.allOptions,
     mask: (helper.allOptions.mask || []) as LocatorEx[],
     name: undefined,

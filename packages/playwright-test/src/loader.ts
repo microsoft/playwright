@@ -99,7 +99,7 @@ export class Loader {
     const configUse = mergeObjects(this._defaultConfig.use, config.use);
     config = mergeObjects(mergeObjects(this._defaultConfig, config), { use: configUse });
 
-    (this._fullConfig as any).__configDir = configDir;
+    this._fullConfig._configDir = configDir;
     this._fullConfig.rootDir = config.testDir || this._configDir;
     this._fullConfig.globalOutputDir = takeFirst(config.outputDir, throwawayArtifactsPath, baseFullConfig.globalOutputDir);
     this._fullConfig.forbidOnly = takeFirst(this._configOverrides.forbidOnly, config.forbidOnly, baseFullConfig.forbidOnly);
@@ -475,6 +475,9 @@ const baseFullConfig: FullConfigInternal = {
   workers: 1,
   webServer: null,
   globalOutputDir: path.resolve(process.cwd()),
+  _attachments: [],
+  _configDir: '',
+  _testGroupsCount: 0,
 };
 
 function resolveReporters(reporters: Config['reporter'], rootDir: string): ReporterDescription[]|undefined {

@@ -753,12 +753,20 @@ export class WKPage implements PageDelegate {
     await this._evaluateBindingScript(binding);
   }
 
+  async removeExposedBindings(): Promise<void> {
+    await this._updateBootstrapScript();
+  }
+
   private async _evaluateBindingScript(binding: PageBinding): Promise<void> {
     const script = this._bindingToScript(binding);
     await Promise.all(this._page.frames().map(frame => frame.evaluateExpression(script, false, {}).catch(e => {})));
   }
 
-  async evaluateOnNewDocument(script: string): Promise<void> {
+  async addInitScript(script: string): Promise<void> {
+    await this._updateBootstrapScript();
+  }
+
+  async removeInitScripts() {
     await this._updateBootstrapScript();
   }
 
@@ -775,9 +783,9 @@ export class WKPage implements PageDelegate {
     }
     for (const binding of this._page.allBindings())
       scripts.push(this._bindingToScript(binding));
-    scripts.push(...this._browserContext._evaluateOnNewDocumentSources);
-    scripts.push(...this._page._evaluateOnNewDocumentSources);
-    return scripts.join(';');
+    scripts.push(...this._browserContext.initScripts);
+    scripts.push(...this._page.initScripts);
+    return scripts.join(';\n');
   }
 
   async _updateBootstrapScript(): Promise<void> {
@@ -821,9 +829,9 @@ export class WKPage implements PageDelegate {
     this._recordingVideoFile = null;
   }
 
-  async takeScreenshot(progress: Progress, format: string, documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, quality: number | undefined, fitsViewport: boolean, size: 'css' | 'device'): Promise<Buffer> {
+  async takeScreenshot(progress: Progress, format: string, documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, quality: number | undefined, fitsViewport: boolean, scale: 'css' | 'device'): Promise<Buffer> {
     const rect = (documentRect || viewportRect)!;
-    const result = await this._session.send('Page.snapshotRect', { ...rect, coordinateSystem: documentRect ? 'Page' : 'Viewport', omitDeviceScaleFactor: size === 'css' });
+    const result = await this._session.send('Page.snapshotRect', { ...rect, coordinateSystem: documentRect ? 'Page' : 'Viewport', omitDeviceScaleFactor: scale === 'css' });
     const prefix = 'data:image/png;base64,';
     let buffer = Buffer.from(result.dataURL.substr(prefix.length), 'base64');
     if (format === 'jpeg')

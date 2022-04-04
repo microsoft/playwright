@@ -217,10 +217,10 @@ export class TestInfoImpl implements TestInfo {
     const step = this._addStep(stepInfo);
     try {
       const result = await cb();
-      step.complete();
+      step.complete({});
       return result;
     } catch (e) {
-      step.complete(e instanceof SkipError ? undefined : serializeError(e));
+      step.complete({ error: e instanceof SkipError ? undefined : serializeError(e) });
       throw e;
     }
   }

@@ -886,7 +886,7 @@ Slows down Playwright operations by the specified amount of milliseconds. Useful
 ## locator-option-has-text
 - `hasText` <[string]|[RegExp]>
 
-Matches elements containing specified text somewhere inside, possibly in a child or a descendant element.
+Matches elements containing specified text somewhere inside, possibly in a child or a descendant element. When passed a [string], matching is case-insensitive and searches for a substring.
 For example, `"Playwright"` matches `<article><div>Playwright</div></article>`.
 
 ## locator-option-has
@@ -954,8 +954,8 @@ When true, takes a screenshot of the full scrollable page, instead of the curren
 
 An object which specifies clipping of the resulting image. Should have the following fields:
 
-## screenshot-option-size
-- `size` <[ScreenshotSize]<"css"|"device">>
+## screenshot-option-scale
+- `scale` <[ScreenshotScale]<"css"|"device">>
 
 When set to `"css"`, screenshot will have a single pixel per each css pixel on the page. For high-dpi devices, this will keep screenshots small. Using `"device"` option will produce a single pixel per each device pixel, so screenhots of high-dpi devices will be twice as large or even larger. Defaults to `"device"`.
 
@@ -964,13 +964,19 @@ When set to `"css"`, screenshot will have a single pixel per each css pixel on t
 
 When set to `"ready"`, screenshot will wait for [`document.fonts.ready`](https://developer.mozilla.org/en-US/docs/Web/API/FontFaceSet/ready) promise to resolve in all frames. Defaults to `"nowait"`.
 
+## screenshot-option-caret
+- `caret` <[ScreenshotCaret]<"hide"|"initial">>
+
+When set to `"hide"`, screenshot will hide text caret. When set to `"initial"`, text caret behavior will not be changed.  Defaults to `"hide"`.
+
 ## screenshot-options-common-list
 - %%-screenshot-option-animations-%%
 - %%-screenshot-option-omit-background-%%
 - %%-screenshot-option-quality-%%
 - %%-screenshot-option-path-%%
-- %%-screenshot-option-size-%%
+- %%-screenshot-option-scale-%%
 - %%-screenshot-option-fonts-%%
+- %%-screenshot-option-caret-%%
 - %%-screenshot-option-type-%%
 - %%-screenshot-option-mask-%%
 - %%-input-timeout-%%

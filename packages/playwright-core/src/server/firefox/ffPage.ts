@@ -113,7 +113,7 @@ export class FFPage implements PageDelegate {
     });
     // Ideally, we somehow ensure that utility world is created before Page.ready arrives, but currently it is racy.
     // Therefore, we can end up with an initialized page without utility world, although very unlikely.
-    this.evaluateOnNewDocument('', UTILITY_WORLD_NAME).catch(e => this._markAsError(e));
+    this.addInitScript('', UTILITY_WORLD_NAME).catch(e => this._markAsError(e));
   }
 
   potentiallyUninitializedPage(): Page {
@@ -333,6 +333,10 @@ export class FFPage implements PageDelegate {
     await this._session.send('Page.addBinding', { name: binding.name, script: binding.source });
   }
 
+  async removeExposedBindings() {
+    // TODO: implement me.
+  }
+
   didClose() {
     this._session.dispose();
     eventsHelper.removeEventListeners(this._eventListeners);
@@ -398,9 +402,14 @@ export class FFPage implements PageDelegate {
     return success;
   }
 
-  async evaluateOnNewDocument(script: string, worldName?: string): Promise<void> {
+  async addInitScript(script: string, worldName?: string): Promise<void> {
     this._initScripts.push({ script, worldName });
     await this._session.send('Page.setInitScripts', { scripts: this._initScripts });
+  }
+
+  async removeInitScripts() {
+    this._initScripts = [];
+    await this._session.send('Page.setInitScripts', { scripts: [] });
   }
 
   async closePage(runBeforeUnload: boolean): Promise<void> {
@@ -412,7 +421,7 @@ export class FFPage implements PageDelegate {
       throw new Error('Not implemented');
   }
 
-  async takeScreenshot(progress: Progress, format: 'png' | 'jpeg', documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, quality: number | undefined, fitsViewport: boolean, size: 'css' | 'device'): Promise<Buffer> {
+  async takeScreenshot(progress: Progress, format: 'png' | 'jpeg', documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, quality: number | undefined, fitsViewport: boolean, scale: 'css' | 'device'): Promise<Buffer> {
     if (!documentRect) {
       const scrollOffset = await this._page.mainFrame().waitForFunctionValueInUtility(progress, () => ({ x: window.scrollX, y: window.scrollY }));
       documentRect = {
@@ -428,7 +437,7 @@ export class FFPage implements PageDelegate {
     const { data } = await this._session.send('Page.screenshot', {
       mimeType: ('image/' + format) as ('image/png' | 'image/jpeg'),
       clip: documentRect,
-      omitDeviceScaleFactor: size === 'css',
+      omitDeviceScaleFactor: scale === 'css',
     });
     return Buffer.from(data, 'base64');
   }

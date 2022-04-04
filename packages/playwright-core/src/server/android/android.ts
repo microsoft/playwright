@@ -80,7 +80,7 @@ export class Android extends SdkObject {
       newSerials.add(d.serial);
       if (this._devices.has(d.serial))
         continue;
-      const device = await AndroidDevice.create(this, d);
+      const device = await AndroidDevice.create(this, d, options);
       this._devices.set(d.serial, device);
     }
     for (const d of this._devices.keys()) {
@@ -99,6 +99,7 @@ export class AndroidDevice extends SdkObject {
   readonly _backend: DeviceBackend;
   readonly model: string;
   readonly serial: string;
+  private _options: types.AndroidDeviceOptions;
   private _driverPromise: Promise<PipeTransport> | undefined;
   private _lastId = 0;
   private _callbacks = new Map<number, { fulfill: (result: any) => void, reject: (error: Error) => void }>();
@@ -116,19 +117,20 @@ export class AndroidDevice extends SdkObject {
   private _android: Android;
   private _isClosed = false;
 
-  constructor(android: Android, backend: DeviceBackend, model: string) {
+  constructor(android: Android, backend: DeviceBackend, model: string, options: types.AndroidDeviceOptions) {
     super(android, 'android-device');
     this._android = android;
     this._backend = backend;
     this.model = model;
     this.serial = backend.serial;
+    this._options = options;
     this._timeoutSettings = new TimeoutSettings(android._timeoutSettings);
   }
 
-  static async create(android: Android, backend: DeviceBackend): Promise<AndroidDevice> {
+  static async create(android: Android, backend: DeviceBackend, options: types.AndroidDeviceOptions): Promise<AndroidDevice> {
     await backend.init();
     const model = await backend.runCommand('shell:getprop ro.product.model');
-    const device = new AndroidDevice(android, backend, model.toString().trim());
+    const device = new AndroidDevice(android, backend, model.toString().trim(), options);
     await device._init();
     return device;
   }
@@ -169,13 +171,18 @@ export class AndroidDevice extends SdkObject {
     debug('pw:android')('Stopping the old driver');
     await this.shell(`am force-stop com.microsoft.playwright.androiddriver`);
 
-    debug('pw:android')('Uninstalling the old driver');
-    await this.shell(`cmd package uninstall com.microsoft.playwright.androiddriver`);
-    await this.shell(`cmd package uninstall com.microsoft.playwright.androiddriver.test`);
+    // uninstall and install driver on every excution
+    if (!this._options.omitDriverInstall) {
+      debug('pw:android')('Uninstalling the old driver');
+      await this.shell(`cmd package uninstall com.microsoft.playwright.androiddriver`);
+      await this.shell(`cmd package uninstall com.microsoft.playwright.androiddriver.test`);
 
-    debug('pw:android')('Installing the new driver');
-    for (const file of ['android-driver.apk', 'android-driver-target.apk'])
-      await this.installApk(await fs.promises.readFile(require.resolve(`../../../bin/${file}`)));
+      debug('pw:android')('Installing the new driver');
+      for (const file of ['android-driver.apk', 'android-driver-target.apk'])
+        await this.installApk(await fs.promises.readFile(require.resolve(`../../../bin/${file}`)));
+    } else {
+      debug('pw:android')('Skipping the driver installation');
+    }
 
     debug('pw:android')('Starting the new driver');
     this.shell('am instrument -w com.microsoft.playwright.androiddriver.test/androidx.test.runner.AndroidJUnitRunner').catch(e => debug('pw:android')(e));

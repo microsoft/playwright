@@ -21,6 +21,7 @@ import milliseconds from 'ms';
 import path from 'path';
 import StackUtils from 'stack-utils';
 import { FullConfig, TestCase, Suite, TestResult, TestError, Reporter, FullResult, TestStep, Location } from '../../types/testReporter';
+import { FullConfigInternal } from '../types';
 
 const stackUtils = new StackUtils();
 
@@ -49,7 +50,7 @@ type TestSummary = {
 
 export class BaseReporter implements Reporter  {
   duration = 0;
-  config!: FullConfig;
+  config!: FullConfigInternal;
   suite!: Suite;
   totalTestCount = 0;
   result!: FullResult;
@@ -65,7 +66,7 @@ export class BaseReporter implements Reporter  {
 
   onBegin(config: FullConfig, suite: Suite) {
     this.monotonicStartTime = monotonicTime();
-    this.config = config;
+    this.config = config as FullConfigInternal;
     this.suite = suite;
     this.totalTestCount = suite.allTests().length;
   }
@@ -117,7 +118,7 @@ export class BaseReporter implements Reporter  {
   }
 
   protected generateStartingMessage() {
-    const jobs = Math.min(this.config.workers, (this.config as any).__testGroupsCount);
+    const jobs = Math.min(this.config.workers, this.config._testGroupsCount);
     const shardDetails = this.config.shard ? `, shard ${this.config.shard.current} of ${this.config.shard.total}` : '';
     return `\nRunning ${this.totalTestCount} test${this.totalTestCount > 1 ? 's' : ''} using ${jobs} worker${jobs > 1 ? 's' : ''}${shardDetails}`;
   }

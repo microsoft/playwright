@@ -2625,8 +2625,9 @@ export interface Page {
     has?: Locator;
 
     /**
-     * Matches elements containing specified text somewhere inside, possibly in a child or a descendant element. For example,
-     * `"Playwright"` matches `<article><div>Playwright</div></article>`.
+     * Matches elements containing specified text somewhere inside, possibly in a child or a descendant element. When passed a
+     * [string], matching is case-insensitive and searches for a substring. For example, `"Playwright"` matches
+     * `<article><div>Playwright</div></article>`.
      */
     hasText?: string|RegExp;
   }): Locator;
@@ -5443,8 +5444,9 @@ export interface Frame {
     has?: Locator;
 
     /**
-     * Matches elements containing specified text somewhere inside, possibly in a child or a descendant element. For example,
-     * `"Playwright"` matches `<article><div>Playwright</div></article>`.
+     * Matches elements containing specified text somewhere inside, possibly in a child or a descendant element. When passed a
+     * [string], matching is case-insensitive and searches for a substring. For example, `"Playwright"` matches
+     * `<article><div>Playwright</div></article>`.
      */
     hasText?: string|RegExp;
   }): Locator;
@@ -8147,6 +8149,12 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
     animations?: "disabled"|"allow";
 
     /**
+     * When set to `"hide"`, screenshot will hide text caret. When set to `"initial"`, text caret behavior will not be changed.
+     * Defaults to `"hide"`.
+     */
+    caret?: "hide"|"initial";
+
+    /**
      * When set to `"ready"`, screenshot will wait for
      * [`document.fonts.ready`](https://developer.mozilla.org/en-US/docs/Web/API/FontFaceSet/ready) promise to resolve in all
      * frames. Defaults to `"nowait"`.
@@ -8182,7 +8190,7 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
      * keep screenshots small. Using `"device"` option will produce a single pixel per each device pixel, so screenhots of
      * high-dpi devices will be twice as large or even larger. Defaults to `"device"`.
      */
-    size?: "css"|"device";
+    scale?: "css"|"device";
 
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
@@ -9399,8 +9407,9 @@ export interface Locator {
     has?: Locator;
 
     /**
-     * Matches elements containing specified text somewhere inside, possibly in a child or a descendant element. For example,
-     * `"Playwright"` matches `<article><div>Playwright</div></article>`.
+     * Matches elements containing specified text somewhere inside, possibly in a child or a descendant element. When passed a
+     * [string], matching is case-insensitive and searches for a substring. For example, `"Playwright"` matches
+     * `<article><div>Playwright</div></article>`.
      */
     hasText?: string|RegExp;
   }): Locator;
@@ -10916,6 +10925,11 @@ export interface ElectronApplication {
   firstWindow(): Promise<Page>;
 
   /**
+   * Returns the main process for this Electron Application.
+   */
+  process(): ChildProcess;
+
+  /**
    * This event is issued when the application closes.
    */
   waitForEvent(event: 'close', optionsOrPredicate?: { predicate?: () => boolean | Promise<boolean>, timeout?: number } | (() => boolean | Promise<boolean>)): Promise<void>;
@@ -11111,6 +11125,11 @@ export interface Android {
    * @param options
    */
   devices(options?: {
+    /**
+     * Prevents automatic playwright driver installation on attach. Assumes that the drivers have been installed already.
+     */
+    omitDriverInstall?: boolean;
+
     /**
      * Optional port to establish ADB server connection.
      */
@@ -13863,8 +13882,9 @@ export interface FrameLocator {
     has?: Locator;
 
     /**
-     * Matches elements containing specified text somewhere inside, possibly in a child or a descendant element. For example,
-     * `"Playwright"` matches `<article><div>Playwright</div></article>`.
+     * Matches elements containing specified text somewhere inside, possibly in a child or a descendant element. When passed a
+     * [string], matching is case-insensitive and searches for a substring. For example, `"Playwright"` matches
+     * `<article><div>Playwright</div></article>`.
      */
     hasText?: string|RegExp;
   }): Locator;
@@ -14721,15 +14741,6 @@ export interface Route {
      * If set, equals to setting `Content-Type` response header.
      */
     contentType?: string;
-
-    /**
-     * Wheb set to "allow" or omitted, the fulfilled response will have
-     * ["Access-Control-Allow-Origin"](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Allow-Origin)
-     * header set to request's origin. If the option is set to "none" then
-     * [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS) headers won't be added to the response. Note that all
-     * CORS headers configured via `headers` option will take precedence.
-     */
-    cors?: "allow"|"none";
 
     /**
      * Response headers. Header values will be converted to a string.
@@ -15732,6 +15743,12 @@ export interface LocatorScreenshotOptions {
   animations?: "disabled"|"allow";
 
   /**
+   * When set to `"hide"`, screenshot will hide text caret. When set to `"initial"`, text caret behavior will not be changed.
+   * Defaults to `"hide"`.
+   */
+  caret?: "hide"|"initial";
+
+  /**
    * When set to `"ready"`, screenshot will wait for
    * [`document.fonts.ready`](https://developer.mozilla.org/en-US/docs/Web/API/FontFaceSet/ready) promise to resolve in all
    * frames. Defaults to `"nowait"`.
@@ -15767,7 +15784,7 @@ export interface LocatorScreenshotOptions {
    * keep screenshots small. Using `"device"` option will produce a single pixel per each device pixel, so screenhots of
    * high-dpi devices will be twice as large or even larger. Defaults to `"device"`.
    */
-  size?: "css"|"device";
+  scale?: "css"|"device";
 
   /**
    * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
@@ -15885,6 +15902,12 @@ export interface PageScreenshotOptions {
   animations?: "disabled"|"allow";
 
   /**
+   * When set to `"hide"`, screenshot will hide text caret. When set to `"initial"`, text caret behavior will not be changed.
+   * Defaults to `"hide"`.
+   */
+  caret?: "hide"|"initial";
+
+  /**
    * An object which specifies clipping of the resulting image. Should have the following fields:
    */
   clip?: {
@@ -15951,7 +15974,7 @@ export interface PageScreenshotOptions {
    * keep screenshots small. Using `"device"` option will produce a single pixel per each device pixel, so screenhots of
    * high-dpi devices will be twice as large or even larger. Defaults to `"device"`.
    */
-  size?: "css"|"device";
+  scale?: "css"|"device";
 
   /**
    * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by

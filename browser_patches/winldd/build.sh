@@ -5,7 +5,7 @@ set +x
 trap "cd $(pwd -P)" EXIT
 cd "$(dirname $0)"
 
-if [[ "$(uname)" == MINGW* ]]; then
+if [[ "$(uname)" == MINGW* || "$(uname)" == MSYS* ]]; then
   /c/Windows/System32/cmd.exe "/c buildwin.bat"
 else
   echo "ERROR: cannot upload on this platform!" 1>&2

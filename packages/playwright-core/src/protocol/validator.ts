@@ -444,6 +444,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   scheme.BrowserContextAddInitScriptParams = tObject({
     source: tString,
   });
+  scheme.BrowserContextRemoveInitScriptsParams = tOptional(tObject({}));
   scheme.BrowserContextClearCookiesParams = tOptional(tObject({}));
   scheme.BrowserContextClearPermissionsParams = tOptional(tObject({}));
   scheme.BrowserContextCloseParams = tOptional(tObject({}));
@@ -454,6 +455,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     name: tString,
     needsHandle: tOptional(tBoolean),
   });
+  scheme.BrowserContextRemoveExposedBindingsParams = tOptional(tObject({}));
   scheme.BrowserContextGrantPermissionsParams = tObject({
     permissions: tArray(tString),
     origin: tOptional(tString),
@@ -519,6 +521,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   scheme.PageAddInitScriptParams = tObject({
     source: tString,
   });
+  scheme.PageRemoveInitScriptsParams = tOptional(tObject({}));
   scheme.PageCloseParams = tObject({
     runBeforeUnload: tOptional(tBoolean),
   });
@@ -532,6 +535,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     name: tString,
     needsHandle: tOptional(tBoolean),
   });
+  scheme.PageRemoveExposedBindingsParams = tOptional(tObject({}));
   scheme.PageGoBackParams = tObject({
     timeout: tOptional(tNumber),
     waitUntil: tOptional(tType('LifecycleEvent')),
@@ -561,8 +565,9 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
       fullPage: tOptional(tBoolean),
       clip: tOptional(tType('Rect')),
       omitBackground: tOptional(tBoolean),
+      caret: tOptional(tEnum(['hide', 'initial'])),
       animations: tOptional(tEnum(['disabled', 'allow'])),
-      size: tOptional(tEnum(['css', 'device'])),
+      scale: tOptional(tEnum(['css', 'device'])),
       fonts: tOptional(tEnum(['ready', 'nowait'])),
       mask: tOptional(tArray(tObject({
         frame: tChannel('Frame'),
@@ -577,8 +582,9 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     fullPage: tOptional(tBoolean),
     clip: tOptional(tType('Rect')),
     omitBackground: tOptional(tBoolean),
+    caret: tOptional(tEnum(['hide', 'initial'])),
     animations: tOptional(tEnum(['disabled', 'allow'])),
-    size: tOptional(tEnum(['css', 'device'])),
+    scale: tOptional(tEnum(['css', 'device'])),
     fonts: tOptional(tEnum(['ready', 'nowait'])),
     mask: tOptional(tArray(tObject({
       frame: tChannel('Frame'),
@@ -1081,8 +1087,9 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     type: tOptional(tEnum(['png', 'jpeg'])),
     quality: tOptional(tNumber),
     omitBackground: tOptional(tBoolean),
+    caret: tOptional(tEnum(['hide', 'initial'])),
     animations: tOptional(tEnum(['disabled', 'allow'])),
-    size: tOptional(tEnum(['css', 'device'])),
+    scale: tOptional(tEnum(['css', 'device'])),
     fonts: tOptional(tEnum(['ready', 'nowait'])),
     mask: tOptional(tArray(tObject({
       frame: tChannel('Frame'),
@@ -1168,7 +1175,6 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   scheme.RouteFulfillParams = tObject({
     status: tOptional(tNumber),
     headers: tOptional(tArray(tType('NameValue'))),
-    cors: tOptional(tEnum(['allow', 'none'])),
     body: tOptional(tString),
     isBase64: tOptional(tBoolean),
     fetchResponseUid: tOptional(tString),
@@ -1302,6 +1308,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   scheme.ElectronApplicationCloseParams = tOptional(tObject({}));
   scheme.AndroidDevicesParams = tObject({
     port: tOptional(tNumber),
+    omitDriverInstall: tOptional(tBoolean),
   });
   scheme.AndroidSetDefaultTimeoutNoReplyParams = tObject({
     timeout: tNumber,

@@ -313,12 +313,17 @@ CommonScreenshotOptions:
   type: mixin
   properties:
     omitBackground: boolean?
+    caret:
+      type: enum?
+      literals:
+      - hide
+      - initial
     animations:
       type: enum?
       literals:
       - disabled
       - allow
-    size:
+    scale:
       type: enum?
       literals:
       - css
@@ -756,6 +761,8 @@ BrowserContext:
       parameters:
         source: string
 
+    removeInitScripts:
+
     clearCookies:
 
     clearPermissions:
@@ -776,6 +783,8 @@ BrowserContext:
       parameters:
         name: string
         needsHandle: boolean?
+
+    removeExposedBindings:
 
     grantPermissions:
       parameters:
@@ -868,7 +877,6 @@ BrowserContext:
       returns:
         writableStream: WritableStream
 
-
   events:
 
     bindingCall:
@@ -955,6 +963,8 @@ Page:
       parameters:
         source: string
 
+    removeInitScripts:
+
     close:
       parameters:
         runBeforeUnload: boolean?
@@ -995,6 +1005,8 @@ Page:
       parameters:
         name: string
         needsHandle: boolean?
+
+    removeExposedBindings:
 
     goBack:
       parameters:
@@ -2449,11 +2461,6 @@ Route:
         headers:
           type: array?
           items: NameValue
-        cors:
-          type: enum?
-          literals:
-          - allow
-          - none
         body: string?
         isBase64: boolean?
         fetchResponseUid: string?
@@ -2846,6 +2853,7 @@ Android:
     devices:
       parameters:
         port: number?
+        omitDriverInstall: boolean?
       returns:
         devices:
           type: array

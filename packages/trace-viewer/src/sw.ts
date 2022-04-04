@@ -30,16 +30,19 @@ self.addEventListener('activate', function(event: any) {
 
 const scopePath = new URL(self.registration.scope).pathname;
 
-const loadedTraces = new Map<string, { traceModel: TraceModel, snapshotServer: SnapshotServer, clientId: string }>();
+const loadedTraces = new Map<string, { traceModel: TraceModel, snapshotServer: SnapshotServer }>();
+
+const clientIdToTraceUrl = new Map<string, string>();
 
 async function loadTrace(trace: string, clientId: string, progress: (done: number, total: number) => void): Promise<TraceModel> {
   const entry = loadedTraces.get(trace);
+  clientIdToTraceUrl.set(clientId, trace);
   if (entry)
     return entry.traceModel;
   const traceModel = new TraceModel();
   await traceModel.load(trace, progress);
   const snapshotServer = new SnapshotServer(traceModel.storage());
-  loadedTraces.set(trace, { traceModel, snapshotServer, clientId });
+  loadedTraces.set(trace, { traceModel, snapshotServer });
   return traceModel;
 }
 
@@ -117,10 +120,14 @@ async function doFetch(event: FetchEvent): Promise<Response> {
 }
 
 async function gc() {
+  const clients = await self.clients.matchAll();
   const usedTraces = new Set<string>();
-  for (const [traceUrl, entry] of loadedTraces) {
-    const client = await self.clients.get(entry.clientId);
-    if (client)
+
+  for (const [clientId, traceUrl] of clientIdToTraceUrl) {
+    // @ts-ignore
+    if (!clients.find(c => c.id === clientId))
+      clientIdToTraceUrl.delete(clientId);
+    else
       usedTraces.add(traceUrl);
   }
 
