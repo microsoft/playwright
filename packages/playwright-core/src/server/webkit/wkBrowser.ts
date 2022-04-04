@@ -307,9 +307,19 @@ export class WKBrowserContext extends BrowserContext {
       await (page._delegate as WKPage)._updateBootstrapScript();
   }
 
+  async doRemoveInitScripts() {
+    for (const page of this.pages())
+      await (page._delegate as WKPage)._updateBootstrapScript();
+  }
+
   async doExposeBinding(binding: PageBinding) {
     for (const page of this.pages())
       await (page._delegate as WKPage).exposeBinding(binding);
+  }
+
+  async doRemoveExposedBindings() {
+    for (const page of this.pages())
+      await (page._delegate as WKPage).removeExposedBindings();
   }
 
   async doUpdateRequestInterception(): Promise<void> {

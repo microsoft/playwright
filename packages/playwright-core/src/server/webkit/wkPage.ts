@@ -753,12 +753,20 @@ export class WKPage implements PageDelegate {
     await this._evaluateBindingScript(binding);
   }
 
+  async removeExposedBindings(): Promise<void> {
+    await this._updateBootstrapScript();
+  }
+
   private async _evaluateBindingScript(binding: PageBinding): Promise<void> {
     const script = this._bindingToScript(binding);
     await Promise.all(this._page.frames().map(frame => frame.evaluateExpression(script, false, {}).catch(e => {})));
   }
 
   async addInitScript(script: string): Promise<void> {
+    await this._updateBootstrapScript();
+  }
+
+  async removeInitScripts() {
     await this._updateBootstrapScript();
   }
 

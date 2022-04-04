@@ -107,6 +107,10 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel> imple
     });
   }
 
+  async removeExposedBindings() {
+    await this._page.removeExposedBindings();
+  }
+
   async setExtraHTTPHeaders(params: channels.PageSetExtraHTTPHeadersParams, metadata: CallMetadata): Promise<void> {
     await this._page.setExtraHTTPHeaders(params.headers);
   }
@@ -138,6 +142,10 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel> imple
 
   async addInitScript(params: channels.PageAddInitScriptParams, metadata: CallMetadata): Promise<void> {
     await this._page.addInitScript(params.source);
+  }
+
+  async removeInitScripts(): Promise<void> {
+    await this._page.removeInitScripts();
   }
 
   async setNetworkInterceptionEnabled(params: channels.PageSetNetworkInterceptionEnabledParams, metadata: CallMetadata): Promise<void> {

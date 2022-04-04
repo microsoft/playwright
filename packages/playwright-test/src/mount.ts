@@ -14,10 +14,16 @@
  * limitations under the License.
  */
 
-import type { Page } from '@playwright/test';
+import type { Page, ViewportSize } from '@playwright/test';
 import { createGuid } from 'playwright-core/lib/utils/utils';
 
-export async function mount(page: Page, jsxOrType: any, options: any): Promise<string> {
+export async function mount(page: Page, jsxOrType: any, options: any, baseURL: string, viewport: ViewportSize): Promise<string> {
+  await page.goto('about:blank');
+  await (page as any)._resetForReuse();
+  await (page.context() as any)._resetForReuse();
+  await page.setViewportSize(viewport);
+  await page.goto(baseURL);
+
   let component;
   if (typeof jsxOrType === 'string')
     component = { kind: 'object', type: jsxOrType, options };

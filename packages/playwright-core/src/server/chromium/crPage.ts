@@ -179,6 +179,10 @@ export class CRPage implements PageDelegate {
     await Promise.all(this._page.frames().map(frame => frame.evaluateExpression(binding.source, false, {}).catch(e => {})));
   }
 
+  async removeExposedBindings() {
+    await this._forAllFrameSessions(frame => frame._removeExposedBindings());
+  }
+
   async updateExtraHTTPHeaders(): Promise<void> {
     await this._forAllFrameSessions(frame => frame._updateExtraHTTPHeaders(false));
   }
@@ -239,6 +243,10 @@ export class CRPage implements PageDelegate {
 
   async addInitScript(source: string, world: types.World = 'main'): Promise<void> {
     await this._forAllFrameSessions(frame => frame._evaluateOnNewDocument(source, world));
+  }
+
+  async removeInitScripts() {
+    await this._forAllFrameSessions(frame => frame._removeEvaluatesOnNewDocument());
   }
 
   async closePage(runBeforeUnload: boolean): Promise<void> {
@@ -388,6 +396,8 @@ class FrameSession {
   private _videoRecorder: VideoRecorder | null = null;
   private _screencastId: string | null = null;
   private _screencastClients = new Set<any>();
+  private _evaluateOnNewDocumentIdentifiers: string[] = [];
+  private _exposedBindingNames: string[] = [];
 
   constructor(crPage: CRPage, client: CRSession, targetId: string, parentSession: FrameSession | null) {
     this._client = client;
@@ -798,10 +808,18 @@ class FrameSession {
   }
 
   async _initBinding(binding: PageBinding) {
-    await Promise.all([
+    const [ , response ] = await Promise.all([
       this._client.send('Runtime.addBinding', { name: binding.name }),
       this._client.send('Page.addScriptToEvaluateOnNewDocument', { source: binding.source })
     ]);
+    this._exposedBindingNames.push(binding.name);
+    this._evaluateOnNewDocumentIdentifiers.push(response.identifier);
+  }
+
+  async _removeExposedBindings() {
+    const names = this._exposedBindingNames;
+    this._exposedBindingNames = [];
+    await Promise.all(names.map(name => this._client.send('Runtime.removeBinding', { name })));
   }
 
   async _onBindingCalled(event: Protocol.Runtime.bindingCalledPayload) {
@@ -1054,7 +1072,14 @@ class FrameSession {
 
   async _evaluateOnNewDocument(source: string, world: types.World): Promise<void> {
     const worldName = world === 'utility' ? UTILITY_WORLD_NAME : undefined;
-    await this._client.send('Page.addScriptToEvaluateOnNewDocument', { source, worldName });
+    const { identifier } = await this._client.send('Page.addScriptToEvaluateOnNewDocument', { source, worldName });
+    this._evaluateOnNewDocumentIdentifiers.push(identifier);
+  }
+
+  async _removeEvaluatesOnNewDocument(): Promise<void> {
+    const identifiers = this._evaluateOnNewDocumentIdentifiers;
+    this._evaluateOnNewDocumentIdentifiers = [];
+    await Promise.all(identifiers.map(identifier => this._client.send('Page.removeScriptToEvaluateOnNewDocument', { identifier })));
   }
 
   async _getContentFrame(handle: dom.ElementHandle): Promise<frames.Frame | null> {

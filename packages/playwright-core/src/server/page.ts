@@ -47,7 +47,9 @@ export interface PageDelegate {
   goBack(): Promise<boolean>;
   goForward(): Promise<boolean>;
   exposeBinding(binding: PageBinding): Promise<void>;
+  removeExposedBindings(): Promise<void>;
   addInitScript(source: string): Promise<void>;
+  removeInitScripts(): Promise<void>;
   closePage(runBeforeUnload: boolean): Promise<void>;
   potentiallyUninitializedPage(): Page;
   pageOrError(): Promise<Page | Error>;
@@ -308,6 +310,11 @@ export class Page extends SdkObject {
     await this._delegate.exposeBinding(binding);
   }
 
+  async removeExposedBindings() {
+    this._pageBindings.clear();
+    await this._delegate.removeExposedBindings();
+  }
+
   setExtraHTTPHeaders(headers: types.HeadersArray) {
     this._state.extraHTTPHeaders = headers;
     return this._delegate.updateExtraHTTPHeaders();
@@ -414,6 +421,11 @@ export class Page extends SdkObject {
   async addInitScript(source: string) {
     this.initScripts.push(source);
     await this._delegate.addInitScript(source);
+  }
+
+  async removeInitScripts() {
+    this.initScripts.splice(0, this.initScripts.length);
+    await this._delegate.removeInitScripts();
   }
 
   _needsRequestInterception(): boolean {

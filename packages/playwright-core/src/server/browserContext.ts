@@ -163,7 +163,9 @@ export abstract class BrowserContext extends SdkObject {
   protected abstract doClearPermissions(): Promise<void>;
   protected abstract doSetHTTPCredentials(httpCredentials?: types.Credentials): Promise<void>;
   protected abstract doAddInitScript(expression: string): Promise<void>;
+  protected abstract doRemoveInitScripts(): Promise<void>;
   protected abstract doExposeBinding(binding: PageBinding): Promise<void>;
+  protected abstract doRemoveExposedBindings(): Promise<void>;
   protected abstract doUpdateRequestInterception(): Promise<void>;
   protected abstract doClose(): Promise<void>;
   protected abstract onClosePersistent(): void;
@@ -188,6 +190,11 @@ export abstract class BrowserContext extends SdkObject {
     const binding = new PageBinding(name, playwrightBinding, needsHandle);
     this._pageBindings.set(name, binding);
     await this.doExposeBinding(binding);
+  }
+
+  async removeExposedBindings() {
+    this._pageBindings.clear();
+    await this.doRemoveExposedBindings();
   }
 
   async grantPermissions(permissions: string[], origin?: string) {
@@ -268,6 +275,11 @@ export abstract class BrowserContext extends SdkObject {
   async addInitScript(script: string) {
     this.initScripts.push(script);
     await this.doAddInitScript(script);
+  }
+
+  async removeInitScripts(): Promise<void> {
+    this.initScripts.splice(0, this.initScripts.length);
+    await this.doRemoveInitScripts();
   }
 
   async setRequestInterceptor(handler: network.RouteHandler | undefined): Promise<void> {
