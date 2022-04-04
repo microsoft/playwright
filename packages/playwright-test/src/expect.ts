@@ -44,7 +44,7 @@ import {
   toHaveURL,
   toHaveValue
 } from './matchers/matchers';
-import { toMatchSnapshot, toHaveScreenshot } from './matchers/toMatchSnapshot';
+import { toMatchSnapshot, toHaveScreenshot as _toHaveScreenshot } from './matchers/toMatchSnapshot';
 import type { Expect, TestError } from './types';
 import matchers from 'expect/build/matchers';
 import { currentTestInfo } from './globals';
@@ -141,7 +141,7 @@ const customMatchers = {
   toHaveURL,
   toHaveValue,
   toMatchSnapshot,
-  toHaveScreenshot,
+  _toHaveScreenshot,
 };
 
 type ExpectMetaInfo = {

@@ -223,18 +223,6 @@ interface LocatorMatchers {
    * Asserts given DOM node visible on the screen.
    */
   toBeVisible(options?: { timeout?: number }): Promise<Locator>;
-
-  /**
-   * Asserts element's screenshot is matching to the snapshot.
-   */
-  toHaveScreenshot(options?: Omit<LocatorScreenshotOptions, 'path' | 'type' | 'quality'> & ImageComparatorOptions & {
-    name?: string | string[],
-  }): Promise<Locator>;
-
-  /**
-   * Asserts element's screenshot is matching to the snapshot.
-   */
-  toHaveScreenshot(name: string | string[], options?: Omit<LocatorScreenshotOptions, 'path' | 'type' | 'quality'> & ImageComparatorOptions): Promise<Locator>;
 }
 interface PageMatchers {
   /**
@@ -246,18 +234,6 @@ interface PageMatchers {
   * Asserts page's URL.
   */
   toHaveURL(expected: string | RegExp, options?: { timeout?: number }): Promise<Page>;
-
-  /**
-   * Asserts page screenshot is matching to the snapshot.
-   */
-  toHaveScreenshot(options?: Omit<PageScreenshotOptions, 'path' | 'quality' | 'type'> & ImageComparatorOptions & {
-    name?: string | string[],
-  }): Promise<Page>;
-
-  /**
-   * Asserts page screenshot is matching to the snapshot.
-   */
-  toHaveScreenshot(name: string | string[], options?: Omit<PageScreenshotOptions, 'path' | 'quality' | 'type'> & ImageComparatorOptions): Promise<Page>;
 }
 
 interface APIResponseMatchers {

@@ -295,7 +295,7 @@ export async function toHaveScreenshot(
   const testInfo = currentTestInfo();
   if (!testInfo)
     throw new Error(`toHaveScreenshot() must be called during the test`);
-  const config = testInfo.project.expect?.toHaveScreenshot;
+  const config = (testInfo.project.expect as any)?._toHaveScreenshot;
   const helper = new SnapshotHelper(
       testInfo, testInfo._screenshotPath.bind(testInfo), 'png',
       {
