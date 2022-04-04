@@ -2,38 +2,34 @@ name: "PR: bump //browser_patches/chromium/BUILD_NUMBER"
 on:
   workflow_dispatch:
   schedule:
-    # At 10:00am UTC  (3AM PST) on Monday and Friday
-    - cron: "0 10 * * 1,5"
+    # At 10:00am UTC  (3AM PST) every day to build every new Chromium beta
+    - cron: "0 10 * * *"
 jobs:
   trigger-chromium-build:
     name: Trigger Build
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/github-script@v4
-        id: bump-chromium
-        with:
-          script: |
-            const fs = require('fs');
-            const response = await github.request('https://omahaproxy.appspot.com/all.json');
-            const win = response.data.find(({os}) => os === 'win');
-            const winCanary = win.versions.find(version => version.channel === 'canary');
-            fs.writeFileSync('browser_patches/chromium/BUILD_NUMBER', `${winCanary.branch_base_position}\n`)
-            core.setOutput('GIT_COMMIT', winCanary.chromium_commit);
-            core.setOutput('BASE_POSITION', winCanary.branch_base_position);
+      - run: ./browser_patches/chromium/roll_to_current_beta.sh
       - name: Prepare branch
         id: prepare-branch
         run: |
-          BASE_POSITION="${{ steps.bump-chromium.outputs.BASE_POSITION }}"
-          BRANCH_NAME="roll-chromium/${BASE_POSITION}"
+          if [[ "$(git status --porcelain)" == "" ]]; then
+              echo "there are no changes";
+              exit 0;
+          fi
+          echo "::set-output name=HAS_CHANGES::1"
+          CURRENT_DATE=$(date +%Y-%b-%d)
+          BRANCH_NAME="roll-chromium/${CURRENT_DATE}"
           echo "::set-output name=BRANCH_NAME::$BRANCH_NAME"
           git config --global user.name github-actions
           git config --global user.email 41898282+github-actions[bot]@users.noreply.github.com
           git checkout -b "$BRANCH_NAME"
           git add .
-          git commit -m "browser(chromium): roll to r${BASE_POSITION}"
+          git commit -m "browser(chromium): roll to $CURRENT_DATE"
           git push origin $BRANCH_NAME
       - name: Create Pull Request
+        if: ${{ steps.prepare-branch.outputs.HAS_CHANGES == '1' }}
         uses: actions/github-script@v4
         with:
           script: |
@@ -42,6 +38,4 @@ jobs:
               repo: 'playwright',
               head: 'microsoft:${{ steps.prepare-branch.outputs.BRANCH_NAME }}',
               base: 'main',
-              title: 'browser(chromium): roll to r${{ steps.bump-chromium.outputs.BASE_POSITION }}',
-              body: 'Upstream commit: https://github.com/chromium/chromium/commit/${{ steps.bump-chromium.outputs.GIT_COMMIT }}',
             });
