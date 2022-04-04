@@ -10,8 +10,7 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
-      - run: |
-        ./browser_patches/chromium/roll_to_current_beta.sh
+      - run: ./browser_patches/chromium/roll_to_current_beta.sh
       - name: Prepare branch
         id: prepare-branch
         run: |
