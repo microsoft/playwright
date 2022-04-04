@@ -23,7 +23,7 @@ import { gracefullyCloseAll } from '../utils/processLauncher';
 import { SocksProxy } from '../utils/socksProxy';
 
 function launchGridWorker(gridURL: string, agentId: string, workerId: string) {
-  const log = debug(`pw:grid:worker${workerId}`);
+  const log = debug(`pw:grid:worker:${workerId}`);
   log('created');
   const ws = new WebSocket(gridURL.replace('http://', 'ws://') + `/registerWorker?agentId=${agentId}&workerId=${workerId}`);
   const dispatcherConnection = new DispatcherConnection();

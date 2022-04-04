@@ -15,12 +15,11 @@
  */
 
 import debug from 'debug';
-import assert from 'assert';
 import { EventEmitter } from 'events';
 import { URL } from 'url';
 import WebSocket, { Server as WebSocketServer } from 'ws';
 import { HttpServer } from '../utils/httpServer';
-import { createGuid, getPlaywrightVersion } from '../utils/utils';
+import { assert, createGuid, getPlaywrightVersion } from '../utils/utils';
 
 export type GridAgentLaunchOptions = {
   agentId: string,
@@ -57,18 +56,35 @@ const WSErrors = {
   AGENT_MANUALLY_STOPPED: { code: 1000, reason: 'Grid agent was manually stopped' },
 };
 
+
+type GridWorkerParams = {
+  browserAlias?: string;
+  headless?: boolean;
+};
+
 class GridWorker extends EventEmitter {
   readonly workerId = createGuid();
+  readonly params: GridWorkerParams;
   private _workerSocket: WebSocket | undefined;
   private _clientSocket: WebSocket;
   private _log: debug.Debugger;
+  private _bufferedMessages: WebSocket.RawData[] = [];
 
-  constructor(clientSocket: WebSocket) {
+  constructor(clientSocket: WebSocket, params: GridWorkerParams) {
     super();
-    this._log = debug(`pw:grid:worker${this.workerId}`);
+    this._log = debug(`pw:grid:worker:${this.workerId}`);
     this._clientSocket = clientSocket;
+    this.params = params;
     clientSocket.on('close', (code: number, reason: string) => this.closeWorker(WSErrors.NO_ERROR));
     clientSocket.on('error', (error: Error) => this.closeWorker(WSErrors.CLIENT_SOCKET_ERROR));
+    // clientSocket.pause() would be preferrable but according to the docs " Some events can still be
+    // emitted after it is called, until all buffered data is consumed."
+    this._clientSocket.on('message', data => {
+      if (this._workerSocket)
+        this._workerSocket.send(data);
+      else
+        this._bufferedMessages.push(data);
+    });
   }
 
   workerConnected(workerSocket: WebSocket) {
@@ -76,13 +92,14 @@ class GridWorker extends EventEmitter {
     this._workerSocket = workerSocket;
     workerSocket.on('close', (code: number, reason: string) => this.closeWorker(WSErrors.NO_ERROR));
     workerSocket.on('error', (error: Error) => this.closeWorker(WSErrors.WORKER_SOCKET_ERROR));
-    this._clientSocket.on('message', data => workerSocket!.send(data));
     workerSocket.on('message', data => this._clientSocket!.send(data));
-    this._clientSocket.send('run');
+    for (const data of this._bufferedMessages)
+      workerSocket.send(data);
+    this._bufferedMessages = [];
   }
 
   closeWorker(errorCode: ErrorCode) {
-    this._log('close');
+    this._log(`close ${errorCode.reason}`);
     this._workerSocket?.close(errorCode.code, errorCode.reason);
     this._clientSocket.close(errorCode.code, errorCode.reason);
     this.emit('close');
@@ -110,7 +127,7 @@ class GridAgent extends EventEmitter {
   constructor(capacity = Infinity, creationTimeout = 5 * 60000, retireTimeout = 30000) {
     super();
     this._capacity = capacity;
-    this._log = debug(`pw:grid:agent${this.agentId}`);
+    this._log = debug(`pw:grid:agent:${this.agentId}`);
     this.setStatus('created');
     this._retireTimeout = retireTimeout;
     this._agentCreationTimeoutId = setTimeout(() => {
@@ -131,10 +148,8 @@ class GridAgent extends EventEmitter {
     clearTimeout(this._agentCreationTimeoutId);
     this.setStatus('connected');
     this._ws = ws;
-    for (const worker of this._workersWaitingForAgentConnected) {
-      this._log(`send worker id: ${worker.workerId}`);
-      ws.send(worker.workerId);
-    }
+    for (const worker of this._workersWaitingForAgentConnected)
+      this._sendStartWorkerMessage(worker);
     this._workersWaitingForAgentConnected.clear();
   }
 
@@ -142,12 +157,12 @@ class GridAgent extends EventEmitter {
     return this._workers.size < this._capacity;
   }
 
-  async createWorker(clientSocket: WebSocket) {
+  async createWorker(clientSocket: WebSocket, params: GridWorkerParams) {
     if (this._retireTimeoutId)
       clearTimeout(this._retireTimeoutId);
     if (this._ws)
       this.setStatus('connected');
-    const worker = new GridWorker(clientSocket);
+    const worker = new GridWorker(clientSocket, params);
     this._log(`create worker: ${worker.workerId}`);
     this._workers.set(worker.workerId, worker);
     worker.on('close', () => {
@@ -161,12 +176,10 @@ class GridAgent extends EventEmitter {
           this._retireTimeoutId = setTimeout(() => this.closeAgent(WSErrors.AGENT_RETIRED), this._retireTimeout);
       }
     });
-    if (this._ws) {
-      this._log(`send worker id: ${worker.workerId}`);
-      this._ws.send(worker.workerId);
-    } else {
+    if (this._ws)
+      this._sendStartWorkerMessage(worker);
+    else
       this._workersWaitingForAgentConnected.add(worker);
-    }
   }
 
   workerConnected(workerId: string, ws: WebSocket) {
@@ -184,6 +197,16 @@ class GridAgent extends EventEmitter {
     this._ws?.close(errorCode.code, errorCode.reason);
     this.emit('close');
   }
+
+  private _sendStartWorkerMessage(worker: GridWorker) {
+    const message = JSON.stringify({
+      ...worker.params,
+      'workerId': worker.workerId,
+    });
+    this._log(`start worker message: ${message}`);
+    assert(this._ws);
+    this._ws.send(message);
+  }
 }
 
 export class GridServer {
@@ -197,6 +220,7 @@ export class GridServer {
 
   constructor(factory: GridFactory, authToken: string = '') {
     this._log = debug(`pw:grid:server`);
+    this._log(`using factory ${factory.name}`);
     this._authToken = authToken || '';
     this._server = new HttpServer();
     this._factory = factory;
@@ -239,17 +263,23 @@ export class GridServer {
     this._wsServer.on('connection', async (ws, request) => {
       if (request.url?.startsWith(this._securePath('/claimWorker'))) {
         const params = new URL('http://localhost/' + request.url).searchParams;
-        if (params.get('pwVersion') !== this._pwVersion && !process.env.PWTEST_UNSAFE_GRID_VERSION) {
+        const version = params.get('pwVersion') || request.headers['x-playwright-version'];
+        if (version !== this._pwVersion && !process.env.PWTEST_UNSAFE_GRID_VERSION) {
+          this._log(`version mismatch: ${version} !== ${this._pwVersion}`);
           ws.close(WSErrors.CLIENT_PLAYWRIGHT_VERSION_MISMATCH.code, WSErrors.CLIENT_PLAYWRIGHT_VERSION_MISMATCH.reason);
           return;
         }
         const agent = [...this._agents.values()].find(w => w.canCreateWorker()) || this._createAgent()?.agent;
         if (!agent) {
+          this._log(`failed to get agent`);
           ws.close(WSErrors.AGENT_CREATION_FAILED.code, WSErrors.AGENT_CREATION_FAILED.reason);
           return;
         }
 
-        agent.createWorker(ws);
+        agent.createWorker(ws, {
+          browserAlias: request.headers['x-playwright-browser'] as string | undefined,
+          headless: request.headers['x-playwright-headless'] !== '0',
+        });
         return;
       }
 
