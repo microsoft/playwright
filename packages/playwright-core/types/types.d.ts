@@ -8155,13 +8155,6 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
     caret?: "hide"|"initial";
 
     /**
-     * When set to `"ready"`, screenshot will wait for
-     * [`document.fonts.ready`](https://developer.mozilla.org/en-US/docs/Web/API/FontFaceSet/ready) promise to resolve in all
-     * frames. Defaults to `"nowait"`.
-     */
-    fonts?: "ready"|"nowait";
-
-    /**
      * Specify locators that should be masked when the screenshot is taken. Masked elements will be overlayed with a pink box
      * `#FF00FF` that completely covers its bounding box.
      */
@@ -15749,13 +15742,6 @@ export interface LocatorScreenshotOptions {
   caret?: "hide"|"initial";
 
   /**
-   * When set to `"ready"`, screenshot will wait for
-   * [`document.fonts.ready`](https://developer.mozilla.org/en-US/docs/Web/API/FontFaceSet/ready) promise to resolve in all
-   * frames. Defaults to `"nowait"`.
-   */
-  fonts?: "ready"|"nowait";
-
-  /**
    * Specify locators that should be masked when the screenshot is taken. Masked elements will be overlayed with a pink box
    * `#FF00FF` that completely covers its bounding box.
    */
@@ -15931,13 +15917,6 @@ export interface PageScreenshotOptions {
      */
     height: number;
   };
-
-  /**
-   * When set to `"ready"`, screenshot will wait for
-   * [`document.fonts.ready`](https://developer.mozilla.org/en-US/docs/Web/API/FontFaceSet/ready) promise to resolve in all
-   * frames. Defaults to `"nowait"`.
-   */
-  fonts?: "ready"|"nowait";
 
   /**
    * When true, takes a screenshot of the full scrollable page, instead of the currently visible viewport. Defaults to

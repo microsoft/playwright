@@ -975,7 +975,6 @@ When set to `"hide"`, screenshot will hide text caret. When set to `"initial"`, 
 - %%-screenshot-option-quality-%%
 - %%-screenshot-option-path-%%
 - %%-screenshot-option-scale-%%
-- %%-screenshot-option-fonts-%%
 - %%-screenshot-option-caret-%%
 - %%-screenshot-option-type-%%
 - %%-screenshot-option-mask-%%

@@ -310,7 +310,7 @@ export async function toHaveScreenshot(
   const [page, locator] = pageOrLocator.constructor.name === 'Page' ? [(pageOrLocator as PageEx), undefined] : [(pageOrLocator as Locator).page() as PageEx, pageOrLocator as LocatorEx];
   const screenshotOptions = {
     animations: config?.animations ?? 'disabled',
-    fonts: config?.fonts ?? 'ready',
+    _fonts: config?.fonts ?? 'ready',
     scale: config?.scale ?? 'css',
     caret: config?.caret ?? 'hide',
     ...helper.allOptions,
