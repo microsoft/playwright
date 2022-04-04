@@ -292,7 +292,7 @@ export interface TestInfo {
 }
 
 export interface GlobalInfo {
-  attachments: { name: string, path?: string, body?: Buffer, contentType: string }[];
+  attachments(): { name: string, path?: string, body?: Buffer, contentType: string }[];
   attach(name: string, options?: { contentType?: string, path?: string, body?: string | Buffer }): Promise<void>;
 }
 interface SuiteFunction {

@@ -23,7 +23,6 @@ import { formatResultFailure } from './base';
 import { toPosixPath, serializePatterns } from './json';
 import { MultiMap } from 'playwright-core/lib/utils/multimap';
 import { codeFrameColumns } from '@babel/code-frame';
-import { FullConfigInternal } from '../types';
 
 export type JsonLocation = Location;
 export type JsonError = string;

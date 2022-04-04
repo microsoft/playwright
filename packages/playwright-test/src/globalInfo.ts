@@ -13,29 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import fs from 'fs';
-import path from 'path';
 import { GlobalInfo } from './types';
-import { attach, getContainedPath } from './util';
-
+import { normalizeAndSaveAttachment } from './util';
+import fs from 'fs/promises';
 export class GlobalInfoImpl implements GlobalInfo {
   private _outputDir: string;
+  private _attachments: { name: string; path?: string | undefined; body?: Buffer | undefined; contentType: string; }[] = [];
 
   constructor(outputDir: string) {
     this._outputDir = outputDir;
   }
 
-  attachments: { name: string; path?: string | undefined; body?: Buffer | undefined; contentType: string; }[] = [];
-  async attach(name: string, options: { path?: string, body?: string | Buffer, contentType?: string } = {}) {
-    this.attachments.push(await attach((...segments: string[]) => this._outputPath(...segments), name, options));
+  attachments() {
+    return [...this._attachments];
   }
 
-  private _outputPath(...pathSegments: string[]){
-    fs.mkdirSync(this._outputDir, { recursive: true });
-    const joinedPath = path.join(...pathSegments);
-    const outputPath = getContainedPath(this._outputDir, joinedPath);
-    if (outputPath)
-      return outputPath;
-    throw new Error(`The outputPath is not allowed outside of the parent directory. Please fix the defined path.\n\n\toutputPath: ${joinedPath}`);
+  async attach(name: string, options: { path?: string, body?: string | Buffer, contentType?: string } = {}) {
+    await fs.mkdir(this._outputDir, { recursive: true });
+    this._attachments.push(await normalizeAndSaveAttachment(this._outputDir, name, options));
   }
 }

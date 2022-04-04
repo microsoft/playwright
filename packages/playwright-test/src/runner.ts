@@ -286,7 +286,6 @@ export class Runner {
 
     const outputDirs = new Set<string>();
     const rootSuite = new Suite('');
-    rootSuite.attachments = this._globalInfo.attachments;
     for (const [project, files] of filesByProject) {
       const grepMatcher = createTitleMatcher(project.config.grep);
       const grepInvertMatcher = project.config.grepInvert ? createTitleMatcher(project.config.grepInvert) : null;
@@ -393,6 +392,9 @@ export class Runner {
     }
 
     const result: FullResult = { status: 'passed' };
+
+    // 13.5 Add copy of attachments.
+    rootSuite.attachments = this._globalInfo.attachments();
 
     // 14. Run tests.
     try {

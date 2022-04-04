@@ -250,6 +250,8 @@ test(`GlobalInfo.attach works`, async ({ runInlineTest }, testInfo) => {
         await fs.promises.writeFile(external, 'external');
         await globalInfo.attach('inline.txt', { body: Buffer.from('inline'), contentType: 'text/plain' });
         await globalInfo.attach('external.txt', { path: external, contentType: 'text/plain' });
+        // The attach call above should have saved it to a safe place
+        await fs.promises.rm(external);
       };
 
       export default globalSetup;
@@ -269,11 +271,13 @@ test(`GlobalInfo.attach works`, async ({ runInlineTest }, testInfo) => {
   }, { reporter: 'dot,' + kRawReporterPath, workers: 1 }, {}, { usesCustomOutputDir: true });
 
   expect(result.exitCode).toBe(0);
-  const json = JSON.parse(fs.readFileSync(testInfo.outputPath('test-results', 'report', 'project.report'), 'utf-8'));
+  const outputPath = testInfo.outputPath('test-results', 'report', 'project.report');
+  const json = JSON.parse(fs.readFileSync(outputPath, 'utf-8'));
   {
     const attachment = json.attachments[0];
     expect(attachment.name).toBe('inline.txt');
     expect(attachment.contentType).toBe('text/plain');
+    expect(attachment.path).toBeUndefined();
     expect(Buffer.from(attachment.body, 'base64').toString()).toEqual('inline');
   }
   {
@@ -281,7 +285,9 @@ test(`GlobalInfo.attach works`, async ({ runInlineTest }, testInfo) => {
     expect(attachment.name).toBe('external.txt');
     expect(attachment.contentType).toBe('text/plain');
     const contents = fs.readFileSync(attachment.path);
+    expect(attachment.path).toBe(path.join(testInfo.outputDir, 'attachments', 'a3eb3dad08b764c3f9a7b108f1db60d1f3ef4124.txt'));
     expect(contents.toString()).toEqual('external');
+    expect(attachment.body).toBeUndefined();
   }
 });
 

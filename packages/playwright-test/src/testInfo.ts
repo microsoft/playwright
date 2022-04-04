@@ -24,7 +24,7 @@ import { ProjectImpl } from './project';
 import { TestCase } from './test';
 import { TimeoutManager } from './timeoutManager';
 import { Annotation, TestStepInternal } from './types';
-import { addSuffixToFilePath, attach, getContainedPath, monotonicTime, sanitizeForFilePath, serializeError, trimLongString } from './util';
+import { addSuffixToFilePath, normalizeAndSaveAttachment, getContainedPath, monotonicTime, sanitizeForFilePath, serializeError, trimLongString } from './util';
 
 export class TestInfoImpl implements TestInfo {
   private _projectImpl: ProjectImpl;
@@ -228,7 +228,7 @@ export class TestInfoImpl implements TestInfo {
   // ------------ TestInfo methods ------------
 
   async attach(name: string, options: { path?: string, body?: string | Buffer, contentType?: string } = {}) {
-    this.attachments.push(await attach((...segments: string[]) => this.outputPath(...segments), name, options));
+    this.attachments.push(await normalizeAndSaveAttachment(this.outputPath(), name, options));
   }
 
   outputPath(...pathSegments: string[]){

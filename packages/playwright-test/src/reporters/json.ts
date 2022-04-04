@@ -33,12 +33,6 @@ export interface JSONReport {
       timeout: number,
     }[],
   };
-  attachments: {
-    name: string;
-    path?: string;
-    body?: string;
-    contentType: string;
-  }[];
   suites: JSONReportSuite[];
   errors: TestError[];
 }
@@ -142,12 +136,6 @@ class JSONReporter implements Reporter {
           };
         })
       },
-      attachments: this.suite.attachments.map(a => ({
-        name: a.name,
-        contentType: a.contentType,
-        path: a.path,
-        body: a.body?.toString('base64')
-      })),
       suites: this._mergeSuites(this.suite.suites),
       errors: this._errors
     };
