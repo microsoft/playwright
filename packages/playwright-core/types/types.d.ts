@@ -10922,6 +10922,11 @@ export interface ElectronApplication {
   firstWindow(): Promise<Page>;
 
   /**
+   * Returns the main process for this Electron Application.
+   */
+  process(): ChildProcess;
+
+  /**
    * This event is issued when the application closes.
    */
   waitForEvent(event: 'close', optionsOrPredicate?: { predicate?: () => boolean | Promise<boolean>, timeout?: number } | (() => boolean | Promise<boolean>)): Promise<void>;

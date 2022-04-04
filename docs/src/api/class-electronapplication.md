@@ -112,6 +112,11 @@ Typically your script will start with:
   // ...
 ```
 
+## method: ElectronApplication.process
+- returns: <[ChildProcess]>
+
+Returns the main process for this Electron Application.
+
 ## async method: ElectronApplication.waitForEvent
 - returns: <[any]>
 
