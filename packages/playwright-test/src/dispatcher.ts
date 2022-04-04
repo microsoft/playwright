@@ -466,6 +466,7 @@ class Worker extends EventEmitter {
   private _didSendStop = false;
   private _didFail = false;
   private didExit = false;
+  private _ready: Promise<void>;
 
   constructor(hash: string, parallelIndex: number) {
     super();
@@ -494,9 +495,15 @@ class Worker extends EventEmitter {
       const { method, params } = message;
       this.emit(method, params);
     });
+
+    this._ready = new Promise((resolve, reject) => {
+      this.process.once('exit', () => reject(new Error('worker exited before it became ready')));
+      this.once('ready', () => resolve());
+    });
   }
 
   async init(testGroup: TestGroup, loaderData: SerializedLoaderData) {
+    await this._ready;
     const params: WorkerInitParams = {
       workerIndex: this.workerIndex,
       parallelIndex: this.parallelIndex,
@@ -505,7 +512,6 @@ class Worker extends EventEmitter {
       loader: loaderData,
     };
     this.send({ method: 'init', params });
-    await new Promise(f => this.process.once('message', f));  // Ready ack
   }
 
   run(testGroup: TestGroup) {
