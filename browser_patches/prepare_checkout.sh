@@ -30,6 +30,7 @@ fi
 function prepare_chromium_checkout {
   cd "${SCRIPT_PATH}"
 
+  source "${SCRIPT_PATH}/chromium/UPSTREAM_CONFIG.sh"
   source "${SCRIPT_PATH}/chromium/ensure_depot_tools.sh"
 
   if [[ -z "${CR_CHECKOUT_PATH}" ]]; then
@@ -55,7 +56,6 @@ function prepare_chromium_checkout {
     exit 1
   fi
 
-  source "${SCRIPT_PATH}/chromium/UPSTREAM_CONFIG.sh"
   cd "${CR_CHECKOUT_PATH}/src"
   gclient sync --with_branch_heads
   git fetch origin
