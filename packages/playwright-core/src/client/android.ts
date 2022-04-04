@@ -106,7 +106,7 @@ export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel> i
       if (selector.pkg)
         return v.pkg() === selector.pkg;
       if (selector.socketName)
-        return v.socketName() === selector.socketName;
+        return v._socketName() === selector.socketName;
       return false;
     };
     const webView = [...this._webViews.values()].find(predicate);
@@ -338,7 +338,7 @@ export class AndroidWebView extends EventEmitter implements api.AndroidWebView {
     return this._data.pkg;
   }
 
-  socketName(): string {
+  _socketName(): string {
     return this._data.socketName;
   }
 
