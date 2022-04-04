@@ -94,7 +94,7 @@ compile_chromium() {
     fi
   fi
 
-  TARGETS="$@"
+  TARGETS="${args[@]}"
   if [[ $(uname) == "MINGW" ]]; then
     if [[ -n "$TARGETS" ]]; then
       echo "ERROR: cannot compile custom targets on windows yet."
@@ -107,7 +107,6 @@ compile_chromium() {
       /c/Windows/System32/cmd.exe "/c $(cygpath -w "${SCRIPT_FOLDER}"/buildwingoma.bat)"
     fi
   else
-    gn gen out/Default
     if [[ -z "$TARGETS" ]]; then
       if [[ $(uname) == "Linux" ]]; then
         TARGETS="chrome chrome_sandbox clear_key_cdm"
@@ -115,6 +114,11 @@ compile_chromium() {
         TARGETS="chrome"
       fi
     fi
+    echo
+    echo ">> Compiling Targets: $TARGETS"
+    echo
+
+    gn gen out/Default
     if [[ -z "$USE_GOMA" ]]; then
       autoninja -C out/Default $TARGETS
     else
