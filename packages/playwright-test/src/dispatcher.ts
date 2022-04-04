@@ -466,7 +466,7 @@ class Worker extends EventEmitter {
   private _didSendStop = false;
   private _didFail = false;
   private didExit = false;
-  private readonly _ready: Promise<void>;
+  private _ready: Promise<void>;
 
   constructor(hash: string, parallelIndex: number) {
     super();
