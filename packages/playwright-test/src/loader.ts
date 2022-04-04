@@ -15,7 +15,7 @@
  */
 
 import { installTransform, setCurrentlyLoadingTestFile } from './transform';
-import type { Config, FullProject, Project, ReporterDescription, PreserveOutput } from './types';
+import type { Config, Project, ReporterDescription, PreserveOutput, FullProjectInternal } from './types';
 import type { FullConfigInternal } from './types';
 import { getPackageJsonPath, mergeObjects, errorWithFile } from './util';
 import { setCurrentlyLoadingFileSuite } from './globals';
@@ -219,7 +219,7 @@ export class Loader {
     const snapshotDir = takeFirst(this._configOverrides.snapshotDir, projectConfig.snapshotDir, config.snapshotDir, testDir);
     const name = takeFirst(this._configOverrides.name, projectConfig.name, config.name, '');
     const screenshotsDir = takeFirst(this._configOverrides.screenshotsDir, projectConfig.screenshotsDir, config.screenshotsDir, path.join(testDir, '__screenshots__', process.platform, name));
-    const fullProject: FullProject = {
+    const fullProject: FullProjectInternal = {
       fullyParallel: takeFirst(this._configOverrides.fullyParallel, projectConfig.fullyParallel, config.fullyParallel, undefined),
       expect: takeFirst(this._configOverrides.expect, projectConfig.expect, config.expect, undefined),
       grep: takeFirst(this._configOverrides.grep, projectConfig.grep, config.grep, baseFullConfig.grep),
