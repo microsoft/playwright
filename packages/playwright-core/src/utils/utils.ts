@@ -632,3 +632,4 @@ export class SigIntWatcher {
   }
 }
 
+export const isLikelyNpxGlobal = () => process.argv.length >= 2 && process.argv[1].includes('_npx');

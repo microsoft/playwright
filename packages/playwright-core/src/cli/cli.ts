@@ -32,7 +32,7 @@ import { BrowserType } from '../client/browserType';
 import { BrowserContextOptions, LaunchOptions } from '../client/types';
 import { spawn } from 'child_process';
 import { registry, Executable } from '../utils/registry';
-import { spawnAsync, getPlaywrightVersion, wrapInASCIIBox } from '../utils/utils';
+import { spawnAsync, getPlaywrightVersion, wrapInASCIIBox, isLikelyNpxGlobal } from '../utils/utils';
 import { writeDockerVersion } from '../utils/dependencies';
 import { launchGridAgent } from '../grid/gridAgent';
 import { GridServer, GridFactory } from '../grid/gridServer';
@@ -115,8 +115,7 @@ program
     .option('--with-deps', 'install system dependencies for browsers')
     .option('--force', 'force reinstall of stable browser channels')
     .action(async function(args: string[], options: { withDeps?: boolean, force?: boolean }) {
-      const isLikelyNpxGlobal = process.argv.length >= 2 && process.argv[1].includes('_npx');
-      if (isLikelyNpxGlobal) {
+      if (isLikelyNpxGlobal()) {
         console.error(wrapInASCIIBox([
           `WARNING: It looks like you are running 'npx playwright install' without first`,
           `installing your project's dependencies.`,
