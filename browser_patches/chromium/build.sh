@@ -33,7 +33,7 @@ IS_ARM64=""
 IS_SYMBOLS_BUILD=""
 IS_FULL=""
 USE_GOMA=""
-for ((i=0; i<="${#args[@]}"; ++i)); do
+for ((i="${#args[@]}"-1; i >= 0; --i)); do
     case ${args[i]} in
         --arm64) IS_ARM64="1"; unset args[i]; ;;
         --symbols) IS_SYMBOLS_BUILD="1"; unset args[i]; ;;
