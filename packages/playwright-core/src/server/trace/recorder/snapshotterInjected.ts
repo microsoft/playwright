@@ -333,7 +333,7 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
           expectValue(cssText);
           // Compensate for the extra 'cssText' text node.
           extraNodes++;
-          return checkAndReturn(['style', {}, cssText]);
+          return checkAndReturn([nodeName, {}, cssText]);
         }
 
         const attrs: { [attr: string]: string } = {};
