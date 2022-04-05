@@ -179,11 +179,12 @@ test('should work with default expect matchers and esModuleInterop=false', async
 test('should work with custom PlaywrightTest namespace', async ({ runTSC }) => {
   const result = await runTSC({
     'global.d.ts': `
-      // Extracted example from their typings.
-      // Reference: https://github.com/jest-community/jest-extended/blob/master/types/index.d.ts
       declare namespace PlaywrightTest {
         interface Matchers<R> {
           toBeEmpty(): R;
+        }
+        interface Matchers<R, T> {
+          toBeNonEmpty(): R;
         }
       }
     `,
@@ -199,6 +200,7 @@ test('should work with custom PlaywrightTest namespace', async ({ runTSC }) => {
       test.expect(['hello']).not.toBeEmpty();
       test.expect({}).toBeEmpty();
       test.expect({ hello: 'world' }).not.toBeEmpty();
+      test.expect('').toBeNonEmpty();
     `
   });
   expect(result.exitCode).toBe(0);
@@ -229,6 +231,48 @@ test('should propose only the relevant matchers when custom expect matcher class
       // @ts-expect-error
       await test.expect(123).toHaveURL('https://example.com');
     });
+    `
+  });
+  expect(result.exitCode).toBe(0);
+});
+
+test('should return void/Promise when appropriate', async ({ runTSC }) => {
+  const result = await runTSC({
+    'a.spec.ts': `
+      type AssertType<T, S> = S extends T ? AssertNotAny<S> : false;
+      type AssertNotAny<S> = {notRealProperty: number} extends S ? false : true;
+
+      pwt.test('example', async ({ page }) => {
+        {
+          const value = expect(1).toBe(2);
+          const assertion: AssertType<void, typeof value> = true;
+        }
+
+        {
+          const value = expect(1).not.toBe(2);
+          const assertion: AssertType<void, typeof value> = true;
+        }
+
+        {
+          const value = expect(page).toHaveURL('');
+          const assertion: AssertType<Promise<void>, typeof value> = true;
+        }
+
+        {
+          const value = expect(Promise.resolve(1)).resolves.toBe(1);
+          const assertion: AssertType<Promise<void>, typeof value> = true;
+        }
+
+        {
+          const value = expect.soft(1).toBe(2);
+          const assertion: AssertType<void, typeof value> = true;
+        }
+
+        {
+          const value = expect.poll(() => true).toBe(2);
+          const assertion: AssertType<Promise<void>, typeof value> = true;
+        }
+      });
     `
   });
   expect(result.exitCode).toBe(0);
