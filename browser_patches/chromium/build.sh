@@ -95,7 +95,7 @@ compile_chromium() {
   fi
 
   TARGETS="${args[@]}"
-  if [[ $(uname) == "MINGW" || "$(uname)" == MSYS* ]]; then
+  if [[ $(uname) == "MINGW"* || "$(uname)" == MSYS* ]]; then
     if [[ -n "$TARGETS" ]]; then
       echo "ERROR: cannot compile custom targets on windows yet."
       echo "Requested to compile chromium targets - ${TARGETS}"
