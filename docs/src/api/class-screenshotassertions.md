@@ -19,6 +19,14 @@ Ensures that passed value, either a [string] or a [Buffer], matches the expected
 // Basic usage.
 expect(await page.screenshot()).toMatchSnapshot('landing-page.png');
 
+// Basic usage and the file name is derived from the test name.
+expect(await page.screenshot()).toMatchSnapshot();
+
+// Pass options to customize the snapshot comparison and have a generated name.
+expect(await page.screenshot()).toMatchSnapshot({
+  maxDiffPixels: 27, // allow no more than 27 different pixels.
+});
+
 // Configure image matching threshold.
 expect(await page.screenshot()).toMatchSnapshot('landing-page.png', { threshold: 0.3 });
 
@@ -29,10 +37,10 @@ expect(await page.screenshot()).toMatchSnapshot(['landing', 'step3.png']);
 
 Learn more about [visual comparisons](./test-snapshots.md).
 
-### param: ScreenshotAssertions.toMatchSnapshot.name
-- `name` <[string]|[Array]<[string]>>
+### param: ScreenshotAssertions.toMatchSnapshot.nameOrOptions
+- `nameOrOptions` <[string]|[Array]<[string]>|[Object]>
 
-Snapshot name.
+Optional snapshot name. If not passed, the test name and ordinals are used when called multiple times. Also passing the options here is supported.
 
 ### option: ScreenshotAssertions.toMatchSnapshot.maxDiffPixels = %%-assertions-max-diff-pixels-%%
 

@@ -22,7 +22,6 @@ title: "Release notes"
 
   ```js
   expect(await page.screenshot()).toMatchSnapshot({
-    fullPage: true, // take a full page screenshot
     maxDiffPixels: 27, // allow no more than 27 different pixels.
   });
   ```
