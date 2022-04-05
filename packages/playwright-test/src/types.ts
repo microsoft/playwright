@@ -16,7 +16,7 @@
 
 import type { Fixtures, TestError } from '../types/test';
 import type { Location } from '../types/testReporter';
-import type { FullConfig as FullConfigPublic } from './types';
+import type { FullConfig as FullConfigPublic, FullProject as FullProjectPublic } from './types';
 export * from '../types/test';
 export type { Location } from '../types/testReporter';
 
@@ -47,4 +47,14 @@ export interface FullConfigInternal extends FullConfigPublic {
   _globalOutputDir: string;
   _configDir: string;
   _testGroupsCount: number;
+
+  // Overrides the public field.
+  projects: FullProjectInternal[];
+}
+
+/**
+ * FullProjectInternal allows the plumbing of configuration details throughout the Test Runner without
+ * increasing the surface area of the public API type called FullProject.
+ */
+export interface FullProjectInternal extends FullProjectPublic {
 }

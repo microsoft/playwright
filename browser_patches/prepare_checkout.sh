@@ -30,17 +30,12 @@ fi
 function prepare_chromium_checkout {
   cd "${SCRIPT_PATH}"
 
+  source "${SCRIPT_PATH}/chromium/UPSTREAM_CONFIG.sh"
   source "${SCRIPT_PATH}/chromium/ensure_depot_tools.sh"
 
   if [[ -z "${CR_CHECKOUT_PATH}" ]]; then
     CR_CHECKOUT_PATH="$HOME/chromium"
   fi
-
-  # Get chromium SHA from the build revision.
-  # This will get us the last redirect URL from the crrev.com service.
-  CRREV=$(head -1 ./chromium/BUILD_NUMBER)
-  REVISION_URL=$(curl -ILs -o /dev/null -w %{url_effective} "https://crrev.com/${CRREV}")
-  CRSHA="${REVISION_URL##*/}"
 
   # Update Chromium checkout.
   #
@@ -62,10 +57,10 @@ function prepare_chromium_checkout {
   fi
 
   cd "${CR_CHECKOUT_PATH}/src"
-  git checkout main
-  git pull origin main
-  git checkout "${CRSHA}"
-  gclient sync -D
+  gclient sync --with_branch_heads
+  git fetch origin
+  git checkout "${BRANCH_COMMIT}"
+  gclient sync -D --with_branch_heads
 }
 
 # FRIENDLY_CHECKOUT_PATH is used only for logging.
