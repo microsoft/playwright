@@ -52,7 +52,7 @@ elif [[ $(uname) == "Linux" ]]; then
   CHROMIUM_FOLDER_NAME="chrome-linux"
   IFS=$'\n' CHROMIUM_FILES_TO_ARCHIVE=($(node "${SCRIPT_PATH}/compute_files_to_archive.js" "${CR_CHECKOUT_PATH}/src/infra/archive_config/linux-archive-rel.json"))
   unset IFS
-elif [[ $(uname) == "MINGW" || "$(uname)" == MSYS* ]]; then
+elif [[ $(uname) == "MINGW"* || "$(uname)" == MSYS* ]]; then
   CHROMIUM_FOLDER_NAME="chrome-win"
   IFS=$'\n\r' CHROMIUM_FILES_TO_ARCHIVE=($(node "${SCRIPT_PATH}/compute_files_to_archive.js" "${CR_CHECKOUT_PATH}/src/infra/archive_config/win-archive-rel.json"))
   unset IFS
@@ -78,7 +78,7 @@ for ((i = 0; i < ${#CHROMIUM_FILES_TO_ARCHIVE[@]}; i++)) do
   $COPY_COMMAND "${CR_CHECKOUT_PATH}/src/out/Default/${file}" "output/${CHROMIUM_FOLDER_NAME}/${file}"
 done
 
-if [[ $(uname) == "MINGW" || "$(uname)" == MSYS* ]]; then
+if [[ $(uname) == "MINGW"* || "$(uname)" == MSYS* ]]; then
   $COPY_COMMAND "${CR_CHECKOUT_PATH}/src/out/Default/"*.manifest "output/${CHROMIUM_FOLDER_NAME}/"
   mkdir -p "output/${CHROMIUM_FOLDER_NAME}/locales"
   $COPY_COMMAND "${CR_CHECKOUT_PATH}/src/out/Default/locales/"*.pak "output/${CHROMIUM_FOLDER_NAME}/locales/"
