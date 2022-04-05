@@ -101,7 +101,7 @@ export class Loader {
 
     this._fullConfig._configDir = configDir;
     this._fullConfig.rootDir = config.testDir || this._configDir;
-    this._fullConfig.globalOutputDir = takeFirst(config.outputDir, throwawayArtifactsPath, baseFullConfig.globalOutputDir);
+    this._fullConfig._globalOutputDir = takeFirst(config.outputDir, throwawayArtifactsPath, baseFullConfig._globalOutputDir);
     this._fullConfig.forbidOnly = takeFirst(this._configOverrides.forbidOnly, config.forbidOnly, baseFullConfig.forbidOnly);
     this._fullConfig.fullyParallel = takeFirst(this._configOverrides.fullyParallel, config.fullyParallel, baseFullConfig.fullyParallel);
     this._fullConfig.globalSetup = takeFirst(this._configOverrides.globalSetup, config.globalSetup, baseFullConfig.globalSetup);
@@ -474,8 +474,7 @@ const baseFullConfig: FullConfigInternal = {
   version: require('../package.json').version,
   workers: 1,
   webServer: null,
-  globalOutputDir: path.resolve(process.cwd()),
-  _attachments: [],
+  _globalOutputDir: path.resolve(process.cwd()),
   _configDir: '',
   _testGroupsCount: 0,
 };

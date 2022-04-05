@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { GlobalInfo } from './types';
+import { FullConfigInternal, GlobalInfo } from './types';
 import { normalizeAndSaveAttachment } from './util';
-import fs from 'fs/promises';
+import fs from 'fs';
 export class GlobalInfoImpl implements GlobalInfo {
-  private _outputDir: string;
+  private _fullConfig: FullConfigInternal;
   private _attachments: { name: string; path?: string | undefined; body?: Buffer | undefined; contentType: string; }[] = [];
 
-  constructor(outputDir: string) {
-    this._outputDir = outputDir;
+  constructor(config: FullConfigInternal) {
+    this._fullConfig = config;
   }
 
   attachments() {
@@ -29,7 +29,7 @@ export class GlobalInfoImpl implements GlobalInfo {
   }
 
   async attach(name: string, options: { path?: string, body?: string | Buffer, contentType?: string } = {}) {
-    await fs.mkdir(this._outputDir, { recursive: true });
-    this._attachments.push(await normalizeAndSaveAttachment(this._outputDir, name, options));
+    await fs.promises.mkdir(this._fullConfig._globalOutputDir, { recursive: true });
+    this._attachments.push(await normalizeAndSaveAttachment(this._fullConfig._globalOutputDir, name, options));
   }
 }

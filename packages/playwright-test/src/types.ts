@@ -40,8 +40,11 @@ export interface TestStepInternal {
  * increasing the surface area of the public API type called FullConfig.
  */
 export interface FullConfigInternal extends FullConfigPublic {
-  globalOutputDir: string;
+  /**
+   * Location for GlobalInfo scoped data. This my differ from the projec-level outputDir
+   * since GlobalInfo (and this config), only respect top-level configurations.
+   */
+  _globalOutputDir: string;
   _configDir: string;
   _testGroupsCount: number;
-  _attachments: { name: string, path?: string, body?: Buffer, contentType: string }[];
 }

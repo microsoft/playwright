@@ -37,7 +37,7 @@ import HtmlReporter from './reporters/html';
 import { ProjectImpl } from './project';
 import { Minimatch } from 'minimatch';
 import { Config } from './types';
-import type { FullConfigInternal, GlobalInfo } from './types';
+import type { FullConfigInternal } from './types';
 import { WebServer } from './webServer';
 import { raceAgainstTimeout } from 'playwright-core/lib/utils/async';
 import { SigIntWatcher } from 'playwright-core/lib/utils/utils';
@@ -60,11 +60,11 @@ export class Runner {
   private _loader: Loader;
   private _reporter!: Reporter;
   private _internalGlobalSetups: Array<InternalGlobalSetupFunction> = [];
-  private _globalInfo: GlobalInfo;
+  private _globalInfo: GlobalInfoImpl;
 
   constructor(configOverrides: Config, options: { defaultConfig?: Config } = {}) {
     this._loader = new Loader(options.defaultConfig || {}, configOverrides);
-    this._globalInfo = new GlobalInfoImpl(this._loader.fullConfig().globalOutputDir);
+    this._globalInfo = new GlobalInfoImpl(this._loader.fullConfig());
   }
 
   async loadConfigFromResolvedFile(resolvedConfigFile: string): Promise<Config> {
