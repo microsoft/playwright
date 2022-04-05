@@ -7340,6 +7340,18 @@ index b60f9a64bacc8282860da6de299b75aeb295b9b5..55bd017c03c6478ca334bd5ef164160f
  
  namespace WebCore {
  
+diff --git a/Source/WebCore/platform/graphics/gbm/GBMDevice.cpp b/Source/WebCore/platform/graphics/gbm/GBMDevice.cpp
+index 6f18826e06382c4d915607dbe5d6d16666a6c8e4..f1ab10953b92713da029f19de76ea2338336312a 100644
+--- a/Source/WebCore/platform/graphics/gbm/GBMDevice.cpp
++++ b/Source/WebCore/platform/graphics/gbm/GBMDevice.cpp
+@@ -32,6 +32,7 @@
+ #include <fcntl.h>
+ #include <gbm.h>
+ #include <mutex>
++#include <unistd.h>
+ #include <wtf/StdLibExtras.h>
+ #include <xf86drm.h>
+ 
 diff --git a/Source/WebCore/platform/graphics/gstreamer/GStreamerCommon.cpp b/Source/WebCore/platform/graphics/gstreamer/GStreamerCommon.cpp
 index d6942ce22541d8ec4eda1edf50c4735eaa6af644..e8aa707257aaf8bfe00fc8fd0ed9e31994b0b42d 100644
 --- a/Source/WebCore/platform/graphics/gstreamer/GStreamerCommon.cpp
