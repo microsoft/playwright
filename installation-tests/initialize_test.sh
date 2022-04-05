@@ -66,7 +66,8 @@ function clean_test_root() {
 }
 
 function initialize_test {
-  trap "report_test_result;cd $(pwd -P)" EXIT
+  TEST_TMP_NPM_CACHE="$(mktemp -d)";
+  trap "report_test_result; local-playwright-registry kill; rm -rf $TEST_TMP_NPM_CACHE; cd $(pwd -P)" EXIT
   cd "$(dirname $0)"
 
   # cleanup environment
@@ -79,11 +80,9 @@ function initialize_test {
   TEST_FILE=$(basename $0)
   TEST_NAME=$(basename ${0%%.sh})
 
-  # Check if test tries to install some playwright-family package
-  # fron NPM registry.
+  # Check if test tries to install using npm directly
   if grep 'npm i.*playwright' "$0" 2>&1 >/dev/null; then
-    # If it does, this is an error: we should always install local packages using
-    # the `npm_i` script.
+    # If it does, this is an error: you will miss output
     cecho "RED" "ERROR: test tries to install playwright-family package from NPM registry!"
     cecho "RED" "       Do not use NPM to install playwright packages!"
     cecho "RED" "       Instead, use 'npm_i' command to install local package"
@@ -117,7 +116,12 @@ function initialize_test {
   cp "${SCRIPTS_PATH}/fixture-scripts/"* .
   export PATH="${SCRIPTS_PATH}/bin:${PATH}"
 
+  # Start up our local registry and configure npm to use it
+  local-playwright-registry start &
+  rm -rf ./node_modules
+  export npm_config_cache="$TEST_TMP_NPM_CACHE"
+  export npm_config_registry="$(local-playwright-registry wait-for-ready)"
+
   # Enable bash lines logging.
   set -x
 }
-

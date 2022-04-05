@@ -1,24 +1,3 @@
 #!/bin/bash
 
-args=""
-for i in "$@"; do
-  if [[ "$i" == "playwright" ]]; then
-    args="${args} ${PLAYWRIGHT_TGZ}"
-  elif [[ $i == "playwright-core" ]]; then
-    args="${args} ${PLAYWRIGHT_CORE_TGZ}"
-  elif [[ $i == "playwright-firefox" ]]; then
-    args="${args} ${PLAYWRIGHT_FIREFOX_TGZ}"
-  elif [[ $i == "playwright-chromium" ]]; then
-    args="${args} ${PLAYWRIGHT_CHROMIUM_TGZ}"
-  elif [[ $i == "playwright-webkit" ]]; then
-    args="${args} ${PLAYWRIGHT_WEBKIT_TGZ}"
-  elif [[ $i == "@playwright/test" ]]; then
-    args="${args} ${PLAYWRIGHT_TEST_TGZ}"
-  elif [[ $i == "-"* ]]; then
-    args="${args} $i"
-  else
-    echo "ERROR: cannot install package $i using npm_i. Use regular npm instead"
-  fi
-done
-npm install $args 2>&1
-
+npm install $@ 2>&1
