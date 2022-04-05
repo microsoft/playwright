@@ -135,8 +135,32 @@ class RawReporter {
     }
   }
 
-  generateAttachments(attachments: Suite['attachments']): JsonAttachment[] {
-    return this._createAttachments(attachments);
+  generateAttachments(attachments: TestResult['attachments'], ioStreams?: Pick<TestResult, 'stdout' | 'stderr'>): JsonAttachment[] {
+    const out: JsonAttachment[] = [];
+    for (const attachment of attachments) {
+      if (attachment.body) {
+        out.push({
+          name: attachment.name,
+          contentType: attachment.contentType,
+          body: attachment.body
+        });
+      } else if (attachment.path) {
+        out.push({
+          name: attachment.name,
+          contentType: attachment.contentType,
+          path: attachment.path
+        });
+      }
+    }
+
+    if (ioStreams) {
+      for (const chunk of ioStreams.stdout)
+        out.push(this._stdioAttachment(chunk, 'stdout'));
+      for (const chunk of ioStreams.stderr)
+        out.push(this._stdioAttachment(chunk, 'stderr'));
+    }
+
+    return out;
   }
 
   generateProjectReport(config: FullConfig, suite: Suite, attachments: JsonAttachment[]): JsonReport {
@@ -230,7 +254,7 @@ class RawReporter {
       duration: result.duration,
       status: result.status,
       errors: formatResultFailure(this.config, test, result, '', true).map(error => error.message),
-      attachments: this._createAttachments(result.attachments, result),
+      attachments: this.generateAttachments(result.attachments, result),
       steps: dedupeSteps(result.steps.map(step => this._serializeStep(test, step)))
     };
   }
@@ -250,34 +274,6 @@ class RawReporter {
     if (step.location)
       this.stepsInFile.set(step.location.file, result);
     return result;
-  }
-
-  private _createAttachments(attachments: TestResult['attachments'], ioStreams?: Pick<TestResult, 'stdout' | 'stderr'>): JsonAttachment[] {
-    const out: JsonAttachment[] = [];
-    for (const attachment of attachments) {
-      if (attachment.body) {
-        out.push({
-          name: attachment.name,
-          contentType: attachment.contentType,
-          body: attachment.body
-        });
-      } else if (attachment.path) {
-        out.push({
-          name: attachment.name,
-          contentType: attachment.contentType,
-          path: attachment.path
-        });
-      }
-    }
-
-    if (ioStreams) {
-      for (const chunk of ioStreams.stdout)
-        out.push(this._stdioAttachment(chunk, 'stdout'));
-      for (const chunk of ioStreams.stderr)
-        out.push(this._stdioAttachment(chunk, 'stderr'));
-    }
-
-    return out;
   }
 
   private _stdioAttachment(chunk: Buffer | string, type: 'stdout' | 'stderr'): JsonAttachment {
