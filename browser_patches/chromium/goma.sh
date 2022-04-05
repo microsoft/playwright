@@ -47,7 +47,7 @@ if [[ $1 == "--help" ]]; then
 elif [[ $1 == "args" ]]; then
   print_gn_args
 elif [[ $1 == "login" ]]; then
-  if [[ $(uname) == "MINGW"* ]]; then
+  if [[ $(uname) == "MINGW"* || "$(uname)" == MSYS* ]]; then
     /c/Windows/System32/cmd.exe "/c $(cygpath -w $(pwd)/goma_auth.bat) login"
   else
     python ./goma_auth.py login
@@ -66,7 +66,7 @@ elif [[ $1 == "start" ]]; then
     echo "run '$(basename "$0") login'"
     exit 1
   fi
-  if [[ $(uname) == "MINGW"* ]]; then
+  if [[ $(uname) == "MINGW"* || "$(uname)" == MSYS* ]]; then
     /c/Windows/System32/cmd.exe "/c $(cygpath -w $(pwd)/goma_ctl.bat) ensure_start"
   else
     python ./goma_ctl.py ensure_start
@@ -81,7 +81,7 @@ elif [[ $1 == "start" ]]; then
   print_gn_args
   echo "===== ======= ====="
 elif [[ $1 == "stop" ]]; then
-  if [[ $(uname) == "MINGW"* ]]; then
+  if [[ $(uname) == "MINGW"* || "$(uname)" == MSYS* ]]; then
     /c/Windows/System32/cmd.exe "/c $(cygpath -w $(pwd)/goma_ctl.bat) stop"
   else
     python ./goma_ctl.py stop
