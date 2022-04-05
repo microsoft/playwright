@@ -24,6 +24,7 @@ import { CRExecutionContext } from '../chromium/crExecutionContext';
 import * as js from '../javascript';
 import { Page } from '../page';
 import { TimeoutSettings } from '../../utils/timeoutSettings';
+import { wrapInASCIIBox } from '../../utils/utils';
 import { WebSocketTransport } from '../transport';
 import { launchProcess, envArrayToObject } from '../../utils/processLauncher';
 import { BrowserContext, validateBrowserContextOptions } from '../browserContext';
@@ -134,12 +135,32 @@ export class Electron extends SdkObject {
 
       const browserLogsCollector = new RecentLogsCollector();
       const env = options.env ? envArrayToObject(options.env) : process.env;
+
+      let command: string;
+      if (options.executablePath) {
+        command = options.executablePath;
+      } else {
+        try {
+          // By default we fallback to the Electron App executable path.
+          // 'electron/index.js' resolves to the actual Electron App.
+          command = require('electron/index.js');
+        } catch (error: any) {
+          if ((error as NodeJS.ErrnoException)?.code === 'MODULE_NOT_FOUND') {
+            throw new Error('\n' + wrapInASCIIBox([
+              'Electron executablePath not found!',
+              'Please install it using `npm install -D electron` or set the executablePath to your Electron executable.',
+            ].join('\n'), 1));
+          }
+          throw error;
+        }
+      }
+
       // When debugging Playwright test that runs Electron, NODE_OPTIONS
       // will make the debugger attach to Electron's Node. But Playwright
       // also needs to attach to drive the automation. Disable external debugging.
       delete env.NODE_OPTIONS;
       const { launchedProcess, gracefullyClose, kill } = await launchProcess({
-        command: options.executablePath || require('electron/index.js'),
+        command,
         args: electronArguments,
         env,
         log: (message: string) => {
