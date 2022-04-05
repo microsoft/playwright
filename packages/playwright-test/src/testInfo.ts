@@ -18,8 +18,8 @@ import fs from 'fs';
 import * as mime from 'mime';
 import path from 'path';
 import { calculateSha1 } from 'playwright-core/lib/utils/utils';
-import type { FullProject, TestError, TestInfo, TestStatus } from '../types/test';
-import type { FullConfigInternal } from './types';
+import type { TestError, TestInfo, TestStatus } from '../types/test';
+import type { FullConfigInternal, FullProjectInternal } from './types';
 import { WorkerInitParams } from './ipc';
 import { Loader } from './loader';
 import { ProjectImpl } from './project';
@@ -43,7 +43,7 @@ export class TestInfoImpl implements TestInfo {
   readonly retry: number;
   readonly workerIndex: number;
   readonly parallelIndex: number;
-  readonly project: FullProject;
+  readonly project: FullProjectInternal;
   config: FullConfigInternal;
   readonly title: string;
   readonly titlePath: string[];
@@ -141,7 +141,7 @@ export class TestInfoImpl implements TestInfo {
     })();
     this._screenshotsDir = (() => {
       const relativeTestFilePath = path.relative(this.project.testDir, test._requireFile);
-      return path.join(this.project.screenshotsDir, relativeTestFilePath);
+      return path.join(this.project._screenshotsDir, relativeTestFilePath);
     })();
   }
 

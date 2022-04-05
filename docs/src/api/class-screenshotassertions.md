@@ -2,8 +2,7 @@
 * langs: js
 
 Playwright provides methods for comparing page and element screenshots with
-expected values stored in files. See also [`method: PageAssertions.toHaveScreenshot`] and
-[`LocatorAssertions.toHaveScreenshot`].
+expected values stored in files.
 
 ```js
 expect(screenshot).toMatchSnapshot('landing-page.png');

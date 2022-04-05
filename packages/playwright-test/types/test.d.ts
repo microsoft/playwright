@@ -43,45 +43,6 @@ type ExpectSettings = {
    * Default timeout for async expect matchers in milliseconds, defaults to 5000ms.
    */
   timeout?: number;
-  toHaveScreenshot?: {
-    /** An acceptable perceived color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between pixels in compared images, between zero (strict) and one (lax). Defaults to `0.2`.
-     */
-    threshold?: number,
-    /**
-     * An acceptable amount of pixels that could be different, unset by default.
-     */
-    maxDiffPixels?: number,
-    /**
-     * An acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1` , unset by default.
-     */
-    maxDiffPixelRatio?: number,
-    /**
-     * When set to `"disabled"`, stops CSS animations, CSS transitions and Web Animations. Animations get different treatment
-     * depending on their duration:
-     * - finite animations are fast-forwarded to completion, so they'll fire `transitionend` event.
-     * - infinite animations are canceled to initial state, and then played over after the screenshot.
-     *
-     * Defaults to `"disabled"` that leaves animations untouched.
-     */
-    animations?: 'allow'|'disabled',
-    /**
-     * When set to `"ready"`, screenshot will wait for
-     * [`document.fonts.ready`](https://developer.mozilla.org/en-US/docs/Web/API/FontFaceSet/ready) promise to resolve in all
-     * frames. Defaults to `"ready"`.
-     */
-    fonts?: 'ready'|'nowait',
-    /**
-     * When set to `"css"`, screenshot will have a single pixel per each css pixel on the page. For high-dpi devices, this will
-     * keep screenshots small. Using `"device"` option will produce a single pixel per each device pixel, so screenhots of
-     * high-dpi devices will be twice as large or even larger. Defaults to `"css"`.
-     */
-    scale?: 'css'|'device',
-    /**
-     * When set to `"hide"`, screenshot will hide text caret.
-     * When set to `"initial"`, text caret behavior will not be changed. Defaults to `"hide"`.
-     */
-    caret?: 'hide'|'initial',
-  }
   toMatchSnapshot?: {
     /** An acceptable perceived color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between pixels in compared images, between zero (strict) and one (lax). Defaults to `0.2`.
      */
@@ -208,41 +169,6 @@ interface TestProject {
    * resolve to `snapshots/a.spec.js-snapshots`.
    */
   snapshotDir?: string;
-  /**
-   * The base directory, relative to the config file, for screenshot files created with `toHaveScreenshot`. Defaults to
-   *
-   * ```
-   * <directory-of-configuration-file>/__screenshots__/<platform name>/<project name>
-   * ```
-   *
-   * This path will serve as the base directory for each test file screenshot directory. For example, the following test
-   * structure:
-   *
-   * ```
-   * smoke-tests/
-   * └── basic.spec.ts
-   * ```
-   *
-   * will result in the following screenshots folder structure:
-   *
-   * ```
-   * __screenshots__/
-   * └── darwin/
-   *     ├── Mobile Safari/
-   *     │   └── smoke-tests/
-   *     │       └── basic.spec.ts/
-   *     │           └── screenshot-expectation.png
-   *     └── Desktop Chrome/
-   *         └── smoke-tests/
-   *             └── basic.spec.ts/
-   *                 └── screenshot-expectation.png
-   * ```
-   *
-   * where:
-   * - `darwin/` - a platform name folder
-   * - `Mobile Safari` and `Desktop Chrome` - project names
-   */
-  screenshotsDir?: string;
   /**
    * The output directory for files created during test execution. Defaults to `<package.json-directory>/test-results`.
    *
@@ -773,7 +699,7 @@ interface TestConfig {
    * const config: PlaywrightTestConfig = {
    *   expect: {
    *     timeout: 10000,
-   *     toHaveScreenshot: {
+   *     toMatchSnapshot: {
    *       maxDiffPixels: 10,
    *     },
    *   },
@@ -801,41 +727,6 @@ interface TestConfig {
    * resolve to `snapshots/a.spec.js-snapshots`.
    */
   snapshotDir?: string;
-  /**
-   * The base directory, relative to the config file, for screenshot files created with `toHaveScreenshot`. Defaults to
-   *
-   * ```
-   * <directory-of-configuration-file>/__screenshots__/<platform name>/<project name>
-   * ```
-   *
-   * This path will serve as the base directory for each test file screenshot directory. For example, the following test
-   * structure:
-   *
-   * ```
-   * smoke-tests/
-   * └── basic.spec.ts
-   * ```
-   *
-   * will result in the following screenshots folder structure:
-   *
-   * ```
-   * __screenshots__/
-   * └── darwin/
-   *     ├── Mobile Safari/
-   *     │   └── smoke-tests/
-   *     │       └── basic.spec.ts/
-   *     │           └── screenshot-expectation.png
-   *     └── Desktop Chrome/
-   *         └── smoke-tests/
-   *             └── basic.spec.ts/
-   *                 └── screenshot-expectation.png
-   * ```
-   *
-   * where:
-   * - `darwin/` - a platform name folder
-   * - `Mobile Safari` and `Desktop Chrome` - project names
-   */
-  screenshotsDir?: string;
   /**
    * The output directory for files created during test execution. Defaults to `<package.json-directory>/test-results`.
    *
