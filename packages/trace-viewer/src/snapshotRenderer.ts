@@ -62,8 +62,9 @@ export class SnapshotRenderer {
           // Never set relative URLs as <iframe src> - they start fetching frames immediately.
           const isFrame = n[0] === 'IFRAME' || n[0] === 'FRAME';
           for (const [attr, value] of Object.entries(n[1] || {})) {
-            const attrToSet = isFrame && attr.toLowerCase() === 'src' ? '__playwright_src__' : attr;
-            builder.push(' ', attrToSet, '="', escapeAttribute(value as string), '"');
+            const attrName = isFrame && attr.toLowerCase() === 'src' ? '__playwright_src__' : attr;
+            const attrValue = attr.toLowerCase() === 'href' || attr.toLowerCase() === 'src' ? rewriteURLForCustomProtocol(value) : value;
+            builder.push(' ', attrName, '="', escapeAttribute(attrValue as string), '"');
           }
           builder.push('>');
           for (let i = 2; i < n.length; i++)
@@ -272,4 +273,34 @@ function snapshotScript() {
   }
 
   return `\n(${applyPlaywrightAttributes.toString()})()`;
+}
+
+const schemas = ['about:', 'blob:', 'data:', 'file:', 'ftp:', 'http:', 'https:', 'mailto:', 'sftp:', 'ws:', 'wss:' ];
+
+const kLegacyBlobPrefix = 'http://playwright.bloburl/#';
+
+export function rewriteURLForCustomProtocol(href: string): string {
+  // Legacy support, we used to prepend this to blobs, strip it away.
+  if (href.startsWith(kLegacyBlobPrefix))
+    href = href.substring(kLegacyBlobPrefix.length);
+
+  try {
+    const url = new URL(href);
+    // Sanitize URL.
+    if (url.protocol === 'javascript:')
+      return 'javascript:void(0)';
+
+    // Pass through if possible.
+    const isBlob = url.protocol === 'blob:';
+    if (!isBlob && schemas.includes(url.protocol))
+      return href;
+
+    // Rewrite blob and custom schemas.
+    const prefix = 'pw-' + url.protocol.slice(0, url.protocol.length - 1);
+    url.protocol = 'https:';
+    url.hostname = url.hostname ? `${prefix}.${url.hostname}` : prefix;
+    return url.toString();
+  } catch {
+    return href;
+  }
 }

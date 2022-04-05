@@ -16,7 +16,7 @@
 
 import type { FrameSnapshot, ResourceSnapshot } from '@playwright-core/server/trace/common/snapshotTypes';
 import { EventEmitter } from './events';
-import { SnapshotRenderer } from './snapshotRenderer';
+import { rewriteURLForCustomProtocol, SnapshotRenderer } from './snapshotRenderer';
 
 export interface SnapshotStorage {
   resources(): ResourceSnapshot[];
@@ -40,10 +40,13 @@ export abstract class BaseSnapshotStorage  implements SnapshotStorage {
   }
 
   addResource(resource: ResourceSnapshot): void {
+    resource.request.url = rewriteURLForCustomProtocol(resource.request.url);
     this._resources.push(resource);
   }
 
   addFrameSnapshot(snapshot: FrameSnapshot): void {
+    for (const override of snapshot.resourceOverrides)
+      override.url = rewriteURLForCustomProtocol(override.url);
     let frameSnapshots = this._frameSnapshots.get(snapshot.frameId);
     if (!frameSnapshots) {
       frameSnapshots = {

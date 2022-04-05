@@ -19,8 +19,6 @@ import type { Point } from '@playwright-core/common/types';
 import { URLSearchParams } from 'url';
 import { SnapshotRenderer } from './snapshotRenderer';
 
-const kBlobUrlPrefix = 'http://playwright.bloburl/#';
-
 export class SnapshotServer {
   private _snapshotStorage: SnapshotStorage;
   private _snapshotIds = new Map<string, SnapshotRenderer>();
@@ -65,7 +63,7 @@ export class SnapshotServer {
 
   async serveResource(requestUrl: string, snapshotUrl: string): Promise<Response> {
     const snapshot = this._snapshotIds.get(snapshotUrl)!;
-    const url = requestUrl.startsWith(kBlobUrlPrefix) ? requestUrl.substring(kBlobUrlPrefix.length) : removeHash(requestUrl);
+    const url = removeHash(requestUrl);
     const resource = snapshot?.resourceByUrl(url);
     if (!resource)
       return new Response(null, { status: 404 });
