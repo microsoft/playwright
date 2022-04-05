@@ -62,6 +62,7 @@ export class TestInfoImpl implements TestInfo {
   readonly outputDir: string;
   readonly snapshotDir: string;
   errors: TestError[] = [];
+  currentStep: TestStepInternal | undefined;
 
   get error(): TestError | undefined {
     return this.errors.length > 0 ? this.errors[0] : undefined;
