@@ -360,7 +360,7 @@ export class AndroidDevice extends SdkObject {
       socketNames.add(socketName);
 
       if (this._webViews.has(socketName))
-          continue;
+        continue;
 
       // possible line: 0000000000000000: 00000002 00000000 00010000 0001 01 5841881 @webview_devtools_remote_zeus
       // the result: match[1] = ''
