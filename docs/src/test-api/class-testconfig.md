@@ -245,6 +245,11 @@ export default config;
 
 Any JSON-serializable metadata that will be put directly to the test report.
 
+## property: TestConfig.name
+- type: <[string]>
+
+Config name is visible in the report and during test execution, unless overridden by [`property: TestProject.name`].
+
 ## property: TestConfig.outputDir
 - type: <[string]>
 

@@ -95,13 +95,14 @@ class ApiParser {
     if (!returnType)
       returnType = new Documentation.Type('void');
 
+    const comments = extractComments(spec);
     let member;
     if (match[1] === 'event')
-      member = Documentation.Member.createEvent(extractLangs(spec), name, returnType, extractComments(spec));
+      member = Documentation.Member.createEvent(extractLangs(spec), name, returnType, comments);
     if (match[1] === 'property')
-      member = Documentation.Member.createProperty(extractLangs(spec), name, returnType, extractComments(spec));
+      member = Documentation.Member.createProperty(extractLangs(spec), name, returnType, comments, guessRequired(md.render(comments)));
     if (match[1] === 'method' || match[1] === 'async method') {
-      member = Documentation.Member.createMethod(extractLangs(spec), name, [], returnType, extractComments(spec));
+      member = Documentation.Member.createMethod(extractLangs(spec), name, [], returnType, comments);
       if (match[1] === 'async method')
         member.async = true;
     }
