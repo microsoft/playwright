@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-import assert from 'assert';
 import debug from 'debug';
 import type * as types from '../types';
 import * as net from 'net';
 import { EventEmitter } from 'events';
 import type { Backend, DeviceBackend, SocketBackend } from './android';
-import { createGuid } from '../../utils/utils';
+import { assert, createGuid } from '../../utils/utils';
 
 export class AdbBackend implements Backend {
   async devices(options: types.AndroidDeviceOptions = {}): Promise<DeviceBackend[]> {
