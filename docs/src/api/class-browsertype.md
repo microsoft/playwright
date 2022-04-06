@@ -87,7 +87,7 @@ class BrowserTypeExamples
 ## async method: BrowserType.connect
 - returns: <[Browser]>
 
-This methods attaches Playwright to an existing browser instance.
+This method attaches Playwright to an existing browser instance.
 
 ### param: BrowserType.connect.wsEndpoint
 - `wsEndpoint` <[string]>
