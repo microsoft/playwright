@@ -39,7 +39,7 @@ const githubFactory: GridFactory = {
 };
 
 async function createWorkflow(inputs: GridAgentLaunchOptions): Promise<boolean> {
-  return new Promise((fulfill, reject) => {
+  return new Promise(fulfill => {
     log(`triggering workflow ${JSON.stringify(inputs)}`);
     const req = https.request(`https://api.github.com/repos/${repoName}/actions/workflows/agent.yml/dispatches`, {
       method: 'POST',
@@ -55,7 +55,7 @@ async function createWorkflow(inputs: GridAgentLaunchOptions): Promise<boolean> 
     });
     req.on('error', e => {
       log(`failed to create workflow ${inputs.agentId}`);
-      reject('Request failed.');
+      fulfill(false);
     });
     req.end(JSON.stringify({
       'ref': 'refs/heads/main',
