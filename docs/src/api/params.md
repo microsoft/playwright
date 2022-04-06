@@ -628,7 +628,7 @@ is considered matching if all specified properties match.
 - `url` <[string]|[RegExp]|[function]\([URL]\):[boolean]>
 
 A glob pattern, regex pattern or predicate receiving [URL] to match while waiting for the navigation. Note that if
-the parameter is a string without wilcard characters, the method will wait for navigation to URL that is exactly
+the parameter is a string without wildcard characters, the method will wait for navigation to URL that is exactly
 equal to the string.
 
 ## wait-for-event-event

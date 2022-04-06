@@ -3809,7 +3809,7 @@ export interface Page {
 
     /**
      * A glob pattern, regex pattern or predicate receiving [URL] to match while waiting for the navigation. Note that if the
-     * parameter is a string without wilcard characters, the method will wait for navigation to URL that is exactly equal to
+     * parameter is a string without wildcard characters, the method will wait for navigation to URL that is exactly equal to
      * the string.
      */
     url?: string|RegExp|((url: URL) => boolean);
@@ -3922,7 +3922,7 @@ export interface Page {
    *
    * Shortcut for main frame's
    * [frame.waitForURL(url[, options])](https://playwright.dev/docs/api/class-frame#frame-wait-for-url).
-   * @param url A glob pattern, regex pattern or predicate receiving [URL] to match while waiting for the navigation. Note that if the parameter is a string without wilcard characters, the method will wait for navigation to URL that is exactly equal to
+   * @param url A glob pattern, regex pattern or predicate receiving [URL] to match while waiting for the navigation. Note that if the parameter is a string without wildcard characters, the method will wait for navigation to URL that is exactly equal to
    * the string.
    * @param options
    */
@@ -6020,7 +6020,7 @@ export interface Frame {
 
     /**
      * A glob pattern, regex pattern or predicate receiving [URL] to match while waiting for the navigation. Note that if the
-     * parameter is a string without wilcard characters, the method will wait for navigation to URL that is exactly equal to
+     * parameter is a string without wildcard characters, the method will wait for navigation to URL that is exactly equal to
      * the string.
      */
     url?: string|RegExp|((url: URL) => boolean);
@@ -6052,7 +6052,7 @@ export interface Frame {
    * await frame.waitForURL('**\/target.html');
    * ```
    *
-   * @param url A glob pattern, regex pattern or predicate receiving [URL] to match while waiting for the navigation. Note that if the parameter is a string without wilcard characters, the method will wait for navigation to URL that is exactly equal to
+   * @param url A glob pattern, regex pattern or predicate receiving [URL] to match while waiting for the navigation. Note that if the parameter is a string without wildcard characters, the method will wait for navigation to URL that is exactly equal to
    * the string.
    * @param options
    */
@@ -9922,7 +9922,7 @@ export interface Locator {
  */
 export interface BrowserType<Unused = {}> {
   /**
-   * This methods attaches Playwright to an existing browser instance using the Chrome DevTools Protocol.
+   * This method attaches Playwright to an existing browser instance using the Chrome DevTools Protocol.
    *
    * The default browser context is accessible via
    * [browser.contexts()](https://playwright.dev/docs/api/class-browser#browser-contexts).
@@ -9937,7 +9937,7 @@ export interface BrowserType<Unused = {}> {
    * @deprecated
    */
   /**
-   * This methods attaches Playwright to an existing browser instance using the Chrome DevTools Protocol.
+   * This method attaches Playwright to an existing browser instance using the Chrome DevTools Protocol.
    *
    * The default browser context is accessible via
    * [browser.contexts()](https://playwright.dev/docs/api/class-browser#browser-contexts).
@@ -9948,7 +9948,7 @@ export interface BrowserType<Unused = {}> {
    */
   connectOverCDP(options: ConnectOverCDPOptions & { wsEndpoint?: string }): Promise<Browser>;
   /**
-   * This methods attaches Playwright to an existing browser instance.
+   * This method attaches Playwright to an existing browser instance.
    * @param wsEndpoint A browser websocket endpoint to connect to.
    * @param options
    */
@@ -9960,7 +9960,7 @@ export interface BrowserType<Unused = {}> {
    * @deprecated
    */
   /**
-   * This methods attaches Playwright to an existing browser instance.
+   * This method attaches Playwright to an existing browser instance.
    * @param wsEndpoint A browser websocket endpoint to connect to.
    * @param options
    */
