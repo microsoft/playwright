@@ -172,8 +172,8 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
       // Force kill the browser.
       try {
         if (process.platform === 'win32') {
-          const taskkillProcess = childProcess.spawnSync(`taskkill /pid ${spawnedProcess.pid} /T /F /FI "MEMUSAGE gt 0"`, { shell: true });
-          const [stderr, stdout] = [taskkillProcess.stdout.toString(), taskkillProcess.stderr.toString()];
+          const taskkillProcess = childProcess.spawnSync(`chcp 65001>nul&&taskkill /pid ${spawnedProcess.pid} /T /F /FI "MEMUSAGE gt 0"`, { shell: true });
+          const [stdout, stderr] = [taskkillProcess.stdout.toString(), taskkillProcess.stderr.toString()];
           if (stdout)
             options.log(`[pid=${spawnedProcess.pid}] taskkill stdout: ${stdout}`);
           if (stderr)
@@ -190,14 +190,23 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
     }
   }
 
+  function sleep(ms: Number) {
+    childProcess.spawnSync(process.execPath, ['-e', 'setTimeout(function(){},' + ms + ')']);
+  }
+
   function killProcessAndCleanup() {
     killProcess();
     options.log(`[pid=${spawnedProcess.pid || 'N/A'}] starting temporary directories cleanup`);
     for (const dir of options.tempDirectories) {
-      try {
-        rimraf.sync(dir, { maxBusyTries: 10 });
-      } catch (e) {
-        options.log(`[pid=${spawnedProcess.pid || 'N/A'}] exception while removing ${dir}: ${e}`);
+      for (let i = 0; i < 10; i++) {
+        try {
+          // maxBusyTries has bugs
+          rimraf.sync(dir);
+          break;
+        } catch (e) {
+          options.log(`[pid=${spawnedProcess.pid || 'N/A'}] exception while removing@${i} ${dir}: ${e}`);
+        }
+        sleep(500);
       }
     }
     options.log(`[pid=${spawnedProcess.pid || 'N/A'}] finished temporary directories cleanup`);
