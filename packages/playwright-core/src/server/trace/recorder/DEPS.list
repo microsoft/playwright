@@ -1,0 +1,9 @@
+[*]
+../../
+../../../common/
+../../../generated/
+../../../protocol/
+../../../utils/
+../../common/
+../../supplements/har/
+../common/

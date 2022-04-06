@@ -1,0 +1,16 @@
+[*]
+../../
+../client
+../debug/injected
+../generated/
+../grid
+../server/injected/
+../server/trace
+../utils
+
+[cli.ts]
+../server/trace/viewer/traceViewer.ts
+
+[driver.ts]
+../**
+../../

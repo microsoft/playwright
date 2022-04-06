@@ -26,6 +26,8 @@ const packagesDir = path.normalize(path.join(__dirname, '..', 'packages'));
 const packages = fs.readdirSync(packagesDir);
 const peerDependencies = ['electron', 'react', 'react-dom', '@zip.js/zip.js'];
 
+const depsCache = {};
+
 async function checkDeps() {
   await innerCheckDeps(path.join(packagesDir, 'recorder'), true, true);
   await innerCheckDeps(path.join(packagesDir, 'trace-viewer'), true, true);
@@ -45,10 +47,10 @@ async function checkDeps() {
 }
 
 async function innerCheckDeps(root, checkDepsFile, checkPackageJson) {
-  console.log('Testing', root);
+  console.log('Testing', path.relative(packagesDir, root));
   const deps = new Set();
   const src = path.join(root, 'src');
-  const depsFile = checkDepsFile ? loadDEPSFile(src) : {};
+
   const packageJSON = require(path.join(root, 'package.json'));
   const program = ts.createProgram({
     options: {
@@ -60,12 +62,8 @@ async function innerCheckDeps(root, checkDepsFile, checkPackageJson) {
   });
   const sourceFiles = program.getSourceFiles();
   const errors = [];
-  const usedDeps = new Set(['/']);
   sourceFiles.filter(x => !x.fileName.includes('node_modules')).map(x => visit(x, x.fileName));
-  for (const key of Object.keys(depsFile)) {
-    if (!usedDeps.has(key) && depsFile[key].length)
-      errors.push(`Stale DEPS entry "${key}"`);
-  }
+
   if (checkDepsFile && errors.length) {
     for (const error of errors)
       console.log(error);
@@ -122,7 +120,7 @@ async function innerCheckDeps(root, checkDepsFile, checkPackageJson) {
             importPath = importPath + '.d.ts';
         }
 
-        if (checkDepsFile && !allowImport(depsFile, fileName, importPath))
+        if (checkDepsFile && !allowImport(fileName, importPath))
           errors.push(`Disallowed import ${path.relative(root, importPath)} in ${path.relative(root, fileName)}`);
         return;
       }
@@ -138,20 +136,39 @@ async function innerCheckDeps(root, checkDepsFile, checkPackageJson) {
     ts.forEachChild(node, x => visit(x, fileName));
   }
 
-  function allowImport(depsFile, from, to) {
+  function allowImport(from, to) {
+    const fff = from;
     const fromDirectory = path.dirname(from);
     const toDirectory = path.dirname(to);
     if (fromDirectory === toDirectory)
       return true;
 
-    while (!depsFile[from]) {
-      if (from.lastIndexOf('/') === -1)
-        return false;
-      from = from.substring(0, from.lastIndexOf('/'));
+    let depsDirectory = fromDirectory;
+    while (depsDirectory.startsWith(packagesDir) && !depsCache[depsDirectory] && !fs.existsSync(path.join(depsDirectory, 'DEPS.list')))
+      depsDirectory = path.dirname(depsDirectory);
+
+    let deps = depsCache[depsDirectory];
+    if (!deps) {
+      const depsListFile = path.join(depsDirectory, 'DEPS.list');
+      deps = {};
+      let group;
+      for (const line of fs.readFileSync(depsListFile, 'utf-8').split('\n').filter(Boolean).filter(l => !l.startsWith('#'))) {
+        const groupMatch = line.match(/\[(.*)\]/);
+        if (groupMatch) {
+          group = [];
+          deps[groupMatch[1]] = group;
+          continue;
+        }
+        if (line.startsWith('@'))
+          group.push(line.replace(/@([\w-]+)\/(.*)/, path.join(packagesDir, '$1', 'src', '$2')));
+        else
+          group.push(path.resolve(depsDirectory, line));
+      }
+      depsCache[depsDirectory] = deps;
     }
 
-    usedDeps.add(from);
-    for (const dep of depsFile[from]) {
+    const mergedDeps = [...(deps['*'] || []), ...(deps[path.relative(depsDirectory, from)] || [])]
+    for (const dep of mergedDeps) {
       if (to === dep || toDirectory === dep)
         return true;
       if (dep.endsWith('**')) {
@@ -163,7 +180,6 @@ async function innerCheckDeps(root, checkDepsFile, checkPackageJson) {
     return false;
   }
 
-
   function allowExternalImport(importName, packageJSON) {
     // Only external imports are relevant. Files in src/web are bundled via webpack.
     if (importName.startsWith('.') || importName.startsWith('@'))
@@ -172,15 +188,16 @@ async function innerCheckDeps(root, checkDepsFile, checkPackageJson) {
       return true;
     try {
       const resolvedImport = require.resolve(importName);
-      const resolvedImportRelativeToNodeModules = path.relative(path.join(root, 'node_modules'), resolvedImport);
-      // Filter out internal Node.js modules
-      if (!resolvedImportRelativeToNodeModules.startsWith(importName))
+      if (!resolvedImport.includes('node_modules'))
         return true;
     } catch (error) {
       if (error.code !== 'MODULE_NOT_FOUND')
         throw error;
     }
-    return !!(packageJSON.dependencies || {})[importName];
+
+    const match = importName.match(/(@[\w-]+\/)?([^/]+)/);
+    const dependency = match[1] ? match[1] + '/' + match[2] : match[2];
+    return !!(packageJSON.dependencies || {})[dependency];
   }
 }
 
@@ -195,23 +212,6 @@ function listAllFiles(dir) {
       result.push(res);
   });
   return result;
-}
-
-function loadDEPSFile(src) {
-  const deps = require(path.join(src, 'DEPS'));
-  const resolved = {};
-  for (let [key, values] of Object.entries(deps)) {
-    if (key === '/')
-      key = '';
-    resolved[path.resolve(src, key)] = values.map(v => {
-      if (v.startsWith('@')) {
-        const tokens = v.substring(1).split('/');
-        return path.resolve(packagesDir, tokens[0], 'src', ...tokens.slice(1));
-      }
-      return path.resolve(src, v);
-    });
-  }
-  return resolved;
 }
 
 checkDeps().catch(e => {

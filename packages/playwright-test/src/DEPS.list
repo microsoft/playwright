@@ -1,0 +1,5 @@
+[*]
+../types/testReporter.d.ts
+matchers/
+reporters/
+third_party/

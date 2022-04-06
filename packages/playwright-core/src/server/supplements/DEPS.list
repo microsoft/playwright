@@ -1,0 +1,9 @@
+[*]
+../
+../../common/
+../../protocol/
+../../utils/
+
+[recorderSupplement.ts]
+../../generated/
+./recorder/
