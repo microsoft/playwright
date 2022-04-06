@@ -1,4 +1,2 @@
 [*]
-../common/
-../protocol/
 ../third_party/diff_match_patch

@@ -1,6 +1,4 @@
 [*]
-../../types/types.d.ts
-../common/
 ../generated/
 ../protocol/
 ../utils/
