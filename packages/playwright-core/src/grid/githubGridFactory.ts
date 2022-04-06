@@ -31,15 +31,14 @@ const log = debug(`pw:grid:server`);
 const githubFactory: GridFactory = {
   name: 'Agents hosted on Github',
   capacity: 10,
-  launchTimeout: 10000,
-  retireTimeout: 10000,
+  launchTimeout: 30000,
+  retireTimeout: 600000,
   launch: async (options: GridAgentLaunchOptions) => {
     await createWorkflow(options);
   },
 };
 
-async function createWorkflow(inputs: { gridURL: string, agentId: string, playwrightVersion: string }): Promise<boolean> {
-  inputs.playwrightVersion = '1.20';
+async function createWorkflow(inputs: GridAgentLaunchOptions): Promise<boolean> {
   return new Promise((fulfill, reject) => {
     log(`triggering workflow ${JSON.stringify(inputs)}`);
     const req = https.request(`https://api.github.com/repos/${repoName}/actions/workflows/agent.yml/dispatches`, {
@@ -51,7 +50,7 @@ async function createWorkflow(inputs: { gridURL: string, agentId: string, playwr
       }
     }, response => {
       log(`workflow ${inputs.agentId} response: ${response.statusCode} ${response.statusMessage}`);
-      const success = ((response.statusCode || 500) / 100 | 0) === 2;
+      const success = !!response.statusCode && 200 <= response.statusCode && response.statusCode < 300;
       fulfill(success);
     });
     req.on('error', e => {
