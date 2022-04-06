@@ -16,8 +16,8 @@
 
 import { EventEmitter } from 'events';
 import { debugMode, isUnderTest, monotonicTime } from '../../utils/utils';
-import { BrowserContext } from '../browserContext';
-import { CallMetadata, InstrumentationListener, SdkObject } from '../instrumentation';
+import type { BrowserContext } from '../browserContext';
+import type { CallMetadata, InstrumentationListener, SdkObject } from '../instrumentation';
 import { commandsWithTracingSnapshots, pausesBeforeInputActions } from '../../protocol/channels';
 
 const symbol = Symbol('Debugger');

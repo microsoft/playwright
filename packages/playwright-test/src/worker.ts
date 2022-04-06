@@ -16,7 +16,7 @@
 
 import { Console } from 'console';
 import * as util from 'util';
-import { RunPayload, TeardownErrorsPayload, TestOutputPayload, WorkerInitParams } from './ipc';
+import type { RunPayload, TeardownErrorsPayload, TestOutputPayload, WorkerInitParams } from './ipc';
 import { startProfiling, stopProfiling } from './profiler';
 import { serializeError } from './util';
 import { WorkerRunner } from './workerRunner';

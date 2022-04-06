@@ -16,7 +16,8 @@
 
 import React from 'react';
 import { test, expect } from '@playwright/experimental-ct-react/test';
-import { ImageDiff, ImageDiffView } from './imageDiffView';
+import type { ImageDiff } from './imageDiffView';
+import { ImageDiffView } from './imageDiffView';
 
 test.use({ viewport: { width: 1000, height: 800 } });
 

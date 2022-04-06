@@ -16,9 +16,9 @@
 
 import * as util from 'util';
 import { JSHandle } from './jsHandle';
-import * as channels from '../protocol/channels';
+import type * as channels from '../protocol/channels';
 import { ChannelOwner } from './channelOwner';
-import * as api from '../../types/types';
+import type * as api from '../../types/types';
 
 type ConsoleMessageLocation = channels.ConsoleMessageInitializer['location'];
 

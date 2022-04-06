@@ -17,7 +17,7 @@
 
 import { test as it, expect } from './pageTest';
 import type { Frame } from 'playwright-core';
-import { TestServer } from '../../utils/testserver';
+import type { TestServer } from '../../utils/testserver';
 
 it('should navigate to empty page with networkidle', async ({ page, server }) => {
   const response = await page.goto(server.EMPTY_PAGE, { waitUntil: 'networkidle' });

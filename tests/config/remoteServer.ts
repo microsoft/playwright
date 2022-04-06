@@ -16,7 +16,7 @@
 
 import path from 'path';
 import type { BrowserType, Browser, LaunchOptions } from 'playwright-core';
-import { CommonFixtures, TestChildProcess } from './commonFixtures';
+import type { CommonFixtures, TestChildProcess } from './commonFixtures';
 
 export type RemoteServerOptions = {
   stallOnClose?: boolean;

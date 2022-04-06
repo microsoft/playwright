@@ -15,9 +15,10 @@
  */
 
 import * as fs from 'fs';
-import * as actions from './recorder/recorderActions';
+import type * as actions from './recorder/recorderActions';
 import type * as channels from '../../protocol/channels';
-import { CodeGenerator, ActionInContext } from './recorder/codeGenerator';
+import type { ActionInContext } from './recorder/codeGenerator';
+import { CodeGenerator } from './recorder/codeGenerator';
 import { toClickOptions, toModifiers } from './recorder/utils';
 import { Page } from '../page';
 import { Frame } from '../frames';
@@ -28,10 +29,11 @@ import { CSharpLanguageGenerator } from './recorder/csharp';
 import { PythonLanguageGenerator } from './recorder/python';
 import * as recorderSource from '../../generated/recorderSource';
 import * as consoleApiSource from '../../generated/consoleApiSource';
-import { IRecorderApp, RecorderApp } from './recorder/recorderApp';
-import { CallMetadata, InstrumentationListener, SdkObject } from '../instrumentation';
-import { Point } from '../../common/types';
-import { CallLog, CallLogStatus, EventData, Mode, Source, UIState } from './recorder/recorderTypes';
+import type { IRecorderApp } from './recorder/recorderApp';
+import { RecorderApp } from './recorder/recorderApp';
+import type { CallMetadata, InstrumentationListener, SdkObject } from '../instrumentation';
+import type { Point } from '../../common/types';
+import type { CallLog, CallLogStatus, EventData, Mode, Source, UIState } from './recorder/recorderTypes';
 import { createGuid, monotonicTime } from '../../utils/utils';
 import { metadataToCallLog } from './recorder/recorderUtils';
 import { Debugger } from './debugger';

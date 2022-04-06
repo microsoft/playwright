@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { IncomingMessage, Server } from 'http';
-import { Socket } from 'net';
+import type { IncomingMessage, Server } from 'http';
+import type { Socket } from 'net';
 import createProxy from 'proxy';
 
 export class TestProxy {

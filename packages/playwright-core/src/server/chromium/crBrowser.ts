@@ -15,21 +15,24 @@
  * limitations under the License.
  */
 
-import { Browser, BrowserOptions } from '../browser';
+import type { BrowserOptions } from '../browser';
+import { Browser } from '../browser';
 import { assertBrowserContextIsNotOwned, BrowserContext, verifyGeolocation } from '../browserContext';
 import { assert } from '../../utils/utils';
 import * as network from '../network';
-import { Page, PageBinding, PageDelegate, Worker } from '../page';
+import type { PageBinding, PageDelegate } from '../page';
+import { Page, Worker } from '../page';
 import { Frame } from '../frames';
-import { Dialog } from '../dialog';
-import { ConnectionTransport } from '../transport';
-import * as types from '../types';
-import { ConnectionEvents, CRConnection, CRSession } from './crConnection';
+import type { Dialog } from '../dialog';
+import type { ConnectionTransport } from '../transport';
+import type * as types from '../types';
+import type { CRSession } from './crConnection';
+import { ConnectionEvents, CRConnection } from './crConnection';
 import { CRPage } from './crPage';
 import { readProtocolStream } from './crProtocolHelper';
-import { Protocol } from './protocol';
+import type { Protocol } from './protocol';
 import { CRExecutionContext } from './crExecutionContext';
-import { CRDevTools } from './crDevTools';
+import type { CRDevTools } from './crDevTools';
 
 export class CRBrowser extends Browser {
   readonly _connection: CRConnection;

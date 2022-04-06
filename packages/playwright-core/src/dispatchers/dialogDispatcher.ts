@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-import { Dialog } from '../server/dialog';
-import * as channels from '../protocol/channels';
-import { Dispatcher, DispatcherScope } from './dispatcher';
+import type { Dialog } from '../server/dialog';
+import type * as channels from '../protocol/channels';
+import type { DispatcherScope } from './dispatcher';
+import { Dispatcher } from './dispatcher';
 
 export class DialogDispatcher extends Dispatcher<Dialog, channels.DialogChannel> implements channels.DialogChannel {
   _type_Dialog = true;

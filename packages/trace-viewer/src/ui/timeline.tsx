@@ -18,10 +18,10 @@
 import type { ActionTraceEvent } from '@playwright-core/server/trace/common/traceEvents';
 import { msToString } from '@web/uiUtils';
 import * as React from 'react';
-import { Boundaries } from '../geometry';
+import type { Boundaries } from '../geometry';
 import { FilmStrip } from './filmStrip';
 import { useMeasure } from './helpers';
-import { MultiTraceModel } from './modelUtil';
+import type { MultiTraceModel } from './modelUtil';
 import './timeline.css';
 
 type TimelineBar = {

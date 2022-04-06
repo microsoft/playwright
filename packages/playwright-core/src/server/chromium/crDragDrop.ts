@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
 */
-import { CRPage } from './crPage';
-import * as types from '../types';
+import type { CRPage } from './crPage';
+import type * as types from '../types';
 import { assert } from '../../utils/utils';
-import { Protocol } from './protocol';
+import type { Protocol } from './protocol';
 import { toModifiersMask } from './crProtocolHelper';
 
 declare global {

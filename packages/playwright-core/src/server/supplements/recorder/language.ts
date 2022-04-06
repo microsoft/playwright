@@ -15,8 +15,8 @@
  */
 
 import type { BrowserContextOptions, LaunchOptions } from '../../../..';
-import { ActionInContext } from './codeGenerator';
-import { Action, DialogSignal, DownloadSignal, NavigationSignal, PopupSignal } from './recorderActions';
+import type { ActionInContext } from './codeGenerator';
+import type { Action, DialogSignal, DownloadSignal, NavigationSignal, PopupSignal } from './recorderActions';
 
 export type LanguageGeneratorOptions = {
   browserName: string;

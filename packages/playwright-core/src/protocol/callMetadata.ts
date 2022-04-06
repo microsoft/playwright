@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Point, StackFrame, SerializedError } from './channels';
+import type { Point, StackFrame, SerializedError } from './channels';
 
 export type CallMetadata = {
   id: string;

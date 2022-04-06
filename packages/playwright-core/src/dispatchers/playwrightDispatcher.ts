@@ -14,15 +14,17 @@
  * limitations under the License.
  */
 
-import * as channels from '../protocol/channels';
-import { Browser } from '../server/browser';
+import type * as channels from '../protocol/channels';
+import type { Browser } from '../server/browser';
 import { GlobalAPIRequestContext } from '../server/fetch';
-import { Playwright } from '../server/playwright';
-import { SocksProxy, SocksSocketClosedPayload, SocksSocketDataPayload, SocksSocketRequestedPayload } from '../utils/socksProxy';
-import * as types from '../server/types';
+import type { Playwright } from '../server/playwright';
+import type { SocksSocketClosedPayload, SocksSocketDataPayload, SocksSocketRequestedPayload } from '../utils/socksProxy';
+import { SocksProxy } from '../utils/socksProxy';
+import type * as types from '../server/types';
 import { AndroidDispatcher } from './androidDispatcher';
 import { BrowserTypeDispatcher } from './browserTypeDispatcher';
-import { Dispatcher, DispatcherScope } from './dispatcher';
+import type { DispatcherScope } from './dispatcher';
+import { Dispatcher } from './dispatcher';
 import { ElectronDispatcher } from './electronDispatcher';
 import { LocalUtilsDispatcher } from './localUtilsDispatcher';
 import { APIRequestContextDispatcher } from './networkDispatchers';

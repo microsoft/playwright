@@ -15,7 +15,8 @@
  */
 
 import type { Expect } from '../types';
-import { expectTypes, callLogText, currentExpectTimeout, ParsedStackTrace, captureStackTrace } from '../util';
+import type { ParsedStackTrace } from '../util';
+import { expectTypes, callLogText, currentExpectTimeout, captureStackTrace } from '../util';
 
 export async function toBeTruthy(
   this: ReturnType<Expect['getState']>,

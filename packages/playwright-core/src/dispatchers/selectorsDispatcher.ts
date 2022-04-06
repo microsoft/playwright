@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-import { Dispatcher, DispatcherScope } from './dispatcher';
-import * as channels from '../protocol/channels';
-import { Selectors } from '../server/selectors';
+import type { DispatcherScope } from './dispatcher';
+import { Dispatcher } from './dispatcher';
+import type * as channels from '../protocol/channels';
+import type { Selectors } from '../server/selectors';
 
 export class SelectorsDispatcher extends Dispatcher<Selectors, channels.SelectorsChannel> implements channels.SelectorsChannel {
   _type_Selectors = true;

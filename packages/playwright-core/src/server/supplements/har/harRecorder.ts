@@ -15,10 +15,10 @@
  */
 
 import fs from 'fs';
-import { APIRequestContext } from '../../fetch';
+import type { APIRequestContext } from '../../fetch';
 import { Artifact } from '../../artifact';
-import { BrowserContext } from '../../browserContext';
-import * as har from './har';
+import type { BrowserContext } from '../../browserContext';
+import type * as har from './har';
 import { HarTracer } from './harTracer';
 
 type HarOptions = {

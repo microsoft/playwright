@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import * as channels from '../protocol/channels';
+import type * as channels from '../protocol/channels';
 import { ChannelOwner } from './channelOwner';
 import type { Protocol } from '../server/chromium/protocol';
 import type * as api from '../../types/types';

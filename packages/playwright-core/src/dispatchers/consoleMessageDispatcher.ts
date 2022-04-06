@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-import { ConsoleMessage } from '../server/console';
-import * as channels from '../protocol/channels';
-import { Dispatcher, DispatcherScope } from './dispatcher';
+import type { ConsoleMessage } from '../server/console';
+import type * as channels from '../protocol/channels';
+import type { DispatcherScope } from './dispatcher';
+import { Dispatcher } from './dispatcher';
 import { ElementHandleDispatcher } from './elementHandlerDispatcher';
 
 export class ConsoleMessageDispatcher extends Dispatcher<ConsoleMessage, channels.ConsoleMessageChannel> implements channels.ConsoleMessageChannel {

@@ -16,7 +16,7 @@
 
 import fs from 'fs';
 import path from 'path';
-import { Page } from '../../page';
+import type { Page } from '../../page';
 import { ProgressController } from '../../progress';
 import { EventEmitter } from 'events';
 import { serverSideCallMetadata } from '../../instrumentation';

@@ -16,7 +16,7 @@
 
 import { Connection } from './client/connection';
 import { IpcTransport } from './protocol/transport';
-import { Playwright } from './client/playwright';
+import type { Playwright } from './client/playwright';
 import * as childProcess from 'child_process';
 import * as path from 'path';
 import { ManualPromise } from './utils/async';

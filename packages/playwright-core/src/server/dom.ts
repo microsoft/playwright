@@ -16,18 +16,19 @@
 
 import * as mime from 'mime';
 import * as injectedScriptSource from '../generated/injectedScriptSource';
-import * as channels from '../protocol/channels';
+import type * as channels from '../protocol/channels';
 import { isSessionClosedError } from './protocolError';
-import { ScreenshotOptions } from './screenshotter';
-import * as frames from './frames';
+import type { ScreenshotOptions } from './screenshotter';
+import type * as frames from './frames';
 import type { InjectedScript, InjectedScriptPoll, LogEntry, HitTargetInterceptionResult } from './injected/injectedScript';
-import { CallMetadata } from './instrumentation';
+import type { CallMetadata } from './instrumentation';
 import * as js from './javascript';
-import { Page } from './page';
-import { Progress, ProgressController } from './progress';
-import { SelectorInfo } from './selectors';
-import * as types from './types';
-import { TimeoutOptions } from '../common/types';
+import type { Page } from './page';
+import type { Progress } from './progress';
+import { ProgressController } from './progress';
+import type { SelectorInfo } from './selectors';
+import type * as types from './types';
+import type { TimeoutOptions } from '../common/types';
 import { experimentalFeaturesEnabled, isUnderTest } from '../utils/utils';
 
 type SetInputFilesFiles = channels.ElementHandleSetInputFilesParams['files'];

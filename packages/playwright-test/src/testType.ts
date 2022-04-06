@@ -18,7 +18,7 @@ import { expect } from './expect';
 import { currentlyLoadingFileSuite, currentTestInfo, setCurrentlyLoadingFileSuite } from './globals';
 import { TestCase, Suite } from './test';
 import { wrapFunctionWithLocation } from './transform';
-import { Fixtures, FixturesWithLocation, Location, TestType } from './types';
+import type { Fixtures, FixturesWithLocation, Location, TestType } from './types';
 import { errorWithLocation, serializeError } from './util';
 
 const testTypeSymbol = Symbol('testType');

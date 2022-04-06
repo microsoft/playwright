@@ -17,19 +17,21 @@
 
 import * as dialog from '../dialog';
 import * as dom from '../dom';
-import * as frames from '../frames';
-import { eventsHelper, RegisteredListener } from '../../utils/eventsHelper';
+import type * as frames from '../frames';
+import type { RegisteredListener } from '../../utils/eventsHelper';
+import { eventsHelper } from '../../utils/eventsHelper';
 import { assert } from '../../utils/utils';
-import { Page, PageBinding, PageDelegate, Worker } from '../page';
-import * as types from '../types';
+import type { PageBinding, PageDelegate } from '../page';
+import { Page, Worker } from '../page';
+import type * as types from '../types';
 import { getAccessibilityTree } from './ffAccessibility';
-import { FFBrowserContext } from './ffBrowser';
+import type { FFBrowserContext } from './ffBrowser';
 import { FFSession, FFSessionEvents } from './ffConnection';
 import { FFExecutionContext } from './ffExecutionContext';
 import { RawKeyboardImpl, RawMouseImpl, RawTouchscreenImpl } from './ffInput';
 import { FFNetworkManager } from './ffNetworkManager';
-import { Protocol } from './protocol';
-import { Progress } from '../progress';
+import type { Protocol } from './protocol';
+import type { Progress } from '../progress';
 import { splitErrorMessage } from '../../utils/stackTrace';
 import { debugLogger } from '../../utils/debugLogger';
 import { ManualPromise } from '../../utils/async';

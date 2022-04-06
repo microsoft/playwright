@@ -19,9 +19,9 @@ import https from 'https';
 import net from 'net';
 import debug from 'debug';
 import { raceAgainstTimeout } from 'playwright-core/lib/utils/async';
-import { WebServerConfig } from './types';
+import type { WebServerConfig } from './types';
 import { launchProcess } from 'playwright-core/lib/utils/processLauncher';
-import { Reporter } from '../types/testReporter';
+import type { Reporter } from '../types/testReporter';
 
 const DEFAULT_ENVIRONMENT_VARIABLES = {
   'BROWSER': 'none', // Disable that create-react-app will open the page in the browser

@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
-import * as channels from '../protocol/channels';
-import * as api from '../../types/types';
+import type * as channels from '../protocol/channels';
+import type * as api from '../../types/types';
 import type { Page } from './page';
 
 export class Keyboard implements api.Keyboard {

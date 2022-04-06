@@ -20,13 +20,14 @@ import type { FullConfigInternal } from './types';
 import { getPackageJsonPath, mergeObjects, errorWithFile } from './util';
 import { setCurrentlyLoadingFileSuite } from './globals';
 import { Suite } from './test';
-import { SerializedLoaderData } from './ipc';
+import type { SerializedLoaderData } from './ipc';
 import * as path from 'path';
 import * as url from 'url';
 import * as fs from 'fs';
 import { ProjectImpl } from './project';
-import { Reporter } from '../types/testReporter';
-import { BuiltInReporter, builtInReporters } from './runner';
+import type { Reporter } from '../types/testReporter';
+import type { BuiltInReporter } from './runner';
+import { builtInReporters } from './runner';
 import { isRegExp } from 'playwright-core/lib/utils/utils';
 import { serializeError } from './util';
 

@@ -16,9 +16,9 @@
 
 import { EventEmitter } from 'events';
 import type { BrowserContextOptions, LaunchOptions } from '../../../..';
-import { Frame } from '../../frames';
-import { LanguageGenerator, LanguageGeneratorOptions } from './language';
-import { Action, Signal, FrameDescription } from './recorderActions';
+import type { Frame } from '../../frames';
+import type { LanguageGenerator, LanguageGeneratorOptions } from './language';
+import type { Action, Signal, FrameDescription } from './recorderActions';
 
 export type ActionInContext = {
   frame: FrameDescription;

@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-import * as channels from '../protocol/channels';
+import type * as channels from '../protocol/channels';
 import { Tracing } from '../server/trace/recorder/tracing';
 import { ArtifactDispatcher } from './artifactDispatcher';
-import { Dispatcher, DispatcherScope, existingDispatcher } from './dispatcher';
+import type { DispatcherScope } from './dispatcher';
+import { Dispatcher, existingDispatcher } from './dispatcher';
 
 export class TracingDispatcher extends Dispatcher<Tracing, channels.TracingChannel> implements channels.TracingChannel {
   _type_Tracing = true;

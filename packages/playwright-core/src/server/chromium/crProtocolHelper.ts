@@ -15,10 +15,10 @@
  * limitations under the License.
  */
 
-import { CRSession } from './crConnection';
-import { Protocol } from './protocol';
+import type { CRSession } from './crConnection';
+import type { Protocol } from './protocol';
 import fs from 'fs';
-import * as types from '../types';
+import type * as types from '../types';
 import { mkdirIfNeeded } from '../../utils/utils';
 import { splitErrorMessage } from '../../utils/stackTrace';
 

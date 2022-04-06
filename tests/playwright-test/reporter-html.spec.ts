@@ -16,7 +16,7 @@
 
 import fs from 'fs';
 import { test as baseTest, expect, createImage } from './playwright-test-fixtures';
-import { HttpServer } from '../../packages/playwright-core/lib/utils/httpServer';
+import type { HttpServer } from '../../packages/playwright-core/lib/utils/httpServer';
 import { startHtmlReportServer } from '../../packages/playwright-test/lib/reporters/html';
 import { spawnAsync } from 'playwright-core/lib/utils/utils';
 

@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import * as types from './types';
+import type * as types from './types';
 import fs from 'fs';
 import { isString, isRegExp, constructURLBasedOnBaseURL } from '../utils/utils';
 

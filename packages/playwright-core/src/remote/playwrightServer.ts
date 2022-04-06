@@ -17,7 +17,7 @@
 import debug from 'debug';
 import * as http from 'http';
 import WebSocket from 'ws';
-import { Browser } from '../server/browser';
+import type { Browser } from '../server/browser';
 import { PlaywrightConnection } from './playwrightConnection';
 
 const debugLog = debug('pw:server');

@@ -22,7 +22,8 @@ import * as pirates from 'pirates';
 import * as sourceMapSupport from 'source-map-support';
 import * as url from 'url';
 import type { Location } from './types';
-import { tsConfigLoader, TsConfigLoaderResult } from './third_party/tsconfig-loader';
+import type { TsConfigLoaderResult } from './third_party/tsconfig-loader';
+import { tsConfigLoader } from './third_party/tsconfig-loader';
 import Module from 'module';
 
 const version = 8;

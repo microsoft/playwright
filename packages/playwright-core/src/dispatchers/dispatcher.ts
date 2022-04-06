@@ -15,13 +15,15 @@
  */
 
 import { EventEmitter } from 'events';
-import * as channels from '../protocol/channels';
+import type * as channels from '../protocol/channels';
 import { serializeError } from '../protocol/serializers';
-import { createScheme, Validator, ValidationError } from '../protocol/validator';
+import type { Validator } from '../protocol/validator';
+import { createScheme, ValidationError } from '../protocol/validator';
 import { assert, debugAssert, isUnderTest, monotonicTime } from '../utils/utils';
 import { tOptional } from '../protocol/validatorPrimitives';
 import { kBrowserOrContextClosedError } from '../utils/errors';
-import { CallMetadata, SdkObject } from '../server/instrumentation';
+import type { CallMetadata } from '../server/instrumentation';
+import { SdkObject } from '../server/instrumentation';
 import { rewriteErrorMessage } from '../utils/stackTrace';
 import type { PlaywrightDispatcher } from './playwrightDispatcher';
 

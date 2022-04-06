@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { ConnectionTransport, ProtocolRequest, ProtocolResponse } from './transport';
+import type { ConnectionTransport, ProtocolRequest, ProtocolResponse } from './transport';
 import { makeWaitForNextTask } from '../utils/utils';
 import { debugLogger } from '../utils/debugLogger';
 

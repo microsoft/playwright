@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-import { types as t, NodePath } from '@babel/core';
+import type { NodePath } from '@babel/core';
+import { types as t } from '@babel/core';
 import { declare } from '@babel/helper-plugin-utils';
 
 export default declare(api => {

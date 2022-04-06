@@ -21,9 +21,12 @@ import * as path from 'path';
 import { PNG } from 'pngjs';
 import rimraf from 'rimraf';
 import { promisify } from 'util';
-import { CommonFixtures, commonFixtures } from '../config/commonFixtures';
-import { serverFixtures, ServerFixtures, ServerWorkerOptions } from '../config/serverFixtures';
-import { test as base, TestInfo } from './stable-test-runner';
+import type { CommonFixtures } from '../config/commonFixtures';
+import { commonFixtures } from '../config/commonFixtures';
+import type { ServerFixtures, ServerWorkerOptions } from '../config/serverFixtures';
+import { serverFixtures } from '../config/serverFixtures';
+import type { TestInfo } from './stable-test-runner';
+import { test as base } from './stable-test-runner';
 
 const removeFolderAsync = promisify(rimraf);
 

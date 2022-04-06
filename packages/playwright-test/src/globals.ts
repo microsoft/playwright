@@ -15,7 +15,7 @@
  */
 
 import type { TestInfoImpl } from './testInfo';
-import { Suite } from './test';
+import type { Suite } from './test';
 
 let currentTestInfoValue: TestInfoImpl | null = null;
 export function setCurrentTestInfo(testInfo: TestInfoImpl | null) {

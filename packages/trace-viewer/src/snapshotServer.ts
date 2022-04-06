@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import { SnapshotStorage } from './snapshotStorage';
+import type { SnapshotStorage } from './snapshotStorage';
 import type { Point } from '@playwright-core/common/types';
-import { URLSearchParams } from 'url';
-import { SnapshotRenderer } from './snapshotRenderer';
+import type { URLSearchParams } from 'url';
+import type { SnapshotRenderer } from './snapshotRenderer';
 
 export class SnapshotServer {
   private _snapshotStorage: SnapshotStorage;

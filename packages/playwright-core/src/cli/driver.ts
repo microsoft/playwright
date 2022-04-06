@@ -18,8 +18,8 @@
 
 import fs from 'fs';
 import * as playwright from '../..';
-import { BrowserType } from '../client/browserType';
-import { LaunchServerOptions } from '../client/types';
+import type { BrowserType } from '../client/browserType';
+import type { LaunchServerOptions } from '../client/types';
 import { DispatcherConnection, Root } from '../dispatchers/dispatcher';
 import { PlaywrightDispatcher } from '../dispatchers/playwrightDispatcher';
 import { IpcTransport, PipeTransport } from '../protocol/transport';

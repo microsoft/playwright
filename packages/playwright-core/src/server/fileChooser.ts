@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { ElementHandle } from './dom';
-import { Page } from './page';
+import type { ElementHandle } from './dom';
+import type { Page } from './page';
 
 export class FileChooser {
   private _page: Page;

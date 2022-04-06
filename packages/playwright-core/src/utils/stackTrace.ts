@@ -15,7 +15,7 @@
  */
 
 import path from 'path';
-import { StackFrame } from '../protocol/channels';
+import type { StackFrame } from '../protocol/channels';
 import StackUtils from 'stack-utils';
 import { isUnderTest } from './utils';
 

@@ -14,16 +14,17 @@
  * limitations under the License.
  */
 
-import * as types from './types';
+import type * as types from './types';
 import { BrowserContext, validateBrowserContextOptions } from './browserContext';
 import { Page } from './page';
 import { Download } from './download';
-import { ProxySettings } from './types';
-import { ChildProcess } from 'child_process';
-import { RecentLogsCollector } from '../utils/debugLogger';
-import { CallMetadata, SdkObject } from './instrumentation';
+import type { ProxySettings } from './types';
+import type { ChildProcess } from 'child_process';
+import type { RecentLogsCollector } from '../utils/debugLogger';
+import type { CallMetadata } from './instrumentation';
+import { SdkObject } from './instrumentation';
 import { Artifact } from './artifact';
-import { Selectors } from './selectors';
+import type { Selectors } from './selectors';
 
 export interface BrowserProcess {
   onclose?: ((exitCode: number | null, signal: string | null) => void);

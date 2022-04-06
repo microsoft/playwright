@@ -18,7 +18,7 @@ import type { ActionTraceEvent } from '@playwright-core/server/trace/common/trac
 import { SplitView } from '@web/components/splitView';
 import { msToString } from '@web/uiUtils';
 import * as React from 'react';
-import { ContextEntry } from '../entries';
+import type { ContextEntry } from '../entries';
 import { ActionList } from './actionList';
 import { CallTab } from './callTab';
 import { ConsoleTab } from './consoleTab';

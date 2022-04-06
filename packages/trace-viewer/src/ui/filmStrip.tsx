@@ -15,12 +15,12 @@
 */
 
 import './filmStrip.css';
-import { Boundaries, Size } from '../geometry';
+import type { Boundaries, Size } from '../geometry';
 import * as React from 'react';
 import { useMeasure } from './helpers';
 import { upperBound } from '@web/uiUtils';
-import { PageEntry } from '../entries';
-import { MultiTraceModel } from './modelUtil';
+import type { PageEntry } from '../entries';
+import type { MultiTraceModel } from './modelUtil';
 
 const tileSize = { width: 200, height: 45 };
 
