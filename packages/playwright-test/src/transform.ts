@@ -100,23 +100,52 @@ export function resolveHook(filename: string, specifier: string): string | undef
     return;
   const tsconfig = loadAndValidateTsconfigForFile(filename);
   if (tsconfig) {
+    let longestPrefixLength = -1;
+    let pathMatchedByLongestPrefix: string | undefined;
+
     for (const { key, values } of tsconfig.paths) {
-      const keyHasStar = key[key.length - 1] === '*';
-      const matches = specifier.startsWith(keyHasStar ? key.substring(0, key.length - 1) : key);
-      if (!matches)
-        continue;
+      let matchedPartOfSpecifier = specifier;
+
+      const [keyPrefix, keySuffix] = key.split('*');
+      if (key.includes('*')) {
+        // * If pattern contains '*' then to match pattern "<prefix>*<suffix>" module name must start with the <prefix> and end with <suffix>.
+        // * <MatchedStar> denotes part of the module name between <prefix> and <suffix>.
+        // * If module name can be matches with multiple patterns then pattern with the longest prefix will be picked.
+        // https://github.com/microsoft/TypeScript/blob/f82d0cb3299c04093e3835bc7e29f5b40475f586/src/compiler/moduleNameResolver.ts#L1049
+        if (keyPrefix) {
+          if (!specifier.startsWith(keyPrefix))
+            continue;
+          matchedPartOfSpecifier = matchedPartOfSpecifier.substring(keyPrefix.length, matchedPartOfSpecifier.length);
+        }
+        if (keySuffix) {
+          if (!specifier.endsWith(keySuffix))
+            continue;
+          matchedPartOfSpecifier = matchedPartOfSpecifier.substring(0, matchedPartOfSpecifier.length - keySuffix.length);
+        }
+      } else {
+        if (specifier !== key)
+          continue;
+        matchedPartOfSpecifier = specifier;
+      }
+
       for (const value of values) {
-        const valueHasStar = value[value.length - 1] === '*';
-        let candidate = valueHasStar ? value.substring(0, value.length - 1) : value;
-        if (valueHasStar && keyHasStar)
-          candidate += specifier.substring(key.length - 1);
+        let candidate: string = value;
+
+        if (value.includes('*'))
+          candidate = candidate.replace('*', matchedPartOfSpecifier);
         candidate = path.resolve(tsconfig.absoluteBaseUrl, candidate.replace(/\//g, path.sep));
         for (const ext of ['', '.js', '.ts', '.mjs', '.cjs', '.jsx', '.tsx']) {
-          if (fs.existsSync(candidate + ext))
-            return candidate;
+          if (fs.existsSync(candidate + ext)) {
+            if (keyPrefix.length > longestPrefixLength) {
+              longestPrefixLength = keyPrefix.length;
+              pathMatchedByLongestPrefix = candidate;
+            }
+          }
         }
       }
     }
+    if (pathMatchedByLongestPrefix)
+      return pathMatchedByLongestPrefix;
   }
   if (specifier.endsWith('.js')) {
     const resolved = path.resolve(path.dirname(filename), specifier);

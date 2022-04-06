@@ -163,3 +163,110 @@ test('should respect baseurl w/o paths', async ({ runInlineTest }) => {
   expect(result.passed).toBe(1);
   expect(result.output).not.toContain(`Could not`);
 });
+
+test('should respect complex path resolver', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      export default {
+        projects: [{name: 'foo'}],
+      };
+    `,
+    'tsconfig.json': `{
+      "compilerOptions": {
+        "target": "ES2019",
+        "module": "commonjs",
+        "lib": ["esnext", "dom", "DOM.Iterable"],
+        "baseUrl": ".",
+        "paths": {
+          "prefix-*": ["./prefix-*/bar"],
+          "prefix-*-suffix": ["./prefix-*-suffix/bar"],
+          "*-suffix": ["./*-suffix/bar"],
+          "no-star": ["./no-star-foo"],
+          "longest-*": ["./this-is-not-the-longest-prefix"],
+          "longest-pre*": ["./this-is-the-longest-prefix"],
+          "*bar": ["./*bar"],
+          "*[bar]": ["*foo"],
+        },
+      },
+    }`,
+    'a.spec.ts': `
+      import { foo } from 'prefix-matchedstar';
+      const { test } = pwt;
+      test('test', ({}, testInfo) => {
+        expect(testInfo.project.name).toBe(foo);
+      });
+    `,
+    'prefix-matchedstar/bar/index.ts': `
+      export const foo: string = 'foo';
+    `,
+    'b.spec.ts': `
+      import { foo } from 'prefix-matchedstar-suffix';
+      const { test } = pwt;
+      test('test', ({}, testInfo) => {
+        expect(testInfo.project.name).toBe(foo);
+      });
+    `,
+    'prefix-matchedstar-suffix/bar.ts': `
+      export const foo: string = 'foo';
+    `,
+    'c.spec.ts': `
+      import { foo } from 'matchedstar-suffix';
+      const { test } = pwt;
+      test('test', ({}, testInfo) => {
+        expect(testInfo.project.name).toBe(foo);
+      });
+    `,
+    'matchedstar-suffix/bar.ts': `
+      export const foo: string = 'foo';
+    `,
+    'd.spec.ts': `
+      import { foo } from 'no-star';
+      const { test } = pwt;
+      test('test', ({}, testInfo) => {
+        expect(testInfo.project.name).toBe(foo);
+      });
+    `,
+    './no-star-foo.ts': `
+      export const foo: string = 'foo';
+    `,
+    'e.spec.ts': `
+      import { foo } from 'longest-prefix';
+      const { test } = pwt;
+      test('test', ({}, testInfo) => {
+        expect(testInfo.project.name).toBe(foo);
+      });
+    `,
+    './this-is-the-longest-prefix.ts': `
+      // this module should be resolved as it matches by a longer prefix
+      export const foo: string = 'foo';
+    `,
+    './this-is-not-the-longest-prefix.ts': `
+      // This module should't be resolved as it matches by a shorter prefix
+      export const bar: string = 'bar';
+    `,
+    'f.spec.ts': `
+      import { foo } from 'barfoobar';
+      const { test } = pwt;
+      test('test', ({}, testInfo) => {
+        expect(testInfo.project.name).toBe(foo);
+      });
+    `,
+    'barfoobar.ts': `
+      export const foo: string = 'foo';
+    `,
+    'g.spec.ts': `
+      import { foo } from 'foo/[bar]';
+      const { test } = pwt;
+      test('test', ({}, testInfo) => {
+        expect(testInfo.project.name).toBe(foo);
+      });
+    `,
+    'foo/foo.ts': `
+      export const foo: string = 'foo';
+    `,
+  });
+
+  expect(result.passed).toBe(7);
+  expect(result.exitCode).toBe(0);
+  expect(result.output).not.toContain(`Could not`);
+});
