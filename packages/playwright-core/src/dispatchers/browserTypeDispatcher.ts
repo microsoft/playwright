@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-import { BrowserType } from '../server/browserType';
+import type { BrowserType } from '../server/browserType';
 import { BrowserDispatcher } from './browserDispatcher';
-import * as channels from '../protocol/channels';
-import { Dispatcher, DispatcherScope } from './dispatcher';
+import type * as channels from '../protocol/channels';
+import type { DispatcherScope } from './dispatcher';
+import { Dispatcher } from './dispatcher';
 import { BrowserContextDispatcher } from './browserContextDispatcher';
-import { CallMetadata } from '../server/instrumentation';
+import type { CallMetadata } from '../server/instrumentation';
 import { JsonPipeDispatcher } from '../dispatchers/jsonPipeDispatcher';
 import { getUserAgent } from '../utils/utils';
 import * as socks from '../utils/socksProxy';

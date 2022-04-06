@@ -16,7 +16,7 @@
 
 import WebSocket from 'ws';
 import { Connection } from '../client/connection';
-import { Playwright } from '../client/playwright';
+import type { Playwright } from '../client/playwright';
 import { getPlaywrightVersion } from '../utils/utils';
 
 export class GridClient {

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Reporter } from '../../types/testReporter';
+import type { Reporter } from '../../types/testReporter';
 
 class EmptyReporter implements Reporter {
 }

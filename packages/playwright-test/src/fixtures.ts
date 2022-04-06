@@ -16,10 +16,10 @@
 
 import { formatLocation, debugTest } from './util';
 import * as crypto from 'crypto';
-import { FixturesWithLocation, Location, WorkerInfo } from './types';
+import type { FixturesWithLocation, Location, WorkerInfo } from './types';
 import { ManualPromise } from 'playwright-core/lib/utils/async';
-import { TestInfoImpl } from './testInfo';
-import { FixtureDescription, TimeoutManager } from './timeoutManager';
+import type { TestInfoImpl } from './testInfo';
+import type { FixtureDescription, TimeoutManager } from './timeoutManager';
 
 type FixtureScope = 'test' | 'worker';
 type FixtureOptions = { auto?: boolean, scope?: FixtureScope, option?: boolean, timeout?: number | undefined };

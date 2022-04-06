@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import * as channels from '../protocol/channels';
+import type * as channels from '../protocol/channels';
 import { ChannelOwner } from './channelOwner';
-import * as api from '../../types/types';
+import type * as api from '../../types/types';
 
 export class Dialog extends ChannelOwner<channels.DialogChannel> implements api.Dialog {
   static from(dialog: channels.DialogChannel): Dialog {

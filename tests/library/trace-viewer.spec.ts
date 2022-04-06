@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-import { TraceViewerFixtures, traceViewerFixtures } from '../config/traceViewerFixtures';
+import type { TraceViewerFixtures } from '../config/traceViewerFixtures';
+import { traceViewerFixtures } from '../config/traceViewerFixtures';
 import fs from 'fs';
 import path from 'path';
 import { expect, playwrightTest } from '../config/browserTest';

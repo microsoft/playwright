@@ -16,9 +16,9 @@
  */
 
 import * as input from '../input';
-import * as types from '../types';
+import type * as types from '../types';
 import { macEditingCommands } from '../macEditingCommands';
-import { WKSession } from './wkConnection';
+import type { WKSession } from './wkConnection';
 import { isString } from '../../utils/utils';
 import type { Page } from '../page';
 

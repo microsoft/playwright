@@ -16,8 +16,8 @@
  */
 
 import { assert } from '../../utils/utils';
-import * as types from '../types';
-import { CRSession } from './crConnection';
+import type * as types from '../types';
+import type { CRSession } from './crConnection';
 import { readProtocolStream } from './crProtocolHelper';
 
 const PagePaperFormats: { [key: string]: { width: number, height: number }} = {

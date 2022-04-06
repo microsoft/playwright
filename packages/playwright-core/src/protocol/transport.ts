@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { ChildProcess } from 'child_process';
+import type { ChildProcess } from 'child_process';
 import { makeWaitForNextTask } from '../utils/utils';
 
 export interface WritableStream {

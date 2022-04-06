@@ -14,25 +14,27 @@
  * limitations under the License.
  */
 
-import { BrowserContext } from '../server/browserContext';
-import { Frame } from '../server/frames';
+import type { BrowserContext } from '../server/browserContext';
+import type { Frame } from '../server/frames';
 import { Page, Worker } from '../server/page';
-import * as channels from '../protocol/channels';
-import { Dispatcher, DispatcherScope, existingDispatcher, lookupDispatcher, lookupNullableDispatcher } from './dispatcher';
+import type * as channels from '../protocol/channels';
+import type { DispatcherScope } from './dispatcher';
+import { Dispatcher, existingDispatcher, lookupDispatcher, lookupNullableDispatcher } from './dispatcher';
 import { parseError, serializeError } from '../protocol/serializers';
 import { ConsoleMessageDispatcher } from './consoleMessageDispatcher';
 import { DialogDispatcher } from './dialogDispatcher';
 import { FrameDispatcher } from './frameDispatcher';
-import { RequestDispatcher, ResponseDispatcher, RouteDispatcher, WebSocketDispatcher } from './networkDispatchers';
+import type { ResponseDispatcher } from './networkDispatchers';
+import { RequestDispatcher, RouteDispatcher, WebSocketDispatcher } from './networkDispatchers';
 import { serializeResult, parseArgument } from './jsHandleDispatcher';
 import { ElementHandleDispatcher } from './elementHandlerDispatcher';
-import { FileChooser } from '../server/fileChooser';
-import { CRCoverage } from '../server/chromium/crCoverage';
-import { JSHandle } from '../server/javascript';
-import { CallMetadata } from '../server/instrumentation';
-import { Artifact } from '../server/artifact';
+import type { FileChooser } from '../server/fileChooser';
+import type { CRCoverage } from '../server/chromium/crCoverage';
+import type { JSHandle } from '../server/javascript';
+import type { CallMetadata } from '../server/instrumentation';
+import type { Artifact } from '../server/artifact';
 import { ArtifactDispatcher } from './artifactDispatcher';
-import { Download } from '../server/download';
+import type { Download } from '../server/download';
 import { createGuid } from '../utils/utils';
 
 export class PageDispatcher extends Dispatcher<Page, channels.PageChannel> implements channels.PageChannel {

@@ -18,7 +18,8 @@ import debug from 'debug';
 import assert from 'assert';
 import { EventEmitter } from 'events';
 import { URL } from 'url';
-import WebSocket, { Server as WebSocketServer } from 'ws';
+import type { Server as WebSocketServer } from 'ws';
+import type WebSocket from 'ws';
 import { HttpServer } from '../utils/httpServer';
 import { createGuid, getPlaywrightVersion } from '../utils/utils';
 

@@ -14,15 +14,16 @@
  * limitations under the License.
  */
 
-import EventEmitter from 'events';
+import type EventEmitter from 'events';
 import fs from 'fs';
 import path from 'path';
 import yauzl from 'yauzl';
 import yazl from 'yazl';
-import * as channels from '../protocol/channels';
+import type * as channels from '../protocol/channels';
 import { ManualPromise } from '../utils/async';
 import { assert, createGuid } from '../utils/utils';
-import { Dispatcher, DispatcherScope } from './dispatcher';
+import type { DispatcherScope } from './dispatcher';
+import { Dispatcher } from './dispatcher';
 
 export class LocalUtilsDispatcher extends Dispatcher<{ guid: string }, channels.LocalUtilsChannel> implements channels.LocalUtilsChannel {
   _type_LocalUtils: boolean;

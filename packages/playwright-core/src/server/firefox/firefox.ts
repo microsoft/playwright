@@ -21,10 +21,10 @@ import path from 'path';
 import { FFBrowser } from './ffBrowser';
 import { kBrowserCloseMessageId } from './ffConnection';
 import { BrowserType, kNoXServerRunningError } from '../browserType';
-import { Env } from '../../utils/processLauncher';
-import { ConnectionTransport } from '../transport';
-import { BrowserOptions, PlaywrightOptions } from '../browser';
-import * as types from '../types';
+import type { Env } from '../../utils/processLauncher';
+import type { ConnectionTransport } from '../transport';
+import type { BrowserOptions, PlaywrightOptions } from '../browser';
+import type * as types from '../types';
 import { rewriteErrorMessage } from '../../utils/stackTrace';
 import { wrapInASCIIBox } from '../../utils/utils';
 

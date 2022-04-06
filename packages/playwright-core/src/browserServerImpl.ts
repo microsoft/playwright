@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-import { LaunchServerOptions, Logger } from './client/types';
+import type { LaunchServerOptions, Logger } from './client/types';
 import { EventEmitter } from 'ws';
-import { BrowserServerLauncher, BrowserServer } from './client/browserType';
+import type { BrowserServerLauncher, BrowserServer } from './client/browserType';
 import { envObjectToArray } from './client/clientHelper';
 import { createGuid } from './utils/utils';
-import { ProtocolLogger } from './server/types';
+import type { ProtocolLogger } from './server/types';
 import { serverSideCallMetadata } from './server/instrumentation';
 import { createPlaywright } from './server/playwright';
 import { PlaywrightServer } from './remote/playwrightServer';

@@ -16,9 +16,10 @@
 
 import { baseTest } from '../config/baseTest';
 import * as path from 'path';
-import { ElectronApplication, Page } from '@playwright/test';
-import { PageTestFixtures, PageWorkerFixtures } from '../page/pageTestApi';
-import { traceViewerFixtures, TraceViewerFixtures } from '../config/traceViewerFixtures';
+import type { ElectronApplication, Page } from '@playwright/test';
+import type { PageTestFixtures, PageWorkerFixtures } from '../page/pageTestApi';
+import type { TraceViewerFixtures } from '../config/traceViewerFixtures';
+import { traceViewerFixtures } from '../config/traceViewerFixtures';
 export { expect } from '@playwright/test';
 
 type ElectronTestFixtures = PageTestFixtures & {

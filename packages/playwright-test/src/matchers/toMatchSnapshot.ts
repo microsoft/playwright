@@ -14,24 +14,25 @@
  * limitations under the License.
  */
 
-import { Locator, Page } from 'playwright-core';
+import type { Locator, Page } from 'playwright-core';
 import type { Page as PageEx } from 'playwright-core/lib/client/page';
 import type { Locator as LocatorEx } from 'playwright-core/lib/client/locator';
 import type { Expect } from '../types';
 import { currentTestInfo } from '../globals';
-import { getComparator, ImageComparatorOptions, Comparator } from 'playwright-core/lib/utils/comparators';
+import type { ImageComparatorOptions, Comparator } from 'playwright-core/lib/utils/comparators';
+import { getComparator } from 'playwright-core/lib/utils/comparators';
 import type { PageScreenshotOptions } from 'playwright-core/types/types';
 import {
   addSuffixToFilePath, serializeError, sanitizeForFilePath,
   trimLongString, callLogText, currentExpectTimeout,
   expectTypes, captureStackTrace  } from '../util';
-import { UpdateSnapshots } from '../types';
+import type { UpdateSnapshots } from '../types';
 import colors from 'colors/safe';
 import fs from 'fs';
 import path from 'path';
 import * as mime from 'mime';
-import { TestInfoImpl } from '../testInfo';
-import { SyncExpectationResult } from '../expect';
+import type { TestInfoImpl } from '../testInfo';
+import type { SyncExpectationResult } from '../expect';
 
 type NameOrSegments = string | string[];
 const snapshotNamesSymbol = Symbol('snapshotNames');

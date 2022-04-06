@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-import * as frames from './frames';
-import * as types from './types';
-import * as channels from '../protocol/channels';
+import type * as frames from './frames';
+import type * as types from './types';
+import type * as channels from '../protocol/channels';
 import { assert } from '../utils/utils';
 import { ManualPromise } from '../utils/async';
 import { SdkObject } from './instrumentation';
-import { NameValue } from '../common/types';
+import type { NameValue } from '../common/types';
 import { APIRequestContext } from './fetch';
 
 export function filterCookies(cookies: types.NetworkCookie[], urls: string[]): types.NetworkCookie[] {

@@ -16,7 +16,7 @@
 
 import http from 'http';
 import os from 'os';
-import { GridAgentLaunchOptions, GridFactory } from './gridServer';
+import type { GridAgentLaunchOptions, GridFactory } from './gridServer';
 import * as utils from '../utils/utils';
 
 const dockerFactory: GridFactory = {

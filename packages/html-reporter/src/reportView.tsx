@@ -21,7 +21,7 @@ import './common.css';
 import { Filter } from './filter';
 import { HeaderView } from './headerView';
 import { Route } from './links';
-import { LoadedReport } from './loadedReport';
+import type { LoadedReport } from './loadedReport';
 import './reportView.css';
 import { MetadataView } from './metadataView';
 import { TestCaseView } from './testCaseView';

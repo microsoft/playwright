@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { ParsedStackTrace } from '../utils/stackTrace';
+import type { ParsedStackTrace } from '../utils/stackTrace';
 
 export interface ClientInstrumentation {
   addListener(listener: ClientInstrumentationListener): void;

@@ -15,7 +15,7 @@
  */
 
 import child_process from 'child_process';
-import { GridAgentLaunchOptions, GridFactory } from './gridServer';
+import type { GridAgentLaunchOptions, GridFactory } from './gridServer';
 import path from 'path';
 
 const simpleFactory: GridFactory = {

@@ -18,16 +18,18 @@ import colors from 'colors/safe';
 import fs from 'fs';
 import open from 'open';
 import path from 'path';
-import { Transform, TransformCallback } from 'stream';
-import { FullConfig, Suite, Reporter } from '../../types/testReporter';
+import type { TransformCallback } from 'stream';
+import { Transform } from 'stream';
+import type { FullConfig, Suite, Reporter } from '../../types/testReporter';
 import { HttpServer } from 'playwright-core/lib/utils/httpServer';
 import { calculateSha1, removeFolders } from 'playwright-core/lib/utils/utils';
-import RawReporter, { JsonAttachment, JsonReport, JsonSuite, JsonTestCase, JsonTestResult, JsonTestStep } from './raw';
+import type { JsonAttachment, JsonReport, JsonSuite, JsonTestCase, JsonTestResult, JsonTestStep } from './raw';
+import RawReporter from './raw';
 import assert from 'assert';
 import yazl from 'yazl';
 import { stripAnsiEscapes } from './base';
 import { getPackageJsonPath } from '../util';
-import { FullConfigInternal } from '../types';
+import type { FullConfigInternal } from '../types';
 
 export type Stats = {
   total: number;

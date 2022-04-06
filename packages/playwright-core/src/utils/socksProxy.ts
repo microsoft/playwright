@@ -16,7 +16,8 @@
 
 import dns from 'dns';
 import EventEmitter from 'events';
-import net, { AddressInfo } from 'net';
+import type { AddressInfo } from 'net';
+import net from 'net';
 import util from 'util';
 import { debugLogger } from './debugLogger';
 import { createSocket } from './netUtils';

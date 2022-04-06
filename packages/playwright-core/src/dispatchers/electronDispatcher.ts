@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 
-import { Dispatcher, DispatcherScope } from './dispatcher';
-import { Electron, ElectronApplication } from '../server/electron/electron';
-import * as channels from '../protocol/channels';
+import type { DispatcherScope } from './dispatcher';
+import { Dispatcher } from './dispatcher';
+import type { Electron } from '../server/electron/electron';
+import { ElectronApplication } from '../server/electron/electron';
+import type * as channels from '../protocol/channels';
 import { BrowserContextDispatcher } from './browserContextDispatcher';
-import { PageDispatcher } from './pageDispatcher';
+import type { PageDispatcher } from './pageDispatcher';
 import { parseArgument, serializeResult } from './jsHandleDispatcher';
 import { ElementHandleDispatcher } from './elementHandlerDispatcher';
 

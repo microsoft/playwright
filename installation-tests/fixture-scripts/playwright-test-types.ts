@@ -15,7 +15,7 @@
  */
 
 import { test, expect } from '@playwright/test';
-import { Reporter, TestCase } from '@playwright/test/reporter';
+import type { Reporter, TestCase } from '@playwright/test/reporter';
 
 test.use({ locale: 'en-US' });
 

@@ -15,7 +15,8 @@
  */
 
 import type { Fixtures } from '@playwright/test';
-import { ChildProcess, execSync, spawn } from 'child_process';
+import type { ChildProcess } from 'child_process';
+import { execSync, spawn } from 'child_process';
 import net from 'net';
 
 type TestChildParams = {

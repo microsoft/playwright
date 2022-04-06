@@ -15,10 +15,10 @@
  */
 
 import type { BrowserWindow } from 'electron';
-import * as childProcess from 'child_process';
-import * as structs from '../../types/structs';
-import * as api from '../../types/types';
-import * as channels from '../protocol/channels';
+import type * as childProcess from 'child_process';
+import type * as structs from '../../types/structs';
+import type * as api from '../../types/types';
+import type * as channels from '../protocol/channels';
 import { TimeoutSettings } from '../utils/timeoutSettings';
 import { headersObjectToArray } from '../utils/utils';
 import { BrowserContext } from './browserContext';
@@ -26,8 +26,8 @@ import { ChannelOwner } from './channelOwner';
 import { envObjectToArray } from './clientHelper';
 import { Events } from './events';
 import { JSHandle, parseResult, serializeArgument } from './jsHandle';
-import { Page } from './page';
-import { Env, WaitForEventOptions, Headers } from './types';
+import type { Page } from './page';
+import type { Env, WaitForEventOptions, Headers } from './types';
 import { Waiter } from './waiter';
 
 type ElectronOptions = Omit<channels.ElectronLaunchOptions, 'env'|'extraHTTPHeaders'> & {

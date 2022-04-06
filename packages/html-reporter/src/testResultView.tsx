@@ -23,7 +23,8 @@ import { AutoChip } from './chip';
 import { traceImage } from './images';
 import { AttachmentLink } from './links';
 import { statusIcon } from './statusIcon';
-import { ImageDiff, ImageDiffView } from './imageDiffView';
+import type { ImageDiff } from './imageDiffView';
+import { ImageDiffView } from './imageDiffView';
 import './testResultView.css';
 
 function groupImageDiffs(screenshots: Set<TestAttachment>): ImageDiff[] {

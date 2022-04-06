@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import { Readable } from 'stream';
-import * as api from '../../types/types';
-import { Artifact } from './artifact';
-import { Page } from './page';
+import type { Readable } from 'stream';
+import type * as api from '../../types/types';
+import type { Artifact } from './artifact';
+import type { Page } from './page';
 
 export class Download implements api.Download {
   private _page: Page;

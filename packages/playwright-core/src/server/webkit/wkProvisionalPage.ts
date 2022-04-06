@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-import { WKSession } from './wkConnection';
-import { WKPage } from './wkPage';
-import { RegisteredListener, eventsHelper } from '../../utils/eventsHelper';
-import { Protocol } from './protocol';
+import type { WKSession } from './wkConnection';
+import type { WKPage } from './wkPage';
+import type { RegisteredListener } from '../../utils/eventsHelper';
+import { eventsHelper } from '../../utils/eventsHelper';
+import type { Protocol } from './protocol';
 import { assert } from '../../utils/utils';
 
 export class WKProvisionalPage {

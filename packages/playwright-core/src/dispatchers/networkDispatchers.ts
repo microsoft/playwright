@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 
-import * as channels from '../protocol/channels';
+import type * as channels from '../protocol/channels';
 import { APIRequestContext } from '../server/fetch';
-import { CallMetadata } from '../server/instrumentation';
-import { Request, Response, Route, WebSocket } from '../server/network';
-import { Dispatcher, DispatcherScope, existingDispatcher, lookupNullableDispatcher } from './dispatcher';
+import type { CallMetadata } from '../server/instrumentation';
+import type { Request, Response, Route } from '../server/network';
+import { WebSocket } from '../server/network';
+import type { DispatcherScope } from './dispatcher';
+import { Dispatcher, existingDispatcher, lookupNullableDispatcher } from './dispatcher';
 import { FrameDispatcher } from './frameDispatcher';
 import { TracingDispatcher } from './tracingDispatcher';
 

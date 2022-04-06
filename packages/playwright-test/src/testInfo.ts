@@ -20,12 +20,12 @@ import path from 'path';
 import { calculateSha1 } from 'playwright-core/lib/utils/utils';
 import type { TestError, TestInfo, TestStatus } from '../types/test';
 import type { FullConfigInternal, FullProjectInternal } from './types';
-import { WorkerInitParams } from './ipc';
-import { Loader } from './loader';
-import { ProjectImpl } from './project';
-import { TestCase } from './test';
+import type { WorkerInitParams } from './ipc';
+import type { Loader } from './loader';
+import type { ProjectImpl } from './project';
+import type { TestCase } from './test';
 import { TimeoutManager } from './timeoutManager';
-import { Annotation, TestStepInternal } from './types';
+import type { Annotation, TestStepInternal } from './types';
 import { addSuffixToFilePath, getContainedPath, monotonicTime, sanitizeForFilePath, serializeError, trimLongString } from './util';
 
 export class TestInfoImpl implements TestInfo {

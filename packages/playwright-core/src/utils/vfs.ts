@@ -16,7 +16,7 @@
 
 import path from 'path';
 import fs from 'fs';
-import stream from 'stream';
+import type stream from 'stream';
 import yauzl from 'yauzl';
 
 export interface VirtualFileSystem {

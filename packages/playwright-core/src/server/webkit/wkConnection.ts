@@ -17,11 +17,12 @@
 
 import { EventEmitter } from 'events';
 import { assert } from '../../utils/utils';
-import { ConnectionTransport, ProtocolRequest, ProtocolResponse } from '../transport';
-import { Protocol } from './protocol';
+import type { ConnectionTransport, ProtocolRequest, ProtocolResponse } from '../transport';
+import type { Protocol } from './protocol';
 import { rewriteErrorMessage } from '../../utils/stackTrace';
-import { debugLogger, RecentLogsCollector } from '../../utils/debugLogger';
-import { ProtocolLogger } from '../types';
+import type { RecentLogsCollector } from '../../utils/debugLogger';
+import { debugLogger } from '../../utils/debugLogger';
+import type { ProtocolLogger } from '../types';
 import { helper } from '../helper';
 import { kBrowserClosedError } from '../../utils/errors';
 import { ProtocolError } from '../protocolError';

@@ -15,9 +15,10 @@
  */
 
 import type { Fixtures, FixturesWithLocation, FullProjectInternal } from './types';
-import { Suite, TestCase } from './test';
+import type { TestCase } from './test';
+import { Suite } from './test';
 import { FixturePool, isFixtureOption } from './fixtures';
-import { TestTypeImpl } from './testType';
+import type { TestTypeImpl } from './testType';
 import { calculateSha1 } from 'playwright-core/lib/utils/utils';
 
 export class ProjectImpl {

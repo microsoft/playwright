@@ -14,9 +14,12 @@
  * limitations under the License.
  */
 
-import { test, TestType, Fixtures } from '@playwright/test';
-import { commonFixtures, CommonFixtures } from './commonFixtures';
-import { serverFixtures, ServerFixtures, ServerWorkerOptions } from './serverFixtures';
+import type { TestType, Fixtures } from '@playwright/test';
+import { test } from '@playwright/test';
+import type { CommonFixtures } from './commonFixtures';
+import { commonFixtures } from './commonFixtures';
+import type { ServerFixtures, ServerWorkerOptions } from './serverFixtures';
+import { serverFixtures } from './serverFixtures';
 import { coverageTest } from './coverageFixtures';
 import { platformTest } from './platformFixtures';
 import { testModeTest } from './testModeFixtures';

@@ -15,18 +15,19 @@
  */
 
 import { BrowserContext } from '../server/browserContext';
-import { Dispatcher, DispatcherScope, lookupDispatcher } from './dispatcher';
+import type { DispatcherScope } from './dispatcher';
+import { Dispatcher, lookupDispatcher } from './dispatcher';
 import { PageDispatcher, BindingCallDispatcher, WorkerDispatcher } from './pageDispatcher';
-import { FrameDispatcher } from './frameDispatcher';
-import * as channels from '../protocol/channels';
+import type { FrameDispatcher } from './frameDispatcher';
+import type * as channels from '../protocol/channels';
 import { RouteDispatcher, RequestDispatcher, ResponseDispatcher, APIRequestContextDispatcher } from './networkDispatchers';
 import { CRBrowserContext } from '../server/chromium/crBrowser';
 import { CDPSessionDispatcher } from './cdpSessionDispatcher';
 import { RecorderSupplement } from '../server/supplements/recorderSupplement';
-import { CallMetadata } from '../server/instrumentation';
+import type { CallMetadata } from '../server/instrumentation';
 import { ArtifactDispatcher } from './artifactDispatcher';
-import { Artifact } from '../server/artifact';
-import { Request, Response } from '../server/network';
+import type { Artifact } from '../server/artifact';
+import type { Request, Response } from '../server/network';
 import { TracingDispatcher } from './tracingDispatcher';
 import * as fs from 'fs';
 import * as path from 'path';

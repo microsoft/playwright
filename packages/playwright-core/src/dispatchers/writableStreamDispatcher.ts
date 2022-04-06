@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-import * as channels from '../protocol/channels';
-import { Dispatcher, DispatcherScope } from './dispatcher';
-import * as fs from 'fs';
+import type * as channels from '../protocol/channels';
+import type { DispatcherScope } from './dispatcher';
+import { Dispatcher } from './dispatcher';
+import type * as fs from 'fs';
 import { createGuid } from '../utils/utils';
 
 export class WritableStreamDispatcher extends Dispatcher<{ guid: string, stream: fs.WriteStream }, channels.WritableStreamChannel> implements channels.WritableStreamChannel {

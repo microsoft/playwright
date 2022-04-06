@@ -15,13 +15,15 @@
  */
 
 import { Browser } from '../server/browser';
-import * as channels from '../protocol/channels';
+import type * as channels from '../protocol/channels';
 import { BrowserContextDispatcher } from './browserContextDispatcher';
 import { CDPSessionDispatcher } from './cdpSessionDispatcher';
-import { Dispatcher, DispatcherScope } from './dispatcher';
-import { CRBrowser } from '../server/chromium/crBrowser';
-import { PageDispatcher } from './pageDispatcher';
-import { CallMetadata, serverSideCallMetadata } from '../server/instrumentation';
+import type { DispatcherScope } from './dispatcher';
+import { Dispatcher } from './dispatcher';
+import type { CRBrowser } from '../server/chromium/crBrowser';
+import type { PageDispatcher } from './pageDispatcher';
+import type { CallMetadata } from '../server/instrumentation';
+import { serverSideCallMetadata } from '../server/instrumentation';
 import { BrowserContext } from '../server/browserContext';
 import { Selectors } from '../server/selectors';
 

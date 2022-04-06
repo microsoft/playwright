@@ -16,17 +16,18 @@
 
 import path from 'path';
 import fs from 'fs';
-import stream from 'stream';
+import type stream from 'stream';
 import removeFolder from 'rimraf';
 import * as crypto from 'crypto';
 import os from 'os';
 import http from 'http';
 import https from 'https';
-import { spawn, SpawnOptions, execSync } from 'child_process';
+import type { SpawnOptions } from 'child_process';
+import { spawn, execSync } from 'child_process';
 import { getProxyForUrl } from 'proxy-from-env';
 import * as URL from 'url';
 import { getUbuntuVersionSync, parseOSReleaseText } from './ubuntuVersion';
-import { NameValue } from '../protocol/channels';
+import type { NameValue } from '../protocol/channels';
 import ProgressBar from 'progress';
 
 // `https-proxy-agent` v5 is written in TypeScript and exposes generated types.

@@ -14,14 +14,17 @@
  * limitations under the License.
  */
 
-import { Frame, NavigationEvent } from '../server/frames';
-import * as channels from '../protocol/channels';
-import { Dispatcher, DispatcherScope, lookupNullableDispatcher, existingDispatcher } from './dispatcher';
+import type { NavigationEvent } from '../server/frames';
+import { Frame } from '../server/frames';
+import type * as channels from '../protocol/channels';
+import type { DispatcherScope } from './dispatcher';
+import { Dispatcher, lookupNullableDispatcher, existingDispatcher } from './dispatcher';
 import { ElementHandleDispatcher } from './elementHandlerDispatcher';
 import { parseArgument, serializeResult } from './jsHandleDispatcher';
-import { ResponseDispatcher, RequestDispatcher } from './networkDispatchers';
-import { CallMetadata } from '../server/instrumentation';
-import { WritableStreamDispatcher } from './writableStreamDispatcher';
+import type { ResponseDispatcher } from './networkDispatchers';
+import { RequestDispatcher } from './networkDispatchers';
+import type { CallMetadata } from '../server/instrumentation';
+import type { WritableStreamDispatcher } from './writableStreamDispatcher';
 
 export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel> implements channels.FrameChannel {
   _type_Frame = true;

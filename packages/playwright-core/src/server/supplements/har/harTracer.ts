@@ -15,13 +15,15 @@
  */
 
 import { BrowserContext } from '../../browserContext';
-import { APIRequestContext, APIRequestEvent, APIRequestFinishedEvent } from '../../fetch';
+import type { APIRequestEvent, APIRequestFinishedEvent } from '../../fetch';
+import { APIRequestContext } from '../../fetch';
 import { helper } from '../../helper';
 import * as network from '../../network';
 import { Page } from '../../page';
-import * as har from './har';
+import type * as har from './har';
 import { calculateSha1, monotonicTime } from '../../../utils/utils';
-import { eventsHelper, RegisteredListener } from '../../../utils/eventsHelper';
+import type { RegisteredListener } from '../../../utils/eventsHelper';
+import { eventsHelper } from '../../../utils/eventsHelper';
 import * as mime from 'mime';
 import { ManualPromise } from '../../../utils/async';
 

@@ -16,15 +16,16 @@
 
 /* eslint-disable no-console */
 
-import { Command } from 'commander';
+import type { Command } from 'commander';
 import fs from 'fs';
 import url from 'url';
 import path from 'path';
 import os from 'os';
 import type { Config } from './types';
-import { Runner, builtInReporters, BuiltInReporter, kDefaultConfigFiles } from './runner';
+import type { BuiltInReporter } from './runner';
+import { Runner, builtInReporters, kDefaultConfigFiles } from './runner';
 import { stopProfiling, startProfiling } from './profiler';
-import { FilePatternFilter } from './util';
+import type { FilePatternFilter } from './util';
 import { showHTMLReport } from './reporters/html';
 import { GridServer } from 'playwright-core/lib/grid/gridServer';
 import dockerFactory from 'playwright-core/lib/grid/dockerGridFactory';

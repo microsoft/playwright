@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-import * as channels from '../protocol/channels';
-import { Dispatcher, DispatcherScope } from './dispatcher';
+import type * as channels from '../protocol/channels';
+import type { DispatcherScope } from './dispatcher';
+import { Dispatcher } from './dispatcher';
 import { createGuid } from '../utils/utils';
 import { serializeError } from '../protocol/serializers';
 

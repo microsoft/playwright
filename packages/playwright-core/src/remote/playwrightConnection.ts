@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 
-import WebSocket from 'ws';
-import { DispatcherConnection, DispatcherScope, Root } from '../dispatchers/dispatcher';
+import type WebSocket from 'ws';
+import type { DispatcherScope } from '../dispatchers/dispatcher';
+import { DispatcherConnection, Root } from '../dispatchers/dispatcher';
 import { PlaywrightDispatcher } from '../dispatchers/playwrightDispatcher';
 import { Browser } from '../server/browser';
 import { serverSideCallMetadata } from '../server/instrumentation';
-import { createPlaywright, Playwright } from '../server/playwright';
+import type { Playwright } from '../server/playwright';
+import { createPlaywright } from '../server/playwright';
 import { gracefullyCloseAll } from '../utils/processLauncher';
 import { registry } from '../utils/registry';
 import { SocksProxy } from '../utils/socksProxy';

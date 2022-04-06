@@ -15,16 +15,17 @@
  */
 
 import debug from 'debug';
-import * as types from '../types';
+import type * as types from '../types';
 import { EventEmitter } from 'events';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import * as stream from 'stream';
+import type * as stream from 'stream';
 import * as ws from 'ws';
 import { createGuid, makeWaitForNextTask, removeFolders } from '../../utils/utils';
-import { BrowserOptions, BrowserProcess, PlaywrightOptions } from '../browser';
-import { BrowserContext, validateBrowserContextOptions } from '../browserContext';
+import type { BrowserOptions, BrowserProcess, PlaywrightOptions } from '../browser';
+import type { BrowserContext } from '../browserContext';
+import { validateBrowserContextOptions } from '../browserContext';
 import { ProgressController } from '../progress';
 import { CRBrowser } from '../chromium/crBrowser';
 import { helper } from '../helper';
@@ -32,7 +33,7 @@ import { PipeTransport } from '../../protocol/transport';
 import { RecentLogsCollector } from '../../utils/debugLogger';
 import { gracefullyCloseSet } from '../../utils/processLauncher';
 import { TimeoutSettings } from '../../utils/timeoutSettings';
-import { AndroidWebView } from '../../protocol/channels';
+import type { AndroidWebView } from '../../protocol/channels';
 import { SdkObject, serverSideCallMetadata } from '../instrumentation';
 
 const ARTIFACTS_FOLDER = path.join(os.tmpdir(), 'playwright-artifacts-');

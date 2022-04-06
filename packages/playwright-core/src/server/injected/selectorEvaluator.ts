@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { CSSComplexSelector, CSSSimpleSelector, CSSComplexSelectorList, CSSFunctionArgument } from '../common/cssParser';
+import type { CSSComplexSelector, CSSSimpleSelector, CSSComplexSelectorList, CSSFunctionArgument } from '../common/cssParser';
 import { customCSSNames } from '../common/selectorParser';
 
 export type QueryContext = {

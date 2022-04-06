@@ -15,28 +15,33 @@
  * limitations under the License.
  */
 
-import * as dom from './dom';
+import type * as dom from './dom';
 import * as frames from './frames';
 import * as input from './input';
 import * as js from './javascript';
 import * as network from './network';
-import { Screenshotter, ScreenshotOptions } from './screenshotter';
+import type { ScreenshotOptions } from './screenshotter';
+import { Screenshotter } from './screenshotter';
 import { TimeoutSettings } from '../utils/timeoutSettings';
-import * as types from './types';
+import type * as types from './types';
 import { BrowserContext } from './browserContext';
 import { ConsoleMessage } from './console';
 import * as accessibility from './accessibility';
 import { FileChooser } from './fileChooser';
-import { Progress, ProgressController } from './progress';
+import type { Progress } from './progress';
+import { ProgressController } from './progress';
 import { assert, isError } from '../utils/utils';
 import { ManualPromise } from '../utils/async';
 import { debugLogger } from '../utils/debugLogger';
-import { getComparator, ImageComparatorOptions } from '../utils/comparators';
-import { SelectorInfo, Selectors } from './selectors';
-import { CallMetadata, SdkObject } from './instrumentation';
-import { Artifact } from './artifact';
-import { TimeoutOptions } from '../common/types';
-import { isInvalidSelectorError, ParsedSelector } from './common/selectorParser';
+import type { ImageComparatorOptions } from '../utils/comparators';
+import { getComparator } from '../utils/comparators';
+import type { SelectorInfo, Selectors } from './selectors';
+import type { CallMetadata } from './instrumentation';
+import { SdkObject } from './instrumentation';
+import type { Artifact } from './artifact';
+import type { TimeoutOptions } from '../common/types';
+import type { ParsedSelector } from './common/selectorParser';
+import { isInvalidSelectorError } from './common/selectorParser';
 
 export interface PageDelegate {
   readonly rawMouse: input.RawMouse;

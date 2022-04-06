@@ -25,7 +25,8 @@ import debug from 'debug';
 import { calculateSha1, isRegExp } from 'playwright-core/lib/utils/utils';
 import { isInternalFileName } from 'playwright-core/lib/utils/stackTrace';
 import { currentTestInfo } from './globals';
-import { captureStackTrace as coreCaptureStackTrace, ParsedStackTrace } from 'playwright-core/lib/utils/stackTrace';
+import type { ParsedStackTrace } from 'playwright-core/lib/utils/stackTrace';
+import { captureStackTrace as coreCaptureStackTrace } from 'playwright-core/lib/utils/stackTrace';
 
 export type { ParsedStackTrace };
 

@@ -19,7 +19,8 @@ import type * as trace from '@playwright-core/server/trace/common/traceEvents';
 import type zip from '@zip.js/zip.js';
 // @ts-ignore
 import zipImport from '@zip.js/zip.js/dist/zip-no-worker-inflate.min.js';
-import { ContextEntry, createEmptyContext, PageEntry } from './entries';
+import type { ContextEntry, PageEntry } from './entries';
+import { createEmptyContext } from './entries';
 import { BaseSnapshotStorage } from './snapshotStorage';
 
 const zipjs = zipImport as typeof zip;

@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { Route } from 'playwright-core';
+import type { Route } from 'playwright-core';
 import { test as it, expect } from './pageTest';
 
 it('should intercept @smoke', async ({ page, server }) => {

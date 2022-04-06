@@ -14,28 +14,33 @@
  * limitations under the License.
  */
 
-import { EventEmitter } from 'events';
+import type { EventEmitter } from 'events';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import yazl from 'yazl';
-import { NameValue } from '../../../common/types';
-import { commandsWithTracingSnapshots, TracingTracingStopChunkParams } from '../../../protocol/channels';
+import type { NameValue } from '../../../common/types';
+import type { TracingTracingStopChunkParams } from '../../../protocol/channels';
+import { commandsWithTracingSnapshots } from '../../../protocol/channels';
 import { ManualPromise } from '../../../utils/async';
-import { eventsHelper, RegisteredListener } from '../../../utils/eventsHelper';
+import type { RegisteredListener } from '../../../utils/eventsHelper';
+import { eventsHelper } from '../../../utils/eventsHelper';
 import { assert, calculateSha1, createGuid, mkdirIfNeeded, monotonicTime, removeFolders } from '../../../utils/utils';
 import { Artifact } from '../../artifact';
 import { BrowserContext } from '../../browserContext';
 import { ElementHandle } from '../../dom';
-import { APIRequestContext } from '../../fetch';
-import { CallMetadata, InstrumentationListener, SdkObject } from '../../instrumentation';
+import type { APIRequestContext } from '../../fetch';
+import type { CallMetadata, InstrumentationListener } from '../../instrumentation';
+import { SdkObject } from '../../instrumentation';
 import { Page } from '../../page';
-import * as har from '../../supplements/har/har';
-import { HarTracer, HarTracerDelegate } from '../../supplements/har/harTracer';
-import { FrameSnapshot } from '../common/snapshotTypes';
-import * as trace from '../common/traceEvents';
+import type * as har from '../../supplements/har/har';
+import type { HarTracerDelegate } from '../../supplements/har/harTracer';
+import { HarTracer } from '../../supplements/har/harTracer';
+import type { FrameSnapshot } from '../common/snapshotTypes';
+import type * as trace from '../common/traceEvents';
 import { VERSION } from '../common/traceEvents';
-import { Snapshotter, SnapshotterBlob, SnapshotterDelegate } from './snapshotter';
+import type { SnapshotterBlob, SnapshotterDelegate } from './snapshotter';
+import { Snapshotter } from './snapshotter';
 
 export type TracerOptions = {
   name?: string;

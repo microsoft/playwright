@@ -15,7 +15,7 @@
  */
 
 import { TimeoutError } from '../utils/errors';
-import { SerializedError, SerializedValue } from './channels';
+import type { SerializedError, SerializedValue } from './channels';
 
 export function serializeError(e: any): SerializedError {
   if (isError(e))
