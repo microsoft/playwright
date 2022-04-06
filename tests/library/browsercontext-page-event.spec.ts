@@ -199,3 +199,31 @@ it('should not hang on ctrl-click during provisional load', async ({ context, pa
   ]);
   expect(popup).toBeTruthy();
 });
+
+it('should work with javascript-src-frame', async ({ browser, server }) => {
+  const context = await browser.newContext();
+  const page = await context.newPage();
+
+  await page.goto(server.PREFIX + '/javascript-src-frame.html', { waitUntil: 'commit' });
+
+  await page.waitForLoadState('networkidle');
+  await page.waitForLoadState('domcontentloaded');
+  await page.waitForLoadState('load');
+
+  expect(page.url()).not.toBe('');
+  await context.close();
+});
+
+it('should work with data-src-frame', async ({ browser, server }) => {
+  const context = await browser.newContext();
+  const page = await context.newPage();
+
+  await page.goto(server.PREFIX + '/data-src-frame.html', { waitUntil: 'commit' });
+
+  await page.waitForLoadState('networkidle');
+  await page.waitForLoadState('domcontentloaded');
+  await page.waitForLoadState('load');
+
+  expect(page.url()).not.toBe('');
+  await context.close();
+});

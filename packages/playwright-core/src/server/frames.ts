@@ -551,7 +551,9 @@ export class Frame extends SdkObject {
       // We require a particular lifecycle event to be fired in the whole
       // frame subtree, and then consider it done.
       for (const event of events) {
-        if (!child._subtreeLifecycleEvents.has(event))
+        // Wait for commit in the subframe with non-url src instead of other events
+        // <iframe src="javascript:false"></iframe> <iframe src="data:text/html"></iframe>
+        if (!child._subtreeLifecycleEvents.has(child._url === '' ? 'commit' : event))
           events.delete(event);
       }
     }
