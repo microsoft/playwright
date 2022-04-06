@@ -214,7 +214,7 @@ export class WorkerRunner extends EventEmitter {
           const error = result.error instanceof Error ? serializeError(result.error) : result.error;
           const payload: StepEndPayload = {
             testId: test._id,
-            refinedTitle: result.refinedTitle,
+            refinedTitle: step.refinedTitle,
             stepId,
             wallTime: Date.now(),
             error,

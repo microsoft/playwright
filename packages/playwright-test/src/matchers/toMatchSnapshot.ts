@@ -110,6 +110,7 @@ class SnapshotHelper<T extends ImageComparatorOptions> {
       }
     }
 
+    testInfo.currentStep!.refinedTitle = `${testInfo.currentStep!.title}(${path.basename(this.snapshotName)})`;
     options = {
       ...configOptions,
       ...options,
@@ -148,23 +149,19 @@ class SnapshotHelper<T extends ImageComparatorOptions> {
     this.kind = this.mimeType.startsWith('image/') ? 'Screenshot' : 'Snapshot';
   }
 
-  decorateTitle(result: SyncExpectationResult): SyncExpectationResult & { titleSuffix: string } {
-    return { ...result, titleSuffix: `(${path.basename(this.snapshotName)})` };
-  }
-
   handleMissingNegated() {
     const isWriteMissingMode = this.updateSnapshots === 'all' || this.updateSnapshots === 'missing';
     const message = `${this.snapshotPath} is missing in snapshots${isWriteMissingMode ? ', matchers using ".not" won\'t write them automatically.' : '.'}`;
-    return this.decorateTitle({
+    return {
       // NOTE: 'isNot' matcher implies inversed value.
       pass: true,
       message: () => message,
-    });
+    };
   }
 
   handleDifferentNegated() {
     // NOTE: 'isNot' matcher implies inversed value.
-    return this.decorateTitle({ pass: false, message: () => '' });
+    return { pass: false, message: () => '' };
   }
 
   handleMatchingNegated() {
@@ -174,7 +171,7 @@ class SnapshotHelper<T extends ImageComparatorOptions> {
       indent('Expected result should be different from the actual one.', '  '),
     ].join('\n');
     // NOTE: 'isNot' matcher implies inversed value.
-    return this.decorateTitle({ pass: true, message: () => message });
+    return { pass: true, message: () => message };
   }
 
   handleMissing(actual: Buffer | string) {
@@ -187,13 +184,13 @@ class SnapshotHelper<T extends ImageComparatorOptions> {
     if (this.updateSnapshots === 'all') {
       /* eslint-disable no-console */
       console.log(message);
-      return this.decorateTitle({ pass: true, message: () => message });
+      return { pass: true, message: () => message };
     }
     if (this.updateSnapshots === 'missing') {
       this.testInfo._failWithError(serializeError(new Error(message)), false /* isHardError */);
-      return this.decorateTitle({ pass: true, message: () => '' });
+      return { pass: true, message: () => '' };
     }
-    return this.decorateTitle({ pass: false, message: () => message });
+    return { pass: false, message: () => message };
   }
 
   handleDifferent(
@@ -235,11 +232,11 @@ class SnapshotHelper<T extends ImageComparatorOptions> {
       this.testInfo.attachments.push({ name: addSuffixToFilePath(this.snapshotName, '-diff'), contentType: this.mimeType, path: this.diffPath });
       output.push(`    Diff: ${colors.yellow(this.diffPath)}`);
     }
-    return this.decorateTitle({ pass: false, message: () => output.join('\n'), });
+    return { pass: false, message: () => output.join('\n'), };
   }
 
   handleMatching() {
-    return this.decorateTitle({ pass: true, message: () => '' });
+    return { pass: true, message: () => '' };
   }
 }
 
@@ -248,7 +245,7 @@ export function toMatchSnapshot(
   received: Buffer | string,
   nameOrOptions: NameOrSegments | { name?: NameOrSegments } & ImageComparatorOptions = {},
   optOptions: ImageComparatorOptions = {}
-): SyncExpectationResult & { titleSuffix: string } {
+): SyncExpectationResult {
   const testInfo = currentTestInfo();
   if (!testInfo)
     throw new Error(`toMatchSnapshot() must be called during the test`);
@@ -278,7 +275,7 @@ export function toMatchSnapshot(
     writeFileSync(helper.snapshotPath, received);
     /* eslint-disable no-console */
     console.log(helper.snapshotPath + ' does not match, writing actual.');
-    return helper.decorateTitle({ pass: true, message: () => helper.snapshotPath + ' running with --update-snapshots, writing actual.' });
+    return { pass: true, message: () => helper.snapshotPath + ' running with --update-snapshots, writing actual.' };
   }
 
   return helper.handleDifferent(received, expected, undefined, result.diff, result.errorMessage, undefined);

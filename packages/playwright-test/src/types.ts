@@ -27,12 +27,13 @@ export type FixturesWithLocation = {
 export type Annotation = { type: string, description?: string };
 
 export interface TestStepInternal {
-  complete(result: { refinedTitle?: string, error?: Error | TestError }): void;
+  complete(result: { error?: Error | TestError }): void;
   title: string;
   category: string;
   canHaveChildren: boolean;
   forceNoParent: boolean;
   location?: Location;
+  refinedTitle?: string;
 }
 
 /**
