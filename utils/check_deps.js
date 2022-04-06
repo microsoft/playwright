@@ -137,7 +137,6 @@ async function innerCheckDeps(root, checkDepsFile, checkPackageJson) {
   }
 
   function allowImport(from, to) {
-    const fff = from;
     const fromDirectory = path.dirname(from);
     const toDirectory = path.dirname(to);
     if (fromDirectory === toDirectory)
