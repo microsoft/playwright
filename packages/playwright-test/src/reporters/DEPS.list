@@ -1,0 +1,4 @@
+[*]
+../types.ts
+../util.ts
+../../types/testReporter.d.ts

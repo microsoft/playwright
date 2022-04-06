@@ -1,0 +1,5 @@
+[*]
+../../
+../../../generated/
+../../../utils/
+../../chromium/crApp.ts
