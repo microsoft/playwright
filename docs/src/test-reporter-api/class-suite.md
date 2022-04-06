@@ -71,4 +71,4 @@ Returns a list of titles from the root down to this suite.
   - `path` <[void]|[string]> Optional path on the filesystem to the attached file.
   - `body` <[void]|[Buffer]> Optional attachment body used instead of a file.
 
-The list of files or buffers attached to the overall test run. See [`method: GlobalInfo.attach`] to populate this.
+The list of files or buffers attached to the suite. Root suite has attachments populated by [`method: GlobalInfo.attach`].
