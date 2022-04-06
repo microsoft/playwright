@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { GridAgentLaunchOptions, GridFactory } from './gridServer';
+import type { GridAgentLaunchOptions, GridFactory } from './gridServer';
 import https from 'https';
 import debug from 'debug';
 
