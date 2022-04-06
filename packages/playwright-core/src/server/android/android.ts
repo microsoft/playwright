@@ -258,7 +258,7 @@ export class AndroidDevice extends SdkObject {
     const webView = this._webViews.get(socketName);
     if (!webView)
       throw new Error('WebView has been closed');
-    return await this._connectToBrowser(socketName, { hasTouch: true });
+    return await this._connectToBrowser(socketName);
   }
 
   private async _connectToBrowser(socketName: string, options: types.BrowserContextOptions = {}): Promise<BrowserContext> {
@@ -348,7 +348,6 @@ export class AndroidDevice extends SdkObject {
     if (this._isClosed)
       return;
 
-    const newPids = new Set<number>();
     const socketNames = new Set<string>();
     for (const line of sockets) {
       const match = line.match(/[^@]+@.*?webview_devtools_remote_?(\d*)/);
@@ -359,11 +358,13 @@ export class AndroidDevice extends SdkObject {
 
       const socketName = matchSocketName[1];
       socketNames.add(socketName);
+
+      if (this._webViews.has(socketName))
+          continue;
+
       // possible line: 0000000000000000: 00000002 00000000 00010000 0001 01 5841881 @webview_devtools_remote_zeus
       // the result: match[1] = ''
       if (!match || !match[1]) {
-        if (this._webViews.has(socketName))
-          continue;
         const webView = { pid: -1, pkg: '', socketName };
         this._webViews.set(socketName, webView);
         this.emit(AndroidDevice.Events.WebViewAdded, webView);
@@ -371,27 +372,20 @@ export class AndroidDevice extends SdkObject {
       }
 
       const pid = +match[1];
-      if (!newPids.has(pid)) {
-        if (this._webViews.has(socketName))
+      const procs = (await this._backend.runCommand(`shell:ps -A | grep ${pid}`)).toString().split('\n');
+      if (this._isClosed)
+        return;
+      let pkg = '';
+      for (const proc of procs) {
+        const match = proc.match(/[^\s]+\s+(\d+).*$/);
+        if (!match)
           continue;
-
-        const procs = (await this._backend.runCommand(`shell:ps -A | grep ${pid}`)).toString().split('\n');
-        if (this._isClosed)
-          return;
-        let pkg = '';
-        for (const proc of procs) {
-          const match = proc.match(/[^\s]+\s+(\d+).*$/);
-          if (!match)
-            continue;
-          pkg = proc.substring(proc.lastIndexOf(' ') + 1);
-        }
-        const webView = { pid, pkg, socketName };
-        this._webViews.set(socketName, webView);
-
-        this.emit(AndroidDevice.Events.WebViewAdded, webView);
+        pkg = proc.substring(proc.lastIndexOf(' ') + 1);
       }
+      const webView = { pid, pkg, socketName };
+      this._webViews.set(socketName, webView);
 
-      newPids.add(pid);
+      this.emit(AndroidDevice.Events.WebViewAdded, webView);
     }
     for (const p of this._webViews.keys()) {
       if (!socketNames.has(p)) {
