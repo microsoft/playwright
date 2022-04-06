@@ -172,7 +172,7 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
       // Force kill the browser.
       try {
         if (process.platform === 'win32') {
-          const taskkillProcess = childProcess.spawnSync(`chcp 65001>nul&&taskkill /pid ${spawnedProcess.pid} /T /F /FI "MEMUSAGE gt 0"`, { shell: true });
+          const taskkillProcess = childProcess.spawnSync(`chcp 65001>nul&&taskkill /pid ${spawnedProcess.pid} /T /F`, { shell: true });
           const [stdout, stderr] = [taskkillProcess.stdout.toString(), taskkillProcess.stderr.toString()];
           if (stdout)
             options.log(`[pid=${spawnedProcess.pid}] taskkill stdout: ${stdout}`);
