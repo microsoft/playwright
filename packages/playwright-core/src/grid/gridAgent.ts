@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-import debug from 'debug';
-import WebSocket from 'ws';
+import debug from '../externalDeps/debug';
+import path from 'path';
+import WebSocket from '../externalDeps/ws';
 import { fork } from 'child_process';
 import { getPlaywrightVersion } from '../utils/utils';
 
@@ -28,7 +29,7 @@ export function launchGridAgent(agentId: string, gridURL: string) {
   const ws = new WebSocket(gridURL.replace('http://', 'ws://') + `/registerAgent?` + params.toString());
   ws.on('message', (workerId: string) => {
     log('Worker requested ' + workerId);
-    fork(require.resolve('./gridWorker.js'), [gridURL, agentId, workerId], { detached: true });
+    fork(path.join(__dirname, './gridWorker.js'), [gridURL, agentId, workerId], { detached: true });
   });
   ws.on('close', () => process.exit(0));
 }

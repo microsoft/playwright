@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import WebSocket from 'ws';
+import WebSocket from '../externalDeps/ws';
 import { DispatcherConnection, DispatcherScope, Root } from '../dispatchers/dispatcher';
 import { PlaywrightDispatcher } from '../dispatchers/playwrightDispatcher';
 import { Browser } from '../server/browser';

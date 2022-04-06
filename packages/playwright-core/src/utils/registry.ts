@@ -19,7 +19,7 @@ import * as os from 'os';
 import path from 'path';
 import * as util from 'util';
 import * as fs from 'fs';
-import lockfile from 'proper-lockfile';
+import lockfile from '../externalDeps/proper-lockfile';
 import { getUbuntuVersion } from './ubuntuVersion';
 import { getFromENV, getAsBooleanFromENV, getClientLanguage, calculateSha1, removeFolders, existsAsync, hostPlatform, canAccessFile, spawnAsync, fetchData, wrapInASCIIBox, transformCommandsForRoot } from './utils';
 import { DependencyGroup, installDependenciesLinux, installDependenciesWindows, validateDependenciesLinux, validateDependenciesWindows } from './dependencies';

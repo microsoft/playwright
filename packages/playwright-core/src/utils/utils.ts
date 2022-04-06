@@ -17,26 +17,18 @@
 import path from 'path';
 import fs from 'fs';
 import stream from 'stream';
-import removeFolder from 'rimraf';
+import removeFolder from '../externalDeps/rimraf';
 import * as crypto from 'crypto';
 import os from 'os';
 import http from 'http';
 import https from 'https';
 import { spawn, SpawnOptions, execSync } from 'child_process';
-import { getProxyForUrl } from 'proxy-from-env';
+import { getProxyForUrl } from '../externalDeps/proxy-from-env';
 import * as URL from 'url';
 import { getUbuntuVersionSync, parseOSReleaseText } from './ubuntuVersion';
 import { NameValue } from '../protocol/channels';
-import ProgressBar from 'progress';
-
-// `https-proxy-agent` v5 is written in TypeScript and exposes generated types.
-// However, as of June 2020, its types are generated with tsconfig that enables
-// `esModuleInterop` option.
-//
-// As a result, we can't depend on the package unless we enable the option
-// for our codebase. Instead of doing this, we abuse "require" to import module
-// without types.
-const ProxyAgent = require('https-proxy-agent');
+import ProgressBar from '../externalDeps/progress';
+import { HttpsProxyAgent } from '../externalDeps/https-proxy-agent';
 
 export const existsAsync = (path: string): Promise<boolean> => new Promise(resolve => fs.stat(path, err => resolve(!err)));
 
@@ -67,7 +59,7 @@ function httpRequest(params: HTTPRequestParams, onResponse: (r: http.IncomingMes
       const parsedProxyURL = URL.parse(proxyURL);
       (parsedProxyURL as any).secureProxy = parsedProxyURL.protocol === 'https:';
 
-      options.agent = new ProxyAgent(parsedProxyURL);
+      options.agent = new HttpsProxyAgent(parsedProxyURL);
       options.rejectUnauthorized = false;
     }
   }

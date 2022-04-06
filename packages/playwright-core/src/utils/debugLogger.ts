@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import debug from 'debug';
+import debug from '../externalDeps/debug';
 import fs from 'fs';
 
 const debugLoggerColorMap = {

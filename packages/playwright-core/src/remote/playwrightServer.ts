@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import debug from 'debug';
+import debug from '../externalDeps/debug';
 import * as http from 'http';
-import WebSocket from 'ws';
+import WebSocket from '../externalDeps/ws';
 import { Browser } from '../server/browser';
 import { PlaywrightConnection } from './playwrightConnection';
 

@@ -22,7 +22,7 @@ import { Page } from '../../page';
 import * as har from './har';
 import { calculateSha1, monotonicTime } from '../../../utils/utils';
 import { eventsHelper, RegisteredListener } from '../../../utils/eventsHelper';
-import * as mime from 'mime';
+import mime from '../../../externalDeps/mime';
 import { ManualPromise } from '../../../utils/async';
 
 const FALLBACK_HTTP_VERSION = 'HTTP/1.1';

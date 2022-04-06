@@ -22,7 +22,7 @@ import { EventEmitter } from 'events';
 import { serverSideCallMetadata } from '../../instrumentation';
 import type { CallLog, EventData, Mode, Source } from './recorderTypes';
 import { isUnderTest } from '../../../utils/utils';
-import * as mime from 'mime';
+import mime from 'mime';
 import { installAppIcon } from '../../chromium/crApp';
 import { findChromiumChannel } from '../../../utils/registry';
 
@@ -70,7 +70,7 @@ export class RecorderApp extends EventEmitter implements IRecorderApp {
     await this._page._setServerRequestInterceptor(async route => {
       if (route.request().url().startsWith('https://playwright/')) {
         const uri = route.request().url().substring('https://playwright/'.length);
-        const file = require.resolve('../../../webpack/recorder/' + uri);
+        const file = path.join(__dirname, '../webpack/recorder/' + uri);
         const buffer = await fs.promises.readFile(file);
         await route.fulfill({
           status: 200,

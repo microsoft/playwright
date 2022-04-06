@@ -37,7 +37,7 @@
   "bin": {
     "playwright": "./cli.js"
   },
-  "dependencies": {
+  "devDependencies": {
     "commander": "8.3.0",
     "colors": "1.4.0",
     "debug": "4.3.3",

@@ -15,13 +15,12 @@
  * limitations under the License.
  */
 
-import colors from 'colors/safe';
-import jpeg from 'jpeg-js';
-import pixelmatch from 'pixelmatch';
+import colors from '../externalDeps/colors';
+import jpeg from '../externalDeps/jpeg-js';
+import { PNG } from '../externalDeps/pngjs';
+import pixelmatch from '../externalDeps/pixelmatch';
 import { diff_match_patch, DIFF_INSERT, DIFF_DELETE, DIFF_EQUAL } from '../third_party/diff_match_patch';
 
-// Note: we require the pngjs version of pixelmatch to avoid version mismatches.
-const { PNG } = require(require.resolve('pngjs', { paths: [require.resolve('pixelmatch')] })) as typeof import('pngjs');
 
 export type ImageComparatorOptions = { threshold?: number, maxDiffPixels?: number, maxDiffPixelRatio?: number };
 export type ComparatorResult = { diff?: Buffer; errorMessage: string; } | null;

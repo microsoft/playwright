@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-import debug from 'debug';
+import debug from '../../externalDeps/debug';
 import * as types from '../types';
 import { EventEmitter } from 'events';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import * as stream from 'stream';
-import * as ws from 'ws';
+import ws from '../../externalDeps/ws';
 import { createGuid, makeWaitForNextTask, removeFolders } from '../../utils/utils';
 import { BrowserOptions, BrowserProcess, PlaywrightOptions } from '../browser';
 import { BrowserContext, validateBrowserContextOptions } from '../browserContext';

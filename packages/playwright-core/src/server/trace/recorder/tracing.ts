@@ -18,7 +18,7 @@ import { EventEmitter } from 'events';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import yazl from 'yazl';
+import yazl from '../../../externalDeps/yazl';
 import { NameValue } from '../../../common/types';
 import { commandsWithTracingSnapshots, TracingTracingStopChunkParams } from '../../../protocol/channels';
 import { ManualPromise } from '../../../utils/async';

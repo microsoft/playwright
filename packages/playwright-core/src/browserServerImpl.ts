@@ -15,7 +15,7 @@
  */
 
 import { LaunchServerOptions, Logger } from './client/types';
-import { EventEmitter } from 'ws';
+import { EventEmitter } from './externalDeps/ws';
 import { BrowserServerLauncher, BrowserServer } from './client/browserType';
 import { envObjectToArray } from './client/clientHelper';
 import { createGuid } from './utils/utils';

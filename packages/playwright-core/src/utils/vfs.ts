@@ -17,7 +17,7 @@
 import path from 'path';
 import fs from 'fs';
 import stream from 'stream';
-import yauzl from 'yauzl';
+import yauzl from '../externalDeps/yauzl';
 
 export interface VirtualFileSystem {
   entries(): Promise<string[]>;

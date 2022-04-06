@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import extract from 'extract-zip';
+import extract from '../externalDeps/extract-zip';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';

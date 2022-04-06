@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import WebSocket from 'ws';
-import debug from 'debug';
+import WebSocket from '../externalDeps/ws';
+import debug from '../externalDeps/debug';
 import { DispatcherConnection, Root } from '../dispatchers/dispatcher';
 import { PlaywrightDispatcher } from '../dispatchers/playwrightDispatcher';
 import { createPlaywright } from '../server/playwright';

@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-import debug from 'debug';
+import debug from '../externalDeps/debug';
 import assert from 'assert';
 import { EventEmitter } from 'events';
 import { URL } from 'url';
-import WebSocket, { Server as WebSocketServer } from 'ws';
+import WebSocket, { Server as WebSocketServer } from '../externalDeps/ws';
 import { HttpServer } from '../utils/httpServer';
 import { createGuid, getPlaywrightVersion } from '../utils/utils';
 

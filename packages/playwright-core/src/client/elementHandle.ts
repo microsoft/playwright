@@ -21,7 +21,7 @@ import { JSHandle, serializeArgument, parseResult } from './jsHandle';
 import { ChannelOwner } from './channelOwner';
 import { SelectOption, FilePayload, Rect, SelectOptionOptions } from './types';
 import fs from 'fs';
-import * as mime from 'mime';
+import mime from '../externalDeps/mime';
 import path from 'path';
 import { assert, isString, mkdirIfNeeded } from '../utils/utils';
 import * as api from '../../types/types';

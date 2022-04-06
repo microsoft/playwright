@@ -17,8 +17,8 @@
 import * as http from 'http';
 import fs from 'fs';
 import path from 'path';
-import { Server as WebSocketServer } from 'ws';
-import * as mime from 'mime';
+import { Server as WebSocketServer } from '../externalDeps/ws';
+import mime from '../externalDeps/mime';
 import { assert } from './utils';
 import { VirtualFileSystem } from './vfs';
 

@@ -17,8 +17,8 @@
 import EventEmitter from 'events';
 import fs from 'fs';
 import path from 'path';
-import yauzl from 'yauzl';
-import yazl from 'yazl';
+import yauzl from '../externalDeps/yauzl';
+import yazl from '../externalDeps/yazl';
 import * as channels from '../protocol/channels';
 import { ManualPromise } from '../utils/async';
 import { assert, createGuid } from '../utils/utils';

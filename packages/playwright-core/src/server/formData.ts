@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import mime from 'mime';
+import mime from '../externalDeps/mime';
 import * as channels from '../protocol/channels';
 
 export class MultipartFormData {

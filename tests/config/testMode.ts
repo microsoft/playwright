@@ -16,7 +16,7 @@
 
 import { GridClient } from '../../packages/playwright-core/lib/grid/gridClient';
 import { start } from '../../packages/playwright-core/lib/outofprocess';
-import { Playwright } from '../../packages/playwright-core/lib/client/playwright';
+import type { Playwright } from '../../packages/playwright-core/src/client/playwright';
 
 export type TestModeName = 'default' | 'driver' | 'service' | 'service2';
 
@@ -41,7 +41,7 @@ export class DriverTestMode implements TestMode {
 }
 
 export class ServiceTestMode implements TestMode {
-  private _gridClient: GridClient;
+  private _gridClient: any;
 
   async setup() {
     this._gridClient = await GridClient.connect('ws://localhost:3333');

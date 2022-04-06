@@ -16,8 +16,8 @@
 
 import * as http from 'http';
 import * as https from 'https';
-import { HttpsProxyAgent } from 'https-proxy-agent';
-import { SocksProxyAgent } from 'socks-proxy-agent';
+import { HttpsProxyAgent } from '../externalDeps/https-proxy-agent';
+import { SocksProxyAgent } from '../externalDeps/socks-proxy-agent';
 import { pipeline, Readable, Transform, TransformCallback } from 'stream';
 import url from 'url';
 import zlib from 'zlib';

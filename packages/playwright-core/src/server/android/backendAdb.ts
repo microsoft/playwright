@@ -15,7 +15,7 @@
  */
 
 import assert from 'assert';
-import debug from 'debug';
+import debug from '../../externalDeps/debug';
 import * as types from '../types';
 import * as net from 'net';
 import { EventEmitter } from 'events';

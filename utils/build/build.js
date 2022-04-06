@@ -196,23 +196,24 @@ steps.push({
   shell: true,
 });
 
-// Run Babel.
-for (const pkg of workspace.packages()) {
-  if (!fs.existsSync(path.join(pkg.path, 'src')))
-    continue;
-  steps.push({
-    command: 'npx',
-    args: [
-      'babel',
-      ...(watchMode ? ['-w', '--source-maps'] : []),
-      '--extensions', '.ts',
-      '--out-dir', quotePath(path.join(pkg.path, 'lib')),
-      '--ignore', '"packages/playwright-core/src/server/injected/**/*"',
-      '--ignore', '"packages/playwright-core/src/server/supplements/injected/**/*"',
-      quotePath(path.join(pkg.path, 'src'))],
-    shell: true,
-  });
-}
+// build playwright-core
+steps.push({
+  command: 'node',
+  args: ['packages/playwright-core/build.js'],
+  shell: true,
+});
+
+// Build @playwright/test
+steps.push({
+  command: 'npx',
+  args: [
+    'babel',
+    ...(watchMode ? ['-w', '--source-maps'] : []),
+    '--extensions', '.ts',
+    '--out-dir', quotePath(path.join('packages/playwright-test', 'lib')),
+    quotePath(path.join('packages/playwright-test', 'src'))],
+  shell: true,
+});
 
 // Generate injected.
 onChanges.push({

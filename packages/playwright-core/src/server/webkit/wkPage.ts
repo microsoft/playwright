@@ -15,9 +15,9 @@
  * limitations under the License.
  */
 
-import * as jpeg from 'jpeg-js';
+import jpeg from '../../externalDeps/jpeg-js';
 import path from 'path';
-import * as png from 'pngjs';
+import png from '../../externalDeps/pngjs';
 import { splitErrorMessage } from '../../utils/stackTrace';
 import { assert, createGuid, debugAssert, headersArrayToObject, headersObjectToArray, hostPlatform } from '../../utils/utils';
 import * as accessibility from '../accessibility';
