@@ -187,67 +187,16 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
 
 export type TestStatus = 'passed' | 'failed' | 'timedOut' | 'skipped';
 
-export interface TestError {
-  message?: string;
-  stack?: string;
-  value?: string;
-}
-
 export interface WorkerInfo {
   config: FullConfig;
-  parallelIndex: number;
   project: FullProject;
-  workerIndex: number;
 }
 
 export interface TestInfo {
   config: FullConfig;
-  parallelIndex: number;
   project: FullProject;
-  workerIndex: number;
-
-  title: string;
-  titlePath: string[];
-  file: string;
-  line: number;
-  column: number;
-  fn: Function;
-
-  skip(): void;
-  skip(condition: boolean): void;
-  skip(condition: boolean, description: string): void;
-
-  fixme(): void;
-  fixme(condition: boolean): void;
-  fixme(condition: boolean, description: string): void;
-
-  fail(): void;
-  fail(condition: boolean): void;
-  fail(condition: boolean, description: string): void;
-
-  slow(): void;
-  slow(condition: boolean): void;
-  slow(condition: boolean, description: string): void;
-
-  setTimeout(timeout: number): void;
   expectedStatus: TestStatus;
-  timeout: number;
-  annotations: { type: string, description?: string }[];
-  attachments: { name: string, path?: string, body?: Buffer, contentType: string }[];
-  attach(name: string, options?: { contentType?: string, path?: string, body?: string | Buffer }): Promise<void>;
-  repeatEachIndex: number;
-  retry: number;
-  duration: number;
   status?: TestStatus;
-  error?: TestError;
-  errors: TestError[];
-  stdout: (string | Buffer)[];
-  stderr: (string | Buffer)[];
-  snapshotSuffix: string;
-  snapshotDir: string;
-  outputDir: string;
-  snapshotPath: (...pathSegments: string[]) => string;
-  outputPath: (...pathSegments: string[]) => string;
 }
 
 interface SuiteFunction {
@@ -280,15 +229,11 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
   fixme(condition: boolean, description?: string): void;
   fixme(callback: (args: TestArgs & WorkerArgs) => boolean, description?: string): void;
   fail(): void;
-  fail(condition: boolean): void;
-  fail(condition: boolean, description: string): void;
-  fail(callback: (args: TestArgs & WorkerArgs) => boolean): void;
-  fail(callback: (args: TestArgs & WorkerArgs) => boolean, description: string): void;
+  fail(condition: boolean, description?: string): void;
+  fail(callback: (args: TestArgs & WorkerArgs) => boolean, description?: string): void;
   slow(): void;
-  slow(condition: boolean): void;
-  slow(condition: boolean, description: string): void;
-  slow(callback: (args: TestArgs & WorkerArgs) => boolean): void;
-  slow(callback: (args: TestArgs & WorkerArgs) => boolean, description: string): void;
+  slow(condition: boolean, description?: string): void;
+  slow(callback: (args: TestArgs & WorkerArgs) => boolean, description?: string): void;
   setTimeout(timeout: number): void;
   beforeEach(inner: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<any> | any): void;
   afterEach(inner: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<any> | any): void;

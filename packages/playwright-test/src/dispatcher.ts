@@ -239,7 +239,6 @@ export class Dispatcher {
         duration: -1,
         steps: [],
         location: params.location,
-        data: {},
       };
       steps.set(params.stepId, step);
       (parentStep || result).steps.push(step);
