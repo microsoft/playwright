@@ -1,7 +1,7 @@
 # class: GlobalInfo
 * langs: js
 
-`GlobalInfo` contains information on the overall test run. The information spans projects and tests.
+`GlobalInfo` contains information on the overall test run. The information spans projects and tests. Some reporters show global info.
 
 You can write to GlobalInfo via your Global Setup hook, and read from it in a [Custom Reporter](../test-reporters.md):
 

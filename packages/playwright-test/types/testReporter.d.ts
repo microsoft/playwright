@@ -85,9 +85,8 @@ export interface Suite {
    */
   tests: TestCase[];
   /**
-   * The list of files or buffers attached to the overall test run. See
-   * [globalInfo.attach(name[, options])](https://playwright.dev/docs/api/class-globalinfo#global-info-attach) to populate
-   * this.
+   * The list of files or buffers attached to the suite. Root suite has attachments populated by
+   * [globalInfo.attach(name[, options])](https://playwright.dev/docs/api/class-globalinfo#global-info-attach).
    */
   attachments: { name: string, path?: string, body?: Buffer, contentType: string }[];
   /**
