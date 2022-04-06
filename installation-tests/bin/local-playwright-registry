@@ -218,7 +218,7 @@ const waitForReady = async () => {
 const kill = async () => {
     const pid = await fs.promises.readFile(PID_FILE);
     process.kill(Number.parseInt(pid, 10));
-    await fs.promises.rm(PID_FILE, { force: true }).catch(() => { });
+    await fs.promises.unlink(PID_FILE).catch(() => { });
 };
 
 const assertLocalPkg = async (pkg) => {
