@@ -263,7 +263,7 @@ export class GridServer {
     this._wsServer.on('connection', async (ws, request) => {
       if (request.url?.startsWith(this._securePath('/claimWorker'))) {
         const params = new URL('http://localhost/' + request.url).searchParams;
-        const version = params.get('pwVersion') || request.headers['x-playwright-version'];
+        const version = params.get('pwVersion');
         if (version !== this._pwVersion && !process.env.PWTEST_UNSAFE_GRID_VERSION) {
           this._log(`version mismatch: ${version} !== ${this._pwVersion}`);
           ws.close(WSErrors.CLIENT_PLAYWRIGHT_VERSION_MISMATCH.code, WSErrors.CLIENT_PLAYWRIGHT_VERSION_MISMATCH.reason);
