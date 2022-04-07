@@ -19,8 +19,9 @@ import extract from 'extract-zip';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import { existsAsync, download, getUserAgent } from '../../utils/utils';
+import { existsAsync, getUserAgent } from '../../utils/utils';
 import { debugLogger } from '../../utils/debugLogger';
+import { download } from './download';
 
 export async function downloadBrowserWithProgressBar(title: string, browserDirectory: string, executablePath: string, downloadURL: string, downloadFileName: string): Promise<boolean> {
   const progressBarName = `Playwright build of ${title}`;
