@@ -43,213 +43,213 @@ const kPublicNpmRegistry = 'https://registry.npmjs.org';
 const kContentTypeAbbreviatedMetadata = 'application/vnd.npm.install-v1+json';
 
 class Registry {
-    constructor() {
-        this._objectsDir = path.join(WORK_DIR, 'objects');
-        this._packageMeta = new Map();
-        this._address = '';
-        this._listener = (_, res) => res.writeHead(503).end();
-        this._log = () => { };
-    }
+  constructor() {
+    this._objectsDir = path.join(WORK_DIR, 'objects');
+    this._packageMeta = new Map();
+    this._address = '';
+    this._listener = (_req, res) => res.writeHead(503).end();
+    this._log = () => { };
+  }
 
-    async init() {
-        await fs.promises.mkdir(this._objectsDir, { recursive: true });
-        await fs.promises.writeFile(PID_FILE, `${process.pid}`);
-        await fs.promises.writeFile(ACCESS_LOGS, '');
-        this._log = (msg) => fs.appendFileSync(ACCESS_LOGS, `${msg}\n`);
+  async init() {
+    await fs.promises.mkdir(this._objectsDir, { recursive: true });
+    await fs.promises.writeFile(PID_FILE, `${process.pid}`);
+    await fs.promises.writeFile(ACCESS_LOGS, '');
+    this._log = msg => fs.appendFileSync(ACCESS_LOGS, `${msg}\n`);
 
-        this._server = http.createServer((req, res) => this._listener(req, res));
-        await new Promise(res => {
-            this._server.listen(undefined, 'localhost', () => {
-                this._address = new URL(`http://localhost:${this._server.address().port}`);
-                res();
-            });
-            process.on('exit', () => {
-                console.log('closing server');
-                this._server.close(console.error);
-            });
-        });
+    this._server = http.createServer((req, res) => this._listener(req, res));
+    await new Promise(res => {
+      this._server.listen(undefined, 'localhost', () => {
+        this._address = new URL(`http://localhost:${this._server.address().port}`);
+        res();
+      });
+      process.on('exit', () => {
+        console.log('closing server');
+        this._server.close(console.error);
+      });
+    });
 
-        await Promise.all(
-            Object.entries({
-            'playwright': mustEnv('PLAYWRIGHT_TGZ'),
-            'playwright-core': mustEnv('PLAYWRIGHT_CORE_TGZ'),
-            'playwright-chromium': mustEnv('PLAYWRIGHT_CHROMIUM_TGZ'),
-            'playwright-firefox': mustEnv('PLAYWRIGHT_FIREFOX_TGZ'),
-            'playwright-webkit': mustEnv('PLAYWRIGHT_WEBKIT_TGZ'),
-            '@playwright/test': mustEnv('PLAYWRIGHT_TEST_TGZ'),
+    await Promise.all(
+        Object.entries({
+          'playwright': mustEnv('PLAYWRIGHT_TGZ'),
+          'playwright-core': mustEnv('PLAYWRIGHT_CORE_TGZ'),
+          'playwright-chromium': mustEnv('PLAYWRIGHT_CHROMIUM_TGZ'),
+          'playwright-firefox': mustEnv('PLAYWRIGHT_FIREFOX_TGZ'),
+          'playwright-webkit': mustEnv('PLAYWRIGHT_WEBKIT_TGZ'),
+          '@playwright/test': mustEnv('PLAYWRIGHT_TEST_TGZ'),
         }).map(([pkg, tar]) => this._publish(pkg, tar)));
 
-        this._listener = async (req, res) => {
-            this._log(`REQUEST: ${req.method} ${req.url}`);
-            if (req.method !== 'GET') {
-                res.writeHead(405).end();
-                return;
-            }
+    this._listener = async (req, res) => {
+      this._log(`REQUEST: ${req.method} ${req.url}`);
+      if (req.method !== 'GET') {
+        res.writeHead(405).end();
+        return;
+      }
 
-            const url = new URL(req.url, kPublicNpmRegistry);
-            let [_, userSuppliedPackageName, __, userSuppliedFilename] = url.pathname.split('/');
-            if (userSuppliedPackageName)
-                userSuppliedPackageName = decodeURIComponent(userSuppliedPackageName);
-            if (userSuppliedFilename)
-                userSuppliedFilename = decodeURIComponent(userSuppliedFilename);
-            // Serve locally if regiserted
-            if (this._packageMeta.has(userSuppliedPackageName)) {
-                const [metadata, objectPath] = this._packageMeta.get(userSuppliedPackageName);
-                // Requesting a tar ball
-                if (userSuppliedFilename) {
-                    if (path.basename(objectPath) !== userSuppliedFilename) {
-                        res.writeHead(404).end();
-                        return;
-                    }
-                    this._log(`LOCAL ${userSuppliedPackageName} tar`)
-                    const fileStream = fs.createReadStream(objectPath)
-                    fileStream.pipe(res, { end: true });
-                    fileStream.on('error', console.log);
-                    res.on('error', console.log)
-                    return;
-                }
-                // Basic request just for package metadata
-                this._log(`LOCAL ${userSuppliedPackageName} metadata`)
-                res.setHeader('content-type', kContentTypeAbbreviatedMetadata)
-                res.write(JSON.stringify(metadata, null, " "));
-                res.end();
-            } else {
-                // Fall through to official registry
-                this._log(`PROXIED ${userSuppliedPackageName}`);
-                const client = { req, res };
-                const toNpm = https.request({
-                    host: url.host,
-                    headers: { ...req.headers, 'host': url.host },
-                    method: req.method,
-                    path: url.pathname,
-                    searchParams: url.searchParams,
-                    protocol: 'https:',
-                }, (fromNpm) => {
-                    client.res.writeHead(fromNpm.statusCode, fromNpm.statusMessage, fromNpm.headers);
-                    fromNpm.on('error', (err) => console.log(`error: `, err));
-                    fromNpm.pipe(client.res, { end: true });
-                });
-                client.req.pipe(toNpm);
-                client.req.on('error', (err) => console.log(`error: `, err));
-            }
-        };
-        // Finally, tell other processes the registry is available and ready
-        await fs.promises.writeFile(REGISTRY_URL_FILE, this._address.toString());
-    }
+      const url = new URL(req.url, kPublicNpmRegistry);
+      let [, userSuppliedPackageName, , userSuppliedFilename] = url.pathname.split('/');
+      if (userSuppliedPackageName)
+        userSuppliedPackageName = decodeURIComponent(userSuppliedPackageName);
+      if (userSuppliedFilename)
+        userSuppliedFilename = decodeURIComponent(userSuppliedFilename);
+      // Serve locally if regiserted
+      if (this._packageMeta.has(userSuppliedPackageName)) {
+        const [metadata, objectPath] = this._packageMeta.get(userSuppliedPackageName);
+        // Requesting a tar ball
+        if (userSuppliedFilename) {
+          if (path.basename(objectPath) !== userSuppliedFilename) {
+            res.writeHead(404).end();
+            return;
+          }
+          this._log(`LOCAL ${userSuppliedPackageName} tar`);
+          const fileStream = fs.createReadStream(objectPath);
+          fileStream.pipe(res, { end: true });
+          fileStream.on('error', console.log);
+          res.on('error', console.log);
+          return;
+        }
+        // Basic request just for package metadata
+        this._log(`LOCAL ${userSuppliedPackageName} metadata`);
+        res.setHeader('content-type', kContentTypeAbbreviatedMetadata);
+        res.write(JSON.stringify(metadata, null, ' '));
+        res.end();
+      } else {
+        // Fall through to official registry
+        this._log(`PROXIED ${userSuppliedPackageName}`);
+        const client = { req, res };
+        const toNpm = https.request({
+          host: url.host,
+          headers: { ...req.headers, 'host': url.host },
+          method: req.method,
+          path: url.pathname,
+          searchParams: url.searchParams,
+          protocol: 'https:',
+        }, fromNpm => {
+          client.res.writeHead(fromNpm.statusCode, fromNpm.statusMessage, fromNpm.headers);
+          fromNpm.on('error', err => console.log(`error: `, err));
+          fromNpm.pipe(client.res, { end: true });
+        });
+        client.req.pipe(toNpm);
+        client.req.on('error', err => console.log(`error: `, err));
+      }
+    };
+    // Finally, tell other processes the registry is available and ready
+    await fs.promises.writeFile(REGISTRY_URL_FILE, this._address.toString());
+  }
 
-    async _publish(pkg, tarPath) {
-        const tmpDir = await fs.promises.mkdtemp(path.join(WORK_DIR, '.staging-package-'));
-        const { stderr, code } = await spawnAsync('tar', ['-xvzf', tarPath, '-C', tmpDir]);
-        if (!!code)
-            throw new Error(`Failed to untar ${pkg}: ${stderr}`);
+  async _publish(pkg, tarPath) {
+    const tmpDir = await fs.promises.mkdtemp(path.join(WORK_DIR, '.staging-package-'));
+    const { stderr, code } = await spawnAsync('tar', ['-xvzf', tarPath, '-C', tmpDir]);
+    if (!!code)
+      throw new Error(`Failed to untar ${pkg}: ${stderr}`);
 
-        const packageJson = JSON.parse((await fs.promises.readFile(path.join(tmpDir, 'package', 'package.json'))).toString());
-        if (pkg !== packageJson.name)
-            throw new Error(`Package name mismatch: ${pkg} is called ${packageJson.name} in its package.json`);
+    const packageJson = JSON.parse((await fs.promises.readFile(path.join(tmpDir, 'package', 'package.json'))).toString());
+    if (pkg !== packageJson.name)
+      throw new Error(`Package name mismatch: ${pkg} is called ${packageJson.name} in its package.json`);
 
-        const now = new Date().toISOString();
-        const shasum = crypto.createHash('sha1').update(await fs.promises.readFile(tarPath)).digest().toString('hex')
-        const tarball = new URL(this._address);
-        tarball.pathname = `${tarball.pathname}${tarball.pathname.endsWith('/') ? '' : '/'}${encodeURIComponent(pkg)}/-/${shasum}.tgz`;
-        const metadata = {
-            'dist-tags': {
-                latest: packageJson.version,
-                [packageJson.version]: packageJson.version,
-            },
-            modified: now,
-            name: pkg,
-            versions: {
-                [packageJson.version]: {
-                    _hasShrinkwrap: false,
-                    name: pkg,
-                    version: packageJson.version,
-                    dependencies: packageJson.dependencies || {},
-                    optionalDependencies: packageJson.optionalDependencies || {},
-                    devDependencies: packageJson.devDependencies || {},
-                    bundleDependencies: packageJson.bundleDependencies || {},
-                    peerDependencies: packageJson.peerDependencies || {},
-                    bin: packageJson.bin || {},
-                    directories: packageJson.directories || [],
-                    dist: {
-                        tarball: tarball.toString(),
-                        shasum,
-                    },
-                    engines: packageJson.engines || {},
-                },
-            },
-        };
+    const now = new Date().toISOString();
+    const shasum = crypto.createHash('sha1').update(await fs.promises.readFile(tarPath)).digest().toString('hex');
+    const tarball = new URL(this._address);
+    tarball.pathname = `${tarball.pathname}${tarball.pathname.endsWith('/') ? '' : '/'}${encodeURIComponent(pkg)}/-/${shasum}.tgz`;
+    const metadata = {
+      'dist-tags': {
+        latest: packageJson.version,
+        [packageJson.version]: packageJson.version,
+      },
+      'modified': now,
+      'name': pkg,
+      'versions': {
+        [packageJson.version]: {
+          _hasShrinkwrap: false,
+          name: pkg,
+          version: packageJson.version,
+          dependencies: packageJson.dependencies || {},
+          optionalDependencies: packageJson.optionalDependencies || {},
+          devDependencies: packageJson.devDependencies || {},
+          bundleDependencies: packageJson.bundleDependencies || {},
+          peerDependencies: packageJson.peerDependencies || {},
+          bin: packageJson.bin || {},
+          directories: packageJson.directories || [],
+          dist: {
+            tarball: tarball.toString(),
+            shasum,
+          },
+          engines: packageJson.engines || {},
+        },
+      },
+    };
 
-        const object = path.join(this._objectsDir, `${shasum}.tgz`);
-        await fs.promises.copyFile(tarPath, object);
+    const object = path.join(this._objectsDir, `${shasum}.tgz`);
+    await fs.promises.copyFile(tarPath, object);
 
-        this._packageMeta.set(pkg, [metadata, object])
-    }
+    this._packageMeta.set(pkg, [metadata, object]);
+  }
 }
 
-const mustEnv = (varName) => {
-    const v = process.env[varName];
-    if (!v)
-        throw new Error(`${varName} environment variable MUST be set.`);
+const mustEnv = varName => {
+  const v = process.env[varName];
+  if (!v)
+    throw new Error(`${varName} environment variable MUST be set.`);
 
-    return v;
+  return v;
 };
 
 const start = async () => {
-    const registry = new Registry(process.cwd());
-    await registry.init();
-}
+  const registry = new Registry(process.cwd());
+  await registry.init();
+};
 
 const waitForReady = async () => {
-    const registryUrl = await new Promise(async (res, rej) => {
-        setTimeout(rej, READY_TIMEOUT_MS);
-        for (; ;) {
-            const registryUrl = await fs.promises.readFile(REGISTRY_URL_FILE).catch(() => null);
-            if (registryUrl) {
-                res(registryUrl.toString());
-                return;
-            }
-            await new Promise(r => setTimeout(r, 500));
-        }
-    });
-    console.log(registryUrl);
-    process.exit(0);
+  const registryUrl = await new Promise(async (res, rej) => {
+    setTimeout(rej, READY_TIMEOUT_MS);
+    for (; ;) {
+      const registryUrl = await fs.promises.readFile(REGISTRY_URL_FILE).catch(() => null);
+      if (registryUrl) {
+        res(registryUrl.toString());
+        return;
+      }
+      await new Promise(r => setTimeout(r, 500));
+    }
+  });
+  console.log(registryUrl);
+  process.exit(0);
 };
 
 const kill = async () => {
-    const pid = await fs.promises.readFile(PID_FILE);
-    process.kill(Number.parseInt(pid, 10));
-    await fs.promises.unlink(PID_FILE).catch(() => { });
+  const pid = await fs.promises.readFile(PID_FILE);
+  process.kill(Number.parseInt(pid, 10));
+  await fs.promises.unlink(PID_FILE).catch(() => { });
 };
 
-const assertLocalPkg = async (pkg) => {
-    const logs = await fs.promises.readFile(ACCESS_LOGS);
-    const lines = logs.toString().split(`\n`);
-    if (lines.includes(`LOCAL ${pkg} metadata`) && lines.includes(`LOCAL ${pkg} tar`) && !lines.includes(`PROXIED ${pkg} metadata`))
-        return;
-    console.log('Expected LOCAL metadata and tar, and no PROXIED logs for:', pkg);
-    console.log('Logs:')
-    console.log(lines.join(`\n`));
-    process.exit(1);
-}
+const assertLocalPkg = async pkg => {
+  const logs = await fs.promises.readFile(ACCESS_LOGS);
+  const lines = logs.toString().split(`\n`);
+  if (lines.includes(`LOCAL ${pkg} metadata`) && lines.includes(`LOCAL ${pkg} tar`) && !lines.includes(`PROXIED ${pkg} metadata`))
+    return;
+  console.log('Expected LOCAL metadata and tar, and no PROXIED logs for:', pkg);
+  console.log('Logs:');
+  console.log(lines.join(`\n`));
+  process.exit(1);
+};
 
 const spawnAsync = (cmd, args, options) => {
-    const process = spawn(cmd, args, Object.assign({ windowsHide: true }, options));
+  const process = spawn(cmd, args, Object.assign({ windowsHide: true }, options));
 
-    return new Promise(resolve => {
-        let stdout = '';
-        let stderr = '';
-        if (process.stdout)
-            process.stdout.on('data', data => stdout += data);
-        if (process.stderr)
-            process.stderr.on('data', data => stderr += data);
-        process.on('close', code => resolve({ stdout, stderr, code }));
-        process.on('error', error => resolve({ stdout, stderr, code: 0, error }));
-    });
-}
+  return new Promise(resolve => {
+    let stdout = '';
+    let stderr = '';
+    if (process.stdout)
+      process.stdout.on('data', data => stdout += data);
+    if (process.stderr)
+      process.stderr.on('data', data => stderr += data);
+    process.on('close', code => resolve({ stdout, stderr, code }));
+    process.on('error', error => resolve({ stdout, stderr, code: 0, error }));
+  });
+};
 
 const commands = {
-    'help': async () => {
-        console.log(`
+  'help': async () => {
+    console.log(`
 A minimal, inefficent npm registry to serve local npm packages, or fall through
 to the offical npm registry. This is useful for testing npm and npx utilities,
 but should NOT, be used for anything more.
@@ -263,20 +263,20 @@ Commands:
     - kill.......................: shutdown the server (does NOT clean up files)
     - assert-downloaded <package>: confirms that <package> was served locally,
                                    AND never proxied to the official registry.`);
-    },
-    'start': start,
-    'kill': kill,
-    'wait-for-ready': waitForReady,
-    'assert-local-pkg': ([pkg]) => assertLocalPkg(pkg),
+  },
+  'start': start,
+  'kill': kill,
+  'wait-for-ready': waitForReady,
+  'assert-local-pkg': ([pkg]) => assertLocalPkg(pkg),
 };
 
 (async () => {
-    const command = commands[process.argv[2]];
-    if (!command) {
-        console.log(`${process.argv[2]} not a valid command:`);
-        await commands['help']();
-        process.exit(1);
-    }
+  const command = commands[process.argv[2]];
+  if (!command) {
+    console.log(`${process.argv[2]} not a valid command:`);
+    await commands['help']();
+    process.exit(1);
+  }
 
-    await command(process.argv.slice(3));
-})()
+  await command(process.argv.slice(3));
+})();
