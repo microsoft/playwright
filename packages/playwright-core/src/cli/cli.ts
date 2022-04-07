@@ -237,12 +237,12 @@ Examples:
   $ pdf https://example.com example.pdf`);
 
 program
-  .command('experimental-grid-server', { hidden: true })
-  .option('--port <port>', 'grid port; defaults to 3333')
+    .command('experimental-grid-server', { hidden: true })
+    .option('--port <port>', 'grid port; defaults to 3333')
     .option('--address <address>', 'address of the server')
     .option('--agent-factory <factory>', 'path to grid agent factory or npm package')
     .option('--auth-token <authToken>', 'optional authentication token')
-    .action(function (options) {
+    .action(function(options) {
       launchGridServer(options.agentFactory, options.port || 3333, options.address, options.authToken);
     });
 
