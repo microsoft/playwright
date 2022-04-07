@@ -19,7 +19,7 @@ import type * as childProcess from 'child_process';
 import type * as structs from '../../types/structs';
 import type * as api from '../../types/types';
 import type * as channels from '../protocol/channels';
-import { TimeoutSettings } from '../utils/timeoutSettings';
+import { TimeoutSettings } from '../common/timeoutSettings';
 import { headersObjectToArray } from '../utils';
 import { BrowserContext } from './browserContext';
 import { ChannelOwner } from './channelOwner';

@@ -30,9 +30,9 @@ import { ProgressController } from '../progress';
 import { CRBrowser } from '../chromium/crBrowser';
 import { helper } from '../helper';
 import { PipeTransport } from '../../protocol/transport';
-import { RecentLogsCollector } from '../../utils/debugLogger';
+import { RecentLogsCollector } from '../../common/debugLogger';
 import { gracefullyCloseSet } from '../../utils/processLauncher';
-import { TimeoutSettings } from '../../utils/timeoutSettings';
+import { TimeoutSettings } from '../../common/timeoutSettings';
 import type { AndroidWebView } from '../../protocol/channels';
 import { SdkObject, serverSideCallMetadata } from '../instrumentation';
 

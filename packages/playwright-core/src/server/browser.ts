@@ -20,7 +20,7 @@ import { Page } from './page';
 import { Download } from './download';
 import type { ProxySettings } from './types';
 import type { ChildProcess } from 'child_process';
-import type { RecentLogsCollector } from '../utils/debugLogger';
+import type { RecentLogsCollector } from '../common/debugLogger';
 import type { CallMetadata } from './instrumentation';
 import { SdkObject } from './instrumentation';
 import { Artifact } from './artifact';

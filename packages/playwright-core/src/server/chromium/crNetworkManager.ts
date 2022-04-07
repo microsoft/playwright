@@ -18,8 +18,8 @@
 import type { CRSession } from './crConnection';
 import type { Page } from '../page';
 import { helper } from '../helper';
-import type { RegisteredListener } from '../../utils/eventsHelper';
-import { eventsHelper } from '../../utils/eventsHelper';
+import type { RegisteredListener } from '../../utils';
+import { eventsHelper } from '../../utils';
 import type { Protocol } from './protocol';
 import * as network from '../network';
 import type * as frames from '../frames';

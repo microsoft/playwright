@@ -18,7 +18,7 @@ import WebSocket from 'ws';
 import debug from 'debug';
 import { createPlaywright, PlaywrightDispatcher, DispatcherConnection, Root } from '../server';
 import { gracefullyCloseAll } from '../utils/processLauncher';
-import { SocksProxy } from '../utils/socksProxy';
+import { SocksProxy } from '../common/socksProxy';
 
 function launchGridWorker(gridURL: string, agentId: string, workerId: string) {
   const log = debug(`pw:grid:worker:${workerId}`);

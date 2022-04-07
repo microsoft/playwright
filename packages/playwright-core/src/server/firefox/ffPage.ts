@@ -18,8 +18,8 @@
 import * as dialog from '../dialog';
 import * as dom from '../dom';
 import type * as frames from '../frames';
-import type { RegisteredListener } from '../../utils/eventsHelper';
-import { eventsHelper } from '../../utils/eventsHelper';
+import type { RegisteredListener } from '../../utils';
+import { eventsHelper } from '../../utils';
 import { assert } from '../../utils';
 import type { PageBinding, PageDelegate } from '../page';
 import { Page, Worker } from '../page';
@@ -33,7 +33,7 @@ import { FFNetworkManager } from './ffNetworkManager';
 import type { Protocol } from './protocol';
 import type { Progress } from '../progress';
 import { splitErrorMessage } from '../../utils/stackTrace';
-import { debugLogger } from '../../utils/debugLogger';
+import { debugLogger } from '../../common/debugLogger';
 import { ManualPromise } from '../../utils';
 
 export const UTILITY_WORLD_NAME = '__playwright_utility_world__';

@@ -17,7 +17,7 @@
 
 import { Events } from './events';
 import { assert } from '../utils';
-import { TimeoutSettings } from '../utils/timeoutSettings';
+import { TimeoutSettings } from '../common/timeoutSettings';
 import type { ParsedStackTrace } from '../utils/stackTrace';
 import type * as channels from '../protocol/channels';
 import { parseError, serializeError } from '../protocol/serializers';
@@ -47,7 +47,7 @@ import path from 'path';
 import type { Size, URLMatch, Headers, LifecycleEvent, WaitForEventOptions, SelectOption, SelectOptionOptions, FilePayload, WaitForFunctionOptions } from './types';
 import { evaluationScript, urlMatches } from './clientHelper';
 import { isString, isRegExp, isObject, mkdirIfNeeded, headersObjectToArray } from '../utils';
-import { isSafeCloseError } from '../utils/errors';
+import { isSafeCloseError } from '../common/errors';
 import { Video } from './video';
 import { Artifact } from './artifact';
 import type { APIRequestContext } from './fetch';

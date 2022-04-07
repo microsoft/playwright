@@ -32,7 +32,7 @@ import { kLifecycleEvents } from './types';
 import { urlMatches } from './clientHelper';
 import type * as api from '../../types/types';
 import type * as structs from '../../types/structs';
-import { debugLogger } from '../utils/debugLogger';
+import { debugLogger } from '../common/debugLogger';
 
 export type WaitForNavigationOptions = {
   timeout?: number,

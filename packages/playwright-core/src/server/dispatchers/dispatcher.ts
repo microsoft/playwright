@@ -21,7 +21,7 @@ import type { Validator } from '../../protocol/validator';
 import { createScheme, ValidationError } from '../../protocol/validator';
 import { assert, debugAssert, isUnderTest, monotonicTime } from '../../utils';
 import { tOptional } from '../../protocol/validatorPrimitives';
-import { kBrowserOrContextClosedError } from '../../utils/errors';
+import { kBrowserOrContextClosedError } from '../../common/errors';
 import type { CallMetadata } from '../instrumentation';
 import { SdkObject } from '../instrumentation';
 import { rewriteErrorMessage } from '../../utils/stackTrace';

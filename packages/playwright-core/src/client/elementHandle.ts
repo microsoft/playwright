@@ -30,7 +30,7 @@ import type { BrowserContext } from './browserContext';
 import { WritableStream } from './writableStream';
 import { pipeline } from 'stream';
 import { promisify } from 'util';
-import { debugLogger } from '../utils/debugLogger';
+import { debugLogger } from '../common/debugLogger';
 
 const pipelineAsync = promisify(pipeline);
 

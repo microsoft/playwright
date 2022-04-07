@@ -16,7 +16,7 @@
  */
 
 import * as os from 'os';
-import { TimeoutSettings } from '../utils/timeoutSettings';
+import { TimeoutSettings } from '../common/timeoutSettings';
 import { debugMode, mkdirIfNeeded, createGuid } from '../utils';
 import type { Browser, BrowserOptions } from './browser';
 import type { Download } from './download';

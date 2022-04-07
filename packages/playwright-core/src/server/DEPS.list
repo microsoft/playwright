@@ -1,19 +1,20 @@
 [*]
+../common/
 ../generated/
 ../protocol/
 ../utils/
 ./
-common/
-injected/
-supplements/
-trace/recorder/tracing.ts
+./common/
+./injected/
+./supplements/
+./trace/recorder/tracing.ts
 
 [browserContext.ts]
-supplements/har/
+./supplements/har/
 
 [playwright.ts]
-android/
-chromium/
-electron/
-firefox/
-webkit/
+./android/
+./chromium/
+./electron/
+./firefox/
+./webkit/

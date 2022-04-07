@@ -33,7 +33,7 @@ import { Electron, ElectronApplication } from './electron';
 import type * as channels from '../protocol/channels';
 import { Stream } from './stream';
 import { WritableStream } from './writableStream';
-import { debugLogger } from '../utils/debugLogger';
+import { debugLogger } from '../common/debugLogger';
 import { SelectorsOwner } from './selectors';
 import { Android, AndroidSocket, AndroidDevice } from './android';
 import type { ParsedStackTrace } from '../utils/stackTrace';
