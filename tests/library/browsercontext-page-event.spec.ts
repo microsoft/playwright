@@ -227,3 +227,17 @@ it('should work with data-src-frame', async ({ browser, server }) => {
   expect(page.url()).not.toBe('');
   await context.close();
 });
+
+it('should work with blob-src-frame', async ({ browser, server }) => {
+  const context = await browser.newContext();
+  const page = await context.newPage();
+
+  await page.goto(server.PREFIX + '/blob-src-frame.html', { waitUntil: 'commit' });
+
+  await page.waitForLoadState('networkidle');
+  await page.waitForLoadState('domcontentloaded');
+  await page.waitForLoadState('load');
+
+  expect(page.url()).not.toBe('');
+  await context.close();
+});
