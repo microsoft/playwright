@@ -17,7 +17,7 @@
 let install;
 
 try {
-  install = require('playwright-core/lib/server').registry.installBrowsersForNpmInstall;
+  install = require('playwright-core/lib/server').installBrowsersForNpmInstall;
 } catch (e) {
   // Dev build, don't install browsers by default.
 }
