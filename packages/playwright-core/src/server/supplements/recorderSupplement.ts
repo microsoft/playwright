@@ -34,7 +34,7 @@ import { RecorderApp } from './recorder/recorderApp';
 import type { CallMetadata, InstrumentationListener, SdkObject } from '../instrumentation';
 import type { Point } from '../../common/types';
 import type { CallLog, CallLogStatus, EventData, Mode, Source, UIState } from './recorder/recorderTypes';
-import { createGuid, monotonicTime } from '../../utils/utils';
+import { createGuid, monotonicTime } from '../../utils';
 import { metadataToCallLog } from './recorder/recorderUtils';
 import { Debugger } from './debugger';
 import { EventEmitter } from 'events';

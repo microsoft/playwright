@@ -15,7 +15,7 @@
  */
 
 import type { Page, ViewportSize } from '@playwright/test';
-import { createGuid } from 'playwright-core/lib/utils/utils';
+import { createGuid } from 'playwright-core/lib/utils';
 
 export async function mount(page: Page, jsxOrType: any, options: any, baseURL: string, viewport: ViewportSize): Promise<string> {
   await page.goto('about:blank');

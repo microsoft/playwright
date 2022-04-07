@@ -19,7 +19,7 @@ import extract from 'extract-zip';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import { existsAsync, getUserAgent } from '../../utils/utils';
+import { existsAsync, getUserAgent } from '../../utils';
 import { debugLogger } from '../../utils/debugLogger';
 import { download } from './download';
 

@@ -20,7 +20,7 @@ import { Browser } from '../browser';
 import { assertBrowserContextIsNotOwned, BrowserContext, verifyGeolocation } from '../browserContext';
 import type { RegisteredListener } from '../../utils/eventsHelper';
 import { eventsHelper } from '../../utils/eventsHelper';
-import { assert } from '../../utils/utils';
+import { assert } from '../../utils';
 import * as network from '../network';
 import type { Page, PageBinding, PageDelegate } from '../page';
 import type { ConnectionTransport } from '../transport';

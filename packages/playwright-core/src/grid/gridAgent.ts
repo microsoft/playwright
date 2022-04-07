@@ -17,7 +17,7 @@
 import debug from 'debug';
 import WebSocket from 'ws';
 import { fork } from 'child_process';
-import { getPlaywrightVersion } from '../utils/utils';
+import { getPlaywrightVersion } from '../utils';
 
 export function launchGridAgent(agentId: string, gridURL: string) {
   const log = debug(`pw:grid:agent:${agentId}`);

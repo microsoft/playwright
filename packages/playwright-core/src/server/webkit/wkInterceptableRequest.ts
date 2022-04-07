@@ -20,7 +20,7 @@ import * as network from '../network';
 import type * as types from '../types';
 import type { Protocol } from './protocol';
 import type { WKSession } from './wkConnection';
-import { assert, headersObjectToArray, headersArrayToObject } from '../../utils/utils';
+import { assert, headersObjectToArray, headersArrayToObject } from '../../utils';
 import { ManualPromise } from '../../utils';
 
 const errorReasons: { [reason: string]: Protocol.Network.ResourceErrorType } = {

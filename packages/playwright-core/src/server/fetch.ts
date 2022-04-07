@@ -25,7 +25,7 @@ import zlib from 'zlib';
 import type { HTTPCredentials } from '../../types/types';
 import type * as channels from '../protocol/channels';
 import { TimeoutSettings } from '../utils/timeoutSettings';
-import { assert, createGuid, getUserAgent, monotonicTime } from '../utils/utils';
+import { assert, createGuid, getUserAgent, monotonicTime } from '../utils';
 import { BrowserContext } from './browserContext';
 import { CookieStore, domainMatches } from './cookieStore';
 import { MultipartFormData } from './formData';

@@ -16,7 +16,7 @@
 
 import type { Locator, Page, APIResponse } from 'playwright-core';
 import type { FrameExpectOptions } from 'playwright-core/lib/client/types';
-import { constructURLBasedOnBaseURL } from 'playwright-core/lib/utils/utils';
+import { constructURLBasedOnBaseURL } from 'playwright-core/lib/utils';
 import type { Expect } from '../types';
 import { expectTypes, callLogText } from '../util';
 import { toBeTruthy } from './toBeTruthy';

@@ -43,7 +43,7 @@ import type { Config } from './types';
 import type { FullConfigInternal } from './types';
 import { WebServer } from './webServer';
 import { raceAgainstTimeout } from 'playwright-core/lib/utils';
-import { SigIntWatcher } from 'playwright-core/lib/utils/utils';
+import { SigIntWatcher } from 'playwright-core/lib/utils';
 
 const removeFolderAsync = promisify(rimraf);
 const readDirAsync = promisify(fs.readdir);

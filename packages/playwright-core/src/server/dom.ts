@@ -29,7 +29,7 @@ import { ProgressController } from './progress';
 import type { SelectorInfo } from './selectors';
 import type * as types from './types';
 import type { TimeoutOptions } from '../common/types';
-import { experimentalFeaturesEnabled, isUnderTest } from '../utils/utils';
+import { experimentalFeaturesEnabled, isUnderTest } from '../utils';
 
 type SetInputFilesFiles = channels.ElementHandleSetInputFilesParams['files'];
 export type InputFilesItems = { files?: SetInputFilesFiles, localPaths?: string[] };

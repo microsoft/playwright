@@ -17,7 +17,7 @@
 import WebSocket from 'ws';
 import { Connection } from '../client/connection';
 import type { Playwright } from '../client/playwright';
-import { makeWaitForNextTask } from '../utils/utils';
+import { makeWaitForNextTask } from '../utils';
 
 // TODO: this file should be removed because it uses the old protocol.
 

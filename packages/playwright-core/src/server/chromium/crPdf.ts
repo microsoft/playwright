@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { assert } from '../../utils/utils';
+import { assert } from '../../utils';
 import type * as types from '../types';
 import type { CRSession } from './crConnection';
 import { readProtocolStream } from './crProtocolHelper';

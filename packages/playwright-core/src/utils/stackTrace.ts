@@ -17,7 +17,7 @@
 import path from 'path';
 import type { StackFrame } from '../protocol/channels';
 import StackUtils from 'stack-utils';
-import { isUnderTest } from './utils';
+import { isUnderTest } from './';
 
 const stackUtils = new StackUtils();
 

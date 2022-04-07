@@ -19,7 +19,7 @@ import * as jpeg from 'jpeg-js';
 import path from 'path';
 import * as png from 'pngjs';
 import { splitErrorMessage } from '../../utils/stackTrace';
-import { assert, createGuid, debugAssert, headersArrayToObject, headersObjectToArray, hostPlatform } from '../../utils/utils';
+import { assert, createGuid, debugAssert, headersArrayToObject, headersObjectToArray, hostPlatform } from '../../utils';
 import type * as accessibility from '../accessibility';
 import * as dialog from '../dialog';
 import * as dom from '../dom';

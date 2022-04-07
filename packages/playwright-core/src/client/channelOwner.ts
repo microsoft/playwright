@@ -21,7 +21,7 @@ import { createScheme, ValidationError } from '../protocol/validator';
 import { debugLogger } from '../utils/debugLogger';
 import type { ParsedStackTrace } from '../utils/stackTrace';
 import { captureRawStack, captureStackTrace } from '../utils/stackTrace';
-import { isUnderTest } from '../utils/utils';
+import { isUnderTest } from '../utils';
 import { zones } from '../utils/zones';
 import type { ClientInstrumentation } from './clientInstrumentation';
 import type { Connection } from './connection';

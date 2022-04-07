@@ -15,7 +15,7 @@
  */
 
 import { ManualPromise } from './manualPromise';
-import { monotonicTime } from './utils';
+import { monotonicTime } from './';
 
 export class TimeoutRunnerError extends Error {}
 

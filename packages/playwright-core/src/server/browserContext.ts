@@ -17,7 +17,7 @@
 
 import * as os from 'os';
 import { TimeoutSettings } from '../utils/timeoutSettings';
-import { debugMode, mkdirIfNeeded, createGuid } from '../utils/utils';
+import { debugMode, mkdirIfNeeded, createGuid } from '../utils';
 import type { Browser, BrowserOptions } from './browser';
 import type { Download } from './download';
 import type * as frames from './frames';

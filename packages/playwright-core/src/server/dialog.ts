@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { assert } from '../utils/utils';
+import { assert } from '../utils';
 import type { Page } from './page';
 import { SdkObject } from './instrumentation';
 

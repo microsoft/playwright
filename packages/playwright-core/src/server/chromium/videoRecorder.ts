@@ -15,7 +15,7 @@
  */
 
 import type { ChildProcess } from 'child_process';
-import { assert, monotonicTime } from '../../utils/utils';
+import { assert, monotonicTime } from '../../utils';
 import { Page } from '../page';
 import { launchProcess } from '../../utils/processLauncher';
 import type { Progress } from '../progress';

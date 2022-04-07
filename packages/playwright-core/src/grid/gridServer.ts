@@ -20,7 +20,7 @@ import { URL } from 'url';
 import type { Server as WebSocketServer } from 'ws';
 import type WebSocket from 'ws';
 import { HttpServer } from '../utils/httpServer';
-import { assert, createGuid, getPlaywrightVersion } from '../utils/utils';
+import { assert, createGuid, getPlaywrightVersion } from '../utils';
 
 export type GridAgentLaunchOptions = {
   agentId: string,

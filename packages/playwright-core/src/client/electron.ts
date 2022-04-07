@@ -20,7 +20,7 @@ import type * as structs from '../../types/structs';
 import type * as api from '../../types/types';
 import type * as channels from '../protocol/channels';
 import { TimeoutSettings } from '../utils/timeoutSettings';
-import { headersObjectToArray } from '../utils/utils';
+import { headersObjectToArray } from '../utils';
 import { BrowserContext } from './browserContext';
 import { ChannelOwner } from './channelOwner';
 import { envObjectToArray } from './clientHelper';

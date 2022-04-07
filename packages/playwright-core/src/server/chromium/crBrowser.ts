@@ -18,7 +18,7 @@
 import type { BrowserOptions } from '../browser';
 import { Browser } from '../browser';
 import { assertBrowserContextIsNotOwned, BrowserContext, verifyGeolocation } from '../browserContext';
-import { assert } from '../../utils/utils';
+import { assert } from '../../utils';
 import * as network from '../network';
 import type { PageBinding, PageDelegate } from '../page';
 import { Page, Worker } from '../page';

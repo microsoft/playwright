@@ -18,7 +18,7 @@ import fs from 'fs';
 import path from 'path';
 import * as os from 'os';
 import childProcess from 'child_process';
-import * as utils from '../../utils/utils';
+import * as utils from '../../utils';
 import { buildPlaywrightCLICommand } from '.';
 import { deps } from './nativeDeps';
 import { getUbuntuVersion } from '../../utils/ubuntuVersion';

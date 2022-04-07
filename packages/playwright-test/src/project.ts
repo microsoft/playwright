@@ -19,7 +19,7 @@ import type { TestCase } from './test';
 import { Suite } from './test';
 import { FixturePool, isFixtureOption } from './fixtures';
 import type { TestTypeImpl } from './testType';
-import { calculateSha1 } from 'playwright-core/lib/utils/utils';
+import { calculateSha1 } from 'playwright-core/lib/utils';
 
 export class ProjectImpl {
   config: FullProjectInternal;

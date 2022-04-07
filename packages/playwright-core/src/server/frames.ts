@@ -29,7 +29,7 @@ import * as types from './types';
 import { BrowserContext } from './browserContext';
 import type { Progress } from './progress';
 import { ProgressController } from './progress';
-import { assert, constructURLBasedOnBaseURL, makeWaitForNextTask } from '../utils/utils';
+import { assert, constructURLBasedOnBaseURL, makeWaitForNextTask } from '../utils';
 import { ManualPromise } from '../utils';
 import { debugLogger } from '../utils/debugLogger';
 import type { CallMetadata } from './instrumentation';

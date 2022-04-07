@@ -19,7 +19,7 @@ import * as input from '../input';
 import type * as types from '../types';
 import type { CRSession } from './crConnection';
 import { macEditingCommands } from '../macEditingCommands';
-import { isString } from '../../utils/utils';
+import { isString } from '../../utils';
 import type { DragManager } from './crDragDrop';
 import type { CRPage } from './crPage';
 import { toButtonsMask, toModifiersMask } from './crProtocolHelper';

@@ -15,7 +15,7 @@
  */
 
 import type { ChildProcess } from 'child_process';
-import { makeWaitForNextTask } from '../utils/utils';
+import { makeWaitForNextTask } from '../utils';
 
 export interface WritableStream {
   write(data: Buffer): void;

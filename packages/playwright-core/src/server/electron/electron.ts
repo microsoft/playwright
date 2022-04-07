@@ -26,7 +26,7 @@ import { CRExecutionContext } from '../chromium/crExecutionContext';
 import * as js from '../javascript';
 import type { Page } from '../page';
 import { TimeoutSettings } from '../../utils/timeoutSettings';
-import { wrapInASCIIBox } from '../../utils/utils';
+import { wrapInASCIIBox } from '../../utils';
 import { WebSocketTransport } from '../transport';
 import { launchProcess, envArrayToObject } from '../../utils/processLauncher';
 import { BrowserContext, validateBrowserContextOptions } from '../browserContext';

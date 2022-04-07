@@ -15,7 +15,7 @@
 */
 import type { CRPage } from './crPage';
 import type * as types from '../types';
-import { assert } from '../../utils/utils';
+import { assert } from '../../utils';
 import type { Protocol } from './protocol';
 import { toModifiersMask } from './crProtocolHelper';
 

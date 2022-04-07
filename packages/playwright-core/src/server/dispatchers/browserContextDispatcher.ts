@@ -31,7 +31,7 @@ import type { Request, Response } from '../network';
 import { TracingDispatcher } from './tracingDispatcher';
 import * as fs from 'fs';
 import * as path from 'path';
-import { createGuid } from '../../utils/utils';
+import { createGuid } from '../../utils';
 import { WritableStreamDispatcher } from './writableStreamDispatcher';
 
 export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channels.BrowserContextChannel> implements channels.BrowserContextChannel {

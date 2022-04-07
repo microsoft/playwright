@@ -19,7 +19,7 @@ import type * as channels from '../../protocol/channels';
 import { serializeError } from '../../protocol/serializers';
 import type { Validator } from '../../protocol/validator';
 import { createScheme, ValidationError } from '../../protocol/validator';
-import { assert, debugAssert, isUnderTest, monotonicTime } from '../../utils/utils';
+import { assert, debugAssert, isUnderTest, monotonicTime } from '../../utils';
 import { tOptional } from '../../protocol/validatorPrimitives';
 import { kBrowserOrContextClosedError } from '../../utils/errors';
 import type { CallMetadata } from '../instrumentation';

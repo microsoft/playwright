@@ -22,7 +22,7 @@ import type * as api from '../../types/types';
 import type { HeadersArray } from '../common/types';
 import type * as channels from '../protocol/channels';
 import { kBrowserOrContextClosedError } from '../utils/errors';
-import { assert, headersObjectToArray, isFilePayload, isString, mkdirIfNeeded, objectToArray } from '../utils/utils';
+import { assert, headersObjectToArray, isFilePayload, isString, mkdirIfNeeded, objectToArray } from '../utils';
 import { ChannelOwner } from './channelOwner';
 import * as network from './network';
 import { RawHeaders } from './network';

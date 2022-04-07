@@ -25,7 +25,7 @@ import { commandsWithTracingSnapshots } from '../../../protocol/channels';
 import { ManualPromise } from '../../../utils';
 import type { RegisteredListener } from '../../../utils/eventsHelper';
 import { eventsHelper } from '../../../utils/eventsHelper';
-import { assert, calculateSha1, createGuid, mkdirIfNeeded, monotonicTime, removeFolders } from '../../../utils/utils';
+import { assert, calculateSha1, createGuid, mkdirIfNeeded, monotonicTime, removeFolders } from '../../../utils';
 import { Artifact } from '../../artifact';
 import { BrowserContext } from '../../browserContext';
 import { ElementHandle } from '../../dom';

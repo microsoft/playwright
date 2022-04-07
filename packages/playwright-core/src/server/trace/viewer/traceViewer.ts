@@ -19,7 +19,7 @@ import fs from 'fs';
 import * as consoleApiSource from '../../../generated/consoleApiSource';
 import { HttpServer } from '../../../utils/httpServer';
 import { findChromiumChannel } from '../../registry';
-import { isUnderTest } from '../../../utils/utils';
+import { isUnderTest } from '../../../utils';
 import type { BrowserContext } from '../../browserContext';
 import { installAppIcon } from '../../chromium/crApp';
 import { serverSideCallMetadata } from '../../instrumentation';

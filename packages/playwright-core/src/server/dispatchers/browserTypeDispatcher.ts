@@ -22,7 +22,7 @@ import { Dispatcher } from './dispatcher';
 import { BrowserContextDispatcher } from './browserContextDispatcher';
 import type { CallMetadata } from '../instrumentation';
 import { JsonPipeDispatcher } from '../dispatchers/jsonPipeDispatcher';
-import { getUserAgent } from '../../utils/utils';
+import { getUserAgent } from '../../utils';
 import * as socks from '../../utils/socksProxy';
 import EventEmitter from 'events';
 import { ProgressController } from '../progress';

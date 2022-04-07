@@ -35,7 +35,7 @@ import type { CallMetadata } from '../instrumentation';
 import type { Artifact } from '../artifact';
 import { ArtifactDispatcher } from './artifactDispatcher';
 import type { Download } from '../download';
-import { createGuid } from '../../utils/utils';
+import { createGuid } from '../../utils';
 
 export class PageDispatcher extends Dispatcher<Page, channels.PageChannel> implements channels.PageChannel {
   _type_EventTarget = true;

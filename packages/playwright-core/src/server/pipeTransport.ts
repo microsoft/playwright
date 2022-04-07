@@ -16,7 +16,7 @@
  */
 
 import type { ConnectionTransport, ProtocolRequest, ProtocolResponse } from './transport';
-import { makeWaitForNextTask } from '../utils/utils';
+import { makeWaitForNextTask } from '../utils';
 import { debugLogger } from '../utils/debugLogger';
 
 export class PipeTransport implements ConnectionTransport {

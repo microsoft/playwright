@@ -48,7 +48,7 @@ import { toMatchSnapshot, toHaveScreenshot as _toHaveScreenshot } from './matche
 import type { Expect } from './types';
 import { currentTestInfo } from './globals';
 import { serializeError, captureStackTrace, currentExpectTimeout } from './util';
-import { monotonicTime } from 'playwright-core/lib/utils/utils';
+import { monotonicTime } from 'playwright-core/lib/utils';
 
 // from expect/build/types
 export type SyncExpectationResult = {
