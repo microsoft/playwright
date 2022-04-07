@@ -15,7 +15,7 @@
  */
 
 import colors from 'colors/safe';
-import { TimeoutRunner, TimeoutRunnerError } from 'playwright-core/lib/utils/async';
+import { TimeoutRunner, TimeoutRunnerError } from 'playwright-core/lib/utils';
 import type { TestError } from '../types/test';
 import type { Location } from './types';
 

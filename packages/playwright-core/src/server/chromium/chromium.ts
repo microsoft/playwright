@@ -41,7 +41,7 @@ import type { CallMetadata } from '../instrumentation';
 import http from 'http';
 import https from 'https';
 import { registry } from '../registry';
-import { ManualPromise } from '../../utils/async';
+import { ManualPromise } from '../../utils';
 
 const ARTIFACTS_FOLDER = path.join(os.tmpdir(), 'playwright-artifacts-');
 

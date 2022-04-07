@@ -30,7 +30,7 @@ import { BrowserContext } from './browserContext';
 import type { Progress } from './progress';
 import { ProgressController } from './progress';
 import { assert, constructURLBasedOnBaseURL, makeWaitForNextTask } from '../utils/utils';
-import { ManualPromise } from '../utils/async';
+import { ManualPromise } from '../utils';
 import { debugLogger } from '../utils/debugLogger';
 import type { CallMetadata } from './instrumentation';
 import { serverSideCallMetadata, SdkObject } from './instrumentation';

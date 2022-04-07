@@ -18,7 +18,7 @@ import type * as frames from './frames';
 import type * as types from './types';
 import type * as channels from '../protocol/channels';
 import { assert } from '../utils/utils';
-import { ManualPromise } from '../utils/async';
+import { ManualPromise } from '../utils';
 import { SdkObject } from './instrumentation';
 import type { NameValue } from '../common/types';
 import { APIRequestContext } from './fetch';

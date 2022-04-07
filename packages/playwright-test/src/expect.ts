@@ -15,7 +15,7 @@
  */
 
 import expectLibrary from 'expect';
-import { raceAgainstTimeout } from 'playwright-core/lib/utils/async';
+import { raceAgainstTimeout } from 'playwright-core/lib/utils';
 import path from 'path';
 import {
   INVERTED_COLOR,
