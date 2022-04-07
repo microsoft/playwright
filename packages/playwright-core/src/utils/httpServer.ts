@@ -20,7 +20,6 @@ import path from 'path';
 import { Server as WebSocketServer } from 'ws';
 import * as mime from 'mime';
 import { assert } from './utils';
-import type { VirtualFileSystem } from './vfs';
 
 export type ServerRouteHandler = (request: http.IncomingMessage, response: http.ServerResponse) => boolean;
 
@@ -149,22 +148,6 @@ export class HttpServer {
 
     const readable = fs.createReadStream(absoluteFilePath, { start, end });
     readable.pipe(response);
-  }
-
-  async serveVirtualFile(response: http.ServerResponse, vfs: VirtualFileSystem, entry: string, headers?: { [name: string]: string }) {
-    try {
-      const content = await vfs.read(entry);
-      response.statusCode = 200;
-      const contentType = mime.getType(path.extname(entry)) || 'application/octet-stream';
-      response.setHeader('Content-Type', contentType);
-      response.setHeader('Content-Length', content.byteLength);
-      for (const [name, value] of Object.entries(headers || {}))
-        response.setHeader(name, value);
-      response.end(content);
-      return true;
-    } catch (e) {
-      return false;
-    }
   }
 
   private _onRequest(request: http.IncomingMessage, response: http.ServerResponse) {

@@ -24,7 +24,7 @@ import type { CallLog, EventData, Mode, Source } from './recorderTypes';
 import { isUnderTest } from '../../../utils/utils';
 import * as mime from 'mime';
 import { installAppIcon } from '../../chromium/crApp';
-import { findChromiumChannel } from '../../../utils/registry';
+import { findChromiumChannel } from '../../registry';
 
 declare global {
   interface Window {

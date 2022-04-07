@@ -14,20 +14,18 @@
  * limitations under the License.
  */
 
-import type { ConsoleMessage } from '../server/console';
-import type * as channels from '../protocol/channels';
 import type { DispatcherScope } from './dispatcher';
 import { Dispatcher } from './dispatcher';
-import { ElementHandleDispatcher } from './elementHandlerDispatcher';
+import type * as channels from '../../protocol/channels';
+import type { Selectors } from '../selectors';
 
-export class ConsoleMessageDispatcher extends Dispatcher<ConsoleMessage, channels.ConsoleMessageChannel> implements channels.ConsoleMessageChannel {
-  _type_ConsoleMessage = true;
-  constructor(scope: DispatcherScope, message: ConsoleMessage) {
-    super(scope, message, 'ConsoleMessage', {
-      type: message.type(),
-      text: message.text(),
-      args: message.args().map(a => ElementHandleDispatcher.fromJSHandle(scope, a)),
-      location: message.location(),
-    });
+export class SelectorsDispatcher extends Dispatcher<Selectors, channels.SelectorsChannel> implements channels.SelectorsChannel {
+  _type_Selectors = true;
+  constructor(scope: DispatcherScope, selectors: Selectors) {
+    super(scope, selectors, 'Selectors', {});
+  }
+
+  async register(params: channels.SelectorsRegisterParams): Promise<void> {
+    await this._object.register(params.name, params.source, params.contentScript);
   }
 }

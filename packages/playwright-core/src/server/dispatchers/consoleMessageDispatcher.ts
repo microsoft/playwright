@@ -14,26 +14,20 @@
  * limitations under the License.
  */
 
-import type { Dialog } from '../server/dialog';
-import type * as channels from '../protocol/channels';
+import type { ConsoleMessage } from '../console';
+import type * as channels from '../../protocol/channels';
 import type { DispatcherScope } from './dispatcher';
 import { Dispatcher } from './dispatcher';
+import { ElementHandleDispatcher } from './elementHandlerDispatcher';
 
-export class DialogDispatcher extends Dispatcher<Dialog, channels.DialogChannel> implements channels.DialogChannel {
-  _type_Dialog = true;
-  constructor(scope: DispatcherScope, dialog: Dialog) {
-    super(scope, dialog, 'Dialog', {
-      type: dialog.type(),
-      message: dialog.message(),
-      defaultValue: dialog.defaultValue(),
+export class ConsoleMessageDispatcher extends Dispatcher<ConsoleMessage, channels.ConsoleMessageChannel> implements channels.ConsoleMessageChannel {
+  _type_ConsoleMessage = true;
+  constructor(scope: DispatcherScope, message: ConsoleMessage) {
+    super(scope, message, 'ConsoleMessage', {
+      type: message.type(),
+      text: message.text(),
+      args: message.args().map(a => ElementHandleDispatcher.fromJSHandle(scope, a)),
+      location: message.location(),
     });
-  }
-
-  async accept(params: { promptText?: string }): Promise<void> {
-    await this._object.accept(params.promptText);
-  }
-
-  async dismiss(): Promise<void> {
-    await this._object.dismiss();
   }
 }

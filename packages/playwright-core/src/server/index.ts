@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-let install;
+export type { Executable } from './registry';
+export { registry, writeDockerVersion, Registry, registryDirectory } from './registry';
 
-try {
-  install = require('playwright-core/lib/server').registry.installBrowsersForNpmInstall;
-} catch (e) {
-  // Dev build, don't install browsers by default.
-}
+export { DispatcherConnection, Root } from './dispatchers/dispatcher';
+export { PlaywrightDispatcher } from './dispatchers/playwrightDispatcher';
+export { createPlaywright } from './playwright';
 
-if (install)
-  install(['firefox']);
+export type { DispatcherScope } from './dispatchers/dispatcher';
+export type { Playwright } from './playwright';

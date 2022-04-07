@@ -15,16 +15,16 @@
  */
 
 import { EventEmitter } from 'events';
-import type * as channels from '../protocol/channels';
-import { serializeError } from '../protocol/serializers';
-import type { Validator } from '../protocol/validator';
-import { createScheme, ValidationError } from '../protocol/validator';
-import { assert, debugAssert, isUnderTest, monotonicTime } from '../utils/utils';
-import { tOptional } from '../protocol/validatorPrimitives';
-import { kBrowserOrContextClosedError } from '../utils/errors';
-import type { CallMetadata } from '../server/instrumentation';
-import { SdkObject } from '../server/instrumentation';
-import { rewriteErrorMessage } from '../utils/stackTrace';
+import type * as channels from '../../protocol/channels';
+import { serializeError } from '../../protocol/serializers';
+import type { Validator } from '../../protocol/validator';
+import { createScheme, ValidationError } from '../../protocol/validator';
+import { assert, debugAssert, isUnderTest, monotonicTime } from '../../utils/utils';
+import { tOptional } from '../../protocol/validatorPrimitives';
+import { kBrowserOrContextClosedError } from '../../utils/errors';
+import type { CallMetadata } from '../instrumentation';
+import { SdkObject } from '../instrumentation';
+import { rewriteErrorMessage } from '../../utils/stackTrace';
 import type { PlaywrightDispatcher } from './playwrightDispatcher';
 
 export const dispatcherSymbol = Symbol('dispatcher');

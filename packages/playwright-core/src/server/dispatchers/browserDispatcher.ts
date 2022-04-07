@@ -14,18 +14,18 @@
  * limitations under the License.
  */
 
-import { Browser } from '../server/browser';
-import type * as channels from '../protocol/channels';
+import { Browser } from '../browser';
+import type * as channels from '../../protocol/channels';
 import { BrowserContextDispatcher } from './browserContextDispatcher';
 import { CDPSessionDispatcher } from './cdpSessionDispatcher';
 import type { DispatcherScope } from './dispatcher';
 import { Dispatcher } from './dispatcher';
-import type { CRBrowser } from '../server/chromium/crBrowser';
+import type { CRBrowser } from '../chromium/crBrowser';
 import type { PageDispatcher } from './pageDispatcher';
-import type { CallMetadata } from '../server/instrumentation';
-import { serverSideCallMetadata } from '../server/instrumentation';
-import { BrowserContext } from '../server/browserContext';
-import { Selectors } from '../server/selectors';
+import type { CallMetadata } from '../instrumentation';
+import { serverSideCallMetadata } from '../instrumentation';
+import { BrowserContext } from '../browserContext';
+import { Selectors } from '../selectors';
 
 export class BrowserDispatcher extends Dispatcher<Browser, channels.BrowserChannel> implements channels.BrowserChannel {
   _type_Browser = true;

@@ -20,11 +20,9 @@ import fs from 'fs';
 import * as playwright from '../..';
 import type { BrowserType } from '../client/browserType';
 import type { LaunchServerOptions } from '../client/types';
-import { DispatcherConnection, Root } from '../dispatchers/dispatcher';
-import { PlaywrightDispatcher } from '../dispatchers/playwrightDispatcher';
+import { createPlaywright, DispatcherConnection, Root, PlaywrightDispatcher } from '../server';
 import { IpcTransport, PipeTransport } from '../protocol/transport';
 import { PlaywrightServer } from '../remote/playwrightServer';
-import { createPlaywright } from '../server/playwright';
 import { gracefullyCloseAll } from '../utils/processLauncher';
 
 export function printApiJson() {
