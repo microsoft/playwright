@@ -27,10 +27,11 @@ export class HttpServer {
   private _server: http.Server;
   private _urlPrefix: string;
   private _port: number = 0;
+  private _started = false;
   private _routes: { prefix?: string, exact?: string, handler: ServerRouteHandler }[] = [];
   private _activeSockets = new Set<import('net').Socket>();
-  constructor() {
-    this._urlPrefix = '';
+  constructor(address: string = '') {
+    this._urlPrefix = address;
     this._server = http.createServer(this._onRequest.bind(this));
   }
 
@@ -51,7 +52,8 @@ export class HttpServer {
   }
 
   async start(port?: number): Promise<string> {
-    assert(!this._urlPrefix, 'server already started');
+    assert(!this._started, 'server already started');
+    this._started = true;
     this._server.on('connection', socket => {
       this._activeSockets.add(socket);
       socket.once('close', () => this._activeSockets.delete(socket));
@@ -59,12 +61,14 @@ export class HttpServer {
     this._server.listen(port);
     await new Promise(cb => this._server!.once('listening', cb));
     const address = this._server.address();
-    if (typeof address === 'string') {
-      this._urlPrefix = address;
-    } else {
-      assert(address, 'Could not bind server socket');
-      this._port = address.port;
-      this._urlPrefix = `http://127.0.0.1:${address.port}`;
+    assert(address, 'Could not bind server socket');
+    if (!this._urlPrefix) {
+      if (typeof address === 'string') {
+        this._urlPrefix = address;
+      } else {
+        this._port = address.port;
+        this._urlPrefix = `http://127.0.0.1:${address.port}`;
+      }
     }
     return this._urlPrefix;
   }

@@ -219,11 +219,11 @@ export class GridServer {
   private _factory: GridFactory;
   private _pwVersion: string;
 
-  constructor(factory: GridFactory, authToken: string = '') {
+  constructor(factory: GridFactory, authToken: string = '', address: string = '') {
     this._log = debug(`pw:grid:server`);
     this._log(`using factory ${factory.name}`);
     this._authToken = authToken || '';
-    this._server = new HttpServer();
+    this._server = new HttpServer(address);
     this._factory = factory;
     this._pwVersion = getPlaywrightVersion(true /* majorMinorOnly */);
 
@@ -322,7 +322,7 @@ export class GridServer {
     return await initPromise;
   }
 
-  private _createAgent(): {agent: GridAgent, initPromise: Promise<{ error: any }>} {
+  private _createAgent(): { agent: GridAgent, initPromise: Promise<{ error: any }> } {
     const agent = new GridAgent(this._factory.capacity, this._factory.launchTimeout, this._factory.retireTimeout);
     this._agents.set(agent.agentId, agent);
     agent.on('close', () => {
