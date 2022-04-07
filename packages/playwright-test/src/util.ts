@@ -107,6 +107,7 @@ export type Matcher = (value: string) => boolean;
 export type FilePatternFilter = {
   re: RegExp;
   line: number | null;
+  column: number | null;
 };
 
 export function createFileMatcher(patterns: string | RegExp | (string | RegExp)[]): Matcher {

@@ -260,7 +260,7 @@ export class Runner {
       preprocessRoot._addSuite(fileSuite);
     }
 
-    // 2. Filter tests to respect column filter.
+    // 2. Filter tests to respect line/column filter.
     filterByFocusedLine(preprocessRoot, testFileReFilters);
 
     // 3. Complain about only.
@@ -487,14 +487,14 @@ function filterByFocusedLine(suite: Suite, focusedTestFileLines: FilePatternFilt
   if (!filterWithLine)
     return;
 
-  const testFileLineMatches = (testFileName: string, testLine: number) => focusedTestFileLines.some(({ re, line }) => {
+  const testFileLineMatches = (testFileName: string, testLine: number, testColumn: number) => focusedTestFileLines.some(({ re, line, column }) => {
     re.lastIndex = 0;
-    return re.test(testFileName) && (line === testLine || line === null);
+    return re.test(testFileName) && (line === testLine || line === null) && (column === testColumn || column === null);
   });
   const suiteFilter = (suite: Suite) => {
-    return !!suite.location && testFileLineMatches(suite.location.file, suite.location.line);
+    return !!suite.location && testFileLineMatches(suite.location.file, suite.location.line, suite.location.column);
   };
-  const testFilter = (test: TestCase) => testFileLineMatches(test.location.file, test.location.line);
+  const testFilter = (test: TestCase) => testFileLineMatches(test.location.file, test.location.line, test.location.column);
   return filterSuite(suite, suiteFilter, testFilter);
 }
 
