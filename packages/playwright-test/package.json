@@ -5,7 +5,8 @@
   "repository": "github:Microsoft/playwright",
   "homepage": "https://playwright.dev",
   "engines": {
-    "node": ">=12"
+    "node": ">=12",
+    "npm": ">=8"
   },
   "main": "index.js",
   "exports": {
