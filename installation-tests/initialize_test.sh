@@ -66,8 +66,8 @@ function clean_test_root() {
 }
 
 function initialize_test {
-  TEST_TMP_NPM_CACHE="$(mktemp -d)";
-  trap "report_test_result; local-playwright-registry kill; rm -rf $TEST_TMP_NPM_CACHE; cd $(pwd -P)" EXIT
+  TEST_TMP_NPM_SCRATCH_SPACE="$(mktemp -d)";
+  trap "report_test_result; local-playwright-registry kill; rm -rf $TEST_TMP_NPM_SCRATCH_SPACE; cd $(pwd -P)" EXIT
   cd "$(dirname $0)"
 
   # cleanup environment
@@ -118,8 +118,8 @@ function initialize_test {
 
   # Start up our local registry and configure npm to use it
   local-playwright-registry start &
-  rm -rf ./node_modules
-  export npm_config_cache="$TEST_TMP_NPM_CACHE"
+  export npm_config_prefix="$TEST_TMP_NPM_SCRATCH_SPACE/npm_prefix"
+  export npm_config_cache="$TEST_TMP_NPM_SCRATCH_SPACE/npm_cache"
   export npm_config_registry="$(local-playwright-registry wait-for-ready)"
 
   # Enable bash lines logging.
