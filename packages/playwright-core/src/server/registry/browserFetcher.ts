@@ -19,8 +19,9 @@ import extract from 'extract-zip';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import { existsAsync, getUserAgent } from '../../utils';
-import { debugLogger } from '../../utils/debugLogger';
+import { getUserAgent } from '../../common/userAgent';
+import { existsAsync } from '../../utils';
+import { debugLogger } from '../../common/debugLogger';
 import { download } from './download';
 
 export async function downloadBrowserWithProgressBar(title: string, browserDirectory: string, executablePath: string, downloadURL: string, downloadFileName: string): Promise<boolean> {

@@ -23,7 +23,7 @@ import { ChannelOwner } from './channelOwner';
 import type * as api from '../../types/types';
 import type * as types from './types';
 import type { Page } from './page';
-import { TimeoutSettings } from '../utils/timeoutSettings';
+import { TimeoutSettings } from '../common/timeoutSettings';
 import { Waiter } from './waiter';
 import { EventEmitter } from 'events';
 

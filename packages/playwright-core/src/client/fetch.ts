@@ -21,7 +21,7 @@ import type { Serializable } from '../../types/structs';
 import type * as api from '../../types/types';
 import type { HeadersArray } from '../common/types';
 import type * as channels from '../protocol/channels';
-import { kBrowserOrContextClosedError } from '../utils/errors';
+import { kBrowserOrContextClosedError } from '../common/errors';
 import { assert, headersObjectToArray, isFilePayload, isString, mkdirIfNeeded, objectToArray } from '../utils';
 import { ChannelOwner } from './channelOwner';
 import * as network from './network';

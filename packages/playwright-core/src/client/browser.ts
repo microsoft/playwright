@@ -20,7 +20,7 @@ import type { Page } from './page';
 import { ChannelOwner } from './channelOwner';
 import { Events } from './events';
 import type { BrowserContextOptions } from './types';
-import { isSafeCloseError, kBrowserClosedError } from '../utils/errors';
+import { isSafeCloseError, kBrowserClosedError } from '../common/errors';
 import type * as api from '../../types/types';
 import { CDPSession } from './cdpSession';
 import type { BrowserType } from './browserType';

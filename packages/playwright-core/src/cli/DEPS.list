@@ -1,6 +1,7 @@
 [*]
 ../../
 ../client
+../common
 ../debug/injected
 ../generated/
 ../grid

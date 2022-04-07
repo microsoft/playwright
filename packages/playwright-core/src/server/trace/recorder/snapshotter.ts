@@ -16,9 +16,9 @@
 
 import { BrowserContext } from '../../browserContext';
 import { Page } from '../../page';
-import type { RegisteredListener } from '../../../utils/eventsHelper';
-import { eventsHelper } from '../../../utils/eventsHelper';
-import { debugLogger } from '../../../utils/debugLogger';
+import type { RegisteredListener } from '../../../utils';
+import { eventsHelper } from '../../../utils';
+import { debugLogger } from '../../../common/debugLogger';
 import type { Frame } from '../../frames';
 import type { SnapshotData } from './snapshotterInjected';
 import { frameSnapshotStreamer } from './snapshotterInjected';

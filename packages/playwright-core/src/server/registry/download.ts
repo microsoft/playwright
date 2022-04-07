@@ -16,7 +16,7 @@
 
 import fs from 'fs';
 import ProgressBar from 'progress';
-import { httpRequest } from '../../utils';
+import { httpRequest } from '../../common/netUtils';
 
 type OnProgressCallback = (downloadedBytes: number, totalBytes: number) => void;
 type DownloadFileLogger = (message: string) => void;

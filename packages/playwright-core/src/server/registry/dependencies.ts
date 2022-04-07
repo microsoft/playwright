@@ -22,6 +22,7 @@ import * as utils from '../../utils';
 import { buildPlaywrightCLICommand } from '.';
 import { deps } from './nativeDeps';
 import { getUbuntuVersion } from '../../utils/ubuntuVersion';
+import { getPlaywrightVersion } from '../../common/userAgent';
 
 const BIN_DIRECTORY = path.join(__dirname, '..', '..', '..', 'bin');
 const packageJSON = require('../../../package.json');
@@ -207,10 +208,10 @@ export async function validateDependenciesLinux(sdkLanguage: string, linuxLddDir
   ];
   // Ignore patch versions when comparing docker container version and Playwright version:
   // we **NEVER** roll browsers in patch releases, so native dependencies do not change.
-  if (dockerInfo && !dockerInfo.driverVersion.startsWith(utils.getPlaywrightVersion(true /* majorMinorOnly */) + '.')) {
+  if (dockerInfo && !dockerInfo.driverVersion.startsWith(getPlaywrightVersion(true /* majorMinorOnly */) + '.')) {
     // We are running in a docker container with unmatching version.
     // In this case, we know how to install dependencies in it.
-    const pwVersion = utils.getPlaywrightVersion();
+    const pwVersion = getPlaywrightVersion();
     const requiredDockerImage = dockerInfo.dockerImageName.replace(dockerInfo.driverVersion, pwVersion);
     errorLines.push(...[
       `This is most likely due to docker image version not matching Playwright version:`,

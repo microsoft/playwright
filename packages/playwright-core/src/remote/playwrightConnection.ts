@@ -21,7 +21,7 @@ import { Browser } from '../server/browser';
 import { serverSideCallMetadata } from '../server/instrumentation';
 import { gracefullyCloseAll } from '../utils/processLauncher';
 import { registry } from '../server';
-import { SocksProxy } from '../utils/socksProxy';
+import { SocksProxy } from '../common/socksProxy';
 
 export class PlaywrightConnection {
   private _ws: WebSocket;

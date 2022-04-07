@@ -15,8 +15,8 @@
  */
 
 import type * as channels from '../protocol/channels';
-import { TimeoutError } from '../utils/errors';
-import * as socks from '../utils/socksProxy';
+import { TimeoutError } from '../common/errors';
+import * as socks from '../common/socksProxy';
 import { Android } from './android';
 import { BrowserType } from './browserType';
 import { ChannelOwner } from './channelOwner';

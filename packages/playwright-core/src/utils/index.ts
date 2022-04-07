@@ -15,7 +15,7 @@
  */
 
 import type { SpawnOptions } from 'child_process';
-import { execSync, spawn } from 'child_process';
+import { spawn } from 'child_process';
 import * as crypto from 'crypto';
 import fs from 'fs';
 import os from 'os';
@@ -24,13 +24,14 @@ import removeFolder from 'rimraf';
 import type stream from 'stream';
 import * as URL from 'url';
 import type { NameValue } from '../protocol/channels';
-import { getUbuntuVersionSync, parseOSReleaseText } from './ubuntuVersion';
+import { getUbuntuVersionSync } from './ubuntuVersion';
 
+export { eventsHelper } from './eventsHelper';
+export type { RegisteredListener } from './eventsHelper';
 export { ManualPromise } from './manualPromise';
 export { MultiMap } from './multimap';
 export { raceAgainstTimeout, TimeoutRunner, TimeoutRunnerError } from './timeoutRunner';
-export type { HTTPRequestParams } from './netUtils';
-export { httpRequest, fetchData } from './netUtils';
+export { zones } from './zones';
 
 export const existsAsync = (path: string): Promise<boolean> => new Promise(resolve => fs.stat(path, err => resolve(!err)));
 
@@ -233,66 +234,6 @@ export function canAccessFile(file: string) {
   } catch (e) {
     return false;
   }
-}
-
-let cachedUserAgent: string | undefined;
-export function getUserAgent(): string {
-  if (cachedUserAgent)
-    return cachedUserAgent;
-  try {
-    cachedUserAgent = determineUserAgent();
-  } catch (e) {
-    cachedUserAgent = 'Playwright/unknown';
-  }
-  return cachedUserAgent;
-}
-
-function determineUserAgent(): string {
-  let osIdentifier = 'unknown';
-  let osVersion = 'unknown';
-  if (process.platform === 'win32') {
-    const version = os.release().split('.');
-    osIdentifier = 'windows';
-    osVersion = `${version[0]}.${version[1]}`;
-  } else if (process.platform === 'darwin') {
-    const version = execSync('sw_vers -productVersion', { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim().split('.');
-    osIdentifier = 'macOS';
-    osVersion = `${version[0]}.${version[1]}`;
-  } else if (process.platform === 'linux') {
-    try {
-      // List of /etc/os-release values for different distributions could be
-      // found here: https://gist.github.com/aslushnikov/8ceddb8288e4cf9db3039c02e0f4fb75
-      const osReleaseText = fs.readFileSync('/etc/os-release', 'utf8');
-      const fields = parseOSReleaseText(osReleaseText);
-      osIdentifier = fields.get('id') || 'unknown';
-      osVersion = fields.get('version_id') || 'unknown';
-    } catch (e) {
-      // Linux distribution without /etc/os-release.
-      // Default to linux/unknown.
-      osIdentifier = 'linux';
-    }
-  }
-
-  const { langName, langVersion } = getClientLanguage();
-  return `Playwright/${getPlaywrightVersion()} (${os.arch()}; ${osIdentifier} ${osVersion}) ${langName}/${langVersion}`;
-}
-
-export function getClientLanguage(): { langName: string, langVersion: string } {
-  let langName = 'unknown';
-  let langVersion = 'unknown';
-  if (!process.env.PW_LANG_NAME) {
-    langName = 'node';
-    langVersion = process.version.substring(1).split('.').slice(0, 2).join('.');
-  } else if (['node', 'python', 'java', 'csharp'].includes(process.env.PW_LANG_NAME)) {
-    langName = process.env.PW_LANG_NAME;
-    langVersion = process.env.PW_LANG_NAME_VERSION ?? 'unknown';
-  }
-  return { langName, langVersion };
-}
-
-export function getPlaywrightVersion(majorMinorOnly = false) {
-  const packageJson = require('./../../package.json');
-  return majorMinorOnly ? packageJson.version.split('.').slice(0, 2).join('.') : packageJson.version;
 }
 
 export function constructURLBasedOnBaseURL(baseURL: string | undefined, givenURL: string): string {

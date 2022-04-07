@@ -20,8 +20,8 @@ import type { ConnectionTransport, ProtocolRequest, ProtocolResponse } from '../
 import type { Protocol } from './protocol';
 import { EventEmitter } from 'events';
 import { rewriteErrorMessage } from '../../utils/stackTrace';
-import type { RecentLogsCollector } from '../../utils/debugLogger';
-import { debugLogger } from '../../utils/debugLogger';
+import type { RecentLogsCollector } from '../../common/debugLogger';
+import { debugLogger } from '../../common/debugLogger';
 import type { ProtocolLogger } from '../types';
 import { helper } from '../helper';
 import { ProtocolError } from '../protocolError';

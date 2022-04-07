@@ -20,11 +20,11 @@ import { assert } from '../../utils';
 import type { ConnectionTransport, ProtocolRequest, ProtocolResponse } from '../transport';
 import type { Protocol } from './protocol';
 import { rewriteErrorMessage } from '../../utils/stackTrace';
-import type { RecentLogsCollector } from '../../utils/debugLogger';
-import { debugLogger } from '../../utils/debugLogger';
+import type { RecentLogsCollector } from '../../common/debugLogger';
+import { debugLogger } from '../../common/debugLogger';
 import type { ProtocolLogger } from '../types';
 import { helper } from '../helper';
-import { kBrowserClosedError } from '../../utils/errors';
+import { kBrowserClosedError } from '../../common/errors';
 import { ProtocolError } from '../protocolError';
 
 // WKPlaywright uses this special id to issue Browser.close command which we

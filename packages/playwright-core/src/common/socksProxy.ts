@@ -21,7 +21,7 @@ import net from 'net';
 import util from 'util';
 import { debugLogger } from './debugLogger';
 import { createSocket } from './netUtils';
-import { assert, createGuid } from './';
+import { assert, createGuid } from '../utils';
 
 const dnsLookupAsync = util.promisify(dns.lookup);
 
