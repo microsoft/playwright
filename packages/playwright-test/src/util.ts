@@ -22,11 +22,9 @@ import colors from 'colors/safe';
 import type { TestError, Location } from './types';
 import { default as minimatch } from 'minimatch';
 import debug from 'debug';
-import { calculateSha1, isRegExp } from 'playwright-core/lib/utils/utils';
-import { isInternalFileName } from 'playwright-core/lib/utils/stackTrace';
+import { calculateSha1, isRegExp, isInternalFileName, captureStackTrace as coreCaptureStackTrace } from 'playwright-core/lib/utils';
+import type { ParsedStackTrace } from 'playwright-core/lib/utils';
 import { currentTestInfo } from './globals';
-import type { ParsedStackTrace } from 'playwright-core/lib/utils/stackTrace';
-import { captureStackTrace as coreCaptureStackTrace } from 'playwright-core/lib/utils/stackTrace';
 
 export type { ParsedStackTrace };
 

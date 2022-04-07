@@ -28,7 +28,7 @@ import { ProjectImpl } from './project';
 import type { Reporter } from '../types/testReporter';
 import type { BuiltInReporter } from './runner';
 import { builtInReporters } from './runner';
-import { isRegExp } from 'playwright-core/lib/utils/utils';
+import { isRegExp } from 'playwright-core/lib/utils';
 import { serializeError } from './util';
 
 // To allow multiple loaders in the same process without clearing require cache,

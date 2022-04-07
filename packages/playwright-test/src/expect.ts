@@ -15,7 +15,7 @@
  */
 
 import expectLibrary from 'expect';
-import { raceAgainstTimeout } from 'playwright-core/lib/utils/async';
+import { raceAgainstTimeout, monotonicTime } from 'playwright-core/lib/utils';
 import path from 'path';
 import {
   INVERTED_COLOR,
@@ -48,7 +48,6 @@ import { toMatchSnapshot, toHaveScreenshot as _toHaveScreenshot } from './matche
 import type { Expect } from './types';
 import { currentTestInfo } from './globals';
 import { serializeError, captureStackTrace, currentExpectTimeout } from './util';
-import { monotonicTime } from 'playwright-core/lib/utils/utils';
 
 // from expect/build/types
 export type SyncExpectationResult = {

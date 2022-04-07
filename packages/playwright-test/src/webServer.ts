@@ -18,9 +18,9 @@ import http from 'http';
 import https from 'https';
 import net from 'net';
 import debug from 'debug';
-import { raceAgainstTimeout } from 'playwright-core/lib/utils/async';
+import { raceAgainstTimeout } from 'playwright-core/lib/utils';
+import { launchProcess } from 'playwright-core/lib/utils';
 import type { WebServerConfig } from './types';
-import { launchProcess } from 'playwright-core/lib/utils/processLauncher';
 import type { Reporter } from '../types/testReporter';
 
 const DEFAULT_ENVIRONMENT_VARIABLES = {

@@ -19,8 +19,8 @@ import type { Page as PageEx } from 'playwright-core/lib/client/page';
 import type { Locator as LocatorEx } from 'playwright-core/lib/client/locator';
 import type { Expect } from '../types';
 import { currentTestInfo } from '../globals';
-import type { ImageComparatorOptions, Comparator } from 'playwright-core/lib/utils/comparators';
-import { getComparator } from 'playwright-core/lib/utils/comparators';
+import type { ImageComparatorOptions, Comparator } from 'playwright-core/lib/utils';
+import { getComparator } from 'playwright-core/lib/utils';
 import type { PageScreenshotOptions } from 'playwright-core/types/types';
 import {
   addSuffixToFilePath, serializeError, sanitizeForFilePath,

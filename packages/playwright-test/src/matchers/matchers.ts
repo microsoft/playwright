@@ -16,13 +16,13 @@
 
 import type { Locator, Page, APIResponse } from 'playwright-core';
 import type { FrameExpectOptions } from 'playwright-core/lib/client/types';
-import { constructURLBasedOnBaseURL } from 'playwright-core/lib/utils/utils';
+import { constructURLBasedOnBaseURL } from 'playwright-core/lib/utils';
+import type { ParsedStackTrace } from 'playwright-core/lib/utils';
 import type { Expect } from '../types';
 import { expectTypes, callLogText } from '../util';
 import { toBeTruthy } from './toBeTruthy';
 import { toEqual } from './toEqual';
 import { toExpectedTextValues, toMatchText } from './toMatchText';
-import type { ParsedStackTrace } from 'playwright-core/lib/utils/stackTrace';
 
 interface LocatorEx extends Locator {
   _expect(customStackTrace: ParsedStackTrace, expression: string, options: Omit<FrameExpectOptions, 'expectedValue'> & { expectedValue?: any }): Promise<{ matches: boolean, received?: any, log?: string[] }>;

@@ -17,7 +17,7 @@
 import fs from 'fs';
 import * as mime from 'mime';
 import path from 'path';
-import { calculateSha1 } from 'playwright-core/lib/utils/utils';
+import { calculateSha1 } from 'playwright-core/lib/utils';
 import type { TestError, TestInfo, TestStatus } from '../types/test';
 import type { FullConfigInternal, FullProjectInternal } from './types';
 import type { WorkerInitParams } from './ipc';

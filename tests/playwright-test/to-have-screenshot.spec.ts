@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { getComparator } from 'playwright-core/lib/utils/comparators';
+import { getComparator } from 'playwright-core/lib/utils';
 import * as fs from 'fs';
 import { PNG } from 'pngjs';
 import * as path from 'path';
