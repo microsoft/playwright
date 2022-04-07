@@ -350,41 +350,28 @@ export class AndroidDevice extends SdkObject {
 
     const socketNames = new Set<string>();
     for (const line of sockets) {
-      const match = line.match(/[^@]+@.*?webview_devtools_remote_?(\d*)/);
       const matchSocketName = line.match(/[^@]+@(.*?webview_devtools_remote_?.*)/);
-
       if (!matchSocketName)
         continue;
 
       const socketName = matchSocketName[1];
       socketNames.add(socketName);
-
       if (this._webViews.has(socketName))
         continue;
 
       // possible line: 0000000000000000: 00000002 00000000 00010000 0001 01 5841881 @webview_devtools_remote_zeus
       // the result: match[1] = ''
-      if (!match || !match[1]) {
-        const webView = { pid: -1, pkg: '', socketName };
-        this._webViews.set(socketName, webView);
-        this.emit(AndroidDevice.Events.WebViewAdded, webView);
-        continue;
-      }
+      const match = line.match(/[^@]+@.*?webview_devtools_remote_?(\d*)/);
+      let pid = -1;
+      if (match && match[1])
+        pid = +match[1];
 
-      const pid = +match[1];
-      const procs = (await this._backend.runCommand(`shell:ps -A | grep ${pid}`)).toString().split('\n');
+      const pkg = await this._extractPkg(pid);
       if (this._isClosed)
         return;
-      let pkg = '';
-      for (const proc of procs) {
-        const match = proc.match(/[^\s]+\s+(\d+).*$/);
-        if (!match)
-          continue;
-        pkg = proc.substring(proc.lastIndexOf(' ') + 1);
-      }
+
       const webView = { pid, pkg, socketName };
       this._webViews.set(socketName, webView);
-
       this.emit(AndroidDevice.Events.WebViewAdded, webView);
     }
     for (const p of this._webViews.keys()) {
@@ -393,6 +380,21 @@ export class AndroidDevice extends SdkObject {
         this.emit(AndroidDevice.Events.WebViewRemoved, p);
       }
     }
+  }
+
+  private async _extractPkg(pid: number) {
+    let pkg = '';
+    if (pid === -1)
+      return pkg;
+
+    const procs = (await this._backend.runCommand(`shell:ps -A | grep ${pid}`)).toString().split('\n');
+    for (const proc of procs) {
+      const match = proc.match(/[^\s]+\s+(\d+).*$/);
+      if (!match)
+        continue;
+      pkg = proc.substring(proc.lastIndexOf(' ') + 1);
+    }
+    return pkg;
   }
 }
 
@@ -473,3 +475,5 @@ class ClankBrowserProcess implements BrowserProcess {
     await this._browser.close();
   }
 }
+
+
