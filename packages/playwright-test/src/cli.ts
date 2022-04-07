@@ -74,6 +74,7 @@ Arguments [test-filter...]:
 
 Examples:
   $ npx playwright test my.spec.ts
+  $ npx playwright test some.spec.ts:42
   $ npx playwright test --headed
   $ npx playwright test --browser=webkit`);
 }

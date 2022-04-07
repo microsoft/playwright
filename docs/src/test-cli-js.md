@@ -29,6 +29,11 @@ Here are the most common options available in the command line.
   npx playwright test my-spec my-spec-2
   ```
 
+- Run files that are in line 42 in my-spec.ts
+  ```bash
+  npx playwright test my-spec.ts:42
+  ```
+
 - Run the test with the title
   ```bash
   npx playwright test -g "add a todo item"
