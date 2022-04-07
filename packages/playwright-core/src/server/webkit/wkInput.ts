@@ -19,7 +19,7 @@ import * as input from '../input';
 import type * as types from '../types';
 import { macEditingCommands } from '../macEditingCommands';
 import type { WKSession } from './wkConnection';
-import { isString } from '../../utils/utils';
+import { isString } from '../../utils';
 import type { Page } from '../page';
 
 function toModifiersMask(modifiers: Set<types.KeyboardModifier>): number {

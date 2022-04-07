@@ -25,7 +25,7 @@ import * as network from '../network';
 import type * as frames from '../frames';
 import type * as types from '../types';
 import type { CRPage } from './crPage';
-import { assert, headersObjectToArray } from '../../utils/utils';
+import { assert, headersObjectToArray } from '../../utils';
 
 export class CRNetworkManager {
   private _client: CRSession;

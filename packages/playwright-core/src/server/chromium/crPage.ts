@@ -20,7 +20,7 @@ import type { RegisteredListener } from '../../utils/eventsHelper';
 import { eventsHelper } from '../../utils/eventsHelper';
 import { registry } from '../registry';
 import { rewriteErrorMessage } from '../../utils/stackTrace';
-import { assert, createGuid, headersArrayToObject } from '../../utils/utils';
+import { assert, createGuid, headersArrayToObject } from '../../utils';
 import * as dialog from '../dialog';
 import * as dom from '../dom';
 import type * as frames from '../frames';

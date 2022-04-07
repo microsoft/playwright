@@ -22,7 +22,7 @@ import colors from 'colors/safe';
 import type { TestError, Location } from './types';
 import { default as minimatch } from 'minimatch';
 import debug from 'debug';
-import { calculateSha1, isRegExp } from 'playwright-core/lib/utils/utils';
+import { calculateSha1, isRegExp } from 'playwright-core/lib/utils';
 import { isInternalFileName } from 'playwright-core/lib/utils/stackTrace';
 import { currentTestInfo } from './globals';
 import type { ParsedStackTrace } from 'playwright-core/lib/utils/stackTrace';

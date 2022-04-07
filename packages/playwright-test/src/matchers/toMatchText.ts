@@ -16,7 +16,7 @@
 
 
 import type { ExpectedTextValue } from 'playwright-core/lib/protocol/channels';
-import { isRegExp, isString } from 'playwright-core/lib/utils/utils';
+import { isRegExp, isString } from 'playwright-core/lib/utils';
 import type { Expect } from '../types';
 import type { ParsedStackTrace } from '../util';
 import { expectTypes, callLogText, currentExpectTimeout, captureStackTrace } from '../util';

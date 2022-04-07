@@ -20,7 +20,7 @@ import type * as js from './javascript';
 import type * as types from './types';
 import type { ParsedSelector } from './common/selectorParser';
 import { allEngineNames, InvalidSelectorError, parseSelector, stringifySelector } from './common/selectorParser';
-import { createGuid, experimentalFeaturesEnabled } from '../utils/utils';
+import { createGuid, experimentalFeaturesEnabled } from '../utils';
 
 export type SelectorInfo = {
   parsed: ParsedSelector,

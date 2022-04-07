@@ -16,7 +16,7 @@
 
 import path from 'path';
 import { Page } from './page';
-import { assert } from '../utils/utils';
+import { assert } from '../utils';
 import { Artifact } from './artifact';
 
 export class Download {

@@ -19,7 +19,7 @@ import type { WKPage } from './wkPage';
 import type { RegisteredListener } from '../../utils/eventsHelper';
 import { eventsHelper } from '../../utils/eventsHelper';
 import type { Protocol } from './protocol';
-import { assert } from '../../utils/utils';
+import { assert } from '../../utils';
 
 export class WKProvisionalPage {
   readonly _session: WKSession;

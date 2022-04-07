@@ -23,7 +23,7 @@ import type { SelectOption, FilePayload, Rect, SelectOptionOptions } from './typ
 import fs from 'fs';
 import * as mime from 'mime';
 import path from 'path';
-import { assert, isString, mkdirIfNeeded } from '../utils/utils';
+import { assert, isString, mkdirIfNeeded } from '../utils';
 import type * as api from '../../types/types';
 import type * as structs from '../../types/structs';
 import type { BrowserContext } from './browserContext';

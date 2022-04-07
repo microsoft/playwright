@@ -23,7 +23,7 @@ import { Connection } from './connection';
 import { Events } from './events';
 import type { ChildProcess } from 'child_process';
 import { envObjectToArray } from './clientHelper';
-import { assert, headersObjectToArray, monotonicTime } from '../utils/utils';
+import { assert, headersObjectToArray, monotonicTime } from '../utils';
 import type * as api from '../../types/types';
 import { kBrowserClosedError } from '../utils/errors';
 import { raceAgainstTimeout } from '../utils';

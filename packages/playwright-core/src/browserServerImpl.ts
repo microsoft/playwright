@@ -18,7 +18,7 @@ import type { LaunchServerOptions, Logger } from './client/types';
 import { EventEmitter } from 'ws';
 import type { BrowserServerLauncher, BrowserServer } from './client/browserType';
 import { envObjectToArray } from './client/clientHelper';
-import { createGuid } from './utils/utils';
+import { createGuid } from './utils';
 import type { ProtocolLogger } from './server/types';
 import { serverSideCallMetadata } from './server/instrumentation';
 import { createPlaywright } from './server/playwright';

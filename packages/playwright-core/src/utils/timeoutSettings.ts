@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { debugMode } from './utils';
+import { debugMode } from './';
 
 export const DEFAULT_TIMEOUT = 30000;
 

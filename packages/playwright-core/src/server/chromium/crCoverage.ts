@@ -20,7 +20,7 @@ import type { RegisteredListener } from '../../utils/eventsHelper';
 import { eventsHelper } from '../../utils/eventsHelper';
 import type { Protocol } from './protocol';
 import type * as types from '../types';
-import { assert } from '../../utils/utils';
+import { assert } from '../../utils';
 
 export class CRCoverage {
   private _jsCoverage: JSCoverage;

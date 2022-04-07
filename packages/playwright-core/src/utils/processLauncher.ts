@@ -18,7 +18,7 @@
 import * as childProcess from 'child_process';
 import * as readline from 'readline';
 import { eventsHelper } from './eventsHelper';
-import { isUnderTest, removeFolders } from './utils';
+import { isUnderTest, removeFolders } from './';
 import rimraf from 'rimraf';
 
 export type Env = {[key: string]: string | number | boolean | undefined};

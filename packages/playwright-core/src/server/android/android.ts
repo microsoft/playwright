@@ -22,7 +22,7 @@ import os from 'os';
 import path from 'path';
 import type * as stream from 'stream';
 import * as ws from 'ws';
-import { createGuid, makeWaitForNextTask, removeFolders } from '../../utils/utils';
+import { createGuid, makeWaitForNextTask, removeFolders } from '../../utils';
 import type { BrowserOptions, BrowserProcess, PlaywrightOptions } from '../browser';
 import type { BrowserContext } from '../browserContext';
 import { validateBrowserContextOptions } from '../browserContext';

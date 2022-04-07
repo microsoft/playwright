@@ -22,7 +22,7 @@ import { debugLogger } from '../../../utils/debugLogger';
 import type { Frame } from '../../frames';
 import type { SnapshotData } from './snapshotterInjected';
 import { frameSnapshotStreamer } from './snapshotterInjected';
-import { calculateSha1, createGuid, monotonicTime } from '../../../utils/utils';
+import { calculateSha1, createGuid, monotonicTime } from '../../../utils';
 import type { FrameSnapshot } from '../common/snapshotTypes';
 import type { ElementHandle } from '../../dom';
 import * as mime from 'mime';

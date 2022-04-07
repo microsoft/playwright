@@ -21,7 +21,7 @@ import { helper } from '../../helper';
 import * as network from '../../network';
 import { Page } from '../../page';
 import type * as har from './har';
-import { calculateSha1, monotonicTime } from '../../../utils/utils';
+import { calculateSha1, monotonicTime } from '../../../utils';
 import type { RegisteredListener } from '../../../utils/eventsHelper';
 import { eventsHelper } from '../../../utils/eventsHelper';
 import * as mime from 'mime';

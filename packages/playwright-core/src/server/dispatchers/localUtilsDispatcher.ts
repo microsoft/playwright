@@ -21,7 +21,7 @@ import yauzl from 'yauzl';
 import yazl from 'yazl';
 import type * as channels from '../../protocol/channels';
 import { ManualPromise } from '../../utils';
-import { assert, createGuid } from '../../utils/utils';
+import { assert, createGuid } from '../../utils';
 import type { DispatcherScope } from './dispatcher';
 import { Dispatcher } from './dispatcher';
 

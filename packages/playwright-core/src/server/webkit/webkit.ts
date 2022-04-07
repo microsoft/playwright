@@ -24,7 +24,7 @@ import type { ConnectionTransport } from '../transport';
 import type { BrowserOptions, PlaywrightOptions } from '../browser';
 import type * as types from '../types';
 import { rewriteErrorMessage } from '../../utils/stackTrace';
-import { wrapInASCIIBox } from '../../utils/utils';
+import { wrapInASCIIBox } from '../../utils';
 
 export class WebKit extends BrowserType {
   constructor(playwrightOptions: PlaywrightOptions) {

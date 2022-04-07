@@ -19,7 +19,7 @@ import type * as api from '../../types/types';
 import type * as channels from '../protocol/channels';
 import type { ParsedStackTrace } from '../utils/stackTrace';
 import * as util from 'util';
-import { isRegExp, monotonicTime } from '../utils/utils';
+import { isRegExp, monotonicTime } from '../utils';
 import { ElementHandle } from './elementHandle';
 import type { Frame } from './frame';
 import type { FilePayload, FrameExpectOptions, Rect, SelectOption, SelectOptionOptions, TimeoutOptions } from './types';

@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { assert } from '../../utils/utils';
+import { assert } from '../../utils';
 import type { ConnectionTransport, ProtocolRequest, ProtocolResponse } from '../transport';
 import type { Protocol } from './protocol';
 import { EventEmitter } from 'events';

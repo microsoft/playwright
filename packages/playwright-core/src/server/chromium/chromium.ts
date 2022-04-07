@@ -32,7 +32,7 @@ import { Browser } from '../browser';
 import type * as types from '../types';
 import type { HTTPRequestParams } from '../../utils';
 import { fetchData } from '../../utils';
-import { debugMode, getUserAgent, headersArrayToObject, removeFolders, streamToString, wrapInASCIIBox } from '../../utils/utils';
+import { debugMode, getUserAgent, headersArrayToObject, removeFolders, streamToString, wrapInASCIIBox } from '../../utils';
 import { RecentLogsCollector } from '../../utils/debugLogger';
 import type { Progress } from '../progress';
 import { ProgressController } from '../progress';

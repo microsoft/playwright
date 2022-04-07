@@ -20,7 +20,7 @@ import * as dom from '../dom';
 import type * as frames from '../frames';
 import type { RegisteredListener } from '../../utils/eventsHelper';
 import { eventsHelper } from '../../utils/eventsHelper';
-import { assert } from '../../utils/utils';
+import { assert } from '../../utils';
 import type { PageBinding, PageDelegate } from '../page';
 import { Page, Worker } from '../page';
 import type * as types from '../types';

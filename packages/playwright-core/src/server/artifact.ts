@@ -15,7 +15,7 @@
  */
 
 import fs from 'fs';
-import { assert } from '../utils/utils';
+import { assert } from '../utils';
 import { ManualPromise } from '../utils';
 import { SdkObject } from './instrumentation';
 

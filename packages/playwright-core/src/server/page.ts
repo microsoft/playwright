@@ -30,7 +30,7 @@ import * as accessibility from './accessibility';
 import { FileChooser } from './fileChooser';
 import type { Progress } from './progress';
 import { ProgressController } from './progress';
-import { assert, isError } from '../utils/utils';
+import { assert, isError } from '../utils';
 import { ManualPromise } from '../utils';
 import { debugLogger } from '../utils/debugLogger';
 import type { ImageComparatorOptions } from '../utils/comparators';

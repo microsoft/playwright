@@ -30,7 +30,7 @@ import { LocalUtilsDispatcher } from './localUtilsDispatcher';
 import { APIRequestContextDispatcher } from './networkDispatchers';
 import { SelectorsDispatcher } from './selectorsDispatcher';
 import { ConnectedBrowserDispatcher } from './browserDispatcher';
-import { createGuid } from '../../utils/utils';
+import { createGuid } from '../../utils';
 
 export class PlaywrightDispatcher extends Dispatcher<Playwright, channels.PlaywrightChannel> implements channels.PlaywrightChannel {
   _type_Playwright;

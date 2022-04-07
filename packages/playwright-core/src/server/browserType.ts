@@ -31,7 +31,7 @@ import type { Progress } from './progress';
 import { ProgressController } from './progress';
 import type * as types from './types';
 import { DEFAULT_TIMEOUT, TimeoutSettings } from '../utils/timeoutSettings';
-import { debugMode, existsAsync } from '../utils/utils';
+import { debugMode, existsAsync } from '../utils';
 import { helper } from './helper';
 import { RecentLogsCollector } from '../utils/debugLogger';
 import type { CallMetadata } from './instrumentation';

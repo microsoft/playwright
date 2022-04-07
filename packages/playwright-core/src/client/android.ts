@@ -15,7 +15,7 @@
  */
 
 import fs from 'fs';
-import { isString, isRegExp } from '../utils/utils';
+import { isString, isRegExp } from '../utils';
 import type * as channels from '../protocol/channels';
 import { Events } from './events';
 import { BrowserContext, prepareBrowserContextParams } from './browserContext';

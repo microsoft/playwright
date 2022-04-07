@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { assert } from '../utils/utils';
+import { assert } from '../utils';
 import type * as channels from '../protocol/channels';
 import { ChannelOwner } from './channelOwner';
 import { FrameLocator, Locator } from './locator';

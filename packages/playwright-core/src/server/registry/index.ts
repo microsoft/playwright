@@ -22,7 +22,7 @@ import * as fs from 'fs';
 import lockfile from 'proper-lockfile';
 import { getUbuntuVersion } from '../../utils/ubuntuVersion';
 import { fetchData } from '../../utils';
-import { getFromENV, getAsBooleanFromENV, getClientLanguage, calculateSha1, removeFolders, existsAsync, hostPlatform, canAccessFile, spawnAsync, wrapInASCIIBox, transformCommandsForRoot } from '../../utils/utils';
+import { getFromENV, getAsBooleanFromENV, getClientLanguage, calculateSha1, removeFolders, existsAsync, hostPlatform, canAccessFile, spawnAsync, wrapInASCIIBox, transformCommandsForRoot } from '../../utils';
 import type { DependencyGroup } from './dependencies';
 import { installDependenciesLinux, installDependenciesWindows, validateDependenciesLinux, validateDependenciesWindows } from './dependencies';
 import { downloadBrowserWithProgressBar, logPolitely } from './browserFetcher';

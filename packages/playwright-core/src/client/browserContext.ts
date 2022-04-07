@@ -28,7 +28,7 @@ import { Events } from './events';
 import { TimeoutSettings } from '../utils/timeoutSettings';
 import { Waiter } from './waiter';
 import type { URLMatch, Headers, WaitForEventOptions, BrowserContextOptions, StorageState, LaunchOptions } from './types';
-import { headersObjectToArray, mkdirIfNeeded } from '../utils/utils';
+import { headersObjectToArray, mkdirIfNeeded } from '../utils';
 import { isSafeCloseError } from '../utils/errors';
 import type * as api from '../../types/types';
 import type * as structs from '../../types/structs';

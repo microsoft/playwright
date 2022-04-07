@@ -26,7 +26,6 @@
     "./lib/utils/comparators": "./lib/utils/comparators.js",
     "./lib/utils/httpServer": "./lib/utils/httpServer.js",
     "./lib/utils/processLauncher": "./lib/utils/processLauncher.js",
-    "./lib/utils/utils": "./lib/utils/utils.js",
     "./lib/utils/stackTrace": "./lib/utils/stackTrace.js",
     "./lib/remote/playwrightServer": "./lib/remote/playwrightServer.js",
     "./lib/remote/playwrightClient": "./lib/remote/playwrightClient.js",
