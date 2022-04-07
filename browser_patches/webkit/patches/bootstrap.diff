@@ -2220,7 +2220,7 @@ index 6b5f33fc5c9e1dc0dedecf0f2070e0483c197f21..5c44cde5ed6626c6a34e6dff062bd49b
  
  UseScreenCaptureKit:
 diff --git a/Source/WTF/Scripts/Preferences/WebPreferencesInternal.yaml b/Source/WTF/Scripts/Preferences/WebPreferencesInternal.yaml
-index 65aca5319527cb7c4d67e80b6974362dbb7ef472..1e98cb197bd40b7e46aaaba4105bfe13bc3e068b 100644
+index 65aca5319527cb7c4d67e80b6974362dbb7ef472..30aad4af22a17034ddb2876d348a024661257abe 100644
 --- a/Source/WTF/Scripts/Preferences/WebPreferencesInternal.yaml
 +++ b/Source/WTF/Scripts/Preferences/WebPreferencesInternal.yaml
 @@ -968,6 +968,7 @@ UseCGDisplayListsForDOMRendering:
@@ -2236,7 +2236,7 @@ index 65aca5319527cb7c4d67e80b6974362dbb7ef472..1e98cb197bd40b7e46aaaba4105bfe13
      WebKit:
        "ENABLE(GPU_PROCESS_BY_DEFAULT)": true
 -      "PLATFORM(WIN)": true
-+      "PLATFORM(WIN)": false;
++      "PLATFORM(WIN)": false
        default: false
  
  UseGPUProcessForMediaEnabled:
@@ -19406,7 +19406,7 @@ index 0c80d970c3f9a987faf620081c909f6c7021970d..1467e5481f7417913c0d12a1cb492d02
  };
 diff --git a/Source/WebKit/UIProcess/win/WebPageInspectorEmulationAgentWin.cpp b/Source/WebKit/UIProcess/win/WebPageInspectorEmulationAgentWin.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..62b841fe1d0de2296e1c61e328cff564f5aa1c0f
+index 0000000000000000000000000000000000000000..0f95bc9549b3a00f9b976b4fe9140ea8e61a3513
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/win/WebPageInspectorEmulationAgentWin.cpp
 @@ -0,0 +1,58 @@
@@ -19449,11 +19449,11 @@ index 0000000000000000000000000000000000000000..62b841fe1d0de2296e1c61e328cff564
 +    RECT windowRect;
 +
 +    if (!windowHwnd || !GetWindowRect(windowHwnd, &windowRect)) {
-+        callback("Could not retrieve window size");
++        callback("Could not retrieve window size"_s);
 +        return;
 +    }
 +    if (!GetWindowRect(viewHwnd, &viewRect)) {
-+        callback("Could retrieve view size");
++        callback("Could retrieve view size"_s);
 +        return;
 +    }
 +
@@ -19461,7 +19461,7 @@ index 0000000000000000000000000000000000000000..62b841fe1d0de2296e1c61e328cff564
 +    height += windowRect.bottom - windowRect.top - viewRect.bottom + viewRect.top;
 +
 +    if (!SetWindowPos(windowHwnd, 0, 0, 0, width, height, SWP_NOCOPYBITS | SWP_NOSENDCHANGING | SWP_NOMOVE)) {
-+        callback("Could not resize window");
++        callback("Could not resize window"_s);
 +        return;
 +    }
 +    callback(String());
