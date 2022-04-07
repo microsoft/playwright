@@ -21,6 +21,7 @@ async function start() {
     console.log(`(exitCode=>${exitCode})`);
     console.log(`(signal=>${signal})`);
   });
+  console.log(`(tempDir=>${browserServer._artifactsDirForTest})`);
   console.log(`(pid=>${browserServer.process().pid})`);
   console.log(`(wsEndpoint=>${browserServer.wsEndpoint()})`);
 }

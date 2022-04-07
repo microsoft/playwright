@@ -110,8 +110,6 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
   });
 
   let processClosed = false;
-  let fulfillClose = () => {};
-  const waitForClose = new Promise<void>(f => fulfillClose = f);
   let fulfillCleanup = () => {};
   const waitForCleanup = new Promise<void>(f => fulfillCleanup = f);
   spawnedProcess.once('exit', (exitCode, signal) => {
@@ -120,7 +118,6 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
     eventsHelper.removeEventListeners(listeners);
     gracefullyCloseSet.delete(gracefullyClose);
     options.onExit(exitCode, signal);
-    fulfillClose();
     // Cleanup as process exits.
     cleanup().then(fulfillCleanup);
   });
@@ -153,7 +150,7 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
     if (gracefullyClosing) {
       options.log(`[pid=${spawnedProcess.pid}] <forecefully close>`);
       killProcess();
-      await waitForClose;  // Ensure the process is dead and we called options.onkill.
+      await waitForCleanup;  // Ensure the process is dead and we have cleaned up.
       return;
     }
     gracefullyClosing = true;
