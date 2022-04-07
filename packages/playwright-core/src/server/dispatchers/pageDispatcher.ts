@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-import type { BrowserContext } from '../server/browserContext';
-import type { Frame } from '../server/frames';
-import { Page, Worker } from '../server/page';
-import type * as channels from '../protocol/channels';
+import type { BrowserContext } from '../browserContext';
+import type { Frame } from '../frames';
+import { Page, Worker } from '../page';
+import type * as channels from '../../protocol/channels';
 import type { DispatcherScope } from './dispatcher';
 import { Dispatcher, existingDispatcher, lookupDispatcher, lookupNullableDispatcher } from './dispatcher';
-import { parseError, serializeError } from '../protocol/serializers';
+import { parseError, serializeError } from '../../protocol/serializers';
 import { ConsoleMessageDispatcher } from './consoleMessageDispatcher';
 import { DialogDispatcher } from './dialogDispatcher';
 import { FrameDispatcher } from './frameDispatcher';
@@ -28,14 +28,14 @@ import type { ResponseDispatcher } from './networkDispatchers';
 import { RequestDispatcher, RouteDispatcher, WebSocketDispatcher } from './networkDispatchers';
 import { serializeResult, parseArgument } from './jsHandleDispatcher';
 import { ElementHandleDispatcher } from './elementHandlerDispatcher';
-import type { FileChooser } from '../server/fileChooser';
-import type { CRCoverage } from '../server/chromium/crCoverage';
-import type { JSHandle } from '../server/javascript';
-import type { CallMetadata } from '../server/instrumentation';
-import type { Artifact } from '../server/artifact';
+import type { FileChooser } from '../fileChooser';
+import type { CRCoverage } from '../chromium/crCoverage';
+import type { JSHandle } from '../javascript';
+import type { CallMetadata } from '../instrumentation';
+import type { Artifact } from '../artifact';
 import { ArtifactDispatcher } from './artifactDispatcher';
-import type { Download } from '../server/download';
-import { createGuid } from '../utils/utils';
+import type { Download } from '../download';
+import { createGuid } from '../../utils/utils';
 
 export class PageDispatcher extends Dispatcher<Page, channels.PageChannel> implements channels.PageChannel {
   _type_EventTarget = true;

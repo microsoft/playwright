@@ -18,7 +18,7 @@
 import path from 'path';
 import type { RegisteredListener } from '../../utils/eventsHelper';
 import { eventsHelper } from '../../utils/eventsHelper';
-import { registry } from '../../utils/registry';
+import { registry } from '../registry';
 import { rewriteErrorMessage } from '../../utils/stackTrace';
 import { assert, createGuid, headersArrayToObject } from '../../utils/utils';
 import * as dialog from '../dialog';

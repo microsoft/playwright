@@ -18,13 +18,13 @@ import fs from 'fs';
 import path from 'path';
 import * as os from 'os';
 import childProcess from 'child_process';
-import * as utils from './utils';
-import { buildPlaywrightCLICommand } from './registry';
+import * as utils from '../../utils/utils';
+import { buildPlaywrightCLICommand } from '.';
 import { deps } from './nativeDeps';
-import { getUbuntuVersion } from './ubuntuVersion';
+import { getUbuntuVersion } from '../../utils/ubuntuVersion';
 
-const BIN_DIRECTORY = path.join(__dirname, '..', '..', 'bin');
-const packageJSON = require('../../package.json');
+const BIN_DIRECTORY = path.join(__dirname, '..', '..', '..', 'bin');
+const packageJSON = require('../../../package.json');
 
 const dockerVersionFilePath = '/ms-playwright/.docker-info';
 export async function writeDockerVersion(dockerImageNameTemplate: string) {
@@ -284,7 +284,7 @@ async function executablesOrSharedLibraries(directoryPath: string): Promise<stri
 }
 
 async function missingFileDependenciesWindows(filePath: string): Promise<Array<string>> {
-  const executable = path.join(__dirname, '..', '..', 'bin', 'PrintDeps.exe');
+  const executable = path.join(__dirname, '..', '..', '..', 'bin', 'PrintDeps.exe');
   const dirname = path.dirname(filePath);
   const { stdout, code } = await utils.spawnAsync(executable, [filePath], {
     cwd: dirname,

@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-import type * as channels from '../protocol/channels';
+import type * as channels from '../../protocol/channels';
 import type { DispatcherScope } from './dispatcher';
 import { Dispatcher } from './dispatcher';
 import type * as stream from 'stream';
-import { createGuid } from '../utils/utils';
+import { createGuid } from '../../utils/utils';
 
 export class StreamDispatcher extends Dispatcher<{ guid: string, stream: stream.Readable }, channels.StreamChannel> implements channels.StreamChannel {
   _type_Stream = true;

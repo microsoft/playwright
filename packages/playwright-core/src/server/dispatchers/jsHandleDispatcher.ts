@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-import type * as js from '../server/javascript';
-import type * as channels from '../protocol/channels';
+import type * as js from '../javascript';
+import type * as channels from '../../protocol/channels';
 import type { DispatcherScope } from './dispatcher';
 import { Dispatcher } from './dispatcher';
 import { ElementHandleDispatcher } from './elementHandlerDispatcher';
-import { parseSerializedValue, serializeValue } from '../protocol/serializers';
+import { parseSerializedValue, serializeValue } from '../../protocol/serializers';
 
 export class JSHandleDispatcher extends Dispatcher<js.JSHandle, channels.JSHandleChannel> implements channels.JSHandleChannel {
   _type_JSHandle = true;

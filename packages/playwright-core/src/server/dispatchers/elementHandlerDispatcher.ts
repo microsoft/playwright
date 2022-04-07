@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-import type { ElementHandle } from '../server/dom';
-import type { Frame } from '../server/frames';
-import type * as js from '../server/javascript';
-import type * as channels from '../protocol/channels';
+import type { ElementHandle } from '../dom';
+import type { Frame } from '../frames';
+import type * as js from '../javascript';
+import type * as channels from '../../protocol/channels';
 import type { DispatcherScope } from './dispatcher';
 import { existingDispatcher, lookupNullableDispatcher } from './dispatcher';
 import { JSHandleDispatcher, serializeResult, parseArgument } from './jsHandleDispatcher';
 import type { FrameDispatcher } from './frameDispatcher';
-import type { CallMetadata } from '../server/instrumentation';
+import type { CallMetadata } from '../instrumentation';
 import type { WritableStreamDispatcher } from './writableStreamDispatcher';
 
 export class ElementHandleDispatcher extends JSHandleDispatcher implements channels.ElementHandleChannel {

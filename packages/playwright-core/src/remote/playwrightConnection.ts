@@ -15,15 +15,12 @@
  */
 
 import type WebSocket from 'ws';
-import type { DispatcherScope } from '../dispatchers/dispatcher';
-import { DispatcherConnection, Root } from '../dispatchers/dispatcher';
-import { PlaywrightDispatcher } from '../dispatchers/playwrightDispatcher';
+import type { Playwright, DispatcherScope } from '../server';
+import { createPlaywright, DispatcherConnection, Root, PlaywrightDispatcher } from '../server';
 import { Browser } from '../server/browser';
 import { serverSideCallMetadata } from '../server/instrumentation';
-import type { Playwright } from '../server/playwright';
-import { createPlaywright } from '../server/playwright';
 import { gracefullyCloseAll } from '../utils/processLauncher';
-import { registry } from '../utils/registry';
+import { registry } from '../server';
 import { SocksProxy } from '../utils/socksProxy';
 
 export class PlaywrightConnection {

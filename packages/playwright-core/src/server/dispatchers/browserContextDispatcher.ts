@@ -14,24 +14,24 @@
  * limitations under the License.
  */
 
-import { BrowserContext } from '../server/browserContext';
+import { BrowserContext } from '../browserContext';
 import type { DispatcherScope } from './dispatcher';
 import { Dispatcher, lookupDispatcher } from './dispatcher';
 import { PageDispatcher, BindingCallDispatcher, WorkerDispatcher } from './pageDispatcher';
 import type { FrameDispatcher } from './frameDispatcher';
-import type * as channels from '../protocol/channels';
+import type * as channels from '../../protocol/channels';
 import { RouteDispatcher, RequestDispatcher, ResponseDispatcher, APIRequestContextDispatcher } from './networkDispatchers';
-import { CRBrowserContext } from '../server/chromium/crBrowser';
+import { CRBrowserContext } from '../chromium/crBrowser';
 import { CDPSessionDispatcher } from './cdpSessionDispatcher';
-import { RecorderSupplement } from '../server/supplements/recorderSupplement';
-import type { CallMetadata } from '../server/instrumentation';
+import { RecorderSupplement } from '../supplements/recorderSupplement';
+import type { CallMetadata } from '../instrumentation';
 import { ArtifactDispatcher } from './artifactDispatcher';
-import type { Artifact } from '../server/artifact';
-import type { Request, Response } from '../server/network';
+import type { Artifact } from '../artifact';
+import type { Request, Response } from '../network';
 import { TracingDispatcher } from './tracingDispatcher';
 import * as fs from 'fs';
 import * as path from 'path';
-import { createGuid } from '../utils/utils';
+import { createGuid } from '../../utils/utils';
 import { WritableStreamDispatcher } from './writableStreamDispatcher';
 
 export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channels.BrowserContextChannel> implements channels.BrowserContextChannel {

@@ -16,9 +16,9 @@
 
 import type { DispatcherScope } from './dispatcher';
 import { Dispatcher } from './dispatcher';
-import type { Electron } from '../server/electron/electron';
-import { ElectronApplication } from '../server/electron/electron';
-import type * as channels from '../protocol/channels';
+import type { Electron } from '../electron/electron';
+import { ElectronApplication } from '../electron/electron';
+import type * as channels from '../../protocol/channels';
 import { BrowserContextDispatcher } from './browserContextDispatcher';
 import type { PageDispatcher } from './pageDispatcher';
 import { parseArgument, serializeResult } from './jsHandleDispatcher';

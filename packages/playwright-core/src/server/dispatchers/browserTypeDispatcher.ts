@@ -14,19 +14,19 @@
  * limitations under the License.
  */
 
-import type { BrowserType } from '../server/browserType';
+import type { BrowserType } from '../browserType';
 import { BrowserDispatcher } from './browserDispatcher';
-import type * as channels from '../protocol/channels';
+import type * as channels from '../../protocol/channels';
 import type { DispatcherScope } from './dispatcher';
 import { Dispatcher } from './dispatcher';
 import { BrowserContextDispatcher } from './browserContextDispatcher';
-import type { CallMetadata } from '../server/instrumentation';
+import type { CallMetadata } from '../instrumentation';
 import { JsonPipeDispatcher } from '../dispatchers/jsonPipeDispatcher';
-import { getUserAgent } from '../utils/utils';
-import * as socks from '../utils/socksProxy';
+import { getUserAgent } from '../../utils/utils';
+import * as socks from '../../utils/socksProxy';
 import EventEmitter from 'events';
-import { ProgressController } from '../server/progress';
-import { WebSocketTransport } from '../server/transport';
+import { ProgressController } from '../progress';
+import { WebSocketTransport } from '../transport';
 
 export class BrowserTypeDispatcher extends Dispatcher<BrowserType, channels.BrowserTypeChannel> implements channels.BrowserTypeChannel {
   _type_BrowserType = true;

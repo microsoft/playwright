@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-import type * as channels from '../protocol/channels';
-import type { Browser } from '../server/browser';
-import { GlobalAPIRequestContext } from '../server/fetch';
-import type { Playwright } from '../server/playwright';
-import type { SocksSocketClosedPayload, SocksSocketDataPayload, SocksSocketRequestedPayload } from '../utils/socksProxy';
-import { SocksProxy } from '../utils/socksProxy';
-import type * as types from '../server/types';
+import type * as channels from '../../protocol/channels';
+import type { Browser } from '../browser';
+import { GlobalAPIRequestContext } from '../fetch';
+import type { Playwright } from '../playwright';
+import type { SocksSocketClosedPayload, SocksSocketDataPayload, SocksSocketRequestedPayload } from '../../utils/socksProxy';
+import { SocksProxy } from '../../utils/socksProxy';
+import type * as types from '../types';
 import { AndroidDispatcher } from './androidDispatcher';
 import { BrowserTypeDispatcher } from './browserTypeDispatcher';
 import type { DispatcherScope } from './dispatcher';
@@ -30,14 +30,14 @@ import { LocalUtilsDispatcher } from './localUtilsDispatcher';
 import { APIRequestContextDispatcher } from './networkDispatchers';
 import { SelectorsDispatcher } from './selectorsDispatcher';
 import { ConnectedBrowserDispatcher } from './browserDispatcher';
-import { createGuid } from '../utils/utils';
+import { createGuid } from '../../utils/utils';
 
 export class PlaywrightDispatcher extends Dispatcher<Playwright, channels.PlaywrightChannel> implements channels.PlaywrightChannel {
   _type_Playwright;
   private _browserDispatcher: ConnectedBrowserDispatcher | undefined;
 
   constructor(scope: DispatcherScope, playwright: Playwright, socksProxy?: SocksProxy, preLaunchedBrowser?: Browser) {
-    const descriptors = require('../server/deviceDescriptors') as types.Devices;
+    const descriptors = require('../deviceDescriptors') as types.Devices;
     const deviceDescriptors = Object.entries(descriptors)
         .map(([name, descriptor]) => ({ name, descriptor }));
     const browserDispatcher = preLaunchedBrowser ? new ConnectedBrowserDispatcher(scope, preLaunchedBrowser) : undefined;

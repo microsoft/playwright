@@ -10,6 +10,7 @@
 
 [cli.ts]
 ../server/trace/viewer/traceViewer.ts
+../server/
 
 [driver.ts]
 ../**

@@ -19,9 +19,9 @@ import fs from 'fs';
 import path from 'path';
 import yauzl from 'yauzl';
 import yazl from 'yazl';
-import type * as channels from '../protocol/channels';
-import { ManualPromise } from '../utils/async';
-import { assert, createGuid } from '../utils/utils';
+import type * as channels from '../../protocol/channels';
+import { ManualPromise } from '../../utils/async';
+import { assert, createGuid } from '../../utils/utils';
 import type { DispatcherScope } from './dispatcher';
 import { Dispatcher } from './dispatcher';
 

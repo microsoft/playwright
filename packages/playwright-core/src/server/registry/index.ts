@@ -20,14 +20,15 @@ import path from 'path';
 import * as util from 'util';
 import * as fs from 'fs';
 import lockfile from 'proper-lockfile';
-import { getUbuntuVersion } from './ubuntuVersion';
-import { getFromENV, getAsBooleanFromENV, getClientLanguage, calculateSha1, removeFolders, existsAsync, hostPlatform, canAccessFile, spawnAsync, fetchData, wrapInASCIIBox, transformCommandsForRoot } from './utils';
+import { getUbuntuVersion } from '../../utils/ubuntuVersion';
+import { getFromENV, getAsBooleanFromENV, getClientLanguage, calculateSha1, removeFolders, existsAsync, hostPlatform, canAccessFile, spawnAsync, fetchData, wrapInASCIIBox, transformCommandsForRoot } from '../../utils/utils';
 import type { DependencyGroup } from './dependencies';
 import { installDependenciesLinux, installDependenciesWindows, validateDependenciesLinux, validateDependenciesWindows } from './dependencies';
 import { downloadBrowserWithProgressBar, logPolitely } from './browserFetcher';
+export { writeDockerVersion } from './dependencies';
 
-const PACKAGE_PATH = path.join(__dirname, '..', '..');
-const BIN_PATH = path.join(__dirname, '..', '..', 'bin');
+const PACKAGE_PATH = path.join(__dirname, '..', '..', '..');
+const BIN_PATH = path.join(__dirname, '..', '..', '..', 'bin');
 
 const EXECUTABLE_PATHS = {
   'chromium': {
@@ -162,7 +163,7 @@ export const registryDirectory = (() => {
 
   const envDefined = getFromENV('PLAYWRIGHT_BROWSERS_PATH');
   if (envDefined === '0') {
-    result = path.join(__dirname, '..', '..', '.local-browsers');
+    result = path.join(__dirname, '..', '..', '..', '.local-browsers');
   } else if (envDefined) {
     result = envDefined;
   } else {
@@ -820,4 +821,4 @@ export function findChromiumChannel(sdkLanguage: string): string | undefined {
   return channel;
 }
 
-export const registry = new Registry(require('../../browsers.json'));
+export const registry = new Registry(require('../../../browsers.json'));

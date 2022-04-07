@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import type { CRSession } from '../server/chromium/crConnection';
-import { CRSessionEvents } from '../server/chromium/crConnection';
-import type * as channels from '../protocol/channels';
+import type { CRSession } from '../chromium/crConnection';
+import { CRSessionEvents } from '../chromium/crConnection';
+import type * as channels from '../../protocol/channels';
 import type { DispatcherScope } from './dispatcher';
 import { Dispatcher } from './dispatcher';
 

@@ -32,13 +32,12 @@ import type { Page } from '../client/page';
 import type { BrowserType } from '../client/browserType';
 import type { BrowserContextOptions, LaunchOptions } from '../client/types';
 import { spawn } from 'child_process';
-import type { Executable } from '../utils/registry';
-import { registry } from '../utils/registry';
 import { spawnAsync, getPlaywrightVersion, wrapInASCIIBox } from '../utils/utils';
-import { writeDockerVersion } from '../utils/dependencies';
 import { launchGridAgent } from '../grid/gridAgent';
 import type { GridFactory } from '../grid/gridServer';
 import { GridServer } from '../grid/gridServer';
+import type { Executable } from '../server';
+import { registry, writeDockerVersion } from '../server';
 
 const packageJSON = require('../../package.json');
 
