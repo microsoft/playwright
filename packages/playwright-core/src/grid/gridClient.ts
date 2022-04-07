@@ -28,7 +28,7 @@ export class GridClient {
     params.set('pwVersion', getPlaywrightVersion(true /* majorMinorOnly */));
     const ws = new WebSocket(`${gridURL}/claimWorker?` + params.toString());
     const errorText = await Promise.race([
-      new Promise(f => ws.once('message', () => f(undefined))),
+      new Promise(f => ws.once('open', () => f(undefined))),
       new Promise(f => ws.once('close', (code, reason) => f(reason))),
     ]);
     if (errorText)

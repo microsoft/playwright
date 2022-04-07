@@ -1,5 +1,6 @@
 [*]
 ../client/
 ../dispatchers/
+../remote/
 ../server/
 ../utils/
