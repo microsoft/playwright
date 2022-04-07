@@ -81,13 +81,15 @@ export class PlaywrightServer {
       const url = new URL('http://localhost' + (request.url || ''));
       const browserHeader = request.headers['x-playwright-browser'];
       const browserAlias = url.searchParams.get('browser') || (Array.isArray(browserHeader) ? browserHeader[0] : browserHeader);
+      const headlessHeader = request.headers['x-playwright-headless'];
+      const headlessValue = url.searchParams.get('headless') || (Array.isArray(headlessHeader) ? headlessHeader[0] : headlessHeader);
       const proxyHeader = request.headers['x-playwright-proxy'];
       const proxyValue = url.searchParams.get('proxy') || (Array.isArray(proxyHeader) ? proxyHeader[0] : proxyHeader);
       const enableSocksProxy = this._enableSocksProxy && proxyValue === '*';
       this._clientsCount++;
       const log = newLogger();
       log(`serving connection: ${request.url}`);
-      const connection = new PlaywrightConnection(ws, enableSocksProxy, browserAlias, this._browser, log, () => this._clientsCount--);
+      const connection = new PlaywrightConnection(ws, enableSocksProxy, browserAlias, headlessValue !== '0', this._browser, log, () => this._clientsCount--);
       (ws as any)[kConnectionSymbol] = connection;
     });
 
