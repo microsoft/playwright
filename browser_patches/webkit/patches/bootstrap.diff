@@ -22264,6 +22264,23 @@ index faad78e101e3bb91dc45ae55abf90c7f6dbe4dc6..94af5f57c389d8403991ee45c95a2ff4
  
              # WebInspectorUI must come after JavaScriptCore and WebCore but before WebKit and WebKit2
              my $webKitIndex = first { $projects[$_] eq "Source/WebKitLegacy" } 0..$#projects;
+diff --git a/Tools/Scripts/webkitpy/binary_bundling/bundle.py b/Tools/Scripts/webkitpy/binary_bundling/bundle.py
+index a0de1c33380c4b6c6d22d081f9ca87d16c090293..cf16a562fe27f1f8e8153efc2703c2961635a9cb 100644
+--- a/Tools/Scripts/webkitpy/binary_bundling/bundle.py
++++ b/Tools/Scripts/webkitpy/binary_bundling/bundle.py
+@@ -214,10 +214,7 @@ class BinaryBundler:
+             if os.path.isfile(os.path.join(lib_dir, dlopenwrap_libname)):
+                 script_handle.write('export LD_PRELOAD="${%s}/lib/%s"\n' % (self.VAR_MYDIR, dlopenwrap_libname))
+             # If we have patched the binaries to use a relative relpath then load the binary directly without prefixing it with the interpreter (it allows the process to use the correct progname)
+-            if self._has_patched_interpreter_relpath:
+-                script_handle.write('exec "${%s}/bin/%s" "$@"\n' % (self.VAR_MYDIR, binary_to_wrap))
+-            else:
+-                script_handle.write('INTERPRETER="${%s}/lib/%s"\n' % (self.VAR_MYDIR, os.path.basename(interpreter)))
+-                script_handle.write('exec "${INTERPRETER}" "${%s}/bin/%s" "$@"\n' % (self.VAR_MYDIR, binary_to_wrap))
++            # Playwright: always exec directly for now as it was previously; the dynamic linker is not bundled
++            script_handle.write('exec "${%s}/bin/%s" "$@"\n' % (self.VAR_MYDIR, binary_to_wrap))
+ 
+         os.chmod(script_file, 0o755)
 diff --git a/Tools/WebKitTestRunner/InjectedBundle/empty/AccessibilityControllerEmpty.cpp b/Tools/WebKitTestRunner/InjectedBundle/empty/AccessibilityControllerEmpty.cpp
 new file mode 100644
 index 0000000000000000000000000000000000000000..3618075f10824beb0bc6cd8070772ab88f4e51c8
