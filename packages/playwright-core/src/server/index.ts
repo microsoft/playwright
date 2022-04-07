@@ -15,7 +15,13 @@
  */
 
 export type { Executable } from './registry';
-export { registry, writeDockerVersion, Registry, registryDirectory } from './registry';
+export {
+  registry,
+  registryDirectory,
+  Registry,
+  installDefaultBrowsersForNpmInstall,
+  installBrowsersForNpmInstall,
+  writeDockerVersion } from './registry';
 
 export { DispatcherConnection, Root } from './dispatchers/dispatcher';
 export { PlaywrightDispatcher } from './dispatchers/playwrightDispatcher';
