@@ -123,10 +123,14 @@ class Workspace {
       for (const otherPackage of this._packages) {
         if (pkgLockEntry.dependencies && pkgLockEntry.dependencies[otherPackage.name])
           pkgLockEntry.dependencies[otherPackage.name] = version;
+        if (pkgLockEntry.devDependencies && pkgLockEntry.devDependencies[otherPackage.name])
+          pkgLockEntry.devDependencies[otherPackage.name] = version;
         if (depLockEntry.requires && depLockEntry.requires[otherPackage.name])
           depLockEntry.requires[otherPackage.name] = version;
         if (pkg.packageJSON.dependencies && pkg.packageJSON.dependencies[otherPackage.name])
           pkg.packageJSON.dependencies[otherPackage.name] = version;
+        if (pkg.packageJSON.devDependencies && pkg.packageJSON.devDependencies[otherPackage.name])
+          pkg.packageJSON.devDependencies[otherPackage.name] = version;
       }
       await maybeWriteJSON(pkg.packageJSONPath, pkg.packageJSON);
     }
