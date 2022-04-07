@@ -16,11 +16,11 @@ inherit from this class.
 Message of the error.
 
 ## property: Error.name
-- returns: <[str]>
+- returns: ?<[str]>
 
 Name of the error which got thrown inside the browser. Optional.
 
 ## property: Error.stack
-- returns: <[str]>
+- returns: ?<[str]>
 
 Stack of the error which got thrown inside the browser. Optional.

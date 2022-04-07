@@ -223,7 +223,7 @@ await element.DispatchEventAsync("dragstart", new Dictionary<string, object>
 DOM event type: `"click"`, `"dragstart"`, etc.
 
 ### param: Locator.dispatchEvent.eventInit
-- `eventInit` <[EvaluationArgument]>
+- `eventInit` ?<[EvaluationArgument]>
 
 Optional event-specific initialization properties.
 
@@ -294,7 +294,7 @@ Assert.AreEqual("10 retweets", await tweets.EvaluateAsync("node => node.innerTex
 ### param: Locator.evaluate.expression = %%-evaluate-expression-%%
 
 ### param: Locator.evaluate.arg
-- `arg` <[EvaluationArgument]>
+- `arg` ?<[EvaluationArgument]>
 
 Optional argument to pass to [`param: expression`].
 
@@ -339,7 +339,7 @@ var divsCount = await elements.EvaluateAll<bool>("(divs, min) => divs.length >= 
 ### param: Locator.evaluateAll.expression = %%-evaluate-expression-%%
 
 ### param: Locator.evaluateAll.arg
-- `arg` <[EvaluationArgument]>
+- `arg` ?<[EvaluationArgument]>
 
 Optional argument to pass to [`param: expression`].
 
@@ -361,7 +361,7 @@ See [`method: Page.evaluateHandle`] for more details.
 ### param: Locator.evaluateHandle.expression = %%-evaluate-expression-%%
 
 ### param: Locator.evaluateHandle.arg
-- `arg` <[EvaluationArgument]>
+- `arg` ?<[EvaluationArgument]>
 
 Optional argument to pass to [`param: expression`].
 

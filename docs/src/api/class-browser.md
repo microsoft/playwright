@@ -271,7 +271,7 @@ browser.stop_tracing()
 ```
 
 ### param: Browser.startTracing.page
-- `page` <[Page]>
+- `page` ?<[Page]>
 
 Optional, if specified, tracing includes screenshots of the given page.
 

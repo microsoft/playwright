@@ -79,7 +79,7 @@ some additional values that are not serializable by `JSON`: `-0`, `NaN`, `Infini
 ### param: ElectronApplication.evaluate.expression = %%-evaluate-expression-%%
 
 ### param: ElectronApplication.evaluate.arg
-- `arg` <[EvaluationArgument]>
+- `arg` ?<[EvaluationArgument]>
 
 Optional argument to pass to [`param: expression`].
 
@@ -96,7 +96,9 @@ If the function passed to the [`method: ElectronApplication.evaluateHandle`] ret
 ### param: ElectronApplication.evaluateHandle.expression = %%-evaluate-expression-%%
 
 ### param: ElectronApplication.evaluateHandle.arg
-- `arg` <[EvaluationArgument]>
+- `arg` ?<[EvaluationArgument]>
+
+Optional argument to pass to [`param: expression`].
 
 ## async method: ElectronApplication.firstWindow
 - returns: <[Page]>
@@ -133,9 +135,9 @@ const [window] = await Promise.all([
 
 ### param: ElectronApplication.waitForEvent.optionsOrPredicate
 * langs: js
-- `optionsOrPredicate` <[function]|[Object]>
+- `optionsOrPredicate` ?<[function]|[Object]>
   - `predicate` <[function]> receives the event data and resolves to truthy value when the waiting should resolve.
-  - `timeout` <[float]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to
+  - `timeout` ?<[float]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to
     disable timeout. The default value can be changed by using the [`method: BrowserContext.setDefaultTimeout`].
 
 Either a predicate that receives an event or an options object. Optional.
