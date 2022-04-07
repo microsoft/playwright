@@ -19,7 +19,7 @@ import { assert, monotonicTime } from '../utils/utils';
 import type { LogName } from '../utils/debugLogger';
 import type { CallMetadata, Instrumentation, SdkObject } from './instrumentation';
 import type { ElementHandle } from './dom';
-import { ManualPromise } from '../utils/async';
+import { ManualPromise } from '../utils';
 import type { LogEntry } from './injected/injectedScript';
 
 export interface Progress {

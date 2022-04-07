@@ -21,7 +21,7 @@ import type { RunPayload, TestBeginPayload, TestEndPayload, DonePayload, TestOut
 import type { TestResult, Reporter, TestStep, TestError } from '../types/testReporter';
 import type { Suite, TestCase } from './test';
 import type { Loader } from './loader';
-import { ManualPromise } from 'playwright-core/lib/utils/async';
+import { ManualPromise } from 'playwright-core/lib/utils';
 
 export type TestGroup = {
   workerHash: string;

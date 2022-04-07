@@ -38,7 +38,7 @@ import { createGuid, monotonicTime } from '../../utils/utils';
 import { metadataToCallLog } from './recorder/recorderUtils';
 import { Debugger } from './debugger';
 import { EventEmitter } from 'events';
-import { raceAgainstTimeout } from '../../utils/async';
+import { raceAgainstTimeout } from '../../utils';
 
 type BindingSource = { frame: Frame, page: Page };
 

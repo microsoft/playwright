@@ -19,7 +19,7 @@ import { IpcTransport } from './protocol/transport';
 import type { Playwright } from './client/playwright';
 import * as childProcess from 'child_process';
 import * as path from 'path';
-import { ManualPromise } from './utils/async';
+import { ManualPromise } from './utils';
 
 export async function start(env: any = {}): Promise<{ playwright: Playwright, stop: () => Promise<void> }> {
   const client = new PlaywrightClient(env);

@@ -22,7 +22,7 @@ import yazl from 'yazl';
 import type { NameValue } from '../../../common/types';
 import type { TracingTracingStopChunkParams } from '../../../protocol/channels';
 import { commandsWithTracingSnapshots } from '../../../protocol/channels';
-import { ManualPromise } from '../../../utils/async';
+import { ManualPromise } from '../../../utils';
 import type { RegisteredListener } from '../../../utils/eventsHelper';
 import { eventsHelper } from '../../../utils/eventsHelper';
 import { assert, calculateSha1, createGuid, mkdirIfNeeded, monotonicTime, removeFolders } from '../../../utils/utils';

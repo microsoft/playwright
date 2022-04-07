@@ -34,7 +34,7 @@ import type { Protocol } from './protocol';
 import type { Progress } from '../progress';
 import { splitErrorMessage } from '../../utils/stackTrace';
 import { debugLogger } from '../../utils/debugLogger';
-import { ManualPromise } from '../../utils/async';
+import { ManualPromise } from '../../utils';
 
 export const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 

@@ -25,7 +25,7 @@ import { calculateSha1, monotonicTime } from '../../../utils/utils';
 import type { RegisteredListener } from '../../../utils/eventsHelper';
 import { eventsHelper } from '../../../utils/eventsHelper';
 import * as mime from 'mime';
-import { ManualPromise } from '../../../utils/async';
+import { ManualPromise } from '../../../utils';
 
 const FALLBACK_HTTP_VERSION = 'HTTP/1.1';
 

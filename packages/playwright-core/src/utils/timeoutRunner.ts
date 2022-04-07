@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { ManualPromise } from './manualPromise';
 import { monotonicTime } from './utils';
 
 export class TimeoutRunnerError extends Error {}
@@ -23,6 +24,7 @@ type TimeoutRunnerData = {
   timer: NodeJS.Timer | undefined,
   timeoutPromise: ManualPromise<any>,
 };
+
 export class TimeoutRunner {
   private _running: TimeoutRunnerData | undefined;
   private _timeout: number;
@@ -105,45 +107,5 @@ export async function raceAgainstTimeout<T>(cb: () => Promise<T>, timeout: numbe
     if (e instanceof TimeoutRunnerError)
       return { timedOut: true };
     throw e;
-  }
-}
-
-export class ManualPromise<T> extends Promise<T> {
-  private _resolve!: (t: T) => void;
-  private _reject!: (e: Error) => void;
-  private _isDone: boolean;
-
-  constructor() {
-    let resolve: (t: T) => void;
-    let reject: (e: Error) => void;
-    super((f, r) => {
-      resolve = f;
-      reject = r;
-    });
-    this._isDone = false;
-    this._resolve = resolve!;
-    this._reject = reject!;
-  }
-
-  isDone() {
-    return this._isDone;
-  }
-
-  resolve(t: T) {
-    this._isDone = true;
-    this._resolve(t);
-  }
-
-  reject(e: Error) {
-    this._isDone = true;
-    this._reject(e);
-  }
-
-  static override get [Symbol.species]() {
-    return Promise;
-  }
-
-  override get [Symbol.toStringTag]() {
-    return 'ManualPromise';
   }
 }
