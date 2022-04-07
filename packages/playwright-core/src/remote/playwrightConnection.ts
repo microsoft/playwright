@@ -31,7 +31,7 @@ export class PlaywrightConnection {
   private _debugLog: (m: string) => void;
   private _disconnected = false;
 
-  constructor(ws: WebSocket, enableSocksProxy: boolean, browserAlias: string | undefined, browser: Browser | undefined, log: (m: string) => void, onClose: () => void) {
+  constructor(ws: WebSocket, enableSocksProxy: boolean, browserAlias: string | undefined, headless: boolean, browser: Browser | undefined, log: (m: string) => void, onClose: () => void) {
     this._ws = ws;
     this._onClose = onClose;
     this._debugLog = log;
@@ -53,7 +53,7 @@ export class PlaywrightConnection {
         return await this._initPreLaunchedBrowserMode(scope, browser);
       if (!browserAlias)
         return await this._initPlaywrightConnectMode(scope, enableSocksProxy);
-      return await this._initLaunchBrowserMode(scope, enableSocksProxy, browserAlias);
+      return await this._initLaunchBrowserMode(scope, enableSocksProxy, browserAlias, headless);
     });
   }
 
@@ -67,7 +67,7 @@ export class PlaywrightConnection {
     return new PlaywrightDispatcher(scope, playwright, socksProxy);
   }
 
-  private async _initLaunchBrowserMode(scope: DispatcherScope, enableSocksProxy: boolean, browserAlias: string) {
+  private async _initLaunchBrowserMode(scope: DispatcherScope, enableSocksProxy: boolean, browserAlias: string, headless: boolean) {
     this._debugLog(`engaged launch mode for "${browserAlias}"`);
     const executable = registry.findExecutable(browserAlias);
     if (!executable || !executable.browserName)
@@ -77,6 +77,7 @@ export class PlaywrightConnection {
     const socksProxy = enableSocksProxy ? await this._enableSocksProxy(playwright) : undefined;
     const browser = await playwright[executable.browserName].launch(serverSideCallMetadata(), {
       channel: executable.type === 'browser' ? undefined : executable.name,
+      headless,
     });
 
     // Close the browser on disconnect.
