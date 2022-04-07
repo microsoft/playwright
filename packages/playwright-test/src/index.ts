@@ -19,7 +19,7 @@ import * as path from 'path';
 import type { LaunchOptions, BrowserContextOptions, Page, BrowserContext, Video, APIRequestContext, Tracing } from 'playwright-core';
 import type { TestType, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, TestInfo } from '../types/test';
 import { rootTestType } from './testType';
-import { createGuid, removeFolders, debugMode } from 'playwright-core/lib/utils/utils';
+import { createGuid, removeFolders, debugMode } from 'playwright-core/lib/utils';
 import { GridClient } from 'playwright-core/lib/grid/gridClient';
 export { expect } from './expect';
 export const _baseTest: TestType<{}, {}> = rootTestType.test;

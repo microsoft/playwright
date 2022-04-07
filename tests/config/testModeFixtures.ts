@@ -15,7 +15,8 @@
  */
 
 import { test } from '@playwright/test';
-import { DefaultTestMode, DriverTestMode, ServiceTestMode, TestModeName } from './testMode';
+import type { TestModeName } from './testMode';
+import { DefaultTestMode, DriverTestMode, ServiceTestMode } from './testMode';
 
 export type TestModeWorkerOptions = {
   mode: TestModeName;
@@ -35,7 +36,7 @@ export const testModeTest = test.extend<{}, TestModeWorkerOptions & TestModeWork
       driver: new DriverTestMode(),
       service2: new DefaultTestMode(),
     }[mode];
-    require('playwright-core/lib/utils/utils').setUnderTest();
+    require('playwright-core/lib/utils').setUnderTest();
     const playwright = await testMode.setup();
     await run(playwright);
     await testMode.teardown();

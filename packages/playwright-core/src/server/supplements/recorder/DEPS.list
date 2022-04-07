@@ -1,0 +1,8 @@
+[*]
+../../
+../../../common/
+../../../protocol/
+../../../utils/
+
+[recorderApp.ts]
+../../chromium/crApp.ts

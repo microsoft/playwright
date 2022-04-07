@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-import { ChildProcess } from 'child_process';
-import { assert, monotonicTime } from '../../utils/utils';
+import type { ChildProcess } from 'child_process';
+import { assert, monotonicTime } from '../../utils';
 import { Page } from '../page';
 import { launchProcess } from '../../utils/processLauncher';
-import { Progress, ProgressController } from '../progress';
+import type { Progress } from '../progress';
+import { ProgressController } from '../progress';
 import { serverSideCallMetadata } from '../instrumentation';
-import * as types from '../types';
+import type * as types from '../types';
 
 const fps = 25;
 

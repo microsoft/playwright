@@ -16,7 +16,7 @@
 
 import { expect } from '@playwright/test';
 import type { Frame, Page } from 'playwright-core';
-import { ZipFileSystem } from '../../packages/playwright-core/lib/utils/vfs';
+import { ZipFileSystem } from './vfs';
 
 export async function attachFrame(page: Page, frameId: string, url: string): Promise<Frame> {
   const handle = await page.evaluateHandle(async ({ frameId, url }) => {

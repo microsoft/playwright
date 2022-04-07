@@ -15,18 +15,20 @@
  * limitations under the License.
  */
 
-import { Browser, BrowserOptions } from '../browser';
+import type { BrowserOptions } from '../browser';
+import { Browser } from '../browser';
 import { assertBrowserContextIsNotOwned, BrowserContext, verifyGeolocation } from '../browserContext';
-import { eventsHelper, RegisteredListener } from '../../utils/eventsHelper';
-import { assert } from '../../utils/utils';
+import type { RegisteredListener } from '../../utils';
+import { assert, eventsHelper } from '../../utils';
 import * as network from '../network';
-import { Page, PageBinding, PageDelegate } from '../page';
-import { ConnectionTransport } from '../transport';
-import * as types from '../types';
-import { Protocol } from './protocol';
-import { kPageProxyMessageReceived, PageProxyMessageReceivedPayload, WKConnection, WKSession } from './wkConnection';
+import type { Page, PageBinding, PageDelegate } from '../page';
+import type { ConnectionTransport } from '../transport';
+import type * as types from '../types';
+import type { Protocol } from './protocol';
+import type { PageProxyMessageReceivedPayload } from './wkConnection';
+import { kPageProxyMessageReceived, WKConnection, WKSession } from './wkConnection';
 import { WKPage } from './wkPage';
-import { kBrowserClosedError } from '../../utils/errors';
+import { kBrowserClosedError } from '../../common/errors';
 
 const DEFAULT_USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.4 Safari/605.1.15';
 const BROWSER_VERSION = '15.4';

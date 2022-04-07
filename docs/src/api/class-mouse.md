@@ -111,7 +111,7 @@ Dispatches a `mousemove` event.
 ### option: Mouse.move.steps
 - `steps` <[int]>
 
-defaults to 1. Sends intermediate `mousemove` events.
+Defaults to 1. Sends intermediate `mousemove` events.
 
 ## async method: Mouse.up
 

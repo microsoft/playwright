@@ -15,13 +15,14 @@
  */
 
 import { EventEmitter } from 'events';
-import * as channels from '../protocol/channels';
-import { createScheme, ValidationError, Validator } from '../protocol/validator';
-import { debugLogger } from '../utils/debugLogger';
-import { captureRawStack, captureStackTrace, ParsedStackTrace } from '../utils/stackTrace';
-import { isUnderTest } from '../utils/utils';
-import { zones } from '../utils/zones';
-import { ClientInstrumentation } from './clientInstrumentation';
+import type * as channels from '../protocol/channels';
+import type { Validator } from '../protocol/validator';
+import { createScheme, ValidationError } from '../protocol/validator';
+import { debugLogger } from '../common/debugLogger';
+import type { ParsedStackTrace } from '../utils/stackTrace';
+import { captureRawStack, captureStackTrace } from '../utils/stackTrace';
+import { isUnderTest, zones } from '../utils';
+import type { ClientInstrumentation } from './clientInstrumentation';
 import type { Connection } from './connection';
 import type { Logger } from './types';
 

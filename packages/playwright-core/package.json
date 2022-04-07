@@ -22,16 +22,14 @@
     "./lib/grid/gridClient": "./lib/grid/gridClient.js",
     "./lib/grid/dockerGridFactory": "./lib/grid/dockerGridFactory.js",
     "./lib/outofprocess": "./lib/outofprocess.js",
-    "./lib/utils/async": "./lib/utils/async.js",
+    "./lib/utils": "./lib/utils/index.js",
     "./lib/utils/comparators": "./lib/utils/comparators.js",
     "./lib/utils/httpServer": "./lib/utils/httpServer.js",
-    "./lib/utils/multimap": "./lib/utils/multimap.js",
     "./lib/utils/processLauncher": "./lib/utils/processLauncher.js",
-    "./lib/utils/registry": "./lib/utils/registry.js",
-    "./lib/utils/utils": "./lib/utils/utils.js",
     "./lib/utils/stackTrace": "./lib/utils/stackTrace.js",
     "./lib/remote/playwrightServer": "./lib/remote/playwrightServer.js",
-    "./lib/remote/playwrightClient": "./lib/remote/playwrightClient.js"
+    "./lib/remote/playwrightClient": "./lib/remote/playwrightClient.js",
+    "./lib/server": "./lib/server/index.js"
   },
   "types": "types/types.d.ts",
   "bin": {

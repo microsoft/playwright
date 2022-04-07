@@ -16,14 +16,14 @@
 
 import fs from 'fs';
 import path from 'path';
-import { FullConfig, Location, Suite, TestCase, TestResult, TestStatus, TestStep } from '../../types/testReporter';
-import { assert, calculateSha1 } from 'playwright-core/lib/utils/utils';
+import type { FullConfig, Location, Suite, TestCase, TestResult, TestStatus, TestStep } from '../../types/testReporter';
+import { assert, calculateSha1 } from 'playwright-core/lib/utils';
 import { sanitizeForFilePath } from '../util';
 import { formatResultFailure } from './base';
 import { toPosixPath, serializePatterns } from './json';
-import { MultiMap } from 'playwright-core/lib/utils/multimap';
+import { MultiMap } from 'playwright-core/lib/utils';
 import { codeFrameColumns } from '@babel/code-frame';
-import { FullConfigInternal } from '../types';
+import type { FullConfigInternal } from '../types';
 
 export type JsonLocation = Location;
 export type JsonError = string;

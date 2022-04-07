@@ -17,15 +17,15 @@
 import fs from 'fs';
 import * as mime from 'mime';
 import path from 'path';
-import { calculateSha1 } from 'playwright-core/lib/utils/utils';
-import type { FullProject, TestError, TestInfo, TestStatus } from '../types/test';
-import type { FullConfigInternal } from './types';
-import { WorkerInitParams } from './ipc';
-import { Loader } from './loader';
-import { ProjectImpl } from './project';
-import { TestCase } from './test';
+import { calculateSha1 } from 'playwright-core/lib/utils';
+import type { TestError, TestInfo, TestStatus } from '../types/test';
+import type { FullConfigInternal, FullProjectInternal } from './types';
+import type { WorkerInitParams } from './ipc';
+import type { Loader } from './loader';
+import type { ProjectImpl } from './project';
+import type { TestCase } from './test';
 import { TimeoutManager } from './timeoutManager';
-import { Annotation, TestStepInternal } from './types';
+import type { Annotation, TestStepInternal } from './types';
 import { addSuffixToFilePath, getContainedPath, monotonicTime, sanitizeForFilePath, serializeError, trimLongString } from './util';
 
 export class TestInfoImpl implements TestInfo {
@@ -43,7 +43,7 @@ export class TestInfoImpl implements TestInfo {
   readonly retry: number;
   readonly workerIndex: number;
   readonly parallelIndex: number;
-  readonly project: FullProject;
+  readonly project: FullProjectInternal;
   config: FullConfigInternal;
   readonly title: string;
   readonly titlePath: string[];
@@ -62,6 +62,7 @@ export class TestInfoImpl implements TestInfo {
   readonly outputDir: string;
   readonly snapshotDir: string;
   errors: TestError[] = [];
+  currentStep: TestStepInternal | undefined;
 
   get error(): TestError | undefined {
     return this.errors.length > 0 ? this.errors[0] : undefined;
@@ -141,7 +142,7 @@ export class TestInfoImpl implements TestInfo {
     })();
     this._screenshotsDir = (() => {
       const relativeTestFilePath = path.relative(this.project.testDir, test._requireFile);
-      return path.join(this.project.screenshotsDir, relativeTestFilePath);
+      return path.join(this.project._screenshotsDir, relativeTestFilePath);
     })();
   }
 

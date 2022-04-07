@@ -321,3 +321,61 @@ test('should report expect step locations', async ({ runInlineTest }) => {
     },
   ]);
 });
+
+test('should report custom expect steps', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'reporter.ts': stepHierarchyReporter,
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: './reporter',
+      };
+    `,
+    'a.test.ts': `
+      expect.extend({
+        toBeWithinRange(received, floor, ceiling) {
+          const pass = received >= floor && received <= ceiling;
+          if (pass) {
+            return {
+              message: () =>
+                "expected " + received + " not to be within range " + floor + " - " + ceiling,
+              pass: true,
+            };
+          } else {
+            return {
+              message: () =>
+                "expected " + received + " to be within range " + floor + " - " + ceiling,
+              pass: false,
+            };
+          }
+        },
+      });
+
+      const { test } = pwt;
+      test('pass', async ({}) => {
+        expect(15).toBeWithinRange(10, 20);
+      });
+    `
+  }, { reporter: '', workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  const objects = result.output.split('\n').filter(line => line.startsWith('%% ')).map(line => line.substring(3).trim()).filter(Boolean).map(line => JSON.parse(line));
+  expect(objects).toEqual([
+    {
+      category: 'hook',
+      title: 'Before Hooks',
+    },
+    {
+      category: 'expect',
+      location: {
+        column: 'number',
+        file: 'a.test.ts',
+        line: 'number',
+      },
+      title: 'expect.toBeWithinRange',
+    },
+    {
+      category: 'hook',
+      title: 'After Hooks',
+    },
+  ]);
+});

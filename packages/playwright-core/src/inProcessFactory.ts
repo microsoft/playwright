@@ -14,10 +14,8 @@
  * limitations under the License.
  */
 
-import { DispatcherConnection, Root } from './dispatchers/dispatcher';
-import { createPlaywright } from './server/playwright';
 import type { Playwright as PlaywrightAPI } from './client/playwright';
-import { PlaywrightDispatcher } from './dispatchers/playwrightDispatcher';
+import { createPlaywright, DispatcherConnection, Root, PlaywrightDispatcher } from './server';
 import { Connection } from './client/connection';
 import { BrowserServerLauncherImpl } from './browserServerImpl';
 

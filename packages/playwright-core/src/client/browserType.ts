@@ -14,19 +14,19 @@
  * limitations under the License.
  */
 
-import * as channels from '../protocol/channels';
+import type * as channels from '../protocol/channels';
 import { Browser } from './browser';
 import { BrowserContext, prepareBrowserContextParams } from './browserContext';
 import { ChannelOwner } from './channelOwner';
-import { LaunchOptions, LaunchServerOptions, ConnectOptions, LaunchPersistentContextOptions, BrowserContextOptions } from './types';
+import type { LaunchOptions, LaunchServerOptions, ConnectOptions, LaunchPersistentContextOptions, BrowserContextOptions } from './types';
 import { Connection } from './connection';
 import { Events } from './events';
-import { ChildProcess } from 'child_process';
+import type { ChildProcess } from 'child_process';
 import { envObjectToArray } from './clientHelper';
-import { assert, headersObjectToArray, monotonicTime } from '../utils/utils';
-import * as api from '../../types/types';
-import { kBrowserClosedError } from '../utils/errors';
-import { raceAgainstTimeout } from '../utils/async';
+import { assert, headersObjectToArray, monotonicTime } from '../utils';
+import type * as api from '../../types/types';
+import { kBrowserClosedError } from '../common/errors';
+import { raceAgainstTimeout } from '../utils';
 import type { Playwright } from './playwright';
 
 export interface BrowserServerLauncher {

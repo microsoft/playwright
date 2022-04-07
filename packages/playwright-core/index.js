@@ -14,5 +14,20 @@
  * limitations under the License.
  */
 
-require('./lib/utils/verifyNodeJsVersion');
+const currentNodeVersion = process.versions.node;
+const semver = currentNodeVersion.split('.');
+const [major] = [+semver[0]];
+
+if (major < 12) {
+  // eslint-disable-next-line no-console
+  console.error(
+      'You are running Node.js ' +
+      currentNodeVersion +
+      '.\n' +
+      'Playwright requires Node.js 12 or higher. \n' +
+      'Please update your version of Node.js.'
+  );
+  process.exit(1);
+}
+
 module.exports = require('./lib/inprocess');

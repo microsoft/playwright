@@ -15,13 +15,13 @@
  */
 
 import { Events } from './events';
-import * as channels from '../protocol/channels';
+import type * as channels from '../protocol/channels';
 import { ChannelOwner } from './channelOwner';
 import { assertMaxArguments, JSHandle, parseResult, serializeArgument } from './jsHandle';
-import { Page } from './page';
-import { BrowserContext } from './browserContext';
-import * as api from '../../types/types';
-import * as structs from '../../types/structs';
+import type { Page } from './page';
+import type { BrowserContext } from './browserContext';
+import type * as api from '../../types/types';
+import type * as structs from '../../types/structs';
 
 export class Worker extends ChannelOwner<channels.WorkerChannel> implements api.Worker {
   _page: Page | undefined;  // Set for web workers.

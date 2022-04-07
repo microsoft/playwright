@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Protocol } from './protocol';
+import type { Protocol } from './protocol';
 
 // DO NOT EDIT: this map is generated from Chromium source code by utils/generate_chromium_default_font_families.js
 export const platformToFontFamilies: { [key in 'linux'|'mac'|'win']: Protocol.Page.setFontFamiliesParameters } = {

@@ -15,9 +15,9 @@
  * limitations under the License.
  */
 
-import * as types from './types';
+import type * as types from './types';
 import fs from 'fs';
-import { isString, isRegExp, constructURLBasedOnBaseURL } from '../utils/utils';
+import { isString, isRegExp, constructURLBasedOnBaseURL } from '../utils';
 
 export function envObjectToArray(env: types.Env): { name: string, value: string }[] {
   const result: { name: string, value: string }[] = [];

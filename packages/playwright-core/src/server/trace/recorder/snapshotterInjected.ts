@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { NodeSnapshot } from '../common/snapshotTypes';
+import type { NodeSnapshot } from '../common/snapshotTypes';
 
 export type SnapshotData = {
   doctype?: string,
@@ -44,7 +44,6 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
   const kScrollTopAttribute = '__playwright_scroll_top_';
   const kScrollLeftAttribute = '__playwright_scroll_left_';
   const kStyleSheetAttribute = '__playwright_style_sheet_';
-  const kBlobUrlPrefix = 'http://playwright.bloburl/#';
 
   // Symbols for our own info on Nodes/StyleSheets.
   const kSnapshotFrameId = Symbol('__playwright_snapshot_frameid_');
@@ -220,9 +219,6 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
     private _sanitizeUrl(url: string): string {
       if (url.startsWith('javascript:'))
         return '';
-      // Rewrite blob urls so that Service Worker can intercept them.
-      if (url.startsWith('blob:'))
-        return kBlobUrlPrefix + url;
       return url;
     }
 
@@ -337,7 +333,7 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
           expectValue(cssText);
           // Compensate for the extra 'cssText' text node.
           extraNodes++;
-          return checkAndReturn(['style', {}, cssText]);
+          return checkAndReturn([nodeName, {}, cssText]);
         }
 
         const attrs: { [attr: string]: string } = {};

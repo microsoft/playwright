@@ -14,24 +14,25 @@
  * limitations under the License.
  */
 
-import { Locator, Page } from 'playwright-core';
+import type { Locator, Page } from 'playwright-core';
 import type { Page as PageEx } from 'playwright-core/lib/client/page';
 import type { Locator as LocatorEx } from 'playwright-core/lib/client/locator';
 import type { Expect } from '../types';
 import { currentTestInfo } from '../globals';
-import { getComparator, ImageComparatorOptions, Comparator } from 'playwright-core/lib/utils/comparators';
+import type { ImageComparatorOptions, Comparator } from 'playwright-core/lib/utils/comparators';
+import { getComparator } from 'playwright-core/lib/utils/comparators';
 import type { PageScreenshotOptions } from 'playwright-core/types/types';
 import {
   addSuffixToFilePath, serializeError, sanitizeForFilePath,
   trimLongString, callLogText, currentExpectTimeout,
   expectTypes, captureStackTrace  } from '../util';
-import { UpdateSnapshots } from '../types';
+import type { UpdateSnapshots } from '../types';
 import colors from 'colors/safe';
 import fs from 'fs';
 import path from 'path';
 import * as mime from 'mime';
-import { TestInfoImpl } from '../testInfo';
-import { SyncExpectationResult } from '../expect';
+import type { TestInfoImpl } from '../testInfo';
+import type { SyncExpectationResult } from '../expect';
 
 type NameOrSegments = string | string[];
 const snapshotNamesSymbol = Symbol('snapshotNames');
@@ -110,6 +111,7 @@ class SnapshotHelper<T extends ImageComparatorOptions> {
       }
     }
 
+    testInfo.currentStep!.refinedTitle = `${testInfo.currentStep!.title}(${path.basename(this.snapshotName)})`;
     options = {
       ...configOptions,
       ...options,
@@ -148,23 +150,19 @@ class SnapshotHelper<T extends ImageComparatorOptions> {
     this.kind = this.mimeType.startsWith('image/') ? 'Screenshot' : 'Snapshot';
   }
 
-  decorateTitle(result: SyncExpectationResult): SyncExpectationResult & { titleSuffix: string } {
-    return { ...result, titleSuffix: `(${path.basename(this.snapshotName)})` };
-  }
-
   handleMissingNegated() {
     const isWriteMissingMode = this.updateSnapshots === 'all' || this.updateSnapshots === 'missing';
     const message = `${this.snapshotPath} is missing in snapshots${isWriteMissingMode ? ', matchers using ".not" won\'t write them automatically.' : '.'}`;
-    return this.decorateTitle({
+    return {
       // NOTE: 'isNot' matcher implies inversed value.
       pass: true,
       message: () => message,
-    });
+    };
   }
 
   handleDifferentNegated() {
     // NOTE: 'isNot' matcher implies inversed value.
-    return this.decorateTitle({ pass: false, message: () => '' });
+    return { pass: false, message: () => '' };
   }
 
   handleMatchingNegated() {
@@ -174,7 +172,7 @@ class SnapshotHelper<T extends ImageComparatorOptions> {
       indent('Expected result should be different from the actual one.', '  '),
     ].join('\n');
     // NOTE: 'isNot' matcher implies inversed value.
-    return this.decorateTitle({ pass: true, message: () => message });
+    return { pass: true, message: () => message };
   }
 
   handleMissing(actual: Buffer | string) {
@@ -187,13 +185,13 @@ class SnapshotHelper<T extends ImageComparatorOptions> {
     if (this.updateSnapshots === 'all') {
       /* eslint-disable no-console */
       console.log(message);
-      return this.decorateTitle({ pass: true, message: () => message });
+      return { pass: true, message: () => message };
     }
     if (this.updateSnapshots === 'missing') {
       this.testInfo._failWithError(serializeError(new Error(message)), false /* isHardError */);
-      return this.decorateTitle({ pass: true, message: () => '' });
+      return { pass: true, message: () => '' };
     }
-    return this.decorateTitle({ pass: false, message: () => message });
+    return { pass: false, message: () => message };
   }
 
   handleDifferent(
@@ -235,11 +233,11 @@ class SnapshotHelper<T extends ImageComparatorOptions> {
       this.testInfo.attachments.push({ name: addSuffixToFilePath(this.snapshotName, '-diff'), contentType: this.mimeType, path: this.diffPath });
       output.push(`    Diff: ${colors.yellow(this.diffPath)}`);
     }
-    return this.decorateTitle({ pass: false, message: () => output.join('\n'), });
+    return { pass: false, message: () => output.join('\n'), };
   }
 
   handleMatching() {
-    return this.decorateTitle({ pass: true, message: () => '' });
+    return { pass: true, message: () => '' };
   }
 }
 
@@ -248,7 +246,7 @@ export function toMatchSnapshot(
   received: Buffer | string,
   nameOrOptions: NameOrSegments | { name?: NameOrSegments } & ImageComparatorOptions = {},
   optOptions: ImageComparatorOptions = {}
-): SyncExpectationResult & { titleSuffix: string } {
+): SyncExpectationResult {
   const testInfo = currentTestInfo();
   if (!testInfo)
     throw new Error(`toMatchSnapshot() must be called during the test`);
@@ -278,7 +276,7 @@ export function toMatchSnapshot(
     writeFileSync(helper.snapshotPath, received);
     /* eslint-disable no-console */
     console.log(helper.snapshotPath + ' does not match, writing actual.');
-    return helper.decorateTitle({ pass: true, message: () => helper.snapshotPath + ' running with --update-snapshots, writing actual.' });
+    return { pass: true, message: () => helper.snapshotPath + ' running with --update-snapshots, writing actual.' };
   }
 
   return helper.handleDifferent(received, expected, undefined, result.diff, result.errorMessage, undefined);
@@ -295,7 +293,7 @@ export async function toHaveScreenshot(
   const testInfo = currentTestInfo();
   if (!testInfo)
     throw new Error(`toHaveScreenshot() must be called during the test`);
-  const config = testInfo.project.expect?.toHaveScreenshot;
+  const config = (testInfo.project.expect as any)?._toHaveScreenshot;
   const helper = new SnapshotHelper(
       testInfo, testInfo._screenshotPath.bind(testInfo), 'png',
       {
@@ -310,7 +308,7 @@ export async function toHaveScreenshot(
   const [page, locator] = pageOrLocator.constructor.name === 'Page' ? [(pageOrLocator as PageEx), undefined] : [(pageOrLocator as Locator).page() as PageEx, pageOrLocator as LocatorEx];
   const screenshotOptions = {
     animations: config?.animations ?? 'disabled',
-    fonts: config?.fonts ?? 'ready',
+    _fonts: config?.fonts ?? 'ready',
     scale: config?.scale ?? 'css',
     caret: config?.caret ?? 'hide',
     ...helper.allOptions,

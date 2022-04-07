@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 
-import { eventsHelper, RegisteredListener } from '../../utils/eventsHelper';
-import { Page, Worker } from '../page';
-import { Protocol } from './protocol';
+import type { RegisteredListener } from '../../utils';
+import { eventsHelper } from '../../utils';
+import type { Page } from '../page';
+import { Worker } from '../page';
+import type { Protocol } from './protocol';
 import { WKSession } from './wkConnection';
 import { WKExecutionContext } from './wkExecutionContext';
-import * as types from '../types';
+import type * as types from '../types';
 
 export class WKWorkers {
   private _sessionListeners: RegisteredListener[] = [];

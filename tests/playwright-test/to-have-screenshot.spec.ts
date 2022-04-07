@@ -37,7 +37,7 @@ test('should fail to screenshot a page with infinite animation', async ({ runInl
   const result = await runInlineTest({
     ...playwrightConfig({
       expect: {
-        toHaveScreenshot: {
+        _toHaveScreenshot: {
           animations: 'allow',
         },
       },
@@ -45,7 +45,7 @@ test('should fail to screenshot a page with infinite animation', async ({ runInl
     'a.spec.js': `
       pwt.test('is a test', async ({ page }) => {
         await page.goto('${infiniteAnimationURL}');
-        await expect(page).toHaveScreenshot({ timeout: 2000 });
+        await expect(page)._toHaveScreenshot({ timeout: 2000 });
       });
     `
   });
@@ -66,7 +66,7 @@ test('should disable animations by default', async ({ runInlineTest }, testInfo)
     'a.spec.js': `
       pwt.test('is a test', async ({ page }) => {
         await page.goto('${cssTransitionURL}');
-        await expect(page).toHaveScreenshot({ timeout: 2000 });
+        await expect(page)._toHaveScreenshot({ timeout: 2000 });
       });
     `
   }, { 'update-snapshots': true });
@@ -75,7 +75,7 @@ test('should disable animations by default', async ({ runInlineTest }, testInfo)
 
 test('should have scale:css by default', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
-    ...playwrightConfig({ screenshotsDir: '__screenshots__' }),
+    ...playwrightConfig({ _screenshotsDir: '__screenshots__' }),
     'a.spec.js': `
       pwt.test('is a test', async ({ browser }) => {
         const context = await browser.newContext({
@@ -83,7 +83,7 @@ test('should have scale:css by default', async ({ runInlineTest }, testInfo) => 
           deviceScaleFactor: 2,
         });
         const page = await context.newPage();
-        await expect(page).toHaveScreenshot('snapshot.png');
+        await expect(page)._toHaveScreenshot('snapshot.png');
         await context.close();
       });
     `
@@ -94,19 +94,19 @@ test('should have scale:css by default', async ({ runInlineTest }, testInfo) => 
   expect(pngComparator(fs.readFileSync(snapshotOutputPath), whiteImage)).toBe(null);
 });
 
-test('should ignore non-documented options in toHaveScreenshot config', async ({ runInlineTest }, testInfo) => {
+test('should ignore non-documented options in _toHaveScreenshot config', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     ...playwrightConfig({
-      screenshotsDir: '__screenshots__',
+      _screenshotsDir: '__screenshots__',
       expect: {
-        toHaveScreenshot: {
+        _toHaveScreenshot: {
           clip: { x: 0, y: 0, width: 10, height: 10 },
         },
       },
     }),
     'a.spec.js': `
       pwt.test('is a test', async ({ page }) => {
-        await expect(page).toHaveScreenshot('snapshot.png');
+        await expect(page)._toHaveScreenshot('snapshot.png');
       });
     `
   }, { 'update-snapshots': true });
@@ -126,17 +126,17 @@ test('screenshotPath should include platform and project name by default', async
     }),
     'a.spec.js': `
       pwt.test('is a test', async ({ page }, testInfo) => {
-        await pwt.expect(page).toHaveScreenshot('snapshot.png');
+        await pwt.expect(page)._toHaveScreenshot('snapshot.png');
       });
     `,
     'foo/b.spec.js': `
       pwt.test('is a test', async ({ page }, testInfo) => {
-        await pwt.expect(page).toHaveScreenshot('snapshot.png');
+        await pwt.expect(page)._toHaveScreenshot('snapshot.png');
       });
     `,
     'foo/bar/baz/c.spec.js': `
       pwt.test('is a test', async ({ page }, testInfo) => {
-        await pwt.expect(page).toHaveScreenshot('snapshot.png');
+        await pwt.expect(page)._toHaveScreenshot('snapshot.png');
       });
     `,
   }, { 'update-snapshots': true });
@@ -146,7 +146,7 @@ test('screenshotPath should include platform and project name by default', async
   expect(fs.existsSync(testInfo.outputPath('__screenshots__', process.platform, PROJECT_NAME, 'foo', 'bar', 'baz', 'c.spec.js', 'snapshot.png'))).toBeTruthy();
 });
 
-test('should report toHaveScreenshot step with expectation name in title', async ({ runInlineTest }) => {
+test('should report _toHaveScreenshot step with expectation name in title', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'reporter.ts': `
       class Reporter {
@@ -164,9 +164,9 @@ test('should report toHaveScreenshot step with expectation name in title', async
     'a.spec.js': `
       pwt.test('is a test', async ({ page }) => {
         // Named expectation.
-        await expect(page).toHaveScreenshot('foo.png', { timeout: 2000 });
+        await expect(page)._toHaveScreenshot('foo.png', { timeout: 2000 });
         // Anonymous expectation.
-        await expect(page).toHaveScreenshot({ timeout: 2000 });
+        await expect(page)._toHaveScreenshot({ timeout: 2000 });
       });
     `
   }, { 'reporter': '', 'workers': 1, 'update-snapshots': true });
@@ -175,8 +175,8 @@ test('should report toHaveScreenshot step with expectation name in title', async
   expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
     `%% end browserContext.newPage`,
     `%% end Before Hooks`,
-    `%% end expect.toHaveScreenshot(foo.png)`,
-    `%% end expect.toHaveScreenshot(is-a-test-1.png)`,
+    `%% end expect._toHaveScreenshot(foo.png)`,
+    `%% end expect._toHaveScreenshot(is-a-test-1.png)`,
     `%% end browserContext.close`,
     `%% end After Hooks`,
   ]);
@@ -186,14 +186,14 @@ test('should not fail when racing with navigation', async ({ runInlineTest }, te
   const infiniteAnimationURL = pathToFileURL(path.join(__dirname, '../assets/rotate-z.html'));
   const result = await runInlineTest({
     ...playwrightConfig({
-      screenshotsDir: '__screenshots__',
+      _screenshotsDir: '__screenshots__',
     }),
     '__screenshots__/a.spec.js/snapshot.png': createImage(10, 10, 255, 0, 0),
     'a.spec.js': `
       pwt.test('is a test', async ({ page }) => {
         await Promise.all([
           page.goto('${infiniteAnimationURL}'),
-          expect(page).toHaveScreenshot({
+          expect(page)._toHaveScreenshot({
             name: 'snapshot.png',
             animations: "disabled",
             clip: { x: 0, y: 0, width: 10, height: 10 },
@@ -208,11 +208,11 @@ test('should not fail when racing with navigation', async ({ runInlineTest }, te
 test('should successfully screenshot a page with infinite animation with disableAnimation: true', async ({ runInlineTest }, testInfo) => {
   const infiniteAnimationURL = pathToFileURL(path.join(__dirname, '../assets/rotate-z.html'));
   const result = await runInlineTest({
-    ...playwrightConfig({ screenshotsDir: '__screenshots__' }),
+    ...playwrightConfig({ _screenshotsDir: '__screenshots__' }),
     'a.spec.js': `
       pwt.test('is a test', async ({ page }) => {
         await page.goto('${infiniteAnimationURL}');
-        await expect(page).toHaveScreenshot({
+        await expect(page)._toHaveScreenshot({
           animations: "disabled",
         });
       });
@@ -224,11 +224,11 @@ test('should successfully screenshot a page with infinite animation with disable
 
 test('should support clip option for page', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
-    ...playwrightConfig({ screenshotsDir: '__screenshots__' }),
+    ...playwrightConfig({ _screenshotsDir: '__screenshots__' }),
     '__screenshots__/a.spec.js/snapshot.png': createImage(50, 50, 255, 255, 255),
     'a.spec.js': `
       pwt.test('is a test', async ({ page }) => {
-        await expect(page).toHaveScreenshot({
+        await expect(page)._toHaveScreenshot({
           name: 'snapshot.png',
           clip: { x: 0, y: 0, width: 50, height: 50, },
         });
@@ -240,14 +240,14 @@ test('should support clip option for page', async ({ runInlineTest }, testInfo) 
 
 test('should support omitBackground option for locator', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
-    ...playwrightConfig({ screenshotsDir: '__screenshots__' }),
+    ...playwrightConfig({ _screenshotsDir: '__screenshots__' }),
     'a.spec.js': `
       pwt.test('is a test', async ({ page }) => {
         await page.evaluate(() => {
           document.body.style.setProperty('width', '100px');
           document.body.style.setProperty('height', '100px');
         });
-        await expect(page.locator('body')).toHaveScreenshot({
+        await expect(page.locator('body'))._toHaveScreenshot({
           name: 'snapshot.png',
           omitBackground: true,
         });
@@ -270,10 +270,10 @@ test('should fail to screenshot an element with infinite animation', async ({ ru
   const infiniteAnimationURL = pathToFileURL(path.join(__dirname, '../assets/rotate-z.html'));
   const result = await runInlineTest({
     ...playwrightConfig({
-      screenshotsDir: '__screenshots__',
+      _screenshotsDir: '__screenshots__',
       projects: [{
         expect: {
-          toHaveScreenshot: {
+          _toHaveScreenshot: {
             animations: 'allow',
           },
         },
@@ -282,7 +282,7 @@ test('should fail to screenshot an element with infinite animation', async ({ ru
     'a.spec.js': `
       pwt.test('is a test', async ({ page }) => {
         await page.goto('${infiniteAnimationURL}');
-        await expect(page.locator('body')).toHaveScreenshot({ timeout: 2000 });
+        await expect(page.locator('body'))._toHaveScreenshot({ timeout: 2000 });
       });
     `
   });
@@ -300,9 +300,9 @@ test('should fail to screenshot an element that keeps moving', async ({ runInlin
   const infiniteAnimationURL = pathToFileURL(path.join(__dirname, '../assets/rotate-z.html'));
   const result = await runInlineTest({
     ...playwrightConfig({
-      screenshotsDir: '__screenshots__',
+      _screenshotsDir: '__screenshots__',
       expect: {
-        toHaveScreenshot: {
+        _toHaveScreenshot: {
           animations: 'allow',
         },
       },
@@ -310,7 +310,7 @@ test('should fail to screenshot an element that keeps moving', async ({ runInlin
     'a.spec.js': `
       pwt.test('is a test', async ({ page }) => {
         await page.goto('${infiniteAnimationURL}');
-        await expect(page.locator('div')).toHaveScreenshot({ timeout: 2000 });
+        await expect(page.locator('div'))._toHaveScreenshot({ timeout: 2000 });
       });
     `
   });
@@ -325,10 +325,10 @@ test('should fail to screenshot an element that keeps moving', async ({ runInlin
 
 test('should generate default name', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
-    ...playwrightConfig({ screenshotsDir: '__screenshots__' }),
+    ...playwrightConfig({ _screenshotsDir: '__screenshots__' }),
     'a.spec.js': `
       pwt.test('is a test', async ({ page }) => {
-        await expect(page).toHaveScreenshot();
+        await expect(page)._toHaveScreenshot();
       });
     `
   });
@@ -338,6 +338,8 @@ test('should generate default name', async ({ runInlineTest }, testInfo) => {
 });
 
 test('should compile with different option combinations', async ({ runTSC }) => {
+  test.skip(true, 'Enable when enabling _toHaveScreenshot');
+
   const result = await runTSC({
     'playwright.config.ts': `
       import type { PlaywrightTestConfig } from '@playwright/test';
@@ -361,7 +363,7 @@ test('should compile with different option combinations', async ({ runTSC }) => 
       const { test } = pwt;
       test('is a test', async ({ page }) => {
         await expect(page).toHaveScreenshot();
-        await expect(page.locator('body')).toHaveScreenshot({ threshold: 0.2 });
+        await expect(page.locator('body'))._toHaveScreenshot({ threshold: 0.2 });
         await expect(page).toHaveScreenshot({ maxDiffPixelRatio: 0.2 });
         await expect(page).toHaveScreenshot({
           threshold: 0.2,
@@ -369,7 +371,8 @@ test('should compile with different option combinations', async ({ runTSC }) => 
           maxDiffPixelRatio: 0.2,
           animations: "disabled",
           omitBackground: true,
-          fonts: "nowait",
+          // TODO: uncomment when enabling "fonts".
+          // fonts: "nowait",
           caret: "initial",
           scale: "device",
           timeout: 1000,
@@ -382,11 +385,11 @@ test('should compile with different option combinations', async ({ runTSC }) => 
 
 test('should fail when screenshot is different size', async ({ runInlineTest }) => {
   const result = await runInlineTest({
-    ...playwrightConfig({ screenshotsDir: '__screenshots__' }),
+    ...playwrightConfig({ _screenshotsDir: '__screenshots__' }),
     '__screenshots__/a.spec.js/snapshot.png': createImage(22, 33),
     'a.spec.js': `
       pwt.test('is a test', async ({ page }) => {
-        await expect(page).toHaveScreenshot('snapshot.png', { timeout: 2000 });
+        await expect(page)._toHaveScreenshot('snapshot.png', { timeout: 2000 });
       });
     `
   });
@@ -400,7 +403,7 @@ test('should fail when given non-png snapshot name', async ({ runInlineTest }) =
   const result = await runInlineTest({
     'a.spec.js': `
       pwt.test('is a test', async ({ page }) => {
-        await expect(page).toHaveScreenshot('snapshot.jpeg');
+        await expect(page)._toHaveScreenshot('snapshot.jpeg');
       });
     `
   });
@@ -412,7 +415,7 @@ test('should fail when given buffer', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.js': `
       pwt.test('is a test', async ({ page }) => {
-        await expect(Buffer.from([1])).toHaveScreenshot();
+        await expect(Buffer.from([1]))._toHaveScreenshot();
       });
     `
   });
@@ -422,11 +425,11 @@ test('should fail when given buffer', async ({ runInlineTest }) => {
 
 test('should fail when screenshot is different pixels', async ({ runInlineTest }) => {
   const result = await runInlineTest({
-    ...playwrightConfig({ screenshotsDir: '__screenshots__' }),
+    ...playwrightConfig({ _screenshotsDir: '__screenshots__' }),
     '__screenshots__/a.spec.js/snapshot.png': paintBlackPixels(whiteImage, 12345),
     'a.spec.js': `
       pwt.test('is a test', async ({ page }) => {
-        await expect(page).toHaveScreenshot('snapshot.png', { timeout: 2000 });
+        await expect(page)._toHaveScreenshot('snapshot.png', { timeout: 2000 });
       });
     `
   });
@@ -441,11 +444,11 @@ test('should fail when screenshot is different pixels', async ({ runInlineTest }
 
 test('doesn\'t create comparison artifacts in an output folder for passed negated snapshot matcher', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
-    ...playwrightConfig({ screenshotsDir: '__screenshots__' }),
+    ...playwrightConfig({ _screenshotsDir: '__screenshots__' }),
     '__screenshots__/a.spec.js/snapshot.png': blueImage,
     'a.spec.js': `
       pwt.test('is a test', async ({ page }) => {
-        await expect(page).not.toHaveScreenshot('snapshot.png');
+        await expect(page).not._toHaveScreenshot('snapshot.png');
       });
     `
   });
@@ -462,11 +465,11 @@ test('doesn\'t create comparison artifacts in an output folder for passed negate
 
 test('should fail on same snapshots with negate matcher', async ({ runInlineTest }) => {
   const result = await runInlineTest({
-    ...playwrightConfig({ screenshotsDir: '__screenshots__' }),
+    ...playwrightConfig({ _screenshotsDir: '__screenshots__' }),
     '__screenshots__/a.spec.js/snapshot.png': whiteImage,
     'a.spec.js': `
       pwt.test('is a test', async ({ page }) => {
-        await expect(page).not.toHaveScreenshot('snapshot.png', { timeout: 2000 });
+        await expect(page).not._toHaveScreenshot('snapshot.png', { timeout: 2000 });
       });
     `
   });
@@ -478,11 +481,11 @@ test('should fail on same snapshots with negate matcher', async ({ runInlineTest
 
 test('should write missing expectations locally twice and continue', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
-    ...playwrightConfig({ screenshotsDir: '__screenshots__' }),
+    ...playwrightConfig({ _screenshotsDir: '__screenshots__' }),
     'a.spec.js': `
       pwt.test('is a test', async ({ page }) => {
-        await expect(page).toHaveScreenshot('snapshot.png');
-        await expect(page).toHaveScreenshot('snapshot2.png');
+        await expect(page)._toHaveScreenshot('snapshot.png');
+        await expect(page)._toHaveScreenshot('snapshot2.png');
         console.log('Here we are!');
       });
     `
@@ -508,10 +511,10 @@ test('should write missing expectations locally twice and continue', async ({ ru
 
 test('shouldn\'t write missing expectations locally for negated matcher', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
-    ...playwrightConfig({ screenshotsDir: '__screenshots__' }),
+    ...playwrightConfig({ _screenshotsDir: '__screenshots__' }),
     'a.spec.js': `
       pwt.test('is a test', async ({ page }) => {
-        await expect(page).not.toHaveScreenshot('snapshot.png');
+        await expect(page).not._toHaveScreenshot('snapshot.png');
       });
     `
   });
@@ -524,11 +527,11 @@ test('shouldn\'t write missing expectations locally for negated matcher', async 
 
 test('should update snapshot with the update-snapshots flag', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
-    ...playwrightConfig({ screenshotsDir: '__screenshots__' }),
+    ...playwrightConfig({ _screenshotsDir: '__screenshots__' }),
     '__screenshots__/a.spec.js/snapshot.png': blueImage,
     'a.spec.js': `
       pwt.test('is a test', async ({ page }) => {
-        await expect(page).toHaveScreenshot('snapshot.png');
+        await expect(page)._toHaveScreenshot('snapshot.png');
       });
     `
   }, { 'update-snapshots': true });
@@ -542,11 +545,11 @@ test('should update snapshot with the update-snapshots flag', async ({ runInline
 test('shouldn\'t update snapshot with the update-snapshots flag for negated matcher', async ({ runInlineTest }, testInfo) => {
   const EXPECTED_SNAPSHOT = blueImage;
   const result = await runInlineTest({
-    ...playwrightConfig({ screenshotsDir: '__screenshots__' }),
+    ...playwrightConfig({ _screenshotsDir: '__screenshots__' }),
     '__screenshots__/a.spec.js/snapshot.png': EXPECTED_SNAPSHOT,
     'a.spec.js': `
       pwt.test('is a test', async ({ page }) => {
-        await expect(page).not.toHaveScreenshot('snapshot.png');
+        await expect(page).not._toHaveScreenshot('snapshot.png');
       });
     `
   }, { 'update-snapshots': true });
@@ -558,10 +561,10 @@ test('shouldn\'t update snapshot with the update-snapshots flag for negated matc
 
 test('should silently write missing expectations locally with the update-snapshots flag', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
-    ...playwrightConfig({ screenshotsDir: '__screenshots__' }),
+    ...playwrightConfig({ _screenshotsDir: '__screenshots__' }),
     'a.spec.js': `
       pwt.test('is a test', async ({ page }) => {
-        await expect(page).toHaveScreenshot('snapshot.png');
+        await expect(page)._toHaveScreenshot('snapshot.png');
       });
     `
   }, { 'update-snapshots': true });
@@ -575,10 +578,10 @@ test('should silently write missing expectations locally with the update-snapsho
 
 test('should not write missing expectations locally with the update-snapshots flag for negated matcher', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
-    ...playwrightConfig({ screenshotsDir: '__screenshots__' }),
+    ...playwrightConfig({ _screenshotsDir: '__screenshots__' }),
     'a.spec.js': `
       pwt.test('is a test', async ({ page }) => {
-        await expect(page).not.toHaveScreenshot('snapshot.png');
+        await expect(page).not._toHaveScreenshot('snapshot.png');
       });
     `
   }, { 'update-snapshots': true });
@@ -591,7 +594,7 @@ test('should not write missing expectations locally with the update-snapshots fl
 
 test('should match multiple snapshots', async ({ runInlineTest }) => {
   const result = await runInlineTest({
-    ...playwrightConfig({ screenshotsDir: '__screenshots__' }),
+    ...playwrightConfig({ _screenshotsDir: '__screenshots__' }),
     '__screenshots__/a.spec.js/red.png': redImage,
     '__screenshots__/a.spec.js/green.png': greenImage,
     '__screenshots__/a.spec.js/blue.png': blueImage,
@@ -599,15 +602,15 @@ test('should match multiple snapshots', async ({ runInlineTest }) => {
       pwt.test('is a test', async ({ page }) => {
         await Promise.all([
           page.evaluate(() => document.documentElement.style.setProperty('background', '#f00')),
-          expect(page).toHaveScreenshot('red.png'),
+          expect(page)._toHaveScreenshot('red.png'),
         ]);
         await Promise.all([
           page.evaluate(() => document.documentElement.style.setProperty('background', '#0f0')),
-          expect(page).toHaveScreenshot('green.png'),
+          expect(page)._toHaveScreenshot('green.png'),
         ]);
         await Promise.all([
           page.evaluate(() => document.documentElement.style.setProperty('background', '#00f')),
-          expect(page).toHaveScreenshot('blue.png'),
+          expect(page)._toHaveScreenshot('blue.png'),
         ]);
       });
     `
@@ -617,11 +620,11 @@ test('should match multiple snapshots', async ({ runInlineTest }) => {
 
 test('should use provided name', async ({ runInlineTest }) => {
   const result = await runInlineTest({
-    ...playwrightConfig({ screenshotsDir: '__screenshots__' }),
+    ...playwrightConfig({ _screenshotsDir: '__screenshots__' }),
     '__screenshots__/a.spec.js/provided.png': whiteImage,
     'a.spec.js': `
       pwt.test('is a test', async ({ page }) => {
-        await expect(page).toHaveScreenshot('provided.png');
+        await expect(page)._toHaveScreenshot('provided.png');
       });
     `
   });
@@ -630,11 +633,11 @@ test('should use provided name', async ({ runInlineTest }) => {
 
 test('should use provided name via options', async ({ runInlineTest }) => {
   const result = await runInlineTest({
-    ...playwrightConfig({ screenshotsDir: '__screenshots__' }),
+    ...playwrightConfig({ _screenshotsDir: '__screenshots__' }),
     '__screenshots__/a.spec.js/provided.png': whiteImage,
     'a.spec.js': `
       pwt.test('is a test', async ({ page }) => {
-        await expect(page).toHaveScreenshot({ name: 'provided.png' });
+        await expect(page)._toHaveScreenshot({ name: 'provided.png' });
       });
     `
   });
@@ -646,21 +649,21 @@ test('should respect maxDiffPixels option', async ({ runInlineTest }) => {
   const EXPECTED_SNAPSHOT = paintBlackPixels(whiteImage, BAD_PIXELS);
 
   expect((await runInlineTest({
-    ...playwrightConfig({ screenshotsDir: '__screenshots__' }),
+    ...playwrightConfig({ _screenshotsDir: '__screenshots__' }),
     '__screenshots__/a.spec.js/snapshot.png': EXPECTED_SNAPSHOT,
     'a.spec.js': `
       pwt.test('is a test', async ({ page }) => {
-        await expect(page).toHaveScreenshot('snapshot.png', { timeout: 2000 });
+        await expect(page)._toHaveScreenshot('snapshot.png', { timeout: 2000 });
       });
     `
   })).exitCode, 'make sure default comparison fails').toBe(1);
 
   expect((await runInlineTest({
-    ...playwrightConfig({ screenshotsDir: '__screenshots__' }),
+    ...playwrightConfig({ _screenshotsDir: '__screenshots__' }),
     '__screenshots__/a.spec.js/snapshot.png': EXPECTED_SNAPSHOT,
     'a.spec.js': `
       pwt.test('is a test', async ({ page }) => {
-        await expect(page).toHaveScreenshot('snapshot.png', {
+        await expect(page)._toHaveScreenshot('snapshot.png', {
           maxDiffPixels: ${BAD_PIXELS}
         });
       });
@@ -671,9 +674,9 @@ test('should respect maxDiffPixels option', async ({ runInlineTest }) => {
     ...playwrightConfig({
       projects: [
         {
-          screenshotsDir: '__screenshots__',
+          _screenshotsDir: '__screenshots__',
           expect: {
-            toHaveScreenshot: {
+            _toHaveScreenshot: {
               maxDiffPixels: BAD_PIXELS
             }
           },
@@ -683,7 +686,7 @@ test('should respect maxDiffPixels option', async ({ runInlineTest }) => {
     '__screenshots__/a.spec.js/snapshot.png': EXPECTED_SNAPSHOT,
     'a.spec.js': `
       pwt.test('is a test', async ({ page }) => {
-        await expect(page).toHaveScreenshot('snapshot.png');
+        await expect(page)._toHaveScreenshot('snapshot.png');
       });
     `
   })).exitCode, 'make sure maxDiffPixels option in project config is respected').toBe(0);
@@ -695,21 +698,21 @@ test('should satisfy both maxDiffPixelRatio and maxDiffPixels', async ({ runInli
   const EXPECTED_SNAPSHOT = paintBlackPixels(whiteImage, BAD_COUNT);
 
   expect((await runInlineTest({
-    ...playwrightConfig({ screenshotsDir: '__screenshots__' }),
+    ...playwrightConfig({ _screenshotsDir: '__screenshots__' }),
     '__screenshots__/a.spec.js/snapshot.png': EXPECTED_SNAPSHOT,
     'a.spec.js': `
       pwt.test('is a test', async ({ page }) => {
-        await expect(page).toHaveScreenshot('snapshot.png', { timeout: 2000 });
+        await expect(page)._toHaveScreenshot('snapshot.png', { timeout: 2000 });
       });
     `
   })).exitCode, 'make sure default comparison fails').toBe(1);
 
   expect((await runInlineTest({
-    ...playwrightConfig({ screenshotsDir: '__screenshots__' }),
+    ...playwrightConfig({ _screenshotsDir: '__screenshots__' }),
     '__screenshots__/a.spec.js/snapshot.png': EXPECTED_SNAPSHOT,
     'a.spec.js': `
       pwt.test('is a test', async ({ page }) => {
-        await expect(page).toHaveScreenshot('snapshot.png', {
+        await expect(page)._toHaveScreenshot('snapshot.png', {
           maxDiffPixels: ${Math.floor(BAD_COUNT / 2)},
           maxDiffPixelRatio: ${BAD_RATIO},
           timeout: 2000,
@@ -719,11 +722,11 @@ test('should satisfy both maxDiffPixelRatio and maxDiffPixels', async ({ runInli
   })).exitCode, 'make sure it fails when maxDiffPixels < actualBadPixels < maxDiffPixelRatio').toBe(1);
 
   expect((await runInlineTest({
-    ...playwrightConfig({ screenshotsDir: '__screenshots__' }),
+    ...playwrightConfig({ _screenshotsDir: '__screenshots__' }),
     '__screenshots__/a.spec.js/snapshot.png': EXPECTED_SNAPSHOT,
     'a.spec.js': `
       pwt.test('is a test', async ({ page }) => {
-        await expect(page).toHaveScreenshot('snapshot.png', {
+        await expect(page)._toHaveScreenshot('snapshot.png', {
           maxDiffPixels: ${BAD_COUNT},
           maxDiffPixelRatio: ${BAD_RATIO / 2},
           timeout: 2000,
@@ -733,11 +736,11 @@ test('should satisfy both maxDiffPixelRatio and maxDiffPixels', async ({ runInli
   })).exitCode, 'make sure it fails when maxDiffPixelRatio < actualBadPixels < maxDiffPixels').toBe(1);
 
   expect((await runInlineTest({
-    ...playwrightConfig({ screenshotsDir: '__screenshots__' }),
+    ...playwrightConfig({ _screenshotsDir: '__screenshots__' }),
     '__screenshots__/a.spec.js/snapshot.png': EXPECTED_SNAPSHOT,
     'a.spec.js': `
       pwt.test('is a test', async ({ page }) => {
-        await expect(page).toHaveScreenshot('snapshot.png', {
+        await expect(page)._toHaveScreenshot('snapshot.png', {
           maxDiffPixels: ${BAD_COUNT},
           maxDiffPixelRatio: ${BAD_RATIO},
         });
@@ -752,21 +755,21 @@ test('should respect maxDiffPixelRatio option', async ({ runInlineTest }) => {
   const EXPECTED_SNAPSHOT = paintBlackPixels(whiteImage, BAD_PIXELS);
 
   expect((await runInlineTest({
-    ...playwrightConfig({ screenshotsDir: '__screenshots__' }),
+    ...playwrightConfig({ _screenshotsDir: '__screenshots__' }),
     '__screenshots__/a.spec.js/snapshot.png': EXPECTED_SNAPSHOT,
     'a.spec.js': `
       pwt.test('is a test', async ({ page }) => {
-        await expect(page).toHaveScreenshot('snapshot.png', { timeout: 2000 });
+        await expect(page)._toHaveScreenshot('snapshot.png', { timeout: 2000 });
       });
     `
   })).exitCode, 'make sure default comparison fails').toBe(1);
 
   expect((await runInlineTest({
-    ...playwrightConfig({ screenshotsDir: '__screenshots__' }),
+    ...playwrightConfig({ _screenshotsDir: '__screenshots__' }),
     '__screenshots__/a.spec.js/snapshot.png': EXPECTED_SNAPSHOT,
     'a.spec.js': `
       pwt.test('is a test', async ({ page }) => {
-        await expect(page).toHaveScreenshot('snapshot.png', {
+        await expect(page)._toHaveScreenshot('snapshot.png', {
           maxDiffPixelRatio: ${BAD_RATIO}
         });
       });
@@ -776,9 +779,9 @@ test('should respect maxDiffPixelRatio option', async ({ runInlineTest }) => {
   expect((await runInlineTest({
     ...playwrightConfig({
       projects: [{
-        screenshotsDir: '__screenshots__',
+        _screenshotsDir: '__screenshots__',
         expect: {
-          toHaveScreenshot: {
+          _toHaveScreenshot: {
             maxDiffPixelRatio: BAD_RATIO,
           },
         },
@@ -787,7 +790,7 @@ test('should respect maxDiffPixelRatio option', async ({ runInlineTest }) => {
     '__screenshots__/a.spec.js/snapshot.png': EXPECTED_SNAPSHOT,
     'a.spec.js': `
       pwt.test('is a test', async ({ page }) => {
-        await expect(page).toHaveScreenshot('snapshot.png');
+        await expect(page)._toHaveScreenshot('snapshot.png');
       });
     `
   })).exitCode, 'make sure maxDiffPixels option in project config is respected').toBe(0);
@@ -797,7 +800,7 @@ test('should throw for invalid maxDiffPixels values', async ({ runInlineTest }) 
   expect((await runInlineTest({
     'a.spec.js': `
       pwt.test('is a test', async ({ page }) => {
-        await expect(page).toHaveScreenshot({
+        await expect(page)._toHaveScreenshot({
           maxDiffPixels: -1,
         });
       });
@@ -809,7 +812,7 @@ test('should throw for invalid maxDiffPixelRatio values', async ({ runInlineTest
   expect((await runInlineTest({
     'a.spec.js': `
       pwt.test('is a test', async ({ page }) => {
-        await expect(page).toHaveScreenshot({
+        await expect(page)._toHaveScreenshot({
           maxDiffPixelRatio: 12,
         });
       });
@@ -820,14 +823,14 @@ test('should throw for invalid maxDiffPixelRatio values', async ({ runInlineTest
 
 test('should attach expected/actual and no diff when sizes are different', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
-    ...playwrightConfig({ screenshotsDir: '__screenshots__' }),
+    ...playwrightConfig({ _screenshotsDir: '__screenshots__' }),
     '__screenshots__/a.spec.js/snapshot.png': createImage(2, 2),
     'a.spec.js': `
       pwt.test.afterEach(async ({}, testInfo) => {
         console.log('## ' + JSON.stringify(testInfo.attachments));
       });
       pwt.test('is a test', async ({ page }) => {
-        await expect(page).toHaveScreenshot('snapshot.png', { timeout: 2000 });
+        await expect(page)._toHaveScreenshot('snapshot.png', { timeout: 2000 });
       });
     `
   });
@@ -856,11 +859,11 @@ test('should fail with missing expectations and retries', async ({ runInlineTest
   const result = await runInlineTest({
     ...playwrightConfig({
       retries: 1,
-      screenshotsDir: '__screenshots__'
+      _screenshotsDir: '__screenshots__'
     }),
     'a.spec.js': `
       pwt.test('is a test', async ({ page }) => {
-        await expect(page).toHaveScreenshot('snapshot.png');
+        await expect(page)._toHaveScreenshot('snapshot.png');
       });
     `
   });
@@ -877,11 +880,11 @@ test('should update expectations with retries', async ({ runInlineTest }, testIn
   const result = await runInlineTest({
     ...playwrightConfig({
       retries: 1,
-      screenshotsDir: '__screenshots__'
+      _screenshotsDir: '__screenshots__'
     }),
     'a.spec.js': `
       pwt.test('is a test', async ({ page }) => {
-        await expect(page).toHaveScreenshot('snapshot.png');
+        await expect(page)._toHaveScreenshot('snapshot.png');
       });
     `
   }, { 'update-snapshots': true });

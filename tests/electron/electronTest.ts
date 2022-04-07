@@ -16,8 +16,10 @@
 
 import { baseTest } from '../config/baseTest';
 import * as path from 'path';
-import { ElectronApplication, Page } from 'playwright-core';
-import { PageTestFixtures, PageWorkerFixtures } from '../page/pageTestApi';
+import type { ElectronApplication, Page } from '@playwright/test';
+import type { PageTestFixtures, PageWorkerFixtures } from '../page/pageTestApi';
+import type { TraceViewerFixtures } from '../config/traceViewerFixtures';
+import { traceViewerFixtures } from '../config/traceViewerFixtures';
 export { expect } from '@playwright/test';
 
 type ElectronTestFixtures = PageTestFixtures & {
@@ -27,7 +29,7 @@ type ElectronTestFixtures = PageTestFixtures & {
 
 const electronVersion = require('electron/package.json').version;
 
-export const electronTest = baseTest.extend<ElectronTestFixtures, PageWorkerFixtures>({
+export const electronTest = baseTest.extend<TraceViewerFixtures>(traceViewerFixtures).extend<ElectronTestFixtures, PageWorkerFixtures>({
   browserVersion: [electronVersion, { scope: 'worker' }],
   browserMajorVersion: [Number(electronVersion.split('.')[0]), { scope: 'worker' }],
   isAndroid: [false, { scope: 'worker' }],
@@ -70,5 +72,9 @@ export const electronTest = baseTest.extend<ElectronTestFixtures, PageWorkerFixt
 
   page: async ({ newWindow }, run) => {
     await run(await newWindow());
+  },
+
+  context: async ({ electronApp }, run) => {
+    await run(electronApp.context());
   },
 });

@@ -33,7 +33,7 @@ IS_ARM64=""
 IS_SYMBOLS_BUILD=""
 IS_FULL=""
 USE_GOMA=""
-for ((i=0; i<="${#args[@]}"; ++i)); do
+for ((i="${#args[@]}"-1; i >= 0; --i)); do
     case ${args[i]} in
         --arm64) IS_ARM64="1"; unset args[i]; ;;
         --symbols) IS_SYMBOLS_BUILD="1"; unset args[i]; ;;
@@ -94,8 +94,8 @@ compile_chromium() {
     fi
   fi
 
-  TARGETS="$@"
-  if [[ $(uname) == "MINGW" ]]; then
+  TARGETS="${args[@]}"
+  if [[ $(uname) == "MINGW"* || "$(uname)" == MSYS* ]]; then
     if [[ -n "$TARGETS" ]]; then
       echo "ERROR: cannot compile custom targets on windows yet."
       echo "Requested to compile chromium targets - ${TARGETS}"
@@ -107,7 +107,6 @@ compile_chromium() {
       /c/Windows/System32/cmd.exe "/c $(cygpath -w "${SCRIPT_FOLDER}"/buildwingoma.bat)"
     fi
   else
-    gn gen out/Default
     if [[ -z "$TARGETS" ]]; then
       if [[ $(uname) == "Linux" ]]; then
         TARGETS="chrome chrome_sandbox clear_key_cdm"
@@ -115,6 +114,11 @@ compile_chromium() {
         TARGETS="chrome"
       fi
     fi
+    echo
+    echo ">> Compiling Targets: $TARGETS"
+    echo
+
+    gn gen out/Default
     if [[ -z "$USE_GOMA" ]]; then
       autoninja -C out/Default $TARGETS
     else

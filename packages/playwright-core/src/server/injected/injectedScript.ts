@@ -14,14 +14,16 @@
  * limitations under the License.
  */
 
-import { SelectorEngine, SelectorRoot } from './selectorEngine';
+import type { SelectorEngine, SelectorRoot } from './selectorEngine';
 import { XPathEngine } from './xpathSelectorEngine';
 import { ReactEngine } from './reactSelectorEngine';
 import { VueEngine } from './vueSelectorEngine';
 import { RoleEngine } from './roleSelectorEngine';
-import { allEngineNames, ParsedSelector, ParsedSelectorPart, parseSelector, stringifySelector } from '../common/selectorParser';
-import { SelectorEvaluatorImpl, isVisible, parentElementOrShadowHost, elementMatchesText, TextMatcher, createRegexTextMatcher, createStrictTextMatcher, createLaxTextMatcher } from './selectorEvaluator';
-import { CSSComplexSelectorList } from '../common/cssParser';
+import type { ParsedSelector, ParsedSelectorPart } from '../common/selectorParser';
+import { allEngineNames, parseSelector, stringifySelector } from '../common/selectorParser';
+import type { TextMatcher } from './selectorEvaluator';
+import { SelectorEvaluatorImpl, isVisible, parentElementOrShadowHost, elementMatchesText, createRegexTextMatcher, createStrictTextMatcher, createLaxTextMatcher } from './selectorEvaluator';
+import type { CSSComplexSelectorList } from '../common/cssParser';
 import { generateSelector } from './selectorGenerator';
 import type * as channels from '../../protocol/channels';
 import { Highlight } from './highlight';
@@ -813,10 +815,7 @@ export class InjectedScript {
       // elementFromPoint works incorrectly in Chromium (http://crbug.com/1188919),
       // so we use elementsFromPoint instead.
       const elements: Element[] = container.elementsFromPoint(x, y);
-      let innerElement = elements[0] as Element | undefined;
-      // Workaround https://bugs.chromium.org/p/chromium/issues/detail?id=1307458.
-      if (elements[0] && elements[1] && elements[0].contains(elements[1]) && container.elementFromPoint(x, y) === elements[1])
-        innerElement = elements[1];
+      const innerElement = elements[0] as Element | undefined;
       if (!innerElement || element === innerElement)
         break;
       element = innerElement;

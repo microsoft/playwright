@@ -17,11 +17,11 @@
 import child_process from 'child_process';
 import path from 'path';
 import { EventEmitter } from 'events';
-import { RunPayload, TestBeginPayload, TestEndPayload, DonePayload, TestOutputPayload, WorkerInitParams, StepBeginPayload, StepEndPayload, SerializedLoaderData, TeardownErrorsPayload } from './ipc';
+import type { RunPayload, TestBeginPayload, TestEndPayload, DonePayload, TestOutputPayload, WorkerInitParams, StepBeginPayload, StepEndPayload, SerializedLoaderData, TeardownErrorsPayload } from './ipc';
 import type { TestResult, Reporter, TestStep, TestError } from '../types/testReporter';
-import { Suite, TestCase } from './test';
-import { Loader } from './loader';
-import { ManualPromise } from 'playwright-core/lib/utils/async';
+import type { Suite, TestCase } from './test';
+import type { Loader } from './loader';
+import { ManualPromise } from 'playwright-core/lib/utils';
 
 export type TestGroup = {
   workerHash: string;
@@ -239,7 +239,6 @@ export class Dispatcher {
         duration: -1,
         steps: [],
         location: params.location,
-        data: {},
       };
       steps.set(params.stepId, step);
       (parentStep || result).steps.push(step);
@@ -466,6 +465,7 @@ class Worker extends EventEmitter {
   private _didSendStop = false;
   private _didFail = false;
   private didExit = false;
+  private _ready: Promise<void>;
 
   constructor(hash: string, parallelIndex: number) {
     super();
@@ -494,9 +494,15 @@ class Worker extends EventEmitter {
       const { method, params } = message;
       this.emit(method, params);
     });
+
+    this._ready = new Promise((resolve, reject) => {
+      this.process.once('exit', () => reject(new Error('worker exited before it became ready')));
+      this.once('ready', () => resolve());
+    });
   }
 
   async init(testGroup: TestGroup, loaderData: SerializedLoaderData) {
+    await this._ready;
     const params: WorkerInitParams = {
       workerIndex: this.workerIndex,
       parallelIndex: this.parallelIndex,
@@ -505,7 +511,6 @@ class Worker extends EventEmitter {
       loader: loaderData,
     };
     this.send({ method: 'init', params });
-    await new Promise(f => this.process.once('message', f));  // Ready ack
   }
 
   run(testGroup: TestGroup) {

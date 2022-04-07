@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Page } from 'playwright-core';
+import type { Page } from 'playwright-core';
 import { test as it, expect } from './inspectorTest';
 
 

@@ -19,11 +19,14 @@ import rimraf from 'rimraf';
 import * as fs from 'fs';
 import * as path from 'path';
 import { promisify } from 'util';
-import { Dispatcher, TestGroup } from './dispatcher';
-import { createFileMatcher, createTitleMatcher, FilePatternFilter, serializeError } from './util';
-import { TestCase, Suite } from './test';
+import type { TestGroup } from './dispatcher';
+import { Dispatcher } from './dispatcher';
+import type { FilePatternFilter } from './util';
+import { createFileMatcher, createTitleMatcher, serializeError } from './util';
+import type { TestCase } from './test';
+import { Suite } from './test';
 import { Loader } from './loader';
-import { FullResult, Reporter, TestError } from '../types/testReporter';
+import type { FullResult, Reporter, TestError } from '../types/testReporter';
 import { Multiplexer } from './reporters/multiplexer';
 import { formatError } from './reporters/base';
 import DotReporter from './reporters/dot';
@@ -34,13 +37,13 @@ import JSONReporter from './reporters/json';
 import JUnitReporter from './reporters/junit';
 import EmptyReporter from './reporters/empty';
 import HtmlReporter from './reporters/html';
-import { ProjectImpl } from './project';
+import type { ProjectImpl } from './project';
 import { Minimatch } from 'minimatch';
-import { Config } from './types';
+import type { Config } from './types';
 import type { FullConfigInternal } from './types';
 import { WebServer } from './webServer';
-import { raceAgainstTimeout } from 'playwright-core/lib/utils/async';
-import { SigIntWatcher } from 'playwright-core/lib/utils/utils';
+import { raceAgainstTimeout } from 'playwright-core/lib/utils';
+import { SigIntWatcher } from 'playwright-core/lib/utils';
 
 const removeFolderAsync = promisify(rimraf);
 const readDirAsync = promisify(fs.readdir);
@@ -257,7 +260,7 @@ export class Runner {
       preprocessRoot._addSuite(fileSuite);
     }
 
-    // 2. Filter tests to respect column filter.
+    // 2. Filter tests to respect line/column filter.
     filterByFocusedLine(preprocessRoot, testFileReFilters);
 
     // 3. Complain about only.
@@ -484,14 +487,14 @@ function filterByFocusedLine(suite: Suite, focusedTestFileLines: FilePatternFilt
   if (!filterWithLine)
     return;
 
-  const testFileLineMatches = (testFileName: string, testLine: number) => focusedTestFileLines.some(({ re, line }) => {
+  const testFileLineMatches = (testFileName: string, testLine: number, testColumn: number) => focusedTestFileLines.some(({ re, line, column }) => {
     re.lastIndex = 0;
-    return re.test(testFileName) && (line === testLine || line === null);
+    return re.test(testFileName) && (line === testLine || line === null) && (column === testColumn || column === null);
   });
   const suiteFilter = (suite: Suite) => {
-    return !!suite.location && testFileLineMatches(suite.location.file, suite.location.line);
+    return !!suite.location && testFileLineMatches(suite.location.file, suite.location.line, suite.location.column);
   };
-  const testFilter = (test: TestCase) => testFileLineMatches(test.location.file, test.location.line);
+  const testFilter = (test: TestCase) => testFileLineMatches(test.location.file, test.location.line, test.location.column);
   return filterSuite(suite, suiteFilter, testFilter);
 }
 

@@ -16,9 +16,9 @@
 
 import fs from 'fs';
 import { test as baseTest, expect, createImage } from './playwright-test-fixtures';
-import { HttpServer } from '../../packages/playwright-core/lib/utils/httpServer';
+import type { HttpServer } from '../../packages/playwright-core/lib/utils/httpServer';
 import { startHtmlReportServer } from '../../packages/playwright-test/lib/reporters/html';
-import { spawnAsync } from 'playwright-core/lib/utils/utils';
+import { spawnAsync } from 'playwright-core/lib/utils';
 
 const test = baseTest.extend<{ showReport: () => Promise<void> }>({
   showReport: async ({ page }, use, testInfo) => {
@@ -181,7 +181,7 @@ test('should include multiple image diffs', async ({ runInlineTest, page, showRe
   const result = await runInlineTest({
     'playwright.config.ts': `
       module.exports = {
-        screenshotsDir: '__screenshots__',
+        _screenshotsDir: '__screenshots__',
         use: { viewport: { width: ${IMG_WIDTH}, height: ${IMG_HEIGHT} }}
       };
     `,
@@ -192,9 +192,9 @@ test('should include multiple image diffs', async ({ runInlineTest, page, showRe
       const { test } = pwt;
       test('fails', async ({ page }, testInfo) => {
         testInfo.snapshotSuffix = '';
-        await expect.soft(page).toHaveScreenshot({ timeout: 1000 });
-        await expect.soft(page).toHaveScreenshot({ timeout: 1000 });
-        await expect.soft(page).toHaveScreenshot({ timeout: 1000 });
+        await expect.soft(page)._toHaveScreenshot({ timeout: 1000 });
+        await expect.soft(page)._toHaveScreenshot({ timeout: 1000 });
+        await expect.soft(page)._toHaveScreenshot({ timeout: 1000 });
       });
     `,
   }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
@@ -260,7 +260,7 @@ test('should include image diff when screenshot failed to generate due to animat
             document.body.textContent = Date.now();
           }, 50);
         });
-        await expect.soft(page).toHaveScreenshot({ timeout: 1000 });
+        await expect.soft(page)._toHaveScreenshot({ timeout: 1000 });
       });
     `,
   }, { 'reporter': 'dot,html', 'update-snapshots': true }, { PW_TEST_HTML_REPORT_OPEN: 'never' });

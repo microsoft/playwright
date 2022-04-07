@@ -113,8 +113,8 @@ Learn more about [various timeouts](../test-timeouts.md).
 ## property: TestOptions.connectOptions
 - type: <[void]|[Object]>
   - `wsEndpoint` <[string]> A browser websocket endpoint to connect to.
-  - `headers` <[void]|[Object]<[string], [string]>> Additional HTTP headers to be sent with web socket connect request. Optional.
-  - `timeout` <[int]> Timeout in milliseconds for the connection to be established. Optional, defaults to no timeout.
+  - `headers` ?<[void]|[Object]<[string], [string]>> Additional HTTP headers to be sent with web socket connect request. Optional.
+  - `timeout` ?<[int]> Timeout in milliseconds for the connection to be established. Optional, defaults to no timeout.
 
 When connect options are specified, default [`property: Fixtures.browser`], [`property: Fixtures.context`] and [`property: Fixtures.page`] use the remote browser instead of launching a browser locally, and any launch options like [`property: TestOptions.headless`] or [`property: TestOptions.channel`] are ignored.
 
@@ -180,9 +180,9 @@ Learn more about [automatic screenshots](../test-configuration.md#automatic-scre
 ## property: TestOptions.trace
 - type: <[Object]|[TraceMode]<"off"|"on"|"retain-on-failure"|"on-first-retry">>
   - `mode` <[TraceMode]<"off"|"on"|"retain-on-failure"|"on-first-retry">> Trace recording mode.
-  - `screenshots` <[boolean]> Whether to capture screenshots during tracing. Screenshots are used to build a timeline preview. Defaults to true. Optional.
-  - `snapshots` <[boolean]> Whether to capture DOM snapshot on every action. Defaults to true. Optional.
-  - `sources` <[boolean]> Whether to include source files for trace actions. Defaults to true. Optional.
+  - `screenshots` ?<[boolean]> Whether to capture screenshots during tracing. Screenshots are used to build a timeline preview. Defaults to true. Optional.
+  - `snapshots` ?<[boolean]> Whether to capture DOM snapshot on every action. Defaults to true. Optional.
+  - `sources` ?<[boolean]> Whether to include source files for trace actions. Defaults to true. Optional.
 
 Whether to record trace for each test. Defaults to `'off'`.
 * `'off'`: Do not record trace.
@@ -199,7 +199,7 @@ Learn more about [recording trace](../test-configuration.md#record-test-trace).
 ## property: TestOptions.video
 - type: <[Object]|[VideoMode]<"off"|"on"|"retain-on-failure"|"on-first-retry">>
   - `mode` <[VideoMode]<"off"|"on"|"retain-on-failure"|"on-first-retry">> Video recording mode.
-  - `size` <[Object]> Size of the recorded video. Optional.
+  - `size` ?<[Object]> Size of the recorded video. Optional.
     - `width` <[int]>
     - `height` <[int]>
 

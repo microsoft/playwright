@@ -2625,8 +2625,9 @@ export interface Page {
     has?: Locator;
 
     /**
-     * Matches elements containing specified text somewhere inside, possibly in a child or a descendant element. For example,
-     * `"Playwright"` matches `<article><div>Playwright</div></article>`.
+     * Matches elements containing specified text somewhere inside, possibly in a child or a descendant element. When passed a
+     * [string], matching is case-insensitive and searches for a substring. For example, `"Playwright"` matches
+     * `<article><div>Playwright</div></article>`.
      */
     hasText?: string|RegExp;
   }): Locator;
@@ -3808,7 +3809,7 @@ export interface Page {
 
     /**
      * A glob pattern, regex pattern or predicate receiving [URL] to match while waiting for the navigation. Note that if the
-     * parameter is a string without wilcard characters, the method will wait for navigation to URL that is exactly equal to
+     * parameter is a string without wildcard characters, the method will wait for navigation to URL that is exactly equal to
      * the string.
      */
     url?: string|RegExp|((url: URL) => boolean);
@@ -3921,7 +3922,7 @@ export interface Page {
    *
    * Shortcut for main frame's
    * [frame.waitForURL(url[, options])](https://playwright.dev/docs/api/class-frame#frame-wait-for-url).
-   * @param url A glob pattern, regex pattern or predicate receiving [URL] to match while waiting for the navigation. Note that if the parameter is a string without wilcard characters, the method will wait for navigation to URL that is exactly equal to
+   * @param url A glob pattern, regex pattern or predicate receiving [URL] to match while waiting for the navigation. Note that if the parameter is a string without wildcard characters, the method will wait for navigation to URL that is exactly equal to
    * the string.
    * @param options
    */
@@ -5443,8 +5444,9 @@ export interface Frame {
     has?: Locator;
 
     /**
-     * Matches elements containing specified text somewhere inside, possibly in a child or a descendant element. For example,
-     * `"Playwright"` matches `<article><div>Playwright</div></article>`.
+     * Matches elements containing specified text somewhere inside, possibly in a child or a descendant element. When passed a
+     * [string], matching is case-insensitive and searches for a substring. For example, `"Playwright"` matches
+     * `<article><div>Playwright</div></article>`.
      */
     hasText?: string|RegExp;
   }): Locator;
@@ -6018,7 +6020,7 @@ export interface Frame {
 
     /**
      * A glob pattern, regex pattern or predicate receiving [URL] to match while waiting for the navigation. Note that if the
-     * parameter is a string without wilcard characters, the method will wait for navigation to URL that is exactly equal to
+     * parameter is a string without wildcard characters, the method will wait for navigation to URL that is exactly equal to
      * the string.
      */
     url?: string|RegExp|((url: URL) => boolean);
@@ -6050,7 +6052,7 @@ export interface Frame {
    * await frame.waitForURL('**\/target.html');
    * ```
    *
-   * @param url A glob pattern, regex pattern or predicate receiving [URL] to match while waiting for the navigation. Note that if the parameter is a string without wilcard characters, the method will wait for navigation to URL that is exactly equal to
+   * @param url A glob pattern, regex pattern or predicate receiving [URL] to match while waiting for the navigation. Note that if the parameter is a string without wildcard characters, the method will wait for navigation to URL that is exactly equal to
    * the string.
    * @param options
    */
@@ -8153,13 +8155,6 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
     caret?: "hide"|"initial";
 
     /**
-     * When set to `"ready"`, screenshot will wait for
-     * [`document.fonts.ready`](https://developer.mozilla.org/en-US/docs/Web/API/FontFaceSet/ready) promise to resolve in all
-     * frames. Defaults to `"nowait"`.
-     */
-    fonts?: "ready"|"nowait";
-
-    /**
      * Specify locators that should be masked when the screenshot is taken. Masked elements will be overlayed with a pink box
      * `#FF00FF` that completely covers its bounding box.
      */
@@ -9405,8 +9400,9 @@ export interface Locator {
     has?: Locator;
 
     /**
-     * Matches elements containing specified text somewhere inside, possibly in a child or a descendant element. For example,
-     * `"Playwright"` matches `<article><div>Playwright</div></article>`.
+     * Matches elements containing specified text somewhere inside, possibly in a child or a descendant element. When passed a
+     * [string], matching is case-insensitive and searches for a substring. For example, `"Playwright"` matches
+     * `<article><div>Playwright</div></article>`.
      */
     hasText?: string|RegExp;
   }): Locator;
@@ -9926,7 +9922,7 @@ export interface Locator {
  */
 export interface BrowserType<Unused = {}> {
   /**
-   * This methods attaches Playwright to an existing browser instance using the Chrome DevTools Protocol.
+   * This method attaches Playwright to an existing browser instance using the Chrome DevTools Protocol.
    *
    * The default browser context is accessible via
    * [browser.contexts()](https://playwright.dev/docs/api/class-browser#browser-contexts).
@@ -9941,7 +9937,7 @@ export interface BrowserType<Unused = {}> {
    * @deprecated
    */
   /**
-   * This methods attaches Playwright to an existing browser instance using the Chrome DevTools Protocol.
+   * This method attaches Playwright to an existing browser instance using the Chrome DevTools Protocol.
    *
    * The default browser context is accessible via
    * [browser.contexts()](https://playwright.dev/docs/api/class-browser#browser-contexts).
@@ -9952,7 +9948,7 @@ export interface BrowserType<Unused = {}> {
    */
   connectOverCDP(options: ConnectOverCDPOptions & { wsEndpoint?: string }): Promise<Browser>;
   /**
-   * This methods attaches Playwright to an existing browser instance.
+   * This method attaches Playwright to an existing browser instance.
    * @param wsEndpoint A browser websocket endpoint to connect to.
    * @param options
    */
@@ -9964,7 +9960,7 @@ export interface BrowserType<Unused = {}> {
    * @deprecated
    */
   /**
-   * This methods attaches Playwright to an existing browser instance.
+   * This method attaches Playwright to an existing browser instance.
    * @param wsEndpoint A browser websocket endpoint to connect to.
    * @param options
    */
@@ -10570,8 +10566,8 @@ export interface CDPSession {
   removeListener: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
   once: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
   /**
-   * @param method protocol method name
-   * @param params Optional method parameters
+   * @param method Protocol method name.
+   * @param params Optional method parameters.
    */
   send<T extends keyof Protocol.CommandParameters>(
     method: T,
@@ -10676,17 +10672,7 @@ export interface Accessibility {
    *
    * @param options
    */
-  snapshot(options?: {
-    /**
-     * Prune uninteresting nodes from the tree. Defaults to `true`.
-     */
-    interestingOnly?: boolean;
-
-    /**
-     * The root DOM element for the snapshot. Defaults to the whole page.
-     */
-    root?: ElementHandle;
-  }): Promise<null|AccessibilityNode>;
+  snapshot(options?: AccessibilitySnapshotOptions): Promise<null|AccessibilityNode>;
 }
 
 type AccessibilityNode = {
@@ -10805,18 +10791,18 @@ export interface ElectronApplication {
    * The only difference between
    * [electronApplication.evaluate(pageFunction[, arg])](https://playwright.dev/docs/api/class-electronapplication#electron-application-evaluate)
    * and
-   * [electronApplication.evaluateHandle(pageFunction, arg)](https://playwright.dev/docs/api/class-electronapplication#electron-application-evaluate-handle)
+   * [electronApplication.evaluateHandle(pageFunction[, arg])](https://playwright.dev/docs/api/class-electronapplication#electron-application-evaluate-handle)
    * is that
-   * [electronApplication.evaluateHandle(pageFunction, arg)](https://playwright.dev/docs/api/class-electronapplication#electron-application-evaluate-handle)
+   * [electronApplication.evaluateHandle(pageFunction[, arg])](https://playwright.dev/docs/api/class-electronapplication#electron-application-evaluate-handle)
    * returns [JSHandle].
    *
    * If the function passed to the
-   * [electronApplication.evaluateHandle(pageFunction, arg)](https://playwright.dev/docs/api/class-electronapplication#electron-application-evaluate-handle)
+   * [electronApplication.evaluateHandle(pageFunction[, arg])](https://playwright.dev/docs/api/class-electronapplication#electron-application-evaluate-handle)
    * returns a [Promise], then
-   * [electronApplication.evaluateHandle(pageFunction, arg)](https://playwright.dev/docs/api/class-electronapplication#electron-application-evaluate-handle)
+   * [electronApplication.evaluateHandle(pageFunction[, arg])](https://playwright.dev/docs/api/class-electronapplication#electron-application-evaluate-handle)
    * would wait for the promise to resolve and return its value.
    * @param pageFunction Function to be evaluated in the worker context.
-   * @param arg
+   * @param arg Optional argument to pass to `pageFunction`.
    */
   evaluateHandle<R, Arg>(pageFunction: PageFunctionOn<ElectronType, Arg, R>, arg: Arg): Promise<SmartHandle<R>>;
   /**
@@ -10825,18 +10811,18 @@ export interface ElectronApplication {
    * The only difference between
    * [electronApplication.evaluate(pageFunction[, arg])](https://playwright.dev/docs/api/class-electronapplication#electron-application-evaluate)
    * and
-   * [electronApplication.evaluateHandle(pageFunction, arg)](https://playwright.dev/docs/api/class-electronapplication#electron-application-evaluate-handle)
+   * [electronApplication.evaluateHandle(pageFunction[, arg])](https://playwright.dev/docs/api/class-electronapplication#electron-application-evaluate-handle)
    * is that
-   * [electronApplication.evaluateHandle(pageFunction, arg)](https://playwright.dev/docs/api/class-electronapplication#electron-application-evaluate-handle)
+   * [electronApplication.evaluateHandle(pageFunction[, arg])](https://playwright.dev/docs/api/class-electronapplication#electron-application-evaluate-handle)
    * returns [JSHandle].
    *
    * If the function passed to the
-   * [electronApplication.evaluateHandle(pageFunction, arg)](https://playwright.dev/docs/api/class-electronapplication#electron-application-evaluate-handle)
+   * [electronApplication.evaluateHandle(pageFunction[, arg])](https://playwright.dev/docs/api/class-electronapplication#electron-application-evaluate-handle)
    * returns a [Promise], then
-   * [electronApplication.evaluateHandle(pageFunction, arg)](https://playwright.dev/docs/api/class-electronapplication#electron-application-evaluate-handle)
+   * [electronApplication.evaluateHandle(pageFunction[, arg])](https://playwright.dev/docs/api/class-electronapplication#electron-application-evaluate-handle)
    * would wait for the promise to resolve and return its value.
    * @param pageFunction Function to be evaluated in the worker context.
-   * @param arg
+   * @param arg Optional argument to pass to `pageFunction`.
    */
   evaluateHandle<R>(pageFunction: PageFunctionOn<ElectronType, void, R>, arg?: any): Promise<SmartHandle<R>>;
   /**
@@ -13271,7 +13257,7 @@ export interface ConsoleMessage {
  *   await page.goto('https://chromium.org');
  *   const coverage = await page.coverage.stopJSCoverage();
  *   for (const entry of coverage) {
- *     const converter = new v8toIstanbul('', 0, { source: entry.source });
+ *     const converter = v8toIstanbul('', 0, { source: entry.source });
  *     await converter.load();
  *     converter.applyCoverage(entry.functions);
  *     console.log(JSON.stringify(converter.toIstanbul()));
@@ -13879,8 +13865,9 @@ export interface FrameLocator {
     has?: Locator;
 
     /**
-     * Matches elements containing specified text somewhere inside, possibly in a child or a descendant element. For example,
-     * `"Playwright"` matches `<article><div>Playwright</div></article>`.
+     * Matches elements containing specified text somewhere inside, possibly in a child or a descendant element. When passed a
+     * [string], matching is case-insensitive and searches for a substring. For example, `"Playwright"` matches
+     * `<article><div>Playwright</div></article>`.
      */
     hasText?: string|RegExp;
   }): Locator;
@@ -14181,7 +14168,7 @@ export interface Mouse {
    */
   move(x: number, y: number, options?: {
     /**
-     * defaults to 1. Sends intermediate `mousemove` events.
+     * Defaults to 1. Sends intermediate `mousemove` events.
      */
     steps?: number;
   }): Promise<void>;
@@ -15548,6 +15535,18 @@ export interface Geolocation {
   accuracy?: number;
 }
 
+interface AccessibilitySnapshotOptions {
+  /**
+   * Prune uninteresting nodes from the tree. Defaults to `true`.
+   */
+  interestingOnly?: boolean;
+
+  /**
+   * The root DOM element for the snapshot. Defaults to the whole page.
+   */
+  root?: ElementHandle;
+}
+
 export interface LaunchOptions {
   /**
    * Additional arguments to pass to the browser instance. The list of Chromium flags can be found
@@ -15745,13 +15744,6 @@ export interface LocatorScreenshotOptions {
   caret?: "hide"|"initial";
 
   /**
-   * When set to `"ready"`, screenshot will wait for
-   * [`document.fonts.ready`](https://developer.mozilla.org/en-US/docs/Web/API/FontFaceSet/ready) promise to resolve in all
-   * frames. Defaults to `"nowait"`.
-   */
-  fonts?: "ready"|"nowait";
-
-  /**
    * Specify locators that should be masked when the screenshot is taken. Masked elements will be overlayed with a pink box
    * `#FF00FF` that completely covers its bounding box.
    */
@@ -15927,13 +15919,6 @@ export interface PageScreenshotOptions {
      */
     height: number;
   };
-
-  /**
-   * When set to `"ready"`, screenshot will wait for
-   * [`document.fonts.ready`](https://developer.mozilla.org/en-US/docs/Web/API/FontFaceSet/ready) promise to resolve in all
-   * frames. Defaults to `"nowait"`.
-   */
-  fonts?: "ready"|"nowait";
 
   /**
    * When true, takes a screenshot of the full scrollable page, instead of the currently visible viewport. Defaults to

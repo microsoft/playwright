@@ -74,6 +74,7 @@ test('should respect timeout', async ({ runInlineTest }) => {
   });
   expect(result.exitCode).toBe(1);
   expect(stripAnsi(result.output)).toContain('Timeout 100ms exceeded while waiting on the predicate');
+  expect(stripAnsi(result.output)).toContain('Received: false');
   expect(stripAnsi(result.output)).toContain(`
   7 |         await test.expect.poll(() => false, { timeout: 100 }).
   `.trim());
@@ -143,4 +144,37 @@ test('should support .not predicate', async ({ runInlineTest }) => {
     `
   });
   expect(result.exitCode).toBe(0);
+});
+
+test('should support custom matchers', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      expect.extend({
+        toBeWithinRange(received, floor, ceiling) {
+          const pass = received >= floor && received <= ceiling;
+          if (pass) {
+            return {
+              message: () =>
+                "expected " + received + " not to be within range " + floor + " - " + ceiling,
+              pass: true,
+            };
+          } else {
+            return {
+              message: () =>
+                "expected " + received + " to be within range " + floor + " - " + ceiling,
+              pass: false,
+            };
+          }
+        },
+      });
+
+      const { test } = pwt;
+      test('should poll', async () => {
+        let i = 0;
+        await test.expect.poll(() => ++i).toBeWithinRange(3, Number.MAX_VALUE);
+      });
+    `
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
 });

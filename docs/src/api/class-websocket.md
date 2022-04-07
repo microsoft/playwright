@@ -57,9 +57,9 @@ Event name, same one would pass into `webSocket.on(event)`.
 
 ### param: WebSocket.waitForEvent.optionsOrPredicate
 * langs: js
-- `optionsOrPredicate` <[function]|[Object]>
+- `optionsOrPredicate` ?<[function]|[Object]>
   - `predicate` <[function]> receives the event data and resolves to truthy value when the waiting should resolve.
-  - `timeout` <[float]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default value can be changed by using the [`method: BrowserContext.setDefaultTimeout`].
+  - `timeout` ?<[float]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default value can be changed by using the [`method: BrowserContext.setDefaultTimeout`].
 
 Either a predicate that receives an event or an options object. Optional.
 

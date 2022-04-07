@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-import { TimeoutError } from '../utils/errors';
-import { assert, monotonicTime } from '../utils/utils';
-import { LogName } from '../utils/debugLogger';
-import { CallMetadata, Instrumentation, SdkObject } from './instrumentation';
-import { ElementHandle } from './dom';
-import { ManualPromise } from '../utils/async';
+import { TimeoutError } from '../common/errors';
+import { assert, monotonicTime } from '../utils';
+import type { LogName } from '../common/debugLogger';
+import type { CallMetadata, Instrumentation, SdkObject } from './instrumentation';
+import type { ElementHandle } from './dom';
+import { ManualPromise } from '../utils';
 import type { LogEntry } from './injected/injectedScript';
 
 export interface Progress {

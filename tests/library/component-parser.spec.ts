@@ -15,7 +15,8 @@
  */
 
 import { playwrightTest as it, expect } from '../config/browserTest';
-import { ParsedComponentSelector, parseComponentSelector } from '../../packages/playwright-core/src/server/injected/componentUtils';
+import type { ParsedComponentSelector } from '../../packages/playwright-core/src/server/injected/componentUtils';
+import { parseComponentSelector } from '../../packages/playwright-core/src/server/injected/componentUtils';
 
 const parse = (selector: string) => parseComponentSelector(selector, false);
 const serialize = (parsed: ParsedComponentSelector) => {

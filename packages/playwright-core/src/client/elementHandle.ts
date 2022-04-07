@@ -14,23 +14,23 @@
  * limitations under the License.
  */
 
-import * as channels from '../protocol/channels';
+import type * as channels from '../protocol/channels';
 import { Frame } from './frame';
-import { Locator } from './locator';
+import type { Locator } from './locator';
 import { JSHandle, serializeArgument, parseResult } from './jsHandle';
-import { ChannelOwner } from './channelOwner';
-import { SelectOption, FilePayload, Rect, SelectOptionOptions } from './types';
+import type { ChannelOwner } from './channelOwner';
+import type { SelectOption, FilePayload, Rect, SelectOptionOptions } from './types';
 import fs from 'fs';
 import * as mime from 'mime';
 import path from 'path';
-import { assert, isString, mkdirIfNeeded } from '../utils/utils';
-import * as api from '../../types/types';
-import * as structs from '../../types/structs';
-import { BrowserContext } from './browserContext';
+import { assert, isString, mkdirIfNeeded } from '../utils';
+import type * as api from '../../types/types';
+import type * as structs from '../../types/structs';
+import type { BrowserContext } from './browserContext';
 import { WritableStream } from './writableStream';
 import { pipeline } from 'stream';
 import { promisify } from 'util';
-import { debugLogger } from '../utils/debugLogger';
+import { debugLogger } from '../common/debugLogger';
 
 const pipelineAsync = promisify(pipeline);
 
@@ -200,6 +200,7 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> implements
         selector: locator._selector,
       }));
     }
+    copy.fonts = (options as any)._fonts;
     const result = await this._elementChannel.screenshot(copy);
     const buffer = Buffer.from(result.binary, 'base64');
     if (options.path) {

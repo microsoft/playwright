@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-import * as dom from './dom';
+import type * as dom from './dom';
 import * as utilityScriptSource from '../generated/utilityScriptSource';
 import { serializeAsCallArgument } from './common/utilityScriptSerializers';
 import { type UtilityScript } from './injected/utilityScript';
 import { SdkObject } from './instrumentation';
-import { ManualPromise } from '../utils/async';
+import { ManualPromise } from '../utils';
 
 export type ObjectId = string;
 export type RemoteObject = {

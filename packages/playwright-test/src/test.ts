@@ -15,10 +15,9 @@
  */
 
 import type { FixturePool } from './fixtures';
-import * as reporterTypes from '../types/testReporter';
+import type * as reporterTypes from '../types/testReporter';
 import type { TestTypeImpl } from './testType';
-import { Annotation, FixturesWithLocation, Location } from './types';
-import { FullProject } from './types';
+import type { Annotation, FixturesWithLocation, FullProject, FullProjectInternal, Location } from './types';
 
 class Base {
   title: string;
@@ -51,7 +50,7 @@ export class Suite extends Base implements reporterTypes.Suite {
   _annotations: Annotation[] = [];
   _modifiers: Modifier[] = [];
   _parallelMode: 'default' | 'serial' | 'parallel' = 'default';
-  _projectConfig: FullProject | undefined;
+  _projectConfig: FullProjectInternal | undefined;
   _loadError?: reporterTypes.TestError;
 
   _addTest(test: TestCase) {

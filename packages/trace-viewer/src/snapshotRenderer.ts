@@ -40,10 +40,16 @@ export class SnapshotRenderer {
   }
 
   render(): RenderedFrameSnapshot {
-    const visit = (n: NodeSnapshot, snapshotIndex: number): string => {
+    const visit = (n: NodeSnapshot, snapshotIndex: number, parentTag: string | undefined): string => {
       // Text node.
-      if (typeof n === 'string')
-        return escapeText(n);
+      if (typeof n === 'string') {
+        const text = escapeText(n);
+        // Best-effort Electron support: rewrite custom protocol in url() links in stylesheets.
+        // Old snapshotter was sending lower-case.
+        if (parentTag === 'STYLE' || parentTag === 'style')
+          return rewriteURLsInStyleSheetForCustomProtocol(text);
+        return text;
+      }
 
       if (!(n as any)._string) {
         if (Array.isArray(n[0])) {
@@ -53,7 +59,7 @@ export class SnapshotRenderer {
             const nodes = snapshotNodes(this._snapshots[referenceIndex]);
             const nodeIndex = n[0][1];
             if (nodeIndex >= 0 && nodeIndex < nodes.length)
-              (n as any)._string = visit(nodes[nodeIndex], referenceIndex);
+              (n as any)._string = visit(nodes[nodeIndex], referenceIndex, parentTag);
           }
         } else if (typeof n[0] === 'string') {
           // Element node.
@@ -62,12 +68,13 @@ export class SnapshotRenderer {
           // Never set relative URLs as <iframe src> - they start fetching frames immediately.
           const isFrame = n[0] === 'IFRAME' || n[0] === 'FRAME';
           for (const [attr, value] of Object.entries(n[1] || {})) {
-            const attrToSet = isFrame && attr.toLowerCase() === 'src' ? '__playwright_src__' : attr;
-            builder.push(' ', attrToSet, '="', escapeAttribute(value as string), '"');
+            const attrName = isFrame && attr.toLowerCase() === 'src' ? '__playwright_src__' : attr;
+            const attrValue = attr.toLowerCase() === 'href' || attr.toLowerCase() === 'src' ? rewriteURLForCustomProtocol(value) : value;
+            builder.push(' ', attrName, '="', escapeAttribute(attrValue as string), '"');
           }
           builder.push('>');
           for (let i = 2; i < n.length; i++)
-            builder.push(visit(n[i], snapshotIndex));
+            builder.push(visit(n[i], snapshotIndex, n[0]));
           if (!autoClosing.has(n[0]))
             builder.push('</', n[0], '>');
           (n as any)._string = builder.join('');
@@ -80,7 +87,7 @@ export class SnapshotRenderer {
     };
 
     const snapshot = this._snapshot;
-    let html = visit(snapshot.html, this._index);
+    let html = visit(snapshot.html, this._index, undefined);
     if (!html)
       return { html: '', pageId: snapshot.pageId, frameId: snapshot.frameId, index: this._index };
 
@@ -272,4 +279,53 @@ function snapshotScript() {
   }
 
   return `\n(${applyPlaywrightAttributes.toString()})()`;
+}
+
+
+/**
+ * Best-effort Electron support: rewrite custom protocol in DOM.
+ * vscode-file://vscode-app/ -> https://pw-vscode-file--vscode-app/
+ */
+const schemas = ['about:', 'blob:', 'data:', 'file:', 'ftp:', 'http:', 'https:', 'mailto:', 'sftp:', 'ws:', 'wss:' ];
+const kLegacyBlobPrefix = 'http://playwright.bloburl/#';
+
+export function rewriteURLForCustomProtocol(href: string): string {
+  // Legacy support, we used to prepend this to blobs, strip it away.
+  if (href.startsWith(kLegacyBlobPrefix))
+    href = href.substring(kLegacyBlobPrefix.length);
+
+  try {
+    const url = new URL(href);
+    // Sanitize URL.
+    if (url.protocol === 'javascript:')
+      return 'javascript:void(0)';
+
+    // Pass through if possible.
+    const isBlob = url.protocol === 'blob:';
+    if (!isBlob && schemas.includes(url.protocol))
+      return href;
+
+    // Rewrite blob and custom schemas.
+    const prefix = 'pw-' + url.protocol.slice(0, url.protocol.length - 1);
+    url.protocol = 'https:';
+    url.hostname = url.hostname ? `${prefix}--${url.hostname}` : prefix;
+    return url.toString();
+  } catch {
+    return href;
+  }
+}
+
+/**
+ * Best-effort Electron support: rewrite custom protocol in inline stylesheets.
+ * vscode-file://vscode-app/ -> https://pw-vscode-file--vscode-app/
+ */
+const urlInCSSRegex = /url\(['"]?([\w-]+:)\/\//ig;
+
+function rewriteURLsInStyleSheetForCustomProtocol(text: string): string {
+  return text.replace(urlInCSSRegex, (match: string, protocol: string) => {
+    const isBlob = protocol === 'blob:';
+    if (!isBlob && schemas.includes(protocol))
+      return match;
+    return match.replace(protocol + '//', `https://pw-${protocol.slice(0, -1)}--`);
+  });
 }

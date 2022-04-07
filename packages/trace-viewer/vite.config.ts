@@ -20,7 +20,7 @@ import * as path from 'path';
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  base: '/trace/',
+  base: '',
   plugins: [
     react()
   ],

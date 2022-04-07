@@ -1,0 +1,6 @@
+[*]
+../client/
+../common/
+../dispatchers/
+../server/
+../utils/

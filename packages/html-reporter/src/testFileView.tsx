@@ -18,7 +18,7 @@ import type { HTMLReport, TestFileSummary } from '@playwright-test/reporters/htm
 import * as React from 'react';
 import { msToString } from './uiUtils';
 import { Chip } from './chip';
-import { Filter } from './filter';
+import type { Filter } from './filter';
 import { Link, ProjectLink } from './links';
 import { statusIcon } from './statusIcon';
 import './testFileView.css';

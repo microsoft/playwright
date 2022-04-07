@@ -15,8 +15,8 @@
  */
 
 import fs from 'fs';
-import { assert } from '../utils/utils';
-import { ManualPromise } from '../utils/async';
+import { assert } from '../utils';
+import { ManualPromise } from '../utils';
 import { SdkObject } from './instrumentation';
 
 type SaveCallback = (localPath: string, error?: string) => Promise<void>;

@@ -19,24 +19,6 @@ import type { FullConfig, FullProject, TestStatus, TestError } from './test';
 export type { FullConfig, TestStatus, TestError } from './test';
 
 /**
- * Represents a location in the source code where [TestCase] or [Suite] is defined.
- */
-export interface Location {
-  /**
-   * Path to the source file.
-   */
-  file: string;
-  /**
-   * Line number in the source file.
-   */
-  line: number;
-  /**
-   * Column number in the source file.
-   */
-  column: number;
-}
-
-/**
  * `Suite` is a group of tests. All tests in Playwright Test form the following hierarchy:
  * - Root suite has a child suite for each [TestProject].
  *   - Project suite #1. Has a child suite for each test file in the project.
@@ -58,9 +40,37 @@ export interface Location {
  */
 export interface Suite {
   /**
-   * Parent suite or [void] for the root suite.
+   * Configuration of the project this suite belongs to, or [void] for the root suite.
+   */
+  project(): FullProject | undefined;
+  /**
+   * Returns the list of all test cases in this suite and its descendants, as opposite to
+   * [suite.tests](https://playwright.dev/docs/api/class-suite#suite-tests).
+   */
+  allTests(): Array<TestCase>;
+
+  /**
+   * Location in the source where the suite is defined. Missing for root and project suites.
+   */
+  location?: Location;
+
+  /**
+   * Parent suite, missing for the root suite.
    */
   parent?: Suite;
+
+  /**
+   * Child suites. See [Suite] for the hierarchy of suites.
+   */
+  suites: Array<Suite>;
+
+  /**
+   * Test cases in the suite. Note that only test cases defined directly in this suite are in the list. Any test cases
+   * defined in nested [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) groups are
+   * listed in the child [suite.suites](https://playwright.dev/docs/api/class-suite#suite-suites).
+   */
+  tests: Array<TestCase>;
+
   /**
    * Suite title.
    * - Empty for root suite.
@@ -70,34 +80,11 @@ export interface Suite {
    *   group suite.
    */
   title: string;
-  /**
-   * Location in the source where the suite is defined. Missing for root and project suites.
-   */
-  location?: Location;
-  /**
-   * Child suites. See [Suite] for the hierarchy of suites.
-   */
-  suites: Suite[];
-  /**
-   * Test cases in the suite. Note that only test cases defined directly in this suite are in the list. Any test cases
-   * defined in nested [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) groups are
-   * listed in the child [suite.suites](https://playwright.dev/docs/api/class-suite#suite-suites).
-   */
-  tests: TestCase[];
+
   /**
    * Returns a list of titles from the root down to this suite.
    */
-  titlePath(): string[];
-  /**
-   * Returns the list of all test cases in this suite and its descendants, as opposite to
-   * [suite.tests](https://playwright.dev/docs/api/class-suite#suite-tests).
-   */
-  allTests(): TestCase[];
-  /**
-   * Configuration of the project this suite belongs to, or [void] for the root suite.
-   */
-  project(): FullProject | undefined;
-}
+  titlePath(): Array<string>;}
 
 /**
  * `TestCase` corresponds to every [test.(call)(title, testFunction)](https://playwright.dev/docs/api/class-test#test-call)
@@ -107,43 +94,16 @@ export interface Suite {
  */
 export interface TestCase {
   /**
-   * Suite this test case belongs to.
-   */
-  parent: Suite;
-  /**
-   * Test title as passed to the [test.(call)(title, testFunction)](https://playwright.dev/docs/api/class-test#test-call)
-   * call.
-   */
-  title: string;
-  /**
-   * Location in the source where the test is defined.
-   */
-  location: Location;
-  /**
-   * Returns a list of titles from the root down to this test.
-   */
-  titlePath(): string[];
-  /**
    * Expected test status.
    * - Tests marked as [test.skip(title, testFunction)](https://playwright.dev/docs/api/class-test#test-skip-1) or
    *   [test.fixme(title, testFunction)](https://playwright.dev/docs/api/class-test#test-fixme-1) are expected to be
    *   `'skipped'`.
-   * - Tests marked as [test.fail([condition, description])](https://playwright.dev/docs/api/class-test#test-fail) are
-   *   expected to be `'failed'`.
+   * - Tests marked as [test.fail()](https://playwright.dev/docs/api/class-test#test-fail-1) are expected to be `'failed'`.
    * - Other tests are expected to be `'passed'`.
    *
    * See also [testResult.status](https://playwright.dev/docs/api/class-testresult#test-result-status) for the actual status.
    */
   expectedStatus: TestStatus;
-  /**
-   * The timeout given to the test. Affected by
-   * [testConfig.timeout](https://playwright.dev/docs/api/class-testconfig#test-config-timeout),
-   * [testProject.timeout](https://playwright.dev/docs/api/class-testproject#test-project-timeout),
-   * [test.setTimeout(timeout)](https://playwright.dev/docs/api/class-test#test-set-timeout),
-   * [test.slow([condition, description])](https://playwright.dev/docs/api/class-test#test-slow) and
-   * [testInfo.setTimeout(timeout)](https://playwright.dev/docs/api/class-testinfo#test-info-set-timeout).
-   */
-  timeout: number;
   /**
    * The list of annotations applicable to the current test. Includes annotations from the test, annotations from all
    * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) groups the test belongs to
@@ -154,138 +114,164 @@ export interface TestCase {
    *
    * Learn more about [test annotations](https://playwright.dev/docs/test-annotations).
    */
-  annotations: { type: string, description?: string }[];
+  annotations: Array<{
+    /**
+     * Annotation type, for example `'skip'` or `'fail'`.
+     */
+    type: string;
+
+    /**
+     * Optional description.
+     */
+    description?: string;
+  }>;
+
   /**
-   * The maximum number of retries given to this test in the configuration.
-   *
-   * Learn more about [test retries](https://playwright.dev/docs/test-retries#retries).
+   * Location in the source where the test is defined.
    */
-  retries: number;
+  location: Location;
+
   /**
-   * Contains the repeat index when running in "repeat each" mode. This mode is enabled by passing `--repeat-each` to the
-   * [command line](https://playwright.dev/docs/test-cli).
+   * Whether the test is considered running fine. Non-ok tests fail the test run with non-zero exit code.
    */
-  repeatEachIndex: number;
-  /**
-   * Results for each run of this test.
-   */
-  results: TestResult[];
+  ok(): boolean;
+
   /**
    * Testing outcome for this test. Note that outcome is not the same as
    * [testResult.status](https://playwright.dev/docs/api/class-testresult#test-result-status):
    * - Test that is expected to fail and actually fails is `'expected'`.
    * - Test that passes on a second retry is `'flaky'`.
    */
-  outcome(): 'skipped' | 'expected' | 'unexpected' | 'flaky';
+  outcome(): "skipped"|"expected"|"unexpected"|"flaky";
+
   /**
-   * Whether the test is considered running fine. Non-ok tests fail the test run with non-zero exit code.
+   * Suite this test case belongs to.
    */
-  ok(): boolean;
-}
+  parent: Suite;
+
+  /**
+   * Contains the repeat index when running in "repeat each" mode. This mode is enabled by passing `--repeat-each` to the
+   * [command line](https://playwright.dev/docs/test-cli).
+   */
+  repeatEachIndex: number;
+
+  /**
+   * Results for each run of this test.
+   */
+  results: Array<TestResult>;
+
+  /**
+   * The maximum number of retries given to this test in the configuration.
+   *
+   * Learn more about [test retries](https://playwright.dev/docs/test-retries#retries).
+   */
+  retries: number;
+
+  /**
+   * The timeout given to the test. Affected by
+   * [testConfig.timeout](https://playwright.dev/docs/api/class-testconfig#test-config-timeout),
+   * [testProject.timeout](https://playwright.dev/docs/api/class-testproject#test-project-timeout),
+   * [test.setTimeout(timeout)](https://playwright.dev/docs/api/class-test#test-set-timeout),
+   * [test.slow()](https://playwright.dev/docs/api/class-test#test-slow-1) and
+   * [testInfo.setTimeout(timeout)](https://playwright.dev/docs/api/class-testinfo#test-info-set-timeout).
+   */
+  timeout: number;
+
+  /**
+   * Test title as passed to the [test.(call)(title, testFunction)](https://playwright.dev/docs/api/class-test#test-call)
+   * call.
+   */
+  title: string;
+
+  /**
+   * Returns a list of titles from the root down to this test.
+   */
+  titlePath(): Array<string>;}
 
 /**
  * A result of a single [TestCase] run.
  */
 export interface TestResult {
   /**
-   * When test is retries multiple times, each retry attempt is given a sequential number.
-   *
-   * Learn more about [test retries](https://playwright.dev/docs/test-retries#retries).
-   */
-  retry: number;
-  /**
-   * Index of the worker where the test was run.
-   *
-   * Learn more about [parallelism and sharding](https://playwright.dev/docs/test-parallel) with Playwright Test.
-   */
-  workerIndex: number;
-  /**
-   * Start time of this particular test run.
-   */
-  startTime: Date;
-  /**
-   * Running time in milliseconds.
-   */
-  duration: number;
-  /**
    * The status of this test result. See also
    * [testCase.expectedStatus](https://playwright.dev/docs/api/class-testcase#test-case-expected-status).
    */
   status: TestStatus;
   /**
-   * First error thrown during test execution, if any. This is equal to the first element in
-   * [testResult.errors](https://playwright.dev/docs/api/class-testresult#test-result-errors).
-   */
-  error?: TestError;
-  /**
-   * Errors thrown during the test execution.
-   */
-  errors: TestError[];
-  /**
    * The list of files or buffers attached during the test execution through
    * [testInfo.attachments](https://playwright.dev/docs/api/class-testinfo#test-info-attachments).
    */
-  attachments: { name: string, path?: string, body?: Buffer, contentType: string }[];
-  /**
-   * Anything written to the standard output during the test run.
-   */
-  stdout: (string | Buffer)[];
-  /**
-   * Anything written to the standard error during the test run.
-   */
-  stderr: (string | Buffer)[];
-  /**
-   * List of steps inside this test run.
-   */
-  steps: TestStep[];
-}
+  attachments: Array<{
+    /**
+     * Attachment name.
+     */
+    name: string;
 
-/**
- * Represents a step in the [TestRun].
- */
-export interface TestStep {
-  /**
-   * User-friendly test step title.
-   */
-  title: string;
-  /**
-   * Returns a list of step titles from the root step down to this step.
-   */
-  titlePath(): string[];
-  /**
-   * Location in the source where the step is defined.
-   */
-  location?: Location;
-  /**
-   * Parent step, if any.
-   */
-  parent?: TestStep;
-  /**
-   * Step category to differentiate steps with different origin and verbosity. Built-in categories are:
-   * - `hook` for fixtures and hooks initialization and teardown
-   * - `expect` for expect calls
-   * - `pw:api` for Playwright API calls.
-   * - `test.step` for test.step API calls.
-   */
-  category: string,
-  /**
-   * Start time of this particular test step.
-   */
-  startTime: Date;
+    /**
+     * Content type of this attachment to properly present in the report, for example `'application/json'` or `'image/png'`.
+     */
+    contentType: string;
+
+    /**
+     * Optional path on the filesystem to the attached file.
+     */
+    path?: string;
+
+    /**
+     * Optional attachment body used instead of a file.
+     */
+    body?: Buffer;
+  }>;
+
   /**
    * Running time in milliseconds.
    */
   duration: number;
+
   /**
-   * An error thrown during the step execution, if any.
+   * First error thrown during test execution, if any. This is equal to the first element in
+   * [testResult.errors](https://playwright.dev/docs/api/class-testresult#test-result-errors).
    */
   error?: TestError;
+
   /**
-   * List of steps inside this step.
+   * Errors thrown during the test execution.
    */
-  steps: TestStep[];
-  data: { [key: string]: any };
-}
+  errors: Array<TestError>;
+
+  /**
+   * When test is retries multiple times, each retry attempt is given a sequential number.
+   *
+   * Learn more about [test retries](https://playwright.dev/docs/test-retries#retries).
+   */
+  retry: number;
+
+  /**
+   * Start time of this particular test run.
+   */
+  startTime: Date;
+
+  /**
+   * Anything written to the standard error during the test run.
+   */
+  stderr: Array<string|Buffer>;
+
+  /**
+   * Anything written to the standard output during the test run.
+   */
+  stdout: Array<string|Buffer>;
+
+  /**
+   * List of steps inside this test run.
+   */
+  steps: Array<TestStep>;
+
+  /**
+   * Index of the worker where the test was run.
+   *
+   * Learn more about [parallelism and sharding](https://playwright.dev/docs/test-parallel) with Playwright Test.
+   */
+  workerIndex: number;}
 
 /**
  * Result of the full test run.
@@ -442,5 +428,78 @@ export interface Reporter {
 export {};
 
 
+/**
+ * Represents a location in the source code where [TestCase] or [Suite] is defined.
+ */
+export interface Location {
+  /**
+   * Path to the source file.
+   */
+  file: string;
+
+  /**
+   * Line number in the source file.
+   */
+  line: number;
+
+  /**
+   * Column number in the source file.
+   */
+  column: number;
+}
+
+/**
+ * Represents a step in the [TestRun].
+ */
+export interface TestStep {
+  /**
+   * Step category to differentiate steps with different origin and verbosity. Built-in categories are:
+   * - `hook` for fixtures and hooks initialization and teardown
+   * - `expect` for expect calls
+   * - `pw:api` for Playwright API calls.
+   * - `test.step` for test.step API calls.
+   */
+  category: string;
+
+  /**
+   * Running time in milliseconds.
+   */
+  duration: number;
+
+  /**
+   * Optional location in the source where the step is defined.
+   */
+  location?: Location;
+
+  /**
+   * Error thrown during the step execution, if any.
+   */
+  error?: TestError;
+
+  /**
+   * Parent step, if any.
+   */
+  parent?: TestStep;
+
+  /**
+   * Start time of this particular test step.
+   */
+  startTime: Date;
+
+  /**
+   * List of steps inside this step.
+   */
+  steps: Array<TestStep>;
+
+  /**
+   * User-friendly test step title.
+   */
+  title: string;
+
+  /**
+   * Returns a list of step titles from the root step down to this step.
+   */
+  titlePath(): Array<string>;
+}
 
 

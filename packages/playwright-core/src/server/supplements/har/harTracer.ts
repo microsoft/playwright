@@ -15,15 +15,17 @@
  */
 
 import { BrowserContext } from '../../browserContext';
-import { APIRequestContext, APIRequestEvent, APIRequestFinishedEvent } from '../../fetch';
+import type { APIRequestEvent, APIRequestFinishedEvent } from '../../fetch';
+import { APIRequestContext } from '../../fetch';
 import { helper } from '../../helper';
 import * as network from '../../network';
 import { Page } from '../../page';
-import * as har from './har';
-import { calculateSha1, monotonicTime } from '../../../utils/utils';
-import { eventsHelper, RegisteredListener } from '../../../utils/eventsHelper';
+import type * as har from './har';
+import { calculateSha1, monotonicTime } from '../../../utils';
+import type { RegisteredListener } from '../../../utils';
+import { eventsHelper } from '../../../utils';
 import * as mime from 'mime';
-import { ManualPromise } from '../../../utils/async';
+import { ManualPromise } from '../../../utils';
 
 const FALLBACK_HTTP_VERSION = 'HTTP/1.1';
 

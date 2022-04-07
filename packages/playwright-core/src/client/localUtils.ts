@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import * as channels from '../protocol/channels';
+import type * as channels from '../protocol/channels';
 import { ChannelOwner } from './channelOwner';
 
 export class LocalUtils extends ChannelOwner<channels.LocalUtilsChannel> {

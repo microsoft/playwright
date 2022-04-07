@@ -15,29 +15,33 @@
  * limitations under the License.
  */
 
-import * as channels from '../protocol/channels';
-import { ConsoleMessage } from './console';
+import type * as channels from '../protocol/channels';
+import type { ConsoleMessage } from './console';
 import * as dom from './dom';
 import { helper } from './helper';
-import { eventsHelper, RegisteredListener } from '../utils/eventsHelper';
+import type { RegisteredListener } from '../utils';
+import { eventsHelper } from '../utils';
 import * as js from './javascript';
 import * as network from './network';
-import { Dialog } from './dialog';
+import type { Dialog } from './dialog';
 import { Page } from './page';
 import * as types from './types';
 import { BrowserContext } from './browserContext';
-import { Progress, ProgressController } from './progress';
-import { assert, constructURLBasedOnBaseURL, makeWaitForNextTask } from '../utils/utils';
-import { ManualPromise } from '../utils/async';
-import { debugLogger } from '../utils/debugLogger';
-import { CallMetadata, serverSideCallMetadata, SdkObject } from './instrumentation';
+import type { Progress } from './progress';
+import { ProgressController } from './progress';
+import { assert, constructURLBasedOnBaseURL, makeWaitForNextTask } from '../utils';
+import { ManualPromise } from '../utils';
+import { debugLogger } from '../common/debugLogger';
+import type { CallMetadata } from './instrumentation';
+import { serverSideCallMetadata, SdkObject } from './instrumentation';
 import { type InjectedScript } from './injected/injectedScript';
 import type { ElementStateWithoutStable, FrameExpectParams, InjectedScriptPoll, InjectedScriptProgress } from './injected/injectedScript';
 import { isSessionClosedError } from './protocolError';
-import { isInvalidSelectorError, splitSelectorByFrame, stringifySelector, ParsedSelector } from './common/selectorParser';
-import { SelectorInfo } from './selectors';
-import { ScreenshotOptions } from './screenshotter';
-import { InputFilesItems } from './dom';
+import type { ParsedSelector } from './common/selectorParser';
+import { isInvalidSelectorError, splitSelectorByFrame, stringifySelector } from './common/selectorParser';
+import type { SelectorInfo } from './selectors';
+import type { ScreenshotOptions } from './screenshotter';
+import type { InputFilesItems } from './dom';
 
 type ContextData = {
   contextPromise: ManualPromise<dom.FrameExecutionContext | Error>;

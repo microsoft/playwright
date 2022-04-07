@@ -15,10 +15,10 @@
  */
 
 import { evaluationScript } from './clientHelper';
-import * as channels from '../protocol/channels';
+import type * as channels from '../protocol/channels';
 import { ChannelOwner } from './channelOwner';
-import { SelectorEngine } from './types';
-import * as api from '../../types/types';
+import type { SelectorEngine } from './types';
+import type * as api from '../../types/types';
 
 export class Selectors implements api.Selectors {
   private _channels = new Set<SelectorsOwner>();

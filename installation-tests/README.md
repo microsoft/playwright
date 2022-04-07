@@ -6,6 +6,7 @@ Each test is set with a separate folder that contains all scripts from
 
 To create a new test, create a new file that starts with `test_*.sh`
 with the following header:
+
     ```bash
     #!/bin/bash
     source ./initialize_test.sh && initialize_test "$@" # initialize test

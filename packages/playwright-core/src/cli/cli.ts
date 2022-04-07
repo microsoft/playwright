@@ -21,21 +21,24 @@
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import { program, Command } from 'commander';
+import type { Command } from 'commander';
+import { program } from 'commander';
 import { runDriver, runServer, printApiJson, launchBrowserServer } from './driver';
 import { showTraceViewer } from '../server/trace/viewer/traceViewer';
 import * as playwright from '../..';
-import { BrowserContext } from '../client/browserContext';
-import { Browser } from '../client/browser';
-import { Page } from '../client/page';
-import { BrowserType } from '../client/browserType';
-import { BrowserContextOptions, LaunchOptions } from '../client/types';
+import type { BrowserContext } from '../client/browserContext';
+import type { Browser } from '../client/browser';
+import type { Page } from '../client/page';
+import type { BrowserType } from '../client/browserType';
+import type { BrowserContextOptions, LaunchOptions } from '../client/types';
 import { spawn } from 'child_process';
-import { registry, Executable } from '../utils/registry';
-import { spawnAsync, getPlaywrightVersion, wrapInASCIIBox, isLikelyNpxGlobal } from '../utils/utils';
-import { writeDockerVersion } from '../utils/dependencies';
+import { getPlaywrightVersion } from '../common/userAgent';
+import { spawnAsync, wrapInASCIIBox, isLikelyNpxGlobal } from '../utils';
 import { launchGridAgent } from '../grid/gridAgent';
-import { GridServer, GridFactory } from '../grid/gridServer';
+import type { GridFactory } from '../grid/gridServer';
+import { GridServer } from '../grid/gridServer';
+import type { Executable } from '../server';
+import { registry, writeDockerVersion } from '../server';
 
 const packageJSON = require('../../package.json');
 

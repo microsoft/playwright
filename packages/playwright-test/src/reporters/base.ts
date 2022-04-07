@@ -20,8 +20,8 @@ import fs from 'fs';
 import milliseconds from 'ms';
 import path from 'path';
 import StackUtils from 'stack-utils';
-import { FullConfig, TestCase, Suite, TestResult, TestError, Reporter, FullResult, TestStep, Location } from '../../types/testReporter';
-import { FullConfigInternal } from '../types';
+import type { FullConfig, TestCase, Suite, TestResult, TestError, Reporter, FullResult, TestStep, Location } from '../../types/testReporter';
+import type { FullConfigInternal } from '../types';
 
 const stackUtils = new StackUtils();
 

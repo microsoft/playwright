@@ -16,7 +16,7 @@
 
 import { GridClient } from '../../packages/playwright-core/lib/grid/gridClient';
 import { start } from '../../packages/playwright-core/lib/outofprocess';
-import { Playwright } from '../../packages/playwright-core/lib/client/playwright';
+import type { Playwright } from '../../packages/playwright-core/lib/client/playwright';
 
 export type TestModeName = 'default' | 'driver' | 'service' | 'service2';
 

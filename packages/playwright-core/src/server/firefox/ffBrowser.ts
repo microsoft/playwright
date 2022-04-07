@@ -15,17 +15,18 @@
  * limitations under the License.
  */
 
-import { kBrowserClosedError } from '../../utils/errors';
-import { assert } from '../../utils/utils';
-import { Browser, BrowserOptions } from '../browser';
+import { kBrowserClosedError } from '../../common/errors';
+import { assert } from '../../utils';
+import type { BrowserOptions } from '../browser';
+import { Browser } from '../browser';
 import { assertBrowserContextIsNotOwned, BrowserContext, verifyGeolocation } from '../browserContext';
 import * as network from '../network';
-import { Page, PageBinding, PageDelegate } from '../page';
-import { ConnectionTransport } from '../transport';
-import * as types from '../types';
+import type { Page, PageBinding, PageDelegate } from '../page';
+import type { ConnectionTransport } from '../transport';
+import type * as types from '../types';
 import { ConnectionEvents, FFConnection } from './ffConnection';
 import { FFPage } from './ffPage';
-import { Protocol } from './protocol';
+import type { Protocol } from './protocol';
 
 export class FFBrowser extends Browser {
   _connection: FFConnection;

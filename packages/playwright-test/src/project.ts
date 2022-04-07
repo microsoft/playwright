@@ -14,19 +14,20 @@
  * limitations under the License.
  */
 
-import type { FullProject, Fixtures, FixturesWithLocation } from './types';
-import { Suite, TestCase } from './test';
+import type { Fixtures, FixturesWithLocation, FullProjectInternal } from './types';
+import type { TestCase } from './test';
+import { Suite } from './test';
 import { FixturePool, isFixtureOption } from './fixtures';
-import { TestTypeImpl } from './testType';
-import { calculateSha1 } from 'playwright-core/lib/utils/utils';
+import type { TestTypeImpl } from './testType';
+import { calculateSha1 } from 'playwright-core/lib/utils';
 
 export class ProjectImpl {
-  config: FullProject;
+  config: FullProjectInternal;
   private index: number;
   private testTypePools = new Map<TestTypeImpl, FixturePool>();
   private testPools = new Map<TestCase, FixturePool>();
 
-  constructor(project: FullProject, index: number) {
+  constructor(project: FullProjectInternal, index: number) {
     this.config = project;
     this.index = index;
   }

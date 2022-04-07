@@ -16,21 +16,24 @@
  */
 
 import path from 'path';
-import { eventsHelper, RegisteredListener } from '../../utils/eventsHelper';
-import { registry } from '../../utils/registry';
+import type { RegisteredListener } from '../../utils';
+import { eventsHelper } from '../../utils';
+import { registry } from '../registry';
 import { rewriteErrorMessage } from '../../utils/stackTrace';
-import { assert, createGuid, headersArrayToObject } from '../../utils/utils';
+import { assert, createGuid, headersArrayToObject } from '../../utils';
 import * as dialog from '../dialog';
 import * as dom from '../dom';
-import * as frames from '../frames';
+import type * as frames from '../frames';
 import { helper } from '../helper';
 import * as network from '../network';
-import { Page, PageBinding, PageDelegate, Worker } from '../page';
-import { Progress } from '../progress';
-import * as types from '../types';
+import type { PageBinding, PageDelegate } from '../page';
+import { Page, Worker } from '../page';
+import type { Progress } from '../progress';
+import type * as types from '../types';
 import { getAccessibilityTree } from './crAccessibility';
 import { CRBrowserContext } from './crBrowser';
-import { CRConnection, CRSession, CRSessionEvents } from './crConnection';
+import type { CRSession } from './crConnection';
+import { CRConnection, CRSessionEvents } from './crConnection';
 import { CRCoverage } from './crCoverage';
 import { DragManager } from './crDragDrop';
 import { CRExecutionContext } from './crExecutionContext';
@@ -39,7 +42,7 @@ import { CRNetworkManager } from './crNetworkManager';
 import { CRPDF } from './crPdf';
 import { exceptionToError, releaseObject, toConsoleMessageLocation } from './crProtocolHelper';
 import { platformToFontFamilies } from './defaultFontFamilies';
-import { Protocol } from './protocol';
+import type { Protocol } from './protocol';
 import { VideoRecorder } from './videoRecorder';
 
 

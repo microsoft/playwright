@@ -17,7 +17,7 @@
 import childProcess from 'child_process';
 import http from 'http';
 import path from 'path';
-import net from 'net';
+import type net from 'net';
 
 import { contextTest, expect } from '../config/browserTest';
 import type { Page, Browser } from 'playwright-core';

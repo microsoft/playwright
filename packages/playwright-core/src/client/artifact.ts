@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-import * as channels from '../protocol/channels';
+import type * as channels from '../protocol/channels';
 import * as fs from 'fs';
 import { Stream } from './stream';
-import { mkdirIfNeeded } from '../utils/utils';
+import { mkdirIfNeeded } from '../utils';
 import { ChannelOwner } from './channelOwner';
-import { Readable } from 'stream';
+import type { Readable } from 'stream';
 
 export class Artifact extends ChannelOwner<channels.ArtifactChannel> {
   static from(channel: channels.ArtifactChannel): Artifact {

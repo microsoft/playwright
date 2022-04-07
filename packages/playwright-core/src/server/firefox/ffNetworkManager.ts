@@ -15,14 +15,15 @@
  * limitations under the License.
  */
 
-import { eventsHelper, RegisteredListener } from '../../utils/eventsHelper';
-import { FFSession } from './ffConnection';
-import { Page } from '../page';
+import type { RegisteredListener } from '../../utils';
+import { eventsHelper } from '../../utils';
+import type { FFSession } from './ffConnection';
+import type { Page } from '../page';
 import * as network from '../network';
-import * as frames from '../frames';
-import * as types from '../types';
-import { Protocol } from './protocol';
-import { HeadersArray } from '../../server/types';
+import type * as frames from '../frames';
+import type * as types from '../types';
+import type { Protocol } from './protocol';
+import type { HeadersArray } from '../../server/types';
 
 export class FFNetworkManager {
   private _session: FFSession;
