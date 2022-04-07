@@ -17,3 +17,5 @@
 export { ManualPromise } from './manualPromise';
 export { MultiMap } from './multimap';
 export { raceAgainstTimeout, TimeoutRunner, TimeoutRunnerError } from './timeoutRunner';
+export type { HTTPRequestParams } from './netUtils';
+export { httpRequest, fetchData } from './netUtils';
