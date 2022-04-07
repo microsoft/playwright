@@ -74,6 +74,7 @@ Arguments [test-filter...]:
 
 Examples:
   $ npx playwright test my.spec.ts
+  $ npx playwright test some.spec.ts:42
   $ npx playwright test --headed
   $ npx playwright test --browser=webkit`);
 }
@@ -156,10 +157,11 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
     throw new Error(`Cannot use --browser option when configuration file defines projects. Specify browserName in the projects instead.`);
 
   const filePatternFilter: FilePatternFilter[] = args.map(arg => {
-    const match = /^(.*):(\d+)$/.exec(arg);
+    const match = /^(.*?):(\d+):?(\d+)?$/.exec(arg);
     return {
       re: forceRegExp(match ? match[1] : arg),
       line: match ? parseInt(match[2], 10) : null,
+      column: match?.[3] ? parseInt(match[3], 10) : null,
     };
   });
 
