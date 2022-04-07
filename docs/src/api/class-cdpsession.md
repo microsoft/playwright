@@ -56,9 +56,9 @@ send messages.
 ### param: CDPSession.send.method
 - `method` <[string]>
 
-protocol method name
+Protocol method name.
 
 ### param: CDPSession.send.params
-- `params` <[Object]>
+- `params` ?<[Object]>
 
-Optional method parameters
+Optional method parameters.

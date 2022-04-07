@@ -1384,7 +1384,7 @@ export interface TestInfo {
   duration: number;
 
   /**
-   * Optional first error thrown during test execution, if any. This is equal to the first element in
+   * First error thrown during test execution, if any. This is equal to the first element in
    * [testInfo.errors](https://playwright.dev/docs/api/class-testinfo#test-info-errors).
    */
   error?: TestError;
@@ -1395,7 +1395,7 @@ export interface TestInfo {
   errors: Array<TestError>;
 
   /**
-   * Marks the currently running test as "should fail". Playwright Test runs theis tests and ensures that it is actually
+   * Marks the currently running test as "should fail". Playwright Test runs this test and ensures that it is actually
    * failing. This is useful for documentation purposes to acknowledge that some functionality is broken until it is fixed.
    * This is similar to [test.fail()](https://playwright.dev/docs/api/class-test#test-fail-1).
    */
@@ -2832,17 +2832,17 @@ export {};
  */
 export interface TestError {
   /**
-   * Optional error message. Set when [Error] (or its subclass) has been thrown.
+   * Error message. Set when [Error] (or its subclass) has been thrown.
    */
   message?: string;
 
   /**
-   * Optional error stack. Set when [Error] (or its subclass) has been thrown.
+   * Error stack. Set when [Error] (or its subclass) has been thrown.
    */
   stack?: string;
 
   /**
-   * Optional value that was thrown. Set when anything except the [Error] (or its subclass) has been thrown.
+   * The value that was thrown. Set when anything except the [Error] (or its subclass) has been thrown.
    */
   value?: string;
 }

@@ -113,7 +113,7 @@ When listener is present, it **must** either [`method: Dialog.accept`] or [`meth
 Returns when the dialog has been accepted.
 
 ### param: Dialog.accept.promptText
-- `promptText` <[string]>
+- `promptText` ?<[string]>
 
 A text to enter in prompt. Does not cause any effects if the dialog's `type` is not prompt. Optional.
 

@@ -25,7 +25,7 @@ test('basic test', async ({ page }, testInfo) => {
 ## property: TestInfo.annotations
 - type: <[Array]<[Object]>>
   - `type` <[string]> Annotation type, for example `'skip'` or `'fail'`.
-  - `description` <[string]> Optional description.
+  - `description` ?<[string]> Optional description.
 
 The list of annotations applicable to the current test. Includes annotations from the test, annotations from all [`method: Test.describe`] groups the test belongs to and file-level annotations for the test file.
 
@@ -35,8 +35,8 @@ Learn more about [test annotations](../test-annotations.md).
 - type: <[Array]<[Object]>>
   - `name` <[string]> Attachment name.
   - `contentType` <[string]> Content type of this attachment to properly present in the report, for example `'application/json'` or `'image/png'`.
-  - `path` <[string]> Optional path on the filesystem to the attached file.
-  - `body` <[Buffer]> Optional attachment body used instead of a file.
+  - `path` ?<[string]> Optional path on the filesystem to the attached file.
+  - `body` ?<[Buffer]> Optional attachment body used instead of a file.
 
 The list of files or buffers attached to the current test. Some reporters show test attachments.
 
@@ -128,9 +128,9 @@ The number of milliseconds the test took to finish. Always zero before the test 
 
 
 ## property: TestInfo.error
-- type: <[TestError]>
+- type: ?<[TestError]>
 
-Optional first error thrown during test execution, if any. This is equal to the first
+First error thrown during test execution, if any. This is equal to the first
 element in [`property: TestInfo.errors`].
 
 ## property: TestInfo.errors
@@ -168,7 +168,7 @@ test.afterEach(async ({}, testInfo) => {
 
 ## method: TestInfo.fail#1
 
-Marks the currently running test as "should fail". Playwright Test runs theis tests and ensures that it is actually failing. This is useful for documentation purposes to acknowledge that some functionality is broken until it is fixed. This is similar to [`method: Test.fail#1`].
+Marks the currently running test as "should fail". Playwright Test runs this test and ensures that it is actually failing. This is useful for documentation purposes to acknowledge that some functionality is broken until it is fixed. This is similar to [`method: Test.fail#1`].
 
 ## method: TestInfo.fail#2
 
@@ -180,7 +180,7 @@ Conditionally mark the currently running test as "should fail" with an optional 
 Test is marked as "should fail" when the condition is `true`.
 
 ### param: TestInfo.fail#2.description
-- `description` <[string]>
+- `description` ?<[string]>
 
 Optional description that will be reflected in a test report.
 
@@ -205,7 +205,7 @@ Conditionally mark the currently running test as "fixme" with an optional descri
 Test is marked as "fixme" when the condition is `true`.
 
 ### param: TestInfo.fixme#2.description
-- `description` <[string]>
+- `description` ?<[string]>
 
 Optional description that will be reflected in a test report.
 
@@ -363,7 +363,7 @@ Conditionally skips the currently running test with an optional description. Thi
 A skip condition. Test is skipped when the condition is `true`.
 
 ### param: TestInfo.skip#2.description
-- `description` <[string]>
+- `description` ?<[string]>
 
 Optional description that will be reflected in a test report.
 
@@ -382,7 +382,7 @@ Conditionally mark the currently running test as "slow" with an optional descrip
 Test is marked as "slow" when the condition is `true`.
 
 ### param: TestInfo.slow#2.description
-- `description` <[string]>
+- `description` ?<[string]>
 
 Optional description that will be reflected in a test report.
 

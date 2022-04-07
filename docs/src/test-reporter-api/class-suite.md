@@ -25,17 +25,17 @@ Reporter is given a root suite in the [`method: Reporter.onBegin`] method.
 Returns the list of all test cases in this suite and its descendants, as opposite to [`property: Suite.tests`].
 
 ## property: Suite.location
-- type: <[Location]>
+- type: ?<[Location]>
 
-Optional location in the source where the suite is defined. Missing for root and project suites.
+Location in the source where the suite is defined. Missing for root and project suites.
 
 ## property: Suite.parent
-- type: <[Suite]>
+- type: ?<[Suite]>
 
-Optional parent suite, missing for the root suite.
+Parent suite, missing for the root suite.
 
 ## method: Suite.project
-- returns: <[void]|[TestProject]>
+- returns: ?<[TestProject]>
 
 Configuration of the project this suite belongs to, or [void] for the root suite.
 

@@ -330,7 +330,7 @@ await elementHandle.DispatchEventAsync("dragstart", new Dictionary<string, objec
 DOM event type: `"click"`, `"dragstart"`, etc.
 
 ### param: ElementHandle.dispatchEvent.eventInit
-- `eventInit` <[EvaluationArgument]>
+- `eventInit` ?<[EvaluationArgument]>
 
 Optional event-specific initialization properties.
 
@@ -386,7 +386,7 @@ Assert.AreEqual("10", await tweetHandle.EvalOnSelectorAsync(".retweets", "node =
 ### param: ElementHandle.evalOnSelector.expression = %%-evaluate-expression-%%
 
 ### param: ElementHandle.evalOnSelector.arg
-- `arg` <[EvaluationArgument]>
+- `arg` ?<[EvaluationArgument]>
 
 Optional argument to pass to [`param: expression`].
 
@@ -444,7 +444,7 @@ Assert.AreEqual(new [] { "Hello!", "Hi!" }, await feedHandle.EvalOnSelectorAllAs
 ### param: ElementHandle.evalOnSelectorAll.expression = %%-evaluate-expression-%%
 
 ### param: ElementHandle.evalOnSelectorAll.arg
-- `arg` <[EvaluationArgument]>
+- `arg` ?<[EvaluationArgument]>
 
 Optional argument to pass to [`param: expression`].
 

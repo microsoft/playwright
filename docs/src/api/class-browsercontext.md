@@ -218,13 +218,13 @@ await context.AddCookiesAsync(new[] { cookie1, cookie2 });
 - `cookies` <[Array]<[Object]>>
   - `name` <[string]>
   - `value` <[string]>
-  - `url` <[string]> either url or domain / path are required. Optional.
-  - `domain` <[string]> either url or domain / path are required Optional.
-  - `path` <[string]> either url or domain / path are required Optional.
-  - `expires` <[float]> Unix time in seconds. Optional.
-  - `httpOnly` <[boolean]> Optional.
-  - `secure` <[boolean]> Optional.
-  - `sameSite` <[SameSiteAttribute]<"Strict"|"Lax"|"None">> Optional.
+  - `url` ?<[string]> either url or domain / path are required. Optional.
+  - `domain` ?<[string]> either url or domain / path are required Optional.
+  - `path` ?<[string]> either url or domain / path are required Optional.
+  - `expires` ?<[float]> Unix time in seconds. Optional.
+  - `httpOnly` ?<[boolean]> Optional.
+  - `secure` ?<[boolean]> Optional.
+  - `sameSite` ?<[SameSiteAttribute]<"Strict"|"Lax"|"None">> Optional.
 
 ## async method: BrowserContext.addInitScript
 
@@ -277,9 +277,9 @@ The order of evaluation of multiple scripts installed via [`method: BrowserConte
 ### param: BrowserContext.addInitScript.script
 * langs: js
 - `script` <[function]|[string]|[Object]>
-  - `path` <[path]> Path to the JavaScript file. If `path` is a relative path, then it is resolved relative to the
+  - `path` ?<[path]> Path to the JavaScript file. If `path` is a relative path, then it is resolved relative to the
     current working directory. Optional.
-  - `content` <[string]> Raw script content. Optional.
+  - `content` ?<[string]> Raw script content. Optional.
 
 Script to be evaluated in all pages in the browser context.
 
@@ -291,7 +291,7 @@ Script to be evaluated in all pages in the browser context.
 
 ### param: BrowserContext.addInitScript.arg
 * langs: js
-- `arg` <[Serializable]>
+- `arg` ?<[Serializable]>
 
 Optional argument to pass to [`param: script`] (only supported when passing a function).
 
@@ -378,7 +378,7 @@ If no URLs are specified, this method returns all cookies. If URLs are specified
 are returned.
 
 ### param: BrowserContext.cookies.urls
-- `urls` <[string]|[Array]<[string]>>
+- `urls` ?<[string]|[Array]<[string]>>
 
 Optional list of URLs.
 
@@ -1127,7 +1127,7 @@ its geolocation.
 - `geolocation` <[null]|[Object]>
   - `latitude` <[float]> Latitude between -90 and 90.
   - `longitude` <[float]> Longitude between -180 and 180.
-  - `accuracy` <[float]> Non-negative accuracy value. Defaults to `0`.
+  - `accuracy` ?<[float]> Non-negative accuracy value. Defaults to `0`.
 
 ## async method: BrowserContext.setHTTPCredentials
 * langs: js
@@ -1187,13 +1187,13 @@ A glob pattern, regex pattern or predicate receiving [URL] used to register a ro
 
 ### param: BrowserContext.unroute.handler
 * langs: js, python
-- `handler` <[function]\([Route], [Request]\)>
+- `handler` ?<[function]\([Route], [Request]\)>
 
 Optional handler function used to register a routing with [`method: BrowserContext.route`].
 
 ### param: BrowserContext.unroute.handler
 * langs: csharp, java
-- `handler` <[function]\([Route]\)>
+- `handler` ?<[function]\([Route]\)>
 
 Optional handler function used to register a routing with [`method: BrowserContext.route`].
 
@@ -1242,9 +1242,9 @@ Event name, same one would pass into `browserContext.on(event)`.
 
 ### param: BrowserContext.waitForEvent.optionsOrPredicate
 * langs: js
-- `optionsOrPredicate` <[function]|[Object]>
+- `optionsOrPredicate` ?<[function]|[Object]>
   - `predicate` <[function]> receives the event data and resolves to truthy value when the waiting should resolve.
-  - `timeout` <[float]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to
+  - `timeout` ?<[float]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to
     disable timeout. The default value can be changed by using the [`method: BrowserContext.setDefaultTimeout`].
 
 Either a predicate that receives an event or an options object. Optional.

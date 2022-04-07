@@ -680,7 +680,7 @@ test('fail in WebKit', async ({ page, browserName }) => {
 Test is marked as "should fail" when the condition is `true`.
 
 ### param: Test.fail#2.description
-- `description` <[string]>
+- `description` ?<[string]>
 
 Optional description that will be reflected in a test report.
 
@@ -721,7 +721,7 @@ test('fail in WebKit 2', async ({ page }) => {
 A function that returns whether to mark as "should fail", based on test fixtures. Test or tests are marked as "should fail" when the return value is `true`.
 
 ### param: Test.fail#3.description
-- `description` <[string]>
+- `description` ?<[string]>
 
 Optional description that will be reflected in a test report.
 
@@ -838,7 +838,7 @@ test('broken in WebKit', async ({ page, browserName }) => {
 Test is marked as "fixme" when the condition is `true`.
 
 ### param: Test.fixme#3.description
-- `description` <[string]>
+- `description` ?<[string]>
 
 Optional description that will be reflected in a test report.
 
@@ -882,7 +882,7 @@ test('broken in WebKit 2', async ({ page }) => {
 A function that returns whether to mark as "fixme", based on test fixtures. Test or tests are marked as "fixme" when the return value is `true`.
 
 ### param: Test.fixme#4.description
-- `description` <[string]>
+- `description` ?<[string]>
 
 Optional description that will be reflected in a test report.
 
@@ -1103,7 +1103,7 @@ test.beforeEach(async ({ page }) => {
 A skip condition. Test is skipped when the condition is `true`.
 
 ### param: Test.skip#3.description
-- `description` <[void]|[string]>
+- `description` ?<[void]|[string]>
 
 Optional description that will be reflected in a test report.
 
@@ -1147,7 +1147,7 @@ test('skip in WebKit 2', async ({ page }) => {
 A function that returns whether to skip, based on test fixtures. Test or tests are skipped when the return value is `true`.
 
 ### param: Test.skip#4.description
-- `description` <[string]>
+- `description` ?<[string]>
 
 Optional description that will be reflected in a test report.
 
@@ -1203,7 +1203,7 @@ test('slow in WebKit', async ({ page, browserName }) => {
 Test is marked as "slow" when the condition is `true`.
 
 ### param: Test.slow#2.description
-- `description` <[string]>
+- `description` ?<[string]>
 
 Optional description that will be reflected in a test report.
 
@@ -1244,7 +1244,7 @@ test('fail in WebKit 2', async ({ page }) => {
 A function that returns whether to mark as "slow", based on test fixtures. Test or tests are marked as "slow" when the return value is `true`.
 
 ### param: Test.slow#3.description
-- `description` <[string]>
+- `description` ?<[string]>
 
 Optional description that will be reflected in a test report.
 

@@ -344,9 +344,9 @@ Waits for event to fire and passes its value into the predicate function. Return
 ### param: AndroidDevice.waitForEvent.event = %%-wait-for-event-event-%%
 
 ### param: AndroidDevice.waitForEvent.optionsOrPredicate
-- `optionsOrPredicate` <[function]|[Object]>
+- `optionsOrPredicate` ?<[function]|[Object]>
   - `predicate` <[function]> receives the event data and resolves to truthy value when the waiting should resolve.
-  - `timeout` <[float]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to
+  - `timeout` ?<[float]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to
     disable timeout. The default value can be changed by using the [`method: AndroidDevice.setDefaultTimeout`].
 
 Either a predicate that receives an event or an options object. Optional.

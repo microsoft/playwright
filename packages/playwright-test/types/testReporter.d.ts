@@ -50,12 +50,12 @@ export interface Suite {
   allTests(): Array<TestCase>;
 
   /**
-   * Optional location in the source where the suite is defined. Missing for root and project suites.
+   * Location in the source where the suite is defined. Missing for root and project suites.
    */
   location?: Location;
 
   /**
-   * Optional parent suite, missing for the root suite.
+   * Parent suite, missing for the root suite.
    */
   parent?: Suite;
 
@@ -229,7 +229,7 @@ export interface TestResult {
   duration: number;
 
   /**
-   * Optional first error thrown during test execution, if any. This is equal to the first element in
+   * First error thrown during test execution, if any. This is equal to the first element in
    * [testResult.errors](https://playwright.dev/docs/api/class-testresult#test-result-errors).
    */
   error?: TestError;
@@ -472,12 +472,12 @@ export interface TestStep {
   location?: Location;
 
   /**
-   * Optional error thrown during the step execution, if any.
+   * Error thrown during the step execution, if any.
    */
   error?: TestError;
 
   /**
-   * Optional parent step, if any.
+   * Parent step, if any.
    */
   parent?: TestStep;
 

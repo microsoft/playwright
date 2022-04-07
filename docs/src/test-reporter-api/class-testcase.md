@@ -6,7 +6,7 @@
 ## property: TestCase.annotations
 - type: <[Array]<[Object]>>
   - `type` <[string]> Annotation type, for example `'skip'` or `'fail'`.
-  - `description` <[string]> Optional description.
+  - `description` ?<[string]> Optional description.
 
 The list of annotations applicable to the current test. Includes annotations from the test, annotations from all [`method: Test.describe`] groups the test belongs to and file-level annotations for the test file.
 

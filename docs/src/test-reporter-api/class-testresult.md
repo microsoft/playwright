@@ -7,8 +7,8 @@ A result of a single [TestCase] run.
 - type: <[Array]<[Object]>>
   - `name` <[string]> Attachment name.
   - `contentType` <[string]> Content type of this attachment to properly present in the report, for example `'application/json'` or `'image/png'`.
-  - `path` <[string]> Optional path on the filesystem to the attached file.
-  - `body` <[Buffer]> Optional attachment body used instead of a file.
+  - `path` ?<[string]> Optional path on the filesystem to the attached file.
+  - `body` ?<[Buffer]> Optional attachment body used instead of a file.
 
 The list of files or buffers attached during the test execution through [`property: TestInfo.attachments`].
 
@@ -18,9 +18,9 @@ The list of files or buffers attached during the test execution through [`proper
 Running time in milliseconds.
 
 ## property: TestResult.error
-- type: <[TestError]>
+- type: ?<[TestError]>
 
-Optional first error thrown during test execution, if any. This is equal to the first
+First error thrown during test execution, if any. This is equal to the first
 element in [`property: TestResult.errors`].
 
 ## property: TestResult.errors
