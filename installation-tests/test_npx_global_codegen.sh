@@ -3,7 +3,7 @@ source ./initialize_test.sh && initialize_test "$@"
 
 echo "Running codegen command without installing"
 OUTPUT="$(npx_playwright codegen || true)"
-local-playwright-registry assert-local-pkg playwright
+local-playwright-registry assert-served-from-local-tgz playwright
 if [[ "${OUTPUT}" != *'Please run the following command to download new browsers'* ]]; then
   echo "ERROR: should instruct user to download browsers"
   exit 1

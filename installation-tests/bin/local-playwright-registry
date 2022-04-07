@@ -37,7 +37,6 @@ const ACCESS_LOGS = path.join(WORK_DIR, 'access.log');
 // REGISTRY_URL_FILE is the URL to us to connect to the registy. It is allocated dynamically and shows up on disk only once the packages are actually available for download.
 const REGISTRY_URL_FILE = path.join(WORK_DIR, 'registry.url.txt');
 
-
 const kPublicNpmRegistry = 'https://registry.npmjs.org';
 const kContentTypeAbbreviatedMetadata = 'application/vnd.npm.install-v1+json';
 
@@ -132,6 +131,12 @@ class Registry {
     await new Promise(res => {
       this._server.listen(undefined, 'localhost', () => {
         this._address = new URL(`http://localhost:${this._server.address().port}`);
+        // We now have an address to make tarball paths fully qualified.
+        for (const [,[metadata]] of this._packageMeta.entries()) {
+          for (const [,version] of Object.entries(metadata.versions)) {
+            version.tarball = this._address + version.tarball;
+          }
+        }
         res();
       });
       process.on('exit', () => {
@@ -155,8 +160,6 @@ class Registry {
       throw new Error(`Package name mismatch: ${pkg} is called ${packageJson.name} in its package.json`);
 
     const shasum = crypto.createHash('sha1').update(await fs.promises.readFile(tarPath)).digest().toString('hex');
-    const tarballUrl = new URL(this._address);
-    tarballUrl.pathname = `/${encodeURIComponent(pkg)}/-/${shasum}.tgz`;
     const metadata = {
       'dist-tags': {
         latest: packageJson.version,
@@ -177,7 +180,8 @@ class Registry {
           bin: packageJson.bin || {},
           directories: packageJson.directories || [],
           dist: {
-            tarball: tarballUrl.toString(),
+            // This needs to be updated later with a full address.
+            tarball: `/${encodeURIComponent(pkg)}/-/${shasum}.tgz`,
             shasum,
           },
           engines: packageJson.engines || {},
@@ -273,7 +277,7 @@ Commands:
   'start': Registry.registryFactory,
   'kill': Registry.kill,
   'wait-for-ready': Registry.waitForReady,
-  'assert-local-pkg': ([pkg]) => Registry.assertLocalPkg(pkg),
+  'assert-served-from-local-tgz': ([pkg]) => Registry.assertLocalPkg(pkg),
 };
 
 (async () => {

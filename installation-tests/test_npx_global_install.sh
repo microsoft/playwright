@@ -3,7 +3,7 @@ source ./initialize_test.sh && initialize_test "$@"
 
 echo "Running install explcitly"
 OUTPUT="$(npx_playwright install || true)"
-local-playwright-registry assert-local-pkg playwright
+local-playwright-registry assert-served-from-local-tgz playwright
 if [[ "${OUTPUT}" == *'Please run the following command to download new browsers'* ]]; then
   echo "ERROR: should not tell the user to run install"
   exit 1

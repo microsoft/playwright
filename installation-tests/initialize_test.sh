@@ -58,6 +58,7 @@ function setup_env_variables() {
   export PLAYWRIGHT_FIREFOX_TGZ="${PWD}/output/playwright-firefox.tgz"
   export PLAYWRIGHT_TEST_TGZ="${PWD}/output/playwright-test.tgz"
   PLAYWRIGHT_CHECKOUT="${PWD}/.."
+  export PLAYWRIGHT_VERSION_UNDER_TEST="$(node ${PLAYWRIGHT_CHECKOUT}/utils/workspace.js --get-version)"
 }
 
 function clean_test_root() {
