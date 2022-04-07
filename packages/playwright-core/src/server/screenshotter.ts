@@ -148,7 +148,7 @@ export class Screenshotter {
     await Promise.all(this._page.frames().map(async frame => {
       await frame.nonStallingEvaluateInExistingContext('(' + (async function(hideCaret: boolean, disableAnimations: boolean, waitForFonts: boolean) {
         const styleTag = document.createElement('style');
-        if (hideCaret) {
+        if (hideCaret && document.contentType !== 'application/xml') {
           styleTag.textContent = `
             *:not(#playwright-aaaaaaaaaa.playwright-bbbbbbbbbbb.playwright-cccccccccc.playwright-dddddddddd.playwright-eeeeeeeee) {
               caret-color: transparent !important;
