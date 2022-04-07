@@ -301,6 +301,56 @@ test('test', async ({ page }) => {
 });
 ```
 
+You can make arbitary data available in your tests from your global setup file by attaching it to `process.env`.
+
+```js js-flavor=js
+// global-setup.js
+const { chromium } = require('@playwright/test');
+
+module.exports = async config => {
+  process.env.foo = 'some data';
+  // Or a more complicated data structure as JSON:
+  process.env.bar = JSON.stringify({ some: 'data' });
+};
+```
+
+```js js-flavor=ts
+// global-setup.ts
+import { chromium, FullConfig } from '@playwright/test';
+
+async function globalSetup(config: FullConfig) {
+  process.env.foo = 'some data';
+  // Or a more complicated data structure as JSON:
+  process.env.bar = JSON.stringify({ some: 'data' });
+}
+
+export default globalSetup;
+```
+
+Tests have access to the `process.env` properties set in the global setup.
+
+```js js-flavor=ts
+import { test } from '@playwright/test';
+const { foo, bar } = process.env;
+
+test('test', async ({ page }) => {
+  // foo and bar properties are populated.
+  expect(foo).toEqual('some data')
+  expect(bar).toEqual('{"some":"data"}')
+});
+```
+
+```js js-flavor=js
+const { test } = require('@playwright/test');
+const { foo, bar } = process.env;
+
+test('test', async ({ page }) => {
+  // foo and bar properties are populated.
+  expect(foo).toEqual('some data')
+  expect(bar).toEqual('{"some":"data"}')
+});
+```
+
 ## Projects
 
 Playwright Test supports running multiple test projects at the same time. This is useful for running the same or different tests in multiple configurations.
