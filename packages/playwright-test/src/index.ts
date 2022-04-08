@@ -91,7 +91,7 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
   _browserOptions: [async ({ playwright, headless, channel, launchOptions }, use) => {
     const options: LaunchOptions = {
       handleSIGINT: false,
-      timeout: 0,
+      timeout: 30000,  // 30 seconds
       ...launchOptions,
     };
     if (headless !== undefined)
@@ -110,14 +110,13 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
     if (!['chromium', 'firefox', 'webkit'].includes(browserName))
       throw new Error(`Unexpected browserName "${browserName}", must be one of "chromium", "firefox" or "webkit"`);
     if (connectOptions) {
-      const browser = await playwright[browserName].connect({
-        wsEndpoint: connectOptions.wsEndpoint,
+      const browser = await playwright[browserName].connect(connectOptions.wsEndpoint, {
         headers: {
           'x-playwright-browser': channel || browserName,
           'x-playwright-headless': headless ? '1' : '0',
           ...connectOptions.headers,
         },
-        timeout: connectOptions.timeout,
+        timeout: connectOptions.timeout ?? 3 * 60 * 1000, // 3 minutes
       });
       await use(browser);
       await browser.close();
@@ -127,7 +126,7 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
     const browser = await playwright[browserName].launch();
     await use(browser);
     await browser.close();
-  }, { scope: 'worker' } ],
+  }, { scope: 'worker', timeout: 0 } ],
 
   acceptDownloads: [ undefined, { option: true } ],
   bypassCSP: [ undefined, { option: true } ],
