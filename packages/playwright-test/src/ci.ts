@@ -13,7 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { createGuid, spawnAsync } from 'playwright-core/lib/utils';
+import { createGuid } from 'playwright-core/lib/utils';
+import { spawnAsync } from 'playwright-core/lib/utils/spawnAsync';
 
 const GIT_OPERATIONS_TIMEOUT_MS = 1500;
 const kContentTypePlainText = 'text/plain';

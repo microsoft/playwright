@@ -17,7 +17,7 @@
 import { formatLocation, debugTest } from './util';
 import * as crypto from 'crypto';
 import type { FixturesWithLocation, Location, WorkerInfo } from './types';
-import { ManualPromise } from 'playwright-core/lib/utils';
+import { ManualPromise } from 'playwright-core/lib/utils/manualPromise';
 import type { TestInfoImpl } from './testInfo';
 import type { FixtureDescription, TimeoutManager } from './timeoutManager';
 

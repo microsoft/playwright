@@ -19,7 +19,7 @@ import type { CRSession } from './crConnection';
 import type { Protocol } from './protocol';
 import fs from 'fs';
 import type * as types from '../types';
-import { mkdirIfNeeded } from '../../utils';
+import { mkdirIfNeeded } from '../../utils/fileUtils';
 import { splitErrorMessage } from '../../utils/stackTrace';
 
 export function getExceptionMessage(exceptionDetails: Protocol.Runtime.ExceptionDetails): string {

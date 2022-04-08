@@ -33,7 +33,8 @@ import type * as types from '../types';
 import type { HTTPRequestParams } from '../../common/netUtils';
 import { fetchData } from '../../common/netUtils';
 import { getUserAgent } from '../../common/userAgent';
-import { debugMode, headersArrayToObject, removeFolders, streamToString, wrapInASCIIBox } from '../../utils';
+import { debugMode, headersArrayToObject, streamToString, wrapInASCIIBox } from '../../utils';
+import { removeFolders } from '../../utils/fileUtils';
 import { RecentLogsCollector } from '../../common/debugLogger';
 import type { Progress } from '../progress';
 import { ProgressController } from '../progress';
@@ -43,7 +44,7 @@ import type { CallMetadata } from '../instrumentation';
 import http from 'http';
 import https from 'https';
 import { registry } from '../registry';
-import { ManualPromise } from '../../utils';
+import { ManualPromise } from '../../utils/manualPromise';
 
 const ARTIFACTS_FOLDER = path.join(os.tmpdir(), 'playwright-artifacts-');
 

@@ -16,8 +16,8 @@
  */
 
 import type { CRSession } from './crConnection';
-import type { RegisteredListener } from '../../utils';
-import { eventsHelper } from '../../utils';
+import type { RegisteredListener } from '../../utils/eventsHelper';
+import { eventsHelper } from '../../utils/eventsHelper';
 import type { Protocol } from './protocol';
 import type * as types from '../types';
 import { assert } from '../../utils';
