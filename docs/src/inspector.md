@@ -31,17 +31,20 @@ configures Playwright for debugging and opens the inspector.
   ```
 
   ```bash bash-flavor=bash lang=java
-  PWDEBUG=1 PLAYWRIGHT_JAVA_SRC=<java src root> mvn test
+  # Source directories in the list are separated by : on macos and linux and by ; on win.
+  PWDEBUG=1 PLAYWRIGHT_JAVA_SRC=<java source dirs> mvn test
   ```
 
   ```bash bash-flavor=batch lang=java
-  set PLAYWRIGHT_JAVA_SRC=<java src root>
+  # Source directories in the list are separated by : on macos and linux and by ; on win.
+  set PLAYWRIGHT_JAVA_SRC=<java source dirs>
   set PWDEBUG=1
   mvn test
   ```
 
   ```bash bash-flavor=powershell lang=java
-  $env:PLAYWRIGHT_JAVA_SRC="<java src root>"
+  # Source directories in the list are separated by : on macos and linux and by ; on win.
+  $env:PLAYWRIGHT_JAVA_SRC="<java source dirs>"
   $env:PWDEBUG=1
   mvn test
   ```
