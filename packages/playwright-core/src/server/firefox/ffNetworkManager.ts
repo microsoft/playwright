@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
-import type { RegisteredListener } from '../../utils';
-import { eventsHelper } from '../../utils';
+import type { RegisteredListener } from '../../utils/eventsHelper';
+import { eventsHelper } from '../../utils/eventsHelper';
 import type { FFSession } from './ffConnection';
 import type { Page } from '../page';
 import * as network from '../network';

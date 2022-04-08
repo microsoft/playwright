@@ -26,7 +26,7 @@ import { envObjectToArray } from './clientHelper';
 import { assert, headersObjectToArray, monotonicTime } from '../utils';
 import type * as api from '../../types/types';
 import { kBrowserClosedError } from '../common/errors';
-import { raceAgainstTimeout } from '../utils';
+import { raceAgainstTimeout } from '../utils/timeoutRunner';
 import type { Playwright } from './playwright';
 
 export interface BrowserServerLauncher {

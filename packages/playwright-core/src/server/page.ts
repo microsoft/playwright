@@ -31,7 +31,7 @@ import { FileChooser } from './fileChooser';
 import type { Progress } from './progress';
 import { ProgressController } from './progress';
 import { assert, isError } from '../utils';
-import { ManualPromise } from '../utils';
+import { ManualPromise } from '../utils/manualPromise';
 import { debugLogger } from '../common/debugLogger';
 import type { ImageComparatorOptions } from '../utils/comparators';
 import { getComparator } from '../utils/comparators';
