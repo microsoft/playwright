@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { BrowserContextOptions } from '../../../..';
+import type { BrowserContextOptions } from '../../..';
 import type { LanguageGenerator, LanguageGeneratorOptions } from './language';
 import { toSignalMap } from './language';
 import type { ActionInContext } from './codeGenerator';
@@ -22,9 +22,9 @@ import type { Action } from './recorderActions';
 import { actionTitle } from './recorderActions';
 import type { MouseClickOptions } from './utils';
 import { toModifiers } from './utils';
-import deviceDescriptors from '../../deviceDescriptors';
+import deviceDescriptors from '../deviceDescriptors';
 import { JavaScriptFormatter } from './javascript';
-import { escapeWithQuotes } from '../../../utils/isomorphic/stringUtils';
+import { escapeWithQuotes } from '../../utils/isomorphic/stringUtils';
 
 export class JavaLanguageGenerator implements LanguageGenerator {
   id = 'java';

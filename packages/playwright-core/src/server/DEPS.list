@@ -6,12 +6,10 @@
 ./
 ./injected/
 ./isomorphic/
+./har/
+./recorder/
 ./registry/
-./supplements/
 ./trace/recorder/tracing.ts
-
-[browserContext.ts]
-./supplements/har/
 
 [playwright.ts]
 ./android/

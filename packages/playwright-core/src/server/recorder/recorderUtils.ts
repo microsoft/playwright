@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { CallMetadata } from '../../instrumentation';
+import type { CallMetadata } from '../instrumentation';
 import type { CallLog, CallLogStatus } from './recorderTypes';
 
 export function metadataToCallLog(metadata: CallMetadata, status: CallLogStatus): CallLog {

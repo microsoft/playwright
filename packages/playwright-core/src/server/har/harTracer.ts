@@ -14,18 +14,19 @@
  * limitations under the License.
  */
 
-import { BrowserContext } from '../../browserContext';
-import type { APIRequestEvent, APIRequestFinishedEvent } from '../../fetch';
-import { APIRequestContext } from '../../fetch';
-import { helper } from '../../helper';
-import * as network from '../../network';
-import { Page } from '../../page';
+import { BrowserContext } from '../browserContext';
+import type { APIRequestEvent, APIRequestFinishedEvent } from '../fetch';
+import { APIRequestContext } from '../fetch';
+import { helper } from '../helper';
+import * as network from '../network';
+import { Page } from '../page';
 import type * as har from './har';
-import { calculateSha1, monotonicTime } from '../../../utils';
-import type { RegisteredListener } from '../../../utils/eventsHelper';
-import { eventsHelper } from '../../../utils/eventsHelper';
+import { calculateSha1, monotonicTime } from '../../utils';
+import type { RegisteredListener } from '../../utils/eventsHelper';
+import { eventsHelper } from '../../utils/eventsHelper';
 import * as mime from 'mime';
-import { ManualPromise } from '../../../utils/manualPromise';
+import { ManualPromise } from '../../utils/manualPromise';
+import { getPlaywrightVersion } from '../../common/userAgent';
 
 const FALLBACK_HTTP_VERSION = 'HTTP/1.1';
 
@@ -382,7 +383,7 @@ export class HarTracer {
       version: '1.2',
       creator: {
         name: 'Playwright',
-        version: require('../../../../package.json')['version'],
+        version: getPlaywrightVersion(),
       },
       browser: {
         name: context?._browser.options.name || '',

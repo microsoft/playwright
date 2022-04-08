@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { BrowserContextOptions, LaunchOptions } from '../../../..';
+import type { BrowserContextOptions, LaunchOptions } from '../../..';
 import type { ActionInContext } from './codeGenerator';
 import type { Action, DialogSignal, DownloadSignal, NavigationSignal, PopupSignal } from './recorderActions';
 

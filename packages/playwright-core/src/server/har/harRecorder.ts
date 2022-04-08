@@ -15,9 +15,9 @@
  */
 
 import fs from 'fs';
-import type { APIRequestContext } from '../../fetch';
-import { Artifact } from '../../artifact';
-import type { BrowserContext } from '../../browserContext';
+import type { APIRequestContext } from '../fetch';
+import { Artifact } from '../artifact';
+import type { BrowserContext } from '../browserContext';
 import type * as har from './har';
 import { HarTracer } from './harTracer';
 
