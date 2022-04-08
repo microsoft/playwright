@@ -96,26 +96,35 @@ it('should accept userDataDir', async ({ createUserDataDir, browserType }) => {
   expect(fs.readdirSync(userDataDir).length).toBeGreaterThan(0);
 });
 
-it('should restore state from userDataDir', async ({ browserType, server, createUserDataDir }) => {
+it.only('should restore state from userDataDir', async ({ browserType, server, createUserDataDir }) => {
   it.slow();
 
   const userDataDir = await createUserDataDir();
+  console.log('userDataDir ' + userDataDir);
   const browserContext = await browserType.launchPersistentContext(userDataDir);
   const page = await browserContext.newPage();
   await page.goto(server.EMPTY_PAGE);
   await page.evaluate(() => localStorage.hey = 'hello');
+  console.log('did eval 1');
+  await new Promise(f => setTimeout(f, 10000));
   await browserContext.close();
 
-  const browserContext2 = await browserType.launchPersistentContext(userDataDir);
-  const page2 = await browserContext2.newPage();
-  await page2.goto(server.EMPTY_PAGE);
-  expect(await page2.evaluate(() => localStorage.hey)).toBe('hello');
-  await browserContext2.close();
+  // const browserContext2 = await browserType.launchPersistentContext(userDataDir);
+  // const page2 = await browserContext2.newPage();
+  // await page2.goto(server.EMPTY_PAGE);
+  // expect(await page2.evaluate(() => localStorage.hey)).toBe('hello');
+  // await browserContext2.close();
+
+  console.log('\n\n\n\n\n');
 
   const userDataDir2 = await createUserDataDir();
+  console.log('userDataDir2 ' + userDataDir2);
   const browserContext3 = await browserType.launchPersistentContext(userDataDir2);
   const page3 = await browserContext3.newPage();
   await page3.goto(server.EMPTY_PAGE);
+  console.log(await page3.evaluate(() => localStorage.hey));
+  console.log('\n\n\n\n\n');
+  await new Promise(f => setTimeout(f, 10000));
   expect(await page3.evaluate(() => localStorage.hey)).not.toBe('hello');
   await browserContext3.close();
 });
