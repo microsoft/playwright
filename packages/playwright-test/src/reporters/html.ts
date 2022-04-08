@@ -158,12 +158,12 @@ class HtmlReporter implements Reporter {
     const projectSuites = this.suite.suites;
     const reports = projectSuites.map(suite => {
       const rawReporter = new RawReporter();
-      const report = rawReporter.generateProjectReport(this.config, suite);
+      const report = rawReporter.generateProjectReport(this.config, suite, []);
       return report;
     });
     await removeFolders([outputFolder]);
     const builder = new HtmlBuilder(outputFolder);
-    const { ok, singleTestId } = await builder.build(new RawReporter().generateAttachments(this.config), reports);
+    const { ok, singleTestId } = await builder.build(new RawReporter().generateAttachments(this.suite.attachments), reports);
 
     if (process.env.CI)
       return;

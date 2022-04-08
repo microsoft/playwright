@@ -23,7 +23,6 @@ import { formatResultFailure } from './base';
 import { toPosixPath, serializePatterns } from './json';
 import { MultiMap } from 'playwright-core/lib/utils/multimap';
 import { codeFrameColumns } from '@babel/code-frame';
-import type { FullConfigInternal } from '../types';
 
 export type JsonLocation = Location;
 export type JsonError = string;
@@ -31,6 +30,7 @@ export type JsonStackFrame = { file: string, line: number, column: number };
 
 export type JsonReport = {
   config: JsonConfig,
+  attachments: JsonAttachment[],
   project: JsonProject,
   suites: JsonSuite[],
 };
@@ -112,6 +112,7 @@ class RawReporter {
 
   async onEnd() {
     const projectSuites = this.suite.suites;
+    const globalAttachments = this.generateAttachments(this.suite.attachments);
     for (const suite of projectSuites) {
       const project = suite.project();
       assert(project, 'Internal Error: Invalid project structure');
@@ -129,21 +130,46 @@ class RawReporter {
       }
       if (!reportFile)
         throw new Error('Internal error, could not create report file');
-      const report = this.generateProjectReport(this.config, suite);
+      const report = this.generateProjectReport(this.config, suite, globalAttachments);
       fs.writeFileSync(reportFile, JSON.stringify(report, undefined, 2));
     }
   }
 
-  generateAttachments(config: FullConfig): JsonAttachment[] {
-    return this._createAttachments((config as FullConfigInternal)._attachments);
+  generateAttachments(attachments: TestResult['attachments'], ioStreams?: Pick<TestResult, 'stdout' | 'stderr'>): JsonAttachment[] {
+    const out: JsonAttachment[] = [];
+    for (const attachment of attachments) {
+      if (attachment.body) {
+        out.push({
+          name: attachment.name,
+          contentType: attachment.contentType,
+          body: attachment.body
+        });
+      } else if (attachment.path) {
+        out.push({
+          name: attachment.name,
+          contentType: attachment.contentType,
+          path: attachment.path
+        });
+      }
+    }
+
+    if (ioStreams) {
+      for (const chunk of ioStreams.stdout)
+        out.push(this._stdioAttachment(chunk, 'stdout'));
+      for (const chunk of ioStreams.stderr)
+        out.push(this._stdioAttachment(chunk, 'stderr'));
+    }
+
+    return out;
   }
 
-  generateProjectReport(config: FullConfig, suite: Suite): JsonReport {
+  generateProjectReport(config: FullConfig, suite: Suite, attachments: JsonAttachment[]): JsonReport {
     this.config = config;
     const project = suite.project();
     assert(project, 'Internal Error: Invalid project structure');
     const report: JsonReport = {
       config,
+      attachments,
       project: {
         metadata: project.metadata,
         name: project.name,
@@ -228,7 +254,7 @@ class RawReporter {
       duration: result.duration,
       status: result.status,
       errors: formatResultFailure(this.config, test, result, '', true).map(error => error.message),
-      attachments: this._createAttachments(result.attachments, result),
+      attachments: this.generateAttachments(result.attachments, result),
       steps: dedupeSteps(result.steps.map(step => this._serializeStep(test, step)))
     };
   }
@@ -248,34 +274,6 @@ class RawReporter {
     if (step.location)
       this.stepsInFile.set(step.location.file, result);
     return result;
-  }
-
-  private _createAttachments(attachments: TestResult['attachments'], ioStreams?: Pick<TestResult, 'stdout' | 'stderr'>): JsonAttachment[] {
-    const out: JsonAttachment[] = [];
-    for (const attachment of attachments) {
-      if (attachment.body) {
-        out.push({
-          name: attachment.name,
-          contentType: attachment.contentType,
-          body: attachment.body
-        });
-      } else if (attachment.path) {
-        out.push({
-          name: attachment.name,
-          contentType: attachment.contentType,
-          path: attachment.path
-        });
-      }
-    }
-
-    if (ioStreams) {
-      for (const chunk of ioStreams.stdout)
-        out.push(this._stdioAttachment(chunk, 'stdout'));
-      for (const chunk of ioStreams.stderr)
-        out.push(this._stdioAttachment(chunk, 'stderr'));
-    }
-
-    return out;
   }
 
   private _stdioAttachment(chunk: Buffer | string, type: 'stdout' | 'stderr'): JsonAttachment {

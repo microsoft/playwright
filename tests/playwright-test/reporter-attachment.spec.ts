@@ -186,34 +186,3 @@ test(`testInfo.attach allow empty buffer body`, async ({ runInlineTest }) => {
   expect(result.failed).toBe(1);
   expect(stripAnsi(result.output)).toMatch(/^.*attachment #1: name \(text\/plain\).*\n.*\n.*------/gm);
 });
-
-test(`TestConfig.attachments works`, async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    'globalSetup.ts': `
-      import { FullConfig } from '@playwright/test';
-
-      async function globalSetup(config: FullConfig) {
-        (config as any)._attachments = [{ contentType: 'text/plain', body: Buffer.from('example data'), name: 'my-attachment.txt' }];
-      };
-
-      export default globalSetup;
-    `,
-    'playwright.config.ts': `
-      import path from 'path';
-      const config = {
-        globalSetup: path.join(__dirname, './globalSetup'),
-      }
-
-      export default config;
-    `,
-    'example.spec.ts': `
-      const { test } = pwt;
-      test('sample', async ({}) => { expect(2).toBe(2); });
-    `,
-  }, { reporter: 'json' });
-
-  expect(result.exitCode).toBe(0);
-  expect((result.report.config as any)._attachments).toHaveLength(1);
-  expect((result.report.config as any)._attachments[0].name).toBe('my-attachment.txt');
-  expect(Buffer.from((result.report.config as any)._attachments[0].body, 'base64').toString()).toBe('example data');
-});

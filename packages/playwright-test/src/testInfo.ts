@@ -15,9 +15,7 @@
  */
 
 import fs from 'fs';
-import * as mime from 'mime';
 import path from 'path';
-import { calculateSha1 } from 'playwright-core/lib/utils';
 import type { TestError, TestInfo, TestStatus } from '../types/test';
 import type { FullConfigInternal, FullProjectInternal } from './types';
 import type { WorkerInitParams } from './ipc';
@@ -26,7 +24,7 @@ import type { ProjectImpl } from './project';
 import type { TestCase } from './test';
 import { TimeoutManager } from './timeoutManager';
 import type { Annotation, TestStepInternal } from './types';
-import { addSuffixToFilePath, getContainedPath, monotonicTime, sanitizeForFilePath, serializeError, trimLongString } from './util';
+import { addSuffixToFilePath, getContainedPath, monotonicTime, normalizeAndSaveAttachment, sanitizeForFilePath, serializeError, trimLongString } from './util';
 
 export class TestInfoImpl implements TestInfo {
   private _projectImpl: ProjectImpl;
@@ -231,19 +229,7 @@ export class TestInfoImpl implements TestInfo {
   // ------------ TestInfo methods ------------
 
   async attach(name: string, options: { path?: string, body?: string | Buffer, contentType?: string } = {}) {
-    if ((options.path !== undefined ? 1 : 0) + (options.body !== undefined ? 1 : 0) !== 1)
-      throw new Error(`Exactly one of "path" and "body" must be specified`);
-    if (options.path !== undefined) {
-      const hash = calculateSha1(options.path);
-      const dest = this.outputPath('attachments', hash + path.extname(options.path));
-      await fs.promises.mkdir(path.dirname(dest), { recursive: true });
-      await fs.promises.copyFile(options.path, dest);
-      const contentType = options.contentType ?? (mime.getType(path.basename(options.path)) || 'application/octet-stream');
-      this.attachments.push({ name, contentType, path: dest });
-    } else {
-      const contentType = options.contentType ?? (typeof options.body === 'string' ? 'text/plain' : 'application/octet-stream');
-      this.attachments.push({ name, contentType, body: typeof options.body === 'string' ? Buffer.from(options.body) : options.body });
-    }
+    this.attachments.push(await normalizeAndSaveAttachment(this.outputPath(), name, options));
   }
 
   outputPath(...pathSegments: string[]){

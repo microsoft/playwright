@@ -44,6 +44,7 @@ import type { FullConfigInternal } from './types';
 import { WebServer } from './webServer';
 import { raceAgainstTimeout } from 'playwright-core/lib/utils/timeoutRunner';
 import { SigIntWatcher } from './sigIntWatcher';
+import { GlobalInfoImpl } from './globalInfo';
 
 const removeFolderAsync = promisify(rimraf);
 const readDirAsync = promisify(fs.readdir);
@@ -62,9 +63,11 @@ export class Runner {
   private _loader: Loader;
   private _reporter!: Reporter;
   private _internalGlobalSetups: Array<InternalGlobalSetupFunction> = [];
+  private _globalInfo: GlobalInfoImpl;
 
   constructor(configOverrides: Config, options: { defaultConfig?: Config } = {}) {
     this._loader = new Loader(options.defaultConfig || {}, configOverrides);
+    this._globalInfo = new GlobalInfoImpl(this._loader.fullConfig());
   }
 
   async loadConfigFromResolvedFile(resolvedConfigFile: string): Promise<Config> {
@@ -393,6 +396,9 @@ export class Runner {
 
     const result: FullResult = { status: 'passed' };
 
+    // 13.5 Add copy of attachments.
+    rootSuite.attachments = this._globalInfo.attachments();
+
     // 14. Run tests.
     try {
       const sigintWatcher = new SigIntWatcher();
@@ -455,7 +461,7 @@ export class Runner {
         internalGlobalTeardowns.push(await internalGlobalSetup());
       webServer = config.webServer ? await WebServer.create(config.webServer, this._reporter) : undefined;
       if (config.globalSetup)
-        globalSetupResult = await (await this._loader.loadGlobalHook(config.globalSetup, 'globalSetup'))(this._loader.fullConfig());
+        globalSetupResult = await (await this._loader.loadGlobalHook(config.globalSetup, 'globalSetup'))(this._loader.fullConfig(), this._globalInfo);
     }, result);
 
     if (result.status !== 'passed') {

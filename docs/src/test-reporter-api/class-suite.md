@@ -63,3 +63,12 @@ Suite title.
 - returns: <[Array]<[string]>>
 
 Returns a list of titles from the root down to this suite.
+
+## property: Suite.attachments
+- type: <[Array]<[Object]>>
+  - `name` <[string]> Attachment name.
+  - `contentType` <[string]> Content type of this attachment to properly present in the report, for example `'application/json'` or `'image/png'`.
+  - `path` ?<[string]> Optional path on the filesystem to the attached file.
+  - `body` ?<[Buffer]> Optional attachment body used instead of a file.
+
+The list of files or buffers attached to the suite. Root suite has attachments populated by [`method: GlobalInfo.attach`].
