@@ -83,7 +83,7 @@ class ApiParser {
    * @param {MarkdownNode} spec
    */
   parseMember(spec) {
-    const match = spec.text.match(/(event|method|property|async method): ([^.]+)\.(.*)/);
+    const match = spec.text.match(/(event|method|property|async method|optional method|optional async method): ([^.]+)\.(.*)/);
     if (!match)
       throw new Error('Invalid member: ' + spec.text);
     const name = match[3];
@@ -105,10 +105,12 @@ class ApiParser {
       member = Documentation.Member.createEvent(extractLangs(spec), name, returnType, comments);
     if (match[1] === 'property')
       member = Documentation.Member.createProperty(extractLangs(spec), name, returnType, comments, !optional);
-    if (match[1] === 'method' || match[1] === 'async method') {
+    if (['method', 'async method', 'optional method', 'optional async method'].includes(match[1])) {
       member = Documentation.Member.createMethod(extractLangs(spec), name, [], returnType, comments);
-      if (match[1] === 'async method')
+      if (match[1].includes('async'))
         member.async = true;
+      if (match[1].includes('optional'))
+        member.required = false;
     }
     const clazz = this.classes.get(match[2]);
     const existingMember = clazz.membersArray.find(m => m.name === name && m.kind === member.kind);

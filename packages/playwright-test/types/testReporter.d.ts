@@ -356,61 +356,11 @@ export interface FullResult {
  */
 export interface Reporter {
   /**
-   * Whether this reporter uses stdio for reporting. When it does not, Playwright Test could add some output to enhance user
-   * experience.
-   */
-  printsToStdio?(): boolean;
-  /**
    * Called once before running tests. All tests have been already discovered and put into a hierarchy of [Suite]s.
    * @param config Resolved configuration.
    * @param suite The root suite that contains all projects, files and test cases.
    */
   onBegin?(config: FullConfig, suite: Suite): void;
-  /**
-   * Called after a test has been started in the worker process.
-   * @param test Test that has been started.
-   * @param result Result of the test run, this object gets populated while the test runs.
-   */
-  onTestBegin?(test: TestCase, result: TestResult): void;
-  /**
-   * Called when something has been written to the standard output in the worker process.
-   * @param chunk Output chunk.
-   * @param test Test that was running. Note that output may happen when no test is running, in which case this will be [void].
-   * @param result Result of the test run, this object gets populated while the test runs.
-   */
-  onStdOut?(chunk: string | Buffer, test?: TestCase, result?: TestResult): void;
-  /**
-   * Called when something has been written to the standard error in the worker process.
-   * @param chunk Output chunk.
-   * @param test Test that was running. Note that output may happen when no test is running, in which case this will be [void].
-   * @param result Result of the test run, this object gets populated while the test runs.
-   */
-  onStdErr?(chunk: string | Buffer, test?: TestCase, result?: TestResult): void;
-  /**
-   * Called after a test has been finished in the worker process.
-   * @param test Test that has been finished.
-   * @param result Result of the test run.
-   */
-  onTestEnd?(test: TestCase, result: TestResult): void;
-  /**
-   * Called when a test step started in the worker process.
-   * @param test Test that the step belongs to.
-   * @param result Result of the test run, this object gets populated while the test runs.
-   * @param step Test step instance that has started.
-   */
-  onStepBegin?(test: TestCase, result: TestResult, step: TestStep): void;
-  /**
-   * Called when a test step finished in the worker process.
-   * @param test Test that the step belongs to.
-   * @param result Result of the test run.
-   * @param step Test step instance that has finished.
-   */
-  onStepEnd?(test: TestCase, result: TestResult, step: TestStep): void;
-  /**
-   * Called on some global error, for example unhandled exception in the worker process.
-   * @param error The error.
-   */
-  onError?(error: TestError): void;
   /**
    * Called after all tests has been run, or testing has been interrupted. Note that this method may return a [Promise] and
    * Playwright Test will await it.
@@ -422,7 +372,63 @@ export interface Reporter {
    * - `'interrupted'` - Interrupted by the user.
    */
   onEnd?(result: FullResult): void | Promise<void>;
-}
+  /**
+   * Called on some global error, for example unhandled exception in the worker process.
+   * @param error The error.
+   */
+  onError?(error: TestError): void;
+
+  /**
+   * Called when something has been written to the standard error in the worker process.
+   * @param chunk Output chunk.
+   * @param test Test that was running. Note that output may happen when no test is running, in which case this will be [void].
+   * @param result Result of the test run, this object gets populated while the test runs.
+   */
+  onStdErr?(chunk: string|Buffer, test: void|TestCase, result: void|TestResult): void;
+
+  /**
+   * Called when something has been written to the standard output in the worker process.
+   * @param chunk Output chunk.
+   * @param test Test that was running. Note that output may happen when no test is running, in which case this will be [void].
+   * @param result Result of the test run, this object gets populated while the test runs.
+   */
+  onStdOut?(chunk: string|Buffer, test: void|TestCase, result: void|TestResult): void;
+
+  /**
+   * Called when a test step started in the worker process.
+   * @param test Test that the step belongs to.
+   * @param result Result of the test run, this object gets populated while the test runs.
+   * @param step Test step instance that has started.
+   */
+  onStepBegin?(test: TestCase, result: TestResult, step: TestStep): void;
+
+  /**
+   * Called when a test step finished in the worker process.
+   * @param test Test that the step belongs to.
+   * @param result Result of the test run.
+   * @param step Test step instance that has finished.
+   */
+  onStepEnd?(test: TestCase, result: TestResult, step: TestStep): void;
+
+  /**
+   * Called after a test has been started in the worker process.
+   * @param test Test that has been started.
+   * @param result Result of the test run, this object gets populated while the test runs.
+   */
+  onTestBegin?(test: TestCase, result: TestResult): void;
+
+  /**
+   * Called after a test has been finished in the worker process.
+   * @param test Test that has been finished.
+   * @param result Result of the test run.
+   */
+  onTestEnd?(test: TestCase, result: TestResult): void;
+
+  /**
+   * Whether this reporter uses stdio for reporting. When it does not, Playwright Test could add some output to enhance user
+   * experience.
+   */
+  printsToStdio?(): boolean;}
 
 // This is required to not export everything by default. See https://github.com/Microsoft/TypeScript/issues/19545#issuecomment-340490459
 export {};
