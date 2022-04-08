@@ -110,6 +110,14 @@ test('sigint should stop workers', async ({ runInlineTest }) => {
   expect(result.output).toContain('%%SEND-SIGINT%%2');
   expect(result.output).not.toContain('%%skipped1');
   expect(result.output).not.toContain('%%skipped2');
+
+  const interrupted2 = result.report.suites[1].specs[0];
+  expect(interrupted2.title).toBe('interrupted2');
+  expect(interrupted2.tests[0].results[0].workerIndex === 0 || interrupted2.tests[0].results[0].workerIndex === 1).toBe(true);
+
+  const skipped2 = result.report.suites[1].specs[1];
+  expect(skipped2.title).toBe('skipped2');
+  expect(skipped2.tests[0].results[0].workerIndex).toBe(-1);
 });
 
 test('should use the first occurring error when an unhandled exception was thrown', async ({ runInlineTest }) => {

@@ -176,7 +176,7 @@ export class TestCase extends Base implements reporterTypes.TestCase {
   _appendTestResult(): reporterTypes.TestResult {
     const result: reporterTypes.TestResult = {
       retry: this.results.length,
-      workerIndex: 0,
+      workerIndex: -1,
       duration: 0,
       startTime: new Date(),
       stdout: [],

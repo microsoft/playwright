@@ -63,6 +63,6 @@ List of steps inside this test run.
 ## property: TestResult.workerIndex
 - type: <[int]>
 
-Index of the worker where the test was run.
+Index of the worker where the test was run. If the test was not run a single time, for example when the user interrupted testing, the only result will have a `workerIndex` equal to `-1`.
 
 Learn more about [parallelism and sharding](../test-parallel.md) with Playwright Test.
