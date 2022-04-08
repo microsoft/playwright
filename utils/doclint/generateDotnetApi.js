@@ -19,7 +19,7 @@
 const path = require('path');
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const Documentation = require('./documentation');
-const XmlDoc = require('./xmlDocumentation');
+const XmlDoc = require('./dotnetXmlDocumentation');
 const PROJECT_DIR = path.join(__dirname, '..', '..');
 const fs = require('fs');
 const { parseApi } = require('./api_parser');
