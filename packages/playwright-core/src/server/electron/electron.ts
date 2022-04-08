@@ -34,7 +34,7 @@ import type { BrowserWindow } from 'electron';
 import type { Progress } from '../progress';
 import { ProgressController } from '../progress';
 import { helper } from '../helper';
-import { eventsHelper } from '../../utils';
+import { eventsHelper } from '../../utils/eventsHelper';
 import type { BrowserOptions, BrowserProcess, PlaywrightOptions } from '../browser';
 import type * as childProcess from 'child_process';
 import * as readline from 'readline';

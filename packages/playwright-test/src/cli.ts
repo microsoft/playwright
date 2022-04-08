@@ -29,7 +29,8 @@ import type { FilePatternFilter } from './util';
 import { showHTMLReport } from './reporters/html';
 import { GridServer } from 'playwright-core/lib/grid/gridServer';
 import dockerFactory from 'playwright-core/lib/grid/dockerGridFactory';
-import { createGuid, hostPlatform } from 'playwright-core/lib/utils';
+import { createGuid } from 'playwright-core/lib/utils';
+import { hostPlatform } from 'playwright-core/lib/utils/hostPlatform';
 import { fileIsModule } from './loader';
 
 const defaultTimeout = 30000;

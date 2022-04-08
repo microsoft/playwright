@@ -19,6 +19,8 @@ import path from 'path';
 import * as os from 'os';
 import childProcess from 'child_process';
 import * as utils from '../../utils';
+import { spawnAsync } from '../../utils/spawnAsync';
+import { hostPlatform } from '../../utils/hostPlatform';
 import { buildPlaywrightCLICommand } from '.';
 import { deps } from './nativeDeps';
 import { getUbuntuVersion } from '../../utils/ubuntuVersion';
@@ -66,7 +68,7 @@ export async function installDependenciesWindows(targets: Set<DependencyGroup>, 
       console.log(`${command} ${quoteProcessArgs(args).join(' ')}`); // eslint-disable-line no-console
       return;
     }
-    const { code } = await utils.spawnAsync(command, args, { cwd: BIN_DIRECTORY, stdio: 'inherit' });
+    const { code } = await spawnAsync(command, args, { cwd: BIN_DIRECTORY, stdio: 'inherit' });
     if (code !== 0)
       throw new Error('Failed to install windows dependencies!');
   }
@@ -77,7 +79,7 @@ export async function installDependenciesLinux(targets: Set<DependencyGroup>, dr
     throw new Error(`Unsupported Linux distribution, only Ubuntu is supported!`);
   const libraries: string[] = [];
   for (const target of targets) {
-    const info = deps[utils.hostPlatform];
+    const info = deps[hostPlatform];
     if (!info) {
       console.warn('Cannot install dependencies for this linux distribution!');  // eslint-disable-line no-console
       return;
@@ -92,7 +94,7 @@ export async function installDependenciesLinux(targets: Set<DependencyGroup>, dr
   commands.push(['apt-get', 'install', '-y', '--no-install-recommends',
     ...uniqueLibraries,
   ].join(' '));
-  const { command, args, elevatedPermissions } = await utils.transformCommandsForRoot(commands);
+  const { command, args, elevatedPermissions } = await transformCommandsForRoot(commands);
   if (dryRun) {
     console.log(`${command} ${quoteProcessArgs(args).join(' ')}`); // eslint-disable-line no-console
     return;
@@ -189,7 +191,7 @@ export async function validateDependenciesLinux(sdkLanguage: string, linuxLddDir
   const missingPackages = new Set();
 
   const libraryToPackageNameMapping = {
-    ...(deps[utils.hostPlatform]?.lib2package || {}),
+    ...(deps[hostPlatform]?.lib2package || {}),
     ...MANUAL_LIBRARY_TO_PACKAGE_NAME_UBUNTU,
   };
   // Translate missing dependencies to package names to install with apt.
@@ -287,7 +289,7 @@ async function executablesOrSharedLibraries(directoryPath: string): Promise<stri
 async function missingFileDependenciesWindows(filePath: string): Promise<Array<string>> {
   const executable = path.join(__dirname, '..', '..', '..', 'bin', 'PrintDeps.exe');
   const dirname = path.dirname(filePath);
-  const { stdout, code } = await utils.spawnAsync(executable, [filePath], {
+  const { stdout, code } = await spawnAsync(executable, [filePath], {
     cwd: dirname,
     env: {
       ...process.env,
@@ -305,7 +307,7 @@ async function missingFileDependencies(filePath: string, extraLDPaths: string[])
   let LD_LIBRARY_PATH = extraLDPaths.join(':');
   if (process.env.LD_LIBRARY_PATH)
     LD_LIBRARY_PATH = `${process.env.LD_LIBRARY_PATH}:${LD_LIBRARY_PATH}`;
-  const { stdout, code } = await utils.spawnAsync('ldd', [filePath], {
+  const { stdout, code } = await spawnAsync('ldd', [filePath], {
     cwd: dirname,
     env: {
       ...process.env,
@@ -324,7 +326,7 @@ async function missingDLOPENLibraries(libraries: string[]): Promise<string[]> {
   // NOTE: Using full-qualified path to `ldconfig` since `/sbin` is not part of the
   // default PATH in CRON.
   // @see https://github.com/microsoft/playwright/issues/3397
-  const { stdout, code, error } = await utils.spawnAsync('/sbin/ldconfig', ['-p'], {});
+  const { stdout, code, error } = await spawnAsync('/sbin/ldconfig', ['-p'], {});
   if (code !== 0 || error)
     return [];
   const isLibraryAvailable = (library: string) => stdout.toLowerCase().includes(library.toLowerCase());
@@ -345,4 +347,14 @@ function quoteProcessArgs(args: string[]): string[] {
       return `"${arg}"`;
     return arg;
   });
+}
+
+export async function transformCommandsForRoot(commands: string[]): Promise<{ command: string, args: string[], elevatedPermissions: boolean}> {
+  const isRoot = process.getuid() === 0;
+  if (isRoot)
+    return { command: 'sh', args: ['-c', `${commands.join('&& ')}`], elevatedPermissions: false };
+  const sudoExists = await spawnAsync('which', ['sudo']);
+  if (sudoExists.code === 0)
+    return { command: 'sudo', args: ['--', 'sh', '-c', `${commands.join('&& ')}`], elevatedPermissions: true };
+  return { command: 'su', args: ['root', '-c', `${commands.join('&& ')}`], elevatedPermissions: true };
 }

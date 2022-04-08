@@ -19,7 +19,7 @@ import type { DispatcherScope } from './dispatcher';
 import { Dispatcher } from './dispatcher';
 import { StreamDispatcher } from './streamDispatcher';
 import fs from 'fs';
-import { mkdirIfNeeded } from '../../utils';
+import { mkdirIfNeeded } from '../../utils/fileUtils';
 import type { Artifact } from '../artifact';
 
 export class ArtifactDispatcher extends Dispatcher<Artifact, channels.ArtifactChannel> implements channels.ArtifactChannel {
