@@ -45,7 +45,7 @@ test('should compile', async ({ runTSC }) => {
   const result = await runTSC({
     'a.spec.ts': `
       const { test } = pwt;
-      test('should poll sync predicate', () => {
+      test('should poll sync predicate', async ({ page }) => {
         let i = 0;
         test.expect.poll(() => ++i).toBe(3);
         test.expect.poll(() => ++i, 'message').toBe(3);
@@ -57,6 +57,11 @@ test('should compile', async ({ runTSC }) => {
           return ++i;
         }).toBe(3);
         test.expect.poll(() => Promise.resolve(++i)).toBe(3);
+
+        // @ts-expect-error
+        await test.expect.poll(() => page.locator('foo')).toBeEnabled();
+        // @ts-expect-error
+        await test.expect.poll(() => page.locator('foo')).not.toBeEnabled();
       });
     `
   });
