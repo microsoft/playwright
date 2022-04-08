@@ -332,7 +332,7 @@ export class GridServer {
     const initPromise = Promise.resolve()
         .then(() => this._factory.launch({
           agentId: agent.agentId,
-          gridURL: this._server.urlPrefix(),
+          gridURL: this.urlPrefix(),
           playwrightVersion: getPlaywrightVersion(),
         })).then(() => {
           this._log('created');
