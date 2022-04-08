@@ -293,7 +293,8 @@ export interface TestResult {
   steps: Array<TestStep>;
 
   /**
-   * Index of the worker where the test was run.
+   * Index of the worker where the test was run. If the test was not run a single time, for example when the user interrupted
+   * testing, the only result will have a `workerIndex` equal to `-1`.
    *
    * Learn more about [parallelism and sharding](https://playwright.dev/docs/test-parallel) with Playwright Test.
    */
