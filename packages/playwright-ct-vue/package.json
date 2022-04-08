@@ -1,22 +1,22 @@
 {
-    "name": "@playwright/experimental-ct-vue",
-    "private": true,
-    "version": "0.0.2",
-    "description": "Playwright Component Testing for Svelte",
-    "repository": "github:Microsoft/playwright",
-    "homepage": "https://playwright.dev",
-    "engines": {
-      "node": ">=12"
-    },
-    "author": {
-      "name": "Microsoft Corporation"
-    },
-    "license": "Apache-2.0",
-    "exports": {
-        "./register": "./register.mjs",
-        "./test": "./test.js"
-    },
-    "devDependencies": {
-      "@playwright/test": "1.21.0-next"
-    }
+  "name": "@playwright/experimental-ct-vue",
+  "private": true,
+  "version": "0.0.2",
+  "description": "Playwright Component Testing for Svelte",
+  "repository": "github:Microsoft/playwright",
+  "homepage": "https://playwright.dev",
+  "engines": {
+    "node": ">=12"
+  },
+  "author": {
+    "name": "Microsoft Corporation"
+  },
+  "license": "Apache-2.0",
+  "exports": {
+    "./register": "./register.mjs",
+    "./test": "./test.js"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.21.0"
+  }
 }
