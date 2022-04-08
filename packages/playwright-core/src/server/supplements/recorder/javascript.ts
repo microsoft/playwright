@@ -23,7 +23,7 @@ import { actionTitle } from './recorderActions';
 import type { MouseClickOptions } from './utils';
 import { toModifiers } from './utils';
 import deviceDescriptors from '../../deviceDescriptors';
-import { escapeWithQuotes } from '../../../utils/stringUtils';
+import { escapeWithQuotes } from '../../../utils/isomorphic/stringUtils';
 
 export class JavaScriptLanguageGenerator implements LanguageGenerator {
   id: string;
