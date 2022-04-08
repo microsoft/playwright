@@ -20,7 +20,7 @@ import type { Rect } from '../common/types';
 import { helper } from './helper';
 import type { Page } from './page';
 import type { Frame } from './frames';
-import type { ParsedSelector } from './common/selectorParser';
+import type { ParsedSelector } from './isomorphic/selectorParser';
 import type * as types from './types';
 import type { Progress } from './progress';
 import { assert } from '../utils';

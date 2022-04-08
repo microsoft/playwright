@@ -40,8 +40,8 @@ import type { CallMetadata } from './instrumentation';
 import { SdkObject } from './instrumentation';
 import type { Artifact } from './artifact';
 import type { TimeoutOptions } from '../common/types';
-import type { ParsedSelector } from './common/selectorParser';
-import { isInvalidSelectorError } from './common/selectorParser';
+import type { ParsedSelector } from './isomorphic/selectorParser';
+import { isInvalidSelectorError } from './isomorphic/selectorParser';
 
 export interface PageDelegate {
   readonly rawMouse: input.RawMouse;
