@@ -242,7 +242,7 @@ async function launchDockerContainer(): Promise<() => Promise<void>> {
   const { error } = await gridServer.createAgent();
   if (error)
     throw error;
-  process.env.PW_GRID = gridServer.urlPrefix().substring(0, gridServer.urlPrefix().length - 1);
+  process.env.PW_GRID = gridServer.gridURL();
   return async () => await gridServer.stop();
 }
 

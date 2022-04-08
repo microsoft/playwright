@@ -658,7 +658,7 @@ async function launchGridServer(factoryPathOrPackageName: string, port: number, 
   factory.name = factory.name || factoryPathOrPackageName;
   const gridServer = new GridServer(factory as GridFactory, authToken, address);
   await gridServer.start(port);
-  console.log('Grid server is running at ' + gridServer.urlPrefix());
+  console.log('Grid server is running at ' + gridServer.gridURL());
 }
 
 function buildBasePlaywrightCLICommand(cliTargetLang: string | undefined): string {
