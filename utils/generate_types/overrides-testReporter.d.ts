@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import type { FullConfig, FullProject, TestStatus, TestError } from './test';
-export type { FullConfig, TestStatus, TestError } from './test';
+import type { FullConfig, FullProject, TestStatus, TestError } from '@playwright/test';
+export type { FullConfig, TestStatus, TestError } from '@playwright/test';
 
 export interface Suite {
   project(): FullProject | undefined;

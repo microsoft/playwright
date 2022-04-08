@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+/// <reference path="./experimental.d.ts" />
+
 import type { Fixtures } from '@playwright/test';
 import type { ChildProcess } from 'child_process';
 import { execSync, spawn } from 'child_process';

@@ -371,8 +371,7 @@ test('should compile with different option combinations', async ({ runTSC }) => 
           maxDiffPixelRatio: 0.2,
           animations: "disabled",
           omitBackground: true,
-          // TODO: uncomment when enabling "fonts".
-          // fonts: "nowait",
+          fonts: "nowait",
           caret: "initial",
           scale: "device",
           timeout: 1000,

@@ -26,8 +26,6 @@ const { parseOverrides } = require('./parseOverrides');
 const exported = require('./exported.json');
 const { parseApi } = require('../doclint/api_parser');
 
-/** @typedef {import('../doclint/documentation').Member} Member */
-
 Error.stackTraceLimit = 50;
 
 class TypesGenerator {
@@ -38,10 +36,11 @@ class TypesGenerator {
    *   overridesToDocsClassMapping?: Map<string, string>,
    *   ignoreMissing?: Set<string>,
    *   doNotExportClassNames?: Set<string>,
+   *   includeExperimental?: boolean,
    * }} options
    */
   constructor(options) {
-    /** @type {Array<{name: string, properties: Member[]}>} */
+    /** @type {Array<{name: string, properties: Documentation.Member[]}>} */
     this.objectDefinitions = [];
     /** @type {Set<string>} */
     this.handledMethods = new Set();
@@ -50,6 +49,7 @@ class TypesGenerator {
     this.overridesToDocsClassMapping = options.overridesToDocsClassMapping || new Map();
     this.ignoreMissing = options.ignoreMissing || new Set();
     this.doNotExportClassNames = options.doNotExportClassNames || new Set();
+    this.includeExperimental = !!options.includeExperimental;
   }
 
   /**
@@ -135,6 +135,8 @@ class TypesGenerator {
       overrides,
       '',
       classes.map(classDesc => {
+        if (classDesc.experimental && !this.includeExperimental)
+          return '';
         return (classDesc.name === 'Playwright') ? this.classBody(classDesc, true) : this.classToString(classDesc);
       }).join('\n'),
       this.objectDefinitionsToString(overrides),
@@ -238,7 +240,8 @@ class TypesGenerator {
         type,
         params,
         eventName,
-        comment: value.comment
+        comment: value.comment,
+        experimental: value.experimental,
       });
     }
     return descriptions;
@@ -258,7 +261,9 @@ class TypesGenerator {
     }
     const indent = exportMembersAsGlobals ? '' : '  ';
     for (const method of ['on', 'once', 'addListener', 'removeListener', 'off']) {
-      for (const { eventName, params, comment } of eventDescriptions) {
+      for (const { eventName, params, comment, experimental } of eventDescriptions) {
+        if (experimental && !this.includeExperimental)
+          continue;
         if ((method === 'on' || method === 'addListener') && comment)
           parts.push(this.writeComment(comment, indent));
         else
@@ -273,7 +278,9 @@ class TypesGenerator {
         return '';
       if (member.alias === 'waitForEvent') {
         const parts = [];
-        for (const { eventName, params, comment, type } of eventDescriptions) {
+        for (const { eventName, params, comment, type, experimental } of eventDescriptions) {
+          if (experimental && !this.includeExperimental)
+            continue;
           if (comment)
             parts.push(this.writeComment(comment, indent));
           parts.push(`  ${member.alias}(event: '${eventName}', optionsOrPredicate?: { predicate?: (${params}) => boolean | Promise<boolean>, timeout?: number } | ((${params}) => boolean | Promise<boolean>)): Promise<${type}>;\n`);
@@ -286,8 +293,8 @@ class TypesGenerator {
       let type = this.stringifyComplexType(member.type, indent, classDesc.name, member.alias);
       if (member.async)
         type = `Promise<${type}>`;
-      // do this late, because we still want object definitions for overridden types
-      if (!this.hasOwnMethod(classDesc, member))
+      // do this late, because we still want object definitions for overridden and experimental types
+      if (!this.hasOwnMethod(classDesc, member) || (member.experimental && !this.includeExperimental))
         return '';
       if (exportMembersAsGlobals) {
         const memberType = member.kind === 'method' ? `${args} => ${type}` : type;
@@ -366,10 +373,21 @@ class TypesGenerator {
     return this.stringifySimpleType(type, indent, ...namespace);
   }
 
+  /**
+   * @param {Documentation.Member[]} properties
+   * @param {string} name
+   * @param {string=} indent
+   * @returns {string}
+   */
   stringifyObjectType(properties, name, indent = '') {
     const parts = [];
     parts.push(`{`);
-    parts.push(properties.map(member => `${this.memberJSDOC(member, indent + '  ')}${this.nameForProperty(member)}${this.argsFromMember(member, indent + '  ', name)}: ${this.stringifyComplexType(member.type, indent + '  ', name, member.name)};`).join('\n\n'));
+    parts.push(properties.filter(member => !member.experimental || this.includeExperimental).map(member => {
+      const comment = this.memberJSDOC(member, indent + '  ');
+      const args = this.argsFromMember(member, indent + '  ', name);
+      const type = this.stringifyComplexType(member.type, indent + '  ', name, member.name);
+      return `${comment}${this.nameForProperty(member)}${args}: ${type};`;
+    }).join('\n\n'));
     parts.push(indent + '}');
     return parts.join('\n');
   }
@@ -476,13 +494,120 @@ class TypesGenerator {
 }
 
 (async function () {
-  let hadChanges = false;
+  const coreDocumentation = parseApi(path.join(PROJECT_DIR, 'docs', 'src', 'api'));
+  const testDocumentation = parseApi(path.join(PROJECT_DIR, 'docs', 'src', 'test-api'), path.join(PROJECT_DIR, 'docs', 'src', 'api', 'params.md'));
+  const reporterDocumentation = parseApi(path.join(PROJECT_DIR, 'docs', 'src', 'test-reporter-api'));
+  const assertionClasses = new Set(['LocatorAssertions', 'PageAssertions', 'APIResponseAssertions', 'ScreenshotAssertions']);
+
+  /**
+   * @param {boolean} includeExperimental
+   * @returns {Promise<string>}
+   */
+  async function generateCoreTypes(includeExperimental) {
+    const documentation = coreDocumentation.clone();
+    const generator = new TypesGenerator({
+      documentation,
+      classNamesToGenerate: new Set(coreDocumentation.classesArray.map(cls => cls.name).filter(name => !assertionClasses.has(name) && name !== 'PlaywrightAssertions')),
+      includeExperimental,
+    });
+    let types = await generator.generateTypes(path.join(__dirname, 'overrides.d.ts'));
+    const namedDevices = Object.keys(devices).map(name => `  ${JSON.stringify(name)}: DeviceDescriptor;`).join('\n');
+    types += [
+      `type Devices = {`,
+      namedDevices,
+      `  [key: string]: DeviceDescriptor;`,
+      `}`,
+      ``,
+      `export interface ChromiumBrowserContext extends BrowserContext { }`,
+      `export interface ChromiumBrowser extends Browser { }`,
+      `export interface FirefoxBrowser extends Browser { }`,
+      `export interface WebKitBrowser extends Browser { }`,
+      `export interface ChromiumCoverage extends Coverage { }`,
+      ``,
+    ].join('\n');
+    for (const [key, value] of Object.entries(exported))
+      types = types.replace(new RegExp('\\b' + key + '\\b', 'g'), value);
+    return types;
+  }
+
+  /**
+   * @param {boolean} includeExperimental
+   * @returns {Promise<string>}
+   */
+  async function generateTestTypes(includeExperimental) {
+    const documentation = coreDocumentation.mergeWith(testDocumentation);
+    const generator = new TypesGenerator({
+      documentation,
+      classNamesToGenerate: new Set(['TestError', 'TestInfo', 'WorkerInfo', ...assertionClasses]),
+      overridesToDocsClassMapping: new Map([
+        ['TestType', 'Test'],
+        ['Config', 'TestConfig'],
+        ['FullConfig', 'TestConfig'],
+        ['Project', 'TestProject'],
+        ['PlaywrightWorkerOptions', 'TestOptions'],
+        ['PlaywrightTestOptions', 'TestOptions'],
+        ['PlaywrightWorkerArgs', 'Fixtures'],
+        ['PlaywrightTestArgs', 'Fixtures'],
+      ]),
+      ignoreMissing: new Set([
+        'FullConfig.version',
+        'FullConfig.rootDir',
+        'SuiteFunction',
+        'TestFunction',
+        'PlaywrightWorkerOptions.defaultBrowserType',
+        'PlaywrightWorkerArgs.playwright',
+        'Matchers',
+      ]),
+      doNotExportClassNames: new Set(assertionClasses),
+      includeExperimental,
+    });
+    return await generator.generateTypes(path.join(__dirname, 'overrides-test.d.ts'));
+  }
+
+  /**
+   * @param {boolean} includeExperimental
+   * @returns {Promise<string>}
+   */
+  async function generateReporterTypes(includeExperimental) {
+    const documentation = coreDocumentation.mergeWith(testDocumentation).mergeWith(reporterDocumentation);
+    const generator = new TypesGenerator({
+      documentation,
+      classNamesToGenerate: new Set(reporterDocumentation.classesArray.map(cls => cls.name)),
+      ignoreMissing: new Set(['FullResult']),
+      includeExperimental,
+    });
+    return await generator.generateTypes(path.join(__dirname, 'overrides-testReporter.d.ts'));
+  }
+
+  async function generateExperimentalTypes() {
+    const core = await generateCoreTypes(true);
+    const test = await generateTestTypes(true);
+    const reporter = await generateReporterTypes(true);
+    const lines = [
+      `declare module 'playwright-core' {`,
+      core,
+      `}`,
+      `declare module '@playwright/test' {`,
+      test,
+      `}`,
+      `declare module '@playwright/test/reporter' {`,
+      reporter,
+      `}`,
+    ].join('\n').split('\n');
+    const cutFrom = lines.findIndex(line => line.includes('BEGINGLOBAL'));
+    const cutTo = lines.findIndex(line => line.includes('ENDGLOBAL'));
+    lines.splice(cutFrom, cutTo - cutFrom + 1);
+    return lines.join('\n');
+  }
 
   /**
    * @param {string} filePath
    * @param {string} content
+   * @param {boolean} removeTrailingWhiteSpace
    */
-  function writeFile(filePath, content) {
+  function writeFile(filePath, content, removeTrailingWhiteSpace) {
+    if (removeTrailingWhiteSpace)
+      content = content.replace(/( +)\n/g, '\n'); // remove trailing whitespace
     if (os.platform() === 'win32')
       content = content.replace(/\r\n/g, '\n').replace(/\n/g, '\r\n');
     const existing = fs.readFileSync(filePath, 'utf8');
@@ -493,82 +618,18 @@ class TypesGenerator {
     fs.writeFileSync(filePath, content, 'utf8');
   }
 
+  let hadChanges = false;
   const coreTypesDir = path.join(PROJECT_DIR, 'packages', 'playwright-core', 'types');
   if (!fs.existsSync(coreTypesDir))
     fs.mkdirSync(coreTypesDir)
   const testTypesDir = path.join(PROJECT_DIR, 'packages', 'playwright-test', 'types');
   if (!fs.existsSync(testTypesDir))
     fs.mkdirSync(testTypesDir)
-  writeFile(path.join(coreTypesDir, 'protocol.d.ts'), fs.readFileSync(path.join(PROJECT_DIR, 'packages', 'playwright-core', 'src', 'server', 'chromium', 'protocol.d.ts'), 'utf8'));
-
-  const assertionClasses = new Set(['LocatorAssertions', 'PageAssertions', 'APIResponseAssertions', 'ScreenshotAssertions']);
-  const apiDocumentation = parseApi(path.join(PROJECT_DIR, 'docs', 'src', 'api'));
-  apiDocumentation.index();
-  const apiTypesGenerator = new TypesGenerator({
-    documentation: apiDocumentation,
-    classNamesToGenerate: new Set(apiDocumentation.classesArray.map(cls => cls.name).filter(name => !assertionClasses.has(name) && name !== 'PlaywrightAssertions')),
-  });
-  let apiTypes = await apiTypesGenerator.generateTypes(path.join(__dirname, 'overrides.d.ts'));
-  const namedDevices = Object.keys(devices).map(name => `  ${JSON.stringify(name)}: DeviceDescriptor;`).join('\n');
-  apiTypes += [
-    `type Devices = {`,
-    namedDevices,
-    `  [key: string]: DeviceDescriptor;`,
-    `}`,
-    ``,
-    `export interface ChromiumBrowserContext extends BrowserContext { }`,
-    `export interface ChromiumBrowser extends Browser { }`,
-    `export interface FirefoxBrowser extends Browser { }`,
-    `export interface WebKitBrowser extends Browser { }`,
-    `export interface ChromiumCoverage extends Coverage { }`,
-    ``,
-  ].join('\n');
-  for (const [key, value] of Object.entries(exported))
-    apiTypes = apiTypes.replace(new RegExp('\\b' + key + '\\b', 'g'), value);
-  apiTypes = apiTypes.replace(/( +)\n/g, '\n'); // remove trailing whitespace
-  writeFile(path.join(coreTypesDir, 'types.d.ts'), apiTypes);
-
-  const testOnlyDocumentation = parseApi(path.join(PROJECT_DIR, 'docs', 'src', 'test-api'), path.join(PROJECT_DIR, 'docs', 'src', 'api', 'params.md'));
-  const testDocumentation = apiDocumentation.mergeWith(testOnlyDocumentation);
-  const testTypesGenerator = new TypesGenerator({
-    documentation: testDocumentation,
-    classNamesToGenerate: new Set(['TestError', 'TestInfo', 'WorkerInfo', ...assertionClasses]),
-    overridesToDocsClassMapping: new Map([
-      ['TestType', 'Test'],
-      ['Config', 'TestConfig'],
-      ['FullConfig', 'TestConfig'],
-      ['Project', 'TestProject'],
-      ['PlaywrightWorkerOptions', 'TestOptions'],
-      ['PlaywrightTestOptions', 'TestOptions'],
-      ['PlaywrightWorkerArgs', 'Fixtures'],
-      ['PlaywrightTestArgs', 'Fixtures'],
-    ]),
-    ignoreMissing: new Set([
-      'FullConfig.version',
-      'FullConfig.rootDir',
-      'SuiteFunction',
-      'TestFunction',
-      'PlaywrightWorkerOptions.defaultBrowserType',
-      'PlaywrightWorkerArgs.playwright',
-      'Matchers',
-    ]),
-    doNotExportClassNames: new Set(assertionClasses),
-  });
-  let testTypes = await testTypesGenerator.generateTypes(path.join(__dirname, 'overrides-test.d.ts'));
-  testTypes = testTypes.replace(/( +)\n/g, '\n'); // remove trailing whitespace
-  writeFile(path.join(testTypesDir, 'test.d.ts'), testTypes);
-
-  const testReporterOnlyDocumentation = parseApi(path.join(PROJECT_DIR, 'docs', 'src', 'test-reporter-api'));
-  const testReporterDocumentation = testDocumentation.mergeWith(testReporterOnlyDocumentation);
-  const testReporterTypesGenerator = new TypesGenerator({
-    documentation: testReporterDocumentation,
-    classNamesToGenerate: new Set(testReporterOnlyDocumentation.classesArray.map(cls => cls.name)),
-    ignoreMissing: new Set(['FullResult']),
-  });
-  let testReporterTypes = await testReporterTypesGenerator.generateTypes(path.join(__dirname, 'overrides-testReporter.d.ts'));
-  testReporterTypes = testReporterTypes.replace(/( +)\n/g, '\n'); // remove trailing whitespace
-  writeFile(path.join(testTypesDir, 'testReporter.d.ts'), testReporterTypes);
-
+  writeFile(path.join(coreTypesDir, 'protocol.d.ts'), fs.readFileSync(path.join(PROJECT_DIR, 'packages', 'playwright-core', 'src', 'server', 'chromium', 'protocol.d.ts'), 'utf8'), false);
+  writeFile(path.join(coreTypesDir, 'types.d.ts'), await generateCoreTypes(false), true);
+  writeFile(path.join(testTypesDir, 'test.d.ts'), await generateTestTypes(false), true);
+  writeFile(path.join(testTypesDir, 'testReporter.d.ts'), await generateReporterTypes(false), true);
+  writeFile(path.join(PROJECT_DIR, 'tests', 'config', 'experimental.d.ts'), await generateExperimentalTypes(), true);
   process.exit(hadChanges && process.argv.includes('--check-clean') ? 1 : 0);
 })().catch(e => {
   console.error(e);

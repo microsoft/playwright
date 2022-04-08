@@ -201,7 +201,6 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> implements
         selector: locator._selector,
       }));
     }
-    copy.fonts = (options as any)._fonts;
     const result = await this._elementChannel.screenshot(copy);
     const buffer = Buffer.from(result.binary, 'base64');
     if (options.path) {

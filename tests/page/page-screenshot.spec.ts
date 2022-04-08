@@ -785,13 +785,13 @@ it.describe('page screenshot animations', () => {
     const noIconsScreenshot = await page.screenshot();
     // Make sure screenshot times out while webfont is stalled.
     const error = await page.screenshot({
-      _fonts: 'ready',
+      fonts: 'ready',
       timeout: 200,
-    } as any).catch(e => e);
+    }).catch(e => e);
     expect(error.message).toContain('waiting for fonts to load...');
     expect(error.message).toContain('Timeout 200ms exceeded');
     const [iconsScreenshot] = await Promise.all([
-      page.screenshot({ _fonts: 'ready' } as any),
+      page.screenshot({ fonts: 'ready' }),
       server.serveFile(serverRequest, serverResponse),
     ]);
     expect(iconsScreenshot).toMatchSnapshot('screenshot-web-font.png', {

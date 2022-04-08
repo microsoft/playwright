@@ -492,7 +492,6 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
         selector: locator._selector,
       }));
     }
-    copy.fonts = (options as any)._fonts;
     const result = await this._channel.screenshot(copy);
     const buffer = Buffer.from(result.binary, 'base64');
     if (options.path) {

@@ -960,6 +960,8 @@ An object which specifies clipping of the resulting image. Should have the follo
 When set to `"css"`, screenshot will have a single pixel per each css pixel on the page. For high-dpi devices, this will keep screenshots small. Using `"device"` option will produce a single pixel per each device pixel, so screenhots of high-dpi devices will be twice as large or even larger. Defaults to `"device"`.
 
 ## screenshot-option-fonts
+* langs: js
+* experimental
 - `fonts` <[ScreenshotFonts]<"ready"|"nowait">>
 
 When set to `"ready"`, screenshot will wait for [`document.fonts.ready`](https://developer.mozilla.org/en-US/docs/Web/API/FontFaceSet/ready) promise to resolve in all frames. Defaults to `"nowait"`.
@@ -975,6 +977,7 @@ When set to `"hide"`, screenshot will hide text caret. When set to `"initial"`, 
 - %%-screenshot-option-quality-%%
 - %%-screenshot-option-path-%%
 - %%-screenshot-option-scale-%%
+- %%-screenshot-option-fonts-%%
 - %%-screenshot-option-caret-%%
 - %%-screenshot-option-type-%%
 - %%-screenshot-option-mask-%%
