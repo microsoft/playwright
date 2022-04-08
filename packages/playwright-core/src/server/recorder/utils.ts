@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { Frame } from '../../frames';
+import type { Frame } from '../frames';
 import type * as actions from './recorderActions';
 
 export type MouseClickOptions = Parameters<Frame['click']>[2];

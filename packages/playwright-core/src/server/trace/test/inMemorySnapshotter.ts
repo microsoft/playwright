@@ -22,9 +22,9 @@ import { BaseSnapshotStorage } from '../../../../../trace-viewer/src/snapshotSto
 import type { SnapshotterBlob, SnapshotterDelegate } from '../recorder/snapshotter';
 import { Snapshotter } from '../recorder/snapshotter';
 import type { ElementHandle } from '../../dom';
-import type { HarTracerDelegate } from '../../supplements/har/harTracer';
-import { HarTracer } from '../../supplements/har/harTracer';
-import type * as har from '../../supplements/har/har';
+import type { HarTracerDelegate } from '../../har/harTracer';
+import { HarTracer } from '../../har/harTracer';
+import type * as har from '../../har/har';
 
 export class InMemorySnapshotter extends BaseSnapshotStorage implements SnapshotterDelegate, HarTracerDelegate {
   private _blobs = new Map<string, Buffer>();

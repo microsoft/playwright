@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import { escapeWithQuotes } from '../../../utils/isomorphic/stringUtils';
-import { type InjectedScript } from '../../injected/injectedScript';
-import { generateSelector } from '../../injected/selectorGenerator';
+import { escapeWithQuotes } from '../../utils/isomorphic/stringUtils';
+import { type InjectedScript } from './injectedScript';
+import { generateSelector } from './selectorGenerator';
 
 function createLocator(injectedScript: InjectedScript, initial: string, options?: { hasText?: string | RegExp }) {
   class Locator {

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import type { Point } from '../../../common/types';
-import type { SerializedError } from '../../../protocol/channels';
+import type { Point } from '../../common/types';
+import type { SerializedError } from '../../protocol/channels';
 
 export type Mode = 'inspecting' | 'recording' | 'none';
 

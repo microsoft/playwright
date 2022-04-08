@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { BrowserContextOptions } from '../../../..';
+import type { BrowserContextOptions } from '../../..';
 import type { LanguageGenerator, LanguageGeneratorOptions } from './language';
 import { sanitizeDeviceOptions, toSignalMap } from './language';
 import type { ActionInContext } from './codeGenerator';
@@ -22,8 +22,8 @@ import type { Action } from './recorderActions';
 import { actionTitle } from './recorderActions';
 import type { MouseClickOptions } from './utils';
 import { toModifiers } from './utils';
-import deviceDescriptors from '../../deviceDescriptors';
-import { escapeWithQuotes } from '../../../utils/isomorphic/stringUtils';
+import deviceDescriptors from '../deviceDescriptors';
+import { escapeWithQuotes } from '../../utils/isomorphic/stringUtils';
 
 export class JavaScriptLanguageGenerator implements LanguageGenerator {
   id: string;

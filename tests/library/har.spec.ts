@@ -21,7 +21,7 @@ import fs from 'fs';
 import http2 from 'http2';
 import type { BrowserContext, BrowserContextOptions } from 'playwright-core';
 import type { AddressInfo } from 'net';
-import type { Log } from '../../packages/playwright-core/src/server/supplements/har/har';
+import type { Log } from '../../packages/playwright-core/src/server/har/har';
 
 async function pageWithHar(contextFactory: (options?: BrowserContextOptions) => Promise<BrowserContext>, testInfo: any, outputPath: string = 'test.har') {
   const harPath = testInfo.outputPath(outputPath);

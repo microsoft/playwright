@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { Entry as HAREntry } from '../../supplements/har/har';
+import type { Entry as HAREntry } from '../../har/har';
 
 export type ResourceSnapshot = HAREntry;
 

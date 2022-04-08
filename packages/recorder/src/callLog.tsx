@@ -16,7 +16,7 @@
 
 import './callLog.css';
 import * as React from 'react';
-import type { CallLog } from '@playwright-core/server/supplements/recorder/recorderTypes';
+import type { CallLog } from '@playwright-core/server/recorder/recorderTypes';
 import { msToString } from '@web/uiUtils';
 
 export interface CallLogProps {

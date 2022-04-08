@@ -16,15 +16,15 @@
 
 import fs from 'fs';
 import path from 'path';
-import type { Page } from '../../page';
-import { ProgressController } from '../../progress';
+import type { Page } from '../page';
+import { ProgressController } from '../progress';
 import { EventEmitter } from 'events';
-import { serverSideCallMetadata } from '../../instrumentation';
+import { serverSideCallMetadata } from '../instrumentation';
 import type { CallLog, EventData, Mode, Source } from './recorderTypes';
-import { isUnderTest } from '../../../utils';
+import { isUnderTest } from '../../utils';
 import * as mime from 'mime';
-import { installAppIcon } from '../../chromium/crApp';
-import { findChromiumChannel } from '../../registry';
+import { installAppIcon } from '../chromium/crApp';
+import { findChromiumChannel } from '../registry';
 
 declare global {
   interface Window {
@@ -70,7 +70,7 @@ export class RecorderApp extends EventEmitter implements IRecorderApp {
     await this._page._setServerRequestInterceptor(async route => {
       if (route.request().url().startsWith('https://playwright/')) {
         const uri = route.request().url().substring('https://playwright/'.length);
-        const file = require.resolve('../../../webpack/recorder/' + uri);
+        const file = require.resolve('../../webpack/recorder/' + uri);
         const buffer = await fs.promises.readFile(file);
         await route.fulfill({
           status: 200,
@@ -99,7 +99,7 @@ export class RecorderApp extends EventEmitter implements IRecorderApp {
   static async open(sdkLanguage: string, headed: boolean): Promise<IRecorderApp> {
     if (process.env.PW_CODEGEN_NO_INSPECTOR)
       return new HeadlessRecorderApp();
-    const recorderPlaywright = (require('../../playwright').createPlaywright as typeof import('../../playwright').createPlaywright)('javascript', true);
+    const recorderPlaywright = (require('../playwright').createPlaywright as typeof import('../playwright').createPlaywright)('javascript', true);
     const args = [
       '--app=data:text/html,',
       '--window-size=600,600',

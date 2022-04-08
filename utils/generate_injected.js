@@ -25,8 +25,8 @@ const esbuild = require('esbuild');
 const injectedScripts = [
   path.join(ROOT, 'packages', 'playwright-core', 'src', 'server', 'injected', 'utilityScript.ts'),
   path.join(ROOT, 'packages', 'playwright-core', 'src', 'server', 'injected', 'injectedScript.ts'),
-  path.join(ROOT, 'packages', 'playwright-core', 'src', 'server', 'supplements', 'injected', 'consoleApi.ts'),
-  path.join(ROOT, 'packages', 'playwright-core', 'src', 'server', 'supplements', 'injected', 'recorder.ts'),
+  path.join(ROOT, 'packages', 'playwright-core', 'src', 'server', 'injected', 'consoleApi.ts'),
+  path.join(ROOT, 'packages', 'playwright-core', 'src', 'server', 'injected', 'recorder.ts'),
 ];
 
 (async () => {

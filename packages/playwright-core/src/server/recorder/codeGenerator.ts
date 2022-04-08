@@ -15,8 +15,8 @@
  */
 
 import { EventEmitter } from 'events';
-import type { BrowserContextOptions, LaunchOptions } from '../../../..';
-import type { Frame } from '../../frames';
+import type { BrowserContextOptions, LaunchOptions } from '../../..';
+import type { Frame } from '../frames';
 import type { LanguageGenerator, LanguageGeneratorOptions } from './language';
 import type { Action, Signal, FrameDescription } from './recorderActions';
 
