@@ -16,7 +16,7 @@
 
 import type * as dom from './dom';
 import * as utilityScriptSource from '../generated/utilityScriptSource';
-import { serializeAsCallArgument } from './common/utilityScriptSerializers';
+import { serializeAsCallArgument } from './isomorphic/utilityScriptSerializers';
 import { type UtilityScript } from './injected/utilityScript';
 import { SdkObject } from './instrumentation';
 import { ManualPromise } from '../utils/manualPromise';

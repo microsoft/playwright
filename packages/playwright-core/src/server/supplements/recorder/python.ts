@@ -22,7 +22,7 @@ import type { Action } from './recorderActions';
 import { actionTitle } from './recorderActions';
 import type { MouseClickOptions } from './utils';
 import { toModifiers } from './utils';
-import { escapeWithQuotes } from '../../../utils/stringUtils';
+import { escapeWithQuotes } from '../../../utils/isomorphic/stringUtils';
 import deviceDescriptors from '../../deviceDescriptors';
 
 export class PythonLanguageGenerator implements LanguageGenerator {

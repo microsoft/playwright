@@ -24,7 +24,7 @@ import { ElementHandle } from './elementHandle';
 import type { Frame } from './frame';
 import type { FilePayload, FrameExpectOptions, Rect, SelectOption, SelectOptionOptions, TimeoutOptions } from './types';
 import { parseResult, serializeArgument } from './jsHandle';
-import { escapeWithQuotes } from '../utils/stringUtils';
+import { escapeWithQuotes } from '../utils/isomorphic/stringUtils';
 
 export class Locator implements api.Locator {
   _frame: Frame;

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import type { CSSComplexSelector, CSSSimpleSelector, CSSComplexSelectorList, CSSFunctionArgument } from '../common/cssParser';
-import { customCSSNames } from '../common/selectorParser';
+import type { CSSComplexSelector, CSSSimpleSelector, CSSComplexSelectorList, CSSFunctionArgument } from '../isomorphic/cssParser';
+import { customCSSNames } from '../isomorphic/selectorParser';
 
 export type QueryContext = {
   scope: Element | Document;
