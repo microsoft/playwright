@@ -55,7 +55,7 @@ export class Android extends ChannelOwner<channels.AndroidChannel> implements ap
 
 export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel> implements api.AndroidDevice {
   readonly _timeoutSettings: TimeoutSettings;
-  private _webViews = new Map<number, AndroidWebView>();
+  private _webViews = new Map<string, AndroidWebView>();
 
   static from(androidDevice: channels.AndroidDeviceChannel): AndroidDevice {
     return (androidDevice as any)._object;
@@ -68,18 +68,18 @@ export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel> i
     this.input = new AndroidInput(this);
     this._timeoutSettings = new TimeoutSettings((parent as Android)._timeoutSettings);
     this._channel.on('webViewAdded', ({ webView }) => this._onWebViewAdded(webView));
-    this._channel.on('webViewRemoved', ({ pid }) => this._onWebViewRemoved(pid));
+    this._channel.on('webViewRemoved', ({ socketName }) => this._onWebViewRemoved(socketName));
   }
 
   private _onWebViewAdded(webView: channels.AndroidWebView) {
     const view = new AndroidWebView(this, webView);
-    this._webViews.set(webView.pid, view);
+    this._webViews.set(webView.socketName, view);
     this.emit(Events.AndroidDevice.WebView, view);
   }
 
-  private _onWebViewRemoved(pid: number) {
-    const view = this._webViews.get(pid);
-    this._webViews.delete(pid);
+  private _onWebViewRemoved(socketName: string) {
+    const view = this._webViews.get(socketName);
+    this._webViews.delete(socketName);
     if (view)
       view.emit(Events.AndroidWebView.Close);
   }
@@ -101,14 +101,18 @@ export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel> i
     return [...this._webViews.values()];
   }
 
-  async webView(selector: { pkg: string }, options?: types.TimeoutOptions): Promise<AndroidWebView> {
-    const webView = [...this._webViews.values()].find(v => v.pkg() === selector.pkg);
+  async webView(selector: { pkg?: string; socketName?: string; }, options?: types.TimeoutOptions): Promise<AndroidWebView> {
+    const predicate = (v: AndroidWebView) => {
+      if (selector.pkg)
+        return v.pkg() === selector.pkg;
+      if (selector.socketName)
+        return v._socketName() === selector.socketName;
+      return false;
+    };
+    const webView = [...this._webViews.values()].find(predicate);
     if (webView)
       return webView;
-    return this.waitForEvent('webview', {
-      ...options,
-      predicate: (view: AndroidWebView) => view.pkg() === selector.pkg
-    });
+    return this.waitForEvent('webview', { ...options, predicate });
   }
 
   async wait(selector: api.AndroidSelector, options?: { state?: 'gone' } & types.TimeoutOptions) {
@@ -334,6 +338,10 @@ export class AndroidWebView extends EventEmitter implements api.AndroidWebView {
     return this._data.pkg;
   }
 
+  _socketName(): string {
+    return this._data.socketName;
+  }
+
   async page(): Promise<Page> {
     if (!this._pagePromise)
       this._pagePromise = this._fetchPage();
@@ -341,7 +349,7 @@ export class AndroidWebView extends EventEmitter implements api.AndroidWebView {
   }
 
   private async _fetchPage(): Promise<Page> {
-    const { context } = await this._device._channel.connectToWebView({ pid: this._data.pid });
+    const { context } = await this._device._channel.connectToWebView({ socketName: this._data.socketName });
     return BrowserContext.from(context).pages()[0];
   }
 }

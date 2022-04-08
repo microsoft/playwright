@@ -3790,7 +3790,7 @@ export type AndroidDeviceWebViewAddedEvent = {
   webView: AndroidWebView,
 };
 export type AndroidDeviceWebViewRemovedEvent = {
-  pid: number,
+  socketName: string,
 };
 export type AndroidDeviceWaitParams = {
   selector: AndroidSelector,
@@ -4107,7 +4107,7 @@ export type AndroidDeviceSetDefaultTimeoutNoReplyOptions = {
 };
 export type AndroidDeviceSetDefaultTimeoutNoReplyResult = void;
 export type AndroidDeviceConnectToWebViewParams = {
-  pid: number,
+  socketName: string,
 };
 export type AndroidDeviceConnectToWebViewOptions = {
 
@@ -4127,6 +4127,7 @@ export interface AndroidDeviceEvents {
 export type AndroidWebView = {
   pid: number,
   pkg: string,
+  socketName: string,
 };
 
 export type AndroidSelector = {

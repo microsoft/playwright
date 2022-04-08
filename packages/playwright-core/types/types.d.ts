@@ -11727,9 +11727,14 @@ export interface AndroidDevice {
    */
   webView(selector: {
     /**
-     * Package identifier.
+     * Optional Package identifier.
      */
-    pkg: string;
+    pkg?: string;
+
+    /**
+     * Optional webview socket name.
+     */
+    socketName?: string;
   }, options?: {
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
