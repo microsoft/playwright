@@ -22,14 +22,14 @@ import type { Headers, RemoteAddr, SecurityDetails, WaitForEventOptions } from '
 import fs from 'fs';
 import * as mime from 'mime';
 import { isString, headersObjectToArray } from '../utils';
-import { ManualPromise } from '../utils';
+import { ManualPromise } from '../utils/manualPromise';
 import { Events } from './events';
 import type { Page } from './page';
 import { Waiter } from './waiter';
 import type * as api from '../../types/types';
 import type { HeadersArray, URLMatch } from '../common/types';
 import { urlMatches } from './clientHelper';
-import { MultiMap } from '../utils';
+import { MultiMap } from '../utils/multimap';
 import { APIResponse } from './fetch';
 
 export type NetworkCookie = {

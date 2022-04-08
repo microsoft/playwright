@@ -18,8 +18,8 @@
 import * as dialog from '../dialog';
 import * as dom from '../dom';
 import type * as frames from '../frames';
-import type { RegisteredListener } from '../../utils';
-import { eventsHelper } from '../../utils';
+import type { RegisteredListener } from '../../utils/eventsHelper';
+import { eventsHelper } from '../../utils/eventsHelper';
 import { assert } from '../../utils';
 import type { PageBinding, PageDelegate } from '../page';
 import { Page, Worker } from '../page';
@@ -34,7 +34,7 @@ import type { Protocol } from './protocol';
 import type { Progress } from '../progress';
 import { splitErrorMessage } from '../../utils/stackTrace';
 import { debugLogger } from '../../common/debugLogger';
-import { ManualPromise } from '../../utils';
+import { ManualPromise } from '../../utils/manualPromise';
 
 export const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 

@@ -24,7 +24,7 @@ import type { MouseClickOptions } from './utils';
 import { toModifiers } from './utils';
 import deviceDescriptors from '../../deviceDescriptors';
 import { JavaScriptFormatter } from './javascript';
-import { escapeWithQuotes } from '../../../utils/stringUtils';
+import { escapeWithQuotes } from '../../../utils/isomorphic/stringUtils';
 
 export class JavaLanguageGenerator implements LanguageGenerator {
   id = 'java';

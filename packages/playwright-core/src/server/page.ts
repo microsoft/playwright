@@ -31,7 +31,7 @@ import { FileChooser } from './fileChooser';
 import type { Progress } from './progress';
 import { ProgressController } from './progress';
 import { assert, isError } from '../utils';
-import { ManualPromise } from '../utils';
+import { ManualPromise } from '../utils/manualPromise';
 import { debugLogger } from '../common/debugLogger';
 import type { ImageComparatorOptions } from '../utils/comparators';
 import { getComparator } from '../utils/comparators';
@@ -40,8 +40,8 @@ import type { CallMetadata } from './instrumentation';
 import { SdkObject } from './instrumentation';
 import type { Artifact } from './artifact';
 import type { TimeoutOptions } from '../common/types';
-import type { ParsedSelector } from './common/selectorParser';
-import { isInvalidSelectorError } from './common/selectorParser';
+import type { ParsedSelector } from './isomorphic/selectorParser';
+import { isInvalidSelectorError } from './isomorphic/selectorParser';
 
 export interface PageDelegate {
   readonly rawMouse: input.RawMouse;

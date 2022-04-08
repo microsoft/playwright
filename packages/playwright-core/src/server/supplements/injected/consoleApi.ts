@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { escapeWithQuotes } from '../../../utils/stringUtils';
+import { escapeWithQuotes } from '../../../utils/isomorphic/stringUtils';
 import { type InjectedScript } from '../../injected/injectedScript';
 import { generateSelector } from '../../injected/selectorGenerator';
 

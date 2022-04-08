@@ -21,7 +21,7 @@ import type * as types from '../types';
 import type { Protocol } from './protocol';
 import type { WKSession } from './wkConnection';
 import { assert, headersObjectToArray, headersArrayToObject } from '../../utils';
-import { ManualPromise } from '../../utils';
+import { ManualPromise } from '../../utils/manualPromise';
 
 const errorReasons: { [reason: string]: Protocol.Network.ResourceErrorType } = {
   'aborted': 'Cancellation',

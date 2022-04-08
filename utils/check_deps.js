@@ -138,7 +138,9 @@ async function innerCheckDeps(root, checkDepsFile, checkPackageJson) {
 
   function allowImport(from, to) {
     const fromDirectory = path.dirname(from);
-    const toDirectory = path.dirname(to);
+    const toDirectory = isDirectory(to) ? to : path.dirname(to);
+    if (to === toDirectory)
+      to = path.join(to, 'index.ts');
     if (fromDirectory === toDirectory)
       return true;
 
@@ -217,3 +219,7 @@ checkDeps().catch(e => {
   console.error(e && e.stack ? e.stack : e);
   process.exit(1);
 });
+
+function isDirectory(dir) {
+  return fs.existsSync(dir) && fs.statSync(dir).isDirectory();
+}
