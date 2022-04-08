@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import type { CallLog, Mode, Source } from '@playwright-core/server/supplements/recorder/recorderTypes';
+import type { CallLog, Mode, Source } from '@playwright-core/server/recorder/recorderTypes';
 import * as React from 'react';
 import { Recorder } from './recorder';
 import './recorder.css';

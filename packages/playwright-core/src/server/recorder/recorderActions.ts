@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { Point } from '../../../common/types';
+import type { Point } from '../../common/types';
 
 export type ActionName =
   'check' |

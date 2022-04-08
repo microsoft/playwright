@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import type { CallLog, Mode, Source } from '@playwright-core/server/supplements/recorder/recorderTypes';
+import type { CallLog, Mode, Source } from '@playwright-core/server/recorder/recorderTypes';
 import { Source as SourceView } from '@web/components/source';
 import { SplitView } from '@web/components/splitView';
 import { Toolbar } from '@web/components/toolbar';

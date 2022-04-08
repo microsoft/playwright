@@ -208,7 +208,6 @@ for (const pkg of workspace.packages()) {
       '--extensions', '.ts',
       '--out-dir', quotePath(path.join(pkg.path, 'lib')),
       '--ignore', '"packages/playwright-core/src/server/injected/**/*"',
-      '--ignore', '"packages/playwright-core/src/server/supplements/injected/**/*"',
       quotePath(path.join(pkg.path, 'src'))],
     shell: true,
   });
@@ -219,7 +218,6 @@ onChanges.push({
   committed: false,
   inputs: [
     'packages/playwright-core/src/server/injected/**',
-    'packages/playwright-core/src/supplements/injected/**',
     'utils/generate_injected.js',
   ],
   script: 'utils/generate_injected.js',

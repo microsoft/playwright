@@ -33,10 +33,10 @@ import path from 'path';
 import fs from 'fs';
 import type { CallMetadata } from './instrumentation';
 import { serverSideCallMetadata, SdkObject } from './instrumentation';
-import { Debugger } from './supplements/debugger';
+import { Debugger } from './debugger';
 import { Tracing } from './trace/recorder/tracing';
-import { HarRecorder } from './supplements/har/harRecorder';
-import { RecorderSupplement } from './supplements/recorderSupplement';
+import { HarRecorder } from './har/harRecorder';
+import { Recorder } from './recorder';
 import * as consoleApiSource from '../generated/consoleApiSource';
 import { BrowserContextAPIRequestContext } from './fetch';
 
@@ -112,13 +112,13 @@ export abstract class BrowserContext extends SdkObject {
 
     // When PWDEBUG=1, show inspector for each context.
     if (debugMode() === 'inspector')
-      await RecorderSupplement.show(this, { pauseOnNextStatement: true });
+      await Recorder.show(this, { pauseOnNextStatement: true });
 
     // When paused, show inspector.
     if (contextDebugger.isPaused())
-      RecorderSupplement.showInspector(this);
+      Recorder.showInspector(this);
     contextDebugger.on(Debugger.Events.PausedStateChanged, () => {
-      RecorderSupplement.showInspector(this);
+      Recorder.showInspector(this);
     });
 
     if (debugMode() === 'console')

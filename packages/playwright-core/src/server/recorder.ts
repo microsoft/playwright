@@ -16,35 +16,35 @@
 
 import * as fs from 'fs';
 import type * as actions from './recorder/recorderActions';
-import type * as channels from '../../protocol/channels';
+import type * as channels from '../protocol/channels';
 import type { ActionInContext } from './recorder/codeGenerator';
 import { CodeGenerator } from './recorder/codeGenerator';
 import { toClickOptions, toModifiers } from './recorder/utils';
-import { Page } from '../page';
-import { Frame } from '../frames';
-import { BrowserContext } from '../browserContext';
+import { Page } from './page';
+import { Frame } from './frames';
+import { BrowserContext } from './browserContext';
 import { JavaLanguageGenerator } from './recorder/java';
 import { JavaScriptLanguageGenerator } from './recorder/javascript';
 import { CSharpLanguageGenerator } from './recorder/csharp';
 import { PythonLanguageGenerator } from './recorder/python';
-import * as recorderSource from '../../generated/recorderSource';
-import * as consoleApiSource from '../../generated/consoleApiSource';
+import * as recorderSource from '../generated/recorderSource';
+import * as consoleApiSource from '../generated/consoleApiSource';
 import type { IRecorderApp } from './recorder/recorderApp';
 import { RecorderApp } from './recorder/recorderApp';
-import type { CallMetadata, InstrumentationListener, SdkObject } from '../instrumentation';
-import type { Point } from '../../common/types';
+import type { CallMetadata, InstrumentationListener, SdkObject } from './instrumentation';
+import type { Point } from '../common/types';
 import type { CallLog, CallLogStatus, EventData, Mode, Source, UIState } from './recorder/recorderTypes';
-import { createGuid, monotonicTime } from '../../utils';
+import { createGuid, monotonicTime } from '../utils';
 import { metadataToCallLog } from './recorder/recorderUtils';
 import { Debugger } from './debugger';
 import { EventEmitter } from 'events';
-import { raceAgainstTimeout } from '../../utils/timeoutRunner';
+import { raceAgainstTimeout } from '../utils/timeoutRunner';
 
 type BindingSource = { frame: Frame, page: Page };
 
 const symbol = Symbol('RecorderSupplement');
 
-export class RecorderSupplement implements InstrumentationListener {
+export class Recorder implements InstrumentationListener {
   private _context: BrowserContext;
   private _mode: Mode;
   private _highlightedSelector = '';
@@ -57,13 +57,13 @@ export class RecorderSupplement implements InstrumentationListener {
   private _contextRecorder: ContextRecorder;
 
   static showInspector(context: BrowserContext) {
-    RecorderSupplement.show(context, {}).catch(() => {});
+    Recorder.show(context, {}).catch(() => {});
   }
 
-  static show(context: BrowserContext, params: channels.BrowserContextRecorderSupplementEnableParams = {}): Promise<RecorderSupplement> {
-    let recorderPromise = (context as any)[symbol] as Promise<RecorderSupplement>;
+  static show(context: BrowserContext, params: channels.BrowserContextRecorderSupplementEnableParams = {}): Promise<Recorder> {
+    let recorderPromise = (context as any)[symbol] as Promise<Recorder>;
     if (!recorderPromise) {
-      const recorder = new RecorderSupplement(context, params);
+      const recorder = new Recorder(context, params);
       recorderPromise = recorder.install().then(() => recorder);
       (context as any)[symbol] = recorderPromise;
     }
