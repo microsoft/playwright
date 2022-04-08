@@ -133,9 +133,9 @@ class Registry {
         this._address = new URL(`http://localhost:${this._server.address().port}`);
         // We now have an address to make tarball paths fully qualified.
         for (const [,[metadata]] of this._packageMeta.entries()) {
-          for (const [,version] of Object.entries(metadata.versions)) {
+          for (const [,version] of Object.entries(metadata.versions))
             version.tarball = this._address + version.tarball;
-          }
+
         }
         res();
       });
