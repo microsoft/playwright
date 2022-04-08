@@ -3,6 +3,10 @@ source ./initialize_test.sh && initialize_test "$@"
 
 npm_i playwright-core
 OUTPUT=$(npm_i --foreground-script playwright-webkit)
+if [[ "${OUTPUT}" == *'To avoid unexpected behavior, please install your dependencies first'* ]]; then
+  echo "ERROR: should not warn user about global installation"
+  exit 1
+fi
 if [[ "${OUTPUT}" == *"chromium"* ]]; then
   echo "ERROR: should not download chromium"
   exit 1

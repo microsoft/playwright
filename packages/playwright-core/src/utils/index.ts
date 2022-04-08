@@ -212,3 +212,5 @@ export function streamToString(stream: stream.Readable): Promise<string> {
     stream.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')));
   });
 }
+
+export const isLikelyNpxGlobal = () => process.argv.length >= 2 && process.argv[1].includes('_npx');

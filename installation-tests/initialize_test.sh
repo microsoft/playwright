@@ -58,6 +58,7 @@ function setup_env_variables() {
   export PLAYWRIGHT_FIREFOX_TGZ="${PWD}/output/playwright-firefox.tgz"
   export PLAYWRIGHT_TEST_TGZ="${PWD}/output/playwright-test.tgz"
   PLAYWRIGHT_CHECKOUT="${PWD}/.."
+  export PLAYWRIGHT_VERSION_UNDER_TEST="$(node ${PLAYWRIGHT_CHECKOUT}/utils/workspace.js --get-version)"
 }
 
 function clean_test_root() {
@@ -66,7 +67,8 @@ function clean_test_root() {
 }
 
 function initialize_test {
-  trap "report_test_result;cd $(pwd -P)" EXIT
+  TEST_TMP_NPM_SCRATCH_SPACE="$(mktemp -d)";
+  trap "report_test_result; kill %1; rm -rf $TEST_TMP_NPM_SCRATCH_SPACE; cd $(pwd -P);" EXIT
   cd "$(dirname $0)"
 
   # cleanup environment
@@ -79,11 +81,9 @@ function initialize_test {
   TEST_FILE=$(basename $0)
   TEST_NAME=$(basename ${0%%.sh})
 
-  # Check if test tries to install some playwright-family package
-  # fron NPM registry.
+  # Check if test tries to install using npm directly
   if grep 'npm i.*playwright' "$0" 2>&1 >/dev/null; then
-    # If it does, this is an error: we should always install local packages using
-    # the `npm_i` script.
+    # If it does, this is an error: you will miss output
     cecho "RED" "ERROR: test tries to install playwright-family package from NPM registry!"
     cecho "RED" "       Do not use NPM to install playwright packages!"
     cecho "RED" "       Instead, use 'npm_i' command to install local package"
@@ -117,7 +117,13 @@ function initialize_test {
   cp "${SCRIPTS_PATH}/fixture-scripts/"* .
   export PATH="${SCRIPTS_PATH}/bin:${PATH}"
 
+  # Start up our local registry and configure npm to use it
+  local-playwright-registry start &
+  export npm_config_prefix="$TEST_TMP_NPM_SCRATCH_SPACE/npm_prefix"
+  export npm_config_cache="$TEST_TMP_NPM_SCRATCH_SPACE/npm_cache"
+  export npm_config_registry="$(local-playwright-registry wait-for-ready)"
+  export EXPECTED_NODE_MODULES_PARENT="$(pwd -P)"
+
   # Enable bash lines logging.
   set -x
 }
-

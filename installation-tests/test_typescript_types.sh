@@ -22,8 +22,8 @@ for PKG_NAME in "playwright" \
                 "playwright-webkit"
 do
   echo "Checking types of ${PKG_NAME}"
-  echo "import { Page } from '${PKG_NAME}';" > "${PKG_NAME}.ts" && npx -p typescript@3.7.5 tsc "${PKG_NAME}.ts"
+  echo "import { Page } from '${PKG_NAME}';" > "${PKG_NAME}.ts" && npx --yes -p typescript@3.7.5 tsc "${PKG_NAME}.ts"
 done;
 
 echo "Checking types of @playwright/test"
-echo npx -p typescript@3.7.5 tsc "playwright-test-types.ts"
+echo npx --yes -p typescript@3.7.5 tsc "playwright-test-types.ts"

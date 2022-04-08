@@ -14,4 +14,3 @@ PLAYWRIGHT_BROWSERS_PATH="${BROWSERS}" npm_i playwright
 # Note: the flag `--unahdnled-rejections=strict` will force node to terminate in case
 # of UnhandledPromiseRejection.
 PLAYWRIGHT_BROWSERS_PATH="${BROWSERS}" node --unhandled-rejections=strict node_modules/playwright/install.js
-

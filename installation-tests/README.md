@@ -19,3 +19,6 @@ To run all tests:
 ```
 
 To install local builds of `playwright` packages in tests, do `npm_i playwright`.
+
+Each test run will get its own npm state. You can use `local-playwright-registry <package>` to
+ensure it was installed as part of the test run, and that it was a local copy.
