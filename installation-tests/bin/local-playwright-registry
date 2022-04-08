@@ -30,8 +30,6 @@ const https = require('https');
 
 // WORK_DIR should be a local directory the Registry can work in through its lifetime. It will not be removed automatically.
 const WORK_DIR = path.join(process.cwd(), '.playwright-registry');
-// PID_FILE is the PID of this server process so it can be killed after each test run.
-const PID_FILE = path.join(WORK_DIR, 'registry.pid');
 // ACCESS_LOGS records which packages have been served locally vs. proxied to the official npm registry.
 const ACCESS_LOGS = path.join(WORK_DIR, 'access.log');
 // REGISTRY_URL_FILE is the URL to us to connect to the registy. It is allocated dynamically and shows up on disk only once the packages are actually available for download.
@@ -50,7 +48,6 @@ class Registry {
 
   async init() {
     await fs.promises.mkdir(this._objectsDir, { recursive: true });
-    await fs.promises.writeFile(PID_FILE, `${process.pid}`);
     await fs.promises.writeFile(ACCESS_LOGS, '');
     this._log = msg => fs.appendFileSync(ACCESS_LOGS, `${msg}\n`);
 
@@ -209,12 +206,6 @@ class Registry {
     process.exit(0);
   }
 
-  static async kill() {
-    const pid = await fs.promises.readFile(PID_FILE, 'utf8');
-    process.kill(Number.parseInt(pid, 10));
-    await fs.promises.unlink(PID_FILE).catch(() => { });
-  }
-
   static async assertLocalPkg(pkg) {
     const logs = await fs.promises.readFile(ACCESS_LOGS, 'utf8');
     const lines = logs.split(`\n`);
@@ -263,12 +254,10 @@ Commands:
     - wait-for-ready.............: blocks waiting for the server to print
                                    that it's actually ready and serving the
                                    packages you published!
-    - kill.......................: shutdown the server (does NOT clean up files)
     - assert-downloaded <package>: confirms that <package> was served locally,
                                    AND never proxied to the official registry.`);
   },
   'start': Registry.registryFactory,
-  'kill': Registry.kill,
   'wait-for-ready': Registry.waitForReady,
   'assert-served-from-local-tgz': ([pkg]) => Registry.assertLocalPkg(pkg),
 };

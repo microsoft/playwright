@@ -68,7 +68,7 @@ function clean_test_root() {
 
 function initialize_test {
   TEST_TMP_NPM_SCRATCH_SPACE="$(mktemp -d)";
-  trap "report_test_result; local-playwright-registry kill; rm -rf $TEST_TMP_NPM_SCRATCH_SPACE; cd $(pwd -P)" EXIT
+  trap "report_test_result; kill %1; rm -rf $TEST_TMP_NPM_SCRATCH_SPACE; cd $(pwd -P);" EXIT
   cd "$(dirname $0)"
 
   # cleanup environment
