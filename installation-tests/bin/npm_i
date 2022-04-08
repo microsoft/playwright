@@ -37,7 +37,7 @@ SCRIPT=$(cat <<EOF
   console.log('Verifying local installation of:', packages.join(', '));
 
   for (const package of packages) {
-    const expectedDir = path.join(process.cwd(), 'node_modules');
+    const expectedDir = process.env.EXPECTED_NODE_MODULES_PARENT;
     const packageJsonPath = path.join(path.dirname(require.resolve(package)), 'package.json');
     if (!packageJsonPath.startsWith(expectedDir)) {
       console.error('Local resolution of package failed. Package:', package, 'Expected:', expectedDir, 'Got:', path.dirname(packageJsonPath));

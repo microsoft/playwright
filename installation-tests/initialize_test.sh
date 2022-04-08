@@ -122,6 +122,7 @@ function initialize_test {
   export npm_config_prefix="$TEST_TMP_NPM_SCRATCH_SPACE/npm_prefix"
   export npm_config_cache="$TEST_TMP_NPM_SCRATCH_SPACE/npm_cache"
   export npm_config_registry="$(local-playwright-registry wait-for-ready)"
+  export EXPECTED_NODE_MODULES_PARENT="$(pwd -P)"
 
   # Enable bash lines logging.
   set -x
