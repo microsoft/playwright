@@ -253,7 +253,8 @@ export class GridServer {
         return true;
       }
 
-      if (request.url!.startsWith('/registerAgent') || request.url!.startsWith('/registerWorker')) {
+      if (request.url!.startsWith(this._securePath('/registerAgent'))
+       || request.url!.startsWith(this._securePath('/registerWorker'))) {
         const params = new URL('http://localhost/' + request.url).searchParams;
         const agentId = params.get('agentId');
         return !!agentId && this._agents.has(agentId);
@@ -285,7 +286,7 @@ export class GridServer {
         return;
       }
 
-      if (request.url?.startsWith('/registerAgent')) {
+      if (request.url?.startsWith(this._securePath('/registerAgent'))) {
         const params = new URL('http://localhost/' + request.url).searchParams;
         if (params.get('pwVersion') !== this._pwVersion) {
           ws.close(WSErrors.AGENT_PLAYWRIGHT_VERSION_MISMATCH.code, WSErrors.AGENT_PLAYWRIGHT_VERSION_MISMATCH.reason);
@@ -302,7 +303,7 @@ export class GridServer {
         return;
       }
 
-      if (request.url?.startsWith('/registerWorker')) {
+      if (request.url?.startsWith(this._securePath('/registerWorker'))) {
         const params = new URL('http://localhost/' + request.url).searchParams;
         const agentId = params.get('agentId')!;
         const workerId = params.get('workerId')!;
@@ -332,7 +333,7 @@ export class GridServer {
     const initPromise = Promise.resolve()
         .then(() => this._factory.launch({
           agentId: agent.agentId,
-          gridURL: this.urlPrefix(),
+          gridURL: this.gridURL(),
           playwrightVersion: getPlaywrightVersion(),
         })).then(() => {
           this._log('created');
@@ -386,8 +387,8 @@ export class GridServer {
     await this._server.start(port);
   }
 
-  urlPrefix(): string {
-    return this._server.urlPrefix() + this._securePath('/');
+  gridURL(): string {
+    return this._server.urlPrefix() + this._securePath('');
   }
 
   async stop() {
