@@ -285,9 +285,8 @@ Documentation.Member = class {
    * @param {!Array<!Documentation.Member>} argsArray
    * @param {MarkdownNode[]=} spec
    * @param {boolean=} required
-   * @param {string[]=} templates
    */
-  constructor(kind, langs, name, type, argsArray, spec = undefined, required = true, templates = []) {
+  constructor(kind, langs, name, type, argsArray, spec = undefined, required = true) {
     this.kind = kind;
     this.langs = langs;
     this.name = name;
