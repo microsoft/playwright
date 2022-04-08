@@ -19,7 +19,7 @@ loadEnv({ path: path.join(__dirname, '..', '..', '.env') });
 
 import type { Config, PlaywrightTestOptions, PlaywrightWorkerOptions } from '@playwright/test';
 import * as path from 'path';
-import { CoverageWorkerOptions } from '../config/coverageFixtures';
+import type { CoverageWorkerOptions } from '../config/coverageFixtures';
 
 process.env.PWPAGE_IMPL = 'electron';
 

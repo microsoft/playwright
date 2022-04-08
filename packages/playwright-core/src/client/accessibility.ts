@@ -15,9 +15,9 @@
  * limitations under the License.
  */
 
-import * as channels from '../protocol/channels';
-import { ElementHandle } from './elementHandle';
-import * as api from '../../types/types';
+import type * as channels from '../protocol/channels';
+import type { ElementHandle } from './elementHandle';
+import type * as api from '../../types/types';
 
 type SerializedAXNode = Omit<channels.AXNode, 'valueString' | 'valueNumber' | 'children' | 'checked' | 'pressed'> & {
   value?: string|number,

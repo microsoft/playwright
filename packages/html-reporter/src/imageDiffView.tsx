@@ -17,7 +17,8 @@
 import type { TestAttachment } from '@playwright-test/reporters/html';
 import * as React from 'react';
 import { AttachmentLink } from './links';
-import { TabbedPane, TabbedPaneTab } from './tabbedPane';
+import type { TabbedPaneTab } from './tabbedPane';
+import { TabbedPane } from './tabbedPane';
 import './imageDiffView.css';
 import './tabbedPane.css';
 

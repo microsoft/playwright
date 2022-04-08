@@ -44,19 +44,6 @@ test('soft expects should work', async ({ runInlineTest }) => {
   expect(stripAnsi(result.output)).toContain('woof-woof');
 });
 
-test('should fail when passed in function', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    'a.spec.ts': `
-      const { test } = pwt;
-      test('should work', () => {
-        test.expect.soft(() => 1+1).toBe(2);
-      });
-    `
-  });
-  expect(result.exitCode).toBe(1);
-  expect(stripAnsi(result.output)).toContain('Cannot accept function as a first argument; did you mean to use `expect.poll()`?');
-});
-
 test('should report a mixture of soft and non-soft errors', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.ts': `

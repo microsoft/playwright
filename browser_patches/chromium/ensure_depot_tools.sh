@@ -15,7 +15,7 @@ function ensure_depot_tools() {
   # Install depot_tools if they are not in system, and modify $PATH
   # to include depot_tools
   if ! command -v autoninja >/dev/null; then
-    if [[ $(uname) == "MINGW"* ]]; then
+    if [[ $(uname) == "MINGW"* || "$(uname)" == MSYS* ]]; then
       # NOTE: as of Feb 8, 2021, windows requires manual and separate
       # installation of depot_tools.
       echo "ERROR: cannot automatically install depot_tools on windows. Please, install manually"

@@ -22,6 +22,7 @@ jobs:
           CURRENT_DATE=$(date +%Y-%b-%d)
           BRANCH_NAME="roll-chromium/${CURRENT_DATE}"
           echo "::set-output name=BRANCH_NAME::$BRANCH_NAME"
+          echo "::set-output name=CURRENT_DATE::$CURRENT_DATE"
           git config --global user.name github-actions
           git config --global user.email 41898282+github-actions[bot]@users.noreply.github.com
           git checkout -b "$BRANCH_NAME"
@@ -38,4 +39,5 @@ jobs:
               repo: 'playwright',
               head: 'microsoft:${{ steps.prepare-branch.outputs.BRANCH_NAME }}',
               base: 'main',
+              title: 'browser(chromium): roll to ${{ steps.prepare-branch.outputs.CURRENT_DATE }}',
             });

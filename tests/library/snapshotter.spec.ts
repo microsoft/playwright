@@ -68,11 +68,11 @@ it.describe('snapshots', () => {
   it('should respect inline CSSOM change', async ({ page, toImpl, snapshotter }) => {
     await page.setContent('<style>button { color: red; }</style><button>Hello</button>');
     const snapshot1 = await snapshotter.captureSnapshot(toImpl(page), 'snapshot1');
-    expect(distillSnapshot(snapshot1)).toBe('<style>button { color: red; }</style><BUTTON>Hello</BUTTON>');
+    expect(distillSnapshot(snapshot1)).toBe('<STYLE>button { color: red; }</STYLE><BUTTON>Hello</BUTTON>');
 
     await page.evaluate(() => { (document.styleSheets[0].cssRules[0] as any).style.color = 'blue'; });
     const snapshot2 = await snapshotter.captureSnapshot(toImpl(page), 'snapshot2');
-    expect(distillSnapshot(snapshot2)).toBe('<style>button { color: blue; }</style><BUTTON>Hello</BUTTON>');
+    expect(distillSnapshot(snapshot2)).toBe('<STYLE>button { color: blue; }</STYLE><BUTTON>Hello</BUTTON>');
   });
 
   it('should respect node removal', async ({ page, toImpl, snapshotter }) => {

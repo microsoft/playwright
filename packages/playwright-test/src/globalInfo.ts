@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { FullConfigInternal, GlobalInfo } from './types';
+import type { FullConfigInternal, GlobalInfo } from './types';
 import { normalizeAndSaveAttachment } from './util';
 import fs from 'fs';
 export class GlobalInfoImpl implements GlobalInfo {

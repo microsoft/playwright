@@ -20,14 +20,15 @@ import type { FullConfigInternal } from './types';
 import { getPackageJsonPath, mergeObjects, errorWithFile } from './util';
 import { setCurrentlyLoadingFileSuite } from './globals';
 import { Suite } from './test';
-import { SerializedLoaderData } from './ipc';
+import type { SerializedLoaderData } from './ipc';
 import * as path from 'path';
 import * as url from 'url';
 import * as fs from 'fs';
 import { ProjectImpl } from './project';
-import { Reporter } from '../types/testReporter';
-import { BuiltInReporter, builtInReporters } from './runner';
-import { isRegExp } from 'playwright-core/lib/utils/utils';
+import type { Reporter } from '../types/testReporter';
+import type { BuiltInReporter } from './runner';
+import { builtInReporters } from './runner';
+import { isRegExp } from 'playwright-core/lib/utils';
 import { serializeError } from './util';
 
 // To allow multiple loaders in the same process without clearing require cache,
@@ -91,8 +92,8 @@ export class Loader {
       config.testDir = path.resolve(configDir, config.testDir);
     if (config.outputDir !== undefined)
       config.outputDir = path.resolve(configDir, config.outputDir);
-    if (config.screenshotsDir !== undefined)
-      config.screenshotsDir = path.resolve(configDir, config.screenshotsDir);
+    if ((config as any)._screenshotsDir !== undefined)
+      (config as any)._screenshotsDir = path.resolve(configDir, (config as any)._screenshotsDir);
     if (config.snapshotDir !== undefined)
       config.snapshotDir = path.resolve(configDir, config.snapshotDir);
 
@@ -209,8 +210,8 @@ export class Loader {
       projectConfig.testDir = path.resolve(this._configDir, projectConfig.testDir);
     if (projectConfig.outputDir !== undefined)
       projectConfig.outputDir = path.resolve(this._configDir, projectConfig.outputDir);
-    if (projectConfig.screenshotsDir !== undefined)
-      projectConfig.screenshotsDir = path.resolve(this._configDir, projectConfig.screenshotsDir);
+    if ((projectConfig as any)._screenshotsDir !== undefined)
+      (projectConfig as any)._screenshotsDir = path.resolve(this._configDir, (projectConfig as any)._screenshotsDir);
     if (projectConfig.snapshotDir !== undefined)
       projectConfig.snapshotDir = path.resolve(this._configDir, projectConfig.snapshotDir);
 
@@ -219,7 +220,7 @@ export class Loader {
     const outputDir = takeFirst(this._configOverrides.outputDir, projectConfig.outputDir, config.outputDir, path.join(throwawayArtifactsPath, 'test-results'));
     const snapshotDir = takeFirst(this._configOverrides.snapshotDir, projectConfig.snapshotDir, config.snapshotDir, testDir);
     const name = takeFirst(this._configOverrides.name, projectConfig.name, config.name, '');
-    const screenshotsDir = takeFirst(this._configOverrides.screenshotsDir, projectConfig.screenshotsDir, config.screenshotsDir, path.join(testDir, '__screenshots__', process.platform, name));
+    const screenshotsDir = takeFirst((this._configOverrides as any)._screenshotsDir, (projectConfig as any)._screenshotsDir, (config as any)._screenshotsDir, path.join(testDir, '__screenshots__', process.platform, name));
     const fullProject: FullProjectInternal = {
       fullyParallel: takeFirst(this._configOverrides.fullyParallel, projectConfig.fullyParallel, config.fullyParallel, undefined),
       expect: takeFirst(this._configOverrides.expect, projectConfig.expect, config.expect, undefined),
@@ -232,7 +233,7 @@ export class Loader {
       name,
       testDir,
       snapshotDir,
-      screenshotsDir,
+      _screenshotsDir: screenshotsDir,
       testIgnore: takeFirst(this._configOverrides.testIgnore, projectConfig.testIgnore, config.testIgnore, []),
       testMatch: takeFirst(this._configOverrides.testMatch, projectConfig.testMatch, config.testMatch, '**/?(*.)@(spec|test).*'),
       timeout: takeFirst(this._configOverrides.timeout, projectConfig.timeout, config.timeout, 10000),
@@ -477,6 +478,7 @@ const baseFullConfig: FullConfigInternal = {
   _globalOutputDir: path.resolve(process.cwd()),
   _configDir: '',
   _testGroupsCount: 0,
+  _screenshotsDir: '',
 };
 
 function resolveReporters(reporters: Config['reporter'], rootDir: string): ReporterDescription[]|undefined {

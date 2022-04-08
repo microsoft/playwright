@@ -16,10 +16,10 @@
  */
 
 import * as js from '../javascript';
-import { FFSession } from './ffConnection';
-import { Protocol } from './protocol';
+import type { FFSession } from './ffConnection';
+import type { Protocol } from './protocol';
 import { rewriteErrorMessage } from '../../utils/stackTrace';
-import { parseEvaluationResultValue } from '../common/utilityScriptSerializers';
+import { parseEvaluationResultValue } from '../isomorphic/utilityScriptSerializers';
 import { isSessionClosedError } from '../protocolError';
 
 export class FFExecutionContext implements js.ExecutionContextDelegate {

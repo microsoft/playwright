@@ -15,12 +15,15 @@
  */
 
 import type { BrowserContextOptions } from '../../../..';
-import { LanguageGenerator, LanguageGeneratorOptions, sanitizeDeviceOptions, toSignalMap } from './language';
-import { ActionInContext } from './codeGenerator';
-import { Action, actionTitle } from './recorderActions';
-import { MouseClickOptions, toModifiers } from './utils';
+import type { LanguageGenerator, LanguageGeneratorOptions } from './language';
+import { sanitizeDeviceOptions, toSignalMap } from './language';
+import type { ActionInContext } from './codeGenerator';
+import type { Action } from './recorderActions';
+import { actionTitle } from './recorderActions';
+import type { MouseClickOptions } from './utils';
+import { toModifiers } from './utils';
 import deviceDescriptors from '../../deviceDescriptors';
-import { escapeWithQuotes } from '../../../utils/stringUtils';
+import { escapeWithQuotes } from '../../../utils/isomorphic/stringUtils';
 
 export class JavaScriptLanguageGenerator implements LanguageGenerator {
   id: string;

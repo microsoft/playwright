@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-import * as dom from './dom';
-import * as frames from './frames';
-import * as js from './javascript';
-import * as types from './types';
-import { allEngineNames, InvalidSelectorError, ParsedSelector, parseSelector, stringifySelector } from './common/selectorParser';
-import { createGuid, experimentalFeaturesEnabled } from '../utils/utils';
+import type * as dom from './dom';
+import type * as frames from './frames';
+import type * as js from './javascript';
+import type * as types from './types';
+import type { ParsedSelector } from './isomorphic/selectorParser';
+import { allEngineNames, InvalidSelectorError, parseSelector, stringifySelector } from './isomorphic/selectorParser';
+import { createGuid, experimentalFeaturesEnabled } from '../utils';
 
 export type SelectorInfo = {
   parsed: ParsedSelector,

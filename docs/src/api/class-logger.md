@@ -52,6 +52,6 @@ message arguments
 
 ### param: Logger.log.hints
 - `hints` <[Object]>
-  - `color` <[string]> Optional preferred logger color.
+  - `color` ?<[string]> Optional preferred logger color.
 
 optional formatting hints

@@ -21,21 +21,25 @@
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import { program, Command } from 'commander';
+import type { Command } from 'commander';
+import { program } from 'commander';
 import { runDriver, runServer, printApiJson, launchBrowserServer } from './driver';
 import { showTraceViewer } from '../server/trace/viewer/traceViewer';
 import * as playwright from '../..';
-import { BrowserContext } from '../client/browserContext';
-import { Browser } from '../client/browser';
-import { Page } from '../client/page';
-import { BrowserType } from '../client/browserType';
-import { BrowserContextOptions, LaunchOptions } from '../client/types';
+import type { BrowserContext } from '../client/browserContext';
+import type { Browser } from '../client/browser';
+import type { Page } from '../client/page';
+import type { BrowserType } from '../client/browserType';
+import type { BrowserContextOptions, LaunchOptions } from '../client/types';
 import { spawn } from 'child_process';
-import { registry, Executable } from '../utils/registry';
-import { spawnAsync, getPlaywrightVersion, wrapInASCIIBox } from '../utils/utils';
-import { writeDockerVersion } from '../utils/dependencies';
+import { getPlaywrightVersion } from '../common/userAgent';
+import { wrapInASCIIBox, isLikelyNpxGlobal } from '../utils';
+import { spawnAsync } from '../utils/spawnAsync';
 import { launchGridAgent } from '../grid/gridAgent';
-import { GridServer, GridFactory } from '../grid/gridServer';
+import type { GridFactory } from '../grid/gridServer';
+import { GridServer } from '../grid/gridServer';
+import type { Executable } from '../server';
+import { registry, writeDockerVersion } from '../server';
 
 const packageJSON = require('../../package.json');
 
@@ -115,8 +119,7 @@ program
     .option('--with-deps', 'install system dependencies for browsers')
     .option('--force', 'force reinstall of stable browser channels')
     .action(async function(args: string[], options: { withDeps?: boolean, force?: boolean }) {
-      const isLikelyNpxGlobal = process.argv.length >= 2 && process.argv[1].includes('_npx');
-      if (isLikelyNpxGlobal) {
+      if (isLikelyNpxGlobal()) {
         console.error(wrapInASCIIBox([
           `WARNING: It looks like you are running 'npx playwright install' without first`,
           `installing your project's dependencies.`,
@@ -237,10 +240,11 @@ Examples:
 program
     .command('experimental-grid-server', { hidden: true })
     .option('--port <port>', 'grid port; defaults to 3333')
+    .option('--address <address>', 'address of the server')
     .option('--agent-factory <factory>', 'path to grid agent factory or npm package')
     .option('--auth-token <authToken>', 'optional authentication token')
     .action(function(options) {
-      launchGridServer(options.agentFactory, options.port || 3333, options.authToken);
+      launchGridServer(options.agentFactory, options.port || 3333, options.address, options.authToken);
     });
 
 program
@@ -638,7 +642,7 @@ function commandWithOpenOptions(command: string, description: string, options: a
       .option('--viewport-size <size>', 'specify browser viewport size in pixels, for example "1280, 720"');
 }
 
-async function launchGridServer(factoryPathOrPackageName: string, port: number, authToken: string|undefined): Promise<void> {
+async function launchGridServer(factoryPathOrPackageName: string, port: number, address: string | undefined, authToken: string | undefined): Promise<void> {
   if (!factoryPathOrPackageName)
     factoryPathOrPackageName = path.join('..', 'grid', 'simpleGridFactory');
   let factory;
@@ -652,7 +656,7 @@ async function launchGridServer(factoryPathOrPackageName: string, port: number, 
   if (!factory || !factory.launch || typeof factory.launch !== 'function')
     throw new Error('factory does not export `launch` method');
   factory.name = factory.name || factoryPathOrPackageName;
-  const gridServer = new GridServer(factory as GridFactory, authToken);
+  const gridServer = new GridServer(factory as GridFactory, authToken, address);
   await gridServer.start(port);
   console.log('Grid server is running at ' + gridServer.urlPrefix());
 }

@@ -83,27 +83,34 @@ class ApiParser {
    * @param {MarkdownNode} spec
    */
   parseMember(spec) {
-    const match = spec.text.match(/(event|method|property|async method): ([^.]+)\.(.*)/);
+    const match = spec.text.match(/(event|method|property|async method|optional method|optional async method): ([^.]+)\.(.*)/);
     if (!match)
       throw new Error('Invalid member: ' + spec.text);
     const name = match[3];
     let returnType = null;
+    let optional = false;
     for (const item of spec.children || []) {
-      if (item.type === 'li' && item.liType === 'default')
-        returnType = this.parseType(item);
+      if (item.type === 'li' && item.liType === 'default') {
+        const parsed = this.parseType(item);;
+        returnType = parsed.type;
+        optional = parsed.optional;
+      }
     }
     if (!returnType)
       returnType = new Documentation.Type('void');
 
+    const comments = extractComments(spec);
     let member;
     if (match[1] === 'event')
-      member = Documentation.Member.createEvent(extractLangs(spec), name, returnType, extractComments(spec));
+      member = Documentation.Member.createEvent(extractLangs(spec), name, returnType, comments);
     if (match[1] === 'property')
-      member = Documentation.Member.createProperty(extractLangs(spec), name, returnType, extractComments(spec));
-    if (match[1] === 'method' || match[1] === 'async method') {
-      member = Documentation.Member.createMethod(extractLangs(spec), name, [], returnType, extractComments(spec));
-      if (match[1] === 'async method')
+      member = Documentation.Member.createProperty(extractLangs(spec), name, returnType, comments, !optional);
+    if (['method', 'async method', 'optional method', 'optional async method'].includes(match[1])) {
+      member = Documentation.Member.createMethod(extractLangs(spec), name, [], returnType, comments);
+      if (match[1].includes('async'))
         member.async = true;
+      if (match[1].includes('optional'))
+        member.required = false;
     }
     const clazz = this.classes.get(match[2]);
     const existingMember = clazz.membersArray.find(m => m.name === name && m.kind === member.kind);
@@ -175,14 +182,18 @@ class ApiParser {
   parseProperty(spec) {
     const param = childrenWithoutProperties(spec)[0];
     const text = param.text;
-    const name = text.substring(0, text.indexOf('<')).replace(/\`/g, '').trim();
+    let typeStart = text.indexOf('<');
+    if (text[typeStart - 1] === '?')
+      typeStart--;
+    const name = text.substring(0, typeStart).replace(/\`/g, '').trim();
     const comments = extractComments(spec);
-    return Documentation.Member.createProperty(extractLangs(spec), name, this.parseType(param), comments, guessRequired(md.render(comments)));
+    const { type, optional } = this.parseType(param);
+    return Documentation.Member.createProperty(extractLangs(spec), name, type, comments, !optional);
   }
 
   /**
    * @param {MarkdownNode=} spec
-   * @return {Documentation.Type}
+   * @return {{ type: Documentation.Type, optional: boolean }}
    */
   parseType(spec) {
     const arg = parseVariable(spec.text);
@@ -190,15 +201,17 @@ class ApiParser {
     for (const child of spec.children || []) {
       const { name, text } = parseVariable(child.text);
       const comments = /** @type {MarkdownNode[]} */ ([{ type: 'text', text }]);
-      properties.push(Documentation.Member.createProperty({}, name, this.parseType(child), comments, guessRequired(text)));
+      const childType = this.parseType(child);
+      properties.push(Documentation.Member.createProperty({}, name, childType.type, comments, !childType.optional));
     }
-    return Documentation.Type.parse(arg.type, properties);
+    const type = Documentation.Type.parse(arg.type, properties);
+    return { type, optional: arg.optional };
   }
 }
 
 /**
  * @param {string} line
- * @returns {{ name: string, type: string, text: string }}
+ * @returns {{ name: string, type: string, text: string, optional: boolean }}
  */
 function parseVariable(line) {
   let match = line.match(/^`([^`]+)` (.*)/);
@@ -211,7 +224,12 @@ function parseVariable(line) {
   if (!match)
     throw new Error('Invalid argument: ' + line);
   const name = match[1];
-  const remainder = match[2];
+  let remainder = match[2];
+  let optional = false;
+  if (remainder.startsWith('?')) {
+    optional = true;
+    remainder = remainder.substring(1);
+  }
   if (!remainder.startsWith('<'))
     throw new Error(`Bad argument: "${name}" in "${line}"`);
   let depth = 0;
@@ -222,7 +240,7 @@ function parseVariable(line) {
     if (c === '>')
       --depth;
     if (depth === 0)
-      return { name, type: remainder.substring(1, i), text: remainder.substring(i + 2) };
+      return { name, type: remainder.substring(1, i), text: remainder.substring(i + 2), optional };
   }
   throw new Error('Should not be reached');
 }
@@ -291,26 +309,6 @@ function extractComments(item) {
       return false;
     return true;
   });
-}
-
-/**
- * @param {string} comment
- */
-function guessRequired(comment) {
-  let required = true;
-  if (comment.toLowerCase().includes('defaults to '))
-    required = false;
-  if (comment.startsWith('Optional'))
-    required = false;
-  if (comment.endsWith('Optional.'))
-    required = false;
-  if (comment.toLowerCase().includes('if set'))
-    required = false;
-  if (comment.toLowerCase().includes('if applicable'))
-    required = false;
-  if (comment.toLowerCase().includes('if available'))
-    required = false;
-  return required;
 }
 
 /**

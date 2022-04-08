@@ -25,17 +25,17 @@ Reporter is given a root suite in the [`method: Reporter.onBegin`] method.
 Returns the list of all test cases in this suite and its descendants, as opposite to [`property: Suite.tests`].
 
 ## property: Suite.location
-- type: <[void]|[Location]>
+- type: ?<[Location]>
 
 Location in the source where the suite is defined. Missing for root and project suites.
 
 ## property: Suite.parent
-- type: <[void]|[Suite]>
+- type: ?<[Suite]>
 
-Parent suite or [void] for the root suite.
+Parent suite, missing for the root suite.
 
 ## method: Suite.project
-- returns: <[void]|[TestProject]>
+- returns: ?<[TestProject]>
 
 Configuration of the project this suite belongs to, or [void] for the root suite.
 
@@ -68,7 +68,7 @@ Returns a list of titles from the root down to this suite.
 - type: <[Array]<[Object]>>
   - `name` <[string]> Attachment name.
   - `contentType` <[string]> Content type of this attachment to properly present in the report, for example `'application/json'` or `'image/png'`.
-  - `path` <[void]|[string]> Optional path on the filesystem to the attached file.
-  - `body` <[void]|[Buffer]> Optional attachment body used instead of a file.
+  - `path` ?<[string]> Optional path on the filesystem to the attached file.
+  - `body` ?<[Buffer]> Optional attachment body used instead of a file.
 
 The list of files or buffers attached to the suite. Root suite has attachments populated by [`method: GlobalInfo.attach`].

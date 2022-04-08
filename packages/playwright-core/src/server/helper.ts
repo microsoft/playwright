@@ -15,11 +15,12 @@
  * limitations under the License.
  */
 
-import { EventEmitter } from 'events';
-import * as types from './types';
-import { Progress } from './progress';
-import { debugLogger } from '../utils/debugLogger';
-import { eventsHelper, RegisteredListener } from '../utils/eventsHelper';
+import type { EventEmitter } from 'events';
+import type * as types from './types';
+import type { Progress } from './progress';
+import { debugLogger } from '../common/debugLogger';
+import type { RegisteredListener } from '../utils/eventsHelper';
+import { eventsHelper } from '../utils/eventsHelper';
 
 class Helper {
   static completeUserURL(urlString: string): string {

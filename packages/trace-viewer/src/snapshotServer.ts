@@ -14,12 +14,10 @@
  * limitations under the License.
  */
 
-import { SnapshotStorage } from './snapshotStorage';
+import type { SnapshotStorage } from './snapshotStorage';
 import type { Point } from '@playwright-core/common/types';
-import { URLSearchParams } from 'url';
-import { SnapshotRenderer } from './snapshotRenderer';
-
-const kBlobUrlPrefix = 'http://playwright.bloburl/#';
+import type { URLSearchParams } from 'url';
+import type { SnapshotRenderer } from './snapshotRenderer';
 
 export class SnapshotServer {
   private _snapshotStorage: SnapshotStorage;
@@ -65,7 +63,7 @@ export class SnapshotServer {
 
   async serveResource(requestUrl: string, snapshotUrl: string): Promise<Response> {
     const snapshot = this._snapshotIds.get(snapshotUrl)!;
-    const url = requestUrl.startsWith(kBlobUrlPrefix) ? requestUrl.substring(kBlobUrlPrefix.length) : removeHash(requestUrl);
+    const url = removeHash(requestUrl);
     const resource = snapshot?.resourceByUrl(url);
     if (!resource)
       return new Response(null, { status: 404 });

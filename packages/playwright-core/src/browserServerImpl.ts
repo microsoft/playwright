@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-import { LaunchServerOptions, Logger } from './client/types';
+import type { LaunchServerOptions, Logger } from './client/types';
 import { EventEmitter } from 'ws';
-import { BrowserServerLauncher, BrowserServer } from './client/browserType';
+import type { BrowserServerLauncher, BrowserServer } from './client/browserType';
 import { envObjectToArray } from './client/clientHelper';
-import { createGuid } from './utils/utils';
-import { ProtocolLogger } from './server/types';
+import { createGuid } from './utils';
+import type { ProtocolLogger } from './server/types';
 import { serverSideCallMetadata } from './server/instrumentation';
 import { createPlaywright } from './server/playwright';
 import { PlaywrightServer } from './remote/playwrightServer';
@@ -63,6 +63,7 @@ export class BrowserServerLauncherImpl implements BrowserServerLauncher {
     browserServer.close = () => browser.options.browserProcess.close();
     browserServer.kill = () => browser.options.browserProcess.kill();
     (browserServer as any)._disconnectForTest = () => server.close();
+    (browserServer as any)._artifactsDirForTest = browser.options.artifactsDir;
     browser.options.browserProcess.onclose = async (exitCode, signal) => {
       server.close();
       browserServer.emit('close', exitCode, signal);

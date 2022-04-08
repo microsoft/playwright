@@ -16,15 +16,15 @@
  */
 
 import { WKBrowser } from '../webkit/wkBrowser';
-import { Env } from '../../utils/processLauncher';
+import type { Env } from '../../utils/processLauncher';
 import path from 'path';
 import { kBrowserCloseMessageId } from './wkConnection';
 import { BrowserType, kNoXServerRunningError } from '../browserType';
-import { ConnectionTransport } from '../transport';
-import { BrowserOptions, PlaywrightOptions } from '../browser';
-import * as types from '../types';
+import type { ConnectionTransport } from '../transport';
+import type { BrowserOptions, PlaywrightOptions } from '../browser';
+import type * as types from '../types';
 import { rewriteErrorMessage } from '../../utils/stackTrace';
-import { wrapInASCIIBox } from '../../utils/utils';
+import { wrapInASCIIBox } from '../../utils';
 
 export class WebKit extends BrowserType {
   constructor(playwrightOptions: PlaywrightOptions) {

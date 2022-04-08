@@ -15,9 +15,8 @@
  */
 
 import path from 'path';
-import { StackFrame } from '../protocol/channels';
 import StackUtils from 'stack-utils';
-import { isUnderTest } from './utils';
+import { isUnderTest } from './';
 
 const stackUtils = new StackUtils();
 
@@ -37,6 +36,13 @@ const TEST_DIR_SRC = path.resolve(CORE_DIR, '..', 'playwright-test');
 const TEST_DIR_LIB = path.resolve(CORE_DIR, '..', '@playwright', 'test');
 const COVERAGE_PATH = path.join(CORE_DIR, '..', '..', 'tests', 'config', 'coverage.js');
 const WS_LIB = path.relative(process.cwd(), path.dirname(require.resolve('ws')));
+
+export type StackFrame = {
+  file: string,
+  line?: number,
+  column?: number,
+  function?: string,
+};
 
 export type ParsedStackTrace = {
   allFrames: StackFrame[];

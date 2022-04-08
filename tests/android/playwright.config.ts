@@ -19,7 +19,7 @@ loadEnv({ path: path.join(__dirname, '..', '..', '.env') });
 
 import type { Config, PlaywrightTestOptions, PlaywrightWorkerOptions } from '@playwright/test';
 import * as path from 'path';
-import { ServerWorkerOptions } from '../config/serverFixtures';
+import type { ServerWorkerOptions } from '../config/serverFixtures';
 
 process.env.PWPAGE_IMPL = 'android';
 

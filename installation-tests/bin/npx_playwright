@@ -1,0 +1,3 @@
+#!/bin/bash
+
+npx --yes playwright $@ 2>&1

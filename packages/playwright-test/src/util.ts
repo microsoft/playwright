@@ -23,10 +23,11 @@ import colors from 'colors/safe';
 import type { TestError, Location } from './types';
 import { default as minimatch } from 'minimatch';
 import debug from 'debug';
-import { calculateSha1, isRegExp } from 'playwright-core/lib/utils/utils';
+import { calculateSha1, isRegExp } from 'playwright-core/lib/utils';
 import { isInternalFileName } from 'playwright-core/lib/utils/stackTrace';
 import { currentTestInfo } from './globals';
-import { captureStackTrace as coreCaptureStackTrace, ParsedStackTrace } from 'playwright-core/lib/utils/stackTrace';
+import type { ParsedStackTrace } from 'playwright-core/lib/utils/stackTrace';
+import { captureStackTrace as coreCaptureStackTrace } from 'playwright-core/lib/utils/stackTrace';
 
 export type { ParsedStackTrace };
 
@@ -107,6 +108,7 @@ export type Matcher = (value: string) => boolean;
 export type FilePatternFilter = {
   re: RegExp;
   line: number | null;
+  column: number | null;
 };
 
 export function createFileMatcher(patterns: string | RegExp | (string | RegExp)[]): Matcher {

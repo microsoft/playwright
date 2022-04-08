@@ -17,64 +17,16 @@
 import type { FullConfig, FullProject, TestStatus, TestError } from './test';
 export type { FullConfig, TestStatus, TestError } from './test';
 
-export interface Location {
-  file: string;
-  line: number;
-  column: number;
-}
-
 export interface Suite {
-  parent?: Suite;
-  title: string;
-  location?: Location;
-  suites: Suite[];
-  tests: TestCase[];
-  attachments: { name: string, path?: string, body?: Buffer, contentType: string }[];
-  titlePath(): string[];
-  allTests(): TestCase[];
   project(): FullProject | undefined;
 }
 
 export interface TestCase {
-  parent: Suite;
-  title: string;
-  location: Location;
-  titlePath(): string[];
   expectedStatus: TestStatus;
-  timeout: number;
-  annotations: { type: string, description?: string }[];
-  retries: number;
-  repeatEachIndex: number;
-  results: TestResult[];
-  outcome(): 'skipped' | 'expected' | 'unexpected' | 'flaky';
-  ok(): boolean;
 }
 
 export interface TestResult {
-  retry: number;
-  workerIndex: number;
-  startTime: Date;
-  duration: number;
   status: TestStatus;
-  error?: TestError;
-  errors: TestError[];
-  attachments: { name: string, path?: string, body?: Buffer, contentType: string }[];
-  stdout: (string | Buffer)[];
-  stderr: (string | Buffer)[];
-  steps: TestStep[];
-}
-
-export interface TestStep {
-  title: string;
-  titlePath(): string[];
-  location?: Location;
-  parent?: TestStep;
-  category: string,
-  startTime: Date;
-  duration: number;
-  error?: TestError;
-  steps: TestStep[];
-  data: { [key: string]: any };
 }
 
 /**
@@ -92,15 +44,7 @@ export interface FullResult {
 }
 
 export interface Reporter {
-  printsToStdio?(): boolean;
   onBegin?(config: FullConfig, suite: Suite): void;
-  onTestBegin?(test: TestCase, result: TestResult): void;
-  onStdOut?(chunk: string | Buffer, test?: TestCase, result?: TestResult): void;
-  onStdErr?(chunk: string | Buffer, test?: TestCase, result?: TestResult): void;
-  onTestEnd?(test: TestCase, result: TestResult): void;
-  onStepBegin?(test: TestCase, result: TestResult, step: TestStep): void;
-  onStepEnd?(test: TestCase, result: TestResult, step: TestStep): void;
-  onError?(error: TestError): void;
   onEnd?(result: FullResult): void | Promise<void>;
 }
 

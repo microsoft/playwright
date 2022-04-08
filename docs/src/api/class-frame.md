@@ -352,7 +352,7 @@ await frame.DispatchEventAsync("#source", "dragstart", new { dataTransfer });
 DOM event type: `"click"`, `"dragstart"`, etc.
 
 ### param: Frame.dispatchEvent.eventInit
-- `eventInit` <[EvaluationArgument]>
+- `eventInit` ?<[EvaluationArgument]>
 
 Optional event-specific initialization properties.
 
@@ -430,7 +430,7 @@ var html = await frame.EvalOnSelectorAsync(".main-container", "(e, suffix) => e.
 ### param: Frame.evalOnSelector.selector = %%-query-selector-%%
 ### param: Frame.evalOnSelector.expression = %%-evaluate-expression-%%
 ### param: Frame.evalOnSelector.arg
-- `arg` <[EvaluationArgument]>
+- `arg` ?<[EvaluationArgument]>
 
 Optional argument to pass to [`param: expression`].
 
@@ -481,7 +481,7 @@ var divsCount = await frame.EvalOnSelectorAllAsync<bool>("div", "(divs, min) => 
 ### param: Frame.evalOnSelectorAll.expression = %%-evaluate-expression-%%
 
 ### param: Frame.evalOnSelectorAll.arg
-- `arg` <[EvaluationArgument]>
+- `arg` ?<[EvaluationArgument]>
 
 Optional argument to pass to [`param: expression`].
 
@@ -587,7 +587,7 @@ await bodyHandle.DisposeAsync();
 ### param: Frame.evaluate.expression = %%-evaluate-expression-%%
 
 ### param: Frame.evaluate.arg
-- `arg` <[EvaluationArgument]>
+- `arg` ?<[EvaluationArgument]>
 
 Optional argument to pass to [`param: expression`].
 
@@ -689,7 +689,7 @@ await resultHandle.DisposeAsync();
 ### param: Frame.evaluateHandle.expression = %%-evaluate-expression-%%
 
 ### param: Frame.evaluateHandle.arg
-- `arg` <[EvaluationArgument]>
+- `arg` ?<[EvaluationArgument]>
 
 Optional argument to pass to [`param: expression`].
 
@@ -1445,7 +1445,7 @@ await page.MainFrame.WaitForFunctionAsync("selector => !!document.querySelector(
 ### param: Frame.waitForFunction.expression = %%-evaluate-expression-%%
 
 ### param: Frame.waitForFunction.arg
-- `arg` <[EvaluationArgument]>
+- `arg` ?<[EvaluationArgument]>
 
 Optional argument to pass to [`param: expression`].
 

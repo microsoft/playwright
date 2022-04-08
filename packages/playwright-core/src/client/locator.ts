@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-import * as structs from '../../types/structs';
-import * as api from '../../types/types';
-import * as channels from '../protocol/channels';
+import type * as structs from '../../types/structs';
+import type * as api from '../../types/types';
+import type * as channels from '../protocol/channels';
 import type { ParsedStackTrace } from '../utils/stackTrace';
 import * as util from 'util';
-import { isRegExp, monotonicTime } from '../utils/utils';
+import { isRegExp, monotonicTime } from '../utils';
 import { ElementHandle } from './elementHandle';
-import { Frame } from './frame';
-import { FilePayload, FrameExpectOptions, Rect, SelectOption, SelectOptionOptions, TimeoutOptions } from './types';
+import type { Frame } from './frame';
+import type { FilePayload, FrameExpectOptions, Rect, SelectOption, SelectOptionOptions, TimeoutOptions } from './types';
 import { parseResult, serializeArgument } from './jsHandle';
-import { escapeWithQuotes } from '../utils/stringUtils';
+import { escapeWithQuotes } from '../utils/isomorphic/stringUtils';
 
 export class Locator implements api.Locator {
   _frame: Frame;

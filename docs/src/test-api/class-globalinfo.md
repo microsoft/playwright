@@ -91,8 +91,8 @@ See [`TestInfo`](./class-testinfo.md) for related attachment functionality scope
 - type: <[Array]<[Object]>>
   - `name` <[string]> Attachment name.
   - `contentType` <[string]> Content type of this attachment to properly present in the report, for example `'application/json'` or `'image/png'`.
-  - `path` <[void]|[string]> Optional path on the filesystem to the attached file.
-  - `body` <[void]|[Buffer]> Optional attachment body used instead of a file.
+  - `path` ?<[string]> Optional path on the filesystem to the attached file.
+  - `body` ?<[Buffer]> Optional attachment body used instead of a file.
 
 The list of files or buffers attached to the overall test run. Some reporters show global attachments.
 
@@ -114,10 +114,10 @@ after awaiting the attach call.
 - `name` <[string]> Attachment name.
 
 ### option: GlobalInfo.attach.body
-- `body` <[string]|[Buffer]> Attachment body. Mutually exclusive with [`option: path`].
+- `body` ?<[string]|[Buffer]> Attachment body. Mutually exclusive with [`option: path`].
 
 ### option: GlobalInfo.attach.contentType
-- `contentType` <[void]|[string]> Optional content type of this attachment to properly present in the report, for example `'application/json'` or `'image/png'`. If omitted, content type is inferred based on the [`option: path`], or defaults to `text/plain` for [string] attachments and `application/octet-stream` for [Buffer] attachments.
+- `contentType` ?<[string]> Optional content type of this attachment to properly present in the report, for example `'application/json'` or `'image/png'`. If omitted, content type is inferred based on the [`option: path`], or defaults to `text/plain` for [string] attachments and `application/octet-stream` for [Buffer] attachments.
 
 ### option: GlobalInfo.attach.path
-- `path` <[string]> Path on the filesystem to the attached file. Mutually exclusive with [`option: body`].
+- `path` ?<[string]> Path on the filesystem to the attached file. Mutually exclusive with [`option: body`].

@@ -15,10 +15,10 @@
  * limitations under the License.
  */
 
-import * as input from '../input';
-import { Page } from '../page';
-import * as types from '../types';
-import { FFSession } from './ffConnection';
+import type * as input from '../input';
+import type { Page } from '../page';
+import type * as types from '../types';
+import type { FFSession } from './ffConnection';
 
 function toModifiersMask(modifiers: Set<types.KeyboardModifier>): number {
   let mask = 0;

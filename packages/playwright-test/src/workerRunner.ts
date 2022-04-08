@@ -19,16 +19,17 @@ import rimraf from 'rimraf';
 import util from 'util';
 import { EventEmitter } from 'events';
 import { relativeFilePath, serializeError } from './util';
-import { TestBeginPayload, TestEndPayload, RunPayload, DonePayload, WorkerInitParams, StepBeginPayload, StepEndPayload, TeardownErrorsPayload } from './ipc';
+import type { TestBeginPayload, TestEndPayload, RunPayload, DonePayload, WorkerInitParams, StepBeginPayload, StepEndPayload, TeardownErrorsPayload } from './ipc';
 import { setCurrentTestInfo } from './globals';
 import { Loader } from './loader';
-import { Suite, TestCase } from './test';
-import { Annotation, TestError, TestStepInternal } from './types';
-import { ProjectImpl } from './project';
+import type { Suite, TestCase } from './test';
+import type { Annotation, TestError, TestStepInternal } from './types';
+import type { ProjectImpl } from './project';
 import { FixtureRunner } from './fixtures';
-import { ManualPromise } from 'playwright-core/lib/utils/async';
+import { ManualPromise } from 'playwright-core/lib/utils/manualPromise';
 import { TestInfoImpl } from './testInfo';
-import { TimeoutManager, TimeSlot } from './timeoutManager';
+import type { TimeSlot } from './timeoutManager';
+import { TimeoutManager } from './timeoutManager';
 
 const removeFolderAsync = util.promisify(rimraf);
 
@@ -214,7 +215,7 @@ export class WorkerRunner extends EventEmitter {
           const error = result.error instanceof Error ? serializeError(result.error) : result.error;
           const payload: StepEndPayload = {
             testId: test._id,
-            refinedTitle: result.refinedTitle,
+            refinedTitle: step.refinedTitle,
             stepId,
             wallTime: Date.now(),
             error,

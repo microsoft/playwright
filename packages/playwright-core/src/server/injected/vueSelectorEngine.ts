@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { SelectorEngine, SelectorRoot } from './selectorEngine';
+import type { SelectorEngine, SelectorRoot } from './selectorEngine';
 import { isInsideScope } from './selectorEvaluator';
 import { checkComponentAttribute, parseComponentSelector } from './componentUtils';
 

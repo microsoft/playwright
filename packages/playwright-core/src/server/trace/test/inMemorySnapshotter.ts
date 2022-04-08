@@ -14,15 +14,17 @@
  * limitations under the License.
  */
 
-import { BrowserContext } from '../../browserContext';
-import { Page } from '../../page';
-import { FrameSnapshot } from '../common/snapshotTypes';
-import { SnapshotRenderer } from '../../../../../trace-viewer/src/snapshotRenderer';
+import type { BrowserContext } from '../../browserContext';
+import type { Page } from '../../page';
+import type { FrameSnapshot } from '../common/snapshotTypes';
+import type { SnapshotRenderer } from '../../../../../trace-viewer/src/snapshotRenderer';
 import { BaseSnapshotStorage } from '../../../../../trace-viewer/src/snapshotStorage';
-import { Snapshotter, SnapshotterBlob, SnapshotterDelegate } from '../recorder/snapshotter';
-import { ElementHandle } from '../../dom';
-import { HarTracer, HarTracerDelegate } from '../../supplements/har/harTracer';
-import * as har from '../../supplements/har/har';
+import type { SnapshotterBlob, SnapshotterDelegate } from '../recorder/snapshotter';
+import { Snapshotter } from '../recorder/snapshotter';
+import type { ElementHandle } from '../../dom';
+import type { HarTracerDelegate } from '../../supplements/har/harTracer';
+import { HarTracer } from '../../supplements/har/harTracer';
+import type * as har from '../../supplements/har/har';
 
 export class InMemorySnapshotter extends BaseSnapshotStorage implements SnapshotterDelegate, HarTracerDelegate {
   private _blobs = new Map<string, Buffer>();

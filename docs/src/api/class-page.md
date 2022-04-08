@@ -587,9 +587,9 @@ The order of evaluation of multiple scripts installed via [`method: BrowserConte
 ### param: Page.addInitScript.script
 * langs: js
 - `script` <[function]|[string]|[Object]>
-  - `path` <[path]> Path to the JavaScript file. If `path` is a relative path, then it is resolved relative to the
+  - `path` ?<[path]> Path to the JavaScript file. If `path` is a relative path, then it is resolved relative to the
     current working directory. Optional.
-  - `content` <[string]> Raw script content. Optional.
+  - `content` ?<[string]> Raw script content. Optional.
 
 Script to be evaluated in the page.
 
@@ -601,7 +601,7 @@ Script to be evaluated in all pages in the browser context.
 
 ### param: Page.addInitScript.arg
 * langs: js
-- `arg` <[Serializable]>
+- `arg` ?<[Serializable]>
 
 Optional argument to pass to [`param: script`] (only supported when passing a function).
 
@@ -874,7 +874,7 @@ await page.DispatchEventAsync("#source", "dragstart", new { dataTransfer });
 DOM event type: `"click"`, `"dragstart"`, etc.
 
 ### param: Page.dispatchEvent.eventInit
-- `eventInit` <[EvaluationArgument]>
+- `eventInit` ?<[EvaluationArgument]>
 
 Optional event-specific initialization properties.
 
@@ -1155,7 +1155,7 @@ Shortcut for main frame's [`method: Frame.evalOnSelector`].
 ### param: Page.evalOnSelector.selector = %%-query-selector-%%
 ### param: Page.evalOnSelector.expression = %%-evaluate-expression-%%
 ### param: Page.evalOnSelector.arg
-- `arg` <[EvaluationArgument]>
+- `arg` ?<[EvaluationArgument]>
 
 Optional argument to pass to [`param: expression`].
 
@@ -1202,7 +1202,7 @@ var divsCount = await page.EvalOnSelectorAllAsync<bool>("div", "(divs, min) => d
 ### param: Page.evalOnSelectorAll.selector = %%-query-selector-%%
 ### param: Page.evalOnSelectorAll.expression = %%-evaluate-expression-%%
 ### param: Page.evalOnSelectorAll.arg
-- `arg` <[EvaluationArgument]>
+- `arg` ?<[EvaluationArgument]>
 
 Optional argument to pass to [`param: expression`].
 
@@ -1314,7 +1314,7 @@ Shortcut for main frame's [`method: Frame.evaluate`].
 ### param: Page.evaluate.expression = %%-evaluate-expression-%%
 
 ### param: Page.evaluate.arg
-- `arg` <[EvaluationArgument]>
+- `arg` ?<[EvaluationArgument]>
 
 Optional argument to pass to [`param: expression`].
 
@@ -1415,7 +1415,7 @@ await resultHandle.DisposeAsync();
 ### param: Page.evaluateHandle.expression = %%-evaluate-expression-%%
 
 ### param: Page.evaluateHandle.arg
-- `arg` <[EvaluationArgument]>
+- `arg` ?<[EvaluationArgument]>
 
 Optional argument to pass to [`param: expression`].
 
@@ -1909,8 +1909,8 @@ var frame = page.FrameByUrl(".*domain.*");
 ### param: Page.frame.frameSelector
 * langs: js
 - `frameSelector` <[string]|[Object]>
-  - `name` <[string]> Frame name specified in the `iframe`'s `name` attribute. Optional.
-  - `url` <[string]|[RegExp]|[function]\([URL]\):[boolean]> A glob pattern, regex pattern or predicate receiving
+  - `name` ?<[string]> Frame name specified in the `iframe`'s `name` attribute. Optional.
+  - `url` ?<[string]|[RegExp]|[function]\([URL]\):[boolean]> A glob pattern, regex pattern or predicate receiving
     frame's `url` as a [URL] object. Optional.
 
 Frame name or other frame lookup options.
@@ -2387,20 +2387,20 @@ Paper height, accepts values labeled with units.
 ### option: Page.pdf.margin
 * langs: js, python
 - `margin` <[Object]>
-  - `top` <[string]|[float]> Top margin, accepts values labeled with units. Defaults to `0`.
-  - `right` <[string]|[float]> Right margin, accepts values labeled with units. Defaults to `0`.
-  - `bottom` <[string]|[float]> Bottom margin, accepts values labeled with units. Defaults to `0`.
-  - `left` <[string]|[float]> Left margin, accepts values labeled with units. Defaults to `0`.
+  - `top` ?<[string]|[float]> Top margin, accepts values labeled with units. Defaults to `0`.
+  - `right` ?<[string]|[float]> Right margin, accepts values labeled with units. Defaults to `0`.
+  - `bottom` ?<[string]|[float]> Bottom margin, accepts values labeled with units. Defaults to `0`.
+  - `left` ?<[string]|[float]> Left margin, accepts values labeled with units. Defaults to `0`.
 
 Paper margins, defaults to none.
 
 ### option: Page.pdf.margin
 * langs: csharp, java
 - `margin` <[Object]>
-  - `top` <[string]> Top margin, accepts values labeled with units. Defaults to `0`.
-  - `right` <[string]> Right margin, accepts values labeled with units. Defaults to `0`.
-  - `bottom` <[string]> Bottom margin, accepts values labeled with units. Defaults to `0`.
-  - `left` <[string]> Left margin, accepts values labeled with units. Defaults to `0`.
+  - `top` ?<[string]> Top margin, accepts values labeled with units. Defaults to `0`.
+  - `right` ?<[string]> Right margin, accepts values labeled with units. Defaults to `0`.
+  - `bottom` ?<[string]> Bottom margin, accepts values labeled with units. Defaults to `0`.
+  - `left` ?<[string]> Left margin, accepts values labeled with units. Defaults to `0`.
 
 Paper margins, defaults to none.
 
@@ -3103,13 +3103,13 @@ A glob pattern, regex pattern or predicate receiving [URL] to match while routin
 
 ### param: Page.unroute.handler
 * langs: js, python
-- `handler` <[function]\([Route], [Request]\)>
+- `handler` ?<[function]\([Route], [Request]\)>
 
 Optional handler function to route the request.
 
 ### param: Page.unroute.handler
 * langs: csharp, java
-- `handler` <[function]\([Route]\)>
+- `handler` ?<[function]\([Route]\)>
 
 Optional handler function to route the request.
 
@@ -3205,9 +3205,9 @@ frame = event_info.value
 
 ### param: Page.waitForEvent.optionsOrPredicate
 * langs: js
-- `optionsOrPredicate` <[function]|[Object]>
+- `optionsOrPredicate` ?<[function]|[Object]>
   - `predicate` <[function]> receives the event data and resolves to truthy value when the waiting should resolve.
-  - `timeout` <[float]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to
+  - `timeout` ?<[float]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to
     disable timeout. The default value can be changed by using the [`method: BrowserContext.setDefaultTimeout`].
 
 Either a predicate that receives an event or an options object. Optional.
@@ -3348,7 +3348,7 @@ Shortcut for main frame's [`method: Frame.waitForFunction`].
 ### param: Page.waitForFunction.expression = %%-evaluate-expression-%%
 
 ### param: Page.waitForFunction.arg
-- `arg` <[EvaluationArgument]>
+- `arg` ?<[EvaluationArgument]>
 
 Optional argument to pass to [`param: expression`].
 

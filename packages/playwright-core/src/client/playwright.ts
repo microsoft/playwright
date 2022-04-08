@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import * as channels from '../protocol/channels';
-import { TimeoutError } from '../utils/errors';
-import * as socks from '../utils/socksProxy';
+import type * as channels from '../protocol/channels';
+import { TimeoutError } from '../common/errors';
+import * as socks from '../common/socksProxy';
 import { Android } from './android';
 import { BrowserType } from './browserType';
 import { ChannelOwner } from './channelOwner';
@@ -24,7 +24,7 @@ import { Electron } from './electron';
 import { APIRequest } from './fetch';
 import { LocalUtils } from './localUtils';
 import { Selectors, SelectorsOwner } from './selectors';
-import { Size } from './types';
+import type { Size } from './types';
 
 type DeviceDescriptor = {
   userAgent: string,

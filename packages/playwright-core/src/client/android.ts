@@ -15,15 +15,15 @@
  */
 
 import fs from 'fs';
-import { isString, isRegExp } from '../utils/utils';
-import * as channels from '../protocol/channels';
+import { isString, isRegExp } from '../utils';
+import type * as channels from '../protocol/channels';
 import { Events } from './events';
 import { BrowserContext, prepareBrowserContextParams } from './browserContext';
 import { ChannelOwner } from './channelOwner';
-import * as api from '../../types/types';
-import * as types from './types';
-import { Page } from './page';
-import { TimeoutSettings } from '../utils/timeoutSettings';
+import type * as api from '../../types/types';
+import type * as types from './types';
+import type { Page } from './page';
+import { TimeoutSettings } from '../common/timeoutSettings';
 import { Waiter } from './waiter';
 import { EventEmitter } from 'events';
 

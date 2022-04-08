@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { FullConfig, GlobalInfo } from '@playwright/test';
+import type { FullConfig, GlobalInfo } from '@playwright/test';
 
 // We're dogfooding this, so the …/lib/… import is acceptable
 import * as ci from '@playwright/test/lib/ci';

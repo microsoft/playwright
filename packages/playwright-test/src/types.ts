@@ -27,12 +27,13 @@ export type FixturesWithLocation = {
 export type Annotation = { type: string, description?: string };
 
 export interface TestStepInternal {
-  complete(result: { refinedTitle?: string, error?: Error | TestError }): void;
+  complete(result: { error?: Error | TestError }): void;
   title: string;
   category: string;
   canHaveChildren: boolean;
   forceNoParent: boolean;
   location?: Location;
+  refinedTitle?: string;
 }
 
 /**
@@ -47,6 +48,7 @@ export interface FullConfigInternal extends FullConfigPublic {
   _globalOutputDir: string;
   _configDir: string;
   _testGroupsCount: number;
+  _screenshotsDir: string;
 
   // Overrides the public field.
   projects: FullProjectInternal[];
@@ -57,4 +59,5 @@ export interface FullConfigInternal extends FullConfigPublic {
  * increasing the surface area of the public API type called FullProject.
  */
 export interface FullProjectInternal extends FullProjectPublic {
+  _screenshotsDir: string;
 }

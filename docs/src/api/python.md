@@ -19,26 +19,26 @@ Terminates this instance of Playwright in case it was created bypassing the Pyth
 
 ### param: BrowserContext.addInitScript.path
 * langs: python
-- `path` <[path]>
+- `path` ?<[path]>
 
 Path to the JavaScript file. If `path` is a relative path, then it is resolved relative to the current working directory. Optional.
 
 
 ### param: BrowserContext.addInitScript.script
 * langs: python
-- `script` <[string]>
+- `script` ?<[string]>
 
 Script to be evaluated in all pages in the browser context. Optional.
 
 ### param: Page.addInitScript.path
 * langs: python
-- `path` <[path]>
+- `path` ?<[path]>
 
 Path to the JavaScript file. If `path` is a relative path, then it is resolved relative to the current working directory. Optional.
 
 ### param: Page.addInitScript.script
 * langs: python
-- `script` <[string]>
+- `script` ?<[string]>
 
 Script to be evaluated in all pages in the browser context. Optional.
 
@@ -64,13 +64,13 @@ Script to be evaluated in all pages in the browser context. Optional.
 
 ### option: Page.frame.name
 * langs: python
-- `name` <[string]>
+- `name` ?<[string]>
 
 Frame name specified in the `iframe`'s `name` attribute. Optional.
 
 ### option: Page.frame.url
 * langs: python
-- `url` <[string]|[RegExp]|[function]\([URL]\):[boolean]>
+- `url` ?<[string]|[RegExp]|[function]\([URL]\):[boolean]>
 
 A glob pattern, regex pattern or predicate receiving frame's `url` as a [URL] object. Optional.
 

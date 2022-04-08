@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-import * as api from '../../types/types';
-import * as channels from '../protocol/channels';
+import type * as api from '../../types/types';
+import type * as channels from '../protocol/channels';
 import { Artifact } from './artifact';
 import { ChannelOwner } from './channelOwner';
-import { LocalUtils } from './localUtils';
+import type { LocalUtils } from './localUtils';
 
 export class Tracing extends ChannelOwner<channels.TracingChannel> implements api.Tracing {
   _localUtils!: LocalUtils;

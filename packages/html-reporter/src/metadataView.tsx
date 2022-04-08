@@ -18,7 +18,7 @@ import * as React from 'react';
 import './colors.css';
 import './common.css';
 import * as icons from './icons';
-import { Metadata } from './index';
+import type { Metadata } from './index';
 import { AutoChip } from './chip';
 import './reportView.css';
 import './theme.css';

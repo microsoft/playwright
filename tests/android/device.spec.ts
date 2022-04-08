@@ -60,6 +60,7 @@ test('androidDevice.fill', async function({ androidDevice }) {
 });
 
 test('androidDevice.options.omitDriverInstall', async function({ playwright }) {
+  test.skip(true, 'Android._driverPromise gets cached and is in a closed state. Its stored inside the androidDevice worker fixture.');
   const devices = await playwright._android.devices({ omitDriverInstall: true });
 
   const androidDevice = devices[0];

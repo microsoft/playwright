@@ -186,10 +186,10 @@ Dangerous option; use with care. Defaults to `false`.
   - `server` <[string]> Proxy to be used for all requests. HTTP and SOCKS proxies are supported, for example
     `http://myproxy.com:3128` or `socks5://myproxy.com:3128`. Short form `myproxy.com:3128` is considered an HTTP
     proxy.
-  - `bypass` <[string]> Optional comma-separated domains to bypass proxy, for example `".com, chromium.org,
+  - `bypass` ?<[string]> Optional comma-separated domains to bypass proxy, for example `".com, chromium.org,
     .domain.com"`.
-  - `username` <[string]> Optional username to use if HTTP proxy requires authentication.
-  - `password` <[string]> Optional password to use if HTTP proxy requires authentication.
+  - `username` ?<[string]> Optional username to use if HTTP proxy requires authentication.
+  - `password` ?<[string]> Optional password to use if HTTP proxy requires authentication.
 
 Network proxy settings.
 
@@ -456,7 +456,7 @@ for a list of supported timezone IDs.
 - `geolocation` <[Object]>
   - `latitude` <[float]> Latitude between -90 and 90.
   - `longitude` <[float]> Longitude between -180 and 180.
-  - `accuracy` <[float]> Non-negative accuracy value. Defaults to `0`.
+  - `accuracy` ?<[float]> Non-negative accuracy value. Defaults to `0`.
 
 ## context-option-locale
 - `locale` <[string]>
@@ -532,7 +532,7 @@ Logger sink for Playwright logging.
 ## context-option-recordhar
 * langs: js
 - `recordHar` <[Object]>
-  - `omitContent` <[boolean]> Optional setting to control whether to omit request content from the HAR. Defaults to
+  - `omitContent` ?<[boolean]> Optional setting to control whether to omit request content from the HAR. Defaults to
     `false`.
   - `path` <[path]> Path on the filesystem to write the HAR file to.
 
@@ -560,7 +560,7 @@ Optional setting to control whether to omit request content from the HAR. Defaul
 * langs: js
 - `recordVideo` <[Object]>
   - `dir` <[path]> Path to the directory to put videos into.
-  - `size` <[Object]> Optional dimensions of the recorded videos. If not specified the size will be equal to `viewport`
+  - `size` ?<[Object]> Optional dimensions of the recorded videos. If not specified the size will be equal to `viewport`
     scaled down to fit into 800x800. If `viewport` is not configured explicitly the video size defaults to 800x450.
     Actual picture of each page will be scaled down if necessary to fit the specified size.
     - `width` <[int]> Video frame width.
@@ -594,9 +594,9 @@ Actual picture of each page will be scaled down if necessary to fit the specifie
 - `proxy` <[Object]>
   - `server` <[string]> Proxy to be used for all requests. HTTP and SOCKS proxies are supported, for example
     `http://myproxy.com:3128` or `socks5://myproxy.com:3128`. Short form `myproxy.com:3128` is considered an HTTP proxy.
-  - `bypass` <[string]> Optional comma-separated domains to bypass proxy, for example `".com, chromium.org, .domain.com"`.
-  - `username` <[string]> Optional username to use if HTTP proxy requires authentication.
-  - `password` <[string]> Optional password to use if HTTP proxy requires authentication.
+  - `bypass` ?<[string]> Optional comma-separated domains to bypass proxy, for example `".com, chromium.org, .domain.com"`.
+  - `username` ?<[string]> Optional username to use if HTTP proxy requires authentication.
+  - `password` ?<[string]> Optional password to use if HTTP proxy requires authentication.
 
 Network proxy settings to use with this context.
 
@@ -616,9 +616,9 @@ See [Locator] to learn more about the strict mode.
 ## select-options-values
 * langs: java, js, csharp
 - `values` <[null]|[string]|[ElementHandle]|[Array]<[string]>|[Object]|[Array]<[ElementHandle]>|[Array]<[Object]>>
-  - `value` <[string]> Matches by `option.value`. Optional.
-  - `label` <[string]> Matches by `option.label`. Optional.
-  - `index` <[int]> Matches by the index. Optional.
+  - `value` ?<[string]> Matches by `option.value`. Optional.
+  - `label` ?<[string]> Matches by `option.label`. Optional.
+  - `index` ?<[int]> Matches by the index. Optional.
 
 Options to select. If the `<select>` has the `multiple` attribute, all matching options are selected, otherwise only the
 first option matching one of the passed options is selected. String values are equivalent to `{value:'string'}`. Option
@@ -628,7 +628,7 @@ is considered matching if all specified properties match.
 - `url` <[string]|[RegExp]|[function]\([URL]\):[boolean]>
 
 A glob pattern, regex pattern or predicate receiving [URL] to match while waiting for the navigation. Note that if
-the parameter is a string without wilcard characters, the method will wait for navigation to URL that is exactly
+the parameter is a string without wildcard characters, the method will wait for navigation to URL that is exactly
 equal to the string.
 
 ## wait-for-event-event
@@ -638,7 +638,7 @@ equal to the string.
 Event name, same one typically passed into `*.on(event)`.
 
 ## wait-for-load-state-state
-- `state` <[LoadState]<"load"|"domcontentloaded"|"networkidle">>
+- `state` ?<[LoadState]<"load"|"domcontentloaded"|"networkidle">>
 
 Optional load state to wait for, defaults to `load`. If the state has been already reached while loading current document, the
 method resolves immediately. Can be one of:
@@ -660,26 +660,26 @@ Action that triggers the event.
 
 ## python-select-options-element
 * langs: python
-- `element` <[ElementHandle]|[Array]<[ElementHandle]>>
+- `element` ?<[ElementHandle]|[Array]<[ElementHandle]>>
 
 Option elements to select. Optional.
 
 ## python-select-options-index
 * langs: python
-- `index` <[int]|[Array]<[int]>>
+- `index` ?<[int]|[Array]<[int]>>
 
 Options to select by index. Optional.
 
 ## python-select-options-value
 * langs: python
-- `value` <[string]|[Array]<[string]>>
+- `value` ?<[string]|[Array]<[string]>>
 
 Options to select by value. If the `<select>` has the `multiple` attribute, all given options are selected, otherwise
 only the first option matching one of the passed options is selected. Optional.
 
 ## python-select-options-label
 * langs: python
-- `label` <[string]|[Array]<[string]>>
+- `label` ?<[string]|[Array]<[string]>>
 
 Options to select by label. If the `<select>` has the `multiple` attribute, all given options are selected, otherwise
 only the first option matching one of the passed options is selected. Optional.

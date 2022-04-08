@@ -15,7 +15,7 @@
  */
 
 import { EventEmitter } from 'events';
-import { createGuid } from '../utils/utils';
+import { createGuid } from '../utils';
 import type { APIRequestContext } from './fetch';
 import type { Browser } from './browser';
 import type { BrowserContext } from './browserContext';

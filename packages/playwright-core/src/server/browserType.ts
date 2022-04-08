@@ -17,19 +17,26 @@
 import fs from 'fs';
 import * as os from 'os';
 import path from 'path';
-import { BrowserContext, normalizeProxySettings, validateBrowserContextOptions } from './browserContext';
-import { registry, BrowserName } from '../utils/registry';
-import { ConnectionTransport, WebSocketTransport } from './transport';
-import { BrowserOptions, Browser, BrowserProcess, PlaywrightOptions } from './browser';
-import { launchProcess, Env, envArrayToObject } from '../utils/processLauncher';
+import type { BrowserContext } from './browserContext';
+import { normalizeProxySettings, validateBrowserContextOptions } from './browserContext';
+import type { BrowserName } from './registry';
+import { registry } from './registry';
+import type { ConnectionTransport } from './transport';
+import { WebSocketTransport } from './transport';
+import type { BrowserOptions, Browser, BrowserProcess, PlaywrightOptions } from './browser';
+import type { Env } from '../utils/processLauncher';
+import { launchProcess, envArrayToObject } from '../utils/processLauncher';
 import { PipeTransport } from './pipeTransport';
-import { Progress, ProgressController } from './progress';
-import * as types from './types';
-import { DEFAULT_TIMEOUT, TimeoutSettings } from '../utils/timeoutSettings';
-import { debugMode, existsAsync } from '../utils/utils';
+import type { Progress } from './progress';
+import { ProgressController } from './progress';
+import type * as types from './types';
+import { DEFAULT_TIMEOUT, TimeoutSettings } from '../common/timeoutSettings';
+import { debugMode } from '../utils';
+import { existsAsync } from '../utils/fileUtils';
 import { helper } from './helper';
-import { RecentLogsCollector } from '../utils/debugLogger';
-import { CallMetadata, SdkObject } from './instrumentation';
+import { RecentLogsCollector } from '../common/debugLogger';
+import type { CallMetadata } from './instrumentation';
+import { SdkObject } from './instrumentation';
 
 export const kNoXServerRunningError = 'Looks like you launched a headed browser without having a XServer running.\n' +
   'Set either \'headless: false\' or use \'xvfb-run <your-playwright-app>\' before running Playwright.\n\n<3 Playwright Team';

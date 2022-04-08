@@ -17,11 +17,11 @@
 import child_process from 'child_process';
 import path from 'path';
 import { EventEmitter } from 'events';
-import { RunPayload, TestBeginPayload, TestEndPayload, DonePayload, TestOutputPayload, WorkerInitParams, StepBeginPayload, StepEndPayload, SerializedLoaderData, TeardownErrorsPayload } from './ipc';
+import type { RunPayload, TestBeginPayload, TestEndPayload, DonePayload, TestOutputPayload, WorkerInitParams, StepBeginPayload, StepEndPayload, SerializedLoaderData, TeardownErrorsPayload } from './ipc';
 import type { TestResult, Reporter, TestStep, TestError } from '../types/testReporter';
-import { Suite, TestCase } from './test';
-import { Loader } from './loader';
-import { ManualPromise } from 'playwright-core/lib/utils/async';
+import type { Suite, TestCase } from './test';
+import type { Loader } from './loader';
+import { ManualPromise } from 'playwright-core/lib/utils/manualPromise';
 
 export type TestGroup = {
   workerHash: string;
@@ -239,7 +239,6 @@ export class Dispatcher {
         duration: -1,
         steps: [],
         location: params.location,
-        data: {},
       };
       steps.set(params.stepId, step);
       (parentStep || result).steps.push(step);

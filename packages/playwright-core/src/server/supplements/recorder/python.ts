@@ -15,11 +15,14 @@
  */
 
 import type { BrowserContextOptions } from '../../../..';
-import { LanguageGenerator, LanguageGeneratorOptions, sanitizeDeviceOptions, toSignalMap } from './language';
-import { ActionInContext } from './codeGenerator';
-import { actionTitle, Action } from './recorderActions';
-import { MouseClickOptions, toModifiers } from './utils';
-import { escapeWithQuotes } from '../../../utils/stringUtils';
+import type { LanguageGenerator, LanguageGeneratorOptions } from './language';
+import { sanitizeDeviceOptions, toSignalMap } from './language';
+import type { ActionInContext } from './codeGenerator';
+import type { Action } from './recorderActions';
+import { actionTitle } from './recorderActions';
+import type { MouseClickOptions } from './utils';
+import { toModifiers } from './utils';
+import { escapeWithQuotes } from '../../../utils/isomorphic/stringUtils';
 import deviceDescriptors from '../../deviceDescriptors';
 
 export class PythonLanguageGenerator implements LanguageGenerator {

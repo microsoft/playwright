@@ -1,6 +1,6 @@
 {
   "name": "playwright-core",
-  "version": "1.21.0-next",
+  "version": "1.22.0-next",
   "description": "A high-level API to automate web browsers",
   "repository": "github:Microsoft/playwright",
   "homepage": "https://playwright.dev",
@@ -22,16 +22,21 @@
     "./lib/grid/gridClient": "./lib/grid/gridClient.js",
     "./lib/grid/dockerGridFactory": "./lib/grid/dockerGridFactory.js",
     "./lib/outofprocess": "./lib/outofprocess.js",
-    "./lib/utils/async": "./lib/utils/async.js",
+    "./lib/utils": "./lib/utils/index.js",
     "./lib/utils/comparators": "./lib/utils/comparators.js",
+    "./lib/utils/eventsHelper": "./lib/utils/eventsHelper.js",
+    "./lib/utils/fileUtils": "./lib/utils/fileUtils.js",
     "./lib/utils/httpServer": "./lib/utils/httpServer.js",
+    "./lib/utils/hostPlatform": "./lib/utils/hostPlatform.js",
+    "./lib/utils/manualPromise": "./lib/utils/manualPromise.js",
     "./lib/utils/multimap": "./lib/utils/multimap.js",
     "./lib/utils/processLauncher": "./lib/utils/processLauncher.js",
-    "./lib/utils/registry": "./lib/utils/registry.js",
-    "./lib/utils/utils": "./lib/utils/utils.js",
+    "./lib/utils/spawnAsync": "./lib/utils/spawnAsync.js",
     "./lib/utils/stackTrace": "./lib/utils/stackTrace.js",
+    "./lib/utils/timeoutRunner": "./lib/utils/timeoutRunner.js",
     "./lib/remote/playwrightServer": "./lib/remote/playwrightServer.js",
-    "./lib/remote/playwrightClient": "./lib/remote/playwrightClient.js"
+    "./lib/remote/playwrightClient": "./lib/remote/playwrightClient.js",
+    "./lib/server": "./lib/server/index.js"
   },
   "types": "types/types.d.ts",
   "bin": {

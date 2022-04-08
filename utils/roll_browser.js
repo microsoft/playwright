@@ -17,7 +17,7 @@
  */
 
 const path = require('path');
-const {Registry} = require('../packages/playwright-core/lib/utils/registry');
+const { Registry } = require('../packages/playwright-core/lib/server');
 const fs = require('fs');
 const protocolGenerator = require('./protocol-types-generator');
 const {execSync} = require('child_process');

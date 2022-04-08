@@ -27,6 +27,15 @@ if [[ $# == 0 ]]; then
   exit 1
 fi
 
+function maybe_cmd {
+  if [[ $(uname) == MINGW* || "$(uname)" == MSYS* ]]; then
+    local args="$@"
+    /c/Windows/System32/cmd.exe "/c $args"
+  else
+    $@
+  fi
+}
+
 function prepare_chromium_checkout {
   cd "${SCRIPT_PATH}"
 
@@ -44,12 +53,12 @@ function prepare_chromium_checkout {
     rm -rf "${CR_CHECKOUT_PATH}"
     mkdir -p "${CR_CHECKOUT_PATH}"
     cd "${CR_CHECKOUT_PATH}"
-    fetch --nohooks chromium
+    maybe_cmd fetch --nohooks chromium
     cd src
     if [[ $(uname) == "Linux" ]]; then
       ./build/install-build-deps.sh
     fi
-    gclient runhooks
+    maybe_cmd gclient runhooks
   fi
   if [[ ! -d "${CR_CHECKOUT_PATH}/src" ]]; then
     echo "ERROR: CR_CHECKOUT_PATH does not have src/ subfolder; is this a chromium checkout?"
@@ -57,10 +66,10 @@ function prepare_chromium_checkout {
   fi
 
   cd "${CR_CHECKOUT_PATH}/src"
-  gclient sync --with_branch_heads
+  maybe_cmd gclient sync --with_branch_heads
   git fetch origin
   git checkout "${BRANCH_COMMIT}"
-  gclient sync -D --with_branch_heads
+  maybe_cmd gclient sync -D --with_branch_heads
 }
 
 # FRIENDLY_CHECKOUT_PATH is used only for logging.

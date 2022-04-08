@@ -9,5 +9,4 @@ npm i -D @types/node@14
 echo "import { Page, _electron, ElectronApplication, Electron } from 'playwright';" > "test.ts"
 
 echo "Running tsc"
-npx -p typescript@3.7.5 tsc "test.ts"
-
+npx --yes -p typescript@3.7.5 tsc "test.ts"

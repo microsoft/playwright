@@ -16,13 +16,15 @@
 
 import { BrowserContext } from '../../browserContext';
 import { Page } from '../../page';
-import { eventsHelper, RegisteredListener } from '../../../utils/eventsHelper';
-import { debugLogger } from '../../../utils/debugLogger';
-import { Frame } from '../../frames';
-import { frameSnapshotStreamer, SnapshotData } from './snapshotterInjected';
-import { calculateSha1, createGuid, monotonicTime } from '../../../utils/utils';
-import { FrameSnapshot } from '../common/snapshotTypes';
-import { ElementHandle } from '../../dom';
+import type { RegisteredListener } from '../../../utils/eventsHelper';
+import { eventsHelper } from '../../../utils/eventsHelper';
+import { debugLogger } from '../../../common/debugLogger';
+import type { Frame } from '../../frames';
+import type { SnapshotData } from './snapshotterInjected';
+import { frameSnapshotStreamer } from './snapshotterInjected';
+import { calculateSha1, createGuid, monotonicTime } from '../../../utils';
+import type { FrameSnapshot } from '../common/snapshotTypes';
+import type { ElementHandle } from '../../dom';
 import * as mime from 'mime';
 
 export type SnapshotterBlob = {

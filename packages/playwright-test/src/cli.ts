@@ -16,19 +16,21 @@
 
 /* eslint-disable no-console */
 
-import { Command } from 'commander';
+import type { Command } from 'commander';
 import fs from 'fs';
 import url from 'url';
 import path from 'path';
 import os from 'os';
 import type { Config } from './types';
-import { Runner, builtInReporters, BuiltInReporter, kDefaultConfigFiles } from './runner';
+import type { BuiltInReporter } from './runner';
+import { Runner, builtInReporters, kDefaultConfigFiles } from './runner';
 import { stopProfiling, startProfiling } from './profiler';
-import { FilePatternFilter } from './util';
+import type { FilePatternFilter } from './util';
 import { showHTMLReport } from './reporters/html';
 import { GridServer } from 'playwright-core/lib/grid/gridServer';
 import dockerFactory from 'playwright-core/lib/grid/dockerGridFactory';
-import { createGuid, hostPlatform } from 'playwright-core/lib/utils/utils';
+import { createGuid } from 'playwright-core/lib/utils';
+import { hostPlatform } from 'playwright-core/lib/utils/hostPlatform';
 import { fileIsModule } from './loader';
 
 const defaultTimeout = 30000;
@@ -73,6 +75,7 @@ Arguments [test-filter...]:
 
 Examples:
   $ npx playwright test my.spec.ts
+  $ npx playwright test some.spec.ts:42
   $ npx playwright test --headed
   $ npx playwright test --browser=webkit`);
 }
@@ -155,10 +158,11 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
     throw new Error(`Cannot use --browser option when configuration file defines projects. Specify browserName in the projects instead.`);
 
   const filePatternFilter: FilePatternFilter[] = args.map(arg => {
-    const match = /^(.*):(\d+)$/.exec(arg);
+    const match = /^(.*?):(\d+):?(\d+)?$/.exec(arg);
     return {
       re: forceRegExp(match ? match[1] : arg),
       line: match ? parseInt(match[2], 10) : null,
+      column: match?.[3] ? parseInt(match[3], 10) : null,
     };
   });
 

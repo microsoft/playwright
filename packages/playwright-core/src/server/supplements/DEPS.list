@@ -1,0 +1,10 @@
+[*]
+../
+../../utils/
+
+[debugger.ts]
+../../protocol/
+
+[recorderSupplement.ts]
+../../generated/
+./recorder/

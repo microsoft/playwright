@@ -1,0 +1,274 @@
+#!/usr/bin/env node
+
+/*
+  Copyright (c) Microsoft Corporation.
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+*/
+
+// ============================================
+// See `./local-playwright-registry help` for
+// usage and help.
+// ============================================
+
+const crypto = require('crypto');
+const { spawn } = require('child_process');
+const fs = require('fs');
+const path = require('path');
+const http = require('http');
+const https = require('https');
+
+// WORK_DIR should be a local directory the Registry can work in through its lifetime. It will not be removed automatically.
+const WORK_DIR = path.join(process.cwd(), '.playwright-registry');
+// ACCESS_LOGS records which packages have been served locally vs. proxied to the official npm registry.
+const ACCESS_LOGS = path.join(WORK_DIR, 'access.log');
+// REGISTRY_URL_FILE is the URL to us to connect to the registy. It is allocated dynamically and shows up on disk only once the packages are actually available for download.
+const REGISTRY_URL_FILE = path.join(WORK_DIR, 'registry.url.txt');
+
+const kPublicNpmRegistry = 'https://registry.npmjs.org';
+const kContentTypeAbbreviatedMetadata = 'application/vnd.npm.install-v1+json';
+
+class Registry {
+  constructor() {
+    this._objectsDir = path.join(WORK_DIR, 'objects');
+    this._packageMeta = new Map();
+    this._address = '';
+    this._log = () => { };
+  }
+
+  async init() {
+    await fs.promises.mkdir(this._objectsDir, { recursive: true });
+    await fs.promises.writeFile(ACCESS_LOGS, '');
+    this._log = msg => fs.appendFileSync(ACCESS_LOGS, `${msg}\n`);
+
+    await Promise.all([
+      this._addPackage('playwright', getEnvOrDie('PLAYWRIGHT_TGZ')),
+      this._addPackage('playwright-core', getEnvOrDie('PLAYWRIGHT_CORE_TGZ')),
+      this._addPackage('playwright-chromium', getEnvOrDie('PLAYWRIGHT_CHROMIUM_TGZ')),
+      this._addPackage('playwright-firefox',getEnvOrDie('PLAYWRIGHT_FIREFOX_TGZ')),
+      this._addPackage('playwright-webkit',getEnvOrDie('PLAYWRIGHT_WEBKIT_TGZ')),
+      this._addPackage('@playwright/test',getEnvOrDie('PLAYWRIGHT_TEST_TGZ')),
+    ]);
+
+    // Minimal Server that implements essential endpoints from the NPM Registry API.
+    // See https://github.com/npm/registry/blob/master/docs/REGISTRY-API.md.
+    this._server = http.createServer(async (req, res) => {
+      this._log(`REQUEST: ${req.method} ${req.url}`);
+      // 1. Only support GET requests
+      if (req.method !== 'GET') {
+        res.writeHead(405).end();
+        return;
+      }
+
+      // 2. Determine what package is being asked for.
+      //    The paths we can handle look like:
+      //    - /<userSuppliedPackageName>/*/<userSuppliedTarName i.e. some *.tgz>
+      //    - /<userSuppliedPackageName>/*
+      //    - /<userSuppliedPackageName>
+      const url = new URL(req.url, kPublicNpmRegistry);
+      let [, userSuppliedPackageName, , userSuppliedTarName] = url.pathname.split('/');
+      if (userSuppliedPackageName)
+        userSuppliedPackageName = decodeURIComponent(userSuppliedPackageName);
+      if (userSuppliedTarName)
+        userSuppliedTarName = decodeURIComponent(userSuppliedTarName);
+
+      // 3. If we have local metadata, serve directly (otherwise, proxy to upstream).
+      if (this._packageMeta.has(userSuppliedPackageName)) {
+        const [metadata, objectPath] = this._packageMeta.get(userSuppliedPackageName);
+        if (userSuppliedTarName) { // Tar ball request.
+          if (path.basename(objectPath) !== userSuppliedTarName) {
+            res.writeHead(404).end();
+            return;
+          }
+          this._log(`LOCAL ${userSuppliedPackageName} tar`);
+          const fileStream = fs.createReadStream(objectPath);
+          fileStream.pipe(res, { end: true });
+          fileStream.on('error', console.error);
+          res.on('error', console.error);
+          return;
+        } else { // Metadata request.
+          this._log(`LOCAL ${userSuppliedPackageName} metadata`);
+          res.setHeader('content-type', kContentTypeAbbreviatedMetadata);
+          res.write(JSON.stringify(metadata));
+          res.end();
+          return;
+        }
+      } else { // Fall through to official registry.
+        this._log(`PROXIED ${userSuppliedPackageName}`);
+        const client = { req, res };
+        const toNpm = https.request({
+          host: url.host,
+          headers: { ...req.headers, 'host': url.host },
+          method: req.method,
+          path: url.pathname,
+          searchParams: url.searchParams,
+          protocol: 'https:',
+        }, fromNpm => {
+          client.res.writeHead(fromNpm.statusCode, fromNpm.statusMessage, fromNpm.headers);
+          fromNpm.on('error', console.error);
+          fromNpm.pipe(client.res, { end: true });
+        });
+        client.req.pipe(toNpm);
+        client.req.on('error', console.error);
+        return;
+      }
+    });
+
+    this._server.listen(undefined, 'localhost', () => {
+      this._address = new URL(`http://localhost:${this._server.address().port}`).toString();
+      // We now have an address to make tarball paths fully qualified.
+      for (const [,[metadata]] of this._packageMeta.entries()) {
+        for (const [,version] of Object.entries(metadata.versions))
+          version.dist.tarball = this._address + version.dist.tarball;
+      }
+      fs.writeFileSync(REGISTRY_URL_FILE, this._address.toString());
+    });
+    process.on('exit', () => {
+      console.log('closing server');
+      this._server.close(console.error);
+    });
+  }
+
+  async _addPackage(pkg, tarPath) {
+    const tmpDir = await fs.promises.mkdtemp(path.join(WORK_DIR, '.staging-package-'));
+    const { stderr, code } = await spawnAsync('tar', ['-xvzf', tarPath, '-C', tmpDir]);
+    if (!!code)
+      throw new Error(`Failed to untar ${pkg}: ${stderr}`);
+
+    const packageJson = JSON.parse((await fs.promises.readFile(path.join(tmpDir, 'package', 'package.json'), 'utf8')));
+    if (pkg !== packageJson.name)
+      throw new Error(`Package name mismatch: ${pkg} is called ${packageJson.name} in its package.json`);
+
+    const shasum = crypto.createHash('sha1').update(await fs.promises.readFile(tarPath)).digest().toString('hex');
+    const metadata = {
+      'dist-tags': {
+        latest: packageJson.version,
+        [packageJson.version]: packageJson.version,
+      },
+      'modified': new Date().toISOString(),
+      'name': pkg,
+      'versions': {
+        [packageJson.version]: {
+          _hasShrinkwrap: false,
+          name: pkg,
+          version: packageJson.version,
+          dependencies: packageJson.dependencies || {},
+          optionalDependencies: packageJson.optionalDependencies || {},
+          devDependencies: packageJson.devDependencies || {},
+          bundleDependencies: packageJson.bundleDependencies || {},
+          peerDependencies: packageJson.peerDependencies || {},
+          bin: packageJson.bin || {},
+          directories: packageJson.directories || [],
+          dist: {
+            // This needs to be updated later with a full address.
+            tarball: `${encodeURIComponent(pkg)}/-/${shasum}.tgz`,
+            shasum,
+          },
+          engines: packageJson.engines || {},
+        },
+      },
+    };
+
+    const object = path.join(this._objectsDir, `${shasum}.tgz`);
+    await fs.promises.copyFile(tarPath, object);
+
+    this._packageMeta.set(pkg, [metadata, object]);
+  }
+
+  static async registryFactory() {
+    const registry = new Registry();
+    await registry.init();
+    return registry;
+  }
+
+  static async waitForReady() {
+    const OVERALL_TIMEOUT_MS = 60000;
+    const registryUrl = await new Promise(async (res, rej) => {
+      setTimeout(rej.bind(null, new Error('Timeout: Registry failed to become ready.')), OVERALL_TIMEOUT_MS);
+      while (true) {
+        const registryUrl = await fs.promises.readFile(REGISTRY_URL_FILE, 'utf8').catch(() => null);
+        if (registryUrl)
+          return res(registryUrl);
+        await new Promise(r => setTimeout(r, 500));
+      }
+    });
+    console.log(registryUrl);
+    process.exit(0);
+  }
+
+  static async assertLocalPkg(pkg) {
+    const logs = await fs.promises.readFile(ACCESS_LOGS, 'utf8');
+    const lines = logs.split(`\n`);
+    if (lines.includes(`LOCAL ${pkg} metadata`) && lines.includes(`LOCAL ${pkg} tar`) && !lines.includes(`PROXIED ${pkg} metadata`))
+      return;
+    console.log('Expected LOCAL metadata and tar, and no PROXIED logs for:', pkg);
+    console.log('Logs:');
+    console.log(lines.join(`\n`));
+    process.exit(1);
+  }
+}
+
+const getEnvOrDie = varName => {
+  const v = process.env[varName];
+  if (!v)
+    throw new Error(`${varName} environment variable MUST be set.`);
+
+  return v;
+};
+
+const spawnAsync = (cmd, args, options) => {
+  const process = spawn(cmd, args, Object.assign({ windowsHide: true }, options));
+
+  return new Promise(resolve => {
+    let stdout = '';
+    let stderr = '';
+    if (process.stdout)
+      process.stdout.on('data', data => stdout += data);
+    if (process.stderr)
+      process.stderr.on('data', data => stderr += data);
+    process.on('close', code => resolve({ stdout, stderr, code }));
+    process.on('error', error => resolve({ stdout, stderr, code: 0, error }));
+  });
+};
+
+const commands = {
+  'help': async () => {
+    console.log(`
+A minimal, inefficent npm registry to serve local npm packages, or fall through
+to the offical npm registry. This is useful for testing npm and npx utilities,
+but should NOT, be used for anything more.
+
+Commands:
+    - help.......................: prints this help message
+    - start......................: starts the registry server
+    - wait-for-ready.............: blocks waiting for the server to print
+                                   that it's actually ready and serving the
+                                   packages you published!
+    - assert-downloaded <package>: confirms that <package> was served locally,
+                                   AND never proxied to the official registry.`);
+  },
+  'start': Registry.registryFactory,
+  'wait-for-ready': Registry.waitForReady,
+  'assert-served-from-local-tgz': ([pkg]) => Registry.assertLocalPkg(pkg),
+};
+
+(async () => {
+  const command = commands[process.argv[2]];
+  if (!command) {
+    console.log(`${process.argv[2]} not a valid command:`);
+    await commands['help']();
+    process.exit(1);
+  }
+
+  await command(process.argv.slice(3));
+})();

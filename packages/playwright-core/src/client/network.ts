@@ -15,19 +15,19 @@
  */
 
 import { URLSearchParams } from 'url';
-import * as channels from '../protocol/channels';
+import type * as channels from '../protocol/channels';
 import { ChannelOwner } from './channelOwner';
 import { Frame } from './frame';
-import { Headers, RemoteAddr, SecurityDetails, WaitForEventOptions } from './types';
+import type { Headers, RemoteAddr, SecurityDetails, WaitForEventOptions } from './types';
 import fs from 'fs';
 import * as mime from 'mime';
-import { isString, headersObjectToArray } from '../utils/utils';
-import { ManualPromise } from '../utils/async';
+import { isString, headersObjectToArray } from '../utils';
+import { ManualPromise } from '../utils/manualPromise';
 import { Events } from './events';
-import { Page } from './page';
+import type { Page } from './page';
 import { Waiter } from './waiter';
-import * as api from '../../types/types';
-import { HeadersArray, URLMatch } from '../common/types';
+import type * as api from '../../types/types';
+import type { HeadersArray, URLMatch } from '../common/types';
 import { urlMatches } from './clientHelper';
 import { MultiMap } from '../utils/multimap';
 import { APIResponse } from './fetch';

@@ -16,15 +16,16 @@
 
 import { Android } from './android/android';
 import { AdbBackend } from './android/backendAdb';
-import { PlaywrightOptions } from './browser';
+import type { PlaywrightOptions } from './browser';
 import { Chromium } from './chromium/chromium';
 import { Electron } from './electron/electron';
 import { Firefox } from './firefox/firefox';
 import { Selectors } from './selectors';
 import { WebKit } from './webkit/webkit';
-import { CallMetadata, createInstrumentation, SdkObject } from './instrumentation';
-import { debugLogger } from '../utils/debugLogger';
-import { Page } from './page';
+import type { CallMetadata } from './instrumentation';
+import { createInstrumentation, SdkObject } from './instrumentation';
+import { debugLogger } from '../common/debugLogger';
+import type { Page } from './page';
 
 export class Playwright extends SdkObject {
   readonly selectors: Selectors;

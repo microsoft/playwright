@@ -15,7 +15,7 @@
  */
 
 import expectLibrary from 'expect';
-import { raceAgainstTimeout } from 'playwright-core/lib/utils/async';
+import { raceAgainstTimeout } from 'playwright-core/lib/utils/timeoutRunner';
 import path from 'path';
 import {
   INVERTED_COLOR,
@@ -44,12 +44,11 @@ import {
   toHaveURL,
   toHaveValue
 } from './matchers/matchers';
-import { toMatchSnapshot, toHaveScreenshot } from './matchers/toMatchSnapshot';
-import type { Expect, TestError } from './types';
-import matchers from 'expect/build/matchers';
+import { toMatchSnapshot, toHaveScreenshot as _toHaveScreenshot } from './matchers/toMatchSnapshot';
+import type { Expect } from './types';
 import { currentTestInfo } from './globals';
 import { serializeError, captureStackTrace, currentExpectTimeout } from './util';
-import { monotonicTime } from 'playwright-core/lib/utils/utils';
+import { monotonicTime } from 'playwright-core/lib/utils';
 
 // from expect/build/types
 export type SyncExpectationResult = {
@@ -99,8 +98,8 @@ export const printReceivedStringContainExpectedResult = (
 
 type ExpectMessageOrOptions = undefined | string | { message?: string, timeout?: number };
 
-function createExpect(actual: unknown, messageOrOptions: ExpectMessageOrOptions, isSoft: boolean, isPoll: boolean) {
-  return new Proxy(expectLibrary(actual), new ExpectMetaInfoProxyHandler(messageOrOptions, isSoft, isPoll));
+function createExpect(actual: unknown, messageOrOptions: ExpectMessageOrOptions, isSoft: boolean, isPoll: boolean, generator?: Generator) {
+  return new Proxy(expectLibrary(actual), new ExpectMetaInfoProxyHandler(messageOrOptions, isSoft, isPoll, generator));
 }
 
 export const expect: Expect = new Proxy(expectLibrary as any, {
@@ -115,7 +114,9 @@ expect.soft = (actual: unknown, messageOrOptions: ExpectMessageOrOptions) => {
 };
 
 expect.poll = (actual: unknown, messageOrOptions: ExpectMessageOrOptions) => {
-  return createExpect(actual, messageOrOptions, false /* isSoft */, true /* isPoll */);
+  if (typeof actual !== 'function')
+    throw new Error('`expect.poll()` accepts only function as a first argument');
+  return createExpect(actual, messageOrOptions, false /* isSoft */, true /* isPoll */, actual as any);
 };
 
 expectLibrary.setState({ expand: false });
@@ -141,23 +142,25 @@ const customMatchers = {
   toHaveURL,
   toHaveValue,
   toMatchSnapshot,
-  toHaveScreenshot,
+  _toHaveScreenshot,
 };
+
+type Generator = () => any;
 
 type ExpectMetaInfo = {
   message?: string;
+  isNot: boolean;
   isSoft: boolean;
   isPoll: boolean;
   pollTimeout?: number;
+  generator?: Generator;
 };
-
-let expectCallMetaInfo: undefined|ExpectMetaInfo = undefined;
 
 class ExpectMetaInfoProxyHandler {
   private _info: ExpectMetaInfo;
 
-  constructor(messageOrOptions: ExpectMessageOrOptions, isSoft: boolean, isPoll: boolean) {
-    this._info = { isSoft, isPoll };
+  constructor(messageOrOptions: ExpectMessageOrOptions, isSoft: boolean, isPoll: boolean, generator?: Generator) {
+    this._info = { isSoft, isPoll, generator, isNot: false };
     if (typeof messageOrOptions === 'string') {
       this._info.message = messageOrOptions;
     } else {
@@ -166,100 +169,36 @@ class ExpectMetaInfoProxyHandler {
     }
   }
 
-  get(target: any, prop: any, receiver: any): any {
-    const value = Reflect.get(target, prop, receiver);
-    if (value === undefined)
-      throw new Error(`expect: Property '${prop}' not found.`);
-    if (typeof value !== 'function')
-      return new Proxy(value, this);
+  get(target: any, matcherName: any, receiver: any): any {
+    const matcher = Reflect.get(target, matcherName, receiver);
+    if (matcher === undefined)
+      throw new Error(`expect: Property '${matcherName}' not found.`);
+    if (typeof matcher !== 'function') {
+      if (matcherName === 'not')
+        this._info.isNot = !this._info.isNot;
+      return new Proxy(matcher, this);
+    }
     return (...args: any[]) => {
       const testInfo = currentTestInfo();
       if (!testInfo)
-        return value.call(target, ...args);
-      const handleError = (e: Error) => {
-        if (this._info.isSoft)
-          testInfo._failWithError(serializeError(e), false /* isHardError */);
-        else
-          throw e;
-      };
-      try {
-        expectCallMetaInfo = {
-          message: this._info.message,
-          isSoft: this._info.isSoft,
-          isPoll: this._info.isPoll,
-          pollTimeout: this._info.pollTimeout,
-        };
-        let result = value.call(target, ...args);
-        if ((result instanceof Promise))
-          result = result.catch(handleError);
-        return result;
-      } catch (e) {
-        handleError(e);
-      } finally {
-        expectCallMetaInfo = undefined;
-      }
-    };
-  }
-}
+        return matcher.call(target, ...args);
 
-async function pollMatcher(matcher: any, timeout: number, thisArg: any, generator: () => any, ...args: any[]) {
-  let result: { pass: boolean, message: () => string } | undefined = undefined;
-  const startTime = monotonicTime();
-  const pollIntervals = [100, 250, 500];
-  while (true) {
-    const elapsed = monotonicTime() - startTime;
-    if (timeout !== 0 && elapsed > timeout)
-      break;
-    const received = timeout !== 0 ? await raceAgainstTimeout(generator, timeout - elapsed) : await generator();
-    if (received.timedOut)
-      break;
-    result = matcher.call(thisArg, received.result, ...args);
-    const success = result!.pass !== thisArg.isNot;
-    if (success)
-      return result;
-    await new Promise(x => setTimeout(x, pollIntervals.shift() ?? 1000));
-  }
-  const timeoutMessage = `Timeout ${timeout}ms exceeded while waiting on the predicate`;
-  const message = result ? [
-    result.message(),
-    '',
-    `Call Log:`,
-    `- ${timeoutMessage}`,
-  ].join('\n') : timeoutMessage;
-  return {
-    pass: thisArg.isNot,
-    message: () => message,
-  };
-}
+      const stackTrace = captureStackTrace();
+      const stackLines = stackTrace.frameTexts;
+      const frame = stackTrace.frames[0];
+      const customMessage = this._info.message || '';
+      const defaultTitle = `expect${this._info.isPoll ? '.poll' : ''}${this._info.isSoft ? '.soft' : ''}${this._info.isNot ? '.not' : ''}.${matcherName}`;
+      const step = testInfo._addStep({
+        location: frame && frame.file ? { file: path.resolve(process.cwd(), frame.file), line: frame.line || 0, column: frame.column || 0 } : undefined,
+        category: 'expect',
+        title: customMessage || defaultTitle,
+        canHaveChildren: true,
+        forceNoParent: false
+      });
+      testInfo.currentStep = step;
 
-function wrap(matcherName: string, matcher: any) {
-  return function(this: any, ...args: any[]) {
-    const testInfo = currentTestInfo();
-    if (!testInfo)
-      return matcher.call(this, ...args);
-
-    const stackTrace = captureStackTrace();
-    const stackLines = stackTrace.frameTexts;
-    const frame = stackTrace.frames[0];
-    const customMessage = expectCallMetaInfo?.message ?? '';
-    const isSoft = expectCallMetaInfo?.isSoft ?? false;
-    const isPoll = expectCallMetaInfo?.isPoll ?? false;
-    const pollTimeout = expectCallMetaInfo?.pollTimeout;
-    const defaultTitle = `expect${isPoll ? '.poll' : ''}${isSoft ? '.soft' : ''}${this.isNot ? '.not' : ''}.${matcherName}`;
-    const step = testInfo._addStep({
-      location: frame && frame.file ? { file: path.resolve(process.cwd(), frame.file), line: frame.line || 0, column: frame.column || 0 } : undefined,
-      category: 'expect',
-      title: customMessage || defaultTitle,
-      canHaveChildren: true,
-      forceNoParent: false
-    });
-
-    const reportStepEnd = (result: any, options: { refinedTitle?: string }) => {
-      const success = result.pass !== this.isNot;
-      let error: TestError | undefined;
-      if (!success) {
-        const message = result.message();
-        error = { message, stack: message + '\n' + stackLines.join('\n') };
+      const reportStepError = (jestError: Error) => {
+        const message = jestError.message;
         if (customMessage) {
           const messageLines = message.split('\n');
           // Jest adds something like the following error to all errors:
@@ -273,53 +212,74 @@ function wrap(matcherName: string, matcher: any) {
               messageLines.splice(uselessMatcherLineIndex, 1);
           }
           const newMessage = [
-            customMessage,
+            'Error: ' + customMessage,
             '',
             ...messageLines,
           ].join('\n');
-          result.message = () => newMessage;
+          jestError.message = newMessage;
+          jestError.stack = newMessage + '\n' + stackLines.join('\n');
         }
+
+        const serializerError = serializeError(jestError);
+        step.complete({ error: serializerError });
+        if (this._info.isSoft)
+          testInfo._failWithError(serializerError, false /* isHardError */);
+        else
+          throw jestError;
+      };
+
+      try {
+        let result;
+        if (this._info.isPoll) {
+          if ((customMatchers as any)[matcherName] || matcherName === 'resolves' || matcherName === 'rejects')
+            throw new Error(`\`expect.poll()\` does not support "${matcherName}" matcher.`);
+          result = pollMatcher(matcherName, this._info.isNot, currentExpectTimeout({ timeout: this._info.pollTimeout }), this._info.generator!, ...args);
+        } else {
+          result = matcher.call(target, ...args);
+        }
+        if ((result instanceof Promise))
+          return result.then(() => step.complete({})).catch(reportStepError);
+        else
+          step.complete({});
+      } catch (e) {
+        reportStepError(e);
       }
-      step.complete({ ...options, error });
-      return result;
     };
-
-    const reportStepError = (error: Error) => {
-      step.complete({ error: serializeError(error) });
-      throw error;
-    };
-
-    const refineTitle = (result: SyncExpectationResult & { titleSuffix?: string }): string | undefined => {
-      return !customMessage && result.titleSuffix ? defaultTitle + result.titleSuffix : undefined;
-    };
-
-    try {
-      let result;
-      const [receivedOrGenerator, ...otherArgs] = args;
-      if (isPoll) {
-        if (typeof receivedOrGenerator !== 'function')
-          throw new Error('`expect.poll()` accepts only function as a first argument');
-        if ((customMatchers as any)[matcherName] || matcherName === 'resolves' || matcherName === 'rejects')
-          throw new Error(`\`expect.poll()\` does not support "${matcherName}" matcher.`);
-        result = pollMatcher(matcher, currentExpectTimeout({ timeout: pollTimeout }), this, receivedOrGenerator, ...otherArgs);
-      } else {
-        if (typeof receivedOrGenerator === 'function')
-          throw new Error('Cannot accept function as a first argument; did you mean to use `expect.poll()`?');
-        result = matcher.call(this, ...args);
-      }
-      if (result instanceof Promise)
-        return result.then(result => reportStepEnd(result, { refinedTitle: refineTitle(result) })).catch(reportStepError);
-      return reportStepEnd(result, { refinedTitle: refineTitle(result) });
-    } catch (e) {
-      reportStepError(e);
-    }
-  };
+  }
 }
 
-const wrappedMatchers: any = {};
-for (const matcherName in matchers)
-  wrappedMatchers[matcherName] = wrap(matcherName, matchers[matcherName]);
-for (const matcherName in customMatchers)
-  wrappedMatchers[matcherName] = wrap(matcherName, (customMatchers as any)[matcherName]);
+async function pollMatcher(matcherName: any, isNot: boolean, timeout: number, generator: () => any, ...args: any[]) {
+  let matcherError;
+  const startTime = monotonicTime();
+  const pollIntervals = [100, 250, 500];
+  while (true) {
+    const elapsed = monotonicTime() - startTime;
+    if (timeout !== 0 && elapsed > timeout)
+      break;
+    const received = timeout !== 0 ? await raceAgainstTimeout(generator, timeout - elapsed) : await generator();
+    if (received.timedOut)
+      break;
+    try {
+      let expectInstance = expectLibrary(received.result) as any;
+      if (isNot)
+        expectInstance = expectInstance.not;
+      expectInstance[matcherName].call(expectInstance, ...args);
+      return;
+    } catch (e) {
+      matcherError = e;
+    }
+    await new Promise(x => setTimeout(x, pollIntervals.shift() ?? 1000));
+  }
 
-expectLibrary.extend(wrappedMatchers);
+  const timeoutMessage = `Timeout ${timeout}ms exceeded while waiting on the predicate`;
+  const message = matcherError ? [
+    matcherError.message,
+    '',
+    `Call Log:`,
+    `- ${timeoutMessage}`,
+  ].join('\n') : timeoutMessage;
+
+  throw new Error(message);
+}
+
+expectLibrary.extend(customMatchers);

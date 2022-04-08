@@ -16,12 +16,12 @@
  */
 
 import * as input from '../input';
-import * as types from '../types';
-import { CRSession } from './crConnection';
+import type * as types from '../types';
+import type { CRSession } from './crConnection';
 import { macEditingCommands } from '../macEditingCommands';
-import { isString } from '../../utils/utils';
-import { DragManager } from './crDragDrop';
-import { CRPage } from './crPage';
+import { isString } from '../../utils';
+import type { DragManager } from './crDragDrop';
+import type { CRPage } from './crPage';
 import { toButtonsMask, toModifiersMask } from './crProtocolHelper';
 
 export class RawKeyboardImpl implements input.RawKeyboard {

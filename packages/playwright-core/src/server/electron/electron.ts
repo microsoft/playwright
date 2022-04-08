@@ -17,27 +17,31 @@
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import { CRBrowser, CRBrowserContext } from '../chromium/crBrowser';
-import { CRConnection, CRSession } from '../chromium/crConnection';
-import { CRPage } from '../chromium/crPage';
+import type { CRBrowserContext } from '../chromium/crBrowser';
+import { CRBrowser } from '../chromium/crBrowser';
+import type { CRSession } from '../chromium/crConnection';
+import { CRConnection } from '../chromium/crConnection';
+import type { CRPage } from '../chromium/crPage';
 import { CRExecutionContext } from '../chromium/crExecutionContext';
 import * as js from '../javascript';
-import { Page } from '../page';
-import { TimeoutSettings } from '../../utils/timeoutSettings';
+import type { Page } from '../page';
+import { TimeoutSettings } from '../../common/timeoutSettings';
+import { wrapInASCIIBox } from '../../utils';
 import { WebSocketTransport } from '../transport';
 import { launchProcess, envArrayToObject } from '../../utils/processLauncher';
 import { BrowserContext, validateBrowserContextOptions } from '../browserContext';
 import type { BrowserWindow } from 'electron';
-import { Progress, ProgressController } from '../progress';
+import type { Progress } from '../progress';
+import { ProgressController } from '../progress';
 import { helper } from '../helper';
 import { eventsHelper } from '../../utils/eventsHelper';
-import { BrowserOptions, BrowserProcess, PlaywrightOptions } from '../browser';
-import * as childProcess from 'child_process';
+import type { BrowserOptions, BrowserProcess, PlaywrightOptions } from '../browser';
+import type * as childProcess from 'child_process';
 import * as readline from 'readline';
-import { RecentLogsCollector } from '../../utils/debugLogger';
+import { RecentLogsCollector } from '../../common/debugLogger';
 import { serverSideCallMetadata, SdkObject } from '../instrumentation';
-import * as channels from '../../protocol/channels';
-import { BrowserContextOptions } from '../types';
+import type * as channels from '../../protocol/channels';
+import type { BrowserContextOptions } from '../types';
 
 const ARTIFACTS_FOLDER = path.join(os.tmpdir(), 'playwright-artifacts-');
 
@@ -134,12 +138,32 @@ export class Electron extends SdkObject {
 
       const browserLogsCollector = new RecentLogsCollector();
       const env = options.env ? envArrayToObject(options.env) : process.env;
+
+      let command: string;
+      if (options.executablePath) {
+        command = options.executablePath;
+      } else {
+        try {
+          // By default we fallback to the Electron App executable path.
+          // 'electron/index.js' resolves to the actual Electron App.
+          command = require('electron/index.js');
+        } catch (error: any) {
+          if ((error as NodeJS.ErrnoException)?.code === 'MODULE_NOT_FOUND') {
+            throw new Error('\n' + wrapInASCIIBox([
+              'Electron executablePath not found!',
+              'Please install it using `npm install -D electron` or set the executablePath to your Electron executable.',
+            ].join('\n'), 1));
+          }
+          throw error;
+        }
+      }
+
       // When debugging Playwright test that runs Electron, NODE_OPTIONS
       // will make the debugger attach to Electron's Node. But Playwright
       // also needs to attach to drive the automation. Disable external debugging.
       delete env.NODE_OPTIONS;
       const { launchedProcess, gracefullyClose, kill } = await launchProcess({
-        command: options.executablePath || require('electron/index.js'),
+        command,
         args: electronArguments,
         env,
         log: (message: string) => {

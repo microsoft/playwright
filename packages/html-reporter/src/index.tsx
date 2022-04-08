@@ -21,7 +21,7 @@ import zipImport from '@zip.js/zip.js/dist/zip-no-worker-inflate.min.js';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import './colors.css';
-import { LoadedReport } from './loadedReport';
+import type { LoadedReport } from './loadedReport';
 import { ReportView } from './reportView';
 // @ts-ignore
 const zipjs = zipImport as typeof zip;

@@ -17,6 +17,7 @@
 
 import { playwrightTest as test, expect } from '../config/browserTest';
 import { execSync } from 'child_process';
+import fs from 'fs';
 
 test.slow();
 
@@ -78,14 +79,19 @@ test.describe('signals', () => {
     expect(await remoteServer.childExitCode()).toBe(0);
   });
 
-  test('should kill the browser on double SIGINT', async ({ startRemoteServer, server }) => {
+  test('should kill the browser on double SIGINT and remove temp dir', async ({ startRemoteServer, server }) => {
     const remoteServer = await startRemoteServer({ stallOnClose: true, url: server.EMPTY_PAGE });
+    const tempDir = await remoteServer.out('tempDir');
+    const before = fs.existsSync(tempDir);
     process.kill(remoteServer.child().pid, 'SIGINT');
     await remoteServer.out('stalled');
     process.kill(remoteServer.child().pid, 'SIGINT');
     expect(await remoteServer.out('exitCode')).toBe('null');
     expect(await remoteServer.out('signal')).toBe('SIGKILL');
     expect(await remoteServer.childExitCode()).toBe(130);
+    const after = fs.existsSync(tempDir);
+    expect(before).toBe(true);
+    expect(after).toBe(false);
   });
 
   test('should kill the browser on SIGINT + SIGTERM', async ({ startRemoteServer, server }) => {

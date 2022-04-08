@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-import { SelectorEngine, SelectorRoot } from './selectorEngine';
-import { matchesAttribute, parseComponentSelector, ParsedComponentAttribute, ParsedAttributeOperator } from './componentUtils';
+import type { SelectorEngine, SelectorRoot } from './selectorEngine';
+import type { ParsedComponentAttribute, ParsedAttributeOperator } from './componentUtils';
+import { matchesAttribute, parseComponentSelector } from './componentUtils';
 import { getAriaChecked, getAriaDisabled, getAriaExpanded, getAriaLevel, getAriaPressed, getAriaRole, getAriaSelected, getElementAccessibleName, isElementHiddenForAria, kAriaCheckedRoles, kAriaExpandedRoles, kAriaLevelRoles, kAriaPressedRoles, kAriaSelectedRoles } from './roleUtils';
 
 const kSupportedAttributes = ['selected', 'checked', 'pressed', 'expanded', 'level', 'disabled', 'name', 'include-hidden'];

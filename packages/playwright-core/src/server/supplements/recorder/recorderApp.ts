@@ -16,15 +16,15 @@
 
 import fs from 'fs';
 import path from 'path';
-import { Page } from '../../page';
+import type { Page } from '../../page';
 import { ProgressController } from '../../progress';
 import { EventEmitter } from 'events';
 import { serverSideCallMetadata } from '../../instrumentation';
 import type { CallLog, EventData, Mode, Source } from './recorderTypes';
-import { isUnderTest } from '../../../utils/utils';
+import { isUnderTest } from '../../../utils';
 import * as mime from 'mime';
 import { installAppIcon } from '../../chromium/crApp';
-import { findChromiumChannel } from '../../../utils/registry';
+import { findChromiumChannel } from '../../registry';
 
 declare global {
   interface Window {

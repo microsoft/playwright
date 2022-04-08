@@ -15,7 +15,7 @@
  */
 
 import { baseTest } from '../config/baseTest';
-import { PageTestFixtures, PageWorkerFixtures } from '../page/pageTestApi';
+import type { PageTestFixtures, PageWorkerFixtures } from '../page/pageTestApi';
 import type { AndroidDevice, BrowserContext } from 'playwright-core';
 export { expect } from '@playwright/test';
 

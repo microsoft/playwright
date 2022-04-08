@@ -117,7 +117,7 @@ async function parseOverrides(filePath, commentForClass, commentForMethod, extra
         pos,
         text: commentForMethod(className, `${prefix}`, 0),
       });
-    } else if (!ts.isMethodSignature(node)) {
+    } else if (ts.isIntersectionTypeNode(node) || ts.isTypeLiteralNode(node)) {
       ts.forEachChild(node, child => visitProperties(className, prefix, child));
     }
   }
