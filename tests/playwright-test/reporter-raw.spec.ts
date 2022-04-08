@@ -251,7 +251,7 @@ test(`GlobalInfo.attach works`, async ({ runInlineTest }, testInfo) => {
         await globalInfo.attach('inline.txt', { body: Buffer.from('inline'), contentType: 'text/plain' });
         await globalInfo.attach('external.txt', { path: external, contentType: 'text/plain' });
         // The attach call above should have saved it to a safe place
-        await fs.promises.rm(external);
+        await fs.promises.unlink(external);
       };
 
       export default globalSetup;
