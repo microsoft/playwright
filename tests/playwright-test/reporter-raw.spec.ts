@@ -285,7 +285,7 @@ test(`GlobalInfo.attach works`, async ({ runInlineTest }, testInfo) => {
     expect(attachment.name).toBe('external.txt');
     expect(attachment.contentType).toBe('text/plain');
     const contents = fs.readFileSync(attachment.path);
-    expect(attachment.path).toBe(path.join(testInfo.outputDir, 'attachments', 'a3eb3dad08b764c3f9a7b108f1db60d1f3ef4124.txt'));
+    expect(attachment.path.startsWith(path.join(testInfo.outputDir, 'attachments')), 'Attachment should be in our output directory.').toBeTruthy();
     expect(contents.toString()).toEqual('external');
     expect(attachment.body).toBeUndefined();
   }
