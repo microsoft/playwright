@@ -1,4 +1,4 @@
 [*]
 ../common/
 ../protocol/
-../utils/
+../utils/**

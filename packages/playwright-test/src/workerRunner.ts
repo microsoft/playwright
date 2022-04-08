@@ -26,7 +26,7 @@ import type { Suite, TestCase } from './test';
 import type { Annotation, TestError, TestStepInternal } from './types';
 import type { ProjectImpl } from './project';
 import { FixtureRunner } from './fixtures';
-import { ManualPromise } from 'playwright-core/lib/utils';
+import { ManualPromise } from 'playwright-core/lib/utils/manualPromise';
 import { TestInfoImpl } from './testInfo';
 import type { TimeSlot } from './timeoutManager';
 import { TimeoutManager } from './timeoutManager';

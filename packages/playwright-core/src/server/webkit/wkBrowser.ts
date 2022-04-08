@@ -18,8 +18,9 @@
 import type { BrowserOptions } from '../browser';
 import { Browser } from '../browser';
 import { assertBrowserContextIsNotOwned, BrowserContext, verifyGeolocation } from '../browserContext';
-import type { RegisteredListener } from '../../utils';
-import { assert, eventsHelper } from '../../utils';
+import type { RegisteredListener } from '../../utils/eventsHelper';
+import { assert } from '../../utils';
+import { eventsHelper } from '../../utils/eventsHelper';
 import * as network from '../network';
 import type { Page, PageBinding, PageDelegate } from '../page';
 import type { ConnectionTransport } from '../transport';

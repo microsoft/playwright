@@ -20,7 +20,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import { getUserAgent } from '../../common/userAgent';
-import { existsAsync } from '../../utils';
+import { existsAsync } from '../../utils/fileUtils';
 import { debugLogger } from '../../common/debugLogger';
 import { download } from './download';
 

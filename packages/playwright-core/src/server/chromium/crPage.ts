@@ -16,8 +16,8 @@
  */
 
 import path from 'path';
-import type { RegisteredListener } from '../../utils';
-import { eventsHelper } from '../../utils';
+import type { RegisteredListener } from '../../utils/eventsHelper';
+import { eventsHelper } from '../../utils/eventsHelper';
 import { registry } from '../registry';
 import { rewriteErrorMessage } from '../../utils/stackTrace';
 import { assert, createGuid, headersArrayToObject } from '../../utils';

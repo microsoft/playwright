@@ -20,7 +20,7 @@ import { getExceptionMessage, releaseObject } from './crProtocolHelper';
 import type { Protocol } from './protocol';
 import * as js from '../javascript';
 import { rewriteErrorMessage } from '../../utils/stackTrace';
-import { parseEvaluationResultValue } from '../common/utilityScriptSerializers';
+import { parseEvaluationResultValue } from '../isomorphic/utilityScriptSerializers';
 import { isSessionClosedError } from '../protocolError';
 
 export class CRExecutionContext implements js.ExecutionContextDelegate {

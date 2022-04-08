@@ -4,8 +4,9 @@
 ../protocol/
 ../utils/
 ./
-./common/
 ./injected/
+./isomorphic/
+./registry/
 ./supplements/
 ./trace/recorder/tracing.ts
 

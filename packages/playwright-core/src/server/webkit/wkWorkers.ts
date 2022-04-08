@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import type { RegisteredListener } from '../../utils';
-import { eventsHelper } from '../../utils';
+import type { RegisteredListener } from '../../utils/eventsHelper';
+import { eventsHelper } from '../../utils/eventsHelper';
 import type { Page } from '../page';
 import { Worker } from '../page';
 import type { Protocol } from './protocol';

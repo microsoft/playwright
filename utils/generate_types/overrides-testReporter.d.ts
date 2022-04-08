@@ -44,15 +44,7 @@ export interface FullResult {
 }
 
 export interface Reporter {
-  printsToStdio?(): boolean;
   onBegin?(config: FullConfig, suite: Suite): void;
-  onTestBegin?(test: TestCase, result: TestResult): void;
-  onStdOut?(chunk: string | Buffer, test?: TestCase, result?: TestResult): void;
-  onStdErr?(chunk: string | Buffer, test?: TestCase, result?: TestResult): void;
-  onTestEnd?(test: TestCase, result: TestResult): void;
-  onStepBegin?(test: TestCase, result: TestResult, step: TestStep): void;
-  onStepEnd?(test: TestCase, result: TestResult, step: TestStep): void;
-  onError?(error: TestError): void;
   onEnd?(result: FullResult): void | Promise<void>;
 }
 
