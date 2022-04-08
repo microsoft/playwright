@@ -270,6 +270,8 @@ function isSharedLib(basename: string) {
 }
 
 async function executablesOrSharedLibraries(directoryPath: string): Promise<string[]> {
+  if (!fs.existsSync(directoryPath))
+    return [];
   const allPaths = (await fs.promises.readdir(directoryPath)).map(file => path.resolve(directoryPath, file));
   const allStats = await Promise.all(allPaths.map(aPath => fs.promises.stat(aPath)));
   const filePaths = allPaths.filter((aPath, index) => (allStats[index] as any).isFile());
