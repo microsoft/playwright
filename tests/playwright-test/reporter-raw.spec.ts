@@ -239,14 +239,13 @@ test(`testInfo.attach should save attachments via inline attachment`, async ({ r
 });
 
 test(`GlobalInfo.attach works`, async ({ runInlineTest }, testInfo) => {
-  const external = testInfo.outputPath('external.txt');
   const result = await runInlineTest({
     'globalSetup.ts': `
       import fs from 'fs';
       import { FullConfig, GlobalInfo } from '@playwright/test';
 
       async function globalSetup(config: FullConfig, globalInfo: GlobalInfo) {
-        const external = '${external}';
+        const external = 'external.txt';
         await fs.promises.writeFile(external, 'external');
         await globalInfo.attach('inline.txt', { body: Buffer.from('inline'), contentType: 'text/plain' });
         await globalInfo.attach('external.txt', { path: external, contentType: 'text/plain' });
