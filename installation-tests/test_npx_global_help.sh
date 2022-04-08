@@ -8,15 +8,15 @@ if [[ "${OUTPUT}" == *'To avoid unexpected behavior, please install your depende
   echo "ERROR: should not warn user about global installation"
   exit 1
 fi
-if [[ "${OUTPUT}" == *"Downloading"*"chromium"* ]]; then
+if [[ "${OUTPUT}" == *"chromium"*"downloaded"* ]]; then
   echo "ERROR: should not download chromium"
   exit 1
 fi
-if [[ "${OUTPUT}" == *"Downloading"*"webkit"* ]]; then
+if [[ "${OUTPUT}" == *"webkit"*"downloaded"* ]]; then
   echo "ERROR: should not download webkit"
   exit 1
 fi
-if [[ "${OUTPUT}" == *"Downloading"*"firefox"* ]]; then
+if [[ "${OUTPUT}" == *"firefox"*"downloaded"* ]]; then
   echo "ERROR: should not download firefox"
   exit 1
 fi

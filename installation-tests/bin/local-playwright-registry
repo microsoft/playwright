@@ -127,26 +127,19 @@ class Registry {
       }
     });
 
-
-    await new Promise(res => {
-      this._server.listen(undefined, 'localhost', () => {
-        this._address = new URL(`http://localhost:${this._server.address().port}`);
-        // We now have an address to make tarball paths fully qualified.
-        for (const [,[metadata]] of this._packageMeta.entries()) {
-          for (const [,version] of Object.entries(metadata.versions))
-            version.tarball = this._address + version.tarball;
-
-        }
-        res();
-      });
-      process.on('exit', () => {
-        console.log('closing server');
-        this._server.close(console.error);
-      });
+    this._server.listen(undefined, 'localhost', () => {
+      this._address = new URL(`http://localhost:${this._server.address().port}`).toString();
+      // We now have an address to make tarball paths fully qualified.
+      for (const [,[metadata]] of this._packageMeta.entries()) {
+        for (const [,version] of Object.entries(metadata.versions))
+          version.dist.tarball = this._address + version.dist.tarball;
+      }
+      fs.writeFileSync(REGISTRY_URL_FILE, this._address.toString());
     });
-
-    // Finally, tell other processes the registry is available and ready.
-    await fs.promises.writeFile(REGISTRY_URL_FILE, this._address.toString());
+    process.on('exit', () => {
+      console.log('closing server');
+      this._server.close(console.error);
+    });
   }
 
   async _addPackage(pkg, tarPath) {
@@ -181,7 +174,7 @@ class Registry {
           directories: packageJson.directories || [],
           dist: {
             // This needs to be updated later with a full address.
-            tarball: `/${encodeURIComponent(pkg)}/-/${shasum}.tgz`,
+            tarball: `${encodeURIComponent(pkg)}/-/${shasum}.tgz`,
             shasum,
           },
           engines: packageJson.engines || {},

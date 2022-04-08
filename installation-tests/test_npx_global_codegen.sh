@@ -8,15 +8,15 @@ if [[ "${OUTPUT}" != *'Please run the following command to download new browsers
   echo "ERROR: should instruct user to download browsers"
   exit 1
 fi
-if [[ "${OUTPUT}" == *"Downloading"*"chromium"* ]]; then
+if [[ "${OUTPUT}" == *"chromium"*"downloaded"* ]]; then
   echo "ERROR: should not download chromium"
   exit 1
 fi
-if [[ "${OUTPUT}" == *"Downloading"*"webkit"* ]]; then
+if [[ "${OUTPUT}" == *"webkit"*"downloaded"* ]]; then
   echo "ERROR: should not download webkit"
   exit 1
 fi
-if [[ "${OUTPUT}" == *"Downloading"*"firefox"* ]]; then
+if [[ "${OUTPUT}" == *"firefox"*"downloaded"* ]]; then
   echo "ERROR: should not download firefox"
   exit 1
 fi
