@@ -119,6 +119,9 @@ function _wrapAndEscape(node, maxColumns = 0) {
 
   let text = node.text;
   text = text.replace(/\[([^\]]*)\]\((.*?)\)/g, (match, linkName, linkUrl) => {
+    const isInternal = !linkUrl.startsWith('http://') && !linkUrl.startsWith('https://');
+    if (isInternal)
+      linkUrl = new URL(linkUrl.replace('.md', ''), 'https://playwright.dev/dotnet/docs/api/').toString();
     return `<a href="${linkUrl}">${linkName}</a>`;
   });
   text = text.replace(/(?<!`)\[(.*?)\]/g, (match, link) => `<see cref="${link}"/>`);
