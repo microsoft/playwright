@@ -11910,6 +11910,11 @@ export interface AndroidWebView {
   page(): Promise<Page>;
 
   /**
+   * Connects to the WebView and returns multiple Playwright [Page] objects to interact with.
+   */
+  pages(): Promise<Page[]>;
+
+  /**
    * WebView process PID.
    */
   pid(): number;

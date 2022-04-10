@@ -78,3 +78,21 @@ test('select webview from socketName', async function({ androidDevice }) {
   await newPage.close();
   await context.close();
 });
+
+test('webview.pages', async function({ androidDevice }) {
+  test.slow();
+  // open first page
+  const context = await androidDevice.launchBrowser();
+  // open second page
+  const newPage = await context.newPage();
+  newPage.goto('about:blank');
+
+  const webview = await androidDevice.webView({ socketName: 'webview_devtools_remote_playwright_test' });
+  expect(webview.pkg()).toBe('');
+  const pages = await webview.pages();
+  expect(pages.length).toBe(2);
+  expect(pages[0].url()).toBe('about:blank');
+
+  await newPage.close();
+  await context.close();
+});
