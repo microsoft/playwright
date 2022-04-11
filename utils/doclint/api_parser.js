@@ -300,14 +300,10 @@ function applyTemplates(body, params) {
  * @returns {MarkdownNode[]}
  */
 function extractComments(item) {
-  return (item.children || []).filter(c => {
+  return childrenWithoutProperties(item).filter(c => {
     if (c.type.startsWith('h'))
       return false;
     if (c.type === 'li' && c.liType === 'default')
-      return false;
-    if (c.type === 'li' && c.text.startsWith('langs:'))
-      return false;
-    if (c.type === 'li' && c.text === 'experimental')
       return false;
     return true;
   });
@@ -365,7 +361,7 @@ function extractLangs(spec) {
  * @returns {MarkdownNode[]}
  */
 function childrenWithoutProperties(spec) {
-  return spec.children.filter(c => {
+  return (spec.children || []).filter(c => {
     const isProperty = c.liType === 'bullet' && (c.text.startsWith('langs:') || c.text === 'experimental');
     return !isProperty;
   });

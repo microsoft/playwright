@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+// eslint-disable-next-line spaced-comment
 /// <reference path="./experimental.d.ts" />
 
 import type { Fixtures } from '@playwright/test';

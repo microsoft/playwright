@@ -66,7 +66,7 @@ class Documentation {
    * @return {!Documentation}
    */
   mergeWith(documentation) {
-    return new Documentation([...this.classesArray, ...documentation.classesArray]);
+    return new Documentation([...this.classesArray, ...documentation.classesArray].map(cls => cls.clone()));
   }
 
   /**
@@ -102,6 +102,18 @@ class Documentation {
       if (clazz.langs.only && !clazz.langs.only.includes(lang))
         continue;
       clazz.filterForLanguage(lang);
+      classesArray.push(clazz);
+    }
+    this.classesArray = classesArray;
+    this.index();
+  }
+
+  filterOutExperimental() {
+    const classesArray = [];
+    for (const clazz of this.classesArray) {
+      if (clazz.experimental)
+        continue;
+      clazz.filterOutExperimental();
       classesArray.push(clazz);
     }
     this.classesArray = classesArray;
@@ -150,7 +162,7 @@ class Documentation {
   }
 
   clone() {
-    return new Documentation([...this.classesArray]);
+    return new Documentation(this.classesArray.map(cls => cls.clone()));
   }
 }
 
@@ -170,7 +182,7 @@ Documentation.Class = class {
     this.membersArray = membersArray;
     this.spec = spec;
     this.extends = extendsName;
-    this.comment =  '';
+    this.comment = '';
     this.index();
     const match = name.match(/(API|JS|CDP|[A-Z])(.*)/);
     this.varName = match[1].toLowerCase() + match[2];
@@ -209,6 +221,12 @@ Documentation.Class = class {
     }
   }
 
+  clone() {
+    const cls = new Documentation.Class(this.langs, this.experimental, this.name, this.membersArray.map(m => m.clone()), this.extends, this.spec);
+    cls.comment = this.comment;
+    return cls;
+  }
+
   /**
    * @param {string} lang
    */
@@ -218,6 +236,17 @@ Documentation.Class = class {
       if (member.langs.only && !member.langs.only.includes(lang))
         continue;
       member.filterForLanguage(lang);
+      membersArray.push(member);
+    }
+    this.membersArray = membersArray;
+  }
+
+  filterOutExperimental()  {
+    const membersArray = [];
+    for (const member of this.membersArray) {
+      if (member.experimental)
+        continue;
+      member.filterOutExperimental();
       membersArray.push(member);
     }
     this.membersArray = membersArray;
@@ -362,13 +391,27 @@ Documentation.Member = class {
       overriddenArg.filterForLanguage(lang);
       if (overriddenArg.name === 'options' && !overriddenArg.type.properties.length)
         continue;
+      overriddenArg.type.filterForLanguage(lang);
       argsArray.push(overriddenArg);
     }
     this.argsArray = argsArray;
   }
 
+  filterOutExperimental() {
+    this.type.filterOutExperimental();
+    const argsArray = [];
+    for (const arg of this.argsArray) {
+      if (arg.experimental)
+        continue;
+      arg.type.filterOutExperimental();
+      argsArray.push(arg);
+    }
+    this.argsArray = argsArray;
+  }
+
   clone() {
-    const result = new Documentation.Member(this.kind, this.langs, this.experimental, this.name, this.type, this.argsArray, this.spec, this.required);
+    const result = new Documentation.Member(this.kind, this.langs, this.experimental, this.name, this.type.clone(), this.argsArray.map(arg => arg.clone()), this.spec, this.required);
+    result.alias = this.alias;
     result.async = this.async;
     result.paramOrOption = this.paramOrOption;
     return result;
@@ -521,6 +564,20 @@ Documentation.Type = class {
     }
   }
 
+  clone() {
+    const type = new Documentation.Type(this.name, this.properties ? this.properties.map(prop => prop.clone()) : undefined);
+    if (this.union)
+      type.union = this.union.map(type => type.clone());
+    if (this.args)
+      type.args = this.args.map(type => type.clone());
+    if (this.returnType)
+      type.returnType = this.returnType.clone();
+    if (this.templates)
+      type.templates = this.templates.map(type => type.clone());
+    type.expression = this.expression;
+    return type;
+  }
+
   /**
    * @returns {Documentation.Member[]}
    */
@@ -556,6 +613,19 @@ Documentation.Type = class {
       if (prop.langs.only && !prop.langs.only.includes(lang))
         continue;
       prop.filterForLanguage(lang);
+      properties.push(prop);
+    }
+    this.properties = properties;
+  }
+
+  filterOutExperimental() {
+    if (!this.properties)
+      return;
+    const properties = [];
+    for (const prop of this.properties) {
+      if (prop.experimental)
+        continue;
+      prop.filterOutExperimental();
       properties.push(prop);
     }
     this.properties = properties;

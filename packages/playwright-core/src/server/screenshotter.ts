@@ -141,8 +141,6 @@ export class Screenshotter {
   }
 
   async _preparePageForScreenshot(progress: Progress, hideCaret: boolean, disableAnimations: boolean, waitForFonts: boolean) {
-    if (!experimentalFeaturesEnabled())
-      waitForFonts = false;
     if (disableAnimations)
       progress.log('  disabled all CSS animations');
     if (waitForFonts)
@@ -324,6 +322,9 @@ function trimClipToSize(clip: types.Rect, size: types.Size): types.Rect {
 }
 
 function validateScreenshotOptions(options: ScreenshotOptions): 'png' | 'jpeg' {
+  if (options.fonts && !experimentalFeaturesEnabled())
+    throw new Error(`To use the experimental option "fonts", set PLAYWRIGHT_EXPERIMENTAL_FEATURES=1 enviroment variable.`);
+
   let format: 'png' | 'jpeg' | null = null;
   // options.type takes precedence over inferring the type from options.path
   // because it may be a 0-length file with no extension created beforehand (i.e. as a temp file).

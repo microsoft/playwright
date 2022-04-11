@@ -16,6 +16,7 @@
  */
 
 import type { APIRequestContext, Browser, BrowserContext, BrowserContextOptions, Page, LaunchOptions, ViewportSize, Geolocation, HTTPCredentials, Locator, APIResponse } from 'playwright-core';
+export * from 'playwright-core';
 
 export type ReporterDescription =
   ['dot'] |
