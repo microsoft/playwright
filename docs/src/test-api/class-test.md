@@ -1249,7 +1249,7 @@ A function that returns whether to mark as "slow", based on test fixtures. Test 
 Optional description that will be reflected in a test report.
 
 
-## method: Test.step
+## async method: Test.step
 
 Declares a test step.
 
