@@ -312,7 +312,7 @@ Query parameters to be sent with the URL.
 
 ## java-fetch-params
 * langs: java
-- `options` <[RequestOptions]>
+- `options` ?<[RequestOptions]>
 
 Optional request parameters.
 
@@ -552,7 +552,7 @@ call [`method: BrowserContext.close`] for the HAR to be saved.
 ## context-option-recordhar-omit-content
 * langs: csharp, java, python
   - alias-python: record_har_omit_content
-- `recordHarOmitContent` <[boolean]>
+- `recordHarOmitContent` ?<[boolean]>
 
 Optional setting to control whether to omit request content from the HAR. Defaults to `false`.
 
