@@ -437,9 +437,11 @@ export class Registry {
       path.join('minibrowser-gtk'),
       path.join('minibrowser-gtk', 'bin'),
       path.join('minibrowser-gtk', 'lib'),
+      path.join('minibrowser-gtk', 'sys', 'lib'),
       path.join('minibrowser-wpe'),
       path.join('minibrowser-wpe', 'bin'),
       path.join('minibrowser-wpe', 'lib'),
+      path.join('minibrowser-wpe', 'sys', 'lib'),
     ];
     this._executables.push({
       type: 'browser',
