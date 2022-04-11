@@ -600,7 +600,7 @@ export class Registry {
           throw new Error(`ERROR: Playwright does not support installing ${executable.name}`);
 
         const { langName } = getClientLanguage();
-        if (!executable._isHermeticInstallation && !forceReinstall && executable.executablePath(langName)) {
+        if (!getAsBooleanFromENV('CI') && !executable._isHermeticInstallation && !forceReinstall && executable.executablePath(langName)) {
           const command = buildPlaywrightCLICommand(langName, 'install --force ' + executable.name);
           throw new Error('\n' + wrapInASCIIBox([
             `ATTENTION: "${executable.name}" is already installed on the system!`,
