@@ -12,13 +12,13 @@ title: "Release notes"
 - New **experimental** role selectors that allow selecting elements by their [ARIA role](https://www.w3.org/TR/wai-aria-1.2/#roles), [ARIA attributes](https://www.w3.org/TR/wai-aria-1.2/#aria-attributes) and [accessible name](https://w3c.github.io/accname/#dfn-accessible-name).
 
   ```python async
-  // Click a button with accessible name "log in"
-  await page.click('role=button[name="log in"]')
+  # Click a button with accessible name "log in"
+  await page.click("role=button[name='log in']")
   ```
 
   ```python sync
-  // Click a button with accessible name "log in"
-  page.click('role=button[name="log in"]')
+  # Click a button with accessible name "log in"
+  page.click("role=button[name='log in']")
   ```
 
   To use role selectors, make sure to pass `PLAYWRIGHT_EXPERIMENTAL_FEATURES=1` environment variable.
