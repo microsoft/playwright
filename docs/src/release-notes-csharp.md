@@ -13,7 +13,7 @@ title: "Release notes"
 
   ```csharp
   // Click a button with accessible name "log in"
-  page.ClickAsync("role=button[name='log in']")
+  await page.ClickAsync("role=button[name='log in']")
   ```
 
   To use role selectors, make sure to pass `PLAYWRIGHT_EXPERIMENTAL_FEATURES=1` environment variable.
