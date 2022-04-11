@@ -97,7 +97,6 @@ it('should accept userDataDir', async ({ createUserDataDir, browserType }) => {
 });
 
 it('should restore state from userDataDir', async ({ browserType, server, createUserDataDir, isMac, browserName }) => {
-  it.skip(isMac && browserName === 'webkit', 'Started failing after roll https://github.com/microsoft/playwright/issues/13433');
   it.slow();
 
   const userDataDir = await createUserDataDir();
