@@ -8,9 +8,7 @@ expected values stored in files.
 expect(screenshot).toMatchSnapshot('landing-page.png');
 ```
 
-<!-- TOC -->
-
-## method: ScreenshotAssertions.toMatchSnapshot
+## method: ScreenshotAssertions.toMatchSnapshot#1
 
 Ensures that passed value, either a [string] or a [Buffer], matches the expected snapshot stored in the test snapshots directory.
 
@@ -18,11 +16,8 @@ Ensures that passed value, either a [string] or a [Buffer], matches the expected
 // Basic usage.
 expect(await page.screenshot()).toMatchSnapshot('landing-page.png');
 
-// Basic usage and the file name is derived from the test name.
-expect(await page.screenshot()).toMatchSnapshot();
-
 // Pass options to customize the snapshot comparison and have a generated name.
-expect(await page.screenshot()).toMatchSnapshot({
+expect(await page.screenshot()).toMatchSnapshot('landing-page.png', {
   maxDiffPixels: 27, // allow no more than 27 different pixels.
 });
 
@@ -36,13 +31,49 @@ expect(await page.screenshot()).toMatchSnapshot(['landing', 'step3.png']);
 
 Learn more about [visual comparisons](./test-snapshots.md).
 
-### param: ScreenshotAssertions.toMatchSnapshot.nameOrOptions
-- `nameOrOptions` <[string]|[Array]<[string]>|[Object]>
+### param: ScreenshotAssertions.toMatchSnapshot#1.name
+- `name` <[string]|[Array]<[string]>>
 
-Optional snapshot name. If not passed, the test name and ordinals are used when called multiple times. Also passing the options here is supported.
+Snapshot name.
 
-### option: ScreenshotAssertions.toMatchSnapshot.maxDiffPixels = %%-assertions-max-diff-pixels-%%
+### option: ScreenshotAssertions.toMatchSnapshot#1.maxDiffPixels = %%-assertions-max-diff-pixels-%%
 
-### option: ScreenshotAssertions.toMatchSnapshot.maxDiffPixelRatio = %%-assertions-max-diff-pixel-ratio-%%
+### option: ScreenshotAssertions.toMatchSnapshot#1.maxDiffPixelRatio = %%-assertions-max-diff-pixel-ratio-%%
 
-### option: ScreenshotAssertions.toMatchSnapshot.threshold = %%-assertions-threshold-%%
+### option: ScreenshotAssertions.toMatchSnapshot#1.threshold = %%-assertions-threshold-%%
+
+
+
+## method: ScreenshotAssertions.toMatchSnapshot#2
+
+Ensures that passed value, either a [string] or a [Buffer], matches the expected snapshot stored in the test snapshots directory.
+
+```js
+// Basic usage and the file name is derived from the test name.
+expect(await page.screenshot()).toMatchSnapshot();
+
+// Pass options to customize the snapshot comparison and have a generated name.
+expect(await page.screenshot()).toMatchSnapshot({
+  maxDiffPixels: 27, // allow no more than 27 different pixels.
+});
+
+// Configure image matching threshold and snapshot name.
+expect(await page.screenshot()).toMatchSnapshot({
+  name: 'landing-page.png',
+  threshold: 0.3,
+});
+```
+
+Learn more about [visual comparisons](./test-snapshots.md).
+
+### option: ScreenshotAssertions.toMatchSnapshot#2.maxDiffPixels = %%-assertions-max-diff-pixels-%%
+
+### option: ScreenshotAssertions.toMatchSnapshot#2.maxDiffPixelRatio = %%-assertions-max-diff-pixel-ratio-%%
+
+### option: ScreenshotAssertions.toMatchSnapshot#2.name
+- `name` <[string]|[Array]<[string]>>
+
+Snapshot name. If not passed, the test name and ordinals are used when called multiple times.
+
+### option: ScreenshotAssertions.toMatchSnapshot#2.threshold = %%-assertions-threshold-%%
+

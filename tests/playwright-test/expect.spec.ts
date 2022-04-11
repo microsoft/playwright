@@ -212,9 +212,12 @@ test('should propose only the relevant matchers when custom expect matcher class
     const { test } = pwt;
     test('custom matchers', async ({ page }) => {
       await test.expect(page).toHaveURL('https://example.com');
+      await test.expect(page).not.toHaveURL('https://example.com');
       await test.expect(page).toBe(true);
       // @ts-expect-error
       await test.expect(page).toBeEnabled();
+      // @ts-expect-error
+      await test.expect(page).not.toBeEnabled();
 
       await test.expect(page.locator('foo')).toBeEnabled();
       await test.expect(page.locator('foo')).toBe(true);

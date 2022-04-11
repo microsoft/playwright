@@ -34,9 +34,10 @@ class TypesGenerator {
   /**
    * @param {{
    *   documentation: Documentation,
-   *   classNames: Set<string>,
-   *   overridesToDocsClassMapping: Map<string, string>,
-   *   ignoreMissing: Set<string>,
+   *   classNamesToGenerate: Set<string>,
+   *   overridesToDocsClassMapping?: Map<string, string>,
+   *   ignoreMissing?: Set<string>,
+   *   doNotExportClassNames?: Set<string>,
    * }} options
    */
   constructor(options) {
@@ -45,9 +46,10 @@ class TypesGenerator {
     /** @type {Set<string>} */
     this.handledMethods = new Set();
     this.documentation = options.documentation;
-    this.classNames = options.classNames;
-    this.overridesToDocsClassMapping = options.overridesToDocsClassMapping;
-    this.ignoreMissing = options.ignoreMissing;
+    this.classNamesToGenerate = options.classNamesToGenerate;
+    this.overridesToDocsClassMapping = options.overridesToDocsClassMapping || new Map();
+    this.ignoreMissing = options.ignoreMissing || new Set();
+    this.doNotExportClassNames = options.doNotExportClassNames || new Set();
   }
 
   /**
@@ -61,7 +63,7 @@ class TypesGenerator {
     const createMarkdownLink = (member, text) => {
       const className = toKebabCase(member.clazz.name);
       const memberName = toKebabCase(member.name);
-      let hash = null
+      let hash = null;
       if (member.kind === 'property' || member.kind === 'method')
         hash = `${className}-${memberName}`.toLowerCase();
       else if (member.kind === 'event')
@@ -76,12 +78,13 @@ class TypesGenerator {
         return `\`${option}\``;
       if (clazz)
         return `[${clazz.name}]`;
+      const className = member.clazz.varName === 'playwrightAssertions' ? '' : member.clazz.varName + '.';
       if (member.kind === 'method')
-        return createMarkdownLink(member, `${member.clazz.varName}.${member.alias}(${this.renderJSSignature(member.argsArray)})`);
+        return createMarkdownLink(member, `${className}${member.alias}(${this.renderJSSignature(member.argsArray)})`);
       if (member.kind === 'event')
-        return createMarkdownLink(member, `${member.clazz.varName}.on('${member.alias.toLowerCase()}')`);
+        return createMarkdownLink(member, `${className}on('${member.alias.toLowerCase()}')`);
       if (member.kind === 'property')
-        return createMarkdownLink(member, `${member.clazz.varName}.${member.alias}`);
+        return createMarkdownLink(member, `${className}${member.alias}`);
       throw new Error('Unknown member kind ' + member.kind);
     });
     this.documentation.generateSourceCodeComments();
@@ -113,13 +116,13 @@ class TypesGenerator {
       return this.memberJSDOC(method, '  ').trimLeft();
     }, (className) => {
       const docClass = this.docClassForName(className);
-      if (!docClass || !this.classNames.has(docClass.name))
+      if (!docClass || !this.classNamesToGenerate.has(docClass.name))
         return '';
       return this.classBody(docClass);
     });
 
     const classes = this.documentation.classesArray
-        .filter(cls => this.classNames.has(cls.name))
+        .filter(cls => this.classNamesToGenerate.has(cls.name))
         .filter(cls => !handledClasses.has(cls.name));
     {
       const playwright = this.documentation.classesArray.find(c => c.name === 'Playwright');
@@ -152,7 +155,7 @@ class TypesGenerator {
    * @param {string} name
    */
   docClassForName(name) {
-    const mappedName = (this.overridesToDocsClassMapping ? this.overridesToDocsClassMapping.get(name) : undefined) || name;
+    const mappedName = this.overridesToDocsClassMapping.get(name) || name;
     const docClass = this.documentation.classes.get(mappedName);
     if (!docClass && !this.canIgnoreMissingName(name))
       throw new Error(`Unknown override class ${name}`);
@@ -189,7 +192,8 @@ class TypesGenerator {
     if (classDesc.comment) {
       parts.push(this.writeComment(classDesc.comment))
     }
-    parts.push(`export interface ${classDesc.name} ${classDesc.extends ? `extends ${classDesc.extends} ` : ''}{`);
+    const shouldExport = !this.doNotExportClassNames.has(classDesc.name);
+    parts.push(`${shouldExport ? 'export ' : ''}interface ${classDesc.name} ${classDesc.extends ? `extends ${classDesc.extends} ` : ''}{`);
     parts.push(this.classBody(classDesc));
     parts.push('}\n');
     return parts.join('\n');
@@ -497,14 +501,12 @@ class TypesGenerator {
     fs.mkdirSync(testTypesDir)
   writeFile(path.join(coreTypesDir, 'protocol.d.ts'), fs.readFileSync(path.join(PROJECT_DIR, 'packages', 'playwright-core', 'src', 'server', 'chromium', 'protocol.d.ts'), 'utf8'));
 
-  const assertionClasses = new Set(['PlaywrightAssertions', 'LocatorAssertions', 'PageAssertions', 'APIResponseAssertions', 'ScreenshotAssertions']);
+  const assertionClasses = new Set(['LocatorAssertions', 'PageAssertions', 'APIResponseAssertions', 'ScreenshotAssertions']);
   const apiDocumentation = parseApi(path.join(PROJECT_DIR, 'docs', 'src', 'api'));
   apiDocumentation.index();
   const apiTypesGenerator = new TypesGenerator({
     documentation: apiDocumentation,
-    classNames: new Set(apiDocumentation.classesArray.map(cls => cls.name).filter(name => !assertionClasses.has(name))),
-    overridesToDocsClassMapping: new Map(),
-    ignoreMissing: new Set(),
+    classNamesToGenerate: new Set(apiDocumentation.classesArray.map(cls => cls.name).filter(name => !assertionClasses.has(name) && name !== 'PlaywrightAssertions')),
   });
   let apiTypes = await apiTypesGenerator.generateTypes(path.join(__dirname, 'overrides.d.ts'));
   const namedDevices = Object.keys(devices).map(name => `  ${JSON.stringify(name)}: DeviceDescriptor;`).join('\n');
@@ -530,7 +532,7 @@ class TypesGenerator {
   const testDocumentation = apiDocumentation.mergeWith(testOnlyDocumentation);
   const testTypesGenerator = new TypesGenerator({
     documentation: testDocumentation,
-    classNames: new Set(['TestError', 'TestInfo', 'WorkerInfo']),
+    classNamesToGenerate: new Set(['TestError', 'TestInfo', 'WorkerInfo', ...assertionClasses]),
     overridesToDocsClassMapping: new Map([
       ['TestType', 'Test'],
       ['Config', 'TestConfig'],
@@ -548,7 +550,9 @@ class TypesGenerator {
       'TestFunction',
       'PlaywrightWorkerOptions.defaultBrowserType',
       'PlaywrightWorkerArgs.playwright',
+      'Matchers',
     ]),
+    doNotExportClassNames: new Set(assertionClasses),
   });
   let testTypes = await testTypesGenerator.generateTypes(path.join(__dirname, 'overrides-test.d.ts'));
   testTypes = testTypes.replace(/( +)\n/g, '\n'); // remove trailing whitespace
@@ -558,8 +562,7 @@ class TypesGenerator {
   const testReporterDocumentation = testDocumentation.mergeWith(testReporterOnlyDocumentation);
   const testReporterTypesGenerator = new TypesGenerator({
     documentation: testReporterDocumentation,
-    classNames: new Set(testReporterOnlyDocumentation.classesArray.map(cls => cls.name)),
-    overridesToDocsClassMapping: new Map(),
+    classNamesToGenerate: new Set(testReporterOnlyDocumentation.classesArray.map(cls => cls.name)),
     ignoreMissing: new Set(['FullResult']),
   });
   let testReporterTypes = await testReporterTypesGenerator.generateTypes(path.join(__dirname, 'overrides-testReporter.d.ts'));

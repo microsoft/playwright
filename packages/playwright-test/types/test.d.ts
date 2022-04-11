@@ -15,10 +15,7 @@
  * limitations under the License.
  */
 
-import type { APIRequestContext, Browser, BrowserContext, BrowserContextOptions, Page, LaunchOptions, ViewportSize, Geolocation, HTTPCredentials } from 'playwright-core';
-import type { Expect } from './testExpect';
-
-export type { Expect } from './testExpect';
+import type { APIRequestContext, Browser, BrowserContext, BrowserContextOptions, Page, LaunchOptions, ViewportSize, Geolocation, HTTPCredentials, Locator, APIResponse } from 'playwright-core';
 
 export type ReporterDescription =
   ['dot'] |
@@ -2802,7 +2799,7 @@ export interface PlaywrightTestOptions {
  * [fixtures.page](https://playwright.dev/docs/api/class-fixtures#fixtures-page).
  */
 export interface PlaywrightWorkerArgs {
-  playwright: typeof import('..');
+  playwright: typeof import('playwright-core');
   /**
    * [Browser] instance is shared between all tests in the [same worker](https://playwright.dev/docs/test-parallel) - this makes testing efficient.
    * However, each test runs in an isolated [BrowserContext]  and gets a fresh environment.
@@ -2891,6 +2888,121 @@ export interface PlaywrightTestArgs {
 export type PlaywrightTestProject<TestArgs = {}, WorkerArgs = {}> = Project<PlaywrightTestOptions & TestArgs, PlaywrightWorkerOptions & WorkerArgs>;
 export type PlaywrightTestConfig<TestArgs = {}, WorkerArgs = {}> = Config<PlaywrightTestOptions & TestArgs, PlaywrightWorkerOptions & WorkerArgs>;
 
+import type * as expectType from 'expect';
+
+type AsymmetricMatcher = Record<string, any>;
+
+type IfAny<T, Y, N> = 0 extends (1 & T) ? Y : N;
+type ExtraMatchers<T, Type, Matchers> = T extends Type ? Matchers : IfAny<T, Matchers, {}>;
+
+type BaseMatchers<R, T> = Pick<expectType.Matchers<R>, SupportedExpectProperties> & PlaywrightTest.Matchers<R, T>;
+
+type MakeMatchers<R, T> = BaseMatchers<R, T> & {
+    /**
+     * If you know how to test something, `.not` lets you test its opposite.
+     */
+    not: MakeMatchers<R, T>;
+    /**
+     * Use resolves to unwrap the value of a fulfilled promise so any other
+     * matcher can be chained. If the promise is rejected the assertion fails.
+     */
+    resolves: MakeMatchers<Promise<R>, Awaited<T>>;
+    /**
+    * Unwraps the reason of a rejected promise so any other matcher can be chained.
+    * If the promise is fulfilled the assertion fails.
+    */
+    rejects: MakeMatchers<Promise<R>, Awaited<T>>;
+  } & ScreenshotAssertions &
+  ExtraMatchers<T, Page, PageAssertions> &
+  ExtraMatchers<T, Locator, LocatorAssertions> &
+  ExtraMatchers<T, APIResponse, APIResponseAssertions>;
+
+export declare type Expect = {
+  <T = unknown>(actual: T, messageOrOptions?: string | { message?: string }): MakeMatchers<void, T>;
+  soft: <T = unknown>(actual: T, messageOrOptions?: string | { message?: string }) => MakeMatchers<void, T>;
+  poll: <T = unknown>(actual: () => T | Promise<T>, messageOrOptions?: string | { message?: string, timeout?: number }) => BaseMatchers<Promise<void>, T> & {
+    /**
+     * If you know how to test something, `.not` lets you test its opposite.
+     */
+     not: BaseMatchers<Promise<void>, T>;
+  };
+
+  extend(arg0: any): void;
+  getState(): expectType.MatcherState;
+  setState(state: Partial<expectType.MatcherState>): void;
+  any(expectedObject: any): AsymmetricMatcher;
+  anything(): AsymmetricMatcher;
+  arrayContaining(sample: Array<unknown>): AsymmetricMatcher;
+  objectContaining(sample: Record<string, unknown>): AsymmetricMatcher;
+  stringContaining(expected: string): AsymmetricMatcher;
+  stringMatching(expected: string | RegExp): AsymmetricMatcher;
+  /**
+   * Removed following methods because they rely on a test-runner integration from Jest which we don't support:
+   * - assertions()
+   * - extractExpectedAssertionsErrors()
+   * – hasAssertions()
+   */
+};
+
+type Awaited<T> = T extends PromiseLike<infer U> ? U : T;
+
+/**
+ * Removed methods require the jest.fn() integration from Jest to spy on function calls which we don't support:
+ * - lastCalledWith()
+ * - lastReturnedWith()
+ * - nthCalledWith()
+ * - nthReturnedWith()
+ * - toBeCalled()
+ * - toBeCalledTimes()
+ * - toBeCalledWith()
+ * - toHaveBeenCalled()
+ * - toHaveBeenCalledTimes()
+ * - toHaveBeenCalledWith()
+ * - toHaveBeenLastCalledWith()
+ * - toHaveBeenNthCalledWith()
+ * - toHaveLastReturnedWith()
+ * - toHaveNthReturnedWith()
+ * - toHaveReturned()
+ * - toHaveReturnedTimes()
+ * - toHaveReturnedWith()
+ * - toReturn()
+ * - toReturnTimes()
+ * - toReturnWith()
+ * - toThrowErrorMatchingSnapshot()
+ * - toThrowErrorMatchingInlineSnapshot()
+ */
+type SupportedExpectProperties =
+  'toBe' |
+  'toBeCloseTo' |
+  'toBeDefined' |
+  'toBeFalsy' |
+  'toBeGreaterThan' |
+  'toBeGreaterThanOrEqual' |
+  'toBeInstanceOf' |
+  'toBeLessThan' |
+  'toBeLessThanOrEqual' |
+  'toBeNaN' |
+  'toBeNull' |
+  'toBeTruthy' |
+  'toBeUndefined' |
+  'toContain' |
+  'toContainEqual' |
+  'toEqual' |
+  'toHaveLength' |
+  'toHaveProperty' |
+  'toMatch' |
+  'toMatchObject' |
+  'toStrictEqual' |
+  'toThrow' |
+  'toThrowError'
+
+declare global {
+  export namespace PlaywrightTest {
+    export interface Matchers<R, T = unknown> {
+    }
+  }
+}
+
 /**
  * These tests are executed in Playwright environment that launches the browser
  * and provides a fresh page to each test.
@@ -2904,6 +3016,581 @@ export const expect: Expect;
 // This is required to not export everything by default. See https://github.com/Microsoft/TypeScript/issues/19545#issuecomment-340490459
 export {};
 
+
+/**
+ * The [APIResponseAssertions] class provides assertion methods that can be used to make assertions about the [APIResponse]
+ * in the tests. A new instance of [APIResponseAssertions] is created by calling
+ * [expect(response)](https://playwright.dev/docs/api/class-playwrightassertions#playwright-assertions-expect-api-response):
+ *
+ * ```js
+ * import { test, expect } from '@playwright/test';
+ *
+ * test('navigates to login', async ({ page }) => {
+ *   // ...
+ *   const response = await page.request.get('https://playwright.dev');
+ *   await expect(response).toBeOK();
+ * });
+ * ```
+ *
+ */
+interface APIResponseAssertions {
+  /**
+   * Makes the assertion check for the opposite condition. For example, this code tests that the response status is not
+   * successful:
+   *
+   * ```js
+   * await expect(response).not.toBeOK();
+   * ```
+   *
+   */
+  not: APIResponseAssertions;
+
+  /**
+   * Ensures the response status code is within [200..299] range.
+   *
+   * ```js
+   * await expect(response).toBeOK();
+   * ```
+   *
+   */
+  toBeOK(): Promise<void>;
+}
+
+/**
+ * The [LocatorAssertions] class provides assertion methods that can be used to make assertions about the [Locator] state
+ * in the tests. A new instance of [LocatorAssertions] is created by calling
+ * [expect(locator)](https://playwright.dev/docs/api/class-playwrightassertions#playwright-assertions-expect-locator):
+ *
+ * ```js
+ * import { test, expect } from '@playwright/test';
+ *
+ * test('status becomes submitted', async ({ page }) => {
+ *   // ...
+ *   await page.click('#submit-button');
+ *   await expect(page.locator('.status')).toHaveText('Submitted');
+ * });
+ * ```
+ *
+ */
+interface LocatorAssertions {
+  /**
+   * Makes the assertion check for the opposite condition. For example, this code tests that the Locator doesn't contain text
+   * `"error"`:
+   *
+   * ```js
+   * await expect(locator).not.toContainText('error');
+   * ```
+   *
+   */
+  not: LocatorAssertions;
+
+  /**
+   * Ensures the [Locator] points to a checked input.
+   *
+   * ```js
+   * const locator = page.locator('.subscribe');
+   * await expect(locator).toBeChecked();
+   * ```
+   *
+   * @param options
+   */
+  toBeChecked(options?: {
+    checked?: boolean;
+
+    /**
+     * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
+     */
+    timeout?: number;
+  }): Promise<void>;
+
+  /**
+   * Ensures the [Locator] points to a disabled element.
+   *
+   * ```js
+   * const locator = page.locator('button.submit');
+   * await expect(locator).toBeDisabled();
+   * ```
+   *
+   * @param options
+   */
+  toBeDisabled(options?: {
+    /**
+     * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
+     */
+    timeout?: number;
+  }): Promise<void>;
+
+  /**
+   * Ensures the [Locator] points to an editable element.
+   *
+   * ```js
+   * const locator = page.locator('input');
+   * await expect(locator).toBeEditable();
+   * ```
+   *
+   * @param options
+   */
+  toBeEditable(options?: {
+    /**
+     * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
+     */
+    timeout?: number;
+  }): Promise<void>;
+
+  /**
+   * Ensures the [Locator] points to an empty editable element or to a DOM node that has no text.
+   *
+   * ```js
+   * const locator = page.locator('div.warning');
+   * await expect(locator).toBeEmpty();
+   * ```
+   *
+   * @param options
+   */
+  toBeEmpty(options?: {
+    /**
+     * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
+     */
+    timeout?: number;
+  }): Promise<void>;
+
+  /**
+   * Ensures the [Locator] points to an enabled element.
+   *
+   * ```js
+   * const locator = page.locator('button.submit');
+   * await expect(locator).toBeEnabled();
+   * ```
+   *
+   * @param options
+   */
+  toBeEnabled(options?: {
+    /**
+     * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
+     */
+    timeout?: number;
+  }): Promise<void>;
+
+  /**
+   * Ensures the [Locator] points to a focused DOM node.
+   *
+   * ```js
+   * const locator = page.locator('input');
+   * await expect(locator).toBeFocused();
+   * ```
+   *
+   * @param options
+   */
+  toBeFocused(options?: {
+    /**
+     * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
+     */
+    timeout?: number;
+  }): Promise<void>;
+
+  /**
+   * Ensures the [Locator] points to a hidden DOM node, which is the opposite of [visible](https://playwright.dev/docs/api/actionability#visible).
+   *
+   * ```js
+   * const locator = page.locator('.my-element');
+   * await expect(locator).toBeHidden();
+   * ```
+   *
+   * @param options
+   */
+  toBeHidden(options?: {
+    /**
+     * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
+     */
+    timeout?: number;
+  }): Promise<void>;
+
+  /**
+   * Ensures the [Locator] points to a [visible](https://playwright.dev/docs/api/actionability#visible) DOM node.
+   *
+   * ```js
+   * const locator = page.locator('.my-element');
+   * await expect(locator).toBeVisible();
+   * ```
+   *
+   * @param options
+   */
+  toBeVisible(options?: {
+    /**
+     * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
+     */
+    timeout?: number;
+  }): Promise<void>;
+
+  /**
+   * Ensures the [Locator] points to an element that contains the given text. You can use regular expressions for the value
+   * as well.
+   *
+   * ```js
+   * const locator = page.locator('.title');
+   * await expect(locator).toContainText('substring');
+   * await expect(locator).toContainText(/\d messages/);
+   * ```
+   *
+   * Note that if array is passed as an expected value, entire lists of elements can be asserted:
+   *
+   * ```js
+   * const locator = page.locator('list > .list-item');
+   * await expect(locator).toContainText(['Text 1', 'Text 4', 'Text 5']);
+   * ```
+   *
+   * @param expected Expected substring or RegExp or a list of those.
+   * @param options
+   */
+  toContainText(expected: string|RegExp|Array<string|RegExp>, options?: {
+    /**
+     * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
+     */
+    timeout?: number;
+
+    /**
+     * Whether to use `element.innerText` instead of `element.textContent` when retrieving DOM node text.
+     */
+    useInnerText?: boolean;
+  }): Promise<void>;
+
+  /**
+   * Ensures the [Locator] points to an element with given attribute.
+   *
+   * ```js
+   * const locator = page.locator('input');
+   * await expect(locator).toHaveAttribute('type', 'text');
+   * ```
+   *
+   * @param name Attribute name.
+   * @param value Expected attribute value.
+   * @param options
+   */
+  toHaveAttribute(name: string, value: string|RegExp, options?: {
+    /**
+     * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
+     */
+    timeout?: number;
+  }): Promise<void>;
+
+  /**
+   * Ensures the [Locator] points to an element with given CSS class.
+   *
+   * ```js
+   * const locator = page.locator('#component');
+   * await expect(locator).toHaveClass(/selected/);
+   * ```
+   *
+   * Note that if array is passed as an expected value, entire lists of elements can be asserted:
+   *
+   * ```js
+   * const locator = page.locator('list > .component');
+   * await expect(locator).toHaveClass(['component', 'component selected', 'component']);
+   * ```
+   *
+   * @param expected Expected class or RegExp or a list of those.
+   * @param options
+   */
+  toHaveClass(expected: string|RegExp|Array<string|RegExp>, options?: {
+    /**
+     * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
+     */
+    timeout?: number;
+  }): Promise<void>;
+
+  /**
+   * Ensures the [Locator] resolves to an exact number of DOM nodes.
+   *
+   * ```js
+   * const list = page.locator('list > .component');
+   * await expect(list).toHaveCount(3);
+   * ```
+   *
+   * @param count Expected count.
+   * @param options
+   */
+  toHaveCount(count: number, options?: {
+    /**
+     * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
+     */
+    timeout?: number;
+  }): Promise<void>;
+
+  /**
+   * Ensures the [Locator] resolves to an element with the given computed CSS style.
+   *
+   * ```js
+   * const locator = page.locator('button');
+   * await expect(locator).toHaveCSS('display', 'flex');
+   * ```
+   *
+   * @param name CSS property name.
+   * @param value CSS property value.
+   * @param options
+   */
+  toHaveCSS(name: string, value: string|RegExp, options?: {
+    /**
+     * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
+     */
+    timeout?: number;
+  }): Promise<void>;
+
+  /**
+   * Ensures the [Locator] points to an element with the given DOM Node ID.
+   *
+   * ```js
+   * const locator = page.locator('input');
+   * await expect(locator).toHaveId('lastname');
+   * ```
+   *
+   * @param id Element id.
+   * @param options
+   */
+  toHaveId(id: string|RegExp, options?: {
+    /**
+     * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
+     */
+    timeout?: number;
+  }): Promise<void>;
+
+  /**
+   * Ensures the [Locator] points to an element with given JavaScript property. Note that this property can be of a primitive
+   * type as well as a plain serializable JavaScript object.
+   *
+   * ```js
+   * const locator = page.locator('.component');
+   * await expect(locator).toHaveJSProperty('loaded', true);
+   * ```
+   *
+   * @param name Property name.
+   * @param value Property value.
+   * @param options
+   */
+  toHaveJSProperty(name: string, value: any, options?: {
+    /**
+     * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
+     */
+    timeout?: number;
+  }): Promise<void>;
+
+  /**
+   * Ensures the [Locator] points to an element with the given text. You can use regular expressions for the value as well.
+   *
+   * ```js
+   * const locator = page.locator('.title');
+   * await expect(locator).toHaveText(/Welcome, Test User/);
+   * await expect(locator).toHaveText(/Welcome, .*\/);
+   * ```
+   *
+   * Note that if array is passed as an expected value, entire lists of elements can be asserted:
+   *
+   * ```js
+   * const locator = page.locator('list > .component');
+   * await expect(locator).toHaveText(['Text 1', 'Text 2', 'Text 3']);
+   * ```
+   *
+   * @param expected Expected substring or RegExp or a list of those.
+   * @param options
+   */
+  toHaveText(expected: string|RegExp|Array<string|RegExp>, options?: {
+    /**
+     * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
+     */
+    timeout?: number;
+
+    /**
+     * Whether to use `element.innerText` instead of `element.textContent` when retrieving DOM node text.
+     */
+    useInnerText?: boolean;
+  }): Promise<void>;
+
+  /**
+   * Ensures the [Locator] points to an element with the given input value. You can use regular expressions for the value as
+   * well.
+   *
+   * ```js
+   * const locator = page.locator('input[type=number]');
+   * await expect(locator).toHaveValue(/[0-9]/);
+   * ```
+   *
+   * @param value Expected value.
+   * @param options
+   */
+  toHaveValue(value: string|RegExp, options?: {
+    /**
+     * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
+     */
+    timeout?: number;
+  }): Promise<void>;
+}
+
+/**
+ * The [PageAssertions] class provides assertion methods that can be used to make assertions about the [Page] state in the
+ * tests. A new instance of [PageAssertions] is created by calling
+ * [expect(page)](https://playwright.dev/docs/api/class-playwrightassertions#playwright-assertions-expect-page):
+ *
+ * ```js
+ * import { test, expect } from '@playwright/test';
+ *
+ * test('navigates to login', async ({ page }) => {
+ *   // ...
+ *   await page.click('#login');
+ *   await expect(page).toHaveURL(/.*\/login/);
+ * });
+ * ```
+ *
+ */
+interface PageAssertions {
+  /**
+   * Makes the assertion check for the opposite condition. For example, this code tests that the page URL doesn't contain
+   * `"error"`:
+   *
+   * ```js
+   * await expect(page).not.toHaveURL('error');
+   * ```
+   *
+   */
+  not: PageAssertions;
+
+  /**
+   * Ensures the page has the given title.
+   *
+   * ```js
+   * await expect(page).toHaveTitle(/.*checkout/);
+   * ```
+   *
+   * @param titleOrRegExp Expected title or RegExp.
+   * @param options
+   */
+  toHaveTitle(titleOrRegExp: string|RegExp, options?: {
+    /**
+     * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
+     */
+    timeout?: number;
+  }): Promise<void>;
+
+  /**
+   * Ensures the page is navigated to the given URL.
+   *
+   * ```js
+   * await expect(page).toHaveURL(/.*checkout/);
+   * ```
+   *
+   * @param urlOrRegExp Expected substring or RegExp.
+   * @param options
+   */
+  toHaveURL(urlOrRegExp: string|RegExp, options?: {
+    /**
+     * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
+     */
+    timeout?: number;
+  }): Promise<void>;
+}
+
+/**
+ * Playwright provides methods for comparing page and element screenshots with expected values stored in files.
+ *
+ * ```js
+ * expect(screenshot).toMatchSnapshot('landing-page.png');
+ * ```
+ *
+ */
+interface ScreenshotAssertions {
+  /**
+   * Ensures that passed value, either a [string] or a [Buffer], matches the expected snapshot stored in the test snapshots
+   * directory.
+   *
+   * ```js
+   * // Basic usage.
+   * expect(await page.screenshot()).toMatchSnapshot('landing-page.png');
+   *
+   * // Pass options to customize the snapshot comparison and have a generated name.
+   * expect(await page.screenshot()).toMatchSnapshot('landing-page.png', {
+   *   maxDiffPixels: 27, // allow no more than 27 different pixels.
+   * });
+   *
+   * // Configure image matching threshold.
+   * expect(await page.screenshot()).toMatchSnapshot('landing-page.png', { threshold: 0.3 });
+   *
+   * // Bring some structure to your snapshot files by passing file path segments.
+   * expect(await page.screenshot()).toMatchSnapshot(['landing', 'step2.png']);
+   * expect(await page.screenshot()).toMatchSnapshot(['landing', 'step3.png']);
+   * ```
+   *
+   * Learn more about [visual comparisons](https://playwright.dev/docs/api/test-snapshots).
+   * @param name Snapshot name.
+   * @param options
+   */
+  toMatchSnapshot(name: string|Array<string>, options?: {
+    /**
+     * An acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1`. Default is
+     * configurable with `TestConfig.expect`. Unset by default.
+     */
+    maxDiffPixelRatio?: number;
+
+    /**
+     * An acceptable amount of pixels that could be different, default is configurable with `TestConfig.expect`. Default is
+     * configurable with `TestConfig.expect`. Unset by default.
+     */
+    maxDiffPixels?: number;
+
+    /**
+     * An acceptable perceived color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between the same
+     * pixel in compared images, between zero (strict) and one (lax), default is configurable with `TestConfig.expect`.
+     * Defaults to `0.2`.
+     */
+    threshold?: number;
+  }): void;
+
+  /**
+   * Ensures that passed value, either a [string] or a [Buffer], matches the expected snapshot stored in the test snapshots
+   * directory.
+   *
+   * ```js
+   * // Basic usage and the file name is derived from the test name.
+   * expect(await page.screenshot()).toMatchSnapshot();
+   *
+   * // Pass options to customize the snapshot comparison and have a generated name.
+   * expect(await page.screenshot()).toMatchSnapshot({
+   *   maxDiffPixels: 27, // allow no more than 27 different pixels.
+   * });
+   *
+   * // Configure image matching threshold and snapshot name.
+   * expect(await page.screenshot()).toMatchSnapshot({
+   *   name: 'landing-page.png',
+   *   threshold: 0.3,
+   * });
+   * ```
+   *
+   * Learn more about [visual comparisons](https://playwright.dev/docs/api/test-snapshots).
+   * @param options
+   */
+  toMatchSnapshot(options?: {
+    /**
+     * An acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1`. Default is
+     * configurable with `TestConfig.expect`. Unset by default.
+     */
+    maxDiffPixelRatio?: number;
+
+    /**
+     * An acceptable amount of pixels that could be different, default is configurable with `TestConfig.expect`. Default is
+     * configurable with `TestConfig.expect`. Unset by default.
+     */
+    maxDiffPixels?: number;
+
+    /**
+     * Snapshot name. If not passed, the test name and ordinals are used when called multiple times.
+     */
+    name?: string|Array<string>;
+
+    /**
+     * An acceptable perceived color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between the same
+     * pixel in compared images, between zero (strict) and one (lax), default is configurable with `TestConfig.expect`.
+     * Defaults to `0.2`.
+     */
+    threshold?: number;
+  }): void;
+}
 
 /**
  * Information about an error thrown during test execution.

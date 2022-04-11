@@ -14,10 +14,7 @@
  * limitations under the License.
  */
 
-import type { APIRequestContext, Browser, BrowserContext, BrowserContextOptions, Page, LaunchOptions, ViewportSize, Geolocation, HTTPCredentials } from 'playwright-core';
-import type { Expect } from './testExpect';
-
-export type { Expect } from './testExpect';
+import type { APIRequestContext, Browser, BrowserContext, BrowserContextOptions, Page, LaunchOptions, ViewportSize, Geolocation, HTTPCredentials, Locator, APIResponse } from 'playwright-core';
 
 export type ReporterDescription =
   ['dot'] |
@@ -332,7 +329,7 @@ export interface PlaywrightTestOptions {
 
 
 export interface PlaywrightWorkerArgs {
-  playwright: typeof import('..');
+  playwright: typeof import('playwright-core');
   browser: Browser;
 }
 
@@ -344,6 +341,121 @@ export interface PlaywrightTestArgs {
 
 export type PlaywrightTestProject<TestArgs = {}, WorkerArgs = {}> = Project<PlaywrightTestOptions & TestArgs, PlaywrightWorkerOptions & WorkerArgs>;
 export type PlaywrightTestConfig<TestArgs = {}, WorkerArgs = {}> = Config<PlaywrightTestOptions & TestArgs, PlaywrightWorkerOptions & WorkerArgs>;
+
+import type * as expectType from 'expect';
+
+type AsymmetricMatcher = Record<string, any>;
+
+type IfAny<T, Y, N> = 0 extends (1 & T) ? Y : N;
+type ExtraMatchers<T, Type, Matchers> = T extends Type ? Matchers : IfAny<T, Matchers, {}>;
+
+type BaseMatchers<R, T> = Pick<expectType.Matchers<R>, SupportedExpectProperties> & PlaywrightTest.Matchers<R, T>;
+
+type MakeMatchers<R, T> = BaseMatchers<R, T> & {
+    /**
+     * If you know how to test something, `.not` lets you test its opposite.
+     */
+    not: MakeMatchers<R, T>;
+    /**
+     * Use resolves to unwrap the value of a fulfilled promise so any other
+     * matcher can be chained. If the promise is rejected the assertion fails.
+     */
+    resolves: MakeMatchers<Promise<R>, Awaited<T>>;
+    /**
+    * Unwraps the reason of a rejected promise so any other matcher can be chained.
+    * If the promise is fulfilled the assertion fails.
+    */
+    rejects: MakeMatchers<Promise<R>, Awaited<T>>;
+  } & ScreenshotAssertions &
+  ExtraMatchers<T, Page, PageAssertions> &
+  ExtraMatchers<T, Locator, LocatorAssertions> &
+  ExtraMatchers<T, APIResponse, APIResponseAssertions>;
+
+export declare type Expect = {
+  <T = unknown>(actual: T, messageOrOptions?: string | { message?: string }): MakeMatchers<void, T>;
+  soft: <T = unknown>(actual: T, messageOrOptions?: string | { message?: string }) => MakeMatchers<void, T>;
+  poll: <T = unknown>(actual: () => T | Promise<T>, messageOrOptions?: string | { message?: string, timeout?: number }) => BaseMatchers<Promise<void>, T> & {
+    /**
+     * If you know how to test something, `.not` lets you test its opposite.
+     */
+     not: BaseMatchers<Promise<void>, T>;
+  };
+
+  extend(arg0: any): void;
+  getState(): expectType.MatcherState;
+  setState(state: Partial<expectType.MatcherState>): void;
+  any(expectedObject: any): AsymmetricMatcher;
+  anything(): AsymmetricMatcher;
+  arrayContaining(sample: Array<unknown>): AsymmetricMatcher;
+  objectContaining(sample: Record<string, unknown>): AsymmetricMatcher;
+  stringContaining(expected: string): AsymmetricMatcher;
+  stringMatching(expected: string | RegExp): AsymmetricMatcher;
+  /**
+   * Removed following methods because they rely on a test-runner integration from Jest which we don't support:
+   * - assertions()
+   * - extractExpectedAssertionsErrors()
+   * – hasAssertions()
+   */
+};
+
+type Awaited<T> = T extends PromiseLike<infer U> ? U : T;
+
+/**
+ * Removed methods require the jest.fn() integration from Jest to spy on function calls which we don't support:
+ * - lastCalledWith()
+ * - lastReturnedWith()
+ * - nthCalledWith()
+ * - nthReturnedWith()
+ * - toBeCalled()
+ * - toBeCalledTimes()
+ * - toBeCalledWith()
+ * - toHaveBeenCalled()
+ * - toHaveBeenCalledTimes()
+ * - toHaveBeenCalledWith()
+ * - toHaveBeenLastCalledWith()
+ * - toHaveBeenNthCalledWith()
+ * - toHaveLastReturnedWith()
+ * - toHaveNthReturnedWith()
+ * - toHaveReturned()
+ * - toHaveReturnedTimes()
+ * - toHaveReturnedWith()
+ * - toReturn()
+ * - toReturnTimes()
+ * - toReturnWith()
+ * - toThrowErrorMatchingSnapshot()
+ * - toThrowErrorMatchingInlineSnapshot()
+ */
+type SupportedExpectProperties =
+  'toBe' |
+  'toBeCloseTo' |
+  'toBeDefined' |
+  'toBeFalsy' |
+  'toBeGreaterThan' |
+  'toBeGreaterThanOrEqual' |
+  'toBeInstanceOf' |
+  'toBeLessThan' |
+  'toBeLessThanOrEqual' |
+  'toBeNaN' |
+  'toBeNull' |
+  'toBeTruthy' |
+  'toBeUndefined' |
+  'toContain' |
+  'toContainEqual' |
+  'toEqual' |
+  'toHaveLength' |
+  'toHaveProperty' |
+  'toMatch' |
+  'toMatchObject' |
+  'toStrictEqual' |
+  'toThrow' |
+  'toThrowError'
+
+declare global {
+  export namespace PlaywrightTest {
+    export interface Matchers<R, T = unknown> {
+    }
+  }
+}
 
 /**
  * These tests are executed in Playwright environment that launches the browser
