@@ -397,7 +397,11 @@ export class Registry {
       'linux': '',
       'darwin': '/Applications/Microsoft Edge Canary.app/Contents/MacOS/Microsoft Edge Canary',
       'win32': `\\Microsoft\\Edge SxS\\Application\\msedge.exe`,
-    }));
+    }, () => this._installMSEdgeChannel('msedge-canary', {
+      'darwin': 'reinstall_msedge_dev_mac.sh',
+      'linux': 'reinstall_msedge_dev_linux.sh',
+      'win32': 'reinstall_msedge_dev_win.ps1',
+    })));
 
     const firefox = descriptors.find(d => d.name === 'firefox')!;
     const firefoxExecutable = findExecutablePath(firefox.dir, 'firefox');
@@ -664,7 +668,7 @@ export class Registry {
     await fs.promises.writeFile(markerFilePath(descriptor.dir), '');
   }
 
-  private async _installMSEdgeChannel(channel: 'msedge'|'msedge-beta'|'msedge-dev', scripts: Record<'linux' | 'darwin' | 'win32', string>) {
+  private async _installMSEdgeChannel(channel: 'msedge'|'msedge-beta'|'msedge-dev'|'msedge-canary', scripts: Record<'linux' | 'darwin' | 'win32', string>) {
     const scriptArgs: string[] = [];
     if (process.platform !== 'linux') {
       const products = JSON.parse(await fetchData({ url: 'https://edgeupdates.microsoft.com/api/products' }));
@@ -672,6 +676,7 @@ export class Registry {
         'msedge': 'Stable',
         'msedge-beta': 'Beta',
         'msedge-dev': 'Dev',
+        'msedge-canary': 'Canary',
       }[channel];
       const product = products.find((product: any) => product.Product === productName);
       const searchConfig = ({
