@@ -25,6 +25,7 @@ import { GridClient } from 'playwright-core/lib/grid/gridClient';
 export { expect } from './expect';
 export const _baseTest: TestType<{}, {}> = rootTestType.test;
 import * as outOfProcess from 'playwright-core/lib/outofprocess';
+export { webServer } from './webServerPlugin';
 
 if ((process as any)['__pw_initiator__']) {
   const originalStackTraceLimit = Error.stackTraceLimit;

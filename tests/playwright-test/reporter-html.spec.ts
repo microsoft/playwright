@@ -722,26 +722,12 @@ test('should include metadata', async ({ runInlineTest, showReport, page }) => {
 
   const result = await runInlineTest({
     'uncommitted.txt': `uncommitted file`,
-    'globalSetup.ts': `
-      import { FullConfig, GlobalInfo } from '@playwright/test';
-      import * as ci from '@playwright/test/lib/ci';
-
-      async function globalSetup(config: FullConfig, globalInfo: GlobalInfo) {
-        const pluginResults = await Promise.all([
-          ci.generationTimestamp(),
-          ci.gitStatusFromCLI(config.rootDir),
-          ci.githubEnv(),
-        ]);
-
-        await Promise.all(pluginResults.flat().map(attachment => globalInfo.attach(attachment.name, attachment)));
-      }
-
-      export default globalSetup;
-    `,
     'playwright.config.ts': `
       import path from 'path';
+      import { versionControlSystemInfo } from '@playwright/test/lib/ci';
+
       const config = {
-        globalSetup: path.join(__dirname, './globalSetup'),
+        plugins: [ versionControlSystemInfo() ]
       }
 
       export default config;

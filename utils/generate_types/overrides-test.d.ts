@@ -128,6 +128,7 @@ interface TestConfig {
   grep?: RegExp | RegExp[];
   grepInvert?: RegExp | RegExp[];
   maxFailures?: number;
+  plugins?: TestPlugin[]
   preserveOutput?: PreserveOutput;
   projects?: Project[];
   quiet?: boolean;

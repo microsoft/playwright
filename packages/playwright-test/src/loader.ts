@@ -15,8 +15,7 @@
  */
 
 import { installTransform, setCurrentlyLoadingTestFile } from './transform';
-import type { Config, Project, ReporterDescription, PreserveOutput, FullProjectInternal, GlobalInfo } from './types';
-import type { FullConfigInternal } from './types';
+import type { FullConfigInternal , Config, Project, ReporterDescription, PreserveOutput, FullProjectInternal, GlobalInfo } from './types';
 import { getPackageJsonPath, mergeObjects, errorWithFile } from './util';
 import { setCurrentlyLoadingFileSuite } from './globals';
 import { Suite } from './test';
@@ -66,7 +65,7 @@ export class Loader {
       config = config['default'];
     this._configFile = file;
     const rawConfig = { ...config };
-    this._processConfigObject(config, path.dirname(file));
+    await this._processConfigObject(config, path.dirname(file));
     return rawConfig;
   }
 
@@ -119,6 +118,7 @@ export class Loader {
     this._fullConfig.updateSnapshots = takeFirst(this._configOverrides.updateSnapshots, config.updateSnapshots, baseFullConfig.updateSnapshots);
     this._fullConfig.workers = takeFirst(this._configOverrides.workers, config.workers, baseFullConfig.workers);
     this._fullConfig.webServer = takeFirst(this._configOverrides.webServer, config.webServer, baseFullConfig.webServer);
+    this._fullConfig._plugins = takeFirst(this._configOverrides.plugins, config.plugins, baseFullConfig._plugins);
 
     const projects: Project[] = ('projects' in config) && config.projects !== undefined ? config.projects : [config];
     for (const project of projects)
@@ -479,6 +479,7 @@ const baseFullConfig: FullConfigInternal = {
   _configDir: '',
   _testGroupsCount: 0,
   _screenshotsDir: '',
+  _plugins: [],
 };
 
 function resolveReporters(reporters: Config['reporter'], rootDir: string): ReporterDescription[]|undefined {

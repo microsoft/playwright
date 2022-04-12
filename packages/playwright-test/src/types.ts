@@ -16,7 +16,7 @@
 
 import type { Fixtures, TestError } from '../types/test';
 import type { Location } from '../types/testReporter';
-import type { FullConfig as FullConfigPublic, FullProject as FullProjectPublic } from './types';
+import type { FullConfig as FullConfigPublic, FullProject as FullProjectPublic, TestPlugin } from './types';
 export * from '../types/test';
 export type { Location } from '../types/testReporter';
 
@@ -49,6 +49,7 @@ export interface FullConfigInternal extends FullConfigPublic {
   _configDir: string;
   _testGroupsCount: number;
   _screenshotsDir: string;
+  _plugins: TestPlugin[];
 
   // Overrides the public field.
   projects: FullProjectInternal[];

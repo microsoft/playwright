@@ -555,6 +555,7 @@ interface TestConfig {
    *
    */
   maxFailures?: number;
+  plugins?: TestPlugin[]
   /**
    * Whether to preserve test output in the
    * [testConfig.outputDir](https://playwright.dev/docs/api/class-testconfig#test-config-output-dir). Defaults to `'always'`.
@@ -3610,6 +3611,16 @@ export interface TestError {
    * The value that was thrown. Set when anything except the [Error] (or its subclass) has been thrown.
    */
   value?: string;
+}
+
+export interface TestPlugin {
+  /**
+   * @param config
+   * @param info
+   */
+  globalSetup?(config: FullConfig, info: GlobalInfo): Promise<void>;
+
+  globalTeardown?(): Promise<void>;
 }
 
 

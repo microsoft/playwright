@@ -432,6 +432,7 @@ export class Runner {
   private async _performGlobalSetup(config: FullConfigInternal): Promise<(() => Promise<void>) | undefined> {
     const result: FullResult = { status: 'passed' };
     const internalGlobalTeardowns: (() => Promise<void>)[] = [];
+    const pluginTeardowns: (() => Promise<void>)[] = [];
     let globalSetupResult: any;
     let webServer: WebServer | undefined;
 
@@ -444,6 +445,11 @@ export class Runner {
       await this._runAndReportError(async () => {
         if (config.globalTeardown)
           await (await this._loader.loadGlobalHook(config.globalTeardown, 'globalTeardown'))(this._loader.fullConfig());
+      }, result);
+
+      await this._runAndReportError(async () => {
+        for (const teardown of pluginTeardowns)
+          await teardown();
       }, result);
 
       await this._runAndReportError(async () => {
@@ -460,6 +466,11 @@ export class Runner {
       for (const internalGlobalSetup of this._internalGlobalSetups)
         internalGlobalTeardowns.push(await internalGlobalSetup());
       webServer = config.webServer ? await WebServer.create(config.webServer, this._reporter) : undefined;
+      for (const plugin of this._loader.fullConfig()._plugins) {
+        await plugin.globalSetup?.(this._loader.fullConfig(), this._globalInfo);
+        if (plugin.globalTeardown)
+          pluginTeardowns.unshift(plugin.globalTeardown);
+      }
       if (config.globalSetup)
         globalSetupResult = await (await this._loader.loadGlobalHook(config.globalSetup, 'globalSetup'))(this._loader.fullConfig(), this._globalInfo);
     }, result);

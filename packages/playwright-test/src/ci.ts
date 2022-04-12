@@ -15,6 +15,8 @@
  */
 import { createGuid } from 'playwright-core/lib/utils';
 import { spawnAsync } from 'playwright-core/lib/utils/spawnAsync';
+import type { FullConfig } from '../reporter';
+import type { GlobalInfo, TestPlugin } from './types';
 
 const GIT_OPERATIONS_TIMEOUT_MS = 1500;
 const kContentTypePlainText = 'text/plain';
@@ -84,3 +86,23 @@ export const jenkinsEnv = async (): Promise<Attachment[]> => {
 export const generationTimestamp = async (): Promise<Attachment[]> => {
   return [{ name: 'generatedAt', body: Buffer.from(JSON.stringify(Date.now())), contentType: kContentTypeJSON }];
 };
+
+export class VersionControlSystemInfoPlugin implements TestPlugin {
+  private _gitDir: string;
+
+  constructor(gitDir: string) {
+    this._gitDir = gitDir;
+  }
+
+  async globalSetup(conifg: FullConfig, globalInfo: GlobalInfo) {
+    const pluginResults = await Promise.all([
+      generationTimestamp(),
+      gitStatusFromCLI(this._gitDir),
+      githubEnv(),
+    ]);
+
+    await Promise.all(pluginResults.flat().map(attachment => globalInfo.attach(attachment.name, attachment)));
+  }
+}
+
+export const versionControlSystemInfo = (gitDir: string = process.cwd()) => new VersionControlSystemInfoPlugin(gitDir);

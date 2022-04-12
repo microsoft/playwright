@@ -532,7 +532,7 @@ class TypesGenerator {
   const testDocumentation = apiDocumentation.mergeWith(testOnlyDocumentation);
   const testTypesGenerator = new TypesGenerator({
     documentation: testDocumentation,
-    classNamesToGenerate: new Set(['TestError', 'TestInfo', 'WorkerInfo', ...assertionClasses]),
+    classNamesToGenerate: new Set(['TestError', 'TestInfo', 'TestPlugin', 'WorkerInfo', ...assertionClasses]),
     overridesToDocsClassMapping: new Map([
       ['TestType', 'Test'],
       ['Config', 'TestConfig'],

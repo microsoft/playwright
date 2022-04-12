@@ -694,4 +694,3 @@ it('should not hang on resources served from cache', async ({ contextFactory, se
   else
     expect(entries.length).toBe(2);
 });
-

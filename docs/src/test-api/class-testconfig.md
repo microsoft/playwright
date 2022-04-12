@@ -652,6 +652,9 @@ test('test', async ({ page }) => {
 });
 ```
 
+## property: TestConfig.plugins
+- type: <[Array]<[TestPlugin]>>
+
 ## property: TestConfig.workers
 - type: <[int]>
 
