@@ -21,6 +21,7 @@ import type { CommonFixtures, TestChildProcess } from './commonFixtures';
 export type RemoteServerOptions = {
   stallOnClose?: boolean;
   disconnectOnSIGHUP?: boolean;
+  exitOnFile?: string;
   inCluster?: boolean;
   url?: string;
 };

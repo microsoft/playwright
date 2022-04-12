@@ -1,7 +1,8 @@
+const fs = require('fs');
 const cluster = require('cluster');
 
 async function start() {
-  const { browserTypeName, launchOptions, stallOnClose, disconnectOnSIGHUP } = JSON.parse(process.argv[2]);
+  const { browserTypeName, launchOptions, stallOnClose, disconnectOnSIGHUP, exitOnFile } = JSON.parse(process.argv[2]);
   if (stallOnClose) {
     launchOptions.__testHookGracefullyClose = () => {
       console.log(`(stalled=>true)`);
@@ -16,6 +17,17 @@ async function start() {
   const browserServer = await playwright[browserTypeName].launchServer(launchOptions);
   if (disconnectOnSIGHUP)
     process.on('SIGHUP', () => browserServer._disconnectForTest());
+
+  if (exitOnFile) {
+    (async function waitForFileAndExit() {
+      while (true) {
+        if (fs.existsSync(exitOnFile))
+          break;
+        await new Promise(f => setTimeout(f, 100));
+      }
+      process.exit(42);
+    })();
+  }
 
   browserServer.on('close', (exitCode, signal) => {
     console.log(`(exitCode=>${exitCode})`);
