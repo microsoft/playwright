@@ -30,9 +30,10 @@ const log = debug(`pw:grid:server`);
 
 const githubFactory: GridFactory = {
   name: 'Agents hosted on Github',
-  capacity: 10,
-  launchTimeout: 30000,
-  retireTimeout: 600000,
+  // Standard VM is 3-core on mac and 2-core on win and lin
+  capacity: 4,
+  launchTimeout: 10 * 60_000,
+  retireTimeout: 1 * 60 * 60_000,
   launch: async (options: GridAgentLaunchOptions) => {
     await createWorkflow(options);
   },

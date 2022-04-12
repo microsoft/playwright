@@ -248,18 +248,12 @@ export class GridServer {
 
     this._wsServer.shouldHandle = request => {
       this._log(request.url);
-      if (request.url!.startsWith(this._securePath('/claimWorker'))) {
+      if (request.url!.startsWith(this._securePath('/claimWorker')) ||
+          request.url!.startsWith(this._securePath('/registerAgent')) ||
+          request.url!.startsWith(this._securePath('/registerWorker'))) {
         // shouldHandle claims it accepts promise, except it doesn't.
         return true;
       }
-
-      if (request.url!.startsWith(this._securePath('/registerAgent'))
-       || request.url!.startsWith(this._securePath('/registerWorker'))) {
-        const params = new URL('http://localhost/' + request.url).searchParams;
-        const agentId = params.get('agentId');
-        return !!agentId && this._agents.has(agentId);
-      }
-
       return false;
     };
 
