@@ -476,6 +476,48 @@ it('should support simple copy-pasting', async ({ page, isMac, browserName }) =>
   expect(await page.evaluate(() => document.querySelector('div').textContent)).toBe('123123');
 });
 
+it('should type repeatedly in contenteditable in shadow dom', async ({ page }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/12941' });
+
+  await page.setContent(`
+    <html>
+      <body>
+        <shadow-element></shadow-element>
+        <script>
+          customElements.define('shadow-element', class extends HTMLElement {
+            constructor() {
+              super();
+              this.attachShadow({ mode: 'open' });
+            }
+
+            connectedCallback() {
+              this.shadowRoot.innerHTML = \`
+                <style>
+                  .editor { padding: 1rem; margin: 1rem; border: 1px solid #ccc; }
+                </style>
+                <div class=editor contenteditable id=foo></div>
+                <hr>
+                <section>
+                  <div class=editor contenteditable id=bar></div>
+                </section>
+              \`;
+            }
+          });
+        </script>
+      </body>
+    </html>
+  `);
+
+  const editor = page.locator('shadow-element > .editor').first();
+  await editor.type('This is the first box.');
+
+  const sectionEditor = page.locator('section .editor');
+  await sectionEditor.type('This is the second box.');
+
+  expect(await editor.textContent()).toBe('This is the first box.');
+  expect(await sectionEditor.textContent()).toBe('This is the second box.');
+});
+
 async function captureLastKeydown(page) {
   const lastEvent = await page.evaluateHandle(() => {
     const lastEvent = {
