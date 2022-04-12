@@ -33,7 +33,7 @@ import type { BrowserType } from '../client/browserType';
 import type { BrowserContextOptions, LaunchOptions } from '../client/types';
 import { spawn } from 'child_process';
 import { getPlaywrightVersion } from '../common/userAgent';
-import { wrapInASCIIBox, isLikelyNpxGlobal } from '../utils';
+import { wrapInASCIIBox, isLikelyNpxGlobal, assert } from '../utils';
 import { spawnAsync } from '../utils/spawnAsync';
 import { launchGridAgent } from '../grid/gridAgent';
 import type { GridFactory } from '../grid/gridServer';
@@ -48,11 +48,12 @@ program
     .name(buildBasePlaywrightCLICommand(process.env.PW_LANG_NAME));
 
 program
-    .command('mark-docker-image > [args...]', { hidden: true })
+    .command('mark-docker-image [dockerImageNameTemplate]', { hidden: true })
     .description('mark docker image')
     .allowUnknownOption(true)
     .action(function(dockerImageNameTemplate) {
-      writeDockerVersion(dockerImageNameTemplate);
+      assert(dockerImageNameTemplate, 'dockerImageNameTemplate is required');
+      writeDockerVersion(dockerImageNameTemplate).catch(logErrorAndExit);
     });
 
 commandWithOpenOptions('open [url]', 'open page in browser specified via -b, --browser', [])
