@@ -471,10 +471,10 @@ test('should not report fixture teardown timeout twice', async ({ runInlineTest 
   }, { reporter: 'list', timeout: 1000 });
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
-  expect(result.output).toContain('in fixtures teardown');
+  expect(result.output).toContain('Timeout of 1000ms exceeded while running fixture "fixture" teardown.');
   expect(stripAnsi(result.output)).not.toContain('pwt.test.extend'); // Should not point to the location.
-  // TODO: this should be "1" actually.
-  expect(countTimes(result.output, 'in fixtures teardown')).not.toBe(1);
+  // TODO: this should be "not.toContain" actually.
+  expect(result.output).toContain('in fixtures teardown');
 });
 
 test('should handle fixture teardown error after test timeout and continue', async ({ runInlineTest }) => {
@@ -529,6 +529,6 @@ test('should report worker fixture teardown with debug info', async ({ runInline
     'a.spec.ts:12:9 › good18',
     'a.spec.ts:12:9 › good19',
     '',
-    'Timeout of 1000ms exceeded in fixtures teardown.',
+    'Timeout of 1000ms exceeded while running fixture "fixture" teardown.',
   ].join('\n'));
 });

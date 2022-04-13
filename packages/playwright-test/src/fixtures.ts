@@ -31,6 +31,7 @@ type FixtureRegistration = {
   fn: Function | any;  // Either a fixture function, or a fixture value.
   auto: boolean;
   option: boolean;
+  customTitle?: string;
   timeout?: number;
   deps: string[];  // Names of the dependencies, ({ foo, bar }) => {...}
   id: string;  // Unique id, to differentiate between fixtures with the same name.
@@ -54,7 +55,7 @@ class Fixture {
     this.usages = new Set();
     this.value = null;
     this._runnableDescription = {
-      fixture: this.registration.name,
+      title: `fixture "${this.registration.customTitle || this.registration.name}" setup`,
       location: registration.location,
       slot: this.registration.timeout === undefined ? undefined : {
         timeout: this.registration.timeout,
@@ -117,6 +118,7 @@ class Fixture {
       this.usages.clear();
       if (this._useFuncFinished) {
         debugTest(`teardown ${this.registration.name}`);
+        this._runnableDescription.title = `fixture "${this.registration.customTitle || this.registration.name}" teardown`;
         timeoutManager.setCurrentFixture(this._runnableDescription);
         this._useFuncFinished.resolve();
         await this._selfTeardownComplete;
@@ -147,13 +149,14 @@ export class FixturePool {
       for (const entry of Object.entries(fixtures)) {
         const name = entry[0];
         let value = entry[1];
-        let options: { auto: boolean, scope: FixtureScope, option: boolean, timeout: number | undefined } | undefined;
+        let options: { auto: boolean, scope: FixtureScope, option: boolean, timeout: number | undefined, customTitle: string | undefined } | undefined;
         if (isFixtureTuple(value)) {
           options = {
             auto: !!value[1].auto,
             scope: value[1].scope || 'test',
             option: !!value[1].option,
             timeout: value[1].timeout,
+            customTitle: (value[1] as any)._title,
           };
           value = value[0];
         }
@@ -166,9 +169,9 @@ export class FixturePool {
           if (previous.auto !== options.auto)
             throw errorWithLocations(`Fixture "${name}" has already been registered as a { auto: '${previous.scope}' } fixture.`, { location, name }, previous);
         } else if (previous) {
-          options = { auto: previous.auto, scope: previous.scope, option: previous.option, timeout: previous.timeout };
+          options = { auto: previous.auto, scope: previous.scope, option: previous.option, timeout: previous.timeout, customTitle: previous.customTitle };
         } else if (!options) {
-          options = { auto: false, scope: 'test', option: false, timeout: undefined };
+          options = { auto: false, scope: 'test', option: false, timeout: undefined, customTitle: undefined };
         }
 
         if (options.scope !== 'test' && options.scope !== 'worker')
@@ -177,7 +180,7 @@ export class FixturePool {
           throw errorWithLocations(`Cannot use({ ${name} }) in a describe group, because it forces a new worker.\nMake it top-level in the test file or put in the configuration file.`, { location, name });
 
         const deps = fixtureParameterNames(fn, location);
-        const registration: FixtureRegistration = { id: '', name, location, scope: options.scope, fn, auto: options.auto, option: options.option, timeout: options.timeout, deps, super: previous };
+        const registration: FixtureRegistration = { id: '', name, location, scope: options.scope, fn, auto: options.auto, option: options.option, timeout: options.timeout, customTitle: options.customTitle, deps, super: previous };
         registrationId(registration);
         this.registrations.set(name, registration);
       }
