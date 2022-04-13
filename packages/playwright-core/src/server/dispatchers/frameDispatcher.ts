@@ -27,6 +27,7 @@ import type { CallMetadata } from '../instrumentation';
 import type { WritableStreamDispatcher } from './writableStreamDispatcher';
 import { assert } from '../../utils';
 import path from 'path';
+
 export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel> implements channels.FrameChannel {
   _type_Frame = true;
   private _frame: Frame;
