@@ -252,8 +252,9 @@ program
     .command('experimental-grid-agent', { hidden: true })
     .requiredOption('--agent-id <agentId>', 'agent ID')
     .requiredOption('--grid-url <gridURL>', 'grid URL')
+    .option('--run-id <github run_id>', 'Workflow run_id')
     .action(function(options) {
-      launchGridAgent(options.agentId, options.gridUrl);
+      launchGridAgent(options.agentId, options.gridUrl, options.runId);
     });
 
 program
