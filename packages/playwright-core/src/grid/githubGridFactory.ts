@@ -40,6 +40,10 @@ const githubFactory: GridFactory = {
 };
 
 async function createWorkflow(inputs: GridAgentLaunchOptions): Promise<boolean> {
+  if (!['windows', 'linux', 'macos'].includes(inputs.os)) {
+    log(`unsupported OS: ${inputs.os}`);
+    return false;
+  }
   return new Promise(fulfill => {
     log(`triggering workflow ${JSON.stringify(inputs)}`);
     const req = https.request(`https://api.github.com/repos/${repoName}/actions/workflows/agent.yml/dispatches`, {

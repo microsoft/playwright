@@ -23,10 +23,13 @@ import { HttpServer } from '../utils/httpServer';
 import { assert, createGuid } from '../utils';
 import { getPlaywrightVersion } from '../common/userAgent';
 
+const defaultOS = 'linux';
+
 export type GridAgentLaunchOptions = {
   agentId: string,
   gridURL: string,
   playwrightVersion: string,
+  os: string,
 };
 
 export type GridFactory = {
@@ -54,6 +57,7 @@ const WSErrors = {
   WORKER_SOCKET_ERROR: { code: 1011, reason: 'Grid worker socket error' },
   CLIENT_PLAYWRIGHT_VERSION_MISMATCH: { code: 1013, reason: 'Grid Playwright and grid client versions are different' },
   AGENT_PLAYWRIGHT_VERSION_MISMATCH: { code: 1013, reason: 'Grid Playwright and grid agent versions are different' },
+  CLIENT_UNSUPPORTED_OS: { code: 1013, reason: 'Unsupported OS' },
   GRID_SHUTDOWN: { code: 1000, reason: 'Grid was shutdown' },
   AGENT_MANUALLY_STOPPED: { code: 1000, reason: 'Grid agent was manually stopped' },
 };
@@ -117,6 +121,7 @@ type AgentStatus = 'none' | 'created' | 'connected' | 'retiring';
 class GridAgent extends EventEmitter {
   private _capacity: number;
   readonly agentId = createGuid();
+  readonly os: string;
   private _ws: WebSocket | undefined;
   readonly _workers = new Map<string, GridWorker>();
   private _status: AgentStatus = 'none';
@@ -126,8 +131,9 @@ class GridAgent extends EventEmitter {
   private _log: debug.Debugger;
   private _agentCreationTimeoutId: NodeJS.Timeout;
 
-  constructor(capacity = Infinity, creationTimeout = 5 * 60000, retireTimeout = 30000) {
+  constructor(os: string, capacity = Infinity, creationTimeout = 5 * 60000, retireTimeout = 30000) {
     super();
+    this.os = os;
     this._capacity = capacity;
     this._log = debug(`pw:grid:agent:${this.agentId}`);
     this.setStatus('created');
@@ -155,8 +161,8 @@ class GridAgent extends EventEmitter {
     this._workersWaitingForAgentConnected.clear();
   }
 
-  canCreateWorker() {
-    return this._workers.size < this._capacity;
+  canCreateWorker(os: string) {
+    return this.os === os && this._workers.size < this._capacity;
   }
 
   async createWorker(clientSocket: WebSocket, params: GridWorkerParams) {
@@ -266,7 +272,8 @@ export class GridServer {
           ws.close(WSErrors.CLIENT_PLAYWRIGHT_VERSION_MISMATCH.code, WSErrors.CLIENT_PLAYWRIGHT_VERSION_MISMATCH.reason);
           return;
         }
-        const agent = [...this._agents.values()].find(w => w.canCreateWorker()) || this._createAgent()?.agent;
+        const os = params.get('os') || defaultOS;
+        const agent = [...this._agents.values()].find(w => w.canCreateWorker(os)) || this._createAgent(os)?.agent;
         if (!agent) {
           this._log(`failed to get agent`);
           ws.close(WSErrors.AGENT_CREATION_FAILED.code, WSErrors.AGENT_CREATION_FAILED.reason);
@@ -314,12 +321,12 @@ export class GridServer {
   }
 
   public async createAgent(): Promise<{ error: any }> {
-    const { initPromise } = this._createAgent();
+    const { initPromise } = this._createAgent(defaultOS);
     return await initPromise;
   }
 
-  private _createAgent(): { agent: GridAgent, initPromise: Promise<{ error: any }> } {
-    const agent = new GridAgent(this._factory.capacity, this._factory.launchTimeout, this._factory.retireTimeout);
+  private _createAgent(os: string): { agent: GridAgent, initPromise: Promise<{ error: any }> } {
+    const agent = new GridAgent(os, this._factory.capacity, this._factory.launchTimeout, this._factory.retireTimeout);
     this._agents.set(agent.agentId, agent);
     agent.on('close', () => {
       this._agents.delete(agent.agentId);
@@ -329,6 +336,7 @@ export class GridServer {
           agentId: agent.agentId,
           gridURL: this.gridURL(),
           playwrightVersion: getPlaywrightVersion(),
+          os
         })).then(() => {
           this._log('created');
           return { error: undefined };
