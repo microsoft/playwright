@@ -23,7 +23,6 @@ import { spawnAsync } from '../../utils/spawnAsync';
 import { hostPlatform } from '../../utils/hostPlatform';
 import { buildPlaywrightCLICommand } from '.';
 import { deps } from './nativeDeps';
-import { getUbuntuVersion } from '../../utils/ubuntuVersion';
 import { getPlaywrightVersion } from '../../common/userAgent';
 
 const BIN_DIRECTORY = path.join(__dirname, '..', '..', '..', 'bin');
@@ -75,8 +74,6 @@ export async function installDependenciesWindows(targets: Set<DependencyGroup>, 
 }
 
 export async function installDependenciesLinux(targets: Set<DependencyGroup>, dryRun: boolean) {
-  if (await getUbuntuVersion() === '')
-    throw new Error(`Unsupported Linux distribution, only Ubuntu is supported!`);
   const libraries: string[] = [];
   for (const target of targets) {
     const info = deps[hostPlatform];
