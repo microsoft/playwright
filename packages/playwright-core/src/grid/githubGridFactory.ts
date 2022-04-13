@@ -34,6 +34,9 @@ const githubFactory: GridFactory = {
   capacity: 4,
   launchTimeout: 10 * 60_000,
   retireTimeout: 1 * 60 * 60_000,
+  statusUrl: (runId: string) => {
+    return `https://github.com/${repoName}/actions/runs/${runId}`;
+  },
   launch: async (options: GridAgentLaunchOptions) => {
     await createWorkflow(options);
   },
