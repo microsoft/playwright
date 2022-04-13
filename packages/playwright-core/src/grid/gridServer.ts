@@ -37,6 +37,7 @@ export type GridFactory = {
   capacity?: number,
   launchTimeout?: number,
   retireTimeout?: number,
+  statusUrl?: (runId: string) => string;
   launch: (launchOptions: GridAgentLaunchOptions) => Promise<void>,
 };
 
@@ -116,13 +117,14 @@ class GridWorker extends EventEmitter {
   }
 }
 
-type AgentStatus = 'none' | 'created' | 'connected' | 'retiring';
+type AgentStatus = 'none' | 'created' | 'connected' | 'idle';
 
 class GridAgent extends EventEmitter {
   private _capacity: number;
   readonly agentId = createGuid();
   readonly os: string;
   private _ws: WebSocket | undefined;
+  runId: string | undefined;
   readonly _workers = new Map<string, GridWorker>();
   private _status: AgentStatus = 'none';
   private _workersWaitingForAgentConnected: Set<GridWorker> = new Set();
@@ -152,10 +154,11 @@ class GridAgent extends EventEmitter {
     this._status = status;
   }
 
-  agentConnected(ws: WebSocket) {
+  agentConnected(ws: WebSocket, runId?: string) {
     clearTimeout(this._agentCreationTimeoutId);
     this.setStatus('connected');
     this._ws = ws;
+    this.runId = runId;
     for (const worker of this._workersWaitingForAgentConnected)
       this._sendStartWorkerMessage(worker);
     this._workersWaitingForAgentConnected.clear();
@@ -177,7 +180,7 @@ class GridAgent extends EventEmitter {
       this._workers.delete(worker.workerId);
       this._workersWaitingForAgentConnected.delete(worker);
       if (!this._workers.size) {
-        this.setStatus('retiring');
+        this.setStatus('idle');
         if (this._retireTimeoutId)
           clearTimeout(this._retireTimeoutId);
         if (this._retireTimeout && isFinite(this._retireTimeout))
@@ -300,7 +303,8 @@ export class GridServer {
           return;
         }
 
-        agent.agentConnected(ws);
+        const runId = params.get('runId') || undefined;
+        agent.agentConnected(ws, runId);
         return;
       }
 
@@ -355,6 +359,11 @@ export class GridServer {
   }
 
   private _state(): string {
+    const linkifyStatus = (agent: GridAgent) => {
+      if (agent.runId && this._factory.statusUrl)
+        return `<a href="${this._factory.statusUrl(agent.runId)}">${agent.status()}</a>`;
+      return agent.status();
+    };
     return `
         <section style="display: flex; flex-direction: row">
           <div style="display: flex; flex-direction: column; align-items: end; margin-right: 1ex;">
@@ -372,15 +381,15 @@ export class GridServer {
         <ul>
           ${[...this._agents].map(([agentId, agent]) => `
             <li>
-              <div>Agent <code>${mangle(agentId)}</code>: ${agent.status()}</div>
+              <div>Agent (${agent.os}) <code>${mangle(agentId)}</code>: ${linkifyStatus(agent)}</div>
               <div>Workers: ${agent._workers.size}</div>
               <ul>
                 ${[...agent._workers].map(([workerId, worker]) => `
                   <li>worker <code>${mangle(workerId)}</code> - ${JSON.stringify(worker.debugInfo())}</li>
-                `)}
+                `).join('')}
               </ul>
             </li>
-          `)}
+          `).join('')}
         </ul>
     `;
   }
