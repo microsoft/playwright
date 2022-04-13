@@ -31,7 +31,7 @@ type RunnableDescription = {
 };
 
 export type FixtureDescription = {
-  fixture: string;
+  title: string;
   location?: Location;
   slot?: TimeSlot;  // Falls back to current runnable slot.
 };
@@ -123,7 +123,9 @@ export class TimeoutManager {
     }
     const fixtureWithSlot = this._fixture?.slot ? this._fixture : undefined;
     if (fixtureWithSlot)
-      suffix = ` in fixture "${fixtureWithSlot.fixture}"`;
+      suffix = ` by ${fixtureWithSlot.title}`;
+    else if (this._fixture)
+      suffix = ` while running ${this._fixture.title}`;
     const message = colors.red(`Timeout of ${this._currentSlot().timeout}ms exceeded${suffix}.`);
     const location = (fixtureWithSlot || this._runnable).location;
     return {
