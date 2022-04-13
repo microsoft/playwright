@@ -23,14 +23,13 @@ import { HttpServer } from '../utils/httpServer';
 import { assert, createGuid } from '../utils';
 import { getPlaywrightVersion } from '../common/userAgent';
 
-type AgentOS = 'linux' | 'windows' | 'macos';
 const defaultOS = 'linux';
 
 export type GridAgentLaunchOptions = {
   agentId: string,
   gridURL: string,
   playwrightVersion: string,
-  os: AgentOS,
+  os: string,
 };
 
 export type GridFactory = {
@@ -273,12 +272,7 @@ export class GridServer {
           ws.close(WSErrors.CLIENT_PLAYWRIGHT_VERSION_MISMATCH.code, WSErrors.CLIENT_PLAYWRIGHT_VERSION_MISMATCH.reason);
           return;
         }
-        const os = (params.get('os') || defaultOS) as AgentOS;
-        if (!['windows', 'linux', 'macos'].includes(os)) {
-          this._log(`unsupported OS: ${os}`);
-          ws.close(WSErrors.CLIENT_UNSUPPORTED_OS.code, WSErrors.CLIENT_UNSUPPORTED_OS.reason);
-          return;
-        }
+        const os = params.get('os') || defaultOS;
         const agent = [...this._agents.values()].find(w => w.canCreateWorker(os)) || this._createAgent(os)?.agent;
         if (!agent) {
           this._log(`failed to get agent`);
@@ -331,7 +325,7 @@ export class GridServer {
     return await initPromise;
   }
 
-  private _createAgent(os: AgentOS): { agent: GridAgent, initPromise: Promise<{ error: any }> } {
+  private _createAgent(os: string): { agent: GridAgent, initPromise: Promise<{ error: any }> } {
     const agent = new GridAgent(os, this._factory.capacity, this._factory.launchTimeout, this._factory.retireTimeout);
     this._agents.set(agent.agentId, agent);
     agent.on('close', () => {
