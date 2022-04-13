@@ -24,7 +24,8 @@ import { JSHandleDispatcher, serializeResult, parseArgument } from './jsHandleDi
 import type { FrameDispatcher } from './frameDispatcher';
 import type { CallMetadata } from '../instrumentation';
 import type { WritableStreamDispatcher } from './writableStreamDispatcher';
-
+import { assert } from '../../utils';
+import path from 'path';
 export class ElementHandleDispatcher extends JSHandleDispatcher implements channels.ElementHandleChannel {
   _type_ElementHandle = true;
 
@@ -155,6 +156,8 @@ export class ElementHandleDispatcher extends JSHandleDispatcher implements chann
         throw new Error('Neither localPaths nor streams is specified');
       localPaths = params.streams.map(c => (c as WritableStreamDispatcher).path());
     }
+    for (const p of localPaths)
+      assert(path.isAbsolute(p) && path.resolve(p) === p, 'Paths provided to localPaths must be absolute and fully resolved.');
     return await this._elementHandle.setInputFiles(metadata, { localPaths }, params);
   }
 
