@@ -15,6 +15,7 @@
  */
 
 import type { APIRequestContext, Browser, BrowserContext, BrowserContextOptions, Page, LaunchOptions, ViewportSize, Geolocation, HTTPCredentials, Locator, APIResponse } from 'playwright-core';
+export * from 'playwright-core';
 
 export type ReporterDescription =
   ['dot'] |
@@ -371,7 +372,7 @@ type MakeMatchers<R, T> = BaseMatchers<R, T> & {
   ExtraMatchers<T, Locator, LocatorAssertions> &
   ExtraMatchers<T, APIResponse, APIResponseAssertions>;
 
-export declare type Expect = {
+export type Expect = {
   <T = unknown>(actual: T, messageOrOptions?: string | { message?: string }): MakeMatchers<void, T>;
   soft: <T = unknown>(actual: T, messageOrOptions?: string | { message?: string }) => MakeMatchers<void, T>;
   poll: <T = unknown>(actual: () => T | Promise<T>, messageOrOptions?: string | { message?: string, timeout?: number }) => BaseMatchers<Promise<void>, T> & {
@@ -450,12 +451,14 @@ type SupportedExpectProperties =
   'toThrow' |
   'toThrowError'
 
+// --- BEGINGLOBAL ---
 declare global {
   export namespace PlaywrightTest {
     export interface Matchers<R, T = unknown> {
     }
   }
 }
+// --- ENDGLOBAL ---
 
 /**
  * These tests are executed in Playwright environment that launches the browser

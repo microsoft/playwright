@@ -66,7 +66,7 @@ class Documentation {
    * @return {!Documentation}
    */
   mergeWith(documentation) {
-    return new Documentation([...this.classesArray, ...documentation.classesArray]);
+    return new Documentation([...this.classesArray, ...documentation.classesArray].map(cls => cls.clone()));
   }
 
   /**
@@ -102,6 +102,18 @@ class Documentation {
       if (clazz.langs.only && !clazz.langs.only.includes(lang))
         continue;
       clazz.filterForLanguage(lang);
+      classesArray.push(clazz);
+    }
+    this.classesArray = classesArray;
+    this.index();
+  }
+
+  filterOutExperimental() {
+    const classesArray = [];
+    for (const clazz of this.classesArray) {
+      if (clazz.experimental)
+        continue;
+      clazz.filterOutExperimental();
       classesArray.push(clazz);
     }
     this.classesArray = classesArray;
@@ -149,23 +161,28 @@ class Documentation {
       clazz.visit(item => item.comment = generateSourceCodeComment(item.spec));
   }
 
+  clone() {
+    return new Documentation(this.classesArray.map(cls => cls.clone()));
+  }
 }
 
 Documentation.Class = class {
   /**
    * @param {Langs} langs
+   * @param {boolean} experimental
    * @param {string} name
    * @param {!Array<!Documentation.Member>} membersArray
    * @param {?string=} extendsName
    * @param {MarkdownNode[]=} spec
    */
-  constructor(langs, name, membersArray, extendsName = null, spec = undefined) {
+  constructor(langs, experimental, name, membersArray, extendsName = null, spec = undefined) {
     this.langs = langs;
+    this.experimental = experimental;
     this.name = name;
     this.membersArray = membersArray;
     this.spec = spec;
     this.extends = extendsName;
-    this.comment =  '';
+    this.comment = '';
     this.index();
     const match = name.match(/(API|JS|CDP|[A-Z])(.*)/);
     this.varName = match[1].toLowerCase() + match[2];
@@ -204,6 +221,12 @@ Documentation.Class = class {
     }
   }
 
+  clone() {
+    const cls = new Documentation.Class(this.langs, this.experimental, this.name, this.membersArray.map(m => m.clone()), this.extends, this.spec);
+    cls.comment = this.comment;
+    return cls;
+  }
+
   /**
    * @param {string} lang
    */
@@ -213,6 +236,17 @@ Documentation.Class = class {
       if (member.langs.only && !member.langs.only.includes(lang))
         continue;
       member.filterForLanguage(lang);
+      membersArray.push(member);
+    }
+    this.membersArray = membersArray;
+  }
+
+  filterOutExperimental()  {
+    const membersArray = [];
+    for (const member of this.membersArray) {
+      if (member.experimental)
+        continue;
+      member.filterOutExperimental();
       membersArray.push(member);
     }
     this.membersArray = membersArray;
@@ -280,15 +314,17 @@ Documentation.Member = class {
   /**
    * @param {string} kind
    * @param {Langs} langs
+   * @param {boolean} experimental
    * @param {string} name
    * @param {?Documentation.Type} type
    * @param {!Array<!Documentation.Member>} argsArray
    * @param {MarkdownNode[]=} spec
    * @param {boolean=} required
    */
-  constructor(kind, langs, name, type, argsArray, spec = undefined, required = true) {
+  constructor(kind, langs, experimental, name, type, argsArray, spec = undefined, required = true) {
     this.kind = kind;
     this.langs = langs;
+    this.experimental = experimental;
     this.name = name;
     this.type = type;
     this.spec = spec;
@@ -355,13 +391,27 @@ Documentation.Member = class {
       overriddenArg.filterForLanguage(lang);
       if (overriddenArg.name === 'options' && !overriddenArg.type.properties.length)
         continue;
+      overriddenArg.type.filterForLanguage(lang);
       argsArray.push(overriddenArg);
     }
     this.argsArray = argsArray;
   }
 
+  filterOutExperimental() {
+    this.type.filterOutExperimental();
+    const argsArray = [];
+    for (const arg of this.argsArray) {
+      if (arg.experimental)
+        continue;
+      arg.type.filterOutExperimental();
+      argsArray.push(arg);
+    }
+    this.argsArray = argsArray;
+  }
+
   clone() {
-    const result = new Documentation.Member(this.kind, this.langs, this.name, this.type, this.argsArray, this.spec, this.required);
+    const result = new Documentation.Member(this.kind, this.langs, this.experimental, this.name, this.type.clone(), this.argsArray.map(arg => arg.clone()), this.spec, this.required);
+    result.alias = this.alias;
     result.async = this.async;
     result.paramOrOption = this.paramOrOption;
     return result;
@@ -369,37 +419,40 @@ Documentation.Member = class {
 
   /**
    * @param {Langs} langs
+   * @param {boolean} experimental
    * @param {string} name
    * @param {!Array<!Documentation.Member>} argsArray
    * @param {?Documentation.Type} returnType
    * @param {MarkdownNode[]=} spec
    * @return {!Documentation.Member}
    */
-  static createMethod(langs, name, argsArray, returnType, spec) {
-    return new Documentation.Member('method', langs, name, returnType, argsArray, spec);
+  static createMethod(langs, experimental, name, argsArray, returnType, spec) {
+    return new Documentation.Member('method', langs, experimental, name, returnType, argsArray, spec);
   }
 
   /**
    * @param {!Langs} langs
+   * @param {boolean} experimental
    * @param {!string} name
    * @param {!Documentation.Type} type
    * @param {!MarkdownNode[]=} spec
    * @param {boolean=} required
    * @return {!Documentation.Member}
    */
-  static createProperty(langs, name, type, spec, required) {
-    return new Documentation.Member('property', langs, name, type, [], spec, required);
+  static createProperty(langs, experimental, name, type, spec, required) {
+    return new Documentation.Member('property', langs, experimental, name, type, [], spec, required);
   }
 
   /**
    * @param {Langs} langs
+   * @param {boolean} experimental
    * @param {string} name
    * @param {?Documentation.Type=} type
    * @param {MarkdownNode[]=} spec
    * @return {!Documentation.Member}
    */
-  static createEvent(langs, name, type = null, spec) {
-    return new Documentation.Member('event', langs, name, type, [], spec);
+  static createEvent(langs, experimental, name, type = null, spec) {
+    return new Documentation.Member('event', langs, experimental, name, type, [], spec);
   }
 
   /**
@@ -488,16 +541,17 @@ Documentation.Type = class {
    */
   constructor(name, properties) {
     this.name = name.replace(/^\[/, '').replace(/\]$/, '');
+    /** @type {Documentation.Member[] | undefined} */
     this.properties = this.name === 'Object' ? properties : undefined;
-    /** @type {Documentation.Type[]} | undefined */
+    /** @type {Documentation.Type[] | undefined} */
     this.union;
-    /** @type {Documentation.Type[]} | undefined */
+    /** @type {Documentation.Type[] | undefined} */
     this.args;
-    /** @type {Documentation.Type} | undefined */
+    /** @type {Documentation.Type | undefined} */
     this.returnType;
-    /** @type {Documentation.Type[]} | undefined */
+    /** @type {Documentation.Type[] | undefined} */
     this.templates;
-    /** @type {string | undefined } */
+    /** @type {string | undefined} */
     this.expression;
   }
 
@@ -508,6 +562,20 @@ Documentation.Type = class {
       for (const p of type.properties || [])
         p.visit(visitor);
     }
+  }
+
+  clone() {
+    const type = new Documentation.Type(this.name, this.properties ? this.properties.map(prop => prop.clone()) : undefined);
+    if (this.union)
+      type.union = this.union.map(type => type.clone());
+    if (this.args)
+      type.args = this.args.map(type => type.clone());
+    if (this.returnType)
+      type.returnType = this.returnType.clone();
+    if (this.templates)
+      type.templates = this.templates.map(type => type.clone());
+    type.expression = this.expression;
+    return type;
   }
 
   /**
@@ -545,6 +613,19 @@ Documentation.Type = class {
       if (prop.langs.only && !prop.langs.only.includes(lang))
         continue;
       prop.filterForLanguage(lang);
+      properties.push(prop);
+    }
+    this.properties = properties;
+  }
+
+  filterOutExperimental() {
+    if (!this.properties)
+      return;
+    const properties = [];
+    for (const prop of this.properties) {
+      if (prop.experimental)
+        continue;
+      prop.filterOutExperimental();
       properties.push(prop);
     }
     this.properties = properties;

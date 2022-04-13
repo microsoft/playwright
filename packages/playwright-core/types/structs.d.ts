@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { JSHandle, ElementHandle, Frame, Page, BrowserContext, Locator } from './types';
+import { JSHandle, ElementHandle, Frame, Page, BrowserContext } from 'playwright-core';
 
 /**
  * Can be converted to JSON

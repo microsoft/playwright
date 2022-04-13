@@ -63,6 +63,7 @@ test('should fail to screenshot a page with infinite animation', async ({ runInl
 test('should disable animations by default', async ({ runInlineTest }, testInfo) => {
   const cssTransitionURL = pathToFileURL(path.join(__dirname, '../assets/css-transition.html'));
   const result = await runInlineTest({
+    ...playwrightConfig({}),
     'a.spec.js': `
       pwt.test('is a test', async ({ page }) => {
         await page.goto('${cssTransitionURL}');
@@ -156,11 +157,7 @@ test('should report _toHaveScreenshot step with expectation name in title', asyn
       }
       module.exports = Reporter;
     `,
-    'playwright.config.ts': `
-      module.exports = {
-        reporter: './reporter',
-      };
-    `,
+    ...playwrightConfig({ reporter: './reporter' }),
     'a.spec.js': `
       pwt.test('is a test', async ({ page }) => {
         // Named expectation.
@@ -371,8 +368,7 @@ test('should compile with different option combinations', async ({ runTSC }) => 
           maxDiffPixelRatio: 0.2,
           animations: "disabled",
           omitBackground: true,
-          // TODO: uncomment when enabling "fonts".
-          // fonts: "nowait",
+          fonts: "nowait",
           caret: "initial",
           scale: "device",
           timeout: 1000,
@@ -401,6 +397,7 @@ test('should fail when screenshot is different size', async ({ runInlineTest }) 
 
 test('should fail when given non-png snapshot name', async ({ runInlineTest }) => {
   const result = await runInlineTest({
+    ...playwrightConfig({}),
     'a.spec.js': `
       pwt.test('is a test', async ({ page }) => {
         await expect(page)._toHaveScreenshot('snapshot.jpeg');
@@ -413,6 +410,7 @@ test('should fail when given non-png snapshot name', async ({ runInlineTest }) =
 
 test('should fail when given buffer', async ({ runInlineTest }) => {
   const result = await runInlineTest({
+    ...playwrightConfig({}),
     'a.spec.js': `
       pwt.test('is a test', async ({ page }) => {
         await expect(Buffer.from([1]))._toHaveScreenshot();
@@ -798,6 +796,7 @@ test('should respect maxDiffPixelRatio option', async ({ runInlineTest }) => {
 
 test('should throw for invalid maxDiffPixels values', async ({ runInlineTest }) => {
   expect((await runInlineTest({
+    ...playwrightConfig({}),
     'a.spec.js': `
       pwt.test('is a test', async ({ page }) => {
         await expect(page)._toHaveScreenshot({
@@ -810,6 +809,7 @@ test('should throw for invalid maxDiffPixels values', async ({ runInlineTest }) 
 
 test('should throw for invalid maxDiffPixelRatio values', async ({ runInlineTest }) => {
   expect((await runInlineTest({
+    ...playwrightConfig({}),
     'a.spec.js': `
       pwt.test('is a test', async ({ page }) => {
         await expect(page)._toHaveScreenshot({

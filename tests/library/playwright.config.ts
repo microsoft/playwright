@@ -72,6 +72,9 @@ if (mode === 'service') {
     command: 'npx playwright experimental-grid-server',
     port: 3333,
     reuseExistingServer: true,
+    env: {
+      PLAYWRIGHT_EXPERIMENTAL_FEATURES: '1',
+    },
   };
 }
 
@@ -80,6 +83,9 @@ if (mode === 'service2') {
     command: 'npx playwright run-server --port=3333',
     port: 3333,
     reuseExistingServer: true,
+    env: {
+      PLAYWRIGHT_EXPERIMENTAL_FEATURES: '1',
+    },
   };
   config.use.connectOptions = {
     wsEndpoint: 'ws://localhost:3333/',

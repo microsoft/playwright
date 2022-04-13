@@ -74,7 +74,7 @@ class ApiParser {
         continue;
       }
     }
-    const clazz = new Documentation.Class(extractLangs(node), name, [], extendsName, extractComments(node));
+    const clazz = new Documentation.Class(extractLangs(node), extractExperimental(node), name, [], extendsName, extractComments(node));
     this.classes.set(clazz.name, clazz);
   }
 
@@ -102,11 +102,11 @@ class ApiParser {
     const comments = extractComments(spec);
     let member;
     if (match[1] === 'event')
-      member = Documentation.Member.createEvent(extractLangs(spec), name, returnType, comments);
+      member = Documentation.Member.createEvent(extractLangs(spec), extractExperimental(spec), name, returnType, comments);
     if (match[1] === 'property')
-      member = Documentation.Member.createProperty(extractLangs(spec), name, returnType, comments, !optional);
+      member = Documentation.Member.createProperty(extractLangs(spec), extractExperimental(spec), name, returnType, comments, !optional);
     if (['method', 'async method', 'optional method', 'optional async method'].includes(match[1])) {
-      member = Documentation.Member.createMethod(extractLangs(spec), name, [], returnType, comments);
+      member = Documentation.Member.createMethod(extractLangs(spec), extractExperimental(spec), name, [], returnType, comments);
       if (match[1].includes('async'))
         member.async = true;
       if (match[1].includes('optional'))
@@ -167,7 +167,7 @@ class ApiParser {
       let options = method.argsArray.find(o => o.name === 'options');
       if (!options) {
         const type = new Documentation.Type('Object', []);
-        options = Documentation.Member.createProperty({}, 'options', type, undefined, false);
+        options = Documentation.Member.createProperty({}, false /* experimental */, 'options', type, undefined, false);
         method.argsArray.push(options);
       }
       const p = this.parseProperty(spec);
@@ -188,7 +188,7 @@ class ApiParser {
     const name = text.substring(0, typeStart).replace(/\`/g, '').trim();
     const comments = extractComments(spec);
     const { type, optional } = this.parseType(param);
-    return Documentation.Member.createProperty(extractLangs(spec), name, type, comments, !optional);
+    return Documentation.Member.createProperty(extractLangs(spec), extractExperimental(spec), name, type, comments, !optional);
   }
 
   /**
@@ -202,7 +202,7 @@ class ApiParser {
       const { name, text } = parseVariable(child.text);
       const comments = /** @type {MarkdownNode[]} */ ([{ type: 'text', text }]);
       const childType = this.parseType(child);
-      properties.push(Documentation.Member.createProperty({}, name, childType.type, comments, !childType.optional));
+      properties.push(Documentation.Member.createProperty({}, false /* experimental */, name, childType.type, comments, !childType.optional));
     }
     const type = Documentation.Type.parse(arg.type, properties);
     return { type, optional: arg.optional };
@@ -300,12 +300,10 @@ function applyTemplates(body, params) {
  * @returns {MarkdownNode[]}
  */
 function extractComments(item) {
-  return (item.children || []).filter(c => {
+  return childrenWithoutProperties(item).filter(c => {
     if (c.type.startsWith('h'))
       return false;
     if (c.type === 'li' && c.liType === 'default')
-      return false;
-    if (c.type === 'li' && c.text.startsWith('langs:'))
       return false;
     return true;
   });
@@ -348,10 +346,25 @@ function extractLangs(spec) {
 
 /**
  * @param {MarkdownNode} spec
+ * @returns {boolean}
+ */
+ function extractExperimental(spec) {
+  for (const child of spec.children) {
+    if (child.type === 'li' && child.liType === 'bullet' && child.text === 'experimental')
+      return true;
+  }
+  return false;
+}
+
+/**
+ * @param {MarkdownNode} spec
  * @returns {MarkdownNode[]}
  */
 function childrenWithoutProperties(spec) {
-  return spec.children.filter(c => c.liType !== 'bullet' || !c.text.startsWith('langs'));
+  return (spec.children || []).filter(c => {
+    const isProperty = c.liType === 'bullet' && (c.text.startsWith('langs:') || c.text === 'experimental');
+    return !isProperty;
+  });
 }
 
 /**
