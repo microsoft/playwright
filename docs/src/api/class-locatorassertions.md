@@ -998,6 +998,44 @@ Property value.
 ### option: LocatorAssertions.toHaveJSProperty.timeout = %%-js-assertions-timeout-%%
 ### option: LocatorAssertions.toHaveJSProperty.timeout = %%-csharp-java-python-assertions-timeout-%%
 
+
+## async method: LocatorAssertions.toHaveScreenshot
+* langs: js
+* experimental
+
+Ensures that [Locator] resolves to a given screenshot. This function will re-take
+screenshots until it matches with the saved expectation.
+
+If there's no expectation yet, it will wait until two consecutive screenshots
+yield the same result, and save the last one as an expectation.
+
+```js
+const locator = page.locator('button');
+await expect(locator).toHaveScreenshot();
+```
+
+### option: LocatorAssertions.toHaveScreenshot.timeout = %%-js-assertions-timeout-%%
+### option: LocatorAssertions.toHaveScreenshot.timeout = %%-csharp-java-python-assertions-timeout-%%
+
+### option: LocatorAssertions.toHaveScreenshot.animations = %%-screenshot-option-animations-%%
+
+### option: LocatorAssertions.toHaveScreenshot.caret = %%-screenshot-option-caret-%%
+
+### option: LocatorAssertions.toHaveScreenshot.fonts = %%-screenshot-option-fonts-%%
+
+### option: LocatorAssertions.toHaveScreenshot.mask = %%-screenshot-option-mask-%%
+
+### option: LocatorAssertions.toHaveScreenshot.omitBackground = %%-screenshot-option-omit-background-%%
+
+### option: LocatorAssertions.toHaveScreenshot.scale = %%-screenshot-option-scale-%%
+
+### option: LocatorAssertions.toHaveScreenshot.maxDiffPixels = %%-assertions-max-diff-pixels-%%
+
+### option: LocatorAssertions.toHaveScreenshot.maxDiffPixelRatio = %%-assertions-max-diff-pixel-ratio-%%
+
+### option: LocatorAssertions.toHaveScreenshot.threshold = %%-assertions-threshold-%%
+
+
 ## async method: LocatorAssertions.toHaveText
 * langs:
   - alias-java: hasText

@@ -16,6 +16,7 @@
 import type { FullConfigInternal, GlobalInfo } from './types';
 import { normalizeAndSaveAttachment } from './util';
 import fs from 'fs';
+
 export class GlobalInfoImpl implements GlobalInfo {
   private _fullConfig: FullConfigInternal;
   private _attachments: { name: string; path?: string | undefined; body?: Buffer | undefined; contentType: string; }[] = [];
