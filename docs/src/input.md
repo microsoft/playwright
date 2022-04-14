@@ -184,6 +184,9 @@ await page.CheckAsync("text=XL");
 - [`method: ElementHandle.check`]
 - [`method: ElementHandle.isChecked`]
 - [`method: ElementHandle.uncheck`]
+- [`method: Locator.check`]
+- [`method: Locator.isChecked`]
+- [`method: Locator.uncheck`]
 
 <br/>
 
