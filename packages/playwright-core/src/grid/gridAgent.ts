@@ -31,10 +31,15 @@ export function launchGridAgent(agentId: string, gridURL: string, runId: string 
   ws.on('message', (message: string) => {
     log('worker requested ' + message);
     const { workerId, browserAlias } = JSON.parse(message);
-    if (browserAlias)
-      fork(require.resolve('./gridBrowserWorker.js'), [gridURL, agentId, workerId, browserAlias], { detached: true });
-    else
-      fork(require.resolve('./gridWorker.js'), [gridURL, agentId, workerId], { detached: true });
+    if (!workerId) {
+      log('workerId not specified');
+      return;
+    }
+    if (!browserAlias) {
+      log('browserAlias not specified');
+      return;
+    }
+    fork(require.resolve('./gridBrowserWorker.js'), [gridURL, agentId, workerId, browserAlias], { detached: true });
   });
   ws.on('close', () => process.exit(0));
 }
