@@ -90,7 +90,6 @@ browser = playwright.chromium.launch(channel="chrome")
 
 ```csharp
 using Microsoft.Playwright;
-using System.Threading.Tasks;
 
 using var playwright = await Playwright.CreateAsync();
 var chromium = playwright.Chromium;
