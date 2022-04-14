@@ -257,12 +257,14 @@ export class GridServer {
 
     this._wsServer.shouldHandle = request => {
       this._log(request.url);
+      this._log('before accept: ' + this._securePath('/claimWorker'));
       if (request.url!.startsWith(this._securePath('/claimWorker')) ||
           request.url!.startsWith(this._securePath('/registerAgent')) ||
           request.url!.startsWith(this._securePath('/registerWorker'))) {
         // shouldHandle claims it accepts promise, except it doesn't.
         return true;
       }
+      this._log('rejecting websocket request');
       return false;
     };
 

@@ -32,7 +32,7 @@ export const testModeTest = test.extend<{}, TestModeWorkerOptions & TestModeWork
   playwright: [ async ({ mode }, run) => {
     const testMode = {
       default: new DefaultTestMode(),
-      service: new ServiceTestMode(),
+      service: new DefaultTestMode(),
       driver: new DriverTestMode(),
       service2: new DefaultTestMode(),
     }[mode];

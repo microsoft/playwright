@@ -142,7 +142,6 @@ async function runPlaywrightTest(childProcess: CommonFixtures['childProcess'], b
       // END: Reserved CI
       PW_TEST_HTML_REPORT_OPEN: undefined,
       PLAYWRIGHT_DOCKER: undefined,
-      PW_GRID: undefined,
       PW_TEST_REPORTER: undefined,
       PW_TEST_REPORTER_WS_ENDPOINT: undefined,
       PW_TEST_SOURCE_TRANSFORM: undefined,
