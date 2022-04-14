@@ -55,7 +55,6 @@ it('should enable and disable domains independently', async function({ page }) {
   // JS coverage enables and then disables Debugger domain.
   await page.coverage.startJSCoverage();
   await page.coverage.stopJSCoverage();
-  page.on('console', console.log);
   // generate a script in page and wait for the event.
   await Promise.all([
     new Promise<void>(f => client.on('Debugger.scriptParsed', event => {
