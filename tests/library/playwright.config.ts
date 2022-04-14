@@ -80,6 +80,15 @@ if (mode === 'service') {
   config.use.connectOptions = {
     wsEndpoint: 'ws://localhost:3333/mysecret/claimWorker?os=linux',
   };
+  config.projects = [{
+    name: 'Chromium page tests',
+    testMatch: /page\/.*spec.ts$/,
+    testIgnore: 'screenshot',
+    use: {
+      browserName: 'chromium',
+      mode
+    }
+  }];
 }
 
 if (mode === 'service2') {

@@ -185,7 +185,7 @@ jobs:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
     - run: npx playwright install --with-deps chromium
-    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run ctest -- page
+    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run test -- --project='Chromium page tests'
       if: matrix.mode == 'service' # run only page tests in service mode
       env:
         PWTEST_MODE: ${{ matrix.mode }}
