@@ -222,8 +222,8 @@ export class Loader {
     const name = takeFirst(this._configOverrides.name, projectConfig.name, config.name, '');
     const screenshotsDir = takeFirst((this._configOverrides as any).screenshotsDir, (projectConfig as any).screenshotsDir, (config as any).screenshotsDir, path.join(testDir, '__screenshots__', process.platform, name));
     const fullProject: FullProjectInternal = {
-      fullyParallel: takeFirst(this._configOverrides.fullyParallel, projectConfig.fullyParallel, config.fullyParallel, undefined),
-      expect: takeFirst(this._configOverrides.expect, projectConfig.expect, config.expect, undefined),
+      _fullyParallel: takeFirst(this._configOverrides.fullyParallel, projectConfig.fullyParallel, config.fullyParallel, undefined),
+      _expect: takeFirst(this._configOverrides.expect, projectConfig.expect, config.expect, undefined),
       grep: takeFirst(this._configOverrides.grep, projectConfig.grep, config.grep, baseFullConfig.grep),
       grepInvert: takeFirst(this._configOverrides.grepInvert, projectConfig.grepInvert, config.grepInvert, baseFullConfig.grepInvert),
       outputDir,

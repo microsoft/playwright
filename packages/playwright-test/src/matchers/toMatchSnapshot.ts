@@ -253,7 +253,7 @@ export function toMatchSnapshot(
     throw new Error('An unresolved Promise was passed to toMatchSnapshot(), make sure to resolve it by adding await to it.');
   const helper = new SnapshotHelper(
       testInfo, testInfo.snapshotPath.bind(testInfo), determineFileExtension(received),
-      testInfo.project.expect?.toMatchSnapshot || {},
+      testInfo.project._expect?.toMatchSnapshot || {},
       nameOrOptions, optOptions);
 
   if (this.isNot) {
@@ -294,7 +294,7 @@ export async function toHaveScreenshot(
   const testInfo = currentTestInfo();
   if (!testInfo)
     throw new Error(`toHaveScreenshot() must be called during the test`);
-  const config = (testInfo.project.expect as any)?.toHaveScreenshot;
+  const config = (testInfo.project._expect as any)?.toHaveScreenshot;
   const helper = new SnapshotHelper(
       testInfo, testInfo._screenshotPath.bind(testInfo), 'png',
       {

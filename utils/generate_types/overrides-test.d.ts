@@ -55,7 +55,25 @@ export interface Project<TestArgs = {}, WorkerArgs = {}> extends TestProject {
   use?: UseOptions<TestArgs, WorkerArgs>;
 }
 
-export type FullProject<TestArgs = {}, WorkerArgs = {}> = Required<Project<PlaywrightTestOptions & TestArgs, PlaywrightWorkerOptions & WorkerArgs>>;
+// [internal] !!! DO NOT ADD TO THIS !!!
+// [internal] It is part of the public API and is computed from the user's config.
+// [internal] If you need new fields internally, add them to FullConfigInternal instead.
+export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
+  grep: RegExp | RegExp[];
+  grepInvert: RegExp | RegExp[] | null;
+  metadata: any;
+  name: string;
+  snapshotDir: string;
+  outputDir: string;
+  repeatEach: number;
+  retries: number;
+  testDir: string;
+  testIgnore: string | RegExp | (string | RegExp)[];
+  testMatch: string | RegExp | (string | RegExp)[];
+  timeout: number;
+  use: UseOptions<PlaywrightTestOptions & TestArgs, PlaywrightWorkerOptions & WorkerArgs>;
+  // [internal] !!! DO NOT ADD TO THIS !!! See prior note.
+}
 
 export type WebServerConfig = {
   /**
