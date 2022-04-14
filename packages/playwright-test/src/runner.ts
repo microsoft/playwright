@@ -294,7 +294,7 @@ export class Runner {
       const grepInvertMatcher = project.config.grepInvert ? createTitleMatcher(project.config.grepInvert) : null;
       const projectSuite = new Suite(project.config.name);
       projectSuite._projectConfig = project.config;
-      if (project.config.fullyParallel)
+      if (project.config._fullyParallel)
         projectSuite._parallelMode = 'parallel';
       rootSuite._addSuite(projectSuite);
       for (const file of files) {
