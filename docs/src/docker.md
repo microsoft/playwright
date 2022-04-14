@@ -13,8 +13,6 @@ This image is published on [Docker Hub].
 
 ### Pull the image
 
-Replace 1.20.0 with your Playwright version:
-
 ```bash js
 docker pull mcr.microsoft.com/playwright:v1.22.0-focal
 ```
@@ -116,8 +114,6 @@ following tags (`v1.20.0` in this case is an example:):
 - `:sha-XXXXXXX` - docker image for every commit that changed
   docker files or browsers, marked with a [short sha](https://git-scm.com/book/en/v2/Git-Tools-Revision-Selection#Short-SHA-1) (first 7 digits of the SHA commit).
 
-Status of push to MCR can be [verified here](https://mcrflow-status-ui.azurewebsites.net/) (internal link).
-
 ### Base images
 
 We currently publish images based on the following [Ubuntu](https://hub.docker.com/_/ubuntu) versions:
@@ -126,7 +122,7 @@ We currently publish images based on the following [Ubuntu](https://hub.docker.c
 
 #### Alpine
 
-Browser builds for Firefox and WebKit are built for the [glibc](https://en.wikipedia.org/wiki/GNU_C_Library) library. Alpine Linux and other distributions that are based on the [musl](https://en.wikipedia.org/wiki/Musl) standard library are not supported.
+Browser builds for Firefox and WebKit are built for the [glibc](https://en.wikipedia.org/wiki/Glibc) library. Alpine Linux and other distributions that are based on the [musl](https://en.wikipedia.org/wiki/Musl) standard library are not supported.
 
 ## Development
 * langs: js
