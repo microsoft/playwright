@@ -44,7 +44,7 @@ import {
   toHaveURL,
   toHaveValue
 } from './matchers/matchers';
-import { toMatchSnapshot, toHaveScreenshot as _toHaveScreenshot } from './matchers/toMatchSnapshot';
+import { toMatchSnapshot, toHaveScreenshot } from './matchers/toMatchSnapshot';
 import type { Expect } from './types';
 import { currentTestInfo } from './globals';
 import { serializeError, captureStackTrace, currentExpectTimeout } from './util';
@@ -142,7 +142,7 @@ const customMatchers = {
   toHaveURL,
   toHaveValue,
   toMatchSnapshot,
-  _toHaveScreenshot,
+  toHaveScreenshot,
 };
 
 type Generator = () => any;

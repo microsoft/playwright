@@ -48,7 +48,6 @@ export interface FullConfigInternal extends FullConfigPublic {
   _globalOutputDir: string;
   _configDir: string;
   _testGroupsCount: number;
-  _screenshotsDir: string;
 
   // Overrides the public field.
   projects: FullProjectInternal[];

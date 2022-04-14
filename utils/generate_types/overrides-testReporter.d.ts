@@ -48,5 +48,78 @@ export interface Reporter {
   onEnd?(result: FullResult): void | Promise<void>;
 }
 
+export interface JSONReport {
+  config: Omit<FullConfig, 'projects'> & {
+    projects: {
+      outputDir: string,
+      repeatEach: number,
+      retries: number,
+      metadata: any,
+      name: string,
+      testDir: string,
+      testIgnore: string[],
+      testMatch: string[],
+      timeout: number,
+    }[],
+  };
+  suites: JSONReportSuite[];
+  errors: TestError[];
+}
+
+export interface JSONReportSuite {
+  title: string;
+  file: string;
+  column: number;
+  line: number;
+  specs: JSONReportSpec[];
+  suites?: JSONReportSuite[];
+}
+
+export interface JSONReportSpec {
+  tags: string[],
+  title: string;
+  ok: boolean;
+  tests: JSONReportTest[];
+  file: string;
+  line: number;
+  column: number;
+}
+
+export interface JSONReportTest {
+  timeout: number;
+  annotations: { type: string, description?: string }[],
+  expectedStatus: TestStatus;
+  projectName: string;
+  results: JSONReportTestResult[];
+  status: 'skipped' | 'expected' | 'unexpected' | 'flaky';
+}
+
+export interface JSONReportTestResult {
+  workerIndex: number;
+  status: TestStatus | undefined;
+  duration: number;
+  error: TestError | undefined;
+  stdout: JSONReportSTDIOEntry[];
+  stderr: JSONReportSTDIOEntry[];
+  retry: number;
+  steps?: JSONReportTestStep[];
+  attachments: {
+    name: string;
+    path?: string;
+    body?: string;
+    contentType: string;
+  }[];
+  errorLocation?: Location;
+}
+
+export interface JSONReportTestStep {
+  title: string;
+  duration: number;
+  error: TestError | undefined;
+  steps?: JSONReportTestStep[];
+}
+
+export type JSONReportSTDIOEntry = { text: string } | { buffer: string };
+
 // This is required to not export everything by default. See https://github.com/Microsoft/TypeScript/issues/19545#issuecomment-340490459
 export {};

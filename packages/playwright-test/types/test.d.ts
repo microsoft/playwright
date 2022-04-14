@@ -36,26 +36,6 @@ export type UpdateSnapshots = 'all' | 'none' | 'missing';
 
 type UseOptions<TestArgs, WorkerArgs> = { [K in keyof WorkerArgs]?: WorkerArgs[K] } & { [K in keyof TestArgs]?: TestArgs[K] };
 
-type ExpectSettings = {
-  /**
-   * Default timeout for async expect matchers in milliseconds, defaults to 5000ms.
-   */
-  timeout?: number;
-  toMatchSnapshot?: {
-    /** An acceptable perceived color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between pixels in compared images, between zero (strict) and one (lax). Defaults to `0.2`.
-     */
-    threshold?: number,
-    /**
-     * An acceptable amount of pixels that could be different, unset by default.
-     */
-    maxDiffPixels?: number,
-    /**
-     * An acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1` , unset by default.
-     */
-    maxDiffPixelRatio?: number,
-  }
-};
-
 /**
  * Playwright Test supports running multiple test projects at the same time. This is useful for running tests in multiple
  * configurations. For example, consider running tests against multiple browsers.
@@ -116,13 +96,6 @@ type ExpectSettings = {
  *
  */
 interface TestProject {
-  /**
-   * Configuration for the `expect` assertion library.
-   *
-   * Use [testConfig.expect](https://playwright.dev/docs/api/class-testconfig#test-config-expect) to change this option for
-   * all projects.
-   */
-  expect?: ExpectSettings;
   /**
    * Playwright Test runs tests in parallel. In order to achieve that, it runs several worker processes that run at the same
    * time. By default, **test files** are run in parallel. Tests in a single file are run in order, in the same worker
@@ -288,7 +261,41 @@ interface TestProject {
    * all projects.
    */
   timeout?: number;
-}
+  /**
+   * Configuration for the `expect` assertion library.
+   *
+   * Use [testConfig.expect](https://playwright.dev/docs/api/class-testconfig#test-config-expect) to change this option for
+   * all projects.
+   */
+  expect?: {
+    /**
+     * Default timeout for async expect matchers in milliseconds, defaults to 5000ms.
+     */
+    timeout?: number;
+
+    /**
+     * Configuration for the
+     * [screenshotAssertions.toMatchSnapshot(name[, options])](https://playwright.dev/docs/api/class-screenshotassertions#screenshot-assertions-to-match-snapshot-1)
+     * method.
+     */
+    toMatchSnapshot?: {
+      /**
+       * an acceptable perceived color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between the same
+       * pixel in compared images, between zero (strict) and one (lax). Defaults to `0.2`.
+       */
+      threshold?: number;
+
+      /**
+       * an acceptable amount of pixels that could be different, unset by default.
+       */
+      maxDiffPixels?: number;
+
+      /**
+       * an acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1` , unset by default.
+       */
+      maxDiffPixelRatio?: number;
+    };
+  };}
 
 /**
  * Playwright Test supports running multiple test projects at the same time. This is useful for running tests in multiple
@@ -688,26 +695,6 @@ interface TestConfig {
   workers?: number;
 
   /**
-   * Configuration for the `expect` assertion library. Learn more about [various timeouts](https://playwright.dev/docs/test-timeouts).
-   *
-   * ```ts
-   * // playwright.config.ts
-   * import { PlaywrightTestConfig } from '@playwright/test';
-   *
-   * const config: PlaywrightTestConfig = {
-   *   expect: {
-   *     timeout: 10000,
-   *     toMatchSnapshot: {
-   *       maxDiffPixels: 10,
-   *     },
-   *   },
-   * };
-   * export default config;
-   * ```
-   *
-   */
-  expect?: ExpectSettings;
-  /**
    * Any JSON-serializable metadata that will be put directly to the test report.
    */
   metadata?: any;
@@ -854,7 +841,54 @@ interface TestConfig {
    *
    */
   timeout?: number;
-}
+  /**
+   * Configuration for the `expect` assertion library. Learn more about [various timeouts](https://playwright.dev/docs/test-timeouts).
+   *
+   * ```ts
+   * // playwright.config.ts
+   * import { PlaywrightTestConfig } from '@playwright/test';
+   *
+   * const config: PlaywrightTestConfig = {
+   *   expect: {
+   *     timeout: 10000,
+   *     toMatchSnapshot: {
+   *       maxDiffPixels: 10,
+   *     },
+   *   },
+   * };
+   * export default config;
+   * ```
+   *
+   */
+  expect?: {
+    /**
+     * Default timeout for async expect matchers in milliseconds, defaults to 5000ms.
+     */
+    timeout?: number;
+
+    /**
+     * Configuration for the
+     * [screenshotAssertions.toMatchSnapshot(name[, options])](https://playwright.dev/docs/api/class-screenshotassertions#screenshot-assertions-to-match-snapshot-1)
+     * method.
+     */
+    toMatchSnapshot?: {
+      /**
+       * an acceptable perceived color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between the same
+       * pixel in compared images, between zero (strict) and one (lax). Defaults to `0.2`.
+       */
+      threshold?: number;
+
+      /**
+       * an acceptable amount of pixels that could be different, unset by default.
+       */
+      maxDiffPixels?: number;
+
+      /**
+       * an acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1` , unset by default.
+       */
+      maxDiffPixelRatio?: number;
+    };
+  };}
 
 /**
  * Playwright Test provides many options to configure how your tests are collected and executed, for example `timeout` or

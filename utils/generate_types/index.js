@@ -32,10 +32,10 @@ class TypesGenerator {
   /**
    * @param {{
    *   documentation: Documentation,
-   *   classNamesToGenerate: Set<string>,
    *   overridesToDocsClassMapping?: Map<string, string>,
    *   ignoreMissing?: Set<string>,
    *   doNotExportClassNames?: Set<string>,
+   *   doNotGenerate?: Set<string>,
    *   includeExperimental?: boolean,
    * }} options
    */
@@ -45,10 +45,10 @@ class TypesGenerator {
     /** @type {Set<string>} */
     this.handledMethods = new Set();
     this.documentation = options.documentation;
-    this.classNamesToGenerate = options.classNamesToGenerate;
     this.overridesToDocsClassMapping = options.overridesToDocsClassMapping || new Map();
     this.ignoreMissing = options.ignoreMissing || new Set();
     this.doNotExportClassNames = options.doNotExportClassNames || new Set();
+    this.doNotGenerate = options.doNotGenerate || new Set();
     this.documentation.filterForLanguage('js');
     if (!options.includeExperimental)
       this.documentation.filterOutExperimental();
@@ -116,13 +116,15 @@ class TypesGenerator {
       return this.memberJSDOC(method, '  ').trimLeft();
     }, (className) => {
       const docClass = this.docClassForName(className);
-      if (!docClass || !this.classNamesToGenerate.has(docClass.name))
+      if (!docClass || !this.shouldGenerate(docClass.name))
+        return '';
+      if (docClass.name !== className)  // Do not generate members for name-mapped classes.
         return '';
       return this.classBody(docClass);
     });
 
     const classes = this.documentation.classesArray
-        .filter(cls => this.classNamesToGenerate.has(cls.name))
+        .filter(cls => this.shouldGenerate(cls.name))
         .filter(cls => !handledClasses.has(cls.name));
     {
       const playwright = this.documentation.classesArray.find(c => c.name === 'Playwright');
@@ -149,6 +151,16 @@ class TypesGenerator {
     const parts = name.split('.');
     // Either the class is ignored, or a specific method.
     return this.ignoreMissing.has(name) || this.ignoreMissing.has(parts[0]);
+  }
+
+  /**
+   * @param {string} name
+   */
+  shouldGenerate(name) {
+    const parts = name.split('.');
+    // Either the class is skipped, or a specific method.
+    const skip = this.doNotGenerate.has(name) || this.doNotGenerate.has(parts[0]);
+    return !skip;
   }
 
   /**
@@ -269,6 +281,8 @@ class TypesGenerator {
 
     const members = classDesc.membersArray.filter(member => member.kind !== 'event');
     parts.push(members.map(member => {
+      if (!this.shouldGenerate(`${classDesc.name}.${member.name}`))
+        return '';
       if (member.kind === 'event')
         return '';
       if (member.alias === 'waitForEvent') {
@@ -490,7 +504,7 @@ class TypesGenerator {
   const coreDocumentation = parseApi(path.join(PROJECT_DIR, 'docs', 'src', 'api'));
   const testDocumentation = parseApi(path.join(PROJECT_DIR, 'docs', 'src', 'test-api'), path.join(PROJECT_DIR, 'docs', 'src', 'api', 'params.md'));
   const reporterDocumentation = parseApi(path.join(PROJECT_DIR, 'docs', 'src', 'test-reporter-api'));
-  const assertionClasses = new Set(['LocatorAssertions', 'PageAssertions', 'APIResponseAssertions', 'ScreenshotAssertions']);
+  const assertionClasses = new Set(['LocatorAssertions', 'PageAssertions', 'APIResponseAssertions', 'ScreenshotAssertions', 'PlaywrightAssertions']);
 
   /**
    * @param {boolean} includeExperimental
@@ -500,7 +514,7 @@ class TypesGenerator {
     const documentation = coreDocumentation.clone();
     const generator = new TypesGenerator({
       documentation,
-      classNamesToGenerate: new Set(coreDocumentation.classesArray.map(cls => cls.name).filter(name => !assertionClasses.has(name) && name !== 'PlaywrightAssertions')),
+      doNotGenerate: new Set([...assertionClasses]),
       includeExperimental,
     });
     let types = await generator.generateTypes(path.join(__dirname, 'overrides.d.ts'));
@@ -531,7 +545,15 @@ class TypesGenerator {
     const documentation = coreDocumentation.mergeWith(testDocumentation);
     const generator = new TypesGenerator({
       documentation,
-      classNamesToGenerate: new Set(['TestError', 'TestInfo', 'WorkerInfo', ...assertionClasses]),
+      doNotGenerate: new Set([
+        ...coreDocumentation.classesArray.map(cls => cls.name).filter(name => !assertionClasses.has(name)),
+        'PlaywrightAssertions',
+        'Test',
+        'Fixtures',
+        'TestOptions',
+        'TestConfig.use',
+        'TestProject.use',
+      ]),
       overridesToDocsClassMapping: new Map([
         ['TestType', 'Test'],
         ['Config', 'TestConfig'],
@@ -565,8 +587,19 @@ class TypesGenerator {
     const documentation = coreDocumentation.mergeWith(testDocumentation).mergeWith(reporterDocumentation);
     const generator = new TypesGenerator({
       documentation,
-      classNamesToGenerate: new Set(reporterDocumentation.classesArray.map(cls => cls.name)),
-      ignoreMissing: new Set(['FullResult']),
+      doNotGenerate: new Set([
+        ...coreDocumentation.classesArray.map(cls => cls.name),
+        ...testDocumentation.classesArray.map(cls => cls.name),
+      ]),
+      ignoreMissing: new Set([
+        'FullResult',
+        'JSONReport',
+        'JSONReportSuite',
+        'JSONReportSpec',
+        'JSONReportTest',
+        'JSONReportTestResult',
+        'JSONReportTestStep',
+      ]),
       includeExperimental,
     });
     return await generator.generateTypes(path.join(__dirname, 'overrides-testReporter.d.ts'));

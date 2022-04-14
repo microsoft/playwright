@@ -25,6 +25,8 @@ import type { ResponseDispatcher } from './networkDispatchers';
 import { RequestDispatcher } from './networkDispatchers';
 import type { CallMetadata } from '../instrumentation';
 import type { WritableStreamDispatcher } from './writableStreamDispatcher';
+import { assert } from '../../utils';
+import path from 'path';
 
 export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel> implements channels.FrameChannel {
   _type_Frame = true;
@@ -215,6 +217,8 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel> im
         throw new Error('Neither localPaths nor streams is specified');
       localPaths = params.streams.map(c => (c as WritableStreamDispatcher).path());
     }
+    for (const p of localPaths)
+      assert(path.isAbsolute(p) && path.resolve(p) === p, 'Paths provided to localPaths must be absolute and fully resolved.');
     return await this._frame.setInputFiles(metadata, params.selector, { localPaths }, params);
   }
 

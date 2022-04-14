@@ -11,22 +11,30 @@ build_gtk() {
   if ! [[ -d ./WebKitBuild/GTK/DependenciesGTK ]]; then
     yes | WEBKIT_JHBUILD=1 WEBKIT_JHBUILD_MODULESET=minimal WEBKIT_OUTPUTDIR=$(pwd)/WebKitBuild/GTK DEBIAN_FRONTEND=noninteractive ./Tools/Scripts/update-webkitgtk-libs
   fi
-  local CMAKE_ARGS=""
+  local CMAKE_ARGS=(
+    --cmakeargs=-DENABLE_INTROSPECTION=OFF
+    --cmakeargs=-DUSE_GSTREAMER_WEBRTC=FALSE
+  )
   if [[ -n "${EXPORT_COMPILE_COMMANDS}" ]]; then
-    CMAKE_ARGS="--cmakeargs=\"-DCMAKE_EXPORT_COMPILE_COMMANDS=1\""
+    CMAKE_ARGS+=("--cmakeargs=-DCMAKE_EXPORT_COMPILE_COMMANDS=1")
   fi
-  WEBKIT_JHBUILD=1 WEBKIT_JHBUILD_MODULESET=minimal WEBKIT_OUTPUTDIR=$(pwd)/WebKitBuild/GTK ./Tools/Scripts/build-webkit --gtk --release "${CMAKE_ARGS}" --touch-events --orientation-events --no-bubblewrap-sandbox --no-webxr --cmakeargs=-DUSE_GSTREAMER_WEBRTC=FALSE --cmakeargs=-DENABLE_INTROSPECTION=OFF MiniBrowser
+  WEBKIT_JHBUILD=1 WEBKIT_JHBUILD_MODULESET=minimal WEBKIT_OUTPUTDIR=$(pwd)/WebKitBuild/GTK ./Tools/Scripts/build-webkit --gtk --release "${CMAKE_ARGS}" --touch-events --orientation-events --no-bubblewrap-sandbox "${CMAKE_ARGS[@]}" MiniBrowser
 }
 
 build_wpe() {
   if ! [[ -d ./WebKitBuild/WPE/DependenciesWPE ]]; then
     yes | WEBKIT_JHBUILD=1 WEBKIT_JHBUILD_MODULESET=minimal WEBKIT_OUTPUTDIR=$(pwd)/WebKitBuild/WPE DEBIAN_FRONTEND=noninteractive ./Tools/Scripts/update-webkitwpe-libs
   fi
-  local CMAKE_ARGS=""
+  local CMAKE_ARGS=(
+    --cmakeargs=-DENABLE_COG=OFF
+    --cmakeargs=-DENABLE_INTROSPECTION=OFF
+    --cmakeargs=-DENABLE_WEBXR=OFF
+    --cmakeargs=-DUSE_GSTREAMER_WEBRTC=FALSE
+  )
   if [[ -n "${EXPORT_COMPILE_COMMANDS}" ]]; then
-    CMAKE_ARGS="--cmakeargs=\"-DCMAKE_EXPORT_COMPILE_COMMANDS=1\""
+    CMAKE_ARGS+=("--cmakeargs=-DCMAKE_EXPORT_COMPILE_COMMANDS=1")
   fi
-  WEBKIT_JHBUILD=1 WEBKIT_JHBUILD_MODULESET=minimal WEBKIT_OUTPUTDIR=$(pwd)/WebKitBuild/WPE ./Tools/Scripts/build-webkit --wpe --release "${CMAKE_ARGS}" --touch-events --orientation-events --no-bubblewrap-sandbox --no-webxr --cmakeargs=-DENABLE_COG=OFF --cmakeargs=-DUSE_GSTREAMER_WEBRTC=FALSE --cmakeargs=-DENABLE_INTROSPECTION=OFF MiniBrowser
+  WEBKIT_JHBUILD=1 WEBKIT_JHBUILD_MODULESET=minimal WEBKIT_OUTPUTDIR=$(pwd)/WebKitBuild/WPE ./Tools/Scripts/build-webkit --wpe --release "${CMAKE_ARGS}" --touch-events --orientation-events --no-bubblewrap-sandbox "${CMAKE_ARGS[@]}" MiniBrowser
 }
 
 ensure_linux_deps() {

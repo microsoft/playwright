@@ -91,7 +91,7 @@ class ApiParser {
     let optional = false;
     for (const item of spec.children || []) {
       if (item.type === 'li' && item.liType === 'default') {
-        const parsed = this.parseType(item);;
+        const parsed = this.parseType(item);
         returnType = parsed.type;
         optional = parsed.optional;
       }
@@ -164,6 +164,7 @@ class ApiParser {
         method.argsArray.push(arg);
       }
     } else {
+      // match[1] === 'option'
       let options = method.argsArray.find(o => o.name === 'options');
       if (!options) {
         const type = new Documentation.Type('Object', []);
@@ -183,7 +184,7 @@ class ApiParser {
     const param = childrenWithoutProperties(spec)[0];
     const text = param.text;
     let typeStart = text.indexOf('<');
-    if (text[typeStart - 1] === '?')
+    while ('?e'.includes(text[typeStart - 1]))
       typeStart--;
     const name = text.substring(0, typeStart).replace(/\`/g, '').trim();
     const comments = extractComments(spec);
@@ -193,7 +194,7 @@ class ApiParser {
 
   /**
    * @param {MarkdownNode=} spec
-   * @return {{ type: Documentation.Type, optional: boolean }}
+   * @return {{ type: Documentation.Type, optional: boolean, experimental: boolean }}
    */
   parseType(spec) {
     const arg = parseVariable(spec.text);
@@ -202,16 +203,16 @@ class ApiParser {
       const { name, text } = parseVariable(child.text);
       const comments = /** @type {MarkdownNode[]} */ ([{ type: 'text', text }]);
       const childType = this.parseType(child);
-      properties.push(Documentation.Member.createProperty({}, false /* experimental */, name, childType.type, comments, !childType.optional));
+      properties.push(Documentation.Member.createProperty({}, childType.experimental, name, childType.type, comments, !childType.optional));
     }
     const type = Documentation.Type.parse(arg.type, properties);
-    return { type, optional: arg.optional };
+    return { type, optional: arg.optional, experimental: arg.experimental };
   }
 }
 
 /**
  * @param {string} line
- * @returns {{ name: string, type: string, text: string, optional: boolean }}
+ * @returns {{ name: string, type: string, text: string, optional: boolean, experimental: boolean }}
  */
 function parseVariable(line) {
   let match = line.match(/^`([^`]+)` (.*)/);
@@ -226,8 +227,12 @@ function parseVariable(line) {
   const name = match[1];
   let remainder = match[2];
   let optional = false;
-  if (remainder.startsWith('?')) {
-    optional = true;
+  let experimental = false;
+  while ('?e'.includes(remainder[0])) {
+    if (remainder[0] === '?')
+      optional = true;
+    else if (remainder[0] === 'e')
+      experimental = true;
     remainder = remainder.substring(1);
   }
   if (!remainder.startsWith('<'))
@@ -240,7 +245,7 @@ function parseVariable(line) {
     if (c === '>')
       --depth;
     if (depth === 0)
-      return { name, type: remainder.substring(1, i), text: remainder.substring(i + 2), optional };
+      return { name, type: remainder.substring(1, i), text: remainder.substring(i + 2), optional, experimental };
   }
   throw new Error('Should not be reached');
 }
