@@ -76,7 +76,6 @@ it.describe('snapshots', () => {
   });
 
   it('should respect node removal', async ({ page, toImpl, snapshotter }) => {
-    page.on('console', console.log);
     await page.setContent('<div><button id="button1"></button><button id="button2"></button></div>');
     const snapshot1 = await snapshotter.captureSnapshot(toImpl(page), 'snapshot1');
     expect(distillSnapshot(snapshot1)).toBe('<DIV><BUTTON id=\"button1\"></BUTTON><BUTTON id=\"button2\"></BUTTON></DIV>');
@@ -86,7 +85,6 @@ it.describe('snapshots', () => {
   });
 
   it('should respect attr removal', async ({ page, toImpl, snapshotter }) => {
-    page.on('console', console.log);
     await page.setContent('<div id="div" attr1="1" attr2="2"></div>');
     const snapshot1 = await snapshotter.captureSnapshot(toImpl(page), 'snapshot1');
     expect(distillSnapshot(snapshot1)).toBe('<DIV id=\"div\" attr1=\"1\" attr2=\"2\"></DIV>');
