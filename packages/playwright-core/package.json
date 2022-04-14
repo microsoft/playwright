@@ -19,7 +19,6 @@
     "./cli": "./cli.js",
     "./package.json": "./package.json",
     "./lib/grid/gridServer": "./lib/grid/gridServer.js",
-    "./lib/grid/gridClient": "./lib/grid/gridClient.js",
     "./lib/outofprocess": "./lib/outofprocess.js",
     "./lib/utils": "./lib/utils/index.js",
     "./lib/utils/comparators": "./lib/utils/comparators.js",
