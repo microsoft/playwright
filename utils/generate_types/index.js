@@ -591,7 +591,15 @@ class TypesGenerator {
         ...coreDocumentation.classesArray.map(cls => cls.name),
         ...testDocumentation.classesArray.map(cls => cls.name),
       ]),
-      ignoreMissing: new Set(['FullResult']),
+      ignoreMissing: new Set([
+        'FullResult',
+        'JSONReport',
+        'JSONReportSuite',
+        'JSONReportSpec',
+        'JSONReportTest',
+        'JSONReportTestResult',
+        'JSONReportTestStep',
+      ]),
       includeExperimental,
     });
     return await generator.generateTypes(path.join(__dirname, 'overrides-testReporter.d.ts'));
