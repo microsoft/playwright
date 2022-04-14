@@ -31,8 +31,7 @@ class OutOfProcessPlaywrightServer {
       stdio: 'pipe',
       detached: true,
       env: {
-        ...process.env,
-        PW_SOCKS_PROXY_PORT: '1'
+        ...process.env
       }
     });
     this._driverProcess.unref();

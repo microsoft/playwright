@@ -16,7 +16,7 @@
 
 import type * as channels from '../protocol/channels';
 import { TimeoutError } from '../common/errors';
-import * as socks from '../common/socksProxy';
+import type * as socks from '../common/socksProxy';
 import { Android } from './android';
 import { BrowserType } from './browserType';
 import { ChannelOwner } from './channelOwner';
@@ -85,23 +85,6 @@ export class Playwright extends ChannelOwner<channels.PlaywrightChannel> {
     this.selectors._removeChannel(selectorsOwner);
     this.selectors = selectors;
     this.selectors._addChannel(selectorsOwner);
-  }
-
-  // TODO: remove this methods together with PlaywrightClient.
-  _enablePortForwarding(redirectPortForTest?: number) {
-    const socksSupport = this._initializer.socksSupport;
-    if (!socksSupport)
-      return;
-    const handler = new socks.SocksProxyHandler(redirectPortForTest);
-    this._socksProxyHandler = handler;
-    handler.on(socks.SocksProxyHandler.Events.SocksConnected, (payload: socks.SocksSocketConnectedPayload) => socksSupport.socksConnected(payload).catch(() => {}));
-    handler.on(socks.SocksProxyHandler.Events.SocksData, (payload: socks.SocksSocketDataPayload) => socksSupport.socksData({ uid: payload.uid, data: payload.data.toString('base64') }).catch(() => {}));
-    handler.on(socks.SocksProxyHandler.Events.SocksError, (payload: socks.SocksSocketErrorPayload) => socksSupport.socksError(payload).catch(() => {}));
-    handler.on(socks.SocksProxyHandler.Events.SocksFailed, (payload: socks.SocksSocketFailedPayload) => socksSupport.socksFailed(payload).catch(() => {}));
-    handler.on(socks.SocksProxyHandler.Events.SocksEnd, (payload: socks.SocksSocketEndPayload) => socksSupport.socksEnd(payload).catch(() => {}));
-    socksSupport.on('socksRequested', payload => handler.socketRequested(payload));
-    socksSupport.on('socksClosed', payload => handler.socketClosed(payload));
-    socksSupport.on('socksData', payload => handler.sendSocketData({ uid: payload.uid, data: Buffer.from(payload.data, 'base64') }));
   }
 
   static from(channel: channels.PlaywrightChannel): Playwright {
