@@ -955,3 +955,21 @@ it('should abort requests when browser context closes', async ({ contextFactory,
   expect(error.message).toContain('Request context disposed');
   await connectionClosed;
 });
+
+it('should work with connectOverCDP', async ({ browserName, browserType, server }, testInfo) => {
+  it.skip(browserName !== 'chromium');
+  const port = 9339 + testInfo.workerIndex;
+  const browserServer = await browserType.launch({
+    args: ['--remote-debugging-port=' + port]
+  });
+  try {
+    const cdpBrowser = await browserType.connectOverCDP(`http://localhost:${port}/`);
+    const [context] = cdpBrowser.contexts();
+    const response = await context.request.get(server.PREFIX + '/simple.json');
+    expect(response.url()).toBe(server.PREFIX + '/simple.json');
+    expect(response.status()).toBe(200);
+    expect(await response.text()).toBe('{"foo": "bar"}\n');
+  } finally {
+    await browserServer.close();
+  }
+});
