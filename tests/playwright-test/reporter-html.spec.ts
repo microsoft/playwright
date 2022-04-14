@@ -181,7 +181,7 @@ test('should include multiple image diffs', async ({ runInlineTest, page, showRe
   const result = await runInlineTest({
     'playwright.config.ts': `
       module.exports = {
-        _screenshotsDir: '__screenshots__',
+        screenshotsDir: '__screenshots__',
         use: { viewport: { width: ${IMG_WIDTH}, height: ${IMG_HEIGHT} }}
       };
     `,
@@ -192,12 +192,12 @@ test('should include multiple image diffs', async ({ runInlineTest, page, showRe
       const { test } = pwt;
       test('fails', async ({ page }, testInfo) => {
         testInfo.snapshotSuffix = '';
-        await expect.soft(page)._toHaveScreenshot({ timeout: 1000 });
-        await expect.soft(page)._toHaveScreenshot({ timeout: 1000 });
-        await expect.soft(page)._toHaveScreenshot({ timeout: 1000 });
+        await expect.soft(page).toHaveScreenshot({ timeout: 1000 });
+        await expect.soft(page).toHaveScreenshot({ timeout: 1000 });
+        await expect.soft(page).toHaveScreenshot({ timeout: 1000 });
       });
     `,
-  }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+  }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never', PLAYWRIGHT_EXPERIMENTAL_FEATURES: '1' });
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
 
@@ -260,10 +260,10 @@ test('should include image diff when screenshot failed to generate due to animat
             document.body.textContent = Date.now();
           }, 50);
         });
-        await expect.soft(page)._toHaveScreenshot({ timeout: 1000 });
+        await expect.soft(page).toHaveScreenshot({ timeout: 1000 });
       });
     `,
-  }, { 'reporter': 'dot,html', 'update-snapshots': true }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+  }, { 'reporter': 'dot,html', 'update-snapshots': true }, { PW_TEST_HTML_REPORT_OPEN: 'never', PLAYWRIGHT_EXPERIMENTAL_FEATURES: '1' });
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
 

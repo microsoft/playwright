@@ -284,7 +284,7 @@ export async function convertInputFiles(files: string | FilePayload | string[] |
       }));
       return { streams };
     }
-    return { localPaths: items as string[] };
+    return { localPaths: items.map(f => path.resolve(f as string)) as string[] };
   }
 
   const filePayloads: SetInputFilesFiles = await Promise.all(items.map(async item => {

@@ -17,7 +17,7 @@
 import type { Locator, Page } from 'playwright-core';
 import type { Page as PageEx } from 'playwright-core/lib/client/page';
 import type { Locator as LocatorEx } from 'playwright-core/lib/client/locator';
-import type { Expect } from '../types';
+import type { Expect, UpdateSnapshots } from '../types';
 import { currentTestInfo } from '../globals';
 import type { ImageComparatorOptions, Comparator } from 'playwright-core/lib/utils/comparators';
 import { getComparator } from 'playwright-core/lib/utils/comparators';
@@ -26,7 +26,6 @@ import {
   addSuffixToFilePath, serializeError, sanitizeForFilePath,
   trimLongString, callLogText, currentExpectTimeout,
   expectTypes, captureStackTrace  } from '../util';
-import type { UpdateSnapshots } from '../types';
 import colors from 'colors/safe';
 import fs from 'fs';
 import path from 'path';
@@ -290,10 +289,12 @@ export async function toHaveScreenshot(
   nameOrOptions: NameOrSegments | { name?: NameOrSegments } & HaveScreenshotOptions = {},
   optOptions: HaveScreenshotOptions = {}
 ): Promise<SyncExpectationResult> {
+  if (!process.env.PLAYWRIGHT_EXPERIMENTAL_FEATURES)
+    throw new Error(`To use the experimental method "toHaveScreenshot", set PLAYWRIGHT_EXPERIMENTAL_FEATURES=1 enviroment variable.`);
   const testInfo = currentTestInfo();
   if (!testInfo)
     throw new Error(`toHaveScreenshot() must be called during the test`);
-  const config = (testInfo.project.expect as any)?._toHaveScreenshot;
+  const config = (testInfo.project.expect as any)?.toHaveScreenshot;
   const helper = new SnapshotHelper(
       testInfo, testInfo._screenshotPath.bind(testInfo), 'png',
       {
