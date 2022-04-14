@@ -16,7 +16,7 @@
 
 import { test } from '@playwright/test';
 import type { TestModeName } from './testMode';
-import { DefaultTestMode, DriverTestMode, ServiceTestMode } from './testMode';
+import { DefaultTestMode, DriverTestMode } from './testMode';
 
 export type TestModeWorkerOptions = {
   mode: TestModeName;
@@ -32,7 +32,7 @@ export const testModeTest = test.extend<{}, TestModeWorkerOptions & TestModeWork
   playwright: [ async ({ mode }, run) => {
     const testMode = {
       default: new DefaultTestMode(),
-      service: new ServiceTestMode(),
+      service: new DefaultTestMode(),
       driver: new DriverTestMode(),
       service2: new DefaultTestMode(),
     }[mode];

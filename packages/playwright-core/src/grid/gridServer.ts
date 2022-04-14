@@ -263,6 +263,7 @@ export class GridServer {
         // shouldHandle claims it accepts promise, except it doesn't.
         return true;
       }
+      this._log('rejecting websocket request');
       return false;
     };
 

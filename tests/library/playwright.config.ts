@@ -69,13 +69,26 @@ const config: Config<CoverageWorkerOptions & PlaywrightWorkerOptions & Playwrigh
 
 if (mode === 'service') {
   config.webServer = {
-    command: 'npx playwright experimental-grid-server',
+    command: 'npx playwright experimental-grid-server --auth-token=mysecret --address=http://localhost:3333 --port=3333',
     port: 3333,
     reuseExistingServer: true,
     env: {
+      PWTEST_UNSAFE_GRID_VERSION: '1',
       PLAYWRIGHT_EXPERIMENTAL_FEATURES: '1',
     },
   };
+  config.use.connectOptions = {
+    wsEndpoint: 'ws://localhost:3333/mysecret/claimWorker?os=linux',
+  };
+  config.projects = [{
+    name: 'Chromium page tests',
+    testMatch: /page\/.*spec.ts$/,
+    testIgnore: 'screenshot',
+    use: {
+      browserName: 'chromium',
+      mode
+    }
+  }];
 }
 
 if (mode === 'service2') {
