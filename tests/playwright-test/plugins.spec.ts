@@ -16,9 +16,7 @@
 import path from 'path';
 import { test, expect } from './playwright-test-fixtures';
 
-const kRawReporterPath = path.join(__dirname, '..', '..', 'packages', 'playwright-test', 'lib', 'reporters', 'raw.js');
-
-test.only('should create a server', async ({ runInlineTest }, { workerIndex }) => {
+test('should create a server', async ({ runInlineTest }, { workerIndex }) => {
   const port = workerIndex + 10500;
   const result = await runInlineTest({
     'test.spec.ts': `
@@ -70,11 +68,11 @@ test.only('should create a server', async ({ runInlineTest }, { workerIndex }) =
         console.log('globalTeardown-status-'+response.statusCode)
       };
     `,
-  }, { reporter: 'json,dot,' + kRawReporterPath }, {}, { usesCustomOutputDir: true });
+  }, undefined, { DEBUG: 'pw:webserver' });
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
-  expect(result.output).not.toContain('[WebServer] listening');
-  expect(result.output).not.toContain('[WebServer] error from server');
+  expect(result.output).toContain('[WebServer] listening');
+  expect(result.output).toContain('[WebServer] error from server');
   expect(result.report.suites[0].specs[0].tests[0].results[0].status).toContain('passed');
 
   const expectedLogMessages = ['globalSetup-status-200', 'globalSetup-teardown-status', 'globalTeardown-status-200'];
