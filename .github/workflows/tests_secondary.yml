@@ -186,7 +186,7 @@ jobs:
     - run: npm run build
     - run: npx playwright install --with-deps chromium
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run test -- --project='Chromium page tests'
-      if: matrix.mode == 'service' # run only page tests in service mode
+      if: matrix.mode == 'service'
       env:
         PWTEST_MODE: ${{ matrix.mode }}
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run ctest
