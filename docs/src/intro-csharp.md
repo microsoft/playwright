@@ -71,7 +71,7 @@ Install dependencies, build project and download necessary browsers. This is onl
 dotnet add package Microsoft.Playwright.NUnit
 # Build the project
 dotnet build
-# Install required browsers
+# Install required browsers - replace netX with actual output folder name, f.ex. net6.0.
 pwsh bin\Debug\netX\playwright.ps1 install
 ```
 
@@ -81,24 +81,23 @@ using System.Threading.Tasks;
 using Microsoft.Playwright.NUnit;
 using NUnit.Framework;
 
-namespace PlaywrightTests
-{
-    [Parallelizable(ParallelScope.Self)]
-    public class Tests : PageTest
-    {
-        [Test]
-        public async Task ShouldAdd()
-        {
-            int result = await Page.EvaluateAsync<int>("() => 7 + 3");
-            Assert.AreEqual(10, result);
-        }
+namespace PlaywrightTests;
 
-        [Test]
-        public async Task ShouldMultiply()
-        {
-            int result = await Page.EvaluateAsync<int>("() => 7 * 3");
-            Assert.AreEqual(21, result);
-        }
+[Parallelizable(ParallelScope.Self)]
+public class Tests : PageTest
+{
+    [Test]
+    public async Task ShouldAdd()
+    {
+        int result = await Page.EvaluateAsync<int>("() => 7 + 3");
+        Assert.AreEqual(10, result);
+    }
+
+    [Test]
+    public async Task ShouldMultiply()
+    {
+        int result = await Page.EvaluateAsync<int>("() => 7 * 3");
+        Assert.AreEqual(21, result);
     }
 }
 ```
