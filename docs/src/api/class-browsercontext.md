@@ -493,28 +493,21 @@ with sync_playwright() as playwright:
 
 ```csharp
 using Microsoft.Playwright;
-using System.Threading.Tasks;
 
-class Program
-{
-    public static async Task Main()
-    {
-        using var playwright = await Playwright.CreateAsync();
-        var browser = await playwright.Webkit.LaunchAsync(new BrowserTypeLaunchOptions { Headless = false });
-        var context = await browser.NewContextAsync();
+using var playwright = await Playwright.CreateAsync();
+var browser = await playwright.Webkit.LaunchAsync(new BrowserTypeLaunchOptions { Headless = false });
+var context = await browser.NewContextAsync();
 
-        await context.ExposeBindingAsync("pageURL", source => source.Page.Url);
-        var page = await context.NewPageAsync();
-        await page.SetContentAsync("<script>\n" +
-        "  async function onClick() {\n" +
-        "    document.querySelector('div').textContent = await window.pageURL();\n" +
-        "  }\n" +
-        "</script>\n" +
-        "<button onclick=\"onClick()\">Click me</button>\n" +
-        "<div></div>");
-        await page.ClickAsync("button");
-    }
-}
+await context.ExposeBindingAsync("pageURL", source => source.Page.Url);
+var page = await context.NewPageAsync();
+await page.SetContentAsync("<script>\n" +
+"  async function onClick() {\n" +
+"    document.querySelector('div').textContent = await window.pageURL();\n" +
+"  }\n" +
+"</script>\n" +
+"<button onclick=\"onClick()\">Click me</button>\n" +
+"<div></div>");
+await page.ClickAsync("button");
 ```
 
 An example of passing an element handle:
