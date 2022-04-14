@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { JSONReport, JSONReportSuite } from '@playwright/test/src/reporters/json';
+import type { JSONReport, JSONReportSuite } from '@playwright/test/reporter';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
