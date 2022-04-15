@@ -83,7 +83,7 @@ if (mode === 'service') {
   config.projects = [{
     name: 'Chromium page tests',
     testMatch: /page\/.*spec.ts$/,
-    testIgnore: 'screenshot',
+    testIgnore: '**/*screenshot*',
     use: {
       browserName: 'chromium',
       mode
