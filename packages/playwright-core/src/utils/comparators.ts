@@ -17,11 +17,9 @@
 
 import colors from 'colors/safe';
 import jpeg from 'jpeg-js';
-import pixelmatch from 'pixelmatch';
+import pixelmatch from '../third_party/pixelmatch';
 import { diff_match_patch, DIFF_INSERT, DIFF_DELETE, DIFF_EQUAL } from '../third_party/diff_match_patch';
-
-// Note: we require the pngjs version of pixelmatch to avoid version mismatches.
-const { PNG } = require(require.resolve('pngjs', { paths: [require.resolve('pixelmatch')] })) as typeof import('pngjs');
+import { PNG } from 'pngjs';
 
 export type ImageComparatorOptions = { threshold?: number, maxDiffPixels?: number, maxDiffPixelRatio?: number };
 export type ComparatorResult = { diff?: Buffer; errorMessage: string; } | null;
