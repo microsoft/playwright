@@ -35,22 +35,6 @@ export type UpdateSnapshots = 'all' | 'none' | 'missing';
 
 type UseOptions<TestArgs, WorkerArgs> = { [K in keyof WorkerArgs]?: WorkerArgs[K] } & { [K in keyof TestArgs]?: TestArgs[K] };
 
-interface TestProject {
-  fullyParallel?: boolean;
-  grep?: RegExp | RegExp[];
-  grepInvert?: RegExp | RegExp[] | null;
-  metadata?: any;
-  name?: string;
-  snapshotDir?: string;
-  outputDir?: string;
-  repeatEach?: number;
-  retries?: number;
-  testDir?: string;
-  testIgnore?: string | RegExp | (string | RegExp)[];
-  testMatch?: string | RegExp | (string | RegExp)[];
-  timeout?: number;
-}
-
 export interface Project<TestArgs = {}, WorkerArgs = {}> extends TestProject {
   use?: UseOptions<TestArgs, WorkerArgs>;
 }
@@ -118,34 +102,7 @@ export type WebServerConfig = {
 type LiteralUnion<T extends U, U = string> = T | (U & { zz_IGNORE_ME?: never });
 
 interface TestConfig {
-  forbidOnly?: boolean;
-  fullyParallel?: boolean;
-  globalSetup?: string;
-  globalTeardown?: string;
-  globalTimeout?: number;
-  grep?: RegExp | RegExp[];
-  grepInvert?: RegExp | RegExp[];
-  maxFailures?: number;
-  preserveOutput?: PreserveOutput;
-  projects?: Project[];
-  quiet?: boolean;
   reporter?: LiteralUnion<'list'|'dot'|'line'|'github'|'json'|'junit'|'null'|'html', string> | ReporterDescription[];
-  reportSlowTests?: ReportSlowTests;
-  shard?: Shard;
-  updateSnapshots?: UpdateSnapshots;
-  webServer?: WebServerConfig;
-  workers?: number;
-
-  metadata?: any;
-  name?: string;
-  snapshotDir?: string;
-  outputDir?: string;
-  repeatEach?: number;
-  retries?: number;
-  testDir?: string;
-  testIgnore?: string | RegExp | (string | RegExp)[];
-  testMatch?: string | RegExp | (string | RegExp)[];
-  timeout?: number;
 }
 
 export interface Config<TestArgs = {}, WorkerArgs = {}> extends TestConfig {

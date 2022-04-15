@@ -574,7 +574,7 @@ class TypesGenerator {
         'PlaywrightWorkerArgs.playwright',
         'Matchers',
       ]),
-      doNotExportClassNames: new Set(assertionClasses),
+      doNotExportClassNames: new Set([...assertionClasses, 'TestProject']),
       includeExperimental,
     });
     return await generator.generateTypes(path.join(__dirname, 'overrides-test.d.ts'));
