@@ -61,7 +61,8 @@ it('should type', async ({ page }) => {
   expect(await page.$eval('input', input => input.value)).toBe('hello');
 });
 
-it('should take screenshot', async ({ page, server, browserName, headless, isAndroid }) => {
+it('should take screenshot', async ({ page, server, browserName, headless, isAndroid, mode }) => {
+  it.skip(mode === 'service');
   it.skip(browserName === 'firefox' && !headless);
   it.skip(isAndroid, 'Different dpr. Remove after using 1x scale for screenshots.');
   await page.setViewportSize({ width: 500, height: 500 });
