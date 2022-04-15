@@ -301,7 +301,7 @@ test('test', async ({ page }) => {
 });
 ```
 
-You can make arbitary data available in your tests from your global setup file by attaching it to `process.env`.
+You can make arbitrary data available in your tests from your global setup file by setting them as environment variables via `process.env`.
 
 ```js js-flavor=js
 // global-setup.js
