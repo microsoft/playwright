@@ -498,7 +498,7 @@ You can also pass a regular expression.
 
 ### Filter by another locator
 
-Locators support an option to only select elements that have a descendant matching antoher locator.
+Locators support an option to only select elements that have a descendant matching another locator.
 
   ```js
   page.locator('article', { has: page.locator('button.subscribe') })
