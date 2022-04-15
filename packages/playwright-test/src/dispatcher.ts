@@ -43,7 +43,7 @@ type TestData = {
 export class Dispatcher {
   private _workerSlots: { busy: boolean, worker?: Worker }[] = [];
   private _queue: TestGroup[] = [];
-  private _queueOrRunningHashCount = new Map<string, number>();
+  private _queuedOrRunningHashCount = new Map<string, number>();
   private _finished = new ManualPromise<void>();
   private _isStopped = false;
 
@@ -58,7 +58,7 @@ export class Dispatcher {
     this._reporter = reporter;
     this._queue = testGroups;
     for (const group of testGroups) {
-      this._queueOrRunningHashCount.set(group.workerHash, 1 + (this._queueOrRunningHashCount.get(group.workerHash) || 0));
+      this._queuedOrRunningHashCount.set(group.workerHash, 1 + (this._queuedOrRunningHashCount.get(group.workerHash) || 0));
       for (const test of group.tests)
         this._testById.set(test._id, { test, resultByWorkerIndex: new Map() });
     }
@@ -142,7 +142,7 @@ export class Dispatcher {
       if (slot.worker && !slot.worker.didSendStop() && slot.worker.hash() === worker.hash())
         workersWithSameHash++;
     }
-    return workersWithSameHash > this._queueOrRunningHashCount.get(worker.hash())!;
+    return workersWithSameHash > this._queuedOrRunningHashCount.get(worker.hash())!;
   }
 
   async run() {
@@ -272,7 +272,7 @@ export class Dispatcher {
     worker.on('stepEnd', onStepEnd);
 
     const onDone = (params: DonePayload) => {
-      this._queueOrRunningHashCount.set(worker.hash(), this._queueOrRunningHashCount.get(worker.hash())! - 1);
+      this._queuedOrRunningHashCount.set(worker.hash(), this._queuedOrRunningHashCount.get(worker.hash())! - 1);
       let remaining = [...remainingByTestId.values()];
 
       // We won't file remaining if:
@@ -379,7 +379,7 @@ export class Dispatcher {
 
       if (remaining.length) {
         this._queue.unshift({ ...testGroup, tests: remaining });
-        this._queueOrRunningHashCount.set(testGroup.workerHash, this._queueOrRunningHashCount.get(testGroup.workerHash)! + 1);
+        this._queuedOrRunningHashCount.set(testGroup.workerHash, this._queuedOrRunningHashCount.get(testGroup.workerHash)! + 1);
         // Perhaps we can immediately start the new job if there is a worker available?
         this._scheduleJob();
       }
