@@ -1,7 +1,7 @@
 {
   "name": "@playwright/experimental-ct-vue",
   "private": true,
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Playwright Component Testing for Svelte",
   "repository": "github:Microsoft/playwright",
   "homepage": "https://playwright.dev",
