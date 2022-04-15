@@ -336,7 +336,9 @@ const { FOO, BAR } = process.env;
 test('test', async ({ page }) => {
   // FOO and BAR properties are populated.
   expect(FOO).toEqual('some data');
-  expect(BAR).toEqual('{"some":"data"}');
+
+  const complexData = JSON.parse(BAR);
+  expect(BAR).toEqual({ some: "data" });
 });
 ```
 
@@ -347,7 +349,9 @@ const { FOO, BAR } = process.env;
 test('test', async ({ page }) => {
   // FOO and BAR properties are populated.
   expect(FOO).toEqual('some data');
-  expect(BAR).toEqual('{"some":"data"}');
+
+  const complexData = JSON.parse(BAR);
+  expect(BAR).toEqual({ some: "data" });
 });
 ```
 
