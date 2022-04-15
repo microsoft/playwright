@@ -27,9 +27,6 @@ import { Runner, builtInReporters, kDefaultConfigFiles } from './runner';
 import { stopProfiling, startProfiling } from './profiler';
 import type { FilePatternFilter } from './util';
 import { showHTMLReport } from './reporters/html';
-import { GridServer } from 'playwright-core/lib/grid/gridServer';
-import dockerFactory from 'playwright-core/lib/grid/dockerGridFactory';
-import { createGuid } from 'playwright-core/lib/utils';
 import { hostPlatform } from 'playwright-core/lib/utils/hostPlatform';
 import { fileIsModule } from './loader';
 
@@ -166,8 +163,6 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
     };
   });
 
-  if (process.env.PLAYWRIGHT_DOCKER)
-    runner.addInternalGlobalSetup(launchDockerContainer);
   const result = await runner.runAllTests({
     listOnly: !!opts.list,
     filePatternFilter,
@@ -233,16 +228,6 @@ function resolveReporter(id: string) {
   if (fs.existsSync(localPath))
     return localPath;
   return require.resolve(id, { paths: [ process.cwd() ] });
-}
-
-async function launchDockerContainer(): Promise<() => Promise<void>> {
-  const gridServer = new GridServer(dockerFactory, createGuid());
-  await gridServer.start();
-  // Start docker container in advance.
-  const { error } = await gridServer.createAgent();
-  if (error)
-    throw error;
-  return async () => await gridServer.stop();
 }
 
 function restartWithExperimentalTsEsm(configFile: string | null): boolean {

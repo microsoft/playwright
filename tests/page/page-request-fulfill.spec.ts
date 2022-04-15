@@ -76,7 +76,8 @@ it('should work with status code 422', async ({ page, server }) => {
   expect(await page.evaluate(() => document.body.textContent)).toBe('Yo, page!');
 });
 
-it('should allow mocking binary responses', async ({ page, server, browserName, headless, asset, isAndroid }) => {
+it('should allow mocking binary responses', async ({ page, server, browserName, headless, asset, isAndroid, mode }) => {
+  it.skip(mode === 'service');
   it.skip(browserName === 'firefox' && !headless, 'Firefox headed produces a different image.');
   it.skip(isAndroid);
 
@@ -97,7 +98,8 @@ it('should allow mocking binary responses', async ({ page, server, browserName, 
   expect(await img.screenshot()).toMatchSnapshot('mock-binary-response.png');
 });
 
-it('should allow mocking svg with charset', async ({ page, server, browserName, headless, isAndroid }) => {
+it('should allow mocking svg with charset', async ({ page, server, browserName, headless, isAndroid, mode }) => {
+  it.skip(mode === 'service');
   it.skip(browserName === 'firefox' && !headless, 'Firefox headed produces a different image.');
   it.skip(isAndroid);
 
@@ -117,7 +119,8 @@ it('should allow mocking svg with charset', async ({ page, server, browserName, 
   expect(await img.screenshot()).toMatchSnapshot('mock-svg.png');
 });
 
-it('should work with file path', async ({ page, server, asset, isAndroid }) => {
+it('should work with file path', async ({ page, server, asset, isAndroid, mode }) => {
+  it.skip(mode === 'service');
   it.skip(isAndroid);
 
   await page.route('**/*', route => route.fulfill({ contentType: 'shouldBeIgnored', path: asset('pptr.png') }));

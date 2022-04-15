@@ -19,8 +19,6 @@
     "./cli": "./cli.js",
     "./package.json": "./package.json",
     "./lib/grid/gridServer": "./lib/grid/gridServer.js",
-    "./lib/grid/gridClient": "./lib/grid/gridClient.js",
-    "./lib/grid/dockerGridFactory": "./lib/grid/dockerGridFactory.js",
     "./lib/outofprocess": "./lib/outofprocess.js",
     "./lib/utils": "./lib/utils/index.js",
     "./lib/utils/comparators": "./lib/utils/comparators.js",
@@ -35,7 +33,6 @@
     "./lib/utils/stackTrace": "./lib/utils/stackTrace.js",
     "./lib/utils/timeoutRunner": "./lib/utils/timeoutRunner.js",
     "./lib/remote/playwrightServer": "./lib/remote/playwrightServer.js",
-    "./lib/remote/playwrightClient": "./lib/remote/playwrightClient.js",
     "./lib/server": "./lib/server/index.js",
     "./types/protocol": "./types/protocol.d.ts",
     "./types/structs": "./types/structs.d.ts"

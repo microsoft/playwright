@@ -230,7 +230,7 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
     });
   },
 
-  _snapshotSuffix: [process.env.PLAYWRIGHT_DOCKER ? 'docker' : process.platform, { scope: 'worker' }],
+  _snapshotSuffix: [process.platform, { scope: 'worker' }],
 
   _setupContextOptionsAndArtifacts: [async ({ playwright, _snapshotSuffix, _combinedContextOptions, _browserOptions, _artifactsDir, trace, screenshot, actionTimeout, navigationTimeout }, use, testInfo) => {
     testInfo.snapshotSuffix = _snapshotSuffix;
