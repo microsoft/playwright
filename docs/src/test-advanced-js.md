@@ -308,9 +308,9 @@ You can make arbitrary data available in your tests from your global setup file 
 const { chromium } = require('@playwright/test');
 
 module.exports = async config => {
-  process.env.foo = 'some data';
+  process.env.FOO = 'some data';
   // Or a more complicated data structure as JSON:
-  process.env.bar = JSON.stringify({ some: 'data' });
+  process.env.BAR = JSON.stringify({ some: 'data' });
 };
 ```
 
@@ -319,9 +319,9 @@ module.exports = async config => {
 import { chromium, FullConfig } from '@playwright/test';
 
 async function globalSetup(config: FullConfig) {
-  process.env.foo = 'some data';
+  process.env.FOO = 'some data';
   // Or a more complicated data structure as JSON:
-  process.env.bar = JSON.stringify({ some: 'data' });
+  process.env.BAR = JSON.stringify({ some: 'data' });
 }
 
 export default globalSetup;
@@ -331,23 +331,23 @@ Tests have access to the `process.env` properties set in the global setup.
 
 ```js js-flavor=ts
 import { test } from '@playwright/test';
-const { foo, bar } = process.env;
+const { FOO, BAR } = process.env;
 
 test('test', async ({ page }) => {
-  // foo and bar properties are populated.
-  expect(foo).toEqual('some data')
-  expect(bar).toEqual('{"some":"data"}')
+  // FOO and BAR properties are populated.
+  expect(FOO).toEqual('some data')
+  expect(BAR).toEqual('{"some":"data"}')
 });
 ```
 
 ```js js-flavor=js
 const { test } = require('@playwright/test');
-const { foo, bar } = process.env;
+const { FOO, BAR } = process.env;
 
 test('test', async ({ page }) => {
-  // foo and bar properties are populated.
-  expect(foo).toEqual('some data')
-  expect(bar).toEqual('{"some":"data"}')
+  // FOO and BAR properties are populated.
+  expect(FOO).toEqual('some data')
+  expect(BAR).toEqual('{"some":"data"}')
 });
 ```
 
