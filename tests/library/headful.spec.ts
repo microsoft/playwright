@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import pixelmatch from 'pixelmatch';
+import pixelmatch from '../../packages/playwright-core/src/third_party/pixelmatch';
 import { PNG } from 'pngjs';
 import { expect, playwrightTest as it } from '../config/browserTest';
 

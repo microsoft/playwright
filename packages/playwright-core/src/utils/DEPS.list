@@ -1,3 +1,4 @@
 [*]
 ./
 ../third_party/diff_match_patch
+../third_party/pixelmatch
