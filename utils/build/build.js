@@ -115,7 +115,7 @@ async function runWatch() {
   }
   /** @type{import('child_process').ChildProcess[]} */
   const spawns = [];
-  for (const step of steps)
+  for (const step of steps) {
     spawns.push(child_process.spawn(step.command, step.args, {
       stdio: 'inherit',
       shell: step.shell,
@@ -125,6 +125,7 @@ async function runWatch() {
       },
       cwd: step.cwd,
     }));
+  }
   process.on('exit', () => spawns.forEach(s => s.kill()));
   for (const onChange of onChanges)
     runOnChange(onChange);
@@ -212,6 +213,26 @@ for (const pkg of workspace.packages()) {
     shell: true,
   });
 }
+
+// Build bundles.
+steps.push({
+  command: 'npm',
+  args: ['run', watchMode ? 'watch' : 'build'],
+  shell: true,
+  cwd: path.resolve(__dirname, '../../packages/playwright-core/bundles/zip')
+});
+steps.push({
+  command: 'npm',
+  args: ['run', watchMode ? 'watch' : 'build'],
+  shell: true,
+  cwd: path.resolve(__dirname, '../../packages/playwright-test/bundles/babel')
+});
+steps.push({
+  command: 'npm',
+  args: ['run', watchMode ? 'watch' : 'build'],
+  shell: true,
+  cwd: path.resolve(__dirname, '../../packages/playwright-test/bundles/expect')
+});
 
 // Generate injected.
 onChanges.push({

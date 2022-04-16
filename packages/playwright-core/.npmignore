@@ -36,3 +36,4 @@ lib/**/injected/
 !browsers.json
 # Include generated devices descriptors
 !deviceDescriptorsSource.json
+!ThirdPartyNotices.txt

@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import { codeFrameColumns } from '@babel/code-frame';
 import colors from 'colors/safe';
 import fs from 'fs';
 import milliseconds from 'ms';
@@ -23,6 +22,7 @@ import StackUtils from 'stack-utils';
 import type { FullConfig, TestCase, Suite, TestResult, TestError, Reporter, FullResult, TestStep, Location } from '../../types/testReporter';
 import type { FullConfigInternal } from '../types';
 
+const { codeFrameColumns } = require('../babelBundle');
 const stackUtils = new StackUtils();
 
 export type TestResultOutput = { chunk: string | Buffer, type: 'stdout' | 'stderr' };

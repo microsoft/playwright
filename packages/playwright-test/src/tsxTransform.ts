@@ -14,14 +14,15 @@
  * limitations under the License.
  */
 
-import type { NodePath } from '@babel/core';
-import { types as t } from '@babel/core';
-import { declare } from '@babel/helper-plugin-utils';
+import type { NodePath, types as T } from '@babel/core';
+import type { BabelAPI } from '@babel/helper-plugin-utils';
+const { types, declare } = require('./babelBundle');
+const t: typeof T = types;
 
-export default declare(api => {
+export default declare((api: BabelAPI) => {
   api.assertVersion(7);
 
-  return {
+  const result: babel.PluginObj = {
     name: 'playwright-debug-transform',
     visitor: {
       Program(path) {
@@ -69,12 +70,12 @@ export default declare(api => {
           return;
 
         const name = jsxName.name;
-        const props: (t.ObjectProperty | t.SpreadElement)[] = [];
+        const props: (T.ObjectProperty | T.SpreadElement)[] = [];
 
         for (const jsxAttribute of jsxElement.openingElement.attributes) {
           if (t.isJSXAttribute(jsxAttribute)) {
-            let namespace: t.JSXIdentifier | undefined;
-            let name: t.JSXIdentifier | undefined;
+            let namespace: T.JSXIdentifier | undefined;
+            let name: T.JSXIdentifier | undefined;
             if (t.isJSXNamespacedName(jsxAttribute.name)) {
               namespace = jsxAttribute.name.namespace;
               name = jsxAttribute.name.name;
@@ -95,7 +96,7 @@ export default declare(api => {
           }
         }
 
-        const children: (t.Expression | t.SpreadElement)[] = [];
+        const children: (T.Expression | T.SpreadElement)[] = [];
         for (const child of jsxElement.children) {
           if (t.isJSXText(child))
             children.push(t.stringLiteral(child.value));
@@ -116,11 +117,12 @@ export default declare(api => {
       }
     }
   };
+  return result;
 });
 
-function flushConst(importPath: NodePath<t.ImportDeclaration>, keepPath: boolean) {
+function flushConst(importPath: NodePath<T.ImportDeclaration>, keepPath: boolean) {
   const importNode = importPath.node;
-  const importNodes = (importPath.parentPath.node as t.Program).body.filter(i => t.isImportDeclaration(i));
+  const importNodes = (importPath.parentPath.node as T.Program).body.filter(i => t.isImportDeclaration(i));
   const isLast = importNodes.indexOf(importNode) === importNodes.length - 1;
   if (!isLast) {
     if (!keepPath)

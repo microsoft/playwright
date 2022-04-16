@@ -26,10 +26,12 @@ import { assert, calculateSha1 } from 'playwright-core/lib/utils';
 import { removeFolders } from 'playwright-core/lib/utils/fileUtils';
 import type { JsonAttachment, JsonReport, JsonSuite, JsonTestCase, JsonTestResult, JsonTestStep } from './raw';
 import RawReporter from './raw';
-import yazl from 'yazl';
 import { stripAnsiEscapes } from './base';
 import { getPackageJsonPath } from '../util';
 import type { FullConfigInternal } from '../types';
+
+import type { ZipFile } from 'yazl';
+const yazl: typeof import('yazl') = require('playwright-core/lib/zipBundle').yazl;
 
 export type Stats = {
   total: number;
@@ -245,7 +247,7 @@ class HtmlBuilder {
   private _reportFolder: string;
   private _tests = new Map<string, JsonTestCase>();
   private _testPath = new Map<string, string[]>();
-  private _dataZipFile: yazl.ZipFile;
+  private _dataZipFile: ZipFile;
   private _hasTraces = false;
 
   constructor(outputDir: string) {

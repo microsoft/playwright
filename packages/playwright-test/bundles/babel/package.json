@@ -1,0 +1,31 @@
+{
+  "name": "babel-bundle",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "esbuild": "esbuild ./src/babelBundle.ts --bundle --outdir=../../lib --format=cjs --platform=node --target=ES2019",
+    "build": "npm ci && npm run esbuild -- --minify && npm run generate-license",
+    "watch": "npm ci && npm run esbuild -- --watch --sourcemap",
+    "generate-license": "node ../../../../utils/generate_third_party_notice.js"
+  },
+  "dependencies": {
+    "@babel/code-frame": "7.16.7",
+    "@babel/core": "7.16.12",
+    "@babel/helper-plugin-utils": "7.16.7",
+    "@babel/plugin-proposal-class-properties": "7.16.7",
+    "@babel/plugin-proposal-dynamic-import": "7.16.7",
+    "@babel/plugin-proposal-export-namespace-from": "7.16.7",
+    "@babel/plugin-proposal-logical-assignment-operators": "7.16.7",
+    "@babel/plugin-proposal-nullish-coalescing-operator": "7.16.7",
+    "@babel/plugin-proposal-numeric-separator": "7.16.7",
+    "@babel/plugin-proposal-optional-chaining": "7.16.7",
+    "@babel/plugin-proposal-private-methods": "7.16.11",
+    "@babel/plugin-proposal-private-property-in-object": "7.16.7",
+    "@babel/plugin-syntax-async-generators": "7.8.4",
+    "@babel/plugin-syntax-json-strings": "7.8.3",
+    "@babel/plugin-syntax-object-rest-spread": "7.8.3",
+    "@babel/plugin-syntax-optional-catch-binding": "7.8.3",
+    "@babel/plugin-transform-modules-commonjs": "7.16.8",
+    "@babel/preset-typescript": "7.16.7"
+  }
+}

@@ -32,7 +32,7 @@ import { captureStackTrace as coreCaptureStackTrace } from 'playwright-core/lib/
 export type { ParsedStackTrace };
 
 const PLAYWRIGHT_CORE_PATH = path.dirname(require.resolve('playwright-core'));
-const EXPECT_PATH = path.dirname(require.resolve('expect'));
+const EXPECT_PATH = path.dirname(require.resolve('./expectBundle'));
 const PLAYWRIGHT_TEST_PATH = path.join(__dirname, '..');
 
 function filterStackTrace(e: Error) {
@@ -57,7 +57,6 @@ function filterStackTrace(e: Error) {
         return true;
       return !fileName.startsWith(PLAYWRIGHT_TEST_PATH) &&
              !fileName.startsWith(PLAYWRIGHT_CORE_PATH) &&
-             !fileName.startsWith(EXPECT_PATH) &&
              !isInternalFileName(fileName, functionName);
     }));
   };

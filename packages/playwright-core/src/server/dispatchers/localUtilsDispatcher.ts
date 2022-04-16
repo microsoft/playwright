@@ -17,13 +17,14 @@
 import type EventEmitter from 'events';
 import fs from 'fs';
 import path from 'path';
-import yauzl from 'yauzl';
-import yazl from 'yazl';
 import type * as channels from '../../protocol/channels';
 import { ManualPromise } from '../../utils/manualPromise';
 import { assert, createGuid } from '../../utils';
 import type { DispatcherScope } from './dispatcher';
 import { Dispatcher } from './dispatcher';
+
+const yazl: typeof import('yazl') = require('../../zipBundle').yazl;
+const yauzl: typeof import('yauzl') = require('../../zipBundle').yauzl;
 
 export class LocalUtilsDispatcher extends Dispatcher<{ guid: string }, channels.LocalUtilsChannel> implements channels.LocalUtilsChannel {
   _type_LocalUtils: boolean;
