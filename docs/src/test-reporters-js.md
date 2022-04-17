@@ -500,36 +500,7 @@ export default config;
 ```
 
 
-## Third party showcase
+## Third party reporter showcase
 
-### Allure reporter
-
-```bash
-# Install
-npm i -D allure-playwright
-
-# Run tests
-npx playwright test --reporter=line,allure-playwright
-
-# Generate report
-allure generate ./allure-results --clean && allure open ./allure-report
-```
-
-See [here](https://www.npmjs.com/package/allure-playwright) for more information.
-
-### Tesults reporter
-
-```bash
-# Install
-npm i -D playwright-tesults-reporter 
-
-# Config (playwright.conf.js) - replace 'token' below with your Tesults token
-const conf = {
-  reporter: [['playwright-tesults-reporter', {'tesults-target': 'token'}]]
-}
-
-# Run tests as usual to generate a test report
-npx playwright test
-```
-
-See [here](https://www.tesults.com/docs/playwright) for more information.
+* [Allure](https://www.npmjs.com/package/allure-playwright)
+* [Tesults](https://www.tesults.com/docs/playwright)
