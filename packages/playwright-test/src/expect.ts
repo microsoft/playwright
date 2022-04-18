@@ -14,14 +14,8 @@
  * limitations under the License.
  */
 
-import expectLibrary from 'expect';
 import { raceAgainstTimeout } from 'playwright-core/lib/utils/timeoutRunner';
 import path from 'path';
-import {
-  INVERTED_COLOR,
-  RECEIVED_COLOR,
-  printReceived,
-} from 'jest-matcher-utils';
 import {
   toBeChecked,
   toBeDisabled,
@@ -49,6 +43,13 @@ import type { Expect } from './types';
 import { currentTestInfo } from './globals';
 import { serializeError, captureStackTrace, currentExpectTimeout } from './util';
 import { monotonicTime } from 'playwright-core/lib/utils';
+
+const { expectLibrary } = require('./expectBundle');
+const {
+  INVERTED_COLOR,
+  RECEIVED_COLOR,
+  printReceived,
+} = require('./expectBundle');
 
 // from expect/build/types
 export type SyncExpectationResult = {

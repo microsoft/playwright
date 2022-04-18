@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-import extract from 'extract-zip';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
@@ -23,6 +22,8 @@ import { getUserAgent } from '../../common/userAgent';
 import { existsAsync } from '../../utils/fileUtils';
 import { debugLogger } from '../../common/debugLogger';
 import { download } from './download';
+
+const extract: typeof import('../../../bundles/zip/node_modules/extract-zip') = require('../../zipBundle').extract;
 
 export async function downloadBrowserWithProgressBar(title: string, browserDirectory: string, executablePath: string, downloadURL: string, downloadFileName: string): Promise<boolean> {
   const progressBarName = `Playwright build of ${title}`;

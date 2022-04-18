@@ -181,50 +181,10 @@ export function transformHook(code: string, filename: string, isModule = false):
   // We don't use any browserslist data, but babel checks it anyway.
   // Silence the annoying warning.
   process.env.BROWSERSLIST_IGNORE_OLD_DATA = 'true';
-  const babel: typeof import('@babel/core') = require('@babel/core');
-  const plugins = [];
-
-  if (isTypeScript) {
-    plugins.push(
-        [require.resolve('@babel/plugin-proposal-class-properties')],
-        [require.resolve('@babel/plugin-proposal-numeric-separator')],
-        [require.resolve('@babel/plugin-proposal-logical-assignment-operators')],
-        [require.resolve('@babel/plugin-proposal-nullish-coalescing-operator')],
-        [require.resolve('@babel/plugin-proposal-optional-chaining')],
-        [require.resolve('@babel/plugin-proposal-private-methods')],
-        [require.resolve('@babel/plugin-syntax-json-strings')],
-        [require.resolve('@babel/plugin-syntax-optional-catch-binding')],
-        [require.resolve('@babel/plugin-syntax-async-generators')],
-        [require.resolve('@babel/plugin-syntax-object-rest-spread')],
-        [require.resolve('@babel/plugin-proposal-export-namespace-from')]
-    );
-
-    if (!isModule) {
-      plugins.push([require.resolve('@babel/plugin-transform-modules-commonjs')]);
-      plugins.push([require.resolve('@babel/plugin-proposal-dynamic-import')]);
-    }
-  }
-
-  plugins.unshift([require.resolve('./tsxTransform')]);
-
-  if (hasPreprocessor)
-    plugins.push([scriptPreprocessor]);
 
   try {
-    const result = babel.transformFileSync(filename, {
-      babelrc: false,
-      configFile: false,
-      assumptions: {
-        // Without this, babel defines a top level function that
-        // breaks playwright evaluates.
-        setPublicClassFields: true,
-      },
-      presets: [
-        [require.resolve('@babel/preset-typescript'), { onlyRemoveTypeImports: true }],
-      ],
-      plugins,
-      sourceMaps: 'both',
-    } as babel.TransformOptions)!;
+    const { babelTransform } = require('./babelBundle');
+    const result = babelTransform(filename, isTypeScript, isModule, hasPreprocessor ? scriptPreprocessor : undefined, [require.resolve('./tsxTransform')]);
     if (result.code) {
       fs.mkdirSync(path.dirname(cachePath), { recursive: true });
       if (result.map)

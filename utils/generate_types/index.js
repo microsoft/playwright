@@ -658,7 +658,6 @@ class TypesGenerator {
   writeFile(path.join(coreTypesDir, 'types.d.ts'), await generateCoreTypes(false), true);
   writeFile(path.join(testTypesDir, 'test.d.ts'), await generateTestTypes(false), true);
   writeFile(path.join(testTypesDir, 'testReporter.d.ts'), await generateReporterTypes(false), true);
-  writeFile(path.join(PROJECT_DIR, 'tests', 'config', 'experimental.d.ts'), await generateExperimentalTypes(), true);
   process.exit(hadChanges && process.argv.includes('--check-clean') ? 1 : 0);
 })().catch(e => {
   console.error(e);
