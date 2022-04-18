@@ -18,11 +18,11 @@ import colors from 'colors/safe';
 import fs from 'fs';
 import milliseconds from 'ms';
 import path from 'path';
-import StackUtils from 'stack-utils';
 import type { FullConfig, TestCase, Suite, TestResult, TestError, Reporter, FullResult, TestStep, Location } from '../../types/testReporter';
 import type { FullConfigInternal } from '../types';
 
 const { codeFrameColumns } = require('../babelBundle');
+const StackUtils: typeof import('stack-utils') = require('playwright-core/lib/utilsBundle').StackUtils;
 const stackUtils = new StackUtils();
 
 export type TestResultOutput = { chunk: string | Buffer, type: 'stdout' | 'stderr' };

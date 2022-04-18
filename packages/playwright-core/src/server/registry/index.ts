@@ -19,7 +19,6 @@ import * as os from 'os';
 import path from 'path';
 import * as util from 'util';
 import * as fs from 'fs';
-import lockfile from 'proper-lockfile';
 import { getUbuntuVersion } from '../../utils/ubuntuVersion';
 import { fetchData } from '../../common/netUtils';
 import { getClientLanguage } from '../../common/userAgent';
@@ -32,6 +31,8 @@ import { transformCommandsForRoot } from './dependencies';
 import { installDependenciesLinux, installDependenciesWindows, validateDependenciesLinux, validateDependenciesWindows } from './dependencies';
 import { downloadBrowserWithProgressBar, logPolitely } from './browserFetcher';
 export { writeDockerVersion } from './dependencies';
+
+const lockfile: typeof import('proper-lockfile') = require('../../utilsBundle').lockfile;
 
 const PACKAGE_PATH = path.join(__dirname, '..', '..', '..');
 const BIN_PATH = path.join(__dirname, '..', '..', '..', 'bin');

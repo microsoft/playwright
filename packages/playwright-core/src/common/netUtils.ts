@@ -17,8 +17,10 @@
 import http from 'http';
 import https from 'https';
 import net from 'net';
-import { getProxyForUrl } from 'proxy-from-env';
 import * as URL from 'url';
+
+const { HttpsProxyAgent }: typeof import('../../bundles/utils/node_modules/https-proxy-agent') = require('../utilsBundle');
+const { getProxyForUrl }: typeof import('proxy-from-env') = require('../utilsBundle');
 
 export async function createSocket(host: string, port: number): Promise<net.Socket> {
   return new Promise((resolve, reject) => {
@@ -27,15 +29,6 @@ export async function createSocket(host: string, port: number): Promise<net.Sock
     socket.on('error', error => reject(error));
   });
 }
-
-// `https-proxy-agent` v5 is written in TypeScript and exposes generated types.
-// However, as of June 2020, its types are generated with tsconfig that enables
-// `esModuleInterop` option.
-//
-// As a result, we can't depend on the package unless we enable the option
-// for our codebase. Instead of doing this, we abuse "require" to import module
-// without types.
-const ProxyAgent = require('https-proxy-agent');
 
 export type HTTPRequestParams = {
   url: string,
@@ -64,7 +57,7 @@ export function httpRequest(params: HTTPRequestParams, onResponse: (r: http.Inco
       const parsedProxyURL = URL.parse(proxyURL);
       (parsedProxyURL as any).secureProxy = parsedProxyURL.protocol === 'https:';
 
-      options.agent = new ProxyAgent(parsedProxyURL);
+      options.agent = new HttpsProxyAgent(parsedProxyURL);
       options.rejectUnauthorized = false;
     }
   }

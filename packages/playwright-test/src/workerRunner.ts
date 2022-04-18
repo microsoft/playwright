@@ -15,7 +15,6 @@
  */
 
 import colors from 'colors/safe';
-import rimraf from 'rimraf';
 import util from 'util';
 import { EventEmitter } from 'events';
 import { relativeFilePath, serializeError } from './util';
@@ -31,6 +30,7 @@ import { TestInfoImpl } from './testInfo';
 import type { TimeSlot } from './timeoutManager';
 import { TimeoutManager } from './timeoutManager';
 
+const rimraf: typeof import('rimraf') = require('playwright-core/lib/utilsBundle').rimraf;
 const removeFolderAsync = util.promisify(rimraf);
 
 export class WorkerRunner extends EventEmitter {

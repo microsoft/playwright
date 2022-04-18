@@ -19,7 +19,6 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import { PNG } from 'pngjs';
-import rimraf from 'rimraf';
 import { promisify } from 'util';
 import type { CommonFixtures } from '../config/commonFixtures';
 import { commonFixtures } from '../config/commonFixtures';
@@ -28,6 +27,7 @@ import { serverFixtures } from '../config/serverFixtures';
 import type { TestInfo } from './stable-test-runner';
 import { test as base } from './stable-test-runner';
 
+const rimraf: typeof import('rimraf') = require('playwright-core/lib/utilsBundle').rimraf;
 const removeFolderAsync = promisify(rimraf);
 
 type RunResult = {

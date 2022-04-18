@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "esbuild": "esbuild ./src/zipBundle.ts --bundle --outdir=../../lib --format=cjs --platform=node --target=ES2019",
-    "build": "npm ci && npm run esbuild -- --minify && npm run generate-license",
+    "build": "npm ci && npm run esbuild -- --minify",
     "watch": "npm ci && npm run esbuild -- --watch --sourcemap",
     "generate-license": "node ../../../../utils/generate_third_party_notice.js"
   },
