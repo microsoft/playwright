@@ -19418,7 +19418,10 @@ interface LocatorAssertions {
   }): Promise<void>;
 
   /**
-   * Ensures the [Locator] points to a disabled element.
+   * Ensures the [Locator] points to a disabled element. Element is disabled if it has "disabled" attribute or is disabled
+   * via ['aria-disabled'](https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Attributes/aria-disabled). Note
+   * that only native control elements such as HTML `button`, `input`, `select`, `textarea`, `option`, `optgroup` can be
+   * disabled by setting "disabled" attribute. "disabled" attribute on other elements is ignored by the browser.
    *
    * ```js
    * const locator = page.locator('button.submit');
