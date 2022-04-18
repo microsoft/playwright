@@ -16,7 +16,7 @@
 
 import fs from 'fs';
 import path from 'path';
-import removeFolder from 'rimraf';
+const rimraf: typeof import('rimraf') = require('../utilsBundle').rimraf;
 
 export const existsAsync = (path: string): Promise<boolean> => new Promise(resolve => fs.stat(path, err => resolve(!err)));
 
@@ -28,7 +28,7 @@ export async function mkdirIfNeeded(filePath: string) {
 export async function removeFolders(dirs: string[]): Promise<Array<Error|null|undefined>> {
   return await Promise.all(dirs.map((dir: string) => {
     return new Promise<Error|null|undefined>(fulfill => {
-      removeFolder(dir, { maxBusyTries: 10 }, error => {
+      rimraf(dir, { maxBusyTries: 10 }, error => {
         fulfill(error ?? undefined);
       });
     });

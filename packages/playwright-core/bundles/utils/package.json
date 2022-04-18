@@ -1,0 +1,19 @@
+{
+  "name": "utils-bundle",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "esbuild": "esbuild ./src/utilsBundle.ts --bundle --outdir=../../lib --format=cjs --platform=node --target=ES2019",
+    "build": "npm ci && npm run esbuild -- --minify",
+    "watch": "npm ci && npm run esbuild -- --watch --sourcemap",
+    "generate-license": "node ../../../../utils/generate_third_party_notice.js"
+  },
+  "dependencies": {
+    "https-proxy-agent": "5.0.0",
+    "proper-lockfile": "4.1.2",
+    "proxy-from-env": "1.1.0",
+    "socks-proxy-agent": "6.1.1",
+    "stack-utils": "2.0.5",
+    "rimraf": "3.0.2"
+  }
+}

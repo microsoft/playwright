@@ -34,6 +34,7 @@
     "./lib/utils/timeoutRunner": "./lib/utils/timeoutRunner.js",
     "./lib/remote/playwrightServer": "./lib/remote/playwrightServer.js",
     "./lib/server": "./lib/server/index.js",
+    "./lib/utilsBundle": "./lib/utilsBundle.js",
     "./lib/zipBundle": "./lib/zipBundle.js",
     "./types/protocol": "./types/protocol.d.ts",
     "./types/structs": "./types/structs.d.ts"
@@ -46,16 +47,10 @@
     "commander": "8.3.0",
     "colors": "1.4.0",
     "debug": "4.3.3",
-    "https-proxy-agent": "5.0.0",
     "jpeg-js": "0.4.3",
     "mime": "3.0.0",
     "pngjs": "6.0.0",
     "progress": "2.0.3",
-    "proper-lockfile": "4.1.2",
-    "proxy-from-env": "1.1.0",
-    "rimraf": "3.0.2",
-    "socks-proxy-agent": "6.1.1",
-    "stack-utils": "2.0.5",
     "ws": "8.4.2"
   }
 }

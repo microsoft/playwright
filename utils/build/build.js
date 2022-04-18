@@ -197,7 +197,7 @@ steps.push({
   shell: true,
 });
 
-// Run Babel.
+// Run Babel & Bundles.
 for (const pkg of workspace.packages()) {
   if (!fs.existsSync(path.join(pkg.path, 'src')))
     continue;
@@ -212,26 +212,26 @@ for (const pkg of workspace.packages()) {
       quotePath(path.join(pkg.path, 'src'))],
     shell: true,
   });
+
+  // Build bundles.
+  const bundlesDir = path.join(pkg.path, 'bundles');
+  if (!fs.existsSync(bundlesDir))
+    continue;
+  for (const bundle of fs.readdirSync(bundlesDir)) {
+    steps.push({
+      command: 'npm',
+      args: ['run', 'build'],
+      shell: true,
+      cwd: path.join(bundlesDir, bundle)
+    });
+  }
 }
 
-// Build bundles.
+// Generate third party licenses for bundles.
 steps.push({
-  command: 'npm',
-  args: ['run', watchMode ? 'watch' : 'build'],
+  command: 'node',
+  args: [path.resolve(__dirname, '../generate_third_party_notice.js')],
   shell: true,
-  cwd: path.resolve(__dirname, '../../packages/playwright-core/bundles/zip')
-});
-steps.push({
-  command: 'npm',
-  args: ['run', watchMode ? 'watch' : 'build'],
-  shell: true,
-  cwd: path.resolve(__dirname, '../../packages/playwright-test/bundles/babel')
-});
-steps.push({
-  command: 'npm',
-  args: ['run', watchMode ? 'watch' : 'build'],
-  shell: true,
-  cwd: path.resolve(__dirname, '../../packages/playwright-test/bundles/expect')
 });
 
 // Generate injected.
