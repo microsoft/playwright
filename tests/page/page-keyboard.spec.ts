@@ -476,6 +476,19 @@ it('should support simple copy-pasting', async ({ page, isMac, browserName }) =>
   expect(await page.evaluate(() => document.querySelector('div').textContent)).toBe('123123');
 });
 
+it('should support undo-redo', async ({ page, isMac, browserName }) => {
+  const modifier = isMac ? 'Meta' : 'Control';
+  await page.setContent(`<div contenteditable></div>`);
+  const div = page.locator('div');
+  await expect(div).toHaveText('');
+  await div.type('123');
+  await expect(div).toHaveText('123');
+  await page.keyboard.press(`${modifier}+KeyZ`);
+  await expect(div).toHaveText('');
+  await page.keyboard.press(`Shift+${modifier}+KeyZ`);
+  await expect(div).toHaveText('123');
+});
+
 it('should type repeatedly in contenteditable in shadow dom', async ({ page }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/12941' });
 
