@@ -296,14 +296,14 @@ export interface PlaywrightTestArgs {
 export type PlaywrightTestProject<TestArgs = {}, WorkerArgs = {}> = Project<PlaywrightTestOptions & TestArgs, PlaywrightWorkerOptions & WorkerArgs>;
 export type PlaywrightTestConfig<TestArgs = {}, WorkerArgs = {}> = Config<PlaywrightTestOptions & TestArgs, PlaywrightWorkerOptions & WorkerArgs>;
 
-import type * as expectType from 'expect';
+import type * as expectType from '@playwright/test/types/expect-types';
 
 type AsymmetricMatcher = Record<string, any>;
 
 type IfAny<T, Y, N> = 0 extends (1 & T) ? Y : N;
 type ExtraMatchers<T, Type, Matchers> = T extends Type ? Matchers : IfAny<T, Matchers, {}>;
 
-type BaseMatchers<R, T> = Pick<expectType.Matchers<R>, SupportedExpectProperties> & PlaywrightTest.Matchers<R, T>;
+type BaseMatchers<R, T> = expectType.Matchers<R> & PlaywrightTest.Matchers<R, T>;
 
 type MakeMatchers<R, T> = BaseMatchers<R, T> & {
     /**
@@ -353,56 +353,6 @@ export type Expect = {
 };
 
 type Awaited<T> = T extends PromiseLike<infer U> ? U : T;
-
-/**
- * Removed methods require the jest.fn() integration from Jest to spy on function calls which we don't support:
- * - lastCalledWith()
- * - lastReturnedWith()
- * - nthCalledWith()
- * - nthReturnedWith()
- * - toBeCalled()
- * - toBeCalledTimes()
- * - toBeCalledWith()
- * - toHaveBeenCalled()
- * - toHaveBeenCalledTimes()
- * - toHaveBeenCalledWith()
- * - toHaveBeenLastCalledWith()
- * - toHaveBeenNthCalledWith()
- * - toHaveLastReturnedWith()
- * - toHaveNthReturnedWith()
- * - toHaveReturned()
- * - toHaveReturnedTimes()
- * - toHaveReturnedWith()
- * - toReturn()
- * - toReturnTimes()
- * - toReturnWith()
- * - toThrowErrorMatchingSnapshot()
- * - toThrowErrorMatchingInlineSnapshot()
- */
-type SupportedExpectProperties =
-  'toBe' |
-  'toBeCloseTo' |
-  'toBeDefined' |
-  'toBeFalsy' |
-  'toBeGreaterThan' |
-  'toBeGreaterThanOrEqual' |
-  'toBeInstanceOf' |
-  'toBeLessThan' |
-  'toBeLessThanOrEqual' |
-  'toBeNaN' |
-  'toBeNull' |
-  'toBeTruthy' |
-  'toBeUndefined' |
-  'toContain' |
-  'toContainEqual' |
-  'toEqual' |
-  'toHaveLength' |
-  'toHaveProperty' |
-  'toMatch' |
-  'toMatchObject' |
-  'toStrictEqual' |
-  'toThrow' |
-  'toThrowError'
 
 // --- BEGINGLOBAL ---
 declare global {
