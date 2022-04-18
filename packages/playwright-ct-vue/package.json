@@ -17,6 +17,6 @@
     "./test": "./test.js"
   },
   "devDependencies": {
-    "@playwright/test": "1.21.0"
+    "@playwright/test": "1.21.1"
   }
 }
