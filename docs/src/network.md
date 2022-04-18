@@ -584,7 +584,7 @@ else
 * langs: js
 
 To modify a response use [APIRequestContext] to get original response and then pass the response to [`method: Route.fulfill`].
-You can override individual fields on the reponse via options:
+You can override individual fields on the response via options:
 
 ```js
 await page.route('**/title.html', async route => {
