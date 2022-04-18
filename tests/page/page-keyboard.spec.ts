@@ -476,7 +476,8 @@ it('should support simple copy-pasting', async ({ page, isMac, browserName }) =>
   expect(await page.evaluate(() => document.querySelector('div').textContent)).toBe('123123');
 });
 
-it('should support undo-redo', async ({ page, isMac, browserName }) => {
+it('should support undo-redo', async ({ page, isMac, browserName, isLinux }) => {
+  it.fixme(browserName === 'webkit' && isLinux, 'https://github.com/microsoft/playwright/issues/12000');
   const modifier = isMac ? 'Meta' : 'Control';
   await page.setContent(`<div contenteditable></div>`);
   const div = page.locator('div');
