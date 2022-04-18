@@ -3,4 +3,5 @@
 ../../common/
 ../../protocol/
 ../../utils/
+../../utilsBundle.ts
 ../chromium/

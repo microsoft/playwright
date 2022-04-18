@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import debug from 'debug';
+import { debug } from '../utilsBundle';
 import fs from 'fs';
 
 const debugLoggerColorMap = {

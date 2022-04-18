@@ -15,9 +15,8 @@
  */
 
 import path from 'path';
+import { StackUtils } from '../utilsBundle';
 import { isUnderTest } from './';
-
-const StackUtils: typeof import('stack-utils') = require('../utilsBundle').StackUtils;
 
 const stackUtils = new StackUtils();
 

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import debug from 'debug';
+import { debug } from '../../utilsBundle';
 import type * as types from '../types';
 import * as net from 'net';
 import { EventEmitter } from 'events';

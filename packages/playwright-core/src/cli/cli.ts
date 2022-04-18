@@ -21,8 +21,8 @@
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import type { Command } from 'commander';
-import { program } from 'commander';
+import type { Command } from '../utilsBundle';
+import { program } from '../utilsBundle';
 import { runDriver, runServer, printApiJson, launchBrowserServer } from './driver';
 import { showTraceViewer } from '../server/trace/viewer/traceViewer';
 import * as playwright from '../..';
@@ -597,6 +597,7 @@ function lookupBrowserType(options: Options): BrowserType {
   if (browserType)
     return browserType;
   program.help();
+  process.exit(1);
 }
 
 function validateOptions(options: Options) {

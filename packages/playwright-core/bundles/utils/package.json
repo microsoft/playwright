@@ -3,17 +3,27 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "esbuild": "esbuild ./src/utilsBundle.ts --bundle --outdir=../../lib --format=cjs --platform=node --target=ES2019",
+    "esbuild": "esbuild ./src/utilsBundleImpl.ts --bundle --outdir=../../lib --format=cjs --platform=node --target=ES2019",
     "build": "npm ci && npm run esbuild -- --minify",
     "watch": "npm ci && npm run esbuild -- --watch --sourcemap",
     "generate-license": "node ../../../../utils/generate_third_party_notice.js"
   },
   "dependencies": {
+    "colors": "1.4.0",
+    "commander": "8.3.0",
+    "debug": "4.3.3",
     "https-proxy-agent": "5.0.0",
     "proper-lockfile": "4.1.2",
     "proxy-from-env": "1.1.0",
     "socks-proxy-agent": "6.1.1",
     "stack-utils": "2.0.5",
     "rimraf": "3.0.2"
+  },
+  "devDependencies": {
+    "@types/debug": "^4.1.7",
+    "@types/proper-lockfile": "^4.1.2",
+    "@types/proxy-from-env": "^1.0.1",
+    "@types/rimraf": "^3.0.2",
+    "@types/stack-utils": "^2.0.1"
   }
 }

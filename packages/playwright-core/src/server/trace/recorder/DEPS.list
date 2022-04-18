@@ -4,4 +4,5 @@
 ../../../common/
 ../../../protocol/
 ../../../utils/
+../../../zipBundle.ts
 ../common/

@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+import { rimraf } from 'playwright-core/lib/utilsBundle';
 import * as fs from 'fs';
 import * as path from 'path';
 import { promisify } from 'util';
@@ -45,7 +46,6 @@ import { raceAgainstTimeout } from 'playwright-core/lib/utils/timeoutRunner';
 import { SigIntWatcher } from './sigIntWatcher';
 import { GlobalInfoImpl } from './globalInfo';
 
-const rimraf: typeof import('rimraf') = require('playwright-core/lib/utilsBundle').rimraf;
 const removeFolderAsync = promisify(rimraf);
 const readDirAsync = promisify(fs.readdir);
 const readFileAsync = promisify(fs.readFile);

@@ -8,6 +8,7 @@
 ../server/injected/
 ../server/trace
 ../utils
+../utilsBundle.ts
 
 [cli.ts]
 ../server/trace/viewer/traceViewer.ts

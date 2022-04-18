@@ -3,6 +3,8 @@
 ../generated/
 ../protocol/
 ../utils/
+../utilsBundle.ts
+../zipBundle.ts
 ./
 ./injected/
 ./isomorphic/

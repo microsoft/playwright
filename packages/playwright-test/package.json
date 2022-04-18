@@ -29,9 +29,6 @@
   },
   "license": "Apache-2.0",
   "dependencies": {
-    "colors": "1.4.0",
-    "commander": "8.3.0",
-    "debug": "4.3.3",
     "json5": "2.2.1",
     "mime": "3.0.0",
     "minimatch": "3.0.4",

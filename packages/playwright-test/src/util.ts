@@ -19,10 +19,9 @@ import * as mime from 'mime';
 import util from 'util';
 import path from 'path';
 import url from 'url';
-import colors from 'colors/safe';
+import { colors, debug } from 'playwright-core/lib/utilsBundle';
 import type { TestError, Location } from './types';
 import { default as minimatch } from 'minimatch';
-import debug from 'debug';
 import { calculateSha1, isRegExp } from 'playwright-core/lib/utils';
 import { isInternalFileName } from 'playwright-core/lib/utils/stackTrace';
 import { currentTestInfo } from './globals';
@@ -32,7 +31,8 @@ import { captureStackTrace as coreCaptureStackTrace } from 'playwright-core/lib/
 export type { ParsedStackTrace };
 
 const PLAYWRIGHT_CORE_PATH = path.dirname(require.resolve('playwright-core'));
-const EXPECT_PATH = path.dirname(require.resolve('./expectBundle'));
+const EXPECT_PATH = require.resolve('./expectBundle');
+const EXPECT_PATH_IMPL = require.resolve('./expectBundleImpl');
 const PLAYWRIGHT_TEST_PATH = path.join(__dirname, '..');
 
 function filterStackTrace(e: Error) {
@@ -71,7 +71,7 @@ export function captureStackTrace(customApiName?: string): ParsedStackTrace {
   const frameTexts = [];
   for (let i = 0; i < stackTrace.frames.length; ++i) {
     const frame = stackTrace.frames[i];
-    if (frame.file.startsWith(EXPECT_PATH))
+    if (frame.file === EXPECT_PATH || frame.file === EXPECT_PATH_IMPL)
       continue;
     frames.push(frame);
     frameTexts.push(stackTrace.frameTexts[i]);

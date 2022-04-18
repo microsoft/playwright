@@ -16,7 +16,7 @@
 
 import type { GridAgentLaunchOptions, GridFactory } from './gridServer';
 import https from 'https';
-import debug from 'debug';
+import { debug } from '../utilsBundle';
 
 const repoName = process.env.GITHUB_AGENT_REPO;
 if (!repoName)

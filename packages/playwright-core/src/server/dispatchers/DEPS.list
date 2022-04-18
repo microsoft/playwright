@@ -2,4 +2,5 @@
 ../../common/
 ../../protocol/
 ../../utils/
+../../zipBundle.ts
 ../**

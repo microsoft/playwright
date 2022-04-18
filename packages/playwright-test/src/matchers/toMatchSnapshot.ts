@@ -26,7 +26,7 @@ import {
   addSuffixToFilePath, serializeError, sanitizeForFilePath,
   trimLongString, callLogText, currentExpectTimeout,
   expectTypes, captureStackTrace  } from '../util';
-import colors from 'colors/safe';
+import { colors } from 'playwright-core/lib/utilsBundle';
 import fs from 'fs';
 import path from 'path';
 import * as mime from 'mime';

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import colors from 'colors/safe';
+import { colors } from 'playwright-core/lib/utilsBundle';
 import { TimeoutRunner, TimeoutRunnerError } from 'playwright-core/lib/utils/timeoutRunner';
 import type { TestError } from '../types/test';
 import type { Location } from './types';

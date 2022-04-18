@@ -44,9 +44,6 @@
     "playwright": "./cli.js"
   },
   "dependencies": {
-    "commander": "8.3.0",
-    "colors": "1.4.0",
-    "debug": "4.3.3",
     "jpeg-js": "0.4.3",
     "mime": "3.0.0",
     "pngjs": "6.0.0",

@@ -14,15 +14,11 @@
  * limitations under the License.
  */
 
-import rimrafLibrary from 'rimraf';
-export const rimraf = rimrafLibrary;
+import expectLibrary from 'expect';
+export const expect = expectLibrary;
 
-import lockfileLibrary from 'proper-lockfile';
-export const lockfile = lockfileLibrary;
-
-import StackUtilsLibrary from 'stack-utils';
-export const StackUtils = StackUtilsLibrary;
-
-export { HttpsProxyAgent } from 'https-proxy-agent';
-export { SocksProxyAgent } from 'socks-proxy-agent';
-export { getProxyForUrl } from 'proxy-from-env';
+export {
+  INVERTED_COLOR,
+  RECEIVED_COLOR,
+  printReceived,
+} from 'jest-matcher-utils';

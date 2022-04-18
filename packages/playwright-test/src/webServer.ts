@@ -17,7 +17,7 @@
 import http from 'http';
 import https from 'https';
 import net from 'net';
-import debug from 'debug';
+import { debug } from 'playwright-core/lib/utilsBundle';
 import { raceAgainstTimeout } from 'playwright-core/lib/utils/timeoutRunner';
 import type { WebServerConfig } from './types';
 import { launchProcess } from 'playwright-core/lib/utils/processLauncher';

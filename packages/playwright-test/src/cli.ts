@@ -16,7 +16,7 @@
 
 /* eslint-disable no-console */
 
-import type { Command } from 'commander';
+import type { Command } from 'playwright-core/lib/utilsBundle';
 import fs from 'fs';
 import url from 'url';
 import path from 'path';

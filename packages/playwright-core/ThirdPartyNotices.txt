@@ -7,41 +7,44 @@ This project incorporates components from the projects listed below. The origina
 1.	agent-base@6.0.2 (https://github.com/TooTallNate/node-agent-base)
 2.	balanced-match@1.0.2 (https://github.com/juliangruber/balanced-match)
 3.	brace-expansion@1.1.11 (https://github.com/juliangruber/brace-expansion)
-4.	concat-map@0.0.1 (https://github.com/substack/node-concat-map)
-5.	debug@4.3.4 (https://github.com/debug-js/debug)
-6.	escape-string-regexp@2.0.0 (https://github.com/sindresorhus/escape-string-regexp)
-7.	fs.realpath@1.0.0 (https://github.com/isaacs/fs.realpath)
-8.	glob@7.2.0 (https://github.com/isaacs/node-glob)
-9.	graceful-fs@4.2.10 (https://github.com/isaacs/node-graceful-fs)
-10.	https-proxy-agent@5.0.0 (https://github.com/TooTallNate/node-https-proxy-agent)
-11.	inflight@1.0.6 (https://github.com/npm/inflight)
-12.	inherits@2.0.4 (https://github.com/isaacs/inherits)
-13.	ip@1.1.5 (https://github.com/indutny/node-ip)
-14.	minimatch@3.1.2 (https://github.com/isaacs/minimatch)
-15.	ms@2.1.2 (https://github.com/zeit/ms)
-16.	once@1.4.0 (https://github.com/isaacs/once)
-17.	path-is-absolute@1.0.1 (https://github.com/sindresorhus/path-is-absolute)
-18.	proper-lockfile@4.1.2 (https://github.com/moxystudio/node-proper-lockfile)
-19.	proxy-from-env@1.1.0 (https://github.com/Rob--W/proxy-from-env)
-20.	retry@0.12.0 (https://github.com/tim-kos/node-retry)
-21.	rimraf@3.0.2 (https://github.com/isaacs/rimraf)
-22.	signal-exit@3.0.7 (https://github.com/tapjs/signal-exit)
-23.	smart-buffer@4.2.0 (https://github.com/JoshGlazebrook/smart-buffer)
-24.	socks-proxy-agent@6.1.1 (https://github.com/TooTallNate/node-socks-proxy-agent)
-25.	socks@2.6.2 (https://github.com/JoshGlazebrook/socks)
-26.	stack-utils@2.0.5 (https://github.com/tapjs/stack-utils)
-27.	wrappy@1.0.2 (https://github.com/npm/wrappy)
-28.	@types/node@17.0.24 (https://github.com/DefinitelyTyped/DefinitelyTyped)
-29.	@types/yauzl@2.10.0 (https://github.com/DefinitelyTyped/DefinitelyTyped)
-30.	buffer-crc32@0.2.13 (https://github.com/brianloveswords/buffer-crc32)
-31.	end-of-stream@1.4.4 (https://github.com/mafintosh/end-of-stream)
-32.	extract-zip@2.0.1 (https://github.com/maxogden/extract-zip)
-33.	fd-slicer@1.1.0 (https://github.com/andrewrk/node-fd-slicer)
-34.	get-stream@5.2.0 (https://github.com/sindresorhus/get-stream)
-35.	pend@1.2.0 (https://github.com/andrewrk/node-pend)
-36.	pump@3.0.0 (https://github.com/mafintosh/pump)
-37.	yauzl@2.10.0 (https://github.com/thejoshwolfe/yauzl)
-38.	yazl@2.5.1 (https://github.com/thejoshwolfe/yazl)
+4.	colors@1.4.0 (https://github.com/Marak/colors.js)
+5.	commander@8.3.0 (https://github.com/tj/commander.js)
+6.	concat-map@0.0.1 (https://github.com/substack/node-concat-map)
+7.	debug@4.3.3 (https://github.com/debug-js/debug)
+8.	escape-string-regexp@2.0.0 (https://github.com/sindresorhus/escape-string-regexp)
+9.	fs.realpath@1.0.0 (https://github.com/isaacs/fs.realpath)
+10.	glob@7.2.0 (https://github.com/isaacs/node-glob)
+11.	graceful-fs@4.2.10 (https://github.com/isaacs/node-graceful-fs)
+12.	https-proxy-agent@5.0.0 (https://github.com/TooTallNate/node-https-proxy-agent)
+13.	inflight@1.0.6 (https://github.com/npm/inflight)
+14.	inherits@2.0.4 (https://github.com/isaacs/inherits)
+15.	ip@1.1.5 (https://github.com/indutny/node-ip)
+16.	minimatch@3.1.2 (https://github.com/isaacs/minimatch)
+17.	ms@2.1.2 (https://github.com/zeit/ms)
+18.	once@1.4.0 (https://github.com/isaacs/once)
+19.	path-is-absolute@1.0.1 (https://github.com/sindresorhus/path-is-absolute)
+20.	proper-lockfile@4.1.2 (https://github.com/moxystudio/node-proper-lockfile)
+21.	proxy-from-env@1.1.0 (https://github.com/Rob--W/proxy-from-env)
+22.	retry@0.12.0 (https://github.com/tim-kos/node-retry)
+23.	rimraf@3.0.2 (https://github.com/isaacs/rimraf)
+24.	signal-exit@3.0.7 (https://github.com/tapjs/signal-exit)
+25.	smart-buffer@4.2.0 (https://github.com/JoshGlazebrook/smart-buffer)
+26.	socks-proxy-agent@6.1.1 (https://github.com/TooTallNate/node-socks-proxy-agent)
+27.	socks@2.6.2 (https://github.com/JoshGlazebrook/socks)
+28.	stack-utils@2.0.5 (https://github.com/tapjs/stack-utils)
+29.	wrappy@1.0.2 (https://github.com/npm/wrappy)
+30.	@types/node@17.0.24 (https://github.com/DefinitelyTyped/DefinitelyTyped)
+31.	@types/yauzl@2.10.0 (https://github.com/DefinitelyTyped/DefinitelyTyped)
+32.	buffer-crc32@0.2.13 (https://github.com/brianloveswords/buffer-crc32)
+33.	debug@4.3.4 (https://github.com/debug-js/debug)
+34.	end-of-stream@1.4.4 (https://github.com/mafintosh/end-of-stream)
+35.	extract-zip@2.0.1 (https://github.com/maxogden/extract-zip)
+36.	fd-slicer@1.1.0 (https://github.com/andrewrk/node-fd-slicer)
+37.	get-stream@5.2.0 (https://github.com/sindresorhus/get-stream)
+38.	pend@1.2.0 (https://github.com/andrewrk/node-pend)
+39.	pump@3.0.0 (https://github.com/mafintosh/pump)
+40.	yauzl@2.10.0 (https://github.com/thejoshwolfe/yauzl)
+41.	yazl@2.5.1 (https://github.com/thejoshwolfe/yazl)
 
 %% agent-base@6.0.2 NOTICES AND INFORMATION BEGIN HERE
 =========================================
@@ -245,6 +248,63 @@ SOFTWARE.
 =========================================
 END OF brace-expansion@1.1.11 AND INFORMATION
 
+%% colors@1.4.0 NOTICES AND INFORMATION BEGIN HERE
+=========================================
+MIT License
+
+Original Library
+  - Copyright (c) Marak Squires
+
+Additional Functionality
+ - Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+=========================================
+END OF colors@1.4.0 AND INFORMATION
+
+%% commander@8.3.0 NOTICES AND INFORMATION BEGIN HERE
+=========================================
+(The MIT License)
+
+Copyright (c) 2011 TJ Holowaychuk <tj@vision-media.ca>
+
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+'Software'), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+=========================================
+END OF commander@8.3.0 AND INFORMATION
+
 %% concat-map@0.0.1 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 This software is released under the MIT license:
@@ -268,7 +328,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
 END OF concat-map@0.0.1 AND INFORMATION
 
-%% debug@4.3.4 NOTICES AND INFORMATION BEGIN HERE
+%% debug@4.3.3 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 (The MIT License)
 
@@ -290,7 +350,7 @@ IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMA
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
-END OF debug@4.3.4 AND INFORMATION
+END OF debug@4.3.3 AND INFORMATION
 
 %% escape-string-regexp@2.0.0 NOTICES AND INFORMATION BEGIN HERE
 =========================================
@@ -1215,6 +1275,30 @@ FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TOR
 ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
 END OF buffer-crc32@0.2.13 AND INFORMATION
+
+%% debug@4.3.4 NOTICES AND INFORMATION BEGIN HERE
+=========================================
+(The MIT License)
+
+Copyright (c) 2014-2017 TJ Holowaychuk <tj@vision-media.ca>
+Copyright (c) 2018-2021 Josh Junon
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software
+and associated documentation files (the 'Software'), to deal in the Software without restriction,
+including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense,
+and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so,
+subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial
+portions of the Software.
+
+THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT
+LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+=========================================
+END OF debug@4.3.4 AND INFORMATION
 
 %% end-of-stream@1.4.4 NOTICES AND INFORMATION BEGIN HERE
 =========================================

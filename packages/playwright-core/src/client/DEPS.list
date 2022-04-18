@@ -2,3 +2,4 @@
 ../common/
 ../protocol/
 ../utils/**
+../utilsBundle.ts
