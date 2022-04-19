@@ -67,8 +67,7 @@ function clean_test_root() {
 }
 
 function initialize_test {
-  TEST_TMP_NPM_SCRATCH_SPACE="$(mktemp -d)";
-  trap "report_test_result; kill %1; rm -rf $TEST_TMP_NPM_SCRATCH_SPACE; cd $(pwd -P);" EXIT
+  trap "report_test_result; kill %1; cd $(pwd -P);" EXIT
   cd "$(dirname $0)"
 
   # cleanup environment
@@ -120,6 +119,7 @@ function initialize_test {
 
   # Start up our local registry and configure npm to use it
   local-playwright-registry start &
+  TEST_TMP_NPM_SCRATCH_SPACE="${TEST_FRAMEWORK_RUN_ROOT}/${TEST_NAME}--npm-scratch-space"
   export npm_config_prefix="$TEST_TMP_NPM_SCRATCH_SPACE/npm_prefix"
   export npm_config_cache="$TEST_TMP_NPM_SCRATCH_SPACE/npm_cache"
   export npm_config_registry="$(local-playwright-registry wait-for-ready)"
