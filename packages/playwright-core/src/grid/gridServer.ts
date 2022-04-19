@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import debug from 'debug';
+import { debug } from '../utilsBundle';
 import { EventEmitter } from 'events';
 import { URL } from 'url';
 import type { Server as WebSocketServer } from 'ws';

@@ -22,9 +22,7 @@ import { ManualPromise } from '../../utils/manualPromise';
 import { assert, createGuid } from '../../utils';
 import type { DispatcherScope } from './dispatcher';
 import { Dispatcher } from './dispatcher';
-
-const yazl: typeof import('yazl') = require('../../zipBundle').yazl;
-const yauzl: typeof import('yauzl') = require('../../zipBundle').yauzl;
+import { yazl, yauzl } from '../../zipBundle';
 
 export class LocalUtilsDispatcher extends Dispatcher<{ guid: string }, channels.LocalUtilsChannel> implements channels.LocalUtilsChannel {
   _type_LocalUtils: boolean;

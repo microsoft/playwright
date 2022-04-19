@@ -36,9 +36,7 @@ import { ProgressController } from './progress';
 import { Tracing } from './trace/recorder/tracing';
 import type * as types from './types';
 import type { HeadersArray, ProxySettings } from './types';
-
-const { HttpsProxyAgent }: typeof import('../../bundles/utils/node_modules/https-proxy-agent') = require('../utilsBundle');
-const { SocksProxyAgent }: typeof import('../../bundles/utils/node_modules/socks-proxy-agent') = require('../utilsBundle');
+import { HttpsProxyAgent, SocksProxyAgent } from '../utilsBundle';
 
 type FetchRequestOptions = {
   userAgent: string;

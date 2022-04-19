@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import colors from 'colors/safe';
+import { colors } from 'playwright-core/lib/utilsBundle';
 import fs from 'fs';
 import open from 'open';
 import path from 'path';
@@ -29,9 +29,8 @@ import RawReporter from './raw';
 import { stripAnsiEscapes } from './base';
 import { getPackageJsonPath } from '../util';
 import type { FullConfigInternal } from '../types';
-
-import type { ZipFile } from 'yazl';
-const yazl: typeof import('yazl') = require('playwright-core/lib/zipBundle').yazl;
+import type { ZipFile } from 'playwright-core/lib/zipBundle';
+import { yazl } from 'playwright-core/lib/zipBundle';
 
 export type Stats = {
   total: number;

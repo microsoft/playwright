@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-import type { NodePath, types as T } from '@babel/core';
-import type { BabelAPI } from '@babel/helper-plugin-utils';
-const { types, declare } = require('./babelBundle');
+import type { NodePath, T, BabelAPI } from './babelBundle';
+import { types, declare } from './babelBundle';
 const t: typeof T = types;
 
 export default declare((api: BabelAPI) => {

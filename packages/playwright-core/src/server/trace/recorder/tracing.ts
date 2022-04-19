@@ -41,8 +41,7 @@ import type * as trace from '../common/traceEvents';
 import { VERSION } from '../common/traceEvents';
 import type { SnapshotterBlob, SnapshotterDelegate } from './snapshotter';
 import { Snapshotter } from './snapshotter';
-
-const yazl: typeof import('yazl') = require('../../../zipBundle').yazl;
+import { yazl } from '../../../zipBundle';
 
 export type TracerOptions = {
   name?: string;

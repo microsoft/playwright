@@ -17,10 +17,9 @@
 import http from 'http';
 import https from 'https';
 import net from 'net';
+import { getProxyForUrl } from '../utilsBundle';
+import { HttpsProxyAgent } from '../utilsBundle';
 import * as URL from 'url';
-
-const { HttpsProxyAgent }: typeof import('../../bundles/utils/node_modules/https-proxy-agent') = require('../utilsBundle');
-const { getProxyForUrl }: typeof import('proxy-from-env') = require('../utilsBundle');
 
 export async function createSocket(host: string, port: number): Promise<net.Socket> {
   return new Promise((resolve, reject) => {

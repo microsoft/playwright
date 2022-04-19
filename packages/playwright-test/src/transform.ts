@@ -25,6 +25,7 @@ import type { Location } from './types';
 import type { TsConfigLoaderResult } from './third_party/tsconfig-loader';
 import { tsConfigLoader } from './third_party/tsconfig-loader';
 import Module from 'module';
+import type { BabelTransformFunction } from './babelBundle';
 
 const version = 8;
 const cacheDir = process.env.PWTEST_CACHE_DIR || path.join(os.tmpdir(), 'playwright-transform-cache');
@@ -183,7 +184,7 @@ export function transformHook(code: string, filename: string, isModule = false):
   process.env.BROWSERSLIST_IGNORE_OLD_DATA = 'true';
 
   try {
-    const { babelTransform } = require('./babelBundle');
+    const { babelTransform }: { babelTransform: BabelTransformFunction } = require('./babelBundle');
     const result = babelTransform(filename, isTypeScript, isModule, hasPreprocessor ? scriptPreprocessor : undefined, [require.resolve('./tsxTransform')]);
     if (result.code) {
       fs.mkdirSync(path.dirname(cachePath), { recursive: true });

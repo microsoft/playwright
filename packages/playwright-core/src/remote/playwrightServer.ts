@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import debug from 'debug';
+import { debug } from '../utilsBundle';
 import * as http from 'http';
 import WebSocket from 'ws';
 import type { Browser } from '../server/browser';

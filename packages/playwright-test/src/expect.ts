@@ -43,13 +43,12 @@ import type { Expect } from './types';
 import { currentTestInfo } from './globals';
 import { serializeError, captureStackTrace, currentExpectTimeout } from './util';
 import { monotonicTime } from 'playwright-core/lib/utils';
-
-const { expectLibrary } = require('./expectBundle');
-const {
+import {
+  expect as expectLibrary,
   INVERTED_COLOR,
   RECEIVED_COLOR,
   printReceived,
-} = require('./expectBundle');
+} from './expectBundle';
 
 // from expect/build/types
 export type SyncExpectationResult = {

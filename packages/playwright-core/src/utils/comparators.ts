@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import colors from 'colors/safe';
+import { colors } from '../utilsBundle';
 import jpeg from 'jpeg-js';
 import pixelmatch from '../third_party/pixelmatch';
 import { diff_match_patch, DIFF_INSERT, DIFF_DELETE, DIFF_EQUAL } from '../third_party/diff_match_patch';

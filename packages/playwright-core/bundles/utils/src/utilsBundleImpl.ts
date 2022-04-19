@@ -14,11 +14,25 @@
  * limitations under the License.
  */
 
-import expect from 'expect';
-export const expectLibrary = expect;
+import colorsLibrary from 'colors/safe';
+export const colors = colorsLibrary;
 
-export {
-  INVERTED_COLOR,
-  RECEIVED_COLOR,
-  printReceived,
-} from 'jest-matcher-utils';
+import debugLibrary from 'debug';
+export const debug = debugLibrary;
+
+export { getProxyForUrl } from 'proxy-from-env';
+
+export { HttpsProxyAgent } from 'https-proxy-agent';
+
+import lockfileLibrary from 'proper-lockfile';
+export const lockfile = lockfileLibrary;
+
+export { program } from 'commander';
+
+import rimrafLibrary from 'rimraf';
+export const rimraf = rimrafLibrary;
+
+export { SocksProxyAgent } from 'socks-proxy-agent';
+
+import StackUtilsLibrary from 'stack-utils';
+export const StackUtils = StackUtilsLibrary;

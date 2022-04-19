@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import debug from 'debug';
+import { debug } from '../utilsBundle';
 import WebSocket from 'ws';
 import { fork } from 'child_process';
 import { getPlaywrightVersion } from '../common/userAgent';
