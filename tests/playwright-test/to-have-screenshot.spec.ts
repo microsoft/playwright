@@ -74,6 +74,24 @@ test('should disable animations by default', async ({ runInlineTest }, testInfo)
   expect(result.exitCode).toBe(0);
 });
 
+test('should fail with proper error when unsupported argument is given', async ({ runInlineTest }, testInfo) => {
+  const cssTransitionURL = pathToFileURL(path.join(__dirname, '../assets/css-transition.html'));
+  const result = await runInlineTest({
+    ...playwrightConfig({}),
+    'a.spec.js': `
+      pwt.test('is a test', async ({ page }) => {
+        await page.goto('${cssTransitionURL}');
+        await expect(page).toHaveScreenshot({
+          animations: 'unknown',
+          timeout: 2000,
+        });
+      });
+    `
+  }, { 'update-snapshots': true });
+  expect(result.exitCode).toBe(1);
+  expect(stripAnsi(result.output)).toContain(`expect.toHaveScreenshot: screenshotOptions.animations: expected one of (disabled|allow)`);
+});
+
 test('should have scale:css by default', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     ...playwrightConfig({ screenshotsDir: '__screenshots__' }),
