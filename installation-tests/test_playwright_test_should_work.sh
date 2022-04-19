@@ -1,7 +1,6 @@
 #!/bin/bash
 source ./initialize_test.sh && initialize_test "$@"
 
-npm_i playwright-core
 npm_i @playwright/test
 
 echo "Running playwright test without install"
