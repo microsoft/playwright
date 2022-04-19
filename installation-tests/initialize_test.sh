@@ -111,6 +111,7 @@ function initialize_test {
 
   cecho "YELLOW" ">>>>>>>>>>>>"
   cecho "YELLOW" "  Running test - '${TEST_FILE}'"
+  cecho "YELLOW" "  Workdir - ${PWD}/${TEST_NAME}"
   cecho "YELLOW" ">>>>>>>>>>>>"
   mkdir ${TEST_NAME} && cd ${TEST_NAME} && npm init -y 1>/dev/null 2>/dev/null
 
