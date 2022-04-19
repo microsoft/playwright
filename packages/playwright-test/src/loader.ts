@@ -96,6 +96,8 @@ export class Loader {
       (config as any).screenshotsDir = path.resolve(configDir, (config as any).screenshotsDir);
     if (config.snapshotDir !== undefined)
       config.snapshotDir = path.resolve(configDir, config.snapshotDir);
+    if (config.webServer)
+      config.webServer.cwd = config.webServer.cwd ? path.resolve(configDir, config.webServer.cwd) : configDir;
 
     const configUse = mergeObjects(this._defaultConfig.use, config.use);
     config = mergeObjects(mergeObjects(this._defaultConfig, config), { use: configUse });

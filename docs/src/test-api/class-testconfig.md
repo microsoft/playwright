@@ -624,7 +624,7 @@ export default config;
   - `ignoreHTTPSErrors` ?<[boolean]> Whether to ignore HTTPS errors when fetching the `url`. Defaults to `false`.
   - `timeout` ?<[int]> How long to wait for the process to start up and be available in milliseconds. Defaults to 60000.
   - `reuseExistingServer` ?<[boolean]> If true, it will re-use an existing server on the `port` or `url` when available. If no server is running on that `port` or `url`, it will run the command to start a new server. If `false`, it will throw if an existing process is listening on the `port` or `url`. This should be commonly set to `!process.env.CI` to allow the local dev server when running tests locally.
-  - `cwd` ?<[string]> Current working directory of the spawned process, `process.cwd()` by default.
+  - `cwd` ?<[string]> Current working directory of the spawned process, defaults to the directory of the configuration file.
   - `env` ?<[Object]<[string], [string]>> Environment variables to set for the command, `process.env` by default.
 
 Launch a development web server during the tests.
