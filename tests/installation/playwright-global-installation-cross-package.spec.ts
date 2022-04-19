@@ -15,10 +15,21 @@
  */
 import { test, expect } from './npmTest';
 
-test('npx playwright install global', async ({ npx }) => {
-  const result = await npx('playwright', 'install');
+test.only('global installation cross package', async ({ npm, exec, envOverrides }) => {
+  const packages = ['playwright-chromium', 'playwright-firefox', 'playwright-webkit'];
+  envOverrides['PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD'] = '1';
+  for (const pkg of packages) {
+    const results = await npm('i', '--foreground-scripts', pkg);
+    expect(results.raw.code).toBe(0);
+  }
+
+  delete envOverrides['PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD'];
+  const result = await npm('i', '--foreground-scripts', 'playwright');
   expect(result.raw.code).toBe(0);
   expect(result).toHaveDownloaded(['chromium', 'firefox', 'webkit']);
-  expect(result.combined()).not.toContain(`Please run the following command to download new browsers`);
-  expect(result.combined()).toContain(`To avoid unexpected behavior, please install your dependencies first`);
+
+  for (const pkg of packages) {
+    const result = await exec('node', ['./sanity.js', pkg, 'all']);
+    expect(result.raw.code).toBe(0);
+  }
 });
