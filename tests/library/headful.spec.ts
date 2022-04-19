@@ -15,7 +15,7 @@
  */
 
 import pixelmatch from '../../packages/playwright-core/src/third_party/pixelmatch';
-import { PNG } from 'pngjs';
+import { PNG } from 'playwright-core/lib/utilsBundle';
 import { expect, playwrightTest as it } from '../config/browserTest';
 
 it('should have default url when launching browser @smoke', async ({ browserType, createUserDataDir }) => {

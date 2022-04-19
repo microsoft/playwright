@@ -15,7 +15,7 @@
  */
 
 import fs from 'fs';
-import * as mime from 'mime';
+import { mime } from 'playwright-core/lib/utilsBundle';
 import util from 'util';
 import path from 'path';
 import url from 'url';

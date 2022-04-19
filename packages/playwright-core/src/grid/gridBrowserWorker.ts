@@ -15,7 +15,7 @@
  */
 
 import { debug } from '../utilsBundle';
-import WebSocket from 'ws';
+import { ws as WebSocket } from '../utilsBundle';
 import { PlaywrightConnection } from '../remote/playwrightConnection';
 import { gracefullyCloseAll } from '../utils/processLauncher';
 

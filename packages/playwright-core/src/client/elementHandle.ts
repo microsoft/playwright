@@ -21,7 +21,7 @@ import { JSHandle, serializeArgument, parseResult } from './jsHandle';
 import type { ChannelOwner } from './channelOwner';
 import type { SelectOption, FilePayload, Rect, SelectOptionOptions } from './types';
 import fs from 'fs';
-import * as mime from 'mime';
+import { mime } from '../utilsBundle';
 import path from 'path';
 import { assert, isString } from '../utils';
 import { mkdirIfNeeded } from '../utils/fileUtils';

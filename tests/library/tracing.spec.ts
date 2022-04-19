@@ -15,7 +15,7 @@
  */
 
 import fs from 'fs';
-import jpeg from 'jpeg-js';
+import { jpegjs } from 'playwright-core/lib/utilsBundle';
 import path from 'path';
 import { browserTest, contextTest as test, expect } from '../config/browserTest';
 import { parseTrace } from '../config/utils';
@@ -276,14 +276,14 @@ for (const params of [
       expect(frame.width).toBe(params.width);
       expect(frame.height).toBe(params.height);
       const buffer = resources.get('resources/' + frame.sha1);
-      const image = jpeg.decode(buffer);
+      const image = jpegjs.decode(buffer);
       expect(image.width).toBe(previewWidth);
       expect(image.height).toBe(previewHeight);
     }
 
     const frame = frames[frames.length - 1]; // pick last frame.
     const buffer = resources.get('resources/' + frame.sha1);
-    const image = jpeg.decode(buffer);
+    const image = jpegjs.decode(buffer);
     expect(image.data.byteLength).toBe(previewWidth * previewHeight * 4);
     expectRed(image.data, previewWidth * previewHeight * 4 / 2 + previewWidth * 4 / 2); // center is red
     expectBlue(image.data, previewWidth * 5 * 4 + previewWidth * 4 / 2); // top

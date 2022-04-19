@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type WebSocket from 'ws';
+import type { WebSocket } from '../utilsBundle';
 import type { Playwright, DispatcherScope } from '../server';
 import { createPlaywright, DispatcherConnection, Root, PlaywrightDispatcher } from '../server';
 import { Browser } from '../server/browser';

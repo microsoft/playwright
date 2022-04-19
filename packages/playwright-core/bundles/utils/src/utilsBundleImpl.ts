@@ -24,10 +24,21 @@ export { getProxyForUrl } from 'proxy-from-env';
 
 export { HttpsProxyAgent } from 'https-proxy-agent';
 
+import jpegLibrary from 'jpeg-js';
+export const jpegjs = jpegLibrary;
+
 import lockfileLibrary from 'proper-lockfile';
 export const lockfile = lockfileLibrary;
 
+import mimeLibrary from 'mime';
+export const mime = mimeLibrary;
+
+export { PNG } from 'pngjs';
+
 export { program } from 'commander';
+
+import progressLibrary from 'progress';
+export const progress = progressLibrary;
 
 import rimrafLibrary from 'rimraf';
 export const rimraf = rimrafLibrary;
@@ -36,3 +47,7 @@ export { SocksProxyAgent } from 'socks-proxy-agent';
 
 import StackUtilsLibrary from 'stack-utils';
 export const StackUtils = StackUtilsLibrary;
+
+import wsLibrary, { WebSocketServer } from 'ws';
+export const ws = wsLibrary;
+export const wsServer = WebSocketServer;

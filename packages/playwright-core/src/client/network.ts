@@ -20,7 +20,7 @@ import { ChannelOwner } from './channelOwner';
 import { Frame } from './frame';
 import type { Headers, RemoteAddr, SecurityDetails, WaitForEventOptions } from './types';
 import fs from 'fs';
-import * as mime from 'mime';
+import { mime } from '../utilsBundle';
 import { isString, headersObjectToArray } from '../utils';
 import { ManualPromise } from '../utils/manualPromise';
 import { Events } from './events';

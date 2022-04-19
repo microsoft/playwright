@@ -30,7 +30,6 @@
   "license": "Apache-2.0",
   "dependencies": {
     "json5": "2.2.1",
-    "mime": "3.0.0",
     "minimatch": "3.0.4",
     "ms": "2.1.3",
     "open": "8.4.0",

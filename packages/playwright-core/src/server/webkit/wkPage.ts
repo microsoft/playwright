@@ -15,9 +15,8 @@
  * limitations under the License.
  */
 
-import * as jpeg from 'jpeg-js';
 import path from 'path';
-import * as png from 'pngjs';
+import { PNG, jpegjs } from '../../utilsBundle';
 import { splitErrorMessage } from '../../utils/stackTrace';
 import { assert, createGuid, debugAssert, headersArrayToObject, headersObjectToArray } from '../../utils';
 import { hostPlatform } from '../../utils/hostPlatform';
@@ -838,7 +837,7 @@ export class WKPage implements PageDelegate {
     const prefix = 'data:image/png;base64,';
     let buffer = Buffer.from(result.dataURL.substr(prefix.length), 'base64');
     if (format === 'jpeg')
-      buffer = jpeg.encode(png.PNG.sync.read(buffer), quality).data;
+      buffer = jpegjs.encode(PNG.sync.read(buffer), quality).data;
     return buffer;
   }
 

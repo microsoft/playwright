@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import * as mime from 'mime';
+import { mime } from '../utilsBundle';
 import * as injectedScriptSource from '../generated/injectedScriptSource';
 import type * as channels from '../protocol/channels';
 import { isSessionClosedError } from './protocolError';

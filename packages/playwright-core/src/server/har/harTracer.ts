@@ -24,7 +24,7 @@ import type * as har from './har';
 import { calculateSha1, monotonicTime } from '../../utils';
 import type { RegisteredListener } from '../../utils/eventsHelper';
 import { eventsHelper } from '../../utils/eventsHelper';
-import * as mime from 'mime';
+import { mime } from '../../utilsBundle';
 import { ManualPromise } from '../../utils/manualPromise';
 import { getPlaywrightVersion } from '../../common/userAgent';
 

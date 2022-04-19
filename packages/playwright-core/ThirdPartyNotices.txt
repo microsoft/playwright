@@ -19,32 +19,37 @@ This project incorporates components from the projects listed below. The origina
 13.	inflight@1.0.6 (https://github.com/npm/inflight)
 14.	inherits@2.0.4 (https://github.com/isaacs/inherits)
 15.	ip@1.1.5 (https://github.com/indutny/node-ip)
-16.	minimatch@3.1.2 (https://github.com/isaacs/minimatch)
-17.	ms@2.1.2 (https://github.com/zeit/ms)
-18.	once@1.4.0 (https://github.com/isaacs/once)
-19.	path-is-absolute@1.0.1 (https://github.com/sindresorhus/path-is-absolute)
-20.	proper-lockfile@4.1.2 (https://github.com/moxystudio/node-proper-lockfile)
-21.	proxy-from-env@1.1.0 (https://github.com/Rob--W/proxy-from-env)
-22.	retry@0.12.0 (https://github.com/tim-kos/node-retry)
-23.	rimraf@3.0.2 (https://github.com/isaacs/rimraf)
-24.	signal-exit@3.0.7 (https://github.com/tapjs/signal-exit)
-25.	smart-buffer@4.2.0 (https://github.com/JoshGlazebrook/smart-buffer)
-26.	socks-proxy-agent@6.1.1 (https://github.com/TooTallNate/node-socks-proxy-agent)
-27.	socks@2.6.2 (https://github.com/JoshGlazebrook/socks)
-28.	stack-utils@2.0.5 (https://github.com/tapjs/stack-utils)
-29.	wrappy@1.0.2 (https://github.com/npm/wrappy)
-30.	@types/node@17.0.24 (https://github.com/DefinitelyTyped/DefinitelyTyped)
-31.	@types/yauzl@2.10.0 (https://github.com/DefinitelyTyped/DefinitelyTyped)
-32.	buffer-crc32@0.2.13 (https://github.com/brianloveswords/buffer-crc32)
-33.	debug@4.3.4 (https://github.com/debug-js/debug)
-34.	end-of-stream@1.4.4 (https://github.com/mafintosh/end-of-stream)
-35.	extract-zip@2.0.1 (https://github.com/maxogden/extract-zip)
-36.	fd-slicer@1.1.0 (https://github.com/andrewrk/node-fd-slicer)
-37.	get-stream@5.2.0 (https://github.com/sindresorhus/get-stream)
-38.	pend@1.2.0 (https://github.com/andrewrk/node-pend)
-39.	pump@3.0.0 (https://github.com/mafintosh/pump)
-40.	yauzl@2.10.0 (https://github.com/thejoshwolfe/yauzl)
-41.	yazl@2.5.1 (https://github.com/thejoshwolfe/yazl)
+16.	jpeg-js@0.4.3 (https://github.com/eugeneware/jpeg-js)
+17.	mime@3.0.0 (https://github.com/broofa/mime)
+18.	minimatch@3.1.2 (https://github.com/isaacs/minimatch)
+19.	ms@2.1.2 (https://github.com/zeit/ms)
+20.	once@1.4.0 (https://github.com/isaacs/once)
+21.	path-is-absolute@1.0.1 (https://github.com/sindresorhus/path-is-absolute)
+22.	pngjs@6.0.0 (https://github.com/lukeapage/pngjs)
+23.	progress@2.0.3 (https://github.com/visionmedia/node-progress)
+24.	proper-lockfile@4.1.2 (https://github.com/moxystudio/node-proper-lockfile)
+25.	proxy-from-env@1.1.0 (https://github.com/Rob--W/proxy-from-env)
+26.	retry@0.12.0 (https://github.com/tim-kos/node-retry)
+27.	rimraf@3.0.2 (https://github.com/isaacs/rimraf)
+28.	signal-exit@3.0.7 (https://github.com/tapjs/signal-exit)
+29.	smart-buffer@4.2.0 (https://github.com/JoshGlazebrook/smart-buffer)
+30.	socks-proxy-agent@6.1.1 (https://github.com/TooTallNate/node-socks-proxy-agent)
+31.	socks@2.6.2 (https://github.com/JoshGlazebrook/socks)
+32.	stack-utils@2.0.5 (https://github.com/tapjs/stack-utils)
+33.	wrappy@1.0.2 (https://github.com/npm/wrappy)
+34.	ws@8.4.2 (https://github.com/websockets/ws)
+35.	@types/node@17.0.24 (https://github.com/DefinitelyTyped/DefinitelyTyped)
+36.	@types/yauzl@2.10.0 (https://github.com/DefinitelyTyped/DefinitelyTyped)
+37.	buffer-crc32@0.2.13 (https://github.com/brianloveswords/buffer-crc32)
+38.	debug@4.3.4 (https://github.com/debug-js/debug)
+39.	end-of-stream@1.4.4 (https://github.com/mafintosh/end-of-stream)
+40.	extract-zip@2.0.1 (https://github.com/maxogden/extract-zip)
+41.	fd-slicer@1.1.0 (https://github.com/andrewrk/node-fd-slicer)
+42.	get-stream@5.2.0 (https://github.com/sindresorhus/get-stream)
+43.	pend@1.2.0 (https://github.com/andrewrk/node-pend)
+44.	pump@3.0.0 (https://github.com/mafintosh/pump)
+45.	yauzl@2.10.0 (https://github.com/thejoshwolfe/yauzl)
+46.	yazl@2.5.1 (https://github.com/thejoshwolfe/yazl)
 
 %% agent-base@6.0.2 NOTICES AND INFORMATION BEGIN HERE
 =========================================
@@ -737,6 +742,62 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
 END OF ip@1.1.5 AND INFORMATION
 
+%% jpeg-js@0.4.3 NOTICES AND INFORMATION BEGIN HERE
+=========================================
+Copyright (c) 2014, Eugene Ware
+All rights reserved.
+  
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:  
+
+1. Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.  
+2. Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.  
+3. Neither the name of Eugene Ware nor the names of its contributors
+   may be used to endorse or promote products derived from this software
+   without specific prior written permission.  
+  
+THIS SOFTWARE IS PROVIDED BY EUGENE WARE ''AS IS'' AND ANY
+EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL EUGENE WARE BE LIABLE FOR ANY
+DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+=========================================
+END OF jpeg-js@0.4.3 AND INFORMATION
+
+%% mime@3.0.0 NOTICES AND INFORMATION BEGIN HERE
+=========================================
+The MIT License (MIT)
+
+Copyright (c) 2010 Benjamin Thomas, Robert Kieffer
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+=========================================
+END OF mime@3.0.0 AND INFORMATION
+
 %% minimatch@3.1.2 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 The ISC License
@@ -828,6 +889,58 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 =========================================
 END OF path-is-absolute@1.0.1 AND INFORMATION
+
+%% pngjs@6.0.0 NOTICES AND INFORMATION BEGIN HERE
+=========================================
+pngjs2 original work Copyright (c) 2015 Luke Page & Original Contributors
+pngjs derived work Copyright (c) 2012 Kuba Niegowski
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+=========================================
+END OF pngjs@6.0.0 AND INFORMATION
+
+%% progress@2.0.3 NOTICES AND INFORMATION BEGIN HERE
+=========================================
+(The MIT License)
+
+Copyright (c) 2017 TJ Holowaychuk <tj@vision-media.ca>
+
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+'Software'), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+=========================================
+END OF progress@2.0.3 AND INFORMATION
 
 %% proper-lockfile@4.1.2 NOTICES AND INFORMATION BEGIN HERE
 =========================================
@@ -1199,6 +1312,30 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
 IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 =========================================
 END OF wrappy@1.0.2 AND INFORMATION
+
+%% ws@8.4.2 NOTICES AND INFORMATION BEGIN HERE
+=========================================
+Copyright (c) 2011 Einar Otto Stangvik <einaros@gmail.com>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+=========================================
+END OF ws@8.4.2 AND INFORMATION
 
 %% @types/node@17.0.24 NOTICES AND INFORMATION BEGIN HERE
 =========================================
