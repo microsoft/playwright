@@ -16,7 +16,7 @@
 
 import { getComparator } from 'playwright-core/lib/utils/comparators';
 import * as fs from 'fs';
-import { PNG } from 'pngjs';
+import { PNG } from 'playwright-core/lib/utilsBundle';
 import * as path from 'path';
 import { pathToFileURL } from 'url';
 import { test, expect, stripAnsi, createImage, paintBlackPixels } from './playwright-test-fixtures';

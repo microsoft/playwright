@@ -21,7 +21,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import type * as stream from 'stream';
-import * as ws from 'ws';
+import { ws } from '../../utilsBundle';
 import { createGuid, makeWaitForNextTask, isUnderTest } from '../../utils';
 import { removeFolders } from '../../utils/fileUtils';
 import type { BrowserOptions, BrowserProcess, PlaywrightOptions } from '../browser';

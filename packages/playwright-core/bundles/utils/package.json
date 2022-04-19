@@ -13,17 +13,26 @@
     "commander": "8.3.0",
     "debug": "4.3.3",
     "https-proxy-agent": "5.0.0",
+    "jpeg-js": "0.4.3",
+    "mime": "^3.0.0",
+    "pngjs": "6.0.0",
+    "progress": "2.0.3",
     "proper-lockfile": "4.1.2",
     "proxy-from-env": "1.1.0",
     "socks-proxy-agent": "6.1.1",
     "stack-utils": "2.0.5",
-    "rimraf": "3.0.2"
+    "rimraf": "3.0.2",
+    "ws": "8.4.2"
   },
   "devDependencies": {
     "@types/debug": "^4.1.7",
+    "@types/mime": "^2.0.3",
+    "@types/pngjs": "^6.0.1",
+    "@types/progress": "^2.0.5",
     "@types/proper-lockfile": "^4.1.2",
     "@types/proxy-from-env": "^1.0.1",
     "@types/rimraf": "^3.0.2",
-    "@types/stack-utils": "^2.0.1"
+    "@types/stack-utils": "^2.0.1",
+    "@types/ws": "8.2.2"
   }
 }

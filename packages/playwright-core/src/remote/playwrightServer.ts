@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import { debug } from '../utilsBundle';
+import { debug, wsServer } from '../utilsBundle';
+import type { WebSocketServer } from '../utilsBundle';
 import * as http from 'http';
-import WebSocket from 'ws';
 import type { Browser } from '../server/browser';
 import { PlaywrightConnection } from './playwrightConnection';
 
@@ -35,7 +35,7 @@ export class PlaywrightServer {
   private _maxClients: number;
   private _enableSocksProxy: boolean;
   private _browser: Browser | undefined;
-  private _wsServer: WebSocket.Server | undefined;
+  private _wsServer: WebSocketServer | undefined;
   private _clientsCount = 0;
 
   static async startDefault(options: { path?: string, maxClients?: number, enableSocksProxy?: boolean } = {}): Promise<PlaywrightServer> {
@@ -70,7 +70,7 @@ export class PlaywrightServer {
 
     debugLog('Listening at ' + wsEndpoint);
 
-    this._wsServer = new WebSocket.Server({ server, path: this._path });
+    this._wsServer = new wsServer({ server, path: this._path });
     const originalShouldHandle = this._wsServer.shouldHandle.bind(this._wsServer);
     this._wsServer.shouldHandle = request => originalShouldHandle(request) && this._clientsCount < this._maxClients;
     this._wsServer.on('connection', async (ws, request) => {

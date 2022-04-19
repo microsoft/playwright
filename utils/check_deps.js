@@ -36,7 +36,7 @@ async function checkDeps() {
   const testPackageJson = await innerCheckDeps(path.join(packagesDir, 'playwright-test'), true, true);
 
   let hasVersionMismatch = false;
-  for (const [key, value] of Object.entries(corePackageJson.dependencies)) {
+  for (const [key, value] of Object.entries(corePackageJson.dependencies || {})) {
     const value2 = testPackageJson.dependencies[key];
     if (value2 && value2 !== value) {
       hasVersionMismatch = true;

@@ -15,7 +15,7 @@
  */
 
 import { debug } from '../utilsBundle';
-import WebSocket from 'ws';
+import { ws as WebSocket } from '../utilsBundle';
 import { fork } from 'child_process';
 import { getPlaywrightVersion } from '../common/userAgent';
 

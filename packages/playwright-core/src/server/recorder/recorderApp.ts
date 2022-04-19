@@ -22,7 +22,7 @@ import { EventEmitter } from 'events';
 import { serverSideCallMetadata } from '../instrumentation';
 import type { CallLog, EventData, Mode, Source } from './recorderTypes';
 import { isUnderTest } from '../../utils';
-import * as mime from 'mime';
+import { mime } from '../../utilsBundle';
 import { installAppIcon } from '../chromium/crApp';
 import { findChromiumChannel } from '../registry';
 

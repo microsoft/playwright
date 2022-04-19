@@ -42,12 +42,5 @@
   "types": "types/types.d.ts",
   "bin": {
     "playwright": "./cli.js"
-  },
-  "dependencies": {
-    "jpeg-js": "0.4.3",
-    "mime": "3.0.0",
-    "pngjs": "6.0.0",
-    "progress": "2.0.3",
-    "ws": "8.4.2"
   }
 }

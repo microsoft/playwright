@@ -15,7 +15,7 @@
  */
 
 import fs from 'fs';
-import ProgressBar from 'progress';
+import { progress as ProgressBar } from '../../utilsBundle';
 import { httpRequest } from '../../common/netUtils';
 
 type OnProgressCallback = (downloadedBytes: number, totalBytes: number) => void;

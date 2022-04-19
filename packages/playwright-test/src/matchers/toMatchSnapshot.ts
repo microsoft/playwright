@@ -29,7 +29,7 @@ import {
 import { colors } from 'playwright-core/lib/utilsBundle';
 import fs from 'fs';
 import path from 'path';
-import * as mime from 'mime';
+import { mime } from 'playwright-core/lib/utilsBundle';
 import type { TestInfoImpl } from '../testInfo';
 import type { SyncExpectationResult } from '../expect';
 

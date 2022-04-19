@@ -16,7 +16,7 @@
 
 import fs from 'fs';
 import { join } from 'path';
-import { PNG } from 'pngjs';
+import { PNG } from 'playwright-core/lib/utilsBundle';
 import { androidTest as test, expect } from './androidTest';
 
 test('androidDevice.shell', async function({ androidDevice }) {

@@ -15,7 +15,8 @@
  * limitations under the License.
  */
 
-import WebSocket from 'ws';
+import { ws } from '../utilsBundle';
+import type { WebSocket } from '../utilsBundle';
 import type { Progress } from './progress';
 import { makeWaitForNextTask } from '../utils';
 
@@ -77,7 +78,7 @@ export class WebSocketTransport implements ConnectionTransport {
 
   constructor(progress: Progress, url: string, headers?: { [key: string]: string; }, followRedirects?: boolean) {
     this.wsEndpoint = url;
-    this._ws = new WebSocket(url, [], {
+    this._ws = new ws(url, [], {
       perMessageDeflate: false,
       maxPayload: 256 * 1024 * 1024, // 256Mb,
       // Prevent internal http client error when passing negative timeout.
@@ -122,7 +123,7 @@ export class WebSocketTransport implements ConnectionTransport {
   }
 
   async closeAndWait() {
-    if (this._ws.readyState === WebSocket.CLOSED)
+    if (this._ws.readyState === ws.CLOSED)
       return;
     const promise = new Promise(f => this._ws.once('close', f));
     this.close();

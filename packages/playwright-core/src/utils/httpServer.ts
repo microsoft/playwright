@@ -17,8 +17,8 @@
 import * as http from 'http';
 import fs from 'fs';
 import path from 'path';
-import { Server as WebSocketServer } from 'ws';
-import * as mime from 'mime';
+import { mime, wsServer } from '../utilsBundle';
+import type { WebSocketServer } from '../utilsBundle';
 import { assert } from './';
 
 export type ServerRouteHandler = (request: http.IncomingMessage, response: http.ServerResponse) => boolean;
@@ -36,7 +36,7 @@ export class HttpServer {
   }
 
   createWebSocketServer(): WebSocketServer {
-    return new WebSocketServer({ server: this._server });
+    return new wsServer({ server: this._server });
   }
 
   routePrefix(prefix: string, handler: ServerRouteHandler) {
