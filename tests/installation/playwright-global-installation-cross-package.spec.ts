@@ -15,7 +15,7 @@
  */
 import { test, expect } from './npmTest';
 
-test.only('global installation cross package', async ({ npm, exec, envOverrides }) => {
+test('global installation cross package', async ({ npm, exec, envOverrides }) => {
   const packages = ['playwright-chromium', 'playwright-firefox', 'playwright-webkit'];
   envOverrides['PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD'] = '1';
   for (const pkg of packages) {

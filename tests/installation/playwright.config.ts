@@ -26,7 +26,7 @@ const config: PlaywrightTestConfig = {
   retries: 0,
   reporter: process.env.CI ? 'dot' : [['list'], ['html', { open: 'on-failure' }]],
   forbidOnly: !!process.env.CI,
-  fullyParallel: !process.env.CI,
+  workers: 1,
 };
 
 export default config;
