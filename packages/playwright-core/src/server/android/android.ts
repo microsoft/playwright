@@ -21,7 +21,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import type * as stream from 'stream';
-import { ws } from '../../utilsBundle';
+import { wsReceiver, wsSender } from '../../utilsBundle';
 import { createGuid, makeWaitForNextTask, isUnderTest } from '../../utils';
 import { removeFolders } from '../../utils/fileUtils';
 import type { BrowserOptions, BrowserProcess, PlaywrightOptions } from '../browser';
@@ -418,7 +418,7 @@ class AndroidBrowser extends EventEmitter {
           this.onclose();
       });
     });
-    this._receiver = new (ws as any).Receiver() as stream.Writable;
+    this._receiver = new wsReceiver() as stream.Writable;
     this._receiver.on('message', message => {
       this._waitForNextTask(() => {
         if (this.onmessage)
@@ -452,7 +452,7 @@ Sec-WebSocket-Version: 13\r
 }
 
 function encodeWebFrame(data: string): Buffer {
-  return (ws as any).Sender.frame(Buffer.from(data), {
+  return wsSender.frame(Buffer.from(data), {
     opcode: 1,
     mask: true,
     fin: true,
