@@ -35,7 +35,6 @@ const CORE_SRC = path.join(CORE_DIR, 'src');
 const TEST_DIR_SRC = path.resolve(CORE_DIR, '..', 'playwright-test');
 const TEST_DIR_LIB = path.resolve(CORE_DIR, '..', '@playwright', 'test');
 const COVERAGE_PATH = path.join(CORE_DIR, '..', '..', 'tests', 'config', 'coverage.js');
-const WS_LIB = path.relative(process.cwd(), path.dirname(require.resolve('ws')));
 
 export type StackFrame = {
   file: string,
@@ -69,8 +68,6 @@ export function isInternalFileName(file: string, functionName?: string): boolean
     return true;
   // Node 12
   if (file === '_stream_readable.js' || file === '_stream_writable.js')
-    return true;
-  if (file.startsWith(WS_LIB))
     return true;
   return false;
 }
