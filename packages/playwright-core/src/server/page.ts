@@ -21,7 +21,7 @@ import * as input from './input';
 import * as js from './javascript';
 import * as network from './network';
 import type { ScreenshotOptions } from './screenshotter';
-import { Screenshotter } from './screenshotter';
+import { Screenshotter, validateScreenshotOptions } from './screenshotter';
 import { TimeoutSettings } from '../common/timeoutSettings';
 import type * as types from './types';
 import { BrowserContext } from './browserContext';
@@ -477,6 +477,13 @@ export class Page extends SdkObject {
     const controller = new ProgressController(metadata, this);
     if (!options.expected && options.isNot)
       return { errorMessage: '"not" matcher requires expected result' };
+    try {
+      const format = validateScreenshotOptions(options.screenshotOptions || {});
+      if (format !== 'png')
+        throw new Error('Only PNG screenshots are supported');
+    } catch (error) {
+      return { errorMessage: error.message };
+    }
     let intermediateResult: {
       actual?: Buffer,
       previous?: Buffer,
@@ -549,7 +556,7 @@ export class Page extends SdkObject {
       return {
         log: e.message ? [...metadata.log, e.message] : metadata.log,
         ...intermediateResult,
-        errorMessage: intermediateResult?.errorMessage ?? e.message,
+        errorMessage: e.message,
       };
     });
   }

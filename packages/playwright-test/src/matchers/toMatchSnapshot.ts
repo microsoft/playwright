@@ -357,12 +357,8 @@ export async function toHaveScreenshot(
     });
     // We tried re-generating new snapshot but failed.
     // This can be due to e.g. spinning animation, so we want to show it as a diff.
-    if (errorMessage) {
-      const title = actual && previous ?
-        `Timeout ${timeout}ms exceeded while generating screenshot because ${locator ? 'element' : 'page'} kept changing` :
-        `Timeout ${timeout}ms exceeded while generating screenshot`;
-      return helper.handleDifferent(actual, undefined, previous, diff, undefined, log, title);
-    }
+    if (errorMessage)
+      return helper.handleDifferent(actual, undefined, previous, diff, undefined, log, errorMessage);
 
     // We successfully (re-)generated new screenshot.
     if (!hasSnapshot)

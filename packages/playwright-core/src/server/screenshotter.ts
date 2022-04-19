@@ -321,7 +321,7 @@ function trimClipToSize(clip: types.Rect, size: types.Size): types.Rect {
   return result;
 }
 
-function validateScreenshotOptions(options: ScreenshotOptions): 'png' | 'jpeg' {
+export function validateScreenshotOptions(options: ScreenshotOptions): 'png' | 'jpeg' {
   if (options.fonts && !experimentalFeaturesEnabled())
     throw new Error(`To use the experimental option "fonts", set PLAYWRIGHT_EXPERIMENTAL_FEATURES=1 enviroment variable.`);
 

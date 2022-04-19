@@ -50,7 +50,7 @@ test('should fail to screenshot a page with infinite animation', async ({ runInl
     `
   });
   expect(result.exitCode).toBe(1);
-  expect(stripAnsi(result.output)).toContain(`Timeout 2000ms exceeded while generating screenshot because page kept changing`);
+  expect(stripAnsi(result.output)).toContain(`Timeout 2000ms exceeded`);
   expect(stripAnsi(result.output)).toContain(`expect.toHaveScreenshot with timeout 2000ms`);
   expect(stripAnsi(result.output)).toContain(`generating new stable screenshot expectation`);
   expect(fs.existsSync(testInfo.outputPath('test-results', 'a-is-a-test', 'is-a-test-1-actual.png'))).toBe(true);
@@ -72,6 +72,29 @@ test('should disable animations by default', async ({ runInlineTest }, testInfo)
     `
   }, { 'update-snapshots': true });
   expect(result.exitCode).toBe(0);
+});
+
+test('should fail with proper error when unsupported argument is given', async ({ runInlineTest }, testInfo) => {
+  const cssTransitionURL = pathToFileURL(path.join(__dirname, '../assets/css-transition.html'));
+  const result = await runInlineTest({
+    ...playwrightConfig({}),
+    'a.spec.js': `
+      pwt.test('is a test', async ({ page }) => {
+        await page.goto('${cssTransitionURL}');
+        await expect(page).toHaveScreenshot({
+          clip: {
+            x: 0,
+            y: 0,
+            width: 0,
+            height: 0,
+          },
+          timeout: 2000,
+        });
+      });
+    `
+  }, { 'update-snapshots': true });
+  expect(result.exitCode).toBe(1);
+  expect(stripAnsi(result.output)).toContain(`Expected options.clip.width not to be 0`);
 });
 
 test('should have scale:css by default', async ({ runInlineTest }, testInfo) => {
@@ -284,7 +307,7 @@ test('should fail to screenshot an element with infinite animation', async ({ ru
     `
   });
   expect(result.exitCode).toBe(1);
-  expect(stripAnsi(result.output)).toContain(`Timeout 2000ms exceeded while generating screenshot because element kept changing`);
+  expect(stripAnsi(result.output)).toContain(`Timeout 2000ms exceeded`);
   expect(stripAnsi(result.output)).toContain(`expect.toHaveScreenshot with timeout 2000ms`);
   expect(fs.existsSync(testInfo.outputPath('test-results', 'a-is-a-test', 'is-a-test-1-previous.png'))).toBe(true);
   expect(fs.existsSync(testInfo.outputPath('test-results', 'a-is-a-test', 'is-a-test-1-actual.png'))).toBe(true);
