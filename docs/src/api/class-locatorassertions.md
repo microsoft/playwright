@@ -51,17 +51,16 @@ using System.Threading.Tasks;
 using Microsoft.Playwright.NUnit;
 using NUnit.Framework;
 
-namespace PlaywrightTests
+namespace PlaywrightTests;
+
+public class ExampleTests : PageTest
 {
-    public class ExampleTests : PageTest
+    [Test]
+    public async Task StatusBecomesSubmitted()
     {
-        [Test]
-        public async Task StatusBecomesSubmitted()
-        {
-            // ..
-            await Page.ClickAsync("#submit-button");
-            await Expect(Page.Locator(".status")).ToHaveTextAsync("Submitted");
-        }
+        // ..
+        await Page.ClickAsync("#submit-button");
+        await Expect(Page.Locator(".status")).ToHaveTextAsync("Submitted");
     }
 }
 ```

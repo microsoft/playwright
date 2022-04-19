@@ -53,17 +53,16 @@ using System.Threading.Tasks;
 using Microsoft.Playwright.NUnit;
 using NUnit.Framework;
 
-namespace PlaywrightTests
+namespace PlaywrightTests;
+
+public class ExampleTests : PageTest
 {
-    public class ExampleTests : PageTest
+    [Test]
+    public async Task NavigatetoLoginPage()
     {
-        [Test]
-        public async Task NavigatetoLoginPage()
-        {
-            // ..
-            await Page.ClickAsync("#login");
-            await Expect(Page.Locator("div#foobar")).ToHaveURL(new Regex(".*/login"));
-        }
+        // ..
+        await Page.ClickAsync("#login");
+        await Expect(Page.Locator("div#foobar")).ToHaveURL(new Regex(".*/login"));
     }
 }
 ```

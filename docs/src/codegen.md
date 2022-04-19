@@ -163,26 +163,19 @@ with sync_playwright() as p:
 
 ```csharp
 using Microsoft.Playwright;
-using System.Threading.Tasks;
 
-class Program
-{
-    public static async Task Main()
-    {
-        using var playwright = await Playwright.CreateAsync();
-        var chromium = playwright.Chromium;
-        // Make sure to run headed.
-        var browser = await chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = false });
+using var playwright = await Playwright.CreateAsync();
+var chromium = playwright.Chromium;
+// Make sure to run headed.
+var browser = await chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = false });
 
-        // Setup context however you like.
-        var context = await browser.NewContextAsync(); // Pass any options
-        await context.RouteAsync('**/*', route => route.ContinueAsync());
+// Setup context however you like.
+var context = await browser.NewContextAsync(); // Pass any options
+await context.RouteAsync('**/*', route => route.ContinueAsync());
 
-        // Pause the page, and start recording manually.
-        var page = await context.NewPageAsync();
-        await page.PauseAsync();
-    }
-}
+// Pause the page, and start recording manually.
+var page = await context.NewPageAsync();
+await page.PauseAsync();
 ```
 
 ## Emulate devices
