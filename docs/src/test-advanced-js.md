@@ -305,8 +305,6 @@ You can make arbitrary data available in your tests from your global setup file 
 
 ```js js-flavor=js
 // global-setup.js
-const { chromium } = require('@playwright/test');
-
 module.exports = async config => {
   process.env.FOO = 'some data';
   // Or a more complicated data structure as JSON:
@@ -316,7 +314,7 @@ module.exports = async config => {
 
 ```js js-flavor=ts
 // global-setup.ts
-import { chromium, FullConfig } from '@playwright/test';
+import { FullConfig } from '@playwright/test';
 
 async function globalSetup(config: FullConfig) {
   process.env.FOO = 'some data';
@@ -338,7 +336,7 @@ test('test', async ({ page }) => {
   expect(FOO).toEqual('some data');
 
   const complexData = JSON.parse(BAR);
-  expect(BAR).toEqual({ some: "data" });
+  expect(BAR).toEqual({ some: 'data' });
 });
 ```
 
@@ -351,7 +349,7 @@ test('test', async ({ page }) => {
   expect(FOO).toEqual('some data');
 
   const complexData = JSON.parse(BAR);
-  expect(BAR).toEqual({ some: "data" });
+  expect(BAR).toEqual({ some: 'data' });
 });
 ```
 
