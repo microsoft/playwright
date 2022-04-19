@@ -15,7 +15,7 @@
  */
 import { test, expect } from './npmTest';
 
-test.only('npx playwright --help should not download browsers', async ({ npx }) => {
+test('npx playwright --help should not download browsers', async ({ npx }) => {
   const result = await npx('playwright', '--help');
   expect(result.raw.code).toBe(0);
   expect(result).toHaveDownloaded([]);

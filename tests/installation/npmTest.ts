@@ -175,6 +175,7 @@ class Registry {
           peerDependencies: packageJson.peerDependencies || {},
           bin: packageJson.bin || {},
           directories: packageJson.directories || [],
+          scripts: packageJson.scripts || {},
           dist: {
             tarball: tarball.toString(),
             shasum,
@@ -223,8 +224,7 @@ export const test = _test.extend<{
     registry: Registry,
         }>({
           _autoCopyScripts: [async ({ tmpWorkspace }, use) => {
-            const dstDir = path.join(tmpWorkspace, 'fixture-scripts');
-            await fs.promises.mkdir(dstDir);
+            const dstDir = path.join(tmpWorkspace);
             const sourceDir = path.join(__dirname, 'fixture-scripts');
             const contents = await fs.promises.readdir(sourceDir);
             await Promise.all(contents.map(f => fs.promises.copyFile(path.join(sourceDir, f), path.join(dstDir, f))));
@@ -251,10 +251,11 @@ export const test = _test.extend<{
           },
           exec: async ({ registry, tmpWorkspace, envOverrides }, use, testInfo) => {
             await use(async (cmd: string, args: string[]) => new ExecOutput(await spawnAsync(cmd, args, {
+              shell: true,
               cwd: tmpWorkspace,
               env: {
                 ...process.env,
-                'PLAYWRIGHT_BROWSERS_PATH': path.join(tmpWorkspace, '.browsers'),
+                'PLAYWRIGHT_BROWSERS_PATH': path.join(tmpWorkspace, 'browsers'),
                 'npm_config_cache': testInfo.outputPath('npm_cache'),
                 'npm_config_registry': registry.url(),
                 'npm_config_prefix': testInfo.outputPath('npm_global'),
