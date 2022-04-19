@@ -16,7 +16,7 @@
 
 import { colors } from 'playwright-core/lib/utilsBundle';
 import fs from 'fs';
-import open from 'open';
+import { open } from '../utilsBundle';
 import path from 'path';
 import type { TransformCallback } from 'stream';
 import { Transform } from 'stream';

@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-import { colors } from 'playwright-core/lib/utilsBundle';
+import { colors, ms as milliseconds } from 'playwright-core/lib/utilsBundle';
 import fs from 'fs';
-import milliseconds from 'ms';
 import path from 'path';
 import { StackUtils } from 'playwright-core/lib/utilsBundle';
 import type { FullConfig, TestCase, Suite, TestResult, TestError, Reporter, FullResult, TestStep, Location } from '../../types/testReporter';

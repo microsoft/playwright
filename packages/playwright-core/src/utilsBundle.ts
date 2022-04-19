@@ -21,6 +21,8 @@ export const HttpsProxyAgent: typeof import('../bundles/utils/node_modules/https
 export const jpegjs: typeof import('../bundles/utils/node_modules/jpeg-js') = require('./utilsBundleImpl').jpegjs;
 export const lockfile: typeof import('../bundles/utils/node_modules/@types/proper-lockfile') = require('./utilsBundleImpl').lockfile;
 export const mime: typeof import('../bundles/utils/node_modules/@types/mime') = require('./utilsBundleImpl').mime;
+export const minimatch: typeof import('../bundles/utils/node_modules/@types/minimatch') = require('./utilsBundleImpl').minimatch;
+export const ms: typeof import('../bundles/utils/node_modules/@types/ms') = require('./utilsBundleImpl').ms;
 export const PNG: typeof import('../bundles/utils/node_modules/@types/pngjs').PNG = require('./utilsBundleImpl').PNG;
 export const program: typeof import('../bundles/utils/node_modules/commander').program = require('./utilsBundleImpl').program;
 export const progress: typeof import('../bundles/utils/node_modules/@types/progress') = require('./utilsBundleImpl').progress;

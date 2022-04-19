@@ -1,0 +1,20 @@
+{
+  "name": "utils-bundle",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "esbuild": "esbuild ./src/utilsBundleImpl.ts --bundle --outdir=../../lib --format=cjs --platform=node --target=ES2019",
+    "build": "npm ci && npm run esbuild -- --minify",
+    "watch": "npm ci && npm run esbuild -- --watch --sourcemap",
+    "generate-license": "node ../../../../utils/generate_third_party_notice.js"
+  },
+  "dependencies": {
+    "json5": "2.2.1",
+    "open": "8.4.0",
+    "pirates": "4.0.4",
+    "source-map-support": "0.4.18"
+  },
+  "devDependencies": {
+    "@types/source-map-support": "^0.5.4"
+  }
+}

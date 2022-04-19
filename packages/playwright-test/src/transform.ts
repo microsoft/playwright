@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-import * as crypto from 'crypto';
-import * as os from 'os';
-import * as path from 'path';
-import * as fs from 'fs';
-import * as pirates from 'pirates';
-import * as sourceMapSupport from 'source-map-support';
-import * as url from 'url';
+import crypto from 'crypto';
+import os from 'os';
+import path from 'path';
+import fs from 'fs';
+import { sourceMapSupport, pirates } from './utilsBundle';
+import url from 'url';
 import type { Location } from './types';
 import type { TsConfigLoaderResult } from './third_party/tsconfig-loader';
 import { tsConfigLoader } from './third_party/tsconfig-loader';
