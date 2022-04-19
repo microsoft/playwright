@@ -11,4 +11,4 @@ setTimeout(() => {
       response.end(process.env.FOO);
     });
   });
-}, process.argv[3] ? +process.argv[3] : 0));
+}, process.argv[3] ? +process.argv[3] : 0);
