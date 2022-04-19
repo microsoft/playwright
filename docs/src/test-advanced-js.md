@@ -211,7 +211,7 @@ test('test', async ({ page }) => {
 
 To set something up once before running all tests, use `globalSetup` option in the [configuration file](#configuration-object). Global setup file must export a single function that takes a config object. This function will be run once before all the tests.
 
-Similarly, use `globalTeardown` to run something once after all the tests. Alternatively, let `globalSetup` return a function that will be used as a global teardown. You can pass data such as port number, authentication tokens, etc. from your global setup to your tests using environment.
+Similarly, use `globalTeardown` to run something once after all the tests. Alternatively, let `globalSetup` return a function that will be used as a global teardown. You can pass data such as port number, authentication tokens, etc. from your global setup to your tests using environment variables.
 
 Here is a global setup example that authenticates once and reuses authentication state in tests. It uses `baseURL` and `storageState` options from the configuration file.
 
@@ -298,6 +298,62 @@ const { test } = require('@playwright/test');
 test('test', async ({ page }) => {
   await page.goto('/');
   // You are signed in!
+});
+```
+
+You can make arbitrary data available in your tests from your global setup file by setting them as environment variables via `process.env`.
+
+```js js-flavor=js
+// global-setup.js
+module.exports = async config => {
+  process.env.FOO = 'some data';
+  // Or a more complicated data structure as JSON:
+  process.env.BAR = JSON.stringify({ some: 'data' });
+};
+```
+
+```js js-flavor=ts
+// global-setup.ts
+import { FullConfig } from '@playwright/test';
+
+async function globalSetup(config: FullConfig) {
+  process.env.FOO = 'some data';
+  // Or a more complicated data structure as JSON:
+  process.env.BAR = JSON.stringify({ some: 'data' });
+}
+
+export default globalSetup;
+```
+
+Tests have access to the `process.env` properties set in the global setup.
+
+```js js-flavor=ts
+import { test } from '@playwright/test';
+
+test('test', async ({ page }) => {
+  // environment variables which are set in globalSetup are only available inside test().
+  const { FOO, BAR } = process.env;
+
+  // FOO and BAR properties are populated.
+  expect(FOO).toEqual('some data');
+
+  const complexData = JSON.parse(BAR);
+  expect(BAR).toEqual({ some: 'data' });
+});
+```
+
+```js js-flavor=js
+const { test } = require('@playwright/test');
+
+test('test', async ({ page }) => {
+  // environment variables which are set in globalSetup are only available inside test().
+  const { FOO, BAR } = process.env;
+
+  // FOO and BAR properties are populated.
+  expect(FOO).toEqual('some data');
+
+  const complexData = JSON.parse(BAR);
+  expect(BAR).toEqual({ some: 'data' });
 });
 ```
 
