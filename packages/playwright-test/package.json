@@ -27,5 +27,8 @@
   "author": {
     "name": "Microsoft Corporation"
   },
-  "license": "Apache-2.0"
+  "license": "Apache-2.0",
+  "dependencies": {
+    "playwright-core": "1.22.0-next"
+  }
 }
