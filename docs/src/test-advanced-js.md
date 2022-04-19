@@ -329,9 +329,11 @@ Tests have access to the `process.env` properties set in the global setup.
 
 ```js js-flavor=ts
 import { test } from '@playwright/test';
-const { FOO, BAR } = process.env;
 
 test('test', async ({ page }) => {
+  // environment variables which are set in globalSetup are only available inside test().
+  const { FOO, BAR } = process.env;
+
   // FOO and BAR properties are populated.
   expect(FOO).toEqual('some data');
 
@@ -342,9 +344,11 @@ test('test', async ({ page }) => {
 
 ```js js-flavor=js
 const { test } = require('@playwright/test');
-const { FOO, BAR } = process.env;
 
 test('test', async ({ page }) => {
+  // environment variables which are set in globalSetup are only available inside test().
+  const { FOO, BAR } = process.env;
+
   // FOO and BAR properties are populated.
   expect(FOO).toEqual('some data');
 
