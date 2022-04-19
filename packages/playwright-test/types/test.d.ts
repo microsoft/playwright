@@ -930,7 +930,7 @@ interface TestConfig {
     reuseExistingServer?: boolean;
 
     /**
-     * Current working directory of the spawned process, directory of the configuration file by default.
+     * Current working directory of the spawned process, defaults to the directory of the configuration file.
      */
     cwd?: string;
 
