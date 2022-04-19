@@ -55,5 +55,7 @@ import StackUtilsLibrary from 'stack-utils';
 export const StackUtils = StackUtilsLibrary;
 
 import wsLibrary, { WebSocketServer } from 'ws';
+import type stream from 'stream';
 export const ws = wsLibrary;
 export const wsServer = WebSocketServer;
+export const wsReceiver = require('ws').Receiver as typeof stream.Writable;

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { debug } from '../../utilsBundle';
+import { debug, wsReceiver } from '../../utilsBundle';
 import type * as types from '../types';
 import { EventEmitter } from 'events';
 import fs from 'fs';
@@ -418,7 +418,7 @@ class AndroidBrowser extends EventEmitter {
           this.onclose();
       });
     });
-    this._receiver = new (ws as any).Receiver() as stream.Writable;
+    this._receiver = new wsReceiver();
     this._receiver.on('message', message => {
       this._waitForNextTask(() => {
         if (this.onmessage)
