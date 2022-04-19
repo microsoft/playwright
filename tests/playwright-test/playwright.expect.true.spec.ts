@@ -176,6 +176,39 @@ test('should support toBeEditable, toBeEnabled, toBeDisabled, toBeEmpty', async 
   expect(output).toContain('expect(locator).toBeEnabled({ timeout: 500 }');
 });
 
+test('should support toBeDisabled,toBeChecked,toBeHidden w/ value', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      const { test } = pwt;
+
+      test('disabled', async ({ page }) => {
+        await page.setContent('<button disabled="yes">Text</button>');
+        const locator = page.locator('button');
+        await expect(locator).toBeDisabled();
+      });
+      test('checked', async ({ page }) => {
+        await page.setContent('<input type=checkbox checked="yes"></input>');
+        const locator = page.locator('input');
+        await expect(locator).toBeChecked();
+      });
+      test('hidden', async ({ page }) => {
+        await page.setContent('<input type=checkbox hidden="of course"></input>');
+        const locator = page.locator('input');
+        await expect(locator).toBeHidden();
+      });
+      test('div disabled', async ({ page }) => {
+        await page.setContent('<div disabled="yes"></div>');
+        const locator = page.locator('div');
+        await expect(locator).not.toBeDisabled();
+      });
+      `,
+  }, { workers: 1 });
+  expect(result.passed).toBe(4);
+  expect(result.failed).toBe(0);
+  expect(result.exitCode).toBe(0);
+});
+
+
 test('should support toBeVisible, toBeHidden', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
