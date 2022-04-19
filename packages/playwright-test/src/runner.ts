@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { rimraf } from 'playwright-core/lib/utilsBundle';
+import { rimraf, minimatch } from 'playwright-core/lib/utilsBundle';
 import * as fs from 'fs';
 import * as path from 'path';
 import { promisify } from 'util';
@@ -38,7 +38,6 @@ import JUnitReporter from './reporters/junit';
 import EmptyReporter from './reporters/empty';
 import HtmlReporter from './reporters/html';
 import type { ProjectImpl } from './project';
-import { Minimatch } from 'minimatch';
 import type { Config } from './types';
 import type { FullConfigInternal } from './types';
 import { WebServer } from './webServer';
@@ -575,7 +574,7 @@ async function collectFiles(testDir: string): Promise<string[]> {
         if (!s)
           return;
         // Use flipNegate, because we handle negation ourselves.
-        const rule = new Minimatch(s, { matchBase: true, dot: true, flipNegate: true }) as any;
+        const rule = new minimatch.Minimatch(s, { matchBase: true, dot: true, flipNegate: true }) as any;
         if (rule.comment)
           return;
         rule.dir = dir;

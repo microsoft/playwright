@@ -26,7 +26,7 @@
 
 import * as path from 'path';
 import * as fs from 'fs';
-import JSON5 from 'json5';
+import { json5 } from '../utilsBundle';
 
 /**
  * Typing for the parts of tsconfig that we care about
@@ -149,7 +149,7 @@ export function loadTsconfig(
 
   const configString = readFileSync(configFilePath);
   const cleanedJson = StripBom(configString);
-  const config: Tsconfig = JSON5.parse(cleanedJson);
+  const config: Tsconfig = json5.parse(cleanedJson);
   let extendedConfig = config.extends;
 
   if (extendedConfig) {

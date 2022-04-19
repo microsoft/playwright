@@ -1,4 +1,5 @@
 [*]
+./utilsBundle.ts
 matchers/
 reporters/
 third_party/

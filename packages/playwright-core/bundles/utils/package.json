@@ -11,10 +11,12 @@
   "dependencies": {
     "colors": "1.4.0",
     "commander": "8.3.0",
-    "debug": "4.3.3",
+    "debug": "^4.3.4",
     "https-proxy-agent": "5.0.0",
     "jpeg-js": "0.4.3",
     "mime": "^3.0.0",
+    "minimatch": "^3.1.2",
+    "ms": "^2.1.2",
     "pngjs": "6.0.0",
     "progress": "2.0.3",
     "proper-lockfile": "4.1.2",
@@ -27,6 +29,8 @@
   "devDependencies": {
     "@types/debug": "^4.1.7",
     "@types/mime": "^2.0.3",
+    "@types/minimatch": "^3.0.5",
+    "@types/ms": "^0.7.31",
     "@types/pngjs": "^6.0.1",
     "@types/progress": "^2.0.5",
     "@types/proper-lockfile": "^4.1.2",
