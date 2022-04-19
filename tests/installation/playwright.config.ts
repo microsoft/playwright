@@ -20,11 +20,12 @@ import { config as loadEnv } from 'dotenv';
 loadEnv({ path: path.join(__dirname, '..', '..', '.env') });
 
 const config: PlaywrightTestConfig = {
+  testIgnore: '**\/fixture-scripts/**',
   globalSetup: './globalSetup',
   timeout: 5 * 60 * 1000,
   retries: 0,
   reporter: process.env.CI ? 'dot' : [['list'], ['html', { open: 'on-failure' }]],
-  forbidOnly: !process.env.CI,
+  // forbidOnly: !process.env.CI,
   fullyParallel: !process.env.CI,
 };
 

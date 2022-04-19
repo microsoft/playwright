@@ -214,6 +214,7 @@ export class ExecOutput {
 }
 
 export const test = _test.extend<{
+    _autoCopyScripts: void,
     envOverrides: Record<string, string>;
     tmpWorkspace: string,
     exec: (cmd: string, args: string[]) => Promise<ExecOutput>
@@ -221,6 +222,16 @@ export const test = _test.extend<{
     npx: (...args: string[]) => Promise<ExecOutput>,
     registry: Registry,
         }>({
+          _autoCopyScripts: [async ({ tmpWorkspace }, use) => {
+            const dstDir = path.join(tmpWorkspace, 'fixture-scripts');
+            await fs.promises.mkdir(dstDir);
+            const sourceDir = path.join(__dirname, 'fixture-scripts');
+            const contents = await fs.promises.readdir(sourceDir);
+            await Promise.all(contents.map(f => fs.promises.copyFile(path.join(sourceDir, f), path.join(dstDir, f))));
+            await use();
+          }, {
+            auto: true,
+          }],
           envOverrides: async ({}, use) => {
             await use({});
           },
