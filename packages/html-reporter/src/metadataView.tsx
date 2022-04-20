@@ -59,6 +59,7 @@ export const MetadataView: React.FC<Metadata> = metadata => {
           content={
             <>
               {Intl.DateTimeFormat(undefined, { dateStyle: 'full' }).format(metadata['revision.timestamp'])}
+              {' '}
               {Intl.DateTimeFormat(undefined, { timeStyle: 'long' }).format(metadata['revision.timestamp'])}
             </>
           }
