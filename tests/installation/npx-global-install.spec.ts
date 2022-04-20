@@ -17,7 +17,6 @@ import { test, expect } from './npmTest';
 
 test('npx playwright install global', async ({ npx }) => {
   const result = await npx('playwright', 'install');
-  expect(result.raw.code).toBe(0);
   expect(result).toHaveDownloaded(['chromium', 'firefox', 'webkit']);
   expect(result.combined()).not.toContain(`Please run the following command to download new browsers`);
   expect(result.combined()).toContain(`To avoid unexpected behavior, please install your dependencies first`);

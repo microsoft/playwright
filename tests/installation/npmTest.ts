@@ -255,11 +255,12 @@ export const test = _test.extend<{
     _autoCopyScripts: void,
     envOverrides: Record<string, string>;
     tmpWorkspace: string,
+    nodeVersion: number,
     writeFiles: (nameToContents: Record<string, string>) => Promise<void>,
     exec: (cmd: string, args: string[]) => Promise<ExecOutput>
     npm: (...args: string[]) => Promise<ExecOutput>,
     npx: (...args: string[]) => Promise<ExecOutput>,
-    tsc: (...args: string[]) => Promise<void>,
+    tsc: (...args: string[]) => Promise<ExecOutput>,
     registry: Registry,
         }>({
           _autoCopyScripts: [async ({ tmpWorkspace }, use) => {
@@ -271,6 +272,9 @@ export const test = _test.extend<{
           }, {
             auto: true,
           }],
+          nodeVersion: async ({}, use) => {
+            await use(+process.versions.node.split('.')[0]);
+          },
           writeFiles: async ({ tmpWorkspace }, use) => {
             await use(async (nameToContents: Record<string, string>) => {
               for (const [name, contents] of Object.entries(nameToContents))
@@ -295,25 +299,28 @@ export const test = _test.extend<{
             await registry.shutdown();
           },
           exec: async ({ registry, tmpWorkspace, envOverrides }, use, testInfo) => {
-            await use(async (cmd: string, args: string[]) => new ExecOutput(await spawnAsync(cmd, args, {
-              shell: true,
-              cwd: tmpWorkspace,
-              env: {
-                ...process.env,
-                'PLAYWRIGHT_BROWSERS_PATH': path.join(tmpWorkspace, 'browsers'),
-                'npm_config_cache': testInfo.outputPath('npm_cache'),
-                'npm_config_registry': registry.url(),
-                'npm_config_prefix': testInfo.outputPath('npm_global'),
-                ...envOverrides,
-              } })));
+            await use(async (cmd: string, args: string[]) => {
+              const result = new ExecOutput(await spawnAsync(cmd, args, {
+                shell: true,
+                cwd: tmpWorkspace,
+                env: {
+                  ...process.env,
+                  'PLAYWRIGHT_BROWSERS_PATH': path.join(tmpWorkspace, 'browsers'),
+                  'npm_config_cache': testInfo.outputPath('npm_cache'),
+                  'npm_config_registry': registry.url(),
+                  'npm_config_prefix': testInfo.outputPath('npm_global'),
+                  ...envOverrides,
+                } }));
+
+              if (result.raw.code)
+                throw result;
+
+              return result;
+            });
           },
           tsc: async ({ npm, npx }, use) => {
-            const result = await npm('i', '--foreground-scripts', 'typescript@3.8', '@types/node@14');
-            expect(result.raw.code).toBe(0);
-            await use(async (...args: string[]) => {
-              const result = await npx('-p', 'typescript@3.8', 'tsc', ...args);
-              expect(result.raw.code).toBe(0);
-            });
+            await npm('i', '--foreground-scripts', 'typescript@3.8', '@types/node@14');
+            await use((...args: string[]) => npx('-p', 'typescript@3.8', 'tsc', ...args));
           },
           npm: async ({ exec }, use) => {
             await use((...args) => exec('npm', args));

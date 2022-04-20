@@ -13,18 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { test, expect } from './npmTest';
+import { test } from './npmTest';
 
 test('android types', async ({ npm, tsc, envOverrides, writeFiles }) => {
   envOverrides['PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD'] = '1';
-  const result = await npm('i', '--foreground-scripts', 'playwright', 'electron@12');
-  expect(result.raw.code).toBe(0);
-
+  await npm('i', '--foreground-scripts', 'playwright', 'electron@12');
   await writeFiles({
-    'test.ts': `
-        import { AndroidDevice, _android, AndroidWebView, Page } from 'playwright';
-        `
+    'test.ts': `import { AndroidDevice, _android, AndroidWebView, Page } from 'playwright';`,
   });
-
   await tsc('test.ts');
 });

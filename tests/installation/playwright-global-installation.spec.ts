@@ -15,13 +15,8 @@
  */
 import { test, expect } from './npmTest';
 
-test('global installation', async ({ npm, exec, envOverrides }) => {
+test('global installation', async ({ npm, exec }) => {
   const result = await npm('i', '--foreground-scripts', 'playwright');
-  expect(result.raw.code).toBe(0);
   expect(result).toHaveDownloaded(['chromium', 'firefox', 'webkit']);
-
-  {
-    const result = await exec('node', ['./sanity.js', 'playwright']);
-    expect(result.raw.code).toBe(0);
-  }
+  await exec('node', ['./sanity.js', 'playwright']);
 });
