@@ -25,5 +25,5 @@ test('global installation cross package', async ({ npm, exec, envOverrides }) =>
   expect(result).toHaveDownloaded(['chromium', 'firefox', 'webkit']);
 
   for (const pkg of packages)
-    await exec('node', ['./sanity.js', pkg, 'all']);
+    await test.step(pkg, () => exec('node', ['./sanity.js', pkg, 'all']));
 });

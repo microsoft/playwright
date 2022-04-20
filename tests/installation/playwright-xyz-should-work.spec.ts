@@ -24,6 +24,5 @@ for (const pkg of ['playwright-chromium', 'playwright-firefox', 'playwright-webk
     await exec('node', ['./sanity.js', pkg]);
     if (nodeVersion >= 14)
       await exec('node', [`esm-${pkg}.mjs`]);
-
   });
 }
