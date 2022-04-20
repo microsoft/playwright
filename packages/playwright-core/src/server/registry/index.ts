@@ -286,7 +286,7 @@ export class Registry {
       const installCommand = buildPlaywrightCLICommand(sdkLanguage, `install${installByDefault ? '' : ' ' + name}`);
       if (!canAccessFile(e)) {
         const prettyMessage = [
-          `Looks like Playwright Test or Playwright was just installed or updated.`,
+          `Looks like ${sdkLanguage === 'javascript' ? 'Playwright Test or ' : ''}Playwright was just installed or updated.`,
           `Please run the following command to download new browser${installByDefault ? 's' : ''}:`,
           ``,
           `    ${installCommand}`,
