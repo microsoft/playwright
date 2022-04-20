@@ -17,9 +17,11 @@
 import { test, expect } from './npmTest';
 
 for (const pkg of ['playwright-chromium', 'playwright-firefox', 'playwright-webkit']) {
-  test(`${pkg} should work`, async ({ npm, exec, nodeVersion }) => {
+  test(`${pkg} should work`, async ({ npm, exec, nodeVersion, installedBrowsers }) => {
     const result = await npm('i', '--foreground-scripts', pkg);
-    expect(result).toHaveDownloaded([pkg.split('-')[1] as any]);
+    const browserName = pkg.split('-')[1];
+    expect(result).toHaveDownloaded([browserName as any]);
+    expect(await installedBrowsers()).toEqual([browserName]);
     expect(result.combined()).not.toContain(`To avoid unexpected behavior, please install your dependencies first`);
     await exec('node', ['./sanity.js', pkg]);
     if (nodeVersion >= 14)

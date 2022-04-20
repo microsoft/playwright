@@ -15,9 +15,10 @@
  */
 import { test, expect, ExecOutput } from './npmTest';
 
-test(`playwright should work`, async ({ npm, exec, npx, nodeVersion }) => {
+test(`playwright should work`, async ({ npm, exec, npx, nodeVersion, installedBrowsers }) => {
   const result = await npm('i', '--foreground-scripts', 'playwright');
   expect(result).toHaveDownloaded(['chromium', 'firefox', 'webkit']);
+  expect(await installedBrowsers()).toEqual(['chromium', 'firefox', 'webkit']);
   await exec('node', ['./sanity.js', 'playwright']);
   if (nodeVersion >= 14)
     await exec('node', [`esm-playwright.mjs`]);

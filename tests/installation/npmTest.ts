@@ -257,6 +257,7 @@ export const test = _test.extend<{
     envOverrides: Record<string, string>;
     tmpWorkspace: string,
     nodeVersion: number,
+    installedBrowsers: () => Promise<string[]>;
     writeFiles: (nameToContents: Record<string, string>) => Promise<void>,
     exec: (cmd: string, args: string[], fixtureOverrides?: SpawnOptions) => Promise<ExecOutput>
     npm: (...args: string[]) => Promise<ExecOutput>,
@@ -298,6 +299,9 @@ export const test = _test.extend<{
             await registry.start(JSON.parse((await fs.promises.readFile(path.join(__dirname, './registry.json'))).toString()));
             await use(registry);
             await registry.shutdown();
+          },
+          installedBrowsers: async ({ tmpWorkspace }, use) => {
+            await use(async () => fs.promises.readdir(path.join(tmpWorkspace, 'browsers')).catch(() => []).then(files => files.map(f => f.split('-')[0]).filter(f => f !== 'ffmpeg' && !f.startsWith('.'))));
           },
           exec: async ({ registry, tmpWorkspace, envOverrides }, use, testInfo) => {
             await use(async (cmd: string, args: string[], fixtureOverrides?: SpawnOptions) => {

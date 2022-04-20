@@ -15,7 +15,7 @@
  */
 import { test, expect } from './npmTest';
 
-test('global installation cross package', async ({ npm, exec, envOverrides }) => {
+test('global installation cross package', async ({ npm, exec, envOverrides, installedBrowsers }) => {
   const packages = ['playwright-chromium', 'playwright-firefox', 'playwright-webkit'];
   envOverrides['PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD'] = '1';
   for (const pkg of packages)
@@ -23,6 +23,7 @@ test('global installation cross package', async ({ npm, exec, envOverrides }) =>
   delete envOverrides['PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD'];
   const result = await npm('i', '--foreground-scripts', 'playwright');
   expect(result).toHaveDownloaded(['chromium', 'firefox', 'webkit']);
+  expect(installedBrowsers()).toEqual(['chromium', 'firefox', 'webkit']);
 
   for (const pkg of packages)
     await test.step(pkg, () => exec('node', ['./sanity.js', pkg, 'all']));

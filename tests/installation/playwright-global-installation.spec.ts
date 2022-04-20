@@ -15,8 +15,9 @@
  */
 import { test, expect } from './npmTest';
 
-test('global installation', async ({ npm, exec }) => {
+test('global installation', async ({ npm, exec, installedBrowsers }) => {
   const result = await npm('i', '--foreground-scripts', 'playwright');
   expect(result).toHaveDownloaded(['chromium', 'firefox', 'webkit']);
+  expect(await installedBrowsers()).toEqual(['chromium', 'firefox', 'webkit']);
   await exec('node', ['./sanity.js', 'playwright']);
 });

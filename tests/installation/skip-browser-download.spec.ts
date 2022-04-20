@@ -13,15 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { test, expect, ExecOutput } from './npmTest';
+import { test, expect } from './npmTest';
 
-test('npx playwright codegen', async ({ npx, installedBrowsers }) => {
-  const error = await npx('playwright', 'codegen').catch(e => {
-    if (e instanceof ExecOutput) return e;
-    throw e;
-  });
-  expect(error).toHaveDownloaded([]);
-  expect(installedBrowsers()).toEqual([]);
-  expect(error.raw.code).toBeTruthy();
-  expect(error.combined()).toContain(`Please run the following command to download new browsers`);
+test('PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD should skip browser installs', async ({ npm, envOverrides, installedBrowsers }) => {
+  envOverrides['PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD'] = '1';
+  const result = await npm('i', '--foreground-scripts', 'playwright');
+  expect(result).toHaveDownloaded([]);
+  expect(await installedBrowsers()).toEqual([]);
+  expect(result.combined()).toContain(`Skipping browsers download because`);
 });
