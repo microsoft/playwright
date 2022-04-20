@@ -36,6 +36,43 @@ const kContentTypeAbbreviatedMetadata = 'application/vnd.npm.install-v1+json';
  *
  * See https://github.com/npm/registry/blob/master/docs/REGISTRY-API.md for information on the offical APIs.
  */
+
+_expect.extend({
+  toHaveDownloaded(received: any, browsers: ('chromium' | 'firefox' | 'webkit')[]) {
+    if (!(received instanceof ExecOutput))
+      throw new Error(`Expected ExecOutput instance.`);
+
+    const downloaded = new Set();
+    for (const [, browser] of received.combined().matchAll(/^.*(chromium|firefox|webkit) v\d+ downloaded.*$/img))
+      downloaded.add(browser);
+    try {
+      const expected = [...browsers];
+      browsers.sort();
+      const actual = [...downloaded];
+      actual.sort();
+      _expect(actual).toEqual(expected);
+    } catch (err) {
+      return {
+        message: () => `Browser download expectation failed:\n${err.toString()}`,
+        pass: false,
+      };
+    }
+
+    return {
+      pass: true,
+    };
+  }
+});
+
+interface CustomExpect extends Expect {
+    (output: ExecOutput): {
+        toHaveDownloaded(browsers: ('chromium'|'firefox'|'webkit')[]): void;
+        toExitCleanly(): void;
+    };
+}
+
+const expect = _expect as CustomExpect;
+
 class Registry {
   private _workDir: string;
   private _url: string;
@@ -218,9 +255,11 @@ export const test = _test.extend<{
     _autoCopyScripts: void,
     envOverrides: Record<string, string>;
     tmpWorkspace: string,
+    writeFiles: (nameToContents: Record<string, string>) => Promise<void>,
     exec: (cmd: string, args: string[]) => Promise<ExecOutput>
     npm: (...args: string[]) => Promise<ExecOutput>,
     npx: (...args: string[]) => Promise<ExecOutput>,
+    tsc: (...args: string[]) => Promise<void>,
     registry: Registry,
         }>({
           _autoCopyScripts: [async ({ tmpWorkspace }, use) => {
@@ -232,6 +271,12 @@ export const test = _test.extend<{
           }, {
             auto: true,
           }],
+          writeFiles: async ({ tmpWorkspace }, use) => {
+            await use(async (nameToContents: Record<string, string>) => {
+              for (const [name, contents] of Object.entries(nameToContents))
+                await fs.promises.writeFile(path.join(tmpWorkspace, name), contents);
+            });
+          },
           envOverrides: async ({}, use) => {
             await use({});
           },
@@ -262,6 +307,14 @@ export const test = _test.extend<{
                 ...envOverrides,
               } })));
           },
+          tsc: async ({ npm, npx }, use) => {
+            const result = await npm('i', '--foreground-scripts', 'typescript@3.8', '@types/node@14');
+            expect(result.raw.code).toBe(0);
+            await use(async (...args: string[]) => {
+              const result = await npx('-p', 'typescript@3.8', 'tsc', ...args);
+              expect(result.raw.code).toBe(0);
+            });
+          },
           npm: async ({ exec }, use) => {
             await use((...args) => exec('npm', args));
           },
@@ -270,40 +323,5 @@ export const test = _test.extend<{
           },
         });
 
-_expect.extend({
-  toHaveDownloaded(received: any, browsers: ('chromium' | 'firefox' | 'webkit')[]) {
-    if (!(received instanceof ExecOutput))
-      throw new Error(`Expected ExecOutput instance.`);
-
-    const downloaded = new Set();
-    for (const [, browser] of received.combined().matchAll(/^.*(chromium|firefox|webkit) v\d+ downloaded.*$/img))
-      downloaded.add(browser);
-    try {
-      const expected = [...browsers];
-      browsers.sort();
-      const actual = [...downloaded];
-      actual.sort();
-      _expect(actual).toEqual(expected);
-    } catch (err) {
-      return {
-        message: () => `Browser download expectation failed:\n${err.toString()}`,
-        pass: false,
-      };
-    }
-
-    return {
-      pass: true,
-    };
-  }
-});
-
-interface CustomExpect extends Expect {
-    (output: ExecOutput): {
-        toHaveDownloaded(browsers: ('chromium'|'firefox'|'webkit')[]): void;
-        toExitCleanly(): void;
-    };
-}
-
-const expect = _expect as CustomExpect;
 
 export { expect };
