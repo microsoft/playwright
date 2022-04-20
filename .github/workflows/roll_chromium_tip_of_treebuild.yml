@@ -1,0 +1,43 @@
+name: "PR: bump //browser_patches/chromium-tip-of-tree/BUILD_NUMBER"
+on:
+  workflow_dispatch:
+  schedule:
+    # At 10:00am UTC  (3AM PST) every tuesday and thursday to build new Chromium Tip-of-tree
+    - cron: "0 10 * * 2,4"
+jobs:
+  trigger-chromium-build:
+    name: Trigger Build
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+      - run: ./browser_patches/chromium-tip-of-tree/roll_to_current_tip_of_tree.sh
+      - name: Prepare branch
+        id: prepare-branch
+        run: |
+          if [[ "$(git status --porcelain)" == "" ]]; then
+              echo "there are no changes";
+              exit 0;
+          fi
+          echo "::set-output name=HAS_CHANGES::1"
+          CURRENT_DATE=$(date +%Y-%b-%d)
+          BRANCH_NAME="roll-chromium/${CURRENT_DATE}"
+          echo "::set-output name=BRANCH_NAME::$BRANCH_NAME"
+          echo "::set-output name=CURRENT_DATE::$CURRENT_DATE"
+          git config --global user.name github-actions
+          git config --global user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git checkout -b "$BRANCH_NAME"
+          git add .
+          git commit -m "browser(chromium-tip-of-tree): roll to $CURRENT_DATE"
+          git push origin $BRANCH_NAME
+      - name: Create Pull Request
+        if: ${{ steps.prepare-branch.outputs.HAS_CHANGES == '1' }}
+        uses: actions/github-script@v4
+        with:
+          script: |
+            await github.pulls.create({
+              owner: 'microsoft',
+              repo: 'playwright',
+              head: 'microsoft:${{ steps.prepare-branch.outputs.BRANCH_NAME }}',
+              base: 'main',
+              title: 'browser(chromium-tip-of-tree): roll to ${{ steps.prepare-branch.outputs.CURRENT_DATE }}',
+            });
