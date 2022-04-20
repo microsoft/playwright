@@ -71,8 +71,10 @@ else
   az storage blob upload -c builds --account-key "$AZ_ACCOUNT_KEY" --account-name "$AZ_ACCOUNT_NAME" -f "$ZIP_PATH" -n "$BLOB_PATH" --content-md5 "${MD5_HASH}"
 fi
 
+ZIP_SIZE=$(node -e 'console.log(Math.round(require("fs").statSync(process.argv[1]).size / 1024 / 1024) + "MB")' "${ZIP_PATH}")
+
 echo "UPLOAD SUCCESSFUL!"
 echo "--  SRC: $ZIP_PATH"
-echo "-- SIZE: $(du -h "$ZIP_PATH" | awk '{print $1}')"
+echo "-- SIZE: $ZIP_SIZE"
 echo "--  DST: $BLOB_PATH"
 
