@@ -20,7 +20,7 @@ import './colors.css';
 import './common.css';
 import * as icons from './icons';
 
-export const Chip: React.FunctionComponent<{
+export const Chip: React.FC<{
   header: JSX.Element | string,
   expanded?: boolean,
   noInsets?: boolean,

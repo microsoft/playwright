@@ -14,13 +14,4 @@
  * limitations under the License.
  */
 
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
-
-// https://vitejs.dev/config/
-export default defineConfig({
-  plugins: [react()],
-  server: {
-    port: 3102,
-  },
-});
+// Playwright's Vite plugin is dynamically populating this file with the components.

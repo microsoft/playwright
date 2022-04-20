@@ -25,7 +25,22 @@ export default components => {
 };
 
 function render(component) {
-  const componentFunc = registry.get(component.type) || component.type;
+  let componentFunc = registry.get(component.type);
+  if (!componentFunc) {
+    // Lookup by shorthand.
+    for (const [name, value] of registry) {
+      if (component.type.endsWith(`_${name}`)) {
+        componentFunc = value;
+        break;
+      }
+    }
+  }
+
+  if (!componentFunc && component.type[0].toUpperCase() === component.type[0])
+    throw new Error(`Unregistered component: ${component.type}. Following components are registered: ${[...registry.keys()]}`);
+
+  componentFunc = componentFunc || component.type;
+
   return React.createElement(componentFunc, component.props, ...component.children.map(child => {
     if (typeof child === 'string')
       return child;

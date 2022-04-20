@@ -14,16 +14,5 @@
  * limitations under the License.
  */
 
-import { Expandable } from './expandable';
-import { Source } from './source';
-import { SplitView } from './splitView';
-import '../common.css';
-import '../third_party/vscode/codicon.css';
-
-import register from '@playwright/experimental-ct-react/register';
-
-register({
-  Expandable,
-  Source,
-  SplitView,
-});
+const { createVitePlugin } = require('@playwright/test/lib/vitePlugin');
+module.exports = createVitePlugin('@playwright/experimental-ct-svelte/register');

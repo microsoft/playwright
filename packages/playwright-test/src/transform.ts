@@ -26,7 +26,7 @@ import { tsConfigLoader } from './third_party/tsconfig-loader';
 import Module from 'module';
 import type { BabelTransformFunction } from './babelBundle';
 
-const version = 8;
+const version = 9;
 const cacheDir = process.env.PWTEST_CACHE_DIR || path.join(os.tmpdir(), 'playwright-transform-cache');
 const sourceMaps: Map<string, string> = new Map();
 
