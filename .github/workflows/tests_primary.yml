@@ -123,3 +123,29 @@ jobs:
       if: always() && matrix.os != 'ubuntu-latest'
     - run: xvfb-run npm run test-web
       if: always() && matrix.os == 'ubuntu-latest'
+
+  test-package-installations:
+    runs-on: ubuntu-20.04
+    strategy:
+      fail-fast: false
+      matrix:
+        node_version:
+        - "12.0.0"
+        - "^12.0.0"
+        - "^14.1.0"  # pre 14.1, zip extraction was broken (https://github.com/microsoft/playwright/issues/1988)
+        - "^16.0.0"
+    timeout-minutes: 20
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-node@v2
+      with:
+        node-version: ${{ matrix.node_version }}
+    # NPM 7 is the latest version which supports Node.js 12.0.0
+    - run: npm i -g npm@7
+    - run: npm ci
+      env:
+        DEBUG: pw:install
+    - run: npm run build
+    - run: npx playwright install-deps
+    - name: INSTALLATION TESTS
+      run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run itest
