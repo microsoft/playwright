@@ -1,0 +1,36 @@
+/**
+ * Copyright (c) Microsoft Corporation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+import path from 'path';
+import { test, expect } from './npmTest';
+import fs from 'fs';
+
+test('installs local packages', async ({ npm, envOverrides, registry, exec, tmpWorkspace }) => {
+  envOverrides['PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD'] = '1';
+  const packages = ['playwright', 'playwright-core', 'playwright-chromium', 'playwright-firefox', 'playwright-webkit', '@playwright/test'];
+  await npm('i', '--foreground-scripts', ...packages);
+  const output = await exec('node', [path.join(__dirname, '..', '..', 'utils', 'workspace.js'), '--get-version']);
+  const expectedPlaywrightVersion = output.combined().trim();
+  for (const pkg of packages) {
+    await test.step(`check version and installation location of ${pkg}`, async () => {
+      registry.assertLocalPackage(pkg);
+      const result = await exec('node', [`--eval='console.log(JSON.stringify(require.resolve("${pkg}")))'`]);
+      const pkgJsonPath = path.join(path.dirname(JSON.parse(result.combined())), 'package.json');
+      expect(pkgJsonPath.startsWith(path.join(tmpWorkspace, 'node_modules'))).toBeTruthy();
+      const installedVersion = JSON.parse(await fs.promises.readFile(pkgJsonPath, 'utf8')).version;
+      expect(installedVersion).toBe(expectedPlaywrightVersion);
+    });
+  }
+});
