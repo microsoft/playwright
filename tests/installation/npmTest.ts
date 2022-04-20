@@ -25,6 +25,7 @@ import type { Server } from 'http';
 import http from 'http';
 import https from 'https';
 import crypto from 'crypto';
+import type { SpawnOptions } from 'child_process';
 
 const kPublicNpmRegistry = 'https://registry.npmjs.org';
 const kContentTypeAbbreviatedMetadata = 'application/vnd.npm.install-v1+json';
@@ -257,7 +258,7 @@ export const test = _test.extend<{
     tmpWorkspace: string,
     nodeVersion: number,
     writeFiles: (nameToContents: Record<string, string>) => Promise<void>,
-    exec: (cmd: string, args: string[]) => Promise<ExecOutput>
+    exec: (cmd: string, args: string[], fixtureOverrides?: SpawnOptions) => Promise<ExecOutput>
     npm: (...args: string[]) => Promise<ExecOutput>,
     npx: (...args: string[]) => Promise<ExecOutput>,
     tsc: (...args: string[]) => Promise<ExecOutput>,
@@ -291,7 +292,7 @@ export const test = _test.extend<{
             await promisify(rimraf)(tmpWorkspace);
           },
           registry: async ({}, use, testInfo) => {
-            const port = testInfo.workerIndex + 15123;
+            const port = testInfo.workerIndex + 16123;
             const url = `http://localhost:${port}`;
             const registry = new Registry(testInfo.outputPath('registry'), url);
             await registry.start(JSON.parse((await fs.promises.readFile(path.join(__dirname, './registry.json'))).toString()));
@@ -299,7 +300,7 @@ export const test = _test.extend<{
             await registry.shutdown();
           },
           exec: async ({ registry, tmpWorkspace, envOverrides }, use, testInfo) => {
-            await use(async (cmd: string, args: string[]) => {
+            await use(async (cmd: string, args: string[], fixtureOverrides?: SpawnOptions) => {
               const result = new ExecOutput(await spawnAsync(cmd, args, {
                 shell: true,
                 cwd: tmpWorkspace,
@@ -310,7 +311,8 @@ export const test = _test.extend<{
                   'npm_config_registry': registry.url(),
                   'npm_config_prefix': testInfo.outputPath('npm_global'),
                   ...envOverrides,
-                } }));
+                },
+                ...fixtureOverrides }));
 
               if (result.raw.code)
                 throw result;
