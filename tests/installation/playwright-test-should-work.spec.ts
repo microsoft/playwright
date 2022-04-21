@@ -19,8 +19,8 @@ test('@playwright/test should work', async ({ npm, npx, exec, envOverrides, node
   await npm('i', '--foreground-scripts', '@playwright/test');
 
   const tryRunningTests = await npx('playwright', 'test', '-c', '.')
-    .then(() => false)
-    .catch(e => true);
+      .then(() => false)
+      .catch(e => true);
   expect(tryRunningTests, 'should not be able to run tests without installing browsers').toBe(true);
 
   envOverrides['PLAYWRIGHT_BROWSERS_PATH'] = '0';

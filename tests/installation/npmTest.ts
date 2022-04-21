@@ -15,7 +15,6 @@
  */
 import type { Expect } from '@playwright/test';
 import { test as _test, expect as _expect } from '@playwright/test';
-import { spawnAsync } from 'playwright-core/lib/utils/spawnAsync';
 import fs from 'fs';
 import { promisify } from 'util';
 import { rimraf } from 'playwright-core/lib/utilsBundle';
@@ -26,6 +25,36 @@ import http from 'http';
 import https from 'https';
 import crypto from 'crypto';
 import type { SpawnOptions } from 'child_process';
+import debugLogger from 'debug';
+import { spawn } from 'child_process';
+
+const debugExec = debugLogger('itest:exec');
+const debugExecStdout = debugLogger('itest:exec:stdout');
+const debugExecStderr = debugLogger('itest:exec:stderr');
+
+function spawnAsync(cmd: string, args: string[], options: SpawnOptions = {}): Promise<{stdout: string, stderr: string, code: number | null, error?: Error}> {
+  debugExec(`${cmd} ${args.join(' ')}`);
+  const process = spawn(cmd, args, Object.assign({ windowsHide: true }, options));
+
+  return new Promise(resolve => {
+    let stdout = '';
+    let stderr = '';
+    if (process.stdout) {
+      process.stdout.on('data', data => {
+        debugExecStdout(data.toString());
+        stdout += data;
+      });
+    }
+    if (process.stderr) {
+      process.stderr.on('data', data => {
+        debugExecStderr(data.toString());
+        stderr += data;
+      });
+    }
+    process.on('close', code => resolve({ stdout, stderr, code }));
+    process.on('error', error => resolve({ stdout, stderr, code: 0, error }));
+  });
+}
 
 const kPublicNpmRegistry = 'https://registry.npmjs.org';
 const kContentTypeAbbreviatedMetadata = 'application/vnd.npm.install-v1+json';
@@ -313,7 +342,7 @@ export const test = _test.extend<{
                 cwd: tmpWorkspace,
                 env: {
                   ...process.env,
-                  //TODO: this is very unfortunate! Can we fix this?
+                  // TODO: this is very unfortunate! Can we fix this?
                   'INIT_CWD': undefined,
                   'PLAYWRIGHT_BROWSERS_PATH': path.join(tmpWorkspace, 'browsers'),
                   'npm_config_cache': testInfo.outputPath('npm_cache'),

@@ -22,7 +22,7 @@ test('should skip download', async ({ npm, npx, exec, envOverrides, nodeVersion 
   expect(installOutput.combined()).toContain('Skipping browsers download because');
 
   if (process.platform === 'linux') {
-    const output = await exec('node', ['inspector-custom-executable.js']); 
+    const output = await exec('node', ['inspector-custom-executable.js']);
     expect(output.combined()).toContain('SUCCESS');
   }
 });

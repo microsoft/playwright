@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { test, expect } from './npmTest';
+import { test } from './npmTest';
 
 test('playwright should work with relative home path', async ({ npm, npx, exec, envOverrides, nodeVersion }) => {
   envOverrides['PLAYWRIGHT_BROWSERS_PATH'] = '0';
