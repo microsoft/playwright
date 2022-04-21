@@ -21,7 +21,7 @@ test('npx playwright codegen', async ({ npx, installedBrowsers }) => {
     throw e;
   });
   expect(error).toHaveDownloaded([]);
-  expect(installedBrowsers()).toEqual([]);
+  expect(await installedBrowsers()).toEqual([]);
   expect(error.raw.code).toBeTruthy();
   expect(error.combined()).toContain(`Please run the following command to download new browsers`);
 });
