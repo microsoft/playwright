@@ -3697,10 +3697,12 @@ export interface AndroidChannel extends AndroidEventTarget, Channel {
   setDefaultTimeoutNoReply(params: AndroidSetDefaultTimeoutNoReplyParams, metadata?: Metadata): Promise<AndroidSetDefaultTimeoutNoReplyResult>;
 }
 export type AndroidDevicesParams = {
+  host?: string,
   port?: number,
   omitDriverInstall?: boolean,
 };
 export type AndroidDevicesOptions = {
+  host?: string,
   port?: number,
   omitDriverInstall?: boolean,
 };

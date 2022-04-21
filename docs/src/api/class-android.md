@@ -82,10 +82,15 @@ PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm i -D playwright
 
 Returns the list of detected Android devices.
 
+### option: Android.devices.host
+- `host` <[string]>
+
+Optional host to establish ADB server connection. Default to `127.0.0.1`.
+
 ### option: Android.devices.port
 - `port` <[int]>
 
-Optional port to establish ADB server connection.
+Optional port to establish ADB server connection. Default to `5037`.
 
 ### option: Android.devices.omitDriverInstall
 - `omitDriverInstall` <[boolean]>

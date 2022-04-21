@@ -2852,6 +2852,7 @@ Android:
 
     devices:
       parameters:
+        host: string?
         port: number?
         omitDriverInstall: boolean?
       returns:
