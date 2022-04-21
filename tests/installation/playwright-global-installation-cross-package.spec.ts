@@ -20,7 +20,7 @@ test('global installation cross package', async ({ exec, installedBrowsers }) =>
   for (const pkg of packages)
     await exec('npm i --foreground-scripts', pkg, { env: { PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1' } });
   const result = await exec('npm i --foreground-scripts playwright');
-  (expect(result) as any).toHaveDownloaded(['chromium', 'firefox', 'webkit']);
+  expect(result).toHaveDownloaded(['chromium', 'firefox', 'webkit']);
   expect(await installedBrowsers()).toEqual(['chromium', 'firefox', 'webkit']);
 
   for (const pkg of packages)

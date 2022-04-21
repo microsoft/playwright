@@ -17,7 +17,7 @@ import { test, expect } from './npmTest';
 
 test(`playwright should work`, async ({ exec, nodeMajorVersion, installedBrowsers }) => {
   const result = await exec('npm i --foreground-scripts playwright');
-  (expect(result) as any).toHaveDownloaded(['chromium', 'firefox', 'webkit']);
+  expect(result).toHaveDownloaded(['chromium', 'firefox', 'webkit']);
   expect(await installedBrowsers()).toEqual(['chromium', 'firefox', 'webkit']);
   await exec('node ./sanity.js playwright');
   if (nodeMajorVersion >= 14)

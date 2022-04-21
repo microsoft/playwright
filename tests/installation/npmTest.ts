@@ -13,6 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+// eslint-disable-next-line spaced-comment
+/// <reference path="./expect.d.ts" />
+
 import { test as _test, expect as _expect } from '@playwright/test';
 import fs from 'fs';
 import path from 'path';

@@ -20,14 +20,14 @@ test('codegen should work', async ({ exec, installedBrowsers }) => {
 
   await test.step('playwright install chromium', async () => {
     const result = await exec('npx playwright install chromium');
-    (expect(result) as any).toHaveDownloaded(['chromium']);
+    expect(result).toHaveDownloaded(['chromium']);
     expect(await installedBrowsers()).toEqual(['chromium']);
     expect(result).toContain('ffmpeg');
   });
 
   await test.step('playwright install', async () => {
     const result = await exec('npx playwright install');
-    (expect(result) as any).toHaveDownloaded(['firefox', 'webkit']);
+    expect(result).toHaveDownloaded(['firefox', 'webkit']);
     expect(await installedBrowsers()).toEqual(['chromium', 'firefox', 'webkit']);
     expect(result).not.toContain('ffmpeg');
   });
