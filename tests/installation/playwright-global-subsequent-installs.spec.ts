@@ -16,13 +16,13 @@
 import { test } from './npmTest';
 import path from 'path';
 
-test('subsequent installs works', async ({ npm, exec, envOverrides }) => {
+test('subsequent installs works', async ({ exec }) => {
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/1651' });
-  await npm('i', '--foreground-scripts', 'playwright');
+  await exec('npm i --foreground-scripts playwright');
   // Note: the `npm install` would not actually crash, the error
   // is merely logged to the console. To reproduce the error, we should make
   // sure that script's install.js can be run subsequently without unhandled promise rejections.
   // Note: the flag `--unhandled-rejections=strict` will force node to terminate in case
   // of UnhandledPromiseRejection.
-  await exec('node', ['--unhandled-rejections=strict', path.join('./node_modules', 'playwright', 'install.js')]);
+  await exec('node --unhandled-rejections=strict', path.join('./node_modules', 'playwright', 'install.js'));
 });

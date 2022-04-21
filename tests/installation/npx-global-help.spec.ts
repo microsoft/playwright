@@ -15,9 +15,9 @@
  */
 import { test, expect } from './npmTest';
 
-test('npx playwright --help should not download browsers', async ({ npx, installedBrowsers }) => {
-  const result = await npx('playwright', '--help');
-  expect(result).toHaveDownloaded([]);
+test('npx playwright --help should not download browsers', async ({ exec, installedBrowsers }) => {
+  const result = await exec('npx playwright --help');
+  (expect(result) as any).toHaveDownloaded([]);
   expect(await installedBrowsers()).toEqual([]);
-  expect(result.combined()).not.toContain(`To avoid unexpected behavior, please install your dependencies first`);
+  expect(result).not.toContain(`To avoid unexpected behavior, please install your dependencies first`);
 });

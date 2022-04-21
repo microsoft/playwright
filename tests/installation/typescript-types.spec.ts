@@ -15,9 +15,9 @@
  */
 import { test } from './npmTest';
 
-test('typescript types should work', async ({ npm, tsc, envOverrides, writeFiles }) => {
-  envOverrides['PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD'] = '1';
-  await npm('i', '-D', '@types/node@14.18.9');
+test('typescript types should work', async ({ exec, tsc, writeFiles }) => {
+  const env = { PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1' };
+  await exec('npm i -D @types/node@14.18.9');
 
   const libraryPackages = [
     'playwright',
@@ -26,15 +26,15 @@ test('typescript types should work', async ({ npm, tsc, envOverrides, writeFiles
     'playwright-webkit',
     'playwright-chromium',
   ];
-  await npm('i', '@playwright/test', ...libraryPackages);
+  await exec('npm i @playwright/test', ...libraryPackages, { env });
 
   for (const libraryPackage of libraryPackages) {
     const filename = libraryPackage + '.ts';
     await writeFiles({
       [filename]: `import { Page } from '${libraryPackage}';`,
     });
-    await tsc(filename);
+    await tsc(filename, { env });
   }
 
-  await tsc('playwright-test-types.ts');
+  await tsc('playwright-test-types.ts', { env });
 });

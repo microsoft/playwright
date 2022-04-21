@@ -15,15 +15,10 @@
  */
 import { test, expect } from './npmTest';
 
-test('@playwright/test stacks should work', async ({ npm, npx, exec, envOverrides, nodeVersion }) => {
-  await npm('i', '--foreground-scripts', '@playwright/test');
-
-  envOverrides['PLAYWRIGHT_BROWSERS_PATH'] = '0';
-  await npx('playwright', 'install', 'chromium');
-
-  envOverrides['DEBUG'] = 'pw:api';
-  const output = await npx('playwright', 'test', '-c', '.', 'failing.spec.js').then(() => '').catch(execOutput => execOutput.combined());
-
+test('@playwright/test stacks should work', async ({ exec }) => {
+  await exec('npm i --foreground-scripts @playwright/test');
+  await exec('npx playwright install chromium', { env: { PLAYWRIGHT_BROWSERS_PATH: '0' } });
+  const output = await exec('npx playwright test -c . failing.spec.js', { expectToExitWithError: true, env: { DEBUG: 'pw:api', PLAYWRIGHT_BROWSERS_PATH: '0' } });
   expect(output).toContain('expect.toHaveText started');
   expect(output).toContain('failing.spec.js:5:38');
 });

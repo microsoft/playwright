@@ -16,8 +16,8 @@
 import path from 'path';
 import { test } from './npmTest';
 
-test('connect to selenium', async ({ npm, exec, tmpWorkspace }) => {
-  await npm('i', '--foreground-scripts', 'playwright-core');
-  await exec('node', ['./download-chromedriver.js', path.join(tmpWorkspace)]);
-  await exec('npm', ['run', 'test', '--', '--reporter=list', 'selenium.spec'], { cwd: path.join(__dirname, '..', '..'), env: { ...process.env, PWTEST_CHROMEDRIVER: path.join(tmpWorkspace, 'chromedriver') } });
+test('connect to selenium', async ({ exec, tmpWorkspace }) => {
+  await exec('npm i --foreground-scripts playwright-core');
+  await exec(`node ./download-chromedriver.js ${path.join(tmpWorkspace)}`);
+  await exec('npm run test -- --reporter=list selenium.spec', { cwd: path.join(__dirname, '..', '..'), env: { ...process.env, PWTEST_CHROMEDRIVER: path.join(tmpWorkspace, 'chromedriver') } });
 });

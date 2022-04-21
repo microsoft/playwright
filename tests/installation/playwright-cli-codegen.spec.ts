@@ -15,26 +15,24 @@
  */
 import { test, expect } from './npmTest';
 
-test('codegen should work', async ({ npm, npx, envOverrides }) => {
-  await npm('i', '--foreground-scripts', 'playwright');
-
-  envOverrides['PWTEST_CLI_EXIT'] = '1';
+test('codegen should work', async ({ exec }) => {
+  await exec('npm i --foreground-scripts playwright');
 
   await test.step('codegen without arguments', async () => {
-    const result = await npx('playwright', 'codegen');
-    expect(result.combined()).toContain(`@playwright/test`);
-    expect(result.combined()).toContain(`{ page }`);
+    const result = await exec('npx playwright codegen', { env: { PWTEST_CLI_EXIT: '1' } });
+    expect(result).toContain(`@playwright/test`);
+    expect(result).toContain(`{ page }`);
   });
 
   await test.step('codegen --target=javascript', async () => {
-    const result = await npx('playwright', 'codegen', '--target=javascript');
-    expect(result.combined()).toContain(`playwright`);
-    expect(result.combined()).toContain(`page.close`);
+    const result = await exec('npx playwright codegen --target=javascript', { env: { PWTEST_CLI_EXIT: '1' } });
+    expect(result).toContain(`playwright`);
+    expect(result).toContain(`page.close`);
   });
 
   await test.step('codegen --target=python', async () => {
-    const result = await npx('playwright', 'codegen', '--target=python');
-    expect(result.combined()).toContain(`chromium.launch`);
-    expect(result.combined()).toContain(`browser.close`);
+    const result = await exec('npx playwright codegen --target=python', { env: { PWTEST_CLI_EXIT: '1' } });
+    expect(result).toContain(`chromium.launch`);
+    expect(result).toContain(`browser.close`);
   });
 });

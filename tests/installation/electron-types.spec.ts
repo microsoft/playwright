@@ -15,11 +15,11 @@
  */
 import { test } from './npmTest';
 
-test('electron types', async ({ npm, tsc, envOverrides, writeFiles }) => {
-  envOverrides['PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD'] = '1';
-  await npm('i', '--foreground-scripts', 'playwright', 'electron@12');
+test('electron types', async ({ exec, tsc, writeFiles }) => {
+  await exec('npm i --foreground-scripts playwright electron@12', { env: { PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1' } });
   await writeFiles({
-    'test.ts': `import { Page, _electron, ElectronApplication, Electron } from 'playwright';`
+    'test.ts':
+      `import { Page, _electron, ElectronApplication, Electron } from 'playwright';`
   });
   await tsc('test.ts');
 });

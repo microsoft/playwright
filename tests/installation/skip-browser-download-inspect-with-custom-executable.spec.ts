@@ -15,14 +15,12 @@
  */
 import { test, expect } from './npmTest';
 
-test('should skip download', async ({ npm, npx, exec, envOverrides, nodeVersion }) => {
-  envOverrides['PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD'] = '1';
-
-  const installOutput = await npm('i', '--foreground-scripts', 'playwright');
-  expect(installOutput.combined()).toContain('Skipping browsers download because');
-
+test('should skip download', async ({ exec }) => {
+  const env = { PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1' };
+  const installOutput = await exec('npm i --foreground-scripts playwright', { env });
+  expect(installOutput).toContain('Skipping browsers download because');
   if (process.platform === 'linux') {
-    const output = await exec('node', ['inspector-custom-executable.js']);
-    expect(output.combined()).toContain('SUCCESS');
+    const output = await exec('node inspector-custom-executable.js', { env });
+    expect(output).toContain('SUCCESS');
   }
 });

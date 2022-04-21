@@ -16,15 +16,15 @@
 import { test, expect } from './npmTest';
 
 test.describe('validate dependencies', () => {
-  test('default (on)', async ({ npm, exec }) => {
-    await npm('i', '--foreground-scripts', 'playwright');
-    const result = await exec('node', ['./validate-dependencies.js']);
-    expect(result.combined()).toContain(`PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS`);
+  test('default (on)', async ({ exec }) => {
+    await exec('npm i --foreground-scripts playwright');
+    const result = await exec('node ./validate-dependencies.js');
+    expect(result).toContain(`PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS`);
   });
 
-  test('disabled (off)',  async ({ npm, exec }) => {
-    await npm('i', '--foreground-scripts', 'playwright');
-    const result = await exec('node', ['./validate-dependencies-skip-executable-path.js']);
-    expect(result.combined()).not.toContain(`PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS`);
+  test('disabled (off)',  async ({ exec }) => {
+    await exec('npm i --foreground-scripts playwright');
+    const result = await exec('node ./validate-dependencies-skip-executable-path.js');
+    expect(result).not.toContain(`PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS`);
   });
 });

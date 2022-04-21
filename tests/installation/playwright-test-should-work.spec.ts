@@ -13,29 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { test, expect } from './npmTest';
+import { test } from './npmTest';
 
-test('@playwright/test should work', async ({ npm, npx, exec, envOverrides, nodeVersion }) => {
-  await npm('i', '--foreground-scripts', '@playwright/test');
+test('@playwright/test should work', async ({ exec, nodeVersion }) => {
+  await exec('npm i --foreground-scripts @playwright/test');
+  await exec('npx playwright test -c .', { expectToExitWithError: true, message: 'should not be able to run tests without installing browsers' });
 
-  const tryRunningTests = await npx('playwright', 'test', '-c', '.')
-      .then(() => false)
-      .catch(e => true);
-  expect(tryRunningTests, 'should not be able to run tests without installing browsers').toBe(true);
-
-  envOverrides['PLAYWRIGHT_BROWSERS_PATH'] = '0';
-  await npx('playwright', 'install');
-  envOverrides['PLAYWRIGHT_JSON_OUTPUT_NAME'] = 'report.json';
-  await npx('playwright', 'test',
-      '-c', '.',
-      '--browser=all',
-      '--reporter=list,json',
-      'sample.spec.js'
-  );
-
-  await exec('node', ['./read-json-report.js', './report.json']);
-  await exec('node', ['sanity.js', '@playwright/test']);
-
+  const env = { PLAYWRIGHT_BROWSERS_PATH: '0', PLAYWRIGHT_JSON_OUTPUT_NAME: 'report.json' };
+  await exec('npx playwright install', { env });
+  await exec('npx playwright test -c . --browser=all --reporter=list,json sample.spec.js', { env });
+  await exec('node ./read-json-report.js ./report.json', { env });
+  await exec('node sanity.js @playwright/test', { env });
   if (nodeVersion >= 14)
-    await exec('node', ['esm-playwright-test.mjs']);
+    await exec('node', 'esm-playwright-test.mjs', { env });
 });

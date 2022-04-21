@@ -15,8 +15,7 @@
  */
 import { test } from './npmTest';
 
-test('electron should work', async ({ npm, exec, envOverrides }) => {
-  envOverrides['-PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD'] = '1';
-  await npm('i', '--foreground-scripts', 'playwright', 'electron@9.0');
-  await exec('node', ['sanity-electron.js']);
+test('electron should work', async ({ exec }) => {
+  await exec('npm i --foreground-scripts playwright electron@9.0', { env: { PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1' } });
+  await exec('node sanity-electron.js');
 });

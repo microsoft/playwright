@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import type { Expect } from '@playwright/test';
 import { test as _test, expect as _expect } from '@playwright/test';
 import fs from 'fs';
 import path from 'path';
@@ -67,11 +66,11 @@ const kContentTypeAbbreviatedMetadata = 'application/vnd.npm.install-v1+json';
 
 _expect.extend({
   toHaveDownloaded(received: any, browsers: ('chromium' | 'firefox' | 'webkit')[]) {
-    if (!(received instanceof ExecOutput))
-      throw new Error(`Expected ExecOutput instance.`);
+    if (typeof received !== 'string')
+      throw new Error(`Expected argument to be a string.`);
 
     const downloaded = new Set();
-    for (const [, browser] of received.combined().matchAll(/^.*(chromium|firefox|webkit) v\d+ downloaded.*$/img))
+    for (const [, browser] of received.matchAll(/^.*(chromium|firefox|webkit) v\d+ downloaded.*$/img))
       downloaded.add(browser);
     try {
       const expected = [...browsers];
@@ -92,14 +91,7 @@ _expect.extend({
   }
 });
 
-interface CustomExpect extends Expect {
-    (output: ExecOutput): {
-        toHaveDownloaded(browsers: ('chromium'|'firefox'|'webkit')[]): void;
-    };
-}
-
-const expect = _expect as CustomExpect;
-
+const expect = _expect;
 class Registry {
   private _workDir: string;
   private _url: string;
@@ -278,17 +270,16 @@ export class ExecOutput {
   }
 }
 
+export type ExecOptions = { cwd?: string, env?: Record<string, string>, message?: string, expectToExitWithError?: boolean };
+export type ArgsOrOptions = [] | [...string[]] | [...string[], ExecOptions] | [ExecOptions];
 export const test = _test.extend<{
     _autoCopyScripts: void,
-    envOverrides: Record<string, string>;
     tmpWorkspace: string,
     nodeVersion: number,
     installedBrowsers: () => Promise<string[]>;
     writeFiles: (nameToContents: Record<string, string>) => Promise<void>,
-    exec: (cmd: string, args: string[], fixtureOverrides?: SpawnOptions) => Promise<ExecOutput>
-    npm: (...args: string[]) => Promise<ExecOutput>,
-    npx: (...args: string[]) => Promise<ExecOutput>,
-    tsc: (...args: string[]) => Promise<ExecOutput>,
+    exec: (cmd: string, ...argsAndOrOptions: ArgsOrOptions) => Promise<string>
+    tsc: (...argsAndOrOptions: ArgsOrOptions) => Promise<string>,
     registry: Registry,
         }>({
           _autoCopyScripts: [async ({ tmpWorkspace }, use) => {
@@ -308,9 +299,6 @@ export const test = _test.extend<{
               for (const [name, contents] of Object.entries(nameToContents))
                 await fs.promises.writeFile(path.join(tmpWorkspace, name), contents);
             });
-          },
-          envOverrides: async ({}, use) => {
-            await use({});
           },
           tmpWorkspace: async ({}, use) => {
             // We want a location that won't have a node_modules dir anywhere along its path
@@ -335,44 +323,59 @@ export const test = _test.extend<{
           installedBrowsers: async ({ tmpWorkspace }, use) => {
             await use(async () => fs.promises.readdir(path.join(tmpWorkspace, 'browsers')).catch(() => []).then(files => files.map(f => f.split('-')[0]).filter(f => f !== 'ffmpeg' && !f.startsWith('.'))));
           },
-          exec: async ({ registry, tmpWorkspace, envOverrides }, use, testInfo) => {
-            await use(async (cmd: string, args: string[], fixtureOverrides?: SpawnOptions) => {
-              let result!: ExecOutput;
+          exec: async ({ registry, tmpWorkspace }, use, testInfo) => {
+            await use(async (cmd: string, ...argsAndOrOptions: [] | [...string[]] | [...string[], ExecOptions] | [ExecOptions]) => {
+              let args: string[] = [];
+              let options: ExecOptions = {};
+              if (typeof argsAndOrOptions[argsAndOrOptions.length - 1] === 'object')
+                options = argsAndOrOptions.pop() as ExecOptions;
+
+              args = argsAndOrOptions as string[];
+
+              let result!: Awaited<ReturnType<typeof spawnAsync>>;
               await test.step(`exec: ${[cmd, ...args].join(' ')}`, async () => {
-                result = new ExecOutput(await spawnAsync(cmd, args, {
+                result = await spawnAsync(cmd, args, {
                   shell: true,
-                  cwd: tmpWorkspace,
+                  cwd: options.cwd ?? tmpWorkspace,
                   env: {
-                    ...process.env,
-                    // TODO: this is very unfortunate! Can we fix this?
-                    'INIT_CWD': undefined,
+                    'PATH': process.env.PATH,
+                    'DISPLAY': process.env.DISPLAY,
+                    'XAUTHORITY': process.env.XAUTHORITY,
                     'PLAYWRIGHT_BROWSERS_PATH': path.join(tmpWorkspace, 'browsers'),
                     'npm_config_cache': testInfo.outputPath('npm_cache'),
                     'npm_config_registry': registry.url(),
                     'npm_config_prefix': testInfo.outputPath('npm_global'),
-                    ...envOverrides,
-                  },
-                  ...fixtureOverrides }));
+                    ...options.env,
+                  }
+                });
               });
 
-              await testInfo.attach(`${[cmd, ...args].join(' ')}`, { body: `COMMAND: ${[cmd, ...args].join(' ')}\n\nEXIT CODE: ${result.raw.code}\n\n===============\n\n${result.combined()}` });
+              const stdio = `${result.stdout}\n${result.stderr}`;
 
-              if (result.raw.code)
-                throw result;
+              await testInfo.attach(`${[cmd, ...args].join(' ')}`, { body: `COMMAND: ${[cmd, ...args].join(' ')}\n\nEXIT CODE: ${result.code}\n\n====== STDIO + STDERR ======\n\n${stdio}` });
 
-              return result;
+              // This means something is really off with spawn
+              if (result.error)
+                throw result.error;
+
+              // User expects command to fail
+              if (options.expectToExitWithError) {
+                if (result.code === 0) {
+                  const message = options.message ? ` Message: ${options.message}` : '';
+                  throw new Error(`Expected the command to exit with an error, but exited cleanly.${message}`);
+                }
+              } else if (result.code !== 0) {
+                const message = options.message ? ` Message: ${options.message}` : '';
+                throw new Error(`Expected the command to exit cleanl (0 status code), but exited with ${result.code}.${message}`);
+              }
+
+              return stdio;
 
             });
           },
-          tsc: async ({ npm, npx }, use) => {
-            await npm('i', '--foreground-scripts', 'typescript@3.8', '@types/node@14');
-            await use((...args: string[]) => npx('-p', 'typescript@3.8', 'tsc', ...args));
-          },
-          npm: async ({ exec }, use) => {
-            await use((...args) => exec('npm', args));
-          },
-          npx: async ({ exec }, use) => {
-            await use((...args) => exec('npx', ['--yes', ...args]));
+          tsc: async ({ exec }, use) => {
+            await exec('npm i --foreground-scripts typescript@3.8 @types/node@14');
+            await use((...args: ArgsOrOptions) => exec('npx', '-p', 'typescript@3.8', 'tsc', ...args));
           },
         });
 

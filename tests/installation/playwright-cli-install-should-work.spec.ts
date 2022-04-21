@@ -15,24 +15,22 @@
  */
 import { test, expect } from './npmTest';
 
-test('codegen should work', async ({ npm, npx, exec, envOverrides, installedBrowsers }) => {
-  envOverrides['PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD'] = '1';
-  await npm('i', '--foreground-scripts', 'playwright');
-  delete envOverrides['PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD'];
+test('codegen should work', async ({ exec, installedBrowsers }) => {
+  await exec('npm i --foreground-scripts playwright', { env: { PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1' } });
 
   await test.step('playwright install chromium', async () => {
-    const result = await npx('playwright', 'install', 'chromium');
-    expect(result).toHaveDownloaded(['chromium']);
+    const result = await exec('npx playwright install chromium');
+    (expect(result) as any).toHaveDownloaded(['chromium']);
     expect(await installedBrowsers()).toEqual(['chromium']);
-    expect(result.combined()).toContain('ffmpeg');
+    expect(result).toContain('ffmpeg');
   });
 
   await test.step('playwright install', async () => {
-    const result = await npx('playwright', 'install');
-    expect(result).toHaveDownloaded(['firefox', 'webkit']);
+    const result = await exec('npx playwright install');
+    (expect(result) as any).toHaveDownloaded(['firefox', 'webkit']);
     expect(await installedBrowsers()).toEqual(['chromium', 'firefox', 'webkit']);
-    expect(result.combined()).not.toContain('ffmpeg');
+    expect(result).not.toContain('ffmpeg');
   });
 
-  await exec('node', ['sanity.js', 'playwright']);
+  await exec('node sanity.js playwright');
 });

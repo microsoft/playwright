@@ -13,19 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { test, expect, ExecOutput } from './npmTest';
+import { test, expect } from './npmTest';
 
-test(`playwright should work`, async ({ npm, exec, npx, nodeVersion, installedBrowsers }) => {
-  const result = await npm('i', '--foreground-scripts', 'playwright');
-  expect(result).toHaveDownloaded(['chromium', 'firefox', 'webkit']);
+test(`playwright should work`, async ({ exec, nodeVersion, installedBrowsers }) => {
+  const result = await exec('npm i --foreground-scripts playwright');
+  (expect(result) as any).toHaveDownloaded(['chromium', 'firefox', 'webkit']);
   expect(await installedBrowsers()).toEqual(['chromium', 'firefox', 'webkit']);
-  await exec('node', ['./sanity.js', 'playwright']);
+  await exec('node ./sanity.js playwright');
   if (nodeVersion >= 14)
-    await exec('node', [`esm-playwright.mjs`]);
-  const error = await npx('playwright', 'test', '-c', '.').catch(e => {
-    if (e instanceof ExecOutput) return e;
-    throw e;
-  });
-  expect(error.raw.code).toBeTruthy();
-  expect(error.combined()).toContain(`Please install @playwright/test package to use Playwright Test.`);
+    await exec('node esm-playwright.mjs');
+  const error = await exec('npx playwright', 'test', '-c', '.', { expectToExitWithError: true });
+  expect(error).toContain(`Please install @playwright/test package to use Playwright Test.`);
 });

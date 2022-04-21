@@ -15,9 +15,9 @@
  */
 import { test } from './npmTest';
 
-test('screencast works', async ({ npm, exec }) => {
+test('screencast works', async ({ exec }) => {
   const packages = ['playwright', 'playwright-chromium', 'playwright-firefox', 'playwright-webkit'];
-  await npm('i', '--foreground-scripts', ...packages);
+  await exec('npm i --foreground-scripts', ...packages);
   for (const pkg of packages)
-    await test.step(pkg, () => exec('node', ['./screencast.js', pkg]));
+    await test.step(pkg, () => exec('node ./screencast.js', pkg));
 });

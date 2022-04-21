@@ -17,11 +17,11 @@ import { test } from './npmTest';
 import fs from 'fs';
 import path from 'path';
 
-test('playwright cli screenshot should work', async ({ npm, npx, exec, tmpWorkspace }) => {
-  await npm('i', '--foreground-scripts', 'playwright');
-  await exec('./node_modules/.bin/playwright', ['screenshot', 'about:blank', 'one.png']);
+test('playwright cli screenshot should work', async ({ exec, tmpWorkspace }) => {
+  await exec('npm i --foreground-scripts playwright');
+  await exec('./node_modules/.bin/playwright screenshot about:blank one.png');
   await fs.promises.stat(path.join(tmpWorkspace, 'one.png'));
 
-  await npx('playwright', 'screenshot', 'about:blank', 'two.png');
+  await exec('npx playwright screenshot about:blank two.png');
   await fs.promises.stat(path.join(tmpWorkspace, 'two.png'));
 });

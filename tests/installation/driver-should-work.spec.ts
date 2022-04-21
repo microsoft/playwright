@@ -15,12 +15,8 @@
  */
 import { test } from './npmTest';
 
-test('codegen should work', async ({ npm, npx, exec, envOverrides, installedBrowsers }) => {
-  envOverrides['PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD'] = '1';
-  await npm('i', '--foreground-scripts', 'playwright');
-  delete envOverrides['PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD'];
-
-  envOverrides['PLAYWRIGHT_BROWSERS_PATH'] = '0';
-  await npx('playwright', 'install');
-  await exec('node', ['driver-client.js']);
+test('codegen should work', async ({ exec }) => {
+  await exec('npm i --foreground-scripts playwright', { env: { PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1' } });
+  await exec('npx playwright install', { env: { PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '0' } });
+  await exec('node driver-client.js');
 });

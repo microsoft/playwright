@@ -13,15 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { test, expect, ExecOutput } from './npmTest';
+import { test, expect } from './npmTest';
 
-test('npx playwright codegen', async ({ npx, installedBrowsers }) => {
-  const error = await npx('playwright', 'codegen').catch(e => {
-    if (e instanceof ExecOutput) return e;
-    throw e;
-  });
-  expect(error).toHaveDownloaded([]);
+test('npx playwright codegen', async ({ exec, installedBrowsers }) => {
+  const error = await exec('npx playwright codegen', { expectToExitWithError: true });
+  (expect(error) as any).toHaveDownloaded([]);
   expect(await installedBrowsers()).toEqual([]);
-  expect(error.raw.code).toBeTruthy();
-  expect(error.combined()).toContain(`Please run the following command to download new browsers`);
+  expect(error).toContain(`Please run the following command to download new browsers`);
 });
