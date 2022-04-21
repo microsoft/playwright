@@ -15,7 +15,7 @@
  */
 import { test, expect } from './npmTest';
 
-test('android types', async ({ npm, npx, exec, envOverrides, nodeVersion }) => {
+test('@playwright/test should work', async ({ npm, npx, exec, envOverrides, nodeVersion }) => {
   await npm('i', '--foreground-scripts', '@playwright/test');
 
   const tryRunningTests = await npx('playwright', 'test', '-c', '.')

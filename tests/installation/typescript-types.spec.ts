@@ -15,7 +15,7 @@
  */
 import { test } from './npmTest';
 
-test('android types', async ({ npm, tsc, envOverrides, writeFiles }) => {
+test('typescript types should work', async ({ npm, tsc, envOverrides, writeFiles }) => {
   envOverrides['PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD'] = '1';
   await npm('i', '-D', '@types/node@14.18.9');
 

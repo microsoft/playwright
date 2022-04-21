@@ -68,7 +68,6 @@ _expect.extend({
 interface CustomExpect extends Expect {
     (output: ExecOutput): {
         toHaveDownloaded(browsers: ('chromium'|'firefox'|'webkit')[]): void;
-        toExitCleanly(): void;
     };
 }
 
