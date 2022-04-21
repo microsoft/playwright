@@ -201,7 +201,7 @@ test('user profile', async ({ page }) => {
 ```js js-flavor=ts
 // example.spec.ts
 
-test.beforeEach(async ({ page }) => {
+test.beforeEach(async ({ page, isMobile }) => {
   test.fixme(isMobile, 'Settings page does not work in mobile yet');
 
   await page.goto('http://localhost:3000/settings');
