@@ -2018,8 +2018,8 @@ Navigate to the next page in history.
   - alias-java: navigate
 - returns: <[null]|[Response]>
 
-Returns the main resource response. In case of multiple redirects, the navigation will resolve with the response of the
-last redirect.
+Returns the main resource response. In case of multiple redirects, the navigation will resolve with the first
+non-redirect response.
 
 The method will throw an error if:
 * there's an SSL error (e.g. in case of self-signed certificates).

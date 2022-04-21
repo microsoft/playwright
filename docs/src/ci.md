@@ -313,19 +313,12 @@ with sync_playwright() as p:
 
 ```csharp
 using Microsoft.Playwright;
-using System.Threading.Tasks;
 
-class Program
+using var playwright = await Playwright.CreateAsync();
+await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
 {
-    public static async Task Main()
-    {
-        using var playwright = await Playwright.CreateAsync();
-        await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
-        {
-            Headless = false
-        });
-    }
-}
+    Headless = false
+});
 ```
 
 On Linux agents, headed execution requires [Xvfb](https://en.wikipedia.org/wiki/Xvfb) to be installed. Our [Docker image](./docker.md) and GitHub Action have Xvfb pre-installed. To run browsers in headed mode with Xvfb, add `xvfb-run` before the Node.js command.

@@ -31,5 +31,7 @@ export const SocksProxyAgent: typeof import('../bundles/utils/node_modules/socks
 export const StackUtils: typeof import('../bundles/utils/node_modules/@types/stack-utils') = require('./utilsBundleImpl').StackUtils;
 export const ws: typeof import('../bundles/utils/node_modules/@types/ws') = require('./utilsBundleImpl').ws;
 export const wsServer: typeof import('../bundles/utils/node_modules/@types/ws').WebSocketServer = require('./utilsBundleImpl').wsServer;
+export const wsReceiver = require('./utilsBundleImpl').wsReceiver;
+export const wsSender = require('./utilsBundleImpl').wsSender;
 export type { Command } from '../bundles/utils/node_modules/commander';
 export type { WebSocket, WebSocketServer, RawData as WebSocketRawData, EventEmitter as WebSocketEventEmitter } from '../bundles/utils/node_modules/@types/ws';

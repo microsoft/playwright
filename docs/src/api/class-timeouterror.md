@@ -78,25 +78,17 @@ public class TimeoutErrorExample {
 ```
 
 ```csharp
-using System.Threading.Tasks;
 using Microsoft.Playwright;
-using System;
 
-class Program
+using var playwright = await Playwright.CreateAsync();
+await using var browser = await playwright.Chromium.LaunchAsync();
+var page = await browser.NewPageAsync();
+try
 {
-    public static async Task Main()
-    {
-        using var playwright = await Playwright.CreateAsync();
-        await using var browser = await playwright.Chromium.LaunchAsync();
-        var page = await browser.NewPageAsync();
-        try
-        {
-            await page.ClickAsync("text=Example", new() { Timeout = 100 });
-        }
-        catch (TimeoutException)
-        {
-            Console.WriteLine("Timeout!");
-        }
-    }
+    await page.ClickAsync("text=Example", new() { Timeout = 100 });
+}
+catch (TimeoutException)
+{
+    Console.WriteLine("Timeout!");
 }
 ```

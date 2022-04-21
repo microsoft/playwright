@@ -120,6 +120,39 @@ elif [[ "$BUILD_FLAVOR" == "chromium-linux-arm64" ]]; then
   BUILD_BLOB_NAME="chromium-linux-arm64.zip"
 
 # ===========================
+#    CHROMIUM-TIP-OF-TREE COMPILATION
+# ===========================
+elif [[ "$BUILD_FLAVOR" == "chromium-tip-of-tree-win64" ]]; then
+  BROWSER_NAME="chromium-tip-of-tree"
+  EXTRA_BUILD_ARGS="--full --goma"
+  EXPECTED_HOST_OS="MINGW"
+  BUILD_BLOB_NAME="chromium-tip-of-tree-win64.zip"
+elif [[ "$BUILD_FLAVOR" == "chromium-tip-of-tree-mac" ]]; then
+  BROWSER_NAME="chromium-tip-of-tree"
+  EXTRA_BUILD_ARGS="--full --goma"
+  EXPECTED_HOST_OS="Darwin"
+  EXPECTED_HOST_OS_VERSION="12.2"
+  BUILD_BLOB_NAME="chromium-tip-of-tree-mac.zip"
+elif [[ "$BUILD_FLAVOR" == "chromium-tip-of-tree-mac-arm64" ]]; then
+  BROWSER_NAME="chromium-tip-of-tree"
+  EXTRA_BUILD_ARGS="--arm64 --full --goma"
+  EXPECTED_HOST_OS="Darwin"
+  EXPECTED_HOST_OS_VERSION="12.2"
+  BUILD_BLOB_NAME="chromium-tip-of-tree-mac-arm64.zip"
+elif [[ "$BUILD_FLAVOR" == "chromium-tip-of-tree-linux" ]]; then
+  BROWSER_NAME="chromium-tip-of-tree"
+  EXTRA_BUILD_ARGS="--full --goma"
+  EXPECTED_HOST_OS="Ubuntu"
+  EXPECTED_HOST_OS_VERSION="18.04"
+  BUILD_BLOB_NAME="chromium-tip-of-tree-linux.zip"
+elif [[ "$BUILD_FLAVOR" == "chromium-tip-of-tree-linux-arm64" ]]; then
+  BROWSER_NAME="chromium-tip-of-tree"
+  EXTRA_BUILD_ARGS="--arm64 --full --goma"
+  EXPECTED_HOST_OS="Ubuntu"
+  EXPECTED_HOST_OS_VERSION="20.04"
+  BUILD_BLOB_NAME="chromium-tip-of-tree-linux-arm64.zip"
+
+# ===========================
 #    CHROMIUM-WITH-SYMBOLS COMPILATION
 # ===========================
 elif [[ "$BUILD_FLAVOR" == "chromium-with-symbols-win64" ]]; then
