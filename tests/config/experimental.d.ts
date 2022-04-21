@@ -17143,7 +17143,7 @@ interface TestConfig {
     reuseExistingServer?: boolean;
 
     /**
-     * Current working directory of the spawned process, `process.cwd()` by default.
+     * Current working directory of the spawned process, defaults to the directory of the configuration file.
      */
     cwd?: string;
 
@@ -17687,7 +17687,7 @@ export interface TestInfo {
     contentType?: string;
 
     path?: string;
-  }): void;
+  }): Promise<void>;
 
   /**
    * Column number where the currently running test is declared.
