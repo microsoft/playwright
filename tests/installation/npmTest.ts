@@ -33,7 +33,7 @@ const debugExecStdout = debugLogger('itest:exec:stdout');
 const debugExecStderr = debugLogger('itest:exec:stderr');
 
 function spawnAsync(cmd: string, args: string[], options: SpawnOptions = {}): Promise<{stdout: string, stderr: string, code: number | null, error?: Error}> {
-  debugExec(`${cmd} ${args.join(' ')}`);
+  debugExec([cmd, ...args].join(' '));
   const process = spawn(cmd, args, Object.assign({ windowsHide: true }, options));
 
   return new Promise(resolve => {
@@ -337,25 +337,29 @@ export const test = _test.extend<{
           },
           exec: async ({ registry, tmpWorkspace, envOverrides }, use, testInfo) => {
             await use(async (cmd: string, args: string[], fixtureOverrides?: SpawnOptions) => {
-              const result = new ExecOutput(await spawnAsync(cmd, args, {
-                shell: true,
-                cwd: tmpWorkspace,
-                env: {
-                  ...process.env,
-                  // TODO: this is very unfortunate! Can we fix this?
-                  'INIT_CWD': undefined,
-                  'PLAYWRIGHT_BROWSERS_PATH': path.join(tmpWorkspace, 'browsers'),
-                  'npm_config_cache': testInfo.outputPath('npm_cache'),
-                  'npm_config_registry': registry.url(),
-                  'npm_config_prefix': testInfo.outputPath('npm_global'),
-                  ...envOverrides,
-                },
-                ...fixtureOverrides }));
+              let result!: ExecOutput;
+              await test.step(`exec: ${[cmd, ...args].join(' ')}`, async () => {
+                result = new ExecOutput(await spawnAsync(cmd, args, {
+                  shell: true,
+                  cwd: tmpWorkspace,
+                  env: {
+                    ...process.env,
+                    // TODO: this is very unfortunate! Can we fix this?
+                    'INIT_CWD': undefined,
+                    'PLAYWRIGHT_BROWSERS_PATH': path.join(tmpWorkspace, 'browsers'),
+                    'npm_config_cache': testInfo.outputPath('npm_cache'),
+                    'npm_config_registry': registry.url(),
+                    'npm_config_prefix': testInfo.outputPath('npm_global'),
+                    ...envOverrides,
+                  },
+                  ...fixtureOverrides }));
+              });
 
               if (result.raw.code)
                 throw result;
 
               return result;
+
             });
           },
           tsc: async ({ npm, npx }, use) => {
