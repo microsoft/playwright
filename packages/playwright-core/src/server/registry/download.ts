@@ -26,19 +26,19 @@ type DownloadFileOptions = {
   userAgent?: string
 };
 
-function downloadFile(url: string, destinationPath: string, options: DownloadFileOptions = {}): Promise<{error: any}> {
+function downloadFile(url: string, destinationPath: string, options: DownloadFileOptions = {}): Promise<{ error: any }> {
   const {
     progressCallback,
-    log = () => {},
+    log = () => { },
   } = options;
   log(`running download:`);
   log(`-- from url: ${url}`);
   log(`-- to location: ${destinationPath}`);
-  let fulfill: ({ error }: {error: any}) => void = ({ error }) => {};
+  let fulfill: ({ error }: { error: any }) => void = ({ error }) => { };
   let downloadedBytes = 0;
   let totalBytes = 0;
 
-  const promise: Promise<{error: any}> = new Promise(x => { fulfill = x; });
+  const promise: Promise<{ error: any }> = new Promise(x => { fulfill = x; });
 
   httpRequest({
     url,
@@ -83,7 +83,7 @@ export async function download(
   destination: string,
   options: DownloadOptions = {}
 ) {
-  const { progressBarName = 'file', retryCount = 3, log = () => {}, userAgent } = options;
+  const { progressBarName = 'file', retryCount = 3, log = () => { }, userAgent } = options;
   for (let attempt = 1; attempt <= retryCount; ++attempt) {
     log(
         `downloading ${progressBarName} - attempt #${attempt}`
@@ -115,12 +115,16 @@ export async function download(
 }
 
 function getDownloadProgress(progressBarName: string): OnProgressCallback {
+  if (process.stdout.isTTY)
+    return _getInteractiveDownloadProgress(progressBarName);
+  return _getNonInteractiveDownloadProgress(progressBarName);
+}
+
+function _getInteractiveDownloadProgress(progressBarName: string): OnProgressCallback {
   let progressBar: ProgressBar;
   let lastDownloadedBytes = 0;
 
   return (downloadedBytes: number, totalBytes: number) => {
-    if (!process.stderr.isTTY)
-      return;
     if (!progressBar) {
       progressBar = new ProgressBar(
           `Downloading ${progressBarName} - ${toMegabytes(
@@ -137,6 +141,26 @@ function getDownloadProgress(progressBarName: string): OnProgressCallback {
     const delta = downloadedBytes - lastDownloadedBytes;
     lastDownloadedBytes = downloadedBytes;
     progressBar.tick(delta);
+  };
+}
+
+function _getNonInteractiveDownloadProgress(progressBarName: string): OnProgressCallback {
+  // eslint-disable-next-line no-console
+  console.log(`Downloading ${progressBarName}...`);
+  const width = 80;
+  const maxLines = 10;
+  const reportedSteps = width / maxLines;
+  const char = '■';
+  const boundary = '|';
+  let nextMinimum = 0;
+  return (downloadedBytes: number, totalBytes: number) => {
+    const percentage = Math.round(downloadedBytes / totalBytes * 100);
+    const currentWidth = Math.round(percentage / 100 * width);
+    if (currentWidth < nextMinimum)
+      return;
+    nextMinimum = currentWidth + (reportedSteps - currentWidth % reportedSteps);
+    // eslint-disable-next-line no-console
+    console.log(`${boundary}${char.repeat(currentWidth)}${' '.repeat(width - currentWidth)}${boundary} ${' '.repeat(3 - percentage.toString().length)}${percentage}% of ${toMegabytes(totalBytes)}`);
   };
 }
 
