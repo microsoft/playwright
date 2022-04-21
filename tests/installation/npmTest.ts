@@ -16,10 +16,7 @@
 import type { Expect } from '@playwright/test';
 import { test as _test, expect as _expect } from '@playwright/test';
 import fs from 'fs';
-import { promisify } from 'util';
-import { rimraf } from 'playwright-core/lib/utilsBundle';
 import path from 'path';
-import os from 'os';
 import type { Server } from 'http';
 import http from 'http';
 import https from 'https';
@@ -28,6 +25,7 @@ import type { SpawnOptions } from 'child_process';
 import debugLogger from 'debug';
 import { spawn } from 'child_process';
 
+const debug = debugLogger('itest');
 const debugExec = debugLogger('itest:exec');
 const debugExecStdout = debugLogger('itest:exec:stdout');
 const debugExecStderr = debugLogger('itest:exec:stderr');
@@ -316,13 +314,15 @@ export const test = _test.extend<{
           },
           tmpWorkspace: async ({}, use) => {
             // We want a location that won't have a node_modules dir anywhere along its path
-            const tmpWorkspace = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'playwright-installation-tests-workspace-'));
+            const tmpWorkspace = await fs.promises.mkdtemp(path.join('/tmp/pwt/workspaces', 'playwright-installation-tests-workspace-'));
+            debug(`Workspace Folder: ${tmpWorkspace}`);
             await spawnAsync('npm', ['init', '-y'], {
               cwd: tmpWorkspace,
             });
 
             await use(tmpWorkspace);
-            await promisify(rimraf)(tmpWorkspace);
+            // NOTE WELL: We do not remove for easier debugging
+            // await promisify(rimraf)(tmpWorkspace);
           },
           registry: async ({}, use, testInfo) => {
             const port = testInfo.workerIndex + 16123;

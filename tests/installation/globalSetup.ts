@@ -21,8 +21,12 @@ import fs from 'fs';
 
 
 const PACKAGE_BUILDER_SCRIPT = path.join(__dirname, '..', '..', 'utils', 'pack_package.js');
+const TMP_WORKSPACE = '/tmp/pwt/workspaces';
 
 async function globalSetup() {
+  await promisify(rimraf)(TMP_WORKSPACE);
+  console.log(`Temporary workspaces will be created in ${TMP_WORKSPACE}. They will not be removed at the end. Set DEBUG=itest to determine which sub-dir a specific test is using.`);
+  await fs.promises.mkdir(TMP_WORKSPACE, { recursive: true });
   if (process.env.PWTEST_INSTALLATION_TEST_SKIP_PACKAGE_BUILDS) {
     console.log('Skipped building packages. Unset PWTEST_INSTALLATION_TEST_SKIP_PACKAGE_BUILDS to build packages.');
     return;
