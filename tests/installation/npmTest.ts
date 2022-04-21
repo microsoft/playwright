@@ -289,6 +289,10 @@ export const test = _test.extend<{
           tmpWorkspace: async ({}, use) => {
             // We want a location that won't have a node_modules dir anywhere along its path
             const tmpWorkspace = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'playwright-installation-tests-workspace-'));
+            await spawnAsync('npm', ['init', '-y'], {
+              cwd: tmpWorkspace,
+            });
+
             await use(tmpWorkspace);
             await promisify(rimraf)(tmpWorkspace);
           },
@@ -310,6 +314,8 @@ export const test = _test.extend<{
                 cwd: tmpWorkspace,
                 env: {
                   ...process.env,
+                  //TODO: this is very unfortunate! Can we fix this?
+                  'INIT_CWD': undefined,
                   'PLAYWRIGHT_BROWSERS_PATH': path.join(tmpWorkspace, 'browsers'),
                   'npm_config_cache': testInfo.outputPath('npm_cache'),
                   'npm_config_registry': registry.url(),
