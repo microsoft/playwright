@@ -248,3 +248,37 @@ test('should teardown workers that are redundant', async ({ runInlineTest }) => 
     '%%worker teardown',
   ]);
 });
+
+test('should not hang if test suites in worker are inconsistent with runner', async ({ runInlineTest }) => {
+  const oldValue = process.env.TEST_WORKER_INDEX;
+  delete process.env.TEST_WORKER_INDEX;
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { name: 'project-name' };
+    `,
+    'names.js': `
+    exports.getNames = () => {
+      const inWorker = process.env.TEST_WORKER_INDEX !== undefined;
+      if (inWorker)
+        return ['foo'];
+      return ['foo', 'bar', 'baz'];
+    };
+    `,
+    'a.spec.js': `
+      const { test } = pwt;
+      const { getNames } = require('./names');
+      const names = getNames();
+      for (const index in names) {
+        test('Test ' + index + ' - ' + names[index], async () => {
+        });
+      }
+    `,
+  }, { 'workers': 1 });
+  process.env.TEST_WORKER_INDEX = oldValue;
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.skipped).toBe(1);
+  expect(result.report.suites[0].specs[1].tests[0].results[0].error.message).toBe('Unknown test(s) in worker:\nproject-name > a.spec.js > Test 1 - bar\nproject-name > a.spec.js > Test 2 - baz');
+});
+

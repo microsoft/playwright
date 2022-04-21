@@ -171,6 +171,7 @@ export class Dispatcher {
       worker.removeListener('stepEnd', onStepEnd);
       worker.removeListener('done', onDone);
       worker.removeListener('exit', onExit);
+      worker.removeListener('unknowTest', onUnknownTest);
       doneCallback();
     };
 
@@ -393,6 +394,15 @@ export class Dispatcher {
       onDone({ skipTestsDueToSetupFailure: [], fatalErrors: expectedly ? [] : [{ value: 'Worker process exited unexpectedly' }] });
     };
     worker.on('exit', onExit);
+
+    const onUnknownTest = (params: RunPayload) => {
+      const titles = params.entries.map(e => {
+        const test = this._testById.get(e.testId)!.test;
+        return test.titlePath().slice(1).join(' > ');
+      });
+      onDone({ skipTestsDueToSetupFailure: [], fatalErrors: [{ message: `Unknown test(s) in worker:\n${titles.join('\n')}` }] });
+    };
+    worker.on('unknowTest', onUnknownTest);
 
     return result;
   }

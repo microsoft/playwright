@@ -178,6 +178,8 @@ export class WorkerRunner extends EventEmitter {
           entries.delete(tests[i]._id);
           await this._runTest(tests[i], entry.retry, tests[i + 1]);
         }
+      } else {
+        this.emit('unknowTest', runPayload);
       }
     } catch (e) {
       // In theory, we should run above code without any errors.
