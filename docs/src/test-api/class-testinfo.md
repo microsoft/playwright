@@ -42,7 +42,7 @@ The list of files or buffers attached to the current test. Some reporters show t
 
 To add an attachment, use [`method: TestInfo.attach`] instead of directly pushing onto this array.
 
-## method: TestInfo.attach
+## async method: TestInfo.attach
 
 Attach a value or a file from disk to the current test. Some reporters show test attachments. Either [`option: path`] or [`option: body`] must be specified, but not both.
 
