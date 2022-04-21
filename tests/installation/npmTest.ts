@@ -355,6 +355,8 @@ export const test = _test.extend<{
                   ...fixtureOverrides }));
               });
 
+              await testInfo.attach(`${[cmd, ...args].join(' ')}`, { body: `COMMAND: ${[cmd, ...args].join(' ')}\n\nEXIT CODE: ${result.raw.code}\n\n===============\n\n${result.combined()}` });
+
               if (result.raw.code)
                 throw result;
 
