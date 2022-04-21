@@ -21,7 +21,7 @@ loadEnv({ path: path.join(__dirname, '..', '..', '.env') });
 
 const config: PlaywrightTestConfig = {
   testIgnore: '**\/fixture-scripts/**',
-  globalSetup: './globalSetup',
+  globalSetup: path.join(__dirname, 'globalSetup'),
   timeout: 5 * 60 * 1000,
   retries: 0,
   reporter: process.env.CI ? 'dot' : [['list'], ['html', { open: 'on-failure' }]],
