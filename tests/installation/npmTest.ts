@@ -275,7 +275,7 @@ export type ArgsOrOptions = [] | [...string[]] | [...string[], ExecOptions] | [E
 export const test = _test.extend<{
     _autoCopyScripts: void,
     tmpWorkspace: string,
-    nodeVersion: number,
+    nodeMajorVersion: number,
     installedBrowsers: () => Promise<string[]>;
     writeFiles: (nameToContents: Record<string, string>) => Promise<void>,
     exec: (cmd: string, ...argsAndOrOptions: ArgsOrOptions) => Promise<string>
@@ -291,7 +291,7 @@ export const test = _test.extend<{
           }, {
             auto: true,
           }],
-          nodeVersion: async ({}, use) => {
+          nodeMajorVersion: async ({}, use) => {
             await use(+process.versions.node.split('.')[0]);
           },
           writeFiles: async ({ tmpWorkspace }, use) => {

@@ -15,7 +15,7 @@
  */
 import { test } from './npmTest';
 
-test('@playwright/test should work', async ({ exec, nodeVersion }) => {
+test('@playwright/test should work', async ({ exec, nodeMajorVersion }) => {
   await exec('npm i --foreground-scripts @playwright/test');
   await exec('npx playwright test -c .', { expectToExitWithError: true, message: 'should not be able to run tests without installing browsers' });
 
@@ -24,6 +24,6 @@ test('@playwright/test should work', async ({ exec, nodeVersion }) => {
   await exec('npx playwright test -c . --browser=all --reporter=list,json sample.spec.js', { env });
   await exec('node ./read-json-report.js ./report.json', { env });
   await exec('node sanity.js @playwright/test', { env });
-  if (nodeVersion >= 14)
+  if (nodeMajorVersion >= 14)
     await exec('node', 'esm-playwright-test.mjs', { env });
 });

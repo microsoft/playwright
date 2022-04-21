@@ -15,12 +15,12 @@
  */
 import { test, expect } from './npmTest';
 
-test(`playwright should work`, async ({ exec, nodeVersion, installedBrowsers }) => {
+test(`playwright should work`, async ({ exec, nodeMajorVersion, installedBrowsers }) => {
   const result = await exec('npm i --foreground-scripts playwright');
   (expect(result) as any).toHaveDownloaded(['chromium', 'firefox', 'webkit']);
   expect(await installedBrowsers()).toEqual(['chromium', 'firefox', 'webkit']);
   await exec('node ./sanity.js playwright');
-  if (nodeVersion >= 14)
+  if (nodeMajorVersion >= 14)
     await exec('node esm-playwright.mjs');
   const error = await exec('npx playwright', 'test', '-c', '.', { expectToExitWithError: true });
   expect(error).toContain(`Please install @playwright/test package to use Playwright Test.`);
