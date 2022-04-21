@@ -11109,12 +11109,17 @@ export interface Android {
    */
   devices(options?: {
     /**
+     * Optional host to establish ADB server connection. Default to `127.0.0.1`.
+     */
+    host?: string;
+
+    /**
      * Prevents automatic playwright driver installation on attach. Assumes that the drivers have been installed already.
      */
     omitDriverInstall?: boolean;
 
     /**
-     * Optional port to establish ADB server connection.
+     * Optional port to establish ADB server connection. Default to `5037`.
      */
     port?: number;
   }): Promise<Array<AndroidDevice>>;

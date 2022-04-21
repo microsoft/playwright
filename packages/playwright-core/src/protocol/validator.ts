@@ -1308,6 +1308,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   });
   scheme.ElectronApplicationCloseParams = tOptional(tObject({}));
   scheme.AndroidDevicesParams = tObject({
+    host: tOptional(tString),
     port: tOptional(tNumber),
     omitDriverInstall: tOptional(tBoolean),
   });
