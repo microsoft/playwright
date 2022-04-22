@@ -2,7 +2,7 @@
 window.addEventListener('DOMContentLoaded', () => {
   const iframe = document.createElement('iframe');
   const url = new URL(location.href);
-  url.hostname = '127.0.0.2';
+  url.hostname = '::1';
   url.pathname = '/one-style.html';
   iframe.src = url.toString();
   document.body.appendChild(iframe);

@@ -7,7 +7,7 @@ window.addEventListener('DOMContentLoaded', () => {
   iframe.src = url.toString();
   document.body.appendChild(iframe);
   setTimeout(() => {
-    url.hostname = '127.0.0.3'
+    url.hostname = 'localhost'
     iframe.src = url.toString();
   }, 50);
 }, false);
