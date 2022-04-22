@@ -55,8 +55,8 @@ compile_chromium() {
   source "${SCRIPT_FOLDER}/ensure_depot_tools.sh"
 
   if [[ $(uname) == "Darwin" ]]; then
-    # As of Feb, 2022 Chromium mac compilation requires Xcode13.2
-    selectXcodeVersionOrDie "13.2"
+    # As of Apr, 2022 Chromium mac compilation requires Xcode13.3
+    selectXcodeVersionOrDie "13.3"
   fi
 
   cd "${CR_CHECKOUT_PATH}/src"
