@@ -58,7 +58,7 @@ if [[ "$(uname)" == "Darwin" ]]; then
   elif [[ "${CURRENT_HOST_OS_VERSION}" == "11."* ]]; then
     selectXcodeVersionOrDie "12.5"
   elif [[ "${CURRENT_HOST_OS_VERSION}" == "12."* ]]; then
-    selectXcodeVersionOrDie "13.2"
+    selectXcodeVersionOrDie "13.3"
   else
     echo "ERROR: ${CURRENT_HOST_OS_VERSION} is not supported"
     exit 1
