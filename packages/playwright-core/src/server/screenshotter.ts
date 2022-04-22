@@ -119,7 +119,7 @@ export class Screenshotter {
       await this._preparePageForScreenshot(progress, options.caret !== 'initial', options.animations === 'disabled', options.fonts === 'ready');
       progress.throwIfAborted(); // Do not do extra work.
 
-      await handle._waitAndScrollIntoViewIfNeeded(progress);
+      await handle._waitAndScrollIntoViewIfNeeded(progress, true /* waitForVisible */);
 
       progress.throwIfAborted(); // Do not do extra work.
       const boundingBox = await handle.boundingBox();

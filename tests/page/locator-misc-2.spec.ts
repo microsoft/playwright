@@ -42,6 +42,34 @@ it('should scroll into view', async ({ page, server, isAndroid }) => {
   }
 });
 
+it('should scroll zero-sized element into view', async ({ page, isAndroid }) => {
+  it.fixme(isAndroid);
+
+  await page.setContent(`
+    <style>html,body { margin: 0; padding: 0; }</style>
+    <div style="height: 2000px; text-align: center; border: 10px solid blue;">
+      <h1>SCROLL DOWN</h1>
+    </div>
+    <div id=lazyload style="font-size:75px; background-color: green;"></div>
+    <script>
+      const lazyLoadElement = document.querySelector('#lazyload');
+      const observer = new IntersectionObserver((entries) => {
+        if (entries.some(entry => entry.isIntersecting)) {
+          lazyLoadElement.textContent = 'LAZY LOADED CONTENT';
+          lazyLoadElement.style.height = '20px';
+          observer.disconnect();
+        }
+      });
+      observer.observe(lazyLoadElement);
+    </script>
+  `);
+  expect(await page.locator('#lazyload').boundingBox()).toEqual({ x: 0, y: 2020, width: 1280, height: 0 });
+  await page.locator('#lazyload').scrollIntoViewIfNeeded();
+  await page.evaluate(() => new Promise(requestAnimationFrame));
+  expect(await page.locator('#lazyload').textContent()).toBe('LAZY LOADED CONTENT');
+  expect(await page.locator('#lazyload').boundingBox()).toEqual({ x: 0, y: 720, width: 1280, height: 20 });
+});
+
 it('should select textarea', async ({ page, server, browserName }) => {
   await page.goto(server.PREFIX + '/input/textarea.html');
   const textarea = page.locator('textarea');
