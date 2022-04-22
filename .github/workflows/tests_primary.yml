@@ -55,6 +55,36 @@ jobs:
         name: ${{ matrix.browser }}-${{ matrix.os }}-test-results
         path: test-results
 
+  test_linux_chromium_tot:
+    name: ${{ matrix.os }} (chromium tip-of-tree)
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-20.04]
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-node@v2
+      with:
+        node-version: 12
+    - run: npm i -g npm@8.3
+    - run: npm ci
+      env:
+        DEBUG: pw:install
+        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+    - run: npm run build
+    - run: npx playwright install --with-deps chromium-tip-of-tree
+    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run test -- --project=chromium
+      env:
+        PWTEST_CHANNEL: chromium-tip-of-tree
+    - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
+      if: always()
+    - uses: actions/upload-artifact@v1
+      if: always()
+      with:
+        name: ${{ matrix.browser }}-chromium-tip-of-tree-test-results
+        path: test-results
+
   test_test_runner:
     name: Test Runner
     strategy:
