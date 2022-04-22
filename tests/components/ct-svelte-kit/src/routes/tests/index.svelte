@@ -12,4 +12,4 @@ onMount(async () => {
 });
 </script>
 
-<div id="app"></div>
+<div id="root"></div>

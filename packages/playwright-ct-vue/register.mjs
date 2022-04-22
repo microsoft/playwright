@@ -129,6 +129,6 @@ window.playwrightMount = async component => {
     render: () => render(component)
   });
   instance.setDevtoolsHook(createDevTools(), {});
-  app.mount('#app');
-  return '#app > *';
+  app.mount('#root');
+  return '#root > *';
 };

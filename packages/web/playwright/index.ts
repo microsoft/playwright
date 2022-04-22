@@ -14,4 +14,6 @@
  * limitations under the License.
  */
 
-// Playwright's Vite plugin is dynamically populating this file with the components.
+import '../src/common.css';
+import '../src/theme.ts';
+import '../src/third_party/vscode/codicon.css';

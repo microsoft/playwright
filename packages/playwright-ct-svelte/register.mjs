@@ -41,11 +41,11 @@ const playwrightMount = component => {
     throw new Error(`Unregistered component: ${component.type}. Following components are registered: ${[...registry.keys()]}`);
 
   const wrapper = new componentCtor({
-    target: document.getElementById('app'),
+    target: document.getElementById('root'),
     props: component.options?.props,
   });
 
   for (const [key, listener] of Object.entries(component.options?.on || {}))
     wrapper.$on(key, event => listener(event.detail));
-  return '#app > *';
+  return '#root > *';
 };

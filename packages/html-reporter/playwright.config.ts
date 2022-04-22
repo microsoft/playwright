@@ -28,13 +28,13 @@ const config: PlaywrightTestConfig = {
     ['html', { open: 'on-failure' }]
   ],
   webServer: {
-    url: 'http://localhost:3101/playwright.html',
+    url: 'http://localhost:3101/playwright/index.html',
     command: 'npm run playwright-dev',
     cwd: __dirname,
     reuseExistingServer: !process.env.CI,
   },
   use: {
-    baseURL: 'http://localhost:3101/playwright.html',
+    baseURL: 'http://localhost:3101/playwright/index.html',
     trace: 'on-first-retry',
   },
   projects: [ ],
