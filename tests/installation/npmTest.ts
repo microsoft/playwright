@@ -35,7 +35,7 @@ const debug = debugLogger('itest');
  */
 
 _expect.extend({
-  toHaveLoggedBrowserDownload(received: any, browsers: ('chromium' | 'firefox' | 'webkit' | 'ffmpeg')[]) {
+  toHaveLoggedSoftwareDownload(received: any, browsers: ('chromium' | 'firefox' | 'webkit' | 'ffmpeg')[]) {
     if (typeof received !== 'string')
       throw new Error(`Expected argument to be a string.`);
 
@@ -50,7 +50,7 @@ _expect.extend({
       pass: false,
       message: () => [
         `Browser download expectation failed!`,
-        ` expected: ${[...expected.sort().join(', ')]}`,
+        ` expected: ${[...expected].sort().join(', ')}`,
         `   actual: ${[...downloaded].sort().join(', ')}`,
       ].join('\n'),
     };

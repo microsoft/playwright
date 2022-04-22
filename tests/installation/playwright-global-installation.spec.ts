@@ -17,8 +17,8 @@ import { test, expect } from './npmTest';
 
 test('global installation', async ({ exec, installedSoftwareOnDisk }) => {
   const result = await exec('npm i --foreground-scripts playwright');
-  expect(result).toHaveLoggedSoftwareDownload(['chromium', 'firefox', 'webkit']);
-  expect(await installedSoftwareOnDisk()).toEqual(['chromium', 'firefox', 'webkit']);
+  expect(result).toHaveLoggedSoftwareDownload(['chromium', 'ffmpeg', 'firefox', 'webkit']);
+  expect(await installedSoftwareOnDisk()).toEqual(['chromium', 'ffmpeg', 'firefox', 'webkit']);
   await exec('node sanity.js playwright none', { env: { PLAYWRIGHT_BROWSERS_PATH: undefined } });
   await exec('node ./sanity.js playwright');
 });

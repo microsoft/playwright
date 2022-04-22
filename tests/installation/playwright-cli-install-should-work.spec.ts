@@ -27,7 +27,7 @@ test('codegen should work', async ({ exec, installedSoftwareOnDisk }) => {
   await test.step('playwright install', async () => {
     const result = await exec('npx playwright install');
     expect(result).toHaveLoggedSoftwareDownload(['firefox', 'webkit']);
-    expect(await installedSoftwareOnDisk()).toEqual(['chromium', 'firefox', 'webkit', 'ffmpeg']);
+    expect(await installedSoftwareOnDisk()).toEqual(['chromium', 'ffmpeg', 'firefox', 'webkit']);
   });
 
   await exec('node sanity.js playwright none', { env: {  PLAYWRIGHT_BROWSERS_PATH: undefined } });

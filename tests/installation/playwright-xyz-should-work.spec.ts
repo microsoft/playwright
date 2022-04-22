@@ -20,8 +20,11 @@ for (const pkg of ['playwright-chromium', 'playwright-firefox', 'playwright-webk
   test(`${pkg} should work`, async ({ exec, nodeMajorVersion, installedSoftwareOnDisk }) => {
     const result = await exec('npm i --foreground-scripts', pkg);
     const browserName = pkg.split('-')[1];
-    expect(result).toHaveLoggedSoftwareDownload([browserName as any]);
-    expect(await installedSoftwareOnDisk()).toEqual([browserName]);
+    const expectedSoftware = [browserName];
+    if (browserName === 'chromium')
+      expectedSoftware.push('ffmpeg');
+    expect(result).toHaveLoggedSoftwareDownload(expectedSoftware as any);
+    expect(await installedSoftwareOnDisk()).toEqual(expectedSoftware);
     expect(result).not.toContain(`To avoid unexpected behavior, please install your dependencies first`);
     await exec('node ./sanity.js', pkg);
     if (nodeMajorVersion >= 14)
