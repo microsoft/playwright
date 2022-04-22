@@ -67,7 +67,7 @@ else
   echo "ac_add_options --enable-release" >> .mozconfig
 fi
 
-if is_win || is_linux; then
+if is_win || is_mac; then
   # This options is only available on win and mac.
   echo "ac_add_options --disable-update-agent" >> .mozconfig
 fi
