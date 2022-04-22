@@ -1,0 +1,14 @@
+<script>
+window.addEventListener('DOMContentLoaded', () => {
+  const iframe = document.createElement('iframe');
+  const url = new URL(location.href);
+  url.hostname = '127.0.0.1';
+  url.pathname = '/inner-oopif.html';
+  iframe.src = url.toString();
+  document.body.appendChild(iframe);
+  setTimeout(() => {
+    url.hostname = '127.0.0.3'
+    iframe.src = url.toString();
+  }, 50);
+}, false);
+</script>

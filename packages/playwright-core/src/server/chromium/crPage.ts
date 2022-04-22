@@ -386,6 +386,8 @@ class FrameSession {
   readonly _crPage: CRPage;
   readonly _page: Page;
   readonly _networkManager: CRNetworkManager;
+  private readonly _parentSession: FrameSession | null;
+  private readonly _childSessions = new Set<FrameSession>();
   private readonly _contextIdToContext = new Map<number, dom.FrameExecutionContext>();
   private _eventListeners: RegisteredListener[] = [];
   readonly _targetId: string;
@@ -408,6 +410,9 @@ class FrameSession {
     this._page = crPage._page;
     this._targetId = targetId;
     this._networkManager = new CRNetworkManager(client, this._page, parentSession ? parentSession._networkManager : null);
+    this._parentSession = parentSession;
+    if (parentSession)
+      parentSession._childSessions.add(this);
     this._firstNonInitialNavigationCommittedPromise = new Promise((f, r) => {
       this._firstNonInitialNavigationCommittedFulfill = f;
       this._firstNonInitialNavigationCommittedReject = r;
@@ -569,6 +574,10 @@ class FrameSession {
   }
 
   dispose() {
+    for (const childSession of this._childSessions)
+      childSession.dispose();
+    if (this._parentSession)
+      this._parentSession._childSessions.delete(this);
     eventsHelper.removeEventListeners(this._eventListeners);
     this._networkManager.dispose();
     this._crPage._sessions.delete(this._targetId);
