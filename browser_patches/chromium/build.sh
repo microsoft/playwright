@@ -56,8 +56,7 @@ compile_chromium() {
   source "${SCRIPT_FOLDER}/ensure_depot_tools.sh"
 
   if is_mac; then
-    # As of Apr, 2022 Chromium mac compilation requires Xcode13.3
-    selectXcodeVersionOrDie "13.3"
+    selectXcodeVersionOrDie $(node "${SCRIPT_FOLDER}/../get_xcode_version.js" chromium)
   fi
 
   cd "${CR_CHECKOUT_PATH}/src"
