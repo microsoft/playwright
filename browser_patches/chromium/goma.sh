@@ -22,6 +22,7 @@ fi
 if [[ ! -d ./electron-build-tools ]]; then
   git clone --single-branch --branch main https://github.com/electron/build-tools/ electron-build-tools
   cd electron-build-tools
+  git checkout 926e1a2f2926b9a7663ae865c3bd9a1b1d366393
   npm install
   mkdir -p third_party
   ./src/e update-goma msftGoma
@@ -91,4 +92,3 @@ else
   echo "Use --help to list all available commands"
   exit 1
 fi
-
