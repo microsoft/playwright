@@ -12,6 +12,11 @@
       "installByDefault": false
     },
     {
+      "name": "chromium-tip-of-tree",
+      "revision": "1000",
+      "installByDefault": false
+    },
+    {
       "name": "firefox",
       "revision": "1322",
       "installByDefault": true

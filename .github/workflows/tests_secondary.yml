@@ -304,6 +304,83 @@ jobs:
         name: chrome-stable-mac-test-results
         path: test-results
 
+  chromium_tot_linux:
+    name: "Chromium TOT (Linux)"
+    runs-on: ubuntu-20.04
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-node@v2
+      with:
+        node-version: 12
+    - run: npm i -g npm@8.3
+    - run: npm ci
+      env:
+        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+    - run: npm run build
+    - run: npx playwright install --with-deps chromium-tip-of-tree
+    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run ctest
+      env:
+        PWTEST_CHANNEL: chromium-tip-of-tree
+    - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
+      if: always()
+    - uses: actions/upload-artifact@v1
+      if: ${{ always() }}
+      with:
+        name: chromium-tot-linux-test-results
+        path: test-results
+
+  chromium_tot_win:
+    name: "Chromium TOT (Win)"
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-node@v2
+      with:
+        node-version: 12
+    - run: npm i -g npm@8.3
+    - run: npm ci
+      env:
+        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+    - run: npm run build
+    - run: npx playwright install --with-deps chromium-tip-of-tree
+    - run: npm run ctest
+      shell: bash
+      env:
+        PWTEST_CHANNEL: chromium-tip-of-tree
+    - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
+      if: always()
+      shell: bash
+    - uses: actions/upload-artifact@v1
+      if: ${{ always() }}
+      with:
+        name: chromium-tot-win-test-results
+        path: test-results
+
+  chromium_tot_mac:
+    name: "Chromium TOT (Mac)"
+    runs-on: macos-10.15
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-node@v2
+      with:
+        node-version: 12
+    - run: npm i -g npm@8.3
+    - run: npm ci
+      env:
+        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+    - run: npm run build
+    - run: npx playwright install --with-deps chromium-tip-of-tree
+    - run: npm run ctest
+      env:
+        PWTEST_CHANNEL: chromium-tip-of-tree
+    - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
+      if: always()
+    - uses: actions/upload-artifact@v1
+      if: ${{ always() }}
+      with:
+        name: chromium-tot-mac-test-results
+        path: test-results
+
   firefox_beta_linux:
     name: "Firefox Beta (Linux)"
     runs-on: ubuntu-20.04
