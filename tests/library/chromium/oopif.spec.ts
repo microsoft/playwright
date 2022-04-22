@@ -94,16 +94,6 @@ it('should expose function', async ({ page, browser, server }) => {
   expect(result).toBe(36);
 });
 
-it('should not hang in exposeBinding when nested oopifs navigate', async ({ page, browser, server }) => {
-  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/13637' });
-  await page.goto(server.PREFIX + '/outer-oopif.html');
-  await page.context().exposeBinding('mul', (source, a, b) => a * b);
-  const result = await page.evaluate(async function() {
-    return await window['mul'](9, 4);
-  });
-  expect(result).toBe(36);
-});
-
 it('should emulate media', async ({ page, browser, server }) => {
   await page.goto(server.PREFIX + '/dynamic-oopif.html');
   expect(page.frames().length).toBe(2);
