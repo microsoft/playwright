@@ -375,7 +375,10 @@ export class SocksProxyHandler extends EventEmitter {
 
   async socketRequested({ uid, host, port }: SocksSocketRequestedPayload): Promise<void> {
     if (host === 'local.playwright')
-      host = 'localhost';
+      host = '127.0.0.1';
+    // Node.js 17 does resolve localhost to ipv6
+    if (host === 'localhost')
+      host = '127.0.0.1';
     try {
       if (this._redirectPortForTest)
         port = this._redirectPortForTest;

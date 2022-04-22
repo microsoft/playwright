@@ -51,7 +51,7 @@ it.describe('permissions', () => {
   it('should prompt for geolocation permission when origin is not listed', async ({ page, context, server }) => {
     await page.goto(server.EMPTY_PAGE);
     await context.grantPermissions(['geolocation'], { origin: server.EMPTY_PAGE });
-    await page.goto(server.EMPTY_PAGE.replace('localhost', '127.0.0.1'));
+    await page.goto(server.CROSS_PROCESS_PREFIX + '/empty.html');
     expect(await getPermission(page, 'geolocation')).toBe('prompt');
   });
 

@@ -364,11 +364,12 @@ export abstract class APIRequestContext extends SdkObject {
             if (e)
               reject(new Error(`failed to decompress '${encoding}' encoding: ${e}`));
           });
+        } else {
+          body.on('error', reject);
         }
 
         body.on('data', chunk => chunks.push(chunk));
         body.on('end', notifyBodyFinished);
-        body.on('error', reject);
       });
       request.on('error', reject);
 
