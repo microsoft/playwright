@@ -115,7 +115,7 @@ export async function download(
 }
 
 function getDownloadProgress(progressBarName: string): OnProgressCallback {
-  if (false && process.stdout.isTTY)
+  if (process.stdout.isTTY)
     return _getAnimatedDownloadProgress(progressBarName);
   return _getBasicDownloadProgress(progressBarName);
 }
@@ -147,18 +147,18 @@ function _getAnimatedDownloadProgress(progressBarName: string): OnProgressCallba
 function _getBasicDownloadProgress(progressBarName: string): OnProgressCallback {
   // eslint-disable-next-line no-console
   console.log(`Downloading ${progressBarName}...`);
-  const width = 80;
-  const maxLines = 10;
-  const reportedSteps = width / (maxLines - 1);
-  let nextMinimum = 0;
+  const totalRows = 10;
+  const stepWidth = 8;
+  let lastRow = -1;
   return (downloadedBytes: number, totalBytes: number) => {
-    const percentage = Math.round(downloadedBytes / totalBytes * 100);
-    const currentWidth = Math.round(percentage / 100 * width);
-    if (currentWidth < nextMinimum)
-      return;
-    nextMinimum = currentWidth + (reportedSteps - currentWidth % reportedSteps);
-    // eslint-disable-next-line no-console
-    console.log(`|${'■'.repeat(currentWidth)}${' '.repeat(width - currentWidth)}| ${percentage.toString().padStart(3)}% of ${toMegabytes(totalBytes)}`);
+    const percentage = downloadedBytes / totalBytes;
+    const row = Math.floor(totalRows * percentage);
+    if (row > lastRow) {
+      lastRow = row;
+      const percentageString = String(percentage * 100 | 0).padStart(3);
+      // eslint-disable-next-line no-console
+      console.log(`|${'■'.repeat(row * stepWidth)}${' '.repeat((totalRows - row) * stepWidth)}| ${percentageString}% of ${toMegabytes(totalBytes)}`);
+    }
   };
 }
 
