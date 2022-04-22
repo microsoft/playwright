@@ -14,18 +14,5 @@
  * limitations under the License.
  */
 
-import { AutoChip, Chip } from './chip';
-import { HeaderView } from './headerView';
-import { ImageDiffView } from './imageDiffView';
-import { TestCaseView } from './testCaseView';
-import './theme.css';
-
-import register from '@playwright/experimental-ct-react/register';
-
-register({
-  AutoChip,
-  Chip,
-  HeaderView,
-  ImageDiffView,
-  TestCaseView,
-});
+const { createVitePlugin } = require('@playwright/test/lib/vitePlugin');
+module.exports = createVitePlugin('@playwright/experimental-ct-vue/register');

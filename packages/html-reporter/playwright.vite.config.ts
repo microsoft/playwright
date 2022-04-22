@@ -16,14 +16,16 @@
 
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-import { bundle } from './bundle';
-import * as path from 'path';
+import playwrightPlugin from '@playwright/experimental-ct-react/vitePlugin';
+import path from 'path';
 
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
     react(),
-    bundle()
+    playwrightPlugin({
+      imports: ['./src/theme.css']
+    }),
   ],
   resolve: {
     alias: {
@@ -31,17 +33,7 @@ export default defineConfig({
       '@playwright-core': path.resolve(__dirname, '../playwright-core/src'),
     },
   },
-  build: {
-    outDir: path.resolve(__dirname, 'dist'),
-    emptyOutDir: true,
-    assetsInlineLimit: 100000000,
-    chunkSizeWarningLimit: 100000000,
-    cssCodeSplit: false,
-    rollupOptions: {
-      inlineDynamicImports: true,
-      output: {
-        manualChunks: undefined,
-      },
-    },
+  server: {
+    port: 3101,
   },
 });

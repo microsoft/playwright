@@ -22,6 +22,9 @@ export const debug = debugLibrary;
 
 export { getProxyForUrl } from 'proxy-from-env';
 
+import globLibrary from 'glob';
+export const glob = globLibrary;
+
 export { HttpsProxyAgent } from 'https-proxy-agent';
 
 import jpegLibrary from 'jpeg-js';

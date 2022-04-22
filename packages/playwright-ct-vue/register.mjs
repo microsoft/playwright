@@ -31,7 +31,23 @@ const allListeners = [];
 function render(component) {
   if (typeof component === 'string')
     return component;
-  const componentFunc = registry.get(component.type) || component.type;
+
+  let componentFunc = registry.get(component.type);
+  if (!componentFunc) {
+    // Lookup by shorthand.
+    for (const [name, value] of registry) {
+      if (component.type.endsWith(`_${name}_vue`)) {
+        componentFunc = value;
+        break;
+      }
+    }
+  }
+
+  if (!componentFunc && component.type[0].toUpperCase() === component.type[0])
+    throw new Error(`Unregistered component: ${component.type}. Following components are registered: ${[...registry.keys()]}`);
+
+  componentFunc = componentFunc || component.type;
+
   const isVueComponent = componentFunc !== component.type;
 
   const children = [];

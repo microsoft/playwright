@@ -26,12 +26,12 @@ const config: PlaywrightTestConfig = {
     ['html', { open: 'on-failure' }]
   ],
   webServer: {
-    url: 'http://localhost:3000/tests.html',
-    command: 'npm run dev',
+    url: 'http://localhost:3000/playwright.html',
+    command: 'npm run playwright-dev',
     reuseExistingServer: !process.env.CI,
   },
   use: {
-    baseURL: 'http://localhost:3000/tests.html',
+    baseURL: 'http://localhost:3000/playwright.html',
     trace: 'on-first-retry',
   },
   projects: [

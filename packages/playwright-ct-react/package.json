@@ -14,7 +14,8 @@
   "license": "Apache-2.0",
   "exports": {
     "./register": "./register.mjs",
-    "./test": "./test.js"
+    "./test": "./test.js",
+    "./vitePlugin": "./vitePlugin.js"
   },
   "devDependencies": {
     "@playwright/test": "1.22.0-next"

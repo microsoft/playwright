@@ -16,7 +16,7 @@
 
 import React from 'react';
 import { expect, test } from '@playwright/experimental-ct-react/test';
-import { AutoChip, Chip } from './chip';
+import { AutoChip, Chip as LocalChip } from './chip';
 
 test.use({ viewport: { width: 500, height: 500 } });
 
@@ -42,9 +42,9 @@ test('render long title', async ({ mount }) => {
 
 test('setExpanded is called', async ({ mount }) => {
   const expandedValues: boolean[] = [];
-  const component = await mount(<Chip header='Title'
+  const component = await mount(<LocalChip header='Title'
     setExpanded={(expanded: boolean) => expandedValues.push(expanded)}>
-  </Chip>);
+  </LocalChip>);
 
   await component.locator('text=Title').click();
   expect(expandedValues).toEqual([true]);
