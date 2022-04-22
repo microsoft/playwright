@@ -191,7 +191,7 @@ it.describe('selector generator', () => {
       </a>
       <a><b></b></a>
     `);
-    expect(await generate(page, 'c[mark="1"]')).toBe('b:nth-child(2) c');
+    expect(await generate(page, 'c[mark="1"]')).toBe('b:nth-child(2) > c');
   });
 
   it('should not use input[value]', async ({ page }) => {
