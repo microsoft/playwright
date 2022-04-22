@@ -1474,7 +1474,7 @@ export interface TestInfo {
     contentType?: string;
 
     path?: string;
-  }): void;
+  }): Promise<void>;
 
   /**
    * Column number where the currently running test is declared.

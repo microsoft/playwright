@@ -11118,12 +11118,17 @@ export interface Android {
    */
   devices(options?: {
     /**
+     * Optional host to establish ADB server connection. Default to `127.0.0.1`.
+     */
+    host?: string;
+
+    /**
      * Prevents automatic playwright driver installation on attach. Assumes that the drivers have been installed already.
      */
     omitDriverInstall?: boolean;
 
     /**
-     * Optional port to establish ADB server connection.
+     * Optional port to establish ADB server connection. Default to `5037`.
      */
     port?: number;
   }): Promise<Array<AndroidDevice>>;
@@ -17143,7 +17148,7 @@ interface TestConfig {
     reuseExistingServer?: boolean;
 
     /**
-     * Current working directory of the spawned process, `process.cwd()` by default.
+     * Current working directory of the spawned process, defaults to the directory of the configuration file.
      */
     cwd?: string;
 
@@ -17687,7 +17692,7 @@ export interface TestInfo {
     contentType?: string;
 
     path?: string;
-  }): void;
+  }): Promise<void>;
 
   /**
    * Column number where the currently running test is declared.

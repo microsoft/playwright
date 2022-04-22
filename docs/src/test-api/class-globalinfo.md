@@ -98,7 +98,7 @@ The list of files or buffers attached to the overall test run. Some reporters sh
 
 To add an attachment, use [`method: GlobalInfo.attach`]. See [`property: TestInfo.attachments`] if you are looking for test-scoped attachments.
 
-## method: GlobalInfo.attach
+## async method: GlobalInfo.attach
 
 Attach a value or a file from disk to the overall test run. Some reporters show global attachments. Either [`option: path`] or [`option: body`] must be specified, but not both.
 
