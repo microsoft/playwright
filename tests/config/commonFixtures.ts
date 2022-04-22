@@ -141,7 +141,7 @@ export const commonFixtures: Fixtures<CommonFixtures, {}> = {
     await use(async port => {
       while (!token.canceled) {
         const promise = new Promise<boolean>(resolve => {
-          const conn = net.connect(port)
+          const conn = net.connect(port, '127.0.0.1')
               .on('error', () => resolve(false))
               .on('connect', () => {
                 conn.end();

@@ -102,7 +102,7 @@ playwrightTest('should connect to an existing cdp session', async ({ browserType
   });
   try {
     const cdpBrowser = await browserType.connectOverCDP({
-      endpointURL: `http://localhost:${port}/`,
+      endpointURL: `http://127.0.0.1:${port}/`,
     });
     const contexts = cdpBrowser.contexts();
     expect(contexts.length).toBe(1);
@@ -120,7 +120,7 @@ playwrightTest('should cleanup artifacts dir after connectOverCDP disconnects du
     args: ['--remote-debugging-port=' + port]
   });
   const cdpBrowser = await browserType.connectOverCDP({
-    endpointURL: `http://localhost:${port}/`,
+    endpointURL: `http://127.0.0.1:${port}/`,
   });
   const dir = toImpl(cdpBrowser).options.artifactsDir;
   const exists1 = fs.existsSync(dir);
@@ -140,10 +140,10 @@ playwrightTest('should connect to an existing cdp session twice', async ({ brows
   });
   try {
     const cdpBrowser1 = await browserType.connectOverCDP({
-      endpointURL: `http://localhost:${port}/`,
+      endpointURL: `http://127.0.0.1:${port}/`,
     });
     const cdpBrowser2 = await browserType.connectOverCDP({
-      endpointURL: `http://localhost:${port}/`,
+      endpointURL: `http://127.0.0.1:${port}/`,
     });
     const contexts1 = cdpBrowser1.contexts();
     expect(contexts1.length).toBe(1);
@@ -178,7 +178,7 @@ playwrightTest('should connect to existing page with iframe and navigate', async
       const page = await context1.newPage();
       await page.goto(server.PREFIX + '/frames/one-frame.html');
     }
-    const cdpBrowser = await browserType.connectOverCDP(`http://localhost:${port}/`);
+    const cdpBrowser = await browserType.connectOverCDP(`http://127.0.0.1:${port}/`);
     const contexts = cdpBrowser.contexts();
     expect(contexts.length).toBe(1);
     await contexts[0].pages()[0].goto(server.EMPTY_PAGE);
@@ -195,7 +195,7 @@ playwrightTest('should connect to existing service workers', async ({ browserTyp
   });
   try {
     const cdpBrowser1 = await browserType.connectOverCDP({
-      endpointURL: `http://localhost:${port}`,
+      endpointURL: `http://127.0.0.1:${port}`,
     });
     const context = cdpBrowser1.contexts()[0];
     const page = await cdpBrowser1.contexts()[0].newPage();
@@ -207,7 +207,7 @@ playwrightTest('should connect to existing service workers', async ({ browserTyp
     await cdpBrowser1.close();
 
     const cdpBrowser2 = await browserType.connectOverCDP({
-      endpointURL: `http://localhost:${port}`,
+      endpointURL: `http://127.0.0.1:${port}`,
     });
     const context2 = cdpBrowser2.contexts()[0];
     expect(context2.serviceWorkers().length).toBe(1);
@@ -224,7 +224,7 @@ playwrightTest('should connect over a ws endpoint', async ({ browserType, server
   });
   try {
     const json = await new Promise<string>((resolve, reject) => {
-      http.get(`http://localhost:${port}/json/version/`, resp => {
+      http.get(`http://127.0.0.1:${port}/json/version/`, resp => {
         let data = '';
         resp.on('data', chunk => data += chunk);
         resp.on('end', () => resolve(data));
@@ -306,7 +306,7 @@ playwrightTest('should report all pages in an existing browser', async ({ browse
   });
   try {
     const cdpBrowser = await browserType.connectOverCDP({
-      endpointURL: `http://localhost:${port}/`,
+      endpointURL: `http://127.0.0.1:${port}/`,
     });
     const contexts = cdpBrowser.contexts();
     expect(contexts.length).toBe(1);
@@ -315,7 +315,7 @@ playwrightTest('should report all pages in an existing browser', async ({ browse
     await cdpBrowser.close();
 
     const cdpBrowser2 = await browserType.connectOverCDP({
-      endpointURL: `http://localhost:${port}/`,
+      endpointURL: `http://127.0.0.1:${port}/`,
     });
     expect(cdpBrowser2.contexts()[0].pages().length).toBe(3);
 
@@ -332,7 +332,7 @@ playwrightTest('should connect via https', async ({ browserType, httpsServer, mo
     args: ['--remote-debugging-port=' + port]
   });
   const json = await new Promise<string>((resolve, reject) => {
-    http.get(`http://localhost:${port}/json/version/`, resp => {
+    http.get(`http://127.0.0.1:${port}/json/version/`, resp => {
       let data = '';
       resp.on('data', chunk => data += chunk);
       resp.on('end', () => resolve(data));
@@ -366,7 +366,7 @@ playwrightTest('should return valid browser from context.browser()', async ({ br
   });
   try {
     const cdpBrowser = await browserType.connectOverCDP({
-      endpointURL: `http://localhost:${port}/`,
+      endpointURL: `http://127.0.0.1:${port}/`,
     });
     const contexts = cdpBrowser.contexts();
     expect(contexts.length).toBe(1);
@@ -410,7 +410,7 @@ playwrightTest('should connect to an existing cdp session when passed as a first
     args: ['--remote-debugging-port=' + port]
   });
   try {
-    const cdpBrowser = await browserType.connectOverCDP(`http://localhost:${port}/`);
+    const cdpBrowser = await browserType.connectOverCDP(`http://127.0.0.1:${port}/`);
     const contexts = cdpBrowser.contexts();
     expect(contexts.length).toBe(1);
     await cdpBrowser.close();
@@ -428,7 +428,7 @@ playwrightTest('should use proxy with connectOverCDP', async ({ browserType, ser
     args: ['--remote-debugging-port=' + port, ...(process.platform === 'win32' ? ['--proxy-server=some-value'] : [])]
   });
   try {
-    const cdpBrowser = await browserType.connectOverCDP(`http://localhost:${port}/`);
+    const cdpBrowser = await browserType.connectOverCDP(`http://127.0.0.1:${port}/`);
     const context = await cdpBrowser.newContext({
       proxy: { server: `localhost:${server.PORT}` }
     });

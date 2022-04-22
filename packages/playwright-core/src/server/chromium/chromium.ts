@@ -225,7 +225,8 @@ export class Chromium extends BrowserType {
         const chromeOptions = maybeChromeOptions && typeof maybeChromeOptions === 'object' ? maybeChromeOptions : undefined;
         const debuggerAddress = chromeOptions && typeof chromeOptions.debuggerAddress === 'string' ? chromeOptions.debuggerAddress : undefined;
         const chromeOptionsURL = typeof maybeChromeOptions === 'string' ? maybeChromeOptions : undefined;
-        const endpointURLString = addProtocol(debuggerAddress || chromeOptionsURL);
+        // TODO(dgozman): figure out if we can make ChromeDriver to return 127.0.0.1 instead of localhost.
+        const endpointURLString = addProtocol(debuggerAddress || chromeOptionsURL).replace('localhost', '127.0.0.1');
         progress.log(`<selenium> retrieved endpoint ${endpointURLString} for sessionId=${sessionId}`);
         endpointURL = new URL(endpointURLString);
         if (endpointURL.hostname === 'localhost' || endpointURL.hostname === '127.0.0.1') {

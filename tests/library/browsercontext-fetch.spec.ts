@@ -963,7 +963,7 @@ it('should work with connectOverCDP', async ({ browserName, browserType, server 
     args: ['--remote-debugging-port=' + port]
   });
   try {
-    const cdpBrowser = await browserType.connectOverCDP(`http://localhost:${port}/`);
+    const cdpBrowser = await browserType.connectOverCDP(`http://127.0.0.1:${port}/`);
     const [context] = cdpBrowser.contexts();
     const response = await context.request.get(server.PREFIX + '/simple.json');
     expect(response.url()).toBe(server.PREFIX + '/simple.json');

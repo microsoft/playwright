@@ -117,7 +117,7 @@ it('should proxy localhost requests @smoke', async ({ pageFactory, server, brows
   });
   const examplePort = 20_000 + workerInfo.workerIndex * 3;
   const page = await pageFactory(testServerPort);
-  await page.goto(`http://localhost:${examplePort}/foo.html`);
+  await page.goto(`http://127.0.0.1:${examplePort}/foo.html`);
   expect(await page.content()).toContain('from-retargeted-server');
   expect(reachedOriginalTarget).toBe(false);
   stopTestServer();
@@ -134,7 +134,7 @@ it('should proxy localhost requests from fetch api', async ({ pageFactory, serve
   });
   const examplePort = 20_000 + workerInfo.workerIndex * 3;
   const page = await pageFactory(testServerPort);
-  const response = await page.request.get(`http://localhost:${examplePort}/foo.html`);
+  const response = await page.request.get(`http://127.0.0.1:${examplePort}/foo.html`);
   expect(response.status()).toBe(200);
   expect(await response.text()).toContain('from-retargeted-server');
   expect(reachedOriginalTarget).toBe(false);
@@ -159,9 +159,9 @@ it('should proxy local.playwright requests', async ({ pageFactory, server, brows
 it('should lead to the error page for forwarded requests when the connection is refused', async ({ pageFactory, browserName }, workerInfo) => {
   const examplePort = 20_000 + workerInfo.workerIndex * 3;
   const page = await pageFactory();
-  const error = await page.goto(`http://localhost:${examplePort}`).catch(e => e);
+  const error = await page.goto(`http://127.0.0.1:${examplePort}`).catch(e => e);
   if (browserName === 'chromium')
-    expect(error.message).toContain('net::ERR_SOCKS_CONNECTION_FAILED at http://localhost:20');
+    expect(error.message).toContain('net::ERR_SOCKS_CONNECTION_FAILED at http://127.0.0.1:20');
   else if (browserName === 'webkit')
     expect(error.message).toBeTruthy();
   else if (browserName === 'firefox')
