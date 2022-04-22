@@ -5,6 +5,7 @@ set +x
 trap "cd $(pwd -P)" EXIT
 cd "$(dirname "$0")"
 SCRIPT_PATH=$(pwd -P)
+source "${SCRIPT_PATH}/../utils.sh"
 
 if [[ ("$1" == "-h") || ("$1" == "--help") ]]; then
   echo "usage: $(basename "$0") [output-absolute-path]"
@@ -44,15 +45,15 @@ fi
 CHROMIUM_FOLDER_NAME=""
 CHROMIUM_FILES_TO_ARCHIVE=()
 
-if [[ $(uname) == "Darwin" ]]; then
+if is_mac; then
   CHROMIUM_FOLDER_NAME="chrome-mac"
   IFS=$'\n' CHROMIUM_FILES_TO_ARCHIVE=($(node "${SCRIPT_PATH}/compute_files_to_archive.js" "${CR_CHECKOUT_PATH}/src/infra/archive_config/mac-archive-rel.json"))
   unset IFS
-elif [[ $(uname) == "Linux" ]]; then
+elif is_linux; then
   CHROMIUM_FOLDER_NAME="chrome-linux"
   IFS=$'\n' CHROMIUM_FILES_TO_ARCHIVE=($(node "${SCRIPT_PATH}/compute_files_to_archive.js" "${CR_CHECKOUT_PATH}/src/infra/archive_config/linux-archive-rel.json"))
   unset IFS
-elif [[ $(uname) == "MINGW"* || "$(uname)" == MSYS* ]]; then
+elif is_win; then
   CHROMIUM_FOLDER_NAME="chrome-win"
   IFS=$'\n\r' CHROMIUM_FILES_TO_ARCHIVE=($(node "${SCRIPT_PATH}/compute_files_to_archive.js" "${CR_CHECKOUT_PATH}/src/infra/archive_config/win-archive-rel.json"))
   unset IFS
@@ -68,7 +69,7 @@ mkdir -p "output/${CHROMIUM_FOLDER_NAME}"
 
 # On Mac, use 'ditto' to copy directories instead of 'cp'.
 COPY_COMMAND="cp -R"
-if [[ $(uname) == "Darwin" ]]; then
+if is_mac; then
   COPY_COMMAND="ditto"
 fi
 
@@ -78,7 +79,7 @@ for ((i = 0; i < ${#CHROMIUM_FILES_TO_ARCHIVE[@]}; i++)) do
   $COPY_COMMAND "${CR_CHECKOUT_PATH}/src/out/Default/${file}" "output/${CHROMIUM_FOLDER_NAME}/${file}"
 done
 
-if [[ $(uname) == "MINGW"* || "$(uname)" == MSYS* ]]; then
+if is_win; then
   $COPY_COMMAND "${CR_CHECKOUT_PATH}/src/out/Default/"*.manifest "output/${CHROMIUM_FOLDER_NAME}/"
   mkdir -p "output/${CHROMIUM_FOLDER_NAME}/locales"
   $COPY_COMMAND "${CR_CHECKOUT_PATH}/src/out/Default/locales/"*.pak "output/${CHROMIUM_FOLDER_NAME}/locales/"

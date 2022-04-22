@@ -6,6 +6,8 @@ trap "cd $(pwd -P)" EXIT
 cd "$(dirname "$0")"
 SCRIPT_PATH=$(pwd -P)
 
+source "${SCRIPT_PATH}/utils.sh"
+
 REMOTE_BROWSER_UPSTREAM="browser_upstream"
 BUILD_BRANCH="playwright-build"
 
@@ -28,7 +30,7 @@ if [[ $# == 0 ]]; then
 fi
 
 function maybe_cmd {
-  if [[ $(uname) == MINGW* || "$(uname)" == MSYS* ]]; then
+  if is_win; then
     local args="$@"
     /c/Windows/System32/cmd.exe "/c $args"
   else
@@ -62,7 +64,7 @@ function prepare_chromium_checkout {
     cd "${CR_CHECKOUT_PATH}"
     maybe_cmd fetch --nohooks chromium
     cd src
-    if [[ $(uname) == "Linux" ]]; then
+    if is_linux; then
       ./build/install-build-deps.sh
     fi
     maybe_cmd gclient runhooks

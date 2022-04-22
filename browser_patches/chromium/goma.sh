@@ -5,6 +5,7 @@ set +x
 trap "cd $(pwd -P)" EXIT
 cd "$(dirname "$0")"
 SCRIPT_FOLDER=$(pwd -P)
+source "${SCRIPT_FOLDER}/../utils.sh"
 
 ELECTRON_BUILD_TOOLS_REQUIRED_VERSION=6ba8962529c37727a778691b89c92ab0eb1d9d87
 if [[ -d ./electron-build-tools ]]; then
@@ -35,7 +36,7 @@ export GOMA_START_COMPILER_PROXY=true
 
 function print_gn_args() {
   PLAYWRIGHT_GOMA_PATH="${SCRIPT_FOLDER}/electron-build-tools/third_party/goma"
-  if [[ $(uname) == MINGW* || "$(uname)" == MSYS* ]]; then
+  if is_win; then
     PLAYWRIGHT_GOMA_PATH=$(cygpath -w "${PLAYWRIGHT_GOMA_PATH}")
   fi
   echo 'use_goma = true'
@@ -48,7 +49,7 @@ if [[ $1 == "--help" ]]; then
 elif [[ $1 == "args" ]]; then
   print_gn_args
 elif [[ $1 == "login" ]]; then
-  if [[ $(uname) == "MINGW"* || "$(uname)" == MSYS* ]]; then
+  if is_win; then
     /c/Windows/System32/cmd.exe "/c $(cygpath -w $(pwd)/goma_auth.bat) login"
   else
     python ./goma_auth.py login
@@ -67,7 +68,7 @@ elif [[ $1 == "start" ]]; then
     echo "run '$(basename "$0") login'"
     exit 1
   fi
-  if [[ $(uname) == "MINGW"* || "$(uname)" == MSYS* ]]; then
+  if is_win; then
     /c/Windows/System32/cmd.exe "/c $(cygpath -w $(pwd)/goma_ctl.bat) ensure_start"
   else
     python ./goma_ctl.py ensure_start
@@ -82,7 +83,7 @@ elif [[ $1 == "start" ]]; then
   print_gn_args
   echo "===== ======= ====="
 elif [[ $1 == "stop" ]]; then
-  if [[ $(uname) == "MINGW"* || "$(uname)" == MSYS* ]]; then
+  if is_win; then
     /c/Windows/System32/cmd.exe "/c $(cygpath -w $(pwd)/goma_ctl.bat) stop"
   else
     python ./goma_ctl.py stop

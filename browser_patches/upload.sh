@@ -5,6 +5,8 @@ set +x
 trap "cd $(pwd -P)" EXIT
 cd "$(dirname "$0")"
 
+source "./utils.sh"
+
 if [[ ($1 == '--help') || ($1 == '-h') ]]; then
   echo "usage: $(basename "$0") [BLOB-PATH] [--check|ZIP-PATH]"
   echo
@@ -62,7 +64,7 @@ if [[ "${ZIP_PATH}" != *.zip && "${ZIP_PATH}" != *.gz ]]; then
   echo "ERROR: ${ZIP_PATH} is not an archive (must have a .zip or .gz extension)"
   exit 1
 fi
-if [[ $(uname) == MINGW* || "$(uname)" == MSYS* ]]; then
+if is_win; then
   # Convert POSIX path to MSYS
   WIN_PATH=$({ cd $(dirname "$ZIP_PATH") && pwd -W; } | sed 's|/|\\|g')
   WIN_PATH="${WIN_PATH}\\$(basename "$ZIP_PATH")"
