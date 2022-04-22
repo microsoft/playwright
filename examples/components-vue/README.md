@@ -67,7 +67,7 @@ npm run test
       <style>@import '/src/assets/base.css';</style>
     </head>
     <body>
-      <div id="app"></div>
+      <div id="root"></div>
       <script type="module" src="/tests.js"></script>
     </body>
     </html>

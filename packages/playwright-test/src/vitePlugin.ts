@@ -23,20 +23,18 @@ import { componentInfo, collectComponentUsages } from './tsxTransform';
 import type { ComponentInfo } from './tsxTransform';
 
 const imports: Map<string, ComponentInfo> = new Map();
-let configDir: string;
 
 export function createVitePlugin(registerFunction: string) {
-  return (options?: { include: string, imports?: string[] }) => {
+  return (options?: { include: string }) => {
     return vitePlugin({ ...(options || {}), registerFunction });
   };
 }
 
-function vitePlugin(options: { include?: string, imports?: string[], registerFunction: string }): Plugin {
+function vitePlugin(options: { include?: string, registerFunction: string }): Plugin {
   return {
     name: 'playwright-gallery',
 
     configResolved: async config => {
-      configDir = path.dirname(config.configFile || '');
       const files = await new Promise<string[]>((f, r) => {
         glob(options.include || config.root + '/**/*.{test,spec}.[tj]s{x,}', {}, function(err, files) {
           if (err)
@@ -72,12 +70,12 @@ function vitePlugin(options: { include?: string, imports?: string[], registerFun
       }
     },
 
-    transform: async (_, id) => {
-      if (!id.includes('playwright.app.ts') && !id.includes('playwright.app.js'))
+    transform: async (content, id) => {
+      if (!id.endsWith('playwright/index.ts') && !id.endsWith('playwright/index.tsx') && !id.endsWith('playwright/index.js'))
         return;
 
       const folder = path.dirname(id);
-      const lines = [];
+      const lines = [content, ''];
       lines.push(`import register from '${options.registerFunction}';`);
 
       for (const [alias, value] of imports) {
@@ -86,11 +84,6 @@ function vitePlugin(options: { include?: string, imports?: string[], registerFun
           lines.push(`import { ${value.importedName} as ${alias} } from '${importPath}';`);
         else
           lines.push(`import ${alias} from '${importPath}';`);
-      }
-
-      for (const i of options.imports || []) {
-        const importPath = configDir && i.startsWith('.') ? './' + path.relative(folder, path.resolve(configDir, i)).replace(/\\/g, '/') : i;
-        lines.push(`import '${importPath}';`);
       }
 
       lines.push(`register({ ${[...imports.keys()].join(',\n  ')} });`);

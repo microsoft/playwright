@@ -16,19 +16,13 @@
 
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-import playwrightPlugin from '@playwright/experimental-ct-react/vitePlugin';
+import playwright from '@playwright/experimental-ct-react/vitePlugin';
 
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
     react(),
-    playwrightPlugin({
-      imports: [
-        './src/common.css',
-        './src/theme.ts',
-        './src/third_party/vscode/codicon.css',
-      ],
-    }),
+    playwright(),
   ],
   server: {
     port: 3102,

@@ -27,13 +27,13 @@ const config: PlaywrightTestConfig = {
     ['html', { open: 'on-failure' }]
   ],
   webServer: {
-    url: 'http://localhost:3102/playwright.html',
+    url: 'http://localhost:3102/playwright/index.html',
     command: 'npx vite --config playwright.vite.config.ts dev',
     cwd: __dirname,
     reuseExistingServer: !process.env.CI,
   },
   use: {
-    baseURL: 'http://localhost:3102/playwright.html',
+    baseURL: 'http://localhost:3102/playwright/index.html',
     trace: 'on-first-retry',
   },
   projects: [

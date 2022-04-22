@@ -14,4 +14,4 @@
  * limitations under the License.
  */
 
-// Playwright's Vite plugin is dynamically populating this file with the components.
+import '../src/theme.css';

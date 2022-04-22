@@ -1,1 +1,0 @@
-// Playwright's Vite plugin is dynamically populating this file with the components.

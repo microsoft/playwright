@@ -14,4 +14,4 @@
  * limitations under the License.
  */
 
-export default function(options?: { include?: string, imports?: string[] }): any;
+export default function(options?: { include?: string }): any;
