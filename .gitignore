@@ -26,4 +26,4 @@ playwright-report
 /packages/playwright-core/api.json
 .env
 /tests/installation/output/
-/tests/installation/registry.json
+/tests/installation/.registry.json

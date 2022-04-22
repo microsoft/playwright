@@ -54,7 +54,7 @@ async function globalSetup() {
     build('playwright-webkit'),
   ]);
 
-  await fs.promises.writeFile(path.join(__dirname, './registry.json'), JSON.stringify(Object.fromEntries(builds)));
+  await fs.promises.writeFile(path.join(__dirname, './.registry.json'), JSON.stringify(Object.fromEntries(builds)));
 }
 
 export default globalSetup;
