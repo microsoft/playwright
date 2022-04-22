@@ -16,7 +16,7 @@
 import { test } from './npmTest';
 
 test('android types', async ({ exec, tsc, writeFiles }) => {
-  await exec('npm i --foreground-scripts playwright electron@12', { env: { PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1' } });
+  await exec('npm i --foreground-scripts playwright', { env: { PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1' } });
   await writeFiles({
     'test.ts':
       `import { AndroidDevice, _android, AndroidWebView, Page } from 'playwright';`,

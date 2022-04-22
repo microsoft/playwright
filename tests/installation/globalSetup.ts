@@ -19,7 +19,6 @@ import { rimraf } from 'playwright-core/lib/utilsBundle';
 import { promisify } from 'util';
 import fs from 'fs';
 
-
 const PACKAGE_BUILDER_SCRIPT = path.join(__dirname, '..', '..', 'utils', 'pack_package.js');
 const TMP_WORKSPACE = '/tmp/pwt/workspaces';
 

@@ -15,9 +15,9 @@
  */
 import { test, expect } from './npmTest';
 
-test('npx playwright codegen', async ({ exec, installedBrowsers }) => {
-  const error = await exec('npx playwright codegen', { expectToExitWithError: true });
-  expect(error).toHaveDownloaded([]);
-  expect(await installedBrowsers()).toEqual([]);
-  expect(error).toContain(`Please run the following command to download new browsers`);
+test('npx playwright codegen', async ({ exec, installedSoftwareOnDisk }) => {
+  const stdio = await exec('npx playwright codegen', { expectToExitWithError: true });
+  expect(stdio).toHaveLoggedSoftwareDownload([]);
+  expect(await installedSoftwareOnDisk()).toEqual([]);
+  expect(stdio).toContain(`Please run the following command to download new browsers`);
 });

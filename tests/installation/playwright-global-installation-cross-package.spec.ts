@@ -15,13 +15,13 @@
  */
 import { test, expect } from './npmTest';
 
-test('global installation cross package', async ({ exec, installedBrowsers }) => {
+test('global installation cross package', async ({ exec, installedSoftwareOnDisk }) => {
   const packages = ['playwright-chromium', 'playwright-firefox', 'playwright-webkit'];
   for (const pkg of packages)
     await exec('npm i --foreground-scripts', pkg, { env: { PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1' } });
   const result = await exec('npm i --foreground-scripts playwright');
-  expect(result).toHaveDownloaded(['chromium', 'firefox', 'webkit']);
-  expect(await installedBrowsers()).toEqual(['chromium', 'firefox', 'webkit']);
+  expect(result).toHaveLoggedSoftwareDownload(['chromium', 'firefox', 'webkit']);
+  expect(await installedSoftwareOnDisk()).toEqual(['chromium', 'firefox', 'webkit']);
 
   for (const pkg of packages)
     await test.step(pkg, () => exec('node ./sanity.js', pkg, 'all'));

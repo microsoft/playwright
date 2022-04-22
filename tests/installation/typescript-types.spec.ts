@@ -16,9 +16,6 @@
 import { test } from './npmTest';
 
 test('typescript types should work', async ({ exec, tsc, writeFiles }) => {
-  const env = { PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1' };
-  await exec('npm i -D @types/node@14.18.9');
-
   const libraryPackages = [
     'playwright',
     'playwright-core',
@@ -26,15 +23,15 @@ test('typescript types should work', async ({ exec, tsc, writeFiles }) => {
     'playwright-webkit',
     'playwright-chromium',
   ];
-  await exec('npm i @playwright/test', ...libraryPackages, { env });
+  await exec('npm i @playwright/test', ...libraryPackages, { env: { PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1' } });
 
   for (const libraryPackage of libraryPackages) {
     const filename = libraryPackage + '.ts';
     await writeFiles({
       [filename]: `import { Page } from '${libraryPackage}';`,
     });
-    await tsc(filename, { env });
+    await tsc(filename);
   }
 
-  await tsc('playwright-test-types.ts', { env });
+  await tsc('playwright-test-types.ts');
 });

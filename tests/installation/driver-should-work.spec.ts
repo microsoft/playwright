@@ -15,8 +15,8 @@
  */
 import { test } from './npmTest';
 
-test('codegen should work', async ({ exec }) => {
+test('driver should work', async ({ exec }) => {
   await exec('npm i --foreground-scripts playwright', { env: { PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1' } });
-  await exec('npx playwright install', { env: { PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '0' } });
+  await exec('npx playwright install');
   await exec('node driver-client.js');
 });

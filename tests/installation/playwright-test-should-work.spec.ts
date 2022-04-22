@@ -19,11 +19,10 @@ test('@playwright/test should work', async ({ exec, nodeMajorVersion }) => {
   await exec('npm i --foreground-scripts @playwright/test');
   await exec('npx playwright test -c .', { expectToExitWithError: true, message: 'should not be able to run tests without installing browsers' });
 
-  const env = { PLAYWRIGHT_BROWSERS_PATH: '0', PLAYWRIGHT_JSON_OUTPUT_NAME: 'report.json' };
-  await exec('npx playwright install', { env });
-  await exec('npx playwright test -c . --browser=all --reporter=list,json sample.spec.js', { env });
-  await exec('node ./read-json-report.js ./report.json', { env });
-  await exec('node sanity.js @playwright/test', { env });
+  await exec('npx playwright install');
+  await exec('npx playwright test -c . --browser=all --reporter=list,json sample.spec.js', { env: {  PLAYWRIGHT_JSON_OUTPUT_NAME: 'report.json' } });
+  await exec('node ./read-json-report.js ./report.json');
+  await exec('node sanity.js @playwright/test');
   if (nodeMajorVersion >= 14)
-    await exec('node', 'esm-playwright-test.mjs', { env });
+    await exec('node', 'esm-playwright-test.mjs');
 });

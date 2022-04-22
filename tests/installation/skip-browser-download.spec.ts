@@ -15,9 +15,9 @@
  */
 import { test, expect } from './npmTest';
 
-test('PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD should skip browser installs', async ({ exec, installedBrowsers }) => {
+test('PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD should skip browser installs', async ({ exec, installedSoftwareOnDisk }) => {
   const result = await exec('npm i --foreground-scripts playwright', { env: { PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1' } });
-  expect(result).toHaveDownloaded([]);
-  expect(await installedBrowsers()).toEqual([]);
+  expect(result).toHaveLoggedSoftwareDownload([]);
+  expect(await installedSoftwareOnDisk()).toEqual([]);
   expect(result).toContain(`Skipping browsers download because`);
 });
