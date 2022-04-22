@@ -76,6 +76,9 @@ export class Loader {
   }
 
   private _processConfigObject(config: Config, configDir: string) {
+    for (const plugin of config.plugins || [])
+      plugin.configure?.(config, configDir);
+
     this._configDir = configDir;
     const packageJsonPath = getPackageJsonPath(configDir);
     const packageJsonDir = packageJsonPath ? path.dirname(packageJsonPath) : undefined;
@@ -121,6 +124,7 @@ export class Loader {
     this._fullConfig.updateSnapshots = takeFirst(this._configOverrides.updateSnapshots, config.updateSnapshots, baseFullConfig.updateSnapshots);
     this._fullConfig.workers = takeFirst(this._configOverrides.workers, config.workers, baseFullConfig.workers);
     this._fullConfig.webServer = takeFirst(this._configOverrides.webServer, config.webServer, baseFullConfig.webServer);
+    this._fullConfig._plugins = takeFirst(this._configOverrides.plugins, config.plugins, baseFullConfig._plugins);
 
     const projects: Project[] = ('projects' in config) && config.projects !== undefined ? config.projects : [config];
     for (const project of projects)
@@ -480,6 +484,7 @@ const baseFullConfig: FullConfigInternal = {
   _globalOutputDir: path.resolve(process.cwd()),
   _configDir: '',
   _testGroupsCount: 0,
+  _plugins: [],
 };
 
 function resolveReporters(reporters: Config['reporter'], rootDir: string): ReporterDescription[]|undefined {

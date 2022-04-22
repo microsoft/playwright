@@ -14,5 +14,8 @@
  * limitations under the License.
  */
 
-const { createVitePlugin } = require('@playwright/test/lib/vitePlugin');
-module.exports = createVitePlugin('@playwright/experimental-ct-react/register');
+const { createPlugin } = require('@playwright/test/lib/plugins/vitePlugin');
+
+module.exports = (options = {}) => {
+  return createPlugin('@playwright/experimental-ct-react/register', options);
+};

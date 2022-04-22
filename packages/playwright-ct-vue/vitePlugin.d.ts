@@ -14,4 +14,11 @@
  * limitations under the License.
  */
 
-export default function(options?: { include?: string }): any;
+import { TestPlugin } from '@playwright/test';
+import type { InlineConfig } from 'vite';
+
+export default function(options?: {
+  config?: InlineConfig,
+  include?: string,
+  port?: number,
+}): TestPlugin;

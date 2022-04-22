@@ -50,8 +50,6 @@ const readDirAsync = promisify(fs.readdir);
 const readFileAsync = promisify(fs.readFile);
 export const kDefaultConfigFiles = ['playwright.config.ts', 'playwright.config.js', 'playwright.config.mjs'];
 
-type InternalGlobalSetupFunction = () => Promise<() => Promise<void>>;
-
 type RunOptions = {
   listOnly?: boolean;
   filePatternFilter?: FilePatternFilter[];
@@ -61,7 +59,6 @@ type RunOptions = {
 export class Runner {
   private _loader: Loader;
   private _reporter!: Reporter;
-  private _internalGlobalSetups: Array<InternalGlobalSetupFunction> = [];
   private _globalInfo: GlobalInfoImpl;
 
   constructor(configOverrides: Config, options: { defaultConfig?: Config } = {}) {
@@ -70,7 +67,7 @@ export class Runner {
   }
 
   async loadConfigFromResolvedFile(resolvedConfigFile: string): Promise<Config> {
-    return this._loader.loadConfigFile(resolvedConfigFile);
+    return await this._loader.loadConfigFile(resolvedConfigFile);
   }
 
   loadEmptyConfig(configFileOrDirectory: string): Config {
@@ -146,10 +143,6 @@ export class Runner {
         reporters.unshift(!process.env.CI ? new LineReporter({ omitFailures: true }) : new DotReporter({ omitFailures: true }));
     }
     return new Multiplexer(reporters);
-  }
-
-  addInternalGlobalSetup(internalGlobalSetup: InternalGlobalSetupFunction) {
-    this._internalGlobalSetups.push(internalGlobalSetup);
   }
 
   async runAllTests(options: RunOptions = {}): Promise<FullResult> {
@@ -430,11 +423,12 @@ export class Runner {
 
   private async _performGlobalSetup(config: FullConfigInternal): Promise<(() => Promise<void>) | undefined> {
     const result: FullResult = { status: 'passed' };
-    const internalGlobalTeardowns: (() => Promise<void>)[] = [];
+    const pluginTeardowns: (() => Promise<void>)[] = [];
     let globalSetupResult: any;
     let webServer: WebServer | undefined;
 
     const tearDown = async () => {
+      // Reverse to setup.
       await this._runAndReportError(async () => {
         if (globalSetupResult && typeof globalSetupResult === 'function')
           await globalSetupResult(this._loader.fullConfig());
@@ -449,16 +443,26 @@ export class Runner {
         await webServer?.kill();
       }, result);
 
-      await this._runAndReportError(async () => {
-        for (const internalGlobalTeardown of internalGlobalTeardowns)
-          await internalGlobalTeardown();
-      }, result);
+      for (const teardown of pluginTeardowns) {
+        await this._runAndReportError(async () => {
+          await teardown();
+        }, result);
+      }
     };
 
     await this._runAndReportError(async () => {
-      for (const internalGlobalSetup of this._internalGlobalSetups)
-        internalGlobalTeardowns.push(await internalGlobalSetup());
+      // First run the plugins, if plugin is a web server we want it to run before the
+      // config's global setup.
+      for (const plugin of config._plugins) {
+        await plugin.setup?.();
+        if (plugin.teardown)
+          pluginTeardowns.unshift(plugin.teardown);
+      }
+
+      // Then do legacy web server.
       webServer = config.webServer ? await WebServer.create(config.webServer, this._reporter) : undefined;
+
+      // The do global setup.
       if (config.globalSetup)
         globalSetupResult = await (await this._loader.loadGlobalHook(config.globalSetup, 'globalSetup'))(this._loader.fullConfig(), this._globalInfo);
     }, result);
