@@ -51,7 +51,7 @@ else
   cd "$HOME/webkit"
 fi
 
-if [[ "$(uname)" == "Darwin" ]]; then
+if is_mac; then
   CURRENT_HOST_OS_VERSION=$(getMacVersion)
   if [[ "${CURRENT_HOST_OS_VERSION}" == "10.15" ]]; then
     selectXcodeVersionOrDie "11.7"
@@ -64,7 +64,7 @@ if [[ "$(uname)" == "Darwin" ]]; then
     exit 1
   fi
   ./Tools/Scripts/build-webkit --release --touch-events --orientation-events
-elif [[ "$(uname)" == "Linux" ]]; then
+elif is_linux; then
   if [[ $# == 0 || (-z "$1") ]]; then
     echo
     echo BUILDING: GTK and WPE
@@ -89,7 +89,7 @@ elif [[ "$(uname)" == "Linux" ]]; then
     echo
     build_wpe
   fi
-elif [[ "$(uname)" == MINGW* || "$(uname)" == MSYS* ]]; then
+elif is_win; then
   /c/Windows/System32/cmd.exe "/c $(cygpath -w "${SCRIPT_FOLDER}"/buildwin.bat)"
 else
   echo "ERROR: cannot upload on this platform!" 1>&2

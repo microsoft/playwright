@@ -5,6 +5,7 @@ set +x
 trap "cd $(pwd -P)" EXIT
 cd "$(dirname "$0")"
 SCRIPT_FOLDER=$(pwd -P)
+source "${SCRIPT_FOLDER}/../utils.sh"
 
 USAGE=$(cat<<EOF
   usage: $(basename "$0") [--arm64] [--symbols] [--full] [--goma] <custom targets to compile>
@@ -54,7 +55,7 @@ compile_chromium() {
 
   source "${SCRIPT_FOLDER}/ensure_depot_tools.sh"
 
-  if [[ $(uname) == "Darwin" ]]; then
+  if is_mac; then
     # As of Apr, 2022 Chromium mac compilation requires Xcode13.3
     selectXcodeVersionOrDie "13.3"
   fi
@@ -85,7 +86,7 @@ compile_chromium() {
   echo "===== ======= ====="
 
   if [[ -n "$IS_FULL" ]]; then
-    if [[ $(uname) == "Linux" ]]; then
+    if is_linux; then
       ./build/install-build-deps.sh
       if [[ -n "$IS_ARM64" ]]; then
         # Install sysroot image, see https://chromium.googlesource.com/chromium/src/+/refs/heads/main/docs/linux/chromium_arm.md
@@ -95,7 +96,7 @@ compile_chromium() {
   fi
 
   TARGETS="${args[@]}"
-  if [[ $(uname) == "MINGW"* || "$(uname)" == MSYS* ]]; then
+  if is_win; then
     if [[ -n "$TARGETS" ]]; then
       echo "ERROR: cannot compile custom targets on windows yet."
       echo "Requested to compile chromium targets - ${TARGETS}"
@@ -108,7 +109,7 @@ compile_chromium() {
     fi
   else
     if [[ -z "$TARGETS" ]]; then
-      if [[ $(uname) == "Linux" ]]; then
+      if is_linux; then
         TARGETS="chrome chrome_sandbox clear_key_cdm"
       else
         TARGETS="chrome"

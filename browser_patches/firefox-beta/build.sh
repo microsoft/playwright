@@ -20,7 +20,7 @@ fi
 
 rm -rf .mozconfig
 
-if [[ "$(uname)" == "Darwin" ]]; then
+if is_mac; then
   CURRENT_HOST_OS_VERSION=$(getMacVersion)
   # As of Oct 2021, building Firefox requires XCode 13
   if [[ "${CURRENT_HOST_OS_VERSION}" != "10."* ]]; then
@@ -30,9 +30,9 @@ if [[ "$(uname)" == "Darwin" ]]; then
     exit 1
   fi
   echo "-- building on Mac"
-elif [[ "$(uname)" == "Linux" ]]; then
+elif is_linux; then
   echo "-- building on Linux"
-elif [[ "$(uname)" == MINGW* || "$(uname)" == MSYS* ]]; then
+elif is_win; then
   echo "ac_add_options --disable-update-agent" >> .mozconfig
   echo "ac_add_options --disable-default-browser-agent" >> .mozconfig
   echo "ac_add_options --disable-maintenance-service" >> .mozconfig
@@ -67,7 +67,7 @@ else
   echo "ac_add_options --enable-release" >> .mozconfig
 fi
 
-if [[ "$(uname)" == MINGW* || "$(uname)" == "Darwin" || "$(uname)" == MSYS* ]]; then
+if is_mac || is_win; then
   # This options is only available on win and mac.
   echo "ac_add_options --disable-update-agent" >> .mozconfig
 fi
@@ -90,7 +90,7 @@ fi
 
 if [[ $1 == "--full" || $2 == "--full" || $1 == "--bootstrap" ]]; then
   echo "ac_add_options --enable-bootstrap" >> .mozconfig
-  if [[ "$(uname)" == "Darwin" || "$(uname)" == "Linux" ]]; then
+  if is_mac || is_linux; then
     SHELL=/bin/sh ./mach --no-interactive bootstrap --application-choice=browser
   fi
   if [[ ! -z "${WIN32_REDIST_DIR}" ]]; then
@@ -105,7 +105,7 @@ elif [[ $1 == "--bootstrap" ]]; then
   ./mach configure
 else
   ./mach build
-  if [[ "$(uname)" == "Darwin" ]]; then
+  if is_mac; then
     node "${SCRIPT_FOLDER}"/install-preferences.js "$PWD"/${OBJ_FOLDER}/dist
   else
     node "${SCRIPT_FOLDER}"/install-preferences.js "$PWD"/${OBJ_FOLDER}/dist/bin
