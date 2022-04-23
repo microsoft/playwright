@@ -54,6 +54,7 @@ async function testWaiting(page, after) {
   await promise;
   expect(done).toBe(true);
 }
+
 it('should wait for display:none to become visible', async ({ page, server }) => {
   await page.setContent('<div style="display:none">Hello</div>');
   await testWaiting(page, div => div.style.display = 'block');
@@ -64,14 +65,16 @@ it('should wait for display:contents to become visible', async ({ page, server }
   await testWaiting(page, div => div.style.display = 'block');
 });
 
-it('should wait for visibility:hidden to become visible', async ({ page, server }) => {
+it('should work for visibility:hidden element', async ({ page }) => {
   await page.setContent('<div style="visibility:hidden">Hello</div>');
-  await testWaiting(page, div => div.style.visibility = 'visible');
+  const div = await page.$('div');
+  await div.scrollIntoViewIfNeeded();
 });
 
-it('should wait for zero-sized element to become visible', async ({ page, server }) => {
+it('should work for zero-sized element', async ({ page }) => {
   await page.setContent('<div style="height:0">Hello</div>');
-  await testWaiting(page, div => div.style.height = '100px');
+  const div = await page.$('div');
+  await div.scrollIntoViewIfNeeded();
 });
 
 it('should wait for nested display:none to become visible', async ({ page, server }) => {
@@ -99,5 +102,5 @@ it('should timeout waiting for visible', async ({ page, server }) => {
   await page.setContent('<div style="display:none">Hello</div>');
   const div = await page.$('div');
   const error = await div.scrollIntoViewIfNeeded({ timeout: 3000 }).catch(e => e);
-  expect(error.message).toContain('element is not visible');
+  expect(error.message).toContain('element is not displayed, retrying in 100ms');
 });

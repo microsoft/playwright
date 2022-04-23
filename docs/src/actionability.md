@@ -24,7 +24,7 @@ Here is the complete list of actionability checks performed for each action:
 | tap | Yes | Yes | Yes | Yes | Yes | - |
 | uncheck | Yes | Yes | Yes | Yes | Yes | - |
 | hover | Yes | Yes | Yes | Yes | - | - |
-| scrollIntoViewIfNeeded | Yes | Yes | Yes | - | - | - |
+| scrollIntoViewIfNeeded | Yes | - | Yes | - | - | - |
 | screenshot | Yes | Yes | Yes | - | - | - |
 | fill | Yes | Yes | - | - | Yes | Yes |
 | selectText | Yes | Yes | - | - | - | - |

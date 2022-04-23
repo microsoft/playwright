@@ -20,7 +20,7 @@ import type * as channels from '../protocol/channels';
 import { isSessionClosedError } from './protocolError';
 import type { ScreenshotOptions } from './screenshotter';
 import type * as frames from './frames';
-import type { InjectedScript, InjectedScriptPoll, LogEntry, HitTargetInterceptionResult } from './injected/injectedScript';
+import type { InjectedScript, InjectedScriptPoll, LogEntry, HitTargetInterceptionResult, ElementState } from './injected/injectedScript';
 import type { CallMetadata } from './instrumentation';
 import * as js from './javascript';
 import type { Page } from './page';
@@ -260,14 +260,22 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return await this._page._delegate.scrollRectIntoViewIfNeeded(this, rect);
   }
 
-  async _waitAndScrollIntoViewIfNeeded(progress: Progress): Promise<void> {
+  async _waitAndScrollIntoViewIfNeeded(progress: Progress, waitForVisible: boolean): Promise<void> {
+    const timeouts = [0, 50, 100, 250];
     while (progress.isRunning()) {
-      assertDone(throwRetargetableDOMError(await this._waitForDisplayedAtStablePosition(progress, false /* force */, false /* waitForEnabled */)));
-
+      assertDone(throwRetargetableDOMError(await this._waitForElementStates(progress, waitForVisible ? ['visible', 'stable'] : ['stable'], false /* force */)));
       progress.throwIfAborted();  // Avoid action that has side-effects.
       const result = throwRetargetableDOMError(await this._scrollRectIntoViewIfNeeded());
-      if (result === 'error:notvisible')
+      if (result === 'error:notvisible') {
+        if (!waitForVisible) {
+          // Wait for a timeout to avoid retrying too often when not waiting for visible.
+          // If we wait for visible, this should be covered by _waitForElementStates instead.
+          const timeout = timeouts.shift() ?? 500;
+          progress.log(`  element is not displayed, retrying in ${timeout}ms`);
+          await new Promise(f => setTimeout(f, timeout));
+        }
         continue;
+      }
       assertDone(result);
       return;
     }
@@ -276,7 +284,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   async scrollIntoViewIfNeeded(metadata: CallMetadata, options: types.TimeoutOptions = {}) {
     const controller = new ProgressController(metadata, this);
     return controller.run(
-        progress => this._waitAndScrollIntoViewIfNeeded(progress),
+        progress => this._waitAndScrollIntoViewIfNeeded(progress, false /* waitForVisible */),
         this._page._timeoutSettings.timeout(options));
   }
 
@@ -395,7 +403,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     const { force = false, position } = options;
     if ((options as any).__testHookBeforeStable)
       await (options as any).__testHookBeforeStable();
-    const result = await this._waitForDisplayedAtStablePosition(progress, force, waitForEnabled);
+    const result = await this._waitForElementStates(progress, waitForEnabled ? ['visible', 'enabled', 'stable'] : ['visible', 'stable'], force);
     if (result !== 'done')
       return result;
     if ((options as any).__testHookAfterStable)
@@ -845,21 +853,15 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return this;
   }
 
-  async _waitForDisplayedAtStablePosition(progress: Progress, force: boolean, waitForEnabled: boolean): Promise<'error:notconnected' | 'done'> {
-    if (waitForEnabled)
-      progress.log(`  waiting for element to be visible, enabled and stable`);
-    else
-      progress.log(`  waiting for element to be visible and stable`);
-    const result = await this.evaluatePoll(progress, ([injected, node, { waitForEnabled, force }]) => {
-      return injected.waitForElementStatesAndPerformAction(node,
-          waitForEnabled ? ['visible', 'stable', 'enabled'] : ['visible', 'stable'], force, () => 'done' as const);
-    }, { waitForEnabled, force });
+  async _waitForElementStates(progress: Progress, states: ElementState[], force: boolean): Promise<'error:notconnected' | 'done'> {
+    const title = joinWithAnd(states);
+    progress.log(`  waiting for element to be ${title}`);
+    const result = await this.evaluatePoll(progress, ([injected, node, { states, force }]) => {
+      return injected.waitForElementStatesAndPerformAction(node, states, force, () => 'done' as const);
+    }, { states, force });
     if (result === 'error:notconnected')
       return result;
-    if (waitForEnabled)
-      progress.log('  element is visible, enabled and stable');
-    else
-      progress.log('  element is visible and stable');
+    progress.log(`  element is ${title}`);
     return result;
   }
 
@@ -1021,6 +1023,12 @@ export function waitForSelectorTask(selector: SelectorInfo, state: 'attached' | 
       }
     });
   }, { parsed: selector.parsed, strict: selector.strict, state, omitReturnValue, root });
+}
+
+function joinWithAnd(strings: string[]): string {
+  if (strings.length < 1)
+    return strings.join(', ');
+  return strings.slice(0, strings.length - 1).join(', ') + ' and ' + strings[strings.length - 1];
 }
 
 export const kUnableToAdoptErrorMessage = 'Unable to adopt element handle from a different document';
