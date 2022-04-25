@@ -110,7 +110,7 @@ jobs:
         path: test-results
 
   test-package-installations:
-    name: "${{ matrix.os }} (${{ matrix.node_version }})"
+    name: "Installation Test ${{ matrix.os }} (${{ matrix.node_version }})"
     runs-on: ${{ matrix.os  }}
     strategy:
       fail-fast: false
