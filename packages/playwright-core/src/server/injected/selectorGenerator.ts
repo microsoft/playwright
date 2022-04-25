@@ -224,7 +224,7 @@ function cssFallback(injectedScript: InjectedScript, targetElement: Element, str
     const path = tokens.slice();
     if (prefix)
       path.unshift(prefix);
-    const selector = path.join(' ');
+    const selector = path.join(' > ');
     const parsedSelector = injectedScript.parseSelector(selector);
     const node = injectedScript.querySelector(parsedSelector, targetElement.ownerDocument, false);
     return node === targetElement ? selector : undefined;
