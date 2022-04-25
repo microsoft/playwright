@@ -107,7 +107,7 @@ export class Registry {
       }
     });
 
-    this._server.listen(Number.parseInt(new URL(this._url).port, 10), 'localhost');
+    this._server.listen(Number.parseInt(new URL(this._url).port, 10), '127.0.0.1');
     await new Promise<void>((res, rej) => {
       this._server.on('listening', () => res());
       this._server.on('error', rej);
