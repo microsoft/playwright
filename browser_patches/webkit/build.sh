@@ -52,17 +52,7 @@ else
 fi
 
 if is_mac; then
-  CURRENT_HOST_OS_VERSION=$(getMacVersion)
-  if [[ "${CURRENT_HOST_OS_VERSION}" == "10.15" ]]; then
-    selectXcodeVersionOrDie "11.7"
-  elif [[ "${CURRENT_HOST_OS_VERSION}" == "11."* ]]; then
-    selectXcodeVersionOrDie "12.5"
-  elif [[ "${CURRENT_HOST_OS_VERSION}" == "12."* ]]; then
-    selectXcodeVersionOrDie "13.3"
-  else
-    echo "ERROR: ${CURRENT_HOST_OS_VERSION} is not supported"
-    exit 1
-  fi
+  selectXcodeVersionOrDie $(node "$SCRIPT_FOLDER/../get_xcode_version.js" webkit)
   ./Tools/Scripts/build-webkit --release --touch-events --orientation-events
 elif is_linux; then
   if [[ $# == 0 || (-z "$1") ]]; then
