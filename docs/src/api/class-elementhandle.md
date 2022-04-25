@@ -515,7 +515,9 @@ Returns the `element.innerText`.
 ## async method: ElementHandle.inputValue
 - returns: <[string]>
 
-Returns `input.value` for `<input>` or `<textarea>` or `<select>` element. Throws for non-input elements.
+Returns `input.value` for the selected `<input>` or `<textarea>` or `<select>` element.
+
+Throws for non-input elements. However, if the element is inside the `<label>` element that has an associated [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), returns the value of the control.
 
 ### option: ElementHandle.inputValue.timeout = %%-input-timeout-%%
 
@@ -719,6 +721,8 @@ await handle.SelectOptionAsync(new[] {
 This method waits for [actionability](../actionability.md) checks, then focuses the element and selects all its text
 content.
 
+If the element is inside the `<label>` element that has an associated [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), focuses and selects text in the control instead.
+
 ### option: ElementHandle.selectText.force = %%-input-force-%%
 ### option: ElementHandle.selectText.timeout = %%-input-timeout-%%
 
@@ -746,11 +750,12 @@ When all steps combined have not finished during the specified [`option: timeout
 
 ## async method: ElementHandle.setInputFiles
 
-This method expects `elementHandle` to point to an
-[input element](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input).
-
 Sets the value of the file input to these file paths or files. If some of the `filePaths` are relative paths, then they
 are resolved relative to the the current working directory. For empty array, clears the selected files.
+
+This method expects [`elementHandle`] to point to an
+[input element](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input). However, if the element is inside the `<label>` element that has an associated [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), targets the control instead.
+
 
 ### param: ElementHandle.setInputFiles.files = %%-input-files-%%
 

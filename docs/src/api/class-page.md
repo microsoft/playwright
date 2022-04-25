@@ -2109,7 +2109,9 @@ Returns `element.innerText`.
 ## async method: Page.inputValue
 - returns: <[string]>
 
-Returns `input.value` for the selected `<input>` or `<textarea>` or `<select>` element. Throws for non-input elements.
+Returns `input.value` for the selected `<input>` or `<textarea>` or `<select>` element.
+
+Throws for non-input elements. However, if the element is inside the `<label>` element that has an associated [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), returns the value of the control.
 
 ### param: Page.inputValue.selector = %%-input-selector-%%
 
@@ -2894,11 +2896,11 @@ An object containing additional HTTP headers to be sent with every request. All 
 
 ## async method: Page.setInputFiles
 
-This method expects [`param: selector`] to point to an
-[input element](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input).
-
 Sets the value of the file input to these file paths or files. If some of the `filePaths` are relative paths, then they
 are resolved relative to the the current working directory. For empty array, clears the selected files.
+
+This method expects [`param: selector`] to point to an
+[input element](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input). However, if the element is inside the `<label>` element that has an associated [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), targets the control instead.
 
 ### param: Page.setInputFiles.selector = %%-input-selector-%%
 
