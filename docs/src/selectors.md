@@ -762,6 +762,45 @@ await page.Locator("button:near(.promo-card)").ClickAsync();
 All layout selectors support optional maximum pixel distance as the last argument. For example
 `button:near(:text("Username"), 120)` matches a button that is at most 120 pixels away from the element with the text "Username".
 
+## Selecting elements by label text
+
+Targeted input actions in Playwright automatically distinguish between labels and controls, so you can target the label to perform an action on the associated control.
+
+For example, consider the following DOM structure: `<label for="password">Password:</label><input id="password" type="password">`. You can target the label with something like `text=Password` and perform the following actions on the input instead:
+- `click` will click the label and automatically focus the input field;
+- `fill` will fill the input field;
+- `inputValue` will return the value of the input field;
+- `selectText` will select text in the input field;
+- `setInputFiles` will set files for the input field with `type=file`;
+- `selectOption` will select an option from the select box.
+
+```js
+// Fill the input by targeting the label.
+await page.fill('text=Password', 'secret');
+```
+
+```java
+// Fill the input by targeting the label.
+page.fill("text=Password", "secret");
+```
+
+```python async
+# Fill the input by targeting the label.
+await page.fill('text=Password', 'secret')
+```
+
+```python sync
+# Fill the input by targeting the label.
+page.fill('text=Password', 'secret')
+```
+
+```csharp
+// Fill the input by targeting the label.
+await page.FillAsync("text=Password", "secret");
+```
+
+However, other methods will target the label itself, for example `textContent` will return the text content of the label, not the input field.
+
 ## XPath selectors
 
 XPath selectors are equivalent to calling [`Document.evaluate`](https://developer.mozilla.org/en/docs/Web/API/Document/evaluate).

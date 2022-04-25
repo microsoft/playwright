@@ -2450,7 +2450,10 @@ export interface Page {
   }): Promise<string>;
 
   /**
-   * Returns `input.value` for the selected `<input>` or `<textarea>` or `<select>` element. Throws for non-input elements.
+   * Returns `input.value` for the selected `<input>` or `<textarea>` or `<select>` element.
+   *
+   * Throws for non-input elements. However, if the element is inside the `<label>` element that has an associated
+   * [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), returns the value of the control.
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
@@ -3187,11 +3190,13 @@ export interface Page {
   setExtraHTTPHeaders(headers: { [key: string]: string; }): Promise<void>;
 
   /**
-   * This method expects `selector` to point to an
-   * [input element](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input).
-   *
    * Sets the value of the file input to these file paths or files. If some of the `filePaths` are relative paths, then they
    * are resolved relative to the the current working directory. For empty array, clears the selected files.
+   *
+   * This method expects `selector` to point to an
+   * [input element](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input). However, if the element is inside the
+   * `<label>` element that has an associated
+   * [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), targets the control instead.
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param files
    * @param options
@@ -5274,7 +5279,10 @@ export interface Frame {
   }): Promise<string>;
 
   /**
-   * Returns `input.value` for the selected `<input>` or `<textarea>` or `<select>` element. Throws for non-input elements.
+   * Returns `input.value` for the selected `<input>` or `<textarea>` or `<select>` element.
+   *
+   * Throws for non-input elements. However, if the element is inside the `<label>` element that has an associated
+   * [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), returns the value of the control.
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
@@ -5693,11 +5701,13 @@ export interface Frame {
   }): Promise<void>;
 
   /**
-   * This method expects `selector` to point to an
-   * [input element](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input).
-   *
    * Sets the value of the file input to these file paths or files. If some of the `filePaths` are relative paths, then they
    * are resolved relative to the the current working directory. For empty array, clears the selected files.
+   *
+   * This method expects `selector` to point to an
+   * [input element](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input). However, if the element is inside the
+   * `<label>` element that has an associated
+   * [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), targets the control instead.
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param files
    * @param options
@@ -8037,7 +8047,10 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
   innerText(): Promise<string>;
 
   /**
-   * Returns `input.value` for `<input>` or `<textarea>` or `<select>` element. Throws for non-input elements.
+   * Returns `input.value` for the selected `<input>` or `<textarea>` or `<select>` element.
+   *
+   * Throws for non-input elements. However, if the element is inside the `<label>` element that has an associated
+   * [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), returns the value of the control.
    * @param options
    */
   inputValue(options?: {
@@ -8300,6 +8313,10 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
   /**
    * This method waits for [actionability](https://playwright.dev/docs/actionability) checks, then focuses the element and selects all its text
    * content.
+   *
+   * If the element is inside the `<label>` element that has an associated
+   * [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), focuses and selects text in the
+   * control instead.
    * @param options
    */
   selectText(options?: {
@@ -8372,11 +8389,13 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
   }): Promise<void>;
 
   /**
-   * This method expects `elementHandle` to point to an
-   * [input element](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input).
-   *
    * Sets the value of the file input to these file paths or files. If some of the `filePaths` are relative paths, then they
    * are resolved relative to the the current working directory. For empty array, clears the selected files.
+   *
+   * This method expects [`elementHandle`] to point to an
+   * [input element](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input). However, if the element is inside the
+   * `<label>` element that has an associated
+   * [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), targets the control instead.
    * @param files
    * @param options
    */
@@ -9283,7 +9302,10 @@ export interface Locator {
   }): Promise<string>;
 
   /**
-   * Returns `input.value` for `<input>` or `<textarea>` or `<select>` element. Throws for non-input elements.
+   * Returns `input.value` for the selected `<input>` or `<textarea>` or `<select>` element.
+   *
+   * Throws for non-input elements. However, if the element is inside the `<label>` element that has an associated
+   * [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), returns the value of the control.
    * @param options
    */
   inputValue(options?: {
@@ -9570,6 +9592,10 @@ export interface Locator {
   /**
    * This method waits for [actionability](https://playwright.dev/docs/actionability) checks, then focuses the element and selects all its text
    * content.
+   *
+   * If the element is inside the `<label>` element that has an associated
+   * [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), focuses and selects text in the
+   * control instead.
    * @param options
    */
   selectText(options?: {
@@ -9642,11 +9668,13 @@ export interface Locator {
   }): Promise<void>;
 
   /**
-   * This method expects `element` to point to an
-   * [input element](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input).
-   *
    * Sets the value of the file input to these file paths or files. If some of the `filePaths` are relative paths, then they
    * are resolved relative to the the current working directory. For empty array, clears the selected files.
+   *
+   * This method expects [`locator`] to point to an
+   * [input element](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input). However, if the element is inside the
+   * `<label>` element that has an associated
+   * [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), targets the control instead.
    * @param files
    * @param options
    */
