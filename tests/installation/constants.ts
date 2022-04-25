@@ -15,5 +15,6 @@
  */
 import os from 'os';
 import path from 'path';
+import fs from 'fs';
 
-export const TMP_WORKSPACES = path.join(os.platform() === 'darwin' ? '/tmp' : os.tmpdir(), 'pwt', 'workspaces');
+export const TMP_WORKSPACES = fs.realpathSync(path.join(os.platform() === 'darwin' ? '/tmp' : os.tmpdir(), 'pwt', 'workspaces'));
