@@ -165,11 +165,11 @@ jobs:
         - macos-latest
         - windows-latest
         node_version:
-        - "^18.0.0"
+        # - "^18.0.0"
         # - "12.0.0"
         # - "^12.0.0"
         # - "^14.1.0"
-        # - "^16.0.0"
+        - "^16.0.0"
     timeout-minutes: 20
     steps:
     - uses: actions/checkout@v2
