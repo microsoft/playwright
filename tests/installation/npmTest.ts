@@ -63,7 +63,7 @@ const expect = _expect;
 export type ExecOptions = { cwd?: string, env?: Record<string, string>, message?: string, expectToExitWithError?: boolean };
 export type ArgsOrOptions = [] | [...string[]] | [...string[], ExecOptions] | [ExecOptions];
 export const test = _test.extend<{
-    _autoCopyScripts: void,
+    _auto: void,
     tmpWorkspace: string,
     nodeMajorVersion: number,
     installedSoftwareOnDisk: (registryPath?: string) => Promise<string[]>;
@@ -72,11 +72,11 @@ export const test = _test.extend<{
     tsc: (...argsAndOrOptions: ArgsOrOptions) => Promise<string>,
     registry: Registry,
         }>({
-          _autoCopyScripts: [async ({ tmpWorkspace }, use) => {
-            const dstDir = path.join(tmpWorkspace);
+          _auto: [async ({ tmpWorkspace, exec }, use) => {
+            await exec('npm init -y');
             const sourceDir = path.join(__dirname, 'fixture-scripts');
             const contents = await fs.promises.readdir(sourceDir);
-            await Promise.all(contents.map(f => fs.promises.copyFile(path.join(sourceDir, f), path.join(dstDir, f))));
+            await Promise.all(contents.map(f => fs.promises.copyFile(path.join(sourceDir, f), path.join(tmpWorkspace, f))));
             await use();
           }, {
             auto: true,
@@ -95,10 +95,6 @@ export const test = _test.extend<{
             const tmpWorkspace = path.join(TMP_WORKSPACES, path.basename(test.info().outputDir));
             await fs.promises.mkdir(tmpWorkspace);
             debug(`Workspace Folder: ${tmpWorkspace}`);
-            await spawnAsync('npm', ['init', '-y'], {
-              cwd: tmpWorkspace,
-            });
-
             await use(tmpWorkspace);
           },
           registry: async ({}, use, testInfo) => {
