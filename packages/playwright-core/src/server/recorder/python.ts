@@ -335,6 +335,8 @@ export class PytestLanguageGenerator implements LanguageGenerator {
     const formatter = new PythonFormatter();
     if (this._isAsync) {
       formatter.add(`
+import pytest
+
 from playwright.async_api import Page, expect
 
 
