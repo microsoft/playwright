@@ -103,7 +103,7 @@ You can convert any synchronous `expect` to an asynchronous polling one using `e
 The following method will poll given function until it returns HTTP status 200:
 
 ```js
-expect.poll(async () => {
+await expect.poll(async () => {
   const response = await page.request.get('https://api.example.com');
   return response.status();
 }, {
