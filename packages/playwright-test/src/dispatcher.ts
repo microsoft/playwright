@@ -279,7 +279,7 @@ export class Dispatcher {
       // - there are no remaining
       // - we are here not because something failed
       // - no unrecoverable worker error
-      if (!remaining.length && !failedTestIds.size && !params.fatalErrors.length && !params.skipTestsDueToSetupFailure.length) {
+      if (!remaining.length && !failedTestIds.size && !params.fatalErrors.length && !params.skipTestsDueToSetupFailure.length && !params.fatalUnknownTestIds) {
         if (this._isWorkerRedundant(worker))
           worker.stop();
         doneWithJob();
@@ -322,6 +322,13 @@ export class Dispatcher {
         }
       };
 
+      if (params.fatalUnknownTestIds) {
+        const titles = params.fatalUnknownTestIds.map(testId => {
+          const test = this._testById.get(testId)!.test;
+          return test.titlePath().slice(1).join(' > ');
+        });
+        massSkipTestsFromRemaining(new Set(params.fatalUnknownTestIds), [{ message: `Unknown test(s) in worker:\n${titles.join('\n')}` }]);
+      }
       if (params.fatalErrors.length) {
         // In case of fatal errors, report first remaining test as failing with these errors,
         // and all others as skipped.

@@ -157,6 +157,7 @@ export class WorkerRunner extends EventEmitter {
   async runTestGroup(runPayload: RunPayload) {
     this._runFinished = new ManualPromise<void>();
     const entries = new Map(runPayload.entries.map(e => [ e.testId, e ]));
+    let fatalUnknownTestIds;
     try {
       await this._loadIfNeeded();
       const fileSuite = await this._loader.loadTestFile(runPayload.file, 'worker');
@@ -178,6 +179,9 @@ export class WorkerRunner extends EventEmitter {
           entries.delete(tests[i]._id);
           await this._runTest(tests[i], entry.retry, tests[i + 1]);
         }
+      } else {
+        fatalUnknownTestIds = runPayload.entries.map(e => e.testId);
+        this.stop();
       }
     } catch (e) {
       // In theory, we should run above code without any errors.
@@ -188,6 +192,7 @@ export class WorkerRunner extends EventEmitter {
       const donePayload: DonePayload = {
         fatalErrors: this._fatalErrors,
         skipTestsDueToSetupFailure: [],
+        fatalUnknownTestIds
       };
       for (const test of this._skipRemainingTestsInSuite?.allTests() || []) {
         if (entries.has(test._id))
