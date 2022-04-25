@@ -17,6 +17,7 @@
 import type { PlaywrightTestConfig } from '@playwright/test';
 import path from 'path';
 import { devices } from '@playwright/test';
+import vite from '@playwright/experimental-ct-react/vitePlugin';
 
 const config: PlaywrightTestConfig = {
   testDir: 'src',
@@ -27,14 +28,10 @@ const config: PlaywrightTestConfig = {
   ] : [
     ['html', { open: 'on-failure' }]
   ],
-  webServer: {
-    url: 'http://localhost:3101/playwright/index.html',
-    command: 'npm run playwright-dev',
-    cwd: __dirname,
-    reuseExistingServer: !process.env.CI,
-  },
+  plugins: [
+    vite({ port: 3101 })
+  ],
   use: {
-    baseURL: 'http://localhost:3101/playwright/index.html',
     trace: 'on-first-retry',
   },
   projects: [ ],

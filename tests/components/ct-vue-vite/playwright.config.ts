@@ -15,6 +15,8 @@
  */
 
 import { PlaywrightTestConfig, devices } from '@playwright/test';
+import vite from '@playwright/experimental-ct-vue/vitePlugin';
+import vue from '@vitejs/plugin-vue'
 
 const config: PlaywrightTestConfig = {
   testDir: 'src',
@@ -25,13 +27,14 @@ const config: PlaywrightTestConfig = {
   ] : [
     ['html', { open: 'on-failure' }]
   ],
-  webServer: {
-    url: 'http://localhost:3000/playwright/index.html',
-    command: 'npm run playwright-dev',
-    reuseExistingServer: !process.env.CI,
-  },
+  plugins: [
+    vite({
+      config: {
+        plugins: [ vue() ]
+      }
+    }),
+  ],
   use: {
-    baseURL: 'http://localhost:3000/playwright/index.html',
     trace: 'on-first-retry',
   },
   projects: [

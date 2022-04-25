@@ -14,29 +14,63 @@
  * limitations under the License.
  */
 
+import type { PlaywrightTestConfig, TestPlugin } from '@playwright/test';
 import fs from 'fs';
 import path from 'path';
 import { glob } from 'playwright-core/lib/utilsBundle';
-import { parse, types as t, traverse } from './babelBundle';
-import type { Plugin } from 'vite';
-import { componentInfo, collectComponentUsages } from './tsxTransform';
-import type { ComponentInfo } from './tsxTransform';
+import type { InlineConfig, Plugin, ViteDevServer } from 'vite';
+import { parse, traverse, types as t } from '../babelBundle';
+import type { ComponentInfo } from '../tsxTransform';
+import { collectComponentUsages, componentInfo } from '../tsxTransform';
 
-const imports: Map<string, ComponentInfo> = new Map();
+let viteDevServer: ViteDevServer;
 
-export function createVitePlugin(registerFunction: string) {
-  return (options?: { include: string }) => {
-    return vitePlugin({ ...(options || {}), registerFunction });
+export function createPlugin(
+  registerFunction: string,
+  options: {
+    include?: string,
+    port?: number,
+    config?: InlineConfig
+  } = {}): TestPlugin {
+  const viteConfig = options.config || {};
+  const port = options.port || 3100;
+  let configDir: string;
+  return {
+    configure: async (config: PlaywrightTestConfig, configDirectory: string) => {
+      configDir = configDirectory;
+      const url = `http://localhost:${port}/playwright/index.html`;
+      if (!config.use)
+        config.use = {};
+      config.use!.baseURL = url;
+    },
+
+    setup: async () => {
+      viteConfig.root = viteConfig.root || configDir;
+      viteConfig.plugins = viteConfig.plugins || [];
+      viteConfig.plugins.push(vitePlugin(registerFunction, options.include));
+      viteConfig.configFile = viteConfig.configFile || false;
+      viteConfig.server = viteConfig.server || {};
+      viteConfig.server.port = port;
+      const { createServer } = require('vite');
+      viteDevServer = await createServer(viteConfig);
+      await viteDevServer.listen(port);
+    },
+
+    teardown: async () => {
+      await viteDevServer.close();
+    },
   };
 }
 
-function vitePlugin(options: { include?: string, registerFunction: string }): Plugin {
+const imports: Map<string, ComponentInfo> = new Map();
+
+function vitePlugin(registerFunction: string, include: string | undefined): Plugin {
   return {
-    name: 'playwright-gallery',
+    name: 'playwright:component-index',
 
     configResolved: async config => {
       const files = await new Promise<string[]>((f, r) => {
-        glob(options.include || config.root + '/**/*.{test,spec}.[tj]s{x,}', {}, function(err, files) {
+        glob(include || config.root + '/**/*.{test,spec}.[tj]s{x,}', {}, function(err, files) {
           if (err)
             r(err);
           else
@@ -76,7 +110,7 @@ function vitePlugin(options: { include?: string, registerFunction: string }): Pl
 
       const folder = path.dirname(id);
       const lines = [content, ''];
-      lines.push(`import register from '${options.registerFunction}';`);
+      lines.push(`import register from '${registerFunction}';`);
 
       for (const [alias, value] of imports) {
         const importPath = value.isModuleOrAlias ? value.importPath : './' + path.relative(folder, value.importPath).replace(/\\/g, '/');

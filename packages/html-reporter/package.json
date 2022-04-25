@@ -5,8 +5,6 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build && tsc",
-    "preview": "vite preview",
-    "playwright-build": "vite --config playwright.vite.config.ts build",
-    "playwright-dev": "vite --config playwright.vite.config.ts"
+    "preview": "vite preview"
   }
 }
