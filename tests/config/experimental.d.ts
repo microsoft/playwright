@@ -9809,6 +9809,27 @@ export interface Locator {
   }): Promise<null|string>;
 
   /**
+   * This method narrows existing locator according to the options, for example filters by text.
+   * @param options
+   */
+  that(options?: {
+    /**
+     * Matches elements containing an element that matches an inner locator. Inner locator is queried against the outer one.
+     * For example, `article` that has `text=Playwright` matches `<article><div>Playwright</div></article>`.
+     *
+     * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
+     */
+    has?: Locator;
+
+    /**
+     * Matches elements containing specified text somewhere inside, possibly in a child or a descendant element. When passed a
+     * [string], matching is case-insensitive and searches for a substring. For example, `"Playwright"` matches
+     * `<article><div>Playwright</div></article>`.
+     */
+    hasText?: string|RegExp;
+  }): Locator;
+
+  /**
    * Focuses the element, and then sends a `keydown`, `keypress`/`input`, and `keyup` event for each character in the text.
    *
    * To press a special key, like `Control` or `ArrowDown`, use
