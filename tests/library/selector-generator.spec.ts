@@ -194,6 +194,27 @@ it.describe('selector generator', () => {
     expect(await generate(page, 'c[mark="1"]')).toBe('b:nth-child(2) > c');
   });
 
+  it('should properly join child selectors under nested ordinals', async ({ page }) => {
+    await page.setContent(`
+      <a><c></c><c></c><c></c><c></c><c></c><b></b></a>
+      <a>
+        <b>
+          <div>
+            <c>
+            </c>
+          </div>
+        </b>
+        <b>
+          <div>
+            <c mark=1></c>
+          </div>
+        </b>
+      </a>
+      <a><b></b></a>
+    `);
+    expect(await generate(page, 'c[mark="1"]')).toBe('b:nth-child(2) > div > c');
+  });
+
   it('should not use input[value]', async ({ page }) => {
     await page.setContent(`
       <input value="one">
