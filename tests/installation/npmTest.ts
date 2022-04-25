@@ -105,7 +105,7 @@ export const test = _test.extend<{
             const port = testInfo.workerIndex + 16123;
             const url = `http://127.0.0.1:${port}`;
             const registry = new Registry(testInfo.outputPath('registry'), url);
-            await registry.start(JSON.parse((await fs.promises.readFile(path.join(__dirname, './.registry.json'), 'utf8'))));
+            await registry.start(JSON.parse((await fs.promises.readFile(path.join(__dirname, '.registry.json'), 'utf8'))));
             await use(registry);
             await registry.shutdown();
           },

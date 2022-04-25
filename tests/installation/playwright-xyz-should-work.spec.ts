@@ -26,7 +26,7 @@ for (const pkg of ['playwright-chromium', 'playwright-firefox', 'playwright-webk
     expect(result).toHaveLoggedSoftwareDownload(expectedSoftware as any);
     expect(await installedSoftwareOnDisk()).toEqual(expectedSoftware);
     expect(result).not.toContain(`To avoid unexpected behavior, please install your dependencies first`);
-    await exec('node ./sanity.js', pkg);
+    await exec('node sanity.js', pkg);
     if (nodeMajorVersion >= 14)
       await exec('node', `esm-${pkg}.mjs`);
   });

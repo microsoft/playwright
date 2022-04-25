@@ -24,5 +24,5 @@ test('subsequent installs works', async ({ exec }) => {
   // sure that script's install.js can be run subsequently without unhandled promise rejections.
   // Note: the flag `--unhandled-rejections=strict` will force node to terminate in case
   // of UnhandledPromiseRejection.
-  await exec('node --unhandled-rejections=strict', path.join('./node_modules', 'playwright', 'install.js'));
+  await exec('node --unhandled-rejections=strict', path.join('node_modules', 'playwright', 'install.js'));
 });

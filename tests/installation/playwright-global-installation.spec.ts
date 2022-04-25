@@ -20,5 +20,5 @@ test('global installation', async ({ exec, installedSoftwareOnDisk }) => {
   expect(result).toHaveLoggedSoftwareDownload(['chromium', 'ffmpeg', 'firefox', 'webkit']);
   expect(await installedSoftwareOnDisk()).toEqual(['chromium', 'ffmpeg', 'firefox', 'webkit']);
   await exec('node sanity.js playwright none', { env: { PLAYWRIGHT_BROWSERS_PATH: undefined } });
-  await exec('node ./sanity.js playwright');
+  await exec('node sanity.js playwright');
 });

@@ -19,7 +19,7 @@ import path from 'path';
 
 test('playwright cli screenshot should work', async ({ exec, tmpWorkspace }) => {
   await exec('npm i --foreground-scripts playwright');
-  await exec('./node_modules/.bin/playwright screenshot about:blank one.png');
+  await exec(path.join('node_modules', '.bin', 'playwright'), 'screenshot about:blank one.png');
   await fs.promises.stat(path.join(tmpWorkspace, 'one.png'));
 
   await exec('npx playwright screenshot about:blank two.png');
