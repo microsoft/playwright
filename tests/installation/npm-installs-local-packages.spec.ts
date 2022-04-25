@@ -17,7 +17,7 @@ import path from 'path';
 import { test, expect } from './npmTest';
 import fs from 'fs';
 
-test.only('installs local packages', async ({ registry, exec, tmpWorkspace }) => {
+test('installs local packages', async ({ registry, exec, tmpWorkspace }) => {
   const packages = ['playwright', 'playwright-core', 'playwright-chromium', 'playwright-firefox', 'playwright-webkit', '@playwright/test'];
   await exec('npm i --foreground-scripts', ...packages, { env: { PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1' } });
 
