@@ -124,6 +124,23 @@ it('should support has:locator', async ({ page, trace }) => {
   })).toHaveCount(1);
 });
 
+it('should support locator.that', async ({ page, trace }) => {
+  it.skip(trace === 'on');
+
+  await page.setContent(`<section><div><span>hello</span></div><div><span>world</span></div></section>`);
+  await expect(page.locator(`div`).that({ hasText: 'hello' })).toHaveCount(1);
+  await expect(page.locator(`div`, { hasText: 'hello' }).that({ hasText: 'hello' })).toHaveCount(1);
+  await expect(page.locator(`div`, { hasText: 'hello' }).that({ hasText: 'world' })).toHaveCount(0);
+  await expect(page.locator(`section`, { hasText: 'hello' }).that({ hasText: 'world' })).toHaveCount(1);
+  await expect(page.locator(`div`).that({ hasText: 'hello' }).locator('span')).toHaveCount(1);
+  await expect(page.locator(`div`).that({ has: page.locator('span', { hasText: 'world' }) })).toHaveCount(1);
+  await expect(page.locator(`div`).that({ has: page.locator('span') })).toHaveCount(2);
+  await expect(page.locator(`div`).that({
+    has: page.locator('span'),
+    hasText: 'world',
+  })).toHaveCount(1);
+});
+
 it('should enforce same frame for has:locator', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/frames/two-frames.html');
   const child = page.frames()[1];

@@ -770,6 +770,13 @@ Returns the `node.textContent`.
 
 ### option: Locator.textContent.timeout = %%-input-timeout-%%
 
+## method: Locator.that
+- returns: <[Locator]>
+
+This method narrows existing locator according to the options, for example filters by text.
+
+### option: Locator.that.-inline- = %%-locator-options-list-%%
+
 ## async method: Locator.type
 
 Focuses the element, and then sends a `keydown`, `keypress`/`input`, and `keyup` event for each character in the text.

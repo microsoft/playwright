@@ -130,6 +130,10 @@ export class Locator implements api.Locator {
     return new FrameLocator(this._frame, this._selector + ' >> ' + selector);
   }
 
+  that(options?: { hasText?: string | RegExp, has?: Locator }): Locator {
+    return new Locator(this._frame, this._selector, options);
+  }
+
   async elementHandle(options?: TimeoutOptions): Promise<ElementHandle<SVGElement | HTMLElement>> {
     return await this._frame.waitForSelector(this._selector, { strict: true, state: 'attached', ...options })!;
   }
