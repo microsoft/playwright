@@ -166,15 +166,10 @@ jobs:
         - windows-latest
         node_version:
         - "^18.0.0"
-        include:
-        - node: "12.0.0"
-          os: ubuntu-latest
-        - node: "^12.0.0"
-          os: ubuntu-latest
-        - node: "^14.1.0"  # pre 14.1, zip extraction was broken (https://github.com/microsoft/playwright/issues/1988)
-          os: ubuntu-latest
-        - node: "^16.0.0"
-          os: ubuntu-latest
+        # - "12.0.0"
+        # - "^12.0.0"
+        # - "^14.1.0"
+        # - "^16.0.0"
     timeout-minutes: 20
     steps:
     - uses: actions/checkout@v2
@@ -188,5 +183,7 @@ jobs:
         DEBUG: pw:install
     - run: npm run build
     - run: npx playwright install-deps
-    - name: INSTALLATION TESTS
-      run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run itest
+    - run: npm run itest
+      if: matrix.os != 'ubuntu-latest'
+    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run itest
+      if: matrix.os == 'ubuntu-latest'
