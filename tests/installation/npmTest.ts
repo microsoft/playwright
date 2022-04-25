@@ -23,6 +23,7 @@ import path from 'path';
 import debugLogger from 'debug';
 import { Registry }  from './registry';
 import { spawnAsync } from './spawnAsync';
+import { TMP_WORKSPACES } from './constants';
 
 const debug = debugLogger('itest');
 
@@ -91,7 +92,7 @@ export const test = _test.extend<{
           },
           tmpWorkspace: async ({}, use) => {
             // We want a location that won't have a node_modules dir anywhere along its path
-            const tmpWorkspace = path.join('/tmp/pwt/workspaces', path.basename(test.info().outputDir));
+            const tmpWorkspace = path.join(TMP_WORKSPACES, path.basename(test.info().outputDir));
             await fs.promises.mkdir(tmpWorkspace);
             debug(`Workspace Folder: ${tmpWorkspace}`);
             await spawnAsync('npm', ['init', '-y'], {
