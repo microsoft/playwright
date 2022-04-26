@@ -17,6 +17,10 @@
     "./test": "./test.js",
     "./vitePlugin": "./vitePlugin.js"
   },
+  "dependencies": {
+    "@vitejs/plugin-vue": "^2.3.1",
+    "vite": "^2.9.5"
+  },
   "devDependencies": {
     "@playwright/test": "1.22.0-next"
   }

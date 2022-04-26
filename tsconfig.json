@@ -27,6 +27,9 @@
   "exclude": [
     "packages/*/lib",
     "packages/html-reporter",
+    "packages/playwright-ct-react",
+    "packages/playwright-ct-svelte",
+    "packages/playwright-ct-vue",
     "packages/recorder",
     "packages/trace-viewer",
     "packages/web",

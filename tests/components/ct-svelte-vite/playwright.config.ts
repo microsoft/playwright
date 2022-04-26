@@ -16,8 +16,7 @@
 
 import type { PlaywrightTestConfig } from '@playwright/test';
 import { devices } from '@playwright/test';
-import vite from '@playwright/experimental-ct-svelte/vitePlugin';
-import { svelte } from '@sveltejs/vite-plugin-svelte';
+import viteCT from '@playwright/experimental-ct-svelte/vitePlugin';
 
 const config: PlaywrightTestConfig = {
   testDir: 'src',
@@ -29,9 +28,7 @@ const config: PlaywrightTestConfig = {
     ['html', { open: 'on-failure' }]
   ],
   plugins: [
-    vite({
-      config: { plugins: [ svelte() ] }
-    }),
+    viteCT(),
   ],
   use: {
     trace: 'on-first-retry',

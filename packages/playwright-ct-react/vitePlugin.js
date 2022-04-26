@@ -17,5 +17,8 @@
 const { createPlugin } = require('@playwright/test/lib/plugins/vitePlugin');
 
 module.exports = (options = {}) => {
-  return createPlugin('@playwright/experimental-ct-react/register', options);
+  return createPlugin(
+    '@playwright/experimental-ct-react/register',
+    () => require('@vitejs/plugin-react')(),
+    options);
 };

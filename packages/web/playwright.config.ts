@@ -16,7 +16,7 @@
 
 import type { PlaywrightTestConfig } from '@playwright/test';
 import { devices } from '@playwright/test';
-import vite from '@playwright/experimental-ct-react/vitePlugin';
+import viteCT from '@playwright/experimental-ct-react/vitePlugin';
 
 const config: PlaywrightTestConfig = {
   testDir: 'src',
@@ -28,7 +28,7 @@ const config: PlaywrightTestConfig = {
     ['html', { open: 'on-failure' }]
   ],
   plugins: [
-    vite({ port: 3101 })
+    viteCT({ port: 3101 })
   ],
   use: {
     trace: 'on-first-retry',

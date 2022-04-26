@@ -17,5 +17,8 @@
 const { createPlugin } = require('@playwright/test/lib/plugins/vitePlugin');
 
 module.exports = (options = {}) => {
-  return createPlugin('@playwright/experimental-ct-svelte/register', options);
+  return createPlugin(
+    '@playwright/experimental-ct-svelte/register',
+    () => require('@sveltejs/vite-plugin-svelte').svelte(),
+    options);
 };
