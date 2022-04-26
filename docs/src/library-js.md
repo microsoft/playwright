@@ -97,7 +97,7 @@ let page: import('playwright').Page;
 
 ## System requirements
 
-Playwright requires Node.js version 12 or above. The browser binaries for Chromium,
+Playwright requires Node.js version 14 or above. The browser binaries for Chromium,
 Firefox and WebKit work across the 3 platforms (Windows, macOS, Linux):
 
 ### Windows
