@@ -27,6 +27,7 @@ let viteDevServer: ViteDevServer;
 
 export function createPlugin(
   registerFunction: string,
+  frameworkPluginFactory: () => Plugin,
   options: {
     include?: string,
     port?: number,
@@ -46,7 +47,9 @@ export function createPlugin(
 
     setup: async () => {
       viteConfig.root = viteConfig.root || configDir;
-      viteConfig.plugins = viteConfig.plugins || [];
+      viteConfig.plugins = viteConfig.plugins || [
+        frameworkPluginFactory()
+      ];
       viteConfig.plugins.push(vitePlugin(registerFunction, options.include));
       viteConfig.configFile = viteConfig.configFile || false;
       viteConfig.server = viteConfig.server || {};

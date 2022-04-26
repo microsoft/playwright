@@ -1,6 +1,5 @@
 import { PlaywrightTestConfig, devices } from '@playwright/test';
-import vite from '@playwright/experimental-ct-vue/vitePlugin';
-import vue from '@vitejs/plugin-vue';
+import viteCT from '@playwright/experimental-ct-vue/vitePlugin';
 
 const config: PlaywrightTestConfig = {
   testDir: 'src',
@@ -12,7 +11,7 @@ const config: PlaywrightTestConfig = {
     ['html', { open: 'on-failure' }]
   ],
   plugins: [
-    vite({ config: { plugins: [ vue() ] }}),
+    viteCT()
   ],
   use: {
     trace: 'on-first-retry',

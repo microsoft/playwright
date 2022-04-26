@@ -17,5 +17,8 @@
 const { createPlugin } = require('@playwright/test/lib/plugins/vitePlugin');
 
 module.exports = (options = {}) => {
-  return createPlugin('@playwright/experimental-ct-vue/register', options);
+  return createPlugin(
+    '@playwright/experimental-ct-vue/register',
+    () => require('@vitejs/plugin-vue')(),
+    options);
 };
