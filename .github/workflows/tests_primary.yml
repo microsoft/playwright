@@ -46,7 +46,7 @@ jobs:
     - uses: actions/setup-node@v2
       with:
         node-version: ${{ matrix.node-version }}
-    - run: npm i -g npm@8.3
+    - run: npm i -g npm@8
     - run: npm ci
       env:
         DEBUG: pw:install
@@ -75,7 +75,7 @@ jobs:
     - uses: actions/setup-node@v2
       with:
         node-version: 14
-    - run: npm i -g npm@8.3
+    - run: npm i -g npm@8
     - run: npm ci
       env:
         DEBUG: pw:install
@@ -106,7 +106,7 @@ jobs:
     - uses: actions/setup-node@v2
       with:
         node-version: ${{matrix.node-version}}
-    - run: npm i -g npm@8.3
+    - run: npm i -g npm@8
     - run: npm ci
       env:
         DEBUG: pw:install
@@ -133,7 +133,7 @@ jobs:
       with:
         # ESM tests rely on the experimental loader in Node.js 16+
         node-version: 16
-    - run: npm i -g npm@8.3
+    - run: npm i -g npm@8
     - run: npm ci
       env:
         DEBUG: pw:install
@@ -150,7 +150,7 @@ jobs:
       with:
         # Component tests require Node.js 16+ (they require ESM via TS)
         node-version: 16
-    - run: npm i -g npm@8.3
+    - run: npm i -g npm@8
     - run: npm ci
       env:
         DEBUG: pw:install

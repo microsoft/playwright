@@ -31,7 +31,7 @@ jobs:
       uses: docker/setup-qemu-action@v1
       with:
         platforms: arm64
-    - run: npm i -g npm@8.3
+    - run: npm i -g npm@8
     - run: npm ci
     - run: npm run build
     - run: npx playwright install-deps

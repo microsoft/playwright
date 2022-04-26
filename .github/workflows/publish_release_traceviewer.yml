@@ -14,7 +14,7 @@ jobs:
     - uses: actions/setup-node@v2
       with:
         node-version: 14
-    - run: npm i -g npm@7
+    - run: npm i -g npm@8
     - name: Deploy Stable
       run: bash utils/build/deploy-trace-viewer.sh --stable
       env:

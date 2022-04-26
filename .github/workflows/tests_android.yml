@@ -33,7 +33,7 @@ jobs:
     - uses: actions/setup-node@v2
       with:
         node-version: 14
-    - run: npm i -g npm@8.3
+    - run: npm i -g npm@8
     - run: npm ci
       env:
         DEBUG: pw:install
