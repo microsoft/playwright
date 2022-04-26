@@ -37,7 +37,7 @@ jobs:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v2
       with:
-        node-version: 12
+        node-version: 14
     - run: npm i -g npm@8.3
     - run: npm ci
       env:
@@ -66,7 +66,7 @@ jobs:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v2
       with:
-        node-version: 12
+        node-version: 14
     - run: npm i -g npm@8.3
     - run: npm ci
       env:
@@ -91,7 +91,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        node-version: [12]
+        node-version: [14]
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v2
@@ -123,7 +123,7 @@ jobs:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v2
       with:
-        node-version: 16
+        node-version: 18
     - run: npm i -g npm@8.3
     - run: npm ci
       env:
@@ -139,7 +139,7 @@ jobs:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v2
       with:
-        node-version: 16
+        node-version: 18
     - run: npm ci
       env:
         DEBUG: pw:install
