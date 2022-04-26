@@ -29,6 +29,7 @@ jobs:
     - uses: actions/setup-node@v2
       with:
         node-version: 16
+    - run: npm i -g npm@8.3
     - run: npm ci
     - run: npm run build
     - run: npx playwright install --with-deps
