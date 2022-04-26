@@ -14,4 +14,3 @@
  * limitations under the License.
  */
 export { webServer } from './webServerPlugin';
-export { createPlugin as vite } from './vitePlugin';
