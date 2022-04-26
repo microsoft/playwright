@@ -46,7 +46,11 @@ it('should scroll zero-sized element into view', async ({ page, isAndroid }) => 
   it.fixme(isAndroid);
 
   await page.setContent(`
-    <style>html,body { margin: 0; padding: 0; }</style>
+    <style>
+      html,body { margin: 0; padding: 0; }
+      ::-webkit-scrollbar { display: none; }
+      * { scrollbar-width: none; }
+    </style>
     <div style="height: 2000px; text-align: center; border: 10px solid blue;">
       <h1>SCROLL DOWN</h1>
     </div>
