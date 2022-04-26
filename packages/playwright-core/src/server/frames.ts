@@ -468,6 +468,7 @@ export class Frame extends SdkObject {
 
     this._firedLifecycleEvents.add('commit');
     this._subtreeLifecycleEvents.add('commit');
+    this._startNetworkIdleTimer();
   }
 
   isDetached(): boolean {

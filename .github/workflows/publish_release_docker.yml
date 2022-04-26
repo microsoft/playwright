@@ -20,7 +20,7 @@ jobs:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v2
       with:
-        node-version: 12
+        node-version: 14
         registry-url: 'https://registry.npmjs.org'
     - uses: azure/docker-login@v1
       with:
@@ -31,7 +31,7 @@ jobs:
       uses: docker/setup-qemu-action@v1
       with:
         platforms: arm64
-    - run: npm i -g npm@8.3
+    - run: npm i -g npm@8
     - run: npm ci
     - run: npm run build
     - run: npx playwright install-deps

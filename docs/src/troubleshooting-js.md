@@ -30,7 +30,7 @@ await page.evaluate(`(async() => {
 
 ### ReferenceError: URL is not defined
 
-Playwright requires Node.js 12 or higher. Node.js 8 is not supported, and will cause you to receive this error.
+Playwright requires Node.js 14 or higher. Node.js 8 is not supported, and will cause you to receive this error.
 
 # Please file an issue
 

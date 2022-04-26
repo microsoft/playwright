@@ -32,8 +32,8 @@ jobs:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v2
       with:
-        node-version: 12
-    - run: npm i -g npm@8.3
+        node-version: 14
+    - run: npm i -g npm@8
     - run: npm ci
       env:
         DEBUG: pw:install
@@ -62,8 +62,8 @@ jobs:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v2
       with:
-        node-version: 12
-    - run: npm i -g npm@8.3
+        node-version: 14
+    - run: npm i -g npm@8
     - run: npm ci
       env:
         DEBUG: pw:install
@@ -90,8 +90,8 @@ jobs:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v2
       with:
-        node-version: 12
-    - run: npm i -g npm@8.3
+        node-version: 14
+    - run: npm i -g npm@8
     - run: npm ci
       env:
         DEBUG: pw:install
@@ -123,10 +123,6 @@ jobs:
         - "^18.0.0"
         include:
         - os: ubuntu-latest
-          node_version: "12.0.0"
-        - os: ubuntu-latest
-          node_version: "^12.0.0"
-        - os: ubuntu-latest
           node_version: "^14.1.0"  # pre 14.1, zip extraction was broken (https://github.com/microsoft/playwright/issues/1988)
         - os: ubuntu-latest
           node_version: "^16.0.0"
@@ -136,8 +132,7 @@ jobs:
     - uses: actions/setup-node@v2
       with:
         node-version: ${{ matrix.node_version }}
-    # NPM 7 is the latest version which supports Node.js 12.0.0
-    - run: npm i -g npm@7
+    - run: npm i -g npm@8
     - run: npm ci
       env:
         DEBUG: pw:install
@@ -159,8 +154,8 @@ jobs:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v2
       with:
-        node-version: 12
-    - run: npm i -g npm@8.3
+        node-version: 14
+    - run: npm i -g npm@8
     - run: npm ci
       env:
         DEBUG: pw:install
@@ -190,8 +185,8 @@ jobs:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v2
       with:
-        node-version: 12
-    - run: npm i -g npm@8.3
+        node-version: 14
+    - run: npm i -g npm@8
     - run: npm ci
       env:
         DEBUG: pw:install
@@ -225,8 +220,8 @@ jobs:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v2
       with:
-        node-version: 12
-    - run: npm i -g npm@8.3
+        node-version: 14
+    - run: npm i -g npm@8
     - run: npm ci
       env:
         DEBUG: pw:install
@@ -246,8 +241,8 @@ jobs:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v2
       with:
-        node-version: 12
-    - run: npm i -g npm@8.3
+        node-version: 14
+    - run: npm i -g npm@8
     - run: npm ci
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
@@ -271,8 +266,8 @@ jobs:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v2
       with:
-        node-version: 12
-    - run: npm i -g npm@8.3
+        node-version: 14
+    - run: npm i -g npm@8
     - run: npm ci
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
@@ -298,8 +293,8 @@ jobs:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v2
       with:
-        node-version: 12
-    - run: npm i -g npm@8.3
+        node-version: 14
+    - run: npm i -g npm@8
     - run: npm ci
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
@@ -323,8 +318,8 @@ jobs:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v2
       with:
-        node-version: 12
-    - run: npm i -g npm@8.3
+        node-version: 14
+    - run: npm i -g npm@8
     - run: npm ci
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
@@ -348,8 +343,8 @@ jobs:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v2
       with:
-        node-version: 12
-    - run: npm i -g npm@8.3
+        node-version: 14
+    - run: npm i -g npm@8
     - run: npm ci
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
@@ -375,8 +370,8 @@ jobs:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v2
       with:
-        node-version: 12
-    - run: npm i -g npm@8.3
+        node-version: 14
+    - run: npm i -g npm@8
     - run: npm ci
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
@@ -400,8 +395,8 @@ jobs:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v2
       with:
-        node-version: 12
-    - run: npm i -g npm@8.3
+        node-version: 14
+    - run: npm i -g npm@8
     - run: npm ci
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
@@ -425,8 +420,8 @@ jobs:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v2
       with:
-        node-version: 12
-    - run: npm i -g npm@8.3
+        node-version: 14
+    - run: npm i -g npm@8
     - run: npm ci
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
@@ -452,8 +447,8 @@ jobs:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v2
       with:
-        node-version: 12
-    - run: npm i -g npm@8.3
+        node-version: 14
+    - run: npm i -g npm@8
     - run: npm ci
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
@@ -477,8 +472,8 @@ jobs:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v2
       with:
-        node-version: 12
-    - run: npm i -g npm@8.3
+        node-version: 14
+    - run: npm i -g npm@8
     - run: npm ci
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
@@ -503,8 +498,8 @@ jobs:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v2
       with:
-        node-version: 12
-    - run: npm i -g npm@8.3
+        node-version: 14
+    - run: npm i -g npm@8
     - run: npm ci
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
@@ -527,8 +522,8 @@ jobs:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v2
       with:
-        node-version: 12
-    - run: npm i -g npm@8.3
+        node-version: 14
+    - run: npm i -g npm@8
     - run: npm ci
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
@@ -552,8 +547,8 @@ jobs:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v2
       with:
-        node-version: 12
-    - run: npm i -g npm@8.3
+        node-version: 14
+    - run: npm i -g npm@8
     - run: npm ci
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
@@ -577,8 +572,8 @@ jobs:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v2
       with:
-        node-version: 12
-    - run: npm i -g npm@8.3
+        node-version: 14
+    - run: npm i -g npm@8
     - run: npm ci
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
@@ -601,8 +596,8 @@ jobs:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v2
       with:
-        node-version: 12
-    - run: npm i -g npm@8.3
+        node-version: 14
+    - run: npm i -g npm@8
     - run: npm ci
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
@@ -626,8 +621,8 @@ jobs:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v2
       with:
-        node-version: 12
-    - run: npm i -g npm@8.3
+        node-version: 14
+    - run: npm i -g npm@8
     - run: npm ci
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
@@ -651,8 +646,8 @@ jobs:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v2
       with:
-        node-version: 12
-    - run: npm i -g npm@8.3
+        node-version: 14
+    - run: npm i -g npm@8
     - run: npm ci
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
@@ -675,8 +670,8 @@ jobs:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v2
       with:
-        node-version: 12
-    - run: npm i -g npm@8.3
+        node-version: 14
+    - run: npm i -g npm@8
     - run: npm ci
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
@@ -700,8 +695,8 @@ jobs:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v2
       with:
-        node-version: 12
-    - run: npm i -g npm@8.3
+        node-version: 14
+    - run: npm i -g npm@8
     - run: npm ci
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
@@ -725,8 +720,8 @@ jobs:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v2
       with:
-        node-version: 12
-    - run: npm i -g npm@8.3
+        node-version: 14
+    - run: npm i -g npm@8
     - run: npm ci
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
@@ -752,8 +747,8 @@ jobs:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v2
       with:
-        node-version: 12
-    - run: npm i -g npm@8.3
+        node-version: 14
+    - run: npm i -g npm@8
     - run: npm ci
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
@@ -777,8 +772,8 @@ jobs:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v2
       with:
-        node-version: 12
-    - run: npm i -g npm@8.3
+        node-version: 14
+    - run: npm i -g npm@8
     - run: npm ci
       env:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
@@ -801,8 +796,8 @@ jobs:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v2
       with:
-        node-version: 12
-    - run: npm i -g npm@8.3
+        node-version: 14
+    - run: npm i -g npm@8
     - run: npm ci
     - run: npm run build
     - run: npx playwright install-deps
