@@ -6,3 +6,5 @@
 !register.mjs
 !test.d.ts
 !test.js
+!vitePlugin.d.ts
+!vitePlugin.js
