@@ -272,7 +272,7 @@ test('should support toHaveText with innerText', async ({ runInlineTest }) => {
       const { test } = pwt;
 
       test('pass', async ({ page }) => {
-        await page.setContent('<div id=node>Text content</div>');
+        await page.setContent('<div id=node>Text <span hidden>garbage</span> content</div>');
         const locator = page.locator('#node');
         await expect(locator).toHaveText('Text content', { useInnerText: true });
       });
