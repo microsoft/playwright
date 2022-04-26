@@ -29,6 +29,7 @@
     "./lib/utils/manualPromise": "./lib/utils/manualPromise.js",
     "./lib/utils/multimap": "./lib/utils/multimap.js",
     "./lib/utils/processLauncher": "./lib/utils/processLauncher.js",
+    "./lib/utils/processLauncherCleanupEntrypoint": "./lib/utils/processLauncherCleanupEntrypoint.js",
     "./lib/utils/spawnAsync": "./lib/utils/spawnAsync.js",
     "./lib/utils/stackTrace": "./lib/utils/stackTrace.js",
     "./lib/utils/timeoutRunner": "./lib/utils/timeoutRunner.js",
