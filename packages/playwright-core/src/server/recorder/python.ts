@@ -33,17 +33,22 @@ export class PythonLanguageGenerator implements LanguageGenerator {
   private _awaitPrefix: '' | 'await ';
   private _asyncPrefix: '' | 'async ';
   private _isAsync: boolean;
+  private _isTest: boolean;
 
-  constructor(isAsync: boolean) {
-    this.id = isAsync ? 'python-async' : 'python';
-    this.fileName = isAsync ? 'Python Async' : 'Python';
+  constructor(isAsync: boolean, isTest: boolean) {
+    this.id = isTest ? 'pytest' : (isAsync ? 'python-async' : 'python');
+    this.fileName = isTest ? 'Pytest' : (isAsync ? 'Python Async' : 'Python');
     this._isAsync = isAsync;
+    this._isTest = isTest;
     this._awaitPrefix = isAsync ? 'await ' : '';
     this._asyncPrefix = isAsync ? 'async ' : '';
   }
 
   generateAction(actionInContext: ActionInContext): string {
     const action = actionInContext.action;
+    if (this._isTest && (action.name === 'openPage' || action.name === 'closePage'))
+      return '';
+
     const pageAlias = actionInContext.frame.pageAlias;
     const formatter = new PythonFormatter(4);
     formatter.newLine();
@@ -150,7 +155,13 @@ export class PythonLanguageGenerator implements LanguageGenerator {
 
   generateHeader(options: LanguageGeneratorOptions): string {
     const formatter = new PythonFormatter();
-    if (this._isAsync) {
+    if (this._isTest) {
+      formatter.add(`
+from playwright.sync_api import Page, expect
+
+
+def test_sample(page: Page) -> None {`);
+    } else if (this._isAsync) {
       formatter.add(`
 import asyncio
 
@@ -173,7 +184,9 @@ def run(playwright: Playwright) -> None {
   }
 
   generateFooter(saveStorage: string | undefined): string {
-    if (this._isAsync) {
+    if (this._isTest) {
+      return '';
+    } else if (this._isAsync) {
       const storageStateLine = saveStorage ? `\n    await context.storage_state(path=${quote(saveStorage)})` : '';
       return `\n    # ---------------------${storageStateLine}
     await context.close()
@@ -198,162 +211,6 @@ with sync_playwright() as playwright:
     run(playwright)
 `;
     }
-  }
-}
-
-export class PytestLanguageGenerator implements LanguageGenerator {
-  id = 'pytest';
-  fileName = 'Pytest';
-  highlighter = 'python';
-
-  private _awaitPrefix: '' | 'await ';
-  private _asyncPrefix: '' | 'async ';
-  private _isAsync: boolean;
-
-  constructor(isAsync: boolean) {
-    this.id = isAsync ? 'pytest-async' : 'pytest';
-    this.fileName = isAsync ? 'Pytest Async' : 'Pytest';
-    this._isAsync = isAsync;
-    this._awaitPrefix = isAsync ? 'await ' : '';
-    this._asyncPrefix = isAsync ? 'async ' : '';
-  }
-
-  generateAction(actionInContext: ActionInContext): string {
-    const action = actionInContext.action;
-    const pageAlias = actionInContext.frame.pageAlias;
-    const formatter = new PythonFormatter(4);
-    formatter.newLine();
-
-    if (action.name === 'openPage') {
-      if (action.url && action.url !== 'about:blank' && action.url !== 'chrome://newtab/') {
-        formatter.add('# ' + actionTitle(action));
-        formatter.add(`${this._awaitPrefix}${pageAlias}.goto(${quote(action.url)})`);
-      }
-      return formatter.format();
-    }
-
-    if (action.name === 'closePage') {
-      // page.close() is handled automatically by playwright-pytest fixtures
-      return formatter.format();
-    }
-
-    formatter.add('# ' + actionTitle(action));
-
-    let subject: string;
-    if (actionInContext.frame.isMainFrame) {
-      subject = pageAlias;
-    } else if (actionInContext.frame.selectorsChain && action.name !== 'navigate') {
-      const locators = actionInContext.frame.selectorsChain.map(selector => '.' + asLocator(selector, 'frame_locator'));
-      subject = `${pageAlias}${locators.join('')}`;
-    } else if (actionInContext.frame.name) {
-      subject = `${pageAlias}.frame(${formatOptions({ name: actionInContext.frame.name }, false)})`;
-    } else {
-      subject = `${pageAlias}.frame(${formatOptions({ url: actionInContext.frame.url }, false)})`;
-    }
-
-    const signals = toSignalMap(action);
-
-    if (signals.dialog)
-      formatter.add(`  ${pageAlias}.once("dialog", lambda dialog: dialog.dismiss())`);
-
-    const actionCall = this._generateActionCall(action);
-    let code = `${this._awaitPrefix}${subject}.${actionCall}`;
-
-    if (signals.popup) {
-      code = `${this._asyncPrefix}with ${pageAlias}.expect_popup() as popup_info {
-        ${code}
-      }
-      ${signals.popup.popupAlias} = ${this._awaitPrefix}popup_info.value`;
-    }
-
-    if (signals.download) {
-      code = `${this._asyncPrefix}with ${pageAlias}.expect_download() as download_info {
-        ${code}
-      }
-      download = ${this._awaitPrefix}download_info.value`;
-    }
-
-    if (signals.waitForNavigation) {
-      code = `
-      # ${this._asyncPrefix}with ${pageAlias}.expect_navigation(url=${quote(signals.waitForNavigation.url)}):
-      ${this._asyncPrefix}with ${pageAlias}.expect_navigation() {
-        ${code}
-      }`;
-    }
-
-    formatter.add(code);
-
-    if (signals.assertNavigation)
-      formatter.add(`  # ${this._awaitPrefix}expect(${pageAlias}).to_have_url(${quote(signals.assertNavigation.url)})`);
-    return formatter.format();
-  }
-
-  private _generateActionCall(action: Action): string {
-    switch (action.name) {
-      case 'openPage':
-        throw Error('Not reached');
-      case 'closePage':
-        return 'close()';
-      case 'click': {
-        let method = 'click';
-        if (action.clickCount === 2)
-          method = 'dblclick';
-        const modifiers = toModifiers(action.modifiers);
-        const options: MouseClickOptions = {};
-        if (action.button !== 'left')
-          options.button = action.button;
-        if (modifiers.length)
-          options.modifiers = modifiers;
-        if (action.clickCount > 2)
-          options.clickCount = action.clickCount;
-        if (action.position)
-          options.position = action.position;
-        const optionsString = formatOptions(options, false);
-        return asLocator(action.selector) + `.${method}(${optionsString})`;
-      }
-      case 'check':
-        return asLocator(action.selector) + `.check()`;
-      case 'uncheck':
-        return asLocator(action.selector) + `.uncheck()`;
-      case 'fill':
-        return asLocator(action.selector) + `.fill(${quote(action.text)})`;
-      case 'setInputFiles':
-        return asLocator(action.selector) + `.set_input_files(${formatValue(action.files.length === 1 ? action.files[0] : action.files)})`;
-      case 'press': {
-        const modifiers = toModifiers(action.modifiers);
-        const shortcut = [...modifiers, action.key].join('+');
-        return asLocator(action.selector) + `.press(${quote(shortcut)})`;
-      }
-      case 'navigate':
-        return `goto(${quote(action.url)})`;
-      case 'select':
-        return asLocator(action.selector) + `.select_option(${formatValue(action.options.length === 1 ? action.options[0] : action.options)})`;
-    }
-  }
-
-  generateHeader(options: LanguageGeneratorOptions): string {
-    const formatter = new PythonFormatter();
-    if (this._isAsync) {
-      formatter.add(`
-import pytest
-
-from playwright.async_api import Page, expect
-
-
-@pytest.mark.asyncio
-async def test_sample(page: Page) -> None {`);
-    } else {
-      formatter.add(`
-from playwright.sync_api import Page, expect
-
-
-def test_sample(page: Page) -> None {`);
-    }
-    return formatter.format();
-  }
-
-  generateFooter(saveStorage: string | undefined): string {
-    return '';
   }
 }
 

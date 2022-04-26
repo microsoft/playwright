@@ -26,7 +26,7 @@ import { BrowserContext } from './browserContext';
 import { JavaLanguageGenerator } from './recorder/java';
 import { JavaScriptLanguageGenerator } from './recorder/javascript';
 import { CSharpLanguageGenerator } from './recorder/csharp';
-import { PytestLanguageGenerator, PythonLanguageGenerator } from './recorder/python';
+import { PythonLanguageGenerator } from './recorder/python';
 import * as recorderSource from '../generated/recorderSource';
 import * as consoleApiSource from '../generated/consoleApiSource';
 import type { IRecorderApp } from './recorder/recorderApp';
@@ -306,10 +306,9 @@ class ContextRecorder extends EventEmitter {
       new JavaLanguageGenerator(),
       new JavaScriptLanguageGenerator(false),
       new JavaScriptLanguageGenerator(true),
-      new PythonLanguageGenerator(false),
-      new PythonLanguageGenerator(true),
-      new PytestLanguageGenerator(false),
-      new PytestLanguageGenerator(true),
+      new PythonLanguageGenerator(false, false),
+      new PythonLanguageGenerator(true, false),
+      new PythonLanguageGenerator(false, true),
       new CSharpLanguageGenerator(),
     ]);
     const primaryLanguage = [...languages].find(l => l.id === language)!;
