@@ -713,11 +713,13 @@ element could be matched when layout changes by one pixel.
 
 Layout selectors use [bounding client rect](https://developer.mozilla.org/en-US/docs/Web/API/Element/getBoundingClientRect)
 to compute distance and relative position of the elements.
-* `:right-of(inner > selector)` - Matches elements that are to the right of any element matching the inner selector.
-* `:left-of(inner > selector)` - Matches elements that are to the left of any element matching the inner selector.
-* `:above(inner > selector)` - Matches elements that are above any of the elements matching the inner selector.
-* `:below(inner > selector)` - Matches elements that are below any of the elements matching the inner selector.
+* `:right-of(inner > selector)` - Matches elements that are to the right of any element matching the inner selector, at any vertical position.
+* `:left-of(inner > selector)` - Matches elements that are to the left of any element matching the inner selector, at any vertical position.
+* `:above(inner > selector)` - Matches elements that are above any of the elements matching the inner selector, at any horizontal position.
+* `:below(inner > selector)` - Matches elements that are below any of the elements matching the inner selector, at any horizontal position.
 * `:near(inner > selector)` - Matches elements that are near (within 50 CSS pixels) any of the elements matching the inner selector.
+
+Note that resulting matches are sorted by their distance to the anchor element, so you can use [`method: Locator.first`] to pick the closest one.
 
 ```js
 // Fill an input to the right of "Username".
@@ -725,6 +727,9 @@ await page.locator('input:right-of(:text("Username"))').fill('value');
 
 // Click a button near the promo card.
 await page.locator('button:near(.promo-card)').click();
+
+// Click the radio input in the list closest to the "Label 3".
+await page.locator('[type=radio]:left-of(:text("Label 3"))').first().click();
 ```
 
 ```java
@@ -733,22 +738,31 @@ page.locator("input:right-of(:text(\"Username\"))").fill("value");
 
 // Click a button near the promo card.
 page.locator("button:near(.promo-card)").click();
+
+// Click the radio input in the list closest to the "Label 3".
+page.locator("[type=radio]:left-of(:text(\"Label 3\"))").first().click();
 ```
 
 ```python async
 # Fill an input to the right of "Username".
-await page.locator('input:right-of(:text("Username"))').fill('value')
+await page.locator("input:right-of(:text(\"Username\"))").fill("value")
 
 # Click a button near the promo card.
-await page.locator('button:near(.promo-card)').click()
+await page.locator("button:near(.promo-card)").click()
+
+# Click the radio input in the list closest to the "Label 3".
+await page.locator("[type=radio]:left-of(:text(\"Label 3\"))").first.click()
 ```
 
 ```python sync
 # Fill an input to the right of "Username".
-page.locator('input:right-of(:text("Username"))').fill('value')
+page.locator("input:right-of(:text(\"Username\"))").fill("value")
 
 # Click a button near the promo card.
-page.locator('button:near(.promo-card)').click()
+page.locator("button:near(.promo-card)").click()
+
+# Click the radio input in the list closest to the "Label 3".
+page.locator("[type=radio]:left-of(:text(\"Label 3\"))").first.click()
 ```
 
 ```csharp
@@ -757,6 +771,9 @@ await page.Locator("input:right-of(:text(\"Username\"))").FillAsync("value");
 
 // Click a button near the promo card.
 await page.Locator("button:near(.promo-card)").ClickAsync();
+
+// Click the radio input in the list closest to the "Label 3".
+await page.Locator("[type=radio]:left-of(:text(\"Label 3\"))").First.ClickAsync();
 ```
 
 All layout selectors support optional maximum pixel distance as the last argument. For example
