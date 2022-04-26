@@ -64,7 +64,7 @@ export class BrowserServerLauncherImpl implements BrowserServerLauncher {
     browserServer.close = () => browser.options.browserProcess.close();
     browserServer.kill = () => browser.options.browserProcess.kill();
     (browserServer as any)._disconnectForTest = () => server.close();
-    (browserServer as any)._artifactsDirForTest = browser.options.artifactsDir;
+    (browserServer as any)._userDataDirForTest = (browser as any)._userDataDirForTest;
     browser.options.browserProcess.onclose = async (exitCode, signal) => {
       server.close();
       browserServer.emit('close', exitCode, signal);
