@@ -125,6 +125,11 @@ function createDevTools() {
 }
 
 window.playwrightMount = async component => {
+  if (!document.getElementById('root')) {
+    const rootElement = document.createElement('div');
+    rootElement.id = 'root';
+    document.body.append(rootElement);
+  }
   const app = instance.createApp({
     render: () => render(component)
   });

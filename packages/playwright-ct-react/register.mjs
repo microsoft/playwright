@@ -53,6 +53,11 @@ function render(component) {
 }
 
 window.playwrightMount = component => {
+  if (!document.getElementById('root')) {
+    const rootElement = document.createElement('div');
+    rootElement.id = 'root';
+    document.body.append(rootElement);
+  }
   ReactDOM.render(render(component), document.getElementById('root'));
   return '#root > *';
 };
