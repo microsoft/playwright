@@ -131,6 +131,7 @@ jobs:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v2
       with:
+        # ESM tests rely on the experimental loader in Node.js 16+
         node-version: 16
     - run: npm i -g npm@8.3
     - run: npm ci
@@ -147,6 +148,7 @@ jobs:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v2
       with:
+        # Component tests require Node.js 16+ (they require ESM via TS)
         node-version: 16
     - run: npm i -g npm@8.3
     - run: npm ci
