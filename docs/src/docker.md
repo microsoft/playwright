@@ -114,6 +114,10 @@ following tags (`v1.20.0` in this case is an example:):
 - `:sha-XXXXXXX` - docker image for every commit that changed
   docker files or browsers, marked with a [short sha](https://git-scm.com/book/en/v2/Git-Tools-Revision-Selection#Short-SHA-1) (first 7 digits of the SHA commit).
 
+:::note
+It is recommended to always pin your Docker image to a specific version if possible. If the Playwright version in your Docker image does not match the version in your project/tests, Playwright will be unable to locate browser executables.
+:::
+
 ### Base images
 
 We currently publish images based on the following [Ubuntu](https://hub.docker.com/_/ubuntu) versions:
