@@ -24,5 +24,5 @@ test('global installation cross package', async ({ exec, installedSoftwareOnDisk
   expect(await installedSoftwareOnDisk()).toEqual(['chromium', 'ffmpeg', 'firefox', 'webkit']);
 
   for (const pkg of packages)
-    await test.step(pkg, () => exec('node ./sanity.js', pkg, 'all'));
+    await test.step(pkg, () => exec('node sanity.js', pkg, 'all'));
 });

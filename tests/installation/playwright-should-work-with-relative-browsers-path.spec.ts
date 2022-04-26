@@ -20,6 +20,6 @@ import path from 'path';
 test('playwright should work with relative home path', async ({ exec, tmpWorkspace }) => {
   await fs.promises.mkdir(path.join(tmpWorkspace, 'foo'));
   // Make sure that browsers path is resolved relative to the `npm install` call location.
-  await exec('npm i --foreground-scripts playwright', { cwd: path.join(tmpWorkspace, 'foo'), env: { PLAYWRIGHT_BROWSERS_PATH: '../relative' } });
-  await exec('node sanity.js playwright', { env: { PLAYWRIGHT_BROWSERS_PATH: './relative' } });
+  await exec('npm i --foreground-scripts playwright', { cwd: path.join(tmpWorkspace, 'foo'), env: { PLAYWRIGHT_BROWSERS_PATH: path.join('..', 'relative') } });
+  await exec('node sanity.js playwright', { env: { PLAYWRIGHT_BROWSERS_PATH: path.join('.', 'relative') } });
 });

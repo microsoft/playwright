@@ -19,10 +19,14 @@
 
 import { test as _test, expect as _expect } from '@playwright/test';
 import fs from 'fs';
+import os from 'os';
 import path from 'path';
 import debugLogger from 'debug';
 import { Registry }  from './registry';
 import { spawnAsync } from './spawnAsync';
+
+
+export const TMP_WORKSPACES = path.join(os.platform() === 'darwin' ? '/tmp' : os.tmpdir(), 'pwt', 'workspaces');
 
 const debug = debugLogger('itest');
 
@@ -62,7 +66,7 @@ const expect = _expect;
 export type ExecOptions = { cwd?: string, env?: Record<string, string>, message?: string, expectToExitWithError?: boolean };
 export type ArgsOrOptions = [] | [...string[]] | [...string[], ExecOptions] | [ExecOptions];
 export const test = _test.extend<{
-    _autoCopyScripts: void,
+    _auto: void,
     tmpWorkspace: string,
     nodeMajorVersion: number,
     installedSoftwareOnDisk: (registryPath?: string) => Promise<string[]>;
@@ -71,11 +75,11 @@ export const test = _test.extend<{
     tsc: (...argsAndOrOptions: ArgsOrOptions) => Promise<string>,
     registry: Registry,
         }>({
-          _autoCopyScripts: [async ({ tmpWorkspace }, use) => {
-            const dstDir = path.join(tmpWorkspace);
+          _auto: [async ({ tmpWorkspace, exec }, use) => {
+            await exec('npm init -y');
             const sourceDir = path.join(__dirname, 'fixture-scripts');
             const contents = await fs.promises.readdir(sourceDir);
-            await Promise.all(contents.map(f => fs.promises.copyFile(path.join(sourceDir, f), path.join(dstDir, f))));
+            await Promise.all(contents.map(f => fs.promises.copyFile(path.join(sourceDir, f), path.join(tmpWorkspace, f))));
             await use();
           }, {
             auto: true,
@@ -91,20 +95,16 @@ export const test = _test.extend<{
           },
           tmpWorkspace: async ({}, use) => {
             // We want a location that won't have a node_modules dir anywhere along its path
-            const tmpWorkspace = path.join('/tmp/pwt/workspaces', path.basename(test.info().outputDir));
+            const tmpWorkspace = path.join(TMP_WORKSPACES, path.basename(test.info().outputDir));
             await fs.promises.mkdir(tmpWorkspace);
             debug(`Workspace Folder: ${tmpWorkspace}`);
-            await spawnAsync('npm', ['init', '-y'], {
-              cwd: tmpWorkspace,
-            });
-
             await use(tmpWorkspace);
           },
           registry: async ({}, use, testInfo) => {
             const port = testInfo.workerIndex + 16123;
             const url = `http://127.0.0.1:${port}`;
             const registry = new Registry(testInfo.outputPath('registry'), url);
-            await registry.start(JSON.parse((await fs.promises.readFile(path.join(__dirname, './.registry.json'), 'utf8'))));
+            await registry.start(JSON.parse((await fs.promises.readFile(path.join(__dirname, '.registry.json'), 'utf8'))));
             await use(registry);
             await registry.shutdown();
           },

@@ -19,7 +19,7 @@ test(`playwright should work`, async ({ exec, nodeMajorVersion, installedSoftwar
   const result = await exec('npm i --foreground-scripts playwright');
   expect(result).toHaveLoggedSoftwareDownload(['chromium', 'ffmpeg', 'firefox', 'webkit']);
   expect(await installedSoftwareOnDisk()).toEqual(['chromium', 'ffmpeg', 'firefox', 'webkit']);
-  await exec('node ./sanity.js playwright');
+  await exec('node sanity.js playwright');
   if (nodeMajorVersion >= 14)
     await exec('node esm-playwright.mjs');
   const stdio = await exec('npx playwright', 'test', '-c', '.', { expectToExitWithError: true });

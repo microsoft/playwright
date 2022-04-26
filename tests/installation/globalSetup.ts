@@ -18,14 +18,14 @@ import { spawnAsync } from 'playwright-core/lib/utils/spawnAsync';
 import { rimraf } from 'playwright-core/lib/utilsBundle';
 import { promisify } from 'util';
 import fs from 'fs';
+import { TMP_WORKSPACES } from './npmTest';
 
 const PACKAGE_BUILDER_SCRIPT = path.join(__dirname, '..', '..', 'utils', 'pack_package.js');
-const TMP_WORKSPACE = '/tmp/pwt/workspaces';
 
 async function globalSetup() {
-  await promisify(rimraf)(TMP_WORKSPACE);
-  console.log(`Temporary workspaces will be created in ${TMP_WORKSPACE}. They will not be removed at the end. Set DEBUG=itest to determine which sub-dir a specific test is using.`);
-  await fs.promises.mkdir(TMP_WORKSPACE, { recursive: true });
+  await promisify(rimraf)(TMP_WORKSPACES);
+  console.log(`Temporary workspaces will be created in ${TMP_WORKSPACES}. They will not be removed at the end. Set DEBUG=itest to determine which sub-dir a specific test is using.`);
+  await fs.promises.mkdir(TMP_WORKSPACES, { recursive: true });
   if (process.env.PWTEST_INSTALLATION_TEST_SKIP_PACKAGE_BUILDS) {
     console.log('Skipped building packages. Unset PWTEST_INSTALLATION_TEST_SKIP_PACKAGE_BUILDS to build packages.');
     return;
@@ -54,7 +54,7 @@ async function globalSetup() {
     build('playwright-webkit'),
   ]);
 
-  await fs.promises.writeFile(path.join(__dirname, './.registry.json'), JSON.stringify(Object.fromEntries(builds)));
+  await fs.promises.writeFile(path.join(__dirname, '.registry.json'), JSON.stringify(Object.fromEntries(builds)));
 }
 
 export default globalSetup;
