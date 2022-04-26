@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/experimental-ct-vue/test'
 
-import DocumentationIcon from './icons/DocumentationIcon.vue'
+import DocumentationIcon from './icons/IconDocumentation.vue'
 import WelcomeItem from './WelcomeItem.vue'
 
 test.use({ viewport: { width: 500, height: 500 } })
