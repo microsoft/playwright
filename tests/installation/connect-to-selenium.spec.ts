@@ -18,7 +18,7 @@ import path from 'path';
 import { test } from './npmTest';
 
 test('connect to selenium', async ({ exec, tmpWorkspace }, testInfo) => {
-  test.skip(os.platform() !== 'linux');
+  test.fixme(os.platform() !== 'linux');
 
   await exec('npm i --foreground-scripts playwright-core');
   await exec(`node download-chromedriver.js ${path.join(tmpWorkspace)}`);

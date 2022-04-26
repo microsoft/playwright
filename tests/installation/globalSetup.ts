@@ -18,7 +18,7 @@ import { spawnAsync } from 'playwright-core/lib/utils/spawnAsync';
 import { rimraf } from 'playwright-core/lib/utilsBundle';
 import { promisify } from 'util';
 import fs from 'fs';
-import { TMP_WORKSPACES } from './constants';
+import { TMP_WORKSPACES } from './npmTest';
 
 const PACKAGE_BUILDER_SCRIPT = path.join(__dirname, '..', '..', 'utils', 'pack_package.js');
 

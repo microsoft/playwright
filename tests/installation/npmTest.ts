@@ -19,11 +19,14 @@
 
 import { test as _test, expect as _expect } from '@playwright/test';
 import fs from 'fs';
+import os from 'os';
 import path from 'path';
 import debugLogger from 'debug';
 import { Registry }  from './registry';
 import { spawnAsync } from './spawnAsync';
-import { TMP_WORKSPACES } from './constants';
+
+
+export const TMP_WORKSPACES = path.join(os.platform() === 'darwin' ? '/tmp' : os.tmpdir(), 'pwt', 'workspaces');
 
 const debug = debugLogger('itest');
 
