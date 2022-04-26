@@ -96,7 +96,7 @@ export const printReceivedStringContainExpectedResult = (
 
 // #endregion
 
-type ExpectMessageOrOptions = undefined | string | { message?: string, timeout?: number };
+type ExpectMessageOrOptions = undefined | string | { message?: string, timeout?: number, intervals?: number[] };
 
 function createExpect(actual: unknown, messageOrOptions: ExpectMessageOrOptions, isSoft: boolean, isPoll: boolean, generator?: Generator) {
   return new Proxy(expectLibrary(actual), new ExpectMetaInfoProxyHandler(messageOrOptions, isSoft, isPoll, generator));
@@ -153,6 +153,7 @@ type ExpectMetaInfo = {
   isSoft: boolean;
   isPoll: boolean;
   pollTimeout?: number;
+  pollIntervals?: number[];
   generator?: Generator;
 };
 
@@ -166,6 +167,7 @@ class ExpectMetaInfoProxyHandler {
     } else {
       this._info.message = messageOrOptions?.message;
       this._info.pollTimeout = messageOrOptions?.timeout;
+      this._info.pollIntervals = messageOrOptions?.intervals;
     }
   }
 
@@ -233,7 +235,7 @@ class ExpectMetaInfoProxyHandler {
         if (this._info.isPoll) {
           if ((customMatchers as any)[matcherName] || matcherName === 'resolves' || matcherName === 'rejects')
             throw new Error(`\`expect.poll()\` does not support "${matcherName}" matcher.`);
-          result = pollMatcher(matcherName, this._info.isNot, currentExpectTimeout({ timeout: this._info.pollTimeout }), this._info.generator!, ...args);
+          result = pollMatcher(matcherName, this._info.isNot, this._info.pollIntervals, currentExpectTimeout({ timeout: this._info.pollTimeout }), this._info.generator!, ...args);
         } else {
           result = matcher.call(target, ...args);
         }
@@ -248,10 +250,11 @@ class ExpectMetaInfoProxyHandler {
   }
 }
 
-async function pollMatcher(matcherName: any, isNot: boolean, timeout: number, generator: () => any, ...args: any[]) {
+async function pollMatcher(matcherName: any, isNot: boolean, pollIntervals: number[] | undefined, timeout: number, generator: () => any, ...args: any[]) {
   let matcherError;
   const startTime = monotonicTime();
-  const pollIntervals = [100, 250, 500];
+  pollIntervals = pollIntervals || [100, 250, 500, 1000];
+  const lastPollInterval = pollIntervals[pollIntervals.length - 1] || 1000;
   while (true) {
     const elapsed = monotonicTime() - startTime;
     if (timeout !== 0 && elapsed > timeout)
@@ -268,7 +271,7 @@ async function pollMatcher(matcherName: any, isNot: boolean, timeout: number, ge
     } catch (e) {
       matcherError = e;
     }
-    await new Promise(x => setTimeout(x, pollIntervals.shift() ?? 1000));
+    await new Promise(x => setTimeout(x, pollIntervals!.shift() ?? lastPollInterval));
   }
 
   const timeoutMessage = `Timeout ${timeout}ms exceeded while waiting on the predicate`;
