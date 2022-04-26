@@ -40,16 +40,21 @@ export class WebServer {
     this._isAvailable = getIsAvailableFunction(config, reporter.onStdErr?.bind(reporter));
   }
 
-  public static async create(config: WebServerConfig, reporter: Reporter): Promise<WebServer> {
-    const webServer = new WebServer(config, reporter);
+  public async start() {
     try {
-      await webServer._startProcess();
-      await webServer._waitForProcess();
-      return webServer;
+      await this._startProcess();
+      await this._waitForProcess();
+      return this;
     } catch (error) {
-      await webServer.kill();
+      await this.kill();
       throw error;
     }
+  }
+
+  public static async create(config: WebServerConfig, reporter: Reporter): Promise<WebServer> {
+    const webServer = new WebServer(config, reporter);
+    await webServer.start();
+    return webServer;
   }
 
   private async _startProcess(): Promise<void> {

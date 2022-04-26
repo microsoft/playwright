@@ -19,6 +19,7 @@
     "./lib/cli": "./lib/cli.js",
     "./lib/experimentalLoader": "./lib/experimentalLoader.js",
     "./lib/mount": "./lib/mount.js",
+    "./lib/plugins": "./lib/plugins/index.js",
     "./lib/plugins/vitePlugin": "./lib/plugins/vitePlugin.js",
     "./reporter": "./reporter.js"
   },
