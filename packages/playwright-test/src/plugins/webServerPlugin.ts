@@ -20,7 +20,7 @@ export const webServer = (config: WebServerConfig): TestPlugin => {
   // eslint-disable-next-line no-console
   const server = new WebServer(config, { onStdOut: console.log, onStdErr: console.error });
   return {
-    setup: async () => { await server.start(); },
+    setup: async () => { await server.start({ setBaseURL: false }); },
     teardown: async () => server.kill(),
   };
 };

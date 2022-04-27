@@ -40,10 +40,12 @@ export class WebServer {
     this._isAvailable = getIsAvailableFunction(config, reporter.onStdErr?.bind(reporter));
   }
 
-  public async start() {
+  public async start(options: { setBaseURL: boolean } = { setBaseURL: true }) {
     try {
       await this._startProcess();
       await this._waitForProcess();
+      if (options.setBaseURL && this.config.port !== undefined)
+        process.env.PLAYWRIGHT_TEST_BASE_URL = `http://localhost:${this.config.port}`;
       return this;
     } catch (error) {
       await this.kill();
@@ -100,8 +102,6 @@ export class WebServer {
     debugWebServer(`Waiting for availability...`);
     await this._waitForAvailability();
     debugWebServer(`WebServer available`);
-    if (this.config.port !== undefined)
-      process.env.PLAYWRIGHT_TEST_BASE_URL = `http://localhost:${this.config.port}`;
   }
 
   private async _waitForAvailability() {
