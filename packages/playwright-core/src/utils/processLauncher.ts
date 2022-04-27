@@ -17,10 +17,10 @@
 
 import * as childProcess from 'child_process';
 import * as readline from 'readline';
+import * as path from 'path';
 import { eventsHelper } from './eventsHelper';
 import { isUnderTest } from './';
 import { removeFolders } from './fileUtils';
-import { rimraf } from '../utilsBundle';
 
 export type Env = {[key: string]: string | number | boolean | undefined};
 
@@ -191,12 +191,13 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
   function killProcessAndCleanup() {
     killProcess();
     options.log(`[pid=${spawnedProcess.pid || 'N/A'}] starting temporary directories cleanup`);
-    for (const dir of options.tempDirectories) {
-      try {
-        rimraf.sync(dir, { maxBusyTries: 10 });
-      } catch (e) {
-        options.log(`[pid=${spawnedProcess.pid || 'N/A'}] exception while removing ${dir}: ${e}`);
-      }
+    if (options.tempDirectories.length) {
+      const cleanupProcess = childProcess.spawnSync(process.argv0, [path.join(__dirname, 'processLauncherCleanupEntrypoint.js'), ...options.tempDirectories]);
+      const [stdout, stderr] = [cleanupProcess.stdout.toString(), cleanupProcess.stderr.toString()];
+      if (stdout)
+        options.log(`[pid=${spawnedProcess.pid || 'N/A'}] ${stdout}`);
+      if (stderr)
+        options.log(`[pid=${spawnedProcess.pid || 'N/A'}] ${stderr}`);
     }
     options.log(`[pid=${spawnedProcess.pid || 'N/A'}] finished temporary directories cleanup`);
   }
