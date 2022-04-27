@@ -91,7 +91,7 @@ We run [our tests](https://github.com/microsoft/playwright/blob/main/.github/wor
 ### GitHub Actions on deployment
 
 This will start the tests after a [GitHub Deployment](https://developer.github.com/v3/repos/deployments/) went into the `success` state.
-Services like Azure Static Web Apps, Netlify, Vercel, etc. use this pattern so you can run your end-to-end tests on their deployed environment.
+Services like Vercel use this pattern so you can run your end-to-end tests on their deployed environment.
 
 ```yml
 name: Playwright Tests
