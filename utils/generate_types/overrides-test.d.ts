@@ -28,11 +28,6 @@ export type ReporterDescription =
   ['null'] |
   [string] | [string, any];
 
-export type Shard = { total: number, current: number } | null;
-export type ReportSlowTests = { max: number, threshold: number } | null;
-export type PreserveOutput = 'always' | 'never' | 'failures-only';
-export type UpdateSnapshots = 'all' | 'none' | 'missing';
-
 type UseOptions<TestArgs, WorkerArgs> = { [K in keyof WorkerArgs]?: WorkerArgs[K] } & { [K in keyof TestArgs]?: TestArgs[K] };
 
 export interface Project<TestArgs = {}, WorkerArgs = {}> extends TestProject {
@@ -59,50 +54,11 @@ export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
   // [internal] !!! DO NOT ADD TO THIS !!! See prior note.
 }
 
-export type WebServerConfig = {
-  /**
-   * Shell command to start. For example `npm run start`.
-   */
-  command: string,
-  /**
-   * The port that your http server is expected to appear on. It does wait until it accepts connections.
-   * Exactly one of `port` or `url` is required.
-   */
-  port?: number,
-  /**
-   * The url on your http server that is expected to return a 2xx status code when the server is ready to accept connections.
-   * Exactly one of `port` or `url` is required.
-   */
-  url?: string,
-  /**
-   * Whether to ignore HTTPS errors when fetching the `url`. Defaults to `false`.
-   */
-   ignoreHTTPSErrors?: boolean,
-  /**
-   * How long to wait for the process to start up and be available in milliseconds. Defaults to 60000.
-   */
-  timeout?: number,
-  /**
-   * If true, it will re-use an existing server on the port or url when available. If no server is running
-   * on that port or url, it will run the command to start a new server.
-   * If false, it will throw if an existing process is listening on the port or url.
-   * This should commonly set to !process.env.CI to allow the local dev server when running tests locally.
-   */
-  reuseExistingServer?: boolean
-  /**
-   * Environment variables, process.env by default
-   */
-  env?: Record<string, string>,
-  /**
-   * Current working directory of the spawned process. Default is process.cwd().
-   */
-  cwd?: string,
-};
-
 type LiteralUnion<T extends U, U = string> = T | (U & { zz_IGNORE_ME?: never });
 
 interface TestConfig {
   reporter?: LiteralUnion<'list'|'dot'|'line'|'github'|'json'|'junit'|'null'|'html', string> | ReporterDescription[];
+  webServer?: TestConfigWebServer;
 }
 
 export interface Config<TestArgs = {}, WorkerArgs = {}> extends TestConfig {
@@ -123,16 +79,16 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
   grepInvert: RegExp | RegExp[] | null;
   maxFailures: number;
   version: string;
-  preserveOutput: PreserveOutput;
+  preserveOutput: 'always' | 'never' | 'failures-only';
   projects: FullProject<TestArgs, WorkerArgs>[];
   reporter: ReporterDescription[];
-  reportSlowTests: ReportSlowTests;
+  reportSlowTests: { max: number, threshold: number } | null;
   rootDir: string;
   quiet: boolean;
-  shard: Shard;
-  updateSnapshots: UpdateSnapshots;
+  shard: { total: number, current: number } | null;
+  updateSnapshots: 'all' | 'none' | 'missing';
   workers: number;
-  webServer: WebServerConfig | null;
+  webServer: TestConfigWebServer | null;
   // [internal] !!! DO NOT ADD TO THIS !!! See prior note.
 }
 
@@ -146,8 +102,6 @@ export interface WorkerInfo {
 export interface TestInfo {
   config: FullConfig;
   project: FullProject;
-  expectedStatus: TestStatus;
-  status?: TestStatus;
 }
 
 interface SuiteFunction {

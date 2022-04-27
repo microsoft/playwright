@@ -15,7 +15,7 @@
  */
 
 import { installTransform, setCurrentlyLoadingTestFile } from './transform';
-import type { Config, Project, ReporterDescription, PreserveOutput, FullProjectInternal, GlobalInfo } from './types';
+import type { Config, Project, ReporterDescription, FullProjectInternal, GlobalInfo } from './types';
 import type { FullConfigInternal } from './types';
 import { getPackageJsonPath, mergeObjects, errorWithFile } from './util';
 import { setCurrentlyLoadingFileSuite } from './globals';
@@ -116,7 +116,7 @@ export class Loader {
     this._fullConfig.grep = takeFirst(this._configOverrides.grep, config.grep, baseFullConfig.grep);
     this._fullConfig.grepInvert = takeFirst(this._configOverrides.grepInvert, config.grepInvert, baseFullConfig.grepInvert);
     this._fullConfig.maxFailures = takeFirst(this._configOverrides.maxFailures, config.maxFailures, baseFullConfig.maxFailures);
-    this._fullConfig.preserveOutput = takeFirst<PreserveOutput>(this._configOverrides.preserveOutput, config.preserveOutput, baseFullConfig.preserveOutput);
+    this._fullConfig.preserveOutput = takeFirst(this._configOverrides.preserveOutput, config.preserveOutput, baseFullConfig.preserveOutput);
     this._fullConfig.reporter = takeFirst(toReporters(this._configOverrides.reporter as any), resolveReporters(config.reporter, configDir), baseFullConfig.reporter);
     this._fullConfig.reportSlowTests = takeFirst(this._configOverrides.reportSlowTests, config.reportSlowTests, baseFullConfig.reportSlowTests);
     this._fullConfig.quiet = takeFirst(this._configOverrides.quiet, config.quiet, baseFullConfig.quiet);
