@@ -12,7 +12,7 @@ on:
       - main
       - release-*
     paths:
-      - browser_patches/chromium/BUILD_NUMBER
+      - browser_patches/chromium-tip-of-tree/BUILD_NUMBER
       - .github/workflows/trigger_build_chromium_tip_of_tree.yml
 
 jobs:
