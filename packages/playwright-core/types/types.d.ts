@@ -3191,7 +3191,7 @@ export interface Page {
 
   /**
    * Sets the value of the file input to these file paths or files. If some of the `filePaths` are relative paths, then they
-   * are resolved relative to the the current working directory. For empty array, clears the selected files.
+   * are resolved relative to the current working directory. For empty array, clears the selected files.
    *
    * This method expects `selector` to point to an
    * [input element](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input). However, if the element is inside the
@@ -5702,7 +5702,7 @@ export interface Frame {
 
   /**
    * Sets the value of the file input to these file paths or files. If some of the `filePaths` are relative paths, then they
-   * are resolved relative to the the current working directory. For empty array, clears the selected files.
+   * are resolved relative to the current working directory. For empty array, clears the selected files.
    *
    * This method expects `selector` to point to an
    * [input element](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input). However, if the element is inside the
@@ -8390,9 +8390,9 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
 
   /**
    * Sets the value of the file input to these file paths or files. If some of the `filePaths` are relative paths, then they
-   * are resolved relative to the the current working directory. For empty array, clears the selected files.
+   * are resolved relative to the current working directory. For empty array, clears the selected files.
    *
-   * This method expects [`elementHandle`] to point to an
+   * This method expects [ElementHandle] to point to an
    * [input element](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input). However, if the element is inside the
    * `<label>` element that has an associated
    * [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), targets the control instead.
@@ -9669,9 +9669,9 @@ export interface Locator {
 
   /**
    * Sets the value of the file input to these file paths or files. If some of the `filePaths` are relative paths, then they
-   * are resolved relative to the the current working directory. For empty array, clears the selected files.
+   * are resolved relative to the current working directory. For empty array, clears the selected files.
    *
-   * This method expects [`locator`] to point to an
+   * This method expects [Locator] to point to an
    * [input element](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input). However, if the element is inside the
    * `<label>` element that has an associated
    * [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), targets the control instead.
@@ -13805,7 +13805,7 @@ export interface FileChooser {
 
   /**
    * Sets the value of the file input this chooser is associated with. If some of the `filePaths` are relative paths, then
-   * they are resolved relative to the the current working directory. For empty array, clears the selected files.
+   * they are resolved relative to the current working directory. For empty array, clears the selected files.
    * @param files
    * @param options
    */
