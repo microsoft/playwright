@@ -29,11 +29,6 @@ export type ReporterDescription =
   ['null'] |
   [string] | [string, any];
 
-export type Shard = { total: number, current: number } | null;
-export type ReportSlowTests = { max: number, threshold: number } | null;
-export type PreserveOutput = 'always' | 'never' | 'failures-only';
-export type UpdateSnapshots = 'all' | 'none' | 'missing';
-
 type UseOptions<TestArgs, WorkerArgs> = { [K in keyof WorkerArgs]?: WorkerArgs[K] } & { [K in keyof TestArgs]?: TestArgs[K] };
 
 /**
@@ -369,46 +364,6 @@ export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
   use: UseOptions<PlaywrightTestOptions & TestArgs, PlaywrightWorkerOptions & WorkerArgs>;
 }
 
-export type WebServerConfig = {
-  /**
-   * Shell command to start. For example `npm run start`.
-   */
-  command: string,
-  /**
-   * The port that your http server is expected to appear on. It does wait until it accepts connections.
-   * Exactly one of `port` or `url` is required.
-   */
-  port?: number,
-  /**
-   * The url on your http server that is expected to return a 2xx status code when the server is ready to accept connections.
-   * Exactly one of `port` or `url` is required.
-   */
-  url?: string,
-  /**
-   * Whether to ignore HTTPS errors when fetching the `url`. Defaults to `false`.
-   */
-   ignoreHTTPSErrors?: boolean,
-  /**
-   * How long to wait for the process to start up and be available in milliseconds. Defaults to 60000.
-   */
-  timeout?: number,
-  /**
-   * If true, it will re-use an existing server on the port or url when available. If no server is running
-   * on that port or url, it will run the command to start a new server.
-   * If false, it will throw if an existing process is listening on the port or url.
-   * This should commonly set to !process.env.CI to allow the local dev server when running tests locally.
-   */
-  reuseExistingServer?: boolean
-  /**
-   * Environment variables, process.env by default
-   */
-  env?: Record<string, string>,
-  /**
-   * Current working directory of the spawned process. Default is process.cwd().
-   */
-  cwd?: string,
-};
-
 type LiteralUnion<T extends U, U = string> = T | (U & { zz_IGNORE_ME?: never });
 
 /**
@@ -456,6 +411,54 @@ interface TestConfig {
    *
    */
   reporter?: LiteralUnion<'list'|'dot'|'line'|'github'|'json'|'junit'|'null'|'html', string> | ReporterDescription[];
+  /**
+   * Launch a development web server during the tests.
+   *
+   * If the port is specified, the server will wait for it to be available on `127.0.0.1` or `::1`, before running the tests.
+   * If the url is specified, the server will wait for the URL to return a 2xx status code before running the tests.
+   *
+   * For continuous integration, you may want to use the `reuseExistingServer: !process.env.CI` option which does not use an
+   * existing server on the CI. To see the stdout, you can set the `DEBUG=pw:webserver` environment variable.
+   *
+   * The `port` (but not the `url`) gets passed over to Playwright as a
+   * [testOptions.baseURL](https://playwright.dev/docs/api/class-testoptions#test-options-base-url). For example port `8080`
+   * produces `baseURL` equal `http://localhost:8080`.
+   *
+   * > NOTE: It is also recommended to specify
+   * [testOptions.baseURL](https://playwright.dev/docs/api/class-testoptions#test-options-base-url) in the config, so that
+   * tests could use relative urls.
+   *
+   * ```ts
+   * // playwright.config.ts
+   * import { PlaywrightTestConfig } from '@playwright/test';
+   * const config: PlaywrightTestConfig = {
+   *   webServer: {
+   *     command: 'npm run start',
+   *     port: 3000,
+   *     timeout: 120 * 1000,
+   *     reuseExistingServer: !process.env.CI,
+   *   },
+   *   use: {
+   *     baseURL: 'http://localhost:3000/',
+   *   },
+   * };
+   * export default config;
+   * ```
+   *
+   * Now you can use a relative path when navigating the page:
+   *
+   * ```ts
+   * // test.spec.ts
+   * import { test } from '@playwright/test';
+   *
+   * test('test', async ({ page }) => {
+   *   // This will result in http://localhost:3000/foo
+   *   await page.goto('/foo');
+   * });
+   * ```
+   *
+   */
+  webServer?: TestConfigWebServer;
   /**
    * Configuration for the `expect` assertion library. Learn more about [various timeouts](https://playwright.dev/docs/test-timeouts).
    *
@@ -849,100 +852,6 @@ interface TestConfig {
   updateSnapshots?: "all"|"none"|"missing";
 
   /**
-   * Launch a development web server during the tests.
-   *
-   * If the port is specified, the server will wait for it to be available on `127.0.0.1` or `::1`, before running the tests.
-   * If the url is specified, the server will wait for the URL to return a 2xx status code before running the tests.
-   *
-   * For continuous integration, you may want to use the `reuseExistingServer: !process.env.CI` option which does not use an
-   * existing server on the CI. To see the stdout, you can set the `DEBUG=pw:webserver` environment variable.
-   *
-   * The `port` (but not the `url`) gets passed over to Playwright as a
-   * [testOptions.baseURL](https://playwright.dev/docs/api/class-testoptions#test-options-base-url). For example port `8080`
-   * produces `baseURL` equal `http://localhost:8080`.
-   *
-   * > NOTE: It is also recommended to specify
-   * [testOptions.baseURL](https://playwright.dev/docs/api/class-testoptions#test-options-base-url) in the config, so that
-   * tests could use relative urls.
-   *
-   * ```ts
-   * // playwright.config.ts
-   * import { PlaywrightTestConfig } from '@playwright/test';
-   * const config: PlaywrightTestConfig = {
-   *   webServer: {
-   *     command: 'npm run start',
-   *     port: 3000,
-   *     timeout: 120 * 1000,
-   *     reuseExistingServer: !process.env.CI,
-   *   },
-   *   use: {
-   *     baseURL: 'http://localhost:3000/',
-   *   },
-   * };
-   * export default config;
-   * ```
-   *
-   * Now you can use a relative path when navigating the page:
-   *
-   * ```ts
-   * // test.spec.ts
-   * import { test } from '@playwright/test';
-   *
-   * test('test', async ({ page }) => {
-   *   // This will result in http://localhost:3000/foo
-   *   await page.goto('/foo');
-   * });
-   * ```
-   *
-   */
-  webServer?: {
-    /**
-     * Shell command to start. For example `npm run start`..
-     */
-    command: string;
-
-    /**
-     * The port that your http server is expected to appear on. It does wait until it accepts connections. Exactly one of
-     * `port` or `url` is required.
-     */
-    port?: number;
-
-    /**
-     * The url on your http server that is expected to return a 2xx status code when the server is ready to accept connections.
-     * Exactly one of `port` or `url` is required.
-     */
-    url?: string;
-
-    /**
-     * Whether to ignore HTTPS errors when fetching the `url`. Defaults to `false`.
-     */
-    ignoreHTTPSErrors?: boolean;
-
-    /**
-     * How long to wait for the process to start up and be available in milliseconds. Defaults to 60000.
-     */
-    timeout?: number;
-
-    /**
-     * If true, it will re-use an existing server on the `port` or `url` when available. If no server is running on that `port`
-     * or `url`, it will run the command to start a new server. If `false`, it will throw if an existing process is listening
-     * on the `port` or `url`. This should be commonly set to `!process.env.CI` to allow the local dev server when running
-     * tests locally.
-     */
-    reuseExistingServer?: boolean;
-
-    /**
-     * Current working directory of the spawned process, defaults to the directory of the configuration file.
-     */
-    cwd?: string;
-
-    /**
-     * Environment variables to set for the command, `process.env` by default.
-     */
-    env?: { [key: string]: string; };
-  };
-
-  /**
    * The maximum number of concurrent worker processes to use for parallelizing tests.
    *
    * Playwright Test uses worker processes to run tests. There is always at least one worker process, but more can be used to
@@ -1154,7 +1063,7 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    * - `'never'` - do not preserve output for any tests;
    * - `'failures-only'` - only preserve output for failed tests.
    */
-  preserveOutput: PreserveOutput;
+  preserveOutput: 'always' | 'never' | 'failures-only';
   /**
    * Playwright Test supports running multiple test projects at the same time. See [TestProject] for more information.
    */
@@ -1187,7 +1096,7 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    * Test files that took more than `threshold` milliseconds are considered slow, and the slowest ones are reported, no more
    * than `max` number of them. Passing zero as `max` reports all test files that exceed the threshold.
    */
-  reportSlowTests: ReportSlowTests;
+  reportSlowTests: { max: number, threshold: number } | null;
   rootDir: string;
   /**
    * Whether to suppress stdio and stderr output from the tests.
@@ -1198,7 +1107,7 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    *
    * Learn more about [parallelism and sharding](https://playwright.dev/docs/test-parallel) with Playwright Test.
    */
-  shard: Shard;
+  shard: { total: number, current: number } | null;
   /**
    * Whether to update expected snapshots with the actual results produced by the test run. Defaults to `'missing'`.
    * - `'all'` - All tests that are executed will update snapshots.
@@ -1208,7 +1117,7 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    *
    * Learn more about [snapshots](https://playwright.dev/docs/test-snapshots).
    */
-  updateSnapshots: UpdateSnapshots;
+  updateSnapshots: 'all' | 'none' | 'missing';
   /**
    * The maximum number of concurrent worker processes to use for parallelizing tests.
    *
@@ -1277,7 +1186,7 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    * ```
    *
    */
-  webServer: WebServerConfig | null;
+  webServer: TestConfigWebServer | null;
 }
 
 export type TestStatus = 'passed' | 'failed' | 'timedOut' | 'skipped';
@@ -1351,43 +1260,6 @@ export interface TestInfo {
    * Processed project configuration from the [configuration file](https://playwright.dev/docs/test-configuration).
    */
   project: FullProject;
-  /**
-   * Expected status for the currently running test. This is usually `'passed'`, except for a few cases:
-   * - `'skipped'` for skipped tests, e.g. with [test.skip()](https://playwright.dev/docs/api/class-test#test-skip-2);
-   * - `'failed'` for tests marked as failed with [test.fail()](https://playwright.dev/docs/api/class-test#test-fail-1).
-   *
-   * Expected status is usually compared with the actual
-   * [testInfo.status](https://playwright.dev/docs/api/class-testinfo#test-info-status):
-   *
-   * ```ts
-   * import { test, expect } from '@playwright/test';
-   *
-   * test.afterEach(async ({}, testInfo) => {
-   *   if (testInfo.status !== testInfo.expectedStatus)
-   *     console.log(`${testInfo.title} did not run as expected!`);
-   * });
-   * ```
-   *
-   */
-  expectedStatus: TestStatus;
-  /**
-   * Actual status for the currently running test. Available after the test has finished in
-   * [test.afterEach(hookFunction)](https://playwright.dev/docs/api/class-test#test-after-each) hook and fixtures.
-   *
-   * Status is usually compared with the
-   * [testInfo.expectedStatus](https://playwright.dev/docs/api/class-testinfo#test-info-expected-status):
-   *
-   * ```ts
-   * import { test, expect } from '@playwright/test';
-   *
-   * test.afterEach(async ({}, testInfo) => {
-   *   if (testInfo.status !== testInfo.expectedStatus)
-   *     console.log(`${testInfo.title} did not run as expected!`);
-   * });
-   * ```
-   *
-   */
-  status?: TestStatus;
   /**
    * The list of annotations applicable to the current test. Includes annotations from the test, annotations from all
    * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) groups the test belongs to
@@ -1510,6 +1382,26 @@ export interface TestInfo {
    * Errors thrown during test execution, if any.
    */
   errors: Array<TestError>;
+
+  /**
+   * Expected status for the currently running test. This is usually `'passed'`, except for a few cases:
+   * - `'skipped'` for skipped tests, e.g. with [test.skip()](https://playwright.dev/docs/api/class-test#test-skip-2);
+   * - `'failed'` for tests marked as failed with [test.fail()](https://playwright.dev/docs/api/class-test#test-fail-1).
+   *
+   * Expected status is usually compared with the actual
+   * [testInfo.status](https://playwright.dev/docs/api/class-testinfo#test-info-status):
+   *
+   * ```ts
+   * import { test, expect } from '@playwright/test';
+   *
+   * test.afterEach(async ({}, testInfo) => {
+   *   if (testInfo.status !== testInfo.expectedStatus)
+   *     console.log(`${testInfo.title} did not run as expected!`);
+   * });
+   * ```
+   *
+   */
+  expectedStatus: "passed"|"failed"|"timedOut"|"skipped";
 
   /**
    * Marks the currently running test as "should fail". Playwright Test runs this test and ensures that it is actually
@@ -1699,6 +1591,25 @@ export interface TestInfo {
    * [snapshots](https://playwright.dev/docs/test-snapshots).
    */
   snapshotSuffix: string;
+
+  /**
+   * Actual status for the currently running test. Available after the test has finished in
+   * [test.afterEach(hookFunction)](https://playwright.dev/docs/api/class-test#test-after-each) hook and fixtures.
+   *
+   * Status is usually compared with the
+   * [testInfo.expectedStatus](https://playwright.dev/docs/api/class-testinfo#test-info-expected-status):
+   *
+   * ```ts
+   * import { test, expect } from '@playwright/test';
+   *
+   * test.afterEach(async ({}, testInfo) => {
+   *   if (testInfo.status !== testInfo.expectedStatus)
+   *     console.log(`${testInfo.title} did not run as expected!`);
+   * });
+   * ```
+   *
+   */
+  status?: "passed"|"failed"|"timedOut"|"skipped";
 
   /**
    * Output written to `process.stderr` or `console.error` during the test execution.
@@ -4012,4 +3923,50 @@ interface TestProject {
   timeout?: number;
 }
 
+interface TestConfigWebServer {
+  /**
+   * Shell command to start. For example `npm run start`..
+   */
+  command: string;
+
+  /**
+   * The port that your http server is expected to appear on. It does wait until it accepts connections. Exactly one of
+   * `port` or `url` is required.
+   */
+  port?: number;
+
+  /**
+   * The url on your http server that is expected to return a 2xx status code when the server is ready to accept connections.
+   * Exactly one of `port` or `url` is required.
+   */
+  url?: string;
+
+  /**
+   * Whether to ignore HTTPS errors when fetching the `url`. Defaults to `false`.
+   */
+  ignoreHTTPSErrors?: boolean;
+
+  /**
+   * How long to wait for the process to start up and be available in milliseconds. Defaults to 60000.
+   */
+  timeout?: number;
+
+  /**
+   * If true, it will re-use an existing server on the `port` or `url` when available. If no server is running on that `port`
+   * or `url`, it will run the command to start a new server. If `false`, it will throw if an existing process is listening
+   * on the `port` or `url`. This should be commonly set to `!process.env.CI` to allow the local dev server when running
+   * tests locally.
+   */
+  reuseExistingServer?: boolean;
+
+  /**
+   * Current working directory of the spawned process, defaults to the directory of the configuration file.
+   */
+  cwd?: string;
+
+  /**
+   * Environment variables to set for the command, `process.env` by default.
+   */
+  env?: { [key: string]: string; };
+}
 

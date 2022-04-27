@@ -17,7 +17,7 @@
 import type { Locator, Page } from 'playwright-core';
 import type { Page as PageEx } from 'playwright-core/lib/client/page';
 import type { Locator as LocatorEx } from 'playwright-core/lib/client/locator';
-import type { Expect, UpdateSnapshots } from '../types';
+import type { Expect } from '../types';
 import { currentTestInfo } from '../globals';
 import type { ImageComparatorOptions, Comparator } from 'playwright-core/lib/utils/comparators';
 import { getComparator } from 'playwright-core/lib/utils/comparators';
@@ -51,7 +51,7 @@ class SnapshotHelper<T extends ImageComparatorOptions> {
   readonly diffPath: string;
   readonly mimeType: string;
   readonly kind: 'Screenshot'|'Snapshot';
-  readonly updateSnapshots: UpdateSnapshots;
+  readonly updateSnapshots: 'all' | 'none' | 'missing';
   readonly comparatorOptions: ImageComparatorOptions;
   readonly comparator: Comparator;
   readonly allOptions: T;
