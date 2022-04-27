@@ -13,14 +13,193 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import type { TestPlugin, WebServerConfig } from '../types';
-import { WebServer } from '../webServer';
+import http from 'http';
+import https from 'https';
+import path from 'path';
+import net from 'net';
+
+import { debug } from 'playwright-core/lib/utilsBundle';
+import { raceAgainstTimeout } from 'playwright-core/lib/utils/timeoutRunner';
+import { launchProcess } from 'playwright-core/lib/utils/processLauncher';
+
+import type { FullConfig, PlaywrightTestConfig, TestPlugin } from '../types';
+import type { Reporter } from '../../types/testReporter';
+type WebServerConfig = NonNullable<FullConfig['webServer']>;
+
+const DEFAULT_ENVIRONMENT_VARIABLES = {
+  'BROWSER': 'none', // Disable that create-react-app will open the page in the browser
+};
+
+const debugWebServer = debug('pw:webserver');
+
+class WebServerPlugin implements TestPlugin {
+  private _isAvailable: () => Promise<boolean>;
+  private _killProcess?: () => Promise<void>;
+  private _processExitedPromise!: Promise<any>;
+  private _config: WebServerConfig;
+  private _reporter: Reporter;
+
+  constructor(config: WebServerConfig, reporter: Reporter) {
+    this._reporter = reporter;
+    this._config = { ...config };
+    this._config.setBaseURL = this._config.setBaseURL ?? true;
+    this._isAvailable = getIsAvailableFunction(config, this._reporter.onStdErr?.bind(this._reporter));
+  }
+
+  public async configure(config: PlaywrightTestConfig, configDir: string) {
+    this._config.cwd = this._config.cwd ? path.resolve(configDir, this._config.cwd) : configDir;
+    if (this._config.setBaseURL && this._config.port !== undefined && !config.use?.baseURL) {
+      config.use = (config.use || {});
+      config.use.baseURL = `http://localhost:${this._config.port}`;
+    }
+  }
+
+  public async setup() {
+    try {
+      await this._startProcess();
+      await this._waitForProcess();
+    } catch (error) {
+      await this.teardown();
+      throw error;
+    }
+  }
+
+  public async teardown() {
+    await this._killProcess?.();
+  }
+
+  public _setReporter(reporter: Reporter) {
+    this._reporter = reporter;
+  }
+
+  private async _startProcess(): Promise<void> {
+    let processExitedReject = (error: Error) => { };
+    this._processExitedPromise = new Promise((_, reject) => processExitedReject = reject);
+
+    const isAlreadyAvailable = await this._isAvailable();
+    if (isAlreadyAvailable) {
+      debugWebServer(`WebServer is already available`);
+      if (this._config.reuseExistingServer)
+        return;
+      throw new Error(`${this._config.url ?? `http://localhost:${this._config.port}`} is already used, make sure that nothing is running on the port/url or set reuseExistingServer:true in config.webServer.`);
+    }
+
+    debugWebServer(`Starting WebServer process ${this._config.command}...`);
+    const { launchedProcess, kill } = await launchProcess({
+      command: this._config.command,
+      env: {
+        ...DEFAULT_ENVIRONMENT_VARIABLES,
+        ...process.env,
+        ...this._config.env,
+      },
+      cwd: this._config.cwd,
+      stdio: 'stdin',
+      shell: true,
+      attemptToGracefullyClose: async () => {},
+      log: () => {},
+      onExit: code => processExitedReject(new Error(`Process from config.webServer was not able to start. Exit code: ${code}`)),
+      tempDirectories: [],
+    });
+    this._killProcess = kill;
+
+    debugWebServer(`Process started`);
+
+    launchedProcess.stderr!.on('data', line => this._reporter.onStdErr?.('[WebServer] ' + line.toString()));
+    launchedProcess.stdout!.on('data', line => {
+      if (debugWebServer.enabled)
+        this._reporter.onStdOut?.('[WebServer] ' + line.toString());
+    });
+  }
+
+  private async _waitForProcess() {
+    debugWebServer(`Waiting for availability...`);
+    await this._waitForAvailability();
+    debugWebServer(`WebServer available`);
+  }
+
+  private async _waitForAvailability() {
+    const launchTimeout = this._config.timeout || 60 * 1000;
+    const cancellationToken = { canceled: false };
+    const { timedOut } = (await Promise.race([
+      raceAgainstTimeout(() => waitFor(this._isAvailable, cancellationToken), launchTimeout),
+      this._processExitedPromise,
+    ]));
+    cancellationToken.canceled = true;
+    if (timedOut)
+      throw new Error(`Timed out waiting ${launchTimeout}ms from config.webServer.`);
+  }
+}
+
+async function isPortUsed(port: number): Promise<boolean> {
+  const innerIsPortUsed = (host: string) => new Promise<boolean>(resolve => {
+    const conn = net
+        .connect(port, host)
+        .on('error', () => {
+          resolve(false);
+        })
+        .on('connect', () => {
+          conn.end();
+          resolve(true);
+        });
+  });
+  return await innerIsPortUsed('127.0.0.1') || await innerIsPortUsed('::1');
+}
+
+async function isURLAvailable(url: URL, ignoreHTTPSErrors: boolean | undefined, onStdErr: Reporter['onStdErr']) {
+  let statusCode = await httpStatusCode(url, ignoreHTTPSErrors, onStdErr);
+  if (statusCode === 404 && url.pathname === '/') {
+    const indexUrl = new URL(url);
+    indexUrl.pathname = '/index.html';
+    statusCode = await httpStatusCode(indexUrl, ignoreHTTPSErrors, onStdErr);
+  }
+  return statusCode >= 200 && statusCode < 300;
+}
+
+async function httpStatusCode(url: URL, ignoreHTTPSErrors: boolean | undefined, onStdErr: Reporter['onStdErr']): Promise<number> {
+  const isHttps = url.protocol === 'https:';
+  const requestOptions = isHttps ? {
+    rejectUnauthorized: !ignoreHTTPSErrors,
+  } : {};
+  return new Promise(resolve => {
+    debugWebServer(`HTTP GET: ${url}`);
+    (isHttps ? https : http).get(url, requestOptions, res => {
+      res.resume();
+      const statusCode = res.statusCode ?? 0;
+      debugWebServer(`HTTP Status: ${statusCode}`);
+      resolve(statusCode);
+    }).on('error', error => {
+      if ((error as NodeJS.ErrnoException).code === 'DEPTH_ZERO_SELF_SIGNED_CERT')
+        onStdErr?.(`[WebServer] Self-signed certificate detected. Try adding ignoreHTTPSErrors: true to config.webServer.`);
+      debugWebServer(`Error while checking if ${url} is available: ${error.message}`);
+      resolve(0);
+    });
+  });
+}
+
+async function waitFor(waitFn: () => Promise<boolean>, cancellationToken: { canceled: boolean }) {
+  const logScale = [100, 250, 500];
+  while (!cancellationToken.canceled) {
+    const connected = await waitFn();
+    if (connected)
+      return;
+    const delay = logScale.shift() || 1000;
+    debugWebServer(`Waiting ${delay}ms`);
+    await new Promise(x => setTimeout(x, delay));
+  }
+}
+
+function getIsAvailableFunction({ url, port, ignoreHTTPSErrors }: Pick<WebServerConfig, 'port' | 'url' | 'ignoreHTTPSErrors'>, onStdErr: Reporter['onStdErr']) {
+  if (url !== undefined && port === undefined) {
+    const urlObject = new URL(url);
+    return () => isURLAvailable(urlObject, ignoreHTTPSErrors, onStdErr);
+  } else if (port !== undefined && url === undefined) {
+    return () => isPortUsed(port);
+  } else {
+    throw new Error(`Exactly one of 'port' or 'url' is required in config.webServer.`);
+  }
+}
 
 export const webServer = (config: WebServerConfig): TestPlugin => {
   // eslint-disable-next-line no-console
-  const server = new WebServer(config, { onStdOut: console.log, onStdErr: console.error });
-  return {
-    setup: async () => { await server.start({ setBaseURL: false }); },
-    teardown: async () => server.kill(),
-  };
+  return new WebServerPlugin(config, { onStdOut: console.log, onStdErr: console.error });
 };

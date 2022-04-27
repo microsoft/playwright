@@ -40,7 +40,6 @@ import HtmlReporter from './reporters/html';
 import type { ProjectImpl } from './project';
 import type { Config } from './types';
 import type { FullConfigInternal } from './types';
-import { WebServer } from './webServer';
 import { raceAgainstTimeout } from 'playwright-core/lib/utils/timeoutRunner';
 import { SigIntWatcher } from './sigIntWatcher';
 import { GlobalInfoImpl } from './globalInfo';
@@ -425,7 +424,6 @@ export class Runner {
     const result: FullResult = { status: 'passed' };
     const pluginTeardowns: (() => Promise<void>)[] = [];
     let globalSetupResult: any;
-    let webServer: WebServer | undefined;
 
     const tearDown = async () => {
       // Reverse to setup.
@@ -437,10 +435,6 @@ export class Runner {
       await this._runAndReportError(async () => {
         if (config.globalTeardown)
           await (await this._loader.loadGlobalHook(config.globalTeardown, 'globalTeardown'))(this._loader.fullConfig());
-      }, result);
-
-      await this._runAndReportError(async () => {
-        await webServer?.kill();
       }, result);
 
       for (const teardown of pluginTeardowns) {
@@ -458,9 +452,6 @@ export class Runner {
         if (plugin.teardown)
           pluginTeardowns.unshift(plugin.teardown);
       }
-
-      // Then do legacy web server.
-      webServer = config.webServer ? await WebServer.create(config.webServer, this._reporter) : undefined;
 
       // The do global setup.
       if (config.globalSetup)
