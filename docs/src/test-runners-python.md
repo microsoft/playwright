@@ -84,7 +84,7 @@ def test_my_app_is_working(fixture_name):
 - `browser_channel`: Browser channel as string.
 - `is_chromium`, `is_webkit`, `is_firefox`: Booleans for the respective browser types.
 
-**Customizing fixture options**: For `browser` and `context` fixtures, use the the following fixtures to define custom launch options.
+**Customizing fixture options**: For `browser` and `context` fixtures, use the following fixtures to define custom launch options.
 
 - `browser_type_launch_args`: Override launch arguments for [`method: BrowserType.launch`]. It should return a Dict.
 - `browser_context_args`: Override the options for [`method: Browser.newContext`]. It should return a Dict.

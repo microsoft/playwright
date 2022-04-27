@@ -59,7 +59,7 @@ Returns page this file chooser belongs to.
 ## async method: FileChooser.setFiles
 
 Sets the value of the file input this chooser is associated with. If some of the `filePaths` are relative paths, then
-they are resolved relative to the the current working directory. For empty array, clears the selected files.
+they are resolved relative to the current working directory. For empty array, clears the selected files.
 
 ### param: FileChooser.setFiles.files = %%-input-files-%%
 
