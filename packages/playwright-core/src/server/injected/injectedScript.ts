@@ -63,11 +63,6 @@ export interface SelectorEngineV2 {
   queryAll(root: SelectorRoot, body: any): Element[];
 }
 
-export type ElementMatch = {
-  element: Element;
-  capture: Element | undefined;
-};
-
 export type HitTargetInterceptionResult = {
   stop: () => 'done' | { hitTargetDescription: string };
 };
@@ -105,7 +100,7 @@ export class InjectedScript {
     this._engines.set('data-test:light', this._createAttributeEngine('data-test', false));
     this._engines.set('css', this._createCSSEngine());
     this._engines.set('nth', { queryAll: () => [] });
-    this._engines.set('visible', { queryAll: () => [] });
+    this._engines.set('visible', this._createVisibleEngine());
     this._engines.set('control', this._createControlEngine());
     this._engines.set('has', this._createHasEngine());
 
@@ -140,93 +135,70 @@ export class InjectedScript {
   }
 
   querySelector(selector: ParsedSelector, root: Node, strict: boolean): Element | undefined {
-    if (!(root as any)['querySelector'])
-      throw this.createStacklessError('Node is not queryable.');
-    this._evaluator.begin();
-    try {
-      const result = this._querySelectorRecursively([{ element: root as Element, capture: undefined }], selector, 0, new Map());
-      if (strict && result.length > 1)
-        throw this.strictModeViolationError(selector, result.map(r => r.element));
-      return result[0]?.capture || result[0]?.element;
-    } finally {
-      this._evaluator.end();
-    }
+    const result = this.querySelectorAll(selector, root);
+    if (strict && result.length > 1)
+      throw this.strictModeViolationError(selector, result);
+    return result[0];
   }
 
-  private _querySelectorRecursively(roots: ElementMatch[], selector: ParsedSelector, index: number, queryCache: Map<Element, Element[][]>): ElementMatch[] {
-    if (index === selector.parts.length)
-      return roots;
-
-    const part = selector.parts[index];
-    if (part.name === 'nth') {
-      let filtered: ElementMatch[] = [];
-      if (part.body === '0') {
-        filtered = roots.slice(0, 1);
-      } else if (part.body === '-1') {
-        if (roots.length)
-          filtered = roots.slice(roots.length - 1);
-      } else {
-        if (typeof selector.capture === 'number')
-          throw this.createStacklessError(`Can't query n-th element in a request with the capture.`);
-        const nth = +part.body;
-        const set = new Set<Element>();
-        for (const root of roots) {
-          set.add(root.element);
-          if (nth + 1 === set.size)
-            filtered = [root];
-        }
-      }
-      return this._querySelectorRecursively(filtered, selector, index + 1, queryCache);
-    }
-
-    if (part.name === 'visible') {
-      const visible = Boolean(part.body);
-      const filtered = roots.filter(match => visible === isVisible(match.element));
-      return this._querySelectorRecursively(filtered, selector, index + 1, queryCache);
-    }
-
-    const result: ElementMatch[] = [];
-    for (const root of roots) {
-      const capture = index - 1 === selector.capture ? root.element : root.capture;
-
-      // Do not query engine twice for the same element.
-      let queryResults = queryCache.get(root.element);
-      if (!queryResults) {
-        queryResults = [];
-        queryCache.set(root.element, queryResults);
-      }
-      let all = queryResults[index];
-      if (!all) {
-        all = this._queryEngineAll(part, root.element);
-        queryResults[index] = all;
-      }
-
-      for (const element of all) {
-        if (!('nodeName' in element))
-          throw this.createStacklessError(`Expected a Node but got ${Object.prototype.toString.call(element)}`);
-        result.push({ element, capture });
-      }
-    }
-    return this._querySelectorRecursively(result, selector, index + 1, queryCache);
+  private _queryNth(roots: Set<Element>, part: ParsedSelectorPart): Set<Element> {
+    const list = [...roots];
+    let nth = +part.body;
+    if (nth === -1)
+      nth = list.length - 1;
+    return new Set<Element>(list.slice(nth, nth + 1));
   }
 
   querySelectorAll(selector: ParsedSelector, root: Node): Element[] {
+    if (selector.capture !== undefined) {
+      if (selector.parts.some(part => part.name === 'nth'))
+        throw this.createStacklessError(`Can't query n-th element in a request with the capture.`);
+      const withHas: ParsedSelector = { parts: selector.parts.slice(0, selector.capture + 1) };
+      if (selector.capture < selector.parts.length - 1) {
+        const body = { parts: selector.parts.slice(selector.capture + 1) };
+        const has: ParsedSelectorPart = { name: 'has', body, source: stringifySelector(body) };
+        withHas.parts.push(has);
+      }
+      return this.querySelectorAll(withHas, root);
+    }
+
     if (!(root as any)['querySelectorAll'])
       throw this.createStacklessError('Node is not queryable.');
+
+    if (selector.capture !== undefined) {
+      // We should have handled the capture above.
+      throw this.createStacklessError('Internal error: there should not be a capture in the selector.');
+    }
+
     this._evaluator.begin();
     try {
-      const result = this._querySelectorRecursively([{ element: root as Element, capture: undefined }], selector, 0, new Map());
-      const set = new Set<Element>();
-      for (const r of result)
-        set.add(r.capture || r.element);
-      return [...set];
+      let roots = new Set<Element>([root as Element]);
+      for (const part of selector.parts) {
+        if (part.name === 'nth') {
+          roots = this._queryNth(roots, part);
+        } else {
+          const next = new Set<Element>();
+          for (const root of roots) {
+            const all = this._queryEngineAll(part, root);
+            for (const one of all)
+              next.add(one);
+          }
+          roots = next;
+        }
+      }
+      return [...roots];
     } finally {
       this._evaluator.end();
     }
   }
 
   private _queryEngineAll(part: ParsedSelectorPart, root: SelectorRoot): Element[] {
-    return this._engines.get(part.name)!.queryAll(root, part.body);
+    const result = this._engines.get(part.name)!.queryAll(root, part.body);
+    for (const element of result) {
+      if (!('nodeName' in element))
+        throw this.createStacklessError(`Expected a Node but got ${Object.prototype.toString.call(element)}`);
+    }
+    return result;
   }
 
   private _createAttributeEngine(attribute: string, shadow: boolean): SelectorEngine {
@@ -300,6 +272,15 @@ export class InjectedScript {
         return [];
       const has = !!this.querySelector(body, root, false);
       return has ? [root as Element] : [];
+    };
+    return { queryAll };
+  }
+
+  private _createVisibleEngine(): SelectorEngineV2 {
+    const queryAll = (root: SelectorRoot, body: string) => {
+      if (root.nodeType !== 1 /* Node.ELEMENT_NODE */)
+        return [];
+      return isVisible(root as Element) === Boolean(body) ? [root as Element] : [];
     };
     return { queryAll };
   }
