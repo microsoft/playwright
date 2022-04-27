@@ -149,13 +149,6 @@ export class Runner {
     this._reporter = await this._createReporter(!!options.listOnly);
     const config = this._loader.fullConfig();
 
-    let legacyGlobalTearDown: (() => Promise<void>) | undefined;
-    if (process.env.PW_TEST_LEGACY_GLOBAL_SETUP_MODE) {
-      legacyGlobalTearDown = await this._performGlobalSetup(config);
-      if (!legacyGlobalTearDown)
-        return { status: 'failed' };
-    }
-
     const result = await raceAgainstTimeout(() => this._run(!!options.listOnly, options.filePatternFilter || [], options.projectFilter), config.globalTimeout);
     let fullResult: FullResult;
     if (result.timedOut) {
@@ -165,7 +158,6 @@ export class Runner {
       fullResult = result.result;
     }
     await this._reporter.onEnd?.(fullResult);
-    await legacyGlobalTearDown?.();
 
     // Calling process.exit() might truncate large stdout/stderr output.
     // See https://github.com/nodejs/node/issues/6456.
@@ -379,12 +371,9 @@ export class Runner {
     }
 
     // 13. Run Global setup.
-    let globalTearDown: (() => Promise<void>) | undefined;
-    if (!process.env.PW_TEST_LEGACY_GLOBAL_SETUP_MODE) {
-      globalTearDown = await this._performGlobalSetup(config);
-      if (!globalTearDown)
-        return { status: 'failed' };
-    }
+    const globalTearDown = await this._performGlobalSetup(config);
+    if (!globalTearDown)
+      return { status: 'failed' };
 
     const result: FullResult = { status: 'passed' };
 
