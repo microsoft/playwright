@@ -629,7 +629,6 @@ export default config;
   - `reuseExistingServer` ?<[boolean]> If true, it will re-use an existing server on the `port` or `url` when available. If no server is running on that `port` or `url`, it will run the command to start a new server. If `false`, it will throw if an existing process is listening on the `port` or `url`. This should be commonly set to `!process.env.CI` to allow the local dev server when running tests locally.
   - `cwd` ?<[string]> Current working directory of the spawned process, defaults to the directory of the configuration file.
   - `env` ?<[Object]<[string], [string]>> Environment variables to set for the command, `process.env` by default.
-  - `setBaseURL` ?<[boolean]> If false, [`property: TestOptions.baseURL`] will not be automatically set based on `port`. See docs for more details on how [`property: TestOptions.baseURL`] precedence works when using `webServer`.
 
 Launch a development web server during the tests.
 
@@ -637,7 +636,7 @@ If the port is specified, the server will wait for it to be available on `127.0.
 
 For continuous integration, you may want to use the `reuseExistingServer: !process.env.CI` option which does not use an existing server on the CI. To see the stdout, you can set the `DEBUG=pw:webserver` environment variable.
 
-The `port` (but not the `url`) gets passed over to Playwright as a [`property: TestOptions.baseURL`]. For example port `8080` produces `baseURL` equal `http://localhost:8080`. You can disable this by setting `setBaseURL` to `false` in the `webServer` config. The `webServer`'s inferred `baseURL` takes precendence over the legacy config. Additionally, if using multiple `webServer` plugins, the first's inferred `baseURL` is used. If [`property: TestOptions.baseURL`] is specified, it will take precedence.
+The `port` (but not the `url`) gets passed over to Playwright as a [`property: TestOptions.baseURL`]. For example port `8080` produces `baseURL` equal `http://localhost:8080`.
 
 :::note
 It is also recommended to specify [`property: TestOptions.baseURL`] in the config, so that tests could use relative urls.

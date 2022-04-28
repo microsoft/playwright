@@ -22,9 +22,24 @@ import { debug } from 'playwright-core/lib/utilsBundle';
 import { raceAgainstTimeout } from 'playwright-core/lib/utils/timeoutRunner';
 import { launchProcess } from 'playwright-core/lib/utils/processLauncher';
 
-import type { FullConfig, PlaywrightTestConfig, TestPlugin } from '../types';
+import type { PlaywrightTestConfig, TestPlugin } from '../types';
 import type { Reporter } from '../../types/testReporter';
-type WebServerConfig = NonNullable<FullConfig['webServer']>;
+
+export type WebServerPluginOptions = {
+  command: string;
+  url: string;
+  ignoreHTTPSErrors?: boolean;
+  timeout?: number;
+  reuseExistingServer?: boolean;
+  cwd?: string;
+  env?: { [key: string]: string; };
+};
+
+interface InternalWebServerConfigOptions extends Omit<WebServerPluginOptions, 'url'> {
+  setBaseURL: boolean;
+  url?: string;
+  port?: number;
+}
 
 const DEFAULT_ENVIRONMENT_VARIABLES = {
   'BROWSER': 'none', // Disable that create-react-app will open the page in the browser
@@ -32,14 +47,14 @@ const DEFAULT_ENVIRONMENT_VARIABLES = {
 
 const debugWebServer = debug('pw:webserver');
 
-class WebServerPlugin implements TestPlugin {
+export class InternalWebServerPlugin implements TestPlugin {
   private _isAvailable: () => Promise<boolean>;
   private _killProcess?: () => Promise<void>;
   private _processExitedPromise!: Promise<any>;
-  private _config: WebServerConfig;
+  private _config: InternalWebServerConfigOptions;
   private _reporter: Reporter;
 
-  constructor(config: WebServerConfig, reporter: Reporter) {
+  constructor(config: InternalWebServerConfigOptions, reporter: Reporter) {
     this._reporter = reporter;
     this._config = { ...config };
     this._config.setBaseURL = this._config.setBaseURL ?? true;
@@ -66,10 +81,6 @@ class WebServerPlugin implements TestPlugin {
 
   public async teardown() {
     await this._killProcess?.();
-  }
-
-  public _setReporter(reporter: Reporter) {
-    this._reporter = reporter;
   }
 
   private async _startProcess(): Promise<void> {
@@ -188,7 +199,7 @@ async function waitFor(waitFn: () => Promise<boolean>, cancellationToken: { canc
   }
 }
 
-function getIsAvailableFunction({ url, port, ignoreHTTPSErrors }: Pick<WebServerConfig, 'port' | 'url' | 'ignoreHTTPSErrors'>, onStdErr: Reporter['onStdErr']) {
+function getIsAvailableFunction({ url, port, ignoreHTTPSErrors }: Pick<InternalWebServerConfigOptions, 'port' | 'url' | 'ignoreHTTPSErrors'>, onStdErr: Reporter['onStdErr']) {
   if (url !== undefined && port === undefined) {
     const urlObject = new URL(url);
     return () => isURLAvailable(urlObject, ignoreHTTPSErrors, onStdErr);
@@ -199,7 +210,12 @@ function getIsAvailableFunction({ url, port, ignoreHTTPSErrors }: Pick<WebServer
   }
 }
 
-export const webServer = (config: WebServerConfig): TestPlugin => {
+export const webServer = (config: WebServerPluginOptions): TestPlugin => {
   // eslint-disable-next-line no-console
-  return new WebServerPlugin(config, { onStdOut: console.log, onStdErr: console.error });
+  return new InternalWebServerPlugin({ ...config, setBaseURL: false }, { onStdOut: d => console.log(d.toString()), onStdErr: d => console.error(d.toString()) });
+};
+
+export const _legacyWebServer = (config: Omit<InternalWebServerConfigOptions, 'setBaseURL'>): TestPlugin => {
+  // eslint-disable-next-line no-console
+  return new InternalWebServerPlugin({ ...config, setBaseURL: true }, { onStdOut: d => console.log(d.toString()), onStdErr: d => console.error(d.toString()) });
 };

@@ -16604,11 +16604,7 @@ interface TestConfig {
    *
    * The `port` (but not the `url`) gets passed over to Playwright as a
    * [testOptions.baseURL](https://playwright.dev/docs/api/class-testoptions#test-options-base-url). For example port `8080`
-   * produces `baseURL` equal `http://localhost:8080`. You can disable this by setting `setBaseURL` to `false` in the
-   * `webServer` config. The `webServer`'s inferred `baseURL` takes precendence over the legacy config. Additionally, if
-   * using multiple `webServer` plugins, the first's inferred `baseURL` is used. If
-   * [testOptions.baseURL](https://playwright.dev/docs/api/class-testoptions#test-options-base-url) is specified, it will
-   * take precedence.
+   * produces `baseURL` equal `http://localhost:8080`.
    *
    * > NOTE: It is also recommended to specify
    * [testOptions.baseURL](https://playwright.dev/docs/api/class-testoptions#test-options-base-url) in the config, so that
@@ -17421,11 +17417,7 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    *
    * The `port` (but not the `url`) gets passed over to Playwright as a
    * [testOptions.baseURL](https://playwright.dev/docs/api/class-testoptions#test-options-base-url). For example port `8080`
-   * produces `baseURL` equal `http://localhost:8080`. You can disable this by setting `setBaseURL` to `false` in the
-   * `webServer` config. The `webServer`'s inferred `baseURL` takes precendence over the legacy config. Additionally, if
-   * using multiple `webServer` plugins, the first's inferred `baseURL` is used. If
-   * [testOptions.baseURL](https://playwright.dev/docs/api/class-testoptions#test-options-base-url) is specified, it will
-   * take precedence.
+   * produces `baseURL` equal `http://localhost:8080`.
    *
    * > NOTE: It is also recommended to specify
    * [testOptions.baseURL](https://playwright.dev/docs/api/class-testoptions#test-options-base-url) in the config, so that
@@ -20512,14 +20504,6 @@ interface TestConfigWebServer {
    * Environment variables to set for the command, `process.env` by default.
    */
   env?: { [key: string]: string; };
-
-  /**
-   * If false, [testOptions.baseURL](https://playwright.dev/docs/api/class-testoptions#test-options-base-url) will not be
-   * automatically set based on `port`. See docs for more details on how
-   * [testOptions.baseURL](https://playwright.dev/docs/api/class-testoptions#test-options-base-url) precedence works when
-   * using `webServer`.
-   */
-  setBaseURL?: boolean;
 }
 
 

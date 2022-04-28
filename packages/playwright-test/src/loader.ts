@@ -30,7 +30,7 @@ import type { Reporter } from '../types/testReporter';
 import { builtInReporters } from './runner';
 import { isRegExp } from 'playwright-core/lib/utils';
 import { serializeError } from './util';
-import { webServer } from './plugins/webServerPlugin';
+import { _legacyWebServer } from './plugins/webServerPlugin';
 
 // To allow multiple loaders in the same process without clearing require cache,
 // we make these maps global.
@@ -79,7 +79,7 @@ export class Loader {
   private _processConfigObject(config: Config, configDir: string) {
     if (config.webServer) {
       config.plugins = config.plugins || [];
-      config.plugins.push(webServer(config.webServer));
+      config.plugins.push(_legacyWebServer(config.webServer));
     }
 
     for (const plugin of config.plugins || [])

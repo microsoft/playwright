@@ -432,7 +432,7 @@ test('should create multiple servers', async ({ runInlineTest }, { workerIndex }
   const result = await runInlineTest({
     'test.spec.ts': `
         const { test } = pwt;
-        test('connect to the server', async ({baseURL, page}) => {
+        test('connect to the server', async ({page}) => {
           await page.goto('http://localhost:${port}/port');
           await page.locator('text=${port}');
 
@@ -446,11 +446,11 @@ test('should create multiple servers', async ({ runInlineTest }, { workerIndex }
           plugins: [
             webServer({
                 command: 'node ${JSON.stringify(SIMPLE_SERVER_PATH)} ${port}',
-                port: ${port},
+                url: 'http://localhost:${port}/port',
             }),
             webServer({
                 command: 'node ${JSON.stringify(SIMPLE_SERVER_PATH)} ${port + 1}',
-                port: ${port + 1},
+                url: 'http://localhost:${port + 1}/port',
             }),
            ],
            globalSetup: 'globalSetup.ts',
@@ -500,7 +500,32 @@ test('should create multiple servers', async ({ runInlineTest }, { workerIndex }
 });
 
 test.describe('baseURL with plugins', () => {
-  test('first plugin is selected as baseURL', async ({ runInlineTest }, { workerIndex }) => {
+  test('plugins do not set it', async ({ runInlineTest }, { workerIndex }) => {
+    const port = workerIndex + 10500;
+    const result = await runInlineTest({
+      'test.spec.ts': `
+          const { test } = pwt;
+          test('connect to the server', async ({baseURL, page}) => {
+            expect(baseURL).toBeUndefined();
+          });
+        `,
+      'playwright.config.ts': `
+          import { webServer } from '@playwright/test/lib/plugins';
+          module.exports = {
+            plugins: [
+              webServer({
+                  command: 'node ${JSON.stringify(SIMPLE_SERVER_PATH)} ${port}',
+                  url: 'http://localhost:${port}/port',
+              }),
+             ],
+            };
+          `,
+    }, undefined, { DEBUG: 'pw:webserver' });
+    expect(result.exitCode).toBe(0);
+    expect(result.passed).toBe(1);
+  });
+
+  test('legacy config sets it alongside plugin', async ({ runInlineTest }, { workerIndex }) => {
     const port = workerIndex + 10500;
     const result = await runInlineTest({
       'test.spec.ts': `
@@ -514,67 +539,8 @@ test.describe('baseURL with plugins', () => {
           module.exports = {
             plugins: [
               webServer({
-                  command: 'node ${JSON.stringify(SIMPLE_SERVER_PATH)} ${port}',
-                  port: ${port},
-              }),
-              webServer({
                   command: 'node ${JSON.stringify(SIMPLE_SERVER_PATH)} ${port + 1}',
-                  port: ${port + 1},
-              }),
-             ],
-            };
-          `,
-    }, undefined, { DEBUG: 'pw:webserver' });
-    expect(result.exitCode).toBe(0);
-    expect(result.passed).toBe(1);
-  });
-
-  test('setBaseURL=false works', async ({ runInlineTest }, { workerIndex }) => {
-    const port = workerIndex + 10500;
-    const result = await runInlineTest({
-      'test.spec.ts': `
-          const { test } = pwt;
-          test('connect to the server', async ({baseURL, page}) => {
-            expect(baseURL).toBe('http://localhost:${port + 1}');
-          });
-        `,
-      'playwright.config.ts': `
-          import { webServer } from '@playwright/test/lib/plugins';
-          module.exports = {
-            plugins: [
-              webServer({
-                  command: 'node ${JSON.stringify(SIMPLE_SERVER_PATH)} ${port}',
-                  port: ${port},
-                  setBaseURL: false,
-              }),
-              webServer({
-                  command: 'node ${JSON.stringify(SIMPLE_SERVER_PATH)} ${port + 1}',
-                  port: ${port + 1},
-              }),
-             ],
-            };
-          `,
-    }, undefined, { DEBUG: 'pw:webserver' });
-    expect(result.exitCode).toBe(0);
-    expect(result.passed).toBe(1);
-  });
-
-  test('plugins takes precedence over legacy config', async ({ runInlineTest }, { workerIndex }) => {
-    const port = workerIndex + 10500;
-    const result = await runInlineTest({
-      'test.spec.ts': `
-          const { test } = pwt;
-          test('connect to the server', async ({baseURL, page}) => {
-            expect(baseURL).toBe('http://localhost:${port + 1}');
-          });
-        `,
-      'playwright.config.ts': `
-          import { webServer } from '@playwright/test/lib/plugins';
-          module.exports = {
-            plugins: [
-              webServer({
-                  command: 'node ${JSON.stringify(SIMPLE_SERVER_PATH)} ${port + 1}',
-                  port: ${port + 1},
+                  url: 'http://localhost:${port + 1}/port'
               }),
             ],
             webServer: {
