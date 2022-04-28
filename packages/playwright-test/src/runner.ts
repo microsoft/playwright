@@ -55,17 +55,37 @@ type RunOptions = {
   projectFilter?: string[];
 };
 
+export type ConfigCLIOverrides = {
+  forbidOnly?: boolean;
+  fullyParallel?: boolean;
+  globalTimeout?: number;
+  grep?: RegExp;
+  grepInvert?: RegExp;
+  maxFailures?: number;
+  outputDir?: string;
+  quiet?: boolean;
+  repeatEach?: number;
+  retries?: number;
+  reporter?: string;
+  shard?: { current: number, total: number };
+  timeout?: number;
+  updateSnapshots?: 'all'|'none'|'missing';
+  workers?: number;
+  projects?: { name: string, use?: any }[],
+  use?: any;
+};
+
 export class Runner {
   private _loader: Loader;
   private _reporter!: Reporter;
   private _globalInfo: GlobalInfoImpl;
 
-  constructor(configOverrides?: Config) {
-    this._loader = new Loader(configOverrides);
+  constructor(configCLIOverrides?: ConfigCLIOverrides) {
+    this._loader = new Loader(configCLIOverrides);
     this._globalInfo = new GlobalInfoImpl(this._loader.fullConfig());
   }
 
-  async loadConfigFromResolvedFile(resolvedConfigFile: string): Promise<Config> {
+  async loadConfigFromResolvedFile(resolvedConfigFile: string): Promise<FullConfigInternal> {
     return await this._loader.loadConfigFile(resolvedConfigFile);
   }
 
