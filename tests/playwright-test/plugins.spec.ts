@@ -48,13 +48,18 @@ test('event order', async ({ runInlineTest }, testInfo) => {
           export default setup;
         `,
     'globalTeardown.ts': `
+          import log from './log';
           const teardown = () => log('globalTeardown');
           export default teardown;
         `,
     'plugin.ts': `
           import log from './log';
           export const myPlugin = (name: string) => ({
-            configure: async (config) => { config.use = (config.use || {}); config.use.baseURL = (config.use.baseURL || '') + name + ' | '; },
+            configure: async (config) => {
+              log(name, 'configure');
+              config.use = (config.use || {});
+              config.use.baseURL = (config.use.baseURL || '') + name + ' | ';
+            },
             setup: async () => log(name, 'setup'),
             teardown: async () => log(name, 'teardown'),
           });
@@ -64,10 +69,15 @@ test('event order', async ({ runInlineTest }, testInfo) => {
   expect(result.passed).toBe(1);
   const logLines = await fs.promises.readFile(log, 'utf8');
   expect(logLines.split('\n')).toEqual([
+    'a configure',
+    'b configure',
     'a setup',
     'b setup',
     'globalSetup',
+    'a configure',
+    'b configure',
     'baseURL a | b | ',
+    'globalTeardown',
     'b teardown',
     'a teardown',
     '',
