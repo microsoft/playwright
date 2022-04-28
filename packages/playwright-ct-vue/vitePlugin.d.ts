@@ -19,6 +19,5 @@ import type { InlineConfig } from 'vite';
 
 export default function(options?: {
   config?: InlineConfig,
-  include?: string,
   port?: number,
 }): TestPlugin;

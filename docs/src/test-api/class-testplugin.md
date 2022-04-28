@@ -10,5 +10,7 @@
 
 ## optional async method: TestPlugin.setup
 
-## optional async method: TestPlugin.teardown
+### param: TestPlugin.setup.suite
+- `suite` <[Suite]>
 
+## optional async method: TestPlugin.teardown
