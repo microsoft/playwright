@@ -19,7 +19,7 @@ import { XPathEngine } from './xpathSelectorEngine';
 import { ReactEngine } from './reactSelectorEngine';
 import { VueEngine } from './vueSelectorEngine';
 import { RoleEngine } from './roleSelectorEngine';
-import type { ParsedSelector, ParsedSelectorPart } from '../isomorphic/selectorParser';
+import type { NestedSelectorBody, ParsedSelector, ParsedSelectorPart } from '../isomorphic/selectorParser';
 import { allEngineNames, parseSelector, stringifySelector } from '../isomorphic/selectorParser';
 import type { TextMatcher } from './selectorEvaluator';
 import { SelectorEvaluatorImpl, isVisible, parentElementOrShadowHost, elementMatchesText, createRegexTextMatcher, createStrictTextMatcher, createLaxTextMatcher } from './selectorEvaluator';
@@ -28,6 +28,7 @@ import { generateSelector } from './selectorGenerator';
 import type * as channels from '../../protocol/channels';
 import { Highlight } from './highlight';
 import { getAriaDisabled, getAriaRole, getElementAccessibleName } from './roleUtils';
+import { kLayoutSelectorNames, type LayoutSelectorName, layoutSelectorScore } from './layoutSelectorUtils';
 
 type Predicate<T> = (progress: InjectedScriptProgress) => T | symbol;
 
@@ -103,6 +104,11 @@ export class InjectedScript {
     this._engines.set('visible', this._createVisibleEngine());
     this._engines.set('control', this._createControlEngine());
     this._engines.set('has', this._createHasEngine());
+    this._engines.set('left-of', { queryAll: () => [] });
+    this._engines.set('right-of', { queryAll: () => [] });
+    this._engines.set('above', { queryAll: () => [] });
+    this._engines.set('below', { queryAll: () => [] });
+    this._engines.set('near', { queryAll: () => [] });
 
     for (const { name, engine } of customEngines)
       this._engines.set(name, engine);
@@ -141,12 +147,26 @@ export class InjectedScript {
     return result[0];
   }
 
-  private _queryNth(roots: Set<Element>, part: ParsedSelectorPart): Set<Element> {
-    const list = [...roots];
+  private _queryNth(elements: Set<Element>, part: ParsedSelectorPart): Set<Element> {
+    const list = [...elements];
     let nth = +part.body;
     if (nth === -1)
       nth = list.length - 1;
     return new Set<Element>(list.slice(nth, nth + 1));
+  }
+
+  private _queryLayoutSelector(elements: Set<Element>, part: ParsedSelectorPart, originalRoot: Node): Set<Element> {
+    const name = part.name as LayoutSelectorName;
+    const body = part.body as NestedSelectorBody;
+    const result: { element: Element, score: number }[] = [];
+    const inner = this.querySelectorAll(body.parsed, originalRoot);
+    for (const element of elements) {
+      const score = layoutSelectorScore(name, element, inner, body.distance);
+      if (score !== undefined)
+        result.push({ element, score });
+    }
+    result.sort((a, b) => a.score - b.score);
+    return new Set<Element>(result.map(r => r.element));
   }
 
   querySelectorAll(selector: ParsedSelector, root: Node): Element[] {
@@ -155,8 +175,8 @@ export class InjectedScript {
         throw this.createStacklessError(`Can't query n-th element in a request with the capture.`);
       const withHas: ParsedSelector = { parts: selector.parts.slice(0, selector.capture + 1) };
       if (selector.capture < selector.parts.length - 1) {
-        const body = { parts: selector.parts.slice(selector.capture + 1) };
-        const has: ParsedSelectorPart = { name: 'has', body, source: stringifySelector(body) };
+        const parsed: ParsedSelector = { parts: selector.parts.slice(selector.capture + 1) };
+        const has: ParsedSelectorPart = { name: 'has', body: { parsed }, source: stringifySelector(parsed) };
         withHas.parts.push(has);
       }
       return this.querySelectorAll(withHas, root);
@@ -176,6 +196,8 @@ export class InjectedScript {
       for (const part of selector.parts) {
         if (part.name === 'nth') {
           roots = this._queryNth(roots, part);
+        } else if (kLayoutSelectorNames.includes(part.name as LayoutSelectorName)) {
+          roots = this._queryLayoutSelector(roots, part, root);
         } else {
           const next = new Set<Element>();
           for (const root of roots) {
@@ -267,10 +289,10 @@ export class InjectedScript {
   }
 
   private _createHasEngine(): SelectorEngineV2 {
-    const queryAll = (root: SelectorRoot, body: ParsedSelector) => {
+    const queryAll = (root: SelectorRoot, body: NestedSelectorBody) => {
       if (root.nodeType !== 1 /* Node.ELEMENT_NODE */)
         return [];
-      const has = !!this.querySelector(body, root, false);
+      const has = !!this.querySelector(body.parsed, root, false);
       return has ? [root as Element] : [];
     };
     return { queryAll };
@@ -281,6 +303,16 @@ export class InjectedScript {
       if (root.nodeType !== 1 /* Node.ELEMENT_NODE */)
         return [];
       return isVisible(root as Element) === Boolean(body) ? [root as Element] : [];
+    };
+    return { queryAll };
+  }
+
+  private _createLayoutEngine(name: LayoutSelectorName): SelectorEngineV2 {
+    const queryAll = (root: SelectorRoot, body: ParsedSelector) => {
+      if (root.nodeType !== 1 /* Node.ELEMENT_NODE */)
+        return [];
+      const has = !!this.querySelector(body, root, false);
+      return has ? [root as Element] : [];
     };
     return { queryAll };
   }

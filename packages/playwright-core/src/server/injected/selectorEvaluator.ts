@@ -16,6 +16,7 @@
 
 import type { CSSComplexSelector, CSSSimpleSelector, CSSComplexSelectorList, CSSFunctionArgument } from '../isomorphic/cssParser';
 import { customCSSNames } from '../isomorphic/selectorParser';
+import { type LayoutSelectorName, layoutSelectorScore } from './layoutSelectorUtils';
 
 export type QueryContext = {
   scope: Element | Document;
@@ -61,11 +62,11 @@ export class SelectorEvaluatorImpl implements SelectorEvaluator {
     this._engines.set('text-is', textIsEngine);
     this._engines.set('text-matches', textMatchesEngine);
     this._engines.set('has-text', hasTextEngine);
-    this._engines.set('right-of', createPositionEngine('right-of', boxRightOf));
-    this._engines.set('left-of', createPositionEngine('left-of', boxLeftOf));
-    this._engines.set('above', createPositionEngine('above', boxAbove));
-    this._engines.set('below', createPositionEngine('below', boxBelow));
-    this._engines.set('near', createPositionEngine('near', boxNear));
+    this._engines.set('right-of', createLayoutEngine('right-of'));
+    this._engines.set('left-of', createLayoutEngine('left-of'));
+    this._engines.set('above', createLayoutEngine('above'));
+    this._engines.set('below', createLayoutEngine('below'));
+    this._engines.set('near', createLayoutEngine('near'));
     this._engines.set('nth-match', nthMatchEngine);
 
     const allNames = [...this._engines.keys()];
@@ -541,69 +542,18 @@ export function elementMatchesText(evaluator: SelectorEvaluatorImpl, element: El
   return 'self';
 }
 
-function boxRightOf(box1: DOMRect, box2: DOMRect, maxDistance: number | undefined): number | undefined {
-  const distance = box1.left - box2.right;
-  if (distance < 0 || (maxDistance !== undefined && distance > maxDistance))
-    return;
-  return distance + Math.max(box2.bottom - box1.bottom, 0) + Math.max(box1.top - box2.top, 0);
-}
-
-function boxLeftOf(box1: DOMRect, box2: DOMRect, maxDistance: number | undefined): number | undefined {
-  const distance = box2.left - box1.right;
-  if (distance < 0 || (maxDistance !== undefined && distance > maxDistance))
-    return;
-  return distance + Math.max(box2.bottom - box1.bottom, 0) + Math.max(box1.top - box2.top, 0);
-}
-
-function boxAbove(box1: DOMRect, box2: DOMRect, maxDistance: number | undefined): number | undefined {
-  const distance = box2.top - box1.bottom;
-  if (distance < 0 || (maxDistance !== undefined && distance > maxDistance))
-    return;
-  return distance + Math.max(box1.left - box2.left, 0) + Math.max(box2.right - box1.right, 0);
-}
-
-function boxBelow(box1: DOMRect, box2: DOMRect, maxDistance: number | undefined): number | undefined {
-  const distance = box1.top - box2.bottom;
-  if (distance < 0 || (maxDistance !== undefined && distance > maxDistance))
-    return;
-  return distance + Math.max(box1.left - box2.left, 0) + Math.max(box2.right - box1.right, 0);
-}
-
-function boxNear(box1: DOMRect, box2: DOMRect, maxDistance: number | undefined): number | undefined {
-  const kThreshold = maxDistance === undefined ? 50 : maxDistance;
-  let score = 0;
-  if (box1.left - box2.right >= 0)
-    score += box1.left - box2.right;
-  if (box2.left - box1.right >= 0)
-    score += box2.left - box1.right;
-  if (box2.top - box1.bottom >= 0)
-    score += box2.top - box1.bottom;
-  if (box1.top - box2.bottom >= 0)
-    score += box1.top - box2.bottom;
-  return score > kThreshold ? undefined : score;
-}
-
-function createPositionEngine(name: string, scorer: (box1: DOMRect, box2: DOMRect, maxDistance: number | undefined) => number | undefined): SelectorEngine {
+function createLayoutEngine(name: LayoutSelectorName): SelectorEngine {
   return {
     matches(element: Element, args: (string | number | Selector)[], context: QueryContext, evaluator: SelectorEvaluator): boolean {
       const maxDistance = args.length && typeof args[args.length - 1] === 'number' ? args[args.length - 1] : undefined;
       const queryArgs = maxDistance === undefined ? args : args.slice(0, args.length - 1);
       if (args.length < 1 + (maxDistance === undefined ? 0 : 1))
         throw new Error(`"${name}" engine expects a selector list and optional maximum distance in pixels`);
-      const box = element.getBoundingClientRect();
-      let bestScore: number | undefined;
-      for (const e of evaluator.query(context, queryArgs)) {
-        if (e === element)
-          continue;
-        const score = scorer(box, e.getBoundingClientRect(), maxDistance);
-        if (score === undefined)
-          continue;
-        if (bestScore === undefined || score < bestScore)
-          bestScore = score;
-      }
-      if (bestScore === undefined)
+      const inner = evaluator.query(context, queryArgs);
+      const score = layoutSelectorScore(name, element, inner, maxDistance);
+      if (score === undefined)
         return false;
-      (evaluator as SelectorEvaluatorImpl)._markScore(element, bestScore);
+      (evaluator as SelectorEvaluatorImpl)._markScore(element, score);
       return true;
     }
   };

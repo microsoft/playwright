@@ -141,14 +141,26 @@ it('should support locator.that', async ({ page, trace }) => {
   })).toHaveCount(1);
 });
 
-it('should enforce same frame for has:locator', async ({ page, server }) => {
+it('should enforce same frame for has/leftOf/rightOf/above/below/near', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/frames/two-frames.html');
   const child = page.frames()[1];
+  for (const option of ['has', 'leftOf', 'rightOf', 'above', 'below', 'near']) {
+    let error;
+    try {
+      page.locator('div', { [option]: child.locator('span') });
+    } catch (e) {
+      error = e;
+    }
+    expect(error.message).toContain(`Inner "${option}" locator must belong to the same frame.`);
+  }
+});
+
+it('should check leftOf options', async ({ page }) => {
   let error;
   try {
-    page.locator('div', { has: child.locator('span') });
+    page.locator('div', { leftOf: { locator: page.locator('span'), maxDistance: 'abc' } as any });
   } catch (e) {
     error = e;
   }
-  expect(error.message).toContain('Inner "has" locator must belong to the same frame.');
+  expect(error.message).toContain(`"leftOf.maxDistance" must be a number, found string.`);
 });
