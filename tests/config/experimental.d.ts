@@ -17322,6 +17322,10 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    *
    */
   maxFailures: number;
+  /**
+   * Any JSON-serializable metadata that will be put directly to the test report.
+   */
+  metadata: any;
   version: string;
   /**
    * Whether to preserve test output in the

@@ -131,6 +131,7 @@ export class Loader {
     this._fullConfig.workers = takeFirst(this._configOverrides.workers, config.workers, baseFullConfig.workers);
     this._fullConfig.webServer = takeFirst(this._configOverrides.webServer, config.webServer, baseFullConfig.webServer);
     this._fullConfig._plugins = takeFirst(this._configOverrides.plugins, config.plugins, baseFullConfig._plugins);
+    this._fullConfig.metadata = mergeObjects(this._configOverrides.metadata, mergeObjects(config.metadata, baseFullConfig.metadata));
 
     const projects: Project[] = ('projects' in config) && config.projects !== undefined ? config.projects : [config];
     for (const project of projects)
@@ -476,6 +477,7 @@ const baseFullConfig: FullConfigInternal = {
   grep: /.*/,
   grepInvert: null,
   maxFailures: 0,
+  metadata: undefined,
   preserveOutput: 'always',
   projects: [],
   reporter: [ ['list'] ],
