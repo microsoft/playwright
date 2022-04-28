@@ -49,7 +49,7 @@ export type Location = {
 };
 
 export type HTMLReport = {
-  attachments: TestAttachment[];
+  metadata: any;
   files: TestFileSummary[];
   stats: Stats;
   projectNames: string[];
@@ -159,12 +159,12 @@ class HtmlReporter implements Reporter {
     const projectSuites = this.suite.suites;
     const reports = projectSuites.map(suite => {
       const rawReporter = new RawReporter();
-      const report = rawReporter.generateProjectReport(this.config, suite, []);
+      const report = rawReporter.generateProjectReport(this.config, suite);
       return report;
     });
     await removeFolders([outputFolder]);
     const builder = new HtmlBuilder(outputFolder);
-    const { ok, singleTestId } = await builder.build(new RawReporter().generateAttachments(this.suite.attachments), reports);
+    const { ok, singleTestId } = await builder.build(this.config.metadata, reports);
 
     if (process.env.CI)
       return;
@@ -255,7 +255,7 @@ class HtmlBuilder {
     this._dataZipFile = new yazl.ZipFile();
   }
 
-  async build(testReportAttachments: JsonAttachment[], rawReports: JsonReport[]): Promise<{ ok: boolean, singleTestId: string | undefined }> {
+  async build(metadata: any, rawReports: JsonReport[]): Promise<{ ok: boolean, singleTestId: string | undefined }> {
 
     const data = new Map<string, { testFile: TestFile, testFileSummary: TestFileSummary }>();
     for (const projectJson of rawReports) {
@@ -311,7 +311,7 @@ class HtmlBuilder {
       this._addDataFile(fileId + '.json', testFile);
     }
     const htmlReport: HTMLReport = {
-      attachments: this._serializeAttachments(testReportAttachments),
+      metadata,
       files: [...data.values()].map(e => e.testFileSummary),
       projectNames: rawReports.map(r => r.project.name),
       stats: [...data.values()].reduce((a, e) => addStats(a, e.testFileSummary.stats), emptyStats())

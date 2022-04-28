@@ -39,7 +39,6 @@ export type Modifier = {
 export class Suite extends Base implements reporterTypes.Suite {
   suites: Suite[] = [];
   tests: TestCase[] = [];
-  attachments: reporterTypes.Suite['attachments'] = [];
   location?: Location;
   parent?: Suite;
   _use: FixturesWithLocation[] = [];
