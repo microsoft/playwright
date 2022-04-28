@@ -19,7 +19,12 @@ import type { PlaywrightTestConfig } from '@playwright/test';
 import { config as loadEnv } from 'dotenv';
 loadEnv({ path: path.join(__dirname, '..', '..', '.env') });
 
+import { vcs } from '@playwright/test/lib/plugins';
+
 const config: PlaywrightTestConfig = {
+  plugins: [
+    vcs(),
+  ],
   testIgnore: '**\/fixture-scripts/**',
   timeout: 5 * 60 * 1000,
   retries: 0,

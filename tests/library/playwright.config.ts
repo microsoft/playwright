@@ -21,6 +21,7 @@ import type { Config, PlaywrightTestOptions, PlaywrightWorkerOptions } from '@pl
 import * as path from 'path';
 import type { TestModeWorkerOptions } from '../config/testModeFixtures';
 import type { CoverageWorkerOptions } from '../config/coverageFixtures';
+import { vcs } from '@playwright/test/lib/plugins';
 
 type BrowserName = 'chromium' | 'firefox' | 'webkit';
 
@@ -44,6 +45,9 @@ const trace = !!process.env.PWTEST_TRACE;
 const outputDir = path.join(__dirname, '..', '..', 'test-results');
 const testDir = path.join(__dirname, '..');
 const config: Config<CoverageWorkerOptions & PlaywrightWorkerOptions & PlaywrightTestOptions & TestModeWorkerOptions> = {
+  plugins: [
+    vcs(),
+  ],
   testDir,
   outputDir,
   expect: {

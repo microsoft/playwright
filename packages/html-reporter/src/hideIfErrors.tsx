@@ -13,5 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-export { webServer } from './webServerPlugin';
-export { vcs } from './vcsPlugin';
+import * as React from 'react';
+
+export class HideIfErrors extends React.Component<{}, { hitError: boolean }> {
+  state = {
+    hitError: false,
+  };
+
+  componentDidCatch(error: any, errorInfo: any) {
+    this.setState({ hitError: true });
+  }
+
+  render() {
+    if (this.state.hitError)
+      return null;
+    return this.props.children;
+  }
+}
