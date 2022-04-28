@@ -17,6 +17,7 @@
 import * as crypto from 'crypto';
 import type stream from 'stream';
 import * as URL from 'url';
+import v8 from 'v8';
 
 type NameValue = {
   name: string,
@@ -214,3 +215,7 @@ export function streamToString(stream: stream.Readable): Promise<string> {
 }
 
 export const isLikelyNpxGlobal = () => process.argv.length >= 2 && process.argv[1].includes('_npx');
+
+export function deepCopy<T>(obj: T): T {
+  return v8.deserialize(v8.serialize(obj));
+}

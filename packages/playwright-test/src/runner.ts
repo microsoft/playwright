@@ -60,8 +60,8 @@ export class Runner {
   private _reporter!: Reporter;
   private _globalInfo: GlobalInfoImpl;
 
-  constructor(configOverrides: Config, options: { defaultConfig?: Config } = {}) {
-    this._loader = new Loader(options.defaultConfig || {}, configOverrides);
+  constructor(configOverrides?: Config) {
+    this._loader = new Loader(configOverrides);
     this._globalInfo = new GlobalInfoImpl(this._loader.fullConfig());
   }
 
