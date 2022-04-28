@@ -1,6 +1,9 @@
 # class: TestPlugin
 * langs: js
 
+## property: TestPlugin.name
+- type: <[string]>
+
 ## optional async method: TestPlugin.configure
 ### param: TestPlugin.configure.config
 - `config` <[TestConfig]>

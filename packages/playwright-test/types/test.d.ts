@@ -3638,6 +3638,8 @@ export interface TestError {
 }
 
 export interface TestPlugin {
+  name: string;
+
   /**
    * @param config
    * @param configDir
