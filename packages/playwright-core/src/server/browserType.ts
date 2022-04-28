@@ -39,7 +39,7 @@ import type { CallMetadata } from './instrumentation';
 import { SdkObject } from './instrumentation';
 
 export const kNoXServerRunningError = 'Looks like you launched a headed browser without having a XServer running.\n' +
-  'Set either \'headless: false\' or use \'xvfb-run <your-playwright-app>\' before running Playwright.\n\n<3 Playwright Team';
+  'Set either \'headless: true\' or use \'xvfb-run <your-playwright-app>\' before running Playwright.\n\n<3 Playwright Team';
 
 export abstract class BrowserType extends SdkObject {
   private _name: BrowserName;

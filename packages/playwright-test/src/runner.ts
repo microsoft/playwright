@@ -139,7 +139,7 @@ export class Runner {
       if (list)
         reporters.unshift(new ListModeReporter());
       else
-        reporters.unshift(!process.env.CI ? new LineReporter({ omitFailures: true }) : new DotReporter({ omitFailures: true }));
+        reporters.unshift(!process.env.CI ? new LineReporter({ omitFailures: true }) : new DotReporter());
     }
     return new Multiplexer(reporters);
   }
@@ -147,13 +147,6 @@ export class Runner {
   async runAllTests(options: RunOptions = {}): Promise<FullResult> {
     this._reporter = await this._createReporter(!!options.listOnly);
     const config = this._loader.fullConfig();
-
-    let legacyGlobalTearDown: (() => Promise<void>) | undefined;
-    if (process.env.PW_TEST_LEGACY_GLOBAL_SETUP_MODE) {
-      legacyGlobalTearDown = await this._performGlobalSetup(config);
-      if (!legacyGlobalTearDown)
-        return { status: 'failed' };
-    }
 
     const result = await raceAgainstTimeout(() => this._run(!!options.listOnly, options.filePatternFilter || [], options.projectFilter), config.globalTimeout);
     let fullResult: FullResult;
@@ -164,7 +157,6 @@ export class Runner {
       fullResult = result.result;
     }
     await this._reporter.onEnd?.(fullResult);
-    await legacyGlobalTearDown?.();
 
     // Calling process.exit() might truncate large stdout/stderr output.
     // See https://github.com/nodejs/node/issues/6456.
@@ -378,12 +370,9 @@ export class Runner {
     }
 
     // 13. Run Global setup.
-    let globalTearDown: (() => Promise<void>) | undefined;
-    if (!process.env.PW_TEST_LEGACY_GLOBAL_SETUP_MODE) {
-      globalTearDown = await this._performGlobalSetup(config);
-      if (!globalTearDown)
-        return { status: 'failed' };
-    }
+    const globalTearDown = await this._performGlobalSetup(config, rootSuite);
+    if (!globalTearDown)
+      return { status: 'failed' };
 
     const result: FullResult = { status: 'passed' };
 
@@ -420,7 +409,7 @@ export class Runner {
     return result;
   }
 
-  private async _performGlobalSetup(config: FullConfigInternal): Promise<(() => Promise<void>) | undefined> {
+  private async _performGlobalSetup(config: FullConfigInternal, rootSuite: Suite): Promise<(() => Promise<void>) | undefined> {
     const result: FullResult = { status: 'passed' };
     const pluginTeardowns: (() => Promise<void>)[] = [];
     let globalSetupResult: any;
@@ -448,7 +437,7 @@ export class Runner {
       // First run the plugins, if plugin is a web server we want it to run before the
       // config's global setup.
       for (const plugin of config._plugins) {
-        await plugin.setup?.();
+        await plugin.setup?.(rootSuite);
         if (plugin.teardown)
           pluginTeardowns.unshift(plugin.teardown);
       }

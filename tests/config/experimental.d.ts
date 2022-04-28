@@ -19109,6 +19109,7 @@ export type PlaywrightTestProject<TestArgs = {}, WorkerArgs = {}> = Project<Play
 export type PlaywrightTestConfig<TestArgs = {}, WorkerArgs = {}> = Config<PlaywrightTestOptions & TestArgs, PlaywrightWorkerOptions & WorkerArgs>;
 
 import type * as expectType from '@playwright/test/types/expect-types';
+import type { Suite } from '@playwright/test/types/testReporter';
 
 type AsymmetricMatcher = Record<string, any>;
 
@@ -20090,13 +20091,18 @@ export interface TestError {
 }
 
 export interface TestPlugin {
+  name: string;
+
   /**
    * @param config
    * @param configDir
    */
   configure?(config: TestConfig, configDir: string): Promise<void>;
 
-  setup?(): Promise<void>;
+  /**
+   * @param suite
+   */
+  setup?(suite: Suite): Promise<void>;
 
   teardown?(): Promise<void>;
 }

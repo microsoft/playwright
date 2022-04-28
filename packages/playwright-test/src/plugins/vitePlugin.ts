@@ -17,7 +17,6 @@
 import type { PlaywrightTestConfig, TestPlugin } from '@playwright/test';
 import fs from 'fs';
 import path from 'path';
-import { glob } from 'playwright-core/lib/utilsBundle';
 import type { InlineConfig, Plugin, ViteDevServer } from 'vite';
 import { parse, traverse, types as t } from '../babelBundle';
 import type { ComponentInfo } from '../tsxTransform';
@@ -29,7 +28,6 @@ export function createPlugin(
   registerFunction: string,
   frameworkPluginFactory: () => Plugin,
   options: {
-    include?: string,
     port?: number,
     config?: InlineConfig
   } = {}): TestPlugin {
@@ -37,6 +35,8 @@ export function createPlugin(
   const port = options.port || 3100;
   let configDir: string;
   return {
+    name: 'playwright-vite-plugin',
+
     configure: async (config: PlaywrightTestConfig, configDirectory: string) => {
       configDir = configDirectory;
       const url = `http://localhost:${port}/playwright/index.html`;
@@ -45,12 +45,17 @@ export function createPlugin(
       config.use!.baseURL = url;
     },
 
-    setup: async () => {
+    setup: async suite => {
       viteConfig.root = viteConfig.root || configDir;
       viteConfig.plugins = viteConfig.plugins || [
         frameworkPluginFactory()
       ];
-      viteConfig.plugins.push(vitePlugin(registerFunction, options.include));
+      const files = new Set<string>();
+      for (const project of suite.suites) {
+        for (const file of project.suites)
+          files.add(file.location!.file);
+      }
+      viteConfig.plugins.push(vitePlugin(registerFunction, [...files]));
       viteConfig.configFile = viteConfig.configFile || false;
       viteConfig.server = viteConfig.server || {};
       viteConfig.server.port = port;
@@ -67,19 +72,11 @@ export function createPlugin(
 
 const imports: Map<string, ComponentInfo> = new Map();
 
-function vitePlugin(registerFunction: string, include: string | undefined): Plugin {
+function vitePlugin(registerFunction: string, files: string[]): Plugin {
   return {
     name: 'playwright:component-index',
 
     configResolved: async config => {
-      const files = await new Promise<string[]>((f, r) => {
-        glob(include || config.root + '/**/*.{test,spec}.[tj]s{x,}', {}, function(err, files) {
-          if (err)
-            r(err);
-          else
-            f(files);
-        });
-      });
 
       for (const file of files) {
         const text = await fs.promises.readFile(file, 'utf-8');
