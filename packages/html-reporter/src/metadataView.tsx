@@ -24,59 +24,61 @@ import './reportView.css';
 import './theme.css';
 
 export const MetadataView: React.FC<Metadata> = metadata => {
+  if (!metadata.ci?.link && !metadata.revision?.id && !metadata.revision?.author && !metadata.revision?.email && !metadata.revision?.subject && !metadata.revision?.timestamp && !metadata.revision?.link && !metadata.generatedAt)
+    return null;
+
   return (
     <AutoChip header={
       <span>
-        {metadata['revision.id'] && <span style={{ float: 'right', fontFamily: 'var(--monospace-font)' }}>
-          {metadata['revision.id'].slice(0, 7)}
+        {metadata.revision?.id && <span style={{ float: 'right', fontFamily: 'var(--monospace-font)' }}>
+          {metadata.revision?.id.slice(0, 7)}
         </span>}
-        {metadata['revision.subject'] && metadata['revision.subject'] || 'no subject>'}
-        {!metadata['revision.subject'] && 'Commit metainfo'}
-      </span>} initialExpanded={false}>
-      {metadata['revision.subject'] &&
+        {metadata.revision?.subject || 'Commit Metainfo'}
+      </span>} initialExpanded={false} testId='metadata-chip'>
+      {metadata.revision?.subject &&
         <MetadatViewItem
           testId='revision.subject'
-          content={<span>{metadata['revision.subject']}</span>}
+          content={<span>{metadata.revision?.subject}</span>}
         />
       }
-      {metadata['revision.id'] &&
+      {metadata.revision?.id &&
         <MetadatViewItem
           testId='revision.id'
-          content={<span style={{ fontFamily: 'var(--monospace-font)' }}>{metadata['revision.id']}</span>}
-          href={metadata['revision.link']}
+          content={<span style={{ fontFamily: 'var(--monospace-font)' }}>{metadata.revision?.id}</span>}
+          href={metadata.revision?.link}
           icon='commit'
         />
       }
-      {(metadata['revision.author'] || metadata['revision.email']) &&
+      {(metadata.revision?.author || metadata.revision?.link) &&
         <MetadatViewItem
-          content={`${metadata['revision.author']} ${metadata['revision.email']}`}
+          content={`${metadata.revision?.author} ${metadata.revision?.email}`}
           icon='person'
         />
       }
-      {metadata['revision.timestamp'] &&
+      {metadata.revision?.timestamp &&
         <MetadatViewItem
           testId='revision.timestamp'
           content={
             <>
-              {Intl.DateTimeFormat(undefined, { dateStyle: 'full' }).format(metadata['revision.timestamp'])}
+              {Intl.DateTimeFormat(undefined, { dateStyle: 'full' }).format(metadata.revision?.timestamp)}
               {' '}
-              {Intl.DateTimeFormat(undefined, { timeStyle: 'long' }).format(metadata['revision.timestamp'])}
+              {Intl.DateTimeFormat(undefined, { timeStyle: 'long' }).format(metadata.revision?.timestamp)}
             </>
           }
           icon='calendar'
         />
       }
-      {metadata['ci.link'] &&
+      {metadata.ci?.link &&
         <MetadatViewItem
           content='CI/CD Logs'
-          href={metadata['ci.link']}
+          href={metadata.ci?.link}
           icon='externalLink'
         />
       }
-      {metadata['generatedAt'] &&
+      {metadata.generatedAt &&
         <MetadatViewItem
           content={<span style={{ color: 'var(--color-fg-subtle)' }}>
-            Report generated on {Intl.DateTimeFormat(undefined, { dateStyle: 'full', timeStyle: 'long' }).format(metadata['generatedAt'])}
+            Report generated on {Intl.DateTimeFormat(undefined, { dateStyle: 'full', timeStyle: 'long' }).format(metadata.generatedAt)}
           </span>}></MetadatViewItem>
       }
     </AutoChip>

@@ -37,7 +37,8 @@ async function pageWithHar(contextFactory: (options?: BrowserContextOptions) => 
   };
 }
 
-it('should throw without path', async ({ browser }) => {
+it.only('should throw without path', async ({ browser }) => {
+  expect(1).toBe(2);
   const error = await browser.newContext({ recordHar: {} as any }).catch(e => e);
   expect(error.message).toContain('recordHar.path: expected string, got undefined');
 });
@@ -694,4 +695,3 @@ it('should not hang on resources served from cache', async ({ contextFactory, se
   else
     expect(entries.length).toBe(2);
 });
-
