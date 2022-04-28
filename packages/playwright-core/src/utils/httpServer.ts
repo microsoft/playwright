@@ -17,6 +17,7 @@
 import * as http from 'http';
 import fs from 'fs';
 import path from 'path';
+import { URL } from 'url';
 import { mime, wsServer } from '../utilsBundle';
 import type { WebSocketServer } from '../utilsBundle';
 import { assert } from './';

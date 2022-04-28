@@ -15,6 +15,7 @@
  */
 
 import path from 'path';
+import { URL } from 'url';
 import { StackUtils } from '../utilsBundle';
 import { isUnderTest } from './';
 

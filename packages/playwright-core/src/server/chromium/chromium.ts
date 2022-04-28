@@ -18,6 +18,7 @@
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
+import { URL } from 'url';
 import { CRBrowser } from './crBrowser';
 import type { Env } from '../../utils/processLauncher';
 import { gracefullyCloseSet } from '../../utils/processLauncher';

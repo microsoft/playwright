@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { URL } from 'url';
 import type { NodeSnapshot } from '../common/snapshotTypes';
 
 export type SnapshotData = {

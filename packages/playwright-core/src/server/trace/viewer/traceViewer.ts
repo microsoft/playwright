@@ -16,6 +16,7 @@
 
 import path from 'path';
 import fs from 'fs';
+import { URL } from 'url';
 import * as consoleApiSource from '../../../generated/consoleApiSource';
 import { HttpServer } from '../../../utils/httpServer';
 import { findChromiumChannel } from '../../registry';

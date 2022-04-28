@@ -18,7 +18,7 @@ import * as http from 'http';
 import * as https from 'https';
 import type { Readable, TransformCallback } from 'stream';
 import { pipeline, Transform } from 'stream';
-import url from 'url';
+import { parse as urlParse, URL, URLSearchParams } from 'url';
 import zlib from 'zlib';
 import type { HTTPCredentials } from '../../types/types';
 import type * as channels from '../protocol/channels';
@@ -142,7 +142,7 @@ export abstract class APIRequestContext extends SdkObject {
     let agent;
     if (proxy && proxy.server !== 'per-context') {
       // TODO: support bypass proxy
-      const proxyOpts = url.parse(proxy.server);
+      const proxyOpts = urlParse(proxy.server);
       if (proxyOpts.protocol?.startsWith('socks')) {
         agent = new SocksProxyAgent({
           host: proxyOpts.hostname,

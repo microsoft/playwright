@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+import { URL } from 'url';
 import { kBrowserClosedError } from '../../common/errors';
 import { assert } from '../../utils';
 import type { BrowserOptions } from '../browser';

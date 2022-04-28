@@ -17,6 +17,7 @@
 import { debug } from '../utilsBundle';
 import { ws as WebSocket } from '../utilsBundle';
 import { fork } from 'child_process';
+import { URLSearchParams } from 'url';
 import { getPlaywrightVersion } from '../common/userAgent';
 
 export function launchGridAgent(agentId: string, gridURL: string, runId: string | undefined) {

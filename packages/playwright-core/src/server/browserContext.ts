@@ -31,6 +31,7 @@ import type { Selectors } from './selectors';
 import type * as types from './types';
 import path from 'path';
 import fs from 'fs';
+import { URL } from 'url';
 import type { CallMetadata } from './instrumentation';
 import { serverSideCallMetadata, SdkObject } from './instrumentation';
 import { Debugger } from './debugger';

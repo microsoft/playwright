@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import type { URL } from 'url';
 import type * as types from './types';
 
 class Cookie {

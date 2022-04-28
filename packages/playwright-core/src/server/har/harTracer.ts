@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import type { URL } from 'url';
+import { URLSearchParams } from 'url';
 import { BrowserContext } from '../browserContext';
 import type { APIRequestEvent, APIRequestFinishedEvent } from '../fetch';
 import { APIRequestContext } from '../fetch';

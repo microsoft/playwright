@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { URL } from 'url';
 import type * as frames from './frames';
 import type * as types from './types';
 import type * as channels from '../protocol/channels';

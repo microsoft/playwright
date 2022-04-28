@@ -17,6 +17,7 @@
 import { debug, wsServer } from '../utilsBundle';
 import type { WebSocketServer } from '../utilsBundle';
 import * as http from 'http';
+import { URL } from 'url';
 import type { Browser } from '../server/browser';
 import { PlaywrightConnection } from './playwrightConnection';
 
