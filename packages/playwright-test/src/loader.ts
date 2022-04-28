@@ -55,7 +55,7 @@ export class Loader {
     if ('file' in data.configFile)
       await loader.loadConfigFile(data.configFile.file);
     else
-      loader.loadEmptyConfig(data.configFile.configDir);
+      await loader.loadEmptyConfig(data.configFile.configDir);
     return loader;
   }
 
@@ -67,23 +67,23 @@ export class Loader {
       config = config['default'];
     this._configFile = file;
     const rawConfig = { ...config };
-    this._processConfigObject(config, path.dirname(file));
+    await this._processConfigObject(config, path.dirname(file));
     return rawConfig;
   }
 
-  loadEmptyConfig(configDir: string): Config {
-    this._processConfigObject({}, configDir);
+  async loadEmptyConfig(configDir: string): Promise<Config> {
+    await this._processConfigObject({}, configDir);
     return {};
   }
 
-  private _processConfigObject(config: Config, configDir: string) {
+  private async _processConfigObject(config: Config, configDir: string) {
     if (config.webServer) {
       config.plugins = config.plugins || [];
       config.plugins.push(_legacyWebServer(config.webServer));
     }
 
     for (const plugin of config.plugins || [])
-      plugin.configure?.(config, configDir);
+      await plugin.configure?.(config, configDir);
 
     this._configDir = configDir;
     const packageJsonPath = getPackageJsonPath(configDir);
