@@ -16716,10 +16716,10 @@ index 0000000000000000000000000000000000000000..b3bb4880a866ee6132b8b26acf8dad81
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/WebPageInspectorInputAgent.cpp b/Source/WebKit/UIProcess/WebPageInspectorInputAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..45863acc2a61155bdc6db48110a7b196920b73db
+index 0000000000000000000000000000000000000000..3349b5d961f1308e201782358e8b3a7354d11a97
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/WebPageInspectorInputAgent.cpp
-@@ -0,0 +1,329 @@
+@@ -0,0 +1,332 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -16995,6 +16995,9 @@ index 0000000000000000000000000000000000000000..45863acc2a61155bdc6db48110a7b196
 +    // operating system. This is turned off in the callback.
 +    m_page.setInterceptDrags(true);
 +#if PLATFORM(MAC)
++    ASSERT_UNUSED(eventType, 1);
++    ASSERT_UNUSED(eventButton, 1);
++    ASSERT_UNUSED(eventClickCount, 1);
 +    platformDispatchMouseEvent(type, x, y, WTFMove(modifiers), button, WTFMove(clickCount), eventButtons);
 +#elif PLATFORM(GTK) || PLATFORM(WPE) || PLATFORM(WIN)
 +    WallTime timestamp = WallTime::now();
