@@ -14906,7 +14906,7 @@ index 0000000000000000000000000000000000000000..d0e11ed81a6257c011df23d5870da740
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..21e45c0dc3ea7b42879f5771bec577d0d9811274
+index 0000000000000000000000000000000000000000..51950b0673ff515122cb26c0b6beffadb2d3b765
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp
 @@ -0,0 +1,974 @@
@@ -15768,7 +15768,7 @@ index 0000000000000000000000000000000000000000..21e45c0dc3ea7b42879f5771bec577d0
 +        items.append(language);
 +    }
 +
-+    browserContext->dataStore->setLanguagesForAutomation(WTFMove(items));
++    browserContext->processPool->configuration().setOverrideLanguages(WTFMove(items));
 +    return { };
 +}
 +
@@ -17862,7 +17862,7 @@ index e276d3e2f7640986c38fec49d3dc99b1baedafa0..fe8eefde7bde9c00764e43b14acc33b1
      DidPerformDragOperation(bool handled)
  #endif
 diff --git a/Source/WebKit/UIProcess/WebProcessPool.cpp b/Source/WebKit/UIProcess/WebProcessPool.cpp
-index 9ec0e155bd57795ff5edfb6482f04b9c25d8490d..2533299ae9271736b1b14acbea9cc6ff3951dce4 100644
+index 9ec0e155bd57795ff5edfb6482f04b9c25d8490d..5cea588ddeb3a87de47dc54c4a593873475a6c97 100644
 --- a/Source/WebKit/UIProcess/WebProcessPool.cpp
 +++ b/Source/WebKit/UIProcess/WebProcessPool.cpp
 @@ -548,6 +548,14 @@ void WebProcessPool::establishRemoteWorkerContextConnectionToNetworkProcess(Remo
@@ -17880,21 +17880,6 @@ index 9ec0e155bd57795ff5edfb6482f04b9c25d8490d..2533299ae9271736b1b14acbea9cc6ff
      ASSERT(processPool);
  
      WebProcessProxy* remoteWorkerProcessProxy { nullptr };
-@@ -843,8 +851,12 @@ void WebProcessPool::initializeNewWebProcess(WebProcessProxy& process, WebsiteDa
- #endif
- 
-     parameters.cacheModel = LegacyGlobalSettings::singleton().cacheModel();
--    parameters.overrideLanguages = configuration().overrideLanguages();
--    LOG_WITH_STREAM(Language, stream << "WebProcessPool is initializing a new web process with overrideLanguages: " << parameters.overrideLanguages);
-+    if (websiteDataStore && websiteDataStore->languagesForAutomation().size())
-+        parameters.overrideLanguages = websiteDataStore->languagesForAutomation();
-+    else {
-+        parameters.overrideLanguages = configuration().overrideLanguages();
-+        LOG_WITH_STREAM(Language, stream << "WebProcessPool is initializing a new web process with overrideLanguages: " << parameters.overrideLanguages);
-+    }
- 
-     parameters.urlSchemesRegisteredAsEmptyDocument = copyToVector(m_schemesToRegisterAsEmptyDocument);
-     parameters.urlSchemesRegisteredAsSecure = copyToVector(LegacyGlobalSettings::singleton().schemesToRegisterAsSecure());
 diff --git a/Source/WebKit/UIProcess/WebProcessProxy.cpp b/Source/WebKit/UIProcess/WebProcessProxy.cpp
 index da1542a32c69363871fc041c62079d351bbbf352..a42a5af4afab4a985f0435f7307c2f4b0bdd7dd3 100644
 --- a/Source/WebKit/UIProcess/WebProcessProxy.cpp
@@ -17924,18 +17909,13 @@ index 488db9556b5d8b418df98c2cb82f47108a89b13b..010df163d34467cf873860da715bc59a
      WebConnection* webConnection() const { return m_webConnection.get(); }
  
 diff --git a/Source/WebKit/UIProcess/WebsiteData/WebsiteDataStore.cpp b/Source/WebKit/UIProcess/WebsiteData/WebsiteDataStore.cpp
-index cb623e5e3745fdd91d31844fbd93209886d00e6e..87413c5c1f90da0f9ad0495ac81108b4e0153f37 100644
+index cb623e5e3745fdd91d31844fbd93209886d00e6e..c0ac993693b8138fde0c930008a3787d24628d66 100644
 --- a/Source/WebKit/UIProcess/WebsiteData/WebsiteDataStore.cpp
 +++ b/Source/WebKit/UIProcess/WebsiteData/WebsiteDataStore.cpp
-@@ -2037,6 +2037,17 @@ void WebsiteDataStore::originDirectoryForTesting(URL&& origin, URL&& topOrigin,
+@@ -2037,6 +2037,12 @@ void WebsiteDataStore::originDirectoryForTesting(URL&& origin, URL&& topOrigin,
      networkProcess().websiteDataOriginDirectoryForTesting(m_sessionID, WTFMove(origin), WTFMove(topOrigin), type, WTFMove(completionHandler));
  }
  
-+void WebsiteDataStore::setLanguagesForAutomation(Vector<String>&& languages)
-+{
-+    m_languagesForAutomation = WTFMove(languages);
-+}
-+
 +void WebsiteDataStore::setDownloadForAutomation(std::optional<bool> allow, const String& downloadPath)
 +{
 +    m_allowDownloadForAutomation = allow;
@@ -17946,7 +17926,7 @@ index cb623e5e3745fdd91d31844fbd93209886d00e6e..87413c5c1f90da0f9ad0495ac81108b4
  void WebsiteDataStore::hasAppBoundSession(CompletionHandler<void(bool)>&& completionHandler) const
  {
 diff --git a/Source/WebKit/UIProcess/WebsiteData/WebsiteDataStore.h b/Source/WebKit/UIProcess/WebsiteData/WebsiteDataStore.h
-index d9d62230f905b49adceacebf59eba1aadabb7d8d..742f348bd896bc2a1a69a6bfbb681360707969c0 100644
+index d9d62230f905b49adceacebf59eba1aadabb7d8d..fe57cf72938ddca93088144a6e6acb06cc167ce8 100644
 --- a/Source/WebKit/UIProcess/WebsiteData/WebsiteDataStore.h
 +++ b/Source/WebKit/UIProcess/WebsiteData/WebsiteDataStore.h
 @@ -89,6 +89,7 @@ class SecKeyProxyStore;
@@ -17995,12 +17975,10 @@ index d9d62230f905b49adceacebf59eba1aadabb7d8d..742f348bd896bc2a1a69a6bfbb681360
      void setNetworkProxySettings(WebCore::SoupNetworkProxySettings&&);
      const WebCore::SoupNetworkProxySettings& networkProxySettings() const { return m_networkProxySettings; }
      void setCookiePersistentStorage(const String&, SoupCookiePersistentStorageType);
-@@ -362,6 +374,14 @@ public:
+@@ -362,6 +374,12 @@ public:
      static constexpr uint64_t defaultPerOriginQuota() { return 1000 * MB; }
      static bool defaultShouldUseCustomStoragePaths();
  
-+    void setLanguagesForAutomation(Vector<String>&&);
-+    Vector<String>& languagesForAutomation() { return m_languagesForAutomation; };
 +    void setDownloadForAutomation(std::optional<bool> allow, const String& downloadPath);
 +    std::optional<bool> allowDownloadForAutomation() { return m_allowDownloadForAutomation; };
 +    String downloadPathForAutomation() { return m_downloadPathForAutomation; };
@@ -18010,7 +17988,7 @@ index d9d62230f905b49adceacebf59eba1aadabb7d8d..742f348bd896bc2a1a69a6bfbb681360
      void resetQuota(CompletionHandler<void()>&&);
      void clearStorage(CompletionHandler<void()>&&);
  
-@@ -456,9 +476,11 @@ private:
+@@ -456,9 +474,11 @@ private:
      WebCore::CurlProxySettings m_proxySettings;
  #endif
  
@@ -18023,11 +18001,10 @@ index d9d62230f905b49adceacebf59eba1aadabb7d8d..742f348bd896bc2a1a69a6bfbb681360
      WebCore::SoupNetworkProxySettings m_networkProxySettings;
      String m_cookiePersistentStoragePath;
      SoupCookiePersistentStorageType m_cookiePersistentStorageType { SoupCookiePersistentStorageType::SQLite };
-@@ -486,6 +508,11 @@ private:
+@@ -486,6 +506,10 @@ private:
      RefPtr<API::HTTPCookieStore> m_cookieStore;
      RefPtr<NetworkProcessProxy> m_networkProcess;
  
-+    Vector<String> m_languagesForAutomation;
 +    std::optional<bool> m_allowDownloadForAutomation;
 +    String m_downloadPathForAutomation;
 +    DownloadInstrumentation* m_downloadInstrumentation { nullptr };
