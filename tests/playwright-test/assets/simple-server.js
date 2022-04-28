@@ -10,5 +10,8 @@ setTimeout(() => {
     server.setRoute('/env-FOO', (message, response) => {
       response.end(process.env.FOO);
     });
+    server.setRoute('/port', (_, response) => {
+      response.end('' + server.PORT);
+    });
   });
 }, process.argv[3] ? +process.argv[3] : 0);
