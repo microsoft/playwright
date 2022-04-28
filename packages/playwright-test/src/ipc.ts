@@ -18,7 +18,6 @@ import type { TestError } from '../types/testReporter';
 import type { Config, TestStatus } from './types';
 
 export type SerializedLoaderData = {
-  defaultConfig: Config;
   overrides: Config;
   configFile: { file: string } | { configDir: string };
 };
