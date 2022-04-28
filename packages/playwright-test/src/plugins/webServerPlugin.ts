@@ -61,6 +61,11 @@ export class InternalWebServerPlugin implements TestPlugin {
     this._isAvailable = getIsAvailableFunction(config, this._reporter.onStdErr?.bind(this._reporter));
   }
 
+  get name() {
+    const target = this._config.url || `http://localhost:${this._config.port}`;
+    return `playwright-webserver-plugin [${target}]`;
+  }
+
   public async configure(config: PlaywrightTestConfig, configDir: string) {
     this._config.cwd = this._config.cwd ? path.resolve(configDir, this._config.cwd) : configDir;
     if (this._config.setBaseURL && this._config.port !== undefined && !config.use?.baseURL) {
