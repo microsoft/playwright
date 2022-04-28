@@ -1,8 +1,8 @@
 # class: TestPlugin
 * langs: js
 
-## method: TestPlugin.name
-- returns: <[string]>
+## property: TestPlugin.name
+- type: <[string]>
 
 ## optional async method: TestPlugin.configure
 ### param: TestPlugin.configure.config

@@ -35,7 +35,7 @@ export function createPlugin(
   const port = options.port || 3100;
   let configDir: string;
   return {
-    name: () => 'playwright-vite-plugin',
+    name: 'playwright-vite-plugin',
 
     configure: async (config: PlaywrightTestConfig, configDirectory: string) => {
       configDir = configDirectory;

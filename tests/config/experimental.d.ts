@@ -20091,7 +20091,7 @@ export interface TestError {
 }
 
 export interface TestPlugin {
-  name(): string;
+  name: string;
 
   /**
    * @param config
