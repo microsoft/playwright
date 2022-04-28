@@ -150,7 +150,7 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
     return;
 
   const runner = new Runner(overrides, { defaultConfig });
-  const config = resolvedConfigFile ? await runner.loadConfigFromResolvedFile(resolvedConfigFile) : runner.loadEmptyConfig(configFileOrDirectory);
+  const config = resolvedConfigFile ? await runner.loadConfigFromResolvedFile(resolvedConfigFile) : await runner.loadEmptyConfig(configFileOrDirectory);
   if (('projects' in config) && opts.browser)
     throw new Error(`Cannot use --browser option when configuration file defines projects. Specify browserName in the projects instead.`);
 

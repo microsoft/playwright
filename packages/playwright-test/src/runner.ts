@@ -69,7 +69,7 @@ export class Runner {
     return await this._loader.loadConfigFile(resolvedConfigFile);
   }
 
-  loadEmptyConfig(configFileOrDirectory: string): Config {
+  loadEmptyConfig(configFileOrDirectory: string): Promise<Config> {
     return this._loader.loadEmptyConfig(configFileOrDirectory);
   }
 
