@@ -15,7 +15,7 @@
  */
 
 import { installTransform, setCurrentlyLoadingTestFile } from './transform';
-import type { Config, Project, ReporterDescription, FullProjectInternal, GlobalInfo } from './types';
+import type { Config, Project, ReporterDescription, FullProjectInternal } from './types';
 import type { FullConfigInternal } from './types';
 import { getPackageJsonPath, mergeObjects, errorWithFile } from './util';
 import { setCurrentlyLoadingFileSuite } from './globals';
@@ -183,7 +183,7 @@ export class Loader {
     return suite;
   }
 
-  async loadGlobalHook(file: string, name: string): Promise<(config: FullConfigInternal, globalInfo?: GlobalInfo) => any> {
+  async loadGlobalHook(file: string, name: string): Promise<(config: FullConfigInternal) => any> {
     let hook = await this._requireOrImport(file);
     if (hook && typeof hook === 'object' && ('default' in hook))
       hook = hook['default'];

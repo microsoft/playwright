@@ -103,7 +103,7 @@ class ZipReport implements LoadedReport {
     for (const entry of await zipReader.getEntries())
       this._entries.set(entry.filename, entry);
     this._json = await this.entry('report.json') as HTMLReport;
-    this._json.metadata = extractMetadata(this._json.attachments);
+    // this._json.metadata = extractMetadata(this._json.attachments);
   }
 
   json(): HTMLReport {

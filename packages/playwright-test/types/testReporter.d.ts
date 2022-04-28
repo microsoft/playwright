@@ -84,33 +84,7 @@ export interface Suite {
   /**
    * Returns a list of titles from the root down to this suite.
    */
-  titlePath(): Array<string>;
-
-  /**
-   * The list of files or buffers attached to the suite. Root suite has attachments populated by
-   * [globalInfo.attach(name[, options])](https://playwright.dev/docs/api/class-globalinfo#global-info-attach).
-   */
-  attachments: Array<{
-    /**
-     * Attachment name.
-     */
-    name: string;
-
-    /**
-     * Content type of this attachment to properly present in the report, for example `'application/json'` or `'image/png'`.
-     */
-    contentType: string;
-
-    /**
-     * Optional path on the filesystem to the attached file.
-     */
-    path?: string;
-
-    /**
-     * Optional attachment body used instead of a file.
-     */
-    body?: Buffer;
-  }>;}
+  titlePath(): Array<string>;}
 
 /**
  * `TestCase` corresponds to every [test.(call)(title, testFunction)](https://playwright.dev/docs/api/class-test#test-call)
