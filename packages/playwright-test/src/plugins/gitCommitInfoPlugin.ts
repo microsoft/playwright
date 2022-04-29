@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import type { PlaywrightTestConfig, TestPlugin } from '../types';
+import type { Config, TestPlugin } from '../types';
 import { createGuid } from 'playwright-core/lib/utils';
 import { spawnAsync } from 'playwright-core/lib/utils/spawnAsync';
 
@@ -23,90 +23,56 @@ export const gitCommitInfo = (options?: GitCommitInfoPluginOptions): TestPlugin 
   return {
     name: 'playwright-git-commit-info-plugin',
 
-    configure: async (config: PlaywrightTestConfig, configDir: string) => {
-      options = options || {};
-      let revision: Partial<Revision> | undefined = options.revision;
-      if (shouldRunGit(options.revision, options.mode)) {
-        revision = {
-          ...await gitStatusFromCLI(options.directory || configDir),
-          ...revision,
-        };
-      }
-      const links = linksFromEnv();
-      // Merge it all together minding the order of precedence
-      // Be sure to mutate the config passed in and not return a new copy
+    configure: async (config: Config, configDir: string) => {
       config.metadata = config.metadata || {};
-      config.metadata.generatedAt = config.metadata?.generatedAt ?? Date.now();
-      config.metadata.revision = {
-        ...config.metadata?.revision,
-        link: links.revision,
-        ...revision,
-      };
-      config.metadata.ci = {
-        ...config.metadata?.ci,
-        link: links.ci,
-        ...options.ci,
-      };
-
+      Object.assign(
+          config.metadata,
+          linksFromEnv(),
+          options?.info ? options.info : await gitStatusFromCLI(options?.directory || configDir),
+      );
+      config.metadata.generatedAt = Date.now();
       // Normalize dates
-      const timestamp = config.metadata.revision?.timestamp;
+      const timestamp = config.metadata['revision.timestamp'];
       if (timestamp instanceof Date)
-        config.metadata.revision.timestamp = timestamp.getTime();
-
+        config.metadata['revision.timestamp'] = timestamp.getTime();
     },
   };
 };
 
-export type GitCommitInfoPluginOptions = {
-    mode?: 'disable-cli',
-    directory?: string,
-    revision?: Partial<Revision>,
-    ci?: Partial<CI>,
-};
-
-interface Revision {
-    id: string;
-    author: string;
-    email: string;
-    subject: string;
-    timestamp: number | Date;
-    link: string;
+export interface GitCommitInfoPluginOptions {
+    directory?: string;
+    info?: Info;
 }
 
-interface CI {
-    link: string;
+export interface Info {
+  'revision.id'?: string;
+  'revision.author'?: string;
+  'revision.email'?: string;
+  'revision.subject'?: string;
+  'revision.timestamp'?: number | Date;
+  'revision.link'?: string;
+  'ci.link'?: string;
 }
 
-const shouldRunGit = (revision: Partial<Revision> | undefined, mode: GitCommitInfoPluginOptions['mode']) => {
-  return mode !== 'disable-cli' && (
-    !revision ||
-        revision.id === undefined ||
-        revision.author === undefined ||
-        revision.subject === undefined ||
-        revision.timestamp === undefined ||
-        revision.link === undefined
-  );
-};
-
-const linksFromEnv = () => {
-  const out: { revision?: string, ci?: string } = {};
+const linksFromEnv = (): Pick<Info, 'revision.link' | 'ci.link'> => {
+  const out: { 'revision.link'?: string; 'ci.link'?: string; } = {};
   // Jenkins: https://www.jenkins.io/doc/book/pipeline/jenkinsfile/#using-environment-variables
   if (process.env.BUILD_URL)
-    out.ci = process.env.BUILD_URL;
+    out['ci.link'] = process.env.BUILD_URL;
   // GitLab: https://docs.gitlab.com/ee/ci/variables/predefined_variables.html
   if (process.env.CI_PROJECT_URL && process.env.CI_COMMIT_SHA)
-    out.revision = `${process.env.CI_PROJECT_URL}/-/commit/${process.env.CI_COMMIT_SHA}`;
+    out['revision.link'] = `${process.env.CI_PROJECT_URL}/-/commit/${process.env.CI_COMMIT_SHA}`;
   if (process.env.CI_JOB_URL)
-    out.ci = process.env.CI_JOB_URL;
+    out['ci.link'] = process.env.CI_JOB_URL;
     // GitHub: https://docs.github.com/en/actions/learn-github-actions/environment-variables#default-environment-variables
   if (process.env.GITHUB_SERVER_URL && process.env.GITHUB_REPOSITORY && process.env.GITHUB_SHA)
-    out.revision = `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/commit/${process.env.GITHUB_SHA}`;
+    out['revision.link'] = `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/commit/${process.env.GITHUB_SHA}`;
   if (process.env.GITHUB_SERVER_URL && process.env.GITHUB_REPOSITORY && process.env.GITHUB_RUN_ID)
-    out.ci = `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`;
+    out['ci.link'] = `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`;
   return out;
 };
 
-export const gitStatusFromCLI = async (gitDir: string): Promise<Omit<Revision, 'link'> | undefined> => {
+export const gitStatusFromCLI = async (gitDir: string): Promise<Info | undefined> => {
   const separator = `:${createGuid().slice(0, 4)}:`;
   const { code, stdout } = await spawnAsync(
       'git',
@@ -121,10 +87,10 @@ export const gitStatusFromCLI = async (gitDir: string): Promise<Omit<Revision, '
   timestamp = Number.isInteger(timestamp) ? timestamp * 1000 : 0;
 
   return {
-    id,
-    author,
-    email,
-    subject,
-    timestamp,
+    'revision.id': id,
+    'revision.author': author,
+    'revision.email': email,
+    'revision.subject': subject,
+    'revision.timestamp': timestamp,
   };
 };

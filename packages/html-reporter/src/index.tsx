@@ -25,25 +25,17 @@ import type { LoadedReport } from './loadedReport';
 import { ReportView } from './reportView';
 // @ts-ignore
 const zipjs = zipImport as typeof zip;
-
-interface Revision {
-  id: string;
-  author: string;
-  email: string;
-  subject: string;
-  timestamp: number | Date;
-  link: string;
+interface Info {
+  'revision.id'?: string;
+  'revision.author'?: string;
+  'revision.email'?: string;
+  'revision.subject'?: string;
+  'revision.timestamp'?: number | Date;
+  'revision.link'?: string;
+  'ci.link'?: string;
 }
 
-interface CI {
-  link: string;
-}
-
-export type Metadata = {
-  generatedAt?: number;
-  ci?: Partial<CI>;
-  revision?: Partial<Revision>;
-} | undefined;
+export type Metadata = (Info & { generatedAt?: number }) | undefined;
 
 const ReportLoader: React.FC = () => {
   const [report, setReport] = React.useState<LoadedReport | undefined>();

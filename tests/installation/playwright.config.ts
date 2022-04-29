@@ -23,7 +23,7 @@ import { gitCommitInfo } from '@playwright/test/lib/plugins';
 
 const config: PlaywrightTestConfig = {
   plugins: [
-    vcs(),
+    gitCommitInfo(),
   ],
   testIgnore: '**\/fixture-scripts/**',
   timeout: 5 * 60 * 1000,

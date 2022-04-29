@@ -28,7 +28,7 @@ const outputDir = path.join(__dirname, '..', '..', 'test-results');
 const testDir = path.join(__dirname, '..');
 const config: Config<ServerWorkerOptions & PlaywrightWorkerOptions & PlaywrightTestOptions> = {
   plugins: [
-    vcs(),
+    gitCommitInfo(),
   ],
   testDir,
   outputDir,

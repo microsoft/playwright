@@ -728,7 +728,7 @@ test.describe('vcs plugin', () => {
         import { gitCommitInfo } from '@playwright/test/lib/plugins';
 
         const config = {
-          plugins: [ vcs() ],
+          plugins: [ gitCommitInfo() ],
         }
 
         export default config;
@@ -755,22 +755,7 @@ test.describe('vcs plugin', () => {
   });
 
 
-  test('should use overriden subject', async ({ runInlineTest, showReport, page }) => {
-    const beforeRunPlaywrightTest = async ({ baseDir }: { baseDir: string }) => {
-      const execGit = async (args: string[]) => {
-        const { code, stdout, stderr } = await spawnAsync('git', args, { stdio: 'pipe', cwd: baseDir });
-        if (!!code)
-          throw new Error(`Non-zero exit of:\n$ git ${args.join(' ')}\nConsole:\nstdout:\n${stdout}\n\nstderr:\n${stderr}\n\n`);
-        return;
-      };
-
-      await execGit(['init']);
-      await execGit(['config', '--local', 'user.email', 'shakespeare@example.local']);
-      await execGit(['config', '--local', 'user.name', 'William']);
-      await execGit(['add', '*.ts']);
-      await execGit(['commit', '-m', 'awesome commit message']);
-    };
-
+  test('should use explicitly supplied metadata', async ({ runInlineTest, showReport, page }) => {
     const result = await runInlineTest({
       'uncommitted.txt': `uncommitted file`,
       'playwright.config.ts': `
@@ -778,7 +763,15 @@ test.describe('vcs plugin', () => {
         import { gitCommitInfo } from '@playwright/test/lib/plugins';
 
         const config = {
-          plugins: [ vcs({ revision: { subject: 'a better subject' } }) ],
+          plugins: [ gitCommitInfo({
+            info: {
+              'revision.id': '1234567890',
+              'revision.subject': 'a better subject',
+              'revision.timestamp': new Date(),
+              'revision.author': 'William',
+              'revision.email': 'shakespeare@example.local',
+            },
+          }) ],
         }
 
         export default config;
@@ -787,7 +780,7 @@ test.describe('vcs plugin', () => {
         const { test } = pwt;
         test('sample', async ({}) => { expect(2).toBe(2); });
       `,
-    }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never', GITHUB_REPOSITORY: 'microsoft/playwright-example-for-test', GITHUB_RUN_ID: 'example-run-id', GITHUB_SERVER_URL: 'https://playwright.dev', GITHUB_SHA: 'example-sha' }, undefined, beforeRunPlaywrightTest);
+    }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never', GITHUB_REPOSITORY: 'microsoft/playwright-example-for-test', GITHUB_RUN_ID: 'example-run-id', GITHUB_SERVER_URL: 'https://playwright.dev', GITHUB_SHA: 'example-sha' }, undefined);
 
     await showReport();
 

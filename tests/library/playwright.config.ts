@@ -46,7 +46,7 @@ const outputDir = path.join(__dirname, '..', '..', 'test-results');
 const testDir = path.join(__dirname, '..');
 const config: Config<CoverageWorkerOptions & PlaywrightWorkerOptions & PlaywrightTestOptions & TestModeWorkerOptions> = {
   plugins: [
-    vcs(),
+    gitCommitInfo(),
   ],
   testDir,
   outputDir,
