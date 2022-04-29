@@ -37,8 +37,8 @@ import JSONReporter from './reporters/json';
 import JUnitReporter from './reporters/junit';
 import EmptyReporter from './reporters/empty';
 import HtmlReporter from './reporters/html';
-import type { ProjectImpl } from './project';
-import type { Config } from './types';
+import { ProjectImpl } from './project';
+import type { Config, FullProjectInternal } from './types';
 import type { FullConfigInternal } from './types';
 import { raceAgainstTimeout } from 'playwright-core/lib/utils/timeoutRunner';
 import { SigIntWatcher } from './sigIntWatcher';
@@ -194,8 +194,8 @@ export class Runner {
     };
     for (const [project, files] of filesByProject) {
       report.projects.push({
-        name: project.config.name,
-        testDir: path.resolve(configFile, project.config.testDir),
+        name: project.name,
+        testDir: path.resolve(configFile, project.testDir),
         files: files
       });
     }
@@ -207,7 +207,7 @@ export class Runner {
     return await this._runFiles(list, filesByProject, testFileReFilters);
   }
 
-  private async _collectFiles(testFileReFilters: FilePatternFilter[], projectNames?: string[]): Promise<Map<ProjectImpl, string[]>> {
+  private async _collectFiles(testFileReFilters: FilePatternFilter[], projectNames?: string[]): Promise<Map<FullProjectInternal, string[]>> {
     const testFileFilter = testFileReFilters.length ? createFileMatcher(testFileReFilters.map(e => e.re)) : () => true;
     let projectsToFind: Set<string> | undefined;
     let unknownProjects: Map<string, string> | undefined;
@@ -220,26 +220,27 @@ export class Runner {
         unknownProjects!.set(name, n);
       });
     }
-    const projects = this._loader.projects().filter(project => {
+    const fullConfig = this._loader.fullConfig();
+    const projects = fullConfig.projects.filter(project => {
       if (!projectsToFind)
         return true;
-      const name = project.config.name.toLocaleLowerCase();
+      const name = project.name.toLocaleLowerCase();
       unknownProjects!.delete(name);
       return projectsToFind.has(name);
     });
     if (unknownProjects && unknownProjects.size) {
-      const names = this._loader.projects().map(p => p.config.name).filter(name => !!name);
+      const names = fullConfig.projects.map(p => p.name).filter(name => !!name);
       if (!names.length)
         throw new Error(`No named projects are specified in the configuration file`);
       const unknownProjectNames = Array.from(unknownProjects.values()).map(n => `"${n}"`).join(', ');
       throw new Error(`Project(s) ${unknownProjectNames} not found. Available named projects: ${names.map(name => `"${name}"`).join(', ')}`);
     }
 
-    const files = new Map<ProjectImpl, string[]>();
+    const files = new Map<FullProjectInternal, string[]>();
     for (const project of projects) {
-      const allFiles = await collectFiles(project.config.testDir);
-      const testMatch = createFileMatcher(project.config.testMatch);
-      const testIgnore = createFileMatcher(project.config.testIgnore);
+      const allFiles = await collectFiles(project.testDir);
+      const testMatch = createFileMatcher(project.testMatch);
+      const testIgnore = createFileMatcher(project.testIgnore);
       const extensions = ['.js', '.ts', '.mjs', '.tsx', '.jsx'];
       const testFileExtension = (file: string) => extensions.includes(path.extname(file));
       const testFiles = allFiles.filter(file => !testIgnore(file) && testMatch(file) && testFileFilter(file) && testFileExtension(file));
@@ -248,7 +249,7 @@ export class Runner {
     return files;
   }
 
-  private async _runFiles(list: boolean, filesByProject: Map<ProjectImpl, string[]>, testFileReFilters: FilePatternFilter[]): Promise<FullResult> {
+  private async _runFiles(list: boolean, filesByProject: Map<FullProjectInternal, string[]>, testFileReFilters: FilePatternFilter[]): Promise<FullResult> {
     const allTestFiles = new Set<string>();
     for (const files of filesByProject.values())
       files.forEach(file => allTestFiles.add(file));
@@ -293,19 +294,20 @@ export class Runner {
     const outputDirs = new Set<string>();
     const rootSuite = new Suite('');
     for (const [project, files] of filesByProject) {
-      const grepMatcher = createTitleMatcher(project.config.grep);
-      const grepInvertMatcher = project.config.grepInvert ? createTitleMatcher(project.config.grepInvert) : null;
-      const projectSuite = new Suite(project.config.name);
-      projectSuite._projectConfig = project.config;
-      if (project.config._fullyParallel)
+      const projectImpl = new ProjectImpl(project, config.projects.indexOf(project));
+      const grepMatcher = createTitleMatcher(project.grep);
+      const grepInvertMatcher = project.grepInvert ? createTitleMatcher(project.grepInvert) : null;
+      const projectSuite = new Suite(project.name);
+      projectSuite._projectConfig = project;
+      if (project._fullyParallel)
         projectSuite._parallelMode = 'parallel';
       rootSuite._addSuite(projectSuite);
       for (const file of files) {
         const fileSuite = fileSuites.get(file);
         if (!fileSuite)
           continue;
-        for (let repeatEachIndex = 0; repeatEachIndex < project.config.repeatEach; repeatEachIndex++) {
-          const cloned = project.cloneFileSuite(fileSuite, repeatEachIndex, test => {
+        for (let repeatEachIndex = 0; repeatEachIndex < project.repeatEach; repeatEachIndex++) {
+          const cloned = projectImpl.cloneFileSuite(fileSuite, repeatEachIndex, test => {
             const grepTitle = test.titlePath().join(' ');
             if (grepInvertMatcher?.(grepTitle))
               return false;
@@ -315,7 +317,7 @@ export class Runner {
             projectSuite._addSuite(cloned);
         }
       }
-      outputDirs.add(project.config.outputDir);
+      outputDirs.add(project.outputDir);
     }
 
     // 7. Fail when no tests.

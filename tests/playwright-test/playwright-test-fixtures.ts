@@ -215,6 +215,7 @@ type RunOptions = {
   cwd?: string,
 };
 type Fixtures = {
+  legacyConfigLoader: boolean;
   writeFiles: (files: Files) => Promise<string>;
   runInlineTest: (files: Files, params?: Params, env?: Env, options?: RunOptions, beforeRunPlaywrightTest?: ({ baseDir }: { baseDir: string }) => Promise<void>) => Promise<RunResult>;
   runTSC: (files: Files) => Promise<TSCResult>;
@@ -224,15 +225,19 @@ export const test = base
     .extend<CommonFixtures>(commonFixtures)
     .extend<ServerFixtures, ServerWorkerOptions>(serverFixtures)
     .extend<Fixtures>({
+      legacyConfigLoader: [false, { option: true }],
+
       writeFiles: async ({}, use, testInfo) => {
         await use(files => writeFiles(testInfo, files));
       },
 
-      runInlineTest: async ({ childProcess }, use, testInfo: TestInfo) => {
+      runInlineTest: async ({ childProcess, legacyConfigLoader }, use, testInfo: TestInfo) => {
         await use(async (files: Files, params: Params = {}, env: Env = {}, options: RunOptions = {}, beforeRunPlaywrightTest?: ({ baseDir: string }) => Promise<void>) => {
           const baseDir = await writeFiles(testInfo, files);
           if (beforeRunPlaywrightTest)
             await beforeRunPlaywrightTest({ baseDir });
+          if (legacyConfigLoader)
+            env = { ...env, PLAYWRIGHT_LEGACY_CONFIG_MODE: '1' };
           return await runPlaywrightTest(childProcess, baseDir, params, env, options);
         });
       },

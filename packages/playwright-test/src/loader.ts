@@ -25,7 +25,6 @@ import * as path from 'path';
 import * as url from 'url';
 import * as fs from 'fs';
 import * as os from 'os';
-import { ProjectImpl } from './project';
 import type { BuiltInReporter, ConfigCLIOverrides } from './runner';
 import type { Reporter } from '../types/testReporter';
 import { builtInReporters } from './runner';
@@ -45,7 +44,6 @@ export class Loader {
   private _fullConfig: FullConfigInternal;
   private _configDir: string = '';
   private _configFile: string | undefined;
-  private _projects: ProjectImpl[] = [];
 
   constructor(configCLIOverrides?: ConfigCLIOverrides) {
     this._configCLIOverrides = configCLIOverrides || {};
@@ -53,12 +51,20 @@ export class Loader {
   }
 
   static async deserialize(data: SerializedLoaderData): Promise<Loader> {
-    const loader = new Loader(data.overrides);
-    if ('file' in data.configFile)
-      await loader.loadConfigFile(data.configFile.file);
-    else
-      await loader.loadEmptyConfig(data.configFile.configDir);
-    return loader;
+    if (process.env.PLAYWRIGHT_LEGACY_CONFIG_MODE) {
+      const loader = new Loader(data.overridesForLegacyConfigMode);
+      if (data.configFile)
+        await loader.loadConfigFile(data.configFile);
+      else
+        await loader.loadEmptyConfig(data.configDir);
+      return loader;
+    } else {
+      const loader = new Loader();
+      loader._configFile = data.configFile;
+      loader._configDir = data.configDir;
+      loader._fullConfig = data.config;
+      return loader;
+    }
   }
 
   async loadConfigFile(file: string): Promise<FullConfigInternal> {
@@ -107,6 +113,8 @@ export class Loader {
     config.projects = takeFirst(this._configCLIOverrides.projects, config.projects as any);
     config.workers = takeFirst(this._configCLIOverrides.workers, config.workers);
     config.use = mergeObjects(config.use, this._configCLIOverrides.use);
+    for (const project of config.projects || [])
+      this._applyCLIOverridesToProject(project);
 
     // 3. Run configure plugins phase.
     for (const plugin of config.plugins || [])
@@ -155,11 +163,7 @@ export class Loader {
     this._fullConfig.workers = takeFirst(config.workers, baseFullConfig.workers);
     this._fullConfig.webServer = takeFirst(config.webServer, baseFullConfig.webServer);
     this._fullConfig._plugins = takeFirst(config.plugins, baseFullConfig._plugins);
-
-    const projects: Project[] = this._configCLIOverrides.projects || config.projects || [config];
-    for (const project of projects)
-      this._addProject(config, project, throwawayArtifactsPath);
-    this._fullConfig.projects = this._projects.map(p => p.config);
+    this._fullConfig.projects = (config.projects || [config]).map(p => this._resolveProject(config, p, throwawayArtifactsPath));
   }
 
   async loadTestFile(file: string, environment: 'runner' | 'worker') {
@@ -228,18 +232,28 @@ export class Loader {
     return this._fullConfig;
   }
 
-  projects() {
-    return this._projects;
-  }
-
   serialize(): SerializedLoaderData {
-    return {
-      configFile: this._configFile ? { file: this._configFile } : { configDir: this._configDir },
-      overrides: this._configCLIOverrides,
+    const result: SerializedLoaderData = {
+      configFile: this._configFile,
+      configDir: this._configDir,
+      config: this._fullConfig,
     };
+    if (process.env.PLAYWRIGHT_LEGACY_CONFIG_MODE)
+      result.overridesForLegacyConfigMode = this._configCLIOverrides;
+    return result;
   }
 
-  private _addProject(config: Config, projectConfig: Project, throwawayArtifactsPath: string) {
+  private _applyCLIOverridesToProject(projectConfig: Project) {
+    projectConfig.fullyParallel = takeFirst(this._configCLIOverrides.fullyParallel, projectConfig.fullyParallel);
+    projectConfig.grep = takeFirst(this._configCLIOverrides.grep, projectConfig.grep);
+    projectConfig.grepInvert = takeFirst(this._configCLIOverrides.grepInvert, projectConfig.grepInvert);
+    projectConfig.outputDir = takeFirst(this._configCLIOverrides.outputDir, projectConfig.outputDir);
+    projectConfig.repeatEach = takeFirst(this._configCLIOverrides.repeatEach, projectConfig.repeatEach);
+    projectConfig.retries = takeFirst(this._configCLIOverrides.retries, projectConfig.retries);
+    projectConfig.timeout = takeFirst(this._configCLIOverrides.timeout, projectConfig.timeout);
+  }
+
+  private _resolveProject(config: Config, projectConfig: Project, throwawayArtifactsPath: string): FullProjectInternal {
     // Resolve all config dirs relative to configDir.
     if (projectConfig.testDir !== undefined)
       projectConfig.testDir = path.resolve(this._configDir, projectConfig.testDir);
@@ -250,21 +264,13 @@ export class Loader {
     if (projectConfig.snapshotDir !== undefined)
       projectConfig.snapshotDir = path.resolve(this._configDir, projectConfig.snapshotDir);
 
-    projectConfig.fullyParallel = takeFirst(this._configCLIOverrides.fullyParallel, projectConfig.fullyParallel);
-    projectConfig.grep = takeFirst(this._configCLIOverrides.grep, projectConfig.grep);
-    projectConfig.grepInvert = takeFirst(this._configCLIOverrides.grepInvert, projectConfig.grepInvert);
-    projectConfig.outputDir = takeFirst(this._configCLIOverrides.outputDir, projectConfig.outputDir);
-    projectConfig.repeatEach = takeFirst(this._configCLIOverrides.repeatEach, projectConfig.repeatEach);
-    projectConfig.retries = takeFirst(this._configCLIOverrides.retries, projectConfig.retries);
-    projectConfig.timeout = takeFirst(this._configCLIOverrides.timeout, projectConfig.timeout);
-
     const testDir = takeFirst(projectConfig.testDir, config.testDir, this._configDir);
 
     const outputDir = takeFirst(projectConfig.outputDir, config.outputDir, path.join(throwawayArtifactsPath, 'test-results'));
     const snapshotDir = takeFirst(projectConfig.snapshotDir, config.snapshotDir, testDir);
     const name = takeFirst(projectConfig.name, config.name, '');
     const screenshotsDir = takeFirst((projectConfig as any).screenshotsDir, (config as any).screenshotsDir, path.join(testDir, '__screenshots__', process.platform, name));
-    const fullProject: FullProjectInternal = {
+    return {
       _fullyParallel: takeFirst(projectConfig.fullyParallel, config.fullyParallel, undefined),
       _expect: takeFirst(projectConfig.expect, config.expect, undefined),
       grep: takeFirst(projectConfig.grep, config.grep, baseFullConfig.grep),
@@ -282,7 +288,6 @@ export class Loader {
       timeout: takeFirst(projectConfig.timeout, config.timeout, defaultTimeout),
       use: mergeObjects(config.use, projectConfig.use),
     };
-    this._projects.push(new ProjectImpl(fullProject, this._projects.length));
   }
 
   private async _requireOrImport(file: string) {

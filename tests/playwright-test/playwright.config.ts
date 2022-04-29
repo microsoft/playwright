@@ -29,7 +29,13 @@ const config: Config = {
   workers: process.env.CI ? 1 : undefined,
   preserveOutput: process.env.CI ? 'failures-only' : 'always',
   projects: [
-    { name: 'playwright-test' },
+    {
+      name: 'playwright-test'
+    },
+    {
+      name: 'playwright-test-legacy-config',
+      use: { legacyConfigLoader: true },
+    } as any,
   ],
   reporter: process.env.CI ? [
     ['dot'],

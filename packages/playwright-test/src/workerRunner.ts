@@ -23,7 +23,7 @@ import { setCurrentTestInfo } from './globals';
 import { Loader } from './loader';
 import type { Suite, TestCase } from './test';
 import type { Annotation, TestError, TestStepInternal } from './types';
-import type { ProjectImpl } from './project';
+import { ProjectImpl } from './project';
 import { FixtureRunner } from './fixtures';
 import { ManualPromise } from 'playwright-core/lib/utils/manualPromise';
 import { TestInfoImpl } from './testInfo';
@@ -151,7 +151,7 @@ export class WorkerRunner extends EventEmitter {
       return;
 
     this._loader = await Loader.deserialize(this._params.loader);
-    this._project = this._loader.projects()[this._params.projectIndex];
+    this._project = new ProjectImpl(this._loader.fullConfig().projects[this._params.projectIndex], this._params.projectIndex);
   }
 
   async runTestGroup(runPayload: RunPayload) {
@@ -207,7 +207,7 @@ export class WorkerRunner extends EventEmitter {
 
   private async _runTest(test: TestCase, retry: number, nextTest: TestCase | undefined) {
     let lastStepId = 0;
-    const testInfo = new TestInfoImpl(this._loader, this._params, test, retry, data => {
+    const testInfo = new TestInfoImpl(this._loader, this._project, this._params, test, retry, data => {
       const stepId = `${data.category}@${data.title}@${++lastStepId}`;
       let callbackHandled = false;
       const step: TestStepInternal = {

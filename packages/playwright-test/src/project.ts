@@ -32,9 +32,9 @@ export class ProjectImpl {
     this.index = index;
   }
 
-  private buildTestTypePool(testType: TestTypeImpl): FixturePool {
+  private _buildTestTypePool(testType: TestTypeImpl): FixturePool {
     if (!this.testTypePools.has(testType)) {
-      const fixtures = this.resolveFixtures(testType, this.config.use);
+      const fixtures = this._resolveFixtures(testType, this.config.use);
       const pool = new FixturePool(fixtures);
       this.testTypePools.set(testType, pool);
     }
@@ -42,9 +42,9 @@ export class ProjectImpl {
   }
 
   // TODO: we can optimize this function by building the pool inline in cloneSuite
-  private buildPool(test: TestCase): FixturePool {
+  private _buildPool(test: TestCase): FixturePool {
     if (!this.testPools.has(test)) {
-      let pool = this.buildTestTypePool(test._testType);
+      let pool = this._buildTestTypePool(test._testType);
 
       const parents: Suite[] = [];
       for (let parent: Suite | undefined = test.parent; parent; parent = parent.parent)
@@ -88,7 +88,7 @@ export class ProjectImpl {
           to._entries.pop();
           to.tests.pop();
         } else {
-          const pool = this.buildPool(entry);
+          const pool = this._buildPool(entry);
           test._workerHash = `run${this.index}-${pool.digest}-repeat${repeatEachIndex}`;
           test._pool = pool;
         }
@@ -104,7 +104,7 @@ export class ProjectImpl {
     return this._cloneEntries(suite, result, repeatEachIndex, filter, '') ? result : undefined;
   }
 
-  private resolveFixtures(testType: TestTypeImpl, configUse: Fixtures): FixturesWithLocation[] {
+  private _resolveFixtures(testType: TestTypeImpl, configUse: Fixtures): FixturesWithLocation[] {
     return testType.fixtures.map(f => {
       const configKeys = new Set(Object.keys(configUse || {}));
       const resolved = { ...f.fixtures };
