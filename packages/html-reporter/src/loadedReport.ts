@@ -15,9 +15,8 @@
  */
 
 import type { HTMLReport } from '@playwright-test/reporters/html';
-import type { Metadata } from './index';
 
 export interface LoadedReport {
-  json(): HTMLReport & { metadata?: Metadata };
+  json(): HTMLReport;
   entry(name: string): Promise<Object | undefined>;
 }

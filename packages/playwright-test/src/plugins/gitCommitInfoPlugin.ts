@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import type { Config, TestPlugin } from '../types';
+import type { Config, Metadata, TestPlugin } from '../types';
 import { createGuid } from 'playwright-core/lib/utils';
 import { spawnAsync } from 'playwright-core/lib/utils/spawnAsync';
 
@@ -24,17 +24,18 @@ export const gitCommitInfo = (options?: GitCommitInfoPluginOptions): TestPlugin 
     name: 'playwright-git-commit-info-plugin',
 
     configure: async (config: Config, configDir: string) => {
-      config.metadata = config.metadata || {};
-      Object.assign(
-          config.metadata,
-          linksFromEnv(),
-          options?.info ? options.info : await gitStatusFromCLI(options?.directory || configDir),
-      );
-      config.metadata.generatedAt = Date.now();
-      // Normalize dates
-      const timestamp = config.metadata['revision.timestamp'];
+      const info = {
+        ...linksFromEnv(),
+        ...options?.info ? options.info : await gitStatusFromCLI(options?.directory || configDir),
+        generatedAt: Date.now(),
+      };
+        // Normalize dates
+      const timestamp = info['revision.timestamp'];
       if (timestamp instanceof Date)
-        config.metadata['revision.timestamp'] = timestamp.getTime();
+        info['revision.timestamp'] = timestamp.getTime();
+
+      config.metadata = config.metadata || {};
+      config.metadata['git-commit-info'] = info as Metadata;
     },
   };
 };

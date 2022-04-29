@@ -28,7 +28,7 @@ import type { JsonAttachment, JsonReport, JsonSuite, JsonTestCase, JsonTestResul
 import RawReporter from './raw';
 import { stripAnsiEscapes } from './base';
 import { getPackageJsonPath } from '../util';
-import type { FullConfigInternal } from '../types';
+import type { FullConfigInternal, Metadata } from '../types';
 import type { ZipFile } from 'playwright-core/lib/zipBundle';
 import { yazl } from 'playwright-core/lib/zipBundle';
 
@@ -49,7 +49,7 @@ export type Location = {
 };
 
 export type HTMLReport = {
-  metadata: any;
+  metadata: Metadata;
   files: TestFileSummary[];
   stats: Stats;
   projectNames: string[];
@@ -255,7 +255,7 @@ class HtmlBuilder {
     this._dataZipFile = new yazl.ZipFile();
   }
 
-  async build(metadata: any, rawReports: JsonReport[]): Promise<{ ok: boolean, singleTestId: string | undefined }> {
+  async build(metadata: Metadata, rawReports: JsonReport[]): Promise<{ ok: boolean, singleTestId: string | undefined }> {
 
     const data = new Map<string, { testFile: TestFile, testFileSummary: TestFileSummary }>();
     for (const projectJson of rawReports) {

@@ -249,9 +249,9 @@ export default config;
 ```
 
 ## property: TestConfig.metadata
-- type: ?<[any]>
+- type: ?<[Metadata]>
 
-Any JSON-serializable metadata that will be put directly to the test report.
+Metadata that will be put directly to the test report serialized as JSON.
 
 ## property: TestConfig.name
 - type: ?<[string]>

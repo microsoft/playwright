@@ -66,6 +66,8 @@ export interface Config<TestArgs = {}, WorkerArgs = {}> extends TestConfig {
   use?: UseOptions<TestArgs, WorkerArgs>;
 }
 
+export type Metadata = { [key: string]: string | number | boolean | Metadata };
+
 // [internal] !!! DO NOT ADD TO THIS !!!
 // [internal] It is part of the public API and is computed from the user's config.
 // [internal] If you need new fields internally, add them to FullConfigInternal instead.
@@ -78,7 +80,7 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
   grep: RegExp | RegExp[];
   grepInvert: RegExp | RegExp[] | null;
   maxFailures: number;
-  metadata: any;
+  metadata: Metadata;
   version: string;
   preserveOutput: 'always' | 'never' | 'failures-only';
   projects: FullProject<TestArgs, WorkerArgs>[];

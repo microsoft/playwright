@@ -23,6 +23,7 @@ import { formatResultFailure } from './base';
 import { toPosixPath, serializePatterns } from './json';
 import { MultiMap } from 'playwright-core/lib/utils/multimap';
 import { codeFrameColumns } from '../babelBundle';
+import type { Metadata } from '../types';
 
 export type JsonLocation = Location;
 export type JsonError = string;
@@ -37,7 +38,7 @@ export type JsonReport = {
 export type JsonConfig = Omit<FullConfig, 'projects' | 'attachments'>;
 
 export type JsonProject = {
-  metadata: any,
+  metadata: Metadata,
   name: string,
   outputDir: string,
   repeatEach: number,

@@ -16,6 +16,7 @@
  */
 
 import type { FullConfig, FullProject, TestStatus, TestError } from '@playwright/test';
+import { Metadata } from './test';
 export type { FullConfig, TestStatus, TestError } from '@playwright/test';
 
 /**
@@ -437,7 +438,7 @@ export interface JSONReport {
       outputDir: string,
       repeatEach: number,
       retries: number,
-      metadata: any,
+      metadata: Metadata,
       name: string,
       testDir: string,
       testIgnore: string[],
@@ -581,5 +582,3 @@ export interface TestStep {
    */
   titlePath(): Array<string>;
 }
-
-

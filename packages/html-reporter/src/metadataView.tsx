@@ -18,12 +18,23 @@ import * as React from 'react';
 import './colors.css';
 import './common.css';
 import * as icons from './icons';
-import type { Metadata } from './index';
 import { AutoChip } from './chip';
 import './reportView.css';
 import './theme.css';
 
-export const MetadataView: React.FC<Metadata> = metadata => {
+interface Info {
+  'revision.id'?: string;
+  'revision.author'?: string;
+  'revision.email'?: string;
+  'revision.subject'?: string;
+  'revision.timestamp'?: number | Date;
+  'revision.link'?: string;
+  'ci.link'?: string;
+}
+
+export type GitCommitInfo =  (Info & { generatedAt?: number }) | undefined;
+
+export const MetadataView: React.FC<GitCommitInfo> = metadata => {
   if (!metadata['ci.link'] && !metadata['revision.id'] && !metadata['revision.author'] && !metadata['revision.email'] && !metadata['revision.subject'] && !metadata['revision.timestamp'] && !metadata['revision.link'])
     return null;
 

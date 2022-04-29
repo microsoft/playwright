@@ -25,17 +25,6 @@ import type { LoadedReport } from './loadedReport';
 import { ReportView } from './reportView';
 // @ts-ignore
 const zipjs = zipImport as typeof zip;
-interface Info {
-  'revision.id'?: string;
-  'revision.author'?: string;
-  'revision.email'?: string;
-  'revision.subject'?: string;
-  'revision.timestamp'?: number | Date;
-  'revision.link'?: string;
-  'ci.link'?: string;
-}
-
-export type Metadata = (Info & { generatedAt?: number }) | undefined;
 
 const ReportLoader: React.FC = () => {
   const [report, setReport] = React.useState<LoadedReport | undefined>();
@@ -54,7 +43,7 @@ window.onload = () => {
 
 class ZipReport implements LoadedReport {
   private _entries = new Map<string, zip.Entry>();
-  private _json!: HTMLReport & { metadata?: Metadata };
+  private _json!: HTMLReport;
 
   async load() {
     const zipReader = new zipjs.ZipReader(new zipjs.Data64URIReader((window as any).playwrightReportBase64), { useWebWorkers: false }) as zip.ZipReader;

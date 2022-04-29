@@ -830,8 +830,8 @@ test.describe.only('vcs plugin', () => {
 
         const config = {
           metadata: {
-            revision: {
-              timestamp: 'hi',
+            'git-commit-info': {
+              'revision.timestamp': 'hi',
             }
           },
         }

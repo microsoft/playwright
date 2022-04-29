@@ -628,9 +628,9 @@ interface TestConfig {
   maxFailures?: number;
 
   /**
-   * Any JSON-serializable metadata that will be put directly to the test report.
+   * Metadata that will be put directly to the test report serialized as JSON.
    */
-  metadata?: any;
+  metadata?: Metadata;
 
   /**
    * Config name is visible in the report and during test execution, unless overridden by
@@ -921,6 +921,8 @@ export interface Config<TestArgs = {}, WorkerArgs = {}> extends TestConfig {
   use?: UseOptions<TestArgs, WorkerArgs>;
 }
 
+export type Metadata = { [key: string]: string | number | boolean | Metadata };
+
 /**
  * Playwright Test provides many options to configure how your tests are collected and executed, for example `timeout` or
  * `testDir`. These options are described in the [TestConfig] object in the [configuration file](https://playwright.dev/docs/test-configuration).
@@ -1056,9 +1058,9 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    */
   maxFailures: number;
   /**
-   * Any JSON-serializable metadata that will be put directly to the test report.
+   * Metadata that will be put directly to the test report serialized as JSON.
    */
-  metadata: any;
+  metadata: Metadata;
   version: string;
   /**
    * Whether to preserve test output in the
