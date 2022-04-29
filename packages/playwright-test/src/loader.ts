@@ -24,66 +24,69 @@ import type { SerializedLoaderData } from './ipc';
 import * as path from 'path';
 import * as url from 'url';
 import * as fs from 'fs';
+import * as os from 'os';
 import { ProjectImpl } from './project';
 import type { BuiltInReporter } from './runner';
 import type { Reporter } from '../types/testReporter';
 import { builtInReporters } from './runner';
-import { isRegExp } from 'playwright-core/lib/utils';
+import { deepCopy, isRegExp } from 'playwright-core/lib/utils';
 import { serializeError } from './util';
 import { _legacyWebServer } from './plugins/webServerPlugin';
+import { hostPlatform } from 'playwright-core/lib/utils/hostPlatform';
+
+export const defaultTimeout = 30000;
 
 // To allow multiple loaders in the same process without clearing require cache,
 // we make these maps global.
 const cachedFileSuites = new Map<string, Suite>();
 
 export class Loader {
-  private _defaultConfig: Config;
   private _configOverrides: Config;
   private _fullConfig: FullConfigInternal;
   private _configDir: string = '';
   private _configFile: string | undefined;
   private _projects: ProjectImpl[] = [];
 
-  constructor(defaultConfig: Config, configOverrides: Config) {
-    this._defaultConfig = defaultConfig;
-    this._configOverrides = configOverrides;
+  constructor(configOverrides?: Config) {
+    this._configOverrides = configOverrides || {};
     this._fullConfig = { ...baseFullConfig };
   }
 
   static async deserialize(data: SerializedLoaderData): Promise<Loader> {
-    const loader = new Loader(data.defaultConfig, data.overrides);
+    const loader = new Loader(data.overrides);
     if ('file' in data.configFile)
       await loader.loadConfigFile(data.configFile.file);
     else
-      loader.loadEmptyConfig(data.configFile.configDir);
+      await loader.loadEmptyConfig(data.configFile.configDir);
     return loader;
   }
 
   async loadConfigFile(file: string): Promise<Config> {
     if (this._configFile)
       throw new Error('Cannot load two config files');
-    let config = await this._requireOrImport(file);
+    let config = await this._requireOrImport(file) as Config;
     if (config && typeof config === 'object' && ('default' in config))
-      config = config['default'];
+      config = (config as any)['default'];
     this._configFile = file;
-    const rawConfig = { ...config };
-    this._processConfigObject(config, path.dirname(file));
+    const rawConfig = deepCopy({ ...config, plugins: [] });
+    rawConfig.plugins = config.plugins?.slice() || [] as any;
+    await this._processConfigObject(config, path.dirname(file));
     return rawConfig;
   }
 
-  loadEmptyConfig(configDir: string): Config {
-    this._processConfigObject({}, configDir);
+  async loadEmptyConfig(configDir: string): Promise<Config> {
+    await this._processConfigObject({}, configDir);
     return {};
   }
 
-  private _processConfigObject(config: Config, configDir: string) {
+  private async _processConfigObject(config: Config, configDir: string) {
     if (config.webServer) {
       config.plugins = config.plugins || [];
       config.plugins.push(_legacyWebServer(config.webServer));
     }
 
     for (const plugin of config.plugins || [])
-      plugin.configure?.(config, configDir);
+      await plugin.configure?.(config, configDir);
 
     this._configDir = configDir;
     const packageJsonPath = getPackageJsonPath(configDir);
@@ -108,9 +111,6 @@ export class Loader {
     if (config.webServer)
       config.webServer.cwd = config.webServer.cwd ? path.resolve(configDir, config.webServer.cwd) : configDir;
 
-    const configUse = mergeObjects(this._defaultConfig.use, config.use);
-    config = mergeObjects(mergeObjects(this._defaultConfig, config), { use: configUse });
-
     this._fullConfig._configDir = configDir;
     this._fullConfig.rootDir = config.testDir || this._configDir;
     this._fullConfig._globalOutputDir = takeFirst(config.outputDir, throwawayArtifactsPath, baseFullConfig._globalOutputDir);
@@ -133,7 +133,7 @@ export class Loader {
     this._fullConfig._plugins = takeFirst(this._configOverrides.plugins, config.plugins, baseFullConfig._plugins);
     this._fullConfig.metadata = mergeObjects(this._configOverrides.metadata, mergeObjects(config.metadata, baseFullConfig.metadata));
 
-    const projects: Project[] = ('projects' in config) && config.projects !== undefined ? config.projects : [config];
+    const projects: Project[] = this._configOverrides.projects || config.projects || [config];
     for (const project of projects)
       this._addProject(config, project, throwawayArtifactsPath);
     this._fullConfig.projects = this._projects.map(p => p.config);
@@ -211,7 +211,6 @@ export class Loader {
 
   serialize(): SerializedLoaderData {
     return {
-      defaultConfig: this._defaultConfig,
       configFile: this._configFile ? { file: this._configFile } : { configDir: this._configDir },
       overrides: this._configOverrides,
     };
@@ -249,7 +248,7 @@ export class Loader {
       _screenshotsDir: screenshotsDir,
       testIgnore: takeFirst(this._configOverrides.testIgnore, projectConfig.testIgnore, config.testIgnore, []),
       testMatch: takeFirst(this._configOverrides.testMatch, projectConfig.testMatch, config.testMatch, '**/?(*.)@(spec|test).*'),
-      timeout: takeFirst(this._configOverrides.timeout, projectConfig.timeout, config.timeout, 10000),
+      timeout: takeFirst(this._configOverrides.timeout, projectConfig.timeout, config.timeout, defaultTimeout),
       use: mergeObjects(mergeObjects(config.use, projectConfig.use), this._configOverrides.use),
     };
     this._projects.push(new ProjectImpl(fullProject, this._projects.length));
@@ -468,7 +467,10 @@ function validateProject(file: string, project: Project, title: string) {
   }
 }
 
-const baseFullConfig: FullConfigInternal = {
+const cpus = os.cpus().length;
+const workers = hostPlatform.startsWith('mac') && hostPlatform.endsWith('arm64') ? cpus : Math.ceil(cpus / 2);
+
+export const baseFullConfig: FullConfigInternal = {
   forbidOnly: false,
   fullyParallel: false,
   globalSetup: null,
@@ -480,14 +482,14 @@ const baseFullConfig: FullConfigInternal = {
   metadata: undefined,
   preserveOutput: 'always',
   projects: [],
-  reporter: [ ['list'] ],
-  reportSlowTests: null,
+  reporter: [ [process.env.CI ? 'dot' : 'list'] ],
+  reportSlowTests: { max: 5, threshold: 15000 },
   rootDir: path.resolve(process.cwd()),
   quiet: false,
   shard: null,
   updateSnapshots: 'missing',
   version: require('../package.json').version,
-  workers: 1,
+  workers,
   webServer: null,
   _globalOutputDir: path.resolve(process.cwd()),
   _configDir: '',

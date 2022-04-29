@@ -20,18 +20,12 @@ import type { Command } from 'playwright-core/lib/utilsBundle';
 import fs from 'fs';
 import url from 'url';
 import path from 'path';
-import os from 'os';
 import type { Config } from './types';
-import type { BuiltInReporter } from './runner';
 import { Runner, builtInReporters, kDefaultConfigFiles } from './runner';
 import { stopProfiling, startProfiling } from './profiler';
 import type { FilePatternFilter } from './util';
 import { showHTMLReport } from './reporters/html';
-import { hostPlatform } from 'playwright-core/lib/utils/hostPlatform';
-import { fileIsModule } from './loader';
-
-const defaultTimeout = 30000;
-const defaultReporter: BuiltInReporter = process.env.CI ? 'dot' : 'list';
+import { baseFullConfig, defaultTimeout, fileIsModule } from './loader';
 
 export function addTestCommand(program: Command) {
   const command = program.command('test [test-filter...]');
@@ -51,7 +45,7 @@ export function addTestCommand(program: Command) {
   command.option('--output <dir>', `Folder for output artifacts (default: "test-results")`);
   command.option('--quiet', `Suppress stdio`);
   command.option('--repeat-each <N>', `Run each test N times (default: 1)`);
-  command.option('--reporter <reporter>', `Reporter to use, comma-separated, can be ${builtInReporters.map(name => `"${name}"`).join(', ')} (default: "${defaultReporter}")`);
+  command.option('--reporter <reporter>', `Reporter to use, comma-separated, can be ${builtInReporters.map(name => `"${name}"`).join(', ')} (default: "${baseFullConfig.reporter[0]}")`);
   command.option('--retries <retries>', `Maximum retry count for flaky tests, zero for no retries (default: no retries)`);
   command.option('--shard <shard>', `Shard tests and execute only the selected shard, specify in the form "current/all", 1-based, for example "3/5"`);
   command.option('--project <project-name...>', `Only run tests from the specified list of projects (default: run all projects)`);
@@ -108,24 +102,13 @@ Examples:
 async function runTests(args: string[], opts: { [key: string]: any }) {
   await startProfiling();
 
-  const cpus = os.cpus().length;
-  const workers = hostPlatform.startsWith('mac') && hostPlatform.endsWith('arm64') ? cpus : Math.ceil(cpus / 2);
-
-  const defaultConfig: Config = {
-    preserveOutput: 'always',
-    reporter: [ [defaultReporter] ],
-    reportSlowTests: { max: 5, threshold: 15000 },
-    timeout: defaultTimeout,
-    updateSnapshots: 'missing',
-    workers,
-  };
-
+  const overrides = overridesFromOptions(opts);
   if (opts.browser) {
     const browserOpt = opts.browser.toLowerCase();
     if (!['all', 'chromium', 'firefox', 'webkit'].includes(browserOpt))
       throw new Error(`Unsupported browser "${opts.browser}", must be one of "all", "chromium", "firefox" or "webkit"`);
     const browserNames = browserOpt === 'all' ? ['chromium', 'firefox', 'webkit'] : [browserOpt];
-    defaultConfig.projects = browserNames.map(browserName => {
+    overrides.projects = browserNames.map(browserName => {
       return {
         name: browserName,
         use: { browserName },
@@ -133,7 +116,6 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
     });
   }
 
-  const overrides = overridesFromOptions(opts);
   if (opts.headed || opts.debug)
     overrides.use = { headless: false };
   if (opts.debug) {
@@ -149,8 +131,8 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
   if (restartWithExperimentalTsEsm(resolvedConfigFile))
     return;
 
-  const runner = new Runner(overrides, { defaultConfig });
-  const config = resolvedConfigFile ? await runner.loadConfigFromResolvedFile(resolvedConfigFile) : runner.loadEmptyConfig(configFileOrDirectory);
+  const runner = new Runner(overrides);
+  const config = resolvedConfigFile ? await runner.loadConfigFromResolvedFile(resolvedConfigFile) : await runner.loadEmptyConfig(configFileOrDirectory);
   if (('projects' in config) && opts.browser)
     throw new Error(`Cannot use --browser option when configuration file defines projects. Specify browserName in the projects instead.`);
 
@@ -185,7 +167,7 @@ async function listTestFiles(opts: { [key: string]: any }) {
   if (restartWithExperimentalTsEsm(resolvedConfigFile))
     return;
 
-  const runner = new Runner({}, { defaultConfig: {} });
+  const runner = new Runner();
   await runner.loadConfigFromResolvedFile(resolvedConfigFile);
   const report = await runner.listTestFiles(resolvedConfigFile, opts.project);
   write(JSON.stringify(report), () => {

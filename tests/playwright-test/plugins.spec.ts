@@ -44,24 +44,37 @@ test('event order', async ({ runInlineTest }, testInfo) => {
         `,
     'globalSetup.ts': `
           import log from './log';
-          const setup = () => log('globalSetup');
+          const setup = async () => {
+            await new Promise(r => setTimeout(r, 100));
+            log('globalSetup');
+          }
           export default setup;
         `,
     'globalTeardown.ts': `
           import log from './log';
-          const teardown = () => log('globalTeardown');
+          const teardown = async () => {
+            await new Promise(r => setTimeout(r, 100));
+            log('globalTeardown');
+          }
           export default teardown;
         `,
     'plugin.ts': `
           import log from './log';
           export const myPlugin = (name: string) => ({
             configure: async (config) => {
+              await new Promise(r => setTimeout(r, 100));
               log(name, 'configure');
               config.use = (config.use || {});
               config.use.baseURL = (config.use.baseURL || '') + name + ' | ';
             },
-            setup: async () => log(name, 'setup'),
-            teardown: async () => log(name, 'teardown'),
+            setup: async () => {
+              await new Promise(r => setTimeout(r, 100));
+              log(name, 'setup');
+            },
+            teardown: async () => {
+              await new Promise(r => setTimeout(r, 100));
+              log(name, 'teardown');
+            },
           });
         `,
   });

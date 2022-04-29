@@ -58,15 +58,15 @@ export class Runner {
   private _loader: Loader;
   private _reporter!: Reporter;
 
-  constructor(configOverrides: Config, options: { defaultConfig?: Config } = {}) {
-    this._loader = new Loader(options.defaultConfig || {}, configOverrides);
+  constructor(configOverrides?: Config) {
+    this._loader = new Loader(configOverrides);
   }
 
   async loadConfigFromResolvedFile(resolvedConfigFile: string): Promise<Config> {
     return await this._loader.loadConfigFile(resolvedConfigFile);
   }
 
-  loadEmptyConfig(configFileOrDirectory: string): Config {
+  loadEmptyConfig(configFileOrDirectory: string): Promise<Config> {
     return this._loader.loadEmptyConfig(configFileOrDirectory);
   }
 
