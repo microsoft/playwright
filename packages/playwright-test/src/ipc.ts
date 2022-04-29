@@ -15,10 +15,11 @@
  */
 
 import type { TestError } from '../types/testReporter';
-import type { Config, TestStatus } from './types';
+import type { ConfigCLIOverrides } from './runner';
+import type { TestStatus } from './types';
 
 export type SerializedLoaderData = {
-  overrides: Config;
+  overrides: ConfigCLIOverrides;
   configFile: { file: string } | { configDir: string };
 };
 export type WorkerInitParams = {
