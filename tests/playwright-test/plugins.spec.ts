@@ -21,7 +21,7 @@ test('event order', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'log.ts': `
             import { appendFileSync } from 'fs';
-            const log = (...args) => appendFileSync('${log}', args.join(' ') + '\\n');
+            const log = (...args) => appendFileSync(Buffer.from('${Buffer.from(log).toString('base64')}', 'base64').toString(), args.join(' ') + '\\n');
             export default log;
         `,
     'test.spec.ts': `
