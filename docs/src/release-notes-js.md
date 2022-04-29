@@ -9,21 +9,11 @@ title: "Release notes"
 
 ### Highlights
 
-- New **experimental** role selectors that allow selecting elements by their [ARIA role](https://www.w3.org/TR/wai-aria-1.2/#roles), [ARIA attributes](https://www.w3.org/TR/wai-aria-1.2/#aria-attributes) and [accessible name](https://w3c.github.io/accname/#dfn-accessible-name).
+- New role selectors that allow selecting elements by their [ARIA role](https://www.w3.org/TR/wai-aria-1.2/#roles), [ARIA attributes](https://www.w3.org/TR/wai-aria-1.2/#aria-attributes) and [accessible name](https://w3c.github.io/accname/#dfn-accessible-name).
 
   ```js
   // Click a button with accessible name "log in"
   await page.click('role=button[name="log in"]')
-  ```
-
-  To use role selectors, make sure to pass `PLAYWRIGHT_EXPERIMENTAL_FEATURES=1` environment variable:
-
-  ```js
-  // playwright.config.js
-  process.env.PLAYWRIGHT_EXPERIMENTAL_FEATURES = '1';
-  module.exports = {
-    /* ... */
-  };
   ```
 
   Read more in [our documentation](./selectors#role-selector).

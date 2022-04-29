@@ -948,10 +948,6 @@ Vue selectors, as well as [Vue DevTools](https://chrome.google.com/webstore/deta
 
 ## Role selector
 
-:::note
-Role selector is experimental, only available when running with `PLAYWRIGHT_EXPERIMENTAL_FEATURES=1` enviroment variable.
-:::
-
 Role selector allows selecting elements by their [ARIA role](https://www.w3.org/TR/wai-aria-1.2/#roles), [ARIA attributes](https://www.w3.org/TR/wai-aria-1.2/#aria-attributes) and [accessible name](https://w3c.github.io/accname/#dfn-accessible-name). Note that role selector **does not replace** accessibility audits and conformance tests, but rather gives early feedback about the ARIA guidelines.
 
 The syntax is very similar to [CSS attribute selectors](https://developer.mozilla.org/en-US/docs/Web/CSS/Attribute_selectors). For example, `role=button[name="Click me"][pressed]` selects a pressed button that has accessible name "Click me".
