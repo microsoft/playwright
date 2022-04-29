@@ -34,7 +34,7 @@ export const MetadataView: React.FC<Metadata> = metadata => {
           {metadata.revision?.id.slice(0, 7)}
         </span>}
         {metadata.revision?.subject || 'Commit Metainfo'}
-      </span>} initialExpanded={false} testId='metadata-chip'>
+      </span>} initialExpanded={false} dataTestId='metadata-chip'>
       {metadata.revision?.subject &&
         <MetadatViewItem
           testId='revision.subject'
