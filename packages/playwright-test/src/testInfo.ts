@@ -85,12 +85,13 @@ export class TestInfoImpl implements TestInfo {
 
   constructor(
     loader: Loader,
+    projectImpl: ProjectImpl,
     workerParams: WorkerInitParams,
     test: TestCase,
     retry: number,
     addStepImpl: (data: Omit<TestStepInternal, 'complete'>) => TestStepInternal,
   ) {
-    this._projectImpl = loader.projects()[workerParams.projectIndex];
+    this._projectImpl = projectImpl;
     this._test = test;
     this._addStepImpl = addStepImpl;
     this._startTime = monotonicTime();
@@ -113,10 +114,10 @@ export class TestInfoImpl implements TestInfo {
     this._timeoutManager = new TimeoutManager(this.project.timeout);
 
     this.outputDir = (() => {
-      const sameName = loader.projects().filter(project => project.config.name === this.project.name);
+      const sameName = loader.fullConfig().projects.filter(project => project.name === this.project.name);
       let uniqueProjectNamePathSegment: string;
       if (sameName.length > 1)
-        uniqueProjectNamePathSegment = this.project.name + (sameName.indexOf(this._projectImpl) + 1);
+        uniqueProjectNamePathSegment = this.project.name + (sameName.indexOf(this._projectImpl.config) + 1);
       else
         uniqueProjectNamePathSegment = this.project.name;
 

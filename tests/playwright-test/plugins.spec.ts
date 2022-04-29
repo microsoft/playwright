@@ -16,7 +16,8 @@
 import fs from 'fs';
 import { test, expect } from './playwright-test-fixtures';
 
-test('event order', async ({ runInlineTest }, testInfo) => {
+test('event order', async ({ runInlineTest, legacyConfigLoader }, testInfo) => {
+  test.skip(legacyConfigLoader);
   const log = testInfo.outputPath('logs.txt');
   const result = await runInlineTest({
     'log.ts': `
@@ -87,8 +88,6 @@ test('event order', async ({ runInlineTest }, testInfo) => {
     'a setup',
     'b setup',
     'globalSetup',
-    'a configure',
-    'b configure',
     'baseURL a | b | ',
     'globalTeardown',
     'b teardown',
