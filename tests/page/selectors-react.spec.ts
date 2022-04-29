@@ -21,6 +21,7 @@ const reacts = {
   'react15': '/reading-list/react15.html',
   'react16': '/reading-list/react16.html',
   'react17': '/reading-list/react17.html',
+  'react18': '/reading-list/react18.html',
 };
 
 for (const [name, url] of Object.entries(reacts)) {
