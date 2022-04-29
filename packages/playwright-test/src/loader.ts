@@ -479,7 +479,7 @@ export const baseFullConfig: FullConfigInternal = {
   grep: /.*/,
   grepInvert: null,
   maxFailures: 0,
-  metadata: undefined,
+  metadata: {},
   preserveOutput: 'always',
   projects: [],
   reporter: [ [process.env.CI ? 'dot' : 'list'] ],

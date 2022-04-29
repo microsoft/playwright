@@ -14,4 +14,4 @@
  * limitations under the License.
  */
 export { webServer } from './webServerPlugin';
-export { vcs } from './vcsPlugin';
+export { gitCommitInfo } from './gitCommitInfoPlugin';

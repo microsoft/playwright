@@ -19,9 +19,9 @@ import { spawnAsync } from 'playwright-core/lib/utils/spawnAsync';
 
 const GIT_OPERATIONS_TIMEOUT_MS = 1500;
 
-export const vcs = (options?: VCSPluginOptions): TestPlugin => {
+export const gitCommitInfo = (options?: GitCommitInfoPluginOptions): TestPlugin => {
   return {
-    name: 'playwright-vcs-plugin',
+    name: 'playwright-git-commit-info-plugin',
 
     configure: async (config: PlaywrightTestConfig, configDir: string) => {
       options = options || {};
@@ -57,7 +57,7 @@ export const vcs = (options?: VCSPluginOptions): TestPlugin => {
   };
 };
 
-export type VCSPluginOptions = {
+export type GitCommitInfoPluginOptions = {
     mode?: 'disable-cli',
     directory?: string,
     revision?: Partial<Revision>,
@@ -77,7 +77,7 @@ interface CI {
     link: string;
 }
 
-const shouldRunGit = (revision: Partial<Revision> | undefined, mode: VCSPluginOptions['mode']) => {
+const shouldRunGit = (revision: Partial<Revision> | undefined, mode: GitCommitInfoPluginOptions['mode']) => {
   return mode !== 'disable-cli' && (
     !revision ||
         revision.id === undefined ||

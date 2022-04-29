@@ -19,7 +19,7 @@ import type { PlaywrightTestConfig } from '@playwright/test';
 import { config as loadEnv } from 'dotenv';
 loadEnv({ path: path.join(__dirname, '..', '..', '.env') });
 
-import { vcs } from '@playwright/test/lib/plugins';
+import { gitCommitInfo } from '@playwright/test/lib/plugins';
 
 const config: PlaywrightTestConfig = {
   plugins: [

@@ -725,7 +725,7 @@ test.describe('vcs plugin', () => {
       'uncommitted.txt': `uncommitted file`,
       'playwright.config.ts': `
         import path from 'path';
-        import { vcs } from '@playwright/test/lib/plugins';
+        import { gitCommitInfo } from '@playwright/test/lib/plugins';
 
         const config = {
           plugins: [ vcs() ],
@@ -775,7 +775,7 @@ test.describe('vcs plugin', () => {
       'uncommitted.txt': `uncommitted file`,
       'playwright.config.ts': `
         import path from 'path';
-        import { vcs } from '@playwright/test/lib/plugins';
+        import { gitCommitInfo } from '@playwright/test/lib/plugins';
 
         const config = {
           plugins: [ vcs({ revision: { subject: 'a better subject' } }) ],
