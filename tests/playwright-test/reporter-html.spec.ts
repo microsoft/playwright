@@ -854,7 +854,7 @@ test.describe('vcs plugin', () => {
     await showReport();
 
     expect(result.exitCode).toBe(0);
-    await page.click('text=my sample test');
+    await expect.soft(page.locator('text="my sample test"')).toBeVisible();
     await expect.soft(page.locator('data-test-id=metadata-chip')).not.toBeVisible();
   });
 });
