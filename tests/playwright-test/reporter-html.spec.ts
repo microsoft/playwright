@@ -704,7 +704,7 @@ test('open tests from required file', async ({ runInlineTest, showReport, page }
   ]);
 });
 
-test.describe.only('vcs plugin', () => {
+test.describe('gitCommitInfo plugin', () => {
   test('should include metadata', async ({ runInlineTest, showReport, page }) => {
     const beforeRunPlaywrightTest = async ({ baseDir }: { baseDir: string }) => {
       const execGit = async (args: string[]) => {
