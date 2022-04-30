@@ -20,8 +20,8 @@ import type { Command } from 'playwright-core/lib/utilsBundle';
 import fs from 'fs';
 import url from 'url';
 import path from 'path';
-import type { Config } from './types';
 import { Runner, builtInReporters, kDefaultConfigFiles } from './runner';
+import type { ConfigCLIOverrides } from './runner';
 import { stopProfiling, startProfiling } from './profiler';
 import type { FilePatternFilter } from './util';
 import { showHTMLReport } from './reporters/html';
@@ -132,9 +132,10 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
     return;
 
   const runner = new Runner(overrides);
-  const config = resolvedConfigFile ? await runner.loadConfigFromResolvedFile(resolvedConfigFile) : await runner.loadEmptyConfig(configFileOrDirectory);
-  if (('projects' in config) && opts.browser)
-    throw new Error(`Cannot use --browser option when configuration file defines projects. Specify browserName in the projects instead.`);
+  if (resolvedConfigFile)
+    await runner.loadConfigFromResolvedFile(resolvedConfigFile);
+  else
+    await runner.loadEmptyConfig(configFileOrDirectory);
 
   const filePatternFilter: FilePatternFilter[] = args.map(arg => {
     const match = /^(.*?):(\d+):?(\d+)?$/.exec(arg);
@@ -182,7 +183,7 @@ function forceRegExp(pattern: string): RegExp {
   return new RegExp(pattern, 'gi');
 }
 
-function overridesFromOptions(options: { [key: string]: any }): Config {
+function overridesFromOptions(options: { [key: string]: any }): ConfigCLIOverrides {
   const shardPair = options.shard ? options.shard.split('/').map((t: string) => parseInt(t, 10)) : undefined;
   return {
     forbidOnly: options.forbidOnly ? true : undefined,

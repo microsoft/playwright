@@ -619,10 +619,12 @@ returns empty array.
 ## async method: ElementHandle.screenshot
 - returns: <[Buffer]>
 
-Returns the buffer with the captured screenshot.
+This method captures a screenshot of the page, clipped to the size and position of this particular element. If the element is covered by other elements, it will not be actually visible on the screenshot. If the element is a scrollable container, only the currently scrolled content will be visible on the screenshot.
 
 This method waits for the [actionability](../actionability.md) checks, then scrolls element into view before taking a
 screenshot. If the element is detached from DOM, the method throws an error.
+
+Returns the buffer with the captured screenshot.
 
 ### option: ElementHandle.screenshot.-inline- = %%-screenshot-options-common-list-%%
 
