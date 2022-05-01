@@ -160,7 +160,7 @@ export class PythonLanguageGenerator implements LanguageGenerator {
 from playwright.sync_api import Page, expect
 
 
-def test_sample(page: Page) -> None {`);
+def test_example(page: Page) -> None {`);
     } else if (this._isAsync) {
       formatter.add(`
 import asyncio
