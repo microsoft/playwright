@@ -32,7 +32,7 @@ npm run test
     npm init vue@latest
     ```
 
-- Install Playwright Text with component testing as dev dependencies.
+- Install Playwright Test with component testing as dev dependencies.
 
     ```sh
     npm i --save-dev @playwright/test @playwright/experimental-ct-vue
