@@ -22,7 +22,7 @@ test('event order', async ({ runInlineTest, legacyConfigLoader }, testInfo) => {
   const result = await runInlineTest({
     'log.ts': `
             import { appendFileSync } from 'fs';
-            const log = (...args) => appendFileSync('${log}', args.join(' ') + '\\n');
+            const log = (...args) => appendFileSync('${log.replace(/\\/g, '\\\\')}', args.join(' ') + '\\n');
             export default log;
         `,
     'test.spec.ts': `
