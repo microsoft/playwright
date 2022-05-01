@@ -144,9 +144,16 @@ function findReactRoots(root: Document | ShadowRoot, roots: ReactVNode[] = []): 
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT);
   do {
     const node = walker.currentNode;
+    // ReactDOM Legacy client API:
     // @see https://github.com/baruchvlz/resq/blob/5c15a5e04d3f7174087248f5a158c3d6dcc1ec72/src/utils.js#L329
-    if (node.hasOwnProperty('_reactRootContainer'))
+    if (node.hasOwnProperty('_reactRootContainer')) {
       roots.push((node as any)._reactRootContainer._internalRoot.current);
+    } else {
+      // React 17+
+      const rootKey = Object.keys(node).find(key => key.startsWith('__reactContainer'));
+      if (rootKey)
+        roots.push((node as any)[rootKey].stateNode.current);
+    }
 
     // Pre-react 16: rely on `data-reactroot`
     // @see https://github.com/facebook/react/issues/10971
