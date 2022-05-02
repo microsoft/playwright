@@ -32,10 +32,38 @@ interface Info {
   'ci.link'?: string;
 }
 
-export type GitCommitInfo =  (Info & { generatedAt?: number }) | undefined;
+export type GitCommitInfo =  (Info & { timestamp?: number }) | undefined;
 
-export const MetadataView: React.FC<GitCommitInfo> = metadata => {
-  if (!metadata['ci.link'] && !metadata['revision.id'] && !metadata['revision.author'] && !metadata['revision.email'] && !metadata['revision.subject'] && !metadata['revision.timestamp'] && !metadata['revision.link'])
+export class ErrorBoundary extends React.Component<{}, { error: Error | null, errorInfo: React.ErrorInfo | null }> {
+  state: { error: Error | null, errorInfo: React.ErrorInfo | null } = {
+    error: null,
+    errorInfo: null,
+  };
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    this.setState({ error, errorInfo });
+  }
+
+  render() {
+    if (this.state.error || this.state.errorInfo) {
+      return (
+        <AutoChip header={'Commit Metainfo Error'} dataTestId='metadata-error'>
+          <p>An error was encountered when trying to render Commit Metainfo. Please file a GitHub issue to report this error.</p>
+          <p>
+            <pre style={{ overflow: 'scroll' }}>{this.state.error?.message}<br/>{this.state.error?.stack}<br/>{this.state.errorInfo?.componentStack}</pre>
+          </p>
+        </AutoChip>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
+export const MetadataView: React.FC<GitCommitInfo> = metadata => <ErrorBoundary><InnerMetadataView {...metadata} /></ErrorBoundary>;
+
+const InnerMetadataView: React.FC<GitCommitInfo> = metadata => {
+  if (!Object.keys(metadata).find(k => k.startsWith('revision.') || k.startsWith('ci.')))
     return null;
 
   return (
@@ -86,10 +114,10 @@ export const MetadataView: React.FC<GitCommitInfo> = metadata => {
           icon='externalLink'
         />
       }
-      {metadata.generatedAt &&
+      {metadata['timestamp'] &&
         <MetadatViewItem
           content={<span style={{ color: 'var(--color-fg-subtle)' }}>
-            Report generated on {Intl.DateTimeFormat(undefined, { dateStyle: 'full', timeStyle: 'long' }).format(metadata.generatedAt)}
+            Report generated on {Intl.DateTimeFormat(undefined, { dateStyle: 'full', timeStyle: 'long' }).format(metadata['timestamp'])}
           </span>}></MetadatViewItem>
       }
     </AutoChip>

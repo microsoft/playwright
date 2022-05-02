@@ -17196,7 +17196,7 @@ export interface Config<TestArgs = {}, WorkerArgs = {}> extends TestConfig {
   use?: UseOptions<TestArgs, WorkerArgs>;
 }
 
-export type Metadata = { [key: string]: string | number | boolean | Metadata };
+export type Metadata = { [key: string]: string | number | boolean };
 
 /**
  * Playwright Test provides many options to configure how your tests are collected and executed, for example `timeout` or

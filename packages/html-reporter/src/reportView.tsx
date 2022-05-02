@@ -28,7 +28,6 @@ import { MetadataView } from './metadataView';
 import { TestCaseView } from './testCaseView';
 import { TestFilesView } from './testFilesView';
 import './theme.css';
-import { HideIfErrors } from './hideIfErrors';
 
 declare global {
   interface Window {
@@ -48,7 +47,7 @@ export const ReportView: React.FC<{
   return <div className='htmlreport vbox px-4 pb-4'>
     <main>
       {report?.json() && <HeaderView stats={report.json().stats} filterText={filterText} setFilterText={setFilterText}></HeaderView>}
-      {report?.json().metadata && <HideIfErrors><MetadataView {...report?.json().metadata['git-commit-info'] as GitCommitInfo} /></HideIfErrors>}
+      {report?.json().metadata && <MetadataView {...report?.json().metadata as GitCommitInfo} />}
       <Route params=''>
         <TestFilesView report={report?.json()} filter={filter} expandedFiles={expandedFiles} setExpandedFiles={setExpandedFiles}></TestFilesView>
       </Route>

@@ -752,6 +752,7 @@ test.describe('gitCommitInfo plugin', () => {
     await expect.soft(page.locator('text=CI/CD Logs')).toHaveAttribute('href', 'https://playwright.dev/microsoft/playwright-example-for-test/actions/runs/example-run-id');
     await expect.soft(page.locator('text=Report generated on')).toContainText(/AM|PM/);
     await expect.soft(page.locator('data-test-id=metadata-chip')).toBeVisible();
+    await expect.soft(page.locator('data-test-id=metadata-error')).not.toBeVisible();
   });
 
 
@@ -795,6 +796,7 @@ test.describe('gitCommitInfo plugin', () => {
     await expect.soft(page.locator('text=CI/CD Logs')).toHaveAttribute('href', 'https://playwright.dev/microsoft/playwright-example-for-test/actions/runs/example-run-id');
     await expect.soft(page.locator('text=Report generated on')).toContainText(/AM|PM/);
     await expect.soft(page.locator('data-test-id=metadata-chip')).toBeVisible();
+    await expect.soft(page.locator('data-test-id=metadata-error')).not.toBeVisible();
   });
 
   test('should not have metadata by default', async ({ runInlineTest, showReport, page }) => {
@@ -819,6 +821,7 @@ test.describe('gitCommitInfo plugin', () => {
 
     expect(result.exitCode).toBe(0);
     await expect.soft(page.locator('text="my sample test"')).toBeVisible();
+    await expect.soft(page.locator('data-test-id=metadata-error')).not.toBeVisible();
     await expect.soft(page.locator('data-test-id=metadata-chip')).not.toBeVisible();
   });
 
@@ -830,9 +833,7 @@ test.describe('gitCommitInfo plugin', () => {
 
         const config = {
           metadata: {
-            'git-commit-info': {
-              'revision.timestamp': 'hi',
-            }
+            'revision.timestamp': 'hi',
           },
         }
 
@@ -848,6 +849,7 @@ test.describe('gitCommitInfo plugin', () => {
 
     expect(result.exitCode).toBe(0);
     await expect.soft(page.locator('text="my sample test"')).toBeVisible();
+    await expect.soft(page.locator('data-test-id=metadata-error')).toBeVisible();
     await expect.soft(page.locator('data-test-id=metadata-chip')).not.toBeVisible();
   });
 });
