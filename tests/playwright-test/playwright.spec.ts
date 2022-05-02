@@ -121,6 +121,25 @@ test('should complain with projects and --browser', async ({ runInlineTest }) =>
   expect(result.output).toContain('Cannot use --browser option when configuration file defines projects');
 });
 
+test('should override any headless option with --headed', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { projects: [
+        { name: 'a', use: { headless: true } }
+      ] };
+    `,
+    'a.test.ts': `
+      const { test } = pwt;
+      test('example', async ({ page }) => {
+        expect(await page.evaluate(() => navigator.userAgent)).not.toContain('Headless');
+      });
+    `,
+  }, { workers: 1, headed: true });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
+
+
 test('should not override use:browserName without projects', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
