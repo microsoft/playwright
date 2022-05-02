@@ -63,7 +63,7 @@ export class InternalWebServerPlugin implements TestPlugin {
 
   get name() {
     const target = this._config.url || `http://localhost:${this._config.port}`;
-    return `playwright-webserver-plugin [${target}]`;
+    return `playwright:webserver [${target}]`;
   }
 
   public async configure(config: PlaywrightTestConfig, configDir: string) {
