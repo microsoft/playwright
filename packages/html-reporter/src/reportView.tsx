@@ -23,7 +23,7 @@ import { HeaderView } from './headerView';
 import { Route } from './links';
 import type { LoadedReport } from './loadedReport';
 import './reportView.css';
-import type { GitCommitInfo } from './metadataView';
+import type { CommitInfo } from './metadataView';
 import { MetadataView } from './metadataView';
 import { TestCaseView } from './testCaseView';
 import { TestFilesView } from './testFilesView';
@@ -47,7 +47,7 @@ export const ReportView: React.FC<{
   return <div className='htmlreport vbox px-4 pb-4'>
     <main>
       {report?.json() && <HeaderView stats={report.json().stats} filterText={filterText} setFilterText={setFilterText}></HeaderView>}
-      {report?.json().metadata && <MetadataView {...report?.json().metadata as GitCommitInfo} />}
+      {report?.json().metadata && <MetadataView {...report?.json().metadata as CommitInfo} />}
       <Route params=''>
         <TestFilesView report={report?.json()} filter={filter} expandedFiles={expandedFiles} setExpandedFiles={setExpandedFiles}></TestFilesView>
       </Route>

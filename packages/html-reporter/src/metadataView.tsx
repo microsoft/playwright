@@ -22,7 +22,7 @@ import { AutoChip } from './chip';
 import './reportView.css';
 import './theme.css';
 
-interface Info {
+export type CommitInfo = {
   'revision.id'?: string;
   'revision.author'?: string;
   'revision.email'?: string;
@@ -30,9 +30,8 @@ interface Info {
   'revision.timestamp'?: number | Date;
   'revision.link'?: string;
   'ci.link'?: string;
-}
-
-export type GitCommitInfo =  (Info & { timestamp?: number }) | undefined;
+  'timestamp'?: number
+} | undefined;
 
 export class ErrorBoundary extends React.Component<{}, { error: Error | null, errorInfo: React.ErrorInfo | null }> {
   state: { error: Error | null, errorInfo: React.ErrorInfo | null } = {
@@ -60,9 +59,9 @@ export class ErrorBoundary extends React.Component<{}, { error: Error | null, er
   }
 }
 
-export const MetadataView: React.FC<GitCommitInfo> = metadata => <ErrorBoundary><InnerMetadataView {...metadata} /></ErrorBoundary>;
+export const MetadataView: React.FC<CommitInfo> = metadata => <ErrorBoundary><InnerMetadataView {...metadata} /></ErrorBoundary>;
 
-const InnerMetadataView: React.FC<GitCommitInfo> = metadata => {
+const InnerMetadataView: React.FC<CommitInfo> = metadata => {
   if (!Object.keys(metadata).find(k => k.startsWith('revision.') || k.startsWith('ci.')))
     return null;
 
