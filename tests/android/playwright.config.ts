@@ -20,13 +20,16 @@ loadEnv({ path: path.join(__dirname, '..', '..', '.env') });
 import type { Config, PlaywrightTestOptions, PlaywrightWorkerOptions } from '@playwright/test';
 import * as path from 'path';
 import type { ServerWorkerOptions } from '../config/serverFixtures';
+import { gitCommitInfo } from '@playwright/test/lib/plugins';
 
 process.env.PWPAGE_IMPL = 'android';
 
 const outputDir = path.join(__dirname, '..', '..', 'test-results');
 const testDir = path.join(__dirname, '..');
 const config: Config<ServerWorkerOptions & PlaywrightWorkerOptions & PlaywrightTestOptions> = {
-  globalSetup: path.join(__dirname, '../config/globalSetup'),
+  plugins: [
+    gitCommitInfo(),
+  ],
   testDir,
   outputDir,
   timeout: 120000,

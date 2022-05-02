@@ -15,7 +15,7 @@
  */
 
 import { installTransform, setCurrentlyLoadingTestFile } from './transform';
-import type { Config, Project, ReporterDescription, FullProjectInternal, GlobalInfo } from './types';
+import type { Config, Project, ReporterDescription, FullProjectInternal } from './types';
 import type { FullConfigInternal } from './types';
 import { getPackageJsonPath, mergeObjects, errorWithFile } from './util';
 import { setCurrentlyLoadingFileSuite } from './globals';
@@ -163,6 +163,7 @@ export class Loader {
     this._fullConfig.workers = takeFirst(config.workers, baseFullConfig.workers);
     this._fullConfig.webServer = takeFirst(config.webServer, baseFullConfig.webServer);
     this._fullConfig._plugins = takeFirst(config.plugins, baseFullConfig._plugins);
+    this._fullConfig.metadata = takeFirst(config.metadata, baseFullConfig.metadata);
     this._fullConfig.projects = (config.projects || [config]).map(p => this._resolveProject(config, p, throwawayArtifactsPath));
   }
 
@@ -210,7 +211,7 @@ export class Loader {
     return suite;
   }
 
-  async loadGlobalHook(file: string, name: string): Promise<(config: FullConfigInternal, globalInfo?: GlobalInfo) => any> {
+  async loadGlobalHook(file: string, name: string): Promise<(config: FullConfigInternal) => any> {
     let hook = await this._requireOrImport(file);
     if (hook && typeof hook === 'object' && ('default' in hook))
       hook = hook['default'];
@@ -516,6 +517,7 @@ export const baseFullConfig: FullConfigInternal = {
   grep: /.*/,
   grepInvert: null,
   maxFailures: 0,
+  metadata: {},
   preserveOutput: 'always',
   projects: [],
   reporter: [ [process.env.CI ? 'dot' : 'list'] ],

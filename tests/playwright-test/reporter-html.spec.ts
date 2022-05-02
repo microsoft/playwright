@@ -704,64 +704,152 @@ test('open tests from required file', async ({ runInlineTest, showReport, page }
   ]);
 });
 
-test('should include metadata', async ({ runInlineTest, showReport, page }) => {
-  const beforeRunPlaywrightTest = async ({ baseDir }: { baseDir: string }) => {
-    const execGit = async (args: string[]) => {
-      const { code, stdout, stderr } = await spawnAsync('git', args, { stdio: 'pipe', cwd: baseDir });
-      if (!!code)
-        throw new Error(`Non-zero exit of:\n$ git ${args.join(' ')}\nConsole:\nstdout:\n${stdout}\n\nstderr:\n${stderr}\n\n`);
-      return;
+test.describe('gitCommitInfo plugin', () => {
+  test('should include metadata', async ({ runInlineTest, showReport, page }) => {
+    const beforeRunPlaywrightTest = async ({ baseDir }: { baseDir: string }) => {
+      const execGit = async (args: string[]) => {
+        const { code, stdout, stderr } = await spawnAsync('git', args, { stdio: 'pipe', cwd: baseDir });
+        if (!!code)
+          throw new Error(`Non-zero exit of:\n$ git ${args.join(' ')}\nConsole:\nstdout:\n${stdout}\n\nstderr:\n${stderr}\n\n`);
+        return;
+      };
+
+      await execGit(['init']);
+      await execGit(['config', '--local', 'user.email', 'shakespeare@example.local']);
+      await execGit(['config', '--local', 'user.name', 'William']);
+      await execGit(['add', '*.ts']);
+      await execGit(['commit', '-m', 'awesome commit message']);
     };
 
-    await execGit(['init']);
-    await execGit(['config', '--local', 'user.email', 'shakespeare@example.local']);
-    await execGit(['config', '--local', 'user.name', 'William']);
-    await execGit(['add', '*.ts']);
-    await execGit(['commit', '-m', 'awesome commit message']);
-  };
+    const result = await runInlineTest({
+      'uncommitted.txt': `uncommitted file`,
+      'playwright.config.ts': `
+        import path from 'path';
+        import { gitCommitInfo } from '@playwright/test/lib/plugins';
 
-  const result = await runInlineTest({
-    'uncommitted.txt': `uncommitted file`,
-    'globalSetup.ts': `
-      import { FullConfig, GlobalInfo } from '@playwright/test';
-      import * as ci from '@playwright/test/lib/ci';
+        const config = {
+          plugins: [ gitCommitInfo() ],
+        }
 
-      async function globalSetup(config: FullConfig, globalInfo: GlobalInfo) {
-        const pluginResults = await Promise.all([
-          ci.generationTimestamp(),
-          ci.gitStatusFromCLI(config.rootDir),
-          ci.githubEnv(),
-        ]);
+        export default config;
+      `,
+      'example.spec.ts': `
+        const { test } = pwt;
+        test('sample', async ({}) => { expect(2).toBe(2); });
+      `,
+    }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never', GITHUB_REPOSITORY: 'microsoft/playwright-example-for-test', GITHUB_RUN_ID: 'example-run-id', GITHUB_SERVER_URL: 'https://playwright.dev', GITHUB_SHA: 'example-sha' }, undefined, beforeRunPlaywrightTest);
 
-        await Promise.all(pluginResults.flat().map(attachment => globalInfo.attach(attachment.name, attachment)));
-      }
+    await showReport();
 
-      export default globalSetup;
-    `,
-    'playwright.config.ts': `
-      import path from 'path';
-      const config = {
-        globalSetup: path.join(__dirname, './globalSetup'),
-      }
+    expect(result.exitCode).toBe(0);
+    await page.click('text=awesome commit message');
+    await expect.soft(page.locator('data-test-id=revision.id')).toContainText(/^[a-f\d]+$/i);
+    await expect.soft(page.locator('data-test-id=revision.id >> a')).toHaveAttribute('href', 'https://playwright.dev/microsoft/playwright-example-for-test/commit/example-sha');
+    await expect.soft(page.locator('data-test-id=revision.timestamp')).toContainText(/AM|PM/);
+    await expect.soft(page.locator('text=awesome commit message')).toHaveCount(2);
+    await expect.soft(page.locator('text=William')).toBeVisible();
+    await expect.soft(page.locator('text=shakespeare@example.local')).toBeVisible();
+    await expect.soft(page.locator('text=CI/CD Logs')).toHaveAttribute('href', 'https://playwright.dev/microsoft/playwright-example-for-test/actions/runs/example-run-id');
+    await expect.soft(page.locator('text=Report generated on')).toContainText(/AM|PM/);
+    await expect.soft(page.locator('data-test-id=metadata-chip')).toBeVisible();
+    await expect.soft(page.locator('data-test-id=metadata-error')).not.toBeVisible();
+  });
 
-      export default config;
-    `,
-    'example.spec.ts': `
-      const { test } = pwt;
-      test('sample', async ({}) => { expect(2).toBe(2); });
-    `,
-  }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never', GITHUB_REPOSITORY: 'microsoft/playwright-example-for-test', GITHUB_RUN_ID: 'example-run-id', GITHUB_SERVER_URL: 'https://playwright.dev', GITHUB_SHA: 'example-sha' }, undefined, beforeRunPlaywrightTest);
 
-  await showReport();
+  test('should use explicitly supplied metadata', async ({ runInlineTest, showReport, page }) => {
+    const result = await runInlineTest({
+      'uncommitted.txt': `uncommitted file`,
+      'playwright.config.ts': `
+        import path from 'path';
+        import { gitCommitInfo } from '@playwright/test/lib/plugins';
 
-  expect(result.exitCode).toBe(0);
-  await page.click('text=awesome commit message');
-  await expect.soft(page.locator('data-test-id=revision.id')).toContainText(/^[a-f\d]+$/i);
-  await expect.soft(page.locator('data-test-id=revision.id >> a')).toHaveAttribute('href', 'https://playwright.dev/microsoft/playwright-example-for-test/commit/example-sha');
-  await expect.soft(page.locator('data-test-id=revision.timestamp')).toContainText(/AM|PM/);
-  await expect.soft(page.locator('text=awesome commit message')).toHaveCount(2);
-  await expect.soft(page.locator('text=William')).toBeVisible();
-  await expect.soft(page.locator('text=shakespeare@example.local')).toBeVisible();
-  await expect.soft(page.locator('text=CI/CD Logs')).toHaveAttribute('href', 'https://playwright.dev/microsoft/playwright-example-for-test/actions/runs/example-run-id');
-  await expect.soft(page.locator('text=Report generated on')).toContainText(/AM|PM/);
+        const config = {
+          plugins: [ gitCommitInfo({
+            info: {
+              'revision.id': '1234567890',
+              'revision.subject': 'a better subject',
+              'revision.timestamp': new Date(),
+              'revision.author': 'William',
+              'revision.email': 'shakespeare@example.local',
+            },
+          }) ],
+        }
+
+        export default config;
+      `,
+      'example.spec.ts': `
+        const { test } = pwt;
+        test('sample', async ({}) => { expect(2).toBe(2); });
+      `,
+    }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never', GITHUB_REPOSITORY: 'microsoft/playwright-example-for-test', GITHUB_RUN_ID: 'example-run-id', GITHUB_SERVER_URL: 'https://playwright.dev', GITHUB_SHA: 'example-sha' }, undefined);
+
+    await showReport();
+
+    expect(result.exitCode).toBe(0);
+    await page.click('text=a better subject');
+    await expect.soft(page.locator('data-test-id=revision.id')).toContainText(/^[a-f\d]+$/i);
+    await expect.soft(page.locator('data-test-id=revision.id >> a')).toHaveAttribute('href', 'https://playwright.dev/microsoft/playwright-example-for-test/commit/example-sha');
+    await expect.soft(page.locator('data-test-id=revision.timestamp')).toContainText(/AM|PM/);
+    await expect.soft(page.locator('text=a better subject')).toHaveCount(2);
+    await expect.soft(page.locator('text=William')).toBeVisible();
+    await expect.soft(page.locator('text=shakespeare@example.local')).toBeVisible();
+    await expect.soft(page.locator('text=CI/CD Logs')).toHaveAttribute('href', 'https://playwright.dev/microsoft/playwright-example-for-test/actions/runs/example-run-id');
+    await expect.soft(page.locator('text=Report generated on')).toContainText(/AM|PM/);
+    await expect.soft(page.locator('data-test-id=metadata-chip')).toBeVisible();
+    await expect.soft(page.locator('data-test-id=metadata-error')).not.toBeVisible();
+  });
+
+  test('should not have metadata by default', async ({ runInlineTest, showReport, page }) => {
+    const result = await runInlineTest({
+      'uncommitted.txt': `uncommitted file`,
+      'playwright.config.ts': `
+        import path from 'path';
+
+        const config = {
+          plugins: [],
+        }
+
+        export default config;
+      `,
+      'example.spec.ts': `
+        const { test } = pwt;
+        test('my sample test', async ({}) => { expect(2).toBe(2); });
+      `,
+    }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' }, undefined);
+
+    await showReport();
+
+    expect(result.exitCode).toBe(0);
+    await expect.soft(page.locator('text="my sample test"')).toBeVisible();
+    await expect.soft(page.locator('data-test-id=metadata-error')).not.toBeVisible();
+    await expect.soft(page.locator('data-test-id=metadata-chip')).not.toBeVisible();
+  });
+
+  test('should not include metadata if user supplies invalid values via metadata field', async ({ runInlineTest, showReport, page }) => {
+    const result = await runInlineTest({
+      'uncommitted.txt': `uncommitted file`,
+      'playwright.config.ts': `
+        import path from 'path';
+
+        const config = {
+          metadata: {
+            'revision.timestamp': 'hi',
+          },
+        }
+
+        export default config;
+      `,
+      'example.spec.ts': `
+        const { test } = pwt;
+        test('my sample test', async ({}) => { expect(2).toBe(2); });
+      `,
+    }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+
+    await showReport();
+
+    expect(result.exitCode).toBe(0);
+    await expect.soft(page.locator('text="my sample test"')).toBeVisible();
+    await expect.soft(page.locator('data-test-id=metadata-error')).toBeVisible();
+    await expect.soft(page.locator('data-test-id=metadata-chip')).not.toBeVisible();
+  });
 });

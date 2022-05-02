@@ -42,7 +42,6 @@ import type { Config, FullProjectInternal } from './types';
 import type { FullConfigInternal } from './types';
 import { raceAgainstTimeout } from 'playwright-core/lib/utils/timeoutRunner';
 import { SigIntWatcher } from './sigIntWatcher';
-import { GlobalInfoImpl } from './globalInfo';
 
 const removeFolderAsync = promisify(rimraf);
 const readDirAsync = promisify(fs.readdir);
@@ -78,11 +77,9 @@ export type ConfigCLIOverrides = {
 export class Runner {
   private _loader: Loader;
   private _reporter!: Reporter;
-  private _globalInfo: GlobalInfoImpl;
 
   constructor(configCLIOverrides?: ConfigCLIOverrides) {
     this._loader = new Loader(configCLIOverrides);
-    this._globalInfo = new GlobalInfoImpl(this._loader.fullConfig());
   }
 
   async loadConfigFromResolvedFile(resolvedConfigFile: string): Promise<FullConfigInternal> {
@@ -398,9 +395,6 @@ export class Runner {
 
     const result: FullResult = { status: 'passed' };
 
-    // 13.5 Add copy of attachments.
-    rootSuite.attachments = this._globalInfo.attachments();
-
     // 14. Run tests.
     try {
       const sigintWatcher = new SigIntWatcher();
@@ -466,7 +460,7 @@ export class Runner {
 
       // The do global setup.
       if (config.globalSetup)
-        globalSetupResult = await (await this._loader.loadGlobalHook(config.globalSetup, 'globalSetup'))(this._loader.fullConfig(), this._globalInfo);
+        globalSetupResult = await (await this._loader.loadGlobalHook(config.globalSetup, 'globalSetup'))(this._loader.fullConfig());
     }, result);
 
     if (result.status !== 'passed') {
