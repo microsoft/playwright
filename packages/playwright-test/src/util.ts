@@ -295,4 +295,4 @@ export async function normalizeAndSaveAttachment(outputPath: string, name: strin
   }
 }
 
-export const pluginLogger = (plugin: TestPlugin) => debug(`pw:plugin:${plugin.name}`);
+export const pluginLogger = (plugin: TestPlugin) => debug(`pw:test:plugins:${plugin.name}`);
