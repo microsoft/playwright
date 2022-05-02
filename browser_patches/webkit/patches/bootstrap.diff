@@ -3634,7 +3634,7 @@ index bde7c16e2e3fbe0b5d3891996e550f99785bb5c1..899b13d1eac5bd7dd35fe82cce1bf796
  {
      return context ? instrumentingAgents(*context) : nullptr;
 diff --git a/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp b/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp
-index c8ec0ee3944800964eabea9370f4f45e4c7f583e..00b99c93efa8c20c8cba7fb6bdfa588c742811f3 100644
+index c8ec0ee3944800964eabea9370f4f45e4c7f583e..899008924290cc064b88641cc09595f4c0a877ff 100644
 --- a/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp
 +++ b/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp
 @@ -62,12 +62,16 @@
@@ -3827,7 +3827,7 @@ index c8ec0ee3944800964eabea9370f4f45e4c7f583e..00b99c93efa8c20c8cba7fb6bdfa588c
 +    }
 +    ScrollAlignment alignment = ScrollAlignment::alignCenterIfNeeded;
 +    alignment.m_enableLegacyHorizontalVisibilityThreshold = false; // Disable RenderLayer minium horizontal scroll threshold.
-+    renderer->scrollRectToVisible(absoluteBounds, insideFixed, { SelectionRevealMode::Reveal, alignment, alignment, ShouldAllowCrossOriginScrolling::Yes });
++    renderer->scrollRectToVisible(absoluteBounds, insideFixed, { SelectionRevealMode::Reveal, alignment, alignment, ShouldAllowCrossOriginScrolling::Yes, ScrollBehavior::Instant });
 +    return { };
 +}
 +
