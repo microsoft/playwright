@@ -22,6 +22,7 @@ import { promisify } from 'util';
 import type { TestGroup } from './dispatcher';
 import { Dispatcher } from './dispatcher';
 import type { FilePatternFilter } from './util';
+import { pluginLogger } from './util';
 import { createFileMatcher, createTitleMatcher, serializeError } from './util';
 import type { TestCase } from './test';
 import { Suite } from './test';
@@ -38,7 +39,7 @@ import JUnitReporter from './reporters/junit';
 import EmptyReporter from './reporters/empty';
 import HtmlReporter from './reporters/html';
 import { ProjectImpl } from './project';
-import type { Config, FullProjectInternal } from './types';
+import type { Config, FullProjectInternal, TestPlugin } from './types';
 import type { FullConfigInternal } from './types';
 import { raceAgainstTimeout } from 'playwright-core/lib/utils/timeoutRunner';
 import { SigIntWatcher } from './sigIntWatcher';
@@ -433,7 +434,7 @@ export class Runner {
 
   private async _performGlobalSetup(config: FullConfigInternal, rootSuite: Suite): Promise<(() => Promise<void>) | undefined> {
     const result: FullResult = { status: 'passed' };
-    const pluginTeardowns: (() => Promise<void>)[] = [];
+    const pluginTeardowns: TestPlugin[] = [];
     let globalSetupResult: any;
 
     const tearDown = async () => {
@@ -448,9 +449,13 @@ export class Runner {
           await (await this._loader.loadGlobalHook(config.globalTeardown, 'globalTeardown'))(this._loader.fullConfig());
       }, result);
 
-      for (const teardown of pluginTeardowns) {
+      for (const plugin of pluginTeardowns) {
         await this._runAndReportError(async () => {
-          await teardown();
+          if (plugin.teardown) {
+            pluginLogger(plugin)('Running teardown');
+            await plugin.teardown();
+            pluginLogger(plugin)('Finished teardown');
+          }
         }, result);
       }
     };
@@ -459,9 +464,13 @@ export class Runner {
       // First run the plugins, if plugin is a web server we want it to run before the
       // config's global setup.
       for (const plugin of config._plugins) {
-        await plugin.setup?.(rootSuite);
+        if (plugin.setup) {
+          pluginLogger(plugin)('Running configure');
+          await plugin.setup(rootSuite);
+          pluginLogger(plugin)('Finished configure');
+        }
         if (plugin.teardown)
-          pluginTeardowns.unshift(plugin.teardown);
+          pluginTeardowns.unshift(plugin);
       }
 
       // The do global setup.

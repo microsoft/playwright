@@ -32,6 +32,7 @@ import { isRegExp } from 'playwright-core/lib/utils';
 import { serializeError } from './util';
 import { _legacyWebServer } from './plugins/webServerPlugin';
 import { hostPlatform } from 'playwright-core/lib/utils/hostPlatform';
+import { pluginLogger } from './util';
 
 export const defaultTimeout = 30000;
 
@@ -117,8 +118,13 @@ export class Loader {
       this._applyCLIOverridesToProject(project);
 
     // 3. Run configure plugins phase.
-    for (const plugin of config.plugins || [])
-      await plugin.configure?.(config, configDir);
+    for (const plugin of config.plugins || []) {
+      if (plugin.configure) {
+        pluginLogger(plugin)('Running configure');
+        await plugin.configure(config, configDir);
+        pluginLogger(plugin)('Finished configure');
+      }
+    }
 
     // 4. Resolve config.
     this._configDir = configDir;

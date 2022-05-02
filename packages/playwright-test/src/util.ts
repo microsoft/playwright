@@ -20,7 +20,7 @@ import util from 'util';
 import path from 'path';
 import url from 'url';
 import { colors, debug, minimatch } from 'playwright-core/lib/utilsBundle';
-import type { TestError, Location } from './types';
+import type { TestError, TestPlugin, Location } from './types';
 import { calculateSha1, isRegExp } from 'playwright-core/lib/utils';
 import { isInternalFileName } from 'playwright-core/lib/utils/stackTrace';
 import { currentTestInfo } from './globals';
@@ -294,3 +294,5 @@ export async function normalizeAndSaveAttachment(outputPath: string, name: strin
     return { name, contentType, body: typeof options.body === 'string' ? Buffer.from(options.body) : options.body };
   }
 }
+
+export const pluginLogger = (plugin: TestPlugin) => debug(`pw:plugin:${plugin.name}`);
