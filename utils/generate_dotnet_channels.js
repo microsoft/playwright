@@ -114,6 +114,7 @@ function properties(properties, indent, onlyOptional) {
       if (onlyOptional && !inner.optional)
         continue;
       ts.push('');
+      ts.push(`${indent}[JsonPropertyName("${name}")]`)
       ts.push(`${indent}public ${inner.ts}${nullableSuffix(inner)} ${toTitleCase(name)} { get; set; }`);
       const wrapped = inner.optional ? `tOptional(${inner.scheme})` : inner.scheme;
       scheme.push(`${indent}${name}: ${wrapped},`);
@@ -183,6 +184,7 @@ for (const [name, item] of Object.entries(protocol)) {
  */
 `)
     channels_ts.push('using System.Collections.Generic;');
+    channels_ts.push('using System.Text.Json.Serialization;')
     channels_ts.push(``);
     channels_ts.push(`namespace Microsoft.Playwright.Transport.Protocol`);
     channels_ts.push(`{`);
