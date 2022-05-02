@@ -33,7 +33,7 @@ export type Metainfo = {
   'timestamp'?: number
 } | undefined;
 
-export class ErrorBoundary extends React.Component<{}, { error: Error | null, errorInfo: React.ErrorInfo | null }> {
+class ErrorBoundary extends React.Component<{}, { error: Error | null, errorInfo: React.ErrorInfo | null }> {
   state: { error: Error | null, errorInfo: React.ErrorInfo | null } = {
     error: null,
     errorInfo: null,
