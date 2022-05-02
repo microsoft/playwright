@@ -252,7 +252,7 @@ it('should connect to a browser with the default page', async ({ browserType,cre
   await context.close();
 });
 
-it.only('route.continue should delete the origin header', async ({ launchPersistent, server, isAndroid, browserName }) => {
+it('route.continue should delete the origin header', async ({ launchPersistent, server, isAndroid, browserName }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/13106' });
   it.skip(isAndroid, 'No cross-process on Android');
   it.fail(browserName === 'webkit', 'Does not delete origin in webkit');
