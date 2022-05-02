@@ -36,6 +36,44 @@ it('should amend HTTP headers', async ({ page, server }) => {
   expect(request.headers['foo']).toBe('bar');
 });
 
+it('should delete header with undefined value', async ({ page, server, browserName }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/13106' });
+
+  await page.goto(server.PREFIX + '/empty.html');
+  server.setRoute('/something', (request, response) => {
+    response.writeHead(200, { 'Access-Control-Allow-Origin': '*' });
+    response.end('done');
+  });
+  let interceptedRequest;
+  await page.route(server.PREFIX + '/something', async (route, request) => {
+    interceptedRequest = request;
+    const headers = await request.allHeaders();
+    route.continue({
+      headers: {
+        ...headers,
+        foo: undefined
+      }
+    });
+  });
+
+  const [text, serverRequest] = await Promise.all([
+    page.evaluate(async url => {
+      const data = await fetch(url, {
+        headers: {
+          foo: 'a',
+          bar: 'b',
+        }
+      });
+      return data.text();
+    }, server.PREFIX + '/something'),
+    server.waitForRequest('/something')
+  ]);
+  expect(text).toBe('done');
+  expect(interceptedRequest.headers()['foo']).toEqual('a');
+  expect(serverRequest.headers.foo).toBeFalsy();
+  expect(serverRequest.headers.bar).toBe('b');
+});
+
 it('should amend method', async ({ page, server }) => {
   const sRequest = server.waitForRequest('/sleep.zzz');
   await page.goto(server.EMPTY_PAGE);
