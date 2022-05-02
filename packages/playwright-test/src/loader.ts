@@ -251,6 +251,7 @@ export class Loader {
     projectConfig.repeatEach = takeFirst(this._configCLIOverrides.repeatEach, projectConfig.repeatEach);
     projectConfig.retries = takeFirst(this._configCLIOverrides.retries, projectConfig.retries);
     projectConfig.timeout = takeFirst(this._configCLIOverrides.timeout, projectConfig.timeout);
+    projectConfig.use = mergeObjects(projectConfig.use, this._configCLIOverrides.use);
   }
 
   private _resolveProject(config: Config, projectConfig: Project, throwawayArtifactsPath: string): FullProjectInternal {
