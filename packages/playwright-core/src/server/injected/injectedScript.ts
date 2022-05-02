@@ -715,14 +715,6 @@ export class InjectedScript {
     input.dispatchEvent(new Event('change', { 'bubbles': true }));
   }
 
-  checkHitTargetAt(node: Node, point: { x: number, y: number }): 'error:notconnected' | 'done' | { hitTargetDescription: string } {
-    const element: Element | null | undefined = node.nodeType === Node.ELEMENT_NODE ? (node as Element) : node.parentElement;
-    if (!element || !element.isConnected)
-      return 'error:notconnected';
-    const hitElement = this.deepElementFromPoint(document, point.x, point.y);
-    return this._expectHitTargetParent(hitElement, element);
-  }
-
   private _expectHitTargetParent(hitElement: Element | undefined, targetElement: Element) {
     targetElement = targetElement.closest('button, [role=button], a, [role=link]') || targetElement;
     const hitParents: Element[] = [];
@@ -752,10 +744,54 @@ export class InjectedScript {
     return { hitTargetDescription };
   }
 
-  setupHitTargetInterceptor(node: Node, action: 'hover' | 'tap' | 'mouse', blockAllEvents: boolean): HitTargetInterceptionResult | 'error:notconnected' {
+  // Life of a pointer action, for example click.
+  //
+  // 0. Retry items 1 and 2 while action fails due to navigation or element being detached.
+  //   1. Resolve selector to an element.
+  //   2. Retry the following steps until the element is detached or frame navigates away.
+  //     2a. Wait for the element to be stable (not moving), visible and enabled.
+  //     2b. Scroll element into view. Scrolling alternates between:
+  //         - Built-in protocol scrolling.
+  //         - Anchoring to the top/left, bottom/right and center/center.
+  //         This is to scroll elements from under sticky headers/footers.
+  //     2c. Click point is calculated, either based on explicitly specified position,
+  //         or some visible point of the element based on protocol content quads.
+  //     2d. Click point relative to page viewport is converted relative to the target iframe
+  //         for the next hit-point check.
+  //     2e. (injected) Hit target at the click point must be a descendant of the target element.
+  //         This prevents mis-clicking in edge cases like <iframe> overlaying the target.
+  //     2f. (injected) Events specific for click (or some other action type) are intercepted on
+  //         the Window with capture:true. See 2i for details.
+  //         Note: this step is skipped for drag&drop (see inline comments for the reason).
+  //     2g. Necessary keyboard modifiers are pressed.
+  //     2h. Click event is issued (mousemove + mousedown + mouseup).
+  //     2i. (injected) For each event, we check that hit target at the event point
+  //         is a descendant of the target element.
+  //         This guarantees no race between issuing the event and handling it in the page,
+  //         for example due to layout shift.
+  //         When hit target check fails, we block all future events in the page.
+  //     2j. Keyboard modifiers are restored.
+  //     2k. (injected) Event interceptor is removed.
+  //     2l. All navigations triggered between 2g-2k are awaited to be either committed or canceled.
+  //     2m. If failed, wait for increasing amount of time before the next retry.
+  setupHitTargetInterceptor(node: Node, action: 'hover' | 'tap' | 'mouse' | 'drag', hitPoint: { x: number, y: number }, blockAllEvents: boolean): HitTargetInterceptionResult | 'error:notconnected' | string /* hitTargetDescription */ {
     const element: Element | null | undefined = node.nodeType === Node.ELEMENT_NODE ? (node as Element) : node.parentElement;
     if (!element || !element.isConnected)
       return 'error:notconnected';
+
+    // First do a preliminary check, to reduce the possibility of some iframe
+    // intercepting the action.
+    const preliminaryHitElement = this.deepElementFromPoint(document, hitPoint.x, hitPoint.y);
+    const preliminaryResult = this._expectHitTargetParent(preliminaryHitElement, element);
+    if (preliminaryResult !== 'done')
+      return preliminaryResult.hitTargetDescription;
+
+    // When dropping, the "element that is being dragged" often stays under the cursor,
+    // so hit target check at the moment we receive mousedown does not work -
+    // it finds the "element that is being dragged" instead of the
+    // "element that we drop onto".
+    if (action === 'drag')
+      return { stop: () => 'done' };
 
     const events = {
       'hover': kHoverHitTargetInterceptorEvents,

@@ -239,3 +239,18 @@ it('should work with block inside inline in shadow dom', async ({ page, server }
   await page.locator('#target').click();
   expect(await page.evaluate('window._clicked')).toBe(true);
 });
+
+it('should not click iframe overlaying the target', async ({ page, server }) => {
+  await page.goto(server.EMPTY_PAGE);
+  await page.setContent(`
+    <button style="position: absolute; left: 250px;bottom: 0;height: 40px;width: 200px;" onclick="window._clicked=1">
+      click-me
+    </button>
+    <div style="background: transparent; bottom: 0px; left: 0px; margin: 0px; padding: 0px; position: fixed; z-index: 2147483647;">
+      <iframe srcdoc="<body onclick='window.top._clicked=2' style='background-color:red;height:40px;'></body>" style="display: block; border: 0px; width: 100vw; height: 48px;"></iframe>
+    </div>
+  `);
+  const error = await page.click('text=click-me', { timeout: 500 }).catch(e => e);
+  expect(await page.evaluate('window._clicked')).toBe(undefined);
+  expect(error.message).toContain(`<iframe srcdoc="<body onclick='window.top._clicked=2' st…></iframe> from <div>…</div> subtree intercepts pointer events`);
+});
