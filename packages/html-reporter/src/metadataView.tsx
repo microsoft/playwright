@@ -22,7 +22,7 @@ import { AutoChip } from './chip';
 import './reportView.css';
 import './theme.css';
 
-export type CommitInfo = {
+export type Metainfo = {
   'revision.id'?: string;
   'revision.author'?: string;
   'revision.email'?: string;
@@ -59,9 +59,9 @@ export class ErrorBoundary extends React.Component<{}, { error: Error | null, er
   }
 }
 
-export const MetadataView: React.FC<CommitInfo> = metadata => <ErrorBoundary><InnerMetadataView {...metadata} /></ErrorBoundary>;
+export const MetadataView: React.FC<Metainfo> = metadata => <ErrorBoundary><InnerMetadataView {...metadata} /></ErrorBoundary>;
 
-const InnerMetadataView: React.FC<CommitInfo> = metadata => {
+const InnerMetadataView: React.FC<Metainfo> = metadata => {
   if (!Object.keys(metadata).find(k => k.startsWith('revision.') || k.startsWith('ci.')))
     return null;
 
