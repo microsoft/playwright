@@ -283,7 +283,7 @@ export class Loader {
     const screenshotsDir = takeFirst((projectConfig as any).screenshotsDir, (config as any).screenshotsDir, path.join(testDir, '__screenshots__', process.platform, name));
     return {
       _fullyParallel: takeFirst(projectConfig.fullyParallel, config.fullyParallel, undefined),
-      _expect: takeFirst(projectConfig.expect, config.expect, undefined),
+      _expect: takeFirst(projectConfig.expect, config.expect, {}),
       grep: takeFirst(projectConfig.grep, config.grep, baseFullConfig.grep),
       grepInvert: takeFirst(projectConfig.grepInvert, config.grepInvert, baseFullConfig.grepInvert),
       outputDir,
@@ -346,7 +346,7 @@ class ProjectSuiteBuilder {
 
   private _buildTestTypePool(testType: TestTypeImpl): FixturePool {
     if (!this._testTypePools.has(testType)) {
-      const fixtures = this._applyConfigUseOptions(testType, this._config.use);
+      const fixtures = this._applyConfigUseOptions(testType, this._config.use || {});
       const pool = new FixturePool(fixtures);
       this._testTypePools.set(testType, pool);
     }
@@ -417,18 +417,25 @@ class ProjectSuiteBuilder {
   }
 
   private _applyConfigUseOptions(testType: TestTypeImpl, configUse: Fixtures): FixturesWithLocation[] {
-    return testType.fixtures.map(f => {
-      const configKeys = new Set(Object.keys(configUse || {}));
-      const resolved = { ...f.fixtures };
-      for (const [key, value] of Object.entries(resolved)) {
-        if (!isFixtureOption(value) || !configKeys.has(key))
-          continue;
-        // Apply override from config file.
-        const override = (configUse as any)[key];
-        (resolved as any)[key] = [override, value[1]];
+    const configKeys = new Set(Object.keys(configUse));
+    if (!configKeys.size)
+      return testType.fixtures;
+    const result: FixturesWithLocation[] = [];
+    for (const f of testType.fixtures) {
+      const optionsFromConfig: Fixtures = {};
+      const originalFixtures: Fixtures = {};
+      for (const [key, value] of Object.entries(f.fixtures)) {
+        if (isFixtureOption(value) && configKeys.has(key))
+          (optionsFromConfig as any)[key] = [(configUse as any)[key], value[1]];
+        else
+          (originalFixtures as any)[key] = value;
       }
-      return { fixtures: resolved, location: f.location };
-    });
+      if (Object.entries(optionsFromConfig).length)
+        result.push({ fixtures: optionsFromConfig, location: { file: `project#${this._index}`, line: 1, column: 1 } });
+      if (Object.entries(originalFixtures).length)
+        result.push({ fixtures: originalFixtures, location: f.location });
+    }
+    return result;
   }
 }
 
