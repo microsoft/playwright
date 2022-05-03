@@ -22,8 +22,7 @@ import type { TestBeginPayload, TestEndPayload, RunPayload, DonePayload, WorkerI
 import { setCurrentTestInfo } from './globals';
 import { Loader } from './loader';
 import type { Suite, TestCase } from './test';
-import type { Annotation, TestError, TestStepInternal } from './types';
-import { ProjectImpl } from './project';
+import type { Annotation, FullProjectInternal, TestError, TestStepInternal } from './types';
 import { FixtureRunner } from './fixtures';
 import { ManualPromise } from 'playwright-core/lib/utils/manualPromise';
 import { TestInfoImpl } from './testInfo';
@@ -35,7 +34,7 @@ const removeFolderAsync = util.promisify(rimraf);
 export class WorkerRunner extends EventEmitter {
   private _params: WorkerInitParams;
   private _loader!: Loader;
-  private _project!: ProjectImpl;
+  private _project!: FullProjectInternal;
   private _fixtureRunner: FixtureRunner;
 
   // Accumulated fatal errors that cannot be attributed to a test.
@@ -111,7 +110,7 @@ export class WorkerRunner extends EventEmitter {
 
   private async _teardownScopes() {
     // TODO: separate timeout for teardown?
-    const timeoutManager = new TimeoutManager(this._project.config.timeout);
+    const timeoutManager = new TimeoutManager(this._project.timeout);
     timeoutManager.setCurrentRunnable({ type: 'teardown' });
     const timeoutError = await timeoutManager.runWithTimeout(async () => {
       await this._fixtureRunner.teardownScope('test', timeoutManager);
@@ -151,7 +150,7 @@ export class WorkerRunner extends EventEmitter {
       return;
 
     this._loader = await Loader.deserialize(this._params.loader);
-    this._project = new ProjectImpl(this._loader.fullConfig().projects[this._params.projectIndex], this._params.projectIndex);
+    this._project = this._loader.fullConfig().projects[this._params.projectIndex];
   }
 
   async runTestGroup(runPayload: RunPayload) {
@@ -161,7 +160,7 @@ export class WorkerRunner extends EventEmitter {
     try {
       await this._loadIfNeeded();
       const fileSuite = await this._loader.loadTestFile(runPayload.file, 'worker');
-      const suite = this._project.cloneFileSuite(fileSuite, this._params.repeatEachIndex, test => {
+      const suite = this._loader.buildFileSuiteForProject(this._project, fileSuite, this._params.repeatEachIndex, test => {
         if (!entries.has(test._id))
           return false;
         return true;
@@ -327,7 +326,7 @@ export class WorkerRunner extends EventEmitter {
           this._extraSuiteAnnotations.set(suite, extraAnnotations);
           didFailBeforeAllForSuite = suite;  // Assume failure, unless reset below.
           // Separate timeout for each "beforeAll" modifier.
-          const timeSlot = { timeout: this._project.config.timeout, elapsed: 0 };
+          const timeSlot = { timeout: this._project.timeout, elapsed: 0 };
           await this._runModifiersForSuite(suite, testInfo, 'worker', timeSlot, extraAnnotations);
         }
 
@@ -379,7 +378,7 @@ export class WorkerRunner extends EventEmitter {
     let afterHooksSlot: TimeSlot | undefined;
     if (testInfo.status === 'timedOut') {
       // A timed-out test gets a full additional timeout to run after hooks.
-      afterHooksSlot = { timeout: this._project.config.timeout, elapsed: 0 };
+      afterHooksSlot = { timeout: this._project.timeout, elapsed: 0 };
     }
     await testInfo._runWithTimeout(async () => {
       // Note: do not wrap all teardown steps together, because failure in any of them
@@ -421,7 +420,7 @@ export class WorkerRunner extends EventEmitter {
           const afterAllError = await this._runAfterAllHooksForSuite(suite, testInfo);
           firstAfterHooksError = firstAfterHooksError || afterAllError;
         }
-        const teardownSlot = { timeout: this._project.config.timeout, elapsed: 0 };
+        const teardownSlot = { timeout: this._project.timeout, elapsed: 0 };
         testInfo._timeoutManager.setCurrentRunnable({ type: 'teardown', slot: teardownSlot });
         const testScopeError = await testInfo._runFn(() => this._fixtureRunner.teardownScope('test', testInfo._timeoutManager));
         firstAfterHooksError = firstAfterHooksError || testScopeError;
@@ -470,7 +469,7 @@ export class WorkerRunner extends EventEmitter {
         continue;
       try {
         // Separate time slot for each "beforeAll" hook.
-        const timeSlot = { timeout: this._project.config.timeout, elapsed: 0 };
+        const timeSlot = { timeout: this._project.timeout, elapsed: 0 };
         testInfo._timeoutManager.setCurrentRunnable({ type: 'beforeAll', location: hook.location, slot: timeSlot });
         await testInfo._runAsStep(() => this._fixtureRunner.resolveParametersAndRunFunction(hook.fn, testInfo), {
           category: 'hook',
@@ -498,7 +497,7 @@ export class WorkerRunner extends EventEmitter {
         continue;
       const afterAllError = await testInfo._runFn(async () => {
         // Separate time slot for each "afterAll" hook.
-        const timeSlot = { timeout: this._project.config.timeout, elapsed: 0 };
+        const timeSlot = { timeout: this._project.timeout, elapsed: 0 };
         testInfo._timeoutManager.setCurrentRunnable({ type: 'afterAll', location: hook.location, slot: timeSlot });
         await testInfo._runAsStep(() => this._fixtureRunner.resolveParametersAndRunFunction(hook.fn, testInfo), {
           category: 'hook',

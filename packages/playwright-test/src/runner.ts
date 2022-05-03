@@ -37,7 +37,6 @@ import JSONReporter from './reporters/json';
 import JUnitReporter from './reporters/junit';
 import EmptyReporter from './reporters/empty';
 import HtmlReporter from './reporters/html';
-import { ProjectImpl } from './project';
 import type { Config, FullProjectInternal } from './types';
 import type { FullConfigInternal } from './types';
 import { raceAgainstTimeout } from 'playwright-core/lib/utils/timeoutRunner';
@@ -291,7 +290,6 @@ export class Runner {
     const outputDirs = new Set<string>();
     const rootSuite = new Suite('');
     for (const [project, files] of filesByProject) {
-      const projectImpl = new ProjectImpl(project, config.projects.indexOf(project));
       const grepMatcher = createTitleMatcher(project.grep);
       const grepInvertMatcher = project.grepInvert ? createTitleMatcher(project.grepInvert) : null;
       const projectSuite = new Suite(project.name);
@@ -304,14 +302,14 @@ export class Runner {
         if (!fileSuite)
           continue;
         for (let repeatEachIndex = 0; repeatEachIndex < project.repeatEach; repeatEachIndex++) {
-          const cloned = projectImpl.cloneFileSuite(fileSuite, repeatEachIndex, test => {
+          const builtSuite = this._loader.buildFileSuiteForProject(project, fileSuite, repeatEachIndex, test => {
             const grepTitle = test.titlePath().join(' ');
             if (grepInvertMatcher?.(grepTitle))
               return false;
             return grepMatcher(grepTitle);
           });
-          if (cloned)
-            projectSuite._addSuite(cloned);
+          if (builtSuite)
+            projectSuite._addSuite(builtSuite);
         }
       }
       outputDirs.add(project.outputDir);

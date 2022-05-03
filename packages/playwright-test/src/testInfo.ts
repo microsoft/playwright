@@ -20,14 +20,12 @@ import type { TestError, TestInfo, TestStatus } from '../types/test';
 import type { FullConfigInternal, FullProjectInternal } from './types';
 import type { WorkerInitParams } from './ipc';
 import type { Loader } from './loader';
-import type { ProjectImpl } from './project';
 import type { TestCase } from './test';
 import { TimeoutManager } from './timeoutManager';
 import type { Annotation, TestStepInternal } from './types';
 import { addSuffixToFilePath, getContainedPath, monotonicTime, normalizeAndSaveAttachment, sanitizeForFilePath, serializeError, trimLongString } from './util';
 
 export class TestInfoImpl implements TestInfo {
-  private _projectImpl: ProjectImpl;
   private _addStepImpl: (data: Omit<TestStepInternal, 'complete'>) => TestStepInternal;
   readonly _test: TestCase;
   readonly _timeoutManager: TimeoutManager;
@@ -85,13 +83,12 @@ export class TestInfoImpl implements TestInfo {
 
   constructor(
     loader: Loader,
-    projectImpl: ProjectImpl,
+    project: FullProjectInternal,
     workerParams: WorkerInitParams,
     test: TestCase,
     retry: number,
     addStepImpl: (data: Omit<TestStepInternal, 'complete'>) => TestStepInternal,
   ) {
-    this._projectImpl = projectImpl;
     this._test = test;
     this._addStepImpl = addStepImpl;
     this._startTime = monotonicTime();
@@ -101,7 +98,7 @@ export class TestInfoImpl implements TestInfo {
     this.retry = retry;
     this.workerIndex = workerParams.workerIndex;
     this.parallelIndex =  workerParams.parallelIndex;
-    this.project = this._projectImpl.config;
+    this.project = project;
     this.config = loader.fullConfig();
     this.title = test.title;
     this.titlePath = test.titlePath();
@@ -117,7 +114,7 @@ export class TestInfoImpl implements TestInfo {
       const sameName = loader.fullConfig().projects.filter(project => project.name === this.project.name);
       let uniqueProjectNamePathSegment: string;
       if (sameName.length > 1)
-        uniqueProjectNamePathSegment = this.project.name + (sameName.indexOf(this._projectImpl.config) + 1);
+        uniqueProjectNamePathSegment = this.project.name + (sameName.indexOf(this.project) + 1);
       else
         uniqueProjectNamePathSegment = this.project.name;
 

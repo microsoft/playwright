@@ -15,11 +15,10 @@
  */
 
 import { installTransform, setCurrentlyLoadingTestFile } from './transform';
-import type { Config, Project, ReporterDescription, FullProjectInternal } from './types';
-import type { FullConfigInternal } from './types';
+import type { Config, Project, ReporterDescription, FullProjectInternal, FullConfigInternal, Fixtures, FixturesWithLocation } from './types';
 import { getPackageJsonPath, mergeObjects, errorWithFile } from './util';
 import { setCurrentlyLoadingFileSuite } from './globals';
-import { Suite } from './test';
+import { Suite, type TestCase } from './test';
 import type { SerializedLoaderData } from './ipc';
 import * as path from 'path';
 import * as url from 'url';
@@ -28,10 +27,12 @@ import * as os from 'os';
 import type { BuiltInReporter, ConfigCLIOverrides } from './runner';
 import type { Reporter } from '../types/testReporter';
 import { builtInReporters } from './runner';
-import { isRegExp } from 'playwright-core/lib/utils';
+import { isRegExp, calculateSha1 } from 'playwright-core/lib/utils';
 import { serializeError } from './util';
 import { _legacyWebServer } from './plugins/webServerPlugin';
 import { hostPlatform } from 'playwright-core/lib/utils/hostPlatform';
+import { FixturePool, isFixtureOption } from './fixtures';
+import type { TestTypeImpl } from './testType';
 
 export const defaultTimeout = 30000;
 
@@ -44,6 +45,7 @@ export class Loader {
   private _fullConfig: FullConfigInternal;
   private _configDir: string = '';
   private _configFile: string | undefined;
+  private _projectSuiteBuilders = new Map<FullProjectInternal, ProjectSuiteBuilder>();
 
   constructor(configCLIOverrides?: ConfigCLIOverrides) {
     this._configCLIOverrides = configCLIOverrides || {};
@@ -233,6 +235,13 @@ export class Loader {
     return this._fullConfig;
   }
 
+  buildFileSuiteForProject(project: FullProjectInternal, suite: Suite, repeatEachIndex: number, filter: (test: TestCase) => boolean): Suite | undefined {
+    if (!this._projectSuiteBuilders.has(project))
+      this._projectSuiteBuilders.set(project, new ProjectSuiteBuilder(project, this._fullConfig.projects.indexOf(project)));
+    const builder = this._projectSuiteBuilders.get(project)!;
+    return builder.cloneFileSuite(suite, repeatEachIndex, filter);
+  }
+
   serialize(): SerializedLoaderData {
     const result: SerializedLoaderData = {
       configFile: this._configFile,
@@ -321,6 +330,105 @@ ${'='.repeat(80)}\n`);
     } finally {
       revertBabelRequire();
     }
+  }
+}
+
+class ProjectSuiteBuilder {
+  private _config: FullProjectInternal;
+  private _index: number;
+  private _testTypePools = new Map<TestTypeImpl, FixturePool>();
+  private _testPools = new Map<TestCase, FixturePool>();
+
+  constructor(project: FullProjectInternal, index: number) {
+    this._config = project;
+    this._index = index;
+  }
+
+  private _buildTestTypePool(testType: TestTypeImpl): FixturePool {
+    if (!this._testTypePools.has(testType)) {
+      const fixtures = this._applyConfigUseOptions(testType, this._config.use);
+      const pool = new FixturePool(fixtures);
+      this._testTypePools.set(testType, pool);
+    }
+    return this._testTypePools.get(testType)!;
+  }
+
+  // TODO: we can optimize this function by building the pool inline in cloneSuite
+  private _buildPool(test: TestCase): FixturePool {
+    if (!this._testPools.has(test)) {
+      let pool = this._buildTestTypePool(test._testType);
+
+      const parents: Suite[] = [];
+      for (let parent: Suite | undefined = test.parent; parent; parent = parent.parent)
+        parents.push(parent);
+      parents.reverse();
+
+      for (const parent of parents) {
+        if (parent._use.length)
+          pool = new FixturePool(parent._use, pool, parent._isDescribe);
+        for (const hook of parent._hooks)
+          pool.validateFunction(hook.fn, hook.type + ' hook', hook.location);
+        for (const modifier of parent._modifiers)
+          pool.validateFunction(modifier.fn, modifier.type + ' modifier', modifier.location);
+      }
+
+      pool.validateFunction(test.fn, 'Test', test.location);
+      this._testPools.set(test, pool);
+    }
+    return this._testPools.get(test)!;
+  }
+
+  private _cloneEntries(from: Suite, to: Suite, repeatEachIndex: number, filter: (test: TestCase) => boolean, relativeTitlePath: string): boolean {
+    for (const entry of from._entries) {
+      if (entry instanceof Suite) {
+        const suite = entry._clone();
+        to._addSuite(suite);
+        if (!this._cloneEntries(entry, suite, repeatEachIndex, filter, relativeTitlePath + ' ' + suite.title)) {
+          to._entries.pop();
+          to.suites.pop();
+        }
+      } else {
+        const test = entry._clone();
+        test.retries = this._config.retries;
+        // We rely upon relative paths being unique.
+        // See `getClashingTestsPerSuite()` in `runner.ts`.
+        test._id = `${calculateSha1(relativeTitlePath + ' ' + entry.title)}@${entry._requireFile}#run${this._index}-repeat${repeatEachIndex}`;
+        test.repeatEachIndex = repeatEachIndex;
+        test._projectIndex = this._index;
+        to._addTest(test);
+        if (!filter(test)) {
+          to._entries.pop();
+          to.tests.pop();
+        } else {
+          const pool = this._buildPool(entry);
+          test._workerHash = `run${this._index}-${pool.digest}-repeat${repeatEachIndex}`;
+          test._pool = pool;
+        }
+      }
+    }
+    if (!to._entries.length)
+      return false;
+    return true;
+  }
+
+  cloneFileSuite(suite: Suite, repeatEachIndex: number, filter: (test: TestCase) => boolean): Suite | undefined {
+    const result = suite._clone();
+    return this._cloneEntries(suite, result, repeatEachIndex, filter, '') ? result : undefined;
+  }
+
+  private _applyConfigUseOptions(testType: TestTypeImpl, configUse: Fixtures): FixturesWithLocation[] {
+    return testType.fixtures.map(f => {
+      const configKeys = new Set(Object.keys(configUse || {}));
+      const resolved = { ...f.fixtures };
+      for (const [key, value] of Object.entries(resolved)) {
+        if (!isFixtureOption(value) || !configKeys.has(key))
+          continue;
+        // Apply override from config file.
+        const override = (configUse as any)[key];
+        (resolved as any)[key] = [override, value[1]];
+      }
+      return { fixtures: resolved, location: f.location };
+    });
   }
 }
 
