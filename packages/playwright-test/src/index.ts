@@ -23,6 +23,7 @@ import { createGuid, debugMode } from 'playwright-core/lib/utils';
 import { removeFolders } from 'playwright-core/lib/utils/fileUtils';
 export { expect } from './expect';
 export const _baseTest: TestType<{}, {}> = rootTestType.test;
+export { addRunnerPlugin as _addRunnerPlugin } from './plugins';
 import * as outOfProcess from 'playwright-core/lib/outofprocess';
 
 if ((process as any)['__pw_initiator__']) {

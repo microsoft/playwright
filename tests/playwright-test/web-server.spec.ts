@@ -415,14 +415,14 @@ test(`should suport self signed certificate`, async ({ runInlineTest, httpsServe
       test('pass', async ({}) => { });
     `,
     'playwright.config.js': `
-    module.exports = {
-      webServer: {
-        url: '${httpsServer.EMPTY_PAGE}',
-        ignoreHTTPSErrors: true,
-        reuseExistingServer: true,
-      },
-    };
-  `,
+      module.exports = {
+        webServer: {
+          url: '${httpsServer.EMPTY_PAGE}',
+          ignoreHTTPSErrors: true,
+          reuseExistingServer: true,
+        },
+      };
+    `,
   });
   expect(result.exitCode).toBe(0);
 });
@@ -431,7 +431,17 @@ test('should create multiple servers', async ({ runInlineTest }, { workerIndex }
   const port = workerIndex + 10500;
   const result = await runInlineTest({
     'test.spec.ts': `
-        const { test } = pwt;
+        import { webServer } from '@playwright/test/lib/plugins';
+        const { test, _addRunnerPlugin } = pwt;
+        _addRunnerPlugin(webServer({
+            command: 'node ${JSON.stringify(SIMPLE_SERVER_PATH)} ${port}',
+            url: 'http://localhost:${port}/port',
+        }));
+        _addRunnerPlugin(webServer({
+            command: 'node ${JSON.stringify(SIMPLE_SERVER_PATH)} ${port + 1}',
+            url: 'http://localhost:${port + 1}/port',
+        }));
+
         test('connect to the server', async ({page}) => {
           await page.goto('http://localhost:${port}/port');
           await page.locator('text=${port}');
@@ -441,48 +451,37 @@ test('should create multiple servers', async ({ runInlineTest }, { workerIndex }
         });
       `,
     'playwright.config.ts': `
-        import { webServer } from '@playwright/test/lib/plugins';
         module.exports = {
-          plugins: [
-            webServer({
-                command: 'node ${JSON.stringify(SIMPLE_SERVER_PATH)} ${port}',
-                url: 'http://localhost:${port}/port',
-            }),
-            webServer({
-                command: 'node ${JSON.stringify(SIMPLE_SERVER_PATH)} ${port + 1}',
-                url: 'http://localhost:${port + 1}/port',
-            }),
-           ],
-           globalSetup: 'globalSetup.ts',
-           globalTeardown: 'globalTeardown.ts',
-          };
+          globalSetup: 'globalSetup.ts',
+          globalTeardown: 'globalTeardown.ts',
+        };
         `,
     'globalSetup.ts': `
-          module.exports = async () => {
-            const http = require("http");
+        module.exports = async () => {
+          const http = require("http");
+          const response = await new Promise(resolve => {
+            const request = http.request("http://localhost:${port}/hello", resolve);
+            request.end();
+          })
+          console.log('globalSetup-status-'+response.statusCode)
+          return async () => {
             const response = await new Promise(resolve => {
               const request = http.request("http://localhost:${port}/hello", resolve);
               request.end();
             })
-            console.log('globalSetup-status-'+response.statusCode)
-            return async () => {
-              const response = await new Promise(resolve => {
-                const request = http.request("http://localhost:${port}/hello", resolve);
-                request.end();
-              })
-              console.log('globalSetup-teardown-status-'+response.statusCode)
-            };
+            console.log('globalSetup-teardown-status-'+response.statusCode)
           };
+        };
         `,
     'globalTeardown.ts': `
-          module.exports = async () => {
-            const http = require("http");
-            const response = await new Promise(resolve => {
-              const request = http.request("http://localhost:${port}/hello", resolve);
-              request.end();
-            })
-            console.log('globalTeardown-status-'+response.statusCode)
-          };
+        module.exports = async () => {
+          const http = require("http");
+          const response = await new Promise(resolve => {
+            const request = http.request("http://localhost:${port}/hello", resolve);
+            request.end();
+          })
+          console.log('globalTeardown-status-'+response.statusCode)
+        };
         `,
   }, undefined, { DEBUG: 'pw:webserver' });
   expect(result.exitCode).toBe(0);
@@ -504,22 +503,17 @@ test.describe('baseURL with plugins', () => {
     const port = workerIndex + 10500;
     const result = await runInlineTest({
       'test.spec.ts': `
-          const { test } = pwt;
+          import { webServer } from '@playwright/test/lib/plugins';
+          const { test, _addRunnerPlugin } = pwt;
+          _addRunnerPlugin(webServer({
+            command: 'node ${JSON.stringify(SIMPLE_SERVER_PATH)} ${port}',
+            url: 'http://localhost:${port}/port',
+          }));
           test('connect to the server', async ({baseURL, page}) => {
             expect(baseURL).toBeUndefined();
           });
-        `,
-      'playwright.config.ts': `
-          import { webServer } from '@playwright/test/lib/plugins';
-          module.exports = {
-            plugins: [
-              webServer({
-                  command: 'node ${JSON.stringify(SIMPLE_SERVER_PATH)} ${port}',
-                  url: 'http://localhost:${port}/port',
-              }),
-             ],
-            };
-          `,
+      `,
+      'playwright.config.ts': `module.exports = {};`,
     }, undefined, { DEBUG: 'pw:webserver' });
     expect(result.exitCode).toBe(0);
     expect(result.passed).toBe(1);
@@ -529,20 +523,18 @@ test.describe('baseURL with plugins', () => {
     const port = workerIndex + 10500;
     const result = await runInlineTest({
       'test.spec.ts': `
-          const { test } = pwt;
+          import { webServer } from '@playwright/test/lib/plugins';
+          const { test, _addRunnerPlugin } = pwt;
+          _addRunnerPlugin(webServer({
+            command: 'node ${JSON.stringify(SIMPLE_SERVER_PATH)} ${port + 1}',
+            url: 'http://localhost:${port + 1}/port'
+          }));
           test('connect to the server', async ({baseURL, page}) => {
             expect(baseURL).toBe('http://localhost:${port}');
           });
         `,
       'playwright.config.ts': `
-          import { webServer } from '@playwright/test/lib/plugins';
           module.exports = {
-            plugins: [
-              webServer({
-                  command: 'node ${JSON.stringify(SIMPLE_SERVER_PATH)} ${port + 1}',
-                  url: 'http://localhost:${port + 1}/port'
-              }),
-            ],
             webServer: {
               command: 'node ${JSON.stringify(SIMPLE_SERVER_PATH)} ${port}',
               port: ${port},

@@ -14,8 +14,13 @@
  * limitations under the License.
  */
 
-const { test: baseTest, expect } = require('@playwright/test');
+const { test: baseTest, expect, _addRunnerPlugin } = require('@playwright/test');
 const { mount } = require('@playwright/test/lib/mount');
+const { createPlugin } = require('@playwright/test/lib/plugins/vitePlugin');
+
+_addRunnerPlugin(createPlugin(
+  '@playwright/experimental-ct-svelte/register',
+  () => require('@sveltejs/vite-plugin-svelte').svelte()));
 
 const test = baseTest.extend({
   _workerPage: [async ({ browser }, use) => {

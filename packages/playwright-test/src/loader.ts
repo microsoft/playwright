@@ -29,7 +29,6 @@ import type { Reporter } from '../types/testReporter';
 import { builtInReporters } from './runner';
 import { isRegExp, calculateSha1 } from 'playwright-core/lib/utils';
 import { serializeError } from './util';
-import { webServerPluginForConfig } from './plugins/webServerPlugin';
 import { hostPlatform } from 'playwright-core/lib/utils/hostPlatform';
 import { FixturePool, isFixtureOption } from './fixtures';
 import type { TestTypeImpl } from './testType';
@@ -53,20 +52,12 @@ export class Loader {
   }
 
   static async deserialize(data: SerializedLoaderData): Promise<Loader> {
-    if (process.env.PLAYWRIGHT_LEGACY_CONFIG_MODE) {
-      const loader = new Loader(data.overridesForLegacyConfigMode);
-      if (data.configFile)
-        await loader.loadConfigFile(data.configFile);
-      else
-        await loader.loadEmptyConfig(data.configDir);
-      return loader;
-    } else {
-      const loader = new Loader();
-      loader._configFile = data.configFile;
-      loader._configDir = data.configDir;
-      loader._fullConfig = data.config;
-      return loader;
-    }
+    const loader = new Loader(data.configCLIOverrides);
+    if (data.configFile)
+      await loader.loadConfigFile(data.configFile);
+    else
+      await loader.loadEmptyConfig(data.configDir);
+    return loader;
   }
 
   async loadConfigFile(file: string): Promise<FullConfigInternal> {
@@ -86,11 +77,6 @@ export class Loader {
   }
 
   private async _processConfigObject(config: Config, configDir: string) {
-    if (config.webServer) {
-      config.plugins = config.plugins || [];
-      config.plugins.push(webServerPluginForConfig(config));
-    }
-
     // 1. Validate data provided in the config file.
     validateConfig(this._configFile || '<default config>', config);
 
@@ -118,11 +104,7 @@ export class Loader {
     for (const project of config.projects || [])
       this._applyCLIOverridesToProject(project);
 
-    // 3. Run configure plugins phase.
-    for (const plugin of config.plugins || [])
-      await plugin.configure?.(config, configDir);
-
-    // 4. Resolve config.
+    // 3. Resolve config.
     this._configDir = configDir;
     const packageJsonPath = getPackageJsonPath(configDir);
     const packageJsonDir = packageJsonPath ? path.dirname(packageJsonPath) : undefined;
@@ -142,8 +124,6 @@ export class Loader {
       (config as any).screenshotsDir = path.resolve(configDir, (config as any).screenshotsDir);
     if (config.snapshotDir !== undefined)
       config.snapshotDir = path.resolve(configDir, config.snapshotDir);
-    if (config.webServer)
-      config.webServer.cwd = config.webServer.cwd ? path.resolve(configDir, config.webServer.cwd) : configDir;
 
     this._fullConfig._configDir = configDir;
     this._fullConfig.rootDir = config.testDir || this._configDir;
@@ -164,7 +144,6 @@ export class Loader {
     this._fullConfig.updateSnapshots = takeFirst(config.updateSnapshots, baseFullConfig.updateSnapshots);
     this._fullConfig.workers = takeFirst(config.workers, baseFullConfig.workers);
     this._fullConfig.webServer = takeFirst(config.webServer, baseFullConfig.webServer);
-    this._fullConfig._plugins = takeFirst(config.plugins, baseFullConfig._plugins);
     this._fullConfig.metadata = takeFirst(config.metadata, baseFullConfig.metadata);
     this._fullConfig.projects = (config.projects || [config]).map(p => this._resolveProject(config, p, throwawayArtifactsPath));
   }
@@ -246,10 +225,8 @@ export class Loader {
     const result: SerializedLoaderData = {
       configFile: this._configFile,
       configDir: this._configDir,
-      config: this._fullConfig,
+      configCLIOverrides: this._configCLIOverrides,
     };
-    if (process.env.PLAYWRIGHT_LEGACY_CONFIG_MODE)
-      result.overridesForLegacyConfigMode = this._configCLIOverrides;
     return result;
   }
 
@@ -647,7 +624,6 @@ export const baseFullConfig: FullConfigInternal = {
   _globalOutputDir: path.resolve(process.cwd()),
   _configDir: '',
   _testGroupsCount: 0,
-  _plugins: [],
 };
 
 function resolveReporters(reporters: Config['reporter'], rootDir: string): ReporterDescription[]|undefined {
