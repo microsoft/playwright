@@ -15,20 +15,12 @@
  */
 
 import { PlaywrightTestConfig, devices } from '@playwright/test';
-import viteCT from '@playwright/experimental-ct-vue/vitePlugin';
 
 const config: PlaywrightTestConfig = {
   testDir: 'src',
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  reporter: process.env.CI ? [
-    ['html', { open: 'never' }],
-  ] : [
-    ['html', { open: 'on-failure' }]
-  ],
-  plugins: [
-    viteCT(),
-  ],
+  reporter: 'html',
   use: {
     trace: 'on-first-retry',
   },

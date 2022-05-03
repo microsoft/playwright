@@ -16,13 +16,12 @@
 
 import type { TestError } from '../types/testReporter';
 import type { ConfigCLIOverrides } from './runner';
-import type { FullConfigInternal, TestStatus } from './types';
+import type { TestStatus } from './types';
 
 export type SerializedLoaderData = {
-  config: FullConfigInternal;
   configFile: string | undefined;
   configDir: string;
-  overridesForLegacyConfigMode?: ConfigCLIOverrides;
+  configCLIOverrides: ConfigCLIOverrides;
 };
 
 export type WorkerInitParams = {

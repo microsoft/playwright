@@ -22,8 +22,8 @@ import { debug } from 'playwright-core/lib/utilsBundle';
 import { raceAgainstTimeout } from 'playwright-core/lib/utils/timeoutRunner';
 import { launchProcess } from 'playwright-core/lib/utils/processLauncher';
 
-import type { PlaywrightTestConfig, TestPlugin } from '../types';
-import type { Reporter } from '../../types/testReporter';
+import type { FullConfig, Reporter } from '../../types/testReporter';
+import type { TestRunnerPlugin } from '.';
 
 
 export type WebServerPluginOptions = {
@@ -42,7 +42,7 @@ const DEFAULT_ENVIRONMENT_VARIABLES = {
 
 const debugWebServer = debug('pw:webserver');
 
-export class WebServerPlugin implements TestPlugin {
+export class WebServerPlugin implements TestRunnerPlugin {
   private _isAvailable: () => Promise<boolean>;
   private _killProcess?: () => Promise<void>;
   private _processExitedPromise!: Promise<any>;
@@ -57,11 +57,8 @@ export class WebServerPlugin implements TestPlugin {
   }
 
 
-  public async configure(config: PlaywrightTestConfig, configDir: string) {
+  public async setup(config: FullConfig, configDir: string) {
     this._options.cwd = this._options.cwd ? path.resolve(configDir, this._options.cwd) : configDir;
-  }
-
-  public async setup() {
     try {
       await this._startProcess();
       await this._waitForProcess();
@@ -200,23 +197,23 @@ function getIsAvailableFunction(url: string, checkPortOnly: boolean, ignoreHTTPS
   return () => isPortUsed(+port);
 }
 
-export const webServer = (options: WebServerPluginOptions): TestPlugin => {
+export const webServer = (options: WebServerPluginOptions): TestRunnerPlugin => {
   // eslint-disable-next-line no-console
   return new WebServerPlugin(options, false, { onStdOut: d => console.log(d.toString()), onStdErr: d => console.error(d.toString()) });
 };
 
-export const webServerPluginForConfig = (config: PlaywrightTestConfig): TestPlugin => {
+export const webServerPluginForConfig = (config: FullConfig, reporter: Reporter): TestRunnerPlugin => {
   const webServer = config.webServer!;
   if (webServer.port !== undefined && webServer.url !== undefined)
     throw new Error(`Exactly one of 'port' or 'url' is required in config.webServer.`);
 
-  if (webServer.port !== undefined && !config.use?.baseURL) {
-    config.use = (config.use || {});
-    config.use.baseURL = `http://localhost:${webServer.port}`;
-  }
-
   const url = webServer.url || `http://localhost:${webServer.port}`;
+
+  // We only set base url when only the port is given. That's a legacy mode we have regrets about.
+  if (!webServer.url)
+    process.env.PLAYWRIGHT_TEST_BASE_URL = url;
+
   // TODO: replace with reporter once plugins are removed.
   // eslint-disable-next-line no-console
-  return new WebServerPlugin({ ...webServer, url }, webServer.port !== undefined, { onStdOut: d => console.log(d.toString()), onStdErr: d => console.error(d.toString()) });
+  return new WebServerPlugin({ ...webServer, url }, webServer.port !== undefined, reporter);
 };

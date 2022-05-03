@@ -41,6 +41,9 @@ import type { Config, FullProjectInternal } from './types';
 import type { FullConfigInternal } from './types';
 import { raceAgainstTimeout } from 'playwright-core/lib/utils/timeoutRunner';
 import { SigIntWatcher } from './sigIntWatcher';
+import type { TestRunnerPlugin } from './plugins';
+import { setRunnerToAddPluginsTo } from './plugins';
+import { webServerPluginForConfig } from './plugins/webServerPlugin';
 
 const removeFolderAsync = promisify(rimraf);
 const readDirAsync = promisify(fs.readdir);
@@ -76,9 +79,15 @@ export type ConfigCLIOverrides = {
 export class Runner {
   private _loader: Loader;
   private _reporter!: Reporter;
+  private _plugins: TestRunnerPlugin[] = [];
 
   constructor(configCLIOverrides?: ConfigCLIOverrides) {
     this._loader = new Loader(configCLIOverrides);
+    setRunnerToAddPluginsTo(this);
+  }
+
+  addPlugin(plugin: TestRunnerPlugin) {
+    this._plugins.push(plugin);
   }
 
   async loadConfigFromResolvedFile(resolvedConfigFile: string): Promise<FullConfigInternal> {
@@ -448,10 +457,14 @@ export class Runner {
     };
 
     await this._runAndReportError(async () => {
+      // Legacy webServer support.
+      if (config.webServer)
+        this._plugins.push(webServerPluginForConfig(config, this._reporter));
+
       // First run the plugins, if plugin is a web server we want it to run before the
       // config's global setup.
-      for (const plugin of config._plugins) {
-        await plugin.setup?.(rootSuite);
+      for (const plugin of this._plugins) {
+        await plugin.setup?.(config, config._configDir, rootSuite);
         if (plugin.teardown)
           pluginTeardowns.unshift(plugin.teardown);
       }

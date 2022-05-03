@@ -723,18 +723,11 @@ test.describe('gitCommitInfo plugin', () => {
 
     const result = await runInlineTest({
       'uncommitted.txt': `uncommitted file`,
-      'playwright.config.ts': `
-        import path from 'path';
-        import { gitCommitInfo } from '@playwright/test/lib/plugins';
-
-        const config = {
-          plugins: [ gitCommitInfo() ],
-        }
-
-        export default config;
-      `,
+      'playwright.config.ts': `export default {};`,
       'example.spec.ts': `
-        const { test } = pwt;
+        import { gitCommitInfo } from '@playwright/test/lib/plugins';
+        const { test, _addRunnerPlugin } = pwt;
+        _addRunnerPlugin(gitCommitInfo());
         test('sample', async ({}) => { expect(2).toBe(2); });
       `,
     }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never', GITHUB_REPOSITORY: 'microsoft/playwright-example-for-test', GITHUB_RUN_ID: 'example-run-id', GITHUB_SERVER_URL: 'https://playwright.dev', GITHUB_SHA: 'example-sha' }, undefined, beforeRunPlaywrightTest);
@@ -760,25 +753,20 @@ test.describe('gitCommitInfo plugin', () => {
     const result = await runInlineTest({
       'uncommitted.txt': `uncommitted file`,
       'playwright.config.ts': `
-        import path from 'path';
-        import { gitCommitInfo } from '@playwright/test/lib/plugins';
-
-        const config = {
-          plugins: [ gitCommitInfo({
-            info: {
-              'revision.id': '1234567890',
-              'revision.subject': 'a better subject',
-              'revision.timestamp': new Date(),
-              'revision.author': 'William',
-              'revision.email': 'shakespeare@example.local',
-            },
-          }) ],
-        }
-
-        export default config;
+        export default {};
       `,
       'example.spec.ts': `
-        const { test } = pwt;
+        import { gitCommitInfo } from '@playwright/test/lib/plugins';
+        const { test, _addRunnerPlugin } = pwt;
+        _addRunnerPlugin(gitCommitInfo({
+          info: {
+            'revision.id': '1234567890',
+            'revision.subject': 'a better subject',
+            'revision.timestamp': new Date(),
+            'revision.author': 'William',
+            'revision.email': 'shakespeare@example.local',
+          },
+        }));
         test('sample', async ({}) => { expect(2).toBe(2); });
       `,
     }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never', GITHUB_REPOSITORY: 'microsoft/playwright-example-for-test', GITHUB_RUN_ID: 'example-run-id', GITHUB_SERVER_URL: 'https://playwright.dev', GITHUB_SHA: 'example-sha' }, undefined);
@@ -803,13 +791,7 @@ test.describe('gitCommitInfo plugin', () => {
     const result = await runInlineTest({
       'uncommitted.txt': `uncommitted file`,
       'playwright.config.ts': `
-        import path from 'path';
-
-        const config = {
-          plugins: [],
-        }
-
-        export default config;
+        export default {};
       `,
       'example.spec.ts': `
         const { test } = pwt;
@@ -829,15 +811,11 @@ test.describe('gitCommitInfo plugin', () => {
     const result = await runInlineTest({
       'uncommitted.txt': `uncommitted file`,
       'playwright.config.ts': `
-        import path from 'path';
-
-        const config = {
+        export default {
           metadata: {
             'revision.timestamp': 'hi',
           },
-        }
-
-        export default config;
+        };
       `,
       'example.spec.ts': `
         const { test } = pwt;

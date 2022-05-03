@@ -14,38 +14,34 @@
  * limitations under the License.
  */
 
-import type { PlaywrightTestConfig, TestPlugin } from '@playwright/test';
 import fs from 'fs';
+import type { Suite } from '../../types/testReporter';
 import path from 'path';
 import type { InlineConfig, Plugin, ViteDevServer } from 'vite';
+import type { TestRunnerPlugin } from '.';
 import { parse, traverse, types as t } from '../babelBundle';
 import type { ComponentInfo } from '../tsxTransform';
 import { collectComponentUsages, componentInfo } from '../tsxTransform';
+import type { FullConfig } from '../types';
 
 let viteDevServer: ViteDevServer;
 
 export function createPlugin(
   registerFunction: string,
-  frameworkPluginFactory: () => Plugin,
-  options: {
-    port?: number,
-    config?: InlineConfig
-  } = {}): TestPlugin {
-  const viteConfig = options.config || {};
-  const port = options.port || 3100;
+  frameworkPluginFactory: () => Plugin): TestRunnerPlugin {
   let configDir: string;
   return {
     name: 'playwright-vite-plugin',
 
-    configure: async (config: PlaywrightTestConfig, configDirectory: string) => {
-      configDir = configDirectory;
-      const url = `http://localhost:${port}/playwright/index.html`;
-      if (!config.use)
-        config.use = {};
-      config.use!.baseURL = url;
-    },
+    setup: async (config: FullConfig, configDirectory: string, suite: Suite) => {
+      // TODO: declare and pick these from the config.
+      const viteConfig: InlineConfig = {};
+      const port = 3100;
 
-    setup: async suite => {
+      configDir = configDirectory;
+
+      process.env.PLAYWRIGHT_TEST_BASE_URL = `http://localhost:${port}/playwright/index.html`;
+
       viteConfig.root = viteConfig.root || configDir;
       viteConfig.plugins = viteConfig.plugins || [
         frameworkPluginFactory()

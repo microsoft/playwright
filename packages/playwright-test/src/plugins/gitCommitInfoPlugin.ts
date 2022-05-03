@@ -13,17 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import type { Config, TestPlugin } from '../types';
+
 import { createGuid } from 'playwright-core/lib/utils';
 import { spawnAsync } from 'playwright-core/lib/utils/spawnAsync';
+import type { TestRunnerPlugin } from './';
+import type { FullConfig } from '../../types/testReporter';
 
 const GIT_OPERATIONS_TIMEOUT_MS = 1500;
 
-export const gitCommitInfo = (options?: GitCommitInfoPluginOptions): TestPlugin => {
+export const gitCommitInfo = (options?: GitCommitInfoPluginOptions): TestRunnerPlugin => {
   return {
     name: 'playwright:git-commit-info',
 
-    configure: async (config: Config, configDir: string) => {
+    setup: async (config: FullConfig, configDir: string) => {
       const info = {
         ...linksFromEnv(),
         ...options?.info ? options.info : await gitStatusFromCLI(options?.directory || configDir),
