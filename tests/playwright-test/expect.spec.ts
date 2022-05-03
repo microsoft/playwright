@@ -348,3 +348,29 @@ test.describe('helpful expect errors', () => {
     expect(result.passed).toBe(1);
   });
 });
+
+test('should reasonably work in global setup', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      export default { globalSetup: './global-setup' };
+    `,
+    'global-setup.ts': `
+      const { expect } = pwt;
+      export default async () => {
+        expect(1).toBe(1);
+        await expect.poll(async () => {
+          await new Promise(f => setTimeout(f, 50));
+          return 42;
+        }).toBe(42);
+        expect(1).toBe(2);
+      };
+    `,
+    'a.spec.ts': `
+      const { test } = pwt;
+      test('skipped', () => {});
+    `,
+  });
+
+  expect(result.exitCode).toBe(1);
+  expect(stripAnsi(result.output)).toContain('> 11 |         expect(1).toBe(2);');
+});
