@@ -30,6 +30,34 @@ def test_example(page: Page) -> None:`;
   expect(cli.text()).toContain(expectedResult);
 });
 
+test('should print the correct context options when using a device', async ({ browserName, runCLI }, testInfo) => {
+  test.skip(browserName !== 'webkit');
+
+  const tmpFile = testInfo.outputPath('script.js');
+  const cli = runCLI(['--target=pytest', '--device=iPhone 11', '--output', tmpFile, emptyHTML]);
+  await cli.exited;
+  const content = fs.readFileSync(tmpFile);
+  expect(content.toString()).toBe(`import pytest
+
+from playwright.sync_api import Page, expect
+
+
+@pytest.fixture(scope="session")
+def browser_context_args(browser_context_args, playwright):
+    device = playwright.devices["iPhone 11"]
+    return dict(
+    **browser_context_args,
+    **device,
+    )
+
+
+def test_example(page: Page) -> None:
+
+    # Go to ${emptyHTML}
+    page.goto("${emptyHTML}")
+`);
+});
+
 test('should save the codegen output to a file if specified', async ({ runCLI }, testInfo) => {
   const tmpFile = testInfo.outputPath('script.js');
   const cli = runCLI(['--target=pytest', '--output', tmpFile, emptyHTML]);

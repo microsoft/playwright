@@ -156,9 +156,19 @@ export class PythonLanguageGenerator implements LanguageGenerator {
   generateHeader(options: LanguageGeneratorOptions): string {
     const formatter = new PythonFormatter();
     if (this._isTest) {
-      formatter.add(`
+      formatter.add(`${options.deviceName ? 'import pytest\n' : ''}
 from playwright.sync_api import Page, expect
+${options.deviceName ? `
 
+@pytest.fixture(scope="session")
+def browser_context_args(browser_context_args, playwright) {
+    device = playwright.devices["${options.deviceName}"]
+    return dict(
+        **browser_context_args,
+        **device,
+    )
+}
+` : ''}
 
 def test_example(page: Page) -> None {`);
     } else if (this._isAsync) {
