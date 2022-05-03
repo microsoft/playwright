@@ -164,3 +164,32 @@ jobs:
       if: always() && matrix.os != 'ubuntu-latest'
     - run: xvfb-run npm run test-web
       if: always() && matrix.os == 'ubuntu-latest'
+
+  test-package-installations:
+    name: "Installation Test ${{ matrix.os }} (${{ matrix.node_version }})"
+    runs-on: ${{ matrix.os  }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+        - ubuntu-latest
+        - macos-latest
+        - windows-latest
+        node_version:
+        - "^18.0.0"
+    timeout-minutes: 30
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-node@v2
+      with:
+        node-version: ${{ matrix.node_version }}
+    - run: npm i -g npm@8
+    - run: npm ci
+      env:
+        DEBUG: pw:install
+    - run: npm run build
+    - run: npx playwright install-deps
+    - run: npm run itest
+      if: matrix.os != 'ubuntu-latest'
+    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run itest
+      if: matrix.os == 'ubuntu-latest'
