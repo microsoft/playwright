@@ -22,20 +22,31 @@ import type { TestInfoImpl } from './testInfo';
 import type { FixtureDescription, TimeoutManager } from './timeoutManager';
 
 type FixtureScope = 'test' | 'worker';
+const kScopeOrder: FixtureScope[] = ['test', 'worker'];
 type FixtureOptions = { auto?: boolean, scope?: FixtureScope, option?: boolean, timeout?: number | undefined };
 type FixtureTuple = [ value: any, options: FixtureOptions ];
 type FixtureRegistration = {
-  location: Location;  // Fixutre registration location.
+  // Fixture registration location.
+  location: Location;
+  // Fixture name comes from test.extend() call.
   name: string;
   scope: FixtureScope;
-  fn: Function | any;  // Either a fixture function, or a fixture value.
+  // Either a fixture function, or a fixture value.
+  fn: Function | any;
+  // Auto fixtures always run without user explicitly mentioning them.
   auto: boolean;
+  // An "option" fixture can have a value set in the config.
   option: boolean;
+  // Custom title to be used instead of the name, internal-only.
   customTitle?: string;
+  // Fixture with a separate timeout does not count towards the test time.
   timeout?: number;
-  deps: string[];  // Names of the dependencies, ({ foo, bar }) => {...}
-  id: string;  // Unique id, to differentiate between fixtures with the same name.
-  super?: FixtureRegistration;  // A fixture override can use the previous version of the fixture.
+  // Names of the dependencies, comes from the declaration "({ foo, bar }) => {...}"
+  deps: string[];
+  // Unique id, to differentiate between fixtures with the same name.
+  id: string;
+  // A fixture override can use the previous version of the fixture.
+  super?: FixtureRegistration;
 };
 
 class Fixture {
@@ -174,7 +185,7 @@ export class FixturePool {
           options = { auto: false, scope: 'test', option: false, timeout: undefined, customTitle: undefined };
         }
 
-        if (options.scope !== 'test' && options.scope !== 'worker')
+        if (!kScopeOrder.includes(options.scope))
           throw errorWithLocations(`Fixture "${name}" has unknown { scope: '${options.scope}' }.`, { location, name });
         if (options.scope === 'worker' && disallowWorkerFixtures)
           throw errorWithLocations(`Cannot use({ ${name} }) in a describe group, because it forces a new worker.\nMake it top-level in the test file or put in the configuration file.`, { location, name });
@@ -203,8 +214,8 @@ export class FixturePool {
           else
             throw errorWithLocations(`Fixture "${registration.name}" has unknown parameter "${name}".`, registration);
         }
-        if (registration.scope === 'worker' && dep.scope === 'test')
-          throw errorWithLocations(`Worker fixture "${registration.name}" cannot depend on a test fixture "${name}".`, registration, dep);
+        if (kScopeOrder.indexOf(registration.scope) > kScopeOrder.indexOf(dep.scope))
+          throw errorWithLocations(`${registration.scope} fixture "${registration.name}" cannot depend on a ${dep.scope} fixture "${name}".`, registration, dep);
         if (!markers.has(dep)) {
           visit(dep);
         } else if (markers.get(dep) === 'visiting') {
