@@ -17,17 +17,17 @@
 import fs from 'fs';
 import type { Suite } from '../../types/testReporter';
 import path from 'path';
-import type { InlineConfig, Plugin, ViteDevServer } from 'vite';
+import type { InlineConfig, Plugin, PreviewServer } from 'vite';
 import type { TestRunnerPlugin } from '.';
 import { parse, traverse, types as t } from '../babelBundle';
 import type { ComponentInfo } from '../tsxTransform';
 import { collectComponentUsages, componentInfo } from '../tsxTransform';
 import type { FullConfig } from '../types';
 
-let viteDevServer: ViteDevServer;
+let previewServer: PreviewServer;
 
 export function createPlugin(
-  registerFunction: string,
+  registerSourceFile: string,
   frameworkPluginFactory: () => Plugin): TestRunnerPlugin {
   let configDir: string;
   return {
@@ -51,24 +51,45 @@ export function createPlugin(
         for (const file of project.suites)
           files.add(file.location!.file);
       }
-      viteConfig.plugins.push(vitePlugin(registerFunction, [...files]));
+      const registerSource = await fs.promises.readFile(registerSourceFile, 'utf-8');
+      viteConfig.plugins.push(vitePlugin(registerSource, [...files]));
       viteConfig.configFile = viteConfig.configFile || false;
-      viteConfig.server = viteConfig.server || {};
-      viteConfig.server.port = port;
-      const { createServer } = require('vite');
-      viteDevServer = await createServer(viteConfig);
-      await viteDevServer.listen(port);
+      viteConfig.define = viteConfig.define || {};
+      viteConfig.define.__VUE_PROD_DEVTOOLS__ = true;
+      viteConfig.css = viteConfig.css || {};
+      viteConfig.css.devSourcemap = true;
+      viteConfig.preview = { port };
+      viteConfig.build = {
+        target: 'esnext',
+        minify: false,
+        rollupOptions: {
+          treeshake: false,
+          input: {
+            index: path.join(viteConfig.root, 'playwright', 'index.html')
+          },
+        },
+        sourcemap: true,
+        outDir: viteConfig?.build?.outDir || path.join(viteConfig.root, './dist-pw/')
+      };
+      const { build, preview } = require('vite');
+      await build(viteConfig);
+      previewServer = await preview(viteConfig);
     },
 
     teardown: async () => {
-      await viteDevServer.close();
+      await new Promise<void>((f, r) => previewServer.httpServer.close(err => {
+        if (err)
+          r(err);
+        else
+          f();
+      }));
     },
   };
 }
 
 const imports: Map<string, ComponentInfo> = new Map();
 
-function vitePlugin(registerFunction: string, files: string[]): Plugin {
+function vitePlugin(registerSource: string, files: string[]): Plugin {
   return {
     name: 'playwright:component-index',
 
@@ -106,7 +127,7 @@ function vitePlugin(registerFunction: string, files: string[]): Plugin {
 
       const folder = path.dirname(id);
       const lines = [content, ''];
-      lines.push(`import register from '${registerFunction}';`);
+      lines.push(registerSource);
 
       for (const [alias, value] of imports) {
         const importPath = value.isModuleOrAlias ? value.importPath : './' + path.relative(folder, value.importPath).replace(/\\/g, '/');

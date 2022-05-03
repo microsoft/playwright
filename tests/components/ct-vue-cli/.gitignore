@@ -1,7 +1,7 @@
 .DS_Store
 node_modules
 /dist
-
+/dist-pw
 
 # local env files
 .env.local
