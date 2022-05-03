@@ -2447,7 +2447,7 @@ index 09d4af604a835c7c6be1e43c249565bd1053aff4..0d6112342480454ce41a6b56dd925e1d
  
  if (Journald_FOUND)
 diff --git a/Source/WTF/wtf/StdLibExtras.h b/Source/WTF/wtf/StdLibExtras.h
-index 61801a0bad58cc59aef1745d8312e22a9973e87a..f77daadefa62f842f1a6f357a18a7caf155bdd57 100644
+index 61801a0bad58cc59aef1745d8312e22a9973e87a..dfb35560c5e9ad7788576e9a0f8cb61c9c4ede75 100644
 --- a/Source/WTF/wtf/StdLibExtras.h
 +++ b/Source/WTF/wtf/StdLibExtras.h
 @@ -605,8 +605,8 @@ template<typename OptionalType> auto valueOrDefault(OptionalType&& optionalValue
@@ -2457,7 +2457,7 @@ index 61801a0bad58cc59aef1745d8312e22a9973e87a..f77daadefa62f842f1a6f357a18a7caf
 -// TODO: Needed for GCC<=9.3. Remove it after Ubuntu 20.04 end of support (May 2023).
 -#if defined(__GLIBCXX__) && __cplusplus <= 201703L
 +// FIXME: Needed for GCC<=9.3. Remove it after Ubuntu 20.04 end of support (May 2023).
-+#if defined(__GLIBCXX__) && !defined(HAVE_STD_REMOVE_CVREF)
++#if defined(__GLIBCXX__) && !defined(__clang__) && !defined(HAVE_STD_REMOVE_CVREF)
  namespace std {
  template <typename T>
  struct remove_cvref {
