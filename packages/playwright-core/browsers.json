@@ -13,7 +13,7 @@
     },
     {
       "name": "chromium-tip-of-tree",
-      "revision": "1000",
+      "revision": "1003",
       "installByDefault": false
     },
     {
