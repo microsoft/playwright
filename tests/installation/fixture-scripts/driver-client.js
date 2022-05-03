@@ -28,7 +28,7 @@ const { start } = require('./node_modules/playwright-core/lib/outofprocess');
       await browser.close();
       console.log(`${browserType} SUCCESS`);
     } catch (e) {
-      console.error(`Should be able to launch ${browserType} from ${requireName}`);
+      console.error(`Should be able to launch ${browserType} from ${process.cwd()}`);
       console.error(e);
       process.exit(1);
     }
