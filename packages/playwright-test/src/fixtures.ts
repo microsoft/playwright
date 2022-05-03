@@ -26,7 +26,7 @@ const kScopeOrder: FixtureScope[] = ['test', 'worker'];
 type FixtureOptions = { auto?: boolean, scope?: FixtureScope, option?: boolean, timeout?: number | undefined };
 type FixtureTuple = [ value: any, options: FixtureOptions ];
 type FixtureRegistration = {
-  // Fixutre registration location.
+  // Fixture registration location.
   location: Location;
   // Fixture name comes from test.extend() call.
   name: string;
