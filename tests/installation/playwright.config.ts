@@ -25,6 +25,7 @@ const config: PlaywrightTestConfig = {
   plugins: [
     gitCommitInfo(),
   ],
+  globalSetup: path.join(__dirname, 'globalSetup'),
   testIgnore: '**\/fixture-scripts/**',
   timeout: 5 * 60 * 1000,
   retries: 0,
