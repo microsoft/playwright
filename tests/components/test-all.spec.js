@@ -9,7 +9,7 @@ for (const dir of fs.readdirSync(__dirname)) {
   if (!fs.statSync(folder).isDirectory())
     continue;
   test.describe.serial(path.basename(folder), () => {
-    test.setTimeout(180000);
+    test.setTimeout(7 * 60 * 1000 /* 7 minutes */);
     test('install', async () => {
       await run('npm', ['i'], folder);
     });
