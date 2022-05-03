@@ -78,7 +78,6 @@ it('should properly format :nth-child() in strict mode message', async ({ page }
   </div>
   `);
   const error = await page.locator('.foo').hover().catch(e => e);
-  console.log(error.message);
   expect(error.message).toContain('strict mode violation');
   // Second div has body > div:nth-child(2) > div:nth-child(2) selector which would be ambiguous
   // if '>' were ' '.
