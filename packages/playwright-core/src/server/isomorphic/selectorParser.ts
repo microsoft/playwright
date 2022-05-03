@@ -18,9 +18,13 @@ import type { CSSComplexSelectorList } from './cssParser';
 import { InvalidSelectorError, parseCSS } from './cssParser';
 export { InvalidSelectorError, isInvalidSelectorError } from './cssParser';
 
+export type NestedSelectorBody = { parsed: ParsedSelector, distance?: number };
+const kNestedSelectorNames = new Set(['has', 'left-of', 'right-of', 'above', 'below', 'near']);
+const kNestedSelectorNamesWithDistance = new Set(['left-of', 'right-of', 'above', 'below', 'near']);
+
 export type ParsedSelectorPart = {
   name: string,
-  body: string | CSSComplexSelectorList | ParsedSelector,
+  body: string | CSSComplexSelectorList | NestedSelectorBody,
   source: string,
 };
 
@@ -35,7 +39,6 @@ type ParsedSelectorStrings = {
 };
 
 export const customCSSNames = new Set(['not', 'is', 'where', 'has', 'scope', 'light', 'visible', 'text', 'text-matches', 'text-is', 'has-text', 'above', 'below', 'right-of', 'left-of', 'near', 'nth-match']);
-const kNestedSelectorNames = new Set(['has']);
 
 export function parseSelector(selector: string): ParsedSelector {
   const result = parseSelectorString(selector);
@@ -52,16 +55,22 @@ export function parseSelector(selector: string): ParsedSelector {
     }
     if (kNestedSelectorNames.has(part.name)) {
       let innerSelector: string;
+      let distance: number | undefined;
       try {
-        const unescaped = JSON.parse(part.body);
-        if (typeof unescaped !== 'string')
+        const unescaped = JSON.parse('[' + part.body + ']');
+        if (!Array.isArray(unescaped) || unescaped.length < 1 || unescaped.length > 2 || typeof unescaped[0] !== 'string')
           throw new Error(`Malformed selector: ${part.name}=` + part.body);
-        innerSelector = unescaped;
+        innerSelector = unescaped[0];
+        if (unescaped.length === 2) {
+          if (typeof unescaped[1] !== 'number' || !kNestedSelectorNamesWithDistance.has(part.name))
+            throw new Error(`Malformed selector: ${part.name}=` + part.body);
+          distance = unescaped[1];
+        }
       } catch (e) {
         throw new Error(`Malformed selector: ${part.name}=` + part.body);
       }
-      const result = { name: part.name, source: part.body, body: parseSelector(innerSelector) };
-      if (result.body.parts.some(part => part.name === 'control' && part.body === 'enter-frame'))
+      const result = { name: part.name, source: part.body, body: { parsed: parseSelector(innerSelector), distance } };
+      if (result.body.parsed.parts.some(part => part.name === 'control' && part.body === 'enter-frame'))
         throw new Error(`Frames are not allowed inside "${part.name}" selectors`);
       return result;
     }
@@ -119,7 +128,7 @@ export function allEngineNames(selector: ParsedSelector): Set<string> {
     for (const part of selector.parts) {
       result.add(part.name);
       if (kNestedSelectorNames.has(part.name))
-        visit(part.body as ParsedSelector);
+        visit((part.body as NestedSelectorBody).parsed);
     }
   };
   visit(selector);

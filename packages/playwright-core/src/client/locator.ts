@@ -26,11 +26,21 @@ import type { FilePayload, FrameExpectOptions, Rect, SelectOption, SelectOptionO
 import { parseResult, serializeArgument } from './jsHandle';
 import { escapeWithQuotes } from '../utils/isomorphic/stringUtils';
 
+export type LocatorOptions = {
+  hasText?: string | RegExp;
+  has?: Locator;
+  leftOf?: Locator | { locator: Locator, maxDistance?: number };
+  rightOf?: Locator | { locator: Locator, maxDistance?: number };
+  above?: Locator | { locator: Locator, maxDistance?: number };
+  below?: Locator | { locator: Locator, maxDistance?: number };
+  near?: Locator | { locator: Locator, maxDistance?: number };
+};
+
 export class Locator implements api.Locator {
   _frame: Frame;
   _selector: string;
 
-  constructor(frame: Frame, selector: string, options?: { hasText?: string | RegExp, has?: Locator }) {
+  constructor(frame: Frame, selector: string, options?: LocatorOptions) {
     this._frame = frame;
     this._selector = selector;
 
@@ -46,6 +56,26 @@ export class Locator implements api.Locator {
       if (options.has._frame !== frame)
         throw new Error(`Inner "has" locator must belong to the same frame.`);
       this._selector += ` >> has=` + JSON.stringify(options.has._selector);
+    }
+
+    for (const inner of ['leftOf', 'rightOf', 'above', 'below', 'near'] as const) {
+      const value = options?.[inner];
+      if (!value)
+        continue;
+      let maxDistance: number | undefined;
+      let locator: Locator;
+      if (value instanceof Locator) {
+        locator = value;
+      } else {
+        locator = value.locator;
+        maxDistance = value.maxDistance;
+      }
+      if (locator._frame !== frame)
+        throw new Error(`Inner "${inner}" locator must belong to the same frame.`);
+      if (maxDistance !== undefined && typeof maxDistance !== 'number')
+        throw new Error(`"${inner}.maxDistance" must be a number, found ${typeof maxDistance}.`);
+      const engineName = inner === 'leftOf' ? 'left-of' : (inner === 'rightOf' ? 'right-of' : inner);
+      this._selector += ` >> ${engineName}=` + JSON.stringify(locator._selector) + (maxDistance === undefined ? '' : ',' + maxDistance);
     }
   }
 
@@ -122,7 +152,7 @@ export class Locator implements api.Locator {
     return this._frame._highlight(this._selector);
   }
 
-  locator(selector: string, options?: { hasText?: string | RegExp, has?: Locator }): Locator {
+  locator(selector: string, options?: LocatorOptions): Locator {
     return new Locator(this._frame, this._selector + ' >> ' + selector, options);
   }
 
@@ -130,7 +160,7 @@ export class Locator implements api.Locator {
     return new FrameLocator(this._frame, this._selector + ' >> ' + selector);
   }
 
-  that(options?: { hasText?: string | RegExp, has?: Locator }): Locator {
+  that(options?: LocatorOptions): Locator {
     return new Locator(this._frame, this._selector, options);
   }
 

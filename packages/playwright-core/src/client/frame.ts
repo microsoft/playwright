@@ -18,7 +18,7 @@
 import { assert } from '../utils';
 import type * as channels from '../protocol/channels';
 import { ChannelOwner } from './channelOwner';
-import { FrameLocator, Locator } from './locator';
+import { FrameLocator, Locator, type LocatorOptions } from './locator';
 import { ElementHandle, convertSelectOptionValues, convertInputFiles } from './elementHandle';
 import { assertMaxArguments, JSHandle, serializeArgument, parseResult } from './jsHandle';
 import fs from 'fs';
@@ -290,7 +290,7 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
     return await this._channel.highlight({ selector });
   }
 
-  locator(selector: string, options?: { hasText?: string | RegExp, has?: Locator }): Locator {
+  locator(selector: string, options?: LocatorOptions): Locator {
     return new Locator(this, selector, options);
   }
 

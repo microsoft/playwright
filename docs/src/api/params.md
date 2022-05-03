@@ -897,9 +897,59 @@ For example, `article` that has `text=Playwright` matches `<article><div>Playwri
 
 Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
 
+## locator-option-left-of
+- `leftOf` <[Locator]|[Object]>
+  - `locator` <[Locator]> The inner locator.
+  - `maxDistance` ?<[float]> Maximum horizontal distance between the elements in pixels, unlimited by default.
+
+Matches elements that are to the left of any element matching the inner locator, at any vertical position. Inner locator is queried against the same root as the outer one. More details in [layout selectors](../selectors.md#selecting-elements-based-on-layout) guide.
+
+Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
+
+## locator-option-right-of
+- `rightOf` <[Locator]|[Object]>
+  - `locator` <[Locator]> The inner locator.
+  - `maxDistance` ?<[float]> Maximum horizontal distance between the elements in pixels, unlimited by default.
+
+Matches elements that are to the right of any element matching the inner locator, at any vertical position. Inner locator is queried against the same root as the outer one. More details in [layout selectors](../selectors.md#selecting-elements-based-on-layout) guide.
+
+Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
+
+## locator-option-above
+- `above` <[Locator]|[Object]>
+  - `locator` <[Locator]> The inner locator.
+  - `maxDistance` ?<[float]> Maximum vertical distance between the elements in pixels, unlimited by default.
+
+Matches elements that are above any of the elements matching the inner locator, at any horizontal position. Inner locator is queried against the same root as the outer one. More details in [layout selectors](../selectors.md#selecting-elements-based-on-layout) guide.
+
+Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
+
+## locator-option-below
+- `below` <[Locator]|[Object]>
+  - `locator` <[Locator]> The inner locator.
+  - `maxDistance` ?<[float]> Maximum vertical distance between the elements in pixels, unlimited by default.
+
+Matches elements that are below any of the elements matching the inner locator, at any horizontal position. Inner locator is queried against the same root as the outer one. More details in [layout selectors](../selectors.md#selecting-elements-based-on-layout) guide.
+
+Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
+
+## locator-option-near
+- `near` <[Locator]|[Object]>
+  - `locator` <[Locator]> The inner locator.
+  - `maxDistance` ?<[float]> Maximum distance between the elements in pixels, 50 by default.
+
+Matches elements that are near any of the elements matching the inner locator. Inner locator is queried against the same root as the outer one. More details in [layout selectors](../selectors.md#selecting-elements-based-on-layout) guide.
+
+Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
+
 ## locator-options-list
 - %%-locator-option-has-text-%%
 - %%-locator-option-has-%%
+- %%-locator-option-left-of-%%
+- %%-locator-option-right-of-%%
+- %%-locator-option-above-%%
+- %%-locator-option-below-%%
+- %%-locator-option-near-%%
 
 ## screenshot-option-animations
 - `animations` <[ScreenshotAnimations]<"disabled"|"allow">>

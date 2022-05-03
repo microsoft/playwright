@@ -162,7 +162,9 @@ it('should work with strict mode and chaining', async ({ page }) => {
   expect(await page.locator('div >> div >> span').textContent()).toBe('hi');
 });
 
-it('should work with position selectors', async ({ page }) => {
+it('should work with layout selectors', async ({ page, trace }) => {
+  it.skip(trace === 'on');
+
   /*
 
        +--+  +--+
@@ -214,60 +216,130 @@ it('should work with position selectors', async ({ page }) => {
       div.style.width = box[2] + 'px';
       div.style.height = box[3] + 'px';
       container.appendChild(div);
+      const span = document.createElement('span');
+      span.textContent = '' + i;
+      div.appendChild(span);
     }
   }, boxes);
 
   expect(await page.$eval('div:right-of(#id6)', e => e.id)).toBe('id7');
+  expect(await page.$eval('div >> right-of="#id6"', e => e.id)).toBe('id7');
+  expect(await page.locator('div', { rightOf: page.locator('#id6') }).first().evaluate(e => e.id)).toBe('id7');
   expect(await page.$eval('div:right-of(#id1)', e => e.id)).toBe('id2');
+  expect(await page.$eval('div >> right-of="#id1"', e => e.id)).toBe('id2');
   expect(await page.$eval('div:right-of(#id3)', e => e.id)).toBe('id4');
+  expect(await page.$eval('div >> right-of="#id3"', e => e.id)).toBe('id4');
   expect(await page.$('div:right-of(#id4)')).toBe(null);
+  expect(await page.$('div >> right-of="#id4"')).toBe(null);
   expect(await page.$eval('div:right-of(#id0)', e => e.id)).toBe('id7');
+  expect(await page.$eval('div >> right-of="#id0"', e => e.id)).toBe('id7');
   expect(await page.$eval('div:right-of(#id8)', e => e.id)).toBe('id9');
+  expect(await page.$eval('div >> right-of="#id8"', e => e.id)).toBe('id9');
   expect(await page.$$eval('div:right-of(#id3)', els => els.map(e => e.id).join(','))).toBe('id4,id2,id5,id7,id8,id9');
+  expect(await page.$$eval('div >> right-of="#id3"', els => els.map(e => e.id).join(','))).toBe('id4,id2,id5,id7,id8,id9');
+  expect(await page.locator('div', { rightOf: page.locator('#id3') }).locator('span').evaluateAll(els => els.map(e => e.textContent).join(','))).toBe('4,2,5,7,8,9');
   expect(await page.$$eval('div:right-of(#id3, 50)', els => els.map(e => e.id).join(','))).toBe('id2,id5,id7,id8');
+  expect(await page.$$eval('div >> right-of="#id3",50', els => els.map(e => e.id).join(','))).toBe('id2,id5,id7,id8');
+  expect(await page.$$eval('div >> right-of="#id3",50 >> span', els => els.map(e => e.textContent).join(','))).toBe('2,5,7,8');
+  expect(await page.locator('div', {
+    rightOf: { locator: page.locator('#id3'), maxDistance: 50 },
+  }).locator('span').evaluateAll(els => els.map(e => e.textContent).join(','))).toBe('2,5,7,8');
   expect(await page.$$eval('div:right-of(#id3, 49)', els => els.map(e => e.id).join(','))).toBe('id7,id8');
+  expect(await page.$$eval('div >> right-of="#id3",49', els => els.map(e => e.id).join(','))).toBe('id7,id8');
+  expect(await page.$$eval('div >> right-of="#id3",49 >> span', els => els.map(e => e.textContent).join(','))).toBe('7,8');
+  expect(await page.locator('div', {
+    rightOf: { locator: page.locator('#id3'), maxDistance: 49 },
+  }).locator('span').evaluateAll(els => els.map(e => e.textContent).join(','))).toBe('7,8');
 
   expect(await page.$eval('div:left-of(#id2)', e => e.id)).toBe('id1');
+  expect(await page.$eval('div >> left-of="#id2"', e => e.id)).toBe('id1');
+  expect(await page.locator('div', { leftOf: page.locator('#id2') }).first().evaluate(e => e.id)).toBe('id1');
   expect(await page.$('div:left-of(#id0)')).toBe(null);
+  expect(await page.$('div >> left-of="#id0"')).toBe(null);
   expect(await page.$eval('div:left-of(#id5)', e => e.id)).toBe('id0');
+  expect(await page.$eval('div >> left-of="#id5"', e => e.id)).toBe('id0');
   expect(await page.$eval('div:left-of(#id9)', e => e.id)).toBe('id8');
+  expect(await page.$eval('div >> left-of="#id9"', e => e.id)).toBe('id8');
   expect(await page.$eval('div:left-of(#id4)', e => e.id)).toBe('id3');
+  expect(await page.$eval('div >> left-of="#id4"', e => e.id)).toBe('id3');
   expect(await page.$$eval('div:left-of(#id5)', els => els.map(e => e.id).join(','))).toBe('id0,id7,id3,id1,id6,id8');
+  expect(await page.$$eval('div >> left-of="#id5"', els => els.map(e => e.id).join(','))).toBe('id0,id7,id3,id1,id6,id8');
   expect(await page.$$eval('div:left-of(#id5, 3)', els => els.map(e => e.id).join(','))).toBe('id7,id8');
+  expect(await page.$$eval('div >> left-of="#id5",3', els => els.map(e => e.id).join(','))).toBe('id7,id8');
+  expect(await page.$$eval('div >> left-of="#id5",3 >> span', els => els.map(e => e.textContent).join(','))).toBe('7,8');
 
   expect(await page.$eval('div:above(#id0)', e => e.id)).toBe('id3');
+  expect(await page.$eval('div >> above="#id0"', e => e.id)).toBe('id3');
+  expect(await page.locator('div', { above: page.locator('#id0') }).first().evaluate(e => e.id)).toBe('id3');
   expect(await page.$eval('div:above(#id5)', e => e.id)).toBe('id4');
+  expect(await page.$eval('div >> above="#id5"', e => e.id)).toBe('id4');
   expect(await page.$eval('div:above(#id7)', e => e.id)).toBe('id5');
+  expect(await page.$eval('div >> above="#id7"', e => e.id)).toBe('id5');
   expect(await page.$eval('div:above(#id8)', e => e.id)).toBe('id0');
+  expect(await page.$eval('div >> above="#id8"', e => e.id)).toBe('id0');
   expect(await page.$eval('div:above(#id9)', e => e.id)).toBe('id8');
+  expect(await page.$eval('div >> above="#id9"', e => e.id)).toBe('id8');
   expect(await page.$('div:above(#id2)')).toBe(null);
+  expect(await page.$('div >> above="#id2"')).toBe(null);
   expect(await page.$$eval('div:above(#id5)', els => els.map(e => e.id).join(','))).toBe('id4,id2,id3,id1');
+  expect(await page.$$eval('div >> above="#id5"', els => els.map(e => e.id).join(','))).toBe('id4,id2,id3,id1');
   expect(await page.$$eval('div:above(#id5, 20)', els => els.map(e => e.id).join(','))).toBe('id4,id3');
+  expect(await page.$$eval('div >> above="#id5",20', els => els.map(e => e.id).join(','))).toBe('id4,id3');
 
   expect(await page.$eval('div:below(#id4)', e => e.id)).toBe('id5');
+  expect(await page.$eval('div >> below="#id4"', e => e.id)).toBe('id5');
+  expect(await page.locator('div', { below: page.locator('#id4') }).first().evaluate(e => e.id)).toBe('id5');
   expect(await page.$eval('div:below(#id3)', e => e.id)).toBe('id0');
+  expect(await page.$eval('div >> below="#id3"', e => e.id)).toBe('id0');
   expect(await page.$eval('div:below(#id2)', e => e.id)).toBe('id4');
+  expect(await page.$eval('div >> below="#id2"', e => e.id)).toBe('id4');
   expect(await page.$eval('div:below(#id6)', e => e.id)).toBe('id8');
+  expect(await page.$eval('div >> below="#id6"', e => e.id)).toBe('id8');
   expect(await page.$eval('div:below(#id7)', e => e.id)).toBe('id8');
+  expect(await page.$eval('div >> below="#id7"', e => e.id)).toBe('id8');
   expect(await page.$eval('div:below(#id8)', e => e.id)).toBe('id9');
+  expect(await page.$eval('div >> below="#id8"', e => e.id)).toBe('id9');
   expect(await page.$('div:below(#id9)')).toBe(null);
+  expect(await page.$('div >> below="#id9"')).toBe(null);
   expect(await page.$$eval('div:below(#id3)', els => els.map(e => e.id).join(','))).toBe('id0,id5,id6,id7,id8,id9');
+  expect(await page.$$eval('div >> below="#id3"', els => els.map(e => e.id).join(','))).toBe('id0,id5,id6,id7,id8,id9');
   expect(await page.$$eval('div:below(#id3, 105)', els => els.map(e => e.id).join(','))).toBe('id0,id5,id6,id7');
+  expect(await page.$$eval('div >> below="#id3" , 105', els => els.map(e => e.id).join(','))).toBe('id0,id5,id6,id7');
 
   expect(await page.$eval('div:near(#id0)', e => e.id)).toBe('id3');
+  expect(await page.$eval('div >> near="#id0"', e => e.id)).toBe('id3');
+  expect(await page.locator('div', { near: page.locator('#id0') }).first().evaluate(e => e.id)).toBe('id3');
   expect(await page.$$eval('div:near(#id7)', els => els.map(e => e.id).join(','))).toBe('id0,id5,id3,id6');
+  expect(await page.$$eval('div >> near="#id7"', els => els.map(e => e.id).join(','))).toBe('id0,id5,id3,id6');
   expect(await page.$$eval('div:near(#id0)', els => els.map(e => e.id).join(','))).toBe('id3,id6,id7,id8,id1,id5');
+  expect(await page.$$eval('div >> near="#id0"', els => els.map(e => e.id).join(','))).toBe('id3,id6,id7,id8,id1,id5');
   expect(await page.$$eval('div:near(#id6)', els => els.map(e => e.id).join(','))).toBe('id0,id3,id7');
+  expect(await page.$$eval('div >> near="#id6"', els => els.map(e => e.id).join(','))).toBe('id0,id3,id7');
   expect(await page.$$eval('div:near(#id6, 10)', els => els.map(e => e.id).join(','))).toBe('id0');
+  expect(await page.$$eval('div >> near="#id6",10', els => els.map(e => e.id).join(','))).toBe('id0');
   expect(await page.$$eval('div:near(#id0, 100)', els => els.map(e => e.id).join(','))).toBe('id3,id6,id7,id8,id1,id5,id4,id2');
+  expect(await page.$$eval('div >> near="#id0",100', els => els.map(e => e.id).join(','))).toBe('id3,id6,id7,id8,id1,id5,id4,id2');
 
   expect(await page.$$eval('div:below(#id5):above(#id8)', els => els.map(e => e.id).join(','))).toBe('id7,id6');
+  expect(await page.$$eval('div >> below="#id5" >> above="#id8"', els => els.map(e => e.id).join(','))).toBe('id7,id6');
   expect(await page.$eval('div:below(#id5):above(#id8)', e => e.id)).toBe('id7');
+  expect(await page.$eval('div >> below="#id5" >> above="#id8"', e => e.id)).toBe('id7');
+  expect(await page.locator('div', { below: page.locator('#id5'), above: page.locator('#id8') }).first().evaluate(e => e.id)).toBe('id7');
 
   expect(await page.$$eval('div:right-of(#id0) + div:above(#id8)', els => els.map(e => e.id).join(','))).toBe('id5,id6,id3');
 
   const error = await page.$(':near(50)').catch(e => e);
   expect(error.message).toContain('"near" engine expects a selector list and optional maximum distance in pixels');
+  const error1 = await page.$(`div >> left-of=abc`).catch(e => e);
+  expect(error1.message).toContain('Malformed selector: left-of=abc');
+  const error2 = await page.$(`left-of="div"`).catch(e => e);
+  expect(error2.message).toContain('"left-of" selector cannot be first');
+  const error3 = await page.$(`div >> left-of=33`).catch(e => e);
+  expect(error3.message).toContain('Malformed selector: left-of=33');
+  const error4 = await page.$(`div >> left-of="span","foo"`).catch(e => e);
+  expect(error4.message).toContain('Malformed selector: left-of="span","foo"');
+  const error5 = await page.$(`div >> left-of="span",3,4`).catch(e => e);
+  expect(error5.message).toContain('Malformed selector: left-of="span",3,4');
 });
 
 it('should escape the scope with >>', async ({ page }) => {

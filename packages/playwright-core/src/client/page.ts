@@ -28,7 +28,7 @@ import { ConsoleMessage } from './consoleMessage';
 import { Dialog } from './dialog';
 import { Download } from './download';
 import { ElementHandle, determineScreenshotType } from './elementHandle';
-import type { Locator, FrameLocator } from './locator';
+import type { Locator, FrameLocator, LocatorOptions } from './locator';
 import { Worker } from './worker';
 import type { WaitForNavigationOptions } from './frame';
 import { Frame, verifyLoadState } from './frame';
@@ -578,7 +578,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     return this._mainFrame.fill(selector, value, options);
   }
 
-  locator(selector: string, options?: { hasText?: string | RegExp, has?: Locator }): Locator {
+  locator(selector: string, options?: LocatorOptions): Locator {
     return this.mainFrame().locator(selector, options);
   }
 
