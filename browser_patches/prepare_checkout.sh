@@ -238,9 +238,11 @@ if [[ ! -z "${WEBKIT_EXTRA_FOLDER_PATH}" ]]; then
   echo "-- adding WebKit embedders"
   EMBEDDER_DIR="$PWD/Tools/Playwright"
   # git status does not show empty directories, check it separately.
+  # XCode 13 and WebKit build on MacOS 12 now create empty folder here:
+  #   ./Tools/Playwright/Playwright.xcodeproj/project.xcworkspace/xcshareddata/swiftpm
+  # As an easy work-around, let's remove it.
   if [[ -d $EMBEDDER_DIR ]]; then
-    echo "ERROR: $EMBEDDER_DIR already exists! Remove it and re-run the script."
-    exit 1
+    rm -rf "$EMBEDDER_DIR"
   fi
   cp -r "${WEBKIT_EXTRA_FOLDER_PATH}" "$EMBEDDER_DIR"
   git add "$EMBEDDER_DIR"
@@ -248,9 +250,9 @@ elif [[ ! -z "${FIREFOX_EXTRA_FOLDER_PATH}" ]]; then
   echo "-- adding juggler"
   EMBEDDER_DIR="$PWD/juggler"
   # git status does not show empty directories, check it separately.
+  # Remove for good if its empty but exists.
   if [[ -d $EMBEDDER_DIR ]]; then
-    echo "ERROR: $EMBEDDER_DIR already exists! Remove it and re-run the script."
-    exit 1
+    rm -rf "$EMBEDDER_DIR"
   fi
   cp -r "${FIREFOX_EXTRA_FOLDER_PATH}" "$EMBEDDER_DIR"
   git add "$EMBEDDER_DIR"
