@@ -150,6 +150,8 @@ function findReactRoots(root: Document | ShadowRoot, roots: ReactVNode[] = []): 
       roots.push((node as any)._reactRootContainer._internalRoot.current);
     } else {
       // React 17+
+      // React sets rootKey when mounting
+      // @see https://github.com/facebook/react/blob/a724a3b578dce77d427bef313102a4d0e978d9b4/packages/react-dom/src/client/ReactDOMComponentTree.js#L62-L64
       const rootKey = Object.keys(node).find(key => key.startsWith('__reactContainer'));
       if (rootKey)
         roots.push((node as any)[rootKey].stateNode.current);

@@ -65,9 +65,12 @@ class BookList extends React.Component {
   }
 }
 
+const apps = [];
+
 class App extends React.Component {
   constructor(props) {
     super(props);
+    apps.push(this);
     this.mountPoint = React.createRef();
     this.state = {
       books: [
@@ -101,8 +104,8 @@ class App extends React.Component {
     root.render(e(App, null, null));
     return root;
   };
-  window.app = window.mountApp(document.getElementById('root'));
-  window.mountNestedApp = () => window.mountApp(window.app._internalRoot.current.child.stateNode.mountPoint.current);
+  window.mountApp(document.getElementById('root'));
+  window.mountNestedApp = () => window.mountApp(apps[apps.length - 1].mountPoint.current);
 }
 
 </script>
