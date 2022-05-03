@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { PlaywrightTestConfig } from '@playwright/test';
+import type { PlaywrightTestConfig } from '@playwright/experimental-ct-svelte';
 import { devices } from '@playwright/test';
 
 const config: PlaywrightTestConfig = {

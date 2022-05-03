@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/experimental-ct-vue/test'
+import { test, expect } from '@playwright/experimental-ct-vue'
 
 import HelloWorld from './HelloWorld.vue'
 

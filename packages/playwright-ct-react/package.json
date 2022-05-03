@@ -14,7 +14,7 @@
   "license": "Apache-2.0",
   "exports": {
     "./register": "./register.mjs",
-    "./test": "./test.js"
+    ".": "./index.js"
   },
   "dependencies": {
     "@vitejs/plugin-react": "^1.0.7",

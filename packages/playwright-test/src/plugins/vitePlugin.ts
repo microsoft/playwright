@@ -34,9 +34,9 @@ export function createPlugin(
     name: 'playwright-vite-plugin',
 
     setup: async (config: FullConfig, configDirectory: string, suite: Suite) => {
-      // TODO: declare and pick these from the config.
-      const viteConfig: InlineConfig = {};
-      const port = 3100;
+      const use = config.projects[0].use as any;
+      const viteConfig: InlineConfig = use.viteConfig || {};
+      const port = use.vitePort || 3100;
 
       configDir = configDirectory;
 

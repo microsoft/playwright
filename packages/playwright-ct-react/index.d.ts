@@ -17,22 +17,24 @@
 import type {
   TestType,
   PlaywrightTestArgs,
+  PlaywrightTestConfig as BasePlaywrightTestConfig,
   PlaywrightTestOptions,
   PlaywrightWorkerArgs,
   PlaywrightWorkerOptions,
   Locator,
 } from '@playwright/test';
+import type { InlineConfig } from 'vite';
+
+export type PlaywrightTestConfig = Omit<BasePlaywrightTestConfig, 'use'> & {
+  use: BasePlaywrightTestConfig['use'] & { vitePort?: number, viteConfig?: InlineConfig }
+};
 
 interface ComponentFixtures {
-  mount(component: any, options?: {
-    props?: { [key: string]: any },
-    slots?: { [key: string]: any },
-    on?: { [key: string]: Function },
-  }): Promise<Locator>;
+  mount(component: JSX.Element): Promise<Locator>;
 }
 
 export const test: TestType<
   PlaywrightTestArgs & PlaywrightTestOptions & ComponentFixtures,
   PlaywrightWorkerArgs & PlaywrightWorkerOptions>;
 
-export { expect } from '@playwright/test';
+export { expect, devices } from '@playwright/test';

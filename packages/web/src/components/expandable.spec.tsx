@@ -15,7 +15,7 @@
  */
 
 import React from 'react';
-import { expect, test } from '@playwright/experimental-ct-react/test';
+import { expect, test } from '@playwright/experimental-ct-react';
 import { Expandable } from './expandable';
 
 test.use({ viewport: { width: 500, height: 500 } });
