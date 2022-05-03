@@ -26,6 +26,11 @@ export default (components, options) => {
 };
 
 const playwrightMount = component => {
+  if (!document.getElementById('root')) {
+    const rootElement = document.createElement('div');
+    rootElement.id = 'root';
+    document.body.append(rootElement);
+  }
   let componentCtor = registry.get(component.type);
   if (!componentCtor) {
     // Lookup by shorthand.
