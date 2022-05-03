@@ -25,6 +25,7 @@ import { launchProcess } from 'playwright-core/lib/utils/processLauncher';
 import type { PlaywrightTestConfig, TestPlugin } from '../types';
 import type { Reporter } from '../../types/testReporter';
 
+
 export type WebServerPluginOptions = {
   command: string;
   url: string;
@@ -35,43 +36,29 @@ export type WebServerPluginOptions = {
   env?: { [key: string]: string; };
 };
 
-interface InternalWebServerConfigOptions extends Omit<WebServerPluginOptions, 'url'> {
-  setBaseURL: boolean;
-  url?: string;
-  port?: number;
-}
-
 const DEFAULT_ENVIRONMENT_VARIABLES = {
   'BROWSER': 'none', // Disable that create-react-app will open the page in the browser
 };
 
 const debugWebServer = debug('pw:webserver');
 
-export class InternalWebServerPlugin implements TestPlugin {
+export class WebServerPlugin implements TestPlugin {
   private _isAvailable: () => Promise<boolean>;
   private _killProcess?: () => Promise<void>;
   private _processExitedPromise!: Promise<any>;
-  private _config: InternalWebServerConfigOptions;
+  private _options: WebServerPluginOptions;
   private _reporter: Reporter;
+  name = 'playwright:webserver';
 
-  constructor(config: InternalWebServerConfigOptions, reporter: Reporter) {
+  constructor(options: WebServerPluginOptions, checkPortOnly: boolean, reporter: Reporter) {
     this._reporter = reporter;
-    this._config = { ...config };
-    this._config.setBaseURL = this._config.setBaseURL ?? true;
-    this._isAvailable = getIsAvailableFunction(config, this._reporter.onStdErr?.bind(this._reporter));
+    this._options = options;
+    this._isAvailable = getIsAvailableFunction(options.url, checkPortOnly, !!options.ignoreHTTPSErrors, this._reporter.onStdErr?.bind(this._reporter));
   }
 
-  get name() {
-    const target = this._config.url || `http://localhost:${this._config.port}`;
-    return `playwright-webserver-plugin [${target}]`;
-  }
 
   public async configure(config: PlaywrightTestConfig, configDir: string) {
-    this._config.cwd = this._config.cwd ? path.resolve(configDir, this._config.cwd) : configDir;
-    if (this._config.setBaseURL && this._config.port !== undefined && !config.use?.baseURL) {
-      config.use = (config.use || {});
-      config.use.baseURL = `http://localhost:${this._config.port}`;
-    }
+    this._options.cwd = this._options.cwd ? path.resolve(configDir, this._options.cwd) : configDir;
   }
 
   public async setup() {
@@ -95,20 +82,21 @@ export class InternalWebServerPlugin implements TestPlugin {
     const isAlreadyAvailable = await this._isAvailable();
     if (isAlreadyAvailable) {
       debugWebServer(`WebServer is already available`);
-      if (this._config.reuseExistingServer)
+      if (this._options.reuseExistingServer)
         return;
-      throw new Error(`${this._config.url ?? `http://localhost:${this._config.port}`} is already used, make sure that nothing is running on the port/url or set reuseExistingServer:true in config.webServer.`);
+      const port = new URL(this._options.url);
+      throw new Error(`${this._options.url ?? `http://localhost${port ? ':' + port : ''}`} is already used, make sure that nothing is running on the port/url or set reuseExistingServer:true in config.webServer.`);
     }
 
-    debugWebServer(`Starting WebServer process ${this._config.command}...`);
+    debugWebServer(`Starting WebServer process ${this._options.command}...`);
     const { launchedProcess, kill } = await launchProcess({
-      command: this._config.command,
+      command: this._options.command,
       env: {
         ...DEFAULT_ENVIRONMENT_VARIABLES,
         ...process.env,
-        ...this._config.env,
+        ...this._options.env,
       },
-      cwd: this._config.cwd,
+      cwd: this._options.cwd,
       stdio: 'stdin',
       shell: true,
       attemptToGracefullyClose: async () => {},
@@ -134,7 +122,7 @@ export class InternalWebServerPlugin implements TestPlugin {
   }
 
   private async _waitForAvailability() {
-    const launchTimeout = this._config.timeout || 60 * 1000;
+    const launchTimeout = this._options.timeout || 60 * 1000;
     const cancellationToken = { canceled: false };
     const { timedOut } = (await Promise.race([
       raceAgainstTimeout(() => waitFor(this._isAvailable, cancellationToken), launchTimeout),
@@ -161,7 +149,7 @@ async function isPortUsed(port: number): Promise<boolean> {
   return await innerIsPortUsed('127.0.0.1') || await innerIsPortUsed('::1');
 }
 
-async function isURLAvailable(url: URL, ignoreHTTPSErrors: boolean | undefined, onStdErr: Reporter['onStdErr']) {
+async function isURLAvailable(url: URL, ignoreHTTPSErrors: boolean, onStdErr: Reporter['onStdErr']) {
   let statusCode = await httpStatusCode(url, ignoreHTTPSErrors, onStdErr);
   if (statusCode === 404 && url.pathname === '/') {
     const indexUrl = new URL(url);
@@ -171,7 +159,7 @@ async function isURLAvailable(url: URL, ignoreHTTPSErrors: boolean | undefined, 
   return statusCode >= 200 && statusCode < 300;
 }
 
-async function httpStatusCode(url: URL, ignoreHTTPSErrors: boolean | undefined, onStdErr: Reporter['onStdErr']): Promise<number> {
+async function httpStatusCode(url: URL, ignoreHTTPSErrors: boolean, onStdErr: Reporter['onStdErr']): Promise<number> {
   const isHttps = url.protocol === 'https:';
   const requestOptions = isHttps ? {
     rejectUnauthorized: !ignoreHTTPSErrors,
@@ -204,23 +192,31 @@ async function waitFor(waitFn: () => Promise<boolean>, cancellationToken: { canc
   }
 }
 
-function getIsAvailableFunction({ url, port, ignoreHTTPSErrors }: Pick<InternalWebServerConfigOptions, 'port' | 'url' | 'ignoreHTTPSErrors'>, onStdErr: Reporter['onStdErr']) {
-  if (url !== undefined && port === undefined) {
-    const urlObject = new URL(url);
+function getIsAvailableFunction(url: string, checkPortOnly: boolean, ignoreHTTPSErrors: boolean, onStdErr: Reporter['onStdErr']) {
+  const urlObject = new URL(url);
+  if (!checkPortOnly)
     return () => isURLAvailable(urlObject, ignoreHTTPSErrors, onStdErr);
-  } else if (port !== undefined && url === undefined) {
-    return () => isPortUsed(port);
-  } else {
-    throw new Error(`Exactly one of 'port' or 'url' is required in config.webServer.`);
-  }
+  const port = urlObject.port;
+  return () => isPortUsed(+port);
 }
 
-export const webServer = (config: WebServerPluginOptions): TestPlugin => {
+export const webServer = (options: WebServerPluginOptions): TestPlugin => {
   // eslint-disable-next-line no-console
-  return new InternalWebServerPlugin({ ...config, setBaseURL: false }, { onStdOut: d => console.log(d.toString()), onStdErr: d => console.error(d.toString()) });
+  return new WebServerPlugin(options, false, { onStdOut: d => console.log(d.toString()), onStdErr: d => console.error(d.toString()) });
 };
 
-export const _legacyWebServer = (config: Omit<InternalWebServerConfigOptions, 'setBaseURL'>): TestPlugin => {
+export const webServerPluginForConfig = (config: PlaywrightTestConfig): TestPlugin => {
+  const webServer = config.webServer!;
+  if (webServer.port !== undefined && webServer.url !== undefined)
+    throw new Error(`Exactly one of 'port' or 'url' is required in config.webServer.`);
+
+  if (webServer.port !== undefined && !config.use?.baseURL) {
+    config.use = (config.use || {});
+    config.use.baseURL = `http://localhost:${webServer.port}`;
+  }
+
+  const url = webServer.url || `http://localhost:${webServer.port}`;
+  // TODO: replace with reporter once plugins are removed.
   // eslint-disable-next-line no-console
-  return new InternalWebServerPlugin({ ...config, setBaseURL: true }, { onStdOut: d => console.log(d.toString()), onStdErr: d => console.error(d.toString()) });
+  return new WebServerPlugin({ ...webServer, url }, webServer.port !== undefined, { onStdOut: d => console.log(d.toString()), onStdErr: d => console.error(d.toString()) });
 };

@@ -29,7 +29,7 @@ import type { Reporter } from '../types/testReporter';
 import { builtInReporters } from './runner';
 import { isRegExp, calculateSha1 } from 'playwright-core/lib/utils';
 import { serializeError } from './util';
-import { _legacyWebServer } from './plugins/webServerPlugin';
+import { webServerPluginForConfig } from './plugins/webServerPlugin';
 import { hostPlatform } from 'playwright-core/lib/utils/hostPlatform';
 import { FixturePool, isFixtureOption } from './fixtures';
 import type { TestTypeImpl } from './testType';
@@ -88,7 +88,7 @@ export class Loader {
   private async _processConfigObject(config: Config, configDir: string) {
     if (config.webServer) {
       config.plugins = config.plugins || [];
-      config.plugins.push(_legacyWebServer(config.webServer));
+      config.plugins.push(webServerPluginForConfig(config));
     }
 
     // 1. Validate data provided in the config file.
