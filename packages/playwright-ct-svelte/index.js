@@ -14,13 +14,16 @@
  * limitations under the License.
  */
 
-const { test: baseTest, expect, _addRunnerPlugin } = require('@playwright/test');
+const { test: baseTest, expect, devices, _addRunnerPlugin } = require('@playwright/test');
 const { mount } = require('@playwright/test/lib/mount');
-const { createPlugin } = require('@playwright/test/lib/plugins/vitePlugin');
 
-_addRunnerPlugin(createPlugin(
-  '@playwright/experimental-ct-vue/register',
-  () => require('@vitejs/plugin-vue')()));
+_addRunnerPlugin(() => {
+  // Only fetch upon request to avoid resolution in workers.
+  const { createPlugin } = require('@playwright/test/lib/plugins/vitePlugin');
+  return createPlugin(
+    '@playwright/experimental-ct-svelte/register',
+    () => require('@sveltejs/vite-plugin-svelte').svelte());
+});
 
 const test = baseTest.extend({
   _workerPage: [async ({ browser }, use) => {
@@ -45,4 +48,4 @@ const test = baseTest.extend({
   },
 });
 
-module.exports = { test, expect };
+module.exports = { test, expect, devices };

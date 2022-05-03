@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { PlaywrightTestConfig, devices } from '@playwright/test';
+import { type PlaywrightTestConfig, devices } from '@playwright/experimental-ct-vue';
 
 const config: PlaywrightTestConfig = {
   testDir: 'src',

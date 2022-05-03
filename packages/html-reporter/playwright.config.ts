@@ -14,20 +14,17 @@
  * limitations under the License.
  */
 
-import type { PlaywrightTestConfig } from '@playwright/test';
 import path from 'path';
-import { devices } from '@playwright/test';
+import type { PlaywrightTestConfig } from '@playwright/experimental-ct-react';
+import { devices } from '@playwright/experimental-ct-react';
 
 const config: PlaywrightTestConfig = {
   testDir: 'src',
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  reporter: process.env.CI ? [
-    ['html', { open: 'never' }],
-  ] : [
-    ['html', { open: 'on-failure' }]
-  ],
+  reporter: 'html',
   use: {
+    vitePort: 3101,
     trace: 'on-first-retry',
   },
   projects: [ ],

@@ -15,7 +15,7 @@
  */
 
 import React from 'react';
-import { test, expect } from '@playwright/experimental-ct-react/test';
+import { test, expect } from '@playwright/experimental-ct-react';
 import { HeaderView } from './headerView';
 
 test.use({ viewport: { width: 720, height: 200 } });

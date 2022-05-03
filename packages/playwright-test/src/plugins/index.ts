@@ -33,8 +33,10 @@ export const setRunnerToAddPluginsTo = (runner: Runner) => {
   runnerInstanceToAddPluginsTo = runner;
 };
 
-export const addRunnerPlugin = (plugin: TestRunnerPlugin) => {
+export const addRunnerPlugin = (plugin: TestRunnerPlugin | (() => TestRunnerPlugin)) => {
   // Only present in runner, absent in worker.
-  if (runnerInstanceToAddPluginsTo)
+  if (runnerInstanceToAddPluginsTo) {
+    plugin = typeof plugin === 'function' ? plugin() : plugin;
     runnerInstanceToAddPluginsTo.addPlugin(plugin);
+  }
 };

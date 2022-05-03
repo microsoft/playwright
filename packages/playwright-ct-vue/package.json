@@ -14,7 +14,7 @@
   "license": "Apache-2.0",
   "exports": {
     "./register": "./register.mjs",
-    "./test": "./test.js"
+    ".": "./index.js"
   },
   "dependencies": {
     "@vitejs/plugin-vue": "^2.3.1",

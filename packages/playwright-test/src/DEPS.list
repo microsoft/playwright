@@ -4,4 +4,3 @@ matchers/
 reporters/
 third_party/
 plugins/
-plugins/webServerPlugin.ts
