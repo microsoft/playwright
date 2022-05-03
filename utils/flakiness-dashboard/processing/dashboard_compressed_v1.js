@@ -43,6 +43,16 @@ function compressReports(reports) {
           delete project.metadata.mode;
         if (project.metadata.platform && project.metadata.platform.toLowerCase() !== 'android')
           delete project.metadata.platform;
+        // Cleanup a bunch of data from report.
+        delete project.metadata['ci.link'];
+        delete project.metadata['revision.id'];
+        delete project.metadata['revision.author'];
+        delete project.metadata['revision.email'];
+        delete project.metadata['revision.subject'];
+        delete project.metadata['revision.timestamp'];
+        delete project.metadata['revision.link'];
+        delete project.metadata['timestamp'];
+
         projectNameToMetadata.set(project.name, project.metadata);
       }
     }
@@ -108,11 +118,6 @@ function compressReports(reports) {
         }
 
         for (const run of test.results) {
-          // Record duration of slow tests only, i.e. > 1s.
-          if (run.status === 'passed' && run.duration > 1000) {
-            testObject.minTime = Math.min((testObject.minTime || Number.MAX_VALUE), run.duration);
-            testObject.maxTime = Math.max((testObject.maxTime || 0), run.duration);
-          }
           if (run.status === 'failed') {
             if (!Array.isArray(testObject.failed))
               testObject.failed = [];
