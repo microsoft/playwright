@@ -172,13 +172,18 @@ class ExpectMetaInfoProxyHandler {
   }
 
   get(target: any, matcherName: any, receiver: any): any {
-    const matcher = Reflect.get(target, matcherName, receiver);
+    let matcher = Reflect.get(target, matcherName, receiver);
     if (matcher === undefined)
       throw new Error(`expect: Property '${matcherName}' not found.`);
     if (typeof matcher !== 'function') {
       if (matcherName === 'not')
         this._info.isNot = !this._info.isNot;
       return new Proxy(matcher, this);
+    }
+    if (this._info.isPoll) {
+      if ((customMatchers as any)[matcherName] || matcherName === 'resolves' || matcherName === 'rejects')
+        throw new Error(`\`expect.poll()\` does not support "${matcherName}" matcher.`);
+      matcher = (...args: any[]) => pollMatcher(matcherName, this._info.isNot, this._info.pollIntervals, currentExpectTimeout({ timeout: this._info.pollTimeout }), this._info.generator!, ...args);
     }
     return (...args: any[]) => {
       const testInfo = currentTestInfo();
@@ -231,14 +236,7 @@ class ExpectMetaInfoProxyHandler {
       };
 
       try {
-        let result;
-        if (this._info.isPoll) {
-          if ((customMatchers as any)[matcherName] || matcherName === 'resolves' || matcherName === 'rejects')
-            throw new Error(`\`expect.poll()\` does not support "${matcherName}" matcher.`);
-          result = pollMatcher(matcherName, this._info.isNot, this._info.pollIntervals, currentExpectTimeout({ timeout: this._info.pollTimeout }), this._info.generator!, ...args);
-        } else {
-          result = matcher.call(target, ...args);
-        }
+        const result = matcher.call(target, ...args);
         if ((result instanceof Promise))
           return result.then(() => step.complete({})).catch(reportStepError);
         else
