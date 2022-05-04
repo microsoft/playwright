@@ -43,14 +43,12 @@ function compressReports(reports) {
           delete project.metadata.mode;
         if (project.metadata.platform && project.metadata.platform.toLowerCase() !== 'android')
           delete project.metadata.platform;
-        // Cleanup a bunch of data from report.
-        delete project.metadata['ci.link'];
-        delete project.metadata['revision.id'];
-        delete project.metadata['revision.author'];
-        delete project.metadata['revision.email'];
-        delete project.metadata['revision.subject'];
-        delete project.metadata['revision.timestamp'];
-        delete project.metadata['revision.link'];
+        // Cleanup a bunch of data from report that
+        // comes from CI plugin.
+        for (const key of Object.keys(project.metadata)) {
+          if (key.startsWith('ci.') || key.startsWith('revision.'))
+            delete project.metadata[key];
+        }
         delete project.metadata['timestamp'];
 
         projectNameToMetadata.set(project.name, project.metadata);
