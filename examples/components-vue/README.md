@@ -38,8 +38,8 @@ npm run test
     npm i --save-dev @playwright/test @playwright/experimental-ct-vue
     ```
 
-- [playwright/index.html](playwright/index.html) file was added that defines theming for the components through importing [playwright/index.js](playwright/index.js) .
+- [playwright/index.html](playwright/index.html) file was added that defines theming for the components through importing [playwright/index.js](playwright/index.js).
 
-- [playwright.config.ts](playwright.config.ts) was added that executes `npm run dev` before running tests if it is not already running.
+- [playwright.config.ts](playwright.config.ts) was added that builds components before running tests.
   
 - A bunch of `.spec.ts` and `.spec.tsx` files were added to `src` that demonstrate Vue3 component testing with and without the use of JSX syntax.
