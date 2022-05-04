@@ -212,8 +212,6 @@ it('should return empty body', async ({ playwright, server }) => {
   expect(body.length).toBe(0);
   expect(await response.text()).toBe('');
   await request.dispose();
-  const error = await response.body().catch(e => e);
-  expect(error.message).toContain('Response has been disposed');
 });
 
 it('should abort requests when context is disposed', async ({ playwright, server }) => {
@@ -249,7 +247,7 @@ it('should abort redirected requests when context is disposed', async ({ playwri
   await connectionClosed;
 });
 
-it('should remove content-length from reidrected post requests', async ({ playwright, server }) => {
+it('should remove content-length from redirected post requests', async ({ playwright, server }) => {
   server.setRedirect('/redirect', '/empty.html');
   const request = await playwright.request.newContext();
   const [result, req1, req2] = await Promise.all([
