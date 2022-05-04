@@ -251,9 +251,8 @@ it('should scroll and click the button', async ({ page, server }) => {
   expect(await page.evaluate(() => document.querySelector('#button-80').textContent)).toBe('clicked');
 });
 
-it('should scroll and click the button with smooth scroll behavior', async ({ page, server, browserName, headless, isLinux }) => {
+it('should scroll and click the button with smooth scroll behavior', async ({ page, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/12370' });
-  it.skip(browserName === 'webkit' && !headless && isLinux);
   await page.goto(server.PREFIX + '/input/scrollable.html');
   await page.addStyleTag({ content: 'html { scroll-behavior: smooth; }' });
   for (let i = 0; i < 10; i++) {
