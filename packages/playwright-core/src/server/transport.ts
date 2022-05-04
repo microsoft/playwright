@@ -31,7 +31,7 @@ export type ProtocolResponse = {
   id?: number;
   method?: string;
   sessionId?: string;
-  error?: { message: string; data: any; };
+  error?: { message: string; data: any; code?: number };
   params?: any;
   result?: any;
   pageProxyId?: string;

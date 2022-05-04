@@ -189,6 +189,8 @@ export class CRSession extends EventEmitter {
         callback.reject(createProtocolError(callback.error, callback.method, object.error));
       else
         callback.resolve(object.result);
+    } else if (object.id && object.error?.code === -32001) {
+      // Message to a closed session, just ignore it.
     } else {
       assert(!object.id);
       Promise.resolve().then(() => {
