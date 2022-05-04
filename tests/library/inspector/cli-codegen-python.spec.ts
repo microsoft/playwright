@@ -76,7 +76,7 @@ def run(playwright: Playwright) -> None:
 });
 
 test('should save the codegen output to a file if specified', async ({ runCLI, channel, browserName }, testInfo) => {
-  const tmpFile = testInfo.outputPath('script.js');
+  const tmpFile = testInfo.outputPath('example.py');
   const cli = runCLI(['--target=python', '--output', tmpFile, emptyHTML]);
   await cli.exited;
   const content = fs.readFileSync(tmpFile);
