@@ -42,8 +42,8 @@ it('should scroll into view', async ({ page, server, isAndroid }) => {
   }
 });
 
-it('should scroll zero-sized element into view', async ({ page, isAndroid }) => {
-  it.fixme(isAndroid);
+it('should scroll zero-sized element into view', async ({ page, isAndroid, isElectron }) => {
+  it.fixme(isAndroid || isElectron);
 
   await page.setContent(`
     <style>
