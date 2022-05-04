@@ -52,6 +52,7 @@ export type SourceHighlight = {
 };
 
 export type Source = {
+  isRecorded: boolean;
   file: string;
   text: string;
   language: string;

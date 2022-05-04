@@ -25,7 +25,7 @@ import './recorder.css';
 
 declare global {
   interface Window {
-    playwrightSetFile: (file: string) => void;
+    playwrightSetFileIfNeeded: (file: string) => void;
     playwrightSetSelector: (selector: string, focus?: boolean) => void;
     dispatch(data: any): Promise<void>;
   }
@@ -54,14 +54,21 @@ export const Recorder: React.FC<RecorderProps> = ({
   };
 
   const [f, setFile] = React.useState<string | undefined>();
-  window.playwrightSetFile = setFile;
   const file = f || sources[0]?.file;
 
   const source = sources.find(s => s.file === file) || {
+    isRecorded: false,
     text: '',
     language: 'javascript',
     file: '',
     highlight: []
+  };
+  window.playwrightSetFileIfNeeded = (value: string) => {
+    const newSource = sources.find(s => s.file === value);
+    // Do not forcefully switch between two recorded sources, because
+    // user did explicitly choose one.
+    if (newSource && !newSource.isRecorded || !source.isRecorded)
+      setFile(value);
   };
 
   const messagesEndRef = React.createRef<HTMLDivElement>();
