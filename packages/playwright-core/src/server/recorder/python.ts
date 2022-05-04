@@ -33,17 +33,22 @@ export class PythonLanguageGenerator implements LanguageGenerator {
   private _awaitPrefix: '' | 'await ';
   private _asyncPrefix: '' | 'async ';
   private _isAsync: boolean;
+  private _isTest: boolean;
 
-  constructor(isAsync: boolean) {
-    this.id = isAsync ? 'python-async' : 'python';
-    this.fileName = isAsync ? 'Python Async' : 'Python';
+  constructor(isAsync: boolean, isTest: boolean) {
+    this.id = isTest ? 'pytest' : (isAsync ? 'python-async' : 'python');
+    this.fileName = isTest ? 'Pytest' : (isAsync ? 'Python Async' : 'Python');
     this._isAsync = isAsync;
+    this._isTest = isTest;
     this._awaitPrefix = isAsync ? 'await ' : '';
     this._asyncPrefix = isAsync ? 'async ' : '';
   }
 
   generateAction(actionInContext: ActionInContext): string {
     const action = actionInContext.action;
+    if (this._isTest && (action.name === 'openPage' || action.name === 'closePage'))
+      return '';
+
     const pageAlias = actionInContext.frame.pageAlias;
     const formatter = new PythonFormatter(4);
     formatter.newLine();
@@ -150,7 +155,23 @@ export class PythonLanguageGenerator implements LanguageGenerator {
 
   generateHeader(options: LanguageGeneratorOptions): string {
     const formatter = new PythonFormatter();
-    if (this._isAsync) {
+    if (this._isTest) {
+      formatter.add(`${options.deviceName ? 'import pytest\n' : ''}
+from playwright.sync_api import Page, expect
+${options.deviceName ? `
+
+@pytest.fixture(scope="session")
+def browser_context_args(browser_context_args, playwright) {
+    device = playwright.devices["${options.deviceName}"]
+    return dict(
+        **browser_context_args,
+        **device,
+    )
+}
+` : ''}
+
+def test_example(page: Page) -> None {`);
+    } else if (this._isAsync) {
       formatter.add(`
 import asyncio
 
@@ -173,7 +194,9 @@ def run(playwright: Playwright) -> None {
   }
 
   generateFooter(saveStorage: string | undefined): string {
-    if (this._isAsync) {
+    if (this._isTest) {
+      return '';
+    } else if (this._isAsync) {
       const storageStateLine = saveStorage ? `\n    await context.storage_state(path=${quote(saveStorage)})` : '';
       return `\n    # ---------------------${storageStateLine}
     await context.close()

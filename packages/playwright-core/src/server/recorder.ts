@@ -306,8 +306,9 @@ class ContextRecorder extends EventEmitter {
       new JavaLanguageGenerator(),
       new JavaScriptLanguageGenerator(false),
       new JavaScriptLanguageGenerator(true),
-      new PythonLanguageGenerator(false),
-      new PythonLanguageGenerator(true),
+      new PythonLanguageGenerator(false, false),
+      new PythonLanguageGenerator(true, false),
+      new PythonLanguageGenerator(false, true),
       new CSharpLanguageGenerator(),
     ]);
     const primaryLanguage = [...languages].find(l => l.id === language)!;
