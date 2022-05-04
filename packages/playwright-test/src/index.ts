@@ -153,7 +153,7 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
   storageState: [ undefined, { option: true } ],
   timezoneId: [ undefined, { option: true } ],
   userAgent: [ undefined, { option: true } ],
-  viewport: [ undefined, { option: true } ],
+  viewport: [ { width: 1280, height: 720 }, { option: true } ],
   actionTimeout: [ undefined, { option: true } ],
   navigationTimeout: [ undefined, { option: true } ],
   baseURL: [ async ({ }, use) => {
