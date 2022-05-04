@@ -44,8 +44,8 @@ _expect.extend({
       throw new Error(`Expected argument to be a string.`);
 
     const downloaded = new Set();
-    for (const [, browser] of received.matchAll(/^.*(chromium|firefox|webkit|ffmpeg) v\d+ downloaded.*$/img))
-      downloaded.add(browser);
+    for (const [, browser] of received.matchAll(/^.*(chromium|firefox|webkit|ffmpeg).*playwright build v\d+\)? downloaded.*$/img))
+      downloaded.add(browser.toLowerCase());
 
     const expected = browsers;
     if (expected.length === downloaded.size && expected.every(browser => downloaded.has(browser)))
