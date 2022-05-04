@@ -40,7 +40,7 @@ export interface Project<TestArgs = {}, WorkerArgs = {}> extends TestProject {
 export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
   grep: RegExp | RegExp[];
   grepInvert: RegExp | RegExp[] | null;
-  metadata: any;
+  metadata: Metadata;
   name: string;
   snapshotDir: string;
   outputDir: string;
@@ -66,7 +66,7 @@ export interface Config<TestArgs = {}, WorkerArgs = {}> extends TestConfig {
   use?: UseOptions<TestArgs, WorkerArgs>;
 }
 
-export type Metadata = { [key: string]: string | number | boolean };
+export type Metadata = { [key: string]: any };
 
 // [internal] !!! DO NOT ADD TO THIS !!!
 // [internal] It is part of the public API and is computed from the user's config.
