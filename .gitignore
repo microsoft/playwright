@@ -19,6 +19,7 @@ nohup.out
 .tmp
 allure*
 playwright-report
+test-results
 /demo/
 /packages/*/LICENSE
 /packages/*/NOTICE

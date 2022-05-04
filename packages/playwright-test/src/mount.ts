@@ -18,6 +18,12 @@ import type { Page, ViewportSize } from '@playwright/test';
 import { createGuid } from 'playwright-core/lib/utils';
 
 export async function mount(page: Page, jsxOrType: any, options: any, baseURL: string, viewport: ViewportSize): Promise<string> {
+  return await (page as any)._wrapApiCall(async () => {
+    return await innerMount(page, jsxOrType, options, baseURL, viewport);
+  }, true);
+}
+
+async function innerMount(page: Page, jsxOrType: any, options: any, baseURL: string, viewport: ViewportSize): Promise<string> {
   await page.goto('about:blank');
   await (page as any)._resetForReuse();
   await (page.context() as any)._resetForReuse();
@@ -32,7 +38,6 @@ export async function mount(page: Page, jsxOrType: any, options: any, baseURL: s
 
   const callbacks: Function[] = [];
   wrapFunctions(component, page, callbacks);
-
 
   const dispatchMethod = `__pw_dispatch_${createGuid()}`;
   await page.exposeFunction(dispatchMethod, (ordinal: number, args: any[]) => {

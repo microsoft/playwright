@@ -11,5 +11,5 @@ defineProps({
 </script>
 
 <template>
-  <button @click="this.$emit('submit', 'hello')">{{ title }}</button>
+  <button @click="$emit('submit', 'hello')">{{ title }}</button>
 </template>

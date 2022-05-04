@@ -16,19 +16,23 @@
 
 const { test: baseTest, expect, devices, _addRunnerPlugin } = require('@playwright/test');
 const { mount } = require('@playwright/test/lib/mount');
+const path = require('path');
 
 _addRunnerPlugin(() => {
   // Only fetch upon request to avoid resolution in workers.
   const { createPlugin } = require('@playwright/test/lib/plugins/vitePlugin');
   return createPlugin(
-    '@playwright/experimental-ct-vue/register',
+    path.join(__dirname, 'registerSource.mjs'),
     () => require('@vitejs/plugin-vue')());
 });
 
 const test = baseTest.extend({
   _workerPage: [async ({ browser }, use) => {
-    const page = await browser.newPage();
-    await page.addInitScript('navigator.serviceWorker.register = () => {}');
+    const page = await browser._wrapApiCall(async () => {
+      const page = await browser.newPage();
+      await page.addInitScript('navigator.serviceWorker.register = () => {}');
+      return page;
+    });
     await use(page);
   }, { scope: 'worker' }],
 
