@@ -85,6 +85,8 @@ type SelectorInFrame = {
   info: SelectorInfo;
 };
 
+const kDummyFrameId = '<dummy>';
+
 export class FrameManager {
   private _page: Page;
   private _frames = new Map<string, Frame>();
@@ -97,6 +99,11 @@ export class FrameManager {
   constructor(page: Page) {
     this._page = page;
     this._mainFrame = undefined as any as Frame;
+  }
+
+  createDummyMainFrameIfNeeded() {
+    if (!this._mainFrame)
+      this.frameAttached(kDummyFrameId, null);
   }
 
   dispose() {
@@ -468,7 +475,8 @@ export class Frame extends SdkObject {
 
     this._firedLifecycleEvents.add('commit');
     this._subtreeLifecycleEvents.add('commit');
-    this._startNetworkIdleTimer();
+    if (id !== kDummyFrameId)
+      this._startNetworkIdleTimer();
   }
 
   isDetached(): boolean {
