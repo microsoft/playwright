@@ -50,13 +50,6 @@ if [[ $# == 0 ]]; then
   exit 1
 fi
 
-export BUILD_URL="https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
-export COMMIT_SHA=$(git rev-parse HEAD)
-export COMMIT_TITLE=$(git show -s --format=%s HEAD)
-export COMMIT_AUTHOR_NAME=$(git show -s --format=%an HEAD)
-export COMMIT_AUTHOR_EMAIL=$(git show -s --format=%ae HEAD)
-export COMMIT_TIMESTAMP=$(git show -s --format=%ct HEAD)
-
 export HOST_OS_NAME="$(uname)"
 export HOST_ARCH="$(uname -m)"
 export HOST_OS_VERSION=""
@@ -67,19 +60,12 @@ elif [[ "$HOST_OS_NAME" == "Linux" ]]; then
   HOST_OS_VERSION="$(bash -c 'source /etc/os-release && echo $VERSION_ID')"
 fi
 
-
 EMBED_METADATA_SCRIPT=$(cat <<EOF
   const json = require('./' + process.argv[1]);
   json.metadata = {
-    runURL: process.env.BUILD_URL,
     osName: process.env.HOST_OS_NAME,
     arch: process.env.HOST_ARCH,
     osVersion: process.env.HOST_OS_VERSION,
-    commitSHA: process.env.COMMIT_SHA,
-    commitTimestamp: process.env.COMMIT_TIMESTAMP,
-    commitTitle: process.env.COMMIT_TITLE,
-    commitAuthorName: process.env.COMMIT_AUTHOR_NAME,
-    commitAuthorEmail: process.env.COMMIT_AUTHOR_EMAIL,
   };
   console.log(JSON.stringify(json));
 EOF
