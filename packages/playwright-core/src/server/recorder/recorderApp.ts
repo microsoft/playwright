@@ -28,7 +28,7 @@ import { findChromiumChannel } from '../registry';
 
 declare global {
   interface Window {
-    playwrightSetFile: (file: string) => void;
+    playwrightSetFileIfNeeded: (file: string) => void;
     playwrightSetMode: (mode: Mode) => void;
     playwrightSetPaused: (paused: boolean) => void;
     playwrightSetSources: (sources: Source[]) => void;
@@ -42,7 +42,7 @@ export interface IRecorderApp extends EventEmitter {
   close(): Promise<void>;
   setPaused(paused: boolean): Promise<void>;
   setMode(mode: 'none' | 'recording' | 'inspecting'): Promise<void>;
-  setFile(file: string): Promise<void>;
+  setFileIfNeeded(file: string): Promise<void>;
   setSelector(selector: string, focus?: boolean): Promise<void>;
   updateCallLogs(callLogs: CallLog[]): Promise<void>;
   bringToFront(): void;
@@ -133,9 +133,9 @@ export class RecorderApp extends EventEmitter implements IRecorderApp {
     }).toString(), true, mode, 'main').catch(() => {});
   }
 
-  async setFile(file: string): Promise<void> {
+  async setFileIfNeeded(file: string): Promise<void> {
     await this._page.mainFrame().evaluateExpression(((file: string) => {
-      window.playwrightSetFile(file);
+      window.playwrightSetFileIfNeeded(file);
     }).toString(), true, file, 'main').catch(() => {});
   }
 
@@ -181,7 +181,7 @@ class HeadlessRecorderApp extends EventEmitter implements IRecorderApp {
   async close(): Promise<void> {}
   async setPaused(paused: boolean): Promise<void> {}
   async setMode(mode: 'none' | 'recording' | 'inspecting'): Promise<void> {}
-  async setFile(file: string): Promise<void> {}
+  async setFileIfNeeded(file: string): Promise<void> {}
   async setSelector(selector: string, focus?: boolean): Promise<void> {}
   async updateCallLogs(callLogs: CallLog[]): Promise<void> {}
   bringToFront(): void {}
