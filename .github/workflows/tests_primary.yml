@@ -35,6 +35,9 @@ jobs:
         node-version: [14]
         include:
           - os: ubuntu-20.04
+            node-version: 12
+            browser: chromium
+          - os: ubuntu-20.04
             node-version: 16
             browser: chromium
           - os: ubuntu-20.04
