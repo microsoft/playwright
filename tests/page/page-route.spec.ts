@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+import os from 'os';
 import type { Route } from 'playwright-core';
 import { test as it, expect } from './pageTest';
 
@@ -241,14 +242,15 @@ it('should be abortable', async ({ page, server }) => {
   expect(failed).toBe(true);
 });
 
-it('should be abortable with custom error codes', async ({ page, server, browserName }) => {
+it('should be abortable with custom error codes', async ({ page, server, browserName, isMac }) => {
   await page.route('**/*', route => route.abort('internetdisconnected'));
   let failedRequest = null;
   page.on('requestfailed', request => failedRequest = request);
   await page.goto(server.EMPTY_PAGE).catch(e => {});
   expect(failedRequest).toBeTruthy();
+  const isFrozenWebKit = isMac && parseInt(os.release(), 10) < 20;
   if (browserName === 'webkit')
-    expect(failedRequest.failure().errorText).toBe('Request intercepted');
+    expect(failedRequest.failure().errorText).toBe(isFrozenWebKit ? 'Request intercepted' : 'Blocked by Web Inspector');
   else if (browserName === 'firefox')
     expect(failedRequest.failure().errorText).toBe('NS_ERROR_OFFLINE');
   else
@@ -267,13 +269,14 @@ it('should send referer', async ({ page, server }) => {
   expect(request.headers['referer']).toBe('http://google.com/');
 });
 
-it('should fail navigation when aborting main resource', async ({ page, server, browserName }) => {
+it('should fail navigation when aborting main resource', async ({ page, server, browserName, isMac }) => {
   await page.route('**/*', route => route.abort());
   let error = null;
   await page.goto(server.EMPTY_PAGE).catch(e => error = e);
   expect(error).toBeTruthy();
+  const isFrozenWebKit = isMac && parseInt(os.release(), 10) < 20;
   if (browserName === 'webkit')
-    expect(error.message).toContain('Request intercepted');
+    expect(error.message).toContain(isFrozenWebKit ? 'Request intercepted' : 'Blocked by Web Inspector');
   else if (browserName === 'firefox')
     expect(error.message).toContain('NS_ERROR_FAILURE');
   else
