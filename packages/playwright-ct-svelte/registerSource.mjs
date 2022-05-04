@@ -18,16 +18,12 @@
 
 const registry = new Map();
 
-export function register(components, options) {
-  // SvelteKit won't have window in the scope, so it requires explicit initialization.
-  const win = options?.window || window;
-  win.playwrightMount = playwrightMount;
-
+export function register(components) {
   for (const [name, value] of Object.entries(components))
     registry.set(name, value);
 }
 
-const playwrightMount = component => {
+window.playwrightMount = component => {
   if (!document.getElementById('root')) {
     const rootElement = document.createElement('div');
     rootElement.id = 'root';
