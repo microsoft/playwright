@@ -97,8 +97,8 @@ This code snippet navigates to whatsmyuseragent.org and saves a screenshot.
 import { test } from '@playwright/test';
 
 test('Page Screenshot', async ({ page }) => {
-    await page.goto('http://whatsmyuseragent.org/');
-    await page.screenshot({ path: `example.png` });
+  await page.goto('http://whatsmyuseragent.org/');
+  await page.screenshot({ path: `example.png` });
 });
 ```
 
