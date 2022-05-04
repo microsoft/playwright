@@ -698,8 +698,8 @@ export class Registry {
       return word === 'ffmpeg' ? 'FFMPEG' : word.charAt(0).toUpperCase() + word.slice(1);
     }).join(' ');
     const title = descriptor.browserVersion
-                    ? `${displayName} ${descriptor.browserVersion} (playwright build v${descriptor.revision})`
-                    : `${displayName} playwright build v${descriptor.revision}`;
+      ? `${displayName} ${descriptor.browserVersion} (playwright build v${descriptor.revision})`
+      : `${displayName} playwright build v${descriptor.revision}`;
 
     const downloadFileName = `playwright-download-${descriptor.name}-${hostPlatform}-${descriptor.revision}.zip`;
     await downloadBrowserWithProgressBar(title, descriptor.dir, executablePath, downloadURL, downloadFileName).catch(e => {
