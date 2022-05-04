@@ -587,8 +587,7 @@ export class Page extends SdkObject {
 
   private _setIsError(error: Error) {
     this._pageIsError = error;
-    if (!this._frameManager.mainFrame())
-      this._frameManager.frameAttached('<dummy>', null);
+    this._frameManager.createDummyMainFrameIfNeeded();
   }
 
   isClosed(): boolean {
