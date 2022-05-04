@@ -323,7 +323,7 @@ export interface FullResult {
  *
  * ```ts
  * // playwright.config.ts
- * import { PlaywrightTestConfig } from '@playwright/test';
+ * import type { PlaywrightTestConfig } from '@playwright/test';
  *
  * const config: PlaywrightTestConfig = {
  *   reporter: './my-awesome-reporter.ts',
