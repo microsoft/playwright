@@ -29,7 +29,7 @@ module.exports = config;
 ```
 
 ```js js-flavor=ts
-import { PlaywrightTestConfig } from '@playwright/test';
+import type { PlaywrightTestConfig } from '@playwright/test';
 const config: PlaywrightTestConfig = {
   retries: 1,
   use: {
@@ -225,7 +225,7 @@ pwsh bin\Debug\netX\playwright.ps1 show-trace https://example.com/trace.zip
 
 ## Using [trace.playwright.dev](https://trace.playwright.dev)
 
-[trace.playwright.dev](https://trace.playwright.dev) is a statically hosted variant of the Trace Viewer. 
+[trace.playwright.dev](https://trace.playwright.dev) is a statically hosted variant of the Trace Viewer.
 
 ### Viewing local traces
 

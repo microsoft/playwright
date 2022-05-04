@@ -48,7 +48,7 @@ module.exports = config;
 ```
 
 ```js js-flavor=ts
-import { PlaywrightTestConfig } from '@playwright/test';
+import type { PlaywrightTestConfig } from '@playwright/test';
 const config: PlaywrightTestConfig = {
   use: {
     channel: 'chrome',
@@ -222,7 +222,7 @@ mvn test
 ```
 
 ```bash bash-flavor=bash lang=csharp
-PLAYWRIGHT_BROWSERS_PATH=$HOME/pw-browsers 
+PLAYWRIGHT_BROWSERS_PATH=$HOME/pw-browsers
 pwsh bin\Debug\netX\playwright.ps1 install
 ```
 
