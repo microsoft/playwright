@@ -91,7 +91,7 @@ Here is how this is achieved:
 
 - Once the tests are executed, Playwright creates a list of components that the tests need.
 - It then compiles a bundle that includes these components and serves it using a local static web server.
-- Upon the `mount` call within the test, Playwright navigates to the facade page of this bundle and tells it to render the component.
+- Upon the `mount` call within the test, Playwright navigates to the facade page `/playwright/index.html` of this bundle and tells it to render the component.
 - Events are marshalled back to the Node.js environment to allow verification.
 
 Playwright is using [Vite](https://vitejs.dev/) to create the components bundle and serve it.
