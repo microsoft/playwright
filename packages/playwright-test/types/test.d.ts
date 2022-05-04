@@ -195,9 +195,9 @@ export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
    */
   grepInvert: RegExp | RegExp[] | null;
   /**
-   * Any JSON-serializable metadata that will be put directly to the test report.
+   * Metadata that will be put directly to the test report serialized as JSON.
    */
-  metadata: any;
+  metadata: Metadata;
   /**
    * Project name is visible in the report and during test execution.
    */
@@ -919,7 +919,7 @@ export interface Config<TestArgs = {}, WorkerArgs = {}> extends TestConfig {
   use?: UseOptions<TestArgs, WorkerArgs>;
 }
 
-export type Metadata = { [key: string]: string | number | boolean };
+export type Metadata = { [key: string]: any };
 
 /**
  * Playwright Test provides many options to configure how your tests are collected and executed, for example `timeout` or
@@ -3648,9 +3648,9 @@ interface TestProject {
   grepInvert?: RegExp|Array<RegExp>;
 
   /**
-   * Any JSON-serializable metadata that will be put directly to the test report.
+   * Metadata that will be put directly to the test report serialized as JSON.
    */
-  metadata?: any;
+  metadata?: Metadata;
 
   /**
    * Project name is visible in the report and during test execution.
