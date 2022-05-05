@@ -1,7 +1,7 @@
 {
   "name": "@playwright/experimental-ct-vue",
   "private": true,
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "Playwright Component Testing for Vue",
   "repository": "github:Microsoft/playwright",
   "homepage": "https://playwright.dev",
