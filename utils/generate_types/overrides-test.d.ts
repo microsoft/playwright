@@ -28,7 +28,7 @@ export type ReporterDescription =
   ['null'] |
   [string] | [string, any];
 
-type UseOptions<TestArgs, WorkerArgs> = { [K in keyof WorkerArgs]?: WorkerArgs[K] } & { [K in keyof TestArgs]?: TestArgs[K] } & { [K in keyof PlaywrightTest.WorkerOptions]?: PlaywrightTest.WorkerOptions[K] } & { [K in keyof PlaywrightTest.TestOptions]?: PlaywrightTest.TestOptions[K] };
+type UseOptions<TestArgs, WorkerArgs> = { [K in keyof WorkerArgs]?: WorkerArgs[K] } & { [K in keyof TestArgs]?: TestArgs[K] };
 
 export interface Project<TestArgs = {}, WorkerArgs = {}> extends TestProject {
   use?: UseOptions<TestArgs, WorkerArgs>;
@@ -245,8 +245,8 @@ export interface PlaywrightTestArgs {
   request: APIRequestContext;
 }
 
-export type PlaywrightTestProject<TestArgs = {}, WorkerArgs = {}> = Project<PlaywrightTestOptions & TestArgs, PlaywrightWorkerOptions & WorkerArgs>;
-export type PlaywrightTestConfig<TestArgs = {}, WorkerArgs = {}> = Config<PlaywrightTestOptions & TestArgs, PlaywrightWorkerOptions & WorkerArgs>;
+export type PlaywrightTestProject<TestArgs = {}, WorkerArgs = {}> = Project<PlaywrightTestOptions & TestArgs & PlaywrightTest.TestFixtures & PlaywrightTest.ProjectTestOptions, PlaywrightWorkerOptions & WorkerArgs & PlaywrightTest.WorkerFixtures & PlaywrightTest.ProjectWorkerOptions>;
+export type PlaywrightTestConfig<TestArgs = {}, WorkerArgs = {}> = Config<PlaywrightTestOptions & TestArgs & PlaywrightTest.WorkerFixtures & PlaywrightTest.ConfigTestOptions, PlaywrightWorkerOptions & WorkerArgs & PlaywrightTest.WorkerFixtures & PlaywrightTest.ConfigWorkerOptions>;
 
 import type * as expectType from '@playwright/test/types/expect-types';
 import type { Suite } from '@playwright/test/types/testReporter';
@@ -319,10 +319,16 @@ declare global {
     export interface WorkerFixtures extends KeyValue {
     }
 
-    export interface TestOptions extends KeyValue {
+    export interface ConfigTestOptions extends KeyValue {
     }
 
-    export interface WorkerOptions extends KeyValue {
+    export interface ConfigWorkerOptions extends KeyValue {
+    }
+
+    export interface ProjectTestOptions extends KeyValue {
+    }
+
+    export interface ProjectWorkerOptions extends KeyValue {
     }
   }
 }
@@ -332,7 +338,7 @@ declare global {
  * These tests are executed in Playwright environment that launches the browser
  * and provides a fresh page to each test.
  */
-export const test: TestType<PlaywrightTestArgs & PlaywrightTestOptions & PlaywrightTest.TestFixtures & PlaywrightTest.TestOptions, PlaywrightWorkerArgs & PlaywrightWorkerOptions & PlaywrightTest.WorkerFixtures & PlaywrightTest.WorkerOptions>;
+export const test: TestType<PlaywrightTestArgs & PlaywrightTestOptions & PlaywrightTest.TestFixtures & PlaywrightTest.ConfigTestOptions & PlaywrightTest.ProjectTestOptions, PlaywrightWorkerArgs & PlaywrightWorkerOptions & PlaywrightTest.WorkerFixtures & PlaywrightTest.ConfigWorkerOptions & PlaywrightTest.ProjectWorkerOptions>;
 export default test;
 
 export const _baseTest: TestType<{}, {}>;

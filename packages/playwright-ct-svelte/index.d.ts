@@ -27,7 +27,7 @@ declare global {
       }): Promise<Locator>;
     }
 
-    export interface WorkerOptions {
+    export interface ConfigWorkerOptions {
       vitePort?: number;
       viteConfig?: InlineConfig;
     }
