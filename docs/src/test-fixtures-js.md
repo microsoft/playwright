@@ -348,6 +348,7 @@ exports.test = base.test.extend({
 
   page: async ({ page, account }, use) => {
     // Sign in with our account.
+    const { username, password } = account;
     await page.goto('/signin');
     await page.locator('#username').fill(username);
     await page.locator('#password').fill(password);
@@ -394,6 +395,7 @@ export const test = base.extend<{}, { account: Account }>({
 
   page: async ({ page, account }, use) => {
     // Sign in with our account.
+    const { username, password } = account;
     await page.goto('/signin');
     await page.locator('#username').fill(username);
     await page.locator('#password').fill(password);
