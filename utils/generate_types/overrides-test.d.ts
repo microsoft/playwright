@@ -28,7 +28,7 @@ export type ReporterDescription =
   ['null'] |
   [string] | [string, any];
 
-type UseOptions<TestArgs, WorkerArgs> = { [K in keyof WorkerArgs]?: WorkerArgs[K] } & { [K in keyof TestArgs]?: TestArgs[K] };
+type UseOptions<TestArgs, WorkerArgs> = { [K in keyof WorkerArgs]?: WorkerArgs[K] } & { [K in keyof TestArgs]?: TestArgs[K] } & { [K in keyof PlaywrightTest.WorkerOptions]?: PlaywrightTest.WorkerOptions[K] } & { [K in keyof PlaywrightTest.TestOptions]?: PlaywrightTest.TestOptions[K] };
 
 export interface Project<TestArgs = {}, WorkerArgs = {}> extends TestProject {
   use?: UseOptions<TestArgs, WorkerArgs>;
@@ -312,6 +312,18 @@ declare global {
   export namespace PlaywrightTest {
     export interface Matchers<R, T = unknown> {
     }
+
+    export interface TestFixtures extends KeyValue {
+    }
+
+    export interface WorkerFixtures extends KeyValue {
+    }
+
+    export interface TestOptions extends KeyValue {
+    }
+
+    export interface WorkerOptions extends KeyValue {
+    }
   }
 }
 // --- ENDGLOBAL ---
@@ -320,7 +332,7 @@ declare global {
  * These tests are executed in Playwright environment that launches the browser
  * and provides a fresh page to each test.
  */
-export const test: TestType<PlaywrightTestArgs & PlaywrightTestOptions, PlaywrightWorkerArgs & PlaywrightWorkerOptions>;
+export const test: TestType<PlaywrightTestArgs & PlaywrightTestOptions & PlaywrightTest.TestFixtures & PlaywrightTest.TestOptions, PlaywrightWorkerArgs & PlaywrightWorkerOptions & PlaywrightTest.WorkerFixtures & PlaywrightTest.WorkerOptions>;
 export default test;
 
 export const _baseTest: TestType<{}, {}>;

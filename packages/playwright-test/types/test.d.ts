@@ -29,7 +29,7 @@ export type ReporterDescription =
   ['null'] |
   [string] | [string, any];
 
-type UseOptions<TestArgs, WorkerArgs> = { [K in keyof WorkerArgs]?: WorkerArgs[K] } & { [K in keyof TestArgs]?: TestArgs[K] };
+type UseOptions<TestArgs, WorkerArgs> = { [K in keyof WorkerArgs]?: WorkerArgs[K] } & { [K in keyof TestArgs]?: TestArgs[K] } & { [K in keyof PlaywrightTest.WorkerOptions]?: PlaywrightTest.WorkerOptions[K] } & { [K in keyof PlaywrightTest.TestOptions]?: PlaywrightTest.TestOptions[K] };
 
 /**
  * Playwright Test supports running multiple test projects at the same time. This is useful for running tests in multiple
@@ -2909,6 +2909,54 @@ declare global {
   export namespace PlaywrightTest {
     export interface Matchers<R, T = unknown> {
     }
+
+    export interface TestFixtures extends KeyValue {
+    }
+
+    export interface WorkerFixtures extends KeyValue {
+    }
+
+    /**
+ * Playwright Test provides many options to configure test environment, [Browser], [BrowserContext] and more.
+ *
+ * These options are usually provided in the [configuration file](https://playwright.dev/docs/test-configuration) through
+ * [testConfig.use](https://playwright.dev/docs/api/class-testconfig#test-config-use) and
+ * [testProject.use](https://playwright.dev/docs/api/class-testproject#test-project-use).
+ *
+ * ```ts
+ * import { PlaywrightTestConfig } from '@playwright/test';
+ * const config: PlaywrightTestConfig = {
+ *   use: {
+ *     headless: false,
+ *     viewport: { width: 1280, height: 720 },
+ *     ignoreHTTPSErrors: true,
+ *     video: 'on-first-retry',
+ *   },
+ * };
+ * export default config;
+ * ```
+ *
+ * Alternatively, with [test.use(options)](https://playwright.dev/docs/api/class-test#test-use) you can override some
+ * options for a file.
+ *
+ * ```ts
+ * // example.spec.ts
+ * import { test, expect } from '@playwright/test';
+ *
+ * // Run tests in this file with portrait-like viewport.
+ * test.use({ viewport: { width: 600, height: 900 } });
+ *
+ * test('my portrait test', async ({ page }) => {
+ *   // ...
+ * });
+ * ```
+ *
+ */
+export interface TestOptions extends KeyValue {
+    }
+
+    export interface WorkerOptions extends KeyValue {
+    }
   }
 }
 // --- ENDGLOBAL ---
@@ -2917,7 +2965,7 @@ declare global {
  * These tests are executed in Playwright environment that launches the browser
  * and provides a fresh page to each test.
  */
-export const test: TestType<PlaywrightTestArgs & PlaywrightTestOptions, PlaywrightWorkerArgs & PlaywrightWorkerOptions>;
+export const test: TestType<PlaywrightTestArgs & PlaywrightTestOptions & PlaywrightTest.TestFixtures & PlaywrightTest.TestOptions, PlaywrightWorkerArgs & PlaywrightWorkerOptions & PlaywrightTest.WorkerFixtures & PlaywrightTest.WorkerOptions>;
 export default test;
 
 export const _baseTest: TestType<{}, {}>;

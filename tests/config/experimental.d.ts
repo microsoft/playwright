@@ -16689,7 +16689,7 @@ export type ReporterDescription =
   ['null'] |
   [string] | [string, any];
 
-type UseOptions<TestArgs, WorkerArgs> = { [K in keyof WorkerArgs]?: WorkerArgs[K] } & { [K in keyof TestArgs]?: TestArgs[K] };
+type UseOptions<TestArgs, WorkerArgs> = { [K in keyof WorkerArgs]?: WorkerArgs[K] } & { [K in keyof TestArgs]?: TestArgs[K] } & { [K in keyof PlaywrightTest.WorkerOptions]?: PlaywrightTest.WorkerOptions[K] } & { [K in keyof PlaywrightTest.TestOptions]?: PlaywrightTest.TestOptions[K] };
 
 /**
  * Playwright Test supports running multiple test projects at the same time. This is useful for running tests in multiple
@@ -19654,7 +19654,7 @@ type Awaited<T> = T extends PromiseLike<infer U> ? U : T;
  * These tests are executed in Playwright environment that launches the browser
  * and provides a fresh page to each test.
  */
-export const test: TestType<PlaywrightTestArgs & PlaywrightTestOptions, PlaywrightWorkerArgs & PlaywrightWorkerOptions>;
+export const test: TestType<PlaywrightTestArgs & PlaywrightTestOptions & PlaywrightTest.TestFixtures & PlaywrightTest.TestOptions, PlaywrightWorkerArgs & PlaywrightWorkerOptions & PlaywrightTest.WorkerFixtures & PlaywrightTest.WorkerOptions>;
 export default test;
 
 export const _baseTest: TestType<{}, {}>;
