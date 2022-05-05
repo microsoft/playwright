@@ -227,6 +227,7 @@ type BrowsersJSON = {
   browsers: {
     name: string,
     revision: string,
+    browserVersion?: string,
     installByDefault: boolean,
     revisionOverrides?: {[os: string]: string},
   }[]
@@ -235,6 +236,7 @@ type BrowsersJSON = {
 type BrowsersJSONDescriptor = {
   name: string,
   revision: string,
+  browserVersion?: string,
   installByDefault: boolean,
   dir: string,
 };
@@ -248,6 +250,8 @@ function readDescriptors(browsersJSON: BrowsersJSON) {
     const descriptor: BrowsersJSONDescriptor = {
       name,
       revision,
+      // We only put browser version for the supported operating systems.
+      browserVersion: revisionOverride ? undefined : obj.browserVersion,
       installByDefault: !!obj.installByDefault,
       // Method `isBrowserDirectory` determines directory to be browser iff
       // it starts with some browser name followed by '-'. Some browser names
@@ -689,7 +693,14 @@ export class Registry {
         'https://playwright.azureedge.net';
     const downloadPath = util.format(downloadPathTemplate, descriptor.revision);
     const downloadURL = `${downloadHost}/${downloadPath}`;
-    const title = `${descriptor.name} v${descriptor.revision}`;
+
+    const displayName = descriptor.name.split('-').map(word => {
+      return word === 'ffmpeg' ? 'FFMPEG' : word.charAt(0).toUpperCase() + word.slice(1);
+    }).join(' ');
+    const title = descriptor.browserVersion
+      ? `${displayName} ${descriptor.browserVersion} (playwright build v${descriptor.revision})`
+      : `${displayName} playwright build v${descriptor.revision}`;
+
     const downloadFileName = `playwright-download-${descriptor.name}-${hostPlatform}-${descriptor.revision}.zip`;
     await downloadBrowserWithProgressBar(title, descriptor.dir, executablePath, downloadURL, downloadFileName).catch(e => {
       throw new Error(`Failed to download ${title}, caused by\n${e.stack}`);

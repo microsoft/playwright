@@ -25,10 +25,9 @@ import { download } from './download';
 import { extract } from '../../zipBundle';
 
 export async function downloadBrowserWithProgressBar(title: string, browserDirectory: string, executablePath: string, downloadURL: string, downloadFileName: string): Promise<boolean> {
-  const progressBarName = `Playwright build of ${title}`;
   if (await existsAsync(browserDirectory)) {
     // Already downloaded.
-    debugLogger.log('install', `browser ${title} is already downloaded.`);
+    debugLogger.log('install', `${title} is already downloaded.`);
     return false;
   }
 
@@ -36,7 +35,7 @@ export async function downloadBrowserWithProgressBar(title: string, browserDirec
   const zipPath = path.join(os.tmpdir(), downloadFileName);
   try {
     await download(url, zipPath, {
-      progressBarName,
+      progressBarName: title,
       log: debugLogger.log.bind(debugLogger, 'install'),
       userAgent: getUserAgent(),
     });
@@ -47,14 +46,14 @@ export async function downloadBrowserWithProgressBar(title: string, browserDirec
     debugLogger.log('install', `fixing permissions at ${executablePath}`);
     await fs.promises.chmod(executablePath, 0o755);
   } catch (e) {
-    debugLogger.log('install', `FAILED installation ${progressBarName} with error: ${e}`);
+    debugLogger.log('install', `FAILED installation ${title} with error: ${e}`);
     process.exitCode = 1;
     throw e;
   } finally {
     if (await existsAsync(zipPath))
       await fs.promises.unlink(zipPath);
   }
-  logPolitely(`${progressBarName} downloaded to ${browserDirectory}`);
+  logPolitely(`${title} downloaded to ${browserDirectory}`);
   return true;
 }
 
