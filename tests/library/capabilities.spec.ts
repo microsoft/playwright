@@ -19,7 +19,6 @@ import url from 'url';
 import { contextTest as it, expect } from '../config/browserTest';
 
 it('SharedArrayBuffer should work @smoke', async function({ contextFactory, httpsServer, browserName }) {
-  it.fail(browserName === 'webkit', 'no shared array buffer on webkit');
   const context = await contextFactory({ ignoreHTTPSErrors: true });
   const page = await context.newPage();
   httpsServer.setRoute('/sharedarraybuffer', (req, res) => {
