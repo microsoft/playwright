@@ -61,8 +61,8 @@ interface TestConfig {
   webServer?: TestConfigWebServer;
 }
 
-export interface Config<TestArgs = {}, WorkerArgs = {}> extends TestConfig {
-  projects?: Project<TestArgs, WorkerArgs>[];
+export interface Config<TestArgs = {}, WorkerArgs = {}, ProjectTestArgs = {}, ProjectWorkerArgs = {}> extends TestConfig {
+  projects?: Project<ProjectTestArgs, ProjectWorkerArgs>[];
   use?: UseOptions<TestArgs, WorkerArgs>;
 }
 
@@ -246,7 +246,7 @@ export interface PlaywrightTestArgs {
 }
 
 export type PlaywrightTestProject<TestArgs = {}, WorkerArgs = {}> = Project<PlaywrightTestOptions & TestArgs & PlaywrightTest.TestFixtures & PlaywrightTest.ProjectTestOptions, PlaywrightWorkerOptions & WorkerArgs & PlaywrightTest.WorkerFixtures & PlaywrightTest.ProjectWorkerOptions>;
-export type PlaywrightTestConfig<TestArgs = {}, WorkerArgs = {}> = Config<PlaywrightTestOptions & TestArgs & PlaywrightTest.WorkerFixtures & PlaywrightTest.ConfigTestOptions, PlaywrightWorkerOptions & WorkerArgs & PlaywrightTest.WorkerFixtures & PlaywrightTest.ConfigWorkerOptions>;
+export type PlaywrightTestConfig<TestArgs = {}, WorkerArgs = {}, ProjectTestArgs = {}, ProjectWorkerArgs = {}> = Config<PlaywrightTestOptions & TestArgs & PlaywrightTest.WorkerFixtures & PlaywrightTest.ConfigTestOptions, PlaywrightWorkerOptions & WorkerArgs & PlaywrightTest.WorkerFixtures & PlaywrightTest.ConfigWorkerOptions, PlaywrightTestOptions & ProjectTestArgs & PlaywrightTest.TestFixtures & PlaywrightTest.ProjectTestOptions, PlaywrightWorkerOptions & ProjectWorkerArgs & PlaywrightTest.WorkerFixtures & PlaywrightTest.ProjectWorkerOptions>;
 
 import type * as expectType from '@playwright/test/types/expect-types';
 import type { Suite } from '@playwright/test/types/testReporter';

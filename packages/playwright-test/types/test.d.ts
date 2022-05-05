@@ -893,11 +893,11 @@ interface TestConfig {
  * ```
  *
  */
-export interface Config<TestArgs = {}, WorkerArgs = {}> extends TestConfig {
+export interface Config<TestArgs = {}, WorkerArgs = {}, ProjectTestArgs = {}, ProjectWorkerArgs = {}> extends TestConfig {
   /**
    * Playwright Test supports running multiple test projects at the same time. See [TestProject] for more information.
    */
-  projects?: Project<TestArgs, WorkerArgs>[];
+  projects?: Project<ProjectTestArgs, ProjectWorkerArgs>[];
   /**
    * Global options for all tests, for example
    * [testOptions.browserName](https://playwright.dev/docs/api/class-testoptions#test-options-browser-name). Learn more about
@@ -2843,7 +2843,7 @@ export interface PlaywrightTestArgs {
 }
 
 export type PlaywrightTestProject<TestArgs = {}, WorkerArgs = {}> = Project<PlaywrightTestOptions & TestArgs & PlaywrightTest.TestFixtures & PlaywrightTest.ProjectTestOptions, PlaywrightWorkerOptions & WorkerArgs & PlaywrightTest.WorkerFixtures & PlaywrightTest.ProjectWorkerOptions>;
-export type PlaywrightTestConfig<TestArgs = {}, WorkerArgs = {}> = Config<PlaywrightTestOptions & TestArgs & PlaywrightTest.WorkerFixtures & PlaywrightTest.ConfigTestOptions, PlaywrightWorkerOptions & WorkerArgs & PlaywrightTest.WorkerFixtures & PlaywrightTest.ConfigWorkerOptions>;
+export type PlaywrightTestConfig<TestArgs = {}, WorkerArgs = {}, ProjectTestArgs = {}, ProjectWorkerArgs = {}> = Config<PlaywrightTestOptions & TestArgs & PlaywrightTest.WorkerFixtures & PlaywrightTest.ConfigTestOptions, PlaywrightWorkerOptions & WorkerArgs & PlaywrightTest.WorkerFixtures & PlaywrightTest.ConfigWorkerOptions, PlaywrightTestOptions & ProjectTestArgs & PlaywrightTest.TestFixtures & PlaywrightTest.ProjectTestOptions, PlaywrightWorkerOptions & ProjectWorkerArgs & PlaywrightTest.WorkerFixtures & PlaywrightTest.ProjectWorkerOptions>;
 
 import type * as expectType from '@playwright/test/types/expect-types';
 import type { Suite } from '@playwright/test/types/testReporter';
