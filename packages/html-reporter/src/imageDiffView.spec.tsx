@@ -15,7 +15,7 @@
  */
 
 import React from 'react';
-import { test, expect } from '@playwright/experimental-ct-react';
+import { test, expect } from '@playwright/test';
 import type { ImageDiff } from './imageDiffView';
 import { ImageDiffView } from './imageDiffView';
 

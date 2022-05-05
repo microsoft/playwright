@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/experimental-ct-vue'
+import { test, expect } from '@playwright/test'
 
 import NamedSlots from './NamedSlots.vue'
 

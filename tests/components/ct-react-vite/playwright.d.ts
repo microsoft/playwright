@@ -14,25 +14,4 @@
  * limitations under the License.
  */
 
-import type { PlaywrightTestConfig } from '@playwright/test';
-import { devices } from '@playwright/test';
-import ct from '@playwright/experimental-ct-react';
-
-const config: PlaywrightTestConfig = {
-  testDir: 'src',
-  forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
-  reporter: 'html',
-  plugins: [ct({ vitePort: 3102 })],
-  use: {
-    trace: 'on-first-retry',
-  },
-  projects: [
-    {
-      name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
-    },
-  ],
-};
-
-export default config;
+import '@playwright/experimental-ct-react';
