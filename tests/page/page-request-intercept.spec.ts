@@ -57,8 +57,7 @@ it('should fulfill intercepted response', async ({ page, server, isElectron, isA
   expect(await page.evaluate(() => document.body.textContent)).toBe('Yo, page!');
 });
 
-it('should fulfill response with empty body', async ({ page, server, isAndroid, browserName, browserMajorVersion }) => {
-  it.skip(browserName === 'chromium' && browserMajorVersion <= 91, 'Fails in Electron that uses old Chromium');
+it('should fulfill response with empty body', async ({ page, server, isAndroid }) => {
   it.skip(isAndroid, 'The internal Android localhost (10.0.0.2) != the localhost on the host');
   await page.route('**/*', async route => {
     const response = await page.request.fetch(route.request());

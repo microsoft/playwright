@@ -173,7 +173,7 @@ it('rich text editable fields should have children', async function({ page, brow
   expect(snapshot.children[0]).toEqual(golden);
 });
 
-it('rich text editable fields with role should have children', async function({ page, browserName, browserMajorVersion }) {
+it('rich text editable fields with role should have children', async function({ page, browserName }) {
   it.skip(browserName === 'webkit', 'WebKit rich text accessibility is iffy');
 
   await page.setContent(`
@@ -191,7 +191,7 @@ it('rich text editable fields with role should have children', async function({ 
   } : {
     role: 'textbox',
     name: '',
-    multiline: (browserName === 'chromium' && browserMajorVersion >= 92) ? true : undefined,
+    multiline: browserName === 'chromium' ? true : undefined,
     value: 'Edit this image: ',
     children: [{
       role: 'text',

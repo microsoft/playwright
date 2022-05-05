@@ -18,6 +18,8 @@ import { test, expect } from './playwright-test-fixtures';
 
 // Note: tests from this file are additionally run on Node16 bots.
 
+const kNodeJSMajorVersion = parseInt(process.version.slice(1), 10);
+
 test('should load nested as esm when package.json has type module', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.js': `
@@ -40,7 +42,7 @@ test('should load nested as esm when package.json has type module', async ({ run
 
 test('should import esm from ts when package.json has type module in experimental mode', async ({ runInlineTest }) => {
   // We only support experimental esm mode on Node 16+
-  test.skip(parseInt(process.version.slice(1), 10) < 16);
+  test.skip(kNodeJSMajorVersion < 16);
   const result = await runInlineTest({
     'playwright.config.ts': `
       import * as fs from 'fs';
@@ -75,7 +77,7 @@ test('should import esm from ts when package.json has type module in experimenta
 
 test('should propagate subprocess exit code in experimental mode', async ({ runInlineTest }) => {
   // We only support experimental esm mode on Node 16+
-  test.skip(parseInt(process.version.slice(1), 10) < 16);
+  test.skip(kNodeJSMajorVersion < 16);
   const result = await runInlineTest({
     'package.json': JSON.stringify({ type: 'module' }),
     'a.test.ts': `
@@ -91,7 +93,7 @@ test('should propagate subprocess exit code in experimental mode', async ({ runI
 
 test('should respect path resolver in experimental mode', async ({ runInlineTest }) => {
   // We only support experimental esm mode on Node 16+
-  test.skip(parseInt(process.version.slice(1), 10) < 16);
+  test.skip(kNodeJSMajorVersion < 16);
   const result = await runInlineTest({
     'package.json': JSON.stringify({ type: 'module' }),
     'playwright.config.ts': `

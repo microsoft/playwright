@@ -126,7 +126,6 @@ it('should not crash on page with mp4 @smoke', async ({ page, server, platform, 
 
 it('should not crash on showDirectoryPicker', async ({ page, server, browserName, browserMajorVersion }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/7339' });
-  it.skip(browserName === 'chromium' && browserMajorVersion < 99, 'Fixed in Chromium r956769');
   it.skip(browserName !== 'chromium', 'showDirectoryPicker is only available in Chromium');
   await page.goto(server.EMPTY_PAGE);
   await Promise.race([

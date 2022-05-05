@@ -178,7 +178,7 @@ it('should emit event for iframe', async ({ page, server, browserName }) => {
   expect(chooser).toBeTruthy();
 });
 
-it('should emit event on/off', async ({ page, server }) => {
+it('should emit event on/off', async ({ page }) => {
   await page.setContent(`<input type=file>`);
   const [chooser] = await Promise.all([
     new Promise(f => {
@@ -193,7 +193,7 @@ it('should emit event on/off', async ({ page, server }) => {
   expect(chooser).toBeTruthy();
 });
 
-it('should emit event addListener/removeListener', async ({ page, server }) => {
+it('should emit event addListener/removeListener', async ({ page }) => {
   await page.setContent(`<input type=file>`);
   const [chooser] = await Promise.all([
     new Promise(f => {
@@ -208,7 +208,7 @@ it('should emit event addListener/removeListener', async ({ page, server }) => {
   expect(chooser).toBeTruthy();
 });
 
-it('should work when file input is attached to DOM', async ({ page, server }) => {
+it('should work when file input is attached to DOM', async ({ page }) => {
   await page.setContent(`<input type=file>`);
   const [chooser] = await Promise.all([
     page.waitForEvent('filechooser'),
@@ -234,7 +234,7 @@ it('should work when file input is not attached to DOM', async ({ page, asset })
   expect(content).toBe('contents of the file');
 });
 
-it('should not throw when filechooser belongs to iframe', async ({ page, server, browserName }) => {
+it('should not throw when filechooser belongs to iframe', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/frames/one-frame.html');
   const frame = page.mainFrame().childFrames()[0];
   await frame.setContent(`
@@ -317,7 +317,7 @@ it('should work with no timeout', async ({ page, server }) => {
   expect(chooser).toBeTruthy();
 });
 
-it('should return the same file chooser when there are many watchdogs simultaneously', async ({ page, server }) => {
+it('should return the same file chooser when there are many watchdogs simultaneously', async ({ page }) => {
   await page.setContent(`<input type=file>`);
   const [fileChooser1, fileChooser2] = await Promise.all([
     page.waitForEvent('filechooser'),
@@ -376,7 +376,7 @@ it('should detect mime type', async ({ page, server, asset, isAndroid }) => {
 });
 
 // @see https://github.com/microsoft/playwright/issues/4704
-it('should not trim big uploaded files', async ({ page, server, asset, isAndroid }) => {
+it('should not trim big uploaded files', async ({ page, server, isAndroid }) => {
   it.fixme(isAndroid);
 
   let files: Record<string, formidable.File>;
@@ -468,7 +468,7 @@ it('should emit input and change events', async ({ page, asset }) => {
   expect(events[1].type).toBe('change');
 });
 
-it('should work for single file pick', async ({ page, server }) => {
+it('should work for single file pick', async ({ page }) => {
   await page.setContent(`<input type=file>`);
   const [fileChooser] = await Promise.all([
     page.waitForEvent('filechooser'),
@@ -477,7 +477,7 @@ it('should work for single file pick', async ({ page, server }) => {
   expect(fileChooser.isMultiple()).toBe(false);
 });
 
-it('should work for "multiple"', async ({ page, server }) => {
+it('should work for "multiple"', async ({ page }) => {
   await page.setContent(`<input multiple type=file>`);
   const [fileChooser] = await Promise.all([
     page.waitForEvent('filechooser'),
@@ -486,7 +486,7 @@ it('should work for "multiple"', async ({ page, server }) => {
   expect(fileChooser.isMultiple()).toBe(true);
 });
 
-it('should work for "webkitdirectory"', async ({ page, server }) => {
+it('should work for "webkitdirectory"', async ({ page }) => {
   await page.setContent(`<input multiple webkitdirectory type=file>`);
   const [fileChooser] = await Promise.all([
     page.waitForEvent('filechooser'),
@@ -495,9 +495,8 @@ it('should work for "webkitdirectory"', async ({ page, server }) => {
   expect(fileChooser.isMultiple()).toBe(true);
 });
 
-it('should emit event after navigation', async ({ page, server, browserName, browserMajorVersion }) => {
+it('should emit event after navigation', async ({ page, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/11375' });
-  it.skip(browserName === 'chromium' && browserMajorVersion < 99);
 
   const logs = [];
   page.on('filechooser', () => logs.push('filechooser'));

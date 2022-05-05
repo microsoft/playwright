@@ -17,7 +17,7 @@ import { test } from './npmTest';
 import os from 'os';
 
 test('playwright should work with relative home path', async ({ exec }) => {
-  test.skip(os.platform().startsWith('win'));
+  test.skip(os.platform() === 'win32', 'Windows has no HOME env variable');
 
   const env = { PLAYWRIGHT_BROWSERS_PATH: '0', HOME: '.' };
   await exec('npm i --foreground-scripts playwright', { env });

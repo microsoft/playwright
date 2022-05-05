@@ -20,7 +20,6 @@ import { attachFrame } from '../config/utils';
 
 it.describe('Drag and drop', () => {
   it.skip(({ isAndroid }) => isAndroid);
-  it.skip(({ browserName, browserMajorVersion }) => browserName === 'chromium' && browserMajorVersion < 91);
 
   it('should work @smoke', async ({ page, server }) => {
     await page.goto(server.PREFIX + '/drag-n-drop.html');
