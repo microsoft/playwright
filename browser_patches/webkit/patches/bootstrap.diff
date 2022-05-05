@@ -422,7 +422,7 @@ index 1db64831b835df816130be4e7d42b7b213625656..5c3488200ab2df6dfc914ff780f05eba
      InjectedScriptManager& injectedScriptManager() { return m_injectedScriptManager; }
  
 diff --git a/Source/JavaScriptCore/inspector/agents/InspectorTargetAgent.cpp b/Source/JavaScriptCore/inspector/agents/InspectorTargetAgent.cpp
-index 508eb02ec95c52408384a1e2b77648afd426dd9d..c0099a56794ae411fe9cdce1a65a95f1a7e37924 100644
+index 508eb02ec95c52408384a1e2b77648afd426dd9d..93d6757e170272cda8c346bf51578d2b5f8aafaa 100644
 --- a/Source/JavaScriptCore/inspector/agents/InspectorTargetAgent.cpp
 +++ b/Source/JavaScriptCore/inspector/agents/InspectorTargetAgent.cpp
 @@ -87,6 +87,34 @@ Protocol::ErrorStringOr<void> InspectorTargetAgent::sendMessageToTarget(const St
@@ -479,30 +479,11 @@ index 508eb02ec95c52408384a1e2b77648afd426dd9d..c0099a56794ae411fe9cdce1a65a95f1
  }
  
  void InspectorTargetAgent::didCommitProvisionalTarget(const String& oldTargetID, const String& committedTargetID)
-@@ -159,6 +197,18 @@ void InspectorTargetAgent::didCommitProvisionalTarget(const String& oldTargetID,
-     m_frontendDispatcher->didCommitProvisionalTarget(oldTargetID, committedTargetID);
- }
- 
-+void InspectorTargetAgent::ensureConnected(const String& targetID)
-+{
-+    if (!m_isConnected)
-+        return;
-+
-+    auto* target = m_targets.get(targetID);
-+    if (!target)
-+        return;
-+
-+    target->connect(connectionType());
-+}
-+
- FrontendChannel::ConnectionType InspectorTargetAgent::connectionType() const
- {
-     return m_router.hasLocalFrontend() ? Inspector::FrontendChannel::ConnectionType::Local : Inspector::FrontendChannel::ConnectionType::Remote;
 diff --git a/Source/JavaScriptCore/inspector/agents/InspectorTargetAgent.h b/Source/JavaScriptCore/inspector/agents/InspectorTargetAgent.h
-index e81573fd0fffaaf6fd2af36635c78fcdf8608c69..4169e227b5fb5a3a7fb51396c4679100f495719c 100644
+index e81573fd0fffaaf6fd2af36635c78fcdf8608c69..c8cde6cfcde9612624f12e21bd9fa56b426bec7f 100644
 --- a/Source/JavaScriptCore/inspector/agents/InspectorTargetAgent.h
 +++ b/Source/JavaScriptCore/inspector/agents/InspectorTargetAgent.h
-@@ -50,15 +50,21 @@ public:
+@@ -50,15 +50,20 @@ public:
      Protocol::ErrorStringOr<void> setPauseOnStart(bool) final;
      Protocol::ErrorStringOr<void> resume(const String& targetId) final;
      Protocol::ErrorStringOr<void> sendMessageToTarget(const String& targetId, const String& message) final;
@@ -514,7 +495,6 @@ index e81573fd0fffaaf6fd2af36635c78fcdf8608c69..4169e227b5fb5a3a7fb51396c4679100
      void targetDestroyed(InspectorTarget&);
 +    void targetCrashed(InspectorTarget&);
      void didCommitProvisionalTarget(const String& oldTargetID, const String& committedTargetID);
-+    void ensureConnected(const String& targetID);
  
      // Target messages.
      void sendMessageFromTargetToFrontend(const String& targetId, const String& message);
@@ -2289,7 +2269,7 @@ diff --git a/Source/WebCore/Modules/speech/cocoa/WebSpeechRecognizerTask.mm b/So
 index a941d76a4f748718df1e3cff2a6c5e0827f48891..f62db5a27ac0e4c12430e7d19e60c83d768ace22 100644
 --- a/Source/WebCore/Modules/speech/cocoa/WebSpeechRecognizerTask.mm
 +++ b/Source/WebCore/Modules/speech/cocoa/WebSpeechRecognizerTask.mm
-@@ -198,6 +198,7 @@ NS_ASSUME_NONNULL_BEGIN
+@@ -198,6 +198,7 @@ - (void)sendEndIfNeeded
  
  - (void)speechRecognizer:(SFSpeechRecognizer *)speechRecognizer availabilityDidChange:(BOOL)available
  {
@@ -2297,7 +2277,7 @@ index a941d76a4f748718df1e3cff2a6c5e0827f48891..f62db5a27ac0e4c12430e7d19e60c83d
      ASSERT(isMainThread());
  
      if (available || !_task)
-@@ -211,6 +212,7 @@ NS_ASSUME_NONNULL_BEGIN
+@@ -211,6 +212,7 @@ - (void)speechRecognizer:(SFSpeechRecognizer *)speechRecognizer availabilityDidC
  
  - (void)speechRecognitionTask:(SFSpeechRecognitionTask *)task didHypothesizeTranscription:(SFTranscription *)transcription
  {
@@ -2305,7 +2285,7 @@ index a941d76a4f748718df1e3cff2a6c5e0827f48891..f62db5a27ac0e4c12430e7d19e60c83d
      ASSERT(isMainThread());
  
      [self sendSpeechStartIfNeeded];
-@@ -219,6 +221,7 @@ NS_ASSUME_NONNULL_BEGIN
+@@ -219,6 +221,7 @@ - (void)speechRecognitionTask:(SFSpeechRecognitionTask *)task didHypothesizeTran
  
  - (void)speechRecognitionTask:(SFSpeechRecognitionTask *)task didFinishRecognition:(SFSpeechRecognitionResult *)recognitionResult
  {
@@ -2313,7 +2293,7 @@ index a941d76a4f748718df1e3cff2a6c5e0827f48891..f62db5a27ac0e4c12430e7d19e60c83d
      ASSERT(isMainThread());
      [self callbackWithTranscriptions:recognitionResult.transcriptions isFinal:YES];
  
-@@ -230,6 +233,7 @@ NS_ASSUME_NONNULL_BEGIN
+@@ -230,6 +233,7 @@ - (void)speechRecognitionTask:(SFSpeechRecognitionTask *)task didFinishRecogniti
  
  - (void)speechRecognitionTaskWasCancelled:(SFSpeechRecognitionTask *)task
  {
@@ -2325,7 +2305,7 @@ diff --git a/Source/WebCore/Modules/speech/cocoa/WebSpeechRecognizerTaskMock.mm 
 index bef3a522517f4c2e32f58323da98430bb0d195b6..1b5176c119145040942c0c0eb5fb524b486bc7ff 100644
 --- a/Source/WebCore/Modules/speech/cocoa/WebSpeechRecognizerTaskMock.mm
 +++ b/Source/WebCore/Modules/speech/cocoa/WebSpeechRecognizerTaskMock.mm
-@@ -54,7 +54,7 @@ NS_ASSUME_NONNULL_BEGIN
+@@ -54,7 +54,7 @@ - (instancetype)initWithIdentifier:(WebCore::SpeechRecognitionConnectionClientId
  - (void)audioSamplesAvailable:(CMSampleBufferRef)sampleBuffer
  {
      UNUSED_PARAM(sampleBuffer);
@@ -9077,7 +9057,7 @@ diff --git a/Source/WebKit/NetworkProcess/cocoa/NetworkSessionCocoa.mm b/Source/
 index 0904887aa35a36cb66ad59f97ad1666a08abfadd..d5a71d12d78a480c1fa5dfb8b163a2661418d7a5 100644
 --- a/Source/WebKit/NetworkProcess/cocoa/NetworkSessionCocoa.mm
 +++ b/Source/WebKit/NetworkProcess/cocoa/NetworkSessionCocoa.mm
-@@ -720,7 +720,7 @@ void NetworkSessionCocoa::setClientAuditToken(const WebCore::AuthenticationChall
+@@ -720,7 +720,7 @@ - (void)URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task didRece
  
      if ([challenge.protectionSpace.authenticationMethod isEqualToString:NSURLAuthenticationMethodServerTrust]) {
          sessionCocoa->setClientAuditToken(challenge);
@@ -10618,7 +10598,7 @@ index e6f2fcf02b24fa16021c3be83f6116f989610027..bc2ddd59dd037fe3f52f996124b8cd2d
  #import <WebCore/Credential.h>
  #import <WebCore/RegistrationDatabase.h>
  #import <WebCore/ServiceWorkerClientData.h>
-@@ -234,6 +235,11 @@ static WallTime toSystemClockTime(NSDate *date)
+@@ -234,6 +235,11 @@ - (void)removeDataOfTypes:(NSSet *)dataTypes modifiedSince:(NSDate *)date comple
      });
  }
  
@@ -10812,7 +10792,7 @@ diff --git a/Source/WebKit/UIProcess/API/Cocoa/_WKProcessPoolConfiguration.mm b/
 index cb7445b7fe814feff50a14b8dd25f5a32f70a17d..d6d2b2d5ed41ffda551e47dd14801c0e036a0890 100644
 --- a/Source/WebKit/UIProcess/API/Cocoa/_WKProcessPoolConfiguration.mm
 +++ b/Source/WebKit/UIProcess/API/Cocoa/_WKProcessPoolConfiguration.mm
-@@ -257,6 +257,16 @@
+@@ -257,6 +257,16 @@ - (BOOL)processSwapsOnNavigation
      return _processPoolConfiguration->processSwapsOnNavigation();
  }
  
@@ -11083,66 +11063,10 @@ index 64c90f9f25fc44911e819ab94fa973bf0b82a0e4..8d8c739fb903b71f7881801cb41901f2
      bool canRunBeforeUnloadConfirmPanel() const final { return true; }
  
 diff --git a/Source/WebKit/UIProcess/API/glib/WebKitWebContext.cpp b/Source/WebKit/UIProcess/API/glib/WebKitWebContext.cpp
-index a158a10e673c754b30f3678e3bad5653c9e2f8de..4c8eff64d0b1d62fb0f6e9b6b52bed7cd036ff91 100644
+index a158a10e673c754b30f3678e3bad5653c9e2f8de..5f62cef28ef630ac6f958983de363c76785a7b4b 100644
 --- a/Source/WebKit/UIProcess/API/glib/WebKitWebContext.cpp
 +++ b/Source/WebKit/UIProcess/API/glib/WebKitWebContext.cpp
-@@ -121,8 +121,8 @@ enum {
-     PROP_LOCAL_STORAGE_DIRECTORY,
- #endif
-     PROP_WEBSITE_DATA_MANAGER,
--#if PLATFORM(GTK)
-     PROP_PSON_ENABLED,
-+#if PLATFORM(GTK)
- #if !USE(GTK4)
-     PROP_USE_SYSTEM_APPEARANCE_FOR_SCROLLBARS,
- #endif
-@@ -211,8 +211,8 @@ struct _WebKitWebContextPrivate {
- 
-     RefPtr<WebProcessPool> processPool;
-     bool clientsDetached;
--#if PLATFORM(GTK)
-     bool psonEnabled;
-+#if PLATFORM(GTK)
- #if !USE(GTK4)
-     bool useSystemAppearanceForScrollbars;
- #endif
-@@ -315,11 +315,9 @@ WEBKIT_DEFINE_TYPE(WebKitWebContext, webkit_web_context, G_TYPE_OBJECT)
- 
- static const char* injectedBundleDirectory()
- {
--#if ENABLE(DEVELOPER_MODE)
-     const char* bundleDirectory = g_getenv("WEBKIT_INJECTED_BUNDLE_PATH");
-     if (bundleDirectory && g_file_test(bundleDirectory, G_FILE_TEST_IS_DIR))
-         return bundleDirectory;
--#endif
- 
- #if PLATFORM(GTK)
-     static const char* injectedBundlePath = LIBDIR G_DIR_SEPARATOR_S "webkit2gtk-" WEBKITGTK_API_VERSION_STRING
-@@ -344,10 +342,10 @@ static void webkitWebContextGetProperty(GObject* object, guint propID, GValue* v
-     case PROP_WEBSITE_DATA_MANAGER:
-         g_value_set_object(value, webkit_web_context_get_website_data_manager(context));
-         break;
--#if PLATFORM(GTK)
-     case PROP_PSON_ENABLED:
-         g_value_set_boolean(value, context->priv->psonEnabled);
-         break;
-+#if PLATFORM(GTK)
- #if !USE(GTK4)
-     case PROP_USE_SYSTEM_APPEARANCE_FOR_SCROLLBARS:
-         g_value_set_boolean(value, webkit_web_context_get_use_system_appearance_for_scrollbars(context));
-@@ -377,10 +375,10 @@ static void webkitWebContextSetProperty(GObject* object, guint propID, const GVa
-         context->priv->websiteDataManager = manager ? WEBKIT_WEBSITE_DATA_MANAGER(manager) : nullptr;
-         break;
-     }
--#if PLATFORM(GTK)
-     case PROP_PSON_ENABLED:
-         context->priv->psonEnabled = g_value_get_boolean(value);
-         break;
-+#if PLATFORM(GTK)
- #if !USE(GTK4)
-     case PROP_USE_SYSTEM_APPEARANCE_FOR_SCROLLBARS:
-         webkit_web_context_set_use_system_appearance_for_scrollbars(context, g_value_get_boolean(value));
-@@ -402,10 +400,19 @@ static void webkitWebContextSetProperty(GObject* object, guint propID, const GVa
+@@ -402,10 +402,19 @@ static void webkitWebContextSetProperty(GObject* object, guint propID, const GVa
      }
  }
  
@@ -11162,17 +11086,7 @@ index a158a10e673c754b30f3678e3bad5653c9e2f8de..4c8eff64d0b1d62fb0f6e9b6b52bed7c
      GUniquePtr<char> bundleFilename(g_build_filename(injectedBundleDirectory(), INJECTED_BUNDLE_FILENAME, nullptr));
  
      WebKitWebContext* webContext = WEBKIT_WEB_CONTEXT(object);
-@@ -414,8 +421,8 @@ static void webkitWebContextConstructed(GObject* object)
-     API::ProcessPoolConfiguration configuration;
-     configuration.setInjectedBundlePath(FileSystem::stringFromFileSystemRepresentation(bundleFilename.get()));
-     configuration.setUsesWebProcessCache(true);
--#if PLATFORM(GTK)
-     configuration.setProcessSwapsOnNavigation(priv->psonEnabled);
-+#if PLATFORM(GTK)
- #if !USE(GTK4)
-     configuration.setUseSystemAppearanceForScrollbars(priv->useSystemAppearanceForScrollbars);
- #endif
-@@ -458,6 +465,8 @@ static void webkitWebContextConstructed(GObject* object)
+@@ -458,6 +467,8 @@ static void webkitWebContextConstructed(GObject* object)
  
  static void webkitWebContextDispose(GObject* object)
  {
@@ -11181,22 +11095,6 @@ index a158a10e673c754b30f3678e3bad5653c9e2f8de..4c8eff64d0b1d62fb0f6e9b6b52bed7c
      WebKitWebContextPrivate* priv = WEBKIT_WEB_CONTEXT(object)->priv;
      if (!priv->clientsDetached) {
          priv->clientsDetached = true;
-@@ -526,7 +535,6 @@ static void webkit_web_context_class_init(WebKitWebContextClass* webContextClass
-             WEBKIT_TYPE_WEBSITE_DATA_MANAGER,
-             static_cast<GParamFlags>(WEBKIT_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY));
- 
--#if PLATFORM(GTK)
-     /**
-      * WebKitWebContext:process-swap-on-cross-site-navigation-enabled:
-      *
-@@ -548,6 +556,7 @@ static void webkit_web_context_class_init(WebKitWebContextClass* webContextClass
-             FALSE,
-             static_cast<GParamFlags>(WEBKIT_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY));
- 
-+#if PLATFORM(GTK)
- #if !USE(GTK4)
-     /**
-      * WebKitWebContext:use-system-appearance-for-scrollbars:
 diff --git a/Source/WebKit/UIProcess/API/glib/WebKitWebContextPrivate.h b/Source/WebKit/UIProcess/API/glib/WebKitWebContextPrivate.h
 index 78d1578f94793e9e59a3d4d2b33e79ea8530fa04..493cdadac3873508b3efa3048638e73a13f4c976 100644
 --- a/Source/WebKit/UIProcess/API/glib/WebKitWebContextPrivate.h
@@ -21161,7 +21059,7 @@ diff --git a/Source/WebKitLegacy/mac/WebView/WebHTMLView.mm b/Source/WebKitLegac
 index 9f9c67523b8fac9025d2cec101adf452631ffc61..737d8dab4f7aa1fe446b2dcfdc32fe83e02a4555 100644
 --- a/Source/WebKitLegacy/mac/WebView/WebHTMLView.mm
 +++ b/Source/WebKitLegacy/mac/WebView/WebHTMLView.mm
-@@ -4189,7 +4189,7 @@ static BOOL currentScrollIsBlit(NSView *clipView)
+@@ -4189,7 +4189,7 @@ - (void)mouseDown:(WebEvent *)event
      _private->handlingMouseDownEvent = NO;
  }
  
@@ -21174,7 +21072,7 @@ diff --git a/Source/WebKitLegacy/mac/WebView/WebView.mm b/Source/WebKitLegacy/ma
 index 42f0a9da1fc329d13893d86905f5e6435df35ae2..04b066da6388038d5dcff5c509357b074a0c961b 100644
 --- a/Source/WebKitLegacy/mac/WebView/WebView.mm
 +++ b/Source/WebKitLegacy/mac/WebView/WebView.mm
-@@ -4043,7 +4043,7 @@ IGNORE_WARNINGS_END
+@@ -4043,7 +4043,7 @@ + (void)_doNotStartObservingNetworkReachability
  }
  #endif // PLATFORM(IOS_FAMILY)
  
@@ -21183,7 +21081,7 @@ index 42f0a9da1fc329d13893d86905f5e6435df35ae2..04b066da6388038d5dcff5c509357b07
  
  - (NSArray *)_touchEventRegions
  {
-@@ -4085,7 +4085,7 @@ IGNORE_WARNINGS_END
+@@ -4085,7 +4085,7 @@ - (NSArray *)_touchEventRegions
      }).autorelease();
  }
  
@@ -21792,7 +21690,7 @@ index 817e8fec7e18b3fbde85aa534263def60458b1a8..e722f02eeb891538d2d5b1c2b7d4cd1c
  
      return exitAfterLoad && webProcessCrashed ? 1 : 0;
 diff --git a/Tools/MiniBrowser/wpe/main.cpp b/Tools/MiniBrowser/wpe/main.cpp
-index cd1d3647c8bfaa6cc9642ce63060a5aa6c594791..a69c62a7e4a67f91682b05debac7eb99349edc81 100644
+index cd1d3647c8bfaa6cc9642ce63060a5aa6c594791..1e0516b437d01e8af70da1e8865b7840514522e7 100644
 --- a/Tools/MiniBrowser/wpe/main.cpp
 +++ b/Tools/MiniBrowser/wpe/main.cpp
 @@ -41,6 +41,9 @@ static gboolean headlessMode;
@@ -21978,12 +21876,10 @@ index cd1d3647c8bfaa6cc9642ce63060a5aa6c594791..a69c62a7e4a67f91682b05debac7eb99
      webkit_website_data_manager_set_itp_enabled(manager, enableITP);
  
      if (proxy) {
-@@ -231,7 +349,8 @@ int main(int argc, char *argv[])
-     if (ignoreTLSErrors)
+@@ -232,6 +350,7 @@ int main(int argc, char *argv[])
          webkit_website_data_manager_set_tls_errors_policy(manager, WEBKIT_TLS_ERRORS_POLICY_IGNORE);
  
--    auto* webContext = WEBKIT_WEB_CONTEXT(g_object_new(WEBKIT_TYPE_WEB_CONTEXT, "website-data-manager", manager, "time-zone-override", timeZone, nullptr));
-+    WebKitWebContext *webContext = WEBKIT_WEB_CONTEXT(g_object_new(WEBKIT_TYPE_WEB_CONTEXT, "website-data-manager", manager, "process-swap-on-cross-site-navigation-enabled", TRUE, NULL));
+     auto* webContext = WEBKIT_WEB_CONTEXT(g_object_new(WEBKIT_TYPE_WEB_CONTEXT, "website-data-manager", manager, "time-zone-override", timeZone, nullptr));
 +    persistentWebContext = webContext;
      g_object_unref(manager);
  
