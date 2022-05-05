@@ -16,7 +16,7 @@ test('event should work', async ({ mount }) => {
   let clicked = false;
 
   // Mount a component. Returns locator pointing to the component.
-  const c = await mount(<Button title='Submit'
+  const component = await mount(<Button title='Submit'
     onClick={() => clicked = true}>
   </Button>);
 
@@ -33,7 +33,7 @@ test('event should work', async ({ mount }) => {
 
 ## How to get started
 
-Adding Playwright Test to an existing React, Vue or Svelte project is easy. Below at the steps to enable Playwright Test for a sample create-react-app with TypeScript template.
+Adding Playwright Test to an existing React, Vue or Svelte project is easy. Below are the steps to enable Playwright Test for a sample create-react-app with TypeScript template.
 
 ### Step 1: Install Playwright Test for components for your respective framework
 
@@ -54,7 +54,7 @@ npm i @playwright/experimental-ct-react
 </html>
 ```
 
-### Step 3: create `playwright/index.js`
+### Step 3: create `playwright/index.ts`
 ```js
 // Apply theme here, add anything your component needs at runtime here.
 ```
