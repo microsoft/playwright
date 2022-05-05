@@ -3589,6 +3589,7 @@ export type ElectronLaunchParams = {
   },
   strictSelectors?: boolean,
   timezoneId?: string,
+  shell?: boolean;
 };
 export type ElectronLaunchOptions = {
   executablePath?: string,

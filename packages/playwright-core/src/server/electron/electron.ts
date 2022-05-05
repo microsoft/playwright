@@ -178,7 +178,7 @@ export class Electron extends SdkObject {
         handleSIGTERM: true,
         handleSIGHUP: true,
         onExit: () => {},
-        shell: os.platform() === 'win32'
+        shell: options.shell
       });
 
       const waitForXserverError = new Promise(async (resolve, reject) => {
