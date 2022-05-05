@@ -32,7 +32,7 @@ export async function toMatchText(
   receiverType: string,
   query: (isNot: boolean, timeout: number, customStackTrace: ParsedStackTrace) => Promise<{ matches: boolean, received?: string, log?: string[] }>,
   expected: string | RegExp,
-  options: { timeout?: number, matchSubstring?: boolean } = {},
+  options: { timeout?: number, matchSubstring?: boolean, ignoreCase?: boolean } = {},
 ) {
   expectTypes(receiver, [receiverType], matcherName);
 
@@ -60,7 +60,7 @@ export async function toMatchText(
 
   const { matches: pass, received, log } = await query(this.isNot, timeout, captureStackTrace('expect.' + matcherName));
   const stringSubstring = options.matchSubstring ? 'substring' : 'string';
-  const receivedString = received || '';
+  const receivedString = options.ignoreCase && received ? received.toLowerCase() : received || '';
   const message = pass
     ? () =>
       typeof expected === 'string'
@@ -101,12 +101,13 @@ export async function toMatchText(
   return { message, pass };
 }
 
-export function toExpectedTextValues(items: (string | RegExp)[], options: { matchSubstring?: boolean, normalizeWhiteSpace?: boolean } = {}): ExpectedTextValue[] {
+export function toExpectedTextValues(items: (string | RegExp)[], options: { matchSubstring?: boolean, normalizeWhiteSpace?: boolean, ignoreCase?: boolean } = {}): ExpectedTextValue[] {
   return items.map(i => ({
-    string: isString(i) ? i : undefined,
+    string: isString(i) ? options?.ignoreCase ? i.toLowerCase() : i : undefined,
     regexSource: isRegExp(i) ? i.source : undefined,
     regexFlags: isRegExp(i) ? i.flags : undefined,
     matchSubstring: options.matchSubstring,
     normalizeWhiteSpace: options.normalizeWhiteSpace,
+    ignoreCase: isRegExp(i) ? i.flags === 'i' : isString(i) ? options.ignoreCase : undefined,
   }));
 }

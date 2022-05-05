@@ -186,6 +186,12 @@ test('should support toHaveText w/ array', async ({ runInlineTest }) => {
         await expect(locator).not.toHaveText(['Test']);
       });
 
+      test('pass on with ignoreCase=true', async ({ page }) => {
+        await page.setContent('<div>test</div>');
+        const locator = page.locator('p');
+        await expect(locator).toHaveText(['Test'], {ignoreCase: true});
+      });
+
       test('fail on not+empty', async ({ page }) => {
         await page.setContent('<div></div>');
         const locator = page.locator('p');
@@ -214,10 +220,11 @@ test('should support toHaveText w/ array', async ({ runInlineTest }) => {
   expect(output).toContain('-   "Extra"');
   expect(output).toContain('waiting for selector "div"');
   expect(output).toContain('selector resolved to 2 elements');
-  expect(result.passed).toBe(6);
+  expect(result.passed).toBe(7);
   expect(result.failed).toBe(2);
   expect(result.exitCode).toBe(1);
 });
+
 
 test('should support toContainText w/ array', async ({ runInlineTest }) => {
   const result = await runInlineTest({
@@ -228,6 +235,12 @@ test('should support toContainText w/ array', async ({ runInlineTest }) => {
         await page.setContent('<div>Text \\n1</div><div>Text2</div><div>Text3</div>');
         const locator = page.locator('div');
         await expect(locator).toContainText(['ext     1', /ext3/]);
+      });
+
+      test('pass with ignoreCase=true', async ({ page }) => {
+        await page.setContent('<div>Text \\n1</div><div>Text2</div><div>Text3</div>');
+        const locator = page.locator('div');
+        await expect(locator).toContainText(['text'], {ignoreCase: true});
       });
 
       test('fail', async ({ page }) => {
@@ -241,7 +254,7 @@ test('should support toContainText w/ array', async ({ runInlineTest }) => {
   expect(output).toContain('Error: expect(received).toContainText(expected)');
   expect(output).toContain('await expect(locator).toContainText');
   expect(output).toContain('-   "Text 2"');
-  expect(result.passed).toBe(1);
+  expect(result.passed).toBe(2);
   expect(result.failed).toBe(1);
   expect(result.exitCode).toBe(1);
 });
