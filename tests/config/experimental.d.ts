@@ -17027,6 +17027,22 @@ export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
 type LiteralUnion<T extends U, U = string> = T | (U & { zz_IGNORE_ME?: never });
 
 /**
+ *
+ */
+export interface TestPlugin {
+  fixtures?: Fixtures;
+  name: string;
+
+  /**
+   * @param config
+   * @param configDir
+   * @param suite
+   */
+  setup?(config: FullConfig, configDir: string, suite: Suite): Promise<void>;
+
+  teardown?(): Promise<void>;}
+
+/**
  * Playwright Test provides many options to configure how your tests are collected and executed, for example `timeout` or
  * `testDir`. These options are described in the [TestConfig] object in the [configuration file](https://playwright.dev/docs/test-configuration).
  *
@@ -17119,6 +17135,7 @@ interface TestConfig {
    *
    */
   webServer?: TestConfigWebServer;
+  plugins?: TestPlugin[],
   /**
    * Configuration for the `expect` assertion library. Learn more about [various timeouts](https://playwright.dev/docs/test-timeouts).
    *

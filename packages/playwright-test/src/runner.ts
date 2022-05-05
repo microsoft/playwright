@@ -434,7 +434,6 @@ export class Runner {
 
   private async _performGlobalSetup(config: FullConfigInternal, rootSuite: Suite): Promise<(() => Promise<void>) | undefined> {
     const result: FullResult = { status: 'passed' };
-    const pluginTeardowns: (() => Promise<void>)[] = [];
     let globalSetupResult: any;
 
     const tearDown = async () => {
@@ -449,9 +448,9 @@ export class Runner {
           await (await this._loader.loadGlobalHook(config.globalTeardown, 'globalTeardown'))(this._loader.fullConfig());
       }, result);
 
-      for (const teardown of pluginTeardowns) {
+      for (const plugin of [...this._plugins, ...config._plugins].reverse()) {
         await this._runAndReportError(async () => {
-          await teardown();
+          await plugin.teardown?.();
         }, result);
       }
     };
@@ -463,11 +462,8 @@ export class Runner {
 
       // First run the plugins, if plugin is a web server we want it to run before the
       // config's global setup.
-      for (const plugin of this._plugins) {
+      for (const plugin of [...this._plugins, ...config._plugins])
         await plugin.setup?.(config, config._configDir, rootSuite);
-        if (plugin.teardown)
-          pluginTeardowns.unshift(plugin.teardown);
-      }
 
       // The do global setup.
       if (config.globalSetup)

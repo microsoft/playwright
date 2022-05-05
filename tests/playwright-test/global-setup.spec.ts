@@ -184,7 +184,7 @@ test('globalSetup should throw when passed non-function', async ({ runInlineTest
       });
     `,
   });
-  expect(output).toContain(`globalSetup.ts: globalSetup file must export a single function.`);
+  expect(output).toContain(`globalSetup.ts: file must export a single function.`);
 });
 
 test('globalSetup should work with default export and run the returned fn', async ({ runInlineTest }) => {
