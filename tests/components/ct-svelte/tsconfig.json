@@ -1,3 +1,0 @@
-{
-    "include": ["playwright.config.ts", "src/", "playwright.d.ts"]
-}

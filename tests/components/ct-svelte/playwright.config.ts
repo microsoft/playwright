@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-import { PlaywrightTestConfig, devices } from '@playwright/test';
+import type { PlaywrightTestConfig } from '@playwright/experimental-ct-svelte';
+import { devices } from '@playwright/test';
 
 const config: PlaywrightTestConfig = {
   testDir: 'src',
@@ -22,7 +23,6 @@ const config: PlaywrightTestConfig = {
   retries: process.env.CI ? 2 : 0,
   reporter: 'html',
   use: {
-    vitePort: undefined,
     trace: 'on-first-retry',
   },
   projects: [

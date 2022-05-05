@@ -14,24 +14,31 @@
  * limitations under the License.
  */
 
-import type { Locator } from '@playwright/test';
+import type {
+  TestType,
+  PlaywrightTestArgs,
+  PlaywrightTestConfig as BasePlaywrightTestConfig,
+  PlaywrightTestOptions,
+  PlaywrightWorkerArgs,
+  PlaywrightWorkerOptions,
+  Locator,
+} from '@playwright/test';
 import type { InlineConfig } from 'vite';
 
-declare global {
-  export namespace PlaywrightTest {
-    export interface TestFixtures {
-      mount(component: any, options?: {
-        props?: { [key: string]: any },
-        slots?: { [key: string]: any },
-        on?: { [key: string]: Function },
-      }): Promise<Locator>;
-    }
+export type PlaywrightTestConfig = Omit<BasePlaywrightTestConfig, 'use'> & {
+  use: BasePlaywrightTestConfig['use'] & { vitePort?: number, viteConfig?: InlineConfig }
+};
 
-    export interface ConfigWorkerOptions {
-      vitePort?: number;
-      viteConfig?: InlineConfig;
-    }
-  }
+interface ComponentFixtures {
+  mount(component: any, options?: {
+    props?: { [key: string]: any },
+    slots?: { [key: string]: any },
+    on?: { [key: string]: Function },
+  }): Promise<Locator>;
 }
 
-export { };
+export const test: TestType<
+  PlaywrightTestArgs & PlaywrightTestOptions & ComponentFixtures,
+  PlaywrightWorkerArgs & PlaywrightWorkerOptions>;
+
+export { expect, devices } from '@playwright/test';
