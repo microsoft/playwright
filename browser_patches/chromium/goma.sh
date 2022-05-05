@@ -7,7 +7,7 @@ cd "$(dirname "$0")"
 SCRIPT_FOLDER=$(pwd -P)
 source "${SCRIPT_FOLDER}/../utils.sh"
 
-ELECTRON_BUILD_TOOLS_REQUIRED_VERSION=6ba8962529c37727a778691b89c92ab0eb1d9d87
+ELECTRON_BUILD_TOOLS_REQUIRED_VERSION=2c24fb5c7c938a4e387f355ab64be449604ae5db
 if [[ -d ./electron-build-tools ]]; then
   cd ./electron-build-tools
   # Make sure required commit is part of electron-build-tools.
@@ -23,11 +23,21 @@ fi
 if [[ ! -d ./electron-build-tools ]]; then
   git clone --single-branch --branch main https://github.com/electron/build-tools/ electron-build-tools
   cd electron-build-tools
-  git checkout 926e1a2f2926b9a7663ae865c3bd9a1b1d366393
   npm install
   mkdir -p third_party
   ./src/e update-goma msftGoma
   cd ..
+fi
+
+if ! is_win; then
+  if command -v python >/dev/null; then
+    PYTHON=python
+  elif command -v python3 >/dev/null; then
+    PYTHON=python3
+  else
+    echo "ERROR: no python or python3 found in PATH"
+    exit 1
+  fi
 fi
 
 cd electron-build-tools/third_party/goma
@@ -52,7 +62,7 @@ elif [[ $1 == "login" ]]; then
   if is_win; then
     /c/Windows/System32/cmd.exe "/c $(cygpath -w $(pwd)/goma_auth.bat) login"
   else
-    python ./goma_auth.py login
+    $PYTHON ./goma_auth.py login
   fi
   echo
   echo "Congratulation! Goma is logged in!"
@@ -71,7 +81,7 @@ elif [[ $1 == "start" ]]; then
   if is_win; then
     /c/Windows/System32/cmd.exe "/c $(cygpath -w $(pwd)/goma_ctl.bat) ensure_start"
   else
-    python ./goma_ctl.py ensure_start
+    $PYTHON ./goma_ctl.py ensure_start
   fi
   set +x
   echo
@@ -86,7 +96,7 @@ elif [[ $1 == "stop" ]]; then
   if is_win; then
     /c/Windows/System32/cmd.exe "/c $(cygpath -w $(pwd)/goma_ctl.bat) stop"
   else
-    python ./goma_ctl.py stop
+    $PYTHON ./goma_ctl.py stop
   fi
 else
   echo "ERROR: unknown command - $1"
