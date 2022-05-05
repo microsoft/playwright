@@ -62,7 +62,7 @@ npm i @playwright/experimental-ct-react
 ### Create a test `src/App.spec.tsx`
 
 ```js
-import { test, expect } from '@playwright/experimental-ct-react';
+import { test, expect } from '@playwright/test';
 import App from './App';
 
 test.use({ viewport: { width: 500, height: 500 } });

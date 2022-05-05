@@ -21,6 +21,7 @@
     "jsx": "react-jsx"
   },
   "include": [
-    "src"
+    "src",
+    "playwright.d.ts"
   ]
 }

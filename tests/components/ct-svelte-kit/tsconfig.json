@@ -1,0 +1,8 @@
+{
+  "compilerOptions": {
+    "allowSyntheticDefaultImports": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+  },
+  "include": ["src", "playwright.d.ts", "selte.d.ts"],
+}
