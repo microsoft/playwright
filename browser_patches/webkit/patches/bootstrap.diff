@@ -1753,30 +1753,6 @@ index 638612413466efc87b737e8a81042ed07ca12703..6f9e518ff0bfa2a6228675d25b6b785f
              ]
          },
          {
-diff --git a/Source/JavaScriptCore/runtime/IntlDateTimeFormat.cpp b/Source/JavaScriptCore/runtime/IntlDateTimeFormat.cpp
-index aa6ee6b2ad34c05c9056af1931968aa2567abe5b..35693aba5a49956a8326ae5693b6f0e80dbdd066 100644
---- a/Source/JavaScriptCore/runtime/IntlDateTimeFormat.cpp
-+++ b/Source/JavaScriptCore/runtime/IntlDateTimeFormat.cpp
-@@ -36,6 +36,7 @@
- #include <unicode/ucal.h>
- #include <unicode/uenum.h>
- #include <wtf/Range.h>
-+#include <wtf/DateMath.h>
- #include <wtf/text/StringBuilder.h>
- #include <wtf/unicode/icu/ICUHelpers.h>
- 
-diff --git a/Source/JavaScriptCore/runtime/JSDateMath.cpp b/Source/JavaScriptCore/runtime/JSDateMath.cpp
-index b0b9d3269a46ba6e712b310f3febf1e2d55bcdc5..b2ead4beed4c596fef2feb644092c5aaf923b140 100644
---- a/Source/JavaScriptCore/runtime/JSDateMath.cpp
-+++ b/Source/JavaScriptCore/runtime/JSDateMath.cpp
-@@ -77,6 +77,7 @@
- #include <limits>
- #include <wtf/Language.h>
- #include <wtf/unicode/icu/ICUHelpers.h>
-+#include <wtf/DateMath.h>
- 
- #if U_ICU_VERSION_MAJOR_NUM >= 69 || (U_ICU_VERSION_MAJOR_NUM == 68 && USE(APPLE_INTERNAL_SDK))
- #define HAVE_ICU_C_TIMEZONE_API 1
 diff --git a/Source/ThirdParty/libwebrtc/CMakeLists.txt b/Source/ThirdParty/libwebrtc/CMakeLists.txt
 index 0d42c17c6a85b2a9f6af319431332f7f8a709188..8899c8e85b11db81d1da14c7f27814883f75da50 100644
 --- a/Source/ThirdParty/libwebrtc/CMakeLists.txt
@@ -2301,19 +2277,6 @@ index a941d76a4f748718df1e3cff2a6c5e0827f48891..f62db5a27ac0e4c12430e7d19e60c83d
      ASSERT(isMainThread());
  
      [self sendSpeechEndIfNeeded];
-diff --git a/Source/WebCore/Modules/speech/cocoa/WebSpeechRecognizerTaskMock.mm b/Source/WebCore/Modules/speech/cocoa/WebSpeechRecognizerTaskMock.mm
-index bef3a522517f4c2e32f58323da98430bb0d195b6..1b5176c119145040942c0c0eb5fb524b486bc7ff 100644
---- a/Source/WebCore/Modules/speech/cocoa/WebSpeechRecognizerTaskMock.mm
-+++ b/Source/WebCore/Modules/speech/cocoa/WebSpeechRecognizerTaskMock.mm
-@@ -54,7 +54,7 @@ - (instancetype)initWithIdentifier:(WebCore::SpeechRecognitionConnectionClientId
- - (void)audioSamplesAvailable:(CMSampleBufferRef)sampleBuffer
- {
-     UNUSED_PARAM(sampleBuffer);
--    
-+
-     if (!_hasSentSpeechStart) {
-         _hasSentSpeechStart = true;
-         _delegateCallback(WebCore::SpeechRecognitionUpdate::create(_identifier, WebCore::SpeechRecognitionUpdateType::SpeechStart));
 diff --git a/Source/WebCore/PlatformWPE.cmake b/Source/WebCore/PlatformWPE.cmake
 index 9d021a1a887fb06779b063b525ac985f8f4ba37a..8378753eacb14e9fd34e906111352b5833032d38 100644
 --- a/Source/WebCore/PlatformWPE.cmake
@@ -3794,18 +3757,6 @@ index 12dc38a0bb33578e0c468c690b4ae6d77f0cd1e6..8402d34f8099fa040e5ebdefc217b060
  
      void discardBindings();
  
-diff --git a/Source/WebCore/inspector/agents/InspectorDOMStorageAgent.h b/Source/WebCore/inspector/agents/InspectorDOMStorageAgent.h
-index e0cd2af16589ce137c79fa896a55ee461b77a318..4381b9ff1d1d62dd9b0ffddde303e7eaef0ee217 100644
---- a/Source/WebCore/inspector/agents/InspectorDOMStorageAgent.h
-+++ b/Source/WebCore/inspector/agents/InspectorDOMStorageAgent.h
-@@ -40,6 +40,7 @@ class DOMStorageFrontendDispatcher;
- 
- namespace WebCore {
- 
-+class Color;
- class Frame;
- class Page;
- class SecurityOrigin;
 diff --git a/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp b/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp
 index a6601cae918cc76aab630e88c05acc445977169c..cb11fe1ae599c802d029f09d257a7fc29a8e7e9f 100644
 --- a/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp
@@ -10761,21 +10712,6 @@ index b1c6e033c8a86353f96161482d92c227d7946201..64e592705c97d2d78668aa532f271ddf
  
  #import "WKObject.h"
  #import <wtf/RetainPtr.h>
-diff --git a/Source/WebKit/UIProcess/API/Cocoa/_WKInspectorExtension.mm b/Source/WebKit/UIProcess/API/Cocoa/_WKInspectorExtension.mm
-index d8465a1a50d39ab043a368d48ef2f0940d427446..6602eb497f66cdfbb92e918a4f9b3e1e20b3ee72 100644
---- a/Source/WebKit/UIProcess/API/Cocoa/_WKInspectorExtension.mm
-+++ b/Source/WebKit/UIProcess/API/Cocoa/_WKInspectorExtension.mm
-@@ -24,7 +24,10 @@
-  */
- 
- #import "config.h"
-+#import "WKError.h"
- #import "_WKInspectorExtensionInternal.h"
-+#import <wtf/BlockPtr.h>
-+#import <wtf/URL.h>
- 
- #if ENABLE(INSPECTOR_EXTENSIONS)
- 
 diff --git a/Source/WebKit/UIProcess/API/Cocoa/_WKProcessPoolConfiguration.h b/Source/WebKit/UIProcess/API/Cocoa/_WKProcessPoolConfiguration.h
 index a4b6d757e066334af98dec218ac52261b9d5ccd8..2c2e3c70b4bb9a4ddcd2ba2afd5af842d9b59eb6 100644
 --- a/Source/WebKit/UIProcess/API/Cocoa/_WKProcessPoolConfiguration.h
@@ -11949,19 +11885,18 @@ index 94690e2744bf965e63696e31450cbafec077ffc8..74d14d6d5dba79c9dd7f5ae9340a8564
  static NSString *const classifierOutputFeatureKey = @"label";
  
 diff --git a/Source/WebKit/UIProcess/Cocoa/SOAuthorization/PopUpSOAuthorizationSession.h b/Source/WebKit/UIProcess/Cocoa/SOAuthorization/PopUpSOAuthorizationSession.h
-index 454c61ffdefecc476d1560c7c43f5b5d345f281d..6de7509037b7683ddd403ee247bdf2845ce4e87a 100644
+index 454c61ffdefecc476d1560c7c43f5b5d345f281d..59f93c79167d3d392b46ff5243494b02af073550 100644
 --- a/Source/WebKit/UIProcess/Cocoa/SOAuthorization/PopUpSOAuthorizationSession.h
 +++ b/Source/WebKit/UIProcess/Cocoa/SOAuthorization/PopUpSOAuthorizationSession.h
-@@ -27,6 +27,8 @@
+@@ -29,6 +29,7 @@
  
- #if HAVE(APP_SSO)
- 
-+#include <wtf/Forward.h>
-+#include <wtf/CompletionHandler.h>
  #include "SOAuthorizationSession.h"
  #include <wtf/CompletionHandler.h>
++#include <wtf/Forward.h>
  
-@@ -39,6 +41,8 @@ class NavigationAction;
+ OBJC_CLASS WKSOSecretDelegate;
+ OBJC_CLASS WKWebView;
+@@ -39,6 +40,8 @@ class NavigationAction;
  
  namespace WebKit {
  
@@ -11970,18 +11905,6 @@ index 454c61ffdefecc476d1560c7c43f5b5d345f281d..6de7509037b7683ddd403ee247bdf284
  // FSM: Idle => Active => Completed
  class PopUpSOAuthorizationSession final : public SOAuthorizationSession {
  public:
-diff --git a/Source/WebKit/UIProcess/Cocoa/SOAuthorization/SubFrameSOAuthorizationSession.h b/Source/WebKit/UIProcess/Cocoa/SOAuthorization/SubFrameSOAuthorizationSession.h
-index 8a95a3f8036bb0c664954c23ba3ecf72058ae711..dd10e28e2499cd84be2d072dc7567050ca1e3001 100644
---- a/Source/WebKit/UIProcess/Cocoa/SOAuthorization/SubFrameSOAuthorizationSession.h
-+++ b/Source/WebKit/UIProcess/Cocoa/SOAuthorization/SubFrameSOAuthorizationSession.h
-@@ -32,6 +32,7 @@
- #include "NavigationSOAuthorizationSession.h"
- #include <WebCore/FrameIdentifier.h>
- #include <wtf/Deque.h>
-+#include <variant>
- 
- namespace WebKit {
- 
 diff --git a/Source/WebKit/UIProcess/Cocoa/UIDelegate.h b/Source/WebKit/UIProcess/Cocoa/UIDelegate.h
 index 20b08ac2df75f589bbbe29e2f924c92f33cf2242..2aaa37a18eb31ade4ff8d7fb8b85fee612bb47f1 100644
 --- a/Source/WebKit/UIProcess/Cocoa/UIDelegate.h
@@ -16111,19 +16034,6 @@ index 0000000000000000000000000000000000000000..6d04f9290135069359ce6bf872654648
 +} // namespace WebKit
 +
 +#endif // ENABLE(REMOTE_INSPECTOR)
-diff --git a/Source/WebKit/UIProcess/SpeechRecognitionRemoteRealtimeMediaSource.cpp b/Source/WebKit/UIProcess/SpeechRecognitionRemoteRealtimeMediaSource.cpp
-index 3c1566e64215c5ab1b437f6b2362affde4456678..9eeda40abfb093221f34d681175b282512222fce 100644
---- a/Source/WebKit/UIProcess/SpeechRecognitionRemoteRealtimeMediaSource.cpp
-+++ b/Source/WebKit/UIProcess/SpeechRecognitionRemoteRealtimeMediaSource.cpp
-@@ -37,6 +37,8 @@
- #include <WebCore/WebAudioBufferList.h>
- #endif
- 
-+using namespace WebCore;
-+
- namespace WebKit {
- 
- Ref<WebCore::RealtimeMediaSource> SpeechRecognitionRemoteRealtimeMediaSource::create(SpeechRecognitionRemoteRealtimeMediaSourceManager& manager, const WebCore::CaptureDevice& captureDevice, WebCore::PageIdentifier pageIdentifier)
 diff --git a/Source/WebKit/UIProcess/WebAuthentication/Mock/MockLocalConnection.h b/Source/WebKit/UIProcess/WebAuthentication/Mock/MockLocalConnection.h
 index 684b9616573761123fbcc0d94be29de519ecced6..51ff18323ece0ee15c87d63a1d6fd604377ee968 100644
 --- a/Source/WebKit/UIProcess/WebAuthentication/Mock/MockLocalConnection.h
