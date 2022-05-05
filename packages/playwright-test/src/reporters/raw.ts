@@ -167,7 +167,7 @@ class RawReporter {
     const project = suite.project();
     assert(project, 'Internal Error: Invalid project structure');
     const report: JsonReport = {
-      config,
+      config: filterOutPrivateFields(config),
       project: {
         metadata: project.metadata,
         name: project.name,
@@ -315,6 +315,14 @@ function dedupeSteps(steps: JsonTestStep[]): JsonTestStep[] {
     lastStep = canDedupe ? step : undefined;
   }
   return result;
+}
+
+function filterOutPrivateFields(object: any): any {
+  if (!object || typeof object !== 'object')
+    return object;
+  if (Array.isArray(object))
+    return object.map(filterOutPrivateFields);
+  return Object.fromEntries(Object.entries(object).filter(entry => !entry[0].startsWith('_')).map(entry => [entry[0], filterOutPrivateFields(entry[1])]));
 }
 
 export default RawReporter;

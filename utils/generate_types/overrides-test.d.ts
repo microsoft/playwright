@@ -56,9 +56,14 @@ export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
 
 type LiteralUnion<T extends U, U = string> = T | (U & { zz_IGNORE_ME?: never });
 
+export interface TestPlugin {
+  fixtures?: Fixtures;
+}
+
 interface TestConfig {
   reporter?: LiteralUnion<'list'|'dot'|'line'|'github'|'json'|'junit'|'null'|'html', string> | ReporterDescription[];
   webServer?: TestConfigWebServer;
+  plugins?: TestPlugin[],
 }
 
 export interface Config<TestArgs = {}, WorkerArgs = {}> extends TestConfig {

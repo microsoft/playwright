@@ -15,7 +15,7 @@
  */
 
 import { installTransform, setCurrentlyLoadingTestFile } from './transform';
-import type { Config, Project, ReporterDescription, FullProjectInternal, FullConfigInternal, Fixtures, FixturesWithLocation } from './types';
+import type { Config, Project, ReporterDescription, FullProjectInternal, FullConfigInternal, Fixtures, FixturesWithLocation, TestPlugin } from './types';
 import { getPackageJsonPath, mergeObjects, errorWithFile } from './util';
 import { setCurrentlyLoadingFileSuite } from './globals';
 import { Suite, type TestCase } from './test';
@@ -63,9 +63,7 @@ export class Loader {
   async loadConfigFile(file: string): Promise<FullConfigInternal> {
     if (this._configFile)
       throw new Error('Cannot load two config files');
-    let config = await this._requireOrImport(file) as Config;
-    if (config && typeof config === 'object' && ('default' in config))
-      config = (config as any)['default'];
+    const config = await this._requireOrImportDefaultObject(file) as Config;
     this._configFile = file;
     await this._processConfigObject(config, path.dirname(file));
     return this._fullConfig;
@@ -125,6 +123,19 @@ export class Loader {
     if (config.snapshotDir !== undefined)
       config.snapshotDir = path.resolve(configDir, config.snapshotDir);
 
+    config.plugins = await Promise.all((config.plugins || []).map(async plugin => {
+      if (typeof plugin === 'string')
+        return (await this._requireOrImportDefaultObject(resolveScript(plugin, configDir))) as TestPlugin;
+      return plugin;
+    }));
+
+    for (const plugin of config.plugins || []) {
+      if (!plugin.fixtures)
+        continue;
+      if (typeof plugin.fixtures === 'string')
+        plugin.fixtures = await this._requireOrImportDefaultObject(resolveScript(plugin.fixtures, configDir));
+    }
+
     this._fullConfig._configDir = configDir;
     this._fullConfig.rootDir = config.testDir || this._configDir;
     this._fullConfig._globalOutputDir = takeFirst(config.outputDir, throwawayArtifactsPath, baseFullConfig._globalOutputDir);
@@ -144,8 +155,9 @@ export class Loader {
     this._fullConfig.updateSnapshots = takeFirst(config.updateSnapshots, baseFullConfig.updateSnapshots);
     this._fullConfig.workers = takeFirst(config.workers, baseFullConfig.workers);
     this._fullConfig.webServer = takeFirst(config.webServer, baseFullConfig.webServer);
+    this._fullConfig._plugins = takeFirst(config.plugins, baseFullConfig._plugins);
     this._fullConfig.metadata = takeFirst(config.metadata, baseFullConfig.metadata);
-    this._fullConfig.projects = (config.projects || [config]).map(p => this._resolveProject(config, p, throwawayArtifactsPath));
+    this._fullConfig.projects = (config.projects || [config]).map(p => this._resolveProject(config, this._fullConfig, p, throwawayArtifactsPath));
   }
 
   async loadTestFile(file: string, environment: 'runner' | 'worker') {
@@ -193,21 +205,11 @@ export class Loader {
   }
 
   async loadGlobalHook(file: string, name: string): Promise<(config: FullConfigInternal) => any> {
-    let hook = await this._requireOrImport(file);
-    if (hook && typeof hook === 'object' && ('default' in hook))
-      hook = hook['default'];
-    if (typeof hook !== 'function')
-      throw errorWithFile(file, `${name} file must export a single function.`);
-    return hook;
+    return this._requireOrImportDefaultFunction(path.resolve(this._fullConfig.rootDir, file), false);
   }
 
   async loadReporter(file: string): Promise<new (arg?: any) => Reporter> {
-    let func = await this._requireOrImport(path.resolve(this._fullConfig.rootDir, file));
-    if (func && typeof func === 'object' && ('default' in func))
-      func = func['default'];
-    if (typeof func !== 'function')
-      throw errorWithFile(file, `reporter file must export a single class.`);
-    return func;
+    return this._requireOrImportDefaultFunction(path.resolve(this._fullConfig.rootDir, file), true);
   }
 
   fullConfig(): FullConfigInternal {
@@ -241,7 +243,7 @@ export class Loader {
     projectConfig.use = mergeObjects(projectConfig.use, this._configCLIOverrides.use);
   }
 
-  private _resolveProject(config: Config, projectConfig: Project, throwawayArtifactsPath: string): FullProjectInternal {
+  private _resolveProject(config: Config, fullConfig: FullConfigInternal, projectConfig: Project, throwawayArtifactsPath: string): FullProjectInternal {
     // Resolve all config dirs relative to configDir.
     if (projectConfig.testDir !== undefined)
       projectConfig.testDir = path.resolve(this._configDir, projectConfig.testDir);
@@ -259,6 +261,7 @@ export class Loader {
     const name = takeFirst(projectConfig.name, config.name, '');
     const screenshotsDir = takeFirst((projectConfig as any).screenshotsDir, (config as any).screenshotsDir, path.join(testDir, '__screenshots__', process.platform, name));
     return {
+      _fullConfig: fullConfig,
       _fullyParallel: takeFirst(projectConfig.fullyParallel, config.fullyParallel, undefined),
       _expect: takeFirst(projectConfig.expect, config.expect, {}),
       grep: takeFirst(projectConfig.grep, config.grep, baseFullConfig.grep),
@@ -308,22 +311,38 @@ ${'='.repeat(80)}\n`);
       revertBabelRequire();
     }
   }
+
+  private async _requireOrImportDefaultFunction(file: string, expectConstructor: boolean) {
+    let func = await this._requireOrImport(file);
+    if (func && typeof func === 'object' && ('default' in func))
+      func = func['default'];
+    if (typeof func !== 'function')
+      throw errorWithFile(file, `file must export a single ${expectConstructor ? 'class' : 'function'}.`);
+    return func;
+  }
+
+  private async _requireOrImportDefaultObject(file: string) {
+    let object = await this._requireOrImport(file);
+    if (object && typeof object === 'object' && ('default' in object))
+      object = object['default'];
+    return object;
+  }
 }
 
 class ProjectSuiteBuilder {
-  private _config: FullProjectInternal;
+  private _project: FullProjectInternal;
   private _index: number;
   private _testTypePools = new Map<TestTypeImpl, FixturePool>();
   private _testPools = new Map<TestCase, FixturePool>();
 
   constructor(project: FullProjectInternal, index: number) {
-    this._config = project;
+    this._project = project;
     this._index = index;
   }
 
   private _buildTestTypePool(testType: TestTypeImpl): FixturePool {
     if (!this._testTypePools.has(testType)) {
-      const fixtures = this._applyConfigUseOptions(testType, this._config.use || {});
+      const fixtures = this._applyConfigUseOptions(testType, this._project.use || {});
       const pool = new FixturePool(fixtures);
       this._testTypePools.set(testType, pool);
     }
@@ -334,6 +353,16 @@ class ProjectSuiteBuilder {
   private _buildPool(test: TestCase): FixturePool {
     if (!this._testPools.has(test)) {
       let pool = this._buildTestTypePool(test._testType);
+
+      for (const plugin of this._project._fullConfig._plugins) {
+        if (!plugin.fixtures)
+          continue;
+        const pluginFixturesWithLocation: FixturesWithLocation = {
+          fixtures: plugin.fixtures,
+          location: { file: '', line: 0, column: 0 },
+        };
+        pool = new FixturePool([pluginFixturesWithLocation], pool, false);
+      }
 
       const parents: Suite[] = [];
       for (let parent: Suite | undefined = test.parent; parent; parent = parent.parent)
@@ -366,7 +395,7 @@ class ProjectSuiteBuilder {
         }
       } else {
         const test = entry._clone();
-        test.retries = this._config.retries;
+        test.retries = this._project.retries;
         // We rely upon relative paths being unique.
         // See `getClashingTestsPerSuite()` in `runner.ts`.
         test._id = `${calculateSha1(relativeTitlePath + ' ' + entry.title)}@${entry._requireFile}#run${this._index}-repeat${repeatEachIndex}`;
@@ -624,6 +653,7 @@ export const baseFullConfig: FullConfigInternal = {
   _globalOutputDir: path.resolve(process.cwd()),
   _configDir: '',
   _testGroupsCount: 0,
+  _plugins: [],
 };
 
 function resolveReporters(reporters: Config['reporter'], rootDir: string): ReporterDescription[]|undefined {
