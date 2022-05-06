@@ -11,3 +11,12 @@ test('should work', async ({ mount }) => {
   await component.click();
   expect.poll(() => clicked).toBe(true);
 });
+
+test('should work inline', async ({ mount }) => {
+    let clicked = false;
+    const component = await mount(<div onClick={() => clicked = true }>click me</div>);
+    await expect(component).toContainText('click me');
+    expect(clicked).toBe(false);
+    await component.click();
+    expect.poll(() => clicked).toBe(true);
+});
