@@ -210,45 +210,60 @@ it('make sure that the server side context, page, etc. objects were garbage coll
   const script = `
   const playwright = require('${require.resolve('playwright')}');
   const { kTestSdkObjects } = require('${require.resolve('../../packages/playwright-core/lib/server/instrumentation')}');
+  const { existingDispatcher } = require('${require.resolve('../../packages/playwright-core/lib/server/dispatchers/dispatcher')}');
   
   const toImpl = playwright._toImpl;
   
   (async () => {
-    const clientSideObjectsBeforeLaunch = playwright._connection._objects.size;
+    const clientSideObjectsSizeBeforeLaunch = playwright._connection._objects.size;
     const browser = await playwright['${browserName}'].launch();
     const objectRefs = [];
-    const objectRefs2Names = new WeakMap();
+    const dispatcherRefs = [];
 
     for (let i = 0; i < 5; i++) {
       const context = await browser.newContext();
       const page = await context.newPage();
-      const response = await page.goto('http://localhost:8907/empty.html');
+      const response = await page.goto('${server.EMPTY_PAGE}');
       objectRefs.push(new WeakRef(toImpl(context)));
-      objectRefs2Names.set(toImpl(context), 'context:' + i);
       objectRefs.push(new WeakRef(toImpl(page)));
-      objectRefs2Names.set(toImpl(page), 'page:' + i);
       objectRefs.push(new WeakRef(toImpl(response)));
-      objectRefs2Names.set(toImpl(response), 'response:' + i);
+      dispatcherRefs.push(
+        new WeakRef(existingDispatcher(toImpl(context))),
+        new WeakRef(existingDispatcher(toImpl(page))),
+        new WeakRef(existingDispatcher(toImpl(response))),
+      );
       await context.close();
     }
-    
+
     assertServerSideObjectsExistance(true);
+    assertServerSideDispatchersExistance(dispatcherRefs, true);
     await browser.close();
     global.gc();
-  
+
     assertServerSideObjectsExistance(false);
+    assertServerSideDispatchersExistance(dispatcherRefs, false);
     
-    // Verify that client side objects got cleaned up.
-    if (playwright._connection._objects.size !== clientSideObjectsBeforeLaunch)
-      throw new Error('Client-side objects were not cleaned up');
-  
+    assertClientSideObjects();
+
+    function assertClientSideObjects() {
+      // Verify that client side objects got cleaned up.
+      if (playwright._connection._objects.size !== clientSideObjectsSizeBeforeLaunch)
+        throw new Error('Client-side objects were not cleaned up');
+    }
+
     function assertServerSideObjectsExistance(expected) {
       for (const ref of objectRefs) {
         const impl = ref.deref();
-        if (kTestSdkObjects.has(impl) !== expected) {
-          const name = objectRefs2Names.get(ref);
-          throw new Error('Unexpected ' + name + ' existence');
-        }
+        if (kTestSdkObjects.has(impl) !== expected)
+          throw new Error('Unexpected  dkObject existence!');
+      }
+    }
+
+    function assertServerSideDispatchersExistance(refs, expected) {
+      for (const ref of refs) {
+        const impl = ref.deref();
+        if (!!impl !== expected)
+          throw new Error('Dispatcher is still alive!');
       }
     }
   })();
