@@ -214,29 +214,35 @@ it('make sure that the server side context, page, etc. objects were garbage coll
   const toImpl = playwright._toImpl;
   
   (async () => {
+    const clientSideObjectsBeforeLaunch = playwright._connection._objects.size;
     const browser = await playwright['${browserName}'].launch();
-    const context = await browser.newContext();
-    const page = await context.newPage();
-    const response = await page.goto('${server.EMPTY_PAGE}');
-    const objectRefs = [
-      new WeakRef(toImpl(context)),
-      new WeakRef(toImpl(page)),
-      new WeakRef(toImpl(response)),
-    ]
-    const objectRefs2Names = new WeakMap([
-      [objectRefs[0], 'context'],
-      [objectRefs[1], 'page'],
-      [objectRefs[2], 'response'],
-    ]);
-  
-    assertExistance(true);
+    const objectRefs = [];
+    const objectRefs2Names = new WeakMap();
+
+    for (let i = 0; i < 5; i++) {
+      const context = await browser.newContext();
+      const page = await context.newPage();
+      const response = await page.goto('http://localhost:8907/empty.html');
+      objectRefs.push(new WeakRef(toImpl(context)));
+      objectRefs2Names.set(toImpl(context), 'context:' + i);
+      objectRefs.push(new WeakRef(toImpl(page)));
+      objectRefs2Names.set(toImpl(page), 'page:' + i);
+      objectRefs.push(new WeakRef(toImpl(response)));
+      objectRefs2Names.set(toImpl(response), 'response:' + i);
+      await context.close();
+    }
     
+    assertServerSideObjectsExistance(true);
     await browser.close();
     global.gc();
   
-    assertExistance(false);
+    assertServerSideObjectsExistance(false);
+    
+    // Verify that client side objects got cleaned up.
+    if (playwright._connection._objects.size !== clientSideObjectsBeforeLaunch)
+      throw new Error('Client-side objects were not cleaned up');
   
-    function assertExistance(expected) {
+    function assertServerSideObjectsExistance(expected) {
       for (const ref of objectRefs) {
         const impl = ref.deref();
         if (kTestSdkObjects.has(impl) !== expected) {
@@ -257,7 +263,6 @@ it('make sure that the server side context, page, etc. objects were garbage coll
   });
   const { exitCode } = await testSdkObjectsProcess.exited;
   expect(exitCode).toBe(0);
-  console.log(testSdkObjectsProcess.output);
 });
 
 async function expectScopeState(object, golden) {
