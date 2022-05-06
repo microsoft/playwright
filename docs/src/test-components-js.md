@@ -27,7 +27,7 @@ test('event should work', async ({ mount }) => {
   await component.click();
 
   // Assert that respective events have been fired.
-  expect(clicked).toBeTruthy();
+  expect.poll(() => clicked).toBeTruthy();
 });
 ```
 
