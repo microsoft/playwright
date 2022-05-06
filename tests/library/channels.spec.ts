@@ -208,9 +208,9 @@ it('should work with the domain module', async ({ browserType, server, browserNa
 it('make sure that the server side context, page, etc. objects were garbage collected', async ({ browserName, server, childProcess }, testInfo) => {
   const scriptPath = testInfo.outputPath('test.js');
   const script = `
-  const playwright = require('${require.resolve('playwright')}');
-  const { kTestSdkObjects } = require('${require.resolve('../../packages/playwright-core/lib/server/instrumentation')}');
-  const { existingDispatcher } = require('${require.resolve('../../packages/playwright-core/lib/server/dispatchers/dispatcher')}');
+  const playwright = require('${JSON.stringify(require.resolve('playwright'))}');
+  const { kTestSdkObjects } = require('${JSON.stringify(require.resolve('../../packages/playwright-core/lib/server/instrumentation'))}');
+  const { existingDispatcher } = require('${JSON.stringify(require.resolve('../../packages/playwright-core/lib/server/dispatchers/dispatcher'))}');
   
   const toImpl = playwright._toImpl;
   
