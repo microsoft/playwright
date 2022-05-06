@@ -23,6 +23,54 @@ export async function mount(page: Page, jsxOrType: any, options: any, baseURL: s
   }, true);
 }
 
+function serialize(value: any, visited: Set<any> = new Set()): any {
+  if (visited.has(value))
+    return undefined; // we found a cycle
+  if (typeof value === 'symbol')
+    return value;
+  if (Object.is(value, undefined))
+    return value;
+  if (Object.is(value, null))
+    return value;
+  if (Object.is(value, NaN))
+    return value;
+  if (Object.is(value, Infinity))
+    return value;
+  if (Object.is(value, -Infinity))
+    return value;
+  if (Object.is(value, -0))
+    return value;
+  if (typeof value === 'boolean')
+    return value;
+  if (typeof value === 'number')
+    return value;
+  if (typeof value === 'string')
+    return value
+  if (value instanceof Error)
+    return value;
+  if (value instanceof Date)
+    return value;
+  if (value instanceof RegExp)
+    return value;
+  if (Array.isArray(value)) {
+    const a = [];
+    visited.add(value);
+    for (let i = 0; i < value.length; ++i)
+      a.push(serialize(value[i], visited));
+    visited.delete(value);
+    return a;
+  }
+  if (typeof value === 'object') {
+    const o: any = {};
+    visited.add(value);
+    for (const name of Object.keys(value))
+      o[name] = serialize(value, visited);
+    visited.delete(value);
+    return o;
+  }
+  throw new Error('Unexpected value');
+}
+
 async function innerMount(page: Page, jsxOrType: any, options: any, baseURL: string, viewport: ViewportSize): Promise<string> {
   await page.goto('about:blank');
   await (page as any)._resetForReuse();
@@ -53,6 +101,7 @@ async function innerMount(page: Page, jsxOrType: any, options: any, baseURL: str
         if (typeof value === 'string' && (value as string).startsWith('__pw_func_')) {
           const ordinal = +value.substring('__pw_func_'.length);
           object[key] = (...args: any[]) => {
+            args = args.map(a => serialize(a));
             (window as any)[dispatchMethod](ordinal, args);
           };
         } else if (typeof value === 'object' && value) {
