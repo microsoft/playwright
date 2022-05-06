@@ -97,6 +97,27 @@ test('should fail with proper error when unsupported argument is given', async (
   expect(stripAnsi(result.output)).toContain(`Expected options.clip.width not to be 0`);
 });
 
+test('should use match snapshot paths by default', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    // The helper function `playwrightConfig` injects a `_useScreenshotsDir` flag.
+    // Provide default config manually instead.
+    'playwright.config.js': `
+      process.env.PLAYWRIGHT_EXPERIMENTAL_FEATURES = '1';
+      module.exports = {};
+    `,
+    'a.spec.js': `
+      pwt.test('is a test', async ({ page }, testInfo) => {
+        testInfo.snapshotSuffix = '';
+        await expect(page).toHaveScreenshot('snapshot.png');
+      });
+    `
+  }, { 'update-snapshots': true });
+  expect(result.exitCode).toBe(0);
+
+  const snapshotOutputPath = testInfo.outputPath('a.spec.js-snapshots', 'snapshot.png');
+  expect(fs.existsSync(snapshotOutputPath)).toBe(true);
+});
+
 test('should have scale:css by default', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     ...playwrightConfig({ screenshotsDir: '__screenshots__' }),
@@ -920,6 +941,9 @@ test('should update expectations with retries', async ({ runInlineTest }, testIn
 });
 
 function playwrightConfig(obj: any) {
+  obj.expect ??= {};
+  obj.expect.toHaveScreenshot ??= {};
+  obj.expect.toHaveScreenshot._useScreenshotsDir ??= true;
   return {
     'playwright.config.js': `
       process.env.PLAYWRIGHT_EXPERIMENTAL_FEATURES = '1';

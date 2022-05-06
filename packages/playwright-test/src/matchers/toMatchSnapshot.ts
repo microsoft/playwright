@@ -295,8 +295,11 @@ export async function toHaveScreenshot(
   if (!testInfo)
     throw new Error(`toHaveScreenshot() must be called during the test`);
   const config = (testInfo.project._expect as any)?.toHaveScreenshot;
+  const snapshotPathResolver = process.env.PLAYWRIGHT_EXPERIMENTAL_FEATURES && config?._useScreenshotsDir
+    ? testInfo._screenshotPath.bind(testInfo)
+    : testInfo.snapshotPath.bind(testInfo);
   const helper = new SnapshotHelper(
-      testInfo, testInfo._screenshotPath.bind(testInfo), 'png',
+      testInfo, snapshotPathResolver, 'png',
       {
         maxDiffPixels: config?.maxDiffPixels,
         maxDiffPixelRatio: config?.maxDiffPixelRatio,
