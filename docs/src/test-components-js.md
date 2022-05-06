@@ -28,7 +28,7 @@ test('event should work', async ({ mount }) => {
 
   // Assert that respective events have been fired.
   expect(clicked).toBeTruthy();
-})
+});
 ```
 
 ## How to get started
@@ -38,13 +38,17 @@ Adding Playwright Test to an existing React, Vue or Svelte project is easy. Belo
 ### Step 1: Install Playwright Test for components for your respective framework
 
 ```sh
-npm i @playwright/test
-npm i @playwright/experimental-ct-react
-# npm i @playwright/experimental-ct-vue
-# npm i @playwright/experimental-ct-svelte
+npm init playwright@latest --ct
 ```
 
-### Step 2: create `playwright/index.html`
+This step creates several files in your workspace:
+
+#### `playwright/index.html`
+
+This file defines an html file that will be used to render components during testing.
+It must contain element with `id="root"`, that's where components are mounted. It must
+also link the script called `playwright/index.[tj]s`.
+
 ```html
 <html lang="en">
   <body>
@@ -54,12 +58,20 @@ npm i @playwright/experimental-ct-react
 </html>
 ```
 
-### Step 3: create `playwright/index.ts`
+#### `playwright/index.ts`
+
+You can include stylesheets, apply theme and inject code into the page where
+component is mounted using this script. It can be either `.js` or `.ts` file.
+
 ```js
 // Apply theme here, add anything your component needs at runtime here.
 ```
 
-### Create a test `src/App.spec.tsx`
+#### `playwright/types.d.ts`
+
+This file makes sure `mount` fixture is typed in your tests.
+
+### Step 2. Create a test file `src/App.spec.tsx`
 
 ```js
 import { test, expect } from '@playwright/test';
@@ -73,7 +85,7 @@ test('should work', async ({ mount }) => {
 });
 ```
 
-### Run the tests
+### Step 3. Run the tests
 
 ```sh
 npx playwright test
