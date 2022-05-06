@@ -40,7 +40,7 @@ export function createPlugin(
 
       configDir = configDirectory;
 
-      process.env.PLAYWRIGHT_TEST_BASE_URL = `http://localhost:${port}/playwright/index.html`;
+      process.env.PLAYWRIGHT_VITE_COMPONENTS_BASE_URL = `http://localhost:${port}/playwright/index.html`;
 
       viteConfig.root = viteConfig.root || configDir;
       viteConfig.plugins = viteConfig.plugins || [

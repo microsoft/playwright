@@ -15,7 +15,7 @@
  */
 
 const { test: baseTest, expect, devices, _addRunnerPlugin } = require('@playwright/test');
-const { mount } = require('@playwright/test/lib/mount');
+const { fixtures } = require('@playwright/test/lib/mount');
 const path = require('path');
 
 _addRunnerPlugin(() => {
@@ -26,30 +26,6 @@ _addRunnerPlugin(() => {
     () => require('@vitejs/plugin-react')());
 });
 
-const test = baseTest.extend({
-  _workerPage: [async ({ browser }, use) => {
-    const page = await browser._wrapApiCall(async () => {
-      const page = await browser.newPage();
-      await page.addInitScript('navigator.serviceWorker.register = () => {}');
-      return page;
-    });
-    await use(page);
-  }, { scope: 'worker' }],
-
-  context: async ({ page }, use) => {
-    await use(page.context());
-  },
-
-  page: async ({ _workerPage }, use) => {
-    await use(_workerPage);
-  },
-
-  mount: async ({ page, baseURL, viewport }, use) => {
-    await use(async (component, options) => {
-      const selector = await mount(page, component, options, baseURL, viewport);
-      return page.locator(selector);
-    });
-  },
-});
+const test = baseTest.extend(fixtures);
 
 module.exports = { test, expect, devices };
