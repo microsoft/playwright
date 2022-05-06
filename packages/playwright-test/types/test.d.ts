@@ -370,8 +370,9 @@ type LiteralUnion<T extends U, U = string> = T | (U & { zz_IGNORE_ME?: never });
  *
  */
 export interface TestPlugin {
-  name: string;
   fixtures?: Fixtures;
+  name: string;
+
   /**
    * @param config
    * @param configDir
@@ -474,7 +475,7 @@ interface TestConfig {
    *
    */
   webServer?: TestConfigWebServer;
-  plugins?: (TestPlugin | string | [string, any])[],
+  plugins?: TestPlugin[],
   /**
    * Configuration for the `expect` assertion library. Learn more about [various timeouts](https://playwright.dev/docs/test-timeouts).
    *
@@ -2619,7 +2620,7 @@ export type VideoMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry';
  * ```
  *
  */
-export interface PlaywrightTestOptions extends PlaywrightTest.TestOptions {
+export interface PlaywrightTestOptions {
   /**
    * Whether to automatically download all the attachments. Defaults to `true` where all the downloads are accepted.
    */
@@ -2807,7 +2808,7 @@ export interface PlaywrightWorkerArgs {
  * [fixtures.context](https://playwright.dev/docs/api/class-fixtures#fixtures-context) and
  * [fixtures.page](https://playwright.dev/docs/api/class-fixtures#fixtures-page).
  */
-export interface PlaywrightTestArgs extends PlaywrightTest.TestArgs {
+export interface PlaywrightTestArgs {
   /**
    * Isolated [BrowserContext] instance, created for each test. Since contexts are isolated between each other, every test
    * gets a fresh environment, even when multiple tests run in a single [Browser] for maximum efficiency.
@@ -2924,12 +2925,6 @@ type Awaited<T> = T extends PromiseLike<infer U> ? U : T;
 declare global {
   export namespace PlaywrightTest {
     export interface Matchers<R, T = unknown> {
-    }
-
-    export interface TestArgs {
-    }
-
-    export interface TestOptions {
     }
   }
 }

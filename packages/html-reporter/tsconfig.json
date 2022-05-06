@@ -24,6 +24,6 @@
       "playwright-test/lib/*": ["../playwright-test/src/*"],
     }
   },
-  "include": ["src", "playwright.d.ts"],
+  "include": ["src"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

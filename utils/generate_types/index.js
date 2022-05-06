@@ -93,7 +93,7 @@ class TypesGenerator {
 
     let overrides = await parseOverrides(overridesFile, className => {
       const docClass = this.docClassForName(className);
-      if (!docClass || !this.shouldGenerate(className))
+      if (!docClass)
         return '';
       handledClasses.add(className);
       return this.writeComment(docClass.comment) + '\n';
@@ -573,7 +573,6 @@ class TypesGenerator {
         'PlaywrightWorkerOptions.defaultBrowserType',
         'PlaywrightWorkerArgs.playwright',
         'Matchers',
-        'TestArgs',
       ]),
       doNotExportClassNames: new Set([...assertionClasses, 'TestProject']),
       includeExperimental,
