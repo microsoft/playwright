@@ -14,15 +14,27 @@
  * limitations under the License.
  */
 
-import type { Locator, TestPlugin } from '@playwright/test';
+import type {
+  TestType,
+  PlaywrightTestArgs,
+  PlaywrightTestConfig as BasePlaywrightTestConfig,
+  PlaywrightTestOptions,
+  PlaywrightWorkerArgs,
+  PlaywrightWorkerOptions,
+  Locator,
+} from '@playwright/test';
 import type { InlineConfig } from 'vite';
 
-declare global {
-  export namespace PlaywrightTest {
-    export interface TestArgs {
-      mount(component: JSX.Element): Promise<Locator>;
-    }
-  }
+export type PlaywrightTestConfig = Omit<BasePlaywrightTestConfig, 'use'> & {
+  use?: BasePlaywrightTestConfig['use'] & { vitePort?: number, viteConfig?: InlineConfig }
+};
+
+interface ComponentFixtures {
+  mount(component: JSX.Element): Promise<Locator>;
 }
 
-export default function(options?: { vitePort?: number, viteConfig?: InlineConfig }): TestPlugin;
+export const test: TestType<
+  PlaywrightTestArgs & PlaywrightTestOptions & ComponentFixtures,
+  PlaywrightWorkerArgs & PlaywrightWorkerOptions>;
+
+export { expect, devices } from '@playwright/test';

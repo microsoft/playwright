@@ -74,7 +74,7 @@ This file makes sure `mount` fixture is typed in your tests.
 ### Step 2. Create a test file `src/App.spec.tsx`
 
 ```js
-import { test, expect } from '@playwright/test';
+import { test, expect } from '@playwright/experimental-ct-react';
 import App from './App';
 
 test.use({ viewport: { width: 500, height: 500 } });

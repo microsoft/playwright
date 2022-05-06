@@ -15,7 +15,7 @@
  */
 
 import React from 'react';
-import { expect, test } from '@playwright/test';
+import { expect, test } from '@playwright/experimental-ct-react';
 import { Source } from './source';
 
 test.use({ viewport: { width: 500, height: 500 } });

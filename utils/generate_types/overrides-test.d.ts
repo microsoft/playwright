@@ -57,14 +57,13 @@ export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
 type LiteralUnion<T extends U, U = string> = T | (U & { zz_IGNORE_ME?: never });
 
 export interface TestPlugin {
-  name: string;
   fixtures?: Fixtures;
 }
 
 interface TestConfig {
   reporter?: LiteralUnion<'list'|'dot'|'line'|'github'|'json'|'junit'|'null'|'html', string> | ReporterDescription[];
   webServer?: TestConfigWebServer;
-  plugins?: (TestPlugin | string | [string, any])[],
+  plugins?: TestPlugin[],
 }
 
 export interface Config<TestArgs = {}, WorkerArgs = {}> extends TestConfig {
@@ -213,7 +212,7 @@ export interface PlaywrightWorkerOptions {
 export type TraceMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry';
 export type VideoMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry';
 
-export interface PlaywrightTestOptions extends PlaywrightTest.TestOptions {
+export interface PlaywrightTestOptions {
   acceptDownloads: boolean | undefined;
   bypassCSP: boolean | undefined;
   colorScheme: ColorScheme | undefined;
@@ -245,7 +244,7 @@ export interface PlaywrightWorkerArgs {
   browser: Browser;
 }
 
-export interface PlaywrightTestArgs extends PlaywrightTest.TestArgs {
+export interface PlaywrightTestArgs {
   context: BrowserContext;
   page: Page;
   request: APIRequestContext;
@@ -317,12 +316,6 @@ type Awaited<T> = T extends PromiseLike<infer U> ? U : T;
 declare global {
   export namespace PlaywrightTest {
     export interface Matchers<R, T = unknown> {
-    }
-
-    export interface TestArgs {
-    }
-
-    export interface TestOptions {
     }
   }
 }

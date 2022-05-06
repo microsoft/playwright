@@ -14,57 +14,131 @@
  * limitations under the License.
  */
 
-import type { InlineConfig, Plugin } from 'vite';
+import fs from 'fs';
 import type { Suite } from '../../types/testReporter';
-import type { Fixtures, FullConfig, Locator, Page, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, TestPlugin } from '../types';
+import path from 'path';
+import type { InlineConfig, Plugin, PreviewServer } from 'vite';
+import type { TestRunnerPlugin } from '.';
+import { parse, traverse, types as t } from '../babelBundle';
+import type { ComponentInfo } from '../tsxTransform';
+import { collectComponentUsages, componentInfo } from '../tsxTransform';
+import type { FullConfig } from '../types';
 
-import { mount } from '../mount';
+let previewServer: PreviewServer;
 
-export function vitePlugin(
-  name: string,
+export function createPlugin(
   registerSourceFile: string,
-  frameworkPluginFactory: () => Plugin,
-  viteConfig: InlineConfig = {},
-  vitePort: number = 3100): TestPlugin {
-
-  let teardownVite: () => Promise<void>;
+  frameworkPluginFactory: () => Plugin): TestRunnerPlugin {
+  let configDir: string;
   return {
-    name,
+    name: 'playwright-vite-plugin',
 
     setup: async (config: FullConfig, configDirectory: string, suite: Suite) => {
-      teardownVite = await require('./vitePluginSetup').setup(registerSourceFile, frameworkPluginFactory, configDirectory, suite, viteConfig, vitePort);
+      const use = config.projects[0].use as any;
+      const viteConfig: InlineConfig = use.viteConfig || {};
+      const port = use.vitePort || 3100;
+
+      configDir = configDirectory;
+
+      process.env.PLAYWRIGHT_TEST_BASE_URL = `http://localhost:${port}/playwright/index.html`;
+
+      viteConfig.root = viteConfig.root || configDir;
+      viteConfig.plugins = viteConfig.plugins || [
+        frameworkPluginFactory()
+      ];
+      const files = new Set<string>();
+      for (const project of suite.suites) {
+        for (const file of project.suites)
+          files.add(file.location!.file);
+      }
+      const registerSource = await fs.promises.readFile(registerSourceFile, 'utf-8');
+      viteConfig.plugins.push(vitePlugin(registerSource, [...files]));
+      viteConfig.configFile = viteConfig.configFile || false;
+      viteConfig.define = viteConfig.define || {};
+      viteConfig.define.__VUE_PROD_DEVTOOLS__ = true;
+      viteConfig.css = viteConfig.css || {};
+      viteConfig.css.devSourcemap = true;
+      viteConfig.preview = { port };
+      viteConfig.build = {
+        target: 'esnext',
+        minify: false,
+        rollupOptions: {
+          treeshake: false,
+          input: {
+            index: path.join(viteConfig.root, 'playwright', 'index.html')
+          },
+        },
+        sourcemap: true,
+        outDir: viteConfig?.build?.outDir || path.join(viteConfig.root, './dist-pw/')
+      };
+      const { build, preview } = require('vite');
+      await build(viteConfig);
+      previewServer = await preview(viteConfig);
     },
 
     teardown: async () => {
-      await teardownVite();
+      await new Promise<void>((f, r) => previewServer.httpServer.close(err => {
+        if (err)
+          r(err);
+        else
+          f();
+      }));
     },
-
-    fixtures
   };
 }
 
-const fixtures: Fixtures<PlaywrightTestArgs & PlaywrightTestOptions & { mount: (component: any, options: any) => Promise<Locator> }, PlaywrightWorkerArgs & { _workerPage: Page }> = {
-  _workerPage: [async ({ browser }, use) => {
-    const page = await (browser as any)._wrapApiCall(async () => {
-      const page = await browser.newPage();
-      await page.addInitScript('navigator.serviceWorker.register = () => {}');
-      return page;
-    });
-    await use(page);
-  }, { scope: 'worker' }],
+const imports: Map<string, ComponentInfo> = new Map();
 
-  context: async ({ page }, use) => {
-    await use(page.context());
-  },
+function vitePlugin(registerSource: string, files: string[]): Plugin {
+  return {
+    name: 'playwright:component-index',
 
-  page: async ({ _workerPage }, use) => {
-    await use(_workerPage);
-  },
+    configResolved: async config => {
 
-  mount: async ({ page, viewport }, use) => {
-    await use(async (component, options) => {
-      const selector = await mount(page, component, options, process.env.PLAYWRIGHT_VITE_PLUGIN_GALLERY!, viewport || { width: 1280, height: 720 });
-      return page.locator(selector);
-    });
-  },
-};
+      for (const file of files) {
+        const text = await fs.promises.readFile(file, 'utf-8');
+        const ast = parse(text, { errorRecovery: true, plugins: ['typescript', 'jsx'], sourceType: 'module' });
+        const components = collectComponentUsages(ast);
+
+        traverse(ast, {
+          enter: p => {
+            if (t.isImportDeclaration(p.node)) {
+              const importNode = p.node;
+              if (!t.isStringLiteral(importNode.source))
+                return;
+
+              for (const specifier of importNode.specifiers) {
+                if (!components.names.has(specifier.local.name))
+                  continue;
+                if (t.isImportNamespaceSpecifier(specifier))
+                  continue;
+                const info = componentInfo(specifier, importNode.source.value, file);
+                imports.set(info.fullName, info);
+              }
+            }
+          }
+        });
+      }
+    },
+
+    transform: async (content, id) => {
+      if (!id.endsWith('playwright/index.ts') && !id.endsWith('playwright/index.tsx') && !id.endsWith('playwright/index.js'))
+        return;
+
+      const folder = path.dirname(id);
+      const lines = [content, ''];
+      lines.push(registerSource);
+
+      for (const [alias, value] of imports) {
+        const importPath = value.isModuleOrAlias ? value.importPath : './' + path.relative(folder, value.importPath).replace(/\\/g, '/');
+        if (value.importedName)
+          lines.push(`import { ${value.importedName} as ${alias} } from '${importPath}';`);
+        else
+          lines.push(`import ${alias} from '${importPath}';`);
+      }
+
+      lines.push(`register({ ${[...imports.keys()].join(',\n  ')} });`);
+      return lines.join('\n');
+    },
+  };
+}
