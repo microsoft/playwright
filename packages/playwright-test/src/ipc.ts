@@ -16,12 +16,15 @@
 
 import type { TestError } from '../types/testReporter';
 import type { ConfigCLIOverrides } from './runner';
-import type { TestStatus } from './types';
+import type { FullConfigInternal, TestStatus } from './types';
 
 export type SerializedLoaderData = {
+  config: FullConfigInternal;
   configFile: string | undefined;
   configDir: string;
   configCLIOverrides: ConfigCLIOverrides;
+  pluginFixtureFiles: string[];
+  overridesForLegacyConfigMode?: ConfigCLIOverrides;
 };
 
 export type WorkerInitParams = {

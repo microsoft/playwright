@@ -17027,21 +17027,6 @@ export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
 type LiteralUnion<T extends U, U = string> = T | (U & { zz_IGNORE_ME?: never });
 
 /**
- *
- */
-export interface TestPlugin {
-  name: string;
-  fixtures?: Fixtures;
-  /**
-   * @param config
-   * @param configDir
-   * @param suite
-   */
-  setup?(config: FullConfig, configDir: string, suite: Suite): Promise<void>;
-
-  teardown?(): Promise<void>;}
-
-/**
  * Playwright Test provides many options to configure how your tests are collected and executed, for example `timeout` or
  * `testDir`. These options are described in the [TestConfig] object in the [configuration file](https://playwright.dev/docs/test-configuration).
  *
@@ -17134,7 +17119,6 @@ interface TestConfig {
    *
    */
   webServer?: TestConfigWebServer;
-  plugins?: (TestPlugin | string | [string, any])[],
   /**
    * Configuration for the `expect` assertion library. Learn more about [various timeouts](https://playwright.dev/docs/test-timeouts).
    *
@@ -17410,6 +17394,8 @@ interface TestConfig {
    * resolve to `snapshots/a.spec.js-snapshots`.
    */
   snapshotDir?: string;
+
+  plugins?: Array<TestPlugin>;
 
   /**
    * Whether to preserve test output in the
@@ -20470,6 +20456,21 @@ export interface TestError {
    * The value that was thrown. Set when anything except the [Error] (or its subclass) has been thrown.
    */
   value?: string;
+}
+
+export interface TestPlugin {
+  name: string;
+
+  /**
+   * @param config
+   * @param configDir
+   * @param suite
+   */
+  setup?(config: FullConfig, configDir: string, suite: Suite): Promise<void>;
+
+  teardown?(): Promise<void>;
+
+  fixtures?: string;
 }
 
 /**

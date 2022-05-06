@@ -16,7 +16,9 @@
 
 import { test, expect } from './playwright-test-fixtures';
 
-test('should work with connectOptions', async ({ runInlineTest }) => {
+test('should work with connectOptions (legacy)', async ({ runInlineTest, legacyConfigLoader }) => {
+  test.skip(!legacyConfigLoader, 'Not supported in the new mode');
+
   const result = await runInlineTest({
     'playwright.config.js': `
       module.exports = {
@@ -33,6 +35,43 @@ test('should work with connectOptions', async ({ runInlineTest }) => {
         const server = await pwt.chromium.launchServer();
         process.env.CONNECT_WS_ENDPOINT = server.wsEndpoint();
         return () => server.close();
+      };
+    `,
+    'a.test.ts': `
+      const { test } = pwt;
+      test.use({ locale: 'fr-CH' });
+      test('pass', async ({ page }) => {
+        await page.setContent('<div>PASS</div>');
+        await expect(page.locator('div')).toHaveText('PASS');
+        expect(await page.evaluate(() => navigator.language)).toBe('fr-CH');
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
+
+test('should work with connectOptions', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.js': `
+      let server;
+      const plugin = {
+        setup: async (config) => {
+          server = await pwt.chromium.launchServer();
+          process.env.CONNECT_WS_ENDPOINT = server.wsEndpoint();
+        },
+        teardown: async () => {
+          await server.close();
+        },
+        fixtures: require.resolve('./fixtures.js'),
+      };
+      module.exports = { plugins: [plugin] };
+    `,
+    'fixtures.js': `
+      module.exports = {
+        connectOptions: async ({}, use) => {
+          await use({ wsEndpoint: process.env.CONNECT_WS_ENDPOINT });
+        },
       };
     `,
     'a.test.ts': `

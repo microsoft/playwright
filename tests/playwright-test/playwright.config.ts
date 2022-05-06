@@ -32,6 +32,10 @@ const config: Config = {
     {
       name: 'playwright-test'
     },
+    {
+      name: 'playwright-test-legacy-config',
+      use: { legacyConfigLoader: true },
+    },
   ],
   reporter: process.env.CI ? [
     ['dot'],

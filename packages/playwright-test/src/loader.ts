@@ -44,6 +44,8 @@ export class Loader {
   private _fullConfig: FullConfigInternal;
   private _configDir: string = '';
   private _configFile: string | undefined;
+  private _pluginFixtureFiles: string[] | undefined;
+  private _pluginFixtureObjects: FixturesWithLocation[] = [];
   private _projectSuiteBuilders = new Map<FullProjectInternal, ProjectSuiteBuilder>();
 
   constructor(configCLIOverrides?: ConfigCLIOverrides) {
@@ -52,12 +54,23 @@ export class Loader {
   }
 
   static async deserialize(data: SerializedLoaderData): Promise<Loader> {
-    const loader = new Loader(data.configCLIOverrides);
-    if (data.configFile)
-      await loader.loadConfigFile(data.configFile);
-    else
-      await loader.loadEmptyConfig(data.configDir);
-    return loader;
+    if (process.env.PLAYWRIGHT_LEGACY_CONFIG_MODE) {
+      const loader = new Loader(data.overridesForLegacyConfigMode);
+      loader._pluginFixtureFiles = data.pluginFixtureFiles;
+      if (data.configFile)
+        await loader.loadConfigFile(data.configFile);
+      else
+        await loader.loadEmptyConfig(data.configDir);
+      return loader;
+    } else {
+      const loader = new Loader();
+      loader._configFile = data.configFile;
+      loader._configDir = data.configDir;
+      loader._fullConfig = data.config;
+      loader._pluginFixtureFiles = data.pluginFixtureFiles;
+      await loader._loadPluginFixtures();
+      return loader;
+    }
   }
 
   async loadConfigFile(file: string): Promise<FullConfigInternal> {
@@ -123,24 +136,18 @@ export class Loader {
     if (config.snapshotDir !== undefined)
       config.snapshotDir = path.resolve(configDir, config.snapshotDir);
 
-    const resolvedPlugins = await Promise.all((config.plugins || []).map(async plugin => {
-      if (typeof plugin === 'string')
-        return (await this._requireOrImportDefaultObject(resolveScript(plugin, configDir))) as TestPlugin;
-      if (Array.isArray(plugin)) {
-        const func = await this._requireOrImportDefaultFunction(resolveScript(plugin[0], configDir), false);
-        plugin = func(plugin[1]) as TestPlugin;
+    if (!this._pluginFixtureFiles) {
+      this._pluginFixtureFiles = [];
+      for (const plugin of config.plugins || []) {
+        if (!plugin.fixtures)
+          continue;
+        this._pluginFixtureFiles.push(resolveScript(plugin.fixtures, configDir));
       }
-      return plugin;
-    }));
-
-    for (const plugin of resolvedPlugins) {
-      if (!plugin.fixtures)
-        continue;
-      if (typeof plugin.fixtures === 'string')
-        plugin.fixtures = await this._requireOrImportDefaultObject(resolveScript(plugin.fixtures, configDir));
     }
+    await this._loadPluginFixtures();
 
     this._fullConfig._configDir = configDir;
+    this._fullConfig._plugins = config.plugins || [];
     this._fullConfig.rootDir = config.testDir || this._configDir;
     this._fullConfig._globalOutputDir = takeFirst(config.outputDir, throwawayArtifactsPath, baseFullConfig._globalOutputDir);
     this._fullConfig.forbidOnly = takeFirst(config.forbidOnly, baseFullConfig.forbidOnly);
@@ -159,9 +166,17 @@ export class Loader {
     this._fullConfig.updateSnapshots = takeFirst(config.updateSnapshots, baseFullConfig.updateSnapshots);
     this._fullConfig.workers = takeFirst(config.workers, baseFullConfig.workers);
     this._fullConfig.webServer = takeFirst(config.webServer, baseFullConfig.webServer);
-    this._fullConfig._plugins = takeFirst(resolvedPlugins, baseFullConfig._plugins);
     this._fullConfig.metadata = takeFirst(config.metadata, baseFullConfig.metadata);
-    this._fullConfig.projects = (config.projects || [config]).map(p => this._resolveProject(config, this._fullConfig, p, throwawayArtifactsPath));
+    this._fullConfig.projects = (config.projects || [config]).map(p => this._resolveProject(config, p, throwawayArtifactsPath));
+  }
+
+  private async _loadPluginFixtures() {
+    for (const pluginFixtureFile of this._pluginFixtureFiles!) {
+      this._pluginFixtureObjects.push({
+        fixtures: await this._requireOrImportDefaultObject(pluginFixtureFile),
+        location: { file: pluginFixtureFile, line: 0, column: 0 },
+      });
+    }
   }
 
   async loadTestFile(file: string, environment: 'runner' | 'worker') {
@@ -222,17 +237,21 @@ export class Loader {
 
   buildFileSuiteForProject(project: FullProjectInternal, suite: Suite, repeatEachIndex: number, filter: (test: TestCase) => boolean): Suite | undefined {
     if (!this._projectSuiteBuilders.has(project))
-      this._projectSuiteBuilders.set(project, new ProjectSuiteBuilder(project, this._fullConfig.projects.indexOf(project)));
+      this._projectSuiteBuilders.set(project, new ProjectSuiteBuilder(project, this._fullConfig.projects.indexOf(project), this._pluginFixtureObjects));
     const builder = this._projectSuiteBuilders.get(project)!;
     return builder.cloneFileSuite(suite, repeatEachIndex, filter);
   }
 
   serialize(): SerializedLoaderData {
     const result: SerializedLoaderData = {
+      config: this._fullConfig,
       configFile: this._configFile,
       configDir: this._configDir,
       configCLIOverrides: this._configCLIOverrides,
+      pluginFixtureFiles: this._pluginFixtureFiles!,
     };
+    if (process.env.PLAYWRIGHT_LEGACY_CONFIG_MODE)
+      result.overridesForLegacyConfigMode = this._configCLIOverrides;
     return result;
   }
 
@@ -247,7 +266,7 @@ export class Loader {
     projectConfig.use = mergeObjects(projectConfig.use, this._configCLIOverrides.use);
   }
 
-  private _resolveProject(config: Config, fullConfig: FullConfigInternal, projectConfig: Project, throwawayArtifactsPath: string): FullProjectInternal {
+  private _resolveProject(config: Config, projectConfig: Project, throwawayArtifactsPath: string): FullProjectInternal {
     // Resolve all config dirs relative to configDir.
     if (projectConfig.testDir !== undefined)
       projectConfig.testDir = path.resolve(this._configDir, projectConfig.testDir);
@@ -265,7 +284,6 @@ export class Loader {
     const name = takeFirst(projectConfig.name, config.name, '');
     const screenshotsDir = takeFirst((projectConfig as any).screenshotsDir, (config as any).screenshotsDir, path.join(testDir, '__screenshots__', process.platform, name));
     return {
-      _fullConfig: fullConfig,
       _fullyParallel: takeFirst(projectConfig.fullyParallel, config.fullyParallel, undefined),
       _expect: takeFirst(projectConfig.expect, config.expect, {}),
       grep: takeFirst(projectConfig.grep, config.grep, baseFullConfig.grep),
@@ -338,15 +356,17 @@ class ProjectSuiteBuilder {
   private _index: number;
   private _testTypePools = new Map<TestTypeImpl, FixturePool>();
   private _testPools = new Map<TestCase, FixturePool>();
+  private _pluginFixtureObjects: FixturesWithLocation[];
 
-  constructor(project: FullProjectInternal, index: number) {
+  constructor(project: FullProjectInternal, index: number, pluginFixtureObjects: FixturesWithLocation[]) {
     this._project = project;
     this._index = index;
+    this._pluginFixtureObjects = pluginFixtureObjects;
   }
 
   private _buildTestTypePool(testType: TestTypeImpl): FixturePool {
     if (!this._testTypePools.has(testType)) {
-      const fixtures = this._applyConfigUseOptions(testType, this._project.use || {});
+      const fixtures = this._applyConfigUseOptions([...testType.fixtures, ...this._pluginFixtureObjects], this._project.use || {});
       const pool = new FixturePool(fixtures);
       this._testTypePools.set(testType, pool);
     }
@@ -357,16 +377,6 @@ class ProjectSuiteBuilder {
   private _buildPool(test: TestCase): FixturePool {
     if (!this._testPools.has(test)) {
       let pool = this._buildTestTypePool(test._testType);
-
-      for (const plugin of this._project._fullConfig._plugins) {
-        if (!plugin.fixtures)
-          continue;
-        const pluginFixturesWithLocation: FixturesWithLocation = {
-          fixtures: plugin.fixtures,
-          location: { file: '', line: 0, column: 0 },
-        };
-        pool = new FixturePool([pluginFixturesWithLocation], pool, false);
-      }
 
       const parents: Suite[] = [];
       for (let parent: Suite | undefined = test.parent; parent; parent = parent.parent)
@@ -426,12 +436,12 @@ class ProjectSuiteBuilder {
     return this._cloneEntries(suite, result, repeatEachIndex, filter, '') ? result : undefined;
   }
 
-  private _applyConfigUseOptions(testType: TestTypeImpl, configUse: Fixtures): FixturesWithLocation[] {
+  private _applyConfigUseOptions(fixtures: FixturesWithLocation[], configUse: Fixtures): FixturesWithLocation[] {
     const configKeys = new Set(Object.keys(configUse));
     if (!configKeys.size)
-      return testType.fixtures;
+      return fixtures;
     const result: FixturesWithLocation[] = [];
-    for (const f of testType.fixtures) {
+    for (const f of fixtures) {
       const optionsFromConfig: Fixtures = {};
       const originalFixtures: Fixtures = {};
       for (const [key, value] of Object.entries(f.fixtures)) {

@@ -17,4 +17,4 @@
 ## optional async method: TestPlugin.teardown
 
 ## optional property: TestPlugin.fixtures
-- `fixtures` <[any]>
+- `fixtures` ?<[string]>

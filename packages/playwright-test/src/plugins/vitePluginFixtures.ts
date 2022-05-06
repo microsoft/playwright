@@ -14,10 +14,38 @@
  * limitations under the License.
  */
 
-import type { Page, ViewportSize } from '@playwright/test';
 import { createGuid } from 'playwright-core/lib/utils';
+import type { Fixtures, Locator, Page, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, ViewportSize } from '../types';
 
-export async function mount(page: Page, jsxOrType: any, options: any, baseURL: string, viewport: ViewportSize): Promise<string> {
+const fixtures: Fixtures<PlaywrightTestArgs & PlaywrightTestOptions & { mount: (component: any, options: any) => Promise<Locator> }, PlaywrightWorkerArgs & { _workerPage: Page }> = {
+  _workerPage: [async ({ browser }, use) => {
+    const page = await (browser as any)._wrapApiCall(async () => {
+      const page = await browser.newPage();
+      await page.addInitScript('navigator.serviceWorker.register = () => {}');
+      return page;
+    });
+    await use(page);
+  }, { scope: 'worker' }],
+
+  context: async ({ page }, use) => {
+    await use(page.context());
+  },
+
+  page: async ({ _workerPage }, use) => {
+    await use(_workerPage);
+  },
+
+  mount: async ({ page, viewport }, use) => {
+    await use(async (component, options) => {
+      const selector = await (page as any)._wrapApiCall(async () => {
+        return await mount(page, component, options, process.env.PLAYWRIGHT_VITE_PLUGIN_GALLERY!, viewport || { width: 1280, height: 720 });
+      }, true);
+      return page.locator(selector);
+    });
+  },
+};
+
+async function mount(page: Page, jsxOrType: any, options: any, baseURL: string, viewport: ViewportSize): Promise<string> {
   return await (page as any)._wrapApiCall(async () => {
     return await innerMount(page, jsxOrType, options, baseURL, viewport);
   }, true);
@@ -79,3 +107,5 @@ function wrapFunctions(object: any, page: Page, callbacks: Function[]) {
     }
   }
 }
+
+export default fixtures;

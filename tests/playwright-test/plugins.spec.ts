@@ -85,78 +85,101 @@ test('event order', async ({ runInlineTest }, testInfo) => {
   ]);
 });
 
-test('plugins via require', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    'test.spec.ts': `
-      const { test } = pwt;
-      test('it works', async ({}) => {
-        expect(process.env.PW_CONFIG_DIR).toContain('plugins-via-require');
-      });
-    `,
-    'playwright.config.ts': `
-      export default { plugins: [ 'plugin.ts' ] };
-    `,
-    'plugin.ts': `
-      export function setup(config, configDir, suite) {
-        process.env.PW_CONFIG_DIR = configDir;
-      };
-    `
-  });
-  expect(result.exitCode).toBe(0);
-  expect(result.passed).toBe(1);
-});
-
 test('fixtures', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'test.spec.ts': `
       const { test } = pwt;
-      test('it works', async ({ foo }) => {
+      test('it works', async ({ foo, myBrowserName }) => {
         expect(foo).toEqual(42);
-      });
-
-      test('it uses standard fixture', async ({ myBrowserName }) => {
         expect(myBrowserName).toEqual('chromium');
       });
     `,
     'playwright.config.ts': `
-      import plugin from './plugin.ts';
-      module.exports = {
-        plugins: [ plugin ],
-      };
-    `,
-    'plugin.ts': `
       export default {
-        fixtures: {
-          foo: 42,
-          myBrowserName: async ({ browserName }, use) => { await use(browserName) }
-        }
-      };
-    `,
-  });
-  expect(result.exitCode).toBe(0);
-  expect(result.passed).toBe(2);
-});
-
-test('fixtures via require', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    'test.spec.ts': `
-      const { test } = pwt;
-      test('it works', async ({ foo }) => {
-        expect(foo).toEqual(42);
-      });
-    `,
-    'playwright.config.ts': `
-      export default {
-        plugins: [ { fixtures: require.resolve('./fixtures.ts') } ],
+        plugins: [ { fixtures: require('path').join(__dirname, 'fixtures.ts') } ],
       };
     `,
     'fixtures.ts': `
       //@no-header
       export default {
-        foo: 42
+        foo: 42,
+        myBrowserName: async ({ browserName }, use) => { await use(browserName) },
       };
     `
   });
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
+});
+
+test('fixtures types', async ({ runTSC }) => {
+  const result = await runTSC({
+    'tsconfig.json': `
+      {
+        "compilerOptions": {
+          "target": "ESNext",
+          "moduleResolution": "node",
+          "module": "commonjs",
+          "strict": true,
+          "esModuleInterop": true,
+          "allowSyntheticDefaultImports": true,
+          "rootDir": ".",
+          "lib": ["esnext", "dom", "DOM.Iterable"],
+          "noEmit": true,
+        },
+        "include": [".", "typings.d.ts"],
+        "exclude": [
+          "node_modules"
+        ]
+      }
+    `,
+    'typings.d.ts': `
+      import './plugin';
+    `,
+    'test.spec.ts': `
+      const { test } = pwt;
+      test('it works', async ({ foo, myBrowserName, myOption }) => {
+        expect(foo).toEqual(42);
+        expect(myBrowserName).toEqual('chromium');
+        foo = parseInt(myBrowserName);
+        // @ts-expect-error
+        myBrowserName = parseInt(foo);
+      });
+    `,
+    'playwright.config.ts': `
+      const { plugin } = require('./plugin');
+      export default {
+        plugins: [ plugin ],
+        use: { myOption: false },
+      };
+    `,
+    'plugin.ts': `
+      export const plugin = { fixtures: require.resolve('./fixtures.ts') };
+
+      declare global {
+        export namespace PlaywrightTest {
+          export interface TestArgs {
+            foo: number;
+            myBrowserName: string;
+          }
+
+          export interface TestOptions {
+            myOption: boolean;
+          }
+        }
+      }
+    `,
+    'fixtures.ts': `
+      //@no-header
+      import type { Fixtures, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions } from '@playwright/test';
+
+      const fixtures: Fixtures<PlaywrightTestArgs & PlaywrightTestOptions & { foo: number, myBrowserName: string, myOption: boolean }, PlaywrightWorkerArgs & PlaywrightWorkerOptions> = {
+        foo: 42,
+        myBrowserName: async ({ browserName }, use) => { await use(browserName) },
+        myOption: [ false, { option: true } ],
+      };
+
+      export default fixtures;
+    `
+  });
+  expect(result.exitCode).toBe(0);
 });
