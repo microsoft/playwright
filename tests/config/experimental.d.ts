@@ -8362,13 +8362,6 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
     caret?: "hide"|"initial";
 
     /**
-     * When set to `"ready"`, screenshot will wait for
-     * [`document.fonts.ready`](https://developer.mozilla.org/en-US/docs/Web/API/FontFaceSet/ready) promise to resolve in all
-     * frames. Defaults to `"nowait"`.
-     */
-    fonts?: "ready"|"nowait";
-
-    /**
      * Specify locators that should be masked when the screenshot is taken. Masked elements will be overlayed with a pink box
      * `#FF00FF` that completely covers its bounding box.
      */
@@ -16290,13 +16283,6 @@ export interface LocatorScreenshotOptions {
   caret?: "hide"|"initial";
 
   /**
-   * When set to `"ready"`, screenshot will wait for
-   * [`document.fonts.ready`](https://developer.mozilla.org/en-US/docs/Web/API/FontFaceSet/ready) promise to resolve in all
-   * frames. Defaults to `"nowait"`.
-   */
-  fonts?: "ready"|"nowait";
-
-  /**
    * Specify locators that should be masked when the screenshot is taken. Masked elements will be overlayed with a pink box
    * `#FF00FF` that completely covers its bounding box.
    */
@@ -16472,13 +16458,6 @@ export interface PageScreenshotOptions {
      */
     height: number;
   };
-
-  /**
-   * When set to `"ready"`, screenshot will wait for
-   * [`document.fonts.ready`](https://developer.mozilla.org/en-US/docs/Web/API/FontFaceSet/ready) promise to resolve in all
-   * frames. Defaults to `"nowait"`.
-   */
-  fonts?: "ready"|"nowait";
 
   /**
    * When true, takes a screenshot of the full scrollable page, instead of the currently visible viewport. Defaults to
@@ -17177,12 +17156,6 @@ interface TestConfig {
        * `"hide"`.
        */
       caret?: "hide"|"initial";
-
-      /**
-       * See `fonts` in [page.screenshot([options])](https://playwright.dev/docs/api/class-page#page-screenshot). Defaults to
-       * `"ready"`.
-       */
-      fonts?: "ready"|"nowait";
 
       /**
        * See `scale` in [page.screenshot([options])](https://playwright.dev/docs/api/class-page#page-screenshot). Defaults to
@@ -20055,13 +20028,6 @@ interface LocatorAssertions {
     caret?: "hide"|"initial";
 
     /**
-     * When set to `"ready"`, screenshot will wait for
-     * [`document.fonts.ready`](https://developer.mozilla.org/en-US/docs/Web/API/FontFaceSet/ready) promise to resolve in all
-     * frames. Defaults to `"nowait"`.
-     */
-    fonts?: "ready"|"nowait";
-
-    /**
      * Specify locators that should be masked when the screenshot is taken. Masked elements will be overlayed with a pink box
      * `#FF00FF` that completely covers its bounding box.
      */
@@ -20238,13 +20204,6 @@ interface PageAssertions {
        */
       height: number;
     };
-
-    /**
-     * When set to `"ready"`, screenshot will wait for
-     * [`document.fonts.ready`](https://developer.mozilla.org/en-US/docs/Web/API/FontFaceSet/ready) promise to resolve in all
-     * frames. Defaults to `"nowait"`.
-     */
-    fonts?: "ready"|"nowait";
 
     /**
      * When true, takes a screenshot of the full scrollable page, instead of the currently visible viewport. Defaults to
@@ -20561,12 +20520,6 @@ interface TestProject {
        * `"hide"`.
        */
       caret?: "hide"|"initial";
-
-      /**
-       * See `fonts` in [page.screenshot([options])](https://playwright.dev/docs/api/class-page#page-screenshot). Defaults to
-       * `"ready"`.
-       */
-      fonts?: "ready"|"nowait";
 
       /**
        * See `scale` in [page.screenshot([options])](https://playwright.dev/docs/api/class-page#page-screenshot). Defaults to

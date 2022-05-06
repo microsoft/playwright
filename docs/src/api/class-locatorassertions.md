@@ -1024,8 +1024,6 @@ await expect(locator).toHaveScreenshot();
 
 ### option: LocatorAssertions.toHaveScreenshot.caret = %%-screenshot-option-caret-%%
 
-### option: LocatorAssertions.toHaveScreenshot.fonts = %%-screenshot-option-fonts-%%
-
 ### option: LocatorAssertions.toHaveScreenshot.mask = %%-screenshot-option-mask-%%
 
 ### option: LocatorAssertions.toHaveScreenshot.omitBackground = %%-screenshot-option-omit-background-%%

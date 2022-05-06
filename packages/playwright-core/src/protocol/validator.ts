@@ -569,7 +569,6 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
       caret: tOptional(tEnum(['hide', 'initial'])),
       animations: tOptional(tEnum(['disabled', 'allow'])),
       scale: tOptional(tEnum(['css', 'device'])),
-      fonts: tOptional(tEnum(['ready', 'nowait'])),
       mask: tOptional(tArray(tObject({
         frame: tChannel('Frame'),
         selector: tString,
@@ -586,7 +585,6 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     caret: tOptional(tEnum(['hide', 'initial'])),
     animations: tOptional(tEnum(['disabled', 'allow'])),
     scale: tOptional(tEnum(['css', 'device'])),
-    fonts: tOptional(tEnum(['ready', 'nowait'])),
     mask: tOptional(tArray(tObject({
       frame: tChannel('Frame'),
       selector: tString,
@@ -1091,7 +1089,6 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     caret: tOptional(tEnum(['hide', 'initial'])),
     animations: tOptional(tEnum(['disabled', 'allow'])),
     scale: tOptional(tEnum(['css', 'device'])),
-    fonts: tOptional(tEnum(['ready', 'nowait'])),
     mask: tOptional(tArray(tObject({
       frame: tChannel('Frame'),
       selector: tString,

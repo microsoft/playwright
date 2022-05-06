@@ -137,8 +137,6 @@ await expect(page).toHaveScreenshot();
 
 ### option: PageAssertions.toHaveScreenshot.clip = %%-screenshot-option-clip-%%
 
-### option: PageAssertions.toHaveScreenshot.fonts = %%-screenshot-option-fonts-%%
-
 ### option: PageAssertions.toHaveScreenshot.fullPage = %%-screenshot-option-full-page-%%
 
 ### option: PageAssertions.toHaveScreenshot.mask = %%-screenshot-option-mask-%%
