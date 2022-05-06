@@ -16,7 +16,7 @@
 
 import { EventEmitter } from 'events';
 import { debugMode, isUnderTest, monotonicTime } from '../utils';
-import type { BrowserContext } from './browserContext';
+import { BrowserContext } from './browserContext';
 import type { CallMetadata, InstrumentationListener, SdkObject } from './instrumentation';
 import { commandsWithTracingSnapshots, pausesBeforeInputActions } from '../protocol/channels';
 
@@ -40,6 +40,10 @@ export class Debugger extends EventEmitter implements InstrumentationListener {
     this._enabled = debugMode() === 'inspector';
     if (this._enabled)
       this.pauseOnNextStatement();
+    context.instrumentation.addListener(this, context);
+    this._context.once(BrowserContext.Events.Close, () => {
+      this._context.instrumentation.removeListener(this);
+    });
   }
 
   static lookup(context?: BrowserContext): Debugger | undefined {

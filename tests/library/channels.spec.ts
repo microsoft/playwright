@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+import fs from 'fs';
 import domain from 'domain';
 import { playwrightTest as it, expect } from '../config/browserTest';
 
@@ -202,6 +203,61 @@ it('should work with the domain module', async ({ browserType, server, browserNa
 
   if (err)
     throw err;
+});
+
+it('make sure that the server side context, page, etc. objects were garbage collected', async ({ browserName, server, childProcess }, testInfo) => {
+  const scriptPath = testInfo.outputPath('test.js');
+  const script = `
+  const playwright = require('${require.resolve('playwright')}');
+  const { kTestSdkObjects } = require('${require.resolve('../../packages/playwright-core/lib/server/instrumentation')}');
+  
+  const toImpl = playwright._toImpl;
+  
+  (async () => {
+    const browser = await playwright['${browserName}'].launch();
+    const context = await browser.newContext();
+    const page = await context.newPage();
+    const response = await page.goto('${server.EMPTY_PAGE}');
+    const objectRefs = [
+      new WeakRef(toImpl(context)),
+      new WeakRef(toImpl(page)),
+      new WeakRef(toImpl(response)),
+    ]
+    const objectRefs2Names = new WeakMap([
+      [objectRefs[0], 'context'],
+      [objectRefs[1], 'page'],
+      [objectRefs[2], 'response'],
+    ]);
+  
+    assertExistance(true);
+    
+    await browser.close();
+    global.gc();
+  
+    assertExistance(false);
+  
+    function assertExistance(expected) {
+      for (const ref of objectRefs) {
+        const impl = ref.deref();
+        if (kTestSdkObjects.has(impl) !== expected) {
+          const name = objectRefs2Names.get(ref);
+          throw new Error('Unexpected ' + name + ' existence');
+        }
+      }
+    }
+  })();
+  `;
+  await fs.promises.writeFile(scriptPath, script);
+  const testSdkObjectsProcess = childProcess({
+    command: ['node', '--expose-gc', scriptPath],
+    env: {
+      ...process.env,
+      _PW_INTERNAL_COUNT_SDK_OBJECTS: '1',
+    }
+  });
+  const { exitCode } = await testSdkObjectsProcess.exited;
+  expect(exitCode).toBe(0);
+  console.log(testSdkObjectsProcess.output);
 });
 
 async function expectScopeState(object, golden) {

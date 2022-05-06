@@ -36,6 +36,8 @@ export type Attribution = {
 import type { CallMetadata } from '../protocol/callMetadata';
 export type { CallMetadata } from '../protocol/callMetadata';
 
+export const kTestSdkObjects = new WeakSet<SdkObject>();
+
 export class SdkObject extends EventEmitter {
   guid: string;
   attribution: Attribution;
@@ -47,6 +49,8 @@ export class SdkObject extends EventEmitter {
     this.setMaxListeners(0);
     this.attribution = { ...parent.attribution };
     this.instrumentation = parent.instrumentation;
+    if (process.env._PW_INTERNAL_COUNT_SDK_OBJECTS)
+      kTestSdkObjects.add(this);
   }
 }
 
