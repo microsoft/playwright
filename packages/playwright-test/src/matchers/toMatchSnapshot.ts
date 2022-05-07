@@ -309,7 +309,6 @@ export async function toHaveScreenshot(
   const [page, locator] = pageOrLocator.constructor.name === 'Page' ? [(pageOrLocator as PageEx), undefined] : [(pageOrLocator as Locator).page() as PageEx, pageOrLocator as LocatorEx];
   const screenshotOptions = {
     animations: config?.animations ?? 'disabled',
-    fonts: process.env.PLAYWRIGHT_EXPERIMENTAL_FEATURES ? (config?.fonts ?? 'ready') : undefined,
     scale: config?.scale ?? 'css',
     caret: config?.caret ?? 'hide',
     ...helper.allOptions,
