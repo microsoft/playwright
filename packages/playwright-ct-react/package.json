@@ -1,7 +1,7 @@
 {
   "name": "@playwright/experimental-ct-react",
   "private": true,
-  "version": "0.0.12",
+  "version": "0.0.13",
   "description": "Playwright Component Testing for React",
   "repository": "github:Microsoft/playwright",
   "homepage": "https://playwright.dev",

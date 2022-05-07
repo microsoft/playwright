@@ -138,7 +138,10 @@ function vitePlugin(registerSource: string, files: string[]): Plugin {
       }
 
       lines.push(`register({ ${[...imports.keys()].join(',\n  ')} });`);
-      return lines.join('\n');
+      return {
+        code: lines.join('\n'),
+        map: { mappings: '' }
+      };
     },
   };
 }
