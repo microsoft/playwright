@@ -394,6 +394,8 @@ else
   echo "Force-rebuilding the build."
 fi
 
+./upload.sh "${LOG_BLOB_PATH}" --delete
+
 function generate_and_upload_browser_build {
   echo "-- preparing checkout"
   if ! ./prepare_checkout.sh $BROWSER_NAME; then
@@ -430,35 +432,45 @@ function create_roll_into_playwright_pr {
   https://api.github.com/repos/microsoft/playwright/dispatches
 }
 
+CROSS_CHAR=$(printf '\xe2\x9d\x8c')
+CHECKMARK_CHAR=$(printf '\xe2\x9c\x85')
+WATCH_CHAR=$(printf '\xe2\x8f\xb1')
 source ./send_telegram_message.sh
 BUILD_ALIAS="$BUILD_FLAVOR r$BUILD_NUMBER"
 send_telegram_message "$BUILD_ALIAS -- started"
 
 if generate_and_upload_browser_build 2>&1 | ./sanitize_and_compress_log.js $LOG_PATH; then
-  # Report successful build. Note: MINGW might not have `du` command.
-  UPLOAD_SIZE=""
-  if command -v du >/dev/null && command -v awk >/dev/null; then
-    UPLOAD_SIZE="$(du -h "$ZIP_PATH" | awk '{print $1}') "
-  fi
-  send_telegram_message "$BUILD_ALIAS -- ${UPLOAD_SIZE}uploaded"
-
-  # Check if we uploaded the last build.
-  (
-    for i in $(cat "${BROWSER_NAME}/${BUILDS_LIST}"); do
-      URL="https://playwright2.blob.core.windows.net/builds/${BROWSER_NAME}/${BUILD_NUMBER}/$i"
-      if ! [[ $(curl -s -L -I "$URL" | head -1 | cut -f2 -d' ') == 200 ]]; then
-        # Exit subshell
-        echo "Missing build at ${URL}"
-        exit
+  # Send message with all pending builds status.
+  NL="%0A" # Telegram requires url-encoded newline to send newlines.
+  LAST_COMMIT_MESSAGE=$(git log --format=%s -n 1 HEAD -- "./${BROWSER_NAME}/BUILD_NUMBER")
+  TG_MESSAGE="$BUILD_ALIAS r${BUILD_NUMBER} -- ${LAST_COMMIT_MESSAGE}${NL}${NL}"
+  HAS_MISSING_BUILDS=""
+  for i in $(cat "${BROWSER_NAME}/${BUILDS_LIST}"); do
+    BLOB_URL="https://playwright2.blob.core.windows.net/builds/${BROWSER_NAME}/${BUILD_NUMBER}/$i"
+    LOG_URL="https://playwright2.blob.core.windows.net/builds/${BROWSER_NAME}/${BUILD_NUMBER}/${i%.zip}.log.gz"
+    BLOB_BYTES=$(curl -s -L -I "$BLOB_URL" | grep -i content-length | cut -f 2 -d' ')
+    if [[ -z "${BLOB_BYTES}" ]]; then
+      LOG_BYTES=$(curl -s -L -I "$LOG_URL" | grep -i content-length | cut -f 2 -d' ')
+      if [[ -z "${LOG_BYTES}" ]]; then
+        TG_MESSAGE="${TG_MESSAGE}${NL}${WATCH_CHAR} $i - pending"
+      else
+        TG_MESSAGE="${TG_MESSAGE}${NL}${CROSS_CHAR} $i - failed, see <a href='${LOG_URL}'>logs</a>"
       fi
-    done;
-    LAST_COMMIT_MESSAGE=$(git log --format=%s -n 1 HEAD -- "./${BROWSER_NAME}/BUILD_NUMBER")
-    CHECKMARK_CHAR=$(printf '\xe2\x9c\x85')
-    send_telegram_message "<b>${BROWSER_DISPLAY_NAME} r${BUILD_NUMBER} COMPLETE! ${CHECKMARK_CHAR}</b> ${LAST_COMMIT_MESSAGE}"
-    if [[ "${BROWSER_DISPLAY_NAME}" != "chromium-with-symbols" ]]; then
-      create_roll_into_playwright_pr $BROWSER_NAME $BUILD_NUMBER
+      HAS_MISSING_BUILDS="1"
+    elif [[ "$i" == "${BUILD_BLOB_NAME}" ]]; then
+      TG_MESSAGE="${TG_MESSAGE}${NL}${CHECKMARK_CHAR} <a href='${BLOB_URL}'>$i</a> - $((BYTES / 1024 / 1204)) MB -- just uploaded"
+    else
+      TG_MESSAGE="${TG_MESSAGE}${NL}${CHECKMARK_CHAR} <a href='${BLOB_URL}'>$i</a> - $((BYTES / 1024 / 1204)) MB"
     fi
-  )
+  done;
+  if [[ -z "${HAS_MISSING_BUILDS}" ]]; then
+    TG_MESSAGE="${TG_MESSAGE}${NL}<b>${BROWSER_DISPLAY_NAME} r${BUILD_NUMBER} COMPLETE!</b>"
+  fi
+
+  send_telegram_message "${TG_MESSAGE}"
+  if [[ -z "${HAS_MISSING_BUILDS}" && "${BROWSER_DISPLAY_NAME} != 'chromium-with-symbols" ]]; then
+    create_roll_into_playwright_pr $BROWSER_NAME $BUILD_NUMBER
+  fi
 else
   RESULT_CODE="$?"
   if (( RESULT_CODE == 10 )); then
@@ -480,7 +492,6 @@ else
   fi
   # Upload logs only in case of failure and report failure.
   ./upload.sh "${LOG_BLOB_PATH}" ${LOG_PATH} || true
-  CROSS_CHAR=$(printf '\xe2\x9d\x8c')
   send_telegram_message "$BUILD_ALIAS -- ${FAILED_STEP} failed! ${CROSS_CHAR} <a href='https://playwright.azureedge.net/builds/${LOG_BLOB_PATH}'>${LOG_BLOB_NAME}</a> -- <a href='$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID'>GitHub Action Logs</a>"
   exit 1
 fi

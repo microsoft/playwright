@@ -14,6 +14,7 @@ if [[ ($1 == '--help') || ($1 == '-h') ]]; then
   echo
   echo "--check      pass |--check| as a second parameter instead of a zip-path to check for"
   echo "             existence of BLOB-PATH"
+  echo "--delete     pass |--delete| as a second parameter instead of a zip-path to delete BLOB-PATH"
   echo
   echo "NOTE: \$AZ_ACCOUNT_KEY (azure account name) and \$AZ_ACCOUNT_NAME (azure account name)"
   echo "env variables are required to upload builds to CDN."
@@ -35,6 +36,11 @@ fi
 
 BLOB_PATH="$1"
 ZIP_PATH="$2"
+
+if [[ ("$2" == '--delete') ]]; then
+  az storage blob delete -c builds --account-key "$AZ_ACCOUNT_KEY" --account-name "$AZ_ACCOUNT_NAME" -n "$BLOB_PATH" || true
+  exit 0
+fi
 
 if [[ ("$2" == '--check') ]]; then
   EXISTS=$(az storage blob exists -c builds --account-key "$AZ_ACCOUNT_KEY" --account-name "$AZ_ACCOUNT_NAME" -n "$BLOB_PATH" --query "exists")
