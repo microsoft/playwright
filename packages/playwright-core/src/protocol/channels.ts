@@ -1536,7 +1536,6 @@ export type PageExpectScreenshotParams = {
     caret?: 'hide' | 'initial',
     animations?: 'disabled' | 'allow',
     scale?: 'css' | 'device',
-    fonts?: 'ready' | 'nowait',
     mask?: {
       frame: FrameChannel,
       selector: string,
@@ -1562,7 +1561,6 @@ export type PageExpectScreenshotOptions = {
     caret?: 'hide' | 'initial',
     animations?: 'disabled' | 'allow',
     scale?: 'css' | 'device',
-    fonts?: 'ready' | 'nowait',
     mask?: {
       frame: FrameChannel,
       selector: string,
@@ -1586,7 +1584,6 @@ export type PageScreenshotParams = {
   caret?: 'hide' | 'initial',
   animations?: 'disabled' | 'allow',
   scale?: 'css' | 'device',
-  fonts?: 'ready' | 'nowait',
   mask?: {
     frame: FrameChannel,
     selector: string,
@@ -1602,7 +1599,6 @@ export type PageScreenshotOptions = {
   caret?: 'hide' | 'initial',
   animations?: 'disabled' | 'allow',
   scale?: 'css' | 'device',
-  fonts?: 'ready' | 'nowait',
   mask?: {
     frame: FrameChannel,
     selector: string,
@@ -2922,7 +2918,6 @@ export type ElementHandleScreenshotParams = {
   caret?: 'hide' | 'initial',
   animations?: 'disabled' | 'allow',
   scale?: 'css' | 'device',
-  fonts?: 'ready' | 'nowait',
   mask?: {
     frame: FrameChannel,
     selector: string,
@@ -2936,7 +2931,6 @@ export type ElementHandleScreenshotOptions = {
   caret?: 'hide' | 'initial',
   animations?: 'disabled' | 'allow',
   scale?: 'css' | 'device',
-  fonts?: 'ready' | 'nowait',
   mask?: {
     frame: FrameChannel,
     selector: string,

@@ -23,7 +23,7 @@ import type { Frame } from './frames';
 import type { ParsedSelector } from './isomorphic/selectorParser';
 import type * as types from './types';
 import type { Progress } from './progress';
-import { assert, experimentalFeaturesEnabled } from '../utils';
+import { assert } from '../utils';
 import { MultiMap } from '../utils/multimap';
 
 declare global {
@@ -41,7 +41,6 @@ export type ScreenshotOptions = {
   fullPage?: boolean,
   clip?: Rect,
   scale?: 'css' | 'device',
-  fonts?: 'ready' | 'nowait',
   caret?: 'hide' | 'initial',
 };
 
@@ -87,7 +86,7 @@ export class Screenshotter {
     return this._queue.postTask(async () => {
       progress.log('taking page screenshot');
       const { viewportSize } = await this._originalViewportSize(progress);
-      await this._preparePageForScreenshot(progress, options.caret !== 'initial', options.animations === 'disabled', options.fonts === 'ready');
+      await this._preparePageForScreenshot(progress, options.caret !== 'initial', options.animations === 'disabled');
       progress.throwIfAborted(); // Avoid restoring after failure - should be done by cleanup.
 
       if (options.fullPage) {
@@ -116,7 +115,7 @@ export class Screenshotter {
       progress.log('taking element screenshot');
       const { viewportSize } = await this._originalViewportSize(progress);
 
-      await this._preparePageForScreenshot(progress, options.caret !== 'initial', options.animations === 'disabled', options.fonts === 'ready');
+      await this._preparePageForScreenshot(progress, options.caret !== 'initial', options.animations === 'disabled');
       progress.throwIfAborted(); // Do not do extra work.
 
       await handle._waitAndScrollIntoViewIfNeeded(progress, true /* waitForVisible */);
@@ -140,13 +139,11 @@ export class Screenshotter {
     });
   }
 
-  async _preparePageForScreenshot(progress: Progress, hideCaret: boolean, disableAnimations: boolean, waitForFonts: boolean) {
+  async _preparePageForScreenshot(progress: Progress, hideCaret: boolean, disableAnimations: boolean) {
     if (disableAnimations)
       progress.log('  disabled all CSS animations');
-    if (waitForFonts)
-      progress.log('  waiting for fonts to load...');
     await Promise.all(this._page.frames().map(async frame => {
-      await frame.nonStallingEvaluateInExistingContext('(' + (async function(hideCaret: boolean, disableAnimations: boolean, waitForFonts: boolean) {
+      await frame.nonStallingEvaluateInExistingContext('(' + (async function(hideCaret: boolean, disableAnimations: boolean) {
         const styleTag = document.createElement('style');
         if (hideCaret) {
           styleTag.textContent = `
@@ -223,12 +220,8 @@ export class Screenshotter {
           delete window.__cleanupScreenshot;
         };
 
-        if (waitForFonts)
-          await document.fonts.ready;
-      }).toString() + `)(${hideCaret}, ${disableAnimations}, ${waitForFonts})`, false, 'utility').catch(() => {});
+      }).toString() + `)(${hideCaret}, ${disableAnimations})`, false, 'utility').catch(() => {});
     }));
-    if (waitForFonts)
-      progress.log('  fonts in all frames are loaded');
     progress.cleanupWhenAborted(() => this._restorePageAfterScreenshot());
   }
 
@@ -322,9 +315,6 @@ function trimClipToSize(clip: types.Rect, size: types.Size): types.Rect {
 }
 
 export function validateScreenshotOptions(options: ScreenshotOptions): 'png' | 'jpeg' {
-  if (options.fonts && !experimentalFeaturesEnabled())
-    throw new Error(`To use the experimental option "fonts", set PLAYWRIGHT_EXPERIMENTAL_FEATURES=1 enviroment variable.`);
-
   let format: 'png' | 'jpeg' | null = null;
   // options.type takes precedence over inferring the type from options.path
   // because it may be a 0-length file with no extension created beforehand (i.e. as a temp file).
