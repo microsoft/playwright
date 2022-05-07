@@ -27,6 +27,14 @@ const config: PlaywrightTestConfig = {
   reporter: process.env.CI ? 'dot' : [['list'], ['html', { open: 'on-failure' }]],
   forbidOnly: !!process.env.CI,
   workers: 1,
+  projects: [
+    {
+      name: 'installation tests',
+      metadata: {
+        nodejsVersion: process.version,
+      },
+    },
+  ],
 };
 
 export default config;
