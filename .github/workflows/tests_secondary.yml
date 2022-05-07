@@ -136,6 +136,9 @@ jobs:
       if: matrix.os != 'ubuntu-latest'
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run itest
       if: matrix.os == 'ubuntu-latest'
+    - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
+      if: always()
+      shell: bash
 
   headful_linux:
     name: "Headful Linux"

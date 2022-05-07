@@ -19,12 +19,17 @@ import type { PlaywrightTestConfig } from '@playwright/test';
 import { config as loadEnv } from 'dotenv';
 loadEnv({ path: path.join(__dirname, '..', '..', '.env') });
 
+const outputDir = path.join(__dirname, '..', '..', 'test-results');
 const config: PlaywrightTestConfig = {
   globalSetup: path.join(__dirname, 'globalSetup'),
+  outputDir,
   testIgnore: '**\/fixture-scripts/**',
   timeout: 5 * 60 * 1000,
   retries: 0,
-  reporter: process.env.CI ? 'dot' : [['list'], ['html', { open: 'on-failure' }]],
+  reporter: process.env.CI ? [
+    ['dot'],
+    ['json', { outputFile: path.join(outputDir, 'report.json') }],
+  ] : [['list'], ['html', { open: 'on-failure' }]],
   forbidOnly: !!process.env.CI,
   workers: 1,
   projects: [
