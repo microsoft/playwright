@@ -23,7 +23,7 @@ import type { Frame } from './frames';
 import type { ParsedSelector } from './isomorphic/selectorParser';
 import type * as types from './types';
 import type { Progress } from './progress';
-import { assert, experimentalFeaturesEnabled } from '../utils';
+import { assert } from '../utils';
 import { MultiMap } from '../utils/multimap';
 
 declare global {
