@@ -11,8 +11,6 @@
 # production
 /build
 
-/dist-pw
-
 # misc
 .DS_Store
 .env.local
