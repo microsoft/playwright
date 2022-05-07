@@ -241,15 +241,9 @@ it('should work with layout selectors', async ({ page, trace }) => {
   expect(await page.$$eval('div:right-of(#id3, 50)', els => els.map(e => e.id).join(','))).toBe('id2,id5,id7,id8');
   expect(await page.$$eval('div >> right-of="#id3",50', els => els.map(e => e.id).join(','))).toBe('id2,id5,id7,id8');
   expect(await page.$$eval('div >> right-of="#id3",50 >> span', els => els.map(e => e.textContent).join(','))).toBe('2,5,7,8');
-  expect(await page.locator('div', {
-    rightOf: { locator: page.locator('#id3'), maxDistance: 50 },
-  }).locator('span').evaluateAll(els => els.map(e => e.textContent).join(','))).toBe('2,5,7,8');
   expect(await page.$$eval('div:right-of(#id3, 49)', els => els.map(e => e.id).join(','))).toBe('id7,id8');
   expect(await page.$$eval('div >> right-of="#id3",49', els => els.map(e => e.id).join(','))).toBe('id7,id8');
   expect(await page.$$eval('div >> right-of="#id3",49 >> span', els => els.map(e => e.textContent).join(','))).toBe('7,8');
-  expect(await page.locator('div', {
-    rightOf: { locator: page.locator('#id3'), maxDistance: 49 },
-  }).locator('span').evaluateAll(els => els.map(e => e.textContent).join(','))).toBe('7,8');
 
   expect(await page.$eval('div:left-of(#id2)', e => e.id)).toBe('id1');
   expect(await page.$eval('div >> left-of="#id2"', e => e.id)).toBe('id1');

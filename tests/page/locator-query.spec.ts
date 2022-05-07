@@ -154,13 +154,3 @@ it('should enforce same frame for has/leftOf/rightOf/above/below/near', async ({
     expect(error.message).toContain(`Inner "${option}" locator must belong to the same frame.`);
   }
 });
-
-it('should check leftOf options', async ({ page }) => {
-  let error;
-  try {
-    page.locator('div', { leftOf: { locator: page.locator('span'), maxDistance: 'abc' } as any });
-  } catch (e) {
-    error = e;
-  }
-  expect(error.message).toContain(`"leftOf.maxDistance" must be a number, found string.`);
-});

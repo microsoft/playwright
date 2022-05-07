@@ -2628,17 +2628,7 @@ export interface Page {
      *
      * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
      */
-    above?: Locator|{
-      /**
-       * The inner locator.
-       */
-      locator: Locator;
-
-      /**
-       * Maximum vertical distance between the elements in pixels, unlimited by default.
-       */
-      maxDistance?: number;
-    };
+    above?: Locator;
 
     /**
      * Matches elements that are below any of the elements matching the inner locator, at any horizontal position. Inner
@@ -2647,17 +2637,7 @@ export interface Page {
      *
      * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
      */
-    below?: Locator|{
-      /**
-       * The inner locator.
-       */
-      locator: Locator;
-
-      /**
-       * Maximum vertical distance between the elements in pixels, unlimited by default.
-       */
-      maxDistance?: number;
-    };
+    below?: Locator;
 
     /**
      * Matches elements containing an element that matches an inner locator. Inner locator is queried against the outer one.
@@ -2681,35 +2661,16 @@ export interface Page {
      *
      * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
      */
-    leftOf?: Locator|{
-      /**
-       * The inner locator.
-       */
-      locator: Locator;
-
-      /**
-       * Maximum horizontal distance between the elements in pixels, unlimited by default.
-       */
-      maxDistance?: number;
-    };
+    leftOf?: Locator;
 
     /**
-     * Matches elements that are near any of the elements matching the inner locator. Inner locator is queried against the same
-     * root as the outer one. More details in [layout selectors](https://playwright.dev/docs/selectors#selecting-elements-based-on-layout) guide.
+     * Matches elements that are near (<= 50 css pixels) any of the elements matching the inner locator. Inner locator is
+     * queried against the same root as the outer one. More details in
+     * [layout selectors](https://playwright.dev/docs/selectors#selecting-elements-based-on-layout) guide.
      *
      * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
      */
-    near?: Locator|{
-      /**
-       * The inner locator.
-       */
-      locator: Locator;
-
-      /**
-       * Maximum distance between the elements in pixels, 50 by default.
-       */
-      maxDistance?: number;
-    };
+    near?: Locator;
 
     /**
      * Matches elements that are to the right of any element matching the inner locator, at any vertical position. Inner
@@ -2718,17 +2679,7 @@ export interface Page {
      *
      * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
      */
-    rightOf?: Locator|{
-      /**
-       * The inner locator.
-       */
-      locator: Locator;
-
-      /**
-       * Maximum horizontal distance between the elements in pixels, unlimited by default.
-       */
-      maxDistance?: number;
-    };
+    rightOf?: Locator;
   }): Locator;
 
   /**
@@ -5546,17 +5497,7 @@ export interface Frame {
      *
      * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
      */
-    above?: Locator|{
-      /**
-       * The inner locator.
-       */
-      locator: Locator;
-
-      /**
-       * Maximum vertical distance between the elements in pixels, unlimited by default.
-       */
-      maxDistance?: number;
-    };
+    above?: Locator;
 
     /**
      * Matches elements that are below any of the elements matching the inner locator, at any horizontal position. Inner
@@ -5565,17 +5506,7 @@ export interface Frame {
      *
      * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
      */
-    below?: Locator|{
-      /**
-       * The inner locator.
-       */
-      locator: Locator;
-
-      /**
-       * Maximum vertical distance between the elements in pixels, unlimited by default.
-       */
-      maxDistance?: number;
-    };
+    below?: Locator;
 
     /**
      * Matches elements containing an element that matches an inner locator. Inner locator is queried against the outer one.
@@ -5599,35 +5530,16 @@ export interface Frame {
      *
      * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
      */
-    leftOf?: Locator|{
-      /**
-       * The inner locator.
-       */
-      locator: Locator;
-
-      /**
-       * Maximum horizontal distance between the elements in pixels, unlimited by default.
-       */
-      maxDistance?: number;
-    };
+    leftOf?: Locator;
 
     /**
-     * Matches elements that are near any of the elements matching the inner locator. Inner locator is queried against the same
-     * root as the outer one. More details in [layout selectors](https://playwright.dev/docs/selectors#selecting-elements-based-on-layout) guide.
+     * Matches elements that are near (<= 50 css pixels) any of the elements matching the inner locator. Inner locator is
+     * queried against the same root as the outer one. More details in
+     * [layout selectors](https://playwright.dev/docs/selectors#selecting-elements-based-on-layout) guide.
      *
      * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
      */
-    near?: Locator|{
-      /**
-       * The inner locator.
-       */
-      locator: Locator;
-
-      /**
-       * Maximum distance between the elements in pixels, 50 by default.
-       */
-      maxDistance?: number;
-    };
+    near?: Locator;
 
     /**
      * Matches elements that are to the right of any element matching the inner locator, at any vertical position. Inner
@@ -5636,17 +5548,7 @@ export interface Frame {
      *
      * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
      */
-    rightOf?: Locator|{
-      /**
-       * The inner locator.
-       */
-      locator: Locator;
-
-      /**
-       * Maximum horizontal distance between the elements in pixels, unlimited by default.
-       */
-      maxDistance?: number;
-    };
+    rightOf?: Locator;
   }): Locator;
 
   /**
@@ -9614,17 +9516,7 @@ export interface Locator {
      *
      * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
      */
-    above?: Locator|{
-      /**
-       * The inner locator.
-       */
-      locator: Locator;
-
-      /**
-       * Maximum vertical distance between the elements in pixels, unlimited by default.
-       */
-      maxDistance?: number;
-    };
+    above?: Locator;
 
     /**
      * Matches elements that are below any of the elements matching the inner locator, at any horizontal position. Inner
@@ -9633,17 +9525,7 @@ export interface Locator {
      *
      * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
      */
-    below?: Locator|{
-      /**
-       * The inner locator.
-       */
-      locator: Locator;
-
-      /**
-       * Maximum vertical distance between the elements in pixels, unlimited by default.
-       */
-      maxDistance?: number;
-    };
+    below?: Locator;
 
     /**
      * Matches elements containing an element that matches an inner locator. Inner locator is queried against the outer one.
@@ -9667,35 +9549,16 @@ export interface Locator {
      *
      * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
      */
-    leftOf?: Locator|{
-      /**
-       * The inner locator.
-       */
-      locator: Locator;
-
-      /**
-       * Maximum horizontal distance between the elements in pixels, unlimited by default.
-       */
-      maxDistance?: number;
-    };
+    leftOf?: Locator;
 
     /**
-     * Matches elements that are near any of the elements matching the inner locator. Inner locator is queried against the same
-     * root as the outer one. More details in [layout selectors](https://playwright.dev/docs/selectors#selecting-elements-based-on-layout) guide.
+     * Matches elements that are near (<= 50 css pixels) any of the elements matching the inner locator. Inner locator is
+     * queried against the same root as the outer one. More details in
+     * [layout selectors](https://playwright.dev/docs/selectors#selecting-elements-based-on-layout) guide.
      *
      * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
      */
-    near?: Locator|{
-      /**
-       * The inner locator.
-       */
-      locator: Locator;
-
-      /**
-       * Maximum distance between the elements in pixels, 50 by default.
-       */
-      maxDistance?: number;
-    };
+    near?: Locator;
 
     /**
      * Matches elements that are to the right of any element matching the inner locator, at any vertical position. Inner
@@ -9704,17 +9567,7 @@ export interface Locator {
      *
      * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
      */
-    rightOf?: Locator|{
-      /**
-       * The inner locator.
-       */
-      locator: Locator;
-
-      /**
-       * Maximum horizontal distance between the elements in pixels, unlimited by default.
-       */
-      maxDistance?: number;
-    };
+    rightOf?: Locator;
   }): Locator;
 
   /**
@@ -10103,17 +9956,7 @@ export interface Locator {
      *
      * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
      */
-    above?: Locator|{
-      /**
-       * The inner locator.
-       */
-      locator: Locator;
-
-      /**
-       * Maximum vertical distance between the elements in pixels, unlimited by default.
-       */
-      maxDistance?: number;
-    };
+    above?: Locator;
 
     /**
      * Matches elements that are below any of the elements matching the inner locator, at any horizontal position. Inner
@@ -10122,17 +9965,7 @@ export interface Locator {
      *
      * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
      */
-    below?: Locator|{
-      /**
-       * The inner locator.
-       */
-      locator: Locator;
-
-      /**
-       * Maximum vertical distance between the elements in pixels, unlimited by default.
-       */
-      maxDistance?: number;
-    };
+    below?: Locator;
 
     /**
      * Matches elements containing an element that matches an inner locator. Inner locator is queried against the outer one.
@@ -10156,35 +9989,16 @@ export interface Locator {
      *
      * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
      */
-    leftOf?: Locator|{
-      /**
-       * The inner locator.
-       */
-      locator: Locator;
-
-      /**
-       * Maximum horizontal distance between the elements in pixels, unlimited by default.
-       */
-      maxDistance?: number;
-    };
+    leftOf?: Locator;
 
     /**
-     * Matches elements that are near any of the elements matching the inner locator. Inner locator is queried against the same
-     * root as the outer one. More details in [layout selectors](https://playwright.dev/docs/selectors#selecting-elements-based-on-layout) guide.
+     * Matches elements that are near (<= 50 css pixels) any of the elements matching the inner locator. Inner locator is
+     * queried against the same root as the outer one. More details in
+     * [layout selectors](https://playwright.dev/docs/selectors#selecting-elements-based-on-layout) guide.
      *
      * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
      */
-    near?: Locator|{
-      /**
-       * The inner locator.
-       */
-      locator: Locator;
-
-      /**
-       * Maximum distance between the elements in pixels, 50 by default.
-       */
-      maxDistance?: number;
-    };
+    near?: Locator;
 
     /**
      * Matches elements that are to the right of any element matching the inner locator, at any vertical position. Inner
@@ -10193,17 +10007,7 @@ export interface Locator {
      *
      * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
      */
-    rightOf?: Locator|{
-      /**
-       * The inner locator.
-       */
-      locator: Locator;
-
-      /**
-       * Maximum horizontal distance between the elements in pixels, unlimited by default.
-       */
-      maxDistance?: number;
-    };
+    rightOf?: Locator;
   }): Locator;
 
   /**
@@ -14308,17 +14112,7 @@ export interface FrameLocator {
      *
      * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
      */
-    above?: Locator|{
-      /**
-       * The inner locator.
-       */
-      locator: Locator;
-
-      /**
-       * Maximum vertical distance between the elements in pixels, unlimited by default.
-       */
-      maxDistance?: number;
-    };
+    above?: Locator;
 
     /**
      * Matches elements that are below any of the elements matching the inner locator, at any horizontal position. Inner
@@ -14327,17 +14121,7 @@ export interface FrameLocator {
      *
      * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
      */
-    below?: Locator|{
-      /**
-       * The inner locator.
-       */
-      locator: Locator;
-
-      /**
-       * Maximum vertical distance between the elements in pixels, unlimited by default.
-       */
-      maxDistance?: number;
-    };
+    below?: Locator;
 
     /**
      * Matches elements containing an element that matches an inner locator. Inner locator is queried against the outer one.
@@ -14361,35 +14145,16 @@ export interface FrameLocator {
      *
      * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
      */
-    leftOf?: Locator|{
-      /**
-       * The inner locator.
-       */
-      locator: Locator;
-
-      /**
-       * Maximum horizontal distance between the elements in pixels, unlimited by default.
-       */
-      maxDistance?: number;
-    };
+    leftOf?: Locator;
 
     /**
-     * Matches elements that are near any of the elements matching the inner locator. Inner locator is queried against the same
-     * root as the outer one. More details in [layout selectors](https://playwright.dev/docs/selectors#selecting-elements-based-on-layout) guide.
+     * Matches elements that are near (<= 50 css pixels) any of the elements matching the inner locator. Inner locator is
+     * queried against the same root as the outer one. More details in
+     * [layout selectors](https://playwright.dev/docs/selectors#selecting-elements-based-on-layout) guide.
      *
      * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
      */
-    near?: Locator|{
-      /**
-       * The inner locator.
-       */
-      locator: Locator;
-
-      /**
-       * Maximum distance between the elements in pixels, 50 by default.
-       */
-      maxDistance?: number;
-    };
+    near?: Locator;
 
     /**
      * Matches elements that are to the right of any element matching the inner locator, at any vertical position. Inner
@@ -14398,17 +14163,7 @@ export interface FrameLocator {
      *
      * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
      */
-    rightOf?: Locator|{
-      /**
-       * The inner locator.
-       */
-      locator: Locator;
-
-      /**
-       * Maximum horizontal distance between the elements in pixels, unlimited by default.
-       */
-      maxDistance?: number;
-    };
+    rightOf?: Locator;
   }): Locator;
 
   /**
