@@ -464,7 +464,7 @@ if generate_and_upload_browser_build 2>&1 | ./sanitize_and_compress_log.js $LOG_
     fi
   done;
   if [[ -z "${HAS_MISSING_BUILDS}" ]]; then
-    TG_MESSAGE="${TG_MESSAGE}${NL}<b>${BROWSER_DISPLAY_NAME} r${BUILD_NUMBER} COMPLETE!</b>"
+    TG_MESSAGE="${TG_MESSAGE}${NL}${NL}<b>${BROWSER_DISPLAY_NAME} r${BUILD_NUMBER} COMPLETE!</b>"
   fi
 
   send_telegram_message "${TG_MESSAGE}"
