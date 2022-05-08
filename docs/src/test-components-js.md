@@ -1,6 +1,6 @@
 ---
 id: test-components
-title: "Experimental: Components"
+title: "Experimental: components"
 ---
 
 Playwright Test can now test your components.
@@ -67,10 +67,6 @@ component is mounted using this script. It can be either `.js` or `.ts` file.
 // Apply theme here, add anything your component needs at runtime here.
 ```
 
-#### `playwright/types.d.ts`
-
-This file makes sure `mount` fixture is typed in your tests.
-
 ### Step 2. Create a test file `src/App.spec.tsx`
 
 ```js
@@ -88,7 +84,7 @@ test('should work', async ({ mount }) => {
 ### Step 3. Run the tests
 
 ```sh
-npx playwright test
+npm run test-ct
 ```
 
 ### Further reading: configure reporting, browsers, tracing

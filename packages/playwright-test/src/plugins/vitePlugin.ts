@@ -69,7 +69,7 @@ export function createPlugin(
           },
         },
         sourcemap: true,
-        outDir: viteConfig?.build?.outDir || path.join(viteConfig.root, './dist-pw/')
+        outDir: viteConfig?.build?.outDir || path.join(viteConfig.root, 'playwright', 'out')
       };
       const { build, preview } = require('vite');
       await build(viteConfig);

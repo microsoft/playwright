@@ -28,3 +28,4 @@ test-results
 .env
 /tests/installation/output/
 /tests/installation/.registry.json
+/playwright/out/

@@ -114,6 +114,9 @@ function shouldPauseOnCall(sdkObject: SdkObject, metadata: CallMetadata): boolea
 }
 
 function shouldPauseBeforeStep(metadata: CallMetadata): boolean {
+  // Don't stop on internal.
+  if (!metadata.apiName)
+    return false;
   // Always stop on 'close'
   if (metadata.method === 'close')
     return true;
