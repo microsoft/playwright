@@ -15,13 +15,17 @@
  */
 
 import type { Fixtures, Locator, Page, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, ViewportSize } from './types';
-import { createGuid } from 'playwright-core/lib/utils';
+
+let boundCallbacksForMount: Function[] = [];
 
 export const fixtures: Fixtures<PlaywrightTestArgs & PlaywrightTestOptions & { mount: (component: any, options: any) => Promise<Locator> }, PlaywrightWorkerArgs & { _workerPage: Page }>  = {
   _workerPage: [async ({ browser }, use) => {
     const page = await (browser as any)._wrapApiCall(async () => {
       const page = await browser.newPage();
       await page.addInitScript('navigator.serviceWorker.register = () => {}');
+      await page.exposeFunction('__pw_dispatch', (ordinal: number, args: any[]) => {
+        boundCallbacksForMount[ordinal](...args);
+      });
       return page;
     });
     await use(page);
@@ -42,6 +46,7 @@ export const fixtures: Fixtures<PlaywrightTestArgs & PlaywrightTestOptions & { m
       }, true);
       return page.locator(selector);
     });
+    boundCallbacksForMount = [];
   },
 };
 
@@ -58,24 +63,18 @@ async function innerMount(page: Page, jsxOrType: any, options: any, viewport: Vi
   else
     component = jsxOrType;
 
-  const callbacks: Function[] = [];
-  wrapFunctions(component, page, callbacks);
-
-  const dispatchMethod = `__pw_dispatch_${createGuid()}`;
-  await page.exposeFunction(dispatchMethod, (ordinal: number, args: any[]) => {
-    callbacks[ordinal](...args);
-  });
+  wrapFunctions(component, page, boundCallbacksForMount);
 
   // WebKit does not wait for deferred scripts.
   await page.waitForFunction(() => !!(window as any).playwrightMount);
 
-  const selector = await page.evaluate(async ({ component, dispatchMethod }) => {
+  const selector = await page.evaluate(async ({ component }) => {
     const unwrapFunctions = (object: any) => {
       for (const [key, value] of Object.entries(object)) {
         if (typeof value === 'string' && (value as string).startsWith('__pw_func_')) {
           const ordinal = +value.substring('__pw_func_'.length);
           object[key] = (...args: any[]) => {
-            (window as any)[dispatchMethod](ordinal, args);
+            (window as any)['__pw_dispatch'](ordinal, args);
           };
         } else if (typeof value === 'object' && value) {
           unwrapFunctions(value);
@@ -85,7 +84,7 @@ async function innerMount(page: Page, jsxOrType: any, options: any, viewport: Vi
 
     unwrapFunctions(component);
     return await (window as any).playwrightMount(component);
-  }, { component, dispatchMethod });
+  }, { component });
   return selector;
 }
 
