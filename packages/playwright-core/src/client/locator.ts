@@ -144,7 +144,7 @@ export class Locator implements api.Locator {
     return new FrameLocator(this._frame, this._selector + ' >> ' + selector);
   }
 
-  that(options?: LocatorOptions): Locator {
+  filter(options?: LocatorOptions): Locator {
     return new Locator(this._frame, this._selector, options);
   }
 
