@@ -16,3 +16,4 @@ test-results/
 tests/components/
 examples/
 DEPS
+.cache/

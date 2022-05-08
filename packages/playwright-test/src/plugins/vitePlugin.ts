@@ -23,8 +23,10 @@ import { parse, traverse, types as t } from '../babelBundle';
 import type { ComponentInfo } from '../tsxTransform';
 import { collectComponentUsages, componentInfo } from '../tsxTransform';
 import type { FullConfig } from '../types';
+import { assert } from 'playwright-core/lib/utils';
 
 let previewServer: PreviewServer;
+const VERSION = 1;
 
 export function createPlugin(
   registerSourceFile: string,
@@ -37,42 +39,68 @@ export function createPlugin(
       const use = config.projects[0].use as any;
       const viteConfig: InlineConfig = use.viteConfig || {};
       const port = use.vitePort || 3100;
-
       configDir = configDirectory;
-
       process.env.PLAYWRIGHT_VITE_COMPONENTS_BASE_URL = `http://localhost:${port}/playwright/index.html`;
 
-      viteConfig.root = viteConfig.root || configDir;
-      viteConfig.plugins = viteConfig.plugins || [
-        frameworkPluginFactory()
-      ];
-      const files = new Set<string>();
-      for (const project of suite.suites) {
-        for (const file of project.suites)
-          files.add(file.location!.file);
+      const rootDir = viteConfig.root || configDir;
+      const outDir = viteConfig?.build?.outDir || path.join(rootDir, 'playwright', '.cache');
+      const templateDir = path.join(rootDir, 'playwright');
+
+      const buildInfoFile = path.join(outDir, 'metainfo.json');
+      let buildInfo: BuildInfo;
+      try {
+        buildInfo = JSON.parse(await fs.promises.readFile(buildInfoFile, 'utf-8')) as BuildInfo;
+        assert(buildInfo.version === VERSION);
+      } catch (e) {
+        buildInfo = {
+          version: VERSION,
+          components: [],
+          tests: {},
+          sources: {},
+        };
       }
-      const registerSource = await fs.promises.readFile(registerSourceFile, 'utf-8');
-      viteConfig.plugins.push(vitePlugin(registerSource, [...files]));
-      viteConfig.configFile = viteConfig.configFile || false;
-      viteConfig.define = viteConfig.define || {};
-      viteConfig.define.__VUE_PROD_DEVTOOLS__ = true;
-      viteConfig.css = viteConfig.css || {};
-      viteConfig.css.devSourcemap = true;
+
+      const componentRegistry: ComponentRegistry = new Map();
+      // 1. Re-parse changed tests and collect required components.
+      const hasNewTests = await checkNewTests(suite, buildInfo, componentRegistry);
+      // 2. Check if the set of required components has changed.
+      const hasNewComponents = await checkNewComponents(buildInfo, componentRegistry);
+      // 3. Check component sources.
+      const sourcesDirty = hasNewComponents || await checkSources(buildInfo);
+
+      viteConfig.root = rootDir;
       viteConfig.preview = { port };
       viteConfig.build = {
-        target: 'esnext',
-        minify: false,
-        rollupOptions: {
-          treeshake: false,
-          input: {
-            index: path.join(viteConfig.root, 'playwright', 'index.html')
-          },
-        },
-        sourcemap: true,
-        outDir: viteConfig?.build?.outDir || path.join(viteConfig.root, 'playwright', 'out')
+        outDir
       };
       const { build, preview } = require('vite');
-      await build(viteConfig);
+      if (sourcesDirty) {
+        viteConfig.plugins = viteConfig.plugins || [
+          frameworkPluginFactory()
+        ];
+        const registerSource = await fs.promises.readFile(registerSourceFile, 'utf-8');
+        viteConfig.plugins.push(vitePlugin(registerSource, buildInfo, componentRegistry));
+        viteConfig.configFile = viteConfig.configFile || false;
+        viteConfig.define = viteConfig.define || {};
+        viteConfig.define.__VUE_PROD_DEVTOOLS__ = true;
+        viteConfig.css = viteConfig.css || {};
+        viteConfig.css.devSourcemap = true;
+        viteConfig.build = {
+          ...viteConfig.build,
+          target: 'esnext',
+          minify: false,
+          rollupOptions: {
+            treeshake: false,
+            input: {
+              index: path.join(templateDir, 'index.html')
+            },
+          },
+          sourcemap: true,
+        };
+        await build(viteConfig);
+      }
+      if (hasNewTests || hasNewComponents || sourcesDirty)
+        await fs.promises.writeFile(buildInfoFile, JSON.stringify(buildInfo, undefined, 2));
       previewServer = await preview(viteConfig);
     },
 
@@ -87,41 +115,126 @@ export function createPlugin(
   };
 }
 
-const imports: Map<string, ComponentInfo> = new Map();
+type BuildInfo = {
+  version: number,
+  sources: {
+    [key: string]: {
+      timestamp: number;
+    }
+  };
+  components: ComponentInfo[];
+  tests: {
+    [key: string]: {
+      timestamp: number;
+      components: string[];
+    }
+  };
+};
 
-function vitePlugin(registerSource: string, files: string[]): Plugin {
+type ComponentRegistry = Map<string, ComponentInfo>;
+
+async function checkSources(buildInfo: BuildInfo): Promise<boolean> {
+  for (const [source, sourceInfo] of Object.entries(buildInfo.sources)) {
+    try {
+      const timestamp = (await fs.promises.stat(source)).mtimeMs;
+      if (sourceInfo.timestamp !== timestamp)
+        return true;
+    } catch (e) {
+      return true;
+    }
+  }
+  return false;
+}
+
+async function checkNewTests(suite: Suite, buildInfo: BuildInfo, componentRegistry: ComponentRegistry): Promise<boolean> {
+  const testFiles = new Set<string>();
+  for (const project of suite.suites) {
+    for (const file of project.suites)
+      testFiles.add(file.location!.file);
+  }
+
+  let hasNewTests = false;
+  for (const testFile of testFiles) {
+    const timestamp = (await fs.promises.stat(testFile)).mtimeMs;
+    if (buildInfo.tests[testFile]?.timestamp !== timestamp) {
+      const components = await parseTestFile(testFile);
+      for (const component of components)
+        componentRegistry.set(component.fullName, component);
+      buildInfo.tests[testFile] = { timestamp, components: components.map(c => c.fullName) };
+      hasNewTests = true;
+    } else {
+      // The test has not changed, populate component registry from the buildInfo.
+      for (const componentName of buildInfo.tests[testFile].components) {
+        const component = buildInfo.components.find(c => c.fullName === componentName)!;
+        componentRegistry.set(component.fullName, component);
+      }
+    }
+  }
+
+  return hasNewTests;
+}
+
+async function checkNewComponents(buildInfo: BuildInfo, componentRegistry: ComponentRegistry): Promise<boolean> {
+  const newComponents = [...componentRegistry.keys()];
+  const oldComponents = new Set(buildInfo.components.map(c => c.fullName));
+
+  let hasNewComponents = false;
+  for (const c of newComponents) {
+    if (!oldComponents.has(c)) {
+      hasNewComponents = true;
+      break;
+    }
+  }
+  if (!hasNewComponents)
+    return false;
+  buildInfo.components = newComponents.map(n => componentRegistry.get(n)!);
+  return true;
+}
+
+async function parseTestFile(testFile: string): Promise<ComponentInfo[]> {
+  const text = await fs.promises.readFile(testFile, 'utf-8');
+  const ast = parse(text, { errorRecovery: true, plugins: ['typescript', 'jsx'], sourceType: 'module' });
+  const componentUsages = collectComponentUsages(ast);
+  const result: ComponentInfo[] = [];
+
+  traverse(ast, {
+    enter: p => {
+      if (t.isImportDeclaration(p.node)) {
+        const importNode = p.node;
+        if (!t.isStringLiteral(importNode.source))
+          return;
+
+        for (const specifier of importNode.specifiers) {
+          if (!componentUsages.names.has(specifier.local.name))
+            continue;
+          if (t.isImportNamespaceSpecifier(specifier))
+            continue;
+          result.push(componentInfo(specifier, importNode.source.value, testFile));
+        }
+      }
+    }
+  });
+
+  return result;
+}
+
+function vitePlugin(registerSource: string, buildInfo: BuildInfo, componentRegistry: ComponentRegistry): Plugin {
+  buildInfo.sources = {};
   return {
     name: 'playwright:component-index',
 
-    configResolved: async config => {
-
-      for (const file of files) {
-        const text = await fs.promises.readFile(file, 'utf-8');
-        const ast = parse(text, { errorRecovery: true, plugins: ['typescript', 'jsx'], sourceType: 'module' });
-        const components = collectComponentUsages(ast);
-
-        traverse(ast, {
-          enter: p => {
-            if (t.isImportDeclaration(p.node)) {
-              const importNode = p.node;
-              if (!t.isStringLiteral(importNode.source))
-                return;
-
-              for (const specifier of importNode.specifiers) {
-                if (!components.names.has(specifier.local.name))
-                  continue;
-                if (t.isImportNamespaceSpecifier(specifier))
-                  continue;
-                const info = componentInfo(specifier, importNode.source.value, file);
-                imports.set(info.fullName, info);
-              }
-            }
-          }
-        });
-      }
-    },
-
     transform: async (content, id) => {
+      const queryIndex = id.indexOf('?');
+      const file = queryIndex !== -1 ? id.substring(0, queryIndex) : id;
+      if (!buildInfo.sources[file]) {
+        try {
+          const timestamp = (await fs.promises.stat(file)).mtimeMs;
+          buildInfo.sources[file] = { timestamp };
+        } catch {
+          // Silent if can't read the file.
+        }
+      }
+
       if (!id.endsWith('playwright/index.ts') && !id.endsWith('playwright/index.tsx') && !id.endsWith('playwright/index.js'))
         return;
 
@@ -129,7 +242,7 @@ function vitePlugin(registerSource: string, files: string[]): Plugin {
       const lines = [content, ''];
       lines.push(registerSource);
 
-      for (const [alias, value] of imports) {
+      for (const [alias, value] of componentRegistry) {
         const importPath = value.isModuleOrAlias ? value.importPath : './' + path.relative(folder, value.importPath).replace(/\\/g, '/');
         if (value.importedName)
           lines.push(`import { ${value.importedName} as ${alias} } from '${importPath}';`);
@@ -137,7 +250,7 @@ function vitePlugin(registerSource: string, files: string[]): Plugin {
           lines.push(`import ${alias} from '${importPath}';`);
       }
 
-      lines.push(`register({ ${[...imports.keys()].join(',\n  ')} });`);
+      lines.push(`register({ ${[...componentRegistry.keys()].join(',\n  ')} });`);
       return {
         code: lines.join('\n'),
         map: { mappings: '' }
