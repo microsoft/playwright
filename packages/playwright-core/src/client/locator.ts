@@ -29,11 +29,11 @@ import { escapeWithQuotes } from '../utils/isomorphic/stringUtils';
 export type LocatorOptions = {
   hasText?: string | RegExp;
   has?: Locator;
-  leftOf?: Locator | { locator: Locator, maxDistance?: number };
-  rightOf?: Locator | { locator: Locator, maxDistance?: number };
-  above?: Locator | { locator: Locator, maxDistance?: number };
-  below?: Locator | { locator: Locator, maxDistance?: number };
-  near?: Locator | { locator: Locator, maxDistance?: number };
+  leftOf?: Locator;
+  rightOf?: Locator;
+  above?: Locator;
+  below?: Locator;
+  near?: Locator;
 };
 
 export class Locator implements api.Locator {
@@ -52,30 +52,14 @@ export class Locator implements api.Locator {
         this._selector += ` >> :scope:has-text(${escapeWithQuotes(text, '"')})`;
     }
 
-    if (options?.has) {
-      if (options.has._frame !== frame)
-        throw new Error(`Inner "has" locator must belong to the same frame.`);
-      this._selector += ` >> has=` + JSON.stringify(options.has._selector);
-    }
-
-    for (const inner of ['leftOf', 'rightOf', 'above', 'below', 'near'] as const) {
-      const value = options?.[inner];
-      if (!value)
+    for (const inner of ['has', 'leftOf', 'rightOf', 'above', 'below', 'near'] as const) {
+      const locator = options?.[inner];
+      if (!locator)
         continue;
-      let maxDistance: number | undefined;
-      let locator: Locator;
-      if (value instanceof Locator) {
-        locator = value;
-      } else {
-        locator = value.locator;
-        maxDistance = value.maxDistance;
-      }
       if (locator._frame !== frame)
         throw new Error(`Inner "${inner}" locator must belong to the same frame.`);
-      if (maxDistance !== undefined && typeof maxDistance !== 'number')
-        throw new Error(`"${inner}.maxDistance" must be a number, found ${typeof maxDistance}.`);
       const engineName = inner === 'leftOf' ? 'left-of' : (inner === 'rightOf' ? 'right-of' : inner);
-      this._selector += ` >> ${engineName}=` + JSON.stringify(locator._selector) + (maxDistance === undefined ? '' : ',' + maxDistance);
+      this._selector += ` >> ${engineName}=` + JSON.stringify(locator._selector);
     }
   }
 
