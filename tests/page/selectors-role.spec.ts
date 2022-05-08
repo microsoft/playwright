@@ -16,8 +16,6 @@
 
 import { test, expect } from './pageTest';
 
-test.skip(({ mode }) => mode !== 'default', 'Experimental features only work in default mode');
-
 test('should detect roles', async ({ page }) => {
   await page.setContent(`
     <button>Hello</button>
