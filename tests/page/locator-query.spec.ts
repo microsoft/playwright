@@ -124,18 +124,18 @@ it('should support has:locator', async ({ page, trace }) => {
   })).toHaveCount(1);
 });
 
-it('should support locator.that', async ({ page, trace }) => {
+it('should support locator.filter', async ({ page, trace }) => {
   it.skip(trace === 'on');
 
   await page.setContent(`<section><div><span>hello</span></div><div><span>world</span></div></section>`);
-  await expect(page.locator(`div`).that({ hasText: 'hello' })).toHaveCount(1);
-  await expect(page.locator(`div`, { hasText: 'hello' }).that({ hasText: 'hello' })).toHaveCount(1);
-  await expect(page.locator(`div`, { hasText: 'hello' }).that({ hasText: 'world' })).toHaveCount(0);
-  await expect(page.locator(`section`, { hasText: 'hello' }).that({ hasText: 'world' })).toHaveCount(1);
-  await expect(page.locator(`div`).that({ hasText: 'hello' }).locator('span')).toHaveCount(1);
-  await expect(page.locator(`div`).that({ has: page.locator('span', { hasText: 'world' }) })).toHaveCount(1);
-  await expect(page.locator(`div`).that({ has: page.locator('span') })).toHaveCount(2);
-  await expect(page.locator(`div`).that({
+  await expect(page.locator(`div`).filter({ hasText: 'hello' })).toHaveCount(1);
+  await expect(page.locator(`div`, { hasText: 'hello' }).filter({ hasText: 'hello' })).toHaveCount(1);
+  await expect(page.locator(`div`, { hasText: 'hello' }).filter({ hasText: 'world' })).toHaveCount(0);
+  await expect(page.locator(`section`, { hasText: 'hello' }).filter({ hasText: 'world' })).toHaveCount(1);
+  await expect(page.locator(`div`).filter({ hasText: 'hello' }).locator('span')).toHaveCount(1);
+  await expect(page.locator(`div`).filter({ has: page.locator('span', { hasText: 'world' }) })).toHaveCount(1);
+  await expect(page.locator(`div`).filter({ has: page.locator('span') })).toHaveCount(2);
+  await expect(page.locator(`div`).filter({
     has: page.locator('span'),
     hasText: 'world',
   })).toHaveCount(1);

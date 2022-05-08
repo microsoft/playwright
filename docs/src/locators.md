@@ -316,32 +316,32 @@ page.locator("article", has=page.locator("button.subscribe"))
 page.Locator("article", new PageLocatorOptions { Has = page.Locator("button.subscribe") })
 ```
 
-You can also filter an existing locator with [`method: Locator.that`] method.
+You can also filter an existing locator with [`method: Locator.filter`] method.
 
 ```js
 const buttonLocator = page.locator('button');
 // ...
-await buttonLocator.that({ hasText: 'Sign up' }).click();
+await buttonLocator.filter({ hasText: 'Sign up' }).click();
 ```
 ```java
 Locator buttonLocator = page.locator("button");
 // ...
-buttonLocator.that(new Locator.ThatOptions().setHasText("Sign up")).click();
+buttonLocator.filter(new Locator.FilterOptions().setHasText("Sign up")).click();
 ```
 ```python async
 button_locator = page.locator("button")
 # ...
-await button_locator.that(has_text="Sign up").click()
+await button_locator.filter(has_text="Sign up").click()
 ```
 ```python sync
 button_locator = page.locator("button")
 # ...
-button_locator.that(has_text="Sign up").click()
+button_locator.filter(has_text="Sign up").click()
 ```
 ```csharp
 var buttonLocator = page.Locator("button");
 // ...
-await buttonLocator.That(new LocatorThatOptions { HasText = "Sign up" }).ClickAsync();
+await buttonLocator.Filter(new LocatorFilterOptions { HasText = "Sign up" }).ClickAsync();
 ```
 
 ## Locator vs ElementHandle
