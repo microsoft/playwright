@@ -335,6 +335,8 @@ export class FFBrowserContext extends BrowserContext {
 
   async doRemoveExposedBindings() {
     // TODO: implement me.
+    // This is not a critical problem, what ends up happening is
+    // an old binding will be restored upon page reload and will point nowhere.
   }
 
   async doUpdateRequestInterception(): Promise<void> {

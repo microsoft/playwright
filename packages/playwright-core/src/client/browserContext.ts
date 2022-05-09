@@ -253,7 +253,10 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   }
 
   async _removeExposedBindings() {
-    this._bindings.clear();
+    for (const key of this._bindings.keys()) {
+      if (!key.startsWith('__pw_'))
+        this._bindings.delete(key);
+    }
     await this._channel.removeExposedBindings();
   }
 

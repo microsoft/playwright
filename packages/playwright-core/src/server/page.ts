@@ -316,7 +316,10 @@ export class Page extends SdkObject {
   }
 
   async removeExposedBindings() {
-    this._pageBindings.clear();
+    for (const key of this._pageBindings.keys()) {
+      if (!key.startsWith('__pw'))
+        this._pageBindings.delete(key);
+    }
     await this._delegate.removeExposedBindings();
   }
 

@@ -825,13 +825,17 @@ class FrameSession {
       this._client.send('Page.addScriptToEvaluateOnNewDocument', { source: binding.source })
     ]);
     this._exposedBindingNames.push(binding.name);
-    this._evaluateOnNewDocumentIdentifiers.push(response.identifier);
+    if (!binding.name.startsWith('__pw'))
+      this._evaluateOnNewDocumentIdentifiers.push(response.identifier);
   }
 
   async _removeExposedBindings() {
-    const names = this._exposedBindingNames;
-    this._exposedBindingNames = [];
-    await Promise.all(names.map(name => this._client.send('Runtime.removeBinding', { name })));
+    const toRetain: string[] = [];
+    const toRemove: string[] = [];
+    for (const name of this._exposedBindingNames)
+      (name.startsWith('__pw_') ? toRetain : toRemove).push(name);
+    this._exposedBindingNames = toRetain;
+    await Promise.all(toRemove.map(name => this._client.send('Runtime.removeBinding', { name })));
   }
 
   async _onBindingCalled(event: Protocol.Runtime.bindingCalledPayload) {

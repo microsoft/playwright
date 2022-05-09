@@ -94,3 +94,26 @@ it('should work with CSP', async ({ page, context, server }) => {
   await page.evaluate(() => (window as any).hi());
   expect(called).toBe(true);
 });
+
+it('should re-add binding after reset', async ({  page, context }) => {
+  await context.exposeFunction('add', function(a, b) {
+    return Promise.resolve(a - b);
+  });
+  expect(await page.evaluate('add(7, 6)')).toBe(1);
+
+  await (context as any)._removeExposedBindings();
+  await context.exposeFunction('add', function(a, b) {
+    return Promise.resolve(a + b);
+  });
+  expect(await page.evaluate('add(5, 6)')).toBe(11);
+  await page.reload();
+  expect(await page.evaluate('add(5, 6)')).toBe(11);
+});
+
+it('should retain internal binding after reset', async ({ page, context }) => {
+  await context.exposeFunction('__pw_add', function(a, b) {
+    return Promise.resolve(a + b);
+  });
+  await (context as any)._removeExposedBindings();
+  expect(await page.evaluate('__pw_add(5, 6)')).toBe(11);
+});
