@@ -49,6 +49,7 @@ const config: Config<CoverageWorkerOptions & PlaywrightWorkerOptions & Playwrigh
   expect: {
     timeout: 10000,
   },
+  maxFailures: 100,
   timeout: video ? 60000 : 30000,
   globalTimeout: 5400000,
   workers: process.env.CI ? 1 : undefined,
