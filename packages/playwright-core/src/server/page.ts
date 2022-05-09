@@ -42,6 +42,8 @@ import type { Artifact } from './artifact';
 import type { TimeoutOptions } from '../common/types';
 import type { ParsedSelector } from './isomorphic/selectorParser';
 import { isInvalidSelectorError } from './isomorphic/selectorParser';
+import { parseEvaluationResultValue, source } from './isomorphic/utilityScriptSerializers';
+import type { SerializedValue } from './isomorphic/utilityScriptSerializers';
 
 export interface PageDelegate {
   readonly rawMouse: input.RawMouse;
@@ -712,6 +714,12 @@ export class Worker extends SdkObject {
   }
 }
 
+type BindingPayload = {
+  name: string;
+  seq: number;
+  serializedArgs?: SerializedValue[],
+};
+
 export class PageBinding {
   readonly name: string;
   readonly playwrightFunction: frames.FunctionWithSource;
@@ -721,12 +729,12 @@ export class PageBinding {
   constructor(name: string, playwrightFunction: frames.FunctionWithSource, needsHandle: boolean) {
     this.name = name;
     this.playwrightFunction = playwrightFunction;
-    this.source = `(${addPageBinding.toString()})(${JSON.stringify(name)}, ${needsHandle})`;
+    this.source = `(${addPageBinding.toString()})(${JSON.stringify(name)}, ${needsHandle}, (${source})(true))`;
     this.needsHandle = needsHandle;
   }
 
   static async dispatch(page: Page, payload: string, context: dom.FrameExecutionContext) {
-    const { name, seq, args } = JSON.parse(payload);
+    const { name, seq, serializedArgs } = JSON.parse(payload) as BindingPayload;
     try {
       assert(context.world);
       const binding = page.getBinding(name)!;
@@ -735,6 +743,7 @@ export class PageBinding {
         const handle = await context.evaluateHandle(takeHandle, { name, seq }).catch(e => null);
         result = await binding.playwrightFunction({ frame: context.frame, page, context: page._browserContext }, handle);
       } else {
+        const args = serializedArgs!.map(a => parseEvaluationResultValue(a, []));
         result = await binding.playwrightFunction({ frame: context.frame, page, context: page._browserContext }, ...args);
       }
       context.evaluate(deliverResult, { name, seq, result }).catch(e => debugLogger.log('error', e));
@@ -770,7 +779,7 @@ export class PageBinding {
   }
 }
 
-function addPageBinding(bindingName: string, needsHandle: boolean) {
+function addPageBinding(bindingName: string, needsHandle: boolean, utilityScriptSerializers: ReturnType<typeof source>) {
   const binding = (globalThis as any)[bindingName];
   if (binding.__installed)
     return;
@@ -783,7 +792,7 @@ function addPageBinding(bindingName: string, needsHandle: boolean) {
       callbacks = new Map();
       me['callbacks'] = callbacks;
     }
-    const seq = (me['lastSeq'] || 0) + 1;
+    const seq: number = (me['lastSeq'] || 0) + 1;
     me['lastSeq'] = seq;
     let handles = me['handles'];
     if (!handles) {
@@ -791,12 +800,17 @@ function addPageBinding(bindingName: string, needsHandle: boolean) {
       me['handles'] = handles;
     }
     const promise = new Promise((resolve, reject) => callbacks.set(seq, { resolve, reject }));
+    let payload: BindingPayload;
     if (needsHandle) {
       handles.set(seq, args[0]);
-      binding(JSON.stringify({ name: bindingName, seq }));
+      payload = { name: bindingName, seq };
     } else {
-      binding(JSON.stringify({ name: bindingName, seq, args }));
+      const serializedArgs = args.map(a => utilityScriptSerializers.serializeAsCallArgument(a, v => {
+        return { fallThrough: v };
+      }));
+      payload = { name: bindingName, seq, serializedArgs };
     }
+    binding(JSON.stringify(payload));
     return promise;
   };
   (globalThis as any)[bindingName].__installed = true;
