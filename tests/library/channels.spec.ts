@@ -206,6 +206,8 @@ it('should work with the domain module', async ({ browserType, server, browserNa
 });
 
 it('make sure that the client/server side context, page, etc. objects were garbage collected', async ({ browserName, server, childProcess }, testInfo) => {
+  // WeakRef was added in Node.js 14
+  it.skip(parseInt(process.version.slice(1), 10) < 14);
   const scriptPath = testInfo.outputPath('test.js');
   const script = `
   const playwright = require(${JSON.stringify(require.resolve('playwright'))});
