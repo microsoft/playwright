@@ -238,6 +238,9 @@ it('make sure that the client/server side context, page, etc. objects were garba
     assertServerSideDispatchersExistance(true);
     await browser.close();
     global.gc();
+    global.gc();
+    global.gc();
+    await new Promise(resolve => setTimeout(resolve, 100));
 
     assertServerSideObjectsExistance(false);
     assertServerSideDispatchersExistance(false);
@@ -251,9 +254,9 @@ it('make sure that the client/server side context, page, etc. objects were garba
 
     function assertServerSideObjectsExistance(expected) {
       for (const ref of objectRefs) {
-        const impl = ref.deref();
-        if (kTestSdkObjects.has(impl) !== expected)
-          throw new Error('Unexpected SdkObject ' + (expected ? impl : '') + 'existence!');
+        if (kTestSdkObjects.has(ref.deref()) !== expected) {
+          throw new Error('Unexpected SdkObject existence! (expected: ' + expected + ')');
+        }
       }
     }
 
