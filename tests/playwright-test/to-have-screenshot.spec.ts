@@ -99,10 +99,9 @@ test('should fail with proper error when unsupported argument is given', async (
 
 test('should use match snapshot paths by default', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
-    // The helper function `playwrightConfig` injects a `_useScreenshotsDir` flag.
+    // The helper function `playwrightConfig` set PWTEST_USE_SCREENSHOTS_DIR_FOR_TEST env variable.
     // Provide default config manually instead.
     'playwright.config.js': `
-      process.env.PLAYWRIGHT_EXPERIMENTAL_FEATURES = '1';
       module.exports = {};
     `,
     'a.spec.js': `
@@ -941,12 +940,9 @@ test('should update expectations with retries', async ({ runInlineTest }, testIn
 });
 
 function playwrightConfig(obj: any) {
-  obj.expect ??= {};
-  obj.expect.toHaveScreenshot ??= {};
-  obj.expect.toHaveScreenshot._useScreenshotsDir ??= true;
   return {
     'playwright.config.js': `
-      process.env.PLAYWRIGHT_EXPERIMENTAL_FEATURES = '1';
+      process.env.PWTEST_USE_SCREENSHOTS_DIR_FOR_TEST = '1';
       module.exports = ${JSON.stringify(obj, null, 2)}
     `,
   };
