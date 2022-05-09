@@ -284,3 +284,19 @@ it('should retain internal binding after reset', async ({ page }) => {
   await (page as any)._removeExposedBindings();
   expect(await page.evaluate('__pw_add(5, 6)')).toBe(11);
 });
+
+it('should alias Window, Document and Node', async ({ page }) => {
+  let object: any;
+  await page.exposeBinding('log', (source, obj) => object = obj);
+  await page.evaluate('window.log([window, document, document.body])');
+  expect(object).toEqual(['ref: <Window>', 'ref: <Document>', 'ref: <Node>']);
+});
+
+it('should trim cycles', async ({ page }) => {
+  let object: any;
+  await page.exposeBinding('log', (source, obj) => object = obj);
+  await page.evaluate('const a = { a: 1 }; a.a = a; window.log(a)');
+  expect(object).toEqual({
+    a: '[Circular Ref]',
+  });
+});
