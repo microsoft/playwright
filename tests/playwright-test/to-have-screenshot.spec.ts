@@ -713,14 +713,14 @@ test('should respect maxDiffPixels option', async ({ runInlineTest }) => {
 
   expect((await runInlineTest({
     ...playwrightConfig({
+      expect: {
+        toHaveScreenshot: {
+          maxDiffPixels: BAD_PIXELS
+        }
+      },
       projects: [
         {
           screenshotsDir: '__screenshots__',
-          expect: {
-            toHaveScreenshot: {
-              maxDiffPixels: BAD_PIXELS
-            }
-          },
         },
       ],
     }),
@@ -819,13 +819,13 @@ test('should respect maxDiffPixelRatio option', async ({ runInlineTest }) => {
 
   expect((await runInlineTest({
     ...playwrightConfig({
+      expect: {
+        toHaveScreenshot: {
+          maxDiffPixelRatio: BAD_RATIO,
+        },
+      },
       projects: [{
         screenshotsDir: '__screenshots__',
-        expect: {
-          toHaveScreenshot: {
-            maxDiffPixelRatio: BAD_RATIO,
-          },
-        },
       }],
     }),
     '__screenshots__/a.spec.js/snapshot.png': EXPECTED_SNAPSHOT,
