@@ -116,7 +116,6 @@ Expected substring or RegExp.
 
 ## async method: PageAssertions.toHaveScreenshot
 * langs: js
-* experimental
 
 Ensures that the page resolves to a given screenshot. This function will re-take
 screenshots until it matches with the saved expectation.

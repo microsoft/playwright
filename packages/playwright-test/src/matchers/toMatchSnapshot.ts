@@ -289,13 +289,11 @@ export async function toHaveScreenshot(
   nameOrOptions: NameOrSegments | { name?: NameOrSegments } & HaveScreenshotOptions = {},
   optOptions: HaveScreenshotOptions = {}
 ): Promise<SyncExpectationResult> {
-  if (!process.env.PLAYWRIGHT_EXPERIMENTAL_FEATURES)
-    throw new Error(`To use the experimental method "toHaveScreenshot", set PLAYWRIGHT_EXPERIMENTAL_FEATURES=1 enviroment variable.`);
   const testInfo = currentTestInfo();
   if (!testInfo)
     throw new Error(`toHaveScreenshot() must be called during the test`);
   const config = (testInfo.project._expect as any)?.toHaveScreenshot;
-  const snapshotPathResolver = process.env.PLAYWRIGHT_EXPERIMENTAL_FEATURES && config?._useScreenshotsDir
+  const snapshotPathResolver = process.env.PWTEST_USE_SCREENSHOTS_DIR_FOR_TEST
     ? testInfo._screenshotPath.bind(testInfo)
     : testInfo.snapshotPath.bind(testInfo);
   const helper = new SnapshotHelper(
