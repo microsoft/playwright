@@ -448,7 +448,7 @@ export class Runner {
           await (await this._loader.loadGlobalHook(config.globalTeardown, 'globalTeardown'))(this._loader.fullConfig());
       }, result);
 
-      for (const plugin of [...this._plugins, ...config._plugins].reverse()) {
+      for (const plugin of [...this._plugins].reverse()) {
         await this._runAndReportError(async () => {
           await plugin.teardown?.();
         }, result);
@@ -462,7 +462,7 @@ export class Runner {
 
       // First run the plugins, if plugin is a web server we want it to run before the
       // config's global setup.
-      for (const plugin of [...this._plugins, ...config._plugins])
+      for (const plugin of this._plugins)
         await plugin.setup?.(config, config._configDir, rootSuite);
 
       // The do global setup.
