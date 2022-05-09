@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { Fixtures, TestError, Project, TestPlugin } from '../types/test';
+import type { Fixtures, TestError, Project } from '../types/test';
 import type { Location } from '../types/testReporter';
 import type { FullConfig as FullConfigPublic, FullProject as FullProjectPublic } from './types';
 export * from '../types/test';
@@ -44,7 +44,6 @@ export interface FullConfigInternal extends FullConfigPublic {
   _globalOutputDir: string;
   _configDir: string;
   _testGroupsCount: number;
-  _plugins: TestPlugin[];
 
   // Overrides the public field.
   projects: FullProjectInternal[];
