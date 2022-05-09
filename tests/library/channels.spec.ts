@@ -239,10 +239,11 @@ it('make sure that the client/server side context, page, etc. objects were garba
     assertServerSideObjectsExistance(true);
     assertServerSideDispatchersExistance(true);
     await browser.close();
-    global.gc();
-    global.gc();
-    global.gc();
-    await new Promise(resolve => setTimeout(resolve, 100));
+
+    for (let i = 0; i < 5; i++) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+      global.gc();
+    }
 
     assertServerSideObjectsExistance(false);
     assertServerSideDispatchersExistance(false);
