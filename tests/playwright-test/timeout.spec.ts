@@ -306,3 +306,37 @@ test('fixture time in beforeEach hook should affect test', async ({ runInlineTes
   expect(result.failed).toBe(1);
   expect(result.output).toContain('Timeout of 1000ms exceeded');
 });
+
+test('test timeout should still run hooks before fixtures teardown', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      const test = pwt.test.extend({
+        auto: [async ({}, use) => {
+          console.log('\\n%%before-auto');
+          await use('hey');
+          console.log('\\n%%after-auto');
+        }, { auto: true }]
+      });
+      test.afterAll(async () => {
+        console.log('\\n%%afterAll-1');
+        await new Promise(f => setTimeout(f, 500));
+        console.log('\\n%%afterAll-2');
+      });
+      test('test fail', async ({}) => {
+        test.setTimeout(100);
+        console.log('\\n%%test');
+        await new Promise(f => setTimeout(f, 800));
+      });
+    `
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.output).toContain('Timeout of 100ms exceeded');
+  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
+    '%%before-auto',
+    '%%test',
+    '%%afterAll-1',
+    '%%afterAll-2',
+    '%%after-auto',
+  ]);
+});

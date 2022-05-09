@@ -379,6 +379,7 @@ export class WorkerRunner extends EventEmitter {
     if (testInfo.status === 'timedOut') {
       // A timed-out test gets a full additional timeout to run after hooks.
       afterHooksSlot = { timeout: this._project.timeout, elapsed: 0 };
+      testInfo._timeoutManager.setCurrentRunnable({ type: 'afterEach', slot: afterHooksSlot });
     }
     await testInfo._runWithTimeout(async () => {
       // Note: do not wrap all teardown steps together, because failure in any of them
