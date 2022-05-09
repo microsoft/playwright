@@ -122,6 +122,7 @@ export class Recorder implements InstrumentationListener {
 
     this._context.once(BrowserContext.Events.Close, () => {
       this._contextRecorder.dispose();
+      this._context.instrumentation.removeListener(this);
       recorderApp.close().catch(() => {});
     });
     this._contextRecorder.on(ContextRecorder.Events.Change, (data: { sources: Source[], primaryFileName: string }) => {
