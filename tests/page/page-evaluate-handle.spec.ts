@@ -63,13 +63,6 @@ it('should accept multiple nested handles', async ({ page }) => {
   });
 });
 
-it('should throw for circular objects', async ({ page }) => {
-  const a = { x: 1 };
-  a['y'] = a;
-  const error = await page.evaluate(x => x, a).catch(e => e);
-  expect(error.message).toContain('Argument is a circular structure');
-});
-
 it('should accept same handle multiple times', async ({ page }) => {
   const foo = await page.evaluateHandle(() => 1);
   expect(await page.evaluate(x => x, { foo, bar: [foo], baz: { foo } })).toEqual({ foo: 1, bar: [1], baz: { foo: 1 } });

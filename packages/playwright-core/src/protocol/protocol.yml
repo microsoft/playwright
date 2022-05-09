@@ -85,6 +85,10 @@ SerializedValue:
           v: SerializedValue
     # An index in the handles array from SerializedArgument.
     h: number?
+    # Index of the object in value-type for circular reference resolution.
+    id: number?
+    # Ref to the object in value-type for circular reference resolution.
+    ref: number?
 
 
 # Represents a value with handle references.

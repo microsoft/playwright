@@ -19,13 +19,19 @@ export type SerializedValue =
     { v: 'null' | 'undefined' | 'NaN' | 'Infinity' | '-Infinity' | '-0' } |
     { d: string } |
     { r: { p: string, f: string} } |
-    { a: SerializedValue[] } |
-    { o: { k: string, v: SerializedValue }[] } |
+    { a: SerializedValue[], id: number } |
+    { o: { k: string, v: SerializedValue }[], id: number } |
+    { ref: number } |
     { h: number };
 
 export type HandleOrValue = { h: number } | { fallThrough: any };
 
-export function source(aliasComplexAndCircularObjects: boolean = false) {
+type VisitorInfo = {
+  visited: Map<object, number>;
+  lastId: number;
+};
+
+export function source() {
 
   function isRegExp(obj: any): obj is RegExp {
     return obj instanceof RegExp || Object.prototype.toString.call(obj) === '[object RegExp]';
@@ -39,10 +45,12 @@ export function source(aliasComplexAndCircularObjects: boolean = false) {
     return obj instanceof Error || (obj && obj.__proto__ && obj.__proto__.name === 'Error');
   }
 
-  function parseEvaluationResultValue(value: SerializedValue, handles: any[] = []): any {
+  function parseEvaluationResultValue(value: SerializedValue, handles: any[] = [], refs: Map<number, object> = new Map()): any {
     if (Object.is(value, undefined))
       return undefined;
     if (typeof value === 'object' && value) {
+      if ('ref' in value)
+        return refs.get(value.ref);
       if ('v' in value) {
         if (value.v === 'undefined')
           return undefined;
@@ -62,12 +70,18 @@ export function source(aliasComplexAndCircularObjects: boolean = false) {
         return new Date(value.d);
       if ('r' in value)
         return new RegExp(value.r.p, value.r.f);
-      if ('a' in value)
-        return value.a.map((a: any) => parseEvaluationResultValue(a, handles));
+      if ('a' in value) {
+        const result: any[] = [];
+        refs.set(value.id, result);
+        for (const a of value.a)
+          result.push(parseEvaluationResultValue(a, handles, refs));
+        return result;
+      }
       if ('o' in value) {
         const result: any = {};
+        refs.set(value.id, result);
         for (const { k, v } of value.o)
-          result[k] = parseEvaluationResultValue(v, handles);
+          result[k] = parseEvaluationResultValue(v, handles, refs);
         return result;
       }
       if ('h' in value)
@@ -77,21 +91,10 @@ export function source(aliasComplexAndCircularObjects: boolean = false) {
   }
 
   function serializeAsCallArgument(value: any, handleSerializer: (value: any) => HandleOrValue): SerializedValue {
-    return serialize(value, handleSerializer, new Set());
+    return serialize(value, handleSerializer, { visited: new Map(), lastId: 0 });
   }
 
-  function serialize(value: any, handleSerializer: (value: any) => HandleOrValue, visited: Set<any>): SerializedValue {
-    if (!aliasComplexAndCircularObjects)
-      return innerSerialize(value, handleSerializer, visited);
-    try {
-      const alias = serializeComplexObjectAsAlias(value);
-      return alias || innerSerialize(value, handleSerializer, visited);
-    } catch (error) {
-      return error.stack;
-    }
-  }
-
-  function serializeComplexObjectAsAlias(value: any): string | undefined {
+  function serialize(value: any, handleSerializer: (value: any) => HandleOrValue, visitorInfo: VisitorInfo): SerializedValue {
     if (value && typeof value === 'object') {
       if (globalThis.Window && value instanceof globalThis.Window)
         return 'ref: <Window>';
@@ -100,22 +103,16 @@ export function source(aliasComplexAndCircularObjects: boolean = false) {
       if (globalThis.Node && value instanceof globalThis.Node)
         return 'ref: <Node>';
     }
+    return innerSerialize(value, handleSerializer, visitorInfo);
   }
 
-  function innerSerialize(value: any, handleSerializer: (value: any) => HandleOrValue, visited: Set<any>): SerializedValue {
+  function innerSerialize(value: any, handleSerializer: (value: any) => HandleOrValue, visitorInfo: VisitorInfo): SerializedValue {
     const result = handleSerializer(value);
     if ('fallThrough' in result)
       value = result.fallThrough;
     else
       return result;
 
-    if (visited.has(value)) {
-      if (aliasComplexAndCircularObjects) {
-        const alias = serializeComplexObjectAsAlias(value);
-        return alias || '[Circular Ref]';
-      }
-      throw new Error('Argument is a circular structure');
-    }
     if (typeof value === 'symbol')
       return { v: 'undefined' };
     if (Object.is(value, undefined))
@@ -151,18 +148,23 @@ export function source(aliasComplexAndCircularObjects: boolean = false) {
     if (isRegExp(value))
       return { r: { p: value.source, f: value.flags } };
 
+    const id = visitorInfo.visited.get(value);
+    if (id)
+      return { ref: id };
+
     if (Array.isArray(value)) {
       const a = [];
-      visited.add(value);
+      const id = ++visitorInfo.lastId;
+      visitorInfo.visited.set(value, id);
       for (let i = 0; i < value.length; ++i)
-        a.push(serialize(value[i], handleSerializer, visited));
-      visited.delete(value);
-      return { a };
+        a.push(serialize(value[i], handleSerializer, visitorInfo));
+      return { a, id };
     }
 
     if (typeof value === 'object') {
       const o: { k: string, v: SerializedValue }[] = [];
-      visited.add(value);
+      const id = ++visitorInfo.lastId;
+      visitorInfo.visited.set(value, id);
       for (const name of Object.keys(value)) {
         let item;
         try {
@@ -171,12 +173,11 @@ export function source(aliasComplexAndCircularObjects: boolean = false) {
           continue;  // native bindings will throw sometimes
         }
         if (name === 'toJSON' && typeof item === 'function')
-          o.push({ k: name, v: { o: [] } });
+          o.push({ k: name, v: { o: [], id: 0 } });
         else
-          o.push({ k: name, v: serialize(item, handleSerializer, visited) });
+          o.push({ k: name, v: serialize(item, handleSerializer, visitorInfo) });
       }
-      visited.delete(value);
-      return { o };
+      return { o, id };
     }
   }
 

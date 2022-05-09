@@ -292,11 +292,11 @@ it('should alias Window, Document and Node', async ({ page }) => {
   expect(object).toEqual(['ref: <Window>', 'ref: <Document>', 'ref: <Node>']);
 });
 
-it('should trim cycles', async ({ page }) => {
+it('should serialize cycles', async ({ page }) => {
   let object: any;
   await page.exposeBinding('log', (source, obj) => object = obj);
-  await page.evaluate('const a = { a: 1 }; a.a = a; window.log(a)');
-  expect(object).toEqual({
-    a: '[Circular Ref]',
-  });
+  await page.evaluate('const a = {}; a.b = a; window.log(a)');
+  const a: any = {};
+  a.b = a;
+  expect(object).toEqual(a);
 });
