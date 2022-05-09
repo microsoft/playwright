@@ -576,7 +576,7 @@ await expect(locator).toBeVisible();
 ```
 
 ```java
-assertThat(page.locator(".my-element")).toBeVisible();
+assertThat(page.locator(".my-element")).isVisible();
 ```
 
 ```python async
