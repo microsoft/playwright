@@ -12,7 +12,7 @@ const XCODE_VERSIONS = {
       ffmpeg: '13.2',
   },
   "macos-12": {
-      webkit: '13.3',
+      webkit: '13.2', // WebKit requires xcode 13.2 to work on MacOS 12.2. 
      firefox: '13.2', // As of Oct 2021 building Firefox requires XCode 13
     chromium: '13.3', // As of Apr 2022 Chromium requires Xcode13.3
       ffmpeg: '13.2',
