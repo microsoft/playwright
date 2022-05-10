@@ -45,7 +45,8 @@ jobs:
     - run: node tests/config/checkCoverage.js electron
       if: always() && matrix.os == 'ubuntu-latest'
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: always() && matrix.os == 'ubuntu-latest'
+      if: always()
+      shell: bash
     - uses: actions/upload-artifact@v1
       if: always() && matrix.os == 'ubuntu-latest'
       with:
