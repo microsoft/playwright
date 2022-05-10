@@ -16594,9 +16594,9 @@ export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
    */
   grepInvert: RegExp | RegExp[] | null;
   /**
-   * Metadata that will be put directly to the test report serialized as JSON.
+   * Any JSON-serializable metadata that will be put directly to the test report.
    */
-  metadata: Metadata;
+  metadata: any;
   /**
    * Project name is visible in the report and during test execution.
    */
@@ -17397,7 +17397,7 @@ export interface Config<TestArgs = {}, WorkerArgs = {}> extends TestConfig {
   use?: UseOptions<TestArgs, WorkerArgs>;
 }
 
-export type Metadata = { [key: string]: any };
+export type Metadata = { [key: string]: string | number | boolean };
 
 /**
  * Playwright Test provides many options to configure how your tests are collected and executed, for example `timeout` or
@@ -20339,9 +20339,9 @@ interface TestProject {
   grepInvert?: RegExp|Array<RegExp>;
 
   /**
-   * Metadata that will be put directly to the test report serialized as JSON.
+   * Any JSON-serializable metadata that will be put directly to the test report.
    */
-  metadata?: Metadata;
+  metadata?: any;
 
   /**
    * Project name is visible in the report and during test execution.
@@ -20594,7 +20594,7 @@ declare module '@playwright/test/reporter' {
  * limitations under the License.
  */
 
-import type { FullConfig, FullProject, TestStatus, TestError, Metadata } from '@playwright/test';
+import type { FullConfig, FullProject, TestStatus, TestError } from '@playwright/test';
 export type { FullConfig, TestStatus, TestError } from '@playwright/test';
 
 /**
@@ -21016,7 +21016,7 @@ export interface JSONReport {
       outputDir: string,
       repeatEach: number,
       retries: number,
-      metadata: Metadata,
+      metadata: any,
       name: string,
       testDir: string,
       testIgnore: string[],

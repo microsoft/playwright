@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { FullConfig, FullProject, TestStatus, TestError, Metadata } from '@playwright/test';
+import type { FullConfig, FullProject, TestStatus, TestError } from '@playwright/test';
 export type { FullConfig, TestStatus, TestError } from '@playwright/test';
 
 export interface Suite {
@@ -54,7 +54,7 @@ export interface JSONReport {
       outputDir: string,
       repeatEach: number,
       retries: number,
-      metadata: Metadata,
+      metadata: any,
       name: string,
       testDir: string,
       testIgnore: string[],

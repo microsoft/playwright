@@ -146,9 +146,9 @@ Filter to only run tests with a title **not** matching one of the patterns. This
 `grepInvert` option is also useful for [tagging tests](../test-annotations.md#tag-tests).
 
 ## property: TestProject.metadata
-- type: ?<[Metadata]>
+- type: ?<[any]>
 
-Metadata that will be put directly to the test report serialized as JSON.
+Any JSON-serializable metadata that will be put directly to the test report.
 
 ## property: TestProject.name
 - type: ?<[string]>
