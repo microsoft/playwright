@@ -72,6 +72,8 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
       v: tType('SerializedValue'),
     }))),
     h: tOptional(tNumber),
+    id: tOptional(tNumber),
+    ref: tOptional(tNumber),
   });
   scheme.SerializedArgument = tObject({
     value: tType('SerializedValue'),

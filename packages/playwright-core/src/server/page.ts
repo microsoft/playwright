@@ -729,7 +729,7 @@ export class PageBinding {
   constructor(name: string, playwrightFunction: frames.FunctionWithSource, needsHandle: boolean) {
     this.name = name;
     this.playwrightFunction = playwrightFunction;
-    this.source = `(${addPageBinding.toString()})(${JSON.stringify(name)}, ${needsHandle}, (${source})(true))`;
+    this.source = `(${addPageBinding.toString()})(${JSON.stringify(name)}, ${needsHandle}, (${source})())`;
     this.needsHandle = needsHandle;
   }
 
@@ -743,7 +743,7 @@ export class PageBinding {
         const handle = await context.evaluateHandle(takeHandle, { name, seq }).catch(e => null);
         result = await binding.playwrightFunction({ frame: context.frame, page, context: page._browserContext }, handle);
       } else {
-        const args = serializedArgs!.map(a => parseEvaluationResultValue(a, []));
+        const args = serializedArgs!.map(a => parseEvaluationResultValue(a));
         result = await binding.playwrightFunction({ frame: context.frame, page, context: page._browserContext }, ...args);
       }
       context.evaluate(deliverResult, { name, seq, result }).catch(e => debugLogger.log('error', e));

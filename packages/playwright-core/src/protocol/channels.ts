@@ -173,6 +173,8 @@ export type SerializedValue = {
     v: SerializedValue,
   }[],
   h?: number,
+  id?: number,
+  ref?: number,
 };
 
 export type SerializedArgument = {
