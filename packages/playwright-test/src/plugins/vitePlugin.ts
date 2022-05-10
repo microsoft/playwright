@@ -28,6 +28,14 @@ import { assert } from 'playwright-core/lib/utils';
 let previewServer: PreviewServer;
 const VERSION = 1;
 
+type CtConfig = {
+  ctPort?: number;
+  ctTemplateDir?: string;
+  ctCacheDir?: string;
+  ctViteConfig?: InlineConfig;
+};
+
+
 export function createPlugin(
   registerSourceFile: string,
   frameworkPluginFactory: () => Plugin): TestRunnerPlugin {
@@ -36,15 +44,16 @@ export function createPlugin(
     name: 'playwright-vite-plugin',
 
     setup: async (config: FullConfig, configDirectory: string, suite: Suite) => {
-      const use = config.projects[0].use as any;
-      const viteConfig: InlineConfig = use.viteConfig || {};
-      const port = use.vitePort || 3100;
       configDir = configDirectory;
-      process.env.PLAYWRIGHT_VITE_COMPONENTS_BASE_URL = `http://localhost:${port}/playwright/index.html`;
+      const use = config.projects[0].use as CtConfig;
+      const port = use.ctPort || 3100;
+      const viteConfig: InlineConfig = use.ctViteConfig || {};
+      const relativeTemplateDir = use.ctTemplateDir || 'playwright';
+      process.env.PLAYWRIGHT_VITE_COMPONENTS_BASE_URL = `http://localhost:${port}/${relativeTemplateDir}/index.html`;
 
       const rootDir = viteConfig.root || configDir;
-      const outDir = viteConfig?.build?.outDir || path.join(rootDir, 'playwright', '.cache');
-      const templateDir = path.join(rootDir, 'playwright');
+      const templateDir = path.join(rootDir, relativeTemplateDir);
+      const outDir = viteConfig?.build?.outDir || (use.ctCacheDir ? path.resolve(rootDir, use.ctCacheDir) : path.resolve(templateDir, '.cache'));
 
       const buildInfoFile = path.join(outDir, 'metainfo.json');
       let buildInfo: BuildInfo;
@@ -79,7 +88,7 @@ export function createPlugin(
           frameworkPluginFactory()
         ];
         const registerSource = await fs.promises.readFile(registerSourceFile, 'utf-8');
-        viteConfig.plugins.push(vitePlugin(registerSource, buildInfo, componentRegistry));
+        viteConfig.plugins.push(vitePlugin(registerSource, relativeTemplateDir, buildInfo, componentRegistry));
         viteConfig.configFile = viteConfig.configFile || false;
         viteConfig.define = viteConfig.define || {};
         viteConfig.define.__VUE_PROD_DEVTOOLS__ = true;
@@ -218,7 +227,7 @@ async function parseTestFile(testFile: string): Promise<ComponentInfo[]> {
   return result;
 }
 
-function vitePlugin(registerSource: string, buildInfo: BuildInfo, componentRegistry: ComponentRegistry): Plugin {
+function vitePlugin(registerSource: string, relativeTemplateDir: string, buildInfo: BuildInfo, componentRegistry: ComponentRegistry): Plugin {
   buildInfo.sources = {};
   return {
     name: 'playwright:component-index',
@@ -235,7 +244,7 @@ function vitePlugin(registerSource: string, buildInfo: BuildInfo, componentRegis
         }
       }
 
-      if (!id.endsWith('playwright/index.ts') && !id.endsWith('playwright/index.tsx') && !id.endsWith('playwright/index.js'))
+      if (!id.endsWith(`${relativeTemplateDir}/index.ts`) && !id.endsWith(`${relativeTemplateDir}/index.tsx`) && !id.endsWith(`${relativeTemplateDir}/index.js`))
         return;
 
       const folder = path.dirname(id);
