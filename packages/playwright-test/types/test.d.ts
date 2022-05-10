@@ -671,7 +671,7 @@ interface TestConfig {
   /**
    * Metadata that will be put directly to the test report serialized as JSON.
    */
-  metadata?: Metadata;
+  metadata?: any;
 
   /**
    * Config name is visible in the report and during test execution, unless overridden by
