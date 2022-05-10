@@ -31,6 +31,19 @@ test('it should not allow multiple tests with the same name per suite', async ({
   expect(result.output).toContain(`  - tests${path.sep}example.spec.js:7`);
 });
 
+test('it should not allow duplicates even with only', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'tests/example.spec.js': `
+      const { test } = pwt;
+      test('i-am-a-duplicate', async () => {});
+      test.only('i-am-a-duplicate', async () => {});
+    `
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain('duplicate test titles are not allowed');
+  expect(result.output).toContain(`- title: i-am-a-duplicate`);
+});
+
 test('it should enforce unique test names based on the describe block name', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'tests/example.spec.js': `
@@ -46,6 +59,29 @@ test('it should enforce unique test names based on the describe block name', asy
   expect(result.output).toContain(`  - tests${path.sep}example.spec.js:6`);
   expect(result.output).toContain(`  - tests${path.sep}example.spec.js:7`);
   expect(result.output).toContain(`  - tests${path.sep}example.spec.js:8`);
+});
+
+test('it should not allow multiple tests with the same name in multiple files', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'tests/example1.spec.js': `
+      const { test } = pwt;
+      test('i-am-a-duplicate', async () => {});
+      test('i-am-a-duplicate', async () => {});
+    `,
+    'tests/example2.spec.js': `
+      const { test } = pwt;
+      test('i-am-a-duplicate', async () => {});
+      test('i-am-a-duplicate', async () => {});
+    `,
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain('duplicate test titles are not allowed');
+  expect(result.output).toContain(`- title: i-am-a-duplicate`);
+  expect(result.output).toContain(`  - tests${path.sep}example1.spec.js:6`);
+  expect(result.output).toContain(`  - tests${path.sep}example1.spec.js:7`);
+  expect(result.output).toContain(`- title: i-am-a-duplicate`);
+  expect(result.output).toContain(`  - tests${path.sep}example2.spec.js:6`);
+  expect(result.output).toContain(`  - tests${path.sep}example2.spec.js:7`);
 });
 
 test('it should not allow a focused test when forbid-only is used', async ({ runInlineTest }) => {
