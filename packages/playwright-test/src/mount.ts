@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { Fixtures, Locator, Page, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, ViewportSize } from './types';
+import type { Fixtures, Locator, Page, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs } from './types';
 
 let boundCallbacksForMount: Function[] = [];
 
