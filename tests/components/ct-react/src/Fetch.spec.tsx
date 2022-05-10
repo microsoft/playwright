@@ -5,28 +5,28 @@ import { serverFixtures } from '../../../../tests/config/serverFixtures';
 const test = _test.extend(serverFixtures);
 
 test('components routing should go through context', async ({ mount, context, server }) => {
-    test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/14076' });
-    test.fail();
-    test.setTimeout(5000);
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/14076' });
+  test.fail();
+  test.setTimeout(5000);
 
-    server.setRoute('/hello', (req, res) => {
-        res.write('served via server');
-        res.end();
+  server.setRoute('/hello', (req, res) => {
+    res.write('served via server');
+    res.end();
+  });
+
+  let markRouted: (url: string) => void;
+  const routedViaContext = new Promise(res => markRouted = res);
+  await context.route('**/hello', async (route, request) => {
+    markRouted(`${request.method()} ${request.url()}`);
+    await route.fulfill({
+      body: 'intercepted',
     });
+  });
 
-    let markRouted: (url: string) => void;
-    const routedViaContext = new Promise(res => markRouted = res);
-    await context.route('**/hello', async (route, request) => {
-        markRouted(`${request.method()} ${request.url()}`);
-        await route.fulfill({
-            body: 'intercepted',
-        });
-    });
-
-    const whoServedTheRequest = Promise.race([
-        server.waitForRequest('/hello').then((req) => `served via server: ${req.method} ${req.url}`),
-        routedViaContext.then(req => `served via context: ${req}`),
-    ]);
+  const whoServedTheRequest = Promise.race([
+    server.waitForRequest('/hello').then((req) => `served via server: ${req.method} ${req.url}`),
+    routedViaContext.then(req => `served via context: ${req}`),
+  ]);
 
   const component = await mount(<Fetch url={server.PREFIX + '/hello'} />);
   await expect.soft(whoServedTheRequest).resolves.toMatch(/served via context: GET.*\/hello.*/i);
