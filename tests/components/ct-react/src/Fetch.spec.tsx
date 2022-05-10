@@ -1,4 +1,4 @@
-import { test as _test, expect } from '@playwright/test';
+import { test as _test, expect } from '@playwright/experimental-ct-vue'
 import { Fetch } from './Fetch';
 import { serverFixtures } from '../../../../tests/config/serverFixtures';
 
@@ -6,7 +6,7 @@ const test = _test.extend(serverFixtures);
 
 test('components routing should go through context', async ({ mount, context, server }) => {
     test.fail();
-    test.setTimeout(1000);
+    test.setTimeout(5000);
 
     server.setRoute('/hello', (req, res) => {
         res.write('served via server');
