@@ -36,7 +36,7 @@ const getExecutablePath = (browserName: BrowserName) => {
 const mode = process.env.PW_OUT_OF_PROCESS_DRIVER ?
   'driver' :
   (process.env.PWTEST_MODE || 'default') as ('default' | 'driver' | 'service' | 'service2');
-const headed = !!process.env.HEADFUL;
+const headed = process.argv.includes('--headed');
 const channel = process.env.PWTEST_CHANNEL as any;
 const video = !!process.env.PWTEST_VIDEO;
 const trace = !!process.env.PWTEST_TRACE;
