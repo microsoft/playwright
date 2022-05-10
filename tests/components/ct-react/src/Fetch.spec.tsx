@@ -5,10 +5,6 @@ import { serverFixtures } from '../../../../tests/config/serverFixtures';
 const test = _test.extend(serverFixtures);
 
 test('components routing should go through context', async ({ mount, context, server }) => {
-  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/14076' });
-  test.fail();
-  test.setTimeout(5000);
-
   server.setRoute('/hello', (req, res) => {
     res.write('served via server');
     res.end();

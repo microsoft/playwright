@@ -35,14 +35,20 @@ export const fixtures: Fixtures<PlaywrightTestArgs & PlaywrightTestOptions & { m
     await use(page.context());
   },
 
-  page: async ({ _workerPage }, use) => {
+  page: async ({ _workerPage, viewport }, use) => {
+    const page = _workerPage;
+    await page.goto('about:blank');
+    await (page as any)._resetForReuse();
+    await (page.context() as any)._resetForReuse();
+    await page.setViewportSize(viewport || { width: 1280, height: 800 });
+    await page.goto(process.env.PLAYWRIGHT_VITE_COMPONENTS_BASE_URL!);
     await use(_workerPage);
   },
 
-  mount: async ({ page, viewport }, use) => {
+  mount: async ({ page }, use) => {
     await use(async (component, options) => {
       const selector = await (page as any)._wrapApiCall(async () => {
-        return await innerMount(page, component, options, viewport || { width: 1280, height: 800 });
+        return await innerMount(page, component, options);
       }, true);
       return page.locator(selector);
     });
@@ -50,13 +56,7 @@ export const fixtures: Fixtures<PlaywrightTestArgs & PlaywrightTestOptions & { m
   },
 };
 
-async function innerMount(page: Page, jsxOrType: any, options: any, viewport: ViewportSize): Promise<string> {
-  await page.goto('about:blank');
-  await (page as any)._resetForReuse();
-  await (page.context() as any)._resetForReuse();
-  await page.setViewportSize(viewport);
-  await page.goto(process.env.PLAYWRIGHT_VITE_COMPONENTS_BASE_URL!);
-
+async function innerMount(page: Page, jsxOrType: any, options: any): Promise<string> {
   let component;
   if (typeof jsxOrType === 'string')
     component = { kind: 'object', type: jsxOrType, options };
