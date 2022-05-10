@@ -636,14 +636,6 @@ export class Frame extends SdkObject {
         }
         if (event.error)
           throw event.error;
-      } else if (isAboutBlank(url)) {
-        // Workaround chromium issue: https://github.com/microsoft/playwright/issues/14047
-        sameDocument.dispose();
-        event = await helper.waitForEvent(progress, this, Frame.Events.Navigation, (event: NavigationEvent) => {
-          return event.newDocument && !event.error;
-        }).promise;
-        if (event.error)
-          throw event.error;
       } else {
         event = await sameDocument.promise;
       }
@@ -1755,8 +1747,3 @@ function verifyLifecycle(name: string, waitUntil: types.LifecycleEvent): types.L
     throw new Error(`${name}: expected one of (load|domcontentloaded|networkidle|commit)`);
   return waitUntil;
 }
-
-function isAboutBlank(url: string) {
-  return url === 'about:blank' || url.startsWith('about:blank#');
-}
-
