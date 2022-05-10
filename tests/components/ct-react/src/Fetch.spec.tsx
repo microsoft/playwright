@@ -1,4 +1,4 @@
-import { test as _test, expect } from '@playwright/experimental-ct-vue'
+import { test as _test, expect } from '@playwright/experimental-ct-react'
 import { Fetch } from './Fetch';
 import { serverFixtures } from '../../../../tests/config/serverFixtures';
 
