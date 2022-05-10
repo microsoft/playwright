@@ -5,8 +5,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview",
-    "playwright-dev": "vite --config playwright.vite.config.ts"
+    "preview": "vite preview"
   },
   "dependencies": {
     "react": "^17.0.2",

@@ -26,7 +26,12 @@ import type {
 import type { InlineConfig } from 'vite';
 
 export type PlaywrightTestConfig = Omit<BasePlaywrightTestConfig, 'use'> & {
-  use?: BasePlaywrightTestConfig['use'] & { vitePort?: number, viteConfig?: InlineConfig }
+  use?: BasePlaywrightTestConfig['use'] & {
+    ctPort?: number,
+    ctTemplateDir?: string,
+    ctCacheDir?: string,
+    ctViteConfig?: InlineConfig
+  }
 };
 
 interface ComponentFixtures {

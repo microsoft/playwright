@@ -23,7 +23,7 @@ const config: PlaywrightTestConfig = {
   retries: process.env.CI ? 2 : 0,
   reporter: 'html',
   use: {
-    vitePort: 3102,
+    ctPort: 3102,
     trace: 'on-first-retry',
   },
   projects: [

@@ -22,6 +22,8 @@ const config: PlaywrightTestConfig = {
   retries: process.env.CI ? 2 : 0,
   reporter: 'html',
   use: {
+    ctTemplateDir: 'playwright',
+    ctCacheDir: 'playwright/.cache',
     trace: 'on-first-retry',
   },
   projects: [
