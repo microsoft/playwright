@@ -15,7 +15,7 @@
  */
 
 import { installTransform, setCurrentlyLoadingTestFile } from './transform';
-import type { Config, Project, ReporterDescription, FullProjectInternal, FullConfigInternal, Fixtures, FixturesWithLocation, TestPlugin } from './types';
+import type { Config, Project, ReporterDescription, FullProjectInternal, FullConfigInternal, Fixtures, FixturesWithLocation } from './types';
 import { getPackageJsonPath, mergeObjects, errorWithFile } from './util';
 import { setCurrentlyLoadingFileSuite } from './globals';
 import { Suite, type TestCase } from './test';
@@ -123,23 +123,6 @@ export class Loader {
     if (config.snapshotDir !== undefined)
       config.snapshotDir = path.resolve(configDir, config.snapshotDir);
 
-    const resolvedPlugins = await Promise.all((config.plugins || []).map(async plugin => {
-      if (typeof plugin === 'string')
-        return (await this._requireOrImportDefaultObject(resolveScript(plugin, configDir))) as TestPlugin;
-      if (Array.isArray(plugin)) {
-        const func = await this._requireOrImportDefaultFunction(resolveScript(plugin[0], configDir), false);
-        plugin = func(plugin[1]) as TestPlugin;
-      }
-      return plugin;
-    }));
-
-    for (const plugin of resolvedPlugins) {
-      if (!plugin.fixtures)
-        continue;
-      if (typeof plugin.fixtures === 'string')
-        plugin.fixtures = await this._requireOrImportDefaultObject(resolveScript(plugin.fixtures, configDir));
-    }
-
     this._fullConfig._configDir = configDir;
     this._fullConfig.rootDir = config.testDir || this._configDir;
     this._fullConfig._globalOutputDir = takeFirst(config.outputDir, throwawayArtifactsPath, baseFullConfig._globalOutputDir);
@@ -159,7 +142,6 @@ export class Loader {
     this._fullConfig.updateSnapshots = takeFirst(config.updateSnapshots, baseFullConfig.updateSnapshots);
     this._fullConfig.workers = takeFirst(config.workers, baseFullConfig.workers);
     this._fullConfig.webServer = takeFirst(config.webServer, baseFullConfig.webServer);
-    this._fullConfig._plugins = takeFirst(resolvedPlugins, baseFullConfig._plugins);
     this._fullConfig.metadata = takeFirst(config.metadata, baseFullConfig.metadata);
     this._fullConfig.projects = (config.projects || [config]).map(p => this._resolveProject(config, this._fullConfig, p, throwawayArtifactsPath));
   }
@@ -357,16 +339,6 @@ class ProjectSuiteBuilder {
   private _buildPool(test: TestCase): FixturePool {
     if (!this._testPools.has(test)) {
       let pool = this._buildTestTypePool(test._testType);
-
-      for (const plugin of this._project._fullConfig._plugins) {
-        if (!plugin.fixtures)
-          continue;
-        const pluginFixturesWithLocation: FixturesWithLocation = {
-          fixtures: plugin.fixtures,
-          location: { file: '', line: 0, column: 0 },
-        };
-        pool = new FixturePool([pluginFixturesWithLocation], pool, false);
-      }
 
       const parents: Suite[] = [];
       for (let parent: Suite | undefined = test.parent; parent; parent = parent.parent)
@@ -657,7 +629,6 @@ export const baseFullConfig: FullConfigInternal = {
   _globalOutputDir: path.resolve(process.cwd()),
   _configDir: '',
   _testGroupsCount: 0,
-  _plugins: [],
 };
 
 function resolveReporters(reporters: Config['reporter'], rootDir: string): ReporterDescription[]|undefined {

@@ -898,47 +898,37 @@ For example, `article` that has `text=Playwright` matches `<article><div>Playwri
 Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
 
 ## locator-option-left-of
-- `leftOf` <[Locator]|[Object]>
-  - `locator` <[Locator]> The inner locator.
-  - `maxDistance` ?<[float]> Maximum horizontal distance between the elements in pixels, unlimited by default.
+- `leftOf` <[Locator]>
 
 Matches elements that are to the left of any element matching the inner locator, at any vertical position. Inner locator is queried against the same root as the outer one. More details in [layout selectors](../selectors.md#selecting-elements-based-on-layout) guide.
 
 Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
 
 ## locator-option-right-of
-- `rightOf` <[Locator]|[Object]>
-  - `locator` <[Locator]> The inner locator.
-  - `maxDistance` ?<[float]> Maximum horizontal distance between the elements in pixels, unlimited by default.
+- `rightOf` <[Locator]>
 
 Matches elements that are to the right of any element matching the inner locator, at any vertical position. Inner locator is queried against the same root as the outer one. More details in [layout selectors](../selectors.md#selecting-elements-based-on-layout) guide.
 
 Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
 
 ## locator-option-above
-- `above` <[Locator]|[Object]>
-  - `locator` <[Locator]> The inner locator.
-  - `maxDistance` ?<[float]> Maximum vertical distance between the elements in pixels, unlimited by default.
+- `above` <[Locator]>
 
 Matches elements that are above any of the elements matching the inner locator, at any horizontal position. Inner locator is queried against the same root as the outer one. More details in [layout selectors](../selectors.md#selecting-elements-based-on-layout) guide.
 
 Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
 
 ## locator-option-below
-- `below` <[Locator]|[Object]>
-  - `locator` <[Locator]> The inner locator.
-  - `maxDistance` ?<[float]> Maximum vertical distance between the elements in pixels, unlimited by default.
+- `below` <[Locator]>
 
 Matches elements that are below any of the elements matching the inner locator, at any horizontal position. Inner locator is queried against the same root as the outer one. More details in [layout selectors](../selectors.md#selecting-elements-based-on-layout) guide.
 
 Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
 
 ## locator-option-near
-- `near` <[Locator]|[Object]>
-  - `locator` <[Locator]> The inner locator.
-  - `maxDistance` ?<[float]> Maximum distance between the elements in pixels, 50 by default.
+- `near` <[Locator]>
 
-Matches elements that are near any of the elements matching the inner locator. Inner locator is queried against the same root as the outer one. More details in [layout selectors](../selectors.md#selecting-elements-based-on-layout) guide.
+Matches elements that are near (<= 50 css pixels) any of the elements matching the inner locator. Inner locator is queried against the same root as the outer one. More details in [layout selectors](../selectors.md#selecting-elements-based-on-layout) guide.
 
 Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
 
@@ -1009,13 +999,6 @@ An object which specifies clipping of the resulting image. Should have the follo
 
 When set to `"css"`, screenshot will have a single pixel per each css pixel on the page. For high-dpi devices, this will keep screenshots small. Using `"device"` option will produce a single pixel per each device pixel, so screenhots of high-dpi devices will be twice as large or even larger. Defaults to `"device"`.
 
-## screenshot-option-fonts
-* langs: js
-* experimental
-- `fonts` <[ScreenshotFonts]<"ready"|"nowait">>
-
-When set to `"ready"`, screenshot will wait for [`document.fonts.ready`](https://developer.mozilla.org/en-US/docs/Web/API/FontFaceSet/ready) promise to resolve in all frames. Defaults to `"nowait"`.
-
 ## screenshot-option-caret
 - `caret` <[ScreenshotCaret]<"hide"|"initial">>
 
@@ -1027,7 +1010,6 @@ When set to `"hide"`, screenshot will hide text caret. When set to `"initial"`, 
 - %%-screenshot-option-quality-%%
 - %%-screenshot-option-path-%%
 - %%-screenshot-option-scale-%%
-- %%-screenshot-option-fonts-%%
 - %%-screenshot-option-caret-%%
 - %%-screenshot-option-type-%%
 - %%-screenshot-option-mask-%%

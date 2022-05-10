@@ -122,6 +122,7 @@ export class Recorder implements InstrumentationListener {
 
     this._context.once(BrowserContext.Events.Close, () => {
       this._contextRecorder.dispose();
+      this._context.instrumentation.removeListener(this);
       recorderApp.close().catch(() => {});
     });
     this._contextRecorder.on(ContextRecorder.Events.Change, (data: { sources: Source[], primaryFileName: string }) => {
@@ -130,7 +131,7 @@ export class Recorder implements InstrumentationListener {
       this._recorderApp?.setFileIfNeeded(data.primaryFileName);
     });
 
-    await this._context.exposeBinding('_playwrightRecorderState', false, source => {
+    await this._context.exposeBinding('__pw_recorderState', false, source => {
       let actionSelector = this._highlightedSelector;
       let actionPoint: Point | undefined;
       for (const [metadata, sdkObject] of this._currentCallsMetadata) {
@@ -147,13 +148,13 @@ export class Recorder implements InstrumentationListener {
       return uiState;
     });
 
-    await this._context.exposeBinding('_playwrightRecorderSetSelector', false, async (_, selector: string) => {
+    await this._context.exposeBinding('__pw_recorderSetSelector', false, async (_, selector: string) => {
       this._setMode('none');
       await this._recorderApp?.setSelector(selector, true);
       await this._recorderApp?.bringToFront();
     });
 
-    await this._context.exposeBinding('_playwrightResume', false, () => {
+    await this._context.exposeBinding('__pw_resume', false, () => {
       this._debugger.resume(false);
     });
     await this._context.extendInjectedScript(consoleApiSource.source);
@@ -189,7 +190,7 @@ export class Recorder implements InstrumentationListener {
 
   private _refreshOverlay() {
     for (const page of this._context.pages())
-      page.mainFrame().evaluateExpression('window._playwrightRefreshOverlay()', false, undefined, 'main').catch(() => {});
+      page.mainFrame().evaluateExpression('window.__pw_refreshOverlay()', false, undefined, 'main').catch(() => {});
   }
 
   async onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata) {
@@ -359,11 +360,11 @@ class ContextRecorder extends EventEmitter {
 
     // Input actions that potentially lead to navigation are intercepted on the page and are
     // performed by the Playwright.
-    await this._context.exposeBinding('_playwrightRecorderPerformAction', false,
+    await this._context.exposeBinding('__pw_recorderPerformAction', false,
         (source: BindingSource, action: actions.Action) => this._performAction(source.frame, action));
 
     // Other non-essential actions are simply being recorded.
-    await this._context.exposeBinding('_playwrightRecorderRecordAction', false,
+    await this._context.exposeBinding('__pw_recorderRecordAction', false,
         (source: BindingSource, action: actions.Action) => this._recordAction(source.frame, action));
 
     await this._context.extendInjectedScript(recorderSource.source);

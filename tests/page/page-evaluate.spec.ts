@@ -331,17 +331,23 @@ it('should properly serialize null fields', async ({ page }) => {
 });
 
 it('should return undefined for non-serializable objects', async ({ page }) => {
-  expect(await page.evaluate(() => window)).toBe(undefined);
+  expect(await page.evaluate(() => function() {})).toBe(undefined);
 });
 
-it('should fail for circular object', async ({ page }) => {
+it('should alias Window, Document and Node', async ({ page }) => {
+  const object = await page.evaluate('[window, document, document.body]');
+  expect(object).toEqual(['ref: <Window>', 'ref: <Document>', 'ref: <Node>']);
+});
+
+it('should work for circular object', async ({ page }) => {
   const result = await page.evaluate(() => {
     const a = {} as any;
-    const b = { a };
-    a.b = b;
+    a.b = a;
     return a;
   });
-  expect(result).toBe(undefined);
+  const a = {} as any;
+  a.b = a;
+  expect(result).toEqual(a);
 });
 
 it('should be able to throw a tricky error', async ({ page }) => {

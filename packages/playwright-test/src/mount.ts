@@ -14,21 +14,48 @@
  * limitations under the License.
  */
 
-import type { Page, ViewportSize } from '@playwright/test';
-import { createGuid } from 'playwright-core/lib/utils';
+import type { Fixtures, Locator, Page, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, ViewportSize } from './types';
 
-export async function mount(page: Page, jsxOrType: any, options: any, baseURL: string, viewport: ViewportSize): Promise<string> {
-  return await (page as any)._wrapApiCall(async () => {
-    return await innerMount(page, jsxOrType, options, baseURL, viewport);
-  }, true);
-}
+let boundCallbacksForMount: Function[] = [];
 
-async function innerMount(page: Page, jsxOrType: any, options: any, baseURL: string, viewport: ViewportSize): Promise<string> {
+export const fixtures: Fixtures<PlaywrightTestArgs & PlaywrightTestOptions & { mount: (component: any, options: any) => Promise<Locator> }, PlaywrightWorkerArgs & { _workerPage: Page }>  = {
+  _workerPage: [async ({ browser }, use) => {
+    const page = await (browser as any)._wrapApiCall(async () => {
+      const page = await browser.newPage();
+      await page.addInitScript('navigator.serviceWorker.register = () => {}');
+      await page.exposeFunction('__pw_dispatch', (ordinal: number, args: any[]) => {
+        boundCallbacksForMount[ordinal](...args);
+      });
+      return page;
+    });
+    await use(page);
+  }, { scope: 'worker' }],
+
+  context: async ({ page }, use) => {
+    await use(page.context());
+  },
+
+  page: async ({ _workerPage }, use) => {
+    await use(_workerPage);
+  },
+
+  mount: async ({ page, viewport }, use) => {
+    await use(async (component, options) => {
+      const selector = await (page as any)._wrapApiCall(async () => {
+        return await innerMount(page, component, options, viewport || { width: 1280, height: 800 });
+      }, true);
+      return page.locator(selector);
+    });
+    boundCallbacksForMount = [];
+  },
+};
+
+async function innerMount(page: Page, jsxOrType: any, options: any, viewport: ViewportSize): Promise<string> {
   await page.goto('about:blank');
   await (page as any)._resetForReuse();
   await (page.context() as any)._resetForReuse();
   await page.setViewportSize(viewport);
-  await page.goto(baseURL);
+  await page.goto(process.env.PLAYWRIGHT_VITE_COMPONENTS_BASE_URL!);
 
   let component;
   if (typeof jsxOrType === 'string')
@@ -36,24 +63,18 @@ async function innerMount(page: Page, jsxOrType: any, options: any, baseURL: str
   else
     component = jsxOrType;
 
-  const callbacks: Function[] = [];
-  wrapFunctions(component, page, callbacks);
-
-  const dispatchMethod = `__pw_dispatch_${createGuid()}`;
-  await page.exposeFunction(dispatchMethod, (ordinal: number, args: any[]) => {
-    callbacks[ordinal](...args);
-  });
+  wrapFunctions(component, page, boundCallbacksForMount);
 
   // WebKit does not wait for deferred scripts.
   await page.waitForFunction(() => !!(window as any).playwrightMount);
 
-  const selector = await page.evaluate(async ({ component, dispatchMethod }) => {
+  const selector = await page.evaluate(async ({ component }) => {
     const unwrapFunctions = (object: any) => {
       for (const [key, value] of Object.entries(object)) {
         if (typeof value === 'string' && (value as string).startsWith('__pw_func_')) {
           const ordinal = +value.substring('__pw_func_'.length);
           object[key] = (...args: any[]) => {
-            (window as any)[dispatchMethod](ordinal, args);
+            (window as any)['__pw_dispatch'](ordinal, args);
           };
         } else if (typeof value === 'object' && value) {
           unwrapFunctions(value);
@@ -63,7 +84,7 @@ async function innerMount(page: Page, jsxOrType: any, options: any, baseURL: str
 
     unwrapFunctions(component);
     return await (window as any).playwrightMount(component);
-  }, { component, dispatchMethod });
+  }, { component });
   return selector;
 }
 

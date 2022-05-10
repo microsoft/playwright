@@ -239,6 +239,7 @@ onChanges.push({
   committed: false,
   inputs: [
     'packages/playwright-core/src/server/injected/**',
+    'packages/playwright-core/src/server/isomorphic/**',
     'utils/generate_injected.js',
   ],
   script: 'utils/generate_injected.js',

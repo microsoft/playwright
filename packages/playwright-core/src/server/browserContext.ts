@@ -108,7 +108,6 @@ export abstract class BrowserContext extends SdkObject {
       return;
     // Debugger will pause execution upon page.pause in headed mode.
     const contextDebugger = new Debugger(this);
-    this.instrumentation.addListener(contextDebugger, this);
 
     // When PWDEBUG=1, show inspector for each context.
     if (debugMode() === 'inspector')
@@ -196,7 +195,10 @@ export abstract class BrowserContext extends SdkObject {
   }
 
   async removeExposedBindings() {
-    this._pageBindings.clear();
+    for (const key of this._pageBindings.keys()) {
+      if (!key.startsWith('__pw'))
+        this._pageBindings.delete(key);
+    }
     await this.doRemoveExposedBindings();
   }
 

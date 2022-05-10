@@ -97,6 +97,26 @@ test('should fail with proper error when unsupported argument is given', async (
   expect(stripAnsi(result.output)).toContain(`Expected options.clip.width not to be 0`);
 });
 
+test('should use match snapshot paths by default', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    // The helper function `playwrightConfig` set PWTEST_USE_SCREENSHOTS_DIR_FOR_TEST env variable.
+    // Provide default config manually instead.
+    'playwright.config.js': `
+      module.exports = {};
+    `,
+    'a.spec.js': `
+      pwt.test('is a test', async ({ page }, testInfo) => {
+        testInfo.snapshotSuffix = '';
+        await expect(page).toHaveScreenshot('snapshot.png');
+      });
+    `
+  }, { 'update-snapshots': true });
+  expect(result.exitCode).toBe(0);
+
+  const snapshotOutputPath = testInfo.outputPath('a.spec.js-snapshots', 'snapshot.png');
+  expect(fs.existsSync(snapshotOutputPath)).toBe(true);
+});
+
 test('should have scale:css by default', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     ...playwrightConfig({ screenshotsDir: '__screenshots__' }),
@@ -372,7 +392,6 @@ test('should compile with different option combinations', async ({ runTSC }) => 
             maxDiffPixels: 10,
             maxDiffPixelRatio: 0.2,
             animations: "allow",
-            fonts: "ready",
             caret: "hide",
             scale: "css",
           },
@@ -392,7 +411,6 @@ test('should compile with different option combinations', async ({ runTSC }) => 
           maxDiffPixelRatio: 0.2,
           animations: "disabled",
           omitBackground: true,
-          fonts: "nowait",
           caret: "initial",
           scale: "device",
           timeout: 1000,
@@ -694,14 +712,14 @@ test('should respect maxDiffPixels option', async ({ runInlineTest }) => {
 
   expect((await runInlineTest({
     ...playwrightConfig({
+      expect: {
+        toHaveScreenshot: {
+          maxDiffPixels: BAD_PIXELS
+        }
+      },
       projects: [
         {
           screenshotsDir: '__screenshots__',
-          expect: {
-            toHaveScreenshot: {
-              maxDiffPixels: BAD_PIXELS
-            }
-          },
         },
       ],
     }),
@@ -800,13 +818,13 @@ test('should respect maxDiffPixelRatio option', async ({ runInlineTest }) => {
 
   expect((await runInlineTest({
     ...playwrightConfig({
+      expect: {
+        toHaveScreenshot: {
+          maxDiffPixelRatio: BAD_RATIO,
+        },
+      },
       projects: [{
         screenshotsDir: '__screenshots__',
-        expect: {
-          toHaveScreenshot: {
-            maxDiffPixelRatio: BAD_RATIO,
-          },
-        },
       }],
     }),
     '__screenshots__/a.spec.js/snapshot.png': EXPECTED_SNAPSHOT,
@@ -924,7 +942,7 @@ test('should update expectations with retries', async ({ runInlineTest }, testIn
 function playwrightConfig(obj: any) {
   return {
     'playwright.config.js': `
-      process.env.PLAYWRIGHT_EXPERIMENTAL_FEATURES = '1';
+      process.env.PWTEST_USE_SCREENSHOTS_DIR_FOR_TEST = '1';
       module.exports = ${JSON.stringify(obj, null, 2)}
     `,
   };

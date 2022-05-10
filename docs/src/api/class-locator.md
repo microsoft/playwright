@@ -384,6 +384,13 @@ Value to set for the `<input>`, `<textarea>` or `[contenteditable]` element.
 ### option: Locator.fill.noWaitAfter = %%-input-no-wait-after-%%
 ### option: Locator.fill.timeout = %%-input-timeout-%%
 
+## method: Locator.filter
+- returns: <[Locator]>
+
+This method narrows existing locator according to the options, for example filters by text.
+
+### option: Locator.filter.-inline- = %%-locator-options-list-%%
+
 ## method: Locator.first
 - returns: <[Locator]>
 
@@ -544,7 +551,7 @@ Returns locator to the last matching element.
 ## method: Locator.locator
 - returns: <[Locator]>
 
-The method finds an element matching the specified selector in the `Locator`'s subtree.
+The method finds an element matching the specified selector in the `Locator`'s subtree. It also accepts filter options, similar to [`method: Locator.filter`] method.
 
 ### param: Locator.locator.selector = %%-find-selector-%%
 ### option: Locator.locator.-inline- = %%-locator-options-list-%%
@@ -771,13 +778,6 @@ When all steps combined have not finished during the specified [`option: timeout
 Returns the `node.textContent`.
 
 ### option: Locator.textContent.timeout = %%-input-timeout-%%
-
-## method: Locator.that
-- returns: <[Locator]>
-
-This method narrows existing locator according to the options, for example filters by text.
-
-### option: Locator.that.-inline- = %%-locator-options-list-%%
 
 ## async method: Locator.type
 

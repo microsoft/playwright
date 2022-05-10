@@ -23,11 +23,11 @@ import { Highlight } from '../injected/highlight';
 
 
 declare module globalThis {
-  let _playwrightRecorderPerformAction: (action: actions.Action) => Promise<void>;
-  let _playwrightRecorderRecordAction: (action: actions.Action) => Promise<void>;
-  let _playwrightRecorderState: () => Promise<UIState>;
-  let _playwrightRecorderSetSelector: (selector: string) => Promise<void>;
-  let _playwrightRefreshOverlay: () => void;
+  let __pw_recorderPerformAction: (action: actions.Action) => Promise<void>;
+  let __pw_recorderRecordAction: (action: actions.Action) => Promise<void>;
+  let __pw_recorderState: () => Promise<UIState>;
+  let __pw_recorderSetSelector: (selector: string) => Promise<void>;
+  let __pw_refreshOverlay: () => void;
 }
 
 class Recorder {
@@ -51,10 +51,10 @@ class Recorder {
     this._refreshListenersIfNeeded();
     injectedScript.onGlobalListenersRemoved.add(() => this._refreshListenersIfNeeded());
 
-    globalThis._playwrightRefreshOverlay = () => {
+    globalThis.__pw_refreshOverlay = () => {
       this._pollRecorderMode().catch(e => console.log(e)); // eslint-disable-line no-console
     };
-    globalThis._playwrightRefreshOverlay();
+    globalThis.__pw_refreshOverlay();
     if (injectedScript.isUnderTest)
       console.error('Recorder script ready for test'); // eslint-disable-line no-console
   }
@@ -88,7 +88,7 @@ class Recorder {
     const pollPeriod = 1000;
     if (this._pollRecorderModeTimer)
       clearTimeout(this._pollRecorderModeTimer);
-    const state = await globalThis._playwrightRecorderState().catch(e => null);
+    const state = await globalThis.__pw_recorderState().catch(e => null);
     if (!state) {
       this._pollRecorderModeTimer = setTimeout(() => this._pollRecorderMode(), pollPeriod);
       return;
@@ -154,7 +154,7 @@ class Recorder {
 
   private _onClick(event: MouseEvent) {
     if (this._mode === 'inspecting')
-      globalThis._playwrightRecorderSetSelector(this._hoveredModel ? this._hoveredModel.selector : '');
+      globalThis.__pw_recorderSetSelector(this._hoveredModel ? this._hoveredModel.selector : '');
     if (this._shouldIgnoreMouseEvent(event))
       return;
     if (this._actionInProgress(event))
@@ -276,7 +276,7 @@ class Recorder {
       }
 
       if (elementType === 'file') {
-        globalThis._playwrightRecorderRecordAction({
+        globalThis.__pw_recorderRecordAction({
           name: 'setInputFiles',
           selector: this._activeModel!.selector,
           signals: [],
@@ -288,7 +288,7 @@ class Recorder {
       // Non-navigating actions are simply recorded by Playwright.
       if (this._consumedDueWrongTarget(event))
         return;
-      globalThis._playwrightRecorderRecordAction({
+      globalThis.__pw_recorderRecordAction({
         name: 'fill',
         selector: this._activeModel!.selector,
         signals: [],
@@ -388,7 +388,7 @@ class Recorder {
   private async _performAction(action: actions.Action) {
     this._clearHighlight();
     this._performingAction = true;
-    await globalThis._playwrightRecorderPerformAction(action).catch(() => {});
+    await globalThis.__pw_recorderPerformAction(action).catch(() => {});
     this._performingAction = false;
 
     // Action could have changed DOM, update hovered model selectors.

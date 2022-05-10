@@ -289,14 +289,15 @@ export async function toHaveScreenshot(
   nameOrOptions: NameOrSegments | { name?: NameOrSegments } & HaveScreenshotOptions = {},
   optOptions: HaveScreenshotOptions = {}
 ): Promise<SyncExpectationResult> {
-  if (!process.env.PLAYWRIGHT_EXPERIMENTAL_FEATURES)
-    throw new Error(`To use the experimental method "toHaveScreenshot", set PLAYWRIGHT_EXPERIMENTAL_FEATURES=1 enviroment variable.`);
   const testInfo = currentTestInfo();
   if (!testInfo)
     throw new Error(`toHaveScreenshot() must be called during the test`);
   const config = (testInfo.project._expect as any)?.toHaveScreenshot;
+  const snapshotPathResolver = process.env.PWTEST_USE_SCREENSHOTS_DIR_FOR_TEST
+    ? testInfo._screenshotPath.bind(testInfo)
+    : testInfo.snapshotPath.bind(testInfo);
   const helper = new SnapshotHelper(
-      testInfo, testInfo._screenshotPath.bind(testInfo), 'png',
+      testInfo, snapshotPathResolver, 'png',
       {
         maxDiffPixels: config?.maxDiffPixels,
         maxDiffPixelRatio: config?.maxDiffPixelRatio,
@@ -309,7 +310,6 @@ export async function toHaveScreenshot(
   const [page, locator] = pageOrLocator.constructor.name === 'Page' ? [(pageOrLocator as PageEx), undefined] : [(pageOrLocator as Locator).page() as PageEx, pageOrLocator as LocatorEx];
   const screenshotOptions = {
     animations: config?.animations ?? 'disabled',
-    fonts: process.env.PLAYWRIGHT_EXPERIMENTAL_FEATURES ? (config?.fonts ?? 'ready') : undefined,
     scale: config?.scale ?? 'css',
     caret: config?.caret ?? 'hide',
     ...helper.allOptions,

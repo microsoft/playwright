@@ -74,5 +74,5 @@ export function parseValue(v: channels.SerializedValue): any {
 }
 
 export function serializeResult(arg: any): channels.SerializedValue {
-  return serializeValue(arg, value => ({ fallThrough: value }), new Set());
+  return serializeValue(arg, value => ({ fallThrough: value }));
 }

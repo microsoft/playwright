@@ -367,21 +367,6 @@ export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
 type LiteralUnion<T extends U, U = string> = T | (U & { zz_IGNORE_ME?: never });
 
 /**
- *
- */
-export interface TestPlugin {
-  name: string;
-  fixtures?: Fixtures;
-  /**
-   * @param config
-   * @param configDir
-   * @param suite
-   */
-  setup?(config: FullConfig, configDir: string, suite: Suite): Promise<void>;
-
-  teardown?(): Promise<void>;}
-
-/**
  * Playwright Test provides many options to configure how your tests are collected and executed, for example `timeout` or
  * `testDir`. These options are described in the [TestConfig] object in the [configuration file](https://playwright.dev/docs/test-configuration).
  *
@@ -474,7 +459,6 @@ interface TestConfig {
    *
    */
   webServer?: TestConfigWebServer;
-  plugins?: (TestPlugin | string | [string, any])[],
   /**
    * Configuration for the `expect` assertion library. Learn more about [various timeouts](https://playwright.dev/docs/test-timeouts).
    *
@@ -499,6 +483,47 @@ interface TestConfig {
      * Default timeout for async expect matchers in milliseconds, defaults to 5000ms.
      */
     timeout?: number;
+
+    /**
+     * Configuration for the
+     * [pageAssertions.toHaveScreenshot([options])](https://playwright.dev/docs/api/class-pageassertions#page-assertions-to-have-screenshot)
+     * method.
+     */
+    toHaveScreenshot?: {
+      /**
+       * an acceptable perceived color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between the same
+       * pixel in compared images, between zero (strict) and one (lax). Defaults to `0.2`.
+       */
+      threshold?: number;
+
+      /**
+       * an acceptable amount of pixels that could be different, unset by default.
+       */
+      maxDiffPixels?: number;
+
+      /**
+       * an acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1` , unset by default.
+       */
+      maxDiffPixelRatio?: number;
+
+      /**
+       * See `animations` in [page.screenshot([options])](https://playwright.dev/docs/api/class-page#page-screenshot). Defaults
+       * to `"disable"`.
+       */
+      animations?: "allow"|"disable";
+
+      /**
+       * See `caret` in [page.screenshot([options])](https://playwright.dev/docs/api/class-page#page-screenshot). Defaults to
+       * `"hide"`.
+       */
+      caret?: "hide"|"initial";
+
+      /**
+       * See `scale` in [page.screenshot([options])](https://playwright.dev/docs/api/class-page#page-screenshot). Defaults to
+       * `"css"`.
+       */
+      scale?: "css"|"device";
+    };
 
     /**
      * Configuration for the
@@ -2619,7 +2644,7 @@ export type VideoMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry';
  * ```
  *
  */
-export interface PlaywrightTestOptions extends PlaywrightTest.TestOptions {
+export interface PlaywrightTestOptions {
   /**
    * Whether to automatically download all the attachments. Defaults to `true` where all the downloads are accepted.
    */
@@ -2807,7 +2832,7 @@ export interface PlaywrightWorkerArgs {
  * [fixtures.context](https://playwright.dev/docs/api/class-fixtures#fixtures-context) and
  * [fixtures.page](https://playwright.dev/docs/api/class-fixtures#fixtures-page).
  */
-export interface PlaywrightTestArgs extends PlaywrightTest.TestArgs {
+export interface PlaywrightTestArgs {
   /**
    * Isolated [BrowserContext] instance, created for each test. Since contexts are isolated between each other, every test
    * gets a fresh environment, even when multiple tests run in a single [Browser] for maximum efficiency.
@@ -2924,12 +2949,6 @@ type Awaited<T> = T extends PromiseLike<infer U> ? U : T;
 declare global {
   export namespace PlaywrightTest {
     export interface Matchers<R, T = unknown> {
-    }
-
-    export interface TestArgs {
-    }
-
-    export interface TestOptions {
     }
   }
 }
@@ -3309,6 +3328,81 @@ interface LocatorAssertions {
   }): Promise<void>;
 
   /**
+   * Ensures that [Locator] resolves to a given screenshot. This function will re-take screenshots until it matches with the
+   * saved expectation.
+   *
+   * If there's no expectation yet, it will wait until two consecutive screenshots yield the same result, and save the last
+   * one as an expectation.
+   *
+   * ```js
+   * const locator = page.locator('button');
+   * await expect(locator).toHaveScreenshot();
+   * ```
+   *
+   * @param options
+   */
+  toHaveScreenshot(options?: {
+    /**
+     * When set to `"disabled"`, stops CSS animations, CSS transitions and Web Animations. Animations get different treatment
+     * depending on their duration:
+     * - finite animations are fast-forwarded to completion, so they'll fire `transitionend` event.
+     * - infinite animations are canceled to initial state, and then played over after the screenshot.
+     *
+     * Defaults to `"allow"` that leaves animations untouched.
+     */
+    animations?: "disabled"|"allow";
+
+    /**
+     * When set to `"hide"`, screenshot will hide text caret. When set to `"initial"`, text caret behavior will not be changed.
+     * Defaults to `"hide"`.
+     */
+    caret?: "hide"|"initial";
+
+    /**
+     * Specify locators that should be masked when the screenshot is taken. Masked elements will be overlayed with a pink box
+     * `#FF00FF` that completely covers its bounding box.
+     */
+    mask?: Array<Locator>;
+
+    /**
+     * An acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1`. Default is
+     * configurable with `TestConfig.expect`. Unset by default.
+     */
+    maxDiffPixelRatio?: number;
+
+    /**
+     * An acceptable amount of pixels that could be different, default is configurable with `TestConfig.expect`. Default is
+     * configurable with `TestConfig.expect`. Unset by default.
+     */
+    maxDiffPixels?: number;
+
+    /**
+     * Hides default white background and allows capturing screenshots with transparency. Not applicable to `jpeg` images.
+     * Defaults to `false`.
+     */
+    omitBackground?: boolean;
+
+    /**
+     * When set to `"css"`, screenshot will have a single pixel per each css pixel on the page. For high-dpi devices, this will
+     * keep screenshots small. Using `"device"` option will produce a single pixel per each device pixel, so screenhots of
+     * high-dpi devices will be twice as large or even larger. Defaults to `"device"`.
+     */
+    scale?: "css"|"device";
+
+    /**
+     * An acceptable perceived color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between the same
+     * pixel in compared images, between zero (strict) and one (lax), default is configurable with `TestConfig.expect`.
+     * Defaults to `0.2`.
+     */
+    threshold?: number;
+
+    /**
+     * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
+     */
+    timeout?: number;
+  }): Promise<void>;
+
+  /**
    * Ensures the [Locator] points to an element with the given text. You can use regular expressions for the value as well.
    *
    * ```js
@@ -3386,6 +3480,111 @@ interface PageAssertions {
    *
    */
   not: PageAssertions;
+
+  /**
+   * Ensures that the page resolves to a given screenshot. This function will re-take screenshots until it matches with the
+   * saved expectation.
+   *
+   * If there's no expectation yet, it will wait until two consecutive screenshots yield the same result, and save the last
+   * one as an expectation.
+   *
+   * ```js
+   * await expect(page).toHaveScreenshot();
+   * ```
+   *
+   * @param options
+   */
+  toHaveScreenshot(options?: {
+    /**
+     * When set to `"disabled"`, stops CSS animations, CSS transitions and Web Animations. Animations get different treatment
+     * depending on their duration:
+     * - finite animations are fast-forwarded to completion, so they'll fire `transitionend` event.
+     * - infinite animations are canceled to initial state, and then played over after the screenshot.
+     *
+     * Defaults to `"allow"` that leaves animations untouched.
+     */
+    animations?: "disabled"|"allow";
+
+    /**
+     * When set to `"hide"`, screenshot will hide text caret. When set to `"initial"`, text caret behavior will not be changed.
+     * Defaults to `"hide"`.
+     */
+    caret?: "hide"|"initial";
+
+    /**
+     * An object which specifies clipping of the resulting image. Should have the following fields:
+     */
+    clip?: {
+      /**
+       * x-coordinate of top-left corner of clip area
+       */
+      x: number;
+
+      /**
+       * y-coordinate of top-left corner of clip area
+       */
+      y: number;
+
+      /**
+       * width of clipping area
+       */
+      width: number;
+
+      /**
+       * height of clipping area
+       */
+      height: number;
+    };
+
+    /**
+     * When true, takes a screenshot of the full scrollable page, instead of the currently visible viewport. Defaults to
+     * `false`.
+     */
+    fullPage?: boolean;
+
+    /**
+     * Specify locators that should be masked when the screenshot is taken. Masked elements will be overlayed with a pink box
+     * `#FF00FF` that completely covers its bounding box.
+     */
+    mask?: Array<Locator>;
+
+    /**
+     * An acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1`. Default is
+     * configurable with `TestConfig.expect`. Unset by default.
+     */
+    maxDiffPixelRatio?: number;
+
+    /**
+     * An acceptable amount of pixels that could be different, default is configurable with `TestConfig.expect`. Default is
+     * configurable with `TestConfig.expect`. Unset by default.
+     */
+    maxDiffPixels?: number;
+
+    /**
+     * Hides default white background and allows capturing screenshots with transparency. Not applicable to `jpeg` images.
+     * Defaults to `false`.
+     */
+    omitBackground?: boolean;
+
+    /**
+     * When set to `"css"`, screenshot will have a single pixel per each css pixel on the page. For high-dpi devices, this will
+     * keep screenshots small. Using `"device"` option will produce a single pixel per each device pixel, so screenhots of
+     * high-dpi devices will be twice as large or even larger. Defaults to `"device"`.
+     */
+    scale?: "css"|"device";
+
+    /**
+     * An acceptable perceived color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between the same
+     * pixel in compared images, between zero (strict) and one (lax), default is configurable with `TestConfig.expect`.
+     * Defaults to `0.2`.
+     */
+    threshold?: number;
+
+    /**
+     * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
+     */
+    timeout?: number;
+  }): Promise<void>;
 
   /**
    * Ensures the page has the given title.
@@ -3618,6 +3817,47 @@ interface TestProject {
      * Default timeout for async expect matchers in milliseconds, defaults to 5000ms.
      */
     timeout?: number;
+
+    /**
+     * Configuration for the
+     * [pageAssertions.toHaveScreenshot([options])](https://playwright.dev/docs/api/class-pageassertions#page-assertions-to-have-screenshot)
+     * method.
+     */
+    toHaveScreenshot?: {
+      /**
+       * an acceptable perceived color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between the same
+       * pixel in compared images, between zero (strict) and one (lax). Defaults to `0.2`.
+       */
+      threshold?: number;
+
+      /**
+       * an acceptable amount of pixels that could be different, unset by default.
+       */
+      maxDiffPixels?: number;
+
+      /**
+       * an acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1` , unset by default.
+       */
+      maxDiffPixelRatio?: number;
+
+      /**
+       * See `animations` in [page.screenshot([options])](https://playwright.dev/docs/api/class-page#page-screenshot). Defaults
+       * to `"disable"`.
+       */
+      animations?: "allow"|"disable";
+
+      /**
+       * See `caret` in [page.screenshot([options])](https://playwright.dev/docs/api/class-page#page-screenshot). Defaults to
+       * `"hide"`.
+       */
+      caret?: "hide"|"initial";
+
+      /**
+       * See `scale` in [page.screenshot([options])](https://playwright.dev/docs/api/class-page#page-screenshot). Defaults to
+       * `"css"`.
+       */
+      scale?: "css"|"device";
+    };
 
     /**
      * Configuration for the

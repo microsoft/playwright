@@ -84,7 +84,7 @@ export function serializeArgument(arg: any): channels.SerializedArgument {
     if (value instanceof JSHandle)
       return { h: pushHandle(value._channel) };
     return { fallThrough: value };
-  }, new Set());
+  });
   return { value, handles };
 }
 
