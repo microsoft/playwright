@@ -15,11 +15,11 @@
  */
 
 import { playwrightTest as it, expect } from '../config/browserTest';
-import type { ParsedComponentSelector } from '../../packages/playwright-core/src/server/injected/componentUtils';
-import { parseComponentSelector } from '../../packages/playwright-core/src/server/injected/componentUtils';
+import type { AttributeSelector } from '../../packages/playwright-core/src/server/isomorphic/selectorParser';
+import { parseAttributeSelector } from '../../packages/playwright-core/src/server/isomorphic/selectorParser';
 
-const parse = (selector: string) => parseComponentSelector(selector, false);
-const serialize = (parsed: ParsedComponentSelector) => {
+const parse = (selector: string) => parseAttributeSelector(selector, false);
+const serialize = (parsed: AttributeSelector) => {
   return parsed.name + parsed.attributes.map(attr => {
     const path = attr.jsonPath.map(token => /^[a-zA-Z0-9]+$/i.test(token) ? token : JSON.stringify(token)).join('.');
     if (attr.op === '<truthy>')
@@ -115,9 +115,9 @@ it('should parse identifiers', async () => {
 });
 
 it('should parse unqouted string', async () => {
-  expect(serialize(parseComponentSelector('[hey=foo]', true))).toBe('[hey = "foo"]');
-  expect(serialize(parseComponentSelector('[yay=and😀more]', true))).toBe('[yay = "and😀more"]');
-  expect(serialize(parseComponentSelector('[yay= trims  ]', true))).toBe('[yay = "trims"]');
+  expect(serialize(parseAttributeSelector('[hey=foo]', true))).toBe('[hey = "foo"]');
+  expect(serialize(parseAttributeSelector('[yay=and😀more]', true))).toBe('[yay = "and😀more"]');
+  expect(serialize(parseAttributeSelector('[yay= trims  ]', true))).toBe('[yay = "trims"]');
 });
 
 it('should throw on malformed selector', async () => {

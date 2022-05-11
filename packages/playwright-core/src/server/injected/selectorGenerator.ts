@@ -15,7 +15,7 @@
  */
 
 import { type InjectedScript } from './injectedScript';
-import { elementText } from './selectorEvaluator';
+import { elementText } from './selectorUtils';
 
 type SelectorToken = {
   engine: string;
@@ -182,7 +182,7 @@ function buildCandidates(injectedScript: InjectedScript, element: Element): Sele
 function buildTextCandidates(injectedScript: InjectedScript, element: Element, allowHasText: boolean): SelectorToken[] {
   if (element.nodeName === 'SELECT')
     return [];
-  const text = elementText(injectedScript._evaluator, element).full.trim().replace(/\s+/g, ' ').substring(0, 80);
+  const text = elementText(injectedScript._evaluator._cacheText, element).full.trim().replace(/\s+/g, ' ').substring(0, 80);
   if (!text)
     return [];
   const candidates: SelectorToken[] = [];

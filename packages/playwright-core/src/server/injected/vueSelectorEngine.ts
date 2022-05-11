@@ -15,8 +15,9 @@
  */
 
 import type { SelectorEngine, SelectorRoot } from './selectorEngine';
-import { isInsideScope } from './selectorEvaluator';
-import { checkComponentAttribute, parseComponentSelector } from './componentUtils';
+import { isInsideScope } from './domUtils';
+import { matchesComponentAttribute } from './selectorUtils';
+import { parseAttributeSelector } from '../isomorphic/selectorParser';
 
 type ComponentNode = {
   name: string,
@@ -232,7 +233,7 @@ function findVueRoots(root: Document | ShadowRoot, roots: VueRoot[] = []): VueRo
 
 export const VueEngine: SelectorEngine = {
   queryAll(scope: SelectorRoot, selector: string): Element[] {
-    const { name, attributes } = parseComponentSelector(selector, false);
+    const { name, attributes } = parseAttributeSelector(selector, false);
     const vueRoots = findVueRoots(document);
     const trees = vueRoots.map(vueRoot => vueRoot.version === 3 ? buildComponentsTreeVue3(vueRoot.root) : buildComponentsTreeVue2(vueRoot.root));
     const treeNodes = trees.map(tree => filterComponentsTree(tree, treeNode => {
@@ -241,7 +242,7 @@ export const VueEngine: SelectorEngine = {
       if (treeNode.rootElements.some(rootElement => !isInsideScope(scope, rootElement)))
         return false;
       for (const attr of attributes) {
-        if (!checkComponentAttribute(treeNode.props, attr))
+        if (!matchesComponentAttribute(treeNode.props, attr))
           return false;
       }
       return true;

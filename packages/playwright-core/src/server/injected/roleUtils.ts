@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { closestCrossShadow, enclosingShadowRootOrDocument, parentElementOrShadowHost } from './selectorEvaluator';
+import { closestCrossShadow, enclosingShadowRootOrDocument, parentElementOrShadowHost } from './domUtils';
 
 function hasExplicitAccessibleName(e: Element) {
   return e.hasAttribute('aria-label') || e.hasAttribute('aria-labelledby');
@@ -676,7 +676,7 @@ export function getAriaExpanded(element: Element): boolean {
 }
 
 export const kAriaLevelRoles = ['heading', 'listitem', 'row', 'treeitem'];
-export function getAriaLevel(element: Element) {
+export function getAriaLevel(element: Element): number {
   // https://www.w3.org/TR/wai-aria-1.2/#aria-level
   // https://www.w3.org/TR/html-aam-1.0/#html-attribute-state-and-property-mappings
   const native = { 'H1': 1, 'H2': 2, 'H3': 3, 'H4': 4, 'H5': 5, 'H6': 6 }[element.tagName];
