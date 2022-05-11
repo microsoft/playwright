@@ -429,7 +429,7 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
       else
         await fs.promises.unlink(file).catch(() => {});
     }));
-  }, { auto: true,  _title: 'built-in playwright configuration' } as any],
+  }, { auto: 'all-hooks-included',  _title: 'built-in playwright configuration' } as any],
 
   _contextFactory: [async ({ browser, video, _artifactsDir }, use, testInfo) => {
     let videoMode = typeof video === 'string' ? video : video.mode;

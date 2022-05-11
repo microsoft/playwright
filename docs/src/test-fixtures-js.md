@@ -609,3 +609,144 @@ const config: PlaywrightTestConfig<MyOptions> = {
 };
 export default config;
 ```
+
+## Execution order
+
+Each fixture has a setup and teardown phase separated by the `await use()` call in the fixture. Setup is executed before the fixture is used by the test/hook, and teardown is executed when the fixture will not be used by the test/hook anymore.
+
+Fixtures follow these rules to determine the execution order:
+* When fixture A depends on fixture B: B is always set up before A and teared down after A.
+* Non-automatic fixtures are executed lazily, only when the test/hook needs them.
+* Test-scoped fixtures are teared down after each test, while worker-scoped fixtures are only teared down when the worker process executing tests is shutdown.
+
+Consider the following example:
+
+```js js-flavor=js
+const { test: base } = require('@playwright/test');
+
+const test = base.extend({
+  workerFixture: [async ({ browser }) => {
+    // workerFixture setup...
+    await use('workerFixture');
+    // workerFixture teardown...
+  }, { scope: 'worker' }],
+
+  autoWorkerFixture: [async ({ browser }) => {
+    // autoWorkerFixture setup...
+    await use('autoWorkerFixture');
+    // autoWorkerFixture teardown...
+  }, { scope: 'worker', auto: true }],
+
+  testFixture: [async ({ page, workerFixture }) => {
+    // testFixture setup...
+    await use('testFixture');
+    // testFixture teardown...
+  }, { scope: 'test' }],
+
+  autoTestFixture: [async () => {
+    // autoTestFixture setup...
+    await use('autoTestFixture');
+    // autoTestFixture teardown...
+  }, { scope: 'test', auto: true }],
+
+  unusedFixture: [async ({ page }) => {
+    // unusedFixture setup...
+    await use('unusedFixture');
+    // unusedFixture teardown...
+  }, { scope: 'test' }],
+});
+
+test.beforeAll(async () => { /* ... */ });
+test.beforeEach(async ({ page }) => { /* ... */ });
+test('first test', async ({ page }) => { /* ... */ });
+test('second test', async ({ testFixture }) => { /* ... */ });
+test.afterEach(async () => { /* ... */ });
+test.afterAll(async () => { /* ... */ });
+```
+
+```js js-flavor=ts
+import { test as base } from '@playwright/test';
+
+const test = base.extend<{
+  testFixture: string,
+  autoTestFixture: string,
+  unusedFixture: string,
+}, {
+  workerFixture: string,
+  autoWorkerFixture: string,
+}>({
+  workerFixture: [async ({ browser }) => {
+    // workerFixture setup...
+    await use('workerFixture');
+    // workerFixture teardown...
+  }, { scope: 'worker' }],
+
+  autoWorkerFixture: [async ({ browser }) => {
+    // autoWorkerFixture setup...
+    await use('autoWorkerFixture');
+    // autoWorkerFixture teardown...
+  }, { scope: 'worker', auto: true }],
+
+  testFixture: [async ({ page, workerFixture }) => {
+    // testFixture setup...
+    await use('testFixture');
+    // testFixture teardown...
+  }, { scope: 'test' }],
+
+  autoTestFixture: [async () => {
+    // autoTestFixture setup...
+    await use('autoTestFixture');
+    // autoTestFixture teardown...
+  }, { scope: 'test', auto: true }],
+
+  unusedFixture: [async ({ page }) => {
+    // unusedFixture setup...
+    await use('unusedFixture');
+    // unusedFixture teardown...
+  }, { scope: 'test' }],
+});
+
+test.beforeAll(async () => { /* ... */ });
+test.beforeEach(async ({ page }) => { /* ... */ });
+test('first test', async ({ page }) => { /* ... */ });
+test('second test', async ({ testFixture }) => { /* ... */ });
+test.afterEach(async () => { /* ... */ });
+test.afterAll(async () => { /* ... */ });
+```
+
+Normally, if all tests pass and no errors are thrown, the order of execution is as following.
+* worker setup and `beforeAll` section:
+  * `browser` setup because it is required by `autoWorkerFixture`.
+  * `autoWorkerFixture` setup because automatic worker fixtures are always set up before anything else.
+  * `beforeAll` runs.
+* `first test` section:
+  * `autoTestFixture` setup because automatic test fixtures are always set up before test and `beforeEach` hooks.
+  * `page` setup because it is required in `beforeEach` hook.
+  * `beforeEach` runs.
+  * `first test` runs.
+  * `afterEach` runs.
+  * `page` teardown because it is a test-scoped fixture and should be teared down after the test finishes.
+  * `autoTestFixture` teardown because it is a test-scoped fixture and should be teared down after the test finishes.
+* `second test` section:
+  * `autoTestFixture` setup because automatic test fixtures are always set up before test and `beforeEach` hooks.
+  * `page` setup because it is required in `beforeEach` hook.
+  * `beforeEach` runs.
+  * `workerFixture` setup because it is required by `testFixture` that is required by the `second test`.
+  * `testFixture` setup because it is required by the `second test`.
+  * `second test` runs.
+  * `afterEach` runs.
+  * `testFixture` teardown because it is a test-scoped fixture and should be teared down after the test finishes.
+  * `page` teardown because it is a test-scoped fixture and should be teared down after the test finishes.
+  * `autoTestFixture` teardown because it is a test-scoped fixture and should be teared down after the test finishes.
+* `afterAll` and worker teardown section:
+  * `afterAll` runs.
+  * `workerFixture` teardown because it is a workers-scoped fixture and should be teared down once at the end.
+  * `autoWorkerFixture` teardown because it is a workers-scoped fixture and should be teared down once at the end.
+  * `browser` teardown because it is a workers-scoped fixture and should be teared down once at the end.
+
+A few observations:
+* `page` and `autoTestFixture` are set up and teared down for each test, as test-scoped fixtures.
+* `unusedFixture` is never set up because it is not used by any tests/hooks.
+* `testFixture` depends on `workerFixture` and triggers its setup.
+* `workerFixture` is lazily set up before the second test, but teared down once during worker shutdown, as a worker-scoped fixture.
+* `autoWorkerFixture` is set up for `beforeAll` hook, but `autoTestFixture` is not.

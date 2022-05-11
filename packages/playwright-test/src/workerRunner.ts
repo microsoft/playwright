@@ -349,7 +349,7 @@ export class WorkerRunner extends EventEmitter {
 
         // Setup fixtures required by the test.
         testInfo._timeoutManager.setCurrentRunnable({ type: 'test' });
-        const params = await this._fixtureRunner.resolveParametersForFunction(test.fn, testInfo);
+        const params = await this._fixtureRunner.resolveParametersForFunction(test.fn, testInfo, 'test');
         beforeHooksStep.complete({}); // Report fixture hooks step as completed.
 
         // Now run the test itself.
@@ -447,7 +447,7 @@ export class WorkerRunner extends EventEmitter {
       if (actualScope !== scope)
         continue;
       testInfo._timeoutManager.setCurrentRunnable({ type: modifier.type, location: modifier.location, slot: timeSlot });
-      const result = await testInfo._runAsStep(() => this._fixtureRunner.resolveParametersAndRunFunction(modifier.fn, testInfo), {
+      const result = await testInfo._runAsStep(() => this._fixtureRunner.resolveParametersAndRunFunction(modifier.fn, testInfo, scope), {
         category: 'hook',
         title: `${modifier.type} modifier`,
         canHaveChildren: true,
@@ -472,7 +472,7 @@ export class WorkerRunner extends EventEmitter {
         // Separate time slot for each "beforeAll" hook.
         const timeSlot = { timeout: this._project.timeout, elapsed: 0 };
         testInfo._timeoutManager.setCurrentRunnable({ type: 'beforeAll', location: hook.location, slot: timeSlot });
-        await testInfo._runAsStep(() => this._fixtureRunner.resolveParametersAndRunFunction(hook.fn, testInfo), {
+        await testInfo._runAsStep(() => this._fixtureRunner.resolveParametersAndRunFunction(hook.fn, testInfo, 'all-hooks-only'), {
           category: 'hook',
           title: `${hook.type} hook`,
           canHaveChildren: true,
@@ -500,7 +500,7 @@ export class WorkerRunner extends EventEmitter {
         // Separate time slot for each "afterAll" hook.
         const timeSlot = { timeout: this._project.timeout, elapsed: 0 };
         testInfo._timeoutManager.setCurrentRunnable({ type: 'afterAll', location: hook.location, slot: timeSlot });
-        await testInfo._runAsStep(() => this._fixtureRunner.resolveParametersAndRunFunction(hook.fn, testInfo), {
+        await testInfo._runAsStep(() => this._fixtureRunner.resolveParametersAndRunFunction(hook.fn, testInfo, 'all-hooks-only'), {
           category: 'hook',
           title: `${hook.type} hook`,
           canHaveChildren: true,
@@ -519,7 +519,7 @@ export class WorkerRunner extends EventEmitter {
     for (const hook of hooks) {
       try {
         testInfo._timeoutManager.setCurrentRunnable({ type, location: hook.location, slot: timeSlot });
-        await testInfo._runAsStep(() => this._fixtureRunner.resolveParametersAndRunFunction(hook.fn, testInfo), {
+        await testInfo._runAsStep(() => this._fixtureRunner.resolveParametersAndRunFunction(hook.fn, testInfo, 'test'), {
           category: 'hook',
           title: `${hook.type} hook`,
           canHaveChildren: true,
