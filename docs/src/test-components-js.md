@@ -38,7 +38,7 @@ Adding Playwright Test to an existing React, Vue or Svelte project is easy. Belo
 ### Step 1: Install Playwright Test for components for your respective framework
 
 ```sh
-npm init playwright@latest --ct
+npm init playwright@latest -- --ct
 ```
 
 This step creates several files in your workspace:
