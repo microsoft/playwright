@@ -33,7 +33,6 @@
     "@types/babel__code-frame": "^7.0.3",
     "@types/babel__core": "^7.1.18",
     "@types/babel__helper-plugin-utils": "^7.10.0",
-    "@types/babel__parser": "^7.1.1",
     "@types/babel__traverse": "^7.17.0"
   }
 }
