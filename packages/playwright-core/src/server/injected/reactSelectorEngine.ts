@@ -15,8 +15,9 @@
  */
 
 import type { SelectorEngine, SelectorRoot } from './selectorEngine';
-import { isInsideScope } from './selectorEvaluator';
-import { checkComponentAttribute, parseComponentSelector } from './componentUtils';
+import { isInsideScope } from './domUtils';
+import { matchesComponentAttribute } from './selectorUtils';
+import { parseAttributeSelector } from '../isomorphic/selectorParser';
 
 type ComponentNode = {
   key?: any,
@@ -176,7 +177,7 @@ function findReactRoots(root: Document | ShadowRoot, roots: ReactVNode[] = []): 
 
 export const ReactEngine: SelectorEngine = {
   queryAll(scope: SelectorRoot, selector: string): Element[] {
-    const { name, attributes } = parseComponentSelector(selector, false);
+    const { name, attributes } = parseAttributeSelector(selector, false);
 
     const reactRoots = findReactRoots(document);
     const trees = reactRoots.map(reactRoot => buildComponentsTree(reactRoot));
@@ -191,7 +192,7 @@ export const ReactEngine: SelectorEngine = {
       if (treeNode.rootElements.some(domNode => !isInsideScope(scope, domNode)))
         return false;
       for (const attr of attributes) {
-        if (!checkComponentAttribute(props, attr))
+        if (!matchesComponentAttribute(props, attr))
           return false;
       }
       return true;

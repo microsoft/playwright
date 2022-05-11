@@ -16,9 +16,11 @@
 
 import type { CSSComplexSelector, CSSSimpleSelector, CSSComplexSelectorList, CSSFunctionArgument } from '../isomorphic/cssParser';
 import { customCSSNames } from '../isomorphic/selectorParser';
+import { isElementVisible, parentElementOrShadowHost } from './domUtils';
 import { type LayoutSelectorName, layoutSelectorScore } from './layoutSelectorUtils';
+import { createLaxTextMatcher, createRegexTextMatcher, createStrictTextMatcher, elementMatchesText, elementText, shouldSkipForTextMatching, type ElementText } from './selectorUtils';
 
-export type QueryContext = {
+type QueryContext = {
   scope: Element | Document;
   pierceShadow: boolean;
   // Place for more options, e.g. normalizing whitespace.
@@ -373,8 +375,6 @@ const hasEngine: SelectorEngine = {
     return evaluator.query({ ...context, scope: element }, args).length > 0;
   },
 
-  // TODO: we do not implement "relative selectors", as in "div:has(> span)" or "div:has(+ span)".
-
   // TODO: we can implement efficient "query" by matching "args" and returning
   // all parents/descendants, just have to be careful with the ":scope" matching.
 };
@@ -423,7 +423,7 @@ const visibleEngine: SelectorEngine = {
   matches(element: Element, args: (string | number | Selector)[], context: QueryContext, evaluator: SelectorEvaluator): boolean {
     if (args.length)
       throw new Error(`"visible" engine expects no arguments`);
-    return isVisible(element);
+    return isElementVisible(element);
   }
 };
 
@@ -432,7 +432,7 @@ const textEngine: SelectorEngine = {
     if (args.length !== 1 || typeof args[0] !== 'string')
       throw new Error(`"text" engine expects a single string`);
     const matcher = createLaxTextMatcher(args[0]);
-    return elementMatchesText(evaluator as SelectorEvaluatorImpl, element, matcher) === 'self';
+    return elementMatchesText((evaluator as SelectorEvaluatorImpl)._cacheText, element, matcher) === 'self';
   },
 };
 
@@ -441,7 +441,7 @@ const textIsEngine: SelectorEngine = {
     if (args.length !== 1 || typeof args[0] !== 'string')
       throw new Error(`"text-is" engine expects a single string`);
     const matcher = createStrictTextMatcher(args[0]);
-    return elementMatchesText(evaluator as SelectorEvaluatorImpl, element, matcher) !== 'none';
+    return elementMatchesText((evaluator as SelectorEvaluatorImpl)._cacheText, element, matcher) !== 'none';
   },
 };
 
@@ -450,7 +450,7 @@ const textMatchesEngine: SelectorEngine = {
     if (args.length === 0 || typeof args[0] !== 'string' || args.length > 2 || (args.length === 2 && typeof args[1] !== 'string'))
       throw new Error(`"text-matches" engine expects a regexp body and optional regexp flags`);
     const matcher = createRegexTextMatcher(args[0], args.length === 2 ? args[1] : undefined);
-    return elementMatchesText(evaluator as SelectorEvaluatorImpl, element, matcher) === 'self';
+    return elementMatchesText((evaluator as SelectorEvaluatorImpl)._cacheText, element, matcher) === 'self';
   },
 };
 
@@ -461,86 +461,9 @@ const hasTextEngine: SelectorEngine = {
     if (shouldSkipForTextMatching(element))
       return false;
     const matcher = createLaxTextMatcher(args[0]);
-    return matcher(elementText(evaluator as SelectorEvaluatorImpl, element));
+    return matcher(elementText((evaluator as SelectorEvaluatorImpl)._cacheText, element));
   },
 };
-
-export function createLaxTextMatcher(text: string): TextMatcher {
-  text = text.trim().replace(/\s+/g, ' ').toLowerCase();
-  return (elementText: ElementText) => {
-    const s = elementText.full.trim().replace(/\s+/g, ' ').toLowerCase();
-    return s.includes(text);
-  };
-}
-
-export function createStrictTextMatcher(text: string): TextMatcher {
-  text = text.trim().replace(/\s+/g, ' ');
-  return (elementText: ElementText) => {
-    if (!text && !elementText.immediate.length)
-      return true;
-    return elementText.immediate.some(s => s.trim().replace(/\s+/g, ' ') === text);
-  };
-}
-
-export function createRegexTextMatcher(source: string, flags?: string): TextMatcher {
-  const re = new RegExp(source, flags);
-  return (elementText: ElementText) => {
-    return re.test(elementText.full);
-  };
-}
-
-function shouldSkipForTextMatching(element: Element | ShadowRoot) {
-  return element.nodeName === 'SCRIPT' || element.nodeName === 'STYLE' || document.head && document.head.contains(element);
-}
-
-export type ElementText = { full: string, immediate: string[] };
-export type TextMatcher = (text: ElementText) => boolean;
-
-export function elementText(evaluator: SelectorEvaluatorImpl, root: Element | ShadowRoot): ElementText {
-  let value = evaluator._cacheText.get(root);
-  if (value === undefined) {
-    value = { full: '', immediate: [] };
-    if (!shouldSkipForTextMatching(root)) {
-      let currentImmediate = '';
-      if ((root instanceof HTMLInputElement) && (root.type === 'submit' || root.type === 'button')) {
-        value = { full: root.value, immediate: [root.value] };
-      } else {
-        for (let child = root.firstChild; child; child = child.nextSibling) {
-          if (child.nodeType === Node.TEXT_NODE) {
-            value.full += child.nodeValue || '';
-            currentImmediate += child.nodeValue || '';
-          } else {
-            if (currentImmediate)
-              value.immediate.push(currentImmediate);
-            currentImmediate = '';
-            if (child.nodeType === Node.ELEMENT_NODE)
-              value.full += elementText(evaluator, child as Element).full;
-          }
-        }
-        if (currentImmediate)
-          value.immediate.push(currentImmediate);
-        if ((root as Element).shadowRoot)
-          value.full += elementText(evaluator, (root as Element).shadowRoot!).full;
-      }
-    }
-    evaluator._cacheText.set(root, value);
-  }
-  return value;
-}
-
-export function elementMatchesText(evaluator: SelectorEvaluatorImpl, element: Element, matcher: TextMatcher): 'none' | 'self' | 'selfAndChildren' {
-  if (shouldSkipForTextMatching(element))
-    return 'none';
-  if (!matcher(elementText(evaluator, element)))
-    return 'none';
-  for (let child = element.firstChild; child; child = child.nextSibling) {
-    if (child.nodeType === Node.ELEMENT_NODE && matcher(elementText(evaluator, child as Element)))
-      return 'selfAndChildren';
-  }
-  if (element.shadowRoot && matcher(elementText(evaluator, element.shadowRoot)))
-    return 'selfAndChildren';
-  return 'self';
-}
 
 function createLayoutEngine(name: LayoutSelectorName): SelectorEngine {
   return {
@@ -572,47 +495,6 @@ const nthMatchEngine: SelectorEngine = {
   },
 };
 
-export function isInsideScope(scope: Node, element: Element | undefined): boolean {
-  while (element) {
-    if (scope.contains(element))
-      return true;
-    element = enclosingShadowHost(element);
-  }
-  return false;
-}
-
-export function parentElementOrShadowHost(element: Element): Element | undefined {
-  if (element.parentElement)
-    return element.parentElement;
-  if (!element.parentNode)
-    return;
-  if (element.parentNode.nodeType === 11 /* Node.DOCUMENT_FRAGMENT_NODE */ && (element.parentNode as ShadowRoot).host)
-    return (element.parentNode as ShadowRoot).host;
-}
-
-export function enclosingShadowRootOrDocument(element: Element): Document | ShadowRoot | undefined {
-  let node: Node = element;
-  while (node.parentNode)
-    node = node.parentNode;
-  if (node.nodeType === 11 /* Node.DOCUMENT_FRAGMENT_NODE */ || node.nodeType === 9 /* Node.DOCUMENT_NODE */)
-    return node as Document | ShadowRoot;
-}
-
-function enclosingShadowHost(element: Element): Element | undefined {
-  while (element.parentElement)
-    element = element.parentElement;
-  return parentElementOrShadowHost(element);
-}
-
-export function closestCrossShadow(element: Element | undefined, css: string): Element | undefined {
-  while (element) {
-    const closest = element.closest(css);
-    if (closest)
-      return closest;
-    element = enclosingShadowHost(element);
-  }
-}
-
 function parentElementOrShadowHostInContext(element: Element, context: QueryContext): Element | undefined {
   if (element === context.scope)
     return;
@@ -625,35 +507,6 @@ function previousSiblingInContext(element: Element, context: QueryContext): Elem
   if (element === context.scope)
     return;
   return element.previousElementSibling || undefined;
-}
-
-export function isVisible(element: Element): boolean {
-  // Note: this logic should be similar to waitForDisplayedAtStablePosition() to avoid surprises.
-  if (!element.ownerDocument || !element.ownerDocument.defaultView)
-    return true;
-  const style = element.ownerDocument.defaultView.getComputedStyle(element);
-  if (!style || style.visibility === 'hidden')
-    return false;
-  if (style.display === 'contents') {
-    // display:contents is not rendered itself, but its child nodes are.
-    for (let child = element.firstChild; child; child = child.nextSibling) {
-      if (child.nodeType === 1 /* Node.ELEMENT_NODE */ && isVisible(child as Element))
-        return true;
-      if (child.nodeType === 3 /* Node.TEXT_NODE */ && isVisibleTextNode(child as Text))
-        return true;
-    }
-    return false;
-  }
-  const rect = element.getBoundingClientRect();
-  return rect.width > 0 && rect.height > 0;
-}
-
-function isVisibleTextNode(node: Text) {
-  // https://stackoverflow.com/questions/1461059/is-there-an-equivalent-to-getboundingclientrect-for-text-nodes
-  const range = document.createRange();
-  range.selectNode(node);
-  const rect = range.getBoundingClientRect();
-  return rect.width > 0 && rect.height > 0;
 }
 
 function sortInDOMOrder(elements: Element[]): Element[] {

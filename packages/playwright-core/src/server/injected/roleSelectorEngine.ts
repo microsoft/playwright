@@ -15,9 +15,9 @@
  */
 
 import type { SelectorEngine, SelectorRoot } from './selectorEngine';
-import type { ParsedComponentAttribute, ParsedAttributeOperator } from './componentUtils';
-import { matchesAttribute, parseComponentSelector } from './componentUtils';
+import { matchesAttributePart } from './selectorUtils';
 import { getAriaChecked, getAriaDisabled, getAriaExpanded, getAriaLevel, getAriaPressed, getAriaRole, getAriaSelected, getElementAccessibleName, isElementHiddenForAria, kAriaCheckedRoles, kAriaExpandedRoles, kAriaLevelRoles, kAriaPressedRoles, kAriaSelectedRoles } from './roleUtils';
+import { parseAttributeSelector, type AttributeSelectorPart, type AttributeSelectorOperator } from '../isomorphic/selectorParser';
 
 const kSupportedAttributes = ['selected', 'checked', 'pressed', 'expanded', 'level', 'disabled', 'name', 'include-hidden'];
 kSupportedAttributes.sort();
@@ -27,17 +27,17 @@ function validateSupportedRole(attr: string, roles: string[], role: string) {
     throw new Error(`"${attr}" attribute is only supported for roles: ${roles.slice().sort().map(role => `"${role}"`).join(', ')}`);
 }
 
-function validateSupportedValues(attr: ParsedComponentAttribute, values: any[]) {
+function validateSupportedValues(attr: AttributeSelectorPart, values: any[]) {
   if (attr.op !== '<truthy>' && !values.includes(attr.value))
     throw new Error(`"${attr.name}" must be one of ${values.map(v => JSON.stringify(v)).join(', ')}`);
 }
 
-function validateSupportedOp(attr: ParsedComponentAttribute, ops: ParsedAttributeOperator[]) {
+function validateSupportedOp(attr: AttributeSelectorPart, ops: AttributeSelectorOperator[]) {
   if (!ops.includes(attr.op))
     throw new Error(`"${attr.name}" does not support "${attr.op}" matcher`);
 }
 
-function validateAttributes(attrs: ParsedComponentAttribute[], role: string) {
+function validateAttributes(attrs: AttributeSelectorPart[], role: string) {
   for (const attr of attrs) {
     switch (attr.name) {
       case 'checked': {
@@ -109,7 +109,7 @@ function validateAttributes(attrs: ParsedComponentAttribute[], role: string) {
 
 export const RoleEngine: SelectorEngine = {
   queryAll(scope: SelectorRoot, selector: string): Element[] {
-    const parsed = parseComponentSelector(selector, true);
+    const parsed = parseAttributeSelector(selector, true);
     const role = parsed.name.toLowerCase();
     if (!role)
       throw new Error(`Role must not be empty`);
@@ -121,7 +121,7 @@ export const RoleEngine: SelectorEngine = {
       if (getAriaRole(element) !== role)
         return;
       let includeHidden = false;  // By default, hidden elements are excluded.
-      let nameAttr: ParsedComponentAttribute | undefined;
+      let nameAttr: AttributeSelectorPart | undefined;
       for (const attr of parsed.attributes) {
         if (attr.name === 'include-hidden') {
           includeHidden = attr.op === '<truthy>' || !!attr.value;
@@ -140,7 +140,7 @@ export const RoleEngine: SelectorEngine = {
           case 'level': actual = getAriaLevel(element); break;
           case 'disabled': actual = getAriaDisabled(element); break;
         }
-        if (!matchesAttribute(actual, attr))
+        if (!matchesAttributePart(actual, attr))
           return;
       }
       if (!includeHidden) {
@@ -150,7 +150,7 @@ export const RoleEngine: SelectorEngine = {
       }
       if (nameAttr !== undefined) {
         const accessibleName = getElementAccessibleName(element, includeHidden, hiddenCache);
-        if (!matchesAttribute(accessibleName, nameAttr))
+        if (!matchesAttributePart(accessibleName, nameAttr))
           return;
       }
       result.push(element);
