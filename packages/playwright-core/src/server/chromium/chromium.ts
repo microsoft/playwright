@@ -331,6 +331,7 @@ const DEFAULT_ARGS = [
   '--disable-dev-shm-usage',
   '--disable-extensions',
   '--disable-features=ImprovedCookieControls,LazyFrameLoading,GlobalMediaControls,DestroyProfileOnBrowserClose,MediaRouter,DialMediaRouteProvider,AcceptCHFrame,AutoExpandDetailsElement,CertificateTransparencyComponentUpdater',
+  '--disable-field-trial-config',
   '--allow-pre-commit-input',
   '--disable-hang-monitor',
   '--disable-ipc-flooding-protection',

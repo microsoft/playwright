@@ -127,7 +127,8 @@ it('should create userDataDir if it does not exist', async ({ createUserDataDir,
   expect(fs.readdirSync(userDataDir).length).toBeGreaterThan(0);
 });
 
-it('should restore cookies from userDataDir', async ({ browserType, server, createUserDataDir, platform, channel, browserName }) => {
+it('should restore cookies from userDataDir', async ({ browserType, server, createUserDataDir, platform, channel, browserName, headless }) => {
+  it.fixme(browserName === 'firefox' && !headless, 'https://github.com/microsoft/playwright/issues/12632');
   it.fixme(platform === 'win32' && channel === 'chrome');
   it.slow();
 
