@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+import type { Page } from '@playwright/test';
 import { test as it, expect } from './pageTest';
 
 it('should work for open shadow roots', async ({ page, server }) => {
@@ -166,7 +167,6 @@ it('should work with layout selectors', async ({ page, trace }) => {
   it.skip(trace === 'on');
 
   /*
-
        +--+  +--+
        | 1|  | 2|
        +--+  ++-++
@@ -177,50 +177,28 @@ it('should work with layout selectors', async ({ page, trace }) => {
   | | 6|  | 7|
   | +--+  +--+
   |       |
-  O-------+
+  +-------+
           +--+
           | 8|
           +--++--+
               | 9|
               +--+
-
   */
 
   const boxes = [
     // x, y, width, height
-    [0, 0, 150, 150],
-    [100, 200, 50, 50],
-    [200, 200, 50, 50],
-    [100, 150, 50, 50],
-    [201, 150, 50, 50],
+    [0, 100, 150, 150],
+    [100, 0, 50, 50],
+    [200, 0, 50, 50],
+    [100, 50, 50, 50],
+    [201, 50, 50, 50],
     [200, 100, 50, 50],
-    [50, 50, 50, 50],
-    [150, 50, 50, 50],
-    [150, -51, 50, 50],
-    [201, -101, 50, 50],
+    [50, 150, 50, 50],
+    [150, 150, 50, 50],
+    [150, 251, 50, 50],
+    [201, 301, 50, 50]
   ];
-  await page.setContent(`<container style="width: 500px; height: 500px; position: relative;"></container>`);
-  await page.$eval('container', (container, boxes) => {
-    for (let i = 0; i < boxes.length; i++) {
-      const div = document.createElement('div');
-      div.style.position = 'absolute';
-      div.style.overflow = 'hidden';
-      div.style.boxSizing = 'border-box';
-      div.style.border = '1px solid black';
-      div.id = 'id' + i;
-      div.textContent = 'id' + i;
-      const box = boxes[i];
-      div.style.left = box[0] + 'px';
-      // Note that top is a flipped y coordinate.
-      div.style.top = (250 - box[1] - box[3]) + 'px';
-      div.style.width = box[2] + 'px';
-      div.style.height = box[3] + 'px';
-      container.appendChild(div);
-      const span = document.createElement('span');
-      span.textContent = '' + i;
-      div.appendChild(span);
-    }
-  }, boxes);
+  await createBoxes(page, boxes, true);
 
   expect(await page.$eval('div:right-of(#id6)', e => e.id)).toBe('id7');
   expect(await page.$eval('div >> right-of="#id6"', e => e.id)).toBe('id7');
@@ -334,6 +312,62 @@ it('should work with layout selectors', async ({ page, trace }) => {
   expect(error4.message).toContain('Malformed selector: left-of="span","foo"');
   const error5 = await page.$(`div >> left-of="span",3,4`).catch(e => e);
   expect(error5.message).toContain('Malformed selector: left-of="span",3,4');
+});
+
+it('layout selectors should not select intersecting objets', async ({ page, trace }) => {
+  it.skip(trace === 'on');
+  /*
+    +-----+
+    |  0  |---+
+    +-----+ 1 |
+        +-----+
+  */
+
+  const boxes = [
+    // x, y, width, height
+    [0, 0, 300, 300],
+    [150, 150, 300, 300],
+  ];
+  await createBoxes(page, boxes);
+
+  await expect(page.locator('div:right-of(#id0)')).toHaveCount(0);
+  await expect(page.locator('div:left-of(#id0)')).toHaveCount(0);
+  await expect(page.locator('div:above(#id0)')).toHaveCount(0);
+  await expect(page.locator('div:below(#id0)')).toHaveCount(0);
+
+  await expect(page.locator('div:right-of(#id1)')).toHaveCount(0);
+  await expect(page.locator('div:left-of(#id1)')).toHaveCount(0);
+  await expect(page.locator('div:above(#id1)')).toHaveCount(0);
+  await expect(page.locator('div:below(#id1)')).toHaveCount(0);
+
+  await expect(page.locator('div:near(#id0)')).toHaveCount(1);
+  await expect(page.locator('div:near(#id1)')).toHaveCount(1);
+});
+
+
+it('layout selectors should sort by proximity', async ({ page, trace }) => {
+  it.skip(trace === 'on');
+  /*
+    +-----+-----+
+    |  0  |  3  |
+    +-----+-----+
+          |  2  |
+          +-----+
+          |  1  |
+          +-----+
+
+  */
+
+  const boxes = [
+    // x, y, width, height
+    [0, 0, 100, 100],
+    [100, 200, 100, 100],
+    [100, 100, 100, 100],
+    [100, 0, 100, 100],
+  ];
+  await createBoxes(page, boxes);
+
+  await expect(page.locator('div:right-of(#id0)')).toHaveText(['id3', 'id2', 'id1']);
 });
 
 it('should escape the scope with >>', async ({ page }) => {
@@ -496,3 +530,31 @@ it('chaining should work with large DOM @smoke', async ({ page, server }) => {
   // Uncomment to see performance results.
   // console.log(times);
 });
+
+async function createBoxes(page: Page, boxes: number[][], createNestedSpans: boolean = false) {
+  await page.setContent(`<container style="width: 500px; height: 100px; position: relative;"></container>`);
+  await page.$eval('container', (container, { boxes, createNestedSpans }) => {
+    for (let i = 0; i < boxes.length; i++) {
+      const div = document.createElement('div');
+      div.style.position = 'absolute';
+      div.style.overflow = 'hidden';
+      div.style.boxSizing = 'border-box';
+      div.style.border = '1px solid black';
+      div.id = 'id' + i;
+      const box = boxes[i];
+      div.style.left = box[0] + 'px';
+      div.style.top = box[1] + 'px';
+      div.style.width = box[2] + 'px';
+      div.style.height = box[3] + 'px';
+      container.appendChild(div);
+      if (createNestedSpans) {
+        const span = document.createElement('span');
+        span.textContent = '' + i;
+        div.appendChild(span);
+      } else {
+        div.textContent = 'id' + i;
+      }
+    }
+  }, { boxes, createNestedSpans });
+}
+

@@ -900,37 +900,54 @@ Note that outer and inner locators must belong to the same frame. Inner locator 
 ## locator-option-left-of
 - `leftOf` <[Locator]>
 
-Matches elements that are to the left of any element matching the inner locator, at any vertical position. Inner locator is queried against the same root as the outer one. More details in [layout selectors](../selectors.md#selecting-elements-based-on-layout) guide.
+Matches elements that are to the left of any element matching the inner locator (anchor), at any vertical position, sorted by the proximity to the anchor.
 
-Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
+:::note
+You are likely to use [`method: Locator.first`] on the outer locator when using this option. Otherwise you end up selecting all the elements to the left of the anchor and the strict checks trigger.
+:::
+
+Inner locator is queried against the same root as the outer one, it can't contain frame locators. See more details in the [layout selectors](../selectors.md#selecting-elements-based-on-layout) guide.
 
 ## locator-option-right-of
 - `rightOf` <[Locator]>
 
-Matches elements that are to the right of any element matching the inner locator, at any vertical position. Inner locator is queried against the same root as the outer one. More details in [layout selectors](../selectors.md#selecting-elements-based-on-layout) guide.
+Matches elements that are to the right of any element matching the inner locator (anchor), at any vertical position, sorted by the proximity to the anchor.
 
-Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
+:::note
+You will most likely use [`method: Locator.first`] on the outer locator when using this option. Otherwise you end up selecting all the elements to the right of the anchor and the strict checks trigger.
+:::
+
+Inner locator is queried against the same root as the outer one, it can't contain frame locators. See more details in the [layout selectors](../selectors.md#selecting-elements-based-on-layout) guide.
 
 ## locator-option-above
 - `above` <[Locator]>
 
-Matches elements that are above any of the elements matching the inner locator, at any horizontal position. Inner locator is queried against the same root as the outer one. More details in [layout selectors](../selectors.md#selecting-elements-based-on-layout) guide.
+Matches elements that are above any element matching the inner locator (anchor), at any horizontal position, sorted by the proximity to the anchor.
 
-Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
+:::note
+You will most likely use [`method: Locator.first`] on the outer locator when using this option. Otherwise you end up selecting all the elements above the anchor and the strict checks trigger.
+:::
+
+Inner locator is queried against the same root as the outer one, it can't contain frame locators. See more details in the [layout selectors](../selectors.md#selecting-elements-based-on-layout) guide.
 
 ## locator-option-below
 - `below` <[Locator]>
 
-Matches elements that are below any of the elements matching the inner locator, at any horizontal position. Inner locator is queried against the same root as the outer one. More details in [layout selectors](../selectors.md#selecting-elements-based-on-layout) guide.
+Matches elements that are below any element matching the inner locator (anchor), at any horizontal position, sorted by the proximity to the anchor.
 
-Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
+:::note
+You will most likely use [`method: Locator.first`] on the outer locator when using this option. Otherwise you end up selecting all the elements below the anchor and the strict checks trigger.
+:::
+
+Inner locator is queried against the same root as the outer one, it can't contain frame locators. See more details in the [layout selectors](../selectors.md#selecting-elements-based-on-layout) guide.
 
 ## locator-option-near
 - `near` <[Locator]>
 
-Matches elements that are near (<= 50 css pixels) any of the elements matching the inner locator. Inner locator is queried against the same root as the outer one. More details in [layout selectors](../selectors.md#selecting-elements-based-on-layout) guide.
+Matches elements that are near (<= 50 css pixels) any element matching the inner locator (anchor), sorted by the proximity to the anchor.
 
-Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
+Inner locator is queried against the same root as the outer one, it can't contain frame locators. See more details in the [layout selectors](../selectors.md#selecting-elements-based-on-layout) guide.
+
 
 ## locator-options-list
 - %%-locator-option-has-text-%%

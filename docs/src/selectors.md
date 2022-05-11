@@ -719,7 +719,21 @@ to compute distance and relative position of the elements.
 * `:below(inner > selector)` - Matches elements that are below any of the elements matching the inner selector, at any horizontal position.
 * `:near(inner > selector)` - Matches elements that are near (within 50 CSS pixels) any of the elements matching the inner selector.
 
-Note that resulting matches are sorted by their distance to the anchor element, so you can use [`method: Locator.first`] to pick the closest one.
+Note that resulting matches are sorted by their distance to the anchor element. Distance between the elements is defined as the sum `X + Y` of the offsets between the bounding box sides:
+
+```txt
+  +---+  X
+  | 1 |-----
+  +---+
+         |
+         | Y
+         |
+            +---+
+            | 2 |
+            +---+
+```
+
+You will most likely use [`method: Locator.first`] when working with layout selectors to pick the nearest element and avoid strict checks triggering.
 
 ```js
 // Fill an input to the right of "Username".
