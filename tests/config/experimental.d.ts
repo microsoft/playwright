@@ -14928,6 +14928,8 @@ export interface Response {
  * [page.route(url, handler[, options])](https://playwright.dev/docs/api/class-page#page-route) or
  * [browserContext.route(url, handler[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-route),
  * the `Route` object allows to handle the route.
+ *
+ * Learn more about [networking](https://playwright.dev/docs/network).
  */
 export interface Route {
   /**

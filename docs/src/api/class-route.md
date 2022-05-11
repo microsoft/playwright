@@ -3,6 +3,8 @@
 Whenever a network route is set up with [`method: Page.route`] or [`method: BrowserContext.route`], the `Route` object
 allows to handle the route.
 
+Learn more about [networking](../network.md).
+
 ## async method: Route.abort
 
 Aborts the route's request.
