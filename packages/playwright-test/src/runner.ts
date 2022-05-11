@@ -44,6 +44,7 @@ import { SigIntWatcher } from './sigIntWatcher';
 import type { TestRunnerPlugin } from './plugins';
 import { setRunnerToAddPluginsTo } from './plugins';
 import { webServerPluginForConfig } from './plugins/webServerPlugin';
+import { MultiMap } from 'playwright-core/lib/utils/multimap';
 
 const removeFolderAsync = promisify(rimraf);
 const readDirAsync = promisify(fs.readdir);
@@ -287,9 +288,9 @@ export class Runner {
       filterOnly(preprocessRoot);
 
     // 5. Complain about clashing.
-    const clashingTests = getClashingTestsPerSuite(preprocessRoot);
-    if (clashingTests.size > 0)
-      fatalErrors.push(createDuplicateTitlesError(config, clashingTests));
+    const duplicateTitlesError = createDuplicateTitlesError(config, preprocessRoot);
+    if (duplicateTitlesError)
+      fatalErrors.push(duplicateTitlesError);
 
     // 6. Generate projects.
     const fileSuites = new Map<string, Suite>();
@@ -607,28 +608,6 @@ async function collectFiles(testDir: string): Promise<string[]> {
   return files;
 }
 
-function getClashingTestsPerSuite(rootSuite: Suite): Map<string, TestCase[]> {
-  function visit(suite: Suite, clashingTests: Map<string, TestCase[]>) {
-    for (const childSuite of suite.suites)
-      visit(childSuite, clashingTests);
-    for (const test of suite.tests) {
-      const fullTitle = test.titlePath().slice(2).join(' ');
-      if (!clashingTests.has(fullTitle))
-        clashingTests.set(fullTitle, []);
-      clashingTests.set(fullTitle, clashingTests.get(fullTitle)!.concat(test));
-    }
-  }
-  const out = new Map<string, TestCase[]>();
-  for (const fileSuite of rootSuite.suites) {
-    const clashingTests = new Map<string, TestCase[]>();
-    visit(fileSuite, clashingTests);
-    for (const [title, tests] of clashingTests.entries()) {
-      if (tests.length > 1)
-        out.set(title, tests);
-    }
-  }
-  return out;
-}
 
 function buildItemLocation(rootDir: string, testOrSuite: Suite | TestCase) {
   if (!testOrSuite.location)
@@ -768,18 +747,31 @@ function createForbidOnlyError(config: FullConfigInternal, onlyTestsAndSuites: (
   return createStacklessError(errorMessage.join('\n'));
 }
 
-function createDuplicateTitlesError(config: FullConfigInternal, clashingTests: Map<string, TestCase[]>): TestError {
-  const errorMessage = [
+function createDuplicateTitlesError(config: FullConfigInternal, rootSuite: Suite): TestError | undefined {
+  const lines: string[] = [];
+  for (const fileSuite of rootSuite.suites) {
+    const testsByFullTitle = new MultiMap<string, TestCase>();
+    for (const test of fileSuite.allTests()) {
+      const fullTitle = test.titlePath().slice(2).join(' ');
+      testsByFullTitle.set(fullTitle, test);
+    }
+    for (const fullTitle of testsByFullTitle.keys()) {
+      const tests = testsByFullTitle.get(fullTitle);
+      if (tests.length > 1) {
+        lines.push(` - title: ${fullTitle}`);
+        for (const test of tests)
+          lines.push(`   - ${buildItemLocation(config.rootDir, test)}`);
+      }
+    }
+  }
+  if (!lines.length)
+    return;
+  return createStacklessError([
     '========================================',
     ' duplicate test titles are not allowed.',
-  ];
-  for (const [title, tests] of clashingTests.entries()) {
-    errorMessage.push(` - title: ${title}`);
-    for (const test of tests)
-      errorMessage.push(`   - ${buildItemLocation(config.rootDir, test)}`);
-  }
-  errorMessage.push('========================================');
-  return createStacklessError(errorMessage.join('\n'));
+    ...lines,
+    '========================================',
+  ].join('\n'));
 }
 
 function createNoTestsError(): TestError {
