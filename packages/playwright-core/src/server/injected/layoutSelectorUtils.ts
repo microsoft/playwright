@@ -14,30 +14,38 @@
  * limitations under the License.
  */
 
-function boxRightOf(box1: DOMRect, box2: DOMRect, maxDistance: number | undefined): number | undefined {
+function boxRightOf(box1: DOMRect, box2: DOMRect, maxDistance: number | undefined, mustIntersect: boolean): number | undefined {
   const distance = box1.left - box2.right;
   if (distance < 0 || (maxDistance !== undefined && distance > maxDistance))
     return;
-  return distance + Math.max(box2.bottom - box1.bottom, 0) + Math.max(box1.top - box2.top, 0);
-}
-
-function boxLeftOf(box1: DOMRect, box2: DOMRect, maxDistance: number | undefined): number | undefined {
-  const distance = box2.left - box1.right;
-  if (distance < 0 || (maxDistance !== undefined && distance > maxDistance))
+  if (mustIntersect && (box1.bottom <= box2.top || box2.bottom <= box1.top))
     return;
   return distance + Math.max(box2.bottom - box1.bottom, 0) + Math.max(box1.top - box2.top, 0);
 }
 
-function boxAbove(box1: DOMRect, box2: DOMRect, maxDistance: number | undefined): number | undefined {
+function boxLeftOf(box1: DOMRect, box2: DOMRect, maxDistance: number | undefined, mustIntersect: boolean): number | undefined {
+  const distance = box2.left - box1.right;
+  if (distance < 0 || (maxDistance !== undefined && distance > maxDistance))
+    return;
+  if (mustIntersect && (box1.bottom <= box2.top || box2.bottom <= box1.top))
+    return;
+  return distance + Math.max(box2.bottom - box1.bottom, 0) + Math.max(box1.top - box2.top, 0);
+}
+
+function boxAbove(box1: DOMRect, box2: DOMRect, maxDistance: number | undefined, mustIntersect: boolean): number | undefined {
   const distance = box2.top - box1.bottom;
   if (distance < 0 || (maxDistance !== undefined && distance > maxDistance))
+    return;
+  if (mustIntersect && (box1.right <= box2.left || box2.right <= box1.left))
     return;
   return distance + Math.max(box1.left - box2.left, 0) + Math.max(box2.right - box1.right, 0);
 }
 
-function boxBelow(box1: DOMRect, box2: DOMRect, maxDistance: number | undefined): number | undefined {
+function boxBelow(box1: DOMRect, box2: DOMRect, maxDistance: number | undefined, mustIntersect: boolean): number | undefined {
   const distance = box1.top - box2.bottom;
   if (distance < 0 || (maxDistance !== undefined && distance > maxDistance))
+    return;
+  if (mustIntersect && (box1.right <= box2.left || box2.right <= box1.left))
     return;
   return distance + Math.max(box1.left - box2.left, 0) + Math.max(box2.right - box1.right, 0);
 }
@@ -59,14 +67,14 @@ function boxNear(box1: DOMRect, box2: DOMRect, maxDistance: number | undefined):
 export type LayoutSelectorName = 'left-of' | 'right-of' | 'above' | 'below' | 'near';
 export const kLayoutSelectorNames: LayoutSelectorName[] = ['left-of', 'right-of', 'above', 'below', 'near'];
 
-export function layoutSelectorScore(name: LayoutSelectorName, element: Element, inner: Element[], maxDistance: number | undefined): number | undefined {
+export function layoutSelectorScore(name: LayoutSelectorName, element: Element, inner: Element[], maxDistance: number | undefined, mustIntersect: boolean): number | undefined {
   const box = element.getBoundingClientRect();
   const scorer = { 'left-of': boxLeftOf, 'right-of': boxRightOf, 'above': boxAbove, 'below': boxBelow, 'near': boxNear }[name];
   let bestScore: number | undefined;
   for (const e of inner) {
     if (e === element)
       continue;
-    const score = scorer(box, e.getBoundingClientRect(), maxDistance);
+    const score = scorer(box, e.getBoundingClientRect(), maxDistance, mustIntersect);
     if (score === undefined)
       continue;
     if (bestScore === undefined || score < bestScore)

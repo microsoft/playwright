@@ -161,7 +161,7 @@ export class InjectedScript {
     const result: { element: Element, score: number }[] = [];
     const inner = this.querySelectorAll(body.parsed, originalRoot);
     for (const element of elements) {
-      const score = layoutSelectorScore(name, element, inner, body.distance);
+      const score = layoutSelectorScore(name, element, inner, body.distance, true);
       if (score !== undefined)
         result.push({ element, score });
     }
@@ -303,16 +303,6 @@ export class InjectedScript {
       if (root.nodeType !== 1 /* Node.ELEMENT_NODE */)
         return [];
       return isElementVisible(root as Element) === Boolean(body) ? [root as Element] : [];
-    };
-    return { queryAll };
-  }
-
-  private _createLayoutEngine(name: LayoutSelectorName): SelectorEngineV2 {
-    const queryAll = (root: SelectorRoot, body: ParsedSelector) => {
-      if (root.nodeType !== 1 /* Node.ELEMENT_NODE */)
-        return [];
-      const has = !!this.querySelector(body, root, false);
-      return has ? [root as Element] : [];
     };
     return { queryAll };
   }

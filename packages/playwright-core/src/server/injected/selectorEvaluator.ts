@@ -473,7 +473,7 @@ function createLayoutEngine(name: LayoutSelectorName): SelectorEngine {
       if (args.length < 1 + (maxDistance === undefined ? 0 : 1))
         throw new Error(`"${name}" engine expects a selector list and optional maximum distance in pixels`);
       const inner = evaluator.query(context, queryArgs);
-      const score = layoutSelectorScore(name, element, inner, maxDistance);
+      const score = layoutSelectorScore(name, element, inner, maxDistance, false);
       if (score === undefined)
         return false;
       (evaluator as SelectorEvaluatorImpl)._markScore(element, score);
