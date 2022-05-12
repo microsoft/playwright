@@ -71,7 +71,7 @@ title: "Release notes"
   ```
 
   The new [`method: PageAssertions.toHaveScreenshot`] saves screenshots at the same
-  location as [`method: ScreenshotAssertions.toMatchSnapshot`].
+  location as [`method: ScreenshotAssertions.toMatchSnapshot#1`].
 
 
 ## Version 1.21
