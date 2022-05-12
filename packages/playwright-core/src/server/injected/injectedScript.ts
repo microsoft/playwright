@@ -104,11 +104,6 @@ export class InjectedScript {
     this._engines.set('visible', this._createVisibleEngine());
     this._engines.set('control', this._createControlEngine());
     this._engines.set('has', this._createHasEngine());
-    this._engines.set('left-of', { queryAll: () => [] });
-    this._engines.set('right-of', { queryAll: () => [] });
-    this._engines.set('above', { queryAll: () => [] });
-    this._engines.set('below', { queryAll: () => [] });
-    this._engines.set('near', { queryAll: () => [] });
 
     for (const { name, engine } of customEngines)
       this._engines.set(name, engine);

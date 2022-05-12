@@ -144,7 +144,7 @@ it('should support locator.filter', async ({ page, trace }) => {
 it('should enforce same frame for has/leftOf/rightOf/above/below/near', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/frames/two-frames.html');
   const child = page.frames()[1];
-  for (const option of ['has', 'leftOf', 'rightOf', 'above', 'below', 'near']) {
+  for (const option of ['has']) {
     let error;
     try {
       page.locator('div', { [option]: child.locator('span') });

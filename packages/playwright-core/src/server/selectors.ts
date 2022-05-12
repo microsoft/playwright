@@ -46,7 +46,6 @@ export class Selectors {
       'data-test-id', 'data-test-id:light',
       'data-test', 'data-test:light',
       'nth', 'visible', 'control', 'has',
-      'left-of', 'right-of', 'above', 'below', 'near',
       'role',
     ]);
     this._builtinEnginesInMainWorld = new Set([

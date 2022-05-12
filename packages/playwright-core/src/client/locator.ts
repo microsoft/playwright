@@ -29,11 +29,6 @@ import { escapeWithQuotes } from '../utils/isomorphic/stringUtils';
 export type LocatorOptions = {
   hasText?: string | RegExp;
   has?: Locator;
-  leftOf?: Locator;
-  rightOf?: Locator;
-  above?: Locator;
-  below?: Locator;
-  near?: Locator;
 };
 
 export class Locator implements api.Locator {
@@ -52,14 +47,11 @@ export class Locator implements api.Locator {
         this._selector += ` >> :scope:has-text(${escapeWithQuotes(text, '"')})`;
     }
 
-    for (const inner of ['has', 'leftOf', 'rightOf', 'above', 'below', 'near'] as const) {
-      const locator = options?.[inner];
-      if (!locator)
-        continue;
+    if (options?.has) {
+      const locator = options.has;
       if (locator._frame !== frame)
-        throw new Error(`Inner "${inner}" locator must belong to the same frame.`);
-      const engineName = inner === 'leftOf' ? 'left-of' : (inner === 'rightOf' ? 'right-of' : inner);
-      this._selector += ` >> ${engineName}=` + JSON.stringify(locator._selector);
+        throw new Error(`Inner "has" locator must belong to the same frame.`);
+      this._selector += ` >> has=` + JSON.stringify(locator._selector);
     }
   }
 
