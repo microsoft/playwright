@@ -20,6 +20,18 @@ it.skip(({ isElectron, browserMajorVersion, isAndroid }) => {
   // Old Electron has flaky wheel events.
   return (isElectron && browserMajorVersion <= 11) || isAndroid;
 });
+
+let deltaScale = 1;
+
+it.beforeAll(async ({ browserMajorVersion, browserName, platform }) => {
+  if (browserName === 'chromium' && browserMajorVersion >= 102 && platform === 'darwin') {
+    // Chromium reports deltaX/deltaY scaled by host device scale factor.
+    // https://bugs.chromium.org/p/chromium/issues/detail?id=1324819
+    // https://github.com/microsoft/playwright/issues/7362
+    deltaScale = 2;
+  }
+});
+
 it('should dispatch wheel events @smoke', async ({ page, server }) => {
   await page.setContent(`<div style="width: 5000px; height: 5000px;"></div>`);
   await page.mouse.move(50, 60);
@@ -27,8 +39,8 @@ it('should dispatch wheel events @smoke', async ({ page, server }) => {
   await page.mouse.wheel(0, 100);
   await page.waitForFunction('window.scrollY === 100');
   expect(await page.evaluate('window.lastEvent')).toEqual({
-    deltaX: 0,
-    deltaY: 100,
+    deltaX: 0 * deltaScale,
+    deltaY: 100 * deltaScale,
     clientX: 50,
     clientY: 60,
     deltaMode: 0,
@@ -53,8 +65,8 @@ it('should set the modifiers', async ({ page }) => {
   await page.keyboard.down('Shift');
   await page.mouse.wheel(0, 100);
   expect(await page.evaluate('window.lastEvent')).toEqual({
-    deltaX: 0,
-    deltaY: 100,
+    deltaX: 0 * deltaScale,
+    deltaY: 100 * deltaScale,
     clientX: 50,
     clientY: 60,
     deltaMode: 0,
@@ -71,8 +83,8 @@ it('should scroll horizontally', async ({ page }) => {
   await listenForWheelEvents(page, 'div');
   await page.mouse.wheel(100, 0);
   expect(await page.evaluate('window.lastEvent')).toEqual({
-    deltaX: 100,
-    deltaY: 0,
+    deltaX: 100 * deltaScale,
+    deltaY: 0 * deltaScale,
     clientX: 50,
     clientY: 60,
     deltaMode: 0,
@@ -93,8 +105,8 @@ it('should work when the event is canceled', async ({ page }) => {
   });
   await page.mouse.wheel(0, 100);
   expect(await page.evaluate('window.lastEvent')).toEqual({
-    deltaX: 0,
-    deltaY: 100,
+    deltaX: 0 * deltaScale,
+    deltaY: 100 * deltaScale,
     clientX: 50,
     clientY: 60,
     deltaMode: 0,
