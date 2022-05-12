@@ -9,39 +9,6 @@ title: "Release notes"
 
 ### Highlights
 
-- Role selectors that allow selecting elements by their [ARIA role](https://www.w3.org/TR/wai-aria-1.2/#roles), [ARIA attributes](https://www.w3.org/TR/wai-aria-1.2/#aria-attributes) and [accessible name](https://w3c.github.io/accname/#dfn-accessible-name).
-
-  ```js
-  // Click a button with accessible name "log in"
-  await page.click('role=button[name="log in"]')
-  ```
-
-  Read more in [our documentation](./selectors#role-selector).
-
-- New [`method: Locator.filter`] API to filter an existing locator.
-
-  ```js
-  const buttons = page.locator('role=button');
-  // ...
-  const submitButton = buttons.filter({ hasText: 'Submit' });
-  await submitButton.click();
-  ```
-
-- New web-first assertion [`method: PageAssertions.toHaveScreenshot`] that
-  waits for screenshot stabilization and enhances test reliability.
-
-  The new assertion has screenshot-specific defaults, such as:
-  * disables animations
-  * uses CSS scale option
-
-  ```js
-  await page.goto('https://playwright.dev');
-  await expect(page).toHaveScreenshot();
-  ```
-
-  The new [`method: PageAssertions.toHaveScreenshot`] saves screenshots at the same
-  location as [`method: ScreenshotAssertions.toMatchSnapshot`].
-
 - (preview) Components Testing
 
   Playwright Test can now test your [React](https://reactjs.org/),
@@ -71,6 +38,41 @@ title: "Release notes"
   ```
 
   Read more in [our documentation](./test-components).
+
+- Role selectors that allow selecting elements by their [ARIA role](https://www.w3.org/TR/wai-aria-1.2/#roles), [ARIA attributes](https://www.w3.org/TR/wai-aria-1.2/#aria-attributes) and [accessible name](https://w3c.github.io/accname/#dfn-accessible-name).
+
+  ```js
+  // Click a button with accessible name "log in"
+  await page.click('role=button[name="log in"]')
+  ```
+
+  Read more in [our documentation](./selectors#role-selector).
+
+- New [`method: Locator.filter`] API to filter an existing locator, including
+  new options: `leftOf`, `rigthOf`, `above`, `below`, `near`.
+
+  ```js
+  const buttons = page.locator('role=button');
+  // ...
+  const submitButton = buttons.filter({ hasText: 'Submit' });
+  await submitButton.click();
+  ```
+
+- New web-first assertions [`method: PageAssertions.toHaveScreenshot`] and [`method: LocatorAssertions.toHaveScreenshot`] that
+  wait for screenshot stabilization and enhances test reliability.
+
+  The new assertions has screenshot-specific defaults, such as:
+  * disables animations
+  * uses CSS scale option
+
+  ```js
+  await page.goto('https://playwright.dev');
+  await expect(page).toHaveScreenshot();
+  ```
+
+  The new [`method: PageAssertions.toHaveScreenshot`] saves screenshots at the same
+  location as [`method: ScreenshotAssertions.toMatchSnapshot`].
+
 
 ## Version 1.21
 
