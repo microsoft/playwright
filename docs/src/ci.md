@@ -143,7 +143,7 @@ Alternatively, you can use [Command line tools](./cli.md#install-system-dependen
 pool:
   vmImage: 'ubuntu-20.04'
 
-container: mcr.microsoft.com/playwright:v1.22.0-focal
+container: mcr.microsoft.com/playwright:v1.23.0-focal
 
 steps:
 ...
@@ -157,7 +157,7 @@ Running Playwright on CircleCI requires the following steps:
 
    ```yml
    docker:
-     - image: mcr.microsoft.com/playwright:v1.22.0-focal
+     - image: mcr.microsoft.com/playwright:v1.23.0-focal
    environment:
      NODE_ENV: development # Needed if playwright is in `devDependencies`
    ```
@@ -179,7 +179,7 @@ to run tests on Jenkins.
 
 ```groovy
 pipeline {
-   agent { docker { image 'mcr.microsoft.com/playwright:v1.22.0-focal' } }
+   agent { docker { image 'mcr.microsoft.com/playwright:v1.23.0-focal' } }
    stages {
       stage('e2e-tests') {
          steps {
@@ -196,7 +196,7 @@ pipeline {
 Bitbucket Pipelines can use public [Docker images as build environments](https://confluence.atlassian.com/bitbucket/use-docker-images-as-build-environments-792298897.html). To run Playwright tests on Bitbucket, use our public Docker image ([see Dockerfile](./docker.md)).
 
 ```yml
-image: mcr.microsoft.com/playwright:v1.22.0-focal
+image: mcr.microsoft.com/playwright:v1.23.0-focal
 ```
 
 ### GitLab CI
@@ -209,7 +209,7 @@ stages:
 
 tests:
   stage: test
-  image: mcr.microsoft.com/playwright:v1.22.0-focal
+  image: mcr.microsoft.com/playwright:v1.23.0-focal
   script:
   ...
 ```
