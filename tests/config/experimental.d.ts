@@ -2624,24 +2624,6 @@ export interface Page {
    */
   locator(selector: string, options?: {
     /**
-     * Matches elements that are above any of the elements matching the inner locator, at any horizontal position. Inner
-     * locator is queried against the same root as the outer one. More details in
-     * [layout selectors](https://playwright.dev/docs/selectors#selecting-elements-based-on-layout) guide.
-     *
-     * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
-     */
-    above?: Locator;
-
-    /**
-     * Matches elements that are below any of the elements matching the inner locator, at any horizontal position. Inner
-     * locator is queried against the same root as the outer one. More details in
-     * [layout selectors](https://playwright.dev/docs/selectors#selecting-elements-based-on-layout) guide.
-     *
-     * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
-     */
-    below?: Locator;
-
-    /**
      * Matches elements containing an element that matches an inner locator. Inner locator is queried against the outer one.
      * For example, `article` that has `text=Playwright` matches `<article><div>Playwright</div></article>`.
      *
@@ -2655,33 +2637,6 @@ export interface Page {
      * `<article><div>Playwright</div></article>`.
      */
     hasText?: string|RegExp;
-
-    /**
-     * Matches elements that are to the left of any element matching the inner locator, at any vertical position. Inner locator
-     * is queried against the same root as the outer one. More details in
-     * [layout selectors](https://playwright.dev/docs/selectors#selecting-elements-based-on-layout) guide.
-     *
-     * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
-     */
-    leftOf?: Locator;
-
-    /**
-     * Matches elements that are near (<= 50 css pixels) any of the elements matching the inner locator. Inner locator is
-     * queried against the same root as the outer one. More details in
-     * [layout selectors](https://playwright.dev/docs/selectors#selecting-elements-based-on-layout) guide.
-     *
-     * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
-     */
-    near?: Locator;
-
-    /**
-     * Matches elements that are to the right of any element matching the inner locator, at any vertical position. Inner
-     * locator is queried against the same root as the outer one. More details in
-     * [layout selectors](https://playwright.dev/docs/selectors#selecting-elements-based-on-layout) guide.
-     *
-     * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
-     */
-    rightOf?: Locator;
   }): Locator;
 
   /**
@@ -5495,24 +5450,6 @@ export interface Frame {
    */
   locator(selector: string, options?: {
     /**
-     * Matches elements that are above any of the elements matching the inner locator, at any horizontal position. Inner
-     * locator is queried against the same root as the outer one. More details in
-     * [layout selectors](https://playwright.dev/docs/selectors#selecting-elements-based-on-layout) guide.
-     *
-     * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
-     */
-    above?: Locator;
-
-    /**
-     * Matches elements that are below any of the elements matching the inner locator, at any horizontal position. Inner
-     * locator is queried against the same root as the outer one. More details in
-     * [layout selectors](https://playwright.dev/docs/selectors#selecting-elements-based-on-layout) guide.
-     *
-     * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
-     */
-    below?: Locator;
-
-    /**
      * Matches elements containing an element that matches an inner locator. Inner locator is queried against the outer one.
      * For example, `article` that has `text=Playwright` matches `<article><div>Playwright</div></article>`.
      *
@@ -5526,33 +5463,6 @@ export interface Frame {
      * `<article><div>Playwright</div></article>`.
      */
     hasText?: string|RegExp;
-
-    /**
-     * Matches elements that are to the left of any element matching the inner locator, at any vertical position. Inner locator
-     * is queried against the same root as the outer one. More details in
-     * [layout selectors](https://playwright.dev/docs/selectors#selecting-elements-based-on-layout) guide.
-     *
-     * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
-     */
-    leftOf?: Locator;
-
-    /**
-     * Matches elements that are near (<= 50 css pixels) any of the elements matching the inner locator. Inner locator is
-     * queried against the same root as the outer one. More details in
-     * [layout selectors](https://playwright.dev/docs/selectors#selecting-elements-based-on-layout) guide.
-     *
-     * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
-     */
-    near?: Locator;
-
-    /**
-     * Matches elements that are to the right of any element matching the inner locator, at any vertical position. Inner
-     * locator is queried against the same root as the outer one. More details in
-     * [layout selectors](https://playwright.dev/docs/selectors#selecting-elements-based-on-layout) guide.
-     *
-     * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
-     */
-    rightOf?: Locator;
   }): Locator;
 
   /**
@@ -9275,24 +9185,6 @@ export interface Locator {
    */
   filter(options?: {
     /**
-     * Matches elements that are above any of the elements matching the inner locator, at any horizontal position. Inner
-     * locator is queried against the same root as the outer one. More details in
-     * [layout selectors](https://playwright.dev/docs/selectors#selecting-elements-based-on-layout) guide.
-     *
-     * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
-     */
-    above?: Locator;
-
-    /**
-     * Matches elements that are below any of the elements matching the inner locator, at any horizontal position. Inner
-     * locator is queried against the same root as the outer one. More details in
-     * [layout selectors](https://playwright.dev/docs/selectors#selecting-elements-based-on-layout) guide.
-     *
-     * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
-     */
-    below?: Locator;
-
-    /**
      * Matches elements containing an element that matches an inner locator. Inner locator is queried against the outer one.
      * For example, `article` that has `text=Playwright` matches `<article><div>Playwright</div></article>`.
      *
@@ -9306,33 +9198,6 @@ export interface Locator {
      * `<article><div>Playwright</div></article>`.
      */
     hasText?: string|RegExp;
-
-    /**
-     * Matches elements that are to the left of any element matching the inner locator, at any vertical position. Inner locator
-     * is queried against the same root as the outer one. More details in
-     * [layout selectors](https://playwright.dev/docs/selectors#selecting-elements-based-on-layout) guide.
-     *
-     * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
-     */
-    leftOf?: Locator;
-
-    /**
-     * Matches elements that are near (<= 50 css pixels) any of the elements matching the inner locator. Inner locator is
-     * queried against the same root as the outer one. More details in
-     * [layout selectors](https://playwright.dev/docs/selectors#selecting-elements-based-on-layout) guide.
-     *
-     * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
-     */
-    near?: Locator;
-
-    /**
-     * Matches elements that are to the right of any element matching the inner locator, at any vertical position. Inner
-     * locator is queried against the same root as the outer one. More details in
-     * [layout selectors](https://playwright.dev/docs/selectors#selecting-elements-based-on-layout) guide.
-     *
-     * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
-     */
-    rightOf?: Locator;
   }): Locator;
 
   /**
@@ -9581,24 +9446,6 @@ export interface Locator {
    */
   locator(selector: string, options?: {
     /**
-     * Matches elements that are above any of the elements matching the inner locator, at any horizontal position. Inner
-     * locator is queried against the same root as the outer one. More details in
-     * [layout selectors](https://playwright.dev/docs/selectors#selecting-elements-based-on-layout) guide.
-     *
-     * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
-     */
-    above?: Locator;
-
-    /**
-     * Matches elements that are below any of the elements matching the inner locator, at any horizontal position. Inner
-     * locator is queried against the same root as the outer one. More details in
-     * [layout selectors](https://playwright.dev/docs/selectors#selecting-elements-based-on-layout) guide.
-     *
-     * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
-     */
-    below?: Locator;
-
-    /**
      * Matches elements containing an element that matches an inner locator. Inner locator is queried against the outer one.
      * For example, `article` that has `text=Playwright` matches `<article><div>Playwright</div></article>`.
      *
@@ -9612,33 +9459,6 @@ export interface Locator {
      * `<article><div>Playwright</div></article>`.
      */
     hasText?: string|RegExp;
-
-    /**
-     * Matches elements that are to the left of any element matching the inner locator, at any vertical position. Inner locator
-     * is queried against the same root as the outer one. More details in
-     * [layout selectors](https://playwright.dev/docs/selectors#selecting-elements-based-on-layout) guide.
-     *
-     * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
-     */
-    leftOf?: Locator;
-
-    /**
-     * Matches elements that are near (<= 50 css pixels) any of the elements matching the inner locator. Inner locator is
-     * queried against the same root as the outer one. More details in
-     * [layout selectors](https://playwright.dev/docs/selectors#selecting-elements-based-on-layout) guide.
-     *
-     * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
-     */
-    near?: Locator;
-
-    /**
-     * Matches elements that are to the right of any element matching the inner locator, at any vertical position. Inner
-     * locator is queried against the same root as the outer one. More details in
-     * [layout selectors](https://playwright.dev/docs/selectors#selecting-elements-based-on-layout) guide.
-     *
-     * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
-     */
-    rightOf?: Locator;
   }): Locator;
 
   /**
@@ -14111,24 +13931,6 @@ export interface FrameLocator {
    */
   locator(selector: string, options?: {
     /**
-     * Matches elements that are above any of the elements matching the inner locator, at any horizontal position. Inner
-     * locator is queried against the same root as the outer one. More details in
-     * [layout selectors](https://playwright.dev/docs/selectors#selecting-elements-based-on-layout) guide.
-     *
-     * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
-     */
-    above?: Locator;
-
-    /**
-     * Matches elements that are below any of the elements matching the inner locator, at any horizontal position. Inner
-     * locator is queried against the same root as the outer one. More details in
-     * [layout selectors](https://playwright.dev/docs/selectors#selecting-elements-based-on-layout) guide.
-     *
-     * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
-     */
-    below?: Locator;
-
-    /**
      * Matches elements containing an element that matches an inner locator. Inner locator is queried against the outer one.
      * For example, `article` that has `text=Playwright` matches `<article><div>Playwright</div></article>`.
      *
@@ -14142,33 +13944,6 @@ export interface FrameLocator {
      * `<article><div>Playwright</div></article>`.
      */
     hasText?: string|RegExp;
-
-    /**
-     * Matches elements that are to the left of any element matching the inner locator, at any vertical position. Inner locator
-     * is queried against the same root as the outer one. More details in
-     * [layout selectors](https://playwright.dev/docs/selectors#selecting-elements-based-on-layout) guide.
-     *
-     * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
-     */
-    leftOf?: Locator;
-
-    /**
-     * Matches elements that are near (<= 50 css pixels) any of the elements matching the inner locator. Inner locator is
-     * queried against the same root as the outer one. More details in
-     * [layout selectors](https://playwright.dev/docs/selectors#selecting-elements-based-on-layout) guide.
-     *
-     * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
-     */
-    near?: Locator;
-
-    /**
-     * Matches elements that are to the right of any element matching the inner locator, at any vertical position. Inner
-     * locator is queried against the same root as the outer one. More details in
-     * [layout selectors](https://playwright.dev/docs/selectors#selecting-elements-based-on-layout) guide.
-     *
-     * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
-     */
-    rightOf?: Locator;
   }): Locator;
 
   /**
