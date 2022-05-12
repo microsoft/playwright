@@ -5,6 +5,76 @@ title: "Release notes"
 
 <!-- TOC -->
 
+## Version 1.22
+
+### Highlights
+
+- Components Testing (preview)
+
+  Playwright Test can now test your [React](https://reactjs.org/),
+  [Vue.js](https://vuejs.org/) or [Svelte](https://svelte.dev/) components.
+  You can use all the features
+  of Playwright Test (such as parallelization, emulation & debugging) while running components
+  in real browsers.
+
+  Here is what a typical component test looks like:
+
+  ```ts
+  // App.spec.tsx
+  import { test, expect } from '@playwright/experimental-ct-react';
+  import App from './App';
+
+  // Let's test component in a dark scheme!
+  test.use({ colorScheme: 'dark' });
+
+  test('should render', async ({ mount }) => {
+    const component = await mount(<App></App>);
+
+    // As with any Playwright test, assert locator text.
+    await expect(component).toContainText('React');
+    // Or do a screenshot 🚀
+    await expect(component).toHaveScreenshot();
+    // Or use any Playwright method
+    await component.click();
+  });
+  ```
+
+  Read more in [our documentation](./test-components).
+
+- Role selectors that allow selecting elements by their [ARIA role](https://www.w3.org/TR/wai-aria-1.2/#roles), [ARIA attributes](https://www.w3.org/TR/wai-aria-1.2/#aria-attributes) and [accessible name](https://w3c.github.io/accname/#dfn-accessible-name).
+
+  ```js
+  // Click a button with accessible name "log in"
+  await page.click('role=button[name="log in"]')
+  ```
+
+  Read more in [our documentation](./selectors#role-selector).
+
+- New [`method: Locator.filter`] API to filter an existing locator
+
+  ```js
+  const buttons = page.locator('role=button');
+  // ...
+  const submitButton = buttons.filter({ hasText: 'Submit' });
+  await submitButton.click();
+  ```
+
+- New web-first assertions [`method: PageAssertions.toHaveScreenshot`] and [`method: LocatorAssertions.toHaveScreenshot`] that
+  wait for screenshot stabilization and enhances test reliability.
+
+  The new assertions has screenshot-specific defaults, such as:
+  * disables animations
+  * uses CSS scale option
+
+  ```js
+  await page.goto('https://playwright.dev');
+  await expect(page).toHaveScreenshot();
+  ```
+
+  The new [`method: PageAssertions.toHaveScreenshot`] saves screenshots at the same
+  location as [`method: ScreenshotAssertions.toMatchSnapshot#1`].
+
+
 ## Version 1.21
 
 ### Highlights
