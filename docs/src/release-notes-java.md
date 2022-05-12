@@ -5,6 +5,33 @@ title: "Release notes"
 
 <!-- TOC -->
 
+## Version 1.22
+
+### Highlights
+
+- Role selectors that allow selecting elements by their [ARIA role](https://www.w3.org/TR/wai-aria-1.2/#roles), [ARIA attributes](https://www.w3.org/TR/wai-aria-1.2/#aria-attributes) and [accessible name](https://w3c.github.io/accname/#dfn-accessible-name).
+
+  ```java
+  // Click a button with accessible name "log in"
+  page.click("role=button[name='log in']")
+  ```
+
+  Read more in [our documentation](./selectors#role-selector).
+
+- New [`method: Locator.filter`] API to filter an existing locator, including
+  new options: `leftOf`, `rigthOf`, `above`, `below`, `near`.
+
+  ```java
+  Locator buttonsLocator = page.locator("role=button");
+  // ...
+  Locator submitButton = buttonsLocator.filter(new Locator.FilterOptions().setHasText("Submit"));
+  submitButton.click();
+  ```
+
+- Playwright for Java now supports **Ubuntu 20.04 ARM64** and **Apple M1**.
+  You can now run Playwright for Java tests on Apple M1, inside Docker on Apple M1, and on Raspberry Pi.
+
+
 ## Version 1.21
 
 ### Highlights

@@ -5,6 +5,35 @@ title: "Release notes"
 
 <!-- TOC -->
 
+## Version 1.22
+
+### Highlights
+
+- Role selectors that allow selecting elements by their [ARIA role](https://www.w3.org/TR/wai-aria-1.2/#roles), [ARIA attributes](https://www.w3.org/TR/wai-aria-1.2/#aria-attributes) and [accessible name](https://w3c.github.io/accname/#dfn-accessible-name).
+
+  ```py
+  // Click a button with accessible name "log in"
+  page.click("role=button[name='log in']")
+  ```
+
+  Read more in [our documentation](./selectors#role-selector).
+
+- New [`method: Locator.filter`] API to filter an existing locator, including
+  new options: `leftOf`, `rigthOf`, `above`, `below`, `near`.
+
+  ```py
+  const buttons = page.locator("role=button");
+  // ...
+  const submit_button = buttons.filter(has_text="Submit");
+  submit_button.click();
+  ```
+
+- Codegen now supports generating Pytest Tests
+
+  ![Graphics](https://user-images.githubusercontent.com/746130/168098384-40784024-6c26-4426-8255-e714862af6fc.png)
+
+
+
 ## Version 1.21
 
 ### Highlights
