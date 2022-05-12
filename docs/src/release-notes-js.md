@@ -34,6 +34,8 @@ title: "Release notes"
     await expect(component).toContainText('React');
     // Or do a screenshot 🚀
     await expect(component).toHaveScreenshot();
+    // Or use any Playwright method
+    await component.click();
   });
   ```
 
@@ -48,8 +50,7 @@ title: "Release notes"
 
   Read more in [our documentation](./selectors#role-selector).
 
-- New [`method: Locator.filter`] API to filter an existing locator, including
-  new options: `leftOf`, `rigthOf`, `above`, `below`, `near`.
+- New [`method: Locator.filter`] API to filter an existing locator
 
   ```js
   const buttons = page.locator('role=button');

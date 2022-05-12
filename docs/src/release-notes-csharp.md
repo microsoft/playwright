@@ -18,13 +18,12 @@ title: "Release notes"
 
   Read more in [our documentation](./selectors#role-selector).
 
-- New [`method: Locator.filter`] API to filter an existing locator, including
-  new options: `leftOf`, `rigthOf`, `above`, `below`, `near`.
+- New [`method: Locator.filter`] API to filter an existing locator
 
   ```csharp
   var buttons = page.Locator("role=button");
   // ...
-  var submitLocator = buttonLocator.Filter(new LocatorFilterOptions { HasText = "Sign up" });
+  var submitLocator = buttons.Filter(new LocatorFilterOptions { HasText = "Sign up" });
   await submitLocator.ClickAsync();
   ```
 
