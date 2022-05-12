@@ -9,7 +9,7 @@ title: "Release notes"
 
 ### Highlights
 
-- (preview) Components Testing
+- Components Testing (preview)
 
   Playwright Test can now test your [React](https://reactjs.org/),
   [Vue.js](https://vuejs.org/) or [Svelte](https://svelte.dev/) components.
