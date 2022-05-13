@@ -22,8 +22,9 @@ import type { TestInfoImpl } from './testInfo';
 import type { FixtureDescription, TimeoutManager } from './timeoutManager';
 
 type FixtureScope = 'test' | 'worker';
+type FixtureAuto = boolean | 'all-hooks-included';
 const kScopeOrder: FixtureScope[] = ['test', 'worker'];
-type FixtureOptions = { auto?: boolean, scope?: FixtureScope, option?: boolean, timeout?: number | undefined };
+type FixtureOptions = { auto?: FixtureAuto, scope?: FixtureScope, option?: boolean, timeout?: number | undefined };
 type FixtureTuple = [ value: any, options: FixtureOptions ];
 type FixtureRegistration = {
   // Fixture registration location.
@@ -34,7 +35,7 @@ type FixtureRegistration = {
   // Either a fixture function, or a fixture value.
   fn: Function | any;
   // Auto fixtures always run without user explicitly mentioning them.
-  auto: boolean;
+  auto: FixtureAuto;
   // An "option" fixture can have a value set in the config.
   option: boolean;
   // Custom title to be used instead of the name, internal-only.
@@ -160,10 +161,10 @@ export class FixturePool {
       for (const entry of Object.entries(fixtures)) {
         const name = entry[0];
         let value = entry[1];
-        let options: { auto: boolean, scope: FixtureScope, option: boolean, timeout: number | undefined, customTitle: string | undefined } | undefined;
+        let options: { auto: FixtureAuto, scope: FixtureScope, option: boolean, timeout: number | undefined, customTitle: string | undefined } | undefined;
         if (isFixtureTuple(value)) {
           options = {
-            auto: !!value[1].auto,
+            auto: value[1].auto ?? false,
             scope: value[1].scope || 'test',
             option: !!value[1].option,
             timeout: value[1].timeout,
@@ -293,11 +294,17 @@ export class FixtureRunner {
       throw error;
   }
 
-  async resolveParametersForFunction(fn: Function, testInfo: TestInfoImpl): Promise<object> {
-    // Install all automatic fixtures.
+  async resolveParametersForFunction(fn: Function, testInfo: TestInfoImpl, autoFixtures: 'worker' | 'test' | 'all-hooks-only'): Promise<object> {
+    // Install automatic fixtures.
     for (const registration of this.pool!.registrations.values()) {
-      const shouldSkip = !testInfo && registration.scope === 'test';
-      if (registration.auto && !shouldSkip)
+      if (registration.auto === false)
+        continue;
+      let shouldRun = true;
+      if (autoFixtures === 'all-hooks-only')
+        shouldRun = registration.scope === 'worker' || registration.auto === 'all-hooks-included';
+      else if (autoFixtures === 'worker')
+        shouldRun = registration.scope === 'worker';
+      if (shouldRun)
         await this.setupFixtureForRegistration(registration, testInfo);
     }
 
@@ -312,8 +319,8 @@ export class FixtureRunner {
     return params;
   }
 
-  async resolveParametersAndRunFunction(fn: Function, testInfo: TestInfoImpl) {
-    const params = await this.resolveParametersForFunction(fn, testInfo);
+  async resolveParametersAndRunFunction(fn: Function, testInfo: TestInfoImpl, autoFixtures: 'worker' | 'test' | 'all-hooks-only') {
+    const params = await this.resolveParametersForFunction(fn, testInfo, autoFixtures);
     return fn(params, testInfo);
   }
 

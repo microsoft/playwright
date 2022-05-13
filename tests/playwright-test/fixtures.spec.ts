@@ -297,6 +297,7 @@ test('automatic fixtures should work', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
       let counterTest = 0;
+      let counterHooksIncluded = 0;
       let counterWorker = 0;
       const test = pwt.test;
       test.use({
@@ -305,6 +306,11 @@ test('automatic fixtures should work', async ({ runInlineTest }) => {
           await runTest();
         }, { auto: true } ],
 
+        automaticTestFixtureHooksIncluded: [ async ({}, runTest) => {
+          ++counterHooksIncluded;
+          await runTest();
+        }, { auto: 'all-hooks-included' } ],
+
         automaticWorkerFixture: [ async ({}, runTest) => {
           ++counterWorker;
           await runTest();
@@ -312,26 +318,32 @@ test('automatic fixtures should work', async ({ runInlineTest }) => {
       });
       test.beforeAll(async ({}) => {
         expect(counterWorker).toBe(1);
-        expect(counterTest).toBe(1);
+        expect(counterHooksIncluded).toBe(1);
+        expect(counterTest).toBe(0);
       });
       test.beforeEach(async ({}) => {
         expect(counterWorker).toBe(1);
         expect(counterTest === 1 || counterTest === 2).toBe(true);
+        expect(counterHooksIncluded === 1 || counterHooksIncluded === 2).toBe(true);
       });
       test('test 1', async ({}) => {
         expect(counterWorker).toBe(1);
+        expect(counterHooksIncluded).toBe(1);
         expect(counterTest).toBe(1);
       });
       test('test 2', async ({}) => {
         expect(counterWorker).toBe(1);
+        expect(counterHooksIncluded).toBe(2);
         expect(counterTest).toBe(2);
       });
       test.afterEach(async ({}) => {
         expect(counterWorker).toBe(1);
         expect(counterTest === 1 || counterTest === 2).toBe(true);
+        expect(counterHooksIncluded === 1 || counterHooksIncluded === 2).toBe(true);
       });
       test.afterAll(async ({}) => {
         expect(counterWorker).toBe(1);
+        expect(counterHooksIncluded).toBe(2);
         expect(counterTest).toBe(2);
       });
     `

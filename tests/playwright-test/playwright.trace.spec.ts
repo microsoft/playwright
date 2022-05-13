@@ -176,6 +176,41 @@ test('should not save sources when not requested', async ({ runInlineTest }, tes
   expect([...resources.keys()].filter(f => f.includes('src@'))).toHaveLength(0);
 });
 
+test('should work in serial mode', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { use: { trace: 'retain-on-failure' } };
+    `,
+    'a.spec.ts': `
+      const { test } = pwt;
+
+      test.describe.serial('serial', () => {
+        let page;
+        test.beforeAll(async ({ browser }) => {
+          page = await browser.newPage();
+        });
+
+        test.afterAll(async () => {
+          await page.close();
+        });
+
+        test('passes', async ({}, testInfo) => {
+        });
+
+        test('fails', async ({}, testInfo) => {
+          throw new Error('oh my');
+        });
+      });
+    `,
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(fs.existsSync(testInfo.outputPath('test-results', 'a-serial-passes', 'trace.zip'))).toBeFalsy();
+  expect(fs.existsSync(testInfo.outputPath('test-results', 'a-serial-fails', 'trace.zip'))).toBeTruthy();
+});
+
 async function parseTrace(file: string): Promise<Map<string, Buffer>> {
   const zipFS = new ZipFileSystem(file);
   const resources = new Map<string, Buffer>();
