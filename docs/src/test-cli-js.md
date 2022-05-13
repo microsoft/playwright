@@ -90,7 +90,7 @@ Complete set of Playwright Test options is available in the [configuration file]
 
 - `--forbid-only`: Whether to disallow `test.only`. Useful on CI.
 
-- `-g <grep>` or `--grep <grep>`: Only run tests matching this regular expression. For example, this will run `'should add to cart'` when passed `-g="add to cart"`.
+- `-g <grep>` or `--grep <grep>`: Only run tests matching this regular expression. For example, this will run `'should add to cart'` when passed `-g "add to cart"`.
 
 - `--grep-invert <grep>`: Only run tests **not** matching this regular expression. The opposite of `--grep`.
 
