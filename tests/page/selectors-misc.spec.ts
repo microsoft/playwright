@@ -17,7 +17,7 @@
 
 import { test as it, expect } from './pageTest';
 
-it('should work for open shadow roots', async ({ page, server }) => {
+it('should work for open shadow roots foo', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/deep-shadow.html');
   expect(await page.$eval(`id=target`, e => e.textContent)).toBe('Hello from root2');
   expect(await page.$eval(`data-testid=foo`, e => e.textContent)).toBe('Hello from root1');
