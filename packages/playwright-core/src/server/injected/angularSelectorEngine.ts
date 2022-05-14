@@ -46,10 +46,10 @@ function buildComponentsAngularTree(root: Document | ShadowRoot | Element, roots
         const currentComponent: AngularComponent | null = (window as any).ng.getComponent(node);
         const parentComponent: AngularComponent | null = (window as any).ng.getOwningComponent(node);
 
-        const parentNativeElement = parentComponent ? (window as any).ng.getHostElement(parentComponent) : (window as any).ng.getHostElement(node);
+        const parentNativeElement: Element = parentComponent ? (window as any).ng.getHostElement(parentComponent) : (window as any).ng.getHostElement(node);
         roots.push({
           directives: (window as any).ng.getDirectives(node),
-          name: currentComponent!.constructor.name || null,
+          name: node.tagName,
           nativeElement: node,
           properties: currentComponent! || parentComponent!,
           parent: parentComponent,

@@ -212,7 +212,23 @@ Selectors are strings that are used to create [Locator]s. Locators are used to p
   ```
   Learn more about [Vue selectors][vue].
 
-
+- Angular selector (experimental)
+  ```js
+  await page.locator('_angular=app-list-item[text *= "milk" i]').click();
+  ```
+  ```java
+  page.locator("_angular=app-list-item[text *= 'milk' i]").click();
+  ```
+  ```python async
+  await page.locator("_angular=app-list-item[text *= 'milk' i]").click()
+  ```
+  ```python sync
+  page.locator("_angular=app-list-item[text *= 'milk' i]").click()
+  ```
+  ```csharp
+  await page.Locator("_angular=app-list-item[text *= 'milk' i]").ClickAsync();
+  ```
+  Learn more about [Angular selectors][angular].
 
 ## Text selector
 
@@ -945,6 +961,31 @@ Vue selectors support Vue2 and above.
 Vue selectors, as well as [Vue DevTools](https://chrome.google.com/webstore/detail/react-developer-tools/fmkadmapgofadopljbjfkapdkoienihi), only work against **unminified** application builds.
 :::
 
+## Angular selectors
+
+:::note
+Angular selectors are experimental and prefixed with `_`. The functionality might change in future.
+:::
+
+Vue selectors allow selecting elements by their component name and property values. The syntax is very similar to [attribute selectors](https://developer.mozilla.org/en-US/docs/Web/CSS/Attribute_selectors) and supports all attribute selector operators.
+
+In Angular selectors, component names are transcribed with **kebab-case**.
+
+Selector examples:
+
+- match by **component**: `_angular=app-root`
+- match by component and **exact property value**, case-sensitive: `_angular=app-book-item[author = "Steven King"]`
+- match by property value only, **case-insensitive**: `_angular=[author = "steven king" i]`
+- match by component and **truthy property value**: `_angular=app-my-button[enabled]`
+- match by component and **boolean value**: `_angular=app-my-button[enabled = false]`
+- match by property **value substring**: `_angular=[author *= "King"]`
+- match by component and **multiple properties**: `_angular=app-book-item[author *= "king" i][year = 1990]`
+- match by **nested** property value: `_angular=[some.nested.value = 12]`
+- match by component and property value **prefix**: `_angular=app-book-item[author ^= "Steven"]`
+- match by component and property value **suffix**: `_angular=app-book-item[author $= "Steven"]`
+- match by property value **regex**: `_angular=[author = /Steven(\\s+King)?/i]`
+
+To find Vue element names in a tree use [Angular DevTools](https://chrome.google.com/webstore/detail/angular-devtools/ienfalfjdbdpebioblfackkekamfmbnh).
 
 ## Role selector
 
@@ -1356,4 +1397,5 @@ await page.Locator("//*[@id='tsf']/div[2]/div[1]/div[1]/div/div[2]/input").Click
 [xpath]: #xpath-selectors
 [react]: #react-selectors
 [vue]: #vue-selectors
+[angular]: #angular-selectors
 [id]: #id-data-testid-data-test-id-data-test-selectors
