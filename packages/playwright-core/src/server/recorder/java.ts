@@ -81,18 +81,10 @@ export class JavaLanguageGenerator implements LanguageGenerator {
       });`;
     }
 
-    if (signals.waitForNavigation) {
-      code = `
-      // ${pageAlias}.waitForNavigation(new Page.WaitForNavigationOptions().setUrl(${quote(signals.waitForNavigation.url)}), () ->
-      ${pageAlias}.waitForNavigation(() -> {
-        ${code}
-      });`;
-    }
-
     formatter.add(code);
 
     if (signals.assertNavigation)
-      formatter.add(`// assertThat(${pageAlias}).hasURL(${quote(signals.assertNavigation.url)});`);
+      formatter.add(`assertThat(${pageAlias}).hasURL(${quote(signals.assertNavigation.url)});`);
     return formatter.format();
   }
 

@@ -115,18 +115,12 @@ class Recorder {
   }
 
   async waitForOutput(file: string, text: string): Promise<Map<string, Source>> {
-    const sources: Source[] = await this.recorderPage.evaluate((params: { text: string, file: string }) => {
+    const handle = await this.recorderPage.waitForFunction((params: { text: string, file: string }) => {
       const w = window as any;
-      return new Promise(f => {
-        const poll = () => {
-          const source = (w.playwrightSourcesEchoForTest || []).find((s: Source) => s.file === params.file);
-          if (source && source.text.includes(params.text))
-            f(w.playwrightSourcesEchoForTest);
-          setTimeout(poll, 300);
-        };
-        poll();
-      });
-    }, { text, file });
+      const source = (w.playwrightSourcesEchoForTest || []).find((s: Source) => s.file === params.file);
+      return source && source.text.includes(params.text) ? w.playwrightSourcesEchoForTest : null;
+    }, { text, file }, { timeout: 8000, polling: 300 });
+    const sources: Source[] = await handle.jsonValue();
     for (const source of sources)
       this._sources.set(source.file, source);
     return this._sources;

@@ -70,17 +70,7 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
 
     const lines: string[] = [];
     const actionCall = this._generateActionCall(action, actionInContext.frame.isMainFrame);
-    if (signals.waitForNavigation) {
-      lines.push(`await ${pageAlias}.RunAndWaitForNavigationAsync(async () =>`);
-      lines.push(`{`);
-      lines.push(`    await ${subject}.${actionCall};`);
-      lines.push(`}/*, new ${actionInContext.frame.isMainFrame ? 'Page' : 'Frame'}WaitForNavigationOptions`);
-      lines.push(`{`);
-      lines.push(`    UrlString = ${quote(signals.waitForNavigation.url)}`);
-      lines.push(`}*/);`);
-    } else {
-      lines.push(`await ${subject}.${actionCall};`);
-    }
+    lines.push(`await ${subject}.${actionCall};`);
 
     if (signals.download) {
       lines.unshift(`var download${signals.download.downloadAlias} = await ${pageAlias}.RunAndWaitForDownloadAsync(async () =>\n{`);
@@ -96,7 +86,7 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
       formatter.add(line);
 
     if (signals.assertNavigation)
-      formatter.add(`  // Assert.AreEqual(${quote(signals.assertNavigation.url)}, ${pageAlias}.Url);`);
+      formatter.add(`await ${pageAlias}.WaitForURLAsync(${quote(signals.assertNavigation.url)});`);
     return formatter.format();
   }
 

@@ -532,10 +532,10 @@ test.describe('cli codegen', () => {
     const [, sources] = await Promise.all([
       // This will click, finish the click, then mouse move, then navigate.
       page.click('button'),
-      recorder.waitForOutput('JavaScript', 'waitForNavigation'),
+      recorder.waitForOutput('JavaScript', 'waitForURL'),
     ]);
 
-    expect(sources.get('JavaScript').text).toContain(`page.waitForNavigation(/*{ url: '${server.EMPTY_PAGE}' }*/)`);
+    expect(sources.get('JavaScript').text).toContain(`page.waitForURL('${server.EMPTY_PAGE}')`);
   });
 
   test('should --save-trace', async ({ runCLI }, testInfo) => {

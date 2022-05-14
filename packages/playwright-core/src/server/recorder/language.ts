@@ -47,15 +47,12 @@ export function sanitizeDeviceOptions(device: any, options: BrowserContextOption
 }
 
 export function toSignalMap(action: Action) {
-  let waitForNavigation: NavigationSignal | undefined;
   let assertNavigation: NavigationSignal | undefined;
   let popup: PopupSignal | undefined;
   let download: DownloadSignal | undefined;
   let dialog: DialogSignal | undefined;
   for (const signal of action.signals) {
-    if (signal.name === 'navigation' && signal.isAsync)
-      waitForNavigation = signal;
-    else if (signal.name === 'navigation' && !signal.isAsync)
+    if (signal.name === 'navigation')
       assertNavigation = signal;
     else if (signal.name === 'popup')
       popup = signal;
@@ -65,7 +62,6 @@ export function toSignalMap(action: Action) {
       dialog = signal;
   }
   return {
-    waitForNavigation,
     assertNavigation,
     popup,
     download,

@@ -136,7 +136,6 @@ export class CodeGenerator extends EventEmitter {
         return;
       if (signal.name === 'download' && signals.length && signals[signals.length - 1].name === 'navigation')
         signals.length = signals.length - 1;
-      signal.isAsync = true;
       this._lastAction.action.signals.push(signal);
       this.emit('change');
       return;

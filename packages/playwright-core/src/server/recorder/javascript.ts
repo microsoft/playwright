@@ -75,7 +75,7 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
   });`);
     }
 
-    const emitPromiseAll = signals.waitForNavigation || signals.popup || signals.download;
+    const emitPromiseAll = signals.popup || signals.download;
     if (emitPromiseAll) {
       // Generate either await Promise.all([]) or
       // const [popup1] = await Promise.all([]).
@@ -91,26 +91,22 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
     if (signals.popup)
       formatter.add(`${pageAlias}.waitForEvent('popup'),`);
 
-    // Navigation signal.
-    if (signals.waitForNavigation)
-      formatter.add(`${pageAlias}.waitForNavigation(/*{ url: ${quote(signals.waitForNavigation.url)} }*/),`);
-
     // Download signals.
     if (signals.download)
       formatter.add(`${pageAlias}.waitForEvent('download'),`);
 
-    const prefix = (signals.popup || signals.waitForNavigation || signals.download) ? '' : 'await ';
+    const prefix = (signals.popup || signals.download) ? '' : 'await ';
     const actionCall = this._generateActionCall(action);
-    const suffix = (signals.waitForNavigation || emitPromiseAll) ? '' : ';';
+    const suffix = emitPromiseAll ? '' : ';';
     formatter.add(`${prefix}${subject}.${actionCall}${suffix}`);
 
     if (emitPromiseAll) {
       formatter.add(`]);`);
     } else if (signals.assertNavigation) {
       if (this._isTest)
-        formatter.add(`  await expect(${pageAlias}).toHaveURL(${quote(signals.assertNavigation.url)});`);
+        formatter.add(`await expect(${pageAlias}).toHaveURL(${quote(signals.assertNavigation.url)});`);
       else
-        formatter.add(`  // assert.equal(${pageAlias}.url(), ${quote(signals.assertNavigation.url)});`);
+        formatter.add(`await ${pageAlias}.waitForURL(${quote(signals.assertNavigation.url)});`);
     }
     return formatter.format();
   }
