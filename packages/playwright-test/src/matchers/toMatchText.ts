@@ -108,6 +108,6 @@ export function toExpectedTextValues(items: (string | RegExp)[], options: { matc
     regexFlags: isRegExp(i) ? i.flags : undefined,
     matchSubstring: options.matchSubstring,
     normalizeWhiteSpace: options.normalizeWhiteSpace,
-    ignoreCase: isRegExp(i) ? i.flags === 'i' : isString(i) ? options.ignoreCase : undefined,
+    ignoreCase: isRegExp(i) ? i.flags.includes('i') : isString(i) ? options.ignoreCase : undefined,
   }));
 }
