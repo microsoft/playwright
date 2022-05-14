@@ -17,6 +17,7 @@
 import type { SelectorEngine, SelectorRoot } from './selectorEngine';
 import { XPathEngine } from './xpathSelectorEngine';
 import { ReactEngine } from './reactSelectorEngine';
+import { AngularEngine } from './angularSelectorEngine';
 import { VueEngine } from './vueSelectorEngine';
 import { RoleEngine } from './roleSelectorEngine';
 import type { NestedSelectorBody, ParsedSelector, ParsedSelectorPart } from '../isomorphic/selectorParser';
@@ -88,6 +89,7 @@ export class InjectedScript {
     this._engines.set('xpath:light', XPathEngine);
     this._engines.set('_react', ReactEngine);
     this._engines.set('_vue', VueEngine);
+    this._engines.set('_angular', AngularEngine);
     this._engines.set('role', RoleEngine);
     this._engines.set('text', this._createTextEngine(true));
     this._engines.set('text:light', this._createTextEngine(false));
