@@ -27,16 +27,6 @@ if [[ ($1 == '--help') || ($1 == '-h') ]]; then
   exit 0
 fi
 
-if [[ ("${GITHUB_REPOSITORY}" != "microsoft/playwright") && ("${GITHUB_REPOSITORY}" != "microsoft/playwright-internal") ]]; then
-  echo "NOTE: skipping dashboard uploading from fork"
-  exit 0
-fi
-
-if [[ "${GITHUB_REF}" != "refs/heads/main" && "${GITHUB_REF}" != 'refs/heads/release-'* ]]; then
-  echo "NOTE: skipping dashboard uploading from Playwright branches"
-  exit 0
-fi
-
 if [[ -z "${FLAKINESS_CONNECTION_STRING}" ]]; then
   echo "ERROR: \$FLAKINESS_CONNECTION_STRING environment variable is missing."
   echo "       'Azure Account Name' and 'Azure Account Key' secrets are required"
