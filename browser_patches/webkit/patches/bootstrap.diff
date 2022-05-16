@@ -2245,7 +2245,7 @@ diff --git a/Source/WebCore/Modules/speech/cocoa/WebSpeechRecognizerTask.mm b/So
 index a941d76a4f748718df1e3cff2a6c5e0827f48891..f62db5a27ac0e4c12430e7d19e60c83d768ace22 100644
 --- a/Source/WebCore/Modules/speech/cocoa/WebSpeechRecognizerTask.mm
 +++ b/Source/WebCore/Modules/speech/cocoa/WebSpeechRecognizerTask.mm
-@@ -198,6 +198,7 @@ NS_ASSUME_NONNULL_BEGIN
+@@ -198,6 +198,7 @@ - (void)sendEndIfNeeded
  
  - (void)speechRecognizer:(SFSpeechRecognizer *)speechRecognizer availabilityDidChange:(BOOL)available
  {
@@ -2253,7 +2253,7 @@ index a941d76a4f748718df1e3cff2a6c5e0827f48891..f62db5a27ac0e4c12430e7d19e60c83d
      ASSERT(isMainThread());
  
      if (available || !_task)
-@@ -211,6 +212,7 @@ NS_ASSUME_NONNULL_BEGIN
+@@ -211,6 +212,7 @@ - (void)speechRecognizer:(SFSpeechRecognizer *)speechRecognizer availabilityDidC
  
  - (void)speechRecognitionTask:(SFSpeechRecognitionTask *)task didHypothesizeTranscription:(SFTranscription *)transcription
  {
@@ -2261,7 +2261,7 @@ index a941d76a4f748718df1e3cff2a6c5e0827f48891..f62db5a27ac0e4c12430e7d19e60c83d
      ASSERT(isMainThread());
  
      [self sendSpeechStartIfNeeded];
-@@ -219,6 +221,7 @@ NS_ASSUME_NONNULL_BEGIN
+@@ -219,6 +221,7 @@ - (void)speechRecognitionTask:(SFSpeechRecognitionTask *)task didHypothesizeTran
  
  - (void)speechRecognitionTask:(SFSpeechRecognitionTask *)task didFinishRecognition:(SFSpeechRecognitionResult *)recognitionResult
  {
@@ -2269,7 +2269,7 @@ index a941d76a4f748718df1e3cff2a6c5e0827f48891..f62db5a27ac0e4c12430e7d19e60c83d
      ASSERT(isMainThread());
      [self callbackWithTranscriptions:recognitionResult.transcriptions isFinal:YES];
  
-@@ -230,6 +233,7 @@ NS_ASSUME_NONNULL_BEGIN
+@@ -230,6 +233,7 @@ - (void)speechRecognitionTask:(SFSpeechRecognitionTask *)task didFinishRecogniti
  
  - (void)speechRecognitionTaskWasCancelled:(SFSpeechRecognitionTask *)task
  {
@@ -3767,7 +3767,7 @@ index 12dc38a0bb33578e0c468c690b4ae6d77f0cd1e6..8402d34f8099fa040e5ebdefc217b060
      void discardBindings();
  
 diff --git a/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp b/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp
-index a6601cae918cc76aab630e88c05acc445977169c..cb11fe1ae599c802d029f09d257a7fc29a8e7e9f 100644
+index a6601cae918cc76aab630e88c05acc445977169c..1eccb300c50fd774dafab643b545367b51402830 100644
 --- a/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp
 +++ b/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp
 @@ -45,6 +45,7 @@
@@ -3825,7 +3825,15 @@ index a6601cae918cc76aab630e88c05acc445977169c..cb11fe1ae599c802d029f09d257a7fc2
  }
  
  void InspectorNetworkAgent::willSendRequestOfType(ResourceLoaderIdentifier identifier, DocumentLoader* loader, ResourceRequest& request, InspectorInstrumentation::LoadType loadType)
-@@ -1194,6 +1204,9 @@ Protocol::ErrorStringOr<void> InspectorNetworkAgent::interceptWithRequest(const
+@@ -914,6 +924,7 @@ void InspectorNetworkAgent::continuePendingResponses()
+ 
+ Protocol::ErrorStringOr<void> InspectorNetworkAgent::setExtraHTTPHeaders(Ref<JSON::Object>&& headers)
+ {
++    m_extraRequestHeaders.clear();
+     for (auto& entry : headers.get()) {
+         auto stringValue = entry.value->asString();
+         if (!!stringValue)
+@@ -1194,6 +1205,9 @@ Protocol::ErrorStringOr<void> InspectorNetworkAgent::interceptWithRequest(const
          return makeUnexpected("Missing pending intercept request for given requestId"_s);
  
      auto& loader = *pendingRequest->m_loader;
@@ -3835,7 +3843,7 @@ index a6601cae918cc76aab630e88c05acc445977169c..cb11fe1ae599c802d029f09d257a7fc2
      ResourceRequest request = loader.request();
      if (!!url)
          request.setURL(URL({ }, url));
-@@ -1293,14 +1306,23 @@ Protocol::ErrorStringOr<void> InspectorNetworkAgent::interceptRequestWithRespons
+@@ -1293,14 +1307,23 @@ Protocol::ErrorStringOr<void> InspectorNetworkAgent::interceptRequestWithRespons
      response.setHTTPStatusCode(status);
      response.setHTTPStatusText(AtomString { statusText });
      HTTPHeaderMap explicitHeaders;
@@ -3861,7 +3869,7 @@ index a6601cae918cc76aab630e88c05acc445977169c..cb11fe1ae599c802d029f09d257a7fc2
          if (loader->reachedTerminalState())
              return;
  
-@@ -1348,6 +1370,12 @@ Protocol::ErrorStringOr<void> InspectorNetworkAgent::interceptRequestWithError(c
+@@ -1348,6 +1371,12 @@ Protocol::ErrorStringOr<void> InspectorNetworkAgent::interceptRequestWithError(c
      return { };
  }
  
@@ -3874,7 +3882,7 @@ index a6601cae918cc76aab630e88c05acc445977169c..cb11fe1ae599c802d029f09d257a7fc2
  bool InspectorNetworkAgent::shouldTreatAsText(const String& mimeType)
  {
      return startsWithLettersIgnoringASCIICase(mimeType, "text/"_s)
-@@ -1389,6 +1417,12 @@ std::optional<String> InspectorNetworkAgent::textContentForCachedResource(Cached
+@@ -1389,6 +1418,12 @@ std::optional<String> InspectorNetworkAgent::textContentForCachedResource(Cached
      return std::nullopt;
  }
  
@@ -9017,7 +9025,7 @@ diff --git a/Source/WebKit/NetworkProcess/cocoa/NetworkSessionCocoa.mm b/Source/
 index 5623a4e3c11dbfa978ecc63f3b762d85fe16ee29..e7e6f789ffd5b70f50bba7bbc8a04bcdebf7c77e 100644
 --- a/Source/WebKit/NetworkProcess/cocoa/NetworkSessionCocoa.mm
 +++ b/Source/WebKit/NetworkProcess/cocoa/NetworkSessionCocoa.mm
-@@ -720,7 +720,7 @@ void NetworkSessionCocoa::setClientAuditToken(const WebCore::AuthenticationChall
+@@ -720,7 +720,7 @@ - (void)URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task didRece
  
      if ([challenge.protectionSpace.authenticationMethod isEqualToString:NSURLAuthenticationMethodServerTrust]) {
          sessionCocoa->setClientAuditToken(challenge);
@@ -10558,7 +10566,7 @@ index e6f2fcf02b24fa16021c3be83f6116f989610027..bc2ddd59dd037fe3f52f996124b8cd2d
  #import <WebCore/Credential.h>
  #import <WebCore/RegistrationDatabase.h>
  #import <WebCore/ServiceWorkerClientData.h>
-@@ -234,6 +235,11 @@ static WallTime toSystemClockTime(NSDate *date)
+@@ -234,6 +235,11 @@ - (void)removeDataOfTypes:(NSSet *)dataTypes modifiedSince:(NSDate *)date comple
      });
  }
  
@@ -10737,7 +10745,7 @@ diff --git a/Source/WebKit/UIProcess/API/Cocoa/_WKProcessPoolConfiguration.mm b/
 index cb7445b7fe814feff50a14b8dd25f5a32f70a17d..d6d2b2d5ed41ffda551e47dd14801c0e036a0890 100644
 --- a/Source/WebKit/UIProcess/API/Cocoa/_WKProcessPoolConfiguration.mm
 +++ b/Source/WebKit/UIProcess/API/Cocoa/_WKProcessPoolConfiguration.mm
-@@ -257,6 +257,16 @@
+@@ -257,6 +257,16 @@ - (BOOL)processSwapsOnNavigation
      return _processPoolConfiguration->processSwapsOnNavigation();
  }
  
@@ -20978,7 +20986,7 @@ diff --git a/Source/WebKitLegacy/mac/WebView/WebHTMLView.mm b/Source/WebKitLegac
 index 9f9c67523b8fac9025d2cec101adf452631ffc61..737d8dab4f7aa1fe446b2dcfdc32fe83e02a4555 100644
 --- a/Source/WebKitLegacy/mac/WebView/WebHTMLView.mm
 +++ b/Source/WebKitLegacy/mac/WebView/WebHTMLView.mm
-@@ -4189,7 +4189,7 @@ static BOOL currentScrollIsBlit(NSView *clipView)
+@@ -4189,7 +4189,7 @@ - (void)mouseDown:(WebEvent *)event
      _private->handlingMouseDownEvent = NO;
  }
  
@@ -20991,7 +20999,7 @@ diff --git a/Source/WebKitLegacy/mac/WebView/WebView.mm b/Source/WebKitLegacy/ma
 index 42f0a9da1fc329d13893d86905f5e6435df35ae2..04b066da6388038d5dcff5c509357b074a0c961b 100644
 --- a/Source/WebKitLegacy/mac/WebView/WebView.mm
 +++ b/Source/WebKitLegacy/mac/WebView/WebView.mm
-@@ -4043,7 +4043,7 @@ IGNORE_WARNINGS_END
+@@ -4043,7 +4043,7 @@ + (void)_doNotStartObservingNetworkReachability
  }
  #endif // PLATFORM(IOS_FAMILY)
  
@@ -21000,7 +21008,7 @@ index 42f0a9da1fc329d13893d86905f5e6435df35ae2..04b066da6388038d5dcff5c509357b07
  
  - (NSArray *)_touchEventRegions
  {
-@@ -4085,7 +4085,7 @@ IGNORE_WARNINGS_END
+@@ -4085,7 +4085,7 @@ - (NSArray *)_touchEventRegions
      }).autorelease();
  }
  
