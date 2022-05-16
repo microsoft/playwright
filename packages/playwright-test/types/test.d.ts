@@ -3349,7 +3349,7 @@ interface LocatorAssertions {
      * - finite animations are fast-forwarded to completion, so they'll fire `transitionend` event.
      * - infinite animations are canceled to initial state, and then played over after the screenshot.
      *
-     * Defaults to `"allow"` that leaves animations untouched.
+     * Defaults to `"disabled"` that disables animations.
      */
     animations?: "disabled"|"allow";
 
@@ -3386,7 +3386,9 @@ interface LocatorAssertions {
     /**
      * When set to `"css"`, screenshot will have a single pixel per each css pixel on the page. For high-dpi devices, this will
      * keep screenshots small. Using `"device"` option will produce a single pixel per each device pixel, so screenhots of
-     * high-dpi devices will be twice as large or even larger. Defaults to `"device"`.
+     * high-dpi devices will be twice as large or even larger.
+     *
+     * Defaults to `"css"`.
      */
     scale?: "css"|"device";
 
@@ -3424,7 +3426,7 @@ interface LocatorAssertions {
      * - finite animations are fast-forwarded to completion, so they'll fire `transitionend` event.
      * - infinite animations are canceled to initial state, and then played over after the screenshot.
      *
-     * Defaults to `"allow"` that leaves animations untouched.
+     * Defaults to `"disabled"` that disables animations.
      */
     animations?: "disabled"|"allow";
 
@@ -3461,7 +3463,9 @@ interface LocatorAssertions {
     /**
      * When set to `"css"`, screenshot will have a single pixel per each css pixel on the page. For high-dpi devices, this will
      * keep screenshots small. Using `"device"` option will produce a single pixel per each device pixel, so screenhots of
-     * high-dpi devices will be twice as large or even larger. Defaults to `"device"`.
+     * high-dpi devices will be twice as large or even larger.
+     *
+     * Defaults to `"css"`.
      */
     scale?: "css"|"device";
 
@@ -3578,7 +3582,7 @@ interface PageAssertions {
      * - finite animations are fast-forwarded to completion, so they'll fire `transitionend` event.
      * - infinite animations are canceled to initial state, and then played over after the screenshot.
      *
-     * Defaults to `"allow"` that leaves animations untouched.
+     * Defaults to `"disabled"` that disables animations.
      */
     animations?: "disabled"|"allow";
 
@@ -3646,7 +3650,9 @@ interface PageAssertions {
     /**
      * When set to `"css"`, screenshot will have a single pixel per each css pixel on the page. For high-dpi devices, this will
      * keep screenshots small. Using `"device"` option will produce a single pixel per each device pixel, so screenhots of
-     * high-dpi devices will be twice as large or even larger. Defaults to `"device"`.
+     * high-dpi devices will be twice as large or even larger.
+     *
+     * Defaults to `"css"`.
      */
     scale?: "css"|"device";
 
@@ -3683,7 +3689,7 @@ interface PageAssertions {
      * - finite animations are fast-forwarded to completion, so they'll fire `transitionend` event.
      * - infinite animations are canceled to initial state, and then played over after the screenshot.
      *
-     * Defaults to `"allow"` that leaves animations untouched.
+     * Defaults to `"disabled"` that disables animations.
      */
     animations?: "disabled"|"allow";
 
@@ -3751,7 +3757,9 @@ interface PageAssertions {
     /**
      * When set to `"css"`, screenshot will have a single pixel per each css pixel on the page. For high-dpi devices, this will
      * keep screenshots small. Using `"device"` option will produce a single pixel per each device pixel, so screenhots of
-     * high-dpi devices will be twice as large or even larger. Defaults to `"device"`.
+     * high-dpi devices will be twice as large or even larger.
+     *
+     * Defaults to `"css"`.
      */
     scale?: "css"|"device";
 
