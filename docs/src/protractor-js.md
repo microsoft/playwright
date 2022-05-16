@@ -5,7 +5,7 @@ title: "Migrating from Protractor"
 
 <!-- TOC -->
 
-## Migration Principes
+## Migration Principles
 
 - No need for "webdriver-manager" / Selenium.
 - Protractor’s [ElementFinder] ⇄ [Playwright Test Locator](./api/class-locator)
