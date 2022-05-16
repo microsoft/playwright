@@ -189,8 +189,8 @@ else
   git remote rename origin $REMOTE_BROWSER_UPSTREAM
 fi
 
-# Check if our checkout contains BASE_REVISION.
-if ! git cat-file -e "$BASE_REVISION"^{commit} 2>/dev/null; then
+# if our remote branch does not contains "BASE_REVISION" - then fetch more stuff.
+if [[ -z $(git branch -r --contains "${BASE_REVISION}" --list "${REMOTE_BROWSER_UPSTREAM}/${BASE_BRANCH}") ]]; then
   # Detach git head so that we can fetch into branch.
   git checkout --detach >/dev/null 2>/dev/null
 
