@@ -8165,7 +8165,7 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
      * - finite animations are fast-forwarded to completion, so they'll fire `transitionend` event.
      * - infinite animations are canceled to initial state, and then played over after the screenshot.
      *
-     * Defaults to `"allow"` that leaves animations untouched.
+     * Defaults to `"disabled"`.
      */
     animations?: "disabled"|"allow";
 
@@ -8202,7 +8202,9 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
     /**
      * When set to `"css"`, screenshot will have a single pixel per each css pixel on the page. For high-dpi devices, this will
      * keep screenshots small. Using `"device"` option will produce a single pixel per each device pixel, so screenhots of
-     * high-dpi devices will be twice as large or even larger. Defaults to `"device"`.
+     * high-dpi devices will be twice as large or even larger.
+     *
+     * Defaults to `"css"`.
      */
     scale?: "css"|"device";
 
@@ -15807,7 +15809,7 @@ export interface LocatorScreenshotOptions {
    * - finite animations are fast-forwarded to completion, so they'll fire `transitionend` event.
    * - infinite animations are canceled to initial state, and then played over after the screenshot.
    *
-   * Defaults to `"allow"` that leaves animations untouched.
+   * Defaults to `"disabled"`.
    */
   animations?: "disabled"|"allow";
 
@@ -15844,7 +15846,9 @@ export interface LocatorScreenshotOptions {
   /**
    * When set to `"css"`, screenshot will have a single pixel per each css pixel on the page. For high-dpi devices, this will
    * keep screenshots small. Using `"device"` option will produce a single pixel per each device pixel, so screenhots of
-   * high-dpi devices will be twice as large or even larger. Defaults to `"device"`.
+   * high-dpi devices will be twice as large or even larger.
+   *
+   * Defaults to `"css"`.
    */
   scale?: "css"|"device";
 
@@ -15959,7 +15963,7 @@ export interface PageScreenshotOptions {
    * - finite animations are fast-forwarded to completion, so they'll fire `transitionend` event.
    * - infinite animations are canceled to initial state, and then played over after the screenshot.
    *
-   * Defaults to `"allow"` that leaves animations untouched.
+   * Defaults to `"disabled"`.
    */
   animations?: "disabled"|"allow";
 
@@ -16027,7 +16031,9 @@ export interface PageScreenshotOptions {
   /**
    * When set to `"css"`, screenshot will have a single pixel per each css pixel on the page. For high-dpi devices, this will
    * keep screenshots small. Using `"device"` option will produce a single pixel per each device pixel, so screenhots of
-   * high-dpi devices will be twice as large or even larger. Defaults to `"device"`.
+   * high-dpi devices will be twice as large or even larger.
+   *
+   * Defaults to `"css"`.
    */
   scale?: "css"|"device";
 
