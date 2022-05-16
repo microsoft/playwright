@@ -59,7 +59,7 @@ title: "Release notes"
   await submitButton.click();
   ```
 
-- New web-first assertions [`method: PageAssertions.toHaveScreenshot`] and [`method: LocatorAssertions.toHaveScreenshot`] that
+- New web-first assertions [`method: PageAssertions.toHaveScreenshot#1`] and [`method: LocatorAssertions.toHaveScreenshot#1`] that
   wait for screenshot stabilization and enhances test reliability.
 
   The new assertions has screenshot-specific defaults, such as:
@@ -71,7 +71,7 @@ title: "Release notes"
   await expect(page).toHaveScreenshot();
   ```
 
-  The new [`method: PageAssertions.toHaveScreenshot`] saves screenshots at the same
+  The new [`method: PageAssertions.toHaveScreenshot#1`] saves screenshots at the same
   location as [`method: ScreenshotAssertions.toMatchSnapshot#1`].
 
 

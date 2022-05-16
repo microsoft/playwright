@@ -403,6 +403,8 @@ test('should compile with different option combinations', async ({ runTSC }) => 
       const { test } = pwt;
       test('is a test', async ({ page }) => {
         await expect(page).toHaveScreenshot();
+        await expect(page).toHaveScreenshot('img.png');
+        await expect(page).toHaveScreenshot('img.png', { threshold: 0.2, caret: 'initial' });
         await expect(page.locator('body')).toHaveScreenshot({ threshold: 0.2 });
         await expect(page).toHaveScreenshot({ maxDiffPixelRatio: 0.2 });
         await expect(page).toHaveScreenshot({
