@@ -133,13 +133,13 @@ await expect(page).toHaveScreenshot('image.png');
 Snapshot name.
 
 ### option: PageAssertions.toHaveScreenshot#1.timeout = %%-js-assertions-timeout-%%
-### option: PageAssertions.toHaveScreenshot#1.animations = %%-screenshot-option-animations-%%
+### option: PageAssertions.toHaveScreenshot#1.animations = %%-screenshot-option-animations-default-disabled-%%
 ### option: PageAssertions.toHaveScreenshot#1.caret = %%-screenshot-option-caret-%%
 ### option: PageAssertions.toHaveScreenshot#1.clip = %%-screenshot-option-clip-%%
 ### option: PageAssertions.toHaveScreenshot#1.fullPage = %%-screenshot-option-full-page-%%
 ### option: PageAssertions.toHaveScreenshot#1.mask = %%-screenshot-option-mask-%%
 ### option: PageAssertions.toHaveScreenshot#1.omitBackground = %%-screenshot-option-omit-background-%%
-### option: PageAssertions.toHaveScreenshot#1.scale = %%-screenshot-option-scale-%%
+### option: PageAssertions.toHaveScreenshot#1.scale = %%-screenshot-option-scale-default-css-%%
 ### option: PageAssertions.toHaveScreenshot#1.maxDiffPixels = %%-assertions-max-diff-pixels-%%
 ### option: PageAssertions.toHaveScreenshot#1.maxDiffPixelRatio = %%-assertions-max-diff-pixel-ratio-%%
 ### option: PageAssertions.toHaveScreenshot#1.threshold = %%-assertions-threshold-%%
@@ -159,13 +159,13 @@ await expect(page).toHaveScreenshot();
 ```
 
 ### option: PageAssertions.toHaveScreenshot#2.timeout = %%-js-assertions-timeout-%%
-### option: PageAssertions.toHaveScreenshot#2.animations = %%-screenshot-option-animations-%%
+### option: PageAssertions.toHaveScreenshot#2.animations = %%-screenshot-option-animations-default-disabled-%%
 ### option: PageAssertions.toHaveScreenshot#2.caret = %%-screenshot-option-caret-%%
 ### option: PageAssertions.toHaveScreenshot#2.clip = %%-screenshot-option-clip-%%
 ### option: PageAssertions.toHaveScreenshot#2.fullPage = %%-screenshot-option-full-page-%%
 ### option: PageAssertions.toHaveScreenshot#2.mask = %%-screenshot-option-mask-%%
 ### option: PageAssertions.toHaveScreenshot#2.omitBackground = %%-screenshot-option-omit-background-%%
-### option: PageAssertions.toHaveScreenshot#2.scale = %%-screenshot-option-scale-%%
+### option: PageAssertions.toHaveScreenshot#2.scale = %%-screenshot-option-scale-default-css-%%
 ### option: PageAssertions.toHaveScreenshot#2.maxDiffPixels = %%-assertions-max-diff-pixels-%%
 ### option: PageAssertions.toHaveScreenshot#2.maxDiffPixelRatio = %%-assertions-max-diff-pixel-ratio-%%
 ### option: PageAssertions.toHaveScreenshot#2.threshold = %%-assertions-threshold-%%
