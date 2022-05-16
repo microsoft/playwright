@@ -1022,11 +1022,12 @@ await expect(locator).toHaveScreenshot('image.png');
 Snapshot name.
 
 ### option: LocatorAssertions.toHaveScreenshot#1.timeout = %%-js-assertions-timeout-%%
-### option: LocatorAssertions.toHaveScreenshot#1.animations = %%-screenshot-option-animations-%%
+### option: LocatorAssertions.toHaveScreenshot#1.animations = %%-screenshot-option-animations-default-disabled-%%
+
 ### option: LocatorAssertions.toHaveScreenshot#1.caret = %%-screenshot-option-caret-%%
 ### option: LocatorAssertions.toHaveScreenshot#1.mask = %%-screenshot-option-mask-%%
 ### option: LocatorAssertions.toHaveScreenshot#1.omitBackground = %%-screenshot-option-omit-background-%%
-### option: LocatorAssertions.toHaveScreenshot#1.scale = %%-screenshot-option-scale-%%
+### option: LocatorAssertions.toHaveScreenshot#1.scale = %%-screenshot-option-scale-default-css-%%
 ### option: LocatorAssertions.toHaveScreenshot#1.maxDiffPixels = %%-assertions-max-diff-pixels-%%
 ### option: LocatorAssertions.toHaveScreenshot#1.maxDiffPixelRatio = %%-assertions-max-diff-pixel-ratio-%%
 ### option: LocatorAssertions.toHaveScreenshot#1.threshold = %%-assertions-threshold-%%
@@ -1046,11 +1047,12 @@ await expect(locator).toHaveScreenshot();
 ```
 
 ### option: LocatorAssertions.toHaveScreenshot#2.timeout = %%-js-assertions-timeout-%%
-### option: LocatorAssertions.toHaveScreenshot#2.animations = %%-screenshot-option-animations-%%
+### option: LocatorAssertions.toHaveScreenshot#2.animations = %%-screenshot-option-animations-default-disabled-%%
+
 ### option: LocatorAssertions.toHaveScreenshot#2.caret = %%-screenshot-option-caret-%%
 ### option: LocatorAssertions.toHaveScreenshot#2.mask = %%-screenshot-option-mask-%%
 ### option: LocatorAssertions.toHaveScreenshot#2.omitBackground = %%-screenshot-option-omit-background-%%
-### option: LocatorAssertions.toHaveScreenshot#2.scale = %%-screenshot-option-scale-%%
+### option: LocatorAssertions.toHaveScreenshot#2.scale = %%-screenshot-option-scale-default-css-%%
 ### option: LocatorAssertions.toHaveScreenshot#2.maxDiffPixels = %%-assertions-max-diff-pixels-%%
 ### option: LocatorAssertions.toHaveScreenshot#2.maxDiffPixelRatio = %%-assertions-max-diff-pixel-ratio-%%
 ### option: LocatorAssertions.toHaveScreenshot#2.threshold = %%-assertions-threshold-%%
