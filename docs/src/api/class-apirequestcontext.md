@@ -129,10 +129,13 @@ context cookies from the response. The method will automatically follow redirect
 ### param: APIRequestContext.delete.url = %%-fetch-param-url-%%
 ### param: APIRequestContext.delete.params = %%-java-csharp-fetch-params-%%
 ### option: APIRequestContext.delete.params = %%-js-python-fetch-option-params-%%
+### option: APIRequestContext.delete.params = %%-csharp-fetch-option-params-%%
 ### option: APIRequestContext.delete.headers = %%-js-python-fetch-option-headers-%%
 ### option: APIRequestContext.delete.data = %%-js-python-fetch-option-data-%%
 ### option: APIRequestContext.delete.form = %%-js-python-fetch-option-form-%%
+### option: APIRequestContext.delete.form = %%-csharp-fetch-option-form-%%
 ### option: APIRequestContext.delete.multipart = %%-js-python-fetch-option-multipart-%%
+### option: APIRequestContext.delete.multipart = %%-csharp-fetch-option-multipart-%%
 ### option: APIRequestContext.delete.timeout = %%-js-python-fetch-option-timeout-%%
 ### option: APIRequestContext.delete.failOnStatusCode = %%-js-python-fetch-option-failonstatuscode-%%
 ### option: APIRequestContext.delete.ignoreHTTPSErrors = %%-js-python-fetch-option-ignorehttpserrors-%%
@@ -155,9 +158,10 @@ Target URL or Request to get all parameters from.
 
 ### param: APIRequestContext.fetch.params = %%-java-csharp-fetch-params-%%
 ### option: APIRequestContext.fetch.params = %%-js-python-fetch-option-params-%%
+### option: APIRequestContext.fetch.params = %%-csharp-fetch-option-params-%%
 
 ### option: APIRequestContext.fetch.method
-* langs: js, python
+* langs: js, python, csharp
 - `method` <[string]>
 
 If set changes the fetch method (e.g. [PUT](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/PUT) or
@@ -166,7 +170,9 @@ If set changes the fetch method (e.g. [PUT](https://developer.mozilla.org/en-US/
 ### option: APIRequestContext.fetch.headers = %%-js-python-fetch-option-headers-%%
 ### option: APIRequestContext.fetch.data = %%-js-python-fetch-option-data-%%
 ### option: APIRequestContext.fetch.form = %%-js-python-fetch-option-form-%%
+### option: APIRequestContext.fetch.form = %%-csharp-fetch-option-form-%%
 ### option: APIRequestContext.fetch.multipart = %%-js-python-fetch-option-multipart-%%
+### option: APIRequestContext.fetch.multipart = %%-csharp-fetch-option-multipart-%%
 ### option: APIRequestContext.fetch.timeout = %%-js-python-fetch-option-timeout-%%
 ### option: APIRequestContext.fetch.failOnStatusCode = %%-js-python-fetch-option-failonstatuscode-%%
 ### option: APIRequestContext.fetch.ignoreHTTPSErrors = %%-js-python-fetch-option-ignorehttpserrors-%%
@@ -181,6 +187,7 @@ context cookies from the response. The method will automatically follow redirect
 ### param: APIRequestContext.get.url = %%-fetch-param-url-%%
 ### param: APIRequestContext.get.params = %%-java-csharp-fetch-params-%%
 ### option: APIRequestContext.get.params = %%-js-python-fetch-option-params-%%
+### option: APIRequestContext.get.params = %%-csharp-fetch-option-params-%%
 ### option: APIRequestContext.get.headers = %%-js-python-fetch-option-headers-%%
 ### option: APIRequestContext.get.timeout = %%-js-python-fetch-option-timeout-%%
 ### option: APIRequestContext.get.failOnStatusCode = %%-js-python-fetch-option-failonstatuscode-%%
@@ -196,6 +203,7 @@ context cookies from the response. The method will automatically follow redirect
 ### param: APIRequestContext.head.url = %%-fetch-param-url-%%
 ### param: APIRequestContext.head.params = %%-java-csharp-fetch-params-%%
 ### option: APIRequestContext.head.params = %%-js-python-fetch-option-params-%%
+### option: APIRequestContext.head.params = %%-csharp-fetch-option-params-%%
 ### option: APIRequestContext.head.headers = %%-js-python-fetch-option-headers-%%
 ### option: APIRequestContext.head.timeout = %%-js-python-fetch-option-timeout-%%
 ### option: APIRequestContext.head.failOnStatusCode = %%-js-python-fetch-option-failonstatuscode-%%
@@ -211,10 +219,13 @@ context cookies from the response. The method will automatically follow redirect
 ### param: APIRequestContext.patch.url = %%-fetch-param-url-%%
 ### param: APIRequestContext.patch.params = %%-java-csharp-fetch-params-%%
 ### option: APIRequestContext.patch.params = %%-js-python-fetch-option-params-%%
+### option: APIRequestContext.patch.params = %%-csharp-fetch-option-params-%%
 ### option: APIRequestContext.patch.headers = %%-js-python-fetch-option-headers-%%
 ### option: APIRequestContext.patch.data = %%-js-python-fetch-option-data-%%
 ### option: APIRequestContext.patch.form = %%-js-python-fetch-option-form-%%
+### option: APIRequestContext.patch.form = %%-csharp-fetch-option-form-%%
 ### option: APIRequestContext.patch.multipart = %%-js-python-fetch-option-multipart-%%
+### option: APIRequestContext.patch.multipart = %%-csharp-fetch-option-multipart-%%
 ### option: APIRequestContext.patch.timeout = %%-js-python-fetch-option-timeout-%%
 ### option: APIRequestContext.patch.failOnStatusCode = %%-js-python-fetch-option-failonstatuscode-%%
 ### option: APIRequestContext.patch.ignoreHTTPSErrors = %%-js-python-fetch-option-ignorehttpserrors-%%
@@ -229,10 +240,13 @@ context cookies from the response. The method will automatically follow redirect
 ### param: APIRequestContext.post.url = %%-fetch-param-url-%%
 ### param: APIRequestContext.post.params = %%-java-csharp-fetch-params-%%
 ### option: APIRequestContext.post.params = %%-js-python-fetch-option-params-%%
+### option: APIRequestContext.post.params = %%-csharp-fetch-option-params-%%
 ### option: APIRequestContext.post.headers = %%-js-python-fetch-option-headers-%%
 ### option: APIRequestContext.post.data = %%-js-python-fetch-option-data-%%
 ### option: APIRequestContext.post.form = %%-js-python-fetch-option-form-%%
+### option: APIRequestContext.post.form = %%-csharp-fetch-option-form-%%
 ### option: APIRequestContext.post.multipart = %%-js-python-fetch-option-multipart-%%
+### option: APIRequestContext.post.multipart = %%-csharp-fetch-option-multipart-%%
 ### option: APIRequestContext.post.timeout = %%-js-python-fetch-option-timeout-%%
 ### option: APIRequestContext.post.failOnStatusCode = %%-js-python-fetch-option-failonstatuscode-%%
 ### option: APIRequestContext.post.ignoreHTTPSErrors = %%-js-python-fetch-option-ignorehttpserrors-%%
@@ -247,10 +261,13 @@ context cookies from the response. The method will automatically follow redirect
 ### param: APIRequestContext.put.url = %%-fetch-param-url-%%
 ### param: APIRequestContext.put.params = %%-java-csharp-fetch-params-%%
 ### option: APIRequestContext.put.params = %%-js-python-fetch-option-params-%%
+### option: APIRequestContext.put.params = %%-csharp-fetch-option-params-%%
 ### option: APIRequestContext.put.headers = %%-js-python-fetch-option-headers-%%
 ### option: APIRequestContext.put.data = %%-js-python-fetch-option-data-%%
 ### option: APIRequestContext.put.form = %%-js-python-fetch-option-form-%%
+### option: APIRequestContext.put.form = %%-csharp-fetch-option-form-%%
 ### option: APIRequestContext.put.multipart = %%-js-python-fetch-option-multipart-%%
+### option: APIRequestContext.put.multipart = %%-csharp-fetch-option-multipart-%%
 ### option: APIRequestContext.put.timeout = %%-js-python-fetch-option-timeout-%%
 ### option: APIRequestContext.put.failOnStatusCode = %%-js-python-fetch-option-failonstatuscode-%%
 ### option: APIRequestContext.put.ignoreHTTPSErrors = %%-js-python-fetch-option-ignorehttpserrors-%%

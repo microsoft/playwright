@@ -1,5 +1,5 @@
 # class: RequestOptions
-* langs: java, csharp
+* langs: java
 
 The [RequestOptions] allows to create form data to be sent via [APIRequestContext].
 

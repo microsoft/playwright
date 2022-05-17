@@ -562,8 +562,9 @@ function renderMethod(member, parent, name, options, out) {
 
     if (arg.name === 'options') {
       if (options.mode === 'options' || options.mode === 'base') {
-        const optionsType = member.clazz.name + name.replace('<T>', '') + 'Options';
-        optionTypes.set(optionsType, arg.type);
+        const optionsType = rewriteSuggestedOptionsName(member.clazz.name + name.replace('<T>', '') + 'Options');
+        if (!optionTypes.has(optionsType) || arg.type.properties.length > optionTypes.get(optionsType).properties.length)
+          optionTypes.set(optionsType, arg.type);
         args.push(`${optionsType}? options = default`);
         argTypeMap.set(`${optionsType}? options = default`, 'options');
         addParamsDoc('options', ['Call options']);
@@ -894,3 +895,22 @@ function toAsync(name, convert) {
     return name.replace('<', 'Async<');
   return name + 'Async';
 }
+
+/**
+ * @param {string} suggestedName 
+ * @returns {string}
+ */
+function rewriteSuggestedOptionsName(suggestedName) {
+  if ([
+    'APIRequestContextDeleteOptions',
+    'APIRequestContextFetchOptions',
+    'APIRequestContextGetOptions',
+    'APIRequestContextHeadOptions',
+    'APIRequestContextPatchOptions',
+    'APIRequestContextPostOptions',
+    'APIRequestContextPutOptions',
+  ].includes(suggestedName))
+    return 'APIRequestContextOptions';
+  return suggestedName;
+}
+
