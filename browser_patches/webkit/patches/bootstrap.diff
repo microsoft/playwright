@@ -8748,6 +8748,55 @@ index fac9402820702989bf72ed2425678bfb82bd6523..40b5a6441d22714fd370ce1a7c2f534e
      // Returns the line height of the inner renderer.
      int innerLineHeight() const override;
  #endif
+diff --git a/Source/WebKit/NetworkProcess/Cookies/WebCookieManager.cpp b/Source/WebKit/NetworkProcess/Cookies/WebCookieManager.cpp
+index 3b7fd04ff503a71b9e53b3d0a25764f839005602..d0af8634fbff3f32cb713900386e125faae1dace 100644
+--- a/Source/WebKit/NetworkProcess/Cookies/WebCookieManager.cpp
++++ b/Source/WebKit/NetworkProcess/Cookies/WebCookieManager.cpp
+@@ -69,10 +69,11 @@ void WebCookieManager::deleteCookiesForHostnames(PAL::SessionID sessionID, const
+         storageSession->deleteCookiesForHostnames(hostnames);
+ }
+ 
+-void WebCookieManager::deleteAllCookies(PAL::SessionID sessionID)
++void WebCookieManager::deleteAllCookies(PAL::SessionID sessionID, CompletionHandler<void()>&& completionHandler)
+ {
+     if (auto* storageSession = m_process.storageSession(sessionID))
+         storageSession->deleteAllCookies();
++    completionHandler();
+ }
+ 
+ void WebCookieManager::deleteCookie(PAL::SessionID sessionID, const Cookie& cookie, CompletionHandler<void()>&& completionHandler)
+diff --git a/Source/WebKit/NetworkProcess/Cookies/WebCookieManager.h b/Source/WebKit/NetworkProcess/Cookies/WebCookieManager.h
+index 35ce8a9ecfc294cd6de1e7ff9310e0a57ea49d7e..6b03f334763e5c46e7d35064e3a169a8308a1b46 100644
+--- a/Source/WebKit/NetworkProcess/Cookies/WebCookieManager.h
++++ b/Source/WebKit/NetworkProcess/Cookies/WebCookieManager.h
+@@ -73,7 +73,7 @@ private:
+ 
+     void deleteCookie(PAL::SessionID, const WebCore::Cookie&, CompletionHandler<void()>&&);
+     void deleteCookiesForHostnames(PAL::SessionID, const Vector<String>&);
+-    void deleteAllCookies(PAL::SessionID);
++    void deleteAllCookies(PAL::SessionID, CompletionHandler<void()>&&);
+     void deleteAllCookiesModifiedSince(PAL::SessionID, WallTime, CompletionHandler<void()>&&);
+ 
+     void setCookie(PAL::SessionID, const Vector<WebCore::Cookie>&, CompletionHandler<void()>&&);
+diff --git a/Source/WebKit/NetworkProcess/Cookies/WebCookieManager.messages.in b/Source/WebKit/NetworkProcess/Cookies/WebCookieManager.messages.in
+index 46d9708bdb8ea74213a4636ca319a09de87f249e..d785669417f8e32f39d422ac1698b303aee5190a 100644
+--- a/Source/WebKit/NetworkProcess/Cookies/WebCookieManager.messages.in
++++ b/Source/WebKit/NetworkProcess/Cookies/WebCookieManager.messages.in
+@@ -26,13 +26,13 @@
+ messages -> WebCookieManager NotRefCounted {
+     void GetHostnamesWithCookies(PAL::SessionID sessionID) -> (Vector<String> hostnames)
+     void DeleteCookiesForHostnames(PAL::SessionID sessionID, Vector<String> hostnames)
+-    void DeleteAllCookies(PAL::SessionID sessionID)
+ 
+     void SetCookie(PAL::SessionID sessionID, Vector<WebCore::Cookie> cookie) -> ()
+     void SetCookies(PAL::SessionID sessionID, Vector<WebCore::Cookie> cookies, URL url, URL mainDocumentURL) -> ()
+     void GetAllCookies(PAL::SessionID sessionID) -> (Vector<WebCore::Cookie> cookies)
+     void GetCookies(PAL::SessionID sessionID, URL url) -> (Vector<WebCore::Cookie> cookies)
+     void DeleteCookie(PAL::SessionID sessionID, struct WebCore::Cookie cookie) -> ()
++    void DeleteAllCookies(PAL::SessionID sessionID) -> ()
+     void DeleteAllCookiesModifiedSince(PAL::SessionID sessionID, WallTime time) -> ()
+ 
+     void SetHTTPCookieAcceptPolicy(enum:uint8_t WebCore::HTTPCookieAcceptPolicy policy) -> ()
 diff --git a/Source/WebKit/NetworkProcess/NetworkConnectionToWebProcess.cpp b/Source/WebKit/NetworkProcess/NetworkConnectionToWebProcess.cpp
 index 61a609b6f9394d53f610c7e9673ada3f1e5da0de..7f317fb6da663e64ea935fb4567613315e567aa4 100644
 --- a/Source/WebKit/NetworkProcess/NetworkConnectionToWebProcess.cpp
@@ -8817,50 +8866,13 @@ index a2629e4edb214b3d26aca78da845c65d0e5aa341..d034f3a57badda1f34729afd712db7cd
      RemoveStorageAccessForFrame(WebCore::FrameIdentifier frameID, WebCore::PageIdentifier pageID);
      LogUserInteraction(WebCore::RegistrableDomain domain)
 diff --git a/Source/WebKit/NetworkProcess/NetworkProcess.cpp b/Source/WebKit/NetworkProcess/NetworkProcess.cpp
-index 0c6f2435a3c75cd5112403085ff2b9ee58e0c0fd..c459e9fdb58951ade7679b3880c025d8f1bf6f83 100644
+index 0c6f2435a3c75cd5112403085ff2b9ee58e0c0fd..12720a7b3a1279a04cde8e322d5e5b67d85ee021 100644
 --- a/Source/WebKit/NetworkProcess/NetworkProcess.cpp
 +++ b/Source/WebKit/NetworkProcess/NetworkProcess.cpp
-@@ -26,7 +26,6 @@
- 
- #include "config.h"
- #include "NetworkProcess.h"
--
- #include "ArgumentCoders.h"
- #include "Attachment.h"
- #include "AuthenticationManager.h"
-@@ -530,6 +529,41 @@ void NetworkProcess::destroySession(PAL::SessionID sessionID)
+@@ -530,6 +530,12 @@ void NetworkProcess::destroySession(PAL::SessionID sessionID)
      m_sessionsControlledByAutomation.remove(sessionID);
  }
  
-+void NetworkProcess::getAllCookies(PAL::SessionID sessionID, CompletionHandler<void(Vector<WebCore::Cookie>&&)>&& completionHandler)
-+{
-+    if (auto* networkStorageSession = storageSession(sessionID)) {
-+        completionHandler(networkStorageSession->getAllCookies());
-+        return;
-+    }
-+    completionHandler({ });
-+}
-+
-+void NetworkProcess::setCookies(PAL::SessionID sessionID, Vector<WebCore::Cookie> cookies, CompletionHandler<void(bool)>&& completionHandler) {
-+    if (auto* networkStorageSession = storageSession(sessionID)) {
-+        for (auto cookie : cookies)
-+            networkStorageSession->setCookie(cookie);
-+        completionHandler(true);
-+        return;
-+    }
-+    completionHandler(false);
-+}
-+
-+void NetworkProcess::deleteAllCookies(PAL::SessionID sessionID, CompletionHandler<void(bool)>&& completionHandler)
-+{
-+    if (auto* networkStorageSession = storageSession(sessionID)) {
-+        networkStorageSession->deleteAllCookies();
-+        completionHandler(true);
-+        return;
-+    }
-+    completionHandler(false);
-+}
-+
 +void NetworkProcess::setIgnoreCertificateErrors(PAL::SessionID sessionID, bool ignore)
 +{
 +    if (auto* networkSession = this->networkSession(sessionID))
@@ -8871,7 +8883,7 @@ index 0c6f2435a3c75cd5112403085ff2b9ee58e0c0fd..c459e9fdb58951ade7679b3880c025d8
  void NetworkProcess::dumpResourceLoadStatistics(PAL::SessionID sessionID, CompletionHandler<void(String)>&& completionHandler)
  {
 diff --git a/Source/WebKit/NetworkProcess/NetworkProcess.h b/Source/WebKit/NetworkProcess/NetworkProcess.h
-index 4cb9db009a89e6e78ecf955b4792b736c22ba1ba..c31699776b6b356f23db8f9a363f9db61269f2d0 100644
+index 4cb9db009a89e6e78ecf955b4792b736c22ba1ba..3458a5b5d4ee873969aaefa0cddd670006542bf6 100644
 --- a/Source/WebKit/NetworkProcess/NetworkProcess.h
 +++ b/Source/WebKit/NetworkProcess/NetworkProcess.h
 @@ -37,6 +37,7 @@
@@ -8890,29 +8902,23 @@ index 4cb9db009a89e6e78ecf955b4792b736c22ba1ba..c31699776b6b356f23db8f9a363f9db6
  class CurlProxySettings;
  class ProtectionSpace;
  class NetworkStorageSession;
-@@ -202,6 +204,11 @@ public:
+@@ -202,6 +204,8 @@ public:
  
      void addWebsiteDataStore(WebsiteDataStoreParameters&&);
  
-+    void getAllCookies(PAL::SessionID, CompletionHandler<void(Vector<WebCore::Cookie>&&)>&&);
-+    void setCookies(PAL::SessionID, Vector<WebCore::Cookie>, CompletionHandler<void(bool)>&&);
-+    void deleteAllCookies(PAL::SessionID, CompletionHandler<void(bool)>&&);
 +    void setIgnoreCertificateErrors(PAL::SessionID, bool);
 +
  #if ENABLE(INTELLIGENT_TRACKING_PREVENTION)
      void clearPrevalentResource(PAL::SessionID, RegistrableDomain&&, CompletionHandler<void()>&&);
      void clearUserInteraction(PAL::SessionID, RegistrableDomain&&, CompletionHandler<void()>&&);
 diff --git a/Source/WebKit/NetworkProcess/NetworkProcess.messages.in b/Source/WebKit/NetworkProcess/NetworkProcess.messages.in
-index 3206dcb97599ce445a73c9667af7d21c61f7c870..bca6a1713b685e16f0f9e080f877efe3d73460ce 100644
+index 3206dcb97599ce445a73c9667af7d21c61f7c870..78abd1fa5d52103383ef8765db299d1c544490d7 100644
 --- a/Source/WebKit/NetworkProcess/NetworkProcess.messages.in
 +++ b/Source/WebKit/NetworkProcess/NetworkProcess.messages.in
-@@ -77,6 +77,11 @@ messages -> NetworkProcess LegacyReceiver {
+@@ -77,6 +77,8 @@ messages -> NetworkProcess LegacyReceiver {
  
      PreconnectTo(PAL::SessionID sessionID, WebKit::WebPageProxyIdentifier webPageProxyID, WebCore::PageIdentifier webPageID, URL url, String userAgent, enum:uint8_t WebCore::StoredCredentialsPolicy storedCredentialsPolicy, enum:bool std::optional<WebKit::NavigatingToAppBoundDomain> isNavigatingToAppBoundDomain, enum:bool WebKit::LastNavigationWasAppInitiated lastNavigationWasAppInitiated);
  
-+    GetAllCookies(PAL::SessionID sessionID) -> (Vector<WebCore::Cookie> cookies) Async
-+    SetCookies(PAL::SessionID sessionID, Vector<WebCore::Cookie> cookies) -> (bool success) Async
-+    DeleteAllCookies(PAL::SessionID sessionID) -> (bool success) Async
 +    SetIgnoreCertificateErrors(PAL::SessionID sessionID, bool ignoreTLSErrors)
 +
  #if ENABLE(INTELLIGENT_TRACKING_PREVENTION)
@@ -10342,6 +10348,21 @@ index ae2181088f8221594c9a2b4fbe5d99f2b6936d67..0c51c08ebf3352f7ec80aa8490e7e10c
  WebProcess/WebCoreSupport/wpe/WebEditorClientWPE.cpp
  
  WebProcess/WebPage/AcceleratedSurface.cpp
+diff --git a/Source/WebKit/UIProcess/API/APIHTTPCookieStore.cpp b/Source/WebKit/UIProcess/API/APIHTTPCookieStore.cpp
+index 3311eedbb49db7d2cc15b275a8bd9db34d3be119..ed3e1a6b0b1c676d93a1bd8f75591bbaf2fa7d7a 100644
+--- a/Source/WebKit/UIProcess/API/APIHTTPCookieStore.cpp
++++ b/Source/WebKit/UIProcess/API/APIHTTPCookieStore.cpp
+@@ -119,9 +119,7 @@ void HTTPCookieStore::deleteAllCookies(CompletionHandler<void()>&& completionHan
+     if (!m_owningDataStore)
+         return completionHandler();
+     auto& cookieManager = m_owningDataStore->networkProcess().cookieManager();
+-    cookieManager.deleteAllCookies(m_owningDataStore->sessionID());
+-    // FIXME: The CompletionHandler should be passed to WebCookieManagerProxy::deleteAllCookies.
+-    RunLoop::main().dispatch(WTFMove(completionHandler));
++    cookieManager.deleteAllCookies(m_owningDataStore->sessionID(), WTFMove(completionHandler));
+ }
+ 
+ void HTTPCookieStore::setHTTPCookieAcceptPolicy(WebCore::HTTPCookieAcceptPolicy policy, CompletionHandler<void()>&& completionHandler)
 diff --git a/Source/WebKit/UIProcess/API/APIProcessPoolConfiguration.cpp b/Source/WebKit/UIProcess/API/APIProcessPoolConfiguration.cpp
 index a16fe13c08576194ec8c43e9dae62a20566904be..f1bc17b878c3103475fa371e05f53cce3a27cff1 100644
 --- a/Source/WebKit/UIProcess/API/APIProcessPoolConfiguration.cpp
@@ -14522,10 +14543,10 @@ index 0000000000000000000000000000000000000000..d0e11ed81a6257c011df23d5870da740
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..51950b0673ff515122cb26c0b6beffadb2d3b765
+index 0000000000000000000000000000000000000000..1d3c9874cd78f2d881424f9e0dcbbbb23ad226fe
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp
-@@ -0,0 +1,974 @@
+@@ -0,0 +1,967 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -14567,6 +14588,7 @@ index 0000000000000000000000000000000000000000..51950b0673ff515122cb26c0b6beffad
 +#include "SandboxExtension.h"
 +#include "StorageNamespaceIdentifier.h"
 +#include "WebAutomationSession.h"
++#include "WebCookieManagerProxy.h"
 +#include "WebGeolocationManagerProxy.h"
 +#include "WebGeolocationPosition.h"
 +#include "WebInspectorUtilities.h"
@@ -15272,7 +15294,7 @@ index 0000000000000000000000000000000000000000..51950b0673ff515122cb26c0b6beffad
 +
 +    PAL::SessionID sessionID = browserContext->dataStore->sessionID();
 +    NetworkProcessProxy& networkProcess = browserContext->dataStore->networkProcess();
-+    networkProcess.sendWithAsyncReply(Messages::NetworkProcess::GetAllCookies(sessionID),
++    networkProcess.cookieManager().getAllCookies(sessionID,
 +        [callback = WTFMove(callback)](Vector<WebCore::Cookie> allCookies) {
 +            if (!callback->isActive())
 +                return;
@@ -15280,7 +15302,7 @@ index 0000000000000000000000000000000000000000..51950b0673ff515122cb26c0b6beffad
 +            for (const auto& cookie : allCookies)
 +                cookies->addItem(buildObjectForCookie(cookie));
 +            callback->sendSuccess(WTFMove(cookies));
-+        }, 0);
++        });
 +}
 +
 +void InspectorPlaywrightAgent::setCookies(const String& browserContextID, Ref<JSON::Array>&& in_cookies, Ref<SetCookiesCallback>&& callback) {
@@ -15334,17 +15356,12 @@ index 0000000000000000000000000000000000000000..51950b0673ff515122cb26c0b6beffad
 +        cookies.append(WTFMove(cookie));
 +    }
 +
-+    networkProcess.sendWithAsyncReply(Messages::NetworkProcess::SetCookies(sessionID, WTFMove(cookies)),
-+        [callback = WTFMove(callback)](bool success) {
++    networkProcess.cookieManager().setCookies(sessionID, WTFMove(cookies),
++        [callback = WTFMove(callback)]() {
 +            if (!callback->isActive())
 +                return;
-+
-+            if (success)
-+                callback->sendSuccess();
-+            else
-+                callback->sendFailure("Internal error: no network storage"_s);
 +            callback->sendSuccess();
-+        }, 0);
++        });
 +}
 +
 +void InspectorPlaywrightAgent::deleteAllCookies(const String& browserContextID, Ref<DeleteAllCookiesCallback>&& callback) {
@@ -15357,15 +15374,12 @@ index 0000000000000000000000000000000000000000..51950b0673ff515122cb26c0b6beffad
 +
 +    NetworkProcessProxy& networkProcess = browserContext->dataStore->networkProcess();
 +    PAL::SessionID sessionID = browserContext->dataStore->sessionID();
-+    networkProcess.sendWithAsyncReply(Messages::NetworkProcess::DeleteAllCookies(sessionID),
-+        [callback = WTFMove(callback)](bool success) {
++    networkProcess.cookieManager().deleteAllCookies(sessionID,
++        [callback = WTFMove(callback)]() {
 +            if (!callback->isActive())
 +                return;
-+            if (success)
-+                callback->sendSuccess();
-+            else
-+                callback->sendFailure("Internal error: no network storage"_s);
-+        }, 0);
++            callback->sendSuccess();
++        });
 +}
 +
 +Inspector::Protocol::ErrorStringOr<void> InspectorPlaywrightAgent::setLanguages(Ref<JSON::Array>&& languages, const String& browserContextID)
@@ -16083,6 +16097,38 @@ index 8a506c2f4b96185560c8ee198f9af9575152b15a..2e76e28266dfd71061373e8ee4211653
  
      WebPageProxy* page() const { return m_page.get(); }
  
+diff --git a/Source/WebKit/UIProcess/WebCookieManagerProxy.cpp b/Source/WebKit/UIProcess/WebCookieManagerProxy.cpp
+index a719411abe5895a6a4ce9c28e0576f94251701d6..c4a28fff84fa91754d962e7caf7e71ca07322032 100644
+--- a/Source/WebKit/UIProcess/WebCookieManagerProxy.cpp
++++ b/Source/WebKit/UIProcess/WebCookieManagerProxy.cpp
+@@ -66,10 +66,12 @@ void WebCookieManagerProxy::deleteCookiesForHostnames(PAL::SessionID sessionID,
+         m_networkProcess->send(Messages::WebCookieManager::DeleteCookiesForHostnames(sessionID, hostnames), 0);
+ }
+ 
+-void WebCookieManagerProxy::deleteAllCookies(PAL::SessionID sessionID)
++void WebCookieManagerProxy::deleteAllCookies(PAL::SessionID sessionID, CompletionHandler<void()>&& callbackFunction)
+ {
+     if (m_networkProcess)
+-        m_networkProcess->send(Messages::WebCookieManager::DeleteAllCookies(sessionID), 0);
++        m_networkProcess->sendWithAsyncReply(Messages::WebCookieManager::DeleteAllCookies(sessionID), WTFMove(callbackFunction));
++    else
++        callbackFunction();
+ }
+ 
+ void WebCookieManagerProxy::deleteCookie(PAL::SessionID sessionID, const Cookie& cookie, CompletionHandler<void()>&& callbackFunction)
+diff --git a/Source/WebKit/UIProcess/WebCookieManagerProxy.h b/Source/WebKit/UIProcess/WebCookieManagerProxy.h
+index 3dcf54ad7c8bab1b5ab6a6ec28f5a1f871a4191c..b80849fa2604e63f837f35141ee61b62cb926869 100644
+--- a/Source/WebKit/UIProcess/WebCookieManagerProxy.h
++++ b/Source/WebKit/UIProcess/WebCookieManagerProxy.h
+@@ -61,7 +61,7 @@ public:
+     void getHostnamesWithCookies(PAL::SessionID, CompletionHandler<void(Vector<String>&&)>&&);
+     void deleteCookie(PAL::SessionID, const WebCore::Cookie&, CompletionHandler<void()>&&);
+     void deleteCookiesForHostnames(PAL::SessionID, const Vector<String>&);
+-    void deleteAllCookies(PAL::SessionID);
++    void deleteAllCookies(PAL::SessionID, CompletionHandler<void()>&&);
+     void deleteAllCookiesModifiedSince(PAL::SessionID, WallTime, CompletionHandler<void()>&&);
+ 
+     void setCookies(PAL::SessionID, const Vector<WebCore::Cookie>&, CompletionHandler<void()>&&);
 diff --git a/Source/WebKit/UIProcess/WebPageInspectorEmulationAgent.cpp b/Source/WebKit/UIProcess/WebPageInspectorEmulationAgent.cpp
 new file mode 100644
 index 0000000000000000000000000000000000000000..ae45b4212bdb3f6a004cc80a1d91146b540f86f5
