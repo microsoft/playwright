@@ -310,8 +310,8 @@ Target URL.
 
 Query parameters to be sent with the URL.
 
-## java-fetch-params
-* langs: java
+## java-csharp-fetch-params
+* langs: java, csharp
 - `options` ?<[RequestOptions]>
 
 Optional request parameters.
@@ -343,7 +343,7 @@ Provides an object that will be serialized as html form using `application/x-www
 this request body. If this parameter is specified `content-type` header will be set to `application/x-www-form-urlencoded`
 unless explicitly provided.
 
-## js-pyhton-fetch-option-multipart
+## js-python-fetch-option-multipart
 * langs: js, python
 - `multipart` <[Object]<[string], [string]|[float]|[boolean]|[ReadStream]|[Object]>>
   - `name` <[string]> File name

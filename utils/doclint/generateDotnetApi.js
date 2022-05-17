@@ -407,7 +407,7 @@ function generateNameDefault(member, name, t, parent) {
           attemptedName = `${parent.name}BoundingBoxResult`;
         if (attemptedName === 'BrowserContextCookie')
           attemptedName = 'BrowserContextCookiesResult';
-        if (attemptedName === 'File')
+        if (attemptedName === 'File' || attemptedName === 'SetValue')
           attemptedName = `FilePayload`;
         if (attemptedName === 'Size')
           attemptedName = 'RequestSizesResult';

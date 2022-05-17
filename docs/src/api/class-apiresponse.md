@@ -1,5 +1,4 @@
 # class: APIResponse
-* langs: js, java, python
 
 [APIResponse] class represents responses returned by [`method: APIRequestContext.get`] and similar methods.
 
@@ -68,7 +67,7 @@ Returns the JSON representation of response body.
 This method will throw if the response body is not parsable via `JSON.parse`.
 
 ## async method: APIResponse.json
-* langs: csharp
+* langs: java, csharp
 - returns: <[null]|[JsonElement]>
 
 Returns the JSON representation of response body.

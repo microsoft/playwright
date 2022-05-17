@@ -1,5 +1,5 @@
 # class: RequestOptions
-* langs: java
+* langs: java, csharp
 
 The [RequestOptions] allows to create form data to be sent via [APIRequestContext].
 
@@ -12,6 +12,7 @@ context.request().post(
 ```
 
 ## method: RequestOptions.create
+* langs: java
 - returns: <[RequestOptions]>
 
 Creates new instance of [RequestOptions].
@@ -22,7 +23,7 @@ Creates new instance of [RequestOptions].
 Sets the request's post data.
 
 ### param: RequestOptions.setData.data
-- `data` <[string]|[Buffer]|[Serializable]>
+- `data` <[string]|[Buffer]|[Object]>
 
 Allows to set post data of the request. If the data parameter is an object, it will be serialized to json string
 and `content-type` header will be set to `application/json` if not explicitly set. Otherwise the `content-type` header will be
