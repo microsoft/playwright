@@ -276,8 +276,7 @@ export class Locator implements api.Locator {
   async _expect(customStackTrace: ParsedStackTrace, expression: string, options: Omit<FrameExpectOptions, 'expectedValue'> & { expectedValue?: any }): Promise<{ matches: boolean, received?: any, log?: string[] }> {
     return this._frame._wrapApiCall(async () => {
       const params: channels.FrameExpectParams = { selector: this._selector, expression, ...options, isNot: !!options.isNot };
-      if (options.expectedValue)
-        params.expectedValue = serializeArgument(options.expectedValue);
+      params.expectedValue = serializeArgument(options.expectedValue);
       const result = (await this._frame._channel.expect(params));
       if (result.received !== undefined)
         result.received = parseResult(result.received);
