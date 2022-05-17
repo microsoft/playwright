@@ -611,6 +611,18 @@ it('should climb up to [role=button]', async ({ page }) => {
   expect(await page.evaluate('__CLICKED')).toBe(true);
 });
 
+it('should climb up to a anchor', async ({ page }) => {
+  await page.setContent(`<a href="javascript:window.__CLICKED=true;" id="outer"><div id="inner" style="pointer-events: none">Inner</div></a>`);
+  await page.click('#inner');
+  expect(await page.evaluate('__CLICKED')).toBe(true);
+});
+
+it('should climb up to a [role=link]', async ({ page }) => {
+  await page.setContent(`<div role=link onclick="javascript:window.__CLICKED=true;" id="outer"><div id="inner" style="pointer-events: none">Inner</div></div>`);
+  await page.click('#inner');
+  expect(await page.evaluate('__CLICKED')).toBe(true);
+});
+
 it('should wait for BUTTON to be clickable when it has pointer-events:none', async ({ page }) => {
   await page.setContent('<button onclick="javascript:window.__CLICKED=true;" style="pointer-events:none"><span>Click target</span></button>');
   let done = false;
