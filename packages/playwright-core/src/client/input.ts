@@ -40,9 +40,7 @@ export class Keyboard implements api.Keyboard {
 
   async imeSetComposition(text: string, selectionStart: number, selectionEnd: number,
     options: channels.PageKeyboardImeSetCompositionOptions) {
-    await this._page._wrapApiCall(async channel => {
-      await channel.keyboardImeSetComposition({ text, selectionStart, selectionEnd, ...options });
-    });
+    await this._page._channel.keyboardImeSetComposition({ text, selectionStart, selectionEnd, ...options });
   }
 
   async type(text: string, options: channels.PageKeyboardTypeOptions = {}) {
