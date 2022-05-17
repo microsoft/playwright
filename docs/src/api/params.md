@@ -910,6 +910,15 @@ When set to `"disabled"`, stops CSS animations, CSS transitions and Web Animatio
 
 Defaults to `"allow"` that leaves animations untouched.
 
+## screenshot-option-animations-default-disabled
+- `animations` <[ScreenshotAnimations]<"disabled"|"allow">>
+
+When set to `"disabled"`, stops CSS animations, CSS transitions and Web Animations. Animations get different treatment depending on their duration:
+* finite animations are fast-forwarded to completion, so they'll fire `transitionend` event.
+* infinite animations are canceled to initial state, and then played over after the screenshot.
+
+Defaults to `"disabled"` that disables animations.
+
 ## screenshot-option-omit-background
 - `omitBackground` <[boolean]>
 
@@ -957,7 +966,16 @@ An object which specifies clipping of the resulting image. Should have the follo
 ## screenshot-option-scale
 - `scale` <[ScreenshotScale]<"css"|"device">>
 
-When set to `"css"`, screenshot will have a single pixel per each css pixel on the page. For high-dpi devices, this will keep screenshots small. Using `"device"` option will produce a single pixel per each device pixel, so screenhots of high-dpi devices will be twice as large or even larger. Defaults to `"device"`.
+When set to `"css"`, screenshot will have a single pixel per each css pixel on the page. For high-dpi devices, this will keep screenshots small. Using `"device"` option will produce a single pixel per each device pixel, so screenhots of high-dpi devices will be twice as large or even larger.
+
+Defaults to `"device"`.
+
+## screenshot-option-scale-default-css
+- `scale` <[ScreenshotScale]<"css"|"device">>
+
+When set to `"css"`, screenshot will have a single pixel per each css pixel on the page. For high-dpi devices, this will keep screenshots small. Using `"device"` option will produce a single pixel per each device pixel, so screenhots of high-dpi devices will be twice as large or even larger.
+
+Defaults to `"css"`.
 
 ## screenshot-option-caret
 - `caret` <[ScreenshotCaret]<"hide"|"initial">>
