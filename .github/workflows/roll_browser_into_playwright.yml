@@ -38,10 +38,16 @@ jobs:
       with:
         github-token: ${{ secrets.GH_SERVICE_ACCOUNT_TOKEN }}
         script: |
-          await github.pulls.create({
+          const response = await github.pulls.create({
             owner: 'microsoft',
             repo: 'playwright',
             head: 'microsoft:${{ steps.prepare-branch.outputs.BRANCH_NAME }}',
             base: 'main',
             title: 'feat(${{ github.event.client_payload.browser }}): roll to r${{ github.event.client_payload.revision }}',
+          });
+          await github.issues.addLabels({
+            owner: 'microsoft',
+            repo: 'playwright',
+            issue_number: response.data.number,
+            labels: ['CQ1'],
           });
