@@ -582,3 +582,23 @@ test('should work with video.path() throwing', async ({ runInlineTest }, testInf
   const video = fs.readdirSync(dir).find(file => file.endsWith('webm'));
   expect(video).toBeTruthy();
 });
+
+test('should pass fixture defaults to tests', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.js': `
+      module.exports = {};
+    `,
+    'a.test.ts': `
+      const { test } = pwt;
+      test('pass', async ({ acceptDownloads, actionTimeout, headless, javaScriptEnabled, navigationTimeout }) => {
+        expect(acceptDownloads).toBe(true);
+        expect(actionTimeout).toBe(0);
+        expect(headless).toBe(true);
+        expect(javaScriptEnabled).toBe(true);
+        expect(navigationTimeout).toBe(0);
+      });
+    `,
+  }, { workers: 1 });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});

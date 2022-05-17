@@ -64,7 +64,7 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
       await use(require('playwright-core'));
     }
   }, { scope: 'worker' } ],
-  headless: [ undefined, { scope: 'worker', option: true } ],
+  headless: [ true, { scope: 'worker', option: true } ],
   channel: [ undefined, { scope: 'worker', option: true } ],
   launchOptions: [ {}, { scope: 'worker', option: true } ],
   connectOptions: [ undefined, { scope: 'worker', option: true } ],
@@ -135,7 +135,7 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
     await browser.close();
   }, { scope: 'worker' } ],
 
-  acceptDownloads: [ undefined, { option: true } ],
+  acceptDownloads: [ true, { option: true } ],
   bypassCSP: [ undefined, { option: true } ],
   colorScheme: [ undefined, { option: true } ],
   deviceScaleFactor: [ undefined, { option: true } ],
@@ -145,7 +145,7 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
   httpCredentials: [ undefined, { option: true } ],
   ignoreHTTPSErrors: [ undefined, { option: true } ],
   isMobile: [ undefined, { option: true } ],
-  javaScriptEnabled: [ undefined, { option: true } ],
+  javaScriptEnabled: [ true, { option: true } ],
   locale: [ 'en-US', { option: true } ],
   offline: [ undefined, { option: true } ],
   permissions: [ undefined, { option: true } ],
@@ -154,8 +154,8 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
   timezoneId: [ undefined, { option: true } ],
   userAgent: [ undefined, { option: true } ],
   viewport: [ { width: 1280, height: 720 }, { option: true } ],
-  actionTimeout: [ undefined, { option: true } ],
-  navigationTimeout: [ undefined, { option: true } ],
+  actionTimeout: [ 0, { option: true } ],
+  navigationTimeout: [ 0, { option: true } ],
   baseURL: [ async ({ }, use) => {
     await use(process.env.PLAYWRIGHT_TEST_BASE_URL);
   }, { option: true } ],
