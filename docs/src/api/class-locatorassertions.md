@@ -601,6 +601,70 @@ await Expect(locator).ToBeVisibleAsync();
 ### option: LocatorAssertions.toBeVisible.timeout = %%-js-assertions-timeout-%%
 ### option: LocatorAssertions.toBeVisible.timeout = %%-csharp-java-python-assertions-timeout-%%
 
+## async method: LocatorAssertions.toContainClass
+* langs:
+  - alias-java: containClass
+
+Ensures the [Locator] points to an element with classList contains expected CSS classes.
+In contrast to `toHaveClass` which checks class attribute as a string, `toContainClass` checks classList.contains.
+
+```html
+<div class='foo bar baz' id='component'>
+  <div class='item alice'></div>
+  <div class='item bob'></div>
+</div>
+```
+
+```js
+const locator = page.locator('#component');
+await expect(locator).toContainClass('bar baz'); // pass, both classes are on element
+await expect(locator).toContainClass('ba'); // fail, no regex or substring matching
+
+const itemLocator = page.locator('#component .alice');
+await expect(itemLocator).toContainClass(['alice', 'bob']); // pass, first element has alice, second bob
+await expect(itemLocator).toContainClass('item'); // fail, length mismatch
+```
+
+```java
+assertThat(page.locator("#component")).containClass(Pattern.compile("bar"));
+```
+
+```python async
+from playwright.async_api import expect
+
+locator = page.locator("#component")
+await expect(locator).to_contain_class(re.compile(r"bar"))
+```
+
+```python sync
+from playwright.sync_api import expect
+
+locator = page.locator("#component")
+expect(locator).to_contain_class(re.compile(r"bar"))
+```
+
+```csharp
+var locator = Page.Locator("#component");
+await Expect(locator).ToContainClassAsync(new Regex("bar"));
+```
+
+Note that locator must point to a single element.
+
+### param: LocatorAssertions.toContainClass.expected
+* langs: python, js
+- `expected` <[string]|[Array]<[string]>>
+
+Expected classnames, whitespace separated.
+
+### param: LocatorAssertions.toContainClass.expected
+* langs: java, csharp
+- `expected` <[string]|[Array]<[string]>>
+
+Expected class.
+
+### option: LocatorAssertions.toContainClass.timeout = %%-js-assertions-timeout-%%
+### option: LocatorAssertions.toContainClass.timeout = %%-csharp-java-python-assertions-timeout-%%
+
 ## async method: LocatorAssertions.toContainText
 * langs:
   - alias-java: containsText
@@ -747,6 +811,10 @@ Expected attribute value.
 
 Ensures the [Locator] points to an element with given CSS class.
 
+```html
+<div class='selected' id='component'></div>
+```
+
 ```js
 const locator = page.locator('#component');
 await expect(locator).toHaveClass(/selected/);
@@ -819,7 +887,6 @@ Expected class or RegExp or a list of those.
 
 ### option: LocatorAssertions.toHaveClass.timeout = %%-js-assertions-timeout-%%
 ### option: LocatorAssertions.toHaveClass.timeout = %%-csharp-java-python-assertions-timeout-%%
-
 
 ## async method: LocatorAssertions.toHaveCount
 * langs:

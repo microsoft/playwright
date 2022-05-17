@@ -1297,9 +1297,9 @@ export class Frame extends SdkObject {
       omitAttached = true;
     else if (options.isNot && options.expression === 'to.have.count' && options.expectedNumber !== 0)
       omitAttached = true;
-    else if (!options.isNot && options.expression.endsWith('.array') && options.expectedText!.length === 0)
+    else if (!options.isNot && options.expression.endsWith('.array') && options.expectedText?.length === 0)
       omitAttached = true;
-    else if (options.isNot && options.expression.endsWith('.array') && options.expectedText!.length > 0)
+    else if (options.isNot && options.expression.endsWith('.array') && (options.expectedText?.length || 0) > 0)
       omitAttached = true;
 
     return controller.run(async outerProgress => {

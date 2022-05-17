@@ -87,7 +87,7 @@ test.describe('Mark all as completed', () => {
     await page.locator('.toggle-all').check();
 
     // Ensure all todos have 'completed' class.
-    await expect(page.locator('.todo-list li')).toHaveClass(['completed', 'completed', 'completed']);
+    await expect(page.locator('.todo-list li')).toContainClass(['completed', 'completed', 'completed']);
     await checkNumberOfCompletedTodosInLocalStorage(page, 3);
   });
 

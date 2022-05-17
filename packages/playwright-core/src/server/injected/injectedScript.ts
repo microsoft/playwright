@@ -1038,6 +1038,11 @@ export class InjectedScript {
         if (element.nodeName !== 'INPUT' && element.nodeName !== 'TEXTAREA' && element.nodeName !== 'SELECT')
           throw this.createStacklessError('Not an input element');
         received = (element as any).value;
+      }  else if (expression === 'to.contain.class') {
+        return {
+          received: element.className,
+          matches: containsAllClasses(element, options.expectedValue),
+        };
       }
 
       if (received !== undefined && options.expectedText) {
@@ -1056,6 +1061,18 @@ export class InjectedScript {
       const received = elements.length;
       const matches = received === options.expectedNumber;
       return { received, matches };
+    }
+
+    if (expression === 'to.contain.class.array') {
+      const receivedClassNames = elements.map(e => e.className);
+
+      if (!Array.isArray(options.expectedValue) || options.expectedValue.length !== elements.length)
+        throw this.createStacklessError(`Length mismatch: found ${elements.length} elements but ${options.expectedValue.length} classNames`);
+
+      return {
+        received: receivedClassNames,
+        matches: elements.every((e, i) => containsAllClasses(e, options.expectedValue[i])),
+      };
     }
 
     // List of values.
@@ -1270,6 +1287,12 @@ function deepEquals(a: any, b: any): boolean {
     return isNaN(a) && isNaN(b);
 
   return false;
+}
+
+function containsAllClasses(element: Element, expectedClasses: string): boolean {
+  const classes: string[] = expectedClasses.trim().split(/\s+/);
+
+  return classes.every(cls => element.classList.contains(cls));
 }
 
 module.exports = InjectedScript;

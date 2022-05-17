@@ -19383,6 +19383,38 @@ interface LocatorAssertions {
   }): Promise<void>;
 
   /**
+   * Ensures the [Locator] points to an element with classList contains expected CSS classes. In contrast to `toHaveClass`
+   * which checks class attribute as a string, `toContainClass` checks classList.contains.
+   *
+   * ```html
+   * <div class='foo bar baz' id='component'>
+   *   <div class='item alice'></div>
+   *   <div class='item bob'></div>
+   * </div>
+   * ```
+   *
+   * ```js
+   * const locator = page.locator('#component');
+   * await expect(locator).toContainClass('bar baz'); // pass, both classes are on element
+   * await expect(locator).toContainClass('ba'); // fail, no regex or substring matching
+   *
+   * const itemLocator = page.locator('#component .alice');
+   * await expect(itemLocator).toContainClass(['alice', 'bob']); // pass, first element has alice, second bob
+   * await expect(itemLocator).toContainClass('item'); // fail, length mismatch
+   * ```
+   *
+   * Note that locator must point to a single element.
+   * @param expected Expected classnames, whitespace separated.
+   * @param options
+   */
+  toContainClass(expected: string|Array<string>, options?: {
+    /**
+     * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
+     */
+    timeout?: number;
+  }): Promise<void>;
+
+  /**
    * Ensures the [Locator] points to an element that contains the given text. You can use regular expressions for the value
    * as well.
    *
@@ -19435,6 +19467,10 @@ interface LocatorAssertions {
 
   /**
    * Ensures the [Locator] points to an element with given CSS class.
+   *
+   * ```html
+   * <div class='selected' id='component'></div>
+   * ```
    *
    * ```js
    * const locator = page.locator('#component');
