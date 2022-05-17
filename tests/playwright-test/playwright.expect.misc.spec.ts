@@ -133,7 +133,7 @@ test('should support toHaveJSProperty with builtin types', async ({ runInlineTes
         await page.setContent('<div></div>');
         await page.$eval('div', e => e.foo = 'string');
         const locator = page.locator('div');
-        await expect(locator).toHaveJSProperty('foo', 'error', {timeout: 1000});
+        await expect(locator).toHaveJSProperty('foo', 'error', {timeout: 200});
       });
 
       test('pass number', async ({ page }) => {
@@ -147,7 +147,7 @@ test('should support toHaveJSProperty with builtin types', async ({ runInlineTes
         await page.setContent('<div></div>');
         await page.$eval('div', e => e.foo = 2021);
         const locator = page.locator('div');
-        await expect(locator).toHaveJSProperty('foo', 1, {timeout: 1000});
+        await expect(locator).toHaveJSProperty('foo', 1, {timeout: 200});
       });
 
       test('pass boolean', async ({ page }) => {
@@ -161,13 +161,40 @@ test('should support toHaveJSProperty with builtin types', async ({ runInlineTes
         await page.setContent('<div></div>');
         await page.$eval('div', e => e.foo = false);
         const locator = page.locator('div');
-        await expect(locator).toHaveJSProperty('foo', true, {timeout: 1000});
+        await expect(locator).toHaveJSProperty('foo', true, {timeout: 200});
+      });
+
+      test('pass boolean 2', async ({ page }) => {
+        await page.setContent('<div></div>');
+        await page.$eval('div', e => e.foo = false);
+        const locator = page.locator('div');
+        await expect(locator).toHaveJSProperty('foo', false);
+      });
+
+      test('fail boolean 2', async ({ page }) => {
+        await page.setContent('<div></div>');
+        await page.$eval('div', e => e.foo = false);
+        const locator = page.locator('div');
+        await expect(locator).toHaveJSProperty('foo', true, {timeout: 200});
+      });
+
+      test('pass undefined', async ({ page }) => {
+        await page.setContent('<div></div>');
+        const locator = page.locator('div');
+        await expect(locator).toHaveJSProperty('foo', undefined);
+      });
+
+      test('pass null', async ({ page }) => {
+        await page.setContent('<div></div>');
+        await page.$eval('div', e => e.foo = null);
+        const locator = page.locator('div');
+        await expect(locator).toHaveJSProperty('foo', null);
       });
       `,
   }, { workers: 1 });
   const output = stripAnsi(result.output);
-  expect(result.passed).toBe(3);
-  expect(result.failed).toBe(3);
+  expect(result.passed).toBe(6);
+  expect(result.failed).toBe(4);
   expect(result.exitCode).toBe(1);
   expect(output).toContain('Expected: "error"');
   expect(output).toContain('Received: "string"');
