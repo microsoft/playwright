@@ -605,7 +605,7 @@ await Expect(locator).ToBeVisibleAsync();
 * langs:
   - alias-java: containClass
 
-Ensures the [Locator] points to an element with classList contains expected CSS classes.
+Ensures the [Locator] points to an element with which contains the given CSS classes.
 In contrast to `toHaveClass` which requires that the [Locator] has exactly the provided classes, `toContainClass` verifies that the [Locator] has a subset (or all) the given CSS classes.
 
 ```html
