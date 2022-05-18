@@ -716,15 +716,15 @@ export class InjectedScript {
   }
 
   checkHitTargetAt(node: Node, point: { x: number, y: number }): 'error:notconnected' | 'done' | { hitTargetDescription: string } {
-    let element: Element | null | undefined = node.nodeType === Node.ELEMENT_NODE ? (node as Element) : node.parentElement;
+    const element: Element | null | undefined = node.nodeType === Node.ELEMENT_NODE ? (node as Element) : node.parentElement;
     if (!element || !element.isConnected)
       return 'error:notconnected';
-    element = element.closest('button, [role=button]') || element;
     const hitElement = this.deepElementFromPoint(document, point.x, point.y);
     return this._expectHitTargetParent(hitElement, element);
   }
 
   private _expectHitTargetParent(hitElement: Element | undefined, targetElement: Element) {
+    targetElement = targetElement.closest('button, [role=button], a, [role=link]') || targetElement;
     const hitParents: Element[] = [];
     while (hitElement && hitElement !== targetElement) {
       hitParents.push(hitElement);
@@ -753,10 +753,9 @@ export class InjectedScript {
   }
 
   setupHitTargetInterceptor(node: Node, action: 'hover' | 'tap' | 'mouse', blockAllEvents: boolean): HitTargetInterceptionResult | 'error:notconnected' {
-    const maybeElement: Element | null | undefined = node.nodeType === Node.ELEMENT_NODE ? (node as Element) : node.parentElement;
-    if (!maybeElement || !maybeElement.isConnected)
+    const element: Element | null | undefined = node.nodeType === Node.ELEMENT_NODE ? (node as Element) : node.parentElement;
+    if (!element || !element.isConnected)
       return 'error:notconnected';
-    const element = maybeElement.closest('button, [role=button]') || maybeElement;
 
     const events = {
       'hover': kHoverHitTargetInterceptorEvents,
