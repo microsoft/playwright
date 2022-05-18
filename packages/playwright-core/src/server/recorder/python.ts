@@ -95,18 +95,14 @@ export class PythonLanguageGenerator implements LanguageGenerator {
       download = ${this._awaitPrefix}download_info.value`;
     }
 
-    if (signals.waitForNavigation) {
-      code = `
-      # ${this._asyncPrefix}with ${pageAlias}.expect_navigation(url=${quote(signals.waitForNavigation.url)}):
-      ${this._asyncPrefix}with ${pageAlias}.expect_navigation() {
-        ${code}
-      }`;
-    }
-
     formatter.add(code);
 
-    if (signals.assertNavigation)
-      formatter.add(`  # ${this._awaitPrefix}expect(${pageAlias}).to_have_url(${quote(signals.assertNavigation.url)})`);
+    if (signals.assertNavigation) {
+      if (this._isPyTest)
+        formatter.add(`${this._awaitPrefix}expect(${pageAlias}).to_have_url(${quote(signals.assertNavigation.url)})`);
+      else
+        formatter.add(`${this._awaitPrefix}${pageAlias}.wait_for_url(${quote(signals.assertNavigation.url)})`);
+    }
     return formatter.format();
   }
 

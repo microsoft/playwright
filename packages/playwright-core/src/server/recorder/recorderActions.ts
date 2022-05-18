@@ -96,7 +96,6 @@ export type Action = ClickAction | CheckAction | ClosesPageAction | OpenPageActi
 // Signals.
 
 export type BaseSignal = {
-  isAsync?: boolean,
 };
 
 export type NavigationSignal = BaseSignal & {
