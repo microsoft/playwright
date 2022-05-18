@@ -257,7 +257,7 @@ test('should support toContainClass', async ({ runInlineTest }) => {
         await expect(locator).toContainClass('foo', { timeout: 1000 });
       });
 
-      test('fail', async ({ page }) => {
+      test('fail length mismatch', async ({ page }) => {
         await page.setContent('<div><span class="alice"></span><span class="bob"></span></div>');
         const locator = page.locator('div span');
         await expect(locator).toContainClass('alice', { timeout: 1000 });
