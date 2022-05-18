@@ -19,6 +19,7 @@
     "atest": "playwright test --config=tests/android/playwright.config.ts",
     "etest": "playwright test --config=tests/electron/playwright.config.ts",
     "itest": "playwright test --config=tests/installation/playwright.config.ts",
+    "stest": "playwright test --config=tests/stress/playwright.config.ts",
     "test-html-reporter": "playwright test --config=packages/html-reporter",
     "test-web": "playwright test --config=packages/web",
     "ttest": "node ./tests/playwright-test/stable-test-runner/node_modules/@playwright/test/cli test --config=tests/playwright-test/playwright.config.ts",
