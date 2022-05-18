@@ -14543,10 +14543,10 @@ index 0000000000000000000000000000000000000000..d0e11ed81a6257c011df23d5870da740
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..1d3c9874cd78f2d881424f9e0dcbbbb23ad226fe
+index 0000000000000000000000000000000000000000..6039fdbcef4cc08e51a195b0c82a4cfb3a5ef8a1
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp
-@@ -0,0 +1,967 @@
+@@ -0,0 +1,963 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -14674,17 +14674,12 @@ index 0000000000000000000000000000000000000000..1d3c9874cd78f2d881424f9e0dcbbbb2
 +    WebPageProxy& m_page;
 +};
 +
-+class OverridenGeolocationProvider final : public API::GeolocationProvider {
++class OverridenGeolocationProvider final : public API::GeolocationProvider, public CanMakeWeakPtr<OverridenGeolocationProvider> {
++     WTF_MAKE_NONCOPYABLE(OverridenGeolocationProvider);
 +public:
-+    explicit OverridenGeolocationProvider(BrowserContext* browserContext)
++    OverridenGeolocationProvider()
 +        : m_position(WebGeolocationPosition::create(WebCore::GeolocationPositionData()))
-+        , m_browserContext(browserContext)
 +    {
-+        m_browserContext->geolocationProvider = this;
-+    }
-+
-+    ~OverridenGeolocationProvider() override {
-+        m_browserContext->geolocationProvider = nullptr;
 +    }
 +
 +    void setPosition(const Ref<WebGeolocationPosition>& position) {
@@ -14706,14 +14701,15 @@ index 0000000000000000000000000000000000000000..1d3c9874cd78f2d881424f9e0dcbbbb2
 +    }
 +
 +    Ref<WebGeolocationPosition> m_position;
-+    BrowserContext* m_browserContext;
 +};
 +
 +namespace {
 +
 +void setGeolocationProvider(BrowserContext* browserContext) {
++    auto provider = makeUnique<OverridenGeolocationProvider>();
++    browserContext->geolocationProvider = *provider;
 +    auto* geoManager = browserContext->processPool->supplement<WebGeolocationManagerProxy>();
-+    geoManager->setProvider(makeUnique<OverridenGeolocationProvider>(browserContext));
++    geoManager->setProvider(WTFMove(provider));
 +}
 +
 +String toBrowserContextIDProtocolString(const PAL::SessionID& sessionID)
@@ -15649,10 +15645,10 @@ index 0000000000000000000000000000000000000000..8522b4942343d9a6f2473ea9a133d1ff
 +#endif // ENABLE(REMOTE_INSPECTOR)
 diff --git a/Source/WebKit/UIProcess/InspectorPlaywrightAgentClient.h b/Source/WebKit/UIProcess/InspectorPlaywrightAgentClient.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..c3ff5fb7028a03fd697fe78e3f92ef9e2527037d
+index 0000000000000000000000000000000000000000..c9f2d7ec888e819a49cb898803432013f6270c2a
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/InspectorPlaywrightAgentClient.h
-@@ -0,0 +1,68 @@
+@@ -0,0 +1,69 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -15688,6 +15684,7 @@ index 0000000000000000000000000000000000000000..c3ff5fb7028a03fd697fe78e3f92ef9e
 +#include <wtf/HashSet.h>
 +#include <wtf/Noncopyable.h>
 +#include <wtf/RefCounted.h>
++#include <wtf/WeakPtr.h>
 +
 +namespace WebKit {
 +
@@ -15706,7 +15703,7 @@ index 0000000000000000000000000000000000000000..c3ff5fb7028a03fd697fe78e3f92ef9e
 +    RefPtr<WebsiteDataStore> dataStore;
 +    RefPtr<WebProcessPool> processPool;
 +    HashSet<WebPageProxy*> pages;
-+    OverridenGeolocationProvider* geolocationProvider { nullptr };
++    WeakPtr<OverridenGeolocationProvider> geolocationProvider;
 +};
 +
 +class InspectorPlaywrightAgentClient {
