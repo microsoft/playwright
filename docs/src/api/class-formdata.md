@@ -29,7 +29,7 @@ Sets a field on the form. File values can be passed either as `Path` or as `File
 Field name.
 
 ### param: FormData.set.value
-- `name` <[string]|[boolean]|[int]|[Path]|[Object]>
+- `value` <[string]|[boolean]|[int]|[Path]|[Object]>
   - `name` <[string]> File name
   - `mimeType` <[string]> File type
   - `buffer` <[Buffer]> File content
