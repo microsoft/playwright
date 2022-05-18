@@ -268,7 +268,7 @@ test('should support toContainClass', async ({ runInlineTest }) => {
   expect(output).toContain('expect(locator).toHaveClass');
   expect(output).toContain('Expected string: \"foo bar baz\"');
   expect(result.passed).toBe(1);
-  expect(result.failed).toBe(1);
+  expect(result.failed).toBe(2);
   expect(result.exitCode).toBe(1);
 });
 
