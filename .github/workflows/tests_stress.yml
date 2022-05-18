@@ -32,4 +32,15 @@ jobs:
     - run: npm ci
     - run: npm run build
     - run: npx playwright install --with-deps
-    - run: npm run stest
+    - run: npm run stest contexts -- --project=chromium
+      if: always()
+    - run: npm run stest browsers -- --project=chromium
+      if: always()
+    - run: npm run stest contexts -- --project=webkit
+      if: always()
+    - run: npm run stest browsers -- --project=webkit
+      if: always()
+    - run: npm run stest contexts -- --project=firefox
+      if: always()
+    - run: npm run stest browsers -- --project=firefox
+      if: always()
