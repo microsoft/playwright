@@ -17738,10 +17738,10 @@ index b5e48e6c61a8a3f4b40b84112c4010101c4d5f41..46747b1d78bfe0270178609867c0d710
  };
 diff --git a/Source/WebKit/UIProcess/glib/InspectorPlaywrightAgentClientGLib.cpp b/Source/WebKit/UIProcess/glib/InspectorPlaywrightAgentClientGLib.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..37e6a825ecbf941f66013044b2b5fc3a7749c7e4
+index 0000000000000000000000000000000000000000..20a7cd2c65be39b3bcab356f6eee0b82d084c6bf
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/glib/InspectorPlaywrightAgentClientGLib.cpp
-@@ -0,0 +1,147 @@
+@@ -0,0 +1,152 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -17861,7 +17861,12 @@ index 0000000000000000000000000000000000000000..37e6a825ecbf941f66013044b2b5fc3a
 +std::unique_ptr<BrowserContext> InspectorPlaywrightAgentClientGlib::createBrowserContext(WTF::String& error, const WTF::String& proxyServer, const WTF::String& proxyBypassList)
 +{
 +    GRefPtr<WebKitWebsiteDataManager> data_manager = adoptGRef(webkit_website_data_manager_new_ephemeral());
-+    GRefPtr<WebKitWebContext> context = adoptGRef(WEBKIT_WEB_CONTEXT(g_object_new(WEBKIT_TYPE_WEB_CONTEXT, "website-data-manager", data_manager.get(), "process-swap-on-cross-site-navigation-enabled", true, nullptr)));
++    GRefPtr<WebKitWebContext> context = adoptGRef(WEBKIT_WEB_CONTEXT(g_object_new(WEBKIT_TYPE_WEB_CONTEXT, "website-data-manager", data_manager.get(),
++    // WPE has PSON enabled by default and doesn't have such parameter.
++#if PLATFORM(GTK)
++        "process-swap-on-cross-site-navigation-enabled", true,
++#endif
++        nullptr)));
 +    if (!context) {
 +        error = "Failed to create GLib ephemeral context"_s;
 +        return nullptr;
