@@ -3177,8 +3177,9 @@ interface LocatorAssertions {
   }): Promise<void>;
 
   /**
-   * Ensures the [Locator] points to an element with classList contains expected CSS classes. In contrast to `toHaveClass`
-   * which checks class attribute as a string, `toContainClass` checks classList.contains.
+   * Ensures the [Locator] points to an element with which contains the given CSS classes. In contrast to `toHaveClass` which
+   * requires that the [Locator] has exactly the provided classes, `toContainClass` verifies that the [Locator] has a subset
+   * (or all) the given CSS classes.
    *
    * ```html
    * <div class='foo bar baz' id='component'>
@@ -3192,9 +3193,9 @@ interface LocatorAssertions {
    * await expect(locator).toContainClass('bar baz'); // pass, both classes are on element
    * await expect(locator).toContainClass('ba'); // fail, no regex or substring matching
    *
-   * const itemLocator = page.locator('#component .alice');
+   * const itemLocator = page.locator('#component .item');
    * await expect(itemLocator).toContainClass(['alice', 'bob']); // pass, first element has alice, second bob
-   * await expect(itemLocator).toContainClass('item'); // fail, length mismatch
+   * await expect(itemLocator).toContainClass(['alice', 'bob', 'carl']); // fail, length mismatch
    * ```
    *
    * Note that locator must point to a single element.
