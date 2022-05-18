@@ -626,26 +626,26 @@ await expect(itemLocator).toContainClass(['alice', 'bob', 'carl']); // fail, len
 ```
 
 ```java
-assertThat(page.locator("#component")).containClass(Pattern.compile("bar"));
+assertThat(page.locator("#component")).containClass("bar");
 ```
 
 ```python async
 from playwright.async_api import expect
 
 locator = page.locator("#component")
-await expect(locator).to_contain_class(re.compile(r"bar"))
+await expect(locator).to_contain_class("bar")
 ```
 
 ```python sync
 from playwright.sync_api import expect
 
 locator = page.locator("#component")
-expect(locator).to_contain_class(re.compile(r"bar"))
+expect(locator).to_contain_class("bar")
 ```
 
 ```csharp
 var locator = Page.Locator("#component");
-await Expect(locator).ToContainClassAsync(new Regex("bar"));
+await Expect(locator).ToContainClassAsync("bar");
 ```
 
 Note that locator must point to a single element.
