@@ -622,7 +622,7 @@ await expect(locator).toContainClass('ba'); // fail, no regex or substring match
 
 const itemLocator = page.locator('#component .item');
 await expect(itemLocator).toContainClass(['alice', 'bob']); // pass, first element has alice, second bob
-await expect(itemLocator).toContainClass('item'); // fail, length mismatch
+await expect(itemLocator).toContainClass(['alice', 'bob', 'carl']); // fail, length mismatch
 ```
 
 ```java
