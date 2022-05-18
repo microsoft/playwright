@@ -32,25 +32,29 @@ export const fixtures: Fixtures<PlaywrightTestArgs & PlaywrightTestOptions & { m
     if (!_ctPage.page || _ctPage.hash !== hash) {
       if (_ctPage.page)
         await _ctPage.page.close();
-      _ctPage.page = await (browser as any)._wrapApiCall(async () => {
+      const page = await (browser as any)._wrapApiCall(async () => {
         const page = await browser.newPage();
         await page.addInitScript('navigator.serviceWorker.register = () => {}');
         await page.exposeFunction('__pw_dispatch', (ordinal: number, args: any[]) => {
           boundCallbacksForMount[ordinal](...args);
         });
+        await page.goto(process.env.PLAYWRIGHT_VITE_COMPONENTS_BASE_URL!);
         return page;
-      });
+      }, true);
+      _ctPage.page = page;
       _ctPage.hash = hash;
+      await use(page);
     } else {
-      await (_ctPage.page as any)._resetForReuse();
-      await (_ctPage.page.context() as any)._resetForReuse();
-      await _ctPage.page.goto('about:blank');
-      await _ctPage.page.setViewportSize(viewport || { width: 1280, height: 800 });
+      const page = _ctPage.page;
+      await (page as any)._wrapApiCall(async () => {
+        await (page as any)._resetForReuse();
+        await (page.context() as any)._resetForReuse();
+        await page.goto('about:blank');
+        await page.setViewportSize(viewport || { width: 1280, height: 800 });
+        await page.goto(process.env.PLAYWRIGHT_VITE_COMPONENTS_BASE_URL!);
+      }, true);
+      await use(page);
     }
-
-    const page = _ctPage.page!;
-    await page.goto(process.env.PLAYWRIGHT_VITE_COMPONENTS_BASE_URL!);
-    await use(page);
   },
 
   mount: async ({ page }, use) => {
