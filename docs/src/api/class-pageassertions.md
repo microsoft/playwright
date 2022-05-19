@@ -114,7 +114,7 @@ Expected substring or RegExp.
 ### option: PageAssertions.NotToHaveURL.timeout = %%-csharp-java-python-assertions-timeout-%%
 
 
-## async method: PageAssertions.toHaveScreenshot#2
+## async method: PageAssertions.toHaveScreenshot#1
 * langs: js
 
 This funciton will wait until two consecutive page screenshots
