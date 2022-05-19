@@ -674,7 +674,7 @@ export class InjectedScript {
 
     const activeElement = (node.getRootNode() as (Document | ShadowRoot)).activeElement;
     const wasFocused = activeElement === node && node.ownerDocument && node.ownerDocument.hasFocus();
-    if (!wasFocused && activeElement && (activeElement as HTMLElement | SVGElement).blur) {
+    if ((node as HTMLElement).isContentEditable && !wasFocused && activeElement && (activeElement as HTMLElement | SVGElement).blur) {
       // Workaround the Firefox bug where focusing the element does not switch current
       // contenteditable to the new element. However, blurring the previous one helps.
       (activeElement as HTMLElement | SVGElement).blur();

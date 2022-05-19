@@ -128,9 +128,6 @@ it('keeps focus on element when attempting to focus a non-focusable element', as
         window.eventLog = [];
 
         const focusable = document.getElementById("focusable");
-        focusable.addEventListener('click', () => {
-          focusable.focus();
-        });
 
         focusable.addEventListener('blur', () => window.eventLog.push('blur focusable'));
         focusable.addEventListener('focus', () => window.eventLog.push('focus focusable'));

@@ -492,7 +492,6 @@ it('should support undo-redo', async ({ page, isMac, browserName, isLinux }) => 
 
 it('should type repeatedly in contenteditable in shadow dom', async ({ page, browserName }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/12941' });
-  it.fail(browserName === 'firefox');
 
   await page.setContent(`
     <html>
@@ -531,6 +530,18 @@ it('should type repeatedly in contenteditable in shadow dom', async ({ page, bro
 
   expect(await editor.textContent()).toBe('This is the first box.');
   expect(await sectionEditor.textContent()).toBe('This is the second box.');
+});
+
+it('type to non-focusable element should maintain old focus', async ({ page }) => {
+  await page.setContent(`
+    <div id="focusable" tabindex="0">focusable div</div>
+    <div id="non-focusable-and-non-editable">non-editable, non-focusable</div>
+  `);
+
+  await page.locator('#focusable').focus();
+  expect(await page.evaluate(() => document.activeElement?.id)).toBe('focusable');
+  await page.locator('#non-focusable-and-non-editable').type('foo');
+  expect(await page.evaluate(() => document.activeElement?.id)).toBe('focusable');
 });
 
 async function captureLastKeydown(page) {
