@@ -37,8 +37,9 @@ it('should upload the file', async ({ page, server, asset }) => {
   }, input)).toBe('contents of the file');
 });
 
-it('should upload large file', async ({ page, server, browserName, isMac }, testInfo) => {
+it('should upload large file', async ({ page, server, browserName, isMac, isAndroid }, testInfo) => {
   it.skip(browserName === 'webkit' && isMac && parseInt(os.release(), 10) < 20, 'WebKit for macOS 10.15 is frozen and does not have corresponding protocol features.');
+  it.skip(isAndroid);
   it.slow();
   await page.goto(server.PREFIX + '/input/fileupload.html');
   const uploadFile = testInfo.outputPath('200MB.zip');
@@ -84,8 +85,9 @@ it('should upload large file', async ({ page, server, browserName, isMac }, test
   await Promise.all([uploadFile, file1.filepath].map(fs.promises.unlink));
 });
 
-it('should upload large file with relative path', async ({ page, server, browserName, isMac }, testInfo) => {
+it('should upload large file with relative path', async ({ page, server, browserName, isMac, isAndroid }, testInfo) => {
   it.skip(browserName === 'webkit' && isMac && parseInt(os.release(), 10) < 20, 'WebKit for macOS 10.15 is frozen and does not have corresponding protocol features.');
+  it.skip(isAndroid);
   it.slow();
   await page.goto(server.PREFIX + '/input/fileupload.html');
   const uploadFile = testInfo.outputPath('200MB.zip');
