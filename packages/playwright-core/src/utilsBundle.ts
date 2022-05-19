@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+export const cbor: typeof import('../bundles/utils/node_modules/cbor') = require('./utilsBundleImpl').cbor;
 export const colors: typeof import('../bundles/utils/node_modules/colors/safe') = require('./utilsBundleImpl').colors;
 export const debug: typeof import('../bundles/utils/node_modules/@types/debug') = require('./utilsBundleImpl').debug;
 export const getProxyForUrl: typeof import('../bundles/utils/node_modules/@types/proxy-from-env').getProxyForUrl = require('./utilsBundleImpl').getProxyForUrl;

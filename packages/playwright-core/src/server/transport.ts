@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { ws } from '../utilsBundle';
+import { cbor, ws } from '../utilsBundle';
 import type { WebSocket } from '../utilsBundle';
 import type { Progress } from './progress';
 import { makeWaitForNextTask } from '../utils';
@@ -86,6 +86,7 @@ export class WebSocketTransport implements ConnectionTransport {
       headers,
       followRedirects,
     });
+    this._ws.binaryType = 'nodebuffer';
     this._progress = progress;
     // The 'ws' module in node sometimes sends us multiple messages in a single task.
     // In Web, all IO callbacks (e.g. WebSocket callbacks)
@@ -93,11 +94,21 @@ export class WebSocketTransport implements ConnectionTransport {
     // to do anything extra.
     const messageWrap: (cb: () => void) => void = makeWaitForNextTask();
 
+    const decoder = process.env.CBOR ? new cbor.Decoder() : undefined;
+    decoder?.on('data', object => {
+      if (this.onmessage)
+        this.onmessage(object);
+    });
     this._ws.addEventListener('message', event => {
       messageWrap(() => {
         try {
-          if (this.onmessage)
-            this.onmessage.call(null, JSON.parse(event.data as string));
+          if (this.onmessage) {
+            if (decoder)
+              decoder.write(event.data as Buffer);
+            else
+              this.onmessage.call(null, JSON.parse(event.data as string));
+
+          }
         } catch (e) {
           this._ws.close();
         }
@@ -114,7 +125,13 @@ export class WebSocketTransport implements ConnectionTransport {
   }
 
   send(message: ProtocolRequest) {
-    this._ws.send(JSON.stringify(message));
+    if (process.env.CBOR) {
+      const encoder = new cbor.Encoder();
+      encoder.on('data', buffer => this._ws.send(buffer));
+      encoder.end(message);
+    } else {
+      this._ws.send(JSON.stringify(message));
+    }
   }
 
   close() {

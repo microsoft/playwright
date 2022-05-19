@@ -74,6 +74,7 @@ export class PlaywrightServer {
     const originalShouldHandle = this._wsServer.shouldHandle.bind(this._wsServer);
     this._wsServer.shouldHandle = request => originalShouldHandle(request) && this._clientsCount < this._maxClients;
     this._wsServer.on('connection', async (ws, request) => {
+      ws.binaryType = 'nodebuffer';
       if (this._clientsCount >= this._maxClients) {
         ws.close(1013, 'Playwright Server is busy');
         return;

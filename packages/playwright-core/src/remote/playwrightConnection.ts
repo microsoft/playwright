@@ -22,6 +22,7 @@ import { serverSideCallMetadata } from '../server/instrumentation';
 import { gracefullyCloseAll } from '../utils/processLauncher';
 import { registry } from '../server';
 import { SocksProxy } from '../common/socksProxy';
+import { cbor } from '../utilsBundle';
 
 export class PlaywrightConnection {
   private _ws: WebSocket;
@@ -38,11 +39,23 @@ export class PlaywrightConnection {
 
     this._dispatcherConnection = new DispatcherConnection();
     this._dispatcherConnection.onmessage = message => {
-      if (ws.readyState !== ws.CLOSING)
-        ws.send(JSON.stringify(message));
+      if (ws.readyState !== ws.CLOSING) {
+        if (process.env.CBOR) {
+          const encoder = new cbor.Encoder();
+          encoder.on('data', buffer => ws.send(buffer));
+          encoder.end(message);
+        } else {
+          ws.send(JSON.stringify(message));
+        }
+      }
     };
-    ws.on('message', (message: string) => {
-      this._dispatcherConnection.dispatch(JSON.parse(Buffer.from(message).toString()));
+    const decoder = process.env.CBOR ? new cbor.Decoder() : undefined;
+    decoder?.on('data', object => this._dispatcherConnection.dispatch(object));
+    ws.on('message', (message: Buffer) => {
+      if (decoder)
+        decoder.write(message);
+      else
+        this._dispatcherConnection.dispatch(JSON.parse(Buffer.from(message).toString()));
     });
 
     ws.on('close', () => this._onDisconnect());

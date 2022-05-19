@@ -17,6 +17,9 @@
 import colorsLibrary from 'colors/safe';
 export const colors = colorsLibrary;
 
+import cborLibrary from 'cbor';
+export const cbor = cborLibrary;
+
 import debugLibrary from 'debug';
 export const debug = debugLibrary;
 

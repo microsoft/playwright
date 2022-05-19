@@ -7,48 +7,50 @@ This project incorporates components from the projects listed below. The origina
 1.	agent-base@6.0.2 (https://github.com/TooTallNate/node-agent-base)
 2.	balanced-match@1.0.2 (https://github.com/juliangruber/balanced-match)
 3.	brace-expansion@1.1.11 (https://github.com/juliangruber/brace-expansion)
-4.	colors@1.4.0 (https://github.com/Marak/colors.js)
-5.	commander@8.3.0 (https://github.com/tj/commander.js)
-6.	concat-map@0.0.1 (https://github.com/substack/node-concat-map)
-7.	debug@4.3.4 (https://github.com/debug-js/debug)
-8.	escape-string-regexp@2.0.0 (https://github.com/sindresorhus/escape-string-regexp)
-9.	fs.realpath@1.0.0 (https://github.com/isaacs/fs.realpath)
-10.	glob@7.2.0 (https://github.com/isaacs/node-glob)
-11.	graceful-fs@4.2.10 (https://github.com/isaacs/node-graceful-fs)
-12.	https-proxy-agent@5.0.0 (https://github.com/TooTallNate/node-https-proxy-agent)
-13.	inflight@1.0.6 (https://github.com/npm/inflight)
-14.	inherits@2.0.4 (https://github.com/isaacs/inherits)
-15.	ip@1.1.5 (https://github.com/indutny/node-ip)
-16.	jpeg-js@0.4.3 (https://github.com/eugeneware/jpeg-js)
-17.	mime@3.0.0 (https://github.com/broofa/mime)
-18.	minimatch@3.1.2 (https://github.com/isaacs/minimatch)
-19.	ms@2.1.2 (https://github.com/zeit/ms)
-20.	once@1.4.0 (https://github.com/isaacs/once)
-21.	path-is-absolute@1.0.1 (https://github.com/sindresorhus/path-is-absolute)
-22.	pngjs@6.0.0 (https://github.com/lukeapage/pngjs)
-23.	progress@2.0.3 (https://github.com/visionmedia/node-progress)
-24.	proper-lockfile@4.1.2 (https://github.com/moxystudio/node-proper-lockfile)
-25.	proxy-from-env@1.1.0 (https://github.com/Rob--W/proxy-from-env)
-26.	retry@0.12.0 (https://github.com/tim-kos/node-retry)
-27.	rimraf@3.0.2 (https://github.com/isaacs/rimraf)
-28.	signal-exit@3.0.7 (https://github.com/tapjs/signal-exit)
-29.	smart-buffer@4.2.0 (https://github.com/JoshGlazebrook/smart-buffer)
-30.	socks-proxy-agent@6.1.1 (https://github.com/TooTallNate/node-socks-proxy-agent)
-31.	socks@2.6.2 (https://github.com/JoshGlazebrook/socks)
-32.	stack-utils@2.0.5 (https://github.com/tapjs/stack-utils)
-33.	wrappy@1.0.2 (https://github.com/npm/wrappy)
-34.	ws@8.4.2 (https://github.com/websockets/ws)
-35.	@types/node@17.0.24 (https://github.com/DefinitelyTyped/DefinitelyTyped)
-36.	@types/yauzl@2.10.0 (https://github.com/DefinitelyTyped/DefinitelyTyped)
-37.	buffer-crc32@0.2.13 (https://github.com/brianloveswords/buffer-crc32)
-38.	end-of-stream@1.4.4 (https://github.com/mafintosh/end-of-stream)
-39.	extract-zip@2.0.1 (https://github.com/maxogden/extract-zip)
-40.	fd-slicer@1.1.0 (https://github.com/andrewrk/node-fd-slicer)
-41.	get-stream@5.2.0 (https://github.com/sindresorhus/get-stream)
-42.	pend@1.2.0 (https://github.com/andrewrk/node-pend)
-43.	pump@3.0.0 (https://github.com/mafintosh/pump)
-44.	yauzl@2.10.0 (https://github.com/thejoshwolfe/yauzl)
-45.	yazl@2.5.1 (https://github.com/thejoshwolfe/yazl)
+4.	cbor@8.1.0 (https://github.com/hildjj/node-cbor)
+5.	colors@1.4.0 (https://github.com/Marak/colors.js)
+6.	commander@8.3.0 (https://github.com/tj/commander.js)
+7.	concat-map@0.0.1 (https://github.com/substack/node-concat-map)
+8.	debug@4.3.4 (https://github.com/debug-js/debug)
+9.	escape-string-regexp@2.0.0 (https://github.com/sindresorhus/escape-string-regexp)
+10.	fs.realpath@1.0.0 (https://github.com/isaacs/fs.realpath)
+11.	glob@7.2.0 (https://github.com/isaacs/node-glob)
+12.	graceful-fs@4.2.10 (https://github.com/isaacs/node-graceful-fs)
+13.	https-proxy-agent@5.0.0 (https://github.com/TooTallNate/node-https-proxy-agent)
+14.	inflight@1.0.6 (https://github.com/npm/inflight)
+15.	inherits@2.0.4 (https://github.com/isaacs/inherits)
+16.	ip@1.1.5 (https://github.com/indutny/node-ip)
+17.	jpeg-js@0.4.3 (https://github.com/eugeneware/jpeg-js)
+18.	mime@3.0.0 (https://github.com/broofa/mime)
+19.	minimatch@3.1.2 (https://github.com/isaacs/minimatch)
+20.	ms@2.1.2 (https://github.com/zeit/ms)
+21.	nofilter@3.1.0 (https://github.com/hildjj/nofilter)
+22.	once@1.4.0 (https://github.com/isaacs/once)
+23.	path-is-absolute@1.0.1 (https://github.com/sindresorhus/path-is-absolute)
+24.	pngjs@6.0.0 (https://github.com/lukeapage/pngjs)
+25.	progress@2.0.3 (https://github.com/visionmedia/node-progress)
+26.	proper-lockfile@4.1.2 (https://github.com/moxystudio/node-proper-lockfile)
+27.	proxy-from-env@1.1.0 (https://github.com/Rob--W/proxy-from-env)
+28.	retry@0.12.0 (https://github.com/tim-kos/node-retry)
+29.	rimraf@3.0.2 (https://github.com/isaacs/rimraf)
+30.	signal-exit@3.0.7 (https://github.com/tapjs/signal-exit)
+31.	smart-buffer@4.2.0 (https://github.com/JoshGlazebrook/smart-buffer)
+32.	socks-proxy-agent@6.1.1 (https://github.com/TooTallNate/node-socks-proxy-agent)
+33.	socks@2.6.2 (https://github.com/JoshGlazebrook/socks)
+34.	stack-utils@2.0.5 (https://github.com/tapjs/stack-utils)
+35.	wrappy@1.0.2 (https://github.com/npm/wrappy)
+36.	ws@8.4.2 (https://github.com/websockets/ws)
+37.	@types/node@17.0.24 (https://github.com/DefinitelyTyped/DefinitelyTyped)
+38.	@types/yauzl@2.10.0 (https://github.com/DefinitelyTyped/DefinitelyTyped)
+39.	buffer-crc32@0.2.13 (https://github.com/brianloveswords/buffer-crc32)
+40.	end-of-stream@1.4.4 (https://github.com/mafintosh/end-of-stream)
+41.	extract-zip@2.0.1 (https://github.com/maxogden/extract-zip)
+42.	fd-slicer@1.1.0 (https://github.com/andrewrk/node-fd-slicer)
+43.	get-stream@5.2.0 (https://github.com/sindresorhus/get-stream)
+44.	pend@1.2.0 (https://github.com/andrewrk/node-pend)
+45.	pump@3.0.0 (https://github.com/mafintosh/pump)
+46.	yauzl@2.10.0 (https://github.com/thejoshwolfe/yauzl)
+47.	yazl@2.5.1 (https://github.com/thejoshwolfe/yazl)
 
 %% agent-base@6.0.2 NOTICES AND INFORMATION BEGIN HERE
 =========================================
@@ -251,6 +253,31 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 =========================================
 END OF brace-expansion@1.1.11 AND INFORMATION
+
+%% cbor@8.1.0 NOTICES AND INFORMATION BEGIN HERE
+=========================================
+The MIT License (MIT)
+
+Copyright (c) 2021 Joe Hildebrand
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software is furnished to do so,
+subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+=========================================
+END OF cbor@8.1.0 AND INFORMATION
 
 %% colors@1.4.0 NOTICES AND INFORMATION BEGIN HERE
 =========================================
@@ -842,6 +869,31 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 =========================================
 END OF ms@2.1.2 AND INFORMATION
+
+%% nofilter@3.1.0 NOTICES AND INFORMATION BEGIN HERE
+=========================================
+The MIT License (MIT)
+
+Copyright (c) 2021 Joe Hildebrand
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software is furnished to do so,
+subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+=========================================
+END OF nofilter@3.1.0 AND INFORMATION
 
 %% once@1.4.0 NOTICES AND INFORMATION BEGIN HERE
 =========================================
