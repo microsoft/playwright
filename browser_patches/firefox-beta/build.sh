@@ -3,7 +3,7 @@ set -e
 set +x
 
 RUST_VERSION="1.59.0"
-CBINDGEN_VERSION="0.19.0"
+CBINDGEN_VERSION="0.23.0"
 
 trap "cd $(pwd -P)" EXIT
 
