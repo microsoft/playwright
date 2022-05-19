@@ -17,6 +17,7 @@
 import { browserTest as it, expect } from '../config/browserTest';
 import fs from 'fs';
 import path from 'path';
+import type { Page } from 'playwright-core';
 import { spawnSync } from 'child_process';
 import { PNG } from 'playwright-core/lib/utilsBundle';
 import { registry } from '../../packages/playwright-core/lib/server';
@@ -712,8 +713,8 @@ it('should saveAs video', async ({ browser }, testInfo) => {
   expect(fs.existsSync(saveAsPath)).toBeTruthy();
 });
 
-async function waitForRafs(page: Page, count: number) {
-  await page.evaluate(count => new Promise(resolve => {
+async function waitForRafs(page: Page, count: number): Promise<void> {
+  await page.evaluate(count => new Promise<void>(resolve => {
     const onRaf = () => {
       --count;
       if (!count)
