@@ -532,6 +532,98 @@ it('should type repeatedly in contenteditable in shadow dom', async ({ page }) =
   expect(await sectionEditor.textContent()).toBe('This is the second box.');
 });
 
+it('should type repeatedly in contenteditable in shadow dom with nested elements', async ({ page }) => {
+  await page.setContent(`
+    <html>
+      <body>
+        <shadow-element></shadow-element>
+        <script>
+          customElements.define('shadow-element', class extends HTMLElement {
+            constructor() {
+              super();
+              this.attachShadow({ mode: 'open' });
+            }
+
+            connectedCallback() {
+              this.shadowRoot.innerHTML = \`
+                <style>
+                  .editor { padding: 1rem; margin: 1rem; border: 1px solid #ccc; }
+                </style>
+                <div class=editor contenteditable id=foo><p>hello</p></div>
+                <hr>
+                <section>
+                  <div class=editor contenteditable id=bar><p>world</p></div>
+                </section>
+              \`;
+            }
+          });
+        </script>
+      </body>
+    </html>
+  `);
+
+  const editor = page.locator('shadow-element > .editor').first();
+  await editor.type('This is the first box: ');
+
+  const sectionEditor = page.locator('section .editor');
+  await sectionEditor.type('This is the second box: ');
+
+  expect(await editor.textContent()).toBe('This is the first box: hello');
+  expect(await sectionEditor.textContent()).toBe('This is the second box: world');
+});
+
+it('should type repeatedly in input in shadow dom', async ({ page }) => {
+  await page.setContent(`
+    <html>
+      <body>
+        <shadow-element></shadow-element>
+        <script>
+          customElements.define('shadow-element', class extends HTMLElement {
+            constructor() {
+              super();
+              this.attachShadow({ mode: 'open' });
+            }
+
+            connectedCallback() {
+              this.shadowRoot.innerHTML = \`
+                <style>
+                  .editor { padding: 1rem; margin: 1rem; border: 1px solid #ccc; }
+                </style>
+                <input class=editor id=foo>
+                <hr>
+                <section>
+                  <input class=editor id=bar>
+                </section>
+              \`;
+            }
+          });
+        </script>
+      </body>
+    </html>
+  `);
+
+  const editor = page.locator('shadow-element > .editor').first();
+  await editor.type('This is the first box.');
+
+  const sectionEditor = page.locator('section .editor');
+  await sectionEditor.type('This is the second box.');
+
+  expect(await editor.inputValue()).toBe('This is the first box.');
+  expect(await sectionEditor.inputValue()).toBe('This is the second box.');
+});
+
+it('type to non-focusable element should maintain old focus', async ({ page }) => {
+  await page.setContent(`
+    <div id="focusable" tabindex="0">focusable div</div>
+    <div id="non-focusable-and-non-editable">non-editable, non-focusable</div>
+  `);
+
+  await page.locator('#focusable').focus();
+  expect(await page.evaluate(() => document.activeElement?.id)).toBe('focusable');
+  await page.locator('#non-focusable-and-non-editable').type('foo');
+  expect(await page.evaluate(() => document.activeElement?.id)).toBe('focusable');
+});
+
 async function captureLastKeydown(page) {
   const lastEvent = await page.evaluateHandle(() => {
     const lastEvent = {
