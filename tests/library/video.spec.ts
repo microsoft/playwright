@@ -17,6 +17,7 @@
 import { browserTest as it, expect } from '../config/browserTest';
 import fs from 'fs';
 import path from 'path';
+import type { Page } from 'playwright-core';
 import { spawnSync } from 'child_process';
 import { PNG } from 'playwright-core/lib/utilsBundle';
 import { registry } from '../../packages/playwright-core/lib/server';
@@ -171,7 +172,7 @@ it.describe('screencast', () => {
     const page = await context.newPage();
 
     await page.evaluate(() => document.body.style.backgroundColor = 'red');
-    await new Promise(r => setTimeout(r, 1000));
+    await waitForRafs(page, 100);
     await context.close();
 
     const videoFile = await page.video().path();
@@ -196,7 +197,7 @@ it.describe('screencast', () => {
     const page = await context.newPage();
 
     await page.evaluate(() => document.body.style.backgroundColor = 'red');
-    await new Promise(r => setTimeout(r, 1000));
+    await waitForRafs(page, 100);
     await context.close();
 
     const videoFile = await page.video().path();
@@ -263,7 +264,7 @@ it.describe('screencast', () => {
     const page = await context.newPage();
     const deletePromise = page.video().delete();
     await page.evaluate(() => document.body.style.backgroundColor = 'red');
-    await page.waitForTimeout(1000);
+    await waitForRafs(page, 100);
     await context.close();
 
     const videoPath = await page.video().path();
@@ -320,9 +321,9 @@ it.describe('screencast', () => {
     const page = await context.newPage();
 
     await page.goto(server.PREFIX + '/background-color.html#rgb(0,0,0)');
-    await new Promise(r => setTimeout(r, 1000));
+    await waitForRafs(page, 100);
     await page.goto(server.CROSS_PROCESS_PREFIX + '/background-color.html#rgb(100,100,100)');
-    await new Promise(r => setTimeout(r, 1000));
+    await waitForRafs(page, 100);
     await context.close();
 
     const videoFile = await page.video().path();
@@ -358,7 +359,7 @@ it.describe('screencast', () => {
     const page = await context.newPage();
 
     await page.goto(server.PREFIX + '/rotate-z.html');
-    await new Promise(r => setTimeout(r, 1000));
+    await waitForRafs(page, 100);
     await context.close();
 
     const videoFile = await page.video().path();
@@ -391,7 +392,10 @@ it.describe('screencast', () => {
       page.evaluate(() => { window.open('about:blank'); }),
     ]);
     await popup.evaluate(() => document.body.style.backgroundColor = 'red');
-    await new Promise(r => setTimeout(r, 1000));
+    await Promise.all([
+      waitForRafs(page, 100),
+      waitForRafs(popup, 100),
+    ]);
     await context.close();
 
     const pageVideoFile = await page.video().path();
@@ -422,11 +426,11 @@ it.describe('screencast', () => {
     await page.$eval('.container', container => {
       container.firstElementChild.classList.remove('red');
     });
-    await new Promise(r => setTimeout(r, 300));
+    await waitForRafs(page, 100);
     await page.$eval('.container', container => {
       container.firstElementChild.classList.add('red');
     });
-    await new Promise(r => setTimeout(r, 1000));
+    await waitForRafs(page, 100);
     await context.close();
 
     const videoFile = await page.video().path();
@@ -462,7 +466,7 @@ it.describe('screencast', () => {
     });
 
     const page = await context.newPage();
-    await new Promise(r => setTimeout(r, 1000));
+    await waitForRafs(page, 100);
     await context.close();
 
     const videoFile = await page.video().path();
@@ -479,7 +483,7 @@ it.describe('screencast', () => {
     });
 
     const page = await context.newPage();
-    await new Promise(r => setTimeout(r, 1000));
+    await waitForRafs(page, 100);
     await context.close();
 
     const videoFile = await page.video().path();
@@ -499,7 +503,7 @@ it.describe('screencast', () => {
     });
 
     const page = await context.newPage();
-    await new Promise(r => setTimeout(r, 1000));
+    await waitForRafs(page, 100);
     await context.close();
 
     const videoFile = await page.video().path();
@@ -520,7 +524,7 @@ it.describe('screencast', () => {
     });
 
     await page.evaluate(() => document.body.style.backgroundColor = 'red');
-    await new Promise(r => setTimeout(r, 1000));
+    await waitForRafs(page, 100);
     await context.close();
 
     const videoFile = await page.video().path();
@@ -549,7 +553,7 @@ it.describe('screencast', () => {
     });
 
     const page = await context.newPage();
-    await new Promise(r => setTimeout(r, 1000));
+    await waitForRafs(page, 100);
     await context.close();
 
     const videoFile = await page.video().path();
@@ -570,7 +574,7 @@ it.describe('screencast', () => {
     });
 
     const page = await context.newPage();
-    await new Promise(r => setTimeout(r, 1000));
+    await waitForRafs(page, 100);
     await browser.close();
 
     const file = testInfo.outputPath('saved-video-');
@@ -591,7 +595,7 @@ it.describe('screencast', () => {
     });
 
     const page = await context.newPage();
-    await new Promise(r => setTimeout(r, 1000));
+    await waitForRafs(page, 100);
     await (browser as any)._channel.killForTests();
 
     const file = testInfo.outputPath('saved-video-');
@@ -613,7 +617,7 @@ it.describe('screencast', () => {
     });
 
     const page = await context.newPage();
-    await new Promise(r => setTimeout(r, 1000));
+    await waitForRafs(page, 100);
     await page.close();
     await context.close();
     await browser.close();
@@ -641,7 +645,7 @@ it.describe('screencast', () => {
 
     const page = await context.newPage();
     await page.goto(server.EMPTY_PAGE);
-    await new Promise(r => setTimeout(r, 1000));
+    await waitForRafs(page, 100);
 
     const cookies = await context.cookies();
     expect(cookies.length).toBe(1);
@@ -670,7 +674,7 @@ it.describe('screencast', () => {
 
     const page = await context.newPage();
     await page.setContent(`<div style='margin: 0; background: red; position: fixed; right:0; bottom:0; width: 30; height: 30;'></div>`);
-    await new Promise(r => setTimeout(r, 1000));
+    await waitForRafs(page, 100);
     await page.close();
     await context.close();
     await browser.close();
@@ -701,10 +705,23 @@ it('should saveAs video', async ({ browser }, testInfo) => {
   });
   const page = await context.newPage();
   await page.evaluate(() => document.body.style.backgroundColor = 'red');
-  await page.waitForTimeout(1000);
+  await waitForRafs(page, 100);
   await context.close();
 
   const saveAsPath = testInfo.outputPath('my-video.webm');
   await page.video().saveAs(saveAsPath);
   expect(fs.existsSync(saveAsPath)).toBeTruthy();
 });
+
+async function waitForRafs(page: Page, count: number): Promise<void> {
+  await page.evaluate(count => new Promise<void>(resolve => {
+    const onRaf = () => {
+      --count;
+      if (!count)
+        resolve();
+      else
+        requestAnimationFrame(onRaf);
+    };
+    requestAnimationFrame(onRaf);
+  }), count);
+}
