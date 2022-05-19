@@ -532,6 +532,46 @@ it('should type repeatedly in contenteditable in shadow dom', async ({ page }) =
   expect(await sectionEditor.textContent()).toBe('This is the second box.');
 });
 
+it('should type repeatedly in contenteditable in shadow dom with nested elements', async ({ page }) => {
+  await page.setContent(`
+    <html>
+      <body>
+        <shadow-element></shadow-element>
+        <script>
+          customElements.define('shadow-element', class extends HTMLElement {
+            constructor() {
+              super();
+              this.attachShadow({ mode: 'open' });
+            }
+
+            connectedCallback() {
+              this.shadowRoot.innerHTML = \`
+                <style>
+                  .editor { padding: 1rem; margin: 1rem; border: 1px solid #ccc; }
+                </style>
+                <div class=editor contenteditable id=foo><p>hello</p></div>
+                <hr>
+                <section>
+                  <div class=editor contenteditable id=bar><p>world</p></div>
+                </section>
+              \`;
+            }
+          });
+        </script>
+      </body>
+    </html>
+  `);
+
+  const editor = page.locator('shadow-element > .editor').first();
+  await editor.type('This is the first box: ');
+
+  const sectionEditor = page.locator('section .editor');
+  await sectionEditor.type('This is the second box: ');
+
+  expect(await editor.textContent()).toBe('This is the first box: hello');
+  expect(await sectionEditor.textContent()).toBe('This is the second box: world');
+});
+
 it('should type repeatedly in input in shadow dom', async ({ page }) => {
   await page.setContent(`
     <html>
