@@ -107,7 +107,7 @@ it('should support webgl @smoke', async ({ page, browserName, headless }) => {
 
 it('should support webgl 2 @smoke', async ({ page, browserName, headless }) => {
   it.skip(browserName === 'webkit', 'WebKit doesn\'t have webgl2 enabled yet upstream.');
-  it.fixme(browserName === 'firefox' && headless);
+  it.fixme(browserName === 'firefox');
   it.fixme(browserName === 'chromium' && !headless, 'chromium doesn\'t like webgl2 when running under xvfb');
 
   const hasWebGL2 = await page.evaluate(() => {

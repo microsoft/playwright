@@ -97,6 +97,7 @@ it('should accept userDataDir', async ({ createUserDataDir, browserType }) => {
 });
 
 it('should restore state from userDataDir', async ({ browserType, server, createUserDataDir, isMac, browserName }) => {
+  it.fixme(browserName === 'firefox', 'https://github.com/microsoft/playwright/issues/12632');
   it.slow();
 
   const userDataDir = await createUserDataDir();
