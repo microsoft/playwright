@@ -117,7 +117,7 @@ Expected substring or RegExp.
 ## async method: PageAssertions.toHaveScreenshot#1
 * langs: js
 
-This funciton will wait until two consecutive page screenshots
+This function will wait until two consecutive page screenshots
 yield the same result, and then compare the last screenshot with the expectation.
 
 ```js
@@ -145,7 +145,7 @@ Snapshot name.
 ## async method: PageAssertions.toHaveScreenshot#2
 * langs: js
 
-This funciton will wait until two consecutive page screenshots
+This function will wait until two consecutive page screenshots
 yield the same result, and then compare the last screenshot with the expectation.
 
 ```js

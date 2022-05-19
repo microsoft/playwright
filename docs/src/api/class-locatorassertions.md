@@ -1005,7 +1005,7 @@ Property value.
 ## async method: LocatorAssertions.toHaveScreenshot#1
 * langs: js
 
-This funciton will wait until two consecutive locator screenshots
+This function will wait until two consecutive locator screenshots
 yield the same result, and then compare the last screenshot with the expectation.
 
 ```js
@@ -1032,7 +1032,7 @@ Snapshot name.
 ## async method: LocatorAssertions.toHaveScreenshot#2
 * langs: js
 
-This funciton will wait until two consecutive locator screenshots
+This function will wait until two consecutive locator screenshots
 yield the same result, and then compare the last screenshot with the expectation.
 
 ```js

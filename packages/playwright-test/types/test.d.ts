@@ -3328,7 +3328,7 @@ interface LocatorAssertions {
   }): Promise<void>;
 
   /**
-   * This funciton will wait until two consecutive locator screenshots yield the same result, and then compare the last
+   * This function will wait until two consecutive locator screenshots yield the same result, and then compare the last
    * screenshot with the expectation.
    *
    * ```js
@@ -3403,7 +3403,7 @@ interface LocatorAssertions {
   }): Promise<void>;
 
   /**
-   * This funciton will wait until two consecutive locator screenshots yield the same result, and then compare the last
+   * This function will wait until two consecutive locator screenshots yield the same result, and then compare the last
    * screenshot with the expectation.
    *
    * ```js
@@ -3556,7 +3556,7 @@ interface PageAssertions {
   not: PageAssertions;
 
   /**
-   * This funciton will wait until two consecutive page screenshots yield the same result, and then compare the last
+   * This function will wait until two consecutive page screenshots yield the same result, and then compare the last
    * screenshot with the expectation.
    *
    * ```js
@@ -3661,7 +3661,7 @@ interface PageAssertions {
   }): Promise<void>;
 
   /**
-   * This funciton will wait until two consecutive page screenshots yield the same result, and then compare the last
+   * This function will wait until two consecutive page screenshots yield the same result, and then compare the last
    * screenshot with the expectation.
    *
    * ```js
