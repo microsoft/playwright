@@ -22,6 +22,9 @@ import { parseTrace } from '../config/utils';
 
 test.skip(({ trace }) => trace === 'on');
 
+// https://github.com/microsoft/playwright/issues/14285
+test.fixme(({ browserName, headless }) => browserName === 'firefox' && !headless);
+
 test('should collect trace with resources, but no js', async ({ context, page, server }, testInfo) => {
   await context.tracing.start({ screenshots: true, snapshots: true });
   await page.goto(server.PREFIX + '/frames/frame.html');
