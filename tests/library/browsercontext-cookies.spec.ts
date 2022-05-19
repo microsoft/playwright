@@ -40,7 +40,7 @@ it('should get a cookie @smoke', async ({ context, page, server, defaultSameSite
   }]);
 });
 
-it('should get a non-session cookie', async ({ context, page, server, defaultSameSiteCookieValue }) => {
+it('should get a non-session cookie', async ({ context, page, server, defaultSameSiteCookieValue, browserName, browserMajorVersion }) => {
   await page.goto(server.EMPTY_PAGE);
   // @see https://en.wikipedia.org/wiki/Year_2038_problem
   const date = +(new Date('1/1/2038'));
@@ -50,16 +50,24 @@ it('should get a non-session cookie', async ({ context, page, server, defaultSam
     return document.cookie;
   }, date);
   expect(documentCookie).toBe('username=John Doe');
-  expect(await context.cookies()).toEqual([{
+  const cookies = await context.cookies();
+  expect(cookies.length).toBe(1);
+  expect(cookies[0]).toEqual({
     name: 'username',
     value: 'John Doe',
     domain: 'localhost',
     path: '/',
-    expires: date / 1000,
+    // We will check this separately.
+    expires: expect.anything(),
     httpOnly: false,
     secure: false,
     sameSite: defaultSameSiteCookieValue,
-  }]);
+  });
+  // Browsers start to cap cookies with 400 days max expires value.
+  // See https://github.com/httpwg/http-extensions/pull/1732
+  // Chromium patch: https://chromium.googlesource.com/chromium/src/+/aaa5d2b55478eac2ee642653dcd77a50ac3faff6
+  // We want to make sure that expires date is at least 400 days in future.
+  expect(cookies[0].expires).toBeGreaterThan((Date.now() + FOUR_HUNDRED_DAYS) / 1000 - 60 * 5 /* subtract 5 minutes to be less precise */);
 });
 
 it('should properly report httpOnly cookie', async ({ context, page, server }) => {
