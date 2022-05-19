@@ -119,6 +119,12 @@ with sync_playwright() as p:
     assert await response.body() == '{"status": "ok"}'
 ```
 
+## method: APIRequestContext.createFormData
+* langs: csharp
+- returns: <[FormData]>
+
+Creates a new [FormData] instance which is used for providing form and multipart data when making HTTP requests.
+
 ## async method: APIRequestContext.delete
 - returns: <[APIResponse]>
 

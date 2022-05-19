@@ -86,7 +86,6 @@ classNameMap.set('path', 'string');
 classNameMap.set('URL', 'string');
 classNameMap.set('RegExp', 'Regex');
 classNameMap.set('Readable', 'Stream');
-classNameMap.set('FormData', 'FormData');
 
 /**
  *
@@ -133,9 +132,6 @@ function writeFile(kind, name, spec, body, folder, extendsName = null) {
 function renderClass(clazz) {
   const name = classNameMap.get(clazz.name);
   if (name === 'TimeoutException')
-    return;
-
-  if (name === 'FormData')
     return;
 
   const body = [];
@@ -504,6 +500,7 @@ function renderMethod(member, parent, name, options, out) {
   if (member.args.size === 0
     && type !== 'void'
     && !name.startsWith('Get')
+    && name !== 'CreateFormData'
     && !name.startsWith('PostDataJSON')
     && !name.startsWith('As')) {
     if (!member.async) {
