@@ -612,7 +612,8 @@ it('should climb up to [role=button]', async ({ page }) => {
 });
 
 it('should climb up to a anchor', async ({ page }) => {
-  await page.setContent(`<a href="javascript:window.__CLICKED=true;" id="outer"><div id="inner" style="pointer-events: none">Inner</div></a>`);
+  // For Firefox its not allowed to return anything: https://bugzilla.mozilla.org/show_bug.cgi?id=1392046
+  await page.setContent(`<a href="javascript:(function(){window.__CLICKED=true})()" id="outer"><div id="inner" style="pointer-events: none">Inner</div></a>`);
   await page.click('#inner');
   expect(await page.evaluate('__CLICKED')).toBe(true);
 });
