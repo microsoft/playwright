@@ -119,7 +119,6 @@ it('clicking checkbox should activate it', async ({ page, browserName, headless,
 });
 
 it('keeps focus on element when attempting to focus a non-focusable element', async ({ page }) => {
-  it.fail();
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/14254' });
 
   await page.setContent(`

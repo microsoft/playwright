@@ -490,8 +490,9 @@ it('should support undo-redo', async ({ page, isMac, browserName, isLinux }) => 
   await expect(div).toHaveText('123');
 });
 
-it('should type repeatedly in contenteditable in shadow dom', async ({ page }) => {
+it('should type repeatedly in contenteditable in shadow dom', async ({ page, browserName }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/12941' });
+  it.fail(browserName === 'firefox');
 
   await page.setContent(`
     <html>
