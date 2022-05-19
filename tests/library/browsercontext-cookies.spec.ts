@@ -67,7 +67,9 @@ it('should get a non-session cookie', async ({ context, page, server, defaultSam
   // See https://github.com/httpwg/http-extensions/pull/1732
   // Chromium patch: https://chromium.googlesource.com/chromium/src/+/aaa5d2b55478eac2ee642653dcd77a50ac3faff6
   // We want to make sure that expires date is at least 400 days in future.
-  expect(cookies[0].expires).toBeGreaterThan((Date.now() + FOUR_HUNDRED_DAYS) / 1000 - 60 * 5 /* subtract 5 minutes to be less precise */);
+  const FOUR_HUNDRED_DAYS = 1000 * 60 * 60 * 24 * 400;
+  const FIVE_MINUTES = 1000 * 60 * 5; // relax condition a bit to make sure test is not flaky.
+  expect(cookies[0].expires).toBeGreaterThan((Date.now() + FOUR_HUNDRED_DAYS - FIVE_MINUTES) / 1000);
 });
 
 it('should properly report httpOnly cookie', async ({ context, page, server }) => {
