@@ -312,7 +312,7 @@ Query parameters to be sent with the URL.
 
 ## csharp-fetch-option-params
 * langs: csharp
-- `params` <[Object]<[string], [any]>>
+- `params` <[Object]<[string], [Serializable]>>
 
 Query parameters to be sent with the URL.
 
@@ -380,7 +380,7 @@ or as file-like object containing file name, mime-type and its content.
 
 ## js-python-fetch-option-data
 * langs: js, python, csharp
-- `data` <[string]|[Buffer]|[any]>
+- `data` <[string]|[Buffer]|[Serializable]>
 
 Allows to set post data of the request. If the data parameter is an object, it will be serialized to json string
 and `content-type` header will be set to `application/json` if not explicitly set. Otherwise the `content-type` header will be

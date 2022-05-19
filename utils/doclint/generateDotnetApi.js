@@ -80,13 +80,13 @@ classNameMap.set('Error', 'Exception');
 classNameMap.set('TimeoutError', 'TimeoutException');
 classNameMap.set('EvaluationArgument', 'object');
 classNameMap.set('boolean', 'bool');
-classNameMap.set('Serializable', 'T');
 classNameMap.set('any', 'object');
 classNameMap.set('Buffer', 'byte[]');
 classNameMap.set('path', 'string');
 classNameMap.set('URL', 'string');
 classNameMap.set('RegExp', 'Regex');
 classNameMap.set('Readable', 'Stream');
+classNameMap.set('FormData', 'FormData');
 
 /**
  *
@@ -133,6 +133,9 @@ function writeFile(kind, name, spec, body, folder, extendsName = null) {
 function renderClass(clazz) {
   const name = classNameMap.get(clazz.name);
   if (name === 'TimeoutException')
+    return;
+
+  if (name === 'FormData')
     return;
 
   const body = [];
@@ -407,7 +410,7 @@ function generateNameDefault(member, name, t, parent) {
           attemptedName = `${parent.name}BoundingBoxResult`;
         if (attemptedName === 'BrowserContextCookie')
           attemptedName = 'BrowserContextCookiesResult';
-        if (attemptedName === 'File' || attemptedName === 'SetValue')
+        if (attemptedName === 'File' || (parent.name === 'FormData' && attemptedName === 'SetValue'))
           attemptedName = `FilePayload`;
         if (attemptedName === 'Size')
           attemptedName = 'RequestSizesResult';
@@ -835,6 +838,9 @@ function translateType(type, parent, generateNameCallback = t => t.name, optiona
     const types = type.templates.map(template => translateType(template, parent));
     return `${type.name}<${types.join(', ')}>`;
   }
+
+  if (type.name === 'Serializable')
+    return isReturnType ? 'T' : 'object';
 
   // there's a chance this is a name we've already seen before, so check
   // this is also where we map known types, like boolean -> bool, etc.

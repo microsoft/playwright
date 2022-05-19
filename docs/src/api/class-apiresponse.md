@@ -67,7 +67,7 @@ Returns the JSON representation of response body.
 This method will throw if the response body is not parsable via `JSON.parse`.
 
 ## async method: APIResponse.json
-* langs: java, csharp
+* langs: csharp
 - returns: <[null]|[JsonElement]>
 
 Returns the JSON representation of response body.
