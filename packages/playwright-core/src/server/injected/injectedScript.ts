@@ -671,7 +671,14 @@ export class InjectedScript {
       return 'error:notconnected';
     if (node.nodeType !== Node.ELEMENT_NODE)
       throw this.createStacklessError('Node is not an element');
-    const wasFocused = (node.getRootNode() as (Document | ShadowRoot)).activeElement === node && node.ownerDocument && node.ownerDocument.hasFocus();
+
+    const activeElement = (node.getRootNode() as (Document | ShadowRoot)).activeElement;
+    const wasFocused = activeElement === node && node.ownerDocument && node.ownerDocument.hasFocus();
+    if (!wasFocused && activeElement && (activeElement as HTMLElement | SVGElement).blur) {
+      // Workaround the Firefox bug where focusing the element does not switch current
+      // contenteditable to the new element. However, blurring the previous one helps.
+      (activeElement as HTMLElement | SVGElement).blur();
+    }
     (node as HTMLElement | SVGElement).focus();
 
     if (resetSelectionIfNotFocused && !wasFocused && node.nodeName.toLowerCase() === 'input') {
