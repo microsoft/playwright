@@ -3,15 +3,15 @@
   "browsers": [
     {
       "name": "chromium",
-      "revision": "1006",
+      "revision": "1007",
       "installByDefault": true,
-      "browserVersion": "102.0.5005.49"
+      "browserVersion": "102.0.5005.61"
     },
     {
       "name": "chromium-with-symbols",
-      "revision": "1006",
+      "revision": "1007",
       "installByDefault": false,
-      "browserVersion": "102.0.5005.49"
+      "browserVersion": "102.0.5005.61"
     },
     {
       "name": "chromium-tip-of-tree",
