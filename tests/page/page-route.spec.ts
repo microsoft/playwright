@@ -772,6 +772,20 @@ it('should support the times parameter with route matching', async ({ page, serv
   expect(intercepted).toHaveLength(1);
 });
 
+it('should support async handler w/ times', async ({ page, server }) => {
+  await page.route('**/empty.html', async route => {
+    await new Promise(f => setTimeout(f, 100));
+    route.fulfill({
+      body: '<html>intercepted</html>',
+      contentType: 'text/html'
+    });
+  }, { times: 1 });
+  await page.goto(server.EMPTY_PAGE);
+  await expect(page.locator('body')).toHaveText('intercepted');
+  await page.goto(server.EMPTY_PAGE);
+  await expect(page.locator('body')).not.toHaveText('intercepted');
+});
+
 it('should contain raw request header', async ({ page, server }) => {
   let headers: any;
   await page.route('**/*', async route => {
