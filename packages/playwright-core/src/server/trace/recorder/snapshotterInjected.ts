@@ -218,7 +218,7 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
     }
 
     private _sanitizeUrl(url: string): string {
-      if (url.startsWith('javascript:'))
+      if (url.startsWith('javascript:') || url.startsWith('data:') || url.startsWith('vbscript:'))
         return '';
       return url;
     }
