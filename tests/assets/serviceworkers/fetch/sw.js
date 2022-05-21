@@ -5,3 +5,5 @@ self.addEventListener('fetch', event => {
 self.addEventListener('activate', event => {
   event.waitUntil(clients.claim());
 });
+
+fetch('/request-from-within-worker.txt')

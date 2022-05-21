@@ -20,8 +20,8 @@ import { Browser } from '../browser';
 import { assertBrowserContextIsNotOwned, BrowserContext, verifyGeolocation } from '../browserContext';
 import { assert } from '../../utils';
 import * as network from '../network';
-import type { PageBinding, PageDelegate } from '../page';
-import { Page, Worker } from '../page';
+import type { PageBinding, PageDelegate , Worker } from '../page';
+import { Page } from '../page';
 import { Frame } from '../frames';
 import type { Dialog } from '../dialog';
 import type { ConnectionTransport } from '../transport';
@@ -31,8 +31,8 @@ import { ConnectionEvents, CRConnection } from './crConnection';
 import { CRPage } from './crPage';
 import { readProtocolStream } from './crProtocolHelper';
 import type { Protocol } from './protocol';
-import { CRExecutionContext } from './crExecutionContext';
 import type { CRDevTools } from './crDevTools';
+import { CRServiceWorker } from './crServiceWorker';
 
 export class CRBrowser extends Browser {
   readonly _connection: CRConnection;
@@ -304,21 +304,6 @@ export class CRBrowser extends Browser {
   }
 }
 
-class CRServiceWorker extends Worker {
-  readonly _browserContext: CRBrowserContext;
-
-  constructor(browserContext: CRBrowserContext, session: CRSession, url: string) {
-    super(browserContext, url);
-    this._browserContext = browserContext;
-    session.once('Runtime.executionContextCreated', event => {
-      this._createExecutionContext(new CRExecutionContext(session, event.context));
-    });
-    // This might fail if the target is closed before we receive all execution contexts.
-    session.send('Runtime.enable', {}).catch(e => {});
-    session.send('Runtime.runIfWaitingForDebugger').catch(e => {});
-  }
-}
-
 export class CRBrowserContext extends BrowserContext {
   static CREvents = {
     BackgroundPage: 'backgroundpage',
@@ -485,6 +470,8 @@ export class CRBrowserContext extends BrowserContext {
   async doUpdateRequestInterception(): Promise<void> {
     for (const page of this.pages())
       await (page._delegate as CRPage).updateRequestInterception();
+    for (const sw of this.serviceWorkers())
+      await (sw as CRServiceWorker).updateRequestInterception();
   }
 
   async doClose() {

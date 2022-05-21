@@ -22,6 +22,7 @@ import { WebSocket } from '../network';
 import type { DispatcherScope } from './dispatcher';
 import { Dispatcher, existingDispatcher, lookupNullableDispatcher } from './dispatcher';
 import { FrameDispatcher } from './frameDispatcher';
+import { WorkerDispatcher } from './pageDispatcher';
 import { TracingDispatcher } from './tracingDispatcher';
 
 export class RequestDispatcher extends Dispatcher<Request, channels.RequestChannel> implements channels.RequestChannel {
@@ -39,13 +40,15 @@ export class RequestDispatcher extends Dispatcher<Request, channels.RequestChann
   private constructor(scope: DispatcherScope, request: Request) {
     const postData = request.postDataBuffer();
     super(scope, request, 'Request', {
-      frame: FrameDispatcher.from(scope, request.frame()),
+      frame: FrameDispatcher.fromNullable(scope, request.frame()),
+      serviceWorker: WorkerDispatcher.fromNullable(scope, request.serviceWorker()),
       url: request.url(),
       resourceType: request.resourceType(),
       method: request.method(),
       postData: postData === null ? undefined : postData.toString('base64'),
       headers: request.headers(),
       isNavigationRequest: request.isNavigationRequest(),
+      isServiceWorkerRequest: request.isServiceWorkerRequest(),
       redirectedFrom: RequestDispatcher.fromNullable(scope, request.redirectedFrom()),
     });
     this._type_Request = true;

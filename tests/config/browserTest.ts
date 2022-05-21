@@ -23,6 +23,7 @@ import { removeFolders } from '../../packages/playwright-core/lib/utils/fileUtil
 import { baseTest } from './baseTest';
 import type { RemoteServerOptions } from './remoteServer';
 import { RemoteServer } from './remoteServer';
+import type { Log } from '../../packages/playwright-core/src/server/har/har';
 
 export type BrowserTestWorkerFixtures = PageWorkerFixtures & {
   browserVersion: string;
@@ -38,6 +39,7 @@ type BrowserTestTestFixtures = PageTestFixtures & {
   launchPersistent: (options?: Parameters<BrowserType['launchPersistentContext']>[1]) => Promise<{ context: BrowserContext, page: Page }>;
   startRemoteServer: (options?: RemoteServerOptions) => Promise<RemoteServer>;
   contextFactory: (options?: BrowserContextOptions) => Promise<BrowserContext>;
+  pageWithHar(outputPath?: string): Promise<{ context: BrowserContext, page: Page, getLog: () => Promise<Log> }>
 };
 
 const test = baseTest.extend<BrowserTestTestFixtures, BrowserTestWorkerFixtures>({
@@ -110,6 +112,22 @@ const test = baseTest.extend<BrowserTestTestFixtures, BrowserTestWorkerFixtures>
       await new Promise(f => setTimeout(f, 1000));
     }
   },
+  pageWithHar: async ({ contextFactory }, use, testInfo) => {
+    const pageWithHar = async (outputPath: string = 'test.har') => {
+      const harPath = testInfo.outputPath(outputPath);
+      const context = await contextFactory({ recordHar: { path: harPath }, ignoreHTTPSErrors: true });
+      const page = await context.newPage();
+      return {
+        page,
+        context,
+        getLog: async () => {
+          await context.close();
+          return JSON.parse(fs.readFileSync(harPath).toString())['log'] as Log;
+        }
+      };
+    };
+    await use(pageWithHar);
+  }
 });
 
 export const playwrightTest = test;

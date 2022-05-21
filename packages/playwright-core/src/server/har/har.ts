@@ -56,7 +56,7 @@ export type Entry = {
   serverIPAddress?: string;
   connection?: string;
   _requestref: string;
-  _frameref: string;
+  _frameref?: string;
   _monotonicTime: number;
   _serverPort?: number;
   _securityDetails?: SecurityDetails;

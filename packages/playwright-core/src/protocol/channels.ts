@@ -3086,13 +3086,15 @@ export interface ElementHandleEvents {
 
 // ----------- Request -----------
 export type RequestInitializer = {
-  frame: FrameChannel,
+  frame?: FrameChannel,
+  serviceWorker?: WorkerChannel,
   url: string,
   resourceType: string,
   method: string,
   postData?: Binary,
   headers: NameValue[],
   isNavigationRequest: boolean,
+  isServiceWorkerRequest: boolean,
   redirectedFrom?: RequestChannel,
 };
 export interface RequestEventTarget {

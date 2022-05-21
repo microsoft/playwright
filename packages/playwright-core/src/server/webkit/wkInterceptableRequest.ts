@@ -60,7 +60,7 @@ export class WKInterceptableRequest {
     this._wallTime = event.walltime * 1000;
     if (event.request.postData)
       postDataBuffer = Buffer.from(event.request.postData, 'base64');
-    this.request = new network.Request(frame, redirectedFrom?.request || null, documentId, event.request.url,
+    this.request = new network.Request(frame._page._browserContext, frame, null, redirectedFrom?.request || null, documentId, event.request.url,
         resourceType, event.request.method, postDataBuffer, headersObjectToArray(event.request.headers));
   }
 

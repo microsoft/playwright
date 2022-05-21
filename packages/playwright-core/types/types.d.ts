@@ -14383,6 +14383,11 @@ export interface Request {
   isNavigationRequest(): boolean;
 
   /**
+   * Whether this request is from a Service Worker.
+   */
+  isServiceWorkerRequest(): boolean;
+
+  /**
    * Request's method (GET, POST, etc.)
    */
   method(): string;
@@ -14453,6 +14458,8 @@ export interface Request {
    * Returns the matching [Response] object, or `null` if the response was not received due to error.
    */
   response(): Promise<null|Response>;
+
+  serviceWorker(): null|Worker;
 
   /**
    * Returns resource size information for given request.

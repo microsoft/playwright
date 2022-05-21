@@ -298,6 +298,13 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel> imple
 
 
 export class WorkerDispatcher extends Dispatcher<Worker, channels.WorkerChannel> implements channels.WorkerChannel {
+  static fromNullable(scope: DispatcherScope, worker: Worker | null): WorkerDispatcher | undefined {
+    if (!worker)
+      return undefined;
+    const result = existingDispatcher<WorkerDispatcher>(worker);
+    return result || new WorkerDispatcher(scope, worker);
+  }
+
   _type_Worker = true;
   constructor(scope: DispatcherScope, worker: Worker) {
     super(scope, worker, 'Worker', {

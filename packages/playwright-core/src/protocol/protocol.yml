@@ -2408,7 +2408,8 @@ Request:
   type: interface
 
   initializer:
-    frame: Frame
+    frame: Frame?
+    serviceWorker: Worker?
     url: string
     resourceType: string
     method: string
@@ -2417,6 +2418,7 @@ Request:
       type: array
       items: NameValue
     isNavigationRequest: boolean
+    isServiceWorkerRequest: boolean
     redirectedFrom: Request?
 
   commands:

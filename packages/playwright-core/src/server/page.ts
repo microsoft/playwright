@@ -161,8 +161,8 @@ export class Page extends SdkObject {
   private _workers = new Map<string, Worker>();
   readonly pdf: ((options?: types.PDFOptions) => Promise<Buffer>) | undefined;
   readonly coverage: any;
-  private _clientRequestInterceptor: network.RouteHandler | undefined;
-  private _serverRequestInterceptor: network.RouteHandler | undefined;
+  _clientRequestInterceptor: network.RouteHandler | undefined;
+  _serverRequestInterceptor: network.RouteHandler | undefined;
   _ownedContext: BrowserContext | undefined;
   readonly selectors: Selectors;
   _pageIsError: Error | undefined;
@@ -450,23 +450,6 @@ export class Page extends SdkObject {
   async _setServerRequestInterceptor(handler: network.RouteHandler | undefined): Promise<void> {
     this._serverRequestInterceptor = handler;
     await this._delegate.updateRequestInterception();
-  }
-
-  _requestStarted(request: network.Request, routeDelegate: network.RouteDelegate) {
-    const route = new network.Route(request, routeDelegate);
-    if (this._serverRequestInterceptor) {
-      this._serverRequestInterceptor(route, request);
-      return;
-    }
-    if (this._clientRequestInterceptor) {
-      this._clientRequestInterceptor(route, request);
-      return;
-    }
-    if (this._browserContext._requestInterceptor) {
-      this._browserContext._requestInterceptor(route, request);
-      return;
-    }
-    route.continue();
   }
 
   async expectScreenshot(metadata: CallMetadata, options: ExpectScreenshotOptions = {}): Promise<{ actual?: Buffer, previous?: Buffer, diff?: Buffer, errorMessage?: string, log?: string[] }> {

@@ -280,7 +280,7 @@ export class FrameManager {
   }
 
   requestStarted(request: network.Request, route?: network.RouteDelegate) {
-    const frame = request.frame();
+    const frame = request.frame()!;
     this._inflightRequestStarted(request);
     if (request._documentId)
       frame.setPendingDocument({ documentId: request._documentId, request });
@@ -290,8 +290,22 @@ export class FrameManager {
       return;
     }
     this._page.emitOnContext(BrowserContext.Events.Request, request);
-    if (route)
-      this._page._requestStarted(request, route);
+    if (route) {
+      const r = new network.Route(request, route);
+      if (this._page._serverRequestInterceptor) {
+        this._page._serverRequestInterceptor(r, request);
+        return;
+      }
+      if (this._page._clientRequestInterceptor) {
+        this._page._clientRequestInterceptor(r, request);
+        return;
+      }
+      if (this._page._browserContext._requestInterceptor) {
+        this._page._browserContext._requestInterceptor(r, request);
+        return;
+      }
+      r.continue();
+    }
   }
 
   requestReceivedResponse(response: network.Response) {
@@ -308,7 +322,7 @@ export class FrameManager {
   }
 
   requestFailed(request: network.Request, canceled: boolean) {
-    const frame = request.frame();
+    const frame = request.frame()!;
     this._inflightRequestFinished(request);
     if (frame.pendingDocument() && frame.pendingDocument()!.request === request) {
       let errorText = request.failure()!.errorText;
@@ -346,7 +360,7 @@ export class FrameManager {
   }
 
   private _inflightRequestFinished(request: network.Request) {
-    const frame = request.frame();
+    const frame = request.frame()!;
     if (request._isFavicon)
       return;
     if (!frame._inflightRequests.has(request))
@@ -357,7 +371,7 @@ export class FrameManager {
   }
 
   private _inflightRequestStarted(request: network.Request) {
-    const frame = request.frame();
+    const frame = request.frame()!;
     if (request._isFavicon)
       return;
     frame._inflightRequests.add(request);

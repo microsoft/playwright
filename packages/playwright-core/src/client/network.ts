@@ -18,10 +18,11 @@ import { URLSearchParams } from 'url';
 import type * as channels from '../protocol/channels';
 import { ChannelOwner } from './channelOwner';
 import { Frame } from './frame';
+import { Worker } from './worker';
 import type { Headers, RemoteAddr, SecurityDetails, WaitForEventOptions } from './types';
 import fs from 'fs';
 import { mime } from '../utilsBundle';
-import { isString, headersObjectToArray } from '../utils';
+import { isString, headersObjectToArray, assert } from '../utils';
 import { ManualPromise } from '../utils/manualPromise';
 import { Events } from './events';
 import type { Page } from './page';
@@ -172,11 +173,23 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
   }
 
   frame(): Frame {
+    if (!this._initializer.frame) {
+      assert(this.isServiceWorkerRequest());
+      throw new Error('Service Worker requests do not have an associated frame.');
+    }
     return Frame.from(this._initializer.frame);
+  }
+
+  serviceWorker(): Worker | null {
+    return this._initializer.serviceWorker ? Worker.from(this._initializer.serviceWorker) : null;
   }
 
   isNavigationRequest(): boolean {
     return this._initializer.isNavigationRequest;
+  }
+
+  isServiceWorkerRequest(): boolean {
+    return this._initializer.isServiceWorkerRequest;
   }
 
   redirectedFrom(): Request | null {
@@ -225,6 +238,8 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
   }
 
   private _raceWithPageClose(promise: Promise<any>): Promise<void> {
+    if (this.request().isServiceWorkerRequest())
+      return Promise.resolve();
     const page = this.request().frame()._page;
     // When page closes or crashes, we catch any potential rejects from this Route.
     // Note that page could be missing when routing popup's initial request that

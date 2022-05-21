@@ -85,6 +85,11 @@ Name of the header.
 
 Whether this request is driving frame's navigation.
 
+## method: Request.isServiceWorkerRequest
+- returns: <[boolean]>
+
+Whether this request is from a Service Worker.
+
 ## method: Request.method
 - returns: <[string]>
 
@@ -206,6 +211,9 @@ following: `document`, `stylesheet`, `image`, `media`, `font`, `script`, `texttr
 - returns: <[null]|[Response]>
 
 Returns the matching [Response] object, or `null` if the response was not received due to error.
+
+## method: Request.serviceWorker
+- returns: <[null]|[Worker]>
 
 ## async method: Request.sizes
 - returns: <[Object]>
