@@ -108,7 +108,7 @@ test('should intercept service worker requests (main and within)', async ({ cont
 });
 
 test('should report failure (due to cross-origin) of main service worker request', async ({ server, page, context }) => {
-  test.fail(true, 'crbug.com/1318727');
+  test.fixme(true, 'crbug.com/1318727');
   server.setRoute('/serviceworkers/cors/sw.html', (req, res) => {
     res.write(`
       <link rel="stylesheet" href="./style.css">
@@ -129,7 +129,7 @@ test('should report failure (due to cross-origin) of main service worker request
 });
 
 test('should report failure (due to content-type) of main service worker request', async ({ server, page, context }) => {
-  test.fail(true, 'crbug.com/1318727');
+  test.fixme(true, 'crbug.com/1318727');
   server.setRoute('/serviceworkers/fetch/sw.js', (req, res) => {
     res.writeHead(200, 'OK', { 'Content-Type': 'text/html' });
     res.write(`console.log('hi from sw');`);
@@ -145,7 +145,7 @@ test('should report failure (due to content-type) of main service worker request
 });
 
 test('should report failure (due to redirect) of main service worker request', async ({ server, page, context }) => {
-  test.fail(true, 'crbug.com/1318727');
+  test.fixme(true, 'crbug.com/1318727');
   server.setRedirect('/serviceworkers/empty/sw.js', '/dev/null');
   const [, main] = await Promise.all([
     server.waitForRequest('/serviceworkers/empty/sw.js'),
