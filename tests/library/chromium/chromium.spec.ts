@@ -70,11 +70,12 @@ test('isServiceWorker() and serviceWorker() work', async ({ context, page, serve
   }
   await page.evaluate(() => window['activationPromise']);
   {
-    await page.reload();
     const [inner] = await Promise.all([
       context.waitForEvent('request', r => r.url().endsWith('/inner.txt')),
       page.evaluate(() => fetch('/inner.txt')),
     ]);
+    // FIXME: This doesn't seem to be the correct assetion.
+    // Ensure the reques is actually intercepted by SW.
     expect(inner.isServiceWorkerRequest()).toBe(false);
     expect(inner.serviceWorker()).toBe(null);
   }
@@ -230,6 +231,30 @@ test('should report intercepted service worker requests in HAR', async ({ pageWi
     expect.soft(req[0].response.headers.filter(v => v.name === 'x-pw-test')).toEqual([{ name: 'x-pw-test', value: 'request-within-worker' }]);
     expect.soft(Buffer.from(req[0].response.content.text, 'base64').toString()).toBe('"intercepted!"');
   }
+});
+
+test('should intercept only serviceworker request, not page', async ({ context, page, server }) => {
+  await context.route('**/data.json', async route => {
+    if (route.request().isServiceWorkerRequest()) {
+      return route.fulfill({
+        contentType: 'text/plain',
+        status: 200,
+        body: 'from sw',
+      });
+    } else {
+      return route.continue();
+    }
+  });
+
+  const [ sw ] = await Promise.all([
+    context.waitForEvent('serviceworker'),
+    page.goto(server.PREFIX + '/serviceworkers/fetch/sw.html'),
+  ]);
+  await page.evaluate(() => window['activationPromise']);
+  const response = await page.evaluate(() => fetch('/data.json').then(r => r.text()));
+  const [ url ] = await sw.evaluate(() => self['intercepted']);
+  expect(url).toMatch(/\/data\.json$/);
+  expect(response).toBe('from sw');
 });
 
 test('serviceWorkers() should return current workers', async ({ page, server }) => {

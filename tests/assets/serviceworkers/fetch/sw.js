@@ -1,4 +1,7 @@
+self.intercepted = [];
+
 self.addEventListener('fetch', event => {
+  self.intercepted.push(event.request.url)
   event.respondWith(fetch(event.request));
 });
 
