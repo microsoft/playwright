@@ -211,6 +211,20 @@ it('should support the times parameter with route matching', async ({ context, p
   expect(intercepted).toHaveLength(1);
 });
 
+it('should support async handler w/ times', async ({ context, page, server }) => {
+  await context.route('**/empty.html', async route => {
+    await new Promise(f => setTimeout(f, 100));
+    route.fulfill({
+      body: '<html>intercepted</html>',
+      contentType: 'text/html'
+    });
+  }, { times: 1 });
+  await page.goto(server.EMPTY_PAGE);
+  await expect(page.locator('body')).toHaveText('intercepted');
+  await page.goto(server.EMPTY_PAGE);
+  await expect(page.locator('body')).not.toHaveText('intercepted');
+});
+
 it('should overwrite post body with empty string', async ({ context, server, page, browserName }) => {
   await context.route('**/empty.html', route => {
     route.continue({

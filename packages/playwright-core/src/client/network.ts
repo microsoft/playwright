@@ -309,7 +309,7 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
   }
 }
 
-export type RouteHandlerCallback = (route: Route, request: Request) => void;
+export type RouteHandlerCallback = (route: Route, request: Request) => void | Promise<void>;
 
 export type ResourceTiming = {
   startTime: number;
@@ -518,13 +518,13 @@ export class RouteHandler {
     return urlMatches(this._baseURL, requestURL, this.url);
   }
 
-  public handle(route: Route, request: Request): void {
+  public handle(route: Route, request: Request): Promise<void> | void {
     ++this.handledCount;
-    this.handler(route, request);
+    return this.handler(route, request);
   }
 
-  public isActive(): boolean {
-    return this.handledCount < this._times;
+  public willExpire(): boolean {
+    return this.handledCount + 1 >= this._times;
   }
 }
 
