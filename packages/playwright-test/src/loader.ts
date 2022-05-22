@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { installTransform, setCurrentlyLoadingTestFile } from './transform';
+import { installTransform } from './transform';
 import type { Config, Project, ReporterDescription, FullProjectInternal, FullConfigInternal, Fixtures, FixturesWithLocation } from './types';
 import { getPackageJsonPath, mergeObjects, errorWithFile } from './util';
 import { setCurrentlyLoadingFileSuite } from './globals';
@@ -153,7 +153,6 @@ export class Loader {
     suite._requireFile = file;
     suite.location = { file, line: 0, column: 0 };
 
-    setCurrentlyLoadingTestFile(file);
     setCurrentlyLoadingFileSuite(suite);
     try {
       await this._requireOrImport(file);
@@ -163,7 +162,6 @@ export class Loader {
         throw e;
       suite._loadError = serializeError(e);
     } finally {
-      setCurrentlyLoadingTestFile(null);
       setCurrentlyLoadingFileSuite(undefined);
     }
 

@@ -16,7 +16,6 @@
 
 import { test, expect, stripAnsi } from './playwright-test-fixtures';
 import fs from 'fs';
-import path from 'path';
 
 test.describe.configure({ mode: 'parallel' });
 
@@ -35,7 +34,7 @@ test('should work with the empty component list', async ({ runInlineTest }, test
   expect(result.passed).toBe(1);
   const output = stripAnsi(result.output);
   expect(output).toContain('transforming...');
-  expect(output).toContain(path.join('playwright', '.cache', 'playwright', 'index.html'));
+  expect(output.replace(/\\+/g, '/')).toContain('playwright/.cache/playwright/index.html');
 
   const metainfo = JSON.parse(fs.readFileSync(testInfo.outputPath('playwright/.cache/metainfo.json'), 'utf-8'));
   expect(metainfo.version).toEqual(expect.any(Number));

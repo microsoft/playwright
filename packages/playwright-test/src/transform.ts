@@ -26,7 +26,7 @@ import { tsConfigLoader } from './third_party/tsconfig-loader';
 import Module from 'module';
 import type { BabelTransformFunction } from './babelBundle';
 
-const version = 9;
+const version = 10;
 const cacheDir = process.env.PWTEST_CACHE_DIR || path.join(os.tmpdir(), 'playwright-transform-cache');
 const sourceMaps: Map<string, string> = new Map();
 
@@ -159,17 +159,15 @@ export function resolveHook(filename: string, specifier: string): string | undef
 }
 
 export function transformHook(code: string, filename: string, isModule = false): string {
-  if (isComponentImport(filename))
-    return componentStub();
-
   // If we are not TypeScript and there is no applicable preprocessor - bail out.
   const isTypeScript = filename.endsWith('.ts') || filename.endsWith('.tsx');
+  const isJSX = filename.endsWith('.jsx');
   const hasPreprocessor =
       process.env.PW_TEST_SOURCE_TRANSFORM &&
       process.env.PW_TEST_SOURCE_TRANSFORM_SCOPE &&
       process.env.PW_TEST_SOURCE_TRANSFORM_SCOPE.split(pathSeparator).some(f => filename.startsWith(f));
 
-  if (!isTypeScript && !hasPreprocessor)
+  if (!isTypeScript && !isJSX && !hasPreprocessor)
     return code;
 
   const cachePath = calculateCachePath(code, filename, isModule);
@@ -213,7 +211,7 @@ export function installTransform(): () => void {
   }
   (Module as any)._resolveFilename = resolveFilename;
 
-  const exts = ['.ts', '.tsx'];
+  const exts = ['.ts', '.tsx', '.jsx'];
   // When script preprocessor is engaged, we transpile JS as well.
   if (scriptPreprocessor)
     exts.push('.js', '.mjs');
@@ -248,23 +246,4 @@ export function wrapFunctionWithLocation<A extends any[], R>(func: (location: Lo
     Error.prepareStackTrace = oldPrepareStackTrace;
     return func(location, ...args);
   };
-}
-
-
-let currentlyLoadingTestFile: string | null = null;
-
-export function setCurrentlyLoadingTestFile(file: string | null) {
-  currentlyLoadingTestFile = file;
-}
-
-function isComponentImport(filename: string): boolean {
-  if (filename === currentlyLoadingTestFile)
-    return false;
-  return filename.endsWith('.tsx') || filename.endsWith('.jsx');
-}
-
-function componentStub(): string {
-  return `module.exports = new Proxy({}, {
-    get: (obj, prop) => prop
-  });`;
 }
