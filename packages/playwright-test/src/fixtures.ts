@@ -53,18 +53,18 @@ type FixtureRegistration = {
 class Fixture {
   runner: FixtureRunner;
   registration: FixtureRegistration;
-  usages: Set<Fixture>;
   value: any;
 
   _useFuncFinished: ManualPromise<void> | undefined;
   _selfTeardownComplete: Promise<void> | undefined;
   _teardownWithDepsComplete: Promise<void> | undefined;
   _runnableDescription: FixtureDescription;
+  _deps = new Set<Fixture>();
+  _usages = new Set<Fixture>();
 
   constructor(runner: FixtureRunner, registration: FixtureRegistration) {
     this.runner = runner;
     this.registration = registration;
-    this.usages = new Set();
     this.value = null;
     this._runnableDescription = {
       title: `fixture "${this.registration.customTitle || this.registration.name}" setup`,
@@ -86,7 +86,12 @@ class Fixture {
     for (const name of this.registration.deps) {
       const registration = this.runner.pool!.resolveDependency(this.registration, name)!;
       const dep = await this.runner.setupFixtureForRegistration(registration, testInfo);
-      dep.usages.add(this);
+      // Fixture teardown is root => leafs, when we need to teardown a fixture,
+      // it recursively tears down its usages first.
+      dep._usages.add(this);
+      // Don't forget to decrement all usages when fixture goes.
+      // Otherwise worker-scope fixtures will retain test-scope fixtures forever.
+      this._deps.add(dep);
       params[name] = dep.value;
     }
 
@@ -125,9 +130,13 @@ class Fixture {
     if (typeof this.registration.fn !== 'function')
       return;
     try {
-      for (const fixture of this.usages)
+      for (const fixture of this._usages)
         await fixture.teardown(timeoutManager);
-      this.usages.clear();
+      if (this._usages.size !== 0) {
+        // TODO: replace with assert.
+        console.error('Internal error: fixture integrity at', this._runnableDescription.title);  // eslint-disable-line no-console
+        this._usages.clear();
+      }
       if (this._useFuncFinished) {
         debugTest(`teardown ${this.registration.name}`);
         this._runnableDescription.title = `fixture "${this.registration.customTitle || this.registration.name}" teardown`;
@@ -137,6 +146,8 @@ class Fixture {
         timeoutManager.setCurrentFixture(undefined);
       }
     } finally {
+      for (const dep of this._deps)
+        dep._usages.delete(this);
       this.runner.instanceForId.delete(this.registration.id);
     }
   }
