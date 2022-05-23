@@ -357,6 +357,8 @@ Provides an object that will be serialized as html form using `application/x-www
 this request body. If this parameter is specified `content-type` header will be set to `application/x-www-form-urlencoded`
 unless explicitly provided.
 
+An instance of [FormData] can be created via [`method: APIRequestContext.createFormData`].
+
 ## js-python-fetch-option-multipart
 * langs: js, python
 - `multipart` <[Object]<[string], [string]|[float]|[boolean]|[ReadStream]|[Object]>>
@@ -377,6 +379,8 @@ Provides an object that will be serialized as html form using `multipart/form-da
 this request body. If this parameter is specified `content-type` header will be set to `multipart/form-data`
 unless explicitly provided. File values can be passed either as [`fs.ReadStream`](https://nodejs.org/api/fs.html#fs_class_fs_readstream)
 or as file-like object containing file name, mime-type and its content.
+
+An instance of [FormData] can be created via [`method: APIRequestContext.createFormData`].
 
 ## js-python-fetch-option-data
 * langs: js, python, csharp
