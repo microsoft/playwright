@@ -2384,7 +2384,7 @@ export module Protocol {
       /**
        * Query selector result.
        */
-      nodeId: NodeId;
+      nodeId?: NodeId;
     }
     /**
      * Executes <code>querySelectorAll</code> on a given node.
@@ -8564,11 +8564,11 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     /**
      * Timeline record type.
      */
-    export type EventType = "EventDispatch"|"ScheduleStyleRecalculation"|"RecalculateStyles"|"InvalidateLayout"|"Layout"|"Paint"|"Composite"|"RenderingFrame"|"TimerInstall"|"TimerRemove"|"TimerFire"|"EvaluateScript"|"TimeStamp"|"Time"|"TimeEnd"|"FunctionCall"|"ProbeSample"|"ConsoleProfile"|"RequestAnimationFrame"|"CancelAnimationFrame"|"FireAnimationFrame"|"ObserverCallback";
+    export type EventType = "EventDispatch"|"ScheduleStyleRecalculation"|"RecalculateStyles"|"InvalidateLayout"|"Layout"|"Paint"|"Composite"|"RenderingFrame"|"TimerInstall"|"TimerRemove"|"TimerFire"|"EvaluateScript"|"TimeStamp"|"Time"|"TimeEnd"|"FunctionCall"|"ProbeSample"|"ConsoleProfile"|"RequestAnimationFrame"|"CancelAnimationFrame"|"FireAnimationFrame"|"ObserverCallback"|"Screenshot";
     /**
      * Instrument types.
      */
-    export type Instrument = "ScriptProfiler"|"Timeline"|"CPU"|"Memory"|"Heap"|"Animation";
+    export type Instrument = "ScriptProfiler"|"Timeline"|"CPU"|"Memory"|"Heap"|"Animation"|"Screenshot";
     /**
      * Timeline record contains information about the recorded activity.
      */
