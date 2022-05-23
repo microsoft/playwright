@@ -77,7 +77,7 @@ export function createPlugin(
       // 2. Check if the set of required components has changed.
       const hasNewComponents = await checkNewComponents(buildInfo, componentRegistry);
       // 3. Check component sources.
-      const sourcesDirty = hasNewComponents || await checkSources(buildInfo);
+      const sourcesDirty = !buildExists || hasNewComponents || await checkSources(buildInfo);
 
       viteConfig.root = rootDir;
       viteConfig.preview = { port };
@@ -85,7 +85,7 @@ export function createPlugin(
         outDir
       };
       const { build, preview } = require('vite');
-      if (!buildExists || sourcesDirty) {
+      if (sourcesDirty) {
         viteConfig.plugins = viteConfig.plugins || [
           frameworkPluginFactory()
         ];
