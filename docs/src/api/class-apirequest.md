@@ -1,5 +1,4 @@
 # class: APIRequest
-* langs: js, java, python
 
 Exposes API that can be used for the Web API testing. This class is used for creating
 [APIRequestContext] instance which in turn can be used for sending web requests. An instance
@@ -7,7 +6,6 @@ of this class can be obtained via [`property: Playwright.request`]. For more inf
 see [APIRequestContext].
 
 ## async method: APIRequest.newContext
-* langs: js, java, python
 - returns: <[APIRequestContext]>
 
 Creates new instances of [APIRequestContext].
@@ -57,7 +55,7 @@ file with saved storage, or the value returned by one of [`method: BrowserContex
 [`method: APIRequestContext.storageState`] methods.
 
 ### option: APIRequest.newContext.storageState
-* langs: java
+* langs: java, csharp
 - `storageState` <[string]>
 
 Populates context with given storage state. This option can be used to initialize context with logged-in information

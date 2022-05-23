@@ -2559,7 +2559,8 @@ last redirect.
 ### option: Page.reload.timeout = %%-navigation-timeout-%%
 
 ## property: Page.request
-* langs: js, java, python
+* langs:
+  - alias-csharp: APIRequest
 - type: <[APIRequestContext]>
 
 API testing helper associated with this page. This method returns the same instance as
