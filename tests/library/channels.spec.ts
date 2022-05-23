@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-import fs from 'fs';
 import domain from 'domain';
 import { playwrightTest as it, expect } from '../config/browserTest';
 
@@ -203,85 +202,6 @@ it('should work with the domain module', async ({ browserType, server, browserNa
 
   if (err)
     throw err;
-});
-
-it('make sure that the client/server side context, page, etc. objects were garbage collected', async ({ browserName, server, childProcess }, testInfo) => {
-  // WeakRef was added in Node.js 14
-  it.skip(parseInt(process.version.slice(1), 10) < 14);
-  const scriptPath = testInfo.outputPath('test.js');
-  const script = `
-  const playwright = require(${JSON.stringify(require.resolve('playwright'))});
-  const { kTestSdkObjects } = require(${JSON.stringify(require.resolve('../../packages/playwright-core/lib/server/instrumentation'))});
-  const { existingDispatcher } = require(${JSON.stringify(require.resolve('../../packages/playwright-core/lib/server/dispatchers/dispatcher'))});
-  
-  const toImpl = playwright._toImpl;
-  
-  (async () => {
-    const clientSideObjectsSizeBeforeLaunch = playwright._connection._objects.size;
-    const browser = await playwright['${browserName}'].launch();
-    const objectRefs = [];
-    const dispatcherRefs = [];
-
-    for (let i = 0; i < 5; i++) {
-      const context = await browser.newContext();
-      const page = await context.newPage();
-      const response = await page.goto('${server.EMPTY_PAGE}');
-      objectRefs.push(new WeakRef(toImpl(context)));
-      objectRefs.push(new WeakRef(toImpl(page)));
-      objectRefs.push(new WeakRef(toImpl(response)));
-      dispatcherRefs.push(
-        new WeakRef(existingDispatcher(toImpl(context))),
-        new WeakRef(existingDispatcher(toImpl(page))),
-        new WeakRef(existingDispatcher(toImpl(response))),
-      );
-    }
-
-    assertServerSideObjectsExistance(true);
-    assertServerSideDispatchersExistance(true);
-    await browser.close();
-
-    for (let i = 0; i < 5; i++) {
-      await new Promise(resolve => setTimeout(resolve, 100));
-      global.gc();
-    }
-
-    assertServerSideObjectsExistance(false);
-    assertServerSideDispatchersExistance(false);
-    
-    assertClientSideObjects();
-
-    function assertClientSideObjects() {
-      if (playwright._connection._objects.size !== clientSideObjectsSizeBeforeLaunch)
-        throw new Error('Client-side objects were not cleaned up');
-    }
-
-    function assertServerSideObjectsExistance(expected) {
-      for (const ref of objectRefs) {
-        if (kTestSdkObjects.has(ref.deref()) !== expected) {
-          throw new Error('Unexpected SdkObject existence! (expected: ' + expected + ')');
-        }
-      }
-    }
-
-    function assertServerSideDispatchersExistance(expected) {
-      for (const ref of dispatcherRefs) {
-        const impl = ref.deref();
-        if (!!impl !== expected)
-          throw new Error('Dispatcher is still alive!');
-      }
-    }
-  })();
-  `;
-  await fs.promises.writeFile(scriptPath, script);
-  const testSdkObjectsProcess = childProcess({
-    command: ['node', '--expose-gc', scriptPath],
-    env: {
-      ...process.env,
-      _PW_INTERNAL_COUNT_SDK_OBJECTS: '1',
-    }
-  });
-  const { exitCode } = await testSdkObjectsProcess.exited;
-  expect(exitCode).toBe(0);
 });
 
 async function expectScopeState(object, golden) {
