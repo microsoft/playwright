@@ -3751,7 +3751,7 @@ index c503d5db51b75de57e3b09357f48f60470986da4..79947b44063d85951d2f6314c5cb78a5
      void discardBindings();
  
 diff --git a/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp b/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp
-index a6601cae918cc76aab630e88c05acc445977169c..4f9852e8407db210d3c59418434cb7fbc3705bbb 100644
+index a6601cae918cc76aab630e88c05acc445977169c..0db6816a0842f8e54db3e03a314327f5cbb41430 100644
 --- a/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp
 +++ b/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp
 @@ -45,6 +45,7 @@
@@ -3790,20 +3790,7 @@ index a6601cae918cc76aab630e88c05acc445977169c..4f9852e8407db210d3c59418434cb7fb
      if (resourceLoader) {
          auto* metrics = response.deprecatedNetworkLoadMetricsOrNull();
          responseObject->setTiming(buildObjectForTiming(metrics ? *metrics : NetworkLoadMetrics::emptyMetrics(), *resourceLoader));
-@@ -490,9 +494,11 @@ static InspectorPageAgent::ResourceType resourceTypeForLoadType(InspectorInstrum
- 
- void InspectorNetworkAgent::willSendRequest(ResourceLoaderIdentifier identifier, DocumentLoader* loader, ResourceRequest& request, const ResourceResponse& redirectResponse, const CachedResource* cachedResource)
- {
-+    InspectorPageAgent::ResourceType resourceType;
-     if (!cachedResource && loader)
-         cachedResource = InspectorPageAgent::cachedResource(loader->frame(), request.url());
--    willSendRequest(identifier, loader, request, redirectResponse, resourceTypeForCachedResource(cachedResource));
-+    resourceType = resourceTypeForCachedResource(cachedResource);
-+    willSendRequest(identifier, loader, request, redirectResponse, resourceType);
- }
- 
- void InspectorNetworkAgent::willSendRequestOfType(ResourceLoaderIdentifier identifier, DocumentLoader* loader, ResourceRequest& request, InspectorInstrumentation::LoadType loadType)
-@@ -914,6 +920,7 @@ void InspectorNetworkAgent::continuePendingResponses()
+@@ -914,6 +918,7 @@ void InspectorNetworkAgent::continuePendingResponses()
  
  Protocol::ErrorStringOr<void> InspectorNetworkAgent::setExtraHTTPHeaders(Ref<JSON::Object>&& headers)
  {
@@ -3811,7 +3798,7 @@ index a6601cae918cc76aab630e88c05acc445977169c..4f9852e8407db210d3c59418434cb7fb
      for (auto& entry : headers.get()) {
          auto stringValue = entry.value->asString();
          if (!!stringValue)
-@@ -1194,6 +1201,9 @@ Protocol::ErrorStringOr<void> InspectorNetworkAgent::interceptWithRequest(const
+@@ -1194,6 +1199,9 @@ Protocol::ErrorStringOr<void> InspectorNetworkAgent::interceptWithRequest(const
          return makeUnexpected("Missing pending intercept request for given requestId"_s);
  
      auto& loader = *pendingRequest->m_loader;
@@ -3821,7 +3808,7 @@ index a6601cae918cc76aab630e88c05acc445977169c..4f9852e8407db210d3c59418434cb7fb
      ResourceRequest request = loader.request();
      if (!!url)
          request.setURL(URL({ }, url));
-@@ -1293,14 +1303,23 @@ Protocol::ErrorStringOr<void> InspectorNetworkAgent::interceptRequestWithRespons
+@@ -1293,14 +1301,23 @@ Protocol::ErrorStringOr<void> InspectorNetworkAgent::interceptRequestWithRespons
      response.setHTTPStatusCode(status);
      response.setHTTPStatusText(AtomString { statusText });
      HTTPHeaderMap explicitHeaders;
@@ -3847,7 +3834,7 @@ index a6601cae918cc76aab630e88c05acc445977169c..4f9852e8407db210d3c59418434cb7fb
          if (loader->reachedTerminalState())
              return;
  
-@@ -1348,6 +1367,12 @@ Protocol::ErrorStringOr<void> InspectorNetworkAgent::interceptRequestWithError(c
+@@ -1348,6 +1365,12 @@ Protocol::ErrorStringOr<void> InspectorNetworkAgent::interceptRequestWithError(c
      return { };
  }
  
@@ -8977,18 +8964,10 @@ index ba33be375f926e0f5d71a9bb6ca8663f13ba59be..80c781b0e7a39b130311d090d7ccf1c2
  #if !LOG_DISABLED
              LOG(NetworkSession, "%llu didReceiveResponse completionHandler (%d)", taskIdentifier, policyAction);
 diff --git a/Source/WebKit/NetworkProcess/curl/NetworkDataTaskCurl.cpp b/Source/WebKit/NetworkProcess/curl/NetworkDataTaskCurl.cpp
-index 2e6fa61594ff12bd7e864ac6edc71849f89e4028..3d550041a35d617843f0e18b54b7c22337d64709 100644
+index 2e6fa61594ff12bd7e864ac6edc71849f89e4028..c9c05b19cc1d229b048261751d85d6a59d2c8f55 100644
 --- a/Source/WebKit/NetworkProcess/curl/NetworkDataTaskCurl.cpp
 +++ b/Source/WebKit/NetworkProcess/curl/NetworkDataTaskCurl.cpp
-@@ -33,6 +33,7 @@
- #include "Download.h"
- #include "NetworkProcess.h"
- #include "NetworkSessionCurl.h"
-+#include "NetworkProcess.h"
- #include "PrivateRelayed.h"
- #include <WebCore/AuthenticationChallenge.h>
- #include <WebCore/CookieJar.h>
-@@ -84,6 +85,8 @@ NetworkDataTaskCurl::NetworkDataTaskCurl(NetworkSession& session, NetworkDataTas
+@@ -84,6 +84,8 @@ NetworkDataTaskCurl::NetworkDataTaskCurl(NetworkSession& session, NetworkDataTas
          m_curlRequest->setUserPass(m_initialCredential.user(), m_initialCredential.password());
          m_curlRequest->setAuthenticationScheme(ProtectionSpace::AuthenticationScheme::HTTPBasic);
      }
@@ -8997,7 +8976,7 @@ index 2e6fa61594ff12bd7e864ac6edc71849f89e4028..3d550041a35d617843f0e18b54b7c223
      m_curlRequest->start();
  }
  
-@@ -160,6 +163,7 @@ void NetworkDataTaskCurl::curlDidReceiveResponse(CurlRequest& request, CurlRespo
+@@ -160,6 +162,7 @@ void NetworkDataTaskCurl::curlDidReceiveResponse(CurlRequest& request, CurlRespo
      m_response = ResourceResponse(receivedResponse);
      m_response.setCertificateInfo(WTFMove(receivedResponse.certificateInfo));
      m_response.setDeprecatedNetworkLoadMetrics(Box<NetworkLoadMetrics>::create(WTFMove(receivedResponse.networkLoadMetrics)));
@@ -9005,7 +8984,7 @@ index 2e6fa61594ff12bd7e864ac6edc71849f89e4028..3d550041a35d617843f0e18b54b7c223
  
      handleCookieHeaders(request.resourceRequest(), receivedResponse);
  
-@@ -386,6 +390,8 @@ void NetworkDataTaskCurl::willPerformHTTPRedirection()
+@@ -386,6 +389,8 @@ void NetworkDataTaskCurl::willPerformHTTPRedirection()
              m_curlRequest->setUserPass(m_initialCredential.user(), m_initialCredential.password());
              m_curlRequest->setAuthenticationScheme(ProtectionSpace::AuthenticationScheme::HTTPBasic);
          }
@@ -9014,18 +8993,6 @@ index 2e6fa61594ff12bd7e864ac6edc71849f89e4028..3d550041a35d617843f0e18b54b7c223
          m_curlRequest->start();
  
          if (m_state != State::Suspended) {
-diff --git a/Source/WebKit/NetworkProcess/curl/NetworkDataTaskCurl.h b/Source/WebKit/NetworkProcess/curl/NetworkDataTaskCurl.h
-index 73d76c7702988ea513039ba22b53dfc5c2e20d53..e0c1355c2fba10d8413d7c4bc75af0cfd4c79fe8 100644
---- a/Source/WebKit/NetworkProcess/curl/NetworkDataTaskCurl.h
-+++ b/Source/WebKit/NetworkProcess/curl/NetworkDataTaskCurl.h
-@@ -87,6 +87,7 @@ private:
- 
-     void appendCookieHeader(WebCore::ResourceRequest&);
-     void handleCookieHeaders(const WebCore::ResourceRequest&, const WebCore::CurlResponse&);
-+    String suggestedFilename() const override;
- 
-     bool isThirdPartyRequest(const WebCore::ResourceRequest&);
-     bool shouldBlockCookies(const WebCore::ResourceRequest&);
 diff --git a/Source/WebKit/NetworkProcess/soup/NetworkDataTaskSoup.cpp b/Source/WebKit/NetworkProcess/soup/NetworkDataTaskSoup.cpp
 index e61d6ab76241aa8834d91d3a02fc9472f068c4ee..38531a742ec079f52d238577ec8426e606a60f4c 100644
 --- a/Source/WebKit/NetworkProcess/soup/NetworkDataTaskSoup.cpp
