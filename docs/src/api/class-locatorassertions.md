@@ -7,7 +7,7 @@ import { test, expect } from '@playwright/test';
 
 test('status becomes submitted', async ({ page }) => {
   // ...
-  await page.click('#submit-button');
+  await page.locator('#submit-button').click();
   await expect(page.locator('.status')).toHaveText('Submitted');
 });
 ```
@@ -21,7 +21,7 @@ public class TestLocator {
   @Test
   void statusBecomesSubmitted() {
     ...
-    page.click("#submit-button");
+    page.locator("#submit-button").click();
     assertThat(page.locator(".status")).hasText("Submitted");
   }
 }

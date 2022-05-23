@@ -29,10 +29,10 @@ const page = await context.newPage();
 await page.goto('https://github.com/login');
 
 // Interact with login form
-await page.click('text=Login');
-await page.fill('input[name="login"]', USERNAME);
-await page.fill('input[name="password"]', PASSWORD);
-await page.click('text=Submit');
+await page.locator('text=Login').click();
+await page.locator('input[name="login"]').fill( USERNAME);
+await page.locator('input[name="password"]').fill( PASSWORD);
+await page.locator('text=Submit').click();
 // Verify app is logged in
 ```
 

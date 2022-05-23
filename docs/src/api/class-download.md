@@ -22,7 +22,7 @@ const path = await download.path();
 
 ```java
 // wait for download to start
-Download download  = page.waitForDownload(() -> page.click("a"));
+Download download  = page.waitForDownload(() -> page.locator("a")).click();
 // wait for download to complete
 Path path = download.path();
 ```
@@ -30,7 +30,7 @@ Path path = download.path();
 ```java
 // wait for download to start
 Download download = page.waitForDownload(() -> {
-  page.click("a");
+  page.locator("a").click();
 });
 // wait for download to complete
 Path path = download.path();

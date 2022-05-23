@@ -15,7 +15,7 @@ await fileChooser.setFiles('myfile.pdf');
 ```
 
 ```java
-FileChooser fileChooser = page.waitForFileChooser(() -> page.click("upload"));
+FileChooser fileChooser = page.waitForFileChooser(() -> page.locator("upload")).click();
 fileChooser.setFiles(Paths.get("myfile.pdf"));
 ```
 

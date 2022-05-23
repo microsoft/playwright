@@ -1720,7 +1720,7 @@ interface TestFunction<TestArgs> {
  *
  * test('basic test', async ({ page }) => {
  *   await page.goto('https://playwright.dev/');
- *   const name = await page.innerText('.navbar__title');
+ *   const name = await page.locator('.navbar__title').innerText();
  *   expect(name).toBe('Playwright');
  * });
  * ```
@@ -2853,9 +2853,9 @@ export interface PlaywrightTestArgs {
    *
    * test('basic test', async ({ page }) => {
    *   await page.goto('/signin');
-   *   await page.fill('#username', 'User');
-   *   await page.fill('#password', 'pwd');
-   *   await page.click('text=Sign in');
+   *   await page.locator('#username').fill( 'User');
+   *   await page.locator('#password').fill( 'pwd');
+   *   await page.locator('text=Sign in').click();
    *   // ...
    * });
    * ```
@@ -3017,7 +3017,7 @@ interface APIResponseAssertions {
  *
  * test('status becomes submitted', async ({ page }) => {
  *   // ...
- *   await page.click('#submit-button');
+ *   await page.locator('#submit-button').click();
  *   await expect(page.locator('.status')).toHaveText('Submitted');
  * });
  * ```
@@ -3543,7 +3543,7 @@ interface LocatorAssertions {
  *
  * test('navigates to login', async ({ page }) => {
  *   // ...
- *   await page.click('#login');
+ *   await page.locator('#login').click();
  *   await expect(page).toHaveURL(/.*\/login/);
  * });
  * ```

@@ -105,28 +105,28 @@ done and its response has started loading in the popup.
 ```js
 const [newPage] = await Promise.all([
   context.waitForEvent('page'),
-  page.click('a[target=_blank]'),
+  page.locator('a[target=_blank]').click(),
 ]);
 console.log(await newPage.evaluate('location.href'));
 ```
 
 ```java
 Page newPage = context.waitForPage(() -> {
-  page.click("a[target=_blank]");
+  page.locator("a[target=_blank]").click();
 });
 System.out.println(newPage.evaluate("location.href"));
 ```
 
 ```python async
 async with context.expect_page() as page_info:
-    await page.click("a[target=_blank]"),
+    await page.locator("a[target=_blank]").click(),
 page = await page_info.value
 print(await page.evaluate("location.href"))
 ```
 
 ```python sync
 with context.expect_page() as page_info:
-    page.click("a[target=_blank]"),
+    page.locator("a[target=_blank]").click(),
 page = page_info.value
 print(page.evaluate("location.href"))
 ```
@@ -412,7 +412,7 @@ const { webkit } = require('playwright');  // Or 'chromium' or 'firefox'.
     <button onclick="onClick()">Click me</button>
     <div></div>
   `);
-  await page.click('button');
+  await page.locator('button').click();
 })();
 ```
 
@@ -434,7 +434,7 @@ public class Example {
         "</script>\n" +
         "<button onclick=\"onClick()\">Click me</button>\n" +
         "<div></div>");
-      page.click("button");
+      page.locator("button").click();
     }
   }
 }
@@ -633,7 +633,7 @@ const crypto = require('crypto');
     <button onclick="onClick()">Click me</button>
     <div></div>
   `);
-  await page.click('button');
+  await page.locator('button').click();
 })();
 ```
 
@@ -669,7 +669,7 @@ public class Example {
         "</script>\n" +
         "<button onclick=\"onClick()\">Click me</button>\n" +
         "<div></div>\n");
-      page.click("button");
+      page.locator("button").click();
     }
   }
 }
@@ -1206,7 +1206,7 @@ const [page, _] = await Promise.all([
 ```
 
 ```java
-Page newPage = context.waitForPage(() -> page.click("button"));
+Page newPage = context.waitForPage(() -> page.locator("button")).click();
 ```
 
 ```python async

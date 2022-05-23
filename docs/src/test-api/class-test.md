@@ -8,7 +8,7 @@ const { test, expect } = require('@playwright/test');
 
 test('basic test', async ({ page }) => {
   await page.goto('https://playwright.dev/');
-  const name = await page.innerText('.navbar__title');
+  const name = await page.locator('.navbar__title').innerText();
   expect(name).toBe('Playwright');
 });
 ```
@@ -18,7 +18,7 @@ import { test, expect } from '@playwright/test';
 
 test('basic test', async ({ page }) => {
   await page.goto('https://playwright.dev/');
-  const name = await page.innerText('.navbar__title');
+  const name = await page.locator('.navbar__title').innerText();
   expect(name).toBe('Playwright');
 });
 ```
@@ -32,7 +32,7 @@ const { test, expect } = require('@playwright/test');
 
 test('basic test', async ({ page }) => {
   await page.goto('https://playwright.dev/');
-  const name = await page.innerText('.navbar__title');
+  const name = await page.locator('.navbar__title').innerText();
   expect(name).toBe('Playwright');
 });
 ```
@@ -42,7 +42,7 @@ import { test, expect } from '@playwright/test';
 
 test('basic test', async ({ page }) => {
   await page.goto('https://playwright.dev/');
-  const name = await page.innerText('.navbar__title');
+  const name = await page.locator('.navbar__title').innerText();
   expect(name).toBe('Playwright');
 });
 ```
@@ -1348,5 +1348,3 @@ test('test with locale', async ({ page }) => {
 - `options` <[TestOptions]>
 
 An object with local options.
-
-

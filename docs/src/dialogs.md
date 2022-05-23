@@ -13,7 +13,7 @@ By default, dialogs are auto-dismissed by Playwright, so you don't have to handl
 
 ```js
 page.on('dialog', dialog => dialog.accept());
-await page.click('button');
+await page.locator('button').click();
 ```
 
 ```java
@@ -48,7 +48,7 @@ WRONG!
 
 ```js
 page.on('dialog', dialog => console.log(dialog.message()));
-await page.click('button'); // Will hang here
+await page.locator('button').click(); // Will hang here
 ```
 
 ```java
@@ -58,7 +58,7 @@ page.click("button"); // Will hang here
 
 ```python async
 page.on("dialog", lambda dialog: print(dialog.message))
-await page.click("button") # Will hang here
+await page.locator("button").click() # Will hang here
 ```
 
 ```python sync

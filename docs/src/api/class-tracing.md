@@ -158,7 +158,7 @@ const page = await context.newPage();
 await page.goto('https://playwright.dev');
 
 await context.tracing.startChunk();
-await page.click('text=Get Started');
+await page.locator('text=Get Started').click();
 // Everything between startChunk and stopChunk will be recorded in the trace.
 await context.tracing.stopChunk({ path: 'trace1.zip' });
 

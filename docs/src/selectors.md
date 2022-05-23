@@ -793,7 +793,7 @@ For example, consider the following DOM structure: `<label for="password">Passwo
 
 ```js
 // Fill the input by targeting the label.
-await page.fill('text=Password', 'secret');
+await page.locator('text=Password').fill( 'secret');
 ```
 
 ```java

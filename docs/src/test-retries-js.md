@@ -213,7 +213,7 @@ test('runs first', async () => {
 });
 
 test('runs second', async () => {
-  await page.click('text=Get Started');
+  await page.locator('text=Get Started').click();
 });
 ```
 
@@ -239,6 +239,6 @@ test('runs first', async () => {
 });
 
 test('runs second', async () => {
-  await page.click('text=Get Started');
+  await page.locator('text=Get Started').click();
 });
 ```

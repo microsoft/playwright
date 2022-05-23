@@ -106,7 +106,7 @@ await page.locator('text=Example Domain').waitFor();
 // Navigate and click element
 // Click will auto-wait for the element
 await page.goto('https://example.com');
-await page.click('text=Example Domain');
+await page.locator('text=Example Domain').click();
 ```
 
 ```java
@@ -170,10 +170,10 @@ the navigated page which would auto-wait for an element.
 
 ```js
 // Click will auto-wait for navigation to complete
-await page.click('text=Login');
+await page.locator('text=Login').click();
 
 // Fill will auto-wait for element on navigated page
-await page.fill('#username', 'John Doe');
+await page.locator('#username').fill( 'John Doe');
 ```
 
 ```java
@@ -213,7 +213,7 @@ await page.FillAsync("#username", "John Doe");
 `page.click` can be combined with [`method: Page.waitForLoadState`] to wait for a loading event.
 
 ```js
-await page.click('button'); // Click triggers navigation
+await page.locator('button').click(); // Click triggers navigation
 await page.waitForLoadState('networkidle'); // This resolves after 'networkidle'
 ```
 
@@ -223,7 +223,7 @@ page.waitForLoadState(LoadState.NETWORKIDLE); // This resolves after "networkidl
 ```
 
 ```python async
-await page.click("button"); # Click triggers navigation
+await page.locator("button").click(); # Click triggers navigation
 await page.wait_for_load_state("networkidle"); # This waits for the "networkidle"
 ```
 
@@ -244,14 +244,14 @@ Alternatively, page interactions like [`method: Page.click`] auto-wait for eleme
 
 ```js
 // Click will auto-wait for the element and trigger navigation
-await page.click('text=Login');
+await page.locator('text=Login').click();
 // Wait for the element
 await page.locator('#username').waitFor();
 
 // Click triggers navigation
-await page.click('text=Login');
+await page.locator('text=Login').click();
 // Fill will auto-wait for element
-await page.fill('#username', 'John Doe');
+await page.locator('#username').fill( 'John Doe');
 ```
 
 ```java
@@ -325,7 +325,7 @@ await Promise.all([
 // Using waitForNavigation with a callback prevents a race condition
 // between clicking and waiting for a navigation.
 page.waitForNavigation(() -> { // Waits for the next navigation
-  page.click("div.delayed-navigation"); // Triggers a navigation after a timeout
+  page.locator("div.delayed-navigation").click(); // Triggers a navigation after a timeout
 });
 ```
 
@@ -377,7 +377,7 @@ await Promise.all([
 // Running action in the callback of waitForNavigation prevents a race
 // condition between clicking and waiting for a navigation.
 page.waitForNavigation(new Page.WaitForNavigationOptions().setUrl("**/login"), () -> {
-  page.click("a"); // Triggers a navigation with a script redirect
+  page.locator("a").click(); // Triggers a navigation with a script redirect
 });
 ```
 
@@ -429,21 +429,21 @@ await popup.waitForLoadState('load');
 
 ```java
 Page popup = page.waitForPopup(() -> {
-  page.click("a[target='_blank']"); // Opens popup
+  page.locator("a[target='_blank']").click(); // Opens popup
 });
 popup.waitForLoadState(LoadState.LOAD);
 ```
 
 ```python async
 async with page.expect_popup() as popup_info:
-    await page.click('a[target="_blank"]') # Opens popup
+    await page.locator('a[target="_blank"]').click() # Opens popup
 popup = await popup_info.value
 await popup.wait_for_load_state("load")
 ```
 
 ```python sync
 with page.expect_popup() as popup_info:
-    page.click('a[target="_blank"]') # Opens popup
+    page.locator('a[target="_blank"]').click() # Opens popup
 popup = popup_info.value
 popup.wait_for_load_state("load")
 ```

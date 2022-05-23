@@ -302,10 +302,10 @@ test.afterAll(async ({ }) => {
 
 test('last created issue should be on the server', async ({ page, request }) => {
   await page.goto(`https://github.com/${USER}/${REPO}/issues`);
-  await page.click('text=New Issue');
-  await page.fill('[aria-label="Title"]', 'Bug report 1');
-  await page.fill('[aria-label="Comment body"]', 'Bug description');
-  await page.click('text=Submit new issue');
+  await page.locator('text=New Issue').click();
+  await page.locator('[aria-label="Title"]').fill( 'Bug report 1');
+  await page.locator('[aria-label="Comment body"]').fill( 'Bug description');
+  await page.locator('text=Submit new issue').click();
   const issueId = page.url().substr(page.url().lastIndexOf('/'));
 
   const newIssue = await request.get(`https://api.github.com/repos/${USER}/${REPO}/issues/${issueId}`);
@@ -347,10 +347,10 @@ test.afterAll(async ({ }) => {
 
 test('last created issue should be on the server', async ({ page, request }) => {
   await page.goto(`https://github.com/${USER}/${REPO}/issues`);
-  await page.click('text=New Issue');
-  await page.fill('[aria-label="Title"]', 'Bug report 1');
-  await page.fill('[aria-label="Comment body"]', 'Bug description');
-  await page.click('text=Submit new issue');
+  await page.locator('text=New Issue').click();
+  await page.locator('[aria-label="Title"]').fill( 'Bug report 1');
+  await page.locator('[aria-label="Comment body"]').fill( 'Bug description');
+  await page.locator('text=Submit new issue').click();
   const issueId = page.url().substr(page.url().lastIndexOf('/'));
 
   const newIssue = await request.get(`https://api.github.com/repos/${USER}/${REPO}/issues/${issueId}`);

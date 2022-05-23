@@ -56,7 +56,7 @@ const frame = page.frame('frame-login');
 const frame = page.frame({ url: /.*domain.*/ });
 
 // Interact with the frame
-await frame.fill('#username-input', 'John');
+await frame.locator('#username-input').fill( 'John');
 ```
 
 ```java

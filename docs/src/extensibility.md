@@ -46,7 +46,7 @@ const button = page.locator('tag=button');
 await button.click();
 
 // We can combine it with other selector engines using `>>` combinator.
-await page.click('tag=div >> span >> "Click me"');
+await page.locator('tag=div >> span >> "Click me"').click();
 
 // We can use it in any methods supporting selectors.
 const buttonCount = await page.locator('tag=button').count();

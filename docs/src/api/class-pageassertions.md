@@ -7,7 +7,7 @@ import { test, expect } from '@playwright/test';
 
 test('navigates to login', async ({ page }) => {
   // ...
-  await page.click('#login');
+  await page.locator('#login').click();
   await expect(page).toHaveURL(/.*\/login/);
 });
 ```
@@ -21,7 +21,7 @@ public class TestPage {
   @Test
   void navigatesToLoginPage() {
     ...
-    page.click("#login");
+    page.locator("#login").click();
     assertThat(page).hasURL(Pattern.compile(".*/login"));
   }
 }

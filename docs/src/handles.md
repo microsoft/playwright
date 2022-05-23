@@ -60,7 +60,7 @@ APIs wait for the element to be attached and visible.
 
 ```js
 // Get the element handle
-const elementHandle = page.waitForSelector('#box');
+const elementHandle = page.locator('#box').waitForSelector();
 
 // Assert bounding box for the element
 const boundingBox = await elementHandle.boundingBox();
@@ -73,7 +73,7 @@ expect(classNames.includes('highlighted')).toBeTruthy();
 
 ```java
 // Get the element handle
-JSHandle jsHandle = page.waitForSelector("#box");
+JSHandle jsHandle = page.locator("#box").waitForSelector();
 ElementHandle elementHandle = jsHandle.asElement();
 
 // Assert bounding box for the element

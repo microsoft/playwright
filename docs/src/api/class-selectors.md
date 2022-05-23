@@ -34,7 +34,7 @@ const { selectors, firefox } = require('playwright');  // Or 'chromium' or 'webk
   // Use the selector prefixed with its name.
   const button = page.locator('tag=button');
   // Combine it with other selector engines.
-  await page.click('tag=div >> text="Click me"');
+  await page.locator('tag=div >> text="Click me"').click();
   // Can use it in any methods supporting selectors.
   const buttonCount = await page.locator('tag=button').count();
 

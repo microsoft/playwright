@@ -68,7 +68,7 @@ public class TimeoutErrorExample {
       BrowserContext context = browser.newContext();
       Page page = context.newPage();
       try {
-        page.click("text=Example", new Page.ClickOptions().setTimeout(100));
+        page.locator("text=Example").click( new Page.ClickOptions().setTimeout(100));
       } catch (TimeoutError e) {
         System.out.println("Timeout!");
       }

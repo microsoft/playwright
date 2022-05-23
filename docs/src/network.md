@@ -259,14 +259,14 @@ Or wait for a network response after the button click:
 // Use a glob URL pattern
 const [response] = await Promise.all([
   page.waitForResponse('**/api/fetch_data'),
-  page.click('button#update'),
+  page.locator('button#update').click(),
 ]);
 ```
 
 ```java
 // Use a glob URL pattern
 Response response = page.waitForResponse("**/api/fetch_data", () -> {
-  page.click("button#update");
+  page.locator("button#update").click();
 });
 ```
 
@@ -297,25 +297,25 @@ var response = await waitForResponseTask;
 // Use a RegExp
 const [response] = await Promise.all([
   page.waitForResponse(/\.jpeg$/),
-  page.click('button#update'),
+  page.locator('button#update').click(),
 ]);
 
 // Use a predicate taking a Response object
 const [response] = await Promise.all([
   page.waitForResponse(response => response.url().includes(token)),
-  page.click('button#update'),
+  page.locator('button#update').click(),
 ]);
 ```
 
 ```java
 // Use a RegExp
 Response response = page.waitForResponse(Pattern.compile("\\.jpeg$"), () -> {
-  page.click("button#update");
+  page.locator("button#update").click();
 });
 
 // Use a predicate taking a Response object
 Response response = page.waitForResponse(r -> r.url().contains(token), () -> {
-  page.click("button#update");
+  page.locator("button#update").click();
 });
 ```
 

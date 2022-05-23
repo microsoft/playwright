@@ -403,10 +403,10 @@ it was created:
 @Test
 void lastCreatedIssueShouldBeOnTheServer() {
   page.navigate("https://github.com/" + USER + "/" + REPO + "/issues");
-  page.click("text=New Issue");
-  page.fill("[aria-label='Title']", "Bug report 1");
-  page.fill("[aria-label='Comment body']", "Bug description");
-  page.click("text=Submit new issue");
+  page.locator("text=New Issue").click();
+  page.locator("[aria-label='Title']").fill( "Bug report 1");
+  page.locator("[aria-label='Comment body']").fill( "Bug description");
+  page.locator("text=Submit new issue").click();
   String issueId = page.url().substring(page.url().lastIndexOf('/'));
 
   APIResponse newIssue = request.get("https://github.com/" + USER + "/" + REPO + "/issues/" + issueId);

@@ -63,23 +63,23 @@ public class TestExample {
   @Test
   void shouldClickButton() {
     page.navigate("data:text/html,<script>var result;</script><button onclick='result=\"Clicked\"'>Go</button>");
-    page.click("button");
+    page.locator("button").click();
     assertEquals("Clicked", page.evaluate("result"));
   }
 
   @Test
   void shouldCheckTheBox() {
     page.setContent("<input id='checkbox' type='checkbox'></input>");
-    page.check("input");
+    page.locator("input").check();
     assertTrue((Boolean) page.evaluate("() => window['checkbox'].checked"));
   }
 
   @Test
   void shouldSearchWiki() {
     page.navigate("https://www.wikipedia.org/");
-    page.click("input[name=\"search\"]");
-    page.fill("input[name=\"search\"]", "playwright");
-    page.press("input[name=\"search\"]", "Enter");
+    page.locator("input[name=\"search\"]").click();
+    page.locator("input[name=\"search\"]").fill( "playwright");
+    page.locator("input[name=\"search\"]").press( "Enter");
     assertEquals("https://en.wikipedia.org/wiki/Playwright", page.url());
   }
 }
@@ -137,23 +137,23 @@ class Test1 extends TestFixtures {
   @Test
   void shouldClickButton() {
     page.navigate("data:text/html,<script>var result;</script><button onclick='result=\"Clicked\"'>Go</button>");
-    page.click("button");
+    page.locator("button").click();
     assertEquals("Clicked", page.evaluate("result"));
   }
 
   @Test
   void shouldCheckTheBox() {
     page.setContent("<input id='checkbox' type='checkbox'></input>");
-    page.check("input");
+    page.locator("input").check();
     assertTrue((Boolean) page.evaluate("() => window['checkbox'].checked"));
   }
 
   @Test
   void shouldSearchWiki() {
     page.navigate("https://www.wikipedia.org/");
-    page.click("input[name=\"search\"]");
-    page.fill("input[name=\"search\"]", "playwright");
-    page.press("input[name=\"search\"]", "Enter");
+    page.locator("input[name=\"search\"]").click();
+    page.locator("input[name=\"search\"]").fill( "playwright");
+    page.locator("input[name=\"search\"]").press( "Enter");
     assertEquals("https://en.wikipedia.org/wiki/Playwright", page.url());
   }
 }
@@ -162,7 +162,7 @@ class Test2 extends TestFixtures {
   @Test
   void shouldReturnInnerHTML() {
     page.setContent("<div>hello</div>");
-    assertEquals("hello", page.innerHTML("css=div"));
+    assertEquals("hello", page.locator("css=div")).innerHTML();
   }
 
   @Test

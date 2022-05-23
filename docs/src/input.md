@@ -11,19 +11,19 @@ This is the easiest way to fill out the form fields. It focuses the element and 
 
 ```js
 // Text input
-await page.fill('#name', 'Peter');
+await page.locator('#name').fill( 'Peter');
 
 // Date input
-await page.fill('#date', '2020-02-02');
+await page.locator('#date').fill( '2020-02-02');
 
 // Time input
-await page.fill('#time', '13:15');
+await page.locator('#time').fill( '13:15');
 
 // Local datetime input
-await page.fill('#local', '2020-03-02T05:15');
+await page.locator('#local').fill( '2020-03-02T05:15');
 
 // Input through label
-await page.fill('text=First Name', 'Peter');
+await page.locator('text=First Name').fill( 'Peter');
 ```
 
 ```java
@@ -108,16 +108,16 @@ This is the easiest way to check and uncheck a checkbox or a radio button. This 
 
 ```js
 // Check the checkbox
-await page.check('#agree');
+await page.locator('#agree').check();
 
 // Assert the checked state
-expect(await page.isChecked('#agree')).toBeTruthy()
+expect(await page.locator('#agree')).isChecked().toBeTruthy()
 
 // Uncheck by input <label>.
 await page.uncheck('#subscribe-label');
 
 // Select the radio button
-await page.check('text=XL');
+await page.locator('text=XL').check();
 ```
 
 ```java
@@ -125,7 +125,7 @@ await page.check('text=XL');
 page.check("#agree");
 
 // Assert the checked state
-assertTrue(page.isChecked("#agree"));
+assertTrue(page.locator("#agree")).isChecked();
 
 // Uncheck by input <label>.
 page.uncheck("#subscribe-label");
@@ -194,17 +194,17 @@ You can specify option `value`, `label` or `elementHandle` to select. Multiple o
 
 ```js
 // Single selection matching the value
-await page.selectOption('select#colors', 'blue');
+await page.locator('select#colors').selectOption( 'blue');
 
 // Single selection matching the label
-await page.selectOption('select#colors', { label: 'Blue' });
+await page.locator('select#colors').selectOption( { label: 'Blue' });
 
 // Multiple selected items
-await page.selectOption('select#colors', ['red', 'green', 'blue']);
+await page.locator('select#colors').selectOption( ['red', 'green', 'blue']);
 
 // Select the option via element handle
 const option = await page.$('#best-option');
-await page.selectOption('select#colors', option);
+await page.locator('select#colors').selectOption( option);
 ```
 
 ```java
@@ -281,22 +281,22 @@ Performs a simple human click.
 
 ```js
 // Generic click
-await page.click('button#submit');
+await page.locator('button#submit').click();
 
 // Double click
 await page.dblclick('#item');
 
 // Right click
-await page.click('#item', { button: 'right' });
+await page.locator('#item').click( { button: 'right' });
 
 // Shift + click
-await page.click('#item', { modifiers: ['Shift'] });
+await page.locator('#item').click( { modifiers: ['Shift'] });
 
 // Hover over element
-await page.hover('#item');
+await page.locator('#item').hover();
 
 // Click the top left corner
-await page.click('#item', { position: { x: 0, y: 0} });
+await page.locator('#item').click( { position: { x: 0, y: 0} });
 ```
 
 ```java
@@ -393,7 +393,7 @@ Under the hood, this and other pointer-related methods:
 Sometimes, apps use non-trivial logic where hovering the element overlays it with another element that intercepts the click. This behavior is indistinguishable from a bug where element gets covered and the click is dispatched elsewhere. If you know this is taking place, you can bypass the [actionability](./actionability.md) checks and force the click:
 
 ```js
-await page.click('button#submit', { force: true });
+await page.locator('button#submit').click( { force: true });
 ```
 
 ```java
@@ -417,7 +417,7 @@ await page.ClickAsync("button#submit", new PageClickOptions { Force = true });
 If you are not interested in testing your app under the real conditions and want to simulate the click by any means possible, you can trigger the [`HTMLElement.click()`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/click) behavior via simply dispatching a click event on the element:
 
 ```js
-await page.dispatchEvent('button#submit', 'click');
+await page.locator('button#submit').dispatchEvent( 'click');
 ```
 
 ```java
@@ -459,7 +459,7 @@ Type into the field character by character, as if it was a user with a real keyb
 
 ```js
 // Type character by character
-await page.type('#area', 'Hello World!');
+await page.locator('#area').type( 'Hello World!');
 ```
 
 ```java
@@ -501,13 +501,13 @@ Most of the time, [`method: Page.fill`] will just work. You only need to type ch
 
 ```js
 // Hit Enter
-await page.press('#submit', 'Enter');
+await page.locator('#submit').press( 'Enter');
 
 // Dispatch Control+Right
-await page.press('#name', 'Control+ArrowRight');
+await page.locator('#name').press( 'Control+ArrowRight');
 
 // Press $ sign on keyboard
-await page.press('#value', '$');
+await page.locator('#value').press( '$');
 ```
 
 ```java
@@ -571,10 +571,10 @@ Simple version produces a single character. This character is case-sensitive, so
 
 ```js
 // <input id=name>
-await page.press('#name', 'Shift+A');
+await page.locator('#name').press( 'Shift+A');
 
 // <input id=name>
-await page.press('#name', 'Shift+ArrowLeft');
+await page.locator('#name').press( 'Shift+ArrowLeft');
 ```
 
 ```java
@@ -629,13 +629,13 @@ You can select input files for upload using the [`method: Page.setInputFiles`] m
 
 ```js
 // Select one file
-await page.setInputFiles('input#upload', 'myfile.pdf');
+await page.locator('input#upload').setInputFiles( 'myfile.pdf');
 
 // Select multiple files
-await page.setInputFiles('input#upload', ['file1.txt', 'file2.txt']);
+await page.locator('input#upload').setInputFiles( ['file1.txt', 'file2.txt']);
 
 // Remove all the selected files
-await page.setInputFiles('input#upload', []);
+await page.locator('input#upload').setInputFiles( []);
 
 // Upload buffer from memory
 await page.setInputFiles('input#upload', {
@@ -733,7 +733,7 @@ await fileChooser.setFiles('myfile.pdf');
 
 ```java
 FileChooser fileChooser = page.waitForFileChooser(() -> {
-  page.click("upload");
+  page.locator("upload").click();
 });
 fileChooser.setFiles(Paths.get("myfile.pdf"));
 ```
@@ -773,7 +773,7 @@ await fileChooser.SetFilesAsync("myfile.pdf");
 For the dynamic pages that handle focus events, you can focus the given element.
 
 ```js
-await page.focus('input#name');
+await page.locator('input#name').focus();
 ```
 
 ```java

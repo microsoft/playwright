@@ -144,7 +144,7 @@ handle new pages opened by `target="_blank"` links.
 // Get page after a specific action (e.g. clicking a link)
 const [newPage] = await Promise.all([
   context.waitForEvent('page'),
-  page.click('a[target="_blank"]') // Opens a new tab
+  page.locator('a[target="_blank"]').click() // Opens a new tab
 ])
 await newPage.waitForLoadState();
 console.log(await newPage.title());
@@ -153,7 +153,7 @@ console.log(await newPage.title());
 ```java
 // Get page after a specific action (e.g. clicking a link)
 Page newPage = context.waitForPage(() -> {
-  page.click("a[target='_blank']"); // Opens a new tab
+  page.locator("a[target='_blank']").click(); // Opens a new tab
 });
 newPage.waitForLoadState();
 System.out.println(newPage.title());
@@ -162,7 +162,7 @@ System.out.println(newPage.title());
 ```python async
 # Get page after a specific action (e.g. clicking a link)
 async with context.expect_page() as new_page_info:
-    await page.click('a[target="_blank"]') # Opens a new tab
+    await page.locator('a[target="_blank"]').click() # Opens a new tab
 new_page = await new_page_info.value
 
 await new_page.wait_for_load_state()
@@ -172,7 +172,7 @@ print(await new_page.title())
 ```python sync
 # Get page after a specific action (e.g. clicking a link)
 with context.expect_page() as new_page_info:
-    page.click('a[target="_blank"]') # Opens a new tab
+    page.locator('a[target="_blank"]').click() # Opens a new tab
 new_page = new_page_info.value
 
 new_page.wait_for_load_state()
@@ -256,7 +256,7 @@ console.log(await popup.title());
 ```java
 // Get popup after a specific action (e.g., click)
 Page popup = page.waitForPopup(() -> {
-  page.click("#open");
+  page.locator("#open").click();
 });
 popup.waitForLoadState();
 System.out.println(popup.title());

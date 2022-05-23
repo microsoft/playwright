@@ -72,9 +72,9 @@ const { test, expect } = require('@playwright/test');
 
 test('basic test', async ({ page }) => {
   await page.goto('/signin');
-  await page.fill('#username', 'User');
-  await page.fill('#password', 'pwd');
-  await page.click('text=Sign in');
+  await page.locator('#username').fill( 'User');
+  await page.locator('#password').fill( 'pwd');
+  await page.locator('text=Sign in').click();
   // ...
 });
 ```
@@ -84,9 +84,9 @@ import { test, expect } from '@playwright/test';
 
 test('basic test', async ({ page }) => {
   await page.goto('/signin');
-  await page.fill('#username', 'User');
-  await page.fill('#password', 'pwd');
-  await page.click('text=Sign in');
+  await page.locator('#username').fill( 'User');
+  await page.locator('#password').fill( 'pwd');
+  await page.locator('text=Sign in').click();
   // ...
 });
 ```

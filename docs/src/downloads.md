@@ -34,7 +34,7 @@ const path = await download.path();
 // Wait for the download to start
 Download download = page.waitForDownload(() -> {
     // Perform the action that initiates download
-    page.click("button#delayed-download");
+    page.locator("button#delayed-download").click();
 });
 // Wait for the download process to complete
 Path path = download.path();

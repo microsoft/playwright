@@ -665,6 +665,8 @@ Brings page to front (activates tab).
 
 ## async method: Page.check
 
+**DEPRECATED**: Use [`async method: Page.locator`] combined with [`async method: Locator.check`] instead. [`Locator`]'s are strict by default, so they help avoid selecting an unexpected element due to an ambiguous selector.
+
 This method checks an element matching [`param: selector`] by performing the following steps:
 1. Find an element matching [`param: selector`]. If there is none, wait until a matching element is attached to
    the DOM.
@@ -692,6 +694,8 @@ Shortcut for main frame's [`method: Frame.check`].
 ### option: Page.check.trial = %%-input-trial-%%
 
 ## async method: Page.click
+
+**DEPRECATED**: Use [`async method: Page.locator`] combined with [`async method: Locator.click`] instead. [`Locator`]'s are strict by default, so they help avoid selecting an unexpected element due to an ambiguous selector.
 
 This method clicks an element matching [`param: selector`] by performing the following steps:
 1. Find an element matching [`param: selector`]. If there is none, wait until a matching element is attached to
@@ -762,6 +766,8 @@ Browser-specific Coverage implementation. See [Coverage](#class-coverage) for mo
 * langs:
   - alias-csharp: DblClickAsync
 
+**DEPRECATED**: Use [`async method: Page.locator`] combined with [`async method: Locator.click`] instead. [`Locator`]'s are strict by default, so they help avoid selecting an unexpected element due to an ambiguous selector.
+
 This method double clicks an element matching [`param: selector`] by performing the following steps:
 1. Find an element matching [`param: selector`]. If there is none, wait until a matching element is attached to
    the DOM.
@@ -794,6 +800,8 @@ Shortcut for main frame's [`method: Frame.dblclick`].
 ### option: Page.dblclick.trial = %%-input-trial-%%
 
 ## async method: Page.dispatchEvent
+
+**DEPRECATED**: Use [`async method: Page.locator`] combined with [`async method: Locator.dispatchEvent`] instead. [`Locator`]'s are strict by default, so they help avoid selecting an unexpected element due to an ambiguous selector.
 
 The snippet below dispatches the `click` event on the element. Regardless of the visibility state of the element, `click`
 is dispatched. This is equivalent to calling
@@ -1837,6 +1845,8 @@ Callback function which will be called in Playwright's context.
 
 ## async method: Page.fill
 
+**DEPRECATED**: Use [`async method: Page.locator`] combined with [`async method: Locator.fill`] instead. [`Locator`]'s are strict by default, so they help avoid selecting an unexpected element due to an ambiguous selector.
+
 This method waits for an element matching [`param: selector`], waits for [actionability](../actionability.md) checks, focuses the element, fills it and triggers an `input` event after filling. Note that you can pass an empty string to clear the input field.
 
 If the target element is not an `<input>`, `<textarea>` or `[contenteditable]` element, this method throws an error. However, if the element is inside the `<label>` element that has an associated [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), the control will be filled instead.
@@ -1858,6 +1868,8 @@ Value to fill for the `<input>`, `<textarea>` or `[contenteditable]` element.
 ### option: Page.fill.timeout = %%-input-timeout-%%
 
 ## async method: Page.focus
+
+**DEPRECATED**: Use [`async method: Page.locator`] combined with [`async method: Locator.focus`] instead. [`Locator`]'s are strict by default, so they help avoid selecting an unexpected element due to an ambiguous selector.
 
 This method fetches an element with [`param: selector`] and focuses it. If there's no element matching
 [`param: selector`], the method waits until a matching element appears in the DOM.
@@ -1977,6 +1989,8 @@ An array of all frames attached to the page.
 ## async method: Page.getAttribute
 - returns: <[null]|[string]>
 
+**DEPRECATED**: Use [`async method: Page.locator`] combined with [`async method: Locator.getAttribute`] instead. [`Locator`]'s are strict by default, so they help avoid selecting an unexpected element due to an ambiguous selector.
+
 Returns element attribute value.
 
 ### param: Page.getAttribute.selector = %%-input-selector-%%
@@ -2063,6 +2077,8 @@ Referer header value. If provided it will take preference over the referer heade
 
 ## async method: Page.hover
 
+**DEPRECATED**: Use [`async method: Page.locator`] combined with [`async method: Locator.hover`] instead. [`Locator`]'s are strict by default, so they help avoid selecting an unexpected element due to an ambiguous selector.
+
 This method hovers over an element matching [`param: selector`] by performing the following steps:
 1. Find an element matching [`param: selector`]. If there is none, wait until a matching element is attached to
    the DOM.
@@ -2089,6 +2105,8 @@ Shortcut for main frame's [`method: Frame.hover`].
 ## async method: Page.innerHTML
 - returns: <[string]>
 
+**DEPRECATED**: Use [`async method: Page.locator`] combined with [`async method: Locator.innerHTML`] instead. [`Locator`]'s are strict by default, so they help avoid selecting an unexpected element due to an ambiguous selector.
+
 Returns `element.innerHTML`.
 
 ### param: Page.innerHTML.selector = %%-input-selector-%%
@@ -2099,6 +2117,8 @@ Returns `element.innerHTML`.
 ## async method: Page.innerText
 - returns: <[string]>
 
+**DEPRECATED**: Use [`async method: Page.locator`] combined with [`async method: Locator.innerText`] instead. [`Locator`]'s are strict by default, so they help avoid selecting an unexpected element due to an ambiguous selector.
+
 Returns `element.innerText`.
 
 ### param: Page.innerText.selector = %%-input-selector-%%
@@ -2108,6 +2128,8 @@ Returns `element.innerText`.
 
 ## async method: Page.inputValue
 - returns: <[string]>
+
+**DEPRECATED**: Use [`async method: Page.locator`] combined with [`async method: Locator.inputValue`] instead. [`Locator`]'s are strict by default, so they help avoid selecting an unexpected element due to an ambiguous selector.
 
 Returns `input.value` for the selected `<input>` or `<textarea>` or `<select>` element.
 
@@ -2120,6 +2142,8 @@ Throws for non-input elements. However, if the element is inside the `<label>` e
 
 ## async method: Page.isChecked
 - returns: <[boolean]>
+
+**DEPRECATED**: Use [`async method: Page.locator`] combined with [`async method: Locator.isChecked`] instead. [`Locator`]'s are strict by default, so they help avoid selecting an unexpected element due to an ambiguous selector.
 
 Returns whether the element is checked. Throws if the element is not a checkbox or radio input.
 
@@ -2137,6 +2161,8 @@ Indicates that the page has been closed.
 ## async method: Page.isDisabled
 - returns: <[boolean]>
 
+**DEPRECATED**: Use [`async method: Page.locator`] combined with [`async method: Locator.isDisabled`] instead. [`Locator`]'s are strict by default, so they help avoid selecting an unexpected element due to an ambiguous selector.
+
 Returns whether the element is disabled, the opposite of [enabled](../actionability.md#enabled).
 
 ### param: Page.isDisabled.selector = %%-input-selector-%%
@@ -2146,6 +2172,8 @@ Returns whether the element is disabled, the opposite of [enabled](../actionabil
 
 ## async method: Page.isEditable
 - returns: <[boolean]>
+
+**DEPRECATED**: Use [`async method: Page.locator`] combined with [`async method: Locator.isEditable`] instead. [`Locator`]'s are strict by default, so they help avoid selecting an unexpected element due to an ambiguous selector.
 
 Returns whether the element is [editable](../actionability.md#editable).
 
@@ -2157,6 +2185,8 @@ Returns whether the element is [editable](../actionability.md#editable).
 ## async method: Page.isEnabled
 - returns: <[boolean]>
 
+**DEPRECATED**: Use [`async method: Page.locator`] combined with [`async method: Locator.isEnabled`] instead. [`Locator`]'s are strict by default, so they help avoid selecting an unexpected element due to an ambiguous selector.
+
 Returns whether the element is [enabled](../actionability.md#enabled).
 
 ### param: Page.isEnabled.selector = %%-input-selector-%%
@@ -2166,6 +2196,8 @@ Returns whether the element is [enabled](../actionability.md#enabled).
 
 ## async method: Page.isHidden
 - returns: <[boolean]>
+
+**DEPRECATED**: Use [`async method: Page.locator`] combined with [`async method: Locator.isHidden`] instead. [`Locator`]'s are strict by default, so they help avoid selecting an unexpected element due to an ambiguous selector.
 
 Returns whether the element is hidden, the opposite of [visible](../actionability.md#visible).  [`option: selector`] that does not match any elements is considered hidden.
 
@@ -2179,6 +2211,8 @@ Returns whether the element is hidden, the opposite of [visible](../actionabilit
 
 ## async method: Page.isVisible
 - returns: <[boolean]>
+
+**DEPRECATED**: Use [`async method: Page.locator`] combined with [`async method: Locator.isVisible`] instead. [`Locator`]'s are strict by default, so they help avoid selecting an unexpected element due to an ambiguous selector.
 
 Returns whether the element is [visible](../actionability.md#visible). [`option: selector`] that does not match any elements is considered not visible.
 
@@ -2416,6 +2450,8 @@ Give any CSS `@page` size declared in the page priority over what is declared in
 size.
 
 ## async method: Page.press
+
+**DEPRECATED**: Use [`async method: Page.locator`] combined with [`async method: Locator.press`] instead. [`Locator`]'s are strict by default, so they help avoid selecting an unexpected element due to an ambiguous selector.
 
 Focuses the element, and then uses [`method: Keyboard.down`] and [`method: Keyboard.up`].
 
@@ -2745,6 +2781,8 @@ Returns the buffer with the captured screenshot.
 ## async method: Page.selectOption
 - returns: <[Array]<[string]>>
 
+**DEPRECATED**: Use [`async method: Page.locator`] combined with [`async method: Locator.selectOption`] instead. [`Locator`]'s are strict by default, so they help avoid selecting an unexpected element due to an ambiguous selector.
+
 This method waits for an element matching [`param: selector`], waits for [actionability](../actionability.md) checks, waits until all specified options are present in the `<select>` element and selects these options.
 
 If the target element is not a `<select>` element, this method throws an error. However, if the element is inside the `<label>` element that has an associated [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), the control will be used instead.
@@ -2811,6 +2849,8 @@ Shortcut for main frame's [`method: Frame.selectOption`].
 ### option: Page.selectOption.timeout = %%-input-timeout-%%
 
 ## async method: Page.setChecked
+
+**DEPRECATED**: Use [`async method: Page.locator`] combined with [`async method: Locator.setChecked`] instead. [`Locator`]'s are strict by default, so they help avoid selecting an unexpected element due to an ambiguous selector.
 
 This method checks or unchecks an element matching [`param: selector`] by performing the following steps:
 1. Find an element matching [`param: selector`]. If there is none, wait until a matching element is attached to
@@ -2898,6 +2938,8 @@ An object containing additional HTTP headers to be sent with every request. All 
 
 ## async method: Page.setInputFiles
 
+**DEPRECATED**: Use [`async method: Page.locator`] combined with [`async method: Locator.setInputFiles`] instead. [`Locator`]'s are strict by default, so they help avoid selecting an unexpected element due to an ambiguous selector.
+
 Sets the value of the file input to these file paths or files. If some of the `filePaths` are relative paths, then they
 are resolved relative to the current working directory. For empty array, clears the selected files.
 
@@ -2969,6 +3011,8 @@ await page.GotoAsync("https://www.microsoft.com");
 
 ## async method: Page.tap
 
+**DEPRECATED**: Use [`async method: Page.locator`] combined with [`async method: Locator.tap`] instead. [`Locator`]'s are strict by default, so they help avoid selecting an unexpected element due to an ambiguous selector.
+
 This method taps an element matching [`param: selector`] by performing the following steps:
 1. Find an element matching [`param: selector`]. If there is none, wait until a matching element is attached to
    the DOM.
@@ -3000,6 +3044,8 @@ Shortcut for main frame's [`method: Frame.tap`].
 ## async method: Page.textContent
 - returns: <[null]|[string]>
 
+**DEPRECATED**: Use [`async method: Page.locator`] combined with [`async method: Locator.textContent`] instead. [`Locator`]'s are strict by default, so they help avoid selecting an unexpected element due to an ambiguous selector.
+
 Returns `element.textContent`.
 
 ### param: Page.textContent.selector = %%-input-selector-%%
@@ -3016,6 +3062,8 @@ Returns the page's title. Shortcut for main frame's [`method: Frame.title`].
 - type: <[Touchscreen]>
 
 ## async method: Page.type
+
+**DEPRECATED**: Use [`async method: Page.locator`] combined with [`async method: Locator.type`] instead. [`Locator`]'s are strict by default, so they help avoid selecting an unexpected element due to an ambiguous selector.
 
 Sends a `keydown`, `keypress`/`input`, and `keyup` event for each character in the text. `page.type` can be used to send
 fine-grained keyboard events. To fill values in form fields, use [`method: Page.fill`].
@@ -3068,6 +3116,8 @@ Time to wait between key presses in milliseconds. Defaults to 0.
 ### option: Page.type.timeout = %%-input-timeout-%%
 
 ## async method: Page.uncheck
+
+**DEPRECATED**: Use [`async method: Page.locator`] combined with [`async method: Locator.check`] instead. [`Locator`]'s are strict by default, so they help avoid selecting an unexpected element due to an ambiguous selector.
 
 This method unchecks an element matching [`param: selector`] by performing the following steps:
 1. Find an element matching [`param: selector`]. If there is none, wait until a matching element is attached to
@@ -3753,6 +3803,8 @@ changed by using the [`method: BrowserContext.setDefaultTimeout`] or [`method: P
 
 ## async method: Page.waitForSelector
 - returns: <[null]|[ElementHandle]>
+
+**DEPRECATED**: Use [`async method: Page.locator`] combined with [`async method: Locator.waitForSelector`] instead. [`Locator`]'s are strict by default, so they help avoid selecting an unexpected element due to an ambiguous selector.
 
 Returns when element specified by selector satisfies [`option: state`] option. Returns `null` if waiting for `hidden` or
 `detached`.

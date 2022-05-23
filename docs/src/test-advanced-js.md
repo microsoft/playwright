@@ -224,9 +224,9 @@ module.exports = async config => {
   const browser = await chromium.launch();
   const page = await browser.newPage();
   await page.goto(baseURL);
-  await page.fill('input[name="user"]', 'user');
-  await page.fill('input[name="password"]', 'password');
-  await page.click('text=Sign in');
+  await page.locator('input[name="user"]').fill( 'user');
+  await page.locator('input[name="password"]').fill( 'password');
+  await page.locator('text=Sign in').click();
   await page.context().storageState({ path: storageState });
   await browser.close();
 };
@@ -241,9 +241,9 @@ async function globalSetup(config: FullConfig) {
   const browser = await chromium.launch();
   const page = await browser.newPage();
   await page.goto(baseURL!);
-  await page.fill('input[name="user"]', 'user');
-  await page.fill('input[name="password"]', 'password');
-  await page.click('text=Sign in');
+  await page.locator('input[name="user"]').fill( 'user');
+  await page.locator('input[name="password"]').fill( 'password');
+  await page.locator('text=Sign in').click();
   await page.context().storageState({ path: storageState as string });
   await browser.close();
 }

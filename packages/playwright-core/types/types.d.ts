@@ -589,6 +589,9 @@ export interface Page {
   waitForFunction<R>(pageFunction: PageFunction<void, R>, arg?: any, options?: PageWaitForFunctionOptions): Promise<SmartHandle<R>>;
 
   /**
+   * **DEPRECATED**: Use [`async method: Page.locator`] combined with [`async method: Locator.waitForSelector`] instead.
+   * [`Locator`]'s are strict by default, so they help avoid selecting an unexpected element due to an ambiguous selector.
+   *
    * Returns when element specified by selector satisfies `state` option. Returns `null` if waiting for `hidden` or
    * `detached`.
    *
@@ -616,11 +619,15 @@ export interface Page {
    * })();
    * ```
    *
+   * @deprecated
    * @param selector A selector to query for. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
   waitForSelector<K extends keyof HTMLElementTagNameMap>(selector: K, options?: PageWaitForSelectorOptionsNotHidden): Promise<ElementHandleForTag<K>>;
   /**
+   * **DEPRECATED**: Use [`async method: Page.locator`] combined with [`async method: Locator.waitForSelector`] instead.
+   * [`Locator`]'s are strict by default, so they help avoid selecting an unexpected element due to an ambiguous selector.
+   *
    * Returns when element specified by selector satisfies `state` option. Returns `null` if waiting for `hidden` or
    * `detached`.
    *
@@ -648,11 +655,15 @@ export interface Page {
    * })();
    * ```
    *
+   * @deprecated
    * @param selector A selector to query for. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
   waitForSelector(selector: string, options?: PageWaitForSelectorOptionsNotHidden): Promise<ElementHandle<SVGElement | HTMLElement>>;
   /**
+   * **DEPRECATED**: Use [`async method: Page.locator`] combined with [`async method: Locator.waitForSelector`] instead.
+   * [`Locator`]'s are strict by default, so they help avoid selecting an unexpected element due to an ambiguous selector.
+   *
    * Returns when element specified by selector satisfies `state` option. Returns `null` if waiting for `hidden` or
    * `detached`.
    *
@@ -680,11 +691,15 @@ export interface Page {
    * })();
    * ```
    *
+   * @deprecated
    * @param selector A selector to query for. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
   waitForSelector<K extends keyof HTMLElementTagNameMap>(selector: K, options: PageWaitForSelectorOptions): Promise<ElementHandleForTag<K> | null>;
   /**
+   * **DEPRECATED**: Use [`async method: Page.locator`] combined with [`async method: Locator.waitForSelector`] instead.
+   * [`Locator`]'s are strict by default, so they help avoid selecting an unexpected element due to an ambiguous selector.
+   *
    * Returns when element specified by selector satisfies `state` option. Returns `null` if waiting for `hidden` or
    * `detached`.
    *
@@ -712,6 +727,7 @@ export interface Page {
    * })();
    * ```
    *
+   * @deprecated
    * @param selector A selector to query for. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
@@ -1628,6 +1644,9 @@ export interface Page {
   bringToFront(): Promise<void>;
 
   /**
+   * **DEPRECATED**: Use [`async method: Page.locator`] combined with [`async method: Locator.check`] instead. [`Locator`]'s
+   * are strict by default, so they help avoid selecting an unexpected element due to an ambiguous selector.
+   *
    * This method checks an element matching `selector` by performing the following steps:
    * 1. Find an element matching `selector`. If there is none, wait until a matching element is attached to the DOM.
    * 1. Ensure that matched element is a checkbox or a radio input. If not, this method throws. If the element is already
@@ -1643,6 +1662,7 @@ export interface Page {
    * zero timeout disables this.
    *
    * Shortcut for main frame's [frame.check(selector[, options])](https://playwright.dev/docs/api/class-frame#frame-check).
+   * @deprecated
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
@@ -1691,6 +1711,9 @@ export interface Page {
   }): Promise<void>;
 
   /**
+   * **DEPRECATED**: Use [`async method: Page.locator`] combined with [`async method: Locator.click`] instead. [`Locator`]'s
+   * are strict by default, so they help avoid selecting an unexpected element due to an ambiguous selector.
+   *
    * This method clicks an element matching `selector` by performing the following steps:
    * 1. Find an element matching `selector`. If there is none, wait until a matching element is attached to the DOM.
    * 1. Wait for [actionability](https://playwright.dev/docs/actionability) checks on the matched element, unless `force` option is set. If the
@@ -1704,6 +1727,7 @@ export interface Page {
    * zero timeout disables this.
    *
    * Shortcut for main frame's [frame.click(selector[, options])](https://playwright.dev/docs/api/class-frame#frame-click).
+   * @deprecated
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
@@ -1808,6 +1832,9 @@ export interface Page {
   coverage: Coverage;
 
   /**
+   * **DEPRECATED**: Use [`async method: Page.locator`] combined with [`async method: Locator.click`] instead. [`Locator`]'s
+   * are strict by default, so they help avoid selecting an unexpected element due to an ambiguous selector.
+   *
    * This method double clicks an element matching `selector` by performing the following steps:
    * 1. Find an element matching `selector`. If there is none, wait until a matching element is attached to the DOM.
    * 1. Wait for [actionability](https://playwright.dev/docs/actionability) checks on the matched element, unless `force` option is set. If the
@@ -1825,6 +1852,7 @@ export interface Page {
    *
    * Shortcut for main frame's
    * [frame.dblclick(selector[, options])](https://playwright.dev/docs/api/class-frame#frame-dblclick).
+   * @deprecated
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
@@ -1889,6 +1917,9 @@ export interface Page {
   }): Promise<void>;
 
   /**
+   * **DEPRECATED**: Use [`async method: Page.locator`] combined with [`async method: Locator.dispatchEvent`] instead.
+   * [`Locator`]'s are strict by default, so they help avoid selecting an unexpected element due to an ambiguous selector.
+   *
    * The snippet below dispatches the `click` event on the element. Regardless of the visibility state of the element,
    * `click` is dispatched. This is equivalent to calling
    * [element.click()](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/click).
@@ -1917,6 +1948,7 @@ export interface Page {
    * await page.dispatchEvent('#source', 'dragstart', { dataTransfer });
    * ```
    *
+   * @deprecated
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param type DOM event type: `"click"`, `"dragstart"`, etc.
    * @param eventInit Optional event-specific initialization properties.
@@ -2103,6 +2135,9 @@ export interface Page {
   exposeFunction(name: string, callback: Function): Promise<void>;
 
   /**
+   * **DEPRECATED**: Use [`async method: Page.locator`] combined with [`async method: Locator.fill`] instead. [`Locator`]'s
+   * are strict by default, so they help avoid selecting an unexpected element due to an ambiguous selector.
+   *
    * This method waits for an element matching `selector`, waits for [actionability](https://playwright.dev/docs/actionability) checks, focuses the
    * element, fills it and triggers an `input` event after filling. Note that you can pass an empty string to clear the input
    * field.
@@ -2117,6 +2152,7 @@ export interface Page {
    *
    * Shortcut for main frame's
    * [frame.fill(selector, value[, options])](https://playwright.dev/docs/api/class-frame#frame-fill).
+   * @deprecated
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param value Value to fill for the `<input>`, `<textarea>` or `[contenteditable]` element.
    * @param options
@@ -2150,10 +2186,14 @@ export interface Page {
   }): Promise<void>;
 
   /**
+   * **DEPRECATED**: Use [`async method: Page.locator`] combined with [`async method: Locator.focus`] instead. [`Locator`]'s
+   * are strict by default, so they help avoid selecting an unexpected element due to an ambiguous selector.
+   *
    * This method fetches an element with `selector` and focuses it. If there's no element matching `selector`, the method
    * waits until a matching element appears in the DOM.
    *
    * Shortcut for main frame's [frame.focus(selector[, options])](https://playwright.dev/docs/api/class-frame#frame-focus).
+   * @deprecated
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
@@ -2218,7 +2258,11 @@ export interface Page {
   frames(): Array<Frame>;
 
   /**
+   * **DEPRECATED**: Use [`async method: Page.locator`] combined with [`async method: Locator.getAttribute`] instead.
+   * [`Locator`]'s are strict by default, so they help avoid selecting an unexpected element due to an ambiguous selector.
+   *
    * Returns element attribute value.
+   * @deprecated
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param name Attribute name to get the value for.
    * @param options
@@ -2348,6 +2392,9 @@ export interface Page {
   }): Promise<null|Response>;
 
   /**
+   * **DEPRECATED**: Use [`async method: Page.locator`] combined with [`async method: Locator.hover`] instead. [`Locator`]'s
+   * are strict by default, so they help avoid selecting an unexpected element due to an ambiguous selector.
+   *
    * This method hovers over an element matching `selector` by performing the following steps:
    * 1. Find an element matching `selector`. If there is none, wait until a matching element is attached to the DOM.
    * 1. Wait for [actionability](https://playwright.dev/docs/actionability) checks on the matched element, unless `force` option is set. If the
@@ -2361,6 +2408,7 @@ export interface Page {
    * zero timeout disables this.
    *
    * Shortcut for main frame's [frame.hover(selector[, options])](https://playwright.dev/docs/api/class-frame#frame-hover).
+   * @deprecated
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
@@ -2408,7 +2456,11 @@ export interface Page {
   }): Promise<void>;
 
   /**
+   * **DEPRECATED**: Use [`async method: Page.locator`] combined with [`async method: Locator.innerHTML`] instead.
+   * [`Locator`]'s are strict by default, so they help avoid selecting an unexpected element due to an ambiguous selector.
+   *
    * Returns `element.innerHTML`.
+   * @deprecated
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
@@ -2429,7 +2481,11 @@ export interface Page {
   }): Promise<string>;
 
   /**
+   * **DEPRECATED**: Use [`async method: Page.locator`] combined with [`async method: Locator.innerText`] instead.
+   * [`Locator`]'s are strict by default, so they help avoid selecting an unexpected element due to an ambiguous selector.
+   *
    * Returns `element.innerText`.
+   * @deprecated
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
@@ -2450,10 +2506,14 @@ export interface Page {
   }): Promise<string>;
 
   /**
+   * **DEPRECATED**: Use [`async method: Page.locator`] combined with [`async method: Locator.inputValue`] instead.
+   * [`Locator`]'s are strict by default, so they help avoid selecting an unexpected element due to an ambiguous selector.
+   *
    * Returns `input.value` for the selected `<input>` or `<textarea>` or `<select>` element.
    *
    * Throws for non-input elements. However, if the element is inside the `<label>` element that has an associated
    * [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), returns the value of the control.
+   * @deprecated
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
@@ -2474,7 +2534,11 @@ export interface Page {
   }): Promise<string>;
 
   /**
+   * **DEPRECATED**: Use [`async method: Page.locator`] combined with [`async method: Locator.isChecked`] instead.
+   * [`Locator`]'s are strict by default, so they help avoid selecting an unexpected element due to an ambiguous selector.
+   *
    * Returns whether the element is checked. Throws if the element is not a checkbox or radio input.
+   * @deprecated
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
@@ -2500,7 +2564,11 @@ export interface Page {
   isClosed(): boolean;
 
   /**
+   * **DEPRECATED**: Use [`async method: Page.locator`] combined with [`async method: Locator.isDisabled`] instead.
+   * [`Locator`]'s are strict by default, so they help avoid selecting an unexpected element due to an ambiguous selector.
+   *
    * Returns whether the element is disabled, the opposite of [enabled](https://playwright.dev/docs/actionability#enabled).
+   * @deprecated
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
@@ -2521,7 +2589,11 @@ export interface Page {
   }): Promise<boolean>;
 
   /**
+   * **DEPRECATED**: Use [`async method: Page.locator`] combined with [`async method: Locator.isEditable`] instead.
+   * [`Locator`]'s are strict by default, so they help avoid selecting an unexpected element due to an ambiguous selector.
+   *
    * Returns whether the element is [editable](https://playwright.dev/docs/actionability#editable).
+   * @deprecated
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
@@ -2542,7 +2614,11 @@ export interface Page {
   }): Promise<boolean>;
 
   /**
+   * **DEPRECATED**: Use [`async method: Page.locator`] combined with [`async method: Locator.isEnabled`] instead.
+   * [`Locator`]'s are strict by default, so they help avoid selecting an unexpected element due to an ambiguous selector.
+   *
    * Returns whether the element is [enabled](https://playwright.dev/docs/actionability#enabled).
+   * @deprecated
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
@@ -2563,8 +2639,12 @@ export interface Page {
   }): Promise<boolean>;
 
   /**
+   * **DEPRECATED**: Use [`async method: Page.locator`] combined with [`async method: Locator.isHidden`] instead.
+   * [`Locator`]'s are strict by default, so they help avoid selecting an unexpected element due to an ambiguous selector.
+   *
    * Returns whether the element is hidden, the opposite of [visible](https://playwright.dev/docs/actionability#visible).  `selector` that does not
    * match any elements is considered hidden.
+   * @deprecated
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
@@ -2585,8 +2665,12 @@ export interface Page {
   }): Promise<boolean>;
 
   /**
+   * **DEPRECATED**: Use [`async method: Page.locator`] combined with [`async method: Locator.isVisible`] instead.
+   * [`Locator`]'s are strict by default, so they help avoid selecting an unexpected element due to an ambiguous selector.
+   *
    * Returns whether the element is [visible](https://playwright.dev/docs/actionability#visible). `selector` that does not match any elements is
    * considered not visible.
+   * @deprecated
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
@@ -2806,6 +2890,9 @@ export interface Page {
   }): Promise<Buffer>;
 
   /**
+   * **DEPRECATED**: Use [`async method: Page.locator`] combined with [`async method: Locator.press`] instead. [`Locator`]'s
+   * are strict by default, so they help avoid selecting an unexpected element due to an ambiguous selector.
+   *
    * Focuses the element, and then uses [keyboard.down(key)](https://playwright.dev/docs/api/class-keyboard#keyboard-down)
    * and [keyboard.up(key)](https://playwright.dev/docs/api/class-keyboard#keyboard-up).
    *
@@ -2838,6 +2925,7 @@ export interface Page {
    * await browser.close();
    * ```
    *
+   * @deprecated
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param key Name of the key to press or a character to generate, such as `ArrowLeft` or `a`.
    * @param options
@@ -2972,6 +3060,9 @@ export interface Page {
   screenshot(options?: PageScreenshotOptions): Promise<Buffer>;
 
   /**
+   * **DEPRECATED**: Use [`async method: Page.locator`] combined with [`async method: Locator.selectOption`] instead.
+   * [`Locator`]'s are strict by default, so they help avoid selecting an unexpected element due to an ambiguous selector.
+   *
    * This method waits for an element matching `selector`, waits for [actionability](https://playwright.dev/docs/actionability) checks, waits until
    * all specified options are present in the `<select>` element and selects these options.
    *
@@ -2997,6 +3088,7 @@ export interface Page {
    *
    * Shortcut for main frame's
    * [frame.selectOption(selector, values[, options])](https://playwright.dev/docs/api/class-frame#frame-select-option).
+   * @deprecated
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param values Options to select. If the `<select>` has the `multiple` attribute, all matching options are selected, otherwise only the first option matching one of the passed options is selected. String values are equivalent to `{value:'string'}`. Option
    * is considered matching if all specified properties match.
@@ -3061,6 +3153,9 @@ export interface Page {
   }): Promise<Array<string>>;
 
   /**
+   * **DEPRECATED**: Use [`async method: Page.locator`] combined with [`async method: Locator.setChecked`] instead.
+   * [`Locator`]'s are strict by default, so they help avoid selecting an unexpected element due to an ambiguous selector.
+   *
    * This method checks or unchecks an element matching `selector` by performing the following steps:
    * 1. Find an element matching `selector`. If there is none, wait until a matching element is attached to the DOM.
    * 1. Ensure that matched element is a checkbox or a radio input. If not, this method throws.
@@ -3077,6 +3172,7 @@ export interface Page {
    *
    * Shortcut for main frame's
    * [frame.setChecked(selector, checked[, options])](https://playwright.dev/docs/api/class-frame#frame-set-checked).
+   * @deprecated
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param checked Whether to check or uncheck the checkbox.
    * @param options
@@ -3192,6 +3288,9 @@ export interface Page {
   setExtraHTTPHeaders(headers: { [key: string]: string; }): Promise<void>;
 
   /**
+   * **DEPRECATED**: Use [`async method: Page.locator`] combined with [`async method: Locator.setInputFiles`] instead.
+   * [`Locator`]'s are strict by default, so they help avoid selecting an unexpected element due to an ambiguous selector.
+   *
    * Sets the value of the file input to these file paths or files. If some of the `filePaths` are relative paths, then they
    * are resolved relative to the current working directory. For empty array, clears the selected files.
    *
@@ -3199,6 +3298,7 @@ export interface Page {
    * [input element](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input). However, if the element is inside the
    * `<label>` element that has an associated
    * [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), targets the control instead.
+   * @deprecated
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param files
    * @param options
@@ -3292,6 +3392,9 @@ export interface Page {
   }): Promise<void>;
 
   /**
+   * **DEPRECATED**: Use [`async method: Page.locator`] combined with [`async method: Locator.tap`] instead. [`Locator`]'s
+   * are strict by default, so they help avoid selecting an unexpected element due to an ambiguous selector.
+   *
    * This method taps an element matching `selector` by performing the following steps:
    * 1. Find an element matching `selector`. If there is none, wait until a matching element is attached to the DOM.
    * 1. Wait for [actionability](https://playwright.dev/docs/actionability) checks on the matched element, unless `force` option is set. If the
@@ -3308,6 +3411,7 @@ export interface Page {
    * `hasTouch` option of the browser context be set to true.
    *
    * Shortcut for main frame's [frame.tap(selector[, options])](https://playwright.dev/docs/api/class-frame#frame-tap).
+   * @deprecated
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
@@ -3362,7 +3466,11 @@ export interface Page {
   }): Promise<void>;
 
   /**
+   * **DEPRECATED**: Use [`async method: Page.locator`] combined with [`async method: Locator.textContent`] instead.
+   * [`Locator`]'s are strict by default, so they help avoid selecting an unexpected element due to an ambiguous selector.
+   *
    * Returns `element.textContent`.
+   * @deprecated
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
@@ -3391,6 +3499,9 @@ export interface Page {
   touchscreen: Touchscreen;
 
   /**
+   * **DEPRECATED**: Use [`async method: Page.locator`] combined with [`async method: Locator.type`] instead. [`Locator`]'s
+   * are strict by default, so they help avoid selecting an unexpected element due to an ambiguous selector.
+   *
    * Sends a `keydown`, `keypress`/`input`, and `keyup` event for each character in the text. `page.type` can be used to send
    * fine-grained keyboard events. To fill values in form fields, use
    * [page.fill(selector, value[, options])](https://playwright.dev/docs/api/class-page#page-fill).
@@ -3405,6 +3516,7 @@ export interface Page {
    *
    * Shortcut for main frame's
    * [frame.type(selector, text[, options])](https://playwright.dev/docs/api/class-frame#frame-type).
+   * @deprecated
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param text A text to type into a focused element.
    * @param options
@@ -3438,6 +3550,9 @@ export interface Page {
   }): Promise<void>;
 
   /**
+   * **DEPRECATED**: Use [`async method: Page.locator`] combined with [`async method: Locator.check`] instead. [`Locator`]'s
+   * are strict by default, so they help avoid selecting an unexpected element due to an ambiguous selector.
+   *
    * This method unchecks an element matching `selector` by performing the following steps:
    * 1. Find an element matching `selector`. If there is none, wait until a matching element is attached to the DOM.
    * 1. Ensure that matched element is a checkbox or a radio input. If not, this method throws. If the element is already
@@ -3454,6 +3569,7 @@ export interface Page {
    *
    * Shortcut for main frame's
    * [frame.uncheck(selector[, options])](https://playwright.dev/docs/api/class-frame#frame-uncheck).
+   * @deprecated
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
@@ -4494,6 +4610,9 @@ export interface Frame {
   waitForFunction<R>(pageFunction: PageFunction<void, R>, arg?: any, options?: PageWaitForFunctionOptions): Promise<SmartHandle<R>>;
 
   /**
+   * **DEPRECATED**: Use [`async method: Frame.locator`] combined with [`async method: Locator.waitForSelector`] instead.
+   * [`Locator`]'s are strict by default, so they help avoid selecting an unexpected element due to an ambiguous selector.
+   *
    * Returns when element specified by selector satisfies `state` option. Returns `null` if waiting for `hidden` or
    * `detached`.
    *
@@ -4521,11 +4640,15 @@ export interface Frame {
    * })();
    * ```
    *
+   * @deprecated
    * @param selector A selector to query for. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
   waitForSelector<K extends keyof HTMLElementTagNameMap>(selector: K, options?: PageWaitForSelectorOptionsNotHidden): Promise<ElementHandleForTag<K>>;
   /**
+   * **DEPRECATED**: Use [`async method: Frame.locator`] combined with [`async method: Locator.waitForSelector`] instead.
+   * [`Locator`]'s are strict by default, so they help avoid selecting an unexpected element due to an ambiguous selector.
+   *
    * Returns when element specified by selector satisfies `state` option. Returns `null` if waiting for `hidden` or
    * `detached`.
    *
@@ -4553,11 +4676,15 @@ export interface Frame {
    * })();
    * ```
    *
+   * @deprecated
    * @param selector A selector to query for. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
   waitForSelector(selector: string, options?: PageWaitForSelectorOptionsNotHidden): Promise<ElementHandle<SVGElement | HTMLElement>>;
   /**
+   * **DEPRECATED**: Use [`async method: Frame.locator`] combined with [`async method: Locator.waitForSelector`] instead.
+   * [`Locator`]'s are strict by default, so they help avoid selecting an unexpected element due to an ambiguous selector.
+   *
    * Returns when element specified by selector satisfies `state` option. Returns `null` if waiting for `hidden` or
    * `detached`.
    *
@@ -4585,11 +4712,15 @@ export interface Frame {
    * })();
    * ```
    *
+   * @deprecated
    * @param selector A selector to query for. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
   waitForSelector<K extends keyof HTMLElementTagNameMap>(selector: K, options: PageWaitForSelectorOptions): Promise<ElementHandleForTag<K> | null>;
   /**
+   * **DEPRECATED**: Use [`async method: Frame.locator`] combined with [`async method: Locator.waitForSelector`] instead.
+   * [`Locator`]'s are strict by default, so they help avoid selecting an unexpected element due to an ambiguous selector.
+   *
    * Returns when element specified by selector satisfies `state` option. Returns `null` if waiting for `hidden` or
    * `detached`.
    *
@@ -4617,6 +4748,7 @@ export interface Frame {
    * })();
    * ```
    *
+   * @deprecated
    * @param selector A selector to query for. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
@@ -4677,6 +4809,9 @@ export interface Frame {
   }): Promise<ElementHandle>;
 
   /**
+   * **DEPRECATED**: Use [`async method: Frame.locator`] combined with [`async method: Locator.check`] instead. [`Locator`]'s
+   * are strict by default, so they help avoid selecting an unexpected element due to an ambiguous selector.
+   *
    * This method checks an element matching `selector` by performing the following steps:
    * 1. Find an element matching `selector`. If there is none, wait until a matching element is attached to the DOM.
    * 1. Ensure that matched element is a checkbox or a radio input. If not, this method throws. If the element is already
@@ -4690,6 +4825,7 @@ export interface Frame {
    *
    * When all steps combined have not finished during the specified `timeout`, this method throws a [TimeoutError]. Passing
    * zero timeout disables this.
+   * @deprecated
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
@@ -4740,6 +4876,9 @@ export interface Frame {
   childFrames(): Array<Frame>;
 
   /**
+   * **DEPRECATED**: Use [`async method: Frame.locator`] combined with [`async method: Locator.click`] instead. [`Locator`]'s
+   * are strict by default, so they help avoid selecting an unexpected element due to an ambiguous selector.
+   *
    * This method clicks an element matching `selector` by performing the following steps:
    * 1. Find an element matching `selector`. If there is none, wait until a matching element is attached to the DOM.
    * 1. Wait for [actionability](https://playwright.dev/docs/actionability) checks on the matched element, unless `force` option is set. If the
@@ -4751,6 +4890,7 @@ export interface Frame {
    *
    * When all steps combined have not finished during the specified `timeout`, this method throws a [TimeoutError]. Passing
    * zero timeout disables this.
+   * @deprecated
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
@@ -4825,6 +4965,9 @@ export interface Frame {
   content(): Promise<string>;
 
   /**
+   * **DEPRECATED**: Use [`async method: Frame.locator`] combined with [`async method: Locator.click`] instead. [`Locator`]'s
+   * are strict by default, so they help avoid selecting an unexpected element due to an ambiguous selector.
+   *
    * This method double clicks an element matching `selector` by performing the following steps:
    * 1. Find an element matching `selector`. If there is none, wait until a matching element is attached to the DOM.
    * 1. Wait for [actionability](https://playwright.dev/docs/actionability) checks on the matched element, unless `force` option is set. If the
@@ -4839,6 +4982,7 @@ export interface Frame {
    * zero timeout disables this.
    *
    * > NOTE: `frame.dblclick()` dispatches two `click` events and a single `dblclick` event.
+   * @deprecated
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
@@ -4903,6 +5047,9 @@ export interface Frame {
   }): Promise<void>;
 
   /**
+   * **DEPRECATED**: Use [`async method: Frame.locator`] combined with [`async method: Locator.dispatchEvent`] instead.
+   * [`Locator`]'s are strict by default, so they help avoid selecting an unexpected element due to an ambiguous selector.
+   *
    * The snippet below dispatches the `click` event on the element. Regardless of the visibility state of the element,
    * `click` is dispatched. This is equivalent to calling
    * [element.click()](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/click).
@@ -4931,6 +5078,7 @@ export interface Frame {
    * await frame.dispatchEvent('#source', 'dragstart', { dataTransfer });
    * ```
    *
+   * @deprecated
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param type DOM event type: `"click"`, `"dragstart"`, etc.
    * @param eventInit Optional event-specific initialization properties.
@@ -5012,6 +5160,9 @@ export interface Frame {
   }): Promise<void>;
 
   /**
+   * **DEPRECATED**: Use [`async method: Frame.locator`] combined with [`async method: Locator.fill`] instead. [`Locator`]'s
+   * are strict by default, so they help avoid selecting an unexpected element due to an ambiguous selector.
+   *
    * This method waits for an element matching `selector`, waits for [actionability](https://playwright.dev/docs/actionability) checks, focuses the
    * element, fills it and triggers an `input` event after filling. Note that you can pass an empty string to clear the input
    * field.
@@ -5023,6 +5174,7 @@ export interface Frame {
    *
    * To send fine-grained keyboard events, use
    * [frame.type(selector, text[, options])](https://playwright.dev/docs/api/class-frame#frame-type).
+   * @deprecated
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param value Value to fill for the `<input>`, `<textarea>` or `[contenteditable]` element.
    * @param options
@@ -5056,8 +5208,12 @@ export interface Frame {
   }): Promise<void>;
 
   /**
+   * **DEPRECATED**: Use [`async method: Frame.locator`] combined with [`async method: Locator.focus`] instead. [`Locator`]'s
+   * are strict by default, so they help avoid selecting an unexpected element due to an ambiguous selector.
+   *
    * This method fetches an element with `selector` and focuses it. If there's no element matching `selector`, the method
    * waits until a matching element appears in the DOM.
+   * @deprecated
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
@@ -5110,7 +5266,11 @@ export interface Frame {
   frameLocator(selector: string): FrameLocator;
 
   /**
+   * **DEPRECATED**: Use [`async method: Frame.locator`] combined with [`async method: Locator.getAttribute`] instead.
+   * [`Locator`]'s are strict by default, so they help avoid selecting an unexpected element due to an ambiguous selector.
+   *
    * Returns element attribute value.
+   * @deprecated
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param name Attribute name to get the value for.
    * @param options
@@ -5181,6 +5341,9 @@ export interface Frame {
   }): Promise<null|Response>;
 
   /**
+   * **DEPRECATED**: Use [`async method: Frame.locator`] combined with [`async method: Locator.hover`] instead. [`Locator`]'s
+   * are strict by default, so they help avoid selecting an unexpected element due to an ambiguous selector.
+   *
    * This method hovers over an element matching `selector` by performing the following steps:
    * 1. Find an element matching `selector`. If there is none, wait until a matching element is attached to the DOM.
    * 1. Wait for [actionability](https://playwright.dev/docs/actionability) checks on the matched element, unless `force` option is set. If the
@@ -5192,6 +5355,7 @@ export interface Frame {
    *
    * When all steps combined have not finished during the specified `timeout`, this method throws a [TimeoutError]. Passing
    * zero timeout disables this.
+   * @deprecated
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
@@ -5239,7 +5403,11 @@ export interface Frame {
   }): Promise<void>;
 
   /**
+   * **DEPRECATED**: Use [`async method: Frame.locator`] combined with [`async method: Locator.innerHTML`] instead.
+   * [`Locator`]'s are strict by default, so they help avoid selecting an unexpected element due to an ambiguous selector.
+   *
    * Returns `element.innerHTML`.
+   * @deprecated
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
@@ -5260,7 +5428,11 @@ export interface Frame {
   }): Promise<string>;
 
   /**
+   * **DEPRECATED**: Use [`async method: Frame.locator`] combined with [`async method: Locator.innerText`] instead.
+   * [`Locator`]'s are strict by default, so they help avoid selecting an unexpected element due to an ambiguous selector.
+   *
    * Returns `element.innerText`.
+   * @deprecated
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
@@ -5281,10 +5453,14 @@ export interface Frame {
   }): Promise<string>;
 
   /**
+   * **DEPRECATED**: Use [`async method: Frame.locator`] combined with [`async method: Locator.inputValue`] instead.
+   * [`Locator`]'s are strict by default, so they help avoid selecting an unexpected element due to an ambiguous selector.
+   *
    * Returns `input.value` for the selected `<input>` or `<textarea>` or `<select>` element.
    *
    * Throws for non-input elements. However, if the element is inside the `<label>` element that has an associated
    * [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), returns the value of the control.
+   * @deprecated
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
@@ -5305,7 +5481,11 @@ export interface Frame {
   }): Promise<string>;
 
   /**
+   * **DEPRECATED**: Use [`async method: Frame.locator`] combined with [`async method: Locator.isChecked`] instead.
+   * [`Locator`]'s are strict by default, so they help avoid selecting an unexpected element due to an ambiguous selector.
+   *
    * Returns whether the element is checked. Throws if the element is not a checkbox or radio input.
+   * @deprecated
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
@@ -5331,7 +5511,11 @@ export interface Frame {
   isDetached(): boolean;
 
   /**
+   * **DEPRECATED**: Use [`async method: Frame.locator`] combined with [`async method: Locator.isDisabled`] instead.
+   * [`Locator`]'s are strict by default, so they help avoid selecting an unexpected element due to an ambiguous selector.
+   *
    * Returns whether the element is disabled, the opposite of [enabled](https://playwright.dev/docs/actionability#enabled).
+   * @deprecated
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
@@ -5352,7 +5536,11 @@ export interface Frame {
   }): Promise<boolean>;
 
   /**
+   * **DEPRECATED**: Use [`async method: Frame.locator`] combined with [`async method: Locator.isEditable`] instead.
+   * [`Locator`]'s are strict by default, so they help avoid selecting an unexpected element due to an ambiguous selector.
+   *
    * Returns whether the element is [editable](https://playwright.dev/docs/actionability#editable).
+   * @deprecated
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
@@ -5373,7 +5561,11 @@ export interface Frame {
   }): Promise<boolean>;
 
   /**
+   * **DEPRECATED**: Use [`async method: Frame.locator`] combined with [`async method: Locator.isEnabled`] instead.
+   * [`Locator`]'s are strict by default, so they help avoid selecting an unexpected element due to an ambiguous selector.
+   *
    * Returns whether the element is [enabled](https://playwright.dev/docs/actionability#enabled).
+   * @deprecated
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
@@ -5394,8 +5586,12 @@ export interface Frame {
   }): Promise<boolean>;
 
   /**
+   * **DEPRECATED**: Use [`async method: Frame.locator`] combined with [`async method: Locator.isHidden`] instead.
+   * [`Locator`]'s are strict by default, so they help avoid selecting an unexpected element due to an ambiguous selector.
+   *
    * Returns whether the element is hidden, the opposite of [visible](https://playwright.dev/docs/actionability#visible).  `selector` that does not
    * match any elements is considered hidden.
+   * @deprecated
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
@@ -5416,8 +5612,12 @@ export interface Frame {
   }): Promise<boolean>;
 
   /**
+   * **DEPRECATED**: Use [`async method: Frame.locator`] combined with [`async method: Locator.isVisible`] instead.
+   * [`Locator`]'s are strict by default, so they help avoid selecting an unexpected element due to an ambiguous selector.
+   *
    * Returns whether the element is [visible](https://playwright.dev/docs/actionability#visible). `selector` that does not match any elements is
    * considered not visible.
+   * @deprecated
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
@@ -5483,6 +5683,9 @@ export interface Frame {
   parentFrame(): null|Frame;
 
   /**
+   * **DEPRECATED**: Use [`async method: Frame.locator`] combined with [`async method: Locator.press`] instead. [`Locator`]'s
+   * are strict by default, so they help avoid selecting an unexpected element due to an ambiguous selector.
+   *
    * `key` can specify the intended [keyboardEvent.key](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key)
    * value or a single character to generate the text for. A superset of the `key` values can be found
    * [here](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values). Examples of the keys are:
@@ -5499,6 +5702,7 @@ export interface Frame {
    *
    * Shortcuts such as `key: "Control+o"` or `key: "Control+Shift+T"` are supported as well. When specified with the
    * modifier, modifier is pressed and being held while the subsequent key is being pressed.
+   * @deprecated
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param key Name of the key to press or a character to generate, such as `ArrowLeft` or `a`.
    * @param options
@@ -5532,6 +5736,9 @@ export interface Frame {
   }): Promise<void>;
 
   /**
+   * **DEPRECATED**: Use [`async method: Frame.locator`] combined with [`async method: Locator.selectOption`] instead.
+   * [`Locator`]'s are strict by default, so they help avoid selecting an unexpected element due to an ambiguous selector.
+   *
    * This method waits for an element matching `selector`, waits for [actionability](https://playwright.dev/docs/actionability) checks, waits until
    * all specified options are present in the `<select>` element and selects these options.
    *
@@ -5554,6 +5761,7 @@ export interface Frame {
    * frame.selectOption('select#colors', 'red', 'green', 'blue');
    * ```
    *
+   * @deprecated
    * @param selector A selector to query for. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param values Options to select. If the `<select>` has the `multiple` attribute, all matching options are selected, otherwise only the first option matching one of the passed options is selected. String values are equivalent to `{value:'string'}`. Option
    * is considered matching if all specified properties match.
@@ -5618,6 +5826,9 @@ export interface Frame {
   }): Promise<Array<string>>;
 
   /**
+   * **DEPRECATED**: Use [`async method: Frame.locator`] combined with [`async method: Locator.setChecked`] instead.
+   * [`Locator`]'s are strict by default, so they help avoid selecting an unexpected element due to an ambiguous selector.
+   *
    * This method checks or unchecks an element matching `selector` by performing the following steps:
    * 1. Find an element matching `selector`. If there is none, wait until a matching element is attached to the DOM.
    * 1. Ensure that matched element is a checkbox or a radio input. If not, this method throws.
@@ -5631,6 +5842,7 @@ export interface Frame {
    *
    * When all steps combined have not finished during the specified `timeout`, this method throws a [TimeoutError]. Passing
    * zero timeout disables this.
+   * @deprecated
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param checked Whether to check or uncheck the checkbox.
    * @param options
@@ -5705,6 +5917,9 @@ export interface Frame {
   }): Promise<void>;
 
   /**
+   * **DEPRECATED**: Use [`async method: Frame.locator`] combined with [`async method: Locator.setInputFiles`] instead.
+   * [`Locator`]'s are strict by default, so they help avoid selecting an unexpected element due to an ambiguous selector.
+   *
    * Sets the value of the file input to these file paths or files. If some of the `filePaths` are relative paths, then they
    * are resolved relative to the current working directory. For empty array, clears the selected files.
    *
@@ -5712,6 +5927,7 @@ export interface Frame {
    * [input element](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input). However, if the element is inside the
    * `<label>` element that has an associated
    * [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), targets the control instead.
+   * @deprecated
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param files
    * @param options
@@ -5770,6 +5986,9 @@ export interface Frame {
   }): Promise<void>;
 
   /**
+   * **DEPRECATED**: Use [`async method: Frame.locator`] combined with [`async method: Locator.tap`] instead. [`Locator`]'s
+   * are strict by default, so they help avoid selecting an unexpected element due to an ambiguous selector.
+   *
    * This method taps an element matching `selector` by performing the following steps:
    * 1. Find an element matching `selector`. If there is none, wait until a matching element is attached to the DOM.
    * 1. Wait for [actionability](https://playwright.dev/docs/actionability) checks on the matched element, unless `force` option is set. If the
@@ -5783,6 +6002,7 @@ export interface Frame {
    * zero timeout disables this.
    *
    * > NOTE: `frame.tap()` requires that the `hasTouch` option of the browser context be set to true.
+   * @deprecated
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
@@ -5837,7 +6057,11 @@ export interface Frame {
   }): Promise<void>;
 
   /**
+   * **DEPRECATED**: Use [`async method: Frame.locator`] combined with [`async method: Locator.textContent`] instead.
+   * [`Locator`]'s are strict by default, so they help avoid selecting an unexpected element due to an ambiguous selector.
+   *
    * Returns `element.textContent`.
+   * @deprecated
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
@@ -5863,6 +6087,9 @@ export interface Frame {
   title(): Promise<string>;
 
   /**
+   * **DEPRECATED**: Use [`async method: Frame.locator`] combined with [`async method: Locator.type`] instead. [`Locator`]'s
+   * are strict by default, so they help avoid selecting an unexpected element due to an ambiguous selector.
+   *
    * Sends a `keydown`, `keypress`/`input`, and `keyup` event for each character in the text. `frame.type` can be used to
    * send fine-grained keyboard events. To fill values in form fields, use
    * [frame.fill(selector, value[, options])](https://playwright.dev/docs/api/class-frame#frame-fill).
@@ -5875,6 +6102,7 @@ export interface Frame {
    * await frame.type('#mytextarea', 'World', {delay: 100}); // Types slower, like a user
    * ```
    *
+   * @deprecated
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param text A text to type into a focused element.
    * @param options
@@ -5908,6 +6136,9 @@ export interface Frame {
   }): Promise<void>;
 
   /**
+   * **DEPRECATED**: Use [`async method: Frame.locator`] combined with [`async method: Locator.check`] instead. [`Locator`]'s
+   * are strict by default, so they help avoid selecting an unexpected element due to an ambiguous selector.
+   *
    * This method checks an element matching `selector` by performing the following steps:
    * 1. Find an element matching `selector`. If there is none, wait until a matching element is attached to the DOM.
    * 1. Ensure that matched element is a checkbox or a radio input. If not, this method throws. If the element is already
@@ -5921,6 +6152,7 @@ export interface Frame {
    *
    * When all steps combined have not finished during the specified `timeout`, this method throws a [TimeoutError]. Passing
    * zero timeout disables this.
+   * @deprecated
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
@@ -6145,7 +6377,7 @@ export interface BrowserContext {
    *     <button onclick="onClick()">Click me</button>
    *     <div></div>
    *   `);
-   *   await page.click('button');
+   *   await page.locator('button').click();
    * })();
    * ```
    *
@@ -6199,7 +6431,7 @@ export interface BrowserContext {
    *     <button onclick="onClick()">Click me</button>
    *     <div></div>
    *   `);
-   *   await page.click('button');
+   *   await page.locator('button').click();
    * })();
    * ```
    *
@@ -6255,7 +6487,7 @@ export interface BrowserContext {
    * ```js
    * const [newPage] = await Promise.all([
    *   context.waitForEvent('page'),
-   *   page.click('a[target=_blank]'),
+   *   page.locator('a[target=_blank]').click(),
    * ]);
    * console.log(await newPage.evaluate('location.href'));
    * ```
@@ -6382,7 +6614,7 @@ export interface BrowserContext {
    * ```js
    * const [newPage] = await Promise.all([
    *   context.waitForEvent('page'),
-   *   page.click('a[target=_blank]'),
+   *   page.locator('a[target=_blank]').click(),
    * ]);
    * console.log(await newPage.evaluate('location.href'));
    * ```
@@ -6684,7 +6916,7 @@ export interface BrowserContext {
    *     <button onclick="onClick()">Click me</button>
    *     <div></div>
    *   `);
-   *   await page.click('button');
+   *   await page.locator('button').click();
    * })();
    * ```
    *
@@ -6985,7 +7217,7 @@ export interface BrowserContext {
    * ```js
    * const [newPage] = await Promise.all([
    *   context.waitForEvent('page'),
-   *   page.click('a[target=_blank]'),
+   *   page.locator('a[target=_blank]').click(),
    * ]);
    * console.log(await newPage.evaluate('location.href'));
    * ```
@@ -14865,7 +15097,7 @@ export interface Selectors {
    *   // Use the selector prefixed with its name.
    *   const button = page.locator('tag=button');
    *   // Combine it with other selector engines.
-   *   await page.click('tag=div >> text="Click me"');
+   *   await page.locator('tag=div >> text="Click me"').click();
    *   // Can use it in any methods supporting selectors.
    *   const buttonCount = await page.locator('tag=button').count();
    *
@@ -14982,7 +15214,7 @@ export interface Tracing {
    * await page.goto('https://playwright.dev');
    *
    * await context.tracing.startChunk();
-   * await page.click('text=Get Started');
+   * await page.locator('text=Get Started').click();
    * // Everything between startChunk and stopChunk will be recorded in the trace.
    * await context.tracing.stopChunk({ path: 'trace1.zip' });
    *
