@@ -85,7 +85,7 @@ export class Dispatcher<Type extends { guid: string }, ChannelType> extends Even
   _dispatchEvent<T extends keyof channels.EventsTraits<ChannelType>>(method: T, params?: channels.EventsTraits<ChannelType>[T]) {
     if (this._disposed) {
       if (isUnderTest())
-        throw new Error(`${this._guid} is sending "${method}" event after being disposed`);
+        throw new Error(`${this._guid} is sending "${String(method)}" event after being disposed`);
       // Just ignore this event outside of tests.
       return;
     }
