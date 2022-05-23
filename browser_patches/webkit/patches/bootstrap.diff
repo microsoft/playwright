@@ -2238,7 +2238,7 @@ diff --git a/Source/WebCore/Modules/speech/cocoa/WebSpeechRecognizerTask.mm b/So
 index a941d76a4f748718df1e3cff2a6c5e0827f48891..f62db5a27ac0e4c12430e7d19e60c83d768ace22 100644
 --- a/Source/WebCore/Modules/speech/cocoa/WebSpeechRecognizerTask.mm
 +++ b/Source/WebCore/Modules/speech/cocoa/WebSpeechRecognizerTask.mm
-@@ -198,6 +198,7 @@ NS_ASSUME_NONNULL_BEGIN
+@@ -198,6 +198,7 @@ - (void)sendEndIfNeeded
  
  - (void)speechRecognizer:(SFSpeechRecognizer *)speechRecognizer availabilityDidChange:(BOOL)available
  {
@@ -2246,7 +2246,7 @@ index a941d76a4f748718df1e3cff2a6c5e0827f48891..f62db5a27ac0e4c12430e7d19e60c83d
      ASSERT(isMainThread());
  
      if (available || !_task)
-@@ -211,6 +212,7 @@ NS_ASSUME_NONNULL_BEGIN
+@@ -211,6 +212,7 @@ - (void)speechRecognizer:(SFSpeechRecognizer *)speechRecognizer availabilityDidC
  
  - (void)speechRecognitionTask:(SFSpeechRecognitionTask *)task didHypothesizeTranscription:(SFTranscription *)transcription
  {
@@ -2254,7 +2254,7 @@ index a941d76a4f748718df1e3cff2a6c5e0827f48891..f62db5a27ac0e4c12430e7d19e60c83d
      ASSERT(isMainThread());
  
      [self sendSpeechStartIfNeeded];
-@@ -219,6 +221,7 @@ NS_ASSUME_NONNULL_BEGIN
+@@ -219,6 +221,7 @@ - (void)speechRecognitionTask:(SFSpeechRecognitionTask *)task didHypothesizeTran
  
  - (void)speechRecognitionTask:(SFSpeechRecognitionTask *)task didFinishRecognition:(SFSpeechRecognitionResult *)recognitionResult
  {
@@ -2262,7 +2262,7 @@ index a941d76a4f748718df1e3cff2a6c5e0827f48891..f62db5a27ac0e4c12430e7d19e60c83d
      ASSERT(isMainThread());
      [self callbackWithTranscriptions:recognitionResult.transcriptions isFinal:YES];
  
-@@ -230,6 +233,7 @@ NS_ASSUME_NONNULL_BEGIN
+@@ -230,6 +233,7 @@ - (void)speechRecognitionTask:(SFSpeechRecognitionTask *)task didFinishRecogniti
  
  - (void)speechRecognitionTaskWasCancelled:(SFSpeechRecognitionTask *)task
  {
@@ -3751,7 +3751,7 @@ index c503d5db51b75de57e3b09357f48f60470986da4..79947b44063d85951d2f6314c5cb78a5
      void discardBindings();
  
 diff --git a/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp b/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp
-index a6601cae918cc76aab630e88c05acc445977169c..e1504bd2726889be47c4f5dfd0688743434b5562 100644
+index a6601cae918cc76aab630e88c05acc445977169c..4f9852e8407db210d3c59418434cb7fbc3705bbb 100644
 --- a/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp
 +++ b/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp
 @@ -45,6 +45,7 @@
@@ -3790,26 +3790,20 @@ index a6601cae918cc76aab630e88c05acc445977169c..e1504bd2726889be47c4f5dfd0688743
      if (resourceLoader) {
          auto* metrics = response.deprecatedNetworkLoadMetricsOrNull();
          responseObject->setTiming(buildObjectForTiming(metrics ? *metrics : NetworkLoadMetrics::emptyMetrics(), *resourceLoader));
-@@ -490,9 +494,15 @@ static InspectorPageAgent::ResourceType resourceTypeForLoadType(InspectorInstrum
+@@ -490,9 +494,11 @@ static InspectorPageAgent::ResourceType resourceTypeForLoadType(InspectorInstrum
  
  void InspectorNetworkAgent::willSendRequest(ResourceLoaderIdentifier identifier, DocumentLoader* loader, ResourceRequest& request, const ResourceResponse& redirectResponse, const CachedResource* cachedResource)
  {
--    if (!cachedResource && loader)
--        cachedResource = InspectorPageAgent::cachedResource(loader->frame(), request.url());
--    willSendRequest(identifier, loader, request, redirectResponse, resourceTypeForCachedResource(cachedResource));
 +    InspectorPageAgent::ResourceType resourceType;
-+    if (request.initiatorIdentifier() == initiatorIdentifierForEventSource()) {
-+        resourceType = InspectorPageAgent::EventSourceResource;
-+    } else {
-+        if (!cachedResource && loader)
-+            cachedResource = InspectorPageAgent::cachedResource(loader->frame(), request.url());
-+        resourceType = resourceTypeForCachedResource(cachedResource);
-+    }
+     if (!cachedResource && loader)
+         cachedResource = InspectorPageAgent::cachedResource(loader->frame(), request.url());
+-    willSendRequest(identifier, loader, request, redirectResponse, resourceTypeForCachedResource(cachedResource));
++    resourceType = resourceTypeForCachedResource(cachedResource);
 +    willSendRequest(identifier, loader, request, redirectResponse, resourceType);
  }
  
  void InspectorNetworkAgent::willSendRequestOfType(ResourceLoaderIdentifier identifier, DocumentLoader* loader, ResourceRequest& request, InspectorInstrumentation::LoadType loadType)
-@@ -914,6 +924,7 @@ void InspectorNetworkAgent::continuePendingResponses()
+@@ -914,6 +920,7 @@ void InspectorNetworkAgent::continuePendingResponses()
  
  Protocol::ErrorStringOr<void> InspectorNetworkAgent::setExtraHTTPHeaders(Ref<JSON::Object>&& headers)
  {
@@ -3817,7 +3811,7 @@ index a6601cae918cc76aab630e88c05acc445977169c..e1504bd2726889be47c4f5dfd0688743
      for (auto& entry : headers.get()) {
          auto stringValue = entry.value->asString();
          if (!!stringValue)
-@@ -1194,6 +1205,9 @@ Protocol::ErrorStringOr<void> InspectorNetworkAgent::interceptWithRequest(const
+@@ -1194,6 +1201,9 @@ Protocol::ErrorStringOr<void> InspectorNetworkAgent::interceptWithRequest(const
          return makeUnexpected("Missing pending intercept request for given requestId"_s);
  
      auto& loader = *pendingRequest->m_loader;
@@ -3827,7 +3821,7 @@ index a6601cae918cc76aab630e88c05acc445977169c..e1504bd2726889be47c4f5dfd0688743
      ResourceRequest request = loader.request();
      if (!!url)
          request.setURL(URL({ }, url));
-@@ -1293,14 +1307,23 @@ Protocol::ErrorStringOr<void> InspectorNetworkAgent::interceptRequestWithRespons
+@@ -1293,14 +1303,23 @@ Protocol::ErrorStringOr<void> InspectorNetworkAgent::interceptRequestWithRespons
      response.setHTTPStatusCode(status);
      response.setHTTPStatusText(AtomString { statusText });
      HTTPHeaderMap explicitHeaders;
@@ -3853,7 +3847,7 @@ index a6601cae918cc76aab630e88c05acc445977169c..e1504bd2726889be47c4f5dfd0688743
          if (loader->reachedTerminalState())
              return;
  
-@@ -1348,6 +1371,12 @@ Protocol::ErrorStringOr<void> InspectorNetworkAgent::interceptRequestWithError(c
+@@ -1348,6 +1367,12 @@ Protocol::ErrorStringOr<void> InspectorNetworkAgent::interceptRequestWithError(c
      return { };
  }
  
@@ -3866,21 +3860,8 @@ index a6601cae918cc76aab630e88c05acc445977169c..e1504bd2726889be47c4f5dfd0688743
  bool InspectorNetworkAgent::shouldTreatAsText(const String& mimeType)
  {
      return startsWithLettersIgnoringASCIICase(mimeType, "text/"_s)
-@@ -1389,6 +1418,12 @@ std::optional<String> InspectorNetworkAgent::textContentForCachedResource(Cached
-     return std::nullopt;
- }
- 
-+// static
-+String InspectorNetworkAgent::initiatorIdentifierForEventSource()
-+{
-+    return "InspectorNetworkAgent: eventSource"_s;
-+}
-+
- bool InspectorNetworkAgent::cachedResourceContent(CachedResource& resource, String* result, bool* base64Encoded)
- {
-     ASSERT(result);
 diff --git a/Source/WebCore/inspector/agents/InspectorNetworkAgent.h b/Source/WebCore/inspector/agents/InspectorNetworkAgent.h
-index 1a4779cbc9f388434295a94fd9da566d6ff4e3f7..9703d8b8c30845f750813f9666b0998f27cf1338 100644
+index 1a4779cbc9f388434295a94fd9da566d6ff4e3f7..c4712dd9f1319c205b97e5afa0a903b70f703988 100644
 --- a/Source/WebCore/inspector/agents/InspectorNetworkAgent.h
 +++ b/Source/WebCore/inspector/agents/InspectorNetworkAgent.h
 @@ -34,6 +34,8 @@
@@ -3892,15 +3873,7 @@ index 1a4779cbc9f388434295a94fd9da566d6ff4e3f7..9703d8b8c30845f750813f9666b0998f
  #include "WebSocket.h"
  #include <JavaScriptCore/InspectorBackendDispatchers.h>
  #include <JavaScriptCore/InspectorFrontendDispatchers.h>
-@@ -76,6 +78,7 @@ public:
-     static Ref<TextResourceDecoder> createTextDecoder(const String& mimeType, const String& textEncodingName);
-     static std::optional<String> textContentForCachedResource(CachedResource&);
-     static bool cachedResourceContent(CachedResource&, String* result, bool* base64Encoded);
-+    static String initiatorIdentifierForEventSource();
- 
-     // InspectorAgentBase
-     void didCreateFrontendAndBackend(Inspector::FrontendRouter*, Inspector::BackendDispatcher*) final;
-@@ -98,6 +101,7 @@ public:
+@@ -98,6 +100,7 @@ public:
      Inspector::Protocol::ErrorStringOr<void> interceptWithResponse(const Inspector::Protocol::Network::RequestId&, const String& content, bool base64Encoded, const String& mimeType, std::optional<int>&& status, const String& statusText, RefPtr<JSON::Object>&& headers) final;
      Inspector::Protocol::ErrorStringOr<void> interceptRequestWithResponse(const Inspector::Protocol::Network::RequestId&, const String& content, bool base64Encoded, const String& mimeType, int status, const String& statusText, Ref<JSON::Object>&& headers) final;
      Inspector::Protocol::ErrorStringOr<void> interceptRequestWithError(const Inspector::Protocol::Network::RequestId&, Inspector::Protocol::Network::ResourceErrorType) final;
@@ -5734,18 +5707,6 @@ index 51d36bd866b1d5f1daea4b02ce86b213eaa44adb..fd3cd3dad309416f41a0a0bcac22c9e5
      RefPtr<Element> m_dragTarget;
      bool m_mouseDownMayStartDrag { false };
      bool m_dragMayStartSelectionInstead { false };
-diff --git a/Source/WebCore/page/EventSource.cpp b/Source/WebCore/page/EventSource.cpp
-index 300218f40e04b7b361a1f86c11060aee68898b9d..2117c080ba43d26e32d21cc73039c9597ff17fec 100644
---- a/Source/WebCore/page/EventSource.cpp
-+++ b/Source/WebCore/page/EventSource.cpp
-@@ -36,6 +36,7 @@
- #include "CachedResourceRequestInitiators.h"
- #include "ContentSecurityPolicy.h"
- #include "EventNames.h"
-+#include "InspectorNetworkAgent.h"
- #include "MessageEvent.h"
- #include "ResourceError.h"
- #include "ResourceRequest.h"
 diff --git a/Source/WebCore/page/Frame.cpp b/Source/WebCore/page/Frame.cpp
 index edf6ed1889560fd4332592d35d52fab2b6858e1c..2c3083caecd1f4281e970c3c531844ae33e433f0 100644
 --- a/Source/WebCore/page/Frame.cpp
@@ -8992,7 +8953,7 @@ diff --git a/Source/WebKit/NetworkProcess/cocoa/NetworkSessionCocoa.mm b/Source/
 index ba33be375f926e0f5d71a9bb6ca8663f13ba59be..80c781b0e7a39b130311d090d7ccf1c233af1261 100644
 --- a/Source/WebKit/NetworkProcess/cocoa/NetworkSessionCocoa.mm
 +++ b/Source/WebKit/NetworkProcess/cocoa/NetworkSessionCocoa.mm
-@@ -720,7 +720,7 @@ void NetworkSessionCocoa::setClientAuditToken(const WebCore::AuthenticationChall
+@@ -720,7 +720,7 @@ - (void)URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task didRece
  
      if ([challenge.protectionSpace.authenticationMethod isEqualToString:NSURLAuthenticationMethodServerTrust]) {
          sessionCocoa->setClientAuditToken(challenge);
@@ -10389,7 +10350,7 @@ index e6f2fcf02b24fa16021c3be83f6116f989610027..bc2ddd59dd037fe3f52f996124b8cd2d
  #import <WebCore/Credential.h>
  #import <WebCore/RegistrationDatabase.h>
  #import <WebCore/ServiceWorkerClientData.h>
-@@ -234,6 +235,11 @@ static WallTime toSystemClockTime(NSDate *date)
+@@ -234,6 +235,11 @@ - (void)removeDataOfTypes:(NSSet *)dataTypes modifiedSince:(NSDate *)date comple
      });
  }
  
@@ -10568,7 +10529,7 @@ diff --git a/Source/WebKit/UIProcess/API/Cocoa/_WKProcessPoolConfiguration.mm b/
 index cb7445b7fe814feff50a14b8dd25f5a32f70a17d..d6d2b2d5ed41ffda551e47dd14801c0e036a0890 100644
 --- a/Source/WebKit/UIProcess/API/Cocoa/_WKProcessPoolConfiguration.mm
 +++ b/Source/WebKit/UIProcess/API/Cocoa/_WKProcessPoolConfiguration.mm
-@@ -257,6 +257,16 @@
+@@ -257,6 +257,16 @@ - (BOOL)processSwapsOnNavigation
      return _processPoolConfiguration->processSwapsOnNavigation();
  }
  
@@ -20836,7 +20797,7 @@ diff --git a/Source/WebKitLegacy/mac/WebView/WebHTMLView.mm b/Source/WebKitLegac
 index 9f9c67523b8fac9025d2cec101adf452631ffc61..737d8dab4f7aa1fe446b2dcfdc32fe83e02a4555 100644
 --- a/Source/WebKitLegacy/mac/WebView/WebHTMLView.mm
 +++ b/Source/WebKitLegacy/mac/WebView/WebHTMLView.mm
-@@ -4189,7 +4189,7 @@ static BOOL currentScrollIsBlit(NSView *clipView)
+@@ -4189,7 +4189,7 @@ - (void)mouseDown:(WebEvent *)event
      _private->handlingMouseDownEvent = NO;
  }
  
@@ -20849,7 +20810,7 @@ diff --git a/Source/WebKitLegacy/mac/WebView/WebView.mm b/Source/WebKitLegacy/ma
 index 09748e5cf07408ec620bb0a151378dbf6590733d..824b2efbfe7c6821ab0913cc7ebeaf960ea79784 100644
 --- a/Source/WebKitLegacy/mac/WebView/WebView.mm
 +++ b/Source/WebKitLegacy/mac/WebView/WebView.mm
-@@ -4043,7 +4043,7 @@ IGNORE_WARNINGS_END
+@@ -4043,7 +4043,7 @@ + (void)_doNotStartObservingNetworkReachability
  }
  #endif // PLATFORM(IOS_FAMILY)
  
@@ -20858,7 +20819,7 @@ index 09748e5cf07408ec620bb0a151378dbf6590733d..824b2efbfe7c6821ab0913cc7ebeaf96
  
  - (NSArray *)_touchEventRegions
  {
-@@ -4085,7 +4085,7 @@ IGNORE_WARNINGS_END
+@@ -4085,7 +4085,7 @@ - (NSArray *)_touchEventRegions
      }).autorelease();
  }
  
