@@ -26,7 +26,7 @@ import type { FullConfig } from '../types';
 import { assert } from 'playwright-core/lib/utils';
 
 let previewServer: PreviewServer;
-const VERSION = 1;
+const VERSION = 2;
 
 type CtConfig = {
   ctPort?: number;
@@ -56,10 +56,12 @@ export function createPlugin(
       const outDir = viteConfig?.build?.outDir || (use.ctCacheDir ? path.resolve(rootDir, use.ctCacheDir) : path.resolve(templateDir, '.cache'));
 
       const buildInfoFile = path.join(outDir, 'metainfo.json');
+      let buildExists = false;
       let buildInfo: BuildInfo;
       try {
         buildInfo = JSON.parse(await fs.promises.readFile(buildInfoFile, 'utf-8')) as BuildInfo;
         assert(buildInfo.version === VERSION);
+        buildExists = true;
       } catch (e) {
         buildInfo = {
           version: VERSION,
@@ -83,7 +85,7 @@ export function createPlugin(
         outDir
       };
       const { build, preview } = require('vite');
-      if (sourcesDirty) {
+      if (!buildExists || sourcesDirty) {
         viteConfig.plugins = viteConfig.plugins || [
           frameworkPluginFactory()
         ];
