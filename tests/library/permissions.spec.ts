@@ -102,6 +102,7 @@ it.describe('permissions', () => {
 
   it('should trigger permission onchange', async ({ page, context, server, browserName, headless }) => {
     it.fail(browserName === 'webkit');
+    it.fail(browserName === 'chromium' && !headless);
 
     await page.goto(server.EMPTY_PAGE);
     await page.evaluate(() => {
