@@ -74,6 +74,42 @@ test('should disable animations by default', async ({ runInlineTest }, testInfo)
   expect(result.exitCode).toBe(0);
 });
 
+test.describe('expect config animations option', () => {
+  test('disabled', async ({ runInlineTest }, testInfo) => {
+    const cssTransitionURL = pathToFileURL(path.join(__dirname, '../assets/css-transition.html'));
+    const result = await runInlineTest({
+      ...playwrightConfig({
+        expect: { toHaveScreenshot: { animations: 'disabled' } },
+      }),
+      'a.spec.js': `
+          pwt.test('is a test', async ({ page }) => {
+            await page.goto('${cssTransitionURL}');
+            await expect(page).toHaveScreenshot({ timeout: 2000 });
+          });
+        `
+    }, { 'update-snapshots': true });
+    expect(result.exitCode).toBe(0);
+  });
+
+  test('allow', async ({ runInlineTest }, testInfo) => {
+    const cssTransitionURL = pathToFileURL(path.join(__dirname, '../assets/css-transition.html'));
+    const result = await runInlineTest({
+      ...playwrightConfig({
+        expect: { toHaveScreenshot: { animations: 'allow' } },
+      }),
+      'a.spec.js': `
+          pwt.test('is a test', async ({ page }) => {
+            await page.goto('${cssTransitionURL}');
+            await expect(page).toHaveScreenshot({ timeout: 2000 });
+          });
+        `
+    }, { 'update-snapshots': true });
+    expect(result.exitCode).toBe(1);
+    expect(result.output).toContain('is-a-test-1-diff.png');
+  });
+});
+
+
 test('should fail with proper error when unsupported argument is given', async ({ runInlineTest }, testInfo) => {
   const cssTransitionURL = pathToFileURL(path.join(__dirname, '../assets/css-transition.html'));
   const result = await runInlineTest({
