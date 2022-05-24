@@ -19556,14 +19556,14 @@ interface LocatorAssertions {
    */
   toHaveScreenshot(name: string|Array<string>, options?: {
     /**
-     * When set to `"disabled"`, stops CSS animations, CSS transitions and Web Animations. Animations get different treatment
+     * When set to `"disable"`, stops CSS animations, CSS transitions and Web Animations. Animations get different treatment
      * depending on their duration:
      * - finite animations are fast-forwarded to completion, so they'll fire `transitionend` event.
      * - infinite animations are canceled to initial state, and then played over after the screenshot.
      *
      * Defaults to `"disabled"` that disables animations.
      */
-    animations?: "disabled"|"allow";
+    animations?: "disable"|"allow";
 
     /**
      * When set to `"hide"`, screenshot will hide text caret. When set to `"initial"`, text caret behavior will not be changed.
@@ -19633,14 +19633,14 @@ interface LocatorAssertions {
    */
   toHaveScreenshot(options?: {
     /**
-     * When set to `"disabled"`, stops CSS animations, CSS transitions and Web Animations. Animations get different treatment
+     * When set to `"disable"`, stops CSS animations, CSS transitions and Web Animations. Animations get different treatment
      * depending on their duration:
      * - finite animations are fast-forwarded to completion, so they'll fire `transitionend` event.
      * - infinite animations are canceled to initial state, and then played over after the screenshot.
      *
      * Defaults to `"disabled"` that disables animations.
      */
-    animations?: "disabled"|"allow";
+    animations?: "disable"|"allow";
 
     /**
      * When set to `"hide"`, screenshot will hide text caret. When set to `"initial"`, text caret behavior will not be changed.
@@ -19789,14 +19789,14 @@ interface PageAssertions {
    */
   toHaveScreenshot(name: string|Array<string>, options?: {
     /**
-     * When set to `"disabled"`, stops CSS animations, CSS transitions and Web Animations. Animations get different treatment
+     * When set to `"disable"`, stops CSS animations, CSS transitions and Web Animations. Animations get different treatment
      * depending on their duration:
      * - finite animations are fast-forwarded to completion, so they'll fire `transitionend` event.
      * - infinite animations are canceled to initial state, and then played over after the screenshot.
      *
      * Defaults to `"disabled"` that disables animations.
      */
-    animations?: "disabled"|"allow";
+    animations?: "disable"|"allow";
 
     /**
      * When set to `"hide"`, screenshot will hide text caret. When set to `"initial"`, text caret behavior will not be changed.
@@ -19896,14 +19896,14 @@ interface PageAssertions {
    */
   toHaveScreenshot(options?: {
     /**
-     * When set to `"disabled"`, stops CSS animations, CSS transitions and Web Animations. Animations get different treatment
+     * When set to `"disable"`, stops CSS animations, CSS transitions and Web Animations. Animations get different treatment
      * depending on their duration:
      * - finite animations are fast-forwarded to completion, so they'll fire `transitionend` event.
      * - infinite animations are canceled to initial state, and then played over after the screenshot.
      *
      * Defaults to `"disabled"` that disables animations.
      */
-    animations?: "disabled"|"allow";
+    animations?: "disable"|"allow";
 
     /**
      * When set to `"hide"`, screenshot will hide text caret. When set to `"initial"`, text caret behavior will not be changed.

@@ -938,9 +938,9 @@ When set to `"disabled"`, stops CSS animations, CSS transitions and Web Animatio
 Defaults to `"allow"` that leaves animations untouched.
 
 ## screenshot-option-animations-default-disabled
-- `animations` <[ScreenshotAnimations]<"disabled"|"allow">>
+- `animations` <[ScreenshotAnimations]<"disable"|"allow">>
 
-When set to `"disabled"`, stops CSS animations, CSS transitions and Web Animations. Animations get different treatment depending on their duration:
+When set to `"disable"`, stops CSS animations, CSS transitions and Web Animations. Animations get different treatment depending on their duration:
 * finite animations are fast-forwarded to completion, so they'll fire `transitionend` event.
 * infinite animations are canceled to initial state, and then played over after the screenshot.
 
