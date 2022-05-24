@@ -1005,11 +1005,8 @@ Property value.
 ## async method: LocatorAssertions.toHaveScreenshot#1
 * langs: js
 
-Ensures that [Locator] resolves to a given screenshot. This function will re-take
-screenshots until it matches with the saved expectation.
-
-If there's no expectation yet, it will wait until two consecutive screenshots
-yield the same result, and save the last one as an expectation.
+This function will wait until two consecutive locator screenshots
+yield the same result, and then compare the last screenshot with the expectation.
 
 ```js
 const locator = page.locator('button');
@@ -1035,11 +1032,8 @@ Snapshot name.
 ## async method: LocatorAssertions.toHaveScreenshot#2
 * langs: js
 
-Ensures that [Locator] resolves to a given screenshot. This function will re-take
-screenshots until it matches with the saved expectation.
-
-If there's no expectation yet, it will wait until two consecutive screenshots
-yield the same result, and save the last one as an expectation.
+This function will wait until two consecutive locator screenshots
+yield the same result, and then compare the last screenshot with the expectation.
 
 ```js
 const locator = page.locator('button');
