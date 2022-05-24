@@ -154,7 +154,7 @@ export type ComponentInfo = {
 
 export function componentInfo(specifier: T.ImportSpecifier | T.ImportDefaultSpecifier, importSource: string, filename: string): ComponentInfo {
   const isModuleOrAlias = !importSource.startsWith('.');
-  const importPath = isModuleOrAlias ? importSource : path.resolve(path.dirname(filename), importSource);
+  const importPath = isModuleOrAlias ? importSource : require.resolve(path.resolve(path.dirname(filename), importSource));
   const prefix = importPath.replace(/[^\w_\d]/g, '_');
   const pathInfo = { importPath, isModuleOrAlias };
 

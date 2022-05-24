@@ -24,9 +24,10 @@ import type { ComponentInfo } from '../tsxTransform';
 import { collectComponentUsages, componentInfo } from '../tsxTransform';
 import type { FullConfig } from '../types';
 import { assert } from 'playwright-core/lib/utils';
+import type { AddressInfo } from 'net';
 
 let previewServer: PreviewServer;
-const VERSION = 2;
+const VERSION = 3;
 
 type CtConfig = {
   ctPort?: number;
@@ -49,7 +50,6 @@ export function createPlugin(
       const port = use.ctPort || 3100;
       const viteConfig: InlineConfig = use.ctViteConfig || {};
       const relativeTemplateDir = use.ctTemplateDir || 'playwright';
-      process.env.PLAYWRIGHT_VITE_COMPONENTS_BASE_URL = `http://localhost:${port}/${relativeTemplateDir}/index.html`;
 
       const rootDir = viteConfig.root || configDir;
       const templateDir = path.join(rootDir, relativeTemplateDir);
@@ -113,6 +113,10 @@ export function createPlugin(
       if (hasNewTests || hasNewComponents || sourcesDirty)
         await fs.promises.writeFile(buildInfoFile, JSON.stringify(buildInfo, undefined, 2));
       previewServer = await preview(viteConfig);
+      const isAddressInfo = (x: any): x is AddressInfo => x?.address;
+      const address = previewServer.httpServer.address();
+      if (isAddressInfo(address))
+        process.env.PLAYWRIGHT_VITE_COMPONENTS_BASE_URL = `http://localhost:${address.port}/${relativeTemplateDir}/index.html`;
     },
 
     teardown: async () => {
