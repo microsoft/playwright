@@ -16690,9 +16690,9 @@ interface TestConfig {
 
       /**
        * See `animations` in [page.screenshot([options])](https://playwright.dev/docs/api/class-page#page-screenshot). Defaults
-       * to `"disable"`.
+       * to `"disabled"`.
        */
-      animations?: "allow"|"disable";
+      animations?: "allow"|"disabled";
 
       /**
        * See `caret` in [page.screenshot([options])](https://playwright.dev/docs/api/class-page#page-screenshot). Defaults to
@@ -20244,9 +20244,9 @@ interface TestProject {
 
       /**
        * See `animations` in [page.screenshot([options])](https://playwright.dev/docs/api/class-page#page-screenshot). Defaults
-       * to `"disable"`.
+       * to `"disabled"`.
        */
-      animations?: "allow"|"disable";
+      animations?: "allow"|"disabled";
 
       /**
        * See `caret` in [page.screenshot([options])](https://playwright.dev/docs/api/class-page#page-screenshot). Defaults to
