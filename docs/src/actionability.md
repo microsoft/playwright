@@ -82,7 +82,7 @@ Element is considered stable when it has maintained the same bounding box for at
 
 ## Enabled
 
-Element is considered enabled when it is not a `<button>`, `<select>`, `<input>` or `<textarea>` with a `disabled` property set.
+Element is considered enabled unless it is a `<button>`, `<select>`, `<input>` or `<textarea>` with a `disabled` property.
 
 ## Editable
 
