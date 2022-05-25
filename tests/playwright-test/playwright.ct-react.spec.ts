@@ -240,3 +240,33 @@ test.fixme('should work with stray JS import', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
 });
+
+test('should work with JSX in variable', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright/index.html': `<script type="module" src="/playwright/index.js"></script>`,
+    'playwright/index.js': `
+      //@no-header
+    `,
+
+    'src/button.jsx': `
+      //@no-header
+      export const Button = () => <button>Button</button>;
+    `,
+
+    'src/button.test.jsx': `
+      //@no-header
+      import { test, expect } from '@playwright/experimental-ct-react';
+      import { Button } from './button';
+
+      const button = <Button></Button>;
+
+      test('pass button', async ({ mount }) => {
+        const component = await mount(button);
+        await expect(component).toHaveText('Button'); 
+      });
+    `,
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
