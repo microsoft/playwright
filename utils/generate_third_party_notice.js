@@ -56,7 +56,7 @@ This project incorporates components from the projects listed below. The origina
     }
 
     for (const [key, value] of Object.entries(allPackages))
-      lines.push(`*\t${key} (${value.repository})`);
+      lines.push(`-\t${key} (${value.repository})`);
 
     for (const [key, value] of Object.entries(allPackages)) {
       lines.push(`\n%% ${key} NOTICES AND INFORMATION BEGIN HERE`);
