@@ -124,21 +124,38 @@ export default declare((api: BabelAPI) => {
 });
 
 export function collectComponentUsages(node: T.Node) {
+  const importedLocalNames = new Set<string>();
   const names = new Set<string>();
   const identifiers = new Set<T.Identifier>();
   traverse(node, {
     enter: p => {
+
+      // First look at all the imports.
+      if (t.isImportDeclaration(p.node)) {
+        const importNode = p.node;
+        if (!t.isStringLiteral(importNode.source))
+          return;
+
+        for (const specifier of importNode.specifiers) {
+          if (t.isImportNamespaceSpecifier(specifier))
+            continue;
+          importedLocalNames.add(specifier.local.name);
+        }
+      }
+
       // Treat JSX-everything as component usages.
       if (t.isJSXElement(p.node) && t.isJSXIdentifier(p.node.openingElement.name))
         names.add(p.node.openingElement.name.name);
 
-      // Treat mount(identifier, ...) as component usage.
+      // Treat mount(identifier, ...) as component usage if it is in the importedLocalNames list.
       if (t.isAwaitExpression(p.node) && t.isCallExpression(p.node.argument) && t.isIdentifier(p.node.argument.callee) && p.node.argument.callee.name === 'mount') {
         const callExpression = p.node.argument;
-        if (t.isIdentifier(callExpression.arguments[0])) {
-          names.add(callExpression.arguments[0].name);
-          identifiers.add(callExpression.arguments[0]);
-        }
+        const arg = callExpression.arguments[0];
+        if (!t.isIdentifier(arg) || !importedLocalNames.has(arg.name))
+          return;
+
+        names.add(arg.name);
+        identifiers.add(arg);
       }
     }
   });
