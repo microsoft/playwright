@@ -80,10 +80,27 @@ export function createPlugin(
       const sourcesDirty = !buildExists || hasNewComponents || await checkSources(buildInfo);
 
       viteConfig.root = rootDir;
+      viteConfig.publicDir = false;
       viteConfig.preview = { port };
       viteConfig.build = {
         outDir
       };
+
+      // React heuristic. If we see a component in a file with .js extension,
+      // consider it a potential JSX-in-JS scenario and enable JSX loader for all
+      // .js files.
+      if (hasJSComponents(buildInfo.components)) {
+        viteConfig.esbuild = {
+          loader: 'jsx',
+          include: /.*\.jsx?$/,
+          exclude: [],
+        };
+        viteConfig.optimizeDeps = {
+          esbuildOptions: {
+            loader: { '.js': 'jsx' },
+          }
+        };
+      }
       const { build, preview } = require('vite');
       if (sourcesDirty) {
         viteConfig.plugins = viteConfig.plugins || [
@@ -250,6 +267,12 @@ function vitePlugin(registerSource: string, relativeTemplateDir: string, buildIn
         }
       }
 
+      // Vite React plugin will do this for .jsx files, but not .js files.
+      if (id.endsWith('.js') && content.includes('React.createElement') && !content.includes('import React')) {
+        const code = `import React from 'react';\n${content}`;
+        return { code, map: { mappings: '' } };
+      }
+
       if (!id.endsWith(`${relativeTemplateDir}/index.ts`) && !id.endsWith(`${relativeTemplateDir}/index.tsx`) && !id.endsWith(`${relativeTemplateDir}/index.js`))
         return;
 
@@ -272,4 +295,13 @@ function vitePlugin(registerSource: string, relativeTemplateDir: string, buildIn
       };
     },
   };
+}
+
+function hasJSComponents(components: ComponentInfo[]): boolean {
+  for (const component of components) {
+    const extname = path.extname(component.importPath);
+    if (extname === '.js' || !extname && fs.existsSync(component.importPath + '.js'))
+      return true;
+  }
+  return false;
 }

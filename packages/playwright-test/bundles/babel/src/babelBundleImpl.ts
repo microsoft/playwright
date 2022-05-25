@@ -41,11 +41,13 @@ export function babelTransform(filename: string, isTypeScript: boolean, isModule
         [require('@babel/plugin-syntax-object-rest-spread')],
         [require('@babel/plugin-proposal-export-namespace-from')]
     );
+  } else {
+    plugins.push([require('@babel/plugin-syntax-jsx')]);
+  }
 
-    if (!isModule) {
-      plugins.push([require('@babel/plugin-transform-modules-commonjs')]);
-      plugins.push([require('@babel/plugin-proposal-dynamic-import')]);
-    }
+  if (!isModule) {
+    plugins.push([require('@babel/plugin-transform-modules-commonjs')]);
+    plugins.push([require('@babel/plugin-proposal-dynamic-import')]);
   }
 
   plugins.unshift(additionalPlugin);

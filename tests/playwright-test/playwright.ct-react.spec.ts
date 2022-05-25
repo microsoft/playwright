@@ -16,11 +16,14 @@
 
 import { test, expect } from './playwright-test-fixtures';
 
-test('should work with TSX', async ({ runInlineTest }, testInfo) => {
+test('should work with TSX', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright/index.html': `<script type="module" src="/playwright/index.ts"></script>`,
-    'playwright/index.ts': ``,
+    'playwright/index.ts': `
+      //@no-header
+    `,
     'src/button.tsx': `
+      //@no-header
       export const Button = () => <button>Button</button>;
     `,
 
@@ -40,12 +43,15 @@ test('should work with TSX', async ({ runInlineTest }, testInfo) => {
   expect(result.passed).toBe(1);
 });
 
-test.fixme('should work with JSX', async ({ runInlineTest }, testInfo) => {
+test('should work with JSX', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright/index.html': `<script type="module" src="/playwright/index.js"></script>`,
-    'playwright/index.js': ``,
+    'playwright/index.js': `
+      //@no-header
+    `,
 
     'src/button.jsx': `
+      //@no-header
       export const Button = () => <button>Button</button>;
     `,
 
@@ -65,12 +71,15 @@ test.fixme('should work with JSX', async ({ runInlineTest }, testInfo) => {
   expect(result.passed).toBe(1);
 });
 
-test.fixme('should work with JS in JSX', async ({ runInlineTest }, testInfo) => {
+test('should work with JSX in JS', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright/index.html': `<script type="module" src="/playwright/index.js"></script>`,
-    'playwright/index.js': ``,
+    'playwright/index.js': `
+      //@no-header
+    `,
 
     'src/button.js': `
+      //@no-header
       export const Button = () => <button>Button</button>;
     `,
 
@@ -80,6 +89,148 @@ test.fixme('should work with JS in JSX', async ({ runInlineTest }, testInfo) => 
       import { Button } from './button';
 
       test('pass', async ({ mount }) => {
+        const component = await mount(<Button></Button>);
+        await expect(component).toHaveText('Button');
+      });
+    `,
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
+
+test('should work with JSX in JS and in JSX', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright/index.html': `<script type="module" src="/playwright/index.js"></script>`,
+    'playwright/index.js': `
+      //@no-header
+    `,
+
+    'src/button.js': `
+      //@no-header
+      export const Button = () => <button>Button</button>;
+    `,
+
+    'src/list.jsx': `
+      //@no-header
+      export const List = () => <ul><li>List</li></ul>;
+    `,
+
+    'src/button.test.jsx': `
+      //@no-header
+      import { test, expect } from '@playwright/experimental-ct-react';
+      import { Button } from './button';
+      import { List } from './list';
+
+      test('pass button', async ({ mount }) => {
+        const component = await mount(<Button></Button>);
+        await expect(component).toHaveText('Button');
+      });
+
+      test('pass list', async ({ mount }) => {
+        const component = await mount(<List></List>);
+        await expect(component).toHaveText('List');
+      });
+    `,
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(2);
+});
+
+
+test('should work with stray TSX import', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright/index.html': `<script type="module" src="/playwright/index.ts"></script>`,
+    'playwright/index.ts': `
+      //@no-header
+    `,
+
+    'src/button.tsx': `
+      //@no-header
+      export const Button = () => <button>Button</button>;
+    `,
+
+    'src/list.tsx': `
+      //@no-header
+      export const List = () => <ul><li>List</li></ul>;
+    `,
+
+    'src/button.test.tsx': `
+      //@no-header
+      import { test, expect } from '@playwright/experimental-ct-react';
+      import { Button } from './button';
+      import { List } from './list';
+
+      test('pass button', async ({ mount }) => {
+        const component = await mount(<Button></Button>);
+        await expect(component).toHaveText('Button');
+      });
+    `,
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
+
+test('should work with stray JSX import', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright/index.html': `<script type="module" src="/playwright/index.js"></script>`,
+    'playwright/index.js': `
+      //@no-header
+    `,
+
+    'src/button.jsx': `
+      //@no-header
+      export const Button = () => <button>Button</button>;
+    `,
+
+    'src/list.jsx': `
+      //@no-header
+      export const List = () => <ul><li>List</li></ul>;
+    `,
+
+    'src/button.test.jsx': `
+      //@no-header
+      import { test, expect } from '@playwright/experimental-ct-react';
+      import { Button } from './button';
+      import { List } from './list';
+
+      test('pass button', async ({ mount }) => {
+        const component = await mount(<Button></Button>);
+        await expect(component).toHaveText('Button');
+      });
+    `,
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
+
+test.fixme('should work with stray JS import', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright/index.html': `<script type="module" src="/playwright/index.js"></script>`,
+    'playwright/index.js': `
+      //@no-header
+    `,
+
+    'src/button.js': `
+      //@no-header
+      export const Button = () => <button>Button</button>;
+    `,
+
+    'src/list.js': `
+      //@no-header
+      export const List = () => <ul><li>List</li></ul>;
+    `,
+
+    'src/button.test.jsx': `
+      //@no-header
+      import { test, expect } from '@playwright/experimental-ct-react';
+      import { Button } from './button';
+      import { List } from './list';
+
+      test('pass button', async ({ mount }) => {
         const component = await mount(<Button></Button>);
         await expect(component).toHaveText('Button');
       });

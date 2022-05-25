@@ -24,6 +24,7 @@
     "@babel/plugin-proposal-private-property-in-object": "^7.16.7",
     "@babel/plugin-syntax-async-generators": "^7.8.4",
     "@babel/plugin-syntax-json-strings": "^7.8.3",
+    "@babel/plugin-syntax-jsx": "^7.16.7",
     "@babel/plugin-syntax-object-rest-spread": "^7.8.3",
     "@babel/plugin-syntax-optional-catch-binding": "^7.8.3",
     "@babel/plugin-transform-modules-commonjs": "^7.16.8",
