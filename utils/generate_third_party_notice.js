@@ -48,18 +48,16 @@ This project incorporates components from the projects listed below. The origina
           else
             f(packages);
         });
-      });  
+      });
       for (const [key, value] of Object.entries(packages)) {
         if (value.licenseText)
           allPackages[key] = value;
       }
     }
 
-    let i = 0;
     for (const [key, value] of Object.entries(allPackages))
-      lines.push(`${++i}.\t${key} (${value.repository})`);
-  
-    i = 0;
+      lines.push(`*\t${key} (${value.repository})`);
+
     for (const [key, value] of Object.entries(allPackages)) {
       lines.push(`\n%% ${key} NOTICES AND INFORMATION BEGIN HERE`);
       lines.push(`=========================================`);
@@ -67,7 +65,13 @@ This project incorporates components from the projects listed below. The origina
       lines.push(`=========================================`);
       lines.push(`END OF ${key} AND INFORMATION`);
     }
-  
+
+    lines.push(`\nSUMMARY BEGIN HERE`);
+    lines.push(`=========================================`);
+    lines.push(`Total Packages: ${Object.entries(allPackages).length}`);
+    lines.push(`=========================================`);
+    lines.push(`END OF SUMMARY`);
+
     fs.writeFileSync(path.join(projectDir, 'ThirdPartyNotices.txt'), lines.join('\n').replace(/\r\n/g, '\n'));
   }
 })();
