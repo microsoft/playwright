@@ -10,6 +10,7 @@
   "main": "index.js",
   "exports": {
     ".": {
+      "types": "./index.d.ts",
       "import": "./index.mjs",
       "require": "./index.js"
     },
