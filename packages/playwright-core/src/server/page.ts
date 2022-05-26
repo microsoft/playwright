@@ -67,7 +67,7 @@ export interface PageDelegate {
   setEmulatedSize(emulatedSize: types.EmulatedSize): Promise<void>;
   updateEmulateMedia(): Promise<void>;
   updateRequestInterception(): Promise<void>;
-  setFileChooserIntercepted(enabled: boolean): Promise<void>;
+  updateFileChooserInterception(enabled: boolean): Promise<void>;
   bringToFront(): Promise<void>;
 
   setBackgroundColor(color?: { r: number; g: number; b: number; a: number; }): Promise<void>;
@@ -104,6 +104,7 @@ type PageState = {
   reducedMotion: types.ReducedMotion | null;
   forcedColors: types.ForcedColors | null;
   extraHTTPHeaders: types.HeadersArray | null;
+  interceptFileChooser: boolean;
 };
 
 type ExpectScreenshotOptions = {
@@ -183,6 +184,7 @@ export class Page extends SdkObject {
       reducedMotion: browserContext._options.reducedMotion !== undefined  ? browserContext._options.reducedMotion : 'no-preference',
       forcedColors: browserContext._options.forcedColors !== undefined  ? browserContext._options.forcedColors : 'none',
       extraHTTPHeaders: null,
+      interceptFileChooser: false,
     };
     this.accessibility = new accessibility.Accessibility(delegate.getAccessibilityTree.bind(delegate));
     this.keyboard = new input.Keyboard(delegate.rawKeyboard, this);
@@ -620,7 +622,8 @@ export class Page extends SdkObject {
   }
 
   async setFileChooserIntercepted(enabled: boolean): Promise<void> {
-    await this._delegate.setFileChooserIntercepted(enabled);
+    this._state.interceptFileChooser = enabled;
+    await this._delegate.updateFileChooserInterception(enabled);
   }
 
   frameNavigatedToNewDocument(frame: frames.Frame) {

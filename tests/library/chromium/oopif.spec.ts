@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { attachFrame } from '../../config/utils';
 import { contextTest as it, expect } from '../../config/browserTest';
 
 it.use({
@@ -309,6 +310,22 @@ it('should allow cdp sessions on oopifs', async function({ page, browser, server
   const oopifCDP = await page.context().newCDPSession(page.frames()[1]);
   const oopif = await oopifCDP.send('DOM.getDocument', { pierce: true, depth: -1 });
   expect(JSON.stringify(oopif)).toContain('./digits/1.png');
+});
+
+it('should emit filechooser event for iframe', async ({ page, server, browser }) => {
+  // Add listener before OOPIF is created.
+  // const chooserPromise = new Promise(f => page.once('filechooser', f));
+  const chooserPromise = page.waitForEvent('filechooser');
+  await page.goto(server.PREFIX + '/dynamic-oopif.html');
+  expect(await countOOPIFs(browser)).toBe(1);
+  expect(page.frames().length).toBe(2);
+  const frame = page.frames()[1];
+  await frame.setContent(`<input type=file>`);
+  const [chooser] = await Promise.all([
+    chooserPromise,
+    frame.click('input'),
+  ]);
+  expect(chooser).toBeTruthy();
 });
 
 async function countOOPIFs(browser) {
