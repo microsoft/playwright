@@ -574,25 +574,29 @@ async function collectFiles(testDir: string, respectGitIgnore: boolean): Promise
     const entries = await readDirAsync(dir, { withFileTypes: true });
     entries.sort((a, b) => a.name.localeCompare(b.name));
 
-    const gitignore = entries.find(e => e.isFile() && e.name === '.gitignore');
-    if (gitignore && respectGitIgnore) {
-      const content = await readFileAsync(path.join(dir, gitignore.name), 'utf8');
-      const newRules: Rule[] = content.split(/\r?\n/).map(s => {
-        s = s.trim();
-        if (!s)
-          return;
-        // Use flipNegate, because we handle negation ourselves.
-        const rule = new minimatch.Minimatch(s, { matchBase: true, dot: true, flipNegate: true }) as any;
-        if (rule.comment)
-          return;
-        rule.dir = dir;
-        return rule;
-      }).filter(rule => !!rule);
-      rules = [...rules, ...newRules];
+    if (respectGitIgnore) {
+      const gitignore = entries.find(e => e.isFile() && e.name === '.gitignore');
+      if (gitignore) {
+        const content = await readFileAsync(path.join(dir, gitignore.name), 'utf8');
+        const newRules: Rule[] = content.split(/\r?\n/).map(s => {
+          s = s.trim();
+          if (!s)
+            return;
+          // Use flipNegate, because we handle negation ourselves.
+          const rule = new minimatch.Minimatch(s, { matchBase: true, dot: true, flipNegate: true }) as any;
+          if (rule.comment)
+            return;
+          rule.dir = dir;
+          return rule;
+        }).filter(rule => !!rule);
+        rules = [...rules, ...newRules];
+      }
     }
 
     for (const entry of entries) {
-      if (entry === gitignore || entry.name === '.' || entry.name === '..')
+      if (entry.name === '.' || entry.name === '..')
+        continue;
+      if (entry.isFile() && entry.name === '.gitignore')
         continue;
       if (entry.isDirectory() && entry.name === 'node_modules')
         continue;
