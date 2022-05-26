@@ -12,8 +12,14 @@
   },
   "license": "Apache-2.0",
   "exports": {
-    "./register": "./register.mjs",
-    ".": "./index.js"
+    ".": {
+      "types": "./index.d.ts",
+      "default": "./index.js"
+    },
+    "./register": {
+      "types": "./register.d.ts",
+      "default": "./register.mjs"
+    }
   },
   "dependencies": {
     "@vitejs/plugin-react": "^1.0.7",
