@@ -58,4 +58,5 @@ export interface FullProjectInternal extends FullProjectPublic {
   _fullyParallel: boolean;
   _expect: Project['expect'];
   _screenshotsDir: string;
+  _respectGitIgnore: boolean;
 }
