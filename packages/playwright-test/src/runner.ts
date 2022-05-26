@@ -244,7 +244,7 @@ export class Runner {
 
     const files = new Map<FullProjectInternal, string[]>();
     for (const project of projects) {
-      const allFiles = await collectFiles(project.testDir);
+      const allFiles = await collectFiles(project.testDir, project._respectGitIgnore);
       const testMatch = createFileMatcher(project.testMatch);
       const testIgnore = createFileMatcher(project.testIgnore);
       const extensions = ['.js', '.ts', '.mjs', '.tsx', '.jsx'];
@@ -534,7 +534,7 @@ function filterSuite(suite: Suite, suiteFilter: (suites: Suite) => boolean, test
   suite._entries = suite._entries.filter(e => entries.has(e)); // Preserve the order.
 }
 
-async function collectFiles(testDir: string): Promise<string[]> {
+async function collectFiles(testDir: string, respectGitIgnore: boolean): Promise<string[]> {
   if (!fs.existsSync(testDir))
     return [];
   if (!fs.statSync(testDir).isDirectory())
@@ -574,25 +574,29 @@ async function collectFiles(testDir: string): Promise<string[]> {
     const entries = await readDirAsync(dir, { withFileTypes: true });
     entries.sort((a, b) => a.name.localeCompare(b.name));
 
-    const gitignore = entries.find(e => e.isFile() && e.name === '.gitignore');
-    if (gitignore) {
-      const content = await readFileAsync(path.join(dir, gitignore.name), 'utf8');
-      const newRules: Rule[] = content.split(/\r?\n/).map(s => {
-        s = s.trim();
-        if (!s)
-          return;
-        // Use flipNegate, because we handle negation ourselves.
-        const rule = new minimatch.Minimatch(s, { matchBase: true, dot: true, flipNegate: true }) as any;
-        if (rule.comment)
-          return;
-        rule.dir = dir;
-        return rule;
-      }).filter(rule => !!rule);
-      rules = [...rules, ...newRules];
+    if (respectGitIgnore) {
+      const gitignore = entries.find(e => e.isFile() && e.name === '.gitignore');
+      if (gitignore) {
+        const content = await readFileAsync(path.join(dir, gitignore.name), 'utf8');
+        const newRules: Rule[] = content.split(/\r?\n/).map(s => {
+          s = s.trim();
+          if (!s)
+            return;
+          // Use flipNegate, because we handle negation ourselves.
+          const rule = new minimatch.Minimatch(s, { matchBase: true, dot: true, flipNegate: true }) as any;
+          if (rule.comment)
+            return;
+          rule.dir = dir;
+          return rule;
+        }).filter(rule => !!rule);
+        rules = [...rules, ...newRules];
+      }
     }
 
     for (const entry of entries) {
-      if (entry === gitignore || entry.name === '.' || entry.name === '..')
+      if (entry.name === '.' || entry.name === '..')
+        continue;
+      if (entry.isFile() && entry.name === '.gitignore')
         continue;
       if (entry.isDirectory() && entry.name === 'node_modules')
         continue;
