@@ -44,7 +44,7 @@ type UseOptions<TestArgs, WorkerArgs> = { [K in keyof WorkerArgs]?: WorkerArgs[K
  *
  * ```ts
  * // playwright.config.ts
- * import { PlaywrightTestConfig, devices } from '@playwright/test';
+ * import { type PlaywrightTestConfig, devices } from '@playwright/test';
  *
  * const config: PlaywrightTestConfig = {
  *   // Options shared for all projects.
@@ -98,7 +98,7 @@ export interface Project<TestArgs = {}, WorkerArgs = {}> extends TestProject {
    *
    * ```ts
    * // playwright.config.ts
-   * import { PlaywrightTestConfig } from '@playwright/test';
+   * import type { PlaywrightTestConfig } from '@playwright/test';
    *
    * const config: PlaywrightTestConfig = {
    *   projects: [
@@ -132,7 +132,7 @@ export interface Project<TestArgs = {}, WorkerArgs = {}> extends TestProject {
  *
  * ```ts
  * // playwright.config.ts
- * import { PlaywrightTestConfig, devices } from '@playwright/test';
+ * import { type PlaywrightTestConfig, devices } from '@playwright/test';
  *
  * const config: PlaywrightTestConfig = {
  *   // Options shared for all projects.
@@ -264,7 +264,7 @@ export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
    *
    * ```ts
    * // playwright.config.ts
-   * import { PlaywrightTestConfig } from '@playwright/test';
+   * import type { PlaywrightTestConfig } from '@playwright/test';
    *
    * const config: PlaywrightTestConfig = {
    *   projects: [
@@ -343,7 +343,7 @@ export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
    *
    * ```ts
    * // playwright.config.ts
-   * import { PlaywrightTestConfig } from '@playwright/test';
+   * import type { PlaywrightTestConfig } from '@playwright/test';
    *
    * const config: PlaywrightTestConfig = {
    *   projects: [
@@ -376,7 +376,7 @@ type LiteralUnion<T extends U, U = string> = T | (U & { zz_IGNORE_ME?: never });
  *
  * ```ts
  * // playwright.config.ts
- * import { PlaywrightTestConfig } from '@playwright/test';
+ * import type { PlaywrightTestConfig } from '@playwright/test';
  *
  * const config: PlaywrightTestConfig = {
  *   timeout: 30000,
@@ -401,7 +401,7 @@ interface TestConfig {
    *
    * ```ts
    * // playwright.config.ts
-   * import { PlaywrightTestConfig } from '@playwright/test';
+   * import type { PlaywrightTestConfig } from '@playwright/test';
    *
    * const config: PlaywrightTestConfig = {
    *   reporter: 'line',
@@ -430,7 +430,7 @@ interface TestConfig {
    *
    * ```ts
    * // playwright.config.ts
-   * import { PlaywrightTestConfig } from '@playwright/test';
+   * import type { PlaywrightTestConfig } from '@playwright/test';
    * const config: PlaywrightTestConfig = {
    *   webServer: {
    *     command: 'npm run start',
@@ -464,7 +464,7 @@ interface TestConfig {
    *
    * ```ts
    * // playwright.config.ts
-   * import { PlaywrightTestConfig } from '@playwright/test';
+   * import type { PlaywrightTestConfig } from '@playwright/test';
    *
    * const config: PlaywrightTestConfig = {
    *   expect: {
@@ -556,7 +556,7 @@ interface TestConfig {
    *
    * ```ts
    * // playwright.config.ts
-   * import { PlaywrightTestConfig } from '@playwright/test';
+   * import type { PlaywrightTestConfig } from '@playwright/test';
    *
    * const config: PlaywrightTestConfig = {
    *   forbidOnly: !!process.env.CI,
@@ -584,7 +584,7 @@ interface TestConfig {
    *
    * ```ts
    * // playwright.config.ts
-   * import { PlaywrightTestConfig, devices } from '@playwright/test';
+   * import { type PlaywrightTestConfig, devices } from '@playwright/test';
    *
    * const config: PlaywrightTestConfig = {
    *   globalSetup: './global-setup',
@@ -603,7 +603,7 @@ interface TestConfig {
    *
    * ```ts
    * // playwright.config.ts
-   * import { PlaywrightTestConfig, devices } from '@playwright/test';
+   * import { type PlaywrightTestConfig, devices } from '@playwright/test';
    *
    * const config: PlaywrightTestConfig = {
    *   globalTeardown: './global-teardown',
@@ -621,7 +621,7 @@ interface TestConfig {
    *
    * ```ts
    * // playwright.config.ts
-   * import { PlaywrightTestConfig } from '@playwright/test';
+   * import type { PlaywrightTestConfig } from '@playwright/test';
    *
    * const config: PlaywrightTestConfig = {
    *   globalTimeout: process.env.CI ? 60 * 60 * 1000 : undefined,
@@ -657,7 +657,7 @@ interface TestConfig {
    *
    * ```ts
    * // playwright.config.ts
-   * import { PlaywrightTestConfig } from '@playwright/test';
+   * import type { PlaywrightTestConfig } from '@playwright/test';
    *
    * const config: PlaywrightTestConfig = {
    *   maxFailures: process.env.CI ? 1 : 0,
@@ -684,7 +684,7 @@ interface TestConfig {
    *
    * ```ts
    * // playwright.config.ts
-   * import { PlaywrightTestConfig, devices } from '@playwright/test';
+   * import { type PlaywrightTestConfig, devices } from '@playwright/test';
    *
    * const config: PlaywrightTestConfig = {
    *   outputDir: './test-results',
@@ -777,7 +777,7 @@ interface TestConfig {
    *
    * ```ts
    * // playwright.config.ts
-   * import { PlaywrightTestConfig } from '@playwright/test';
+   * import type { PlaywrightTestConfig } from '@playwright/test';
    *
    * const config: PlaywrightTestConfig = {
    *   retries: 2,
@@ -810,7 +810,7 @@ interface TestConfig {
    *
    * ```ts
    * // playwright.config.ts
-   * import { PlaywrightTestConfig } from '@playwright/test';
+   * import type { PlaywrightTestConfig } from '@playwright/test';
    *
    * const config: PlaywrightTestConfig = {
    *   testDir: './tests/playwright',
@@ -829,7 +829,7 @@ interface TestConfig {
    *
    * ```ts
    * // playwright.config.ts
-   * import { PlaywrightTestConfig, devices } from '@playwright/test';
+   * import { type PlaywrightTestConfig, devices } from '@playwright/test';
    *
    * const config: PlaywrightTestConfig = {
    *   testIgnore: '**\/test-assets/**',
@@ -848,7 +848,7 @@ interface TestConfig {
    *
    * ```ts
    * // playwright.config.ts
-   * import { PlaywrightTestConfig, devices } from '@playwright/test';
+   * import { type PlaywrightTestConfig, devices } from '@playwright/test';
    *
    * const config: PlaywrightTestConfig = {
    *   testMatch: /.*\.e2e\.js/,
@@ -868,7 +868,7 @@ interface TestConfig {
    *
    * ```ts
    * // playwright.config.ts
-   * import { PlaywrightTestConfig } from '@playwright/test';
+   * import type { PlaywrightTestConfig } from '@playwright/test';
    *
    * const config: PlaywrightTestConfig = {
    *   timeout: 5 * 60 * 1000,
@@ -901,7 +901,7 @@ interface TestConfig {
    *
    * ```ts
    * // playwright.config.ts
-   * import { PlaywrightTestConfig } from '@playwright/test';
+   * import type { PlaywrightTestConfig } from '@playwright/test';
    *
    * const config: PlaywrightTestConfig = {
    *   workers: 3,
@@ -922,7 +922,7 @@ interface TestConfig {
  *
  * ```ts
  * // playwright.config.ts
- * import { PlaywrightTestConfig } from '@playwright/test';
+ * import type { PlaywrightTestConfig } from '@playwright/test';
  *
  * const config: PlaywrightTestConfig = {
  *   timeout: 30000,
@@ -946,7 +946,7 @@ export interface Config<TestArgs = {}, WorkerArgs = {}> extends TestConfig {
    *
    * ```ts
    * // playwright.config.ts
-   * import { PlaywrightTestConfig } from '@playwright/test';
+   * import type { PlaywrightTestConfig } from '@playwright/test';
    *
    * const config: PlaywrightTestConfig = {
    *   use: {
@@ -972,7 +972,7 @@ export type Metadata = { [key: string]: any };
  *
  * ```ts
  * // playwright.config.ts
- * import { PlaywrightTestConfig } from '@playwright/test';
+ * import type { PlaywrightTestConfig } from '@playwright/test';
  *
  * const config: PlaywrightTestConfig = {
  *   timeout: 30000,
@@ -992,7 +992,7 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    *
    * ```ts
    * // playwright.config.ts
-   * import { PlaywrightTestConfig } from '@playwright/test';
+   * import type { PlaywrightTestConfig } from '@playwright/test';
    *
    * const config: PlaywrightTestConfig = {
    *   forbidOnly: !!process.env.CI,
@@ -1018,7 +1018,7 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    *
    * ```ts
    * // playwright.config.ts
-   * import { PlaywrightTestConfig, devices } from '@playwright/test';
+   * import { type PlaywrightTestConfig, devices } from '@playwright/test';
    *
    * const config: PlaywrightTestConfig = {
    *   globalSetup: './global-setup',
@@ -1036,7 +1036,7 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    *
    * ```ts
    * // playwright.config.ts
-   * import { PlaywrightTestConfig, devices } from '@playwright/test';
+   * import { type PlaywrightTestConfig, devices } from '@playwright/test';
    *
    * const config: PlaywrightTestConfig = {
    *   globalTeardown: './global-teardown',
@@ -1053,7 +1053,7 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    *
    * ```ts
    * // playwright.config.ts
-   * import { PlaywrightTestConfig } from '@playwright/test';
+   * import type { PlaywrightTestConfig } from '@playwright/test';
    *
    * const config: PlaywrightTestConfig = {
    *   globalTimeout: process.env.CI ? 60 * 60 * 1000 : undefined,
@@ -1086,7 +1086,7 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    *
    * ```ts
    * // playwright.config.ts
-   * import { PlaywrightTestConfig } from '@playwright/test';
+   * import type { PlaywrightTestConfig } from '@playwright/test';
    *
    * const config: PlaywrightTestConfig = {
    *   maxFailures: process.env.CI ? 1 : 0,
@@ -1125,7 +1125,7 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    *
    * ```ts
    * // playwright.config.ts
-   * import { PlaywrightTestConfig } from '@playwright/test';
+   * import type { PlaywrightTestConfig } from '@playwright/test';
    *
    * const config: PlaywrightTestConfig = {
    *   reporter: 'line',
@@ -1174,7 +1174,7 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    *
    * ```ts
    * // playwright.config.ts
-   * import { PlaywrightTestConfig } from '@playwright/test';
+   * import type { PlaywrightTestConfig } from '@playwright/test';
    *
    * const config: PlaywrightTestConfig = {
    *   workers: 3,
@@ -1203,7 +1203,7 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    *
    * ```ts
    * // playwright.config.ts
-   * import { PlaywrightTestConfig } from '@playwright/test';
+   * import type { PlaywrightTestConfig } from '@playwright/test';
    * const config: PlaywrightTestConfig = {
    *   webServer: {
    *     command: 'npm run start',
@@ -2414,7 +2414,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    *
    * ```ts
    * // playwright.config.ts
-   * import { PlaywrightTestConfig } from '@playwright/test';
+   * import type { PlaywrightTestConfig } from '@playwright/test';
    * import { Options } from './my-test';
    *
    * const config: PlaywrightTestConfig<Options> = {
@@ -2489,7 +2489,7 @@ type ConnectOptions = {
  * [testProject.use](https://playwright.dev/docs/api/class-testproject#test-project-use).
  *
  * ```ts
- * import { PlaywrightTestConfig } from '@playwright/test';
+ * import type { PlaywrightTestConfig } from '@playwright/test';
  * const config: PlaywrightTestConfig = {
  *   use: {
  *     headless: false,
@@ -2524,7 +2524,7 @@ export interface PlaywrightWorkerOptions {
    *
    * ```ts
    * // playwright.config.ts
-   * import { PlaywrightTestConfig, devices } from '@playwright/test';
+   * import { type PlaywrightTestConfig, devices } from '@playwright/test';
    *
    * const config: PlaywrightTestConfig = {
    *   use: {
@@ -2616,7 +2616,7 @@ export type VideoMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry';
  * [testProject.use](https://playwright.dev/docs/api/class-testproject#test-project-use).
  *
  * ```ts
- * import { PlaywrightTestConfig } from '@playwright/test';
+ * import type { PlaywrightTestConfig } from '@playwright/test';
  * const config: PlaywrightTestConfig = {
  *   use: {
  *     headless: false,
@@ -3937,7 +3937,7 @@ export interface TestError {
  *
  * ```ts
  * // playwright.config.ts
- * import { PlaywrightTestConfig, devices } from '@playwright/test';
+ * import { type PlaywrightTestConfig, devices } from '@playwright/test';
  *
  * const config: PlaywrightTestConfig = {
  *   // Options shared for all projects.
@@ -4163,7 +4163,7 @@ interface TestProject {
    *
    * ```ts
    * // playwright.config.ts
-   * import { PlaywrightTestConfig } from '@playwright/test';
+   * import type { PlaywrightTestConfig } from '@playwright/test';
    *
    * const config: PlaywrightTestConfig = {
    *   projects: [
