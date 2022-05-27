@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import { attachFrame } from '../../config/utils';
 import { contextTest as it, expect } from '../../config/browserTest';
 
 it.use({
