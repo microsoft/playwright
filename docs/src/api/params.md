@@ -746,7 +746,7 @@ Time to retry the assertion for.
 * langs: js
 - `maxDiffPixels` <[int]>
 
-An acceptable amount of pixels that could be different, default is configurable with `TestConfig.expect`. Default is configurable with `TestConfig.expect`. Unset by default.
+An acceptable amount of pixels that could be different. Default is configurable with `TestConfig.expect`. Unset by default.
 
 ## assertions-max-diff-pixel-ratio
 * langs: js
