@@ -313,7 +313,6 @@ it('should allow cdp sessions on oopifs', async function({ page, browser, server
 
 it('should emit filechooser event for iframe', async ({ page, server, browser }) => {
   // Add listener before OOPIF is created.
-  // const chooserPromise = new Promise(f => page.once('filechooser', f));
   const chooserPromise = page.waitForEvent('filechooser');
   await page.goto(server.PREFIX + '/dynamic-oopif.html');
   expect(await countOOPIFs(browser)).toBe(1);
