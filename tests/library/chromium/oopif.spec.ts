@@ -311,6 +311,21 @@ it('should allow cdp sessions on oopifs', async function({ page, browser, server
   expect(JSON.stringify(oopif)).toContain('./digits/1.png');
 });
 
+it('should emit filechooser event for iframe', async ({ page, server, browser }) => {
+  // Add listener before OOPIF is created.
+  const chooserPromise = page.waitForEvent('filechooser');
+  await page.goto(server.PREFIX + '/dynamic-oopif.html');
+  expect(await countOOPIFs(browser)).toBe(1);
+  expect(page.frames().length).toBe(2);
+  const frame = page.frames()[1];
+  await frame.setContent(`<input type=file>`);
+  const [chooser] = await Promise.all([
+    chooserPromise,
+    frame.click('input'),
+  ]);
+  expect(chooser).toBeTruthy();
+});
+
 async function countOOPIFs(browser) {
   const browserSession = await browser.newBrowserCDPSession();
   const oopifs = [];
