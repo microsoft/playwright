@@ -54,7 +54,7 @@ status = await page.evaluate("""async () => {
 
 ```python sync
 status = page.evaluate("""async () => {
-  response = fetch(location.href)
+  response = await fetch(location.href)
   return response.status
 }""")
 ```
@@ -367,6 +367,6 @@ var data = new { text = "some data", value = 1};
 // Pass data as a parameter
 var result = await page.EvaluateAsync(@"data => {
   // There is no |data| in the web page.
-  window.myApp.use(data); 
+  window.myApp.use(data);
 }");
 ```
