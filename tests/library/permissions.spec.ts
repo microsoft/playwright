@@ -100,9 +100,9 @@ it.describe('permissions', () => {
     expect(await getPermission(page, 'geolocation')).toBe('prompt');
   });
 
-  it('should trigger permission onchange', async ({ page, context, server, browserName, headless, channel }) => {
+  it('should trigger permission onchange', async ({ page, context, server, browserName, headless, browserMajorVersion }) => {
     it.fail(browserName === 'webkit');
-    it.fail(browserName === 'chromium' && !headless && !channel, 'Fixed on ToT, remove once Beta rolls');
+    it.fail(browserName === 'chromium' && !headless && browserMajorVersion <= 102, 'Fixed on ToT, remove once Beta rolls');
 
     await page.goto(server.EMPTY_PAGE);
     await page.evaluate(() => {
