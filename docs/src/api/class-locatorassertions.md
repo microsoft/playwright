@@ -626,7 +626,7 @@ await expect(itemLocator).toContainClass(['alice', 'bob', 'carl']); // fail, len
 ```
 
 ```java
-assertThat(page.locator("#component")).containClass("bar");
+assertThat(page.locator("#component")).containsClass("bar");
 ```
 
 ```python async
