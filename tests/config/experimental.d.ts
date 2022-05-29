@@ -19581,8 +19581,8 @@ interface LocatorAssertions {
     maxDiffPixelRatio?: number;
 
     /**
-     * An acceptable amount of pixels that could be different, default is configurable with `TestConfig.expect`. Default is
-     * configurable with `TestConfig.expect`. Unset by default.
+     * An acceptable amount of pixels that could be different. Default is configurable with `TestConfig.expect`. Unset by
+     * default.
      */
     maxDiffPixels?: number;
 
@@ -19655,8 +19655,8 @@ interface LocatorAssertions {
     maxDiffPixelRatio?: number;
 
     /**
-     * An acceptable amount of pixels that could be different, default is configurable with `TestConfig.expect`. Default is
-     * configurable with `TestConfig.expect`. Unset by default.
+     * An acceptable amount of pixels that could be different. Default is configurable with `TestConfig.expect`. Unset by
+     * default.
      */
     maxDiffPixels?: number;
 
@@ -19839,8 +19839,8 @@ interface PageAssertions {
     maxDiffPixelRatio?: number;
 
     /**
-     * An acceptable amount of pixels that could be different, default is configurable with `TestConfig.expect`. Default is
-     * configurable with `TestConfig.expect`. Unset by default.
+     * An acceptable amount of pixels that could be different. Default is configurable with `TestConfig.expect`. Unset by
+     * default.
      */
     maxDiffPixels?: number;
 
@@ -19943,8 +19943,8 @@ interface PageAssertions {
     maxDiffPixelRatio?: number;
 
     /**
-     * An acceptable amount of pixels that could be different, default is configurable with `TestConfig.expect`. Default is
-     * configurable with `TestConfig.expect`. Unset by default.
+     * An acceptable amount of pixels that could be different. Default is configurable with `TestConfig.expect`. Unset by
+     * default.
      */
     maxDiffPixels?: number;
 
@@ -20053,8 +20053,8 @@ interface ScreenshotAssertions {
     maxDiffPixelRatio?: number;
 
     /**
-     * An acceptable amount of pixels that could be different, default is configurable with `TestConfig.expect`. Default is
-     * configurable with `TestConfig.expect`. Unset by default.
+     * An acceptable amount of pixels that could be different. Default is configurable with `TestConfig.expect`. Unset by
+     * default.
      */
     maxDiffPixels?: number;
 
@@ -20097,8 +20097,8 @@ interface ScreenshotAssertions {
     maxDiffPixelRatio?: number;
 
     /**
-     * An acceptable amount of pixels that could be different, default is configurable with `TestConfig.expect`. Default is
-     * configurable with `TestConfig.expect`. Unset by default.
+     * An acceptable amount of pixels that could be different. Default is configurable with `TestConfig.expect`. Unset by
+     * default.
      */
     maxDiffPixels?: number;
 
