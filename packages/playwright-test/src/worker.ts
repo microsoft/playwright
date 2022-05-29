@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import { Console } from 'console';
 import * as util from 'util';
 import type { RunPayload, TeardownErrorsPayload, TestOutputPayload, WorkerInitParams } from './ipc';
 import { startProfiling, stopProfiling } from './profiler';
@@ -24,12 +23,6 @@ import { WorkerRunner } from './workerRunner';
 let closed = false;
 
 sendMessageToParent('ready');
-
-global.console = new Console({
-  stdout: process.stdout,
-  stderr: process.stderr,
-  colorMode: process.env.FORCE_COLOR === '1',
-});
 
 process.stdout.write = (chunk: string | Buffer) => {
   const outPayload: TestOutputPayload = {
