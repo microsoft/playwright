@@ -116,6 +116,9 @@ class TestServer {
     this.EMPTY_PAGE = `${protocol}://${same_origin}:${port}/empty.html`;
   }
 
+  /**
+   * @param {*} socket 
+   */
   _onSocket(socket) {
     this._sockets.add(socket);
     // ECONNRESET and HPE_INVALID_EOF_STATE are legit errors given
@@ -144,6 +147,9 @@ class TestServer {
     this._auths.set(path, {username, password});
   }
 
+  /**
+   * @param {string} path 
+   */
   enableGzip(path) {
     this._gzipRoutes.add(path);
   }
@@ -326,6 +332,9 @@ class TestServer {
     }
   }
 
+  /**
+   * @param {*} handler 
+   */
   onceWebSocketConnection(handler) {
     this._wsServer.once('connection', handler);
   }
@@ -336,6 +345,9 @@ class TestServer {
     });
   }
 
+  /**
+   * @param {*} data 
+   */
   sendOnWebSocketConnection(data) {
     this.onceWebSocketConnection(ws => ws.send(data));
   }
