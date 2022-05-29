@@ -22,6 +22,11 @@ const gunzipAsync = util.promisify(zlib.gunzip);
 
 const blobServiceClient = BlobServiceClient.fromConnectionString(process.env.AzureWebJobsStorage);
 
+/**
+ * @param {any} suite 
+ * @param {any} result 
+ * @returns {any}
+ */
 function flattenSpecs(suite, result = []) {
   if (suite.suites) {
     for (const child of suite.suites)
@@ -59,6 +64,9 @@ class SimpleBlob {
     return JSON.parse(content);
   }
 
+  /**
+   * @param {any} data 
+   */
   async uploadGzipped(data) {
     const content = JSON.stringify(data);
     const zipped = await gzipAsync(content, {
@@ -73,6 +81,10 @@ class SimpleBlob {
   }
 }
 
+/**
+ * @param {any} container 
+ * @param {any} blobName 
+ */
 async function deleteBlob(container, blobName) {
   const containerClient = await blobServiceClient.getContainerClient(container);
   await containerClient.deleteBlob(blobName, {});
