@@ -383,6 +383,10 @@ export class Response extends ChannelOwner<channels.ResponseChannel> implements 
     return this._initializer.statusText;
   }
 
+  isFromServiceWorker(): boolean | null {
+    return this._initializer.isFromServiceWorker || null;
+  }
+
   /**
    * @deprecated
    */

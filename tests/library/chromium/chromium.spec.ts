@@ -39,46 +39,51 @@ test('should create a worker from service worker with noop routing', async ({ co
   expect(await worker.evaluate(() => self.toString())).toBe('[object ServiceWorkerGlobalScope]');
 });
 
-test('isServiceWorker() and serviceWorker() work', async ({ context, page, server }) => {
-  {
-    const [worker, html, main, inWorker] = await Promise.all([
-      context.waitForEvent('serviceworker'),
-      context.waitForEvent('request', r => r.url().endsWith('/sw.html')),
-      context.waitForEvent('request', r => r.url().endsWith('/sw.js')),
-      context.waitForEvent('request', r => r.url().endsWith('/request-from-within-worker.txt')),
-      page.goto(server.PREFIX + '/serviceworkers/fetch/sw.html')
-    ]);
-    const [inner] = await Promise.all([
-      context.waitForEvent('request', r => r.url().endsWith('/inner.txt')),
-      page.evaluate(() => fetch('/inner.txt')),
-    ]);
-    expect(html.frame()).toBeTruthy();
-    expect(html.isServiceWorkerRequest()).toBe(false);
-    expect(html.serviceWorker()).toBe(null);
+test('isServiceWorker(), serviceWorker(), and isFromServiceWorker() work', async ({ context, page, server }) => {
+  const [worker, html, main, inWorker] = await Promise.all([
+    context.waitForEvent('serviceworker'),
+    context.waitForEvent('request', r => r.url().endsWith('/sw.html')),
+    context.waitForEvent('request', r => r.url().endsWith('/sw.js')),
+    context.waitForEvent('request', r => r.url().endsWith('/request-from-within-worker.txt')),
+    page.goto(server.PREFIX + '/serviceworkers/fetch/sw.html')
+  ]);
+  const [inner] = await Promise.all([
+    context.waitForEvent('request', r => r.url().endsWith('/inner.txt')),
+    page.evaluate(() => fetch('/inner.txt')),
+  ]);
+  expect(html.frame()).toBeTruthy();
+  expect(html.isServiceWorkerRequest()).toBe(false);
+  expect(html.serviceWorker()).toBe(null);
+  expect((await html.response()).isFromServiceWorker()).toBeNull();
 
-    expect(main.frame).toThrow();
-    expect(main.isServiceWorkerRequest()).toBe(true);
-    expect(main.serviceWorker()).toBe(worker);
+  expect(main.frame).toThrow();
+  expect(main.isServiceWorkerRequest()).toBe(true);
+  expect(main.serviceWorker()).toBe(worker);
+  expect((await main.response()).isFromServiceWorker()).toBeNull();
 
-    expect(inner.frame()).toBeTruthy();
-    expect(inner.isServiceWorkerRequest()).toBe(false);
-    expect(inner.serviceWorker()).toBe(null);
+  expect(inner.frame()).toBeTruthy();
+  expect(inner.isServiceWorkerRequest()).toBe(false);
+  expect(inner.serviceWorker()).toBe(null);
+  expect((await inner.response()).isFromServiceWorker()).toBe(true);
 
-    expect(inWorker.frame).toThrow();
-    expect(inWorker.isServiceWorkerRequest()).toBe(true);
-    expect(inWorker.serviceWorker()).toBe(worker);
-  }
+  expect(inWorker.frame).toThrow();
+  expect(inWorker.isServiceWorkerRequest()).toBe(true);
+  expect(inWorker.serviceWorker()).toBe(worker);
+  expect((await inWorker.response()).isFromServiceWorker()).toBeNull();
+
   await page.evaluate(() => window['activationPromise']);
-  {
-    const [inner] = await Promise.all([
-      context.waitForEvent('request', r => r.url().endsWith('/inner.txt')),
-      page.evaluate(() => fetch('/inner.txt')),
-    ]);
-    // FIXME: This doesn't seem to be the correct assetion.
-    // Ensure the reques is actually intercepted by SW.
-    expect(inner.isServiceWorkerRequest()).toBe(false);
-    expect(inner.serviceWorker()).toBe(null);
-  }
+  const [innerSW, innerPage] = await Promise.all([
+    context.waitForEvent('request', r => r.url().endsWith('/inner.txt') && r.isServiceWorkerRequest()),
+    context.waitForEvent('request', r => r.url().endsWith('/inner.txt') && !r.isServiceWorkerRequest()),
+    page.evaluate(() => fetch('/inner.txt')),
+  ]);
+  expect(innerPage.isServiceWorkerRequest()).toBe(false);
+  expect(innerPage.serviceWorker()).toBe(null);
+  expect((await innerPage.response()).isFromServiceWorker()).toBe(true);
+
+  expect(innerSW.isServiceWorkerRequest()).toBe(true);
+  expect(innerSW.serviceWorker()).toBe(worker);
+  expect((await innerSW.response()).isFromServiceWorker()).toBeNull();
 });
 
 test('should intercept service worker requests (main and within)', async ({ context, page, server }) => {

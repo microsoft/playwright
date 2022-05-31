@@ -3188,6 +3188,7 @@ export type ResponseInitializer = {
   statusText: string,
   headers: NameValue[],
   timing: ResourceTiming,
+  isFromServiceWorker?: boolean,
 };
 export interface ResponseEventTarget {
 }

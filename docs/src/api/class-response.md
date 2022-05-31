@@ -51,6 +51,15 @@ Name of the header.
 
 Returns all values of the headers matching the name, for example `set-cookie`. The name is case insensitive.
 
+## method: Response.isFromServiceWorker
+- returns: <[null]|[boolean]>
+
+:::note
+This field is Chromium only. It's safe to call when using other browsers, but it will always be `null`.
+:::
+
+If set, indicates whether this Response was fullfilled by a Service Worker's Fetch Handler (i.e. via [FetchEvent.respondWith](https://developer.mozilla.org/en-US/docs/Web/API/FetchEvent/respondWith)).
+
 ### param: Response.headerValues.name
 - `name` <[string]>
 

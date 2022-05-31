@@ -14624,6 +14624,14 @@ export interface Response {
   headerValues(name: string): Promise<Array<string>>;
 
   /**
+   * > NOTE: This field is Chromium only. It's safe to call when using other browsers, but it will always be `null`.
+   *
+   * If set, indicates whether this Response was fullfilled by a Service Worker's Fetch Handler (i.e. via
+   * [FetchEvent.respondWith](https://developer.mozilla.org/en-US/docs/Web/API/FetchEvent/respondWith)).
+   */
+  isFromServiceWorker(): null|boolean;
+
+  /**
    * Returns the JSON representation of response body.
    *
    * This method will throw if the response body is not parsable via `JSON.parse`.

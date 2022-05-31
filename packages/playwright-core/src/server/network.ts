@@ -373,8 +373,9 @@ export class Response extends SdkObject {
   private _securityDetailsPromise = new ManualPromise<SecurityDetails | undefined>();
   private _rawResponseHeadersPromise: ManualPromise<types.HeadersArray> | undefined;
   private _httpVersion: string | undefined;
+  private _isFromServiceWorker: boolean | undefined;
 
-  constructor(request: Request, status: number, statusText: string, headers: types.HeadersArray, timing: ResourceTiming, getResponseBodyCallback: GetResponseBodyCallback, httpVersion?: string) {
+  constructor(request: Request, status: number, statusText: string, headers: types.HeadersArray, timing: ResourceTiming, getResponseBodyCallback: GetResponseBodyCallback, httpVersion?: string, isFromServiceWorker?: boolean) {
     super(request.frame() || request._context, 'response');
     this._request = request;
     this._timing = timing;
@@ -387,6 +388,7 @@ export class Response extends SdkObject {
     this._getResponseBodyCallback = getResponseBodyCallback;
     this._request._setResponse(this);
     this._httpVersion = httpVersion;
+    this._isFromServiceWorker = isFromServiceWorker;
   }
 
   _serverAddrFinished(addr?: RemoteAddr) {
@@ -480,6 +482,10 @@ export class Response extends SdkObject {
     if (this._httpVersion === 'h2')
       return 'HTTP/2.0';
     return this._httpVersion;
+  }
+
+  isFromServiceWorker(): boolean | null {
+    return this._isFromServiceWorker || null;
   }
 
   private async _responseHeadersSize(): Promise<number> {
