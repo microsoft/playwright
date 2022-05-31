@@ -393,8 +393,11 @@ export class WorkerRunner extends EventEmitter {
 
       // Run "afterAll" hooks for suites that are not shared with the next test.
       const nextSuites = new Set(getSuites(nextTest));
+      // In case of failure the worker will be stopped and we have to make sure that afterAll
+      // hooks run before test fixtures teardown.
+      const isFailure = testInfo.status !== 'skipped' && testInfo.status !== testInfo.expectedStatus;
       for (const suite of reversedSuites) {
-        if (!nextSuites.has(suite)) {
+        if (!nextSuites.has(suite) || isFailure) {
           const afterAllError = await this._runAfterAllHooksForSuite(suite, testInfo);
           firstAfterHooksError = firstAfterHooksError || afterAllError;
         }
