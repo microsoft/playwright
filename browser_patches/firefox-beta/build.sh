@@ -109,7 +109,7 @@ if [[ $1 == "--juggler" ]]; then
 elif [[ $1 == "--bootstrap" ]]; then
   ./mach configure
 else
-  ./mach build
+  MOZ_AUTOMATION=1 MOZ_FETCHES_DIR=$HOME/.mozbuild ./mach build
   if is_mac; then
     node "${SCRIPT_FOLDER}"/install-preferences.js "$PWD"/${OBJ_FOLDER}/dist
   else
