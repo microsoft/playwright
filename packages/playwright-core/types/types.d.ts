@@ -10367,7 +10367,7 @@ export interface BrowserType<Unused = {}> {
     /**
      * If set to `disabled`, all Service Worker registrations will be blocked.
      */
-    serviceWorkerPolicy?: "default"|"disabled";
+    serviceWorkerPolicy?: ServiceWorkerPolicy;
 
     /**
      * Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on.
@@ -11089,6 +11089,10 @@ export type AndroidKey =
 export const _electron: Electron;
 export const _android: Android;
 
+export type ServiceWorkerPolicy = 'default' | 'disabled' | {
+  enableNetworkInspection?: boolean;
+};
+
 // This is required to not export everything by default. See https://github.com/Microsoft/TypeScript/issues/19545#issuecomment-340490459
 export {};
 
@@ -11521,7 +11525,7 @@ export interface AndroidDevice {
     /**
      * If set to `disabled`, all Service Worker registrations will be blocked.
      */
-    serviceWorkerPolicy?: "default"|"disabled";
+    serviceWorkerPolicy?: ServiceWorkerPolicy;
 
     /**
      * If specified, enables strict selectors mode for this context. In the strict selectors mode all operations on selectors
@@ -13047,7 +13051,7 @@ export interface Browser extends EventEmitter {
     /**
      * If set to `disabled`, all Service Worker registrations will be blocked.
      */
-    serviceWorkerPolicy?: "default"|"disabled";
+    serviceWorkerPolicy?: ServiceWorkerPolicy;
 
     /**
      * Populates context with given storage state. This option can be used to initialize context with logged-in information
@@ -15508,7 +15512,7 @@ export interface BrowserContextOptions {
   /**
    * If set to `disabled`, all Service Worker registrations will be blocked.
    */
-  serviceWorkerPolicy?: "default"|"disabled";
+  serviceWorkerPolicy?: ServiceWorkerPolicy;
 
   /**
    * Populates context with given storage state. This option can be used to initialize context with logged-in information

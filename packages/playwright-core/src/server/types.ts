@@ -375,4 +375,6 @@ export type AndroidDeviceOptions = {
   omitDriverInstall?: boolean,
 };
 
-export type ServiceWorkerPolicy = 'default' | 'disabled';
+export type ServiceWorkerPolicy = 'default' | 'disabled' | {
+  enableNetworkInspection?: boolean;
+};

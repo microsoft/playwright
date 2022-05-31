@@ -39,227 +39,251 @@ test('should create a worker from service worker with noop routing', async ({ co
   expect(await worker.evaluate(() => self.toString())).toBe('[object ServiceWorkerGlobalScope]');
 });
 
-test('isServiceWorker(), serviceWorker(), and isFromServiceWorker() work', async ({ context, page, server }) => {
-  const [worker, html, main, inWorker] = await Promise.all([
-    context.waitForEvent('serviceworker'),
-    context.waitForEvent('request', r => r.url().endsWith('/sw.html')),
-    context.waitForEvent('request', r => r.url().endsWith('/sw.js')),
-    context.waitForEvent('request', r => r.url().endsWith('/request-from-within-worker.txt')),
-    page.goto(server.PREFIX + '/serviceworkers/fetch/sw.html')
-  ]);
-  const [inner] = await Promise.all([
-    context.waitForEvent('request', r => r.url().endsWith('/inner.txt')),
-    page.evaluate(() => fetch('/inner.txt')),
-  ]);
-  expect(html.frame()).toBeTruthy();
-  expect(html.isServiceWorkerRequest()).toBe(false);
-  expect(html.serviceWorker()).toBe(null);
-  expect((await html.response()).isFromServiceWorker()).toBeNull();
-
-  expect(main.frame).toThrow();
-  expect(main.isServiceWorkerRequest()).toBe(true);
-  expect(main.serviceWorker()).toBe(worker);
-  expect((await main.response()).isFromServiceWorker()).toBeNull();
-
-  expect(inner.frame()).toBeTruthy();
-  expect(inner.isServiceWorkerRequest()).toBe(false);
-  expect(inner.serviceWorker()).toBe(null);
-  expect((await inner.response()).isFromServiceWorker()).toBe(true);
-
-  expect(inWorker.frame).toThrow();
-  expect(inWorker.isServiceWorkerRequest()).toBe(true);
-  expect(inWorker.serviceWorker()).toBe(worker);
-  expect((await inWorker.response()).isFromServiceWorker()).toBeNull();
-
+test('should not instrument service worker requests by default', async ({ context, page, server }) => {
+  const routed: string[] = [];
+  const emitted: string[] = [];
+  await context.route('**', async (route, request) => {
+    routed.push(request.url());
+    await route.continue();
+  });
+  context.on('request', request => emitted.push(request.url()));
+  await page.goto(server.PREFIX + '/serviceworkers/fetch/sw.html');
   await page.evaluate(() => window['activationPromise']);
-  const [innerSW, innerPage] = await Promise.all([
-    context.waitForEvent('request', r => r.url().endsWith('/inner.txt') && r.isServiceWorkerRequest()),
-    context.waitForEvent('request', r => r.url().endsWith('/inner.txt') && !r.isServiceWorkerRequest()),
-    page.evaluate(() => fetch('/inner.txt')),
+  expect(routed).toEqual([
+    'http://localhost:8907/serviceworkers/fetch/sw.html',
+    'http://localhost:8907/serviceworkers/fetch/style.css',
   ]);
-  expect(innerPage.isServiceWorkerRequest()).toBe(false);
-  expect(innerPage.serviceWorker()).toBe(null);
-  expect((await innerPage.response()).isFromServiceWorker()).toBe(true);
-
-  expect(innerSW.isServiceWorkerRequest()).toBe(true);
-  expect(innerSW.serviceWorker()).toBe(worker);
-  expect((await innerSW.response()).isFromServiceWorker()).toBeNull();
+  expect(emitted).toEqual([
+    'http://localhost:8907/serviceworkers/fetch/sw.html',
+    'http://localhost:8907/serviceworkers/fetch/style.css',
+  ]);
 });
 
-test('should intercept service worker requests (main and within)', async ({ context, page, server }) => {
-  await context.route('**/request-from-within-worker', route =>
-    route.fulfill({
-      contentType: 'application/json',
-      status: 200,
-      body: '"intercepted!"',
-    })
-  );
+test.describe('with service worker networking', () => {
+  test.use({ serviceWorkerPolicy: { enableNetworkInspection: true } });
 
-  await context.route('**/sw.js', route =>
-    route.fulfill({
-      contentType: 'text/javascript',
-      status: 200,
-      body: `
-        self.contentPromise = new Promise(res => fetch('/request-from-within-worker').then(r => r.json()).then(res));
-      `,
-    })
-  );
+  test('isServiceWorker(), serviceWorker(), and isFromServiceWorker() work', async ({ context, page, server }) => {
+    const [worker, html, main, inWorker] = await Promise.all([
+      context.waitForEvent('serviceworker'),
+      context.waitForEvent('request', r => r.url().endsWith('/sw.html')),
+      context.waitForEvent('request', r => r.url().endsWith('/sw.js')),
+      context.waitForEvent('request', r => r.url().endsWith('/request-from-within-worker.txt')),
+      page.goto(server.PREFIX + '/serviceworkers/fetch/sw.html')
+    ]);
+    const [inner] = await Promise.all([
+      context.waitForEvent('request', r => r.url().endsWith('/inner.txt')),
+      page.evaluate(() => fetch('/inner.txt')),
+    ]);
+    expect(html.frame()).toBeTruthy();
+    expect(html.isServiceWorkerRequest()).toBe(false);
+    expect(html.serviceWorker()).toBe(null);
+    expect((await html.response()).isFromServiceWorker()).toBeNull();
 
-  const [ sw ] = await Promise.all([
-    context.waitForEvent('serviceworker'),
-    page.goto(server.PREFIX + '/serviceworkers/empty/sw.html'),
-  ]);
+    expect(main.frame).toThrow();
+    expect(main.isServiceWorkerRequest()).toBe(true);
+    expect(main.serviceWorker()).toBe(worker);
+    expect((await main.response()).isFromServiceWorker()).toBeNull();
 
-  await expect(sw.evaluate(() => self['contentPromise'])).resolves.toBe('intercepted!');
-});
+    expect(inner.frame()).toBeTruthy();
+    expect(inner.isServiceWorkerRequest()).toBe(false);
+    expect(inner.serviceWorker()).toBe(null);
+    expect((await inner.response()).isFromServiceWorker()).toBe(true);
 
-test('should report failure (due to cross-origin) of main service worker request', async ({ server, page, context }) => {
-  test.fixme(true, 'crbug.com/1318727');
-  server.setRoute('/serviceworkers/cors/sw.html', (req, res) => {
-    res.write(`
-      <link rel="stylesheet" href="./style.css">
-      <script>
-        window.registrationPromise = navigator.serviceWorker.register('${server.CROSS_PROCESS_PREFIX + '/serviceworkers/empty/sw.js'}');
-        window.activationPromise = new Promise(resolve => navigator.serviceWorker.oncontrollerchange = resolve);
-      </script>
-    `);
-    res.end();
+    expect(inWorker.frame).toThrow();
+    expect(inWorker.isServiceWorkerRequest()).toBe(true);
+    expect(inWorker.serviceWorker()).toBe(worker);
+    expect((await inWorker.response()).isFromServiceWorker()).toBeNull();
+
+    await page.evaluate(() => window['activationPromise']);
+    const [innerSW, innerPage] = await Promise.all([
+      context.waitForEvent('request', r => r.url().endsWith('/inner.txt') && r.isServiceWorkerRequest()),
+      context.waitForEvent('request', r => r.url().endsWith('/inner.txt') && !r.isServiceWorkerRequest()),
+      page.evaluate(() => fetch('/inner.txt')),
+    ]);
+    expect(innerPage.isServiceWorkerRequest()).toBe(false);
+    expect(innerPage.serviceWorker()).toBe(null);
+    expect((await innerPage.response()).isFromServiceWorker()).toBe(true);
+
+    expect(innerSW.isServiceWorkerRequest()).toBe(true);
+    expect(innerSW.serviceWorker()).toBe(worker);
+    expect((await innerSW.response()).isFromServiceWorker()).toBeNull();
   });
-  const [, main] = await Promise.all([
-    server.waitForRequest('/serviceworkers/cors/sw.html'),
-    // This is not being emitted today
-    context.waitForEvent('request', r => r.url().endsWith('sw.js')),
-    page.goto(server.PREFIX + '/serviceworkers/cors/sw.html'),
-  ]);
-  await main.response();
-});
 
-test('should report failure (due to content-type) of main service worker request', async ({ server, page, context }) => {
-  test.fixme(true, 'crbug.com/1318727');
-  server.setRoute('/serviceworkers/fetch/sw.js', (req, res) => {
-    res.writeHead(200, 'OK', { 'Content-Type': 'text/html' });
-    res.write(`console.log('hi from sw');`);
-    res.end();
-  });
-  const [, main] = await Promise.all([
-    server.waitForRequest('/serviceworkers/fetch/sw.js'),
-    context.waitForEvent('request', r => r.url().endsWith('sw.js')),
-    page.goto(server.PREFIX + '/serviceworkers/fetch/sw.html'),
-  ]);
-  // This will timeout today
-  await main.response();
-});
-
-test('should report failure (due to redirect) of main service worker request', async ({ server, page, context }) => {
-  test.fixme(true, 'crbug.com/1318727');
-  server.setRedirect('/serviceworkers/empty/sw.js', '/dev/null');
-  const [, main] = await Promise.all([
-    server.waitForRequest('/serviceworkers/empty/sw.js'),
-    context.waitForEvent('request', r => r.url().endsWith('sw.js')),
-    page.goto(server.PREFIX + '/serviceworkers/empty/sw.html'),
-  ]);
-  // This will timeout today
-  const resp = await main.response();
-  expect(resp.status()).toBe(301);
-});
-
-test('should intercept service worker importScripts', async ({ context, page, server }) => {
-  await context.route('**/import.js', route =>
-    route.fulfill({
-      contentType: 'text/javascript',
-      status: 200,
-      body: 'self.exportedValue = 47;',
-    })
-  );
-
-  await context.route('**/sw.js', route =>
-    route.fulfill({
-      contentType: 'text/javascript',
-      status: 200,
-      body: `
-        importScripts('/import.js');
-        self.importedValue = self.exportedValue;
-      `,
-    })
-  );
-
-  const [ sw ] = await Promise.all([
-    context.waitForEvent('serviceworker'),
-    page.goto(server.PREFIX + '/serviceworkers/empty/sw.html'),
-  ]);
-
-  await expect(sw.evaluate(() => self['importedValue'])).resolves.toBe(47);
-});
-
-test('should report intercepted service worker requests in HAR', async ({ pageWithHar, server }) => {
-  const { context, page, getLog } = await pageWithHar();
-  await context.route('**/request-from-within-worker', route =>
-    route.fulfill({
-      contentType: 'application/json',
-      headers: {
-        'x-pw-test': 'request-within-worker',
-      },
-      status: 200,
-      body: '"intercepted!"',
-    })
-  );
-
-  await context.route('**/sw.js', route =>
-    route.fulfill({
-      contentType: 'text/javascript',
-      headers: {
-        'x-pw-test': 'intercepted-main',
-      },
-      status: 200,
-      body: `
-        self.contentPromise = new Promise(res => fetch('/request-from-within-worker').then(r => r.json()).then(res));
-      `,
-    })
-  );
-
-  const [ sw ] = await Promise.all([
-    context.waitForEvent('serviceworker'),
-    page.goto(server.PREFIX + '/serviceworkers/empty/sw.html'),
-  ]);
-
-  await expect(sw.evaluate(() => self['contentPromise'])).resolves.toBe('intercepted!');
-
-  const log = await getLog();
-  {
-    const sw = log.entries.filter(e => e.request.url.endsWith('sw.js'));
-    expect.soft(sw).toHaveLength(1);
-    expect.soft(sw[0].response.headers.filter(v => v.name === 'x-pw-test')).toEqual([{ name: 'x-pw-test', value: 'intercepted-main' }]);
-  }
-  {
-    const req = log.entries.filter(e => e.request.url.endsWith('request-from-within-worker'));
-    expect.soft(req).toHaveLength(1);
-    expect.soft(req[0].response.headers.filter(v => v.name === 'x-pw-test')).toEqual([{ name: 'x-pw-test', value: 'request-within-worker' }]);
-    expect.soft(Buffer.from(req[0].response.content.text, 'base64').toString()).toBe('"intercepted!"');
-  }
-});
-
-test('should intercept only serviceworker request, not page', async ({ context, page, server }) => {
-  await context.route('**/data.json', async route => {
-    if (route.request().isServiceWorkerRequest()) {
-      return route.fulfill({
-        contentType: 'text/plain',
+  test('should intercept service worker requests (main and within)', async ({ context, page, server }) => {
+    await context.route('**/request-from-within-worker', route =>
+      route.fulfill({
+        contentType: 'application/json',
         status: 200,
-        body: 'from sw',
-      });
-    } else {
-      return route.continue();
+        body: '"intercepted!"',
+      })
+    );
+
+    await context.route('**/sw.js', route =>
+      route.fulfill({
+        contentType: 'text/javascript',
+        status: 200,
+        body: `
+          self.contentPromise = new Promise(res => fetch('/request-from-within-worker').then(r => r.json()).then(res));
+        `,
+      })
+    );
+
+    const [ sw ] = await Promise.all([
+      context.waitForEvent('serviceworker'),
+      page.goto(server.PREFIX + '/serviceworkers/empty/sw.html'),
+    ]);
+
+    await expect(sw.evaluate(() => self['contentPromise'])).resolves.toBe('intercepted!');
+  });
+
+  test('should report failure (due to cross-origin) of main service worker request', async ({ server, page, context }) => {
+    test.fixme(true, 'crbug.com/1318727');
+    server.setRoute('/serviceworkers/cors/sw.html', (req, res) => {
+      res.write(`
+        <link rel="stylesheet" href="./style.css">
+        <script>
+          window.registrationPromise = navigator.serviceWorker.register('${server.CROSS_PROCESS_PREFIX + '/serviceworkers/empty/sw.js'}');
+          window.activationPromise = new Promise(resolve => navigator.serviceWorker.oncontrollerchange = resolve);
+        </script>
+      `);
+      res.end();
+    });
+    const [, main] = await Promise.all([
+      server.waitForRequest('/serviceworkers/cors/sw.html'),
+      // This is not being emitted today
+      context.waitForEvent('request', r => r.url().endsWith('sw.js')),
+      page.goto(server.PREFIX + '/serviceworkers/cors/sw.html'),
+    ]);
+    await main.response();
+  });
+
+  test('should report failure (due to content-type) of main service worker request', async ({ server, page, context }) => {
+    test.fixme(true, 'crbug.com/1318727');
+    server.setRoute('/serviceworkers/fetch/sw.js', (req, res) => {
+      res.writeHead(200, 'OK', { 'Content-Type': 'text/html' });
+      res.write(`console.log('hi from sw');`);
+      res.end();
+    });
+    const [, main] = await Promise.all([
+      server.waitForRequest('/serviceworkers/fetch/sw.js'),
+      context.waitForEvent('request', r => r.url().endsWith('sw.js')),
+      page.goto(server.PREFIX + '/serviceworkers/fetch/sw.html'),
+    ]);
+    // This will timeout today
+    await main.response();
+  });
+
+  test('should report failure (due to redirect) of main service worker request', async ({ server, page, context }) => {
+    test.fixme(true, 'crbug.com/1318727');
+    server.setRedirect('/serviceworkers/empty/sw.js', '/dev/null');
+    const [, main] = await Promise.all([
+      server.waitForRequest('/serviceworkers/empty/sw.js'),
+      context.waitForEvent('request', r => r.url().endsWith('sw.js')),
+      page.goto(server.PREFIX + '/serviceworkers/empty/sw.html'),
+    ]);
+    // This will timeout today
+    const resp = await main.response();
+    expect(resp.status()).toBe(301);
+  });
+
+  test('should intercept service worker importScripts', async ({ context, page, server }) => {
+    await context.route('**/import.js', route =>
+      route.fulfill({
+        contentType: 'text/javascript',
+        status: 200,
+        body: 'self.exportedValue = 47;',
+      })
+    );
+
+    await context.route('**/sw.js', route =>
+      route.fulfill({
+        contentType: 'text/javascript',
+        status: 200,
+        body: `
+          importScripts('/import.js');
+          self.importedValue = self.exportedValue;
+        `,
+      })
+    );
+
+    const [ sw ] = await Promise.all([
+      context.waitForEvent('serviceworker'),
+      page.goto(server.PREFIX + '/serviceworkers/empty/sw.html'),
+    ]);
+
+    await expect(sw.evaluate(() => self['importedValue'])).resolves.toBe(47);
+  });
+
+  test('should report intercepted service worker requests in HAR', async ({ pageWithHar, server }) => {
+    const { context, page, getLog } = await pageWithHar();
+    await context.route('**/request-from-within-worker', route =>
+      route.fulfill({
+        contentType: 'application/json',
+        headers: {
+          'x-pw-test': 'request-within-worker',
+        },
+        status: 200,
+        body: '"intercepted!"',
+      })
+    );
+
+    await context.route('**/sw.js', route =>
+      route.fulfill({
+        contentType: 'text/javascript',
+        headers: {
+          'x-pw-test': 'intercepted-main',
+        },
+        status: 200,
+        body: `
+          self.contentPromise = new Promise(res => fetch('/request-from-within-worker').then(r => r.json()).then(res));
+        `,
+      })
+    );
+
+    const [ sw ] = await Promise.all([
+      context.waitForEvent('serviceworker'),
+      page.goto(server.PREFIX + '/serviceworkers/empty/sw.html'),
+    ]);
+
+    await expect(sw.evaluate(() => self['contentPromise'])).resolves.toBe('intercepted!');
+
+    const log = await getLog();
+    {
+      const sw = log.entries.filter(e => e.request.url.endsWith('sw.js'));
+      expect.soft(sw).toHaveLength(1);
+      expect.soft(sw[0].response.headers.filter(v => v.name === 'x-pw-test')).toEqual([{ name: 'x-pw-test', value: 'intercepted-main' }]);
+    }
+    {
+      const req = log.entries.filter(e => e.request.url.endsWith('request-from-within-worker'));
+      expect.soft(req).toHaveLength(1);
+      expect.soft(req[0].response.headers.filter(v => v.name === 'x-pw-test')).toEqual([{ name: 'x-pw-test', value: 'request-within-worker' }]);
+      expect.soft(Buffer.from(req[0].response.content.text, 'base64').toString()).toBe('"intercepted!"');
     }
   });
 
-  const [ sw ] = await Promise.all([
-    context.waitForEvent('serviceworker'),
-    page.goto(server.PREFIX + '/serviceworkers/fetch/sw.html'),
-  ]);
-  await page.evaluate(() => window['activationPromise']);
-  const response = await page.evaluate(() => fetch('/data.json').then(r => r.text()));
-  const [ url ] = await sw.evaluate(() => self['intercepted']);
-  expect(url).toMatch(/\/data\.json$/);
-  expect(response).toBe('from sw');
+  test('should intercept only serviceworker request, not page', async ({ context, page, server }) => {
+    await context.route('**/data.json', async route => {
+      if (route.request().isServiceWorkerRequest()) {
+        return route.fulfill({
+          contentType: 'text/plain',
+          status: 200,
+          body: 'from sw',
+        });
+      } else {
+        return route.continue();
+      }
+    });
+
+    const [ sw ] = await Promise.all([
+      context.waitForEvent('serviceworker'),
+      page.goto(server.PREFIX + '/serviceworkers/fetch/sw.html'),
+    ]);
+    await page.evaluate(() => window['activationPromise']);
+    const response = await page.evaluate(() => fetch('/data.json').then(r => r.text()));
+    const [ url ] = await sw.evaluate(() => self['intercepted']);
+    expect(url).toMatch(/\/data\.json$/);
+    expect(response).toBe('from sw');
+  });
 });
 
 test('serviceWorkers() should return current workers', async ({ page, server }) => {

@@ -33,9 +33,11 @@ export class CRServiceWorker extends Worker {
       this._createExecutionContext(new CRExecutionContext(session, event.context));
     });
 
-    // These might fail if the target is closed before we receive all execution contexts.
-    this._networkManager.initialize().catch(() => {});
-    this.updateRequestInterception();
+    if (this._isNetworkInspectionEnabled()) {
+      this._networkManager.initialize().catch(() => {});
+      this.updateRequestInterception();
+    }
+
     session.send('Runtime.enable', {}).catch(e => { });
     session.send('Runtime.runIfWaitingForDebugger').catch(e => { });
   }
@@ -45,7 +47,7 @@ export class CRServiceWorker extends Worker {
   }
 
   _needsRequestInterception(): boolean {
-    return !!this._browserContext._requestInterceptor;
+    return this._isNetworkInspectionEnabled() && !!this._browserContext._requestInterceptor;
   }
 
   reportRequestFinished(request: network.Request, response: network.Response | null) {
@@ -70,5 +72,9 @@ export class CRServiceWorker extends Worker {
       }
       r.continue();
     }
+  }
+
+  private _isNetworkInspectionEnabled(): boolean {
+    return typeof this._browserContext._options.serviceWorkerPolicy === 'object' && !!this._browserContext._options.serviceWorkerPolicy.enableNetworkInspection;
   }
 }

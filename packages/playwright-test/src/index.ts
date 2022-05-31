@@ -184,6 +184,7 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
     userAgent,
     baseURL,
     contextOptions,
+    serviceWorkerPolicy,
   }, use) => {
     const options: BrowserContextOptions = {};
     if (acceptDownloads !== undefined)
@@ -226,6 +227,8 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
       options.viewport = viewport;
     if (baseURL !== undefined)
       options.baseURL = baseURL;
+    if (serviceWorkerPolicy !== undefined)
+      options.serviceWorkerPolicy = serviceWorkerPolicy;
     await use({
       ...contextOptions,
       ...options,

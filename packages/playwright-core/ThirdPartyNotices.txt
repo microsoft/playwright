@@ -10,7 +10,6 @@ This project incorporates components from the projects listed below. The origina
 -	colors@1.4.0 (https://github.com/Marak/colors.js)
 -	commander@8.3.0 (https://github.com/tj/commander.js)
 -	concat-map@0.0.1 (https://github.com/substack/node-concat-map)
--	debug@4.3.4 (https://github.com/debug-js/debug)
 -	escape-string-regexp@2.0.0 (https://github.com/sindresorhus/escape-string-regexp)
 -	fs.realpath@1.0.0 (https://github.com/isaacs/fs.realpath)
 -	glob@7.2.0 (https://github.com/isaacs/node-glob)
@@ -25,7 +24,6 @@ This project incorporates components from the projects listed below. The origina
 -	ms@2.1.2 (https://github.com/zeit/ms)
 -	once@1.4.0 (https://github.com/isaacs/once)
 -	path-is-absolute@1.0.1 (https://github.com/sindresorhus/path-is-absolute)
--	pngjs@6.0.0 (https://github.com/lukeapage/pngjs)
 -	progress@2.0.3 (https://github.com/visionmedia/node-progress)
 -	proper-lockfile@4.1.2 (https://github.com/moxystudio/node-proper-lockfile)
 -	proxy-from-env@1.1.0 (https://github.com/Rob--W/proxy-from-env)
@@ -41,6 +39,7 @@ This project incorporates components from the projects listed below. The origina
 -	@types/node@17.0.24 (https://github.com/DefinitelyTyped/DefinitelyTyped)
 -	@types/yauzl@2.10.0 (https://github.com/DefinitelyTyped/DefinitelyTyped)
 -	buffer-crc32@0.2.13 (https://github.com/brianloveswords/buffer-crc32)
+-	debug@4.3.4 (https://github.com/debug-js/debug)
 -	end-of-stream@1.4.4 (https://github.com/mafintosh/end-of-stream)
 -	extract-zip@2.0.1 (https://github.com/maxogden/extract-zip)
 -	fd-slicer@1.1.0 (https://github.com/andrewrk/node-fd-slicer)
@@ -331,30 +330,6 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
 END OF concat-map@0.0.1 AND INFORMATION
-
-%% debug@4.3.4 NOTICES AND INFORMATION BEGIN HERE
-=========================================
-(The MIT License)
-
-Copyright (c) 2014-2017 TJ Holowaychuk <tj@vision-media.ca>
-Copyright (c) 2018-2021 Josh Junon
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software
-and associated documentation files (the 'Software'), to deal in the Software without restriction,
-including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so,
-subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all copies or substantial
-portions of the Software.
-
-THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT
-LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
-WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
-SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-=========================================
-END OF debug@4.3.4 AND INFORMATION
 
 %% escape-string-regexp@2.0.0 NOTICES AND INFORMATION BEGIN HERE
 =========================================
@@ -889,31 +864,6 @@ THE SOFTWARE.
 =========================================
 END OF path-is-absolute@1.0.1 AND INFORMATION
 
-%% pngjs@6.0.0 NOTICES AND INFORMATION BEGIN HERE
-=========================================
-pngjs2 original work Copyright (c) 2015 Luke Page & Original Contributors
-pngjs derived work Copyright (c) 2012 Kuba Niegowski
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
-=========================================
-END OF pngjs@6.0.0 AND INFORMATION
-
 %% progress@2.0.3 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 (The MIT License)
@@ -1412,6 +1362,30 @@ ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEAL
 =========================================
 END OF buffer-crc32@0.2.13 AND INFORMATION
 
+%% debug@4.3.4 NOTICES AND INFORMATION BEGIN HERE
+=========================================
+(The MIT License)
+
+Copyright (c) 2014-2017 TJ Holowaychuk <tj@vision-media.ca>
+Copyright (c) 2018-2021 Josh Junon
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software
+and associated documentation files (the 'Software'), to deal in the Software without restriction,
+including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense,
+and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so,
+subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial
+portions of the Software.
+
+THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT
+LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+=========================================
+END OF debug@4.3.4 AND INFORMATION
+
 %% end-of-stream@1.4.4 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 The MIT License (MIT)
@@ -1614,6 +1588,6 @@ END OF yazl@2.5.1 AND INFORMATION
 
 SUMMARY BEGIN HERE
 =========================================
-Total Packages: 45
+Total Packages: 44
 =========================================
 END OF SUMMARY

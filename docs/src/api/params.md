@@ -641,7 +641,7 @@ on selectors that imply single target DOM element will throw when more than one 
 See [Locator] to learn more about the strict mode.
 
 ## context-option-service-worker-policy
-- `serviceWorkerPolicy` <[ServiceWorkerPolicy]<"default"|"disabled">>
+- `serviceWorkerPolicy` <[ServiceWorkerPolicy]>
 
 If set to `disabled`, all Service Worker registrations will be blocked.
 

@@ -741,7 +741,7 @@ export type BrowserTypeLaunchPersistentContextParams = {
     path: string,
   },
   strictSelectors?: boolean,
-  serviceWorkerPolicy?: 'default' | 'disabled',
+  serviceWorkerPolicy?: ServiceWorkerPolicy,
   userDataDir: string,
   slowMo?: number,
 };
@@ -814,7 +814,7 @@ export type BrowserTypeLaunchPersistentContextOptions = {
     path: string,
   },
   strictSelectors?: boolean,
-  serviceWorkerPolicy?: 'default' | 'disabled',
+  serviceWorkerPolicy?: ServiceWorkerPolicy,
   slowMo?: number,
 };
 export type BrowserTypeLaunchPersistentContextResult = {
@@ -911,7 +911,7 @@ export type BrowserNewContextParams = {
     path: string,
   },
   strictSelectors?: boolean,
-  serviceWorkerPolicy?: 'default' | 'disabled',
+  serviceWorkerPolicy?: ServiceWorkerPolicy,
   proxy?: {
     server: string,
     bypass?: string,
@@ -971,7 +971,7 @@ export type BrowserNewContextOptions = {
     path: string,
   },
   strictSelectors?: boolean,
-  serviceWorkerPolicy?: 'default' | 'disabled',
+  serviceWorkerPolicy?: ServiceWorkerPolicy,
   proxy?: {
     server: string,
     bypass?: string,
@@ -3173,6 +3173,11 @@ export type RouteFulfillResult = void;
 export interface RouteEvents {
 }
 
+export type ServiceWorkerPolicy = {
+  canned?: 'default' | 'disabled',
+  enableNetworkInspection?: boolean,
+};
+
 export type ResourceTiming = {
   startTime: number,
   domainLookupStart: number,
@@ -4002,7 +4007,7 @@ export type AndroidDeviceLaunchBrowserParams = {
     path: string,
   },
   strictSelectors?: boolean,
-  serviceWorkerPolicy?: 'default' | 'disabled',
+  serviceWorkerPolicy?: ServiceWorkerPolicy,
   pkg?: string,
   proxy?: {
     server: string,
@@ -4059,7 +4064,7 @@ export type AndroidDeviceLaunchBrowserOptions = {
     path: string,
   },
   strictSelectors?: boolean,
-  serviceWorkerPolicy?: 'default' | 'disabled',
+  serviceWorkerPolicy?: ServiceWorkerPolicy,
   pkg?: string,
   proxy?: {
     server: string,
