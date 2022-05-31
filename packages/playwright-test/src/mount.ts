@@ -14,59 +14,70 @@
  * limitations under the License.
  */
 
-import type { Fixtures, Locator, Page, BrowserContextOptions, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs } from './types';
+import { normalizeTraceMode, normalizeVideoMode, shouldCaptureTrace, shouldCaptureVideo } from './index';
+import type { Fixtures, Locator, Page, BrowserContextOptions, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, BrowserContext } from './types';
 
 let boundCallbacksForMount: Function[] = [];
 
-export const fixtures: Fixtures<PlaywrightTestArgs & PlaywrightTestOptions & { mount: (component: any, options: any) => Promise<Locator> }, PlaywrightWorkerArgs & { _ctPage: { page: Page | undefined, hash: string } }>  = {
-  _ctPage: [{ page: undefined, hash: '' }, { scope: 'worker' }],
+export const fixtures: Fixtures<
+  PlaywrightTestArgs & PlaywrightTestOptions & { mount: (component: any, options: any) => Promise<Locator> },
+  PlaywrightWorkerArgs & PlaywrightWorkerOptions & { _ctWorker: { page: Page | undefined, context: BrowserContext | undefined, hash: string, isolateTests: boolean } },
+  { _contextFactory: (options?: BrowserContextOptions) => Promise<BrowserContext> }> = {
 
-  context: async ({ page }, use) => {
-    await use(page.context());
-  },
+    _ctWorker: [{ page: undefined, context: undefined, hash: '', isolateTests: false }, { scope: 'worker' }],
 
-  page: async ({ _ctPage, browser, viewport, playwright }, use) => {
-    const defaultContextOptions = (playwright.chromium as any)._defaultContextOptions as BrowserContextOptions;
-    const hash = contextHash(defaultContextOptions);
+    context: async ({ _contextFactory, playwright, browser, _ctWorker, video, trace, viewport }, use, testInfo) => {
+      _ctWorker.isolateTests = shouldCaptureVideo(normalizeVideoMode(video), testInfo) || shouldCaptureTrace(normalizeTraceMode(trace), testInfo);
+      if (_ctWorker.isolateTests) {
+        await use(await _contextFactory());
+        return;
+      }
 
-    if (!_ctPage.page || _ctPage.hash !== hash) {
-      if (_ctPage.page)
-        await _ctPage.page.close();
-      const page = await (browser as any)._wrapApiCall(async () => {
-        const page = await browser.newPage();
-        await page.addInitScript('navigator.serviceWorker.register = () => {}');
-        await page.exposeFunction('__pw_dispatch', (ordinal: number, args: any[]) => {
-          boundCallbacksForMount[ordinal](...args);
-        });
-        await page.goto(process.env.PLAYWRIGHT_VITE_COMPONENTS_BASE_URL!);
-        return page;
-      }, true);
-      _ctPage.page = page;
-      _ctPage.hash = hash;
-      await use(page);
-    } else {
-      const page = _ctPage.page;
-      await (page as any)._wrapApiCall(async () => {
-        await (page as any)._resetForReuse();
-        await (page.context() as any)._resetForReuse();
-        await page.goto('about:blank');
-        await page.setViewportSize(viewport || { width: 1280, height: 800 });
-        await page.goto(process.env.PLAYWRIGHT_VITE_COMPONENTS_BASE_URL!);
-      }, true);
-      await use(page);
-    }
-  },
+      const defaultContextOptions = (playwright.chromium as any)._defaultContextOptions as BrowserContextOptions;
+      const hash = contextHash(defaultContextOptions);
 
-  mount: async ({ page }, use) => {
-    await use(async (component, options) => {
-      const selector = await (page as any)._wrapApiCall(async () => {
-        return await innerMount(page, component, options);
-      }, true);
-      return page.locator(selector);
-    });
-    boundCallbacksForMount = [];
-  },
-};
+      if (!_ctWorker.page || _ctWorker.hash !== hash) {
+        if (_ctWorker.context)
+          await _ctWorker.context.close();
+
+        const context = await browser.newContext();
+        const page = await createPage(context);
+        _ctWorker.context = context;
+        _ctWorker.page = page;
+        _ctWorker.hash = hash;
+        await use(page.context());
+        return;
+      } else {
+        const page = _ctWorker.page;
+        await (page as any)._wrapApiCall(async () => {
+          await (page as any)._resetForReuse();
+          await (page.context() as any)._resetForReuse();
+          await page.goto('about:blank');
+          await page.setViewportSize(viewport || { width: 1280, height: 800 });
+          await page.goto(process.env.PLAYWRIGHT_VITE_COMPONENTS_BASE_URL!);
+        }, true);
+        await use(page.context());
+      }
+    },
+
+    page: async ({ context, _ctWorker }, use) => {
+      if (_ctWorker.isolateTests) {
+        await use(await createPage(context));
+        return;
+      }
+      await use(_ctWorker.page!);
+    },
+
+    mount: async ({ page }, use) => {
+      await use(async (component, options) => {
+        const selector = await (page as any)._wrapApiCall(async () => {
+          return await innerMount(page, component, options);
+        }, true);
+        return page.locator(selector);
+      });
+      boundCallbacksForMount = [];
+    },
+  };
 
 async function innerMount(page: Page, jsxOrType: any, options: any): Promise<string> {
   let component;
@@ -136,4 +147,16 @@ function contextHash(context: BrowserContextOptions): string {
     deviceScaleFactor: context.deviceScaleFactor,
   };
   return JSON.stringify(hash);
+}
+
+function createPage(context: BrowserContext): Promise<Page> {
+  return (context as any)._wrapApiCall(async () => {
+    const page = await context.newPage();
+    await page.addInitScript('navigator.serviceWorker.register = () => {}');
+    await page.exposeFunction('__pw_dispatch', (ordinal: number, args: any[]) => {
+      boundCallbacksForMount[ordinal](...args);
+    });
+    await page.goto(process.env.PLAYWRIGHT_VITE_COMPONENTS_BASE_URL!);
+    return page;
+  }, true);
 }

@@ -17,7 +17,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import type { LaunchOptions, BrowserContextOptions, Page, Browser, BrowserContext, Video, APIRequestContext, Tracing } from 'playwright-core';
-import type { TestType, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, TestInfo } from '../types/test';
+import type { TestType, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, TestInfo, VideoMode, TraceMode } from '../types/test';
 import { rootTestType } from './testType';
 import { createGuid, debugMode } from 'playwright-core/lib/utils';
 import { removeFolders } from 'playwright-core/lib/utils/fileUtils';
@@ -238,13 +238,10 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
     if (debugMode())
       testInfo.setTimeout(0);
 
-    let traceMode = typeof trace === 'string' ? trace : trace.mode;
-    if (traceMode as any === 'retry-with-trace')
-      traceMode = 'on-first-retry';
+    const traceMode = normalizeTraceMode(trace);
     const defaultTraceOptions = { screenshots: true, snapshots: true, sources: true };
     const traceOptions = typeof trace === 'string' ? defaultTraceOptions : { ...defaultTraceOptions, ...trace, mode: undefined };
-
-    const captureTrace = (traceMode === 'on' || traceMode === 'retain-on-failure' || (traceMode === 'on-first-retry' && testInfo.retry === 1));
+    const captureTrace = shouldCaptureTrace(traceMode, testInfo);
     const temporaryTraceFiles: string[] = [];
     const temporaryScreenshots: string[] = [];
     const createdContexts = new Set<BrowserContext>();
@@ -432,11 +429,8 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
   }, { auto: 'all-hooks-included',  _title: 'built-in playwright configuration' } as any],
 
   _contextFactory: [async ({ browser, video, _artifactsDir }, use, testInfo) => {
-    let videoMode = typeof video === 'string' ? video : video.mode;
-    if (videoMode === 'retry-with-video')
-      videoMode = 'on-first-retry';
-
-    const captureVideo = (videoMode === 'on' || videoMode === 'retain-on-failure' || (videoMode === 'on-first-retry' && testInfo.retry === 1));
+    const videoMode = normalizeVideoMode(video);
+    const captureVideo = shouldCaptureVideo(videoMode, testInfo);
     const contexts = new Map<BrowserContext, { pages: Page[] }>();
 
     await use(async options => {
@@ -536,6 +530,28 @@ type ParsedStackTrace = {
   frameTexts: string[];
   apiName: string;
 };
+
+export function normalizeVideoMode(video: VideoMode | 'retry-with-video' | { mode: VideoMode }) {
+  let videoMode = typeof video === 'string' ? video : video.mode;
+  if (videoMode === 'retry-with-video')
+    videoMode = 'on-first-retry';
+  return videoMode;
+}
+
+export function shouldCaptureVideo(videoMode: VideoMode, testInfo: TestInfo) {
+  return (videoMode === 'on' || videoMode === 'retain-on-failure' || (videoMode === 'on-first-retry' && testInfo.retry === 1));
+}
+
+export function normalizeTraceMode(trace: TraceMode | 'retry-with-trace' | { mode: TraceMode }) {
+  let traceMode = typeof trace === 'string' ? trace : trace.mode;
+  if (traceMode === 'retry-with-trace')
+    traceMode = 'on-first-retry';
+  return traceMode;
+}
+
+export function shouldCaptureTrace(traceMode: TraceMode, testInfo: TestInfo) {
+  return traceMode === 'on' || traceMode === 'retain-on-failure' || (traceMode === 'on-first-retry' && testInfo.retry === 1);
+}
 
 const kTracingStarted = Symbol('kTracingStarted');
 
