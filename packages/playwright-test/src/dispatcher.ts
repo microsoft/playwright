@@ -503,7 +503,7 @@ class Worker extends EventEmitter {
     });
 
     this._ready = new Promise((resolve, reject) => {
-      this.process.once('exit', () => reject(new Error('worker exited before it became ready')));
+      this.process.once('exit', (code, signal) => reject(new Error(`worker exited with code "${code}" and signal "${signal}" before it became ready`)));
       this.once('ready', () => resolve());
     });
   }
