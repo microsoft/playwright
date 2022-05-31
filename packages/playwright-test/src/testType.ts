@@ -126,8 +126,6 @@ export class TestTypeImpl {
     for (let parent: Suite | undefined = suite; parent; parent = parent.parent) {
       if (parent._parallelMode === 'serial' && child._parallelMode === 'parallel')
         throw errorWithLocation(location, 'describe.parallel cannot be nested inside describe.serial');
-      if (parent._parallelMode === 'parallel' && child._parallelMode === 'serial')
-        throw errorWithLocation(location, 'describe.serial cannot be nested inside describe.parallel');
     }
 
     setCurrentlyLoadingFileSuite(child);
@@ -152,8 +150,6 @@ export class TestTypeImpl {
     for (let parent: Suite | undefined = suite.parent; parent; parent = parent.parent) {
       if (parent._parallelMode === 'serial' && suite._parallelMode === 'parallel')
         throw errorWithLocation(location, 'describe.parallel cannot be nested inside describe.serial');
-      if (parent._parallelMode === 'parallel' && suite._parallelMode === 'serial')
-        throw errorWithLocation(location, 'describe.serial cannot be nested inside describe.parallel');
     }
   }
 
