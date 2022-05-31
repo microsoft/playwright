@@ -741,6 +741,7 @@ export type BrowserTypeLaunchPersistentContextParams = {
     path: string,
   },
   strictSelectors?: boolean,
+  serviceWorkerPolicy?: 'default' | 'disabled',
   userDataDir: string,
   slowMo?: number,
 };
@@ -813,6 +814,7 @@ export type BrowserTypeLaunchPersistentContextOptions = {
     path: string,
   },
   strictSelectors?: boolean,
+  serviceWorkerPolicy?: 'default' | 'disabled',
   slowMo?: number,
 };
 export type BrowserTypeLaunchPersistentContextResult = {
@@ -909,6 +911,7 @@ export type BrowserNewContextParams = {
     path: string,
   },
   strictSelectors?: boolean,
+  serviceWorkerPolicy?: 'default' | 'disabled',
   proxy?: {
     server: string,
     bypass?: string,
@@ -968,6 +971,7 @@ export type BrowserNewContextOptions = {
     path: string,
   },
   strictSelectors?: boolean,
+  serviceWorkerPolicy?: 'default' | 'disabled',
   proxy?: {
     server: string,
     bypass?: string,
@@ -3995,6 +3999,7 @@ export type AndroidDeviceLaunchBrowserParams = {
     path: string,
   },
   strictSelectors?: boolean,
+  serviceWorkerPolicy?: 'default' | 'disabled',
   pkg?: string,
   proxy?: {
     server: string,
@@ -4051,6 +4056,7 @@ export type AndroidDeviceLaunchBrowserOptions = {
     path: string,
   },
   strictSelectors?: boolean,
+  serviceWorkerPolicy?: 'default' | 'disabled',
   pkg?: string,
   proxy?: {
     server: string,

@@ -159,6 +159,7 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
   baseURL: [ async ({ }, use) => {
     await use(process.env.PLAYWRIGHT_TEST_BASE_URL);
   }, { option: true } ],
+  serviceWorkerPolicy: [ undefined, { option: true } ],
   contextOptions: [ {}, { option: true } ],
 
   _combinedContextOptions: async ({

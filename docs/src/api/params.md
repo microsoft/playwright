@@ -636,9 +636,14 @@ contexts override the proxy, global proxy will be never used and can be any stri
 ## context-option-strict
 - `strictSelectors` <[boolean]>
 
-It specified, enables strict selectors mode for this context. In the strict selectors mode all operations
+If specified, enables strict selectors mode for this context. In the strict selectors mode all operations
 on selectors that imply single target DOM element will throw when more than one element matches the selector.
 See [Locator] to learn more about the strict mode.
+
+## context-option-service-worker-policy
+- `serviceWorkerPolicy` <[ServiceWorkerPolicy]<"default"|"disabled">>
+
+If set to `disabled`, all Service Worker registrations will be blocked.
 
 ## select-options-values
 * langs: java, js, csharp
@@ -795,6 +800,7 @@ An acceptable perceived color difference in the [YIQ color space](https://en.wik
 - %%-context-option-recordvideo-dir-%%
 - %%-context-option-recordvideo-size-%%
 - %%-context-option-strict-%%
+- %%-context-option-service-worker-policy-%%
 
 ## browser-option-args
 - `args` <[Array]<[string]>>
@@ -1019,4 +1025,3 @@ When set to `"hide"`, screenshot will hide text caret. When set to `"initial"`, 
 - %%-screenshot-option-type-%%
 - %%-screenshot-option-mask-%%
 - %%-input-timeout-%%
-

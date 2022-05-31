@@ -10365,12 +10365,17 @@ export interface BrowserType<Unused = {}> {
     };
 
     /**
+     * If set to `disabled`, all Service Worker registrations will be blocked.
+     */
+    serviceWorkerPolicy?: "default"|"disabled";
+
+    /**
      * Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on.
      */
     slowMo?: number;
 
     /**
-     * It specified, enables strict selectors mode for this context. In the strict selectors mode all operations on selectors
+     * If specified, enables strict selectors mode for this context. In the strict selectors mode all operations on selectors
      * that imply single target DOM element will throw when more than one element matches the selector. See [Locator] to learn
      * more about the strict mode.
      */
@@ -11514,7 +11519,12 @@ export interface AndroidDevice {
     };
 
     /**
-     * It specified, enables strict selectors mode for this context. In the strict selectors mode all operations on selectors
+     * If set to `disabled`, all Service Worker registrations will be blocked.
+     */
+    serviceWorkerPolicy?: "default"|"disabled";
+
+    /**
+     * If specified, enables strict selectors mode for this context. In the strict selectors mode all operations on selectors
      * that imply single target DOM element will throw when more than one element matches the selector. See [Locator] to learn
      * more about the strict mode.
      */
@@ -13035,6 +13045,11 @@ export interface Browser extends EventEmitter {
     };
 
     /**
+     * If set to `disabled`, all Service Worker registrations will be blocked.
+     */
+    serviceWorkerPolicy?: "default"|"disabled";
+
+    /**
      * Populates context with given storage state. This option can be used to initialize context with logged-in information
      * obtained via
      * [browserContext.storageState([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-storage-state).
@@ -13089,7 +13104,7 @@ export interface Browser extends EventEmitter {
     };
 
     /**
-     * It specified, enables strict selectors mode for this context. In the strict selectors mode all operations on selectors
+     * If specified, enables strict selectors mode for this context. In the strict selectors mode all operations on selectors
      * that imply single target DOM element will throw when more than one element matches the selector. See [Locator] to learn
      * more about the strict mode.
      */
@@ -15476,6 +15491,11 @@ export interface BrowserContextOptions {
   };
 
   /**
+   * If set to `disabled`, all Service Worker registrations will be blocked.
+   */
+  serviceWorkerPolicy?: "default"|"disabled";
+
+  /**
    * Populates context with given storage state. This option can be used to initialize context with logged-in information
    * obtained via
    * [browserContext.storageState([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-storage-state).
@@ -15530,7 +15550,7 @@ export interface BrowserContextOptions {
   };
 
   /**
-   * It specified, enables strict selectors mode for this context. In the strict selectors mode all operations on selectors
+   * If specified, enables strict selectors mode for this context. In the strict selectors mode all operations on selectors
    * that imply single target DOM element will throw when more than one element matches the selector. See [Locator] to learn
    * more about the strict mode.
    */

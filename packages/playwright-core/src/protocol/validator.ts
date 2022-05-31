@@ -349,6 +349,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
       path: tString,
     })),
     strictSelectors: tOptional(tBoolean),
+    serviceWorkerPolicy: tOptional(tEnum(['default', 'disabled'])),
     userDataDir: tString,
     slowMo: tOptional(tNumber),
   });
@@ -408,6 +409,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
       path: tString,
     })),
     strictSelectors: tOptional(tBoolean),
+    serviceWorkerPolicy: tOptional(tEnum(['default', 'disabled'])),
     proxy: tOptional(tObject({
       server: tString,
       bypass: tOptional(tString),
@@ -1445,6 +1447,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
       path: tString,
     })),
     strictSelectors: tOptional(tBoolean),
+    serviceWorkerPolicy: tOptional(tEnum(['default', 'disabled'])),
     pkg: tOptional(tString),
     proxy: tOptional(tObject({
       server: tString,

@@ -447,6 +447,11 @@ ContextOptions:
         omitContent: boolean?
         path: string
     strictSelectors: boolean?
+    serviceWorkerPolicy:
+      type: enum?
+      literals:
+      - default
+      - disabled
 
 LocalUtils:
   type: interface

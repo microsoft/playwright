@@ -2464,6 +2464,7 @@ type ColorScheme = Exclude<BrowserContextOptions['colorScheme'], undefined>;
 type ExtraHTTPHeaders = Exclude<BrowserContextOptions['extraHTTPHeaders'], undefined>;
 type Proxy = Exclude<BrowserContextOptions['proxy'], undefined>;
 type StorageState = Exclude<BrowserContextOptions['storageState'], undefined>;
+type ServiceWorkerPolicy = Exclude<BrowserContextOptions['serviceWorkerPolicy'], undefined>;
 type ConnectOptions = {
   /**
    * A browser websocket endpoint to connect to.
@@ -2768,6 +2769,10 @@ export interface PlaywrightTestOptions {
    * Learn more about [various timeouts](https://playwright.dev/docs/test-timeouts).
    */
   navigationTimeout: number | undefined;
+  /**
+   * If set to `disabled`, all Service Worker registrations will be blocked.
+   */
+  serviceWorkerPolicy: ServiceWorkerPolicy | undefined;
 }
 
 
