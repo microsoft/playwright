@@ -5,28 +5,30 @@ title: "Migrating from Testing Library"
 
 <!-- TOC -->
 
-## Migration Principes
+## Migration principles
 
-If you use DOM Testing Library in the browser (for example, you bundle tests with webpack), follow this guide for straightforward migration to Playwright Test.
-If you use JSDOM + Testing Library setup, you'll need to switch from `render`ing markup to serving the page under test and navigating to it with [`method: Page.goto`].
+This guide describes migration to Playwright's [Experimental Component Testing](./test-components) from [DOM Testing Library](https://testing-library.com/docs/dom-testing-library/intro/), [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/), [Vue Testing Library](https://testing-library.com/docs/vue-testing-library/intro) and [Svelte Testing Library](https://testing-library.com/docs/svelte-testing-library/intro).
 
-- Testing Lirbary [`screen`](https://testing-library.com/docs/queries/about#screen) ⇄ Playwright [page](./api/class-page).
-- Testing Library [quieries](https://testing-library.com/docs/queries/about) ⇄ Playwright [locators](./locators.md).
-- Testing Library [async helpers](https://testing-library.com/docs/dom-testing-library/api-async) ⇄ Playwright [assertions](./test-assertions).
-- Testing Library [user events](https://testing-library.com/docs/user-event/intro) ⇄ Playwright locator [actions](./api/class-locator).
+:::note
+If you use DOM Testing Library in the browser (for example, you bundle end-to-end tests with webpack), you can switch directly to Playwright Test. Examples below are focused on component tests, but for end-to-end test you just need to replace `await mount` with `await page.goto('http://localhost:3000/')` to open the page under test.
+:::
 
 ## Cheat Sheet
 
 | Testing Library                                         | Playwright                                    |
 |---------------------------------------------------------|-----------------------------------------------|
-| `await user.click(screen.getByText('Click me'))`        | `await page.locator('text=Click me').click()` |
-| `await user.click(await screen.findByText('Click me'))` | `await page.locator('text=Click me').click()` |
-| `await user.type(screen.getByLabelText('Password'), 'secret')` | `await page.locator('text=Password').fill('secret')` |
-| `expect(screen.getByLabelText('Password')).toHaveValue('secret')` | `await expect(page.locator('text=Password')).toHaveValue('secret')` |
-| `screen.findByText('...')`                              | `page.locator('text=...')`                    |
-| `screen.getByTestId('...')`                             | `page.locator('data-testid=...')`             |
-| `screen.queryByPlaceholderText('...')`                  | `page.locator('[placeholder="..."]')`         |
-| `screen.getAllByRole('button', { pressed: true })`      | `page.locator('role=button[pressed]')`        |
+| [screen](https://testing-library.com/docs/queries/about#screen) | [page](./api/class-page) and [component](./api/class-locator) |
+| [queries](https://testing-library.com/docs/queries/about) | [locators](./locators) |
+| [async helpers](https://testing-library.com/docs/dom-testing-library/api-async) | [assertions](./test-assertions) |
+| [user events](https://testing-library.com/docs/user-event/intro) | [actions](./api/class-locator) |
+| `await user.click(screen.getByText('Click me'))`        | `await component.locator('text=Click me').click()` |
+| `await user.click(await screen.findByText('Click me'))` | `await component.locator('text=Click me').click()` |
+| `await user.type(screen.getByLabelText('Password'), 'secret')` | `await component.locator('text=Password').fill('secret')` |
+| `expect(screen.getByLabelText('Password')).toHaveValue('secret')` | `await expect(component.locator('text=Password')).toHaveValue('secret')` |
+| `screen.findByText('...')`                              | `component.locator('text=...')`                    |
+| `screen.getByTestId('...')`                             | `component.locator('data-testid=...')`             |
+| `screen.queryByPlaceholderText('...')`                  | `component.locator('[placeholder="..."]')`         |
+| `screen.getAllByRole('button', { pressed: true })`      | `component.locator('role=button[pressed]')`        |
 
 ## Example
 
@@ -55,40 +57,40 @@ test('should sign in', async () => {
 Line-by-line migration to Playwright Test:
 
 ```js
-const { test, expect } = require('@playwright/test'); // 1
+const { test, expect } = require('@playwright/experimental-ct-react'); // 1
 
-test('should sign in', async ({ page }) => { // 2
+test('should sign in', async ({ page, mount }) => { // 2
   // Setup the page.
-  await page.goto('https://localhost:3000/signin'); // 3
+  const component = await mount(<SignInPage />); // 3
 
   // Perform actions.
-  await page.locator('text=Username').fill('John'); // 4
-  await page.locator('text=Password').fill('secret');
-  await page.locator('text=Sign in').click();
+  await component.locator('text=Username').fill('John'); // 4
+  await component.locator('text=Password').fill('secret');
+  await component.locator('text=Sign in').click();
 
   // Verify signed in state by waiting until "Welcome" message appears.
-  await expect(page.locator('text=Welcome, John')).toBeVisible(); // 5
+  await expect(component.locator('text=Welcome, John')).toBeVisible(); // 5
 });
 ```
 
 Migration highlights (see inline comments in the Playwright Test code snippet):
 
-1. Import everything from `@playwright/test` package.
-1. Test function is given a `page` that is isolated from other tests. This is one of the many [useful fixtures](./api/class-fixtures) in Playwright Test.
-1. Instead of rendering markup, navigate to the page under test.
-1. Use locators created with [`method: Page.locator`] to perform most of the actions.
+1. Import everything from `@playwright/experimental-ct-react` (or -vue, -svelte) for component tests, or from `@playwright/test` for end-to-end tests.
+1. Test function is given a `page` that is isolated from other tests, and `mount` that renders a component in this page. These are two of the [useful fixtures](./api/class-fixtures) in Playwright Test.
+1. Replace `render` with `mount` that returns a [component locator](./locators).
+1. Use locators created with [`method: Locator.locator`] or [`method: Page.locator`] to perform most of the actions.
 1. Use [assertions](./test-assertions) to verify the state.
 
 ## Migrating queries
 
-All queries like `getBy...`, `findBy...`, `queryBy...` and their multi-element counterparts are replaced with `page.locator('...')`. Locators always auto-wait and retry when needed, so you don't have to worry about choosing the right method. When you want to do a [list operation](./locators.md#lists), e.g. assert a list of texts, Playwright automatically performs multi-element opertations.
+All queries like `getBy...`, `findBy...`, `queryBy...` and their multi-element counterparts are replaced with `page.locator('...')`. Locators always auto-wait and retry when needed, so you don't have to worry about choosing the right method. When you want to do a [list operation](./locators#lists), e.g. assert a list of texts, Playwright automatically performs multi-element opertations.
 
-1. `getByText`: use `page.locator('text=some value')` and other variations of the [text selector](./selectors.md#text-selector).
-1. `getByTestId`: use [test id selectors](./selectors.md#id-data-testid-data-test-id-data-test-selectors), for example `page.locator('data-testid=some value')`.
-1. `getByPlaceholderText`: use css alternative `page.locator('[placeholder="some value"]')`.
-1. `getByAltText`: use css alternative `page.locator('[alt="some value"]')` or [role selector](./selectors.md#role-selector) `page.locator('role=img[name="some value"]')`.
-1. `getByTitle`: use css alternative `page.locator('[title="some value"]')`
-1. `getByRole`: use [role selector](./selectors.md#role-selector) `page.locator('role=button[name="Sign up"]')`.
+1. `getByRole`: use [role selector](./selectors#role-selector) `component.locator('role=button[name="Sign up"]')`.
+1. `getByText`: use `component.locator('text=some value')` and other variations of the [text selector](./selectors#text-selector).
+1. `getByTestId`: use [test id selectors](./selectors#id-data-testid-data-test-id-data-test-selectors), for example `component.locator('data-testid=some value')`.
+1. `getByPlaceholderText`: use css alternative `component.locator('[placeholder="some value"]')`.
+1. `getByAltText`: use css alternative `component.locator('[alt="some value"]')` or [role selector](./selectors#role-selector) `component.locator('role=img[name="some value"]')`.
+1. `getByTitle`: use css alternative `component.locator('[title="some value"]')`
 
 ## Replacing `waitFor`
 
@@ -109,7 +111,7 @@ await expect(page.locator('text=the mummy')).toBeHidden()
 When you cannot find a suitable assertion, use [`expect.poll`](./test-assertions#polling) instead.
 
 ```js
-expect.poll(async () => {
+await expect.poll(async () => {
   const response = await page.request.get('https://api.example.com');
   return response.status();
 }).toBe(200);
@@ -125,7 +127,7 @@ const messages = document.getElementById('messages')
 const helloMessage = within(messages).getByText('hello')
 
 // Playwright
-const messages = page.locator('id=messages')
+const messages = component.locator('id=messages')
 const helloMessage = messages.locator('text=hello')
 ```
 
@@ -134,9 +136,9 @@ const helloMessage = messages.locator('text=hello')
 Once you're on Playwright Test, you get a lot!
 
 - Full zero-configuration TypeScript support
-- Run tests across **all web engines** (Chrome, Firefox, Safari) on **any popular operating system** (Windows, MacOS, Ubuntu)
+- Run tests across **all web engines** (Chrome, Firefox, Safari) on **any popular operating system** (Windows, macOS, Ubuntu)
 - Full support for multiple origins, [(i)frames](./api/class-frame), [tabs and contexts](./pages)
-- Run tests in parallel across multiple browsers
+- Run tests in isolation in parallel across multiple browsers
 - Built-in test artifact collection: [video recording](./test-configuration#record-video), [screenshots](./test-configuration#automatic-screenshots) and [playwright traces](./test-configuration#record-test-trace)
 
 Also you get all these ✨ awesome tools ✨ that come bundled with Playwright Test:
@@ -149,6 +151,7 @@ Also you get all these ✨ awesome tools ✨ that come bundled with Playwright T
 Learn more about Playwright Test runner:
 
 - [Getting Started](./intro)
+- [Experimental Component Testing](./test-components)
 - [Locators](./api/class-locator)
 - [Selectors](./selectors)
 - [Assertions](./test-assertions)
