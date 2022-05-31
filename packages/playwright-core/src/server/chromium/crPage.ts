@@ -219,8 +219,8 @@ export class CRPage implements PageDelegate {
     await this._forAllFrameSessions(frame => frame._updateRequestInterception());
   }
 
-  async setFileChooserIntercepted(enabled: boolean) {
-    await this._forAllFrameSessions(frame => frame.setFileChooserIntercepted(enabled));
+  async updateFileChooserInterception() {
+    await this._forAllFrameSessions(frame => frame._updateFileChooserInterception(false));
   }
 
   async reload(): Promise<void> {
@@ -559,6 +559,7 @@ class FrameSession {
       promises.push(this._updateOffline(true));
       promises.push(this._updateHttpCredentials(true));
       promises.push(this._updateEmulateMedia(true));
+      promises.push(this._updateFileChooserInterception(true));
       for (const binding of this._crPage._page.allBindings())
         promises.push(this._initBinding(binding));
       for (const source of this._crPage._browserContext.initScripts)
@@ -1082,7 +1083,10 @@ class FrameSession {
     await this._networkManager.setRequestInterception(this._page._needsRequestInterception());
   }
 
-  async setFileChooserIntercepted(enabled: boolean) {
+  async _updateFileChooserInterception(initial: boolean) {
+    const enabled = this._page._state.interceptFileChooser;
+    if (initial && !enabled)
+      return;
     await this._client.send('Page.setInterceptFileChooserDialog', { enabled }).catch(e => {}); // target can be closed.
   }
 

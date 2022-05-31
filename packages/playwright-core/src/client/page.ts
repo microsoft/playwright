@@ -180,18 +180,24 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
 
   private _onRoute(route: Route, request: Request) {
     for (const routeHandler of this._routes) {
-      if (routeHandler.matches(request.url())) {
+      if (!routeHandler.matches(request.url()))
+        continue;
+      // Immediately deactivate based on |times|.
+      if (routeHandler.willExpire())
+        this._routes.splice(this._routes.indexOf(routeHandler), 1);
+
+      (async () => {
         try {
-          routeHandler.handle(route, request);
+          // Let async callback work prior to disabling interception.
+          await routeHandler.handle(route, request);
         } finally {
-          if (!routeHandler.isActive()) {
-            this._routes.splice(this._routes.indexOf(routeHandler), 1);
-            if (!this._routes.length)
-              this._wrapApiCall(() => this._disableInterception(), true).catch(() => {});
-          }
+          if (!this._routes.length)
+            this._wrapApiCall(() => this._disableInterception(), true).catch(() => {});
         }
-        return;
-      }
+      })();
+
+      // There is no chaining, first handler wins.
+      return;
     }
     this._browserContext._onRoute(route, request);
   }

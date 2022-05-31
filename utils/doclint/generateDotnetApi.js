@@ -80,7 +80,6 @@ classNameMap.set('Error', 'Exception');
 classNameMap.set('TimeoutError', 'TimeoutException');
 classNameMap.set('EvaluationArgument', 'object');
 classNameMap.set('boolean', 'bool');
-classNameMap.set('Serializable', 'T');
 classNameMap.set('any', 'object');
 classNameMap.set('Buffer', 'byte[]');
 classNameMap.set('path', 'string');
@@ -407,7 +406,7 @@ function generateNameDefault(member, name, t, parent) {
           attemptedName = `${parent.name}BoundingBoxResult`;
         if (attemptedName === 'BrowserContextCookie')
           attemptedName = 'BrowserContextCookiesResult';
-        if (attemptedName === 'File')
+        if (attemptedName === 'File' || (parent.name === 'FormData' && attemptedName === 'SetValue'))
           attemptedName = `FilePayload`;
         if (attemptedName === 'Size')
           attemptedName = 'RequestSizesResult';
@@ -501,6 +500,7 @@ function renderMethod(member, parent, name, options, out) {
   if (member.args.size === 0
     && type !== 'void'
     && !name.startsWith('Get')
+    && name !== 'CreateFormData'
     && !name.startsWith('PostDataJSON')
     && !name.startsWith('As')) {
     if (!member.async) {
@@ -562,8 +562,9 @@ function renderMethod(member, parent, name, options, out) {
 
     if (arg.name === 'options') {
       if (options.mode === 'options' || options.mode === 'base') {
-        const optionsType = member.clazz.name + name.replace('<T>', '') + 'Options';
-        optionTypes.set(optionsType, arg.type);
+        const optionsType = rewriteSuggestedOptionsName(member.clazz.name + name.replace('<T>', '') + 'Options');
+        if (!optionTypes.has(optionsType) || arg.type.properties.length > optionTypes.get(optionsType).properties.length)
+          optionTypes.set(optionsType, arg.type);
         args.push(`${optionsType}? options = default`);
         argTypeMap.set(`${optionsType}? options = default`, 'options');
         addParamsDoc('options', ['Call options']);
@@ -835,6 +836,9 @@ function translateType(type, parent, generateNameCallback = t => t.name, optiona
     return `${type.name}<${types.join(', ')}>`;
   }
 
+  if (type.name === 'Serializable')
+    return isReturnType ? 'T' : 'object';
+
   // there's a chance this is a name we've already seen before, so check
   // this is also where we map known types, like boolean -> bool, etc.
   const name = classNameMap.get(type.name) || type.name;
@@ -894,3 +898,22 @@ function toAsync(name, convert) {
     return name.replace('<', 'Async<');
   return name + 'Async';
 }
+
+/**
+ * @param {string} suggestedName 
+ * @returns {string}
+ */
+function rewriteSuggestedOptionsName(suggestedName) {
+  if ([
+    'APIRequestContextDeleteOptions',
+    'APIRequestContextFetchOptions',
+    'APIRequestContextGetOptions',
+    'APIRequestContextHeadOptions',
+    'APIRequestContextPatchOptions',
+    'APIRequestContextPostOptions',
+    'APIRequestContextPutOptions',
+  ].includes(suggestedName))
+    return 'APIRequestContextOptions';
+  return suggestedName;
+}
+

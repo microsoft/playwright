@@ -6,7 +6,7 @@ title: "API testing"
 Playwright can be used to get access to the [REST](https://en.wikipedia.org/wiki/Representational_state_transfer) API of
 your application.
 
-Sometimes you may want to send requests to the server directly from Node.js without loading a page and running js code in it.
+Sometimes you may want to send requests to the server directly from Python without loading a page and running js code in it.
 A few examples where it may come in handy:
 - Test your server API.
 - Prepare server side state before visiting the web application in a test.

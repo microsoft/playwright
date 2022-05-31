@@ -104,6 +104,10 @@ Here is how this is achieved:
 
 Playwright is using [Vite](https://vitejs.dev/) to create the components bundle and serve it.
 
+## Known issues and limitations
+
+Please refer to [this issue](https://github.com/microsoft/playwright/issues/14298) for the list of known issues and limitations.
+
 ## Planned work
 
 - Watch mode: watch mode is highly anticipated and should be relatively straightforward in implementation.

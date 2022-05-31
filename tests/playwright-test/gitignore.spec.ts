@@ -109,3 +109,51 @@ test('should respect negations and comments in .gitignore', async ({ runInlineTe
     '%%dir3/a.spec.js',
   ]);
 });
+
+test('should ignore .gitignore inside globally configured testDir', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'tests/.gitignore': `
+      *.js
+    `,
+    'playwright.config.js': `
+      module.exports = {
+        testDir: './tests',
+      };
+    `,
+    'tests/a.spec.js': `
+      const { test } = pwt;
+      test('pass', ({}) => {});
+    `,
+    'tests/foo/b.spec.js': `
+      const { test } = pwt;
+      test('pass', ({}) => {});
+    `
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(2);
+});
+
+
+test('should ignore .gitignore inside project testDir', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'tests/.gitignore': `
+      *.js
+    `,
+    'playwright.config.js': `
+      module.exports = { projects: [
+        { testDir: './tests' },
+      ] };
+    `,
+    'tests/a.spec.js': `
+      const { test } = pwt;
+      test('pass', ({}) => {});
+    `,
+    'tests/foo/b.spec.js': `
+      const { test } = pwt;
+      test('pass', ({}) => {});
+    `
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(2);
+});
+

@@ -109,6 +109,14 @@ if [[ $1 == "--juggler" ]]; then
 elif [[ $1 == "--bootstrap" ]]; then
   ./mach configure
 else
+  export MOZ_AUTOMATION=1
+  # Use winpaths instead of unix paths on Windows.
+  # note: 'cygpath' is not available in MozBuild shell.
+  if is_win; then
+    export MOZ_FETCHES_DIR="${USERPROFILE}\\.mozbuild"
+  else
+    export MOZ_FETCHES_DIR="${HOME}/.mozbuild"
+  fi
   ./mach build
   if is_mac; then
     node "${SCRIPT_FOLDER}"/install-preferences.js "$PWD"/${OBJ_FOLDER}/dist

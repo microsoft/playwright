@@ -107,8 +107,10 @@ export class FrameManager {
   }
 
   dispose() {
-    for (const frame of this._frames.values())
+    for (const frame of this._frames.values()) {
       frame._stopNetworkIdleTimer();
+      frame._invalidateNonStallingEvaluations('Target crashed');
+    }
   }
 
   mainFrame(): Frame {

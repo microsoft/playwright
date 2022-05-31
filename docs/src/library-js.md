@@ -106,7 +106,7 @@ Works with Windows and Windows Subsystem for Linux (WSL).
 
 ### macOS
 
-Requires 10.14 (Mojave) or above.
+Requires 11 (Big Sur) or above.
 
 ### Linux
 

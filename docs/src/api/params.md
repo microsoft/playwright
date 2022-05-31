@@ -310,26 +310,32 @@ Target URL.
 
 Query parameters to be sent with the URL.
 
-## java-fetch-params
+## csharp-fetch-option-params
+* langs: csharp
+- `params` <[Object]<[string], [Serializable]>>
+
+Query parameters to be sent with the URL.
+
+## java-csharp-fetch-params
 * langs: java
 - `options` ?<[RequestOptions]>
 
 Optional request parameters.
 
 ## js-python-fetch-option-headers
-* langs: js, python
+* langs: js, python, csharp
 - `headers` <[Object]<[string], [string]>>
 
 Allows to set HTTP headers.
 
 ## js-python-fetch-option-timeout
-* langs: js, python
+* langs: js, python, csharp
 - `timeout` <[float]>
 
 Request timeout in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
 
 ## js-python-fetch-option-failonstatuscode
-* langs: js, python
+* langs: js, python, csharp
 - `failOnStatusCode` <[boolean]>
 
 Whether to throw on response codes other than 2xx and 3xx. By default response object is returned
@@ -343,7 +349,17 @@ Provides an object that will be serialized as html form using `application/x-www
 this request body. If this parameter is specified `content-type` header will be set to `application/x-www-form-urlencoded`
 unless explicitly provided.
 
-## js-pyhton-fetch-option-multipart
+## csharp-fetch-option-form
+* langs: csharp
+- `form` <[FormData]>
+
+Provides an object that will be serialized as html form using `application/x-www-form-urlencoded` encoding and sent as
+this request body. If this parameter is specified `content-type` header will be set to `application/x-www-form-urlencoded`
+unless explicitly provided.
+
+An instance of [FormData] can be created via [`method: APIRequestContext.createFormData`].
+
+## js-python-fetch-option-multipart
 * langs: js, python
 - `multipart` <[Object]<[string], [string]|[float]|[boolean]|[ReadStream]|[Object]>>
   - `name` <[string]> File name
@@ -355,8 +371,19 @@ this request body. If this parameter is specified `content-type` header will be 
 unless explicitly provided. File values can be passed either as [`fs.ReadStream`](https://nodejs.org/api/fs.html#fs_class_fs_readstream)
 or as file-like object containing file name, mime-type and its content.
 
+## csharp-fetch-option-multipart
+* langs: csharp
+- `multipart` <[FormData]>
+
+Provides an object that will be serialized as html form using `multipart/form-data` encoding and sent as
+this request body. If this parameter is specified `content-type` header will be set to `multipart/form-data`
+unless explicitly provided. File values can be passed either as [`fs.ReadStream`](https://nodejs.org/api/fs.html#fs_class_fs_readstream)
+or as file-like object containing file name, mime-type and its content.
+
+An instance of [FormData] can be created via [`method: APIRequestContext.createFormData`].
+
 ## js-python-fetch-option-data
-* langs: js, python
+* langs: js, python, csharp
 - `data` <[string]|[Buffer]|[Serializable]>
 
 Allows to set post data of the request. If the data parameter is an object, it will be serialized to json string
@@ -364,7 +391,7 @@ and `content-type` header will be set to `application/json` if not explicitly se
 set to `application/octet-stream` if not explicitly set.
 
 ## js-python-fetch-option-ignorehttpserrors
-* langs: js, python
+* langs: js, python, csharp
 - `ignoreHTTPSErrors` <[boolean]>
 
 Whether to ignore HTTPS errors when sending network requests. Defaults to `false`.
@@ -609,9 +636,14 @@ contexts override the proxy, global proxy will be never used and can be any stri
 ## context-option-strict
 - `strictSelectors` <[boolean]>
 
-It specified, enables strict selectors mode for this context. In the strict selectors mode all operations
+If specified, enables strict selectors mode for this context. In the strict selectors mode all operations
 on selectors that imply single target DOM element will throw when more than one element matches the selector.
 See [Locator] to learn more about the strict mode.
+
+## context-option-service-worker-policy
+- `serviceWorkerPolicy` <[ServiceWorkerPolicy]<"default"|"disabled">>
+
+If set to `disabled`, all Service Worker registrations will be blocked.
 
 ## select-options-values
 * langs: java, js, csharp
@@ -719,7 +751,7 @@ Time to retry the assertion for.
 * langs: js
 - `maxDiffPixels` <[int]>
 
-An acceptable amount of pixels that could be different, default is configurable with `TestConfig.expect`. Default is configurable with `TestConfig.expect`. Unset by default.
+An acceptable amount of pixels that could be different. Default is configurable with `TestConfig.expect`. Unset by default.
 
 ## assertions-max-diff-pixel-ratio
 * langs: js
@@ -768,6 +800,7 @@ An acceptable perceived color difference in the [YIQ color space](https://en.wik
 - %%-context-option-recordvideo-dir-%%
 - %%-context-option-recordvideo-size-%%
 - %%-context-option-strict-%%
+- %%-context-option-service-worker-policy-%%
 
 ## browser-option-args
 - `args` <[Array]<[string]>>
@@ -992,4 +1025,3 @@ When set to `"hide"`, screenshot will hide text caret. When set to `"initial"`, 
 - %%-screenshot-option-type-%%
 - %%-screenshot-option-mask-%%
 - %%-input-timeout-%%
-

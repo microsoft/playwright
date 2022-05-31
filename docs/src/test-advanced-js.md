@@ -15,7 +15,7 @@ Here is an example that defines a common timeout and two projects. The "Smoke" p
 
 ```js js-flavor=ts
 // playwright.config.ts
-import { PlaywrightTestConfig } from '@playwright/test';
+import type { PlaywrightTestConfig } from '@playwright/test';
 const config: PlaywrightTestConfig = {
   timeout: 60000, // Timeout is shared between all tests.
   projects: [
@@ -152,7 +152,7 @@ It is also recommended to specify [`property: TestOptions.baseURL`] in the confi
 
 ```js js-flavor=ts
 // playwright.config.ts
-import { PlaywrightTestConfig } from '@playwright/test';
+import type { PlaywrightTestConfig } from '@playwright/test';
 const config: PlaywrightTestConfig = {
   webServer: {
     command: 'npm run start',
@@ -269,7 +269,7 @@ module.exports = config;
 
 ```js js-flavor=ts
 // playwright.config.ts
-import { PlaywrightTestConfig } from '@playwright/test';
+import type { PlaywrightTestConfig } from '@playwright/test';
 
 const config: PlaywrightTestConfig = {
   globalSetup: require.resolve('./global-setup'),
@@ -392,7 +392,7 @@ module.exports = config;
 
 ```js js-flavor=ts
 // playwright.config.ts
-import { PlaywrightTestConfig, devices } from '@playwright/test';
+import { type PlaywrightTestConfig, devices } from '@playwright/test';
 
 const config: PlaywrightTestConfig = {
   projects: [
@@ -430,7 +430,7 @@ Here is an example that runs projects with different tests and configurations. T
 
 ```js js-flavor=ts
 // playwright.config.ts
-import { PlaywrightTestConfig } from '@playwright/test';
+import type { PlaywrightTestConfig } from '@playwright/test';
 const config: PlaywrightTestConfig = {
   timeout: 60000, // Timeout is shared between all tests.
   projects: [

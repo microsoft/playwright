@@ -48,7 +48,7 @@ module.exports = config;
 ```
 
 ```js js-flavor=ts
-import { PlaywrightTestConfig } from '@playwright/test';
+import type { PlaywrightTestConfig } from '@playwright/test';
 const config: PlaywrightTestConfig = {
   use: {
     channel: 'chrome',

@@ -24,9 +24,10 @@ import type { ComponentInfo } from '../tsxTransform';
 import { collectComponentUsages, componentInfo } from '../tsxTransform';
 import type { FullConfig } from '../types';
 import { assert } from 'playwright-core/lib/utils';
+import type { AddressInfo } from 'net';
 
 let previewServer: PreviewServer;
-const VERSION = 1;
+const VERSION = 3;
 
 type CtConfig = {
   ctPort?: number;
@@ -49,17 +50,18 @@ export function createPlugin(
       const port = use.ctPort || 3100;
       const viteConfig: InlineConfig = use.ctViteConfig || {};
       const relativeTemplateDir = use.ctTemplateDir || 'playwright';
-      process.env.PLAYWRIGHT_VITE_COMPONENTS_BASE_URL = `http://localhost:${port}/${relativeTemplateDir}/index.html`;
 
       const rootDir = viteConfig.root || configDir;
       const templateDir = path.join(rootDir, relativeTemplateDir);
       const outDir = viteConfig?.build?.outDir || (use.ctCacheDir ? path.resolve(rootDir, use.ctCacheDir) : path.resolve(templateDir, '.cache'));
 
       const buildInfoFile = path.join(outDir, 'metainfo.json');
+      let buildExists = false;
       let buildInfo: BuildInfo;
       try {
         buildInfo = JSON.parse(await fs.promises.readFile(buildInfoFile, 'utf-8')) as BuildInfo;
         assert(buildInfo.version === VERSION);
+        buildExists = true;
       } catch (e) {
         buildInfo = {
           version: VERSION,
@@ -75,13 +77,30 @@ export function createPlugin(
       // 2. Check if the set of required components has changed.
       const hasNewComponents = await checkNewComponents(buildInfo, componentRegistry);
       // 3. Check component sources.
-      const sourcesDirty = hasNewComponents || await checkSources(buildInfo);
+      const sourcesDirty = !buildExists || hasNewComponents || await checkSources(buildInfo);
 
       viteConfig.root = rootDir;
+      viteConfig.publicDir = false;
       viteConfig.preview = { port };
       viteConfig.build = {
         outDir
       };
+
+      // React heuristic. If we see a component in a file with .js extension,
+      // consider it a potential JSX-in-JS scenario and enable JSX loader for all
+      // .js files.
+      if (hasJSComponents(buildInfo.components)) {
+        viteConfig.esbuild = {
+          loader: 'jsx',
+          include: /.*\.jsx?$/,
+          exclude: [],
+        };
+        viteConfig.optimizeDeps = {
+          esbuildOptions: {
+            loader: { '.js': 'jsx' },
+          }
+        };
+      }
       const { build, preview } = require('vite');
       if (sourcesDirty) {
         viteConfig.plugins = viteConfig.plugins || [
@@ -111,6 +130,10 @@ export function createPlugin(
       if (hasNewTests || hasNewComponents || sourcesDirty)
         await fs.promises.writeFile(buildInfoFile, JSON.stringify(buildInfo, undefined, 2));
       previewServer = await preview(viteConfig);
+      const isAddressInfo = (x: any): x is AddressInfo => x?.address;
+      const address = previewServer.httpServer.address();
+      if (isAddressInfo(address))
+        process.env.PLAYWRIGHT_VITE_COMPONENTS_BASE_URL = `http://localhost:${address.port}/${relativeTemplateDir}/index.html`;
     },
 
     teardown: async () => {
@@ -244,6 +267,12 @@ function vitePlugin(registerSource: string, relativeTemplateDir: string, buildIn
         }
       }
 
+      // Vite React plugin will do this for .jsx files, but not .js files.
+      if (id.endsWith('.js') && content.includes('React.createElement') && !content.includes('import React')) {
+        const code = `import React from 'react';\n${content}`;
+        return { code, map: { mappings: '' } };
+      }
+
       if (!id.endsWith(`${relativeTemplateDir}/index.ts`) && !id.endsWith(`${relativeTemplateDir}/index.tsx`) && !id.endsWith(`${relativeTemplateDir}/index.js`))
         return;
 
@@ -266,4 +295,13 @@ function vitePlugin(registerSource: string, relativeTemplateDir: string, buildIn
       };
     },
   };
+}
+
+function hasJSComponents(components: ComponentInfo[]): boolean {
+  for (const component of components) {
+    const extname = path.extname(component.importPath);
+    if (extname === '.js' || !extname && fs.existsSync(component.importPath + '.js'))
+      return true;
+  }
+  return false;
 }

@@ -592,7 +592,7 @@ module.exports = config;
 
 ```js js-flavor=ts
 // playwright.config.ts
-import { PlaywrightTestConfig } from '@playwright/test';
+import type { PlaywrightTestConfig } from '@playwright/test';
 import { MyOptions } from './my-test';
 
 const config: PlaywrightTestConfig<MyOptions> = {

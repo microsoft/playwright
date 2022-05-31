@@ -517,3 +517,17 @@ it('should emit event after navigation', async ({ page, server, browserName, bro
   ]);
   expect(logs).toEqual(['filechooser', 'filechooser']);
 });
+
+it('should trigger listener added before navigation', async ({ page, server }) => {
+  // Add listener before cross process navigation.
+  const chooserPromise = new Promise(f => page.once('filechooser', f));
+  await page.goto(server.PREFIX + '/empty.html');
+  await page.goto(server.CROSS_PROCESS_PREFIX + '/empty.html');
+  await page.setContent(`<input type=file>`);
+  const [chooser] = await Promise.all([
+    chooserPromise,
+    page.click('input'),
+  ]);
+  expect(chooser).toBeTruthy();
+});
+

@@ -261,6 +261,7 @@ export type BrowserContextOptions = {
   strictSelectors?: boolean,
   proxy?: ProxySettings,
   baseURL?: string,
+  serviceWorkerPolicy?: ServiceWorkerPolicy,
 };
 
 export type EnvArray = { name: string, value: string }[];
@@ -373,3 +374,5 @@ export type AndroidDeviceOptions = {
   port?: number,
   omitDriverInstall?: boolean,
 };
+
+export type ServiceWorkerPolicy = 'default' | 'disabled';

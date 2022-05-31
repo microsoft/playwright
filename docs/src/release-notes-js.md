@@ -752,7 +752,7 @@ To launch a server during the tests, use the [`webServer`](./test-advanced#launc
 
 ```ts
 // playwright.config.ts
-import { PlaywrightTestConfig } from '@playwright/test';
+import type { PlaywrightTestConfig } from '@playwright/test';
 const config: PlaywrightTestConfig = {
   webServer: {
     command: 'npm run start', // command to launch

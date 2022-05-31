@@ -22,7 +22,7 @@ module.exports = config;
 ```
 
 ```js js-flavor=ts
-import { PlaywrightTestConfig } from '@playwright/test';
+import type { PlaywrightTestConfig } from '@playwright/test';
 const config: PlaywrightTestConfig = {
   use: {
     headless: false,
@@ -85,7 +85,7 @@ module.exports = config;
 
 ```js js-flavor=ts
 // playwright.config.ts
-import { PlaywrightTestConfig, devices } from '@playwright/test';
+import { type PlaywrightTestConfig, devices } from '@playwright/test';
 
 const config: PlaywrightTestConfig = {
   use: {
@@ -215,3 +215,4 @@ Learn more about [recording video](../test-configuration.md#record-video).
 
 ## property: TestOptions.viewport = %%-context-option-viewport-%%
 
+## property: TestOptions.serviceWorkerPolicy = %%-context-option-service-worker-policy-%%

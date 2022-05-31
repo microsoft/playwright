@@ -134,6 +134,7 @@ function contextHash(context: BrowserContextOptions): string {
     timezoneId: context.timezoneId,
     userAgent: context.userAgent,
     deviceScaleFactor: context.deviceScaleFactor,
+    serviceWorkerPolicy: context.serviceWorkerPolicy,
   };
   return JSON.stringify(hash);
 }

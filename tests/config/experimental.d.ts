@@ -10367,12 +10367,17 @@ export interface BrowserType<Unused = {}> {
     };
 
     /**
+     * If set to `disabled`, all Service Worker registrations will be blocked.
+     */
+    serviceWorkerPolicy?: "default"|"disabled";
+
+    /**
      * Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on.
      */
     slowMo?: number;
 
     /**
-     * It specified, enables strict selectors mode for this context. In the strict selectors mode all operations on selectors
+     * If specified, enables strict selectors mode for this context. In the strict selectors mode all operations on selectors
      * that imply single target DOM element will throw when more than one element matches the selector. See [Locator] to learn
      * more about the strict mode.
      */
@@ -11516,7 +11521,12 @@ export interface AndroidDevice {
     };
 
     /**
-     * It specified, enables strict selectors mode for this context. In the strict selectors mode all operations on selectors
+     * If set to `disabled`, all Service Worker registrations will be blocked.
+     */
+    serviceWorkerPolicy?: "default"|"disabled";
+
+    /**
+     * If specified, enables strict selectors mode for this context. In the strict selectors mode all operations on selectors
      * that imply single target DOM element will throw when more than one element matches the selector. See [Locator] to learn
      * more about the strict mode.
      */
@@ -13037,6 +13047,11 @@ export interface Browser extends EventEmitter {
     };
 
     /**
+     * If set to `disabled`, all Service Worker registrations will be blocked.
+     */
+    serviceWorkerPolicy?: "default"|"disabled";
+
+    /**
      * Populates context with given storage state. This option can be used to initialize context with logged-in information
      * obtained via
      * [browserContext.storageState([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-storage-state).
@@ -13091,7 +13106,7 @@ export interface Browser extends EventEmitter {
     };
 
     /**
-     * It specified, enables strict selectors mode for this context. In the strict selectors mode all operations on selectors
+     * If specified, enables strict selectors mode for this context. In the strict selectors mode all operations on selectors
      * that imply single target DOM element will throw when more than one element matches the selector. See [Locator] to learn
      * more about the strict mode.
      */
@@ -15493,6 +15508,11 @@ export interface BrowserContextOptions {
   };
 
   /**
+   * If set to `disabled`, all Service Worker registrations will be blocked.
+   */
+  serviceWorkerPolicy?: "default"|"disabled";
+
+  /**
    * Populates context with given storage state. This option can be used to initialize context with logged-in information
    * obtained via
    * [browserContext.storageState([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-storage-state).
@@ -15547,7 +15567,7 @@ export interface BrowserContextOptions {
   };
 
   /**
-   * It specified, enables strict selectors mode for this context. In the strict selectors mode all operations on selectors
+   * If specified, enables strict selectors mode for this context. In the strict selectors mode all operations on selectors
    * that imply single target DOM element will throw when more than one element matches the selector. See [Locator] to learn
    * more about the strict mode.
    */
@@ -16241,7 +16261,7 @@ type UseOptions<TestArgs, WorkerArgs> = { [K in keyof WorkerArgs]?: WorkerArgs[K
  *
  * ```ts
  * // playwright.config.ts
- * import { PlaywrightTestConfig, devices } from '@playwright/test';
+ * import { type PlaywrightTestConfig, devices } from '@playwright/test';
  *
  * const config: PlaywrightTestConfig = {
  *   // Options shared for all projects.
@@ -16295,7 +16315,7 @@ export interface Project<TestArgs = {}, WorkerArgs = {}> extends TestProject {
    *
    * ```ts
    * // playwright.config.ts
-   * import { PlaywrightTestConfig } from '@playwright/test';
+   * import type { PlaywrightTestConfig } from '@playwright/test';
    *
    * const config: PlaywrightTestConfig = {
    *   projects: [
@@ -16329,7 +16349,7 @@ export interface Project<TestArgs = {}, WorkerArgs = {}> extends TestProject {
  *
  * ```ts
  * // playwright.config.ts
- * import { PlaywrightTestConfig, devices } from '@playwright/test';
+ * import { type PlaywrightTestConfig, devices } from '@playwright/test';
  *
  * const config: PlaywrightTestConfig = {
  *   // Options shared for all projects.
@@ -16461,7 +16481,7 @@ export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
    *
    * ```ts
    * // playwright.config.ts
-   * import { PlaywrightTestConfig } from '@playwright/test';
+   * import type { PlaywrightTestConfig } from '@playwright/test';
    *
    * const config: PlaywrightTestConfig = {
    *   projects: [
@@ -16540,7 +16560,7 @@ export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
    *
    * ```ts
    * // playwright.config.ts
-   * import { PlaywrightTestConfig } from '@playwright/test';
+   * import type { PlaywrightTestConfig } from '@playwright/test';
    *
    * const config: PlaywrightTestConfig = {
    *   projects: [
@@ -16573,7 +16593,7 @@ type LiteralUnion<T extends U, U = string> = T | (U & { zz_IGNORE_ME?: never });
  *
  * ```ts
  * // playwright.config.ts
- * import { PlaywrightTestConfig } from '@playwright/test';
+ * import type { PlaywrightTestConfig } from '@playwright/test';
  *
  * const config: PlaywrightTestConfig = {
  *   timeout: 30000,
@@ -16598,7 +16618,7 @@ interface TestConfig {
    *
    * ```ts
    * // playwright.config.ts
-   * import { PlaywrightTestConfig } from '@playwright/test';
+   * import type { PlaywrightTestConfig } from '@playwright/test';
    *
    * const config: PlaywrightTestConfig = {
    *   reporter: 'line',
@@ -16627,7 +16647,7 @@ interface TestConfig {
    *
    * ```ts
    * // playwright.config.ts
-   * import { PlaywrightTestConfig } from '@playwright/test';
+   * import type { PlaywrightTestConfig } from '@playwright/test';
    * const config: PlaywrightTestConfig = {
    *   webServer: {
    *     command: 'npm run start',
@@ -16661,7 +16681,7 @@ interface TestConfig {
    *
    * ```ts
    * // playwright.config.ts
-   * import { PlaywrightTestConfig } from '@playwright/test';
+   * import type { PlaywrightTestConfig } from '@playwright/test';
    *
    * const config: PlaywrightTestConfig = {
    *   expect: {
@@ -16705,9 +16725,9 @@ interface TestConfig {
 
       /**
        * See `animations` in [page.screenshot([options])](https://playwright.dev/docs/api/class-page#page-screenshot). Defaults
-       * to `"disable"`.
+       * to `"disabled"`.
        */
-      animations?: "allow"|"disable";
+      animations?: "allow"|"disabled";
 
       /**
        * See `caret` in [page.screenshot([options])](https://playwright.dev/docs/api/class-page#page-screenshot). Defaults to
@@ -16753,7 +16773,7 @@ interface TestConfig {
    *
    * ```ts
    * // playwright.config.ts
-   * import { PlaywrightTestConfig } from '@playwright/test';
+   * import type { PlaywrightTestConfig } from '@playwright/test';
    *
    * const config: PlaywrightTestConfig = {
    *   forbidOnly: !!process.env.CI,
@@ -16781,7 +16801,7 @@ interface TestConfig {
    *
    * ```ts
    * // playwright.config.ts
-   * import { PlaywrightTestConfig, devices } from '@playwright/test';
+   * import { type PlaywrightTestConfig, devices } from '@playwright/test';
    *
    * const config: PlaywrightTestConfig = {
    *   globalSetup: './global-setup',
@@ -16800,7 +16820,7 @@ interface TestConfig {
    *
    * ```ts
    * // playwright.config.ts
-   * import { PlaywrightTestConfig, devices } from '@playwright/test';
+   * import { type PlaywrightTestConfig, devices } from '@playwright/test';
    *
    * const config: PlaywrightTestConfig = {
    *   globalTeardown: './global-teardown',
@@ -16818,7 +16838,7 @@ interface TestConfig {
    *
    * ```ts
    * // playwright.config.ts
-   * import { PlaywrightTestConfig } from '@playwright/test';
+   * import type { PlaywrightTestConfig } from '@playwright/test';
    *
    * const config: PlaywrightTestConfig = {
    *   globalTimeout: process.env.CI ? 60 * 60 * 1000 : undefined,
@@ -16854,7 +16874,7 @@ interface TestConfig {
    *
    * ```ts
    * // playwright.config.ts
-   * import { PlaywrightTestConfig } from '@playwright/test';
+   * import type { PlaywrightTestConfig } from '@playwright/test';
    *
    * const config: PlaywrightTestConfig = {
    *   maxFailures: process.env.CI ? 1 : 0,
@@ -16881,7 +16901,7 @@ interface TestConfig {
    *
    * ```ts
    * // playwright.config.ts
-   * import { PlaywrightTestConfig, devices } from '@playwright/test';
+   * import { type PlaywrightTestConfig, devices } from '@playwright/test';
    *
    * const config: PlaywrightTestConfig = {
    *   outputDir: './test-results',
@@ -16974,7 +16994,7 @@ interface TestConfig {
    *
    * ```ts
    * // playwright.config.ts
-   * import { PlaywrightTestConfig } from '@playwright/test';
+   * import type { PlaywrightTestConfig } from '@playwright/test';
    *
    * const config: PlaywrightTestConfig = {
    *   retries: 2,
@@ -17045,7 +17065,7 @@ interface TestConfig {
    *
    * ```ts
    * // playwright.config.ts
-   * import { PlaywrightTestConfig } from '@playwright/test';
+   * import type { PlaywrightTestConfig } from '@playwright/test';
    *
    * const config: PlaywrightTestConfig = {
    *   testDir: './tests/playwright',
@@ -17064,7 +17084,7 @@ interface TestConfig {
    *
    * ```ts
    * // playwright.config.ts
-   * import { PlaywrightTestConfig, devices } from '@playwright/test';
+   * import { type PlaywrightTestConfig, devices } from '@playwright/test';
    *
    * const config: PlaywrightTestConfig = {
    *   testIgnore: '**\/test-assets/**',
@@ -17083,7 +17103,7 @@ interface TestConfig {
    *
    * ```ts
    * // playwright.config.ts
-   * import { PlaywrightTestConfig, devices } from '@playwright/test';
+   * import { type PlaywrightTestConfig, devices } from '@playwright/test';
    *
    * const config: PlaywrightTestConfig = {
    *   testMatch: /.*\.e2e\.js/,
@@ -17103,7 +17123,7 @@ interface TestConfig {
    *
    * ```ts
    * // playwright.config.ts
-   * import { PlaywrightTestConfig } from '@playwright/test';
+   * import type { PlaywrightTestConfig } from '@playwright/test';
    *
    * const config: PlaywrightTestConfig = {
    *   timeout: 5 * 60 * 1000,
@@ -17136,7 +17156,7 @@ interface TestConfig {
    *
    * ```ts
    * // playwright.config.ts
-   * import { PlaywrightTestConfig } from '@playwright/test';
+   * import type { PlaywrightTestConfig } from '@playwright/test';
    *
    * const config: PlaywrightTestConfig = {
    *   workers: 3,
@@ -17157,7 +17177,7 @@ interface TestConfig {
  *
  * ```ts
  * // playwright.config.ts
- * import { PlaywrightTestConfig } from '@playwright/test';
+ * import type { PlaywrightTestConfig } from '@playwright/test';
  *
  * const config: PlaywrightTestConfig = {
  *   timeout: 30000,
@@ -17181,7 +17201,7 @@ export interface Config<TestArgs = {}, WorkerArgs = {}> extends TestConfig {
    *
    * ```ts
    * // playwright.config.ts
-   * import { PlaywrightTestConfig } from '@playwright/test';
+   * import type { PlaywrightTestConfig } from '@playwright/test';
    *
    * const config: PlaywrightTestConfig = {
    *   use: {
@@ -17207,7 +17227,7 @@ export type Metadata = { [key: string]: any };
  *
  * ```ts
  * // playwright.config.ts
- * import { PlaywrightTestConfig } from '@playwright/test';
+ * import type { PlaywrightTestConfig } from '@playwright/test';
  *
  * const config: PlaywrightTestConfig = {
  *   timeout: 30000,
@@ -17227,7 +17247,7 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    *
    * ```ts
    * // playwright.config.ts
-   * import { PlaywrightTestConfig } from '@playwright/test';
+   * import type { PlaywrightTestConfig } from '@playwright/test';
    *
    * const config: PlaywrightTestConfig = {
    *   forbidOnly: !!process.env.CI,
@@ -17253,7 +17273,7 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    *
    * ```ts
    * // playwright.config.ts
-   * import { PlaywrightTestConfig, devices } from '@playwright/test';
+   * import { type PlaywrightTestConfig, devices } from '@playwright/test';
    *
    * const config: PlaywrightTestConfig = {
    *   globalSetup: './global-setup',
@@ -17271,7 +17291,7 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    *
    * ```ts
    * // playwright.config.ts
-   * import { PlaywrightTestConfig, devices } from '@playwright/test';
+   * import { type PlaywrightTestConfig, devices } from '@playwright/test';
    *
    * const config: PlaywrightTestConfig = {
    *   globalTeardown: './global-teardown',
@@ -17288,7 +17308,7 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    *
    * ```ts
    * // playwright.config.ts
-   * import { PlaywrightTestConfig } from '@playwright/test';
+   * import type { PlaywrightTestConfig } from '@playwright/test';
    *
    * const config: PlaywrightTestConfig = {
    *   globalTimeout: process.env.CI ? 60 * 60 * 1000 : undefined,
@@ -17321,7 +17341,7 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    *
    * ```ts
    * // playwright.config.ts
-   * import { PlaywrightTestConfig } from '@playwright/test';
+   * import type { PlaywrightTestConfig } from '@playwright/test';
    *
    * const config: PlaywrightTestConfig = {
    *   maxFailures: process.env.CI ? 1 : 0,
@@ -17360,7 +17380,7 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    *
    * ```ts
    * // playwright.config.ts
-   * import { PlaywrightTestConfig } from '@playwright/test';
+   * import type { PlaywrightTestConfig } from '@playwright/test';
    *
    * const config: PlaywrightTestConfig = {
    *   reporter: 'line',
@@ -17409,7 +17429,7 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    *
    * ```ts
    * // playwright.config.ts
-   * import { PlaywrightTestConfig } from '@playwright/test';
+   * import type { PlaywrightTestConfig } from '@playwright/test';
    *
    * const config: PlaywrightTestConfig = {
    *   workers: 3,
@@ -17438,7 +17458,7 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    *
    * ```ts
    * // playwright.config.ts
-   * import { PlaywrightTestConfig } from '@playwright/test';
+   * import type { PlaywrightTestConfig } from '@playwright/test';
    * const config: PlaywrightTestConfig = {
    *   webServer: {
    *     command: 'npm run start',
@@ -18649,7 +18669,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    *
    * ```ts
    * // playwright.config.ts
-   * import { PlaywrightTestConfig } from '@playwright/test';
+   * import type { PlaywrightTestConfig } from '@playwright/test';
    * import { Options } from './my-test';
    *
    * const config: PlaywrightTestConfig<Options> = {
@@ -18699,6 +18719,7 @@ type ColorScheme = Exclude<BrowserContextOptions['colorScheme'], undefined>;
 type ExtraHTTPHeaders = Exclude<BrowserContextOptions['extraHTTPHeaders'], undefined>;
 type Proxy = Exclude<BrowserContextOptions['proxy'], undefined>;
 type StorageState = Exclude<BrowserContextOptions['storageState'], undefined>;
+type ServiceWorkerPolicy = Exclude<BrowserContextOptions['serviceWorkerPolicy'], undefined>;
 type ConnectOptions = {
   /**
    * A browser websocket endpoint to connect to.
@@ -18724,7 +18745,7 @@ type ConnectOptions = {
  * [testProject.use](https://playwright.dev/docs/api/class-testproject#test-project-use).
  *
  * ```ts
- * import { PlaywrightTestConfig } from '@playwright/test';
+ * import type { PlaywrightTestConfig } from '@playwright/test';
  * const config: PlaywrightTestConfig = {
  *   use: {
  *     headless: false,
@@ -18759,7 +18780,7 @@ export interface PlaywrightWorkerOptions {
    *
    * ```ts
    * // playwright.config.ts
-   * import { PlaywrightTestConfig, devices } from '@playwright/test';
+   * import { type PlaywrightTestConfig, devices } from '@playwright/test';
    *
    * const config: PlaywrightTestConfig = {
    *   use: {
@@ -18851,7 +18872,7 @@ export type VideoMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry';
  * [testProject.use](https://playwright.dev/docs/api/class-testproject#test-project-use).
  *
  * ```ts
- * import { PlaywrightTestConfig } from '@playwright/test';
+ * import type { PlaywrightTestConfig } from '@playwright/test';
  * const config: PlaywrightTestConfig = {
  *   use: {
  *     headless: false,
@@ -19003,6 +19024,10 @@ export interface PlaywrightTestOptions {
    * Learn more about [various timeouts](https://playwright.dev/docs/test-timeouts).
    */
   navigationTimeout: number | undefined;
+  /**
+   * If set to `disabled`, all Service Worker registrations will be blocked.
+   */
+  serviceWorkerPolicy: ServiceWorkerPolicy | undefined;
 }
 
 
@@ -19555,11 +19580,8 @@ interface LocatorAssertions {
   }): Promise<void>;
 
   /**
-   * Ensures that [Locator] resolves to a given screenshot. This function will re-take screenshots until it matches with the
-   * saved expectation.
-   *
-   * If there's no expectation yet, it will wait until two consecutive screenshots yield the same result, and save the last
-   * one as an expectation.
+   * This function will wait until two consecutive locator screenshots yield the same result, and then compare the last
+   * screenshot with the expectation.
    *
    * ```js
    * const locator = page.locator('button');
@@ -19599,8 +19621,8 @@ interface LocatorAssertions {
     maxDiffPixelRatio?: number;
 
     /**
-     * An acceptable amount of pixels that could be different, default is configurable with `TestConfig.expect`. Default is
-     * configurable with `TestConfig.expect`. Unset by default.
+     * An acceptable amount of pixels that could be different. Default is configurable with `TestConfig.expect`. Unset by
+     * default.
      */
     maxDiffPixels?: number;
 
@@ -19633,11 +19655,8 @@ interface LocatorAssertions {
   }): Promise<void>;
 
   /**
-   * Ensures that [Locator] resolves to a given screenshot. This function will re-take screenshots until it matches with the
-   * saved expectation.
-   *
-   * If there's no expectation yet, it will wait until two consecutive screenshots yield the same result, and save the last
-   * one as an expectation.
+   * This function will wait until two consecutive locator screenshots yield the same result, and then compare the last
+   * screenshot with the expectation.
    *
    * ```js
    * const locator = page.locator('button');
@@ -19676,8 +19695,8 @@ interface LocatorAssertions {
     maxDiffPixelRatio?: number;
 
     /**
-     * An acceptable amount of pixels that could be different, default is configurable with `TestConfig.expect`. Default is
-     * configurable with `TestConfig.expect`. Unset by default.
+     * An acceptable amount of pixels that could be different. Default is configurable with `TestConfig.expect`. Unset by
+     * default.
      */
     maxDiffPixels?: number;
 
@@ -19789,11 +19808,8 @@ interface PageAssertions {
   not: PageAssertions;
 
   /**
-   * Ensures that the page resolves to a given screenshot. This function will re-take screenshots until it matches with the
-   * saved expectation.
-   *
-   * If there's no expectation yet, it will wait until two consecutive screenshots yield the same result, and save the last
-   * one as an expectation.
+   * This function will wait until two consecutive page screenshots yield the same result, and then compare the last
+   * screenshot with the expectation.
    *
    * ```js
    * await expect(page).toHaveScreenshot('image.png');
@@ -19863,8 +19879,8 @@ interface PageAssertions {
     maxDiffPixelRatio?: number;
 
     /**
-     * An acceptable amount of pixels that could be different, default is configurable with `TestConfig.expect`. Default is
-     * configurable with `TestConfig.expect`. Unset by default.
+     * An acceptable amount of pixels that could be different. Default is configurable with `TestConfig.expect`. Unset by
+     * default.
      */
     maxDiffPixels?: number;
 
@@ -19897,11 +19913,8 @@ interface PageAssertions {
   }): Promise<void>;
 
   /**
-   * Ensures that the page resolves to a given screenshot. This function will re-take screenshots until it matches with the
-   * saved expectation.
-   *
-   * If there's no expectation yet, it will wait until two consecutive screenshots yield the same result, and save the last
-   * one as an expectation.
+   * This function will wait until two consecutive page screenshots yield the same result, and then compare the last
+   * screenshot with the expectation.
    *
    * ```js
    * await expect(page).toHaveScreenshot();
@@ -19970,8 +19983,8 @@ interface PageAssertions {
     maxDiffPixelRatio?: number;
 
     /**
-     * An acceptable amount of pixels that could be different, default is configurable with `TestConfig.expect`. Default is
-     * configurable with `TestConfig.expect`. Unset by default.
+     * An acceptable amount of pixels that could be different. Default is configurable with `TestConfig.expect`. Unset by
+     * default.
      */
     maxDiffPixels?: number;
 
@@ -20080,8 +20093,8 @@ interface ScreenshotAssertions {
     maxDiffPixelRatio?: number;
 
     /**
-     * An acceptable amount of pixels that could be different, default is configurable with `TestConfig.expect`. Default is
-     * configurable with `TestConfig.expect`. Unset by default.
+     * An acceptable amount of pixels that could be different. Default is configurable with `TestConfig.expect`. Unset by
+     * default.
      */
     maxDiffPixels?: number;
 
@@ -20124,8 +20137,8 @@ interface ScreenshotAssertions {
     maxDiffPixelRatio?: number;
 
     /**
-     * An acceptable amount of pixels that could be different, default is configurable with `TestConfig.expect`. Default is
-     * configurable with `TestConfig.expect`. Unset by default.
+     * An acceptable amount of pixels that could be different. Default is configurable with `TestConfig.expect`. Unset by
+     * default.
      */
     maxDiffPixels?: number;
 
@@ -20176,7 +20189,7 @@ export interface TestError {
  *
  * ```ts
  * // playwright.config.ts
- * import { PlaywrightTestConfig, devices } from '@playwright/test';
+ * import { type PlaywrightTestConfig, devices } from '@playwright/test';
  *
  * const config: PlaywrightTestConfig = {
  *   // Options shared for all projects.
@@ -20259,9 +20272,9 @@ interface TestProject {
 
       /**
        * See `animations` in [page.screenshot([options])](https://playwright.dev/docs/api/class-page#page-screenshot). Defaults
-       * to `"disable"`.
+       * to `"disabled"`.
        */
-      animations?: "allow"|"disable";
+      animations?: "allow"|"disabled";
 
       /**
        * See `caret` in [page.screenshot([options])](https://playwright.dev/docs/api/class-page#page-screenshot). Defaults to
@@ -20438,7 +20451,7 @@ interface TestProject {
    *
    * ```ts
    * // playwright.config.ts
-   * import { PlaywrightTestConfig } from '@playwright/test';
+   * import type { PlaywrightTestConfig } from '@playwright/test';
    *
    * const config: PlaywrightTestConfig = {
    *   projects: [
@@ -20890,7 +20903,7 @@ export interface FullResult {
  *
  * ```ts
  * // playwright.config.ts
- * import { PlaywrightTestConfig } from '@playwright/test';
+ * import type { PlaywrightTestConfig } from '@playwright/test';
  *
  * const config: PlaywrightTestConfig = {
  *   reporter: './my-awesome-reporter.ts',

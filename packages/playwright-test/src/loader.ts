@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { installTransform, setCurrentlyLoadingTestFile } from './transform';
+import { installTransform } from './transform';
 import type { Config, Project, ReporterDescription, FullProjectInternal, FullConfigInternal, Fixtures, FixturesWithLocation } from './types';
 import { getPackageJsonPath, mergeObjects, errorWithFile } from './util';
 import { setCurrentlyLoadingFileSuite } from './globals';
@@ -153,7 +153,6 @@ export class Loader {
     suite._requireFile = file;
     suite.location = { file, line: 0, column: 0 };
 
-    setCurrentlyLoadingTestFile(file);
     setCurrentlyLoadingFileSuite(suite);
     try {
       await this._requireOrImport(file);
@@ -163,7 +162,6 @@ export class Loader {
         throw e;
       suite._loadError = serializeError(e);
     } finally {
-      setCurrentlyLoadingTestFile(null);
       setCurrentlyLoadingFileSuite(undefined);
     }
 
@@ -241,6 +239,7 @@ export class Loader {
       projectConfig.snapshotDir = path.resolve(this._configDir, projectConfig.snapshotDir);
 
     const testDir = takeFirst(projectConfig.testDir, config.testDir, this._configDir);
+    const respectGitIgnore = !projectConfig.testDir && !config.testDir;
 
     const outputDir = takeFirst(projectConfig.outputDir, config.outputDir, path.join(throwawayArtifactsPath, 'test-results'));
     const snapshotDir = takeFirst(projectConfig.snapshotDir, config.snapshotDir, testDir);
@@ -258,6 +257,7 @@ export class Loader {
       metadata: takeFirst(projectConfig.metadata, config.metadata, undefined),
       name,
       testDir,
+      _respectGitIgnore: respectGitIgnore,
       snapshotDir,
       _screenshotsDir: screenshotsDir,
       testIgnore: takeFirst(projectConfig.testIgnore, config.testIgnore, []),
