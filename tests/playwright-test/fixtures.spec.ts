@@ -671,6 +671,32 @@ test('should run tests in order', async ({ runInlineTest }) => {
   ]);
 });
 
+test('should tear down test fixture before afterAll', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      const { test } = pwt;
+      let state = 'afterAll did not run';
+
+      const test1 = test.extend({
+        foo: async ({}, run) => {
+          await run();
+          expect(state).toBe('afterAll did not run');
+        }
+      });
+
+      test1.afterAll(() => {
+        state = 'afterAll finished';
+      });
+
+      test1('test1', async ({ foo }, testInfo) => {
+      });
+    `,
+  }, { workers: 1 });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  expect(result.failed).toBe(0);
+});
+
 test('worker fixture should not receive TestInfo', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `

@@ -391,6 +391,11 @@ export class WorkerRunner extends EventEmitter {
         firstAfterHooksError = firstAfterHooksError || afterEachError;
       }
 
+      // Teardown test-scoped fixtures.
+      testInfo._timeoutManager.setCurrentRunnable({ type: 'teardown', slot: afterHooksSlot });
+      const testScopeError = await testInfo._runFn(() => this._fixtureRunner.teardownScope('test', testInfo._timeoutManager));
+      firstAfterHooksError = firstAfterHooksError || testScopeError;
+
       // Run "afterAll" hooks for suites that are not shared with the next test.
       const nextSuites = new Set(getSuites(nextTest));
       for (const suite of reversedSuites) {
@@ -399,11 +404,6 @@ export class WorkerRunner extends EventEmitter {
           firstAfterHooksError = firstAfterHooksError || afterAllError;
         }
       }
-
-      // Teardown test-scoped fixtures.
-      testInfo._timeoutManager.setCurrentRunnable({ type: 'teardown', slot: afterHooksSlot });
-      const testScopeError = await testInfo._runFn(() => this._fixtureRunner.teardownScope('test', testInfo._timeoutManager));
-      firstAfterHooksError = firstAfterHooksError || testScopeError;
     });
 
     const isFailure = testInfo.status !== 'skipped' && testInfo.status !== testInfo.expectedStatus;
