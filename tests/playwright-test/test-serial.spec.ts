@@ -323,16 +323,55 @@ test('test.describe.serial should work with test.fail and retries', async ({ run
   ]);
 });
 
-test('test.describe.serial should throw inside test.describe.parallel', async ({ runInlineTest }) => {
+test('test.describe.serial should work inside test.describe.parallel', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
       const { test } = pwt;
       test.describe.parallel('parallel suite', () => {
         test.describe.serial('serial suite', () => {
+          test('one', async ({}) => {
+            await new Promise(f => setTimeout(f, 1000));
+            console.log('\\n%%one');
+          });
+          test('two', async ({}) => {
+            await new Promise(f => setTimeout(f, 500));
+            console.log('\\n%%two');
+          });
         });
       });
     `,
-  });
-  expect(result.exitCode).toBe(1);
-  expect(result.output).toContain('a.test.ts:7:23: describe.serial cannot be nested inside describe.parallel');
+  }, { workers: 2 });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(2);
+  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
+    '%%one',
+    '%%two',
+  ]);
+});
+
+test('test.describe.serial should work with fullyParallel', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { fullyParallel: true };
+    `,
+    'a.test.ts': `
+      const { test } = pwt;
+      test.describe.serial('serial suite', () => {
+        test('one', async ({}) => {
+          await new Promise(f => setTimeout(f, 1000));
+          console.log('\\n%%one');
+        });
+        test('two', async ({}) => {
+          await new Promise(f => setTimeout(f, 500));
+          console.log('\\n%%two');
+        });
+      });
+    `,
+  }, { workers: 2 });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(2);
+  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
+    '%%one',
+    '%%two',
+  ]);
 });

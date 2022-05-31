@@ -668,9 +668,12 @@ function createTestGroups(rootSuite: Suite, workers: number): TestGroup[] {
       }
 
       let insideParallel = false;
+      let insideSerial = false;
       let hasAllHooks = false;
       for (let parent: Suite | undefined = test.parent; parent; parent = parent.parent) {
-        insideParallel = insideParallel || parent._parallelMode === 'parallel';
+        insideSerial = insideSerial || parent._parallelMode === 'serial';
+        // Serial cancels out any enclosing parallel.
+        insideParallel = insideParallel || (!insideSerial && parent._parallelMode === 'parallel');
         hasAllHooks = hasAllHooks || parent._hooks.some(hook => hook.type === 'beforeAll' || hook.type === 'afterAll');
       }
 
