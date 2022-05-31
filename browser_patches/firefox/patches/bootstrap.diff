@@ -2808,6 +2808,21 @@ index a9ba98c048b51eece158b9a04ff2770f4c7afa76..de8d25ffd94ff92dde3ece18e9b6d7df
   private:
    ~HeadlessWidget();
    bool mEnabled;
+diff --git a/widget/windows/nsAppShell.cpp b/widget/windows/nsAppShell.cpp
+index 9f87a4b8af0ef2cdd2eead57551dff7355e927aa..1f9b5d41a890ce0c12b43580c73eed7ea9022f1c 100644
+--- a/widget/windows/nsAppShell.cpp
++++ b/widget/windows/nsAppShell.cpp
+@@ -17,7 +17,9 @@
+ #include "WinIMEHandler.h"
+ #include "mozilla/widget/AudioSession.h"
+ #include "mozilla/BackgroundHangMonitor.h"
+-#include "mozilla/BackgroundTasks.h"
++#ifdef MOZ_BACKGROUNDTASKS
++#  include "mozilla/BackgroundTasks.h"
++#endif
+ #include "mozilla/Hal.h"
+ #include "nsIDOMWakeLockListener.h"
+ #include "nsIPowerManagerService.h"
 diff --git a/xpcom/reflect/xptinfo/xptinfo.h b/xpcom/reflect/xptinfo/xptinfo.h
 index efee881c142175c29d15f7ceaaebf852f39e44cd..014bf4b39b99eaf2fba6fb08827e7d2f964bab33 100644
 --- a/xpcom/reflect/xptinfo/xptinfo.h
