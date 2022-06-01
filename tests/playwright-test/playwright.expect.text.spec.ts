@@ -28,6 +28,10 @@ test('should support toHaveText w/ regex', async ({ runInlineTest }) => {
 
         // Should not normalize whitespace.
         await expect(locator).toHaveText(/Text   content/);
+        // Should respect ignoreCase.
+        await expect(locator).toHaveText(/text   content/, { ignoreCase: true });
+        // Should override regex flag with ignoreCase.
+        await expect(locator).not.toHaveText(/text   content/i, { ignoreCase: false });
       });
 
       test('fail', async ({ page }) => {
@@ -90,6 +94,10 @@ test('should support toHaveText w/ text', async ({ runInlineTest }) => {
         await expect(locator).toHaveText('Text                        content');
         // Should normalize zero width whitespace.
         await expect(locator).toHaveText('T\u200be\u200bx\u200bt content');
+        // Should support ignoreCase.
+        await expect(locator).toHaveText('text CONTENT', { ignoreCase: true });
+        // Should support falsy ignoreCase.
+        await expect(locator).not.toHaveText('TEXT', { ignoreCase: false });
       });
 
       test('pass contain', async ({ page }) => {
@@ -98,6 +106,10 @@ test('should support toHaveText w/ text', async ({ runInlineTest }) => {
         await expect(locator).toContainText('Text');
         // Should normalize whitespace.
         await expect(locator).toContainText('   ext        cont\\n  ');
+        // Should support ignoreCase.
+        await expect(locator).toContainText('EXT', { ignoreCase: true });
+        // Should support falsy ignoreCase.
+        await expect(locator).not.toContainText('TEXT', { ignoreCase: false });
       });
 
       test('fail', async ({ page }) => {
@@ -126,6 +138,8 @@ test('should support toHaveText w/ not', async ({ runInlineTest }) => {
         await page.setContent('<div id=node>Text content</div>');
         const locator = page.locator('#node');
         await expect(locator).not.toHaveText('Text2');
+        // Should be case-sensitive by default.
+        await expect(locator).not.toHaveText('TEXT');
       });
 
       test('fail', async ({ page }) => {
@@ -155,6 +169,8 @@ test('should support toHaveText w/ array', async ({ runInlineTest }) => {
         const locator = page.locator('div');
         // Should only normalize whitespace in the first item.
         await expect(locator).toHaveText(['Text  1', /Text   \\d+a/]);
+        // Should support ignoreCase.
+        await expect(locator).toHaveText(['tEXT 1', 'TExt 2A'], { ignoreCase: true });
       });
 
       test('pass lazy', async ({ page }) => {
@@ -228,6 +244,8 @@ test('should support toContainText w/ array', async ({ runInlineTest }) => {
         await page.setContent('<div>Text \\n1</div><div>Text2</div><div>Text3</div>');
         const locator = page.locator('div');
         await expect(locator).toContainText(['ext     1', /ext3/]);
+        // Should support ignoreCase.
+        await expect(locator).toContainText(['EXT 1', 'eXt3'], { ignoreCase: true });
       });
 
       test('fail', async ({ page }) => {

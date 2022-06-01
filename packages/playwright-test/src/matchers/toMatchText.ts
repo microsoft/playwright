@@ -101,12 +101,13 @@ export async function toMatchText(
   return { message, pass };
 }
 
-export function toExpectedTextValues(items: (string | RegExp)[], options: { matchSubstring?: boolean, normalizeWhiteSpace?: boolean } = {}): ExpectedTextValue[] {
+export function toExpectedTextValues(items: (string | RegExp)[], options: { matchSubstring?: boolean, normalizeWhiteSpace?: boolean, ignoreCase?: boolean } = {}): ExpectedTextValue[] {
   return items.map(i => ({
     string: isString(i) ? i : undefined,
     regexSource: isRegExp(i) ? i.source : undefined,
     regexFlags: isRegExp(i) ? i.flags : undefined,
     matchSubstring: options.matchSubstring,
+    ignoreCase: options.ignoreCase,
     normalizeWhiteSpace: options.normalizeWhiteSpace,
   }));
 }

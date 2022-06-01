@@ -84,6 +84,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     regexSource: tOptional(tString),
     regexFlags: tOptional(tString),
     matchSubstring: tOptional(tBoolean),
+    ignoreCase: tOptional(tBoolean),
     normalizeWhiteSpace: tOptional(tBoolean),
   });
   scheme.AXNode = tObject({
