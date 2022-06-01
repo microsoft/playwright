@@ -30,7 +30,6 @@ export class DriverTestMode implements TestMode {
   async setup() {
     this._impl = await start({
       NODE_OPTIONS: undefined,  // Hide driver process while debugging.
-      PLAYWRIGHT_EXPERIMENTAL_FEATURES: '1',
     });
     return this._impl.playwright;
   }

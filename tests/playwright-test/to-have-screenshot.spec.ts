@@ -414,11 +414,9 @@ test('should generate default name', async ({ runInlineTest }, testInfo) => {
 });
 
 test('should compile with different option combinations', async ({ runTSC }) => {
-  const experimentalPath = path.resolve(__dirname, '..', 'config', 'experimental.d.ts');
   const result = await runTSC({
     'playwright.config.ts': `
       //@no-header
-      /// <reference path=${JSON.stringify(experimentalPath)} />
       import type { PlaywrightTestConfig } from '@playwright/test';
       const config: PlaywrightTestConfig = {
         expect: {

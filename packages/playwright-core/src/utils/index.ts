@@ -107,10 +107,6 @@ export function isUnderTest(): boolean {
   return _isUnderTest;
 }
 
-export function experimentalFeaturesEnabled() {
-  return isUnderTest() || !!process.env.PLAYWRIGHT_EXPERIMENTAL_FEATURES;
-}
-
 export function getFromENV(name: string): string | undefined {
   let value = process.env[name];
   value = value === undefined ? process.env[`npm_config_${name.toLowerCase()}`] : value;
