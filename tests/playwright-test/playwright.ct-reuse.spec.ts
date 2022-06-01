@@ -111,3 +111,47 @@ test('should not reuse context with trace', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(2);
 });
+
+test('should work with manually closed pages', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright/index.html': `<script type="module" src="/playwright/index.ts"></script>`,
+    'playwright/index.ts': `
+      //@no-header
+    `,
+
+    'src/button.test.tsx': `
+      //@no-header
+      import { test, expect } from '@playwright/experimental-ct-react';
+
+      test('closes page', async ({ mount, page }) => {
+        let hadEvent = false;
+        const component = await mount(<button onClick={e => hadEvent = true}>Submit</button>);
+        await expect(component).toHaveText('Submit');
+        await component.click();
+        expect(hadEvent).toBe(true);
+        await page.close();
+      });
+
+      test('creates a new page', async ({ mount, page, context }) => {
+        let hadEvent = false;
+        const component = await mount(<button onClick={e => hadEvent = true}>Submit</button>);
+        await expect(component).toHaveText('Submit');
+        await component.click();
+        expect(hadEvent).toBe(true);
+        await page.close();
+        await context.newPage();
+      });
+
+      test('still works', async ({ mount }) => {
+        let hadEvent = false;
+        const component = await mount(<button onClick={e => hadEvent = true}>Submit</button>);
+        await expect(component).toHaveText('Submit');
+        await component.click();
+        expect(hadEvent).toBe(true);
+      });
+    `,
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(3);
+});
