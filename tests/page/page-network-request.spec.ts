@@ -114,7 +114,8 @@ it('should get the same headers as the server CORS', async ({ page, server, brow
   expect(headers).toEqual(serverRequest.headers);
 });
 
-it('should not get preflight CORS requests when intercepting', async ({ page, server, browserName }) => {
+it('should not get preflight CORS requests when intercepting', async ({ page, server, browserName, isAndroid }) => {
+  it.fail(isAndroid, 'Playwright does not get CORS pre-flight on Android');
   await page.goto(server.PREFIX + '/empty.html');
 
   const requests = [];
