@@ -94,7 +94,7 @@ test.describe('with service worker networking', () => {
 
     await page.evaluate(() => window['activationPromise']);
     const [innerSW, innerPage] = await Promise.all([
-      context.waitForEvent('request', r => r.url().endsWith('/inner.txt') && r.serviceWorker()),
+      context.waitForEvent('request', r => r.url().endsWith('/inner.txt') && !!r.serviceWorker()),
       context.waitForEvent('request', r => r.url().endsWith('/inner.txt') && !r.serviceWorker()),
       page.evaluate(() => fetch('/inner.txt')),
     ]);
