@@ -433,18 +433,24 @@ export class CRBrowserContext extends BrowserContext {
     this._options.extraHTTPHeaders = headers;
     for (const page of this.pages())
       await (page._delegate as CRPage).updateExtraHTTPHeaders();
+    for (const sw of this.serviceWorkers())
+      await (sw as CRServiceWorker).updateExtraHTTPHeaders(false);
   }
 
   async setOffline(offline: boolean): Promise<void> {
     this._options.offline = offline;
     for (const page of this.pages())
       await (page._delegate as CRPage).updateOffline();
+    for (const sw of this.serviceWorkers())
+      await (sw as CRServiceWorker).updateOffline(false);
   }
 
   async doSetHTTPCredentials(httpCredentials?: types.Credentials): Promise<void> {
     this._options.httpCredentials = httpCredentials;
     for (const page of this.pages())
       await (page._delegate as CRPage).updateHttpCredentials();
+    for (const sw of this.serviceWorkers())
+      await (sw as CRServiceWorker).updateHttpCredentials(false);
   }
 
   async doAddInitScript(source: string) {

@@ -294,6 +294,60 @@ test.describe('with service worker networking', () => {
     expect(url).toMatch(/\/data\.json$/);
     expect(response).toBe('from sw');
   });
+
+  test('setOffline', async ({ context, page, server, browserMajorVersion }) => {
+    test.skip(browserMajorVersion < 103, 'Requires fix from https://chromium-review.googlesource.com/c/chromium/src/+/3544685');
+
+    const [worker] = await Promise.all([
+      context.waitForEvent('serviceworker'),
+      page.goto(server.PREFIX + '/serviceworkers/fetch/sw.html')
+    ]);
+
+    await page.evaluate(() => window['activationPromise']);
+    await context.setOffline(true);
+    const [,error] = await Promise.all([
+      context.waitForEvent('request', r => r.url().endsWith('/inner.txt') && !!r.serviceWorker()),
+      worker.evaluate(() => fetch('/inner.txt').catch(e => `REJECTED: ${e}`)),
+    ]);
+    expect(error).toMatch(/REJECTED.*Failed to fetch/);
+  });
+
+
+  test('setExtraHTTPHeaders', async ({ context, page, server, browserMajorVersion }) => {
+    test.skip(browserMajorVersion < 103, 'Requires fix from https://chromium-review.googlesource.com/c/chromium/src/+/3544685');
+
+    const [worker] = await Promise.all([
+      context.waitForEvent('serviceworker'),
+      page.goto(server.PREFIX + '/serviceworkers/fetch/sw.html')
+    ]);
+
+    await page.evaluate(() => window['activationPromise']);
+    await context.setExtraHTTPHeaders({ 'x-custom-header': 'custom!' });
+    const requestPromise = server.waitForRequest('/inner.txt');
+    await worker.evaluate(() => fetch('/inner.txt'));
+    const req = await requestPromise;
+    expect(req.headers['x-custom-header']).toBe('custom!');
+  });
+
+  test.describe('http credentials', () => {
+    test.fail(true, 'needs debugging');
+
+    test.use({ httpCredentials: { username: 'user',  password: 'pass' } });
+
+    test('httpCredentials', async ({ context, page, server, browserMajorVersion }) => {
+      test.skip(browserMajorVersion < 103, 'Requires fix from https://chromium-review.googlesource.com/c/chromium/src/+/3544685');
+
+      server.setAuth('/sw.html', 'user', 'pass');
+      server.setAuth('/empty.html', 'user', 'pass');
+      const [worker] = await Promise.all([
+        context.waitForEvent('serviceworker'),
+        page.goto(server.PREFIX + '/serviceworkers/fetch/sw.html')
+      ]);
+
+      await page.evaluate(() => window['activationPromise']);
+      expect(await worker.evaluate(() => fetch('/empty.html').then(r => r.status))).toBe(200);
+    });
+  });
 });
 
 test('serviceWorkers() should return current workers', async ({ page, server }) => {
