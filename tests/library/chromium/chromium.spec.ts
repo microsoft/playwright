@@ -330,14 +330,12 @@ test.describe('with service worker networking', () => {
   });
 
   test.describe('http credentials', () => {
-    test.fail(true, 'needs debugging');
-
     test.use({ httpCredentials: { username: 'user',  password: 'pass' } });
 
     test('httpCredentials', async ({ context, page, server, browserMajorVersion }) => {
       test.skip(browserMajorVersion < 103, 'Requires fix from https://chromium-review.googlesource.com/c/chromium/src/+/3544685');
 
-      server.setAuth('/sw.html', 'user', 'pass');
+      server.setAuth('/serviceworkers/fetch/sw.html', 'user', 'pass');
       server.setAuth('/empty.html', 'user', 'pass');
       const [worker] = await Promise.all([
         context.waitForEvent('serviceworker'),
