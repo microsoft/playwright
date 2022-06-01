@@ -345,6 +345,7 @@ it.describe('screencast', () => {
   it('should capture css transformation', async ({ browser, server, headless, browserName, platform, trace }, testInfo) => {
     it.fixme(!headless, 'Fails on headed');
     it.fixme(browserName === 'webkit' && platform === 'win32');
+    it.fixme(browserName === 'firefox' && trace === 'on', 'https://github.com/microsoft/playwright/issues/10060');
 
     const size = { width: 600, height: 400 };
     // Set viewport equal to screencast frame size to avoid scaling.
@@ -656,9 +657,9 @@ it.describe('screencast', () => {
     expect(files.length).toBe(1);
   });
 
-  it('should capture full viewport', async ({ browserType, browserName, headless }, testInfo) => {
+  it('should capture full viewport', async ({ browserType, browserName, headless, isWindows }, testInfo) => {
     it.fail(browserName === 'chromium' && !headless, 'The square is not on the video');
-
+    it.fail(browserName === 'firefox' && isWindows, 'https://github.com/microsoft/playwright/issues/14405');
     const size = { width: 600, height: 400 };
     const browser = await browserType.launch();
 
@@ -689,8 +690,9 @@ it.describe('screencast', () => {
     expectAll(pixels, almostRed);
   });
 
-  it('should capture full viewport on hidpi', async ({ browserType, browserName, headless }, testInfo) => {
+  it('should capture full viewport on hidpi', async ({ browserType, browserName, headless, isWindows }, testInfo) => {
     it.fail(browserName === 'chromium' && !headless, 'The square is not on the video');
+    it.fail(browserName === 'firefox' && isWindows, 'https://github.com/microsoft/playwright/issues/14405');
     const size = { width: 600, height: 400 };
     const browser = await browserType.launch();
 
