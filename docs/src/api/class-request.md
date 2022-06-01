@@ -85,15 +85,6 @@ Name of the header.
 
 Whether this request is driving frame's navigation.
 
-## method: Request.isServiceWorkerRequest
-- returns: <[boolean]>
-
-:::note
-This field is Chromium only. It's safe to call when using other browsers, but it will always be `false`.
-:::
-
-Whether this request was performed within a Service Worker.
-
 ## method: Request.method
 - returns: <[string]>
 
@@ -223,7 +214,7 @@ Returns the matching [Response] object, or `null` if the response was not receiv
 This field is Chromium only. It's safe to call when using other browsers, but it will always be `null`.
 :::
 
-The Service [`Worker`] that is performing the request.
+The Service [Worker] that is performing the request.
 
 ## async method: Request.sizes
 - returns: <[Object]>

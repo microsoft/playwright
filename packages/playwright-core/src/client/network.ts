@@ -174,7 +174,7 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
 
   frame(): Frame {
     if (!this._initializer.frame) {
-      assert(this.isServiceWorkerRequest());
+      assert(this.serviceWorker());
       throw new Error('Service Worker requests do not have an associated frame.');
     }
     return Frame.from(this._initializer.frame);
@@ -186,10 +186,6 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
 
   isNavigationRequest(): boolean {
     return this._initializer.isNavigationRequest;
-  }
-
-  isServiceWorkerRequest(): boolean {
-    return this._initializer.isServiceWorkerRequest;
   }
 
   redirectedFrom(): Request | null {
@@ -238,7 +234,7 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
   }
 
   private _raceWithPageClose(promise: Promise<any>): Promise<void> {
-    if (this.request().isServiceWorkerRequest())
+    if (this.request().serviceWorker())
       return Promise.resolve();
     const page = this.request().frame()._page;
     // When page closes or crashes, we catch any potential rejects from this Route.

@@ -48,7 +48,6 @@ export class RequestDispatcher extends Dispatcher<Request, channels.RequestChann
       postData: postData === null ? undefined : postData.toString('base64'),
       headers: request.headers(),
       isNavigationRequest: request.isNavigationRequest(),
-      isServiceWorkerRequest: request.isServiceWorkerRequest(),
       redirectedFrom: RequestDispatcher.fromNullable(scope, request.redirectedFrom()),
     });
     this._type_Request = true;

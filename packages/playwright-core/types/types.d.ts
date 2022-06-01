@@ -14402,13 +14402,6 @@ export interface Request {
   isNavigationRequest(): boolean;
 
   /**
-   * > NOTE: This field is Chromium only. It's safe to call when using other browsers, but it will always be `false`.
-   *
-   * Whether this request was performed within a Service Worker.
-   */
-  isServiceWorkerRequest(): boolean;
-
-  /**
    * Request's method (GET, POST, etc.)
    */
   method(): string;
@@ -14483,7 +14476,7 @@ export interface Request {
   /**
    * > NOTE: This field is Chromium only. It's safe to call when using other browsers, but it will always be `null`.
    *
-   * The Service [`Worker`] that is performing the request.
+   * The Service [Worker] that is performing the request.
    */
   serviceWorker(): null|Worker;
 

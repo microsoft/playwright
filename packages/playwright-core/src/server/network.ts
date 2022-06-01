@@ -207,10 +207,6 @@ export class Request extends SdkObject {
     return this._serviceWorker;
   }
 
-  isServiceWorkerRequest(): boolean {
-    return !!this._serviceWorker;
-  }
-
   isNavigationRequest(): boolean {
     return !!this._documentId;
   }

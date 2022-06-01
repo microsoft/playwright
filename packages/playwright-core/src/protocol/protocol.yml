@@ -2419,7 +2419,6 @@ Request:
       type: array
       items: NameValue
     isNavigationRequest: boolean
-    isServiceWorkerRequest: boolean
     redirectedFrom: Request?
 
   commands:

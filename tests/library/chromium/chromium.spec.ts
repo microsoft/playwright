@@ -62,7 +62,7 @@ test('should not instrument service worker requests by default', async ({ contex
 test.describe('with service worker networking', () => {
   test.use({ serviceWorkerPolicy: { enableNetworkInspection: true } });
 
-  test('isServiceWorker(), serviceWorker(), and isFromServiceWorker() work', async ({ context, page, server, browserMajorVersion }) => {
+  test('serviceWorker(), and isFromServiceWorker() work', async ({ context, page, server, browserMajorVersion }) => {
     test.skip(browserMajorVersion < 103, 'Requires fix from https://chromium-review.googlesource.com/c/chromium/src/+/3544685');
 
     const [worker, html, main, inWorker] = await Promise.all([
@@ -77,36 +77,30 @@ test.describe('with service worker networking', () => {
       page.evaluate(() => fetch('/inner.txt')),
     ]);
     expect(html.frame()).toBeTruthy();
-    expect(html.isServiceWorkerRequest()).toBe(false);
     expect(html.serviceWorker()).toBe(null);
     expect((await html.response()).isFromServiceWorker()).toBeNull();
 
     expect(main.frame).toThrow();
-    expect(main.isServiceWorkerRequest()).toBe(true);
     expect(main.serviceWorker()).toBe(worker);
     expect((await main.response()).isFromServiceWorker()).toBeNull();
 
     expect(inner.frame()).toBeTruthy();
-    expect(inner.isServiceWorkerRequest()).toBe(false);
     expect(inner.serviceWorker()).toBe(null);
     expect((await inner.response()).isFromServiceWorker()).toBe(true);
 
     expect(inWorker.frame).toThrow();
-    expect(inWorker.isServiceWorkerRequest()).toBe(true);
     expect(inWorker.serviceWorker()).toBe(worker);
     expect((await inWorker.response()).isFromServiceWorker()).toBeNull();
 
     await page.evaluate(() => window['activationPromise']);
     const [innerSW, innerPage] = await Promise.all([
-      context.waitForEvent('request', r => r.url().endsWith('/inner.txt') && r.isServiceWorkerRequest()),
-      context.waitForEvent('request', r => r.url().endsWith('/inner.txt') && !r.isServiceWorkerRequest()),
+      context.waitForEvent('request', r => r.url().endsWith('/inner.txt') && r.serviceWorker()),
+      context.waitForEvent('request', r => r.url().endsWith('/inner.txt') && !r.serviceWorker()),
       page.evaluate(() => fetch('/inner.txt')),
     ]);
-    expect(innerPage.isServiceWorkerRequest()).toBe(false);
     expect(innerPage.serviceWorker()).toBe(null);
     expect((await innerPage.response()).isFromServiceWorker()).toBe(true);
 
-    expect(innerSW.isServiceWorkerRequest()).toBe(true);
     expect(innerSW.serviceWorker()).toBe(worker);
     expect((await innerSW.response()).isFromServiceWorker()).toBeNull();
   });
@@ -279,7 +273,7 @@ test.describe('with service worker networking', () => {
     test.skip(browserMajorVersion < 103, 'Requires fix from https://chromium-review.googlesource.com/c/chromium/src/+/3544685');
 
     await context.route('**/data.json', async route => {
-      if (route.request().isServiceWorkerRequest()) {
+      if (route.request().serviceWorker()) {
         return route.fulfill({
           contentType: 'text/plain',
           status: 200,
