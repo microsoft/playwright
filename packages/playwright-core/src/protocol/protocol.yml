@@ -2501,7 +2501,7 @@ Response:
       type: array
       items: NameValue
     timing: ResourceTiming
-    isFromServiceWorker: boolean?
+    fulfilledByServiceWorker: boolean?
 
 
   commands:

@@ -51,7 +51,7 @@ Name of the header.
 
 Returns all values of the headers matching the name, for example `set-cookie`. The name is case insensitive.
 
-## method: Response.isFromServiceWorker
+## method: Response.fulfilledByServiceWorker
 - returns: <[null]|[boolean]>
 
 :::note

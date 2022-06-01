@@ -62,7 +62,7 @@ test('should not instrument service worker requests by default', async ({ contex
 test.describe('with service worker networking', () => {
   test.use({ serviceWorkerPolicy: { enableNetworkInspection: true } });
 
-  test('serviceWorker(), and isFromServiceWorker() work', async ({ context, page, server, browserMajorVersion }) => {
+  test('serviceWorker(), and fulfilledByServiceWorker() work', async ({ context, page, server, browserMajorVersion }) => {
     test.skip(browserMajorVersion < 103, 'Requires fix from https://chromium-review.googlesource.com/c/chromium/src/+/3544685');
 
     const [worker, html, main, inWorker] = await Promise.all([
@@ -78,19 +78,19 @@ test.describe('with service worker networking', () => {
     ]);
     expect(html.frame()).toBeTruthy();
     expect(html.serviceWorker()).toBe(null);
-    expect((await html.response()).isFromServiceWorker()).toBeNull();
+    expect((await html.response()).fulfilledByServiceWorker()).toBeNull();
 
     expect(main.frame).toThrow();
     expect(main.serviceWorker()).toBe(worker);
-    expect((await main.response()).isFromServiceWorker()).toBeNull();
+    expect((await main.response()).fulfilledByServiceWorker()).toBeNull();
 
     expect(inner.frame()).toBeTruthy();
     expect(inner.serviceWorker()).toBe(null);
-    expect((await inner.response()).isFromServiceWorker()).toBe(true);
+    expect((await inner.response()).fulfilledByServiceWorker()).toBe(true);
 
     expect(inWorker.frame).toThrow();
     expect(inWorker.serviceWorker()).toBe(worker);
-    expect((await inWorker.response()).isFromServiceWorker()).toBeNull();
+    expect((await inWorker.response()).fulfilledByServiceWorker()).toBeNull();
 
     await page.evaluate(() => window['activationPromise']);
     const [innerSW, innerPage] = await Promise.all([
@@ -99,10 +99,10 @@ test.describe('with service worker networking', () => {
       page.evaluate(() => fetch('/inner.txt')),
     ]);
     expect(innerPage.serviceWorker()).toBe(null);
-    expect((await innerPage.response()).isFromServiceWorker()).toBe(true);
+    expect((await innerPage.response()).fulfilledByServiceWorker()).toBe(true);
 
     expect(innerSW.serviceWorker()).toBe(worker);
-    expect((await innerSW.response()).isFromServiceWorker()).toBeNull();
+    expect((await innerSW.response()).fulfilledByServiceWorker()).toBeNull();
   });
 
   test('should intercept service worker requests (main and within)', async ({ context, page, server, browserMajorVersion }) => {
