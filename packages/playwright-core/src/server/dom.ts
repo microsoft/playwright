@@ -436,34 +436,25 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       if ((options as any).__testHookBeforeHitTarget)
         await (options as any).__testHookBeforeHitTarget();
 
-      if (actionName === 'move and up') {
-        // When dropping, the "element that is being dragged" often stays under the cursor,
-        // so hit target check at the moment we receive mousedown does not work -
-        // it finds the "element that is being dragged" instead of the
-        // "element that we drop onto".
-        progress.log(`  checking that element receives pointer events at (${point.x},${point.y})`);
-        const hitTargetResult = await this._checkHitTargetAt(point);
-        if (hitTargetResult !== 'done')
-          return hitTargetResult;
-        progress.log(`  element does receive pointer events`);
-        if (options.trial) {
-          progress.log(`  trial ${actionName} has finished`);
-          return 'done';
-        }
-      } else {
-        const actionType = (actionName === 'hover' || actionName === 'tap') ? actionName : 'mouse';
-        const handle = await this.evaluateHandleInUtility(([injected, node, { actionType, trial }]) => injected.setupHitTargetInterceptor(node, actionType, trial), { actionType, trial: !!options.trial } as const);
-        if (handle === 'error:notconnected')
-          return handle;
-        if (!handle._objectId)
-          return handle.rawValue() as 'error:notconnected';
-        hitTargetInterceptionHandle = handle as any;
-        progress.cleanupWhenAborted(() => {
-          // Do not await here, just in case the renderer is stuck (e.g. on alert)
-          // and we won't be able to cleanup.
-          hitTargetInterceptionHandle!.evaluate(h => h.stop()).catch(e => {});
-        });
+      const hitPoint = await this._viewportPointToDocument(point);
+      if (hitPoint === 'error:notconnected')
+        return hitPoint;
+      const actionType = actionName === 'move and up' ? 'drag' : ((actionName === 'hover' || actionName === 'tap') ? actionName : 'mouse');
+      const handle = await this.evaluateHandleInUtility(([injected, node, { actionType, hitPoint, trial }]) => injected.setupHitTargetInterceptor(node, actionType, hitPoint, trial), { actionType, hitPoint, trial: !!options.trial } as const);
+      if (handle === 'error:notconnected')
+        return handle;
+      if (!handle._objectId) {
+        const error = handle.rawValue() as string;
+        if (error === 'error:notconnected')
+          return error;
+        return { hitTargetDescription: error };
       }
+      hitTargetInterceptionHandle = handle as any;
+      progress.cleanupWhenAborted(() => {
+        // Do not await here, just in case the renderer is stuck (e.g. on alert)
+        // and we won't be able to cleanup.
+        hitTargetInterceptionHandle!.evaluate(h => h.stop()).catch(e => {});
+      });
     }
 
     const actionResult = await this._page._frameManager.waitForSignalsCreatedBy(progress, options.noWaitAfter, async () => {
@@ -864,7 +855,9 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return result;
   }
 
-  async _checkHitTargetAt(point: types.Point): Promise<'error:notconnected' | { hitTargetDescription: string } | 'done'> {
+  async _viewportPointToDocument(point: types.Point): Promise<types.Point | 'error:notconnected'> {
+    if (!this._frame.parentFrame())
+      return point;
     const frame = await this.ownerFrame();
     if (frame && frame.parentFrame()) {
       const element = await frame.frameElement();
@@ -874,7 +867,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       // Translate from viewport coordinates to frame coordinates.
       point = { x: point.x - box.x, y: point.y - box.y };
     }
-    return this.evaluateInUtility(([injected, node, point]) => injected.checkHitTargetAt(node, point), point);
+    return point;
   }
 }
 
