@@ -231,7 +231,7 @@ export class CRNetworkManager {
     //
     // Note: it would be better to match the URL against interception patterns, but
     // that information is only available to the client. Perhaps we can just route to the client?
-    if (requestPausedEvent && requestPausedEvent.request.method === 'OPTIONS' && (this._page || this._serviceWorker)!._needsRequestInterception()) {
+    if (requestPausedEvent && requestPausedEvent.request.method === 'OPTIONS' && (this._page || this._serviceWorker)!.needsRequestInterception()) {
       const requestHeaders = requestPausedEvent.request.headers;
       const responseHeaders: Protocol.Fetch.HeaderEntry[] = [
         { name: 'Access-Control-Allow-Origin', value: requestHeaders['Origin'] || '*' },
@@ -250,6 +250,7 @@ export class CRNetworkManager {
       return;
     }
 
+    // Non-service-worker requests MUST have a frame—if they don't, we pretend there was no request
     if (!frame && !this._serviceWorker) {
       if (requestPausedEvent)
         this._client._sendMayFail('Fetch.continueRequest', { requestId: requestPausedEvent.requestId });

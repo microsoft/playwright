@@ -1080,7 +1080,7 @@ class FrameSession {
   }
 
   async _updateRequestInterception(): Promise<void> {
-    await this._networkManager.setRequestInterception(this._page._needsRequestInterception());
+    await this._networkManager.setRequestInterception(this._page.needsRequestInterception());
   }
 
   async _updateFileChooserInterception(initial: boolean) {

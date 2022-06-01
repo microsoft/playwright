@@ -440,7 +440,7 @@ export class Page extends SdkObject {
     await this._delegate.removeInitScripts();
   }
 
-  _needsRequestInterception(): boolean {
+  needsRequestInterception(): boolean {
     return !!this._clientRequestInterceptor || !!this._serverRequestInterceptor || !!this._browserContext._requestInterceptor;
   }
 
