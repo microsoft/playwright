@@ -158,8 +158,9 @@ export function resolveHook(filename: string, specifier: string): string | undef
   }
 }
 
-export function transformHook(code: string, filename: string, isModule = false): string {
+export function transformHook(code: string, filename: string, moduleUrl?: string): string {
   // If we are not TypeScript and there is no applicable preprocessor - bail out.
+  const isModule = !!moduleUrl;
   const isTypeScript = filename.endsWith('.ts') || filename.endsWith('.tsx');
   const isJSX = filename.endsWith('.jsx');
   const hasPreprocessor =
@@ -173,7 +174,7 @@ export function transformHook(code: string, filename: string, isModule = false):
   const cachePath = calculateCachePath(code, filename, isModule);
   const codePath = cachePath + '.js';
   const sourceMapPath = cachePath + '.map';
-  sourceMaps.set(filename, sourceMapPath);
+  sourceMaps.set(moduleUrl || filename, sourceMapPath);
   if (!process.env.PW_IGNORE_COMPILE_CACHE && fs.existsSync(codePath))
     return fs.readFileSync(codePath, 'utf8');
   // We don't use any browserslist data, but babel checks it anyway.

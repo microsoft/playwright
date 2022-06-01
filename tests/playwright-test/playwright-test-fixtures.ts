@@ -218,6 +218,7 @@ type Fixtures = {
   writeFiles: (files: Files) => Promise<string>;
   runInlineTest: (files: Files, params?: Params, env?: Env, options?: RunOptions, beforeRunPlaywrightTest?: ({ baseDir }: { baseDir: string }) => Promise<void>) => Promise<RunResult>;
   runTSC: (files: Files) => Promise<TSCResult>;
+  nodeVersion: { major: number, minor: number, patch: number },
 };
 
 export const test = base
@@ -248,6 +249,11 @@ export const test = base
           const { exitCode } = await tsc.exited;
           return { exitCode, output: tsc.output };
         });
+      },
+
+      nodeVersion: async ({}, use) => {
+        const [major, minor, patch] = process.versions.node.split('.');
+        await use({ major: +major, minor: +minor, patch: +patch });
       },
     });
 
