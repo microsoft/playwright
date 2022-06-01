@@ -103,6 +103,15 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
         node-version: [14]
+        include:
+          - os: ubuntu-latest
+            node-version: 12
+          - os: ubuntu-latest
+            node-version: 16
+          - os: ubuntu-latest
+            node-version: 18
+          - os: windows-latest
+            node-version: 16
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v2
@@ -122,27 +131,6 @@ jobs:
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
-
-  test_test_runner_esm:
-    name: Test Runner ESM
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-    runs-on: ${{ matrix.os }}
-    steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v2
-      with:
-        # ESM tests rely on the experimental loader in Node.js 16+
-        node-version: 16
-    - run: npm i -g npm@8
-    - run: npm ci
-      env:
-        DEBUG: pw:install
-    - run: npm run build
-    - run: npx playwright install --with-deps
-    - run: npm run ttest -- esm.spec.ts
 
   test_web_components:
     name: Web Components

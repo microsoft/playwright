@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect } from './playwright-test-fixtures';
-
-// Note: tests from this file are additionally run on Node16 bots.
+import { test, expect, stripAnsi } from './playwright-test-fixtures';
 
 test('should load nested as esm when package.json has type module', async ({ runInlineTest }) => {
   const result = await runInlineTest({
@@ -38,9 +36,9 @@ test('should load nested as esm when package.json has type module', async ({ run
   expect(result.passed).toBe(1);
 });
 
-test('should import esm from ts when package.json has type module in experimental mode', async ({ runInlineTest }) => {
+test('should import esm from ts when package.json has type module in experimental mode', async ({ runInlineTest, nodeVersion }) => {
   // We only support experimental esm mode on Node 16+
-  test.skip(parseInt(process.version.slice(1), 10) < 16);
+  test.skip(nodeVersion.major < 16);
   const result = await runInlineTest({
     'playwright.config.ts': `
       import * as fs from 'fs';
@@ -73,9 +71,9 @@ test('should import esm from ts when package.json has type module in experimenta
   expect(result.exitCode).toBe(0);
 });
 
-test('should propagate subprocess exit code in experimental mode', async ({ runInlineTest }) => {
+test('should propagate subprocess exit code in experimental mode', async ({ runInlineTest, nodeVersion }) => {
   // We only support experimental esm mode on Node 16+
-  test.skip(parseInt(process.version.slice(1), 10) < 16);
+  test.skip(nodeVersion.major < 16);
   const result = await runInlineTest({
     'package.json': JSON.stringify({ type: 'module' }),
     'a.test.ts': `
@@ -89,9 +87,9 @@ test('should propagate subprocess exit code in experimental mode', async ({ runI
   expect(result.exitCode).toBe(1);
 });
 
-test('should respect path resolver in experimental mode', async ({ runInlineTest }) => {
+test('should respect path resolver in experimental mode', async ({ runInlineTest, nodeVersion }) => {
   // We only support experimental esm mode on Node 16+
-  test.skip(parseInt(process.version.slice(1), 10) < 16);
+  test.skip(nodeVersion.major < 16);
   const result = await runInlineTest({
     'package.json': JSON.stringify({ type: 'module' }),
     'playwright.config.ts': `
@@ -123,4 +121,27 @@ test('should respect path resolver in experimental mode', async ({ runInlineTest
   }, {});
 
   expect(result.exitCode).toBe(0);
+});
+
+test('should use source maps w/ ESM', async ({ runInlineTest, nodeVersion }) => {
+  // We only support experimental esm mode on Node 16+
+  test.skip(nodeVersion.major < 16);
+  const result = await runInlineTest({
+    'package.json': `{ "type": "module" }`,
+    'playwright.config.ts': `
+      export default { projects: [{name: 'foo'}] };
+    `,
+    'a.test.ts': `
+      const { test } = pwt;
+
+      test('check project name', ({}, testInfo) => {
+        expect(testInfo.project.name).toBe('foo');
+      });
+    `
+  }, { reporter: 'list' });
+
+  const output = stripAnsi(result.output);
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  expect(output).toContain('a.test.ts:7:7');
 });
