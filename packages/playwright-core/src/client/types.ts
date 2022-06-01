@@ -47,14 +47,13 @@ export type SetStorageState = {
 export type LifecycleEvent = channels.LifecycleEvent;
 export const kLifecycleEvents: Set<LifecycleEvent> = new Set(['load', 'domcontentloaded', 'networkidle', 'commit']);
 
-export type BrowserContextOptions = Omit<channels.BrowserNewContextOptions, 'viewport' | 'noDefaultViewport' | 'extraHTTPHeaders' | 'storageState' | 'serviceWorkerPolicy'> & {
+export type BrowserContextOptions = Omit<channels.BrowserNewContextOptions, 'viewport' | 'noDefaultViewport' | 'extraHTTPHeaders' | 'storageState'> & {
   viewport?: Size | null,
   extraHTTPHeaders?: Headers,
   logger?: Logger,
   videosPath?: string,
   videoSize?: Size,
   storageState?: string | SetStorageState,
-  serviceWorkerPolicy?: 'default' | 'disabled' | { enableNetworkInspection?: boolean },
 };
 
 type LaunchOverrides = {

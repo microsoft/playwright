@@ -447,7 +447,12 @@ ContextOptions:
         omitContent: boolean?
         path: string
     strictSelectors: boolean?
-    serviceWorkerPolicy: ServiceWorkerPolicy?
+    serviceWorkerPolicy:
+      type: enum?
+      literals:
+      - default
+      - disabled
+      - inspected
 
 LocalUtils:
   type: interface
@@ -2465,17 +2470,6 @@ Route:
         body: string?
         isBase64: boolean?
         fetchResponseUid: string?
-
-ServiceWorkerPolicy:
-  type: object
-  properties:
-    canned:
-      type: enum?
-      literals:
-      - default
-      - disabled
-    enableNetworkInspection: boolean?
-
 
 ResourceTiming:
   type: object

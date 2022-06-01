@@ -349,7 +349,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
       path: tString,
     })),
     strictSelectors: tOptional(tBoolean),
-    serviceWorkerPolicy: tOptional(tType('ServiceWorkerPolicy')),
+    serviceWorkerPolicy: tOptional(tEnum(['default', 'disabled', 'inspected'])),
     userDataDir: tString,
     slowMo: tOptional(tNumber),
   });
@@ -409,7 +409,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
       path: tString,
     })),
     strictSelectors: tOptional(tBoolean),
-    serviceWorkerPolicy: tOptional(tType('ServiceWorkerPolicy')),
+    serviceWorkerPolicy: tOptional(tEnum(['default', 'disabled', 'inspected'])),
     proxy: tOptional(tObject({
       server: tString,
       bypass: tOptional(tString),
@@ -1181,10 +1181,6 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     isBase64: tOptional(tBoolean),
     fetchResponseUid: tOptional(tString),
   });
-  scheme.ServiceWorkerPolicy = tObject({
-    canned: tOptional(tEnum(['default', 'disabled'])),
-    enableNetworkInspection: tOptional(tBoolean),
-  });
   scheme.ResourceTiming = tObject({
     startTime: tNumber,
     domainLookupStart: tNumber,
@@ -1451,7 +1447,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
       path: tString,
     })),
     strictSelectors: tOptional(tBoolean),
-    serviceWorkerPolicy: tOptional(tType('ServiceWorkerPolicy')),
+    serviceWorkerPolicy: tOptional(tEnum(['default', 'disabled', 'inspected'])),
     pkg: tOptional(tString),
     proxy: tOptional(tObject({
       server: tString,

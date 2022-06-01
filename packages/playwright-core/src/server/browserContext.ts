@@ -122,7 +122,7 @@ export abstract class BrowserContext extends SdkObject {
 
     if (debugMode() === 'console')
       await this.extendInjectedScript(consoleApiSource.source);
-    if (this._options.serviceWorkerPolicy?.canned === 'disabled') {
+    if (this._options.serviceWorkerPolicy === 'disabled') {
       await this.addInitScript(`
 
         // Service Worker Policy Injected Script
@@ -470,7 +470,7 @@ export function validateBrowserContextOptions(options: types.BrowserContextOptio
   if (options.acceptDownloads === undefined)
     options.acceptDownloads = true;
   if (options.serviceWorkerPolicy === undefined)
-    options.serviceWorkerPolicy = { canned: 'default' };
+    options.serviceWorkerPolicy = 'default';
   if (!options.viewport && !options.noDefaultViewport)
     options.viewport = { width: 1280, height: 720 };
   if (options.recordVideo) {

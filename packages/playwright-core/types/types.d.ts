@@ -10365,9 +10365,24 @@ export interface BrowserType<Unused = {}> {
     };
 
     /**
-     * If set to `disabled`, all Service Worker registrations will be blocked.
+     * - `"default"`: Sites can register
+     *   [Service Workers](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API). However, the Network
+     *   requests from within the Service Worker (as well as the main Service Worker script request itself) are not reported
+     *   in
+     *   [browserContext.route(url, handler[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-route)
+     *   nor
+     *   [browserContext.on('request')](https://playwright.dev/docs/api/class-browsercontext#browser-context-event-request)
+     *   event listeners.
+     * - `"disabled"`: Blocks all registration of Service Workers.
+     * - `"inspected"`: Service Workers are enabled, and their Network Requests will show up in
+     *   [browserContext.route(url, handler[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-route)
+     *   and the
+     *   [browserContext.on('request')](https://playwright.dev/docs/api/class-browsercontext#browser-context-event-request)
+     *   event listeners as well as the HAR.
+     *
+     * Defaults to `"default"`.
      */
-    serviceWorkerPolicy?: ServiceWorkerPolicy;
+    serviceWorkerPolicy?: "default"|"disabled"|"inspected";
 
     /**
      * Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on.
@@ -11523,9 +11538,24 @@ export interface AndroidDevice {
     };
 
     /**
-     * If set to `disabled`, all Service Worker registrations will be blocked.
+     * - `"default"`: Sites can register
+     *   [Service Workers](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API). However, the Network
+     *   requests from within the Service Worker (as well as the main Service Worker script request itself) are not reported
+     *   in
+     *   [browserContext.route(url, handler[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-route)
+     *   nor
+     *   [browserContext.on('request')](https://playwright.dev/docs/api/class-browsercontext#browser-context-event-request)
+     *   event listeners.
+     * - `"disabled"`: Blocks all registration of Service Workers.
+     * - `"inspected"`: Service Workers are enabled, and their Network Requests will show up in
+     *   [browserContext.route(url, handler[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-route)
+     *   and the
+     *   [browserContext.on('request')](https://playwright.dev/docs/api/class-browsercontext#browser-context-event-request)
+     *   event listeners as well as the HAR.
+     *
+     * Defaults to `"default"`.
      */
-    serviceWorkerPolicy?: ServiceWorkerPolicy;
+    serviceWorkerPolicy?: "default"|"disabled"|"inspected";
 
     /**
      * If specified, enables strict selectors mode for this context. In the strict selectors mode all operations on selectors
@@ -13049,9 +13079,24 @@ export interface Browser extends EventEmitter {
     };
 
     /**
-     * If set to `disabled`, all Service Worker registrations will be blocked.
+     * - `"default"`: Sites can register
+     *   [Service Workers](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API). However, the Network
+     *   requests from within the Service Worker (as well as the main Service Worker script request itself) are not reported
+     *   in
+     *   [browserContext.route(url, handler[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-route)
+     *   nor
+     *   [browserContext.on('request')](https://playwright.dev/docs/api/class-browsercontext#browser-context-event-request)
+     *   event listeners.
+     * - `"disabled"`: Blocks all registration of Service Workers.
+     * - `"inspected"`: Service Workers are enabled, and their Network Requests will show up in
+     *   [browserContext.route(url, handler[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-route)
+     *   and the
+     *   [browserContext.on('request')](https://playwright.dev/docs/api/class-browsercontext#browser-context-event-request)
+     *   event listeners as well as the HAR.
+     *
+     * Defaults to `"default"`.
      */
-    serviceWorkerPolicy?: ServiceWorkerPolicy;
+    serviceWorkerPolicy?: "default"|"disabled"|"inspected";
 
     /**
      * Populates context with given storage state. This option can be used to initialize context with logged-in information
@@ -14605,6 +14650,14 @@ export interface Response {
   frame(): Frame;
 
   /**
+   * > NOTE: This field is Chromium only. It's safe to call when using other browsers, but it will always be `null`.
+   *
+   * If set, indicates whether this Response was fullfilled by a Service Worker's Fetch Handler (i.e. via
+   * [FetchEvent.respondWith](https://developer.mozilla.org/en-US/docs/Web/API/FetchEvent/respondWith)).
+   */
+  fulfilledByServiceWorker(): null|boolean;
+
+  /**
    * **DEPRECATED** Incomplete list of headers as seen by the rendering engine. Use
    * [response.allHeaders()](https://playwright.dev/docs/api/class-response#response-all-headers) instead.
    * @deprecated
@@ -14641,14 +14694,6 @@ export interface Response {
    * @param name Name of the header.
    */
   headerValues(name: string): Promise<Array<string>>;
-
-  /**
-   * > NOTE: This field is Chromium only. It's safe to call when using other browsers, but it will always be `null`.
-   *
-   * If set, indicates whether this Response was fullfilled by a Service Worker's Fetch Handler (i.e. via
-   * [FetchEvent.respondWith](https://developer.mozilla.org/en-US/docs/Web/API/FetchEvent/respondWith)).
-   */
-  isFromServiceWorker(): null|boolean;
 
   /**
    * Returns the JSON representation of response body.
@@ -15510,9 +15555,24 @@ export interface BrowserContextOptions {
   };
 
   /**
-   * If set to `disabled`, all Service Worker registrations will be blocked.
+   * - `"default"`: Sites can register
+   *   [Service Workers](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API). However, the Network
+   *   requests from within the Service Worker (as well as the main Service Worker script request itself) are not reported
+   *   in
+   *   [browserContext.route(url, handler[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-route)
+   *   nor
+   *   [browserContext.on('request')](https://playwright.dev/docs/api/class-browsercontext#browser-context-event-request)
+   *   event listeners.
+   * - `"disabled"`: Blocks all registration of Service Workers.
+   * - `"inspected"`: Service Workers are enabled, and their Network Requests will show up in
+   *   [browserContext.route(url, handler[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-route)
+   *   and the
+   *   [browserContext.on('request')](https://playwright.dev/docs/api/class-browsercontext#browser-context-event-request)
+   *   event listeners as well as the HAR.
+   *
+   * Defaults to `"default"`.
    */
-  serviceWorkerPolicy?: ServiceWorkerPolicy;
+  serviceWorkerPolicy?: "default"|"disabled"|"inspected";
 
   /**
    * Populates context with given storage state. This option can be used to initialize context with logged-in information

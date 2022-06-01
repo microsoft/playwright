@@ -390,12 +390,6 @@ async function prepareStorageState(options: BrowserContextOptions): Promise<chan
   }
 }
 
-function prepareServiceWorkerPolicy(options: BrowserContextOptions): channels.BrowserNewContextParams['serviceWorkerPolicy'] {
-  if (typeof options.serviceWorkerPolicy === 'string')
-    return { canned: options.serviceWorkerPolicy };
-  return options.serviceWorkerPolicy;
-}
-
 export async function prepareBrowserContextParams(options: BrowserContextOptions): Promise<channels.BrowserNewContextParams> {
   if (options.videoSize && !options.videosPath)
     throw new Error(`"videoSize" option requires "videosPath" to be specified`);
@@ -407,7 +401,7 @@ export async function prepareBrowserContextParams(options: BrowserContextOptions
     noDefaultViewport: options.viewport === null,
     extraHTTPHeaders: options.extraHTTPHeaders ? headersObjectToArray(options.extraHTTPHeaders) : undefined,
     storageState: await prepareStorageState(options),
-    serviceWorkerPolicy: prepareServiceWorkerPolicy(options),
+    serviceWorkerPolicy: options.serviceWorkerPolicy,
   };
   if (!contextParams.recordVideo && options.videosPath) {
     contextParams.recordVideo = {

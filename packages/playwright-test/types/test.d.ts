@@ -2770,7 +2770,22 @@ export interface PlaywrightTestOptions {
    */
   navigationTimeout: number | undefined;
   /**
-   * If set to `disabled`, all Service Worker registrations will be blocked.
+   * - `"default"`: Sites can register
+   *   [Service Workers](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API). However, the Network
+   *   requests from within the Service Worker (as well as the main Service Worker script request itself) are not reported
+   *   in
+   *   [browserContext.route(url, handler[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-route)
+   *   nor
+   *   [browserContext.on('request')](https://playwright.dev/docs/api/class-browsercontext#browser-context-event-request)
+   *   event listeners.
+   * - `"disabled"`: Blocks all registration of Service Workers.
+   * - `"inspected"`: Service Workers are enabled, and their Network Requests will show up in
+   *   [browserContext.route(url, handler[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-route)
+   *   and the
+   *   [browserContext.on('request')](https://playwright.dev/docs/api/class-browsercontext#browser-context-event-request)
+   *   event listeners as well as the HAR.
+   *
+   * Defaults to `"default"`.
    */
   serviceWorkerPolicy: ServiceWorkerPolicy | undefined;
 }
