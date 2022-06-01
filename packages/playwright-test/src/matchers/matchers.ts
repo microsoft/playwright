@@ -234,13 +234,20 @@ export function toHaveText(
 export function toHaveValue(
   this: ReturnType<Expect['getState']>,
   locator: LocatorEx,
-  expected: string | RegExp,
+  expected: string | RegExp | (string | RegExp)[],
   options?: { timeout?: number },
 ) {
-  return toMatchText.call(this, 'toHaveValue', locator, 'Locator', async (isNot, timeout, customStackTrace) => {
-    const expectedText = toExpectedTextValues([expected]);
-    return await locator._expect(customStackTrace, 'to.have.value', { expectedText, isNot, timeout });
-  }, expected, options);
+  if (Array.isArray(expected)) {
+    return toEqual.call(this, 'toHaveValue', locator, 'Locator', async (isNot, timeout, customStackTrace) => {
+      const expectedText = toExpectedTextValues(expected);
+      return await locator._expect(customStackTrace, 'to.have.value', { expectedText, isNot, timeout });
+    }, expected, options);
+  } else {
+    return toMatchText.call(this, 'toHaveValue', locator, 'Locator', async (isNot, timeout, customStackTrace) => {
+      const expectedText = toExpectedTextValues([expected]);
+      return await locator._expect(customStackTrace, 'to.have.value', { expectedText, isNot, timeout });
+    }, expected, options);
+  }
 }
 
 export function toHaveTitle(

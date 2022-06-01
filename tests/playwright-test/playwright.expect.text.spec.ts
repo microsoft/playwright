@@ -412,6 +412,130 @@ test('should support toHaveValue failing', async ({ runInlineTest }) => {
   expect(result.output).toContain('"Text content"');
 });
 
+test.describe('should support toHaveValue with multi-select', () => {
+  test('works with text', async ({ runInlineTest }) => {
+    const result = await runInlineTest({
+      'a.test.ts': `
+        const { test } = pwt;
+
+        test('pass', async ({ page }) => {
+          await page.setContent(\`
+            <select multiple>
+              <option value="R">Red</option>
+              <option value="G">Green</option>
+              <option value="B">Blue</option>
+            </select>
+          \`);
+          const locator = page.locator('select');
+          await locator.selectOption(['R', 'G']);
+          await expect(locator).toHaveValue(['R', 'G']);
+        });
+        `,
+    }, { workers: 1 });
+    expect(result.passed).toBe(1);
+    expect(result.exitCode).toBe(0);
+  });
+
+  test('works with regex', async ({ runInlineTest }) => {
+    const result = await runInlineTest({
+      'a.test.ts': `
+        const { test } = pwt;
+
+        test('pass', async ({ page }) => {
+          await page.setContent(\`
+            <select multiple>
+              <option value="R">Red</option>
+              <option value="G">Green</option>
+              <option value="B">Blue</option>
+            </select>
+          \`);
+          const locator = page.locator('select');
+          await locator.selectOption(['R', 'G']);
+          await expect(locator).toHaveValue([/R/, /G/]);
+        });
+        `,
+    }, { workers: 1 });
+    expect(result.passed).toBe(1);
+    expect(result.exitCode).toBe(0);
+  });
+
+  test('fails when items not selected', async ({ runInlineTest }) => {
+    const result = await runInlineTest({
+      'a.test.ts': `
+        const { test } = pwt;
+
+        test('pass', async ({ page }) => {
+          await page.setContent(\`
+            <select multiple>
+              <option value="R">Red</option>
+              <option value="G">Green</option>
+              <option value="B">Blue</option>
+            </select>
+          \`);
+          const locator = page.locator('select');
+          await locator.selectOption(['B']);
+          await expect(locator).toHaveValue([/R/, /G/]);
+        });
+        `,
+    }, { workers: 1 });
+    expect(result.passed).toBe(0);
+    expect(result.exitCode).toBe(1);
+    expect(stripAnsi(result.output)).toContain(`
+    - Expected  - 2
+    + Received  + 1
+
+      Array [
+    -   /R/,
+    -   /G/,
+    +   "B",
+      ]
+`);
+  });
+
+  test('fails when multiple not specified', async ({ runInlineTest }) => {
+    const result = await runInlineTest({
+      'a.test.ts': `
+        const { test } = pwt;
+
+        test('pass', async ({ page }) => {
+          await page.setContent(\`
+            <select>
+              <option value="R">Red</option>
+              <option value="G">Green</option>
+              <option value="B">Blue</option>
+            </select>
+          \`);
+          const locator = page.locator('select');
+          await locator.selectOption(['B']);
+          await expect(locator).toHaveValue([/R/, /G/]);
+        });
+        `,
+    }, { workers: 1 });
+    expect(result.passed).toBe(0);
+    expect(result.exitCode).toBe(1);
+    expect(result.output).toContain('Not a select element with a multiple attribute');
+  });
+
+  test('fails when not a select element', async ({ runInlineTest }) => {
+    const result = await runInlineTest({
+      'a.test.ts': `
+        const { test } = pwt;
+
+        test('pass', async ({ page }) => {
+          await page.setContent(\`
+            <input value="foo" />
+          \`);
+          const locator = page.locator('input');
+          await expect(locator).toHaveValue([/R/, /G/]);
+        });
+        `,
+    }, { workers: 1 });
+    expect(result.passed).toBe(0);
+    expect(result.exitCode).toBe(1);
+    expect(result.output).toContain('Not a select element with a multiple attribute');
+  });
+});
+
 test('should print expected/received before timeout', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `

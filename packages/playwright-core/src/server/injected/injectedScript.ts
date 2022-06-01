@@ -1051,6 +1051,31 @@ export class InjectedScript {
       }
     }
 
+    // Multi-Select/Combobox
+    {
+      if (expression === 'to.have.value' && options.expectedText?.length && options.expectedText.length >= 2) {
+        if (element.nodeName !== 'SELECT' || !(element as HTMLSelectElement).multiple)
+          throw this.createStacklessError('Not a select element with a multiple attribute');
+
+        const received = [...(element as HTMLSelectElement).selectedOptions].map(o => o.value);
+        if (received.length !== options.expectedText.length)
+          return { received, matches: false };
+
+        let i = 0;
+        const matchers = options.expectedText.map(e => new ExpectedTextMatcher(e));
+        let allMatchesFound = true;
+        for (const matcher of matchers) {
+          while (i < received.length && !matcher.matches(received[i]))
+            i++;
+          if (i >= received.length) {
+            allMatchesFound = false;
+            break;
+          }
+        }
+        return { received, matches: allMatchesFound };
+      }
+    }
+
     {
       // Single text value.
       let received: string | undefined;
@@ -1072,7 +1097,7 @@ export class InjectedScript {
         element = this.retarget(element, 'follow-label')!;
         if (element.nodeName !== 'INPUT' && element.nodeName !== 'TEXTAREA' && element.nodeName !== 'SELECT')
           throw this.createStacklessError('Not an input element');
-        received = (element as any).value;
+        received = (element as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement).value;
       }
 
       if (received !== undefined && options.expectedText) {

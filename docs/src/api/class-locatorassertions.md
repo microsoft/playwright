@@ -293,9 +293,9 @@ Whether to use `element.innerText` instead of `element.textContent` when retriev
 The opposite of [`method: LocatorAssertions.toHaveValue`].
 
 ### param: LocatorAssertions.NotToHaveValue.value
-- `value` <[string]|[RegExp]>
+- `value` <[string]|[RegExp]|[Array]<[string]|[RegExp]>>
 
-Expected value.
+Expected value. A list of expected values can be used if the Locator is a `select` element with the `multiple` attribute.
 
 ### option: LocatorAssertions.NotToHaveValue.timeout = %%-js-assertions-timeout-%%
 ### option: LocatorAssertions.NotToHaveValue.timeout = %%-csharp-java-python-assertions-timeout-%%
@@ -1201,9 +1201,9 @@ await Expect(locator).ToHaveValueAsync(new Regex("[0-9]"));
 ```
 
 ### param: LocatorAssertions.toHaveValue.value
-- `value` <[string]|[RegExp]>
+- `value` <[string]|[RegExp]|[Array]<[string]|[RegExp]>>
 
-Expected value.
+Expected value. A list of expected values can be used if the Locator is a `select` element with the `multiple` attribute.
 
 ### option: LocatorAssertions.toHaveValue.timeout = %%-js-assertions-timeout-%%
 ### option: LocatorAssertions.toHaveValue.timeout = %%-csharp-java-python-assertions-timeout-%%
