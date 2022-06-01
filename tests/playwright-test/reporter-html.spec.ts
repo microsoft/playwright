@@ -198,7 +198,7 @@ test('should include multiple image diffs', async ({ runInlineTest, page, showRe
         await expect.soft(page).toHaveScreenshot({ timeout: 1000 });
       });
     `,
-  }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never', PLAYWRIGHT_EXPERIMENTAL_FEATURES: '1' });
+  }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
 
@@ -264,7 +264,7 @@ test('should include image diff when screenshot failed to generate due to animat
         await expect.soft(page).toHaveScreenshot({ timeout: 1000 });
       });
     `,
-  }, { 'reporter': 'dot,html', 'update-snapshots': true }, { PW_TEST_HTML_REPORT_OPEN: 'never', PLAYWRIGHT_EXPERIMENTAL_FEATURES: '1' });
+  }, { 'reporter': 'dot,html', 'update-snapshots': true }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
 

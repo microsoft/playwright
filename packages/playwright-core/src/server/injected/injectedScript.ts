@@ -79,7 +79,7 @@ export class InjectedScript {
   private _highlight: Highlight | undefined;
   readonly isUnderTest: boolean;
 
-  constructor(isUnderTest: boolean, stableRafCount: number, browserName: string, experimentalFeaturesEnabled: boolean, customEngines: { name: string, engine: SelectorEngine}[]) {
+  constructor(isUnderTest: boolean, stableRafCount: number, browserName: string, customEngines: { name: string, engine: SelectorEngine}[]) {
     this.isUnderTest = isUnderTest;
     this._evaluator = new SelectorEvaluatorImpl(new Map());
 
