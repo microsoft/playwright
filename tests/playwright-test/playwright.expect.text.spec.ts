@@ -436,6 +436,30 @@ test.describe('should support toHaveValue with multi-select', () => {
     expect(result.exitCode).toBe(0);
   });
 
+  test('follows labels', async ({ runInlineTest }) => {
+    const result = await runInlineTest({
+      'a.test.ts': `
+        const { test } = pwt;
+
+        test('pass', async ({ page }) => {
+          await page.setContent(\`
+            <label for="colors">Pick a Color</label>
+            <select id="colors" multiple>
+              <option value="R">Red</option>
+              <option value="G">Green</option>
+              <option value="B">Blue</option>
+            </select>
+          \`);
+          const locator = page.locator('text=Pick a Color');
+          await locator.selectOption(['R', 'G']);
+          await expect(locator).toHaveValue(['R', 'G']);
+        });
+        `,
+    }, { workers: 1 });
+    expect(result.passed).toBe(1);
+    expect(result.exitCode).toBe(0);
+  });
+
   test('exact match with text', async ({ runInlineTest }) => {
     const result = await runInlineTest({
       'a.test.ts': `
