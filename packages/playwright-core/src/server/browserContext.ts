@@ -129,7 +129,6 @@ export abstract class BrowserContext extends SdkObject {
 
         navigator.serviceWorker.register = () => {
           console.warn('Service Worker registration disabled by Playwright');
-          return Promise.reject('Service Worker registration disabled by Playwright');
         };
 
         // END Service Worker Policy Injected Script

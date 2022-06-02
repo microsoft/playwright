@@ -15,28 +15,18 @@
  */
 import { browserTest as it, expect } from '../config/browserTest';
 
-it('should allow service workers by default', async ({ contextFactory, server }) => {
-  const context = await contextFactory();
-  const page = await context.newPage();
+it('should allow service workers by default', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/serviceworkers/empty/sw.html');
   await expect(page.evaluate(() => window['registrationPromise'])).resolves.toBeTruthy();
-  await context.close();
 });
 
+it.describe('disabled', () => {
+  it.use({ serviceWorkerPolicy: 'disabled' });
 
-it('should fail service worker registrations', async ({ contextFactory, server, browserName }) => {
-  const context = await contextFactory({
-    serviceWorkerPolicy: 'disabled',
+  it('blocks service worker registration', async ({ page, server }) => {
+    await Promise.all([
+      page.waitForEvent('console', evt => evt.text() === 'Service Worker registration disabled by Playwright'),
+      page.goto(server.PREFIX + '/serviceworkers/empty/sw.html'),
+    ]);
   });
-  const page = await context.newPage();
-  await Promise.all([
-    page.waitForEvent('console', evt => evt.text() === 'Service Worker registration disabled by Playwright'),
-    page.goto(server.PREFIX + '/serviceworkers/empty/sw.html'),
-  ]);
-  const err = await page.evaluate(() => window['registrationPromise']).catch(e => `REJECTED: ${e}`);
-  if (browserName === 'firefox')
-    expect(err).toMatch(/^REJECTED:.*undefined/);
-  else
-    expect(err).toMatch(/^REJECTED:.*Service Worker registration disabled by Playwright/);
-  await context.close();
 });
