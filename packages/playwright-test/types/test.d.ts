@@ -3558,10 +3558,10 @@ interface LocatorAssertions {
    * await expect(locator).toHaveValues([/R/, /G/]);
    * ```
    *
-   * @param value Expected optinos currently selected.
+   * @param values Expected options currently selected.
    * @param options
    */
-  toHaveValues(value: Array<string|RegExp>, options?: {
+  toHaveValues(values: Array<string|RegExp>, options?: {
     /**
      * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
      */

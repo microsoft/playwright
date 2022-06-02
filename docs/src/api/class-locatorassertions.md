@@ -305,10 +305,10 @@ Expected value.
 
 The opposite of [`method: LocatorAssertions.toHaveValues`].
 
-### param: LocatorAssertions.NotToHaveValues.value
-- `value` <[Array]<[string]|[RegExp]>>
+### param: LocatorAssertions.NotToHaveValues.values
+- `values` <[Array]<[string]|[RegExp]>>
 
-Expected value.
+Expected options currently selected.
 
 ### option: LocatorAssertions.NotToHaveValues.timeout = %%-js-assertions-timeout-%%
 ### option: LocatorAssertions.NotToHaveValues.timeout = %%-csharp-java-python-assertions-timeout-%%
@@ -1271,10 +1271,10 @@ await locator.SelectOptionAsync(new string[] { "R", "G" })
 await Expect(locator).ToHaveValuesAsync(new Regex[] { new Regex("R"), new Regex("G") });
 ```
 
-### param: LocatorAssertions.toHaveValues.value
-- `value` <[Array]<[string]|[RegExp]>>
+### param: LocatorAssertions.toHaveValues.values
+- `values` <[Array]<[string]|[RegExp]>>
 
-Expected optinos currently selected.
+Expected options currently selected.
 
 ### option: LocatorAssertions.toHaveValues.timeout = %%-js-assertions-timeout-%%
 ### option: LocatorAssertions.toHaveValues.timeout = %%-csharp-java-python-assertions-timeout-%%
