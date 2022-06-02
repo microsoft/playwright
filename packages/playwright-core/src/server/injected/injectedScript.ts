@@ -1060,19 +1060,7 @@ export class InjectedScript {
         const received = [...(element as HTMLSelectElement).selectedOptions].map(o => o.value);
         if (received.length !== options.expectedText.length)
           return { received, matches: false };
-
-        let i = 0;
-        const matchers = options.expectedText.map(e => new ExpectedTextMatcher(e));
-        let allMatchesFound = true;
-        for (const matcher of matchers) {
-          while (i < received.length && !matcher.matches(received[i]))
-            i++;
-          if (i >= received.length) {
-            allMatchesFound = false;
-            break;
-          }
-        }
-        return { received, matches: allMatchesFound };
+        return { received, matches: received.map((r, i) => new ExpectedTextMatcher(options.expectedText![i]).matches(r)).every(Boolean) };
       }
     }
 

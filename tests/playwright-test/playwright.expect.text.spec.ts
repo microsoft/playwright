@@ -436,6 +436,39 @@ test.describe('should support toHaveValue with multi-select', () => {
     expect(result.exitCode).toBe(0);
   });
 
+  test('exact match with text', async ({ runInlineTest }) => {
+    const result = await runInlineTest({
+      'a.test.ts': `
+        const { test } = pwt;
+
+        test('pass', async ({ page }) => {
+          await page.setContent(\`
+            <select multiple>
+              <option value="RR">Red</option>
+              <option value="GG">Green</option>
+            </select>
+          \`);
+          const locator = page.locator('select');
+          await locator.selectOption(['RR', 'GG']);
+          await expect(locator).toHaveValue(['R', 'G']);
+        });
+        `,
+    }, { workers: 1 });
+    expect(result.passed).toBe(0);
+    expect(result.exitCode).toBe(1);
+    expect(stripAnsi(result.output)).toContain(`
+    - Expected  - 2
+    + Received  + 2
+
+      Array [
+    -   "R",
+    -   "G",
+    +   "RR",
+    +   "GG",
+      ]
+`);
+  });
+
   test('works with regex', async ({ runInlineTest }) => {
     const result = await runInlineTest({
       'a.test.ts': `
