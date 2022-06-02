@@ -297,7 +297,7 @@ export function rewriteURLForCustomProtocol(href: string): string {
   try {
     const url = new URL(href);
     // Sanitize URL.
-    if (url.protocol === 'javascript:')
+    if (url.protocol === 'javascript:' || url.protocol === 'vbscript:')
       return 'javascript:void(0)';
 
     // Pass through if possible.
