@@ -23,11 +23,11 @@ import { parse, traverse, types as t } from '../babelBundle';
 import type { ComponentInfo } from '../tsxTransform';
 import { collectComponentUsages, componentInfo } from '../tsxTransform';
 import type { FullConfig } from '../types';
-import { assert } from 'playwright-core/lib/utils';
+import { assert, calculateSha1 } from 'playwright-core/lib/utils';
 import type { AddressInfo } from 'net';
 
 let previewServer: PreviewServer;
-const VERSION = 3;
+const VERSION = 4;
 
 type CtConfig = {
   ctPort?: number;
@@ -58,13 +58,19 @@ export function createPlugin(
       const buildInfoFile = path.join(outDir, 'metainfo.json');
       let buildExists = false;
       let buildInfo: BuildInfo;
+
+      const registerSource = await fs.promises.readFile(registerSourceFile, 'utf-8');
+      const registerSourceHash = calculateSha1(registerSource);
+
       try {
         buildInfo = JSON.parse(await fs.promises.readFile(buildInfoFile, 'utf-8')) as BuildInfo;
         assert(buildInfo.version === VERSION);
+        assert(buildInfo.registerSourceHash === registerSourceHash);
         buildExists = true;
       } catch (e) {
         buildInfo = {
           version: VERSION,
+          registerSourceHash,
           components: [],
           tests: {},
           sources: {},
@@ -106,7 +112,6 @@ export function createPlugin(
         viteConfig.plugins = viteConfig.plugins || [
           frameworkPluginFactory()
         ];
-        const registerSource = await fs.promises.readFile(registerSourceFile, 'utf-8');
         viteConfig.plugins.push(vitePlugin(registerSource, relativeTemplateDir, buildInfo, componentRegistry));
         viteConfig.configFile = viteConfig.configFile || false;
         viteConfig.define = viteConfig.define || {};
@@ -149,6 +154,7 @@ export function createPlugin(
 
 type BuildInfo = {
   version: number,
+  registerSourceHash: string,
   sources: {
     [key: string]: {
       timestamp: number;

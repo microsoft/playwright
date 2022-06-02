@@ -1,0 +1,9 @@
+**/*
+
+!README.md
+!LICENSE
+!register.d.ts
+!register.mjs
+!registerSource.mjs
+!index.d.ts
+!index.js
