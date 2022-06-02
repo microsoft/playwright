@@ -145,3 +145,128 @@ test('should use source maps w/ ESM', async ({ runInlineTest, nodeVersion }) => 
   expect(result.passed).toBe(1);
   expect(output).toContain('a.test.ts:7:7');
 });
+
+test('should complain about test.use() in esm imported file - 1', async ({ runInlineTest, nodeVersion }) => {
+  // We only support experimental esm mode on Node 16+
+  test.skip(nodeVersion.major < 16);
+  const result = await runInlineTest({
+    'package.json': `{ "type": "module" }`,
+    'playwright.config.ts': `export default {};`,
+    'helper.ts': `
+      pwt.test.use({ headless: true });
+      export function bad() {}
+    `,
+    'test2.spec.ts': `
+      import { bad } from './helper.ts';
+      pwt.test('test', async ({}) => {});
+    `
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain('Call it directly in the test file instead.');
+});
+
+test('should complain about test.use() in esm imported file - 2', async ({ runInlineTest, nodeVersion }) => {
+  // We only support experimental esm mode on Node 16+
+  test.skip(nodeVersion.major < 16);
+  const result = await runInlineTest({
+    'package.json': `{ "type": "module" }`,
+    'playwright.config.ts': `export default {};`,
+    'helper.ts': `
+      export function bad() {
+        pwt.test.use({ headless: true });
+      }
+      bad();
+    `,
+    'test2.spec.ts': `
+      import { bad } from './helper.ts';
+      pwt.test('test', async ({}) => {});
+    `
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain('Call it directly in the test file instead.');
+});
+
+test('should complain about test.use() in esm imported file - 3', async ({ runInlineTest, nodeVersion }) => {
+  // We only support experimental esm mode on Node 16+
+  test.skip(nodeVersion.major < 16);
+  const result = await runInlineTest({
+    'package.json': `{ "type": "module" }`,
+    'playwright.config.ts': `export default {};`,
+    'helper.ts': `
+      export function bad() {
+        pwt.test.use({ headless: true });
+      }
+      await new Promise(f => setTimeout(f, 100)).then(() => bad());
+    `,
+    'test2.spec.ts': `
+      import { bad } from './helper.ts';
+      pwt.test('test', async ({}) => {});
+    `
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain('Call it directly in the test file instead.');
+});
+
+test('should complain about test.use() in esm imported file - 4', async ({ runInlineTest, nodeVersion }) => {
+  // We only support experimental esm mode on Node 16+
+  test.skip(nodeVersion.major < 16);
+  const result = await runInlineTest({
+    'package.json': `{ "type": "module" }`,
+    'playwright.config.ts': `export default {};`,
+    'helper.ts': `
+      export function bad() {
+        pwt.test.use({ headless: true });
+      }
+      await new Promise(f => setTimeout(f, 100))
+      await bad();
+    `,
+    'test2.spec.ts': `
+      import { bad } from './helper.ts';
+      pwt.test('test', async ({}) => {});
+    `
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain('Call it directly in the test file instead.');
+});
+
+test('should complain about test.use() in esm imported file - 5', async ({ runInlineTest, nodeVersion }) => {
+  // We only support experimental esm mode on Node 16+
+  test.skip(nodeVersion.major < 16);
+  const result = await runInlineTest({
+    'package.json': `{ "type": "module" }`,
+    'playwright.config.ts': `export default {};`,
+    'helper.ts': `
+      pwt.test.use({ headless: true });
+    `,
+    'test2.spec.ts': `
+      async function bad() {
+        await import('./helper.ts');
+      }
+      pwt.test('test', async ({}) => {});
+      await bad();
+    `
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain('Call it directly in the test file instead.');
+});
+
+test('should not complain about test.use() in esm imported helper func - 1', async ({ runInlineTest, nodeVersion }) => {
+  // We only support experimental esm mode on Node 16+
+  test.skip(nodeVersion.major < 16);
+  const result = await runInlineTest({
+    'package.json': `{ "type": "module" }`,
+    'playwright.config.ts': `export default {};`,
+    'helper.ts': `
+      export function bad() {
+        pwt.test.use({ headless: true });
+      }
+    `,
+    'test2.spec.ts': `
+      import { bad } from './helper.ts';
+      bad();
+      pwt.test('test', async ({}) => {});
+    `
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});

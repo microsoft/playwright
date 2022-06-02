@@ -225,22 +225,54 @@ export function installTransform(): () => void {
   };
 }
 
-export function wrapFunctionWithLocation<A extends any[], R>(func: (location: Location, ...args: A) => R): (...args: A) => R {
+export type LocationWithTopLevelCallInFile = Location & { topLevelCallInFile?: string };
+
+export function wrapFunctionWithLocation<A extends any[], R>(func: (location: LocationWithTopLevelCallInFile, ...args: A) => R): (...args: A) => R {
   return (...args) => {
     const oldPrepareStackTrace = Error.prepareStackTrace;
+
     Error.prepareStackTrace = (error, stackFrames) => {
+      let topLevelCallInFile: string | undefined;
+      let seenImportOrRequire = false;
+      for (const frame of stackFrames) {
+        if (!topLevelCallInFile && frame.getFunctionName() === null && frame.getMethodName() === null)
+          topLevelCallInFile = frame.getFileName() || undefined;
+
+        // CommonJS, tested on node 12, 14, 16, 18
+        if (!seenImportOrRequire && frame.getFunctionName() === 'Module.require') {
+          const fileName = frame.getFileName() || '';
+          if (fileName.startsWith('node:internal/') || fileName.startsWith('internal/'))
+            seenImportOrRequire = true;
+        }
+
+        // ESM, tested on node 16, 18
+        if (!seenImportOrRequire && frame.getTypeName() === 'ModuleJob' && frame.getMethodName() === 'run') {
+          const fileName = frame.getFileName() || '';
+          if (fileName.startsWith('node:internal/'))
+            seenImportOrRequire = true;
+        }
+
+        // console.log(`fn: ${frame.getFunctionName()}/${frame.getMethodName()}/${frame.getTypeName()}, file: ${frame.getFileName()} ${frame.isNative()} ${frame.isToplevel()}`);
+        if (topLevelCallInFile && seenImportOrRequire)
+          break;
+      }
+      // console.log(`=====detected ${topLevelCallInFile} ${seenImportOrRequire}`);
+
       const frame: NodeJS.CallSite = sourceMapSupport.wrapCallSite(stackFrames[1]);
       const fileName = frame.getFileName();
       // Node error stacks for modules use file:// urls instead of paths.
       const file = (fileName && fileName.startsWith('file://')) ? url.fileURLToPath(fileName) : fileName;
+      if (topLevelCallInFile && topLevelCallInFile.startsWith('file://'))
+        topLevelCallInFile = url.fileURLToPath(topLevelCallInFile);
       return {
         file,
         line: frame.getLineNumber(),
         column: frame.getColumnNumber(),
+        topLevelCallInFile,
       };
     };
-    Error.stackTraceLimit = 2;
-    const obj: { stack: Location } = {} as any;
+    Error.stackTraceLimit = 20;
+    const obj: { stack: LocationWithTopLevelCallInFile } = {} as any;
     Error.captureStackTrace(obj);
     const location = obj.stack;
     Error.stackTraceLimit = kStackTraceLimit;

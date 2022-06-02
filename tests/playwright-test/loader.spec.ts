@@ -412,3 +412,68 @@ test('should work with cross-imports - 2', async ({ runInlineTest }) => {
   expect(result.output).toContain('TEST-1');
   expect(result.output).toContain('TEST-2');
 });
+
+test('should complain about test.use() in required file - 1', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'helper.ts': `
+      pwt.test.use({ headless: true });
+    `,
+    'test2.spec.ts': `
+      import * as _ from './helper.ts';
+      pwt.test('test', async ({}) => {});
+    `
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain('Call it directly in the test file instead.');
+});
+
+test('should complain about test.use() in required file - 2', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'helper.ts': `
+      function bad() {
+        pwt.test.use({ headless: true });
+      }
+      bad();
+    `,
+    'test2.spec.ts': `
+      import * as _ from './helper.ts';
+      pwt.test('test', async ({}) => {});
+    `
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain('Call it directly in the test file instead.');
+});
+
+test('should complain about test.use() in required file - 3', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'helper.ts': `
+      pwt.test.use({ headless: true });
+    `,
+    'test2.spec.ts': `
+      function bad() {
+        require('./helper.ts');
+      }
+      bad();
+      pwt.test('test', async ({}) => {});
+    `
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain('Call it directly in the test file instead.');
+});
+
+test('should not complain about test.use() in required helper func - 1', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'helper.ts': `
+      export function good() {
+        pwt.test.use({ headless: true });
+      }
+    `,
+    'test2.spec.ts': `
+      import { good } from './helper.ts';
+      good();
+      pwt.test('test', async ({}) => {});
+    `
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});

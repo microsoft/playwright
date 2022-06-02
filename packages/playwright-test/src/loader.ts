@@ -17,7 +17,7 @@
 import { installTransform } from './transform';
 import type { Config, Project, ReporterDescription, FullProjectInternal, FullConfigInternal, Fixtures, FixturesWithLocation } from './types';
 import { getPackageJsonPath, mergeObjects, errorWithFile } from './util';
-import { setCurrentlyLoadingFileSuite } from './globals';
+import { setCurrentlyLoadingFileSuite, setCurrentlyLoadingFile } from './globals';
 import { Suite, type TestCase } from './test';
 import type { SerializedLoaderData } from './ipc';
 import * as path from 'path';
@@ -154,6 +154,7 @@ export class Loader {
     suite.location = { file, line: 0, column: 0 };
 
     setCurrentlyLoadingFileSuite(suite);
+    setCurrentlyLoadingFile(file);
     try {
       await this._requireOrImport(file);
       cachedFileSuites.set(file, suite);
@@ -163,6 +164,7 @@ export class Loader {
       suite._loadError = serializeError(e);
     } finally {
       setCurrentlyLoadingFileSuite(undefined);
+      setCurrentlyLoadingFile(undefined);
     }
 
     {

@@ -32,3 +32,11 @@ export function setCurrentlyLoadingFileSuite(suite: Suite | undefined) {
 export function currentlyLoadingFileSuite() {
   return currentFileSuite;
 }
+
+let currentFile: string | undefined;
+export function setCurrentlyLoadingFile(file: string | undefined) {
+  currentFile = file;
+}
+export function currentlyLoadingFile() {
+  return currentFile;
+}

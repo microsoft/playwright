@@ -15,9 +15,9 @@
  */
 
 import { expect } from './expect';
-import { currentlyLoadingFileSuite, currentTestInfo, setCurrentlyLoadingFileSuite } from './globals';
+import { currentlyLoadingFile, currentlyLoadingFileSuite, currentTestInfo, setCurrentlyLoadingFileSuite } from './globals';
 import { TestCase, Suite } from './test';
-import { wrapFunctionWithLocation } from './transform';
+import { type LocationWithTopLevelCallInFile, wrapFunctionWithLocation } from './transform';
 import type { Fixtures, FixturesWithLocation, Location, TestType } from './types';
 import { errorWithLocation, serializeError } from './util';
 
@@ -194,8 +194,16 @@ export class TestTypeImpl {
     testInfo.setTimeout(timeout);
   }
 
-  private _use(location: Location, fixtures: Fixtures) {
+  private _use(location: LocationWithTopLevelCallInFile, fixtures: Fixtures) {
     const suite = this._ensureCurrentSuite(location, `test.use()`);
+    if (location.topLevelCallInFile && location.topLevelCallInFile !== currentlyLoadingFile()) {
+      throw errorWithLocation(location, [
+        `Playwright Test did not expect test.use() to be called here.`,
+        `Most common reasons include:`,
+        `- You are calling test.use() in a file imported from the test file.`,
+        `  Call it directly in the test file instead.`,
+      ].join('\n'));
+    }
     suite._use.push({ fixtures, location });
   }
 
