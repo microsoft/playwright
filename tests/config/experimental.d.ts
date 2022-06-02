@@ -10376,7 +10376,7 @@ export interface BrowserType<Unused = {}> {
      *   [browserContext.on('request')](https://playwright.dev/docs/api/class-browsercontext#browser-context-event-request)
      *   event listeners.
      * - `"disabled"`: Blocks all registration of Service Workers.
-     * - `"inspected"`: Service Workers are enabled, and their Network Requests will show up in
+     * - `"enable-network-events"`: Service Workers are enabled, and their Network Requests will show up in
      *   [browserContext.route(url, handler[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-route)
      *   and the
      *   [browserContext.on('request')](https://playwright.dev/docs/api/class-browsercontext#browser-context-event-request)
@@ -10384,7 +10384,7 @@ export interface BrowserType<Unused = {}> {
      *
      * Defaults to `"default"`.
      */
-    serviceWorkerPolicy?: "default"|"disabled"|"inspected";
+    serviceWorkerPolicy?: "default"|"disabled"|"enable-network-events";
 
     /**
      * Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on.
@@ -11549,7 +11549,7 @@ export interface AndroidDevice {
      *   [browserContext.on('request')](https://playwright.dev/docs/api/class-browsercontext#browser-context-event-request)
      *   event listeners.
      * - `"disabled"`: Blocks all registration of Service Workers.
-     * - `"inspected"`: Service Workers are enabled, and their Network Requests will show up in
+     * - `"enable-network-events"`: Service Workers are enabled, and their Network Requests will show up in
      *   [browserContext.route(url, handler[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-route)
      *   and the
      *   [browserContext.on('request')](https://playwright.dev/docs/api/class-browsercontext#browser-context-event-request)
@@ -11557,7 +11557,7 @@ export interface AndroidDevice {
      *
      * Defaults to `"default"`.
      */
-    serviceWorkerPolicy?: "default"|"disabled"|"inspected";
+    serviceWorkerPolicy?: "default"|"disabled"|"enable-network-events";
 
     /**
      * If specified, enables strict selectors mode for this context. In the strict selectors mode all operations on selectors
@@ -13090,7 +13090,7 @@ export interface Browser extends EventEmitter {
      *   [browserContext.on('request')](https://playwright.dev/docs/api/class-browsercontext#browser-context-event-request)
      *   event listeners.
      * - `"disabled"`: Blocks all registration of Service Workers.
-     * - `"inspected"`: Service Workers are enabled, and their Network Requests will show up in
+     * - `"enable-network-events"`: Service Workers are enabled, and their Network Requests will show up in
      *   [browserContext.route(url, handler[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-route)
      *   and the
      *   [browserContext.on('request')](https://playwright.dev/docs/api/class-browsercontext#browser-context-event-request)
@@ -13098,7 +13098,7 @@ export interface Browser extends EventEmitter {
      *
      * Defaults to `"default"`.
      */
-    serviceWorkerPolicy?: "default"|"disabled"|"inspected";
+    serviceWorkerPolicy?: "default"|"disabled"|"enable-network-events";
 
     /**
      * Populates context with given storage state. This option can be used to initialize context with logged-in information
@@ -15566,7 +15566,7 @@ export interface BrowserContextOptions {
    *   [browserContext.on('request')](https://playwright.dev/docs/api/class-browsercontext#browser-context-event-request)
    *   event listeners.
    * - `"disabled"`: Blocks all registration of Service Workers.
-   * - `"inspected"`: Service Workers are enabled, and their Network Requests will show up in
+   * - `"enable-network-events"`: Service Workers are enabled, and their Network Requests will show up in
    *   [browserContext.route(url, handler[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-route)
    *   and the
    *   [browserContext.on('request')](https://playwright.dev/docs/api/class-browsercontext#browser-context-event-request)
@@ -15574,7 +15574,7 @@ export interface BrowserContextOptions {
    *
    * Defaults to `"default"`.
    */
-  serviceWorkerPolicy?: "default"|"disabled"|"inspected";
+  serviceWorkerPolicy?: "default"|"disabled"|"enable-network-events";
 
   /**
    * Populates context with given storage state. This option can be used to initialize context with logged-in information
@@ -19098,7 +19098,7 @@ export interface PlaywrightTestOptions {
    *   [browserContext.on('request')](https://playwright.dev/docs/api/class-browsercontext#browser-context-event-request)
    *   event listeners.
    * - `"disabled"`: Blocks all registration of Service Workers.
-   * - `"inspected"`: Service Workers are enabled, and their Network Requests will show up in
+   * - `"enable-network-events"`: Service Workers are enabled, and their Network Requests will show up in
    *   [browserContext.route(url, handler[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-route)
    *   and the
    *   [browserContext.on('request')](https://playwright.dev/docs/api/class-browsercontext#browser-context-event-request)

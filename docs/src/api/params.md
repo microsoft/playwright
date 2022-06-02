@@ -641,11 +641,11 @@ on selectors that imply single target DOM element will throw when more than one 
 See [Locator] to learn more about the strict mode.
 
 ## context-option-service-worker-policy
-- `serviceWorkerPolicy` <[ServiceWorkerPolicy]<"default"|"disabled"|"inspected">>
+- `serviceWorkerPolicy` <[ServiceWorkerPolicy]<"default"|"disabled"|"enable-network-events">>
 
 * `"default"`: Sites can register [Service Workers](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API). However, the Network requests from within the Service Worker (as well as the main Service Worker script request itself) are not reported in [`method: BrowserContext.route`] nor [`event: BrowserContext.request`] event listeners.
 * `"disabled"`: Blocks all registration of Service Workers.
-* `"inspected"`: Service Workers are enabled, and their Network Requests will show up in [`method: BrowserContext.route`] and the [`event: BrowserContext.request`] event listeners as well as the HAR.
+* `"enable-network-events"`: Service Workers are enabled, and their Network Requests will show up in [`method: BrowserContext.route`] and the [`event: BrowserContext.request`] event listeners as well as the HAR.
 
 Defaults to `"default"`.
 

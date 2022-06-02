@@ -2779,7 +2779,7 @@ export interface PlaywrightTestOptions {
    *   [browserContext.on('request')](https://playwright.dev/docs/api/class-browsercontext#browser-context-event-request)
    *   event listeners.
    * - `"disabled"`: Blocks all registration of Service Workers.
-   * - `"inspected"`: Service Workers are enabled, and their Network Requests will show up in
+   * - `"enable-network-events"`: Service Workers are enabled, and their Network Requests will show up in
    *   [browserContext.route(url, handler[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-route)
    *   and the
    *   [browserContext.on('request')](https://playwright.dev/docs/api/class-browsercontext#browser-context-event-request)

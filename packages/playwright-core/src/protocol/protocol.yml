@@ -452,7 +452,7 @@ ContextOptions:
       literals:
       - default
       - disabled
-      - inspected
+      - enable-network-events
 
 LocalUtils:
   type: interface
