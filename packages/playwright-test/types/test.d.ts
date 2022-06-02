@@ -3528,10 +3528,10 @@ interface LocatorAssertions {
    * await expect(locator).toHaveValue(/[0-9]/);
    * ```
    *
-   * @param value Expected value.
+   * @param value Expected value. A list of expected values can be used if the Locator is a `select` element with the `multiple` attribute.
    * @param options
    */
-  toHaveValue(value: string|RegExp, options?: {
+  toHaveValue(value: string|RegExp|Array<string|RegExp>, options?: {
     /**
      * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
      */
