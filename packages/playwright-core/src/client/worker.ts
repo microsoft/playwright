@@ -26,6 +26,7 @@ import type * as structs from '../../types/structs';
 export class Worker extends ChannelOwner<channels.WorkerChannel> implements api.Worker {
   _page: Page | undefined;  // Set for web workers.
   _context: BrowserContext | undefined;  // Set for service workers.
+  _closedPromise: Promise<void>;
 
   static from(worker: channels.WorkerChannel): Worker {
     return (worker as any)._object;
@@ -40,6 +41,7 @@ export class Worker extends ChannelOwner<channels.WorkerChannel> implements api.
         this._context._serviceWorkers.delete(this);
       this.emit(Events.Worker.Close, this);
     });
+    this._closedPromise = new Promise(f => this.once(Events.Worker.Close, f));
   }
 
   url(): string {

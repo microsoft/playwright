@@ -233,21 +233,18 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
     return Request.from(this._initializer.request);
   }
 
-  private _raceWithPageClose(promise: Promise<any>): Promise<void> {
-    if (this.request().serviceWorker())
-      return Promise.resolve();
-    const page = this.request().frame()._page;
+  private _raceWithTargetClose(promise: Promise<any>): Promise<void> {
     // When page closes or crashes, we catch any potential rejects from this Route.
     // Note that page could be missing when routing popup's initial request that
     // does not have a Page initialized just yet.
     return Promise.race([
       promise,
-      page ? page._closedOrCrashedPromise : Promise.resolve(),
+      this.request().serviceWorker()?._closedPromise || this.request().frame()._page?._closedOrCrashedPromise || Promise.resolve(),
     ]);
   }
 
   async abort(errorCode?: string) {
-    await this._raceWithPageClose(this._channel.abort({ errorCode }));
+    await this._raceWithTargetClose(this._channel.abort({ errorCode }));
   }
 
   async fulfill(options: { response?: api.APIResponse, status?: number, headers?: Headers, contentType?: string, body?: string | Buffer, path?: string } = {}) {
@@ -290,7 +287,7 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
     if (length && !('content-length' in headers))
       headers['content-length'] = String(length);
 
-    await this._raceWithPageClose(this._channel.fulfill({
+    await this._raceWithTargetClose(this._channel.fulfill({
       status: statusOption || 200,
       headers: headersObjectToArray(headers),
       body,
@@ -310,7 +307,7 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
   private async _continue(options: { url?: string, method?: string, headers?: Headers, postData?: string | Buffer }, isInternal?: boolean) {
     return await this._wrapApiCall(async () => {
       const postDataBuffer = isString(options.postData) ? Buffer.from(options.postData, 'utf8') : options.postData;
-      await this._raceWithPageClose(this._channel.continue({
+      await this._raceWithTargetClose(this._channel.continue({
         url: options.url,
         method: options.method,
         headers: options.headers ? headersObjectToArray(options.headers) : undefined,
