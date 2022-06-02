@@ -57,9 +57,9 @@ it('should support timezoneId option', async ({ launchPersistent, browserName })
   expect(await page.evaluate(() => new Date(1479579154987).toString())).toBe('Sat Nov 19 2016 13:12:34 GMT-0500 (Eastern Standard Time)');
 });
 
-it('should support locale option', async ({ launchPersistent, browserName, isMac }) => {
-  const { page } = await launchPersistent({ locale: 'fr-CH' });
-  expect(await page.evaluate(() => navigator.language)).toBe(browserName === 'webkit' && isMac ? 'fr-FR' : 'fr-CH');
+it('should support locale option', async ({ launchPersistent }) => {
+  const { page } = await launchPersistent({ locale: 'fr-FR' });
+  expect(await page.evaluate(() => navigator.language)).toBe('fr-FR');
 });
 
 it('should support geolocation and permissions options', async ({ server, launchPersistent }) => {
