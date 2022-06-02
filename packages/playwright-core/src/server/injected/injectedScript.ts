@@ -1053,13 +1053,13 @@ export class InjectedScript {
 
     // Multi-Select/Combobox
     {
-      if (expression === 'to.have.value' && options.expectedText?.length && options.expectedText.length >= 2) {
+      if (expression === 'to.have.values') {
         element = this.retarget(element, 'follow-label')!;
         if (element.nodeName !== 'SELECT' || !(element as HTMLSelectElement).multiple)
           throw this.createStacklessError('Not a select element with a multiple attribute');
 
         const received = [...(element as HTMLSelectElement).selectedOptions].map(o => o.value);
-        if (received.length !== options.expectedText.length)
+        if (received.length !== options.expectedText!.length)
           return { received, matches: false };
         return { received, matches: received.map((r, i) => new ExpectedTextMatcher(options.expectedText![i]).matches(r)).every(Boolean) };
       }

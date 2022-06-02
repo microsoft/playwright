@@ -293,13 +293,25 @@ Whether to use `element.innerText` instead of `element.textContent` when retriev
 The opposite of [`method: LocatorAssertions.toHaveValue`].
 
 ### param: LocatorAssertions.NotToHaveValue.value
-- `value` <[string]|[RegExp]|[Array]<[string]|[RegExp]>>
+- `value` <[string]|[RegExp]>
 
-Expected value. A list of expected values can be used if the Locator is a `select` element with the `multiple` attribute.
+Expected value.
 
 ### option: LocatorAssertions.NotToHaveValue.timeout = %%-js-assertions-timeout-%%
 ### option: LocatorAssertions.NotToHaveValue.timeout = %%-csharp-java-python-assertions-timeout-%%
 
+## async method: LocatorAssertions.NotToHaveValues
+* langs: python
+
+The opposite of [`method: LocatorAssertions.toHaveValues`].
+
+### param: LocatorAssertions.NotToHaveValues.values
+- `values` <[Array]<[string]|[RegExp]>>
+
+Expected options currently selected.
+
+### option: LocatorAssertions.NotToHaveValues.timeout = %%-js-assertions-timeout-%%
+### option: LocatorAssertions.NotToHaveValues.timeout = %%-csharp-java-python-assertions-timeout-%%
 
 ## async method: LocatorAssertions.toBeChecked
 * langs:
@@ -1201,9 +1213,68 @@ await Expect(locator).ToHaveValueAsync(new Regex("[0-9]"));
 ```
 
 ### param: LocatorAssertions.toHaveValue.value
-- `value` <[string]|[RegExp]|[Array]<[string]|[RegExp]>>
+- `value` <[string]|[RegExp]>
 
-Expected value. A list of expected values can be used if the Locator is a `select` element with the `multiple` attribute.
+Expected value.
 
 ### option: LocatorAssertions.toHaveValue.timeout = %%-js-assertions-timeout-%%
 ### option: LocatorAssertions.toHaveValue.timeout = %%-csharp-java-python-assertions-timeout-%%
+
+## async method: LocatorAssertions.toHaveValues
+* langs:
+  - alias-java: hasValues
+
+Ensures the [Locator] points to multi-select/combobox (i.e. a `select` with the `multiple` attribute) and the specified values are selected.
+
+For example, given the following element:
+
+```html
+<select id="favorite-colors" multiple>
+  <option value="R">Red</option>
+  <option value="G">Green</option>
+  <option value="B">Blue</option>
+</select>
+```
+
+```js
+const locator = page.locator("id=favorite-colors");
+await locator.selectOption(["R", "G"]);
+await expect(locator).toHaveValues([/R/, /G/]);
+```
+
+```java
+page.locator("id=favorite-colors").selectOption(["R", "G"]);
+assertThat(page.locator("id=favorite-colors")).hasValues(new Pattern[] { Pattern.compile("R"), Pattern.compile("G") });
+```
+
+```python async
+import re
+from playwright.async_api import expect
+
+locator = page.locator("id=favorite-colors")
+await locator.select_option(["R", "G"])
+await expect(locator).to_have_values([re.compile(r"R"), re.compile(r"G")])
+```
+
+```python sync
+import re
+from playwright.sync_api import expect
+
+locator = page.locator("id=favorite-colors")
+locator.select_option(["R", "G"])
+expect(locator).to_have_values([re.compile(r"R"), re.compile(r"G")])
+```
+
+```csharp
+var locator = Page.Locator("id=favorite-colors");
+await locator.SelectOptionAsync(new string[] { "R", "G" })
+await Expect(locator).ToHaveValuesAsync(new Regex[] { new Regex("R"), new Regex("G") });
+```
+
+### param: LocatorAssertions.toHaveValues.values
+- `values` <[Array]<[string]|[RegExp]>>
+
+Expected options currently selected.
+
+### option: LocatorAssertions.toHaveValues.timeout = %%-js-assertions-timeout-%%
+### option: LocatorAssertions.toHaveValues.timeout = %%-csharp-java-python-assertions-timeout-%%
