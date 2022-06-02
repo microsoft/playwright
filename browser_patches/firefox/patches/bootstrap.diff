@@ -1961,6 +1961,21 @@ index 3ce936fe3a4a83f9161eddc9e5289322d6a363e3..6b1c34244d8b2f2102ec423e2d96812f
    void updateTimeZone();
  
    void internalResyncICUDefaultTimeZone();
+diff --git a/layout/base/PresShell.cpp b/layout/base/PresShell.cpp
+index 276efa425cf8450fb927f770b1d19aa1b5e9d179..471411459667e0864ea0c0f4ebc257327812d523 100644
+--- a/layout/base/PresShell.cpp
++++ b/layout/base/PresShell.cpp
+@@ -10874,7 +10874,9 @@ auto PresShell::ComputeActiveness() const -> Activeness {
+     if (!browserChild->IsVisible()) {
+       MOZ_LOG(gLog, LogLevel::Debug,
+               (" > BrowserChild %p is not visible", browserChild));
+-      return {false, inActiveTab};
++      bool isActive;
++      root->GetDocShell()->GetForceActiveState(&isActive);
++      return {isActive, inActiveTab};
+     }
+ 
+     // If the browser is visible but just due to be preserving layers
 diff --git a/layout/style/GeckoBindings.h b/layout/style/GeckoBindings.h
 index a384a0d00ce970a3e9db8983deaa012b45a76324..954bf59def43fdbb62924f35b45cde5f6c1a9fff 100644
 --- a/layout/style/GeckoBindings.h
@@ -2557,7 +2572,7 @@ diff --git a/widget/cocoa/NativeKeyBindings.mm b/widget/cocoa/NativeKeyBindings.
 index d3e5983259053175584254e7ac01ca9ce024f33a..97f5b851c402fea5477c0ee57af451c62b016eec 100644
 --- a/widget/cocoa/NativeKeyBindings.mm
 +++ b/widget/cocoa/NativeKeyBindings.mm
-@@ -492,6 +492,13 @@
+@@ -492,6 +492,13 @@ void NativeKeyBindings::GetEditCommandsForTests(NativeKeyBindingsType aType,
        break;
      case KEY_NAME_INDEX_ArrowLeft:
        if (aEvent.IsAlt()) {
@@ -2571,7 +2586,7 @@ index d3e5983259053175584254e7ac01ca9ce024f33a..97f5b851c402fea5477c0ee57af451c6
          break;
        }
        if (aEvent.IsMeta() || (aEvent.IsControl() && aEvent.IsShift())) {
-@@ -512,6 +519,13 @@
+@@ -512,6 +519,13 @@ void NativeKeyBindings::GetEditCommandsForTests(NativeKeyBindingsType aType,
        break;
      case KEY_NAME_INDEX_ArrowRight:
        if (aEvent.IsAlt()) {
@@ -2585,7 +2600,7 @@ index d3e5983259053175584254e7ac01ca9ce024f33a..97f5b851c402fea5477c0ee57af451c6
          break;
        }
        if (aEvent.IsMeta() || (aEvent.IsControl() && aEvent.IsShift())) {
-@@ -532,6 +546,10 @@
+@@ -532,6 +546,10 @@ void NativeKeyBindings::GetEditCommandsForTests(NativeKeyBindingsType aType,
        break;
      case KEY_NAME_INDEX_ArrowUp:
        if (aEvent.IsControl()) {
@@ -2596,7 +2611,7 @@ index d3e5983259053175584254e7ac01ca9ce024f33a..97f5b851c402fea5477c0ee57af451c6
          break;
        }
        if (aEvent.IsMeta()) {
-@@ -541,7 +559,7 @@
+@@ -541,7 +559,7 @@ void NativeKeyBindings::GetEditCommandsForTests(NativeKeyBindingsType aType,
          instance->AppendEditCommandsForSelector(
              !aEvent.IsShift()
                  ? ToObjcSelectorPtr(@selector(moveToBeginningOfDocument:))
@@ -2605,7 +2620,7 @@ index d3e5983259053175584254e7ac01ca9ce024f33a..97f5b851c402fea5477c0ee57af451c6
              aCommands);
          break;
        }
-@@ -564,6 +582,10 @@
+@@ -564,6 +582,10 @@ void NativeKeyBindings::GetEditCommandsForTests(NativeKeyBindingsType aType,
        break;
      case KEY_NAME_INDEX_ArrowDown:
        if (aEvent.IsControl()) {

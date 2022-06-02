@@ -1976,6 +1976,21 @@ index 3ce936fe3a4a83f9161eddc9e5289322d6a363e3..6b1c34244d8b2f2102ec423e2d96812f
    void updateTimeZone();
  
    void internalResyncICUDefaultTimeZone();
+diff --git a/layout/base/PresShell.cpp b/layout/base/PresShell.cpp
+index 63f7f0524b0d87fb8b2950963888a27865a8d089..603d16543a7b0c4d20840ca5b2f12665dc310fa7 100644
+--- a/layout/base/PresShell.cpp
++++ b/layout/base/PresShell.cpp
+@@ -10886,7 +10886,9 @@ auto PresShell::ComputeActiveness() const -> Activeness {
+     if (!browserChild->IsVisible()) {
+       MOZ_LOG(gLog, LogLevel::Debug,
+               (" > BrowserChild %p is not visible", browserChild));
+-      return {false, inActiveTab};
++      bool isActive;
++      root->GetDocShell()->GetForceActiveState(&isActive);
++      return {isActive, inActiveTab};
+     }
+ 
+     // If the browser is visible but just due to be preserving layers
 diff --git a/layout/style/GeckoBindings.h b/layout/style/GeckoBindings.h
 index a384a0d00ce970a3e9db8983deaa012b45a76324..954bf59def43fdbb62924f35b45cde5f6c1a9fff 100644
 --- a/layout/style/GeckoBindings.h
