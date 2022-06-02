@@ -41,6 +41,8 @@ This command will:
 
 ## 2. Developing a new change
 
+### Creating new branch
+
 You want to create a new branch off the `playwright-build` branch.
 
 Assuming that you're under `$HOME/firefox` checkout:
@@ -49,6 +51,32 @@ Assuming that you're under `$HOME/firefox` checkout:
 $ git checkout -b my-new-feature playwright-build
 $ # develop my feature on the my-new-feature branch ....
 ```
+
+### Building
+
+Each browser has corresponding build script. `--full` options normally takes care of also installing required build dependencies on Linux.
+
+```bash
+./browser_patches/firefox/build.sh --full
+```
+
+### Running tests with local browser build
+
+Playwright test suite may run against local browser build without bundling it.
+```bash
+# Run webkit tests with local webkit build
+WKPATH=./browser_patches/webkit/pw_run.sh npm run wtest
+
+# Run firefox tests with local firefox build on macos
+FFPATH=/tmp/repackaged-firefox/firefox/Nightly.app/Contents/MacOS/firefox npm run ftest
+
+# Run chromium tests with local chromium build on linux
+CRPATH=~/chromium/src/out/Release/chrome npm run ctest
+```
+
+### Flakiness dashboard
+
+You can look at the [flakiness dashboard](http://flaky.aslushnikov.com/) to see recent history of any playwright test.
 
 ## 3. Exporting your change to playwright repo
 
