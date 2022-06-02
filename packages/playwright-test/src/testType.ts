@@ -129,9 +129,7 @@ export class TestTypeImpl {
     }
 
     setCurrentlyLoadingFileSuite(child);
-    const result = fn();
-    if (result instanceof Promise)
-      throw errorWithLocation(location, 'describe cannot use async functions as callbacks');
+    fn();
     setCurrentlyLoadingFileSuite(suite);
   }
 
