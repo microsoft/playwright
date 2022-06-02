@@ -58,8 +58,8 @@ it('should support timezoneId option', async ({ launchPersistent, browserName })
 });
 
 it('should support locale option', async ({ launchPersistent }) => {
-  const { page } = await launchPersistent({ locale: 'fr-CH' });
-  expect(await page.evaluate(() => navigator.language)).toBe('fr-CH');
+  const { page } = await launchPersistent({ locale: 'fr-FR' });
+  expect(await page.evaluate(() => navigator.language)).toBe('fr-FR');
 });
 
 it('should support geolocation and permissions options', async ({ server, launchPersistent }) => {

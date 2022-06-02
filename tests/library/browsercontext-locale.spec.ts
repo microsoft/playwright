@@ -28,10 +28,10 @@ it('should affect accept-language header @smoke', async ({ browser, server }) =>
   await context.close();
 });
 
-it('should affect navigator.language', async ({ browser, server }) => {
-  const context = await browser.newContext({ locale: 'fr-CH' });
+it('should affect navigator.language', async ({ browser }) => {
+  const context = await browser.newContext({ locale: 'fr-FR' });
   const page = await context.newPage();
-  expect(await page.evaluate(() => navigator.language)).toBe('fr-CH');
+  expect(await page.evaluate(() => navigator.language)).toBe('fr-FR');
   await context.close();
 });
 
@@ -87,7 +87,7 @@ it('should format number in popups', async ({ browser, server }) => {
 });
 
 it('should affect navigator.language in popups', async ({ browser, server }) => {
-  const context = await browser.newContext({ locale: 'fr-CH' });
+  const context = await browser.newContext({ locale: 'fr-FR' });
   const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);
   const [popup] = await Promise.all([
@@ -96,7 +96,7 @@ it('should affect navigator.language in popups', async ({ browser, server }) => 
   ]);
   await popup.waitForLoadState('domcontentloaded');
   const result = await popup.evaluate('window.initialNavigatorLanguage');
-  expect(result).toBe('fr-CH');
+  expect(result).toBe('fr-FR');
   await context.close();
 });
 
@@ -138,7 +138,7 @@ it('should be isolated between contexts', async ({ browser, server }) => {
   ]);
 });
 
-it('should not change default locale in another context', async ({ browser, server }) => {
+it('should not change default locale in another context', async ({ browser }) => {
   async function getContextLocale(context) {
     const page = await context.newPage();
     return await page.evaluate(() => (new Intl.NumberFormat()).resolvedOptions().locale);
@@ -150,7 +150,7 @@ it('should not change default locale in another context', async ({ browser, serv
     defaultLocale = await getContextLocale(context);
     await context.close();
   }
-  const localeOverride = defaultLocale === 'ru-RU' ? 'de-DE' : 'ru-RU';
+  const localeOverride = defaultLocale === 'es-MX' ? 'de-DE' : 'es-MX';
   {
     const context = await browser.newContext({ locale: localeOverride });
     expect(await getContextLocale(context)).toBe(localeOverride);
@@ -164,13 +164,13 @@ it('should not change default locale in another context', async ({ browser, serv
 });
 
 it('should format number in workers', async ({ browser, server }) => {
-  const context = await browser.newContext({ locale: 'ru-RU' });
+  const context = await browser.newContext({ locale: 'es-MX' });
   const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);
   const [worker] = await Promise.all([
     page.waitForEvent('worker'),
     page.evaluate(() => new Worker(URL.createObjectURL(new Blob(['console.log(1)'], { type: 'application/javascript' })))),
   ]);
-  expect(await worker.evaluate(() => (10000.20).toLocaleString())).toBe('10\u00A0000,2');
+  expect(await worker.evaluate(() => (10000.20).toLocaleString())).toBe('10,000.2');
   await context.close();
 });
