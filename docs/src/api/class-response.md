@@ -23,10 +23,10 @@ Waits for this response to finish, returns always `null`.
 Returns the [Frame] that initiated this response.
 
 ## method: Response.fulfilledByServiceWorker
-- returns: <[null]|[boolean]>
+- returns: <[boolean]>
 
 :::note
-This field is Chromium only. It's safe to call when using other browsers, but it will always be `null`.
+This field is Chromium only. It's safe to call when using other browsers, but it will always be `false` (for now).
 :::
 
 If set, indicates whether this Response was fullfilled by a Service Worker's Fetch Handler (i.e. via [FetchEvent.respondWith](https://developer.mozilla.org/en-US/docs/Web/API/FetchEvent/respondWith)).

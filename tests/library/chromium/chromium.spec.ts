@@ -78,11 +78,11 @@ test.describe('with service worker networking', () => {
     ]);
     expect(html.frame()).toBeTruthy();
     expect(html.serviceWorker()).toBe(null);
-    expect((await html.response()).fulfilledByServiceWorker()).toBeNull();
+    expect((await html.response()).fulfilledByServiceWorker()).toBe(false);
 
     expect(main.frame).toThrow();
     expect(main.serviceWorker()).toBe(worker);
-    expect((await main.response()).fulfilledByServiceWorker()).toBeNull();
+    expect((await main.response()).fulfilledByServiceWorker()).toBe(false);
 
     expect(inner.frame()).toBeTruthy();
     expect(inner.serviceWorker()).toBe(null);
@@ -90,7 +90,7 @@ test.describe('with service worker networking', () => {
 
     expect(inWorker.frame).toThrow();
     expect(inWorker.serviceWorker()).toBe(worker);
-    expect((await inWorker.response()).fulfilledByServiceWorker()).toBeNull();
+    expect((await inWorker.response()).fulfilledByServiceWorker()).toBe(false);
 
     await page.evaluate(() => window['activationPromise']);
     const [innerSW, innerPage] = await Promise.all([
@@ -102,7 +102,7 @@ test.describe('with service worker networking', () => {
     expect((await innerPage.response()).fulfilledByServiceWorker()).toBe(true);
 
     expect(innerSW.serviceWorker()).toBe(worker);
-    expect((await innerSW.response()).fulfilledByServiceWorker()).toBeNull();
+    expect((await innerSW.response()).fulfilledByServiceWorker()).toBe(false);
   });
 
   test('should intercept service worker requests (main and within)', async ({ context, page, server, browserMajorVersion }) => {

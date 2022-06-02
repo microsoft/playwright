@@ -14650,12 +14650,13 @@ export interface Response {
   frame(): Frame;
 
   /**
-   * > NOTE: This field is Chromium only. It's safe to call when using other browsers, but it will always be `null`.
+   * > NOTE: This field is Chromium only. It's safe to call when using other browsers, but it will always be `false` (for
+   * now).
    *
    * If set, indicates whether this Response was fullfilled by a Service Worker's Fetch Handler (i.e. via
    * [FetchEvent.respondWith](https://developer.mozilla.org/en-US/docs/Web/API/FetchEvent/respondWith)).
    */
-  fulfilledByServiceWorker(): null|boolean;
+  fulfilledByServiceWorker(): boolean;
 
   /**
    * **DEPRECATED** Incomplete list of headers as seen by the rendering engine. Use

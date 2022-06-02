@@ -369,7 +369,7 @@ export class Response extends SdkObject {
   private _securityDetailsPromise = new ManualPromise<SecurityDetails | undefined>();
   private _rawResponseHeadersPromise: ManualPromise<types.HeadersArray> | undefined;
   private _httpVersion: string | undefined;
-  private _fulfilledByServiceWorker: boolean | undefined;
+  private _fulfilledByServiceWorker: boolean;
 
   constructor(request: Request, status: number, statusText: string, headers: types.HeadersArray, timing: ResourceTiming, getResponseBodyCallback: GetResponseBodyCallback, httpVersion?: string, fulfilledByServiceWorker?: boolean) {
     super(request.frame() || request._context, 'response');
@@ -384,7 +384,7 @@ export class Response extends SdkObject {
     this._getResponseBodyCallback = getResponseBodyCallback;
     this._request._setResponse(this);
     this._httpVersion = httpVersion;
-    this._fulfilledByServiceWorker = fulfilledByServiceWorker;
+    this._fulfilledByServiceWorker = fulfilledByServiceWorker ?? false;
   }
 
   _serverAddrFinished(addr?: RemoteAddr) {
@@ -480,8 +480,8 @@ export class Response extends SdkObject {
     return this._httpVersion;
   }
 
-  fulfilledByServiceWorker(): boolean | null {
-    return this._fulfilledByServiceWorker || null;
+  fulfilledByServiceWorker(): boolean {
+    return this._fulfilledByServiceWorker;
   }
 
   private async _responseHeadersSize(): Promise<number> {
