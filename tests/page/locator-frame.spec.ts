@@ -106,7 +106,8 @@ it('should wait for frame 2', async ({ page, server }) => {
   await page.frameLocator('iframe').locator('button').click();
 });
 
-it('should wait for frame to go', async ({ page, server }) => {
+it('should wait for frame to go', async ({ page, server, isAndroid }) => {
+  it.fail(isAndroid, 'iframe is not removed on Android');
   await routeIframe(page);
   await page.goto(server.EMPTY_PAGE);
   setTimeout(() => page.$eval('iframe', e => e.remove()).catch(() => {}), 300);

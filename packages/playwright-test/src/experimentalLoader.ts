@@ -32,7 +32,7 @@ async function load(moduleUrl: string, context: any, defaultLoad: any) {
   if (moduleUrl.startsWith('file://') && (moduleUrl.endsWith('.ts') || moduleUrl.endsWith('.tsx'))) {
     const filename = url.fileURLToPath(moduleUrl);
     const code = fs.readFileSync(filename, 'utf-8');
-    const source = transformHook(code, filename, true);
+    const source = transformHook(code, filename, moduleUrl);
     return { format: 'module', source };
   }
   return defaultLoad(moduleUrl, context, defaultLoad);

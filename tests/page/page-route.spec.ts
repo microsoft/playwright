@@ -599,7 +599,8 @@ it('should allow null origin for about:blank', async ({ page, server, browserNam
   expect(await response.headerValue('Access-Control-Allow-Origin')).toBe('null');
 });
 
-it('should respect cors overrides', async ({ page, server, browserName }) => {
+it('should respect cors overrides', async ({ page, server, browserName, isAndroid }) => {
+  it.fail(isAndroid, 'no cors error in android emulator');
   await page.goto(server.EMPTY_PAGE);
   server.setRoute('/something', (request, response) => {
     if (request.method === 'OPTIONS') {

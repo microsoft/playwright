@@ -773,7 +773,7 @@ function translateType(type, parent, generateNameCallback = t => t.name, optiona
       // get the inner types of both templates, and if they're strings, it's a keyvaluepair string, string,
       const keyType = translateType(type.templates[0], parent, generateNameCallback, false, isReturnType);
       const valueType = translateType(type.templates[1], parent, generateNameCallback, false, isReturnType);
-      if (parent.name === 'Request' || parent.name === 'Response')
+      if (['Request', 'Response', 'APIResponse'].includes(parent.name))
         return `Dictionary<${keyType}, ${valueType}>`;
       return `IEnumerable<KeyValuePair<${keyType}, ${valueType}>>`;
     }

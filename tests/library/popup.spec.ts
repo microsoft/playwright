@@ -15,6 +15,7 @@
  */
 
 import { browserTest as it, expect } from '../config/browserTest';
+import type { Page } from 'playwright-core';
 
 it('should inherit user agent from browser context @smoke', async function({ browser, server }) {
   const context = await browser.newContext({
@@ -238,3 +239,31 @@ it('should not dispatch binding on a closed page', async function({ browser, ser
   else
     expect(messages.join('|')).toBe('binding|close');
 });
+
+it('should not throttle rAF in the opener page', async ({ page, server, browserName }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/14557' });
+  it.fixme(browserName === 'firefox');
+  await page.goto(server.EMPTY_PAGE);
+  const [popup] = await Promise.all([
+    page.waitForEvent('popup'),
+    page.evaluate(() => { window.open('about:blank'); }),
+  ]);
+  await Promise.all([
+    waitForRafs(page, 30),
+    waitForRafs(popup, 30)
+  ]);
+  console.log('done');
+});
+
+async function waitForRafs(page: Page, count: number): Promise<void> {
+  await page.evaluate(count => new Promise<void>(resolve => {
+    const onRaf = () => {
+      --count;
+      if (!count)
+        resolve();
+      else
+        requestAnimationFrame(onRaf);
+    };
+    requestAnimationFrame(onRaf);
+  }), count);
+}

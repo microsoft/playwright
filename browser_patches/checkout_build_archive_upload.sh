@@ -217,6 +217,19 @@ elif [[ "$BUILD_FLAVOR" == "firefox-ubuntu-20.04-arm64" ]]; then
   EXPECTED_HOST_OS="Ubuntu"
   EXPECTED_HOST_OS_VERSION="20.04"
   BUILD_BLOB_NAME="firefox-ubuntu-20.04-arm64.zip"
+elif [[ "$BUILD_FLAVOR" == "firefox-ubuntu-22.04" ]]; then
+  BROWSER_NAME="firefox"
+  EXTRA_BUILD_ARGS="--full"
+  EXPECTED_HOST_OS="Ubuntu"
+  EXPECTED_HOST_OS_VERSION="22.04"
+  BUILD_BLOB_NAME="firefox-ubuntu-22.04.zip"
+elif [[ "$BUILD_FLAVOR" == "firefox-ubuntu-22.04-arm64" ]]; then
+  BROWSER_NAME="firefox"
+  EXTRA_BUILD_ARGS="--full --linux-arm64"
+  EXTRA_ARCHIVE_ARGS="--linux-arm64"
+  EXPECTED_HOST_OS="Ubuntu"
+  EXPECTED_HOST_OS_VERSION="22.04"
+  BUILD_BLOB_NAME="firefox-ubuntu-22.04-arm64.zip"
 elif [[ "$BUILD_FLAVOR" == "firefox-mac-11" ]]; then
   BROWSER_NAME="firefox"
   EXTRA_BUILD_ARGS="--full"
@@ -255,6 +268,19 @@ elif [[ "$BUILD_FLAVOR" == "firefox-beta-ubuntu-20.04" ]]; then
   EXPECTED_HOST_OS="Ubuntu"
   EXPECTED_HOST_OS_VERSION="20.04"
   BUILD_BLOB_NAME="firefox-beta-ubuntu-20.04.zip"
+elif [[ "$BUILD_FLAVOR" == "firefox-beta-ubuntu-22.04" ]]; then
+  BROWSER_NAME="firefox-beta"
+  EXTRA_BUILD_ARGS="--full"
+  EXPECTED_HOST_OS="Ubuntu"
+  EXPECTED_HOST_OS_VERSION="22.04"
+  BUILD_BLOB_NAME="firefox-beta-ubuntu-22.04.zip"
+elif [[ "$BUILD_FLAVOR" == "firefox-beta-ubuntu-22.04-arm64" ]]; then
+  BROWSER_NAME="firefox-beta"
+  EXTRA_BUILD_ARGS="--full --linux-arm64"
+  EXTRA_ARCHIVE_ARGS="--linux-arm64"
+  EXPECTED_HOST_OS="Ubuntu"
+  EXPECTED_HOST_OS_VERSION="22.04"
+  BUILD_BLOB_NAME="firefox-beta-ubuntu-22.04-arm64.zip"
 elif [[ "$BUILD_FLAVOR" == "firefox-beta-mac-11" ]]; then
   BROWSER_NAME="firefox-beta"
   EXTRA_BUILD_ARGS="--full"

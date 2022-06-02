@@ -79,7 +79,7 @@ export class InjectedScript {
   private _highlight: Highlight | undefined;
   readonly isUnderTest: boolean;
 
-  constructor(isUnderTest: boolean, stableRafCount: number, browserName: string, experimentalFeaturesEnabled: boolean, customEngines: { name: string, engine: SelectorEngine}[]) {
+  constructor(isUnderTest: boolean, stableRafCount: number, browserName: string, customEngines: { name: string, engine: SelectorEngine}[]) {
     this.isUnderTest = isUnderTest;
     this._evaluator = new SelectorEvaluatorImpl(new Map());
 
@@ -715,14 +715,6 @@ export class InjectedScript {
     input.dispatchEvent(new Event('change', { 'bubbles': true }));
   }
 
-  checkHitTargetAt(node: Node, point: { x: number, y: number }): 'error:notconnected' | 'done' | { hitTargetDescription: string } {
-    const element: Element | null | undefined = node.nodeType === Node.ELEMENT_NODE ? (node as Element) : node.parentElement;
-    if (!element || !element.isConnected)
-      return 'error:notconnected';
-    const hitElement = this.deepElementFromPoint(document, point.x, point.y);
-    return this._expectHitTargetParent(hitElement, element);
-  }
-
   private _expectHitTargetParent(hitElement: Element | undefined, targetElement: Element) {
     targetElement = targetElement.closest('button, [role=button], a, [role=link]') || targetElement;
     const hitParents: Element[] = [];
@@ -752,10 +744,54 @@ export class InjectedScript {
     return { hitTargetDescription };
   }
 
-  setupHitTargetInterceptor(node: Node, action: 'hover' | 'tap' | 'mouse', blockAllEvents: boolean): HitTargetInterceptionResult | 'error:notconnected' {
+  // Life of a pointer action, for example click.
+  //
+  // 0. Retry items 1 and 2 while action fails due to navigation or element being detached.
+  //   1. Resolve selector to an element.
+  //   2. Retry the following steps until the element is detached or frame navigates away.
+  //     2a. Wait for the element to be stable (not moving), visible and enabled.
+  //     2b. Scroll element into view. Scrolling alternates between:
+  //         - Built-in protocol scrolling.
+  //         - Anchoring to the top/left, bottom/right and center/center.
+  //         This is to scroll elements from under sticky headers/footers.
+  //     2c. Click point is calculated, either based on explicitly specified position,
+  //         or some visible point of the element based on protocol content quads.
+  //     2d. Click point relative to page viewport is converted relative to the target iframe
+  //         for the next hit-point check.
+  //     2e. (injected) Hit target at the click point must be a descendant of the target element.
+  //         This prevents mis-clicking in edge cases like <iframe> overlaying the target.
+  //     2f. (injected) Events specific for click (or some other action type) are intercepted on
+  //         the Window with capture:true. See 2i for details.
+  //         Note: this step is skipped for drag&drop (see inline comments for the reason).
+  //     2g. Necessary keyboard modifiers are pressed.
+  //     2h. Click event is issued (mousemove + mousedown + mouseup).
+  //     2i. (injected) For each event, we check that hit target at the event point
+  //         is a descendant of the target element.
+  //         This guarantees no race between issuing the event and handling it in the page,
+  //         for example due to layout shift.
+  //         When hit target check fails, we block all future events in the page.
+  //     2j. Keyboard modifiers are restored.
+  //     2k. (injected) Event interceptor is removed.
+  //     2l. All navigations triggered between 2g-2k are awaited to be either committed or canceled.
+  //     2m. If failed, wait for increasing amount of time before the next retry.
+  setupHitTargetInterceptor(node: Node, action: 'hover' | 'tap' | 'mouse' | 'drag', hitPoint: { x: number, y: number }, blockAllEvents: boolean): HitTargetInterceptionResult | 'error:notconnected' | string /* hitTargetDescription */ {
     const element: Element | null | undefined = node.nodeType === Node.ELEMENT_NODE ? (node as Element) : node.parentElement;
     if (!element || !element.isConnected)
       return 'error:notconnected';
+
+    // First do a preliminary check, to reduce the possibility of some iframe
+    // intercepting the action.
+    const preliminaryHitElement = this.deepElementFromPoint(document, hitPoint.x, hitPoint.y);
+    const preliminaryResult = this._expectHitTargetParent(preliminaryHitElement, element);
+    if (preliminaryResult !== 'done')
+      return preliminaryResult.hitTargetDescription;
+
+    // When dropping, the "element that is being dragged" often stays under the cursor,
+    // so hit target check at the moment we receive mousedown does not work -
+    // it finds the "element that is being dragged" instead of the
+    // "element that we drop onto".
+    if (action === 'drag')
+      return { stop: () => 'done' };
 
     const events = {
       'hover': kHoverHitTargetInterceptorEvents,
@@ -1195,17 +1231,26 @@ class ExpectedTextMatcher {
   private _substring: string | undefined;
   private _regex: RegExp | undefined;
   private _normalizeWhiteSpace: boolean | undefined;
+  private _ignoreCase: boolean | undefined;
 
   constructor(expected: channels.ExpectedTextValue) {
     this._normalizeWhiteSpace = expected.normalizeWhiteSpace;
-    this._string = expected.matchSubstring ? undefined : this.normalizeWhiteSpace(expected.string);
-    this._substring = expected.matchSubstring ? this.normalizeWhiteSpace(expected.string) : undefined;
-    this._regex = expected.regexSource ? new RegExp(expected.regexSource, expected.regexFlags) : undefined;
+    this._ignoreCase = expected.ignoreCase;
+    this._string = expected.matchSubstring ? undefined : this.normalize(expected.string);
+    this._substring = expected.matchSubstring ? this.normalize(expected.string) : undefined;
+    if (expected.regexSource) {
+      const flags = new Set((expected.regexFlags || '').split(''));
+      if (expected.ignoreCase === false)
+        flags.delete('i');
+      if (expected.ignoreCase === true)
+        flags.add('i');
+      this._regex = new RegExp(expected.regexSource, [...flags].join(''));
+    }
   }
 
   matches(text: string): boolean {
-    if (this._normalizeWhiteSpace && !this._regex)
-      text = this.normalizeWhiteSpace(text)!;
+    if (!this._regex)
+      text = this.normalize(text)!;
     if (this._string !== undefined)
       return text === this._string;
     if (this._substring !== undefined)
@@ -1215,10 +1260,14 @@ class ExpectedTextMatcher {
     return false;
   }
 
-  private normalizeWhiteSpace(s: string | undefined): string | undefined {
+  private normalize(s: string | undefined): string | undefined {
     if (!s)
       return s;
-    return this._normalizeWhiteSpace ? s.trim().replace(/\u200b/g, '').replace(/\s+/g, ' ') : s;
+    if (this._normalizeWhiteSpace)
+      s = s.trim().replace(/\u200b/g, '').replace(/\s+/g, ' ');
+    if (this._ignoreCase)
+      s = s.toLocaleLowerCase();
+    return s;
   }
 }
 
