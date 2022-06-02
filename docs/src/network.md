@@ -574,7 +574,6 @@ else
 <br/>
 
 ## Modify responses
-* langs: js
 
 To modify a response use [APIRequestContext] to get original response and then pass the response to [`method: Route.fulfill`].
 You can override individual fields on the response via options:
@@ -597,6 +596,87 @@ await page.route('**/title.html', async route => {
       'content-type': 'text/html'
     }
   });
+});
+```
+
+```java
+page.route("**/title.html", route -> {
+  // Fetch original response.
+  APIResponse response = page.request().fetch(route.request());
+  // Add a prefix to the title.
+  String body = response.text();
+  body = body.replace("<title>", "<title>My prefix:");
+  Map<String, String> headers = response.headers();
+  headers.put("content-type": "text/html");
+  route.fulfill(new Route.FulfillOptions()
+    // Pass all fields from the response.
+    .setResponse(response)
+    // Override response body.
+    .setBody(body)
+    // Force content type to be html.
+    .setHeaders(headers));
+});
+```
+
+```python async
+async def handle_route(route: Route) -> None:
+    # Fetch original response.
+    response = await page.request.fetch(route.request)
+    # Add a prefix to the title.
+    body = await response.text()
+    body = body.replace("<title>", "<title>My prefix:")
+    await route.fulfill(
+        # Pass all fields from the response.
+        response=response,
+        # Override response body.
+        body=body,
+        # Force content type to be html.
+        headers={**response.headers, "content-type": "text/html"},
+    )
+
+await page.route("**/title.html", handle_route)
+```
+
+```python sync
+def handle_route(route: Route) -> None:
+    # Fetch original response.
+    response = page.request.fetch(route.request)
+    # Add a prefix to the title.
+    body = response.text()
+    body = body.replace("<title>", "<title>My prefix:")
+    route.fulfill(
+        # Pass all fields from the response.
+        response=response,
+        # Override response body.
+        body=body,
+        # Force content type to be html.
+        headers={**response.headers, "content-type": "text/html"},
+    )
+
+page.route("**/title.html", handle_route)
+```
+
+```csharp
+await Page.RouteAsync("**/title.html", async route =>
+{
+    // Fetch original response.
+    var response = await Page.APIRequest.FetchAsync(route.Request);
+    // Add a prefix to the title.
+    var body = await response.TextAsync();
+    body = body.Replace("<title>", "<title>My prefix:");
+
+    var headers = response.Headers;
+    headers.Add("Content-Type", "text/html");
+
+    await route.FulfillAsync(new()
+    {
+        // Pass all fields from the response.
+        Response = response,
+        // Override response body.
+        Body = body,
+        // Force content type to be html.
+        Headers = headers,
+    });
 });
 ```
 
