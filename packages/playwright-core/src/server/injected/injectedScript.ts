@@ -1053,7 +1053,7 @@ export class InjectedScript {
 
     // Multi-Select/Combobox
     {
-      if (expression === 'to.have.value' && options.expectedText?.length && options.expectedText.length >= 2) {
+      if (expression === 'to.have.values' && options.expectedText?.length && options.expectedText.length >= 2) {
         element = this.retarget(element, 'follow-label')!;
         if (element.nodeName !== 'SELECT' || !(element as HTMLSelectElement).multiple)
           throw this.createStacklessError('Not a select element with a multiple attribute');

@@ -234,20 +234,25 @@ export function toHaveText(
 export function toHaveValue(
   this: ReturnType<Expect['getState']>,
   locator: LocatorEx,
-  expected: string | RegExp | (string | RegExp)[],
+  expected: string | RegExp,
   options?: { timeout?: number },
 ) {
-  if (Array.isArray(expected)) {
-    return toEqual.call(this, 'toHaveValue', locator, 'Locator', async (isNot, timeout, customStackTrace) => {
-      const expectedText = toExpectedTextValues(expected);
-      return await locator._expect(customStackTrace, 'to.have.value', { expectedText, isNot, timeout });
-    }, expected, options);
-  } else {
-    return toMatchText.call(this, 'toHaveValue', locator, 'Locator', async (isNot, timeout, customStackTrace) => {
-      const expectedText = toExpectedTextValues([expected]);
-      return await locator._expect(customStackTrace, 'to.have.value', { expectedText, isNot, timeout });
-    }, expected, options);
-  }
+  return toMatchText.call(this, 'toHaveValue', locator, 'Locator', async (isNot, timeout, customStackTrace) => {
+    const expectedText = toExpectedTextValues([expected]);
+    return await locator._expect(customStackTrace, 'to.have.value', { expectedText, isNot, timeout });
+  }, expected, options);
+}
+
+export function toHaveValues(
+  this: ReturnType<Expect['getState']>,
+  locator: LocatorEx,
+  expected: (string | RegExp)[],
+  options?: { timeout?: number },
+) {
+  return toEqual.call(this, 'toHaveValues', locator, 'Locator', async (isNot, timeout, customStackTrace) => {
+    const expectedText = toExpectedTextValues(expected);
+    return await locator._expect(customStackTrace, 'to.have.values', { expectedText, isNot, timeout });
+  }, expected, options);
 }
 
 export function toHaveTitle(

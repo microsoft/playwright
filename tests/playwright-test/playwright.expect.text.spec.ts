@@ -412,7 +412,7 @@ test('should support toHaveValue failing', async ({ runInlineTest }) => {
   expect(result.output).toContain('"Text content"');
 });
 
-test.describe('should support toHaveValue with multi-select', () => {
+test.describe('should support toHaveValues with multi-select', () => {
   test('works with text', async ({ runInlineTest }) => {
     const result = await runInlineTest({
       'a.test.ts': `
@@ -428,7 +428,7 @@ test.describe('should support toHaveValue with multi-select', () => {
           \`);
           const locator = page.locator('select');
           await locator.selectOption(['R', 'G']);
-          await expect(locator).toHaveValue(['R', 'G']);
+          await expect(locator).toHaveValues(['R', 'G']);
         });
         `,
     }, { workers: 1 });
@@ -452,7 +452,7 @@ test.describe('should support toHaveValue with multi-select', () => {
           \`);
           const locator = page.locator('text=Pick a Color');
           await locator.selectOption(['R', 'G']);
-          await expect(locator).toHaveValue(['R', 'G']);
+          await expect(locator).toHaveValues(['R', 'G']);
         });
         `,
     }, { workers: 1 });
@@ -474,7 +474,7 @@ test.describe('should support toHaveValue with multi-select', () => {
           \`);
           const locator = page.locator('select');
           await locator.selectOption(['RR', 'GG']);
-          await expect(locator).toHaveValue(['R', 'G']);
+          await expect(locator).toHaveValues(['R', 'G']);
         });
         `,
     }, { workers: 1 });
@@ -508,7 +508,7 @@ test.describe('should support toHaveValue with multi-select', () => {
           \`);
           const locator = page.locator('select');
           await locator.selectOption(['R', 'G']);
-          await expect(locator).toHaveValue([/R/, /G/]);
+          await expect(locator).toHaveValues([/R/, /G/]);
         });
         `,
     }, { workers: 1 });
@@ -531,7 +531,7 @@ test.describe('should support toHaveValue with multi-select', () => {
           \`);
           const locator = page.locator('select');
           await locator.selectOption(['B']);
-          await expect(locator).toHaveValue([/R/, /G/]);
+          await expect(locator).toHaveValues([/R/, /G/]);
         });
         `,
     }, { workers: 1 });
@@ -564,7 +564,7 @@ test.describe('should support toHaveValue with multi-select', () => {
           \`);
           const locator = page.locator('select');
           await locator.selectOption(['B']);
-          await expect(locator).toHaveValue([/R/, /G/]);
+          await expect(locator).toHaveValues([/R/, /G/]);
         });
         `,
     }, { workers: 1 });
@@ -583,7 +583,7 @@ test.describe('should support toHaveValue with multi-select', () => {
             <input value="foo" />
           \`);
           const locator = page.locator('input');
-          await expect(locator).toHaveValue([/R/, /G/]);
+          await expect(locator).toHaveValues([/R/, /G/]);
         });
         `,
     }, { workers: 1 });
