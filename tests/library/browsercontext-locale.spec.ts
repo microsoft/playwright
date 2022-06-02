@@ -28,10 +28,10 @@ it('should affect accept-language header @smoke', async ({ browser, server }) =>
   await context.close();
 });
 
-it('should affect navigator.language', async ({ browser, server }) => {
+it('should affect navigator.language', async ({ browser, browserName, isMac }) => {
   const context = await browser.newContext({ locale: 'fr-CH' });
   const page = await context.newPage();
-  expect(await page.evaluate(() => navigator.language)).toBe('fr-CH');
+  expect(await page.evaluate(() => navigator.language)).toBe(browserName === 'webkit' && isMac ? 'fr-FR' : 'fr-CH');
   await context.close();
 });
 
@@ -86,7 +86,7 @@ it('should format number in popups', async ({ browser, server }) => {
   await context.close();
 });
 
-it('should affect navigator.language in popups', async ({ browser, server }) => {
+it('should affect navigator.language in popups', async ({ browser, server, browserName, isMac }) => {
   const context = await browser.newContext({ locale: 'fr-CH' });
   const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);
@@ -96,7 +96,7 @@ it('should affect navigator.language in popups', async ({ browser, server }) => 
   ]);
   await popup.waitForLoadState('domcontentloaded');
   const result = await popup.evaluate('window.initialNavigatorLanguage');
-  expect(result).toBe('fr-CH');
+  expect(result).toBe(browserName === 'webkit' && isMac ? 'fr-FR' : 'fr-CH');
   await context.close();
 });
 
@@ -138,7 +138,7 @@ it('should be isolated between contexts', async ({ browser, server }) => {
   ]);
 });
 
-it('should not change default locale in another context', async ({ browser, server }) => {
+it('should not change default locale in another context', async ({ browser, browserName, isMac }) => {
   async function getContextLocale(context) {
     const page = await context.newPage();
     return await page.evaluate(() => (new Intl.NumberFormat()).resolvedOptions().locale);
@@ -150,7 +150,8 @@ it('should not change default locale in another context', async ({ browser, serv
     defaultLocale = await getContextLocale(context);
     await context.close();
   }
-  const localeOverride = defaultLocale === 'ru-RU' ? 'de-DE' : 'ru-RU';
+  const expectedRuLocale = browserName === 'webkit' && isMac ? 'ru' : 'ru-RU';
+  const localeOverride = defaultLocale === 'ru-RU' ? 'de-DE' : expectedRuLocale;
   {
     const context = await browser.newContext({ locale: localeOverride });
     expect(await getContextLocale(context)).toBe(localeOverride);
