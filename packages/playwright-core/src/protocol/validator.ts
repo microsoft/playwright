@@ -349,7 +349,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
       path: tString,
     })),
     strictSelectors: tOptional(tBoolean),
-    serviceWorkerPolicy: tOptional(tEnum(['default', 'disabled', 'inspected'])),
+    serviceWorkerPolicy: tOptional(tEnum(['default', 'disabled', 'enable-network-events'])),
     userDataDir: tString,
     slowMo: tOptional(tNumber),
   });
@@ -409,7 +409,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
       path: tString,
     })),
     strictSelectors: tOptional(tBoolean),
-    serviceWorkerPolicy: tOptional(tEnum(['default', 'disabled', 'inspected'])),
+    serviceWorkerPolicy: tOptional(tEnum(['default', 'disabled', 'enable-network-events'])),
     proxy: tOptional(tObject({
       server: tString,
       bypass: tOptional(tString),
@@ -1447,7 +1447,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
       path: tString,
     })),
     strictSelectors: tOptional(tBoolean),
-    serviceWorkerPolicy: tOptional(tEnum(['default', 'disabled', 'inspected'])),
+    serviceWorkerPolicy: tOptional(tEnum(['default', 'disabled', 'enable-network-events'])),
     pkg: tOptional(tString),
     proxy: tOptional(tObject({
       server: tString,

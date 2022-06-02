@@ -261,7 +261,7 @@ export type BrowserContextOptions = {
   strictSelectors?: boolean,
   proxy?: ProxySettings,
   baseURL?: string,
-  serviceWorkerPolicy?: 'default' | 'disabled' | 'inspected',
+  serviceWorkerPolicy?: 'default' | 'disabled' | 'enable-network-events',
 };
 
 export type EnvArray = { name: string, value: string }[];

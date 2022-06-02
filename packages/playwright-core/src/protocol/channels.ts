@@ -741,7 +741,7 @@ export type BrowserTypeLaunchPersistentContextParams = {
     path: string,
   },
   strictSelectors?: boolean,
-  serviceWorkerPolicy?: 'default' | 'disabled' | 'inspected',
+  serviceWorkerPolicy?: 'default' | 'disabled' | 'enable-network-events',
   userDataDir: string,
   slowMo?: number,
 };
@@ -814,7 +814,7 @@ export type BrowserTypeLaunchPersistentContextOptions = {
     path: string,
   },
   strictSelectors?: boolean,
-  serviceWorkerPolicy?: 'default' | 'disabled' | 'inspected',
+  serviceWorkerPolicy?: 'default' | 'disabled' | 'enable-network-events',
   slowMo?: number,
 };
 export type BrowserTypeLaunchPersistentContextResult = {
@@ -911,7 +911,7 @@ export type BrowserNewContextParams = {
     path: string,
   },
   strictSelectors?: boolean,
-  serviceWorkerPolicy?: 'default' | 'disabled' | 'inspected',
+  serviceWorkerPolicy?: 'default' | 'disabled' | 'enable-network-events',
   proxy?: {
     server: string,
     bypass?: string,
@@ -971,7 +971,7 @@ export type BrowserNewContextOptions = {
     path: string,
   },
   strictSelectors?: boolean,
-  serviceWorkerPolicy?: 'default' | 'disabled' | 'inspected',
+  serviceWorkerPolicy?: 'default' | 'disabled' | 'enable-network-events',
   proxy?: {
     server: string,
     bypass?: string,
@@ -4001,7 +4001,7 @@ export type AndroidDeviceLaunchBrowserParams = {
     path: string,
   },
   strictSelectors?: boolean,
-  serviceWorkerPolicy?: 'default' | 'disabled' | 'inspected',
+  serviceWorkerPolicy?: 'default' | 'disabled' | 'enable-network-events',
   pkg?: string,
   proxy?: {
     server: string,
@@ -4058,7 +4058,7 @@ export type AndroidDeviceLaunchBrowserOptions = {
     path: string,
   },
   strictSelectors?: boolean,
-  serviceWorkerPolicy?: 'default' | 'disabled' | 'inspected',
+  serviceWorkerPolicy?: 'default' | 'disabled' | 'enable-network-events',
   pkg?: string,
   proxy?: {
     server: string,

@@ -116,6 +116,6 @@ export class CRServiceWorker extends Worker {
   }
 
   private _isNetworkInspectionEnabled(): boolean {
-    return this._browserContext._options.serviceWorkerPolicy === 'inspected';
+    return this._browserContext._options.serviceWorkerPolicy === 'enable-network-events';
   }
 }

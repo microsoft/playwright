@@ -60,7 +60,7 @@ test('should not instrument service worker requests by default', async ({ contex
 });
 
 test.describe('with service worker networking', () => {
-  test.use({ serviceWorkerPolicy: 'inspected' });
+  test.use({ serviceWorkerPolicy: 'enable-network-events' });
 
   test('serviceWorker(), and fulfilledByServiceWorker() work', async ({ context, page, server, browserMajorVersion }) => {
     test.skip(browserMajorVersion < 103, 'Requires fix from https://chromium-review.googlesource.com/c/chromium/src/+/3544685');
