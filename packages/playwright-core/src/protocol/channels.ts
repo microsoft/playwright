@@ -187,6 +187,7 @@ export type ExpectedTextValue = {
   regexSource?: string,
   regexFlags?: string,
   matchSubstring?: boolean,
+  ignoreCase?: boolean,
   normalizeWhiteSpace?: boolean,
 };
 

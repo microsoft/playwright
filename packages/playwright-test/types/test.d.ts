@@ -3198,6 +3198,12 @@ interface LocatorAssertions {
    */
   toContainText(expected: string|RegExp|Array<string|RegExp>, options?: {
     /**
+     * Whether to perform case-insensitive match. `ignoreCase` option takes precedence over the corresponding regular
+     * expression flag if specified.
+     */
+    ignoreCase?: boolean;
+
+    /**
      * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
      */
     timeout?: number;
@@ -3496,6 +3502,12 @@ interface LocatorAssertions {
    * @param options
    */
   toHaveText(expected: string|RegExp|Array<string|RegExp>, options?: {
+    /**
+     * Whether to perform case-insensitive match. `ignoreCase` option takes precedence over the corresponding regular
+     * expression flag if specified.
+     */
+    ignoreCase?: boolean;
+
     /**
      * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
      */

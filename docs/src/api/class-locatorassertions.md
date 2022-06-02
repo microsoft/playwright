@@ -158,6 +158,11 @@ The opposite of [`method: LocatorAssertions.toContainText`].
 
 Expected substring or RegExp or a list of those.
 
+### option: LocatorAssertions.NotToContainText.ignoreCase
+- `ignoreCase` <[boolean]>
+
+Whether to perform case-insensitive match. [`option: ignoreCase`] option takes precedence over the corresponding regular expression flag if specified.
+
 ### option: LocatorAssertions.NotToContainText.useInnerText
 - `useInnerText` <[boolean]>
 
@@ -268,6 +273,11 @@ The opposite of [`method: LocatorAssertions.toHaveText`].
 - `expected` <[string]|[RegExp]|[Array]<[string]|[RegExp]>>
 
 Expected substring or RegExp or a list of those.
+
+### option: LocatorAssertions.NotToHaveText.ignoreCase
+- `ignoreCase` <[boolean]>
+
+Whether to perform case-insensitive match. [`option: ignoreCase`] option takes precedence over the corresponding regular expression flag if specified.
 
 ### option: LocatorAssertions.NotToHaveText.useInnerText
 - `useInnerText` <[boolean]>
@@ -684,6 +694,11 @@ Expected substring or RegExp or a list of those.
 - `expected` <[string]|[RegExp]|[Array]<[string]>|[Array]<[RegExp]>>
 
 Expected substring or RegExp or a list of those.
+
+### option: LocatorAssertions.toContainText.ignoreCase
+- `ignoreCase` <[boolean]>
+
+Whether to perform case-insensitive match. [`option: ignoreCase`] option takes precedence over the corresponding regular expression flag if specified.
 
 ### option: LocatorAssertions.toContainText.useInnerText
 - `useInnerText` <[boolean]>
@@ -1135,6 +1150,11 @@ Expected substring or RegExp or a list of those.
 - `expected` <[string]|[RegExp]|[Array]<[string]>|[Array]<[RegExp]>>
 
 Expected substring or RegExp or a list of those.
+
+### option: LocatorAssertions.toHaveText.ignoreCase
+- `ignoreCase` <[boolean]>
+
+Whether to perform case-insensitive match. [`option: ignoreCase`] option takes precedence over the corresponding regular expression flag if specified.
 
 ### option: LocatorAssertions.toHaveText.useInnerText
 - `useInnerText` <[boolean]>
