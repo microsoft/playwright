@@ -318,3 +318,17 @@ it('should return headers after route.fulfill', async ({ page, server }) => {
     'content-language': 'en'
   });
 });
+
+it('should report if request was fulfilledByServiceWorker', async ({ page, server, browserName }) => {
+  it.fail(browserName === 'firefox', 'Requires https://github.com/microsoft/playwright/pull/14606');
+
+  {
+    const res = await page.goto(server.PREFIX + '/serviceworkers/fetch/sw.html');
+    expect(res.fulfilledByServiceWorker()).toBe(false);
+  }
+  await page.evaluate(() => window['activationPromise']);
+  {
+    const res = await page.goto(server.PREFIX + '/serviceworkers/fetch/sw.html');
+    expect(res.fulfilledByServiceWorker()).toBe(true);
+  }
+});
