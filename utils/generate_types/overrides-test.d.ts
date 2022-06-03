@@ -175,7 +175,7 @@ type ColorScheme = Exclude<BrowserContextOptions['colorScheme'], undefined>;
 type ExtraHTTPHeaders = Exclude<BrowserContextOptions['extraHTTPHeaders'], undefined>;
 type Proxy = Exclude<BrowserContextOptions['proxy'], undefined>;
 type StorageState = Exclude<BrowserContextOptions['storageState'], undefined>;
-type ServiceWorkerPolicy = Exclude<BrowserContextOptions['serviceWorkerPolicy'], undefined>;
+type ServiceWorkerPolicy = Exclude<BrowserContextOptions['serviceWorkers'], undefined>;
 type ConnectOptions = {
   /**
    * A browser websocket endpoint to connect to.
@@ -232,7 +232,7 @@ export interface PlaywrightTestOptions {
   contextOptions: BrowserContextOptions;
   actionTimeout: number | undefined;
   navigationTimeout: number | undefined;
-  serviceWorkerPolicy: ServiceWorkerPolicy | undefined;
+  serviceWorkers: ServiceWorkerPolicy | undefined;
 }
 
 

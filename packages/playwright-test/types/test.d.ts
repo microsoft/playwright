@@ -2464,7 +2464,7 @@ type ColorScheme = Exclude<BrowserContextOptions['colorScheme'], undefined>;
 type ExtraHTTPHeaders = Exclude<BrowserContextOptions['extraHTTPHeaders'], undefined>;
 type Proxy = Exclude<BrowserContextOptions['proxy'], undefined>;
 type StorageState = Exclude<BrowserContextOptions['storageState'], undefined>;
-type ServiceWorkerPolicy = Exclude<BrowserContextOptions['serviceWorkerPolicy'], undefined>;
+type ServiceWorkerPolicy = Exclude<BrowserContextOptions['serviceWorkers'], undefined>;
 type ConnectOptions = {
   /**
    * A browser websocket endpoint to connect to.
@@ -2770,24 +2770,13 @@ export interface PlaywrightTestOptions {
    */
   navigationTimeout: number | undefined;
   /**
-   * - `"default"`: Sites can register
-   *   [Service Workers](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API). However, the Network
-   *   requests from within the Service Worker (as well as the main Service Worker script request itself) are not reported
-   *   in
-   *   [browserContext.route(url, handler[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-route)
-   *   nor
-   *   [browserContext.on('request')](https://playwright.dev/docs/api/class-browsercontext#browser-context-event-request)
-   *   event listeners.
-   * - `"disabled"`: Blocks all registration of Service Workers.
-   * - `"enable-network-events"`: Service Workers are enabled, and their Network Requests will show up in
-   *   [browserContext.route(url, handler[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-route)
-   *   and the
-   *   [browserContext.on('request')](https://playwright.dev/docs/api/class-browsercontext#browser-context-event-request)
-   *   event listeners as well as the HAR.
+   * - `"allow"`: [Service Workers](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API) can be registered
+   *   by sites.
+   * - `"block"`: Playwright will block all registration of Service Workers.
    *
-   * Defaults to `"default"`.
+   * Defaults to `"allow"`.
    */
-  serviceWorkerPolicy: ServiceWorkerPolicy | undefined;
+  serviceWorkers: ServiceWorkerPolicy | undefined;
 }
 
 

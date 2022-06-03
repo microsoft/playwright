@@ -336,9 +336,5 @@ export type AndroidKey =
 export const _electron: Electron;
 export const _android: Android;
 
-export type ServiceWorkerPolicy = 'default' | 'disabled' | {
-  enableNetworkInspection?: boolean;
-};
-
 // This is required to not export everything by default. See https://github.com/Microsoft/TypeScript/issues/19545#issuecomment-340490459
 export {};

@@ -401,7 +401,7 @@ export async function prepareBrowserContextParams(options: BrowserContextOptions
     noDefaultViewport: options.viewport === null,
     extraHTTPHeaders: options.extraHTTPHeaders ? headersObjectToArray(options.extraHTTPHeaders) : undefined,
     storageState: await prepareStorageState(options),
-    serviceWorkerPolicy: options.serviceWorkerPolicy,
+    serviceWorkers: options.serviceWorkers,
   };
   if (!contextParams.recordVideo && options.videosPath) {
     contextParams.recordVideo = {

@@ -20,12 +20,12 @@ it('should allow service workers by default', async ({ page, server }) => {
   await expect(page.evaluate(() => window['registrationPromise'])).resolves.toBeTruthy();
 });
 
-it.describe('disabled', () => {
-  it.use({ serviceWorkerPolicy: 'disabled' });
+it.describe('block', () => {
+  it.use({ serviceWorkers: 'block' });
 
   it('blocks service worker registration', async ({ page, server }) => {
     await Promise.all([
-      page.waitForEvent('console', evt => evt.text() === 'Service Worker registration disabled by Playwright'),
+      page.waitForEvent('console', evt => evt.text() === 'Service Worker registration blocked by Playwright'),
       page.goto(server.PREFIX + '/serviceworkers/empty/sw.html'),
     ]);
   });

@@ -39,289 +39,265 @@ test('should create a worker from service worker with noop routing', async ({ co
   expect(await worker.evaluate(() => self.toString())).toBe('[object ServiceWorkerGlobalScope]');
 });
 
-test('should not instrument service worker requests by default', async ({ context, page, server }) => {
-  const routed: string[] = [];
-  const emitted: string[] = [];
-  await context.route('**', async (route, request) => {
-    routed.push(request.url().replace(/\d+/, 'PORT'));
-    await route.continue();
-  });
-  context.on('request', request => emitted.push(request.url().replace(/\d+/, 'PORT')));
-  await page.goto(server.PREFIX + '/serviceworkers/fetch/sw.html');
+test('serviceWorker(), and fulfilledByServiceWorker() work', async ({ context, page, server, browserMajorVersion }) => {
+  test.skip(browserMajorVersion < 103, 'Requires fix from https://chromium-review.googlesource.com/c/chromium/src/+/3544685');
+
+  const [worker, html, main, inWorker] = await Promise.all([
+    context.waitForEvent('serviceworker'),
+    context.waitForEvent('request', r => r.url().endsWith('/sw.html')),
+    context.waitForEvent('request', r => r.url().endsWith('/sw.js')),
+    context.waitForEvent('request', r => r.url().endsWith('/request-from-within-worker.txt')),
+    page.goto(server.PREFIX + '/serviceworkers/fetch/sw.html')
+  ]);
+  const [inner] = await Promise.all([
+    context.waitForEvent('request', r => r.url().endsWith('/inner.txt')),
+    page.evaluate(() => fetch('/inner.txt')),
+  ]);
+  expect(html.frame()).toBeTruthy();
+  expect(html.serviceWorker()).toBe(null);
+  expect((await html.response()).fulfilledByServiceWorker()).toBe(false);
+
+  expect(main.frame).toThrow();
+  expect(main.serviceWorker()).toBe(worker);
+  expect((await main.response()).fulfilledByServiceWorker()).toBe(false);
+
+  expect(inner.frame()).toBeTruthy();
+  expect(inner.serviceWorker()).toBe(null);
+  expect((await inner.response()).fulfilledByServiceWorker()).toBe(true);
+
+  expect(inWorker.frame).toThrow();
+  expect(inWorker.serviceWorker()).toBe(worker);
+  expect((await inWorker.response()).fulfilledByServiceWorker()).toBe(false);
+
   await page.evaluate(() => window['activationPromise']);
-  expect(routed).toEqual([
-    'http://localhost:PORT/serviceworkers/fetch/sw.html',
-    'http://localhost:PORT/serviceworkers/fetch/style.css',
+  const [innerSW, innerPage] = await Promise.all([
+    context.waitForEvent('request', r => r.url().endsWith('/inner.txt') && !!r.serviceWorker()),
+    context.waitForEvent('request', r => r.url().endsWith('/inner.txt') && !r.serviceWorker()),
+    page.evaluate(() => fetch('/inner.txt')),
   ]);
-  expect(emitted).toEqual([
-    'http://localhost:PORT/serviceworkers/fetch/sw.html',
-    'http://localhost:PORT/serviceworkers/fetch/style.css',
-  ]);
+  expect(innerPage.serviceWorker()).toBe(null);
+  expect((await innerPage.response()).fulfilledByServiceWorker()).toBe(true);
+
+  expect(innerSW.serviceWorker()).toBe(worker);
+  expect((await innerSW.response()).fulfilledByServiceWorker()).toBe(false);
 });
 
-test.describe('with service worker networking', () => {
-  test.use({ serviceWorkerPolicy: 'enable-network-events' });
+test('should intercept service worker requests (main and within)', async ({ context, page, server, browserMajorVersion }) => {
+  test.skip(browserMajorVersion < 103, 'Requires fix from https://chromium-review.googlesource.com/c/chromium/src/+/3544685');
 
-  test('serviceWorker(), and fulfilledByServiceWorker() work', async ({ context, page, server, browserMajorVersion }) => {
-    test.skip(browserMajorVersion < 103, 'Requires fix from https://chromium-review.googlesource.com/c/chromium/src/+/3544685');
+  await context.route('**/request-from-within-worker', route =>
+    route.fulfill({
+      contentType: 'application/json',
+      status: 200,
+      body: '"intercepted!"',
+    })
+  );
 
-    const [worker, html, main, inWorker] = await Promise.all([
-      context.waitForEvent('serviceworker'),
-      context.waitForEvent('request', r => r.url().endsWith('/sw.html')),
-      context.waitForEvent('request', r => r.url().endsWith('/sw.js')),
-      context.waitForEvent('request', r => r.url().endsWith('/request-from-within-worker.txt')),
-      page.goto(server.PREFIX + '/serviceworkers/fetch/sw.html')
-    ]);
-    const [inner] = await Promise.all([
-      context.waitForEvent('request', r => r.url().endsWith('/inner.txt')),
-      page.evaluate(() => fetch('/inner.txt')),
-    ]);
-    expect(html.frame()).toBeTruthy();
-    expect(html.serviceWorker()).toBe(null);
-    expect((await html.response()).fulfilledByServiceWorker()).toBe(false);
-
-    expect(main.frame).toThrow();
-    expect(main.serviceWorker()).toBe(worker);
-    expect((await main.response()).fulfilledByServiceWorker()).toBe(false);
-
-    expect(inner.frame()).toBeTruthy();
-    expect(inner.serviceWorker()).toBe(null);
-    expect((await inner.response()).fulfilledByServiceWorker()).toBe(true);
-
-    expect(inWorker.frame).toThrow();
-    expect(inWorker.serviceWorker()).toBe(worker);
-    expect((await inWorker.response()).fulfilledByServiceWorker()).toBe(false);
-
-    await page.evaluate(() => window['activationPromise']);
-    const [innerSW, innerPage] = await Promise.all([
-      context.waitForEvent('request', r => r.url().endsWith('/inner.txt') && !!r.serviceWorker()),
-      context.waitForEvent('request', r => r.url().endsWith('/inner.txt') && !r.serviceWorker()),
-      page.evaluate(() => fetch('/inner.txt')),
-    ]);
-    expect(innerPage.serviceWorker()).toBe(null);
-    expect((await innerPage.response()).fulfilledByServiceWorker()).toBe(true);
-
-    expect(innerSW.serviceWorker()).toBe(worker);
-    expect((await innerSW.response()).fulfilledByServiceWorker()).toBe(false);
-  });
-
-  test('should intercept service worker requests (main and within)', async ({ context, page, server, browserMajorVersion }) => {
-    test.skip(browserMajorVersion < 103, 'Requires fix from https://chromium-review.googlesource.com/c/chromium/src/+/3544685');
-
-    await context.route('**/request-from-within-worker', route =>
-      route.fulfill({
-        contentType: 'application/json',
-        status: 200,
-        body: '"intercepted!"',
-      })
-    );
-
-    await context.route('**/sw.js', route =>
-      route.fulfill({
-        contentType: 'text/javascript',
-        status: 200,
-        body: `
+  await context.route('**/sw.js', route =>
+    route.fulfill({
+      contentType: 'text/javascript',
+      status: 200,
+      body: `
           self.contentPromise = new Promise(res => fetch('/request-from-within-worker').then(r => r.json()).then(res));
         `,
-      })
-    );
+    })
+  );
 
-    const [ sw ] = await Promise.all([
-      context.waitForEvent('serviceworker'),
-      page.goto(server.PREFIX + '/serviceworkers/empty/sw.html'),
-    ]);
+  const [ sw ] = await Promise.all([
+    context.waitForEvent('serviceworker'),
+    page.goto(server.PREFIX + '/serviceworkers/empty/sw.html'),
+  ]);
 
-    await expect(sw.evaluate(() => self['contentPromise'])).resolves.toBe('intercepted!');
+  await expect(sw.evaluate(() => self['contentPromise'])).resolves.toBe('intercepted!');
+});
+
+test('should report failure (due to content-type) of main service worker request', async ({ server, page, context, browserMajorVersion }) => {
+  test.fixme(true, 'crbug.com/1318727');
+  test.skip(browserMajorVersion < 103, 'Requires fix from https://chromium-review.googlesource.com/c/chromium/src/+/3544685');
+
+  server.setRoute('/serviceworkers/fetch/sw.js', (req, res) => {
+    res.writeHead(200, 'OK', { 'Content-Type': 'text/html' });
+    res.write(`console.log('hi from sw');`);
+    res.end();
   });
-
-  test('should report failure (due to content-type) of main service worker request', async ({ server, page, context, browserMajorVersion }) => {
-    test.fixme(true, 'crbug.com/1318727');
-    test.skip(browserMajorVersion < 103, 'Requires fix from https://chromium-review.googlesource.com/c/chromium/src/+/3544685');
-
-    server.setRoute('/serviceworkers/fetch/sw.js', (req, res) => {
-      res.writeHead(200, 'OK', { 'Content-Type': 'text/html' });
-      res.write(`console.log('hi from sw');`);
-      res.end();
-    });
-    const [, main] = await Promise.all([
-      server.waitForRequest('/serviceworkers/fetch/sw.js'),
-      context.waitForEvent('request', r => r.url().endsWith('sw.js')),
-      page.goto(server.PREFIX + '/serviceworkers/fetch/sw.html'),
-    ]);
+  const [, main] = await Promise.all([
+    server.waitForRequest('/serviceworkers/fetch/sw.js'),
+    context.waitForEvent('request', r => r.url().endsWith('sw.js')),
+    page.goto(server.PREFIX + '/serviceworkers/fetch/sw.html'),
+  ]);
     // This will timeout today
-    await main.response();
-  });
+  await main.response();
+});
 
-  test('should report failure (due to redirect) of main service worker request', async ({ server, page, context, browserMajorVersion }) => {
-    test.fixme(true, 'crbug.com/1318727');
-    test.skip(browserMajorVersion < 103, 'Requires fix from https://chromium-review.googlesource.com/c/chromium/src/+/3544685');
+test('should report failure (due to redirect) of main service worker request', async ({ server, page, context, browserMajorVersion }) => {
+  test.fixme(true, 'crbug.com/1318727');
+  test.skip(browserMajorVersion < 103, 'Requires fix from https://chromium-review.googlesource.com/c/chromium/src/+/3544685');
 
-    server.setRedirect('/serviceworkers/empty/sw.js', '/dev/null');
-    const [, main] = await Promise.all([
-      server.waitForRequest('/serviceworkers/empty/sw.js'),
-      context.waitForEvent('request', r => r.url().endsWith('sw.js')),
-      page.goto(server.PREFIX + '/serviceworkers/empty/sw.html'),
-    ]);
+  server.setRedirect('/serviceworkers/empty/sw.js', '/dev/null');
+  const [, main] = await Promise.all([
+    server.waitForRequest('/serviceworkers/empty/sw.js'),
+    context.waitForEvent('request', r => r.url().endsWith('sw.js')),
+    page.goto(server.PREFIX + '/serviceworkers/empty/sw.html'),
+  ]);
     // This will timeout today
-    const resp = await main.response();
-    expect(resp.status()).toBe(301);
-  });
+  const resp = await main.response();
+  expect(resp.status()).toBe(301);
+});
 
-  test('should intercept service worker importScripts', async ({ context, page, server, browserMajorVersion }) => {
-    test.skip(browserMajorVersion < 103, 'Requires fix from https://chromium-review.googlesource.com/c/chromium/src/+/3544685');
+test('should intercept service worker importScripts', async ({ context, page, server, browserMajorVersion }) => {
+  test.skip(browserMajorVersion < 103, 'Requires fix from https://chromium-review.googlesource.com/c/chromium/src/+/3544685');
 
-    await context.route('**/import.js', route =>
-      route.fulfill({
-        contentType: 'text/javascript',
-        status: 200,
-        body: 'self.exportedValue = 47;',
-      })
-    );
+  await context.route('**/import.js', route =>
+    route.fulfill({
+      contentType: 'text/javascript',
+      status: 200,
+      body: 'self.exportedValue = 47;',
+    })
+  );
 
-    await context.route('**/sw.js', route =>
-      route.fulfill({
-        contentType: 'text/javascript',
-        status: 200,
-        body: `
+  await context.route('**/sw.js', route =>
+    route.fulfill({
+      contentType: 'text/javascript',
+      status: 200,
+      body: `
           importScripts('/import.js');
           self.importedValue = self.exportedValue;
         `,
-      })
-    );
+    })
+  );
 
-    const [ sw ] = await Promise.all([
-      context.waitForEvent('serviceworker'),
-      page.goto(server.PREFIX + '/serviceworkers/empty/sw.html'),
-    ]);
+  const [ sw ] = await Promise.all([
+    context.waitForEvent('serviceworker'),
+    page.goto(server.PREFIX + '/serviceworkers/empty/sw.html'),
+  ]);
 
-    await expect(sw.evaluate(() => self['importedValue'])).resolves.toBe(47);
-  });
+  await expect(sw.evaluate(() => self['importedValue'])).resolves.toBe(47);
+});
 
-  test('should report intercepted service worker requests in HAR', async ({ pageWithHar, server, browserMajorVersion }) => {
-    test.skip(browserMajorVersion < 103, 'Requires fix from https://chromium-review.googlesource.com/c/chromium/src/+/3544685');
+test('should report intercepted service worker requests in HAR', async ({ pageWithHar, server, browserMajorVersion }) => {
+  test.skip(browserMajorVersion < 103, 'Requires fix from https://chromium-review.googlesource.com/c/chromium/src/+/3544685');
 
-    const { context, page, getLog } = await pageWithHar();
-    await context.route('**/request-from-within-worker', route =>
-      route.fulfill({
-        contentType: 'application/json',
-        headers: {
-          'x-pw-test': 'request-within-worker',
-        },
-        status: 200,
-        body: '"intercepted!"',
-      })
-    );
+  const { context, page, getLog } = await pageWithHar();
+  await context.route('**/request-from-within-worker', route =>
+    route.fulfill({
+      contentType: 'application/json',
+      headers: {
+        'x-pw-test': 'request-within-worker',
+      },
+      status: 200,
+      body: '"intercepted!"',
+    })
+  );
 
-    await context.route('**/sw.js', route =>
-      route.fulfill({
-        contentType: 'text/javascript',
-        headers: {
-          'x-pw-test': 'intercepted-main',
-        },
-        status: 200,
-        body: `
+  await context.route('**/sw.js', route =>
+    route.fulfill({
+      contentType: 'text/javascript',
+      headers: {
+        'x-pw-test': 'intercepted-main',
+      },
+      status: 200,
+      body: `
           self.contentPromise = new Promise(res => fetch('/request-from-within-worker').then(r => r.json()).then(res));
         `,
-      })
-    );
+    })
+  );
 
-    const [ sw ] = await Promise.all([
-      context.waitForEvent('serviceworker'),
-      page.goto(server.PREFIX + '/serviceworkers/empty/sw.html'),
-    ]);
+  const [ sw ] = await Promise.all([
+    context.waitForEvent('serviceworker'),
+    page.goto(server.PREFIX + '/serviceworkers/empty/sw.html'),
+  ]);
 
-    await expect(sw.evaluate(() => self['contentPromise'])).resolves.toBe('intercepted!');
+  await expect(sw.evaluate(() => self['contentPromise'])).resolves.toBe('intercepted!');
 
-    const log = await getLog();
-    {
-      const sw = log.entries.filter(e => e.request.url.endsWith('sw.js'));
-      expect.soft(sw).toHaveLength(1);
-      expect.soft(sw[0].response.headers.filter(v => v.name === 'x-pw-test')).toEqual([{ name: 'x-pw-test', value: 'intercepted-main' }]);
-    }
-    {
-      const req = log.entries.filter(e => e.request.url.endsWith('request-from-within-worker'));
-      expect.soft(req).toHaveLength(1);
-      expect.soft(req[0].response.headers.filter(v => v.name === 'x-pw-test')).toEqual([{ name: 'x-pw-test', value: 'request-within-worker' }]);
-      expect.soft(Buffer.from(req[0].response.content.text, 'base64').toString()).toBe('"intercepted!"');
+  const log = await getLog();
+  {
+    const sw = log.entries.filter(e => e.request.url.endsWith('sw.js'));
+    expect.soft(sw).toHaveLength(1);
+    expect.soft(sw[0].response.headers.filter(v => v.name === 'x-pw-test')).toEqual([{ name: 'x-pw-test', value: 'intercepted-main' }]);
+  }
+  {
+    const req = log.entries.filter(e => e.request.url.endsWith('request-from-within-worker'));
+    expect.soft(req).toHaveLength(1);
+    expect.soft(req[0].response.headers.filter(v => v.name === 'x-pw-test')).toEqual([{ name: 'x-pw-test', value: 'request-within-worker' }]);
+    expect.soft(Buffer.from(req[0].response.content.text, 'base64').toString()).toBe('"intercepted!"');
+  }
+});
+
+test('should intercept only serviceworker request, not page', async ({ context, page, server, browserMajorVersion }) => {
+  test.skip(browserMajorVersion < 103, 'Requires fix from https://chromium-review.googlesource.com/c/chromium/src/+/3544685');
+
+  await context.route('**/data.json', async route => {
+    if (route.request().serviceWorker()) {
+      return route.fulfill({
+        contentType: 'text/plain',
+        status: 200,
+        body: 'from sw',
+      });
+    } else {
+      return route.continue();
     }
   });
 
-  test('should intercept only serviceworker request, not page', async ({ context, page, server, browserMajorVersion }) => {
+  const [ sw ] = await Promise.all([
+    context.waitForEvent('serviceworker'),
+    page.goto(server.PREFIX + '/serviceworkers/fetch/sw.html'),
+  ]);
+  await page.evaluate(() => window['activationPromise']);
+  const response = await page.evaluate(() => fetch('/data.json').then(r => r.text()));
+  const [ url ] = await sw.evaluate(() => self['intercepted']);
+  expect(url).toMatch(/\/data\.json$/);
+  expect(response).toBe('from sw');
+});
+
+test('setOffline', async ({ context, page, server, browserMajorVersion }) => {
+  test.skip(browserMajorVersion < 103, 'Requires fix from https://chromium-review.googlesource.com/c/chromium/src/+/3544685');
+
+  const [worker] = await Promise.all([
+    context.waitForEvent('serviceworker'),
+    page.goto(server.PREFIX + '/serviceworkers/fetch/sw.html')
+  ]);
+
+  await page.evaluate(() => window['activationPromise']);
+  await context.setOffline(true);
+  const [,error] = await Promise.all([
+    context.waitForEvent('request', r => r.url().endsWith('/inner.txt') && !!r.serviceWorker()),
+    worker.evaluate(() => fetch('/inner.txt').catch(e => `REJECTED: ${e}`)),
+  ]);
+  expect(error).toMatch(/REJECTED.*Failed to fetch/);
+});
+
+
+test('setExtraHTTPHeaders', async ({ context, page, server, browserMajorVersion }) => {
+  test.skip(browserMajorVersion < 103, 'Requires fix from https://chromium-review.googlesource.com/c/chromium/src/+/3544685');
+
+  const [worker] = await Promise.all([
+    context.waitForEvent('serviceworker'),
+    page.goto(server.PREFIX + '/serviceworkers/fetch/sw.html')
+  ]);
+
+  await page.evaluate(() => window['activationPromise']);
+  await context.setExtraHTTPHeaders({ 'x-custom-header': 'custom!' });
+  const requestPromise = server.waitForRequest('/inner.txt');
+  await worker.evaluate(() => fetch('/inner.txt'));
+  const req = await requestPromise;
+  expect(req.headers['x-custom-header']).toBe('custom!');
+});
+
+test.describe('http credentials', () => {
+  test.use({ httpCredentials: { username: 'user',  password: 'pass' } });
+
+  test('httpCredentials', async ({ context, page, server, browserMajorVersion }) => {
     test.skip(browserMajorVersion < 103, 'Requires fix from https://chromium-review.googlesource.com/c/chromium/src/+/3544685');
 
-    await context.route('**/data.json', async route => {
-      if (route.request().serviceWorker()) {
-        return route.fulfill({
-          contentType: 'text/plain',
-          status: 200,
-          body: 'from sw',
-        });
-      } else {
-        return route.continue();
-      }
-    });
-
-    const [ sw ] = await Promise.all([
-      context.waitForEvent('serviceworker'),
-      page.goto(server.PREFIX + '/serviceworkers/fetch/sw.html'),
-    ]);
-    await page.evaluate(() => window['activationPromise']);
-    const response = await page.evaluate(() => fetch('/data.json').then(r => r.text()));
-    const [ url ] = await sw.evaluate(() => self['intercepted']);
-    expect(url).toMatch(/\/data\.json$/);
-    expect(response).toBe('from sw');
-  });
-
-  test('setOffline', async ({ context, page, server, browserMajorVersion }) => {
-    test.skip(browserMajorVersion < 103, 'Requires fix from https://chromium-review.googlesource.com/c/chromium/src/+/3544685');
-
+    server.setAuth('/serviceworkers/fetch/sw.html', 'user', 'pass');
+    server.setAuth('/empty.html', 'user', 'pass');
     const [worker] = await Promise.all([
       context.waitForEvent('serviceworker'),
       page.goto(server.PREFIX + '/serviceworkers/fetch/sw.html')
     ]);
 
     await page.evaluate(() => window['activationPromise']);
-    await context.setOffline(true);
-    const [,error] = await Promise.all([
-      context.waitForEvent('request', r => r.url().endsWith('/inner.txt') && !!r.serviceWorker()),
-      worker.evaluate(() => fetch('/inner.txt').catch(e => `REJECTED: ${e}`)),
-    ]);
-    expect(error).toMatch(/REJECTED.*Failed to fetch/);
-  });
-
-
-  test('setExtraHTTPHeaders', async ({ context, page, server, browserMajorVersion }) => {
-    test.skip(browserMajorVersion < 103, 'Requires fix from https://chromium-review.googlesource.com/c/chromium/src/+/3544685');
-
-    const [worker] = await Promise.all([
-      context.waitForEvent('serviceworker'),
-      page.goto(server.PREFIX + '/serviceworkers/fetch/sw.html')
-    ]);
-
-    await page.evaluate(() => window['activationPromise']);
-    await context.setExtraHTTPHeaders({ 'x-custom-header': 'custom!' });
-    const requestPromise = server.waitForRequest('/inner.txt');
-    await worker.evaluate(() => fetch('/inner.txt'));
-    const req = await requestPromise;
-    expect(req.headers['x-custom-header']).toBe('custom!');
-  });
-
-  test.describe('http credentials', () => {
-    test.use({ httpCredentials: { username: 'user',  password: 'pass' } });
-
-    test('httpCredentials', async ({ context, page, server, browserMajorVersion }) => {
-      test.skip(browserMajorVersion < 103, 'Requires fix from https://chromium-review.googlesource.com/c/chromium/src/+/3544685');
-
-      server.setAuth('/serviceworkers/fetch/sw.html', 'user', 'pass');
-      server.setAuth('/empty.html', 'user', 'pass');
-      const [worker] = await Promise.all([
-        context.waitForEvent('serviceworker'),
-        page.goto(server.PREFIX + '/serviceworkers/fetch/sw.html')
-      ]);
-
-      await page.evaluate(() => window['activationPromise']);
-      expect(await worker.evaluate(() => fetch('/empty.html').then(r => r.status))).toBe(200);
-    });
+    expect(await worker.evaluate(() => fetch('/empty.html').then(r => r.status))).toBe(200);
   });
 });
 

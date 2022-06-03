@@ -159,7 +159,7 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
   baseURL: [ async ({ }, use) => {
     await use(process.env.PLAYWRIGHT_TEST_BASE_URL);
   }, { option: true } ],
-  serviceWorkerPolicy: [ undefined, { option: true } ],
+  serviceWorkers: [ undefined, { option: true } ],
   contextOptions: [ {}, { option: true } ],
 
   _combinedContextOptions: async ({
@@ -184,7 +184,7 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
     userAgent,
     baseURL,
     contextOptions,
-    serviceWorkerPolicy,
+    serviceWorkers,
   }, use) => {
     const options: BrowserContextOptions = {};
     if (acceptDownloads !== undefined)
@@ -227,8 +227,8 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
       options.viewport = viewport;
     if (baseURL !== undefined)
       options.baseURL = baseURL;
-    if (serviceWorkerPolicy !== undefined)
-      options.serviceWorkerPolicy = serviceWorkerPolicy;
+    if (serviceWorkers !== undefined)
+      options.serviceWorkers = serviceWorkers;
     await use({
       ...contextOptions,
       ...options,

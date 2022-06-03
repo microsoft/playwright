@@ -448,12 +448,11 @@ ContextOptions:
         omitContent: boolean?
         path: string
     strictSelectors: boolean?
-    serviceWorkerPolicy:
+    serviceWorkers:
       type: enum?
       literals:
-      - default
-      - disabled
-      - enable-network-events
+      - allow
+      - block
 
 LocalUtils:
   type: interface

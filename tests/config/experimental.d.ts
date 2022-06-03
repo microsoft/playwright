@@ -10384,7 +10384,7 @@ export interface BrowserType<Unused = {}> {
      *
      * Defaults to `"default"`.
      */
-    serviceWorkerPolicy?: "default"|"disabled"|"enable-network-events";
+    serviceWorkers?: "default"|"disabled"|"enable-network-events";
 
     /**
      * Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on.
@@ -11557,7 +11557,7 @@ export interface AndroidDevice {
      *
      * Defaults to `"default"`.
      */
-    serviceWorkerPolicy?: "default"|"disabled"|"enable-network-events";
+    serviceWorkers?: "default"|"disabled"|"enable-network-events";
 
     /**
      * If specified, enables strict selectors mode for this context. In the strict selectors mode all operations on selectors
@@ -13098,7 +13098,7 @@ export interface Browser extends EventEmitter {
      *
      * Defaults to `"default"`.
      */
-    serviceWorkerPolicy?: "default"|"disabled"|"enable-network-events";
+    serviceWorkers?: "default"|"disabled"|"enable-network-events";
 
     /**
      * Populates context with given storage state. This option can be used to initialize context with logged-in information
@@ -15574,7 +15574,7 @@ export interface BrowserContextOptions {
    *
    * Defaults to `"default"`.
    */
-  serviceWorkerPolicy?: "default"|"disabled"|"enable-network-events";
+  serviceWorkers?: "default"|"disabled"|"enable-network-events";
 
   /**
    * Populates context with given storage state. This option can be used to initialize context with logged-in information
@@ -18783,7 +18783,7 @@ type ColorScheme = Exclude<BrowserContextOptions['colorScheme'], undefined>;
 type ExtraHTTPHeaders = Exclude<BrowserContextOptions['extraHTTPHeaders'], undefined>;
 type Proxy = Exclude<BrowserContextOptions['proxy'], undefined>;
 type StorageState = Exclude<BrowserContextOptions['storageState'], undefined>;
-type ServiceWorkerPolicy = Exclude<BrowserContextOptions['serviceWorkerPolicy'], undefined>;
+type ServiceWorkerPolicy = Exclude<BrowserContextOptions['serviceWorkers'], undefined>;
 type ConnectOptions = {
   /**
    * A browser websocket endpoint to connect to.
@@ -19106,7 +19106,7 @@ export interface PlaywrightTestOptions {
    *
    * Defaults to `"default"`.
    */
-  serviceWorkerPolicy: ServiceWorkerPolicy | undefined;
+  serviceWorkers: ServiceWorkerPolicy | undefined;
 }
 
 
