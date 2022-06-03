@@ -501,6 +501,7 @@ const Network = {
       statusText: t.String,
       headers: t.Array(networkTypes.HTTPHeader),
       timing: networkTypes.ResourceTiming,
+      fromServiceWorker: t.Boolean,
     },
     'requestFinished': {
       requestId: t.String,
