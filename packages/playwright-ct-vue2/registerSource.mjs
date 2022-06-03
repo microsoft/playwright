@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 // @ts-check
 
 // This file is injected into the registry as text, no dependencies are allowed.
 
-import { createApp, setDevtoolsHook, h } from 'vue';
+import Vue from 'vue';
 
 /** @typedef {import('../playwright-test/types/component').Component} Component */
 
@@ -32,24 +33,21 @@ export function register(components) {
     registry.set(name, value);
 }
 
-const allListeners = [];
-
 /**
  * @param {Component | string} child 
+ * @param {import('vue').CreateElement} h 
  * @returns {import('vue').VNode | string}
  */
-function renderChild(child) {
-  return typeof child === 'string' ? child : render(child);
+function renderChild(child, h) {
+  return typeof child === 'string' ? child : render(child, h);
 }
 
 /**
  * @param {Component} component 
+ * @param {import('vue').CreateElement} h 
  * @returns {import('vue').VNode}
  */
-function render(component) {
-  if (typeof component === 'string')
-    return component;
-
+function render(component, h) {
   /**
    * @type {import('vue').Component | string | undefined}
    */
@@ -70,100 +68,81 @@ function render(component) {
   componentFunc = componentFunc || component.type;
 
   const isVueComponent = componentFunc !== component.type;
- 
+
   /**
    * @type {(import('vue').VNode | string)[]}
    */
   const children = [];
-  /** @type {{[key: string]: any}} */
-  const slots = {};
-  const listeners = {};
-  /** @type {{[key: string]: any}} */
-  let props = {};
+
+  /** @type {import('vue').VNodeData} */
+  const nodeData = {};
+  nodeData.attrs = {};
+  nodeData.props = {};
+  nodeData.scopedSlots = {};
+  nodeData.on = {};
 
   if (component.kind === 'jsx') {
     for (const child of component.children || []) {
       if (typeof child !== 'string' && child.type === 'template' && child.kind === 'jsx') {
         const slotProperty = Object.keys(child.props).find(k => k.startsWith('v-slot:'));
         const slot = slotProperty ? slotProperty.substring('v-slot:'.length) : 'default';
-        slots[slot] = child.children.map(renderChild);
+        nodeData.scopedSlots[slot] = () => child.children.map(c => renderChild(c, h));
       } else {
-        children.push(renderChild(child));
+        children.push(renderChild(child, h));
       }
     }
 
     for (const [key, value] of Object.entries(component.props)) {
       if (key.startsWith('v-on:')) {
         const event = key.substring('v-on:'.length);
-        if (isVueComponent)
-          listeners[event] = value;
-        else
-          props[`on${event[0].toUpperCase()}${event.substring(1)}`] = value;
+        nodeData.on[event] = value;
       } else {
-        props[key] = value;
+        if (isVueComponent)
+          nodeData.props[key] = value;
+        else
+          nodeData.attrs[key] = value;
       }
     }
   }
 
   if (component.kind === 'object') {
     // Vue test util syntax.
-    for (const [key, value] of Object.entries(component.options.slots || {})) {
+    const options = component.options || {};
+    for (const [key, value] of Object.entries(options.slots || {})) {
+      const list = (Array.isArray(value) ? value : [value]).map(v => renderChild(v, h));
       if (key === 'default')
-        children.push(value);
+        children.push(...list);
       else
-        slots[key] = value;
+        nodeData.scopedSlots[key] = () => list;
     }
-    props = component.options.props || {};
-    for (const [key, value] of Object.entries(component.options.on || {}))
-      listeners[key] = value;
+    nodeData.props = options.props || {};
+    for (const [key, value] of Object.entries(options.on || {}))
+      nodeData.on[key] = value;
   }
 
+  /** @type {(string|import('vue').VNode)[] | undefined} */
   let lastArg;
-  if (Object.entries(slots).length) {
-    lastArg = slots;
+  if (Object.entries(nodeData.scopedSlots).length) {
     if (children.length)
-      slots.default = children;
+      nodeData.scopedSlots.default = () => children;
   } else if (children.length) {
     lastArg = children;
   }
 
-  // @ts-ignore
-  const wrapper = h(componentFunc, props, lastArg);
-  allListeners.push([wrapper, listeners]);
+  const wrapper = h(componentFunc, nodeData, lastArg);
   return wrapper;
 }
 
-/**
- * @returns {any}
- */
-function createDevTools() {
-  return {
-    emit(eventType, ...payload) {
-      if (eventType === 'component:emit') {
-        const [, componentVM, event, eventArgs] = payload;
-        for (const [wrapper, listeners] of allListeners) {
-          if (wrapper.component !== componentVM)
-            continue;
-          const listener = listeners[event];
-          if (!listener)
-            return;
-          listener(...eventArgs);
-        }
-      }
-    }
-  };
-}
-
 /** @type {any} */ (window).playwrightMount = /** @param {Component} component */ async component => {
-  if (!document.getElementById('root')) {
-    const rootElement = document.createElement('div');
+  let rootElement = document.getElementById('root');
+  if (!rootElement) {
+    rootElement = document.createElement('div');
     rootElement.id = 'root';
     document.body.append(rootElement);
   }
-  const app = createApp({
-    render: () => render(component)
-  });
-  setDevtoolsHook(createDevTools(), {});
-  app.mount('#root');
+  const mounted = new Vue({
+    render: h => render(component, h),
+  }).$mount();
+  rootElement.appendChild(mounted.$el);
   return '#root > *';
 };
