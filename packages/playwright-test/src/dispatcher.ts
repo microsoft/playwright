@@ -40,6 +40,13 @@ type TestData = {
   test: TestCase;
   resultByWorkerIndex: Map<number, TestResultData>;
 };
+
+type WorkerExitData = {
+  unexpectedly: boolean;
+  code: number | null;
+  signal: NodeJS.Signals | null;
+};
+
 export class Dispatcher {
   private _workerSlots: { busy: boolean, worker?: Worker }[] = [];
   private _queue: TestGroup[] = [];
@@ -271,7 +278,7 @@ export class Dispatcher {
     };
     worker.on('stepEnd', onStepEnd);
 
-    const onDone = (params: DonePayload) => {
+    const onDone = (params: DonePayload & { unexpectedExitError?: TestError }) => {
       this._queuedOrRunningHashCount.set(worker.hash(), this._queuedOrRunningHashCount.get(worker.hash())! - 1);
       let remaining = [...remainingByTestId.values()];
 
@@ -279,7 +286,7 @@ export class Dispatcher {
       // - there are no remaining
       // - we are here not because something failed
       // - no unrecoverable worker error
-      if (!remaining.length && !failedTestIds.size && !params.fatalErrors.length && !params.skipTestsDueToSetupFailure.length && !params.fatalUnknownTestIds) {
+      if (!remaining.length && !failedTestIds.size && !params.fatalErrors.length && !params.skipTestsDueToSetupFailure.length && !params.fatalUnknownTestIds && !params.unexpectedExitError) {
         if (this._isWorkerRedundant(worker))
           worker.stop();
         doneWithJob();
@@ -289,7 +296,7 @@ export class Dispatcher {
       // When worker encounters error, we will stop it and create a new one.
       worker.stop(true /* didFail */);
 
-      const massSkipTestsFromRemaining = (testIds: Set<string>, errors: TestError[]) => {
+      const massSkipTestsFromRemaining = (testIds: Set<string>, errors: TestError[], onlyStartedTests?: boolean) => {
         remaining = remaining.filter(test => {
           if (!testIds.has(test._id))
             return true;
@@ -301,6 +308,8 @@ export class Dispatcher {
             if (runData) {
               result = runData.result;
             } else {
+              if (onlyStartedTests)
+                return true;
               result = data.test._appendTestResult();
               this._reporter.onTestBegin?.(test, result);
             }
@@ -336,6 +345,9 @@ export class Dispatcher {
       }
       // Handle tests that should be skipped because of the setup failure.
       massSkipTestsFromRemaining(new Set(params.skipTestsDueToSetupFailure), []);
+      // Handle unexpected worker exit.
+      if (params.unexpectedExitError)
+        massSkipTestsFromRemaining(new Set(remaining.map(test => test._id)), [params.unexpectedExitError], true /* onlyStartedTests */);
 
       const retryCandidates = new Set<string>();
       const serialSuitesWithFailures = new Set<Suite>();
@@ -396,8 +408,9 @@ export class Dispatcher {
     };
     worker.on('done', onDone);
 
-    const onExit = (expectedly: boolean) => {
-      onDone({ skipTestsDueToSetupFailure: [], fatalErrors: expectedly ? [] : [{ value: 'Worker process exited unexpectedly' }] });
+    const onExit = (data: WorkerExitData) => {
+      const unexpectedExitError = data.unexpectedly ? { value: `Worker process exited unexpectedly (code=${data.code}, signal=${data.signal})` } : undefined;
+      onDone({ skipTestsDueToSetupFailure: [], fatalErrors: [], unexpectedExitError });
     };
     worker.on('exit', onExit);
 
@@ -492,9 +505,9 @@ class Worker extends EventEmitter {
       // Can't pipe since piping slows down termination for some reason.
       stdio: ['ignore', 'ignore', process.env.PW_RUNNER_DEBUG ? 'inherit' : 'ignore', 'ipc']
     });
-    this.process.on('exit', () => {
+    this.process.on('exit', (code, signal) => {
       this.didExit = true;
-      this.emit('exit', this._didSendStop /* expectedly */);
+      this.emit('exit', { unexpectedly: !this._didSendStop, code, signal } as WorkerExitData);
     });
     this.process.on('error', e => {});  // do not yell at a send to dead process.
     this.process.on('message', (message: any) => {
