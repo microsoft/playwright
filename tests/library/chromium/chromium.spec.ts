@@ -134,29 +134,6 @@ test.describe('with service worker networking', () => {
     await expect(sw.evaluate(() => self['contentPromise'])).resolves.toBe('intercepted!');
   });
 
-  test('should report failure (due to cross-origin) of main service worker request', async ({ server, page, context, browserMajorVersion }) => {
-    test.fixme(true, 'crbug.com/1318727');
-    test.skip(browserMajorVersion < 103, 'Requires fix from https://chromium-review.googlesource.com/c/chromium/src/+/3544685');
-
-    server.setRoute('/serviceworkers/cors/sw.html', (req, res) => {
-      res.write(`
-        <link rel="stylesheet" href="./style.css">
-        <script>
-          window.registrationPromise = navigator.serviceWorker.register('${server.CROSS_PROCESS_PREFIX + '/serviceworkers/empty/sw.js'}');
-          window.activationPromise = new Promise(resolve => navigator.serviceWorker.oncontrollerchange = resolve);
-        </script>
-      `);
-      res.end();
-    });
-    const [, main] = await Promise.all([
-      server.waitForRequest('/serviceworkers/cors/sw.html'),
-      // This is not being emitted today
-      context.waitForEvent('request', r => r.url().endsWith('sw.js')),
-      page.goto(server.PREFIX + '/serviceworkers/cors/sw.html'),
-    ]);
-    await main.response();
-  });
-
   test('should report failure (due to content-type) of main service worker request', async ({ server, page, context, browserMajorVersion }) => {
     test.fixme(true, 'crbug.com/1318727');
     test.skip(browserMajorVersion < 103, 'Requires fix from https://chromium-review.googlesource.com/c/chromium/src/+/3544685');
