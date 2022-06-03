@@ -112,7 +112,7 @@ test('should intercept service worker requests (main and within)', async ({ cont
 });
 
 test('should report failure (due to content-type) of main service worker request', async ({ server, page, context, browserMajorVersion }) => {
-  test.fixme(true, 'crbug.com/1318727');
+  test.fixme(true, 'crbug.com/1318727, Fixed in https://chromium-review.googlesource.com/c/chromium/src/+/3689949');
   test.skip(browserMajorVersion < 103, 'Requires fix from https://chromium-review.googlesource.com/c/chromium/src/+/3544685');
 
   server.setRoute('/serviceworkers/fetch/sw.js', (req, res) => {
@@ -130,7 +130,7 @@ test('should report failure (due to content-type) of main service worker request
 });
 
 test('should report failure (due to redirect) of main service worker request', async ({ server, page, context, browserMajorVersion }) => {
-  test.fixme(true, 'crbug.com/1318727');
+  test.fixme(true, 'crbug.com/1318727, Fixed in https://chromium-review.googlesource.com/c/chromium/src/+/3689949');
   test.skip(browserMajorVersion < 103, 'Requires fix from https://chromium-review.googlesource.com/c/chromium/src/+/3544685');
 
   server.setRedirect('/serviceworkers/empty/sw.js', '/dev/null');
