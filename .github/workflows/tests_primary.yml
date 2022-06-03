@@ -30,7 +30,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        browser: [chromium, firefox, webkit]
+        browser: [webkit]
         os: [ubuntu-20.04]
         node-version: [14]
         include:
@@ -56,8 +56,7 @@ jobs:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
     - run: npm run build
     - run: npx playwright install --with-deps ${{ matrix.browser }} chromium
-    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run test -- --project=${{ matrix.browser }}
-    - run: node tests/config/checkCoverage.js ${{ matrix.browser }}
+    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run test -- 'trace-viewer|tracing|video' --project=${{ matrix.browser }}
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
     - uses: actions/upload-artifact@v1
@@ -65,125 +64,3 @@ jobs:
       with:
         name: ${{ matrix.browser }}-${{ matrix.os }}-test-results
         path: test-results
-
-  test_linux_chromium_tot:
-    name: ${{ matrix.os }} (chromium tip-of-tree)
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-20.04]
-    runs-on: ${{ matrix.os }}
-    steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v2
-      with:
-        node-version: 14
-    - run: npm i -g npm@8
-    - run: npm ci
-      env:
-        DEBUG: pw:install
-        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
-    - run: npm run build
-    - run: npx playwright install --with-deps chromium-tip-of-tree
-    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run test -- --project=chromium
-      env:
-        PWTEST_CHANNEL: chromium-tip-of-tree
-    - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: always()
-    - uses: actions/upload-artifact@v1
-      if: always()
-      with:
-        name: ${{ matrix.browser }}-chromium-tip-of-tree-test-results
-        path: test-results
-
-  test_test_runner:
-    name: Test Runner
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        node-version: [14]
-        include:
-          - os: ubuntu-latest
-            node-version: 12
-          - os: ubuntu-latest
-            node-version: 16
-          - os: ubuntu-latest
-            node-version: 18
-          - os: windows-latest
-            node-version: 16
-    runs-on: ${{ matrix.os }}
-    steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v2
-      with:
-        node-version: ${{matrix.node-version}}
-    - run: npm i -g npm@8
-    - run: npm ci
-      env:
-        DEBUG: pw:install
-    - run: npm run build
-    - run: npx playwright install --with-deps
-    - run: npm run ttest
-      if: matrix.os != 'ubuntu-latest'
-    - run: xvfb-run npm run ttest
-      if: matrix.os == 'ubuntu-latest'
-    - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: always()
-      shell: bash
-
-  test_web_components:
-    name: Web Components
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v2
-      with:
-        # Component tests require Node.js 16+ (they require ESM via TS)
-        node-version: 16
-    - run: npm i -g npm@8
-    - run: npm ci
-      env:
-        DEBUG: pw:install
-    - run: npm run build
-    - run: npx playwright install --with-deps
-    - run: npm run test-html-reporter
-      if: always() && matrix.os != 'ubuntu-latest'
-    - run: xvfb-run npm run test-html-reporter
-      if: always() && matrix.os == 'ubuntu-latest'
-    - run: npm run test-web
-      if: always() && matrix.os != 'ubuntu-latest'
-    - run: xvfb-run npm run test-web
-      if: always() && matrix.os == 'ubuntu-latest'
-
-  test-package-installations:
-    name: "Installation Test ${{ matrix.os }} (${{ matrix.node_version }})"
-    runs-on: ${{ matrix.os  }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os:
-        - ubuntu-latest
-        - macos-latest
-        - windows-latest
-        node_version:
-        - "^18.0.0"
-    timeout-minutes: 30
-    steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v2
-      with:
-        node-version: ${{ matrix.node_version }}
-    - run: npm i -g npm@8
-    - run: npm ci
-      env:
-        DEBUG: pw:install
-    - run: npm run build
-    - run: npx playwright install-deps
-    - run: npm run itest
-      if: matrix.os != 'ubuntu-latest'
-    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run itest
-      if: matrix.os == 'ubuntu-latest'
-    - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: always()
-      shell: bash
