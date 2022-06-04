@@ -21,14 +21,22 @@ export type JsxComponent = {
   children: (Component | string)[],
 };
 
+export type ObjectComponentOptions = {
+  props?: { [key: string]: any },
+  slots?: { [key: string]: any },
+  on?: { [key: string]: Function },
+};
+
 export type ObjectComponent = {
   kind: 'object',
   type: string,
-  options?: {
-    props?: { [key: string]: any },
-    slots?: { [key: string]: any },
-    on?: { [key: string]: Function },
-  }
+  options?: ObjectComponentOptions
 };
 
 export type Component = JsxComponent | ObjectComponent;
+
+declare global {
+  interface Window {
+    playwrightMount(component: Component, rootElement: Element): void;
+  }
+}

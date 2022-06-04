@@ -14,18 +14,29 @@
  * limitations under the License.
  */
 
+// @ts-check
 // This file is injected into the registry as text, no dependencies are allowed.
 
 import React from 'react';
 import ReactDOM from 'react-dom';
 
+/** @typedef {import('../playwright-test/types/component').Component} Component */
+/** @typedef {import('react').FunctionComponent} FrameworkComponent */
+
+/** @type {Map<string, FrameworkComponent>} */
 const registry = new Map();
 
+/**
+ * @param {{[key: string]: FrameworkComponent}} components
+ */
 export function register(components) {
   for (const [name, value] of Object.entries(components))
     registry.set(name, value);
 }
 
+/**
+ * @param {Component} component
+ */
 function render(component) {
   let componentFunc = registry.get(component.type);
   if (!componentFunc) {
@@ -41,9 +52,12 @@ function render(component) {
   if (!componentFunc && component.type[0].toUpperCase() === component.type[0])
     throw new Error(`Unregistered component: ${component.type}. Following components are registered: ${[...registry.keys()]}`);
 
-  componentFunc = componentFunc || component.type;
+  const componentFuncOrString = componentFunc || component.type;
 
-  return React.createElement(componentFunc, component.props, ...component.children.map(child => {
+  if (component.kind !== 'jsx')
+    throw new Error('Object mount notation is not supported');
+
+  return React.createElement(componentFuncOrString, component.props, ...component.children.map(child => {
     if (typeof child === 'string')
       return child;
     return render(child);
@@ -55,11 +69,5 @@ function render(component) {
 }
 
 window.playwrightMount = component => {
-  if (!document.getElementById('root')) {
-    const rootElement = document.createElement('div');
-    rootElement.id = 'root';
-    document.body.append(rootElement);
-  }
   ReactDOM.render(render(component), document.getElementById('root'));
-  return '#root > *';
 };

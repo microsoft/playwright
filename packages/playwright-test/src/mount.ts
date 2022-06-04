@@ -16,6 +16,7 @@
 
 import { normalizeTraceMode, normalizeVideoMode, shouldCaptureTrace, shouldCaptureVideo } from './index';
 import type { Fixtures, Locator, Page, BrowserContextOptions, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, BrowserContext } from './types';
+import type { Component, JsxComponent, ObjectComponentOptions } from '../types/component';
 
 let boundCallbacksForMount: Function[] = [];
 
@@ -65,7 +66,7 @@ export const fixtures: Fixtures<
     },
 
     mount: async ({ page }, use) => {
-      await use(async (component, options) => {
+      await use(async (component: JsxComponent | string, options?: ObjectComponentOptions) => {
         const selector = await (page as any)._wrapApiCall(async () => {
           return await innerMount(page, component, options);
         }, true);
@@ -75,8 +76,8 @@ export const fixtures: Fixtures<
     },
   };
 
-async function innerMount(page: Page, jsxOrType: any, options: any): Promise<string> {
-  let component;
+async function innerMount(page: Page, jsxOrType: JsxComponent | string, options?: ObjectComponentOptions): Promise<string> {
+  let component: Component;
   if (typeof jsxOrType === 'string')
     component = { kind: 'object', type: jsxOrType, options };
   else
@@ -85,7 +86,7 @@ async function innerMount(page: Page, jsxOrType: any, options: any): Promise<str
   wrapFunctions(component, page, boundCallbacksForMount);
 
   // WebKit does not wait for deferred scripts.
-  await page.waitForFunction(() => !!(window as any).playwrightMount);
+  await page.waitForFunction(() => !!window.playwrightMount);
 
   const selector = await page.evaluate(async ({ component }) => {
     const unwrapFunctions = (object: any) => {
@@ -102,7 +103,17 @@ async function innerMount(page: Page, jsxOrType: any, options: any): Promise<str
     };
 
     unwrapFunctions(component);
-    return await (window as any).playwrightMount(component);
+    let rootElement = document.getElementById('root');
+    if (!rootElement) {
+      rootElement = document.createElement('div');
+      rootElement.id = 'root';
+      document.body.appendChild(rootElement);
+    }
+
+    window.playwrightMount(component, rootElement);
+
+    // When mounting fragments, return selector pointing to the root element.
+    return rootElement.childNodes.length > 1 ? '#root' : '#root > *';
   }, { component });
   return selector;
 }
