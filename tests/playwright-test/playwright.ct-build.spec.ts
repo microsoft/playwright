@@ -39,7 +39,7 @@ test('should work with the empty component list', async ({ runInlineTest }, test
   const metainfo = JSON.parse(fs.readFileSync(testInfo.outputPath('playwright/.cache/metainfo.json'), 'utf-8'));
   expect(metainfo.version).toEqual(expect.any(Number));
   expect(Object.entries(metainfo.tests)).toHaveLength(1);
-  expect(Object.entries(metainfo.sources)).toHaveLength(9);
+  expect(Object.entries(metainfo.sources)).toHaveLength(8);
 });
 
 test('should extract component list', async ({ runInlineTest }, testInfo) => {
