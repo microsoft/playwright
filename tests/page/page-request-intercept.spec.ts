@@ -191,5 +191,5 @@ it('should intercept multipart/form-data request body', async ({ page, server, a
     page.click('input[type=submit]', { noWaitAfter: true })
   ]);
   expect(request.method()).toBe('POST');
-  expect(request.postData()).toContain(fs.readFileSync(filePath).toString());
+  expect(request.postData()).toContain(fs.readFileSync(filePath, 'utf8'));
 });
