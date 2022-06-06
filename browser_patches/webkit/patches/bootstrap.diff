@@ -22871,6 +22871,20 @@ index 017c992209e39859a0b56c1145bb79d9fdc6e939..5bf0744cfdcca58f6ecab6a9838abacf
      ruby
  
      # These are dependencies necessary for running tests.
+diff --git a/Tools/jhbuild/jhbuild-minimal.modules b/Tools/jhbuild/jhbuild-minimal.modules
+index a08c829f49b43d494a09c40f71606735c172b6a5..77755b7fa816283c5e738c4e82c9a822499ef353 100644
+--- a/Tools/jhbuild/jhbuild-minimal.modules
++++ b/Tools/jhbuild/jhbuild-minimal.modules
+@@ -175,8 +175,7 @@
+     </branch>
+   </meson>
+ 
+-  <meson id="glib-networking"
+-	 mesonargs="-Dgnutls=disabled -Dopenssl=enabled">
++  <meson id="glib-networking">
+     <dependencies>
+       <dep package="glib"/>
+     </dependencies>
 diff --git a/Tools/win/DLLLauncher/DLLLauncherMain.cpp b/Tools/win/DLLLauncher/DLLLauncherMain.cpp
 index 52605867b9302d1afcc56c5e9b0c54acf0827900..6edf24ab60249241ba2969531ef55f4b495dce9e 100644
 --- a/Tools/win/DLLLauncher/DLLLauncherMain.cpp
