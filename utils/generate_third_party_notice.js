@@ -55,20 +55,21 @@ This project incorporates components from the projects listed below. The origina
       }
     }
 
-    for (const [key, value] of Object.entries(allPackages))
-      lines.push(`-\t${key} (${value.repository})`);
+    const keys = Object.keys(allPackages).sort();
+    for (const key of keys)
+      lines.push(`-\t${key} (${allPackages[key].repository})`);
 
-    for (const [key, value] of Object.entries(allPackages)) {
+    for (const key of keys) {
       lines.push(`\n%% ${key} NOTICES AND INFORMATION BEGIN HERE`);
       lines.push(`=========================================`);
-      lines.push(value.licenseText);
+      lines.push(allPackages[key].licenseText);
       lines.push(`=========================================`);
       lines.push(`END OF ${key} AND INFORMATION`);
     }
 
     lines.push(`\nSUMMARY BEGIN HERE`);
     lines.push(`=========================================`);
-    lines.push(`Total Packages: ${Object.entries(allPackages).length}`);
+    lines.push(`Total Packages: ${keys.length}`);
     lines.push(`=========================================`);
     lines.push(`END OF SUMMARY`);
 
