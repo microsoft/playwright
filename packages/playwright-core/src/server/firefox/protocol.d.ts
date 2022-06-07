@@ -904,6 +904,7 @@ export module Protocol {
         requestStart: number;
         responseStart: number;
       };
+      fromServiceWorker: boolean;
     }
     export type requestFinishedPayload = {
       requestId: string;
