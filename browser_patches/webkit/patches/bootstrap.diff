@@ -6951,7 +6951,7 @@ index ee63764693bb08b70a4ee6c54bf566f5143182cf..947c9c4f4bde763469e66b915e054f8d
  #else
          return false;
 diff --git a/Source/WebCore/platform/graphics/cairo/ImageBufferUtilitiesCairo.cpp b/Source/WebCore/platform/graphics/cairo/ImageBufferUtilitiesCairo.cpp
-index fab94e0ac0f4ab8f7d7decec53adb1f3ac7a6e07..cd853346eb019b00fa99478e7aee2961f61bc23b 100644
+index fab94e0ac0f4ab8f7d7decec53adb1f3ac7a6e07..56193e30522a6fe87e1a7bf01beeae9b9fdb5fbf 100644
 --- a/Source/WebCore/platform/graphics/cairo/ImageBufferUtilitiesCairo.cpp
 +++ b/Source/WebCore/platform/graphics/cairo/ImageBufferUtilitiesCairo.cpp
 @@ -48,6 +48,13 @@
@@ -7035,7 +7035,7 @@ index fab94e0ac0f4ab8f7d7decec53adb1f3ac7a6e07..cd853346eb019b00fa99478e7aee2961
 +
 +Vector<uint8_t> data(cairo_surface_t* image, const String& mimeType, std::optional<double> quality)
  {
-+    if (mimeType == "image/jpeg") {
++    if (mimeType == "image/jpeg"_s) {
 +        int qualityPercent = 100;
 +        if (quality)
 +            qualityPercent = static_cast<int>(*quality * 100.0 + 0.5);
@@ -7419,7 +7419,7 @@ index 80958ba565a877224d0ed37e4e4057b4be0dde24..eca42bf5181bc4a95efca9c9c3f5ce0f
      auto* display = gdk_display_get_default();
      if (!display)
 diff --git a/Source/WebCore/platform/libwpe/PasteboardLibWPE.cpp b/Source/WebCore/platform/libwpe/PasteboardLibWPE.cpp
-index ae439e30f1fb239d18e1164e8896dfb272c75673..93bbf2bdfc99df151c9b82df07eb5a07fae0b2c4 100644
+index ae439e30f1fb239d18e1164e8896dfb272c75673..c004d77c162f87701278fa1ada9200b92a8e7838 100644
 --- a/Source/WebCore/platform/libwpe/PasteboardLibWPE.cpp
 +++ b/Source/WebCore/platform/libwpe/PasteboardLibWPE.cpp
 @@ -32,6 +32,10 @@
@@ -7438,11 +7438,11 @@ index ae439e30f1fb239d18e1164e8896dfb272c75673..93bbf2bdfc99df151c9b82df07eb5a07
  String Pasteboard::readString(const String& type)
  {
 +    if (m_selectionData) {
-+        if (type == "text/plain")
++        if (type == "text/plain"_s)
 +            return m_selectionData->text();;
-+        if (type == "text/html")
++        if (type == "text/html"_s)
 +            return m_selectionData->markup();
-+        if (type == "Files" || type == "text/uri-list")
++        if (type == "Files"_s || type == "text/uri-list"_s)
 +            return m_selectionData->uriList();
 +        return { };
 +    }
@@ -7455,11 +7455,11 @@ index ae439e30f1fb239d18e1164e8896dfb272c75673..93bbf2bdfc99df151c9b82df07eb5a07
  void Pasteboard::writeString(const String& type, const String& text)
  {
 +   if (m_selectionData) {
-+        if (type == "Files" || type == "text/uri-list")
++        if (type == "Files"_s || type == "text/uri-list"_s)
 +            m_selectionData->setURIList(text);
-+        else if (type == "text/html")
++        else if (type == "text/html"_s)
 +            m_selectionData->setMarkup(text);
-+        else if (type == "text/plain")
++        else if (type == "text/plain"_s)
 +            m_selectionData->setText(text);
 +        return;
 +    }
