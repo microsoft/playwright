@@ -22,6 +22,7 @@ export interface SplitViewProps {
   sidebarHidden?: boolean,
   sidebarIsFirst?: boolean,
   orientation?: 'vertical' | 'horizontal',
+  children: JSX.Element | JSX.Element[] | string,
 }
 
 const kMinSize = 50;
