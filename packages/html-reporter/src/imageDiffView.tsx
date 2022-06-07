@@ -93,10 +93,10 @@ export const ImageDiffView: React.FunctionComponent<{
   </div>;
 };
 
-export const ImageDiffSlider: React.FC<{
+export const ImageDiffSlider: React.FC<React.PropsWithChildren<{
   sliderPosition: number,
   setSliderPosition: (position: number) => void,
-}> = ({ children, sliderPosition, setSliderPosition }) => {
+}>> = ({ children, sliderPosition, setSliderPosition }) => {
   const [resizing, setResizing] = React.useState<{ offset: number, size: number } | null>(null);
   const size = sliderPosition;
 

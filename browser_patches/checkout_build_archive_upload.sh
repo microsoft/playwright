@@ -325,6 +325,19 @@ elif [[ "$BUILD_FLAVOR" == "webkit-ubuntu-20.04-arm64" ]]; then
   EXPECTED_HOST_OS_VERSION="20.04"
   EXPECTED_ARCH="aarch64"
   BUILD_BLOB_NAME="webkit-ubuntu-20.04-arm64.zip"
+elif [[ "$BUILD_FLAVOR" == "webkit-ubuntu-22.04" ]]; then
+  BROWSER_NAME="webkit"
+  EXTRA_BUILD_ARGS="--full"
+  EXPECTED_HOST_OS="Ubuntu"
+  EXPECTED_HOST_OS_VERSION="22.04"
+  BUILD_BLOB_NAME="webkit-ubuntu-22.04.zip"
+elif [[ "$BUILD_FLAVOR" == "webkit-ubuntu-22.04-arm64" ]]; then
+  BROWSER_NAME="webkit"
+  EXTRA_BUILD_ARGS="--full"
+  EXPECTED_HOST_OS="Ubuntu"
+  EXPECTED_HOST_OS_VERSION="22.04"
+  EXPECTED_ARCH="aarch64"
+  BUILD_BLOB_NAME="webkit-ubuntu-22.04-arm64.zip"
 elif [[ "$BUILD_FLAVOR" == "webkit-win64" ]]; then
   BROWSER_NAME="webkit"
   EXPECTED_HOST_OS="MINGW"

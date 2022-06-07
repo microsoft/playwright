@@ -23,10 +23,10 @@ export interface ToolbarButtonProps {
   icon: string,
   disabled?: boolean,
   toggled?: boolean,
-  onClick: () => void
+  onClick: () => void,
 }
 
-export const ToolbarButton: React.FC<ToolbarButtonProps> = ({
+export const ToolbarButton: React.FC<React.PropsWithChildren<ToolbarButtonProps>> = ({
   children,
   title = '',
   icon = '',

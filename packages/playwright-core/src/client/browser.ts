@@ -56,6 +56,10 @@ export class Browser extends ChannelOwner<channels.BrowserChannel> implements ap
       context._setBrowserType(browserType);
   }
 
+  browserType(): BrowserType {
+    return this._browserType;
+  }
+
   async newContext(options: BrowserContextOptions = {}): Promise<BrowserContext> {
     options = { ...this._browserType._defaultContextOptions, ...options };
     const contextOptions = await prepareBrowserContextParams(options);

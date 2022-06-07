@@ -240,9 +240,8 @@ it('should not dispatch binding on a closed page', async function({ browser, ser
     expect(messages.join('|')).toBe('binding|close');
 });
 
-it('should not throttle rAF in the opener page', async ({ page, server, browserName }) => {
+it('should not throttle rAF in the opener page', async ({ page, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/14557' });
-  it.fixme(browserName === 'firefox');
   await page.goto(server.EMPTY_PAGE);
   const [popup] = await Promise.all([
     page.waitForEvent('popup'),

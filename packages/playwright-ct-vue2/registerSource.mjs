@@ -21,12 +21,13 @@
 import Vue from 'vue';
 
 /** @typedef {import('../playwright-test/types/component').Component} Component */
+/** @typedef {import('vue').Component} FrameworkComponent */
 
-/** @type { Map<string, import('vue').Component> } */
+/** @type {Map<string, FrameworkComponent>} */
 const registry = new Map();
 
 /**
- * @param {{[key: string]: import('vue').Component}} components
+ * @param {{[key: string]: FrameworkComponent}} components
  */
 export function register(components) {
   for (const [name, value] of Object.entries(components))
@@ -34,8 +35,8 @@ export function register(components) {
 }
 
 /**
- * @param {Component | string} child 
- * @param {import('vue').CreateElement} h 
+ * @param {Component | string} child
+ * @param {import('vue').CreateElement} h
  * @returns {import('vue').VNode | string}
  */
 function renderChild(child, h) {
@@ -43,8 +44,8 @@ function renderChild(child, h) {
 }
 
 /**
- * @param {Component} component 
- * @param {import('vue').CreateElement} h 
+ * @param {Component} component
+ * @param {import('vue').CreateElement} h
  * @returns {import('vue').VNode}
  */
 function render(component, h) {
@@ -133,16 +134,9 @@ function render(component, h) {
   return wrapper;
 }
 
-/** @type {any} */ (window).playwrightMount = /** @param {Component} component */ async component => {
-  let rootElement = document.getElementById('root');
-  if (!rootElement) {
-    rootElement = document.createElement('div');
-    rootElement.id = 'root';
-    document.body.append(rootElement);
-  }
+window.playwrightMount = (component, rootElement) => {
   const mounted = new Vue({
     render: h => render(component, h),
   }).$mount();
   rootElement.appendChild(mounted.$el);
-  return '#root > *';
 };

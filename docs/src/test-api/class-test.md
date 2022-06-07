@@ -943,7 +943,7 @@ test('very slow test', async ({ page }) => {
 });
 ```
 
-Changing timeout from a slow hook:
+Changing timeout from a slow `beforeEach` or `afterEach` hook. Note that this affects the test timeout that is shared with `beforeEach`/`afterEach` hooks.
 
 ```js js-flavor=js
 const { test, expect } = require('@playwright/test');
@@ -960,6 +960,54 @@ import { test, expect } from '@playwright/test';
 test.beforeEach(async ({ page }, testInfo) => {
   // Extend timeout for all tests running this hook by 30 seconds.
   test.setTimeout(testInfo.timeout + 30000);
+});
+```
+
+Changing timeout for a `beforeAll` or `afterAll` hook. Note this affects the hook's timeout, not the test timeout.
+
+```js js-flavor=js
+const { test, expect } = require('@playwright/test');
+
+test.beforeAll(async () => {
+  // Set timeout for this hook.
+  test.setTimeout(60000);
+});
+```
+
+```js js-flavor=ts
+import { test, expect } from '@playwright/test';
+
+test.beforeAll(async () => {
+  // Set timeout for this hook.
+  test.setTimeout(60000);
+});
+```
+
+Changing timeout for all tests in a [`method: Test.describe`] group.
+
+```js js-flavor=js
+const { test, expect } = require('@playwright/test');
+
+test.describe('group', () => {
+  // Applies to all tests in this group.
+  test.setTimeout(60000);
+
+  test('test one', async () => { /* ... */ });
+  test('test two', async () => { /* ... */ });
+  test('test three', async () => { /* ... */ });
+});
+```
+
+```js js-flavor=ts
+import { test, expect } from '@playwright/test';
+
+test.describe('group', () => {
+  // Applies to all tests in this group.
+  test.setTimeout(60000);
+
+  test('test one', async () => { /* ... */ });
+  test('test two', async () => { /* ... */ });
+  test('test three', async () => { /* ... */ });
 });
 ```
 
@@ -1174,6 +1222,10 @@ test('slow test', async ({ page }) => {
   // ...
 });
 ```
+
+:::note
+[`method: Test.slow#1`] cannot be used in a `beforeAll` or `afterAll` hook. Use [`method: Test.setTimeout`] instead.
+:::
 
 ## method: Test.slow#2
 
