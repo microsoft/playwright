@@ -153,6 +153,13 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     })),
     value: tOptional(tType('SerializedValue')),
   });
+  scheme.RecordHarOptions = tObject({
+    omitContent: tOptional(tBoolean),
+    path: tString,
+    urlGlob: tOptional(tString),
+    urlRegexSource: tOptional(tString),
+    urlRegexFlags: tOptional(tString),
+  });
   scheme.FormField = tObject({
     name: tString,
     value: tOptional(tString),
@@ -345,10 +352,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
         height: tNumber,
       })),
     })),
-    recordHar: tOptional(tObject({
-      omitContent: tOptional(tBoolean),
-      path: tString,
-    })),
+    recordHar: tOptional(tType('RecordHarOptions')),
     strictSelectors: tOptional(tBoolean),
     userDataDir: tString,
     slowMo: tOptional(tNumber),
@@ -404,10 +408,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
         height: tNumber,
       })),
     })),
-    recordHar: tOptional(tObject({
-      omitContent: tOptional(tBoolean),
-      path: tString,
-    })),
+    recordHar: tOptional(tType('RecordHarOptions')),
     strictSelectors: tOptional(tBoolean),
     proxy: tOptional(tObject({
       server: tString,
@@ -1279,10 +1280,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     ignoreHTTPSErrors: tOptional(tBoolean),
     locale: tOptional(tString),
     offline: tOptional(tBoolean),
-    recordHar: tOptional(tObject({
-      omitContent: tOptional(tBoolean),
-      path: tString,
-    })),
+    recordHar: tOptional(tType('RecordHarOptions')),
     recordVideo: tOptional(tObject({
       dir: tString,
       size: tOptional(tObject({
@@ -1441,10 +1439,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
         height: tNumber,
       })),
     })),
-    recordHar: tOptional(tObject({
-      omitContent: tOptional(tBoolean),
-      path: tString,
-    })),
+    recordHar: tOptional(tType('RecordHarOptions')),
     strictSelectors: tOptional(tBoolean),
     pkg: tOptional(tString),
     proxy: tOptional(tObject({

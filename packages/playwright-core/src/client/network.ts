@@ -28,7 +28,7 @@ import type { Page } from './page';
 import { Waiter } from './waiter';
 import type * as api from '../../types/types';
 import type { HeadersArray, URLMatch } from '../common/types';
-import { urlMatches } from './clientHelper';
+import { urlMatches } from '../common/netUtils';
 import { MultiMap } from '../utils/multimap';
 import { APIResponse } from './fetch';
 

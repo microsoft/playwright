@@ -265,6 +265,28 @@ it('should include content @smoke', async ({ contextFactory, server }, testInfo)
   expect(log.entries[1].response.content.compression).toBe(0);
 });
 
+it('should filter by glob', async ({ contextFactory, server }, testInfo) => {
+  const harPath = testInfo.outputPath('test.har');
+  const context = await contextFactory({ baseURL: server.PREFIX, recordHar: { path: harPath, urlFilter: '/*.css' }, ignoreHTTPSErrors: true });
+  const page = await context.newPage();
+  await page.goto('/har.html');
+  await context.close();
+  const log = JSON.parse(fs.readFileSync(harPath).toString())['log'] as Log;
+  expect(log.entries.length).toBe(1);
+  expect(log.entries[0].request.url.endsWith('one-style.css')).toBe(true);
+});
+
+it('should filter by regexp', async ({ contextFactory, server }, testInfo) => {
+  const harPath = testInfo.outputPath('test.har');
+  const context = await contextFactory({ recordHar: { path: harPath, urlFilter: /HAR.X?HTML/i }, ignoreHTTPSErrors: true });
+  const page = await context.newPage();
+  await page.goto(server.PREFIX + '/har.html');
+  await context.close();
+  const log = JSON.parse(fs.readFileSync(harPath).toString())['log'] as Log;
+  expect(log.entries.length).toBe(1);
+  expect(log.entries[0].request.url.endsWith('har.html')).toBe(true);
+});
+
 it('should include sizes', async ({ contextFactory, server, asset }, testInfo) => {
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   await page.goto(server.PREFIX + '/har.html');

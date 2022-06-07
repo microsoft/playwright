@@ -263,6 +263,14 @@ export type SerializedError = {
   value?: SerializedValue,
 };
 
+export type RecordHarOptions = {
+  omitContent?: boolean,
+  path: string,
+  urlGlob?: string,
+  urlRegexSource?: string,
+  urlRegexFlags?: string,
+};
+
 export type FormField = {
   name: string,
   value?: string,
@@ -737,10 +745,7 @@ export type BrowserTypeLaunchPersistentContextParams = {
       height: number,
     },
   },
-  recordHar?: {
-    omitContent?: boolean,
-    path: string,
-  },
+  recordHar?: RecordHarOptions,
   strictSelectors?: boolean,
   userDataDir: string,
   slowMo?: number,
@@ -809,10 +814,7 @@ export type BrowserTypeLaunchPersistentContextOptions = {
       height: number,
     },
   },
-  recordHar?: {
-    omitContent?: boolean,
-    path: string,
-  },
+  recordHar?: RecordHarOptions,
   strictSelectors?: boolean,
   slowMo?: number,
 };
@@ -905,10 +907,7 @@ export type BrowserNewContextParams = {
       height: number,
     },
   },
-  recordHar?: {
-    omitContent?: boolean,
-    path: string,
-  },
+  recordHar?: RecordHarOptions,
   strictSelectors?: boolean,
   proxy?: {
     server: string,
@@ -964,10 +963,7 @@ export type BrowserNewContextOptions = {
       height: number,
     },
   },
-  recordHar?: {
-    omitContent?: boolean,
-    path: string,
-  },
+  recordHar?: RecordHarOptions,
   strictSelectors?: boolean,
   proxy?: {
     server: string,
@@ -3573,10 +3569,7 @@ export type ElectronLaunchParams = {
   ignoreHTTPSErrors?: boolean,
   locale?: string,
   offline?: boolean,
-  recordHar?: {
-    omitContent?: boolean,
-    path: string,
-  },
+  recordHar?: RecordHarOptions,
   recordVideo?: {
     dir: string,
     size?: {
@@ -3609,10 +3602,7 @@ export type ElectronLaunchOptions = {
   ignoreHTTPSErrors?: boolean,
   locale?: string,
   offline?: boolean,
-  recordHar?: {
-    omitContent?: boolean,
-    path: string,
-  },
+  recordHar?: RecordHarOptions,
   recordVideo?: {
     dir: string,
     size?: {
@@ -3991,10 +3981,7 @@ export type AndroidDeviceLaunchBrowserParams = {
       height: number,
     },
   },
-  recordHar?: {
-    omitContent?: boolean,
-    path: string,
-  },
+  recordHar?: RecordHarOptions,
   strictSelectors?: boolean,
   pkg?: string,
   proxy?: {
@@ -4047,10 +4034,7 @@ export type AndroidDeviceLaunchBrowserOptions = {
       height: number,
     },
   },
-  recordHar?: {
-    omitContent?: boolean,
-    path: string,
-  },
+  recordHar?: RecordHarOptions,
   strictSelectors?: boolean,
   pkg?: string,
   proxy?: {

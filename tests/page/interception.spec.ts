@@ -16,7 +16,7 @@
  */
 
 import { test as it, expect } from './pageTest';
-import { globToRegex } from '../../packages/playwright-core/lib/client/clientHelper';
+import { globToRegex } from '../../packages/playwright-core/lib/common/netUtils';
 import vm from 'vm';
 
 it('should work with navigation @smoke', async ({ page, server }) => {
