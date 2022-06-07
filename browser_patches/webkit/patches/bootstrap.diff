@@ -22856,7 +22856,7 @@ index 3a231b168583cfc378fb67ff42b108c747dd0733..2b0971a411f87be622cf53536f107a44
 +
  } // namespace WTR
 diff --git a/Tools/glib/dependencies/apt b/Tools/glib/dependencies/apt
-index 017c992209e39859a0b56c1145bb79d9fdc6e939..5bf0744cfdcca58f6ecab6a9838abacfdea24fdb 100644
+index 017c992209e39859a0b56c1145bb79d9fdc6e939..d438dbf99c57f3d8b38b9f7b2f0e9069c2695baf 100644
 --- a/Tools/glib/dependencies/apt
 +++ b/Tools/glib/dependencies/apt
 @@ -45,9 +45,11 @@ PACKAGES=(
@@ -22871,6 +22871,26 @@ index 017c992209e39859a0b56c1145bb79d9fdc6e939..5bf0744cfdcca58f6ecab6a9838abacf
      ruby
  
      # These are dependencies necessary for running tests.
+@@ -58,7 +60,6 @@ PACKAGES=(
+     libcgi-pm-perl
+     psmisc
+     pulseaudio-utils
+-    python-gi
+     ruby-highline
+     ruby-json
+ 
+diff --git a/Tools/jhbuild/jhbuild-minimal.modules b/Tools/jhbuild/jhbuild-minimal.modules
+index a08c829f49b43d494a09c40f71606735c172b6a5..9b2a3825426adb4e30d010defc878a6b159f8c4b 100644
+--- a/Tools/jhbuild/jhbuild-minimal.modules
++++ b/Tools/jhbuild/jhbuild-minimal.modules
+@@ -22,7 +22,6 @@
+       <dep package="wpebackend-fdo"/>
+       <dep package="icu"/>
+       <dep package="libsoup"/>
+-      <dep package="openxr"/>
+       <dep package="libvpx"/>
+       <dep package="glib"/>
+       <dep package="glib-networking"/>
 diff --git a/Tools/win/DLLLauncher/DLLLauncherMain.cpp b/Tools/win/DLLLauncher/DLLLauncherMain.cpp
 index 52605867b9302d1afcc56c5e9b0c54acf0827900..6edf24ab60249241ba2969531ef55f4b495dce9e 100644
 --- a/Tools/win/DLLLauncher/DLLLauncherMain.cpp
