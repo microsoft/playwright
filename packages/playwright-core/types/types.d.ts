@@ -12747,6 +12747,11 @@ export interface Browser extends EventEmitter {
   off(event: 'disconnected', listener: (browser: Browser) => void): this;
 
   /**
+   * Get the browser type (chromium, firefox or webkit) that the browser belongs to.
+   */
+  browserType(): BrowserType;
+
+  /**
    * In case this browser is obtained using
    * [browserType.launch([options])](https://playwright.dev/docs/api/class-browsertype#browser-type-launch), closes the
    * browser and all of its pages (if any were opened).

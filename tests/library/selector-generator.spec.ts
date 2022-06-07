@@ -301,6 +301,12 @@ it.describe('selector generator', () => {
       await page.setContent(`<form><${tagName} name="foo"></${tagName}><${tagName} name="bar"></${tagName}></form>`);
       expect(await generate(page, '[name=bar]')).toBe(`${tagName}[name="bar"]`);
     }
+
+    await page.setContent(`<iframe name="foo"></iframe><iframe name="bar"></iframe>`);
+    expect(await generate(page, '[name=bar]')).toBe(`iframe[name="bar"]`);
+
+    await page.setContent(`<frameset><frame name="foo"></frame><frame name="bar"></frame></frameset>`);
+    expect(await generate(page, '[name=bar]')).toBe(`frame[name="bar"]`);
   });
 
   it('should work with tricky attributes', async ({ page }) => {

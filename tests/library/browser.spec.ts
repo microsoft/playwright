@@ -16,6 +16,10 @@
 
 import { browserTest as test, expect } from '../config/browserTest';
 
+test('should return browserType', function({ browser, browserType }) {
+  expect(browser.browserType()).toBe(browserType);
+});
+
 test('should create new page @smoke', async function({ browser }) {
   const page1 = await browser.newPage();
   expect(browser.contexts().length).toBe(1);

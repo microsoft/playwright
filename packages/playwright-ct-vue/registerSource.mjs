@@ -19,13 +19,14 @@
 
 import { createApp, setDevtoolsHook, h } from 'vue';
 
-/** @typedef {import('../playwright-test/types/component').Component} Component */
+/** @typedef {import('@playwright/test/types/component').Component} Component */
+/** @typedef {import('vue').Component} FrameworkComponent */
 
-/** @type { Map<string, import('vue').Component> } */
+/** @type {Map<string, FrameworkComponent>} */
 const registry = new Map();
 
 /**
- * @param {{[key: string]: import('vue').Component}} components
+ * @param {{[key: string]: FrameworkComponent}} components
  */
 export function register(components) {
   for (const [name, value] of Object.entries(components))
@@ -35,7 +36,7 @@ export function register(components) {
 const allListeners = [];
 
 /**
- * @param {Component | string} child 
+ * @param {Component | string} child
  * @returns {import('vue').VNode | string}
  */
 function renderChild(child) {
@@ -43,7 +44,7 @@ function renderChild(child) {
 }
 
 /**
- * @param {Component} component 
+ * @param {Component} component
  * @returns {import('vue').VNode}
  */
 function render(component) {
@@ -70,7 +71,7 @@ function render(component) {
   componentFunc = componentFunc || component.type;
 
   const isVueComponent = componentFunc !== component.type;
- 
+
   /**
    * @type {(import('vue').VNode | string)[]}
    */
@@ -154,16 +155,10 @@ function createDevTools() {
   };
 }
 
-/** @type {any} */ (window).playwrightMount = /** @param {Component} component */ async component => {
-  if (!document.getElementById('root')) {
-    const rootElement = document.createElement('div');
-    rootElement.id = 'root';
-    document.body.append(rootElement);
-  }
+window.playwrightMount = (component, rootElement) => {
   const app = createApp({
     render: () => render(component)
   });
   setDevtoolsHook(createDevTools(), {});
-  app.mount('#root');
-  return '#root > *';
+  app.mount(rootElement);
 };

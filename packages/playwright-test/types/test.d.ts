@@ -2144,6 +2144,8 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * });
    * ```
    *
+   * > NOTE: [test.slow()](https://playwright.dev/docs/api/class-test#test-slow-1) cannot be used in a `beforeAll` or
+   * `afterAll` hook. Use [test.setTimeout(timeout)](https://playwright.dev/docs/api/class-test#test-set-timeout) instead.
    */
   slow(): void;
   /**
@@ -2196,7 +2198,8 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * });
    * ```
    *
-   * Changing timeout from a slow hook:
+   * Changing timeout from a slow `beforeEach` or `afterEach` hook. Note that this affects the test timeout that is shared
+   * with `beforeEach`/`afterEach` hooks.
    *
    * ```ts
    * import { test, expect } from '@playwright/test';
@@ -2204,6 +2207,33 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * test.beforeEach(async ({ page }, testInfo) => {
    *   // Extend timeout for all tests running this hook by 30 seconds.
    *   test.setTimeout(testInfo.timeout + 30000);
+   * });
+   * ```
+   *
+   * Changing timeout for a `beforeAll` or `afterAll` hook. Note this affects the hook's timeout, not the test timeout.
+   *
+   * ```ts
+   * import { test, expect } from '@playwright/test';
+   *
+   * test.beforeAll(async () => {
+   *   // Set timeout for this hook.
+   *   test.setTimeout(60000);
+   * });
+   * ```
+   *
+   * Changing timeout for all tests in a
+   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) group.
+   *
+   * ```ts
+   * import { test, expect } from '@playwright/test';
+   *
+   * test.describe('group', () => {
+   *   // Applies to all tests in this group.
+   *   test.setTimeout(60000);
+   *
+   *   test('test one', async () => { /* ... *\/ });
+   *   test('test two', async () => { /* ... *\/ });
+   *   test('test three', async () => { /* ... *\/ });
    * });
    * ```
    *

@@ -14,21 +14,25 @@
  * limitations under the License.
  */
 
+// @ts-check
+
 // This file is injected into the registry as text, no dependencies are allowed.
 
+/** @typedef {import('../playwright-test/types/component').Component} Component */
+/** @typedef {any} FrameworkComponent */
+
+/** @type {Map<string, FrameworkComponent>} */
 const registry = new Map();
 
+/**
+ * @param {{[key: string]: FrameworkComponent}} components
+ */
 export function register(components) {
   for (const [name, value] of Object.entries(components))
     registry.set(name, value);
 }
 
-window.playwrightMount = component => {
-  if (!document.getElementById('root')) {
-    const rootElement = document.createElement('div');
-    rootElement.id = 'root';
-    document.body.append(rootElement);
-  }
+window.playwrightMount = (component, rootElement) => {
   let componentCtor = registry.get(component.type);
   if (!componentCtor) {
     // Lookup by shorthand.
@@ -43,12 +47,13 @@ window.playwrightMount = component => {
   if (!componentCtor)
     throw new Error(`Unregistered component: ${component.type}. Following components are registered: ${[...registry.keys()]}`);
 
+  if (component.kind !== 'object')
+    throw new Error('JSX mount notation is not supported');
+
   const wrapper = new componentCtor({
-    target: document.getElementById('root'),
+    target: rootElement,
     props: component.options?.props,
   });
-
   for (const [key, listener] of Object.entries(component.options?.on || {}))
     wrapper.$on(key, event => listener(event.detail));
-  return '#root > *';
 };

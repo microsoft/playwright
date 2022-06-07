@@ -16,13 +16,12 @@
 
 import * as React from 'react';
 
-export const Expandable: React.FunctionComponent<{
+export const Expandable: React.FunctionComponent<React.PropsWithChildren<{
   title: JSX.Element | string,
   setExpanded: Function,
   expanded: Boolean,
   style?: React.CSSProperties,
-  children: JSX.Element | JSX.Element[] | string,
-}> = ({ title, children, setExpanded, expanded, style }) => {
+}>> = ({ title, children, setExpanded, expanded, style }) => {
   return <div style={{ ...style, display: 'flex', flexDirection: 'column' }}>
     <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', whiteSpace: 'nowrap' }}>
       <div
