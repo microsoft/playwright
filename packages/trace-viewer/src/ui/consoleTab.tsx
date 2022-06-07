@@ -64,7 +64,7 @@ export const ConsoleTab: React.FunctionComponent<{
         } else {
           return <div className='console-line error' key={index}>
             <span className={'codicon codicon-error'}></span>
-            <span className='console-line-message'>{value}</span>
+            <span className='console-line-message'>{String(value)}</span>
           </div>;
         }
       }
