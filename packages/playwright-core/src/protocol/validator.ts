@@ -205,6 +205,15 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     zipFile: tString,
     entries: tArray(tType('NameValue')),
   });
+  scheme.LocalUtilsHarFindEntryParams = tObject({
+    cacheKey: tString,
+    harFile: tString,
+    url: tString,
+    needBody: tBoolean,
+  });
+  scheme.LocalUtilsHarClearCacheParams = tObject({
+    cacheKey: tString,
+  });
   scheme.RootInitializeParams = tObject({
     sdkLanguage: tString,
   });

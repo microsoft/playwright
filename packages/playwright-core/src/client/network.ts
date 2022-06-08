@@ -31,7 +31,6 @@ import type { HeadersArray, URLMatch } from '../common/types';
 import { urlMatches } from '../common/netUtils';
 import { MultiMap } from '../utils/multimap';
 import { APIResponse } from './fetch';
-import { rewriteErrorMessage } from '../utils/stackTrace';
 
 export type NetworkCookie = {
   name: string,
@@ -141,6 +140,11 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
     return this._provisionalHeaders.headers();
   }
 
+  _context() {
+    // TODO: make sure this works for service worker requests.
+    return this.frame().page().context();
+  }
+
   _actualHeaders(): Promise<RawHeaders> {
     if (!this._actualHeadersPromise) {
       this._actualHeadersPromise = this._wrapApiCall(async () => {
@@ -244,13 +248,24 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
     let fetchResponseUid;
     let { status: statusOption, headers: headersOption, body } = options;
 
+    if (options.har && options.response)
+      throw new Error(`At most one of "har" and "response" options should be present`);
+
     if (options.har) {
-      const entry = await findHarEntry(options.har, this.request().url(), body === undefined);
-      if (entry) {
-        statusOption ??= entry.status;
-        headersOption ??= entry.headers;
-        body ??= entry.body;
-      }
+      const entry = await this._connection.localUtils()._channel.harFindEntry({
+        cacheKey: this.request()._context()._guid,
+        harFile: options.har,
+        url: this.request().url(),
+        needBody: body === undefined,
+      });
+      if (entry.error)
+        throw new Error(entry.error);
+      if (statusOption === undefined)
+        statusOption = entry.status;
+      if (headersOption === undefined && entry.headers)
+        headersOption = headersArrayToObject(entry.headers, false);
+      if (body === undefined && entry.body !== undefined)
+        body = Buffer.from(entry.body, 'base64');
     }
 
     if (options.response) {
@@ -569,25 +584,5 @@ export class RawHeaders {
 
   headersArray(): HeadersArray {
     return this._headersArray;
-  }
-}
-
-async function findHarEntry(filePath: string, url: string, needBody: boolean): Promise<{ status: number, headers: Headers, body: Buffer | undefined } | undefined> {
-  try {
-    const contents = await fs.promises.readFile(filePath, 'utf-8');
-    const har = JSON.parse(contents);
-    const entry = har.log.entries.find((entry: any) => entry.request.url === url);
-    if (!entry)
-      return;
-    const headers: Headers = {};
-    for (const header of entry.response.headers)
-      headers[header.name] = header.value;
-    let body: Buffer | undefined;
-    if (needBody && entry.response.content && entry.response.content.text !== undefined)
-      body = Buffer.from(entry.response.content.text, 'base64');
-    return { status: entry.response.status, headers, body };
-  } catch (e) {
-    rewriteErrorMessage(e, `Error reading HAR file ${filePath}: ` + e.message);
-    throw e;
   }
 }

@@ -78,6 +78,6 @@ export class Tracing extends ChannelOwner<channels.TracingChannel> implements ap
 
     // Add local sources to the remote trace if necessary.
     if (result.sourceEntries?.length)
-      await this._connection.localUtils().zip(filePath, result.sourceEntries);
+      await this._connection.localUtils()._channel.zip({ zipFile: filePath, entries: result.sourceEntries });
   }
 }
