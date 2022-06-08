@@ -562,6 +562,7 @@ Logger sink for Playwright logging.
   - `omitContent` ?<[boolean]> Optional setting to control whether to omit request content from the HAR. Defaults to
     `false`.
   - `path` <[path]> Path on the filesystem to write the HAR file to.
+  - `urlFilter` ?<[string]|[RegExp]> A glob or regex pattern to filter requests that are stored in the HAR. When a [`option: baseURL`] via the context options was provided and the passed URL is a path, it gets merged via the [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
 
 Enables [HAR](http://www.softwareishard.com/blog/har-12-spec) recording for all pages into `recordHar.path` file. If not
 specified, the HAR is not recorded. Make sure to await [`method: BrowserContext.close`] for the HAR to be

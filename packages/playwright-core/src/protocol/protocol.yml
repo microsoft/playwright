@@ -220,6 +220,17 @@ SerializedError:
         stack: string?
     value: SerializedValue?
 
+
+RecordHarOptions:
+  type: object
+  properties:
+    omitContent: boolean?
+    path: string
+    urlGlob: string?
+    urlRegexSource: string?
+    urlRegexFlags: string?
+
+
 FormField:
   type: object
   properties:
@@ -442,11 +453,7 @@ ContextOptions:
           properties:
             width: number
             height: number
-    recordHar:
-      type: object?
-      properties:
-        omitContent: boolean?
-        path: string
+    recordHar: RecordHarOptions?
     strictSelectors: boolean?
 
 LocalUtils:
@@ -2786,11 +2793,7 @@ Electron:
         ignoreHTTPSErrors: boolean?
         locale: string?
         offline: boolean?
-        recordHar:
-          type: object?
-          properties:
-            omitContent: boolean?
-            path: string
+        recordHar: RecordHarOptions?
         recordVideo:
           type: object?
           properties:

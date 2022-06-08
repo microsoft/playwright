@@ -27,6 +27,7 @@ import { eventsHelper } from '../../utils/eventsHelper';
 import { mime } from '../../utilsBundle';
 import { ManualPromise } from '../../utils/manualPromise';
 import { getPlaywrightVersion } from '../../common/userAgent';
+import { urlMatches } from '../../common/netUtils';
 
 const FALLBACK_HTTP_VERSION = 'HTTP/1.1';
 
@@ -40,6 +41,7 @@ type HarTracerOptions = {
   content: 'omit' | 'sha1' | 'embedded';
   skipScripts: boolean;
   waitForContentOnStop: boolean;
+  urlFilter?: string | RegExp;
 };
 
 export class HarTracer {
@@ -51,12 +53,14 @@ export class HarTracer {
   private _eventListeners: RegisteredListener[] = [];
   private _started = false;
   private _entrySymbol: symbol;
+  private _baseURL: string | undefined;
 
   constructor(context: BrowserContext | APIRequestContext, delegate: HarTracerDelegate, options: HarTracerOptions) {
     this._context = context;
     this._delegate = delegate;
     this._options = options;
     this._entrySymbol = Symbol('requestHarEntry');
+    this._baseURL = context instanceof APIRequestContext ? context._defaultOptions().baseURL : context._options.baseURL;
   }
 
   start() {
@@ -76,7 +80,10 @@ export class HarTracer {
           eventsHelper.addEventListener(this._context, BrowserContext.Events.RequestFailed, request => this._onRequestFailed(request)),
           eventsHelper.addEventListener(this._context, BrowserContext.Events.Response, (response: network.Response) => this._onResponse(response)));
     }
+  }
 
+  private _shouldIncludeEntryWithUrl(urlString: string) {
+    return !this._options.urlFilter || urlMatches(this._baseURL, urlString, this._options.urlFilter);
   }
 
   private _entryForRequest(request: network.Request | APIRequestEvent): har.Entry | undefined {
@@ -146,6 +153,8 @@ export class HarTracer {
   }
 
   private _onAPIRequest(event: APIRequestEvent) {
+    if (!this._shouldIncludeEntryWithUrl(event.url.toString()))
+      return;
     const harEntry = createHarEntry(event.method, event.url, '', '');
     harEntry.request.cookies = event.cookies;
     harEntry.request.headers = Object.entries(event.headers).map(([name, value]) => ({ name, value }));
@@ -189,6 +198,8 @@ export class HarTracer {
   }
 
   private _onRequest(request: network.Request) {
+    if (!this._shouldIncludeEntryWithUrl(request.url()))
+      return;
     const page = request.frame()._page;
     const url = network.parsedURL(request.url());
     if (!url)

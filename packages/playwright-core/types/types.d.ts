@@ -10310,6 +10310,13 @@ export interface BrowserType<Unused = {}> {
        * Path on the filesystem to write the HAR file to.
        */
       path: string;
+
+      /**
+       * A glob or regex pattern to filter requests that are stored in the HAR. When a `baseURL` via the context options was
+       * provided and the passed URL is a path, it gets merged via the
+       * [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
+       */
+      urlFilter?: string|RegExp;
     };
 
     /**
@@ -11459,6 +11466,13 @@ export interface AndroidDevice {
        * Path on the filesystem to write the HAR file to.
        */
       path: string;
+
+      /**
+       * A glob or regex pattern to filter requests that are stored in the HAR. When a `baseURL` via the context options was
+       * provided and the passed URL is a path, it gets merged via the
+       * [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
+       */
+      urlFilter?: string|RegExp;
     };
 
     /**
@@ -12985,6 +12999,13 @@ export interface Browser extends EventEmitter {
        * Path on the filesystem to write the HAR file to.
        */
       path: string;
+
+      /**
+       * A glob or regex pattern to filter requests that are stored in the HAR. When a `baseURL` via the context options was
+       * provided and the passed URL is a path, it gets merged via the
+       * [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
+       */
+      urlFilter?: string|RegExp;
     };
 
     /**
@@ -13744,6 +13765,13 @@ export interface Electron {
        * Path on the filesystem to write the HAR file to.
        */
       path: string;
+
+      /**
+       * A glob or regex pattern to filter requests that are stored in the HAR. When a `baseURL` via the context options was
+       * provided and the passed URL is a path, it gets merged via the
+       * [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
+       */
+      urlFilter?: string|RegExp;
     };
 
     /**
@@ -15426,6 +15454,13 @@ export interface BrowserContextOptions {
      * Path on the filesystem to write the HAR file to.
      */
     path: string;
+
+    /**
+     * A glob or regex pattern to filter requests that are stored in the HAR. When a `baseURL` via the context options was
+     * provided and the passed URL is a path, it gets merged via the
+     * [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
+     */
+    urlFilter?: string|RegExp;
   };
 
   /**

@@ -28,7 +28,7 @@ import { Events } from './events';
 import { TimeoutSettings } from '../common/timeoutSettings';
 import { Waiter } from './waiter';
 import type { URLMatch, Headers, WaitForEventOptions, BrowserContextOptions, StorageState, LaunchOptions } from './types';
-import { headersObjectToArray } from '../utils';
+import { headersObjectToArray, isRegExp, isString } from '../utils';
 import { mkdirIfNeeded } from '../utils/fileUtils';
 import { isSafeCloseError } from '../common/errors';
 import type * as api from '../../types/types';
@@ -390,6 +390,18 @@ async function prepareStorageState(options: BrowserContextOptions): Promise<chan
   }
 }
 
+function prepareRecordHarOptions(options: BrowserContextOptions['recordHar']): channels.RecordHarOptions | undefined {
+  if (!options)
+    return;
+  return {
+    path: options.path,
+    omitContent: options.omitContent,
+    urlGlob: isString(options.urlFilter) ? options.urlFilter : undefined,
+    urlRegexSource: isRegExp(options.urlFilter) ? options.urlFilter.source : undefined,
+    urlRegexFlags: isRegExp(options.urlFilter) ? options.urlFilter.flags : undefined,
+  };
+}
+
 export async function prepareBrowserContextParams(options: BrowserContextOptions): Promise<channels.BrowserNewContextParams> {
   if (options.videoSize && !options.videosPath)
     throw new Error(`"videoSize" option requires "videosPath" to be specified`);
@@ -401,6 +413,7 @@ export async function prepareBrowserContextParams(options: BrowserContextOptions
     noDefaultViewport: options.viewport === null,
     extraHTTPHeaders: options.extraHTTPHeaders ? headersObjectToArray(options.extraHTTPHeaders) : undefined,
     storageState: await prepareStorageState(options),
+    recordHar: prepareRecordHarOptions(options.recordHar),
   };
   if (!contextParams.recordVideo && options.videosPath) {
     contextParams.recordVideo = {

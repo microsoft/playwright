@@ -20,11 +20,7 @@ import { Artifact } from '../artifact';
 import type { BrowserContext } from '../browserContext';
 import type * as har from './har';
 import { HarTracer } from './harTracer';
-
-type HarOptions = {
-  path: string;
-  omitContent?: boolean;
-};
+import type { HarOptions } from '../types';
 
 export class HarRecorder {
   private _artifact: Artifact;
@@ -36,10 +32,12 @@ export class HarRecorder {
   constructor(context: BrowserContext | APIRequestContext, options: HarOptions) {
     this._artifact = new Artifact(context, options.path);
     this._options = options;
+    const urlFilterRe = options.urlRegexSource !== undefined && options.urlRegexFlags !== undefined ? new RegExp(options.urlRegexSource, options.urlRegexFlags) : undefined;
     this._tracer = new HarTracer(context, this, {
       content: options.omitContent ? 'omit' : 'embedded',
       waitForContentOnStop: true,
       skipScripts: false,
+      urlFilter: urlFilterRe ?? options.urlGlob,
     });
     this._tracer.start();
   }
