@@ -122,6 +122,8 @@ export abstract class BrowserContext extends SdkObject {
 
     if (debugMode() === 'console')
       await this.extendInjectedScript(consoleApiSource.source);
+    if (this._options.serviceWorkers === 'block')
+      await this.addInitScript(`\nnavigator.serviceWorker.register = () => { console.warn('Service Worker registration blocked by Playwright'); };\n`);
   }
 
   async _ensureVideosPath() {

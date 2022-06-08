@@ -455,6 +455,11 @@ ContextOptions:
             height: number
     recordHar: RecordHarOptions?
     strictSelectors: boolean?
+    serviceWorkers:
+      type: enum?
+      literals:
+      - allow
+      - block
 
 LocalUtils:
   type: interface

@@ -747,6 +747,7 @@ export type BrowserTypeLaunchPersistentContextParams = {
   },
   recordHar?: RecordHarOptions,
   strictSelectors?: boolean,
+  serviceWorkers?: 'allow' | 'block',
   userDataDir: string,
   slowMo?: number,
 };
@@ -816,6 +817,7 @@ export type BrowserTypeLaunchPersistentContextOptions = {
   },
   recordHar?: RecordHarOptions,
   strictSelectors?: boolean,
+  serviceWorkers?: 'allow' | 'block',
   slowMo?: number,
 };
 export type BrowserTypeLaunchPersistentContextResult = {
@@ -909,6 +911,7 @@ export type BrowserNewContextParams = {
   },
   recordHar?: RecordHarOptions,
   strictSelectors?: boolean,
+  serviceWorkers?: 'allow' | 'block',
   proxy?: {
     server: string,
     bypass?: string,
@@ -965,6 +968,7 @@ export type BrowserNewContextOptions = {
   },
   recordHar?: RecordHarOptions,
   strictSelectors?: boolean,
+  serviceWorkers?: 'allow' | 'block',
   proxy?: {
     server: string,
     bypass?: string,
@@ -3984,6 +3988,7 @@ export type AndroidDeviceLaunchBrowserParams = {
   },
   recordHar?: RecordHarOptions,
   strictSelectors?: boolean,
+  serviceWorkers?: 'allow' | 'block',
   pkg?: string,
   proxy?: {
     server: string,
@@ -4037,6 +4042,7 @@ export type AndroidDeviceLaunchBrowserOptions = {
   },
   recordHar?: RecordHarOptions,
   strictSelectors?: boolean,
+  serviceWorkers?: 'allow' | 'block',
   pkg?: string,
   proxy?: {
     server: string,

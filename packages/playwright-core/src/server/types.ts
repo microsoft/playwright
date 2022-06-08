@@ -266,6 +266,7 @@ export type BrowserContextOptions = {
   strictSelectors?: boolean,
   proxy?: ProxySettings,
   baseURL?: string,
+  serviceWorkers?: 'allow' | 'block',
 };
 
 export type EnvArray = { name: string, value: string }[];
