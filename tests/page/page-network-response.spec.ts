@@ -319,8 +319,8 @@ it('should return headers after route.fulfill', async ({ page, server }) => {
   });
 });
 
-it('should report if request was fulfilledByServiceWorker', async ({ page, server, browserName }) => {
-  it.fail(browserName === 'firefox', 'Requires https://github.com/microsoft/playwright/pull/14606');
+it('should report if request was fulfilledByServiceWorker', async ({ page, server, browserName, browserMajorVersion }) => {
+  it.fail(browserName === 'firefox' && browserMajorVersion < 101);
 
   {
     const res = await page.goto(server.PREFIX + '/serviceworkers/fetch/sw.html');
@@ -328,7 +328,10 @@ it('should report if request was fulfilledByServiceWorker', async ({ page, serve
   }
   await page.evaluate(() => window['activationPromise']);
   {
-    const res = await page.goto(server.PREFIX + '/serviceworkers/fetch/sw.html');
+    const [res] = await Promise.all([
+      page.waitForResponse(/example\.txt/),
+      page.evaluate(() => fetch('/example.txt')),
+    ]);
     expect(res.fulfilledByServiceWorker()).toBe(true);
   }
 });
