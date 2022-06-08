@@ -222,7 +222,7 @@ it.describe('screencast', () => {
     expect(fs.existsSync(path)).toBeTruthy();
   });
 
-  it('saveAs should throw when no video frames', async ({ browser, browserName }, testInfo) => {
+  it('saveAs should throw when no video frames', async ({ browser }, testInfo) => {
     const videosPath = testInfo.outputPath('');
     const size = { width: 320, height: 240 };
     const context = await browser.newContext({
@@ -249,6 +249,7 @@ it.describe('screencast', () => {
     // and other browsers are sometimes fast as well.
     if (!fs.existsSync(saveAsPath))
       expect(error.message).toContain('Page did not produce any video frames');
+    await context.close();
   });
 
   it('should delete video', async ({ browser }, testInfo) => {
