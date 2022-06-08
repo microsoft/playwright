@@ -215,3 +215,4 @@ Learn more about [recording video](../test-configuration.md#record-video).
 
 ## property: TestOptions.viewport = %%-context-option-viewport-%%
 
+## property: TestOptions.serviceWorkers = %%-context-option-service-worker-policy-%%

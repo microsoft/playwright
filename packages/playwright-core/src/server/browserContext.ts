@@ -122,6 +122,19 @@ export abstract class BrowserContext extends SdkObject {
 
     if (debugMode() === 'console')
       await this.extendInjectedScript(consoleApiSource.source);
+    if (this._options.serviceWorkers === 'block') {
+      await this.addInitScript(`
+
+        // Service Worker Policy Injected Script
+
+        navigator.serviceWorker.register = () => {
+          console.warn('Service Worker registration blocked by Playwright');
+        };
+
+        // END Service Worker Policy Injected Script
+
+      `);
+    }
   }
 
   async _ensureVideosPath() {
@@ -455,6 +468,8 @@ export function validateBrowserContextOptions(options: types.BrowserContextOptio
     throw new Error(`"isMobile" option is not supported with null "viewport"`);
   if (options.acceptDownloads === undefined)
     options.acceptDownloads = true;
+  if (options.serviceWorkers === undefined)
+    options.serviceWorkers = 'allow';
   if (!options.viewport && !options.noDefaultViewport)
     options.viewport = { width: 1280, height: 720 };
   if (options.recordVideo) {
