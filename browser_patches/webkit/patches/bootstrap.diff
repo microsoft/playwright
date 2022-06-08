@@ -22894,8 +22894,48 @@ index 017c992209e39859a0b56c1145bb79d9fdc6e939..d438dbf99c57f3d8b38b9f7b2f0e9069
      ruby-highline
      ruby-json
  
+diff --git a/Tools/gtk/jhbuild.modules b/Tools/gtk/jhbuild.modules
+index 3eb911ba48eca35de2de9ee671cb577a0a96ec27..916b45a541486e59380d66b524a004a77d955ed8 100644
+--- a/Tools/gtk/jhbuild.modules
++++ b/Tools/gtk/jhbuild.modules
+@@ -295,28 +295,28 @@
+   </autotools>
+ 
+   <meson id="atk" mesonargs="-Dintrospection=false">
+-      <branch module="/sources/atk/2.34/atk-${version}.tar.xz" version="2.34.1"
++      <branch module="/sources/atk/2.38/atk-${version}.tar.xz" version="2.38.0"
+             repo="download.gnome.org"
+-            hash="sha256:d4f0e3b3d21265fcf2bc371e117da51c42ede1a71f6db1c834e6976bb20997cb"/>
++            hash="sha256:ac4de2a4ef4bd5665052952fe169657e65e895c5057dffb3c2a810f6191a0c36"/>
+     <dependencies>
+       <dep package="glib"/>
+     </dependencies>
+   </meson>
+ 
+   <meson id="at-spi2-core" mesonargs="-Dintrospection=no -Dx11=no">
+-    <branch module="/sources/at-spi2-core/2.34/at-spi2-core-${version}.tar.xz" version="2.34.0"
++    <branch module="/sources/at-spi2-core/2.44/at-spi2-core-${version}.tar.xz" version="2.44.1"
+             repo="download.gnome.org"
+-            hash="sha256:d629cdbd674e539f8912028512af583990938c7b49e25184c126b00121ef11c6">
++            hash="sha256:4beb23270ba6cf7caf20b597354d75194d89afb69d2efcf15f4271688ba6f746">
+     </branch>
+     <dependencies>
+       <dep package="glib"/>
+     </dependencies>
+   </meson>
+ 
+-  <meson id="at-spi2-atk" mesonargs="-Dintrospection=no">
+-      <branch module="/sources/at-spi2-atk/2.34/at-spi2-atk-${version}.tar.xz" version="2.34.0"
++  <meson id="at-spi2-atk" mesonargs="">
++      <branch module="/sources/at-spi2-atk/2.38/at-spi2-atk-${version}.tar.xz" version="2.38.0"
+             repo="download.gnome.org"
+-            hash="sha256:3a9a7e96a1eb549529e60a42201dd78ccce413d9c1706e16351cc5288e064500">
++            hash="sha256:cfa008a5af822b36ae6287f18182c40c91dd699c55faa38605881ed175ca464f">
+     </branch>
+     <dependencies>
+       <dep package="glib"/>
 diff --git a/Tools/jhbuild/jhbuild-minimal.modules b/Tools/jhbuild/jhbuild-minimal.modules
-index a08c829f49b43d494a09c40f71606735c172b6a5..9b2a3825426adb4e30d010defc878a6b159f8c4b 100644
+index a08c829f49b43d494a09c40f71606735c172b6a5..2e3704d8533ff6e479ee2ee8f9325929591ed4e3 100644
 --- a/Tools/jhbuild/jhbuild-minimal.modules
 +++ b/Tools/jhbuild/jhbuild-minimal.modules
 @@ -22,7 +22,6 @@
@@ -22906,6 +22946,61 @@ index a08c829f49b43d494a09c40f71606735c172b6a5..9b2a3825426adb4e30d010defc878a6b
        <dep package="libvpx"/>
        <dep package="glib"/>
        <dep package="glib-networking"/>
+@@ -135,13 +134,13 @@
+             hash="sha256:4fe0a4bed6b4c3ae7249d341031c27b32f8d9e0ffb5337d71cbcec7160362cf7"/>
+   </meson>
+ 
+-  <!-- meson 0.50.1 required to build libsoup 2.69 -->
++  <!-- meson 0.56.2+ required to build atk 2.38 -->
+   <distutils id="meson" python3="1">
+     <branch repo="github-tarball"
+-            version="0.50.1"
++            version="0.61.5"
+             module="mesonbuild/meson/releases/download/${version}/meson-${version}.tar.gz"
+             checkoutdir="meson-${version}"
+-            hash="sha256:f68f56d60c80a77df8fc08fa1016bc5831605d4717b622c96212573271e14ecc"/>
++            hash="sha256:5e9a0d65c1a51936362b9686d1c5e9e184a6fd245d57e7269750ce50c20f5d9a"/>
+   </distutils>
+ 
+   <!-- OpenXR required for WebXR support -->
+@@ -187,9 +186,9 @@
+ 
+   <!-- atk needed to build with A11y support -->
+   <meson id="atk" mesonargs="-Dintrospection=false">
+-      <branch module="/sources/atk/2.34/atk-${version}.tar.xz" version="2.34.1"
++      <branch module="/sources/atk/2.38/atk-${version}.tar.xz" version="2.38.0"
+             repo="download.gnome.org"
+-            hash="sha256:d4f0e3b3d21265fcf2bc371e117da51c42ede1a71f6db1c834e6976bb20997cb"/>
++            hash="sha256:ac4de2a4ef4bd5665052952fe169657e65e895c5057dffb3c2a810f6191a0c36"/>
+     <dependencies>
+       <dep package="glib"/>
+     </dependencies>
+@@ -197,9 +196,9 @@
+ 
+   <!-- at-spi2-core needed to build with A11y support -->
+   <meson id="at-spi2-core" mesonargs="-Dintrospection=no -Dx11=no">
+-    <branch module="/sources/at-spi2-core/2.34/at-spi2-core-${version}.tar.xz" version="2.34.0"
++    <branch module="/sources/at-spi2-core/2.44/at-spi2-core-${version}.tar.xz" version="2.44.1"
+             repo="download.gnome.org"
+-            hash="sha256:d629cdbd674e539f8912028512af583990938c7b49e25184c126b00121ef11c6">
++            hash="sha256:4beb23270ba6cf7caf20b597354d75194d89afb69d2efcf15f4271688ba6f746">
+     </branch>
+     <dependencies>
+       <dep package="glib"/>
+@@ -207,10 +206,10 @@
+   </meson>
+ 
+   <!-- at-spi2-atk needed to build with A11y support -->
+-  <meson id="at-spi2-atk" mesonargs="-Dintrospection=no">
+-      <branch module="/sources/at-spi2-atk/2.34/at-spi2-atk-${version}.tar.xz" version="2.34.0"
++  <meson id="at-spi2-atk" mesonargs="">
++      <branch module="/sources/at-spi2-atk/2.38/at-spi2-atk-${version}.tar.xz" version="2.38.0"
+             repo="download.gnome.org"
+-            hash="sha256:3a9a7e96a1eb549529e60a42201dd78ccce413d9c1706e16351cc5288e064500">
++            hash="sha256:cfa008a5af822b36ae6287f18182c40c91dd699c55faa38605881ed175ca464f">
+     </branch>
+     <dependencies>
+       <dep package="glib"/>
 diff --git a/Tools/win/DLLLauncher/DLLLauncherMain.cpp b/Tools/win/DLLLauncher/DLLLauncherMain.cpp
 index 52605867b9302d1afcc56c5e9b0c54acf0827900..6edf24ab60249241ba2969531ef55f4b495dce9e 100644
 --- a/Tools/win/DLLLauncher/DLLLauncherMain.cpp
@@ -22988,3 +23083,43 @@ index 4b3d262528d33800ac46e4e9fc342b11f2744979..39d72bd2c04e79b94a5c7634b6abc9b2
  
      static cairo_user_data_key_t bufferKey;
      cairo_surface_set_user_data(m_snapshot, &bufferKey, buffer,
+diff --git a/Tools/wpe/jhbuild.modules b/Tools/wpe/jhbuild.modules
+index 8b8ba5b934075fe53e231a418db17ddcf7ba92aa..08aba0aa37ffbbd5878befe05e2950ab5350ea3c 100644
+--- a/Tools/wpe/jhbuild.modules
++++ b/Tools/wpe/jhbuild.modules
+@@ -276,28 +276,28 @@
+   </autotools>
+ 
+   <meson id="atk" mesonargs="-Dintrospection=false">
+-    <branch module="/sources/atk/2.34/atk-${version}.tar.xz" version="2.34.1"
++    <branch module="/sources/atk/2.38/atk-${version}.tar.xz" version="2.38.0"
+             repo="download.gnome.org"
+-            hash="sha256:d4f0e3b3d21265fcf2bc371e117da51c42ede1a71f6db1c834e6976bb20997cb"/>
++            hash="sha256:ac4de2a4ef4bd5665052952fe169657e65e895c5057dffb3c2a810f6191a0c36"/>
+     <dependencies>
+       <dep package="glib"/>
+     </dependencies>
+   </meson>
+ 
+   <meson id="at-spi2-core" mesonargs="-Dintrospection=no -Dx11=no">
+-    <branch module="/sources/at-spi2-core/2.34/at-spi2-core-${version}.tar.xz" version="2.34.0"
++    <branch module="/sources/at-spi2-core/2.44/at-spi2-core-${version}.tar.xz" version="2.44.1"
+             repo="download.gnome.org"
+-            hash="sha256:d629cdbd674e539f8912028512af583990938c7b49e25184c126b00121ef11c6">
++            hash="sha256:4beb23270ba6cf7caf20b597354d75194d89afb69d2efcf15f4271688ba6f746">
+     </branch>
+     <dependencies>
+       <dep package="glib"/>
+     </dependencies>
+   </meson>
+ 
+-  <meson id="at-spi2-atk" mesonargs="-Dintrospection=no">
+-    <branch module="/sources/at-spi2-atk/2.34/at-spi2-atk-${version}.tar.xz" version="2.34.0"
++  <meson id="at-spi2-atk" mesonargs="">
++    <branch module="/sources/at-spi2-atk/2.38/at-spi2-atk-${version}.tar.xz" version="2.38.0"
+             repo="download.gnome.org"
+-            hash="sha256:3a9a7e96a1eb549529e60a42201dd78ccce413d9c1706e16351cc5288e064500">
++            hash="sha256:cfa008a5af822b36ae6287f18182c40c91dd699c55faa38605881ed175ca464f">
+     </branch>
+     <dependencies>
+       <dep package="glib"/>
