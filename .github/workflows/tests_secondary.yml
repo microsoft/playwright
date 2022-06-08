@@ -109,7 +109,7 @@ jobs:
         name: ${{ matrix.browser }}-win-test-results
         path: test-results
 
-  test-package-installations-older-node-versions:
+  test-package-installations-other-node-versions:
     name: "Installation Test ${{ matrix.os }} (${{ matrix.node_version }})"
     runs-on: ${{ matrix.os  }}
     strategy:
@@ -117,7 +117,7 @@ jobs:
       matrix:
         include:
         - os: ubuntu-latest
-          node_version: "^14.1.0"  # pre 14.1, zip extraction was broken (https://github.com/microsoft/playwright/issues/1988)
+          node_version: "^18.0.0"
         - os: ubuntu-latest
           node_version: "^16.0.0"
     timeout-minutes: 30
