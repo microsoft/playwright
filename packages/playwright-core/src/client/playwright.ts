@@ -22,7 +22,6 @@ import { BrowserType } from './browserType';
 import { ChannelOwner } from './channelOwner';
 import { Electron } from './electron';
 import { APIRequest } from './fetch';
-import { LocalUtils } from './localUtils';
 import { Selectors, SelectorsOwner } from './selectors';
 import type { Size } from './types';
 
@@ -46,7 +45,6 @@ export class Playwright extends ChannelOwner<channels.PlaywrightChannel> {
   selectors: Selectors;
   readonly request: APIRequest;
   readonly errors: { TimeoutError: typeof TimeoutError };
-  _utils: LocalUtils;
   private _socksProxyHandler: socks.SocksProxyHandler | undefined;
 
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.PlaywrightInitializer) {
@@ -65,7 +63,6 @@ export class Playwright extends ChannelOwner<channels.PlaywrightChannel> {
       this.devices[name] = descriptor;
     this.selectors = new Selectors();
     this.errors = { TimeoutError };
-    this._utils = LocalUtils.from(initializer.utils);
 
     const selectorsOwner = SelectorsOwner.from(initializer.selectors);
     this.selectors._addChannel(selectorsOwner);

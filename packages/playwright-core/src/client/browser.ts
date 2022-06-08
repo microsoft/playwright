@@ -24,7 +24,6 @@ import { isSafeCloseError, kBrowserClosedError } from '../common/errors';
 import type * as api from '../../types/types';
 import { CDPSession } from './cdpSession';
 import type { BrowserType } from './browserType';
-import type { LocalUtils } from './localUtils';
 
 export class Browser extends ChannelOwner<channels.BrowserChannel> implements api.Browser {
   readonly _contexts = new Set<BrowserContext>();
@@ -33,7 +32,6 @@ export class Browser extends ChannelOwner<channels.BrowserChannel> implements ap
   _shouldCloseConnectionOnClose = false;
   private _browserType!: BrowserType;
   readonly _name: string;
-  _localUtils!: LocalUtils;
 
   static from(browser: channels.BrowserChannel): Browser {
     return (browser as any)._object;
@@ -68,7 +66,6 @@ export class Browser extends ChannelOwner<channels.BrowserChannel> implements ap
     this._contexts.add(context);
     context._logger = options.logger || this._logger;
     context._setBrowserType(this._browserType);
-    context.tracing._localUtils = this._localUtils;
     await this._browserType._onDidCreateContext?.(context);
     return context;
   }

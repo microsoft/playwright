@@ -18,11 +18,8 @@ import type * as api from '../../types/types';
 import type * as channels from '../protocol/channels';
 import { Artifact } from './artifact';
 import { ChannelOwner } from './channelOwner';
-import type { LocalUtils } from './localUtils';
 
 export class Tracing extends ChannelOwner<channels.TracingChannel> implements api.Tracing {
-  _localUtils!: LocalUtils;
-
   static from(channel: channels.TracingChannel): Tracing {
     return (channel as any)._object;
   }
@@ -81,6 +78,6 @@ export class Tracing extends ChannelOwner<channels.TracingChannel> implements ap
 
     // Add local sources to the remote trace if necessary.
     if (result.sourceEntries?.length)
-      await this._localUtils.zip(filePath, result.sourceEntries);
+      await this._connection.localUtils().zip(filePath, result.sourceEntries);
   }
 }
