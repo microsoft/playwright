@@ -319,10 +319,10 @@ it('should return headers after route.fulfill', async ({ page, server }) => {
   });
 });
 
-it('should report if request was fulfilledByServiceWorker', async ({ page, server }) => {
+it('should report if request was fromServiceWorker', async ({ page, server }) => {
   {
     const res = await page.goto(server.PREFIX + '/serviceworkers/fetch/sw.html');
-    expect(res.fulfilledByServiceWorker()).toBe(false);
+    expect(res.fromServiceWorker()).toBe(false);
   }
   await page.evaluate(() => window['activationPromise']);
   {
@@ -330,6 +330,6 @@ it('should report if request was fulfilledByServiceWorker', async ({ page, serve
       page.waitForResponse(/example\.txt/),
       page.evaluate(() => fetch('/example.txt')),
     ]);
-    expect(res.fulfilledByServiceWorker()).toBe(true);
+    expect(res.fromServiceWorker()).toBe(true);
   }
 });

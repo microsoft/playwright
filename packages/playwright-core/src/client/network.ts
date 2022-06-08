@@ -368,8 +368,8 @@ export class Response extends ChannelOwner<channels.ResponseChannel> implements 
     return this._initializer.statusText;
   }
 
-  fulfilledByServiceWorker(): boolean {
-    return this._initializer.fulfilledByServiceWorker;
+  fromServiceWorker(): boolean {
+    return this._initializer.fromServiceWorker;
   }
 
   /**

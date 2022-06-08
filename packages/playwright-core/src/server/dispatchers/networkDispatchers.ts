@@ -81,7 +81,7 @@ export class ResponseDispatcher extends Dispatcher<Response, channels.ResponseCh
       statusText: response.statusText(),
       headers: response.headers(),
       timing: response.timing(),
-      fulfilledByServiceWorker: response.fulfilledByServiceWorker(),
+      fromServiceWorker: response.fromServiceWorker(),
     });
   }
 

@@ -3183,7 +3183,7 @@ export type ResponseInitializer = {
   statusText: string,
   headers: NameValue[],
   timing: ResourceTiming,
-  fulfilledByServiceWorker: boolean,
+  fromServiceWorker: boolean,
 };
 export interface ResponseEventTarget {
 }

@@ -14615,7 +14615,7 @@ export interface Response {
    * Indicates whether this Response was fullfilled by a Service Worker's Fetch Handler (i.e. via
    * [FetchEvent.respondWith](https://developer.mozilla.org/en-US/docs/Web/API/FetchEvent/respondWith)).
    */
-  fulfilledByServiceWorker(): boolean;
+  fromServiceWorker(): boolean;
 
   /**
    * **DEPRECATED** Incomplete list of headers as seen by the rendering engine. Use
