@@ -319,9 +319,7 @@ it('should return headers after route.fulfill', async ({ page, server }) => {
   });
 });
 
-it('should report if request was fulfilledByServiceWorker', async ({ page, server, browserName, browserMajorVersion }) => {
-  it.fail(browserName === 'firefox' && browserMajorVersion < 101);
-
+it('should report if request was fulfilledByServiceWorker', async ({ page, server }) => {
   {
     const res = await page.goto(server.PREFIX + '/serviceworkers/fetch/sw.html');
     expect(res.fulfilledByServiceWorker()).toBe(false);
