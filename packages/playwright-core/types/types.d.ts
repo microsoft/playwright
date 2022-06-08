@@ -14612,6 +14612,12 @@ export interface Response {
   frame(): Frame;
 
   /**
+   * Indicates whether this Response was fullfilled by a Service Worker's Fetch Handler (i.e. via
+   * [FetchEvent.respondWith](https://developer.mozilla.org/en-US/docs/Web/API/FetchEvent/respondWith)).
+   */
+  fromServiceWorker(): boolean;
+
+  /**
    * **DEPRECATED** Incomplete list of headers as seen by the rendering engine. Use
    * [response.allHeaders()](https://playwright.dev/docs/api/class-response#response-all-headers) instead.
    * @deprecated

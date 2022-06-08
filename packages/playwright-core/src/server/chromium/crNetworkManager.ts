@@ -299,7 +299,7 @@ export class CRNetworkManager {
         responseStart: -1,
       };
     }
-    const response = new network.Response(request.request, responsePayload.status, responsePayload.statusText, headersObjectToArray(responsePayload.headers), timing, getResponseBody, responsePayload.protocol);
+    const response = new network.Response(request.request, responsePayload.status, responsePayload.statusText, headersObjectToArray(responsePayload.headers), timing, getResponseBody, !!responsePayload.fromServiceWorker, responsePayload.protocol);
     if (responsePayload?.remoteIPAddress && typeof responsePayload?.remotePort === 'number') {
       response._serverAddrFinished({
         ipAddress: responsePayload.remoteIPAddress,

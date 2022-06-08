@@ -97,7 +97,7 @@ export class FFNetworkManager {
       requestStart: relativeToStart(event.timing.requestStart),
       responseStart: relativeToStart(event.timing.responseStart),
     };
-    const response = new network.Response(request.request, event.status, event.statusText, parseMultivalueHeaders(event.headers), timing, getResponseBody);
+    const response = new network.Response(request.request, event.status, event.statusText, parseMultivalueHeaders(event.headers), timing, getResponseBody, event.fromServiceWorker);
     if (event?.remoteIPAddress && typeof event?.remotePort === 'number') {
       response._serverAddrFinished({
         ipAddress: event.remoteIPAddress,

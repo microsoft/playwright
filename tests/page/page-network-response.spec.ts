@@ -318,3 +318,18 @@ it('should return headers after route.fulfill', async ({ page, server }) => {
     'content-language': 'en'
   });
 });
+
+it('should report if request was fromServiceWorker', async ({ page, server }) => {
+  {
+    const res = await page.goto(server.PREFIX + '/serviceworkers/fetch/sw.html');
+    expect(res.fromServiceWorker()).toBe(false);
+  }
+  await page.evaluate(() => window['activationPromise']);
+  {
+    const [res] = await Promise.all([
+      page.waitForResponse(/example\.txt/),
+      page.evaluate(() => fetch('/example.txt')),
+    ]);
+    expect(res.fromServiceWorker()).toBe(true);
+  }
+});

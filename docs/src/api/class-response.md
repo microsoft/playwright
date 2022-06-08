@@ -22,6 +22,11 @@ Waits for this response to finish, returns always `null`.
 
 Returns the [Frame] that initiated this response.
 
+## method: Response.fromServiceWorker
+- returns: <[boolean]>
+
+Indicates whether this Response was fullfilled by a Service Worker's Fetch Handler (i.e. via [FetchEvent.respondWith](https://developer.mozilla.org/en-US/docs/Web/API/FetchEvent/respondWith)).
+
 ## method: Response.headers
 - returns: <[Object]<[string], [string]>>
 
