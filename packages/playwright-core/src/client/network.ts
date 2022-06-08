@@ -21,7 +21,7 @@ import { Frame } from './frame';
 import type { Headers, RemoteAddr, SecurityDetails, WaitForEventOptions } from './types';
 import fs from 'fs';
 import { mime } from '../utilsBundle';
-import { isString, headersObjectToArray } from '../utils';
+import { isString, headersObjectToArray, headersArrayToObject } from '../utils';
 import { ManualPromise } from '../utils/manualPromise';
 import { Events } from './events';
 import type { Page } from './page';
@@ -31,6 +31,7 @@ import type { HeadersArray, URLMatch } from '../common/types';
 import { urlMatches } from '../common/netUtils';
 import { MultiMap } from '../utils/multimap';
 import { APIResponse } from './fetch';
+import { rewriteErrorMessage } from '../utils/stackTrace';
 
 export type NetworkCookie = {
   name: string,
@@ -239,13 +240,23 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
     await this._raceWithPageClose(this._channel.abort({ errorCode }));
   }
 
-  async fulfill(options: { response?: api.APIResponse, status?: number, headers?: Headers, contentType?: string, body?: string | Buffer, path?: string } = {}) {
+  async fulfill(options: { response?: api.APIResponse, status?: number, headers?: Headers, contentType?: string, body?: string | Buffer, path?: string, har?: string } = {}) {
     let fetchResponseUid;
     let { status: statusOption, headers: headersOption, body } = options;
+
+    if (options.har) {
+      const entry = await findHarEntry(options.har, this.request().url(), body === undefined);
+      if (entry) {
+        statusOption ??= entry.status;
+        headersOption ??= entry.headers;
+        body ??= entry.body;
+      }
+    }
+
     if (options.response) {
-      statusOption ||= options.response.status();
-      headersOption ||= options.response.headers();
-      if (options.body === undefined && options.path === undefined && options.response instanceof APIResponse) {
+      statusOption ??= options.response.status();
+      headersOption ??= options.response.headers();
+      if (body === undefined && options.path === undefined && options.response instanceof APIResponse) {
         if (options.response._request._connection === this._connection)
           fetchResponseUid = (options.response as APIResponse)._fetchUid();
         else
@@ -558,5 +569,25 @@ export class RawHeaders {
 
   headersArray(): HeadersArray {
     return this._headersArray;
+  }
+}
+
+async function findHarEntry(filePath: string, url: string, needBody: boolean): Promise<{ status: number, headers: Headers, body: Buffer | undefined } | undefined> {
+  try {
+    const contents = await fs.promises.readFile(filePath, 'utf-8');
+    const har = JSON.parse(contents);
+    const entry = har.log.entries.find((entry: any) => entry.request.url === url);
+    if (!entry)
+      return;
+    const headers: Headers = {};
+    for (const header of entry.response.headers)
+      headers[header.name] = header.value;
+    let body: Buffer | undefined;
+    if (needBody && entry.response.content && entry.response.content.text !== undefined)
+      body = Buffer.from(entry.response.content.text, 'base64');
+    return { status: entry.response.status, headers, body };
+  } catch (e) {
+    rewriteErrorMessage(e, `Error reading HAR file ${filePath}: ` + e.message);
+    throw e;
   }
 }

@@ -216,6 +216,12 @@ Optional response body as text.
 
 Optional response body as raw bytes.
 
+### option: Route.fulfill.har
+- `har` <[path]>
+
+HAR file to extract the response from. If HAR file contains an entry with the matching the url, its headers, status and body will be used. Individual fields such as headers can be overridden using fulfill options. If matching entry is not found, this method will throw.
+If `har` is a relative path, then it is resolved relative to the current working directory.
+
 ### option: Route.fulfill.path
 - `path` <[path]>
 

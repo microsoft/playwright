@@ -321,3 +321,15 @@ it('headerValue should return set-cookie from intercepted response', async ({ pa
   const response = await page.goto(server.EMPTY_PAGE);
   expect(await response.headerValue('Set-Cookie')).toBe('a=b');
 });
+
+it('should complain about bad har', async ({ page, server }, testInfo) => {
+  const harPath = testInfo.outputPath('test.har');
+  fs.writeFileSync(harPath, JSON.stringify({log:{entries:'foo'}}), 'utf-8');
+  let error;
+  await page.route('**/*.css', async route => {
+    error = await route.fulfill({ har: harPath }).catch(e => e);
+    await route.continue();
+  });
+  await page.goto(server.PREFIX + '/one-style.html');
+  expect(error.message).toBe(`Error reading HAR file ${harPath}: har.log.entries.find is not a function`);
+});
