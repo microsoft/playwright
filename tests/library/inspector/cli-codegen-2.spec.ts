@@ -545,6 +545,14 @@ test.describe('cli codegen', () => {
     expect(fs.existsSync(traceFileName)).toBeTruthy();
   });
 
+  test('should --save-har', async ({ runCLI }, testInfo) => {
+    const harFileName = testInfo.outputPath('har.har');
+    const cli = runCLI([`--save-har=${harFileName}`]);
+    await cli.exited;
+    const json = JSON.parse(fs.readFileSync(harFileName, 'utf-8'));
+    expect(json.log.creator.name).toBe('Playwright');
+  });
+
   test('should fill tricky characters', async ({ page, openRecorder }) => {
     const recorder = await openRecorder();
 
