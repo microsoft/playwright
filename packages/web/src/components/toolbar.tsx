@@ -20,7 +20,7 @@ import * as React from 'react';
 export interface ToolbarProps {
 }
 
-export const Toolbar: React.FC<ToolbarProps> = ({
+export const Toolbar: React.FC<React.PropsWithChildren<ToolbarProps>> = ({
   children
 }) => {
   return <div className='toolbar'>{children}</div>;

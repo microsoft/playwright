@@ -79,6 +79,11 @@ Emitted when Browser gets disconnected from the browser application. This might 
 * Browser application is closed or crashed.
 * The [`method: Browser.close`] method was called.
 
+## method: Browser.browserType
+- returns: <[BrowserType]>
+
+Get the browser type (chromium, firefox or webkit) that the browser belongs to.
+
 ## async method: Browser.close
 
 In case this browser is obtained using [`method: BrowserType.launch`], closes the browser and all of its pages (if any

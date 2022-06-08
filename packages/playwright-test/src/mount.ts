@@ -16,60 +16,57 @@
 
 import { normalizeTraceMode, normalizeVideoMode, shouldCaptureTrace, shouldCaptureVideo } from './index';
 import type { Fixtures, Locator, Page, BrowserContextOptions, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, BrowserContext } from './types';
+import type { Component, JsxComponent, ObjectComponentOptions } from '../types/component';
 
 let boundCallbacksForMount: Function[] = [];
 
 export const fixtures: Fixtures<
   PlaywrightTestArgs & PlaywrightTestOptions & { mount: (component: any, options: any) => Promise<Locator> },
-  PlaywrightWorkerArgs & PlaywrightWorkerOptions & { _ctWorker: { page: Page | undefined, context: BrowserContext | undefined, hash: string, isolateTests: boolean } },
+  PlaywrightWorkerArgs & PlaywrightWorkerOptions & { _ctWorker: { context: BrowserContext | undefined, hash: string } },
   { _contextFactory: (options?: BrowserContextOptions) => Promise<BrowserContext> }> = {
 
-    _ctWorker: [{ page: undefined, context: undefined, hash: '', isolateTests: false }, { scope: 'worker' }],
+    _ctWorker: [{ context: undefined, hash: '' }, { scope: 'worker' }],
 
-    context: async ({ _contextFactory, playwright, browser, _ctWorker, video, trace, viewport }, use, testInfo) => {
-      _ctWorker.isolateTests = shouldCaptureVideo(normalizeVideoMode(video), testInfo) || shouldCaptureTrace(normalizeTraceMode(trace), testInfo);
-      if (_ctWorker.isolateTests) {
-        await use(await _contextFactory());
-        return;
-      }
-
+    context: async ({ playwright, browser, _ctWorker, _contextFactory, video, trace }, use, testInfo) => {
+      const isolateTests = shouldCaptureVideo(normalizeVideoMode(video), testInfo) || shouldCaptureTrace(normalizeTraceMode(trace), testInfo);
       const defaultContextOptions = (playwright.chromium as any)._defaultContextOptions as BrowserContextOptions;
       const hash = contextHash(defaultContextOptions);
 
-      if (!_ctWorker.page || _ctWorker.hash !== hash) {
+      if (!_ctWorker.context || _ctWorker.hash !== hash || isolateTests) {
         if (_ctWorker.context)
           await _ctWorker.context.close();
-
-        const context = await browser.newContext();
-        const page = await createPage(context);
-        _ctWorker.context = context;
-        _ctWorker.page = page;
+        // Context factory sets up video so we want to use that for isolated contexts.
+        // However, it closes the context after the test, so we don't want to use it
+        // for shared contexts.
+        _ctWorker.context = isolateTests ? await _contextFactory() : await browser.newContext();
         _ctWorker.hash = hash;
-        await use(page.context());
-        return;
+        await _ctWorker.context.addInitScript('navigator.serviceWorker.register = () => {}');
+        await _ctWorker.context.exposeFunction('__pw_dispatch', (ordinal: number, args: any[]) => {
+          boundCallbacksForMount[ordinal](...args);
+        });
       } else {
-        const page = _ctWorker.page;
-        await (page as any)._wrapApiCall(async () => {
-          await (page as any)._resetForReuse();
-          await (page.context() as any)._resetForReuse();
-          await page.goto('about:blank');
-          await page.setViewportSize(viewport || { width: 1280, height: 800 });
-          await page.goto(process.env.PLAYWRIGHT_VITE_COMPONENTS_BASE_URL!);
-        }, true);
-        await use(page.context());
+        await (_ctWorker.context as any)._resetForReuse();
       }
+      await use(_ctWorker.context);
     },
 
-    page: async ({ context, _ctWorker }, use) => {
-      if (_ctWorker.isolateTests) {
-        await use(await createPage(context));
-        return;
-      }
-      await use(_ctWorker.page!);
+    page: async ({ context, viewport }, use) => {
+      let page = context.pages()[0];
+      await (context as any)._wrapApiCall(async () => {
+        if (!page) {
+          page = await context.newPage();
+        } else {
+          await (page as any)._resetForReuse();
+          await page.goto('about:blank');
+          await page.setViewportSize(viewport || { width: 1280, height: 800 });
+        }
+        await page.goto(process.env.PLAYWRIGHT_VITE_COMPONENTS_BASE_URL!);
+      }, true);
+      await use(page);
     },
 
     mount: async ({ page }, use) => {
-      await use(async (component, options) => {
+      await use(async (component: JsxComponent | string, options?: ObjectComponentOptions) => {
         const selector = await (page as any)._wrapApiCall(async () => {
           return await innerMount(page, component, options);
         }, true);
@@ -79,8 +76,8 @@ export const fixtures: Fixtures<
     },
   };
 
-async function innerMount(page: Page, jsxOrType: any, options: any): Promise<string> {
-  let component;
+async function innerMount(page: Page, jsxOrType: JsxComponent | string, options?: ObjectComponentOptions): Promise<string> {
+  let component: Component;
   if (typeof jsxOrType === 'string')
     component = { kind: 'object', type: jsxOrType, options };
   else
@@ -89,7 +86,7 @@ async function innerMount(page: Page, jsxOrType: any, options: any): Promise<str
   wrapFunctions(component, page, boundCallbacksForMount);
 
   // WebKit does not wait for deferred scripts.
-  await page.waitForFunction(() => !!(window as any).playwrightMount);
+  await page.waitForFunction(() => !!window.playwrightMount);
 
   const selector = await page.evaluate(async ({ component }) => {
     const unwrapFunctions = (object: any) => {
@@ -106,7 +103,17 @@ async function innerMount(page: Page, jsxOrType: any, options: any): Promise<str
     };
 
     unwrapFunctions(component);
-    return await (window as any).playwrightMount(component);
+    let rootElement = document.getElementById('root');
+    if (!rootElement) {
+      rootElement = document.createElement('div');
+      rootElement.id = 'root';
+      document.body.appendChild(rootElement);
+    }
+
+    window.playwrightMount(component, rootElement);
+
+    // When mounting fragments, return selector pointing to the root element.
+    return rootElement.childNodes.length > 1 ? '#root' : '#root > *';
   }, { component });
   return selector;
 }
@@ -148,16 +155,4 @@ function contextHash(context: BrowserContextOptions): string {
     serviceWorkers: context.serviceWorkers,
   };
   return JSON.stringify(hash);
-}
-
-function createPage(context: BrowserContext): Promise<Page> {
-  return (context as any)._wrapApiCall(async () => {
-    const page = await context.newPage();
-    await page.addInitScript('navigator.serviceWorker.register = () => {}');
-    await page.exposeFunction('__pw_dispatch', (ordinal: number, args: any[]) => {
-      boundCallbacksForMount[ordinal](...args);
-    });
-    await page.goto(process.env.PLAYWRIGHT_VITE_COMPONENTS_BASE_URL!);
-    return page;
-  }, true);
 }

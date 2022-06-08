@@ -243,6 +243,18 @@ export function toHaveValue(
   }, expected, options);
 }
 
+export function toHaveValues(
+  this: ReturnType<Expect['getState']>,
+  locator: LocatorEx,
+  expected: (string | RegExp)[],
+  options?: { timeout?: number },
+) {
+  return toEqual.call(this, 'toHaveValues', locator, 'Locator', async (isNot, timeout, customStackTrace) => {
+    const expectedText = toExpectedTextValues(expected);
+    return await locator._expect(customStackTrace, 'to.have.values', { expectedText, isNot, timeout });
+  }, expected, options);
+}
+
 export function toHaveTitle(
   this: ReturnType<Expect['getState']>,
   page: Page,

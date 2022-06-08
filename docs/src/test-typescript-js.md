@@ -7,7 +7,7 @@ Playwright Test supports TypeScript out of the box. You just write tests in Type
 
 ## TypeScript with CommonJS
 
-[Node.js](https://nodejs.org/en/) works with CommonJS modules **by default**. Unless you use `'.mjs'` or `'.mts'` extensions, or specify `type: "module"` in your `pacakge.json`, Playwright Test will treat all TypeScript files as CommonJS. You can then import as usual without an extension.
+[Node.js](https://nodejs.org/en/) works with CommonJS modules **by default**. Unless you use `'.mjs'` or `'.mts'` extensions, or specify `type: "module"` in your `package.json`, Playwright Test will treat all TypeScript files as CommonJS. You can then import as usual without an extension.
 
 Consider this helper module written in TypeScript:
 

@@ -16,7 +16,7 @@
  */
 
 import { test as it, expect } from './pageTest';
-import { globToRegex } from '../../packages/playwright-core/lib/client/clientHelper';
+import { globToRegex } from '../../packages/playwright-core/lib/common/netUtils';
 import vm from 'vm';
 
 it('should work with navigation @smoke', async ({ page, server }) => {
@@ -33,7 +33,7 @@ it('should work with navigation @smoke', async ({ page, server }) => {
   expect(requests.get('style.css').isNavigationRequest()).toBe(false);
 });
 
-it('should intercept after a service worker', async ({ page, server, isAndroid, isElectron }) => {
+it('should intercept after a service worker', async ({ page, server, browserName, isAndroid, isElectron }) => {
   it.skip(isAndroid);
   it.skip(isElectron);
 
@@ -61,6 +61,14 @@ it('should intercept after a service worker', async ({ page, server, isAndroid, 
   // Page route is not applied to service worker initiated fetch.
   const nonInterceptedResponse = await page.evaluate(() => window['fetchDummy']('passthrough'));
   expect(nonInterceptedResponse).toBe('FAILURE: Not Found');
+
+  // Firefox does not want to fetch the redirect for some reason.
+  if (browserName !== 'firefox') {
+    // Page route is not applied to service worker initiated fetch with redirect.
+    server.setRedirect('/serviceworkers/fetchdummy/passthrough', '/simple.json');
+    const redirectedResponse = await page.evaluate(() => window['fetchDummy']('passthrough'));
+    expect(redirectedResponse).toBe('{"foo": "bar"}\n');
+  }
 });
 
 it('should work with glob', async () => {

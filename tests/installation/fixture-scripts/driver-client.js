@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
-const { start } = require('./node_modules/playwright-core/lib/outofprocess');
+const pw = require.resolve('playwright');
+const oop = require.resolve('playwright-core/lib/outofprocess', { paths: [pw] });
+const { start } = require(oop);
 
 (async () => {
   const { playwright, stop } = await start();

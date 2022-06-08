@@ -36,7 +36,8 @@ import {
   toHaveText,
   toHaveTitle,
   toHaveURL,
-  toHaveValue
+  toHaveValue,
+  toHaveValues,
 } from './matchers/matchers';
 import { toMatchSnapshot, toHaveScreenshot } from './matchers/toMatchSnapshot';
 import type { Expect } from './types';
@@ -141,6 +142,7 @@ const customMatchers = {
   toHaveTitle,
   toHaveURL,
   toHaveValue,
+  toHaveValues,
   toMatchSnapshot,
   toHaveScreenshot,
 };

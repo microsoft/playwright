@@ -20,6 +20,8 @@ import net from 'net';
 import { getProxyForUrl } from '../utilsBundle';
 import { HttpsProxyAgent } from '../utilsBundle';
 import * as URL from 'url';
+import type { URLMatch } from './types';
+import { isString, constructURLBasedOnBaseURL, isRegExp } from '../utils';
 
 export async function createSocket(host: string, port: number): Promise<net.Socket> {
   return new Promise((resolve, reject) => {
@@ -100,4 +102,92 @@ export function fetchData(params: HTTPRequestParams, onError?: (params: HTTPRequ
       response.on('end', () => resolve(body));
     }, reject);
   });
+}
+
+export function urlMatches(baseURL: string | undefined, urlString: string, match: URLMatch | undefined): boolean {
+  if (match === undefined || match === '')
+    return true;
+  if (isString(match) && !match.startsWith('*'))
+    match = constructURLBasedOnBaseURL(baseURL, match);
+  if (isString(match))
+    match = globToRegex(match);
+  if (isRegExp(match))
+    return match.test(urlString);
+  if (typeof match === 'string' && match === urlString)
+    return true;
+  const url = parsedURL(urlString);
+  if (!url)
+    return false;
+  if (typeof match === 'string')
+    return url.pathname === match;
+  if (typeof match !== 'function')
+    throw new Error('url parameter should be string, RegExp or function');
+  return match(url);
+}
+
+function parsedURL(url: string): URL | null {
+  try {
+    return new URL.URL(url);
+  } catch (e) {
+    return null;
+  }
+}
+
+const escapeGlobChars = new Set(['/', '$', '^', '+', '.', '(', ')', '=', '!', '|']);
+
+// Note: this function is exported so it can be unit-tested.
+export function globToRegex(glob: string): RegExp {
+  const tokens = ['^'];
+  let inGroup;
+  for (let i = 0; i < glob.length; ++i) {
+    const c = glob[i];
+    if (escapeGlobChars.has(c)) {
+      tokens.push('\\' + c);
+      continue;
+    }
+    if (c === '*') {
+      const beforeDeep = glob[i - 1];
+      let starCount = 1;
+      while (glob[i + 1] === '*') {
+        starCount++;
+        i++;
+      }
+      const afterDeep = glob[i + 1];
+      const isDeep = starCount > 1 &&
+          (beforeDeep === '/' || beforeDeep === undefined) &&
+          (afterDeep === '/' || afterDeep === undefined);
+      if (isDeep) {
+        tokens.push('((?:[^/]*(?:\/|$))*)');
+        i++;
+      } else {
+        tokens.push('([^/]*)');
+      }
+      continue;
+    }
+
+    switch (c) {
+      case '?':
+        tokens.push('.');
+        break;
+      case '{':
+        inGroup = true;
+        tokens.push('(');
+        break;
+      case '}':
+        inGroup = false;
+        tokens.push(')');
+        break;
+      case ',':
+        if (inGroup) {
+          tokens.push('|');
+          break;
+        }
+        tokens.push('\\' + c);
+        break;
+      default:
+        tokens.push(c);
+    }
+  }
+  tokens.push('$');
+  return new RegExp(tokens.join(''));
 }

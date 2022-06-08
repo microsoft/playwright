@@ -21,8 +21,8 @@
     "eslint-plugin-vue": "^8.0.3"
   },
   "@standaloneDevDependencies": {
-    "@playwright/experimental-ct-vue": "0.0.1",
-    "@playwright/test": "1.21.0-alpha-mar-12-2022"
+    "@playwright/experimental-ct-vue": "^1.22.2",
+    "@playwright/test": "^1.22.2"
   },
   "eslintConfig": {
     "root": true,

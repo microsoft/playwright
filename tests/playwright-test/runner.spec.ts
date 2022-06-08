@@ -83,20 +83,21 @@ test('it should not allow a focused test when forbid-only is used', async ({ run
   expect(result.output).toContain(`- tests${path.sep}focused-test.spec.js:6 > i-am-focused`);
 });
 
-test('it should not hang and report results when worker process suddenly exits', async ({ runInlineTest }) => {
+test('should continue with other tests after worker process suddenly exits', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.js': `
       const { test } = pwt;
       test('passed1', () => {});
       test('passed2', () => {});
       test('failed1', () => { process.exit(0); });
-      test('skipped', () => {});
+      test('passed3', () => {});
+      test('passed4', () => {});
     `
   });
   expect(result.exitCode).toBe(1);
-  expect(result.passed).toBe(2);
+  expect(result.passed).toBe(4);
   expect(result.failed).toBe(1);
-  expect(result.skipped).toBe(1);
+  expect(result.skipped).toBe(0);
   expect(result.output).toContain('Worker process exited unexpectedly');
 });
 

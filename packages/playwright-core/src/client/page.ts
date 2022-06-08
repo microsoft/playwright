@@ -45,13 +45,14 @@ import type * as structs from '../../types/structs';
 import fs from 'fs';
 import path from 'path';
 import type { Size, URLMatch, Headers, LifecycleEvent, WaitForEventOptions, SelectOption, SelectOptionOptions, FilePayload, WaitForFunctionOptions } from './types';
-import { evaluationScript, urlMatches } from './clientHelper';
+import { evaluationScript } from './clientHelper';
 import { isString, isRegExp, isObject, headersObjectToArray } from '../utils';
 import { mkdirIfNeeded } from '../utils/fileUtils';
 import { isSafeCloseError } from '../common/errors';
 import { Video } from './video';
 import { Artifact } from './artifact';
 import type { APIRequestContext } from './fetch';
+import { urlMatches } from '../common/netUtils';
 
 type PDFOptions = Omit<channels.PagePdfParams, 'width' | 'height' | 'margin'> & {
   width?: string | number,

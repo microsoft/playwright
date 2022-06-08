@@ -175,7 +175,7 @@ test('should throw a nice error if a js file uses import', async ({ runInlineTes
   });
   expect(exitCode).toBe(1);
   expect(output).toContain('a.spec.js');
-  expect(output).toContain('JavaScript files must end with .mjs to use import.');
+  expect(output).toContain('Cannot use import statement outside a module');
 });
 
 test('should load esm when package.json has type module', async ({ runInlineTest }) => {

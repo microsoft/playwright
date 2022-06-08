@@ -289,9 +289,6 @@ export class Loader {
 ${'='.repeat(80)}\n`);
       }
 
-      if (error instanceof SyntaxError && error.message.includes('Cannot use import statement outside a module'))
-        throw errorWithFile(file, 'JavaScript files must end with .mjs to use import.');
-
       throw error;
     } finally {
       revertBabelRequire();

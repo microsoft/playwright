@@ -227,6 +227,14 @@ export type SetNetworkCookieParam = {
 
 export type EmulatedSize = { viewport: Size, screen: Size };
 
+export type HarOptions = {
+  omitContent?: boolean,
+  path: string,
+  urlGlob?: string,
+  urlRegexSource?: string,
+  urlRegexFlags?: string,
+};
+
 export type BrowserContextOptions = {
   viewport?: Size,
   screen?: Size,
@@ -253,10 +261,7 @@ export type BrowserContextOptions = {
     dir: string,
     size?: Size,
   },
-  recordHar?: {
-    omitContent?: boolean,
-    path: string
-  },
+  recordHar?: HarOptions,
   storageState?: SetStorageState,
   strictSelectors?: boolean,
   proxy?: ProxySettings,
