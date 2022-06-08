@@ -73,7 +73,6 @@ export class APIRequest implements api.APIRequest {
       extraHTTPHeaders: options.extraHTTPHeaders ? headersObjectToArray(options.extraHTTPHeaders) : undefined,
       storageState,
     })).request);
-    context._tracing._localUtils = this._playwright._utils;
     this._contexts.add(context);
     context._request = this;
     await this._onDidCreateContext?.(context);
