@@ -643,7 +643,7 @@ function serializePostData(params: channels.APIRequestContextFetchParams, header
     return formData.finish();
   } else if (params.postData !== undefined) {
     headers['content-type'] ??= 'application/octet-stream';
-    return Buffer.from(params.postData, 'base64');
+    return params.postData;
   }
   return undefined;
 }

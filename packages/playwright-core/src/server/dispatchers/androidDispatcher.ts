@@ -136,11 +136,11 @@ export class AndroidDeviceDispatcher extends Dispatcher<AndroidDevice, channels.
   }
 
   async screenshot(params: channels.AndroidDeviceScreenshotParams): Promise<channels.AndroidDeviceScreenshotResult> {
-    return { binary: (await this._object.screenshot()).toString('base64') };
+    return { binary: await this._object.screenshot() };
   }
 
   async shell(params: channels.AndroidDeviceShellParams): Promise<channels.AndroidDeviceShellResult> {
-    return { result: (await this._object.shell(params.command)).toString('base64') };
+    return { result: await this._object.shell(params.command) };
   }
 
   async open(params: channels.AndroidDeviceOpenParams, metadata: CallMetadata): Promise<channels.AndroidDeviceOpenResult> {
@@ -149,11 +149,11 @@ export class AndroidDeviceDispatcher extends Dispatcher<AndroidDevice, channels.
   }
 
   async installApk(params: channels.AndroidDeviceInstallApkParams) {
-    await this._object.installApk(Buffer.from(params.file, 'base64'), { args: params.args });
+    await this._object.installApk(params.file, { args: params.args });
   }
 
   async push(params: channels.AndroidDevicePushParams) {
-    await this._object.push(Buffer.from(params.file, 'base64'), params.path, params.mode);
+    await this._object.push(params.file, params.path, params.mode);
   }
 
   async launchBrowser(params: channels.AndroidDeviceLaunchBrowserParams): Promise<channels.AndroidDeviceLaunchBrowserResult> {
@@ -179,7 +179,7 @@ export class AndroidSocketDispatcher extends Dispatcher<SocketBackend, channels.
 
   constructor(scope: DispatcherScope, socket: SocketBackend) {
     super(scope, socket, 'AndroidSocket', {}, true);
-    socket.on('data', (data: Buffer) => this._dispatchEvent('data', { data: data.toString('base64') }));
+    socket.on('data', (data: Buffer) => this._dispatchEvent('data', { data }));
     socket.on('close', () => {
       this._dispatchEvent('close');
       this._dispose();
@@ -187,7 +187,7 @@ export class AndroidSocketDispatcher extends Dispatcher<SocketBackend, channels.
   }
 
   async write(params: channels.AndroidSocketWriteParams, metadata: CallMetadata): Promise<void> {
-    await this._object.write(Buffer.from(params.data, 'base64'));
+    await this._object.write(params.data);
   }
 
   async close(params: channels.AndroidSocketCloseParams, metadata: CallMetadata): Promise<void> {

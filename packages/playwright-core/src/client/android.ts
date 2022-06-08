@@ -166,10 +166,9 @@ export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel> i
 
   async screenshot(options: { path?: string } = {}): Promise<Buffer> {
     const { binary } = await this._channel.screenshot();
-    const buffer = Buffer.from(binary, 'base64');
     if (options.path)
-      await fs.promises.writeFile(options.path, buffer);
-    return buffer;
+      await fs.promises.writeFile(options.path, binary);
+    return binary;
   }
 
   async close() {
@@ -179,7 +178,7 @@ export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel> i
 
   async shell(command: string): Promise<Buffer> {
     const { result } = await this._channel.shell({ command });
-    return Buffer.from(result, 'base64');
+    return result;
   }
 
   async open(command: string): Promise<AndroidSocket> {
@@ -222,12 +221,12 @@ export class AndroidSocket extends ChannelOwner<channels.AndroidSocketChannel> i
 
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.AndroidSocketInitializer) {
     super(parent, type, guid, initializer);
-    this._channel.on('data', ({ data }) => this.emit(Events.AndroidSocket.Data, Buffer.from(data, 'base64')));
+    this._channel.on('data', ({ data }) => this.emit(Events.AndroidSocket.Data, data));
     this._channel.on('close', () => this.emit(Events.AndroidSocket.Close));
   }
 
   async write(data: Buffer): Promise<void> {
-    await this._channel.write({ data: data.toString('base64') });
+    await this._channel.write({ data });
   }
 
   async close(): Promise<void> {
@@ -235,10 +234,10 @@ export class AndroidSocket extends ChannelOwner<channels.AndroidSocketChannel> i
   }
 }
 
-async function loadFile(file: string | Buffer): Promise<string> {
+async function loadFile(file: string | Buffer): Promise<Buffer> {
   if (isString(file))
-    return fs.promises.readFile(file, { encoding: 'base64' }).toString();
-  return file.toString('base64');
+    return fs.promises.readFile(file);
+  return file;
 }
 
 export class AndroidInput implements api.AndroidInput {

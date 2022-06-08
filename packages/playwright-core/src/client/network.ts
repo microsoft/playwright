@@ -87,7 +87,7 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
     if (this._redirectedFrom)
       this._redirectedFrom._redirectedTo = this;
     this._provisionalHeaders = new RawHeaders(initializer.headers);
-    this._postData = initializer.postData !== undefined ? Buffer.from(initializer.postData, 'base64') : null;
+    this._postData = initializer.postData ?? null;
     this._timing = {
       startTime: 0,
       domainLookupStart: -1,
@@ -385,7 +385,7 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
         url: options.url,
         method: options.method,
         headers: options.headers ? headersObjectToArray(options.headers) : undefined,
-        postData: postDataBuffer ? postDataBuffer.toString('base64') : undefined,
+        postData: postDataBuffer,
       }));
     }, !!internal);
   }
@@ -491,7 +491,7 @@ export class Response extends ChannelOwner<channels.ResponseChannel> implements 
   }
 
   async body(): Promise<Buffer> {
-    return Buffer.from((await this._channel.body()).binary, 'base64');
+    return (await this._channel.body()).binary;
   }
 
   async text(): Promise<string> {
@@ -533,13 +533,13 @@ export class WebSocket extends ChannelOwner<channels.WebSocketChannel> implement
     super(parent, type, guid, initializer);
     this._isClosed = false;
     this._page = parent as Page;
-    this._channel.on('frameSent', (event: { opcode: number, data: string }) => {
+    this._channel.on('frameSent', event => {
       if (event.opcode === 1)
         this.emit(Events.WebSocket.FrameSent, { payload: event.data });
       else if (event.opcode === 2)
         this.emit(Events.WebSocket.FrameSent, { payload: Buffer.from(event.data, 'base64') });
     });
-    this._channel.on('frameReceived', (event: { opcode: number, data: string }) => {
+    this._channel.on('frameReceived', event => {
       if (event.opcode === 1)
         this.emit(Events.WebSocket.FrameReceived, { payload: event.data });
       else if (event.opcode === 2)

@@ -52,7 +52,7 @@ export class HarRouter {
       url: request.url(),
       method: request.method(),
       headers: (await request.headersArray()),
-      postData: request.postDataBuffer()?.toString('base64'),
+      postData: request.postDataBuffer() || undefined,
       isNavigationRequest: request.isNavigationRequest()
     });
 
@@ -66,7 +66,7 @@ export class HarRouter {
       await route.fulfill({
         status: response.status,
         headers: Object.fromEntries(response.headers!.map(h => [h.name, h.value])),
-        body: Buffer.from(response.body!, 'base64')
+        body: response.body!
       });
       return;
     }

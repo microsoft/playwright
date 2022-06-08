@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-import { Buffer } from 'buffer';
 import fs from 'fs';
 import path from 'path';
 import type * as structs from '../../types/structs';
@@ -503,12 +502,11 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
       }));
     }
     const result = await this._channel.screenshot(copy);
-    const buffer = Buffer.from(result.binary, 'base64');
     if (options.path) {
       await mkdirIfNeeded(options.path);
-      await fs.promises.writeFile(options.path, buffer);
+      await fs.promises.writeFile(options.path, result.binary);
     }
-    return buffer;
+    return result.binary;
   }
 
   async _expectScreenshot(customStackTrace: ParsedStackTrace, options: ExpectScreenshotOptions): Promise<{ actual?: Buffer, previous?: Buffer, diff?: Buffer, errorMessage?: string, log?: string[]}> {
@@ -521,25 +519,15 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
         frame: options.locator._frame._channel,
         selector: options.locator._selector,
       } : undefined;
-      const expected = options.expected ? options.expected.toString('base64') : undefined;
-
-      const result = await this._channel.expectScreenshot({
+      return await this._channel.expectScreenshot({
         ...options,
         isNot: !!options.isNot,
-        expected,
         locator,
         screenshotOptions: {
           ...options.screenshotOptions,
           mask,
         }
       });
-      return {
-        log: result.log,
-        actual: result.actual ? Buffer.from(result.actual, 'base64') : undefined,
-        previous: result.previous ? Buffer.from(result.previous, 'base64') : undefined,
-        diff: result.diff ? Buffer.from(result.diff, 'base64') : undefined,
-        errorMessage: result.errorMessage,
-      };
     }, false /* isInternal */, customStackTrace);
   }
 
@@ -742,12 +730,11 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
         transportOptions.margin![index] = transportOptions.margin![index] + 'px';
     }
     const result = await this._channel.pdf(transportOptions);
-    const buffer = Buffer.from(result.pdf, 'base64');
     if (options.path) {
       await fs.promises.mkdir(path.dirname(options.path), { recursive: true });
-      await fs.promises.writeFile(options.path, buffer);
+      await fs.promises.writeFile(options.path, result.pdf);
     }
-    return buffer;
+    return result.pdf;
   }
 
   async _resetForReuse() {

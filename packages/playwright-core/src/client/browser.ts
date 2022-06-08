@@ -99,7 +99,7 @@ export class Browser extends ChannelOwner<channels.BrowserChannel> implements ap
   }
 
   async stopTracing(): Promise<Buffer> {
-    return Buffer.from((await this._channel.stopTracing()).binary, 'base64');
+    return (await this._channel.stopTracing()).binary;
   }
 
   async close(): Promise<void> {

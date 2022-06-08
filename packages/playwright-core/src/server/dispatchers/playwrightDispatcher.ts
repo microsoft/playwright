@@ -81,7 +81,7 @@ class SocksSupportDispatcher extends Dispatcher<{ guid: string }, channels.Socks
     this._type_SocksSupport = true;
     this._socksProxy = socksProxy;
     socksProxy.on(SocksProxy.Events.SocksRequested, (payload: SocksSocketRequestedPayload) => this._dispatchEvent('socksRequested', payload));
-    socksProxy.on(SocksProxy.Events.SocksData, (payload: SocksSocketDataPayload) => this._dispatchEvent('socksData', { uid: payload.uid, data: payload.data.toString('base64') }));
+    socksProxy.on(SocksProxy.Events.SocksData, (payload: SocksSocketDataPayload) => this._dispatchEvent('socksData', payload));
     socksProxy.on(SocksProxy.Events.SocksClosed, (payload: SocksSocketClosedPayload) => this._dispatchEvent('socksClosed', payload));
   }
 
@@ -94,7 +94,7 @@ class SocksSupportDispatcher extends Dispatcher<{ guid: string }, channels.Socks
   }
 
   async socksData(params: channels.SocksSupportSocksDataParams): Promise<void> {
-    this._socksProxy?.sendSocketData({ uid: params.uid, data: Buffer.from(params.data, 'base64') });
+    this._socksProxy?.sendSocketData(params);
   }
 
   async socksError(params: channels.SocksSupportSocksErrorParams): Promise<void> {

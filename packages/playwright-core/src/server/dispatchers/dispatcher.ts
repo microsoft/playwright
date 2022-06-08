@@ -144,16 +144,21 @@ export class DispatcherConnection {
   readonly _dispatchers = new Map<string, Dispatcher<any, any>>();
   onmessage = (message: object) => {};
   private _waitOperations = new Map<string, CallMetadata>();
+  private _isLocal: boolean;
+
+  constructor(isLocal?: boolean) {
+    this._isLocal = !!isLocal;
+  }
 
   sendEvent(dispatcher: Dispatcher<any, any>, event: string, params: any, sdkObject?: SdkObject) {
     const validator = findValidator(dispatcher._type, event, 'Event');
-    params = validator(params, '', { tChannelImpl: this._tChannelImplToWire.bind(this) });
+    params = validator(params, '', { tChannelImpl: this._tChannelImplToWire.bind(this), binary: this._isLocal ? 'buffer' : 'toBase64' });
     this._sendMessageToClient(dispatcher._guid, dispatcher._type, event, params, sdkObject);
   }
 
   sendCreate(parent: Dispatcher<any, any>, type: string, guid: string, initializer: any, sdkObject?: SdkObject) {
     const validator = findValidator(type, '', 'Initializer');
-    initializer = validator(initializer, '', { tChannelImpl: this._tChannelImplToWire.bind(this) });
+    initializer = validator(initializer, '', { tChannelImpl: this._tChannelImplToWire.bind(this), binary: this._isLocal ? 'buffer' : 'toBase64' });
     this._sendMessageToClient(parent._guid, type, '__create__', { type, initializer, guid }, sdkObject);
   }
 
@@ -216,8 +221,8 @@ export class DispatcherConnection {
     let validMetadata: channels.Metadata;
     try {
       const validator = findValidator(dispatcher._type, method, 'Params');
-      validParams = validator(params, '', { tChannelImpl: this._tChannelImplFromWire.bind(this) });
-      validMetadata = metadataValidator(metadata, '', { tChannelImpl: this._tChannelImplFromWire.bind(this) });
+      validParams = validator(params, '', { tChannelImpl: this._tChannelImplFromWire.bind(this), binary: this._isLocal ? 'buffer' : 'fromBase64' });
+      validMetadata = metadataValidator(metadata, '', { tChannelImpl: this._tChannelImplFromWire.bind(this), binary: this._isLocal ? 'buffer' : 'fromBase64' });
       if (typeof (dispatcher as any)[method] !== 'function')
         throw new Error(`Mismatching dispatcher: "${dispatcher._type}" does not implement "${method}"`);
     } catch (e) {
@@ -277,7 +282,7 @@ export class DispatcherConnection {
     try {
       const result = await (dispatcher as any)[method](validParams, callMetadata);
       const validator = findValidator(dispatcher._type, method, 'Result');
-      callMetadata.result = validator(result, '', { tChannelImpl: this._tChannelImplToWire.bind(this) });
+      callMetadata.result = validator(result, '', { tChannelImpl: this._tChannelImplToWire.bind(this), binary: this._isLocal ? 'buffer' : 'toBase64' });
     } catch (e) {
       // Dispatching error
       // We want original, unmodified error in metadata.

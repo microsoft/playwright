@@ -114,7 +114,7 @@ export class LocalUtilsDispatcher extends Dispatcher<{ guid: string }, channels.
     const harBackend = this._harBakends.get(params.harId);
     if (!harBackend)
       return { action: 'error', message: `Internal error: har was not opened` };
-    return await harBackend.lookup(params.url, params.method, params.headers, params.postData ? Buffer.from(params.postData, 'base64') : undefined, params.isNavigationRequest);
+    return await harBackend.lookup(params.url, params.method, params.headers, params.postData, params.isNavigationRequest);
   }
 
   async harClose(params: channels.LocalUtilsHarCloseParams, metadata?: channels.Metadata): Promise<void> {
@@ -160,8 +160,7 @@ class HarBackend {
       redirectURL?: string,
       status?: number,
       headers?: HeadersArray,
-      body?: string,
-      base64Encoded?: boolean }> {
+      body?: Buffer }> {
     let entry;
     try {
       entry = await this._harFindResponse(url, method, headers, postData);
@@ -183,7 +182,7 @@ class HarBackend {
         action: 'fulfill',
         status: response.status,
         headers: response.headers,
-        body: buffer.toString('base64'),
+        body: buffer,
       };
     } catch (e) {
       return { action: 'error', message: e.message };
