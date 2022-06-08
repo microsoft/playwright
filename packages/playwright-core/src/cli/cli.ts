@@ -352,6 +352,8 @@ type Options = {
   loadStorage?: string;
   proxyServer?: string;
   proxyBypass?: string;
+  saveHar?: string;
+  saveHarGlob?: string;
   saveStorage?: string;
   saveTrace?: string;
   timeout: string;
@@ -459,6 +461,14 @@ async function launchContext(options: Options, headless: boolean, executablePath
   if (options.ignoreHttpsErrors)
     contextOptions.ignoreHTTPSErrors = true;
 
+  // HAR
+
+  if (options.saveHar) {
+    contextOptions.recordHar = { path: path.resolve(process.cwd(), options.saveHar) };
+    if (options.saveHarGlob)
+      contextOptions.recordHar.urlFilter = options.saveHarGlob;
+  }
+
   // Close app when the last window closes.
 
   const context = await browser.newContext(contextOptions);
@@ -474,6 +484,8 @@ async function launchContext(options: Options, headless: boolean, executablePath
       await context.tracing.stop({ path: options.saveTrace });
     if (options.saveStorage)
       await context.storageState({ path: options.saveStorage }).catch(e => null);
+    if (options.saveHar)
+      await context.close();
     await browser.close();
   }
 
@@ -637,6 +649,8 @@ function commandWithOpenOptions(command: string, description: string, options: a
       .option('--lang <language>', 'specify language / locale, for example "en-GB"')
       .option('--proxy-server <proxy>', 'specify proxy server, for example "http://myproxy:3128" or "socks5://myproxy:8080"')
       .option('--proxy-bypass <bypass>', 'comma-separated domains to bypass proxy, for example ".com,chromium.org,.domain.com"')
+      .option('--save-har <filename>', 'save HAR file with all network activity at the end')
+      .option('--save-har-glob <glob pattern>', 'filter entries in the HAR by matching url against this glob pattern')
       .option('--save-storage <filename>', 'save context storage state at the end, for later use with --load-storage')
       .option('--save-trace <filename>', 'record a trace for the session and save it to a file')
       .option('--timezone <time zone>', 'time zone to emulate, for example "Europe/Rome"')
