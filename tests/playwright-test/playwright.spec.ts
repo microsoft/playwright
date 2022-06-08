@@ -192,7 +192,7 @@ test('should respect context options in various contexts', async ({ runInlineTes
       import rimraf from 'rimraf';
 
       const { test } = pwt;
-      test.use({ locale: 'fr-CH' });
+      test.use({ locale: 'fr-FR' });
 
       let context;
       test.beforeAll(async ({ browser }) => {
@@ -206,19 +206,19 @@ test('should respect context options in various contexts', async ({ runInlineTes
       test('shared context', async ({}) => {
         const page = await context.newPage();
         expect(page.viewportSize()).toEqual({ width: 500, height: 500 });
-        expect(await page.evaluate(() => navigator.language)).toBe('fr-CH');
+        expect(await page.evaluate(() => navigator.language)).toBe('fr-FR');
       });
 
       test('own context', async ({ browser }) => {
         const page = await browser.newPage();
         expect(page.viewportSize()).toEqual({ width: 500, height: 500 });
-        expect(await page.evaluate(() => navigator.language)).toBe('fr-CH');
+        expect(await page.evaluate(() => navigator.language)).toBe('fr-FR');
         await page.close();
       });
 
       test('default context', async ({ page }) => {
         expect(page.viewportSize()).toEqual({ width: 500, height: 500 });
-        expect(await page.evaluate(() => navigator.language)).toBe('fr-CH');
+        expect(await page.evaluate(() => navigator.language)).toBe('fr-FR');
       });
 
       test('persistent context', async ({ playwright, browserName }) => {
@@ -227,7 +227,7 @@ test('should respect context options in various contexts', async ({ runInlineTes
         const page = context.pages()[0];
 
         expect(page.viewportSize()).toEqual({ width: 500, height: 500 });
-        expect(await page.evaluate(() => navigator.language)).toBe('fr-CH');
+        expect(await page.evaluate(() => navigator.language)).toBe('fr-FR');
 
         await context.close();
         rimraf.sync(dir);
@@ -237,7 +237,7 @@ test('should respect context options in various contexts', async ({ runInlineTes
         const browser = await playwright.webkit.launch();
         const page = await browser.newPage();
 
-        expect(await page.evaluate(() => navigator.language)).toBe('fr-CH');
+        expect(await page.evaluate(() => navigator.language)).toBe('fr-FR');
 
         await browser.close();
       });
