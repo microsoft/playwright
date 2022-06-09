@@ -14195,10 +14195,10 @@ index 0000000000000000000000000000000000000000..d0e11ed81a6257c011df23d5870da740
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..20fd6c8be329f6f18787715736e422821973623f
+index 0000000000000000000000000000000000000000..d9f566a6cce6433c2cfbb25fd6793f65a4ec1f23
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp
-@@ -0,0 +1,957 @@
+@@ -0,0 +1,956 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -14940,7 +14940,6 @@ index 0000000000000000000000000000000000000000..20fd6c8be329f6f18787715736e42282
 +        return;
 +    }
 +
-+    NetworkProcessProxy& networkProcess = browserContext->dataStore->networkProcess();
 +    browserContext->dataStore->cookieStore().cookies(
 +        [callback = WTFMove(callback)](const Vector<WebCore::Cookie>& allCookies) {
 +            if (!callback->isActive())
