@@ -135,9 +135,36 @@ it('should work with nth=', async ({ page }) => {
   });
   const element = await promise;
   expect(await element.evaluate(e => e.id)).toBe('target3');
+
+  await page.setContent(`
+    <div>
+      <div>
+        <div>
+          <span>hi</span>
+          <span>hello</span>
+        </div>
+      </div>
+    </div>
+  `);
+  expect(await page.locator('div >> div >> span >> nth=1').textContent()).toBe('hello');
 });
 
-it('should work with position selectors', async ({ page }) => {
+it('should work with strict mode and chaining', async ({ page }) => {
+  await page.setContent(`
+    <div>
+      <div>
+        <div>
+          <span>hi</span>
+        </div>
+      </div>
+    </div>
+  `);
+  expect(await page.locator('div >> div >> span').textContent()).toBe('hi');
+});
+
+it('should work with layout selectors', async ({ page, trace }) => {
+  it.skip(trace === 'on');
+
   /*
 
        +--+  +--+
@@ -189,6 +216,9 @@ it('should work with position selectors', async ({ page }) => {
       div.style.width = box[2] + 'px';
       div.style.height = box[3] + 'px';
       container.appendChild(div);
+      const span = document.createElement('span');
+      span.textContent = '' + i;
+      div.appendChild(span);
     }
   }, boxes);
 
@@ -372,4 +402,36 @@ it('should work with has=', async ({ page, server }) => {
   expect(error3.message).toContain('Malformed selector: has=33');
   const error4 = await page.$(`div >> has="span!"`).catch(e => e);
   expect(error4.message).toContain('Unexpected token "!" while parsing selector "span!"');
+});
+
+it('chaining should work with large DOM @smoke', async ({ page, server }) => {
+  await page.evaluate(() => {
+    let last = document.body;
+    for (let i = 0; i < 100; i++) {
+      const e = document.createElement('div');
+      last.appendChild(e);
+      last = e;
+    }
+    const target = document.createElement('span');
+    target.textContent = 'Found me!';
+    last.appendChild(target);
+  });
+
+  // Naive implementation generates C(100, 9) ~= 1.9*10^12 entries.
+  const selectors = [
+    'div >> div >> div >> div >> div >> div >> div >> div >> span',
+    'div div div div div div div div span',
+    'div div >> div div >> div div >> div div >> span',
+  ];
+
+  const counts = [];
+  const times = [];
+  for (const selector of selectors) {
+    const time = Date.now();
+    counts.push(await page.$$eval(selector, els => els.length));
+    times.push({ selector, time: Date.now() - time });
+  }
+  expect(counts).toEqual([1, 1, 1]);
+  // Uncomment to see performance results.
+  // console.log(times);
 });

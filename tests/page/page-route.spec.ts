@@ -15,7 +15,8 @@
  * limitations under the License.
  */
 
-import { Route } from 'playwright-core';
+import os from 'os';
+import type { Route } from 'playwright-core';
 import { test as it, expect } from './pageTest';
 
 it('should intercept @smoke', async ({ page, server }) => {
@@ -241,14 +242,15 @@ it('should be abortable', async ({ page, server }) => {
   expect(failed).toBe(true);
 });
 
-it('should be abortable with custom error codes', async ({ page, server, browserName }) => {
+it('should be abortable with custom error codes', async ({ page, server, browserName, isMac }) => {
   await page.route('**/*', route => route.abort('internetdisconnected'));
   let failedRequest = null;
   page.on('requestfailed', request => failedRequest = request);
   await page.goto(server.EMPTY_PAGE).catch(e => {});
   expect(failedRequest).toBeTruthy();
+  const isFrozenWebKit = isMac && parseInt(os.release(), 10) < 20;
   if (browserName === 'webkit')
-    expect(failedRequest.failure().errorText).toBe('Request intercepted');
+    expect(failedRequest.failure().errorText).toBe(isFrozenWebKit ? 'Request intercepted' : 'Blocked by Web Inspector');
   else if (browserName === 'firefox')
     expect(failedRequest.failure().errorText).toBe('NS_ERROR_OFFLINE');
   else
@@ -267,13 +269,14 @@ it('should send referer', async ({ page, server }) => {
   expect(request.headers['referer']).toBe('http://google.com/');
 });
 
-it('should fail navigation when aborting main resource', async ({ page, server, browserName }) => {
+it('should fail navigation when aborting main resource', async ({ page, server, browserName, isMac }) => {
   await page.route('**/*', route => route.abort());
   let error = null;
   await page.goto(server.EMPTY_PAGE).catch(e => error = e);
   expect(error).toBeTruthy();
+  const isFrozenWebKit = isMac && parseInt(os.release(), 10) < 20;
   if (browserName === 'webkit')
-    expect(error.message).toContain('Request intercepted');
+    expect(error.message).toContain(isFrozenWebKit ? 'Request intercepted' : 'Blocked by Web Inspector');
   else if (browserName === 'firefox')
     expect(error.message).toContain('NS_ERROR_FAILURE');
   else
@@ -516,7 +519,7 @@ it('should not fulfill with redirect status', async ({ page, server, browserName
 it('should support cors with GET', async ({ page, server, browserName }) => {
   await page.goto(server.EMPTY_PAGE);
   await page.route('**/cars*', async (route, request) => {
-    const headers = request.url().endsWith('allow') ? { 'access-control-allow-origin': '*' } : {};
+    const headers = { 'access-control-allow-origin': request.url().endsWith('allow') ? '*' : 'none' };
     await route.fulfill({
       contentType: 'application/json',
       headers,
@@ -544,6 +547,99 @@ it('should support cors with GET', async ({ page, server, browserName }) => {
       expect(error.message).toContain('TypeError');
     if (browserName === 'firefox')
       expect(error.message).toContain('NetworkError');
+  }
+});
+
+it('should add Access-Control-Allow-Origin by default when fulfill', async ({ page, server }) => {
+  await page.goto(server.EMPTY_PAGE);
+  await page.route('**/cars', async route => {
+    await route.fulfill({
+      contentType: 'application/json',
+      status: 200,
+      body: JSON.stringify(['electric', 'gas']),
+    });
+  });
+
+  const [result, response] = await Promise.all([
+    page.evaluate(async () => {
+      const response = await fetch('https://example.com/cars', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        mode: 'cors',
+        body: JSON.stringify({ 'number': 1 })
+      });
+      return response.json();
+    }),
+    page.waitForResponse('https://example.com/cars')
+  ]);
+  expect(result).toEqual(['electric', 'gas']);
+  expect(await response.headerValue('Access-Control-Allow-Origin')).toBe(server.PREFIX);
+});
+
+it('should allow null origin for about:blank', async ({ page, server, browserName }) => {
+  await page.route('**/something', async route => {
+    await route.fulfill({
+      contentType: 'text/plain',
+      status: 200,
+      body: 'done',
+    });
+  });
+
+  const [response, text] = await Promise.all([
+    page.waitForResponse(server.CROSS_PROCESS_PREFIX + '/something'),
+    page.evaluate(async url => {
+      const data = await fetch(url, {
+        method: 'GET',
+        headers: { 'X-PINGOTHER': 'pingpong' }
+      });
+      return data.text();
+    }, server.CROSS_PROCESS_PREFIX + '/something')
+  ]);
+  expect(text).toBe('done');
+  expect(await response.headerValue('Access-Control-Allow-Origin')).toBe('null');
+});
+
+it('should respect cors overrides', async ({ page, server, browserName, isAndroid }) => {
+  it.fail(isAndroid, 'no cors error in android emulator');
+  await page.goto(server.EMPTY_PAGE);
+  server.setRoute('/something', (request, response) => {
+    if (request.method === 'OPTIONS') {
+      response.writeHead(204, {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, GET, OPTIONS, DELETE',
+        'Access-Control-Allow-Headers': '*',
+        'Cache-Control': 'no-cache'
+      });
+      response.end();
+      return;
+    }
+    response.writeHead(404, { 'Access-Control-Allow-Origin': '*' });
+    response.end('NOT FOUND');
+  });
+  // Fetch request should fail when CORS header doesn't include the origin.
+  {
+    await page.route('**/something', async route => {
+      await route.fulfill({
+        contentType: 'text/plain',
+        status: 200,
+        headers: { 'Access-Control-Allow-Origin': 'http://non-existent' },
+        body: 'done',
+      });
+    });
+
+    const error = await page.evaluate(async url => {
+      const data = await fetch(url, {
+        method: 'GET',
+        headers: { 'X-PINGOTHER': 'pingpong' }
+      });
+      return data.text();
+    }, server.CROSS_PROCESS_PREFIX + '/something').catch(e => e);
+    if (browserName === 'chromium')
+      expect(error.message).toContain('Failed to fetch');
+    else if (browserName === 'webkit')
+      expect(error.message).toContain('Load failed');
+    else if (browserName === 'firefox')
+      expect(error.message).toContain('NetworkError when attempting to fetch resource.');
   }
 });
 
@@ -675,6 +771,20 @@ it('should support the times parameter with route matching', async ({ page, serv
   await page.goto(server.EMPTY_PAGE);
   await page.goto(server.EMPTY_PAGE);
   expect(intercepted).toHaveLength(1);
+});
+
+it('should support async handler w/ times', async ({ page, server }) => {
+  await page.route('**/empty.html', async route => {
+    await new Promise(f => setTimeout(f, 100));
+    route.fulfill({
+      body: '<html>intercepted</html>',
+      contentType: 'text/html'
+    });
+  }, { times: 1 });
+  await page.goto(server.EMPTY_PAGE);
+  await expect(page.locator('body')).toHaveText('intercepted');
+  await page.goto(server.EMPTY_PAGE);
+  await expect(page.locator('body')).not.toHaveText('intercepted');
 });
 
 it('should contain raw request header', async ({ page, server }) => {

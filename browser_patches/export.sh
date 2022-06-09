@@ -53,7 +53,7 @@ if [[ ("$1" == "firefox") || ("$1" == "firefox/") || ("$1" == "ff") ]]; then
   EXTRA_FOLDER_PW_PATH="$PWD/firefox/juggler"
   EXTRA_FOLDER_CHECKOUT_RELPATH="juggler"
   EXPORT_PATH="$PWD/firefox"
-  BUILD_NUMBER_UPSTREAM_URL="https://raw.githubusercontent.com/microsoft/playwright/master/browser_patches/firefox/BUILD_NUMBER"
+  BUILD_NUMBER_UPSTREAM_URL="https://raw.githubusercontent.com/microsoft/playwright/main/browser_patches/firefox/BUILD_NUMBER"
   source "./firefox/UPSTREAM_CONFIG.sh"
 elif [[ ("$1" == "firefox-beta") || ("$1" == "ff-beta") ]]; then
   if [[ -z "${FF_CHECKOUT_PATH}" ]]; then
@@ -68,7 +68,7 @@ elif [[ ("$1" == "firefox-beta") || ("$1" == "ff-beta") ]]; then
   EXTRA_FOLDER_PW_PATH="$PWD/firefox-beta/juggler"
   EXTRA_FOLDER_CHECKOUT_RELPATH="juggler"
   EXPORT_PATH="$PWD/firefox-beta"
-  BUILD_NUMBER_UPSTREAM_URL="https://raw.githubusercontent.com/microsoft/playwright/master/browser_patches/firefox-beta/BUILD_NUMBER"
+  BUILD_NUMBER_UPSTREAM_URL="https://raw.githubusercontent.com/microsoft/playwright/main/browser_patches/firefox-beta/BUILD_NUMBER"
   source "./firefox-beta/UPSTREAM_CONFIG.sh"
 elif [[ ("$1" == "webkit") || ("$1" == "webkit/") || ("$1" == "wk") ]]; then
   if [[ -z "${WK_CHECKOUT_PATH}" ]]; then
@@ -83,7 +83,7 @@ elif [[ ("$1" == "webkit") || ("$1" == "webkit/") || ("$1" == "wk") ]]; then
   EXTRA_FOLDER_PW_PATH="$PWD/webkit/embedder/Playwright"
   EXTRA_FOLDER_CHECKOUT_RELPATH="Tools/Playwright"
   EXPORT_PATH="$PWD/webkit"
-  BUILD_NUMBER_UPSTREAM_URL="https://raw.githubusercontent.com/microsoft/playwright/master/browser_patches/webkit/BUILD_NUMBER"
+  BUILD_NUMBER_UPSTREAM_URL="https://raw.githubusercontent.com/microsoft/playwright/main/browser_patches/webkit/BUILD_NUMBER"
   source "./webkit/UPSTREAM_CONFIG.sh"
 else
   echo ERROR: unknown browser to export - "$1"

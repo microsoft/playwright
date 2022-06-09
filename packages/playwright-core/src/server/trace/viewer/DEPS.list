@@ -1,0 +1,6 @@
+[*]
+../../
+../../registry/
+../../../generated/
+../../../utils/
+../../chromium/crApp.ts

@@ -17,10 +17,11 @@
  */
 
 const path = require('path');
-const {Registry} = require('../packages/playwright-core/lib/utils/registry');
+const { Registry } = require('../packages/playwright-core/lib/server');
 const fs = require('fs');
 const protocolGenerator = require('./protocol-types-generator');
 const {execSync} = require('child_process');
+const playwright = require('playwright-core');
 
 const SCRIPT_NAME = path.basename(__filename);
 const CORE_PATH = path.resolve(path.join(__dirname, '..', 'packages', 'playwright-core'));
@@ -54,35 +55,52 @@ Example:
   }
   const browsersJSON = require(path.join(CORE_PATH, 'browsers.json'));
   const browserName = args[0].toLowerCase();
-  const descriptor = browsersJSON.browsers.find(b => b.name === browserName);
-  if (!descriptor) {
+  const descriptors = [browsersJSON.browsers.find(b => b.name === browserName)];
+  if (browserName === 'chromium')
+    descriptors.push(browsersJSON.browsers.find(b => b.name === 'chromium-with-symbols'));
+
+  if (!descriptors.every(d => !!d)) {
     console.log(`Unknown browser "${browserName}"`);
     console.log(`Try running ${SCRIPT_NAME} --help`);
     process.exit(1);
   }
+
   const revision = args[1];
   console.log(`Rolling ${browserName} to ${revision}`);
 
-  // 2. Update browsers.json.
-  console.log('\nUpdating browsers.json...');
-  descriptor.revision = String(revision);
-  if (browserName === 'chromium')
-    browsersJSON.browsers.find(b => b.name === 'chromium-with-symbols').revision = String(revision);
+  // 2. Update browser revisions in browsers.json.
+  console.log('\nUpdating revision in browsers.json...');
+  for (const descriptor of descriptors)
+    descriptor.revision = String(revision);
   fs.writeFileSync(path.join(CORE_PATH, 'browsers.json'), JSON.stringify(browsersJSON, null, 2) + '\n');
 
-  if (descriptor.installByDefault) {
-    // 3. Download new browser.
-    console.log('\nDownloading new browser...');
-    const registry = new Registry(browsersJSON);
-    const executables = registry.defaultExecutables();
-    await registry.install(executables);
+  // 3. Download new browser.
+  console.log('\nDownloading new browser...');
+  const registry = new Registry(browsersJSON);
+  const executable = registry.findExecutable(browserName);
+  await registry.install([...registry.defaultExecutables(), executable]);
 
-    // 4. Generate types.
+  // 4. Update browser version if rolling WebKit / Firefox / Chromium.
+  const browserType = playwright[browserName.split('-')[0]];
+  if (browserType) {
+    const browser = await browserType.launch({
+      executablePath: executable.executablePath('javascript'),
+    });
+    const browserVersion = await browser.version();
+    await browser.close();
+    console.log('\nUpdating browser version in browsers.json...');
+    for (const descriptor of descriptors)
+      descriptor.browserVersion = browserVersion;
+    fs.writeFileSync(path.join(CORE_PATH, 'browsers.json'), JSON.stringify(browsersJSON, null, 2) + '\n');
+  }
+
+  if (browserType && descriptors[0].installByDefault) {
+    // 5. Generate types.
     console.log('\nGenerating protocol types...');
     const executablePath = registry.findExecutable(browserName).executablePathOrDie();
     await protocolGenerator.generateProtocol(browserName, executablePath).catch(console.warn);
 
-    // 5. Update docs.
+    // 6. Update docs.
     console.log('\nUpdating documentation...');
     try {
       process.stdout.write(execSync('npm run --silent doc'));

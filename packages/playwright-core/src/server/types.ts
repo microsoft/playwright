@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
-import { Size, Point, TimeoutOptions } from '../common/types';
-export { Size, Point, Rect, Quad, URLMatch, TimeoutOptions } from '../common/types';
+import type { Size, Point, TimeoutOptions } from '../common/types';
+export type { Size, Point, Rect, Quad, URLMatch, TimeoutOptions } from '../common/types';
 
 export type StrictOptions = {
   strict?: boolean,
@@ -227,6 +227,14 @@ export type SetNetworkCookieParam = {
 
 export type EmulatedSize = { viewport: Size, screen: Size };
 
+export type HarOptions = {
+  omitContent?: boolean,
+  path: string,
+  urlGlob?: string,
+  urlRegexSource?: string,
+  urlRegexFlags?: string,
+};
+
 export type BrowserContextOptions = {
   viewport?: Size,
   screen?: Size,
@@ -253,13 +261,12 @@ export type BrowserContextOptions = {
     dir: string,
     size?: Size,
   },
-  recordHar?: {
-    omitContent?: boolean,
-    path: string
-  },
+  recordHar?: HarOptions,
+  storageState?: SetStorageState,
   strictSelectors?: boolean,
   proxy?: ProxySettings,
   baseURL?: string,
+  serviceWorkers?: 'allow' | 'block',
 };
 
 export type EnvArray = { name: string, value: string }[];
@@ -368,5 +375,7 @@ export type APIResponse = {
 };
 
 export type AndroidDeviceOptions = {
-  port?: number
+  host?: string,
+  port?: number,
+  omitDriverInstall?: boolean,
 };

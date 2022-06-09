@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-import { Console } from 'console';
 import * as util from 'util';
-import { RunPayload, TeardownErrorsPayload, TestOutputPayload, WorkerInitParams } from './ipc';
+import type { RunPayload, TeardownErrorsPayload, TestOutputPayload, WorkerInitParams } from './ipc';
 import { startProfiling, stopProfiling } from './profiler';
 import { serializeError } from './util';
 import { WorkerRunner } from './workerRunner';
@@ -24,12 +23,6 @@ import { WorkerRunner } from './workerRunner';
 let closed = false;
 
 sendMessageToParent('ready');
-
-global.console = new Console({
-  stdout: process.stdout,
-  stderr: process.stderr,
-  colorMode: process.env.FORCE_COLOR === '1',
-});
 
 process.stdout.write = (chunk: string | Buffer) => {
   const outPayload: TestOutputPayload = {
@@ -103,8 +96,11 @@ async function gracefullyCloseAndExit() {
     if (workerIndex !== undefined)
       await stopProfiling(workerIndex);
   } catch (e) {
-    const payload: TeardownErrorsPayload = { fatalErrors: [serializeError(e)] };
-    process.send!({ method: 'teardownErrors', params: payload });
+    try {
+      const payload: TeardownErrorsPayload = { fatalErrors: [serializeError(e)] };
+      process.send!({ method: 'teardownErrors', params: payload });
+    } catch {
+    }
   }
   process.exit(0);
 }

@@ -48,6 +48,29 @@ test('it should enforce unique test names based on the describe block name', asy
   expect(result.output).toContain(`  - tests${path.sep}example.spec.js:8`);
 });
 
+test('it should not allow multiple tests with the same name in multiple files', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'tests/example1.spec.js': `
+      const { test } = pwt;
+      test('i-am-a-duplicate', async () => {});
+      test('i-am-a-duplicate', async () => {});
+    `,
+    'tests/example2.spec.js': `
+      const { test } = pwt;
+      test('i-am-a-duplicate', async () => {});
+      test('i-am-a-duplicate', async () => {});
+    `,
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain('duplicate test titles are not allowed');
+  expect(result.output).toContain(`- title: i-am-a-duplicate`);
+  expect(result.output).toContain(`  - tests${path.sep}example1.spec.js:6`);
+  expect(result.output).toContain(`  - tests${path.sep}example1.spec.js:7`);
+  expect(result.output).toContain(`- title: i-am-a-duplicate`);
+  expect(result.output).toContain(`  - tests${path.sep}example2.spec.js:6`);
+  expect(result.output).toContain(`  - tests${path.sep}example2.spec.js:7`);
+});
+
 test('it should not allow a focused test when forbid-only is used', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'tests/focused-test.spec.js': `
@@ -60,20 +83,21 @@ test('it should not allow a focused test when forbid-only is used', async ({ run
   expect(result.output).toContain(`- tests${path.sep}focused-test.spec.js:6 > i-am-focused`);
 });
 
-test('it should not hang and report results when worker process suddenly exits', async ({ runInlineTest }) => {
+test('should continue with other tests after worker process suddenly exits', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.js': `
       const { test } = pwt;
       test('passed1', () => {});
       test('passed2', () => {});
       test('failed1', () => { process.exit(0); });
-      test('skipped', () => {});
+      test('passed3', () => {});
+      test('passed4', () => {});
     `
   });
   expect(result.exitCode).toBe(1);
-  expect(result.passed).toBe(2);
+  expect(result.passed).toBe(4);
   expect(result.failed).toBe(1);
-  expect(result.skipped).toBe(1);
+  expect(result.skipped).toBe(0);
   expect(result.output).toContain('Worker process exited unexpectedly');
 });
 
@@ -110,6 +134,14 @@ test('sigint should stop workers', async ({ runInlineTest }) => {
   expect(result.output).toContain('%%SEND-SIGINT%%2');
   expect(result.output).not.toContain('%%skipped1');
   expect(result.output).not.toContain('%%skipped2');
+
+  const interrupted2 = result.report.suites[1].specs[0];
+  expect(interrupted2.title).toBe('interrupted2');
+  expect(interrupted2.tests[0].results[0].workerIndex === 0 || interrupted2.tests[0].results[0].workerIndex === 1).toBe(true);
+
+  const skipped2 = result.report.suites[1].specs[1];
+  expect(skipped2.title).toBe('skipped2');
+  expect(skipped2.tests[0].results[0].workerIndex).toBe(-1);
 });
 
 test('should use the first occurring error when an unhandled exception was thrown', async ({ runInlineTest }) => {
@@ -240,3 +272,37 @@ test('should teardown workers that are redundant', async ({ runInlineTest }) => 
     '%%worker teardown',
   ]);
 });
+
+test('should not hang if test suites in worker are inconsistent with runner', async ({ runInlineTest }) => {
+  const oldValue = process.env.TEST_WORKER_INDEX;
+  delete process.env.TEST_WORKER_INDEX;
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { name: 'project-name' };
+    `,
+    'names.js': `
+    exports.getNames = () => {
+      const inWorker = process.env.TEST_WORKER_INDEX !== undefined;
+      if (inWorker)
+        return ['foo'];
+      return ['foo', 'bar', 'baz'];
+    };
+    `,
+    'a.spec.js': `
+      const { test } = pwt;
+      const { getNames } = require('./names');
+      const names = getNames();
+      for (const index in names) {
+        test('Test ' + index + ' - ' + names[index], async () => {
+        });
+      }
+    `,
+  }, { 'workers': 1 });
+  process.env.TEST_WORKER_INDEX = oldValue;
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.skipped).toBe(1);
+  expect(result.report.suites[0].specs[1].tests[0].results[0].error.message).toBe('Unknown test(s) in worker:\nproject-name > a.spec.js > Test 1 - bar\nproject-name > a.spec.js > Test 2 - baz');
+});
+

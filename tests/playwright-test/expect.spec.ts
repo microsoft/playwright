@@ -67,20 +67,6 @@ test('should not expand huge arrays', async ({ runInlineTest }) => {
   expect(result.output.length).toBeLessThan(100000);
 });
 
-test('should fail when passed `null` instead of message', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    'expect-test.spec.ts': `
-      const { test } = pwt;
-      test('custom expect message', () => {
-        test.expect(1+1, null).toEqual(3);
-      });
-    `
-  });
-  expect(result.exitCode).toBe(1);
-  expect(result.passed).toBe(0);
-  expect(stripAnsi(result.output)).toContain(`optional error message must be a string.`);
-});
-
 test('should include custom error message', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'expect-test.spec.ts': `
@@ -105,7 +91,7 @@ test('should include custom error message with web-first assertions', async ({ r
     'expect-test.spec.ts': `
       const { test } = pwt;
       test('custom expect message', async ({page}) => {
-        await expect(page.locator('x-foo'), 'x-foo must be visible').toBeVisible({timeout: 1});
+        await expect(page.locator('x-foo'), { message: 'x-foo must be visible' }).toBeVisible({timeout: 1});
       });
     `
   });
@@ -118,17 +104,31 @@ test('should include custom error message with web-first assertions', async ({ r
   ].join('\n'));
 });
 
-test('should work with default expect prototype functions', async ({ runTSC }) => {
-  const result = await runTSC({
-    'a.spec.ts': `
-      const { test } = pwt;
+test('should work with default expect prototype functions', async ({ runTSC, runInlineTest }) => {
+  const spec = `
+    const { test } = pwt;
+    test('pass', async () => {
       const expected = [1, 2, 3, 4, 5, 6];
       test.expect([4, 1, 6, 7, 3, 5, 2, 5, 4, 6]).toEqual(
         expect.arrayContaining(expected),
       );
-    `
-  });
-  expect(result.exitCode).toBe(0);
+      expect('foo').toEqual(expect.any(String));
+      expect('foo').toEqual(expect.anything());
+    });
+  `;
+  {
+    const result = await runTSC({
+      'a.spec.ts': spec,
+    });
+    expect(result.exitCode).toBe(0);
+  }
+  {
+    const result = await runInlineTest({
+      'a.spec.ts': spec,
+    });
+    expect(result.exitCode).toBe(0);
+    expect(result.passed).toBe(1);
+  }
 });
 
 test('should work with default expect matchers', async ({ runTSC }) => {
@@ -179,11 +179,12 @@ test('should work with default expect matchers and esModuleInterop=false', async
 test('should work with custom PlaywrightTest namespace', async ({ runTSC }) => {
   const result = await runTSC({
     'global.d.ts': `
-      // Extracted example from their typings.
-      // Reference: https://github.com/jest-community/jest-extended/blob/master/types/index.d.ts
       declare namespace PlaywrightTest {
         interface Matchers<R> {
           toBeEmpty(): R;
+        }
+        interface Matchers<R, T> {
+          toBeNonEmpty(): R;
         }
       }
     `,
@@ -199,6 +200,7 @@ test('should work with custom PlaywrightTest namespace', async ({ runTSC }) => {
       test.expect(['hello']).not.toBeEmpty();
       test.expect({}).toBeEmpty();
       test.expect({ hello: 'world' }).not.toBeEmpty();
+      test.expect('').toBeNonEmpty();
     `
   });
   expect(result.exitCode).toBe(0);
@@ -210,9 +212,12 @@ test('should propose only the relevant matchers when custom expect matcher class
     const { test } = pwt;
     test('custom matchers', async ({ page }) => {
       await test.expect(page).toHaveURL('https://example.com');
+      await test.expect(page).not.toHaveURL('https://example.com');
       await test.expect(page).toBe(true);
       // @ts-expect-error
       await test.expect(page).toBeEnabled();
+      // @ts-expect-error
+      await test.expect(page).not.toBeEnabled();
 
       await test.expect(page.locator('foo')).toBeEnabled();
       await test.expect(page.locator('foo')).toBe(true);
@@ -232,4 +237,140 @@ test('should propose only the relevant matchers when custom expect matcher class
     `
   });
   expect(result.exitCode).toBe(0);
+});
+
+test('should return void/Promise when appropriate', async ({ runTSC }) => {
+  const result = await runTSC({
+    'a.spec.ts': `
+      type AssertType<T, S> = S extends T ? AssertNotAny<S> : false;
+      type AssertNotAny<S> = {notRealProperty: number} extends S ? false : true;
+
+      pwt.test('example', async ({ page }) => {
+        {
+          const value = expect(1).toBe(2);
+          const assertion: AssertType<void, typeof value> = true;
+        }
+
+        {
+          const value = expect(1).not.toBe(2);
+          const assertion: AssertType<void, typeof value> = true;
+        }
+
+        {
+          const value = expect(page).toHaveURL('');
+          const assertion: AssertType<Promise<void>, typeof value> = true;
+        }
+
+        {
+          const value = expect(Promise.resolve(1)).resolves.toBe(1);
+          const assertion: AssertType<Promise<void>, typeof value> = true;
+        }
+
+        {
+          const value = expect.soft(1).toBe(2);
+          const assertion: AssertType<void, typeof value> = true;
+        }
+
+        {
+          const value = expect.poll(() => true).toBe(2);
+          const assertion: AssertType<Promise<void>, typeof value> = true;
+        }
+      });
+    `
+  });
+  expect(result.exitCode).toBe(0);
+});
+
+test.describe('helpful expect errors', () => {
+  test('top-level', async ({ runInlineTest }) => {
+    const result = await runInlineTest({
+      'a.spec.ts': `
+        const { test } = pwt;
+        test('explodes', () => {
+          expect(1).nope();
+        });
+      `
+    });
+
+    expect(result.output).toContain(`expect: Property 'nope' not found.`);
+  });
+
+  test('soft', async ({ runInlineTest }) => {
+    const result = await runInlineTest({
+      'a.spec.ts': `
+        const { test } = pwt;
+        test('explodes', () => {
+          expect.soft(1).nope();
+        });
+      `
+    });
+
+    expect(result.output).toContain(`expect: Property 'nope' not found.`);
+  });
+
+  test('poll', async ({ runInlineTest }) => {
+    const result = await runInlineTest({
+      'a.spec.ts': `
+        const { test } = pwt;
+        test('explodes', () => {
+          expect.poll(() => {}).nope();
+        });
+      `
+    });
+
+    expect(result.output).toContain(`expect: Property 'nope' not found.`);
+  });
+
+  test('not', async ({ runInlineTest }) => {
+    const result = await runInlineTest({
+      'a.spec.ts': `
+        const { test } = pwt;
+        test('explodes', () => {
+          expect(1).not.nope();
+        });
+      `
+    });
+
+    expect(result.output).toContain(`expect: Property 'nope' not found.`);
+  });
+
+  test('bare', async ({ runInlineTest }) => {
+    const result = await runInlineTest({
+      'a.spec.ts': `
+        const { test } = pwt;
+        test('explodes', () => {
+          expect('');
+        });
+      `
+    });
+
+    expect(result.exitCode).toBe(0);
+    expect(result.passed).toBe(1);
+  });
+});
+
+test('should reasonably work in global setup', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      export default { globalSetup: './global-setup' };
+    `,
+    'global-setup.ts': `
+      const { expect } = pwt;
+      export default async () => {
+        expect(1).toBe(1);
+        await expect.poll(async () => {
+          await new Promise(f => setTimeout(f, 50));
+          return 42;
+        }).toBe(42);
+        expect(1).toBe(2);
+      };
+    `,
+    'a.spec.ts': `
+      const { test } = pwt;
+      test('skipped', () => {});
+    `,
+  });
+
+  expect(result.exitCode).toBe(1);
+  expect(stripAnsi(result.output)).toContain('> 11 |         expect(1).toBe(2);');
 });

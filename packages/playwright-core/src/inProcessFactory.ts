@@ -14,10 +14,8 @@
  * limitations under the License.
  */
 
-import { DispatcherConnection, Root } from './dispatchers/dispatcher';
-import { createPlaywright } from './server/playwright';
 import type { Playwright as PlaywrightAPI } from './client/playwright';
-import { PlaywrightDispatcher } from './dispatchers/playwrightDispatcher';
+import { createPlaywright, DispatcherConnection, Root, PlaywrightDispatcher } from './server';
 import { Connection } from './client/connection';
 import { BrowserServerLauncherImpl } from './browserServerImpl';
 
@@ -44,6 +42,7 @@ export function createInProcessPlaywright(): PlaywrightAPI {
   dispatcherConnection.onmessage = message => setImmediate(() => clientConnection.dispatch(message));
   clientConnection.onmessage = message => setImmediate(() => dispatcherConnection.dispatch(message));
 
-  (playwrightAPI as any)._toImpl = (x: any) => dispatcherConnection._dispatchers.get(x._guid)!._object;
+  clientConnection.toImpl = (x: any) => dispatcherConnection._dispatchers.get(x._guid)!._object;
+  (playwrightAPI as any)._toImpl = clientConnection.toImpl;
   return playwrightAPI;
 }

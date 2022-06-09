@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import type { TestCaseSummary } from '@playwright/test/src/reporters/html';
+import type { TestCaseSummary } from '@playwright-test/reporters/html';
 
 export class Filter {
   project: string[] = [];

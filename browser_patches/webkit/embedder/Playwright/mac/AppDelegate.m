@@ -179,6 +179,9 @@ const NSActivityOptions ActivityOptions =
     if (!dataStore) {
         _WKWebsiteDataStoreConfiguration *configuration = [[[_WKWebsiteDataStoreConfiguration alloc] init] autorelease];
         if (_userDataDir) {
+            // Local storage state should be stored in separate dirs for persistent contexts.
+            [configuration setShouldUseCustomStoragePaths:YES];
+
             NSURL *cookieFile = [NSURL fileURLWithPath:[NSString stringWithFormat:@"%@/cookie.db", _userDataDir]];
             [configuration _setCookieStorageFile:cookieFile];
 

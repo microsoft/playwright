@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-import * as dom from './dom';
-import * as frames from './frames';
-import * as js from './javascript';
-import * as types from './types';
-import { allEngineNames, InvalidSelectorError, ParsedSelector, parseSelector, stringifySelector } from './common/selectorParser';
-import { createGuid } from '../utils/utils';
+import type * as dom from './dom';
+import type * as frames from './frames';
+import type * as js from './javascript';
+import type * as types from './types';
+import type { ParsedSelector } from './isomorphic/selectorParser';
+import { allEngineNames, InvalidSelectorError, parseSelector, stringifySelector } from './isomorphic/selectorParser';
+import { createGuid } from '../utils';
 
 export type SelectorInfo = {
   parsed: ParsedSelector,
@@ -45,6 +46,7 @@ export class Selectors {
       'data-test-id', 'data-test-id:light',
       'data-test', 'data-test:light',
       'nth', 'visible', 'control', 'has',
+      'role',
     ]);
     this._builtinEnginesInMainWorld = new Set([
       '_react', '_vue',
@@ -92,7 +94,7 @@ export class Selectors {
   }
 
   async _queryCount(frame: frames.Frame, info: SelectorInfo, scope?: dom.ElementHandle): Promise<number> {
-    const context = await frame._utilityContext();
+    const context = await frame._context(info.world);
     const injectedScript = await context.injectedScript();
     return await injectedScript.evaluate((injected, { parsed, scope }) => {
       return injected.querySelectorAll(parsed, scope || document).length;

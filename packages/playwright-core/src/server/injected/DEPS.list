@@ -1,0 +1,4 @@
+# Files in this folder are used in browser environment, they can only depend on isomorphic files.
+[*]
+../isomorphic/
+../../utils/isomorphic

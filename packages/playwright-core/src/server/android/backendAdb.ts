@@ -14,28 +14,36 @@
  * limitations under the License.
  */
 
-import assert from 'assert';
-import debug from 'debug';
-import * as types from '../types';
+import { debug } from '../../utilsBundle';
+import type * as types from '../types';
 import * as net from 'net';
 import { EventEmitter } from 'events';
-import { Backend, DeviceBackend, SocketBackend } from './android';
-import { createGuid } from '../../utils/utils';
+import type { Backend, DeviceBackend, SocketBackend } from './android';
+import { assert, createGuid } from '../../utils';
 
 export class AdbBackend implements Backend {
   async devices(options: types.AndroidDeviceOptions = {}): Promise<DeviceBackend[]> {
-    const port  = options.port ? options.port : 5037;
-    const result = await runCommand('host:devices', port);
+    const result = await runCommand('host:devices', options.host, options.port);
     const lines = result.toString().trim().split('\n');
     return lines.map(line => {
       const [serial, status] = line.trim().split('\t');
-      return new AdbDevice(serial, status, port);
+      return new AdbDevice(serial, status, options.host, options.port);
     });
   }
 }
 
 class AdbDevice implements DeviceBackend {
-  constructor(readonly serial: string, readonly status: string, readonly port: number) { }
+  serial: string;
+  status: string;
+  host: string | undefined;
+  port: number | undefined;
+
+  constructor(serial: string, status: string, host?: string, port?: number) {
+    this.serial = serial;
+    this.status = status;
+    this.host = host;
+    this.port = port;
+  }
 
   async init() {
   }
@@ -44,19 +52,19 @@ class AdbDevice implements DeviceBackend {
   }
 
   runCommand(command: string): Promise<Buffer> {
-    return runCommand(command, this.port, this.serial);
+    return runCommand(command, this.host, this.port, this.serial);
   }
 
   async open(command: string): Promise<SocketBackend> {
-    const result = await open(command, this.port, this.serial);
+    const result = await open(command, this.host, this.port, this.serial);
     result.becomeSocket();
     return result;
   }
 }
 
-async function runCommand(command: string, port: number = 5037, serial?: string): Promise<Buffer> {
+async function runCommand(command: string, host: string = '127.0.0.1', port: number = 5037, serial?: string): Promise<Buffer> {
   debug('pw:adb:runCommand')(command, serial);
-  const socket = new BufferedSocketWrapper(command, net.createConnection({ port }));
+  const socket = new BufferedSocketWrapper(command, net.createConnection({ host, port }));
   if (serial) {
     await socket.write(encodeMessage(`host:transport:${serial}`));
     const status = await socket.read(4);
@@ -76,8 +84,8 @@ async function runCommand(command: string, port: number = 5037, serial?: string)
   return commandOutput;
 }
 
-async function open(command: string, port: number = 5037, serial?: string): Promise<BufferedSocketWrapper> {
-  const socket = new BufferedSocketWrapper(command, net.createConnection({ port }));
+async function open(command: string, host: string = '127.0.0.1', port: number = 5037, serial?: string): Promise<BufferedSocketWrapper> {
+  const socket = new BufferedSocketWrapper(command, net.createConnection({ host, port }));
   if (serial) {
     await socket.write(encodeMessage(`host:transport:${serial}`));
     const status = await socket.read(4);

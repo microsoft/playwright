@@ -9,7 +9,11 @@
         "strictBindCallApply": true,
         "allowSyntheticDefaultImports": true,
         "useUnknownInCatchVariables": false,
+        "baseUrl": ".",
+        "paths": {
+            "@playwright-core/*": ["../packages/playwright-core/src/*"],
+        },
     },
     "include": ["**/*.spec.js", "**/*.ts", "index.d.ts"],
-    "exclude": ["playwright-test/"]
+    "exclude": ["playwright-test/", "components/"]
 }

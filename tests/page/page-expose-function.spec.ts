@@ -261,3 +261,42 @@ it('should work with setContent', async ({ page, server }) => {
   await page.setContent('<script>window.result = compute(3, 2)</script>');
   expect(await page.evaluate('window.result')).toBe(6);
 });
+
+it('should re-add binding after reset', async ({ page }) => {
+  await page.exposeFunction('add', function(a, b) {
+    return Promise.resolve(a - b);
+  });
+  expect(await page.evaluate('add(7, 6)')).toBe(1);
+
+  await (page as any)._removeExposedBindings();
+  await page.exposeFunction('add', function(a, b) {
+    return Promise.resolve(a + b);
+  });
+  expect(await page.evaluate('add(5, 6)')).toBe(11);
+  await page.reload();
+  expect(await page.evaluate('add(5, 6)')).toBe(11);
+});
+
+it('should retain internal binding after reset', async ({ page }) => {
+  await page.exposeFunction('__pw_add', function(a, b) {
+    return Promise.resolve(a + b);
+  });
+  await (page as any)._removeExposedBindings();
+  expect(await page.evaluate('__pw_add(5, 6)')).toBe(11);
+});
+
+it('should alias Window, Document and Node', async ({ page }) => {
+  let object: any;
+  await page.exposeBinding('log', (source, obj) => object = obj);
+  await page.evaluate('window.log([window, document, document.body])');
+  expect(object).toEqual(['ref: <Window>', 'ref: <Document>', 'ref: <Node>']);
+});
+
+it('should serialize cycles', async ({ page }) => {
+  let object: any;
+  await page.exposeBinding('log', (source, obj) => object = obj);
+  await page.evaluate('const a = {}; a.b = a; window.log(a)');
+  const a: any = {};
+  a.b = a;
+  expect(object).toEqual(a);
+});

@@ -103,29 +103,28 @@ class SearchPage:
 using System.Threading.Tasks;
 using Microsoft.Playwright;
 
-namespace BigEcommerceApp.Tests.Models
+namespace BigEcommerceApp.Tests.Models;
+
+public class SearchPage
 {
-  public class SearchPage
+  private readonly IPage _page;
+  private readonly ILocator _searchTermInput;
+
+  public SearchPage(IPage page)
   {
-    private readonly IPage _page;
-    private readonly ILocator _searchTermInput;
+    _page = page;
+    _searchTermInput = page.Locator("[aria-label='Enter your search term']");
+  }
 
-    public SearchPage(IPage page)
-    {
-      _page = page;
-      _searchTermInput = page.Locator("[aria-label='Enter your search term']");
-    }
+  public async Task Goto()
+  {
+    await _page.GotoAsync("https://bing.com");
+  }
 
-    public async Task Goto()
-    {
-      await _page.GotoAsync("https://bing.com");
-    }
-
-    public async Task Search(string text)
-    {
-      await _searchTermInput.FillAsync(text);
-      await _searchTermInput.PressAsync("Enter");
-    }
+  public async Task Search(string text)
+  {
+    await _searchTermInput.FillAsync(text);
+    await _searchTermInput.PressAsync("Enter");
   }
 }
 ```

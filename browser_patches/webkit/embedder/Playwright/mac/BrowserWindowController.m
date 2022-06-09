@@ -63,6 +63,18 @@ static void* keyValueObservingContext = &keyValueObservingContext;
 
 @end
 
+@implementation CustomWindow
+
+- (NSRect)constrainFrameRect:(NSRect)frameRect toScreen:(NSScreen *)screen
+{
+    // Retain the frame size, but make sure that
+    // the top of the window is always visible.
+    CGFloat yPos = NSHeight(self.screen.frame) - 100 - NSHeight(self.frame);
+    return NSMakeRect(frameRect.origin.x, yPos, frameRect.size.width, frameRect.size.height);
+}
+
+@end
+
 @interface BrowserWindowController () <NSTextFinderBarContainer, WKNavigationDelegate, WKUIDelegate, _WKIconLoadingDelegate, NSSharingServicePickerDelegate, NSSharingServiceDelegate>
 @end
 

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { FullConfig, Suite, TestCase, TestError, TestResult, Reporter, FullResult, TestStep } from '../../types/testReporter';
+import type { FullConfig, Suite, TestCase, TestError, TestResult, Reporter, FullResult, TestStep } from '../../types/testReporter';
 
 export class Multiplexer implements Reporter {
   private _reporters: Reporter[];

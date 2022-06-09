@@ -126,7 +126,7 @@ it('should wait for aria enabled button', async ({ page }) => {
 });
 
 it('should wait for button with an aria-disabled parent', async ({ page }) => {
-  await page.setContent('<div aria-disabled=true><button><span>Target</span></button></div>');
+  await page.setContent('<div role="group" aria-disabled=true><button><span>Target</span></button></div>');
   const span = await page.$('text=Target');
   let done = false;
   const promise = span.waitForElementState('enabled').then(() => done = true);

@@ -20,6 +20,7 @@ import { attachFrame } from '../config/utils';
 
 import path from 'path';
 import fs from 'fs';
+import os from 'os';
 import formidable from 'formidable';
 
 it('should upload the file', async ({ page, server, asset }) => {
@@ -34,6 +35,104 @@ it('should upload the file', async ({ page, server, asset }) => {
     reader.readAsText(e.files[0]);
     return promise.then(() => reader.result);
   }, input)).toBe('contents of the file');
+});
+
+it('should upload large file', async ({ page, server, browserName, isMac, isAndroid }, testInfo) => {
+  it.skip(browserName === 'webkit' && isMac && parseInt(os.release(), 10) < 20, 'WebKit for macOS 10.15 is frozen and does not have corresponding protocol features.');
+  it.skip(isAndroid);
+  it.slow();
+  await page.goto(server.PREFIX + '/input/fileupload.html');
+  const uploadFile = testInfo.outputPath('200MB.zip');
+  const str = 'A'.repeat(4 * 1024);
+  const stream = fs.createWriteStream(uploadFile);
+  for (let i = 0; i < 50 * 1024; i++) {
+    await new Promise<void>((fulfill, reject) => {
+      stream.write(str, err => {
+        if (err)
+          reject(err);
+        else
+          fulfill();
+      });
+    });
+  }
+  await new Promise(f => stream.end(f));
+  const input = page.locator('input[type="file"]');
+  const events = await input.evaluateHandle(e => {
+    const events = [];
+    e.addEventListener('input', () => events.push('input'));
+    e.addEventListener('change', () => events.push('change'));
+    return events;
+  });
+  await input.setInputFiles(uploadFile);
+  expect(await input.evaluate(e => (e as HTMLInputElement).files[0].name)).toBe('200MB.zip');
+  expect(await events.evaluate(e => e)).toEqual(['input', 'change']);
+  const serverFilePromise = new Promise<formidable.File>(fulfill => {
+    server.setRoute('/upload', async (req, res) => {
+      const form = new formidable.IncomingForm({ uploadDir: testInfo.outputPath() });
+      form.parse(req, function(err, fields, f) {
+        res.end();
+        const files = f as Record<string, formidable.File>;
+        fulfill(files.file1);
+      });
+    });
+  });
+  const [file1] = await Promise.all([
+    serverFilePromise,
+    page.click('input[type=submit]')
+  ]);
+  expect(file1.originalFilename).toBe('200MB.zip');
+  expect(file1.size).toBe(200 * 1024 * 1024);
+  await Promise.all([uploadFile, file1.filepath].map(fs.promises.unlink));
+});
+
+it('should upload large file with relative path', async ({ page, server, browserName, isMac, isAndroid }, testInfo) => {
+  it.skip(browserName === 'webkit' && isMac && parseInt(os.release(), 10) < 20, 'WebKit for macOS 10.15 is frozen and does not have corresponding protocol features.');
+  it.skip(isAndroid);
+  it.slow();
+  await page.goto(server.PREFIX + '/input/fileupload.html');
+  const uploadFile = testInfo.outputPath('200MB.zip');
+  const str = 'A'.repeat(4 * 1024);
+  const stream = fs.createWriteStream(uploadFile);
+  for (let i = 0; i < 50 * 1024; i++) {
+    await new Promise<void>((fulfill, reject) => {
+      stream.write(str, err => {
+        if (err)
+          reject(err);
+        else
+          fulfill();
+      });
+    });
+  }
+  await new Promise(f => stream.end(f));
+  const input = page.locator('input[type="file"]');
+  const events = await input.evaluateHandle(e => {
+    const events = [];
+    e.addEventListener('input', () => events.push('input'));
+    e.addEventListener('change', () => events.push('change'));
+    return events;
+  });
+  const relativeUploadPath = path.relative(process.cwd(), uploadFile);
+  expect(path.isAbsolute(relativeUploadPath)).toBeFalsy();
+  await input.setInputFiles(relativeUploadPath);
+  expect(await input.evaluate(e => (e as HTMLInputElement).files[0].name)).toBe('200MB.zip');
+  expect(await events.evaluate(e => e)).toEqual(['input', 'change']);
+  const serverFilePromise = new Promise<formidable.File>(fulfill => {
+    server.setRoute('/upload', async (req, res) => {
+      const form = new formidable.IncomingForm({ uploadDir: testInfo.outputPath() });
+      form.parse(req, function(err, fields, f) {
+        res.end();
+        const files = f as Record<string, formidable.File>;
+        fulfill(files.file1);
+      });
+    });
+  });
+  const [file1] = await Promise.all([
+    serverFilePromise,
+    page.click('input[type=submit]')
+  ]);
+  expect(file1.originalFilename).toBe('200MB.zip');
+  expect(file1.size).toBe(200 * 1024 * 1024);
+  await Promise.all([uploadFile, file1.filepath].map(fs.promises.unlink));
 });
 
 it('should work @smoke', async ({ page, asset }) => {
@@ -418,3 +517,18 @@ it('should emit event after navigation', async ({ page, server, browserName, bro
   ]);
   expect(logs).toEqual(['filechooser', 'filechooser']);
 });
+
+it('should trigger listener added before navigation', async ({ page, server , browserMajorVersion, isElectron }) => {
+  it.skip(isElectron && browserMajorVersion <= 17);
+  // Add listener before cross process navigation.
+  const chooserPromise = new Promise(f => page.once('filechooser', f));
+  await page.goto(server.PREFIX + '/empty.html');
+  await page.goto(server.CROSS_PROCESS_PREFIX + '/empty.html');
+  await page.setContent(`<input type=file>`);
+  const [chooser] = await Promise.all([
+    chooserPromise,
+    page.click('input'),
+  ]);
+  expect(chooser).toBeTruthy();
+});
+

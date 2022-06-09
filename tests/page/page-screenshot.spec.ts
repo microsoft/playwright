@@ -17,6 +17,7 @@
 
 import { test as it, expect } from './pageTest';
 import { verifyViewport, attachFrame } from '../config/utils';
+import type { Route } from 'playwright-core';
 import path from 'path';
 import fs from 'fs';
 import os from 'os';
@@ -32,7 +33,7 @@ it.describe('page screenshot', () => {
     expect(screenshot).toMatchSnapshot('screenshot-sanity.png');
   });
 
-  it('should not capture blinking caret', async ({ page, server }) => {
+  it('should not capture blinking caret by default', async ({ page, server }) => {
     await page.setContent(`
       <!-- Refer to stylesheet from other origin. Accessing this
            stylesheet rules will throw.
@@ -57,6 +58,35 @@ it.describe('page screenshot', () => {
       const newScreenshot = await div.screenshot();
       expect(newScreenshot.equals(screenshot)).toBe(true);
     }
+  });
+
+  it('should capture blinking caret if explicitly asked for', async ({ page, server }) => {
+    await page.setContent(`
+      <!-- Refer to stylesheet from other origin. Accessing this
+           stylesheet rules will throw.
+      -->
+      <link rel=stylesheet href="${server.CROSS_PROCESS_PREFIX + '/injectedstyle.css'}">
+      <!-- make life harder: define caret color in stylesheet -->
+      <style>
+        div {
+          caret-color: #000 !important;
+        }
+      </style>
+      <div contenteditable="true"></div>
+    `);
+    const div = page.locator('div');
+    await div.type('foo bar');
+    const screenshot = await div.screenshot();
+    let hasDifferentScreenshots = false;
+    for (let i = 0; !hasDifferentScreenshots && i < 10; ++i) {
+      // Caret blinking time is set to 500ms.
+      // Try to capture variety of screenshots to make
+      // sure we capture blinking caret.
+      await new Promise(x => setTimeout(x, 150));
+      const newScreenshot = await div.screenshot({ caret: 'initial' });
+      hasDifferentScreenshots = !newScreenshot.equals(screenshot);
+    }
+    expect(hasDifferentScreenshots).toBe(true);
   });
 
   it('should clip rect', async ({ page, server }) => {
@@ -172,7 +202,7 @@ it.describe('page screenshot', () => {
   it('should render white background on jpeg file', async ({ page, server, isElectron }) => {
     it.fixme(isElectron, 'omitBackground with jpeg does not work');
 
-    await page.setViewportSize({ width: 100, height: 100 });
+    await page.setViewportSize({ width: 300, height: 300 });
     await page.goto(server.EMPTY_PAGE);
     const screenshot = await page.screenshot({ omitBackground: true, type: 'jpeg' });
     expect(screenshot).toMatchSnapshot('white.jpg');
@@ -284,7 +314,7 @@ it.describe('page screenshot', () => {
   it('path option should detect jpeg', async ({ page, server, isElectron }, testInfo) => {
     it.fixme(isElectron, 'omitBackground with jpeg does not work');
 
-    await page.setViewportSize({ width: 100, height: 100 });
+    await page.setViewportSize({ width: 300, height: 300 });
     await page.goto(server.EMPTY_PAGE);
     const outputPath = testInfo.outputPath('screenshot.jpg');
     const screenshot = await page.screenshot({ omitBackground: true, path: outputPath });
@@ -428,6 +458,33 @@ it.describe('page screenshot', () => {
       });
       const screenshot2 = await page.screenshot();
       expect(screenshot1.equals(screenshot2)).toBe(true);
+    });
+
+    it('should work when subframe has stalled navigation', async ({ page, server }) => {
+      let cb;
+      const routeReady = new Promise<Route>(f => cb = f);
+      await page.route('**/subframe.html', cb); // Stalling subframe.
+
+      await page.goto(server.EMPTY_PAGE);
+      const done = page.setContent(`<iframe src='/subframe.html'></iframe>`);
+      const route = await routeReady;
+
+      await page.screenshot({ mask: [ page.locator('non-existent') ] });
+      await route.fulfill({ body: '' });
+      await done;
+    });
+
+    it('should work when subframe used document.open after a weird url', async ({ page, server }) => {
+      await page.goto(server.EMPTY_PAGE);
+      await page.evaluate(() => {
+        const iframe = document.createElement('iframe');
+        iframe.src = 'javascript:hi';
+        document.body.appendChild(iframe);
+        iframe.contentDocument.open();
+        iframe.contentDocument.write('Hello');
+        iframe.contentDocument.close();
+      });
+      await page.screenshot({ mask: [ page.locator('non-existent') ] });
     });
   });
 });
@@ -710,39 +767,5 @@ it.describe('page screenshot animations', () => {
       'onfinish', 'animationend'
     ]);
   });
-
-  it('should respect fonts option', async ({ page, server, isWindows }) => {
-    it.fixme(isWindows, 'This requires a windows-specific test expectations. https://github.com/microsoft/playwright/issues/12707');
-    await page.setViewportSize({ width: 500, height: 500 });
-    let serverRequest, serverResponse;
-    // Stall font loading.
-    server.setRoute('/webfont/iconfont.woff2', (req, res) => {
-      serverRequest = req;
-      serverResponse = res;
-    });
-    await page.goto(server.PREFIX + '/webfont/webfont.html', {
-      waitUntil: 'domcontentloaded', // 'load' will not happen if webfont is pending
-    });
-    // Make sure we can take screenshot.
-    const noIconsScreenshot = await page.screenshot();
-    // Make sure screenshot times out while webfont is stalled.
-    const error = await page.screenshot({
-      fonts: 'ready',
-      timeout: 200,
-    }).catch(e => e);
-    expect(error.message).toContain('waiting for fonts to load...');
-    expect(error.message).toContain('Timeout 200ms exceeded');
-    const [iconsScreenshot] = await Promise.all([
-      page.screenshot({ fonts: 'ready' }),
-      server.serveFile(serverRequest, serverResponse),
-    ]);
-    expect(iconsScreenshot).toMatchSnapshot('screenshot-web-font.png', {
-      maxDiffPixels: 3,
-    });
-    expect(noIconsScreenshot).not.toMatchSnapshot('screenshot-web-font.png', {
-      maxDiffPixels: 3,
-    });
-  });
-
 });
 

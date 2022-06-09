@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-import { ChildProcess } from 'child_process';
-import { assert, monotonicTime } from '../../utils/utils';
+import type { ChildProcess } from 'child_process';
+import { assert, monotonicTime } from '../../utils';
 import { Page } from '../page';
 import { launchProcess } from '../../utils/processLauncher';
-import { Progress, ProgressController } from '../progress';
-import { internalCallMetadata } from '../instrumentation';
-import * as types from '../types';
+import type { Progress } from '../progress';
+import { ProgressController } from '../progress';
+import { serverSideCallMetadata } from '../instrumentation';
+import type * as types from '../types';
 
 const fps = 25;
 
@@ -40,7 +41,7 @@ export class VideoRecorder {
     if (!options.outputFile.endsWith('.webm'))
       throw new Error('File must have .webm extension');
 
-    const controller = new ProgressController(internalCallMetadata(), page);
+    const controller = new ProgressController(serverSideCallMetadata(), page);
     controller.setLogName('browser');
     return await controller.run(async progress => {
       const recorder = new VideoRecorder(page, ffmpegPath, progress);

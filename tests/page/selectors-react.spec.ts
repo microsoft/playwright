@@ -21,6 +21,7 @@ const reacts = {
   'react15': '/reading-list/react15.html',
   'react16': '/reading-list/react16.html',
   'react17': '/reading-list/react17.html',
+  'react18': '/reading-list/react18.html',
 };
 
 for (const [name, url] of Object.entries(reacts)) {
@@ -100,6 +101,15 @@ for (const [name, url] of Object.entries(reacts)) {
       expect(await page.$$eval(`_react=ColorButton[color ~= "e"]`, els => els.length)).toBe(0);
       expect(await page.$$eval(`_react=BookItem[name ~= "gatsby" i]`, els => els.length)).toBe(1);
       expect(await page.$$eval(`_react=BookItem[name *= " gatsby" i]`, els => els.length)).toBe(1);
+    });
+
+    it('should support regex', async ({ page }) => {
+      expect(await page.$$eval(`_react=ColorButton[color = /red/]`, els => els.length)).toBe(3);
+      expect(await page.$$eval(`_react=ColorButton[color = /^red$/]`, els => els.length)).toBe(3);
+      expect(await page.$$eval(`_react=ColorButton[color = /RED/i]`, els => els.length)).toBe(3);
+      expect(await page.$$eval(`_react=ColorButton[color = /[pqr]ed/]`, els => els.length)).toBe(3);
+      expect(await page.$$eval(`_react=ColorButton[color = /[pq]ed/]`, els => els.length)).toBe(0);
+      expect(await page.$$eval(`_react=BookItem[name = /gat.by/i]`, els => els.length)).toBe(1);
     });
 
     it('should support truthy querying', async ({ page }) => {

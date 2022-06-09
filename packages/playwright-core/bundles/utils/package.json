@@ -1,0 +1,44 @@
+{
+  "name": "utils-bundle",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "esbuild": "esbuild ./src/utilsBundleImpl.ts --bundle --outdir=../../lib --format=cjs --platform=node --target=ES2019",
+    "build": "npm ci && npm run esbuild -- --minify",
+    "watch": "npm ci && npm run esbuild -- --watch --sourcemap",
+    "generate-license": "node ../../../../utils/generate_third_party_notice.js"
+  },
+  "dependencies": {
+    "colors": "1.4.0",
+    "commander": "8.3.0",
+    "debug": "^4.3.4",
+    "glob": "^7.1.3",
+    "https-proxy-agent": "5.0.0",
+    "jpeg-js": "0.4.3",
+    "mime": "^3.0.0",
+    "minimatch": "^3.1.2",
+    "ms": "^2.1.2",
+    "pngjs": "6.0.0",
+    "progress": "2.0.3",
+    "proper-lockfile": "4.1.2",
+    "proxy-from-env": "1.1.0",
+    "rimraf": "^3.0.2",
+    "socks-proxy-agent": "6.1.1",
+    "stack-utils": "2.0.5",
+    "ws": "8.4.2"
+  },
+  "devDependencies": {
+    "@types/debug": "^4.1.7",
+    "@types/glob": "^7.2.0",
+    "@types/mime": "^2.0.3",
+    "@types/minimatch": "^3.0.5",
+    "@types/ms": "^0.7.31",
+    "@types/pngjs": "^6.0.1",
+    "@types/progress": "^2.0.5",
+    "@types/proper-lockfile": "^4.1.2",
+    "@types/proxy-from-env": "^1.0.1",
+    "@types/rimraf": "^3.0.2",
+    "@types/stack-utils": "^2.0.1",
+    "@types/ws": "8.2.2"
+  }
+}

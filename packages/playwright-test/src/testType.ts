@@ -18,7 +18,7 @@ import { expect } from './expect';
 import { currentlyLoadingFileSuite, currentTestInfo, setCurrentlyLoadingFileSuite } from './globals';
 import { TestCase, Suite } from './test';
 import { wrapFunctionWithLocation } from './transform';
-import { Fixtures, FixturesWithLocation, Location, TestType } from './types';
+import type { Fixtures, FixturesWithLocation, Location, TestType } from './types';
 import { errorWithLocation, serializeError } from './util';
 
 const testTypeSymbol = Symbol('testType');
@@ -41,6 +41,7 @@ export class TestTypeImpl {
     test.describe.parallel.only = wrapFunctionWithLocation(this._describe.bind(this, 'parallel.only'));
     test.describe.serial = wrapFunctionWithLocation(this._describe.bind(this, 'serial'));
     test.describe.serial.only = wrapFunctionWithLocation(this._describe.bind(this, 'serial.only'));
+    test.describe.skip = wrapFunctionWithLocation(this._describe.bind(this, 'skip'));
     test.beforeEach = wrapFunctionWithLocation(this._hook.bind(this, 'beforeEach'));
     test.afterEach = wrapFunctionWithLocation(this._hook.bind(this, 'afterEach'));
     test.beforeAll = wrapFunctionWithLocation(this._hook.bind(this, 'beforeAll'));
@@ -72,7 +73,7 @@ export class TestTypeImpl {
         `- You are calling ${title} in a configuration file.`,
         `- You are calling ${title} in a file that is imported by the configuration file.`,
         `- You have two different versions of @playwright/test. This usually happens`,
-        `  when one of the dependenices in your package.json depends on @playwright/test.`,
+        `  when one of the dependencies in your package.json depends on @playwright/test.`,
       ].join('\n'));
     }
     return suite;
@@ -89,9 +90,13 @@ export class TestTypeImpl {
       test._only = true;
     if (type === 'skip' || type === 'fixme')
       test.expectedStatus = 'skipped';
+    for (let parent: Suite | undefined = suite; parent; parent = parent.parent) {
+      if (parent._skipped)
+        test.expectedStatus = 'skipped';
+    }
   }
 
-  private _describe(type: 'default' | 'only' | 'serial' | 'serial.only' | 'parallel' | 'parallel.only', location: Location, title: string, fn: Function) {
+  private _describe(type: 'default' | 'only' | 'serial' | 'serial.only' | 'parallel' | 'parallel.only' | 'skip', location: Location, title: string, fn: Function) {
     throwIfRunningInsideJest();
     const suite = this._ensureCurrentSuite(location, 'test.describe()');
     if (typeof title === 'function') {
@@ -115,12 +120,12 @@ export class TestTypeImpl {
       child._parallelMode = 'serial';
     if (type === 'parallel' || type === 'parallel.only')
       child._parallelMode = 'parallel';
+    if (type === 'skip')
+      child._skipped = true;
 
     for (let parent: Suite | undefined = suite; parent; parent = parent.parent) {
       if (parent._parallelMode === 'serial' && child._parallelMode === 'parallel')
         throw errorWithLocation(location, 'describe.parallel cannot be nested inside describe.serial');
-      if (parent._parallelMode === 'parallel' && child._parallelMode === 'serial')
-        throw errorWithLocation(location, 'describe.serial cannot be nested inside describe.parallel');
     }
 
     setCurrentlyLoadingFileSuite(child);
@@ -145,8 +150,6 @@ export class TestTypeImpl {
     for (let parent: Suite | undefined = suite.parent; parent; parent = parent.parent) {
       if (parent._parallelMode === 'serial' && suite._parallelMode === 'parallel')
         throw errorWithLocation(location, 'describe.parallel cannot be nested inside describe.serial');
-      if (parent._parallelMode === 'parallel' && suite._parallelMode === 'serial')
-        throw errorWithLocation(location, 'describe.serial cannot be nested inside describe.parallel');
     }
   }
 
@@ -209,9 +212,9 @@ export class TestTypeImpl {
     });
     try {
       await body();
-      step.complete();
+      step.complete({});
     } catch (e) {
-      step.complete(serializeError(e));
+      step.complete({ error: serializeError(e) });
       throw e;
     }
   }

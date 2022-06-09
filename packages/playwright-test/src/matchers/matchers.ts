@@ -14,17 +14,18 @@
  * limitations under the License.
  */
 
-import { Locator, Page, APIResponse } from 'playwright-core';
-import { FrameExpectOptions } from 'playwright-core/lib/client/types';
-import { constructURLBasedOnBaseURL } from 'playwright-core/lib/utils/utils';
+import type { Locator, Page, APIResponse } from 'playwright-core';
+import type { FrameExpectOptions } from 'playwright-core/lib/client/types';
+import { constructURLBasedOnBaseURL } from 'playwright-core/lib/utils';
 import type { Expect } from '../types';
 import { expectTypes, callLogText } from '../util';
 import { toBeTruthy } from './toBeTruthy';
 import { toEqual } from './toEqual';
 import { toExpectedTextValues, toMatchText } from './toMatchText';
+import type { ParsedStackTrace } from 'playwright-core/lib/utils/stackTrace';
 
 interface LocatorEx extends Locator {
-  _expect(expression: string, options: Omit<FrameExpectOptions, 'expectedValue'> & { expectedValue?: any }): Promise<{ matches: boolean, received?: any, log?: string[] }>;
+  _expect(customStackTrace: ParsedStackTrace, expression: string, options: Omit<FrameExpectOptions, 'expectedValue'> & { expectedValue?: any }): Promise<{ matches: boolean, received?: any, log?: string[] }>;
 }
 
 interface APIResponseEx extends APIResponse {
@@ -36,9 +37,9 @@ export function toBeChecked(
   locator: LocatorEx,
   options?: { checked?: boolean, timeout?: number },
 ) {
-  return toBeTruthy.call(this, 'toBeChecked', locator, 'Locator', async (isNot, timeout) => {
+  return toBeTruthy.call(this, 'toBeChecked', locator, 'Locator', async (isNot, timeout, customStackTrace) => {
     const checked = !options || options.checked === undefined || options.checked === true;
-    return await locator._expect(checked ? 'to.be.checked' : 'to.be.unchecked', { isNot, timeout });
+    return await locator._expect(customStackTrace, checked ? 'to.be.checked' : 'to.be.unchecked', { isNot, timeout });
   }, options);
 }
 
@@ -47,8 +48,8 @@ export function toBeDisabled(
   locator: LocatorEx,
   options?: { timeout?: number },
 ) {
-  return toBeTruthy.call(this, 'toBeDisabled', locator, 'Locator', async (isNot, timeout) => {
-    return await locator._expect('to.be.disabled', { isNot, timeout });
+  return toBeTruthy.call(this, 'toBeDisabled', locator, 'Locator', async (isNot, timeout, customStackTrace) => {
+    return await locator._expect(customStackTrace, 'to.be.disabled', { isNot, timeout });
   }, options);
 }
 
@@ -57,8 +58,8 @@ export function toBeEditable(
   locator: LocatorEx,
   options?: { timeout?: number },
 ) {
-  return toBeTruthy.call(this, 'toBeEditable', locator, 'Locator', async (isNot, timeout) => {
-    return await locator._expect('to.be.editable', { isNot, timeout });
+  return toBeTruthy.call(this, 'toBeEditable', locator, 'Locator', async (isNot, timeout, customStackTrace) => {
+    return await locator._expect(customStackTrace, 'to.be.editable', { isNot, timeout });
   }, options);
 }
 
@@ -67,8 +68,8 @@ export function toBeEmpty(
   locator: LocatorEx,
   options?: { timeout?: number },
 ) {
-  return toBeTruthy.call(this, 'toBeEmpty', locator, 'Locator', async (isNot, timeout) => {
-    return await locator._expect('to.be.empty', { isNot, timeout });
+  return toBeTruthy.call(this, 'toBeEmpty', locator, 'Locator', async (isNot, timeout, customStackTrace) => {
+    return await locator._expect(customStackTrace, 'to.be.empty', { isNot, timeout });
   }, options);
 }
 
@@ -77,8 +78,8 @@ export function toBeEnabled(
   locator: LocatorEx,
   options?: { timeout?: number },
 ) {
-  return toBeTruthy.call(this, 'toBeEnabled', locator, 'Locator', async (isNot, timeout) => {
-    return await locator._expect('to.be.enabled', { isNot, timeout });
+  return toBeTruthy.call(this, 'toBeEnabled', locator, 'Locator', async (isNot, timeout, customStackTrace) => {
+    return await locator._expect(customStackTrace, 'to.be.enabled', { isNot, timeout });
   }, options);
 }
 
@@ -87,8 +88,8 @@ export function toBeFocused(
   locator: LocatorEx,
   options?: { timeout?: number },
 ) {
-  return toBeTruthy.call(this, 'toBeFocused', locator, 'Locator', async (isNot, timeout) => {
-    return await locator._expect('to.be.focused', { isNot, timeout });
+  return toBeTruthy.call(this, 'toBeFocused', locator, 'Locator', async (isNot, timeout, customStackTrace) => {
+    return await locator._expect(customStackTrace, 'to.be.focused', { isNot, timeout });
   }, options);
 }
 
@@ -97,8 +98,8 @@ export function toBeHidden(
   locator: LocatorEx,
   options?: { timeout?: number },
 ) {
-  return toBeTruthy.call(this, 'toBeHidden', locator, 'Locator', async (isNot, timeout) => {
-    return await locator._expect('to.be.hidden', { isNot, timeout });
+  return toBeTruthy.call(this, 'toBeHidden', locator, 'Locator', async (isNot, timeout, customStackTrace) => {
+    return await locator._expect(customStackTrace, 'to.be.hidden', { isNot, timeout });
   }, options);
 }
 
@@ -107,8 +108,8 @@ export function toBeVisible(
   locator: LocatorEx,
   options?: { timeout?: number },
 ) {
-  return toBeTruthy.call(this, 'toBeVisible', locator, 'Locator', async (isNot, timeout) => {
-    return await locator._expect('to.be.visible', { isNot, timeout });
+  return toBeTruthy.call(this, 'toBeVisible', locator, 'Locator', async (isNot, timeout, customStackTrace) => {
+    return await locator._expect(customStackTrace, 'to.be.visible', { isNot, timeout });
   }, options);
 }
 
@@ -116,17 +117,17 @@ export function toContainText(
   this: ReturnType<Expect['getState']>,
   locator: LocatorEx,
   expected: string | RegExp | (string | RegExp)[],
-  options?: { timeout?: number, useInnerText?: boolean },
+  options: { timeout?: number, useInnerText?: boolean, ignoreCase?: boolean } = {},
 ) {
   if (Array.isArray(expected)) {
-    return toEqual.call(this, 'toContainText', locator, 'Locator', async (isNot, timeout) => {
-      const expectedText = toExpectedTextValues(expected, { matchSubstring: true, normalizeWhiteSpace: true });
-      return await locator._expect('to.contain.text.array', { expectedText, isNot, useInnerText: options?.useInnerText, timeout });
+    return toEqual.call(this, 'toContainText', locator, 'Locator', async (isNot, timeout, customStackTrace) => {
+      const expectedText = toExpectedTextValues(expected, { matchSubstring: true, normalizeWhiteSpace: true, ignoreCase: options.ignoreCase });
+      return await locator._expect(customStackTrace, 'to.contain.text.array', { expectedText, isNot, useInnerText: options.useInnerText, timeout });
     }, expected, { ...options, contains: true });
   } else {
-    return toMatchText.call(this, 'toContainText', locator, 'Locator', async (isNot, timeout) => {
-      const expectedText = toExpectedTextValues([expected], { matchSubstring: true, normalizeWhiteSpace: true });
-      return await locator._expect('to.have.text', { expectedText, isNot, useInnerText: options?.useInnerText, timeout });
+    return toMatchText.call(this, 'toContainText', locator, 'Locator', async (isNot, timeout, customStackTrace) => {
+      const expectedText = toExpectedTextValues([expected], { matchSubstring: true, normalizeWhiteSpace: true, ignoreCase: options.ignoreCase });
+      return await locator._expect(customStackTrace, 'to.have.text', { expectedText, isNot, useInnerText: options.useInnerText, timeout });
     }, expected, options);
   }
 }
@@ -138,9 +139,9 @@ export function toHaveAttribute(
   expected: string | RegExp,
   options?: { timeout?: number },
 ) {
-  return toMatchText.call(this, 'toHaveAttribute', locator, 'Locator', async (isNot, timeout) => {
+  return toMatchText.call(this, 'toHaveAttribute', locator, 'Locator', async (isNot, timeout, customStackTrace) => {
     const expectedText = toExpectedTextValues([expected]);
-    return await locator._expect('to.have.attribute', { expressionArg: name, expectedText, isNot, timeout });
+    return await locator._expect(customStackTrace, 'to.have.attribute', { expressionArg: name, expectedText, isNot, timeout });
   }, expected, options);
 }
 
@@ -151,14 +152,14 @@ export function toHaveClass(
   options?: { timeout?: number },
 ) {
   if (Array.isArray(expected)) {
-    return toEqual.call(this, 'toHaveClass', locator, 'Locator', async (isNot, timeout) => {
+    return toEqual.call(this, 'toHaveClass', locator, 'Locator', async (isNot, timeout, customStackTrace) => {
       const expectedText = toExpectedTextValues(expected);
-      return await locator._expect('to.have.class.array', { expectedText, isNot, timeout });
+      return await locator._expect(customStackTrace, 'to.have.class.array', { expectedText, isNot, timeout });
     }, expected, options);
   } else {
-    return toMatchText.call(this, 'toHaveClass', locator, 'Locator', async (isNot, timeout) => {
+    return toMatchText.call(this, 'toHaveClass', locator, 'Locator', async (isNot, timeout, customStackTrace) => {
       const expectedText = toExpectedTextValues([expected]);
-      return await locator._expect('to.have.class', { expectedText, isNot, timeout });
+      return await locator._expect(customStackTrace, 'to.have.class', { expectedText, isNot, timeout });
     }, expected, options);
   }
 }
@@ -169,8 +170,8 @@ export function toHaveCount(
   expected: number,
   options?: { timeout?: number },
 ) {
-  return toEqual.call(this, 'toHaveCount', locator, 'Locator', async (isNot, timeout) => {
-    return await locator._expect('to.have.count', { expectedNumber: expected, isNot, timeout });
+  return toEqual.call(this, 'toHaveCount', locator, 'Locator', async (isNot, timeout, customStackTrace) => {
+    return await locator._expect(customStackTrace, 'to.have.count', { expectedNumber: expected, isNot, timeout });
   }, expected, options);
 }
 
@@ -181,9 +182,9 @@ export function toHaveCSS(
   expected: string | RegExp,
   options?: { timeout?: number },
 ) {
-  return toMatchText.call(this, 'toHaveCSS', locator, 'Locator', async (isNot, timeout) => {
+  return toMatchText.call(this, 'toHaveCSS', locator, 'Locator', async (isNot, timeout, customStackTrace) => {
     const expectedText = toExpectedTextValues([expected]);
-    return await locator._expect('to.have.css', { expressionArg: name, expectedText, isNot, timeout });
+    return await locator._expect(customStackTrace, 'to.have.css', { expressionArg: name, expectedText, isNot, timeout });
   }, expected, options);
 }
 
@@ -193,9 +194,9 @@ export function toHaveId(
   expected: string | RegExp,
   options?: { timeout?: number },
 ) {
-  return toMatchText.call(this, 'toHaveId', locator, 'Locator', async (isNot, timeout) => {
+  return toMatchText.call(this, 'toHaveId', locator, 'Locator', async (isNot, timeout, customStackTrace) => {
     const expectedText = toExpectedTextValues([expected]);
-    return await locator._expect('to.have.id', { expectedText, isNot, timeout });
+    return await locator._expect(customStackTrace, 'to.have.id', { expectedText, isNot, timeout });
   }, expected, options);
 }
 
@@ -206,8 +207,8 @@ export function toHaveJSProperty(
   expected: any,
   options?: { timeout?: number },
 ) {
-  return toEqual.call(this, 'toHaveJSProperty', locator, 'Locator', async (isNot, timeout) => {
-    return await locator._expect('to.have.property', { expressionArg: name, expectedValue: expected, isNot, timeout });
+  return toEqual.call(this, 'toHaveJSProperty', locator, 'Locator', async (isNot, timeout, customStackTrace) => {
+    return await locator._expect(customStackTrace, 'to.have.property', { expressionArg: name, expectedValue: expected, isNot, timeout });
   }, expected, options);
 }
 
@@ -215,17 +216,17 @@ export function toHaveText(
   this: ReturnType<Expect['getState']>,
   locator: LocatorEx,
   expected: string | RegExp | (string | RegExp)[],
-  options: { timeout?: number, useInnerText?: boolean } = {},
+  options: { timeout?: number, useInnerText?: boolean, ignoreCase?: boolean } = {},
 ) {
   if (Array.isArray(expected)) {
-    return toEqual.call(this, 'toHaveText', locator, 'Locator', async (isNot, timeout) => {
-      const expectedText = toExpectedTextValues(expected, { normalizeWhiteSpace: true });
-      return await locator._expect('to.have.text.array', { expectedText, isNot, useInnerText: options?.useInnerText, timeout });
+    return toEqual.call(this, 'toHaveText', locator, 'Locator', async (isNot, timeout, customStackTrace) => {
+      const expectedText = toExpectedTextValues(expected, { normalizeWhiteSpace: true, ignoreCase: options.ignoreCase });
+      return await locator._expect(customStackTrace, 'to.have.text.array', { expectedText, isNot, useInnerText: options?.useInnerText, timeout });
     }, expected, options);
   } else {
-    return toMatchText.call(this, 'toHaveText', locator, 'Locator', async (isNot, timeout) => {
-      const expectedText = toExpectedTextValues([expected], { normalizeWhiteSpace: true });
-      return await locator._expect('to.have.text', { expectedText, isNot, useInnerText: options?.useInnerText, timeout });
+    return toMatchText.call(this, 'toHaveText', locator, 'Locator', async (isNot, timeout, customStackTrace) => {
+      const expectedText = toExpectedTextValues([expected], { normalizeWhiteSpace: true, ignoreCase: options.ignoreCase });
+      return await locator._expect(customStackTrace, 'to.have.text', { expectedText, isNot, useInnerText: options?.useInnerText, timeout });
     }, expected, options);
   }
 }
@@ -236,9 +237,21 @@ export function toHaveValue(
   expected: string | RegExp,
   options?: { timeout?: number },
 ) {
-  return toMatchText.call(this, 'toHaveValue', locator, 'Locator', async (isNot, timeout) => {
+  return toMatchText.call(this, 'toHaveValue', locator, 'Locator', async (isNot, timeout, customStackTrace) => {
     const expectedText = toExpectedTextValues([expected]);
-    return await locator._expect('to.have.value', { expectedText, isNot, timeout });
+    return await locator._expect(customStackTrace, 'to.have.value', { expectedText, isNot, timeout });
+  }, expected, options);
+}
+
+export function toHaveValues(
+  this: ReturnType<Expect['getState']>,
+  locator: LocatorEx,
+  expected: (string | RegExp)[],
+  options?: { timeout?: number },
+) {
+  return toEqual.call(this, 'toHaveValues', locator, 'Locator', async (isNot, timeout, customStackTrace) => {
+    const expectedText = toExpectedTextValues(expected);
+    return await locator._expect(customStackTrace, 'to.have.values', { expectedText, isNot, timeout });
   }, expected, options);
 }
 
@@ -249,9 +262,9 @@ export function toHaveTitle(
   options: { timeout?: number } = {},
 ) {
   const locator = page.locator(':root') as LocatorEx;
-  return toMatchText.call(this, 'toHaveTitle', locator, 'Locator', async (isNot, timeout) => {
+  return toMatchText.call(this, 'toHaveTitle', locator, 'Locator', async (isNot, timeout, customStackTrace) => {
     const expectedText = toExpectedTextValues([expected], { normalizeWhiteSpace: true });
-    return await locator._expect('to.have.title', { expectedText, isNot, timeout });
+    return await locator._expect(customStackTrace, 'to.have.title', { expectedText, isNot, timeout });
   }, expected, options);
 }
 
@@ -264,9 +277,9 @@ export function toHaveURL(
   const baseURL = (page.context() as any)._options.baseURL;
   expected = typeof expected === 'string' ? constructURLBasedOnBaseURL(baseURL, expected) : expected;
   const locator = page.locator(':root') as LocatorEx;
-  return toMatchText.call(this, 'toHaveURL', locator, 'Locator', async (isNot, timeout) => {
+  return toMatchText.call(this, 'toHaveURL', locator, 'Locator', async (isNot, timeout, customStackTrace) => {
     const expectedText = toExpectedTextValues([expected]);
-    return await locator._expect('to.have.url', { expectedText, isNot, timeout });
+    return await locator._expect(customStackTrace, 'to.have.url', { expectedText, isNot, timeout });
   }, expected, options);
 }
 

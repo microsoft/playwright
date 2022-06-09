@@ -67,10 +67,69 @@ await locator.HoverAsync();
 await locator.ClickAsync();
 ```
 
+## Creating Locators
+
+Use [`method: Page.locator`] method to create a locator. This method takes a selector that describes how to find an element in the page. Playwright supports many different selectors like [Text](./selectors.md#text-selector), [CSS](./selectors.md#css-selector), [XPath](./selectors.md#xpath-selectors) and many more. Learn more about available selectors and how to pick one in this [in-depth guide](./selectors.md).
+
+```js
+// Find by text.
+await page.locator('text=Sign up').click();
+
+// Find by CSS.
+await page.locator('button.sign-up').click();
+
+// Find by test id.
+await page.locator('data-testid=sign-up').click();
+```
+
+```python async
+# Find by text.
+await page.locator("text=Sign up").click()
+
+# Find by CSS.
+await page.locator("button.sign-up").click()
+
+# Find by test id.
+await page.locator("data-testid=sign-up").click()
+```
+
+```python sync
+# Find by text.
+page.locator("text=Sign up").click()
+
+# Find by CSS.
+page.locator("button.sign-up").click()
+
+# Find by test id.
+page.locator("data-testid=sign-up").click()
+```
+
+```java
+// Find by text.
+page.locator("text=Sign up").click();
+
+// Find by CSS.
+page.locator("button.sign-up").click();
+
+// Find by test id.
+page.locator("data-testid=sign-up").click();
+```
+
+```csharp
+// Find by text.
+await page.Locator("text=Sign up").ClickAsync();
+
+// Find by CSS.
+await page.Locator("button.sign-up").ClickAsync();
+
+// Find by test id.
+await page.Locator("data-testid=sign-up").ClickAsync();
+```
+
 ## Strictness
 
 Locators are strict. This means that all operations on locators that imply
-some target DOM element will throw an exception if more than one element matches 
+some target DOM element will throw an exception if more than one element matches
 given selector.
 
 ```js
@@ -215,6 +274,74 @@ for (let i = 0; i < count; ++i)
 // Pattern 3: resolve locator to elements on page and map them to their text content
 // Note: the code inside evaluateAll runs in page, you can call any DOM apis there
 var texts = await rows.EvaluateAllAsync("list => list.map(element => element.textContent)");
+```
+
+## Filtering Locators
+
+When creating a locator, you can pass additional options to filter it.
+
+Filtering by text will search for a particular string somewhere inside the element, possibly in a descendant element, case-insensitively. You can also pass a regular expression.
+
+```js
+await page.locator('button', { hasText: 'Sign up' }).click();
+```
+```java
+page.locator("button", new Page.LocatorOptions().setHasText("Sign up")).click();
+```
+```python async
+await page.locator("button", has_text="Sign up").click()
+```
+```python sync
+page.locator("button", has_text="Sign up").click()
+```
+```csharp
+await page.Locator("button", new PageLocatorOptions { HasText = "Sign up" }).ClickAsync();
+```
+
+Locators also support an option to only select elements that have a descendant matching another locator. Note that inner locator is matched starting from the outer one, not from the document root.
+
+```js
+page.locator('article', { has: page.locator('button.subscribe') })
+```
+```java
+page.locator("article", new Page.LocatorOptions().setHas(page.locator("button.subscribe")))
+```
+```python async
+page.locator("article", has=page.locator("button.subscribe"))
+```
+```python sync
+page.locator("article", has=page.locator("button.subscribe"))
+```
+```csharp
+page.Locator("article", new PageLocatorOptions { Has = page.Locator("button.subscribe") })
+```
+
+You can also filter an existing locator with [`method: Locator.filter`] method.
+
+```js
+const buttonLocator = page.locator('button');
+// ...
+await buttonLocator.filter({ hasText: 'Sign up' }).click();
+```
+```java
+Locator buttonLocator = page.locator("button");
+// ...
+buttonLocator.filter(new Locator.FilterOptions().setHasText("Sign up")).click();
+```
+```python async
+button_locator = page.locator("button")
+# ...
+await button_locator.filter(has_text="Sign up").click()
+```
+```python sync
+button_locator = page.locator("button")
+# ...
+button_locator.filter(has_text="Sign up").click()
+```
+```csharp
+var buttonLocator = page.Locator("button");
+// ...
+await buttonLocator.Filter(new LocatorFilterOptions { HasText = "Sign up" }).ClickAsync();
 ```
 
 ## Locator vs ElementHandle

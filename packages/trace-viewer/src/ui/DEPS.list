@@ -1,0 +1,4 @@
+[*]
+@web/**
+../entries.ts
+../geometry.ts

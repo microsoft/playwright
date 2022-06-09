@@ -5,6 +5,8 @@ set +x
 trap "cd $(pwd -P)" EXIT
 cd "$(dirname "$0")"
 
+source "./utils.sh"
+
 if [[ ($1 == '--help') || ($1 == '-h') ]]; then
   echo "usage: $(basename "$0") [BLOB-PATH] [--check|ZIP-PATH]"
   echo
@@ -62,7 +64,7 @@ if [[ "${ZIP_PATH}" != *.zip && "${ZIP_PATH}" != *.gz ]]; then
   echo "ERROR: ${ZIP_PATH} is not an archive (must have a .zip or .gz extension)"
   exit 1
 fi
-if [[ $(uname) == MINGW* ]]; then
+if is_win; then
   # Convert POSIX path to MSYS
   WIN_PATH=$({ cd $(dirname "$ZIP_PATH") && pwd -W; } | sed 's|/|\\|g')
   WIN_PATH="${WIN_PATH}\\$(basename "$ZIP_PATH")"
@@ -71,8 +73,10 @@ else
   az storage blob upload -c builds --account-key "$AZ_ACCOUNT_KEY" --account-name "$AZ_ACCOUNT_NAME" -f "$ZIP_PATH" -n "$BLOB_PATH" --content-md5 "${MD5_HASH}"
 fi
 
+ZIP_SIZE=$(node -e 'console.log(Math.round(require("fs").statSync(process.argv[1]).size / 1024 / 1024) + "MB")' "${ZIP_PATH}")
+
 echo "UPLOAD SUCCESSFUL!"
 echo "--  SRC: $ZIP_PATH"
-echo "-- SIZE: $(du -h "$ZIP_PATH" | awk '{print $1}')"
+echo "-- SIZE: $ZIP_SIZE"
 echo "--  DST: $BLOB_PATH"
 

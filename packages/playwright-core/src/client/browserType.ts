@@ -14,19 +14,19 @@
  * limitations under the License.
  */
 
-import * as channels from '../protocol/channels';
+import type * as channels from '../protocol/channels';
 import { Browser } from './browser';
 import { BrowserContext, prepareBrowserContextParams } from './browserContext';
 import { ChannelOwner } from './channelOwner';
-import { LaunchOptions, LaunchServerOptions, ConnectOptions, LaunchPersistentContextOptions, BrowserContextOptions } from './types';
+import type { LaunchOptions, LaunchServerOptions, ConnectOptions, LaunchPersistentContextOptions, BrowserContextOptions } from './types';
 import { Connection } from './connection';
 import { Events } from './events';
-import { ChildProcess } from 'child_process';
+import type { ChildProcess } from 'child_process';
 import { envObjectToArray } from './clientHelper';
-import { assert, headersObjectToArray, monotonicTime } from '../utils/utils';
-import * as api from '../../types/types';
-import { kBrowserClosedError } from '../utils/errors';
-import { raceAgainstTimeout } from '../utils/async';
+import { assert, headersObjectToArray, monotonicTime } from '../utils';
+import type * as api from '../../types/types';
+import { kBrowserClosedError } from '../common/errors';
+import { raceAgainstTimeout } from '../utils/timeoutRunner';
 import type { Playwright } from './playwright';
 
 export interface BrowserServerLauncher {
@@ -80,7 +80,6 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
     const browser = Browser.from((await this._channel.launch(launchOptions)).browser);
     browser._logger = logger;
     browser._setBrowserType(this);
-    browser._localUtils = this._playwright._utils;
     return browser;
   }
 
@@ -109,7 +108,6 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
     context._options = contextParams;
     context._logger = logger;
     context._setBrowserType(this);
-    context.tracing._localUtils = this._playwright._utils;
     await this._onDidCreateContext?.(context);
     return context;
   }
@@ -134,7 +132,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
         connectParams.socksProxyRedirectPortForTest = (params as any).__testHookRedirectPortForwarding;
       const { pipe } = await this._channel.connect(connectParams);
       const closePipe = () => pipe.close().catch(() => {});
-      const connection = new Connection();
+      const connection = new Connection(this._connection.localUtils());
       connection.markAsRemote();
       connection.on('close', closePipe);
 
@@ -176,7 +174,6 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
         browser._logger = logger;
         browser._shouldCloseConnectionOnClose = true;
         browser._setBrowserType(this);
-        browser._localUtils = this._playwright._utils;
         browser.on(Events.Browser.Disconnected, closePipe);
         return browser;
       }, deadline ? deadline - monotonicTime() : 0);
@@ -214,7 +211,6 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
       browser._contexts.add(BrowserContext.from(result.defaultContext));
     browser._logger = params.logger;
     browser._setBrowserType(this);
-    browser._localUtils = this._playwright._utils;
     return browser;
   }
 }

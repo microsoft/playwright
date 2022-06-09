@@ -5,6 +5,7 @@
 # Include sources from lib, but not map files.
 !lib/**/*.js
 # Include web assets for recorder, trace viewer, etc.
+!lib/**/*.css
 !lib/**/*.html
 !lib/**/*.png
 !lib/**/*.ttf
@@ -35,3 +36,4 @@ lib/**/injected/
 !browsers.json
 # Include generated devices descriptors
 !deviceDescriptorsSource.json
+!ThirdPartyNotices.txt

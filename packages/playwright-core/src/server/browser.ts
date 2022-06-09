@@ -14,16 +14,17 @@
  * limitations under the License.
  */
 
-import * as types from './types';
-import { BrowserContext } from './browserContext';
+import type * as types from './types';
+import { BrowserContext, validateBrowserContextOptions } from './browserContext';
 import { Page } from './page';
 import { Download } from './download';
-import { ProxySettings } from './types';
-import { ChildProcess } from 'child_process';
-import { RecentLogsCollector } from '../utils/debugLogger';
+import type { ProxySettings } from './types';
+import type { ChildProcess } from 'child_process';
+import type { RecentLogsCollector } from '../common/debugLogger';
+import type { CallMetadata } from './instrumentation';
 import { SdkObject } from './instrumentation';
 import { Artifact } from './artifact';
-import { Selectors } from './selectors';
+import type { Selectors } from './selectors';
 
 export interface BrowserProcess {
   onclose?: ((exitCode: number | null, signal: string | null) => void);
@@ -74,11 +75,19 @@ export abstract class Browser extends SdkObject {
     this.options = options;
   }
 
-  abstract newContext(options: types.BrowserContextOptions): Promise<BrowserContext>;
+  abstract doCreateNewContext(options: types.BrowserContextOptions): Promise<BrowserContext>;
   abstract contexts(): BrowserContext[];
   abstract isConnected(): boolean;
   abstract version(): string;
   abstract userAgent(): string;
+
+  async newContext(metadata: CallMetadata, options: types.BrowserContextOptions): Promise<BrowserContext> {
+    validateBrowserContextOptions(options, this.options);
+    const context = await this.doCreateNewContext(options);
+    if (options.storageState)
+      await context.setStorageState(metadata, options.storageState);
+    return context;
+  }
 
   _downloadCreated(page: Page, uuid: string, url: string, suggestedFilename?: string) {
     const download = new Download(page, this.options.downloadsPath || '', uuid, url, suggestedFilename);
@@ -103,10 +112,10 @@ export abstract class Browser extends SdkObject {
   _videoStarted(context: BrowserContext, videoId: string, path: string, pageOrError: Promise<Page | Error>) {
     const artifact = new Artifact(context, path);
     this._idToVideo.set(videoId, { context, artifact });
-    context.emit(BrowserContext.Events.VideoStarted, artifact);
     pageOrError.then(page => {
       if (page instanceof Page) {
         page._video = artifact;
+        page.emitOnContext(BrowserContext.Events.VideoStarted, artifact);
         page.emit(Page.Events.Video, artifact);
       }
     });

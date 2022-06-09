@@ -14,51 +14,56 @@
  * limitations under the License.
  */
 
-import { types as t, NodePath } from '@babel/core';
-import { declare } from '@babel/helper-plugin-utils';
+import path from 'path';
+import type { T, BabelAPI } from './babelBundle';
+import { types, declare, traverse } from './babelBundle';
+const t: typeof T = types;
 
-export default declare(api => {
+const fullNames = new Map<string, string | undefined>();
+let componentNames: Set<string>;
+let componentIdentifiers: Set<T.Identifier>;
+
+export default declare((api: BabelAPI) => {
   api.assertVersion(7);
 
-  return {
+  const result: babel.PluginObj = {
     name: 'playwright-debug-transform',
     visitor: {
       Program(path) {
-        path.setData('pw-components', new Map());
+        fullNames.clear();
+        const result = collectComponentUsages(path.node);
+        componentNames = result.names;
+        componentIdentifiers = result.identifiers;
       },
 
-      ImportDeclaration(path) {
-        // Non-JSX transform, replace
-        //   import Button from './ButtonVue.vue'
-        //   import { Card as MyCard } from './Card.vue'
-        // with
-        //   const Button 'Button', MyCard = 'Card';
-        const importNode = path.node;
-        if (!t.isStringLiteral(importNode.source)) {
-          flushConst(path, true);
+      ImportDeclaration(p) {
+        const importNode = p.node;
+        if (!t.isStringLiteral(importNode.source))
           return;
-        }
 
-        if (!importNode.source.value.endsWith('.vue') && !importNode.source.value.endsWith('.svelte')) {
-          flushConst(path, true);
-          return;
-        }
-
-        const components = path.parentPath.getData('pw-components');
+        let remove = false;
         for (const specifier of importNode.specifiers) {
-          if (t.isImportDefaultSpecifier(specifier)) {
-            components.set(specifier.local.name, specifier.local.name);
+          if (!componentNames.has(specifier.local.name))
             continue;
-          }
-          if (t.isImportSpecifier(specifier)) {
-            if (t.isIdentifier(specifier.imported))
-              components.set(specifier.local.name, specifier.imported.name);
-            else
-              components.set(specifier.local.name, specifier.imported.value);
-          }
+          if (t.isImportNamespaceSpecifier(specifier))
+            continue;
+          const { fullName } = componentInfo(specifier, importNode.source.value, this.filename!);
+          fullNames.set(specifier.local.name, fullName);
+          remove = true;
         }
 
-        flushConst(path, false);
+        // If one of the imports was a component, consider them all component imports.
+        if (remove) {
+          p.skip();
+          p.remove();
+        }
+      },
+
+      Identifier(p) {
+        if (componentIdentifiers.has(p.node)) {
+          const componentName = fullNames.get(p.node.name) || p.node.name;
+          p.replaceWith(t.stringLiteral(componentName));
+        }
       },
 
       JSXElement(path) {
@@ -67,13 +72,12 @@ export default declare(api => {
         if (!t.isJSXIdentifier(jsxName))
           return;
 
-        const name = jsxName.name;
-        const props: (t.ObjectProperty | t.SpreadElement)[] = [];
+        const props: (T.ObjectProperty | T.SpreadElement)[] = [];
 
         for (const jsxAttribute of jsxElement.openingElement.attributes) {
           if (t.isJSXAttribute(jsxAttribute)) {
-            let namespace: t.JSXIdentifier | undefined;
-            let name: t.JSXIdentifier | undefined;
+            let namespace: T.JSXIdentifier | undefined;
+            let name: T.JSXIdentifier | undefined;
             if (t.isJSXNamespacedName(jsxAttribute.name)) {
               namespace = jsxAttribute.name.namespace;
               name = jsxAttribute.name.name;
@@ -94,7 +98,7 @@ export default declare(api => {
           }
         }
 
-        const children: (t.Expression | t.SpreadElement)[] = [];
+        const children: (T.Expression | T.SpreadElement)[] = [];
         for (const child of jsxElement.children) {
           if (t.isJSXText(child))
             children.push(t.stringLiteral(child.value));
@@ -106,36 +110,75 @@ export default declare(api => {
             children.push(t.spreadElement(child.expression));
         }
 
+        const componentName = fullNames.get(jsxName.name) || jsxName.name;
         path.replaceWith(t.objectExpression([
           t.objectProperty(t.identifier('kind'), t.stringLiteral('jsx')),
-          t.objectProperty(t.identifier('type'), t.stringLiteral(name)),
+          t.objectProperty(t.identifier('type'), t.stringLiteral(componentName)),
           t.objectProperty(t.identifier('props'), t.objectExpression(props)),
           t.objectProperty(t.identifier('children'), t.arrayExpression(children)),
         ]));
       }
     }
   };
+  return result;
 });
 
-function flushConst(importPath: NodePath<t.ImportDeclaration>, keepPath: boolean) {
-  const importNode = importPath.node;
-  const importNodes = (importPath.parentPath.node as t.Program).body.filter(i => t.isImportDeclaration(i));
-  const isLast = importNodes.indexOf(importNode) === importNodes.length - 1;
-  if (!isLast) {
-    if (!keepPath)
-      importPath.remove();
-    return;
-  }
+export function collectComponentUsages(node: T.Node) {
+  const importedLocalNames = new Set<string>();
+  const names = new Set<string>();
+  const identifiers = new Set<T.Identifier>();
+  traverse(node, {
+    enter: p => {
 
-  const components = importPath.parentPath.getData('pw-components');
-  if (!components.size)
-    return;
-  const variables = [];
-  for (const [key, value] of components)
-    variables.push(t.variableDeclarator(t.identifier(key), t.stringLiteral(value)));
-  importPath.skip();
-  if (keepPath)
-    importPath.replaceWithMultiple([importNode, t.variableDeclaration('const', variables)]);
-  else
-    importPath.replaceWith(t.variableDeclaration('const', variables));
+      // First look at all the imports.
+      if (t.isImportDeclaration(p.node)) {
+        const importNode = p.node;
+        if (!t.isStringLiteral(importNode.source))
+          return;
+
+        for (const specifier of importNode.specifiers) {
+          if (t.isImportNamespaceSpecifier(specifier))
+            continue;
+          importedLocalNames.add(specifier.local.name);
+        }
+      }
+
+      // Treat JSX-everything as component usages.
+      if (t.isJSXElement(p.node) && t.isJSXIdentifier(p.node.openingElement.name))
+        names.add(p.node.openingElement.name.name);
+
+      // Treat mount(identifier, ...) as component usage if it is in the importedLocalNames list.
+      if (t.isAwaitExpression(p.node) && t.isCallExpression(p.node.argument) && t.isIdentifier(p.node.argument.callee) && p.node.argument.callee.name === 'mount') {
+        const callExpression = p.node.argument;
+        const arg = callExpression.arguments[0];
+        if (!t.isIdentifier(arg) || !importedLocalNames.has(arg.name))
+          return;
+
+        names.add(arg.name);
+        identifiers.add(arg);
+      }
+    }
+  });
+  return { names, identifiers };
+}
+
+export type ComponentInfo = {
+  fullName: string,
+  importPath: string,
+  isModuleOrAlias: boolean,
+  importedName?: string
+};
+
+export function componentInfo(specifier: T.ImportSpecifier | T.ImportDefaultSpecifier, importSource: string, filename: string): ComponentInfo {
+  const isModuleOrAlias = !importSource.startsWith('.');
+  const importPath = isModuleOrAlias ? importSource : require.resolve(path.resolve(path.dirname(filename), importSource));
+  const prefix = importPath.replace(/[^\w_\d]/g, '_');
+  const pathInfo = { importPath, isModuleOrAlias };
+
+  if (t.isImportDefaultSpecifier(specifier))
+    return { fullName: prefix, ...pathInfo };
+
+  if (t.isIdentifier(specifier.imported))
+    return { fullName: prefix + '_' + specifier.imported.name, importedName: specifier.imported.name, ...pathInfo };
+  return { fullName: prefix + '_' + specifier.imported.value, importedName: specifier.imported.value, ...pathInfo };
 }

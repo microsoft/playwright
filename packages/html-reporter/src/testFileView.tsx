@@ -14,22 +14,22 @@
   limitations under the License.
 */
 
-import type { HTMLReport, TestFileSummary } from '@playwright/test/src/reporters/html';
+import type { HTMLReport, TestFileSummary } from '@playwright-test/reporters/html';
 import * as React from 'react';
 import { msToString } from './uiUtils';
 import { Chip } from './chip';
-import { Filter } from './filter';
+import type { Filter } from './filter';
 import { Link, ProjectLink } from './links';
 import { statusIcon } from './statusIcon';
 import './testFileView.css';
 
-export const TestFileView: React.FC<{
+export const TestFileView: React.FC<React.PropsWithChildren<{
   report: HTMLReport;
   file: TestFileSummary;
   isFileExpanded: (fileId: string) => boolean;
   setFileExpanded: (fileId: string, expanded: boolean) => void;
   filter: Filter;
-}> = ({ file, report, isFileExpanded, setFileExpanded, filter }) => {
+}>> = ({ file, report, isFileExpanded, setFileExpanded, filter }) => {
   return <Chip
     expanded={isFileExpanded(file.fileId)}
     noInsets={true}

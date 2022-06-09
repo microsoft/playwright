@@ -16,23 +16,27 @@
  */
 
 import * as os from 'os';
-import { TimeoutSettings } from '../utils/timeoutSettings';
-import { debugMode, mkdirIfNeeded, createGuid } from '../utils/utils';
-import { Browser, BrowserOptions } from './browser';
-import { Download } from './download';
-import * as frames from './frames';
+import { TimeoutSettings } from '../common/timeoutSettings';
+import { debugMode, createGuid } from '../utils';
+import { mkdirIfNeeded } from '../utils/fileUtils';
+import type { Browser, BrowserOptions } from './browser';
+import type { Download } from './download';
+import type * as frames from './frames';
 import { helper } from './helper';
 import * as network from './network';
-import { Page, PageBinding, PageDelegate } from './page';
-import { Progress } from './progress';
-import { Selectors } from './selectors';
-import * as types from './types';
+import type { PageDelegate } from './page';
+import { Page, PageBinding } from './page';
+import type { Progress } from './progress';
+import type { Selectors } from './selectors';
+import type * as types from './types';
 import path from 'path';
-import { CallMetadata, internalCallMetadata, SdkObject } from './instrumentation';
-import { Debugger } from './supplements/debugger';
+import fs from 'fs';
+import type { CallMetadata } from './instrumentation';
+import { serverSideCallMetadata, SdkObject } from './instrumentation';
+import { Debugger } from './debugger';
 import { Tracing } from './trace/recorder/tracing';
-import { HarRecorder } from './supplements/har/harRecorder';
-import { RecorderSupplement } from './supplements/recorderSupplement';
+import { HarRecorder } from './har/harRecorder';
+import { Recorder } from './recorder';
 import * as consoleApiSource from '../generated/consoleApiSource';
 import { BrowserContextAPIRequestContext } from './fetch';
 
@@ -66,6 +70,9 @@ export abstract class BrowserContext extends SdkObject {
   readonly tracing: Tracing;
   readonly fetchRequest: BrowserContextAPIRequestContext;
   private _customCloseHandler?: () => Promise<any>;
+  readonly _tempDirs: string[] = [];
+  private _settingStorageState = false;
+  readonly initScripts: string[] = [];
 
   constructor(browser: Browser, options: types.BrowserContextOptions, browserContextId: string | undefined) {
     super(browser, 'browser-context');
@@ -88,7 +95,7 @@ export abstract class BrowserContext extends SdkObject {
     return this._isPersistentContext;
   }
 
-  _setSelectors(selectors: Selectors) {
+  setSelectors(selectors: Selectors) {
     this._selectors = selectors;
   }
 
@@ -97,25 +104,26 @@ export abstract class BrowserContext extends SdkObject {
   }
 
   async _initialize() {
-    if (this.attribution.isInternal)
+    if (this.attribution.isInternalPlaywright)
       return;
     // Debugger will pause execution upon page.pause in headed mode.
     const contextDebugger = new Debugger(this);
-    this.instrumentation.addListener(contextDebugger, this);
 
     // When PWDEBUG=1, show inspector for each context.
     if (debugMode() === 'inspector')
-      await RecorderSupplement.show(this, { pauseOnNextStatement: true });
+      await Recorder.show(this, { pauseOnNextStatement: true });
 
     // When paused, show inspector.
     if (contextDebugger.isPaused())
-      RecorderSupplement.showInspector(this);
+      Recorder.showInspector(this);
     contextDebugger.on(Debugger.Events.PausedStateChanged, () => {
-      RecorderSupplement.showInspector(this);
+      Recorder.showInspector(this);
     });
 
     if (debugMode() === 'console')
       await this.extendInjectedScript(consoleApiSource.source);
+    if (this._options.serviceWorkers === 'block')
+      await this.addInitScript(`\nnavigator.serviceWorker.register = () => { console.warn('Service Worker registration blocked by Playwright'); };\n`);
   }
 
   async _ensureVideosPath() {
@@ -140,7 +148,7 @@ export abstract class BrowserContext extends SdkObject {
     this._downloads.clear();
     this.tracing.dispose();
     if (this._isPersistentContext)
-      this._onClosePersistent();
+      this.onClosePersistent();
     this._closePromiseFulfill!(new Error('Context closed'));
     this.emit(BrowserContext.Events.Close);
   }
@@ -148,30 +156,32 @@ export abstract class BrowserContext extends SdkObject {
   // BrowserContext methods.
   abstract pages(): Page[];
   abstract newPageDelegate(): Promise<PageDelegate>;
-  abstract _doCookies(urls: string[]): Promise<types.NetworkCookie[]>;
   abstract addCookies(cookies: types.SetNetworkCookieParam[]): Promise<void>;
   abstract clearCookies(): Promise<void>;
-  abstract _doGrantPermissions(origin: string, permissions: string[]): Promise<void>;
-  abstract _doClearPermissions(): Promise<void>;
   abstract setGeolocation(geolocation?: types.Geolocation): Promise<void>;
-  abstract _doSetHTTPCredentials(httpCredentials?: types.Credentials): Promise<void>;
   abstract setExtraHTTPHeaders(headers: types.HeadersArray): Promise<void>;
   abstract setOffline(offline: boolean): Promise<void>;
-  abstract _doAddInitScript(expression: string): Promise<void>;
-  abstract _doExposeBinding(binding: PageBinding): Promise<void>;
-  abstract _doUpdateRequestInterception(): Promise<void>;
-  abstract _doClose(): Promise<void>;
-  abstract _onClosePersistent(): void;
-  abstract _doCancelDownload(uuid: string): Promise<void>;
+  abstract cancelDownload(uuid: string): Promise<void>;
+  protected abstract doGetCookies(urls: string[]): Promise<types.NetworkCookie[]>;
+  protected abstract doGrantPermissions(origin: string, permissions: string[]): Promise<void>;
+  protected abstract doClearPermissions(): Promise<void>;
+  protected abstract doSetHTTPCredentials(httpCredentials?: types.Credentials): Promise<void>;
+  protected abstract doAddInitScript(expression: string): Promise<void>;
+  protected abstract doRemoveInitScripts(): Promise<void>;
+  protected abstract doExposeBinding(binding: PageBinding): Promise<void>;
+  protected abstract doRemoveExposedBindings(): Promise<void>;
+  protected abstract doUpdateRequestInterception(): Promise<void>;
+  protected abstract doClose(): Promise<void>;
+  protected abstract onClosePersistent(): void;
 
   async cookies(urls: string | string[] | undefined = []): Promise<types.NetworkCookie[]> {
     if (urls && !Array.isArray(urls))
       urls = [ urls ];
-    return await this._doCookies(urls as string[]);
+    return await this.doGetCookies(urls as string[]);
   }
 
   setHTTPCredentials(httpCredentials?: types.Credentials): Promise<void> {
-    return this._doSetHTTPCredentials(httpCredentials);
+    return this.doSetHTTPCredentials(httpCredentials);
   }
 
   async exposeBinding(name: string, needsHandle: boolean, playwrightBinding: frames.FunctionWithSource): Promise<void> {
@@ -183,7 +193,15 @@ export abstract class BrowserContext extends SdkObject {
     }
     const binding = new PageBinding(name, playwrightBinding, needsHandle);
     this._pageBindings.set(name, binding);
-    await this._doExposeBinding(binding);
+    await this.doExposeBinding(binding);
+  }
+
+  async removeExposedBindings() {
+    for (const key of this._pageBindings.keys()) {
+      if (!key.startsWith('__pw'))
+        this._pageBindings.delete(key);
+    }
+    await this.doRemoveExposedBindings();
   }
 
   async grantPermissions(permissions: string[], origin?: string) {
@@ -196,12 +214,12 @@ export abstract class BrowserContext extends SdkObject {
     permissions.forEach(p => existing.add(p));
     const list = [...existing.values()];
     this._permissions.set(resolvedOrigin, list);
-    await this._doGrantPermissions(resolvedOrigin, list);
+    await this.doGrantPermissions(resolvedOrigin, list);
   }
 
   async clearPermissions() {
     this._permissions.clear();
-    await this._doClearPermissions();
+    await this.doClearPermissions();
   }
 
   setDefaultNavigationTimeout(timeout: number | undefined) {
@@ -261,9 +279,19 @@ export abstract class BrowserContext extends SdkObject {
       this._options.httpCredentials = { username, password: password || '' };
   }
 
-  async _setRequestInterceptor(handler: network.RouteHandler | undefined): Promise<void> {
+  async addInitScript(script: string) {
+    this.initScripts.push(script);
+    await this.doAddInitScript(script);
+  }
+
+  async removeInitScripts(): Promise<void> {
+    this.initScripts.splice(0, this.initScripts.length);
+    await this.doRemoveInitScripts();
+  }
+
+  async setRequestInterceptor(handler: network.RouteHandler | undefined): Promise<void> {
     this._requestInterceptor = handler;
-    await this._doUpdateRequestInterception();
+    await this.doUpdateRequestInterception();
   }
 
   isClosingOrClosed() {
@@ -272,6 +300,10 @@ export abstract class BrowserContext extends SdkObject {
 
   private async _deleteAllDownloads(): Promise<void> {
     await Promise.all(Array.from(this._downloads).map(download => download.artifact.deleteOnContextClose()));
+  }
+
+  private async _deleteAllTempDirs(): Promise<void> {
+    await Promise.all(this._tempDirs.map(async dir => await fs.promises.unlink(dir).catch(e => {})));
   }
 
   setCustomCloseHandler(handler: (() => Promise<any>) | undefined) {
@@ -302,12 +334,13 @@ export abstract class BrowserContext extends SdkObject {
         await Promise.all(this.pages().map(page => page.close(metadata)));
       } else {
         // Close the context.
-        await this._doClose();
+        await this.doClose();
       }
 
       // We delete downloads after context closure
       // so that browser does not write to the download file anymore.
       promises.push(this._deleteAllDownloads());
+      promises.push(this._deleteAllTempDirs());
       await Promise.all(promises);
 
       // Custom handler should trigger didCloseInternal itself.
@@ -326,6 +359,8 @@ export abstract class BrowserContext extends SdkObject {
 
   async newPage(metadata: CallMetadata): Promise<Page> {
     const pageDelegate = await this.newPageDelegate();
+    if (metadata.isServerSide)
+      pageDelegate.potentiallyUninitializedPage().markAsServerSideOnly();
     const pageOrError = await pageDelegate.pageOrError();
     if (pageOrError instanceof Page) {
       if (pageOrError.isClosed())
@@ -345,7 +380,7 @@ export abstract class BrowserContext extends SdkObject {
       origins: []
     };
     if (this._origins.size)  {
-      const internalMetadata = internalCallMetadata();
+      const internalMetadata = serverSideCallMetadata();
       const page = await this.newPage(internalMetadata);
       await page._setServerRequestInterceptor(handler => {
         handler.fulfill({ body: '<html></html>' }).catch(() => {});
@@ -366,25 +401,34 @@ export abstract class BrowserContext extends SdkObject {
     return result;
   }
 
+  isSettingStorageState(): boolean {
+    return this._settingStorageState;
+  }
+
   async setStorageState(metadata: CallMetadata, state: types.SetStorageState) {
-    if (state.cookies)
-      await this.addCookies(state.cookies);
-    if (state.origins && state.origins.length)  {
-      const internalMetadata = internalCallMetadata();
-      const page = await this.newPage(internalMetadata);
-      await page._setServerRequestInterceptor(handler => {
-        handler.fulfill({ body: '<html></html>' }).catch(() => {});
-      });
-      for (const originState of state.origins) {
-        const frame = page.mainFrame();
-        await frame.goto(metadata, originState.origin);
-        await frame.evaluateExpression(`
-          originState => {
-            for (const { name, value } of (originState.localStorage || []))
-              localStorage.setItem(name, value);
-          }`, true, originState, 'utility');
+    this._settingStorageState = true;
+    try {
+      if (state.cookies)
+        await this.addCookies(state.cookies);
+      if (state.origins && state.origins.length)  {
+        const internalMetadata = serverSideCallMetadata();
+        const page = await this.newPage(internalMetadata);
+        await page._setServerRequestInterceptor(handler => {
+          handler.fulfill({ body: '<html></html>' }).catch(() => {});
+        });
+        for (const originState of state.origins) {
+          const frame = page.mainFrame();
+          await frame.goto(metadata, originState.origin);
+          await frame.evaluateExpression(`
+            originState => {
+              for (const { name, value } of (originState.localStorage || []))
+                localStorage.setItem(name, value);
+            }`, true, originState, 'utility');
+        }
+        await page.close(internalMetadata);
       }
-      await page.close(internalMetadata);
+    } finally {
+      this._settingStorageState = false;
     }
   }
 

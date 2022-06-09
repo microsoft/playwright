@@ -15,18 +15,19 @@
  */
 
 import type { BrowserWindow } from 'electron';
-import * as structs from '../../types/structs';
-import * as api from '../../types/types';
-import * as channels from '../protocol/channels';
-import { TimeoutSettings } from '../utils/timeoutSettings';
-import { headersObjectToArray } from '../utils/utils';
+import type * as childProcess from 'child_process';
+import type * as structs from '../../types/structs';
+import type * as api from '../../types/types';
+import type * as channels from '../protocol/channels';
+import { TimeoutSettings } from '../common/timeoutSettings';
+import { headersObjectToArray } from '../utils';
 import { BrowserContext } from './browserContext';
 import { ChannelOwner } from './channelOwner';
 import { envObjectToArray } from './clientHelper';
 import { Events } from './events';
 import { JSHandle, parseResult, serializeArgument } from './jsHandle';
-import { Page } from './page';
-import { Env, WaitForEventOptions, Headers } from './types';
+import type { Page } from './page';
+import type { Env, WaitForEventOptions, Headers } from './types';
 import { Waiter } from './waiter';
 
 type ElectronOptions = Omit<channels.ElectronLaunchOptions, 'env'|'extraHTTPHeaders'> & {
@@ -73,6 +74,10 @@ export class ElectronApplication extends ChannelOwner<channels.ElectronApplicati
       this._onPage(page);
     this._context.on(Events.BrowserContext.Page, page => this._onPage(page));
     this._channel.on('close', () => this.emit(Events.ElectronApplication.Close));
+  }
+
+  process(): childProcess.ChildProcess {
+    return this._toImpl().process();
   }
 
   _onPage(page: Page) {

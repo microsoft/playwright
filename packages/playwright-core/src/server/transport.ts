@@ -15,9 +15,10 @@
  * limitations under the License.
  */
 
-import WebSocket from 'ws';
-import { Progress } from './progress';
-import { makeWaitForNextTask } from '../utils/utils';
+import { ws } from '../utilsBundle';
+import type { WebSocket } from '../utilsBundle';
+import type { Progress } from './progress';
+import { makeWaitForNextTask } from '../utils';
 
 export type ProtocolRequest = {
   id: number;
@@ -30,7 +31,7 @@ export type ProtocolResponse = {
   id?: number;
   method?: string;
   sessionId?: string;
-  error?: { message: string; data: any; };
+  error?: { message: string; data: any; code?: number };
   params?: any;
   result?: any;
   pageProxyId?: string;
@@ -77,10 +78,11 @@ export class WebSocketTransport implements ConnectionTransport {
 
   constructor(progress: Progress, url: string, headers?: { [key: string]: string; }, followRedirects?: boolean) {
     this.wsEndpoint = url;
-    this._ws = new WebSocket(url, [], {
+    this._ws = new ws(url, [], {
       perMessageDeflate: false,
       maxPayload: 256 * 1024 * 1024, // 256Mb,
-      handshakeTimeout: progress.timeUntilDeadline(),
+      // Prevent internal http client error when passing negative timeout.
+      handshakeTimeout: Math.max(progress.timeUntilDeadline(), 1),
       headers,
       followRedirects,
     });
@@ -121,7 +123,7 @@ export class WebSocketTransport implements ConnectionTransport {
   }
 
   async closeAndWait() {
-    if (this._ws.readyState === WebSocket.CLOSED)
+    if (this._ws.readyState === ws.CLOSED)
       return;
     const promise = new Promise(f => this._ws.once('close', f));
     this.close();

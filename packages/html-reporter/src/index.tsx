@@ -14,15 +14,17 @@
  * limitations under the License.
  */
 
-import type { HTMLReport } from '@playwright/test/src/reporters/html';
+import type { HTMLReport } from '@playwright-test/reporters/html';
 import type zip from '@zip.js/zip.js';
+// @ts-ignore
+import zipImport from '@zip.js/zip.js/dist/zip-no-worker-inflate.min.js';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import './colors.css';
-import { LoadedReport } from './loadedReport';
+import type { LoadedReport } from './loadedReport';
 import { ReportView } from './reportView';
-
-const zipjs = (self as any).zip;
+// @ts-ignore
+const zipjs = zipImport as typeof zip;
 
 const ReportLoader: React.FC = () => {
   const [report, setReport] = React.useState<LoadedReport | undefined>();
@@ -44,7 +46,7 @@ class ZipReport implements LoadedReport {
   private _json!: HTMLReport;
 
   async load() {
-    const zipReader = new zipjs.ZipReader(new zipjs.Data64URIReader(window.playwrightReportBase64), { useWebWorkers: false }) as zip.ZipReader;
+    const zipReader = new zipjs.ZipReader(new zipjs.Data64URIReader((window as any).playwrightReportBase64), { useWebWorkers: false }) as zip.ZipReader;
     for (const entry of await zipReader.getEntries())
       this._entries.set(entry.filename, entry);
     this._json = await this.entry('report.json') as HTMLReport;

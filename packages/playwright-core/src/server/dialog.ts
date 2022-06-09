@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
-import { assert } from '../utils/utils';
-import { Page } from './page';
+import { assert } from '../utils';
+import type { Page } from './page';
 import { SdkObject } from './instrumentation';
 
 type OnHandle = (accept: boolean, promptText?: string) => Promise<void>;

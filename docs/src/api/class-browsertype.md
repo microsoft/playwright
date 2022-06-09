@@ -87,7 +87,7 @@ class BrowserTypeExamples
 ## async method: BrowserType.connect
 - returns: <[Browser]>
 
-This methods attaches Playwright to an existing browser instance.
+This method attaches Playwright to an existing browser instance.
 
 ### param: BrowserType.connect.wsEndpoint
 - `wsEndpoint` <[string]>
@@ -115,12 +115,12 @@ Logger sink for Playwright logging. Optional.
 - `timeout` <[float]>
 
 Maximum time in milliseconds to wait for the connection to be established. Defaults to
-`30000` (30 seconds). Pass `0` to disable timeout.
+`0` (no timeout).
 
 ## async method: BrowserType.connectOverCDP
 - returns: <[Browser]>
 
-This methods attaches Playwright to an existing browser instance using the Chrome DevTools Protocol.
+This method attaches Playwright to an existing browser instance using the Chrome DevTools Protocol.
 
 The default browser context is accessible via [`method: Browser.contexts`].
 

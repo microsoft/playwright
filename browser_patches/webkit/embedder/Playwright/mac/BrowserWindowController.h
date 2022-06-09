@@ -25,6 +25,12 @@
 
 @class WKWebView;
 
+@interface CustomWindow : NSWindow
+
+- (NSRect)constrainFrameRect:(NSRect)frameRect toScreen:(NSScreen *)screen;
+
+@end
+
 @interface BrowserWindowController : NSWindowController
 
 - (IBAction)goBack:(id)sender;

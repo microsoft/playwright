@@ -3,12 +3,14 @@
 Whenever a network route is set up with [`method: Page.route`] or [`method: BrowserContext.route`], the `Route` object
 allows to handle the route.
 
+Learn more about [networking](../network.md).
+
 ## async method: Route.abort
 
 Aborts the route's request.
 
 ### param: Route.abort.errorCode
-- `errorCode` <[string]>
+- `errorCode` ?<[string]>
 
 Optional error code. Defaults to `failed`, could be one of the following:
 * `'aborted'` - An operation was aborted (due to user action)
@@ -154,7 +156,7 @@ page.route("**/*", lambda route: route.fulfill(
 ```csharp
 await page.RouteAsync("**/*", route => route.FulfillAsync(
     status: 404,
-    contentType: "text/plain", 
+    contentType: "text/plain",
     body: "Not Found!"));
 ```
 
@@ -214,6 +216,12 @@ Optional response body as text.
 
 Optional response body as raw bytes.
 
+### option: Route.fulfill.har
+- `har` <[path]>
+
+HAR file to extract the response from. If HAR file contains an entry with the matching the url, its headers, status and body will be used. Individual fields such as headers can be overridden using fulfill options. If matching entry is not found, this method will throw.
+If `har` is a relative path, then it is resolved relative to the current working directory.
+
 ### option: Route.fulfill.path
 - `path` <[path]>
 
@@ -221,7 +229,6 @@ File path to respond with. The content type will be inferred from file extension
 is resolved relative to the current working directory.
 
 ### option: Route.fulfill.response
-* langs: js, java, python
 - `response` <[APIResponse]>
 
 [APIResponse] to fulfill route's request with. Individual fields of the response (such as headers) can be overridden using fulfill options.

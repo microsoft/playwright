@@ -4,5 +4,6 @@
 !LICENSE
 !register.d.ts
 !register.mjs
-!test.d.ts
-!test.js
+!registerSource.mjs
+!index.d.ts
+!index.js

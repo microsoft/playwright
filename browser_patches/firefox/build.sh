@@ -20,24 +20,17 @@ fi
 
 rm -rf .mozconfig
 
-if [[ "$(uname)" == "Darwin" ]]; then
-  CURRENT_HOST_OS_VERSION=$(getMacVersion)
-  # As of Oct 2021, building Firefox requires XCode 13
-  if [[ "${CURRENT_HOST_OS_VERSION}" != "10."* ]]; then
-    selectXcodeVersionOrDie "13"
-  else
-    echo "ERROR: ${CURRENT_HOST_OS_VERSION} is not supported"
-    exit 1
-  fi
+if is_mac; then
+  selectXcodeVersionOrDie $(node "${SCRIPT_FOLDER}/../get_xcode_version.js" firefox)
   echo "-- building on Mac"
-elif [[ "$(uname)" == "Linux" ]]; then
+elif is_linux; then
   echo "-- building on Linux"
-elif [[ "$(uname)" == MINGW* ]]; then
+elif is_win; then
   echo "ac_add_options --disable-update-agent" >> .mozconfig
   echo "ac_add_options --disable-default-browser-agent" >> .mozconfig
   echo "ac_add_options --disable-maintenance-service" >> .mozconfig
 
-  echo "-- building win64 build on MINGW"
+  echo "-- building on Windows"
   echo "ac_add_options --target=x86_64-pc-mingw32" >> .mozconfig
   echo "ac_add_options --host=x86_64-pc-mingw32" >> .mozconfig
   DLL_FILE=$("C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe" -latest -find '**\Redist\MSVC\*\x64\**\vcruntime140.dll')
@@ -67,7 +60,7 @@ else
   echo "ac_add_options --enable-release" >> .mozconfig
 fi
 
-if [[ "$(uname)" == MINGW* || "$(uname)" == "Darwin" ]]; then
+if is_win || is_mac; then
   # This options is only available on win and mac.
   echo "ac_add_options --disable-update-agent" >> .mozconfig
 fi
@@ -89,7 +82,7 @@ if [[ $1 != "--juggler" ]]; then
 fi
 
 if [[ $1 == "--full" || $2 == "--full" ]]; then
-  if [[ "$(uname)" == "Linux" ]]; then
+  if is_linux; then
     echo "ac_add_options --enable-bootstrap" >> .mozconfig
     SHELL=/bin/sh ./mach --no-interactive bootstrap --application-choice=browser
   fi
@@ -99,7 +92,7 @@ if [[ $1 == "--full" || $2 == "--full" ]]; then
   fi
 fi
 
-if [[ "$(uname)" == "Darwin" ]]; then
+if is_mac; then
   if [[ ! -d "$HOME/.mozbuild/clang" ]]; then
     echo "ERROR: build toolchains are not found, specifically \$HOME/.mozbuild/clang is not there!"
     echo "Since December, 2021, build toolchains have to be predownloaded (see https://github.com/microsoft/playwright/pull/10929)"
@@ -118,7 +111,7 @@ if [[ $1 == "--juggler" ]]; then
   ./mach build faster
 else
   ./mach build
-  if [[ "$(uname)" == "Darwin" ]]; then
+  if is_mac; then
     node "${SCRIPT_FOLDER}"/install-preferences.js "$PWD"/${OBJ_FOLDER}/dist
   else
     node "${SCRIPT_FOLDER}"/install-preferences.js "$PWD"/${OBJ_FOLDER}/dist/bin

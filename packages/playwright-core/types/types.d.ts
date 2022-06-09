@@ -14,12 +14,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Protocol } from './protocol';
+import { Protocol } from 'playwright-core/types/protocol';
 import { ChildProcess } from 'child_process';
 import { EventEmitter } from 'events';
 import { Readable } from 'stream';
 import { ReadStream } from 'fs';
-import { Serializable, EvaluationArgument, PageFunction, PageFunctionOn, SmartHandle, ElementHandleForTag, BindingSource } from './structs';
+import { Serializable, EvaluationArgument, PageFunction, PageFunctionOn, SmartHandle, ElementHandleForTag, BindingSource } from 'playwright-core/types/structs';
 
 type PageWaitForSelectorOptionsNotHidden = PageWaitForSelectorOptions & {
   state?: 'visible'|'attached';
@@ -2296,8 +2296,8 @@ export interface Page {
   }): Promise<null|Response>;
 
   /**
-   * Returns the main resource response. In case of multiple redirects, the navigation will resolve with the response of the
-   * last redirect.
+   * Returns the main resource response. In case of multiple redirects, the navigation will resolve with the first
+   * non-redirect response.
    *
    * The method will throw an error if:
    * - there's an SSL error (e.g. in case of self-signed certificates).
@@ -2450,7 +2450,10 @@ export interface Page {
   }): Promise<string>;
 
   /**
-   * Returns `input.value` for the selected `<input>` or `<textarea>` or `<select>` element. Throws for non-input elements.
+   * Returns `input.value` for the selected `<input>` or `<textarea>` or `<select>` element.
+   *
+   * Throws for non-input elements. However, if the element is inside the `<label>` element that has an associated
+   * [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), returns the value of the control.
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
@@ -2610,6 +2613,8 @@ export interface Page {
    * element immediately before performing an action, so a series of actions on the same locator can in fact be performed on
    * different DOM elements. That would happen if the DOM structure between those actions has changed.
    *
+   * [Learn more about locators](https://playwright.dev/docs/locators).
+   *
    * Shortcut for main frame's
    * [frame.locator(selector[, options])](https://playwright.dev/docs/api/class-frame#frame-locator).
    * @param selector A selector to use when resolving DOM element. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
@@ -2625,8 +2630,9 @@ export interface Page {
     has?: Locator;
 
     /**
-     * Matches elements containing specified text somewhere inside, possibly in a child or a descendant element. For example,
-     * `"Playwright"` matches `<article><div>Playwright</div></article>`.
+     * Matches elements containing specified text somewhere inside, possibly in a child or a descendant element. When passed a
+     * [string], matching is case-insensitive and searches for a substring. For example, `"Playwright"` matches
+     * `<article><div>Playwright</div></article>`.
      */
     hasText?: string|RegExp;
   }): Locator;
@@ -2891,7 +2897,10 @@ export interface Page {
   }): Promise<null|Response>;
 
   /**
-   * API testing helper associated with this page. Requests made with this API will use page cookies.
+   * API testing helper associated with this page. This method returns the same instance as
+   * [browserContext.request](https://playwright.dev/docs/api/class-browsercontext#browser-context-request) on the page's
+   * context. See [browserContext.request](https://playwright.dev/docs/api/class-browsercontext#browser-context-request) for
+   * more details.
    */
   request: APIRequestContext;
 
@@ -3183,11 +3192,13 @@ export interface Page {
   setExtraHTTPHeaders(headers: { [key: string]: string; }): Promise<void>;
 
   /**
-   * This method expects `selector` to point to an
-   * [input element](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input).
-   *
    * Sets the value of the file input to these file paths or files. If some of the `filePaths` are relative paths, then they
-   * are resolved relative to the the current working directory. For empty array, clears the selected files.
+   * are resolved relative to the current working directory. For empty array, clears the selected files.
+   *
+   * This method expects `selector` to point to an
+   * [input element](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input). However, if the element is inside the
+   * `<label>` element that has an associated
+   * [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), targets the control instead.
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param files
    * @param options
@@ -3805,7 +3816,7 @@ export interface Page {
 
     /**
      * A glob pattern, regex pattern or predicate receiving [URL] to match while waiting for the navigation. Note that if the
-     * parameter is a string without wilcard characters, the method will wait for navigation to URL that is exactly equal to
+     * parameter is a string without wildcard characters, the method will wait for navigation to URL that is exactly equal to
      * the string.
      */
     url?: string|RegExp|((url: URL) => boolean);
@@ -3918,7 +3929,7 @@ export interface Page {
    *
    * Shortcut for main frame's
    * [frame.waitForURL(url[, options])](https://playwright.dev/docs/api/class-frame#frame-wait-for-url).
-   * @param url A glob pattern, regex pattern or predicate receiving [URL] to match while waiting for the navigation. Note that if the parameter is a string without wilcard characters, the method will wait for navigation to URL that is exactly equal to
+   * @param url A glob pattern, regex pattern or predicate receiving [URL] to match while waiting for the navigation. Note that if the parameter is a string without wildcard characters, the method will wait for navigation to URL that is exactly equal to
    * the string.
    * @param options
    */
@@ -5270,7 +5281,10 @@ export interface Frame {
   }): Promise<string>;
 
   /**
-   * Returns `input.value` for the selected `<input>` or `<textarea>` or `<select>` element. Throws for non-input elements.
+   * Returns `input.value` for the selected `<input>` or `<textarea>` or `<select>` element.
+   *
+   * Throws for non-input elements. However, if the element is inside the `<label>` element that has an associated
+   * [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), returns the value of the control.
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
@@ -5427,6 +5441,8 @@ export interface Frame {
    * The method returns an element locator that can be used to perform actions in the frame. Locator is resolved to the
    * element immediately before performing an action, so a series of actions on the same locator can in fact be performed on
    * different DOM elements. That would happen if the DOM structure between those actions has changed.
+   *
+   * [Learn more about locators](https://playwright.dev/docs/locators).
    * @param selector A selector to use when resolving DOM element. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
@@ -5440,8 +5456,9 @@ export interface Frame {
     has?: Locator;
 
     /**
-     * Matches elements containing specified text somewhere inside, possibly in a child or a descendant element. For example,
-     * `"Playwright"` matches `<article><div>Playwright</div></article>`.
+     * Matches elements containing specified text somewhere inside, possibly in a child or a descendant element. When passed a
+     * [string], matching is case-insensitive and searches for a substring. For example, `"Playwright"` matches
+     * `<article><div>Playwright</div></article>`.
      */
     hasText?: string|RegExp;
   }): Locator;
@@ -5688,11 +5705,13 @@ export interface Frame {
   }): Promise<void>;
 
   /**
-   * This method expects `selector` to point to an
-   * [input element](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input).
-   *
    * Sets the value of the file input to these file paths or files. If some of the `filePaths` are relative paths, then they
-   * are resolved relative to the the current working directory. For empty array, clears the selected files.
+   * are resolved relative to the current working directory. For empty array, clears the selected files.
+   *
+   * This method expects `selector` to point to an
+   * [input element](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input). However, if the element is inside the
+   * `<label>` element that has an associated
+   * [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), targets the control instead.
    * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param files
    * @param options
@@ -6015,7 +6034,7 @@ export interface Frame {
 
     /**
      * A glob pattern, regex pattern or predicate receiving [URL] to match while waiting for the navigation. Note that if the
-     * parameter is a string without wilcard characters, the method will wait for navigation to URL that is exactly equal to
+     * parameter is a string without wildcard characters, the method will wait for navigation to URL that is exactly equal to
      * the string.
      */
     url?: string|RegExp|((url: URL) => boolean);
@@ -6047,7 +6066,7 @@ export interface Frame {
    * await frame.waitForURL('**\/target.html');
    * ```
    *
-   * @param url A glob pattern, regex pattern or predicate receiving [URL] to match while waiting for the navigation. Note that if the parameter is a string without wilcard characters, the method will wait for navigation to URL that is exactly equal to
+   * @param url A glob pattern, regex pattern or predicate receiving [URL] to match while waiting for the navigation. Note that if the parameter is a string without wildcard characters, the method will wait for navigation to URL that is exactly equal to
    * the string.
    * @param options
    */
@@ -8032,7 +8051,10 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
   innerText(): Promise<string>;
 
   /**
-   * Returns `input.value` for `<input>` or `<textarea>` or `<select>` element. Throws for non-input elements.
+   * Returns `input.value` for the selected `<input>` or `<textarea>` or `<select>` element.
+   *
+   * Throws for non-input elements. However, if the element is inside the `<label>` element that has an associated
+   * [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), returns the value of the control.
    * @param options
    */
   inputValue(options?: {
@@ -8126,10 +8148,14 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
   }): Promise<void>;
 
   /**
-   * Returns the buffer with the captured screenshot.
+   * This method captures a screenshot of the page, clipped to the size and position of this particular element. If the
+   * element is covered by other elements, it will not be actually visible on the screenshot. If the element is a scrollable
+   * container, only the currently scrolled content will be visible on the screenshot.
    *
    * This method waits for the [actionability](https://playwright.dev/docs/actionability) checks, then scrolls element into view before taking a
    * screenshot. If the element is detached from DOM, the method throws an error.
+   *
+   * Returns the buffer with the captured screenshot.
    * @param options
    */
   screenshot(options?: {
@@ -8144,11 +8170,10 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
     animations?: "disabled"|"allow";
 
     /**
-     * When set to `"ready"`, screenshot will wait for
-     * [`document.fonts.ready`](https://developer.mozilla.org/en-US/docs/Web/API/FontFaceSet/ready) promise to resolve in all
-     * frames. Defaults to `"nowait"`.
+     * When set to `"hide"`, screenshot will hide text caret. When set to `"initial"`, text caret behavior will not be changed.
+     * Defaults to `"hide"`.
      */
-    fonts?: "ready"|"nowait";
+    caret?: "hide"|"initial";
 
     /**
      * Specify locators that should be masked when the screenshot is taken. Masked elements will be overlayed with a pink box
@@ -8177,9 +8202,11 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
     /**
      * When set to `"css"`, screenshot will have a single pixel per each css pixel on the page. For high-dpi devices, this will
      * keep screenshots small. Using `"device"` option will produce a single pixel per each device pixel, so screenhots of
-     * high-dpi devices will be twice as large or even larger. Defaults to `"device"`.
+     * high-dpi devices will be twice as large or even larger.
+     *
+     * Defaults to `"device"`.
      */
-    size?: "css"|"device";
+    scale?: "css"|"device";
 
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
@@ -8296,6 +8323,10 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
   /**
    * This method waits for [actionability](https://playwright.dev/docs/actionability) checks, then focuses the element and selects all its text
    * content.
+   *
+   * If the element is inside the `<label>` element that has an associated
+   * [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), focuses and selects text in the
+   * control instead.
    * @param options
    */
   selectText(options?: {
@@ -8368,11 +8399,13 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
   }): Promise<void>;
 
   /**
-   * This method expects `elementHandle` to point to an
-   * [input element](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input).
-   *
    * Sets the value of the file input to these file paths or files. If some of the `filePaths` are relative paths, then they
-   * are resolved relative to the the current working directory. For empty array, clears the selected files.
+   * are resolved relative to the current working directory. For empty array, clears the selected files.
+   *
+   * This method expects [ElementHandle] to point to an
+   * [input element](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input). However, if the element is inside the
+   * `<label>` element that has an associated
+   * [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), targets the control instead.
    * @param files
    * @param options
    */
@@ -8589,8 +8622,8 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
   /**
    * Returns when the element satisfies the `state`.
    *
-   * Depending on the `state` parameter, this method waits for one of the [actionability](https://playwright.dev/docs/actionability) checks to pass.
-   * This method throws when the element is detached while waiting, unless waiting for the `"hidden"` state.
+   * Depending on the `state` parameter, this method waits for one of the [actionability](https://playwright.dev/docs/actionability) checks to
+   * pass. This method throws when the element is detached while waiting, unless waiting for the `"hidden"` state.
    * - `"visible"` Wait until the element is [visible](https://playwright.dev/docs/actionability#visible).
    * - `"hidden"` Wait until the element is [not visible](https://playwright.dev/docs/actionability#visible) or
    *   [not attached](https://playwright.dev/docs/actionability#attached). Note that waiting for hidden does not throw when the element detaches.
@@ -9147,6 +9180,27 @@ export interface Locator {
   }): Promise<void>;
 
   /**
+   * This method narrows existing locator according to the options, for example filters by text.
+   * @param options
+   */
+  filter(options?: {
+    /**
+     * Matches elements containing an element that matches an inner locator. Inner locator is queried against the outer one.
+     * For example, `article` that has `text=Playwright` matches `<article><div>Playwright</div></article>`.
+     *
+     * Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
+     */
+    has?: Locator;
+
+    /**
+     * Matches elements containing specified text somewhere inside, possibly in a child or a descendant element. When passed a
+     * [string], matching is case-insensitive and searches for a substring. For example, `"Playwright"` matches
+     * `<article><div>Playwright</div></article>`.
+     */
+    hasText?: string|RegExp;
+  }): Locator;
+
+  /**
    * Returns locator to the first matching element.
    */
   first(): Locator;
@@ -9279,7 +9333,10 @@ export interface Locator {
   }): Promise<string>;
 
   /**
-   * Returns `input.value` for `<input>` or `<textarea>` or `<select>` element. Throws for non-input elements.
+   * Returns `input.value` for the selected `<input>` or `<textarea>` or `<select>` element.
+   *
+   * Throws for non-input elements. However, if the element is inside the `<label>` element that has an associated
+   * [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), returns the value of the control.
    * @param options
    */
   inputValue(options?: {
@@ -9382,7 +9439,8 @@ export interface Locator {
   last(): Locator;
 
   /**
-   * The method finds an element matching the specified selector in the `Locator`'s subtree.
+   * The method finds an element matching the specified selector in the `Locator`'s subtree. It also accepts filter options,
+   * similar to [locator.filter([options])](https://playwright.dev/docs/api/class-locator#locator-filter) method.
    * @param selector A selector to use when resolving DOM element. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
    * @param options
    */
@@ -9396,14 +9454,15 @@ export interface Locator {
     has?: Locator;
 
     /**
-     * Matches elements containing specified text somewhere inside, possibly in a child or a descendant element. For example,
-     * `"Playwright"` matches `<article><div>Playwright</div></article>`.
+     * Matches elements containing specified text somewhere inside, possibly in a child or a descendant element. When passed a
+     * [string], matching is case-insensitive and searches for a substring. For example, `"Playwright"` matches
+     * `<article><div>Playwright</div></article>`.
      */
     hasText?: string|RegExp;
   }): Locator;
 
   /**
-   * Returns locator to the n-th matching element.
+   * Returns locator to the n-th matching element. It's zero based, `nth(0)` selects the first element.
    * @param index
    */
   nth(index: number): Locator;
@@ -9459,10 +9518,14 @@ export interface Locator {
   }): Promise<void>;
 
   /**
-   * Returns the buffer with the captured screenshot.
+   * This method captures a screenshot of the page, clipped to the size and position of a particular element matching the
+   * locator. If the element is covered by other elements, it will not be actually visible on the screenshot. If the element
+   * is a scrollable container, only the currently scrolled content will be visible on the screenshot.
    *
    * This method waits for the [actionability](https://playwright.dev/docs/actionability) checks, then scrolls element into view before taking a
    * screenshot. If the element is detached from DOM, the method throws an error.
+   *
+   * Returns the buffer with the captured screenshot.
    * @param options
    */
   screenshot(options?: LocatorScreenshotOptions): Promise<Buffer>;
@@ -9565,6 +9628,10 @@ export interface Locator {
   /**
    * This method waits for [actionability](https://playwright.dev/docs/actionability) checks, then focuses the element and selects all its text
    * content.
+   *
+   * If the element is inside the `<label>` element that has an associated
+   * [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), focuses and selects text in the
+   * control instead.
    * @param options
    */
   selectText(options?: {
@@ -9637,11 +9704,13 @@ export interface Locator {
   }): Promise<void>;
 
   /**
-   * This method expects `element` to point to an
-   * [input element](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input).
-   *
    * Sets the value of the file input to these file paths or files. If some of the `filePaths` are relative paths, then they
-   * are resolved relative to the the current working directory. For empty array, clears the selected files.
+   * are resolved relative to the current working directory. For empty array, clears the selected files.
+   *
+   * This method expects [Locator] to point to an
+   * [input element](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input). However, if the element is inside the
+   * `<label>` element that has an associated
+   * [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), targets the control instead.
    * @param files
    * @param options
    */
@@ -9917,7 +9986,7 @@ export interface Locator {
  */
 export interface BrowserType<Unused = {}> {
   /**
-   * This methods attaches Playwright to an existing browser instance using the Chrome DevTools Protocol.
+   * This method attaches Playwright to an existing browser instance using the Chrome DevTools Protocol.
    *
    * The default browser context is accessible via
    * [browser.contexts()](https://playwright.dev/docs/api/class-browser#browser-contexts).
@@ -9932,7 +10001,7 @@ export interface BrowserType<Unused = {}> {
    * @deprecated
    */
   /**
-   * This methods attaches Playwright to an existing browser instance using the Chrome DevTools Protocol.
+   * This method attaches Playwright to an existing browser instance using the Chrome DevTools Protocol.
    *
    * The default browser context is accessible via
    * [browser.contexts()](https://playwright.dev/docs/api/class-browser#browser-contexts).
@@ -9943,7 +10012,7 @@ export interface BrowserType<Unused = {}> {
    */
   connectOverCDP(options: ConnectOverCDPOptions & { wsEndpoint?: string }): Promise<Browser>;
   /**
-   * This methods attaches Playwright to an existing browser instance.
+   * This method attaches Playwright to an existing browser instance.
    * @param wsEndpoint A browser websocket endpoint to connect to.
    * @param options
    */
@@ -9955,7 +10024,7 @@ export interface BrowserType<Unused = {}> {
    * @deprecated
    */
   /**
-   * This methods attaches Playwright to an existing browser instance.
+   * This method attaches Playwright to an existing browser instance.
    * @param wsEndpoint A browser websocket endpoint to connect to.
    * @param options
    */
@@ -10241,6 +10310,13 @@ export interface BrowserType<Unused = {}> {
        * Path on the filesystem to write the HAR file to.
        */
       path: string;
+
+      /**
+       * A glob or regex pattern to filter requests that are stored in the HAR. When a `baseURL` via the context options was
+       * provided and the passed URL is a path, it gets merged via the
+       * [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
+       */
+      urlFilter?: string|RegExp;
     };
 
     /**
@@ -10296,12 +10372,21 @@ export interface BrowserType<Unused = {}> {
     };
 
     /**
+     * - `"allow"`: [Service Workers](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API) can be registered
+     *   by sites.
+     * - `"block"`: Playwright will block all registration of Service Workers.
+     *
+     * Defaults to `"allow"`.
+     */
+    serviceWorkers?: "allow"|"block";
+
+    /**
      * Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on.
      */
     slowMo?: number;
 
     /**
-     * It specified, enables strict selectors mode for this context. In the strict selectors mode all operations on selectors
+     * If specified, enables strict selectors mode for this context. In the strict selectors mode all operations on selectors
      * that imply single target DOM element will throw when more than one element matches the selector. See [Locator] to learn
      * more about the strict mode.
      */
@@ -10561,8 +10646,8 @@ export interface CDPSession {
   removeListener: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
   once: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
   /**
-   * @param method protocol method name
-   * @param params Optional method parameters
+   * @param method Protocol method name.
+   * @param params Optional method parameters.
    */
   send<T extends keyof Protocol.CommandParameters>(
     method: T,
@@ -10658,7 +10743,8 @@ export interface Accessibility {
    *     return node;
    *   for (const child of node.children || []) {
    *     const foundNode = findFocusedNode(child);
-   *     return foundNode;
+   *     if (foundNode)
+   *       return foundNode;
    *   }
    *   return null;
    * }
@@ -10666,17 +10752,7 @@ export interface Accessibility {
    *
    * @param options
    */
-  snapshot(options?: {
-    /**
-     * Prune uninteresting nodes from the tree. Defaults to `true`.
-     */
-    interestingOnly?: boolean;
-
-    /**
-     * The root DOM element for the snapshot. Defaults to the whole page.
-     */
-    root?: ElementHandle;
-  }): Promise<null|AccessibilityNode>;
+  snapshot(options?: AccessibilitySnapshotOptions): Promise<null|AccessibilityNode>;
 }
 
 type AccessibilityNode = {
@@ -10795,18 +10871,18 @@ export interface ElectronApplication {
    * The only difference between
    * [electronApplication.evaluate(pageFunction[, arg])](https://playwright.dev/docs/api/class-electronapplication#electron-application-evaluate)
    * and
-   * [electronApplication.evaluateHandle(pageFunction, arg)](https://playwright.dev/docs/api/class-electronapplication#electron-application-evaluate-handle)
+   * [electronApplication.evaluateHandle(pageFunction[, arg])](https://playwright.dev/docs/api/class-electronapplication#electron-application-evaluate-handle)
    * is that
-   * [electronApplication.evaluateHandle(pageFunction, arg)](https://playwright.dev/docs/api/class-electronapplication#electron-application-evaluate-handle)
+   * [electronApplication.evaluateHandle(pageFunction[, arg])](https://playwright.dev/docs/api/class-electronapplication#electron-application-evaluate-handle)
    * returns [JSHandle].
    *
    * If the function passed to the
-   * [electronApplication.evaluateHandle(pageFunction, arg)](https://playwright.dev/docs/api/class-electronapplication#electron-application-evaluate-handle)
+   * [electronApplication.evaluateHandle(pageFunction[, arg])](https://playwright.dev/docs/api/class-electronapplication#electron-application-evaluate-handle)
    * returns a [Promise], then
-   * [electronApplication.evaluateHandle(pageFunction, arg)](https://playwright.dev/docs/api/class-electronapplication#electron-application-evaluate-handle)
+   * [electronApplication.evaluateHandle(pageFunction[, arg])](https://playwright.dev/docs/api/class-electronapplication#electron-application-evaluate-handle)
    * would wait for the promise to resolve and return its value.
    * @param pageFunction Function to be evaluated in the worker context.
-   * @param arg
+   * @param arg Optional argument to pass to `pageFunction`.
    */
   evaluateHandle<R, Arg>(pageFunction: PageFunctionOn<ElectronType, Arg, R>, arg: Arg): Promise<SmartHandle<R>>;
   /**
@@ -10815,18 +10891,18 @@ export interface ElectronApplication {
    * The only difference between
    * [electronApplication.evaluate(pageFunction[, arg])](https://playwright.dev/docs/api/class-electronapplication#electron-application-evaluate)
    * and
-   * [electronApplication.evaluateHandle(pageFunction, arg)](https://playwright.dev/docs/api/class-electronapplication#electron-application-evaluate-handle)
+   * [electronApplication.evaluateHandle(pageFunction[, arg])](https://playwright.dev/docs/api/class-electronapplication#electron-application-evaluate-handle)
    * is that
-   * [electronApplication.evaluateHandle(pageFunction, arg)](https://playwright.dev/docs/api/class-electronapplication#electron-application-evaluate-handle)
+   * [electronApplication.evaluateHandle(pageFunction[, arg])](https://playwright.dev/docs/api/class-electronapplication#electron-application-evaluate-handle)
    * returns [JSHandle].
    *
    * If the function passed to the
-   * [electronApplication.evaluateHandle(pageFunction, arg)](https://playwright.dev/docs/api/class-electronapplication#electron-application-evaluate-handle)
+   * [electronApplication.evaluateHandle(pageFunction[, arg])](https://playwright.dev/docs/api/class-electronapplication#electron-application-evaluate-handle)
    * returns a [Promise], then
-   * [electronApplication.evaluateHandle(pageFunction, arg)](https://playwright.dev/docs/api/class-electronapplication#electron-application-evaluate-handle)
+   * [electronApplication.evaluateHandle(pageFunction[, arg])](https://playwright.dev/docs/api/class-electronapplication#electron-application-evaluate-handle)
    * would wait for the promise to resolve and return its value.
    * @param pageFunction Function to be evaluated in the worker context.
-   * @param arg
+   * @param arg Optional argument to pass to `pageFunction`.
    */
   evaluateHandle<R>(pageFunction: PageFunctionOn<ElectronType, void, R>, arg?: any): Promise<SmartHandle<R>>;
   /**
@@ -10910,6 +10986,11 @@ export interface ElectronApplication {
    *
    */
   firstWindow(): Promise<Page>;
+
+  /**
+   * Returns the main process for this Electron Application.
+   */
+  process(): ChildProcess;
 
   /**
    * This event is issued when the application closes.
@@ -11108,7 +11189,17 @@ export interface Android {
    */
   devices(options?: {
     /**
-     * Optional port to establish ADB server connection.
+     * Optional host to establish ADB server connection. Default to `127.0.0.1`.
+     */
+    host?: string;
+
+    /**
+     * Prevents automatic playwright driver installation on attach. Assumes that the drivers have been installed already.
+     */
+    omitDriverInstall?: boolean;
+
+    /**
+     * Optional port to establish ADB server connection. Default to `5037`.
      */
     port?: number;
   }): Promise<Array<AndroidDevice>>;
@@ -11384,6 +11475,13 @@ export interface AndroidDevice {
        * Path on the filesystem to write the HAR file to.
        */
       path: string;
+
+      /**
+       * A glob or regex pattern to filter requests that are stored in the HAR. When a `baseURL` via the context options was
+       * provided and the passed URL is a path, it gets merged via the
+       * [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
+       */
+      urlFilter?: string|RegExp;
     };
 
     /**
@@ -11439,7 +11537,16 @@ export interface AndroidDevice {
     };
 
     /**
-     * It specified, enables strict selectors mode for this context. In the strict selectors mode all operations on selectors
+     * - `"allow"`: [Service Workers](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API) can be registered
+     *   by sites.
+     * - `"block"`: Playwright will block all registration of Service Workers.
+     *
+     * Defaults to `"allow"`.
+     */
+    serviceWorkers?: "allow"|"block";
+
+    /**
+     * If specified, enables strict selectors mode for this context. In the strict selectors mode all operations on selectors
      * that imply single target DOM element will throw when more than one element matches the selector. See [Locator] to learn
      * more about the strict mode.
      */
@@ -11721,9 +11828,14 @@ export interface AndroidDevice {
    */
   webView(selector: {
     /**
-     * Package identifier.
+     * Optional Package identifier.
      */
-    pkg: string;
+    pkg?: string;
+
+    /**
+     * Optional webview socket name.
+     */
+    socketName?: string;
   }, options?: {
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
@@ -11910,9 +12022,10 @@ export interface AndroidWebView {
 }
 
 /**
- * Exposes API that can be used for the Web API testing. Each Playwright browser context has a APIRequestContext instance
- * attached which shares cookies with the page context. Its also possible to create a new APIRequestContext instance
- * manually. For more information see [here](https://playwright.dev/docs/class-apirequestcontext).
+ * Exposes API that can be used for the Web API testing. This class is used for creating [APIRequestContext] instance which
+ * in turn can be used for sending web requests. An instance of this class can be obtained via
+ * [playwright.request](https://playwright.dev/docs/api/class-playwright#playwright-request). For more information see
+ * [APIRequestContext].
  */
 export interface APIRequest {
   /**
@@ -12037,9 +12150,28 @@ export interface APIRequest {
 
 /**
  * This API is used for the Web API testing. You can use it to trigger API endpoints, configure micro-services, prepare
- * environment or the service to your e2e test. When used on [Page] or a [BrowserContext], this API will automatically use
- * the cookies from the corresponding [BrowserContext]. This means that if you log in using this API, your e2e test will be
- * logged in and vice versa.
+ * environment or the service to your e2e test.
+ *
+ * Each Playwright browser context has associated with it [APIRequestContext] instance which shares cookie storage with the
+ * browser context and can be accessed via
+ * [browserContext.request](https://playwright.dev/docs/api/class-browsercontext#browser-context-request) or
+ * [page.request](https://playwright.dev/docs/api/class-page#page-request). It is also possible to create a new
+ * APIRequestContext instance manually by calling
+ * [apiRequest.newContext([options])](https://playwright.dev/docs/api/class-apirequest#api-request-new-context).
+ *
+ * **Cookie management**
+ *
+ * [APIRequestContext] retuned by
+ * [browserContext.request](https://playwright.dev/docs/api/class-browsercontext#browser-context-request) and
+ * [page.request](https://playwright.dev/docs/api/class-page#page-request) shares cookie storage with the corresponding
+ * [BrowserContext]. Each API request will have `Cookie` header populated with the values from the browser context. If the
+ * API response contains `Set-Cookie` header it will automatically update [BrowserContext] cookies and requests made from
+ * the page will pick them up. This means that if you log in using this API, your e2e test will be logged in and vice
+ * versa.
+ *
+ * If you want API requests to not interfere with the browser cookies you shoud create a new [APIRequestContext] by calling
+ * [apiRequest.newContext([options])](https://playwright.dev/docs/api/class-apirequest#api-request-new-context). Such
+ * `APIRequestContext` object will have its own isolated cookie storage.
  *
  */
 export interface APIRequestContext {
@@ -12647,6 +12779,11 @@ export interface Browser extends EventEmitter {
   off(event: 'disconnected', listener: (browser: Browser) => void): this;
 
   /**
+   * Get the browser type (chromium, firefox or webkit) that the browser belongs to.
+   */
+  browserType(): BrowserType;
+
+  /**
    * In case this browser is obtained using
    * [browserType.launch([options])](https://playwright.dev/docs/api/class-browsertype#browser-type-launch), closes the
    * browser and all of its pages (if any were opened).
@@ -12880,6 +13017,13 @@ export interface Browser extends EventEmitter {
        * Path on the filesystem to write the HAR file to.
        */
       path: string;
+
+      /**
+       * A glob or regex pattern to filter requests that are stored in the HAR. When a `baseURL` via the context options was
+       * provided and the passed URL is a path, it gets merged via the
+       * [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
+       */
+      urlFilter?: string|RegExp;
     };
 
     /**
@@ -12933,6 +13077,15 @@ export interface Browser extends EventEmitter {
        */
       height: number;
     };
+
+    /**
+     * - `"allow"`: [Service Workers](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API) can be registered
+     *   by sites.
+     * - `"block"`: Playwright will block all registration of Service Workers.
+     *
+     * Defaults to `"allow"`.
+     */
+    serviceWorkers?: "allow"|"block";
 
     /**
      * Populates context with given storage state. This option can be used to initialize context with logged-in information
@@ -12989,7 +13142,7 @@ export interface Browser extends EventEmitter {
     };
 
     /**
-     * It specified, enables strict selectors mode for this context. In the strict selectors mode all operations on selectors
+     * If specified, enables strict selectors mode for this context. In the strict selectors mode all operations on selectors
      * that imply single target DOM element will throw when more than one element matches the selector. See [Locator] to learn
      * more about the strict mode.
      */
@@ -13047,8 +13200,8 @@ export interface Browser extends EventEmitter {
 
   /**
    * > NOTE: This API controls [Chromium Tracing](https://www.chromium.org/developers/how-tos/trace-event-profiling-tool)
-   * which is a low-level chromium-specific debugging tool. API to control [Playwright Tracing](../trace-viewer) could be
-   * found [here](https://playwright.dev/docs/class-tracing).
+   * which is a low-level chromium-specific debugging tool. API to control [Playwright Tracing](https://playwright.dev/docs/trace-viewer) could be
+   * found [here](https://playwright.dev/docs/api/class-tracing).
    *
    * You can use [browser.startTracing([page, options])](https://playwright.dev/docs/api/class-browser#browser-start-tracing)
    * and [browser.stopTracing()](https://playwright.dev/docs/api/class-browser#browser-stop-tracing) to create a trace file
@@ -13082,8 +13235,8 @@ export interface Browser extends EventEmitter {
 
   /**
    * > NOTE: This API controls [Chromium Tracing](https://www.chromium.org/developers/how-tos/trace-event-profiling-tool)
-   * which is a low-level chromium-specific debugging tool. API to control [Playwright Tracing](../trace-viewer) could be
-   * found [here](https://playwright.dev/docs/class-tracing).
+   * which is a low-level chromium-specific debugging tool. API to control [Playwright Tracing](https://playwright.dev/docs/trace-viewer) could be
+   * found [here](https://playwright.dev/docs/api/class-tracing).
    *
    * Returns the buffer with trace data.
    */
@@ -13231,7 +13384,7 @@ export interface ConsoleMessage {
  *   await page.goto('https://chromium.org');
  *   const coverage = await page.coverage.stopJSCoverage();
  *   for (const entry of coverage) {
- *     const converter = new v8toIstanbul('', 0, { source: entry.source });
+ *     const converter = v8toIstanbul('', 0, { source: entry.source });
  *     await converter.load();
  *     converter.applyCoverage(entry.functions);
  *     console.log(JSON.stringify(converter.toIstanbul()));
@@ -13639,6 +13792,13 @@ export interface Electron {
        * Path on the filesystem to write the HAR file to.
        */
       path: string;
+
+      /**
+       * A glob or regex pattern to filter requests that are stored in the HAR. When a `baseURL` via the context options was
+       * provided and the passed URL is a path, it gets merged via the
+       * [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
+       */
+      urlFilter?: string|RegExp;
     };
 
     /**
@@ -13720,7 +13880,7 @@ export interface FileChooser {
 
   /**
    * Sets the value of the file input this chooser is associated with. If some of the `filePaths` are relative paths, then
-   * they are resolved relative to the the current working directory. For empty array, clears the selected files.
+   * they are resolved relative to the current working directory. For empty array, clears the selected files.
    * @param files
    * @param options
    */
@@ -13839,14 +13999,15 @@ export interface FrameLocator {
     has?: Locator;
 
     /**
-     * Matches elements containing specified text somewhere inside, possibly in a child or a descendant element. For example,
-     * `"Playwright"` matches `<article><div>Playwright</div></article>`.
+     * Matches elements containing specified text somewhere inside, possibly in a child or a descendant element. When passed a
+     * [string], matching is case-insensitive and searches for a substring. For example, `"Playwright"` matches
+     * `<article><div>Playwright</div></article>`.
      */
     hasText?: string|RegExp;
   }): Locator;
 
   /**
-   * Returns locator to the n-th matching frame.
+   * Returns locator to the n-th matching frame. It's zero based, `nth(0)` selects the first frame.
    * @param index
    */
   nth(index: number): FrameLocator;
@@ -14141,7 +14302,7 @@ export interface Mouse {
    */
   move(x: number, y: number, options?: {
     /**
-     * defaults to 1. Sends intermediate `mousemove` events.
+     * Defaults to 1. Sends intermediate `mousemove` events.
      */
     steps?: number;
   }): Promise<void>;
@@ -14478,6 +14639,12 @@ export interface Response {
   frame(): Frame;
 
   /**
+   * Indicates whether this Response was fullfilled by a Service Worker's Fetch Handler (i.e. via
+   * [FetchEvent.respondWith](https://developer.mozilla.org/en-US/docs/Web/API/FetchEvent/respondWith)).
+   */
+  fromServiceWorker(): boolean;
+
+  /**
    * **DEPRECATED** Incomplete list of headers as seen by the rendering engine. Use
    * [response.allHeaders()](https://playwright.dev/docs/api/class-response#response-all-headers) instead.
    * @deprecated
@@ -14602,6 +14769,8 @@ export interface Response {
  * [page.route(url, handler[, options])](https://playwright.dev/docs/api/class-page#page-route) or
  * [browserContext.route(url, handler[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-route),
  * the `Route` object allows to handle the route.
+ *
+ * Learn more about [networking](https://playwright.dev/docs/network).
  */
 export interface Route {
   /**
@@ -14697,6 +14866,14 @@ export interface Route {
      * If set, equals to setting `Content-Type` response header.
      */
     contentType?: string;
+
+    /**
+     * HAR file to extract the response from. If HAR file contains an entry with the matching the url, its headers, status and
+     * body will be used. Individual fields such as headers can be overridden using fulfill options. If matching entry is not
+     * found, this method will throw. If `har` is a relative path, then it is resolved relative to the current working
+     * directory.
+     */
+    har?: string;
 
     /**
      * Response headers. Header values will be converted to a string.
@@ -15318,6 +15495,13 @@ export interface BrowserContextOptions {
      * Path on the filesystem to write the HAR file to.
      */
     path: string;
+
+    /**
+     * A glob or regex pattern to filter requests that are stored in the HAR. When a `baseURL` via the context options was
+     * provided and the passed URL is a path, it gets merged via the
+     * [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
+     */
+    urlFilter?: string|RegExp;
   };
 
   /**
@@ -15371,6 +15555,15 @@ export interface BrowserContextOptions {
      */
     height: number;
   };
+
+  /**
+   * - `"allow"`: [Service Workers](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API) can be registered
+   *   by sites.
+   * - `"block"`: Playwright will block all registration of Service Workers.
+   *
+   * Defaults to `"allow"`.
+   */
+  serviceWorkers?: "allow"|"block";
 
   /**
    * Populates context with given storage state. This option can be used to initialize context with logged-in information
@@ -15427,7 +15620,7 @@ export interface BrowserContextOptions {
   };
 
   /**
-   * It specified, enables strict selectors mode for this context. In the strict selectors mode all operations on selectors
+   * If specified, enables strict selectors mode for this context. In the strict selectors mode all operations on selectors
    * that imply single target DOM element will throw when more than one element matches the selector. See [Locator] to learn
    * more about the strict mode.
    */
@@ -15506,6 +15699,18 @@ export interface Geolocation {
    * Non-negative accuracy value. Defaults to `0`.
    */
   accuracy?: number;
+}
+
+interface AccessibilitySnapshotOptions {
+  /**
+   * Prune uninteresting nodes from the tree. Defaults to `true`.
+   */
+  interestingOnly?: boolean;
+
+  /**
+   * The root DOM element for the snapshot. Defaults to the whole page.
+   */
+  root?: ElementHandle;
 }
 
 export interface LaunchOptions {
@@ -15682,8 +15887,7 @@ export interface ConnectOptions {
   slowMo?: number;
 
   /**
-   * Maximum time in milliseconds to wait for the connection to be established. Defaults to `30000` (30 seconds). Pass `0` to
-   * disable timeout.
+   * Maximum time in milliseconds to wait for the connection to be established. Defaults to `0` (no timeout).
    */
   timeout?: number;
 }
@@ -15700,11 +15904,10 @@ export interface LocatorScreenshotOptions {
   animations?: "disabled"|"allow";
 
   /**
-   * When set to `"ready"`, screenshot will wait for
-   * [`document.fonts.ready`](https://developer.mozilla.org/en-US/docs/Web/API/FontFaceSet/ready) promise to resolve in all
-   * frames. Defaults to `"nowait"`.
+   * When set to `"hide"`, screenshot will hide text caret. When set to `"initial"`, text caret behavior will not be changed.
+   * Defaults to `"hide"`.
    */
-  fonts?: "ready"|"nowait";
+  caret?: "hide"|"initial";
 
   /**
    * Specify locators that should be masked when the screenshot is taken. Masked elements will be overlayed with a pink box
@@ -15733,9 +15936,11 @@ export interface LocatorScreenshotOptions {
   /**
    * When set to `"css"`, screenshot will have a single pixel per each css pixel on the page. For high-dpi devices, this will
    * keep screenshots small. Using `"device"` option will produce a single pixel per each device pixel, so screenhots of
-   * high-dpi devices will be twice as large or even larger. Defaults to `"device"`.
+   * high-dpi devices will be twice as large or even larger.
+   *
+   * Defaults to `"device"`.
    */
-  size?: "css"|"device";
+  scale?: "css"|"device";
 
   /**
    * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
@@ -15853,6 +16058,12 @@ export interface PageScreenshotOptions {
   animations?: "disabled"|"allow";
 
   /**
+   * When set to `"hide"`, screenshot will hide text caret. When set to `"initial"`, text caret behavior will not be changed.
+   * Defaults to `"hide"`.
+   */
+  caret?: "hide"|"initial";
+
+  /**
    * An object which specifies clipping of the resulting image. Should have the following fields:
    */
   clip?: {
@@ -15876,13 +16087,6 @@ export interface PageScreenshotOptions {
      */
     height: number;
   };
-
-  /**
-   * When set to `"ready"`, screenshot will wait for
-   * [`document.fonts.ready`](https://developer.mozilla.org/en-US/docs/Web/API/FontFaceSet/ready) promise to resolve in all
-   * frames. Defaults to `"nowait"`.
-   */
-  fonts?: "ready"|"nowait";
 
   /**
    * When true, takes a screenshot of the full scrollable page, instead of the currently visible viewport. Defaults to
@@ -15917,9 +16121,11 @@ export interface PageScreenshotOptions {
   /**
    * When set to `"css"`, screenshot will have a single pixel per each css pixel on the page. For high-dpi devices, this will
    * keep screenshots small. Using `"device"` option will produce a single pixel per each device pixel, so screenhots of
-   * high-dpi devices will be twice as large or even larger. Defaults to `"device"`.
+   * high-dpi devices will be twice as large or even larger.
+   *
+   * Defaults to `"device"`.
    */
-  size?: "css"|"device";
+  scale?: "css"|"device";
 
   /**
    * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by

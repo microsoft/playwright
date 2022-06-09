@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Protocol } from './protocol';
+import { Protocol } from 'playwright-core/types/protocol';
 import { ChildProcess } from 'child_process';
 import { EventEmitter } from 'events';
 import { Readable } from 'stream';
 import { ReadStream } from 'fs';
-import { Serializable, EvaluationArgument, PageFunction, PageFunctionOn, SmartHandle, ElementHandleForTag, BindingSource } from './structs';
+import { Serializable, EvaluationArgument, PageFunction, PageFunctionOn, SmartHandle, ElementHandleForTag, BindingSource } from 'playwright-core/types/structs';
 
 type PageWaitForSelectorOptionsNotHidden = PageWaitForSelectorOptions & {
   state?: 'visible'|'attached';
@@ -200,17 +200,7 @@ class TimeoutError extends Error {}
 }
 
 export interface Accessibility {
-  snapshot(options?: {
-    /**
-     * Prune uninteresting nodes from the tree. Defaults to `true`.
-     */
-    interestingOnly?: boolean;
-
-    /**
-     * The root DOM element for the snapshot. Defaults to the whole page.
-     */
-    root?: ElementHandle;
-  }): Promise<null|AccessibilityNode>;
+  snapshot(options?: AccessibilitySnapshotOptions): Promise<null|AccessibilityNode>;
 }
 
 type AccessibilityNode = {

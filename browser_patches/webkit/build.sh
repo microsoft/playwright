@@ -11,22 +11,30 @@ build_gtk() {
   if ! [[ -d ./WebKitBuild/GTK/DependenciesGTK ]]; then
     yes | WEBKIT_JHBUILD=1 WEBKIT_JHBUILD_MODULESET=minimal WEBKIT_OUTPUTDIR=$(pwd)/WebKitBuild/GTK DEBIAN_FRONTEND=noninteractive ./Tools/Scripts/update-webkitgtk-libs
   fi
-  local CMAKE_ARGS=""
+  local CMAKE_ARGS=(
+    --cmakeargs=-DENABLE_INTROSPECTION=OFF
+    --cmakeargs=-DUSE_GSTREAMER_WEBRTC=FALSE
+  )
   if [[ -n "${EXPORT_COMPILE_COMMANDS}" ]]; then
-    CMAKE_ARGS="--cmakeargs=\"-DCMAKE_EXPORT_COMPILE_COMMANDS=1\""
+    CMAKE_ARGS+=("--cmakeargs=-DCMAKE_EXPORT_COMPILE_COMMANDS=1")
   fi
-  WEBKIT_JHBUILD=1 WEBKIT_JHBUILD_MODULESET=minimal WEBKIT_OUTPUTDIR=$(pwd)/WebKitBuild/GTK ./Tools/Scripts/build-webkit --gtk --release "${CMAKE_ARGS}" --touch-events --orientation-events --no-bubblewrap-sandbox --no-webxr MiniBrowser
+  WEBKIT_JHBUILD=1 WEBKIT_JHBUILD_MODULESET=minimal WEBKIT_OUTPUTDIR=$(pwd)/WebKitBuild/GTK ./Tools/Scripts/build-webkit --gtk --release "${CMAKE_ARGS}" --touch-events --orientation-events --no-bubblewrap-sandbox "${CMAKE_ARGS[@]}" MiniBrowser
 }
 
 build_wpe() {
   if ! [[ -d ./WebKitBuild/WPE/DependenciesWPE ]]; then
     yes | WEBKIT_JHBUILD=1 WEBKIT_JHBUILD_MODULESET=minimal WEBKIT_OUTPUTDIR=$(pwd)/WebKitBuild/WPE DEBIAN_FRONTEND=noninteractive ./Tools/Scripts/update-webkitwpe-libs
   fi
-  local CMAKE_ARGS=""
+  local CMAKE_ARGS=(
+    --cmakeargs=-DENABLE_COG=OFF
+    --cmakeargs=-DENABLE_INTROSPECTION=OFF
+    --cmakeargs=-DENABLE_WEBXR=OFF
+    --cmakeargs=-DUSE_GSTREAMER_WEBRTC=FALSE
+  )
   if [[ -n "${EXPORT_COMPILE_COMMANDS}" ]]; then
-    CMAKE_ARGS="--cmakeargs=\"-DCMAKE_EXPORT_COMPILE_COMMANDS=1\""
+    CMAKE_ARGS+=("--cmakeargs=-DCMAKE_EXPORT_COMPILE_COMMANDS=1")
   fi
-  WEBKIT_JHBUILD=1 WEBKIT_JHBUILD_MODULESET=minimal WEBKIT_OUTPUTDIR=$(pwd)/WebKitBuild/WPE ./Tools/Scripts/build-webkit --wpe --release "${CMAKE_ARGS}" --touch-events --orientation-events --no-bubblewrap-sandbox --no-webxr --cmakeargs=-DENABLE_COG=OFF MiniBrowser
+  WEBKIT_JHBUILD=1 WEBKIT_JHBUILD_MODULESET=minimal WEBKIT_OUTPUTDIR=$(pwd)/WebKitBuild/WPE ./Tools/Scripts/build-webkit --wpe --release "${CMAKE_ARGS}" --touch-events --orientation-events --no-bubblewrap-sandbox "${CMAKE_ARGS[@]}" MiniBrowser
 }
 
 ensure_linux_deps() {
@@ -43,20 +51,10 @@ else
   cd "$HOME/webkit"
 fi
 
-if [[ "$(uname)" == "Darwin" ]]; then
-  CURRENT_HOST_OS_VERSION=$(getMacVersion)
-  if [[ "${CURRENT_HOST_OS_VERSION}" == "10.15" ]]; then
-    selectXcodeVersionOrDie "11.7"
-  elif [[ "${CURRENT_HOST_OS_VERSION}" == "11."* ]]; then
-    selectXcodeVersionOrDie "13.2"
-  elif [[ "${CURRENT_HOST_OS_VERSION}" == "12."* ]]; then
-    selectXcodeVersionOrDie "13.2"
-  else
-    echo "ERROR: ${CURRENT_HOST_OS_VERSION} is not supported"
-    exit 1
-  fi
+if is_mac; then
+  selectXcodeVersionOrDie $(node "$SCRIPT_FOLDER/../get_xcode_version.js" webkit)
   ./Tools/Scripts/build-webkit --release --touch-events --orientation-events
-elif [[ "$(uname)" == "Linux" ]]; then
+elif is_linux; then
   if [[ $# == 0 || (-z "$1") ]]; then
     echo
     echo BUILDING: GTK and WPE
@@ -81,7 +79,7 @@ elif [[ "$(uname)" == "Linux" ]]; then
     echo
     build_wpe
   fi
-elif [[ "$(uname)" == MINGW* ]]; then
+elif is_win; then
   /c/Windows/System32/cmd.exe "/c $(cygpath -w "${SCRIPT_FOLDER}"/buildwin.bat)"
 else
   echo "ERROR: cannot upload on this platform!" 1>&2

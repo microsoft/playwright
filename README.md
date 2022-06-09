@@ -1,16 +1,16 @@
 # 🎭 Playwright
 
-[![npm version](https://img.shields.io/npm/v/playwright.svg?style=flat)](https://www.npmjs.com/package/playwright) <!-- GEN:chromium-version-badge -->[![Chromium version](https://img.shields.io/badge/chromium-101.0.4937.0-blue.svg?logo=google-chrome)](https://www.chromium.org/Home)<!-- GEN:stop --> <!-- GEN:firefox-version-badge -->[![Firefox version](https://img.shields.io/badge/firefox-97.0.1-blue.svg?logo=mozilla-firefox)](https://www.mozilla.org/en-US/firefox/new/)<!-- GEN:stop --> <!-- GEN:webkit-version-badge -->[![WebKit version](https://img.shields.io/badge/webkit-15.4-blue.svg?logo=safari)](https://webkit.org/)<!-- GEN:stop -->
+[![npm version](https://img.shields.io/npm/v/playwright.svg?style=flat)](https://www.npmjs.com/package/playwright) <!-- GEN:chromium-version-badge -->[![Chromium version](https://img.shields.io/badge/chromium-103.0.5060.33-blue.svg?logo=google-chrome)](https://www.chromium.org/Home)<!-- GEN:stop --> <!-- GEN:firefox-version-badge -->[![Firefox version](https://img.shields.io/badge/firefox-100.0.2-blue.svg?logo=mozilla-firefox)](https://www.mozilla.org/en-US/firefox/new/)<!-- GEN:stop --> <!-- GEN:webkit-version-badge -->[![WebKit version](https://img.shields.io/badge/webkit-15.4-blue.svg?logo=safari)](https://webkit.org/)<!-- GEN:stop -->
 
-## [Documentation](https://playwright.dev) | [API reference](https://playwright.dev/docs/api/class-playwright/)
+## [Documentation](https://playwright.dev) | [API reference](https://playwright.dev/docs/api/class-playwright)
 
 Playwright is a framework for Web Testing and Automation. It allows testing [Chromium](https://www.chromium.org/Home), [Firefox](https://www.mozilla.org/en-US/firefox/new/) and [WebKit](https://webkit.org/) with a single API. Playwright is built to enable cross-browser web automation that is **ever-green**, **capable**, **reliable** and **fast**.
 
 |          | Linux | macOS | Windows |
 |   :---   | :---: | :---: | :---:   |
-| Chromium <!-- GEN:chromium-version -->101.0.4937.0<!-- GEN:stop --> | :white_check_mark: | :white_check_mark: | :white_check_mark: |
+| Chromium <!-- GEN:chromium-version -->103.0.5060.33<!-- GEN:stop --> | :white_check_mark: | :white_check_mark: | :white_check_mark: |
 | WebKit <!-- GEN:webkit-version -->15.4<!-- GEN:stop --> | :white_check_mark: | :white_check_mark: | :white_check_mark: |
-| Firefox <!-- GEN:firefox-version -->97.0.1<!-- GEN:stop --> | :white_check_mark: | :white_check_mark: | :white_check_mark: |
+| Firefox <!-- GEN:firefox-version -->100.0.2<!-- GEN:stop --> | :white_check_mark: | :white_check_mark: | :white_check_mark: |
 
 Headless execution is supported for all the browsers on all platforms. Check out [system requirements](https://playwright.dev/docs/library#system-requirements) for details.
 
@@ -97,8 +97,8 @@ This code snippet navigates to whatsmyuseragent.org and saves a screenshot.
 import { test } from '@playwright/test';
 
 test('Page Screenshot', async ({ page }) => {
-    await page.goto('http://whatsmyuseragent.org/');
-    await page.screenshot({ path: `example.png` });
+  await page.goto('http://whatsmyuseragent.org/');
+  await page.screenshot({ path: `example.png` });
 });
 ```
 

@@ -1,0 +1,29 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "useDefineForClassFields": true,
+    "lib": ["DOM", "DOM.Iterable", "ESNext"],
+    "allowJs": true,
+    "skipLibCheck": false,
+    "esModuleInterop": false,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "module": "ESNext",
+    "moduleResolution": "Node",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "baseUrl": ".",
+    "useUnknownInCatchVariables": false,
+    "paths": {
+      "@web/*": ["../web/src/*"],
+      "@playwright-core/*": ["../playwright-core/src/*"],
+      "@playwright-test/*": ["../playwright-test/src/*"],
+      "playwright-core/lib/*": ["../playwright-core/src/*"],
+      "playwright-test/lib/*": ["../playwright-test/src/*"],
+    }
+  },
+  "include": ["src"],
+  "references": [{ "path": "./tsconfig.node.json" }]
+}

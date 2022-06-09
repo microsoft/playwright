@@ -5,6 +5,72 @@ title: "Release notes"
 
 <!-- TOC -->
 
+## Version 1.22
+
+### Highlights
+
+- Role selectors that allow selecting elements by their [ARIA role](https://www.w3.org/TR/wai-aria-1.2/#roles), [ARIA attributes](https://www.w3.org/TR/wai-aria-1.2/#aria-attributes) and [accessible name](https://w3c.github.io/accname/#dfn-accessible-name).
+
+  ```py
+  # Click a button with accessible name "log in"
+  page.click("role=button[name='log in']")
+  ```
+
+  Read more in [our documentation](./selectors#role-selector).
+
+- New [`method: Locator.filter`] API to filter an existing locator
+
+  ```py
+  buttons = page.locator("role=button")
+  # ...
+  submit_button = buttons.filter(has_text="Submit")
+  submit_button.click()
+  ```
+
+- Codegen now supports generating Pytest Tests
+
+  ![Graphics](https://user-images.githubusercontent.com/746130/168098384-40784024-6c26-4426-8255-e714862af6fc.png)
+
+
+
+## Version 1.21
+
+### Highlights
+
+- New role selectors that allow selecting elements by their [ARIA role](https://www.w3.org/TR/wai-aria-1.2/#roles), [ARIA attributes](https://www.w3.org/TR/wai-aria-1.2/#aria-attributes) and [accessible name](https://w3c.github.io/accname/#dfn-accessible-name).
+
+  ```python async
+  # Click a button with accessible name "log in"
+  await page.click("role=button[name='log in']")
+  ```
+
+  ```python sync
+  # Click a button with accessible name "log in"
+  page.click("role=button[name='log in']")
+  ```
+
+  Read more in [our documentation](./selectors#role-selector).
+- New `scale` option in [`method: Page.screenshot`] for smaller sized screenshots.
+- New `caret` option in [`method: Page.screenshot`] to control text caret. Defaults to `"hide"`.
+
+### Behavior Changes
+
+- The `mcr.microsoft.com/playwright` docker image no longer contains Python. Please use `mcr.microsoft.com/playwright/python`
+  as a Playwright-ready docker image with pre-installed Python.
+- Playwright now supports large file uploads (100s of MBs) via [`method: Locator.setInputFiles`] API.
+
+### Browser Versions
+
+- Chromium 101.0.4951.26
+- Mozilla Firefox 98.0.2
+- WebKit 15.4
+
+This version was also tested against the following stable channels:
+
+- Google Chrome 100
+- Microsoft Edge 100
+
+
 ## Version 1.20
 
 ### Highlights
@@ -12,7 +78,7 @@ title: "Release notes"
 - New options for methods [`method: Page.screenshot`], [`method: Locator.screenshot`] and [`method: ElementHandle.screenshot`]:
   * Option `animations: "disabled"` rewinds all CSS animations and transitions to a consistent state
   * Option `mask: Locator[]` masks given elements, overlaying them with pink `#FF00FF` boxes.
-- [Trace Viewer](./trace-viewer) now shows [API testing requests](./src/test-api-testing).
+- [Trace Viewer](./trace-viewer) now shows [API testing requests](./api-testing).
 - [`method: Locator.highlight`] visually reveals element(s) for easier debugging.
 
 ### Announcements
@@ -262,7 +328,7 @@ Previously it was not possible to get multiple header values of a response. This
 - [Response.all_headers()](https://playwright.dev/python/docs/api/class-response#response-all-headers)
 - [Response.headers_array()](https://playwright.dev/python/docs/api/class-response#response-headers-array)
 - [Response.header_value(name: str)](https://playwright.dev/python/docs/api/class-response#response-header-value)
-- [Response.header_values(name: str)](https://playwright.dev/python/docs/api/class-response/#response-header-values)
+- [Response.header_values(name: str)](https://playwright.dev/python/docs/api/class-response#response-header-values)
 
 ### 🌈 Forced-Colors emulation
 
@@ -516,9 +582,6 @@ This version of Playwright was also tested against the following stable channels
 
 - [Selecting elements based on layout](./selectors.md#selecting-elements-based-on-layout) with `:left-of()`, `:right-of()`, `:above()` and `:below()`.
 - Playwright now includes [command line interface](./cli.md), former playwright-cli.
-  ```bash js
-  npx playwright --help
-  ```
   ```bash python
   playwright --help
   ```

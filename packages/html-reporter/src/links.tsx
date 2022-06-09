@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import type { TestAttachment } from '@playwright/test/src/reporters/html';
+import type { TestAttachment } from '@playwright-test/reporters/html';
 import * as React from 'react';
 import * as icons from './icons';
 import { TreeItem } from './treeItem';
@@ -76,7 +76,7 @@ export const AttachmentLink: React.FunctionComponent<{
     {attachment.body && <span>{attachment.name}</span>}
   </span>} loadChildren={attachment.body ? () => {
     return [<div className='attachment-body'>{attachment.body}</div>];
-  } : undefined} depth={0}></TreeItem>;
+  } : undefined} depth={0} style={{ lineHeight: '32px' }}></TreeItem>;
 };
 
 const kMissingContentType = 'x-playwright/missing';

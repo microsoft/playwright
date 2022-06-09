@@ -5,6 +5,124 @@ title: "Release notes"
 
 <!-- TOC -->
 
+## Version 1.22
+
+### Highlights
+
+- Components Testing (preview)
+
+  Playwright Test can now test your [React](https://reactjs.org/),
+  [Vue.js](https://vuejs.org/) or [Svelte](https://svelte.dev/) components.
+  You can use all the features
+  of Playwright Test (such as parallelization, emulation & debugging) while running components
+  in real browsers.
+
+  Here is what a typical component test looks like:
+
+  ```ts
+  // App.spec.tsx
+  import { test, expect } from '@playwright/experimental-ct-react';
+  import App from './App';
+
+  // Let's test component in a dark scheme!
+  test.use({ colorScheme: 'dark' });
+
+  test('should render', async ({ mount }) => {
+    const component = await mount(<App></App>);
+
+    // As with any Playwright test, assert locator text.
+    await expect(component).toContainText('React');
+    // Or do a screenshot 🚀
+    await expect(component).toHaveScreenshot();
+    // Or use any Playwright method
+    await component.click();
+  });
+  ```
+
+  Read more in [our documentation](./test-components).
+
+- Role selectors that allow selecting elements by their [ARIA role](https://www.w3.org/TR/wai-aria-1.2/#roles), [ARIA attributes](https://www.w3.org/TR/wai-aria-1.2/#aria-attributes) and [accessible name](https://w3c.github.io/accname/#dfn-accessible-name).
+
+  ```js
+  // Click a button with accessible name "log in"
+  await page.click('role=button[name="log in"]')
+  ```
+
+  Read more in [our documentation](./selectors#role-selector).
+
+- New [`method: Locator.filter`] API to filter an existing locator
+
+  ```js
+  const buttons = page.locator('role=button');
+  // ...
+  const submitButton = buttons.filter({ hasText: 'Submit' });
+  await submitButton.click();
+  ```
+
+- New web-first assertions [`method: PageAssertions.toHaveScreenshot#1`] and [`method: LocatorAssertions.toHaveScreenshot#1`] that
+  wait for screenshot stabilization and enhances test reliability.
+
+  The new assertions has screenshot-specific defaults, such as:
+  * disables animations
+  * uses CSS scale option
+
+  ```js
+  await page.goto('https://playwright.dev');
+  await expect(page).toHaveScreenshot();
+  ```
+
+  The new [`method: PageAssertions.toHaveScreenshot#1`] saves screenshots at the same
+  location as [`method: ScreenshotAssertions.toMatchSnapshot#1`].
+
+
+## Version 1.21
+
+### Highlights
+
+- New role selectors that allow selecting elements by their [ARIA role](https://www.w3.org/TR/wai-aria-1.2/#roles), [ARIA attributes](https://www.w3.org/TR/wai-aria-1.2/#aria-attributes) and [accessible name](https://w3c.github.io/accname/#dfn-accessible-name).
+
+  ```js
+  // Click a button with accessible name "log in"
+  await page.click('role=button[name="log in"]')
+  ```
+
+  Read more in [our documentation](./selectors#role-selector).
+- New `scale` option in [`method: Page.screenshot`] for smaller sized screenshots.
+- New `caret` option in [`method: Page.screenshot`] to control text caret. Defaults to `"hide"`.
+
+- New method `expect.poll` to wait for an arbitrary condition:
+
+  ```js
+  // Poll the method until it returns an expected result.
+  await expect.poll(async () => {
+    const response = await page.request.get('https://api.example.com');
+    return response.status();
+  }).toBe(200);
+  ```
+
+  `expect.poll` supports most synchronous matchers, like `.toBe()`, `.toContain()`, etc.
+  Read more in [our documentation](./test-assertions.md#polling).
+
+### Behavior Changes
+
+- ESM support when running TypeScript tests is now enabled by default. The `PLAYWRIGHT_EXPERIMENTAL_TS_ESM` env variable is
+  no longer required.
+- The `mcr.microsoft.com/playwright` docker image no longer contains Python. Please use `mcr.microsoft.com/playwright/python`
+  as a Playwright-ready docker image with pre-installed Python.
+- Playwright now supports large file uploads (100s of MBs) via [`method: Locator.setInputFiles`] API.
+
+### Browser Versions
+
+- Chromium 101.0.4951.26
+- Mozilla Firefox 98.0.2
+- WebKit 15.4
+
+This version was also tested against the following stable channels:
+
+- Google Chrome 100
+- Microsoft Edge 100
+
+
 ## Version 1.20
 
 ### Highlights
@@ -22,7 +140,6 @@ title: "Release notes"
 
   ```js
   expect(await page.screenshot()).toMatchSnapshot({
-    fullPage: true, // take a full page screenshot
     maxDiffPixels: 27, // allow no more than 27 different pixels.
   });
   ```
@@ -46,7 +163,7 @@ title: "Release notes"
     projects: [
       {
         name: 'smoke tests',
-        grep: '@smoke',
+        grep: /@smoke/,
       },
     ],
   };
@@ -395,7 +512,7 @@ trace and image artifacts.
 
 ![html reporter](https://user-images.githubusercontent.com/746130/138324311-94e68b39-b51a-4776-a446-f60037a77f32.png)
 
-Read more about [our reporters](./test-reporters/#html-reporter).
+Read more about [our reporters](./test-reporters#html-reporter).
 
 ### 🎭 Playwright Library
 
@@ -463,7 +580,7 @@ Previously it was not possible to get multiple header values of a response. This
 - [Response.allHeaders()](https://playwright.dev/docs/api/class-response#response-all-headers)
 - [Response.headersArray()](https://playwright.dev/docs/api/class-response#response-headers-array)
 - [Response.headerValue(name: string)](https://playwright.dev/docs/api/class-response#response-header-value)
-- [Response.headerValues(name: string)](https://playwright.dev/docs/api/class-response/#response-header-values)
+- [Response.headerValues(name: string)](https://playwright.dev/docs/api/class-response#response-header-values)
 
 #### 🌈 Forced-Colors emulation
 
@@ -571,7 +688,7 @@ Consider the following example:
 await expect(page.locator('.status')).toHaveText('Submitted');
 ```
 
-Playwright Test will be re-testing the node with the selector `.status` until fetched Node has the `"Submitted"` text. It will be re-fetching the node and checking it over and over, until the condition is met or until the timeout is reached. You can either pass this timeout or configure it once via the [`testProject.expect`](./api/class-testproject/#test-project-expect) value in test config.
+Playwright Test will be re-testing the node with the selector `.status` until fetched Node has the `"Submitted"` text. It will be re-fetching the node and checking it over and over, until the condition is met or until the timeout is reached. You can either pass this timeout or configure it once via the [`testProject.expect`](./api/class-testproject#test-project-expect) value in test config.
 
 By default, the timeout for assertions is not set, so it'll wait forever, until the whole test times out.
 
@@ -631,11 +748,11 @@ Step information is exposed in reporters API.
 
 #### 🌎 Launch web server before running tests
 
-To launch a server during the tests, use the [`webServer`](./test-advanced/#launching-a-development-web-server-during-the-tests) option in the configuration file. The server will wait for a given port to be available before running the tests, and the port will be passed over to Playwright as a [`baseURL`](./api/class-fixtures#fixtures-base-url) when creating a context.
+To launch a server during the tests, use the [`webServer`](./test-advanced#launching-a-development-web-server-during-the-tests) option in the configuration file. The server will wait for a given port to be available before running the tests, and the port will be passed over to Playwright as a [`baseURL`](./api/class-fixtures#fixtures-base-url) when creating a context.
 
 ```ts
 // playwright.config.ts
-import { PlaywrightTestConfig } from '@playwright/test';
+import type { PlaywrightTestConfig } from '@playwright/test';
 const config: PlaywrightTestConfig = {
   webServer: {
     command: 'npm run start', // command to launch
@@ -876,9 +993,6 @@ This version of Playwright was also tested against the following stable channels
 - Playwright now includes [command line interface](./cli.md), former playwright-cli.
   ```bash js
   npx playwright --help
-  ```
-  ```bash python
-  playwright --help
   ```
 - [`method: Page.selectOption`] now waits for the options to be present.
 - New methods to [assert element state](./actionability#assertions) like [`method: Page.isEditable`].

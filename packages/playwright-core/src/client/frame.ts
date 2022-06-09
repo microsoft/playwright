@@ -15,22 +15,24 @@
  * limitations under the License.
  */
 
-import { assert } from '../utils/utils';
-import * as channels from '../protocol/channels';
+import { assert } from '../utils';
+import type * as channels from '../protocol/channels';
 import { ChannelOwner } from './channelOwner';
-import { FrameLocator, Locator } from './locator';
+import { FrameLocator, Locator, type LocatorOptions } from './locator';
 import { ElementHandle, convertSelectOptionValues, convertInputFiles } from './elementHandle';
 import { assertMaxArguments, JSHandle, serializeArgument, parseResult } from './jsHandle';
 import fs from 'fs';
 import * as network from './network';
-import { Page } from './page';
+import type { Page } from './page';
 import { EventEmitter } from 'events';
 import { Waiter } from './waiter';
 import { Events } from './events';
-import { LifecycleEvent, URLMatch, SelectOption, SelectOptionOptions, FilePayload, WaitForFunctionOptions, StrictOptions, kLifecycleEvents } from './types';
-import { urlMatches } from './clientHelper';
-import * as api from '../../types/types';
-import * as structs from '../../types/structs';
+import type { LifecycleEvent, URLMatch, SelectOption, SelectOptionOptions, FilePayload, WaitForFunctionOptions, StrictOptions } from './types';
+import { kLifecycleEvents } from './types';
+import { urlMatches } from '../common/netUtils';
+import type * as api from '../../types/types';
+import type * as structs from '../../types/structs';
+import { debugLogger } from '../common/debugLogger';
 
 export type WaitForNavigationOptions = {
   timeout?: number,
@@ -288,7 +290,7 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
     return await this._channel.highlight({ selector });
   }
 
-  locator(selector: string, options?: { hasText?: string | RegExp, has?: Locator }): Locator {
+  locator(selector: string, options?: LocatorOptions): Locator {
     return new Locator(this, selector, options);
   }
 
@@ -355,7 +357,13 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
   }
 
   async setInputFiles(selector: string, files: string | FilePayload | string[] | FilePayload[], options: channels.FrameSetInputFilesOptions = {}): Promise<void> {
-    await this._channel.setInputFiles({ selector, files: await convertInputFiles(files), ...options });
+    const converted = await convertInputFiles(files, this.page().context());
+    if (converted.files) {
+      await this._channel.setInputFiles({ selector, files: converted.files, ...options });
+    } else {
+      debugLogger.log('api', 'switching to large files mode');
+      await this._channel.setInputFilePaths({ selector, ...converted, ...options });
+    }
   }
 
   async type(selector: string, text: string, options: channels.FrameTypeOptions = {}) {

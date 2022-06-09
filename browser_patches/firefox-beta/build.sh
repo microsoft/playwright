@@ -2,8 +2,8 @@
 set -e
 set +x
 
-RUST_VERSION="1.57.0"
-CBINDGEN_VERSION="0.19.0"
+RUST_VERSION="1.59.0"
+CBINDGEN_VERSION="0.23.0"
 
 trap "cd $(pwd -P)" EXIT
 
@@ -20,19 +20,12 @@ fi
 
 rm -rf .mozconfig
 
-if [[ "$(uname)" == "Darwin" ]]; then
-  CURRENT_HOST_OS_VERSION=$(getMacVersion)
-  # As of Oct 2021, building Firefox requires XCode 13
-  if [[ "${CURRENT_HOST_OS_VERSION}" != "10."* ]]; then
-    selectXcodeVersionOrDie "13"
-  else
-    echo "ERROR: ${CURRENT_HOST_OS_VERSION} is not supported"
-    exit 1
-  fi
+if is_mac; then
+  selectXcodeVersionOrDie $(node "${SCRIPT_FOLDER}/../get_xcode_version.js" firefox)
   echo "-- building on Mac"
-elif [[ "$(uname)" == "Linux" ]]; then
+elif is_linux; then
   echo "-- building on Linux"
-elif [[ "$(uname)" == MINGW* ]]; then
+elif is_win; then
   echo "ac_add_options --disable-update-agent" >> .mozconfig
   echo "ac_add_options --disable-default-browser-agent" >> .mozconfig
   echo "ac_add_options --disable-maintenance-service" >> .mozconfig
@@ -67,7 +60,7 @@ else
   echo "ac_add_options --enable-release" >> .mozconfig
 fi
 
-if [[ "$(uname)" == MINGW* || "$(uname)" == "Darwin" ]]; then
+if is_mac || is_win; then
   # This options is only available on win and mac.
   echo "ac_add_options --disable-update-agent" >> .mozconfig
 fi
@@ -89,10 +82,22 @@ if [[ $1 != "--juggler" ]]; then
 fi
 
 if [[ $1 == "--full" || $2 == "--full" || $1 == "--bootstrap" ]]; then
-  echo "ac_add_options --enable-bootstrap" >> .mozconfig
-  if [[ "$(uname)" == "Darwin" || "$(uname)" == "Linux" ]]; then
-    SHELL=/bin/sh ./mach --no-interactive bootstrap --application-choice=browser
+  # This is a slow but sure way to get all the necessary toolchains.
+  # However, it will not work if tree is dirty.
+  # Bail out if git repo is dirty.
+  if [[ -n $(git status -s --untracked-files=no) ]]; then
+    echo "ERROR: dirty GIT state - commit everything and re-run the script."
+    exit 1
   fi
+
+  # 1. We have a --single-branch checkout, so we have to add a "master" branch and fetch it
+  git remote set-branches --add browser_upstream master
+  git fetch browser_upstream master
+  # 2. Checkout the master branch and run bootstrap from it.
+  git checkout browser_upstream/master
+  SHELL=/bin/sh ./mach --no-interactive bootstrap --application-choice=browser
+  git checkout -
+
   if [[ ! -z "${WIN32_REDIST_DIR}" ]]; then
     # Having this option in .mozconfig kills incremental compilation.
     echo "export WIN32_REDIST_DIR=\"$WIN32_REDIST_DIR\"" >> .mozconfig
@@ -104,8 +109,16 @@ if [[ $1 == "--juggler" ]]; then
 elif [[ $1 == "--bootstrap" ]]; then
   ./mach configure
 else
+  export MOZ_AUTOMATION=1
+  # Use winpaths instead of unix paths on Windows.
+  # note: 'cygpath' is not available in MozBuild shell.
+  if is_win; then
+    export MOZ_FETCHES_DIR="${USERPROFILE}\\.mozbuild"
+  else
+    export MOZ_FETCHES_DIR="${HOME}/.mozbuild"
+  fi
   ./mach build
-  if [[ "$(uname)" == "Darwin" ]]; then
+  if is_mac; then
     node "${SCRIPT_FOLDER}"/install-preferences.js "$PWD"/${OBJ_FOLDER}/dist
   else
     node "${SCRIPT_FOLDER}"/install-preferences.js "$PWD"/${OBJ_FOLDER}/dist/bin

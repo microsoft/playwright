@@ -7,7 +7,7 @@ trap "cd $(pwd -P)" EXIT
 cd "$(dirname "$0")"
 
 MCR_IMAGE_NAME="playwright"
-PW_VERSION=$(node -e 'console.log(require("../../package.json").version)')
+PW_VERSION=$(node ../../utils/workspace.js --get-version)
 
 RELEASE_CHANNEL="$1"
 if [[ "${RELEASE_CHANNEL}" == "stable" ]]; then

@@ -76,7 +76,8 @@ it('should work with status code 422', async ({ page, server }) => {
   expect(await page.evaluate(() => document.body.textContent)).toBe('Yo, page!');
 });
 
-it('should allow mocking binary responses', async ({ page, server, browserName, headless, asset, isAndroid }) => {
+it('should allow mocking binary responses', async ({ page, server, browserName, headless, asset, isAndroid, mode }) => {
+  it.skip(mode === 'service');
   it.skip(browserName === 'firefox' && !headless, 'Firefox headed produces a different image.');
   it.skip(isAndroid);
 
@@ -97,7 +98,8 @@ it('should allow mocking binary responses', async ({ page, server, browserName, 
   expect(await img.screenshot()).toMatchSnapshot('mock-binary-response.png');
 });
 
-it('should allow mocking svg with charset', async ({ page, server, browserName, headless, isAndroid }) => {
+it('should allow mocking svg with charset', async ({ page, server, browserName, headless, isAndroid, mode }) => {
+  it.skip(mode === 'service');
   it.skip(browserName === 'firefox' && !headless, 'Firefox headed produces a different image.');
   it.skip(isAndroid);
 
@@ -117,7 +119,8 @@ it('should allow mocking svg with charset', async ({ page, server, browserName, 
   expect(await img.screenshot()).toMatchSnapshot('mock-svg.png');
 });
 
-it('should work with file path', async ({ page, server, asset, isAndroid }) => {
+it('should work with file path', async ({ page, server, asset, isAndroid, mode }) => {
+  it.skip(mode === 'service');
   it.skip(isAndroid);
 
   await page.route('**/*', route => route.fulfill({ contentType: 'shouldBeIgnored', path: asset('pptr.png') }));
@@ -317,4 +320,42 @@ it('headerValue should return set-cookie from intercepted response', async ({ pa
   });
   const response = await page.goto(server.EMPTY_PAGE);
   expect(await response.headerValue('Set-Cookie')).toBe('a=b');
+});
+
+it('should complain about bad har', async ({ page, server, isElectron }, testInfo) => {
+  it.fixme(isElectron, 'error: Browser context management is not supported.');
+  const harPath = testInfo.outputPath('test.har');
+  fs.writeFileSync(harPath, JSON.stringify({ log: {} }), 'utf-8');
+  let error;
+  await page.route('**/*.css', async route => {
+    error = await route.fulfill({ har: harPath }).catch(e => e);
+    await route.continue();
+  });
+  await page.goto(server.PREFIX + '/one-style.html');
+  expect(error.message).toContain(`Error reading HAR file ${harPath}: Cannot read`);
+});
+
+it('should complain about no entry found in har', async ({ page, server, isElectron }, testInfo) => {
+  it.fixme(isElectron, 'error: Browser context management is not supported.');
+  const harPath = testInfo.outputPath('test.har');
+  fs.writeFileSync(harPath, JSON.stringify({ log: { entries: [] } }), 'utf-8');
+  let error;
+  await page.route('**/*.css', async route => {
+    error = await route.fulfill({ har: harPath }).catch(e => e);
+    await route.continue();
+  });
+  await page.goto(server.PREFIX + '/one-style.html');
+  expect(error.message).toBe(`Error reading HAR file ${harPath}: No entry matching ${server.PREFIX + '/one-style.css'}`);
+});
+
+it('should complain about har + response options', async ({ page, server, isElectron }) => {
+  it.fixme(isElectron, 'error: Browser context management is not supported.');
+  let error;
+  await page.route('**/*.css', async route => {
+    const response = await page.request.fetch(route.request());
+    error = await route.fulfill({ har: 'har', response }).catch(e => e);
+    await route.continue();
+  });
+  await page.goto(server.PREFIX + '/one-style.html');
+  expect(error.message).toBe(`At most one of "har" and "response" options should be present`);
 });

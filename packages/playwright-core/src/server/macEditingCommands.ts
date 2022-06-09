@@ -128,4 +128,6 @@ export const macEditingCommands: {[key: string]: string|string[]} = {
   'Meta+KeyA': 'selectAll:',
   'Meta+KeyC': 'copy:',
   'Meta+KeyV': 'paste:',
+  'Meta+KeyZ': 'undo:',
+  'Shift+Meta+KeyZ': 'redo:',
 };

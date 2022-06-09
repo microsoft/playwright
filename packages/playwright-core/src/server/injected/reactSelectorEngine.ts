@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-import { SelectorEngine, SelectorRoot } from './selectorEngine';
-import { isInsideScope } from './selectorEvaluator';
-import { checkComponentAttribute, parseComponentSelector } from './componentUtils';
+import type { SelectorEngine, SelectorRoot } from './selectorEngine';
+import { isInsideScope } from './domUtils';
+import { matchesComponentAttribute } from './selectorUtils';
+import { parseAttributeSelector } from '../isomorphic/selectorParser';
 
 type ComponentNode = {
   key?: any,
@@ -144,9 +145,18 @@ function findReactRoots(root: Document | ShadowRoot, roots: ReactVNode[] = []): 
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT);
   do {
     const node = walker.currentNode;
+    // ReactDOM Legacy client API:
     // @see https://github.com/baruchvlz/resq/blob/5c15a5e04d3f7174087248f5a158c3d6dcc1ec72/src/utils.js#L329
-    if (node.hasOwnProperty('_reactRootContainer'))
+    if (node.hasOwnProperty('_reactRootContainer')) {
       roots.push((node as any)._reactRootContainer._internalRoot.current);
+    } else {
+      // React 17+
+      // React sets rootKey when mounting
+      // @see https://github.com/facebook/react/blob/a724a3b578dce77d427bef313102a4d0e978d9b4/packages/react-dom/src/client/ReactDOMComponentTree.js#L62-L64
+      const rootKey = Object.keys(node).find(key => key.startsWith('__reactContainer'));
+      if (rootKey)
+        roots.push((node as any)[rootKey].stateNode.current);
+    }
 
     // Pre-react 16: rely on `data-reactroot`
     // @see https://github.com/facebook/react/issues/10971
@@ -167,7 +177,7 @@ function findReactRoots(root: Document | ShadowRoot, roots: ReactVNode[] = []): 
 
 export const ReactEngine: SelectorEngine = {
   queryAll(scope: SelectorRoot, selector: string): Element[] {
-    const { name, attributes } = parseComponentSelector(selector);
+    const { name, attributes } = parseAttributeSelector(selector, false);
 
     const reactRoots = findReactRoots(document);
     const trees = reactRoots.map(reactRoot => buildComponentsTree(reactRoot));
@@ -182,7 +192,7 @@ export const ReactEngine: SelectorEngine = {
       if (treeNode.rootElements.some(domNode => !isInsideScope(scope, domNode)))
         return false;
       for (const attr of attributes) {
-        if (!checkComponentAttribute(props, attr))
+        if (!matchesComponentAttribute(props, attr))
           return false;
       }
       return true;

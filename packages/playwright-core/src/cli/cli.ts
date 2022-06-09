@@ -21,26 +21,40 @@
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import { program, Command } from 'commander';
+import type { Command } from '../utilsBundle';
+import { program } from '../utilsBundle';
 import { runDriver, runServer, printApiJson, launchBrowserServer } from './driver';
 import { showTraceViewer } from '../server/trace/viewer/traceViewer';
 import * as playwright from '../..';
-import { BrowserContext } from '../client/browserContext';
-import { Browser } from '../client/browser';
-import { Page } from '../client/page';
-import { BrowserType } from '../client/browserType';
-import { BrowserContextOptions, LaunchOptions } from '../client/types';
+import type { BrowserContext } from '../client/browserContext';
+import type { Browser } from '../client/browser';
+import type { Page } from '../client/page';
+import type { BrowserType } from '../client/browserType';
+import type { BrowserContextOptions, LaunchOptions } from '../client/types';
 import { spawn } from 'child_process';
-import { registry, Executable } from '../utils/registry';
-import { spawnAsync, getPlaywrightVersion } from '../utils/utils';
+import { getPlaywrightVersion } from '../common/userAgent';
+import { wrapInASCIIBox, isLikelyNpxGlobal, assert } from '../utils';
+import { spawnAsync } from '../utils/spawnAsync';
 import { launchGridAgent } from '../grid/gridAgent';
-import { GridServer, GridFactory } from '../grid/gridServer';
+import type { GridFactory } from '../grid/gridServer';
+import { GridServer } from '../grid/gridServer';
+import type { Executable } from '../server';
+import { registry, writeDockerVersion } from '../server';
 
 const packageJSON = require('../../package.json');
 
 program
     .version('Version ' + (process.env.PW_CLI_DISPLAY_VERSION || packageJSON.version))
     .name(buildBasePlaywrightCLICommand(process.env.PW_LANG_NAME));
+
+program
+    .command('mark-docker-image [dockerImageNameTemplate]', { hidden: true })
+    .description('mark docker image')
+    .allowUnknownOption(true)
+    .action(function(dockerImageNameTemplate) {
+      assert(dockerImageNameTemplate, 'dockerImageNameTemplate is required');
+      writeDockerVersion(dockerImageNameTemplate).catch(logErrorAndExit);
+    });
 
 commandWithOpenOptions('open [url]', 'open page in browser specified via -b, --browser', [])
     .action(function(url, options) {
@@ -104,13 +118,34 @@ program
     .command('install [browser...]')
     .description('ensure browsers necessary for this version of Playwright are installed')
     .option('--with-deps', 'install system dependencies for browsers')
-    .action(async function(args: string[], options: { withDeps?: boolean }) {
+    .option('--force', 'force reinstall of stable browser channels')
+    .action(async function(args: string[], options: { withDeps?: boolean, force?: boolean }) {
+      if (isLikelyNpxGlobal()) {
+        console.error(wrapInASCIIBox([
+          `WARNING: It looks like you are running 'npx playwright install' without first`,
+          `installing your project's dependencies.`,
+          ``,
+          `To avoid unexpected behavior, please install your dependencies first, and`,
+          `then run Playwright's install command:`,
+          ``,
+          `    npm install`,
+          `    npx playwright install`,
+          ``,
+          `If your project does not yet depend on Playwright, first install the`,
+          `applicable npm package (most commonly @playwright/test), and`,
+          `then run Playwright's install command to download the browsers:`,
+          ``,
+          `    npm install @playwright/test`,
+          `    npx playwright install`,
+          ``,
+        ].join('\n'), 1));
+      }
       try {
         if (!args.length) {
           const executables = registry.defaultExecutables();
           if (options.withDeps)
             await registry.installDeps(executables, false);
-          await registry.install(executables);
+          await registry.install(executables, false /* forceReinstall */);
         } else {
           const installDockerImage = args.some(arg => arg === 'docker-image');
           args = args.filter(arg => arg !== 'docker-image');
@@ -126,7 +161,7 @@ program
           const executables = checkBrowsersToInstall(args);
           if (options.withDeps)
             await registry.installDeps(executables, false);
-          await registry.install(executables);
+          await registry.install(executables, !!options.force /* forceReinstall */);
         }
       } catch (e) {
         console.log(`Failed to install browsers\n${e}`);
@@ -206,18 +241,20 @@ Examples:
 program
     .command('experimental-grid-server', { hidden: true })
     .option('--port <port>', 'grid port; defaults to 3333')
+    .option('--address <address>', 'address of the server')
     .option('--agent-factory <factory>', 'path to grid agent factory or npm package')
     .option('--auth-token <authToken>', 'optional authentication token')
     .action(function(options) {
-      launchGridServer(options.agentFactory, options.port || 3333, options.authToken);
+      launchGridServer(options.agentFactory, options.port || 3333, options.address, options.authToken);
     });
 
 program
     .command('experimental-grid-agent', { hidden: true })
     .requiredOption('--agent-id <agentId>', 'agent ID')
     .requiredOption('--grid-url <gridURL>', 'grid URL')
+    .option('--run-id <github run_id>', 'Workflow run_id')
     .action(function(options) {
-      launchGridAgent(options.agentId, options.gridUrl);
+      launchGridAgent(options.agentId, options.gridUrl, options.runId);
     });
 
 program
@@ -315,6 +352,8 @@ type Options = {
   loadStorage?: string;
   proxyServer?: string;
   proxyBypass?: string;
+  saveHar?: string;
+  saveHarGlob?: string;
   saveStorage?: string;
   saveTrace?: string;
   timeout: string;
@@ -422,6 +461,14 @@ async function launchContext(options: Options, headless: boolean, executablePath
   if (options.ignoreHttpsErrors)
     contextOptions.ignoreHTTPSErrors = true;
 
+  // HAR
+
+  if (options.saveHar) {
+    contextOptions.recordHar = { path: path.resolve(process.cwd(), options.saveHar) };
+    if (options.saveHarGlob)
+      contextOptions.recordHar.urlFilter = options.saveHarGlob;
+  }
+
   // Close app when the last window closes.
 
   const context = await browser.newContext(contextOptions);
@@ -437,6 +484,8 @@ async function launchContext(options: Options, headless: boolean, executablePath
       await context.tracing.stop({ path: options.saveTrace });
     if (options.saveStorage)
       await context.storageState({ path: options.saveStorage }).catch(e => null);
+    if (options.saveHar)
+      await context.close();
     await browser.close();
   }
 
@@ -560,6 +609,7 @@ function lookupBrowserType(options: Options): BrowserType {
   if (browserType)
     return browserType;
   program.help();
+  process.exit(1);
 }
 
 function validateOptions(options: Options) {
@@ -599,6 +649,8 @@ function commandWithOpenOptions(command: string, description: string, options: a
       .option('--lang <language>', 'specify language / locale, for example "en-GB"')
       .option('--proxy-server <proxy>', 'specify proxy server, for example "http://myproxy:3128" or "socks5://myproxy:8080"')
       .option('--proxy-bypass <bypass>', 'comma-separated domains to bypass proxy, for example ".com,chromium.org,.domain.com"')
+      .option('--save-har <filename>', 'save HAR file with all network activity at the end')
+      .option('--save-har-glob <glob pattern>', 'filter entries in the HAR by matching url against this glob pattern')
       .option('--save-storage <filename>', 'save context storage state at the end, for later use with --load-storage')
       .option('--save-trace <filename>', 'record a trace for the session and save it to a file')
       .option('--timezone <time zone>', 'time zone to emulate, for example "Europe/Rome"')
@@ -607,7 +659,7 @@ function commandWithOpenOptions(command: string, description: string, options: a
       .option('--viewport-size <size>', 'specify browser viewport size in pixels, for example "1280, 720"');
 }
 
-async function launchGridServer(factoryPathOrPackageName: string, port: number, authToken: string|undefined): Promise<void> {
+async function launchGridServer(factoryPathOrPackageName: string, port: number, address: string | undefined, authToken: string | undefined): Promise<void> {
   if (!factoryPathOrPackageName)
     factoryPathOrPackageName = path.join('..', 'grid', 'simpleGridFactory');
   let factory;
@@ -621,9 +673,9 @@ async function launchGridServer(factoryPathOrPackageName: string, port: number, 
   if (!factory || !factory.launch || typeof factory.launch !== 'function')
     throw new Error('factory does not export `launch` method');
   factory.name = factory.name || factoryPathOrPackageName;
-  const gridServer = new GridServer(factory as GridFactory, authToken);
+  const gridServer = new GridServer(factory as GridFactory, authToken, address);
   await gridServer.start(port);
-  console.log('Grid server is running at ' + gridServer.urlPrefix());
+  console.log('Grid server is running at ' + gridServer.gridURL());
 }
 
 function buildBasePlaywrightCLICommand(cliTargetLang: string | undefined): string {

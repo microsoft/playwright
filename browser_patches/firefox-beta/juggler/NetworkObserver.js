@@ -533,6 +533,9 @@ class NetworkRequest {
       // remoteAddress is not defined for cached requests.
     }
 
+    const fromServiceWorker = this._networkObserver._channelIdsFulfilledByServiceWorker.has(this.requestId);
+    this._networkObserver._channelIdsFulfilledByServiceWorker.delete(this.requestId);
+
     pageNetwork.emit(PageNetwork.Events.Response, {
       requestId: this.requestId,
       securityDetails: getSecurityDetails(this.httpChannel),
@@ -543,6 +546,7 @@ class NetworkRequest {
       status,
       statusText,
       timing,
+      fromServiceWorker,
     }, this._frameId);
   }
 
@@ -591,6 +595,7 @@ class NetworkObserver {
 
     this._channelToRequest = new Map();  // http channel -> network request
     this._expectedRedirect = new Map();  // expected redirect channel id (string) -> network request
+    this._channelIdsFulfilledByServiceWorker = new Set();  // http channel ids that were fulfilled by service worker
 
     const protocolProxyService = Cc['@mozilla.org/network/protocol-proxy-service;1'].getService();
     this._channelProxyFilter = {
@@ -636,6 +641,7 @@ class NetworkObserver {
       helper.addObserver(this._onResponse.bind(this, false /* fromCache */), 'http-on-examine-response'),
       helper.addObserver(this._onResponse.bind(this, true /* fromCache */), 'http-on-examine-cached-response'),
       helper.addObserver(this._onResponse.bind(this, true /* fromCache */), 'http-on-examine-merged-response'),
+      helper.addObserver(this._onServiceWorkerResponse.bind(this), 'service-worker-synthesized-response'),
     ];
   }
 
@@ -700,6 +706,14 @@ class NetworkObserver {
       request._sendOnResponse(fromCache);
   }
 
+  _onServiceWorkerResponse(channel, topic) {
+    if (!(channel instanceof Ci.nsIHttpChannel))
+      return;
+    const httpChannel = channel.QueryInterface(Ci.nsIHttpChannel);
+    const channelId = httpChannel.channelId + '';
+    this._channelIdsFulfilledByServiceWorker.add(channelId);
+  }
+
   dispose() {
     this._activityDistributor.removeObserver(this);
     const registrar = Cm.QueryInterface(Ci.nsIComponentRegistrar);
@@ -756,14 +770,13 @@ function readRequestPostData(httpChannel) {
   // Read data from the stream.
   let result = undefined;
   try {
-    const buffer = NetUtil.readInputStream(iStream, iStream.available());
-    const bytes = new Uint8Array(buffer);
-    let binary = '';
-    for (let i = 0; i < bytes.byteLength; i++)
-        binary += String.fromCharCode(bytes[i]);
-    result = btoa(binary);
+    const maxLen = iStream.available();
+    // Cap at 10Mb.
+    if (maxLen <= 10 * 1024 * 1024) {
+      const buffer = NetUtil.readInputStreamToString(iStream, maxLen);
+      result = btoa(buffer);
+    }
   } catch (err) {
-    result = '';
   }
 
   // Seek locks the file, so seek to the beginning only if necko hasn't

@@ -15,13 +15,14 @@
  * limitations under the License.
  */
 
-import { assert } from '../../utils/utils';
-import { ConnectionTransport, ProtocolRequest, ProtocolResponse } from '../transport';
-import { Protocol } from './protocol';
+import { assert } from '../../utils';
+import type { ConnectionTransport, ProtocolRequest, ProtocolResponse } from '../transport';
+import type { Protocol } from './protocol';
 import { EventEmitter } from 'events';
 import { rewriteErrorMessage } from '../../utils/stackTrace';
-import { debugLogger, RecentLogsCollector } from '../../utils/debugLogger';
-import { ProtocolLogger } from '../types';
+import type { RecentLogsCollector } from '../../common/debugLogger';
+import { debugLogger } from '../../common/debugLogger';
+import type { ProtocolLogger } from '../types';
 import { helper } from '../helper';
 import { ProtocolError } from '../protocolError';
 
@@ -188,6 +189,8 @@ export class CRSession extends EventEmitter {
         callback.reject(createProtocolError(callback.error, callback.method, object.error));
       else
         callback.resolve(object.result);
+    } else if (object.id && object.error?.code === -32001) {
+      // Message to a closed session, just ignore it.
     } else {
       assert(!object.id);
       Promise.resolve().then(() => {

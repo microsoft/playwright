@@ -1,0 +1,70 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Name test case 561</title>
+    <meta content="text/html; charset=utf-8" http-equiv="Content-Type"/>
+    <link rel="stylesheet" href="/wai-aria/scripts/manual.css">
+    <script src="/resources/testharness.js"></script>
+    <script src="/resources/testharnessreport.js"></script>
+    <script src="/wai-aria/scripts/ATTAcomm.js"></script>
+    <script>
+    setup({explicit_timeout: true, explicit_done: true });
+
+    var theTest = new ATTAcomm(
+    {
+   "steps" : [
+      {
+         "element" : "test",
+         "test" : {
+            "ATK" : [
+               [
+                  "property",
+                  "name",
+                  "is",
+                  "1"
+               ]
+            ],
+            "AXAPI" : [
+               [
+                  "property",
+                  "AXDescription",
+                  "is",
+                  "1"
+               ]
+            ],
+            "IAccessible2" : [
+               [
+                  "property",
+                  "accName",
+                  "is",
+                  "1"
+               ]
+            ],
+            "UIA" : [
+               [
+                  "property",
+                  "Name",
+                  "is",
+                  "1"
+               ]
+            ]
+         },
+         "title" : "step 1",
+         "type" : "test"
+      }
+   ],
+   "title" : "Name test case 561"
+}
+
+    ) ;
+    </script>
+  </head>
+  <body>
+  <p>This test examines the ARIA properties for Name test case 561.</p>
+    <img id="test" aria-labelledby="test" aria-label="1" src="foo.jpg"/>
+
+  <div id="manualMode"></div>
+  <div id="log"></div>
+  <div id="ATTAmessages"></div>
+  </body>
+</html>

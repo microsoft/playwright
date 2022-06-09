@@ -11,8 +11,8 @@ jobs:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v2
       with:
-        node-version: 16
-    - run: npm i -g npm@8.3
+        node-version: 14
+    - run: npm i -g npm@8
     - run: npm ci
     - run: npm run build
     - name: Install dependencies
@@ -36,11 +36,18 @@ jobs:
     - name: Create Pull Request
       uses: actions/github-script@v4
       with:
+        github-token: ${{ secrets.GH_SERVICE_ACCOUNT_TOKEN }}
         script: |
-          await github.pulls.create({
+          const response = await github.pulls.create({
             owner: 'microsoft',
             repo: 'playwright',
             head: 'microsoft:${{ steps.prepare-branch.outputs.BRANCH_NAME }}',
             base: 'main',
             title: 'feat(${{ github.event.client_payload.browser }}): roll to r${{ github.event.client_payload.revision }}',
+          });
+          await github.issues.addLabels({
+            owner: 'microsoft',
+            repo: 'playwright',
+            issue_number: response.data.number,
+            labels: ['CQ1'],
           });

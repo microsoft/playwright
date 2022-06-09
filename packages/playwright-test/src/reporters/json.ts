@@ -16,75 +16,8 @@
 
 import fs from 'fs';
 import path from 'path';
-import { FullConfig, TestCase, Suite, TestResult, TestError, TestStep, FullResult, TestStatus, Location, Reporter } from '../../types/testReporter';
+import type { FullConfig, TestCase, Suite, TestResult, TestError, TestStep, FullResult, Location, Reporter, JSONReport, JSONReportSuite, JSONReportSpec, JSONReportTest, JSONReportTestResult, JSONReportTestStep } from '../../types/testReporter';
 import { prepareErrorStack } from './base';
-
-export interface JSONReport {
-  config: Omit<FullConfig, 'projects'> & {
-    projects: {
-      outputDir: string,
-      repeatEach: number,
-      retries: number,
-      metadata: any,
-      name: string,
-      testDir: string,
-      testIgnore: string[],
-      testMatch: string[],
-      timeout: number,
-    }[],
-  };
-  suites: JSONReportSuite[];
-  errors: TestError[];
-}
-export interface JSONReportSuite {
-  title: string;
-  file: string;
-  column: number;
-  line: number;
-  specs: JSONReportSpec[];
-  suites?: JSONReportSuite[];
-}
-export interface JSONReportSpec {
-  tags: string[],
-  title: string;
-  ok: boolean;
-  tests: JSONReportTest[];
-  file: string;
-  line: number;
-  column: number;
-}
-export interface JSONReportTest {
-  timeout: number;
-  annotations: { type: string, description?: string }[],
-  expectedStatus: TestStatus;
-  projectName: string;
-  results: JSONReportTestResult[];
-  status: 'skipped' | 'expected' | 'unexpected' | 'flaky';
-}
-export interface JSONReportTestResult {
-  workerIndex: number;
-  status: TestStatus | undefined;
-  duration: number;
-  error: TestError | undefined;
-  stdout: JSONReportSTDIOEntry[];
-  stderr: JSONReportSTDIOEntry[];
-  retry: number;
-  steps?: JSONReportTestStep[];
-  attachments: {
-    name: string;
-    path?: string;
-    body?: string;
-    contentType: string;
-  }[];
-  errorLocation?: Location;
-}
-export interface JSONReportTestStep {
-  title: string;
-  duration: number;
-  error: TestError | undefined;
-  steps?: JSONReportTestStep[];
-}
-export type JSONReportSTDIOEntry = { text: string } | { buffer: string };
 
 export function toPosixPath(aPath: string): string {
   return aPath.split(path.sep).join(path.posix.sep);

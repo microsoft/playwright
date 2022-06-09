@@ -42,3 +42,27 @@ function printMSVCRedistDir() {
   fi
   echo "$redist_dir"
 }
+
+function is_win() {
+  if [[ "$(uname)" == MINGW* || "$(uname)" == MSYS* ]]; then
+    return 0;
+  else
+    return 1;
+  fi
+}
+
+function is_mac() {
+  if [[ "$(uname)" == "Darwin" ]]; then
+    return 0;
+  else
+    return 1;
+  fi
+}
+
+function is_linux() {
+  if [[ "$(uname)" == "Linux" ]]; then
+    return 0;
+  else
+    return 1;
+  fi
+}

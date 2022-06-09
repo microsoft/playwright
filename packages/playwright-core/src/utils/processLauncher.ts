@@ -17,9 +17,10 @@
 
 import * as childProcess from 'child_process';
 import * as readline from 'readline';
+import * as path from 'path';
 import { eventsHelper } from './eventsHelper';
-import { isUnderTest, removeFolders } from './utils';
-import rimraf from 'rimraf';
+import { isUnderTest } from './';
+import { removeFolders } from './fileUtils';
 
 export type Env = {[key: string]: string | number | boolean | undefined};
 
@@ -110,8 +111,6 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
   });
 
   let processClosed = false;
-  let fulfillClose = () => {};
-  const waitForClose = new Promise<void>(f => fulfillClose = f);
   let fulfillCleanup = () => {};
   const waitForCleanup = new Promise<void>(f => fulfillCleanup = f);
   spawnedProcess.once('exit', (exitCode, signal) => {
@@ -120,7 +119,6 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
     eventsHelper.removeEventListeners(listeners);
     gracefullyCloseSet.delete(gracefullyClose);
     options.onExit(exitCode, signal);
-    fulfillClose();
     // Cleanup as process exits.
     cleanup().then(fulfillCleanup);
   });
@@ -153,7 +151,7 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
     if (gracefullyClosing) {
       options.log(`[pid=${spawnedProcess.pid}] <forecefully close>`);
       killProcess();
-      await waitForClose;  // Ensure the process is dead and we called options.onkill.
+      await waitForCleanup;  // Ensure the process is dead and we have cleaned up.
       return;
     }
     gracefullyClosing = true;
@@ -172,8 +170,8 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
       // Force kill the browser.
       try {
         if (process.platform === 'win32') {
-          const taskkillProcess = childProcess.spawnSync(`taskkill /pid ${spawnedProcess.pid} /T /F /FI "MEMUSAGE gt 0"`, { shell: true });
-          const [stderr, stdout] = [taskkillProcess.stdout.toString(), taskkillProcess.stderr.toString()];
+          const taskkillProcess = childProcess.spawnSync(`taskkill /pid ${spawnedProcess.pid} /T /F`, { shell: true });
+          const [stdout, stderr] = [taskkillProcess.stdout.toString(), taskkillProcess.stderr.toString()];
           if (stdout)
             options.log(`[pid=${spawnedProcess.pid}] taskkill stdout: ${stdout}`);
           if (stderr)
@@ -193,12 +191,13 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
   function killProcessAndCleanup() {
     killProcess();
     options.log(`[pid=${spawnedProcess.pid || 'N/A'}] starting temporary directories cleanup`);
-    for (const dir of options.tempDirectories) {
-      try {
-        rimraf.sync(dir, { maxBusyTries: 10 });
-      } catch (e) {
-        options.log(`[pid=${spawnedProcess.pid || 'N/A'}] exception while removing ${dir}: ${e}`);
-      }
+    if (options.tempDirectories.length) {
+      const cleanupProcess = childProcess.spawnSync(process.argv0, [path.join(__dirname, 'processLauncherCleanupEntrypoint.js'), ...options.tempDirectories]);
+      const [stdout, stderr] = [cleanupProcess.stdout.toString(), cleanupProcess.stderr.toString()];
+      if (stdout)
+        options.log(`[pid=${spawnedProcess.pid || 'N/A'}] ${stdout}`);
+      if (stderr)
+        options.log(`[pid=${spawnedProcess.pid || 'N/A'}] ${stderr}`);
     }
     options.log(`[pid=${spawnedProcess.pid || 'N/A'}] finished temporary directories cleanup`);
   }

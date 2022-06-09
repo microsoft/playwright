@@ -51,17 +51,16 @@ using System.Threading.Tasks;
 using Microsoft.Playwright.NUnit;
 using NUnit.Framework;
 
-namespace PlaywrightTests
+namespace PlaywrightTests;
+
+public class ExampleTests : PageTest
 {
-    public class ExampleTests : PageTest
+    [Test]
+    public async Task StatusBecomesSubmitted()
     {
-        [Test]
-        public async Task StatusBecomesSubmitted()
-        {
-            // ..
-            await Page.ClickAsync("#submit-button");
-            await Expect(Page.Locator(".status")).ToHaveTextAsync("Submitted");
-        }
+        // ..
+        await Page.ClickAsync("#submit-button");
+        await Expect(Page.Locator(".status")).ToHaveTextAsync("Submitted");
     }
 }
 ```
@@ -158,6 +157,11 @@ The opposite of [`method: LocatorAssertions.toContainText`].
 - `expected` <[string]|[RegExp]|[Array]<[string]|[RegExp]>>
 
 Expected substring or RegExp or a list of those.
+
+### option: LocatorAssertions.NotToContainText.ignoreCase
+- `ignoreCase` <[boolean]>
+
+Whether to perform case-insensitive match. [`option: ignoreCase`] option takes precedence over the corresponding regular expression flag if specified.
 
 ### option: LocatorAssertions.NotToContainText.useInnerText
 - `useInnerText` <[boolean]>
@@ -270,6 +274,11 @@ The opposite of [`method: LocatorAssertions.toHaveText`].
 
 Expected substring or RegExp or a list of those.
 
+### option: LocatorAssertions.NotToHaveText.ignoreCase
+- `ignoreCase` <[boolean]>
+
+Whether to perform case-insensitive match. [`option: ignoreCase`] option takes precedence over the corresponding regular expression flag if specified.
+
 ### option: LocatorAssertions.NotToHaveText.useInnerText
 - `useInnerText` <[boolean]>
 
@@ -291,6 +300,18 @@ Expected value.
 ### option: LocatorAssertions.NotToHaveValue.timeout = %%-js-assertions-timeout-%%
 ### option: LocatorAssertions.NotToHaveValue.timeout = %%-csharp-java-python-assertions-timeout-%%
 
+## async method: LocatorAssertions.NotToHaveValues
+* langs: python
+
+The opposite of [`method: LocatorAssertions.toHaveValues`].
+
+### param: LocatorAssertions.NotToHaveValues.values
+- `values` <[Array]<[string]|[RegExp]>>
+
+Expected options currently selected.
+
+### option: LocatorAssertions.NotToHaveValues.timeout = %%-js-assertions-timeout-%%
+### option: LocatorAssertions.NotToHaveValues.timeout = %%-csharp-java-python-assertions-timeout-%%
 
 ## async method: LocatorAssertions.toBeChecked
 * langs:
@@ -337,7 +358,11 @@ await Expect(locator).ToBeCheckedAsync();
 * langs:
   - alias-java: isDisabled
 
-Ensures the [Locator] points to a disabled element.
+Ensures the [Locator] points to a disabled element. Element is disabled if it has "disabled" attribute
+or is disabled via ['aria-disabled'](https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Attributes/aria-disabled).
+Note that only native control elements such as HTML `button`, `input`, `select`, `textarea`, `option`, `optgroup`
+can be disabled by setting "disabled" attribute. "disabled" attribute on other elements is ignored
+by the browser.
 
 ```js
 const locator = page.locator('button.submit');
@@ -573,7 +598,7 @@ await expect(locator).toBeVisible();
 ```
 
 ```java
-assertThat(page.locator(".my-element")).toBeVisible();
+assertThat(page.locator(".my-element")).isVisible();
 ```
 
 ```python async
@@ -681,6 +706,11 @@ Expected substring or RegExp or a list of those.
 - `expected` <[string]|[RegExp]|[Array]<[string]>|[Array]<[RegExp]>>
 
 Expected substring or RegExp or a list of those.
+
+### option: LocatorAssertions.toContainText.ignoreCase
+- `ignoreCase` <[boolean]>
+
+Whether to perform case-insensitive match. [`option: ignoreCase`] option takes precedence over the corresponding regular expression flag if specified.
 
 ### option: LocatorAssertions.toContainText.useInnerText
 - `useInnerText` <[boolean]>
@@ -998,34 +1028,55 @@ Property value.
 ### option: LocatorAssertions.toHaveJSProperty.timeout = %%-js-assertions-timeout-%%
 ### option: LocatorAssertions.toHaveJSProperty.timeout = %%-csharp-java-python-assertions-timeout-%%
 
-## async method: LocatorAssertions.toHaveScreenshot
+
+## async method: LocatorAssertions.toHaveScreenshot#1
 * langs: js
 
-Ensures that [Locator] resolves to a given screenshot. This function will re-take
-screenshots until it matches with the saved expectation.
+This function will wait until two consecutive locator screenshots
+yield the same result, and then compare the last screenshot with the expectation.
 
-If there's no expectation yet, it will wait until two consecutive screenshots
-yield the same result, and save the last one as an expectation.
+```js
+const locator = page.locator('button');
+await expect(locator).toHaveScreenshot('image.png');
+```
+
+### param: LocatorAssertions.toHaveScreenshot#1.name
+- `name` <[string]|[Array]<[string]>>
+
+Snapshot name.
+
+### option: LocatorAssertions.toHaveScreenshot#1.timeout = %%-js-assertions-timeout-%%
+### option: LocatorAssertions.toHaveScreenshot#1.animations = %%-screenshot-option-animations-default-disabled-%%
+
+### option: LocatorAssertions.toHaveScreenshot#1.caret = %%-screenshot-option-caret-%%
+### option: LocatorAssertions.toHaveScreenshot#1.mask = %%-screenshot-option-mask-%%
+### option: LocatorAssertions.toHaveScreenshot#1.omitBackground = %%-screenshot-option-omit-background-%%
+### option: LocatorAssertions.toHaveScreenshot#1.scale = %%-screenshot-option-scale-default-css-%%
+### option: LocatorAssertions.toHaveScreenshot#1.maxDiffPixels = %%-assertions-max-diff-pixels-%%
+### option: LocatorAssertions.toHaveScreenshot#1.maxDiffPixelRatio = %%-assertions-max-diff-pixel-ratio-%%
+### option: LocatorAssertions.toHaveScreenshot#1.threshold = %%-assertions-threshold-%%
+
+## async method: LocatorAssertions.toHaveScreenshot#2
+* langs: js
+
+This function will wait until two consecutive locator screenshots
+yield the same result, and then compare the last screenshot with the expectation.
 
 ```js
 const locator = page.locator('button');
 await expect(locator).toHaveScreenshot();
 ```
 
-### option: LocatorAssertions.toHaveScreenshot.timeout = %%-js-assertions-timeout-%%
-### option: LocatorAssertions.toHaveScreenshot.timeout = %%-csharp-java-python-assertions-timeout-%%
+### option: LocatorAssertions.toHaveScreenshot#2.timeout = %%-js-assertions-timeout-%%
+### option: LocatorAssertions.toHaveScreenshot#2.animations = %%-screenshot-option-animations-default-disabled-%%
 
-### option: LocatorAssertions.toHaveScreenshot.animations = %%-screenshot-option-animations-%%
-
-### option: LocatorAssertions.toHaveScreenshot.omitBackground = %%-screenshot-option-omit-background-%%
-
-### option: LocatorAssertions.toHaveScreenshot.mask = %%-screenshot-option-mask-%%
-
-### option: LocatorAssertions.toHaveScreenshot.maxDiffPixels = %%-assertions-max-diff-pixels-%%
-
-### option: LocatorAssertions.toHaveScreenshot.maxDiffPixelRatio = %%-assertions-max-diff-pixel-ratio-%%
-
-### option: LocatorAssertions.toHaveScreenshot.threshold = %%-assertions-threshold-%%
+### option: LocatorAssertions.toHaveScreenshot#2.caret = %%-screenshot-option-caret-%%
+### option: LocatorAssertions.toHaveScreenshot#2.mask = %%-screenshot-option-mask-%%
+### option: LocatorAssertions.toHaveScreenshot#2.omitBackground = %%-screenshot-option-omit-background-%%
+### option: LocatorAssertions.toHaveScreenshot#2.scale = %%-screenshot-option-scale-default-css-%%
+### option: LocatorAssertions.toHaveScreenshot#2.maxDiffPixels = %%-assertions-max-diff-pixels-%%
+### option: LocatorAssertions.toHaveScreenshot#2.maxDiffPixelRatio = %%-assertions-max-diff-pixel-ratio-%%
+### option: LocatorAssertions.toHaveScreenshot#2.threshold = %%-assertions-threshold-%%
 
 
 ## async method: LocatorAssertions.toHaveText
@@ -1112,6 +1163,11 @@ Expected substring or RegExp or a list of those.
 
 Expected substring or RegExp or a list of those.
 
+### option: LocatorAssertions.toHaveText.ignoreCase
+- `ignoreCase` <[boolean]>
+
+Whether to perform case-insensitive match. [`option: ignoreCase`] option takes precedence over the corresponding regular expression flag if specified.
+
 ### option: LocatorAssertions.toHaveText.useInnerText
 - `useInnerText` <[boolean]>
 
@@ -1163,3 +1219,62 @@ Expected value.
 
 ### option: LocatorAssertions.toHaveValue.timeout = %%-js-assertions-timeout-%%
 ### option: LocatorAssertions.toHaveValue.timeout = %%-csharp-java-python-assertions-timeout-%%
+
+## async method: LocatorAssertions.toHaveValues
+* langs:
+  - alias-java: hasValues
+
+Ensures the [Locator] points to multi-select/combobox (i.e. a `select` with the `multiple` attribute) and the specified values are selected.
+
+For example, given the following element:
+
+```html
+<select id="favorite-colors" multiple>
+  <option value="R">Red</option>
+  <option value="G">Green</option>
+  <option value="B">Blue</option>
+</select>
+```
+
+```js
+const locator = page.locator("id=favorite-colors");
+await locator.selectOption(["R", "G"]);
+await expect(locator).toHaveValues([/R/, /G/]);
+```
+
+```java
+page.locator("id=favorite-colors").selectOption(["R", "G"]);
+assertThat(page.locator("id=favorite-colors")).hasValues(new Pattern[] { Pattern.compile("R"), Pattern.compile("G") });
+```
+
+```python async
+import re
+from playwright.async_api import expect
+
+locator = page.locator("id=favorite-colors")
+await locator.select_option(["R", "G"])
+await expect(locator).to_have_values([re.compile(r"R"), re.compile(r"G")])
+```
+
+```python sync
+import re
+from playwright.sync_api import expect
+
+locator = page.locator("id=favorite-colors")
+locator.select_option(["R", "G"])
+expect(locator).to_have_values([re.compile(r"R"), re.compile(r"G")])
+```
+
+```csharp
+var locator = Page.Locator("id=favorite-colors");
+await locator.SelectOptionAsync(new string[] { "R", "G" })
+await Expect(locator).ToHaveValuesAsync(new Regex[] { new Regex("R"), new Regex("G") });
+```
+
+### param: LocatorAssertions.toHaveValues.values
+- `values` <[Array]<[string]|[RegExp]>>
+
+Expected options currently selected.
+
+### option: LocatorAssertions.toHaveValues.timeout = %%-js-assertions-timeout-%%
+### option: LocatorAssertions.toHaveValues.timeout = %%-csharp-java-python-assertions-timeout-%%

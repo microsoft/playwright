@@ -57,3 +57,29 @@ it('should fail page.dispatchEvent in strict mode', async ({ page }) => {
   expect(error.message).toContain('1) <span></span> aka playwright.$("span >> nth=0")');
   expect(error.message).toContain('2) <span></span> aka playwright.$("div span")');
 });
+
+it('should properly format :nth-child() in strict mode message', async ({ page }) => {
+  await page.setContent(`
+  <div>
+    <div>
+    </div>
+    <div>
+      <div>
+      </div>
+      <div>
+      </div>
+    </div>
+  </div>
+  <div>
+    <div class='foo'>
+    </div>
+    <div class='foo'>
+    </div>
+  </div>
+  `);
+  const error = await page.locator('.foo').hover().catch(e => e);
+  expect(error.message).toContain('strict mode violation');
+  // Second div has body > div:nth-child(2) > div:nth-child(2) selector which would be ambiguous
+  // if '>' were ' '.
+  expect(error.message).toContain('body > div:nth-child(2) > div:nth-child(2)');
+});

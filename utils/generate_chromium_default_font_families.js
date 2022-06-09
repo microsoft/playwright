@@ -40,7 +40,6 @@ const idToProtocol = new Map([
     ['IDS_CURSIVE_FONT_FAMILY', 'cursive'],
     ['IDS_FANTASY_FONT_FAMILY', 'fantasy'],
     ['IDS_FIXED_FONT_FAMILY', 'fixed'],
-    ['IDS_PICTOGRAPH_FONT_FAMILY', 'pictograph']
 ]);
 
 class ScriptFontFamilies {

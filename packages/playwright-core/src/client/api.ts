@@ -29,7 +29,7 @@ export { Locator, FrameLocator } from './locator';
 export { ElementHandle } from './elementHandle';
 export { FileChooser } from './fileChooser';
 export type { Logger } from './types';
-export { TimeoutError } from '../utils/errors';
+export { TimeoutError } from '../common/errors';
 export { Frame } from './frame';
 export { Keyboard, Mouse, Touchscreen } from './input';
 export { JSHandle } from './jsHandle';

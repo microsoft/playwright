@@ -16,24 +16,27 @@
 
 import * as http from 'http';
 import * as https from 'https';
-import { HttpsProxyAgent } from 'https-proxy-agent';
-import { SocksProxyAgent } from 'socks-proxy-agent';
-import { pipeline, Readable, Transform, TransformCallback } from 'stream';
+import type { Readable, TransformCallback } from 'stream';
+import { pipeline, Transform } from 'stream';
 import url from 'url';
 import zlib from 'zlib';
-import { HTTPCredentials } from '../../types/types';
-import * as channels from '../protocol/channels';
-import { TimeoutSettings } from '../utils/timeoutSettings';
-import { assert, createGuid, getUserAgent, monotonicTime } from '../utils/utils';
+import type { HTTPCredentials } from '../../types/types';
+import type * as channels from '../protocol/channels';
+import { TimeoutSettings } from '../common/timeoutSettings';
+import { getUserAgent } from '../common/userAgent';
+import { assert, createGuid, monotonicTime } from '../utils';
 import { BrowserContext } from './browserContext';
 import { CookieStore, domainMatches } from './cookieStore';
 import { MultipartFormData } from './formData';
-import { CallMetadata, SdkObject } from './instrumentation';
-import { Playwright } from './playwright';
-import { Progress, ProgressController } from './progress';
+import type { CallMetadata } from './instrumentation';
+import { SdkObject } from './instrumentation';
+import type { Playwright } from './playwright';
+import type { Progress } from './progress';
+import { ProgressController } from './progress';
 import { Tracing } from './trace/recorder/tracing';
-import * as types from './types';
-import { HeadersArray, ProxySettings } from './types';
+import type * as types from './types';
+import type { HeadersArray, ProxySettings } from './types';
+import { HttpsProxyAgent, SocksProxyAgent } from '../utilsBundle';
 
 type FetchRequestOptions = {
   userAgent: string;
@@ -137,7 +140,7 @@ export abstract class APIRequestContext extends SdkObject {
     const method = params.method?.toUpperCase() || 'GET';
     const proxy = defaults.proxy;
     let agent;
-    if (proxy) {
+    if (proxy && proxy.server !== 'per-context') {
       // TODO: support bypass proxy
       const proxyOpts = url.parse(proxy.server);
       if (proxyOpts.protocol?.startsWith('socks')) {
@@ -361,11 +364,12 @@ export abstract class APIRequestContext extends SdkObject {
             if (e)
               reject(new Error(`failed to decompress '${encoding}' encoding: ${e}`));
           });
+        } else {
+          body.on('error', reject);
         }
 
         body.on('data', chunk => chunks.push(chunk));
         body.on('end', notifyBodyFinished);
-        body.on('error', reject);
       });
       request.on('error', reject);
 

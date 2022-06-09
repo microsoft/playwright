@@ -15,23 +15,24 @@
  * limitations under the License.
  */
 
-import colors from 'colors/safe';
-import jpeg from 'jpeg-js';
-import pixelmatch from 'pixelmatch';
+import { colors, jpegjs } from '../utilsBundle';
+import pixelmatch from '../third_party/pixelmatch';
 import { diff_match_patch, DIFF_INSERT, DIFF_DELETE, DIFF_EQUAL } from '../third_party/diff_match_patch';
-
-// Note: we require the pngjs version of pixelmatch to avoid version mismatches.
-const { PNG } = require(require.resolve('pngjs', { paths: [require.resolve('pixelmatch')] })) as typeof import('pngjs');
+import { PNG } from '../utilsBundle';
 
 export type ImageComparatorOptions = { threshold?: number, maxDiffPixels?: number, maxDiffPixelRatio?: number };
-export type ComparatorResult = { diff?: Buffer; errorMessage?: string; } | null;
+export type ComparatorResult = { diff?: Buffer; errorMessage: string; } | null;
 export type Comparator = (actualBuffer: Buffer | string, expectedBuffer: Buffer, options?: any) => ComparatorResult;
-export const mimeTypeToComparator: { [key: string]: Comparator } = {
-  'application/octet-string': compareBuffersOrStrings,
-  'image/png': compareImages.bind(null, 'image/png'),
-  'image/jpeg': compareImages.bind(null, 'image/jpeg'),
-  'text/plain': compareText,
-};
+
+export function getComparator(mimeType: string): Comparator {
+  if (mimeType === 'image/png')
+    return compareImages.bind(null, 'image/png');
+  if (mimeType === 'image/jpeg')
+    return compareImages.bind(null, 'image/jpeg');
+  if (mimeType === 'text/plain')
+    return compareText;
+  return compareBuffersOrStrings;
+}
 
 function compareBuffersOrStrings(actualBuffer: Buffer | string, expectedBuffer: Buffer): ComparatorResult {
   if (typeof actualBuffer === 'string')
@@ -47,8 +48,8 @@ function compareImages(mimeType: string, actualBuffer: Buffer | string, expected
   if (!actualBuffer || !(actualBuffer instanceof Buffer))
     return { errorMessage: 'Actual result should be a Buffer.' };
 
-  const actual = mimeType === 'image/png' ? PNG.sync.read(actualBuffer) : jpeg.decode(actualBuffer);
-  const expected = mimeType === 'image/png' ? PNG.sync.read(expectedBuffer) : jpeg.decode(expectedBuffer);
+  const actual = mimeType === 'image/png' ? PNG.sync.read(actualBuffer) : jpegjs.decode(actualBuffer);
+  const expected = mimeType === 'image/png' ? PNG.sync.read(expectedBuffer) : jpegjs.decode(expectedBuffer);
   if (expected.width !== actual.width || expected.height !== actual.height) {
     return {
       errorMessage: `Expected an image ${expected.width}px by ${expected.height}px, received ${actual.width}px by ${actual.height}px. `

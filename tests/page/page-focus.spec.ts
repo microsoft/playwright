@@ -109,11 +109,38 @@ it('should traverse only form elements', async function({ page, browserName, pla
 });
 
 it('clicking checkbox should activate it', async ({ page, browserName, headless, platform }) => {
-  it.fixme(browserName === 'webkit' && headless);
-  it.fixme(browserName === 'firefox' && headless && platform === 'darwin');
+  it.fixme(browserName !== 'chromium');
 
   await page.setContent(`<input type=checkbox></input>`);
   await page.click('input');
   const nodeName = await page.evaluate(() => document.activeElement.nodeName);
   expect(nodeName).toBe('INPUT');
+});
+
+it('keeps focus on element when attempting to focus a non-focusable element', async ({ page }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/14254' });
+
+  await page.setContent(`
+      <div id="focusable" tabindex="0">focusable</div>
+      <div id="non-focusable">not focusable</div>
+      <script>
+        window.eventLog = [];
+
+        const focusable = document.getElementById("focusable");
+
+        focusable.addEventListener('blur', () => window.eventLog.push('blur focusable'));
+        focusable.addEventListener('focus', () => window.eventLog.push('focus focusable'));
+
+        const nonFocusable = document.getElementById("non-focusable");
+        nonFocusable.addEventListener('blur', () => window.eventLog.push('blur non-focusable'));
+        nonFocusable.addEventListener('focus', () => window.eventLog.push('focus non-focusable'));
+      </script>
+    `);
+  await page.locator('#focusable').click();
+  expect.soft(await page.evaluate(() => document.activeElement?.id)).toBe('focusable');
+  await page.locator('#non-focusable').focus();
+  expect.soft(await page.evaluate(() => document.activeElement?.id)).toBe('focusable');
+  expect.soft(await page.evaluate(() => window['eventLog'])).toEqual([
+    'focus focusable',
+  ]);
 });

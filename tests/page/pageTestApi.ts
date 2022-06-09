@@ -15,7 +15,7 @@
  */
 
 import type { Page, ViewportSize } from 'playwright-core';
-import { VideoMode } from '@playwright/test';
+import type { VideoMode } from '@playwright/test';
 export { expect } from '@playwright/test';
 
 // Page test does not guarantee an isolated context, just a new page (because Android).

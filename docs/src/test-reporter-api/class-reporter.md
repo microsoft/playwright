@@ -55,7 +55,7 @@ class MyReporter implements Reporter {
 export default MyReporter;
 ```
 
-Now use this reporter with [`property: TestConfig.reporter`]. Learn more about [using reporters](./test-reporters.md).
+Now use this reporter with [`property: TestConfig.reporter`]. Learn more about [using reporters](../test-reporters.md).
 
 ```js js-flavor=js
 // playwright.config.js
@@ -71,7 +71,7 @@ module.exports = config;
 
 ```js js-flavor=ts
 // playwright.config.ts
-import { PlaywrightTestConfig } from '@playwright/test';
+import type { PlaywrightTestConfig } from '@playwright/test';
 
 const config: PlaywrightTestConfig = {
   reporter: './my-awesome-reporter.ts',
@@ -89,7 +89,7 @@ Here is a typical order of reporter calls:
 Additionally, [`method: Reporter.onStdOut`] and [`method: Reporter.onStdErr`] are called when standard output is produced in the worker process, possibly during a test execution,
 and [`method: Reporter.onError`] is called when something went wrong outside of the test execution.
 
-## method: Reporter.onBegin
+## optional method: Reporter.onBegin
 
 Called once before running tests. All tests have been already discovered and put into a hierarchy of [Suite]s.
 
@@ -105,7 +105,7 @@ The root suite that contains all projects, files and test cases.
 
 
 
-## async method: Reporter.onEnd
+## optional async method: Reporter.onEnd
 
 Called after all tests has been run, or testing has been interrupted. Note that this method may return a [Promise] and Playwright Test will await it.
 
@@ -122,7 +122,7 @@ Result of the full test run.
 
 
 
-## method: Reporter.onError
+## optional method: Reporter.onError
 
 Called on some global error, for example unhandled exception in the worker process.
 
@@ -132,7 +132,7 @@ Called on some global error, for example unhandled exception in the worker proce
 The error.
 
 
-## method: Reporter.onStdErr
+## optional method: Reporter.onStdErr
 
 Called when something has been written to the standard error in the worker process.
 
@@ -152,7 +152,7 @@ Test that was running. Note that output may happen when no test is running, in w
 Result of the test run, this object gets populated while the test runs.
 
 
-## method: Reporter.onStdOut
+## optional method: Reporter.onStdOut
 
 Called when something has been written to the standard output in the worker process.
 
@@ -171,7 +171,7 @@ Test that was running. Note that output may happen when no test is running, in w
 
 Result of the test run, this object gets populated while the test runs.
 
-## method: Reporter.onStepBegin
+## optional method: Reporter.onStepBegin
 
 Called when a test step started in the worker process.
 
@@ -190,7 +190,7 @@ Result of the test run, this object gets populated while the test runs.
 
 Test step instance that has started.
 
-## method: Reporter.onStepEnd
+## optional method: Reporter.onStepEnd
 
 Called when a test step finished in the worker process.
 
@@ -209,7 +209,7 @@ Result of the test run.
 
 Test step instance that has finished.
 
-## method: Reporter.onTestBegin
+## optional method: Reporter.onTestBegin
 
 Called after a test has been started in the worker process.
 
@@ -224,7 +224,7 @@ Test that has been started.
 Result of the test run, this object gets populated while the test runs.
 
 
-## method: Reporter.onTestEnd
+## optional method: Reporter.onTestEnd
 
 Called after a test has been finished in the worker process.
 
@@ -239,7 +239,7 @@ Test that has been finished.
 Result of the test run.
 
 
-## method: Reporter.printsToStdio
+## optional method: Reporter.printsToStdio
 - returns: <[boolean]>
 
 Whether this reporter uses stdio for reporting. When it does not, Playwright Test could add some output to enhance user experience.

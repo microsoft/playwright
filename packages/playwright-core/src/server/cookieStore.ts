@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import * as types from './types';
+import type * as types from './types';
 
 class Cookie {
   private _raw: types.NetworkCookie;

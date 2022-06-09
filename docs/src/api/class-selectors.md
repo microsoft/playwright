@@ -1,6 +1,6 @@
 # class: Selectors
 
-Selectors can be used to install custom selector engines. See [Working with selectors](./selectors.md) for more
+Selectors can be used to install custom selector engines. See [Working with selectors](../selectors.md) for more
 information.
 
 ## async method: Selectors.register
@@ -176,9 +176,9 @@ contain `[a-zA-Z0-9_]` characters.
 ### param: Selectors.register.script
 * langs: js
 - `script` <[function]|[string]|[Object]>
-  - `path` <[path]> Path to the JavaScript file. If `path` is a relative path, then it is resolved relative to the
+  - `path` ?<[path]> Path to the JavaScript file. If `path` is a relative path, then it is resolved relative to the
     current working directory. Optional.
-  - `content` <[string]> Raw script content. Optional.
+  - `content` ?<[string]> Raw script content. Optional.
 
 Script that evaluates to a selector engine instance.
 

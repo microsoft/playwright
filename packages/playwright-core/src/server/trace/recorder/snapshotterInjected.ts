@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { NodeSnapshot } from '../common/snapshotTypes';
+import type { NodeSnapshot } from '../common/snapshotTypes';
 
 export type SnapshotData = {
   doctype?: string,
@@ -38,10 +38,13 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
 
   // Attributes present in the snapshot.
   const kShadowAttribute = '__playwright_shadow_root_';
+  const kValueAttribute = '__playwright_value_';
+  const kCheckedAttribute = '__playwright_checked_';
+  const kSelectedAttribute = '__playwright_selected_';
   const kScrollTopAttribute = '__playwright_scroll_top_';
   const kScrollLeftAttribute = '__playwright_scroll_left_';
   const kStyleSheetAttribute = '__playwright_style_sheet_';
-  const kBlobUrlPrefix = 'http://playwright.bloburl/#';
+  const kTargetAttribute = '__playwright_target__';
 
   // Symbols for our own info on Nodes/StyleSheets.
   const kSnapshotFrameId = Symbol('__playwright_snapshot_frameid_');
@@ -215,11 +218,8 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
     }
 
     private _sanitizeUrl(url: string): string {
-      if (url.startsWith('javascript:'))
+      if (url.startsWith('javascript:') || url.startsWith('vbscript:'))
         return '';
-      // Rewrite blob urls so that Service Worker can intercept them.
-      if (url.startsWith('blob:'))
-        return kBlobUrlPrefix + url;
       return url;
     }
 
@@ -273,6 +273,28 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
 
       // Ensure we are up to date.
       this._handleMutations(this._observer.takeRecords());
+
+      // Restore scroll positions for all ancestors of action target elements
+      // that will show the highlight/red dot in the trace viewer.
+      // Workaround for chromium regression:
+      // https://bugs.chromium.org/p/chromium/issues/detail?id=1324419
+      // https://github.com/microsoft/playwright/issues/14037
+      // TODO: remove after chromium is fixed?
+      const elementsToRestoreScrollPosition = new Set<Node>();
+      const findElementsToRestoreScrollPositionRecursively = (element: Element) => {
+        let shouldAdd = element.hasAttribute(kTargetAttribute);
+        for (let child = element.firstElementChild; child; child = child.nextElementSibling)
+          shouldAdd = shouldAdd || findElementsToRestoreScrollPositionRecursively(child);
+        if (element.shadowRoot) {
+          for (let child = element.shadowRoot.firstElementChild; child; child = child.nextElementSibling)
+            shouldAdd = shouldAdd || findElementsToRestoreScrollPositionRecursively(child);
+        }
+        if (shouldAdd)
+          elementsToRestoreScrollPosition.add(element);
+        return shouldAdd;
+      };
+      if (document.documentElement)
+        findElementsToRestoreScrollPositionRecursively(document.documentElement);
 
       const visitNode = (node: Node | ShadowRoot): { equals: boolean, n: NodeSnapshot } | undefined => {
         const nodeType = node.nodeType;
@@ -334,7 +356,7 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
           expectValue(cssText);
           // Compensate for the extra 'cssText' text node.
           extraNodes++;
-          return checkAndReturn(['style', {}, cssText]);
+          return checkAndReturn([nodeName, {}, cssText]);
         }
 
         const attrs: { [attr: string]: string } = {};
@@ -363,22 +385,30 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
 
         if (nodeType === Node.ELEMENT_NODE) {
           const element = node as Element;
-          if (nodeName === 'INPUT') {
+          if (nodeName === 'INPUT' || nodeName === 'TEXTAREA') {
             const value = (element as HTMLInputElement).value;
-            expectValue('value');
+            expectValue(kValueAttribute);
             expectValue(value);
-            attrs['value'] = value;
-            if ((element as HTMLInputElement).checked) {
-              expectValue('checked');
-              attrs['checked'] = '';
-            }
+            attrs[kValueAttribute] = value;
           }
-          if (element.scrollTop) {
+          if (nodeName === 'INPUT' && ['checkbox', 'radio'].includes((element as HTMLInputElement).type)) {
+            const value = (element as HTMLInputElement).checked ? 'true' : 'false';
+            expectValue(kCheckedAttribute);
+            expectValue(value);
+            attrs[kCheckedAttribute] = value;
+          }
+          if (nodeName === 'OPTION') {
+            const value = (element as HTMLOptionElement).selected ? 'true' : 'false';
+            expectValue(kSelectedAttribute);
+            expectValue(value);
+            attrs[kSelectedAttribute] = value;
+          }
+          if (elementsToRestoreScrollPosition.has(element) && element.scrollTop) {
             expectValue(kScrollTopAttribute);
             expectValue(element.scrollTop);
             attrs[kScrollTopAttribute] = '' + element.scrollTop;
           }
-          if (element.scrollLeft) {
+          if (elementsToRestoreScrollPosition.has(element) && element.scrollLeft) {
             expectValue(kScrollLeftAttribute);
             expectValue(element.scrollLeft);
             attrs[kScrollLeftAttribute] = '' + element.scrollLeft;
@@ -390,33 +420,26 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
           }
         }
 
-        if (nodeName === 'TEXTAREA') {
-          const value = (node as HTMLTextAreaElement).value;
-          expectValue(value);
-          extraNodes++; // Compensate for the extra text node.
-          result.push(value);
-        } else {
-          if (nodeName === 'HEAD') {
-            ++headNesting;
-            // Insert fake <base> first, to ensure all <link> elements use the proper base uri.
-            this._fakeBase.setAttribute('href', document.baseURI);
-            visitChild(this._fakeBase);
-          }
-          for (let child = node.firstChild; child; child = child.nextSibling)
-            visitChild(child);
-          if (nodeName === 'HEAD')
-            --headNesting;
+        if (nodeName === 'HEAD') {
+          ++headNesting;
+          // Insert fake <base> first, to ensure all <link> elements use the proper base uri.
+          this._fakeBase.setAttribute('href', document.baseURI);
+          visitChild(this._fakeBase);
+        }
+        for (let child = node.firstChild; child; child = child.nextSibling)
+          visitChild(child);
+        if (nodeName === 'HEAD')
+          --headNesting;
+        expectValue(kEndOfList);
+        let documentOrShadowRoot = null;
+        if (node.ownerDocument!.documentElement === node)
+          documentOrShadowRoot = node.ownerDocument;
+        else if (node.nodeType === Node.DOCUMENT_FRAGMENT_NODE)
+          documentOrShadowRoot = node;
+        if (documentOrShadowRoot) {
+          for (const sheet of (documentOrShadowRoot as any).adoptedStyleSheets || [])
+            visitChildStyleSheet(sheet);
           expectValue(kEndOfList);
-          let documentOrShadowRoot = null;
-          if (node.ownerDocument!.documentElement === node)
-            documentOrShadowRoot = node.ownerDocument;
-          else if (node.nodeType === Node.DOCUMENT_FRAGMENT_NODE)
-            documentOrShadowRoot = node;
-          if (documentOrShadowRoot) {
-            for (const sheet of (documentOrShadowRoot as any).adoptedStyleSheets || [])
-              visitChildStyleSheet(sheet);
-            expectValue(kEndOfList);
-          }
         }
 
         // Process iframe src attribute before bailing out since it depends on a symbol, not the DOM.
@@ -439,8 +462,6 @@ export function frameSnapshotStreamer(snapshotStreamer: string) {
           const element = node as Element;
           for (let i = 0; i < element.attributes.length; i++) {
             const name = element.attributes[i].name;
-            if (name === 'value' && (nodeName === 'INPUT' || nodeName === 'TEXTAREA'))
-              continue;
             if (nodeName === 'LINK' && name === 'integrity')
               continue;
             if (nodeName === 'IFRAME' && (name === 'src' || name === 'sandbox'))

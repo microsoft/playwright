@@ -1,11 +1,11 @@
 {
   "name": "playwright",
-  "version": "1.21.0-next",
+  "version": "1.23.0-next",
   "description": "A high-level API to automate web browsers",
   "repository": "github:Microsoft/playwright",
   "homepage": "https://playwright.dev",
   "engines": {
-    "node": ">=12"
+    "node": ">=14"
   },
   "author": {
     "name": "Microsoft Corporation"
@@ -13,6 +13,7 @@
   "license": "Apache-2.0",
   "exports": {
     ".": {
+      "types": "./index.d.ts",
       "import": "./index.mjs",
       "require": "./index.js"
     },
@@ -26,6 +27,6 @@
     "install": "node install.js"
   },
   "dependencies": {
-    "playwright-core": "1.21.0-next"
+    "playwright-core": "1.23.0-next"
   }
 }

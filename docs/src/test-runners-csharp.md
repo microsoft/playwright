@@ -34,24 +34,23 @@ using System.Threading.Tasks;
 using Microsoft.Playwright.NUnit;
 using NUnit.Framework;
 
-namespace PlaywrightTests
-{
-    [Parallelizable(ParallelScope.Self)]
-    public class MyTest : PageTest
-    {
-        [Test]
-        public async Task ShouldAdd()
-        {
-            int result = await Page.EvaluateAsync<int>("() => 7 + 3");
-            Assert.AreEqual(10, result);
-        }
+namespace PlaywrightTests;
 
-        [Test]
-        public async Task ShouldMultiply()
-        {
-            int result = await Page.EvaluateAsync<int>("() => 7 * 3");
-            Assert.AreEqual(21, result);
-        }
+[Parallelizable(ParallelScope.Self)]
+public class MyTest : PageTest
+{
+    [Test]
+    public async Task ShouldAdd()
+    {
+        int result = await Page.EvaluateAsync<int>("() => 7 + 3");
+        Assert.AreEqual(10, result);
+    }
+
+    [Test]
+    public async Task ShouldMultiply()
+    {
+        int result = await Page.EvaluateAsync<int>("() => 7 * 3");
+        Assert.AreEqual(21, result);
     }
 }
 ```

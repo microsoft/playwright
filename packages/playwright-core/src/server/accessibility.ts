@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
-import * as dom from './dom';
-import * as types from './types';
+import type * as dom from './dom';
+import type * as types from './types';
 
 export interface AXNode {
     isInteresting(insideControl: boolean): boolean;

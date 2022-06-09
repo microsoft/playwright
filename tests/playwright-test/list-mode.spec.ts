@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect } from './playwright-test-fixtures';
+import { test, expect, stripAnsi } from './playwright-test-fixtures';
 import path from 'path';
 import fs from 'fs';
 
@@ -139,4 +139,15 @@ test('outputDir should not be removed', async ({ runInlineTest }, testInfo) => {
   }, { list: true }, {}, { usesCustomOutputDir: true });
   expect(result2.exitCode).toBe(0);
   expect(fs.existsSync(path.join(outputDir, 'a-my-test', 'myfile.txt'))).toBe(true);
+});
+
+test('should report errors', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      const oh = '';
+      oh = 2;
+    `
+  }, { 'list': true });
+  expect(result.exitCode).toBe(1);
+  expect(stripAnsi(result.output)).toContain('> 6 |       oh = 2;');
 });

@@ -19,24 +19,32 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import { CRBrowser } from './crBrowser';
-import { Env, gracefullyCloseSet } from '../../utils/processLauncher';
+import type { Env } from '../../utils/processLauncher';
+import { gracefullyCloseSet } from '../../utils/processLauncher';
 import { kBrowserCloseMessageId } from './crConnection';
 import { rewriteErrorMessage } from '../../utils/stackTrace';
-import { BrowserType } from '../browserType';
-import { ConnectionTransport, ProtocolRequest, WebSocketTransport } from '../transport';
+import { BrowserType, kNoXServerRunningError } from '../browserType';
+import type { ConnectionTransport, ProtocolRequest } from '../transport';
+import { WebSocketTransport } from '../transport';
 import { CRDevTools } from './crDevTools';
-import { Browser, BrowserOptions, BrowserProcess, PlaywrightOptions } from '../browser';
-import * as types from '../types';
-import { debugMode, fetchData, getUserAgent, headersArrayToObject, HTTPRequestParams, removeFolders, streamToString } from '../../utils/utils';
-import { RecentLogsCollector } from '../../utils/debugLogger';
-import { Progress, ProgressController } from '../progress';
-import { TimeoutSettings } from '../../utils/timeoutSettings';
+import type { BrowserOptions, BrowserProcess, PlaywrightOptions } from '../browser';
+import { Browser } from '../browser';
+import type * as types from '../types';
+import type { HTTPRequestParams } from '../../common/netUtils';
+import { fetchData } from '../../common/netUtils';
+import { getUserAgent } from '../../common/userAgent';
+import { debugMode, headersArrayToObject, streamToString, wrapInASCIIBox } from '../../utils';
+import { removeFolders } from '../../utils/fileUtils';
+import { RecentLogsCollector } from '../../common/debugLogger';
+import type { Progress } from '../progress';
+import { ProgressController } from '../progress';
+import { TimeoutSettings } from '../../common/timeoutSettings';
 import { helper } from '../helper';
-import { CallMetadata } from '../instrumentation';
+import type { CallMetadata } from '../instrumentation';
 import http from 'http';
 import https from 'https';
-import { registry } from '../../utils/registry';
-import { ManualPromise } from '../../utils/async';
+import { registry } from '../registry';
+import { ManualPromise } from '../../utils/manualPromise';
 
 const ARTIFACTS_FOLDER = path.join(os.tmpdir(), 'playwright-artifacts-');
 
@@ -126,6 +134,8 @@ export class Chromium extends BrowserType {
   }
 
   _rewriteStartupError(error: Error): Error {
+    if (error.message.includes('Missing X server'))
+      return rewriteErrorMessage(error, '\n' + wrapInASCIIBox(kNoXServerRunningError, 1));
     // These error messages are taken from Chromium source code as of July, 2020:
     // https://github.com/chromium/chromium/blob/70565f67e79f79e17663ad1337dc6e63ee207ce9/content/browser/zygote_host/zygote_host_impl_linux.cc
     if (!error.message.includes('crbug.com/357670') && !error.message.includes('No usable sandbox!') && !error.message.includes('crbug.com/638180'))
@@ -157,7 +167,10 @@ export class Chromium extends BrowserType {
     const args = this._innerDefaultArgs(options);
     args.push('--remote-debugging-port=0');
     const isEdge = options.channel && options.channel.startsWith('msedge');
-    let desiredCapabilities = { 'browserName': isEdge ? 'MicrosoftEdge' : 'chrome', 'goog:chromeOptions': { args } };
+    let desiredCapabilities = {
+      'browserName': isEdge ? 'MicrosoftEdge' : 'chrome',
+      [isEdge ? 'ms:edgeOptions' : 'goog:chromeOptions']: { args }
+    };
     try {
       if (process.env.SELENIUM_REMOTE_CAPABILITIES) {
         const parsed = JSON.parse(process.env.SELENIUM_REMOTE_CAPABILITIES);
@@ -212,7 +225,8 @@ export class Chromium extends BrowserType {
         const chromeOptions = maybeChromeOptions && typeof maybeChromeOptions === 'object' ? maybeChromeOptions : undefined;
         const debuggerAddress = chromeOptions && typeof chromeOptions.debuggerAddress === 'string' ? chromeOptions.debuggerAddress : undefined;
         const chromeOptionsURL = typeof maybeChromeOptions === 'string' ? maybeChromeOptions : undefined;
-        const endpointURLString = addProtocol(debuggerAddress || chromeOptionsURL);
+        // TODO(dgozman): figure out if we can make ChromeDriver to return 127.0.0.1 instead of localhost.
+        const endpointURLString = addProtocol(debuggerAddress || chromeOptionsURL).replace('localhost', '127.0.0.1');
         progress.log(`<selenium> retrieved endpoint ${endpointURLString} for sessionId=${sessionId}`);
         endpointURL = new URL(endpointURLString);
         if (endpointURL.hostname === 'localhost' || endpointURL.hostname === '127.0.0.1') {
@@ -306,6 +320,7 @@ export class Chromium extends BrowserType {
 }
 
 const DEFAULT_ARGS = [
+  '--disable-field-trial-config', // https://source.chromium.org/chromium/chromium/src/+/main:testing/variations/README.md
   '--disable-background-networking',
   '--enable-features=NetworkService,NetworkServiceInProcess',
   '--disable-background-timer-throttling',
@@ -316,7 +331,8 @@ const DEFAULT_ARGS = [
   '--disable-default-apps',
   '--disable-dev-shm-usage',
   '--disable-extensions',
-  '--disable-features=ImprovedCookieControls,LazyFrameLoading,GlobalMediaControls,DestroyProfileOnBrowserClose,MediaRouter,AcceptCHFrame,AutoExpandDetailsElement',
+  // AvoidUnnecessaryBeforeUnloadCheckSync - https://github.com/microsoft/playwright/issues/14047
+  '--disable-features=ImprovedCookieControls,LazyFrameLoading,GlobalMediaControls,DestroyProfileOnBrowserClose,MediaRouter,DialMediaRouteProvider,AcceptCHFrame,AutoExpandDetailsElement,CertificateTransparencyComponentUpdater,AvoidUnnecessaryBeforeUnloadCheckSync',
   '--allow-pre-commit-input',
   '--disable-hang-monitor',
   '--disable-ipc-flooding-protection',

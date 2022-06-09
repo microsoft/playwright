@@ -124,14 +124,33 @@ it('should support has:locator', async ({ page, trace }) => {
   })).toHaveCount(1);
 });
 
-it('should enforce same frame for has:locator', async ({ page, server }) => {
+it('should support locator.filter', async ({ page, trace }) => {
+  it.skip(trace === 'on');
+
+  await page.setContent(`<section><div><span>hello</span></div><div><span>world</span></div></section>`);
+  await expect(page.locator(`div`).filter({ hasText: 'hello' })).toHaveCount(1);
+  await expect(page.locator(`div`, { hasText: 'hello' }).filter({ hasText: 'hello' })).toHaveCount(1);
+  await expect(page.locator(`div`, { hasText: 'hello' }).filter({ hasText: 'world' })).toHaveCount(0);
+  await expect(page.locator(`section`, { hasText: 'hello' }).filter({ hasText: 'world' })).toHaveCount(1);
+  await expect(page.locator(`div`).filter({ hasText: 'hello' }).locator('span')).toHaveCount(1);
+  await expect(page.locator(`div`).filter({ has: page.locator('span', { hasText: 'world' }) })).toHaveCount(1);
+  await expect(page.locator(`div`).filter({ has: page.locator('span') })).toHaveCount(2);
+  await expect(page.locator(`div`).filter({
+    has: page.locator('span'),
+    hasText: 'world',
+  })).toHaveCount(1);
+});
+
+it('should enforce same frame for has/leftOf/rightOf/above/below/near', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/frames/two-frames.html');
   const child = page.frames()[1];
-  let error;
-  try {
-    page.locator('div', { has: child.locator('span') });
-  } catch (e) {
-    error = e;
+  for (const option of ['has']) {
+    let error;
+    try {
+      page.locator('div', { [option]: child.locator('span') });
+    } catch (e) {
+      error = e;
+    }
+    expect(error.message).toContain(`Inner "${option}" locator must belong to the same frame.`);
   }
-  expect(error.message).toContain('Inner "has" locator must belong to the same frame.');
 });

@@ -14,21 +14,32 @@
  * limitations under the License.
  */
 
-import debug from 'debug';
-import WebSocket from 'ws';
+import { debug } from '../utilsBundle';
+import { ws as WebSocket } from '../utilsBundle';
 import { fork } from 'child_process';
-import { getPlaywrightVersion } from '../utils/utils';
+import { getPlaywrightVersion } from '../common/userAgent';
 
-export function launchGridAgent(agentId: string, gridURL: string) {
+export function launchGridAgent(agentId: string, gridURL: string, runId: string | undefined) {
   const log = debug(`pw:grid:agent:${agentId}`);
   log('created');
   const params = new URLSearchParams();
   params.set('pwVersion', getPlaywrightVersion(true /* majorMinorOnly */));
   params.set('agentId', agentId);
+  if (runId)
+    params.set('runId', runId);
   const ws = new WebSocket(gridURL.replace('http://', 'ws://') + `/registerAgent?` + params.toString());
-  ws.on('message', (workerId: string) => {
-    log('Worker requested ' + workerId);
-    fork(require.resolve('./gridWorker.js'), [gridURL, agentId, workerId], { detached: true });
+  ws.on('message', (message: string) => {
+    log('worker requested ' + message);
+    const { workerId, browserAlias } = JSON.parse(message);
+    if (!workerId) {
+      log('workerId not specified');
+      return;
+    }
+    if (!browserAlias) {
+      log('browserAlias not specified');
+      return;
+    }
+    fork(require.resolve('./gridBrowserWorker.js'), [gridURL, agentId, workerId, browserAlias], { detached: true });
   });
   ws.on('close', () => process.exit(0));
 }

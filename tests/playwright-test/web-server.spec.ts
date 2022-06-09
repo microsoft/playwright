@@ -18,6 +18,8 @@ import http from 'http';
 import path from 'path';
 import { test, expect } from './playwright-test-fixtures';
 
+const SIMPLE_SERVER_PATH = path.join(__dirname, 'assets', 'simple-server.js');
+
 test('should create a server', async ({ runInlineTest }, { workerIndex }) => {
   const port = workerIndex + 10500;
   const result = await runInlineTest({
@@ -33,7 +35,7 @@ test('should create a server', async ({ runInlineTest }, { workerIndex }) => {
     'playwright.config.ts': `
       module.exports = {
         webServer: {
-          command: 'node ${JSON.stringify(path.join(__dirname, 'assets', 'simple-server.js'))} ${port}',
+          command: 'node ${JSON.stringify(SIMPLE_SERVER_PATH)} ${port}',
           port: ${port},
         },
         globalSetup: 'globalSetup.ts',
@@ -96,7 +98,7 @@ test('should create a server with environment variables', async ({ runInlineTest
     'playwright.config.ts': `
       module.exports = {
         webServer: {
-          command: 'node ${JSON.stringify(path.join(__dirname, 'assets', 'simple-server.js'))} ${port}',
+          command: 'node ${JSON.stringify(SIMPLE_SERVER_PATH)} ${port}',
           port: ${port},
           env: {
             'FOO': 'BAR',
@@ -111,6 +113,64 @@ test('should create a server with environment variables', async ({ runInlineTest
   expect(result.output).toContain('[WebServer] error from server');
   expect(result.report.suites[0].specs[0].tests[0].results[0].status).toContain('passed');
 });
+
+test('should default cwd to config directory', async ({ runInlineTest }, testInfo) => {
+  const port = testInfo.workerIndex + 10500;
+  const configDir = testInfo.outputPath('foo');
+  const relativeSimpleServerPath = path.relative(configDir, SIMPLE_SERVER_PATH);
+  const result = await runInlineTest({
+    'foo/test.spec.ts': `
+      const { test } = pwt;
+      test('connect to the server', async ({ baseURL }) => {
+        expect(baseURL).toBe('http://localhost:${port}');
+      });
+    `,
+    'foo/playwright.config.ts': `
+      module.exports = {
+        webServer: {
+          command: 'node ${JSON.stringify(relativeSimpleServerPath)} ${port}',
+          port: ${port},
+        }
+      };
+    `,
+  }, {}, { DEBUG: 'pw:webserver' }, {
+    cwd: 'foo'
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  expect(result.output).toContain('[WebServer] listening');
+  expect(result.output).toContain('[WebServer] error from server');
+});
+
+test('should resolve cwd wrt config directory', async ({ runInlineTest }, testInfo) => {
+  const port = testInfo.workerIndex + 10500;
+  const testdir = testInfo.outputPath();
+  const relativeSimpleServerPath = path.relative(testdir, SIMPLE_SERVER_PATH);
+  const result = await runInlineTest({
+    'foo/test.spec.ts': `
+      const { test } = pwt;
+      test('connect to the server', async ({ baseURL }) => {
+        expect(baseURL).toBe('http://localhost:${port}');
+      });
+    `,
+    'foo/playwright.config.ts': `
+      module.exports = {
+        webServer: {
+          command: 'node ${JSON.stringify(relativeSimpleServerPath)} ${port}',
+          port: ${port},
+          cwd: '..',
+        }
+      };
+    `,
+  }, {}, { DEBUG: 'pw:webserver' }, {
+    cwd: 'foo'
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  expect(result.output).toContain('[WebServer] listening');
+  expect(result.output).toContain('[WebServer] error from server');
+});
+
 
 test('should create a server with url', async ({ runInlineTest }, { workerIndex }) => {
   const port = workerIndex + 10500;
@@ -151,7 +211,7 @@ test('should time out waiting for a server', async ({ runInlineTest }, { workerI
     'playwright.config.ts': `
       module.exports = {
         webServer: {
-          command: 'node ${JSON.stringify(JSON.stringify(path.join(__dirname, 'assets', 'simple-server.js')))} ${port}',
+          command: 'node ${JSON.stringify(SIMPLE_SERVER_PATH)} ${port} 1000',
           port: ${port},
           timeout: 100,
         }
@@ -235,7 +295,7 @@ test('should be able to specify a custom baseURL with the server', async ({ runI
     'playwright.config.ts': `
       module.exports = {
         webServer: {
-          command: 'node ${JSON.stringify(path.join(__dirname, 'assets', 'simple-server.js'))} ${webServerPort}',
+          command: 'node ${JSON.stringify(SIMPLE_SERVER_PATH)} ${webServerPort}',
           port: ${webServerPort},
         },
         use: {
@@ -269,7 +329,7 @@ test('should be able to use an existing server when reuseExistingServer:true ', 
     'playwright.config.ts': `
       module.exports = {
         webServer: {
-          command: 'node ${JSON.stringify(path.join(__dirname, 'assets', 'simple-server.js'))} ${port}',
+          command: 'node ${JSON.stringify(SIMPLE_SERVER_PATH)} ${port}',
           port: ${port},
           reuseExistingServer: true,
         }
@@ -302,7 +362,7 @@ test('should throw when a server is already running on the given port and strict
     'playwright.config.ts': `
       module.exports = {
         webServer: {
-          command: 'node ${JSON.stringify(path.join(__dirname, 'assets', 'simple-server.js'))} ${port}',
+          command: 'node ${JSON.stringify(SIMPLE_SERVER_PATH)} ${port}',
           port: ${port},
           reuseExistingServer: false,
         }
@@ -347,3 +407,142 @@ for (const host of ['localhost', '127.0.0.1', '0.0.0.0']) {
     }
   });
 }
+
+test(`should suport self signed certificate`, async ({ runInlineTest, httpsServer }) => {
+  const result = await runInlineTest({
+    'test.spec.js': `
+      const { test } = pwt;
+      test('pass', async ({}) => { });
+    `,
+    'playwright.config.js': `
+      module.exports = {
+        webServer: {
+          url: '${httpsServer.EMPTY_PAGE}',
+          ignoreHTTPSErrors: true,
+          reuseExistingServer: true,
+        },
+      };
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+});
+
+test('should create multiple servers', async ({ runInlineTest }, { workerIndex }) => {
+  const port = workerIndex + 10500;
+  const result = await runInlineTest({
+    'test.spec.ts': `
+        import { webServer } from '@playwright/test/lib/plugins';
+        const { test, _addRunnerPlugin } = pwt;
+        _addRunnerPlugin(webServer({
+            command: 'node ${JSON.stringify(SIMPLE_SERVER_PATH)} ${port}',
+            url: 'http://localhost:${port}/port',
+        }));
+        _addRunnerPlugin(webServer({
+            command: 'node ${JSON.stringify(SIMPLE_SERVER_PATH)} ${port + 1}',
+            url: 'http://localhost:${port + 1}/port',
+        }));
+
+        test('connect to the server', async ({page}) => {
+          await page.goto('http://localhost:${port}/port');
+          await page.locator('text=${port}');
+
+          await page.goto('http://localhost:${port + 1}/port');
+          await page.locator('text=${port + 1}');
+        });
+      `,
+    'playwright.config.ts': `
+        module.exports = {
+          globalSetup: 'globalSetup.ts',
+          globalTeardown: 'globalTeardown.ts',
+        };
+        `,
+    'globalSetup.ts': `
+        module.exports = async () => {
+          const http = require("http");
+          const response = await new Promise(resolve => {
+            const request = http.request("http://localhost:${port}/hello", resolve);
+            request.end();
+          })
+          console.log('globalSetup-status-'+response.statusCode)
+          return async () => {
+            const response = await new Promise(resolve => {
+              const request = http.request("http://localhost:${port}/hello", resolve);
+              request.end();
+            })
+            console.log('globalSetup-teardown-status-'+response.statusCode)
+          };
+        };
+        `,
+    'globalTeardown.ts': `
+        module.exports = async () => {
+          const http = require("http");
+          const response = await new Promise(resolve => {
+            const request = http.request("http://localhost:${port}/hello", resolve);
+            request.end();
+          })
+          console.log('globalTeardown-status-'+response.statusCode)
+        };
+        `,
+  }, undefined, { DEBUG: 'pw:webserver' });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  expect(result.output).toContain('[WebServer] listening');
+  expect(result.output).toContain('[WebServer] error from server');
+  expect(result.output).toContain('passed');
+
+  const expectedLogMessages = ['globalSetup-status-200', 'globalSetup-teardown-status', 'globalTeardown-status-200'];
+  const actualLogMessages = expectedLogMessages.map(log => ({
+    log,
+    index: result.output.indexOf(log),
+  })).sort((a, b) => a.index - b.index).filter(l => l.index !== -1).map(l => l.log);
+  expect(actualLogMessages).toStrictEqual(expectedLogMessages);
+});
+
+test.describe('baseURL with plugins', () => {
+  test('plugins do not set it', async ({ runInlineTest }, { workerIndex }) => {
+    const port = workerIndex + 10500;
+    const result = await runInlineTest({
+      'test.spec.ts': `
+          import { webServer } from '@playwright/test/lib/plugins';
+          const { test, _addRunnerPlugin } = pwt;
+          _addRunnerPlugin(webServer({
+            command: 'node ${JSON.stringify(SIMPLE_SERVER_PATH)} ${port}',
+            url: 'http://localhost:${port}/port',
+          }));
+          test('connect to the server', async ({baseURL, page}) => {
+            expect(baseURL).toBeUndefined();
+          });
+      `,
+      'playwright.config.ts': `module.exports = {};`,
+    }, undefined, { DEBUG: 'pw:webserver' });
+    expect(result.exitCode).toBe(0);
+    expect(result.passed).toBe(1);
+  });
+
+  test('legacy config sets it alongside plugin', async ({ runInlineTest }, { workerIndex }) => {
+    const port = workerIndex + 10500;
+    const result = await runInlineTest({
+      'test.spec.ts': `
+          import { webServer } from '@playwright/test/lib/plugins';
+          const { test, _addRunnerPlugin } = pwt;
+          _addRunnerPlugin(webServer({
+            command: 'node ${JSON.stringify(SIMPLE_SERVER_PATH)} ${port + 1}',
+            url: 'http://localhost:${port + 1}/port'
+          }));
+          test('connect to the server', async ({baseURL, page}) => {
+            expect(baseURL).toBe('http://localhost:${port}');
+          });
+        `,
+      'playwright.config.ts': `
+          module.exports = {
+            webServer: {
+              command: 'node ${JSON.stringify(SIMPLE_SERVER_PATH)} ${port}',
+              port: ${port},
+            }
+          };
+          `,
+    }, undefined, { DEBUG: 'pw:webserver' });
+    expect(result.exitCode).toBe(0);
+    expect(result.passed).toBe(1);
+  });
+});

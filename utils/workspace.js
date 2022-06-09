@@ -56,6 +56,11 @@ class Workspace {
     return this._packages;
   }
 
+  async version() {
+    const workspacePackageJSON = await readJSON(path.join(this._rootDir, 'package.json'));
+    return workspacePackageJSON.version;
+  }
+
   /**
    * @param {string} version
    */
@@ -118,10 +123,14 @@ class Workspace {
       for (const otherPackage of this._packages) {
         if (pkgLockEntry.dependencies && pkgLockEntry.dependencies[otherPackage.name])
           pkgLockEntry.dependencies[otherPackage.name] = version;
+        if (pkgLockEntry.devDependencies && pkgLockEntry.devDependencies[otherPackage.name])
+          pkgLockEntry.devDependencies[otherPackage.name] = version;
         if (depLockEntry.requires && depLockEntry.requires[otherPackage.name])
           depLockEntry.requires[otherPackage.name] = version;
         if (pkg.packageJSON.dependencies && pkg.packageJSON.dependencies[otherPackage.name])
           pkg.packageJSON.dependencies[otherPackage.name] = version;
+        if (pkg.packageJSON.devDependencies && pkg.packageJSON.devDependencies[otherPackage.name])
+          pkg.packageJSON.devDependencies[otherPackage.name] = version;
       }
       await maybeWriteJSON(pkg.packageJSONPath, pkg.packageJSON);
     }
@@ -184,6 +193,11 @@ const workspace = new Workspace(ROOT_PATH, [
     path: path.join(ROOT_PATH, 'packages', 'playwright-ct-vue'),
     files: ['LICENSE'],
   }),
+  new PWPackage({
+    name: '@playwright/experimental-ct-vue2',
+    path: path.join(ROOT_PATH, 'packages', 'playwright-ct-vue2'),
+    files: ['LICENSE'],
+  }),
 ]);
 
 if (require.main === module) {
@@ -209,6 +223,9 @@ async function parseCLI() {
         if (!pkg.isPrivate)
           console.log(pkg.path);
       }
+    },
+    '--get-version': async (version) => {
+      console.log(await workspace.version());
     },
     '--set-version': async (version) => {
       if (!version)

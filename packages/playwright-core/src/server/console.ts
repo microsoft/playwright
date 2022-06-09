@@ -15,8 +15,8 @@
  */
 
 import { SdkObject } from './instrumentation';
-import * as js from './javascript';
-import { ConsoleMessageLocation } from './types';
+import type * as js from './javascript';
+import type { ConsoleMessageLocation } from './types';
 
 export class ConsoleMessage extends SdkObject {
   private _type: string;

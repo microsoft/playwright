@@ -929,7 +929,11 @@ class PageAgent {
 function takeScreenshot(win, left, top, width, height, mimeType, omitDeviceScaleFactor) {
   const MAX_SKIA_DIMENSIONS = 32767;
 
-  const scale = omitDeviceScaleFactor ? 1 : win.devicePixelRatio;
+  // `win.devicePixelRatio` returns a non-overriden value to priveleged code.
+  // See https://bugzilla.mozilla.org/show_bug.cgi?id=1761032
+  // See https://phabricator.services.mozilla.com/D141323
+  const devicePixelRatio = win.browsingContext.overrideDPPX || win.devicePixelRatio;
+  const scale = omitDeviceScaleFactor ? 1 : devicePixelRatio;
   const canvasWidth = width * scale;
   const canvasHeight = height * scale;
 

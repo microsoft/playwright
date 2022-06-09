@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-import { serializeAsCallArgument, parseEvaluationResultValue } from '../common/utilityScriptSerializers';
+import { serializeAsCallArgument, parseEvaluationResultValue } from '../isomorphic/utilityScriptSerializers';
 
-export default class UtilityScript {
+export class UtilityScript {
   evaluate(isFunction: boolean | undefined, returnByValue: boolean, expression: string, argCount: number, ...argsAndHandles: any[]) {
     const args = argsAndHandles.slice(0, argCount);
     const handles = argsAndHandles.slice(argCount);
     const parameters = args.map(a => parseEvaluationResultValue(a, handles));
-    let result = global.eval(expression);
+    let result = globalThis.eval(expression);
     if (isFunction === true) {
       result = result(...parameters);
     } else if (isFunction === false) {
@@ -63,3 +63,5 @@ export default class UtilityScript {
     return safeJson(value);
   }
 }
+
+module.exports = UtilityScript;

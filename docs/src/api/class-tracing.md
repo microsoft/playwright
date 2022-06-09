@@ -1,6 +1,6 @@
 # class: Tracing
 
-API for collecting and saving Playwright traces. Playwright traces can be opened in [Trace Viewer](./trace-viewer.md) after Playwright script runs.
+API for collecting and saving Playwright traces. Playwright traces can be opened in [Trace Viewer](../trace-viewer.md) after Playwright script runs.
 
 Start recording a trace before performing actions. At the end, stop tracing and save it to a file.
 
@@ -140,7 +140,8 @@ Whether to include source files for trace actions.
 - `sources` <[boolean]>
 
 Whether to include source files for trace actions. List of the directories with source code for the application
-must be provided via `PLAYWRIGHT_JAVA_SRC` environment variable.
+must be provided via `PLAYWRIGHT_JAVA_SRC` environment variable (the paths should be separated by ';' on Windows
+and by ':' on other platforms).
 
 ### option: Tracing.start.title
 - `title` <[string]>

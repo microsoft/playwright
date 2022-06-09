@@ -15,20 +15,20 @@
  */
 
 import { URLSearchParams } from 'url';
-import * as channels from '../protocol/channels';
+import type * as channels from '../protocol/channels';
 import { ChannelOwner } from './channelOwner';
 import { Frame } from './frame';
-import { Headers, RemoteAddr, SecurityDetails, WaitForEventOptions } from './types';
+import type { Headers, RemoteAddr, SecurityDetails, WaitForEventOptions } from './types';
 import fs from 'fs';
-import * as mime from 'mime';
-import { isString, headersObjectToArray } from '../utils/utils';
-import { ManualPromise } from '../utils/async';
+import { mime } from '../utilsBundle';
+import { isString, headersObjectToArray, headersArrayToObject } from '../utils';
+import { ManualPromise } from '../utils/manualPromise';
 import { Events } from './events';
-import { Page } from './page';
+import type { Page } from './page';
 import { Waiter } from './waiter';
-import * as api from '../../types/types';
-import { HeadersArray, URLMatch } from '../common/types';
-import { urlMatches } from './clientHelper';
+import type * as api from '../../types/types';
+import type { HeadersArray, URLMatch } from '../common/types';
+import { urlMatches } from '../common/netUtils';
 import { MultiMap } from '../utils/multimap';
 import { APIResponse } from './fetch';
 
@@ -140,6 +140,11 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
     return this._provisionalHeaders.headers();
   }
 
+  _context() {
+    // TODO: make sure this works for service worker requests.
+    return this.frame().page().context();
+  }
+
   _actualHeaders(): Promise<RawHeaders> {
     if (!this._actualHeadersPromise) {
       this._actualHeadersPromise = this._wrapApiCall(async () => {
@@ -239,13 +244,34 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
     await this._raceWithPageClose(this._channel.abort({ errorCode }));
   }
 
-  async fulfill(options: { response?: api.APIResponse, status?: number, headers?: Headers, contentType?: string, body?: string | Buffer, path?: string } = {}) {
+  async fulfill(options: { response?: api.APIResponse, status?: number, headers?: Headers, contentType?: string, body?: string | Buffer, path?: string, har?: string } = {}) {
     let fetchResponseUid;
     let { status: statusOption, headers: headersOption, body } = options;
+
+    if (options.har && options.response)
+      throw new Error(`At most one of "har" and "response" options should be present`);
+
+    if (options.har) {
+      const entry = await this._connection.localUtils()._channel.harFindEntry({
+        cacheKey: this.request()._context()._guid,
+        harFile: options.har,
+        url: this.request().url(),
+        needBody: body === undefined,
+      });
+      if (entry.error)
+        throw new Error(entry.error);
+      if (statusOption === undefined)
+        statusOption = entry.status;
+      if (headersOption === undefined && entry.headers)
+        headersOption = headersArrayToObject(entry.headers, false);
+      if (body === undefined && entry.body !== undefined)
+        body = Buffer.from(entry.body, 'base64');
+    }
+
     if (options.response) {
-      statusOption ||= options.response.status();
-      headersOption ||= options.response.headers();
-      if (options.body === undefined && options.path === undefined && options.response instanceof APIResponse) {
+      statusOption ??= options.response.status();
+      headersOption ??= options.response.headers();
+      if (body === undefined && options.path === undefined && options.response instanceof APIResponse) {
         if (options.response._request._connection === this._connection)
           fetchResponseUid = (options.response as APIResponse)._fetchUid();
         else
@@ -309,7 +335,7 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
   }
 }
 
-export type RouteHandlerCallback = (route: Route, request: Request) => void;
+export type RouteHandlerCallback = (route: Route, request: Request) => void | Promise<void>;
 
 export type ResourceTiming = {
   startTime: number;
@@ -366,6 +392,10 @@ export class Response extends ChannelOwner<channels.ResponseChannel> implements 
 
   statusText(): string {
     return this._initializer.statusText;
+  }
+
+  fromServiceWorker(): boolean {
+    return this._initializer.fromServiceWorker;
   }
 
   /**
@@ -518,13 +548,13 @@ export class RouteHandler {
     return urlMatches(this._baseURL, requestURL, this.url);
   }
 
-  public handle(route: Route, request: Request): void {
+  public handle(route: Route, request: Request): Promise<void> | void {
     ++this.handledCount;
-    this.handler(route, request);
+    return this.handler(route, request);
   }
 
-  public isActive(): boolean {
-    return this.handledCount < this._times;
+  public willExpire(): boolean {
+    return this.handledCount + 1 >= this._times;
   }
 }
 

@@ -15,13 +15,13 @@
  * limitations under the License.
  */
 
-import * as frames from '../frames';
+import type * as frames from '../frames';
 import * as network from '../network';
-import * as types from '../types';
-import { Protocol } from './protocol';
-import { WKSession } from './wkConnection';
-import { assert, headersObjectToArray, headersArrayToObject } from '../../utils/utils';
-import { ManualPromise } from '../../utils/async';
+import type * as types from '../types';
+import type { Protocol } from './protocol';
+import type { WKSession } from './wkConnection';
+import { assert, headersObjectToArray, headersArrayToObject } from '../../utils';
+import { ManualPromise } from '../../utils/manualPromise';
 
 const errorReasons: { [reason: string]: Protocol.Network.ResourceErrorType } = {
   'aborted': 'Cancellation',
@@ -88,7 +88,7 @@ export class WKInterceptableRequest {
       responseStart: timingPayload ? wkMillisToRoundishMillis(timingPayload.responseStart) : -1,
     };
     const setCookieSeparator = process.platform === 'darwin' ? ',' : '\n';
-    return new network.Response(this.request, responsePayload.status, responsePayload.statusText, headersObjectToArray(responsePayload.headers, ',', setCookieSeparator), timing, getResponseBody);
+    return new network.Response(this.request, responsePayload.status, responsePayload.statusText, headersObjectToArray(responsePayload.headers, ',', setCookieSeparator), timing, getResponseBody, responsePayload.source === 'service-worker');
   }
 }
 

@@ -30,12 +30,13 @@ import { parseError } from '../protocol/serializers';
 import { CDPSession } from './cdpSession';
 import { Playwright } from './playwright';
 import { Electron, ElectronApplication } from './electron';
-import * as channels from '../protocol/channels';
+import type * as channels from '../protocol/channels';
 import { Stream } from './stream';
-import { debugLogger } from '../utils/debugLogger';
+import { WritableStream } from './writableStream';
+import { debugLogger } from '../common/debugLogger';
 import { SelectorsOwner } from './selectors';
 import { Android, AndroidSocket, AndroidDevice } from './android';
-import { ParsedStackTrace } from '../utils/stackTrace';
+import type { ParsedStackTrace } from '../utils/stackTrace';
 import { Artifact } from './artifact';
 import { EventEmitter } from 'events';
 import { JsonPipe } from './jsonPipe';
@@ -66,10 +67,14 @@ export class Connection extends EventEmitter {
   private _rootObject: Root;
   private _closedErrorMessage: string | undefined;
   private _isRemote = false;
+  private _localUtils?: LocalUtils;
+  // Some connections allow resolving in-process dispatchers.
+  toImpl: ((client: ChannelOwner) => any) | undefined;
 
-  constructor() {
+  constructor(localUtils?: LocalUtils) {
     super();
     this._rootObject = new Root(this);
+    this._localUtils = localUtils;
   }
 
   markAsRemote() {
@@ -78,6 +83,10 @@ export class Connection extends EventEmitter {
 
   isRemote() {
     return this._isRemote;
+  }
+
+  localUtils(): LocalUtils {
+    return this._localUtils!;
   }
 
   async initializePlaywright(): Promise<Playwright> {
@@ -235,6 +244,8 @@ export class Connection extends EventEmitter {
         break;
       case 'LocalUtils':
         result = new LocalUtils(parent, type, guid, initializer);
+        if (!this._localUtils)
+          this._localUtils = result as LocalUtils;
         break;
       case 'Page':
         result = new Page(parent, type, guid, initializer);
@@ -268,6 +279,9 @@ export class Connection extends EventEmitter {
         break;
       case 'Worker':
         result = new Worker(parent, type, guid, initializer);
+        break;
+      case 'WritableStream':
+        result = new WritableStream(parent, type, guid, initializer);
         break;
       default:
         throw new Error('Missing type ' + type);

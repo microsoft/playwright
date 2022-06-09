@@ -7,8 +7,8 @@ A result of a single [TestCase] run.
 - type: <[Array]<[Object]>>
   - `name` <[string]> Attachment name.
   - `contentType` <[string]> Content type of this attachment to properly present in the report, for example `'application/json'` or `'image/png'`.
-  - `path` <[void]|[string]> Optional path on the filesystem to the attached file.
-  - `body` <[void]|[Buffer]> Optional attachment body used instead of a file.
+  - `path` ?<[string]> Optional path on the filesystem to the attached file.
+  - `body` ?<[Buffer]> Optional attachment body used instead of a file.
 
 The list of files or buffers attached during the test execution through [`property: TestInfo.attachments`].
 
@@ -18,7 +18,7 @@ The list of files or buffers attached during the test execution through [`proper
 Running time in milliseconds.
 
 ## property: TestResult.error
-- type: <[void]|[TestError]>
+- type: ?<[TestError]>
 
 First error thrown during test execution, if any. This is equal to the first
 element in [`property: TestResult.errors`].
@@ -33,7 +33,7 @@ Errors thrown during the test execution.
 
 When test is retries multiple times, each retry attempt is given a sequential number.
 
-Learn more about [test retries](./test-retries.md#retries).
+Learn more about [test retries](../test-retries.md#retries).
 
 ## property: TestResult.startTime
 - type: <[Date]>
@@ -63,6 +63,6 @@ List of steps inside this test run.
 ## property: TestResult.workerIndex
 - type: <[int]>
 
-Index of the worker where the test was run.
+Index of the worker where the test was run. If the test was not run a single time, for example when the user interrupted testing, the only result will have a `workerIndex` equal to `-1`.
 
-Learn more about [parallelism and sharding](./test-parallel.md) with Playwright Test.
+Learn more about [parallelism and sharding](../test-parallel.md) with Playwright Test.

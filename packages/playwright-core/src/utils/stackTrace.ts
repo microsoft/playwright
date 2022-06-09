@@ -15,9 +15,8 @@
  */
 
 import path from 'path';
-import { StackFrame } from '../protocol/channels';
-import StackUtils from 'stack-utils';
-import { isUnderTest } from './utils';
+import { StackUtils } from '../utilsBundle';
+import { isUnderTest } from './';
 
 const stackUtils = new StackUtils();
 
@@ -36,7 +35,13 @@ const CORE_SRC = path.join(CORE_DIR, 'src');
 const TEST_DIR_SRC = path.resolve(CORE_DIR, '..', 'playwright-test');
 const TEST_DIR_LIB = path.resolve(CORE_DIR, '..', '@playwright', 'test');
 const COVERAGE_PATH = path.join(CORE_DIR, '..', '..', 'tests', 'config', 'coverage.js');
-const WS_LIB = path.relative(process.cwd(), path.dirname(require.resolve('ws')));
+
+export type StackFrame = {
+  file: string,
+  line?: number,
+  column?: number,
+  function?: string,
+};
 
 export type ParsedStackTrace = {
   allFrames: StackFrame[];
@@ -63,8 +68,6 @@ export function isInternalFileName(file: string, functionName?: string): boolean
     return true;
   // Node 12
   if (file === '_stream_readable.js' || file === '_stream_writable.js')
-    return true;
-  if (file.startsWith(WS_LIB))
     return true;
   return false;
 }
@@ -108,28 +111,14 @@ export function captureStackTrace(rawStack?: string): ParsedStackTrace {
 
   let apiName = '';
   const allFrames = parsedFrames;
-
-  // expect matchers have the following stack structure:
-  // at Object.__PWTRAP__[expect.toHaveText] (...)
-  // at __EXTERNAL_MATCHER_TRAP__ (...)
-  // at Object.throwingMatcher [as toHaveText] (...)
-  const TRAP = '__PWTRAP__[';
-  const expectIndex = parsedFrames.findIndex(f => f.frameText.includes(TRAP));
-  if (expectIndex !== -1) {
-    const text = parsedFrames[expectIndex].frameText;
-    const aliasIndex = text.indexOf(TRAP);
-    apiName = text.substring(aliasIndex + TRAP.length, text.indexOf(']'));
-    parsedFrames = parsedFrames.slice(expectIndex + 3);
-  } else {
-    // Deepest transition between non-client code calling into client code
-    // is the api entry.
-    for (let i = 0; i < parsedFrames.length - 1; i++) {
-      if (parsedFrames[i].inCore && !parsedFrames[i + 1].inCore) {
-        const frame = parsedFrames[i].frame;
-        apiName = normalizeAPIName(frame.function);
-        parsedFrames = parsedFrames.slice(i + 1);
-        break;
-      }
+  // Deepest transition between non-client code calling into client code
+  // is the api entry.
+  for (let i = 0; i < parsedFrames.length - 1; i++) {
+    if (parsedFrames[i].inCore && !parsedFrames[i + 1].inCore) {
+      const frame = parsedFrames[i].frame;
+      apiName = normalizeAPIName(frame.function);
+      parsedFrames = parsedFrames.slice(i + 1);
+      break;
     }
   }
 

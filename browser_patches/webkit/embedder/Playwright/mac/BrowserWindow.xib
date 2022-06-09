@@ -22,7 +22,7 @@
         </customObject>
         <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
         <customObject id="-3" userLabel="Application" customClass="NSObject"/>
-        <window title="Window" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" frameAutosaveName="Main Window" animationBehavior="default" id="1">
+        <window title="Window" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" frameAutosaveName="Main Window" animationBehavior="default" id="1" customClass="CustomWindow">
             <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES" resizable="YES" fullSizeContentView="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="517" y="330" width="776" height="608"/>
@@ -137,7 +137,7 @@
                     </toolbarItem>
                     <toolbarItem implicitItemIdentifier="255D29F2-C9AA-4B4B-BB43-B38FCD6A0BBB" label="Location" paletteLabel="Location" id="59">
                         <nil key="toolTip"/>
-                        <size key="minSize" width="200" height="22"/>
+                        <size key="minSize" width="50" height="22"/>
                         <size key="maxSize" width="100000" height="22"/>
                         <textField key="view" verticalHuggingPriority="750" id="10">
                             <rect key="frame" x="0.0" y="14" width="565" height="22"/>

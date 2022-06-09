@@ -4,7 +4,7 @@ title: "Chrome Extensions"
 ---
 
 :::note
-Extensions only work in Chrome / Chromium in non-headless mode.
+Extensions only work in Chrome / Chromium in non-headless mode, launched with a persistent context.
 :::
 
 The following is code for getting a handle to the [background page](https://developer.chrome.com/extensions/background_pages) of an extension whose source is located in `./my-extension`:

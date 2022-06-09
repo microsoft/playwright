@@ -1,6 +1,6 @@
 /* eslint-disable notice/notice */
 
-import { PlaywrightTestConfig } from '@playwright/test';
+import type { PlaywrightTestConfig } from '@playwright/test';
 
 /**
  * See https://playwright.dev/docs/test-configuration.

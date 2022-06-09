@@ -1,0 +1,32 @@
+{
+  "name": "@playwright/experimental-ct-vue2",
+  "version": "1.23.0-next",
+  "description": "Playwright Component Testing for Vue2",
+  "repository": "github:Microsoft/playwright",
+  "homepage": "https://playwright.dev",
+  "engines": {
+    "node": ">=14"
+  },
+  "author": {
+    "name": "Microsoft Corporation"
+  },
+  "license": "Apache-2.0",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "default": "./index.js"
+    },
+    "./register": {
+      "types": "./register.d.ts",
+      "default": "./register.mjs"
+    }
+  },
+  "dependencies": {
+    "@playwright/test": "1.23.0-next",
+    "vite": "^2.9.5",
+    "vite-plugin-vue2": "^2.0.1"
+  },
+  "devDependencies": {
+    "vue": "^2.6.14"
+  }
+}

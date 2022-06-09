@@ -215,7 +215,8 @@ except TimeoutError as e:
 This object can be used to launch or connect to Firefox, returning instances of [Browser].
 
 ## property: Playwright.request
-* langs: js, java, python
+* langs:
+  - alias-csharp: APIRequest
 - type: <[APIRequest]>
 
 Exposes API that can be used for the Web API testing.
@@ -224,7 +225,7 @@ Exposes API that can be used for the Web API testing.
 - type: <[Selectors]>
 
 Selectors can be used to install custom selector engines. See
-[Working with selectors](./selectors.md) for more information.
+[Working with selectors](../selectors.md) for more information.
 
 ## property: Playwright.webkit
 - type: <[BrowserType]>

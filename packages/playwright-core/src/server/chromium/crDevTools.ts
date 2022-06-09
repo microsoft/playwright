@@ -15,7 +15,7 @@
  */
 
 import fs from 'fs';
-import { CRSession } from './crConnection';
+import type { CRSession } from './crConnection';
 
 const kBindingName = '__pw_devtools__';
 

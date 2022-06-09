@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-import { TestType } from '@playwright/test';
-import { PlatformWorkerFixtures } from '../config/platformFixtures';
-import { TestModeWorkerFixtures, TestModeWorkerOptions } from '../config/testModeFixtures';
+import type { TestType } from '@playwright/test';
+import type { PlatformWorkerFixtures } from '../config/platformFixtures';
+import type { TestModeWorkerFixtures, TestModeWorkerOptions } from '../config/testModeFixtures';
 import { androidTest } from '../android/androidTest';
 import { browserTest } from '../config/browserTest';
 import { electronTest } from '../electron/electronTest';
-import { PageTestFixtures, PageWorkerFixtures } from './pageTestApi';
-import { ServerFixtures, ServerWorkerOptions } from '../config/serverFixtures';
+import type { PageTestFixtures, PageWorkerFixtures } from './pageTestApi';
+import type { ServerFixtures, ServerWorkerOptions } from '../config/serverFixtures';
 export { expect } from '@playwright/test';
 
 let impl: TestType<PageTestFixtures & ServerFixtures, PageWorkerFixtures & PlatformWorkerFixtures & TestModeWorkerFixtures & TestModeWorkerOptions & ServerWorkerOptions> = browserTest;

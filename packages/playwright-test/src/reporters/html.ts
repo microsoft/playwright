@@ -14,18 +14,23 @@
  * limitations under the License.
  */
 
-import colors from 'colors/safe';
+import { colors } from 'playwright-core/lib/utilsBundle';
 import fs from 'fs';
-import open from 'open';
+import { open } from '../utilsBundle';
 import path from 'path';
-import { Transform, TransformCallback } from 'stream';
-import { FullConfig, Suite, Reporter } from '../../types/testReporter';
+import type { TransformCallback } from 'stream';
+import { Transform } from 'stream';
+import type { FullConfig, Suite, Reporter } from '../../types/testReporter';
 import { HttpServer } from 'playwright-core/lib/utils/httpServer';
-import { calculateSha1, removeFolders } from 'playwright-core/lib/utils/utils';
-import RawReporter, { JsonReport, JsonSuite, JsonTestCase, JsonTestResult, JsonTestStep } from './raw';
-import assert from 'assert';
-import yazl from 'yazl';
+import { assert, calculateSha1 } from 'playwright-core/lib/utils';
+import { removeFolders } from 'playwright-core/lib/utils/fileUtils';
+import type { JsonAttachment, JsonReport, JsonSuite, JsonTestCase, JsonTestResult, JsonTestStep } from './raw';
+import RawReporter from './raw';
 import { stripAnsiEscapes } from './base';
+import { getPackageJsonPath } from '../util';
+import type { FullConfigInternal, Metadata } from '../types';
+import type { ZipFile } from 'playwright-core/lib/zipBundle';
+import { yazl } from 'playwright-core/lib/zipBundle';
 
 export type Stats = {
   total: number;
@@ -44,6 +49,7 @@ export type Location = {
 };
 
 export type HTMLReport = {
+  metadata: Metadata;
   files: TestFileSummary[];
   stats: Stats;
   projectNames: string[];
@@ -114,16 +120,19 @@ type TestEntry = {
 
 const kMissingContentType = 'x-playwright/missing';
 
-class HtmlReporter implements Reporter {
-  private config!: FullConfig;
-  private suite!: Suite;
-  private _outputFolder: string | undefined;
-  private _open: 'always' | 'never' | 'on-failure';
+type HtmlReportOpenOption = 'always' | 'never' | 'on-failure';
+type HtmlReporterOptions = {
+  outputFolder?: string,
+  open?: HtmlReportOpenOption,
+};
 
-  constructor(options: { outputFolder?: string, open?: 'always' | 'never' | 'on-failure' } = {}) {
-    // TODO: resolve relative to config.
-    this._outputFolder = options.outputFolder;
-    this._open = process.env.PW_TEST_HTML_REPORT_OPEN as any || options.open || 'on-failure';
+class HtmlReporter implements Reporter {
+  private config!: FullConfigInternal;
+  private suite!: Suite;
+  private _options: HtmlReporterOptions;
+
+  constructor(options: HtmlReporterOptions = {}) {
+    this._options = options;
   }
 
   printsToStdio() {
@@ -131,53 +140,71 @@ class HtmlReporter implements Reporter {
   }
 
   onBegin(config: FullConfig, suite: Suite) {
-    this.config = config;
+    this.config = config as FullConfigInternal;
     this.suite = suite;
   }
 
+  _resolveOptions(): { outputFolder: string, open: HtmlReportOpenOption } {
+    let { outputFolder } = this._options;
+    if (outputFolder)
+      outputFolder = path.resolve(this.config._configDir, outputFolder);
+    return {
+      outputFolder: reportFolderFromEnv() ?? outputFolder ?? defaultReportFolder(this.config._configDir),
+      open: process.env.PW_TEST_HTML_REPORT_OPEN as any || this._options.open || 'on-failure',
+    };
+  }
+
   async onEnd() {
+    const { open, outputFolder } = this._resolveOptions();
     const projectSuites = this.suite.suites;
     const reports = projectSuites.map(suite => {
       const rawReporter = new RawReporter();
       const report = rawReporter.generateProjectReport(this.config, suite);
       return report;
     });
-    const reportFolder = htmlReportFolder(this._outputFolder);
-    await removeFolders([reportFolder]);
-    const builder = new HtmlBuilder(reportFolder);
-    const { ok, singleTestId } = await builder.build(reports);
+    await removeFolders([outputFolder]);
+    const builder = new HtmlBuilder(outputFolder);
+    const { ok, singleTestId } = await builder.build(this.config.metadata, reports);
 
     if (process.env.CI)
       return;
 
-    const shouldOpen = this._open === 'always' || (!ok && this._open === 'on-failure');
+
+    const shouldOpen = open === 'always' || (!ok && open === 'on-failure');
     if (shouldOpen) {
-      await showHTMLReport(reportFolder, singleTestId);
+      await showHTMLReport(outputFolder, singleTestId);
     } else {
-      const outputFolderPath = htmlReportFolder(this._outputFolder) === defaultReportFolder() ? '' : ' ' + path.relative(process.cwd(), htmlReportFolder(this._outputFolder));
+      const relativeReportPath = outputFolder === standaloneDefaultFolder() ? '' : ' ' + path.relative(process.cwd(), outputFolder);
       console.log('');
       console.log('To open last HTML report run:');
       console.log(colors.cyan(`
-  npx playwright show-report${outputFolderPath}
+  npx playwright show-report${relativeReportPath}
 `));
     }
   }
 }
 
-export function htmlReportFolder(outputFolder?: string): string {
+function reportFolderFromEnv(): string | undefined {
   if (process.env[`PLAYWRIGHT_HTML_REPORT`])
     return path.resolve(process.cwd(), process.env[`PLAYWRIGHT_HTML_REPORT`]);
-  if (outputFolder)
-    return outputFolder;
-  return defaultReportFolder();
+  return undefined;
 }
 
-function defaultReportFolder(): string {
-  return path.resolve(process.cwd(), 'playwright-report');
+function defaultReportFolder(searchForPackageJson: string): string {
+  let basePath = getPackageJsonPath(searchForPackageJson);
+  if (basePath)
+    basePath = path.dirname(basePath);
+  else
+    basePath = process.cwd();
+  return path.resolve(basePath, 'playwright-report');
+}
+
+function standaloneDefaultFolder(): string {
+  return reportFolderFromEnv() ?? defaultReportFolder(process.cwd());
 }
 
 export async function showHTMLReport(reportFolder: string | undefined, testId?: string) {
-  const folder = reportFolder || htmlReportFolder();
+  const folder = reportFolder ?? standaloneDefaultFolder();
   try {
     assert(fs.statSync(folder).isDirectory());
   } catch (e) {
@@ -219,16 +246,16 @@ class HtmlBuilder {
   private _reportFolder: string;
   private _tests = new Map<string, JsonTestCase>();
   private _testPath = new Map<string, string[]>();
-  private _dataZipFile: yazl.ZipFile;
+  private _dataZipFile: ZipFile;
   private _hasTraces = false;
 
   constructor(outputDir: string) {
-    this._reportFolder = path.resolve(process.cwd(), outputDir);
+    this._reportFolder = outputDir;
     fs.mkdirSync(this._reportFolder, { recursive: true });
     this._dataZipFile = new yazl.ZipFile();
   }
 
-  async build(rawReports: JsonReport[]): Promise<{ ok: boolean, singleTestId: string | undefined }> {
+  async build(metadata: Metadata, rawReports: JsonReport[]): Promise<{ ok: boolean, singleTestId: string | undefined }> {
 
     const data = new Map<string, { testFile: TestFile, testFileSummary: TestFileSummary }>();
     for (const projectJson of rawReports) {
@@ -284,6 +311,7 @@ class HtmlBuilder {
       this._addDataFile(fileId + '.json', testFile);
     }
     const htmlReport: HTMLReport = {
+      metadata,
       files: [...data.values()].map(e => e.testFileSummary),
       projectNames: rawReports.map(r => r.project.name),
       stats: [...data.values()].reduce((a, e) => addStats(a, e.testFileSummary.stats), emptyStats())
@@ -377,8 +405,84 @@ class HtmlBuilder {
     };
   }
 
-  private _createTestResult(result: JsonTestResult): TestResult {
+  private _serializeAttachments(attachments: JsonAttachment[]) {
     let lastAttachment: TestAttachment | undefined;
+    return attachments.map(a => {
+      if (a.name === 'trace')
+        this._hasTraces = true;
+
+      if ((a.name === 'stdout' || a.name === 'stderr') && a.contentType === 'text/plain') {
+        if (lastAttachment &&
+          lastAttachment.name === a.name &&
+          lastAttachment.contentType === a.contentType) {
+          lastAttachment.body += stripAnsiEscapes(a.body as string);
+          return null;
+        }
+        a.body = stripAnsiEscapes(a.body as string);
+        lastAttachment = a as TestAttachment;
+        return a;
+      }
+
+      if (a.path) {
+        let fileName = a.path;
+        try {
+          const buffer = fs.readFileSync(a.path);
+          const sha1 = calculateSha1(buffer) + path.extname(a.path);
+          fileName = 'data/' + sha1;
+          fs.mkdirSync(path.join(this._reportFolder, 'data'), { recursive: true });
+          fs.writeFileSync(path.join(this._reportFolder, 'data', sha1), buffer);
+        } catch (e) {
+          return {
+            name: `Missing attachment "${a.name}"`,
+            contentType: kMissingContentType,
+            body: `Attachment file ${fileName} is missing`,
+          };
+        }
+        return {
+          name: a.name,
+          contentType: a.contentType,
+          path: fileName,
+          body: a.body,
+        };
+      }
+
+      if (a.body instanceof Buffer) {
+        if (isTextContentType(a.contentType)) {
+          // Content type is like this: "text/html; charset=UTF-8"
+          const charset = a.contentType.match(/charset=(.*)/)?.[1];
+          try {
+            const body = a.body.toString(charset as any || 'utf-8');
+            return {
+              name: a.name,
+              contentType: a.contentType,
+              body,
+            };
+          } catch (e) {
+            // Invalid encoding, fall through and save to file.
+          }
+        }
+
+        fs.mkdirSync(path.join(this._reportFolder, 'data'), { recursive: true });
+        const sha1 = calculateSha1(a.body) + '.dat';
+        fs.writeFileSync(path.join(this._reportFolder, 'data', sha1), a.body);
+        return {
+          name: a.name,
+          contentType: a.contentType,
+          path: 'data/' + sha1,
+          body: a.body,
+        };
+      }
+
+      // string
+      return {
+        name: a.name,
+        contentType: a.contentType,
+        body: a.body,
+      };
+    }).filter(Boolean) as TestAttachment[];
+  }
+
+  private _createTestResult(result: JsonTestResult): TestResult {
     return {
       duration: result.duration,
       startTime: result.startTime,
@@ -386,79 +490,7 @@ class HtmlBuilder {
       steps: result.steps.map(s => this._createTestStep(s)),
       errors: result.errors,
       status: result.status,
-      attachments: result.attachments.map(a => {
-        if (a.name === 'trace')
-          this._hasTraces = true;
-
-        if ((a.name === 'stdout' || a.name === 'stderr') && a.contentType === 'text/plain') {
-          if (lastAttachment &&
-            lastAttachment.name === a.name &&
-            lastAttachment.contentType === a.contentType) {
-            lastAttachment.body += stripAnsiEscapes(a.body as string);
-            return null;
-          }
-          a.body = stripAnsiEscapes(a.body as string);
-          lastAttachment = a as TestAttachment;
-          return a;
-        }
-
-        if (a.path) {
-          let fileName = a.path;
-          try {
-            const buffer = fs.readFileSync(a.path);
-            const sha1 = calculateSha1(buffer) + path.extname(a.path);
-            fileName = 'data/' + sha1;
-            fs.mkdirSync(path.join(this._reportFolder, 'data'), { recursive: true });
-            fs.writeFileSync(path.join(this._reportFolder, 'data', sha1), buffer);
-          } catch (e) {
-            return {
-              name: `Missing attachment "${a.name}"`,
-              contentType: kMissingContentType,
-              body: `Attachment file ${fileName} is missing`,
-            };
-          }
-          return {
-            name: a.name,
-            contentType: a.contentType,
-            path: fileName,
-            body: a.body,
-          };
-        }
-
-        if (a.body instanceof Buffer) {
-          if (isTextContentType(a.contentType)) {
-            // Content type is like this: "text/html; charset=UTF-8"
-            const charset = a.contentType.match(/charset=(.*)/)?.[1];
-            try {
-              const body = a.body.toString(charset as any || 'utf-8');
-              return {
-                name: a.name,
-                contentType: a.contentType,
-                body,
-              };
-            } catch (e) {
-              // Invalid encoding, fall through and save to file.
-            }
-          }
-
-          fs.mkdirSync(path.join(this._reportFolder, 'data'), { recursive: true });
-          const sha1 = calculateSha1(a.body) + '.dat';
-          fs.writeFileSync(path.join(this._reportFolder, 'data', sha1), a.body);
-          return {
-            name: a.name,
-            contentType: a.contentType,
-            path: 'data/' + sha1,
-            body: a.body,
-          };
-        }
-
-        // string
-        return {
-          name: a.name,
-          contentType: a.contentType,
-          body: a.body,
-        };
-      }).filter(Boolean) as TestAttachment[]
+      attachments: this._serializeAttachments(result.attachments),
     };
   }
 

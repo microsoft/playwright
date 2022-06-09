@@ -37,11 +37,11 @@ main() {
   fi
 
   set -x
-  if [[ "$(uname)" == "Darwin" ]]; then
+  if is_mac; then
     createZipForMac
-  elif [[ "$(uname)" == "Linux" ]]; then
+  elif is_linux; then
     createZipForLinux
-  elif [[ "$(uname)" == MINGW* ]]; then
+  elif is_win; then
     createZipForWindows
   else
     echo "ERROR: cannot upload on this platform!" 1>&2

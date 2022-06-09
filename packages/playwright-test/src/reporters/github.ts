@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import milliseconds from 'ms';
+import { ms as milliseconds } from 'playwright-core/lib/utilsBundle';
 import path from 'path';
 import { BaseReporter, formatError, formatFailure, stripAnsiEscapes } from './base';
-import { TestCase, FullResult, TestError } from '../../types/testReporter';
+import type { TestCase, FullResult, TestError } from '../../types/testReporter';
 
 type GitHubLogType = 'debug' | 'notice' | 'warning' | 'error';
 

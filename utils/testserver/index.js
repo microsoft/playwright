@@ -235,9 +235,11 @@ class TestServer {
         throw error;
     });
     request.postBody = new Promise(resolve => {
-      let body = Buffer.from([]);
-      request.on('data', chunk => body = Buffer.concat([body, chunk]));
-      request.on('end', () => resolve(body));
+      const chunks = [];
+      request.on('data', chunk => {
+        chunks.push(chunk);
+      });
+      request.on('end', () => resolve(Buffer.concat(chunks)));
     });
     const path = url.parse(request.url).path;
     this.debugServer(`request ${request.method} ${path}`);

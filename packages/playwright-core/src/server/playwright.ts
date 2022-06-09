@@ -16,15 +16,16 @@
 
 import { Android } from './android/android';
 import { AdbBackend } from './android/backendAdb';
-import { PlaywrightOptions } from './browser';
+import type { PlaywrightOptions } from './browser';
 import { Chromium } from './chromium/chromium';
 import { Electron } from './electron/electron';
 import { Firefox } from './firefox/firefox';
 import { Selectors } from './selectors';
 import { WebKit } from './webkit/webkit';
-import { CallMetadata, createInstrumentation, SdkObject } from './instrumentation';
-import { debugLogger } from '../utils/debugLogger';
-import { Page } from './page';
+import type { CallMetadata } from './instrumentation';
+import { createInstrumentation, SdkObject } from './instrumentation';
+import { debugLogger } from '../common/debugLogger';
+import type { Page } from './page';
 
 export class Playwright extends SdkObject {
   readonly selectors: Selectors;
@@ -36,8 +37,8 @@ export class Playwright extends SdkObject {
   readonly options: PlaywrightOptions;
   private _allPages = new Set<Page>();
 
-  constructor(sdkLanguage: string, isInternal: boolean) {
-    super({ attribution: { isInternal }, instrumentation: createInstrumentation() } as any, undefined, 'Playwright');
+  constructor(sdkLanguage: string, isInternalPlaywright: boolean) {
+    super({ attribution: { isInternalPlaywright }, instrumentation: createInstrumentation() } as any, undefined, 'Playwright');
     this.instrumentation.addListener({
       onPageOpen: page => this._allPages.add(page),
       onPageClose: page => this._allPages.delete(page),
@@ -63,6 +64,6 @@ export class Playwright extends SdkObject {
   }
 }
 
-export function createPlaywright(sdkLanguage: string, isInternal: boolean = false) {
-  return new Playwright(sdkLanguage, isInternal);
+export function createPlaywright(sdkLanguage: string, isInternalPlaywright: boolean = false) {
+  return new Playwright(sdkLanguage, isInternalPlaywright);
 }

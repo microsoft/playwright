@@ -254,7 +254,7 @@ Text selector has a few variations:
   await page.Locator("text=Log in").ClickAsync();
   ```
 
-- `text="Log in"` - text body can be escaped with single or double quotes to search for a text node with exact content. For example, `text="Log"` does not match `<button>Log in</button>` because `<button>` contains a single text node `"Log in"` that is not equal to `"Log"`. However, `text="Log"` matches `<button>Log<span>in</span></button>`, because `<button>` contains a text node `"Log"`.
+- `text="Log in"` - text body can be escaped with single or double quotes to search for a text node with exact content. For example, `text="Log"` does not match `<button>Log in</button>` because `<button>` contains a single text node `"Log in"` that is not equal to `"Log"`. However, `text="Log"` matches `<button>Log<span>in</span></button>`, because `<button>` contains a text node `"Log"`. This exact mode implies case-sensitive matching, so `text="Download"` will not match `<button>download</button>`.
 
   Quoted body follows the usual escaping rules, e.g. use `\"` to escape double quote in a double-quoted string: `text="foo\"bar"`.
 
@@ -310,7 +310,7 @@ Text selector has a few variations:
   await page.Locator("text=/Log\\s*in/i").ClickAsync();
   ```
 
-- `article:has-text("Playwright")` - the `:has-text()` pseudo-class can be used inside a [css] selector. It matches any element containing specified text somewhere inside, possibly in a child or a descendant element. For example, `article:has-text("Playwright")` matches `<article><div>Playwright</div></article>`.
+- `article:has-text("Playwright")` - the `:has-text()` pseudo-class can be used inside a [css] selector. It matches any element containing specified text somewhere inside, possibly in a child or a descendant element. Matching is case-insensitive and searches for a substring. For example, `article:has-text("Playwright")` matches `<article><div>Playwright</div></article>`.
 
   Note that `:has-text()` should be used together with other `css` specifiers, otherwise it will match all the elements containing specified text, including the `<body>`.
   ```js
@@ -474,6 +474,52 @@ Consider a page with two buttons, first invisible and second visible.
 
 ## Selecting elements that contain other elements
 
+### Filter by text
+
+Locators support an option to only select elements that have some text somewhere inside, possibly in a descendant element. Matching is case-insensitive and searches for a substring.
+
+  ```js
+  await page.locator('button', { hasText: 'Click me' }).click();
+  ```
+  ```java
+  page.locator("button", new Page.LocatorOptions().setHasText("Click me")).click();
+  ```
+  ```python async
+  await page.locator("button", has_text="Click me").click()
+  ```
+  ```python sync
+  page.locator("button", has_text="Click me").click()
+  ```
+  ```csharp
+  await page.Locator("button", new PageLocatorOptions { HasText = "Click me" }).ClickAsync();
+  ```
+
+You can also pass a regular expression.
+
+### Filter by another locator
+
+Locators support an option to only select elements that have a descendant matching another locator.
+
+  ```js
+  page.locator('article', { has: page.locator('button.subscribe') })
+  ```
+  ```java
+  page.locator("article", new Page.LocatorOptions().setHas(page.locator("button.subscribe")))
+  ```
+  ```python async
+  page.locator("article", has=page.locator("button.subscribe"))
+  ```
+  ```python sync
+  page.locator("article", has=page.locator("button.subscribe"))
+  ```
+  ```csharp
+  page.Locator("article", new PageLocatorOptions { Has = page.Locator("button.subscribe") })
+  ```
+
+Note that inner locator is matched starting from the outer one, not from the document root.
+
+### Inside CSS selector
+
 The `:has()` pseudo-class is an [experimental CSS pseudo-class](https://developer.mozilla.org/en-US/docs/Web/CSS/:has). It returns an element if any of the selectors passed as parameters
 relative to the :scope of the given element match at least one element.
 
@@ -498,6 +544,36 @@ page.locator("article:has(div.promo)").text_content()
 ```csharp
 await page.Locator("article:has(div.promo)").TextContentAsync();
 ```
+
+## Augmenting existing locators
+
+You can add filtering to any locator by passing `:scope` selector to [`method: Locator.locator`] and specifying desired options. For example, given the locator `row` that selects some rows in the table, you can filter to just those that contain text "Hello".
+
+  ```js
+  const row = page.locator('.row');
+  // ... later on ...
+  await row.locator(':scope', { hasText: 'Hello' }).click();
+  ```
+  ```java
+  Locator row = page.locator(".row");
+  // ... later on ...
+  row.locator(":scope", new Locator.LocatorOptions().setHasText("Hello")).click();
+  ```
+  ```python async
+  row = page.locator(".row")
+  # ... later on ...
+  await row.locator(":scope", has_text="Hello").click()
+  ```
+  ```python sync
+  row = page.locator(".row")
+  # ... later on ...
+  row.locator(":scope", has_text="Hello").click()
+  ```
+  ```csharp
+  var locator = page.Locator(".row");
+  // ... later on ...
+  await locator.Locator(":scope", new LocatorLocatorOptions { HasText = "Hello" }).ClickAsync();
+  ```
 
 ## Selecting elements matching one of the conditions
 
@@ -637,11 +713,13 @@ element could be matched when layout changes by one pixel.
 
 Layout selectors use [bounding client rect](https://developer.mozilla.org/en-US/docs/Web/API/Element/getBoundingClientRect)
 to compute distance and relative position of the elements.
-* `:right-of(inner > selector)` - Matches elements that are to the right of any element matching the inner selector.
-* `:left-of(inner > selector)` - Matches elements that are to the left of any element matching the inner selector.
-* `:above(inner > selector)` - Matches elements that are above any of the elements matching the inner selector.
-* `:below(inner > selector)` - Matches elements that are below any of the elements matching the inner selector.
+* `:right-of(inner > selector)` - Matches elements that are to the right of any element matching the inner selector, at any vertical position.
+* `:left-of(inner > selector)` - Matches elements that are to the left of any element matching the inner selector, at any vertical position.
+* `:above(inner > selector)` - Matches elements that are above any of the elements matching the inner selector, at any horizontal position.
+* `:below(inner > selector)` - Matches elements that are below any of the elements matching the inner selector, at any horizontal position.
 * `:near(inner > selector)` - Matches elements that are near (within 50 CSS pixels) any of the elements matching the inner selector.
+
+Note that resulting matches are sorted by their distance to the anchor element, so you can use [`method: Locator.first`] to pick the closest one.
 
 ```js
 // Fill an input to the right of "Username".
@@ -649,6 +727,9 @@ await page.locator('input:right-of(:text("Username"))').fill('value');
 
 // Click a button near the promo card.
 await page.locator('button:near(.promo-card)').click();
+
+// Click the radio input in the list closest to the "Label 3".
+await page.locator('[type=radio]:left-of(:text("Label 3"))').first().click();
 ```
 
 ```java
@@ -657,22 +738,31 @@ page.locator("input:right-of(:text(\"Username\"))").fill("value");
 
 // Click a button near the promo card.
 page.locator("button:near(.promo-card)").click();
+
+// Click the radio input in the list closest to the "Label 3".
+page.locator("[type=radio]:left-of(:text(\"Label 3\"))").first().click();
 ```
 
 ```python async
 # Fill an input to the right of "Username".
-await page.locator('input:right-of(:text("Username"))').fill('value')
+await page.locator("input:right-of(:text(\"Username\"))").fill("value")
 
 # Click a button near the promo card.
-await page.locator('button:near(.promo-card)').click()
+await page.locator("button:near(.promo-card)").click()
+
+# Click the radio input in the list closest to the "Label 3".
+await page.locator("[type=radio]:left-of(:text(\"Label 3\"))").first.click()
 ```
 
 ```python sync
 # Fill an input to the right of "Username".
-page.locator('input:right-of(:text("Username"))').fill('value')
+page.locator("input:right-of(:text(\"Username\"))").fill("value")
 
 # Click a button near the promo card.
-page.locator('button:near(.promo-card)').click()
+page.locator("button:near(.promo-card)").click()
+
+# Click the radio input in the list closest to the "Label 3".
+page.locator("[type=radio]:left-of(:text(\"Label 3\"))").first.click()
 ```
 
 ```csharp
@@ -681,10 +771,52 @@ await page.Locator("input:right-of(:text(\"Username\"))").FillAsync("value");
 
 // Click a button near the promo card.
 await page.Locator("button:near(.promo-card)").ClickAsync();
+
+// Click the radio input in the list closest to the "Label 3".
+await page.Locator("[type=radio]:left-of(:text(\"Label 3\"))").First.ClickAsync();
 ```
 
 All layout selectors support optional maximum pixel distance as the last argument. For example
 `button:near(:text("Username"), 120)` matches a button that is at most 120 pixels away from the element with the text "Username".
+
+## Selecting elements by label text
+
+Targeted input actions in Playwright automatically distinguish between labels and controls, so you can target the label to perform an action on the associated control.
+
+For example, consider the following DOM structure: `<label for="password">Password:</label><input id="password" type="password">`. You can target the label with something like `text=Password` and perform the following actions on the input instead:
+- `click` will click the label and automatically focus the input field;
+- `fill` will fill the input field;
+- `inputValue` will return the value of the input field;
+- `selectText` will select text in the input field;
+- `setInputFiles` will set files for the input field with `type=file`;
+- `selectOption` will select an option from the select box.
+
+```js
+// Fill the input by targeting the label.
+await page.fill('text=Password', 'secret');
+```
+
+```java
+// Fill the input by targeting the label.
+page.fill("text=Password", "secret");
+```
+
+```python async
+# Fill the input by targeting the label.
+await page.fill('text=Password', 'secret')
+```
+
+```python sync
+# Fill the input by targeting the label.
+page.fill('text=Password', 'secret')
+```
+
+```csharp
+// Fill the input by targeting the label.
+await page.FillAsync("text=Password", "secret");
+```
+
+However, other methods will target the label itself, for example `textContent` will return the text content of the label, not the input field.
 
 ## XPath selectors
 
@@ -765,7 +897,7 @@ Selector examples:
 - match by component and property value **prefix**: `_react=BookItem[author ^= "Steven"]`
 - match by component and property value **suffix**: `_react=BookItem[author $= "Steven"]`
 - match by component and **key**: `_react=BookItem[key = '2']`
-
+- match by property value **regex**: `_react=[author = /Steven(\\s+King)?/i]`
 
 
 To find React element names in a tree use [React DevTools](https://chrome.google.com/webstore/detail/react-developer-tools/fmkadmapgofadopljbjfkapdkoienihi).
@@ -801,6 +933,7 @@ Selector examples:
 - match by **nested** property value: `_vue=[some.nested.value = 12]`
 - match by component and property value **prefix**: `_vue=book-item[author ^= "Steven"]`
 - match by component and property value **suffix**: `_vue=book-item[author $= "Steven"]`
+- match by property value **regex**: `_vue=[author = /Steven(\\s+King)?/i]`
 
 To find Vue element names in a tree use [Vue DevTools](https://chrome.google.com/webstore/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd?hl=en).
 
@@ -811,6 +944,72 @@ Vue selectors support Vue2 and above.
 :::note
 Vue selectors, as well as [Vue DevTools](https://chrome.google.com/webstore/detail/react-developer-tools/fmkadmapgofadopljbjfkapdkoienihi), only work against **unminified** application builds.
 :::
+
+
+## Role selector
+
+Role selector allows selecting elements by their [ARIA role](https://www.w3.org/TR/wai-aria-1.2/#roles), [ARIA attributes](https://www.w3.org/TR/wai-aria-1.2/#aria-attributes) and [accessible name](https://w3c.github.io/accname/#dfn-accessible-name). Note that role selector **does not replace** accessibility audits and conformance tests, but rather gives early feedback about the ARIA guidelines.
+
+The syntax is very similar to [CSS attribute selectors](https://developer.mozilla.org/en-US/docs/Web/CSS/Attribute_selectors). For example, `role=button[name="Click me"][pressed]` selects a pressed button that has accessible name "Click me".
+
+Note that many html elements have an implicitly [defined role](https://w3c.github.io/html-aam/#html-element-role-mappings) that is recognized by the role selector. You can find all the [supported roles here](https://www.w3.org/TR/wai-aria-1.2/#role_definitions). ARIA guidelines **do not recommend** duplicating implicit roles and attributes by setting `role` and/or `aria-*` attributes to default values.
+
+Attributes supported by the role selector:
+* `checked` - an attribute that is usually set by `aria-checked` or native `<input type=checkbox>` controls. Available values for checked are `true`, `false` and `"mixed"`. Examples:
+  - `role=checkbox[checked=true]`, equivalent to `role=checkbox[checked]`
+  - `role=checkbox[checked=false]`
+  - `role=checkbox[checked="mixed"]`
+
+  Learn more about [`aria-checked`](https://www.w3.org/TR/wai-aria-1.2/#aria-checked).
+
+* `disabled` - a boolean attribute that is usually set by `aria-disabled` or `disabled`. Examples:
+  - `role=button[disabled=true]`, equivalent to `role=button[disabled]`
+  - `role=button[disabled=false]`
+
+  Note that unlike most other attributes, `disabled` is inherited through the DOM hierarchy.
+  Learn more about [`aria-disabled`](https://www.w3.org/TR/wai-aria-1.2/#aria-disabled).
+
+* `expanded` - a boolean attribute that is usually set by `aria-expanded`. Examples:
+  - `role=button[expanded=true]`, equivalent to `role=button[expanded]`
+  - `role=button[expanded=false]`
+
+  Learn more about [`aria-expanded`](https://www.w3.org/TR/wai-aria-1.2/#aria-expanded).
+
+* `include-hidden` - a boolean attribute that controls whether hidden elements are matched. By default, only non-hidden elements, as [defined by ARIA](https://www.w3.org/TR/wai-aria-1.2/#tree_exclusion), are matched by role selector. With `[include-hidden]`, both hidden and non-hidden elements are matched. Examples:
+  - `role=button[include-hidden=true]`, equivalent to `role=button[include-hidden]`
+  - `role=button[include-hidden=false]`
+
+  Learn more about [`aria-hidden`](https://www.w3.org/TR/wai-aria-1.2/#aria-hidden).
+
+* `level` - a number attribute that is usually present for roles `heading`, `listitem`, `row`, `treeitem`, with default values for `<h1>-<h6>` elements. Examples:
+  - `role=heading[level=1]`
+
+  Learn more about [`aria-level`](https://www.w3.org/TR/wai-aria-1.2/#aria-level).
+
+* `name` - a string attribute that matches [accessible name](https://w3c.github.io/accname/#dfn-accessible-name). Supports attribute operators like `=` and `*=`, and regular expressions.
+  - `role=button[name="Click me"]`
+  - `role=button[name*="Click"]`
+  - `role=button[name=/Click( me)?/]`
+
+  Learn more about [accessible name](https://w3c.github.io/accname/#dfn-accessible-name).
+
+* `pressed` - an attribute that is usually set by `aria-pressed`. Available values for pressed are `true`, `false` and `"mixed"`. Examples:
+  - `role=button[pressed=true]`, equivalent to `role=button[pressed]`
+  - `role=button[pressed=false]`
+  - `role=button[pressed="mixed"]`
+
+  Learn more about [`aria-pressed`](https://www.w3.org/TR/wai-aria-1.2/#aria-pressed).
+
+* `selected` - a boolean attribute that is usually set by `aria-selected`. Examples:
+  - `role=option[selected=true]`, equivalent to `role=option[selected]`
+  - `role=option[selected=false]`
+
+  Learn more about [`aria-selected`](https://www.w3.org/TR/wai-aria-1.2/#aria-selected).
+
+Examples:
+* `role=button` matches all buttons;
+* `role=button[name="Click me"]` matches buttons with "Click me" accessible name;
+* `role=checkbox[checked][include-hidden]` matches checkboxes that are checked, including those that are currently hidden.
 
 
 ## id, data-testid, data-test-id, data-test selectors

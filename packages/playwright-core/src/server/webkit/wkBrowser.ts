@@ -15,18 +15,21 @@
  * limitations under the License.
  */
 
-import { Browser, BrowserOptions } from '../browser';
-import { assertBrowserContextIsNotOwned, BrowserContext, validateBrowserContextOptions, verifyGeolocation } from '../browserContext';
-import { eventsHelper, RegisteredListener } from '../../utils/eventsHelper';
-import { assert } from '../../utils/utils';
+import type { BrowserOptions } from '../browser';
+import { Browser } from '../browser';
+import { assertBrowserContextIsNotOwned, BrowserContext, verifyGeolocation } from '../browserContext';
+import type { RegisteredListener } from '../../utils/eventsHelper';
+import { assert } from '../../utils';
+import { eventsHelper } from '../../utils/eventsHelper';
 import * as network from '../network';
-import { Page, PageBinding, PageDelegate } from '../page';
-import { ConnectionTransport } from '../transport';
-import * as types from '../types';
-import { Protocol } from './protocol';
-import { kPageProxyMessageReceived, PageProxyMessageReceivedPayload, WKConnection, WKSession } from './wkConnection';
+import type { Page, PageBinding, PageDelegate } from '../page';
+import type { ConnectionTransport } from '../transport';
+import type * as types from '../types';
+import type { Protocol } from './protocol';
+import type { PageProxyMessageReceivedPayload } from './wkConnection';
+import { kPageProxyMessageReceived, WKConnection, WKSession } from './wkConnection';
 import { WKPage } from './wkPage';
-import { kBrowserClosedError } from '../../utils/errors';
+import { kBrowserClosedError } from '../../common/errors';
 
 const DEFAULT_USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.4 Safari/605.1.15';
 const BROWSER_VERSION = '15.4';
@@ -79,8 +82,7 @@ export class WKBrowser extends Browser {
     this._didClose();
   }
 
-  async newContext(options: types.BrowserContextOptions): Promise<BrowserContext> {
-    validateBrowserContextOptions(options, this.options);
+  async doCreateNewContext(options: types.BrowserContextOptions): Promise<BrowserContext> {
     const createOptions = options.proxy ? {
       proxyServer: options.proxy.server,
       proxyBypassList: options.proxy.bypass
@@ -203,11 +205,9 @@ export class WKBrowser extends Browser {
 
 export class WKBrowserContext extends BrowserContext {
   declare readonly _browser: WKBrowser;
-  readonly _evaluateOnNewDocumentSources: string[];
 
   constructor(browser: WKBrowser, browserContextId: string | undefined, options: types.BrowserContextOptions) {
     super(browser, options, browserContextId);
-    this._evaluateOnNewDocumentSources = [];
     this._authenticateProxyViaHeader();
   }
 
@@ -249,7 +249,7 @@ export class WKBrowserContext extends BrowserContext {
     return this._browser._wkPages.get(pageProxyId)!;
   }
 
-  async _doCookies(urls: string[]): Promise<types.NetworkCookie[]> {
+  async doGetCookies(urls: string[]): Promise<types.NetworkCookie[]> {
     const { cookies } = await this._browser._browserSession.send('Playwright.getAllCookies', { browserContextId: this._browserContextId });
     return network.filterCookies(cookies.map((c: types.NetworkCookie) => {
       const copy: any = { ... c };
@@ -272,11 +272,11 @@ export class WKBrowserContext extends BrowserContext {
     await this._browser._browserSession.send('Playwright.deleteAllCookies', { browserContextId: this._browserContextId });
   }
 
-  async _doGrantPermissions(origin: string, permissions: string[]) {
+  async doGrantPermissions(origin: string, permissions: string[]) {
     await Promise.all(this.pages().map(page => (page._delegate as WKPage)._grantPermissions(origin, permissions)));
   }
 
-  async _doClearPermissions() {
+  async doClearPermissions() {
     await Promise.all(this.pages().map(page => (page._delegate as WKPage)._clearPermissions()));
   }
 
@@ -299,37 +299,46 @@ export class WKBrowserContext extends BrowserContext {
       await (page._delegate as WKPage).updateOffline();
   }
 
-  async _doSetHTTPCredentials(httpCredentials?: types.Credentials): Promise<void> {
+  async doSetHTTPCredentials(httpCredentials?: types.Credentials): Promise<void> {
     this._options.httpCredentials = httpCredentials;
     for (const page of this.pages())
       await (page._delegate as WKPage).updateHttpCredentials();
   }
 
-  async _doAddInitScript(source: string) {
-    this._evaluateOnNewDocumentSources.push(source);
+  async doAddInitScript(source: string) {
     for (const page of this.pages())
       await (page._delegate as WKPage)._updateBootstrapScript();
   }
 
-  async _doExposeBinding(binding: PageBinding) {
+  async doRemoveInitScripts() {
+    for (const page of this.pages())
+      await (page._delegate as WKPage)._updateBootstrapScript();
+  }
+
+  async doExposeBinding(binding: PageBinding) {
     for (const page of this.pages())
       await (page._delegate as WKPage).exposeBinding(binding);
   }
 
-  async _doUpdateRequestInterception(): Promise<void> {
+  async doRemoveExposedBindings() {
+    for (const page of this.pages())
+      await (page._delegate as WKPage).removeExposedBindings();
+  }
+
+  async doUpdateRequestInterception(): Promise<void> {
     for (const page of this.pages())
       await (page._delegate as WKPage).updateRequestInterception();
   }
 
-  _onClosePersistent() {}
+  onClosePersistent() {}
 
-  async _doClose() {
+  async doClose() {
     assert(this._browserContextId);
     await this._browser._browserSession.send('Playwright.deleteContext', { browserContextId: this._browserContextId });
     this._browser._contexts.delete(this._browserContextId);
   }
 
-  async _doCancelDownload(uuid: string) {
+  async cancelDownload(uuid: string) {
     await this._browser._browserSession.send('Playwright.cancelDownload', { uuid });
   }
 }

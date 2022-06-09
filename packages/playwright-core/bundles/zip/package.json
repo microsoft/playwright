@@ -1,0 +1,20 @@
+{
+  "name": "zip-bundle",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "esbuild": "node build.js",
+    "build": "npm ci && npm run esbuild -- --minify",
+    "watch": "npm ci && npm run esbuild -- --watch --sourcemap",
+    "generate-license": "node ../../../../utils/generate_third_party_notice.js"
+  },
+  "dependencies": {
+    "extract-zip": "2.0.1",
+    "yauzl": "2.10.0",
+    "yazl": "2.5.1"
+  },
+  "devDependencies": {
+    "@types/yauzl": "^2.10.0",
+    "@types/yazl": "^2.4.2"
+  }
+}

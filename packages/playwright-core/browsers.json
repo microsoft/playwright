@@ -3,31 +3,43 @@
   "browsers": [
     {
       "name": "chromium",
-      "revision": "980066",
-      "installByDefault": true
+      "revision": "1009",
+      "installByDefault": true,
+      "browserVersion": "103.0.5060.33"
     },
     {
       "name": "chromium-with-symbols",
-      "revision": "980066",
-      "installByDefault": false
+      "revision": "1009",
+      "installByDefault": false,
+      "browserVersion": "103.0.5060.33"
+    },
+    {
+      "name": "chromium-tip-of-tree",
+      "revision": "1012",
+      "installByDefault": false,
+      "browserVersion": "104.0.5098.0"
     },
     {
       "name": "firefox",
-      "revision": "1319",
-      "installByDefault": true
+      "revision": "1327",
+      "installByDefault": true,
+      "browserVersion": "100.0.2"
     },
     {
       "name": "firefox-beta",
-      "revision": "1318",
-      "installByDefault": false
+      "revision": "1329",
+      "installByDefault": false,
+      "browserVersion": "101.0b8"
     },
     {
       "name": "webkit",
-      "revision": "1616",
+      "revision": "1659",
       "installByDefault": true,
       "revisionOverrides": {
-        "mac10.14": "1446"
-      }
+        "mac10.14": "1446",
+        "mac10.15": "1616"
+      },
+      "browserVersion": "15.4"
     },
     {
       "name": "ffmpeg",

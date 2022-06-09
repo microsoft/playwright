@@ -14,10 +14,13 @@
  * limitations under the License.
  */
 
-import { CSSComplexSelector, CSSSimpleSelector, CSSComplexSelectorList, CSSFunctionArgument } from '../common/cssParser';
-import { customCSSNames } from '../common/selectorParser';
+import type { CSSComplexSelector, CSSSimpleSelector, CSSComplexSelectorList, CSSFunctionArgument } from '../isomorphic/cssParser';
+import { customCSSNames } from '../isomorphic/selectorParser';
+import { isElementVisible, parentElementOrShadowHost } from './domUtils';
+import { type LayoutSelectorName, layoutSelectorScore } from './layoutSelectorUtils';
+import { createLaxTextMatcher, createRegexTextMatcher, createStrictTextMatcher, elementMatchesText, elementText, shouldSkipForTextMatching, type ElementText } from './selectorUtils';
 
-export type QueryContext = {
+type QueryContext = {
   scope: Element | Document;
   pierceShadow: boolean;
   // Place for more options, e.g. normalizing whitespace.
@@ -61,11 +64,11 @@ export class SelectorEvaluatorImpl implements SelectorEvaluator {
     this._engines.set('text-is', textIsEngine);
     this._engines.set('text-matches', textMatchesEngine);
     this._engines.set('has-text', hasTextEngine);
-    this._engines.set('right-of', createPositionEngine('right-of', boxRightOf));
-    this._engines.set('left-of', createPositionEngine('left-of', boxLeftOf));
-    this._engines.set('above', createPositionEngine('above', boxAbove));
-    this._engines.set('below', createPositionEngine('below', boxBelow));
-    this._engines.set('near', createPositionEngine('near', boxNear));
+    this._engines.set('right-of', createLayoutEngine('right-of'));
+    this._engines.set('left-of', createLayoutEngine('left-of'));
+    this._engines.set('above', createLayoutEngine('above'));
+    this._engines.set('below', createLayoutEngine('below'));
+    this._engines.set('near', createLayoutEngine('near'));
     this._engines.set('nth-match', nthMatchEngine);
 
     const allNames = [...this._engines.keys()];
@@ -372,8 +375,6 @@ const hasEngine: SelectorEngine = {
     return evaluator.query({ ...context, scope: element }, args).length > 0;
   },
 
-  // TODO: we do not implement "relative selectors", as in "div:has(> span)" or "div:has(+ span)".
-
   // TODO: we can implement efficient "query" by matching "args" and returning
   // all parents/descendants, just have to be careful with the ":scope" matching.
 };
@@ -422,7 +423,7 @@ const visibleEngine: SelectorEngine = {
   matches(element: Element, args: (string | number | Selector)[], context: QueryContext, evaluator: SelectorEvaluator): boolean {
     if (args.length)
       throw new Error(`"visible" engine expects no arguments`);
-    return isVisible(element);
+    return isElementVisible(element);
   }
 };
 
@@ -431,7 +432,7 @@ const textEngine: SelectorEngine = {
     if (args.length !== 1 || typeof args[0] !== 'string')
       throw new Error(`"text" engine expects a single string`);
     const matcher = createLaxTextMatcher(args[0]);
-    return elementMatchesText(evaluator as SelectorEvaluatorImpl, element, matcher) === 'self';
+    return elementMatchesText((evaluator as SelectorEvaluatorImpl)._cacheText, element, matcher) === 'self';
   },
 };
 
@@ -440,7 +441,7 @@ const textIsEngine: SelectorEngine = {
     if (args.length !== 1 || typeof args[0] !== 'string')
       throw new Error(`"text-is" engine expects a single string`);
     const matcher = createStrictTextMatcher(args[0]);
-    return elementMatchesText(evaluator as SelectorEvaluatorImpl, element, matcher) !== 'none';
+    return elementMatchesText((evaluator as SelectorEvaluatorImpl)._cacheText, element, matcher) !== 'none';
   },
 };
 
@@ -449,7 +450,7 @@ const textMatchesEngine: SelectorEngine = {
     if (args.length === 0 || typeof args[0] !== 'string' || args.length > 2 || (args.length === 2 && typeof args[1] !== 'string'))
       throw new Error(`"text-matches" engine expects a regexp body and optional regexp flags`);
     const matcher = createRegexTextMatcher(args[0], args.length === 2 ? args[1] : undefined);
-    return elementMatchesText(evaluator as SelectorEvaluatorImpl, element, matcher) === 'self';
+    return elementMatchesText((evaluator as SelectorEvaluatorImpl)._cacheText, element, matcher) === 'self';
   },
 };
 
@@ -460,150 +461,22 @@ const hasTextEngine: SelectorEngine = {
     if (shouldSkipForTextMatching(element))
       return false;
     const matcher = createLaxTextMatcher(args[0]);
-    return matcher(elementText(evaluator as SelectorEvaluatorImpl, element));
+    return matcher(elementText((evaluator as SelectorEvaluatorImpl)._cacheText, element));
   },
 };
 
-export function createLaxTextMatcher(text: string): TextMatcher {
-  text = text.trim().replace(/\s+/g, ' ').toLowerCase();
-  return (elementText: ElementText) => {
-    const s = elementText.full.trim().replace(/\s+/g, ' ').toLowerCase();
-    return s.includes(text);
-  };
-}
-
-export function createStrictTextMatcher(text: string): TextMatcher {
-  text = text.trim().replace(/\s+/g, ' ');
-  return (elementText: ElementText) => {
-    if (!text && !elementText.immediate.length)
-      return true;
-    return elementText.immediate.some(s => s.trim().replace(/\s+/g, ' ') === text);
-  };
-}
-
-export function createRegexTextMatcher(source: string, flags?: string): TextMatcher {
-  const re = new RegExp(source, flags);
-  return (elementText: ElementText) => {
-    return re.test(elementText.full);
-  };
-}
-
-function shouldSkipForTextMatching(element: Element | ShadowRoot) {
-  return element.nodeName === 'SCRIPT' || element.nodeName === 'STYLE' || document.head && document.head.contains(element);
-}
-
-export type ElementText = { full: string, immediate: string[] };
-export type TextMatcher = (text: ElementText) => boolean;
-
-export function elementText(evaluator: SelectorEvaluatorImpl, root: Element | ShadowRoot): ElementText {
-  let value = evaluator._cacheText.get(root);
-  if (value === undefined) {
-    value = { full: '', immediate: [] };
-    if (!shouldSkipForTextMatching(root)) {
-      let currentImmediate = '';
-      if ((root instanceof HTMLInputElement) && (root.type === 'submit' || root.type === 'button')) {
-        value = { full: root.value, immediate: [root.value] };
-      } else {
-        for (let child = root.firstChild; child; child = child.nextSibling) {
-          if (child.nodeType === Node.TEXT_NODE) {
-            value.full += child.nodeValue || '';
-            currentImmediate += child.nodeValue || '';
-          } else {
-            if (currentImmediate)
-              value.immediate.push(currentImmediate);
-            currentImmediate = '';
-            if (child.nodeType === Node.ELEMENT_NODE)
-              value.full += elementText(evaluator, child as Element).full;
-          }
-        }
-        if (currentImmediate)
-          value.immediate.push(currentImmediate);
-        if ((root as Element).shadowRoot)
-          value.full += elementText(evaluator, (root as Element).shadowRoot!).full;
-      }
-    }
-    evaluator._cacheText.set(root, value);
-  }
-  return value;
-}
-
-export function elementMatchesText(evaluator: SelectorEvaluatorImpl, element: Element, matcher: TextMatcher): 'none' | 'self' | 'selfAndChildren' {
-  if (shouldSkipForTextMatching(element))
-    return 'none';
-  if (!matcher(elementText(evaluator, element)))
-    return 'none';
-  for (let child = element.firstChild; child; child = child.nextSibling) {
-    if (child.nodeType === Node.ELEMENT_NODE && matcher(elementText(evaluator, child as Element)))
-      return 'selfAndChildren';
-  }
-  if (element.shadowRoot && matcher(elementText(evaluator, element.shadowRoot)))
-    return 'selfAndChildren';
-  return 'self';
-}
-
-function boxRightOf(box1: DOMRect, box2: DOMRect, maxDistance: number | undefined): number | undefined {
-  const distance = box1.left - box2.right;
-  if (distance < 0 || (maxDistance !== undefined && distance > maxDistance))
-    return;
-  return distance + Math.max(box2.bottom - box1.bottom, 0) + Math.max(box1.top - box2.top, 0);
-}
-
-function boxLeftOf(box1: DOMRect, box2: DOMRect, maxDistance: number | undefined): number | undefined {
-  const distance = box2.left - box1.right;
-  if (distance < 0 || (maxDistance !== undefined && distance > maxDistance))
-    return;
-  return distance + Math.max(box2.bottom - box1.bottom, 0) + Math.max(box1.top - box2.top, 0);
-}
-
-function boxAbove(box1: DOMRect, box2: DOMRect, maxDistance: number | undefined): number | undefined {
-  const distance = box2.top - box1.bottom;
-  if (distance < 0 || (maxDistance !== undefined && distance > maxDistance))
-    return;
-  return distance + Math.max(box1.left - box2.left, 0) + Math.max(box2.right - box1.right, 0);
-}
-
-function boxBelow(box1: DOMRect, box2: DOMRect, maxDistance: number | undefined): number | undefined {
-  const distance = box1.top - box2.bottom;
-  if (distance < 0 || (maxDistance !== undefined && distance > maxDistance))
-    return;
-  return distance + Math.max(box1.left - box2.left, 0) + Math.max(box2.right - box1.right, 0);
-}
-
-function boxNear(box1: DOMRect, box2: DOMRect, maxDistance: number | undefined): number | undefined {
-  const kThreshold = maxDistance === undefined ? 50 : maxDistance;
-  let score = 0;
-  if (box1.left - box2.right >= 0)
-    score += box1.left - box2.right;
-  if (box2.left - box1.right >= 0)
-    score += box2.left - box1.right;
-  if (box2.top - box1.bottom >= 0)
-    score += box2.top - box1.bottom;
-  if (box1.top - box2.bottom >= 0)
-    score += box1.top - box2.bottom;
-  return score > kThreshold ? undefined : score;
-}
-
-function createPositionEngine(name: string, scorer: (box1: DOMRect, box2: DOMRect, maxDistance: number | undefined) => number | undefined): SelectorEngine {
+function createLayoutEngine(name: LayoutSelectorName): SelectorEngine {
   return {
     matches(element: Element, args: (string | number | Selector)[], context: QueryContext, evaluator: SelectorEvaluator): boolean {
       const maxDistance = args.length && typeof args[args.length - 1] === 'number' ? args[args.length - 1] : undefined;
       const queryArgs = maxDistance === undefined ? args : args.slice(0, args.length - 1);
       if (args.length < 1 + (maxDistance === undefined ? 0 : 1))
         throw new Error(`"${name}" engine expects a selector list and optional maximum distance in pixels`);
-      const box = element.getBoundingClientRect();
-      let bestScore: number | undefined;
-      for (const e of evaluator.query(context, queryArgs)) {
-        if (e === element)
-          continue;
-        const score = scorer(box, e.getBoundingClientRect(), maxDistance);
-        if (score === undefined)
-          continue;
-        if (bestScore === undefined || score < bestScore)
-          bestScore = score;
-      }
-      if (bestScore === undefined)
+      const inner = evaluator.query(context, queryArgs);
+      const score = layoutSelectorScore(name, element, inner, maxDistance);
+      if (score === undefined)
         return false;
-      (evaluator as SelectorEvaluatorImpl)._markScore(element, bestScore);
+      (evaluator as SelectorEvaluatorImpl)._markScore(element, score);
       return true;
     }
   };
@@ -622,26 +495,6 @@ const nthMatchEngine: SelectorEngine = {
   },
 };
 
-export function isInsideScope(scope: Node, element: Element | undefined): boolean {
-  while (element) {
-    if (scope.contains(element))
-      return true;
-    while (element.parentElement)
-      element = element.parentElement;
-    element = parentElementOrShadowHost(element);
-  }
-  return false;
-}
-
-export function parentElementOrShadowHost(element: Element): Element | undefined {
-  if (element.parentElement)
-    return element.parentElement;
-  if (!element.parentNode)
-    return;
-  if (element.parentNode.nodeType === Node.DOCUMENT_FRAGMENT_NODE && (element.parentNode as ShadowRoot).host)
-    return (element.parentNode as ShadowRoot).host;
-}
-
 function parentElementOrShadowHostInContext(element: Element, context: QueryContext): Element | undefined {
   if (element === context.scope)
     return;
@@ -654,35 +507,6 @@ function previousSiblingInContext(element: Element, context: QueryContext): Elem
   if (element === context.scope)
     return;
   return element.previousElementSibling || undefined;
-}
-
-export function isVisible(element: Element): boolean {
-  // Note: this logic should be similar to waitForDisplayedAtStablePosition() to avoid surprises.
-  if (!element.ownerDocument || !element.ownerDocument.defaultView)
-    return true;
-  const style = element.ownerDocument.defaultView.getComputedStyle(element);
-  if (!style || style.visibility === 'hidden')
-    return false;
-  if (style.display === 'contents') {
-    // display:contents is not rendered itself, but its child nodes are.
-    for (let child = element.firstChild; child; child = child.nextSibling) {
-      if (child.nodeType === 1 /* Node.ELEMENT_NODE */ && isVisible(child as Element))
-        return true;
-      if (child.nodeType === 3 /* Node.TEXT_NODE */ && isVisibleTextNode(child as Text))
-        return true;
-    }
-    return false;
-  }
-  const rect = element.getBoundingClientRect();
-  return rect.width > 0 && rect.height > 0;
-}
-
-function isVisibleTextNode(node: Text) {
-  // https://stackoverflow.com/questions/1461059/is-there-an-equivalent-to-getboundingclientrect-for-text-nodes
-  const range = document.createRange();
-  range.selectNode(node);
-  const rect = range.getBoundingClientRect();
-  return rect.width > 0 && rect.height > 0;
 }
 
 function sortInDOMOrder(elements: Element[]): Element[] {

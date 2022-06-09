@@ -13,6 +13,12 @@ on:
       - main
       - release-*
 
+concurrency:
+  # For pull requests, cancel all currently-running jobs for this workflow
+  # https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#concurrency
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
 env:
   # Force terminal colors. @see https://www.npmjs.com/package/colors
   FORCE_COLOR: 1
@@ -20,19 +26,30 @@ env:
 
 jobs:
   test_linux:
-    name: ${{ matrix.os }} (${{ matrix.browser }})
+    name: ${{ matrix.os }} (${{ matrix.browser }} - Node.js ${{ matrix.node-version }})
     strategy:
       fail-fast: false
       matrix:
         browser: [chromium, firefox, webkit]
-        os: [ubuntu-20.04]
+        os: [ubuntu-20.04, ubuntu-22.04]
+        node-version: [14]
+        include:
+          - os: ubuntu-20.04
+            node-version: 12
+            browser: chromium
+          - os: ubuntu-20.04
+            node-version: 16
+            browser: chromium
+          - os: ubuntu-20.04
+            node-version: 18
+            browser: chromium
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v2
       with:
-        node-version: 12
-    - run: npm i -g npm@8.3
+        node-version: ${{ matrix.node-version }}
+    - run: npm i -g npm@8
     - run: npm ci
       env:
         DEBUG: pw:install
@@ -49,20 +66,59 @@ jobs:
         name: ${{ matrix.browser }}-${{ matrix.os }}-test-results
         path: test-results
 
+  test_linux_chromium_tot:
+    name: ${{ matrix.os }} (chromium tip-of-tree)
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-20.04]
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-node@v2
+      with:
+        node-version: 14
+    - run: npm i -g npm@8
+    - run: npm ci
+      env:
+        DEBUG: pw:install
+        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+    - run: npm run build
+    - run: npx playwright install --with-deps chromium-tip-of-tree
+    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run test -- --project=chromium
+      env:
+        PWTEST_CHANNEL: chromium-tip-of-tree
+    - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
+      if: always()
+    - uses: actions/upload-artifact@v1
+      if: always()
+      with:
+        name: ${{ matrix.browser }}-chromium-tip-of-tree-test-results
+        path: test-results
+
   test_test_runner:
     name: Test Runner
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        node-version: [12]
+        node-version: [14]
+        include:
+          - os: ubuntu-latest
+            node-version: 12
+          - os: ubuntu-latest
+            node-version: 16
+          - os: ubuntu-latest
+            node-version: 18
+          - os: windows-latest
+            node-version: 16
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v2
       with:
         node-version: ${{matrix.node-version}}
-    - run: npm i -g npm@8.3
+    - run: npm i -g npm@8
     - run: npm ci
       env:
         DEBUG: pw:install
@@ -74,42 +130,60 @@ jobs:
       if: matrix.os == 'ubuntu-latest'
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
+      shell: bash
 
-  test_test_runner_esm:
-    name: Test Runner ESM
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-    runs-on: ${{ matrix.os }}
-    steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v2
-      with:
-        node-version: 16
-    - run: npm i -g npm@8.3
-    - run: npm ci
-      env:
-        DEBUG: pw:install
-    - run: npm run build
-    - run: npx playwright install --with-deps
-    - run: npm run ttest -- --grep=@esm
-
-  test_html_report:
-    name: HTML Report
+  test_web_components:
+    name: Web Components
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v2
       with:
-        node-version: 12
-    - run: npm i -g npm@8.3
+        # Component tests require Node.js 16+ (they require ESM via TS)
+        node-version: 16
+    - run: npm i -g npm@8
     - run: npm ci
       env:
         DEBUG: pw:install
     - run: npm run build
     - run: npx playwright install --with-deps
-    - run: npm run htest
+    - run: npm run test-html-reporter
+      if: always() && matrix.os != 'ubuntu-latest'
+    - run: xvfb-run npm run test-html-reporter
+      if: always() && matrix.os == 'ubuntu-latest'
+    - run: npm run test-web
+      if: always() && matrix.os != 'ubuntu-latest'
+    - run: xvfb-run npm run test-web
+      if: always() && matrix.os == 'ubuntu-latest'
+
+  test-package-installations:
+    name: "Installation Test ${{ matrix.os }} (${{ matrix.node_version }})"
+    runs-on: ${{ matrix.os  }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+        - ubuntu-latest
+        - macos-latest
+        - windows-latest
+        node_version:
+        - "^14.1.0"  # pre 14.1, zip extraction was broken (https://github.com/microsoft/playwright/issues/1988)
+    timeout-minutes: 30
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-node@v2
+      with:
+        node-version: ${{ matrix.node_version }}
+    - run: npm i -g npm@8
+    - run: npm ci
+      env:
+        DEBUG: pw:install
+    - run: npm run build
+    - run: npx playwright install-deps
+    - run: npm run itest
       if: matrix.os != 'ubuntu-latest'
-    - run: xvfb-run npm run htest
+    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run itest
       if: matrix.os == 'ubuntu-latest'
+    - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
+      if: always()
+      shell: bash

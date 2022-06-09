@@ -20,14 +20,15 @@ import './colors.css';
 import './common.css';
 import * as icons from './icons';
 
-export const Chip: React.FunctionComponent<{
+export const Chip: React.FC<{
   header: JSX.Element | string,
   expanded?: boolean,
   noInsets?: boolean,
   setExpanded?: (expanded: boolean) => void,
   children?: any,
-}> = ({ header, expanded, setExpanded, children, noInsets }) => {
-  return <div className='chip'>
+  dataTestId?: string,
+}> = ({ header, expanded, setExpanded, children, noInsets, dataTestId }) => {
+  return <div className='chip' data-test-id={dataTestId}>
     <div
       className={'chip-header' + (setExpanded ? ' expanded-' + expanded : '')}
       onClick={() => setExpanded?.(!expanded)}
@@ -45,13 +46,15 @@ export const AutoChip: React.FC<{
   initialExpanded?: boolean,
   noInsets?: boolean,
   children?: any,
-}> = ({ header, initialExpanded, noInsets, children }) => {
+  dataTestId?: string,
+}> = ({ header, initialExpanded, noInsets, children, dataTestId }) => {
   const [expanded, setExpanded] = React.useState(initialExpanded || initialExpanded === undefined);
   return <Chip
     header={header}
     expanded={expanded}
     setExpanded={setExpanded}
     noInsets={noInsets}
+    dataTestId={dataTestId}
   >
     {children}
   </Chip>;

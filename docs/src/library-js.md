@@ -97,7 +97,7 @@ let page: import('playwright').Page;
 
 ## System requirements
 
-Playwright requires Node.js version 12 or above. The browser binaries for Chromium,
+Playwright requires Node.js version 14 or above. The browser binaries for Chromium,
 Firefox and WebKit work across the 3 platforms (Windows, macOS, Linux):
 
 ### Windows
@@ -106,7 +106,7 @@ Works with Windows and Windows Subsystem for Linux (WSL).
 
 ### macOS
 
-Requires 10.14 (Mojave) or above.
+Requires 11 (Big Sur) or above.
 
 ### Linux
 
@@ -114,7 +114,7 @@ Depending on your Linux distribution, you might need to install additional
 dependencies to run the browsers.
 
 :::note
-Only Ubuntu 18.04 and Ubuntu 20.04 are officially supported.
+Only Ubuntu 18.04, 20.04, and 22.04 are officially supported.
 :::
 
 See also in the [Command line tools](./cli.md#install-system-dependencies)

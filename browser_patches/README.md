@@ -41,6 +41,8 @@ This command will:
 
 ## 2. Developing a new change
 
+### Creating new branch
+
 You want to create a new branch off the `playwright-build` branch.
 
 Assuming that you're under `$HOME/firefox` checkout:
@@ -49,6 +51,32 @@ Assuming that you're under `$HOME/firefox` checkout:
 $ git checkout -b my-new-feature playwright-build
 $ # develop my feature on the my-new-feature branch ....
 ```
+
+### Building
+
+Each browser has corresponding build script. `--full` options normally takes care of also installing required build dependencies on Linux.
+
+```bash
+./browser_patches/firefox/build.sh --full
+```
+
+### Running tests with local browser build
+
+Playwright test suite may run against local browser build without bundling it.
+```bash
+# Run webkit tests with local webkit build
+WKPATH=./browser_patches/webkit/pw_run.sh npm run wtest
+
+# Run firefox tests with local firefox build on macos
+FFPATH=/tmp/repackaged-firefox/firefox/Nightly.app/Contents/MacOS/firefox npm run ftest
+
+# Run chromium tests with local chromium build on linux
+CRPATH=~/chromium/src/out/Release/chrome npm run ctest
+```
+
+### Flakiness dashboard
+
+You can look at the [flakiness dashboard](http://flaky.aslushnikov.com/) to see recent history of any playwright test.
 
 ## 3. Exporting your change to playwright repo
 
@@ -140,6 +168,10 @@ In `Source\WTF\wtf\win\DbgHelperWin.cpp` replace
 ```#if !defined(NDEBUG)``` with ```#if 1```
 
 Then regular `WTFReportBacktrace()` works.
+
+#### Debugging linux
+
+`WTFReportBacktrace()` has been broken since [r283707](https://github.com/WebKit/WebKit/commit/de4ba48c8f229bc45042b543a514f6d88b551a64), see [this comment](https://bugs.webkit.org/show_bug.cgi?id=181916#c96). Revert that change locally to make backtraces work again. Otherwise addr2line -f can still be used to map addresses to function names.
 
 #### Enable core dumps on Linux
 

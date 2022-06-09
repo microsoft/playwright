@@ -14,17 +14,16 @@
  * limitations under the License.
  */
 
-import * as channels from '../protocol/channels';
-import { TimeoutError } from '../utils/errors';
-import * as socks from '../utils/socksProxy';
+import type * as channels from '../protocol/channels';
+import { TimeoutError } from '../common/errors';
+import type * as socks from '../common/socksProxy';
 import { Android } from './android';
 import { BrowserType } from './browserType';
 import { ChannelOwner } from './channelOwner';
 import { Electron } from './electron';
 import { APIRequest } from './fetch';
-import { LocalUtils } from './localUtils';
 import { Selectors, SelectorsOwner } from './selectors';
-import { Size } from './types';
+import type { Size } from './types';
 
 type DeviceDescriptor = {
   userAgent: string,
@@ -46,7 +45,6 @@ export class Playwright extends ChannelOwner<channels.PlaywrightChannel> {
   selectors: Selectors;
   readonly request: APIRequest;
   readonly errors: { TimeoutError: typeof TimeoutError };
-  _utils: LocalUtils;
   private _socksProxyHandler: socks.SocksProxyHandler | undefined;
 
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.PlaywrightInitializer) {
@@ -65,7 +63,6 @@ export class Playwright extends ChannelOwner<channels.PlaywrightChannel> {
       this.devices[name] = descriptor;
     this.selectors = new Selectors();
     this.errors = { TimeoutError };
-    this._utils = LocalUtils.from(initializer.utils);
 
     const selectorsOwner = SelectorsOwner.from(initializer.selectors);
     this.selectors._addChannel(selectorsOwner);
@@ -85,23 +82,6 @@ export class Playwright extends ChannelOwner<channels.PlaywrightChannel> {
     this.selectors._removeChannel(selectorsOwner);
     this.selectors = selectors;
     this.selectors._addChannel(selectorsOwner);
-  }
-
-  // TODO: remove this methods together with PlaywrightClient.
-  _enablePortForwarding(redirectPortForTest?: number) {
-    const socksSupport = this._initializer.socksSupport;
-    if (!socksSupport)
-      return;
-    const handler = new socks.SocksProxyHandler(redirectPortForTest);
-    this._socksProxyHandler = handler;
-    handler.on(socks.SocksProxyHandler.Events.SocksConnected, (payload: socks.SocksSocketConnectedPayload) => socksSupport.socksConnected(payload).catch(() => {}));
-    handler.on(socks.SocksProxyHandler.Events.SocksData, (payload: socks.SocksSocketDataPayload) => socksSupport.socksData({ uid: payload.uid, data: payload.data.toString('base64') }).catch(() => {}));
-    handler.on(socks.SocksProxyHandler.Events.SocksError, (payload: socks.SocksSocketErrorPayload) => socksSupport.socksError(payload).catch(() => {}));
-    handler.on(socks.SocksProxyHandler.Events.SocksFailed, (payload: socks.SocksSocketFailedPayload) => socksSupport.socksFailed(payload).catch(() => {}));
-    handler.on(socks.SocksProxyHandler.Events.SocksEnd, (payload: socks.SocksSocketEndPayload) => socksSupport.socksEnd(payload).catch(() => {}));
-    socksSupport.on('socksRequested', payload => handler.socketRequested(payload));
-    socksSupport.on('socksClosed', payload => handler.socketClosed(payload));
-    socksSupport.on('socksData', payload => handler.sendSocketData({ uid: payload.uid, data: Buffer.from(payload.data, 'base64') }));
   }
 
   static from(channel: channels.PlaywrightChannel): Playwright {

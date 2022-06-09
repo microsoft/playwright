@@ -15,7 +15,8 @@
  */
 
 import type { Fixtures } from '@playwright/test';
-import { ChildProcess, execSync, spawn } from 'child_process';
+import type { ChildProcess } from 'child_process';
+import { execSync, spawn } from 'child_process';
 import net from 'net';
 
 type TestChildParams = {
@@ -137,7 +138,7 @@ export const commonFixtures: Fixtures<CommonFixtures, {}> = {
     await use(async port => {
       while (!token.canceled) {
         const promise = new Promise<boolean>(resolve => {
-          const conn = net.connect(port)
+          const conn = net.connect(port, '127.0.0.1')
               .on('error', () => resolve(false))
               .on('connect', () => {
                 conn.end();

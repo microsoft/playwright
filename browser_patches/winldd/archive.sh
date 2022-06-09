@@ -10,11 +10,6 @@ if [[ ("$1" == "-h") || ("$1" == "--help") ]]; then
   exit 0
 fi
 
-if [[ "$(uname)" != MINGW* ]]; then
-  echo "ERROR: this script only supports MINGW (windows)"
-  exit 1
-fi
-
 ZIP_PATH=$1
 if [[ $ZIP_PATH != /* ]]; then
   echo "ERROR: path $ZIP_PATH is not absolute"
@@ -35,6 +30,12 @@ fi
 
 trap "cd $(pwd -P)" EXIT
 cd "$(dirname "$0")"
+
+if [[ "$(uname)" != MINGW* ]]; then
+  echo "ERROR: this script only supports MINGW (windows)"
+  exit 1
+fi
+
 
 # create a TMP directory to copy all necessary files
 cd ./x64/Release

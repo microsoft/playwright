@@ -13,4 +13,7 @@ browser_patches/chromium/output/
 **/*.d.ts
 output/
 test-results/
-tests-components/
+tests/components/
+examples/
+DEPS
+.cache/

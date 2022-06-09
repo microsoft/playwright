@@ -16,13 +16,14 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import type { LaunchOptions, BrowserContextOptions, Page, BrowserContext, Video, APIRequestContext, Tracing } from 'playwright-core';
-import type { TestType, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, TestInfo } from '../types/test';
+import type { LaunchOptions, BrowserContextOptions, Page, Browser, BrowserContext, Video, APIRequestContext, Tracing } from 'playwright-core';
+import type { TestType, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, TestInfo, VideoMode, TraceMode } from '../types/test';
 import { rootTestType } from './testType';
-import { createGuid, removeFolders, debugMode } from 'playwright-core/lib/utils/utils';
-import { GridClient } from 'playwright-core/lib/grid/gridClient';
+import { createGuid, debugMode } from 'playwright-core/lib/utils';
+import { removeFolders } from 'playwright-core/lib/utils/fileUtils';
 export { expect } from './expect';
 export const _baseTest: TestType<{}, {}> = rootTestType.test;
+export { addRunnerPlugin as _addRunnerPlugin } from './plugins';
 import * as outOfProcess from 'playwright-core/lib/outofprocess';
 
 if ((process as any)['__pw_initiator__']) {
@@ -43,6 +44,7 @@ type TestFixtures = PlaywrightTestArgs & PlaywrightTestOptions & {
   _contextFactory: (options?: BrowserContextOptions) => Promise<BrowserContext>;
 };
 type WorkerFixtures = PlaywrightWorkerArgs & PlaywrightWorkerOptions & {
+  _connectedBrowser: Browser | undefined,
   _browserOptions: LaunchOptions;
   _artifactsDir: () => string;
   _snapshotSuffix: string;
@@ -51,12 +53,8 @@ type WorkerFixtures = PlaywrightWorkerArgs & PlaywrightWorkerOptions & {
 export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
   defaultBrowserType: [ 'chromium', { scope: 'worker', option: true } ],
   browserName: [ ({ defaultBrowserType }, use) => use(defaultBrowserType), { scope: 'worker', option: true } ],
-  playwright: [async ({}, use, workerInfo) => {
-    if (process.env.PW_GRID) {
-      const gridClient = await GridClient.connect(process.env.PW_GRID);
-      await use(gridClient.playwright() as any);
-      gridClient.close();
-    } else if (process.env.PW_OUT_OF_PROCESS_DRIVER) {
+  playwright: [async ({ }, use) => {
+    if (process.env.PW_OUT_OF_PROCESS_DRIVER) {
       const impl = await outOfProcess.start({
         NODE_OPTIONS: undefined  // Hide driver process while debugging.
       });
@@ -66,7 +64,7 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
       await use(require('playwright-core'));
     }
   }, { scope: 'worker' } ],
-  headless: [ undefined, { scope: 'worker', option: true } ],
+  headless: [ true, { scope: 'worker', option: true } ],
   channel: [ undefined, { scope: 'worker', option: true } ],
   launchOptions: [ {}, { scope: 'worker', option: true } ],
   connectOptions: [ undefined, { scope: 'worker', option: true } ],
@@ -85,7 +83,7 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
     });
     if (dir)
       await removeFolders([dir]);
-  }, { scope: 'worker' }],
+  }, { scope: 'worker', _title: 'built-in playwright configuration' } as any],
 
   _browserOptions: [async ({ playwright, headless, channel, launchOptions }, use) => {
     const options: LaunchOptions = {
@@ -105,29 +103,39 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
       (browserType as any)._defaultLaunchOptions = undefined;
   }, { scope: 'worker', auto: true }],
 
-  browser: [async ({ playwright, browserName, channel, headless, connectOptions }, use) => {
+  _connectedBrowser: [async ({ playwright, browserName, channel, headless, connectOptions }, use) => {
+    if (!connectOptions) {
+      await use(undefined);
+      return;
+    }
     if (!['chromium', 'firefox', 'webkit'].includes(browserName))
       throw new Error(`Unexpected browserName "${browserName}", must be one of "chromium", "firefox" or "webkit"`);
-    if (connectOptions) {
-      const browser = await playwright[browserName].connect({
-        wsEndpoint: connectOptions.wsEndpoint,
-        headers: {
-          'x-playwright-browser': channel || browserName,
-          'x-playwright-headless': headless ? '1' : '0',
-          ...connectOptions.headers,
-        }
-      });
-      await use(browser);
-      await browser.close();
+    const browser = await playwright[browserName].connect(connectOptions.wsEndpoint, {
+      headers: {
+        'x-playwright-browser': channel || browserName,
+        'x-playwright-headless': headless ? '1' : '0',
+        ...connectOptions.headers,
+      },
+      timeout: connectOptions.timeout ?? 3 * 60 * 1000, // 3 minutes
+    });
+    await use(browser);
+    await browser.close();
+  }, { scope: 'worker', timeout: 0, _title: 'remote connection' } as any],
+
+  browser: [async ({ playwright, browserName, _connectedBrowser }, use) => {
+    if (_connectedBrowser) {
+      await use(_connectedBrowser);
       return;
     }
 
+    if (!['chromium', 'firefox', 'webkit'].includes(browserName))
+      throw new Error(`Unexpected browserName "${browserName}", must be one of "chromium", "firefox" or "webkit"`);
     const browser = await playwright[browserName].launch();
     await use(browser);
     await browser.close();
   }, { scope: 'worker' } ],
 
-  acceptDownloads: [ undefined, { option: true } ],
+  acceptDownloads: [ true, { option: true } ],
   bypassCSP: [ undefined, { option: true } ],
   colorScheme: [ undefined, { option: true } ],
   deviceScaleFactor: [ undefined, { option: true } ],
@@ -137,7 +145,7 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
   httpCredentials: [ undefined, { option: true } ],
   ignoreHTTPSErrors: [ undefined, { option: true } ],
   isMobile: [ undefined, { option: true } ],
-  javaScriptEnabled: [ undefined, { option: true } ],
+  javaScriptEnabled: [ true, { option: true } ],
   locale: [ 'en-US', { option: true } ],
   offline: [ undefined, { option: true } ],
   permissions: [ undefined, { option: true } ],
@@ -145,12 +153,13 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
   storageState: [ undefined, { option: true } ],
   timezoneId: [ undefined, { option: true } ],
   userAgent: [ undefined, { option: true } ],
-  viewport: [ undefined, { option: true } ],
-  actionTimeout: [ undefined, { option: true } ],
-  navigationTimeout: [ undefined, { option: true } ],
+  viewport: [ { width: 1280, height: 720 }, { option: true } ],
+  actionTimeout: [ 0, { option: true } ],
+  navigationTimeout: [ 0, { option: true } ],
   baseURL: [ async ({ }, use) => {
     await use(process.env.PLAYWRIGHT_TEST_BASE_URL);
   }, { option: true } ],
+  serviceWorkers: [ 'allow', { option: true } ],
   contextOptions: [ {}, { option: true } ],
 
   _combinedContextOptions: async ({
@@ -175,6 +184,7 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
     userAgent,
     baseURL,
     contextOptions,
+    serviceWorkers,
   }, use) => {
     const options: BrowserContextOptions = {};
     if (acceptDownloads !== undefined)
@@ -217,26 +227,25 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
       options.viewport = viewport;
     if (baseURL !== undefined)
       options.baseURL = baseURL;
+    if (serviceWorkers !== undefined)
+      options.serviceWorkers = serviceWorkers;
     await use({
       ...contextOptions,
       ...options,
     });
   },
 
-  _snapshotSuffix: [process.env.PLAYWRIGHT_DOCKER ? 'docker' : process.platform, { scope: 'worker' }],
+  _snapshotSuffix: [process.platform, { scope: 'worker' }],
 
   _setupContextOptionsAndArtifacts: [async ({ playwright, _snapshotSuffix, _combinedContextOptions, _browserOptions, _artifactsDir, trace, screenshot, actionTimeout, navigationTimeout }, use, testInfo) => {
     testInfo.snapshotSuffix = _snapshotSuffix;
     if (debugMode())
       testInfo.setTimeout(0);
 
-    let traceMode = typeof trace === 'string' ? trace : trace.mode;
-    if (traceMode as any === 'retry-with-trace')
-      traceMode = 'on-first-retry';
+    const traceMode = normalizeTraceMode(trace);
     const defaultTraceOptions = { screenshots: true, snapshots: true, sources: true };
     const traceOptions = typeof trace === 'string' ? defaultTraceOptions : { ...defaultTraceOptions, ...trace, mode: undefined };
-
-    const captureTrace = (traceMode === 'on' || traceMode === 'retain-on-failure' || (traceMode === 'on-first-retry' && testInfo.retry === 1));
+    const captureTrace = shouldCaptureTrace(traceMode, testInfo);
     const temporaryTraceFiles: string[] = [];
     const temporaryScreenshots: string[] = [];
     const createdContexts = new Set<BrowserContext>();
@@ -263,7 +272,7 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
         },
         onApiCallEnd: (userData: any, error?: Error) => {
           const step = userData.userObject;
-          step?.complete(error);
+          step?.complete({ error });
         },
       };
     };
@@ -421,14 +430,11 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
       else
         await fs.promises.unlink(file).catch(() => {});
     }));
-  }, { auto: true }],
+  }, { auto: 'all-hooks-included',  _title: 'built-in playwright configuration' } as any],
 
-  _contextFactory: async ({ browser, video, _artifactsDir }, use, testInfo) => {
-    let videoMode = typeof video === 'string' ? video : video.mode;
-    if (videoMode === 'retry-with-video')
-      videoMode = 'on-first-retry';
-
-    const captureVideo = (videoMode === 'on' || videoMode === 'retain-on-failure' || (videoMode === 'on-first-retry' && testInfo.retry === 1));
+  _contextFactory: [async ({ browser, video, _artifactsDir }, use, testInfo) => {
+    const videoMode = normalizeVideoMode(video);
+    const captureVideo = shouldCaptureVideo(videoMode, testInfo);
     const contexts = new Map<BrowserContext, { pages: Page[] }>();
 
     await use(async options => {
@@ -475,7 +481,7 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
 
     if (prependToError)
       testInfo.errors.push({ message: prependToError });
-  },
+  }, { scope: 'test',  _title: 'context' } as any],
 
   context: async ({ _contextFactory }, use) => {
     await use(await _contextFactory());
@@ -510,9 +516,9 @@ function formatStackFrame(frame: StackFrame) {
 }
 
 function hookType(testInfo: TestInfo): 'beforeAll' | 'afterAll' | undefined {
-  if ((testInfo as any)._currentRunnable?.type === 'beforeAll')
+  if ((testInfo as any)._timeoutManager._runnable?.type === 'beforeAll')
     return 'beforeAll';
-  if ((testInfo as any)._currentRunnable?.type === 'afterAll')
+  if ((testInfo as any)._timeoutManager._runnable?.type === 'afterAll')
     return 'afterAll';
 }
 
@@ -528,6 +534,28 @@ type ParsedStackTrace = {
   frameTexts: string[];
   apiName: string;
 };
+
+export function normalizeVideoMode(video: VideoMode | 'retry-with-video' | { mode: VideoMode }) {
+  let videoMode = typeof video === 'string' ? video : video.mode;
+  if (videoMode === 'retry-with-video')
+    videoMode = 'on-first-retry';
+  return videoMode;
+}
+
+export function shouldCaptureVideo(videoMode: VideoMode, testInfo: TestInfo) {
+  return (videoMode === 'on' || videoMode === 'retain-on-failure' || (videoMode === 'on-first-retry' && testInfo.retry === 1));
+}
+
+export function normalizeTraceMode(trace: TraceMode | 'retry-with-trace' | { mode: TraceMode }) {
+  let traceMode = typeof trace === 'string' ? trace : trace.mode;
+  if (traceMode === 'retry-with-trace')
+    traceMode = 'on-first-retry';
+  return traceMode;
+}
+
+export function shouldCaptureTrace(traceMode: TraceMode, testInfo: TestInfo) {
+  return traceMode === 'on' || traceMode === 'retain-on-failure' || (traceMode === 'on-first-retry' && testInfo.retry === 1);
+}
 
 const kTracingStarted = Symbol('kTracingStarted');
 

@@ -1,0 +1,19 @@
+{
+  "name": "components-vue",
+  "version": "0.0.0",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview --port 5050",
+    "test": "npx playwright test"
+  },
+  "dependencies": {
+    "vue": "^3.2.31"
+  },
+  "devDependencies": {
+    "@playwright/experimental-ct-vue": "^0.0.5",
+    "@playwright/test": "1.22.0-alpha-apr-26-2022",
+    "@vitejs/plugin-vue": "^2.3.1",
+    "vite": "^2.9.5"
+  }
+}

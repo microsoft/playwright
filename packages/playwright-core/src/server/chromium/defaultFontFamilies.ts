@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Protocol } from './protocol';
+import type { Protocol } from './protocol';
 
 // DO NOT EDIT: this map is generated from Chromium source code by utils/generate_chromium_default_font_families.js
 export const platformToFontFamilies: { [key in 'linux'|'mac'|'win']: Protocol.Page.setFontFamiliesParameters } = {
@@ -26,7 +26,6 @@ export const platformToFontFamilies: { [key in 'linux'|'mac'|'win']: Protocol.Pa
       'sansSerif': 'Arial',
       'cursive': 'Comic Sans MS',
       'fantasy': 'Impact',
-      'pictograph': 'Times New Roman'
     }
   },
   'mac': {
@@ -37,7 +36,6 @@ export const platformToFontFamilies: { [key in 'linux'|'mac'|'win']: Protocol.Pa
       'sansSerif': 'Helvetica',
       'cursive': 'Apple Chancery',
       'fantasy': 'Papyrus',
-      'pictograph': 'Apple Color Emoji'
     },
     'forScripts': [
       {
@@ -85,7 +83,6 @@ export const platformToFontFamilies: { [key in 'linux'|'mac'|'win']: Protocol.Pa
       'sansSerif': 'Arial',
       'cursive': 'Comic Sans MS',
       'fantasy': 'Impact',
-      'pictograph': 'Segoe UI Symbol'
     },
     'forScripts': [
       {

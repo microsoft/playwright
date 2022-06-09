@@ -15,7 +15,7 @@ Here is an example that defines a common timeout and two projects. The "Smoke" p
 
 ```js js-flavor=ts
 // playwright.config.ts
-import { PlaywrightTestConfig } from '@playwright/test';
+import type { PlaywrightTestConfig } from '@playwright/test';
 const config: PlaywrightTestConfig = {
   timeout: 60000, // Timeout is shared between all tests.
   projects: [
@@ -152,13 +152,16 @@ It is also recommended to specify [`property: TestOptions.baseURL`] in the confi
 
 ```js js-flavor=ts
 // playwright.config.ts
-import { PlaywrightTestConfig } from '@playwright/test';
+import type { PlaywrightTestConfig } from '@playwright/test';
 const config: PlaywrightTestConfig = {
   webServer: {
     command: 'npm run start',
-    port: 3000,
+    url: 'http://localhost:3000/app/',
     timeout: 120 * 1000,
     reuseExistingServer: !process.env.CI,
+  },
+  use: {
+    baseURL: 'http://localhost:3000/app/',
   },
 };
 export default config;
@@ -171,41 +174,36 @@ export default config;
 const config = {
   webServer: {
     command: 'npm run start',
-    port: 3000,
+    url: 'http://localhost:3000/app/',
     timeout: 120 * 1000,
     reuseExistingServer: !process.env.CI,
+  },
+  use: {
+    baseURL: 'http://localhost:3000/app/',
   },
 };
 module.exports = config;
 ```
 
-Now you can use a relative path when navigating the page, or use `baseURL` fixture:
+Now you can use a relative path when navigating the page:
 
 ```js js-flavor=ts
 // test.spec.ts
 import { test } from '@playwright/test';
-test('test', async ({ page, baseURL }) => {
-  // baseURL is taken directly from your web server,
-  // e.g. http://localhost:3000
-  await page.goto(baseURL + '/bar');
-  // Alternatively, just use relative path, because baseURL is already
-  // set for the default context and page.
-  // For example, this will result in http://localhost:3000/foo
-  await page.goto('/foo');
+test('test', async ({ page }) => {
+  // baseURL is set in the config to http://localhost:3000/app/
+  // This will navigate to http://localhost:3000/app/login
+  await page.goto('./login');
 });
 ```
 
 ```js js-flavor=js
 // test.spec.js
 const { test } = require('@playwright/test');
-test('test', async ({ page, baseURL }) => {
-  // baseURL is taken directly from your web server,
-  // e.g. http://localhost:3000
-  await page.goto(baseURL + '/bar');
-  // Alternatively, just use relative path, because baseURL is already
-  // set for the default context and page.
-  // For example, this will result in http://localhost:3000/foo
-  await page.goto('/foo');
+test('test', async ({ page }) => {
+  // baseURL is set in the config to http://localhost:3000/app/
+  // This will navigate to http://localhost:3000/app/login
+  await page.goto('./login');
 });
 ```
 
@@ -213,7 +211,7 @@ test('test', async ({ page, baseURL }) => {
 
 To set something up once before running all tests, use `globalSetup` option in the [configuration file](#configuration-object). Global setup file must export a single function that takes a config object. This function will be run once before all the tests.
 
-Similarly, use `globalTeardown` to run something once after all the tests. Alternatively, let `globalSetup` return a function that will be used as a global teardown. You can pass data such as port number, authentication tokens, etc. from your global setup to your tests using environment.
+Similarly, use `globalTeardown` to run something once after all the tests. Alternatively, let `globalSetup` return a function that will be used as a global teardown. You can pass data such as port number, authentication tokens, etc. from your global setup to your tests using environment variables.
 
 Here is a global setup example that authenticates once and reuses authentication state in tests. It uses `baseURL` and `storageState` options from the configuration file.
 
@@ -271,7 +269,7 @@ module.exports = config;
 
 ```js js-flavor=ts
 // playwright.config.ts
-import { PlaywrightTestConfig } from '@playwright/test';
+import type { PlaywrightTestConfig } from '@playwright/test';
 
 const config: PlaywrightTestConfig = {
   globalSetup: require.resolve('./global-setup'),
@@ -300,6 +298,62 @@ const { test } = require('@playwright/test');
 test('test', async ({ page }) => {
   await page.goto('/');
   // You are signed in!
+});
+```
+
+You can make arbitrary data available in your tests from your global setup file by setting them as environment variables via `process.env`.
+
+```js js-flavor=js
+// global-setup.js
+module.exports = async config => {
+  process.env.FOO = 'some data';
+  // Or a more complicated data structure as JSON:
+  process.env.BAR = JSON.stringify({ some: 'data' });
+};
+```
+
+```js js-flavor=ts
+// global-setup.ts
+import { FullConfig } from '@playwright/test';
+
+async function globalSetup(config: FullConfig) {
+  process.env.FOO = 'some data';
+  // Or a more complicated data structure as JSON:
+  process.env.BAR = JSON.stringify({ some: 'data' });
+}
+
+export default globalSetup;
+```
+
+Tests have access to the `process.env` properties set in the global setup.
+
+```js js-flavor=ts
+import { test } from '@playwright/test';
+
+test('test', async ({ page }) => {
+  // environment variables which are set in globalSetup are only available inside test().
+  const { FOO, BAR } = process.env;
+
+  // FOO and BAR properties are populated.
+  expect(FOO).toEqual('some data');
+
+  const complexData = JSON.parse(BAR);
+  expect(BAR).toEqual({ some: 'data' });
+});
+```
+
+```js js-flavor=js
+const { test } = require('@playwright/test');
+
+test('test', async ({ page }) => {
+  // environment variables which are set in globalSetup are only available inside test().
+  const { FOO, BAR } = process.env;
+
+  // FOO and BAR properties are populated.
+  expect(FOO).toEqual('some data');
+
+  const complexData = JSON.parse(BAR);
+  expect(BAR).toEqual({ some: 'data' });
 });
 ```
 
@@ -338,7 +392,7 @@ module.exports = config;
 
 ```js js-flavor=ts
 // playwright.config.ts
-import { PlaywrightTestConfig, devices } from '@playwright/test';
+import { type PlaywrightTestConfig, devices } from '@playwright/test';
 
 const config: PlaywrightTestConfig = {
   projects: [
@@ -376,7 +430,7 @@ Here is an example that runs projects with different tests and configurations. T
 
 ```js js-flavor=ts
 // playwright.config.ts
-import { PlaywrightTestConfig } from '@playwright/test';
+import type { PlaywrightTestConfig } from '@playwright/test';
 const config: PlaywrightTestConfig = {
   timeout: 60000, // Timeout is shared between all tests.
   projects: [
@@ -565,7 +619,7 @@ For TypeScript, also add the following to `global.d.ts`. You don't need it for J
 // global.d.ts
 declare global {
  namespace PlaywrightTest {
-    interface Matchers<R> {
+    interface Matchers<R, T> {
       toBeWithinRange(a: number, b: number): R;
     }
   }

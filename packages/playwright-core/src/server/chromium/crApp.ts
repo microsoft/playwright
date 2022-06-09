@@ -15,8 +15,8 @@
  */
 
 import fs from 'fs';
-import { Page } from '../page';
-import { CRPage } from './crPage';
+import type { Page } from '../page';
+import type { CRPage } from './crPage';
 
 export async function installAppIcon(page: Page) {
   const icon = await fs.promises.readFile(require.resolve('./appIcon.png'));

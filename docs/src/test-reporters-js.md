@@ -30,7 +30,7 @@ module.exports = config;
 
 ```js js-flavor=ts
 // playwright.config.ts
-import { PlaywrightTestConfig } from '@playwright/test';
+import type { PlaywrightTestConfig } from '@playwright/test';
 
 const config: PlaywrightTestConfig = {
   reporter: 'line',
@@ -59,7 +59,7 @@ module.exports = config;
 
 ```js js-flavor=ts
 // playwright.config.ts
-import { PlaywrightTestConfig } from '@playwright/test';
+import type { PlaywrightTestConfig } from '@playwright/test';
 
 const config: PlaywrightTestConfig = {
   reporter: [
@@ -89,7 +89,7 @@ module.exports = config;
 
 ```js js-flavor=ts
 // playwright.config.ts
-import { PlaywrightTestConfig } from '@playwright/test';
+import type { PlaywrightTestConfig } from '@playwright/test';
 
 const config: PlaywrightTestConfig = {
   // Concise 'dot' for CI, default 'list' when running locally
@@ -124,7 +124,7 @@ module.exports = config;
 
 ```js js-flavor=ts
 // playwright.config.ts
-import { PlaywrightTestConfig } from '@playwright/test';
+import type { PlaywrightTestConfig } from '@playwright/test';
 
 const config: PlaywrightTestConfig = {
   reporter: 'list',
@@ -171,7 +171,7 @@ module.exports = config;
 
 ```js js-flavor=ts
 // playwright.config.ts
-import { PlaywrightTestConfig } from '@playwright/test';
+import type { PlaywrightTestConfig } from '@playwright/test';
 
 const config: PlaywrightTestConfig = {
   reporter: 'line',
@@ -215,7 +215,7 @@ module.exports = config;
 
 ```js js-flavor=ts
 // playwright.config.ts
-import { PlaywrightTestConfig } from '@playwright/test';
+import type { PlaywrightTestConfig } from '@playwright/test';
 
 const config: PlaywrightTestConfig = {
   reporter: 'dot',
@@ -256,7 +256,7 @@ module.exports = config;
 
 ```js js-flavor=ts
 // playwright.config.ts
-import { PlaywrightTestConfig } from '@playwright/test';
+import type { PlaywrightTestConfig } from '@playwright/test';
 
 const config: PlaywrightTestConfig = {
   reporter: [ ['html', { open: 'never' }] ],
@@ -282,7 +282,7 @@ module.exports = config;
 
 ```js js-flavor=ts
 // playwright.config.ts
-import { PlaywrightTestConfig } from '@playwright/test';
+import type { PlaywrightTestConfig } from '@playwright/test';
 
 const config: PlaywrightTestConfig = {
   reporter: [ ['html', { outputFolder: 'my-report' }] ],
@@ -338,7 +338,7 @@ module.exports = config;
 
 ```js js-flavor=ts
 // playwright.config.ts
-import { PlaywrightTestConfig } from '@playwright/test';
+import type { PlaywrightTestConfig } from '@playwright/test';
 
 const config: PlaywrightTestConfig = {
   reporter: [ ['json', { outputFile: 'results.json' }] ],
@@ -381,7 +381,7 @@ module.exports = config;
 
 ```js js-flavor=ts
 // playwright.config.ts
-import { PlaywrightTestConfig } from '@playwright/test';
+import type { PlaywrightTestConfig } from '@playwright/test';
 
 const config: PlaywrightTestConfig = {
   reporter: [ ['junit', { outputFile: 'results.xml' }] ],
@@ -411,7 +411,7 @@ module.exports = config;
 
 ```js js-flavor=ts
 // playwright.config.ts
-import { PlaywrightTestConfig } from '@playwright/test';
+import type { PlaywrightTestConfig } from '@playwright/test';
 
 const config: PlaywrightTestConfig = {
   // 'github' for GitHub Actions CI to generate annotations, plus a concise 'dot'
@@ -491,7 +491,7 @@ module.exports = config;
 
 ```js js-flavor=ts
 // playwright.config.ts
-import { PlaywrightTestConfig } from '@playwright/test';
+import type { PlaywrightTestConfig } from '@playwright/test';
 
 const config: PlaywrightTestConfig = {
   reporter: './my-awesome-reporter.ts',
@@ -500,19 +500,7 @@ export default config;
 ```
 
 
-## Third party showcase
+## Third party reporter showcase
 
-### Allure reporter
-
-```bash
-# Install
-npm i -D allure-playwright
-
-# Run tests
-npx playwright test --reporter=line,allure-playwright
-
-# Generate report
-allure generate ./allure-results --clean && allure open ./allure-report
-```
-
-See [here](https://www.npmjs.com/package/allure-playwright) for more information.
+* [Allure](https://www.npmjs.com/package/allure-playwright)
+* [Tesults](https://www.tesults.com/docs/playwright)

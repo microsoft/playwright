@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import type { Stats } from '@playwright/test/src/reporters/html';
+import type { Stats } from '@playwright-test/reporters/html';
 import * as React from 'react';
 import './colors.css';
 import './common.css';
@@ -23,11 +23,11 @@ import * as icons from './icons';
 import { Link, navigate } from './links';
 import { statusIcon } from './statusIcon';
 
-export const HeaderView: React.FC<{
+export const HeaderView: React.FC<React.PropsWithChildren<{
   stats: Stats,
   filterText: string,
   setFilterText: (filterText: string) => void,
-}> = ({ stats, filterText, setFilterText }) => {
+}>> = ({ stats, filterText, setFilterText }) => {
   React.useEffect(() => {
     (async () => {
       window.addEventListener('popstate', () => {

@@ -16,13 +16,14 @@
 
 import fs from 'fs';
 import path from 'path';
-import { FullConfig, Location, Suite, TestCase, TestResult, TestStatus, TestStep } from '../../types/testReporter';
-import { assert, calculateSha1 } from 'playwright-core/lib/utils/utils';
+import type { FullConfig, Location, Suite, TestCase, TestResult, TestStatus, TestStep } from '../../types/testReporter';
+import { assert, calculateSha1 } from 'playwright-core/lib/utils';
 import { sanitizeForFilePath } from '../util';
 import { formatResultFailure } from './base';
 import { toPosixPath, serializePatterns } from './json';
 import { MultiMap } from 'playwright-core/lib/utils/multimap';
-import { codeFrameColumns } from '@babel/code-frame';
+import { codeFrameColumns } from '../babelBundle';
+import type { Metadata } from '../types';
 
 export type JsonLocation = Location;
 export type JsonError = string;
@@ -34,10 +35,10 @@ export type JsonReport = {
   suites: JsonSuite[],
 };
 
-export type JsonConfig = Omit<FullConfig, 'projects'>;
+export type JsonConfig = Omit<FullConfig, 'projects' | 'attachments'>;
 
 export type JsonProject = {
-  metadata: any,
+  metadata: Metadata,
   name: string,
   outputDir: string,
   repeatEach: number,
@@ -133,12 +134,40 @@ class RawReporter {
     }
   }
 
+  generateAttachments(attachments: TestResult['attachments'], ioStreams?: Pick<TestResult, 'stdout' | 'stderr'>): JsonAttachment[] {
+    const out: JsonAttachment[] = [];
+    for (const attachment of attachments) {
+      if (attachment.body) {
+        out.push({
+          name: attachment.name,
+          contentType: attachment.contentType,
+          body: attachment.body
+        });
+      } else if (attachment.path) {
+        out.push({
+          name: attachment.name,
+          contentType: attachment.contentType,
+          path: attachment.path
+        });
+      }
+    }
+
+    if (ioStreams) {
+      for (const chunk of ioStreams.stdout)
+        out.push(this._stdioAttachment(chunk, 'stdout'));
+      for (const chunk of ioStreams.stderr)
+        out.push(this._stdioAttachment(chunk, 'stderr'));
+    }
+
+    return out;
+  }
+
   generateProjectReport(config: FullConfig, suite: Suite): JsonReport {
     this.config = config;
     const project = suite.project();
     assert(project, 'Internal Error: Invalid project structure');
     const report: JsonReport = {
-      config,
+      config: filterOutPrivateFields(config),
       project: {
         metadata: project.metadata,
         name: project.name,
@@ -223,7 +252,7 @@ class RawReporter {
       duration: result.duration,
       status: result.status,
       errors: formatResultFailure(this.config, test, result, '', true).map(error => error.message),
-      attachments: this._createAttachments(result),
+      attachments: this.generateAttachments(result.attachments, result),
       steps: dedupeSteps(result.steps.map(step => this._serializeStep(test, step)))
     };
   }
@@ -243,31 +272,6 @@ class RawReporter {
     if (step.location)
       this.stepsInFile.set(step.location.file, result);
     return result;
-  }
-
-  private _createAttachments(result: TestResult): JsonAttachment[] {
-    const attachments: JsonAttachment[] = [];
-    for (const attachment of result.attachments) {
-      if (attachment.body) {
-        attachments.push({
-          name: attachment.name,
-          contentType: attachment.contentType,
-          body: attachment.body
-        });
-      } else if (attachment.path) {
-        attachments.push({
-          name: attachment.name,
-          contentType: attachment.contentType,
-          path: attachment.path
-        });
-      }
-    }
-
-    for (const chunk of result.stdout)
-      attachments.push(this._stdioAttachment(chunk, 'stdout'));
-    for (const chunk of result.stderr)
-      attachments.push(this._stdioAttachment(chunk, 'stderr'));
-    return attachments;
   }
 
   private _stdioAttachment(chunk: Buffer | string, type: 'stdout' | 'stderr'): JsonAttachment {
@@ -311,6 +315,14 @@ function dedupeSteps(steps: JsonTestStep[]): JsonTestStep[] {
     lastStep = canDedupe ? step : undefined;
   }
   return result;
+}
+
+function filterOutPrivateFields(object: any): any {
+  if (!object || typeof object !== 'object')
+    return object;
+  if (Array.isArray(object))
+    return object.map(filterOutPrivateFields);
+  return Object.fromEntries(Object.entries(object).filter(entry => !entry[0].startsWith('_')).map(entry => [entry[0], filterOutPrivateFields(entry[1])]));
 }
 
 export default RawReporter;

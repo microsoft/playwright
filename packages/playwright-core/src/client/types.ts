@@ -15,9 +15,9 @@
  * limitations under the License.
  */
 
-import * as channels from '../protocol/channels';
+import type * as channels from '../protocol/channels';
 import type { Size } from '../common/types';
-export { Size, Point, Rect, Quad, URLMatch, TimeoutOptions, HeadersArray } from '../common/types';
+export type { Size, Point, Rect, Quad, URLMatch, TimeoutOptions, HeadersArray } from '../common/types';
 
 type LoggerSeverity = 'verbose' | 'info' | 'warning' | 'error';
 export interface Logger {
@@ -47,13 +47,18 @@ export type SetStorageState = {
 export type LifecycleEvent = channels.LifecycleEvent;
 export const kLifecycleEvents: Set<LifecycleEvent> = new Set(['load', 'domcontentloaded', 'networkidle', 'commit']);
 
-export type BrowserContextOptions = Omit<channels.BrowserNewContextOptions, 'viewport' | 'noDefaultViewport' | 'extraHTTPHeaders' | 'storageState'> & {
+export type BrowserContextOptions = Omit<channels.BrowserNewContextOptions, 'viewport' | 'noDefaultViewport' | 'extraHTTPHeaders' | 'storageState' | 'recordHar'> & {
   viewport?: Size | null,
   extraHTTPHeaders?: Headers,
   logger?: Logger,
   videosPath?: string,
   videoSize?: Size,
   storageState?: string | SetStorageState,
+  recordHar?: {
+    path: string,
+    omitContent?: boolean,
+    urlFilter?: string | RegExp,
+  },
 };
 
 type LaunchOverrides = {

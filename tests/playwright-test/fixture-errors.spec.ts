@@ -194,7 +194,7 @@ test('should throw when worker fixture depends on a test fixture', async ({ runI
       test('works', async ({bar}) => {});
     `,
   });
-  expect(result.output).toContain('Worker fixture "bar" cannot depend on a test fixture "foo".');
+  expect(result.output).toContain('worker fixture "bar" cannot depend on a test fixture "foo".');
   expect(result.output).toContain(`f.spec.ts:5`);
   expect(result.exitCode).toBe(1);
 });
@@ -302,7 +302,7 @@ test('should throw when overridden worker fixture depends on a test fixture', as
       test2('works', async ({bar}) => {});
     `,
   });
-  expect(result.output).toContain('Worker fixture "bar" cannot depend on a test fixture "foo".');
+  expect(result.output).toContain('worker fixture "bar" cannot depend on a test fixture "foo".');
   expect(result.exitCode).toBe(1);
 });
 
@@ -471,8 +471,10 @@ test('should not report fixture teardown timeout twice', async ({ runInlineTest 
   }, { reporter: 'list', timeout: 1000 });
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
-  expect(result.output).toContain('while shutting down environment');
-  expect(countTimes(result.output, 'while shutting down environment')).toBe(1);
+  expect(result.output).toContain('Timeout of 1000ms exceeded while running fixture "fixture" teardown.');
+  expect(stripAnsi(result.output)).not.toContain('pwt.test.extend'); // Should not point to the location.
+  // TODO: this should be "not.toContain" actually.
+  expect(result.output).toContain('in fixtures teardown');
 });
 
 test('should handle fixture teardown error after test timeout and continue', async ({ runInlineTest }) => {
@@ -497,4 +499,36 @@ test('should handle fixture teardown error after test timeout and continue', asy
   expect(result.passed).toBe(1);
   expect(result.output).toContain('Timeout of 100ms exceeded');
   expect(result.output).toContain('Error: Oh my error');
+});
+
+test('should report worker fixture teardown with debug info', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      const test = pwt.test.extend({
+        fixture: [ async ({ }, use) => {
+          await use();
+          await new Promise(() => {});
+        }, { scope: 'worker' } ],
+      });
+      for (let i = 0; i < 20; i++)
+        test('good' + i, async ({ fixture }) => {});
+    `,
+  }, { reporter: 'list', timeout: 1000 });
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(20);
+  expect(stripAnsi(result.output)).toContain([
+    'Worker teardown error. This worker ran 20 tests, last 10 tests were:',
+    'a.spec.ts:12:9 › good10',
+    'a.spec.ts:12:9 › good11',
+    'a.spec.ts:12:9 › good12',
+    'a.spec.ts:12:9 › good13',
+    'a.spec.ts:12:9 › good14',
+    'a.spec.ts:12:9 › good15',
+    'a.spec.ts:12:9 › good16',
+    'a.spec.ts:12:9 › good17',
+    'a.spec.ts:12:9 › good18',
+    'a.spec.ts:12:9 › good19',
+    '',
+    'Timeout of 1000ms exceeded while running fixture "fixture" teardown.',
+  ].join('\n'));
 });

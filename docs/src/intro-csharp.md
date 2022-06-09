@@ -30,19 +30,12 @@ Create a `Program.cs` that will navigate to `https://playwright.dev/dotnet` and 
 
 ```csharp
 using Microsoft.Playwright;
-using System.Threading.Tasks;
 
-class Program
-{
-    public static async Task Main()
-    {
-        using var playwright = await Playwright.CreateAsync();
-        await using var browser = await playwright.Chromium.LaunchAsync();
-        var page = await browser.NewPageAsync();
-        await page.GotoAsync("https://playwright.dev/dotnet");
-        await page.ScreenshotAsync(new PageScreenshotOptions { Path = "screenshot.png" });
-    }
-}
+using var playwright = await Playwright.CreateAsync();
+await using var browser = await playwright.Chromium.LaunchAsync();
+var page = await browser.NewPageAsync();
+await page.GotoAsync("https://playwright.dev/dotnet");
+await page.ScreenshotAsync(new PageScreenshotOptions { Path = "screenshot.png" });
 ```
 
 Now run it.
@@ -78,7 +71,7 @@ Install dependencies, build project and download necessary browsers. This is onl
 dotnet add package Microsoft.Playwright.NUnit
 # Build the project
 dotnet build
-# Install required browsers
+# Install required browsers - replace netX with actual output folder name, f.ex. net6.0.
 pwsh bin\Debug\netX\playwright.ps1 install
 ```
 
@@ -88,24 +81,23 @@ using System.Threading.Tasks;
 using Microsoft.Playwright.NUnit;
 using NUnit.Framework;
 
-namespace PlaywrightTests
-{
-    [Parallelizable(ParallelScope.Self)]
-    public class Tests : PageTest
-    {
-        [Test]
-        public async Task ShouldAdd()
-        {
-            int result = await Page.EvaluateAsync<int>("() => 7 + 3");
-            Assert.AreEqual(10, result);
-        }
+namespace PlaywrightTests;
 
-        [Test]
-        public async Task ShouldMultiply()
-        {
-            int result = await Page.EvaluateAsync<int>("() => 7 * 3");
-            Assert.AreEqual(21, result);
-        }
+[Parallelizable(ParallelScope.Self)]
+public class Tests : PageTest
+{
+    [Test]
+    public async Task ShouldAdd()
+    {
+        int result = await Page.EvaluateAsync<int>("() => 7 + 3");
+        Assert.AreEqual(10, result);
+    }
+
+    [Test]
+    public async Task ShouldMultiply()
+    {
+        int result = await Page.EvaluateAsync<int>("() => 7 * 3");
+        Assert.AreEqual(21, result);
     }
 }
 ```
@@ -163,7 +155,7 @@ Works with Windows and Windows Subsystem for Linux (WSL).
 
 ### macOS
 
-Requires 10.14 (Mojave) or above.
+Requires 11 (Big Sur) or above.
 
 ### Linux
 
@@ -171,7 +163,7 @@ Depending on your Linux distribution, you might need to install additional
 dependencies to run the browsers.
 
 :::note
-Only Ubuntu 18.04 and Ubuntu 20.04 are officially supported.
+Only Ubuntu 18.04, 20.04, and 22.04 are officially supported.
 :::
 
 See also in the [Command line tools](./cli.md#install-system-dependencies)

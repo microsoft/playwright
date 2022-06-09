@@ -15,17 +15,18 @@
  * limitations under the License.
  */
 
-import { kBrowserClosedError } from '../../utils/errors';
-import { assert } from '../../utils/utils';
-import { Browser, BrowserOptions } from '../browser';
-import { assertBrowserContextIsNotOwned, BrowserContext, validateBrowserContextOptions, verifyGeolocation } from '../browserContext';
+import { kBrowserClosedError } from '../../common/errors';
+import { assert } from '../../utils';
+import type { BrowserOptions } from '../browser';
+import { Browser } from '../browser';
+import { assertBrowserContextIsNotOwned, BrowserContext, verifyGeolocation } from '../browserContext';
 import * as network from '../network';
-import { Page, PageBinding, PageDelegate } from '../page';
-import { ConnectionTransport } from '../transport';
-import * as types from '../types';
+import type { Page, PageBinding, PageDelegate } from '../page';
+import type { ConnectionTransport } from '../transport';
+import type * as types from '../types';
 import { ConnectionEvents, FFConnection } from './ffConnection';
 import { FFPage } from './ffPage';
-import { Protocol } from './protocol';
+import type { Protocol } from './protocol';
 
 export class FFBrowser extends Browser {
   _connection: FFConnection;
@@ -76,8 +77,7 @@ export class FFBrowser extends Browser {
     return !this._connection._closed;
   }
 
-  async newContext(options: types.BrowserContextOptions): Promise<BrowserContext> {
-    validateBrowserContextOptions(options, this.options);
+  async doCreateNewContext(options: types.BrowserContextOptions): Promise<BrowserContext> {
     if (options.isMobile)
       throw new Error('options.isMobile is not supported in Firefox');
     const { browserContextId } = await this._connection.send('Browser.createBrowserContext', { removeOnDetach: true });
@@ -154,7 +154,6 @@ export class FFBrowser extends Browser {
 
 export class FFBrowserContext extends BrowserContext {
   declare readonly _browser: FFBrowser;
-  private _initScripts: string[] = [];
 
   constructor(browser: FFBrowser, browserContextId: string | undefined, options: types.BrowserContextOptions) {
     super(browser, options, browserContextId);
@@ -256,7 +255,7 @@ export class FFBrowserContext extends BrowserContext {
     return this._browser._ffPages.get(targetId)!;
   }
 
-  async _doCookies(urls: string[]): Promise<types.NetworkCookie[]> {
+  async doGetCookies(urls: string[]): Promise<types.NetworkCookie[]> {
     const { cookies } = await this._browser._connection.send('Browser.getCookies', { browserContextId: this._browserContextId });
     return network.filterCookies(cookies.map(c => {
       const copy: any = { ... c };
@@ -278,7 +277,7 @@ export class FFBrowserContext extends BrowserContext {
     await this._browser._connection.send('Browser.clearCookies', { browserContextId: this._browserContextId });
   }
 
-  async _doGrantPermissions(origin: string, permissions: string[]) {
+  async doGrantPermissions(origin: string, permissions: string[]) {
     const webPermissionToProtocol = new Map<string, 'geo' | 'desktop-notification' | 'persistent-storage' | 'push'>([
       ['geolocation', 'geo'],
       ['persistent-storage', 'persistent-storage'],
@@ -294,7 +293,7 @@ export class FFBrowserContext extends BrowserContext {
     await this._browser._connection.send('Browser.grantPermissions', { origin: origin, browserContextId: this._browserContextId, permissions: filtered });
   }
 
-  async _doClearPermissions() {
+  async doClearPermissions() {
     await this._browser._connection.send('Browser.resetPermissions', { browserContextId: this._browserContextId });
   }
 
@@ -317,33 +316,42 @@ export class FFBrowserContext extends BrowserContext {
     await this._browser._connection.send('Browser.setOnlineOverride', { browserContextId: this._browserContextId, override: offline ? 'offline' : 'online' });
   }
 
-  async _doSetHTTPCredentials(httpCredentials?: types.Credentials): Promise<void> {
+  async doSetHTTPCredentials(httpCredentials?: types.Credentials): Promise<void> {
     this._options.httpCredentials = httpCredentials;
     await this._browser._connection.send('Browser.setHTTPCredentials', { browserContextId: this._browserContextId, credentials: httpCredentials || null });
   }
 
-  async _doAddInitScript(source: string) {
-    this._initScripts.push(source);
-    await this._browser._connection.send('Browser.setInitScripts', { browserContextId: this._browserContextId, scripts: this._initScripts.map(script => ({ script })) });
+  async doAddInitScript(source: string) {
+    await this._browser._connection.send('Browser.setInitScripts', { browserContextId: this._browserContextId, scripts: this.initScripts.map(script => ({ script })) });
   }
 
-  async _doExposeBinding(binding: PageBinding) {
+  async doRemoveInitScripts() {
+    await this._browser._connection.send('Browser.setInitScripts', { browserContextId: this._browserContextId, scripts: [] });
+  }
+
+  async doExposeBinding(binding: PageBinding) {
     await this._browser._connection.send('Browser.addBinding', { browserContextId: this._browserContextId, name: binding.name, script: binding.source });
   }
 
-  async _doUpdateRequestInterception(): Promise<void> {
+  async doRemoveExposedBindings() {
+    // TODO: implement me.
+    // This is not a critical problem, what ends up happening is
+    // an old binding will be restored upon page reload and will point nowhere.
+  }
+
+  async doUpdateRequestInterception(): Promise<void> {
     await this._browser._connection.send('Browser.setRequestInterception', { browserContextId: this._browserContextId, enabled: !!this._requestInterceptor });
   }
 
-  _onClosePersistent() {}
+  onClosePersistent() {}
 
-  async _doClose() {
+  async doClose() {
     assert(this._browserContextId);
     await this._browser._connection.send('Browser.removeBrowserContext', { browserContextId: this._browserContextId });
     this._browser._contexts.delete(this._browserContextId);
   }
 
-  async _doCancelDownload(uuid: string) {
+  async cancelDownload(uuid: string) {
     await this._browser._connection.send('Browser.cancelDownload', { uuid });
   }
 }

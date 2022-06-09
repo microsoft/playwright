@@ -15,10 +15,9 @@
  */
 
 import type { FixturePool } from './fixtures';
-import * as reporterTypes from '../types/testReporter';
+import type * as reporterTypes from '../types/testReporter';
 import type { TestTypeImpl } from './testType';
-import { Annotation, FixturesWithLocation, Location } from './types';
-import { FullProject } from './types';
+import type { Annotation, FixturesWithLocation, FullProject, FullProjectInternal, Location } from './types';
 
 class Base {
   title: string;
@@ -44,13 +43,14 @@ export class Suite extends Base implements reporterTypes.Suite {
   parent?: Suite;
   _use: FixturesWithLocation[] = [];
   _isDescribe = false;
+  _skipped = false;
   _entries: (Suite | TestCase)[] = [];
   _hooks: { type: 'beforeEach' | 'afterEach' | 'beforeAll' | 'afterAll', fn: Function, location: Location }[] = [];
   _timeout: number | undefined;
   _annotations: Annotation[] = [];
   _modifiers: Modifier[] = [];
   _parallelMode: 'default' | 'serial' | 'parallel' = 'default';
-  _projectConfig: FullProject | undefined;
+  _projectConfig: FullProjectInternal | undefined;
   _loadError?: reporterTypes.TestError;
 
   _addTest(test: TestCase) {
@@ -108,6 +108,7 @@ export class Suite extends Base implements reporterTypes.Suite {
     suite._isDescribe = this._isDescribe;
     suite._parallelMode = this._parallelMode;
     suite._projectConfig = this._projectConfig;
+    suite._skipped = this._skipped;
     return suite;
   }
 
@@ -174,7 +175,7 @@ export class TestCase extends Base implements reporterTypes.TestCase {
   _appendTestResult(): reporterTypes.TestResult {
     const result: reporterTypes.TestResult = {
       retry: this.results.length,
-      workerIndex: 0,
+      workerIndex: -1,
       duration: 0,
       startTime: new Date(),
       stdout: [],

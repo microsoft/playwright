@@ -24,7 +24,7 @@ Here is the complete list of actionability checks performed for each action:
 | tap | Yes | Yes | Yes | Yes | Yes | - |
 | uncheck | Yes | Yes | Yes | Yes | Yes | - |
 | hover | Yes | Yes | Yes | Yes | - | - |
-| scrollIntoViewIfNeeded | Yes | Yes | Yes | - | - | - |
+| scrollIntoViewIfNeeded | Yes | - | Yes | - | - | - |
 | screenshot | Yes | Yes | Yes | - | - | - |
 | fill | Yes | Yes | - | - | Yes | Yes |
 | selectText | Yes | Yes | - | - | - | - |
@@ -82,7 +82,7 @@ Element is considered stable when it has maintained the same bounding box for at
 
 ## Enabled
 
-Element is considered enabled when it is not a `<button>`, `<select>`, `<input>` or `<textarea>` with a `disabled` property set.
+Element is considered enabled unless it is a `<button>`, `<select>`, `<input>` or `<textarea>` with a `disabled` property.
 
 ## Editable
 

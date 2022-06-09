@@ -43,6 +43,13 @@ it('should throw without path and content', async ({ page }) => {
   expect(error.message).toContain('Either path or content property must be present');
 });
 
+it('should work with trailing comments', async ({ page, asset }) => {
+  await page.addInitScript({ content: '// comment' });
+  await page.addInitScript({ content: 'window.secret = 42;' });
+  await page.goto('data:text/html,<html></html>');
+  expect(await page.evaluate('secret')).toBe(42);
+});
+
 it('should support multiple scripts', async ({ page, server }) => {
   await page.addInitScript(function() {
     window['script1'] = 1;

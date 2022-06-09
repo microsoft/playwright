@@ -1,0 +1,111 @@
+<link rel=stylesheet href='./style.css'>
+<script src="./react_18.1.0.js"></script>
+<script src="./react-dom_18.1.0.js"></script>
+
+<div id=root></div>
+
+<script>
+const e = React.createElement;
+
+function AppHeader(props) {
+  return e(React.Fragment, null,
+    e('h1', null, `reactjs@${React.version}`),
+    e('h3', null, `Reading List: ${props.bookCount}`),
+  );
+}
+
+class NewBook extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = '';
+  }
+
+  onInput(event) {
+    this.state = event.target.value;
+  }
+
+  render() {
+    return e(React.Fragment, null,
+      e('input', {onInput: this.onInput.bind(this)}, null),
+      e('button', {
+        onClick: () => this.props.onNewBook(this.state),
+      }, `new book`),
+    );
+  }
+}
+
+function ColorButton (props) {
+  return e('button', {className: props.color, disabled: !props.enabled}, 'button ' + props.nested.index);
+}
+
+function ButtonGrid() {
+  const buttons = [];
+  for (let i = 0; i < 9; ++i) {
+    buttons.push(e(ColorButton, {
+      color: ['red', 'green', 'blue'][i % 3],
+      enabled: i % 2 === 0,
+      nested: {
+        index: i,
+        value: i + 0.1,
+      }
+    }, null));
+  };
+  return e(React.Fragment, null, ...buttons);
+}
+
+class BookItem extends React.Component {
+  render() {
+    return e('div', null, this.props.name);
+  }
+}
+
+class BookList extends React.Component {
+  render() {
+    return e('ol', null, this.props.books.map(book => e('li', {key: book.name}, e(BookItem, { name: book.name }))));
+  }
+}
+
+const apps = [];
+
+class App extends React.Component {
+  constructor(props) {
+    super(props);
+    apps.push(this);
+    this.mountPoint = React.createRef();
+    this.state = {
+      books: [
+        {name: 'Pride and Prejudice' },
+        {name: 'To Kill a Mockingbird' },
+        {name: 'The Great Gatsby' },
+      ],
+    };
+  }
+
+  render() {
+    return e(React.Fragment, null,
+      e(AppHeader, {bookCount: this.state.books.length}, null),
+      e(NewBook, {onNewBook: bookName => this.onNewBook(bookName)}, null),
+      e(BookList, {books: this.state.books}, null),
+      e(ButtonGrid, null, null),
+      e('div', {ref: this.mountPoint}, null),
+    );
+  }
+
+  onNewBook(bookName) {
+    this.setState({
+      books: [...this.state.books, {name: bookName}],
+    });
+  }
+}
+
+{
+  window.mountApp = element => {
+    const root = ReactDOM.createRoot(element);
+    root.render(e(App, null, null));
+    return root;
+  };
+  window.mountApp(document.getElementById('root'));
+  window.mountNestedApp = () => window.mountApp(apps[apps.length - 1].mountPoint.current);
+}
+
+</script>

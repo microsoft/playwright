@@ -22,6 +22,11 @@ Waits for this response to finish, returns always `null`.
 
 Returns the [Frame] that initiated this response.
 
+## method: Response.fromServiceWorker
+- returns: <[boolean]>
+
+Indicates whether this Response was fullfilled by a Service Worker's Fetch Handler (i.e. via [FetchEvent.respondWith](https://developer.mozilla.org/en-US/docs/Web/API/FetchEvent/respondWith)).
+
 ## method: Response.headers
 - returns: <[Object]<[string], [string]>>
 
@@ -84,14 +89,14 @@ Returns the matching [Request] object.
 
 ## async method: Response.securityDetails
 - returns: <[null]|[Object]>
-  - `issuer` <[string]> Common Name component of the Issuer field.
+  - `issuer` ?<[string]> Common Name component of the Issuer field.
     from the certificate. This should only be used for informational purposes. Optional.
-  - `protocol` <[string]> The specific TLS protocol used. (e.g. `TLS 1.3`). Optional.
-  - `subjectName` <[string]> Common Name component of the Subject
+  - `protocol` ?<[string]> The specific TLS protocol used. (e.g. `TLS 1.3`). Optional.
+  - `subjectName` ?<[string]> Common Name component of the Subject
     field from the certificate. This should only be used for informational purposes. Optional.
-  - `validFrom` <[float]> Unix timestamp (in seconds) specifying
+  - `validFrom` ?<[float]> Unix timestamp (in seconds) specifying
     when this cert becomes valid. Optional.
-  - `validTo` <[float]> Unix timestamp (in seconds) specifying
+  - `validTo` ?<[float]> Unix timestamp (in seconds) specifying
     when this cert becomes invalid. Optional.
 
 Returns SSL and other security information.

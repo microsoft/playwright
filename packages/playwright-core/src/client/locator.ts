@@ -14,22 +14,28 @@
  * limitations under the License.
  */
 
-import * as structs from '../../types/structs';
-import * as api from '../../types/types';
-import * as channels from '../protocol/channels';
+import type * as structs from '../../types/structs';
+import type * as api from '../../types/types';
+import type * as channels from '../protocol/channels';
+import type { ParsedStackTrace } from '../utils/stackTrace';
 import * as util from 'util';
-import { isRegExp, monotonicTime } from '../utils/utils';
+import { isRegExp, monotonicTime } from '../utils';
 import { ElementHandle } from './elementHandle';
-import { Frame } from './frame';
-import { FilePayload, FrameExpectOptions, Rect, SelectOption, SelectOptionOptions, TimeoutOptions } from './types';
+import type { Frame } from './frame';
+import type { FilePayload, FrameExpectOptions, Rect, SelectOption, SelectOptionOptions, TimeoutOptions } from './types';
 import { parseResult, serializeArgument } from './jsHandle';
-import { escapeWithQuotes } from '../utils/stringUtils';
+import { escapeWithQuotes } from '../utils/isomorphic/stringUtils';
+
+export type LocatorOptions = {
+  hasText?: string | RegExp;
+  has?: Locator;
+};
 
 export class Locator implements api.Locator {
   _frame: Frame;
   _selector: string;
 
-  constructor(frame: Frame, selector: string, options?: { hasText?: string | RegExp, has?: Locator }) {
+  constructor(frame: Frame, selector: string, options?: LocatorOptions) {
     this._frame = frame;
     this._selector = selector;
 
@@ -42,9 +48,10 @@ export class Locator implements api.Locator {
     }
 
     if (options?.has) {
-      if (options.has._frame !== frame)
+      const locator = options.has;
+      if (locator._frame !== frame)
         throw new Error(`Inner "has" locator must belong to the same frame.`);
-      this._selector += ` >> has=` + JSON.stringify(options.has._selector);
+      this._selector += ` >> has=` + JSON.stringify(locator._selector);
     }
   }
 
@@ -121,12 +128,16 @@ export class Locator implements api.Locator {
     return this._frame._highlight(this._selector);
   }
 
-  locator(selector: string, options?: { hasText?: string | RegExp, has?: Locator }): Locator {
+  locator(selector: string, options?: LocatorOptions): Locator {
     return new Locator(this._frame, this._selector + ' >> ' + selector, options);
   }
 
   frameLocator(selector: string): FrameLocator {
     return new FrameLocator(this._frame, this._selector + ' >> ' + selector);
+  }
+
+  filter(options?: LocatorOptions): Locator {
+    return new Locator(this._frame, this._selector, options);
   }
 
   async elementHandle(options?: TimeoutOptions): Promise<ElementHandle<SVGElement | HTMLElement>> {
@@ -262,14 +273,15 @@ export class Locator implements api.Locator {
     await this._frame._channel.waitForSelector({ selector: this._selector, strict: true, omitReturnValue: true, ...options });
   }
 
-  async _expect(expression: string, options: Omit<FrameExpectOptions, 'expectedValue'> & { expectedValue?: any }): Promise<{ matches: boolean, received?: any, log?: string[] }> {
-    const params: channels.FrameExpectParams = { selector: this._selector, expression, ...options, isNot: !!options.isNot };
-    if (options.expectedValue)
+  async _expect(customStackTrace: ParsedStackTrace, expression: string, options: Omit<FrameExpectOptions, 'expectedValue'> & { expectedValue?: any }): Promise<{ matches: boolean, received?: any, log?: string[] }> {
+    return this._frame._wrapApiCall(async () => {
+      const params: channels.FrameExpectParams = { selector: this._selector, expression, ...options, isNot: !!options.isNot };
       params.expectedValue = serializeArgument(options.expectedValue);
-    const result = (await this._frame._channel.expect(params));
-    if (result.received !== undefined)
-      result.received = parseResult(result.received);
-    return result;
+      const result = (await this._frame._channel.expect(params));
+      if (result.received !== undefined)
+        result.received = parseResult(result.received);
+      return result;
+    }, false /* isInternal */, customStackTrace);
   }
 
   [util.inspect.custom]() {

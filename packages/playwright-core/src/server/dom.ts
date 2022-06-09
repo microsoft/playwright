@@ -14,23 +14,25 @@
  * limitations under the License.
  */
 
-import * as mime from 'mime';
+import { mime } from '../utilsBundle';
 import * as injectedScriptSource from '../generated/injectedScriptSource';
-import * as channels from '../protocol/channels';
+import type * as channels from '../protocol/channels';
 import { isSessionClosedError } from './protocolError';
-import { ScreenshotOptions } from './screenshotter';
-import * as frames from './frames';
-import type { InjectedScript, InjectedScriptPoll, LogEntry, HitTargetInterceptionResult } from './injected/injectedScript';
-import { CallMetadata } from './instrumentation';
+import type { ScreenshotOptions } from './screenshotter';
+import type * as frames from './frames';
+import type { InjectedScript, InjectedScriptPoll, LogEntry, HitTargetInterceptionResult, ElementState } from './injected/injectedScript';
+import type { CallMetadata } from './instrumentation';
 import * as js from './javascript';
-import { Page } from './page';
-import { Progress, ProgressController } from './progress';
-import { SelectorInfo } from './selectors';
-import * as types from './types';
-import { TimeoutOptions } from '../common/types';
-import { isUnderTest } from '../utils/utils';
+import type { Page } from './page';
+import type { Progress } from './progress';
+import { ProgressController } from './progress';
+import type { SelectorInfo } from './selectors';
+import type * as types from './types';
+import type { TimeoutOptions } from '../common/types';
+import { isUnderTest } from '../utils';
 
 type SetInputFilesFiles = channels.ElementHandleSetInputFilesParams['files'];
+export type InputFilesItems = { files?: SetInputFilesFiles, localPaths?: string[] };
 type ActionName = 'click' | 'hover' | 'dblclick' | 'tap' | 'move and up' | 'move and down';
 
 export class NonRecoverableDOMError extends Error {
@@ -98,8 +100,9 @@ export class FrameExecutionContext extends js.ExecutionContext {
         custom.push(`{ name: '${name}', engine: (${source}) }`);
       const source = `
         (() => {
+        const module = {};
         ${injectedScriptSource.source}
-        return new pwExport(
+        return new module.exports(
           ${isUnderTest()},
           ${this.frame._page._delegate.rafCountForStablePosition()},
           "${this.frame._page._browserContext._browser.options.name}",
@@ -256,14 +259,22 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return await this._page._delegate.scrollRectIntoViewIfNeeded(this, rect);
   }
 
-  async _waitAndScrollIntoViewIfNeeded(progress: Progress): Promise<void> {
+  async _waitAndScrollIntoViewIfNeeded(progress: Progress, waitForVisible: boolean): Promise<void> {
+    const timeouts = [0, 50, 100, 250];
     while (progress.isRunning()) {
-      assertDone(throwRetargetableDOMError(await this._waitForDisplayedAtStablePosition(progress, false /* force */, false /* waitForEnabled */)));
-
+      assertDone(throwRetargetableDOMError(await this._waitForElementStates(progress, waitForVisible ? ['visible', 'stable'] : ['stable'], false /* force */)));
       progress.throwIfAborted();  // Avoid action that has side-effects.
       const result = throwRetargetableDOMError(await this._scrollRectIntoViewIfNeeded());
-      if (result === 'error:notvisible')
+      if (result === 'error:notvisible') {
+        if (!waitForVisible) {
+          // Wait for a timeout to avoid retrying too often when not waiting for visible.
+          // If we wait for visible, this should be covered by _waitForElementStates instead.
+          const timeout = timeouts.shift() ?? 500;
+          progress.log(`  element is not displayed, retrying in ${timeout}ms`);
+          await new Promise(f => setTimeout(f, timeout));
+        }
         continue;
+      }
       assertDone(result);
       return;
     }
@@ -272,7 +283,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   async scrollIntoViewIfNeeded(metadata: CallMetadata, options: types.TimeoutOptions = {}) {
     const controller = new ProgressController(metadata, this);
     return controller.run(
-        progress => this._waitAndScrollIntoViewIfNeeded(progress),
+        progress => this._waitAndScrollIntoViewIfNeeded(progress, false /* waitForVisible */),
         this._page._timeoutSettings.timeout(options));
   }
 
@@ -391,7 +402,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     const { force = false, position } = options;
     if ((options as any).__testHookBeforeStable)
       await (options as any).__testHookBeforeStable();
-    const result = await this._waitForDisplayedAtStablePosition(progress, force, waitForEnabled);
+    const result = await this._waitForElementStates(progress, waitForEnabled ? ['visible', 'enabled', 'stable'] : ['visible', 'stable'], force);
     if (result !== 'done')
       return result;
     if ((options as any).__testHookAfterStable)
@@ -425,34 +436,25 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       if ((options as any).__testHookBeforeHitTarget)
         await (options as any).__testHookBeforeHitTarget();
 
-      if (actionName === 'move and up') {
-        // When dropping, the "element that is being dragged" often stays under the cursor,
-        // so hit target check at the moment we receive mousedown does not work -
-        // it finds the "element that is being dragged" instead of the
-        // "element that we drop onto".
-        progress.log(`  checking that element receives pointer events at (${point.x},${point.y})`);
-        const hitTargetResult = await this._checkHitTargetAt(point);
-        if (hitTargetResult !== 'done')
-          return hitTargetResult;
-        progress.log(`  element does receive pointer events`);
-        if (options.trial) {
-          progress.log(`  trial ${actionName} has finished`);
-          return 'done';
-        }
-      } else {
-        const actionType = (actionName === 'hover' || actionName === 'tap') ? actionName : 'mouse';
-        const handle = await this.evaluateHandleInUtility(([injected, node, { actionType, trial }]) => injected.setupHitTargetInterceptor(node, actionType, trial), { actionType, trial: !!options.trial } as const);
-        if (handle === 'error:notconnected')
-          return handle;
-        if (!handle._objectId)
-          return handle.rawValue() as 'error:notconnected';
-        hitTargetInterceptionHandle = handle as any;
-        progress.cleanupWhenAborted(() => {
-          // Do not await here, just in case the renderer is stuck (e.g. on alert)
-          // and we won't be able to cleanup.
-          hitTargetInterceptionHandle!.evaluate(h => h.stop()).catch(e => {});
-        });
+      const hitPoint = await this._viewportPointToDocument(point);
+      if (hitPoint === 'error:notconnected')
+        return hitPoint;
+      const actionType = actionName === 'move and up' ? 'drag' : ((actionName === 'hover' || actionName === 'tap') ? actionName : 'mouse');
+      const handle = await this.evaluateHandleInUtility(([injected, node, { actionType, hitPoint, trial }]) => injected.setupHitTargetInterceptor(node, actionType, hitPoint, trial), { actionType, hitPoint, trial: !!options.trial } as const);
+      if (handle === 'error:notconnected')
+        return handle;
+      if (!handle._objectId) {
+        const error = handle.rawValue() as string;
+        if (error === 'error:notconnected')
+          return error;
+        return { hitTargetDescription: error };
       }
+      hitTargetInterceptionHandle = handle as any;
+      progress.cleanupWhenAborted(() => {
+        // Do not await here, just in case the renderer is stuck (e.g. on alert)
+        // and we won't be able to cleanup.
+        hitTargetInterceptionHandle!.evaluate(h => h.stop()).catch(e => {});
+      });
     }
 
     const actionResult = await this._page._frameManager.waitForSignalsCreatedBy(progress, options.noWaitAfter, async () => {
@@ -602,19 +604,23 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     }, this._page._timeoutSettings.timeout(options));
   }
 
-  async setInputFiles(metadata: CallMetadata, files: SetInputFilesFiles, options: types.NavigatingActionWaitOptions) {
+  async setInputFiles(metadata: CallMetadata, items: InputFilesItems, options: types.NavigatingActionWaitOptions) {
     const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
-      const result = await this._setInputFiles(progress, files, options);
+      const result = await this._setInputFiles(progress, items, options);
       return assertDone(throwRetargetableDOMError(result));
     }, this._page._timeoutSettings.timeout(options));
   }
 
-  async _setInputFiles(progress: Progress, files: SetInputFilesFiles, options: types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
-    for (const payload of files) {
-      if (!payload.mimeType)
-        payload.mimeType = mime.getType(payload.name) || 'application/octet-stream';
+  async _setInputFiles(progress: Progress, items: InputFilesItems, options: types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
+    const { files, localPaths } = items;
+    if (files) {
+      for (const payload of files) {
+        if (!payload.mimeType)
+          payload.mimeType = mime.getType(payload.name) || 'application/octet-stream';
+      }
     }
+    const multiple = files && files.length > 1 || localPaths && localPaths.length > 1;
     const result = await this.evaluateHandleInUtility(([injected, node, multiple]): Element | undefined => {
       const element = injected.retarget(node, 'follow-label');
       if (!element)
@@ -624,14 +630,17 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       if (multiple && !(element as HTMLInputElement).multiple)
         throw injected.createStacklessError('Non-multiple file input can only accept single file');
       return element;
-    }, files.length > 1);
+    }, multiple);
     if (result === 'error:notconnected' || !result.asElement())
       return 'error:notconnected';
     const retargeted = result.asElement() as ElementHandle<HTMLInputElement>;
     await progress.beforeInputAction(this);
     await this._page._frameManager.waitForSignalsCreatedBy(progress, options.noWaitAfter, async () => {
       progress.throwIfAborted();  // Avoid action that has side-effects.
-      await this._page._delegate.setInputFiles(retargeted, files as types.FilePayload[]);
+      if (localPaths)
+        await this._page._delegate.setInputFilePaths(retargeted, localPaths);
+      else
+        await this._page._delegate.setInputFiles(retargeted, files as types.FilePayload[]);
     });
     await this._page._doSlowMo();
     return 'done';
@@ -834,25 +843,21 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return this;
   }
 
-  async _waitForDisplayedAtStablePosition(progress: Progress, force: boolean, waitForEnabled: boolean): Promise<'error:notconnected' | 'done'> {
-    if (waitForEnabled)
-      progress.log(`  waiting for element to be visible, enabled and stable`);
-    else
-      progress.log(`  waiting for element to be visible and stable`);
-    const result = await this.evaluatePoll(progress, ([injected, node, { waitForEnabled, force }]) => {
-      return injected.waitForElementStatesAndPerformAction(node,
-          waitForEnabled ? ['visible', 'stable', 'enabled'] : ['visible', 'stable'], force, () => 'done' as const);
-    }, { waitForEnabled, force });
+  async _waitForElementStates(progress: Progress, states: ElementState[], force: boolean): Promise<'error:notconnected' | 'done'> {
+    const title = joinWithAnd(states);
+    progress.log(`  waiting for element to be ${title}`);
+    const result = await this.evaluatePoll(progress, ([injected, node, { states, force }]) => {
+      return injected.waitForElementStatesAndPerformAction(node, states, force, () => 'done' as const);
+    }, { states, force });
     if (result === 'error:notconnected')
       return result;
-    if (waitForEnabled)
-      progress.log('  element is visible, enabled and stable');
-    else
-      progress.log('  element is visible and stable');
+    progress.log(`  element is ${title}`);
     return result;
   }
 
-  async _checkHitTargetAt(point: types.Point): Promise<'error:notconnected' | { hitTargetDescription: string } | 'done'> {
+  async _viewportPointToDocument(point: types.Point): Promise<types.Point | 'error:notconnected'> {
+    if (!this._frame.parentFrame())
+      return point;
     const frame = await this.ownerFrame();
     if (frame && frame.parentFrame()) {
       const element = await frame.frameElement();
@@ -862,7 +867,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       // Translate from viewport coordinates to frame coordinates.
       point = { x: point.x - box.x, y: point.y - box.y };
     }
-    return this.evaluateInUtility(([injected, node, point]) => injected.checkHitTargetAt(node, point), point);
+    return point;
   }
 }
 
@@ -1010,6 +1015,12 @@ export function waitForSelectorTask(selector: SelectorInfo, state: 'attached' | 
       }
     });
   }, { parsed: selector.parsed, strict: selector.strict, state, omitReturnValue, root });
+}
+
+function joinWithAnd(strings: string[]): string {
+  if (strings.length < 1)
+    return strings.join(', ');
+  return strings.slice(0, strings.length - 1).join(', ') + ' and ' + strings[strings.length - 1];
 }
 
 export const kUnableToAdoptErrorMessage = 'Unable to adopt element handle from a different document';

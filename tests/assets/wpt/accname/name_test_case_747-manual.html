@@ -1,0 +1,75 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Name test case 747</title>
+    <meta content="text/html; charset=utf-8" http-equiv="Content-Type"/>
+    <link rel="stylesheet" href="/wai-aria/scripts/manual.css">
+    <script src="/resources/testharness.js"></script>
+    <script src="/resources/testharnessreport.js"></script>
+    <script src="/wai-aria/scripts/ATTAcomm.js"></script>
+    <script>
+    setup({explicit_timeout: true, explicit_done: true });
+
+    var theTest = new ATTAcomm(
+    {
+   "steps" : [
+      {
+         "element" : "test",
+         "test" : {
+            "ATK" : [
+               [
+                  "property",
+                  "name",
+                  "is",
+                  "crazy 4"
+               ]
+            ],
+            "AXAPI" : [
+               [
+                  "property",
+                  "AXDescription",
+                  "is",
+                  "crazy 4"
+               ]
+            ],
+            "IAccessible2" : [
+               [
+                  "property",
+                  "accName",
+                  "is",
+                  "crazy 4"
+               ]
+            ],
+            "UIA" : [
+               [
+                  "property",
+                  "Name",
+                  "is",
+                  "crazy 4"
+               ]
+            ]
+         },
+         "title" : "step 1",
+         "type" : "test"
+      }
+   ],
+   "title" : "Name test case 747"
+}
+
+    ) ;
+    </script>
+  </head>
+  <body>
+  <p>This test examines the ARIA properties for Name test case 747.</p>
+    <label for="test">
+    crazy
+    <div role="spinbutton" aria-valuemin="1" aria-valuemax="7" aria-valuenow="4">
+    </div>
+  </label>
+  <input type="image" src="foo.jpg" id="test"/>
+
+  <div id="manualMode"></div>
+  <div id="log"></div>
+  <div id="ATTAmessages"></div>
+  </body>
+</html>

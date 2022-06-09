@@ -1,0 +1,16 @@
+{
+  "files": {
+    "main.css": "/stress/static/css/main.073c9b0a.css",
+    "main.js": "/stress/static/js/main.cc4a7955.js",
+    "static/js/787.2f3b90fa.chunk.js": "/stress/static/js/787.2f3b90fa.chunk.js",
+    "static/media/logo.svg": "/stress/static/media/logo.6ce24c58023cc2f8fd88fe9d219db6c6.svg",
+    "index.html": "/stress/index.html",
+    "main.073c9b0a.css.map": "/stress/static/css/main.073c9b0a.css.map",
+    "main.cc4a7955.js.map": "/stress/static/js/main.cc4a7955.js.map",
+    "787.2f3b90fa.chunk.js.map": "/stress/static/js/787.2f3b90fa.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.073c9b0a.css",
+    "static/js/main.cc4a7955.js"
+  ]
+}

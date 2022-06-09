@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import type InjectedScript from './injectedScript';
-import { elementText } from './selectorEvaluator';
+import { type InjectedScript } from './injectedScript';
+import { elementText } from './selectorUtils';
 
 type SelectorToken = {
   engine: string;
@@ -144,7 +144,7 @@ function generateSelectorFor(injectedScript: InjectedScript, targetElement: Elem
 function buildCandidates(injectedScript: InjectedScript, element: Element): SelectorToken[] {
   const candidates: SelectorToken[] = [];
   for (const attribute of ['data-testid', 'data-test-id', 'data-test']) {
-    if (element.hasAttribute(attribute))
+    if (element.getAttribute(attribute))
       candidates.push({ engine: 'css', selector: `[${attribute}=${quoteAttributeValue(element.getAttribute(attribute)!)}]`, score: 1 });
   }
 
@@ -153,15 +153,15 @@ function buildCandidates(injectedScript: InjectedScript, element: Element): Sele
     if (input.placeholder)
       candidates.push({ engine: 'css', selector: `[placeholder=${quoteAttributeValue(input.placeholder)}]`, score: 10 });
   }
-  if (element.hasAttribute('aria-label'))
+  if (element.getAttribute('aria-label'))
     candidates.push({ engine: 'css', selector: `[aria-label=${quoteAttributeValue(element.getAttribute('aria-label')!)}]`, score: 10 });
   if (element.getAttribute('alt') && ['APPLET', 'AREA', 'IMG', 'INPUT'].includes(element.nodeName))
     candidates.push({ engine: 'css', selector: `${cssEscape(element.nodeName.toLowerCase())}[alt=${quoteAttributeValue(element.getAttribute('alt')!)}]`, score: 10 });
 
-  if (element.hasAttribute('role'))
+  if (element.getAttribute('role'))
     candidates.push({ engine: 'css', selector: `${cssEscape(element.nodeName.toLowerCase())}[role=${quoteAttributeValue(element.getAttribute('role')!)}]` , score: 50 });
 
-  if (element.getAttribute('name') && ['BUTTON', 'FORM', 'FIELDSET', 'IFRAME', 'INPUT', 'KEYGEN', 'OBJECT', 'OUTPUT', 'SELECT', 'TEXTAREA', 'MAP', 'META', 'PARAM'].includes(element.nodeName))
+  if (element.getAttribute('name') && ['BUTTON', 'FORM', 'FIELDSET', 'FRAME', 'IFRAME', 'INPUT', 'KEYGEN', 'OBJECT', 'OUTPUT', 'SELECT', 'TEXTAREA', 'MAP', 'META', 'PARAM'].includes(element.nodeName))
     candidates.push({ engine: 'css', selector: `${cssEscape(element.nodeName.toLowerCase())}[name=${quoteAttributeValue(element.getAttribute('name')!)}]`, score: 50 });
   if (['INPUT', 'TEXTAREA'].includes(element.nodeName) && element.getAttribute('type') !== 'hidden') {
     if (element.getAttribute('type'))
@@ -182,7 +182,7 @@ function buildCandidates(injectedScript: InjectedScript, element: Element): Sele
 function buildTextCandidates(injectedScript: InjectedScript, element: Element, allowHasText: boolean): SelectorToken[] {
   if (element.nodeName === 'SELECT')
     return [];
-  const text = elementText(injectedScript._evaluator, element).full.trim().replace(/\s+/g, ' ').substring(0, 80);
+  const text = elementText(injectedScript._evaluator._cacheText, element).full.trim().replace(/\s+/g, ' ').substring(0, 80);
   if (!text)
     return [];
   const candidates: SelectorToken[] = [];
@@ -224,7 +224,7 @@ function cssFallback(injectedScript: InjectedScript, targetElement: Element, str
     const path = tokens.slice();
     if (prefix)
       path.unshift(prefix);
-    const selector = path.join(' ');
+    const selector = path.join(' > ');
     const parsedSelector = injectedScript.parseSelector(selector);
     const node = injectedScript.querySelector(parsedSelector, targetElement.ownerDocument, false);
     return node === targetElement ? selector : undefined;

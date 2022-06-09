@@ -15,13 +15,15 @@
  */
 
 import { EventEmitter } from 'events';
-import * as channels from '../protocol/channels';
-import { createScheme, ValidationError, Validator } from '../protocol/validator';
-import { debugLogger } from '../utils/debugLogger';
-import { captureRawStack, captureStackTrace, ParsedStackTrace } from '../utils/stackTrace';
-import { isUnderTest } from '../utils/utils';
+import type * as channels from '../protocol/channels';
+import type { Validator } from '../protocol/validator';
+import { createScheme, ValidationError } from '../protocol/validator';
+import { debugLogger } from '../common/debugLogger';
+import type { ParsedStackTrace } from '../utils/stackTrace';
+import { captureRawStack, captureStackTrace } from '../utils/stackTrace';
+import { isUnderTest } from '../utils';
 import { zones } from '../utils/zones';
-import { ClientInstrumentation } from './clientInstrumentation';
+import type { ClientInstrumentation } from './clientInstrumentation';
 import type { Connection } from './connection';
 import type { Logger } from './types';
 
@@ -101,14 +103,14 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
     return channel;
   }
 
-  async _wrapApiCall<R>(func: (apiZone: ApiZone) => Promise<R>, isInternal = false): Promise<R> {
+  async _wrapApiCall<R>(func: (apiZone: ApiZone) => Promise<R>, isInternal = false, customStackTrace?: ParsedStackTrace): Promise<R> {
     const logger = this._logger;
     const stack = captureRawStack();
     const apiZone = zones.zoneData<ApiZone>('apiZone', stack);
     if (apiZone)
       return func(apiZone);
 
-    const stackTrace = captureStackTrace(stack);
+    const stackTrace = customStackTrace || captureStackTrace(stack);
     if (isInternal)
       delete stackTrace.apiName;
     const csi = isInternal ? undefined : this._instrumentation;
@@ -133,6 +135,10 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
       logApiCall(logger, `<= ${apiName} failed`, isInternal);
       throw e;
     }
+  }
+
+  _toImpl(): any {
+    return this._connection.toImpl?.(this);
   }
 
   private toJSON() {

@@ -1,0 +1,102 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Name from content of labelledby elements one of which is hidden</title>
+    <meta content="text/html; charset=utf-8" http-equiv="Content-Type"/>
+    <link rel="stylesheet" href="/wai-aria/scripts/manual.css">
+    <script src="/resources/testharness.js"></script>
+    <script src="/resources/testharnessreport.js"></script>
+    <script src="/wai-aria/scripts/ATTAcomm.js"></script>
+    <script>
+    setup({explicit_timeout: true, explicit_done: true });
+
+    var theTest = new ATTAcomm(
+    {
+   "steps" : [
+      {
+         "element" : "test",
+         "test" : {
+            "ATK" : [
+               [
+                  "property",
+                  "name",
+                  "is",
+                  "Important stuff"
+               ]
+            ],
+            "AXAPI" : [
+               [
+                  "property",
+                  "AXDescription",
+                  "is",
+                  "Important stuff"
+               ]
+            ],
+            "IAccessible2" : [
+               [
+                  "property",
+                  "accName",
+                  "is",
+                  "Important stuff"
+               ]
+            ],
+            "UIA" : [
+               [
+                  "property",
+                  "Name",
+                  "is",
+                  "Important stuff"
+               ]
+            ]
+         },
+         "title" : "step 1",
+         "type" : "test"
+      }
+   ],
+   "title" : "Name from content of labelledby elements one of which is hidden"
+}
+
+    ) ;
+    </script>
+  </head>
+  <body>
+  <p>This test examines the ARIA properties for Name from content of labelledby elements one of which is hidden.</p>
+    <style>
+    .hidden { display: none; }
+  </style>
+  <div>
+    <input id="test" type="text" aria-labelledby="lbl1 lbl2" aria-describedby="descId" />
+    <span>
+      <span aria-hidden="true" id="lbl1">Important</span>
+      <span class="hidden">
+        <span aria-hidden="true" id="lbl2">stuff</span>
+      </span>
+    </span>
+  </div>
+  <div class="hidden">
+    <div id="descId">
+      <span aria-hidden="true"><i> Hello, </i></span>
+      <span>My</span> name is
+      <div><img src="file.jpg" title="Bryan" alt="" role="presentation" /></div>
+      <span role="presentation" aria-label="Eli">
+        <span aria-label="Garaventa">Zambino</span>
+      </span>
+      <span>the weird.</span>
+      (QED)
+      <span class="hidden"><i><b>and don't you forget it.</b></i></span>
+      <table>
+        <tr>
+          <td>Where</td>
+          <td style="visibility:hidden;"><div>in</div></td>
+          <td><div style="display:none;">the world</div></td>
+          <td>are my marbles?</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+  <div id="manualMode"></div>
+  <div id="log"></div>
+  <div id="ATTAmessages"></div>
+  </body>
+</html>

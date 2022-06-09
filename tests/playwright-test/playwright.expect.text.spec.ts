@@ -28,6 +28,10 @@ test('should support toHaveText w/ regex', async ({ runInlineTest }) => {
 
         // Should not normalize whitespace.
         await expect(locator).toHaveText(/Text   content/);
+        // Should respect ignoreCase.
+        await expect(locator).toHaveText(/text   content/, { ignoreCase: true });
+        // Should override regex flag with ignoreCase.
+        await expect(locator).not.toHaveText(/text   content/i, { ignoreCase: false });
       });
 
       test('fail', async ({ page }) => {
@@ -90,6 +94,10 @@ test('should support toHaveText w/ text', async ({ runInlineTest }) => {
         await expect(locator).toHaveText('Text                        content');
         // Should normalize zero width whitespace.
         await expect(locator).toHaveText('T\u200be\u200bx\u200bt content');
+        // Should support ignoreCase.
+        await expect(locator).toHaveText('text CONTENT', { ignoreCase: true });
+        // Should support falsy ignoreCase.
+        await expect(locator).not.toHaveText('TEXT', { ignoreCase: false });
       });
 
       test('pass contain', async ({ page }) => {
@@ -98,6 +106,10 @@ test('should support toHaveText w/ text', async ({ runInlineTest }) => {
         await expect(locator).toContainText('Text');
         // Should normalize whitespace.
         await expect(locator).toContainText('   ext        cont\\n  ');
+        // Should support ignoreCase.
+        await expect(locator).toContainText('EXT', { ignoreCase: true });
+        // Should support falsy ignoreCase.
+        await expect(locator).not.toContainText('TEXT', { ignoreCase: false });
       });
 
       test('fail', async ({ page }) => {
@@ -126,6 +138,8 @@ test('should support toHaveText w/ not', async ({ runInlineTest }) => {
         await page.setContent('<div id=node>Text content</div>');
         const locator = page.locator('#node');
         await expect(locator).not.toHaveText('Text2');
+        // Should be case-sensitive by default.
+        await expect(locator).not.toHaveText('TEXT');
       });
 
       test('fail', async ({ page }) => {
@@ -155,6 +169,8 @@ test('should support toHaveText w/ array', async ({ runInlineTest }) => {
         const locator = page.locator('div');
         // Should only normalize whitespace in the first item.
         await expect(locator).toHaveText(['Text  1', /Text   \\d+a/]);
+        // Should support ignoreCase.
+        await expect(locator).toHaveText(['tEXT 1', 'TExt 2A'], { ignoreCase: true });
       });
 
       test('pass lazy', async ({ page }) => {
@@ -228,6 +244,8 @@ test('should support toContainText w/ array', async ({ runInlineTest }) => {
         await page.setContent('<div>Text \\n1</div><div>Text2</div><div>Text3</div>');
         const locator = page.locator('div');
         await expect(locator).toContainText(['ext     1', /ext3/]);
+        // Should support ignoreCase.
+        await expect(locator).toContainText(['EXT 1', 'eXt3'], { ignoreCase: true });
       });
 
       test('fail', async ({ page }) => {
@@ -272,7 +290,7 @@ test('should support toHaveText with innerText', async ({ runInlineTest }) => {
       const { test } = pwt;
 
       test('pass', async ({ page }) => {
-        await page.setContent('<div id=node>Text content</div>');
+        await page.setContent('<div id=node>Text <span hidden>garbage</span> content</div>');
         const locator = page.locator('#node');
         await expect(locator).toHaveText('Text content', { useInnerText: true });
       });
@@ -392,6 +410,187 @@ test('should support toHaveValue failing', async ({ runInlineTest }) => {
   expect(result.passed).toBe(0);
   expect(result.exitCode).toBe(1);
   expect(result.output).toContain('"Text content"');
+});
+
+test.describe('should support toHaveValues with multi-select', () => {
+  test('works with text', async ({ runInlineTest }) => {
+    const result = await runInlineTest({
+      'a.test.ts': `
+        const { test } = pwt;
+
+        test('pass', async ({ page }) => {
+          await page.setContent(\`
+            <select multiple>
+              <option value="R">Red</option>
+              <option value="G">Green</option>
+              <option value="B">Blue</option>
+            </select>
+          \`);
+          const locator = page.locator('select');
+          await locator.selectOption(['R', 'G']);
+          await expect(locator).toHaveValues(['R', 'G']);
+        });
+        `,
+    }, { workers: 1 });
+    expect(result.passed).toBe(1);
+    expect(result.exitCode).toBe(0);
+  });
+
+  test('follows labels', async ({ runInlineTest }) => {
+    const result = await runInlineTest({
+      'a.test.ts': `
+        const { test } = pwt;
+
+        test('pass', async ({ page }) => {
+          await page.setContent(\`
+            <label for="colors">Pick a Color</label>
+            <select id="colors" multiple>
+              <option value="R">Red</option>
+              <option value="G">Green</option>
+              <option value="B">Blue</option>
+            </select>
+          \`);
+          const locator = page.locator('text=Pick a Color');
+          await locator.selectOption(['R', 'G']);
+          await expect(locator).toHaveValues(['R', 'G']);
+        });
+        `,
+    }, { workers: 1 });
+    expect(result.passed).toBe(1);
+    expect(result.exitCode).toBe(0);
+  });
+
+  test('exact match with text', async ({ runInlineTest }) => {
+    const result = await runInlineTest({
+      'a.test.ts': `
+        const { test } = pwt;
+
+        test('pass', async ({ page }) => {
+          await page.setContent(\`
+            <select multiple>
+              <option value="RR">Red</option>
+              <option value="GG">Green</option>
+            </select>
+          \`);
+          const locator = page.locator('select');
+          await locator.selectOption(['RR', 'GG']);
+          await expect(locator).toHaveValues(['R', 'G']);
+        });
+        `,
+    }, { workers: 1 });
+    expect(result.passed).toBe(0);
+    expect(result.exitCode).toBe(1);
+    expect(stripAnsi(result.output)).toContain(`
+    - Expected  - 2
+    + Received  + 2
+
+      Array [
+    -   "R",
+    -   "G",
+    +   "RR",
+    +   "GG",
+      ]
+`);
+  });
+
+  test('works with regex', async ({ runInlineTest }) => {
+    const result = await runInlineTest({
+      'a.test.ts': `
+        const { test } = pwt;
+
+        test('pass', async ({ page }) => {
+          await page.setContent(\`
+            <select multiple>
+              <option value="R">Red</option>
+              <option value="G">Green</option>
+              <option value="B">Blue</option>
+            </select>
+          \`);
+          const locator = page.locator('select');
+          await locator.selectOption(['R', 'G']);
+          await expect(locator).toHaveValues([/R/, /G/]);
+        });
+        `,
+    }, { workers: 1 });
+    expect(result.passed).toBe(1);
+    expect(result.exitCode).toBe(0);
+  });
+
+  test('fails when items not selected', async ({ runInlineTest }) => {
+    const result = await runInlineTest({
+      'a.test.ts': `
+        const { test } = pwt;
+
+        test('pass', async ({ page }) => {
+          await page.setContent(\`
+            <select multiple>
+              <option value="R">Red</option>
+              <option value="G">Green</option>
+              <option value="B">Blue</option>
+            </select>
+          \`);
+          const locator = page.locator('select');
+          await locator.selectOption(['B']);
+          await expect(locator).toHaveValues([/R/, /G/]);
+        });
+        `,
+    }, { workers: 1 });
+    expect(result.passed).toBe(0);
+    expect(result.exitCode).toBe(1);
+    expect(stripAnsi(result.output)).toContain(`
+    - Expected  - 2
+    + Received  + 1
+
+      Array [
+    -   /R/,
+    -   /G/,
+    +   "B",
+      ]
+`);
+  });
+
+  test('fails when multiple not specified', async ({ runInlineTest }) => {
+    const result = await runInlineTest({
+      'a.test.ts': `
+        const { test } = pwt;
+
+        test('pass', async ({ page }) => {
+          await page.setContent(\`
+            <select>
+              <option value="R">Red</option>
+              <option value="G">Green</option>
+              <option value="B">Blue</option>
+            </select>
+          \`);
+          const locator = page.locator('select');
+          await locator.selectOption(['B']);
+          await expect(locator).toHaveValues([/R/, /G/]);
+        });
+        `,
+    }, { workers: 1 });
+    expect(result.passed).toBe(0);
+    expect(result.exitCode).toBe(1);
+    expect(result.output).toContain('Not a select element with a multiple attribute');
+  });
+
+  test('fails when not a select element', async ({ runInlineTest }) => {
+    const result = await runInlineTest({
+      'a.test.ts': `
+        const { test } = pwt;
+
+        test('pass', async ({ page }) => {
+          await page.setContent(\`
+            <input value="foo" />
+          \`);
+          const locator = page.locator('input');
+          await expect(locator).toHaveValues([/R/, /G/]);
+        });
+        `,
+    }, { workers: 1 });
+    expect(result.passed).toBe(0);
+    expect(result.exitCode).toBe(1);
+    expect(result.output).toContain('Not a select element with a multiple attribute');
+  });
 });
 
 test('should print expected/received before timeout', async ({ runInlineTest }) => {

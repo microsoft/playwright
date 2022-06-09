@@ -15,16 +15,17 @@
  * limitations under the License.
  */
 
-import { CRSession } from './crConnection';
-import { Page } from '../page';
+import type { CRSession } from './crConnection';
+import type { Page } from '../page';
 import { helper } from '../helper';
-import { eventsHelper, RegisteredListener } from '../../utils/eventsHelper';
-import { Protocol } from './protocol';
+import type { RegisteredListener } from '../../utils/eventsHelper';
+import { eventsHelper } from '../../utils/eventsHelper';
+import type { Protocol } from './protocol';
 import * as network from '../network';
-import * as frames from '../frames';
-import * as types from '../types';
-import { CRPage } from './crPage';
-import { assert, headersObjectToArray } from '../../utils/utils';
+import type * as frames from '../frames';
+import type * as types from '../types';
+import type { CRPage } from './crPage';
+import { assert, headersObjectToArray } from '../../utils';
 
 export class CRNetworkManager {
   private _client: CRSession;
@@ -298,7 +299,7 @@ export class CRNetworkManager {
         responseStart: -1,
       };
     }
-    const response = new network.Response(request.request, responsePayload.status, responsePayload.statusText, headersObjectToArray(responsePayload.headers), timing, getResponseBody, responsePayload.protocol);
+    const response = new network.Response(request.request, responsePayload.status, responsePayload.statusText, headersObjectToArray(responsePayload.headers), timing, getResponseBody, !!responsePayload.fromServiceWorker, responsePayload.protocol);
     if (responsePayload?.remoteIPAddress && typeof responsePayload?.remotePort === 'number') {
       response._serverAddrFinished({
         ipAddress: responsePayload.remoteIPAddress,

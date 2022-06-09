@@ -1,11 +1,11 @@
 {
   "name": "playwright-core",
-  "version": "1.21.0-next",
+  "version": "1.23.0-next",
   "description": "A high-level API to automate web browsers",
   "repository": "github:Microsoft/playwright",
   "homepage": "https://playwright.dev",
   "engines": {
-    "node": ">=12"
+    "node": ">=14"
   },
   "author": {
     "name": "Microsoft Corporation"
@@ -13,48 +13,36 @@
   "license": "Apache-2.0",
   "exports": {
     ".": {
+      "types": "./index.d.ts",
       "import": "./index.mjs",
       "require": "./index.js"
     },
     "./cli": "./cli.js",
     "./package.json": "./package.json",
     "./lib/grid/gridServer": "./lib/grid/gridServer.js",
-    "./lib/grid/gridClient": "./lib/grid/gridClient.js",
-    "./lib/grid/dockerGridFactory": "./lib/grid/dockerGridFactory.js",
     "./lib/outofprocess": "./lib/outofprocess.js",
-    "./lib/utils/async": "./lib/utils/async.js",
+    "./lib/utils": "./lib/utils/index.js",
     "./lib/utils/comparators": "./lib/utils/comparators.js",
+    "./lib/utils/eventsHelper": "./lib/utils/eventsHelper.js",
+    "./lib/utils/fileUtils": "./lib/utils/fileUtils.js",
     "./lib/utils/httpServer": "./lib/utils/httpServer.js",
+    "./lib/utils/hostPlatform": "./lib/utils/hostPlatform.js",
+    "./lib/utils/manualPromise": "./lib/utils/manualPromise.js",
     "./lib/utils/multimap": "./lib/utils/multimap.js",
     "./lib/utils/processLauncher": "./lib/utils/processLauncher.js",
-    "./lib/utils/registry": "./lib/utils/registry.js",
-    "./lib/utils/utils": "./lib/utils/utils.js",
+    "./lib/utils/processLauncherCleanupEntrypoint": "./lib/utils/processLauncherCleanupEntrypoint.js",
+    "./lib/utils/spawnAsync": "./lib/utils/spawnAsync.js",
     "./lib/utils/stackTrace": "./lib/utils/stackTrace.js",
+    "./lib/utils/timeoutRunner": "./lib/utils/timeoutRunner.js",
     "./lib/remote/playwrightServer": "./lib/remote/playwrightServer.js",
-    "./lib/remote/playwrightClient": "./lib/remote/playwrightClient.js"
+    "./lib/server": "./lib/server/index.js",
+    "./lib/utilsBundle": "./lib/utilsBundle.js",
+    "./lib/zipBundle": "./lib/zipBundle.js",
+    "./types/protocol": "./types/protocol.d.ts",
+    "./types/structs": "./types/structs.d.ts"
   },
   "types": "types/types.d.ts",
   "bin": {
     "playwright": "./cli.js"
-  },
-  "dependencies": {
-    "commander": "8.3.0",
-    "colors": "1.4.0",
-    "debug": "4.3.3",
-    "extract-zip": "2.0.1",
-    "https-proxy-agent": "5.0.0",
-    "jpeg-js": "0.4.3",
-    "mime": "3.0.0",
-    "pixelmatch": "5.2.1",
-    "pngjs": "6.0.0",
-    "progress": "2.0.3",
-    "proper-lockfile": "4.1.2",
-    "proxy-from-env": "1.1.0",
-    "rimraf": "3.0.2",
-    "socks-proxy-agent": "6.1.1",
-    "stack-utils": "2.0.5",
-    "ws": "8.4.2",
-    "yauzl": "2.10.0",
-    "yazl": "2.5.1"
   }
 }

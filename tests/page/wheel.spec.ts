@@ -20,13 +20,38 @@ it.skip(({ isElectron, browserMajorVersion, isAndroid }) => {
   // Old Electron has flaky wheel events.
   return (isElectron && browserMajorVersion <= 11) || isAndroid;
 });
+
+let ignoreDelta = false;
+
+it.beforeAll(async ({ browserMajorVersion, browserName, platform }) => {
+  if (browserName === 'chromium' && browserMajorVersion >= 102 && platform === 'darwin') {
+    // Chromium reports deltaX/deltaY scaled by host device scale factor.
+    // https://bugs.chromium.org/p/chromium/issues/detail?id=1324819
+    // https://github.com/microsoft/playwright/issues/7362
+    // Different bots have different scale factors (usually 1 or 2), so we just ignore the values
+    // instead of guessing the host scale factor.
+    ignoreDelta = true;
+  }
+});
+
+async function expectEvent(page: Page, expected: any) {
+  const received = await page.evaluate('window.lastEvent') as any;
+  if (ignoreDelta) {
+    delete received.deltaX;
+    delete received.deltaY;
+    delete expected.deltaX;
+    delete expected.deltaY;
+  }
+  expect(received).toEqual(expected);
+}
+
 it('should dispatch wheel events @smoke', async ({ page, server }) => {
   await page.setContent(`<div style="width: 5000px; height: 5000px;"></div>`);
   await page.mouse.move(50, 60);
   await listenForWheelEvents(page, 'div');
   await page.mouse.wheel(0, 100);
   await page.waitForFunction('window.scrollY === 100');
-  expect(await page.evaluate('window.lastEvent')).toEqual({
+  await expectEvent(page, {
     deltaX: 0,
     deltaY: 100,
     clientX: 50,
@@ -52,7 +77,7 @@ it('should set the modifiers', async ({ page }) => {
   await listenForWheelEvents(page, 'div');
   await page.keyboard.down('Shift');
   await page.mouse.wheel(0, 100);
-  expect(await page.evaluate('window.lastEvent')).toEqual({
+  await expectEvent(page, {
     deltaX: 0,
     deltaY: 100,
     clientX: 50,
@@ -70,7 +95,7 @@ it('should scroll horizontally', async ({ page }) => {
   await page.mouse.move(50, 60);
   await listenForWheelEvents(page, 'div');
   await page.mouse.wheel(100, 0);
-  expect(await page.evaluate('window.lastEvent')).toEqual({
+  await expectEvent(page, {
     deltaX: 100,
     deltaY: 0,
     clientX: 50,
@@ -92,7 +117,7 @@ it('should work when the event is canceled', async ({ page }) => {
     document.querySelector('div').addEventListener('wheel', e => e.preventDefault());
   });
   await page.mouse.wheel(0, 100);
-  expect(await page.evaluate('window.lastEvent')).toEqual({
+  await expectEvent(page, {
     deltaX: 0,
     deltaY: 100,
     clientX: 50,

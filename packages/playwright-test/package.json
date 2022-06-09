@@ -1,23 +1,27 @@
 {
   "name": "@playwright/test",
-  "version": "1.21.0-next",
+  "version": "1.23.0-next",
   "description": "A high-level API to automate web browsers",
   "repository": "github:Microsoft/playwright",
   "homepage": "https://playwright.dev",
   "engines": {
-    "node": ">=12"
+    "node": ">=14"
   },
   "main": "index.js",
   "exports": {
     ".": {
+      "types": "./index.d.ts",
       "import": "./index.mjs",
       "require": "./index.js"
     },
     "./cli": "./cli.js",
     "./package.json": "./package.json",
+    "./lib/ci": "./lib/ci.js",
     "./lib/cli": "./lib/cli.js",
     "./lib/experimentalLoader": "./lib/experimentalLoader.js",
     "./lib/mount": "./lib/mount.js",
+    "./lib/plugins": "./lib/plugins/index.js",
+    "./lib/plugins/vitePlugin": "./lib/plugins/vitePlugin.js",
     "./reporter": "./reporter.js"
   },
   "bin": {
@@ -28,39 +32,7 @@
   },
   "license": "Apache-2.0",
   "dependencies": {
-    "@babel/code-frame": "7.16.7",
-    "@babel/core": "7.16.12",
-    "@babel/helper-plugin-utils": "7.16.7",
-    "@babel/plugin-proposal-class-properties": "7.16.7",
-    "@babel/plugin-proposal-dynamic-import": "7.16.7",
-    "@babel/plugin-proposal-export-namespace-from": "7.16.7",
-    "@babel/plugin-proposal-logical-assignment-operators": "7.16.7",
-    "@babel/plugin-proposal-nullish-coalescing-operator": "7.16.7",
-    "@babel/plugin-proposal-numeric-separator": "7.16.7",
-    "@babel/plugin-proposal-optional-chaining": "7.16.7",
-    "@babel/plugin-proposal-private-methods": "7.16.11",
-    "@babel/plugin-proposal-private-property-in-object": "7.16.7",
-    "@babel/plugin-syntax-async-generators": "7.8.4",
-    "@babel/plugin-syntax-json-strings": "7.8.3",
-    "@babel/plugin-syntax-object-rest-spread": "7.8.3",
-    "@babel/plugin-syntax-optional-catch-binding": "7.8.3",
-    "@babel/plugin-transform-modules-commonjs": "7.16.8",
-    "@babel/preset-typescript": "7.16.7",
-    "colors": "1.4.0",
-    "commander": "8.3.0",
-    "debug": "4.3.3",
-    "expect": "27.2.5",
-    "jest-matcher-utils": "27.2.5",
-    "json5": "2.2.0",
-    "mime": "3.0.0",
-    "minimatch": "3.0.4",
-    "ms": "2.1.3",
-    "open": "8.4.0",
-    "pirates": "4.0.4",
-    "playwright-core": "1.21.0-next",
-    "rimraf": "3.0.2",
-    "source-map-support": "0.4.18",
-    "stack-utils": "2.0.5",
-    "yazl": "2.5.1"
+    "@types/node": "*",
+    "playwright-core": "1.23.0-next"
   }
 }

@@ -25,24 +25,24 @@ test('basic test', async ({ page }, testInfo) => {
 ## property: TestInfo.annotations
 - type: <[Array]<[Object]>>
   - `type` <[string]> Annotation type, for example `'skip'` or `'fail'`.
-  - `description` <[void]|[string]> Optional description.
+  - `description` ?<[string]> Optional description.
 
 The list of annotations applicable to the current test. Includes annotations from the test, annotations from all [`method: Test.describe`] groups the test belongs to and file-level annotations for the test file.
 
-Learn more about [test annotations](./test-annotations.md).
+Learn more about [test annotations](../test-annotations.md).
 
 ## property: TestInfo.attachments
 - type: <[Array]<[Object]>>
   - `name` <[string]> Attachment name.
   - `contentType` <[string]> Content type of this attachment to properly present in the report, for example `'application/json'` or `'image/png'`.
-  - `path` <[void]|[string]> Optional path on the filesystem to the attached file.
-  - `body` <[void]|[Buffer]> Optional attachment body used instead of a file.
+  - `path` ?<[string]> Optional path on the filesystem to the attached file.
+  - `body` ?<[Buffer]> Optional attachment body used instead of a file.
 
 The list of files or buffers attached to the current test. Some reporters show test attachments.
 
 To add an attachment, use [`method: TestInfo.attach`] instead of directly pushing onto this array.
 
-## method: TestInfo.attach
+## async method: TestInfo.attach
 
 Attach a value or a file from disk to the current test. Some reporters show test attachments. Either [`option: path`] or [`option: body`] must be specified, but not both.
 
@@ -97,16 +97,24 @@ after awaiting the attach call.
 :::
 
 ### param: TestInfo.attach.name
-- `name` <[string]> Attachment name.
+- `name` <[string]>
+
+Attachment name.
 
 ### option: TestInfo.attach.body
-- `body` <[string]|[Buffer]> Attachment body. Mutually exclusive with [`option: path`].
+- `body` <[string]|[Buffer]>
+
+Attachment body. Mutually exclusive with [`option: path`].
 
 ### option: TestInfo.attach.contentType
-- `contentType` <[void]|[string]> Optional content type of this attachment to properly present in the report, for example `'application/json'` or `'image/png'`. If omitted, content type is inferred based on the [`option: path`], or defaults to `text/plain` for [string] attachments and `application/octet-stream` for [Buffer] attachments.
+- `contentType` <[string]>
+
+Content type of this attachment to properly present in the report, for example `'application/json'` or `'image/png'`. If omitted, content type is inferred based on the [`option: path`], or defaults to `text/plain` for [string] attachments and `application/octet-stream` for [Buffer] attachments.
 
 ### option: TestInfo.attach.path
-- `path` <[string]> Path on the filesystem to the attached file. Mutually exclusive with [`option: body`].
+- `path` <[string]>
+
+Path on the filesystem to the attached file. Mutually exclusive with [`option: body`].
 
 
 ## property: TestInfo.column
@@ -118,7 +126,7 @@ Column number where the currently running test is declared.
 ## property: TestInfo.config
 - type: <[TestConfig]>
 
-Processed configuration from the [configuration file](./test-configuration.md).
+Processed configuration from the [configuration file](../test-configuration.md).
 
 
 ## property: TestInfo.duration
@@ -128,7 +136,7 @@ The number of milliseconds the test took to finish. Always zero before the test 
 
 
 ## property: TestInfo.error
-- type: <[void]|[TestError]>
+- type: ?<[TestError]>
 
 First error thrown during test execution, if any. This is equal to the first
 element in [`property: TestInfo.errors`].
@@ -144,7 +152,7 @@ Errors thrown during test execution, if any.
 
 Expected status for the currently running test. This is usually `'passed'`, except for a few cases:
 * `'skipped'` for skipped tests, e.g. with [`method: Test.skip#2`];
-* `'failed'` for tests marked as failed with [`method: Test.fail`].
+* `'failed'` for tests marked as failed with [`method: Test.fail#1`].
 
 Expected status is usually compared with the actual [`property: TestInfo.status`]:
 
@@ -166,41 +174,52 @@ test.afterEach(async ({}, testInfo) => {
 });
 ```
 
-## method: TestInfo.fail
+## method: TestInfo.fail#1
 
-Marks the currently running test as "should fail". Playwright Test ensures that this test is actually failing. This is similar to [`method: Test.fail`].
+Marks the currently running test as "should fail". Playwright Test runs this test and ensures that it is actually failing. This is useful for documentation purposes to acknowledge that some functionality is broken until it is fixed. This is similar to [`method: Test.fail#1`].
 
-### param: TestInfo.fail.condition
-- `condition` <[void]|[boolean]>
+## method: TestInfo.fail#2
 
-Optional condition - the test is marked as "should fail" when the condition is `true`.
+Conditionally mark the currently running test as "should fail" with an optional description. This is similar to [`method: Test.fail#2`].
 
-### param: TestInfo.fail.description
-- `description` <[void]|[string]>
+### param: TestInfo.fail#2.condition
+- `condition` <[boolean]>
+
+Test is marked as "should fail" when the condition is `true`.
+
+### param: TestInfo.fail#2.description
+- `description` ?<[string]>
 
 Optional description that will be reflected in a test report.
+
 
 ## property: TestInfo.file
 - type: <[string]>
 
 Absolute path to a file where the currently running test is declared.
 
-## method: TestInfo.fixme
 
-Marks the currently running test as "fixme". The test will be skipped, but the intention is to fix it. This is similar to [`method: Test.fixme#2`].
+## method: TestInfo.fixme#1
 
-### param: TestInfo.fixme.condition
-- `condition` <[void]|[boolean]>
+Mark a test as "fixme", with the intention to fix it. Test is immediately aborted. This is similar to [`method: Test.fixme#2`].
 
-Optional condition - the test is marked as "fixme" when the condition is `true`.
+## method: TestInfo.fixme#2
 
-### param: TestInfo.fixme.description
-- `description` <[void]|[string]>
+Conditionally mark the currently running test as "fixme" with an optional description. This is similar to [`method: Test.fixme#3`].
+
+### param: TestInfo.fixme#2.condition
+- `condition` <[boolean]>
+
+Test is marked as "fixme" when the condition is `true`.
+
+### param: TestInfo.fixme#2.description
+- `description` ?<[string]>
 
 Optional description that will be reflected in a test report.
 
+
 ## property: TestInfo.fn
-- type: <[function]\([TestArgs], [TestInfo]\)>
+- type: <[function]>
 
 Test function as passed to `test(title, testFunction)`.
 
@@ -248,7 +267,7 @@ test('example test', async ({}, testInfo) => {
 > However, this path must stay within the [`property: TestInfo.outputDir`] directory for each test (i.e. `test-results/a-test-title`), otherwise it will throw.
 
 ### param: TestInfo.outputPath.pathSegments
-- `pathSegments` <[string...]>
+- `...pathSegments` <[Array]<[string]>>
 
 Path segments to append at the end of the resulting path.
 
@@ -257,23 +276,23 @@ Path segments to append at the end of the resulting path.
 
 The index of the worker between `0` and `workers - 1`. It is guaranteed that workers running at the same time have a different `parallelIndex`. When a worker is restarted, for example after a failure, the new worker process has the same `parallelIndex`.
 
-Also available as `process.env.TEST_PARALLEL_INDEX`. Learn more about [parallelism and sharding](./test-parallel.md) with Playwright Test.
+Also available as `process.env.TEST_PARALLEL_INDEX`. Learn more about [parallelism and sharding](../test-parallel.md) with Playwright Test.
 
 ## property: TestInfo.project
 - type: <[TestProject]>
 
-Processed project configuration from the [configuration file](./test-configuration.md).
+Processed project configuration from the [configuration file](../test-configuration.md).
 
 
 ## property: TestInfo.repeatEachIndex
 - type: <[int]>
 
-Specifies a unique repeat index when running in "repeat each" mode. This mode is enabled by passing `--repeat-each` to the [command line](./test-cli.md).
+Specifies a unique repeat index when running in "repeat each" mode. This mode is enabled by passing `--repeat-each` to the [command line](../test-cli.md).
 
 ## property: TestInfo.retry
 - type: <[int]>
 
-Specifies the retry number when the test is retried after a failure. The first test run has [`property: TestInfo.retry`] equal to zero, the first retry has it equal to one, and so on. Learn more about [retries](./test-retries.md#retries).
+Specifies the retry number when the test is retried after a failure. The first test run has [`property: TestInfo.retry`] equal to zero, the first retry has it equal to one, and so on. Learn more about [retries](../test-retries.md#retries).
 
 ```js js-flavor=js
 const { test, expect } = require('@playwright/test');
@@ -311,9 +330,9 @@ test('my test', async ({ page }, testInfo) => {
 
 ## method: TestInfo.setTimeout
 
-Changes the timeout for the currently running test. Zero means no timeout. Learn more about [various timeouts](./test-timeouts.md).
+Changes the timeout for the currently running test. Zero means no timeout. Learn more about [various timeouts](../test-timeouts.md).
 
-Timeout is usually specified in the [configuration file](./test-configuration.md), but it could be useful to change the timeout in certain scenarios:
+Timeout is usually specified in the [configuration file](../test-configuration.md), but it could be useful to change the timeout in certain scenarios:
 
 ```js js-flavor=js
 const { test, expect } = require('@playwright/test');
@@ -338,54 +357,64 @@ test.beforeEach(async ({ page }, testInfo) => {
 
 Timeout in milliseconds.
 
-## method: TestInfo.skip
+## method: TestInfo.skip#1
 
-Skips the currently running test. This is similar to [`method: Test.skip#2`].
+Unconditionally skip the currently running test. Test is immediately aborted. This is similar to [`method: Test.skip#2`].
 
-### param: TestInfo.skip.condition
-- `condition` <[void]|[boolean]>
+## method: TestInfo.skip#2
 
-Optional condition - the test is skipped when the condition is `true`.
+Conditionally skips the currently running test with an optional description. This is similar to [`method: Test.skip#3`].
 
-### param: TestInfo.skip.description
-- `description` <[void]|[string]>
+### param: TestInfo.skip#2.condition
+- `condition` <[boolean]>
+
+A skip condition. Test is skipped when the condition is `true`.
+
+### param: TestInfo.skip#2.description
+- `description` ?<[string]>
+
+Optional description that will be reflected in a test report.
+
+
+## method: TestInfo.slow#1
+
+Marks the currently running test as "slow", giving it triple the default timeout. This is similar to [`method: Test.slow#1`].
+
+## method: TestInfo.slow#2
+
+Conditionally mark the currently running test as "slow" with an optional description, giving it triple the default timeout. This is similar to [`method: Test.slow#2`].
+
+### param: TestInfo.slow#2.condition
+- `condition` <[boolean]>
+
+Test is marked as "slow" when the condition is `true`.
+
+### param: TestInfo.slow#2.description
+- `description` ?<[string]>
 
 Optional description that will be reflected in a test report.
 
-## method: TestInfo.slow
-
-Marks the currently running test as "slow", giving it triple the default timeout. This is similar to [`method: Test.slow`].
-
-### param: TestInfo.slow.condition
-- `condition` <[void]|[boolean]>
-
-Optional condition - the test is marked as "slow" when the condition is `true`.
-
-### param: TestInfo.slow.description
-- `description` <[void]|[string]>
-
-Optional description that will be reflected in a test report.
 
 ## method: TestInfo.snapshotPath
 - returns: <[string]>
 
-Returns a path to a snapshot file with the given `pathSegments`. Learn more about [snapshots](./test-snapshots.md).
+Returns a path to a snapshot file with the given `pathSegments`. Learn more about [snapshots](../test-snapshots.md).
 
 > Note that `pathSegments` accepts path segments to the snapshot file such as `testInfo.snapshotPath('relative', 'path', 'to', 'snapshot.png')`.
 > However, this path must stay within the snapshots directory for each test file (i.e. `a.spec.js-snapshots`), otherwise it will throw.
 
 ### param: TestInfo.snapshotPath.pathSegments
-- `pathSegments` <[string...]>
+- `...pathSegments` <[Array]<[string]>>
 
 The name of the snapshot or the path segments to define the snapshot file path. Snapshots with the same name in the same test file are expected to be the same.
 
 ## property: TestInfo.snapshotSuffix
 - type: <[string]>
 
-Suffix used to differentiate snapshots between multiple test configurations. For example, if snapshots depend on the platform, you can set `testInfo.snapshotSuffix` equal to `process.platform`. In this case `expect(value).toMatchSnapshot(snapshotName)` will use different snapshots depending on the platform. Learn more about [snapshots](./test-snapshots.md).
+Suffix used to differentiate snapshots between multiple test configurations. For example, if snapshots depend on the platform, you can set `testInfo.snapshotSuffix` equal to `process.platform`. In this case `expect(value).toMatchSnapshot(snapshotName)` will use different snapshots depending on the platform. Learn more about [snapshots](../test-snapshots.md).
 
 ## property: TestInfo.status
-- type: <[void]|[TestStatus]<"passed"|"failed"|"timedOut"|"skipped">>
+- type: ?<[TestStatus]<"passed"|"failed"|"timedOut"|"skipped">>
 
 Actual status for the currently running test. Available after the test has finished in [`method: Test.afterEach`] hook and fixtures.
 
@@ -422,9 +451,9 @@ Output written to `process.stdout` or `console.log` during the test execution.
 ## property: TestInfo.timeout
 - type: <[int]>
 
-Timeout in milliseconds for the currently running test. Zero means no timeout. Learn more about [various timeouts](./test-timeouts.md).
+Timeout in milliseconds for the currently running test. Zero means no timeout. Learn more about [various timeouts](../test-timeouts.md).
 
-Timeout is usually specified in the [configuration file](./test-configuration.md)
+Timeout is usually specified in the [configuration file](../test-configuration.md)
 
 ```js js-flavor=js
 const { test, expect } = require('@playwright/test');
@@ -459,4 +488,4 @@ The full title path starting with the project.
 
 The unique index of the worker process that is running the test. When a worker is restarted, for example after a failure, the new worker process gets a new unique `workerIndex`.
 
-Also available as `process.env.TEST_WORKER_INDEX`. Learn more about [parallelism and sharding](./test-parallel.md) with Playwright Test.
+Also available as `process.env.TEST_WORKER_INDEX`. Learn more about [parallelism and sharding](../test-parallel.md) with Playwright Test.

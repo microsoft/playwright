@@ -853,11 +853,11 @@ export module Protocol {
      */
     export interface Grouping {
       /**
-       * Source of the media query: "media-rule" if specified by a @media rule, "media-import-rule" if specified by an @import rule, "media-link-node" if specified by a "media" attribute in a linked style sheet's LINK tag, "media-style-node" if specified by a "media" attribute in an inline style sheet's STYLE tag, "supports-rule" if specified by an @supports rule, "layer-rule" if specified by an @layer rule.
+       * Source of the media query: "media-rule" if specified by a @media rule, "media-import-rule" if specified by an @import rule, "media-link-node" if specified by a "media" attribute in a linked style sheet's LINK tag, "media-style-node" if specified by a "media" attribute in an inline style sheet's STYLE tag, "supports-rule" if specified by an @supports rule, "layer-rule" if specified by an @layer rule, "container-rule" if specified by an @container rule.
        */
-      type: "media-rule"|"media-import-rule"|"media-link-node"|"media-style-node"|"supports-rule"|"layer-rule"|"layer-import-rule";
+      type: "media-rule"|"media-import-rule"|"media-link-node"|"media-style-node"|"supports-rule"|"layer-rule"|"layer-import-rule"|"container-rule";
       /**
-       * Query text if specified by a @media or @supports rule. Layer name (or not present for anonymous layers) for @layer rules.
+       * Query text if specified by a @media, @supports, or @container rule. Layer name (or not present for anonymous layers) for @layer rules.
        */
       text?: string;
       /**
@@ -1559,6 +1559,10 @@ export module Protocol {
        * Identifier of the network request associated with this message.
        */
       networkRequestId?: Network.RequestId;
+      /**
+       * Time when this message was added. Currently only used when an expensive operation happens to make sure that the frontend can account for it.
+       */
+      timestamp?: number;
     }
     /**
      * Stack entry for console errors and assertions.
@@ -2384,7 +2388,7 @@ export module Protocol {
       /**
        * Query selector result.
        */
-      nodeId: NodeId;
+      nodeId?: NodeId;
     }
     /**
      * Executes <code>querySelectorAll</code> on a given node.
@@ -2921,6 +2925,10 @@ export module Protocol {
        * The primary color to use for the flex overlay.
        */
       flexColor: RGBAColor;
+      /**
+       * Show labels for flex order. If not specified, the default value is false.
+       */
+      showOrderNumbers?: boolean;
     }
     export type showFlexOverlayReturnValue = {
     }
@@ -3127,7 +3135,11 @@ might return multiple quads for inline nodes.
       /**
        * Files to set
        */
-      files: FilePayload[];
+      files?: FilePayload[];
+      /**
+       * File paths to set
+       */
+      paths?: string[];
     }
     export type setInputFilesReturnValue = {
     }
@@ -4088,6 +4100,14 @@ might return multiple quads for inline nodes.
       isRegex?: boolean;
     }
     export type setShouldBlackboxURLReturnValue = {
+    }
+    /**
+     * Sets whether evaluation of breakpoint conditions, ignore counts, and actions happen at the location of the breakpoint or are deferred due to blackboxing.
+     */
+    export type setBlackboxBreakpointEvaluationsParameters = {
+      blackboxBreakpointEvaluations: boolean;
+    }
+    export type setBlackboxBreakpointEvaluationsReturnValue = {
     }
   }
   
@@ -5329,6 +5349,10 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
        * Connection information for the completed request.
        */
       securityConnection?: Security.Connection;
+      /**
+       * Whether or not the connection was proxied through a server. If <code>true</code>, the <code>remoteAddress</code> will be for the proxy server, not the server that provided the resource to the proxy server.
+       */
+      isProxyConnection?: boolean;
     }
     /**
      * WebSocket request data.
@@ -7247,6 +7271,21 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
       loaderId?: Network.LoaderId;
     }
     /**
+     * Grants read access for the specified files to the web process of the page.
+     */
+    export type grantFileReadAccessParameters = {
+      /**
+       * Unique identifier of the page proxy.
+       */
+      pageProxyId: PageProxyID;
+      /**
+       * Id of the frame to navigate.
+       */
+      paths: string[];
+    }
+    export type grantFileReadAccessReturnValue = {
+    }
+    /**
      * Change whether all certificate errors should be ignored.
      */
     export type setIgnoreCertificateErrorsParameters = {
@@ -8529,11 +8568,11 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     /**
      * Timeline record type.
      */
-    export type EventType = "EventDispatch"|"ScheduleStyleRecalculation"|"RecalculateStyles"|"InvalidateLayout"|"Layout"|"Paint"|"Composite"|"RenderingFrame"|"TimerInstall"|"TimerRemove"|"TimerFire"|"EvaluateScript"|"TimeStamp"|"Time"|"TimeEnd"|"FunctionCall"|"ProbeSample"|"ConsoleProfile"|"RequestAnimationFrame"|"CancelAnimationFrame"|"FireAnimationFrame"|"ObserverCallback";
+    export type EventType = "EventDispatch"|"ScheduleStyleRecalculation"|"RecalculateStyles"|"InvalidateLayout"|"Layout"|"Paint"|"Composite"|"RenderingFrame"|"TimerInstall"|"TimerRemove"|"TimerFire"|"EvaluateScript"|"TimeStamp"|"Time"|"TimeEnd"|"FunctionCall"|"ProbeSample"|"ConsoleProfile"|"RequestAnimationFrame"|"CancelAnimationFrame"|"FireAnimationFrame"|"ObserverCallback"|"Screenshot";
     /**
      * Instrument types.
      */
-    export type Instrument = "ScriptProfiler"|"Timeline"|"CPU"|"Memory"|"Heap"|"Animation";
+    export type Instrument = "ScriptProfiler"|"Timeline"|"CPU"|"Memory"|"Heap"|"Animation"|"Screenshot";
     /**
      * Timeline record contains information about the recorded activity.
      */
@@ -8978,6 +9017,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Debugger.setPauseForInternalScripts": Debugger.setPauseForInternalScriptsParameters;
     "Debugger.evaluateOnCallFrame": Debugger.evaluateOnCallFrameParameters;
     "Debugger.setShouldBlackboxURL": Debugger.setShouldBlackboxURLParameters;
+    "Debugger.setBlackboxBreakpointEvaluations": Debugger.setBlackboxBreakpointEvaluationsParameters;
     "Dialog.enable": Dialog.enableParameters;
     "Dialog.disable": Dialog.disableParameters;
     "Dialog.handleJavaScriptDialog": Dialog.handleJavaScriptDialogParameters;
@@ -9079,6 +9119,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Playwright.deleteContext": Playwright.deleteContextParameters;
     "Playwright.createPage": Playwright.createPageParameters;
     "Playwright.navigate": Playwright.navigateParameters;
+    "Playwright.grantFileReadAccess": Playwright.grantFileReadAccessParameters;
     "Playwright.setIgnoreCertificateErrors": Playwright.setIgnoreCertificateErrorsParameters;
     "Playwright.getAllCookies": Playwright.getAllCookiesParameters;
     "Playwright.setCookies": Playwright.setCookiesParameters;
@@ -9278,6 +9319,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Debugger.setPauseForInternalScripts": Debugger.setPauseForInternalScriptsReturnValue;
     "Debugger.evaluateOnCallFrame": Debugger.evaluateOnCallFrameReturnValue;
     "Debugger.setShouldBlackboxURL": Debugger.setShouldBlackboxURLReturnValue;
+    "Debugger.setBlackboxBreakpointEvaluations": Debugger.setBlackboxBreakpointEvaluationsReturnValue;
     "Dialog.enable": Dialog.enableReturnValue;
     "Dialog.disable": Dialog.disableReturnValue;
     "Dialog.handleJavaScriptDialog": Dialog.handleJavaScriptDialogReturnValue;
@@ -9379,6 +9421,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Playwright.deleteContext": Playwright.deleteContextReturnValue;
     "Playwright.createPage": Playwright.createPageReturnValue;
     "Playwright.navigate": Playwright.navigateReturnValue;
+    "Playwright.grantFileReadAccess": Playwright.grantFileReadAccessReturnValue;
     "Playwright.setIgnoreCertificateErrors": Playwright.setIgnoreCertificateErrorsReturnValue;
     "Playwright.getAllCookies": Playwright.getAllCookiesReturnValue;
     "Playwright.setCookies": Playwright.setCookiesReturnValue;

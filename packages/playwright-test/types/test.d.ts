@@ -15,10 +15,8 @@
  * limitations under the License.
  */
 
-import type { APIRequestContext, Browser, BrowserContext, BrowserContextOptions, Page, LaunchOptions, ViewportSize, Geolocation, HTTPCredentials } from 'playwright-core';
-import type { Expect } from './testExpect';
-
-export type { Expect } from './testExpect';
+import type { APIRequestContext, Browser, BrowserContext, BrowserContextOptions, Page, LaunchOptions, ViewportSize, Geolocation, HTTPCredentials, Locator, APIResponse } from 'playwright-core';
+export * from 'playwright-core';
 
 export type ReporterDescription =
   ['dot'] |
@@ -31,67 +29,8 @@ export type ReporterDescription =
   ['null'] |
   [string] | [string, any];
 
-export type Shard = { total: number, current: number } | null;
-export type ReportSlowTests = { max: number, threshold: number } | null;
-export type PreserveOutput = 'always' | 'never' | 'failures-only';
-export type UpdateSnapshots = 'all' | 'none' | 'missing';
-
 type UseOptions<TestArgs, WorkerArgs> = { [K in keyof WorkerArgs]?: WorkerArgs[K] } & { [K in keyof TestArgs]?: TestArgs[K] };
 
-type ExpectSettings = {
-  /**
-   * Default timeout for async expect matchers in milliseconds, defaults to 5000ms.
-   */
-  timeout?: number;
-  toHaveScreenshot?: {
-    /** An acceptable perceived color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between pixels in compared images, between zero (strict) and one (lax). Defaults to `0.2`.
-     */
-    threshold?: number,
-    /**
-     * An acceptable amount of pixels that could be different, unset by default.
-     */
-    maxDiffPixels?: number,
-    /**
-     * An acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1` , unset by default.
-     */
-    maxDiffPixelRatio?: number,
-    /**
-     * When set to `"disabled"`, stops CSS animations, CSS transitions and Web Animations. Animations get different treatment
-     * depending on their duration:
-     * - finite animations are fast-forwarded to completion, so they'll fire `transitionend` event.
-     * - infinite animations are canceled to initial state, and then played over after the screenshot.
-     *
-     * Defaults to `"disabled"` that leaves animations untouched.
-     */
-    animations?: 'allow'|'disabled',
-    /**
-     * When set to `"ready"`, screenshot will wait for
-     * [`document.fonts.ready`](https://developer.mozilla.org/en-US/docs/Web/API/FontFaceSet/ready) promise to resolve in all
-     * frames. Defaults to `"ready"`.
-     */
-    fonts?: 'ready'|'nowait',
-    /**
-     * When set to `"css"`, screenshot will have a single pixel per each css pixel on the page. For high-dpi devices, this will
-     * keep screenshots small. Using `"device"` option will produce a single pixel per each device pixel, so screenhots of
-     * high-dpi devices will be twice as large or even larger. Defaults to `"css"`.
-     */
-    size?: 'css'|'device',
-  }
-  toMatchSnapshot?: {
-    /** An acceptable perceived color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between pixels in compared images, between zero (strict) and one (lax). Defaults to `0.2`.
-     */
-    threshold?: number,
-    /**
-     * An acceptable amount of pixels that could be different, unset by default.
-     */
-    maxDiffPixels?: number,
-    /**
-     * An acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1` , unset by default.
-     */
-    maxDiffPixelRatio?: number,
-  }
-};
-
 /**
  * Playwright Test supports running multiple test projects at the same time. This is useful for running tests in multiple
  * configurations. For example, consider running tests against multiple browsers.
@@ -105,276 +44,7 @@ type ExpectSettings = {
  *
  * ```ts
  * // playwright.config.ts
- * import { PlaywrightTestConfig, devices } from '@playwright/test';
- *
- * const config: PlaywrightTestConfig = {
- *   // Options shared for all projects.
- *   timeout: 30000,
- *   use: {
- *     ignoreHTTPSErrors: true,
- *   },
- *
- *   // Options specific to each project.
- *   projects: [
- *     {
- *       name: 'Desktop Chromium',
- *       use: {
- *         browserName: 'chromium',
- *         viewport: { width: 1280, height: 720 },
- *       },
- *     },
- *     {
- *       name: 'Desktop Safari',
- *       use: {
- *         browserName: 'webkit',
- *         viewport: { width: 1280, height: 720 },
- *       }
- *     },
- *     {
- *       name: 'Desktop Firefox',
- *       use: {
- *         browserName: 'firefox',
- *         viewport: { width: 1280, height: 720 },
- *       }
- *     },
- *     {
- *       name: 'Mobile Chrome',
- *       use: devices['Pixel 5'],
- *     },
- *     {
- *       name: 'Mobile Safari',
- *       use: devices['iPhone 12'],
- *     },
- *   ],
- * };
- * export default config;
- * ```
- *
- */
-interface TestProject {
-  /**
-   * Configuration for the `expect` assertion library.
-   *
-   * Use [testConfig.expect](https://playwright.dev/docs/api/class-testconfig#test-config-expect) to change this option for
-   * all projects.
-   */
-  expect?: ExpectSettings;
-  /**
-   * Playwright Test runs tests in parallel. In order to achieve that, it runs several worker processes that run at the same
-   * time. By default, **test files** are run in parallel. Tests in a single file are run in order, in the same worker
-   * process.
-   *
-   * You can configure entire test project to concurrently run all tests in all files using this option.
-   */
-  fullyParallel?: boolean;
-  /**
-   * Filter to only run tests with a title matching one of the patterns. For example, passing `grep: /cart/` should only run
-   * tests with "cart" in the title. Also available globally and in the [command line](https://playwright.dev/docs/test-cli) with the `-g` option.
-   *
-   * `grep` option is also useful for [tagging tests](https://playwright.dev/docs/test-annotations#tag-tests).
-   */
-  grep?: RegExp | RegExp[];
-  /**
-   * Filter to only run tests with a title **not** matching one of the patterns. This is the opposite of
-   * [testProject.grep](https://playwright.dev/docs/api/class-testproject#test-project-grep). Also available globally and in
-   * the [command line](https://playwright.dev/docs/test-cli) with the `--grep-invert` option.
-   *
-   * `grepInvert` option is also useful for [tagging tests](https://playwright.dev/docs/test-annotations#tag-tests).
-   */
-  grepInvert?: RegExp | RegExp[] | null;
-  /**
-   * Any JSON-serializable metadata that will be put directly to the test report.
-   */
-  metadata?: any;
-  /**
-   * Project name is visible in the report and during test execution.
-   */
-  name?: string;
-  /**
-   * The base directory, relative to the config file, for snapshot files created with `toMatchSnapshot`. Defaults to
-   * [testProject.testDir](https://playwright.dev/docs/api/class-testproject#test-project-test-dir).
-   *
-   * The directory for each test can be accessed by
-   * [testInfo.snapshotDir](https://playwright.dev/docs/api/class-testinfo#test-info-snapshot-dir) and
-   * [testInfo.snapshotPath(pathSegments)](https://playwright.dev/docs/api/class-testinfo#test-info-snapshot-path).
-   *
-   * This path will serve as the base directory for each test file snapshot directory. Setting `snapshotDir` to
-   * `'snapshots'`, the [testInfo.snapshotDir](https://playwright.dev/docs/api/class-testinfo#test-info-snapshot-dir) would
-   * resolve to `snapshots/a.spec.js-snapshots`.
-   */
-  snapshotDir?: string;
-  /**
-   * The base directory, relative to the config file, for screenshot files created with `toHaveScreenshot`. Defaults to
-   *
-   * ```
-   * <directory-of-configuration-file>/__screenshots__/<platform name>/<project name>
-   * ```
-   *
-   * This path will serve as the base directory for each test file screenshot directory. For example, the following test
-   * structure:
-   *
-   * ```
-   * smoke-tests/
-   * └── basic.spec.ts
-   * ```
-   *
-   * will result in the following screenshots folder structure:
-   *
-   * ```
-   * __screenshots__/
-   * └── darwin/
-   *     ├── Mobile Safari/
-   *     │   └── smoke-tests/
-   *     │       └── basic.spec.ts/
-   *     │           └── screenshot-expectation.png
-   *     └── Desktop Chrome/
-   *         └── smoke-tests/
-   *             └── basic.spec.ts/
-   *                 └── screenshot-expectation.png
-   * ```
-   *
-   * where:
-   * - `darwin/` - a platform name folder
-   * - `Mobile Safari` and `Desktop Chrome` - project names
-   */
-  screenshotsDir?: string;
-  /**
-   * The output directory for files created during test execution. Defaults to `test-results`.
-   *
-   * This directory is cleaned at the start. When running a test, a unique subdirectory inside the
-   * [testProject.outputDir](https://playwright.dev/docs/api/class-testproject#test-project-output-dir) is created,
-   * guaranteeing that test running in parallel do not conflict. This directory can be accessed by
-   * [testInfo.outputDir](https://playwright.dev/docs/api/class-testinfo#test-info-output-dir) and
-   * [testInfo.outputPath(pathSegments)](https://playwright.dev/docs/api/class-testinfo#test-info-output-path).
-   *
-   * Here is an example that uses
-   * [testInfo.outputPath(pathSegments)](https://playwright.dev/docs/api/class-testinfo#test-info-output-path) to create a
-   * temporary file.
-   *
-   * ```ts
-   * import { test, expect } from '@playwright/test';
-   * import fs from 'fs';
-   *
-   * test('example test', async ({}, testInfo) => {
-   *   const file = testInfo.outputPath('temporary-file.txt');
-   *   await fs.promises.writeFile(file, 'Put some data to the file', 'utf8');
-   * });
-   * ```
-   *
-   * Use [testConfig.outputDir](https://playwright.dev/docs/api/class-testconfig#test-config-output-dir) to change this
-   * option for all projects.
-   */
-  outputDir?: string;
-  /**
-   * The number of times to repeat each test, useful for debugging flaky tests.
-   *
-   * Use [testConfig.repeatEach](https://playwright.dev/docs/api/class-testconfig#test-config-repeat-each) to change this
-   * option for all projects.
-   */
-  repeatEach?: number;
-  /**
-   * The maximum number of retry attempts given to failed tests. Learn more about [test retries](https://playwright.dev/docs/test-retries#retries).
-   *
-   * Use [testConfig.retries](https://playwright.dev/docs/api/class-testconfig#test-config-retries) to change this option for
-   * all projects.
-   */
-  retries?: number;
-  /**
-   * Directory that will be recursively scanned for test files. Defaults to the directory of the configuration file.
-   *
-   * Each project can use a different directory. Here is an example that runs smoke tests in three browsers and all other
-   * tests in stable Chrome browser.
-   *
-   * ```ts
-   * // playwright.config.ts
-   * import { PlaywrightTestConfig } from '@playwright/test';
-   *
-   * const config: PlaywrightTestConfig = {
-   *   projects: [
-   *     {
-   *       name: 'Smoke Chromium',
-   *       testDir: './smoke-tests',
-   *       use: {
-   *         browserName: 'chromium',
-   *       }
-   *     },
-   *     {
-   *       name: 'Smoke WebKit',
-   *       testDir: './smoke-tests',
-   *       use: {
-   *         browserName: 'webkit',
-   *       }
-   *     },
-   *     {
-   *       name: 'Smoke Firefox',
-   *       testDir: './smoke-tests',
-   *       use: {
-   *         browserName: 'firefox',
-   *       }
-   *     },
-   *     {
-   *       name: 'Chrome Stable',
-   *       testDir: './',
-   *       use: {
-   *         browserName: 'chromium',
-   *         channel: 'chrome',
-   *       }
-   *     },
-   *   ],
-   * };
-   * export default config;
-   * ```
-   *
-   * Use [testConfig.testDir](https://playwright.dev/docs/api/class-testconfig#test-config-test-dir) to change this option
-   * for all projects.
-   */
-  testDir?: string;
-  /**
-   * Files matching one of these patterns are not executed as test files. Matching is performed against the absolute file
-   * path. Strings are treated as glob patterns.
-   *
-   * For example, `'**\/test-assets/**'` will ignore any files in the `test-assets` directory.
-   *
-   * Use [testConfig.testIgnore](https://playwright.dev/docs/api/class-testconfig#test-config-test-ignore) to change this
-   * option for all projects.
-   */
-  testIgnore?: string | RegExp | (string | RegExp)[];
-  /**
-   * Only the files matching one of these patterns are executed as test files. Matching is performed against the absolute
-   * file path. Strings are treated as glob patterns.
-   *
-   * By default, Playwright Test looks for files matching `.*(test|spec)\.(js|ts|mjs)`.
-   *
-   * Use [testConfig.testMatch](https://playwright.dev/docs/api/class-testconfig#test-config-test-match) to change this
-   * option for all projects.
-   */
-  testMatch?: string | RegExp | (string | RegExp)[];
-  /**
-   * Timeout for each test in milliseconds. Defaults to 30 seconds.
-   *
-   * This is a base timeout for all tests. In addition, each test can configure its own timeout with
-   * [test.setTimeout(timeout)](https://playwright.dev/docs/api/class-test#test-set-timeout).
-   *
-   * Use [testConfig.timeout](https://playwright.dev/docs/api/class-testconfig#test-config-timeout) to change this option for
-   * all projects.
-   */
-  timeout?: number;
-}
-
-/**
- * Playwright Test supports running multiple test projects at the same time. This is useful for running tests in multiple
- * configurations. For example, consider running tests against multiple browsers.
- *
- * `TestProject` encapsulates configuration specific to a single project. Projects are configured in
- * [testConfig.projects](https://playwright.dev/docs/api/class-testconfig#test-config-projects) specified in the
- * [configuration file](https://playwright.dev/docs/test-configuration). Note that all properties of [TestProject] are available in the top-level
- * [TestConfig], in which case they are shared between all projects.
- *
- * Here is an example configuration that runs every test in Chromium, Firefox and WebKit, both Desktop and Mobile versions.
- *
- * ```ts
- * // playwright.config.ts
- * import { PlaywrightTestConfig, devices } from '@playwright/test';
+ * import { type PlaywrightTestConfig, devices } from '@playwright/test';
  *
  * const config: PlaywrightTestConfig = {
  *   // Options shared for all projects.
@@ -428,7 +98,7 @@ export interface Project<TestArgs = {}, WorkerArgs = {}> extends TestProject {
    *
    * ```ts
    * // playwright.config.ts
-   * import { PlaywrightTestConfig } from '@playwright/test';
+   * import type { PlaywrightTestConfig } from '@playwright/test';
    *
    * const config: PlaywrightTestConfig = {
    *   projects: [
@@ -449,43 +119,250 @@ export interface Project<TestArgs = {}, WorkerArgs = {}> extends TestProject {
   use?: UseOptions<TestArgs, WorkerArgs>;
 }
 
-export type FullProject<TestArgs = {}, WorkerArgs = {}> = Required<Project<PlaywrightTestOptions & TestArgs, PlaywrightWorkerOptions & WorkerArgs>>;
-
-export type WebServerConfig = {
+/**
+ * Playwright Test supports running multiple test projects at the same time. This is useful for running tests in multiple
+ * configurations. For example, consider running tests against multiple browsers.
+ *
+ * `TestProject` encapsulates configuration specific to a single project. Projects are configured in
+ * [testConfig.projects](https://playwright.dev/docs/api/class-testconfig#test-config-projects) specified in the
+ * [configuration file](https://playwright.dev/docs/test-configuration). Note that all properties of [TestProject] are available in the top-level
+ * [TestConfig], in which case they are shared between all projects.
+ *
+ * Here is an example configuration that runs every test in Chromium, Firefox and WebKit, both Desktop and Mobile versions.
+ *
+ * ```ts
+ * // playwright.config.ts
+ * import { type PlaywrightTestConfig, devices } from '@playwright/test';
+ *
+ * const config: PlaywrightTestConfig = {
+ *   // Options shared for all projects.
+ *   timeout: 30000,
+ *   use: {
+ *     ignoreHTTPSErrors: true,
+ *   },
+ *
+ *   // Options specific to each project.
+ *   projects: [
+ *     {
+ *       name: 'Desktop Chromium',
+ *       use: {
+ *         browserName: 'chromium',
+ *         viewport: { width: 1280, height: 720 },
+ *       },
+ *     },
+ *     {
+ *       name: 'Desktop Safari',
+ *       use: {
+ *         browserName: 'webkit',
+ *         viewport: { width: 1280, height: 720 },
+ *       }
+ *     },
+ *     {
+ *       name: 'Desktop Firefox',
+ *       use: {
+ *         browserName: 'firefox',
+ *         viewport: { width: 1280, height: 720 },
+ *       }
+ *     },
+ *     {
+ *       name: 'Mobile Chrome',
+ *       use: devices['Pixel 5'],
+ *     },
+ *     {
+ *       name: 'Mobile Safari',
+ *       use: devices['iPhone 12'],
+ *     },
+ *   ],
+ * };
+ * export default config;
+ * ```
+ *
+ */
+export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
   /**
-   * Shell command to start. For example `npm run start`.
+   * Filter to only run tests with a title matching one of the patterns. For example, passing `grep: /cart/` should only run
+   * tests with "cart" in the title. Also available globally and in the [command line](https://playwright.dev/docs/test-cli) with the `-g` option.
+   *
+   * `grep` option is also useful for [tagging tests](https://playwright.dev/docs/test-annotations#tag-tests).
    */
-  command: string,
+  grep: RegExp | RegExp[];
   /**
-   * The port that your http server is expected to appear on. It does wait until it accepts connections.
-   * Exactly one of `port` or `url` is required.
+   * Filter to only run tests with a title **not** matching one of the patterns. This is the opposite of
+   * [testProject.grep](https://playwright.dev/docs/api/class-testproject#test-project-grep). Also available globally and in
+   * the [command line](https://playwright.dev/docs/test-cli) with the `--grep-invert` option.
+   *
+   * `grepInvert` option is also useful for [tagging tests](https://playwright.dev/docs/test-annotations#tag-tests).
    */
-  port?: number,
+  grepInvert: RegExp | RegExp[] | null;
   /**
-   * The url on your http server that is expected to return a 2xx status code when the server is ready to accept connections.
-   * Exactly one of `port` or `url` is required.
+   * Metadata that will be put directly to the test report serialized as JSON.
    */
-  url?: string,
+  metadata: Metadata;
   /**
-   * How long to wait for the process to start up and be available in milliseconds. Defaults to 60000.
+   * Project name is visible in the report and during test execution.
    */
-  timeout?: number,
+  name: string;
   /**
-   * If true, it will re-use an existing server on the port or url when available. If no server is running
-   * on that port or url, it will run the command to start a new server.
-   * If false, it will throw if an existing process is listening on the port or url.
-   * This should commonly set to !process.env.CI to allow the local dev server when running tests locally.
+   * The base directory, relative to the config file, for snapshot files created with `toMatchSnapshot`. Defaults to
+   * [testProject.testDir](https://playwright.dev/docs/api/class-testproject#test-project-test-dir).
+   *
+   * The directory for each test can be accessed by
+   * [testInfo.snapshotDir](https://playwright.dev/docs/api/class-testinfo#test-info-snapshot-dir) and
+   * [testInfo.snapshotPath(...pathSegments)](https://playwright.dev/docs/api/class-testinfo#test-info-snapshot-path).
+   *
+   * This path will serve as the base directory for each test file snapshot directory. Setting `snapshotDir` to
+   * `'snapshots'`, the [testInfo.snapshotDir](https://playwright.dev/docs/api/class-testinfo#test-info-snapshot-dir) would
+   * resolve to `snapshots/a.spec.js-snapshots`.
    */
-  reuseExistingServer?: boolean
+  snapshotDir: string;
   /**
-   * Environment variables, process.env by default
+   * The output directory for files created during test execution. Defaults to `<package.json-directory>/test-results`.
+   *
+   * This directory is cleaned at the start. When running a test, a unique subdirectory inside the
+   * [testProject.outputDir](https://playwright.dev/docs/api/class-testproject#test-project-output-dir) is created,
+   * guaranteeing that test running in parallel do not conflict. This directory can be accessed by
+   * [testInfo.outputDir](https://playwright.dev/docs/api/class-testinfo#test-info-output-dir) and
+   * [testInfo.outputPath(...pathSegments)](https://playwright.dev/docs/api/class-testinfo#test-info-output-path).
+   *
+   * Here is an example that uses
+   * [testInfo.outputPath(...pathSegments)](https://playwright.dev/docs/api/class-testinfo#test-info-output-path) to create a
+   * temporary file.
+   *
+   * ```ts
+   * import { test, expect } from '@playwright/test';
+   * import fs from 'fs';
+   *
+   * test('example test', async ({}, testInfo) => {
+   *   const file = testInfo.outputPath('temporary-file.txt');
+   *   await fs.promises.writeFile(file, 'Put some data to the file', 'utf8');
+   * });
+   * ```
+   *
+   * Use [testConfig.outputDir](https://playwright.dev/docs/api/class-testconfig#test-config-output-dir) to change this
+   * option for all projects.
    */
-  env?: Record<string, string>,
+  outputDir: string;
   /**
-   * Current working directory of the spawned process. Default is process.cwd().
+   * The number of times to repeat each test, useful for debugging flaky tests.
+   *
+   * Use [testConfig.repeatEach](https://playwright.dev/docs/api/class-testconfig#test-config-repeat-each) to change this
+   * option for all projects.
    */
-  cwd?: string,
-};
+  repeatEach: number;
+  /**
+   * The maximum number of retry attempts given to failed tests. Learn more about [test retries](https://playwright.dev/docs/test-retries#retries).
+   *
+   * Use [testConfig.retries](https://playwright.dev/docs/api/class-testconfig#test-config-retries) to change this option for
+   * all projects.
+   */
+  retries: number;
+  /**
+   * Directory that will be recursively scanned for test files. Defaults to the directory of the configuration file.
+   *
+   * Each project can use a different directory. Here is an example that runs smoke tests in three browsers and all other
+   * tests in stable Chrome browser.
+   *
+   * ```ts
+   * // playwright.config.ts
+   * import type { PlaywrightTestConfig } from '@playwright/test';
+   *
+   * const config: PlaywrightTestConfig = {
+   *   projects: [
+   *     {
+   *       name: 'Smoke Chromium',
+   *       testDir: './smoke-tests',
+   *       use: {
+   *         browserName: 'chromium',
+   *       }
+   *     },
+   *     {
+   *       name: 'Smoke WebKit',
+   *       testDir: './smoke-tests',
+   *       use: {
+   *         browserName: 'webkit',
+   *       }
+   *     },
+   *     {
+   *       name: 'Smoke Firefox',
+   *       testDir: './smoke-tests',
+   *       use: {
+   *         browserName: 'firefox',
+   *       }
+   *     },
+   *     {
+   *       name: 'Chrome Stable',
+   *       testDir: './',
+   *       use: {
+   *         browserName: 'chromium',
+   *         channel: 'chrome',
+   *       }
+   *     },
+   *   ],
+   * };
+   * export default config;
+   * ```
+   *
+   * Use [testConfig.testDir](https://playwright.dev/docs/api/class-testconfig#test-config-test-dir) to change this option
+   * for all projects.
+   */
+  testDir: string;
+  /**
+   * Files matching one of these patterns are not executed as test files. Matching is performed against the absolute file
+   * path. Strings are treated as glob patterns.
+   *
+   * For example, `'**\/test-assets/**'` will ignore any files in the `test-assets` directory.
+   *
+   * Use [testConfig.testIgnore](https://playwright.dev/docs/api/class-testconfig#test-config-test-ignore) to change this
+   * option for all projects.
+   */
+  testIgnore: string | RegExp | (string | RegExp)[];
+  /**
+   * Only the files matching one of these patterns are executed as test files. Matching is performed against the absolute
+   * file path. Strings are treated as glob patterns.
+   *
+   * By default, Playwright Test looks for files matching `.*(test|spec)\.(js|ts|mjs)`.
+   *
+   * Use [testConfig.testMatch](https://playwright.dev/docs/api/class-testconfig#test-config-test-match) to change this
+   * option for all projects.
+   */
+  testMatch: string | RegExp | (string | RegExp)[];
+  /**
+   * Timeout for each test in milliseconds. Defaults to 30 seconds.
+   *
+   * This is a base timeout for all tests. In addition, each test can configure its own timeout with
+   * [test.setTimeout(timeout)](https://playwright.dev/docs/api/class-test#test-set-timeout).
+   *
+   * Use [testConfig.timeout](https://playwright.dev/docs/api/class-testconfig#test-config-timeout) to change this option for
+   * all projects.
+   */
+  timeout: number;
+  /**
+   * Options for all tests in this project, for example
+   * [testOptions.browserName](https://playwright.dev/docs/api/class-testoptions#test-options-browser-name). Learn more about
+   * [configuration](https://playwright.dev/docs/test-configuration) and see [available options][TestOptions].
+   *
+   * ```ts
+   * // playwright.config.ts
+   * import type { PlaywrightTestConfig } from '@playwright/test';
+   *
+   * const config: PlaywrightTestConfig = {
+   *   projects: [
+   *     {
+   *       name: 'Chromium',
+   *       use: {
+   *         browserName: 'chromium',
+   *       },
+   *     },
+   *   ],
+   * };
+   * export default config;
+   * ```
+   *
+   * Use [testConfig.use](https://playwright.dev/docs/api/class-testconfig#test-config-use) to change this option for all
+   * projects.
+   */
+  use: UseOptions<PlaywrightTestOptions & TestArgs, PlaywrightWorkerOptions & WorkerArgs>;
+}
 
 type LiteralUnion<T extends U, U = string> = T | (U & { zz_IGNORE_ME?: never });
 
@@ -499,7 +376,7 @@ type LiteralUnion<T extends U, U = string> = T | (U & { zz_IGNORE_ME?: never });
  *
  * ```ts
  * // playwright.config.ts
- * import { PlaywrightTestConfig } from '@playwright/test';
+ * import type { PlaywrightTestConfig } from '@playwright/test';
  *
  * const config: PlaywrightTestConfig = {
  *   timeout: 30000,
@@ -513,133 +390,6 @@ type LiteralUnion<T extends U, U = string> = T | (U & { zz_IGNORE_ME?: never });
  */
 interface TestConfig {
   /**
-   * Whether to exit with an error if any tests or groups are marked as
-   * [test.only(title, testFunction)](https://playwright.dev/docs/api/class-test#test-only) or
-   * [test.describe.only(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-only). Useful on CI.
-   *
-   * ```ts
-   * // playwright.config.ts
-   * import { PlaywrightTestConfig } from '@playwright/test';
-   *
-   * const config: PlaywrightTestConfig = {
-   *   forbidOnly: !!process.env.CI,
-   * };
-   * export default config;
-   * ```
-   *
-   */
-  forbidOnly?: boolean;
-  /**
-   * Playwright Test runs tests in parallel. In order to achieve that, it runs several worker processes that run at the same
-   * time. By default, **test files** are run in parallel. Tests in a single file are run in order, in the same worker
-   * process.
-   *
-   * You can configure entire test run to concurrently execute all tests in all files using this option.
-   */
-  fullyParallel?: boolean;
-  /**
-   * Path to the global setup file. This file will be required and run before all the tests. It must export a single function
-   * that takes a [`TestConfig`] argument.
-   *
-   * Learn more about [global setup and teardown](https://playwright.dev/docs/test-advanced#global-setup-and-teardown).
-   *
-   * ```ts
-   * // playwright.config.ts
-   * import { PlaywrightTestConfig, devices } from '@playwright/test';
-   *
-   * const config: PlaywrightTestConfig = {
-   *   globalSetup: './global-setup',
-   * };
-   * export default config;
-   * ```
-   *
-   */
-  globalSetup?: string;
-  /**
-   * Path to the global teardown file. This file will be required and run after all the tests. It must export a single
-   * function. See also [testConfig.globalSetup](https://playwright.dev/docs/api/class-testconfig#test-config-global-setup).
-   *
-   * Learn more about [global setup and teardown](https://playwright.dev/docs/test-advanced#global-setup-and-teardown).
-   *
-   * ```ts
-   * // playwright.config.ts
-   * import { PlaywrightTestConfig, devices } from '@playwright/test';
-   *
-   * const config: PlaywrightTestConfig = {
-   *   globalTeardown: './global-teardown',
-   * };
-   * export default config;
-   * ```
-   *
-   */
-  globalTeardown?: string;
-  /**
-   * Maximum time in milliseconds the whole test suite can run. Zero timeout (default) disables this behavior. Useful on CI
-   * to prevent broken setup from running too long and wasting resources. Learn more about
-   * [various timeouts](https://playwright.dev/docs/test-timeouts).
-   *
-   * ```ts
-   * // playwright.config.ts
-   * import { PlaywrightTestConfig } from '@playwright/test';
-   *
-   * const config: PlaywrightTestConfig = {
-   *   globalTimeout: process.env.CI ? 60 * 60 * 1000 : undefined,
-   * };
-   * export default config;
-   * ```
-   *
-   */
-  globalTimeout?: number;
-  /**
-   * Filter to only run tests with a title matching one of the patterns. For example, passing `grep: /cart/` should only run
-   * tests with "cart" in the title. Also available in the [command line](https://playwright.dev/docs/test-cli) with the `-g` option.
-   *
-   * `grep` option is also useful for [tagging tests](https://playwright.dev/docs/test-annotations#tag-tests).
-   */
-  grep?: RegExp | RegExp[];
-  /**
-   * Filter to only run tests with a title **not** matching one of the patterns. This is the opposite of
-   * [testConfig.grep](https://playwright.dev/docs/api/class-testconfig#test-config-grep). Also available in the
-   * [command line](https://playwright.dev/docs/test-cli) with the `--grep-invert` option.
-   *
-   * `grepInvert` option is also useful for [tagging tests](https://playwright.dev/docs/test-annotations#tag-tests).
-   */
-  grepInvert?: RegExp | RegExp[];
-  /**
-   * The maximum number of test failures for the whole test suite run. After reaching this number, testing will stop and exit
-   * with an error. Setting to zero (default) disables this behavior.
-   *
-   * Also available in the [command line](https://playwright.dev/docs/test-cli) with the `--max-failures` and `-x` options.
-   *
-   * ```ts
-   * // playwright.config.ts
-   * import { PlaywrightTestConfig } from '@playwright/test';
-   *
-   * const config: PlaywrightTestConfig = {
-   *   maxFailures: process.env.CI ? 1 : 0,
-   * };
-   * export default config;
-   * ```
-   *
-   */
-  maxFailures?: number;
-  /**
-   * Whether to preserve test output in the
-   * [testConfig.outputDir](https://playwright.dev/docs/api/class-testconfig#test-config-output-dir). Defaults to `'always'`.
-   * - `'always'` - preserve output for all tests;
-   * - `'never'` - do not preserve output for any tests;
-   * - `'failures-only'` - only preserve output for failed tests.
-   */
-  preserveOutput?: PreserveOutput;
-  /**
-   * Playwright Test supports running multiple test projects at the same time. See [TestProject] for more information.
-   */
-  projects?: Project[];
-  /**
-   * Whether to suppress stdio and stderr output from the tests.
-   */
-  quiet?: boolean;
-  /**
    * The list of reporters to use. Each reporter can be:
    * - A builtin reporter name like `'list'` or `'json'`.
    * - A module name like `'my-awesome-reporter'`.
@@ -651,7 +401,7 @@ interface TestConfig {
    *
    * ```ts
    * // playwright.config.ts
-   * import { PlaywrightTestConfig } from '@playwright/test';
+   * import type { PlaywrightTestConfig } from '@playwright/test';
    *
    * const config: PlaywrightTestConfig = {
    *   reporter: 'line',
@@ -661,29 +411,6 @@ interface TestConfig {
    *
    */
   reporter?: LiteralUnion<'list'|'dot'|'line'|'github'|'json'|'junit'|'null'|'html', string> | ReporterDescription[];
-  /**
-   * Whether to report slow test files. Pass `null` to disable this feature.
-   *
-   * Test files that took more than `threshold` milliseconds are considered slow, and the slowest ones are reported, no more
-   * than `max` number of them. Passing zero as `max` reports all test files that exceed the threshold.
-   */
-  reportSlowTests?: ReportSlowTests;
-  /**
-   * Shard tests and execute only the selected shard. Specify in the one-based form like `{ total: 5, current: 2 }`.
-   *
-   * Learn more about [parallelism and sharding](https://playwright.dev/docs/test-parallel) with Playwright Test.
-   */
-  shard?: Shard;
-  /**
-   * Whether to update expected snapshots with the actual results produced by the test run. Defaults to `'missing'`.
-   * - `'all'` - All tests that are executed will update snapshots.
-   * - `'none'` - No snapshots are updated.
-   * - `'missing'` - Missing snapshots are created, for example when authoring a new test and running it for the first
-   *   time. This is the default.
-   *
-   * Learn more about [snapshots](https://playwright.dev/docs/test-snapshots).
-   */
-  updateSnapshots?: UpdateSnapshots;
   /**
    * Launch a development web server during the tests.
    *
@@ -703,7 +430,7 @@ interface TestConfig {
    *
    * ```ts
    * // playwright.config.ts
-   * import { PlaywrightTestConfig } from '@playwright/test';
+   * import type { PlaywrightTestConfig } from '@playwright/test';
    * const config: PlaywrightTestConfig = {
    *   webServer: {
    *     command: 'npm run start',
@@ -731,40 +458,18 @@ interface TestConfig {
    * ```
    *
    */
-  webServer?: WebServerConfig;
-  /**
-   * The maximum number of concurrent worker processes to use for parallelizing tests.
-   *
-   * Playwright Test uses worker processes to run tests. There is always at least one worker process, but more can be used to
-   * speed up test execution.
-   *
-   * Defaults to one half of the number of CPU cores. Learn more about [parallelism and sharding](https://playwright.dev/docs/test-parallel) with
-   * Playwright Test.
-   *
-   * ```ts
-   * // playwright.config.ts
-   * import { PlaywrightTestConfig } from '@playwright/test';
-   *
-   * const config: PlaywrightTestConfig = {
-   *   workers: 3,
-   * };
-   * export default config;
-   * ```
-   *
-   */
-  workers?: number;
-
+  webServer?: TestConfigWebServer;
   /**
    * Configuration for the `expect` assertion library. Learn more about [various timeouts](https://playwright.dev/docs/test-timeouts).
    *
    * ```ts
    * // playwright.config.ts
-   * import { PlaywrightTestConfig } from '@playwright/test';
+   * import type { PlaywrightTestConfig } from '@playwright/test';
    *
    * const config: PlaywrightTestConfig = {
    *   expect: {
    *     timeout: 10000,
-   *     toHaveScreenshot: {
+   *     toMatchSnapshot: {
    *       maxDiffPixels: 10,
    *     },
    *   },
@@ -773,66 +478,213 @@ interface TestConfig {
    * ```
    *
    */
-  expect?: ExpectSettings;
+  expect?: {
+    /**
+     * Default timeout for async expect matchers in milliseconds, defaults to 5000ms.
+     */
+    timeout?: number;
+
+    /**
+     * Configuration for the
+     * [pageAssertions.toHaveScreenshot(name[, options])](https://playwright.dev/docs/api/class-pageassertions#page-assertions-to-have-screenshot-1)
+     * method.
+     */
+    toHaveScreenshot?: {
+      /**
+       * an acceptable perceived color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between the same
+       * pixel in compared images, between zero (strict) and one (lax). Defaults to `0.2`.
+       */
+      threshold?: number;
+
+      /**
+       * an acceptable amount of pixels that could be different, unset by default.
+       */
+      maxDiffPixels?: number;
+
+      /**
+       * an acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1` , unset by default.
+       */
+      maxDiffPixelRatio?: number;
+
+      /**
+       * See `animations` in [page.screenshot([options])](https://playwright.dev/docs/api/class-page#page-screenshot). Defaults
+       * to `"disabled"`.
+       */
+      animations?: "allow"|"disabled";
+
+      /**
+       * See `caret` in [page.screenshot([options])](https://playwright.dev/docs/api/class-page#page-screenshot). Defaults to
+       * `"hide"`.
+       */
+      caret?: "hide"|"initial";
+
+      /**
+       * See `scale` in [page.screenshot([options])](https://playwright.dev/docs/api/class-page#page-screenshot). Defaults to
+       * `"css"`.
+       */
+      scale?: "css"|"device";
+    };
+
+    /**
+     * Configuration for the
+     * [screenshotAssertions.toMatchSnapshot(name[, options])](https://playwright.dev/docs/api/class-screenshotassertions#screenshot-assertions-to-match-snapshot-1)
+     * method.
+     */
+    toMatchSnapshot?: {
+      /**
+       * an acceptable perceived color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between the same
+       * pixel in compared images, between zero (strict) and one (lax). Defaults to `0.2`.
+       */
+      threshold?: number;
+
+      /**
+       * an acceptable amount of pixels that could be different, unset by default.
+       */
+      maxDiffPixels?: number;
+
+      /**
+       * an acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1` , unset by default.
+       */
+      maxDiffPixelRatio?: number;
+    };
+  };
+
   /**
-   * Any JSON-serializable metadata that will be put directly to the test report.
-   */
-  metadata?: any;
-  name?: string;
-  /**
-   * The base directory, relative to the config file, for snapshot files created with `toMatchSnapshot`. Defaults to
-   * [testConfig.testDir](https://playwright.dev/docs/api/class-testconfig#test-config-test-dir).
-   *
-   * The directory for each test can be accessed by
-   * [testInfo.snapshotDir](https://playwright.dev/docs/api/class-testinfo#test-info-snapshot-dir) and
-   * [testInfo.snapshotPath(pathSegments)](https://playwright.dev/docs/api/class-testinfo#test-info-snapshot-path).
-   *
-   * This path will serve as the base directory for each test file snapshot directory. Setting `snapshotDir` to
-   * `'snapshots'`, the [testInfo.snapshotDir](https://playwright.dev/docs/api/class-testinfo#test-info-snapshot-dir) would
-   * resolve to `snapshots/a.spec.js-snapshots`.
-   */
-  snapshotDir?: string;
-  /**
-   * The base directory, relative to the config file, for screenshot files created with `toHaveScreenshot`. Defaults to
-   *
-   * ```
-   * <directory-of-configuration-file>/__screenshots__/<platform name>/<project name>
-   * ```
-   *
-   * This path will serve as the base directory for each test file screenshot directory. For example, the following test
-   * structure:
-   *
-   * ```
-   * smoke-tests/
-   * └── basic.spec.ts
-   * ```
-   *
-   * will result in the following screenshots folder structure:
-   *
-   * ```
-   * __screenshots__/
-   * └── darwin/
-   *     ├── Mobile Safari/
-   *     │   └── smoke-tests/
-   *     │       └── basic.spec.ts/
-   *     │           └── screenshot-expectation.png
-   *     └── Desktop Chrome/
-   *         └── smoke-tests/
-   *             └── basic.spec.ts/
-   *                 └── screenshot-expectation.png
-   * ```
-   *
-   * where:
-   * - `darwin/` - a platform name folder
-   * - `Mobile Safari` and `Desktop Chrome` - project names
-   */
-  screenshotsDir?: string;
-  /**
-   * The output directory for files created during test execution. Defaults to `test-results`.
+   * Whether to exit with an error if any tests or groups are marked as
+   * [test.only(title, testFunction)](https://playwright.dev/docs/api/class-test#test-only) or
+   * [test.describe.only(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-only). Useful on CI.
    *
    * ```ts
    * // playwright.config.ts
-   * import { PlaywrightTestConfig, devices } from '@playwright/test';
+   * import type { PlaywrightTestConfig } from '@playwright/test';
+   *
+   * const config: PlaywrightTestConfig = {
+   *   forbidOnly: !!process.env.CI,
+   * };
+   * export default config;
+   * ```
+   *
+   */
+  forbidOnly?: boolean;
+
+  /**
+   * Playwright Test runs tests in parallel. In order to achieve that, it runs several worker processes that run at the same
+   * time. By default, **test files** are run in parallel. Tests in a single file are run in order, in the same worker
+   * process.
+   *
+   * You can configure entire test run to concurrently execute all tests in all files using this option.
+   */
+  fullyParallel?: boolean;
+
+  /**
+   * Path to the global setup file. This file will be required and run before all the tests. It must export a single function
+   * that takes a [`TestConfig`] argument.
+   *
+   * Learn more about [global setup and teardown](https://playwright.dev/docs/test-advanced#global-setup-and-teardown).
+   *
+   * ```ts
+   * // playwright.config.ts
+   * import { type PlaywrightTestConfig, devices } from '@playwright/test';
+   *
+   * const config: PlaywrightTestConfig = {
+   *   globalSetup: './global-setup',
+   * };
+   * export default config;
+   * ```
+   *
+   */
+  globalSetup?: string;
+
+  /**
+   * Path to the global teardown file. This file will be required and run after all the tests. It must export a single
+   * function. See also [testConfig.globalSetup](https://playwright.dev/docs/api/class-testconfig#test-config-global-setup).
+   *
+   * Learn more about [global setup and teardown](https://playwright.dev/docs/test-advanced#global-setup-and-teardown).
+   *
+   * ```ts
+   * // playwright.config.ts
+   * import { type PlaywrightTestConfig, devices } from '@playwright/test';
+   *
+   * const config: PlaywrightTestConfig = {
+   *   globalTeardown: './global-teardown',
+   * };
+   * export default config;
+   * ```
+   *
+   */
+  globalTeardown?: string;
+
+  /**
+   * Maximum time in milliseconds the whole test suite can run. Zero timeout (default) disables this behavior. Useful on CI
+   * to prevent broken setup from running too long and wasting resources. Learn more about
+   * [various timeouts](https://playwright.dev/docs/test-timeouts).
+   *
+   * ```ts
+   * // playwright.config.ts
+   * import type { PlaywrightTestConfig } from '@playwright/test';
+   *
+   * const config: PlaywrightTestConfig = {
+   *   globalTimeout: process.env.CI ? 60 * 60 * 1000 : undefined,
+   * };
+   * export default config;
+   * ```
+   *
+   */
+  globalTimeout?: number;
+
+  /**
+   * Filter to only run tests with a title matching one of the patterns. For example, passing `grep: /cart/` should only run
+   * tests with "cart" in the title. Also available in the [command line](https://playwright.dev/docs/test-cli) with the `-g` option.
+   *
+   * `grep` option is also useful for [tagging tests](https://playwright.dev/docs/test-annotations#tag-tests).
+   */
+  grep?: RegExp|Array<RegExp>;
+
+  /**
+   * Filter to only run tests with a title **not** matching one of the patterns. This is the opposite of
+   * [testConfig.grep](https://playwright.dev/docs/api/class-testconfig#test-config-grep). Also available in the
+   * [command line](https://playwright.dev/docs/test-cli) with the `--grep-invert` option.
+   *
+   * `grepInvert` option is also useful for [tagging tests](https://playwright.dev/docs/test-annotations#tag-tests).
+   */
+  grepInvert?: RegExp|Array<RegExp>;
+
+  /**
+   * The maximum number of test failures for the whole test suite run. After reaching this number, testing will stop and exit
+   * with an error. Setting to zero (default) disables this behavior.
+   *
+   * Also available in the [command line](https://playwright.dev/docs/test-cli) with the `--max-failures` and `-x` options.
+   *
+   * ```ts
+   * // playwright.config.ts
+   * import type { PlaywrightTestConfig } from '@playwright/test';
+   *
+   * const config: PlaywrightTestConfig = {
+   *   maxFailures: process.env.CI ? 1 : 0,
+   * };
+   * export default config;
+   * ```
+   *
+   */
+  maxFailures?: number;
+
+  /**
+   * Metadata that will be put directly to the test report serialized as JSON.
+   */
+  metadata?: Metadata;
+
+  /**
+   * Config name is visible in the report and during test execution, unless overridden by
+   * [testProject.name](https://playwright.dev/docs/api/class-testproject#test-project-name).
+   */
+  name?: string;
+
+  /**
+   * The output directory for files created during test execution. Defaults to `<package.json-directory>/test-results`.
+   *
+   * ```ts
+   * // playwright.config.ts
+   * import { type PlaywrightTestConfig, devices } from '@playwright/test';
    *
    * const config: PlaywrightTestConfig = {
    *   outputDir: './test-results',
@@ -844,10 +696,10 @@ interface TestConfig {
    * [testConfig.outputDir](https://playwright.dev/docs/api/class-testconfig#test-config-output-dir) is created, guaranteeing
    * that test running in parallel do not conflict. This directory can be accessed by
    * [testInfo.outputDir](https://playwright.dev/docs/api/class-testinfo#test-info-output-dir) and
-   * [testInfo.outputPath(pathSegments)](https://playwright.dev/docs/api/class-testinfo#test-info-output-path).
+   * [testInfo.outputPath(...pathSegments)](https://playwright.dev/docs/api/class-testinfo#test-info-output-path).
    *
    * Here is an example that uses
-   * [testInfo.outputPath(pathSegments)](https://playwright.dev/docs/api/class-testinfo#test-info-output-path) to create a
+   * [testInfo.outputPath(...pathSegments)](https://playwright.dev/docs/api/class-testinfo#test-info-output-path) to create a
    * temporary file.
    *
    * ```ts
@@ -862,17 +714,70 @@ interface TestConfig {
    *
    */
   outputDir?: string;
+
+  /**
+   * The base directory, relative to the config file, for snapshot files created with `toMatchSnapshot`. Defaults to
+   * [testConfig.testDir](https://playwright.dev/docs/api/class-testconfig#test-config-test-dir).
+   *
+   * The directory for each test can be accessed by
+   * [testInfo.snapshotDir](https://playwright.dev/docs/api/class-testinfo#test-info-snapshot-dir) and
+   * [testInfo.snapshotPath(...pathSegments)](https://playwright.dev/docs/api/class-testinfo#test-info-snapshot-path).
+   *
+   * This path will serve as the base directory for each test file snapshot directory. Setting `snapshotDir` to
+   * `'snapshots'`, the [testInfo.snapshotDir](https://playwright.dev/docs/api/class-testinfo#test-info-snapshot-dir) would
+   * resolve to `snapshots/a.spec.js-snapshots`.
+   */
+  snapshotDir?: string;
+
+  /**
+   * Whether to preserve test output in the
+   * [testConfig.outputDir](https://playwright.dev/docs/api/class-testconfig#test-config-output-dir). Defaults to `'always'`.
+   * - `'always'` - preserve output for all tests;
+   * - `'never'` - do not preserve output for any tests;
+   * - `'failures-only'` - only preserve output for failed tests.
+   */
+  preserveOutput?: "always"|"never"|"failures-only";
+
+  /**
+   * Playwright Test supports running multiple test projects at the same time. See [TestProject] for more information.
+   */
+  projects?: Array<TestProject>;
+
+  /**
+   * Whether to suppress stdio and stderr output from the tests.
+   */
+  quiet?: boolean;
+
   /**
    * The number of times to repeat each test, useful for debugging flaky tests.
    */
   repeatEach?: number;
+
+  /**
+   * Whether to report slow test files. Pass `null` to disable this feature.
+   *
+   * Test files that took more than `threshold` milliseconds are considered slow, and the slowest ones are reported, no more
+   * than `max` number of them. Passing zero as `max` reports all test files that exceed the threshold.
+   */
+  reportSlowTests?: null|{
+    /**
+     * The maximum number of slow test files to report. Defaults to `5`.
+     */
+    max: number;
+
+    /**
+     * Test duration in milliseconds that is considered slow. Defaults to 15 seconds.
+     */
+    threshold: number;
+  };
+
   /**
    * The maximum number of retry attempts given to failed tests. By default failing tests are not retried. Learn more about
    * [test retries](https://playwright.dev/docs/test-retries#retries).
    *
    * ```ts
    * // playwright.config.ts
-   * import { PlaywrightTestConfig } from '@playwright/test';
+   * import type { PlaywrightTestConfig } from '@playwright/test';
    *
    * const config: PlaywrightTestConfig = {
    *   retries: 2,
@@ -882,12 +787,30 @@ interface TestConfig {
    *
    */
   retries?: number;
+
+  /**
+   * Shard tests and execute only the selected shard. Specify in the one-based form like `{ total: 5, current: 2 }`.
+   *
+   * Learn more about [parallelism and sharding](https://playwright.dev/docs/test-parallel) with Playwright Test.
+   */
+  shard?: null|{
+    /**
+     * The total number of shards.
+     */
+    total: number;
+
+    /**
+     * The index of the shard to execute, one-based.
+     */
+    current: number;
+  };
+
   /**
    * Directory that will be recursively scanned for test files. Defaults to the directory of the configuration file.
    *
    * ```ts
    * // playwright.config.ts
-   * import { PlaywrightTestConfig } from '@playwright/test';
+   * import type { PlaywrightTestConfig } from '@playwright/test';
    *
    * const config: PlaywrightTestConfig = {
    *   testDir: './tests/playwright',
@@ -897,6 +820,7 @@ interface TestConfig {
    *
    */
   testDir?: string;
+
   /**
    * Files matching one of these patterns are not executed as test files. Matching is performed against the absolute file
    * path. Strings are treated as glob patterns.
@@ -905,7 +829,7 @@ interface TestConfig {
    *
    * ```ts
    * // playwright.config.ts
-   * import { PlaywrightTestConfig, devices } from '@playwright/test';
+   * import { type PlaywrightTestConfig, devices } from '@playwright/test';
    *
    * const config: PlaywrightTestConfig = {
    *   testIgnore: '**\/test-assets/**',
@@ -914,7 +838,8 @@ interface TestConfig {
    * ```
    *
    */
-  testIgnore?: string | RegExp | (string | RegExp)[];
+  testIgnore?: string|RegExp|Array<string|RegExp>;
+
   /**
    * Only the files matching one of these patterns are executed as test files. Matching is performed against the absolute
    * file path. Strings are treated as glob patterns.
@@ -923,7 +848,7 @@ interface TestConfig {
    *
    * ```ts
    * // playwright.config.ts
-   * import { PlaywrightTestConfig, devices } from '@playwright/test';
+   * import { type PlaywrightTestConfig, devices } from '@playwright/test';
    *
    * const config: PlaywrightTestConfig = {
    *   testMatch: /.*\.e2e\.js/,
@@ -932,7 +857,8 @@ interface TestConfig {
    * ```
    *
    */
-  testMatch?: string | RegExp | (string | RegExp)[];
+  testMatch?: string|RegExp|Array<string|RegExp>;
+
   /**
    * Timeout for each test in milliseconds. Defaults to 30 seconds.
    *
@@ -942,7 +868,7 @@ interface TestConfig {
    *
    * ```ts
    * // playwright.config.ts
-   * import { PlaywrightTestConfig } from '@playwright/test';
+   * import type { PlaywrightTestConfig } from '@playwright/test';
    *
    * const config: PlaywrightTestConfig = {
    *   timeout: 5 * 60 * 1000,
@@ -952,7 +878,39 @@ interface TestConfig {
    *
    */
   timeout?: number;
-}
+
+  /**
+   * Whether to update expected snapshots with the actual results produced by the test run. Defaults to `'missing'`.
+   * - `'all'` - All tests that are executed will update snapshots.
+   * - `'none'` - No snapshots are updated.
+   * - `'missing'` - Missing snapshots are created, for example when authoring a new test and running it for the first
+   *   time. This is the default.
+   *
+   * Learn more about [snapshots](https://playwright.dev/docs/test-snapshots).
+   */
+  updateSnapshots?: "all"|"none"|"missing";
+
+  /**
+   * The maximum number of concurrent worker processes to use for parallelizing tests.
+   *
+   * Playwright Test uses worker processes to run tests. There is always at least one worker process, but more can be used to
+   * speed up test execution.
+   *
+   * Defaults to one half of the number of CPU cores. Learn more about [parallelism and sharding](https://playwright.dev/docs/test-parallel) with
+   * Playwright Test.
+   *
+   * ```ts
+   * // playwright.config.ts
+   * import type { PlaywrightTestConfig } from '@playwright/test';
+   *
+   * const config: PlaywrightTestConfig = {
+   *   workers: 3,
+   * };
+   * export default config;
+   * ```
+   *
+   */
+  workers?: number;}
 
 /**
  * Playwright Test provides many options to configure how your tests are collected and executed, for example `timeout` or
@@ -964,7 +922,7 @@ interface TestConfig {
  *
  * ```ts
  * // playwright.config.ts
- * import { PlaywrightTestConfig } from '@playwright/test';
+ * import type { PlaywrightTestConfig } from '@playwright/test';
  *
  * const config: PlaywrightTestConfig = {
  *   timeout: 30000,
@@ -988,7 +946,7 @@ export interface Config<TestArgs = {}, WorkerArgs = {}> extends TestConfig {
    *
    * ```ts
    * // playwright.config.ts
-   * import { PlaywrightTestConfig } from '@playwright/test';
+   * import type { PlaywrightTestConfig } from '@playwright/test';
    *
    * const config: PlaywrightTestConfig = {
    *   use: {
@@ -1002,6 +960,8 @@ export interface Config<TestArgs = {}, WorkerArgs = {}> extends TestConfig {
   use?: UseOptions<TestArgs, WorkerArgs>;
 }
 
+export type Metadata = { [key: string]: any };
+
 /**
  * Playwright Test provides many options to configure how your tests are collected and executed, for example `timeout` or
  * `testDir`. These options are described in the [TestConfig] object in the [configuration file](https://playwright.dev/docs/test-configuration).
@@ -1012,7 +972,7 @@ export interface Config<TestArgs = {}, WorkerArgs = {}> extends TestConfig {
  *
  * ```ts
  * // playwright.config.ts
- * import { PlaywrightTestConfig } from '@playwright/test';
+ * import type { PlaywrightTestConfig } from '@playwright/test';
  *
  * const config: PlaywrightTestConfig = {
  *   timeout: 30000,
@@ -1032,7 +992,7 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    *
    * ```ts
    * // playwright.config.ts
-   * import { PlaywrightTestConfig } from '@playwright/test';
+   * import type { PlaywrightTestConfig } from '@playwright/test';
    *
    * const config: PlaywrightTestConfig = {
    *   forbidOnly: !!process.env.CI,
@@ -1058,7 +1018,7 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    *
    * ```ts
    * // playwright.config.ts
-   * import { PlaywrightTestConfig, devices } from '@playwright/test';
+   * import { type PlaywrightTestConfig, devices } from '@playwright/test';
    *
    * const config: PlaywrightTestConfig = {
    *   globalSetup: './global-setup',
@@ -1076,7 +1036,7 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    *
    * ```ts
    * // playwright.config.ts
-   * import { PlaywrightTestConfig, devices } from '@playwright/test';
+   * import { type PlaywrightTestConfig, devices } from '@playwright/test';
    *
    * const config: PlaywrightTestConfig = {
    *   globalTeardown: './global-teardown',
@@ -1093,7 +1053,7 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    *
    * ```ts
    * // playwright.config.ts
-   * import { PlaywrightTestConfig } from '@playwright/test';
+   * import type { PlaywrightTestConfig } from '@playwright/test';
    *
    * const config: PlaywrightTestConfig = {
    *   globalTimeout: process.env.CI ? 60 * 60 * 1000 : undefined,
@@ -1126,7 +1086,7 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    *
    * ```ts
    * // playwright.config.ts
-   * import { PlaywrightTestConfig } from '@playwright/test';
+   * import type { PlaywrightTestConfig } from '@playwright/test';
    *
    * const config: PlaywrightTestConfig = {
    *   maxFailures: process.env.CI ? 1 : 0,
@@ -1136,6 +1096,10 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    *
    */
   maxFailures: number;
+  /**
+   * Metadata that will be put directly to the test report serialized as JSON.
+   */
+  metadata: Metadata;
   version: string;
   /**
    * Whether to preserve test output in the
@@ -1144,7 +1108,7 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    * - `'never'` - do not preserve output for any tests;
    * - `'failures-only'` - only preserve output for failed tests.
    */
-  preserveOutput: PreserveOutput;
+  preserveOutput: 'always' | 'never' | 'failures-only';
   /**
    * Playwright Test supports running multiple test projects at the same time. See [TestProject] for more information.
    */
@@ -1161,7 +1125,7 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    *
    * ```ts
    * // playwright.config.ts
-   * import { PlaywrightTestConfig } from '@playwright/test';
+   * import type { PlaywrightTestConfig } from '@playwright/test';
    *
    * const config: PlaywrightTestConfig = {
    *   reporter: 'line',
@@ -1177,7 +1141,7 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    * Test files that took more than `threshold` milliseconds are considered slow, and the slowest ones are reported, no more
    * than `max` number of them. Passing zero as `max` reports all test files that exceed the threshold.
    */
-  reportSlowTests: ReportSlowTests;
+  reportSlowTests: { max: number, threshold: number } | null;
   rootDir: string;
   /**
    * Whether to suppress stdio and stderr output from the tests.
@@ -1188,7 +1152,7 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    *
    * Learn more about [parallelism and sharding](https://playwright.dev/docs/test-parallel) with Playwright Test.
    */
-  shard: Shard;
+  shard: { total: number, current: number } | null;
   /**
    * Whether to update expected snapshots with the actual results produced by the test run. Defaults to `'missing'`.
    * - `'all'` - All tests that are executed will update snapshots.
@@ -1198,7 +1162,7 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    *
    * Learn more about [snapshots](https://playwright.dev/docs/test-snapshots).
    */
-  updateSnapshots: UpdateSnapshots;
+  updateSnapshots: 'all' | 'none' | 'missing';
   /**
    * The maximum number of concurrent worker processes to use for parallelizing tests.
    *
@@ -1210,7 +1174,7 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    *
    * ```ts
    * // playwright.config.ts
-   * import { PlaywrightTestConfig } from '@playwright/test';
+   * import type { PlaywrightTestConfig } from '@playwright/test';
    *
    * const config: PlaywrightTestConfig = {
    *   workers: 3,
@@ -1239,7 +1203,7 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    *
    * ```ts
    * // playwright.config.ts
-   * import { PlaywrightTestConfig } from '@playwright/test';
+   * import type { PlaywrightTestConfig } from '@playwright/test';
    * const config: PlaywrightTestConfig = {
    *   webServer: {
    *     command: 'npm run start',
@@ -1267,28 +1231,10 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    * ```
    *
    */
-  webServer: WebServerConfig | null;
+  webServer: TestConfigWebServer | null;
 }
 
 export type TestStatus = 'passed' | 'failed' | 'timedOut' | 'skipped';
-
-/**
- * Information about an error thrown during test execution.
- */
-export interface TestError {
-  /**
-   * Error message. Set when [Error] (or its subclass) has been thrown.
-   */
-  message?: string;
-  /**
-   * Error stack. Set when [Error] (or its subclass) has been thrown.
-   */
-  stack?: string;
-  /**
-   * The value that was thrown. Set when anything except the [Error] (or its subclass) has been thrown.
-   */
-  value?: string;
-}
 
 /**
  * `WorkerInfo` contains information about the worker that is running tests. It is available to
@@ -1311,6 +1257,10 @@ export interface WorkerInfo {
    */
   config: FullConfig;
   /**
+   * Processed project configuration from the [configuration file](https://playwright.dev/docs/test-configuration).
+   */
+  project: FullProject;
+  /**
    * The index of the worker between `0` and `workers - 1`. It is guaranteed that workers running at the same time have a
    * different `parallelIndex`. When a worker is restarted, for example after a failure, the new worker process has the same
    * `parallelIndex`.
@@ -1319,10 +1269,7 @@ export interface WorkerInfo {
    * with Playwright Test.
    */
   parallelIndex: number;
-  /**
-   * Processed project configuration from the [configuration file](https://playwright.dev/docs/test-configuration).
-   */
-  project: FullProject;
+
   /**
    * The unique index of the worker process that is running the test. When a worker is restarted, for example after a
    * failure, the new worker process gets a new unique `workerIndex`.
@@ -1330,8 +1277,7 @@ export interface WorkerInfo {
    * Also available as `process.env.TEST_WORKER_INDEX`. Learn more about [parallelism and sharding](https://playwright.dev/docs/test-parallel) with
    * Playwright Test.
    */
-  workerIndex: number;
-}
+  workerIndex: number;}
 
 /**
  * `TestInfo` contains information about currently running test. It is available to any test function,
@@ -1356,196 +1302,9 @@ export interface TestInfo {
    */
   config: FullConfig;
   /**
-   * The index of the worker between `0` and `workers - 1`. It is guaranteed that workers running at the same time have a
-   * different `parallelIndex`. When a worker is restarted, for example after a failure, the new worker process has the same
-   * `parallelIndex`.
-   *
-   * Also available as `process.env.TEST_PARALLEL_INDEX`. Learn more about [parallelism and sharding](https://playwright.dev/docs/test-parallel)
-   * with Playwright Test.
-   */
-  parallelIndex: number;
-  /**
    * Processed project configuration from the [configuration file](https://playwright.dev/docs/test-configuration).
    */
   project: FullProject;
-  /**
-   * The unique index of the worker process that is running the test. When a worker is restarted, for example after a
-   * failure, the new worker process gets a new unique `workerIndex`.
-   *
-   * Also available as `process.env.TEST_WORKER_INDEX`. Learn more about [parallelism and sharding](https://playwright.dev/docs/test-parallel) with
-   * Playwright Test.
-   */
-  workerIndex: number;
-
-  /**
-   * The title of the currently running test as passed to `test(title, testFunction)`.
-   */
-  title: string;
-  /**
-   * The full title path starting with the project.
-   */
-  titlePath: string[];
-  /**
-   * Absolute path to a file where the currently running test is declared.
-   */
-  file: string;
-  /**
-   * Line number where the currently running test is declared.
-   */
-  line: number;
-  /**
-   * Column number where the currently running test is declared.
-   */
-  column: number;
-  /**
-   * Test function as passed to `test(title, testFunction)`.
-   */
-  fn: Function;
-
-  /**
-   * Skips the currently running test. This is similar to
-   * [test.skip()](https://playwright.dev/docs/api/class-test#test-skip-2).
-   * @param condition Optional condition - the test is skipped when the condition is `true`.
-   * @param description Optional description that will be reflected in a test report.
-   */
-  skip(): void;
-  /**
-   * Skips the currently running test. This is similar to
-   * [test.skip()](https://playwright.dev/docs/api/class-test#test-skip-2).
-   * @param condition Optional condition - the test is skipped when the condition is `true`.
-   * @param description Optional description that will be reflected in a test report.
-   */
-  skip(condition: boolean): void;
-  /**
-   * Skips the currently running test. This is similar to
-   * [test.skip()](https://playwright.dev/docs/api/class-test#test-skip-2).
-   * @param condition Optional condition - the test is skipped when the condition is `true`.
-   * @param description Optional description that will be reflected in a test report.
-   */
-  skip(condition: boolean, description: string): void;
-
-  /**
-   * Marks the currently running test as "fixme". The test will be skipped, but the intention is to fix it. This is similar
-   * to [test.fixme()](https://playwright.dev/docs/api/class-test#test-fixme-2).
-   * @param condition Optional condition - the test is marked as "fixme" when the condition is `true`.
-   * @param description Optional description that will be reflected in a test report.
-   */
-  fixme(): void;
-  /**
-   * Marks the currently running test as "fixme". The test will be skipped, but the intention is to fix it. This is similar
-   * to [test.fixme()](https://playwright.dev/docs/api/class-test#test-fixme-2).
-   * @param condition Optional condition - the test is marked as "fixme" when the condition is `true`.
-   * @param description Optional description that will be reflected in a test report.
-   */
-  fixme(condition: boolean): void;
-  /**
-   * Marks the currently running test as "fixme". The test will be skipped, but the intention is to fix it. This is similar
-   * to [test.fixme()](https://playwright.dev/docs/api/class-test#test-fixme-2).
-   * @param condition Optional condition - the test is marked as "fixme" when the condition is `true`.
-   * @param description Optional description that will be reflected in a test report.
-   */
-  fixme(condition: boolean, description: string): void;
-
-  /**
-   * Marks the currently running test as "should fail". Playwright Test ensures that this test is actually failing. This is
-   * similar to [test.fail([condition, description])](https://playwright.dev/docs/api/class-test#test-fail).
-   * @param condition Optional condition - the test is marked as "should fail" when the condition is `true`.
-   * @param description Optional description that will be reflected in a test report.
-   */
-  fail(): void;
-  /**
-   * Marks the currently running test as "should fail". Playwright Test ensures that this test is actually failing. This is
-   * similar to [test.fail([condition, description])](https://playwright.dev/docs/api/class-test#test-fail).
-   * @param condition Optional condition - the test is marked as "should fail" when the condition is `true`.
-   * @param description Optional description that will be reflected in a test report.
-   */
-  fail(condition: boolean): void;
-  /**
-   * Marks the currently running test as "should fail". Playwright Test ensures that this test is actually failing. This is
-   * similar to [test.fail([condition, description])](https://playwright.dev/docs/api/class-test#test-fail).
-   * @param condition Optional condition - the test is marked as "should fail" when the condition is `true`.
-   * @param description Optional description that will be reflected in a test report.
-   */
-  fail(condition: boolean, description: string): void;
-
-  /**
-   * Marks the currently running test as "slow", giving it triple the default timeout. This is similar to
-   * [test.slow([condition, description])](https://playwright.dev/docs/api/class-test#test-slow).
-   * @param condition Optional condition - the test is marked as "slow" when the condition is `true`.
-   * @param description Optional description that will be reflected in a test report.
-   */
-  slow(): void;
-  /**
-   * Marks the currently running test as "slow", giving it triple the default timeout. This is similar to
-   * [test.slow([condition, description])](https://playwright.dev/docs/api/class-test#test-slow).
-   * @param condition Optional condition - the test is marked as "slow" when the condition is `true`.
-   * @param description Optional description that will be reflected in a test report.
-   */
-  slow(condition: boolean): void;
-  /**
-   * Marks the currently running test as "slow", giving it triple the default timeout. This is similar to
-   * [test.slow([condition, description])](https://playwright.dev/docs/api/class-test#test-slow).
-   * @param condition Optional condition - the test is marked as "slow" when the condition is `true`.
-   * @param description Optional description that will be reflected in a test report.
-   */
-  slow(condition: boolean, description: string): void;
-
-  /**
-   * Changes the timeout for the currently running test. Zero means no timeout. Learn more about
-   * [various timeouts](https://playwright.dev/docs/test-timeouts).
-   *
-   * Timeout is usually specified in the [configuration file](https://playwright.dev/docs/test-configuration), but it could be useful to change the
-   * timeout in certain scenarios:
-   *
-   * ```ts
-   * import { test, expect } from '@playwright/test';
-   *
-   * test.beforeEach(async ({ page }, testInfo) => {
-   *   // Extend timeout for all tests running this hook by 30 seconds.
-   *   testInfo.setTimeout(testInfo.timeout + 30000);
-   * });
-   * ```
-   *
-   * @param timeout Timeout in milliseconds.
-   */
-  setTimeout(timeout: number): void;
-  /**
-   * Expected status for the currently running test. This is usually `'passed'`, except for a few cases:
-   * - `'skipped'` for skipped tests, e.g. with [test.skip()](https://playwright.dev/docs/api/class-test#test-skip-2);
-   * - `'failed'` for tests marked as failed with
-   *   [test.fail([condition, description])](https://playwright.dev/docs/api/class-test#test-fail).
-   *
-   * Expected status is usually compared with the actual
-   * [testInfo.status](https://playwright.dev/docs/api/class-testinfo#test-info-status):
-   *
-   * ```ts
-   * import { test, expect } from '@playwright/test';
-   *
-   * test.afterEach(async ({}, testInfo) => {
-   *   if (testInfo.status !== testInfo.expectedStatus)
-   *     console.log(`${testInfo.title} did not run as expected!`);
-   * });
-   * ```
-   *
-   */
-  expectedStatus: TestStatus;
-  /**
-   * Timeout in milliseconds for the currently running test. Zero means no timeout. Learn more about
-   * [various timeouts](https://playwright.dev/docs/test-timeouts).
-   *
-   * Timeout is usually specified in the [configuration file](https://playwright.dev/docs/test-configuration)
-   *
-   * ```ts
-   * import { test, expect } from '@playwright/test';
-   *
-   * test.beforeEach(async ({ page }, testInfo) => {
-   *   // Extend timeout for all tests running this hook by 30 seconds.
-   *   testInfo.setTimeout(testInfo.timeout + 30000);
-   * });
-   * ```
-   *
-   */
-  timeout: number;
   /**
    * The list of annotations applicable to the current test. Includes annotations from the test, annotations from all
    * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) groups the test belongs to
@@ -1553,7 +1312,18 @@ export interface TestInfo {
    *
    * Learn more about [test annotations](https://playwright.dev/docs/test-annotations).
    */
-  annotations: { type: string, description?: string }[];
+  annotations: Array<{
+    /**
+     * Annotation type, for example `'skip'` or `'fail'`.
+     */
+    type: string;
+
+    /**
+     * Optional description.
+     */
+    description?: string;
+  }>;
+
   /**
    * The list of files or buffers attached to the current test. Some reporters show test attachments.
    *
@@ -1561,7 +1331,28 @@ export interface TestInfo {
    * [testInfo.attach(name[, options])](https://playwright.dev/docs/api/class-testinfo#test-info-attach) instead of directly
    * pushing onto this array.
    */
-  attachments: { name: string, path?: string, body?: Buffer, contentType: string }[];
+  attachments: Array<{
+    /**
+     * Attachment name.
+     */
+    name: string;
+
+    /**
+     * Content type of this attachment to properly present in the report, for example `'application/json'` or `'image/png'`.
+     */
+    contentType: string;
+
+    /**
+     * Optional path on the filesystem to the attached file.
+     */
+    path?: string;
+
+    /**
+     * Optional attachment body used instead of a file.
+     */
+    body?: Buffer;
+  }>;
+
   /**
    * Attach a value or a file from disk to the current test. Some reporters show test attachments. Either `path` or `body`
    * must be specified, but not both.
@@ -1593,15 +1384,166 @@ export interface TestInfo {
    * > NOTE: [testInfo.attach(name[, options])](https://playwright.dev/docs/api/class-testinfo#test-info-attach)
    * automatically takes care of copying attached files to a location that is accessible to reporters. You can safely remove
    * the attachment after awaiting the attach call.
-   * @param name
+   * @param name Attachment name.
    * @param options
    */
-  attach(name: string, options?: { contentType?: string, path?: string, body?: string | Buffer }): Promise<void>;
+  attach(name: string, options?: {
+    /**
+     * Attachment body. Mutually exclusive with `path`.
+     */
+    body?: string|Buffer;
+
+    /**
+     * Content type of this attachment to properly present in the report, for example `'application/json'` or `'image/png'`. If
+     * omitted, content type is inferred based on the `path`, or defaults to `text/plain` for [string] attachments and
+     * `application/octet-stream` for [Buffer] attachments.
+     */
+    contentType?: string;
+
+    /**
+     * Path on the filesystem to the attached file. Mutually exclusive with `body`.
+     */
+    path?: string;
+  }): Promise<void>;
+
+  /**
+   * Column number where the currently running test is declared.
+   */
+  column: number;
+
+  /**
+   * The number of milliseconds the test took to finish. Always zero before the test finishes, either successfully or not.
+   * Can be used in [test.afterEach(hookFunction)](https://playwright.dev/docs/api/class-test#test-after-each) hook.
+   */
+  duration: number;
+
+  /**
+   * First error thrown during test execution, if any. This is equal to the first element in
+   * [testInfo.errors](https://playwright.dev/docs/api/class-testinfo#test-info-errors).
+   */
+  error?: TestError;
+
+  /**
+   * Errors thrown during test execution, if any.
+   */
+  errors: Array<TestError>;
+
+  /**
+   * Expected status for the currently running test. This is usually `'passed'`, except for a few cases:
+   * - `'skipped'` for skipped tests, e.g. with [test.skip()](https://playwright.dev/docs/api/class-test#test-skip-2);
+   * - `'failed'` for tests marked as failed with [test.fail()](https://playwright.dev/docs/api/class-test#test-fail-1).
+   *
+   * Expected status is usually compared with the actual
+   * [testInfo.status](https://playwright.dev/docs/api/class-testinfo#test-info-status):
+   *
+   * ```ts
+   * import { test, expect } from '@playwright/test';
+   *
+   * test.afterEach(async ({}, testInfo) => {
+   *   if (testInfo.status !== testInfo.expectedStatus)
+   *     console.log(`${testInfo.title} did not run as expected!`);
+   * });
+   * ```
+   *
+   */
+  expectedStatus: "passed"|"failed"|"timedOut"|"skipped";
+
+  /**
+   * Marks the currently running test as "should fail". Playwright Test runs this test and ensures that it is actually
+   * failing. This is useful for documentation purposes to acknowledge that some functionality is broken until it is fixed.
+   * This is similar to [test.fail()](https://playwright.dev/docs/api/class-test#test-fail-1).
+   */
+  fail(): void;
+
+  /**
+   * Conditionally mark the currently running test as "should fail" with an optional description. This is similar to
+   * [test.fail(condition[, description])](https://playwright.dev/docs/api/class-test#test-fail-2).
+   * @param condition Test is marked as "should fail" when the condition is `true`.
+   * @param description Optional description that will be reflected in a test report.
+   */
+  fail(condition: boolean, description?: string): void;
+
+  /**
+   * Absolute path to a file where the currently running test is declared.
+   */
+  file: string;
+
+  /**
+   * Mark a test as "fixme", with the intention to fix it. Test is immediately aborted. This is similar to
+   * [test.fixme()](https://playwright.dev/docs/api/class-test#test-fixme-2).
+   */
+  fixme(): void;
+
+  /**
+   * Conditionally mark the currently running test as "fixme" with an optional description. This is similar to
+   * [test.fixme(condition[, description])](https://playwright.dev/docs/api/class-test#test-fixme-3).
+   * @param condition Test is marked as "fixme" when the condition is `true`.
+   * @param description Optional description that will be reflected in a test report.
+   */
+  fixme(condition: boolean, description?: string): void;
+
+  /**
+   * Test function as passed to `test(title, testFunction)`.
+   */
+  fn: Function;
+
+  /**
+   * Line number where the currently running test is declared.
+   */
+  line: number;
+
+  /**
+   * Absolute path to the snapshot output directory for this specific test. Each test suite gets its own directory so they
+   * cannot conflict.
+   */
+  snapshotDir: string;
+
+  /**
+   * Absolute path to the output directory for this specific test run. Each test run gets its own directory so they cannot
+   * conflict.
+   */
+  outputDir: string;
+
+  /**
+   * Returns a path inside the [testInfo.outputDir](https://playwright.dev/docs/api/class-testinfo#test-info-output-dir)
+   * where the test can safely put a temporary file. Guarantees that tests running in parallel will not interfere with each
+   * other.
+   *
+   * ```ts
+   * import { test, expect } from '@playwright/test';
+   * import fs from 'fs';
+   *
+   * test('example test', async ({}, testInfo) => {
+   *   const file = testInfo.outputPath('dir', 'temporary-file.txt');
+   *   await fs.promises.writeFile(file, 'Put some data to the dir/temporary-file.txt', 'utf8');
+   * });
+   * ```
+   *
+   * > Note that `pathSegments` accepts path segments to the test output directory such as `testInfo.outputPath('relative',
+   * 'path', 'to', 'output')`.
+   * > However, this path must stay within the
+   * [testInfo.outputDir](https://playwright.dev/docs/api/class-testinfo#test-info-output-dir) directory for each test (i.e.
+   * `test-results/a-test-title`), otherwise it will throw.
+   * @param pathSegments Path segments to append at the end of the resulting path.
+   */
+  outputPath(...pathSegments: Array<string>): string;
+
+  /**
+   * The index of the worker between `0` and `workers - 1`. It is guaranteed that workers running at the same time have a
+   * different `parallelIndex`. When a worker is restarted, for example after a failure, the new worker process has the same
+   * `parallelIndex`.
+   *
+   * Also available as `process.env.TEST_PARALLEL_INDEX`. Learn more about [parallelism and sharding](https://playwright.dev/docs/test-parallel)
+   * with Playwright Test.
+   */
+  parallelIndex: number;
+
   /**
    * Specifies a unique repeat index when running in "repeat each" mode. This mode is enabled by passing `--repeat-each` to
    * the [command line](https://playwright.dev/docs/test-cli).
    */
   repeatEachIndex: number;
+
   /**
    * Specifies the retry number when the test is retried after a failure. The first test run has
    * [testInfo.retry](https://playwright.dev/docs/api/class-testinfo#test-info-retry) equal to zero, the first retry has it
@@ -1626,11 +1568,75 @@ export interface TestInfo {
    *
    */
   retry: number;
+
   /**
-   * The number of milliseconds the test took to finish. Always zero before the test finishes, either successfully or not.
-   * Can be used in [test.afterEach(hookFunction)](https://playwright.dev/docs/api/class-test#test-after-each) hook.
+   * Changes the timeout for the currently running test. Zero means no timeout. Learn more about
+   * [various timeouts](https://playwright.dev/docs/test-timeouts).
+   *
+   * Timeout is usually specified in the [configuration file](https://playwright.dev/docs/test-configuration), but it could be useful to change the
+   * timeout in certain scenarios:
+   *
+   * ```ts
+   * import { test, expect } from '@playwright/test';
+   *
+   * test.beforeEach(async ({ page }, testInfo) => {
+   *   // Extend timeout for all tests running this hook by 30 seconds.
+   *   testInfo.setTimeout(testInfo.timeout + 30000);
+   * });
+   * ```
+   *
+   * @param timeout Timeout in milliseconds.
    */
-  duration: number;
+  setTimeout(timeout: number): void;
+
+  /**
+   * Unconditionally skip the currently running test. Test is immediately aborted. This is similar to
+   * [test.skip()](https://playwright.dev/docs/api/class-test#test-skip-2).
+   */
+  skip(): void;
+
+  /**
+   * Conditionally skips the currently running test with an optional description. This is similar to
+   * [test.skip(condition[, description])](https://playwright.dev/docs/api/class-test#test-skip-3).
+   * @param condition A skip condition. Test is skipped when the condition is `true`.
+   * @param description Optional description that will be reflected in a test report.
+   */
+  skip(condition: boolean, description?: string): void;
+
+  /**
+   * Marks the currently running test as "slow", giving it triple the default timeout. This is similar to
+   * [test.slow()](https://playwright.dev/docs/api/class-test#test-slow-1).
+   */
+  slow(): void;
+
+  /**
+   * Conditionally mark the currently running test as "slow" with an optional description, giving it triple the default
+   * timeout. This is similar to
+   * [test.slow(condition[, description])](https://playwright.dev/docs/api/class-test#test-slow-2).
+   * @param condition Test is marked as "slow" when the condition is `true`.
+   * @param description Optional description that will be reflected in a test report.
+   */
+  slow(condition: boolean, description?: string): void;
+
+  /**
+   * Returns a path to a snapshot file with the given `pathSegments`. Learn more about [snapshots](https://playwright.dev/docs/test-snapshots).
+   *
+   * > Note that `pathSegments` accepts path segments to the snapshot file such as `testInfo.snapshotPath('relative', 'path',
+   * 'to', 'snapshot.png')`.
+   * > However, this path must stay within the snapshots directory for each test file (i.e. `a.spec.js-snapshots`), otherwise
+   * it will throw.
+   * @param pathSegments The name of the snapshot or the path segments to define the snapshot file path. Snapshots with the same name in the same test file are expected to be the same.
+   */
+  snapshotPath(...pathSegments: Array<string>): string;
+
+  /**
+   * Suffix used to differentiate snapshots between multiple test configurations. For example, if snapshots depend on the
+   * platform, you can set `testInfo.snapshotSuffix` equal to `process.platform`. In this case
+   * `expect(value).toMatchSnapshot(snapshotName)` will use different snapshots depending on the platform. Learn more about
+   * [snapshots](https://playwright.dev/docs/test-snapshots).
+   */
+  snapshotSuffix: string;
+
   /**
    * Actual status for the currently running test. Available after the test has finished in
    * [test.afterEach(hookFunction)](https://playwright.dev/docs/api/class-test#test-after-each) hook and fixtures.
@@ -1648,75 +1654,54 @@ export interface TestInfo {
    * ```
    *
    */
-  status?: TestStatus;
-  /**
-   * First error thrown during test execution, if any. This is equal to the first element in
-   * [testInfo.errors](https://playwright.dev/docs/api/class-testinfo#test-info-errors).
-   */
-  error?: TestError;
-  /**
-   * Errors thrown during test execution, if any.
-   */
-  errors: TestError[];
-  /**
-   * Output written to `process.stdout` or `console.log` during the test execution.
-   */
-  stdout: (string | Buffer)[];
+  status?: "passed"|"failed"|"timedOut"|"skipped";
+
   /**
    * Output written to `process.stderr` or `console.error` during the test execution.
    */
-  stderr: (string | Buffer)[];
+  stderr: Array<string|Buffer>;
+
   /**
-   * Suffix used to differentiate snapshots between multiple test configurations. For example, if snapshots depend on the
-   * platform, you can set `testInfo.snapshotSuffix` equal to `process.platform`. In this case
-   * `expect(value).toMatchSnapshot(snapshotName)` will use different snapshots depending on the platform. Learn more about
-   * [snapshots](https://playwright.dev/docs/test-snapshots).
+   * Output written to `process.stdout` or `console.log` during the test execution.
    */
-  snapshotSuffix: string;
+  stdout: Array<string|Buffer>;
+
   /**
-   * Absolute path to the snapshot output directory for this specific test. Each test suite gets its own directory so they
-   * cannot conflict.
-   */
-  snapshotDir: string;
-  /**
-   * Absolute path to the output directory for this specific test run. Each test run gets its own directory so they cannot
-   * conflict.
-   */
-  outputDir: string;
-  /**
-   * Returns a path to a snapshot file with the given `pathSegments`. Learn more about [snapshots](https://playwright.dev/docs/test-snapshots).
+   * Timeout in milliseconds for the currently running test. Zero means no timeout. Learn more about
+   * [various timeouts](https://playwright.dev/docs/test-timeouts).
    *
-   * > Note that `pathSegments` accepts path segments to the snapshot file such as `testInfo.snapshotPath('relative', 'path',
-   * 'to', 'snapshot.png')`.
-   * > However, this path must stay within the snapshots directory for each test file (i.e. `a.spec.js-snapshots`), otherwise
-   * it will throw.
-   * @param pathSegments The name of the snapshot or the path segments to define the snapshot file path. Snapshots with the same name in the same test file are expected to be the same.
-   */
-  snapshotPath: (...pathSegments: string[]) => string;
-  /**
-   * Returns a path inside the [testInfo.outputDir](https://playwright.dev/docs/api/class-testinfo#test-info-output-dir)
-   * where the test can safely put a temporary file. Guarantees that tests running in parallel will not interfere with each
-   * other.
+   * Timeout is usually specified in the [configuration file](https://playwright.dev/docs/test-configuration)
    *
    * ```ts
    * import { test, expect } from '@playwright/test';
-   * import fs from 'fs';
    *
-   * test('example test', async ({}, testInfo) => {
-   *   const file = testInfo.outputPath('dir', 'temporary-file.txt');
-   *   await fs.promises.writeFile(file, 'Put some data to the dir/temporary-file.txt', 'utf8');
+   * test.beforeEach(async ({ page }, testInfo) => {
+   *   // Extend timeout for all tests running this hook by 30 seconds.
+   *   testInfo.setTimeout(testInfo.timeout + 30000);
    * });
    * ```
    *
-   * > Note that `pathSegments` accepts path segments to the test output directory such as `testInfo.outputPath('relative',
-   * 'path', 'to', 'output')`.
-   * > However, this path must stay within the
-   * [testInfo.outputDir](https://playwright.dev/docs/api/class-testinfo#test-info-output-dir) directory for each test (i.e.
-   * `test-results/a-test-title`), otherwise it will throw.
-   * @param pathSegments Path segments to append at the end of the resulting path.
    */
-  outputPath: (...pathSegments: string[]) => string;
-}
+  timeout: number;
+
+  /**
+   * The title of the currently running test as passed to `test(title, testFunction)`.
+   */
+  title: string;
+
+  /**
+   * The full title path starting with the project.
+   */
+  titlePath: Array<string>;
+
+  /**
+   * The unique index of the worker process that is running the test. When a worker is restarted, for example after a
+   * failure, the new worker process gets a new unique `workerIndex`.
+   *
+   * Also available as `process.env.TEST_WORKER_INDEX`. Learn more about [parallelism and sharding](https://playwright.dev/docs/test-parallel) with
+   * Playwright Test.
+   */
+  workerIndex: number;}
 
 interface SuiteFunction {
   (title: string, callback: () => void): void;
@@ -1794,6 +1779,24 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * this callback will belong to the group.
    */
   only: SuiteFunction;
+    /**
+   * Declares a skipped test group, similarly to
+   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe). Tests in the skipped group
+   * are never run.
+   *
+   * ```ts
+   * test.describe.skip('skipped group', () => {
+   *   test('example', async ({ page }) => {
+   *     // This test will not run
+   *   });
+   * });
+   * ```
+   *
+   * @param title Group title.
+   * @param callback A callback that is run immediately when calling [test.describe.skip(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-skip). Any tests added in
+   * this callback will belong to the group, and will not be run.
+   */
+  skip: SuiteFunction;
     /**
    * Declares a group of tests that should always be run serially. If one of the tests fails, all subsequent tests are
    * skipped. All tests in a group are retried together.
@@ -1968,8 +1971,8 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * });
    * ```
    *
-   * @param condition A skip condition. Test or tests are skipped when the condition is `true`.
-   * @param description An optional description that will be reflected in a test report.
+   * @param condition A skip condition. Test is skipped when the condition is `true`.
+   * @param description Optional description that will be reflected in a test report.
    */
   skip(condition: boolean, description?: string): void;
   /**
@@ -1990,7 +1993,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * ```
    *
    * @param callback A function that returns whether to skip, based on test fixtures. Test or tests are skipped when the return value is `true`.
-   * @param description An optional description that will be reflected in a test report.
+   * @param description Optional description that will be reflected in a test report.
    */
   skip(callback: (args: TestArgs & WorkerArgs) => boolean, description?: string): void;
   /**
@@ -2052,8 +2055,8 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * });
    * ```
    *
-   * @param condition Test or tests are marked as "fixme" when the condition is `true`.
-   * @param description An optional description that will be reflected in a test report.
+   * @param condition Test is marked as "fixme" when the condition is `true`.
+   * @param description Optional description that will be reflected in a test report.
    */
   fixme(condition: boolean, description?: string): void;
   /**
@@ -2074,14 +2077,12 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * ```
    *
    * @param callback A function that returns whether to mark as "fixme", based on test fixtures. Test or tests are marked as "fixme" when the return value is `true`.
-   * @param description An optional description that will be reflected in a test report.
+   * @param description Optional description that will be reflected in a test report.
    */
   fixme(callback: (args: TestArgs & WorkerArgs) => boolean, description?: string): void;
   /**
-   * Marks a test or a group of tests as "should fail". Playwright Test runs these tests and ensures that they are actually
-   * failing. This is useful for documentation purposes to acknowledge that some functionality is broken until it is fixed.
-   *
-   * Unconditional fail:
+   * Unconditonally marks a test as "should fail". Playwright Test runs this test and ensures that it is actually failing.
+   * This is useful for documentation purposes to acknowledge that some functionality is broken until it is fixed.
    *
    * ```ts
    * import { test, expect } from '@playwright/test';
@@ -2092,53 +2093,10 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * });
    * ```
    *
-   * Conditional fail a test with an optional description:
-   *
-   * ```ts
-   * import { test, expect } from '@playwright/test';
-   *
-   * test('fail in WebKit', async ({ page, browserName }) => {
-   *   test.fail(browserName === 'webkit', 'This feature is not implemented for Mac yet');
-   *   // ...
-   * });
-   * ```
-   *
-   * Conditional fail for all tests in a file or
-   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) group:
-   *
-   * ```ts
-   * import { test, expect } from '@playwright/test';
-   *
-   * test.fail(({ browserName }) => browserName === 'webkit');
-   *
-   * test('fail in WebKit 1', async ({ page }) => {
-   *   // ...
-   * });
-   * test('fail in WebKit 2', async ({ page }) => {
-   *   // ...
-   * });
-   * ```
-   *
-   * @param condition Optional condition - either a boolean value, or a function that takes a fixtures object and returns a boolean. Test or tests are marked as "should fail" when the condition is `true`.
-   * @param description Optional description that will be reflected in a test report.
    */
   fail(): void;
   /**
-   * Marks a test or a group of tests as "should fail". Playwright Test runs these tests and ensures that they are actually
-   * failing. This is useful for documentation purposes to acknowledge that some functionality is broken until it is fixed.
-   *
-   * Unconditional fail:
-   *
-   * ```ts
-   * import { test, expect } from '@playwright/test';
-   *
-   * test('not yet ready', async ({ page }) => {
-   *   test.fail();
-   *   // ...
-   * });
-   * ```
-   *
-   * Conditional fail a test with an optional description:
+   * Conditionally mark a test as "should fail" with an optional description.
    *
    * ```ts
    * import { test, expect } from '@playwright/test';
@@ -2149,8 +2107,13 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * });
    * ```
    *
-   * Conditional fail for all tests in a file or
-   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) group:
+   * @param condition Test is marked as "should fail" when the condition is `true`.
+   * @param description Optional description that will be reflected in a test report.
+   */
+  fail(condition: boolean, description?: string): void;
+  /**
+   * Conditionally mark all tests in a file or
+   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) group as "should fail".
    *
    * ```ts
    * import { test, expect } from '@playwright/test';
@@ -2165,152 +2128,12 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * });
    * ```
    *
-   * @param condition Optional condition - either a boolean value, or a function that takes a fixtures object and returns a boolean. Test or tests are marked as "should fail" when the condition is `true`.
+   * @param callback A function that returns whether to mark as "should fail", based on test fixtures. Test or tests are marked as "should fail" when the return value is `true`.
    * @param description Optional description that will be reflected in a test report.
    */
-  fail(condition: boolean): void;
+  fail(callback: (args: TestArgs & WorkerArgs) => boolean, description?: string): void;
   /**
-   * Marks a test or a group of tests as "should fail". Playwright Test runs these tests and ensures that they are actually
-   * failing. This is useful for documentation purposes to acknowledge that some functionality is broken until it is fixed.
-   *
-   * Unconditional fail:
-   *
-   * ```ts
-   * import { test, expect } from '@playwright/test';
-   *
-   * test('not yet ready', async ({ page }) => {
-   *   test.fail();
-   *   // ...
-   * });
-   * ```
-   *
-   * Conditional fail a test with an optional description:
-   *
-   * ```ts
-   * import { test, expect } from '@playwright/test';
-   *
-   * test('fail in WebKit', async ({ page, browserName }) => {
-   *   test.fail(browserName === 'webkit', 'This feature is not implemented for Mac yet');
-   *   // ...
-   * });
-   * ```
-   *
-   * Conditional fail for all tests in a file or
-   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) group:
-   *
-   * ```ts
-   * import { test, expect } from '@playwright/test';
-   *
-   * test.fail(({ browserName }) => browserName === 'webkit');
-   *
-   * test('fail in WebKit 1', async ({ page }) => {
-   *   // ...
-   * });
-   * test('fail in WebKit 2', async ({ page }) => {
-   *   // ...
-   * });
-   * ```
-   *
-   * @param condition Optional condition - either a boolean value, or a function that takes a fixtures object and returns a boolean. Test or tests are marked as "should fail" when the condition is `true`.
-   * @param description Optional description that will be reflected in a test report.
-   */
-  fail(condition: boolean, description: string): void;
-  /**
-   * Marks a test or a group of tests as "should fail". Playwright Test runs these tests and ensures that they are actually
-   * failing. This is useful for documentation purposes to acknowledge that some functionality is broken until it is fixed.
-   *
-   * Unconditional fail:
-   *
-   * ```ts
-   * import { test, expect } from '@playwright/test';
-   *
-   * test('not yet ready', async ({ page }) => {
-   *   test.fail();
-   *   // ...
-   * });
-   * ```
-   *
-   * Conditional fail a test with an optional description:
-   *
-   * ```ts
-   * import { test, expect } from '@playwright/test';
-   *
-   * test('fail in WebKit', async ({ page, browserName }) => {
-   *   test.fail(browserName === 'webkit', 'This feature is not implemented for Mac yet');
-   *   // ...
-   * });
-   * ```
-   *
-   * Conditional fail for all tests in a file or
-   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) group:
-   *
-   * ```ts
-   * import { test, expect } from '@playwright/test';
-   *
-   * test.fail(({ browserName }) => browserName === 'webkit');
-   *
-   * test('fail in WebKit 1', async ({ page }) => {
-   *   // ...
-   * });
-   * test('fail in WebKit 2', async ({ page }) => {
-   *   // ...
-   * });
-   * ```
-   *
-   * @param condition Optional condition - either a boolean value, or a function that takes a fixtures object and returns a boolean. Test or tests are marked as "should fail" when the condition is `true`.
-   * @param description Optional description that will be reflected in a test report.
-   */
-  fail(callback: (args: TestArgs & WorkerArgs) => boolean): void;
-  /**
-   * Marks a test or a group of tests as "should fail". Playwright Test runs these tests and ensures that they are actually
-   * failing. This is useful for documentation purposes to acknowledge that some functionality is broken until it is fixed.
-   *
-   * Unconditional fail:
-   *
-   * ```ts
-   * import { test, expect } from '@playwright/test';
-   *
-   * test('not yet ready', async ({ page }) => {
-   *   test.fail();
-   *   // ...
-   * });
-   * ```
-   *
-   * Conditional fail a test with an optional description:
-   *
-   * ```ts
-   * import { test, expect } from '@playwright/test';
-   *
-   * test('fail in WebKit', async ({ page, browserName }) => {
-   *   test.fail(browserName === 'webkit', 'This feature is not implemented for Mac yet');
-   *   // ...
-   * });
-   * ```
-   *
-   * Conditional fail for all tests in a file or
-   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) group:
-   *
-   * ```ts
-   * import { test, expect } from '@playwright/test';
-   *
-   * test.fail(({ browserName }) => browserName === 'webkit');
-   *
-   * test('fail in WebKit 1', async ({ page }) => {
-   *   // ...
-   * });
-   * test('fail in WebKit 2', async ({ page }) => {
-   *   // ...
-   * });
-   * ```
-   *
-   * @param condition Optional condition - either a boolean value, or a function that takes a fixtures object and returns a boolean. Test or tests are marked as "should fail" when the condition is `true`.
-   * @param description Optional description that will be reflected in a test report.
-   */
-  fail(callback: (args: TestArgs & WorkerArgs) => boolean, description: string): void;
-  /**
-   * Marks a test or a group of tests as "slow". Slow tests will be given triple the default timeout.
-   *
-   * Unconditional slow:
+   * Unconditionally marks a test as "slow". Slow test will be given triple the default timeout.
    *
    * ```ts
    * import { test, expect } from '@playwright/test';
@@ -2321,52 +2144,12 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * });
    * ```
    *
-   * Conditional slow a test with an optional description:
-   *
-   * ```ts
-   * import { test, expect } from '@playwright/test';
-   *
-   * test('slow in WebKit', async ({ page, browserName }) => {
-   *   test.slow(browserName === 'webkit', 'This feature is slow on Mac');
-   *   // ...
-   * });
-   * ```
-   *
-   * Conditional slow for all tests in a file or
-   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) group:
-   *
-   * ```ts
-   * import { test, expect } from '@playwright/test';
-   *
-   * test.slow(({ browserName }) => browserName === 'webkit');
-   *
-   * test('slow in WebKit 1', async ({ page }) => {
-   *   // ...
-   * });
-   * test('fail in WebKit 2', async ({ page }) => {
-   *   // ...
-   * });
-   * ```
-   *
-   * @param condition Optional condition - either a boolean value, or a function that takes a fixtures object and returns a boolean. Test or tests are marked as "slow" when the condition is `true`.
-   * @param description Optional description that will be reflected in a test report.
+   * > NOTE: [test.slow()](https://playwright.dev/docs/api/class-test#test-slow-1) cannot be used in a `beforeAll` or
+   * `afterAll` hook. Use [test.setTimeout(timeout)](https://playwright.dev/docs/api/class-test#test-set-timeout) instead.
    */
   slow(): void;
   /**
-   * Marks a test or a group of tests as "slow". Slow tests will be given triple the default timeout.
-   *
-   * Unconditional slow:
-   *
-   * ```ts
-   * import { test, expect } from '@playwright/test';
-   *
-   * test('slow test', async ({ page }) => {
-   *   test.slow();
-   *   // ...
-   * });
-   * ```
-   *
-   * Conditional slow a test with an optional description:
+   * Conditionally mark a test as "slow" with an optional description. Slow test will be given triple the default timeout.
    *
    * ```ts
    * import { test, expect } from '@playwright/test';
@@ -2377,8 +2160,14 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * });
    * ```
    *
-   * Conditional slow for all tests in a file or
-   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) group:
+   * @param condition Test is marked as "slow" when the condition is `true`.
+   * @param description Optional description that will be reflected in a test report.
+   */
+  slow(condition: boolean, description?: string): void;
+  /**
+   * Conditionally mark all tests in a file or
+   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) group as "slow". Slow tests
+   * will be given triple the default timeout.
    *
    * ```ts
    * import { test, expect } from '@playwright/test';
@@ -2393,147 +2182,12 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * });
    * ```
    *
-   * @param condition Optional condition - either a boolean value, or a function that takes a fixtures object and returns a boolean. Test or tests are marked as "slow" when the condition is `true`.
+   * @param callback A function that returns whether to mark as "slow", based on test fixtures. Test or tests are marked as "slow" when the return value is `true`.
    * @param description Optional description that will be reflected in a test report.
    */
-  slow(condition: boolean): void;
+  slow(callback: (args: TestArgs & WorkerArgs) => boolean, description?: string): void;
   /**
-   * Marks a test or a group of tests as "slow". Slow tests will be given triple the default timeout.
-   *
-   * Unconditional slow:
-   *
-   * ```ts
-   * import { test, expect } from '@playwright/test';
-   *
-   * test('slow test', async ({ page }) => {
-   *   test.slow();
-   *   // ...
-   * });
-   * ```
-   *
-   * Conditional slow a test with an optional description:
-   *
-   * ```ts
-   * import { test, expect } from '@playwright/test';
-   *
-   * test('slow in WebKit', async ({ page, browserName }) => {
-   *   test.slow(browserName === 'webkit', 'This feature is slow on Mac');
-   *   // ...
-   * });
-   * ```
-   *
-   * Conditional slow for all tests in a file or
-   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) group:
-   *
-   * ```ts
-   * import { test, expect } from '@playwright/test';
-   *
-   * test.slow(({ browserName }) => browserName === 'webkit');
-   *
-   * test('slow in WebKit 1', async ({ page }) => {
-   *   // ...
-   * });
-   * test('fail in WebKit 2', async ({ page }) => {
-   *   // ...
-   * });
-   * ```
-   *
-   * @param condition Optional condition - either a boolean value, or a function that takes a fixtures object and returns a boolean. Test or tests are marked as "slow" when the condition is `true`.
-   * @param description Optional description that will be reflected in a test report.
-   */
-  slow(condition: boolean, description: string): void;
-  /**
-   * Marks a test or a group of tests as "slow". Slow tests will be given triple the default timeout.
-   *
-   * Unconditional slow:
-   *
-   * ```ts
-   * import { test, expect } from '@playwright/test';
-   *
-   * test('slow test', async ({ page }) => {
-   *   test.slow();
-   *   // ...
-   * });
-   * ```
-   *
-   * Conditional slow a test with an optional description:
-   *
-   * ```ts
-   * import { test, expect } from '@playwright/test';
-   *
-   * test('slow in WebKit', async ({ page, browserName }) => {
-   *   test.slow(browserName === 'webkit', 'This feature is slow on Mac');
-   *   // ...
-   * });
-   * ```
-   *
-   * Conditional slow for all tests in a file or
-   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) group:
-   *
-   * ```ts
-   * import { test, expect } from '@playwright/test';
-   *
-   * test.slow(({ browserName }) => browserName === 'webkit');
-   *
-   * test('slow in WebKit 1', async ({ page }) => {
-   *   // ...
-   * });
-   * test('fail in WebKit 2', async ({ page }) => {
-   *   // ...
-   * });
-   * ```
-   *
-   * @param condition Optional condition - either a boolean value, or a function that takes a fixtures object and returns a boolean. Test or tests are marked as "slow" when the condition is `true`.
-   * @param description Optional description that will be reflected in a test report.
-   */
-  slow(callback: (args: TestArgs & WorkerArgs) => boolean): void;
-  /**
-   * Marks a test or a group of tests as "slow". Slow tests will be given triple the default timeout.
-   *
-   * Unconditional slow:
-   *
-   * ```ts
-   * import { test, expect } from '@playwright/test';
-   *
-   * test('slow test', async ({ page }) => {
-   *   test.slow();
-   *   // ...
-   * });
-   * ```
-   *
-   * Conditional slow a test with an optional description:
-   *
-   * ```ts
-   * import { test, expect } from '@playwright/test';
-   *
-   * test('slow in WebKit', async ({ page, browserName }) => {
-   *   test.slow(browserName === 'webkit', 'This feature is slow on Mac');
-   *   // ...
-   * });
-   * ```
-   *
-   * Conditional slow for all tests in a file or
-   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) group:
-   *
-   * ```ts
-   * import { test, expect } from '@playwright/test';
-   *
-   * test.slow(({ browserName }) => browserName === 'webkit');
-   *
-   * test('slow in WebKit 1', async ({ page }) => {
-   *   // ...
-   * });
-   * test('fail in WebKit 2', async ({ page }) => {
-   *   // ...
-   * });
-   * ```
-   *
-   * @param condition Optional condition - either a boolean value, or a function that takes a fixtures object and returns a boolean. Test or tests are marked as "slow" when the condition is `true`.
-   * @param description Optional description that will be reflected in a test report.
-   */
-  slow(callback: (args: TestArgs & WorkerArgs) => boolean, description: string): void;
-  /**
-   * Changes the timeout for the test. Learn more about [various timeouts](https://playwright.dev/docs/test-timeouts).
+   * Changes the timeout for the test. Zero means no timeout. Learn more about [various timeouts](https://playwright.dev/docs/test-timeouts).
    *
    * ```ts
    * import { test, expect } from '@playwright/test';
@@ -2544,7 +2198,8 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * });
    * ```
    *
-   * Changing timeout from a slow hook:
+   * Changing timeout from a slow `beforeEach` or `afterEach` hook. Note that this affects the test timeout that is shared
+   * with `beforeEach`/`afterEach` hooks.
    *
    * ```ts
    * import { test, expect } from '@playwright/test';
@@ -2552,6 +2207,33 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * test.beforeEach(async ({ page }, testInfo) => {
    *   // Extend timeout for all tests running this hook by 30 seconds.
    *   test.setTimeout(testInfo.timeout + 30000);
+   * });
+   * ```
+   *
+   * Changing timeout for a `beforeAll` or `afterAll` hook. Note this affects the hook's timeout, not the test timeout.
+   *
+   * ```ts
+   * import { test, expect } from '@playwright/test';
+   *
+   * test.beforeAll(async () => {
+   *   // Set timeout for this hook.
+   *   test.setTimeout(60000);
+   * });
+   * ```
+   *
+   * Changing timeout for all tests in a
+   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) group.
+   *
+   * ```ts
+   * import { test, expect } from '@playwright/test';
+   *
+   * test.describe('group', () => {
+   *   // Applies to all tests in this group.
+   *   test.setTimeout(60000);
+   *
+   *   test('test one', async () => { /* ... *\/ });
+   *   test('test two', async () => { /* ... *\/ });
+   *   test('test three', async () => { /* ... *\/ });
    * });
    * ```
    *
@@ -2762,7 +2444,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    *
    * ```ts
    * // playwright.config.ts
-   * import { PlaywrightTestConfig } from '@playwright/test';
+   * import type { PlaywrightTestConfig } from '@playwright/test';
    * import { Options } from './my-test';
    *
    * const config: PlaywrightTestConfig<Options> = {
@@ -2783,7 +2465,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * Learn more about [fixtures](https://playwright.dev/docs/test-fixtures) and [parametrizing tests](https://playwright.dev/docs/test-parameterize).
    * @param fixtures An object containing fixtures and/or options. Learn more about [fixtures format](https://playwright.dev/docs/test-fixtures).
    */
-  extend<T, W extends KeyValue = {}>(fixtures: Fixtures<T, W, TestArgs, WorkerArgs>): TestType<TestArgs & T, WorkerArgs & W>;
+  extend<T extends KeyValue, W extends KeyValue = {}>(fixtures: Fixtures<T, W, TestArgs, WorkerArgs>): TestType<TestArgs & T, WorkerArgs & W>;
   /**
    * Returns information about the currently running test. This method can only be called during the test execution,
    * otherwise it throws.
@@ -2794,16 +2476,16 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
 type KeyValue = { [key: string]: any };
 export type TestFixture<R, Args extends KeyValue> = (args: Args, use: (r: R) => Promise<void>, testInfo: TestInfo) => any;
 export type WorkerFixture<R, Args extends KeyValue> = (args: Args, use: (r: R) => Promise<void>, workerInfo: WorkerInfo) => any;
-type TestFixtureValue<R, Args> = Exclude<R, Function> | TestFixture<R, Args>;
-type WorkerFixtureValue<R, Args> = Exclude<R, Function> | WorkerFixture<R, Args>;
+type TestFixtureValue<R, Args extends KeyValue> = Exclude<R, Function> | TestFixture<R, Args>;
+type WorkerFixtureValue<R, Args extends KeyValue> = Exclude<R, Function> | WorkerFixture<R, Args>;
 export type Fixtures<T extends KeyValue = {}, W extends KeyValue = {}, PT extends KeyValue = {}, PW extends KeyValue = {}> = {
-  [K in keyof PW]?: WorkerFixtureValue<PW[K], W & PW> | [WorkerFixtureValue<PW[K], W & PW>, { scope: 'worker' }];
+  [K in keyof PW]?: WorkerFixtureValue<PW[K], W & PW> | [WorkerFixtureValue<PW[K], W & PW>, { scope: 'worker', timeout?: number | undefined }];
 } & {
-  [K in keyof PT]?: TestFixtureValue<PT[K], T & W & PT & PW> | [TestFixtureValue<PT[K], T & W & PT & PW>, { scope: 'test' }];
+  [K in keyof PT]?: TestFixtureValue<PT[K], T & W & PT & PW> | [TestFixtureValue<PT[K], T & W & PT & PW>, { scope: 'test', timeout?: number | undefined }];
 } & {
-  [K in keyof W]?: [WorkerFixtureValue<W[K], W & PW>, { scope: 'worker', auto?: boolean, option?: boolean }];
+  [K in keyof W]?: [WorkerFixtureValue<W[K], W & PW>, { scope: 'worker', auto?: boolean, option?: boolean, timeout?: number | undefined }];
 } & {
-  [K in keyof T]?: TestFixtureValue<T[K], T & W & PT & PW> | [TestFixtureValue<T[K], T & W & PT & PW>, { scope?: 'test', auto?: boolean, option?: boolean }];
+  [K in keyof T]?: TestFixtureValue<T[K], T & W & PT & PW> | [TestFixtureValue<T[K], T & W & PT & PW>, { scope?: 'test', auto?: boolean, option?: boolean, timeout?: number | undefined }];
 };
 
 type BrowserName = 'chromium' | 'firefox' | 'webkit';
@@ -2812,6 +2494,7 @@ type ColorScheme = Exclude<BrowserContextOptions['colorScheme'], undefined>;
 type ExtraHTTPHeaders = Exclude<BrowserContextOptions['extraHTTPHeaders'], undefined>;
 type Proxy = Exclude<BrowserContextOptions['proxy'], undefined>;
 type StorageState = Exclude<BrowserContextOptions['storageState'], undefined>;
+type ServiceWorkerPolicy = Exclude<BrowserContextOptions['serviceWorkers'], undefined>;
 type ConnectOptions = {
   /**
    * A browser websocket endpoint to connect to.
@@ -2822,6 +2505,11 @@ type ConnectOptions = {
    * Additional HTTP headers to be sent with web socket connect request.
    */
   headers?: { [key: string]: string; };
+
+  /**
+   * Timeout in milliseconds for the connection to be established. Optional, defaults to no timeout.
+   */
+  timeout?: number;
 };
 
 /**
@@ -2832,7 +2520,7 @@ type ConnectOptions = {
  * [testProject.use](https://playwright.dev/docs/api/class-testproject#test-project-use).
  *
  * ```ts
- * import { PlaywrightTestConfig } from '@playwright/test';
+ * import type { PlaywrightTestConfig } from '@playwright/test';
  * const config: PlaywrightTestConfig = {
  *   use: {
  *     headless: false,
@@ -2867,7 +2555,7 @@ export interface PlaywrightWorkerOptions {
    *
    * ```ts
    * // playwright.config.ts
-   * import { PlaywrightTestConfig, devices } from '@playwright/test';
+   * import { type PlaywrightTestConfig, devices } from '@playwright/test';
    *
    * const config: PlaywrightTestConfig = {
    *   use: {
@@ -2959,7 +2647,7 @@ export type VideoMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry';
  * [testProject.use](https://playwright.dev/docs/api/class-testproject#test-project-use).
  *
  * ```ts
- * import { PlaywrightTestConfig } from '@playwright/test';
+ * import type { PlaywrightTestConfig } from '@playwright/test';
  * const config: PlaywrightTestConfig = {
  *   use: {
  *     headless: false,
@@ -3111,6 +2799,14 @@ export interface PlaywrightTestOptions {
    * Learn more about [various timeouts](https://playwright.dev/docs/test-timeouts).
    */
   navigationTimeout: number | undefined;
+  /**
+   * - `"allow"`: [Service Workers](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API) can be registered
+   *   by sites.
+   * - `"block"`: Playwright will block all registration of Service Workers.
+   *
+   * Defaults to `"allow"`.
+   */
+  serviceWorkers: ServiceWorkerPolicy | undefined;
 }
 
 
@@ -3140,7 +2836,7 @@ export interface PlaywrightTestOptions {
  * [fixtures.page](https://playwright.dev/docs/api/class-fixtures#fixtures-page).
  */
 export interface PlaywrightWorkerArgs {
-  playwright: typeof import('..');
+  playwright: typeof import('playwright-core');
   /**
    * [Browser] instance is shared between all tests in the [same worker](https://playwright.dev/docs/test-parallel) - this makes testing efficient.
    * However, each test runs in an isolated [BrowserContext]  and gets a fresh environment.
@@ -3229,6 +2925,74 @@ export interface PlaywrightTestArgs {
 export type PlaywrightTestProject<TestArgs = {}, WorkerArgs = {}> = Project<PlaywrightTestOptions & TestArgs, PlaywrightWorkerOptions & WorkerArgs>;
 export type PlaywrightTestConfig<TestArgs = {}, WorkerArgs = {}> = Config<PlaywrightTestOptions & TestArgs, PlaywrightWorkerOptions & WorkerArgs>;
 
+import type * as expectType from '@playwright/test/types/expect-types';
+import type { Suite } from '@playwright/test/types/testReporter';
+
+type AsymmetricMatcher = Record<string, any>;
+
+type IfAny<T, Y, N> = 0 extends (1 & T) ? Y : N;
+type ExtraMatchers<T, Type, Matchers> = T extends Type ? Matchers : IfAny<T, Matchers, {}>;
+
+type BaseMatchers<R, T> = expectType.Matchers<R> & PlaywrightTest.Matchers<R, T>;
+
+type MakeMatchers<R, T> = BaseMatchers<R, T> & {
+    /**
+     * If you know how to test something, `.not` lets you test its opposite.
+     */
+    not: MakeMatchers<R, T>;
+    /**
+     * Use resolves to unwrap the value of a fulfilled promise so any other
+     * matcher can be chained. If the promise is rejected the assertion fails.
+     */
+    resolves: MakeMatchers<Promise<R>, Awaited<T>>;
+    /**
+    * Unwraps the reason of a rejected promise so any other matcher can be chained.
+    * If the promise is fulfilled the assertion fails.
+    */
+    rejects: MakeMatchers<Promise<R>, Awaited<T>>;
+  } & ScreenshotAssertions &
+  ExtraMatchers<T, Page, PageAssertions> &
+  ExtraMatchers<T, Locator, LocatorAssertions> &
+  ExtraMatchers<T, APIResponse, APIResponseAssertions>;
+
+export type Expect = {
+  <T = unknown>(actual: T, messageOrOptions?: string | { message?: string }): MakeMatchers<void, T>;
+  soft: <T = unknown>(actual: T, messageOrOptions?: string | { message?: string }) => MakeMatchers<void, T>;
+  poll: <T = unknown>(actual: () => T | Promise<T>, messageOrOptions?: string | { message?: string, timeout?: number, intervals?: number[] }) => BaseMatchers<Promise<void>, T> & {
+    /**
+     * If you know how to test something, `.not` lets you test its opposite.
+     */
+     not: BaseMatchers<Promise<void>, T>;
+  };
+
+  extend(arg0: any): void;
+  getState(): expectType.MatcherState;
+  setState(state: Partial<expectType.MatcherState>): void;
+  any(expectedObject: any): AsymmetricMatcher;
+  anything(): AsymmetricMatcher;
+  arrayContaining(sample: Array<unknown>): AsymmetricMatcher;
+  objectContaining(sample: Record<string, unknown>): AsymmetricMatcher;
+  stringContaining(expected: string): AsymmetricMatcher;
+  stringMatching(expected: string | RegExp): AsymmetricMatcher;
+  /**
+   * Removed following methods because they rely on a test-runner integration from Jest which we don't support:
+   * - assertions()
+   * - extractExpectedAssertionsErrors()
+   * – hasAssertions()
+   */
+};
+
+type Awaited<T> = T extends PromiseLike<infer U> ? U : T;
+
+// --- BEGINGLOBAL ---
+declare global {
+  export namespace PlaywrightTest {
+    export interface Matchers<R, T = unknown> {
+    }
+  }
+}
+// --- ENDGLOBAL ---
+
 /**
  * These tests are executed in Playwright environment that launches the browser
  * and provides a fresh page to each test.
@@ -3243,5 +3007,1364 @@ export const expect: Expect;
 export {};
 
 
+/**
+ * The [APIResponseAssertions] class provides assertion methods that can be used to make assertions about the [APIResponse]
+ * in the tests. A new instance of [APIResponseAssertions] is created by calling
+ * [expect(response)](https://playwright.dev/docs/api/class-playwrightassertions#playwright-assertions-expect-api-response):
+ *
+ * ```js
+ * import { test, expect } from '@playwright/test';
+ *
+ * test('navigates to login', async ({ page }) => {
+ *   // ...
+ *   const response = await page.request.get('https://playwright.dev');
+ *   await expect(response).toBeOK();
+ * });
+ * ```
+ *
+ */
+interface APIResponseAssertions {
+  /**
+   * Makes the assertion check for the opposite condition. For example, this code tests that the response status is not
+   * successful:
+   *
+   * ```js
+   * await expect(response).not.toBeOK();
+   * ```
+   *
+   */
+  not: APIResponseAssertions;
 
+  /**
+   * Ensures the response status code is within [200..299] range.
+   *
+   * ```js
+   * await expect(response).toBeOK();
+   * ```
+   *
+   */
+  toBeOK(): Promise<void>;
+}
+
+/**
+ * The [LocatorAssertions] class provides assertion methods that can be used to make assertions about the [Locator] state
+ * in the tests. A new instance of [LocatorAssertions] is created by calling
+ * [expect(locator)](https://playwright.dev/docs/api/class-playwrightassertions#playwright-assertions-expect-locator):
+ *
+ * ```js
+ * import { test, expect } from '@playwright/test';
+ *
+ * test('status becomes submitted', async ({ page }) => {
+ *   // ...
+ *   await page.click('#submit-button');
+ *   await expect(page.locator('.status')).toHaveText('Submitted');
+ * });
+ * ```
+ *
+ */
+interface LocatorAssertions {
+  /**
+   * Makes the assertion check for the opposite condition. For example, this code tests that the Locator doesn't contain text
+   * `"error"`:
+   *
+   * ```js
+   * await expect(locator).not.toContainText('error');
+   * ```
+   *
+   */
+  not: LocatorAssertions;
+
+  /**
+   * Ensures the [Locator] points to a checked input.
+   *
+   * ```js
+   * const locator = page.locator('.subscribe');
+   * await expect(locator).toBeChecked();
+   * ```
+   *
+   * @param options
+   */
+  toBeChecked(options?: {
+    checked?: boolean;
+
+    /**
+     * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
+     */
+    timeout?: number;
+  }): Promise<void>;
+
+  /**
+   * Ensures the [Locator] points to a disabled element. Element is disabled if it has "disabled" attribute or is disabled
+   * via ['aria-disabled'](https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Attributes/aria-disabled). Note
+   * that only native control elements such as HTML `button`, `input`, `select`, `textarea`, `option`, `optgroup` can be
+   * disabled by setting "disabled" attribute. "disabled" attribute on other elements is ignored by the browser.
+   *
+   * ```js
+   * const locator = page.locator('button.submit');
+   * await expect(locator).toBeDisabled();
+   * ```
+   *
+   * @param options
+   */
+  toBeDisabled(options?: {
+    /**
+     * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
+     */
+    timeout?: number;
+  }): Promise<void>;
+
+  /**
+   * Ensures the [Locator] points to an editable element.
+   *
+   * ```js
+   * const locator = page.locator('input');
+   * await expect(locator).toBeEditable();
+   * ```
+   *
+   * @param options
+   */
+  toBeEditable(options?: {
+    /**
+     * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
+     */
+    timeout?: number;
+  }): Promise<void>;
+
+  /**
+   * Ensures the [Locator] points to an empty editable element or to a DOM node that has no text.
+   *
+   * ```js
+   * const locator = page.locator('div.warning');
+   * await expect(locator).toBeEmpty();
+   * ```
+   *
+   * @param options
+   */
+  toBeEmpty(options?: {
+    /**
+     * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
+     */
+    timeout?: number;
+  }): Promise<void>;
+
+  /**
+   * Ensures the [Locator] points to an enabled element.
+   *
+   * ```js
+   * const locator = page.locator('button.submit');
+   * await expect(locator).toBeEnabled();
+   * ```
+   *
+   * @param options
+   */
+  toBeEnabled(options?: {
+    /**
+     * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
+     */
+    timeout?: number;
+  }): Promise<void>;
+
+  /**
+   * Ensures the [Locator] points to a focused DOM node.
+   *
+   * ```js
+   * const locator = page.locator('input');
+   * await expect(locator).toBeFocused();
+   * ```
+   *
+   * @param options
+   */
+  toBeFocused(options?: {
+    /**
+     * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
+     */
+    timeout?: number;
+  }): Promise<void>;
+
+  /**
+   * Ensures the [Locator] points to a hidden DOM node, which is the opposite of [visible](https://playwright.dev/docs/api/actionability#visible).
+   *
+   * ```js
+   * const locator = page.locator('.my-element');
+   * await expect(locator).toBeHidden();
+   * ```
+   *
+   * @param options
+   */
+  toBeHidden(options?: {
+    /**
+     * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
+     */
+    timeout?: number;
+  }): Promise<void>;
+
+  /**
+   * Ensures the [Locator] points to a [visible](https://playwright.dev/docs/api/actionability#visible) DOM node.
+   *
+   * ```js
+   * const locator = page.locator('.my-element');
+   * await expect(locator).toBeVisible();
+   * ```
+   *
+   * @param options
+   */
+  toBeVisible(options?: {
+    /**
+     * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
+     */
+    timeout?: number;
+  }): Promise<void>;
+
+  /**
+   * Ensures the [Locator] points to an element that contains the given text. You can use regular expressions for the value
+   * as well.
+   *
+   * ```js
+   * const locator = page.locator('.title');
+   * await expect(locator).toContainText('substring');
+   * await expect(locator).toContainText(/\d messages/);
+   * ```
+   *
+   * Note that if array is passed as an expected value, entire lists of elements can be asserted:
+   *
+   * ```js
+   * const locator = page.locator('list > .list-item');
+   * await expect(locator).toContainText(['Text 1', 'Text 4', 'Text 5']);
+   * ```
+   *
+   * @param expected Expected substring or RegExp or a list of those.
+   * @param options
+   */
+  toContainText(expected: string|RegExp|Array<string|RegExp>, options?: {
+    /**
+     * Whether to perform case-insensitive match. `ignoreCase` option takes precedence over the corresponding regular
+     * expression flag if specified.
+     */
+    ignoreCase?: boolean;
+
+    /**
+     * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
+     */
+    timeout?: number;
+
+    /**
+     * Whether to use `element.innerText` instead of `element.textContent` when retrieving DOM node text.
+     */
+    useInnerText?: boolean;
+  }): Promise<void>;
+
+  /**
+   * Ensures the [Locator] points to an element with given attribute.
+   *
+   * ```js
+   * const locator = page.locator('input');
+   * await expect(locator).toHaveAttribute('type', 'text');
+   * ```
+   *
+   * @param name Attribute name.
+   * @param value Expected attribute value.
+   * @param options
+   */
+  toHaveAttribute(name: string, value: string|RegExp, options?: {
+    /**
+     * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
+     */
+    timeout?: number;
+  }): Promise<void>;
+
+  /**
+   * Ensures the [Locator] points to an element with given CSS class.
+   *
+   * ```js
+   * const locator = page.locator('#component');
+   * await expect(locator).toHaveClass(/selected/);
+   * ```
+   *
+   * Note that if array is passed as an expected value, entire lists of elements can be asserted:
+   *
+   * ```js
+   * const locator = page.locator('list > .component');
+   * await expect(locator).toHaveClass(['component', 'component selected', 'component']);
+   * ```
+   *
+   * @param expected Expected class or RegExp or a list of those.
+   * @param options
+   */
+  toHaveClass(expected: string|RegExp|Array<string|RegExp>, options?: {
+    /**
+     * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
+     */
+    timeout?: number;
+  }): Promise<void>;
+
+  /**
+   * Ensures the [Locator] resolves to an exact number of DOM nodes.
+   *
+   * ```js
+   * const list = page.locator('list > .component');
+   * await expect(list).toHaveCount(3);
+   * ```
+   *
+   * @param count Expected count.
+   * @param options
+   */
+  toHaveCount(count: number, options?: {
+    /**
+     * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
+     */
+    timeout?: number;
+  }): Promise<void>;
+
+  /**
+   * Ensures the [Locator] resolves to an element with the given computed CSS style.
+   *
+   * ```js
+   * const locator = page.locator('button');
+   * await expect(locator).toHaveCSS('display', 'flex');
+   * ```
+   *
+   * @param name CSS property name.
+   * @param value CSS property value.
+   * @param options
+   */
+  toHaveCSS(name: string, value: string|RegExp, options?: {
+    /**
+     * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
+     */
+    timeout?: number;
+  }): Promise<void>;
+
+  /**
+   * Ensures the [Locator] points to an element with the given DOM Node ID.
+   *
+   * ```js
+   * const locator = page.locator('input');
+   * await expect(locator).toHaveId('lastname');
+   * ```
+   *
+   * @param id Element id.
+   * @param options
+   */
+  toHaveId(id: string|RegExp, options?: {
+    /**
+     * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
+     */
+    timeout?: number;
+  }): Promise<void>;
+
+  /**
+   * Ensures the [Locator] points to an element with given JavaScript property. Note that this property can be of a primitive
+   * type as well as a plain serializable JavaScript object.
+   *
+   * ```js
+   * const locator = page.locator('.component');
+   * await expect(locator).toHaveJSProperty('loaded', true);
+   * ```
+   *
+   * @param name Property name.
+   * @param value Property value.
+   * @param options
+   */
+  toHaveJSProperty(name: string, value: any, options?: {
+    /**
+     * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
+     */
+    timeout?: number;
+  }): Promise<void>;
+
+  /**
+   * This function will wait until two consecutive locator screenshots yield the same result, and then compare the last
+   * screenshot with the expectation.
+   *
+   * ```js
+   * const locator = page.locator('button');
+   * await expect(locator).toHaveScreenshot('image.png');
+   * ```
+   *
+   * @param name Snapshot name.
+   * @param options
+   */
+  toHaveScreenshot(name: string|Array<string>, options?: {
+    /**
+     * When set to `"disabled"`, stops CSS animations, CSS transitions and Web Animations. Animations get different treatment
+     * depending on their duration:
+     * - finite animations are fast-forwarded to completion, so they'll fire `transitionend` event.
+     * - infinite animations are canceled to initial state, and then played over after the screenshot.
+     *
+     * Defaults to `"disabled"` that disables animations.
+     */
+    animations?: "disabled"|"allow";
+
+    /**
+     * When set to `"hide"`, screenshot will hide text caret. When set to `"initial"`, text caret behavior will not be changed.
+     * Defaults to `"hide"`.
+     */
+    caret?: "hide"|"initial";
+
+    /**
+     * Specify locators that should be masked when the screenshot is taken. Masked elements will be overlayed with a pink box
+     * `#FF00FF` that completely covers its bounding box.
+     */
+    mask?: Array<Locator>;
+
+    /**
+     * An acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1`. Default is
+     * configurable with `TestConfig.expect`. Unset by default.
+     */
+    maxDiffPixelRatio?: number;
+
+    /**
+     * An acceptable amount of pixels that could be different. Default is configurable with `TestConfig.expect`. Unset by
+     * default.
+     */
+    maxDiffPixels?: number;
+
+    /**
+     * Hides default white background and allows capturing screenshots with transparency. Not applicable to `jpeg` images.
+     * Defaults to `false`.
+     */
+    omitBackground?: boolean;
+
+    /**
+     * When set to `"css"`, screenshot will have a single pixel per each css pixel on the page. For high-dpi devices, this will
+     * keep screenshots small. Using `"device"` option will produce a single pixel per each device pixel, so screenhots of
+     * high-dpi devices will be twice as large or even larger.
+     *
+     * Defaults to `"css"`.
+     */
+    scale?: "css"|"device";
+
+    /**
+     * An acceptable perceived color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between the same
+     * pixel in compared images, between zero (strict) and one (lax), default is configurable with `TestConfig.expect`.
+     * Defaults to `0.2`.
+     */
+    threshold?: number;
+
+    /**
+     * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
+     */
+    timeout?: number;
+  }): Promise<void>;
+
+  /**
+   * This function will wait until two consecutive locator screenshots yield the same result, and then compare the last
+   * screenshot with the expectation.
+   *
+   * ```js
+   * const locator = page.locator('button');
+   * await expect(locator).toHaveScreenshot();
+   * ```
+   *
+   * @param options
+   */
+  toHaveScreenshot(options?: {
+    /**
+     * When set to `"disabled"`, stops CSS animations, CSS transitions and Web Animations. Animations get different treatment
+     * depending on their duration:
+     * - finite animations are fast-forwarded to completion, so they'll fire `transitionend` event.
+     * - infinite animations are canceled to initial state, and then played over after the screenshot.
+     *
+     * Defaults to `"disabled"` that disables animations.
+     */
+    animations?: "disabled"|"allow";
+
+    /**
+     * When set to `"hide"`, screenshot will hide text caret. When set to `"initial"`, text caret behavior will not be changed.
+     * Defaults to `"hide"`.
+     */
+    caret?: "hide"|"initial";
+
+    /**
+     * Specify locators that should be masked when the screenshot is taken. Masked elements will be overlayed with a pink box
+     * `#FF00FF` that completely covers its bounding box.
+     */
+    mask?: Array<Locator>;
+
+    /**
+     * An acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1`. Default is
+     * configurable with `TestConfig.expect`. Unset by default.
+     */
+    maxDiffPixelRatio?: number;
+
+    /**
+     * An acceptable amount of pixels that could be different. Default is configurable with `TestConfig.expect`. Unset by
+     * default.
+     */
+    maxDiffPixels?: number;
+
+    /**
+     * Hides default white background and allows capturing screenshots with transparency. Not applicable to `jpeg` images.
+     * Defaults to `false`.
+     */
+    omitBackground?: boolean;
+
+    /**
+     * When set to `"css"`, screenshot will have a single pixel per each css pixel on the page. For high-dpi devices, this will
+     * keep screenshots small. Using `"device"` option will produce a single pixel per each device pixel, so screenhots of
+     * high-dpi devices will be twice as large or even larger.
+     *
+     * Defaults to `"css"`.
+     */
+    scale?: "css"|"device";
+
+    /**
+     * An acceptable perceived color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between the same
+     * pixel in compared images, between zero (strict) and one (lax), default is configurable with `TestConfig.expect`.
+     * Defaults to `0.2`.
+     */
+    threshold?: number;
+
+    /**
+     * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
+     */
+    timeout?: number;
+  }): Promise<void>;
+
+  /**
+   * Ensures the [Locator] points to an element with the given text. You can use regular expressions for the value as well.
+   *
+   * ```js
+   * const locator = page.locator('.title');
+   * await expect(locator).toHaveText(/Welcome, Test User/);
+   * await expect(locator).toHaveText(/Welcome, .*\/);
+   * ```
+   *
+   * Note that if array is passed as an expected value, entire lists of elements can be asserted:
+   *
+   * ```js
+   * const locator = page.locator('list > .component');
+   * await expect(locator).toHaveText(['Text 1', 'Text 2', 'Text 3']);
+   * ```
+   *
+   * @param expected Expected substring or RegExp or a list of those.
+   * @param options
+   */
+  toHaveText(expected: string|RegExp|Array<string|RegExp>, options?: {
+    /**
+     * Whether to perform case-insensitive match. `ignoreCase` option takes precedence over the corresponding regular
+     * expression flag if specified.
+     */
+    ignoreCase?: boolean;
+
+    /**
+     * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
+     */
+    timeout?: number;
+
+    /**
+     * Whether to use `element.innerText` instead of `element.textContent` when retrieving DOM node text.
+     */
+    useInnerText?: boolean;
+  }): Promise<void>;
+
+  /**
+   * Ensures the [Locator] points to an element with the given input value. You can use regular expressions for the value as
+   * well.
+   *
+   * ```js
+   * const locator = page.locator('input[type=number]');
+   * await expect(locator).toHaveValue(/[0-9]/);
+   * ```
+   *
+   * @param value Expected value.
+   * @param options
+   */
+  toHaveValue(value: string|RegExp, options?: {
+    /**
+     * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
+     */
+    timeout?: number;
+  }): Promise<void>;
+
+  /**
+   * Ensures the [Locator] points to multi-select/combobox (i.e. a `select` with the `multiple` attribute) and the specified
+   * values are selected.
+   *
+   * For example, given the following element:
+   *
+   * ```html
+   * <select id="favorite-colors" multiple>
+   *   <option value="R">Red</option>
+   *   <option value="G">Green</option>
+   *   <option value="B">Blue</option>
+   * </select>
+   * ```
+   *
+   * ```js
+   * const locator = page.locator("id=favorite-colors");
+   * await locator.selectOption(["R", "G"]);
+   * await expect(locator).toHaveValues([/R/, /G/]);
+   * ```
+   *
+   * @param values Expected options currently selected.
+   * @param options
+   */
+  toHaveValues(values: Array<string|RegExp>, options?: {
+    /**
+     * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
+     */
+    timeout?: number;
+  }): Promise<void>;
+}
+
+/**
+ * The [PageAssertions] class provides assertion methods that can be used to make assertions about the [Page] state in the
+ * tests. A new instance of [PageAssertions] is created by calling
+ * [expect(page)](https://playwright.dev/docs/api/class-playwrightassertions#playwright-assertions-expect-page):
+ *
+ * ```js
+ * import { test, expect } from '@playwright/test';
+ *
+ * test('navigates to login', async ({ page }) => {
+ *   // ...
+ *   await page.click('#login');
+ *   await expect(page).toHaveURL(/.*\/login/);
+ * });
+ * ```
+ *
+ */
+interface PageAssertions {
+  /**
+   * Makes the assertion check for the opposite condition. For example, this code tests that the page URL doesn't contain
+   * `"error"`:
+   *
+   * ```js
+   * await expect(page).not.toHaveURL('error');
+   * ```
+   *
+   */
+  not: PageAssertions;
+
+  /**
+   * This function will wait until two consecutive page screenshots yield the same result, and then compare the last
+   * screenshot with the expectation.
+   *
+   * ```js
+   * await expect(page).toHaveScreenshot('image.png');
+   * ```
+   *
+   * @param name Snapshot name.
+   * @param options
+   */
+  toHaveScreenshot(name: string|Array<string>, options?: {
+    /**
+     * When set to `"disabled"`, stops CSS animations, CSS transitions and Web Animations. Animations get different treatment
+     * depending on their duration:
+     * - finite animations are fast-forwarded to completion, so they'll fire `transitionend` event.
+     * - infinite animations are canceled to initial state, and then played over after the screenshot.
+     *
+     * Defaults to `"disabled"` that disables animations.
+     */
+    animations?: "disabled"|"allow";
+
+    /**
+     * When set to `"hide"`, screenshot will hide text caret. When set to `"initial"`, text caret behavior will not be changed.
+     * Defaults to `"hide"`.
+     */
+    caret?: "hide"|"initial";
+
+    /**
+     * An object which specifies clipping of the resulting image. Should have the following fields:
+     */
+    clip?: {
+      /**
+       * x-coordinate of top-left corner of clip area
+       */
+      x: number;
+
+      /**
+       * y-coordinate of top-left corner of clip area
+       */
+      y: number;
+
+      /**
+       * width of clipping area
+       */
+      width: number;
+
+      /**
+       * height of clipping area
+       */
+      height: number;
+    };
+
+    /**
+     * When true, takes a screenshot of the full scrollable page, instead of the currently visible viewport. Defaults to
+     * `false`.
+     */
+    fullPage?: boolean;
+
+    /**
+     * Specify locators that should be masked when the screenshot is taken. Masked elements will be overlayed with a pink box
+     * `#FF00FF` that completely covers its bounding box.
+     */
+    mask?: Array<Locator>;
+
+    /**
+     * An acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1`. Default is
+     * configurable with `TestConfig.expect`. Unset by default.
+     */
+    maxDiffPixelRatio?: number;
+
+    /**
+     * An acceptable amount of pixels that could be different. Default is configurable with `TestConfig.expect`. Unset by
+     * default.
+     */
+    maxDiffPixels?: number;
+
+    /**
+     * Hides default white background and allows capturing screenshots with transparency. Not applicable to `jpeg` images.
+     * Defaults to `false`.
+     */
+    omitBackground?: boolean;
+
+    /**
+     * When set to `"css"`, screenshot will have a single pixel per each css pixel on the page. For high-dpi devices, this will
+     * keep screenshots small. Using `"device"` option will produce a single pixel per each device pixel, so screenhots of
+     * high-dpi devices will be twice as large or even larger.
+     *
+     * Defaults to `"css"`.
+     */
+    scale?: "css"|"device";
+
+    /**
+     * An acceptable perceived color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between the same
+     * pixel in compared images, between zero (strict) and one (lax), default is configurable with `TestConfig.expect`.
+     * Defaults to `0.2`.
+     */
+    threshold?: number;
+
+    /**
+     * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
+     */
+    timeout?: number;
+  }): Promise<void>;
+
+  /**
+   * This function will wait until two consecutive page screenshots yield the same result, and then compare the last
+   * screenshot with the expectation.
+   *
+   * ```js
+   * await expect(page).toHaveScreenshot();
+   * ```
+   *
+   * @param options
+   */
+  toHaveScreenshot(options?: {
+    /**
+     * When set to `"disabled"`, stops CSS animations, CSS transitions and Web Animations. Animations get different treatment
+     * depending on their duration:
+     * - finite animations are fast-forwarded to completion, so they'll fire `transitionend` event.
+     * - infinite animations are canceled to initial state, and then played over after the screenshot.
+     *
+     * Defaults to `"disabled"` that disables animations.
+     */
+    animations?: "disabled"|"allow";
+
+    /**
+     * When set to `"hide"`, screenshot will hide text caret. When set to `"initial"`, text caret behavior will not be changed.
+     * Defaults to `"hide"`.
+     */
+    caret?: "hide"|"initial";
+
+    /**
+     * An object which specifies clipping of the resulting image. Should have the following fields:
+     */
+    clip?: {
+      /**
+       * x-coordinate of top-left corner of clip area
+       */
+      x: number;
+
+      /**
+       * y-coordinate of top-left corner of clip area
+       */
+      y: number;
+
+      /**
+       * width of clipping area
+       */
+      width: number;
+
+      /**
+       * height of clipping area
+       */
+      height: number;
+    };
+
+    /**
+     * When true, takes a screenshot of the full scrollable page, instead of the currently visible viewport. Defaults to
+     * `false`.
+     */
+    fullPage?: boolean;
+
+    /**
+     * Specify locators that should be masked when the screenshot is taken. Masked elements will be overlayed with a pink box
+     * `#FF00FF` that completely covers its bounding box.
+     */
+    mask?: Array<Locator>;
+
+    /**
+     * An acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1`. Default is
+     * configurable with `TestConfig.expect`. Unset by default.
+     */
+    maxDiffPixelRatio?: number;
+
+    /**
+     * An acceptable amount of pixels that could be different. Default is configurable with `TestConfig.expect`. Unset by
+     * default.
+     */
+    maxDiffPixels?: number;
+
+    /**
+     * Hides default white background and allows capturing screenshots with transparency. Not applicable to `jpeg` images.
+     * Defaults to `false`.
+     */
+    omitBackground?: boolean;
+
+    /**
+     * When set to `"css"`, screenshot will have a single pixel per each css pixel on the page. For high-dpi devices, this will
+     * keep screenshots small. Using `"device"` option will produce a single pixel per each device pixel, so screenhots of
+     * high-dpi devices will be twice as large or even larger.
+     *
+     * Defaults to `"css"`.
+     */
+    scale?: "css"|"device";
+
+    /**
+     * An acceptable perceived color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between the same
+     * pixel in compared images, between zero (strict) and one (lax), default is configurable with `TestConfig.expect`.
+     * Defaults to `0.2`.
+     */
+    threshold?: number;
+
+    /**
+     * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
+     */
+    timeout?: number;
+  }): Promise<void>;
+
+  /**
+   * Ensures the page has the given title.
+   *
+   * ```js
+   * await expect(page).toHaveTitle(/.*checkout/);
+   * ```
+   *
+   * @param titleOrRegExp Expected title or RegExp.
+   * @param options
+   */
+  toHaveTitle(titleOrRegExp: string|RegExp, options?: {
+    /**
+     * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
+     */
+    timeout?: number;
+  }): Promise<void>;
+
+  /**
+   * Ensures the page is navigated to the given URL.
+   *
+   * ```js
+   * await expect(page).toHaveURL(/.*checkout/);
+   * ```
+   *
+   * @param urlOrRegExp Expected substring or RegExp.
+   * @param options
+   */
+  toHaveURL(urlOrRegExp: string|RegExp, options?: {
+    /**
+     * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
+     */
+    timeout?: number;
+  }): Promise<void>;
+}
+
+/**
+ * Playwright provides methods for comparing page and element screenshots with expected values stored in files.
+ *
+ * ```js
+ * expect(screenshot).toMatchSnapshot('landing-page.png');
+ * ```
+ *
+ */
+interface ScreenshotAssertions {
+  /**
+   * Ensures that passed value, either a [string] or a [Buffer], matches the expected snapshot stored in the test snapshots
+   * directory.
+   *
+   * ```js
+   * // Basic usage.
+   * expect(await page.screenshot()).toMatchSnapshot('landing-page.png');
+   *
+   * // Pass options to customize the snapshot comparison and have a generated name.
+   * expect(await page.screenshot()).toMatchSnapshot('landing-page.png', {
+   *   maxDiffPixels: 27, // allow no more than 27 different pixels.
+   * });
+   *
+   * // Configure image matching threshold.
+   * expect(await page.screenshot()).toMatchSnapshot('landing-page.png', { threshold: 0.3 });
+   *
+   * // Bring some structure to your snapshot files by passing file path segments.
+   * expect(await page.screenshot()).toMatchSnapshot(['landing', 'step2.png']);
+   * expect(await page.screenshot()).toMatchSnapshot(['landing', 'step3.png']);
+   * ```
+   *
+   * Learn more about [visual comparisons](https://playwright.dev/docs/api/test-snapshots).
+   * @param name Snapshot name.
+   * @param options
+   */
+  toMatchSnapshot(name: string|Array<string>, options?: {
+    /**
+     * An acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1`. Default is
+     * configurable with `TestConfig.expect`. Unset by default.
+     */
+    maxDiffPixelRatio?: number;
+
+    /**
+     * An acceptable amount of pixels that could be different. Default is configurable with `TestConfig.expect`. Unset by
+     * default.
+     */
+    maxDiffPixels?: number;
+
+    /**
+     * An acceptable perceived color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between the same
+     * pixel in compared images, between zero (strict) and one (lax), default is configurable with `TestConfig.expect`.
+     * Defaults to `0.2`.
+     */
+    threshold?: number;
+  }): void;
+
+  /**
+   * Ensures that passed value, either a [string] or a [Buffer], matches the expected snapshot stored in the test snapshots
+   * directory.
+   *
+   * ```js
+   * // Basic usage and the file name is derived from the test name.
+   * expect(await page.screenshot()).toMatchSnapshot();
+   *
+   * // Pass options to customize the snapshot comparison and have a generated name.
+   * expect(await page.screenshot()).toMatchSnapshot({
+   *   maxDiffPixels: 27, // allow no more than 27 different pixels.
+   * });
+   *
+   * // Configure image matching threshold and snapshot name.
+   * expect(await page.screenshot()).toMatchSnapshot({
+   *   name: 'landing-page.png',
+   *   threshold: 0.3,
+   * });
+   * ```
+   *
+   * Learn more about [visual comparisons](https://playwright.dev/docs/api/test-snapshots).
+   * @param options
+   */
+  toMatchSnapshot(options?: {
+    /**
+     * An acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1`. Default is
+     * configurable with `TestConfig.expect`. Unset by default.
+     */
+    maxDiffPixelRatio?: number;
+
+    /**
+     * An acceptable amount of pixels that could be different. Default is configurable with `TestConfig.expect`. Unset by
+     * default.
+     */
+    maxDiffPixels?: number;
+
+    /**
+     * Snapshot name. If not passed, the test name and ordinals are used when called multiple times.
+     */
+    name?: string|Array<string>;
+
+    /**
+     * An acceptable perceived color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between the same
+     * pixel in compared images, between zero (strict) and one (lax), default is configurable with `TestConfig.expect`.
+     * Defaults to `0.2`.
+     */
+    threshold?: number;
+  }): void;
+}
+
+/**
+ * Information about an error thrown during test execution.
+ */
+export interface TestError {
+  /**
+   * Error message. Set when [Error] (or its subclass) has been thrown.
+   */
+  message?: string;
+
+  /**
+   * Error stack. Set when [Error] (or its subclass) has been thrown.
+   */
+  stack?: string;
+
+  /**
+   * The value that was thrown. Set when anything except the [Error] (or its subclass) has been thrown.
+   */
+  value?: string;
+}
+
+/**
+ * Playwright Test supports running multiple test projects at the same time. This is useful for running tests in multiple
+ * configurations. For example, consider running tests against multiple browsers.
+ *
+ * `TestProject` encapsulates configuration specific to a single project. Projects are configured in
+ * [testConfig.projects](https://playwright.dev/docs/api/class-testconfig#test-config-projects) specified in the
+ * [configuration file](https://playwright.dev/docs/test-configuration). Note that all properties of [TestProject] are available in the top-level
+ * [TestConfig], in which case they are shared between all projects.
+ *
+ * Here is an example configuration that runs every test in Chromium, Firefox and WebKit, both Desktop and Mobile versions.
+ *
+ * ```ts
+ * // playwright.config.ts
+ * import { type PlaywrightTestConfig, devices } from '@playwright/test';
+ *
+ * const config: PlaywrightTestConfig = {
+ *   // Options shared for all projects.
+ *   timeout: 30000,
+ *   use: {
+ *     ignoreHTTPSErrors: true,
+ *   },
+ *
+ *   // Options specific to each project.
+ *   projects: [
+ *     {
+ *       name: 'Desktop Chromium',
+ *       use: {
+ *         browserName: 'chromium',
+ *         viewport: { width: 1280, height: 720 },
+ *       },
+ *     },
+ *     {
+ *       name: 'Desktop Safari',
+ *       use: {
+ *         browserName: 'webkit',
+ *         viewport: { width: 1280, height: 720 },
+ *       }
+ *     },
+ *     {
+ *       name: 'Desktop Firefox',
+ *       use: {
+ *         browserName: 'firefox',
+ *         viewport: { width: 1280, height: 720 },
+ *       }
+ *     },
+ *     {
+ *       name: 'Mobile Chrome',
+ *       use: devices['Pixel 5'],
+ *     },
+ *     {
+ *       name: 'Mobile Safari',
+ *       use: devices['iPhone 12'],
+ *     },
+ *   ],
+ * };
+ * export default config;
+ * ```
+ *
+ */
+interface TestProject {
+  /**
+   * Configuration for the `expect` assertion library.
+   *
+   * Use [testConfig.expect](https://playwright.dev/docs/api/class-testconfig#test-config-expect) to change this option for
+   * all projects.
+   */
+  expect?: {
+    /**
+     * Default timeout for async expect matchers in milliseconds, defaults to 5000ms.
+     */
+    timeout?: number;
+
+    /**
+     * Configuration for the
+     * [pageAssertions.toHaveScreenshot(name[, options])](https://playwright.dev/docs/api/class-pageassertions#page-assertions-to-have-screenshot-1)
+     * method.
+     */
+    toHaveScreenshot?: {
+      /**
+       * an acceptable perceived color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between the same
+       * pixel in compared images, between zero (strict) and one (lax). Defaults to `0.2`.
+       */
+      threshold?: number;
+
+      /**
+       * an acceptable amount of pixels that could be different, unset by default.
+       */
+      maxDiffPixels?: number;
+
+      /**
+       * an acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1` , unset by default.
+       */
+      maxDiffPixelRatio?: number;
+
+      /**
+       * See `animations` in [page.screenshot([options])](https://playwright.dev/docs/api/class-page#page-screenshot). Defaults
+       * to `"disabled"`.
+       */
+      animations?: "allow"|"disabled";
+
+      /**
+       * See `caret` in [page.screenshot([options])](https://playwright.dev/docs/api/class-page#page-screenshot). Defaults to
+       * `"hide"`.
+       */
+      caret?: "hide"|"initial";
+
+      /**
+       * See `scale` in [page.screenshot([options])](https://playwright.dev/docs/api/class-page#page-screenshot). Defaults to
+       * `"css"`.
+       */
+      scale?: "css"|"device";
+    };
+
+    /**
+     * Configuration for the
+     * [screenshotAssertions.toMatchSnapshot(name[, options])](https://playwright.dev/docs/api/class-screenshotassertions#screenshot-assertions-to-match-snapshot-1)
+     * method.
+     */
+    toMatchSnapshot?: {
+      /**
+       * an acceptable perceived color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between the same
+       * pixel in compared images, between zero (strict) and one (lax). Defaults to `0.2`.
+       */
+      threshold?: number;
+
+      /**
+       * an acceptable amount of pixels that could be different, unset by default.
+       */
+      maxDiffPixels?: number;
+
+      /**
+       * an acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1` , unset by default.
+       */
+      maxDiffPixelRatio?: number;
+    };
+  };
+
+  /**
+   * Playwright Test runs tests in parallel. In order to achieve that, it runs several worker processes that run at the same
+   * time. By default, **test files** are run in parallel. Tests in a single file are run in order, in the same worker
+   * process.
+   *
+   * You can configure entire test project to concurrently run all tests in all files using this option.
+   */
+  fullyParallel?: boolean;
+
+  /**
+   * Filter to only run tests with a title matching one of the patterns. For example, passing `grep: /cart/` should only run
+   * tests with "cart" in the title. Also available globally and in the [command line](https://playwright.dev/docs/test-cli) with the `-g` option.
+   *
+   * `grep` option is also useful for [tagging tests](https://playwright.dev/docs/test-annotations#tag-tests).
+   */
+  grep?: RegExp|Array<RegExp>;
+
+  /**
+   * Filter to only run tests with a title **not** matching one of the patterns. This is the opposite of
+   * [testProject.grep](https://playwright.dev/docs/api/class-testproject#test-project-grep). Also available globally and in
+   * the [command line](https://playwright.dev/docs/test-cli) with the `--grep-invert` option.
+   *
+   * `grepInvert` option is also useful for [tagging tests](https://playwright.dev/docs/test-annotations#tag-tests).
+   */
+  grepInvert?: RegExp|Array<RegExp>;
+
+  /**
+   * Metadata that will be put directly to the test report serialized as JSON.
+   */
+  metadata?: Metadata;
+
+  /**
+   * Project name is visible in the report and during test execution.
+   */
+  name?: string;
+
+  /**
+   * The base directory, relative to the config file, for snapshot files created with `toMatchSnapshot`. Defaults to
+   * [testProject.testDir](https://playwright.dev/docs/api/class-testproject#test-project-test-dir).
+   *
+   * The directory for each test can be accessed by
+   * [testInfo.snapshotDir](https://playwright.dev/docs/api/class-testinfo#test-info-snapshot-dir) and
+   * [testInfo.snapshotPath(...pathSegments)](https://playwright.dev/docs/api/class-testinfo#test-info-snapshot-path).
+   *
+   * This path will serve as the base directory for each test file snapshot directory. Setting `snapshotDir` to
+   * `'snapshots'`, the [testInfo.snapshotDir](https://playwright.dev/docs/api/class-testinfo#test-info-snapshot-dir) would
+   * resolve to `snapshots/a.spec.js-snapshots`.
+   */
+  snapshotDir?: string;
+
+  /**
+   * The output directory for files created during test execution. Defaults to `<package.json-directory>/test-results`.
+   *
+   * This directory is cleaned at the start. When running a test, a unique subdirectory inside the
+   * [testProject.outputDir](https://playwright.dev/docs/api/class-testproject#test-project-output-dir) is created,
+   * guaranteeing that test running in parallel do not conflict. This directory can be accessed by
+   * [testInfo.outputDir](https://playwright.dev/docs/api/class-testinfo#test-info-output-dir) and
+   * [testInfo.outputPath(...pathSegments)](https://playwright.dev/docs/api/class-testinfo#test-info-output-path).
+   *
+   * Here is an example that uses
+   * [testInfo.outputPath(...pathSegments)](https://playwright.dev/docs/api/class-testinfo#test-info-output-path) to create a
+   * temporary file.
+   *
+   * ```ts
+   * import { test, expect } from '@playwright/test';
+   * import fs from 'fs';
+   *
+   * test('example test', async ({}, testInfo) => {
+   *   const file = testInfo.outputPath('temporary-file.txt');
+   *   await fs.promises.writeFile(file, 'Put some data to the file', 'utf8');
+   * });
+   * ```
+   *
+   * Use [testConfig.outputDir](https://playwright.dev/docs/api/class-testconfig#test-config-output-dir) to change this
+   * option for all projects.
+   */
+  outputDir?: string;
+
+  /**
+   * The number of times to repeat each test, useful for debugging flaky tests.
+   *
+   * Use [testConfig.repeatEach](https://playwright.dev/docs/api/class-testconfig#test-config-repeat-each) to change this
+   * option for all projects.
+   */
+  repeatEach?: number;
+
+  /**
+   * The maximum number of retry attempts given to failed tests. Learn more about [test retries](https://playwright.dev/docs/test-retries#retries).
+   *
+   * Use [testConfig.retries](https://playwright.dev/docs/api/class-testconfig#test-config-retries) to change this option for
+   * all projects.
+   */
+  retries?: number;
+
+  /**
+   * Directory that will be recursively scanned for test files. Defaults to the directory of the configuration file.
+   *
+   * Each project can use a different directory. Here is an example that runs smoke tests in three browsers and all other
+   * tests in stable Chrome browser.
+   *
+   * ```ts
+   * // playwright.config.ts
+   * import type { PlaywrightTestConfig } from '@playwright/test';
+   *
+   * const config: PlaywrightTestConfig = {
+   *   projects: [
+   *     {
+   *       name: 'Smoke Chromium',
+   *       testDir: './smoke-tests',
+   *       use: {
+   *         browserName: 'chromium',
+   *       }
+   *     },
+   *     {
+   *       name: 'Smoke WebKit',
+   *       testDir: './smoke-tests',
+   *       use: {
+   *         browserName: 'webkit',
+   *       }
+   *     },
+   *     {
+   *       name: 'Smoke Firefox',
+   *       testDir: './smoke-tests',
+   *       use: {
+   *         browserName: 'firefox',
+   *       }
+   *     },
+   *     {
+   *       name: 'Chrome Stable',
+   *       testDir: './',
+   *       use: {
+   *         browserName: 'chromium',
+   *         channel: 'chrome',
+   *       }
+   *     },
+   *   ],
+   * };
+   * export default config;
+   * ```
+   *
+   * Use [testConfig.testDir](https://playwright.dev/docs/api/class-testconfig#test-config-test-dir) to change this option
+   * for all projects.
+   */
+  testDir?: string;
+
+  /**
+   * Files matching one of these patterns are not executed as test files. Matching is performed against the absolute file
+   * path. Strings are treated as glob patterns.
+   *
+   * For example, `'**\/test-assets/**'` will ignore any files in the `test-assets` directory.
+   *
+   * Use [testConfig.testIgnore](https://playwright.dev/docs/api/class-testconfig#test-config-test-ignore) to change this
+   * option for all projects.
+   */
+  testIgnore?: string|RegExp|Array<string|RegExp>;
+
+  /**
+   * Only the files matching one of these patterns are executed as test files. Matching is performed against the absolute
+   * file path. Strings are treated as glob patterns.
+   *
+   * By default, Playwright Test looks for files matching `.*(test|spec)\.(js|ts|mjs)`.
+   *
+   * Use [testConfig.testMatch](https://playwright.dev/docs/api/class-testconfig#test-config-test-match) to change this
+   * option for all projects.
+   */
+  testMatch?: string|RegExp|Array<string|RegExp>;
+
+  /**
+   * Timeout for each test in milliseconds. Defaults to 30 seconds.
+   *
+   * This is a base timeout for all tests. In addition, each test can configure its own timeout with
+   * [test.setTimeout(timeout)](https://playwright.dev/docs/api/class-test#test-set-timeout).
+   *
+   * Use [testConfig.timeout](https://playwright.dev/docs/api/class-testconfig#test-config-timeout) to change this option for
+   * all projects.
+   */
+  timeout?: number;
+}
+
+interface TestConfigWebServer {
+  /**
+   * Shell command to start. For example `npm run start`..
+   */
+  command: string;
+
+  /**
+   * The port that your http server is expected to appear on. It does wait until it accepts connections. Exactly one of
+   * `port` or `url` is required.
+   */
+  port?: number;
+
+  /**
+   * The url on your http server that is expected to return a 2xx status code when the server is ready to accept connections.
+   * Exactly one of `port` or `url` is required.
+   */
+  url?: string;
+
+  /**
+   * Whether to ignore HTTPS errors when fetching the `url`. Defaults to `false`.
+   */
+  ignoreHTTPSErrors?: boolean;
+
+  /**
+   * How long to wait for the process to start up and be available in milliseconds. Defaults to 60000.
+   */
+  timeout?: number;
+
+  /**
+   * If true, it will re-use an existing server on the `port` or `url` when available. If no server is running on that `port`
+   * or `url`, it will run the command to start a new server. If `false`, it will throw if an existing process is listening
+   * on the `port` or `url`. This should be commonly set to `!process.env.CI` to allow the local dev server when running
+   * tests locally.
+   */
+  reuseExistingServer?: boolean;
+
+  /**
+   * Current working directory of the spawned process, defaults to the directory of the configuration file.
+   */
+  cwd?: string;
+
+  /**
+   * Environment variables to set for the command, `process.env` by default.
+   */
+  env?: { [key: string]: string; };
+}
 

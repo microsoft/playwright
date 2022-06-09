@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-import { ElementHandle } from './elementHandle';
-import { Page } from './page';
-import { FilePayload } from './types';
-import * as channels from '../protocol/channels';
-import * as api from '../../types/types';
+import type { ElementHandle } from './elementHandle';
+import type { Page } from './page';
+import type { FilePayload } from './types';
+import type * as channels from '../protocol/channels';
+import type * as api from '../../types/types';
 
 export class FileChooser implements api.FileChooser {
   private _page: Page;

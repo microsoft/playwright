@@ -85,6 +85,10 @@ SerializedValue:
           v: SerializedValue
     # An index in the handles array from SerializedArgument.
     h: number?
+    # Index of the object in value-type for circular reference resolution.
+    id: number?
+    # Ref to the object in value-type for circular reference resolution.
+    ref: number?
 
 
 # Represents a value with handle references.
@@ -104,6 +108,7 @@ ExpectedTextValue:
     regexSource: string?
     regexFlags: string?
     matchSubstring: boolean?
+    ignoreCase: boolean?
     normalizeWhiteSpace: boolean?
 
 
@@ -215,6 +220,17 @@ SerializedError:
         stack: string?
     value: SerializedValue?
 
+
+RecordHarOptions:
+  type: object
+  properties:
+    omitContent: boolean?
+    path: string
+    urlGlob: string?
+    urlRegexSource: string?
+    urlRegexFlags: string?
+
+
 FormField:
   type: object
   properties:
@@ -313,21 +329,21 @@ CommonScreenshotOptions:
   type: mixin
   properties:
     omitBackground: boolean?
+    caret:
+      type: enum?
+      literals:
+      - hide
+      - initial
     animations:
       type: enum?
       literals:
       - disabled
       - allow
-    size:
+    scale:
       type: enum?
       literals:
       - css
       - device
-    fonts:
-      type: enum?
-      literals:
-      - ready
-      - nowait
     mask:
       type: array?
       items:
@@ -437,12 +453,13 @@ ContextOptions:
           properties:
             width: number
             height: number
-    recordHar:
-      type: object?
-      properties:
-        omitContent: boolean?
-        path: string
+    recordHar: RecordHarOptions?
     strictSelectors: boolean?
+    serviceWorkers:
+      type: enum?
+      literals:
+      - allow
+      - block
 
 LocalUtils:
   type: interface
@@ -455,6 +472,26 @@ LocalUtils:
         entries:
           type: array
           items: NameValue
+
+    harFindEntry:
+      parameters:
+        # HAR file is cached until clearHarCache is called
+        cacheKey: string
+        harFile: string
+        url: string
+        needBody: boolean
+      returns:
+        error: string?
+        status: number?
+        headers:
+          type: array?
+          items: NameValue
+        body: binary?
+
+    harClearCache:
+      parameters:
+        cacheKey: string
+
 
 Root:
   type: interface
@@ -756,6 +793,8 @@ BrowserContext:
       parameters:
         source: string
 
+    removeInitScripts:
+
     clearCookies:
 
     clearPermissions:
@@ -776,6 +815,8 @@ BrowserContext:
       parameters:
         name: string
         needsHandle: boolean?
+
+    removeExposedBindings:
 
     grantPermissions:
       parameters:
@@ -861,6 +902,12 @@ BrowserContext:
     harExport:
       returns:
         artifact: Artifact
+
+    createTempFile:
+      parameters:
+        name: string
+      returns:
+        writableStream: WritableStream
 
   events:
 
@@ -948,6 +995,8 @@ Page:
       parameters:
         source: string
 
+    removeInitScripts:
+
     close:
       parameters:
         runBeforeUnload: boolean?
@@ -988,6 +1037,8 @@ Page:
       parameters:
         name: string
         needsHandle: boolean?
+
+    removeExposedBindings:
 
     goBack:
       parameters:
@@ -1747,6 +1798,24 @@ Frame:
         snapshot: true
         pausesBeforeInput: true
 
+    # This method should be used if one of the files is large (>50Mb).
+    setInputFilePaths:
+      parameters:
+        selector: string
+        strict: boolean?
+        # Only one of localPaths and streams should be present.
+        localPaths:
+          type: array?
+          items: string
+        streams:
+          type: array?
+          items: WritableStream
+        timeout: number?
+        noWaitAfter: boolean?
+      tracing:
+        snapshot: true
+        pausesBeforeInput: true
+
     tap:
       parameters:
         selector: string
@@ -2272,6 +2341,22 @@ ElementHandle:
         snapshot: true
         pausesBeforeInput: true
 
+    # This method should be used if one of the files is large (>50Mb).
+    setInputFilePaths:
+      parameters:
+        # Only one of localPaths and streams should be present.
+        localPaths:
+          type: array?
+          items: string
+        streams:
+          type: array?
+          items: WritableStream
+        timeout: number?
+        noWaitAfter: boolean?
+      tracing:
+        snapshot: true
+        pausesBeforeInput: true
+
     tap:
       parameters:
         force: boolean?
@@ -2437,6 +2522,7 @@ Response:
       type: array
       items: NameValue
     timing: ResourceTiming
+    fromServiceWorker: boolean
 
 
   commands:
@@ -2658,6 +2744,18 @@ Stream:
     close:
 
 
+WritableStream:
+  type: interface
+
+  commands:
+
+    write:
+      parameters:
+        binary: binary
+
+    close:
+
+
 CDPSession:
   type: interface
 
@@ -2721,11 +2819,7 @@ Electron:
         ignoreHTTPSErrors: boolean?
         locale: string?
         offline: boolean?
-        recordHar:
-          type: object?
-          properties:
-            omitContent: boolean?
-            path: string
+        recordHar: RecordHarOptions?
         recordVideo:
           type: object?
           properties:
@@ -2787,7 +2881,9 @@ Android:
 
     devices:
       parameters:
+        host: string?
         port: number?
+        omitDriverInstall: boolean?
       returns:
         devices:
           type: array
@@ -2992,7 +3088,7 @@ AndroidDevice:
 
     connectToWebView:
       parameters:
-        pid: number
+        socketName: string
       returns:
         context: BrowserContext
 
@@ -3005,7 +3101,7 @@ AndroidDevice:
 
     webViewRemoved:
       parameters:
-        pid: number
+        socketName: string
 
 
 AndroidWebView:
@@ -3013,6 +3109,7 @@ AndroidWebView:
   properties:
     pid: number
     pkg: string
+    socketName: string
 
 
 AndroidSelector:

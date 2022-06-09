@@ -48,7 +48,7 @@ module.exports = config;
 ```
 
 ```js js-flavor=ts
-import { PlaywrightTestConfig } from '@playwright/test';
+import type { PlaywrightTestConfig } from '@playwright/test';
 const config: PlaywrightTestConfig = {
   use: {
     channel: 'chrome',
@@ -90,18 +90,11 @@ browser = playwright.chromium.launch(channel="chrome")
 
 ```csharp
 using Microsoft.Playwright;
-using System.Threading.Tasks;
 
-class Program
-{
-    public static async Task Main()
-    {
-        using var playwright = await Playwright.CreateAsync();
-        var chromium = playwright.Chromium;
-        // Can be "msedge", "chrome-beta", "msedge-beta", "msedge-dev", etc.
-        var browser = await chromium.LaunchAsync(new BrowserTypeLaunchOptions { Channel = "chrome" });
-    }
-}
+using var playwright = await Playwright.CreateAsync();
+var chromium = playwright.Chromium;
+// Can be "msedge", "chrome-beta", "msedge-beta", "msedge-dev", etc.
+var browser = await chromium.LaunchAsync(new BrowserTypeLaunchOptions { Channel = "chrome" });
 ```
 
 ### When to use Google Chrome & Microsoft Edge and when not to?

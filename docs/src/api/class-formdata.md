@@ -1,5 +1,5 @@
 # class: FormData
-* langs: java
+* langs: java, csharp
 
 The [FormData] is used create form data that is sent via [APIRequestContext].
 
@@ -14,6 +14,7 @@ page.request().post("http://localhost/submit", RequestOptions.create().setForm(f
 ```
 
 ## method: FormData.create
+* langs: java
 - returns: <[FormData]>
 
 Creates new instance of [FormData].
@@ -29,7 +30,16 @@ Sets a field on the form. File values can be passed either as `Path` or as `File
 Field name.
 
 ### param: FormData.set.value
-- `name` <[string]|[boolean]|[int]|[Path]|[Object]>
+- `value` <[string]|[boolean]|[int]|[Path]|[Object]>
+  - `name` <[string]> File name
+  - `mimeType` <[string]> File type
+  - `buffer` <[Buffer]> File content
+
+Field value.
+
+### param: FormData.set.value
+* langs: csharp
+- `value` <[string]|[boolean]|[int]|[Object]>
   - `name` <[string]> File name
   - `mimeType` <[string]> File type
   - `buffer` <[Buffer]> File content

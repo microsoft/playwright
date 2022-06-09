@@ -29,6 +29,11 @@ Here are the most common options available in the command line.
   npx playwright test my-spec my-spec-2
   ```
 
+- Run files that are in line 42 in my-spec.ts
+  ```bash
+  npx playwright test my-spec.ts:42
+  ```
+
 - Run the test with the title
   ```bash
   npx playwright test -g "add a todo item"
@@ -85,7 +90,7 @@ Complete set of Playwright Test options is available in the [configuration file]
 
 - `--forbid-only`: Whether to disallow `test.only`. Useful on CI.
 
-- `-g <grep>` or `--grep <grep>`: Only run tests matching this regular expression. For example, this will run `'should add to cart'` when passed `-g="add to cart"`.
+- `-g <grep>` or `--grep <grep>`: Only run tests matching this regular expression. For example, this will run `'should add to cart'` when passed `-g "add to cart"`.
 
 - `--grep-invert <grep>`: Only run tests **not** matching this regular expression. The opposite of `--grep`.
 

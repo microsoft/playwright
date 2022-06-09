@@ -44,6 +44,7 @@ title: "Community Showcase"
 * [Selenium Box - Enterprise Test Grid](https://seleniumbox.com): Execute Playwright tests securely inside your firewall at scale
 * [test-real-styles](https://github.com/Xiphe/test-real-styles): Utility to test real styling of virtual DOM elements in a browser
 * [Testim Playground](https://www.testim.io/playground/): Record Playwright UI tests as code
+* [Tesults](https://www.tesults.com/docs/playwright): Test automation reporting application and dashboard with Playwright integration
 * [Try Playwright](https://try.playwright.tech/): Interactive playground for Playwright to run examples directly from your browser
 
 ## Frameworks

@@ -16,6 +16,7 @@
  */
 
 import { test as it, expect } from './pageTest';
+import os from 'os';
 
 it('should press @smoke', async ({ page }) => {
   await page.setContent(`<input type='text' />`);
@@ -42,6 +43,38 @@ it('should scroll into view', async ({ page, server, isAndroid }) => {
   }
 });
 
+it('should scroll zero-sized element into view', async ({ page, isAndroid, isElectron, browserName, isMac }) => {
+  it.fixme(isAndroid || isElectron);
+  it.skip(browserName === 'webkit' && isMac && parseInt(os.release(), 10) < 20, 'WebKit for macOS 10.15 is frozen.');
+
+  await page.setContent(`
+    <style>
+      html,body { margin: 0; padding: 0; }
+      ::-webkit-scrollbar { display: none; }
+      * { scrollbar-width: none; }
+    </style>
+    <div style="height: 2000px; text-align: center; border: 10px solid blue;">
+      <h1>SCROLL DOWN</h1>
+    </div>
+    <div id=lazyload style="font-size:75px; background-color: green;"></div>
+    <script>
+      const lazyLoadElement = document.querySelector('#lazyload');
+      const observer = new IntersectionObserver((entries) => {
+        if (entries.some(entry => entry.isIntersecting)) {
+          lazyLoadElement.textContent = 'LAZY LOADED CONTENT';
+          lazyLoadElement.style.height = '20px';
+          observer.disconnect();
+        }
+      });
+      observer.observe(lazyLoadElement);
+    </script>
+  `);
+  expect(await page.locator('#lazyload').boundingBox()).toEqual({ x: 0, y: 2020, width: 1280, height: 0 });
+  await page.locator('#lazyload').scrollIntoViewIfNeeded();
+  await expect(page.locator('#lazyload')).toHaveText('LAZY LOADED CONTENT');
+  expect(await page.locator('#lazyload').boundingBox()).toEqual({ x: 0, y: 720, width: 1280, height: 20 });
+});
+
 it('should select textarea', async ({ page, server, browserName }) => {
   await page.goto(server.PREFIX + '/input/textarea.html');
   const textarea = page.locator('textarea');
@@ -61,7 +94,8 @@ it('should type', async ({ page }) => {
   expect(await page.$eval('input', input => input.value)).toBe('hello');
 });
 
-it('should take screenshot', async ({ page, server, browserName, headless, isAndroid }) => {
+it('should take screenshot', async ({ page, server, browserName, headless, isAndroid, mode }) => {
+  it.skip(mode === 'service');
   it.skip(browserName === 'firefox' && !headless);
   it.skip(isAndroid, 'Different dpr. Remove after using 1x scale for screenshots.');
   await page.setViewportSize({ width: 500, height: 500 });
@@ -72,8 +106,7 @@ it('should take screenshot', async ({ page, server, browserName, headless, isAnd
   expect(screenshot).toMatchSnapshot('screenshot-element-bounding-box.png');
 });
 
-it('should return bounding box', async ({ page, server, browserName, headless, isAndroid }) => {
-  it.fail(browserName === 'firefox' && !headless);
+it('should return bounding box', async ({ page, server, isAndroid }) => {
   it.skip(isAndroid);
 
   await page.setViewportSize({ width: 500, height: 500 });
