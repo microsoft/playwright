@@ -179,28 +179,31 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     this.emit(Events.Page.FrameDetached, frame);
   }
 
-  private _onRoute(route: Route, request: Request) {
-    for (const routeHandler of this._routes) {
-      if (!routeHandler.matches(request.url()))
-        continue;
-      // Immediately deactivate based on |times|.
+  private async _onRoute(route: Route, request: Request) {
+    const routes = this._routes.filter(r => r.matches(request.url()));
+
+    const nextRoute = async () => {
+      const routeHandler = routes.shift();
+      if (!routeHandler) {
+        await this._browserContext._onRoute(route, request);
+        return;
+      }
+
       if (routeHandler.willExpire())
         this._routes.splice(this._routes.indexOf(routeHandler), 1);
 
-      (async () => {
-        try {
-          // Let async callback work prior to disabling interception.
-          await routeHandler.handle(route, request);
-        } finally {
-          if (!this._routes.length)
-            this._wrapApiCall(() => this._disableInterception(), true).catch(() => {});
-        }
-      })();
+      await new Promise<void>(f => {
+        routeHandler.handle(route, request, async done => {
+          if (!done)
+            await nextRoute();
+          f();
+        });
+      });
+    };
 
-      // There is no chaining, first handler wins.
-      return;
-    }
-    this._browserContext._onRoute(route, request);
+    await nextRoute();
+    if (!this._routes.length)
+      this._wrapApiCall(() => this._disableInterception(), true).catch(() => {});
   }
 
   async _onBinding(bindingCall: BindingCall) {

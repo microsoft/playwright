@@ -63,12 +63,12 @@ it('should unroute', async ({ browser, server }) => {
   };
   await context.route('**/empty.html', handler4);
   await page.goto(server.EMPTY_PAGE);
-  expect(intercepted).toEqual([4]);
+  expect(intercepted).toEqual([4, 3, 2, 1]);
 
   intercepted = [];
   await context.unroute('**/empty.html', handler4);
   await page.goto(server.EMPTY_PAGE);
-  expect(intercepted).toEqual([3]);
+  expect(intercepted).toEqual([3, 2, 1]);
 
   intercepted = [];
   await context.unroute('**/empty.html');
@@ -248,4 +248,85 @@ it('should overwrite post body with empty string', async ({ context, server, pag
 
   const body = (await req.postBody).toString();
   expect(body).toBe('');
+});
+
+it('should chain continue', async ({ context, page, server }) => {
+  const intercepted = [];
+  await context.route('**/empty.html', route => {
+    intercepted.push(1);
+    route.continue();
+  });
+  await context.route('**/empty.html', route => {
+    intercepted.push(2);
+    route.continue();
+  });
+  await context.route('**/empty.html', route => {
+    intercepted.push(3);
+    route.continue();
+  });
+  await page.goto(server.EMPTY_PAGE);
+  expect(intercepted).toEqual([3, 2, 1]);
+});
+
+it('should not chain fulfill', async ({ context, page, server }) => {
+  let failed = false;
+  await context.route('**/empty.html', route => {
+    failed = true;
+  });
+  await context.route('**/empty.html', route => {
+    route.fulfill({ status: 200, body: 'fulfilled' });
+  });
+  await context.route('**/empty.html', route => {
+    route.continue();
+  });
+  const response = await page.goto(server.EMPTY_PAGE);
+  const body = await response.body();
+  expect(body.toString()).toEqual('fulfilled');
+  expect(failed).toBeFalsy();
+});
+
+it('should not chain abort', async ({ context, page, server }) => {
+  let failed = false;
+  await context.route('**/empty.html', route => {
+    failed = true;
+  });
+  await context.route('**/empty.html', route => {
+    route.abort();
+  });
+  await context.route('**/empty.html', route => {
+    route.continue();
+  });
+  const e = await page.goto(server.EMPTY_PAGE).catch(e => e);
+  expect(e).toBeTruthy();
+  expect(failed).toBeFalsy();
+});
+
+it('should chain continue into page', async ({ context, page, server }) => {
+  const intercepted = [];
+  await context.route('**/empty.html', route => {
+    intercepted.push(1);
+    route.continue();
+  });
+  await context.route('**/empty.html', route => {
+    intercepted.push(2);
+    route.continue();
+  });
+  await context.route('**/empty.html', route => {
+    intercepted.push(3);
+    route.continue();
+  });
+  await page.route('**/empty.html', route => {
+    intercepted.push(4);
+    route.continue();
+  });
+  await page.route('**/empty.html', route => {
+    intercepted.push(5);
+    route.continue();
+  });
+  await page.route('**/empty.html', route => {
+    intercepted.push(6);
+    route.continue();
+  });
+  await page.goto(server.EMPTY_PAGE);
+  expect(intercepted).toEqual([6, 5, 4, 3, 2, 1]);
 });
