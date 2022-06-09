@@ -474,6 +474,7 @@ export const deps: any = {
       'libxrandr2'
     ],
     firefox: [
+      'ffmpeg',
       'libasound2',
       'libatk1.0-0',
       'libcairo-gobject2',
