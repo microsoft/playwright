@@ -58,7 +58,9 @@ export const hostPlatform = ((): HostPlatform => {
       return ('generic-linux' + archSuffix) as HostPlatform;
     if (parseInt(ubuntuVersion, 10) <= 19)
       return ('ubuntu18.04' + archSuffix) as HostPlatform;
-    return ('ubuntu20.04' + archSuffix) as HostPlatform;
+    if (parseInt(ubuntuVersion, 10) <= 21)
+      return ('ubuntu20.04' + archSuffix) as HostPlatform;
+    return ('ubuntu22.04' + archSuffix) as HostPlatform;
   }
   if (platform === 'win32')
     return 'win64';

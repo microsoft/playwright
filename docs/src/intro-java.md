@@ -142,7 +142,7 @@ Depending on your Linux distribution, you might need to install additional
 dependencies to run the browsers.
 
 :::note
-Only Ubuntu 18.04 and Ubuntu 20.04 are officially supported.
+Only Ubuntu 18.04, 20.04, and 22.04 are officially supported.
 :::
 
 See also in the [Command line tools](./cli.md#install-system-dependencies)

@@ -32,5 +32,5 @@ cd "$(dirname "$0")"
 # image.
 node ../../utils/pack_package.js playwright-core ./playwright-core.tar.gz
 
-docker run -v $PWD:/root/hostfolder --rm -it "$1" /root/hostfolder/inside_docker/process.sh "$2"
+docker run --platform linux/amd64 -v $PWD:/root/hostfolder --rm -it "$1" /root/hostfolder/inside_docker/process.sh "$2"
 
