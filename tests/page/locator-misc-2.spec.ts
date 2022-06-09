@@ -106,7 +106,8 @@ it('should take screenshot', async ({ page, server, browserName, headless, isAnd
   expect(screenshot).toMatchSnapshot('screenshot-element-bounding-box.png');
 });
 
-it('should return bounding box', async ({ page, server, isAndroid }) => {
+it('should return bounding box', async ({ page, server, browserName, headless, isAndroid, isLinux }) => {
+  it.fixme(browserName === 'firefox' && !headless && !isLinux);
   it.skip(isAndroid);
 
   await page.setViewportSize({ width: 500, height: 500 });
