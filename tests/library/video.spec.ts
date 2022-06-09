@@ -163,7 +163,8 @@ it.describe('screencast', () => {
   it('should work with old options', async ({ browser, browserName, trace }, testInfo) => {
     it.fixme(browserName === 'firefox' && trace === 'on', 'https://github.com/microsoft/playwright/issues/10060');
     const videosPath = testInfo.outputPath('');
-    const size = { width: 450, height: 240 };
+    // Firefox does not have a mobile variant and has a large minimum size (500 on windows and 450 elsewhere).
+    const size = browserName === 'firefox' ? { width: 500, height: 400 } : { width: 320, height: 240 };
     const context = await browser.newContext({
       videosPath,
       viewport: size,
@@ -186,7 +187,8 @@ it.describe('screencast', () => {
 
   it('should capture static page', async ({ browser, browserName, trace }, testInfo) => {
     it.fixme(browserName === 'firefox' && trace === 'on', 'https://github.com/microsoft/playwright/issues/10060');
-    const size = { width: 450, height: 240 };
+    // Firefox does not have a mobile variant and has a large minimum size (500 on windows and 450 elsewhere).
+    const size = browserName === 'firefox' ? { width: 500, height: 400 } : { width: 320, height: 240 };
     const context = await browser.newContext({
       recordVideo: {
         dir: testInfo.outputPath(''),
@@ -659,8 +661,8 @@ it.describe('screencast', () => {
   });
 
   it('should capture full viewport', async ({ browserType, browserName, headless, isWindows }, testInfo) => {
-    it.fail(browserName === 'chromium' && !headless, 'The square is not on the video');
-    it.fail(browserName === 'firefox' && isWindows, 'https://github.com/microsoft/playwright/issues/14405');
+    it.fixme(browserName === 'chromium' && !headless, 'The square is not on the video');
+    it.fixme(browserName === 'firefox' && isWindows, 'https://github.com/microsoft/playwright/issues/14405');
     const size = { width: 600, height: 400 };
     const browser = await browserType.launch();
 
@@ -692,8 +694,8 @@ it.describe('screencast', () => {
   });
 
   it('should capture full viewport on hidpi', async ({ browserType, browserName, headless, isWindows }, testInfo) => {
-    it.fail(browserName === 'chromium' && !headless, 'The square is not on the video');
-    it.fail(browserName === 'firefox' && isWindows, 'https://github.com/microsoft/playwright/issues/14405');
+    it.fixme(browserName === 'chromium' && !headless, 'The square is not on the video');
+    it.fixme(browserName === 'firefox' && isWindows, 'https://github.com/microsoft/playwright/issues/14405');
     const size = { width: 600, height: 400 };
     const browser = await browserType.launch();
 
