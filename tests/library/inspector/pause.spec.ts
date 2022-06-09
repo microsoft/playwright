@@ -32,7 +32,9 @@ it('should resume when closing inspector', async ({ page, recorderPageGetter, cl
 it.describe('pause', () => {
   it.skip(({ mode }) => mode !== 'default');
 
-  it.afterEach(async ({ recorderPageGetter }) => {
+  it.afterEach(async ({ recorderPageGetter }, testInfo) => {
+    if (testInfo.status === 'skipped')
+      return;
     try {
       const recorderPage = await recorderPageGetter();
       recorderPage.click('[title=Resume]').catch(() => {});
