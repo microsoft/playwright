@@ -92,3 +92,165 @@ test('print GitHub annotations for global error', async ({ runInlineTest }) => {
   expect(text).toContain('::error ::Error: Oh my!%0A%0A');
   expect(result.exitCode).toBe(1);
 });
+
+test('summary works', async ({ runInlineTest, githubSummary, page }) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      const { test } = pwt;
+      test('passing', async ({}) => {
+        expect(1 + 1).toBe(2);
+      });
+    `
+  }, { reporter: 'github' });
+  expect(result.exitCode).toBe(0);
+  const report = await githubSummary.report();
+  await expect.poll(report.summaryTable).toEqual([
+    ['Status', 'Count'],
+    ['❌ (unexpected)', '0'],
+    ['⁉️ (flaky)', '0'],
+    ['✅ (expected)', '1'],
+    ['⏩ (skipped)', '0'],
+    ['Total', '1']
+  ]);
+
+  await expect.poll(report.detailsTable).toEqual([
+    ['Status', 'Spec', 'Error'],
+    ['✅', ' > a.test.js > passing', ''],
+  ]);
+});
+
+test('summary works with different levels', async ({ runInlineTest, githubSummary, page }) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      const { test } = pwt;
+      test('passing', async ({}) => {
+        expect(1 + 1).toBe(2);
+      });
+
+      test('failing', async ({}) => {
+        expect(1).toBe(2);
+      });
+
+      test('timeout', async ({}) => {
+        test.setTimeout(500);
+        await new Promise(() => {});
+      });
+
+      test('skip', async ({}) => {
+        test.skip();
+      });
+    `
+  }, { reporter: 'github' });
+  expect(result.exitCode).toBe(1);
+  const report = await githubSummary.report();
+  await expect.poll(report.summaryTable).toEqual([
+    ['Status', 'Count'],
+    ['❌ (unexpected)', '2'],
+    ['⁉️ (flaky)', '0'],
+    ['✅ (expected)', '1'],
+    ['⏩ (skipped)', '1'],
+    ['Total', '4']
+  ]);
+
+  await expect.poll(report.detailsTable).toEqual([
+    ['Status', 'Spec', 'Error'],
+    ['❌', ' > a.test.js > failing', expect.stringContaining('expect(1).toBe(2)')],
+    ['❌', ' > a.test.js > timeout', expect.stringContaining('Timeout of 500ms exceeded.')],
+    ['✅', ' > a.test.js > passing', ''],
+    ['⏩', ' > a.test.js > skip', ''],
+  ]);
+});
+
+
+test('summary problematic-only option works', async ({ runInlineTest, githubSummary, page }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: [
+          ['github', { summary: 'problematic-only' }],
+        ]
+      };
+    `,
+    'a.test.js': `
+      const { test } = pwt;
+      test('passing', async ({}) => {
+        expect(1 + 1).toBe(2);
+      });
+
+      test('failing', async ({}) => {
+        expect(1).toBe(2);
+      });
+
+      test('timeout', async ({}) => {
+        test.setTimeout(500);
+        await new Promise(() => {});
+      });
+
+      test('skip', async ({}) => {
+        test.skip();
+      });
+    `
+  }, { reporter: '' });
+  expect(result.exitCode).toBe(1);
+  const report = await githubSummary.report();
+  await expect.poll(report.summaryTable).toEqual([
+    ['Status', 'Count'],
+    ['❌ (unexpected)', '2'],
+    ['⁉️ (flaky)', '0'],
+    ['✅ (expected)', '1'],
+    ['⏩ (skipped)', '1'],
+    ['Total', '4']
+  ]);
+
+  await expect.poll(report.detailsTable).toEqual([
+    ['Status', 'Spec', 'Error'],
+    ['❌', ' > a.test.js > failing', expect.stringContaining('expect(1).toBe(2)')],
+    ['❌', ' > a.test.js > timeout', expect.stringContaining('Timeout of 500ms exceeded.')],
+  ]);
+});
+
+test('summary off option works', async ({ runInlineTest, githubSummary, page }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: [
+          ['github', { summary: 'off' }],
+        ]
+      };
+    `,
+    'a.test.js': `
+      const { test } = pwt;
+      test('example1', async ({}) => {
+        expect(1 + 1).toBe(2);
+      });
+    `
+  }, { reporter: '' });
+  const text = stripAnsi(result.output);
+  expect(text).not.toContain('::error');
+  expect(text).toContain('::notice title=🎭 Playwright Run Summary::  1 passed');
+  expect(result.exitCode).toBe(0);
+
+  await expect(githubSummary.contents()).resolves.toBe('');
+});
+
+test('annotations off option works', async ({ runInlineTest, githubSummary, page }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: [
+          ['github', { annotations: 'off' }],
+        ]
+      };
+    `,
+    'a.test.js': `
+      const { test } = pwt;
+      test('example1', async ({}) => {
+        expect(1 + 1).toBe(2);
+      });
+    `
+  }, { reporter: '' });
+  const text = stripAnsi(result.output);
+  expect(text).not.toContain('::error');
+  expect(text).not.toContain('::notice title=🎭 Playwright Run Summary::  1 passed');
+  expect(result.exitCode).toBe(0);
+});

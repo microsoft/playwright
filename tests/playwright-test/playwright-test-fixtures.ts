@@ -24,7 +24,7 @@ import type { CommonFixtures } from '../config/commonFixtures';
 import { commonFixtures } from '../config/commonFixtures';
 import type { ServerFixtures, ServerWorkerOptions } from '../config/serverFixtures';
 import { serverFixtures } from '../config/serverFixtures';
-import type { TestInfo } from './stable-test-runner';
+import type { Page, TestInfo } from './stable-test-runner';
 import { test as base } from './stable-test-runner';
 
 const removeFolderAsync = promisify(rimraf);
@@ -217,6 +217,13 @@ type RunOptions = {
 type Fixtures = {
   writeFiles: (files: Files) => Promise<string>;
   runInlineTest: (files: Files, params?: Params, env?: Env, options?: RunOptions, beforeRunPlaywrightTest?: ({ baseDir }: { baseDir: string }) => Promise<void>) => Promise<RunResult>;
+  githubSummary: {
+    path: string, contents: () => Promise<string>,
+    report: () => Promise<{ page: Page,
+      summaryTable: () => Promise<string[][]>,
+      detailsTable: () => Promise<string[][]>
+    }>,
+  },
   runTSC: (files: Files) => Promise<TSCResult>;
   nodeVersion: { major: number, minor: number, patch: number },
 };
@@ -229,12 +236,12 @@ export const test = base
         await use(files => writeFiles(testInfo, files));
       },
 
-      runInlineTest: async ({ childProcess }, use, testInfo: TestInfo) => {
+      runInlineTest: async ({ childProcess, githubSummary }, use, testInfo: TestInfo) => {
         await use(async (files: Files, params: Params = {}, env: Env = {}, options: RunOptions = {}, beforeRunPlaywrightTest?: ({ baseDir: string }) => Promise<void>) => {
           const baseDir = await writeFiles(testInfo, files);
           if (beforeRunPlaywrightTest)
             await beforeRunPlaywrightTest({ baseDir });
-          return await runPlaywrightTest(childProcess, baseDir, params, env, options);
+          return await runPlaywrightTest(childProcess, baseDir, params, { GITHUB_STEP_SUMMARY: githubSummary.path, ...env }, options);
         });
       },
 
@@ -255,6 +262,30 @@ export const test = base
         const [major, minor, patch] = process.versions.node.split('.');
         await use({ major: +major, minor: +minor, patch: +patch });
       },
+
+      githubSummary: async ({ page }, use, testInfo: TestInfo) => {
+        const fp = testInfo.outputPath('github-summary.html');
+        await fs.promises.writeFile(fp, '');
+        const contents = () => fs.promises.readFile(fp, 'utf8');
+        const report = async () => {
+          await page.setContent(await contents());
+          const scrapeTable = async (selector: string) => {
+            const table = await page.$(selector);
+            const rows: string[][] = [];
+            for (const r of await table.$$('tr')) {
+              const row = [];
+              for (const c of await r.$$('th, td'))
+                row.push(await c.textContent());
+              rows.push(row);
+            }
+            return rows;
+          };
+
+          return { page, summaryTable: () => scrapeTable('table:nth-of-type(1)'), detailsTable: () => scrapeTable('table:nth-of-type(2)') };
+        };
+
+        await use({ path: fp, contents, report });
+      }
     });
 
 const TSCONFIG = {
