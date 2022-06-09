@@ -251,7 +251,6 @@ it('should not throttle rAF in the opener page', async ({ page, server }) => {
     waitForRafs(page, 30),
     waitForRafs(popup, 30)
   ]);
-  console.log('done');
 });
 
 async function waitForRafs(page: Page, count: number): Promise<void> {
