@@ -146,7 +146,7 @@ jobs:
       fail-fast: false
       matrix:
         browser: [chromium, firefox, webkit]
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-20.04, ubuntu-22.04, macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v2
@@ -161,14 +161,14 @@ jobs:
     - run: npm run build
     - run: npx playwright install --with-deps ${{ matrix.browser }} chromium
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run test -- --project=${{ matrix.browser }} --headed
-      if: always() && matrix.os == 'ubuntu-latest'
+      if: always() && startsWith(matrix.os, 'ubuntu-')
     - run: npm run test -- --project=${{ matrix.browser }} --headed
-      if: always() && matrix.os != 'ubuntu-latest'
+      if: always() && !startsWith(matrix.os, 'ubuntu-')
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always()
       shell: bash
     - uses: actions/upload-artifact@v1
-      if: always() && matrix.os == 'ubuntu-latest'
+      if: always() && startsWith(matrix.os, 'ubuntu-')
       with:
         name: headful-${{ matrix.browser }}-linux-test-results
         path: test-results
