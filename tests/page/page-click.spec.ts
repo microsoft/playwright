@@ -832,8 +832,8 @@ it('should not throw protocol error when navigating during the click', async ({ 
   expect(await page.evaluate('result')).toBe('Clicked');
 });
 
-it('should retry when navigating during the click', async ({ page, server, mode }) => {
-  it.skip(mode !== 'default');
+it('should retry when navigating during the click', async ({ page, server, mode, isAndroid }) => {
+  it.skip(mode !== 'default' || isAndroid);
 
   await page.goto(server.PREFIX + '/input/button.html');
   let firstTime = true;
