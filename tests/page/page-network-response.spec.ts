@@ -319,7 +319,8 @@ it('should return headers after route.fulfill', async ({ page, server }) => {
   });
 });
 
-it('should report if request was fromServiceWorker', async ({ page, server }) => {
+it('should report if request was fromServiceWorker', async ({ page, server, isAndroid }) => {
+  it.skip(isAndroid);
   {
     const res = await page.goto(server.PREFIX + '/serviceworkers/fetch/sw.html');
     expect(res.fromServiceWorker()).toBe(false);

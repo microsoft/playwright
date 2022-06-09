@@ -128,36 +128,6 @@ it('should create userDataDir if it does not exist', async ({ createUserDataDir,
   expect(fs.readdirSync(userDataDir).length).toBeGreaterThan(0);
 });
 
-it('should restore cookies from userDataDir', async ({ browserType, server, createUserDataDir, platform, channel, browserName, headless }) => {
-  it.fixme(browserName === 'firefox' && !headless, 'https://github.com/microsoft/playwright/issues/12632');
-  it.fixme(platform === 'win32' && channel === 'chrome');
-  it.slow();
-
-  const userDataDir = await createUserDataDir();
-  const browserContext = await browserType.launchPersistentContext(userDataDir);
-  const page = await browserContext.newPage();
-  await page.goto(server.EMPTY_PAGE);
-  const documentCookie = await page.evaluate(() => {
-    document.cookie = 'doSomethingOnlyOnce=true; expires=Fri, 31 Dec 9999 23:59:59 GMT';
-    return document.cookie;
-  });
-  expect(documentCookie).toBe('doSomethingOnlyOnce=true');
-  await browserContext.close();
-
-  const browserContext2 = await browserType.launchPersistentContext(userDataDir);
-  const page2 = await browserContext2.newPage();
-  await page2.goto(server.EMPTY_PAGE);
-  expect(await page2.evaluate(() => document.cookie)).toBe('doSomethingOnlyOnce=true');
-  await browserContext2.close();
-
-  const userDataDir2 = await createUserDataDir();
-  const browserContext3 = await browserType.launchPersistentContext(userDataDir2);
-  const page3 = await browserContext3.newPage();
-  await page3.goto(server.EMPTY_PAGE);
-  expect(await page3.evaluate(() => document.cookie)).not.toBe('doSomethingOnlyOnce=true');
-  await browserContext3.close();
-});
-
 it('should have default URL when launching browser', async ({ launchPersistent }) => {
   const { context } = await launchPersistent();
   const urls = context.pages().map(page => page.url());
