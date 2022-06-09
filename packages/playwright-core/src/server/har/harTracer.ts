@@ -191,7 +191,7 @@ export class HarTracer {
     const contentType = event.headers['content-type'];
     if (contentType)
       content.mimeType = contentType;
-    this._storeResponseContent(event.body, content);
+    this._storeResponseContent(event.body, content, 'other');
 
     if (this._started)
       this._delegate.onEntryFinished(harEntry);
@@ -261,7 +261,7 @@ export class HarTracer {
 
       const content = harEntry.response.content;
       compressionCalculationBarrier.setDecodedBodySize(buffer.length);
-      this._storeResponseContent(buffer, content);
+      this._storeResponseContent(buffer, content, request.resourceType());
     }).catch(() => {
       compressionCalculationBarrier.setDecodedBodySize(0);
     }).then(() => {
@@ -296,15 +296,21 @@ export class HarTracer {
       this._delegate.onEntryFinished(harEntry);
   }
 
-  private _storeResponseContent(buffer: Buffer | undefined, content: har.Content) {
+  private _storeResponseContent(buffer: Buffer | undefined, content: har.Content, resourceType: string) {
     if (!buffer) {
       content.size = 0;
       return;
     }
     content.size = buffer.length;
     if (this._options.content === 'embedded') {
-      content.text = buffer.toString('base64');
-      content.encoding = 'base64';
+      // Sometimes, we can receive a font/media file with textual mime type. Browser
+      // still interprets them correctly, but the 'content-type' header is obviously wrong.
+      if (isTextualMimeType(content.mimeType) && resourceType !== 'font') {
+        content.text = buffer.toString();
+      } else {
+        content.text = buffer.toString('base64');
+        content.encoding = 'base64';
+      }
     } else if (this._options.content === 'sha1') {
       content._sha1 = calculateSha1(buffer) + '.' + (mime.getExtension(content.mimeType) || 'dat');
       if (this._started)
@@ -528,4 +534,8 @@ function parseCookie(c: string): har.Cookie {
       cookie.secure = true;
   }
   return cookie;
+}
+
+function isTextualMimeType(mimeType: string) {
+  return !!mimeType.match(/^(text\/.*?|application\/(json|(x-)?javascript|xml.*?|ecmascript)|image\/svg(\+xml)?|application\/.*?(\+json|\+xml))(;\s*charset=.*)?$/);
 }
