@@ -209,6 +209,36 @@ test('summary problematic-only option works', async ({ runInlineTest, githubSumm
   ]);
 });
 
+test('summary skips printing summary table if no entries', async ({ runInlineTest, githubSummary, page }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: [
+          ['github', { summary: 'problematic-only' }],
+        ]
+      };
+    `,
+    'a.test.js': `
+      const { test } = pwt;
+      test('passing', async ({}) => {
+        expect(1 + 1).toBe(2);
+      });
+    `
+  }, { reporter: '' });
+  expect(result.exitCode).toBe(0);
+  const report = await githubSummary.report();
+  await expect.poll(report.summaryTable).toEqual([
+    ['Status', 'Count'],
+    ['❌ (unexpected)', '0'],
+    ['⁉️ (flaky)', '0'],
+    ['✅ (expected)', '1'],
+    ['⏩ (skipped)', '0'],
+    ['Total', '1']
+  ]);
+
+  await expect(page.locator('text=none to show')).toBeVisible();
+});
+
 test('summary off option works', async ({ runInlineTest, githubSummary, page }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `

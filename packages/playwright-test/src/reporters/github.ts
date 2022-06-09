@@ -127,19 +127,22 @@ export class GitHubReporter extends BaseReporter {
       testsToShowDetailsFor = cases.filter(t => PROBLEMATIC_OUTCOMES.includes(t.outcome()));
     }
 
-    await githubActionsCore.summary
-        .addHeading('Playwright Test')
+    let summary = githubActionsCore.summary
+        .addHeading('🎭 Playwright Test 🎭')
         .addHeading('Summary', 2)
         .addTable([[{ data: 'Status', header: true }, { data: 'Count', header: true }],
           ...OUTCOME_PRECEDENCE.map(o => ([`${outcomeToEmoji(o)} (${o})`, cases.filter(t => t.outcome() === o).length.toString()])),
           ['<strong>Total</strong>', cases.length.toString()],
         ])
-        .addHeading(header, 2)
-        .addTable([
-          [{ data: 'Status', header: true }, { data: 'Spec', header: true }, { data: 'Error', header: true }],
-          ...sort(testsToShowDetailsFor).map(t => ([outcomeToEmoji(t.outcome()), t.titlePath().splice(1).join(' > '), t.results.some(r => r.error) ? `<details><summary>Expand for Error Logs</summary> <pre>${escapeHTML(stripAnsiEscapes(formatFailure(this.config, t).message))}</pre></details>` : ''])),
-        ])
-        .write();
+        .addHeading(header, 2);
+    if (testsToShowDetailsFor.length) {
+      summary = summary.addTable([
+        [{ data: 'Status', header: true }, { data: 'Spec', header: true }, { data: 'Error', header: true }],
+        ...sort(testsToShowDetailsFor).map(t => ([outcomeToEmoji(t.outcome()), t.titlePath().splice(1).join(' > '), t.results.some(r => r.error) ? `<details><summary>Expand for Error Logs</summary> <pre>${escapeHTML(stripAnsiEscapes(formatFailure(this.config, t).message))}</pre></details>` : ''])),
+      ]);
+    } else {summary.addRaw('none to show');}
+
+    await summary.write();
   }
 
   private _printAnnotations() {
