@@ -322,8 +322,9 @@ it('headerValue should return set-cookie from intercepted response', async ({ pa
   expect(await response.headerValue('Set-Cookie')).toBe('a=b');
 });
 
-it('should complain about bad har', async ({ page, server, isElectron }, testInfo) => {
+it('should complain about bad har', async ({ page, server, isElectron, isAndroid }, testInfo) => {
   it.fixme(isElectron, 'error: Browser context management is not supported.');
+  it.fixme(isAndroid);
   const harPath = testInfo.outputPath('test.har');
   fs.writeFileSync(harPath, JSON.stringify({ log: {} }), 'utf-8');
   let error;
@@ -335,8 +336,9 @@ it('should complain about bad har', async ({ page, server, isElectron }, testInf
   expect(error.message).toContain(`Error reading HAR file ${harPath}: Cannot read`);
 });
 
-it('should complain about no entry found in har', async ({ page, server, isElectron }, testInfo) => {
+it('should complain about no entry found in har', async ({ page, server, isElectron, isAndroid }, testInfo) => {
   it.fixme(isElectron, 'error: Browser context management is not supported.');
+  it.fixme(isAndroid);
   const harPath = testInfo.outputPath('test.har');
   fs.writeFileSync(harPath, JSON.stringify({ log: { entries: [] } }), 'utf-8');
   let error;
@@ -348,8 +350,9 @@ it('should complain about no entry found in har', async ({ page, server, isElect
   expect(error.message).toBe(`Error reading HAR file ${harPath}: No entry matching ${server.PREFIX + '/one-style.css'}`);
 });
 
-it('should complain about har + response options', async ({ page, server, isElectron }) => {
+it('should complain about har + response options', async ({ page, server, isElectron, isAndroid }) => {
   it.fixme(isElectron, 'error: Browser context management is not supported.');
+  it.fixme(isAndroid);
   let error;
   await page.route('**/*.css', async route => {
     const response = await page.request.fetch(route.request());
