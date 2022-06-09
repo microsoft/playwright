@@ -16924,7 +16924,7 @@ index 51eb4833d140baef40501790ef05906c1f5285a0..86434813aebe0e5e1955a19c70a1e63c
      // and make it one UIClient call that calls the completionHandler with false
      // if there is no delegate instead of returning the completionHandler
 diff --git a/Source/WebKit/UIProcess/WebPageProxy.h b/Source/WebKit/UIProcess/WebPageProxy.h
-index f69420b0b67e1d9d37b4af1feb3cea731f1f3285..73b45e8248cb08ef2a4c55081de1e244b566b911 100644
+index f69420b0b67e1d9d37b4af1feb3cea731f1f3285..00d99f5b7b192c650817302b5e38bc786f047d05 100644
 --- a/Source/WebKit/UIProcess/WebPageProxy.h
 +++ b/Source/WebKit/UIProcess/WebPageProxy.h
 @@ -39,6 +39,7 @@
@@ -16978,7 +16978,15 @@ index f69420b0b67e1d9d37b4af1feb3cea731f1f3285..73b45e8248cb08ef2a4c55081de1e244
  class SharedBuffer;
  class SpeechRecognitionRequest;
  class TextIndicator;
-@@ -543,6 +555,8 @@ public:
+@@ -399,7 +411,6 @@ struct EditingRange;
+ struct EditorState;
+ struct FrameTreeNodeData;
+ struct FocusedElementInformation;
+-struct FontInfo;
+ struct FrameInfoData;
+ struct InputMethodState;
+ struct InsertTextOptions;
+@@ -543,6 +554,8 @@ public:
      void setControlledByAutomation(bool);
  
      WebPageInspectorController& inspectorController() { return *m_inspectorController; }
@@ -16987,7 +16995,7 @@ index f69420b0b67e1d9d37b4af1feb3cea731f1f3285..73b45e8248cb08ef2a4c55081de1e244
  
  #if PLATFORM(IOS_FAMILY)
      void showInspectorIndication();
-@@ -653,6 +667,11 @@ public:
+@@ -653,6 +666,11 @@ public:
  
      void setPageLoadStateObserver(std::unique_ptr<PageLoadState::Observer>&&);
  
@@ -16999,7 +17007,7 @@ index f69420b0b67e1d9d37b4af1feb3cea731f1f3285..73b45e8248cb08ef2a4c55081de1e244
      void initializeWebPage();
      void setDrawingArea(std::unique_ptr<DrawingAreaProxy>&&);
  
-@@ -680,6 +699,7 @@ public:
+@@ -680,6 +698,7 @@ public:
      void closePage();
  
      void addPlatformLoadParameters(WebProcessProxy&, LoadParameters&);
@@ -17007,7 +17015,7 @@ index f69420b0b67e1d9d37b4af1feb3cea731f1f3285..73b45e8248cb08ef2a4c55081de1e244
      RefPtr<API::Navigation> loadRequest(WebCore::ResourceRequest&&, WebCore::ShouldOpenExternalURLsPolicy = WebCore::ShouldOpenExternalURLsPolicy::ShouldAllowExternalSchemesButNotAppLinks, API::Object* userData = nullptr);
      RefPtr<API::Navigation> loadFile(const String& fileURL, const String& resourceDirectoryURL, bool isAppInitiated = true, API::Object* userData = nullptr);
      RefPtr<API::Navigation> loadData(const IPC::DataReference&, const String& MIMEType, const String& encoding, const String& baseURL, API::Object* userData = nullptr, WebCore::ShouldOpenExternalURLsPolicy = WebCore::ShouldOpenExternalURLsPolicy::ShouldNotAllow);
-@@ -1213,6 +1233,7 @@ public:
+@@ -1213,6 +1232,7 @@ public:
  #endif
  
      void pageScaleFactorDidChange(double);
@@ -17015,7 +17023,7 @@ index f69420b0b67e1d9d37b4af1feb3cea731f1f3285..73b45e8248cb08ef2a4c55081de1e244
      void pluginScaleFactorDidChange(double);
      void pluginZoomFactorDidChange(double);
  
-@@ -1300,14 +1321,20 @@ public:
+@@ -1300,14 +1320,20 @@ public:
      void didStartDrag();
      void dragCancelled();
      void setDragCaretRect(const WebCore::IntRect&);
@@ -17037,7 +17045,7 @@ index f69420b0b67e1d9d37b4af1feb3cea731f1f3285..73b45e8248cb08ef2a4c55081de1e244
  #endif
  
      void processDidBecomeUnresponsive();
-@@ -1558,6 +1585,8 @@ public:
+@@ -1558,6 +1584,8 @@ public:
  
  #if PLATFORM(COCOA) || PLATFORM(GTK)
      RefPtr<ViewSnapshot> takeViewSnapshot(std::optional<WebCore::IntRect>&&);
@@ -17046,7 +17054,7 @@ index f69420b0b67e1d9d37b4af1feb3cea731f1f3285..73b45e8248cb08ef2a4c55081de1e244
  #endif
  
  #if ENABLE(WEB_CRYPTO)
-@@ -2734,6 +2763,7 @@ private:
+@@ -2734,6 +2762,7 @@ private:
      String m_overrideContentSecurityPolicy;
  
      RefPtr<WebInspectorUIProxy> m_inspector;
@@ -17054,7 +17062,7 @@ index f69420b0b67e1d9d37b4af1feb3cea731f1f3285..73b45e8248cb08ef2a4c55081de1e244
  
  #if PLATFORM(COCOA)
      WeakObjCPtr<WKWebView> m_cocoaView;
-@@ -3003,6 +3033,20 @@ private:
+@@ -3003,6 +3032,20 @@ private:
      unsigned m_currentDragNumberOfFilesToBeAccepted { 0 };
      WebCore::IntRect m_currentDragCaretRect;
      WebCore::IntRect m_currentDragCaretEditableElementRect;
@@ -17075,7 +17083,7 @@ index f69420b0b67e1d9d37b4af1feb3cea731f1f3285..73b45e8248cb08ef2a4c55081de1e244
  #endif
  
      PageLoadState m_pageLoadState;
-@@ -3213,6 +3257,9 @@ private:
+@@ -3213,6 +3256,9 @@ private:
          RefPtr<API::Object> messageBody;
      };
      Vector<InjectedBundleMessage> m_pendingInjectedBundleMessages;
