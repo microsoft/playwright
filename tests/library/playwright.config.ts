@@ -59,8 +59,8 @@ const config: Config<CoverageWorkerOptions & PlaywrightWorkerOptions & Playwrigh
   retries: process.env.CI ? 3 : 0,
   reporter: process.env.CI ? [
     ['dot'],
-    ['github'],
     ['json', { outputFile: path.join(outputDir, 'report.json') }],
+    ['github', { annotations: 'off', summary: 'problematic-only' }],
   ] : [
     ['html', { open: 'on-failure' }]
   ],

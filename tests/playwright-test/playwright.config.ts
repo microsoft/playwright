@@ -36,6 +36,8 @@ const config: Config = {
   reporter: process.env.CI ? [
     ['dot'],
     ['json', { outputFile: path.join(outputDir, 'report.json') }],
+    // TODO(rwoll): enable after next roll which includes new github reporter that supports these options
+    // ['github', { annotations: 'off', summary: 'problematic-only' }],
   ] : [
     ['list']
   ],

@@ -22,7 +22,7 @@ export type ReporterDescription =
   ['dot'] |
   ['line'] |
   ['list'] |
-  ['github'] |
+  ['github'] | ['github', { annotations?: 'on' | 'off', summary?: 'on' | 'off' | 'problematic-only' }] |
   ['junit'] | ['junit', { outputFile?: string, stripANSIControlSequences?: boolean }] |
   ['json'] | ['json', { outputFile?: string }] |
   ['html'] | ['html', { outputFolder?: string, open?: 'always' | 'never' | 'on-failure' }] |

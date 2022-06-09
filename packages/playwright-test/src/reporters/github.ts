@@ -32,6 +32,7 @@ type GitHubLogOptions = Partial<{
 }>;
 
 const OUTCOME_PRECEDENCE: ReturnType<TestCase['outcome']>[] = ['unexpected', 'flaky', 'expected', 'skipped'];
+const PROBLEMATIC_OUTCOMES: ReturnType<TestCase['outcome']>[] = ['unexpected', 'flaky'];
 
 const sort = (tests: TestCase[]) => {
   const out = [...tests];
@@ -59,6 +60,8 @@ const outcomeToEmoji = (o: ReturnType<TestCase['outcome']>) => {
 
   throw new Error('unreachable');
 };
+
+type Options = { annotations?: 'on' | 'off', summary?: 'on' | 'off' | 'problematic-only' };
 
 function escapeHTML(text: string): string {
   return text.replace(/[&"<>]/g, c => ({ '&': '&amp;', '"': '&quot;', '<': '&lt;', '>': '&gt;' }[c]!));
@@ -90,7 +93,13 @@ class GitHubLogger {
 }
 
 export class GitHubReporter extends BaseReporter {
-  githubLogger = new GitHubLogger();
+  private _githubLogger = new GitHubLogger();
+  private _options: Options = { annotations: 'on', summary: 'on' };
+
+  constructor(options?: Options) {
+    super();
+    this._options = { ...this._options, ...options };
+  }
 
   printsToStdio() {
     return false;
@@ -98,17 +107,26 @@ export class GitHubReporter extends BaseReporter {
 
   override async onEnd(result: FullResult) {
     super.onEnd(result);
-    this._printAnnotations();
-    await this._writeGHASummary();
+    if (this._options.annotations !== 'off')
+      this._printAnnotations();
+    if (this._options.summary !== 'off')
+      await this._writeGHASummary();
   }
 
   override onError(error: TestError) {
     const errorMessage = formatError(this.config, error, false).message;
-    this.githubLogger.error(errorMessage);
+    this._githubLogger.error(errorMessage);
   }
 
   private async _writeGHASummary() {
     const cases = this.suite.allTests();
+    let header = 'Tests';
+    let testsToShowDetailsFor = cases;
+    if (this._options.summary === 'problematic-only') {
+      header = 'Problematic Tests';
+      testsToShowDetailsFor = cases.filter(t => PROBLEMATIC_OUTCOMES.includes(t.outcome()));
+    }
+
     await githubActionsCore.summary
         .addHeading('Playwright Test')
         .addHeading('Summary', 2)
@@ -116,10 +134,10 @@ export class GitHubReporter extends BaseReporter {
           ...OUTCOME_PRECEDENCE.map(o => ([`${outcomeToEmoji(o)} (${o})`, cases.filter(t => t.outcome() === o).length.toString()])),
           ['<strong>Total</strong>', cases.length.toString()],
         ])
-        .addHeading('Details', 2)
+        .addHeading(header, 2)
         .addTable([
           [{ data: 'Status', header: true }, { data: 'Spec', header: true }, { data: 'Error', header: true }],
-          ...sort(this.suite.allTests()).map(t => ([outcomeToEmoji(t.outcome()), t.titlePath().splice(1).join(' > '), t.results.some(r => r.error) ? `<details><summary>Expand for Error Logs</summary> <pre>${escapeHTML(stripAnsiEscapes(formatFailure(this.config, t).message))}</pre></details>` : ''])),
+          ...sort(testsToShowDetailsFor).map(t => ([outcomeToEmoji(t.outcome()), t.titlePath().splice(1).join(' > '), t.results.some(r => r.error) ? `<details><summary>Expand for Error Logs</summary> <pre>${escapeHTML(stripAnsiEscapes(formatFailure(this.config, t).message))}</pre></details>` : ''])),
         ])
         .write();
   }
@@ -136,7 +154,7 @@ export class GitHubReporter extends BaseReporter {
   private _printSlowTestAnnotations() {
     this.getSlowTests().forEach(([file, duration]) => {
       const filePath = workspaceRelativePath(path.join(process.cwd(), file));
-      this.githubLogger.warning(`${filePath} took ${milliseconds(duration)}`, {
+      this._githubLogger.warning(`${filePath} took ${milliseconds(duration)}`, {
         title: 'Slow Test',
         file: filePath,
       });
@@ -144,7 +162,7 @@ export class GitHubReporter extends BaseReporter {
   }
 
   private _printSummaryAnnotation(summary: string){
-    this.githubLogger.notice(summary, {
+    this._githubLogger.notice(summary, {
       title: '🎭 Playwright Run Summary'
     });
   }
@@ -165,7 +183,7 @@ export class GitHubReporter extends BaseReporter {
           options.line = location.line;
           options.col = location.column;
         }
-        this.githubLogger.error(message, options);
+        this._githubLogger.error(message, options);
       });
     });
   }
