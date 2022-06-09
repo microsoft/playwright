@@ -37,12 +37,13 @@ async function pageWithHar(contextFactory: (options?: BrowserContextOptions) => 
   };
 }
 
-it('should throw without path', async ({ browser }) => {
+it.only('should throw without path', async ({ browser }) => {
+  expect(1).toBe(2);
   const error = await browser.newContext({ recordHar: {} as any }).catch(e => e);
   expect(error.message).toContain('recordHar.path: expected string, got undefined');
 });
 
-it('should have version and creator', async ({ contextFactory, server }, testInfo) => {
+it.only('should have version and creator', async ({ contextFactory, server }, testInfo) => {
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   await page.goto(server.EMPTY_PAGE);
   const log = await getLog();
@@ -148,7 +149,8 @@ it('should include postData', async ({ contextFactory, server }, testInfo) => {
   });
 });
 
-it('should include binary postData', async ({ contextFactory, server }, testInfo) => {
+it.only('should include binary postData', async ({ contextFactory, server }, testInfo) => {
+  it.skip();
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   await page.goto(server.EMPTY_PAGE);
   await page.evaluate(async () => {

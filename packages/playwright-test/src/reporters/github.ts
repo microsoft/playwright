@@ -18,6 +18,7 @@ import { ms as milliseconds } from 'playwright-core/lib/utilsBundle';
 import path from 'path';
 import { BaseReporter, formatError, formatFailure, stripAnsiEscapes } from './base';
 import type { TestCase, FullResult, TestError } from '../../types/testReporter';
+import { githubActionsCore } from '../utilsBundle';
 
 type GitHubLogType = 'debug' | 'notice' | 'warning' | 'error';
 
@@ -30,6 +31,38 @@ type GitHubLogOptions = Partial<{
   endLine: number;
 }>;
 
+const OUTCOME_PRECEDENCE: ReturnType<TestCase['outcome']>[] = ['unexpected', 'flaky', 'expected', 'skipped'];
+
+const sort = (tests: TestCase[]) => {
+  const out = [...tests];
+
+  return out.sort((a, b) => {
+    const aOutcome = OUTCOME_PRECEDENCE.indexOf(a.outcome());
+    const bOutcome = OUTCOME_PRECEDENCE.indexOf(b.outcome());
+    if (aOutcome !== bOutcome)
+      return aOutcome < bOutcome ? -1 : 1;
+    return a.titlePath().join(' :: ').localeCompare(b.titlePath().join(' :: '));
+  });
+};
+
+const outcomeToEmoji = (o: ReturnType<TestCase['outcome']>) => {
+  switch (o) {
+    case 'expected':
+      return '✅';
+    case 'flaky':
+      return '⁉️';
+    case 'unexpected':
+      return '❌';
+    case 'skipped':
+      return '⏩';
+  }
+
+  throw new Error('unreachable');
+};
+
+function escapeHTML(text: string): string {
+  return text.replace(/[&"<>]/g, c => ({ '&': '&amp;', '"': '&quot;', '<': '&lt;', '>': '&gt;' }[c]!));
+}
 class GitHubLogger {
   private _log(message: string, type: GitHubLogType = 'notice', options: GitHubLogOptions = {}) {
     message = message.replace(/\n/g, '%0A');
@@ -66,11 +99,29 @@ export class GitHubReporter extends BaseReporter {
   override async onEnd(result: FullResult) {
     super.onEnd(result);
     this._printAnnotations();
+    await this._writeGHASummary();
   }
 
   override onError(error: TestError) {
     const errorMessage = formatError(this.config, error, false).message;
     this.githubLogger.error(errorMessage);
+  }
+
+  private async _writeGHASummary() {
+    const cases = this.suite.allTests();
+    await githubActionsCore.summary
+        .addHeading('Playwright Test')
+        .addHeading('Summary', 2)
+        .addTable([[{ data: 'Status', header: true }, { data: 'Count', header: true }],
+          ...OUTCOME_PRECEDENCE.map(o => ([`${outcomeToEmoji(o)} (${o})`, cases.filter(t => t.outcome() === o).length.toString()])),
+          ['<strong>Total</strong>', cases.length.toString()],
+        ])
+        .addHeading('Details', 2)
+        .addTable([
+          [{ data: 'Status', header: true }, { data: 'Spec', header: true }, { data: 'Error', header: true }],
+          ...sort(this.suite.allTests()).map(t => ([outcomeToEmoji(t.outcome()), t.titlePath().splice(1).join(' > '), t.results.some(r => r.error) ? `<details><summary>Expand for Error Logs</summary> <pre>${escapeHTML(stripAnsiEscapes(formatFailure(this.config, t).message))}</pre></details>` : ''])),
+        ])
+        .write();
   }
 
   private _printAnnotations() {

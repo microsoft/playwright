@@ -25,3 +25,6 @@ export const pirates = piratesLibrary;
 
 import sourceMapSupportLibrary from 'source-map-support';
 export const sourceMapSupport = sourceMapSupportLibrary;
+
+import * as githubActionsCoreLibrary from '@actions/core';
+export const githubActionsCore = githubActionsCoreLibrary;

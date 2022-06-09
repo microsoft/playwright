@@ -18,3 +18,4 @@ export const json5: typeof import('../bundles/utils/node_modules/json5') = requi
 export const open: typeof import('../bundles/utils/node_modules/open') = require('./utilsBundleImpl').open;
 export const pirates: typeof import('../bundles/utils/node_modules/pirates') = require('./utilsBundleImpl').pirates;
 export const sourceMapSupport: typeof import('../bundles/utils/node_modules/@types/source-map-support') = require('./utilsBundleImpl').sourceMapSupport;
+export const githubActionsCore: typeof import('../bundles/utils/node_modules/@actions/core') = require('./utilsBundleImpl').githubActionsCore;
