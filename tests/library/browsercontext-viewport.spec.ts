@@ -25,8 +25,8 @@ it('should get the proper default viewport size', async ({ page, server }) => {
 
 it('should set the proper viewport size', async ({ page, server }) => {
   await verifyViewport(page, 1280, 720);
-  await page.setViewportSize({ width: 123, height: 456 });
-  await verifyViewport(page, 123, 456);
+  await page.setViewportSize({ width: 345, height: 456 });
+  await verifyViewport(page, 345, 456);
 });
 
 it('should return correct outerWidth and outerHeight', async ({ page }) => {

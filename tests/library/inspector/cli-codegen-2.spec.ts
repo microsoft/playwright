@@ -473,8 +473,7 @@ test.describe('cli codegen', () => {
   });
 
   test('should update active model on action', async ({ page, openRecorder, browserName, headless }) => {
-    test.fixme(browserName === 'webkit' && headless);
-    test.fixme(browserName === 'firefox' && headless);
+    test.fixme(browserName !== 'chromium');
 
     const recorder = await openRecorder();
     await recorder.setContentAndWait(`<input id="checkbox" type="checkbox" name="accept" onchange="checkbox.name='updated'"></input>`);
