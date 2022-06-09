@@ -503,6 +503,7 @@ export const deps: any = {
       'libxtst6'
     ],
     webkit: [
+      'libenchant-2-2',
       'gstreamer1.0-libav',
       'gstreamer1.0-plugins-bad',
       'gstreamer1.0-plugins-base',
@@ -642,7 +643,7 @@ export const deps: any = {
       'libicuuc.so.66': 'libicu70',
       'libicui18n.so.66': 'libicu70',
       'libwebp.so.6': 'libwebp6',
-      'libenchant.so.1': 'libenchant-2-2',
+      'libenchant-2.so.2': 'libenchant-2-2',
       'libx264.so': 'libx264-163',
       'libvpx.so.7': 'libvpx7'
     },
