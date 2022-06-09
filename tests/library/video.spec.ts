@@ -662,7 +662,7 @@ it.describe('screencast', () => {
 
   it('should capture full viewport', async ({ browserType, browserName, headless, isWindows }, testInfo) => {
     it.fixme(browserName === 'chromium' && !headless, 'The square is not on the video');
-    it.fixme(browserName === 'firefox' && isWindows, 'https://github.com/microsoft/playwright/issues/14405');
+    it.fixme(browserName === 'firefox', 'https://github.com/microsoft/playwright/issues/14405');
     const size = { width: 600, height: 400 };
     const browser = await browserType.launch();
 
@@ -695,7 +695,7 @@ it.describe('screencast', () => {
 
   it('should capture full viewport on hidpi', async ({ browserType, browserName, headless, isWindows }, testInfo) => {
     it.fixme(browserName === 'chromium' && !headless, 'The square is not on the video');
-    it.fixme(browserName === 'firefox' && isWindows, 'https://github.com/microsoft/playwright/issues/14405');
+    it.fixme(browserName === 'firefox');
     const size = { width: 600, height: 400 };
     const browser = await browserType.launch();
 
