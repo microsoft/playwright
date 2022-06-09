@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+import test from '@playwright/test';
 import fs from 'fs';
 import url from 'url';
 import { expect, test as it } from './pageTest';
@@ -319,7 +320,9 @@ it('should return headers after route.fulfill', async ({ page, server }) => {
   });
 });
 
-it('should report if request was fromServiceWorker', async ({ page, server }) => {
+it('should report if request was fromServiceWorker', async ({ page, server, isAndroid }) => {
+  test.fixme(isAndroid);
+
   {
     const res = await page.goto(server.PREFIX + '/serviceworkers/fetch/sw.html');
     expect(res.fromServiceWorker()).toBe(false);
