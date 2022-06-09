@@ -14868,6 +14868,14 @@ export interface Route {
     contentType?: string;
 
     /**
+     * HAR file to extract the response from. If HAR file contains an entry with the matching the url, its headers, status and
+     * body will be used. Individual fields such as headers can be overridden using fulfill options. If matching entry is not
+     * found, this method will throw. If `har` is a relative path, then it is resolved relative to the current working
+     * directory.
+     */
+    har?: string;
+
+    /**
      * Response headers. Header values will be converted to a string.
      */
     headers?: { [key: string]: string; };

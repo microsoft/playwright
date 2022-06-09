@@ -337,6 +337,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     if (this._browser)
       this._browser._contexts.delete(this);
     this._browserType?._contexts?.delete(this);
+    this._connection.localUtils()._channel.harClearCache({ cacheKey: this._guid }).catch(() => {});
     this.emit(Events.BrowserContext.Close, this);
   }
 

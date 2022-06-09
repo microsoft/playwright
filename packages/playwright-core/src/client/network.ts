@@ -21,7 +21,7 @@ import { Frame } from './frame';
 import type { Headers, RemoteAddr, SecurityDetails, WaitForEventOptions } from './types';
 import fs from 'fs';
 import { mime } from '../utilsBundle';
-import { isString, headersObjectToArray } from '../utils';
+import { isString, headersObjectToArray, headersArrayToObject } from '../utils';
 import { ManualPromise } from '../utils/manualPromise';
 import { Events } from './events';
 import type { Page } from './page';
@@ -140,6 +140,11 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
     return this._provisionalHeaders.headers();
   }
 
+  _context() {
+    // TODO: make sure this works for service worker requests.
+    return this.frame().page().context();
+  }
+
   _actualHeaders(): Promise<RawHeaders> {
     if (!this._actualHeadersPromise) {
       this._actualHeadersPromise = this._wrapApiCall(async () => {
@@ -239,13 +244,34 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
     await this._raceWithPageClose(this._channel.abort({ errorCode }));
   }
 
-  async fulfill(options: { response?: api.APIResponse, status?: number, headers?: Headers, contentType?: string, body?: string | Buffer, path?: string } = {}) {
+  async fulfill(options: { response?: api.APIResponse, status?: number, headers?: Headers, contentType?: string, body?: string | Buffer, path?: string, har?: string } = {}) {
     let fetchResponseUid;
     let { status: statusOption, headers: headersOption, body } = options;
+
+    if (options.har && options.response)
+      throw new Error(`At most one of "har" and "response" options should be present`);
+
+    if (options.har) {
+      const entry = await this._connection.localUtils()._channel.harFindEntry({
+        cacheKey: this.request()._context()._guid,
+        harFile: options.har,
+        url: this.request().url(),
+        needBody: body === undefined,
+      });
+      if (entry.error)
+        throw new Error(entry.error);
+      if (statusOption === undefined)
+        statusOption = entry.status;
+      if (headersOption === undefined && entry.headers)
+        headersOption = headersArrayToObject(entry.headers, false);
+      if (body === undefined && entry.body !== undefined)
+        body = Buffer.from(entry.body, 'base64');
+    }
+
     if (options.response) {
-      statusOption ||= options.response.status();
-      headersOption ||= options.response.headers();
-      if (options.body === undefined && options.path === undefined && options.response instanceof APIResponse) {
+      statusOption ??= options.response.status();
+      headersOption ??= options.response.headers();
+      if (body === undefined && options.path === undefined && options.response instanceof APIResponse) {
         if (options.response._request._connection === this._connection)
           fetchResponseUid = (options.response as APIResponse)._fetchUid();
         else

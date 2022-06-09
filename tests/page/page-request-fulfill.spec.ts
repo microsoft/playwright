@@ -321,3 +321,38 @@ it('headerValue should return set-cookie from intercepted response', async ({ pa
   const response = await page.goto(server.EMPTY_PAGE);
   expect(await response.headerValue('Set-Cookie')).toBe('a=b');
 });
+
+it('should complain about bad har', async ({ page, server }, testInfo) => {
+  const harPath = testInfo.outputPath('test.har');
+  fs.writeFileSync(harPath, JSON.stringify({ log: {} }), 'utf-8');
+  let error;
+  await page.route('**/*.css', async route => {
+    error = await route.fulfill({ har: harPath }).catch(e => e);
+    await route.continue();
+  });
+  await page.goto(server.PREFIX + '/one-style.html');
+  expect(error.message).toContain(`Error reading HAR file ${harPath}: Cannot read`);
+});
+
+it('should complain about no entry found in har', async ({ page, server }, testInfo) => {
+  const harPath = testInfo.outputPath('test.har');
+  fs.writeFileSync(harPath, JSON.stringify({ log: { entries: [] } }), 'utf-8');
+  let error;
+  await page.route('**/*.css', async route => {
+    error = await route.fulfill({ har: harPath }).catch(e => e);
+    await route.continue();
+  });
+  await page.goto(server.PREFIX + '/one-style.html');
+  expect(error.message).toBe(`Error reading HAR file ${harPath}: No entry matching ${server.PREFIX + '/one-style.css'}`);
+});
+
+it('should complain about har + response options', async ({ page, server }, testInfo) => {
+  let error;
+  await page.route('**/*.css', async route => {
+    const response = await page.request.fetch(route.request());
+    error = await route.fulfill({ har: 'har', response }).catch(e => e);
+    await route.continue();
+  });
+  await page.goto(server.PREFIX + '/one-style.html');
+  expect(error.message).toBe(`At most one of "har" and "response" options should be present`);
+});
