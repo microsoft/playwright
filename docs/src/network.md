@@ -691,6 +691,150 @@ await Page.RouteAsync("**/title.html", async route =>
 
 <br/>
 
+## Record and replay requests
+
+You can record network activity as an HTTP Archive file (HAR). Later on, this archive can be used to mock responses to the network requests. You'll need to:
+1. Record a HAR file.
+1. Commit the HAR file alongside the tests.
+1. Route requests using the saved HAR files in the tests.
+
+### Recording HAR with CLI
+
+Open the browser with [Playwright CLI](./cli.md) and pass `--save-har` option to produce a HAR file. Optionally, use `--save-har-glob` to only save requests you are interested in, for example API endpoints.
+
+```bash js
+# Save API requests from example.com as "example.har" archive.
+npx playwright open --save-har=example.har --save-har-glob="**/api/**" https://example.com
+```
+
+```bash java
+# Save API requests from example.com as "example.har" archive.
+mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="open --save-har=example.har --save-har-glob='**/api/**' https://example.com"
+```
+
+```bash python
+# Save API requests from example.com as "example.har" archive.
+playwright open --save-har=example.har --save-har-glob="**/api/**" https://example.coms
+```
+
+```bash csharp
+# Save API requests from example.com as "example.har" archive.
+pwsh bin\Debug\netX\playwright.ps1 open --save-har=example.har --save-har-glob="**/api/**" https://example.com
+```
+
+### Recording HAR with a script
+
+Alternatively, instead of using the CLI, you can record HAR programmatically. Pass [`option: har`] option when creating a [BrowserContext] with [`method: Browser.newContext`] to create an archive.
+
+```js
+const context = await browser.newContext({
+  recordHar: { path: 'example.har', urlFilter: '**/api/**' }
+});
+
+// ... Perform actions ...
+
+// Close context to ensure HAR is saved to disk.
+await context.close();
+```
+
+```java
+BrowserContext context = browser.newContext(new Browser.NewContextOptions()
+    .setRecordHarPath(Paths.get("example.har"))
+    .setRecordHarUrlFilter("**/api/**");
+
+// ... Perform actions ...
+
+// Close context to ensure HAR is saved to disk.
+context.close();
+```
+
+```python async
+context = await browser.new_context(record_har_path="example.har", record_har_url_filter="**/api/**")
+
+# ... Perform actions ...
+
+# Close context to ensure HAR is saved to disk.
+await context.close()
+```
+
+```python sync
+context = browser.new_context(record_har_path="example.har", record_har_url_filter="**/api/**")
+
+# ... Perform actions ...
+
+# Close context to ensure HAR is saved to disk.
+context.close()
+```
+
+```csharp
+var context = await browser.NewContextAsync(new () {
+    RecordHarPath = "example.har",
+    RecordHarUrlFilter = "**/api/**",
+});
+
+// ... Perform actions ...
+
+// Close context to ensure HAR is saved to disk.
+await context.CloseAsync();
+```
+
+### Replaying from HAR
+
+Pass [`option: har`] option to the [`method: Route.fulfill`] method to use a matching response from the HAR file.
+
+```js
+// Replay API requests from HAR.
+await page.route('**/api/**', async route => {
+  // Either use a matching response from the HAR,
+  // or abort the request if nothing matches.
+  await route.fulfill({ har: { path: 'example.har' } });
+});
+```
+
+```java
+page.route("**/api/**", route -> {
+  // Either use a matching response from the HAR,
+  // or abort the request if nothing matches.
+  route.fulfill(new Route.FulfillOptions().setHarPath(Paths.get("example.har")));
+});
+```
+
+```python async
+async def handle_route(route: Route) -> None:
+    # Either use a matching response from the HAR,
+    # or abort the request if nothing matches.
+    await route.fulfill(har_path="example.har")
+
+await page.route("**/api/**", handle_route)
+```
+
+```python sync
+def handle_route(route: Route) -> None:
+    # Either use a matching response from the HAR,
+    # or abort the request if nothing matches.
+    route.fulfill(har_path="example.har")
+
+page.route("**/api/**", handle_route)
+```
+
+```csharp
+await Page.RouteAsync("**/api/**", async route =>
+{
+    // Either use a matching response from the HAR,
+    // or abort the request if nothing matches.
+    await route.FulfillAsync(new()
+    {
+        HarPath = "example.har",
+    });
+});
+```
+
+### API reference
+- [`method: Browser.newContext`]
+- [`method: Route.fulfill`]
+
+<br/>
+
 ## WebSockets
 
 Playwright supports [WebSockets](https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API) inspection out of the
