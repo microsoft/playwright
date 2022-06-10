@@ -114,7 +114,7 @@ test('print GitHub annotations for global error', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(1);
 });
 
-test('summary works', async ({ runInlineTest, githubSummary, page }) => {
+test('summary works', async ({ runInlineTest, githubSummary }) => {
   const result = await runInlineTest({
     'a.test.js': `
       const { test } = pwt;
@@ -142,13 +142,14 @@ test('summary works', async ({ runInlineTest, githubSummary, page }) => {
     `
   }, { reporter: 'github', retries: 2 }, { GITHUB_STEP_SUMMARY: githubSummary.path });
   expect(result.exitCode).toBe(1);
-  const report = await githubSummary.report();
-  await expect(report.locator('details > summary')).toHaveText([
-    '❌ (unexpected) a.test.js > failing',
-    '❌ (unexpected) a.test.js > timeout',
-    '⁉️ (flaky) a.test.js > flaky',
-  ]);
 
+  const report = await githubSummary.report();
+  await expect(report.locator('img')).toHaveAttribute('src', 'https://img.shields.io/badge/results-2%20failing%2C%201%20flaky%2C%201%20skipped%2C%201%20passing%20%7C%20TOTAL%3A%205-red?style=flat-square');
+  await expect(report.locator('details > summary')).toHaveText([
+    '❌ failing - a.test.js',
+    '❌ timeout - a.test.js',
+    '⚠️ flaky - a.test.js',
+  ]);
   await expect(report.locator('details')).toContainText([
     'expect(1).toBe(2);',
     'Timeout of 500ms exceeded.',
@@ -156,7 +157,43 @@ test('summary works', async ({ runInlineTest, githubSummary, page }) => {
   ]);
 });
 
-test('summary skips if no problematic test cases', async ({ runInlineTest, githubSummary, page }) => {
+test('summary works with projects', async ({ runInlineTest, githubSummary }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+    module.exports = {
+      projects: [
+        { name: 'project 1' },
+        { name: 'project 2' },
+      ],
+    };
+    `,
+    'a.test.js': `
+      const { test } = pwt;
+
+      test('failing', async ({}) => {
+        expect(1).toBe(2);
+      });
+
+      test('skip', async ({}) => {
+        test.skip();
+      });
+    `
+  }, { reporter: 'github' }, { GITHUB_STEP_SUMMARY: githubSummary.path });
+  expect(result.exitCode).toBe(1);
+
+  const report = await githubSummary.report();
+  await expect(report.locator('img')).toHaveAttribute('src', 'https://img.shields.io/badge/results-2%20failing%2C%200%20flaky%2C%202%20skipped%2C%200%20passing%20%7C%20TOTAL%3A%204-red?style=flat-square');
+  await expect(report.locator('details > summary')).toHaveText([
+    '❌ failing - a.test.js [project 1]',
+    '❌ failing - a.test.js [project 2]',
+  ]);
+  await expect(report.locator('details')).toContainText([
+    'expect(1).toBe(2);',
+    'expect(1).toBe(2);',
+  ]);
+});
+
+test('summary skips if no problematic test cases', async ({ runInlineTest, githubSummary }) => {
   const result = await runInlineTest({
     'a.test.js': `
       const { test } = pwt;

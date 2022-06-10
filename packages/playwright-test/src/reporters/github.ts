@@ -89,16 +89,23 @@ export class GitHubReporter extends BaseReporter {
     if (!GITHUB_STEP_SUMMARY_PATH)
       return;
 
-    const cases = this.suite.allTests().filter(t => PROBLEMATIC_OUTCOMES.includes(t.outcome()));
-    if (!cases.length)
+    const allCases = this.suite.allTests();
+    const problematicCases = allCases.filter(t => PROBLEMATIC_OUTCOMES.includes(t.outcome()));
+    if (!problematicCases.length)
       return;
 
-    await fs.promises.writeFile(GITHUB_STEP_SUMMARY_PATH, sortByOutcomeAndTitle(cases).map(t => [
+    const detailElements = sortByOutcomeAndTitle(problematicCases).map(t => [
       `<details>`,
-      `  <summary>${escapeHTML(formatOutcome(t.outcome()))} ${escapeHTML(formatTitle(t.titlePath()))}</summary>`,
+      `  <summary>${summaryTitleElement(t)}</summary>`,
       `  <pre>${escapeHTML(stripAnsiEscapes(formatFailure(this.config, t).message))}</pre>`,
       `</details>`,
-    ].join('\n')).join('\n')).catch(e => this._githubLogger.warning(`Playwright Test GitHub Reporter failed to write GitHub Summary: ${e}`));
+    ].join('\n'));
+
+    await fs.promises.appendFile(GITHUB_STEP_SUMMARY_PATH, [
+      summaryBadgeElement(allCases),
+      ...detailElements,
+      '',
+    ].join('\n')).catch(e => this._githubLogger.warning(`Playwright Test GitHub Reporter failed to write GitHub Summary: ${e}`));
   }
 
   private _printAnnotations() {
@@ -170,31 +177,53 @@ const sortByOutcomeAndTitle = (tests: TestCase[]) => {
   });
 };
 
-const formatOutcome = (o: ReturnType<TestCase['outcome']>) => {
+const outcomeElement = (o: ReturnType<TestCase['outcome']>) => {
   let emoji: string = '';
   switch (o) {
-    case 'expected':
-      emoji = '✅';
-      break;
-    case 'flaky':
-      emoji = '⁉️';
-      break;
     case 'unexpected':
       emoji = '❌';
       break;
-    case 'skipped':
-      emoji = '⏩';
+    case 'flaky':
+      emoji = '⚠️';
       break;
     default:
       throw new Error('unreachable');
   }
 
-  return `${emoji} (${o})`;
+  return emoji;
 };
 
-const formatTitle = (titlePath: string[]) => {
-  const [,project, file, ...rest] = titlePath;
-  return (project ? `${project} > ` : '') + file + ' > ' + rest.join(' > ');
+const projectElement = (name: string) => {
+  return `<strong>[${escapeHTML(name)}]</strong>`;
+};
+
+const summaryTitleElement = (t: TestCase) => {
+  const [,project, file, ...rest] = t.titlePath();
+  return `${outcomeElement(t.outcome())} <strong>${escapeHTML(rest.join(' > '))}</strong> - ${escapeHTML(file)}` + (project ? ` ${projectElement(project)}` : '');
+};
+
+const summaryBadgeElement = (tests: TestCase[]) => {
+  const counts = {
+    'flaky': 0,
+    'expected': 0,
+    'unexpected': 0,
+    'skipped': 0,
+  };
+
+  for (const test of tests)
+    counts[test.outcome()] = counts[test.outcome()] + 1;
+
+  let color = 'blue';
+  if (counts.unexpected)
+    color = 'red';
+  else if (counts.flaky)
+    color = 'orange';
+  else if (counts.expected)
+    color = 'green';
+
+  const stats = `${counts.unexpected} failing, ${counts.flaky} flaky, ${counts.skipped} skipped, ${counts.expected} passing | TOTAL: ${tests.length}`;
+
+  return `<img src="https://img.shields.io/badge/results-${encodeURIComponent(stats)}-${encodeURIComponent(color)}?style=flat-square">`;
 };
 
 export default GitHubReporter;
