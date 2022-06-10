@@ -298,7 +298,7 @@ test('should return root locator for fragments', async ({ runInlineTest }) => {
   expect(result.passed).toBe(1);
 });
 
-test.only('should respect default property values', async ({ runInlineTest }) => {
+test('should respect default property values', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright/index.html': `<script type="module" src="/playwright/index.ts"></script>`,
     'playwright/index.ts': `//@no-header`,
