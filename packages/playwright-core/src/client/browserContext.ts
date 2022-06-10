@@ -143,30 +143,32 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
       response._finishedPromise.resolve();
   }
 
-  _onRoute(route: network.Route, request: network.Request) {
-    for (const routeHandler of this._routes) {
-      if (!routeHandler.matches(request.url()))
-        continue;
-      // Immediately deactivate based on |times|.
+  async _onRoute(route: network.Route, request: network.Request) {
+    const routes = this._routes.filter(r => r.matches(request.url()));
+
+    const nextRoute = async () => {
+      const routeHandler = routes.shift();
+      if (!routeHandler) {
+        await route._finalContinue();
+        return;
+      }
+
       if (routeHandler.willExpire())
         this._routes.splice(this._routes.indexOf(routeHandler), 1);
 
-      (async () => {
-        try {
-          // Let async callback work prior to disabling interception.
-          await routeHandler.handle(route, request);
-        } finally {
-          if (!this._routes.length)
-            await this._wrapApiCall(() => this._disableInterception(), true).catch(() => {});
-        }
-      })();
+      await new Promise<void>(f => {
+        routeHandler.handle(route, request, async done => {
+          if (!done)
+            await nextRoute();
+          f();
+        });
+      });
+    };
 
-      // There is no chaining, first handler wins.
-      return;
-    }
+    await nextRoute();
 
-    // it can race with BrowserContext.close() which then throws since its closed
-    route._internalContinue();
+    if (!this._routes.length)
+      this._wrapApiCall(() => this._disableInterception(), true).catch(() => {});
   }
 
   async _onBinding(bindingCall: BindingCall) {

@@ -216,7 +216,17 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
   }
 }
 
+type OverridesForContinue = {
+  url?: string;
+  method?: string;
+  headers?: Headers;
+  postData?: string | Buffer;
+};
+
 export class Route extends ChannelOwner<channels.RouteChannel> implements api.Route {
+  private _pendingContinueOverrides: OverridesForContinue | undefined;
+  private _routeChain: ((done: boolean) => Promise<void>) | null = null;
+
   static from(route: channels.RouteChannel): Route {
     return (route as any)._object;
   }
@@ -240,11 +250,21 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
     ]);
   }
 
+  _startHandling(routeChain: (done: boolean) => Promise<void>) {
+    this._routeChain = routeChain;
+  }
+
   async abort(errorCode?: string) {
     await this._raceWithPageClose(this._channel.abort({ errorCode }));
+    await this._followChain(true);
   }
 
   async fulfill(options: { response?: api.APIResponse, status?: number, headers?: Headers, contentType?: string, body?: string | Buffer, path?: string, har?: string } = {}) {
+    await this._innerFulfill(options);
+    await this._followChain(true);
+  }
+
+  private async _innerFulfill(options: { response?: api.APIResponse, status?: number, headers?: Headers, contentType?: string, body?: string | Buffer, path?: string, har?: string } = {}) {
     let fetchResponseUid;
     let { status: statusOption, headers: headersOption, body } = options;
 
@@ -314,15 +334,21 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
     }));
   }
 
-  async continue(options: { url?: string, method?: string, headers?: Headers, postData?: string | Buffer } = {}) {
-    await this._continue(options);
+  async continue(options: OverridesForContinue = {}) {
+    if (!this._routeChain)
+      throw new Error('Route is already handled!');
+    this._pendingContinueOverrides = { ...this._pendingContinueOverrides, ...options };
+    await this._followChain(false);
   }
 
-  async _internalContinue(options: { url?: string, method?: string, headers?: Headers, postData?: string | Buffer } = {}) {
-    await this._continue(options, true).catch(() => {});
+  async _followChain(done: boolean) {
+    const chain = this._routeChain!;
+    this._routeChain = null;
+    await chain(done);
   }
 
-  private async _continue(options: { url?: string, method?: string, headers?: Headers, postData?: string | Buffer }, isInternal?: boolean) {
+  async _finalContinue() {
+    const options = this._pendingContinueOverrides || {};
     return await this._wrapApiCall(async () => {
       const postDataBuffer = isString(options.postData) ? Buffer.from(options.postData, 'utf8') : options.postData;
       await this._raceWithPageClose(this._channel.continue({
@@ -331,11 +357,11 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
         headers: options.headers ? headersObjectToArray(options.headers) : undefined,
         postData: postDataBuffer ? postDataBuffer.toString('base64') : undefined,
       }));
-    }, isInternal);
+    }, !this._pendingContinueOverrides);
   }
 }
 
-export type RouteHandlerCallback = (route: Route, request: Request) => void | Promise<void>;
+export type RouteHandlerCallback = (route: Route, request: Request) => void;
 
 export type ResourceTiming = {
   startTime: number;
@@ -548,9 +574,10 @@ export class RouteHandler {
     return urlMatches(this._baseURL, requestURL, this.url);
   }
 
-  public handle(route: Route, request: Request): Promise<void> | void {
+  public handle(route: Route, request: Request, routeChain: (done: boolean) => Promise<void>) {
     ++this.handledCount;
-    return this.handler(route, request);
+    route._startHandling(routeChain);
+    this.handler(route, request);
   }
 
   public willExpire(): boolean {
