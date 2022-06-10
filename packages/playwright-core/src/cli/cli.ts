@@ -499,10 +499,9 @@ async function launchContext(options: Options, headless: boolean, executablePath
       closeBrowser().catch(e => null);
     });
   });
-  if (options.timeout) {
-    context.setDefaultTimeout(parseInt(options.timeout, 10));
-    context.setDefaultNavigationTimeout(parseInt(options.timeout, 10));
-  }
+  const timeout = options.timeout ? parseInt(options.timeout, 10) : 0;
+  context.setDefaultTimeout(timeout);
+  context.setDefaultNavigationTimeout(timeout);
 
   if (options.saveTrace)
     await context.tracing.start({ screenshots: true, snapshots: true });
@@ -654,7 +653,7 @@ function commandWithOpenOptions(command: string, description: string, options: a
       .option('--save-storage <filename>', 'save context storage state at the end, for later use with --load-storage')
       .option('--save-trace <filename>', 'record a trace for the session and save it to a file')
       .option('--timezone <time zone>', 'time zone to emulate, for example "Europe/Rome"')
-      .option('--timeout <timeout>', 'timeout for Playwright actions in milliseconds', '10000')
+      .option('--timeout <timeout>', 'timeout for Playwright actions in milliseconds, no timeout by default')
       .option('--user-agent <ua string>', 'specify user agent string')
       .option('--viewport-size <size>', 'specify browser viewport size in pixels, for example "1280, 720"');
 }
