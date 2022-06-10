@@ -13,5 +13,9 @@ setTimeout(() => {
     server.setRoute('/port', (_, response) => {
       response.end('' + server.PORT);
     });
+    server.setRoute('/redirect', (_, response) => {
+      response.writeHead(301, 'Moved');
+      response.end();
+    });
   });
 }, process.argv[3] ? +process.argv[3] : 0);

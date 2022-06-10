@@ -546,3 +546,26 @@ test.describe('baseURL with plugins', () => {
     expect(result.passed).toBe(1);
   });
 });
+
+test('should treat 3XX as available server', async ({ runInlineTest }, { workerIndex }) => {
+  const port = workerIndex + 10500;
+  const result = await runInlineTest({
+    'test.spec.ts': `
+      const { test } = pwt;
+      test('pass', async ({}) => {});
+    `,
+    'playwright.config.ts': `
+      module.exports = {
+        webServer: {
+          command: 'node ${JSON.stringify(SIMPLE_SERVER_PATH)} ${port}',
+          url: 'http://localhost:${port}/redirect',
+        }
+      };
+    `,
+  }, {}, { DEBUG: 'pw:webserver' });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  expect(result.output).toContain('[WebServer] listening');
+  expect(result.output).toContain('[WebServer] error from server');
+});
+
