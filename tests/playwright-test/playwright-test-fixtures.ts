@@ -217,8 +217,9 @@ type RunOptions = {
 type Fixtures = {
   writeFiles: (files: Files) => Promise<string>;
   runInlineTest: (files: Files, params?: Params, env?: Env, options?: RunOptions, beforeRunPlaywrightTest?: ({ baseDir }: { baseDir: string }) => Promise<void>) => Promise<RunResult>;
+  githubSummaryPath: string,
   githubSummary: {
-    path: string, contents: () => Promise<string>,
+    contents: () => Promise<string>,
     report: () => Promise<{ page: Page,
       summaryTable: () => Promise<string[][]>,
       detailsTable: () => Promise<string[][]>
@@ -236,12 +237,12 @@ export const test = base
         await use(files => writeFiles(testInfo, files));
       },
 
-      runInlineTest: async ({ childProcess, githubSummary }, use, testInfo: TestInfo) => {
+      runInlineTest: async ({ childProcess, githubSummaryPath }, use, testInfo: TestInfo) => {
         await use(async (files: Files, params: Params = {}, env: Env = {}, options: RunOptions = {}, beforeRunPlaywrightTest?: ({ baseDir: string }) => Promise<void>) => {
           const baseDir = await writeFiles(testInfo, files);
           if (beforeRunPlaywrightTest)
             await beforeRunPlaywrightTest({ baseDir });
-          return await runPlaywrightTest(childProcess, baseDir, params, { GITHUB_STEP_SUMMARY: githubSummary.path, ...env }, options);
+          return await runPlaywrightTest(childProcess, baseDir, params, { GITHUB_STEP_SUMMARY: githubSummaryPath, ...env }, options);
         });
       },
 
@@ -263,10 +264,14 @@ export const test = base
         await use({ major: +major, minor: +minor, patch: +patch });
       },
 
-      githubSummary: async ({ page }, use, testInfo: TestInfo) => {
-        const fp = testInfo.outputPath('github-summary.html');
-        await fs.promises.writeFile(fp, '');
-        const contents = () => fs.promises.readFile(fp, 'utf8');
+      githubSummaryPath: async ({ page }, use, testInfo: TestInfo) => {
+        const githubSummaryPath = testInfo.outputPath('github-summary.html');
+        await fs.promises.writeFile(githubSummaryPath, '');
+        await use(githubSummaryPath);
+      },
+
+      githubSummary: async ({ page, githubSummaryPath }, use, testInfo: TestInfo) => {
+        const contents = () => fs.promises.readFile(githubSummaryPath, 'utf8');
         const report = async () => {
           await page.setContent(await contents());
           const scrapeTable = async (selector: string) => {
@@ -284,7 +289,7 @@ export const test = base
           return { page, summaryTable: () => scrapeTable('table:nth-of-type(1)'), detailsTable: () => scrapeTable('table:nth-of-type(2)') };
         };
 
-        await use({ path: fp, contents, report });
+        await use({ contents, report });
       }
     });
 

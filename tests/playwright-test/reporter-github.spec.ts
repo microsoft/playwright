@@ -23,6 +23,8 @@ function relativeFilePath(file: string): string {
   return path.relative(process.cwd(), file);
 }
 
+test.use({ channel: 'chrome' });
+
 test('print GitHub annotations for success', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
@@ -239,7 +241,7 @@ test('summary skips printing summary table if no entries', async ({ runInlineTes
   await expect(page.locator('text=none to show')).toBeVisible();
 });
 
-test('summary off option works', async ({ runInlineTest, githubSummary, page }) => {
+test('summary off option works', async ({ runInlineTest, githubSummary }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       module.exports = {
