@@ -241,6 +241,27 @@ test('should not override trace file in afterAll', async ({ runInlineTest, serve
   expect(fs.existsSync(testInfo.outputPath('test-results', 'a-test-1', 'trace-1.zip'))).toBeTruthy();
 });
 
+test('should record trace on manual browser closure', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      const { test } = pwt;
+
+      test.use({ trace: 'on' });
+
+      test.afterAll(async ({ browser }) => {
+        await browser.close();
+      });
+
+      test('test 1', async ({ page }) => {
+        await page.goto('about:blank');
+      });
+    `,
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  expect(fs.existsSync(testInfo.outputPath('test-results', 'a-test-1', 'trace.zip'))).toBeTruthy();
+});
 
 async function parseTrace(file: string): Promise<Map<string, Buffer>> {
   const zipFS = new ZipFileSystem(file);
