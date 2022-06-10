@@ -1272,7 +1272,14 @@ await Expect(locator).ToHaveValuesAsync(new Regex[] { new Regex("R"), new Regex(
 ```
 
 ### param: LocatorAssertions.toHaveValues.values
+* langs: python, js
 - `values` <[Array]<[string]|[RegExp]>>
+
+Expected options currently selected.
+
+### param: LocatorAssertions.toHaveValues.values
+* langs: java, csharp
+- `values` <[Array]<[string]>|[Array]<[RegExp]>>
 
 Expected options currently selected.
 
