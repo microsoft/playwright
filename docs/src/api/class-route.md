@@ -217,10 +217,12 @@ Optional response body as text.
 Optional response body as raw bytes.
 
 ### option: Route.fulfill.har
-- `har` <[path]>
+- `har` <[Object]>
+  - `path` <[string]> Path to the HAR file.
+  - `fallback` ?<[RouteHARFallback]<"abort"|"continue"|"throw">> Behavior in the case where matching entry was not found in the HAR. Either [`method: Route.abort`] the request, [`method: Route.continue`] it, or throw an error. Defaults to "abort".
 
-HAR file to extract the response from. If HAR file contains an entry with the matching the url, its headers, status and body will be used. Individual fields such as headers can be overridden using fulfill options. If matching entry is not found, this method will throw.
-If `har` is a relative path, then it is resolved relative to the current working directory.
+HAR file to extract the response from. If HAR file contains an entry with the matching url and HTTP method, then the entry's headers, status and body will be used to fulfill. An entry resulting in a redirect will be followed automatically. Individual fields such as headers can be overridden using fulfill options.
+If `path` is a relative path, then it is resolved relative to the current working directory.
 
 ### option: Route.fulfill.path
 - `path` <[path]>

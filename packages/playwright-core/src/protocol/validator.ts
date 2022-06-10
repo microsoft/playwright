@@ -209,6 +209,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     cacheKey: tString,
     harFile: tString,
     url: tString,
+    method: tString,
     needBody: tBoolean,
   });
   scheme.LocalUtilsHarClearCacheParams = tObject({

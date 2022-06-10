@@ -322,43 +322,98 @@ it('headerValue should return set-cookie from intercepted response', async ({ pa
   expect(await response.headerValue('Set-Cookie')).toBe('a=b');
 });
 
-it('should complain about bad har', async ({ page, server, isElectron, isAndroid }, testInfo) => {
-  it.fixme(isElectron, 'error: Browser context management is not supported.');
+it('should complain about har + response options', async ({ page, server, isAndroid }) => {
   it.fixme(isAndroid);
+
+  let error;
+  await page.route('**/*.css', async route => {
+    const response = await page.request.fetch(route.request());
+    error = await route.fulfill({ har: { path: 'har' }, response }).catch(e => e);
+    await route.continue();
+  });
+  await page.goto(server.PREFIX + '/one-style.html');
+  expect(error.message).toBe(`route.fulfill: At most one of "har" and "response" options should be present`);
+});
+
+it('should complain about bad har.fallback', async ({ page, server, isAndroid }) => {
+  it.fixme(isAndroid);
+
+  let error;
+  await page.route('**/*.css', async route => {
+    error = await route.fulfill({ har: { path: 'har', fallback: 'foo' } as any }).catch(e => e);
+    await route.continue();
+  });
+  await page.goto(server.PREFIX + '/one-style.html');
+  expect(error.message).toBe(`route.fulfill: har.fallback: expected one of "abort", "continue" or "throw", received "foo"`);
+});
+
+it('should fulfill from har, matching the method and following redirects', async ({ page, isAndroid, asset }) => {
+  it.fixme(isAndroid);
+
+  const harPath = asset('har-fulfill.har');
+  await page.route('**/*', route => route.fulfill({ har: { path: harPath } }));
+  await page.goto('http://no.playwright/');
+  // HAR contains a redirect for the script that should be followed automatically.
+  expect(await page.evaluate('window.value')).toBe('foo');
+  // HAR contains a POST for the css file that should not be used.
+  await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(255, 0, 0)');
+});
+
+it('should fallback to abort when not found in har', async ({ page, server, isAndroid, asset }) => {
+  it.fixme(isAndroid);
+
+  const harPath = asset('har-fulfill.har');
+  await page.route('**/*', route => route.fulfill({ har: { path: harPath } }));
+  const error = await page.goto(server.EMPTY_PAGE).catch(e => e);
+  expect(error instanceof Error).toBe(true);
+});
+
+it('should support fallback:continue when not found in har', async ({ page, server, isAndroid, asset }) => {
+  it.fixme(isAndroid);
+
+  const harPath = asset('har-fulfill.har');
+  await page.route('**/*', route => route.fulfill({ har: { path: harPath, fallback: 'continue' } }));
+  await page.goto(server.PREFIX + '/one-style.html');
+  await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(255, 192, 203)');
+});
+
+it('should support fallback:throw when not found in har', async ({ page, server, isAndroid, asset }) => {
+  it.fixme(isAndroid);
+
+  const harPath = asset('har-fulfill.har');
+  let error;
+  await page.route('**/*.css', async route => {
+    error = await route.fulfill({ har: { path: harPath, fallback: 'throw' } }).catch(e => e);
+    await route.continue();
+  });
+  await page.goto(server.PREFIX + '/one-style.html');
+  expect(error.message).toBe(`route.fulfill: Error reading HAR file ${harPath}: No entry matching ${server.PREFIX + '/one-style.css'}`);
+});
+
+it('should complain about bad har with fallback:throw', async ({ page, server, isAndroid }, testInfo) => {
+  it.fixme(isAndroid);
+
   const harPath = testInfo.outputPath('test.har');
   fs.writeFileSync(harPath, JSON.stringify({ log: {} }), 'utf-8');
   let error;
   await page.route('**/*.css', async route => {
-    error = await route.fulfill({ har: harPath }).catch(e => e);
+    error = await route.fulfill({ har: { path: harPath, fallback: 'throw' } }).catch(e => e);
     await route.continue();
   });
   await page.goto(server.PREFIX + '/one-style.html');
-  expect(error.message).toContain(`Error reading HAR file ${harPath}: Cannot read`);
+  expect(error.message).toContain(`route.fulfill: Error reading HAR file ${harPath}:`);
 });
 
-it('should complain about no entry found in har', async ({ page, server, isElectron, isAndroid }, testInfo) => {
-  it.fixme(isElectron, 'error: Browser context management is not supported.');
+it('should override status when fulfilling from har', async ({ page, isAndroid, asset }) => {
   it.fixme(isAndroid);
-  const harPath = testInfo.outputPath('test.har');
-  fs.writeFileSync(harPath, JSON.stringify({ log: { entries: [] } }), 'utf-8');
-  let error;
-  await page.route('**/*.css', async route => {
-    error = await route.fulfill({ har: harPath }).catch(e => e);
-    await route.continue();
-  });
-  await page.goto(server.PREFIX + '/one-style.html');
-  expect(error.message).toBe(`Error reading HAR file ${harPath}: No entry matching ${server.PREFIX + '/one-style.css'}`);
-});
 
-it('should complain about har + response options', async ({ page, server, isElectron, isAndroid }) => {
-  it.fixme(isElectron, 'error: Browser context management is not supported.');
-  it.fixme(isAndroid);
-  let error;
-  await page.route('**/*.css', async route => {
-    const response = await page.request.fetch(route.request());
-    error = await route.fulfill({ har: 'har', response }).catch(e => e);
-    await route.continue();
+  const harPath = asset('har-fulfill.har');
+  await page.route('**/*', async route => {
+    await route.fulfill({ har: { path: harPath }, status: route.request().url().endsWith('.css') ? 404 : undefined });
   });
-  await page.goto(server.PREFIX + '/one-style.html');
-  expect(error.message).toBe(`At most one of "har" and "response" options should be present`);
+  await page.goto('http://no.playwright/');
+  // Script should work.
+  expect(await page.evaluate('window.value')).toBe('foo');
+  // 404 should fail the CSS and styles should not apply.
+  await expect(page.locator('body')).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
 });

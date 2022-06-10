@@ -895,7 +895,7 @@ it('should continue after exception', async ({ page, server }) => {
   });
   await page.route('**/empty.html', async route => {
     try {
-      await route.fulfill({ har: 'file', response: {} as any });
+      await route.fulfill({ har: { path: 'file' }, response: {} as any });
     } catch (e) {
       route.continue();
     }
