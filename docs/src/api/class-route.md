@@ -236,7 +236,7 @@ If `path` is a relative path, then it is resolved relative to the current workin
 ### option: Route.fulfill.harFallback
 * langs: csharp, java, python
   - alias-python: har_fallback
-- `fallback` ?<[RouteHARFallback]<"abort"|"continue"|"throw">>
+- `harFallback` ?<[RouteHARFallback]<"abort"|"continue"|"throw">>
 
 Behavior in the case where matching entry was not found in the HAR. Either [`method: Route.abort`] the request, [`method: Route.continue`] it, or throw an error. Defaults to "abort".
 
