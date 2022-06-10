@@ -2238,7 +2238,7 @@ diff --git a/Source/WebCore/Modules/speech/cocoa/WebSpeechRecognizerTask.mm b/So
 index a941d76a4f748718df1e3cff2a6c5e0827f48891..f62db5a27ac0e4c12430e7d19e60c83d768ace22 100644
 --- a/Source/WebCore/Modules/speech/cocoa/WebSpeechRecognizerTask.mm
 +++ b/Source/WebCore/Modules/speech/cocoa/WebSpeechRecognizerTask.mm
-@@ -198,6 +198,7 @@ - (void)sendEndIfNeeded
+@@ -198,6 +198,7 @@ NS_ASSUME_NONNULL_BEGIN
  
  - (void)speechRecognizer:(SFSpeechRecognizer *)speechRecognizer availabilityDidChange:(BOOL)available
  {
@@ -2246,7 +2246,7 @@ index a941d76a4f748718df1e3cff2a6c5e0827f48891..f62db5a27ac0e4c12430e7d19e60c83d
      ASSERT(isMainThread());
  
      if (available || !_task)
-@@ -211,6 +212,7 @@ - (void)speechRecognizer:(SFSpeechRecognizer *)speechRecognizer availabilityDidC
+@@ -211,6 +212,7 @@ NS_ASSUME_NONNULL_BEGIN
  
  - (void)speechRecognitionTask:(SFSpeechRecognitionTask *)task didHypothesizeTranscription:(SFTranscription *)transcription
  {
@@ -2254,7 +2254,7 @@ index a941d76a4f748718df1e3cff2a6c5e0827f48891..f62db5a27ac0e4c12430e7d19e60c83d
      ASSERT(isMainThread());
  
      [self sendSpeechStartIfNeeded];
-@@ -219,6 +221,7 @@ - (void)speechRecognitionTask:(SFSpeechRecognitionTask *)task didHypothesizeTran
+@@ -219,6 +221,7 @@ NS_ASSUME_NONNULL_BEGIN
  
  - (void)speechRecognitionTask:(SFSpeechRecognitionTask *)task didFinishRecognition:(SFSpeechRecognitionResult *)recognitionResult
  {
@@ -2262,7 +2262,7 @@ index a941d76a4f748718df1e3cff2a6c5e0827f48891..f62db5a27ac0e4c12430e7d19e60c83d
      ASSERT(isMainThread());
      [self callbackWithTranscriptions:recognitionResult.transcriptions isFinal:YES];
  
-@@ -230,6 +233,7 @@ - (void)speechRecognitionTask:(SFSpeechRecognitionTask *)task didFinishRecogniti
+@@ -230,6 +233,7 @@ NS_ASSUME_NONNULL_BEGIN
  
  - (void)speechRecognitionTaskWasCancelled:(SFSpeechRecognitionTask *)task
  {
@@ -8829,7 +8829,7 @@ diff --git a/Source/WebKit/NetworkProcess/cocoa/NetworkSessionCocoa.mm b/Source/
 index 8b32817b6c0efbcbd221dc7a3ebe420b42d8b51d..a468653cffcfaca8824e94d628c48b7b5d61e164 100644
 --- a/Source/WebKit/NetworkProcess/cocoa/NetworkSessionCocoa.mm
 +++ b/Source/WebKit/NetworkProcess/cocoa/NetworkSessionCocoa.mm
-@@ -720,7 +720,7 @@ - (void)URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task didRece
+@@ -720,7 +720,7 @@ void NetworkSessionCocoa::setClientAuditToken(const WebCore::AuthenticationChall
  
      if ([challenge.protectionSpace.authenticationMethod isEqualToString:NSURLAuthenticationMethodServerTrust]) {
          sessionCocoa->setClientAuditToken(challenge);
@@ -10239,7 +10239,7 @@ index b8bf936e2eb8ca4dc0f445099dfb899395950bdb..30a2af76de0daac450c7afbb8a2dfe81
  #import <WebCore/Credential.h>
  #import <WebCore/RegistrationDatabase.h>
  #import <WebCore/ServiceWorkerClientData.h>
-@@ -234,6 +235,11 @@ - (void)removeDataOfTypes:(NSSet *)dataTypes modifiedSince:(NSDate *)date comple
+@@ -234,6 +235,11 @@ static WallTime toSystemClockTime(NSDate *date)
      });
  }
  
@@ -10418,7 +10418,7 @@ diff --git a/Source/WebKit/UIProcess/API/Cocoa/_WKProcessPoolConfiguration.mm b/
 index 2e235bb880c638a0e74256b6d66cb0244ea0a3f1..3471eebb47e860f7c2071d0e7f2691c9f0a6355d 100644
 --- a/Source/WebKit/UIProcess/API/Cocoa/_WKProcessPoolConfiguration.mm
 +++ b/Source/WebKit/UIProcess/API/Cocoa/_WKProcessPoolConfiguration.mm
-@@ -257,6 +257,16 @@ - (BOOL)processSwapsOnNavigation
+@@ -257,6 +257,16 @@
      return _processPoolConfiguration->processSwapsOnNavigation();
  }
  
@@ -14195,10 +14195,10 @@ index 0000000000000000000000000000000000000000..d0e11ed81a6257c011df23d5870da740
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..20fd6c8be329f6f18787715736e422821973623f
+index 0000000000000000000000000000000000000000..d9f566a6cce6433c2cfbb25fd6793f65a4ec1f23
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp
-@@ -0,0 +1,957 @@
+@@ -0,0 +1,956 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -14940,7 +14940,6 @@ index 0000000000000000000000000000000000000000..20fd6c8be329f6f18787715736e42282
 +        return;
 +    }
 +
-+    NetworkProcessProxy& networkProcess = browserContext->dataStore->networkProcess();
 +    browserContext->dataStore->cookieStore().cookies(
 +        [callback = WTFMove(callback)](const Vector<WebCore::Cookie>& allCookies) {
 +            if (!callback->isActive())
@@ -16924,7 +16923,7 @@ index 51eb4833d140baef40501790ef05906c1f5285a0..86434813aebe0e5e1955a19c70a1e63c
      // and make it one UIClient call that calls the completionHandler with false
      // if there is no delegate instead of returning the completionHandler
 diff --git a/Source/WebKit/UIProcess/WebPageProxy.h b/Source/WebKit/UIProcess/WebPageProxy.h
-index f69420b0b67e1d9d37b4af1feb3cea731f1f3285..73b45e8248cb08ef2a4c55081de1e244b566b911 100644
+index f69420b0b67e1d9d37b4af1feb3cea731f1f3285..00d99f5b7b192c650817302b5e38bc786f047d05 100644
 --- a/Source/WebKit/UIProcess/WebPageProxy.h
 +++ b/Source/WebKit/UIProcess/WebPageProxy.h
 @@ -39,6 +39,7 @@
@@ -16978,7 +16977,15 @@ index f69420b0b67e1d9d37b4af1feb3cea731f1f3285..73b45e8248cb08ef2a4c55081de1e244
  class SharedBuffer;
  class SpeechRecognitionRequest;
  class TextIndicator;
-@@ -543,6 +555,8 @@ public:
+@@ -399,7 +411,6 @@ struct EditingRange;
+ struct EditorState;
+ struct FrameTreeNodeData;
+ struct FocusedElementInformation;
+-struct FontInfo;
+ struct FrameInfoData;
+ struct InputMethodState;
+ struct InsertTextOptions;
+@@ -543,6 +554,8 @@ public:
      void setControlledByAutomation(bool);
  
      WebPageInspectorController& inspectorController() { return *m_inspectorController; }
@@ -16987,7 +16994,7 @@ index f69420b0b67e1d9d37b4af1feb3cea731f1f3285..73b45e8248cb08ef2a4c55081de1e244
  
  #if PLATFORM(IOS_FAMILY)
      void showInspectorIndication();
-@@ -653,6 +667,11 @@ public:
+@@ -653,6 +666,11 @@ public:
  
      void setPageLoadStateObserver(std::unique_ptr<PageLoadState::Observer>&&);
  
@@ -16999,7 +17006,7 @@ index f69420b0b67e1d9d37b4af1feb3cea731f1f3285..73b45e8248cb08ef2a4c55081de1e244
      void initializeWebPage();
      void setDrawingArea(std::unique_ptr<DrawingAreaProxy>&&);
  
-@@ -680,6 +699,7 @@ public:
+@@ -680,6 +698,7 @@ public:
      void closePage();
  
      void addPlatformLoadParameters(WebProcessProxy&, LoadParameters&);
@@ -17007,7 +17014,7 @@ index f69420b0b67e1d9d37b4af1feb3cea731f1f3285..73b45e8248cb08ef2a4c55081de1e244
      RefPtr<API::Navigation> loadRequest(WebCore::ResourceRequest&&, WebCore::ShouldOpenExternalURLsPolicy = WebCore::ShouldOpenExternalURLsPolicy::ShouldAllowExternalSchemesButNotAppLinks, API::Object* userData = nullptr);
      RefPtr<API::Navigation> loadFile(const String& fileURL, const String& resourceDirectoryURL, bool isAppInitiated = true, API::Object* userData = nullptr);
      RefPtr<API::Navigation> loadData(const IPC::DataReference&, const String& MIMEType, const String& encoding, const String& baseURL, API::Object* userData = nullptr, WebCore::ShouldOpenExternalURLsPolicy = WebCore::ShouldOpenExternalURLsPolicy::ShouldNotAllow);
-@@ -1213,6 +1233,7 @@ public:
+@@ -1213,6 +1232,7 @@ public:
  #endif
  
      void pageScaleFactorDidChange(double);
@@ -17015,7 +17022,7 @@ index f69420b0b67e1d9d37b4af1feb3cea731f1f3285..73b45e8248cb08ef2a4c55081de1e244
      void pluginScaleFactorDidChange(double);
      void pluginZoomFactorDidChange(double);
  
-@@ -1300,14 +1321,20 @@ public:
+@@ -1300,14 +1320,20 @@ public:
      void didStartDrag();
      void dragCancelled();
      void setDragCaretRect(const WebCore::IntRect&);
@@ -17037,7 +17044,7 @@ index f69420b0b67e1d9d37b4af1feb3cea731f1f3285..73b45e8248cb08ef2a4c55081de1e244
  #endif
  
      void processDidBecomeUnresponsive();
-@@ -1558,6 +1585,8 @@ public:
+@@ -1558,6 +1584,8 @@ public:
  
  #if PLATFORM(COCOA) || PLATFORM(GTK)
      RefPtr<ViewSnapshot> takeViewSnapshot(std::optional<WebCore::IntRect>&&);
@@ -17046,7 +17053,7 @@ index f69420b0b67e1d9d37b4af1feb3cea731f1f3285..73b45e8248cb08ef2a4c55081de1e244
  #endif
  
  #if ENABLE(WEB_CRYPTO)
-@@ -2734,6 +2763,7 @@ private:
+@@ -2734,6 +2762,7 @@ private:
      String m_overrideContentSecurityPolicy;
  
      RefPtr<WebInspectorUIProxy> m_inspector;
@@ -17054,7 +17061,7 @@ index f69420b0b67e1d9d37b4af1feb3cea731f1f3285..73b45e8248cb08ef2a4c55081de1e244
  
  #if PLATFORM(COCOA)
      WeakObjCPtr<WKWebView> m_cocoaView;
-@@ -3003,6 +3033,20 @@ private:
+@@ -3003,6 +3032,20 @@ private:
      unsigned m_currentDragNumberOfFilesToBeAccepted { 0 };
      WebCore::IntRect m_currentDragCaretRect;
      WebCore::IntRect m_currentDragCaretEditableElementRect;
@@ -17075,7 +17082,7 @@ index f69420b0b67e1d9d37b4af1feb3cea731f1f3285..73b45e8248cb08ef2a4c55081de1e244
  #endif
  
      PageLoadState m_pageLoadState;
-@@ -3213,6 +3257,9 @@ private:
+@@ -3213,6 +3256,9 @@ private:
          RefPtr<API::Object> messageBody;
      };
      Vector<InjectedBundleMessage> m_pendingInjectedBundleMessages;
@@ -20663,7 +20670,7 @@ diff --git a/Source/WebKitLegacy/mac/WebView/WebHTMLView.mm b/Source/WebKitLegac
 index 5fa2c59e5e93bc923d37ae5bb751e2f4d7fe68ee..73378254b62a7ec61b3efc3fd46aadaf45d55601 100644
 --- a/Source/WebKitLegacy/mac/WebView/WebHTMLView.mm
 +++ b/Source/WebKitLegacy/mac/WebView/WebHTMLView.mm
-@@ -4189,7 +4189,7 @@ - (void)mouseDown:(WebEvent *)event
+@@ -4189,7 +4189,7 @@ static BOOL currentScrollIsBlit(NSView *clipView)
      _private->handlingMouseDownEvent = NO;
  }
  
@@ -20676,7 +20683,7 @@ diff --git a/Source/WebKitLegacy/mac/WebView/WebView.mm b/Source/WebKitLegacy/ma
 index 59cecf9242ab834dadc904ef295365e1476f47f9..ca4cc96e62df62e92c22c3535f5972cc1fdc4cba 100644
 --- a/Source/WebKitLegacy/mac/WebView/WebView.mm
 +++ b/Source/WebKitLegacy/mac/WebView/WebView.mm
-@@ -4039,7 +4039,7 @@ + (void)_doNotStartObservingNetworkReachability
+@@ -4039,7 +4039,7 @@ IGNORE_WARNINGS_END
  }
  #endif // PLATFORM(IOS_FAMILY)
  
@@ -20685,7 +20692,7 @@ index 59cecf9242ab834dadc904ef295365e1476f47f9..ca4cc96e62df62e92c22c3535f5972cc
  
  - (NSArray *)_touchEventRegions
  {
-@@ -4081,7 +4081,7 @@ - (NSArray *)_touchEventRegions
+@@ -4081,7 +4081,7 @@ IGNORE_WARNINGS_END
      }).autorelease();
  }
  
@@ -22877,7 +22884,7 @@ index 3eb911ba48eca35de2de9ee671cb577a0a96ec27..916b45a541486e59380d66b524a004a7
      <dependencies>
        <dep package="glib"/>
 diff --git a/Tools/jhbuild/jhbuild-minimal.modules b/Tools/jhbuild/jhbuild-minimal.modules
-index a08c829f49b43d494a09c40f71606735c172b6a5..2e3704d8533ff6e479ee2ee8f9325929591ed4e3 100644
+index a08c829f49b43d494a09c40f71606735c172b6a5..49403c27d67b40e5ae0fb4cf294d835cfdaf37c6 100644
 --- a/Tools/jhbuild/jhbuild-minimal.modules
 +++ b/Tools/jhbuild/jhbuild-minimal.modules
 @@ -22,7 +22,6 @@
@@ -22905,7 +22912,41 @@ index a08c829f49b43d494a09c40f71606735c172b6a5..2e3704d8533ff6e479ee2ee8f9325929
    </distutils>
  
    <!-- OpenXR required for WebXR support -->
-@@ -187,9 +186,9 @@
+@@ -175,21 +174,34 @@
+     </branch>
+   </meson>
+ 
+-  <meson id="glib-networking"
+-	 mesonargs="-Dgnutls=disabled -Dopenssl=enabled">
+-    <dependencies>
+-      <dep package="glib"/>
+-    </dependencies>
+-    <branch module="/sources/glib-networking/2.70/glib-networking-${version}.tar.xz" version="2.70.0"
+-            repo="download.gnome.org"
+-            hash="sha256:66b408e7afa86c582fe38963db56133869ab4b57d34e48ec56aba621940d6f35"/>
+-  </meson>
++  <if condition-set="use_openssl_backend">
++    <meson id="glib-networking"
++      mesonargs="-Dgnutls=disabled -Dopenssl=enabled">
++      <dependencies>
++        <dep package="glib"/>
++      </dependencies>
++      <branch module="/sources/glib-networking/2.70/glib-networking-${version}.tar.xz" version="2.70.0"
++              repo="download.gnome.org"
++              hash="sha256:66b408e7afa86c582fe38963db56133869ab4b57d34e48ec56aba621940d6f35"/>
++    </meson>
++  </if>
++
++  <if condition-unset="use_openssl_backend">
++    <meson id="glib-networking">
++      <dependencies>
++        <dep package="glib"/>
++      </dependencies>
++      <branch module="/sources/glib-networking/2.70/glib-networking-${version}.tar.xz" version="2.70.0"
++              repo="download.gnome.org"
++              hash="sha256:66b408e7afa86c582fe38963db56133869ab4b57d34e48ec56aba621940d6f35"/>
++    </meson>
++  </if>
  
    <!-- atk needed to build with A11y support -->
    <meson id="atk" mesonargs="-Dintrospection=false">
@@ -22917,7 +22958,7 @@ index a08c829f49b43d494a09c40f71606735c172b6a5..2e3704d8533ff6e479ee2ee8f9325929
      <dependencies>
        <dep package="glib"/>
      </dependencies>
-@@ -197,9 +196,9 @@
+@@ -197,9 +209,9 @@
  
    <!-- at-spi2-core needed to build with A11y support -->
    <meson id="at-spi2-core" mesonargs="-Dintrospection=no -Dx11=no">
@@ -22929,7 +22970,7 @@ index a08c829f49b43d494a09c40f71606735c172b6a5..2e3704d8533ff6e479ee2ee8f9325929
      </branch>
      <dependencies>
        <dep package="glib"/>
-@@ -207,10 +206,10 @@
+@@ -207,10 +219,10 @@
    </meson>
  
    <!-- at-spi2-atk needed to build with A11y support -->
@@ -22943,6 +22984,52 @@ index a08c829f49b43d494a09c40f71606735c172b6a5..2e3704d8533ff6e479ee2ee8f9325929
      </branch>
      <dependencies>
        <dep package="glib"/>
+diff --git a/Tools/jhbuild/jhbuildrc_common.py b/Tools/jhbuild/jhbuildrc_common.py
+index 814abef097120d8f0b99ce7b05a43dc014597248..af7f117efe5f754ad655897ae62980cff9fed885 100644
+--- a/Tools/jhbuild/jhbuildrc_common.py
++++ b/Tools/jhbuild/jhbuildrc_common.py
+@@ -19,7 +19,7 @@ import multiprocessing
+ import sys
+ import os
+ import platform
+-
++import re
+ 
+ script_dir = None
+ 
+@@ -35,6 +35,24 @@ def top_level_path(*args):
+     return os.path.join(*((os.path.join(os.path.dirname(__file__), '..', '..'),) + args))
+ 
+ 
++def gnutls_version():
++    ret = {}
++    gnutls = "/usr/include/gnutls/gnutls.h"
++    with open(gnutls) as fd:
++        for l in fd.readlines():
++            m = re.match(r'#define\s+GNUTLS_VERSION_([A-Z]+)\s+(\d)', l)
++            if m:
++                key, value = m.group(1), m.group(2)
++                ret[key.lower()] = int(value)
++        fd.close()
++    return ret
++
++
++def use_openssl_backend():
++    v = gnutls_version()
++    return v["major"] < 3 and v["minor"] < 6 and v["patch"] < 13
++
++
+ def init(jhbuildrc_globals, jhbuild_platform):
+ 
+     __tools_directory = os.path.join(os.path.dirname(__file__), "../", jhbuild_platform)
+@@ -100,3 +118,7 @@ def init(jhbuildrc_globals, jhbuild_platform):
+         jhbuild_enable_thunder = os.environ['JHBUILD_ENABLE_THUNDER'].lower()
+         if jhbuild_enable_thunder == 'yes' or jhbuild_enable_thunder == '1' or jhbuild_enable_thunder == 'true':
+             jhbuildrc_globals['conditions'].add('Thunder')
++
++    if use_openssl_backend():
++        jhbuildrc_globals['conditions'].add('use_openssl_backend')
++
 diff --git a/Tools/win/DLLLauncher/DLLLauncherMain.cpp b/Tools/win/DLLLauncher/DLLLauncherMain.cpp
 index 52605867b9302d1afcc56c5e9b0c54acf0827900..6edf24ab60249241ba2969531ef55f4b495dce9e 100644
 --- a/Tools/win/DLLLauncher/DLLLauncherMain.cpp

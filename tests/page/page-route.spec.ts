@@ -59,12 +59,12 @@ it('should unroute', async ({ page, server }) => {
   };
   await page.route('**/empty.html', handler4);
   await page.goto(server.EMPTY_PAGE);
-  expect(intercepted).toEqual([4]);
+  expect(intercepted).toEqual([4, 3, 2, 1]);
 
   intercepted = [];
   await page.unroute('**/empty.html', handler4);
   await page.goto(server.EMPTY_PAGE);
-  expect(intercepted).toEqual([3]);
+  expect(intercepted).toEqual([3, 2, 1]);
 
   intercepted = [];
   await page.unroute('**/empty.html');
@@ -837,3 +837,80 @@ for (const method of ['fulfill', 'continue', 'abort'] as const) {
     expect(e.message).toContain('Route is already handled!');
   });
 }
+
+it('should chain continue', async ({ page, server }) => {
+  const intercepted = [];
+  await page.route('**/empty.html', route => {
+    intercepted.push(1);
+    route.continue();
+  });
+  await page.route('**/empty.html', route => {
+    intercepted.push(2);
+    route.continue();
+  });
+  await page.route('**/empty.html', route => {
+    intercepted.push(3);
+    route.continue();
+  });
+  await page.goto(server.EMPTY_PAGE);
+  expect(intercepted).toEqual([3, 2, 1]);
+});
+
+it('should not chain fulfill', async ({ page, server }) => {
+  let failed = false;
+  await page.route('**/empty.html', route => {
+    failed = true;
+  });
+  await page.route('**/empty.html', route => {
+    route.fulfill({ status: 200, body: 'fulfilled' });
+  });
+  await page.route('**/empty.html', route => {
+    route.continue();
+  });
+  const response = await page.goto(server.EMPTY_PAGE);
+  const body = await response.body();
+  expect(body.toString()).toEqual('fulfilled');
+  expect(failed).toBeFalsy();
+});
+
+it('should not chain abort', async ({ page, server }) => {
+  let failed = false;
+  await page.route('**/empty.html', route => {
+    failed = true;
+  });
+  await page.route('**/empty.html', route => {
+    route.abort();
+  });
+  await page.route('**/empty.html', route => {
+    route.continue();
+  });
+  const e = await page.goto(server.EMPTY_PAGE).catch(e => e);
+  expect(e).toBeTruthy();
+  expect(failed).toBeFalsy();
+});
+
+it('should continue after exception', async ({ page, server }) => {
+  await page.route('**/empty.html', route => {
+    route.continue();
+  });
+  await page.route('**/empty.html', async route => {
+    try {
+      await route.fulfill({ har: 'file', response: {} as any });
+    } catch (e) {
+      route.continue();
+    }
+  });
+  await page.goto(server.EMPTY_PAGE);
+});
+
+it('should chain once', async ({ page, server }) => {
+  await page.route('**/empty.html', route => {
+    route.fulfill({ status: 200, body: 'fulfilled one' });
+  }, { times: 1 });
+  await page.route('**/empty.html', route => {
+    route.continue();
+  }, { times: 1 });
+  const response = await page.goto(server.EMPTY_PAGE);
+  const body = await response.body();
+  expect(body.toString()).toEqual('fulfilled one');
+});

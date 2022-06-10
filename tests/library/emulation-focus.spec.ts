@@ -123,7 +123,8 @@ it('should not affect screenshots', async ({ page, server, browserName, headless
   expect(screenshots[1]).toMatchSnapshot('grid-cell-0.png');
 });
 
-it('should change focused iframe', async ({ page, server }) => {
+it('should change focused iframe', async ({ page, server, browserName, headless }) => {
+  it.skip(browserName === 'firefox' && !headless, 'Headed FF might lose focus');
   await page.goto(server.EMPTY_PAGE);
   const [frame1, frame2] = await Promise.all([
     attachFrame(page, 'frame1', server.PREFIX + '/input/textarea.html'),
