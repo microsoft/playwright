@@ -40,7 +40,8 @@ it('should get a cookie @smoke', async ({ context, page, server, defaultSameSite
   }]);
 });
 
-it('should get a non-session cookie', async ({ context, page, server, defaultSameSiteCookieValue, browserName, browserMajorVersion }) => {
+it('should get a non-session cookie', async ({ context, page, server, defaultSameSiteCookieValue, channel }) => {
+  it.fixme(channel === 'chromium-tip-of-tree', 'https://github.com/microsoft/playwright/issues/14725');
   await page.goto(server.EMPTY_PAGE);
   // @see https://en.wikipedia.org/wiki/Year_2038_problem
   const date = +(new Date('1/1/2038'));

@@ -63,7 +63,8 @@ it('should add cookies with empty value', async ({ context, page, server }) => {
   expect(await page.evaluate(() => document.cookie)).toEqual('marker=');
 });
 
-it('should roundtrip cookie', async ({ context, page, server }) => {
+it('should roundtrip cookie', async ({ context, page, server, channel }) => {
+  it.fixme(channel === 'chromium-tip-of-tree', 'https://github.com/microsoft/playwright/issues/14725');
   await page.goto(server.EMPTY_PAGE);
   // @see https://en.wikipedia.org/wiki/Year_2038_problem
   const date = +(new Date('1/1/2038'));
