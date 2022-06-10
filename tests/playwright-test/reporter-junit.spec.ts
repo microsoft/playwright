@@ -141,6 +141,28 @@ test('should render stdout without ansi escapes', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
 });
 
+test('should render, by default, character data as CDATA sections', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: [ ['junit'] ],
+      };
+    `,
+    'a.test.ts': `
+      const { test } = pwt;
+      test('one', async ({}) => {
+        process.stdout.write('Hello world &"\\'<>]]>');
+      });
+    `,
+  }, { reporter: '' });
+  const xml = parseXML(result.output);
+  const testcase = xml['testsuites']['testsuite'][0]['testcase'][0];
+  expect(testcase['system-out'].length).toBe(1);
+  expect(testcase['system-out'][0].trim()).toBe('Hello world &"\'<>]]&gt;');
+  expect(result.output).toContain(`<system-out>\n<![CDATA[Hello world &"\'<>]]&gt;]]>\n</system-out>`);
+  expect(result.exitCode).toBe(0);
+});
+
 test('should render skipped', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `

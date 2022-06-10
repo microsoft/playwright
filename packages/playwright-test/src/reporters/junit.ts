@@ -201,10 +201,14 @@ const discouragedXMLCharacters = /[\u0001-\u0008\u000b-\u000c\u000e-\u001f\u007f
 function escape(text: string, stripANSIControlSequences: boolean, isCharacterData: boolean): string {
   if (stripANSIControlSequences)
     text = stripAnsiEscapes(text);
-  const escapeRe = isCharacterData ? /[&<]/g : /[&"<>]/g;
-  text = text.replace(escapeRe, c => ({ '&': '&amp;', '"': '&quot;', '<': '&lt;', '>': '&gt;' }[c]!));
-  if (isCharacterData)
-    text = text.replace(/]]>/g, ']]&gt;');
+
+  if (isCharacterData) {
+    text = '<![CDATA[' + text.replace(/]]>/g, ']]&gt;') + ']]>';
+  } else {
+    const escapeRe = /[&"'<>]/g;
+    text = text.replace(escapeRe, c => ({ '&': '&amp;', '"': '&quot;', "'": '&apos;', '<': '&lt;', '>': '&gt;' }[c]!));
+  }
+
   text = text.replace(discouragedXMLCharacters, '');
   return text;
 }
