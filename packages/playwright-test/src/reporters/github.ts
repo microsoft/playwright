@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-import { ms as milliseconds } from 'playwright-core/lib/utilsBundle';
 import path from 'path';
+import fs from 'fs';
+import { ms as milliseconds } from 'playwright-core/lib/utilsBundle';
 import { BaseReporter, formatError, formatFailure, stripAnsiEscapes } from './base';
 import type { TestCase, FullResult, TestError } from '../../types/testReporter';
-import fs from 'fs';
 
 type GitHubLogType = 'debug' | 'notice' | 'warning' | 'error';
 
@@ -93,7 +93,7 @@ export class GitHubReporter extends BaseReporter {
     if (!cases.length)
       return;
 
-    await fs.promises.writeFile(GITHUB_STEP_SUMMARY_PATH, sort(cases).map(t => `
+    await fs.promises.writeFile(GITHUB_STEP_SUMMARY_PATH, sortByOutcomeAndTitle(cases).map(t => `
         <details>
           <summary>${escapeHTML(formatOutcome(t.outcome()))} ${escapeHTML(formatTitle(t.titlePath()))}</summary>
           <pre>${escapeHTML(stripAnsiEscapes(formatFailure(this.config, t).message))}</pre>
@@ -152,15 +152,13 @@ function workspaceRelativePath(filePath: string): string {
   return path.relative(process.env['GITHUB_WORKSPACE'] ?? '', filePath);
 }
 
-function escapeHTML(text: string): string {
-  return text.replace(/[&"<>]/g, c => ({ '&': '&amp;', '"': '&quot;', '<': '&lt;', '>': '&gt;' }[c]!));
-}
-
 const GITHUB_STEP_SUMMARY_PATH = process.env['GITHUB_STEP_SUMMARY'];
 const OUTCOME_PRECEDENCE: ReturnType<TestCase['outcome']>[] = ['unexpected', 'flaky', 'expected', 'skipped'];
 const PROBLEMATIC_OUTCOMES: ReturnType<TestCase['outcome']>[] = ['unexpected', 'flaky'];
 
-const sort = (tests: TestCase[]) => {
+const escapeHTML = (text: string) => text.replace(/[&"<>]/g, c => ({ '&': '&amp;', '"': '&quot;', '<': '&lt;', '>': '&gt;' }[c]!));
+
+const sortByOutcomeAndTitle = (tests: TestCase[]) => {
   const out = [...tests];
 
   return out.sort((a, b) => {

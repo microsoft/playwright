@@ -25,25 +25,21 @@ function relativeFilePath(file: string): string {
   return path.relative(process.cwd(), file);
 }
 
-const test = base.extend<{
-  githubSummary: {
-    path: string,
-    contents: () => Promise<string>,
-    report: () => Promise<Locator>,
-        },
-        }>({
-          githubSummary: async ({ page }, use, testInfo: TestInfo) => {
-            const githubSummaryPath = testInfo.outputPath('github-summary.html');
-            await fs.promises.writeFile(githubSummaryPath, '');
-            const contents = () => fs.promises.readFile(githubSummaryPath, 'utf8');
-            const report = async () => {
-              await page.setContent(await contents());
-              return page.locator(':scope');
-            };
+const test = base.extend<{ githubSummary: { path: string; contents: () => Promise<string>; report: () => Promise<Locator>; } }>(
+    {
+      githubSummary: async ({ page }, use, testInfo: TestInfo) => {
+        const githubSummaryPath = testInfo.outputPath('github-summary.html');
+        await fs.promises.writeFile(githubSummaryPath, '');
+        const contents = () => fs.promises.readFile(githubSummaryPath, 'utf8');
+        const report = async () => {
+          await page.setContent(await contents());
+          return page.locator(':scope');
+        };
 
-            await use({ report, contents, path: githubSummaryPath });
-          }
-        });
+        await use({ report, contents, path: githubSummaryPath });
+      }
+    }
+);
 
 
 test.use({ channel: 'chrome' });
