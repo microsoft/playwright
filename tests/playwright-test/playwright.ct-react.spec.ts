@@ -297,3 +297,27 @@ test('should return root locator for fragments', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
 });
+
+test.only('should respect default property values', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright/index.html': `<script type="module" src="/playwright/index.ts"></script>`,
+    'playwright/index.ts': `//@no-header`,
+    'src/label.tsx': `//@no-header
+      export const Label = ({ checked }) => <div>type:{typeof checked} value:{String(checked)}</div>;
+    `,
+
+    'src/label.test.tsx': `
+      //@no-header
+      import { test, expect } from '@playwright/experimental-ct-react';
+      import { Label } from './label';
+
+      test('boolean shorthand', async ({ mount }) => {
+        const component = await mount(<Label checked></Label>);
+        await expect(component).toHaveText('type:boolean value:true');
+      });
+    `,
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
