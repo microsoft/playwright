@@ -248,21 +248,26 @@ it('should include secure set-cookies', async ({ contextFactory, httpsServer }, 
 it('should include content @smoke', async ({ contextFactory, server }, testInfo) => {
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   await page.goto(server.PREFIX + '/har.html');
+  await page.evaluate(() => fetch('/pptr.png').then(r => r.arrayBuffer()));
   const log = await getLog();
 
-  expect(log.entries[0].response.httpVersion).toBe('HTTP/1.1');
-  expect(log.entries[0].response.content.encoding).toBe('base64');
+  expect(log.entries[0].response.content.encoding).toBe(undefined);
   expect(log.entries[0].response.content.mimeType).toBe('text/html; charset=utf-8');
-  expect(Buffer.from(log.entries[0].response.content.text, 'base64').toString()).toContain('HAR Page');
+  expect(log.entries[0].response.content.text).toContain('HAR Page');
   expect(log.entries[0].response.content.size).toBeGreaterThanOrEqual(96);
   expect(log.entries[0].response.content.compression).toBe(0);
 
-  expect(log.entries[1].response.httpVersion).toBe('HTTP/1.1');
-  expect(log.entries[1].response.content.encoding).toBe('base64');
+  expect(log.entries[1].response.content.encoding).toBe(undefined);
   expect(log.entries[1].response.content.mimeType).toBe('text/css; charset=utf-8');
-  expect(Buffer.from(log.entries[1].response.content.text, 'base64').toString()).toContain('pink');
+  expect(log.entries[1].response.content.text).toContain('pink');
   expect(log.entries[1].response.content.size).toBeGreaterThanOrEqual(37);
   expect(log.entries[1].response.content.compression).toBe(0);
+
+  expect(log.entries[2].response.content.encoding).toBe('base64');
+  expect(log.entries[2].response.content.mimeType).toBe('image/png');
+  expect(Buffer.from(log.entries[2].response.content.text, 'base64').byteLength).toBeGreaterThan(0);
+  expect(log.entries[2].response.content.size).toBeGreaterThanOrEqual(6000);
+  expect(log.entries[2].response.content.compression).toBe(0);
 });
 
 it('should filter by glob', async ({ contextFactory, server }, testInfo) => {
@@ -580,7 +585,7 @@ it('should contain http2 for http2 requests', async ({ contextFactory, browserNa
   const log = await getLog();
   expect(log.entries[0].request.httpVersion).toBe('HTTP/2.0');
   expect(log.entries[0].response.httpVersion).toBe('HTTP/2.0');
-  expect(Buffer.from(log.entries[0].response.content.text, 'base64').toString()).toBe('<h1>Hello World</h1>');
+  expect(log.entries[0].response.content.text).toBe('<h1>Hello World</h1>');
   server.close();
 });
 
@@ -734,7 +739,7 @@ it('should include API request', async ({ contextFactory, server }, testInfo) =>
   expect(entry.response.status).toBe(200);
   expect(entry.response.headers.find(h => h.name.toLowerCase() === 'content-type')?.value).toContain('application/json');
   expect(entry.response.content.size).toBe(15);
-  expect(entry.response.content.text).toBe(responseBody.toString('base64'));
+  expect(entry.response.content.text).toBe(responseBody.toString());
 });
 
 it('should not hang on resources served from cache', async ({ contextFactory, server, browserName }, testInfo) => {
