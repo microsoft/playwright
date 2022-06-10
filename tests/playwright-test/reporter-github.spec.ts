@@ -28,7 +28,7 @@ function relativeFilePath(file: string): string {
 const test = base.extend<{ githubSummary: { path: string; contents: () => Promise<string>; report: () => Promise<Locator>; } }>(
     {
       githubSummary: async ({ page }, use, testInfo: TestInfo) => {
-        const githubSummaryPath = testInfo.outputPath('github-summary.html');
+        const githubSummaryPath = testInfo.outputPath('github-summary.md');
         await fs.promises.writeFile(githubSummaryPath, '');
         const contents = () => fs.promises.readFile(githubSummaryPath, 'utf8');
         const report = async () => {

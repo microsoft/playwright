@@ -93,12 +93,12 @@ export class GitHubReporter extends BaseReporter {
     if (!cases.length)
       return;
 
-    await fs.promises.writeFile(GITHUB_STEP_SUMMARY_PATH, sortByOutcomeAndTitle(cases).map(t => `
-        <details>
-          <summary>${escapeHTML(formatOutcome(t.outcome()))} ${escapeHTML(formatTitle(t.titlePath()))}</summary>
-          <pre>${escapeHTML(stripAnsiEscapes(formatFailure(this.config, t).message))}</pre>
-        </details>
-    `).join('\n')).catch(e => this._githubLogger.warning(`Playwright Test GitHub Reporter failed to write GitHub Summary: ${e}`));
+    await fs.promises.writeFile(GITHUB_STEP_SUMMARY_PATH, sortByOutcomeAndTitle(cases).map(t => [
+      `<details>`,
+      `  <summary>${escapeHTML(formatOutcome(t.outcome()))} ${escapeHTML(formatTitle(t.titlePath()))}</summary>`,
+      `  <pre>${escapeHTML(stripAnsiEscapes(formatFailure(this.config, t).message))}</pre>`,
+      `</details>`,
+    ].join('\n')).join('\n')).catch(e => this._githubLogger.warning(`Playwright Test GitHub Reporter failed to write GitHub Summary: ${e}`));
   }
 
   private _printAnnotations() {
@@ -194,7 +194,7 @@ const formatOutcome = (o: ReturnType<TestCase['outcome']>) => {
 
 const formatTitle = (titlePath: string[]) => {
   const [,project, file, ...rest] = titlePath;
-  return (project ? `${project} > ` : '') + file + ' > ' + rest.join('>');
+  return (project ? `${project} > ` : '') + file + ' > ' + rest.join(' > ');
 };
 
 export default GitHubReporter;
