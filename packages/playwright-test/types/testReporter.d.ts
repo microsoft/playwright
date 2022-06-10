@@ -294,7 +294,7 @@ export interface FullResult {
  * You can create a custom reporter by implementing a class with some of the reporter methods. Make sure to export this
  * class as default.
  *
- * ```ts
+ * ```js
  * // my-awesome-reporter.ts
  * import { Reporter } from '@playwright/test/reporter';
  *
@@ -321,7 +321,7 @@ export interface FullResult {
  * Now use this reporter with [testConfig.reporter](https://playwright.dev/docs/api/class-testconfig#test-config-reporter).
  * Learn more about [using reporters](https://playwright.dev/docs/test-reporters).
  *
- * ```ts
+ * ```js
  * // playwright.config.ts
  * import type { PlaywrightTestConfig } from '@playwright/test';
  *

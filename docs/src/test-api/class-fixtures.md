@@ -5,7 +5,7 @@ Playwright Test is based on the concept of the [test fixtures](../test-fixtures.
 
 Playwright Test looks at each test declaration, analyses the set of fixtures the test needs and prepares those fixtures specifically for the test. Values prepared by the fixtures are merged into a single object that is available to the `test`, hooks, annotations and other fixtures as a first parameter.
 
-```js js-flavor=js
+```js tab=js-js
 const { test, expect } = require('@playwright/test');
 
 test('basic test', async ({ page }) => {
@@ -13,7 +13,7 @@ test('basic test', async ({ page }) => {
 });
 ```
 
-```js js-flavor=ts
+```js tab=js-ts
 import { test, expect } from '@playwright/test';
 
 test('basic test', async ({ page }) => {
@@ -37,14 +37,14 @@ Learn how to [configure browser](../test-configuration.md) and see [available op
 
 Name of the browser that runs tests. Defaults to `'chromium'`. Useful to [annotate tests](../test-annotations.md) based on the browser.
 
-```js js-flavor=js
+```js tab=js-js
 test('skip this test in Firefox', async ({ page, browserName }) => {
   test.skip(browserName === 'firefox', 'Still working on it');
   // ...
 });
 ```
 
-```js js-flavor=ts
+```js tab=js-ts
 test('skip this test in Firefox', async ({ page, browserName }) => {
   test.skip(browserName === 'firefox', 'Still working on it');
   // ...
@@ -67,7 +67,7 @@ Isolated [Page] instance, created for each test. Pages are isolated between test
 
 This is the most common fixture used in a test.
 
-```js js-flavor=js
+```js tab=js-js
 const { test, expect } = require('@playwright/test');
 
 test('basic test', async ({ page }) => {
@@ -79,7 +79,7 @@ test('basic test', async ({ page }) => {
 });
 ```
 
-```js js-flavor=ts
+```js tab=js-ts
 import { test, expect } from '@playwright/test';
 
 test('basic test', async ({ page }) => {
@@ -96,7 +96,7 @@ test('basic test', async ({ page }) => {
 
 Isolated [APIRequestContext] instance for each test.
 
-```js js-flavor=js
+```js tab=js-js
 const { test, expect } = require('@playwright/test');
 
 test('basic test', async ({ request }) => {
@@ -109,7 +109,7 @@ test('basic test', async ({ request }) => {
 });
 ```
 
-```js js-flavor=ts
+```js tab=js-ts
 import { test, expect } from '@playwright/test';
 
 test('basic test', async ({ request }) => {

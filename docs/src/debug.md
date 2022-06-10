@@ -111,44 +111,44 @@ Using `PWDEBUG=console` will configure the browser for debugging in Developer to
 [Playwright selectors](./selectors.md). This can be used to verify text or
 composite selectors.
 
-```bash bash-flavor=bash lang=js
+```bash tab=bash-bash lang=js
 PWDEBUG=console npm run test
 ```
 
-```bash bash-flavor=batch lang=js
+```batch tab=bash-batch lang=js
 set PWDEBUG=console
 npm run test
 ```
 
-```bash bash-flavor=powershell lang=js
+```powershell tab=bash-powershell lang=js
 $env:PWDEBUG="console"
 npm run test
 ```
 
-```bash bash-flavor=bash lang=java
+```bash tab=bash-bash lang=java
 PWDEBUG=console mvn test
 ```
 
-```bash bash-flavor=batch lang=java
+```batch tab=bash-batch lang=java
 set PWDEBUG=console
 mvn test
 ```
 
-```bash bash-flavor=powershell lang=java
+```powershell tab=bash-powershell lang=java
 $env:PWDEBUG="console"
 mvn test
 ```
 
-```bash bash-flavor=bash lang=python
+```bash tab=bash-bash lang=python
 PWDEBUG=console pytest -s
 ```
 
-```bash bash-flavor=batch lang=python
+```batch tab=bash-batch lang=python
 set PWDEBUG=console
 pytest -s
 ```
 
-```bash bash-flavor=powershell lang=python
+```powershell tab=bash-powershell lang=python
 $env:PWDEBUG="console"
 pytest -s
 ```
@@ -194,58 +194,58 @@ breakpoints.
 
 Playwright supports verbose logging with the `DEBUG` environment variable.
 
-```bash bash-flavor=bash lang=js
+```bash tab=bash-bash lang=js
 DEBUG=pw:api npm run test
 ```
 
-```bash bash-flavor=batch lang=js
+```batch tab=bash-batch lang=js
 set DEBUG=pw:api
 npm run test
 ```
 
-```bash bash-flavor=powershell lang=js
+```powershell tab=bash-powershell lang=js
 $env:DEBUG="pw:api"
 npm run test
 ```
 
-```bash bash-flavor=bash lang=java
+```bash tab=bash-bash lang=java
 DEBUG=pw:api mvn test
 ```
 
-```bash bash-flavor=batch lang=java
+```batch tab=bash-batch lang=java
 set DEBUG=pw:api
 mvn test
 ```
 
-```bash bash-flavor=powershell lang=java
+```powershell tab=bash-powershell lang=java
 $env:DEBUG="pw:api"
 mvn test
 ```
 
-```bash bash-flavor=bash lang=python
+```bash tab=bash-bash lang=python
 DEBUG=pw:api pytest -s
 ```
 
-```bash bash-flavor=batch lang=python
+```batch tab=bash-batch lang=python
 set DEBUG=pw:api
 pytest -s
 ```
 
-```bash bash-flavor=powershell lang=python
+```powershell tab=bash-powershell lang=python
 $env:DEBUG="pw:api"
 pytest -s
 ```
 
-```bash bash-flavor=bash lang=csharp
+```bash tab=bash-bash lang=csharp
 DEBUG=pw:api dotnet run
 ```
 
-```bash bash-flavor=batch lang=csharp
+```batch tab=bash-batch lang=csharp
 set DEBUG=pw:api
 dotnet run
 ```
 
-```bash bash-flavor=powershell lang=csharp
+```powershell tab=bash-powershell lang=csharp
 $env:DEBUG="pw:api"
 dotnet run
 ```

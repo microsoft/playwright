@@ -5,7 +5,7 @@ Playwright Test provides many options to configure how your tests are collected 
 
 Playwright Test supports running multiple test projects at the same time. Project-specific options should be put to [`property: TestConfig.projects`], but top-level [TestConfig] can also define base options shared between all projects.
 
-```js js-flavor=js
+```js tab=js-js
 // playwright.config.js
 // @ts-check
 
@@ -20,7 +20,7 @@ const config = {
 module.exports = config;
 ```
 
-```js js-flavor=ts
+```js tab=js-ts
 // playwright.config.ts
 import type { PlaywrightTestConfig } from '@playwright/test';
 
@@ -50,7 +50,7 @@ export default config;
 
 Configuration for the `expect` assertion library. Learn more about [various timeouts](../test-timeouts.md).
 
-```js js-flavor=js
+```js tab=js-js
 // playwright.config.js
 // @ts-check
 
@@ -67,7 +67,7 @@ const config = {
 module.exports = config;
 ```
 
-```js js-flavor=ts
+```js tab=js-ts
 // playwright.config.ts
 import type { PlaywrightTestConfig } from '@playwright/test';
 
@@ -87,7 +87,7 @@ export default config;
 
 Whether to exit with an error if any tests or groups are marked as [`method: Test.only`] or [`method: Test.describe.only`]. Useful on CI.
 
-```js js-flavor=js
+```js tab=js-js
 // playwright.config.js
 // @ts-check
 
@@ -99,7 +99,7 @@ const config = {
 module.exports = config;
 ```
 
-```js js-flavor=ts
+```js tab=js-ts
 // playwright.config.ts
 import type { PlaywrightTestConfig } from '@playwright/test';
 
@@ -124,7 +124,7 @@ Path to the global setup file. This file will be required and run before all the
 
 Learn more about [global setup and teardown](../test-advanced.md#global-setup-and-teardown).
 
-```js js-flavor=js
+```js tab=js-js
 // playwright.config.js
 // @ts-check
 
@@ -136,7 +136,7 @@ const config = {
 module.exports = config;
 ```
 
-```js js-flavor=ts
+```js tab=js-ts
 // playwright.config.ts
 import { type PlaywrightTestConfig, devices } from '@playwright/test';
 
@@ -153,7 +153,7 @@ Path to the global teardown file. This file will be required and run after all t
 
 Learn more about [global setup and teardown](../test-advanced.md#global-setup-and-teardown).
 
-```js js-flavor=js
+```js tab=js-js
 // playwright.config.js
 // @ts-check
 
@@ -165,7 +165,7 @@ const config = {
 module.exports = config;
 ```
 
-```js js-flavor=ts
+```js tab=js-ts
 // playwright.config.ts
 import { type PlaywrightTestConfig, devices } from '@playwright/test';
 
@@ -180,7 +180,7 @@ export default config;
 
 Maximum time in milliseconds the whole test suite can run. Zero timeout (default) disables this behavior. Useful on CI to prevent broken setup from running too long and wasting resources. Learn more about [various timeouts](../test-timeouts.md).
 
-```js js-flavor=js
+```js tab=js-js
 // playwright.config.js
 // @ts-check
 
@@ -192,7 +192,7 @@ const config = {
 module.exports = config;
 ```
 
-```js js-flavor=ts
+```js tab=js-ts
 // playwright.config.ts
 import type { PlaywrightTestConfig } from '@playwright/test';
 
@@ -225,7 +225,7 @@ The maximum number of test failures for the whole test suite run. After reaching
 
 Also available in the [command line](../test-cli.md) with the `--max-failures` and `-x` options.
 
-```js js-flavor=js
+```js tab=js-js
 // playwright.config.js
 // @ts-check
 
@@ -237,7 +237,7 @@ const config = {
 module.exports = config;
 ```
 
-```js js-flavor=ts
+```js tab=js-ts
 // playwright.config.ts
 import type { PlaywrightTestConfig } from '@playwright/test';
 
@@ -262,7 +262,7 @@ Config name is visible in the report and during test execution, unless overridde
 
 The output directory for files created during test execution. Defaults to `<package.json-directory>/test-results`.
 
-```js js-flavor=js
+```js tab=js-js
 // playwright.config.js
 // @ts-check
 
@@ -274,7 +274,7 @@ const config = {
 module.exports = config;
 ```
 
-```js js-flavor=ts
+```js tab=js-ts
 // playwright.config.ts
 import { type PlaywrightTestConfig, devices } from '@playwright/test';
 
@@ -288,7 +288,7 @@ This directory is cleaned at the start. When running a test, a unique subdirecto
 
 Here is an example that uses [`method: TestInfo.outputPath`] to create a temporary file.
 
-```js js-flavor=js
+```js tab=js-js
 const { test, expect } = require('@playwright/test');
 const fs = require('fs');
 
@@ -298,7 +298,7 @@ test('example test', async ({}, testInfo) => {
 });
 ```
 
-```js js-flavor=ts
+```js tab=js-ts
 import { test, expect } from '@playwright/test';
 import fs from 'fs';
 
@@ -357,7 +357,7 @@ You can pass options to the reporter in a tuple like `['json', { outputFile: './
 
 Learn more in the [reporters guide](../test-reporters.md).
 
-```js js-flavor=js
+```js tab=js-js
 // playwright.config.js
 // @ts-check
 
@@ -369,7 +369,7 @@ const config = {
 module.exports = config;
 ```
 
-```js js-flavor=ts
+```js tab=js-ts
 // playwright.config.ts
 import type { PlaywrightTestConfig } from '@playwright/test';
 
@@ -393,7 +393,7 @@ Test files that took more than `threshold` milliseconds are considered slow, and
 
 The maximum number of retry attempts given to failed tests. By default failing tests are not retried. Learn more about [test retries](../test-retries.md#retries).
 
-```js js-flavor=js
+```js tab=js-js
 // playwright.config.js
 // @ts-check
 
@@ -405,7 +405,7 @@ const config = {
 module.exports = config;
 ```
 
-```js js-flavor=ts
+```js tab=js-ts
 // playwright.config.ts
 import type { PlaywrightTestConfig } from '@playwright/test';
 
@@ -465,7 +465,7 @@ Learn more about [parallelism and sharding](../test-parallel.md) with Playwright
 
 Directory that will be recursively scanned for test files. Defaults to the directory of the configuration file.
 
-```js js-flavor=js
+```js tab=js-js
 // playwright.config.js
 // @ts-check
 
@@ -477,7 +477,7 @@ const config = {
 module.exports = config;
 ```
 
-```js js-flavor=ts
+```js tab=js-ts
 // playwright.config.ts
 import type { PlaywrightTestConfig } from '@playwright/test';
 
@@ -494,7 +494,7 @@ Files matching one of these patterns are not executed as test files. Matching is
 
 For example, `'**/test-assets/**'` will ignore any files in the `test-assets` directory.
 
-```js js-flavor=js
+```js tab=js-js
 // playwright.config.js
 // @ts-check
 
@@ -506,7 +506,7 @@ const config = {
 module.exports = config;
 ```
 
-```js js-flavor=ts
+```js tab=js-ts
 // playwright.config.ts
 import { type PlaywrightTestConfig, devices } from '@playwright/test';
 
@@ -523,7 +523,7 @@ Only the files matching one of these patterns are executed as test files. Matchi
 
 By default, Playwright Test looks for files matching `.*(test|spec)\.(js|ts|mjs)`.
 
-```js js-flavor=js
+```js tab=js-js
 // playwright.config.js
 // @ts-check
 
@@ -535,7 +535,7 @@ const config = {
 module.exports = config;
 ```
 
-```js js-flavor=ts
+```js tab=js-ts
 // playwright.config.ts
 import { type PlaywrightTestConfig, devices } from '@playwright/test';
 
@@ -552,7 +552,7 @@ Timeout for each test in milliseconds. Defaults to 30 seconds.
 
 This is a base timeout for all tests. In addition, each test can configure its own timeout with [`method: Test.setTimeout`]. Learn more about [various timeouts](../test-timeouts.md).
 
-```js js-flavor=js
+```js tab=js-js
 // playwright.config.js
 // @ts-check
 
@@ -564,7 +564,7 @@ const config = {
 module.exports = config;
 ```
 
-```js js-flavor=ts
+```js tab=js-ts
 // playwright.config.ts
 import type { PlaywrightTestConfig } from '@playwright/test';
 
@@ -589,7 +589,7 @@ Learn more about [snapshots](../test-snapshots.md).
 
 Global options for all tests, for example [`property: TestOptions.browserName`]. Learn more about [configuration](../test-configuration.md) and see [available options][TestOptions].
 
-```js js-flavor=js
+```js tab=js-js
 // playwright.config.js
 // @ts-check
 
@@ -603,7 +603,7 @@ const config = {
 module.exports = config;
 ```
 
-```js js-flavor=ts
+```js tab=js-ts
 // playwright.config.ts
 import type { PlaywrightTestConfig } from '@playwright/test';
 
@@ -638,7 +638,7 @@ The `port` (but not the `url`) gets passed over to Playwright as a [`property: T
 It is also recommended to specify [`property: TestOptions.baseURL`] in the config, so that tests could use relative urls.
 :::
 
-```js js-flavor=ts
+```js tab=js-ts
 // playwright.config.ts
 import type { PlaywrightTestConfig } from '@playwright/test';
 const config: PlaywrightTestConfig = {
@@ -655,7 +655,7 @@ const config: PlaywrightTestConfig = {
 export default config;
 ```
 
-```js js-flavor=js
+```js tab=js-js
 // playwright.config.js
 // @ts-check
 /** @type {import('@playwright/test').PlaywrightTestConfig} */
@@ -675,7 +675,7 @@ module.exports = config;
 
 Now you can use a relative path when navigating the page:
 
-```js js-flavor=ts
+```js tab=js-ts
 // test.spec.ts
 import { test } from '@playwright/test';
 
@@ -685,7 +685,7 @@ test('test', async ({ page }) => {
 });
 ```
 
-```js js-flavor=js
+```js tab=js-js
 // test.spec.js
 const { test } = require('@playwright/test');
 
@@ -704,7 +704,7 @@ Playwright Test uses worker processes to run tests. There is always at least one
 
 Defaults to one half of the number of CPU cores. Learn more about [parallelism and sharding](../test-parallel.md) with Playwright Test.
 
-```js js-flavor=js
+```js tab=js-js
 // playwright.config.js
 // @ts-check
 
@@ -716,7 +716,7 @@ const config = {
 module.exports = config;
 ```
 
-```js js-flavor=ts
+```js tab=js-ts
 // playwright.config.ts
 import type { PlaywrightTestConfig } from '@playwright/test';
 

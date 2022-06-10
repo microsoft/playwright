@@ -7,7 +7,7 @@ Playwright Test supports running multiple test projects at the same time. This i
 
 Here is an example configuration that runs every test in Chromium, Firefox and WebKit, both Desktop and Mobile versions.
 
-```js js-flavor=js
+```js tab=js-js
 // playwright.config.js
 // @ts-check
 const { devices } = require('@playwright/test');
@@ -57,7 +57,7 @@ const config = {
 module.exports = config;
 ```
 
-```js js-flavor=ts
+```js tab=js-ts
 // playwright.config.ts
 import { type PlaywrightTestConfig, devices } from '@playwright/test';
 
@@ -211,7 +211,7 @@ This directory is cleaned at the start. When running a test, a unique subdirecto
 
 Here is an example that uses [`method: TestInfo.outputPath`] to create a temporary file.
 
-```js js-flavor=js
+```js tab=js-js
 const { test, expect } = require('@playwright/test');
 const fs = require('fs');
 
@@ -221,7 +221,7 @@ test('example test', async ({}, testInfo) => {
 });
 ```
 
-```js js-flavor=ts
+```js tab=js-ts
 import { test, expect } from '@playwright/test';
 import fs from 'fs';
 
@@ -254,7 +254,7 @@ Directory that will be recursively scanned for test files. Defaults to the direc
 
 Each project can use a different directory. Here is an example that runs smoke tests in three browsers and all other tests in stable Chrome browser.
 
-```js js-flavor=js
+```js tab=js-js
 // playwright.config.js
 // @ts-check
 
@@ -296,7 +296,7 @@ const config = {
 module.exports = config;
 ```
 
-```js js-flavor=ts
+```js tab=js-ts
 // playwright.config.ts
 import type { PlaywrightTestConfig } from '@playwright/test';
 
@@ -370,7 +370,7 @@ Use [`property: TestConfig.timeout`] to change this option for all projects.
 
 Options for all tests in this project, for example [`property: TestOptions.browserName`]. Learn more about [configuration](../test-configuration.md) and see [available options][TestOptions].
 
-```js js-flavor=js
+```js tab=js-js
 // playwright.config.js
 // @ts-check
 
@@ -389,7 +389,7 @@ const config = {
 module.exports = config;
 ```
 
-```js js-flavor=ts
+```js tab=js-ts
 // playwright.config.ts
 import type { PlaywrightTestConfig } from '@playwright/test';
 

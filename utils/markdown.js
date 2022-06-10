@@ -17,7 +17,7 @@
 // @ts-check
 
 /** @typedef {{
- *    type: 'text' | 'li' | 'code' | 'properties' | 'h0' | 'h1' | 'h2' | 'h3' | 'h4' | 'note',
+ *    type: 'text' | 'li' | 'code' | 'properties' | 'h0' | 'h1' | 'h2' | 'h3' | 'h4' | 'note' | 'null',
  *    text?: string,
  *    codeLang?: string,
  *    noteType?: string,
@@ -218,6 +218,8 @@ function render(nodes, maxColumns) {
   const result = [];
   let lastNode;
   for (let node of nodes) {
+    if (node.type === 'null')
+      continue;
     innerRenderMdNode('', node, lastNode, result, maxColumns);
     lastNode = node;
   }
@@ -262,7 +264,7 @@ function innerRenderMdNode(indent, node, lastNode, result, maxColumns) {
 
   if (node.type === 'code') {
     newLine();
-    result.push(`${indent}\`\`\`${node.codeLang}`);
+    result.push(`${indent}\`\`\`${codeLangToHighlighter(node.codeLang)}`);
     for (const line of node.lines)
       result.push(indent + line);
     result.push(`${indent}\`\`\``);
@@ -422,4 +424,15 @@ function filterNodesForLanguage(nodes, language) {
   return result;
 }
 
-module.exports = { parse, render, clone, visitAll, visit, generateToc, filterNodesForLanguage };
+/**
+ * @param {string} codeLang
+ * @return {string}
+ */
+function codeLangToHighlighter(codeLang) {
+  const [lang] = codeLang.split(' ');
+  if (lang === 'python')
+    return 'py';
+  return lang;
+}
+
+module.exports = { parse, render, clone, visitAll, visit, generateToc, filterNodesForLanguage, codeLangToHighlighter };

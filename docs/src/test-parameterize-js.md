@@ -9,7 +9,7 @@ You can either parametrize tests on a test level or on a project level.
 
 ## Parameterized Tests
 
-```js js-flavor=js
+```js tab=js-js
 // example.spec.js
 const people = ['Alice', 'Bob'];
 for (const name of people) {
@@ -20,7 +20,7 @@ for (const name of people) {
 }
 ```
 
-```js js-flavor=ts
+```js tab=js-ts
 // example.spec.ts
 const people = ['Alice', 'Bob'];
 for (const name of people) {
@@ -37,7 +37,7 @@ Playwright Test supports running multiple test projects at the same time. In the
 
 We declare the option `person` and set the value in the config. The first project runs with the value `Alice` and the second with the value `Bob`.
 
-```js js-flavor=js
+```js tab=js-js
 // my-test.js
 const base = require('@playwright/test');
 
@@ -48,7 +48,7 @@ exports.test = base.test.extend({
 });
 ```
 
-```js js-flavor=ts
+```js tab=js-ts
 // my-test.ts
 import { test as base } from '@playwright/test';
 
@@ -65,7 +65,7 @@ export const test = base.extend<TestOptions>({
 
 We can use this option in the test, similarly to [fixtures](./test-fixtures.md).
 
-```js js-flavor=js
+```js tab=js-js
 // example.spec.js
 const { test } = require('./my-test');
 
@@ -76,7 +76,7 @@ test('test 1', async ({ page, person }) => {
 });
 ```
 
-```js js-flavor=ts
+```js tab=js-ts
 // example.spec.ts
 import { test } from './my-test';
 
@@ -89,7 +89,7 @@ test('test 1', async ({ page, person }) => {
 
 Now, we can run tests in multiple configurations by using projects.
 
-```js js-flavor=js
+```js tab=js-js
 // playwright.config.js
 // @ts-check
 
@@ -110,7 +110,7 @@ const config = {
 module.exports = config;
 ```
 
-```js js-flavor=ts
+```js tab=js-ts
 // playwright.config.ts
 import type { PlaywrightTestConfig } from '@playwright/test';
 import { TestOptions } from './my-test';
@@ -132,7 +132,7 @@ export default config;
 
 We can also use the option in a fixture. Learn more about [fixtures](./test-fixtures.md).
 
-```js js-flavor=js
+```js tab=js-js
 // my-test.js
 const base = require('@playwright/test');
 
@@ -153,7 +153,7 @@ exports.test = base.test.extend({
 });
 ```
 
-```js js-flavor=ts
+```js tab=js-ts
 // my-test.ts
 import { test as base } from '@playwright/test';
 
@@ -188,7 +188,7 @@ You can use environment variables to configure tests from the command line.
 
 For example, consider the following test file that needs a username and a password. It is usually a good idea not to store your secrets in the source code, so we'll need a way to pass secrets from outside.
 
-```js js-flavor=js
+```js tab=js-js
 // example.spec.js
 test(`example test`, async ({ page }) => {
   // ...
@@ -197,7 +197,7 @@ test(`example test`, async ({ page }) => {
 });
 ```
 
-```js js-flavor=ts
+```js tab=js-ts
 // example.spec.ts
 test(`example test`, async ({ page }) => {
   // ...
@@ -208,17 +208,17 @@ test(`example test`, async ({ page }) => {
 
 You can run this test with your secrect username and password set in the command line.
 
-```bash bash-flavor=bash
+```bash tab=bash-bash
 USERNAME=me PASSWORD=secret npx playwright test
 ```
 
-```bash bash-flavor=batch
+```batch tab=bash-batch
 set USERNAME=me
 set PASSWORD=secret
 npx playwright test
 ```
 
-```bash bash-flavor=powershell
+```powershell tab=bash-powershell
 $env:USERNAME=me
 $env:PASSWORD=secret
 npx playwright test
@@ -227,7 +227,7 @@ npx playwright test
 Similarly, configuration file can also read environment variables passed throught the command line.
 
 
-```js js-flavor=js
+```js tab=js-js
 // playwright.config.js
 // @ts-check
 
@@ -241,7 +241,7 @@ const config = {
 module.exports = config;
 ```
 
-```js js-flavor=ts
+```js tab=js-ts
 // playwright.config.ts
 import type { PlaywrightTestConfig } from '@playwright/test';
 
@@ -255,16 +255,16 @@ export default config;
 
 Now, you can run tests against a staging or a production environment:
 
-```bash bash-flavor=bash
+```bash tab=bash-bash
 STAGING=1 npx playwright test
 ```
 
-```bash bash-flavor=batch
+```batch tab=bash-batch
 set STAGING=1
 npx playwright test
 ```
 
-```bash bash-flavor=powershell
+```powershell tab=bash-powershell
 $env:STAGING=1
 npx playwright test
 ```
@@ -273,7 +273,7 @@ npx playwright test
 
 To make environment variables easier to manage, consider something like `.env` files. Here is an example that uses [`dotenv`](https://www.npmjs.com/package/dotenv) package to read environment variables directly in the configuration file.
 
-```js js-flavor=js
+```js tab=js-js
 // playwright.config.js
 // @ts-check
 
@@ -293,7 +293,7 @@ const config = {
 module.exports = config;
 ```
 
-```js js-flavor=ts
+```js tab=js-ts
 // playwright.config.ts
 import type { PlaywrightTestConfig } from '@playwright/test';
 import dotenv from 'dotenv';
@@ -344,7 +344,7 @@ See for example this CSV file, in our example `input.csv`:
 
 Based on this we'll generate some tests by using the [csv-parse](https://www.npmjs.com/package/csv-parse) library from NPM:
 
-```js js-flavor=ts
+```js tab=js-ts
 // foo.spec.ts
 import fs from 'fs';
 import path from 'path';
@@ -363,7 +363,7 @@ for (const record of records) {
 }
 ```
 
-```js js-flavor=js
+```js tab=js-js
 // foo.spec.js
 const fs = require('fs');
 const path = require('path');

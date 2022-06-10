@@ -674,17 +674,6 @@ element.select_option(label="blue")
 element.select_option(value=["red", "green", "blue"])
 ```
 
-```python sync
-# single selection matching the value
-element.select_option("blue")
-# single selection matching both the value and the label
-element.select_option(label="blue")
-# multiple selection
-element.select_option("red", "green", "blue")
-# multiple selection for blue, red and second option
-element.select_option(value="blue", { index: 2 }, "red")
-```
-
 ```csharp
 // single selection matching the value
 await element.SelectOptionAsync(new[] { "blue" });

@@ -67,7 +67,7 @@ You can optionally install only selected browsers, see [install browsers](./cli.
 
 Create `tests/example.spec.js` (or `tests/example.spec.ts` for TypeScript) to define your test.
 
-```js js-flavor=js
+```js tab=js-js
 const { test, expect } = require('@playwright/test');
 
 test('basic test', async ({ page }) => {
@@ -77,7 +77,7 @@ test('basic test', async ({ page }) => {
 });
 ```
 
-```js js-flavor=ts
+```js tab=js-ts
 import { test, expect } from '@playwright/test';
 
 test('basic test', async ({ page }) => {
@@ -105,7 +105,7 @@ To enjoy all the features that Playwright Test has to offer, you would want to c
 
 Here is an example configuration that runs every test in Chromium, Firefox and WebKit, by creating a "project" for each browser configuration. It also specifies [two retries](./test-retries.md) and [tracing](./trace-viewer.md) options.
 
-```js js-flavor=js
+```js tab=js-js
 // playwright.config.js
 // @ts-check
 const { devices } = require('@playwright/test');
@@ -136,7 +136,7 @@ const config = {
 module.exports = config;
 ```
 
-```js js-flavor=ts
+```js tab=js-ts
 // playwright.config.ts
 import { type PlaywrightTestConfig, devices } from '@playwright/test';
 
@@ -197,7 +197,7 @@ Learn more about [test assertions here](./test-assertions.md).
 Here is a quick example of using them:
 
 
-```js js-flavor=js
+```js tab=js-js
 // example.spec.js
 const { test, expect } = require('@playwright/test');
 
@@ -216,7 +216,7 @@ test('my test', async ({ page }) => {
 });
 ```
 
-```js js-flavor=ts
+```js tab=js-ts
 // example.spec.ts
 import { test, expect } from '@playwright/test';
 
@@ -239,12 +239,12 @@ test('my test', async ({ page }) => {
 
 You noticed an argument `{ page }` that the test above has access to:
 
-```js js-flavor=js
+```js tab=js-js
 test('basic test', async ({ page }) => {
   ...
 ```
 
-```js js-flavor=ts
+```js tab=js-ts
 test('basic test', async ({ page }) => {
   ...
 ```
@@ -265,7 +265,7 @@ Here is a list of the pre-defined fixtures that you are likely to use most of th
 You can use `test.beforeAll` and `test.afterAll` hooks to set up and tear down resources shared between tests.
 And you can use `test.beforeEach` and `test.afterEach` hooks to set up and tear down resources for each test individually.
 
-```js js-flavor=js
+```js tab=js-js
 // example.spec.js
 const { test, expect } = require('@playwright/test');
 
@@ -282,7 +282,7 @@ test.describe('feature foo', () => {
 });
 ```
 
-```js js-flavor=ts
+```js tab=js-ts
 // example.spec.ts
 import { test, expect } from '@playwright/test';
 
