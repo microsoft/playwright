@@ -18,7 +18,7 @@ import { ms as milliseconds } from 'playwright-core/lib/utilsBundle';
 import path from 'path';
 import { BaseReporter, formatError, formatFailure, stripAnsiEscapes } from './base';
 import type { TestCase, FullResult, TestError } from '../../types/testReporter';
-import { githubActionsCore } from '../utilsBundle';
+import fs from 'fs';
 
 type GitHubLogType = 'debug' | 'notice' | 'warning' | 'error';
 
@@ -31,41 +31,8 @@ type GitHubLogOptions = Partial<{
   endLine: number;
 }>;
 
-const OUTCOME_PRECEDENCE: ReturnType<TestCase['outcome']>[] = ['unexpected', 'flaky', 'expected', 'skipped'];
-const PROBLEMATIC_OUTCOMES: ReturnType<TestCase['outcome']>[] = ['unexpected', 'flaky'];
+type Options = { annotations?: 'on' | 'off', summary?: 'on' | 'off' };
 
-const sort = (tests: TestCase[]) => {
-  const out = [...tests];
-
-  return out.sort((a, b) => {
-    const aOutcome = OUTCOME_PRECEDENCE.indexOf(a.outcome());
-    const bOutcome = OUTCOME_PRECEDENCE.indexOf(b.outcome());
-    if (aOutcome !== bOutcome)
-      return aOutcome < bOutcome ? -1 : 1;
-    return a.titlePath().join(' :: ').localeCompare(b.titlePath().join(' :: '));
-  });
-};
-
-const outcomeToEmoji = (o: ReturnType<TestCase['outcome']>) => {
-  switch (o) {
-    case 'expected':
-      return '✅';
-    case 'flaky':
-      return '⁉️';
-    case 'unexpected':
-      return '❌';
-    case 'skipped':
-      return '⏩';
-  }
-
-  throw new Error('unreachable');
-};
-
-type Options = { annotations?: 'on' | 'off', summary?: 'on' | 'off' | 'problematic-only' };
-
-function escapeHTML(text: string): string {
-  return text.replace(/[&"<>]/g, c => ({ '&': '&amp;', '"': '&quot;', '<': '&lt;', '>': '&gt;' }[c]!));
-}
 class GitHubLogger {
   private _log(message: string, type: GitHubLogType = 'notice', options: GitHubLogOptions = {}) {
     message = message.replace(/\n/g, '%0A');
@@ -119,30 +86,19 @@ export class GitHubReporter extends BaseReporter {
   }
 
   private async _writeGHASummary() {
-    const cases = this.suite.allTests();
-    let header = 'Tests';
-    let testsToShowDetailsFor = cases;
-    if (this._options.summary === 'problematic-only') {
-      header = 'Problematic Tests';
-      testsToShowDetailsFor = cases.filter(t => PROBLEMATIC_OUTCOMES.includes(t.outcome()));
-    }
+    if (!GITHUB_STEP_SUMMARY_PATH)
+      return;
 
-    let summary = githubActionsCore.summary
-        .addHeading('🎭 Playwright Test 🎭')
-        .addHeading('Summary', 2)
-        .addTable([[{ data: 'Status', header: true }, { data: 'Count', header: true }],
-          ...OUTCOME_PRECEDENCE.map(o => ([`${outcomeToEmoji(o)} (${o})`, cases.filter(t => t.outcome() === o).length.toString()])),
-          ['<strong>Total</strong>', cases.length.toString()],
-        ])
-        .addHeading(header, 2);
-    if (testsToShowDetailsFor.length) {
-      summary = summary.addTable([
-        [{ data: 'Status', header: true }, { data: 'Spec', header: true }, { data: 'Error', header: true }],
-        ...sort(testsToShowDetailsFor).map(t => ([outcomeToEmoji(t.outcome()), t.titlePath().splice(1).join(' > '), t.results.some(r => r.error) ? `<details><summary>Expand for Error Logs</summary> <pre>${escapeHTML(stripAnsiEscapes(formatFailure(this.config, t).message))}</pre></details>` : ''])),
-      ]);
-    } else {summary.addRaw('none to show');}
+    const cases = this.suite.allTests().filter(t => PROBLEMATIC_OUTCOMES.includes(t.outcome()));
+    if (!cases.length)
+      return;
 
-    await summary.write();
+    await fs.promises.writeFile(GITHUB_STEP_SUMMARY_PATH, sort(cases).map(t => `
+        <details>
+          <summary>${escapeHTML(formatOutcome(t.outcome()))} ${escapeHTML(formatTitle(t.titlePath()))}</summary>
+          <pre>${escapeHTML(stripAnsiEscapes(formatFailure(this.config, t).message))}</pre>
+        </details>
+    `).join('\n')).catch(e => this._githubLogger.warning(`Playwright Test GitHub Reporter failed to write GitHub Summary: ${e}`));
   }
 
   private _printAnnotations() {
@@ -195,5 +151,52 @@ export class GitHubReporter extends BaseReporter {
 function workspaceRelativePath(filePath: string): string {
   return path.relative(process.env['GITHUB_WORKSPACE'] ?? '', filePath);
 }
+
+function escapeHTML(text: string): string {
+  return text.replace(/[&"<>]/g, c => ({ '&': '&amp;', '"': '&quot;', '<': '&lt;', '>': '&gt;' }[c]!));
+}
+
+const GITHUB_STEP_SUMMARY_PATH = process.env['GITHUB_STEP_SUMMARY'];
+const OUTCOME_PRECEDENCE: ReturnType<TestCase['outcome']>[] = ['unexpected', 'flaky', 'expected', 'skipped'];
+const PROBLEMATIC_OUTCOMES: ReturnType<TestCase['outcome']>[] = ['unexpected', 'flaky'];
+
+const sort = (tests: TestCase[]) => {
+  const out = [...tests];
+
+  return out.sort((a, b) => {
+    const aOutcome = OUTCOME_PRECEDENCE.indexOf(a.outcome());
+    const bOutcome = OUTCOME_PRECEDENCE.indexOf(b.outcome());
+    if (aOutcome !== bOutcome)
+      return aOutcome < bOutcome ? -1 : 1;
+    return a.titlePath().join(' :: ').localeCompare(b.titlePath().join(' :: '));
+  });
+};
+
+const formatOutcome = (o: ReturnType<TestCase['outcome']>) => {
+  let emoji: string = '';
+  switch (o) {
+    case 'expected':
+      emoji = '✅';
+      break;
+    case 'flaky':
+      emoji = '⁉️';
+      break;
+    case 'unexpected':
+      emoji = '❌';
+      break;
+    case 'skipped':
+      emoji = '⏩';
+      break;
+    default:
+      throw new Error('unreachable');
+  }
+
+  return `${emoji} (${o})`;
+};
+
+const formatTitle = (titlePath: string[]) => {
+  const [,project, file, ...rest] = titlePath;
+  return (project ? `${project} > ` : '') + file + ' > ' + rest.join('>');
+};
 
 export default GitHubReporter;

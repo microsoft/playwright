@@ -14,14 +14,37 @@
  * limitations under the License.
  */
 
-import { test, expect, stripAnsi } from './playwright-test-fixtures';
+import fs from 'fs';
+import { test as base, expect, stripAnsi } from './playwright-test-fixtures';
 import path from 'path';
+import type { Locator, TestInfo } from './stable-test-runner';
 
 function relativeFilePath(file: string): string {
   if (!path.isAbsolute(file))
     return file;
   return path.relative(process.cwd(), file);
 }
+
+const test = base.extend<{
+  githubSummary: {
+    path: string,
+    contents: () => Promise<string>,
+    report: () => Promise<Locator>,
+        },
+        }>({
+          githubSummary: async ({ page }, use, testInfo: TestInfo) => {
+            const githubSummaryPath = testInfo.outputPath('github-summary.html');
+            await fs.promises.writeFile(githubSummaryPath, '');
+            const contents = () => fs.promises.readFile(githubSummaryPath, 'utf8');
+            const report = async () => {
+              await page.setContent(await contents());
+              return page.locator(':scope');
+            };
+
+            await use({ report, contents, path: githubSummaryPath });
+          }
+        });
+
 
 test.use({ channel: 'chrome' });
 
@@ -99,38 +122,13 @@ test('summary works', async ({ runInlineTest, githubSummary, page }) => {
   const result = await runInlineTest({
     'a.test.js': `
       const { test } = pwt;
+
+      test('flaky', async ({}, testInfo) => {
+        expect(testInfo.retry).toBe(1);
+      })
+
       test('passing', async ({}) => {
         expect(1 + 1).toBe(2);
-      });
-    `
-  }, { reporter: 'github' });
-  expect(result.exitCode).toBe(0);
-  const report = await githubSummary.report();
-  await expect.poll(report.summaryTable).toEqual([
-    ['Status', 'Count'],
-    ['❌ (unexpected)', '0'],
-    ['⁉️ (flaky)', '0'],
-    ['✅ (expected)', '1'],
-    ['⏩ (skipped)', '0'],
-    ['Total', '1']
-  ]);
-
-  await expect.poll(report.detailsTable).toEqual([
-    ['Status', 'Spec', 'Error'],
-    ['✅', ' > a.test.js > passing', ''],
-  ]);
-});
-
-test('summary works with different levels', async ({ runInlineTest, githubSummary, page }) => {
-  const result = await runInlineTest({
-    'a.test.js': `
-      const { test } = pwt;
-      test('passing', async ({}) => {
-        expect(1 + 1).toBe(2);
-      });
-
-      test('failing', async ({}) => {
-        expect(1).toBe(2);
       });
 
       test('timeout', async ({}) => {
@@ -138,107 +136,42 @@ test('summary works with different levels', async ({ runInlineTest, githubSummar
         await new Promise(() => {});
       });
 
-      test('skip', async ({}) => {
-        test.skip();
-      });
-    `
-  }, { reporter: 'github' });
-  expect(result.exitCode).toBe(1);
-  const report = await githubSummary.report();
-  await expect.poll(report.summaryTable).toEqual([
-    ['Status', 'Count'],
-    ['❌ (unexpected)', '2'],
-    ['⁉️ (flaky)', '0'],
-    ['✅ (expected)', '1'],
-    ['⏩ (skipped)', '1'],
-    ['Total', '4']
-  ]);
-
-  await expect.poll(report.detailsTable).toEqual([
-    ['Status', 'Spec', 'Error'],
-    ['❌', ' > a.test.js > failing', expect.stringContaining('expect(1).toBe(2)')],
-    ['❌', ' > a.test.js > timeout', expect.stringContaining('Timeout of 500ms exceeded.')],
-    ['✅', ' > a.test.js > passing', ''],
-    ['⏩', ' > a.test.js > skip', ''],
-  ]);
-});
-
-
-test('summary problematic-only option works', async ({ runInlineTest, githubSummary, page }) => {
-  const result = await runInlineTest({
-    'playwright.config.ts': `
-      module.exports = {
-        reporter: [
-          ['github', { summary: 'problematic-only' }],
-        ]
-      };
-    `,
-    'a.test.js': `
-      const { test } = pwt;
-      test('passing', async ({}) => {
-        expect(1 + 1).toBe(2);
-      });
-
       test('failing', async ({}) => {
         expect(1).toBe(2);
       });
 
-      test('timeout', async ({}) => {
-        test.setTimeout(500);
-        await new Promise(() => {});
-      });
-
       test('skip', async ({}) => {
         test.skip();
       });
     `
-  }, { reporter: '' });
+  }, { reporter: 'github', retries: 2 }, { GITHUB_STEP_SUMMARY: githubSummary.path });
   expect(result.exitCode).toBe(1);
   const report = await githubSummary.report();
-  await expect.poll(report.summaryTable).toEqual([
-    ['Status', 'Count'],
-    ['❌ (unexpected)', '2'],
-    ['⁉️ (flaky)', '0'],
-    ['✅ (expected)', '1'],
-    ['⏩ (skipped)', '1'],
-    ['Total', '4']
+  await expect(report.locator('details > summary')).toHaveText([
+    '❌ (unexpected) a.test.js > failing',
+    '❌ (unexpected) a.test.js > timeout',
+    '⁉️ (flaky) a.test.js > flaky',
   ]);
 
-  await expect.poll(report.detailsTable).toEqual([
-    ['Status', 'Spec', 'Error'],
-    ['❌', ' > a.test.js > failing', expect.stringContaining('expect(1).toBe(2)')],
-    ['❌', ' > a.test.js > timeout', expect.stringContaining('Timeout of 500ms exceeded.')],
+  await expect(report.locator('details')).toContainText([
+    'expect(1).toBe(2);',
+    'Timeout of 500ms exceeded.',
+    'expect(testInfo.retry).toBe(1);',
   ]);
 });
 
-test('summary skips printing summary table if no entries', async ({ runInlineTest, githubSummary, page }) => {
+test('summary skips if no problematic test cases', async ({ runInlineTest, githubSummary, page }) => {
   const result = await runInlineTest({
-    'playwright.config.ts': `
-      module.exports = {
-        reporter: [
-          ['github', { summary: 'problematic-only' }],
-        ]
-      };
-    `,
     'a.test.js': `
       const { test } = pwt;
+
       test('passing', async ({}) => {
         expect(1 + 1).toBe(2);
       });
     `
-  }, { reporter: '' });
+  }, { reporter: 'github' }, { GITHUB_STEP_SUMMARY: githubSummary.path });
   expect(result.exitCode).toBe(0);
-  const report = await githubSummary.report();
-  await expect.poll(report.summaryTable).toEqual([
-    ['Status', 'Count'],
-    ['❌ (unexpected)', '0'],
-    ['⁉️ (flaky)', '0'],
-    ['✅ (expected)', '1'],
-    ['⏩ (skipped)', '0'],
-    ['Total', '1']
-  ]);
-
-  await expect(page.locator('text=none to show')).toBeVisible();
+  await expect(githubSummary.contents()).resolves.toBe('');
 });
 
 test('summary off option works', async ({ runInlineTest, githubSummary }) => {
@@ -253,19 +186,18 @@ test('summary off option works', async ({ runInlineTest, githubSummary }) => {
     'a.test.js': `
       const { test } = pwt;
       test('example1', async ({}) => {
-        expect(1 + 1).toBe(2);
+        expect(1).toBe(2);
       });
     `
-  }, { reporter: '' });
+  }, { reporter: '' }, { GITHUB_STEP_SUMMARY: githubSummary.path });
   const text = stripAnsi(result.output);
-  expect(text).not.toContain('::error');
-  expect(text).toContain('::notice title=🎭 Playwright Run Summary::  1 passed');
-  expect(result.exitCode).toBe(0);
+  expect(text).toContain('::error');
+  expect(result.exitCode).toBe(1);
 
   await expect(githubSummary.contents()).resolves.toBe('');
 });
 
-test('annotations off option works', async ({ runInlineTest, githubSummary, page }) => {
+test('annotations off option works', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       module.exports = {

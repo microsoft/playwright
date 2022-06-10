@@ -37,7 +37,7 @@ const config: Config = {
     ['dot'],
     ['json', { outputFile: path.join(outputDir, 'report.json') }],
     // TODO(rwoll): enable after next roll which includes new github reporter that supports these options
-    // ['github', { annotations: 'off', summary: 'problematic-only' }],
+    // ['github', { annotations: 'off' }],
   ] : [
     ['list']
   ],

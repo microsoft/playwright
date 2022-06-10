@@ -60,7 +60,7 @@ const config: Config<CoverageWorkerOptions & PlaywrightWorkerOptions & Playwrigh
   reporter: process.env.CI ? [
     ['dot'],
     ['json', { outputFile: path.join(outputDir, 'report.json') }],
-    ['github', { annotations: 'off', summary: 'problematic-only' }],
+    ['github', { annotations: 'off' }],
   ] : [
     ['html', { open: 'on-failure' }]
   ],

@@ -29,7 +29,7 @@ const config: PlaywrightTestConfig = {
   reporter: process.env.CI ? [
     ['dot'],
     ['json', { outputFile: path.join(outputDir, 'report.json') }],
-    ['github', { annotations: 'off', summary: 'problematic-only' }],
+    ['github', { annotations: 'off' }],
   ] : [['list'], ['html', { open: 'on-failure' }]],
   forbidOnly: !!process.env.CI,
   workers: 1,

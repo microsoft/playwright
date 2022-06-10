@@ -391,7 +391,7 @@ export default config;
 
 ### GitHub Actions annotations and summary
 
-You can use the built in `github` reporter to get automatic failure annotations when running in GitHub actions as well as a summary of the test run.
+You can use the built in `github` reporter to get automatic failure annotations when running in GitHub actions as well as a [summary](https://github.blog/2022-05-09-supercharging-github-actions-with-job-summaries/) of the problematic tests.
 
 :::note
 All other reporters work on GitHub Actions as well, but do not provide annotations.
@@ -423,9 +423,7 @@ const config: PlaywrightTestConfig = {
 export default config;
 ```
 
-#### Options
-
-If you don't want either the annotations or summary, you can set an option for the report like so:
+If you don't want either the annotations or summary, you can set the reporters `annotation` or `summary` option to `off`:
 
 ```js js-flavor=js
 // playwright.config.js
@@ -433,7 +431,7 @@ If you don't want either the annotations or summary, you can set an option for t
 
 /** @type {import('@playwright/test').PlaywrightTestConfig} */
 const config = {
-  reporter: [ ['github', { annotations: 'off', summary: 'off' }] ],
+  reporter: [ ['github', { annotations: 'off' }] ],
 };
 
 module.exports = config;
@@ -444,12 +442,10 @@ module.exports = config;
 import type { PlaywrightTestConfig } from '@playwright/test';
 
 const config: PlaywrightTestConfig = {
-  reporter: [ ['github', { annotations: 'off', summary: 'off' }] ],
+  reporter: [ ['github', { annotations: 'off' }] ],
 };
 export default config;
 ```
-
-If you have lots of tests, it's recommended to set `summary` to `'problematic-only'`, so that the summary only includes tests with unexpected or flaky outcomes.
 
 ## Custom reporters
 
