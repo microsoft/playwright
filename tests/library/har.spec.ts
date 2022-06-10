@@ -292,47 +292,6 @@ it('should filter by regexp', async ({ contextFactory, server }, testInfo) => {
   expect(log.entries[0].request.url.endsWith('har.html')).toBe(true);
 });
 
-it('should fulfill route from har', async ({ contextFactory, server }, testInfo) => {
-  const kCustomCSS = 'body { background-color: rgb(50, 100, 150); }';
-
-  const harPath = testInfo.outputPath('test.har');
-  const harContext = await contextFactory({ baseURL: server.PREFIX, recordHar: { path: harPath, urlFilter: '/*.css' }, ignoreHTTPSErrors: true });
-  const harPage = await harContext.newPage();
-  await harPage.route('**/one-style.css', async route => {
-    // Make sure har content is not what the server returns.
-    await route.fulfill({ body: kCustomCSS });
-  });
-  await harPage.goto('/har.html');
-  await harContext.close();
-
-  const context  = await contextFactory();
-  const page1 = await context.newPage();
-  await page1.route('**/*.css', async route => {
-    // Fulfulling from har should give expected CSS.
-    await route.fulfill({ har: harPath });
-  });
-  const [response1] = await Promise.all([
-    page1.waitForResponse('**/one-style.css'),
-    page1.goto(server.PREFIX + '/one-style.html'),
-  ]);
-  expect(await response1.text()).toBe(kCustomCSS);
-  await expect(page1.locator('body')).toHaveCSS('background-color', 'rgb(50, 100, 150)');
-  await page1.close();
-
-  const page2 = await context.newPage();
-  await page2.route('**/*.css', async route => {
-    // Overriding status should make CSS not apply.
-    await route.fulfill({ har: harPath, status: 404 });
-  });
-  const [response2] = await Promise.all([
-    page2.waitForResponse('**/one-style.css'),
-    page2.goto(server.PREFIX + '/one-style.html'),
-  ]);
-  expect(response2.status()).toBe(404);
-  await expect(page2.locator('body')).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
-  await page2.close();
-});
-
 it('should include sizes', async ({ contextFactory, server, asset }, testInfo) => {
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   await page.goto(server.PREFIX + '/har.html');

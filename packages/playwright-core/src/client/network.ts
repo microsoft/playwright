@@ -55,6 +55,11 @@ export type SetNetworkCookieParam = {
   sameSite?: 'Strict' | 'Lax' | 'None'
 };
 
+type RouteHAR = {
+  fallback?: 'abort' | 'continue' | 'throw';
+  path: string;
+};
+
 export class Request extends ChannelOwner<channels.RequestChannel> implements api.Request {
   private _redirectedFrom: Request | null = null;
   private _redirectedTo: Request | null = null;
@@ -259,12 +264,18 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
     await this._followChain(true);
   }
 
-  async fulfill(options: { response?: api.APIResponse, status?: number, headers?: Headers, contentType?: string, body?: string | Buffer, path?: string, har?: string } = {}) {
-    await this._innerFulfill(options);
-    await this._followChain(true);
+  async fulfill(options: { response?: api.APIResponse, status?: number, headers?: Headers, contentType?: string, body?: string | Buffer, path?: string, har?: RouteHAR } = {}) {
+    await this._wrapApiCall(async () => {
+      const fallback = await this._innerFulfill(options);
+      switch (fallback) {
+        case 'abort': await this.abort(); break;
+        case 'continue': await this.continue(); break;
+        case 'done': await this._followChain(true); break;
+      }
+    });
   }
 
-  private async _innerFulfill(options: { response?: api.APIResponse, status?: number, headers?: Headers, contentType?: string, body?: string | Buffer, path?: string, har?: string } = {}) {
+  private async _innerFulfill(options: { response?: api.APIResponse, status?: number, headers?: Headers, contentType?: string, body?: string | Buffer, path?: string, har?: RouteHAR } = {}): Promise<'abort' | 'continue' | 'done'> {
     let fetchResponseUid;
     let { status: statusOption, headers: headersOption, body } = options;
 
@@ -272,14 +283,21 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
       throw new Error(`At most one of "har" and "response" options should be present`);
 
     if (options.har) {
+      const fallback = options.har.fallback ?? 'abort';
+      if (!['abort', 'continue', 'throw'].includes(fallback))
+        throw new Error(`har.fallback: expected one of "abort", "continue" or "throw", received "${fallback}"`);
       const entry = await this._connection.localUtils()._channel.harFindEntry({
         cacheKey: this.request()._context()._guid,
-        harFile: options.har,
+        harFile: options.har.path,
         url: this.request().url(),
+        method: this.request().method(),
         needBody: body === undefined,
       });
-      if (entry.error)
-        throw new Error(entry.error);
+      if (entry.error) {
+        if (fallback === 'throw')
+          throw new Error(entry.error);
+        return fallback;
+      }
       if (statusOption === undefined)
         statusOption = entry.status;
       if (headersOption === undefined && entry.headers)
@@ -332,6 +350,7 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
       isBase64,
       fetchResponseUid
     }));
+    return 'done';
   }
 
   async continue(options: OverridesForContinue = {}) {
@@ -577,7 +596,9 @@ export class RouteHandler {
   public handle(route: Route, request: Request, routeChain: (done: boolean) => Promise<void>) {
     ++this.handledCount;
     route._startHandling(routeChain);
-    this.handler(route, request);
+    // Extract handler into a variable to avoid [RouteHandler.handler] in the stack.
+    const handler = this.handler;
+    handler(route, request);
   }
 
   public willExpire(): boolean {

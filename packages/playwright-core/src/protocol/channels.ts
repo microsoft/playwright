@@ -393,6 +393,7 @@ export type LocalUtilsHarFindEntryParams = {
   cacheKey: string,
   harFile: string,
   url: string,
+  method: string,
   needBody: boolean,
 };
 export type LocalUtilsHarFindEntryOptions = {

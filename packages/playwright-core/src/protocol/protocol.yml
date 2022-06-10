@@ -479,6 +479,7 @@ LocalUtils:
         cacheKey: string
         harFile: string
         url: string
+        method: string
         needBody: boolean
       returns:
         error: string?
