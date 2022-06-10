@@ -16,7 +16,7 @@ title: "Community Showcase"
 ## Unofficial language ports
 
 * Playwright for Go
-  * [GitHub repo](https://github.com/mxschmitt/playwright-go)
+  * [GitHub repo](https://github.com/playwright-community/playwright-go)
   * [Documentation](https://pkg.go.dev/github.com/mxschmitt/playwright-go?tab=doc)
 
 * Playwright for Crystal
