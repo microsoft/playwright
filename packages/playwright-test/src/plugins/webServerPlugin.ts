@@ -153,7 +153,7 @@ async function isURLAvailable(url: URL, ignoreHTTPSErrors: boolean, onStdErr: Re
     indexUrl.pathname = '/index.html';
     statusCode = await httpStatusCode(indexUrl, ignoreHTTPSErrors, onStdErr);
   }
-  return statusCode >= 200 && statusCode < 300;
+  return statusCode >= 200 && statusCode < 404;
 }
 
 async function httpStatusCode(url: URL, ignoreHTTPSErrors: boolean, onStdErr: Reporter['onStdErr']): Promise<number> {
