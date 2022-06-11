@@ -5,7 +5,7 @@ Test runner notifies the reporter about various events during test execution. Al
 
 You can create a custom reporter by implementing a class with some of the reporter methods. Make sure to export this class as default.
 
-```js js-flavor=js
+```js tab=js-js
 // my-awesome-reporter.js
 // @ts-check
 
@@ -31,7 +31,7 @@ class MyReporter {
 module.exports = MyReporter;
 ```
 
-```js js-flavor=ts
+```js tab=js-ts
 // my-awesome-reporter.ts
 import { Reporter } from '@playwright/test/reporter';
 
@@ -57,7 +57,7 @@ export default MyReporter;
 
 Now use this reporter with [`property: TestConfig.reporter`]. Learn more about [using reporters](../test-reporters.md).
 
-```js js-flavor=js
+```js tab=js-js
 // playwright.config.js
 // @ts-check
 
@@ -69,7 +69,7 @@ const config = {
 module.exports = config;
 ```
 
-```js js-flavor=ts
+```js tab=js-ts
 // playwright.config.ts
 import type { PlaywrightTestConfig } from '@playwright/test';
 

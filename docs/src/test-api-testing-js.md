@@ -29,7 +29,7 @@ The following example demonstrates how to use Playwright to test issues creation
 
 GitHub API requires authorization, so we'll configure the token once for all tests. While at it, we'll also set the `baseURL` to simplify the tests. You can either put them in the configuration file, or in the test file with `test.use()`.
 
-```js js-flavor=ts
+```js tab=js-ts
 // playwright.config.ts
 import type { PlaywrightTestConfig } from '@playwright/test';
 
@@ -49,7 +49,7 @@ const config: PlaywrightTestConfig = {
 export default config;
 ```
 
-```js js-flavor=js
+```js tab=js-js
 // playwright.config.js
 // @ts-check
 /** @type {import('@playwright/test').PlaywrightTestConfig} */
@@ -182,7 +182,7 @@ While running tests inside browsers you may want to make calls to the HTTP API o
 The following test creates a new issue via API and then navigates to the list of all issues in the
 project to check that it appears at the top of the list.
 
-```js js-flavor=ts
+```js tab=js-ts
 import { test, expect } from '@playwright/test';
 
 const REPO = 'test-repo-1';
@@ -224,7 +224,7 @@ test('last created issue should be first in the list', async ({ page }) => {
 });
 ```
 
-```js js-flavor=js
+```js tab=js-js
 // @ts-check
 const { test, expect } = require('@playwright/test');
 
@@ -272,7 +272,7 @@ test('last created issue should be first in the list', async ({ page }) => {
 The following test creates a new issue via user interface in the browser and then uses checks if
 it was created via API:
 
-```js js-flavor=ts
+```js tab=js-ts
 import { test, expect } from '@playwright/test';
 
 const REPO = 'test-repo-1';
@@ -316,7 +316,7 @@ test('last created issue should be on the server', async ({ page, request }) => 
 });
 ```
 
-```js js-flavor=js
+```js tab=js-js
 // @ts-check
 const { test, expect } = require('@playwright/test');
 

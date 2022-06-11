@@ -688,17 +688,6 @@ handle.select_option(label="blue")
 handle.select_option(value=["red", "green", "blue"])
 ```
 
-```python sync
-# single selection matching the value
-handle.select_option("blue")
-# single selection matching both the value and the label
-handle.select_option(label="blue")
-# multiple selection
-handle.select_option("red", "green", "blue")
-# multiple selection for blue, red and second option
-handle.select_option(value="blue", { index: 2 }, "red")
-```
-
 ```csharp
 // single selection matching the value
 await handle.SelectOptionAsync(new[] { "blue" });

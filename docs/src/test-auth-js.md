@@ -17,7 +17,7 @@ Below are the typical strategies for implementing the signed-in scenarios.
 This is the simplest way where each test signs in inside the `beforeEach` hook. It also is the
 least efficient one in case the log in process has high latencies.
 
-```js js-flavor=ts
+```js tab=js-ts
 import { test } from '@playwright/test';
 
 test.beforeEach(async ({ page }) => {
@@ -38,7 +38,7 @@ test('second', async ({ page }) => {
 });
 ```
 
-```js js-flavor=js
+```js tab=js-js
 const { test } = require('@playwright/test');
 
 test.beforeEach(async ({ page }) => {
@@ -69,7 +69,7 @@ in only once and then skip the log in step for all of the tests.
 
 Create a new global setup script:
 
-```js js-flavor=js
+```js tab=js-js
 // global-setup.js
 const { chromium } = require('@playwright/test');
 
@@ -86,7 +86,7 @@ module.exports = async config => {
 };
 ```
 
-```js js-flavor=ts
+```js tab=js-ts
 // global-setup.ts
 import { chromium, FullConfig } from '@playwright/test';
 
@@ -107,7 +107,7 @@ export default globalSetup;
 
 Register global setup script in the Playwright configuration file:
 
-```js js-flavor=ts
+```js tab=js-ts
 // playwright.config.ts
 import type { PlaywrightTestConfig } from '@playwright/test';
 
@@ -121,7 +121,7 @@ const config: PlaywrightTestConfig = {
 export default config;
 ```
 
-```js js-flavor=js
+```js tab=js-js
 // playwright.config.js
 // @ts-check
 /** @type {import('@playwright/test').PlaywrightTestConfig} */
@@ -137,7 +137,7 @@ module.exports = config;
 
 Tests start already authenticated because we specify `storageState` that was populated by global setup.
 
-```js js-flavor=ts
+```js tab=js-ts
 import { test } from '@playwright/test';
 
 test('test', async ({ page }) => {
@@ -145,7 +145,7 @@ test('test', async ({ page }) => {
 });
 ```
 
-```js js-flavor=js
+```js tab=js-js
 const { test } = require('@playwright/test');
 
 test('test', async ({ page }) => {
@@ -162,7 +162,7 @@ setup at all, just specify the `storageState.json` in Playwright Config as above
 
 If your web application supports signing in via API, you can use [APIRequestContext] to simplify sign in flow. Global setup script from the example above would change like this:
 
-```js js-flavor=js
+```js tab=js-js
 // global-setup.js
 const { request } = require('@playwright/test');
 
@@ -180,7 +180,7 @@ module.exports = async () => {
 }
 ```
 
-```js js-flavor=ts
+```js tab=js-ts
 // global-setup.ts
 import { request } from '@playwright/test';
 
@@ -204,7 +204,7 @@ export default globalSetup;
 
 Sometimes you have more than one signed-in user in your end to end tests. You can achieve that via logging in for these users multiple times in globalSetup and saving that state into different files.
 
-```js js-flavor=js
+```js tab=js-js
 // global-setup.js
 const { chromium } = require('@playwright/test');
 
@@ -221,7 +221,7 @@ module.exports = async config => {
 };
 ```
 
-```js js-flavor=ts
+```js tab=js-ts
 // global-setup.ts
 import { chromium, FullConfig } from '@playwright/test';
 
@@ -242,7 +242,7 @@ export default globalSetup;
 
 After that you can specify the user to use for each test file or each test group:
 
-```js js-flavor=ts
+```js tab=js-ts
 import { test } from '@playwright/test';
 
 test.use({ storageState: 'adminStorageState.json' });
@@ -260,7 +260,7 @@ test.describe(() => {
 });
 ```
 
-```js js-flavor=js
+```js tab=js-js
 const { test } = require('@playwright/test');
 
 test.use({ storageState: 'adminStorageState.json' });
@@ -285,7 +285,7 @@ in the same page. In that case, you can log into that page once in `beforeAll` a
 page in all the tests. Note that you need to run these tests serially using `test.describe.serial` in
 order to achieve that:
 
-```js js-flavor=js
+```js tab=js-js
 // example.spec.js
 // @ts-check
 
@@ -318,7 +318,7 @@ test('second test', async () => {
 });
 ```
 
-```js js-flavor=ts
+```js tab=js-ts
 // example.spec.ts
 
 import { test, Page } from '@playwright/test';

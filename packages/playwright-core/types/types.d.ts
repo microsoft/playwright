@@ -1535,7 +1535,7 @@ export interface Page {
    *
    * An example of overriding `Math.random` before the page loads:
    *
-   * ```js browser
+   * ```js
    * // preload.js
    * Math.random = () => 42;
    * ```
@@ -6580,7 +6580,7 @@ export interface BrowserContext {
    *
    * An example of overriding `Math.random` before the page loads:
    *
-   * ```js browser
+   * ```js
    * // preload.js
    * Math.random = () => 42;
    * ```
@@ -11177,7 +11177,7 @@ export {};
  * Note that since you don't need Playwright to install web browsers when testing Android, you can omit browser download
  * via setting the following environment variable when installing Playwright:
  *
- * ```bash js
+ * ```bash
  * PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm i -D playwright
  * ```
  *
@@ -13676,7 +13676,7 @@ export interface Download {
  * Note that since you don't need Playwright to install web browsers when testing Electron, you can omit browser download
  * via setting the following environment variable when installing Playwright:
  *
- * ```bash js
+ * ```bash
  * PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm i -D playwright
  * ```
  *

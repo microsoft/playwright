@@ -16,63 +16,63 @@ There are several ways of opening Playwright Inspector:
 - Set the `PWDEBUG` environment variable to run your scripts in debug mode. This
 configures Playwright for debugging and opens the inspector.
 
-  ```bash bash-flavor=bash lang=js
+  ```bash tab=bash-bash lang=js
   PWDEBUG=1 npm run test
   ```
 
-  ```bash bash-flavor=batch lang=js
+  ```batch tab=bash-batch lang=js
   set PWDEBUG=1
   npm run test
   ```
 
-  ```bash bash-flavor=powershell lang=js
+  ```powershell tab=bash-powershell lang=js
   $env:PWDEBUG=1
   npm run test
   ```
 
-  ```bash bash-flavor=bash lang=java
+  ```bash tab=bash-bash lang=java
   # Source directories in the list are separated by : on macos and linux and by ; on win.
   PWDEBUG=1 PLAYWRIGHT_JAVA_SRC=<java source dirs> mvn test
   ```
 
-  ```bash bash-flavor=batch lang=java
+  ```batch tab=bash-batch lang=java
   # Source directories in the list are separated by : on macos and linux and by ; on win.
   set PLAYWRIGHT_JAVA_SRC=<java source dirs>
   set PWDEBUG=1
   mvn test
   ```
 
-  ```bash bash-flavor=powershell lang=java
+  ```powershell tab=bash-powershell lang=java
   # Source directories in the list are separated by : on macos and linux and by ; on win.
   $env:PLAYWRIGHT_JAVA_SRC="<java source dirs>"
   $env:PWDEBUG=1
   mvn test
   ```
 
-  ```bash bash-flavor=bash lang=python
+  ```bash tab=bash-bash lang=python
   PWDEBUG=1 pytest -s
   ```
 
-  ```bash bash-flavor=batch lang=python
+  ```batch tab=bash-batch lang=python
   set PWDEBUG=1
   pytest -s
   ```
 
-  ```bash bash-flavor=powershell lang=python
+  ```powershell tab=bash-powershell lang=python
   $env:PWDEBUG=1
   pytest -s
   ```
 
-  ```bash bash-flavor=bash lang=csharp
+  ```bash tab=bash-bash lang=csharp
   PWDEBUG=1 dotnet test
   ```
 
-  ```bash bash-flavor=batch lang=csharp
+  ```batch tab=bash-batch lang=csharp
   set PWDEBUG=1
   dotnet test
   ```
 
-  ```bash bash-flavor=powershell lang=csharp
+  ```powershell tab=bash-powershell lang=csharp
   $env:PWDEBUG=1
   dotnet test
   ```

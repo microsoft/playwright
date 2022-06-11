@@ -13,7 +13,7 @@ Playwright Test is based on the concept of test fixtures. Test fixtures are used
 
 You have already used test fixtures in your first test.
 
-```js js-flavor=js
+```js tab=js-js
 const { test, expect } = require('@playwright/test');
 
 test('basic test', async ({ page }) => {
@@ -23,7 +23,7 @@ test('basic test', async ({ page }) => {
 });
 ```
 
-```js js-flavor=ts
+```js tab=js-ts
 import { test, expect } from '@playwright/test';
 
 test('basic test', async ({ page }) => {
@@ -91,7 +91,7 @@ Fixtures have a number of advantages over before/after hooks:
 - Fixtures are **flexible**. Tests can use any combinations of the fixtures to tailor precise environment they need, without affecting other tests.
 - Fixtures simplify **grouping**. You no longer need to wrap tests in `describe`s that set up environment, and are free to group your tests by their meaning instead.
 
-```js js-flavor=js
+```js tab=js-js
 // todo.spec.js
 const base = require('@playwright/test');
 const { TodoPage } = require('./todo-page');
@@ -119,7 +119,7 @@ test('should remove an item', async ({ todoPage }) => {
 });
 ```
 
-```js js-flavor=ts
+```js tab=js-ts
 // example.spec.ts
 import { test as base } from '@playwright/test';
 import { TodoPage } from './todo-page';
@@ -153,7 +153,7 @@ To create your own fixture, use [`method: Test.extend`] to create a new `test` o
 
 Below we create two fixtures `todoPage` and `settingsPage` that follow the [Page Object Model](./test-pom.md) pattern.
 
-```js js-flavor=js
+```js tab=js-js
 // my-test.js
 const base = require('@playwright/test');
 const { TodoPage } = require('./todo-page');
@@ -183,7 +183,7 @@ exports.test = base.test.extend({
 exports.expect = base.expect;
 ```
 
-```js js-flavor=ts
+```js tab=js-ts
 // my-test.ts
 import { test as base } from '@playwright/test';
 import { TodoPage } from './todo-page';
@@ -225,7 +225,7 @@ Just mention fixture in your test function argument, and test runner will take c
 
 Below we use the `todoPage` and `settingsPage` fixtures defined above.
 
-```js js-flavor=js
+```js tab=js-js
 const { test, expect } = require('./my-test');
 
 test.beforeEach(async ({ settingsPage }) => {
@@ -238,7 +238,7 @@ test('basic test', async ({ todoPage, page }) => {
 });
 ```
 
-```js js-flavor=ts
+```js tab=js-ts
 import { test, expect } from './my-test';
 
 test.beforeEach(async ({ settingsPage }) => {
@@ -255,7 +255,7 @@ test('basic test', async ({ todoPage, page }) => {
 
 In addition to creating your own fixtures, you can also override existing fixtures to fit your needs. Consider the following example which overrides the `page` fixture by automatically navigating to some `baseURL`:
 
-```js js-flavor=js
+```js tab=js-js
 const base = require('@playwright/test');
 
 exports.test = base.test.extend({
@@ -266,7 +266,7 @@ exports.test = base.test.extend({
 });
 ```
 
-```js js-flavor=ts
+```js tab=js-ts
 import { test as base } from '@playwright/test';
 
 export const test = base.extend({
@@ -279,13 +279,13 @@ export const test = base.extend({
 
 Notice that in this example, the `page` fixture is able to depend on other built-in fixtures such as [`property: TestOptions.baseURL`]. We can now configure `baseURL` in the configuration file, or locally in the test file with [`method: Test.use`].
 
-```js js-flavor=js
+```js tab=js-js
 // example.spec.js
 
 test.use({ baseURL: 'https://playwright.dev' });
 ```
 
-```js js-flavor=ts
+```js tab=js-ts
 // example.spec.ts
 
 test.use({ baseURL: 'https://playwright.dev' });
@@ -293,7 +293,7 @@ test.use({ baseURL: 'https://playwright.dev' });
 
 Fixtures can also be overridden where the base fixture is completely replaced with something different. For example, we could override the [`property: TestOptions.storageState`] fixture to provide our own data.
 
-```js js-flavor=js
+```js tab=js-js
 const base = require('@playwright/test');
 
 exports.test = base.test.extend({
@@ -304,7 +304,7 @@ exports.test = base.test.extend({
 });
 ```
 
-```js js-flavor=ts
+```js tab=js-ts
 import { test as base } from '@playwright/test';
 
 export const test = base.extend({
@@ -321,7 +321,7 @@ Playwright Test uses [worker processes](./test-parallel.md) to run test files. S
 
 Below we'll create an `account` fixture that will be shared by all tests in the same worker, and override the `page` fixture to login into this account for each test. To generate unique accounts, we'll use the [`property: WorkerInfo.workerIndex`] that is available to any test or fixture. Note the tuple-like syntax for the worker fixture - we have to pass `{scope: 'worker'}` so that test runner sets up this fixture once per worker.
 
-```js js-flavor=js
+```js tab=js-js
 // my-test.js
 const base = require('@playwright/test');
 
@@ -362,7 +362,7 @@ exports.test = base.test.extend({
 exports.expect = base.expect;
 ```
 
-```js js-flavor=ts
+```js tab=js-ts
 // my-test.ts
 import { test as base } from '@playwright/test';
 
@@ -415,7 +415,7 @@ Automatic fixtures are set up for each test/worker, even when the test does not 
 
 Here is an example fixture that automatically attaches debug logs when the test fails, so we can later review the logs in the reporter. Note how it uses [TestInfo] object that is available in each test/fixture to retrieve metadata about the test being run.
 
-```js js-flavor=js
+```js tab=js-js
 // my-test.js
 const debug = require('debug');
 const fs = require('fs');
@@ -441,7 +441,7 @@ exports.test = base.test.extend({
 });
 ```
 
-```js js-flavor=ts
+```js tab=js-ts
 // my-test.ts
 import * as debug from 'debug';
 import * as fs from 'fs';
@@ -472,7 +472,7 @@ export { expect } from '@playwright/test';
 
 By default, fixture shares timeout with the test. However, for slow fixtures, especially [worker-scoped](#worker-scoped-fixtures) ones, it is convenient to have a separate timeout. This way you can keep the overall test timeout small, and give the slow fixture more time.
 
-```js js-flavor=js
+```js tab=js-js
 const { test: base, expect } = require('@playwright/test');
 
 const test = base.extend({
@@ -487,7 +487,7 @@ test('example test', async ({ slowFixture }) => {
 });
 ```
 
-```js js-flavor=ts
+```js tab=js-ts
 import { test as base, expect } from '@playwright/test';
 
 const test = base.extend<{ slowFixture: string }>({
@@ -514,7 +514,7 @@ Playwright Test supports running multiple test projects that can be separately c
 Below we'll create a `defaultItem` option in addition to the `todoPage` fixture from other examples. This option will be set in configuration file. Note the tuple syntax and `{ option: true }` argument.
 
 
-```js js-flavor=js
+```js tab=js-js
 // my-test.js
 const base = require('@playwright/test');
 const { TodoPage } = require('./todo-page');
@@ -536,7 +536,7 @@ exports.test = base.test.extend({
 exports.expect = base.expect;
 ```
 
-```js js-flavor=ts
+```js tab=js-ts
 // my-test.ts
 import { test as base } from '@playwright/test';
 import { TodoPage } from './todo-page';
@@ -569,7 +569,7 @@ export { expect } from '@playwright/test';
 
 We can now use `todoPage` fixture as usual, and set the `defaultItem` option in the config file.
 
-```js js-flavor=js
+```js tab=js-js
 // playwright.config.js
 // @ts-check
 
@@ -590,7 +590,7 @@ const config = {
 module.exports = config;
 ```
 
-```js js-flavor=ts
+```js tab=js-ts
 // playwright.config.ts
 import type { PlaywrightTestConfig } from '@playwright/test';
 import { MyOptions } from './my-test';
@@ -621,7 +621,7 @@ Fixtures follow these rules to determine the execution order:
 
 Consider the following example:
 
-```js js-flavor=js
+```js tab=js-js
 const { test: base } = require('@playwright/test');
 
 const test = base.extend({
@@ -664,7 +664,7 @@ test.afterEach(async () => { /* ... */ });
 test.afterAll(async () => { /* ... */ });
 ```
 
-```js js-flavor=ts
+```js tab=js-ts
 import { test as base } from '@playwright/test';
 
 const test = base.extend<{

@@ -14,7 +14,7 @@ Playwright Trace Viewer is a GUI tool that helps exploring recorded Playwright t
 
 Set the `trace: 'on-first-retry'` option in the test configuration file. This will produce `trace.zip` file for each test that was retried.
 
-```js js-flavor=js
+```js tab=js-js
 // @ts-check
 
 /** @type {import('@playwright/test').PlaywrightTestConfig} */
@@ -28,7 +28,7 @@ const config = {
 module.exports = config;
 ```
 
-```js js-flavor=ts
+```js tab=js-ts
 import type { PlaywrightTestConfig } from '@playwright/test';
 const config: PlaywrightTestConfig = {
   retries: 1,
@@ -39,7 +39,7 @@ const config: PlaywrightTestConfig = {
 export default config;
 ```
 
-```js js-flavor=library
+```js tab=js-library
 const browser = await chromium.launch();
 const context = await browser.newContext();
 

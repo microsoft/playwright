@@ -3,7 +3,7 @@
 
 `WorkerInfo` contains information about the worker that is running tests. It is available to [`method: Test.beforeAll`] and [`method: Test.afterAll`] hooks and worker-scoped fixtures.
 
-```js js-flavor=js
+```js tab=js-js
 const { test, expect } = require('@playwright/test');
 
 test.beforeAll(async ({ browserName }, workerInfo) => {
@@ -11,7 +11,7 @@ test.beforeAll(async ({ browserName }, workerInfo) => {
 });
 ```
 
-```js js-flavor=ts
+```js tab=js-ts
 import { test, expect } from '@playwright/test';
 
 test.beforeAll(async ({ browserName }, workerInfo) => {

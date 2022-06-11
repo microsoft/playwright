@@ -7,7 +7,7 @@ Page Object Model is a common pattern that introduces abstractions over web app 
 
 We will create a `PlaywrightDevPage` helper class to encapsulate common operations on the `playwright.dev` page. Internally, it will use the `page` object.
 
-```js js-flavor=js
+```js tab=js-js
 // playwright-dev-page.js
 const { expect } = require('@playwright/test');
 
@@ -40,7 +40,7 @@ exports.PlaywrightDevPage = class PlaywrightDevPage {
 }
 ```
 
-```js js-flavor=ts
+```js tab=js-ts
 // playwright-dev-page.ts
 import { expect, Locator, Page } from '@playwright/test';
 
@@ -77,7 +77,7 @@ export class PlaywrightDevPage {
 
 Now we can use the `PlaywrightDevPage` class in our tests.
 
-```js js-flavor=js
+```js tab=js-js
 // example.spec.js
 const { test, expect } = require('@playwright/test');
 const { PlaywrightDevPage } = require('./playwright-dev-page');
@@ -107,7 +107,7 @@ test('should show Page Object Model article', async ({ page }) => {
 });
 ```
 
-```js js-flavor=ts
+```js tab=js-ts
 // example.spec.ts
 import { test, expect } from '@playwright/test';
 import { PlaywrightDevPage } from './playwright-dev-page';

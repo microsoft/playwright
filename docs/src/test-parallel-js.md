@@ -32,7 +32,7 @@ npx playwright test --workers 4
 ```
 
 In the configuration file:
-```js js-flavor=js
+```js tab=js-js
 // playwright.config.js
 // @ts-check
 
@@ -45,7 +45,7 @@ const config = {
 module.exports = config;
 ```
 
-```js js-flavor=ts
+```js tab=js-ts
 // playwright.config.ts
 import type { PlaywrightTestConfig } from '@playwright/test';
 
@@ -70,7 +70,7 @@ By default, tests in a single file are run in order. If you have many independen
 
 Note that parallel tests are executed in separate worker processes and cannot share any state or global variables. Each test executes all relevant hooks just for itself, including `beforeAll` and `afterAll`.
 
-```js js-flavor=js
+```js tab=js-js
 const { test } = require('@playwright/test');
 
 test.describe.configure({ mode: 'parallel' });
@@ -79,7 +79,7 @@ test('runs in parallel 1', async ({ page }) => { /* ... */ });
 test('runs in parallel 2', async ({ page }) => { /* ... */ });
 ```
 
-```js js-flavor=ts
+```js tab=js-ts
 import { test } from '@playwright/test';
 
 test.describe.configure({ mode: 'parallel' });
@@ -90,7 +90,7 @@ test('runs in parallel 2', async ({ page }) => { /* ... */ });
 
 Alternatively, you can opt-in all tests (or just a few projects) into this fully-parallel mode in the configuration file:
 
-```js js-flavor=js
+```js tab=js-js
 // playwright.config.js
 // @ts-check
 
@@ -102,7 +102,7 @@ const config = {
 module.exports = config;
 ```
 
-```js js-flavor=ts
+```js tab=js-ts
 // playwright.config.ts
 import type { PlaywrightTestConfig } from '@playwright/test';
 
@@ -121,7 +121,7 @@ fails, all subsequent tests are skipped. All tests in a group are retried togeth
 Using serial is not recommended. It is usually better to make your tests isolated, so they can be run independently.
 :::
 
-```js js-flavor=js
+```js tab=js-js
 // @ts-check
 
 const { test } = require('@playwright/test');
@@ -148,7 +148,7 @@ test('runs second', async () => {
 });
 ```
 
-```js js-flavor=ts
+```js tab=js-ts
 // example.spec.ts
 
 import { test, Page } from '@playwright/test';
@@ -199,7 +199,7 @@ npx playwright test --max-failures=10
 ```
 
 Setting in the configuration file:
-```js js-flavor=js
+```js tab=js-js
 // playwright.config.js
 // @ts-check
 
@@ -212,7 +212,7 @@ const config = {
 module.exports = config;
 ```
 
-```js js-flavor=ts
+```js tab=js-ts
 // playwright.config.ts
 import type { PlaywrightTestConfig } from '@playwright/test';
 
@@ -243,7 +243,7 @@ When you **disable parallel test execution**, Playwright Test runs test files in
 
 Suppose we have two test files.
 
-```js js-flavor=js
+```js tab=js-js
 // feature-a.spec.js
 const { test, expect } = require('@playwright/test');
 
@@ -265,7 +265,7 @@ test.describe('feature-b', () => {
 });
 ```
 
-```js js-flavor=ts
+```js tab=js-ts
 // feature-a.spec.ts
 import { test, expect } from '@playwright/test';
 
@@ -289,13 +289,13 @@ test.describe('feature-b', () => {
 
 We can create a test list file that will control the order of tests - first run `feature-b` tests, then `feature-a` tests.
 
-```js js-flavor=js
+```js tab=js-js
 // test.list.js
 require('./feature-b.spec.js');
 require('./feature-a.spec.js');
 ```
 
-```js js-flavor=ts
+```js tab=js-ts
 // test.list.ts
 import './feature-b.spec.ts';
 import './feature-a.spec.ts';
@@ -303,7 +303,7 @@ import './feature-a.spec.ts';
 
 Now **disable parallel execution** by setting workers to one, and specify your test list file.
 
-```js js-flavor=js
+```js tab=js-js
 // playwright.config.js
 // @ts-check
 
@@ -316,7 +316,7 @@ const config = {
 module.exports = config;
 ```
 
-```js js-flavor=ts
+```js tab=js-ts
 // playwright.config.ts
 import type { PlaywrightTestConfig } from '@playwright/test';
 
