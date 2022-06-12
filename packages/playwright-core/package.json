@@ -35,6 +35,7 @@
     "./lib/utils/stackTrace": "./lib/utils/stackTrace.js",
     "./lib/utils/timeoutRunner": "./lib/utils/timeoutRunner.js",
     "./lib/remote/playwrightServer": "./lib/remote/playwrightServer.js",
+    "./lib/remote/playwrightConnection": "./lib/remote/playwrightConnection.js",
     "./lib/server": "./lib/server/index.js",
     "./lib/utilsBundle": "./lib/utilsBundle.js",
     "./lib/zipBundle": "./lib/zipBundle.js",
