@@ -83,3 +83,25 @@ it('should properly format :nth-child() in strict mode message', async ({ page }
   // if '>' were ' '.
   expect(error.message).toContain('body > div:nth-child(2) > div:nth-child(2)');
 });
+
+it('should escape class names', async ({ page }) => {
+  await page.setContent(`
+  <div>
+    <div></div>
+    <div>
+      <div></div>
+      <div></div>
+    </div>
+  </div>
+  <div>
+    <div class='foo bar:0'>
+    </div>
+    <div class='foo bar:1'>
+    </div>
+  </div>
+  `);
+  const error = await page.locator('.foo').hover().catch(e => e);
+  expect(error.message).toContain('strict mode violation');
+  expect(error.message).toContain('<div class=\"foo bar:0');
+  expect(error.message).toContain('<div class=\"foo bar:1');
+});
