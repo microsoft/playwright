@@ -43,6 +43,7 @@ import { JsonPipe } from './jsonPipe';
 import { APIRequestContext } from './fetch';
 import { LocalUtils } from './localUtils';
 import { Tracing } from './tracing';
+import { findValidator, ValidationError, type ValidatorContext } from '../protocol/validator';
 
 class Root extends ChannelOwner<channels.RootChannel> {
   constructor(connection: Connection) {
@@ -63,7 +64,7 @@ export class Connection extends EventEmitter {
   readonly _objects = new Map<string, ChannelOwner>();
   onmessage = (message: object): void => {};
   private _lastId = 0;
-  private _callbacks = new Map<number, { resolve: (a: any) => void, reject: (a: Error) => void, stackTrace: ParsedStackTrace | null }>();
+  private _callbacks = new Map<number, { resolve: (a: any) => void, reject: (a: Error) => void, stackTrace: ParsedStackTrace | null, type: string, method: string }>();
   private _rootObject: Root;
   private _closedErrorMessage: string | undefined;
   private _isRemote = false;
@@ -101,7 +102,7 @@ export class Connection extends EventEmitter {
     return this._objects.get(guid)!;
   }
 
-  async sendMessageToServer(object: ChannelOwner, method: string, params: any, stackTrace: ParsedStackTrace | null): Promise<any> {
+  async sendMessageToServer(object: ChannelOwner, type: string, method: string, params: any, stackTrace: ParsedStackTrace | null): Promise<any> {
     if (this._closedErrorMessage)
       throw new Error(this._closedErrorMessage);
 
@@ -114,11 +115,7 @@ export class Connection extends EventEmitter {
     const metadata: channels.Metadata = { stack: frames, apiName, internal: !apiName };
     this.onmessage({ ...converted, metadata });
 
-    return await new Promise((resolve, reject) => this._callbacks.set(id, { resolve, reject, stackTrace }));
-  }
-
-  _debugScopeState(): any {
-    return this._rootObject._debugScopeState();
+    return await new Promise((resolve, reject) => this._callbacks.set(id, { resolve, reject, stackTrace, type, method }));
   }
 
   dispatch(message: object) {
@@ -132,10 +129,12 @@ export class Connection extends EventEmitter {
       if (!callback)
         throw new Error(`Cannot find command to respond: ${id}`);
       this._callbacks.delete(id);
-      if (error && !result)
+      if (error && !result) {
         callback.reject(parseError(error));
-      else
-        callback.resolve(this._replaceGuidsWithChannels(result));
+      } else {
+        const validator = findValidator(callback.type, callback.method, 'Result');
+        callback.resolve(validator(result, '', { tChannelImpl: this._tChannelImplFromWire.bind(this) }));
+      }
       return;
     }
 
@@ -154,7 +153,8 @@ export class Connection extends EventEmitter {
     const object = this._objects.get(guid);
     if (!object)
       throw new Error(`Cannot find object to emit "${method}": ${guid}`);
-    (object._channel as any).emit(method, object._type === 'JsonPipe' ? params : this._replaceGuidsWithChannels(params));
+    const validator = findValidator(object._type, method, 'Event');
+    (object._channel as any).emit(method, validator(params, '', { tChannelImpl: this._tChannelImplFromWire.bind(this) }));
   }
 
   close(errorMessage: string = 'Connection closed') {
@@ -165,20 +165,14 @@ export class Connection extends EventEmitter {
     this.emit('close');
   }
 
-  private _replaceGuidsWithChannels(payload: any): any {
-    if (!payload)
-      return payload;
-    if (Array.isArray(payload))
-      return payload.map(p => this._replaceGuidsWithChannels(p));
-    if (payload.guid && this._objects.has(payload.guid))
-      return this._objects.get(payload.guid)!._channel;
-    if (typeof payload === 'object') {
-      const result: any = {};
-      for (const key of Object.keys(payload))
-        result[key] = this._replaceGuidsWithChannels(payload[key]);
-      return result;
+  private _tChannelImplFromWire(names: '*' | string[], arg: any, path: string, context: ValidatorContext) {
+    if (arg && typeof arg === 'object' && typeof arg.guid === 'string' && this._objects.has(arg.guid)) {
+      const object = this._objects.get(arg.guid)!;
+      if (names !== '*' && !names.includes(object._type))
+        throw new ValidationError(`${path}: expected channel ${names.toString()}`);
+      return object._channel;
     }
-    return payload;
+    throw new ValidationError(`${path}: expected channel ${names.toString()}`);
   }
 
   private _createRemoteObject(parentGuid: string, type: string, guid: string, initializer: any): any {
@@ -186,7 +180,8 @@ export class Connection extends EventEmitter {
     if (!parent)
       throw new Error(`Cannot find parent object ${parentGuid} to create ${guid}`);
     let result: ChannelOwner<any>;
-    initializer = this._replaceGuidsWithChannels(initializer);
+    const validator = findValidator(type, '', 'Initializer');
+    initializer = validator(initializer, '', { tChannelImpl: this._tChannelImplFromWire.bind(this) });
     switch (type) {
       case 'Android':
         result = new Android(parent, type, guid, initializer);

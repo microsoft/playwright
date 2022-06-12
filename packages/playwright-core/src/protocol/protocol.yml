@@ -289,7 +289,7 @@ APIRequestContext:
       parameters:
         fetchUid: string
       returns:
-        binary?: binary
+        binary: binary?
 
     fetchLog:
       parameters:
