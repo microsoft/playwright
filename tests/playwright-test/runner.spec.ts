@@ -306,3 +306,120 @@ test('should not hang if test suites in worker are inconsistent with runner', as
   expect(result.report.suites[0].specs[1].tests[0].results[0].error.message).toBe('Unknown test(s) in worker:\nproject-name > a.spec.js > Test 1 - bar\nproject-name > a.spec.js > Test 2 - baz');
 });
 
+test('sigint should stop global setup', async ({ runInlineTest }) => {
+  test.skip(process.platform === 'win32', 'No sending SIGINT on Windows');
+
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        globalSetup: './globalSetup',
+        globalTeardown: './globalTeardown.ts',
+      };
+    `,
+    'globalSetup.ts': `
+      module.exports = () => {
+        console.log('Global setup');
+        console.log('%%SEND-SIGINT%%');
+        return new Promise(f => setTimeout(f, 30000));
+      };
+    `,
+    'globalTeardown.ts': `
+      module.exports = () => {
+        console.log('Global teardown');
+      };
+    `,
+    'a.spec.js': `
+      const { test } = pwt;
+      test('test', async () => { });
+    `,
+  }, { 'workers': 1 }, {}, { sendSIGINTAfter: 1 });
+  expect(result.exitCode).toBe(130);
+  expect(result.passed).toBe(0);
+  const output = stripAnsi(result.output);
+  expect(output).toContain('Global setup');
+  expect(output).not.toContain('Global teardown');
+});
+
+test('sigint should stop plugins', async ({ runInlineTest }) => {
+  test.skip(process.platform === 'win32', 'No sending SIGINT on Windows');
+
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+      };
+
+      require('@playwright/test')._addRunnerPlugin(() => ({
+        setup: async () => {
+          console.log('Plugin1 setup');
+          console.log('%%SEND-SIGINT%%');
+          return new Promise(f => setTimeout(f, 30000));
+        },
+        teardown: async () => {
+          console.log('Plugin1 teardown');
+        }
+      }));
+
+      require('@playwright/test')._addRunnerPlugin(() => ({
+        setup: async () => {
+          console.log('Plugin2 setup');
+        },
+        teardown: async () => {
+          console.log('Plugin2 teardown');
+        }
+      }));
+    `,
+    'a.spec.js': `
+      const { test } = pwt;
+      test('test', async () => { });
+    `,
+  }, { 'workers': 1 }, {}, { sendSIGINTAfter: 1 });
+  expect(result.exitCode).toBe(130);
+  expect(result.passed).toBe(0);
+  const output = stripAnsi(result.output);
+  expect(output).toContain('Plugin1 setup');
+  expect(output).not.toContain('Plugin1 teardown');
+  expect(output).not.toContain('Plugin2 setup');
+  expect(output).not.toContain('Plugin2 teardown');
+});
+
+test('sigint should stop plugins 2', async ({ runInlineTest }) => {
+  test.skip(process.platform === 'win32', 'No sending SIGINT on Windows');
+
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+      };
+
+      require('@playwright/test')._addRunnerPlugin(() => ({
+        setup: async () => {
+          console.log('Plugin1 setup');
+        },
+        teardown: async () => {
+          console.log('Plugin1 teardown');
+        }
+      }));
+
+      require('@playwright/test')._addRunnerPlugin(() => ({
+        setup: async () => {
+          console.log('Plugin2 setup');
+          console.log('%%SEND-SIGINT%%');
+          return new Promise(f => setTimeout(f, 30000));
+        },
+        teardown: async () => {
+          console.log('Plugin2 teardown');
+        }
+      }));
+    `,
+    'a.spec.js': `
+      const { test } = pwt;
+      test('test', async () => { });
+    `,
+  }, { 'workers': 1 }, {}, { sendSIGINTAfter: 1 });
+  expect(result.exitCode).toBe(130);
+  expect(result.passed).toBe(0);
+  const output = stripAnsi(result.output);
+  expect(output).toContain('Plugin1 setup');
+  expect(output).toContain('Plugin2 setup');
+  expect(output).toContain('Plugin1 teardown');
+  expect(output).not.toContain('Plugin2 teardown');
+});
