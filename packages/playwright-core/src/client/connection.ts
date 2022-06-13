@@ -56,7 +56,7 @@ class Root extends ChannelOwner<channels.RootChannel> {
   }
 }
 
-class DummyChannelOwner<T> extends ChannelOwner<T> {
+class DummyChannelOwner extends ChannelOwner {
 }
 
 export class Connection extends EventEmitter {
