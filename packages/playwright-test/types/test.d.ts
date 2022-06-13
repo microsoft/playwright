@@ -2800,6 +2800,7 @@ export interface PlaywrightTestOptions {
    */
   navigationTimeout: number | undefined;
   /**
+   * Possible values:
    * - `"allow"`: [Service Workers](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API) can be registered
    *   by sites.
    * - `"block"`: Playwright will block all registration of Service Workers.
