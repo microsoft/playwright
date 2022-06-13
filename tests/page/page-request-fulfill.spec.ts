@@ -322,7 +322,8 @@ it('headerValue should return set-cookie from intercepted response', async ({ pa
   expect(await response.headerValue('Set-Cookie')).toBe('a=b');
 });
 
-it('should complain about har + response options', async ({ page, server, isAndroid }) => {
+it('should complain about har + response options', async ({ page, server, isAndroid, isElectron }) => {
+  it.fixme(isElectron, 'error: Browser context management is not supported.');
   it.fixme(isAndroid);
 
   let error;
