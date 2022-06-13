@@ -77,11 +77,11 @@ Test frames, pierce Shadow DOM. Playwright selectors pierce shadow DOM and allow
 
 ### Powerful Tooling
 
-**Codegen**. Generate tests by recording your actions. Save them into any language.
+**[Codegen](https://playwright.dev/docs/codegen)**. Generate tests by recording your actions. Save them into any language.
 
-**Playwright inspector**. Inspect page, generate selectors, step through the test execution, see click points, explore execution logs.
+**[Playwright inspector](https://playwright.dev/docs/inspector)**. Inspect page, generate selectors, step through the test execution, see click points, explore execution logs.
 
-**Trace Viewer**. Capture all the information to investigate the test failure. Playwright trace contains test execution screencast, live DOM snapshots, action explorer, test source and many more.
+**[Trace Viewer](https://playwright.dev/docs/trace-viewer)**. Capture all the information to investigate the test failure. Playwright trace contains test execution screencast, live DOM snapshots, action explorer, test source and many more.
 
 Looking for Playwright for [TypeScript](https://playwright.dev/docs/intro), [JavaScript](https://playwright.dev/docs/intro), [Python](https://playwright.dev/python/docs/intro), [.NET](https://playwright.dev/dotnet/docs/intro), or [Java](https://playwright.dev/java/docs/intro)?
 
