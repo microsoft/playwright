@@ -275,21 +275,6 @@ export class Loader {
       if (isModule)
         return await esmImport();
       return require(file);
-    } catch (error) {
-      if (error.code === 'ERR_MODULE_NOT_FOUND' && error.message.includes('Did you mean to import')) {
-        const didYouMean = /Did you mean to import (.*)\?/.exec(error.message)?.[1];
-        if (didYouMean?.endsWith('.ts'))
-          throw errorWithFile(file, 'Cannot import a typescript file from an esmodule.');
-      }
-      if (error.code === 'ERR_UNKNOWN_FILE_EXTENSION' && error.message.includes('.ts')) {
-        throw errorWithFile(file, `Cannot import a typescript file from an esmodule.\n${'='.repeat(80)}\nMake sure that:
-  - you are using Node.js 16+,
-  - your package.json contains "type": "module",
-  - you are using TypeScript for playwright.config.ts.
-${'='.repeat(80)}\n`);
-      }
-
-      throw error;
     } finally {
       revertBabelRequire();
     }

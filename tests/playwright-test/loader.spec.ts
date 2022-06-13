@@ -238,7 +238,7 @@ test('should fail to load ts from esm when package.json has type module', async 
   });
 
   expect(result.exitCode).toBe(1);
-  expect(result.output).toContain('Cannot import a typescript file from an esmodule');
+  expect(result.output).toContain('Unknown file extension ".ts"');
 });
 
 test('should filter stack trace for simple expect', async ({ runInlineTest }) => {
