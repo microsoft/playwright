@@ -104,8 +104,6 @@ export class Browser extends ChannelOwner<channels.BrowserChannel> implements ap
 
   async close(): Promise<void> {
     try {
-      for (const context of this.contexts())
-        await this._browserType?._onWillCloseContext?.(context);
       if (this._shouldCloseConnectionOnClose)
         this._connection.close(kBrowserClosedError);
       else
