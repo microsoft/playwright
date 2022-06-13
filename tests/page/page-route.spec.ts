@@ -43,19 +43,19 @@ it('should unroute', async ({ page, server }) => {
   let intercepted = [];
   await page.route('**/*', route => {
     intercepted.push(1);
-    route.continue();
+    route.fallback();
   });
   await page.route('**/empty.html', route => {
     intercepted.push(2);
-    route.continue();
+    route.fallback();
   });
   await page.route('**/empty.html', route => {
     intercepted.push(3);
-    route.continue();
+    route.fallback();
   });
   const handler4 = route => {
     intercepted.push(4);
-    route.continue();
+    route.fallback();
   };
   await page.route('**/empty.html', handler4);
   await page.goto(server.EMPTY_PAGE);
@@ -825,10 +825,10 @@ it('should contain raw response header after fulfill', async ({ page, server }) 
   expect(headers['content-type']).toBeTruthy();
 });
 
-for (const method of ['fulfill', 'continue', 'abort'] as const) {
+for (const method of ['fulfill', 'continue', 'fallback', 'abort'] as const) {
   it(`route.${method} should throw if called twice`, async ({ page, server }) => {
-    const routePromise = new Promise<Route>(async resove => {
-      await page.route('**/*', resove);
+    const routePromise = new Promise<Route>(async resolve => {
+      await page.route('**/*', resolve);
     });
     page.goto(server.PREFIX + '/empty.html').catch(() => {});
     const route = await routePromise;
@@ -838,19 +838,19 @@ for (const method of ['fulfill', 'continue', 'abort'] as const) {
   });
 }
 
-it('should chain continue', async ({ page, server }) => {
+it('should fall back', async ({ page, server }) => {
   const intercepted = [];
   await page.route('**/empty.html', route => {
     intercepted.push(1);
-    route.continue();
+    route.fallback();
   });
   await page.route('**/empty.html', route => {
     intercepted.push(2);
-    route.continue();
+    route.fallback();
   });
   await page.route('**/empty.html', route => {
     intercepted.push(3);
-    route.continue();
+    route.fallback();
   });
   await page.goto(server.EMPTY_PAGE);
   expect(intercepted).toEqual([3, 2, 1]);
@@ -865,7 +865,7 @@ it('should not chain fulfill', async ({ page, server }) => {
     route.fulfill({ status: 200, body: 'fulfilled' });
   });
   await page.route('**/empty.html', route => {
-    route.continue();
+    route.fallback();
   });
   const response = await page.goto(server.EMPTY_PAGE);
   const body = await response.body();
@@ -882,14 +882,14 @@ it('should not chain abort', async ({ page, server }) => {
     route.abort();
   });
   await page.route('**/empty.html', route => {
-    route.continue();
+    route.fallback();
   });
   const e = await page.goto(server.EMPTY_PAGE).catch(e => e);
   expect(e).toBeTruthy();
   expect(failed).toBeFalsy();
 });
 
-it('should continue after exception', async ({ page, server }) => {
+it('should fall back after exception', async ({ page, server }) => {
   await page.route('**/empty.html', route => {
     route.continue();
   });
@@ -897,7 +897,7 @@ it('should continue after exception', async ({ page, server }) => {
     try {
       await route.fulfill({ har: { path: 'file' }, response: {} as any });
     } catch (e) {
-      route.continue();
+      route.fallback();
     }
   });
   await page.goto(server.EMPTY_PAGE);
@@ -908,7 +908,7 @@ it('should chain once', async ({ page, server }) => {
     route.fulfill({ status: 200, body: 'fulfilled one' });
   }, { times: 1 });
   await page.route('**/empty.html', route => {
-    route.continue();
+    route.fallback();
   }, { times: 1 });
   const response = await page.goto(server.EMPTY_PAGE);
   const body = await response.body();
