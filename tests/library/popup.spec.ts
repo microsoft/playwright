@@ -126,7 +126,7 @@ it('should inherit viewport size from browser context', async function({ browser
   expect(size).toEqual({ width: 400, height: 500 });
 });
 
-it('should use viewport size from window features', async function({ browser, server, channel }) {
+it('should use viewport size from window features', async function({ browser, server }) {
   const context = await browser.newContext({
     viewport: { width: 700, height: 700 }
   });
