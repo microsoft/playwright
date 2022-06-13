@@ -644,10 +644,10 @@ See [Locator] to learn more about the strict mode.
 ## context-option-service-worker-policy
 - `serviceWorkers` <[ServiceWorkerPolicy]<"allow"|"block">>
 
-* `"allow"`: [Service Workers](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API) can be registered by sites.
-* `"block"`: Playwright will block all registration of Service Workers.
+Whether to allow sites to register Service workers. Defaults to `'allow'`.
+* `'allow'`: [Service Workers](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API) can be registered.
+* `'block'`: Playwright will block all registration of Service Workers.
 
-Defaults to `"allow"`.
 
 ## select-options-values
 * langs: java, js, csharp
