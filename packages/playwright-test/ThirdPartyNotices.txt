@@ -79,6 +79,7 @@ This project incorporates components from the projects listed below. The origina
 -	babel-plugin-dynamic-import-node@2.3.3 (https://github.com/airbnb/babel-plugin-dynamic-import-node)
 -	braces@3.0.2 (https://github.com/micromatch/braces)
 -	browserslist@4.20.3 (https://github.com/browserslist/browserslist)
+-	buffer-from@1.1.2 (https://github.com/LinusU/buffer-from)
 -	call-bind@1.0.2 (https://github.com/ljharb/call-bind)
 -	caniuse-lite@1.0.30001346 (https://github.com/browserslist/caniuse-lite)
 -	chalk@2.4.2 (https://github.com/chalk/chalk)
@@ -133,8 +134,8 @@ This project incorporates components from the projects listed below. The origina
 -	safe-buffer@5.1.2 (https://github.com/feross/safe-buffer)
 -	semver@6.3.0 (https://github.com/npm/node-semver)
 -	slash@3.0.0 (https://github.com/sindresorhus/slash)
--	source-map-support@0.4.18 (https://github.com/evanw/node-source-map-support)
--	source-map@0.5.7 (https://github.com/mozilla/source-map)
+-	source-map-support@0.5.7 (https://github.com/evanw/node-source-map-support)
+-	source-map@0.6.1 (https://github.com/mozilla/source-map)
 -	stack-utils@2.0.5 (https://github.com/tapjs/stack-utils)
 -	supports-color@5.5.0 (https://github.com/chalk/supports-color)
 -	supports-color@7.2.0 (https://github.com/chalk/supports-color)
@@ -2262,6 +2263,32 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
 END OF browserslist@4.20.3 AND INFORMATION
 
+%% buffer-from@1.1.2 NOTICES AND INFORMATION BEGIN HERE
+=========================================
+MIT License
+
+Copyright (c) 2016, 2018 Linus Unnebäck
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+=========================================
+END OF buffer-from@1.1.2 AND INFORMATION
+
 %% call-bind@1.0.2 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 MIT License
@@ -3820,7 +3847,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 =========================================
 END OF slash@3.0.0 AND INFORMATION
 
-%% source-map-support@0.4.18 NOTICES AND INFORMATION BEGIN HERE
+%% source-map-support@0.5.7 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 The MIT License (MIT)
 
@@ -3844,9 +3871,9 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 =========================================
-END OF source-map-support@0.4.18 AND INFORMATION
+END OF source-map-support@0.5.7 AND INFORMATION
 
-%% source-map@0.5.7 NOTICES AND INFORMATION BEGIN HERE
+%% source-map@0.6.1 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 Copyright (c) 2009-2011, Mozilla Foundation and contributors
 All rights reserved.
@@ -3876,7 +3903,7 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 =========================================
-END OF source-map@0.5.7 AND INFORMATION
+END OF source-map@0.6.1 AND INFORMATION
 
 %% stack-utils@2.0.5 NOTICES AND INFORMATION BEGIN HERE
 =========================================
@@ -3975,6 +4002,6 @@ END OF to-regex-range@5.0.1 AND INFORMATION
 
 SUMMARY BEGIN HERE
 =========================================
-Total Packages: 136
+Total Packages: 137
 =========================================
 END OF SUMMARY
