@@ -69,7 +69,7 @@ it('should delete header with undefined value', async ({ page, server, browserNa
     server.waitForRequest('/something')
   ]);
   expect(text).toBe('done');
-  expect(interceptedRequest.headers()['foo']).toEqual('a');
+  expect(interceptedRequest.headers()['foo']).toEqual(undefined);
   expect(serverRequest.headers.foo).toBeFalsy();
   expect(serverRequest.headers.bar).toBe('b');
 });
@@ -311,7 +311,6 @@ it('should delete the origin header', async ({ page, server, isAndroid, browserN
     server.waitForRequest('/something')
   ]);
   expect(text).toBe('done');
-  expect(interceptedRequest.headers()['origin']).toEqual(server.PREFIX);
+  expect(interceptedRequest.headers()['origin']).toEqual(undefined);
   expect(serverRequest.headers.origin).toBeFalsy();
 });
-

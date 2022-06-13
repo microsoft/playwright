@@ -14802,8 +14802,8 @@ export interface Route {
    *   // Override headers
    *   const headers = {
    *     ...request.headers(),
-   *     foo: 'bar', // set "foo" header
-   *     origin: undefined, // remove "origin" header
+   *     foo: 'foo-value', // set "foo" header
+   *     bar: undefined, // remove "bar" header
    *   };
    *   route.continue({headers});
    * });
@@ -14834,8 +14834,28 @@ export interface Route {
   }): Promise<void>;
 
   /**
-   * Proceeds to the next registered route in the route chain. If no more routes are registered, continues the request as is.
-   * This allows registering multiple routes with the same mask and falling back from one to another.
+   * When several routes match the given pattern, they run in the order opposite to their registration. That way the last
+   * registered route can always override all the previos ones. In the example below, request will be handled by the
+   * bottom-most handler first, then it'll fall back to the previous one and in the end will be aborted by the first
+   * registered route.
+   *
+   * ```js
+   * await page.route('**\/*', route => {
+   *   // Runs last.
+   *   route.abort();
+   * });
+   * await page.route('**\/*', route => {
+   *   // Runs second.
+   *   route.fallback();
+   * });
+   * await page.route('**\/*', route => {
+   *   // Runs first.
+   *   route.fallback();
+   * });
+   * ```
+   *
+   * Registering multiple routes is useful when you want separate handlers to handle different kinds of requests, for example
+   * API calls vs page resources or GET requests vs POST requests as in the example below.
    *
    * ```js
    * // Handle GET requests.
@@ -14859,8 +14879,45 @@ export interface Route {
    * });
    * ```
    *
+   * One can also modify request while falling back to the subsequent handler, that way intermediate route handler can modify
+   * url, method, headers and postData of the request.
+   *
+   * ```js
+   * await page.route('**\/*', (route, request) => {
+   *   // Override headers
+   *   const headers = {
+   *     ...request.headers(),
+   *     foo: 'foo-value', // set "foo" header
+   *     bar: undefined, // remove "bar" header
+   *   };
+   *   route.fallback({headers});
+   * });
+   * ```
+   *
+   * @param options
    */
-  fallback(): Promise<void>;
+  fallback(options?: {
+    /**
+     * If set changes the request HTTP headers. Header values will be converted to a string.
+     */
+    headers?: { [key: string]: string; };
+
+    /**
+     * If set changes the request method (e.g. GET or POST)
+     */
+    method?: string;
+
+    /**
+     * If set changes the post data of request
+     */
+    postData?: string|Buffer;
+
+    /**
+     * If set changes the request URL. New URL must have same protocol as original one. Changing the URL won't affect the route
+     * matching, all the routes are matched using the original request URL.
+     */
+    url?: string;
+  }): Promise<void>;
 
   /**
    * Fulfills route's request with given response.
