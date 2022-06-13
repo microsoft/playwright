@@ -14834,6 +14834,35 @@ export interface Route {
   }): Promise<void>;
 
   /**
+   * Proceeds to the next registered route in the route chain. If no more routes are registered, continues the request as is.
+   * This allows registering multiple routes with the same mask and falling back from one to another.
+   *
+   * ```js
+   * // Handle GET requests.
+   * await page.route('**\/*', route => {
+   *   if (route.request().method() !== 'GET') {
+   *     route.fallback();
+   *     return;
+   *   }
+   *   // Handling GET only.
+   *   // ...
+   * });
+   *
+   * // Handle POST requests.
+   * await page.route('**\/*', route => {
+   *   if (route.request().method() !== 'POST') {
+   *     route.fallback();
+   *     return;
+   *   }
+   *   // Handling POST only.
+   *   // ...
+   * });
+   * ```
+   *
+   */
+  fallback(): Promise<void>;
+
+  /**
    * Fulfills route's request with given response.
    *
    * An example of fulfilling all requests with 404 responses:

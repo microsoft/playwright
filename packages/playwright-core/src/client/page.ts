@@ -180,30 +180,17 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   }
 
   private async _onRoute(route: Route, request: Request) {
-    const routes = this._routes.filter(r => r.matches(request.url()));
-
-    const nextRoute = async () => {
-      const routeHandler = routes.shift();
-      if (!routeHandler) {
-        await this._browserContext._onRoute(route, request);
-        return;
-      }
-
+    const routeHandlers = this._routes.filter(r => r.matches(request.url()));
+    for (const routeHandler of routeHandlers) {
       if (routeHandler.willExpire())
         this._routes.splice(this._routes.indexOf(routeHandler), 1);
-
-      await new Promise<void>(f => {
-        routeHandler.handle(route, request, async done => {
-          if (!done)
-            await nextRoute();
-          f();
-        });
-      });
-    };
-
-    await nextRoute();
-    if (!this._routes.length)
-      this._wrapApiCall(() => this._disableInterception(), true).catch(() => {});
+      const handled = await routeHandler.handle(route, request);
+      if (!this._routes.length)
+        this._wrapApiCall(() => this._disableInterception(), true).catch(() => {});
+      if (handled)
+        return;
+    }
+    await this._browserContext._onRoute(route, request);
   }
 
   async _onBinding(bindingCall: BindingCall) {

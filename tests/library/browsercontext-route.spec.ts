@@ -47,19 +47,19 @@ it('should unroute', async ({ browser, server }) => {
   let intercepted = [];
   await context.route('**/*', route => {
     intercepted.push(1);
-    route.continue();
+    route.fallback();
   });
   await context.route('**/empty.html', route => {
     intercepted.push(2);
-    route.continue();
+    route.fallback();
   });
   await context.route('**/empty.html', route => {
     intercepted.push(3);
-    route.continue();
+    route.fallback();
   });
   const handler4 = route => {
     intercepted.push(4);
-    route.continue();
+    route.fallback();
   };
   await context.route('**/empty.html', handler4);
   await page.goto(server.EMPTY_PAGE);
@@ -250,19 +250,19 @@ it('should overwrite post body with empty string', async ({ context, server, pag
   expect(body).toBe('');
 });
 
-it('should chain continue', async ({ context, page, server }) => {
+it('should chain fallback', async ({ context, page, server }) => {
   const intercepted = [];
   await context.route('**/empty.html', route => {
     intercepted.push(1);
-    route.continue();
+    route.fallback();
   });
   await context.route('**/empty.html', route => {
     intercepted.push(2);
-    route.continue();
+    route.fallback();
   });
   await context.route('**/empty.html', route => {
     intercepted.push(3);
-    route.continue();
+    route.fallback();
   });
   await page.goto(server.EMPTY_PAGE);
   expect(intercepted).toEqual([3, 2, 1]);
@@ -277,7 +277,7 @@ it('should not chain fulfill', async ({ context, page, server }) => {
     route.fulfill({ status: 200, body: 'fulfilled' });
   });
   await context.route('**/empty.html', route => {
-    route.continue();
+    route.fallback();
   });
   const response = await page.goto(server.EMPTY_PAGE);
   const body = await response.body();
@@ -294,38 +294,38 @@ it('should not chain abort', async ({ context, page, server }) => {
     route.abort();
   });
   await context.route('**/empty.html', route => {
-    route.continue();
+    route.fallback();
   });
   const e = await page.goto(server.EMPTY_PAGE).catch(e => e);
   expect(e).toBeTruthy();
   expect(failed).toBeFalsy();
 });
 
-it('should chain continue into page', async ({ context, page, server }) => {
+it('should chain fallback into page', async ({ context, page, server }) => {
   const intercepted = [];
   await context.route('**/empty.html', route => {
     intercepted.push(1);
-    route.continue();
+    route.fallback();
   });
   await context.route('**/empty.html', route => {
     intercepted.push(2);
-    route.continue();
+    route.fallback();
   });
   await context.route('**/empty.html', route => {
     intercepted.push(3);
-    route.continue();
+    route.fallback();
   });
   await page.route('**/empty.html', route => {
     intercepted.push(4);
-    route.continue();
+    route.fallback();
   });
   await page.route('**/empty.html', route => {
     intercepted.push(5);
-    route.continue();
+    route.fallback();
   });
   await page.route('**/empty.html', route => {
     intercepted.push(6);
-    route.continue();
+    route.fallback();
   });
   await page.goto(server.EMPTY_PAGE);
   expect(intercepted).toEqual([6, 5, 4, 3, 2, 1]);
