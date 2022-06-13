@@ -21,6 +21,7 @@ import type { Page } from 'playwright-core';
 import { spawnSync } from 'child_process';
 import { PNG } from 'playwright-core/lib/utilsBundle';
 import { registry } from '../../packages/playwright-core/lib/server';
+import { rewriteErrorMessage } from '../../packages/playwright-core/lib/utils/stackTrace';
 
 const ffmpeg = registry.findExecutable('ffmpeg')!.executablePath('javascript');
 
@@ -54,9 +55,9 @@ export class VideoPlayer {
     this.videoHeight = parseInt(resolutionMatch![2], 10);
   }
 
-  seekFirstNonEmptyFrame(offset?: { x: number, y: number } | undefined): PNG | undefined {
+  seekFirstNonEmptyFrame(offset?: { x: number, y: number }): PNG | undefined {
     for (let f = 1; f <= this.frames; ++f) {
-      const frame = this.frame(f, { x: 0, y: 0 });
+      const frame = this.frame(f, offset);
       let hasColor = false;
       for (let i = 0; i < frame.data.length; i += 4) {
         if (frame.data[i + 0] < 230 || frame.data[i + 1] < 230 || frame.data[i + 2] < 230) {
@@ -123,7 +124,7 @@ function expectAll(pixels: Buffer, rgbaPredicate) {
       checkPixel(i);
   } catch (e) {
     // Log pixel values on failure.
-    e.message += `\n\nActual pixels=[${pixels.join(',')}]`;
+    rewriteErrorMessage(e, e.message + `\n\nActual pixels=[${pixels.join(',')}]`);
     throw e;
   }
 }
@@ -690,7 +691,8 @@ it.describe('screencast', () => {
     expect(videoPlayer.videoHeight).toBe(size.height);
 
     // Bottom right corner should be part of the red border.
-    const pixels = videoPlayer.seekLastFrame({ x: size.width - 10, y: size.height - 10 }).data;
+    // However, headed browsers on mac have rounded corners, so offset by 10.
+    const pixels = videoPlayer.seekLastFrame({ x: size.width - 20, y: size.height - 20 }).data;
     expectAll(pixels, almostRed);
   });
 
@@ -725,7 +727,8 @@ it.describe('screencast', () => {
     expect(videoPlayer.videoHeight).toBe(size.height);
 
     // Bottom right corner should be part of the red border.
-    const pixels = videoPlayer.seekLastFrame({ x: size.width - 10, y: size.height - 10 }).data;
+    // However, headed browsers on mac have rounded corners, so offset by 10.
+    const pixels = videoPlayer.seekLastFrame({ x: size.width - 20, y: size.height - 20 }).data;
     expectAll(pixels, almostRed);
   });
 });
