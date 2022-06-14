@@ -138,7 +138,7 @@ module.exports = config;
 
 ```js tab=js-ts
 // playwright.config.ts
-import { type PlaywrightTestConfig, devices } from '@playwright/test';
+import { type PlaywrightTestConfig } from '@playwright/test';
 
 const config: PlaywrightTestConfig = {
   globalSetup: './global-setup',
@@ -167,7 +167,7 @@ module.exports = config;
 
 ```js tab=js-ts
 // playwright.config.ts
-import { type PlaywrightTestConfig, devices } from '@playwright/test';
+import { type PlaywrightTestConfig } from '@playwright/test';
 
 const config: PlaywrightTestConfig = {
   globalTeardown: './global-teardown',
@@ -276,7 +276,7 @@ module.exports = config;
 
 ```js tab=js-ts
 // playwright.config.ts
-import { type PlaywrightTestConfig, devices } from '@playwright/test';
+import { type PlaywrightTestConfig } from '@playwright/test';
 
 const config: PlaywrightTestConfig = {
   outputDir: './test-results',
@@ -508,7 +508,7 @@ module.exports = config;
 
 ```js tab=js-ts
 // playwright.config.ts
-import { type PlaywrightTestConfig, devices } from '@playwright/test';
+import { type PlaywrightTestConfig } from '@playwright/test';
 
 const config: PlaywrightTestConfig = {
   testIgnore: '**/test-assets/**',
@@ -537,7 +537,7 @@ module.exports = config;
 
 ```js tab=js-ts
 // playwright.config.ts
-import { type PlaywrightTestConfig, devices } from '@playwright/test';
+import { type PlaywrightTestConfig } from '@playwright/test';
 
 const config: PlaywrightTestConfig = {
   testMatch: /.*\.e2e\.js/,
