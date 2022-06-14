@@ -60,14 +60,14 @@
 			children = (
 				256AC3D80F4B6AC300CF336A /* AppDelegate.h */,
 				256AC3D90F4B6AC300CF336A /* AppDelegate.m */,
+				BC329496116A941B008635D1 /* BrowserWindowController.h */,
+				BC329497116A941B008635D1 /* BrowserWindowController.m */,
+				7A8E843D26858D80008EC0B1 /* Images.xcassets */,
 				BC72B89A11E57E8A001EB4EB /* Info.plist */,
 				BC329486116A92E2008635D1 /* main.m */,
 				51E244F811EFCE07008228D2 /* MBToolbarItem.h */,
 				51E244F911EFCE07008228D2 /* MBToolbarItem.m */,
 				37BAF90620218053000EA87A /* Playwright.entitlements */,
-				BC329496116A941B008635D1 /* BrowserWindowController.h */,
-				BC329497116A941B008635D1 /* BrowserWindowController.m */,
-				7A8E843D26858D80008EC0B1 /* Images.xcassets */,
 			);
 			name = Playwright;
 			sourceTree = "<group>";
@@ -193,8 +193,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				7A8E843E26858D80008EC0B1 /* Images.xcassets in Resources */,
 				BC72B89611E57E0F001EB4EB /* BrowserWindow.xib in Resources */,
+				7A8E843E26858D80008EC0B1 /* Images.xcassets in Resources */,
 				BC72B89511E57E07001EB4EB /* MainMenu.xib in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -207,9 +207,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				256AC3DA0F4B6AC300CF336A /* AppDelegate.m in Sources */,
+				BC329498116A941B008635D1 /* BrowserWindowController.m in Sources */,
 				BC329487116A92E2008635D1 /* main.m in Sources */,
 				51E244FA11EFCE07008228D2 /* MBToolbarItem.m in Sources */,
-				BC329498116A941B008635D1 /* BrowserWindowController.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
