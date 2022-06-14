@@ -15,7 +15,7 @@
  */
 
 // see http://www.softwareishard.com/blog/har-12-spec/
-export type HAR = {
+export type HARFile = {
   log: Log;
 };
 

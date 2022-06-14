@@ -15,26 +15,29 @@
  */
 
 // see http://www.softwareishard.com/blog/har-12-spec/
-export type HAR = {
+export type HARFile = {
   log: HARLog;
 }
 
 export type HARLog = {
   version: string;
   creator: HARCreator;
-  browser: HARBrowser;
-  pages: HARPage[];
+  browser?: HARBrowser;
+  pages?: HARPage[];
   entries: HAREntry[];
+  comment?: string;
 };
 
 export type HARCreator = {
   name: string;
   version: string;
+  comment?: string;
 };
 
 export type HARBrowser = {
   name: string;
   version: string;
+  comment?: string;
 };
 
 export type HARPage = {
@@ -42,11 +45,13 @@ export type HARPage = {
   id: string;
   title: string;
   pageTimings: HARPageTimings;
+  comment?: string;
 };
 
 export type HARPageTimings = {
-  onContentLoad: number;
-  onLoad: number;
+  onContentLoad?: number;
+  onLoad?: number;
+  comment?: string;
 };
 
 export type HAREntry = {
@@ -59,6 +64,7 @@ export type HAREntry = {
   timings: HARTimings;
   serverIPAddress?: string;
   connection?: string;
+  comment?: string;
 };
 
 export type HARRequest = {
@@ -71,6 +77,7 @@ export type HARRequest = {
   postData?: HARPostData;
   headersSize: number;
   bodySize: number;
+  comment?: string;
 };
 
 export type HARResponse = {
@@ -83,6 +90,7 @@ export type HARResponse = {
   redirectURL: string;
   headersSize: number;
   bodySize: number;
+  comment?: string;
 };
 
 export type HARCookie = {
@@ -94,22 +102,26 @@ export type HARCookie = {
   httpOnly?: boolean;
   secure?: boolean;
   sameSite?: string;
+  comment?: string;
 };
 
 export type HARHeader = {
   name: string;
   value: string;
+  comment?: string;
 };
 
 export type HARQueryParameter = {
   name: string;
   value: string;
+  comment?: string;
 };
 
 export type HARPostData = {
   mimeType: string;
   params: HARParam[];
   text: string;
+  comment?: string;
 };
 
 export type HARParam = {
@@ -117,6 +129,7 @@ export type HARParam = {
   value?: string;
   fileName?: string;
   contentType?: string;
+  comment?: string;
 };
 
 export type HARContent = {
@@ -125,11 +138,13 @@ export type HARContent = {
   mimeType: string;
   text?: string;
   encoding?: string;
+  comment?: string;
 };
 
 export type HARCache = {
-  beforeRequest: HARCacheState | null;
-  afterRequest: HARCacheState | null;
+  beforeRequest?: HARCacheState;
+  afterRequest?: HARCacheState;
+  comment?: string;
 };
 
 export type HARCacheState = {
@@ -137,6 +152,7 @@ export type HARCacheState = {
   lastAccess: string;
   eTag: string;
   hitCount: number;
+  comment?: string;
 };
 
 export type HARTimings = {
@@ -147,12 +163,5 @@ export type HARTimings = {
   wait: number;
   receive: number;
   ssl?: number;
-};
-
-export type HARSecurityDetails = {
-  protocol?: string;
-  subjectName?: string;
-  issuer?: string;
-  validFrom?: number;
-  validTo?: number;
+  comment?: string;
 };

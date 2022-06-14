@@ -17,7 +17,7 @@
 
 import { test as base, expect } from './pageTest';
 import fs from 'fs';
-import type { HAR } from '@playwright/test';
+import type { HARFile } from '@playwright/test';
 
 const it = base.extend<{
   // We access test servers at 10.0.2.2 from inside the browser on Android,
@@ -424,7 +424,7 @@ it('should fulfill with har response', async ({ page, isAndroid, asset }) => {
   it.fixme(isAndroid);
 
   const harPath = asset('har-fulfill.har');
-  const har = JSON.parse(await fs.promises.readFile(harPath, 'utf-8')) as HAR;
+  const har = JSON.parse(await fs.promises.readFile(harPath, 'utf-8')) as HARFile;
   await page.route('**/*', async route => {
     const response = findResponse(har, route.request().url());
     await route.fulfill({ response });
@@ -440,7 +440,7 @@ it('should override status when fulfill with response from har', async ({ page, 
   it.fixme(isAndroid);
 
   const harPath = asset('har-fulfill.har');
-  const har = JSON.parse(await fs.promises.readFile(harPath, 'utf-8')) as HAR;
+  const har = JSON.parse(await fs.promises.readFile(harPath, 'utf-8')) as HARFile;
   await page.route('**/*', async route => {
     const response = findResponse(har, route.request().url());
     await route.fulfill({ response, status: route.request().url().endsWith('.css') ? 404 : undefined });
@@ -452,7 +452,7 @@ it('should override status when fulfill with response from har', async ({ page, 
   await expect(page.locator('body')).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
 });
 
-function findResponse(har: HAR, url: string) {
+function findResponse(har: HARFile, url: string) {
   let entry;
   const originalUrl = url;
   while (url.trim()) {

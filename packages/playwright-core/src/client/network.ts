@@ -307,7 +307,7 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
 
   private async _innerFulfill(options: { response?: api.APIResponse | HARResponse, status?: number, headers?: Headers, contentType?: string, body?: string | Buffer, path?: string, har?: RouteHAR } = {}): Promise<'abort' | 'continue' | 'done'> {
     let fetchResponseUid;
-    let { status: statusOption, headers: headersOption, body } = options;
+    let { status: statusOption, headers: headersOption, body, contentType } = options;
 
     if (options.har && options.response)
       throw new Error(`At most one of "har" and "response" options should be present`);
@@ -351,6 +351,7 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
       headersOption ??= headersArrayToObject(harResponse.headers, false);
       if (body === undefined && options.path === undefined) {
         body = harResponse.content.text;
+        contentType ??= harResponse.content.mimeType;
         if (body !== undefined && harResponse.content.encoding === 'base64')
           body = Buffer.from(body, 'base64');
       }
@@ -375,8 +376,8 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
     const headers: Headers = {};
     for (const header of Object.keys(headersOption || {}))
       headers[header.toLowerCase()] = String(headersOption![header]);
-    if (options.contentType)
-      headers['content-type'] = String(options.contentType);
+    if (contentType)
+      headers['content-type'] = String(contentType);
     else if (options.path)
       headers['content-type'] = mime.getType(options.path) || 'application/octet-stream';
     if (length && !('content-length' in headers))
