@@ -161,7 +161,9 @@ export class CRBrowser extends Browser {
       return;
     }
 
-    if (targetInfo.type === 'other' || !context) {
+    const treatOtherAsPage = targetInfo.type === 'other' && process.env.PW_CHROMIUM_ATTACH_TO_OTHER;
+
+    if (!context || (targetInfo.type === 'other' && !treatOtherAsPage)) {
       if (waitingForDebugger) {
         // Ideally, detaching should resume any target, but there is a bug in the backend.
         session._sendMayFail('Runtime.runIfWaitingForDebugger').then(() => {
@@ -181,9 +183,9 @@ export class CRBrowser extends Browser {
       return;
     }
 
-    if (targetInfo.type === 'page') {
+    if (targetInfo.type === 'page' || treatOtherAsPage) {
       const opener = targetInfo.openerId ? this._crPages.get(targetInfo.openerId) || null : null;
-      const crPage = new CRPage(session, targetInfo.targetId, context, opener, { hasUIWindow: true, isBackgroundPage: false });
+      const crPage = new CRPage(session, targetInfo.targetId, context, opener, { hasUIWindow: targetInfo.type === 'page', isBackgroundPage: false });
       this._crPages.set(targetInfo.targetId, crPage);
       return;
     }
