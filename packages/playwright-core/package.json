@@ -38,6 +38,7 @@
     "./lib/server": "./lib/server/index.js",
     "./lib/utilsBundle": "./lib/utilsBundle.js",
     "./lib/zipBundle": "./lib/zipBundle.js",
+    "./types/har": "./types/har.d.ts",
     "./types/protocol": "./types/protocol.d.ts",
     "./types/structs": "./types/structs.d.ts"
   },
