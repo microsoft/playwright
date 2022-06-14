@@ -154,7 +154,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
       if (handled)
         return;
     }
-    await route._innerContinue({}, true);
+    await route._innerContinue(true);
   }
 
   async _onBinding(bindingCall: BindingCall) {

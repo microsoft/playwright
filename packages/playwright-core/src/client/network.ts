@@ -60,6 +60,13 @@ type RouteHAR = {
   path: string;
 };
 
+type FallbackOverrides = {
+  url?: string;
+  method?: string;
+  headers?: Headers;
+  postData?: string | Buffer;
+};
+
 export class Request extends ChannelOwner<channels.RequestChannel> implements api.Request {
   private _redirectedFrom: Request | null = null;
   private _redirectedTo: Request | null = null;
@@ -68,6 +75,7 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
   private _actualHeadersPromise: Promise<RawHeaders> | undefined;
   private _postData: Buffer | null;
   _timing: ResourceTiming;
+  private _fallbackOverrides: FallbackOverrides = {};
 
   static from(request: channels.RequestChannel): Request {
     return (request as any)._object;
@@ -98,7 +106,7 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
   }
 
   url(): string {
-    return this._initializer.url;
+    return this._fallbackOverrides.url || this._initializer.url;
   }
 
   resourceType(): string {
@@ -106,14 +114,21 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
   }
 
   method(): string {
-    return this._initializer.method;
+    return this._fallbackOverrides.method || this._initializer.method;
   }
 
   postData(): string | null {
+    if (this._fallbackOverrides.postData)
+      return this._fallbackOverrides.postData.toString('utf-8');
     return this._postData ? this._postData.toString('utf8') : null;
   }
 
   postDataBuffer(): Buffer | null {
+    if (this._fallbackOverrides.postData) {
+      if (isString(this._fallbackOverrides.postData))
+        return Buffer.from(this._fallbackOverrides.postData, 'utf-8');
+      return this._fallbackOverrides.postData;
+    }
     return this._postData;
   }
 
@@ -142,7 +157,9 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
    * @deprecated
    */
   headers(): Headers {
-    return this._provisionalHeaders.headers();
+    if (this._fallbackOverrides.headers)
+      return RawHeaders._fromHeadersObjectLossy(this._fallbackOverrides.headers).headers();
+    return this._fallbackOverrides.headers || this._provisionalHeaders.headers();
   }
 
   _context() {
@@ -151,6 +168,9 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
   }
 
   _actualHeaders(): Promise<RawHeaders> {
+    if (this._fallbackOverrides.headers)
+      return Promise.resolve(RawHeaders._fromHeadersObjectLossy(this._fallbackOverrides.headers));
+
     if (!this._actualHeadersPromise) {
       this._actualHeadersPromise = this._wrapApiCall(async () => {
         return new RawHeaders((await this._channel.rawRequestHeaders()).headers);
@@ -219,14 +239,15 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
   _finalRequest(): Request {
     return this._redirectedTo ? this._redirectedTo._finalRequest() : this;
   }
-}
 
-type OverridesForContinue = {
-  url?: string;
-  method?: string;
-  headers?: Headers;
-  postData?: string | Buffer;
-};
+  _applyFallbackOverrides(overrides: FallbackOverrides) {
+    this._fallbackOverrides = { ...this._fallbackOverrides, ...overrides };
+  }
+
+  _fallbackOverridesForContinue() {
+    return this._fallbackOverrides;
+  }
+}
 
 export class Route extends ChannelOwner<channels.RouteChannel> implements api.Route {
   private _handlingPromise: ManualPromise<boolean> | null = null;
@@ -259,8 +280,9 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
     return this._handlingPromise;
   }
 
-  async fallback() {
+  async fallback(options: FallbackOverrides = {}) {
     this._checkNotHandled();
+    this.request()._applyFallbackOverrides(options);
     this._reportHandled(false);
   }
 
@@ -360,9 +382,10 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
     return 'done';
   }
 
-  async continue(options: OverridesForContinue = {}) {
+  async continue(options: FallbackOverrides = {}) {
     this._checkNotHandled();
-    await this._innerContinue(options);
+    this.request()._applyFallbackOverrides(options);
+    await this._innerContinue();
     this._reportHandled(true);
   }
 
@@ -377,7 +400,8 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
     chain.resolve(done);
   }
 
-  async _innerContinue(options: OverridesForContinue = {}, internal = false) {
+  async _innerContinue(internal = false) {
+    const options = this.request()._fallbackOverridesForContinue();
     return await this._wrapApiCall(async () => {
       const postDataBuffer = isString(options.postData) ? Buffer.from(options.postData, 'utf8') : options.postData;
       await this._raceWithPageClose(this._channel.continue({
@@ -623,6 +647,13 @@ export class RouteHandler {
 export class RawHeaders {
   private _headersArray: HeadersArray;
   private _headersMap = new MultiMap<string, string>();
+
+  static _fromHeadersObjectLossy(headers: Headers): RawHeaders {
+    const headersArray: HeadersArray = Object.entries(headers).map(([name, value]) => ({
+      name, value
+    })).filter(header => header.value !== undefined);
+    return new RawHeaders(headersArray);
+  }
 
   constructor(headers: HeadersArray) {
     this._headersArray = headers;
