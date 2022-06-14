@@ -2969,6 +2969,35 @@ export interface Page {
   }): Promise<void>;
 
   /**
+   * Provides the capability to serve network requests that are made by a page from prerecorded HAR file.
+   *
+   * Once routing is enabled, every request will be served from the HAR file. If there is no matching entry in the file the
+   * execution continues to try other configured HAR files and [Route] handlers.
+   *
+   * > NOTE: [page.routeFromHar(harPath[, options])](https://playwright.dev/docs/api/class-page#page-route-from-har) will not
+   * intercept requests intercepted by Service Worker. See [this](https://github.com/microsoft/playwright/issues/1090) issue.
+   * We recommend disabling Service Workers when using request interception. Via `await context.addInitScript(() => delete
+   * window.navigator.serviceWorker);`
+   * @param harPath Path to the HAR file with prerecorded network data.
+   * @param options
+   */
+  routeFromHar(harPath: string, options?: {
+    /**
+     * If set to true any request not found in the HAR file will be aborted. If set to false missing requests will continue
+     * normal flow and can be handled by other [Route] handlers or served from other HAR files configured with
+     * [page.routeFromHar(harPath[, options])](https://playwright.dev/docs/api/class-page#page-route-from-har). Defaults to
+     * false.
+     */
+    strict?: boolean;
+
+    /**
+     * A glob pattern or regular expression to match request URL while routing. Only requests with URL matching the pattern
+     * will be surved from the HAR file. If not specified, all requests are served from the HAR file.
+     */
+    url?: string|RegExp;
+  }): Promise<void>;
+
+  /**
    * Returns the buffer with the captured screenshot.
    * @param options
    */
@@ -3512,6 +3541,13 @@ export interface Page {
    * @param handler Optional handler function to route the request.
    */
   unroute(url: string|RegExp|((url: URL) => boolean), handler?: ((route: Route, request: Request) => void)): Promise<void>;
+
+  /**
+   * Removes HAR handler previously added with
+   * [page.routeFromHar(harPath[, options])](https://playwright.dev/docs/api/class-page#page-route-from-har).
+   * @param harPath Path to the HAR file which was passed to [page.routeFromHar(harPath[, options])](https://playwright.dev/docs/api/class-page#page-route-from-har).
+   */
+  unrouteFromHar(harPath: string): Promise<void>;
 
   /**
    * Shortcut for main frame's [frame.url()](https://playwright.dev/docs/api/class-frame#frame-url).

@@ -74,6 +74,11 @@ type ExpectScreenshotOptions = Omit<channels.PageExpectScreenshotOptions, 'scree
   screenshotOptions: Omit<channels.PageExpectScreenshotOptions['screenshotOptions'], 'mask'> & { mask?: Locator[] }
 };
 
+type HarHandler = {
+  pattern: string | RegExp;
+  handler: (route: Route) => any;
+};
+
 export class Page extends ChannelOwner<channels.PageChannel> implements api.Page {
   private _browserContext: BrowserContext;
   _ownedContext: BrowserContext | undefined;
@@ -97,6 +102,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   readonly _timeoutSettings: TimeoutSettings;
   private _video: Video | null = null;
   readonly _opener: Page | null;
+  private _harPathToHander: Map<string, HarHandler> = new Map();
 
   static from(page: channels.PageChannel): Page {
     return (page as any)._object;
@@ -471,6 +477,27 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     this._routes = this._routes.filter(route => route.url !== url || (handler && route.handler !== handler));
     if (!this._routes.length)
       await this._disableInterception();
+  }
+
+  async routeFromHar(path: string, options?: { strict?: boolean; url?: string|RegExp; }): Promise<void> {
+    if (this._harPathToHander.has(path))
+      await this.unrouteFromHar(path);
+    const harHandler = {
+      pattern: options?.url ?? /.*/,
+      handler: async (route: Route) => {
+        await route.fulfill({ har: { path, fallback: options?.strict ? 'abort' : 'continue' } });
+      }
+    };
+    this._harPathToHander.set(path, harHandler);
+    await this.route(harHandler.pattern, harHandler.handler);
+  }
+
+  async unrouteFromHar(path: string): Promise<void> {
+    const harHandler = this._harPathToHander.get(path);
+    if (!harHandler)
+      return;
+    this._harPathToHander.delete(path);
+    await this.unroute(harHandler.pattern, harHandler.handler);
   }
 
   async _unrouteAll() {

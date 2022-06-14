@@ -462,3 +462,91 @@ function findResponse(har: HARFile, url: string) {
   expect(entry, originalUrl).toBeTruthy();
   return entry?.response;
 }
+
+it('routeFromHar should fulfill from har, matching the method and following redirects', async ({ page, isAndroid, asset }) => {
+  it.fixme(isAndroid);
+
+  const harPath = asset('har-fulfill.har');
+  await page.routeFromHar(harPath);
+  await page.goto('http://no.playwright/');
+  // HAR contains a redirect for the script that should be followed automatically.
+  expect(await page.evaluate('window.value')).toBe('foo');
+  // HAR contains a POST for the css file that should not be used.
+  await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(255, 0, 0)');
+});
+
+it('routeFromHar should fallback to continue when not found in har', async ({ page, server, isAndroid, asset }) => {
+  it.fixme(isAndroid);
+
+  const harPath = asset('har-fulfill.har');
+  let requestCount = 0;
+  await page.route('**/*', route => {
+    ++requestCount;
+    route.continue();
+  });
+  await page.routeFromHar(harPath);
+  await page.goto(server.PREFIX + '/one-style.html');
+  await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(255, 192, 203)');
+  expect(requestCount).toBe(2);
+});
+
+it('routeFromHar strict:false should fallback to continue when not found in har', async ({ page, server, isAndroid, asset }) => {
+  it.fixme(isAndroid);
+
+  const harPath = asset('har-fulfill.har');
+  let requestCount = 0;
+  await page.route('**/*', route => {
+    ++requestCount;
+    route.continue();
+  });
+  await page.routeFromHar(harPath, { strict: false });
+  await page.goto(server.PREFIX + '/one-style.html');
+  await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(255, 192, 203)');
+  expect(requestCount).toBe(2);
+});
+
+it('routeFromHar strict:true should fallback to abort when not found in har', async ({ page, server, isAndroid, asset }) => {
+  it.fixme(isAndroid);
+
+  const harPath = asset('har-fulfill.har');
+  let requestCount = 0;
+  await page.route('**/*', route => {
+    ++requestCount;
+    route.continue();
+  });
+  await page.routeFromHar(harPath, { strict: true });
+  const error = await page.goto(server.EMPTY_PAGE).catch(e => e);
+  expect(error instanceof Error).toBe(true);
+  expect(requestCount).toBe(0);
+});
+
+it('routeFromHar should continue requests on bad har', async ({ page, server, isAndroid }, testInfo) => {
+  it.fixme(isAndroid);
+
+  const harPath = testInfo.outputPath('test.har');
+  fs.writeFileSync(harPath, JSON.stringify({ log: {} }), 'utf-8');
+  let requestCount = 0;
+  await page.route('**/*', route => {
+    ++requestCount;
+    route.continue();
+  });
+  await page.routeFromHar(harPath);
+  await page.goto(server.PREFIX + '/one-style.html');
+  expect(requestCount).toBe(2);
+});
+
+it('unroute should remove har handler added with routeFromHar', async ({ page, server, isAndroid, asset }) => {
+  it.fixme(isAndroid);
+
+  const harPath = asset('har-fulfill.har');
+  let requestCount = 0;
+  await page.route('**/*', route => {
+    ++requestCount;
+    route.continue();
+  });
+  await page.routeFromHar(harPath, { strict: true });
+  await page.unrouteFromHar(harPath);
+  await page.goto(server.EMPTY_PAGE);
+  expect(requestCount).toBe(1);
+});
+

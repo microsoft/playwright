@@ -299,7 +299,7 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
       const fallback = await this._innerFulfill(options);
       switch (fallback) {
         case 'abort': await this.abort(); break;
-        case 'continue': await this.continue(); break;
+        case 'continue': await this.fallback(); break;
         case 'done': this._reportHandled(true); break;
       }
     });

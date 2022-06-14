@@ -2732,6 +2732,37 @@ handler function to route the request.
 
 How often a route should be used. By default it will be used every time.
 
+## async method: Page.routeFromHar
+
+Provides the capability to serve network requests that are made by a page from prerecorded HAR file.
+
+Once routing is enabled, every request will be served from the HAR file. If there is no matching entry
+in the file the execution continues to try other configured HAR files and [Route] handlers.
+
+:::note
+[`method: Page.routeFromHar`] will not intercept requests intercepted by Service Worker. See [this](https://github.com/microsoft/playwright/issues/1090) issue. We recommend disabling Service Workers when using request interception. Via `await context.addInitScript(() => delete window.navigator.serviceWorker);`
+:::
+
+### param: Page.routeFromHar.harPath
+- `harPath` <[path]>
+
+Path to the HAR file with prerecorded network data.
+
+### option: Page.routeFromHar.strict
+- `strict` <[boolean]>
+
+If set to true any request not found in the HAR file will be aborted. If set to
+false missing requests will continue normal flow and can be handled by other
+[Route] handlers or served from other HAR files configured with [`method: Page.routeFromHar`].
+Defaults to false.
+
+### option: Page.routeFromHar.url
+- `url` <[string]|[RegExp]>
+
+A glob pattern or regular expression to match request URL while routing. Only requests
+with URL matching the pattern will be surved from the HAR file. If not specified, all
+requests are served from the HAR file.
+
 ## async method: Page.screenshot
 - returns: <[Buffer]>
 
@@ -3117,6 +3148,15 @@ Optional handler function to route the request.
 - `handler` ?<[function]\([Route]\)>
 
 Optional handler function to route the request.
+
+## async method: Page.unrouteFromHar
+
+Removes HAR handler previously added with [`method: Page.routeFromHar`].
+
+### param: Page.unrouteFromHar.harPath
+- `harPath` <[path]>
+
+Path to the HAR file which was passed to [`method: Page.routeFromHar`].
 
 ## method: Page.url
 - returns: <[string]>
