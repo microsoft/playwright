@@ -278,6 +278,181 @@ test.describe(() => {
 });
 ```
 
+### Testing multiple roles together
+
+If you need to test how multiple authenticated roles interact together, use multiple [BrowserContext]s and [Page]s with different storage states in the same test. Any of the methods above to create multiple storage state files would work.
+
+```js tab=js-ts
+import { test } from '@playwright/test';
+
+test('admin and user', async ({ browser }) => {
+  // adminContext and all pages inside, including adminPage, are signed in as "admin".
+  const adminContext = await browser.newContext({ storageState: 'adminStorageState.json' });
+  const adminPage = await adminContext.newPage();
+
+  // userContext and all pages inside, including userPage, are signed in as "user".
+  const userContext = await browser.newContext({ storageState: 'userStorageState.json' });
+  const userPage = await userContext.newPage();
+
+  // ... interact with both adminPage and userPage ...
+});
+```
+
+```js tab=js-js
+const { test } = require('@playwright/test');
+
+test('admin and user', async ({ browser }) => {
+  // adminContext and all pages inside, including adminPage, are signed in as "admin".
+  const adminContext = await browser.newContext({ storageState: 'adminStorageState.json' });
+  const adminPage = await adminContext.newPage();
+
+  // userContext and all pages inside, including userPage, are signed in as "user".
+  const userContext = await browser.newContext({ storageState: 'userStorageState.json' });
+  const userPage = await userContext.newPage();
+
+  // ... interact with both adminPage and userPage ...
+});
+```
+
+### Testing multiple roles with POM fixtures
+
+If many of your tests require multiple authenticated roles from within the same test, you can introduce fixtures for each role. Any of the methods above to create multiple storage state files would work.
+
+Below is an example that [creates fixtures](./test-fixtures.md#creating-a-fixture) for two [Page Object Models](./test-pom.md) - admin POM and user POM. It assumes `adminStorageState.json` and `userStorageState.json` files were created.
+
+```js tab=js-ts
+// fixtures.ts
+import { test as base, Page, Browser, Locator } from '@playwright/test';
+export { expect } from '@playwright/test';
+
+// Page Object Model for the "admin" page.
+// Here you can add locators and helper methods specific to the admin page.
+class AdminPage {
+  // Page signed in as "admin".
+  page: Page;
+
+  constructor(page: Page) {
+    this.page = page;
+  }
+
+  async create(browser: Browser) {
+    const context = await browser.newContext({ storageState: 'adminStorageState.json' });
+    const page = await context.newPage();
+    return new AdminPage(page);
+  }
+}
+
+// Page Object Model for the "user" page.
+// Here you can add locators and helper methods specific to the user page.
+class UserPage {
+  // Page signed in as "user".
+  page: Page;
+
+  // Example locator pointing to "Welcome, User" greeting.
+  greeting: Locator;
+
+  constructor(page: Page) {
+    this.page = page;
+    this.greeting = page.locator('#greeting');
+  }
+
+  async create(browser: Browser) {
+    const context = await browser.newContext({ storageState: 'userStorageState.json' });
+    const page = await context.newPage();
+    return new UserPage(page);
+  }
+}
+
+// Declare the types of your fixtures.
+type MyFixtures = {
+  adminPage: AdminPage;
+  userPage: UserPage;
+};
+
+// Extend base test by providing "adminPage" and "userPage".
+// This new "test" can be used in multiple test files, and each of them will get the fixtures.
+export const test = base.extend<MyFixtures>({
+  adminPage: async ({ browser }, use) => {
+    await use(await AdminPage.create(browser));
+  },
+  userPage: async ({ browser }, use) => {
+    await use(await UserPage.create(browser));
+  },
+});
+
+
+// example.spec.ts
+// Import test with our new fixtures.
+import { test, expect } from './fixtures';
+
+// Use adminPage and userPage fixtures in the test.
+test('admin and user', async ({ adminPage, userPage }) => {
+  // ... interact with both adminPage and userPage ...
+  await adminPage.page.screenshot();
+  await expect(userPage.greeting).toHaveText('Welcome, User');
+});
+```
+
+```js tab=js-js
+// fixtures.js
+const { test: base } = require('@playwright/test');
+
+// Page Object Model for the "admin" page.
+// Here you can add locators and helper methods specific to the admin page.
+class AdminPage {
+  constructor(page) {
+    // Page signed in as "admin".
+    this.page = page;
+  }
+
+  async create(browser) {
+    const context = await browser.newContext({ storageState: 'adminStorageState.json' });
+    const page = await context.newPage();
+    return new AdminPage(page);
+  }
+}
+
+// Page Object Model for the "user" page.
+// Here you can add locators and helper methods specific to the user page.
+class UserPage {
+  constructor(page) {
+    // Page signed in as "user".
+    this.page = page;
+    // Example locator pointing to "Welcome, User" greeting.
+    this.greeting = page.locator('#greeting');
+  }
+
+  async create(browser) {
+    const context = await browser.newContext({ storageState: 'userStorageState.json' });
+    const page = await context.newPage();
+    return new UserPage(page);
+  }
+}
+
+// Extend base test by providing "adminPage" and "userPage".
+// This new "test" can be used in multiple test files, and each of them will get the fixtures.
+exports.test = base.extend({
+  adminPage: async ({ browser }, use) => {
+    await use(await AdminPage.create(browser));
+  },
+  userPage: async ({ browser }, use) => {
+    await use(await UserPage.create(browser));
+  },
+});
+exports.expect = base.expect;
+
+// example.spec.ts
+// Import test with our new fixtures.
+const { test, expect } = require('./fixtures');
+
+// Use adminPage and userPage fixtures in the test.
+test('admin and user', async ({ adminPage, userPage }) => {
+  // ... interact with both adminPage and userPage ...
+  await adminPage.page.screenshot();
+  await expect(userPage.greeting).toHaveText('Welcome, User');
+});
+```
+
 ## Reuse the signed in page in multiple tests
 
 Although discouraged, sometimes it is necessary to sacrifice the isolation and run a number of tests
