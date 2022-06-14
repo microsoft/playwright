@@ -31,6 +31,7 @@ import type { HeadersArray, URLMatch } from '../common/types';
 import { urlMatches } from '../common/netUtils';
 import { MultiMap } from '../utils/multimap';
 import { APIResponse } from './fetch';
+import type { HARResponse } from '../../types/har';
 
 export type NetworkCookie = {
   name: string,
@@ -292,7 +293,7 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
     this._reportHandled(true);
   }
 
-  async fulfill(options: { response?: api.APIResponse, status?: number, headers?: Headers, contentType?: string, body?: string | Buffer, path?: string, har?: RouteHAR } = {}) {
+  async fulfill(options: { response?: api.APIResponse | HARResponse, status?: number, headers?: Headers, contentType?: string, body?: string | Buffer, path?: string, har?: RouteHAR } = {}) {
     this._checkNotHandled();
     await this._wrapApiCall(async () => {
       const fallback = await this._innerFulfill(options);
@@ -304,7 +305,7 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
     });
   }
 
-  private async _innerFulfill(options: { response?: api.APIResponse, status?: number, headers?: Headers, contentType?: string, body?: string | Buffer, path?: string, har?: RouteHAR } = {}): Promise<'abort' | 'continue' | 'done'> {
+  private async _innerFulfill(options: { response?: api.APIResponse | HARResponse, status?: number, headers?: Headers, contentType?: string, body?: string | Buffer, path?: string, har?: RouteHAR } = {}): Promise<'abort' | 'continue' | 'done'> {
     let fetchResponseUid;
     let { status: statusOption, headers: headersOption, body } = options;
 
@@ -335,14 +336,23 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
         body = Buffer.from(entry.body, 'base64');
     }
 
-    if (options.response) {
+    if (options.response instanceof APIResponse) {
       statusOption ??= options.response.status();
       headersOption ??= options.response.headers();
-      if (body === undefined && options.path === undefined && options.response instanceof APIResponse) {
+      if (body === undefined && options.path === undefined) {
         if (options.response._request._connection === this._connection)
           fetchResponseUid = (options.response as APIResponse)._fetchUid();
         else
           body = await options.response.body();
+      }
+    } else if (options.response) {
+      const harResponse = options.response as HARResponse;
+      statusOption ??= harResponse.status;
+      headersOption ??= headersArrayToObject(harResponse.headers, false);
+      if (body === undefined && options.path === undefined) {
+        body = harResponse.content.text;
+        if (body !== undefined && harResponse.content.encoding === 'base64')
+          body = Buffer.from(body, 'base64');
       }
     }
 

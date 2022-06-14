@@ -17,6 +17,7 @@
 
 import { test as base, expect } from './pageTest';
 import fs from 'fs';
+import type { HARLog } from 'playwright-core/types/har';
 
 const it = base.extend<{
   // We access test servers at 10.0.2.2 from inside the browser on Android,
@@ -418,3 +419,45 @@ it('should override status when fulfilling from har', async ({ page, isAndroid, 
   // 404 should fail the CSS and styles should not apply.
   await expect(page.locator('body')).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
 });
+
+it('should fulfill with har response', async ({ page, isAndroid, asset }) => {
+  it.fixme(isAndroid);
+
+  const harPath = asset('har-fulfill.har');
+  const log = JSON.parse(await fs.promises.readFile(harPath, 'utf-8')).log as HARLog;
+  await page.route('**/*', async route => {
+    const response = findResponse(log, route.request().url());
+    await route.fulfill({ response });
+  });
+  await page.goto('http://no.playwright/');
+  // HAR contains a redirect for the script.
+  expect(await page.evaluate('window.value')).toBe('foo');
+  // HAR contains a POST for the css file but we match ignoring the method, so the file should be served.
+  await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(0, 255, 255)');
+});
+
+it('should should override status when fulfill with response from har', async ({ page, isAndroid, asset }) => {
+  it.fixme(isAndroid);
+
+  const harPath = asset('har-fulfill.har');
+  const log = JSON.parse(await fs.promises.readFile(harPath, 'utf-8')).log as HARLog;
+  await page.route('**/*', async route => {
+    const response = findResponse(log, route.request().url());
+    await route.fulfill({ response, status: route.request().url().endsWith('.css') ? 404 : undefined });
+  });
+  await page.goto('http://no.playwright/');
+  // Script should work.
+  expect(await page.evaluate('window.value')).toBe('foo');
+  // 404 should fail the CSS and styles should not apply.
+  await expect(page.locator('body')).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
+});
+
+function findResponse(log: HARLog, url: string) {
+  let entry;
+  while (url.trim()) {
+    entry = log.entries.find(entry => entry.request.url === url);
+    url = entry?.response.redirectURL;
+  }
+  expect(entry).toBeTruthy();
+  return entry?.response;
+}
