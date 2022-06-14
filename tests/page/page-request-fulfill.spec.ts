@@ -436,7 +436,7 @@ it('should fulfill with har response', async ({ page, isAndroid, asset }) => {
   await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(0, 255, 255)');
 });
 
-it('should should override status when fulfill with response from har', async ({ page, isAndroid, asset }) => {
+it('should override status when fulfill with response from har', async ({ page, isAndroid, asset }) => {
   it.fixme(isAndroid);
 
   const harPath = asset('har-fulfill.har');
