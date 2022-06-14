@@ -16,139 +16,146 @@
 
 // see http://www.softwareishard.com/blog/har-12-spec/
 export type HARFile = {
-  log: Log;
-};
+  log: HARLog;
+}
 
-export type Log = {
+export type HARLog = {
   version: string;
-  creator: Creator;
-  browser: Browser;
-  pages: Page[];
-  entries: Entry[];
+  creator: HARCreator;
+  browser?: HARBrowser;
+  pages?: HARPage[];
+  entries: HAREntry[];
+  comment?: string;
 };
 
-export type Creator = {
+export type HARCreator = {
   name: string;
   version: string;
+  comment?: string;
 };
 
-export type Browser = {
+export type HARBrowser = {
   name: string;
   version: string;
+  comment?: string;
 };
 
-export type Page = {
-  startedDateTime: Date;
+export type HARPage = {
+  startedDateTime: string;
   id: string;
   title: string;
-  pageTimings: PageTimings;
+  pageTimings: HARPageTimings;
+  comment?: string;
 };
 
-export type PageTimings = {
-  onContentLoad: number;
-  onLoad: number;
+export type HARPageTimings = {
+  onContentLoad?: number;
+  onLoad?: number;
+  comment?: string;
 };
 
-export type Entry = {
+export type HAREntry = {
   pageref?: string;
-  startedDateTime: Date;
+  startedDateTime: string;
   time: number;
-  request: Request;
-  response: Response;
-  cache: Cache;
-  timings: Timings;
+  request: HARRequest;
+  response: HARResponse;
+  cache: HARCache;
+  timings: HARTimings;
   serverIPAddress?: string;
   connection?: string;
-  _requestref: string;
-  _frameref: string;
-  _monotonicTime: number;
-  _serverPort?: number;
-  _securityDetails?: SecurityDetails;
+  comment?: string;
 };
 
-export type Request = {
+export type HARRequest = {
   method: string;
   url: string;
   httpVersion: string;
-  cookies: Cookie[];
-  headers: Header[];
-  queryString: QueryParameter[];
-  postData?: PostData;
+  cookies: HARCookie[];
+  headers: HARHeader[];
+  queryString: HARQueryParameter[];
+  postData?: HARPostData;
   headersSize: number;
   bodySize: number;
+  comment?: string;
 };
 
-export type Response = {
+export type HARResponse = {
   status: number;
   statusText: string;
   httpVersion: string;
-  cookies: Cookie[];
-  headers: Header[];
-  content: Content;
+  cookies: HARCookie[];
+  headers: HARHeader[];
+  content: HARContent;
   redirectURL: string;
   headersSize: number;
   bodySize: number;
-  _transferSize: number;
-  _failureText?: string
+  comment?: string;
 };
 
-export type Cookie = {
+export type HARCookie = {
   name: string;
   value: string;
   path?: string;
   domain?: string;
-  expires?: Date;
+  expires?: string;
   httpOnly?: boolean;
   secure?: boolean;
   sameSite?: string;
+  comment?: string;
 };
 
-export type Header = {
+export type HARHeader = {
   name: string;
   value: string;
+  comment?: string;
 };
 
-export type QueryParameter = {
+export type HARQueryParameter = {
   name: string;
   value: string;
+  comment?: string;
 };
 
-export type PostData = {
+export type HARPostData = {
   mimeType: string;
-  params: Param[];
+  params: HARParam[];
   text: string;
-  _sha1?: string;
+  comment?: string;
 };
 
-export type Param = {
+export type HARParam = {
   name: string;
   value?: string;
   fileName?: string;
   contentType?: string;
+  comment?: string;
 };
 
-export type Content = {
+export type HARContent = {
   size: number;
   compression?: number;
   mimeType: string;
   text?: string;
   encoding?: string;
-  _sha1?: string;
+  comment?: string;
 };
 
-export type Cache = {
-  beforeRequest: CacheState | null;
-  afterRequest: CacheState | null;
+export type HARCache = {
+  beforeRequest?: HARCacheState;
+  afterRequest?: HARCacheState;
+  comment?: string;
 };
 
-export type CacheState = {
+export type HARCacheState = {
   expires?: string;
   lastAccess: string;
   eTag: string;
   hitCount: number;
+  comment?: string;
 };
 
-export type Timings = {
+export type HARTimings = {
   blocked?: number;
   dns?: number;
   connect?: number;
@@ -156,12 +163,5 @@ export type Timings = {
   wait: number;
   receive: number;
   ssl?: number;
-};
-
-export type SecurityDetails = {
-  protocol?: string;
-  subjectName?: string;
-  issuer?: string;
-  validFrom?: number;
-  validTo?: number;
+  comment?: string;
 };

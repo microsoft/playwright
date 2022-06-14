@@ -16,9 +16,12 @@
 import { Protocol } from 'playwright-core/types/protocol';
 import { ChildProcess } from 'child_process';
 import { EventEmitter } from 'events';
+import { HARResponse } from 'playwright-core/types/har';
 import { Readable } from 'stream';
 import { ReadStream } from 'fs';
 import { Serializable, EvaluationArgument, PageFunction, PageFunctionOn, SmartHandle, ElementHandleForTag, BindingSource } from 'playwright-core/types/structs';
+
+export * from 'playwright-core/types/har';
 
 type PageWaitForSelectorOptionsNotHidden = PageWaitForSelectorOptions & {
   state?: 'visible'|'attached';

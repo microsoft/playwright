@@ -508,9 +508,9 @@ File path to respond with. The content type will be inferred from file extension
 is resolved relative to the current working directory.
 
 ### option: Route.fulfill.response
-- `response` <[APIResponse]>
+- `response` <[APIResponse]|[HARResponse]>
 
-[APIResponse] to fulfill route's request with. Individual fields of the response (such as headers) can be overridden using fulfill options.
+[APIResponse] or [HARResponse] to fulfill route's request with. Individual fields of the response (such as headers) can be overridden using fulfill options.
 
 ## method: Route.request
 - returns: <[Request]>
