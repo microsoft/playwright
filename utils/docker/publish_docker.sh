@@ -79,7 +79,6 @@ publish_docker_images_with_arch_suffix() {
   elif [[ "$FLAVOR" == "jammy" ]]; then
     TAGS=("${JAMMY_TAGS[@]}")
   else
-  else
     echo "ERROR: unknown flavor - $FLAVOR. Must be either 'bionic' or 'focal'"
     exit 1
   fi
