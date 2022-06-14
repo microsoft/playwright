@@ -45,6 +45,7 @@ import http from 'http';
 import https from 'https';
 import { registry } from '../registry';
 import { ManualPromise } from '../../utils/manualPromise';
+import { validateBrowserContextOptions } from '../browserContext';
 
 const ARTIFACTS_FOLDER = path.join(os.tmpdir(), 'playwright-artifacts-');
 
@@ -93,12 +94,13 @@ export class Chromium extends BrowserType {
       await cleanedUp;
     };
     const browserProcess: BrowserProcess = { close: doClose, kill: doClose };
+    const persistent: types.BrowserContextOptions = { noDefaultViewport: true };
     const browserOptions: BrowserOptions = {
       ...this._playwrightOptions,
       slowMo: options.slowMo,
       name: 'chromium',
       isChromium: true,
-      persistent: { noDefaultViewport: true },
+      persistent,
       browserProcess,
       protocolLogger: helper.debugProtocolLogger(),
       browserLogsCollector: new RecentLogsCollector(),
@@ -112,6 +114,7 @@ export class Chromium extends BrowserType {
       // does not work at all with proxies on Windows.
       proxy: { server: 'per-context' },
     };
+    validateBrowserContextOptions(persistent, browserOptions);
     progress.throwIfAborted();
     const browser = await CRBrowser.connect(chromeTransport, browserOptions);
     browser.on(Browser.Events.Disconnected, doCleanup);
