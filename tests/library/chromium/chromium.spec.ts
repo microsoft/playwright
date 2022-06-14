@@ -133,6 +133,44 @@ playwrightTest('should cleanup artifacts dir after connectOverCDP disconnects du
   expect(exists2).toBe(false);
 });
 
+playwrightTest('should connectOverCDP and manage downloads in default context', async ({ browserType, toImpl, mode, server }, testInfo) => {
+  playwrightTest.skip(mode !== 'default');
+
+  server.setRoute('/downloadWithFilename', (req, res) => {
+    res.setHeader('Content-Type', 'application/octet-stream');
+    res.setHeader('Content-Disposition', 'attachment; filename=file.txt');
+    res.end(`Hello world`);
+  });
+
+  const port = 9339 + testInfo.workerIndex;
+  const browserServer = await browserType.launch({
+    args: ['--remote-debugging-port=' + port]
+  });
+
+  try {
+    const browser = await browserType.connectOverCDP({
+      endpointURL: `http://127.0.0.1:${port}/`,
+    });
+    const page = await browser.contexts()[0].newPage();
+    await page.setContent(`<a href="${server.PREFIX}/downloadWithFilename">download</a>`);
+
+    const [ download ] = await Promise.all([
+      page.waitForEvent('download'),
+      page.click('a')
+    ]);
+    expect(download.page()).toBe(page);
+    expect(download.url()).toBe(`${server.PREFIX}/downloadWithFilename`);
+    expect(download.suggestedFilename()).toBe(`file.txt`);
+
+    const userPath = testInfo.outputPath('download.txt');
+    await download.saveAs(userPath);
+    expect(fs.existsSync(userPath)).toBeTruthy();
+    expect(fs.readFileSync(userPath).toString()).toBe('Hello world');
+  } finally {
+    await browserServer.close();
+  }
+});
+
 playwrightTest('should connect to an existing cdp session twice', async ({ browserType, server }, testInfo) => {
   const port = 9339 + testInfo.workerIndex;
   const browserServer = await browserType.launch({
