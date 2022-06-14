@@ -378,8 +378,6 @@ export interface LocalUtilsEventTarget {
 export interface LocalUtilsChannel extends LocalUtilsEventTarget, Channel {
   _type_LocalUtils: boolean;
   zip(params: LocalUtilsZipParams, metadata?: Metadata): Promise<LocalUtilsZipResult>;
-  harFindEntry(params: LocalUtilsHarFindEntryParams, metadata?: Metadata): Promise<LocalUtilsHarFindEntryResult>;
-  harClearCache(params: LocalUtilsHarClearCacheParams, metadata?: Metadata): Promise<LocalUtilsHarClearCacheResult>;
 }
 export type LocalUtilsZipParams = {
   zipFile: string,
@@ -389,29 +387,6 @@ export type LocalUtilsZipOptions = {
 
 };
 export type LocalUtilsZipResult = void;
-export type LocalUtilsHarFindEntryParams = {
-  cacheKey: string,
-  harFile: string,
-  url: string,
-  method: string,
-  needBody: boolean,
-};
-export type LocalUtilsHarFindEntryOptions = {
-
-};
-export type LocalUtilsHarFindEntryResult = {
-  error?: string,
-  status?: number,
-  headers?: NameValue[],
-  body?: Binary,
-};
-export type LocalUtilsHarClearCacheParams = {
-  cacheKey: string,
-};
-export type LocalUtilsHarClearCacheOptions = {
-
-};
-export type LocalUtilsHarClearCacheResult = void;
 
 export interface LocalUtilsEvents {
 }

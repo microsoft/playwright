@@ -473,27 +473,6 @@ LocalUtils:
           type: array
           items: NameValue
 
-    harFindEntry:
-      parameters:
-        # HAR file is cached until clearHarCache is called
-        cacheKey: string
-        harFile: string
-        url: string
-        method: string
-        needBody: boolean
-      returns:
-        error: string?
-        status: number?
-        headers:
-          type: array?
-          items: NameValue
-        body: binary?
-
-    harClearCache:
-      parameters:
-        cacheKey: string
-
-
 Root:
   type: interface
 

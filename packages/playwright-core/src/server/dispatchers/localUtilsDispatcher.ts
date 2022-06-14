@@ -23,11 +23,9 @@ import { assert, createGuid } from '../../utils';
 import type { DispatcherScope } from './dispatcher';
 import { Dispatcher } from './dispatcher';
 import { yazl, yauzl } from '../../zipBundle';
-import type { Log, Entry } from '../har/har';
 
 export class LocalUtilsDispatcher extends Dispatcher<{ guid: string }, channels.LocalUtilsChannel> implements channels.LocalUtilsChannel {
   _type_LocalUtils: boolean;
-  private _harCache = new Map<string, Map<string, Log>>();
 
   constructor(scope: DispatcherScope) {
     super(scope, { guid: 'localUtils@' + createGuid() }, 'LocalUtils', {});
@@ -88,62 +86,4 @@ export class LocalUtilsDispatcher extends Dispatcher<{ guid: string }, channels.
     });
     return promise;
   }
-
-  async harFindEntry(params: channels.LocalUtilsHarFindEntryParams, metadata?: channels.Metadata): Promise<channels.LocalUtilsHarFindEntryResult> {
-    try {
-      let cache = this._harCache.get(params.cacheKey);
-      if (!cache) {
-        cache = new Map();
-        this._harCache.set(params.cacheKey, cache);
-      }
-
-      let harLog = cache.get(params.harFile);
-      if (!harLog) {
-        const contents = await fs.promises.readFile(params.harFile, 'utf-8');
-        harLog = JSON.parse(contents).log as Log;
-        cache.set(params.harFile, harLog);
-      }
-
-      const visited = new Set<Entry>();
-      let url = params.url;
-      let method = params.method;
-      while (true) {
-        const entry = harLog.entries.find(entry => entry.request.url === url && entry.request.method === method);
-        if (!entry)
-          throw new Error(`No entry matching ${params.url}`);
-        if (visited.has(entry))
-          throw new Error(`Found redirect cycle for ${params.url}`);
-        visited.add(entry);
-
-        const locationHeader = entry.response.headers.find(h => h.name.toLowerCase() === 'location');
-        if (redirectStatus.includes(entry.response.status) && locationHeader) {
-          const locationURL = new URL(locationHeader.value, url);
-          url = locationURL.toString();
-          if ((entry.response.status === 301 || entry.response.status === 302) && method === 'POST' ||
-              entry.response.status === 303 && !['GET', 'HEAD'].includes(method)) {
-            // HTTP-redirect fetch step 13 (https://fetch.spec.whatwg.org/#http-redirect-fetch)
-            method = 'GET';
-          }
-          continue;
-        }
-
-        let base64body: string | undefined;
-        if (params.needBody && entry.response.content && entry.response.content.text !== undefined) {
-          if (entry.response.content.encoding === 'base64')
-            base64body = entry.response.content.text;
-          else
-            base64body = Buffer.from(entry.response.content.text, 'utf8').toString('base64');
-        }
-        return { status: entry.response.status, headers: entry.response.headers, body: base64body };
-      }
-    } catch (e) {
-      return { error: `Error reading HAR file ${params.harFile}: ` + e.message };
-    }
-  }
-
-  async harClearCache(params: channels.LocalUtilsHarClearCacheParams, metadata?: channels.Metadata): Promise<void> {
-    this._harCache.delete(params.cacheKey);
-  }
 }
-
-const redirectStatus = [301, 302, 303, 307, 308];
