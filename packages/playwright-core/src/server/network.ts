@@ -23,7 +23,7 @@ import { SdkObject } from './instrumentation';
 import type { NameValue } from '../common/types';
 import { APIRequestContext } from './fetch';
 
-export function filterCookies(cookies: types.NetworkCookie[], urls: string[]): types.NetworkCookie[] {
+export function filterCookies(cookies: channels.NetworkCookie[], urls: string[]): channels.NetworkCookie[] {
   const parsedURLs = urls.map(s => new URL(s));
   // Chromiums's cookies are missing sameSite when it is 'None'
   return cookies.filter(c => {
@@ -50,7 +50,7 @@ export function filterCookies(cookies: types.NetworkCookie[], urls: string[]): t
 // 253402300800 == Sat,  1 Jan 1000 00:00:00 +0000 (UTC)
 const kMaxCookieExpiresDateInSeconds = 253402300799;
 
-export function rewriteCookies(cookies: types.SetNetworkCookieParam[]): types.SetNetworkCookieParam[] {
+export function rewriteCookies(cookies: channels.SetNetworkCookie[]): channels.SetNetworkCookie[] {
   return cookies.map(c => {
     assert(c.url || (c.domain && c.path), 'Cookie should have a url or a domain/path pair');
     assert(!(c.url && c.domain), 'Cookie should have either url or domain');

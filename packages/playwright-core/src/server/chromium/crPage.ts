@@ -30,6 +30,7 @@ import type { PageBinding, PageDelegate } from '../page';
 import { Page, Worker } from '../page';
 import type { Progress } from '../progress';
 import type * as types from '../types';
+import type * as channels from '../../protocol/channels';
 import { getAccessibilityTree } from './crAccessibility';
 import { CRBrowserContext } from './crBrowser';
 import type { CRSession } from './crConnection';
@@ -356,7 +357,7 @@ export class CRPage implements PageDelegate {
     await this._mainFrameSession._client.send('Page.enable').catch(e => {});
   }
 
-  async pdf(options?: types.PDFOptions): Promise<Buffer> {
+  async pdf(options: channels.PagePdfParams): Promise<Buffer> {
     return this._pdf.generate(options);
   }
 

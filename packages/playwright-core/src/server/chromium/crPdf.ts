@@ -16,7 +16,7 @@
  */
 
 import { assert } from '../../utils';
-import type * as types from '../types';
+import type * as channels from '../../protocol/channels';
 import type { CRSession } from './crConnection';
 import { readProtocolStream } from './crProtocolHelper';
 
@@ -67,7 +67,7 @@ export class CRPDF {
     this._client = client;
   }
 
-  async generate(options: types.PDFOptions = {}): Promise<Buffer> {
+  async generate(options: channels.PagePdfParams): Promise<Buffer> {
     const {
       scale = 1,
       displayHeaderFooter = false,

@@ -15,14 +15,14 @@
  */
 
 import { debug } from '../../utilsBundle';
-import type * as types from '../types';
+import type * as channels from '../../protocol/channels';
 import * as net from 'net';
 import { EventEmitter } from 'events';
 import type { Backend, DeviceBackend, SocketBackend } from './android';
 import { assert, createGuid } from '../../utils';
 
 export class AdbBackend implements Backend {
-  async devices(options: types.AndroidDeviceOptions = {}): Promise<DeviceBackend[]> {
+  async devices(options: channels.AndroidDevicesOptions = {}): Promise<DeviceBackend[]> {
     const result = await runCommand('host:devices', options.host, options.port);
     const lines = result.toString().trim().split('\n');
     return lines.map(line => {

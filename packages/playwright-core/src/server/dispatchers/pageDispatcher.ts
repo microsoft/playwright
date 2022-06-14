@@ -274,7 +274,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel> imple
 
   async stopJSCoverage(params: channels.PageStopJSCoverageParams, metadata: CallMetadata): Promise<channels.PageStopJSCoverageResult> {
     const coverage = this._page.coverage as CRCoverage;
-    return { entries: await coverage.stopJSCoverage() };
+    return await coverage.stopJSCoverage();
   }
 
   async startCSSCoverage(params: channels.PageStartCSSCoverageParams, metadata: CallMetadata): Promise<void> {
@@ -284,7 +284,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel> imple
 
   async stopCSSCoverage(params: channels.PageStopCSSCoverageParams, metadata: CallMetadata): Promise<channels.PageStopCSSCoverageResult> {
     const coverage = this._page.coverage as CRCoverage;
-    return { entries: await coverage.stopCSSCoverage() };
+    return await coverage.stopCSSCoverage();
   }
 
   _onFrameAttached(frame: Frame) {

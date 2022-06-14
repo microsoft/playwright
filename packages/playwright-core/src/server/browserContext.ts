@@ -29,6 +29,7 @@ import { Page, PageBinding } from './page';
 import type { Progress } from './progress';
 import type { Selectors } from './selectors';
 import type * as types from './types';
+import type * as channels from '../protocol/channels';
 import path from 'path';
 import fs from 'fs';
 import type { CallMetadata } from './instrumentation';
@@ -54,7 +55,7 @@ export abstract class BrowserContext extends SdkObject {
 
   readonly _timeoutSettings = new TimeoutSettings();
   readonly _pageBindings = new Map<string, PageBinding>();
-  readonly _options: types.BrowserContextOptions;
+  readonly _options: channels.BrowserNewContextParams;
   _requestInterceptor?: network.RouteHandler;
   private _isPersistentContext: boolean;
   private _closedStatus: 'open' | 'closing' | 'closed' = 'open';
@@ -74,7 +75,7 @@ export abstract class BrowserContext extends SdkObject {
   private _settingStorageState = false;
   readonly initScripts: string[] = [];
 
-  constructor(browser: Browser, options: types.BrowserContextOptions, browserContextId: string | undefined) {
+  constructor(browser: Browser, options: channels.BrowserNewContextParams, browserContextId: string | undefined) {
     super(browser, 'browser-context');
     this.attribution.context = this;
     this._browser = browser;
@@ -156,13 +157,13 @@ export abstract class BrowserContext extends SdkObject {
   // BrowserContext methods.
   abstract pages(): Page[];
   abstract newPageDelegate(): Promise<PageDelegate>;
-  abstract addCookies(cookies: types.SetNetworkCookieParam[]): Promise<void>;
+  abstract addCookies(cookies: channels.SetNetworkCookie[]): Promise<void>;
   abstract clearCookies(): Promise<void>;
   abstract setGeolocation(geolocation?: types.Geolocation): Promise<void>;
   abstract setExtraHTTPHeaders(headers: types.HeadersArray): Promise<void>;
   abstract setOffline(offline: boolean): Promise<void>;
   abstract cancelDownload(uuid: string): Promise<void>;
-  protected abstract doGetCookies(urls: string[]): Promise<types.NetworkCookie[]>;
+  protected abstract doGetCookies(urls: string[]): Promise<channels.NetworkCookie[]>;
   protected abstract doGrantPermissions(origin: string, permissions: string[]): Promise<void>;
   protected abstract doClearPermissions(): Promise<void>;
   protected abstract doSetHTTPCredentials(httpCredentials?: types.Credentials): Promise<void>;
@@ -174,7 +175,7 @@ export abstract class BrowserContext extends SdkObject {
   protected abstract doClose(): Promise<void>;
   protected abstract onClosePersistent(): void;
 
-  async cookies(urls: string | string[] | undefined = []): Promise<types.NetworkCookie[]> {
+  async cookies(urls: string | string[] | undefined = []): Promise<channels.NetworkCookie[]> {
     if (urls && !Array.isArray(urls))
       urls = [ urls ];
     return await this.doGetCookies(urls as string[]);
@@ -374,8 +375,8 @@ export abstract class BrowserContext extends SdkObject {
     this._origins.add(origin);
   }
 
-  async storageState(): Promise<types.StorageState> {
-    const result: types.StorageState = {
+  async storageState(): Promise<channels.BrowserContextStorageStateResult> {
+    const result: channels.BrowserContextStorageStateResult = {
       cookies: await this.cookies(),
       origins: []
     };
@@ -386,7 +387,7 @@ export abstract class BrowserContext extends SdkObject {
         handler.fulfill({ body: '<html></html>' }).catch(() => {});
       });
       for (const origin of this._origins) {
-        const originStorage: types.OriginStorage = { origin, localStorage: [] };
+        const originStorage: channels.OriginStorage = { origin, localStorage: [] };
         const frame = page.mainFrame();
         await frame.goto(internalMetadata, origin);
         const storage = await frame.evaluateExpression(`({
@@ -405,7 +406,7 @@ export abstract class BrowserContext extends SdkObject {
     return this._settingStorageState;
   }
 
-  async setStorageState(metadata: CallMetadata, state: types.SetStorageState) {
+  async setStorageState(metadata: CallMetadata, state: NonNullable<channels.BrowserNewContextParams['storageState']>) {
     this._settingStorageState = true;
     try {
       if (state.cookies)
@@ -450,7 +451,7 @@ export function assertBrowserContextIsNotOwned(context: BrowserContext) {
   }
 }
 
-export function validateBrowserContextOptions(options: types.BrowserContextOptions, browserOptions: BrowserOptions) {
+export function validateBrowserContextOptions(options: channels.BrowserNewContextParams, browserOptions: BrowserOptions) {
   if (options.noDefaultViewport && options.deviceScaleFactor !== undefined)
     throw new Error(`"deviceScaleFactor" option is not supported with null "viewport"`);
   if (options.noDefaultViewport && options.isMobile !== undefined)

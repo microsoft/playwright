@@ -15,6 +15,7 @@
  */
 
 import type * as types from './types';
+import type * as channels from '../protocol/channels';
 import { BrowserContext, validateBrowserContextOptions } from './browserContext';
 import { Page } from './page';
 import { Download } from './download';
@@ -48,7 +49,7 @@ export type BrowserOptions = PlaywrightOptions & {
   downloadsPath: string,
   tracesDir: string,
   headful?: boolean,
-  persistent?: types.BrowserContextOptions,  // Undefined means no persistent context.
+  persistent?: channels.BrowserNewContextParams,  // Undefined means no persistent context.
   browserProcess: BrowserProcess,
   customExecutablePath?: string;
   proxy?: ProxySettings,
@@ -75,13 +76,13 @@ export abstract class Browser extends SdkObject {
     this.options = options;
   }
 
-  abstract doCreateNewContext(options: types.BrowserContextOptions): Promise<BrowserContext>;
+  abstract doCreateNewContext(options: channels.BrowserNewContextParams): Promise<BrowserContext>;
   abstract contexts(): BrowserContext[];
   abstract isConnected(): boolean;
   abstract version(): string;
   abstract userAgent(): string;
 
-  async newContext(metadata: CallMetadata, options: types.BrowserContextOptions): Promise<BrowserContext> {
+  async newContext(metadata: CallMetadata, options: channels.BrowserNewContextParams): Promise<BrowserContext> {
     validateBrowserContextOptions(options, this.options);
     const context = await this.doCreateNewContext(options);
     if (options.storageState)

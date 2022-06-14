@@ -17,7 +17,7 @@ import type * as accessibility from '../accessibility';
 import type { WKSession } from './wkConnection';
 import type { Protocol } from './protocol';
 import type * as dom from '../dom';
-import type * as types from '../types';
+import type * as channels from '../../protocol/channels';
 
 export async function getAccessibilityTree(session: WKSession, needle?: dom.ElementHandle) {
   const objectId = needle ? needle._objectId : undefined;
@@ -167,8 +167,8 @@ class WKAXNode implements accessibility.AXNode {
     return false;
   }
 
-  serialize(): types.SerializedAXNode {
-    const node: types.SerializedAXNode = {
+  serialize(): channels.AXNode {
+    const node: channels.AXNode = {
       role: WKRoleToARIARole.get(this._payload.role) || this._payload.role,
       name: this._name(),
     };
@@ -195,7 +195,7 @@ class WKAXNode implements accessibility.AXNode {
     if ('pressed' in this._payload)
       node.pressed = this._payload.pressed === 'true' ? 'pressed' : this._payload.pressed === 'false' ? 'released' : 'mixed';
 
-    const userStringProperties: Array<keyof types.SerializedAXNode & keyof Protocol.Page.AXNode> = [
+    const userStringProperties: Array<keyof channels.AXNode & keyof Protocol.Page.AXNode> = [
       'keyshortcuts',
       'valuetext'
     ];
@@ -205,7 +205,7 @@ class WKAXNode implements accessibility.AXNode {
       (node as any)[userStringProperty] = this._payload[userStringProperty];
     }
 
-    const booleanProperties: Array<keyof types.SerializedAXNode & keyof Protocol.Page.AXNode> = [
+    const booleanProperties: Array<keyof channels.AXNode & keyof Protocol.Page.AXNode> = [
       'disabled',
       'expanded',
       'focused',
@@ -227,7 +227,7 @@ class WKAXNode implements accessibility.AXNode {
       (node as any)[booleanProperty] = value;
     }
 
-    const numericalProperties: Array<keyof types.SerializedAXNode & keyof Protocol.Page.AXNode> = [
+    const numericalProperties: Array<keyof channels.AXNode & keyof Protocol.Page.AXNode> = [
       'level',
       'valuemax',
       'valuemin',
@@ -237,7 +237,7 @@ class WKAXNode implements accessibility.AXNode {
         continue;
       (node as any)[numericalProperty] = (this._payload as any)[numericalProperty];
     }
-    const tokenProperties: Array<keyof types.SerializedAXNode & keyof Protocol.Page.AXNode> = [
+    const tokenProperties: Array<keyof channels.AXNode & keyof Protocol.Page.AXNode> = [
       'autocomplete',
       'haspopup',
       'invalid',
