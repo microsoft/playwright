@@ -17,7 +17,7 @@
 
 import { test as base, expect } from './pageTest';
 import fs from 'fs';
-import type { HARLog } from '@playwright/test';
+import type { HAR } from '@playwright/test';
 
 const it = base.extend<{
   // We access test servers at 10.0.2.2 from inside the browser on Android,
@@ -424,9 +424,9 @@ it('should fulfill with har response', async ({ page, isAndroid, asset }) => {
   it.fixme(isAndroid);
 
   const harPath = asset('har-fulfill.har');
-  const log = JSON.parse(await fs.promises.readFile(harPath, 'utf-8')).log as HARLog;
+  const har = JSON.parse(await fs.promises.readFile(harPath, 'utf-8')) as HAR;
   await page.route('**/*', async route => {
-    const response = findResponse(log, route.request().url());
+    const response = findResponse(har, route.request().url());
     await route.fulfill({ response });
   });
   await page.goto('http://no.playwright/');
@@ -440,9 +440,9 @@ it('should override status when fulfill with response from har', async ({ page, 
   it.fixme(isAndroid);
 
   const harPath = asset('har-fulfill.har');
-  const log = JSON.parse(await fs.promises.readFile(harPath, 'utf-8')).log as HARLog;
+  const har = JSON.parse(await fs.promises.readFile(harPath, 'utf-8')) as HAR;
   await page.route('**/*', async route => {
-    const response = findResponse(log, route.request().url());
+    const response = findResponse(har, route.request().url());
     await route.fulfill({ response, status: route.request().url().endsWith('.css') ? 404 : undefined });
   });
   await page.goto('http://no.playwright/');
@@ -452,12 +452,13 @@ it('should override status when fulfill with response from har', async ({ page, 
   await expect(page.locator('body')).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
 });
 
-function findResponse(log: HARLog, url: string) {
+function findResponse(har: HAR, url: string) {
   let entry;
+  const originalUrl = url;
   while (url.trim()) {
-    entry = log.entries.find(entry => entry.request.url === url);
+    entry = har.log.entries.find(entry => entry.request.url === url);
     url = entry?.response.redirectURL;
   }
-  expect(entry).toBeTruthy();
+  expect(entry, originalUrl).toBeTruthy();
   return entry?.response;
 }
