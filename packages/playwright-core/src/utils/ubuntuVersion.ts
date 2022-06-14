@@ -81,6 +81,10 @@ function parseUbuntuVersion(osReleaseText: string): string {
   if (fields.get('distrib_id') && fields.get('distrib_id')?.toLowerCase() === 'ubuntu')
     return fields.get('distrib_release') || '';
 
+  // For Pop!_OS
+  if (fields.get('id') && fields.get('id')?.toLowerCase() === 'pop')
+    return fields.get('version_id') || '';
+
   if (!fields.get('name') || fields.get('name')?.toLowerCase() !== 'ubuntu')
     return '';
   return fields.get('version_id') || '';
