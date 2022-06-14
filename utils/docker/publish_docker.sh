@@ -79,7 +79,7 @@ publish_docker_images_with_arch_suffix() {
   elif [[ "$FLAVOR" == "jammy" ]]; then
     TAGS=("${JAMMY_TAGS[@]}")
   else
-    echo "ERROR: unknown flavor - $FLAVOR. Must be either 'bionic' or 'focal'"
+    echo "ERROR: unknown flavor - $FLAVOR. Must be either 'bionic', 'focal', or 'jammy'"
     exit 1
   fi
   local ARCH="$2"
@@ -104,8 +104,10 @@ publish_docker_manifest () {
     TAGS=("${BIONIC_TAGS[@]}")
   elif [[ "$FLAVOR" == "focal" ]]; then
     TAGS=("${FOCAL_TAGS[@]}")
+  elif [[ "$FLAVOR" == "jammy" ]]; then
+    TAGS=("${JAMMY_TAGS[@]}")
   else
-    echo "ERROR: unknown flavor - $FLAVOR. Must be either 'bionic' or 'focal'"
+    echo "ERROR: unknown flavor - $FLAVOR. Must be either 'bionic', 'focal', or 'jammy'"
     exit 1
   fi
 
