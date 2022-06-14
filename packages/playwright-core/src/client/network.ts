@@ -159,7 +159,7 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
   headers(): Headers {
     if (this._fallbackOverrides.headers)
       return RawHeaders._fromHeadersObjectLossy(this._fallbackOverrides.headers).headers();
-    return this._fallbackOverrides.headers || this._provisionalHeaders.headers();
+    return this._provisionalHeaders.headers();
   }
 
   _context() {
