@@ -43,7 +43,6 @@ import type { APIRequestContext } from './fetch';
 import { FileChooser } from './fileChooser';
 import type { WaitForNavigationOptions } from './frame';
 import { Frame, verifyLoadState } from './frame';
-import { HarRouter } from './harRouter';
 import { Keyboard, Mouse, Touchscreen } from './input';
 import { assertMaxArguments, JSHandle, parseResult, serializeArgument } from './jsHandle';
 import type { FrameLocator, Locator, LocatorOptions } from './locator';
@@ -98,7 +97,6 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   readonly _timeoutSettings: TimeoutSettings;
   private _video: Video | null = null;
   readonly _opener: Page | null;
-  private readonly _harRouter = new HarRouter(this);
 
   static from(page: channels.PageChannel): Page {
     return (page as any)._object;
@@ -473,14 +471,6 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     this._routes = this._routes.filter(route => route.url !== url || (handler && route.handler !== handler));
     if (!this._routes.length)
       await this._disableInterception();
-  }
-
-  async routeFromHar(harPath: string, options?: { strict?: boolean; url?: string|RegExp; }): Promise<void> {
-    await this._harRouter.routeFromHar(harPath, options);
-  }
-
-  async unrouteFromHar(harPath: string): Promise<void> {
-    await this._harRouter.unrouteFromHar(harPath);
   }
 
   async _unrouteAll() {

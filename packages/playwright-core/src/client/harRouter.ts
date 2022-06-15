@@ -18,60 +18,44 @@ import fs from 'fs';
 import type { HAREntry, HARFile, HARResponse } from '../../types/types';
 import type { BrowserContext } from './browserContext';
 import type { Route } from './network';
-import type { Page } from './page';
+import type { BrowserContextOptions } from './types';
 
-type HarHandler = {
-  pattern: string | RegExp;
-  handler: (route: Route) => any;
-};
+type HarOptions = NonNullable<BrowserContextOptions['har']>;
 
 export class HarRouter {
-  private _harPathToHandlers: Map<string, HarHandler[]> = new Map();
-  private readonly owner: BrowserContext | Page;
+  private _pattern: string | RegExp;
+  private _handler: (route: Route) => Promise<void>;
 
-  constructor(owner: BrowserContext | Page) {
-    this.owner = owner;
+  static async create(options: HarOptions): Promise<HarRouter> {
+    const harFile = JSON.parse(await fs.promises.readFile(options.path, 'utf-8')) as HARFile;
+    return new HarRouter(harFile, options);
   }
 
-  async routeFromHar(path: string, options?: { strict?: boolean; url?: string|RegExp; }): Promise<void> {
-    const harFile = JSON.parse(await fs.promises.readFile(path, 'utf-8')) as HARFile;
-    const harHandler = {
-      pattern: options?.url ?? /.*/,
-      handler: async (route: Route) => {
-        let response;
-        try {
-          response = harFindResponse(harFile, {
-            url: route.request().url(),
-            method: route.request().method()
-          });
-        } catch (e) {
-          // TODO: throw or at least error log?
-          // rewriteErrorMessage(e, e.message + `\n\nFailed to find matching entry for ${route.request().method()} ${route.request().url()} in ${path}`);
-          // throw e;
-        }
-        if (response)
-          await route.fulfill({ response });
-        else if (options?.strict === false)
-          await route.fallback();
-        else
-          await route.abort();
+  constructor(harFile: HARFile, options?: HarOptions) {
+    this._pattern = options?.urlFilter ?? /.*/;
+    this._handler = async (route: Route) => {
+      let response;
+      try {
+        response = harFindResponse(harFile, {
+          url: route.request().url(),
+          method: route.request().method()
+        });
+      } catch (e) {
+        // TODO: throw or at least error log?
+        // rewriteErrorMessage(e, e.message + `\n\nFailed to find matching entry for ${route.request().method()} ${route.request().url()} in ${path}`);
+        // throw e;
       }
+      if (response)
+        await route.fulfill({ response });
+      else if (options?.fallback === 'continue')
+        await route.fallback();
+      else
+        await route.abort();
     };
-    let handlers = this._harPathToHandlers.get(path);
-    if (!handlers) {
-      handlers = [];
-      this._harPathToHandlers.set(path, handlers);
-    }
-    handlers.push(harHandler);
-    await this.owner.route(harHandler.pattern, harHandler.handler);
   }
 
-  async unrouteFromHar(path: string): Promise<void> {
-    const handlers = this._harPathToHandlers.get(path);
-    if (!handlers)
-      return;
-    this._harPathToHandlers.delete(path);
-    await Promise.all(handlers.map(h => this.owner.unroute(h.pattern, h.handler)));
+  async addRoute(context: BrowserContext) {
+    await context.route(this._pattern, this._handler);
   }
 }
 

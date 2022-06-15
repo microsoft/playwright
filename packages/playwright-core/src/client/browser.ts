@@ -24,6 +24,7 @@ import { isSafeCloseError, kBrowserClosedError } from '../common/errors';
 import type * as api from '../../types/types';
 import { CDPSession } from './cdpSession';
 import type { BrowserType } from './browserType';
+import { HarRouter } from './harRouter';
 
 export class Browser extends ChannelOwner<channels.BrowserChannel> implements api.Browser {
   readonly _contexts = new Set<BrowserContext>();
@@ -60,12 +61,14 @@ export class Browser extends ChannelOwner<channels.BrowserChannel> implements ap
 
   async newContext(options: BrowserContextOptions = {}): Promise<BrowserContext> {
     options = { ...this._browserType._defaultContextOptions, ...options };
+    const harRouter = options.har ? await HarRouter.create(options.har) : null;
     const contextOptions = await prepareBrowserContextParams(options);
     const context = BrowserContext.from((await this._channel.newContext(contextOptions)).context);
     context._options = contextOptions;
     this._contexts.add(context);
     context._logger = options.logger || this._logger;
     context._setBrowserType(this._browserType);
+    harRouter?.addRoute(context);
     await this._browserType._onDidCreateContext?.(context);
     return context;
   }
