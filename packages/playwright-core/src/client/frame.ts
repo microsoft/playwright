@@ -75,6 +75,10 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
       }
       if (event.remove)
         this._loadStates.delete(event.remove);
+      if (!this._parentFrame && event.add === 'load' && this._page)
+        this._page.emit(Events.Page.Load, this._page);
+      if (!this._parentFrame && event.add === 'domcontentloaded' && this._page)
+        this._page.emit(Events.Page.DOMContentLoaded, this._page);
     });
     this._channel.on('navigated', event => {
       this._url = event.url;

@@ -65,7 +65,6 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel> imple
     });
     page.on(Page.Events.Console, message => this._dispatchEvent('console', { message: new ConsoleMessageDispatcher(this._scope, message) }));
     page.on(Page.Events.Crash, () => this._dispatchEvent('crash'));
-    page.on(Page.Events.DOMContentLoaded, () => this._dispatchEvent('domcontentloaded'));
     page.on(Page.Events.Dialog, dialog => this._dispatchEvent('dialog', { dialog: new DialogDispatcher(this._scope, dialog) }));
     page.on(Page.Events.Download, (download: Download) => {
       this._dispatchEvent('download', { url: download.url, suggestedFilename: download.suggestedFilename(), artifact: new ArtifactDispatcher(scope, download.artifact) });
@@ -76,7 +75,6 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel> imple
     }));
     page.on(Page.Events.FrameAttached, frame => this._onFrameAttached(frame));
     page.on(Page.Events.FrameDetached, frame => this._onFrameDetached(frame));
-    page.on(Page.Events.Load, () => this._dispatchEvent('load'));
     page.on(Page.Events.PageError, error => this._dispatchEvent('pageError', { error: serializeError(error) }));
     page.on(Page.Events.WebSocket, webSocket => this._dispatchEvent('webSocket', { webSocket: new WebSocketDispatcher(this._scope, webSocket) }));
     page.on(Page.Events.Worker, worker => this._dispatchEvent('worker', { worker: new WorkerDispatcher(this._scope, worker) }));

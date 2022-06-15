@@ -19,7 +19,7 @@ import type { APIRequestEvent, APIRequestFinishedEvent } from '../fetch';
 import { APIRequestContext } from '../fetch';
 import { helper } from '../helper';
 import * as network from '../network';
-import { Page } from '../page';
+import type { Page } from '../page';
 import type * as har from './har';
 import { calculateSha1, monotonicTime } from '../../utils';
 import type { RegisteredListener } from '../../utils/eventsHelper';
@@ -28,6 +28,8 @@ import { mime } from '../../utilsBundle';
 import { ManualPromise } from '../../utils/manualPromise';
 import { getPlaywrightVersion } from '../../common/userAgent';
 import { urlMatches } from '../../common/netUtils';
+import { Frame } from '../frames';
+import type { LifecycleEvent } from '../types';
 
 const FALLBACK_HTTP_VERSION = 'HTTP/1.1';
 
@@ -93,8 +95,12 @@ export class HarTracer {
   private _ensurePageEntry(page: Page) {
     let pageEntry = this._pageEntries.get(page);
     if (!pageEntry) {
-      page.on(Page.Events.DOMContentLoaded, () => this._onDOMContentLoaded(page));
-      page.on(Page.Events.Load, () => this._onLoad(page));
+      page.mainFrame().on(Frame.Events.AddLifecycle, (event: LifecycleEvent) => {
+        if (event === 'load')
+          this._onLoad(page);
+        if (event === 'domcontentloaded')
+          this._onDOMContentLoaded(page);
+      });
 
       pageEntry = {
         startedDateTime: new Date(),

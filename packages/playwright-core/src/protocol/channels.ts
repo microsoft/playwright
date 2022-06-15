@@ -1331,11 +1331,9 @@ export interface PageEventTarget {
   on(event: 'crash', callback: (params: PageCrashEvent) => void): this;
   on(event: 'dialog', callback: (params: PageDialogEvent) => void): this;
   on(event: 'download', callback: (params: PageDownloadEvent) => void): this;
-  on(event: 'domcontentloaded', callback: (params: PageDomcontentloadedEvent) => void): this;
   on(event: 'fileChooser', callback: (params: PageFileChooserEvent) => void): this;
   on(event: 'frameAttached', callback: (params: PageFrameAttachedEvent) => void): this;
   on(event: 'frameDetached', callback: (params: PageFrameDetachedEvent) => void): this;
-  on(event: 'load', callback: (params: PageLoadEvent) => void): this;
   on(event: 'pageError', callback: (params: PagePageErrorEvent) => void): this;
   on(event: 'route', callback: (params: PageRouteEvent) => void): this;
   on(event: 'video', callback: (params: PageVideoEvent) => void): this;
@@ -1396,7 +1394,6 @@ export type PageDownloadEvent = {
   suggestedFilename: string,
   artifact: ArtifactChannel,
 };
-export type PageDomcontentloadedEvent = {};
 export type PageFileChooserEvent = {
   element: ElementHandleChannel,
   isMultiple: boolean,
@@ -1407,7 +1404,6 @@ export type PageFrameAttachedEvent = {
 export type PageFrameDetachedEvent = {
   frame: FrameChannel,
 };
-export type PageLoadEvent = {};
 export type PagePageErrorEvent = {
   error: SerializedError,
 };
@@ -1836,11 +1832,9 @@ export interface PageEvents {
   'crash': PageCrashEvent;
   'dialog': PageDialogEvent;
   'download': PageDownloadEvent;
-  'domcontentloaded': PageDomcontentloadedEvent;
   'fileChooser': PageFileChooserEvent;
   'frameAttached': PageFrameAttachedEvent;
   'frameDetached': PageFrameDetachedEvent;
-  'load': PageLoadEvent;
   'pageError': PagePageErrorEvent;
   'route': PageRouteEvent;
   'video': PageVideoEvent;

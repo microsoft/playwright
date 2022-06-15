@@ -1318,8 +1318,6 @@ Page:
         suggestedFilename: string
         artifact: Artifact
 
-    domcontentloaded:
-
     fileChooser:
       parameters:
         element: ElementHandle
@@ -1332,8 +1330,6 @@ Page:
     frameDetached:
       parameters:
         frame: Frame
-
-    load:
 
     pageError:
       parameters:
