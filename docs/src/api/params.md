@@ -247,7 +247,7 @@ The file path to save the storage state to. If [`option: path`] is a relative pa
 current working directory. If no path is provided, storage
 state is still returned, but won't be saved to the disk.
 
-## js-python-context-option-har
+## js-context-option-har
 * langs: js, python
 - `har` <[Object]>
   - `path` <[path]> Path to a [HAR](http://www.softwareishard.com/blog/har-12-spec) file with prerecorded network data. If the HAR file contains an entry with the matching URL and HTTP method, then the entry's headers, status and body will be used to fulfill the network request. An entry resulting in a redirect will be followed automatically. If `path` is a relative path, then it is resolved relative to the current working directory.
@@ -260,21 +260,21 @@ If specified the network requests that are made in the context will be served fr
 Playwright will not serve requests intercepted by Service Worker from the HAR file. See [this](https://github.com/microsoft/playwright/issues/1090) issue. We recommend disabling Service Workers when using request interception. Via `await context.addInitScript(() => delete window.navigator.serviceWorker);`
 :::
 
-## csharp-java-context-option-har-path
-* langs: csharp, java
+## csharp-java-python-context-option-har-path
+* langs: csharp, java, python
 - `harPath` <[path]>
 
 Path to a [HAR](http://www.softwareishard.com/blog/har-12-spec) file with prerecorded network data. If the HAR file contains an entry with the matching URL and HTTP method, then the entry's headers, status and body will be used to fulfill the network request. An entry resulting in a redirect will be followed automatically. If `path` is a relative path, then it is resolved relative to the current working directory.
 
-## csharp-java-context-option-har-fallback
-* langs: csharp, java
-- `fallback` ?<[HarFallback]<"abort"|"continue">>
+## csharp-java-python-context-option-har-fallback
+* langs: csharp, java, python
+- `harFallback` ?<[HarFallback]<"abort"|"continue">>
 
 If set to 'abort' any request not found in the HAR file will be aborted. If set to'continue' missing requests will be sent to the network. Defaults to 'abort'.
 
-## csharp-java-context-option-har-urlfilter
-* langs: csharp, java
-- `urlFilter` ?<[string]|[RegExp]>
+## csharp-java-python-context-option-har-urlfilter
+* langs: csharp, java, python
+- `harUrlFilter` ?<[string]|[RegExp]>
 
 A glob pattern or regular expression to match request URL while routing. Only requests with URL matching the pattern will be surved from the HAR file. If not specified, all requests are served from the HAR file.
 
@@ -833,10 +833,10 @@ An acceptable perceived color difference in the [YIQ color space](https://en.wik
 - %%-context-option-logger-%%
 - %%-context-option-videospath-%%
 - %%-context-option-videosize-%%
-- %%-js-python-context-option-har-%%
-- %%-csharp-java-context-option-har-path-%%
-- %%-csharp-java-context-option-har-fallback-%%
-- %%-csharp-java-context-option-har-urlfilter-%%
+- %%-js-context-option-har-%%
+- %%-csharp-java-python-context-option-har-path-%%
+- %%-csharp-java-python-context-option-har-fallback-%%
+- %%-csharp-java-python-context-option-har-urlfilter-%%
 - %%-context-option-recordhar-%%
 - %%-context-option-recordhar-path-%%
 - %%-context-option-recordhar-omit-content-%%
