@@ -382,16 +382,15 @@ module.exports = async config => {
       .context()
       .tracing.stop({
         path: `./test-results/setup-trace.zip`,
-      }).then(() => {
-        page.close();
-      });
+      })
+    await browser.close();
   } catch (error) {
     await page
       .context()
       .tracing.stop({
         path: `./test-results/failed-setup-trace.zip`,
       });
-    await page.close();
+    await browser.close();
     throw error;
   }
 };
@@ -418,9 +417,8 @@ async function globalSetup(config: FullConfig) {
       .context()
       .tracing.stop({
         path: `./test-results/setup-trace.zip`,
-      }).then(() => {
-          page.close();
-        });
+      })
+    await page.close();
   } catch (error) {
     await page
       .context()
