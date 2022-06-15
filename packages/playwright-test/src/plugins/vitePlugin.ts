@@ -36,6 +36,7 @@ type CtConfig = {
   ctViteConfig?: InlineConfig;
 };
 
+const importReactRE = /(^|\n)import\s+(\*\s+as\s+)?React(,|\s+)/;
 
 export function createPlugin(
   registerSourceFile: string,
@@ -274,7 +275,7 @@ function vitePlugin(registerSource: string, relativeTemplateDir: string, buildIn
       }
 
       // Vite React plugin will do this for .jsx files, but not .js files.
-      if (id.endsWith('.js') && content.includes('React.createElement') && !content.includes('import React')) {
+      if (id.endsWith('.js') && content.includes('React.createElement') && !content.match(importReactRE)) {
         const code = `import React from 'react';\n${content}`;
         return { code, map: { mappings: '' } };
       }
