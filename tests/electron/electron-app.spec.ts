@@ -191,3 +191,19 @@ test('should detach debugger on app-initiated exit', async ({ playwright }) => {
   });
   await closePromise;
 });
+
+test('should serve from HAR', async ({ playwright, asset }) => {
+  const harPath = asset('har-fulfill.har');
+  const app = await playwright._electron.launch({
+    args: [path.join(__dirname, 'electron-window-app.js')],
+    har: { path: harPath },
+  });
+  const page = await app.firstWindow();
+  // await page.goto('https://playwright.dev/');
+  await page.goto('http://no.playwright/');
+  // HAR contains a redirect for the script that should be followed automatically.
+  expect(await page.evaluate('window.value')).toBe('foo');
+  // HAR contains a POST for the css file that should not be used.
+  await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(255, 0, 0)');
+  await app.close();
+});

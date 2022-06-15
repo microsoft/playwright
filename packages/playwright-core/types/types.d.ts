@@ -10215,15 +10215,14 @@ export interface BrowserType<Unused = {}> {
       /**
        * Path to a [HAR](http://www.softwareishard.com/blog/har-12-spec) file with prerecorded network data. If the HAR file
        * contains an entry with the matching URL and HTTP method, then the entry's headers, status and body will be used to
-       * fulfill the network request. An entry resulting in a redirect will be followed automatically. If there is no matching
-       * entry in the file the execution continues to try other configured HAR files and [Route] handlers. If `path` is a
-       * relative path, then it is resolved relative to the current working directory.
+       * fulfill the network request. An entry resulting in a redirect will be followed automatically. If `path` is a relative
+       * path, then it is resolved relative to the current working directory.
        */
       path: string;
 
       /**
-       * If set to 'abort' any request not found in the HAR file will be aborted. If set to'continue' missing requests will
-       * continue normal flow and can be handled by [Route] handlers. Defaults to 'abort'.
+       * If set to 'abort' any request not found in the HAR file will be aborted. If set to'continue' missing requests will be
+       * sent to the network. Defaults to 'abort'.
        */
       fallback?: "abort"|"continue";
 
@@ -11448,15 +11447,14 @@ export interface AndroidDevice {
       /**
        * Path to a [HAR](http://www.softwareishard.com/blog/har-12-spec) file with prerecorded network data. If the HAR file
        * contains an entry with the matching URL and HTTP method, then the entry's headers, status and body will be used to
-       * fulfill the network request. An entry resulting in a redirect will be followed automatically. If there is no matching
-       * entry in the file the execution continues to try other configured HAR files and [Route] handlers. If `path` is a
-       * relative path, then it is resolved relative to the current working directory.
+       * fulfill the network request. An entry resulting in a redirect will be followed automatically. If `path` is a relative
+       * path, then it is resolved relative to the current working directory.
        */
       path: string;
 
       /**
-       * If set to 'abort' any request not found in the HAR file will be aborted. If set to'continue' missing requests will
-       * continue normal flow and can be handled by [Route] handlers. Defaults to 'abort'.
+       * If set to 'abort' any request not found in the HAR file will be aborted. If set to'continue' missing requests will be
+       * sent to the network. Defaults to 'abort'.
        */
       fallback?: "abort"|"continue";
 
@@ -12988,15 +12986,14 @@ export interface Browser extends EventEmitter {
       /**
        * Path to a [HAR](http://www.softwareishard.com/blog/har-12-spec) file with prerecorded network data. If the HAR file
        * contains an entry with the matching URL and HTTP method, then the entry's headers, status and body will be used to
-       * fulfill the network request. An entry resulting in a redirect will be followed automatically. If there is no matching
-       * entry in the file the execution continues to try other configured HAR files and [Route] handlers. If `path` is a
-       * relative path, then it is resolved relative to the current working directory.
+       * fulfill the network request. An entry resulting in a redirect will be followed automatically. If `path` is a relative
+       * path, then it is resolved relative to the current working directory.
        */
       path: string;
 
       /**
-       * If set to 'abort' any request not found in the HAR file will be aborted. If set to'continue' missing requests will
-       * continue normal flow and can be handled by [Route] handlers. Defaults to 'abort'.
+       * If set to 'abort' any request not found in the HAR file will be aborted. If set to'continue' missing requests will be
+       * sent to the network. Defaults to 'abort'.
        */
       fallback?: "abort"|"continue";
 
@@ -13836,6 +13833,35 @@ export interface Electron {
        * Non-negative accuracy value. Defaults to `0`.
        */
       accuracy?: number;
+    };
+
+    /**
+     * If specified the network requests that are made in the context will be served from the HAR file.
+     *
+     * > NOTE: Playwright will not serve requests intercepted by Service Worker from the HAR file. See
+     * [this](https://github.com/microsoft/playwright/issues/1090) issue. We recommend disabling Service Workers when using
+     * request interception. Via `await context.addInitScript(() => delete window.navigator.serviceWorker);`
+     */
+    har?: {
+      /**
+       * Path to a [HAR](http://www.softwareishard.com/blog/har-12-spec) file with prerecorded network data. If the HAR file
+       * contains an entry with the matching URL and HTTP method, then the entry's headers, status and body will be used to
+       * fulfill the network request. An entry resulting in a redirect will be followed automatically. If `path` is a relative
+       * path, then it is resolved relative to the current working directory.
+       */
+      path: string;
+
+      /**
+       * If set to 'abort' any request not found in the HAR file will be aborted. If set to'continue' missing requests will be
+       * sent to the network. Defaults to 'abort'.
+       */
+      fallback?: "abort"|"continue";
+
+      /**
+       * A glob pattern or regular expression to match request URL while routing. Only requests with URL matching the pattern
+       * will be surved from the HAR file. If not specified, all requests are served from the HAR file.
+       */
+      urlFilter?: string|RegExp;
     };
 
     /**
@@ -15576,15 +15602,14 @@ export interface BrowserContextOptions {
     /**
      * Path to a [HAR](http://www.softwareishard.com/blog/har-12-spec) file with prerecorded network data. If the HAR file
      * contains an entry with the matching URL and HTTP method, then the entry's headers, status and body will be used to
-     * fulfill the network request. An entry resulting in a redirect will be followed automatically. If there is no matching
-     * entry in the file the execution continues to try other configured HAR files and [Route] handlers. If `path` is a
-     * relative path, then it is resolved relative to the current working directory.
+     * fulfill the network request. An entry resulting in a redirect will be followed automatically. If `path` is a relative
+     * path, then it is resolved relative to the current working directory.
      */
     path: string;
 
     /**
-     * If set to 'abort' any request not found in the HAR file will be aborted. If set to'continue' missing requests will
-     * continue normal flow and can be handled by [Route] handlers. Defaults to 'abort'.
+     * If set to 'abort' any request not found in the HAR file will be aborted. If set to'continue' missing requests will be
+     * sent to the network. Defaults to 'abort'.
      */
     fallback?: "abort"|"continue";
 

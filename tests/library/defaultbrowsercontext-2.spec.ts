@@ -223,3 +223,16 @@ it('should connect to a browser with the default page', async ({ browserType,cre
   expect(context.pages().length).toBe(1);
   await context.close();
 });
+
+it.only('should support har option', async ({ isAndroid, launchPersistent, asset }) => {
+  it.fixme(isAndroid);
+
+  const path = asset('har-fulfill.har');
+  const { page } = await launchPersistent({ har: { path } });
+  await page.goto('http://no.playwright/');
+  // HAR contains a redirect for the script that should be followed automatically.
+  expect(await page.evaluate('window.value')).toBe('foo');
+  // HAR contains a POST for the css file that should not be used.
+  await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(255, 0, 0)');
+});
+

@@ -28,6 +28,7 @@ import type * as api from '../../types/types';
 import { kBrowserClosedError } from '../common/errors';
 import { raceAgainstTimeout } from '../utils/timeoutRunner';
 import type { Playwright } from './playwright';
+import { HarRouter } from './harRouter';
 
 export interface BrowserServerLauncher {
   launchServer(options?: LaunchServerOptions): Promise<api.BrowserServer>;
@@ -94,6 +95,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
     const logger = options.logger || this._defaultLaunchOptions?.logger;
     assert(!(options as any).port, 'Cannot specify a port without launching as a server.');
     options = { ...this._defaultLaunchOptions, ...this._defaultContextOptions, ...options };
+    const harRouter = options.har ? await HarRouter.create(options.har) : null;
     const contextParams = await prepareBrowserContextParams(options);
     const persistentParams: channels.BrowserTypeLaunchPersistentContextParams = {
       ...contextParams,
@@ -108,6 +110,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
     context._options = contextParams;
     context._logger = logger;
     context._setBrowserType(this);
+    harRouter?.addRoute(context);
     await this._onDidCreateContext?.(context);
     return context;
   }

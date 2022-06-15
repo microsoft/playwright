@@ -250,8 +250,8 @@ state is still returned, but won't be saved to the disk.
 ## js-python-context-option-har
 * langs: js, python
 - `har` <[Object]>
-  - `path` <[path]> Path to a [HAR](http://www.softwareishard.com/blog/har-12-spec) file with prerecorded network data. If the HAR file contains an entry with the matching URL and HTTP method, then the entry's headers, status and body will be used to fulfill the network request. An entry resulting in a redirect will be followed automatically. If there is no matching entry in the file the execution continues to try other configured HAR files and [Route] handlers. If `path` is a relative path, then it is resolved relative to the current working directory.
-  - `fallback` ?<[HarFallback]<"abort"|"continue">> If set to 'abort' any request not found in the HAR file will be aborted. If set to'continue' missing requests will continue normal flow and can be handled by [Route] handlers. Defaults to 'abort'.
+  - `path` <[path]> Path to a [HAR](http://www.softwareishard.com/blog/har-12-spec) file with prerecorded network data. If the HAR file contains an entry with the matching URL and HTTP method, then the entry's headers, status and body will be used to fulfill the network request. An entry resulting in a redirect will be followed automatically. If `path` is a relative path, then it is resolved relative to the current working directory.
+  - `fallback` ?<[HarFallback]<"abort"|"continue">> If set to 'abort' any request not found in the HAR file will be aborted. If set to'continue' missing requests will be sent to the network. Defaults to 'abort'.
   - `urlFilter` ?<[string]|[RegExp]> A glob pattern or regular expression to match request URL while routing. Only requests with URL matching the pattern will be surved from the HAR file. If not specified, all requests are served from the HAR file.
 
 If specified the network requests that are made in the context will be served from the HAR file.
@@ -264,13 +264,13 @@ Playwright will not serve requests intercepted by Service Worker from the HAR fi
 * langs: csharp, java
 - `harPath` <[path]>
 
-Path to a [HAR](http://www.softwareishard.com/blog/har-12-spec) file with prerecorded network data. If the HAR file contains an entry with the matching URL and HTTP method, then the entry's headers, status and body will be used to fulfill the network request. An entry resulting in a redirect will be followed automatically. If there is no matching entry in the file the execution continues to try other configured HAR files and [Route] handlers. If `path` is a relative path, then it is resolved relative to the current working directory.
+Path to a [HAR](http://www.softwareishard.com/blog/har-12-spec) file with prerecorded network data. If the HAR file contains an entry with the matching URL and HTTP method, then the entry's headers, status and body will be used to fulfill the network request. An entry resulting in a redirect will be followed automatically. If `path` is a relative path, then it is resolved relative to the current working directory.
 
 ## csharp-java-context-option-har-fallback
 * langs: csharp, java
 - `fallback` ?<[HarFallback]<"abort"|"continue">>
 
-If set to 'abort' any request not found in the HAR file will be aborted. If set to'continue' missing requests will continue normal flow and can be handled by [Route] handlers. Defaults to 'abort'.
+If set to 'abort' any request not found in the HAR file will be aborted. If set to'continue' missing requests will be sent to the network. Defaults to 'abort'.
 
 ## csharp-java-context-option-har-urlfilter
 * langs: csharp, java
