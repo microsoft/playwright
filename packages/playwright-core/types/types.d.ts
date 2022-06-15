@@ -1525,6 +1525,207 @@ export interface Page {
    */
   off(event: 'worker', listener: (worker: Worker) => void): this;
 
+  /**
+   * Emitted when the page closes.
+   */
+  prependListener(event: 'close', listener: (page: Page) => void): this;
+
+  /**
+   * Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`. Also
+   * emitted if the page throws an error or a warning.
+   *
+   * The arguments passed into `console.log` appear as arguments on the event handler.
+   *
+   * An example of handling `console` event:
+   *
+   * ```js
+   * page.on('console', async msg => {
+   *   const values = [];
+   *   for (const arg of msg.args())
+   *     values.push(await arg.jsonValue());
+   *   console.log(...values);
+   * });
+   * await page.evaluate(() => console.log('hello', 5, {foo: 'bar'}));
+   * ```
+   *
+   */
+  prependListener(event: 'console', listener: (consoleMessage: ConsoleMessage) => void): this;
+
+  /**
+   * Emitted when the page crashes. Browser pages might crash if they try to allocate too much memory. When the page crashes,
+   * ongoing and subsequent operations will throw.
+   *
+   * The most common way to deal with crashes is to catch an exception:
+   *
+   * ```js
+   * try {
+   *   // Crash might happen during a click.
+   *   await page.click('button');
+   *   // Or while waiting for an event.
+   *   await page.waitForEvent('popup');
+   * } catch (e) {
+   *   // When the page crashes, exception message contains 'crash'.
+   * }
+   * ```
+   *
+   */
+  prependListener(event: 'crash', listener: (page: Page) => void): this;
+
+  /**
+   * Emitted when a JavaScript dialog appears, such as `alert`, `prompt`, `confirm` or `beforeunload`. Listener **must**
+   * either [dialog.accept([promptText])](https://playwright.dev/docs/api/class-dialog#dialog-accept) or
+   * [dialog.dismiss()](https://playwright.dev/docs/api/class-dialog#dialog-dismiss) the dialog - otherwise the page will
+   * [freeze](https://developer.mozilla.org/en-US/docs/Web/JavaScript/EventLoop#never_blocking) waiting for the dialog, and
+   * actions like click will never finish.
+   *
+   * ```js
+   * page.on('dialog', dialog => {
+   *   dialog.accept();
+   * });
+   * ```
+   *
+   * > NOTE: When no [page.on('dialog')](https://playwright.dev/docs/api/class-page#page-event-dialog) listeners are present,
+   * all dialogs are automatically dismissed.
+   */
+  prependListener(event: 'dialog', listener: (dialog: Dialog) => void): this;
+
+  /**
+   * Emitted when the JavaScript [`DOMContentLoaded`](https://developer.mozilla.org/en-US/docs/Web/Events/DOMContentLoaded)
+   * event is dispatched.
+   */
+  prependListener(event: 'domcontentloaded', listener: (page: Page) => void): this;
+
+  /**
+   * Emitted when attachment download started. User can access basic file operations on downloaded content via the passed
+   * [Download] instance.
+   */
+  prependListener(event: 'download', listener: (download: Download) => void): this;
+
+  /**
+   * Emitted when a file chooser is supposed to appear, such as after clicking the  `<input type=file>`. Playwright can
+   * respond to it via setting the input files using
+   * [fileChooser.setFiles(files[, options])](https://playwright.dev/docs/api/class-filechooser#file-chooser-set-files) that
+   * can be uploaded after that.
+   *
+   * ```js
+   * page.on('filechooser', async (fileChooser) => {
+   *   await fileChooser.setFiles('/tmp/myfile.pdf');
+   * });
+   * ```
+   *
+   */
+  prependListener(event: 'filechooser', listener: (fileChooser: FileChooser) => void): this;
+
+  /**
+   * Emitted when a frame is attached.
+   */
+  prependListener(event: 'frameattached', listener: (frame: Frame) => void): this;
+
+  /**
+   * Emitted when a frame is detached.
+   */
+  prependListener(event: 'framedetached', listener: (frame: Frame) => void): this;
+
+  /**
+   * Emitted when a frame is navigated to a new url.
+   */
+  prependListener(event: 'framenavigated', listener: (frame: Frame) => void): this;
+
+  /**
+   * Emitted when the JavaScript [`load`](https://developer.mozilla.org/en-US/docs/Web/Events/load) event is dispatched.
+   */
+  prependListener(event: 'load', listener: (page: Page) => void): this;
+
+  /**
+   * Emitted when an uncaught exception happens within the page.
+   *
+   * ```js
+   * // Log all uncaught errors to the terminal
+   * page.on('pageerror', exception => {
+   *   console.log(`Uncaught exception: "${exception}"`);
+   * });
+   *
+   * // Navigate to a page with an exception.
+   * await page.goto('data:text/html,<script>throw new Error("Test")</script>');
+   * ```
+   *
+   */
+  prependListener(event: 'pageerror', listener: (error: Error) => void): this;
+
+  /**
+   * Emitted when the page opens a new tab or window. This event is emitted in addition to the
+   * [browserContext.on('page')](https://playwright.dev/docs/api/class-browsercontext#browser-context-event-page), but only
+   * for popups relevant to this page.
+   *
+   * The earliest moment that page is available is when it has navigated to the initial url. For example, when opening a
+   * popup with `window.open('http://example.com')`, this event will fire when the network request to "http://example.com" is
+   * done and its response has started loading in the popup.
+   *
+   * ```js
+   * // Note that Promise.all prevents a race condition
+   * // between evaluating and waiting for the popup.
+   * const [popup] = await Promise.all([
+   *   // It is important to call waitForEvent first.
+   *   page.waitForEvent('popup'),
+   *   // Opens the popup.
+   *   page.evaluate(() => window.open('https://example.com')),
+   * ]);
+   * console.log(await popup.evaluate('location.href'));
+   * ```
+   *
+   * > NOTE: Use
+   * [page.waitForLoadState([state, options])](https://playwright.dev/docs/api/class-page#page-wait-for-load-state) to wait
+   * until the page gets to a particular state (you should not need it in most cases).
+   */
+  prependListener(event: 'popup', listener: (page: Page) => void): this;
+
+  /**
+   * Emitted when a page issues a request. The [request] object is read-only. In order to intercept and mutate requests, see
+   * [page.route(url, handler[, options])](https://playwright.dev/docs/api/class-page#page-route) or
+   * [browserContext.route(url, handler[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-route).
+   */
+  prependListener(event: 'request', listener: (request: Request) => void): this;
+
+  /**
+   * Emitted when a request fails, for example by timing out.
+   *
+   * ```js
+   * page.on('requestfailed', request => {
+   *   console.log(request.url() + ' ' + request.failure().errorText);
+   * });
+   * ```
+   *
+   * > NOTE: HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request will
+   * complete with [page.on('requestfinished')](https://playwright.dev/docs/api/class-page#page-event-request-finished) event
+   * and not with [page.on('requestfailed')](https://playwright.dev/docs/api/class-page#page-event-request-failed). A request
+   * will only be considered failed when the client cannot get an HTTP response from the server, e.g. due to network error
+   * net::ERR_FAILED.
+   */
+  prependListener(event: 'requestfailed', listener: (request: Request) => void): this;
+
+  /**
+   * Emitted when a request finishes successfully after downloading the response body. For a successful response, the
+   * sequence of events is `request`, `response` and `requestfinished`.
+   */
+  prependListener(event: 'requestfinished', listener: (request: Request) => void): this;
+
+  /**
+   * Emitted when [response] status and headers are received for a request. For a successful response, the sequence of events
+   * is `request`, `response` and `requestfinished`.
+   */
+  prependListener(event: 'response', listener: (response: Response) => void): this;
+
+  /**
+   * Emitted when [WebSocket] request is sent.
+   */
+  prependListener(event: 'websocket', listener: (webSocket: WebSocket) => void): this;
+
+  /**
+   * Emitted when a dedicated [WebWorker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) is spawned by the
+   * page.
+   */
+  prependListener(event: 'worker', listener: (worker: Worker) => void): this;
+
   accessibility: Accessibility;
 
   /**
@@ -6556,6 +6757,93 @@ export interface BrowserContext {
   off(event: 'serviceworker', listener: (worker: Worker) => void): this;
 
   /**
+   * > NOTE: Only works with Chromium browser's persistent context.
+   *
+   * Emitted when new background page is created in the context.
+   *
+   * ```js
+   * const backgroundPage = await context.waitForEvent('backgroundpage');
+   * ```
+   *
+   */
+  prependListener(event: 'backgroundpage', listener: (page: Page) => void): this;
+
+  /**
+   * Emitted when Browser context gets closed. This might happen because of one of the following:
+   * - Browser context is closed.
+   * - Browser application is closed or crashed.
+   * - The [browser.close()](https://playwright.dev/docs/api/class-browser#browser-close) method was called.
+   */
+  prependListener(event: 'close', listener: (browserContext: BrowserContext) => void): this;
+
+  /**
+   * The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event will
+   * also fire for popup pages. See also [page.on('popup')](https://playwright.dev/docs/api/class-page#page-event-popup) to
+   * receive events about popups relevant to a specific page.
+   *
+   * The earliest moment that page is available is when it has navigated to the initial url. For example, when opening a
+   * popup with `window.open('http://example.com')`, this event will fire when the network request to "http://example.com" is
+   * done and its response has started loading in the popup.
+   *
+   * ```js
+   * const [newPage] = await Promise.all([
+   *   context.waitForEvent('page'),
+   *   page.click('a[target=_blank]'),
+   * ]);
+   * console.log(await newPage.evaluate('location.href'));
+   * ```
+   *
+   * > NOTE: Use
+   * [page.waitForLoadState([state, options])](https://playwright.dev/docs/api/class-page#page-wait-for-load-state) to wait
+   * until the page gets to a particular state (you should not need it in most cases).
+   */
+  prependListener(event: 'page', listener: (page: Page) => void): this;
+
+  /**
+   * Emitted when a request is issued from any pages created through this context. The [request] object is read-only. To only
+   * listen for requests from a particular page, use
+   * [page.on('request')](https://playwright.dev/docs/api/class-page#page-event-request).
+   *
+   * In order to intercept and mutate requests, see
+   * [browserContext.route(url, handler[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-route)
+   * or [page.route(url, handler[, options])](https://playwright.dev/docs/api/class-page#page-route).
+   */
+  prependListener(event: 'request', listener: (request: Request) => void): this;
+
+  /**
+   * Emitted when a request fails, for example by timing out. To only listen for failed requests from a particular page, use
+   * [page.on('requestfailed')](https://playwright.dev/docs/api/class-page#page-event-request-failed).
+   *
+   * > NOTE: HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request will
+   * complete with
+   * [browserContext.on('requestfinished')](https://playwright.dev/docs/api/class-browsercontext#browser-context-event-request-finished)
+   * event and not with
+   * [browserContext.on('requestfailed')](https://playwright.dev/docs/api/class-browsercontext#browser-context-event-request-failed).
+   */
+  prependListener(event: 'requestfailed', listener: (request: Request) => void): this;
+
+  /**
+   * Emitted when a request finishes successfully after downloading the response body. For a successful response, the
+   * sequence of events is `request`, `response` and `requestfinished`. To listen for successful requests from a particular
+   * page, use [page.on('requestfinished')](https://playwright.dev/docs/api/class-page#page-event-request-finished).
+   */
+  prependListener(event: 'requestfinished', listener: (request: Request) => void): this;
+
+  /**
+   * Emitted when [response] status and headers are received for a request. For a successful response, the sequence of events
+   * is `request`, `response` and `requestfinished`. To listen for response events from a particular page, use
+   * [page.on('response')](https://playwright.dev/docs/api/class-page#page-event-response).
+   */
+  prependListener(event: 'response', listener: (response: Response) => void): this;
+
+  /**
+   * > NOTE: Service workers are only supported on Chromium-based browsers.
+   *
+   * Emitted when new service worker is created in the context.
+   */
+  prependListener(event: 'serviceworker', listener: (worker: Worker) => void): this;
+
+  /**
    * Adds cookies into this browser context. All pages within this context will have these cookies installed. Cookies can be
    * obtained via
    * [browserContext.cookies([urls])](https://playwright.dev/docs/api/class-browsercontext#browser-context-cookies).
@@ -7230,6 +7518,11 @@ export interface Worker {
    * Removes an event listener added by `on` or `addListener`.
    */
   off(event: 'close', listener: (worker: Worker) => void): this;
+
+  /**
+   * Emitted when this dedicated [WebWorker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) is terminated.
+   */
+  prependListener(event: 'close', listener: (worker: Worker) => void): this;
 
   url(): string;}
 
@@ -11030,6 +11323,17 @@ export interface ElectronApplication {
   off(event: 'window', listener: (page: Page) => void): this;
 
   /**
+   * This event is issued when the application closes.
+   */
+  prependListener(event: 'close', listener: () => void): this;
+
+  /**
+   * This event is issued for every window that is created **and loaded** in Electron. It contains a [Page] that can be used
+   * for Playwright automation.
+   */
+  prependListener(event: 'window', listener: (page: Page) => void): this;
+
+  /**
    * Returns the BrowserWindow object that corresponds to the given Playwright page.
    * @param page Page to retrieve the window for.
    */
@@ -11312,6 +11616,11 @@ export interface AndroidDevice {
    * Removes an event listener added by `on` or `addListener`.
    */
   off(event: 'webview', listener: (androidWebView: AndroidWebView) => void): this;
+
+  /**
+   * Emitted when a new WebView instance is detected.
+   */
+  prependListener(event: 'webview', listener: (androidWebView: AndroidWebView) => void): this;
 
   /**
    * Disconnects from the device.
@@ -12034,6 +12343,16 @@ export interface AndroidSocket {
   off(event: 'data', listener: (buffer: Buffer) => void): this;
 
   /**
+   * Emitted when the socket is closed.
+   */
+  prependListener(event: 'close', listener: () => void): this;
+
+  /**
+   * Emitted when data is available to read from the socket.
+   */
+  prependListener(event: 'data', listener: (buffer: Buffer) => void): this;
+
+  /**
    * Closes the socket.
    */
   close(): Promise<void>;
@@ -12074,6 +12393,11 @@ export interface AndroidWebView {
    * Removes an event listener added by `on` or `addListener`.
    */
   off(event: 'close', listener: () => void): this;
+
+  /**
+   * Emitted when the WebView is closed.
+   */
+  prependListener(event: 'close', listener: () => void): this;
 
   /**
    * Connects to the WebView and returns a regular Playwright [Page] to interact with.
@@ -12849,6 +13173,13 @@ export interface Browser extends EventEmitter {
   off(event: 'disconnected', listener: (browser: Browser) => void): this;
 
   /**
+   * Emitted when Browser gets disconnected from the browser application. This might happen because of one of the following:
+   * - Browser application is closed or crashed.
+   * - The [browser.close()](https://playwright.dev/docs/api/class-browser#browser-close) method was called.
+   */
+  prependListener(event: 'disconnected', listener: (browser: Browser) => void): this;
+
+  /**
    * Get the browser type (chromium, firefox or webkit) that the browser belongs to.
    */
   browserType(): BrowserType;
@@ -13341,6 +13672,11 @@ export interface BrowserServer {
    * Removes an event listener added by `on` or `addListener`.
    */
   off(event: 'close', listener: () => void): this;
+
+  /**
+   * Emitted when the browser server closes.
+   */
+  prependListener(event: 'close', listener: () => void): this;
 
   /**
    * Closes the browser gracefully and makes sure the process is terminated.
@@ -15429,6 +15765,36 @@ export interface WebSocket {
    * Removes an event listener added by `on` or `addListener`.
    */
   off(event: 'socketerror', listener: (string: String) => void): this;
+
+  /**
+   * Fired when the websocket closes.
+   */
+  prependListener(event: 'close', listener: (webSocket: WebSocket) => void): this;
+
+  /**
+   * Fired when the websocket receives a frame.
+   */
+  prependListener(event: 'framereceived', listener: (data: {
+  /**
+   * frame payload
+   */
+  payload: string|Buffer;
+}) => void): this;
+
+  /**
+   * Fired when the websocket sends a frame.
+   */
+  prependListener(event: 'framesent', listener: (data: {
+  /**
+   * frame payload
+   */
+  payload: string|Buffer;
+}) => void): this;
+
+  /**
+   * Fired when the websocket has an error.
+   */
+  prependListener(event: 'socketerror', listener: (string: String) => void): this;
 
   /**
    * Indicates that the web socket has been closed.

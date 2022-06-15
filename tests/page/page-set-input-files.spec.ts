@@ -169,6 +169,15 @@ it('should emit event once', async ({ page, server }) => {
   expect(chooser).toBeTruthy();
 });
 
+it('should emit event via prepend', async ({ page, server }) => {
+  await page.setContent(`<input type=file>`);
+  const [chooser] = await Promise.all([
+    new Promise(f => page.prependListener('filechooser', f)),
+    page.click('input'),
+  ]);
+  expect(chooser).toBeTruthy();
+});
+
 it('should emit event for iframe', async ({ page, server, browserName }) => {
   it.skip(browserName === 'firefox');
   const frame = await attachFrame(page, 'frame1', server.EMPTY_PAGE);
