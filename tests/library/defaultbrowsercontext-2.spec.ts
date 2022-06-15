@@ -224,7 +224,7 @@ it('should connect to a browser with the default page', async ({ browserType,cre
   await context.close();
 });
 
-it.only('should support har option', async ({ isAndroid, launchPersistent, asset }) => {
+it('should support har option', async ({ isAndroid, launchPersistent, asset }) => {
   it.fixme(isAndroid);
 
   const path = asset('har-fulfill.har');
