@@ -1025,6 +1025,35 @@ handler function to route the request.
 
 How often a route should be used. By default it will be used every time.
 
+## async method: BrowserContext.routeFromHar
+
+Provides the capability to serve network requests that are made in the context from prerecorded HAR file.
+
+:::note
+[`method: BrowserContext.routeFromHar`] will not intercept requests intercepted by Service Worker. See [this](https://github.com/microsoft/playwright/issues/1090) issue. We recommend disabling Service Workers when using request interception. Via `await context.addInitScript(() => delete window.navigator.serviceWorker);`
+:::
+
+### param: BrowserContext.routeFromHar.harPath
+- `harPath` <[path]>
+
+Path to the HAR file with prerecorded network data. If HAR file contains an entry with the matching url and HTTP method, then the entry's headers, status and body will be used to fulfill. An entry resulting in a redirect will be followed automatically. If there is no matching entry in the file the execution continues to try other configured HAR files and [Route] handlers.
+If `path` is a relative path, then it is resolved relative to the current working directory.
+
+### option: BrowserContext.routeFromHar.strict
+- `strict` <[boolean]>
+
+If set to true any request not found in the HAR file will be aborted. If set to
+false missing requests will continue normal flow and can be handled by other
+[Route] handlers or served from other HAR files configured with [`method: BrowserContext.routeFromHar`].
+Defaults to false.
+
+### option: BrowserContext.routeFromHar.url
+- `url` <[string]|[RegExp]>
+
+A glob pattern or regular expression to match request URL while routing. Only requests
+with URL matching the pattern will be surved from the HAR file. If not specified, all
+requests are served from the HAR file.
+
 ## method: BrowserContext.serviceWorkers
 * langs: js, python
 - returns: <[Array]<[Worker]>>
@@ -1190,6 +1219,15 @@ Optional handler function used to register a routing with [`method: BrowserConte
 - `handler` ?<[function]\([Route]\)>
 
 Optional handler function used to register a routing with [`method: BrowserContext.route`].
+
+## async method: BrowserContext.unrouteFromHar
+
+Removes HAR handler previously added with [`method: BrowserContext.routeFromHar`].
+
+### param: BrowserContext.unrouteFromHar.harPath
+- `harPath` <[path]>
+
+Path to the HAR file which was passed to [`method: BrowserContext.routeFromHar`].
 
 ## async method: BrowserContext.waitForEvent
 * langs: js, python

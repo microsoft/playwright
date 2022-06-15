@@ -40,6 +40,7 @@ import { Artifact } from './artifact';
 import { APIRequestContext } from './fetch';
 import { createInstrumentation } from './clientInstrumentation';
 import { rewriteErrorMessage } from '../utils/stackTrace';
+import { HarRouter } from './harRouter';
 
 export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel> implements api.BrowserContext {
   _pages = new Set<Page>();
@@ -51,6 +52,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   _ownerPage: Page | undefined;
   private _closedPromise: Promise<void>;
   _options: channels.BrowserNewContextParams = { };
+  private readonly _harRouter = new HarRouter(this);
 
   readonly request: APIRequestContext;
   readonly tracing: Tracing;
@@ -273,6 +275,14 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
       await this._disableInterception();
   }
 
+  async routeFromHar(harPath: string, options?: { strict?: boolean; url?: string|RegExp; }): Promise<void> {
+    await this._harRouter.routeFromHar(harPath, options);
+  }
+
+  async unrouteFromHar(harPath: string): Promise<void> {
+    await this._harRouter.unrouteFromHar(harPath);
+  }
+
   async _unrouteAll() {
     this._routes = [];
     await this._disableInterception();
@@ -325,7 +335,6 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     if (this._browser)
       this._browser._contexts.delete(this);
     this._browserType?._contexts?.delete(this);
-    this._connection.localUtils()._channel.harClearCache({ cacheKey: this._guid }).catch(() => {});
     this.emit(Events.BrowserContext.Close, this);
   }
 

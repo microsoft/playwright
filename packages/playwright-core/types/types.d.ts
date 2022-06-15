@@ -2969,6 +2969,34 @@ export interface Page {
   }): Promise<void>;
 
   /**
+   * Provides the capability to serve network requests that are made by a page from prerecorded HAR file.
+   *
+   * > NOTE: [page.routeFromHar(harPath[, options])](https://playwright.dev/docs/api/class-page#page-route-from-har) will not
+   * intercept requests intercepted by Service Worker. See [this](https://github.com/microsoft/playwright/issues/1090) issue.
+   * We recommend disabling Service Workers when using request interception. Via `await context.addInitScript(() => delete
+   * window.navigator.serviceWorker);`
+   * @param harPath Path to the HAR file with prerecorded network data. If HAR file contains an entry with the matching url and HTTP method, then the entry's headers, status and body will be used to fulfill. An entry resulting in a redirect will be followed
+   * automatically. If there is no matching entry in the file the execution continues to try other configured HAR files and
+   * [Route] handlers. If `path` is a relative path, then it is resolved relative to the current working directory.
+   * @param options
+   */
+  routeFromHar(harPath: string, options?: {
+    /**
+     * If set to true any request not found in the HAR file will be aborted. If set to false missing requests will continue
+     * normal flow and can be handled by other [Route] handlers or served from other HAR files configured with
+     * [page.routeFromHar(harPath[, options])](https://playwright.dev/docs/api/class-page#page-route-from-har). Defaults to
+     * false.
+     */
+    strict?: boolean;
+
+    /**
+     * A glob pattern or regular expression to match request URL while routing. Only requests with URL matching the pattern
+     * will be surved from the HAR file. If not specified, all requests are served from the HAR file.
+     */
+    url?: string|RegExp;
+  }): Promise<void>;
+
+  /**
    * Returns the buffer with the captured screenshot.
    * @param options
    */
@@ -3512,6 +3540,13 @@ export interface Page {
    * @param handler Optional handler function to route the request.
    */
   unroute(url: string|RegExp|((url: URL) => boolean), handler?: ((route: Route, request: Request) => void)): Promise<void>;
+
+  /**
+   * Removes HAR handler previously added with
+   * [page.routeFromHar(harPath[, options])](https://playwright.dev/docs/api/class-page#page-route-from-har).
+   * @param harPath Path to the HAR file which was passed to [page.routeFromHar(harPath[, options])](https://playwright.dev/docs/api/class-page#page-route-from-har).
+   */
+  unrouteFromHar(harPath: string): Promise<void>;
 
   /**
    * Shortcut for main frame's [frame.url()](https://playwright.dev/docs/api/class-frame#frame-url).
@@ -6807,6 +6842,35 @@ export interface BrowserContext {
   }): Promise<void>;
 
   /**
+   * Provides the capability to serve network requests that are made in the context from prerecorded HAR file.
+   *
+   * > NOTE:
+   * [browserContext.routeFromHar(harPath[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-route-from-har)
+   * will not intercept requests intercepted by Service Worker. See
+   * [this](https://github.com/microsoft/playwright/issues/1090) issue. We recommend disabling Service Workers when using
+   * request interception. Via `await context.addInitScript(() => delete window.navigator.serviceWorker);`
+   * @param harPath Path to the HAR file with prerecorded network data. If HAR file contains an entry with the matching url and HTTP method, then the entry's headers, status and body will be used to fulfill. An entry resulting in a redirect will be followed
+   * automatically. If there is no matching entry in the file the execution continues to try other configured HAR files and
+   * [Route] handlers. If `path` is a relative path, then it is resolved relative to the current working directory.
+   * @param options
+   */
+  routeFromHar(harPath: string, options?: {
+    /**
+     * If set to true any request not found in the HAR file will be aborted. If set to false missing requests will continue
+     * normal flow and can be handled by other [Route] handlers or served from other HAR files configured with
+     * [browserContext.routeFromHar(harPath[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-route-from-har).
+     * Defaults to false.
+     */
+    strict?: boolean;
+
+    /**
+     * A glob pattern or regular expression to match request URL while routing. Only requests with URL matching the pattern
+     * will be surved from the HAR file. If not specified, all requests are served from the HAR file.
+     */
+    url?: string|RegExp;
+  }): Promise<void>;
+
+  /**
    * > NOTE: Service workers are only supported on Chromium-based browsers.
    *
    * All existing service workers in the context.
@@ -6955,6 +7019,13 @@ export interface BrowserContext {
    * @param handler Optional handler function used to register a routing with [browserContext.route(url, handler[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-route).
    */
   unroute(url: string|RegExp|((url: URL) => boolean), handler?: ((route: Route, request: Request) => void)): Promise<void>;
+
+  /**
+   * Removes HAR handler previously added with
+   * [browserContext.routeFromHar(harPath[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-route-from-har).
+   * @param harPath Path to the HAR file which was passed to [browserContext.routeFromHar(harPath[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-route-from-har).
+   */
+  unrouteFromHar(harPath: string): Promise<void>;
 
   /**
    * > NOTE: Only works with Chromium browser's persistent context.
@@ -14949,27 +15020,6 @@ export interface Route {
      * If set, equals to setting `Content-Type` response header.
      */
     contentType?: string;
-
-    /**
-     * HAR file to extract the response from. If HAR file contains an entry with the matching url and HTTP method, then the
-     * entry's headers, status and body will be used to fulfill. An entry resulting in a redirect will be followed
-     * automatically. Individual fields such as headers can be overridden using fulfill options. If `path` is a relative path,
-     * then it is resolved relative to the current working directory.
-     */
-    har?: {
-      /**
-       * Path to the HAR file.
-       */
-      path: string;
-
-      /**
-       * Behavior in the case where matching entry was not found in the HAR. Either
-       * [route.abort([errorCode])](https://playwright.dev/docs/api/class-route#route-abort) the request,
-       * [route.continue([options])](https://playwright.dev/docs/api/class-route#route-continue) it, or throw an error. Defaults
-       * to "abort".
-       */
-      fallback?: "abort"|"continue"|"throw";
-    };
 
     /**
      * Response headers. Header values will be converted to a string.

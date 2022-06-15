@@ -15,44 +15,44 @@
  * limitations under the License.
  */
 
-import { Events } from './events';
-import { assert } from '../utils';
-import { TimeoutSettings } from '../common/timeoutSettings';
-import type { ParsedStackTrace } from '../utils/stackTrace';
-import type * as channels from '../protocol/channels';
-import { parseError, serializeError } from '../protocol/serializers';
-import { Accessibility } from './accessibility';
-import type { BrowserContext } from './browserContext';
-import { ChannelOwner } from './channelOwner';
-import { ConsoleMessage } from './consoleMessage';
-import { Dialog } from './dialog';
-import { Download } from './download';
-import { ElementHandle, determineScreenshotType } from './elementHandle';
-import type { Locator, FrameLocator, LocatorOptions } from './locator';
-import { Worker } from './worker';
-import type { WaitForNavigationOptions } from './frame';
-import { Frame, verifyLoadState } from './frame';
-import { Keyboard, Mouse, Touchscreen } from './input';
-import { assertMaxArguments, serializeArgument, parseResult, JSHandle } from './jsHandle';
-import type { RouteHandlerCallback } from './network';
-import { Request, Response, Route, WebSocket, validateHeaders, RouteHandler } from './network';
-import { FileChooser } from './fileChooser';
 import { Buffer } from 'buffer';
-import { Coverage } from './coverage';
-import { Waiter } from './waiter';
-import type * as api from '../../types/types';
-import type * as structs from '../../types/structs';
 import fs from 'fs';
 import path from 'path';
-import type { Size, URLMatch, Headers, LifecycleEvent, WaitForEventOptions, SelectOption, SelectOptionOptions, FilePayload, WaitForFunctionOptions } from './types';
-import { evaluationScript } from './clientHelper';
-import { isString, isRegExp, isObject, headersObjectToArray } from '../utils';
-import { mkdirIfNeeded } from '../utils/fileUtils';
+import type * as structs from '../../types/structs';
+import type * as api from '../../types/types';
 import { isSafeCloseError } from '../common/errors';
-import { Video } from './video';
-import { Artifact } from './artifact';
-import type { APIRequestContext } from './fetch';
 import { urlMatches } from '../common/netUtils';
+import { TimeoutSettings } from '../common/timeoutSettings';
+import type * as channels from '../protocol/channels';
+import { parseError, serializeError } from '../protocol/serializers';
+import { assert, headersObjectToArray, isObject, isRegExp, isString } from '../utils';
+import { mkdirIfNeeded } from '../utils/fileUtils';
+import type { ParsedStackTrace } from '../utils/stackTrace';
+import { Accessibility } from './accessibility';
+import { Artifact } from './artifact';
+import type { BrowserContext } from './browserContext';
+import { ChannelOwner } from './channelOwner';
+import { evaluationScript } from './clientHelper';
+import { ConsoleMessage } from './consoleMessage';
+import { Coverage } from './coverage';
+import { Dialog } from './dialog';
+import { Download } from './download';
+import { determineScreenshotType, ElementHandle } from './elementHandle';
+import { Events } from './events';
+import type { APIRequestContext } from './fetch';
+import { FileChooser } from './fileChooser';
+import type { WaitForNavigationOptions } from './frame';
+import { Frame, verifyLoadState } from './frame';
+import { HarRouter } from './harRouter';
+import { Keyboard, Mouse, Touchscreen } from './input';
+import { assertMaxArguments, JSHandle, parseResult, serializeArgument } from './jsHandle';
+import type { FrameLocator, Locator, LocatorOptions } from './locator';
+import type { RouteHandlerCallback } from './network';
+import { Request, Response, Route, RouteHandler, validateHeaders, WebSocket } from './network';
+import type { FilePayload, Headers, LifecycleEvent, SelectOption, SelectOptionOptions, Size, URLMatch, WaitForEventOptions, WaitForFunctionOptions } from './types';
+import { Video } from './video';
+import { Waiter } from './waiter';
+import { Worker } from './worker';
 
 type PDFOptions = Omit<channels.PagePdfParams, 'width' | 'height' | 'margin'> & {
   width?: string | number,
@@ -73,6 +73,7 @@ type ExpectScreenshotOptions = Omit<channels.PageExpectScreenshotOptions, 'scree
   isNot: boolean,
   screenshotOptions: Omit<channels.PageExpectScreenshotOptions['screenshotOptions'], 'mask'> & { mask?: Locator[] }
 };
+
 
 export class Page extends ChannelOwner<channels.PageChannel> implements api.Page {
   private _browserContext: BrowserContext;
@@ -97,6 +98,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   readonly _timeoutSettings: TimeoutSettings;
   private _video: Video | null = null;
   readonly _opener: Page | null;
+  private readonly _harRouter = new HarRouter(this);
 
   static from(page: channels.PageChannel): Page {
     return (page as any)._object;
@@ -471,6 +473,14 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     this._routes = this._routes.filter(route => route.url !== url || (handler && route.handler !== handler));
     if (!this._routes.length)
       await this._disableInterception();
+  }
+
+  async routeFromHar(harPath: string, options?: { strict?: boolean; url?: string|RegExp; }): Promise<void> {
+    await this._harRouter.routeFromHar(harPath, options);
+  }
+
+  async unrouteFromHar(harPath: string): Promise<void> {
+    await this._harRouter.unrouteFromHar(harPath);
   }
 
   async _unrouteAll() {
