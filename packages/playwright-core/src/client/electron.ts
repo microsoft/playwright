@@ -27,12 +27,14 @@ import { envObjectToArray } from './clientHelper';
 import { Events } from './events';
 import { JSHandle, parseResult, serializeArgument } from './jsHandle';
 import type { Page } from './page';
-import type { Env, WaitForEventOptions, Headers } from './types';
+import type { Env, WaitForEventOptions, Headers, BrowserContextOptions } from './types';
 import { Waiter } from './waiter';
+import { HarRouter } from './harRouter';
 
 type ElectronOptions = Omit<channels.ElectronLaunchOptions, 'env'|'extraHTTPHeaders'> & {
   env?: Env,
   extraHTTPHeaders?: Headers,
+  har?: BrowserContextOptions['har']
 };
 
 type ElectronAppType = typeof import('electron');
@@ -52,8 +54,10 @@ export class Electron extends ChannelOwner<channels.ElectronChannel> implements 
       extraHTTPHeaders: options.extraHTTPHeaders && headersObjectToArray(options.extraHTTPHeaders),
       env: envObjectToArray(options.env ? options.env : process.env),
     };
+    const harRouter = options.har ? await HarRouter.create(options.har) : null;
     const app = ElectronApplication.from((await this._channel.launch(params)).electronApplication);
     app._context._options = params;
+    harRouter?.addRoute(app._context);
     return app;
   }
 }
