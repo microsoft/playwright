@@ -357,6 +357,84 @@ test('test', async ({ page }) => {
 });
 ```
 
+### Capturing trace of failures during global setup
+
+In some instances, it may be useful to capture a trace of failures encountered during the global setup. In order to do this, you must [start tracing](./api/class-tracing.md#tracing-start) in your setup, and you must ensure that of your that you [stop tracing](./api/class-tracing.md#tracing-stop) if an error occurs before that error is thrown. This can be achieved by wrapping your setup in a `try...catch` block.  Here is an example that expands the global setup example to capture a trace.
+
+```js tab=js-js
+// global-setup.js
+const { chromium } = require('@playwright/test');
+
+module.exports = async config => {
+  const { baseURL, storageState } = config.projects[0].use;
+  const browser = await chromium.launch();
+  const page = await browser.newPage();
+  try {
+    await page
+    .context()
+    .tracing.start({ screenshots: true, snapshots: true });
+    await page.goto(baseURL);
+    await page.fill('input[name="user"]', 'user');
+    await page.fill('input[name="password"]', 'password');
+    await page.click('text=Sign in');
+    await page.context().storageState({ path: storageState });
+    await page
+      .context()
+      .tracing.stop({
+        path: `./test-results/setup-trace.zip`,
+      }).then(() => {
+        page.close();
+      });
+  } catch (error) {
+    await page
+      .context()
+      .tracing.stop({
+        path: `./test-results/failed-setup-trace.zip`,
+      });
+    page.close();
+    throw error;
+  }
+};
+```
+
+```js tab=js-ts
+// global-setup.ts
+import { chromium, FullConfig } from '@playwright/test';
+
+async function globalSetup(config: FullConfig) {
+  const { baseURL, storageState } = config.projects[0].use;
+  const browser = await chromium.launch();
+  const page = await browser.newPage();
+  try {
+    await page
+      .context()
+      .tracing.start({ screenshots: true, snapshots: true });
+    await page.goto(baseURL!);
+    await page.fill('input[name="user"]', 'user');
+    await page.fill('input[name="password"]', 'password');
+    await page.click('text=Sign in');
+    await page.context().storageState({ path: storageState as string });
+    await page
+      .context()
+      .tracing.stop({
+        path: `./test-results/setup-trace.zip`,
+      }).then(() => {
+          page.close();
+        });
+  } catch (error) {
+    await page
+      .context()
+      .tracing.stop({
+        path: `./test-results/failed-setup-trace.zip`,
+        });
+      page.close();
+      throw error;
+  }
+}
+
+export default globalSetup;
+```
+
 ## Projects
 
 Playwright Test supports running multiple test projects at the same time. This is useful for running the same or different tests in multiple configurations.
