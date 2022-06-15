@@ -391,7 +391,7 @@ module.exports = async config => {
       .tracing.stop({
         path: `./test-results/failed-setup-trace.zip`,
       });
-    page.close();
+    await page.close();
     throw error;
   }
 };
