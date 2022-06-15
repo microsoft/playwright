@@ -584,6 +584,11 @@ call [`method: BrowserContext.close`] for the HAR to be saved.
 
 Optional setting to control whether to omit request content from the HAR. Defaults to `false`.
 
+## context-option-recordhar-url-filter
+* langs: csharp, java, python
+  - alias-python: record_har_url_filter
+- `recordHarUrlFilter` ?<[string]|[RegExp]>
+
 ## context-option-recordvideo
 * langs: js
 - `recordVideo` <[Object]>
