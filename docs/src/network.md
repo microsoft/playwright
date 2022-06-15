@@ -784,49 +784,33 @@ Pass [`option: har`] option to the [`method: Route.fulfill`] method to use a mat
 
 ```js
 // Replay API requests from HAR.
-await page.route('**/api/**', async route => {
-  // Either use a matching response from the HAR,
-  // or abort the request if nothing matches.
-  await route.fulfill({ har: { path: 'example.har' } });
-});
+// Either use a matching response from the HAR,
+// or abort the request if nothing matches.
+await page.routeFromHar('example.har', { url: '**/api/**' });
 ```
 
 ```java
-page.route("**/api/**", route -> {
-  // Either use a matching response from the HAR,
-  // or abort the request if nothing matches.
-  route.fulfill(new Route.FulfillOptions().setHarPath(Paths.get("example.har")));
-});
+// Either use a matching response from the HAR,
+// or abort the request if nothing matches.
+page.routeFromHar(Paths.get("example.har"), new Page.RouteFromHarOptions().setUrl("**/api/**"));
 ```
 
 ```python async
-async def handle_route(route: Route) -> None:
-    # Either use a matching response from the HAR,
-    # or abort the request if nothing matches.
-    await route.fulfill(har_path="example.har")
-
-await page.route("**/api/**", handle_route)
+# Either use a matching response from the HAR,
+# or abort the request if nothing matches.
+await page.route_from_har("example.har", url="**/api/**")
 ```
 
 ```python sync
-def handle_route(route: Route) -> None:
-    # Either use a matching response from the HAR,
-    # or abort the request if nothing matches.
-    route.fulfill(har_path="example.har")
-
-page.route("**/api/**", handle_route)
+# Either use a matching response from the HAR,
+# or abort the request if nothing matches.
+page.route_from_har("example.har", url="**/api/**")
 ```
 
 ```csharp
-await Page.RouteAsync("**/api/**", async route =>
-{
-    // Either use a matching response from the HAR,
-    // or abort the request if nothing matches.
-    await route.FulfillAsync(new()
-    {
-        HarPath = "example.har",
-    });
-});
+// Either use a matching response from the HAR,
+// or abort the request if nothing matches.
+await Page.RouteFromHarAsync("example.har", new () { Url = "**/api/**" });
 ```
 
 ### API reference
