@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-import type * as types from './types';
+import type * as channels from '../protocol/channels';
 
 class Cookie {
-  private _raw: types.NetworkCookie;
-  constructor(data: types.NetworkCookie) {
+  private _raw: channels.NetworkCookie;
+  constructor(data: channels.NetworkCookie) {
     this._raw = data;
   }
 
@@ -43,7 +43,7 @@ class Cookie {
       this._raw.path === other._raw.path;
   }
 
-  networkCookie(): types.NetworkCookie {
+  networkCookie(): channels.NetworkCookie {
     return this._raw;
   }
 
@@ -61,12 +61,12 @@ class Cookie {
 export class CookieStore {
   private readonly _nameToCookies: Map<string, Set<Cookie>> = new Map();
 
-  addCookies(cookies: types.NetworkCookie[]) {
+  addCookies(cookies: channels.NetworkCookie[]) {
     for (const cookie of cookies)
       this._addCookie(new Cookie(cookie));
   }
 
-  cookies(url: URL): types.NetworkCookie[] {
+  cookies(url: URL): channels.NetworkCookie[] {
     const result = [];
     for (const cookie of this._cookiesIterator()) {
       if (cookie.matches(url))
@@ -75,7 +75,7 @@ export class CookieStore {
     return result;
   }
 
-  allCookies(): types.NetworkCookie[] {
+  allCookies(): channels.NetworkCookie[] {
     const result = [];
     for (const cookie of this._cookiesIterator())
       result.push(cookie.networkCookie());

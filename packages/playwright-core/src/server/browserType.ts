@@ -30,6 +30,7 @@ import { PipeTransport } from './pipeTransport';
 import type { Progress } from './progress';
 import { ProgressController } from './progress';
 import type * as types from './types';
+import type * as channels from '../protocol/channels';
 import { DEFAULT_TIMEOUT, TimeoutSettings } from '../common/timeoutSettings';
 import { debugMode } from '../utils';
 import { existsAsync } from '../utils/fileUtils';
@@ -73,10 +74,10 @@ export abstract class BrowserType extends SdkObject {
     return browser;
   }
 
-  async launchPersistentContext(metadata: CallMetadata, userDataDir: string, options: types.LaunchPersistentOptions): Promise<BrowserContext> {
+  async launchPersistentContext(metadata: CallMetadata, userDataDir: string, options: channels.BrowserTypeLaunchPersistentContextOptions & { useWebSocket?: boolean }): Promise<BrowserContext> {
     options = this._validateLaunchOptions(options);
     const controller = new ProgressController(metadata, this);
-    const persistent: types.BrowserContextOptions = options;
+    const persistent: channels.BrowserNewContextParams = options;
     controller.setLogName('browser');
     const browser = await controller.run(progress => {
       return this._innerLaunchWithRetries(progress, options, persistent, helper.debugProtocolLogger(), userDataDir).catch(e => { throw this._rewriteStartupError(e); });
@@ -84,7 +85,7 @@ export abstract class BrowserType extends SdkObject {
     return browser._defaultContext!;
   }
 
-  async _innerLaunchWithRetries(progress: Progress, options: types.LaunchOptions, persistent: types.BrowserContextOptions | undefined, protocolLogger: types.ProtocolLogger, userDataDir?: string): Promise<Browser> {
+  async _innerLaunchWithRetries(progress: Progress, options: types.LaunchOptions, persistent: channels.BrowserNewContextParams | undefined, protocolLogger: types.ProtocolLogger, userDataDir?: string): Promise<Browser> {
     try {
       return await this._innerLaunch(progress, options, persistent, protocolLogger, userDataDir);
     } catch (error) {
@@ -98,7 +99,7 @@ export abstract class BrowserType extends SdkObject {
     }
   }
 
-  async _innerLaunch(progress: Progress, options: types.LaunchOptions, persistent: types.BrowserContextOptions | undefined, protocolLogger: types.ProtocolLogger, maybeUserDataDir?: string): Promise<Browser> {
+  async _innerLaunch(progress: Progress, options: types.LaunchOptions, persistent: channels.BrowserNewContextParams | undefined, protocolLogger: types.ProtocolLogger, maybeUserDataDir?: string): Promise<Browser> {
     options.proxy = options.proxy ? normalizeProxySettings(options.proxy) : undefined;
     const browserLogsCollector = new RecentLogsCollector();
     const { browserProcess, userDataDir, artifactsDir, transport } = await this._launchProcess(progress, options, !!persistent, browserLogsCollector, maybeUserDataDir);

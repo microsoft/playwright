@@ -20,6 +20,7 @@ import * as frames from './frames';
 import * as input from './input';
 import * as js from './javascript';
 import * as network from './network';
+import type * as channels from '../protocol/channels';
 import type { ScreenshotOptions } from './screenshotter';
 import { Screenshotter, validateScreenshotOptions } from './screenshotter';
 import { TimeoutSettings } from '../common/timeoutSettings';
@@ -86,7 +87,7 @@ export interface PageDelegate {
   setScreencastOptions(options: { width: number, height: number, quality: number } | null): Promise<void>;
 
   getAccessibilityTree(needle?: dom.ElementHandle): Promise<{tree: accessibility.AXNode, needle: accessibility.AXNode | null}>;
-  pdf?: (options?: types.PDFOptions) => Promise<Buffer>;
+  pdf?: (options: channels.PagePdfParams) => Promise<Buffer>;
   coverage?: () => any;
 
   // Work around WebKit's raf issues on Windows.
@@ -160,7 +161,7 @@ export class Page extends SdkObject {
   readonly _frameManager: frames.FrameManager;
   readonly accessibility: accessibility.Accessibility;
   private _workers = new Map<string, Worker>();
-  readonly pdf: ((options?: types.PDFOptions) => Promise<Buffer>) | undefined;
+  readonly pdf: ((options: channels.PagePdfParams) => Promise<Buffer>) | undefined;
   readonly coverage: any;
   private _clientRequestInterceptor: network.RouteHandler | undefined;
   private _serverRequestInterceptor: network.RouteHandler | undefined;

@@ -30,6 +30,7 @@ import { CRDevTools } from './crDevTools';
 import type { BrowserOptions, BrowserProcess, PlaywrightOptions } from '../browser';
 import { Browser } from '../browser';
 import type * as types from '../types';
+import type * as channels from '../../protocol/channels';
 import type { HTTPRequestParams } from '../../common/netUtils';
 import { fetchData } from '../../common/netUtils';
 import { getUserAgent } from '../../common/userAgent';
@@ -94,7 +95,7 @@ export class Chromium extends BrowserType {
       await cleanedUp;
     };
     const browserProcess: BrowserProcess = { close: doClose, kill: doClose };
-    const persistent: types.BrowserContextOptions = { noDefaultViewport: true };
+    const persistent: channels.BrowserNewContextParams = { noDefaultViewport: true };
     const browserOptions: BrowserOptions = {
       ...this._playwrightOptions,
       slowMo: options.slowMo,

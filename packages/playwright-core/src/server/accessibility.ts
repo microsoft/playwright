@@ -16,13 +16,13 @@
  */
 
 import type * as dom from './dom';
-import type * as types from './types';
+import type * as channels from '../protocol/channels';
 
 export interface AXNode {
     isInteresting(insideControl: boolean): boolean;
     isLeafNode(): boolean;
     isControl(): boolean;
-    serialize(): types.SerializedAXNode;
+    serialize(): channels.AXNode;
     children(): Iterable<AXNode>;
 }
 
@@ -35,7 +35,7 @@ export class Accessibility {
   async snapshot(options: {
       interestingOnly?: boolean;
       root?: dom.ElementHandle;
-    } = {}): Promise<types.SerializedAXNode | null> {
+    } = {}): Promise<channels.AXNode | null> {
     const {
       interestingOnly = true,
       root = null,
@@ -65,8 +65,8 @@ function collectInterestingNodes(collection: Set<AXNode>, node: AXNode, insideCo
     collectInterestingNodes(collection, child, insideControl);
 }
 
-function serializeTree(node: AXNode, whitelistedNodes?: Set<AXNode>): types.SerializedAXNode[] {
-  const children: types.SerializedAXNode[] = [];
+function serializeTree(node: AXNode, whitelistedNodes?: Set<AXNode>): channels.AXNode[] {
+  const children: channels.AXNode[] = [];
   for (const child of node.children())
     children.push(...serializeTree(child, whitelistedNodes));
 

@@ -52,7 +52,7 @@ export type APIRequestEvent = {
   url: URL,
   method: string,
   headers: { [name: string]: string },
-  cookies: types.NameValueList,
+  cookies: channels.NameValue[],
   postData?: Buffer
 };
 
@@ -60,7 +60,7 @@ export type APIRequestFinishedEvent = {
   requestEvent: APIRequestEvent,
   httpVersion: string;
   headers: http.IncomingHttpHeaders;
-  cookies: types.NetworkCookie[];
+  cookies: channels.NetworkCookie[];
   rawHeaders: string[];
   statusCode: number;
   statusMessage: string;
@@ -110,8 +110,8 @@ export abstract class APIRequestContext extends SdkObject {
   abstract dispose(): Promise<void>;
 
   abstract _defaultOptions(): FetchRequestOptions;
-  abstract _addCookies(cookies: types.NetworkCookie[]): Promise<void>;
-  abstract _cookies(url: URL): Promise<types.NetworkCookie[]>;
+  abstract _addCookies(cookies: channels.NetworkCookie[]): Promise<void>;
+  abstract _cookies(url: URL): Promise<channels.NetworkCookie[]>;
   abstract storageState(): Promise<channels.APIRequestContextStorageStateResult>;
 
   private _storeResponseBody(body: Buffer): string {
@@ -120,7 +120,7 @@ export abstract class APIRequestContext extends SdkObject {
     return uid;
   }
 
-  async fetch(params: channels.APIRequestContextFetchParams, metadata: CallMetadata): Promise<Omit<types.APIResponse, 'body'> & { fetchUid: string }> {
+  async fetch(params: channels.APIRequestContextFetchParams, metadata: CallMetadata): Promise<channels.APIResponse> {
     const headers: { [name: string]: string } = {};
     const defaults = this._defaultOptions();
     headers['user-agent'] = defaults.userAgent;
@@ -194,16 +194,16 @@ export abstract class APIRequestContext extends SdkObject {
     return { ...fetchResponse, fetchUid };
   }
 
-  private _parseSetCookieHeader(responseUrl: string, setCookie: string[] | undefined): types.NetworkCookie[] {
+  private _parseSetCookieHeader(responseUrl: string, setCookie: string[] | undefined): channels.NetworkCookie[] {
     if (!setCookie)
       return [];
     const url = new URL(responseUrl);
     // https://datatracker.ietf.org/doc/html/rfc6265#section-5.1.4
     const defaultPath = '/' + url.pathname.substr(1).split('/').slice(0, -1).join('/');
-    const cookies: types.NetworkCookie[] = [];
+    const cookies: channels.NetworkCookie[] = [];
     for (const header of setCookie) {
       // Decode cookie value?
-      const cookie: types.NetworkCookie | null = parseCookie(header);
+      const cookie: channels.NetworkCookie | null = parseCookie(header);
       if (!cookie)
         continue;
       // https://datatracker.ietf.org/doc/html/rfc6265#section-5.2.3
@@ -231,7 +231,7 @@ export abstract class APIRequestContext extends SdkObject {
     }
   }
 
-  private async _sendRequest(progress: Progress, url: URL, options: https.RequestOptions & { maxRedirects: number, deadline: number }, postData?: Buffer): Promise<types.APIResponse>{
+  private async _sendRequest(progress: Progress, url: URL, options: https.RequestOptions & { maxRedirects: number, deadline: number }, postData?: Buffer): Promise<Omit<channels.APIResponse, 'fetchUid'> & { body: Buffer }>{
     await this._updateRequestCookieHeader(url, options);
 
     const requestCookies = (options.headers!['cookie'] as (string | undefined))?.split(';').map(p => {
@@ -247,7 +247,7 @@ export abstract class APIRequestContext extends SdkObject {
     };
     this.emit(APIRequestContext.Events.Request, requestEvent);
 
-    return new Promise<types.APIResponse>((fulfill, reject) => {
+    return new Promise((fulfill, reject) => {
       const requestConstructor: ((url: URL, options: http.RequestOptions, callback?: (res: http.IncomingMessage) => void) => http.ClientRequest)
         = (url.protocol === 'https:' ? https : http).request;
       const request = requestConstructor(url, options, async response => {
@@ -455,11 +455,11 @@ export class BrowserContextAPIRequestContext extends APIRequestContext {
     };
   }
 
-  async _addCookies(cookies: types.NetworkCookie[]): Promise<void> {
+  async _addCookies(cookies: channels.NetworkCookie[]): Promise<void> {
     await this._context.addCookies(cookies);
   }
 
-  async _cookies(url: URL): Promise<types.NetworkCookie[]> {
+  async _cookies(url: URL): Promise<channels.NetworkCookie[]> {
     return await this._context.cookies(url.toString());
   }
 
@@ -519,11 +519,11 @@ export class GlobalAPIRequestContext extends APIRequestContext {
     return this._options;
   }
 
-  async _addCookies(cookies: types.NetworkCookie[]): Promise<void> {
+  async _addCookies(cookies: channels.NetworkCookie[]): Promise<void> {
     this._cookieStore.addCookies(cookies);
   }
 
-  async _cookies(url: URL): Promise<types.NetworkCookie[]> {
+  async _cookies(url: URL): Promise<channels.NetworkCookie[]> {
     return this._cookieStore.cookies(url);
   }
 
@@ -544,7 +544,7 @@ function toHeadersArray(rawHeaders: string[]): types.HeadersArray {
 
 const redirectStatus = [301, 302, 303, 307, 308];
 
-function parseCookie(header: string): types.NetworkCookie | null {
+function parseCookie(header: string): channels.NetworkCookie | null {
   const pairs = header.split(';').filter(s => s.trim().length > 0).map(p => {
     let key = '';
     let value = '';
@@ -563,7 +563,7 @@ function parseCookie(header: string): types.NetworkCookie | null {
   if (!pairs.length)
     return null;
   const [name, value] = pairs[0];
-  const cookie: types.NetworkCookie = {
+  const cookie: channels.NetworkCookie = {
     name,
     value,
     domain: '',

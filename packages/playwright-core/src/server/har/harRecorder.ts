@@ -20,16 +20,16 @@ import { Artifact } from '../artifact';
 import type { BrowserContext } from '../browserContext';
 import type * as har from './har';
 import { HarTracer } from './harTracer';
-import type { HarOptions } from '../types';
+import type * as channels from '../../protocol/channels';
 
 export class HarRecorder {
   private _artifact: Artifact;
   private _isFlushed: boolean = false;
-  private _options: HarOptions;
+  private _options: channels.RecordHarOptions;
   private _tracer: HarTracer;
   private _entries: har.Entry[] = [];
 
-  constructor(context: BrowserContext | APIRequestContext, options: HarOptions) {
+  constructor(context: BrowserContext | APIRequestContext, options: channels.RecordHarOptions) {
     this._artifact = new Artifact(context, options.path);
     this._options = options;
     const urlFilterRe = options.urlRegexSource !== undefined && options.urlRegexFlags !== undefined ? new RegExp(options.urlRegexSource, options.urlRegexFlags) : undefined;
