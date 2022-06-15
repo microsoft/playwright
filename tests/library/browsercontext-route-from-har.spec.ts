@@ -29,22 +29,7 @@ it('routeFromHar should fulfill from har, matching the method and following redi
   await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(255, 0, 0)');
 });
 
-it('routeFromHar should fallback to continue when not found in har', async ({ context, page, server, isAndroid, asset }) => {
-  it.fixme(isAndroid);
-
-  const harPath = asset('har-fulfill.har');
-  let requestCount = 0;
-  await context.route('**/*', route => {
-    ++requestCount;
-    route.continue();
-  });
-  await context.routeFromHar(harPath);
-  await page.goto(server.PREFIX + '/one-style.html');
-  await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(255, 192, 203)');
-  expect(requestCount).toBe(2);
-});
-
-it('routeFromHar strict:false should fallback to continue when not found in har', async ({ context, page, server, isAndroid, asset }) => {
+it('routeFromHar strict:false should fallback when not found in har', async ({ context, page, server, isAndroid, asset }) => {
   it.fixme(isAndroid);
 
   const harPath = asset('har-fulfill.har');
@@ -59,7 +44,7 @@ it('routeFromHar strict:false should fallback to continue when not found in har'
   expect(requestCount).toBe(2);
 });
 
-it('routeFromHar strict:true should fallback to abort when not found in har', async ({ context, page, server, isAndroid, asset }) => {
+it('routeFromHar by default should abort requests not found in har', async ({ context, page, server, isAndroid, asset }) => {
   it.fixme(isAndroid);
 
   const harPath = asset('har-fulfill.har');
@@ -68,13 +53,13 @@ it('routeFromHar strict:true should fallback to abort when not found in har', as
     ++requestCount;
     route.continue();
   });
-  await context.routeFromHar(harPath, { strict: true });
+  await context.routeFromHar(harPath);
   const error = await page.goto(server.EMPTY_PAGE).catch(e => e);
   expect(error instanceof Error).toBe(true);
   expect(requestCount).toBe(0);
 });
 
-it('routeFromHar should continue requests on bad har', async ({ context, page, server, isAndroid }, testInfo) => {
+it('routeFromHar strict:false should continue requests on bad har', async ({ context, page, server, isAndroid }, testInfo) => {
   it.fixme(isAndroid);
 
   const harPath = testInfo.outputPath('test.har');
@@ -84,7 +69,7 @@ it('routeFromHar should continue requests on bad har', async ({ context, page, s
     ++requestCount;
     route.continue();
   });
-  await context.routeFromHar(harPath);
+  await context.routeFromHar(harPath, { strict: false });
   await page.goto(server.PREFIX + '/one-style.html');
   expect(requestCount).toBe(2);
 });
@@ -114,6 +99,23 @@ it('routeFromHar should only handle requests matching url filter', async ({ cont
   expect(await page.evaluate('window.value')).toBe('foo');
   expect(fulfillCount).toBe(1);
   expect(passthroughCount).toBe(2);
+});
+
+it('routeFromHar should support mutliple calls with same path', async ({ context, page, isAndroid, asset }) => {
+  it.fixme(isAndroid);
+
+  const harPath = asset('har-fulfill.har');
+  let abortCount = 0;
+  await context.route('**/*', async route => {
+    ++abortCount;
+    await route.abort();
+  });
+  await context.routeFromHar(harPath, { url: '**/*.js' });
+  await context.routeFromHar(harPath, { url: '**/*.css' });
+  await context.routeFromHar(harPath, { url: /.*no.playwright\/$/ });
+  await page.goto('http://no.playwright/');
+  expect(await page.evaluate('window.value')).toBe('foo');
+  expect(abortCount).toBe(0);
 });
 
 it('unrouteFromHar should remove har handler added with routeFromHar', async ({ context, page, server, isAndroid, asset }) => {

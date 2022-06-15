@@ -26,7 +26,7 @@ type HarHandler = {
 };
 
 export class HarRouter {
-  private _harPathToHander: Map<string, HarHandler> = new Map();
+  private _harPathToHandlers: Map<string, HarHandler[]> = new Map();
   private readonly owner: BrowserContext | Page;
 
   constructor(owner: BrowserContext | Page) {
@@ -35,8 +35,6 @@ export class HarRouter {
 
   async routeFromHar(path: string, options?: { strict?: boolean; url?: string|RegExp; }): Promise<void> {
     const harFile = JSON.parse(await fs.promises.readFile(path, 'utf-8')) as HARFile;
-    if (this._harPathToHander.has(path))
-      await this.unrouteFromHar(path);
     const harHandler = {
       pattern: options?.url ?? /.*/,
       handler: async (route: Route) => {
@@ -53,22 +51,27 @@ export class HarRouter {
         }
         if (response)
           await route.fulfill({ response });
-        else if (options?.strict)
-          await route.abort();
-        else
+        else if (options?.strict === false)
           await route.fallback();
+        else
+          await route.abort();
       }
     };
-    this._harPathToHander.set(path, harHandler);
+    let handlers = this._harPathToHandlers.get(path);
+    if (!handlers) {
+      handlers = [];
+      this._harPathToHandlers.set(path, handlers);
+    }
+    handlers.push(harHandler);
     await this.owner.route(harHandler.pattern, harHandler.handler);
   }
 
   async unrouteFromHar(path: string): Promise<void> {
-    const harHandler = this._harPathToHander.get(path);
-    if (!harHandler)
+    const handlers = this._harPathToHandlers.get(path);
+    if (!handlers)
       return;
-    this._harPathToHander.delete(path);
-    await this.owner.unroute(harHandler.pattern, harHandler.handler);
+    this._harPathToHandlers.delete(path);
+    await Promise.all(handlers.map(h => this.owner.unroute(h.pattern, h.handler)));
   }
 }
 

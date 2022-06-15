@@ -1029,9 +1029,6 @@ How often a route should be used. By default it will be used every time.
 
 Provides the capability to serve network requests that are made in the context from prerecorded HAR file.
 
-If HAR file contains an entry with the matching url and HTTP method, then the entry's headers, status and body will be used to fulfill. An entry resulting in a redirect will be followed automatically. If there is no matching entry in the file the execution continues to try other configured HAR files and [Route] handlers.
-If `path` is a relative path, then it is resolved relative to the current working directory.
-
 :::note
 [`method: BrowserContext.routeFromHar`] will not intercept requests intercepted by Service Worker. See [this](https://github.com/microsoft/playwright/issues/1090) issue. We recommend disabling Service Workers when using request interception. Via `await context.addInitScript(() => delete window.navigator.serviceWorker);`
 :::
@@ -1039,7 +1036,8 @@ If `path` is a relative path, then it is resolved relative to the current workin
 ### param: BrowserContext.routeFromHar.harPath
 - `harPath` <[path]>
 
-Path to the HAR file with prerecorded network data.
+Path to the HAR file with prerecorded network data. If HAR file contains an entry with the matching url and HTTP method, then the entry's headers, status and body will be used to fulfill. An entry resulting in a redirect will be followed automatically. If there is no matching entry in the file the execution continues to try other configured HAR files and [Route] handlers.
+If `path` is a relative path, then it is resolved relative to the current working directory.
 
 ### option: BrowserContext.routeFromHar.strict
 - `strict` <[boolean]>
