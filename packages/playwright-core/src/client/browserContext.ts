@@ -40,6 +40,7 @@ import { Artifact } from './artifact';
 import { APIRequestContext } from './fetch';
 import { createInstrumentation } from './clientInstrumentation';
 import { rewriteErrorMessage } from '../utils/stackTrace';
+import { HarRouter } from './harRouter';
 
 export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel> implements api.BrowserContext {
   _pages = new Set<Page>();
@@ -51,6 +52,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   _ownerPage: Page | undefined;
   private _closedPromise: Promise<void>;
   _options: channels.BrowserNewContextParams = { };
+  private readonly _harRouter = new HarRouter(this);
 
   readonly request: APIRequestContext;
   readonly tracing: Tracing;
@@ -271,6 +273,14 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     this._routes = this._routes.filter(route => route.url !== url || (handler && route.handler !== handler));
     if (!this._routes.length)
       await this._disableInterception();
+  }
+
+  async routeFromHar(path: string, options?: { strict?: boolean; url?: string|RegExp; }): Promise<void> {
+    await this._harRouter.routeFromHar(path, options);
+  }
+
+  async unrouteFromHar(path: string): Promise<void> {
+    await this._harRouter.unrouteFromHar(path);
   }
 
   async _unrouteAll() {

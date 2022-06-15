@@ -15,45 +15,44 @@
  * limitations under the License.
  */
 
-import { Events } from './events';
-import { assert } from '../utils';
-import { TimeoutSettings } from '../common/timeoutSettings';
-import type { ParsedStackTrace } from '../utils/stackTrace';
-import type * as channels from '../protocol/channels';
-import { parseError, serializeError } from '../protocol/serializers';
-import { Accessibility } from './accessibility';
-import type { BrowserContext } from './browserContext';
-import { ChannelOwner } from './channelOwner';
-import { ConsoleMessage } from './consoleMessage';
-import { Dialog } from './dialog';
-import { Download } from './download';
-import { ElementHandle, determineScreenshotType } from './elementHandle';
-import type { Locator, FrameLocator, LocatorOptions } from './locator';
-import { Worker } from './worker';
-import type { WaitForNavigationOptions } from './frame';
-import { Frame, verifyLoadState } from './frame';
-import { Keyboard, Mouse, Touchscreen } from './input';
-import { assertMaxArguments, serializeArgument, parseResult, JSHandle } from './jsHandle';
-import type { RouteHandlerCallback } from './network';
-import { Request, Response, Route, WebSocket, validateHeaders, RouteHandler } from './network';
-import { FileChooser } from './fileChooser';
 import { Buffer } from 'buffer';
-import { Coverage } from './coverage';
-import { Waiter } from './waiter';
-import type * as api from '../../types/types';
-import type * as structs from '../../types/structs';
 import fs from 'fs';
 import path from 'path';
-import type { Size, URLMatch, Headers, LifecycleEvent, WaitForEventOptions, SelectOption, SelectOptionOptions, FilePayload, WaitForFunctionOptions } from './types';
-import { evaluationScript } from './clientHelper';
-import { isString, isRegExp, isObject, headersObjectToArray } from '../utils';
-import { mkdirIfNeeded } from '../utils/fileUtils';
+import type * as structs from '../../types/structs';
+import type * as api from '../../types/types';
 import { isSafeCloseError } from '../common/errors';
-import { Video } from './video';
-import { Artifact } from './artifact';
-import type { APIRequestContext } from './fetch';
 import { urlMatches } from '../common/netUtils';
-import type { HARResponse, HARFile, HAREntry } from '../../types/types';
+import { TimeoutSettings } from '../common/timeoutSettings';
+import type * as channels from '../protocol/channels';
+import { parseError, serializeError } from '../protocol/serializers';
+import { assert, headersObjectToArray, isObject, isRegExp, isString } from '../utils';
+import { mkdirIfNeeded } from '../utils/fileUtils';
+import type { ParsedStackTrace } from '../utils/stackTrace';
+import { Accessibility } from './accessibility';
+import { Artifact } from './artifact';
+import type { BrowserContext } from './browserContext';
+import { ChannelOwner } from './channelOwner';
+import { evaluationScript } from './clientHelper';
+import { ConsoleMessage } from './consoleMessage';
+import { Coverage } from './coverage';
+import { Dialog } from './dialog';
+import { Download } from './download';
+import { determineScreenshotType, ElementHandle } from './elementHandle';
+import { Events } from './events';
+import type { APIRequestContext } from './fetch';
+import { FileChooser } from './fileChooser';
+import type { WaitForNavigationOptions } from './frame';
+import { Frame, verifyLoadState } from './frame';
+import { HarRouter } from './harRouter';
+import { Keyboard, Mouse, Touchscreen } from './input';
+import { assertMaxArguments, JSHandle, parseResult, serializeArgument } from './jsHandle';
+import type { FrameLocator, Locator, LocatorOptions } from './locator';
+import type { RouteHandlerCallback } from './network';
+import { Request, Response, Route, RouteHandler, validateHeaders, WebSocket } from './network';
+import type { FilePayload, Headers, LifecycleEvent, SelectOption, SelectOptionOptions, Size, URLMatch, WaitForEventOptions, WaitForFunctionOptions } from './types';
+import { Video } from './video';
+import { Waiter } from './waiter';
+import { Worker } from './worker';
 
 type PDFOptions = Omit<channels.PagePdfParams, 'width' | 'height' | 'margin'> & {
   width?: string | number,
@@ -75,10 +74,6 @@ type ExpectScreenshotOptions = Omit<channels.PageExpectScreenshotOptions, 'scree
   screenshotOptions: Omit<channels.PageExpectScreenshotOptions['screenshotOptions'], 'mask'> & { mask?: Locator[] }
 };
 
-type HarHandler = {
-  pattern: string | RegExp;
-  handler: (route: Route) => any;
-};
 
 export class Page extends ChannelOwner<channels.PageChannel> implements api.Page {
   private _browserContext: BrowserContext;
@@ -103,7 +98,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   readonly _timeoutSettings: TimeoutSettings;
   private _video: Video | null = null;
   readonly _opener: Page | null;
-  private _harPathToHander: Map<string, HarHandler> = new Map();
+  private readonly _harRouter = new HarRouter(this);
 
   static from(page: channels.PageChannel): Page {
     return (page as any)._object;
@@ -481,41 +476,11 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   }
 
   async routeFromHar(path: string, options?: { strict?: boolean; url?: string|RegExp; }): Promise<void> {
-    const harFile = JSON.parse(await fs.promises.readFile(path, 'utf-8')) as HARFile;
-    if (this._harPathToHander.has(path))
-      await this.unrouteFromHar(path);
-    const harHandler = {
-      pattern: options?.url ?? /.*/,
-      handler: async (route: Route) => {
-        let response;
-        try {
-          response = harFindResponse(harFile, {
-            url: route.request().url(),
-            method: route.request().method()
-          });
-        } catch (e) {
-          // TODO: throw?
-          // rewriteErrorMessage(e, e.message + `\n\nFailed to find matching entry for ${route.request().method()} ${route.request().url()} in ${path}`);
-          // throw e;
-        }
-        if (response)
-          await route.fulfill({ response });
-        else if (options?.strict)
-          await route.abort();
-        else
-          await route.fallback();
-      }
-    };
-    this._harPathToHander.set(path, harHandler);
-    await this.route(harHandler.pattern, harHandler.handler);
+    await this._harRouter.routeFromHar(path, options);
   }
 
   async unrouteFromHar(path: string): Promise<void> {
-    const harHandler = this._harPathToHander.get(path);
-    if (!harHandler)
-      return;
-    this._harPathToHander.delete(path);
-    await this.unroute(harHandler.pattern, harHandler.handler);
+    await this._harRouter.unrouteFromHar(path);
   }
 
   async _unrouteAll() {
@@ -825,35 +790,4 @@ function trimUrl(param: any): string | undefined {
     return `/${trimEnd(param.source)}/${param.flags}`;
   if (isString(param))
     return `"${trimEnd(param)}"`;
-}
-
-const redirectStatus = [301, 302, 303, 307, 308];
-
-function harFindResponse(har: HARFile, params: { url: string, method: string }): HARResponse {
-  const harLog = har.log;
-  const visited = new Set<HAREntry>();
-  let url = params.url;
-  let method = params.method;
-  while (true) {
-    const entry = harLog.entries.find(entry => entry.request.url === url && entry.request.method === method);
-    if (!entry)
-      throw new Error(`No entry matching ${params.url}`);
-    if (visited.has(entry))
-      throw new Error(`Found redirect cycle for ${params.url}`);
-    visited.add(entry);
-
-    const locationHeader = entry.response.headers.find(h => h.name.toLowerCase() === 'location');
-    if (redirectStatus.includes(entry.response.status) && locationHeader) {
-      const locationURL = new URL(locationHeader.value, url);
-      url = locationURL.toString();
-      if ((entry.response.status === 301 || entry.response.status === 302) && method === 'POST' ||
-        entry.response.status === 303 && !['GET', 'HEAD'].includes(method)) {
-        // HTTP-redirect fetch step 13 (https://fetch.spec.whatwg.org/#http-redirect-fetch)
-        method = 'GET';
-      }
-      continue;
-    }
-
-    return entry.response;
-  }
 }
