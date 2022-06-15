@@ -18,7 +18,7 @@
 import { Events } from './events';
 import { assert } from '../utils';
 import { TimeoutSettings } from '../common/timeoutSettings';
-import { ParsedStackTrace, rewriteErrorMessage } from '../utils/stackTrace';
+import type { ParsedStackTrace } from '../utils/stackTrace';
 import type * as channels from '../protocol/channels';
 import { parseError, serializeError } from '../protocol/serializers';
 import { Accessibility } from './accessibility';

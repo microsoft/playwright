@@ -438,6 +438,33 @@ it('routeFromHar should continue requests on bad har', async ({ page, server, is
   expect(requestCount).toBe(2);
 });
 
+it('routeFromHar should only handle requests matching url filter', async ({ page, server, isAndroid, asset }) => {
+  it.fixme(isAndroid);
+
+  const harPath = asset('har-fulfill.har');
+  let fulfillCount = 0;
+  let passthroughCount = 0;
+  await page.route('**/*', async route => {
+    ++fulfillCount;
+    expect(route.request().url()).toBe('http://no.playwright/');
+    await route.fulfill({
+      status: 200,
+      contentType: 'text/html',
+      body: '<script src="./script.js"></script><div>hello</div>',
+    });
+  });
+  await page.routeFromHar(harPath, { url: '**/*.js' });
+  await page.route('**/*', route => {
+    ++passthroughCount;
+    route.fallback();
+  });
+  await page.goto('http://no.playwright/');
+  // HAR contains a redirect for the script that should be followed automatically.
+  expect(await page.evaluate('window.value')).toBe('foo');
+  expect(fulfillCount).toBe(1);
+  expect(passthroughCount).toBe(2);
+});
+
 it('unrouteFromHar should remove har handler added with routeFromHar', async ({ page, server, isAndroid, asset }) => {
   it.fixme(isAndroid);
 
