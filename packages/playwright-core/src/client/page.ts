@@ -475,12 +475,12 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
       await this._disableInterception();
   }
 
-  async routeFromHar(path: string, options?: { strict?: boolean; url?: string|RegExp; }): Promise<void> {
-    await this._harRouter.routeFromHar(path, options);
+  async routeFromHar(harPath: string, options?: { strict?: boolean; url?: string|RegExp; }): Promise<void> {
+    await this._harRouter.routeFromHar(harPath, options);
   }
 
-  async unrouteFromHar(path: string): Promise<void> {
-    await this._harRouter.unrouteFromHar(path);
+  async unrouteFromHar(harPath: string): Promise<void> {
+    await this._harRouter.unrouteFromHar(harPath);
   }
 
   async _unrouteAll() {
