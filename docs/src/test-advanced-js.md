@@ -140,7 +140,7 @@ export const test = base.extend<{ saveLogs: void }>({
 To launch a server during the tests, use the `webServer` option in the [configuration file](#configuration-object).
 
 If `port` is specified in the config, test runner will wait for `127.0.0.1:port` or `::1:port` to be available before running the tests.
-If `url` is specified in the config, test runner will wait for that `url` to return 2xx response before running the tests.
+If `url` is specified in the config, test runner will wait for that `url` to return a 2xx, 3xx, 400, 401, 402, or 403 response before running the tests.
 
 For continuous integration, you may want to use the `reuseExistingServer: !process.env.CI` option which does not use an existing server on the CI. To see the stdout, you can set the `DEBUG=pw:webserver` environment variable.
 
