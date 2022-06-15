@@ -587,7 +587,7 @@ Optional setting to control whether to omit request content from the HAR. Defaul
 ## context-option-recordhar-url-filter
 * langs: csharp, java, python
   - alias-python: record_har_url_filter
-- `recordHarURLFilter` ?<[string]|[RegExp]>
+- `recordHarUrlFilter` ?<[string]|[RegExp]>
 
 ## context-option-recordvideo
 * langs: js
