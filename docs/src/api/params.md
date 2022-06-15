@@ -805,6 +805,7 @@ An acceptable perceived color difference in the [YIQ color space](https://en.wik
 - %%-context-option-recordhar-%%
 - %%-context-option-recordhar-path-%%
 - %%-context-option-recordhar-omit-content-%%
+- %%-context-option-recordhar-url-filter-%%
 - %%-context-option-recordvideo-%%
 - %%-context-option-recordvideo-dir-%%
 - %%-context-option-recordvideo-size-%%
