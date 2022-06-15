@@ -1045,7 +1045,7 @@ If `path` is a relative path, then it is resolved relative to the current workin
 If set to true any request not found in the HAR file will be aborted. If set to
 false missing requests will continue normal flow and can be handled by other
 [Route] handlers or served from other HAR files configured with [`method: BrowserContext.routeFromHar`].
-Defaults to false.
+Defaults to true.
 
 ### option: BrowserContext.routeFromHar.url
 - `url` <[string]|[RegExp]>

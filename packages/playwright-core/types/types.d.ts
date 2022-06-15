@@ -2985,7 +2985,7 @@ export interface Page {
      * If set to true any request not found in the HAR file will be aborted. If set to false missing requests will continue
      * normal flow and can be handled by other [Route] handlers or served from other HAR files configured with
      * [page.routeFromHar(harPath[, options])](https://playwright.dev/docs/api/class-page#page-route-from-har). Defaults to
-     * false.
+     * true.
      */
     strict?: boolean;
 
@@ -6859,7 +6859,7 @@ export interface BrowserContext {
      * If set to true any request not found in the HAR file will be aborted. If set to false missing requests will continue
      * normal flow and can be handled by other [Route] handlers or served from other HAR files configured with
      * [browserContext.routeFromHar(harPath[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-route-from-har).
-     * Defaults to false.
+     * Defaults to true.
      */
     strict?: boolean;
 
