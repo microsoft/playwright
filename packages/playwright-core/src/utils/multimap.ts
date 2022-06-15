@@ -38,6 +38,15 @@ export class MultiMap<K, V> {
     return this._map.has(key);
   }
 
+  delete(key: K, value: V) {
+    const values = this._map.get(key);
+    if (!values)
+      return;
+    if (values.includes(value))
+      this._map.set(key, values.filter(v => value !== v));
+  }
+
+
   hasValue(key: K, value: V): boolean {
     const values = this._map.get(key);
     if (!values)
