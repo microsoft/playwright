@@ -780,37 +780,51 @@ await context.CloseAsync();
 
 ### Replaying from HAR
 
-Pass [`option: har`] option to the [`method: Route.fulfill`] method to use a matching response from the HAR file.
+Pass [`option: har`] option to the [`method: Browser.newContext`] method to use matching responses from the HAR file.
 
 ```js
 // Replay API requests from HAR.
 // Either use a matching response from the HAR,
 // or abort the request if nothing matches.
-await page.routeFromHar('example.har', { url: '**/api/**' });
+const context = await browser.newContext({ har: { path: 'example.har' } });
 ```
 
 ```java
 // Either use a matching response from the HAR,
 // or abort the request if nothing matches.
-page.routeFromHar(Paths.get("example.har"), new Page.RouteFromHarOptions().setUrl("**/api/**"));
+BrowserContext context = browser.newContext(new Browser.NewContextOptions().setHarPath(Paths.get("example.har")));
+Page page = context.newPage();
+page.navigate("https://example.com");
 ```
 
 ```python async
 # Either use a matching response from the HAR,
 # or abort the request if nothing matches.
-await page.route_from_har("example.har", url="**/api/**")
+context = await browser.new_context(
+    har_path = "example.har"
+)
+page = await context.new_page()
+await page.goto("https://example.com")
 ```
 
 ```python sync
 # Either use a matching response from the HAR,
 # or abort the request if nothing matches.
-page.route_from_har("example.har", url="**/api/**")
+context = browser.new_context(
+    har_path="example.har"
+)
+page = context.new_page()
+page.goto("https://example.com")
 ```
 
 ```csharp
 // Either use a matching response from the HAR,
 // or abort the request if nothing matches.
-await Page.RouteFromHarAsync("example.har", new () { Url = "**/api/**" });
+var context = await Browser.NewContextAsync(new () {
+    HarPath = "example.har"
+});
+var page = await context.NewPageAsync();
+await page.GotoAsync("https://example.com");
 ```
 
 ### API reference
