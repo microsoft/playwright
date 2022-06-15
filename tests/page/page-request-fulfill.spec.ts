@@ -465,12 +465,6 @@ it('routeFromHar should support mutliple calls with same path', async ({ page, s
   await page.goto('http://no.playwright/');
   expect(await page.evaluate('window.value')).toBe('foo');
   expect(abortCount).toBe(0);
-
-  await page.routeFromHar('example.har', {
-    url: '**/api/**',
-    strict: false
-  });
-
 });
 
 it('unrouteFromHar should remove har handler added with routeFromHar', async ({ page, server, isAndroid, asset }) => {
