@@ -830,11 +830,11 @@ it('should contain raw response header after fulfill', async ({ page, server }) 
 
 for (const method of ['fulfill', 'continue', 'fallback', 'abort'] as const) {
   it(`route.${method} should throw if called twice`, async ({ page, server }) => {
-    const routePromise = new Promise<Route>(async resolve => {
-      await page.route('**/*', resolve);
-    });
+    let resolve;
+    const resolvePromise = new Promise<Route>(f => resolve = f);
+    await page.route('**/*', resolve);
     page.goto(server.PREFIX + '/empty.html').catch(() => {});
-    const route = await routePromise;
+    const route = await resolvePromise;
     await route[method]();
     const e = await route[method]().catch(e => e);
     expect(e.message).toContain('Route is already handled!');

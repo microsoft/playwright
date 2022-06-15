@@ -702,6 +702,13 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     return this;
   }
 
+  override prependListener(event: string | symbol, listener: Listener): this {
+    if (event === Events.Page.FileChooser && !this.listenerCount(event))
+      this._channel.setFileChooserInterceptedNoReply({ intercepted: true });
+    super.prependListener(event, listener);
+    return this;
+  }
+
   override off(event: string | symbol, listener: Listener): this {
     super.off(event, listener);
     if (event === Events.Page.FileChooser && !this.listenerCount(event))
