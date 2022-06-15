@@ -57,7 +57,7 @@ export type BrowserContextOptions = Omit<channels.BrowserNewContextOptions, 'vie
   har?: {
     path: string;
     fallback?: 'abort'|'continue';
-    urlFilter: string|RegExp;
+    urlFilter?: string|RegExp;
   },
   recordHar?: {
     path: string,
