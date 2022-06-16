@@ -352,6 +352,7 @@ type Options = {
   loadStorage?: string;
   proxyServer?: string;
   proxyBypass?: string;
+  blockServiceWorkers?: boolean;
   saveHar?: string;
   saveHarGlob?: string;
   saveStorage?: string;
@@ -393,6 +394,9 @@ async function launchContext(options: Options, headless: boolean, executablePath
 
   if (contextOptions.isMobile && browserType.name() === 'firefox')
     contextOptions.isMobile = undefined;
+
+  if (options.blockServiceWorkers)
+    contextOptions.serviceWorkers = 'block';
 
   // Proxy
 
@@ -639,6 +643,7 @@ function commandWithOpenOptions(command: string, description: string, options: a
     result = result.option(option[0], ...option.slice(1));
   return result
       .option('-b, --browser <browserType>', 'browser to use, one of cr, chromium, ff, firefox, wk, webkit', 'chromium')
+      .option('--block-service-workers', 'block service workers')
       .option('--channel <channel>', 'Chromium distribution channel, "chrome", "chrome-beta", "msedge-dev", etc')
       .option('--color-scheme <scheme>', 'emulate preferred color scheme, "light" or "dark"')
       .option('--device <deviceName>', 'emulate device, for example  "iPhone 11"')
