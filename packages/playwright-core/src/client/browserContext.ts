@@ -383,7 +383,7 @@ function prepareRecordHarOptions(options: BrowserContextOptions['recordHar']): c
     return;
   return {
     path: options.path,
-    omitContent: options.omitContent,
+    content: options.content || (options.omitContent ? 'omit' : 'embed'),
     urlGlob: isString(options.urlFilter) ? options.urlFilter : undefined,
     urlRegexSource: isRegExp(options.urlFilter) ? options.urlFilter.source : undefined,
     urlRegexFlags: isRegExp(options.urlFilter) ? options.urlFilter.flags : undefined,

@@ -264,8 +264,8 @@ export type SerializedError = {
 };
 
 export type RecordHarOptions = {
-  omitContent?: boolean,
   path: string,
+  content: 'embed' | 'attach' | 'omit',
   urlGlob?: string,
   urlRegexSource?: string,
   urlRegexFlags?: string,

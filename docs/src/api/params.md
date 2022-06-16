@@ -591,8 +591,9 @@ Logger sink for Playwright logging.
 * langs: js
 - `recordHar` <[Object]>
   - `omitContent` ?<[boolean]> Optional setting to control whether to omit request content from the HAR. Defaults to
-    `false`.
-  - `path` <[path]> Path on the filesystem to write the HAR file to.
+    `false`. Deprecated, use `content` policy instead.
+  - `content` ?<[HarContentPolicy]<"omit"|"embed"|"attach">> Optional setting to control resource content management. If `omit` is specified, content is not persisted. If `attach` is specified, resources are persistet as separate files and all of these files are archived along with the HAR file. Defaults to `embed`, which stores content inline the HAR file as per HAR specification.
+  - `path` <[path]> Path on the filesystem to write the HAR file to. If the file name ends with `.zip`, the har file is archived. Content `attach` will also enforce `zip` compression.
   - `urlFilter` ?<[string]|[RegExp]> A glob or regex pattern to filter requests that are stored in the HAR. When a [`option: baseURL`] via the context options was provided and the passed URL is a path, it gets merged via the [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
 
 Enables [HAR](http://www.softwareishard.com/blog/har-12-spec) recording for all pages into `recordHar.path` file. If not

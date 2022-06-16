@@ -62,6 +62,7 @@ export type BrowserContextOptions = Omit<channels.BrowserNewContextOptions, 'vie
   recordHar?: {
     path: string,
     omitContent?: boolean,
+    content?: 'omit' | 'embed' | 'attach',
     urlFilter?: string | RegExp,
   },
 };

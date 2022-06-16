@@ -22,10 +22,11 @@ import http2 from 'http2';
 import type { BrowserContext, BrowserContextOptions } from 'playwright-core';
 import type { AddressInfo } from 'net';
 import type { Log } from '../../packages/playwright-core/src/server/har/har';
+import { parseHar } from '../config/utils';
 
-async function pageWithHar(contextFactory: (options?: BrowserContextOptions) => Promise<BrowserContext>, testInfo: any, outputPath: string = 'test.har') {
-  const harPath = testInfo.outputPath(outputPath);
-  const context = await contextFactory({ recordHar: { path: harPath }, ignoreHTTPSErrors: true });
+async function pageWithHar(contextFactory: (options?: BrowserContextOptions) => Promise<BrowserContext>, testInfo: any, options: { outputPath?: string, content?: 'embed' | 'attach' | 'omit', omitContent?: boolean } = {}) {
+  const harPath = testInfo.outputPath(options.outputPath || 'test.har');
+  const context = await contextFactory({ recordHar: { path: harPath, content: options.content, omitContent: options.omitContent }, ignoreHTTPSErrors: true });
   const page = await context.newPage();
   return {
     page,
@@ -33,7 +34,11 @@ async function pageWithHar(contextFactory: (options?: BrowserContextOptions) => 
     getLog: async () => {
       await context.close();
       return JSON.parse(fs.readFileSync(harPath).toString())['log'] as Log;
-    }
+    },
+    getZip: async () => {
+      await context.close();
+      return parseHar(harPath);
+    },
   };
 }
 
@@ -268,6 +273,80 @@ it('should include content @smoke', async ({ contextFactory, server }, testInfo)
   expect(Buffer.from(log.entries[2].response.content.text, 'base64').byteLength).toBeGreaterThan(0);
   expect(log.entries[2].response.content.size).toBeGreaterThanOrEqual(6000);
   expect(log.entries[2].response.content.compression).toBe(0);
+});
+
+it('should include content in zip', async ({ contextFactory, server }, testInfo) => {
+  const { page, getZip } = await pageWithHar(contextFactory, testInfo, { outputPath: 'test.har.zip' });
+  await page.goto(server.PREFIX + '/har.html');
+  await page.evaluate(() => fetch('/pptr.png').then(r => r.arrayBuffer()));
+  const zip = await getZip();
+  const log = JSON.parse(zip.get('har.har').toString())['log'] as Log;
+
+  expect(log.entries[0].response.content.encoding).toBe(undefined);
+  expect(log.entries[0].response.content.mimeType).toBe('text/html; charset=utf-8');
+  expect(log.entries[0].response.content.text).toContain('HAR Page');
+  expect(log.entries[0].response.content.size).toBeGreaterThanOrEqual(96);
+  expect(log.entries[0].response.content.compression).toBe(0);
+
+  expect(log.entries[1].response.content.encoding).toBe(undefined);
+  expect(log.entries[1].response.content.mimeType).toBe('text/css; charset=utf-8');
+  expect(log.entries[1].response.content.text).toContain('pink');
+  expect(log.entries[1].response.content.size).toBeGreaterThanOrEqual(37);
+  expect(log.entries[1].response.content.compression).toBe(0);
+
+  expect(log.entries[2].response.content.encoding).toBe('base64');
+  expect(log.entries[2].response.content.mimeType).toBe('image/png');
+  expect(Buffer.from(log.entries[2].response.content.text, 'base64').byteLength).toBeGreaterThan(0);
+  expect(log.entries[2].response.content.size).toBeGreaterThanOrEqual(6000);
+  expect(log.entries[2].response.content.compression).toBe(0);
+});
+
+it('should omit content', async ({ contextFactory, server }, testInfo) => {
+  const { page, getLog } = await pageWithHar(contextFactory, testInfo, { content: 'omit', outputPath: 'test.har' });
+  await page.goto(server.PREFIX + '/har.html');
+  await page.evaluate(() => fetch('/pptr.png').then(r => r.arrayBuffer()));
+  const log = await getLog();
+  expect(log.entries[0].response.content.text).toBe(undefined);
+  expect(log.entries[0].response.content._sha1).toBe(undefined);
+});
+
+it('should omit content legacy', async ({ contextFactory, server }, testInfo) => {
+  const { page, getLog } = await pageWithHar(contextFactory, testInfo, { omitContent: true, outputPath: 'test.har' });
+  await page.goto(server.PREFIX + '/har.html');
+  await page.evaluate(() => fetch('/pptr.png').then(r => r.arrayBuffer()));
+  const log = await getLog();
+  expect(log.entries[0].response.content.text).toBe(undefined);
+  expect(log.entries[0].response.content._sha1).toBe(undefined);
+});
+
+it('should attach content', async ({ contextFactory, server }, testInfo) => {
+  const { page, getZip } = await pageWithHar(contextFactory, testInfo, { content: 'attach', outputPath: 'test.har.zip' });
+  await page.goto(server.PREFIX + '/har.html');
+  await page.evaluate(() => fetch('/pptr.png').then(r => r.arrayBuffer()));
+  const zip = await getZip();
+  const log = JSON.parse(zip.get('har.har').toString())['log'] as Log;
+
+  expect(log.entries[0].response.content.encoding).toBe(undefined);
+  expect(log.entries[0].response.content.mimeType).toBe('text/html; charset=utf-8');
+  expect(log.entries[0].response.content._sha1).toContain('75841480e2606c03389077304342fac2c58ccb1b');
+  expect(log.entries[0].response.content.size).toBeGreaterThanOrEqual(96);
+  expect(log.entries[0].response.content.compression).toBe(0);
+
+  expect(log.entries[1].response.content.encoding).toBe(undefined);
+  expect(log.entries[1].response.content.mimeType).toBe('text/css; charset=utf-8');
+  expect(log.entries[1].response.content._sha1).toContain('79f739d7bc88e80f55b9891a22bf13a2b4e18adb');
+  expect(log.entries[1].response.content.size).toBeGreaterThanOrEqual(37);
+  expect(log.entries[1].response.content.compression).toBe(0);
+
+  expect(log.entries[2].response.content.encoding).toBe(undefined);
+  expect(log.entries[2].response.content.mimeType).toBe('image/png');
+  expect(log.entries[2].response.content._sha1).toContain('a4c3a18f0bb83f5d9fe7ce561e065c36205762fa');
+  expect(log.entries[2].response.content.size).toBeGreaterThanOrEqual(6000);
+  expect(log.entries[2].response.content.compression).toBe(0);
+
+  expect(zip.get('75841480e2606c03389077304342fac2c58ccb1b.html').toString()).toContain('HAR Page');
+  expect(zip.get('79f739d7bc88e80f55b9891a22bf13a2b4e18adb.css').toString()).toContain('pink');
+  expect(zip.get('a4c3a18f0bb83f5d9fe7ce561e065c36205762fa.png').byteLength).toBe(log.entries[2].response.content.size);
 });
 
 it('should filter by glob', async ({ contextFactory, server }, testInfo) => {
@@ -597,11 +676,11 @@ it('should filter favicon and favicon redirects', async ({ server, browserName, 
 });
 
 it('should have different hars for concurrent contexts', async ({ contextFactory }, testInfo) => {
-  const session0 = await pageWithHar(contextFactory, testInfo, 'test-0.har');
+  const session0 = await pageWithHar(contextFactory, testInfo, { outputPath: 'test-0.har' });
   await session0.page.goto('data:text/html,<title>Zero</title>');
   await session0.page.waitForLoadState('domcontentloaded');
 
-  const session1 = await pageWithHar(contextFactory, testInfo, 'test-1.har');
+  const session1 = await pageWithHar(contextFactory, testInfo, { outputPath: 'test-1.har' });
   await session1.page.goto('data:text/html,<title>One</title>');
   await session1.page.waitForLoadState('domcontentloaded');
 
