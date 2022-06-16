@@ -382,11 +382,9 @@ module.exports = async config => {
     })
     await browser.close();
   } catch (error) {
-    await page
-      .context()
-      .tracing.stop({
+    await context.tracing.stop({
         path: `./test-results/failed-setup-trace.zip`,
-      });
+    });
     await browser.close();
     throw error;
   }
