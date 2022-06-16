@@ -411,11 +411,9 @@ async function globalSetup(config: FullConfig) {
     await page.fill('input[name="password"]', 'password');
     await page.click('text=Sign in');
     await page.context().storageState({ path: storageState as string });
-    await page
-      .context()
-      .tracing.stop({
+    await context.tracing.stop({
         path: `./test-results/setup-trace.zip`,
-      })
+    })
     await page.close();
   } catch (error) {
     await page
