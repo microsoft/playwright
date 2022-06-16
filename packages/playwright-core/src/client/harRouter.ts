@@ -16,6 +16,8 @@
 
 import fs from 'fs';
 import type { HAREntry, HARFile, HARResponse } from '../../types/types';
+import { debugLogger } from '../common/debugLogger';
+import { rewriteErrorMessage } from '../utils/stackTrace';
 import type { BrowserContext } from './browserContext';
 import type { Route } from './network';
 import type { BrowserContextOptions } from './types';
@@ -41,16 +43,18 @@ export class HarRouter {
           method: route.request().method()
         });
       } catch (e) {
-        // TODO: throw or at least error log?
-        // rewriteErrorMessage(e, e.message + `\n\nFailed to find matching entry for ${route.request().method()} ${route.request().url()} in ${path}`);
-        // throw e;
+        rewriteErrorMessage(e, `Error while finding entry for ${route.request().method()} ${route.request().url()} in HAR file:\n${e.message}`);
+        debugLogger.log('api', e);
       }
-      if (response)
+      if (response) {
+        debugLogger.log('api', `serving from HAR: ${route.request().method()} ${route.request().url()}`);
         await route.fulfill({ response });
-      else if (options?.fallback === 'continue')
+      } else if (options?.fallback === 'continue') {
         await route.fallback();
-      else
+      } else {
+        debugLogger.log('api', `request not in HAR, aborting: ${route.request().method()} ${route.request().url()}`);
         await route.abort();
+      }
     };
   }
 
@@ -61,7 +65,7 @@ export class HarRouter {
 
 const redirectStatus = [301, 302, 303, 307, 308];
 
-function harFindResponse(har: HARFile, params: { url: string, method: string }): HARResponse {
+function harFindResponse(har: HARFile, params: { url: string, method: string }): HARResponse | undefined {
   const harLog = har.log;
   const visited = new Set<HAREntry>();
   let url = params.url;
@@ -69,7 +73,7 @@ function harFindResponse(har: HARFile, params: { url: string, method: string }):
   while (true) {
     const entry = harLog.entries.find(entry => entry.request.url === url && entry.request.method === method);
     if (!entry)
-      throw new Error(`No entry matching ${params.url}`);
+      return;
     if (visited.has(entry))
       throw new Error(`Found redirect cycle for ${params.url}`);
     visited.add(entry);
