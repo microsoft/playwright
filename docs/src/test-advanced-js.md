@@ -376,14 +376,14 @@ module.exports = async config => {
     await page.fill('input[name="user"]', 'user');
     await page.fill('input[name="password"]', 'password');
     await page.click('text=Sign in');
-    await page.context().storageState({ path: storageState });
+    await context.storageState({ path: storageState });
     await context.tracing.stop({
-        path: `./test-results/setup-trace.zip`,
+      path: './test-results/setup-trace.zip',
     })
     await browser.close();
   } catch (error) {
     await context.tracing.stop({
-        path: `./test-results/failed-setup-trace.zip`,
+      path: './test-results/failed-setup-trace.zip',
     });
     await browser.close();
     throw error;
@@ -406,14 +406,14 @@ async function globalSetup(config: FullConfig) {
     await page.fill('input[name="user"]', 'user');
     await page.fill('input[name="password"]', 'password');
     await page.click('text=Sign in');
-    await page.context().storageState({ path: storageState as string });
+    await context.storageState({ path: storageState as string });
     await context.tracing.stop({
-        path: `./test-results/setup-trace.zip`,
+      path: './test-results/setup-trace.zip',
     })
     await page.close();
   } catch (error) {
     await context.tracing.stop({
-        path: `./test-results/failed-setup-trace.zip`,
+      path: './test-results/failed-setup-trace.zip',
     });
     await page.close();
     throw error;
