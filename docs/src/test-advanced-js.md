@@ -377,11 +377,9 @@ module.exports = async config => {
     await page.fill('input[name="password"]', 'password');
     await page.click('text=Sign in');
     await page.context().storageState({ path: storageState });
-    await page
-      .context()
-      .tracing.stop({
+    await context.tracing.stop({
         path: `./test-results/setup-trace.zip`,
-      })
+    })
     await browser.close();
   } catch (error) {
     await page
