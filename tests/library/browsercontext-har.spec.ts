@@ -104,3 +104,65 @@ it('newPage should fulfill from har, matching the method and following redirects
   await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(255, 0, 0)');
   await page.close();
 });
+
+it('should change document URL after redirected navigation', async ({ contextFactory, isAndroid, asset }) => {
+  it.fixme(isAndroid);
+
+  const path = asset('har-redirect.har');
+  const context = await contextFactory({ har: { path } });
+  const page = await context.newPage();
+  const [response] = await Promise.all([
+    page.waitForNavigation(),
+    page.goto('https://theverge.com/')
+  ]);
+  await expect(page).toHaveURL('https://www.theverge.com/');
+  await expect(response.request().url()).toBe('https://www.theverge.com/');
+  expect(await page.evaluate(() => location.href)).toBe('https://www.theverge.com/');
+});
+
+it('should goBack to redirected navigation', async ({ contextFactory, isAndroid, asset, server }) => {
+  it.fixme(isAndroid);
+
+  const path = asset('har-redirect.har');
+  const context = await contextFactory({ har: { path, urlFilter: /.*theverge.*/ } });
+  const page = await context.newPage();
+  await page.goto('https://theverge.com/');
+  await page.goto(server.EMPTY_PAGE);
+  await expect(page).toHaveURL(server.EMPTY_PAGE);
+  const response = await page.goBack();
+  await expect(page).toHaveURL('https://www.theverge.com/');
+  await expect(response.request().url()).toBe('https://www.theverge.com/');
+  expect(await page.evaluate(() => location.href)).toBe('https://www.theverge.com/');
+});
+
+it('should goForward to redirected navigation', async ({ contextFactory, isAndroid, asset, server }) => {
+  it.fixme(isAndroid);
+
+  const path = asset('har-redirect.har');
+  const context = await contextFactory({ har: { path, urlFilter: /.*theverge.*/ } });
+  const page = await context.newPage();
+  await page.goto(server.EMPTY_PAGE);
+  await expect(page).toHaveURL(server.EMPTY_PAGE);
+  await page.goto('https://theverge.com/');
+  await expect(page).toHaveURL('https://www.theverge.com/');
+  await page.goBack();
+  await expect(page).toHaveURL(server.EMPTY_PAGE);
+  const response = await page.goForward();
+  await expect(page).toHaveURL('https://www.theverge.com/');
+  await expect(response.request().url()).toBe('https://www.theverge.com/');
+  expect(await page.evaluate(() => location.href)).toBe('https://www.theverge.com/');
+});
+
+it('should reload redirected navigation', async ({ contextFactory, isAndroid, asset, server }) => {
+  it.fixme(isAndroid);
+
+  const path = asset('har-redirect.har');
+  const context = await contextFactory({ har: { path, urlFilter: /.*theverge.*/ } });
+  const page = await context.newPage();
+  await page.goto('https://theverge.com/');
+  await expect(page).toHaveURL('https://www.theverge.com/');
+  const response = await page.reload();
+  await expect(page).toHaveURL('https://www.theverge.com/');
+  await expect(response.request().url()).toBe('https://www.theverge.com/');
+  expect(await page.evaluate(() => location.href)).toBe('https://www.theverge.com/');
+});

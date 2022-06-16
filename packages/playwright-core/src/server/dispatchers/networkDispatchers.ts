@@ -135,7 +135,7 @@ export class RouteDispatcher extends Dispatcher<Route, channels.RouteChannel> im
   }
 
   async abort(params: channels.RouteAbortParams): Promise<void> {
-    await this._object.abort(params.errorCode || 'failed');
+    await this._object.abort(params.errorCode || 'failed', params.redirectAbortedNavigationToUrl);
   }
 }
 

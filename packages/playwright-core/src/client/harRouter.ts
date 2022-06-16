@@ -15,7 +15,7 @@
  */
 
 import fs from 'fs';
-import type { HAREntry, HARFile, HARResponse } from '../../types/types';
+import type { HAREntry, HARFile } from '../../types/types';
 import { debugLogger } from '../common/debugLogger';
 import { rewriteErrorMessage } from '../utils/stackTrace';
 import { ZipFile } from '../utils/zipFile';
@@ -51,9 +51,9 @@ export class HarRouter {
   }
 
   private async _handle(route: Route) {
-    let response;
+    let entry;
     try {
-      response = harFindResponse(this._harFile, {
+      entry = harFindResponse(this._harFile, {
         url: route.request().url(),
         method: route.request().method()
       });
@@ -62,8 +62,15 @@ export class HarRouter {
       debugLogger.log('api', e);
     }
 
-    if (response) {
+    if (entry) {
+      // If navigation is being redirected, restart it with the final url to ensure the document's url changes.
+      if (entry.request.url !== route.request().url() && route.request().isNavigationRequest()) {
+        debugLogger.log('api', `redirecting HAR navigation: ${route.request().url()} => ${entry.request.url}`);
+        await route._abort(undefined, entry.request.url);
+        return;
+      }
       debugLogger.log('api', `serving from HAR: ${route.request().method()} ${route.request().url()}`);
+      const response = entry.response;
       const sha1 = (response.content as any)._sha1;
 
       if (this._zipFile && sha1) {
@@ -106,7 +113,7 @@ export class HarRouter {
 
 const redirectStatus = [301, 302, 303, 307, 308];
 
-function harFindResponse(har: HARFile, params: { url: string, method: string }): HARResponse | undefined {
+function harFindResponse(har: HARFile, params: { url: string, method: string }): HAREntry | undefined {
   const harLog = har.log;
   const visited = new Set<HAREntry>();
   let url = params.url;
@@ -131,6 +138,6 @@ function harFindResponse(har: HARFile, params: { url: string, method: string }):
       continue;
     }
 
-    return entry.response;
+    return entry;
   }
 }
