@@ -316,32 +316,51 @@ page.locator("article", has=page.locator("button.subscribe"))
 page.Locator("article", new PageLocatorOptions { Has = page.Locator("button.subscribe") })
 ```
 
-You can also filter an existing locator with [`method: Locator.filter`] method.
+You can also filter an existing locator with [`method: Locator.filter`] method, possibly chaining it multiple times.
 
 ```js
-const buttonLocator = page.locator('button');
+const rowLocator = page.locator('tr');
 // ...
-await buttonLocator.filter({ hasText: 'Sign up' }).click();
+await rowLocator
+    .filter({ hasText: 'text in column 1' })
+    .filter({ has: page.locator('button', { hasText: 'column 2 button' }) })
+    .screenshot();
 ```
 ```java
-Locator buttonLocator = page.locator("button");
+Locator rowLocator = page.locator("tr");
 // ...
-buttonLocator.filter(new Locator.FilterOptions().setHasText("Sign up")).click();
+rowLocator
+    .filter(new Locator.FilterOptions().setHasText("text in column 1"))
+    .filter(new Locator.FilterOptions().setHas(
+        page.locator("button", new Page.LocatorOptions().setHasText("column 2 button"))
+    ))
+    .screenshot();
 ```
 ```python async
-button_locator = page.locator("button")
+row_locator = page.lsocator("tr")
 # ...
-await button_locator.filter(has_text="Sign up").click()
+await row_locator
+    .filter(has_text="text in column 1")
+    .filter(has=page.locator("tr", has_text="column 2 button"))
+    .screenshot()
 ```
 ```python sync
-button_locator = page.locator("button")
+row_locator = page.lsocator("tr")
 # ...
-button_locator.filter(has_text="Sign up").click()
+row_locator
+    .filter(has_text="text in column 1")
+    .filter(has=page.locator("tr", has_text="column 2 button"))
+    .screenshot()
 ```
 ```csharp
-var buttonLocator = page.Locator("button");
+var rowLocator = page.Locator("tr");
 // ...
-await buttonLocator.Filter(new LocatorFilterOptions { HasText = "Sign up" }).ClickAsync();
+await rowLocator
+    .Filter(new LocatorFilterOptions { HasText = "text in column 1" })
+    .Filter(new LocatorFilterOptions {
+        Has = page.Locator("tr", new PageLocatorOptions { HasText = "column 2 button" } )
+    })
+    .ScreenshotAsync();
 ```
 
 ## Locator vs ElementHandle

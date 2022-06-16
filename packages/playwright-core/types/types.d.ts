@@ -9476,7 +9476,18 @@ export interface Locator {
   }): Promise<void>;
 
   /**
-   * This method narrows existing locator according to the options, for example filters by text.
+   * This method narrows existing locator according to the options, for example filters by text. It can be chained to filter
+   * multiple times.
+   *
+   * ```js
+   * const rowLocator = page.locator('tr');
+   * // ...
+   * await rowLocator
+   *     .filter({ hasText: 'text in column 1' })
+   *     .filter({ has: page.locator('button', { hasText: 'column 2 button' }) })
+   *     .screenshot();
+   * ```
+   *
    * @param options
    */
   filter(options?: {
