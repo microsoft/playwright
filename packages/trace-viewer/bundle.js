@@ -31,24 +31,8 @@ export function bundle() {
       transform(html, ctx) {
         if (!ctx || !ctx.bundle)
           return html;
-        html = html.replace(/(?=<!--)([\s\S]*?)-->/, '');
-        for (const [, value] of Object.entries(ctx.bundle)) {
-          if (value.code)
-            html = html.replace(/<script type="module".*<\/script>/, () => `<script type="module">${value.code}</script>`);
-          else
-            html = html.replace(/<link rel="stylesheet"[^>]*>/, () => `<style type='text/css'>${value.source}</style>`);
-        }
-        return html;
+        return html.replace(/(?=<!--)([\s\S]*?)-->/, '');
       },
-    },
-    closeBundle: () => {
-      if (existsSync(path.join(config.build.outDir, 'index.html'))) {
-        const targetDir = path.join(__dirname, '..', 'playwright-core', 'lib', 'webpack', 'htmlReport');
-        fs.mkdirSync(targetDir, { recursive: true });
-        fs.copyFileSync(
-          path.join(config.build.outDir, 'index.html'),
-          path.join(targetDir, 'index.html'));
-      }
     },
   }
 }
