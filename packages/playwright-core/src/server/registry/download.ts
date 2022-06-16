@@ -79,7 +79,7 @@ type DownloadOptions = {
 };
 
 export async function download(
-  url: string,
+  urls: string | string[],
   destination: string,
   options: DownloadOptions = {}
 ) {
@@ -88,6 +88,7 @@ export async function download(
     log(
         `downloading ${progressBarName} - attempt #${attempt}`
     );
+    const url = Array.isArray(urls) ? urls[(attempt - 1) % urls.length] : urls;
     const { error } = await downloadFile(url, destination, {
       progressCallback: getDownloadProgress(progressBarName),
       log,
@@ -99,14 +100,10 @@ export async function download(
     }
     const errorMessage = error?.message || '';
     log(`attempt #${attempt} - ERROR: ${errorMessage}`);
-    if (
-      attempt < retryCount &&
-      (errorMessage.includes('ECONNRESET') ||
-        errorMessage.includes('ETIMEDOUT'))
-    ) {
+    if (attempt < retryCount) {
       // Maximum default delay is 3rd retry: 1337.5ms
       const millis = Math.random() * 200 + 250 * Math.pow(1.5, attempt);
-      log(`sleeping ${millis}ms before retry...`);
+      log(`sleeping ${millis.toFixed(2)}ms before retry...`);
       await new Promise(c => setTimeout(c, millis));
     } else {
       throw error;
