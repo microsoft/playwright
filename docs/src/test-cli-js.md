@@ -14,6 +14,11 @@ Here are the most common options available in the command line.
   npx playwright test
   ```
 
+- Run all the tests against a specific [project](./test-configuration-js.md#multiple-browsers)
+  ```bash
+  npx playwright test --project=chromium
+  ```
+
 - Run a single test file
   ```bash
   npx playwright test tests/todo-page.spec.ts
