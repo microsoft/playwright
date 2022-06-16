@@ -154,8 +154,8 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     value: tOptional(tType('SerializedValue')),
   });
   scheme.RecordHarOptions = tObject({
-    omitContent: tOptional(tBoolean),
     path: tString,
+    content: tEnum(['embed', 'attach', 'omit']),
     urlGlob: tOptional(tString),
     urlRegexSource: tOptional(tString),
     urlRegexFlags: tOptional(tString),

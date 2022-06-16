@@ -111,3 +111,12 @@ export async function parseTrace(file: string): Promise<{ events: any[], resourc
     resources,
   };
 }
+
+export async function parseHar(file: string): Promise<Map<string, Buffer>> {
+  const zipFS = new ZipFileSystem(file);
+  const resources = new Map<string, Buffer>();
+  for (const entry of await zipFS.entries())
+    resources.set(entry, await zipFS.read(entry));
+  zipFS.close();
+  return resources;
+}

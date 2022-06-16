@@ -15,30 +15,35 @@
  */
 
 import fs from 'fs';
-import type { APIRequestContext } from '../fetch';
+import path from 'path';
 import { Artifact } from '../artifact';
 import type { BrowserContext } from '../browserContext';
 import type * as har from './har';
 import { HarTracer } from './harTracer';
 import type * as channels from '../../protocol/channels';
+import { yazl } from '../../zipBundle';
+import type { ZipFile } from '../../zipBundle';
+import { ManualPromise } from '../../utils/manualPromise';
+import type EventEmitter from 'events';
+import { createGuid } from '../../utils';
 
 export class HarRecorder {
   private _artifact: Artifact;
   private _isFlushed: boolean = false;
-  private _options: channels.RecordHarOptions;
   private _tracer: HarTracer;
   private _entries: har.Entry[] = [];
+  private _zipFile: ZipFile | null = null;
 
-  constructor(context: BrowserContext | APIRequestContext, options: channels.RecordHarOptions) {
-    this._artifact = new Artifact(context, options.path);
-    this._options = options;
+  constructor(context: BrowserContext, options: channels.RecordHarOptions) {
+    this._artifact = new Artifact(context, path.join(context._browser.options.artifactsDir, `${createGuid()}.har`));
     const urlFilterRe = options.urlRegexSource !== undefined && options.urlRegexFlags !== undefined ? new RegExp(options.urlRegexSource, options.urlRegexFlags) : undefined;
     this._tracer = new HarTracer(context, this, {
-      content: options.omitContent ? 'omit' : 'embedded',
+      content: options.content || 'embed',
       waitForContentOnStop: true,
       skipScripts: false,
       urlFilter: urlFilterRe ?? options.urlGlob,
     });
+    this._zipFile = options.content === 'attach' || options.path.endsWith('.zip') ? new yazl.ZipFile() : null;
     this._tracer.start();
   }
 
@@ -50,6 +55,8 @@ export class HarRecorder {
   }
 
   onContentBlob(sha1: string, buffer: Buffer) {
+    if (this._zipFile)
+      this._zipFile!.addBuffer(buffer, sha1);
   }
 
   async flush() {
@@ -57,9 +64,24 @@ export class HarRecorder {
       return;
     this._isFlushed = true;
     await this._tracer.flush();
+
     const log = this._tracer.stop();
     log.entries = this._entries;
-    await fs.promises.writeFile(this._options.path, JSON.stringify({ log }, undefined, 2));
+
+    const harFileContent = JSON.stringify({ log }, undefined, 2);
+
+    if (this._zipFile) {
+      const result = new ManualPromise<void>();
+      (this._zipFile as unknown as EventEmitter).on('error', error => result.reject(error));
+      this._zipFile.addBuffer(Buffer.from(harFileContent, 'utf-8'), 'har.har');
+      this._zipFile.end();
+      this._zipFile.outputStream.pipe(fs.createWriteStream(this._artifact.localPath())).on('close', () => {
+        result.resolve();
+      });
+      await result;
+    } else {
+      await fs.promises.writeFile(this._artifact.localPath(), harFileContent);
+    }
   }
 
   async export(): Promise<Artifact> {

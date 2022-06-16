@@ -17,7 +17,7 @@
 
 import * as os from 'os';
 import { TimeoutSettings } from '../common/timeoutSettings';
-import { debugMode, createGuid } from '../utils';
+import { debugMode } from '../utils';
 import { mkdirIfNeeded } from '../utils/fileUtils';
 import type { Browser, BrowserOptions } from './browser';
 import type { Download } from './download';
@@ -87,7 +87,7 @@ export abstract class BrowserContext extends SdkObject {
     this.fetchRequest = new BrowserContextAPIRequestContext(this);
 
     if (this._options.recordHar)
-      this._harRecorder = new HarRecorder(this, { ...this._options.recordHar, path: path.join(this._browser.options.artifactsDir, `${createGuid()}.har`) });
+      this._harRecorder = new HarRecorder(this, this._options.recordHar);
 
     this.tracing = new Tracing(this, browser.options.tracesDir);
   }
