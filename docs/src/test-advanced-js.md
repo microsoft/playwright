@@ -371,9 +371,7 @@ module.exports = async config => {
   const context = await browser.newPage();
   const page = await context.newPage();
   try {
-    await page
-    .context()
-    .tracing.start({ screenshots: true, snapshots: true });
+    await context.tracing.start({ screenshots: true, snapshots: true });
     await page.goto(baseURL);
     await page.fill('input[name="user"]', 'user');
     await page.fill('input[name="password"]', 'password');
