@@ -15,7 +15,7 @@
  */
 
 import { contextTest } from '../../config/browserTest';
-import type { Page } from 'playwright-core';
+import type { ConsoleMessage, Page } from 'playwright-core';
 import * as path from 'path';
 import type { Source } from '../../../packages/playwright-core/src/server/recorder/recorderTypes';
 import type { CommonFixtures, TestChildProcess } from '../../config/commonFixtures';
@@ -131,21 +131,27 @@ class Recorder {
   }
 
   async waitForHighlight(action: () => Promise<void>): Promise<string> {
-    let callback;
-    const result = new Promise<string>(f => callback = f);
-    const listener = async msg => {
+    // We get the last highlighted selector, because Firefox sometimes issues multiple
+    // focus events.
+    let generatedSelector: string | undefined;
+    let callback: Function | undefined;
+
+    const listener = async (msg: ConsoleMessage) => {
       const prefix = 'Highlight updated for test: ';
       if (msg.text().startsWith(prefix)) {
-        this.page.off('console', listener);
-        callback(msg.text().substr(prefix.length));
+        generatedSelector = msg.text().substr(prefix.length);
+        if (callback) {
+          this.page.off('console', listener);
+          callback(generatedSelector);
+        }
       }
     };
     this.page.on('console', listener);
-    const [ generatedSelector ] = await Promise.all([
-      result,
-      action()
-    ]);
-    return generatedSelector;
+
+    await action();
+    if (generatedSelector)
+      return generatedSelector;
+    return await new Promise<string>(f => callback = f);
   }
 
   async waitForActionPerformed(): Promise<{ hovered: string | null, active: string | null }> {
