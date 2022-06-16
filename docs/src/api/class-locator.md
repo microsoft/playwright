@@ -388,6 +388,52 @@ Value to set for the `<input>`, `<textarea>` or `[contenteditable]` element.
 - returns: <[Locator]>
 
 This method narrows existing locator according to the options, for example filters by text.
+It can be chained to filter multiple times.
+
+```js
+const rowLocator = page.locator('tr');
+// ...
+await rowLocator
+    .filter({ hasText: 'text in column 1' })
+    .filter({ has: page.locator('button', { hasText: 'column 2 button' }) })
+    .screenshot();
+```
+```java
+Locator rowLocator = page.locator("tr");
+// ...
+rowLocator
+    .filter(new Locator.FilterOptions().setHasText("text in column 1"))
+    .filter(new Locator.FilterOptions().setHas(
+        page.locator("button", new Page.LocatorOptions().setHasText("column 2 button"))
+    ))
+    .screenshot();
+```
+```python async
+row_locator = page.lsocator("tr")
+# ...
+await row_locator
+    .filter(has_text="text in column 1")
+    .filter(has=page.locator("tr", has_text="column 2 button"))
+    .screenshot()
+```
+```python sync
+row_locator = page.lsocator("tr")
+# ...
+row_locator
+    .filter(has_text="text in column 1")
+    .filter(has=page.locator("tr", has_text="column 2 button"))
+    .screenshot()
+```
+```csharp
+var rowLocator = page.Locator("tr");
+// ...
+await rowLocator
+    .Filter(new LocatorFilterOptions { HasText = "text in column 1" })
+    .Filter(new LocatorFilterOptions {
+        Has = page.Locator("tr", new PageLocatorOptions { HasText = "column 2 button" } )
+    })
+    .ScreenshotAsync();
+```
 
 ### option: Locator.filter.-inline- = %%-locator-options-list-%%
 
