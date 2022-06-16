@@ -577,10 +577,6 @@ export class Frame extends SdkObject {
         this.emit(Frame.Events.AddLifecycle, event);
         if (this === mainFrame && this._url !== 'about:blank')
           debugLogger.log('api', `  "${event}" event fired`);
-        if (this === mainFrame && event === 'load')
-          this._page.emit(Page.Events.Load);
-        if (this === mainFrame && event === 'domcontentloaded')
-          this._page.emit(Page.Events.DOMContentLoaded);
       }
     }
     for (const event of this._subtreeLifecycleEvents) {

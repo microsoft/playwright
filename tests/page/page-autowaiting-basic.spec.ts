@@ -193,9 +193,9 @@ it('should work with waitForLoadState(load)', async ({ page, server }) => {
   await page.setContent(`<a id="anchor" href="${server.EMPTY_PAGE}">empty.html</a>`);
   await Promise.all([
     page.click('a').then(() => page.waitForLoadState('load')).then(() => messages.push('clickload')),
-    page.waitForEvent('framenavigated').then(() => page.waitForLoadState('domcontentloaded')).then(() => messages.push('domcontentloaded')),
+    page.waitForEvent('load').then(() => messages.push('load')),
   ]);
-  expect(messages.join('|')).toBe('route|domcontentloaded|clickload');
+  expect(messages.join('|')).toBe('route|load|clickload');
 });
 
 it('should work with goto following click', async ({ page, server }) => {
