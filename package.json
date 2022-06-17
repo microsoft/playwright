@@ -72,7 +72,7 @@
     "concurrently": "^6.2.1",
     "cross-env": "^7.0.3",
     "dotenv": "^16.0.0",
-    "electron": "^12.2.1",
+    "electron": "^15.5.5",
     "enquirer": "^2.3.6",
     "eslint": "^8.8.0",
     "eslint-plugin-notice": "^0.9.10",
