@@ -271,8 +271,25 @@ export class CRNetworkManager {
 
   _createResponse(request: InterceptableRequest, responsePayload: Protocol.Network.Response): network.Response {
     const getResponseBody = async () => {
+      const contentLengthHeader = Object.entries(responsePayload.headers).find(header => header[0].toLowerCase() === 'content-length');
+      const expectedLength = contentLengthHeader ? +contentLengthHeader[1] : undefined;
+
       const response = await this._client.send('Network.getResponseBody', { requestId: request._requestId });
-      return Buffer.from(response.body, response.base64Encoded ? 'base64' : 'utf8');
+      if (response.body || !expectedLength)
+        return Buffer.from(response.body, response.base64Encoded ? 'base64' : 'utf8');
+
+      // For <link prefetch we are going to receive empty body with non-emtpy content-length expectation. Reach out for the actual content.
+      const resource = await this._client.send('Network.loadNetworkResource', { url: request.request.url(), frameId: request.request.frame()._id, options: { disableCache: false, includeCredentials: true } });
+      const chunks: Buffer[] = [];
+      while (resource.resource.stream) {
+        const chunk = await this._client.send('IO.read', { handle: resource.resource.stream });
+        chunks.push(Buffer.from(chunk.data, chunk.base64Encoded ? 'base64' : 'utf-8'));
+        if (chunk.eof) {
+          await this._client.send('IO.close', { handle: resource.resource.stream });
+          break;
+        }
+      }
+      return Buffer.concat(chunks);
     };
     const timingPayload = responsePayload.timing!;
     let timing: network.ResourceTiming;

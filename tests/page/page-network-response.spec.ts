@@ -334,3 +334,13 @@ it('should report if request was fromServiceWorker', async ({ page, server, isAn
     expect(res.fromServiceWorker()).toBe(true);
   }
 });
+
+it('should return body for prefetch script', async ({ page, server, browserName }) => {
+  it.skip(browserName === 'webkit', 'No prefetch in WebKit: https://caniuse.com/link-rel-prefetch');
+  const [response] = await Promise.all([
+    page.waitForResponse('**/prefetch.js'),
+    page.goto(server.PREFIX + '/prefetch.html')
+  ]);
+  const body = await response.body();
+  expect(body.toString()).toBe('// Scripts will be pre-fetched');
+});
