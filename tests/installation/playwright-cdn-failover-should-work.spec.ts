@@ -35,7 +35,7 @@ const parsedDownloads = (rawLogs: string) => {
 
 for (const cdn of CDNS) {
   test(`playwright cdn failover should work (${cdn})`, async ({ exec, nodeMajorVersion, installedSoftwareOnDisk }) => {
-    const result = await exec('npm i --foreground-scripts playwright', { env: { PW_TEST_CDN_UNDERTEST: cdn, DEBUG: 'pw:install' } });
+    const result = await exec('npm i --foreground-scripts playwright', { env: { PW_TEST_CDN_THAT_SHOULD_WORK: cdn, DEBUG: 'pw:install' } });
     expect(result).toHaveLoggedSoftwareDownload(['chromium', 'ffmpeg', 'firefox', 'webkit']);
     expect(await installedSoftwareOnDisk()).toEqual(['chromium', 'ffmpeg', 'firefox', 'webkit']);
     const dls = parsedDownloads(result);
