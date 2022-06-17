@@ -26,7 +26,7 @@ This project incorporates components from the projects listed below. The origina
 -	inflight@1.0.6 (https://github.com/npm/inflight)
 -	inherits@2.0.4 (https://github.com/isaacs/inherits)
 -	ip@1.1.5 (https://github.com/indutny/node-ip)
--	jpeg-js@0.4.3 (https://github.com/eugeneware/jpeg-js)
+-	jpeg-js@0.4.4 (https://github.com/eugeneware/jpeg-js)
 -	mime@3.0.0 (https://github.com/broofa/mime)
 -	minimatch@3.1.2 (https://github.com/isaacs/minimatch)
 -	ms@2.1.2 (https://github.com/zeit/ms)
@@ -911,7 +911,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
 END OF ip@1.1.5 AND INFORMATION
 
-%% jpeg-js@0.4.3 NOTICES AND INFORMATION BEGIN HERE
+%% jpeg-js@0.4.4 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 Copyright (c) 2014, Eugene Ware
 All rights reserved.
@@ -939,7 +939,7 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 =========================================
-END OF jpeg-js@0.4.3 AND INFORMATION
+END OF jpeg-js@0.4.4 AND INFORMATION
 
 %% mime@3.0.0 NOTICES AND INFORMATION BEGIN HERE
 =========================================
