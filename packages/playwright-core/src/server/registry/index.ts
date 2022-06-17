@@ -708,8 +708,11 @@ export class Registry {
     if (hostPlatform === 'generic-linux' || hostPlatform === 'generic-linux-arm64')
       logPolitely('BEWARE: your OS is not officially supported by Playwright; downloading Ubuntu build as a fallback.');
     const downloadPath = util.format(downloadPathTemplate, descriptor.revision);
+
+    let downloadURLs = PLAYWRIGHT_CDN_MIRRORS.map(mirror => `${mirror}/${downloadPath}`) ;
     const customHostOverride = (downloadHostEnv && getFromENV(downloadHostEnv)) || getFromENV('PLAYWRIGHT_DOWNLOAD_HOST');
-    const downloadURLs = PLAYWRIGHT_CDN_MIRRORS.map(mirror => `${customHostOverride || mirror}/${downloadPath}`) ;
+    if (customHostOverride)
+      downloadURLs = [`${customHostOverride}/${downloadPath}`];
 
     const displayName = descriptor.name.split('-').map(word => {
       return word === 'ffmpeg' ? 'FFMPEG' : word.charAt(0).toUpperCase() + word.slice(1);
