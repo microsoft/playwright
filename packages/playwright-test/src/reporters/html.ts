@@ -218,12 +218,8 @@ export async function showHTMLReport(reportFolder: string | undefined, testId?: 
   console.log(colors.cyan(`  Serving HTML report at ${url}. Press Ctrl+C to quit.`));
   if (testId)
     url += `#?testId=${testId}`;
-  try {
-    await open(url, { wait: true });
-    await new Promise(() => {});
-  } catch (error) {
-    console.log(`Failed to open browser on ${url}`);
-  }
+  await open(url, { wait: true }).catch(() => console.log(`Failed to open browser on ${url}`));
+  await new Promise(() => {});
 }
 
 export function startHtmlReportServer(folder: string): HttpServer {
