@@ -226,7 +226,7 @@ RecordHarOptions:
   properties:
     path: string
     content:
-      type: enum
+      type: enum?
       literals:
       - embed
       - attach

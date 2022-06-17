@@ -10651,8 +10651,7 @@ export interface BrowserType<Unused = {}> {
       content?: "omit"|"embed"|"attach";
 
       /**
-       * Path on the filesystem to write the HAR file to. If the file name ends with `.zip`, the har file is archived. Content
-       * `attach` will also enforce `zip` compression.
+       * Path on the filesystem to write the HAR file to. If the file name ends with `.zip`, `attach` mode is used by default.
        */
       path: string;
 
@@ -11868,8 +11867,7 @@ export interface AndroidDevice {
       content?: "omit"|"embed"|"attach";
 
       /**
-       * Path on the filesystem to write the HAR file to. If the file name ends with `.zip`, the har file is archived. Content
-       * `attach` will also enforce `zip` compression.
+       * Path on the filesystem to write the HAR file to. If the file name ends with `.zip`, `attach` mode is used by default.
        */
       path: string;
 
@@ -13468,8 +13466,7 @@ export interface Browser extends EventEmitter {
       content?: "omit"|"embed"|"attach";
 
       /**
-       * Path on the filesystem to write the HAR file to. If the file name ends with `.zip`, the har file is archived. Content
-       * `attach` will also enforce `zip` compression.
+       * Path on the filesystem to write the HAR file to. If the file name ends with `.zip`, `attach` mode is used by default.
        */
       path: string;
 
@@ -14284,8 +14281,7 @@ export interface Electron {
       content?: "omit"|"embed"|"attach";
 
       /**
-       * Path on the filesystem to write the HAR file to. If the file name ends with `.zip`, the har file is archived. Content
-       * `attach` will also enforce `zip` compression.
+       * Path on the filesystem to write the HAR file to. If the file name ends with `.zip`, `attach` mode is used by default.
        */
       path: string;
 
@@ -16133,8 +16129,7 @@ export interface BrowserContextOptions {
     content?: "omit"|"embed"|"attach";
 
     /**
-     * Path on the filesystem to write the HAR file to. If the file name ends with `.zip`, the har file is archived. Content
-     * `attach` will also enforce `zip` compression.
+     * Path on the filesystem to write the HAR file to. If the file name ends with `.zip`, `attach` mode is used by default.
      */
     path: string;
 
