@@ -220,6 +220,7 @@ export async function showHTMLReport(reportFolder: string | undefined, testId?: 
     url += `#?testId=${testId}`;
   try {
     await open(url, { wait: true });
+    await new Promise(() => {});
   } catch (error) {
     console.log(`Failed to open browser on ${url}`);
   }
