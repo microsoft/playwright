@@ -18,7 +18,9 @@ import fs from 'fs';
 import type { HAREntry, HARFile, HARResponse } from '../../types/types';
 import { debugLogger } from '../common/debugLogger';
 import { rewriteErrorMessage } from '../utils/stackTrace';
+import { ZipFile } from '../utils/zipFile';
 import type { BrowserContext } from './browserContext';
+import { Events } from './events';
 import type { Route } from './network';
 import type { BrowserContextOptions } from './types';
 
@@ -26,40 +28,79 @@ type HarOptions = NonNullable<BrowserContextOptions['har']>;
 
 export class HarRouter {
   private _pattern: string | RegExp;
-  private _handler: (route: Route) => Promise<void>;
+  private _harFile: HARFile;
+  private _zipFile: ZipFile | null;
+  private _options: HarOptions | undefined;
 
   static async create(options: HarOptions): Promise<HarRouter> {
+    if (options.path.endsWith('.zip')) {
+      const zipFile = new ZipFile(options.path);
+      const har = await zipFile.read('har.har');
+      const harFile = JSON.parse(har.toString()) as HARFile;
+      return new HarRouter(harFile, zipFile, options);
+    }
     const harFile = JSON.parse(await fs.promises.readFile(options.path, 'utf-8')) as HARFile;
-    return new HarRouter(harFile, options);
+    return new HarRouter(harFile, null, options);
   }
 
-  constructor(harFile: HARFile, options?: HarOptions) {
+  constructor(harFile: HARFile, zipFile: ZipFile | null, options?: HarOptions) {
+    this._harFile = harFile;
+    this._zipFile = zipFile;
     this._pattern = options?.urlFilter ?? /.*/;
-    this._handler = async (route: Route) => {
-      let response;
-      try {
-        response = harFindResponse(harFile, {
-          url: route.request().url(),
-          method: route.request().method()
+    this._options = options;
+  }
+
+  private async _handle(route: Route) {
+    let response;
+    try {
+      response = harFindResponse(this._harFile, {
+        url: route.request().url(),
+        method: route.request().method()
+      });
+    } catch (e) {
+      rewriteErrorMessage(e, `Error while finding entry for ${route.request().method()} ${route.request().url()} in HAR file:\n${e.message}`);
+      debugLogger.log('api', e);
+    }
+
+    if (response) {
+      debugLogger.log('api', `serving from HAR: ${route.request().method()} ${route.request().url()}`);
+      const sha1 = (response.content as any)._sha1;
+
+      if (this._zipFile && sha1) {
+        const body = await this._zipFile.read(sha1).catch(() => {
+          debugLogger.log('api', `payload ${sha1} for request ${route.request().url()} is not found in archive`);
+          return null;
         });
-      } catch (e) {
-        rewriteErrorMessage(e, `Error while finding entry for ${route.request().method()} ${route.request().url()} in HAR file:\n${e.message}`);
-        debugLogger.log('api', e);
+        if (body) {
+          await route.fulfill({
+            status: response.status,
+            headers: Object.fromEntries(response.headers.map(h => [h.name, h.value])),
+            body
+          });
+          return;
+        }
       }
-      if (response) {
-        debugLogger.log('api', `serving from HAR: ${route.request().method()} ${route.request().url()}`);
-        await route.fulfill({ response });
-      } else if (options?.fallback === 'continue') {
-        await route.fallback();
-      } else {
-        debugLogger.log('api', `request not in HAR, aborting: ${route.request().method()} ${route.request().url()}`);
-        await route.abort();
-      }
-    };
+
+      await route.fulfill({ response });
+      return;
+    }
+
+    if (this._options?.fallback === 'continue') {
+      await route.fallback();
+      return;
+    }
+
+    debugLogger.log('api', `request not in HAR, aborting: ${route.request().method()} ${route.request().url()}`);
+    await route.abort();
   }
 
   async addRoute(context: BrowserContext) {
-    await context.route(this._pattern, this._handler);
+    await context.route(this._pattern, route => this._handle(route));
+    context.once(Events.BrowserContext.Close, () => this.dispose());
+  }
+
+  dispose() {
+    this._zipFile?.close();
   }
 }
 
