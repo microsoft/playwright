@@ -24,17 +24,16 @@ import { debugLogger } from '../../common/debugLogger';
 import { download } from './download';
 import { extract } from '../../zipBundle';
 
-export async function downloadBrowserWithProgressBar(title: string, browserDirectory: string, executablePath: string, downloadURL: string, downloadFileName: string): Promise<boolean> {
+export async function downloadBrowserWithProgressBar(title: string, browserDirectory: string, executablePath: string, downloadURLs: string[], downloadFileName: string): Promise<boolean> {
   if (await existsAsync(browserDirectory)) {
     // Already downloaded.
     debugLogger.log('install', `${title} is already downloaded.`);
     return false;
   }
 
-  const url = downloadURL;
   const zipPath = path.join(os.tmpdir(), downloadFileName);
   try {
-    await download(url, zipPath, {
+    await download(downloadURLs, zipPath, {
       progressBarName: title,
       log: debugLogger.log.bind(debugLogger, 'install'),
       userAgent: getUserAgent(),
