@@ -37,13 +37,15 @@ export class HarRecorder {
   constructor(context: BrowserContext, options: channels.RecordHarOptions) {
     this._artifact = new Artifact(context, path.join(context._browser.options.artifactsDir, `${createGuid()}.har`));
     const urlFilterRe = options.urlRegexSource !== undefined && options.urlRegexFlags !== undefined ? new RegExp(options.urlRegexSource, options.urlRegexFlags) : undefined;
+    const expectsZip = options.path.endsWith('.zip');
+    const content = options.content || (expectsZip ? 'attach' : 'embed');
     this._tracer = new HarTracer(context, this, {
-      content: options.content || 'embed',
+      content,
       waitForContentOnStop: true,
       skipScripts: false,
       urlFilter: urlFilterRe ?? options.urlGlob,
     });
-    this._zipFile = options.content === 'attach' || options.path.endsWith('.zip') ? new yazl.ZipFile() : null;
+    this._zipFile = content === 'attach' || expectsZip ? new yazl.ZipFile() : null;
     this._tracer.start();
   }
 

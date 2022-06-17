@@ -275,30 +275,14 @@ it('should include content @smoke', async ({ contextFactory, server }, testInfo)
   expect(log.entries[2].response.content.compression).toBe(0);
 });
 
-it('should include content in zip', async ({ contextFactory, server }, testInfo) => {
+it('should use attach mode for zip extension', async ({ contextFactory, server }, testInfo) => {
   const { page, getZip } = await pageWithHar(contextFactory, testInfo, { outputPath: 'test.har.zip' });
   await page.goto(server.PREFIX + '/har.html');
   await page.evaluate(() => fetch('/pptr.png').then(r => r.arrayBuffer()));
   const zip = await getZip();
   const log = JSON.parse(zip.get('har.har').toString())['log'] as Log;
-
-  expect(log.entries[0].response.content.encoding).toBe(undefined);
-  expect(log.entries[0].response.content.mimeType).toBe('text/html; charset=utf-8');
-  expect(log.entries[0].response.content.text).toContain('HAR Page');
-  expect(log.entries[0].response.content.size).toBeGreaterThanOrEqual(96);
-  expect(log.entries[0].response.content.compression).toBe(0);
-
-  expect(log.entries[1].response.content.encoding).toBe(undefined);
-  expect(log.entries[1].response.content.mimeType).toBe('text/css; charset=utf-8');
-  expect(log.entries[1].response.content.text).toContain('pink');
-  expect(log.entries[1].response.content.size).toBeGreaterThanOrEqual(37);
-  expect(log.entries[1].response.content.compression).toBe(0);
-
-  expect(log.entries[2].response.content.encoding).toBe('base64');
-  expect(log.entries[2].response.content.mimeType).toBe('image/png');
-  expect(Buffer.from(log.entries[2].response.content.text, 'base64').byteLength).toBeGreaterThan(0);
-  expect(log.entries[2].response.content.size).toBeGreaterThanOrEqual(6000);
-  expect(log.entries[2].response.content.compression).toBe(0);
+  expect(log.entries[0].response.content.text).toBe(undefined);
+  expect(zip.get('75841480e2606c03389077304342fac2c58ccb1b.html').toString()).toContain('HAR Page');
 });
 
 it('should omit content', async ({ contextFactory, server }, testInfo) => {
