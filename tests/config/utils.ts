@@ -16,7 +16,7 @@
 
 import { expect } from '@playwright/test';
 import type { Frame, Page } from 'playwright-core';
-import { ZipFileSystem } from './vfs';
+import { ZipFile } from '../../packages/playwright-core/lib/utils/zipFile';
 
 export async function attachFrame(page: Page, frameId: string, url: string): Promise<Frame> {
   const handle = await page.evaluateHandle(async ({ frameId, url }) => {
@@ -91,7 +91,7 @@ export function suppressCertificateWarning() {
 }
 
 export async function parseTrace(file: string): Promise<{ events: any[], resources: Map<string, Buffer> }> {
-  const zipFS = new ZipFileSystem(file);
+  const zipFS = new ZipFile(file);
   const resources = new Map<string, Buffer>();
   for (const entry of await zipFS.entries())
     resources.set(entry, await zipFS.read(entry));
@@ -113,7 +113,7 @@ export async function parseTrace(file: string): Promise<{ events: any[], resourc
 }
 
 export async function parseHar(file: string): Promise<Map<string, Buffer>> {
-  const zipFS = new ZipFileSystem(file);
+  const zipFS = new ZipFile(file);
   const resources = new Map<string, Buffer>();
   for (const entry of await zipFS.entries())
     resources.set(entry, await zipFS.read(entry));
