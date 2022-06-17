@@ -38,8 +38,8 @@ const BIN_PATH = path.join(__dirname, '..', '..', '..', 'bin');
 
 const PLAYWRIGHT_CDN_MIRRORS = [
   'https://playwright.azureedge.net',
-  'https://playwright-verizon.azureedge.net',
   'https://playwright-akamai.azureedge.net',
+  'https://playwright-verizon.azureedge.net',
 ];
 
 const EXECUTABLE_PATHS = {
