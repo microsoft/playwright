@@ -27,10 +27,11 @@ import { removeFolders } from 'playwright-core/lib/utils/fileUtils';
 import type { JsonAttachment, JsonReport, JsonSuite, JsonTestCase, JsonTestResult, JsonTestStep } from './raw';
 import RawReporter from './raw';
 import { stripAnsiEscapes } from './base';
-import { getPackageJsonPath } from '../util';
+import { getPackageJsonPath, sanitizeForFilePath } from '../util';
 import type { FullConfigInternal, Metadata } from '../types';
 import type { ZipFile } from 'playwright-core/lib/zipBundle';
 import { yazl } from 'playwright-core/lib/zipBundle';
+import { mime } from 'playwright-core/lib/utilsBundle';
 
 export type Stats = {
   total: number;
@@ -463,7 +464,8 @@ class HtmlBuilder {
         }
 
         fs.mkdirSync(path.join(this._reportFolder, 'data'), { recursive: true });
-        const sha1 = calculateSha1(a.body) + '.dat';
+        const extension = sanitizeForFilePath(path.extname(a.name).replace(/^\./, '')) || mime.getExtension(a.contentType) || 'dat';
+        const sha1 = calculateSha1(a.body) + '.' + extension;
         fs.writeFileSync(path.join(this._reportFolder, 'data', sha1), a.body);
         return {
           name: a.name,
