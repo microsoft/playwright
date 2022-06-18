@@ -16,7 +16,7 @@
 
 import fs from 'fs';
 import path from 'path';
-import { test as baseTest, expect, createImage } from './playwright-test-fixtures';
+import { test as baseTest, expect, createImage, stripAnsi } from './playwright-test-fixtures';
 import type { HttpServer } from '../../packages/playwright-core/lib/utils/httpServer';
 import { startHtmlReportServer } from '../../packages/playwright-test/lib/reporters/html';
 import { spawnAsync } from 'playwright-core/lib/utils/spawnAsync';
@@ -859,4 +859,23 @@ test.describe('gitCommitInfo plugin', () => {
     await expect.soft(page.locator('data-test-id=metadata-error')).toBeVisible();
     await expect.soft(page.locator('data-test-id=metadata-chip')).not.toBeVisible();
   });
+});
+
+test('should report clashing folders', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: [['html', { outputFolder: 'test-results/html-report' }]]
+      }
+    `,
+    'a.test.js': `
+      const { test } = pwt;
+      test('passes', async ({}) => {
+      });
+    `,
+  },  {}, {}, { usesCustomReporters: true });
+  expect(result.exitCode).toBe(0);
+  const output = stripAnsi(result.output);
+  expect(output).toContain('Configuration Error');
+  expect(output).toContain('html-report');
 });
