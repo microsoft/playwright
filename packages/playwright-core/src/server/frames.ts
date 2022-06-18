@@ -618,7 +618,6 @@ export class Frame extends SdkObject {
   }
 
   redirectNavigationAfterAbort(url: string, documentId: string) {
-    assert(!this._pendingNavigationRedirectAfterAbort, `Already redirecting to ${this._pendingNavigationRedirectAfterAbort?.url}`);
     this._pendingNavigationRedirectAfterAbort = { url, documentId };
   }
 
