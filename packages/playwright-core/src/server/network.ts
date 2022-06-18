@@ -244,8 +244,10 @@ export class Route extends SdkObject {
     return this._request;
   }
 
-  async abort(errorCode: string = 'failed') {
+  async abort(errorCode: string = 'failed', redirectAbortedNavigationToUrl?: string) {
     this._startHandling();
+    if (redirectAbortedNavigationToUrl)
+      this._request.frame().redirectNavigationAfterAbort(redirectAbortedNavigationToUrl, this._request._documentId!);
     await this._delegate.abort(errorCode);
   }
 

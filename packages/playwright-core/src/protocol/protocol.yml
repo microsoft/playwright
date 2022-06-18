@@ -2457,6 +2457,7 @@ Route:
     abort:
       parameters:
         errorCode: string?
+        redirectAbortedNavigationToUrl: string?
 
     continue:
       parameters:

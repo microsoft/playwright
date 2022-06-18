@@ -3125,9 +3125,11 @@ export interface RouteChannel extends RouteEventTarget, Channel {
 }
 export type RouteAbortParams = {
   errorCode?: string,
+  redirectAbortedNavigationToUrl?: string,
 };
 export type RouteAbortOptions = {
   errorCode?: string,
+  redirectAbortedNavigationToUrl?: string,
 };
 export type RouteAbortResult = void;
 export type RouteContinueParams = {

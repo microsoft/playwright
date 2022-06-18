@@ -57,7 +57,9 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel> im
     frame.on(Frame.Events.RemoveLifecycle, lifecycleEvent => {
       this._dispatchEvent('loadstate', { remove: lifecycleEvent });
     });
-    frame.on(Frame.Events.Navigation, (event: NavigationEvent) => {
+    frame.on(Frame.Events.InternalNavigation, (event: NavigationEvent) => {
+      if (!event.isPublic)
+        return;
       const params = { url: event.url, name: event.name, error: event.error ? event.error.message : undefined };
       if (event.newDocument)
         (params as any).newDocument = { request: RequestDispatcher.fromNullable(this._scope, event.newDocument.request || null) };

@@ -348,7 +348,7 @@ export class Page extends SdkObject {
 
   async reload(metadata: CallMetadata, options: types.NavigateOptions): Promise<network.Response | null> {
     const controller = new ProgressController(metadata, this);
-    return controller.run(progress => this.mainFrame().raceNavigationAction(async () => {
+    return controller.run(progress => this.mainFrame().raceNavigationAction(progress, options, async () => {
       // Note: waitForNavigation may fail before we get response to reload(),
       // so we should await it immediately.
       const [response] = await Promise.all([
@@ -362,7 +362,7 @@ export class Page extends SdkObject {
 
   async goBack(metadata: CallMetadata, options: types.NavigateOptions): Promise<network.Response | null> {
     const controller = new ProgressController(metadata, this);
-    return controller.run(progress => this.mainFrame().raceNavigationAction(async () => {
+    return controller.run(progress => this.mainFrame().raceNavigationAction(progress, options, async () => {
       // Note: waitForNavigation may fail before we get response to goBack,
       // so we should catch it immediately.
       let error: Error | undefined;
@@ -383,7 +383,7 @@ export class Page extends SdkObject {
 
   async goForward(metadata: CallMetadata, options: types.NavigateOptions): Promise<network.Response | null> {
     const controller = new ProgressController(metadata, this);
-    return controller.run(progress => this.mainFrame().raceNavigationAction(async () => {
+    return controller.run(progress => this.mainFrame().raceNavigationAction(progress, options, async () => {
       // Note: waitForNavigation may fail before we get response to goForward,
       // so we should catch it immediately.
       let error: Error | undefined;
