@@ -75,6 +75,8 @@ export type NavigationEvent = {
   // Error for cross-document navigations if any. When error is present,
   // the navigation did not commit.
   error?: Error,
+  // Wether this event should be visible to the clients via the public APIs.
+  isPublic?: boolean;
 };
 
 export type SchedulableTask<T> = (injectedScript: js.JSHandle<InjectedScript>) => Promise<js.JSHandle<InjectedScriptPoll<T>>>;
@@ -236,9 +238,8 @@ export class FrameManager {
     }
 
     frame._onClearLifecycle();
-    const navigationEvent: NavigationEvent = { url, name, newDocument: frame._currentDocument };
+    const navigationEvent: NavigationEvent = { url, name, newDocument: frame._currentDocument, isPublic: true };
     frame.emit(Frame.Events.InternalNavigation, navigationEvent);
-    frame.emit(Frame.Events.Navigation, navigationEvent);
     if (!initial) {
       debugLogger.log('api', `  navigated to "${url}"`);
       this._page.frameNavigatedToNewDocument(frame);
@@ -252,9 +253,8 @@ export class FrameManager {
     if (!frame)
       return;
     frame._url = url;
-    const navigationEvent: NavigationEvent = { url, name: frame._name };
+    const navigationEvent: NavigationEvent = { url, name: frame._name, isPublic: true };
     frame.emit(Frame.Events.InternalNavigation, navigationEvent);
-    frame.emit(Frame.Events.Navigation, navigationEvent);
     debugLogger.log('api', `  navigated to "${url}"`);
   }
 
@@ -269,11 +269,10 @@ export class FrameManager {
       name: frame._name,
       newDocument: frame.pendingDocument(),
       error: new NavigationAbortedError(documentId, errorText),
+      isPublic: !frame._pendingNavigationRedirectAfterAbort
     };
     frame.setPendingDocument(undefined);
     frame.emit(Frame.Events.InternalNavigation, navigationEvent);
-    if (!frame._pendingNavigationRedirectAfterAbort)
-      frame.emit(Frame.Events.Navigation, navigationEvent);
   }
 
   frameDetached(frameId: string) {
@@ -445,7 +444,6 @@ export class FrameManager {
 
 export class Frame extends SdkObject {
   static Events = {
-    Navigation: 'navigation',
     InternalNavigation: 'internalnavigation',
     AddLifecycle: 'addlifecycle',
     RemoveLifecycle: 'removelifecycle',
@@ -1747,6 +1745,8 @@ class SignalBarrier {
       return;
     this.retain();
     const waiter = helper.waitForEvent(null, frame, Frame.Events.InternalNavigation, (e: NavigationEvent) => {
+      if (!e.isPublic)
+        return false;
       if (!e.error && this._progress)
         this._progress.log(`  navigated to "${frame._url}"`);
       return true;
