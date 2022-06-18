@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { JSONReport, JSONReportSuite } from '@playwright/test/reporter';
+import type { JSONReport, JSONReportSuite, JSONReportTestResult } from '@playwright/test/reporter';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
@@ -102,7 +102,7 @@ async function writeFiles(testInfo: TestInfo, files: Files) {
 const cliEntrypoint = path.join(__dirname, '../../packages/playwright-core/cli.js');
 
 async function runPlaywrightTest(childProcess: CommonFixtures['childProcess'], baseDir: string, params: any, env: Env, options: RunOptions): Promise<RunResult> {
-  const paramList = [];
+  const paramList: string[] = [];
   for (const key of Object.keys(params)) {
     for (const value of Array.isArray(params[key]) ? params[key] : [params[key]]) {
       const k = key.startsWith('-') ? key : '--' + key;
@@ -114,8 +114,9 @@ async function runPlaywrightTest(childProcess: CommonFixtures['childProcess'], b
   const args = ['node', cliEntrypoint, 'test'];
   if (!options.usesCustomOutputDir)
     args.push('--output=' + outputDir);
+  if (!options.usesCustomReporters)
+    args.push('--reporter=dot,json');
   args.push(
-      '--reporter=dot,json',
       '--workers=2',
       ...paramList
   );
@@ -181,7 +182,7 @@ async function runPlaywrightTest(childProcess: CommonFixtures['childProcess'], b
     testProcess.output += '\n' + e.toString();
   }
 
-  const results = [];
+  const results: JSONReportTestResult[] = [];
   function visitSuites(suites?: JSONReportSuite[]) {
     if (!suites)
       return;
@@ -211,6 +212,7 @@ async function runPlaywrightTest(childProcess: CommonFixtures['childProcess'], b
 type RunOptions = {
   sendSIGINTAfter?: number;
   usesCustomOutputDir?: boolean;
+  usesCustomReporters?: boolean;
   additionalArgs?: string[];
   cwd?: string,
 };

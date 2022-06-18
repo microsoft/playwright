@@ -32,7 +32,7 @@ export class TestChildProcess {
   process: ChildProcess;
   output = '';
   onOutput?: () => void;
-  exited: Promise<{ exitCode: number | null, signal: string | null }>;
+  exited: Promise<{ exitCode: number, signal: string | null }>;
   exitCode: Promise<number>;
 
   private _outputCallbacks = new Set<() => void>();

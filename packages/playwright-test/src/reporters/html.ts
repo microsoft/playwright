@@ -131,9 +131,12 @@ class HtmlReporter implements Reporter {
   private config!: FullConfigInternal;
   private suite!: Suite;
   private _options: HtmlReporterOptions;
+  private _outputFolder!: string;
+  private _open: string | undefined;
 
   constructor(options: HtmlReporterOptions = {}) {
     this._options = options;
+    console.log('HTML REPORTER OPTIONS', options);
   }
 
   printsToStdio() {
@@ -142,6 +145,25 @@ class HtmlReporter implements Reporter {
 
   onBegin(config: FullConfig, suite: Suite) {
     this.config = config as FullConfigInternal;
+    const { outputFolder, open } = this._resolveOptions();
+    this._outputFolder = outputFolder;
+    this._open = open;
+    const reportedWarnings = new Set<string>();
+    for (const project of config.projects) {
+      if (outputFolder.startsWith(project.outputDir) || project.outputDir.startsWith(outputFolder)) {
+        const key = outputFolder + '|' + project.outputDir;
+        if (reportedWarnings.has(key))
+          continue;
+        reportedWarnings.add(key);
+        console.log(colors.red(`Configuration Error: HTML reporter output folder clashes with the tests output folder:`));
+        console.log(`
+    html reporter folder: ${colors.bold(outputFolder)}
+    test results folder: ${colors.bold(project.outputDir)}`);
+        console.log('');
+        console.log(`HTML reporter will clear its output directory prior to being generated, which will lead to the artifact loss.
+`);
+      }
+    }
     this.suite = suite;
   }
 
@@ -156,26 +178,25 @@ class HtmlReporter implements Reporter {
   }
 
   async onEnd() {
-    const { open, outputFolder } = this._resolveOptions();
     const projectSuites = this.suite.suites;
     const reports = projectSuites.map(suite => {
       const rawReporter = new RawReporter();
       const report = rawReporter.generateProjectReport(this.config, suite);
       return report;
     });
-    await removeFolders([outputFolder]);
-    const builder = new HtmlBuilder(outputFolder);
+    await removeFolders([this._outputFolder]);
+    const builder = new HtmlBuilder(this._outputFolder);
     const { ok, singleTestId } = await builder.build(this.config.metadata, reports);
 
     if (process.env.CI)
       return;
 
 
-    const shouldOpen = open === 'always' || (!ok && open === 'on-failure');
+    const shouldOpen = this._open === 'always' || (!ok && this._open === 'on-failure');
     if (shouldOpen) {
-      await showHTMLReport(outputFolder, singleTestId);
+      await showHTMLReport(this._outputFolder, singleTestId);
     } else {
-      const relativeReportPath = outputFolder === standaloneDefaultFolder() ? '' : ' ' + path.relative(process.cwd(), outputFolder);
+      const relativeReportPath = this._outputFolder === standaloneDefaultFolder() ? '' : ' ' + path.relative(process.cwd(), this._outputFolder);
       console.log('');
       console.log('To open last HTML report run:');
       console.log(colors.cyan(`
