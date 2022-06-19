@@ -61,7 +61,7 @@ export class Browser extends ChannelOwner<channels.BrowserChannel> implements ap
 
   async newContext(options: BrowserContextOptions = {}): Promise<BrowserContext> {
     options = { ...this._browserType._defaultContextOptions, ...options };
-    const harRouter = options.har ? await HarRouter.create(options.har) : null;
+    const harRouter = options.har ? await HarRouter.create(this._connection.localUtils(), options.har) : null;
     const contextOptions = await prepareBrowserContextParams(options);
     const context = BrowserContext.from((await this._channel.newContext(contextOptions)).context);
     context._options = contextOptions;

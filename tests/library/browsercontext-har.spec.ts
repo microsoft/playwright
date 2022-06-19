@@ -116,7 +116,7 @@ it('should change document URL after redirected navigation', async ({ contextFac
     page.goto('https://theverge.com/')
   ]);
   await expect(page).toHaveURL('https://www.theverge.com/');
-  await expect(response.request().url()).toBe('https://www.theverge.com/');
+  expect(response.request().url()).toBe('https://www.theverge.com/');
   expect(await page.evaluate(() => location.href)).toBe('https://www.theverge.com/');
 });
 
@@ -131,7 +131,7 @@ it('should goBack to redirected navigation', async ({ contextFactory, isAndroid,
   await expect(page).toHaveURL(server.EMPTY_PAGE);
   const response = await page.goBack();
   await expect(page).toHaveURL('https://www.theverge.com/');
-  await expect(response.request().url()).toBe('https://www.theverge.com/');
+  expect(response.request().url()).toBe('https://www.theverge.com/');
   expect(await page.evaluate(() => location.href)).toBe('https://www.theverge.com/');
 });
 
@@ -149,7 +149,7 @@ it('should goForward to redirected navigation', async ({ contextFactory, isAndro
   await expect(page).toHaveURL(server.EMPTY_PAGE);
   const response = await page.goForward();
   await expect(page).toHaveURL('https://www.theverge.com/');
-  await expect(response.request().url()).toBe('https://www.theverge.com/');
+  expect(response.request().url()).toBe('https://www.theverge.com/');
   expect(await page.evaluate(() => location.href)).toBe('https://www.theverge.com/');
 });
 
@@ -163,6 +163,6 @@ it('should reload redirected navigation', async ({ contextFactory, isAndroid, as
   await expect(page).toHaveURL('https://www.theverge.com/');
   const response = await page.reload();
   await expect(page).toHaveURL('https://www.theverge.com/');
-  await expect(response.request().url()).toBe('https://www.theverge.com/');
+  expect(response.request().url()).toBe('https://www.theverge.com/');
   expect(await page.evaluate(() => location.href)).toBe('https://www.theverge.com/');
 });
