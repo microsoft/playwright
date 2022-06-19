@@ -22,7 +22,10 @@ const { chromium } = require('playwright');
       `--load-extension=${pathToExtension}`
     ]
   });
-  const backgroundPage = await browserContext.waitForEvent('backgroundpage')
+  let backgroundPage = browserContext.backgroundPages()[0];
+  if (backgroundPage == null) {
+    backgroundPage = await browserContext.waitForEvent('backgroundpage');
+  }
   // Test the background page as you would any other page.
   await browserContext.close();
 })();
@@ -45,7 +48,12 @@ async def run(playwright):
             f"--load-extension={path_to_extension}",
         ],
     )
-    background_page = await context.wait_for_event('backgroundpage')
+
+    if len(context.background_pages) == 0:
+        background_page = await context.wait_for_event('backgroundpage')
+    else:
+        background_page = context.background_pages[0]
+
     # Test the background page as you would any other page.
     await context.close()
 
@@ -74,7 +82,11 @@ def run(playwright):
             f"--load-extension={path_to_extension}",
         ],
     )
-    background_page = context.wait_for_event('backgroundpage')
+    if len(context.background_pages) == 0:
+        background_page = context.wait_for_event('backgroundpage')
+    else:
+        background_page = context.background_pages[0]
+
     # Test the background page as you would any other page.
     context.close()
 
