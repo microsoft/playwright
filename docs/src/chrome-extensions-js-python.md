@@ -13,7 +13,7 @@ The following is code for getting a handle to the [background page](https://deve
 const { chromium } = require('playwright');
 
 (async () => {
-  const pathToExtension = require('path').join(__dirname, 'my-extension');
+  const pathToExtension = require('path').join(process.cwd(), 'my-extension');
   const userDataDir = '/tmp/test-user-data-dir';
   const browserContext = await chromium.launchPersistentContext(userDataDir,{
     headless: false,
@@ -81,4 +81,38 @@ def run(playwright):
 
 with sync_playwright() as playwright:
     run(playwright)
+```
+
+## Testing
+
+To have the extension loaded when running tests you should extend the test context.
+
+```js
+import { test as base, expect, chromium } from "@playwright/test";
+import path from "path";
+
+export const test = base.extend({
+  context: async ({ browserName }, use) => {
+    const browserTypes = { chromium };
+    const pathToExtension = path.join(process.cwd(), "my-extension");
+    const userDataDir = '/tmp/test-user-data-dir';
+    const context = await browserTypes[browserName].launchPersistentContext(
+      userDataDir,
+      {
+        headless: false,
+        args: [
+          `--disable-extensions-except=${pathToExtension}`,
+          `--load-extension=${pathToExtension}`,
+        ],
+      }
+    );
+    await use(context);
+    await context.close();
+  },
+});
+
+test("example test", async ({ page }) => {
+  await page.goto("https://example.com");
+  await expect(page.locator("body")).toHaveText("Changed by my-extension");
+});
 ```
