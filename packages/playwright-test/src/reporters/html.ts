@@ -136,7 +136,6 @@ class HtmlReporter implements Reporter {
 
   constructor(options: HtmlReporterOptions = {}) {
     this._options = options;
-    console.log('HTML REPORTER OPTIONS', options);
   }
 
   printsToStdio() {
