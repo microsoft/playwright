@@ -205,6 +205,18 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     zipFile: tString,
     entries: tArray(tType('NameValue')),
   });
+  scheme.LocalUtilsHarOpenParams = tObject({
+    file: tString,
+  });
+  scheme.LocalUtilsHarLookupParams = tObject({
+    harId: tString,
+    url: tString,
+    method: tString,
+    isNavigationRequest: tBoolean,
+  });
+  scheme.LocalUtilsHarCloseParams = tObject({
+    harId: tString,
+  });
   scheme.RootInitializeParams = tObject({
     sdkLanguage: tString,
   });

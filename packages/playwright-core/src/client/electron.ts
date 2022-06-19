@@ -53,7 +53,7 @@ export class Electron extends ChannelOwner<channels.ElectronChannel> implements 
       ...await prepareBrowserContextParams(options),
       env: envObjectToArray(options.env ? options.env : process.env),
     };
-    const harRouter = options.har ? await HarRouter.create(options.har) : null;
+    const harRouter = options.har ? await HarRouter.create(this._connection.localUtils(), options.har) : null;
     const app = ElectronApplication.from((await this._channel.launch(params)).electronApplication);
     app._context._options = params;
     harRouter?.addRoute(app._context);

@@ -378,6 +378,9 @@ export interface LocalUtilsEventTarget {
 export interface LocalUtilsChannel extends LocalUtilsEventTarget, Channel {
   _type_LocalUtils: boolean;
   zip(params: LocalUtilsZipParams, metadata?: Metadata): Promise<LocalUtilsZipResult>;
+  harOpen(params: LocalUtilsHarOpenParams, metadata?: Metadata): Promise<LocalUtilsHarOpenResult>;
+  harLookup(params: LocalUtilsHarLookupParams, metadata?: Metadata): Promise<LocalUtilsHarLookupResult>;
+  harClose(params: LocalUtilsHarCloseParams, metadata?: Metadata): Promise<LocalUtilsHarCloseResult>;
 }
 export type LocalUtilsZipParams = {
   zipFile: string,
@@ -387,6 +390,40 @@ export type LocalUtilsZipOptions = {
 
 };
 export type LocalUtilsZipResult = void;
+export type LocalUtilsHarOpenParams = {
+  file: string,
+};
+export type LocalUtilsHarOpenOptions = {
+
+};
+export type LocalUtilsHarOpenResult = {
+  harId: string,
+};
+export type LocalUtilsHarLookupParams = {
+  harId: string,
+  url: string,
+  method: string,
+  isNavigationRequest: boolean,
+};
+export type LocalUtilsHarLookupOptions = {
+
+};
+export type LocalUtilsHarLookupResult = {
+  action: 'error' | 'redirect' | 'fulfill' | 'noentry',
+  message?: string,
+  redirectURL?: string,
+  status?: number,
+  headers?: NameValue[],
+  body?: string,
+  base64Encoded?: boolean,
+};
+export type LocalUtilsHarCloseParams = {
+  harId: string,
+};
+export type LocalUtilsHarCloseOptions = {
+
+};
+export type LocalUtilsHarCloseResult = void;
 
 export interface LocalUtilsEvents {
 }

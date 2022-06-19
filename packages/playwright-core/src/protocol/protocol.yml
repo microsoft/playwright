@@ -478,6 +478,39 @@ LocalUtils:
           type: array
           items: NameValue
 
+    harOpen:
+      parameters:
+        file: string
+      returns:
+        harId: string
+
+    harLookup:
+      parameters:
+        harId: string
+        url: string
+        method: string
+        isNavigationRequest: boolean
+      returns:
+        action:
+          type: enum
+          literals:
+          - error
+          - redirect
+          - fulfill
+          - noentry
+        message: string?
+        redirectURL: string?
+        status: number?
+        headers:
+          type: array?
+          items: NameValue
+        body: string?
+        base64Encoded: boolean?
+
+    harClose:
+      parameters:
+        harId: string
+
 Root:
   type: interface
 
