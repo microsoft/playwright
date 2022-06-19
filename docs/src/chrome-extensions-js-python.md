@@ -85,7 +85,7 @@ with sync_playwright() as playwright:
 
 ## Testing
 
-To have the extension loaded when running tests you should extend the test context.
+To have the extension loaded when running tests you can use a test fixture to set the context. You can also dynamically retrieve the extension id and use it that to load and test the popup page for example.
 
 ```js
 import { test as base, expect, chromium } from "@playwright/test";
@@ -109,10 +109,33 @@ export const test = base.extend({
     await use(context);
     await context.close();
   },
+  extensionId: async ({ context }, use) => {
+    /*
+    // for manifest v2:
+    let background = context.backgroundPages()[0]
+    if (background == null) {
+      background = await context.waitForEvent('backgroundpage')
+    }
+    */
+
+    // for manifest v3:
+    let background = context.serviceWorkers()[0];
+    if (background == null) {
+      background = await context.waitForEvent("serviceworker");
+    }
+
+    const extensionId = background.url().split("/")[2];
+    await use(extensionId);
+  },
 });
 
 test("example test", async ({ page }) => {
   await page.goto("https://example.com");
   await expect(page.locator("body")).toHaveText("Changed by my-extension");
+});
+
+test("popup page", async ({ page, extensionId }) => {
+  await page.goto(`chrome-extension://${extensionId}/popup.html`);
+  await expect(page.locator("body")).toHaveText("my-extension popup");
 });
 ```
