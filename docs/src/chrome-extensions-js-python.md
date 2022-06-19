@@ -7,7 +7,7 @@ title: "Chrome Extensions"
 Extensions only work in Chrome / Chromium in non-headless mode, launched with a persistent context.
 :::
 
-The following is code for getting a handle to the [background page](https://developer.chrome.com/extensions/background_pages) of an extension whose source is located in `./my-extension`:
+The following is code for getting a handle to the [background page](https://developer.chrome.com/extensions/background_pages) of a [Manifest v2](https://developer.chrome.com/docs/extensions/mv2/) extension whose source is located in `./my-extension`:
 
 ```js
 const { chromium } = require('playwright');
@@ -22,7 +22,7 @@ const { chromium } = require('playwright');
       `--load-extension=${pathToExtension}`
     ]
   });
-  const backgroundPage = browserContext.backgroundPages()[0];
+  const backgroundPage = await browserContext.waitForEvent('backgroundpage')
   // Test the background page as you would any other page.
   await browserContext.close();
 })();
@@ -45,7 +45,7 @@ async def run(playwright):
             f"--load-extension={path_to_extension}",
         ],
     )
-    background_page = context.background_pages[0]
+    background_page = await context.wait_for_event('backgroundpage')
     # Test the background page as you would any other page.
     await context.close()
 
@@ -74,7 +74,7 @@ def run(playwright):
             f"--load-extension={path_to_extension}",
         ],
     )
-    background_page = context.background_pages[0]
+    background_page = context.wait_for_event('backgroundpage')
     # Test the background page as you would any other page.
     context.close()
 
