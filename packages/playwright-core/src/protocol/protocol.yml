@@ -490,6 +490,10 @@ LocalUtils:
         harId: string
         url: string
         method: string
+        headers:
+          type: array
+          items: NameValue
+        postData: string?
         isNavigationRequest: boolean
       returns:
         action:
@@ -506,7 +510,6 @@ LocalUtils:
           type: array?
           items: NameValue
         body: string?
-        base64Encoded: boolean?
 
     harClose:
       parameters:

@@ -212,6 +212,8 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     harId: tString,
     url: tString,
     method: tString,
+    headers: tArray(tType('NameValue')),
+    postData: tOptional(tString),
     isNavigationRequest: tBoolean,
   });
   scheme.LocalUtilsHarCloseParams = tObject({
