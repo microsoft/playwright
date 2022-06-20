@@ -42,6 +42,14 @@ const PLAYWRIGHT_CDN_MIRRORS = [
   'https://playwright-verizon.azureedge.net',
 ];
 
+if (process.env.PW_TEST_CDN_THAT_SHOULD_WORK) {
+  for (let i = 0; i < PLAYWRIGHT_CDN_MIRRORS.length; i++) {
+    const cdn = PLAYWRIGHT_CDN_MIRRORS[i];
+    if (cdn !== process.env.PW_TEST_CDN_THAT_SHOULD_WORK)
+      PLAYWRIGHT_CDN_MIRRORS[i] = cdn + '.does-not-resolve.playwright.dev';
+  }
+}
+
 const EXECUTABLE_PATHS = {
   'chromium': {
     'linux': ['chrome-linux', 'chrome'],
