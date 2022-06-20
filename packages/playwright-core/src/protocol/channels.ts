@@ -404,10 +404,12 @@ export type LocalUtilsHarLookupParams = {
   harId: string,
   url: string,
   method: string,
+  headers: NameValue[],
+  postData?: string,
   isNavigationRequest: boolean,
 };
 export type LocalUtilsHarLookupOptions = {
-
+  postData?: string,
 };
 export type LocalUtilsHarLookupResult = {
   action: 'error' | 'redirect' | 'fulfill' | 'noentry',
@@ -416,7 +418,6 @@ export type LocalUtilsHarLookupResult = {
   status?: number,
   headers?: NameValue[],
   body?: string,
-  base64Encoded?: boolean,
 };
 export type LocalUtilsHarCloseParams = {
   harId: string,

@@ -471,6 +471,7 @@ async function launchContext(options: Options, headless: boolean, executablePath
     contextOptions.recordHar = { path: path.resolve(process.cwd(), options.saveHar) };
     if (options.saveHarGlob)
       contextOptions.recordHar.urlFilter = options.saveHarGlob;
+    contextOptions.serviceWorkers = 'block';
   }
 
   // Close app when the last window closes.
