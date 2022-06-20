@@ -166,3 +166,29 @@ it('should reload redirected navigation', async ({ contextFactory, isAndroid, as
   expect(response.request().url()).toBe('https://www.theverge.com/');
   expect(await page.evaluate(() => location.href)).toBe('https://www.theverge.com/');
 });
+
+it('should fulfill from har with content in a file', async ({ contextFactory, isAndroid, asset }) => {
+  it.fixme(isAndroid);
+
+  const path = asset('har-sha1.har');
+  const context = await contextFactory({ har: { path } });
+  const page = await context.newPage();
+  await page.goto('http://no.playwright/');
+  expect(await page.content()).toBe('<html><head></head><body>Hello, world</body></html>');
+});
+
+it('should round-trip har.zip', async ({ contextFactory, isAndroid, server }, testInfo) => {
+  it.fixme(isAndroid);
+
+  const harPath = testInfo.outputPath('har.zip');
+  const context1 = await contextFactory({ recordHar: { path: harPath } });
+  const page1 = await context1.newPage();
+  await page1.goto(server.PREFIX + '/one-style.html');
+  await context1.close();
+
+  const context2 = await contextFactory({ har: { path: harPath, fallback: 'abort' } });
+  const page2 = await context2.newPage();
+  await page2.goto(server.PREFIX + '/one-style.html');
+  expect(await page2.content()).toContain('hello, world!');
+  await expect(page2.locator('body')).toHaveCSS('background-color', 'rgb(255, 192, 203)');
+});

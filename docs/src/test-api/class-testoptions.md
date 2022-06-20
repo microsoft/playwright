@@ -129,6 +129,8 @@ Options used to create the context, as passed to [`method: Browser.newContext`].
 
 ## property: TestOptions.geolocation = %%-context-option-geolocation-%%
 
+## property: TestOptions.har = %%-js-context-option-har-%%
+
 ## property: TestOptions.hasTouch = %%-context-option-hastouch-%%
 
 ## property: TestOptions.headless = %%-browser-option-headless-%%
