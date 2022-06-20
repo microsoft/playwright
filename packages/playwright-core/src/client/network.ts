@@ -21,7 +21,7 @@ import { Frame } from './frame';
 import type { Headers, RemoteAddr, SecurityDetails, WaitForEventOptions } from './types';
 import fs from 'fs';
 import { mime } from '../utilsBundle';
-import { isString, headersObjectToArray, headersArrayToObject } from '../utils';
+import { isString, headersObjectToArray } from '../utils';
 import { ManualPromise } from '../utils/manualPromise';
 import { Events } from './events';
 import type { Page } from './page';
@@ -31,7 +31,6 @@ import type { HeadersArray, URLMatch } from '../common/types';
 import { urlMatches } from '../common/netUtils';
 import { MultiMap } from '../utils/multimap';
 import { APIResponse } from './fetch';
-import type { HARResponse } from '../../types/har';
 
 export type NetworkCookie = {
   name: string,
@@ -292,7 +291,7 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
     this._reportHandled(true);
   }
 
-  async fulfill(options: { response?: api.APIResponse | HARResponse, status?: number, headers?: Headers, contentType?: string, body?: string | Buffer, path?: string } = {}) {
+  async fulfill(options: { response?: api.APIResponse, status?: number, headers?: Headers, contentType?: string, body?: string | Buffer, path?: string } = {}) {
     this._checkNotHandled();
     await this._wrapApiCall(async () => {
       await this._innerFulfill(options);
@@ -300,9 +299,9 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
     });
   }
 
-  private async _innerFulfill(options: { response?: api.APIResponse | HARResponse, status?: number, headers?: Headers, contentType?: string, body?: string | Buffer, path?: string } = {}): Promise<void> {
+  private async _innerFulfill(options: { response?: api.APIResponse, status?: number, headers?: Headers, contentType?: string, body?: string | Buffer, path?: string } = {}): Promise<void> {
     let fetchResponseUid;
-    let { status: statusOption, headers: headersOption, body, contentType } = options;
+    let { status: statusOption, headers: headersOption, body } = options;
 
     if (options.response instanceof APIResponse) {
       statusOption ??= options.response.status();
@@ -312,16 +311,6 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
           fetchResponseUid = (options.response as APIResponse)._fetchUid();
         else
           body = await options.response.body();
-      }
-    } else if (options.response) {
-      const harResponse = options.response as HARResponse;
-      statusOption ??= harResponse.status;
-      headersOption ??= headersArrayToObject(harResponse.headers, false);
-      if (body === undefined && options.path === undefined) {
-        body = harResponse.content.text;
-        contentType ??= harResponse.content.mimeType;
-        if (body !== undefined && harResponse.content.encoding === 'base64')
-          body = Buffer.from(body, 'base64');
       }
     }
 
@@ -344,8 +333,8 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
     const headers: Headers = {};
     for (const header of Object.keys(headersOption || {}))
       headers[header.toLowerCase()] = String(headersOption![header]);
-    if (contentType)
-      headers['content-type'] = String(contentType);
+    if (options.contentType)
+      headers['content-type'] = String(options.contentType);
     else if (options.path)
       headers['content-type'] = mime.getType(options.path) || 'application/octet-stream';
     if (length && !('content-length' in headers))

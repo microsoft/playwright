@@ -22,8 +22,6 @@ import { Readable } from 'stream';
 import { ReadStream } from 'fs';
 import { Serializable, EvaluationArgument, PageFunction, PageFunctionOn, SmartHandle, ElementHandleForTag, BindingSource } from 'playwright-core/types/structs';
 
-export * from 'playwright-core/types/har';
-
 type PageWaitForSelectorOptionsNotHidden = PageWaitForSelectorOptions & {
   state?: 'visible'|'attached';
 };
@@ -15457,10 +15455,10 @@ export interface Route {
     path?: string;
 
     /**
-     * [APIResponse] or [HARResponse] to fulfill route's request with. Individual fields of the response (such as headers) can
-     * be overridden using fulfill options.
+     * [APIResponse] to fulfill route's request with. Individual fields of the response (such as headers) can be overridden
+     * using fulfill options.
      */
-    response?: APIResponse|HARResponse;
+    response?: APIResponse;
 
     /**
      * Response status code, defaults to `200`.

@@ -24,7 +24,7 @@ import type { DispatcherScope } from './dispatcher';
 import { Dispatcher } from './dispatcher';
 import { yazl, yauzl } from '../../zipBundle';
 import { ZipFile } from '../../utils/zipFile';
-import type { HAREntry, HARFile } from '../../../types/types';
+import type { HAREntry, HARFile } from '../../../types/har';
 import type { HeadersArray } from '../types';
 
 export class LocalUtilsDispatcher extends Dispatcher<{ guid: string }, channels.LocalUtilsChannel> implements channels.LocalUtilsChannel {
