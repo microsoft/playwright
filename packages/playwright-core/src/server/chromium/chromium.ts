@@ -329,6 +329,7 @@ const DEFAULT_ARGS = [
   '--enable-features=NetworkService,NetworkServiceInProcess',
   '--disable-background-timer-throttling',
   '--disable-backgrounding-occluded-windows',
+  '--disable-back-forward-cache', // Avoids surprises like main request not being intercepted during page.goBack().
   '--disable-breakpad',
   '--disable-client-side-phishing-detection',
   '--disable-component-extensions-with-background-pages',
