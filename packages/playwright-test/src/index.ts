@@ -547,7 +547,7 @@ export function shouldCaptureVideo(videoMode: VideoMode, testInfo: TestInfo) {
 }
 
 export function normalizeTraceMode(trace: TraceMode | 'retry-with-trace' | { mode: TraceMode }) {
-  let traceMode = typeof trace === 'string' ? trace : trace.mode;
+  let traceMode = typeof trace === 'string' ? trace : trace?.mode;
   if (traceMode === 'retry-with-trace')
     traceMode = 'on-first-retry';
   return traceMode;
