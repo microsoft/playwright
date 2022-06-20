@@ -95,12 +95,16 @@ export class LocalUtilsDispatcher extends Dispatcher<{ guid: string }, channels.
     let harBackend: HarBackend;
     if (params.file.endsWith('.zip')) {
       const zipFile = new ZipFile(params.file);
-      const har = await zipFile.read('har.har');
+      const entryNames = await zipFile.entries();
+      const harEntryName = entryNames.find(e => e.endsWith('.har'));
+      if (!harEntryName)
+        return { error: 'Specified archive does not have a .har file' };
+      const har = await zipFile.read(harEntryName);
       const harFile = JSON.parse(har.toString()) as HARFile;
-      harBackend = new HarBackend(harFile, zipFile);
+      harBackend = new HarBackend(harFile, null, zipFile);
     } else {
       const harFile = JSON.parse(await fs.promises.readFile(params.file, 'utf-8')) as HARFile;
-      harBackend = new HarBackend(harFile, null);
+      harBackend = new HarBackend(harFile, path.dirname(params.file), null);
     }
     this._harBakends.set(harBackend.id, harBackend);
     return { harId: harBackend.id };
@@ -128,9 +132,11 @@ class HarBackend {
   readonly id = createGuid();
   private _harFile: HARFile;
   private _zipFile: ZipFile | null;
+  private _baseDir: string | null;
 
-  constructor(harFile: HARFile, zipFile: ZipFile | null) {
+  constructor(harFile: HARFile, baseDir: string | null, zipFile: ZipFile | null) {
     this._harFile = harFile;
+    this._baseDir = baseDir;
     this._zipFile = zipFile;
   }
 
@@ -158,21 +164,22 @@ class HarBackend {
 
     const response = entry.response;
     const sha1 = (response.content as any)._sha1;
-    let body: string | undefined;
-    let base64Encoded = false;
+    let body = response.content.text;
+    let base64Encoded = response.content.encoding === 'base64';
 
-    if (this._zipFile && sha1) {
-      const buffer = await this._zipFile.read(sha1).catch(() => {
-        return { action: 'error', message: `Malformed HAR: payload ${sha1} for request ${url} is not found in archive` };
-      });
-
-      if (buffer) {
-        body = buffer.toString('base64');
-        base64Encoded = true;
+    if (sha1) {
+      let buffer: Buffer;
+      try {
+        if (this._zipFile)
+          buffer = await this._zipFile.read(sha1);
+        else
+          buffer = await fs.promises.readFile(path.resolve(this._baseDir!, sha1));
+      } catch (e) {
+        return { action: 'error', message: e.message };
       }
-    } else {
-      body = response.content.text;
-      base64Encoded = response.content.encoding === 'base64';
+
+      body = buffer.toString('base64');
+      base64Encoded = true;
     }
 
     return {

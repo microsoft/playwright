@@ -482,7 +482,8 @@ LocalUtils:
       parameters:
         file: string
       returns:
-        harId: string
+        harId: string?
+        error: string?
 
     harLookup:
       parameters:
