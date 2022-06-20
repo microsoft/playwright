@@ -30,7 +30,7 @@ export class VideoPlayer {
     const output = spawnSync(ffmpeg, ['-i', fileName, '-r', '25', `${fileName}-%03d.png`]).stderr.toString();
     const lines = output.split('\n');
     const streamLine = lines.find(l => l.trim().startsWith('Stream #0:0'));
-    const resolutionMatch = streamLine.match(/, (\d+)x(\d+),/);
+    const resolutionMatch = streamLine!.match(/, (\d+)x(\d+),/);
     this.videoWidth = parseInt(resolutionMatch![1], 10);
     this.videoHeight = parseInt(resolutionMatch![2], 10);
   }
@@ -526,7 +526,7 @@ test('should work with video: on-first-retry', async ({ runInlineTest }, testInf
   expect(result.report.suites[0].specs[1].tests[0].results[1].attachments).toEqual([{
     name: 'video',
     contentType: 'video/webm',
-    path: path.join(dirRetry, videoFailRetry),
+    path: path.join(dirRetry, videoFailRetry!),
   }]);
 });
 
@@ -596,6 +596,21 @@ test('should pass fixture defaults to tests', async ({ runInlineTest }) => {
         expect(headless).toBe(true);
         expect(javaScriptEnabled).toBe(true);
         expect(navigationTimeout).toBe(0);
+      });
+    `,
+  }, { workers: 1 });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
+
+test('should support har option', async ({ runInlineTest, asset }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      const { test } = pwt;
+      test.use({ har: { path: ${JSON.stringify(asset('har-fulfill.har'))} }});
+      test('pass', async ({ page }) => {
+        await page.goto('http://no.playwright/');
+        expect(await page.evaluate('window.value')).toBe('foo');
       });
     `,
   }, { workers: 1 });

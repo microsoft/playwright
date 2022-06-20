@@ -173,6 +173,7 @@ type BrowserName = 'chromium' | 'firefox' | 'webkit';
 type BrowserChannel = Exclude<LaunchOptions['channel'], undefined>;
 type ColorScheme = Exclude<BrowserContextOptions['colorScheme'], undefined>;
 type ExtraHTTPHeaders = Exclude<BrowserContextOptions['extraHTTPHeaders'], undefined>;
+type HAROptions = Exclude<BrowserContextOptions['har'], undefined>;
 type Proxy = Exclude<BrowserContextOptions['proxy'], undefined>;
 type StorageState = Exclude<BrowserContextOptions['storageState'], undefined>;
 type ServiceWorkerPolicy = Exclude<BrowserContextOptions['serviceWorkers'], undefined>;
@@ -215,6 +216,7 @@ export interface PlaywrightTestOptions {
   deviceScaleFactor: number | undefined;
   extraHTTPHeaders: ExtraHTTPHeaders | undefined;
   geolocation: Geolocation | undefined;
+  har: HAROptions | undefined;
   hasTouch: boolean | undefined;
   httpCredentials: HTTPCredentials | undefined;
   ignoreHTTPSErrors: boolean | undefined;
