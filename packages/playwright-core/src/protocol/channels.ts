@@ -397,7 +397,8 @@ export type LocalUtilsHarOpenOptions = {
 
 };
 export type LocalUtilsHarOpenResult = {
-  harId: string,
+  harId?: string,
+  error?: string,
 };
 export type LocalUtilsHarLookupParams = {
   harId: string,
