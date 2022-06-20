@@ -17,7 +17,7 @@
 
 import { test as base, expect } from './pageTest';
 import fs from 'fs';
-import type { HARFile } from '@playwright/test';
+import type { HARFile, HARResponse } from 'playwright-core/types/har';
 
 const it = base.extend<{
   // We access test servers at 10.0.2.2 from inside the browser on Android,
@@ -330,7 +330,14 @@ it('should fulfill with har response', async ({ page, isAndroid, asset }) => {
   const har = JSON.parse(await fs.promises.readFile(harPath, 'utf-8')) as HARFile;
   await page.route('**/*', async route => {
     const response = findResponse(har, route.request().url());
-    await route.fulfill({ response });
+    const headers = {};
+    for (const { name, value } of response.headers)
+      headers[name] = value;
+    await route.fulfill({
+      status: response.status,
+      headers,
+      body: Buffer.from(response.content.text || '', (response.content.encoding as 'base64' | undefined) || 'utf-8'),
+    });
   });
   await page.goto('http://no.playwright/');
   // HAR contains a redirect for the script.
@@ -339,23 +346,7 @@ it('should fulfill with har response', async ({ page, isAndroid, asset }) => {
   await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(0, 255, 255)');
 });
 
-it('should override status when fulfill with response from har', async ({ page, isAndroid, asset }) => {
-  it.fixme(isAndroid);
-
-  const harPath = asset('har-fulfill.har');
-  const har = JSON.parse(await fs.promises.readFile(harPath, 'utf-8')) as HARFile;
-  await page.route('**/*', async route => {
-    const response = findResponse(har, route.request().url());
-    await route.fulfill({ response, status: route.request().url().endsWith('.css') ? 404 : undefined });
-  });
-  await page.goto('http://no.playwright/');
-  // Script should work.
-  expect(await page.evaluate('window.value')).toBe('foo');
-  // 404 should fail the CSS and styles should not apply.
-  await expect(page.locator('body')).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
-});
-
-function findResponse(har: HARFile, url: string) {
+function findResponse(har: HARFile, url: string): HARResponse {
   let entry;
   const originalUrl = url;
   while (url.trim()) {
