@@ -98,9 +98,8 @@ export const test = base.extend<{
   context: async ({ browserName }, use) => {
     const browserTypes = { chromium };
     const pathToExtension = path.join(process.cwd(), "my-extension");
-    const userDataDir = '/tmp/test-user-data-dir';
     const context = await browserTypes[browserName].launchPersistentContext(
-      userDataDir,
+      '',
       {
         headless: false,
         args: [
