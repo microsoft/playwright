@@ -854,7 +854,7 @@ Routing provides the capability to modify network requests that are made by any 
 is enabled, every request matching the url pattern will stall unless it's continued, fulfilled or aborted.
 
 :::note
-[`method: Page.route`] will not intercept requests intercepted by Service Worker. See [this](https://github.com/microsoft/playwright/issues/1090) issue. We recommend disabling Service Workers when using request interception. Via `await context.addInitScript(() => delete window.navigator.serviceWorker);`
+[`method: BrowserContext.route`] will not intercept requests intercepted by Service Worker. See [this](https://github.com/microsoft/playwright/issues/1090) issue. We recommend disabling Service Workers when using request interception by setting [`option: Browser.newContext.serviceWorkers`] to `'block'`.
 :::
 
 An example of a naive handler that aborts all image requests:
