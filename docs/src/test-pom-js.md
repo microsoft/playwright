@@ -21,7 +21,7 @@ exports.PlaywrightDevPage = class PlaywrightDevPage {
     this.getStartedLink = page.locator('a', { hasText: 'Get started' });
     this.gettingStartedHeader = page.locator('h1', { hasText: 'Getting started' });
     this.pomLink = page.locator('li', { hasText: 'Playwright Test' }).locator('a', { hasText: 'Page Object Model' });
-    this.tocList = page.locator('article ul > li > a');
+    this.tocList = page.locator('article div.markdown ul > li > a');
   }
 
   async goto() {
@@ -56,7 +56,7 @@ export class PlaywrightDevPage {
     this.getStartedLink = page.locator('a', { hasText: 'Get started' });
     this.gettingStartedHeader = page.locator('h1', { hasText: 'Getting started' });
     this.pomLink = page.locator('li', { hasText: 'Playwright Test' }).locator('a', { hasText: 'Page Object Model' });
-    this.tocList = page.locator('article ul > li > a');
+    this.tocList = page.locator('article div.markdown ul > li > a');
   }
 
   async goto() {
@@ -93,6 +93,7 @@ test('getting started should contain table of contents', async ({ page }) => {
     'Writing assertions',
     'Using test fixtures',
     'Using test hooks',
+    'VS Code extension',
     'Command line',
     'Configure NPM scripts',
     'Release notes'
@@ -123,6 +124,7 @@ test('getting started should contain table of contents', async ({ page }) => {
     'Writing assertions',
     'Using test fixtures',
     'Using test hooks',
+    'VS Code extension',
     'Command line',
     'Configure NPM scripts',
     'Release notes'
