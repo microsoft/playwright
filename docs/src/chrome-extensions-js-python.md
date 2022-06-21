@@ -13,7 +13,7 @@ The following is code for getting a handle to the [background page](https://deve
 const { chromium } = require('playwright');
 
 (async () => {
-  const pathToExtension = require('path').join(process.cwd(), 'my-extension');
+  const pathToExtension = require('path').join(__dirname, 'my-extension');
   const userDataDir = '/tmp/test-user-data-dir';
   const browserContext = await chromium.launchPersistentContext(userDataDir,{
     headless: false,
@@ -97,7 +97,7 @@ export const test = base.extend<{
 }>({
   context: async ({ browserName }, use) => {
     const browserTypes = { chromium };
-    const pathToExtension = path.join(process.cwd(), "my-extension");
+   const pathToExtension = path.join(__dirname, "my-extension");
     const context = await browserTypes[browserName].launchPersistentContext(
       '',
       {
