@@ -73,7 +73,10 @@ it('should not chain abort', async ({ page, server }) => {
   expect(failed).toBeFalsy();
 });
 
-it('should fall back after exception', async ({ page, server }) => {
+it('should fall back after exception', async ({ page, server, isAndroid, isElectron }) => {
+  it.fixme(isAndroid);
+  it.fixme(isElectron);
+
   await page.route('**/empty.html', route => {
     route.continue();
   });
