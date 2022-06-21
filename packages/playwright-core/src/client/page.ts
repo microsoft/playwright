@@ -43,6 +43,7 @@ import type { APIRequestContext } from './fetch';
 import { FileChooser } from './fileChooser';
 import type { WaitForNavigationOptions } from './frame';
 import { Frame, verifyLoadState } from './frame';
+import { HarRouter } from './harRouter';
 import { Keyboard, Mouse, Touchscreen } from './input';
 import { assertMaxArguments, JSHandle, parseResult, serializeArgument } from './jsHandle';
 import type { FrameLocator, Locator, LocatorOptions } from './locator';
@@ -463,6 +464,11 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     this._routes.unshift(new RouteHandler(this._browserContext._options.baseURL, url, handler, options.times));
     if (this._routes.length === 1)
       await this._channel.setNetworkInterceptionEnabled({ enabled: true });
+  }
+
+  async routeFromHAR(har: string, options: { url?: URLMatch, notFound?: 'abort' | 'fallback' } = {}): Promise<void> {
+    const harRouter = await HarRouter.create(this._connection.localUtils(), har, options.notFound || 'abort', { urlMatch: options.url });
+    harRouter.addPageRoute(this);
   }
 
   async unroute(url: URLMatch, handler?: RouteHandlerCallback): Promise<void> {

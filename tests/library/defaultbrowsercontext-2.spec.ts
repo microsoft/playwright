@@ -228,7 +228,8 @@ it('should support har option', async ({ isAndroid, launchPersistent, asset }) =
   it.fixme(isAndroid);
 
   const path = asset('har-fulfill.har');
-  const { page } = await launchPersistent({ har: { path } });
+  const { page } = await launchPersistent();
+  await page.routeFromHAR(path);
   await page.goto('http://no.playwright/');
   // HAR contains a redirect for the script that should be followed automatically.
   expect(await page.evaluate('window.value')).toBe('foo');

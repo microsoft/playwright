@@ -3168,6 +3168,32 @@ export interface Page {
   }): Promise<void>;
 
   /**
+   * If specified the network requests that are made in the page will be served from the HAR file. Read more about
+   * [Replaying from HAR](https://playwright.dev/docs/network#replaying-from-har).
+   *
+   * Playwright will not serve requests intercepted by Service Worker from the HAR file. See
+   * [this](https://github.com/microsoft/playwright/issues/1090) issue. We recommend disabling Service Workers when using
+   * request interception by setting `Browser.newContext.serviceWorkers` to `'block'`.
+   * @param har Path to a [HAR](http://www.softwareishard.com/blog/har-12-spec) file with prerecorded network data. If `path` is a relative path, then it is resolved relative to the current working directory.
+   * @param options
+   */
+  routeFromHAR(har: string, options?: {
+    /**
+     * - If set to 'abort' any request not found in the HAR file will be aborted.
+     * - If set to 'fallback' missing requests will be sent to the network.
+     *
+     * Defaults to abort.
+     */
+    notFound?: "abort"|"fallback";
+
+    /**
+     * A glob pattern, regular expression or predicate to match the request URL. Only requests with URL matching the pattern
+     * will be surved from the HAR file. If not specified, all requests are served from the HAR file.
+     */
+    url?: string|RegExp|((url: URL) => boolean);
+  }): Promise<void>;
+
+  /**
    * Returns the buffer with the captured screenshot.
    * @param options
    */
@@ -7094,6 +7120,32 @@ export interface BrowserContext {
   }): Promise<void>;
 
   /**
+   * If specified the network requests that are made in the context will be served from the HAR file. Read more about
+   * [Replaying from HAR](https://playwright.dev/docs/network#replaying-from-har).
+   *
+   * Playwright will not serve requests intercepted by Service Worker from the HAR file. See
+   * [this](https://github.com/microsoft/playwright/issues/1090) issue. We recommend disabling Service Workers when using
+   * request interception by setting `Browser.newContext.serviceWorkers` to `'block'`.
+   * @param har Path to a [HAR](http://www.softwareishard.com/blog/har-12-spec) file with prerecorded network data. If `path` is a relative path, then it is resolved relative to the current working directory.
+   * @param options
+   */
+  routeFromHAR(har: string, options?: {
+    /**
+     * - If set to 'abort' any request not found in the HAR file will be aborted.
+     * - If set to 'fallback' falls through to the next route handler in the handler chain.
+     *
+     * Defaults to abort.
+     */
+    notFound?: "abort"|"fallback";
+
+    /**
+     * A glob pattern, regular expression or predicate to match the request URL. Only requests with URL matching the pattern
+     * will be surved from the HAR file. If not specified, all requests are served from the HAR file.
+     */
+    url?: string|RegExp|((url: URL) => boolean);
+  }): Promise<void>;
+
+  /**
    * > NOTE: Service workers are only supported on Chromium-based browsers.
    *
    * All existing service workers in the context.
@@ -10508,34 +10560,6 @@ export interface BrowserType<Unused = {}> {
     handleSIGTERM?: boolean;
 
     /**
-     * If specified the network requests that are made in the context will be served from the HAR file. Read more about
-     * [Replaying from HAR](https://playwright.dev/docs/network#replaying-from-har).
-     *
-     * > NOTE: Playwright will not serve requests intercepted by Service Worker from the HAR file. See
-     * [this](https://github.com/microsoft/playwright/issues/1090) issue. We recommend disabling Service Workers when using
-     * request interception by setting `Browser.newContext.serviceWorkers` to `'block'`.
-     */
-    har?: {
-      /**
-       * Path to a [HAR](http://www.softwareishard.com/blog/har-12-spec) file with prerecorded network data. If `path` is a
-       * relative path, then it is resolved relative to the current working directory.
-       */
-      path: string;
-
-      /**
-       * If set to 'abort' any request not found in the HAR file will be aborted. If set to'continue' missing requests will be
-       * sent to the network. Defaults to 'abort'.
-       */
-      fallback?: "abort"|"continue";
-
-      /**
-       * A glob pattern or regular expression to match request URL while routing. Only requests with URL matching the pattern
-       * will be surved from the HAR file. If not specified, all requests are served from the HAR file.
-       */
-      urlFilter?: string|RegExp;
-    };
-
-    /**
      * Specifies if viewport supports touch events. Defaults to false.
      */
     hasTouch?: boolean;
@@ -11760,34 +11784,6 @@ export interface AndroidDevice {
        * Non-negative accuracy value. Defaults to `0`.
        */
       accuracy?: number;
-    };
-
-    /**
-     * If specified the network requests that are made in the context will be served from the HAR file. Read more about
-     * [Replaying from HAR](https://playwright.dev/docs/network#replaying-from-har).
-     *
-     * > NOTE: Playwright will not serve requests intercepted by Service Worker from the HAR file. See
-     * [this](https://github.com/microsoft/playwright/issues/1090) issue. We recommend disabling Service Workers when using
-     * request interception by setting `Browser.newContext.serviceWorkers` to `'block'`.
-     */
-    har?: {
-      /**
-       * Path to a [HAR](http://www.softwareishard.com/blog/har-12-spec) file with prerecorded network data. If `path` is a
-       * relative path, then it is resolved relative to the current working directory.
-       */
-      path: string;
-
-      /**
-       * If set to 'abort' any request not found in the HAR file will be aborted. If set to'continue' missing requests will be
-       * sent to the network. Defaults to 'abort'.
-       */
-      fallback?: "abort"|"continue";
-
-      /**
-       * A glob pattern or regular expression to match request URL while routing. Only requests with URL matching the pattern
-       * will be surved from the HAR file. If not specified, all requests are served from the HAR file.
-       */
-      urlFilter?: string|RegExp;
     };
 
     /**
@@ -13331,34 +13327,6 @@ export interface Browser extends EventEmitter {
     };
 
     /**
-     * If specified the network requests that are made in the context will be served from the HAR file. Read more about
-     * [Replaying from HAR](https://playwright.dev/docs/network#replaying-from-har).
-     *
-     * > NOTE: Playwright will not serve requests intercepted by Service Worker from the HAR file. See
-     * [this](https://github.com/microsoft/playwright/issues/1090) issue. We recommend disabling Service Workers when using
-     * request interception by setting `Browser.newContext.serviceWorkers` to `'block'`.
-     */
-    har?: {
-      /**
-       * Path to a [HAR](http://www.softwareishard.com/blog/har-12-spec) file with prerecorded network data. If `path` is a
-       * relative path, then it is resolved relative to the current working directory.
-       */
-      path: string;
-
-      /**
-       * If set to 'abort' any request not found in the HAR file will be aborted. If set to'continue' missing requests will be
-       * sent to the network. Defaults to 'abort'.
-       */
-      fallback?: "abort"|"continue";
-
-      /**
-       * A glob pattern or regular expression to match request URL while routing. Only requests with URL matching the pattern
-       * will be surved from the HAR file. If not specified, all requests are served from the HAR file.
-       */
-      urlFilter?: string|RegExp;
-    };
-
-    /**
      * Specifies if viewport supports touch events. Defaults to false.
      */
     hasTouch?: boolean;
@@ -14200,34 +14168,6 @@ export interface Electron {
        * Non-negative accuracy value. Defaults to `0`.
        */
       accuracy?: number;
-    };
-
-    /**
-     * If specified the network requests that are made in the context will be served from the HAR file. Read more about
-     * [Replaying from HAR](https://playwright.dev/docs/network#replaying-from-har).
-     *
-     * > NOTE: Playwright will not serve requests intercepted by Service Worker from the HAR file. See
-     * [this](https://github.com/microsoft/playwright/issues/1090) issue. We recommend disabling Service Workers when using
-     * request interception by setting `Browser.newContext.serviceWorkers` to `'block'`.
-     */
-    har?: {
-      /**
-       * Path to a [HAR](http://www.softwareishard.com/blog/har-12-spec) file with prerecorded network data. If `path` is a
-       * relative path, then it is resolved relative to the current working directory.
-       */
-      path: string;
-
-      /**
-       * If set to 'abort' any request not found in the HAR file will be aborted. If set to'continue' missing requests will be
-       * sent to the network. Defaults to 'abort'.
-       */
-      fallback?: "abort"|"continue";
-
-      /**
-       * A glob pattern or regular expression to match request URL while routing. Only requests with URL matching the pattern
-       * will be surved from the HAR file. If not specified, all requests are served from the HAR file.
-       */
-      urlFilter?: string|RegExp;
     };
 
     /**
@@ -15994,34 +15934,6 @@ export interface BrowserContextOptions {
   forcedColors?: "active"|"none";
 
   geolocation?: Geolocation;
-
-  /**
-   * If specified the network requests that are made in the context will be served from the HAR file. Read more about
-   * [Replaying from HAR](https://playwright.dev/docs/network#replaying-from-har).
-   *
-   * > NOTE: Playwright will not serve requests intercepted by Service Worker from the HAR file. See
-   * [this](https://github.com/microsoft/playwright/issues/1090) issue. We recommend disabling Service Workers when using
-   * request interception by setting `Browser.newContext.serviceWorkers` to `'block'`.
-   */
-  har?: {
-    /**
-     * Path to a [HAR](http://www.softwareishard.com/blog/har-12-spec) file with prerecorded network data. If `path` is a
-     * relative path, then it is resolved relative to the current working directory.
-     */
-    path: string;
-
-    /**
-     * If set to 'abort' any request not found in the HAR file will be aborted. If set to'continue' missing requests will be
-     * sent to the network. Defaults to 'abort'.
-     */
-    fallback?: "abort"|"continue";
-
-    /**
-     * A glob pattern or regular expression to match request URL while routing. Only requests with URL matching the pattern
-     * will be surved from the HAR file. If not specified, all requests are served from the HAR file.
-     */
-    urlFilter?: string|RegExp;
-  };
 
   /**
    * Specifies if viewport supports touch events. Defaults to false.
