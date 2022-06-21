@@ -22,10 +22,10 @@ const { chromium } = require('playwright');
       `--load-extension=${pathToExtension}`
     ]
   });
-  let backgroundPage = browserContext.backgroundPages()[0];
-  if (backgroundPage == null) {
+  let [backgroundPage] = browserContext.backgroundPages();
+  if (!backgroundPage)
     backgroundPage = await browserContext.waitForEvent('backgroundpage');
-  }
+
   // Test the background page as you would any other page.
   await browserContext.close();
 })();
