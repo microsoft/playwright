@@ -666,3 +666,19 @@ deps['ubuntu20.04-arm64'] = {
   },
 };
 
+deps['ubuntu22.04-arm64'] = {
+  tools: [...deps['ubuntu22.04'].tools],
+  chromium: [...deps['ubuntu22.04'].chromium],
+  firefox: [
+    ...deps['ubuntu22.04'].firefox,
+  ],
+  webkit: [
+    ...deps['ubuntu22.04'].webkit,
+    'libevent-2.1-7',
+  ],
+  lib2package: {
+    ...deps['ubuntu22.04'].lib2package,
+    'libevent-2.1.so.7': 'libevent-2.1.so.7',
+  },
+};
+
