@@ -330,3 +330,24 @@ it('should chain fallback into page', async ({ context, page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   expect(intercepted).toEqual([6, 5, 4, 3, 2, 1]);
 });
+
+it('should fall back async', async ({ page, context, server }) => {
+  const intercepted = [];
+  await context.route('**/empty.html', async route => {
+    intercepted.push(1);
+    await new Promise(r => setTimeout(r, 100));
+    route.fallback();
+  });
+  await context.route('**/empty.html', async route => {
+    intercepted.push(2);
+    await new Promise(r => setTimeout(r, 100));
+    route.fallback();
+  });
+  await context.route('**/empty.html', async route => {
+    intercepted.push(3);
+    await new Promise(r => setTimeout(r, 100));
+    route.fallback();
+  });
+  await page.goto(server.EMPTY_PAGE);
+  expect(intercepted).toEqual([3, 2, 1]);
+});
