@@ -97,17 +97,14 @@ export const test = base.extend<{
 }>({
   context: async ({ browserName }, use) => {
     const browserTypes = { chromium };
-   const pathToExtension = path.join(__dirname, "my-extension");
-    const context = await browserTypes[browserName].launchPersistentContext(
-      '',
-      {
-        headless: false,
-        args: [
-          `--disable-extensions-except=${pathToExtension}`,
-          `--load-extension=${pathToExtension}`,
-        ],
-      }
-    );
+    const pathToExtension = path.join(__dirname, "my-extension");
+    const context = await browserTypes[browserName].launchPersistentContext("", {
+      headless: false,
+      args: [
+        `--disable-extensions-except=${pathToExtension}`,
+        `--load-extension=${pathToExtension}`,
+      ],
+    });
     await use(context);
     await context.close();
   },
@@ -123,7 +120,6 @@ export const test = base.extend<{
     let [background] = context.serviceWorkers();
     if (!background)
       background = await context.waitForEvent("serviceworker");
-
 
     const extensionId = background.url().split("/")[2];
     await use(extensionId);
