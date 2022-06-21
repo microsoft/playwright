@@ -247,8 +247,9 @@ export class Route extends SdkObject {
   async abort(errorCode: string = 'failed', redirectAbortedNavigationToUrl?: string) {
     this._startHandling();
     if (redirectAbortedNavigationToUrl)
-      this._request.frame().redirectNavigationAfterAbort(redirectAbortedNavigationToUrl, this._request._documentId!);
-    await this._delegate.abort(errorCode);
+      this._request.frame().redirectNavigationAfterAbort(redirectAbortedNavigationToUrl, this._request._documentId!, this._request.headerValue('referer'));
+    else
+      await this._delegate.abort(errorCode);
   }
 
   async fulfill(overrides: channels.RouteFulfillParams) {

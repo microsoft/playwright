@@ -120,6 +120,23 @@ it('should change document URL after redirected navigation', async ({ contextFac
   expect(await page.evaluate(() => location.href)).toBe('https://www.theverge.com/');
 });
 
+it('should change document URL after redirected navigation on click', async ({ server, contextFactory, isAndroid, asset }) => {
+  it.fixme(isAndroid);
+
+  const path = asset('har-redirect.har');
+  const context = await contextFactory({ har: { path, urlFilter: /.*theverge.*/ } });
+  const page = await context.newPage();
+  await page.goto(server.EMPTY_PAGE);
+  await page.setContent(`<a href="https://theverge.com/">click me</a>`);
+  const [response] = await Promise.all([
+    page.waitForNavigation(),
+    page.click('text=click me'),
+  ]);
+  await expect(page).toHaveURL('https://www.theverge.com/');
+  expect(response.request().url()).toBe('https://www.theverge.com/');
+  expect(await page.evaluate(() => location.href)).toBe('https://www.theverge.com/');
+});
+
 it('should goBack to redirected navigation', async ({ contextFactory, isAndroid, asset, server }) => {
   it.fixme(isAndroid);
 
