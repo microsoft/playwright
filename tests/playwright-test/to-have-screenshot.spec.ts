@@ -768,6 +768,31 @@ test('should respect maxDiffPixels option', async ({ runInlineTest }) => {
   })).exitCode, 'make sure maxDiffPixels option in project config is respected').toBe(0);
 });
 
+test('should not update screenshot that matches with maxDiffPixels option when -u is passed', async ({ runInlineTest }, testInfo) => {
+  const BAD_PIXELS = 120;
+  const EXPECTED_SNAPSHOT = paintBlackPixels(whiteImage, BAD_PIXELS);
+
+  const result = await runInlineTest({
+    ...playwrightConfig({ screenshotsDir: '__screenshots__' }),
+    '__screenshots__/a.spec.js/snapshot.png': EXPECTED_SNAPSHOT,
+    'a.spec.js': `
+      pwt.test('is a test', async ({ page }) => {
+        await expect(page).toHaveScreenshot('snapshot.png', { maxDiffPixels: ${BAD_PIXELS} });
+      });
+    `
+  }, { 'update-snapshots': true });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.output).not.toContain(`is re-generated, writing actual`);
+  expect(fs.existsSync(testInfo.outputPath('test-results', 'a-is-a-test', 'is-a-test-1-actual.png'))).toBe(false);
+  expect(fs.existsSync(testInfo.outputPath('test-results', 'a-is-a-test', 'is-a-test-1-expected.png'))).toBe(false);
+  expect(fs.existsSync(testInfo.outputPath('test-results', 'a-is-a-test', 'is-a-test-1-previous.png'))).toBe(false);
+  expect(fs.existsSync(testInfo.outputPath('test-results', 'a-is-a-test', 'is-a-test-1-diff.png'))).toBe(false);
+
+  const data = fs.readFileSync(testInfo.outputPath('__screenshots__/a.spec.js/snapshot.png'));
+  expect(pngComparator(data, EXPECTED_SNAPSHOT)).toBe(null);
+});
+
 test('should satisfy both maxDiffPixelRatio and maxDiffPixels', async ({ runInlineTest }) => {
   const BAD_RATIO = 0.25;
   const BAD_COUNT = Math.floor(IMG_WIDTH * IMG_HEIGHT * BAD_RATIO);
