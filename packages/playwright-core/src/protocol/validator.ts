@@ -1181,9 +1181,11 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   });
   scheme.RequestResponseParams = tOptional(tObject({}));
   scheme.RequestRawRequestHeadersParams = tOptional(tObject({}));
+  scheme.RouteRedirectNavigationRequestParams = tObject({
+    url: tString,
+  });
   scheme.RouteAbortParams = tObject({
     errorCode: tOptional(tString),
-    redirectAbortedNavigationToUrl: tOptional(tString),
   });
   scheme.RouteContinueParams = tObject({
     url: tOptional(tString),

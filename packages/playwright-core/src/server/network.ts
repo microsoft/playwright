@@ -244,11 +244,15 @@ export class Route extends SdkObject {
     return this._request;
   }
 
-  async abort(errorCode: string = 'failed', redirectAbortedNavigationToUrl?: string) {
+  async abort(errorCode: string = 'failed') {
     this._startHandling();
-    if (redirectAbortedNavigationToUrl)
-      this._request.frame().redirectNavigationAfterAbort(redirectAbortedNavigationToUrl, this._request._documentId!);
     await this._delegate.abort(errorCode);
+  }
+
+  async redirectNavigationRequest(url: string) {
+    this._startHandling();
+    assert(this._request.isNavigationRequest());
+    this._request.frame().redirectNavigation(url, this._request._documentId!, this._request.headerValue('referer'));
   }
 
   async fulfill(overrides: channels.RouteFulfillParams) {

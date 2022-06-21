@@ -269,7 +269,7 @@ export class FrameManager {
       name: frame._name,
       newDocument: frame.pendingDocument(),
       error: new NavigationAbortedError(documentId, errorText),
-      isPublic: !frame._pendingNavigationRedirectAfterAbort
+      isPublic: !(documentId && frame._redirectedNavigations.has(documentId)),
     };
     frame.setPendingDocument(undefined);
     frame.emit(Frame.Events.InternalNavigation, navigationEvent);
@@ -467,7 +467,7 @@ export class Frame extends SdkObject {
   readonly _detachedPromise: Promise<void>;
   private _detachedCallback = () => {};
   private _raceAgainstEvaluationStallingEventsPromises = new Set<ManualPromise<any>>();
-  _pendingNavigationRedirectAfterAbort: { url: string, documentId: string } | undefined;
+  readonly _redirectedNavigations = new Map<string, { url: string, gotoPromise: Promise<network.Response | null> }>(); // documentId -> data
 
   constructor(page: Page, id: string, parentFrame: Frame | null) {
     super(page, 'frame');
@@ -604,12 +604,11 @@ export class Frame extends SdkObject {
       this._page._crashedPromise.then(() => { throw new Error('Navigation failed because page crashed!'); }),
       this._detachedPromise.then(() => { throw new Error('Navigating frame was detached!'); }),
       action().catch(e => {
-        if (this._pendingNavigationRedirectAfterAbort && e instanceof NavigationAbortedError) {
-          const { url, documentId } = this._pendingNavigationRedirectAfterAbort;
-          this._pendingNavigationRedirectAfterAbort = undefined;
-          if (e.documentId === documentId) {
-            progress.log(`redirecting navigation to "${url}"`);
-            return this._gotoAction(progress, url, options);
+        if (e instanceof NavigationAbortedError && e.documentId) {
+          const data = this._redirectedNavigations.get(e.documentId);
+          if (data) {
+            progress.log(`waiting for redirected navigation to "${data.url}"`);
+            return data.gotoPromise;
           }
         }
         throw e;
@@ -617,8 +616,14 @@ export class Frame extends SdkObject {
     ]);
   }
 
-  redirectNavigationAfterAbort(url: string, documentId: string) {
-    this._pendingNavigationRedirectAfterAbort = { url, documentId };
+  redirectNavigation(url: string, documentId: string, referer: string | undefined) {
+    const controller = new ProgressController(serverSideCallMetadata(), this);
+    const data = {
+      url,
+      gotoPromise: controller.run(progress => this._gotoAction(progress, url, { referer }), 0),
+    };
+    this._redirectedNavigations.set(documentId, data);
+    data.gotoPromise.finally(() => this._redirectedNavigations.delete(documentId));
   }
 
   async goto(metadata: CallMetadata, url: string, options: types.GotoOptions = {}): Promise<network.Response | null> {
@@ -659,7 +664,7 @@ export class Frame extends SdkObject {
       if (event.newDocument!.documentId !== navigateResult.newDocumentId) {
         // This is just a sanity check. In practice, new navigation should
         // cancel the previous one and report "request cancelled"-like error.
-        throw new Error('Navigation interrupted by another one');
+        throw new NavigationAbortedError(navigateResult.newDocumentId, 'Navigation interrupted by another one');
       }
       if (event.error)
         throw event.error;
