@@ -587,11 +587,8 @@ class FrameSession {
 
   async _navigate(frame: frames.Frame, url: string, referrer: string | undefined): Promise<frames.GotoResult> {
     const response = await this._client.send('Page.navigate', { url, referrer, frameId: frame._id });
-    if (response.errorText) {
-      if (response.loaderId)
-        this._crPage._page._frameManager.frameAbortedNavigation(frame._id, response.errorText, response.loaderId);
+    if (response.errorText)
       throw new frames.NavigationAbortedError(response.loaderId, `${response.errorText} at ${url}`);
-    }
     return { newDocumentId: response.loaderId };
   }
 

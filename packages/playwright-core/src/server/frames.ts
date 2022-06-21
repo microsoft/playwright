@@ -269,7 +269,7 @@ export class FrameManager {
       name: frame._name,
       newDocument: frame.pendingDocument(),
       error: new NavigationAbortedError(documentId, errorText),
-      isPublic: !frame._pendingNavigationRedirectAfterAbort
+      isPublic: !(documentId && frame._redirectedNavigations.has(documentId)),
     };
     frame.setPendingDocument(undefined);
     frame.emit(Frame.Events.InternalNavigation, navigationEvent);
@@ -467,7 +467,7 @@ export class Frame extends SdkObject {
   readonly _detachedPromise: Promise<void>;
   private _detachedCallback = () => {};
   private _raceAgainstEvaluationStallingEventsPromises = new Set<ManualPromise<any>>();
-  _pendingNavigationRedirectAfterAbort: { url: string, fromDocumentId: string, gotoPromise: Promise<network.Response | null> } | undefined;
+  readonly _redirectedNavigations = new Map<string, { url: string, gotoPromise: Promise<network.Response | null> }>(); // documentId -> data
 
   constructor(page: Page, id: string, parentFrame: Frame | null) {
     super(page, 'frame');
@@ -604,12 +604,11 @@ export class Frame extends SdkObject {
       this._page._crashedPromise.then(() => { throw new Error('Navigation failed because page crashed!'); }),
       this._detachedPromise.then(() => { throw new Error('Navigating frame was detached!'); }),
       action().catch(e => {
-        if (this._pendingNavigationRedirectAfterAbort && e instanceof NavigationAbortedError) {
-          const { url, fromDocumentId, gotoPromise } = this._pendingNavigationRedirectAfterAbort;
-          this._pendingNavigationRedirectAfterAbort = undefined;
-          if (e.documentId === fromDocumentId) {
-            progress.log(`waiting for redirected navigation to "${url}"`);
-            return gotoPromise;
+        if (e instanceof NavigationAbortedError && e.documentId) {
+          const data = this._redirectedNavigations.get(e.documentId);
+          if (data) {
+            progress.log(`waiting for redirected navigation to "${data.url}"`);
+            return data.gotoPromise;
           }
         }
         throw e;
@@ -619,11 +618,12 @@ export class Frame extends SdkObject {
 
   redirectNavigation(url: string, documentId: string, referer: string | undefined) {
     const controller = new ProgressController(serverSideCallMetadata(), this);
-    this._pendingNavigationRedirectAfterAbort = {
+    const data = {
       url,
-      fromDocumentId: documentId,
       gotoPromise: controller.run(progress => this._gotoAction(progress, url, { referer }), 0),
     };
+    this._redirectedNavigations.set(documentId, data);
+    data.gotoPromise.finally(() => this._redirectedNavigations.delete(documentId));
   }
 
   async goto(metadata: CallMetadata, url: string, options: types.GotoOptions = {}): Promise<network.Response | null> {
