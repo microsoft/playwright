@@ -700,7 +700,7 @@ You can record network activity as an HTTP Archive file (HAR). Later on, this ar
 
 ### Recording HAR with CLI
 
-Open the browser with [Playwright CLI](./cli.md) and pass `--save-har` option to produce a HAR file. Optionally, use `--save-har-glob` to only save requests you are interested in, for example API endpoints.
+Open the browser with [Playwright CLI](./cli.md) and pass `--save-har` option to produce a HAR file. Optionally, use `--save-har-glob` to only save requests you are interested in, for example API endpoints. If the har file name ends with `.zip`, artifacts are written as separate files and are all compressed into a single `zip`.
 
 ```bash js
 # Save API requests from example.com as "example.har" archive.
@@ -724,7 +724,7 @@ pwsh bin\Debug\netX\playwright.ps1 open --save-har=example.har --save-har-glob="
 
 ### Recording HAR with a script
 
-Alternatively, instead of using the CLI, you can record HAR programmatically. Pass [`option: har`] option when creating a [BrowserContext] with [`method: Browser.newContext`] to create an archive.
+Alternatively, instead of using the CLI, you can record HAR programmatically. Pass [`option: har`] option when creating a [BrowserContext] with [`method: Browser.newContext`] to create an archive. If the har file name ends with `.zip`, artifacts are written as separate files and are all compressed into a single `zip`.
 
 ```js
 const context = await browser.newContext({
@@ -780,7 +780,7 @@ await context.CloseAsync();
 
 ### Replaying from HAR
 
-Pass [`option: har`] option to the [`method: Browser.newContext`] method to use matching responses from the HAR file.
+Pass [`option: har`] option to the [`method: Browser.newContext`] method to use matching responses from the [HAR](http://www.softwareishard.com/blog/har-12-spec/) file.
 
 ```js
 // Replay API requests from HAR.
@@ -826,6 +826,10 @@ var context = await Browser.NewContextAsync(new () {
 var page = await context.NewPageAsync();
 await page.GotoAsync("https://example.com");
 ```
+
+HAR replay matches URL and HTTP method strictly. For POST requests, it also matches POST payloads strictly. If multiple recordings match a request, the one with the most matching headers is picked. An entry resulting in a redirect will be followed automatically.
+
+Similar to when recording, if given HAR file name ends with `.zip`, it is considered an archive containing the HAR file along with network payloads stored as separate entries. You can also extract this archive, edit payloads or HAR log manually and point to the extracted har file. All the payloads will be resolved relative to the extracted har file on the file system.
 
 ### API reference
 - [`method: Browser.newContext`]
