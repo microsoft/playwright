@@ -18,6 +18,7 @@ export type SerializedValue =
     undefined | boolean | number | string |
     { v: 'null' | 'undefined' | 'NaN' | 'Infinity' | '-Infinity' | '-0' } |
     { d: string } |
+    { u: string } |
     { r: { p: string, f: string} } |
     { a: SerializedValue[], id: number } |
     { o: { k: string, v: SerializedValue }[], id: number } |
@@ -39,6 +40,10 @@ export function source() {
 
   function isDate(obj: any): obj is Date {
     return obj instanceof Date || Object.prototype.toString.call(obj) === '[object Date]';
+  }
+
+  function isURL(obj: any): obj is URL {
+    return obj instanceof URL || Object.prototype.toString.call(obj) === '[object URL]';
   }
 
   function isError(obj: any): obj is Error {
@@ -72,6 +77,8 @@ export function source() {
       }
       if ('d' in value)
         return new Date(value.d);
+      if ('u' in value)
+        return new URL(value.u);
       if ('r' in value)
         return new RegExp(value.r.p, value.r.f);
       if ('a' in value) {
@@ -149,6 +156,8 @@ export function source() {
     }
     if (isDate(value))
       return { d: value.toJSON() };
+    if (isURL(value))
+      return { u: value.toJSON() };
     if (isRegExp(value))
       return { r: { p: value.source, f: value.flags } };
 

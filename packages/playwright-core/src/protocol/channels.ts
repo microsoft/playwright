@@ -163,6 +163,7 @@ export type SerializedValue = {
   s?: string,
   v?: 'null' | 'undefined' | 'NaN' | 'Infinity' | '-Infinity' | '-0',
   d?: string,
+  u?: string,
   r?: {
     p: string,
     f: string,
