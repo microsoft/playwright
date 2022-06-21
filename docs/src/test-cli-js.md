@@ -44,14 +44,9 @@ Here are the most common options available in the command line.
   npx playwright test --headed
   ```
 
-- Run tests in a particular browser (config-less mode)
+- Run all the tests against a specific project
   ```bash
-  npx playwright test --browser=webkit
-  ```
-
-- Run tests in all browsers (config-less mode)
-  ```bash
-  npx playwright test --browser=all
+  npx playwright test --project=chromium
   ```
 
 - Disable [parallelization](./test-parallel.md)
