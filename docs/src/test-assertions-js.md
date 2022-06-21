@@ -126,10 +126,3 @@ await expect.poll(async () => {
   timeout: 60_000
 }).toBe(200);
 ```
-
-## API reference
-See the following pages for Playwright-specific assertions:
-- [APIResponseAssertions] assertions for [APIResponse]
-- [LocatorAssertions] assertions for [Locator]
-- [PageAssertions] assertions for [Page]
-- [ScreenshotAssertions] for comparing screenshot with stored value
