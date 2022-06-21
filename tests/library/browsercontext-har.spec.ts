@@ -16,6 +16,8 @@
 
 import { browserTest as it, expect } from '../config/browserTest';
 import fs from 'fs';
+import path from 'path';
+import extractZip from '../../packages/playwright-core/bundles/zip/node_modules/extract-zip';
 
 it('should fulfill from har, matching the method and following redirects', async ({ contextFactory, isAndroid, asset }) => {
   it.fixme(isAndroid);
@@ -191,4 +193,92 @@ it('should round-trip har.zip', async ({ contextFactory, isAndroid, server }, te
   await page2.goto(server.PREFIX + '/one-style.html');
   expect(await page2.content()).toContain('hello, world!');
   await expect(page2.locator('body')).toHaveCSS('background-color', 'rgb(255, 192, 203)');
+});
+
+it('should round-trip extracted har.zip', async ({ contextFactory, isAndroid, server }, testInfo) => {
+  it.fixme(isAndroid);
+
+  const harPath = testInfo.outputPath('har.zip');
+  const context1 = await contextFactory({ recordHar: { path: harPath } });
+  const page1 = await context1.newPage();
+  await page1.goto(server.PREFIX + '/one-style.html');
+  await context1.close();
+
+  const harDir = testInfo.outputPath('hardir');
+  await extractZip(harPath, { dir: harDir });
+
+  const context2 = await contextFactory({ har: { path: path.join(harDir, 'har.har') } });
+  const page2 = await context2.newPage();
+  await page2.goto(server.PREFIX + '/one-style.html');
+  expect(await page2.content()).toContain('hello, world!');
+  await expect(page2.locator('body')).toHaveCSS('background-color', 'rgb(255, 192, 203)');
+});
+
+it('should round-trip har with postData', async ({ contextFactory, isAndroid, server }, testInfo) => {
+  it.fixme(isAndroid);
+  server.setRoute('/echo', async (req, res) => {
+    const body = await req.postBody;
+    res.end(body.toString());
+  });
+
+  const harPath = testInfo.outputPath('har.zip');
+  const context1 = await contextFactory({ recordHar: { path: harPath } });
+  const page1 = await context1.newPage();
+  await page1.goto(server.EMPTY_PAGE);
+  const fetchFunction = async (body: string) => {
+    const response = await fetch('/echo', { method: 'POST', body });
+    return await response.text();
+  };
+
+  expect(await page1.evaluate(fetchFunction, '1')).toBe('1');
+  expect(await page1.evaluate(fetchFunction, '2')).toBe('2');
+  expect(await page1.evaluate(fetchFunction, '3')).toBe('3');
+  await context1.close();
+
+  const context2 = await contextFactory({ har: { path: harPath } });
+  const page2 = await context2.newPage();
+  await page2.goto(server.EMPTY_PAGE);
+  expect(await page2.evaluate(fetchFunction, '1')).toBe('1');
+  expect(await page2.evaluate(fetchFunction, '2')).toBe('2');
+  expect(await page2.evaluate(fetchFunction, '3')).toBe('3');
+  expect(await page2.evaluate(fetchFunction, '4').catch(e => e)).toBeTruthy();
+});
+
+it('should disambiguate by header', async ({ contextFactory, isAndroid, server }, testInfo) => {
+  it.fixme(isAndroid);
+
+  server.setRoute('/echo', async (req, res) => {
+    res.end(req.headers['baz']);
+  });
+
+  const harPath = testInfo.outputPath('har.zip');
+  const context1 = await contextFactory({ recordHar: { path: harPath } });
+  const page1 = await context1.newPage();
+  await page1.goto(server.EMPTY_PAGE);
+
+  const fetchFunction = async (bazValue: string) => {
+    const response = await fetch('/echo', {
+      method: 'POST',
+      body: '',
+      headers: {
+        foo: 'foo-value',
+        bar: 'bar-value',
+        baz: bazValue,
+      }
+    });
+    return await response.text();
+  };
+
+  expect(await page1.evaluate(fetchFunction, 'baz1')).toBe('baz1');
+  expect(await page1.evaluate(fetchFunction, 'baz2')).toBe('baz2');
+  expect(await page1.evaluate(fetchFunction, 'baz3')).toBe('baz3');
+  await context1.close();
+
+  const context2 = await contextFactory({ har: { path: harPath } });
+  const page2 = await context2.newPage();
+  await page2.goto(server.EMPTY_PAGE);
+  expect(await page2.evaluate(fetchFunction, 'baz1')).toBe('baz1');
+  expect(await page2.evaluate(fetchFunction, 'baz2')).toBe('baz2');
+  expect(await page2.evaluate(fetchFunction, 'baz3')).toBe('baz3');
+  expect(await page2.evaluate(fetchFunction, 'baz4')).toBe('baz1');
 });

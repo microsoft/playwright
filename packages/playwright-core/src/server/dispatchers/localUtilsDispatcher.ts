@@ -194,43 +194,33 @@ class HarBackend {
     const harLog = this._harFile.log;
     const visited = new Set<HAREntry>();
     while (true) {
-      const entries = harLog.entries.filter(entry => entry.request.url === url && entry.request.method === method);
+      const entries: HAREntry[] = [];
+      for (const candidate of harLog.entries) {
+        if (candidate.request.url !== url || candidate.request.method !== method)
+          continue;
+        if (method === 'POST' && postData && candidate.request.postData) {
+          const buffer = await this._loadContent(candidate.request.postData);
+          if (!buffer.equals(postData))
+            continue;
+        }
+        entries.push(candidate);
+      }
+
       if (!entries.length)
         return;
 
-      let entry: HAREntry | undefined;
+      let entry = entries[0];
 
+      // Disambiguate using headers - then one with most matching headers wins.
       if (entries.length > 1) {
-        // Disambiguating requests
-
-        // 1. Disambiguate using postData - this covers GraphQL
-        if (!entry && postData) {
-          for (const candidate of entries) {
-            if (!candidate.request.postData)
-              continue;
-            const buffer = await this._loadContent(candidate.request.postData);
-            if (buffer.equals(postData)) {
-              entry = candidate;
-              break;
-            }
-          }
+        const list: { candidate: HAREntry, matchingHeaders: number }[] = [];
+        for (const candidate of entries) {
+          const matchingHeaders = countMatchingHeaders(candidate.request.headers, headers);
+          list.push({ candidate, matchingHeaders });
         }
-
-        // Last. Disambiguate using headers - then one with most matching headers wins.
-        if (!entry) {
-          const list: { candidate: HAREntry, matchingHeaders: number }[] = [];
-          for (const candidate of entries) {
-            const matchingHeaders = countMatchingHeaders(candidate.request.headers, headers);
-            list.push({ candidate, matchingHeaders });
-          }
-          list.sort((a, b) => b.matchingHeaders - a.matchingHeaders);
-          entry = list[0].candidate;
-        }
-
-      } else {
-        entry = entries[0];
+        list.sort((a, b) => b.matchingHeaders - a.matchingHeaders);
+        entry = list[0].candidate;
       }
-
 
       if (visited.has(entry))
         throw new Error(`Found redirect cycle for ${url}`);
