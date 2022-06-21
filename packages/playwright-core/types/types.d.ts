@@ -10507,7 +10507,8 @@ export interface BrowserType<Unused = {}> {
     handleSIGTERM?: boolean;
 
     /**
-     * If specified the network requests that are made in the context will be served from the HAR file.
+     * If specified the network requests that are made in the context will be served from the HAR file. Read more about
+     * [Replaying from HAR](https://playwright.dev/docs/network#replaying-from-har).
      *
      * > NOTE: Playwright will not serve requests intercepted by Service Worker from the HAR file. See
      * [this](https://github.com/microsoft/playwright/issues/1090) issue. We recommend disabling Service Workers when using
@@ -10515,10 +10516,8 @@ export interface BrowserType<Unused = {}> {
      */
     har?: {
       /**
-       * Path to a [HAR](http://www.softwareishard.com/blog/har-12-spec) file with prerecorded network data. If the HAR file
-       * contains an entry with the matching URL and HTTP method, then the entry's headers, status and body will be used to
-       * fulfill the network request. An entry resulting in a redirect will be followed automatically. If `path` is a relative
-       * path, then it is resolved relative to the current working directory.
+       * Path to a [HAR](http://www.softwareishard.com/blog/har-12-spec) file with prerecorded network data. If `path` is a
+       * relative path, then it is resolved relative to the current working directory.
        */
       path: string;
 
@@ -11763,7 +11762,8 @@ export interface AndroidDevice {
     };
 
     /**
-     * If specified the network requests that are made in the context will be served from the HAR file.
+     * If specified the network requests that are made in the context will be served from the HAR file. Read more about
+     * [Replaying from HAR](https://playwright.dev/docs/network#replaying-from-har).
      *
      * > NOTE: Playwright will not serve requests intercepted by Service Worker from the HAR file. See
      * [this](https://github.com/microsoft/playwright/issues/1090) issue. We recommend disabling Service Workers when using
@@ -11771,10 +11771,8 @@ export interface AndroidDevice {
      */
     har?: {
       /**
-       * Path to a [HAR](http://www.softwareishard.com/blog/har-12-spec) file with prerecorded network data. If the HAR file
-       * contains an entry with the matching URL and HTTP method, then the entry's headers, status and body will be used to
-       * fulfill the network request. An entry resulting in a redirect will be followed automatically. If `path` is a relative
-       * path, then it is resolved relative to the current working directory.
+       * Path to a [HAR](http://www.softwareishard.com/blog/har-12-spec) file with prerecorded network data. If `path` is a
+       * relative path, then it is resolved relative to the current working directory.
        */
       path: string;
 
@@ -13332,7 +13330,8 @@ export interface Browser extends EventEmitter {
     };
 
     /**
-     * If specified the network requests that are made in the context will be served from the HAR file.
+     * If specified the network requests that are made in the context will be served from the HAR file. Read more about
+     * [Replaying from HAR](https://playwright.dev/docs/network#replaying-from-har).
      *
      * > NOTE: Playwright will not serve requests intercepted by Service Worker from the HAR file. See
      * [this](https://github.com/microsoft/playwright/issues/1090) issue. We recommend disabling Service Workers when using
@@ -13340,10 +13339,8 @@ export interface Browser extends EventEmitter {
      */
     har?: {
       /**
-       * Path to a [HAR](http://www.softwareishard.com/blog/har-12-spec) file with prerecorded network data. If the HAR file
-       * contains an entry with the matching URL and HTTP method, then the entry's headers, status and body will be used to
-       * fulfill the network request. An entry resulting in a redirect will be followed automatically. If `path` is a relative
-       * path, then it is resolved relative to the current working directory.
+       * Path to a [HAR](http://www.softwareishard.com/blog/har-12-spec) file with prerecorded network data. If `path` is a
+       * relative path, then it is resolved relative to the current working directory.
        */
       path: string;
 
@@ -14205,7 +14202,8 @@ export interface Electron {
     };
 
     /**
-     * If specified the network requests that are made in the context will be served from the HAR file.
+     * If specified the network requests that are made in the context will be served from the HAR file. Read more about
+     * [Replaying from HAR](https://playwright.dev/docs/network#replaying-from-har).
      *
      * > NOTE: Playwright will not serve requests intercepted by Service Worker from the HAR file. See
      * [this](https://github.com/microsoft/playwright/issues/1090) issue. We recommend disabling Service Workers when using
@@ -14213,10 +14211,8 @@ export interface Electron {
      */
     har?: {
       /**
-       * Path to a [HAR](http://www.softwareishard.com/blog/har-12-spec) file with prerecorded network data. If the HAR file
-       * contains an entry with the matching URL and HTTP method, then the entry's headers, status and body will be used to
-       * fulfill the network request. An entry resulting in a redirect will be followed automatically. If `path` is a relative
-       * path, then it is resolved relative to the current working directory.
+       * Path to a [HAR](http://www.softwareishard.com/blog/har-12-spec) file with prerecorded network data. If `path` is a
+       * relative path, then it is resolved relative to the current working directory.
        */
       path: string;
 
@@ -15999,7 +15995,8 @@ export interface BrowserContextOptions {
   geolocation?: Geolocation;
 
   /**
-   * If specified the network requests that are made in the context will be served from the HAR file.
+   * If specified the network requests that are made in the context will be served from the HAR file. Read more about
+   * [Replaying from HAR](https://playwright.dev/docs/network#replaying-from-har).
    *
    * > NOTE: Playwright will not serve requests intercepted by Service Worker from the HAR file. See
    * [this](https://github.com/microsoft/playwright/issues/1090) issue. We recommend disabling Service Workers when using
@@ -16007,10 +16004,8 @@ export interface BrowserContextOptions {
    */
   har?: {
     /**
-     * Path to a [HAR](http://www.softwareishard.com/blog/har-12-spec) file with prerecorded network data. If the HAR file
-     * contains an entry with the matching URL and HTTP method, then the entry's headers, status and body will be used to
-     * fulfill the network request. An entry resulting in a redirect will be followed automatically. If `path` is a relative
-     * path, then it is resolved relative to the current working directory.
+     * Path to a [HAR](http://www.softwareishard.com/blog/har-12-spec) file with prerecorded network data. If `path` is a
+     * relative path, then it is resolved relative to the current working directory.
      */
     path: string;
 
