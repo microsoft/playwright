@@ -87,11 +87,14 @@ with sync_playwright() as playwright:
 
 To have the extension loaded when running tests you can use a test fixture to set the context. You can also dynamically retrieve the extension id and use it that to load and test the popup page for example.
 
-```js
-import { test as base, expect, chromium } from "@playwright/test";
+```typescript
+import { test as base, expect, chromium, BrowserContext } from "@playwright/test";
 import path from "path";
 
-export const test = base.extend({
+export const test = base.extend<{
+  context: BrowserContext;
+  extensionId: string;
+}>({
   context: async ({ browserName }, use) => {
     const browserTypes = { chromium };
     const pathToExtension = path.join(process.cwd(), "my-extension");
