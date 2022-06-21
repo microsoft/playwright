@@ -2488,10 +2488,13 @@ Route:
 
   commands:
 
+    redirectNavigationRequest:
+      parameters:
+        url: string
+
     abort:
       parameters:
         errorCode: string?
-        redirectAbortedNavigationToUrl: string?
 
     continue:
       parameters:

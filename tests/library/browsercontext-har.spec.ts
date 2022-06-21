@@ -113,6 +113,7 @@ it('should change document URL after redirected navigation', async ({ contextFac
   const page = await context.newPage();
   const [response] = await Promise.all([
     page.waitForNavigation(),
+    page.waitForURL('https://www.theverge.com/'),
     page.goto('https://theverge.com/')
   ]);
   await expect(page).toHaveURL('https://www.theverge.com/');

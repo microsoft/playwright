@@ -617,7 +617,7 @@ export class Frame extends SdkObject {
     ]);
   }
 
-  redirectNavigationAfterAbort(url: string, documentId: string, referer: string | undefined) {
+  redirectNavigation(url: string, documentId: string, referer: string | undefined) {
     const controller = new ProgressController(serverSideCallMetadata(), this);
     this._pendingNavigationRedirectAfterAbort = {
       url,

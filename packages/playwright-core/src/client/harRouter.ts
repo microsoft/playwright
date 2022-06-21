@@ -53,7 +53,7 @@ export class HarRouter {
 
     if (response.action === 'redirect') {
       debugLogger.log('api', `HAR: ${route.request().url()} redirected to ${response.redirectURL}`);
-      await route._abort(undefined, response.redirectURL);
+      await route._redirectNavigationRequest(response.redirectURL!);
       return;
     }
 

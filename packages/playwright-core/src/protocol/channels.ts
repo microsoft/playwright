@@ -3157,17 +3157,23 @@ export interface RouteEventTarget {
 }
 export interface RouteChannel extends RouteEventTarget, Channel {
   _type_Route: boolean;
+  redirectNavigationRequest(params: RouteRedirectNavigationRequestParams, metadata?: Metadata): Promise<RouteRedirectNavigationRequestResult>;
   abort(params: RouteAbortParams, metadata?: Metadata): Promise<RouteAbortResult>;
   continue(params: RouteContinueParams, metadata?: Metadata): Promise<RouteContinueResult>;
   fulfill(params: RouteFulfillParams, metadata?: Metadata): Promise<RouteFulfillResult>;
 }
+export type RouteRedirectNavigationRequestParams = {
+  url: string,
+};
+export type RouteRedirectNavigationRequestOptions = {
+
+};
+export type RouteRedirectNavigationRequestResult = void;
 export type RouteAbortParams = {
   errorCode?: string,
-  redirectAbortedNavigationToUrl?: string,
 };
 export type RouteAbortOptions = {
   errorCode?: string,
-  redirectAbortedNavigationToUrl?: string,
 };
 export type RouteAbortResult = void;
 export type RouteContinueParams = {
