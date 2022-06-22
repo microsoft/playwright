@@ -477,7 +477,7 @@ test('should record global request trace', async ({ request, context, server }, 
   }));
 });
 
-test('should store global request traces separately', async ({ request, context, server, playwright }, testInfo) => {
+test('should store global request traces separately', async ({ request, server, playwright }, testInfo) => {
   const request2 = await playwright.request.newContext();
   await Promise.all([
     (request as any)._tracing.start({ snapshots: true }),
@@ -513,6 +513,29 @@ test('should store global request traces separately', async ({ request, context,
     }));
   }
 });
+
+test('should store postData for global request', async ({ request, server }, testInfo) => {
+  testInfo.annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/15031' });
+  await (request as any)._tracing.start({ snapshots: true });
+  const url = server.PREFIX + '/simple.json';
+  await request.post(url, {
+    data: 'test'
+  });
+  const tracePath = testInfo.outputPath('trace.zip');
+  await (request as any)._tracing.stop({ path: tracePath });
+
+  const trace = await parseTrace(tracePath);
+  const actions = trace.events.filter(e => e.type === 'resource-snapshot');
+  expect(actions).toHaveLength(1);
+  const req = actions[0].snapshot.request;
+  console.log(JSON.stringify(req, null, 2));
+  expect(req.postData?._sha1).toBeTruthy();
+  expect(req).toEqual(expect.objectContaining({
+    method: 'POST',
+    url
+  }));
+});
+
 
 function expectRed(pixels: Buffer, offset: number) {
   const r = pixels.readUInt8(offset);
