@@ -63,6 +63,7 @@ export type BrowserContextOptions = Omit<channels.BrowserNewContextOptions, 'vie
     path: string,
     omitContent?: boolean,
     content?: 'omit' | 'embed' | 'attach',
+    mode?: 'full' | 'minimal',
     urlFilter?: string | RegExp,
   },
 };

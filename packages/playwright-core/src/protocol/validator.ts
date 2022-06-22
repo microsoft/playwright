@@ -156,6 +156,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   scheme.RecordHarOptions = tObject({
     path: tString,
     content: tOptional(tEnum(['embed', 'attach', 'omit'])),
+    mode: tOptional(tEnum(['full', 'minimal'])),
     urlGlob: tOptional(tString),
     urlRegexSource: tOptional(tString),
     urlRegexFlags: tOptional(tString),

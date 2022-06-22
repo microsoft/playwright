@@ -393,6 +393,7 @@ function prepareRecordHarOptions(options: BrowserContextOptions['recordHar']): c
     urlGlob: isString(options.urlFilter) ? options.urlFilter : undefined,
     urlRegexSource: isRegExp(options.urlFilter) ? options.urlFilter.source : undefined,
     urlRegexFlags: isRegExp(options.urlFilter) ? options.urlFilter.flags : undefined,
+    mode: options.mode
   };
 }
 
