@@ -602,18 +602,3 @@ test('should pass fixture defaults to tests', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
 });
-
-test('should support har option', async ({ runInlineTest, asset }) => {
-  const result = await runInlineTest({
-    'a.test.ts': `
-      const { test } = pwt;
-      test.use({ har: { path: ${JSON.stringify(asset('har-fulfill.har'))} }});
-      test('pass', async ({ page }) => {
-        await page.goto('http://no.playwright/');
-        expect(await page.evaluate('window.value')).toBe('foo');
-      });
-    `,
-  }, { workers: 1 });
-  expect(result.exitCode).toBe(0);
-  expect(result.passed).toBe(1);
-});

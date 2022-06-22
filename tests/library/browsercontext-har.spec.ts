@@ -19,11 +19,11 @@ import fs from 'fs';
 import path from 'path';
 import extractZip from '../../packages/playwright-core/bundles/zip/node_modules/extract-zip';
 
-it('should fulfill from har, matching the method and following redirects', async ({ contextFactory, isAndroid, asset }) => {
+it('should context.routeFromHAR, matching the method and following redirects', async ({ context, isAndroid, asset }) => {
   it.fixme(isAndroid);
 
   const path = asset('har-fulfill.har');
-  const context = await contextFactory({ har: { path } });
+  await context.routeFromHAR(path);
   const page = await context.newPage();
   await page.goto('http://no.playwright/');
   // HAR contains a redirect for the script that should be followed automatically.
@@ -32,42 +32,55 @@ it('should fulfill from har, matching the method and following redirects', async
   await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(255, 0, 0)');
 });
 
-it('fallback:continue should continue when not found in har', async ({ contextFactory, server, isAndroid, asset }) => {
+it('should page.routeFromHAR, matching the method and following redirects', async ({ context, isAndroid, asset }) => {
   it.fixme(isAndroid);
 
   const path = asset('har-fulfill.har');
-  const context = await contextFactory({ har: { path, fallback: 'continue' } });
+  const page = await context.newPage();
+  await page.routeFromHAR(path);
+  await page.goto('http://no.playwright/');
+  // HAR contains a redirect for the script that should be followed automatically.
+  expect(await page.evaluate('window.value')).toBe('foo');
+  // HAR contains a POST for the css file that should not be used.
+  await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(255, 0, 0)');
+});
+
+it('fallback:continue should continue when not found in har', async ({ context, server, isAndroid, asset }) => {
+  it.fixme(isAndroid);
+
+  const path = asset('har-fulfill.har');
+  await context.routeFromHAR(path, { notFound: 'fallback' });
   const page = await context.newPage();
   await page.goto(server.PREFIX + '/one-style.html');
   await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(255, 192, 203)');
 });
 
-it('by default should abort requests not found in har', async ({ contextFactory, server, isAndroid, asset }) => {
+it('by default should abort requests not found in har', async ({ context, server, isAndroid, asset }) => {
   it.fixme(isAndroid);
 
   const path = asset('har-fulfill.har');
-  const context = await contextFactory({ har: { path } });
+  await context.routeFromHAR(path);
   const page = await context.newPage();
   const error = await page.goto(server.EMPTY_PAGE).catch(e => e);
   expect(error instanceof Error).toBe(true);
 });
 
-it('fallback:continue should continue requests on bad har', async ({ contextFactory, server, isAndroid }, testInfo) => {
+it('fallback:continue should continue requests on bad har', async ({ context, server, isAndroid }, testInfo) => {
   it.fixme(isAndroid);
 
   const path = testInfo.outputPath('test.har');
   fs.writeFileSync(path, JSON.stringify({ log: {} }), 'utf-8');
-  const context = await contextFactory({ har: { path, fallback: 'continue' } });
+  await context.routeFromHAR(path, { notFound: 'fallback' });
   const page = await context.newPage();
   await page.goto(server.PREFIX + '/one-style.html');
   await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(255, 192, 203)');
 });
 
-it('should only handle requests matching url filter', async ({ contextFactory, isAndroid, asset }) => {
+it('should only handle requests matching url filter', async ({ context, isAndroid, asset }) => {
   it.fixme(isAndroid);
 
   const path = asset('har-fulfill.har');
-  const context = await contextFactory({ har: { path, urlFilter: '**/*.js' } });
+  await context.routeFromHAR(path, { notFound: 'fallback', url: '**/*.js' });
   const page = await context.newPage();
   await context.route('http://no.playwright/', async route => {
     expect(route.request().url()).toBe('http://no.playwright/');
@@ -83,11 +96,51 @@ it('should only handle requests matching url filter', async ({ contextFactory, i
   await expect(page.locator('body')).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
 });
 
-it('should support regex filter', async ({ contextFactory, isAndroid, asset }) => {
+it('should only context.routeFromHAR requests matching url filter', async ({ context, isAndroid, asset }) => {
   it.fixme(isAndroid);
 
   const path = asset('har-fulfill.har');
-  const context = await contextFactory({ har: { path, urlFilter: /.*(\.js|.*\.css|no.playwright\/)$/ } });
+  await context.routeFromHAR(path, { url: '**/*.js' });
+  const page = await context.newPage();
+  await context.route('http://no.playwright/', async route => {
+    expect(route.request().url()).toBe('http://no.playwright/');
+    await route.fulfill({
+      status: 200,
+      contentType: 'text/html',
+      body: '<script src="./script.js"></script><div>hello</div>',
+    });
+  });
+  await page.goto('http://no.playwright/');
+  // HAR contains a redirect for the script that should be followed automatically.
+  expect(await page.evaluate('window.value')).toBe('foo');
+  await expect(page.locator('body')).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
+});
+
+it('should only page.routeFromHAR requests matching url filter', async ({ context, isAndroid, asset }) => {
+  it.fixme(isAndroid);
+
+  const path = asset('har-fulfill.har');
+  const page = await context.newPage();
+  await page.routeFromHAR(path, { url: '**/*.js' });
+  await context.route('http://no.playwright/', async route => {
+    expect(route.request().url()).toBe('http://no.playwright/');
+    await route.fulfill({
+      status: 200,
+      contentType: 'text/html',
+      body: '<script src="./script.js"></script><div>hello</div>',
+    });
+  });
+  await page.goto('http://no.playwright/');
+  // HAR contains a redirect for the script that should be followed automatically.
+  expect(await page.evaluate('window.value')).toBe('foo');
+  await expect(page.locator('body')).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
+});
+
+it('should support regex filter', async ({ context, isAndroid, asset }) => {
+  it.fixme(isAndroid);
+
+  const path = asset('har-fulfill.har');
+  await context.routeFromHAR(path, { url: /.*(\.js|.*\.css|no.playwright\/)$/ });
   const page = await context.newPage();
   await page.goto('http://no.playwright/');
   expect(await page.evaluate('window.value')).toBe('foo');
@@ -98,7 +151,8 @@ it('newPage should fulfill from har, matching the method and following redirects
   it.fixme(isAndroid);
 
   const path = asset('har-fulfill.har');
-  const page = await browser.newPage({ har: { path } });
+  const page = await browser.newPage();
+  await page.routeFromHAR(path);
   await page.goto('http://no.playwright/');
   // HAR contains a redirect for the script that should be followed automatically.
   expect(await page.evaluate('window.value')).toBe('foo');
@@ -107,11 +161,11 @@ it('newPage should fulfill from har, matching the method and following redirects
   await page.close();
 });
 
-it('should change document URL after redirected navigation', async ({ contextFactory, isAndroid, asset }) => {
+it('should change document URL after redirected navigation', async ({ context, isAndroid, asset }) => {
   it.fixme(isAndroid);
 
   const path = asset('har-redirect.har');
-  const context = await contextFactory({ har: { path } });
+  await context.routeFromHAR(path);
   const page = await context.newPage();
   const [response] = await Promise.all([
     page.waitForNavigation(),
@@ -123,11 +177,11 @@ it('should change document URL after redirected navigation', async ({ contextFac
   expect(await page.evaluate(() => location.href)).toBe('https://www.theverge.com/');
 });
 
-it('should change document URL after redirected navigation on click', async ({ server, contextFactory, isAndroid, asset }) => {
+it('should change document URL after redirected navigation on click', async ({ server, context, isAndroid, asset }) => {
   it.fixme(isAndroid);
 
   const path = asset('har-redirect.har');
-  const context = await contextFactory({ har: { path, urlFilter: /.*theverge.*/ } });
+  await context.routeFromHAR(path, { url: /.*theverge.*/ });
   const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);
   await page.setContent(`<a href="https://theverge.com/">click me</a>`);
@@ -140,11 +194,11 @@ it('should change document URL after redirected navigation on click', async ({ s
   expect(await page.evaluate(() => location.href)).toBe('https://www.theverge.com/');
 });
 
-it('should goBack to redirected navigation', async ({ contextFactory, isAndroid, asset, server }) => {
+it('should goBack to redirected navigation', async ({ context, isAndroid, asset, server }) => {
   it.fixme(isAndroid);
 
   const path = asset('har-redirect.har');
-  const context = await contextFactory({ har: { path, urlFilter: /.*theverge.*/ } });
+  await context.routeFromHAR(path, { url: /.*theverge.*/ });
   const page = await context.newPage();
   await page.goto('https://theverge.com/');
   await page.goto(server.EMPTY_PAGE);
@@ -155,11 +209,11 @@ it('should goBack to redirected navigation', async ({ contextFactory, isAndroid,
   expect(await page.evaluate(() => location.href)).toBe('https://www.theverge.com/');
 });
 
-it('should goForward to redirected navigation', async ({ contextFactory, isAndroid, asset, server }) => {
+it('should goForward to redirected navigation', async ({ context, isAndroid, asset, server }) => {
   it.fixme(isAndroid);
 
   const path = asset('har-redirect.har');
-  const context = await contextFactory({ har: { path, urlFilter: /.*theverge.*/ } });
+  await context.routeFromHAR(path, { url: /.*theverge.*/ });
   const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);
   await expect(page).toHaveURL(server.EMPTY_PAGE);
@@ -173,11 +227,11 @@ it('should goForward to redirected navigation', async ({ contextFactory, isAndro
   expect(await page.evaluate(() => location.href)).toBe('https://www.theverge.com/');
 });
 
-it('should reload redirected navigation', async ({ contextFactory, isAndroid, asset, server }) => {
+it('should reload redirected navigation', async ({ context, isAndroid, asset, server }) => {
   it.fixme(isAndroid);
 
   const path = asset('har-redirect.har');
-  const context = await contextFactory({ har: { path, urlFilter: /.*theverge.*/ } });
+  await context.routeFromHAR(path, { url: /.*theverge.*/ });
   const page = await context.newPage();
   await page.goto('https://theverge.com/');
   await expect(page).toHaveURL('https://www.theverge.com/');
@@ -187,11 +241,11 @@ it('should reload redirected navigation', async ({ contextFactory, isAndroid, as
   expect(await page.evaluate(() => location.href)).toBe('https://www.theverge.com/');
 });
 
-it('should fulfill from har with content in a file', async ({ contextFactory, isAndroid, asset }) => {
+it('should fulfill from har with content in a file', async ({ context, isAndroid, asset }) => {
   it.fixme(isAndroid);
 
   const path = asset('har-sha1.har');
-  const context = await contextFactory({ har: { path } });
+  await context.routeFromHAR(path);
   const page = await context.newPage();
   await page.goto('http://no.playwright/');
   expect(await page.content()).toBe('<html><head></head><body>Hello, world</body></html>');
@@ -206,7 +260,8 @@ it('should round-trip har.zip', async ({ contextFactory, isAndroid, server }, te
   await page1.goto(server.PREFIX + '/one-style.html');
   await context1.close();
 
-  const context2 = await contextFactory({ har: { path: harPath, fallback: 'abort' } });
+  const context2 = await contextFactory();
+  await context2.routeFromHAR(harPath, { notFound: 'abort' });
   const page2 = await context2.newPage();
   await page2.goto(server.PREFIX + '/one-style.html');
   expect(await page2.content()).toContain('hello, world!');
@@ -225,7 +280,8 @@ it('should round-trip extracted har.zip', async ({ contextFactory, isAndroid, se
   const harDir = testInfo.outputPath('hardir');
   await extractZip(harPath, { dir: harDir });
 
-  const context2 = await contextFactory({ har: { path: path.join(harDir, 'har.har') } });
+  const context2 = await contextFactory();
+  await context2.routeFromHAR(path.join(harDir, 'har.har'));
   const page2 = await context2.newPage();
   await page2.goto(server.PREFIX + '/one-style.html');
   expect(await page2.content()).toContain('hello, world!');
@@ -253,7 +309,8 @@ it('should round-trip har with postData', async ({ contextFactory, isAndroid, se
   expect(await page1.evaluate(fetchFunction, '3')).toBe('3');
   await context1.close();
 
-  const context2 = await contextFactory({ har: { path: harPath } });
+  const context2 = await contextFactory();
+  await context2.routeFromHAR(harPath);
   const page2 = await context2.newPage();
   await page2.goto(server.EMPTY_PAGE);
   expect(await page2.evaluate(fetchFunction, '1')).toBe('1');
@@ -292,7 +349,8 @@ it('should disambiguate by header', async ({ contextFactory, isAndroid, server }
   expect(await page1.evaluate(fetchFunction, 'baz3')).toBe('baz3');
   await context1.close();
 
-  const context2 = await contextFactory({ har: { path: harPath } });
+  const context2 = await contextFactory();
+  await context2.routeFromHAR(harPath);
   const page2 = await context2.newPage();
   await page2.goto(server.EMPTY_PAGE);
   expect(await page2.evaluate(fetchFunction, 'baz1')).toBe('baz1');

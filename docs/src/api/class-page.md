@@ -2732,6 +2732,30 @@ handler function to route the request.
 
 How often a route should be used. By default it will be used every time.
 
+## async method: Page.routeFromHAR
+
+If specified the network requests that are made in the page will be served from the HAR file. Read more about [Replaying from HAR](../network.md#replaying-from-har).
+
+Playwright will not serve requests intercepted by Service Worker from the HAR file. See [this](https://github.com/microsoft/playwright/issues/1090) issue. We recommend disabling Service Workers when using request interception by setting [`option: Browser.newContext.serviceWorkers`] to `'block'`.
+
+### param: Page.routeFromHAR.har
+- `har` <[path]>
+
+Path to a [HAR](http://www.softwareishard.com/blog/har-12-spec) file with prerecorded network data. If `path` is a relative path, then it is resolved relative to the current working directory.
+
+### option: Page.routeFromHAR.notFound
+- `notFound` ?<[HarNotFound]<"abort"|"fallback">>
+
+* If set to 'abort' any request not found in the HAR file will be aborted.
+* If set to 'fallback' missing requests will be sent to the network.
+
+Defaults to abort.
+
+### option: Page.routeFromHAR.url
+- `url` <[string]|[RegExp]|[function]\([URL]\):[boolean]>
+
+A glob pattern, regular expression or predicate to match the request URL. Only requests with URL matching the pattern will be surved from the HAR file. If not specified, all requests are served from the HAR file.
+
 ## async method: Page.screenshot
 - returns: <[Buffer]>
 

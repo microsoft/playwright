@@ -33,6 +33,7 @@ export class HarRecorder {
   private _tracer: HarTracer;
   private _entries: har.Entry[] = [];
   private _zipFile: ZipFile | null = null;
+  private _writtenZipEntries = new Set<string>();
 
   constructor(context: BrowserContext, options: channels.RecordHarOptions) {
     this._artifact = new Artifact(context, path.join(context._browser.options.artifactsDir, `${createGuid()}.har`));
@@ -57,8 +58,10 @@ export class HarRecorder {
   }
 
   onContentBlob(sha1: string, buffer: Buffer) {
-    if (this._zipFile)
-      this._zipFile!.addBuffer(buffer, sha1);
+    if (!this._zipFile || this._writtenZipEntries.has(sha1))
+      return;
+    this._writtenZipEntries.add(sha1);
+    this._zipFile!.addBuffer(buffer, sha1);
   }
 
   async flush() {

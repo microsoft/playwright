@@ -40,6 +40,7 @@ import { Artifact } from './artifact';
 import { APIRequestContext } from './fetch';
 import { createInstrumentation } from './clientInstrumentation';
 import { rewriteErrorMessage } from '../utils/stackTrace';
+import { HarRouter } from './harRouter';
 
 export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel> implements api.BrowserContext {
   _pages = new Set<Page>();
@@ -265,6 +266,11 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     this._routes.unshift(new network.RouteHandler(this._options.baseURL, url, handler, options.times));
     if (this._routes.length === 1)
       await this._channel.setNetworkInterceptionEnabled({ enabled: true });
+  }
+
+  async routeFromHAR(har: string, options: { url?: URLMatch, notFound?: 'abort' | 'fallback' } = {}): Promise<void> {
+    const harRouter = await HarRouter.create(this._connection.localUtils(), har, options.notFound || 'abort', { urlMatch: options.url });
+    harRouter.addContextRoute(this);
   }
 
   async unroute(url: URLMatch, handler?: network.RouteHandlerCallback): Promise<void> {

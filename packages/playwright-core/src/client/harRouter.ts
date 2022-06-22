@@ -19,32 +19,34 @@ import type { BrowserContext } from './browserContext';
 import { Events } from './events';
 import type { LocalUtils } from './localUtils';
 import type { Route } from './network';
-import type { BrowserContextOptions } from './types';
+import type { URLMatch } from './types';
+import type { Page } from './page';
 
-type HarOptions = NonNullable<BrowserContextOptions['har']>;
+type HarNotFoundAction = 'abort' | 'fallback';
 
 export class HarRouter {
-  private _pattern: string | RegExp;
-  private _options: HarOptions | undefined;
   private _localUtils: LocalUtils;
   private _harId: string;
+  private _notFoundAction: HarNotFoundAction;
+  private _options: { urlMatch?: URLMatch; baseURL?: string; };
 
-  static async create(localUtils: LocalUtils, options: HarOptions): Promise<HarRouter> {
-    const { harId, error } = await localUtils._channel.harOpen({ file: options.path });
+  static async create(localUtils: LocalUtils, file: string, notFoundAction: HarNotFoundAction, options: { urlMatch?: URLMatch }): Promise<HarRouter> {
+    const { harId, error } = await localUtils._channel.harOpen({ file });
     if (error)
       throw new Error(error);
-    return new HarRouter(localUtils, harId!, options);
+    return new HarRouter(localUtils, harId!, notFoundAction, options);
   }
 
-  constructor(localUtils: LocalUtils, harId: string, options?: HarOptions) {
+  constructor(localUtils: LocalUtils, harId: string, notFoundAction: HarNotFoundAction, options: { urlMatch?: URLMatch }) {
     this._localUtils = localUtils;
     this._harId = harId;
-    this._pattern = options?.urlFilter ?? /.*/;
     this._options = options;
+    this._notFoundAction = notFoundAction;
   }
 
   private async _handle(route: Route) {
     const request = route.request();
+
     const response = await this._localUtils._channel.harLookup({
       harId: this._harId,
       url: request.url(),
@@ -73,18 +75,22 @@ export class HarRouter {
       debugLogger.log('api', 'HAR: ' + response.message!);
     // Report the error, but fall through to the default handler.
 
-    if (this._options?.fallback === 'continue') {
-      await route.fallback();
+    if (this._notFoundAction === 'abort') {
+      await route.abort();
       return;
     }
 
-    debugLogger.log('api', `HAR: ${route.request().method()} ${route.request().url()} aborted - no such entry in HAR file`);
-    await route.abort();
+    await route.fallback();
   }
 
-  async addRoute(context: BrowserContext) {
-    await context.route(this._pattern, route => this._handle(route));
+  async addContextRoute(context: BrowserContext) {
+    await context.route(this._options.urlMatch || '**/*', route => this._handle(route));
     context.once(Events.BrowserContext.Close, () => this.dispose());
+  }
+
+  async addPageRoute(page: Page) {
+    await page.route(this._options.urlMatch || '**/*', route => this._handle(route));
+    page.once(Events.Page.Close, () => this.dispose());
   }
 
   dispose() {
