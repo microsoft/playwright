@@ -116,7 +116,7 @@ export function resourcesForAction(action: ActionTraceEvent): ResourceSnapshot[]
 
   const nextAction = next(action);
   result = context(action).resources.filter(resource => {
-    return resource._monotonicTime > action.metadata.startTime && (!nextAction || resource._monotonicTime < nextAction.metadata.startTime);
+    return typeof resource._monotonicTime === 'number' && resource._monotonicTime > action.metadata.startTime && (!nextAction || resource._monotonicTime < nextAction.metadata.startTime);
   });
   (action as any)[resourcesSymbol] = result;
   return result;

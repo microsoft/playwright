@@ -176,14 +176,14 @@ class HarBackend {
     }
   }
 
-  private async _loadContent(content: { text?: string, encoding?: string, _sha1?: string }): Promise<Buffer> {
-    const sha1 = content._sha1;
+  private async _loadContent(content: { text?: string, encoding?: string, _file?: string }): Promise<Buffer> {
+    const file = content._file;
     let buffer: Buffer;
-    if (sha1) {
+    if (file) {
       if (this._zipFile)
-        buffer = await this._zipFile.read(sha1);
+        buffer = await this._zipFile.read(file);
       else
-        buffer = await fs.promises.readFile(path.resolve(this._baseDir!, sha1));
+        buffer = await fs.promises.readFile(path.resolve(this._baseDir!, file));
     } else {
       buffer = Buffer.from(content.text || '', content.encoding === 'base64' ? 'base64' : 'utf-8');
     }

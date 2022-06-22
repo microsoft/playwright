@@ -468,7 +468,7 @@ async function launchContext(options: Options, headless: boolean, executablePath
   // HAR
 
   if (options.saveHar) {
-    contextOptions.recordHar = { path: path.resolve(process.cwd(), options.saveHar) };
+    contextOptions.recordHar = { path: path.resolve(process.cwd(), options.saveHar), mode: 'minimal' };
     if (options.saveHarGlob)
       contextOptions.recordHar.urlFilter = options.saveHarGlob;
     contextOptions.serviceWorkers = 'block';
