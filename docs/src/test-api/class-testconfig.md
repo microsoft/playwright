@@ -578,7 +578,7 @@ export default config;
 - type: ?<[UpdateSnapshots]<"all"|"none"|"missing">>
 
 Whether to update expected snapshots with the actual results produced by the test run. Defaults to `'missing'`.
-* `'all'` - All tests that are executed will update snapshots.
+* `'all'` - All tests that are executed will update snapshots that did not match. Matching snapshots will not be updated.
 * `'none'` - No snapshots are updated.
 * `'missing'` - Missing snapshots are created, for example when authoring a new test and running it for the first time. This is the default.
 

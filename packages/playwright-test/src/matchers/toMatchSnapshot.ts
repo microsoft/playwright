@@ -344,7 +344,7 @@ export async function toHaveScreenshot(
   if (helper.updateSnapshots === 'none' && !hasSnapshot)
     return { pass: false, message: () => `${helper.snapshotPath} is missing in snapshots.` };
 
-  if (helper.updateSnapshots === 'all' || !hasSnapshot) {
+  if (!hasSnapshot) {
     // Regenerate a new screenshot by waiting until two screenshots are the same.
     const timeout = currentExpectTimeout(helper.allOptions);
     const { actual, previous, diff, errorMessage, log } = await page._expectScreenshot(customStackTrace, {
@@ -360,23 +360,14 @@ export async function toHaveScreenshot(
     if (errorMessage)
       return helper.handleDifferent(actual, undefined, previous, diff, undefined, log, errorMessage);
 
-    // We successfully (re-)generated new screenshot.
-    if (!hasSnapshot)
-      return helper.handleMissing(actual!);
-
-    writeFileSync(helper.snapshotPath, actual!);
-    /* eslint-disable no-console */
-    console.log(helper.snapshotPath + ' is re-generated, writing actual.');
-    return {
-      pass: true,
-      message: () => helper.snapshotPath + ' running with --update-snapshots, writing actual.'
-    };
+    // We successfully generated new screenshot.
+    return helper.handleMissing(actual!);
   }
 
   // General case:
   // - snapshot exists
   // - regular matcher (i.e. not a `.not`)
-  // - no flags to update screenshots
+  // - perhaps an 'all' flag to update non-matching screenshots
   const expected = await fs.promises.readFile(helper.snapshotPath);
   const { actual, diff, errorMessage, log } = await page._expectScreenshot(customStackTrace, {
     expected,
@@ -387,9 +378,21 @@ export async function toHaveScreenshot(
     timeout: currentExpectTimeout(helper.allOptions),
   });
 
-  return errorMessage ?
-    helper.handleDifferent(actual, expected, undefined, diff, errorMessage, log) :
-    helper.handleMatching();
+  if (!errorMessage)
+    return helper.handleMatching();
+
+  if (helper.updateSnapshots === 'all') {
+    writeFileSync(helper.snapshotPath, actual!);
+    writeFileSync(helper.actualPath, actual!);
+    /* eslint-disable no-console */
+    console.log(helper.snapshotPath + ' is re-generated, writing actual.');
+    return {
+      pass: true,
+      message: () => helper.snapshotPath + ' running with --update-snapshots, writing actual.'
+    };
+  }
+
+  return helper.handleDifferent(actual, expected, undefined, diff, errorMessage, log);
 }
 
 function writeFileSync(aPath: string, content: Buffer | string) {
