@@ -1036,7 +1036,7 @@ Playwright will not serve requests intercepted by Service Worker from the HAR fi
 
 Path to a [HAR](http://www.softwareishard.com/blog/har-12-spec) file with prerecorded network data. If `path` is a relative path, then it is resolved relative to the current working directory.
 
-### option: BrowserContext.routeFromHAR.fallback
+### option: BrowserContext.routeFromHAR.notFound
 - `notFound` ?<[HarNotFound]<"abort"|"fallback">>
 
 * If set to 'abort' any request not found in the HAR file will be aborted.

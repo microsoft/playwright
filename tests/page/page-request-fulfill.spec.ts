@@ -17,7 +17,7 @@
 
 import { test as base, expect } from './pageTest';
 import fs from 'fs';
-import type { HARFile, HARResponse } from 'playwright-core/types/har';
+import type * as har from 'playwright-core/lib/server/har/har';
 
 const it = base.extend<{
   // We access test servers at 10.0.2.2 from inside the browser on Android,
@@ -327,7 +327,7 @@ it('should fulfill with har response', async ({ page, isAndroid, asset }) => {
   it.fixme(isAndroid);
 
   const harPath = asset('har-fulfill.har');
-  const har = JSON.parse(await fs.promises.readFile(harPath, 'utf-8')) as HARFile;
+  const har = JSON.parse(await fs.promises.readFile(harPath, 'utf-8')) as har.HARFile;
   await page.route('**/*', async route => {
     const response = findResponse(har, route.request().url());
     const headers = {};
@@ -346,7 +346,7 @@ it('should fulfill with har response', async ({ page, isAndroid, asset }) => {
   await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(0, 255, 255)');
 });
 
-function findResponse(har: HARFile, url: string): HARResponse {
+function findResponse(har: har.HARFile, url: string): har.Response {
   let entry;
   const originalUrl = url;
   while (url.trim()) {
