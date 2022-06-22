@@ -193,7 +193,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async isIframeElement(): Promise<boolean | 'error:notconnected'> {
-    return this.evaluateInUtility(([injected, node]) => node && (node.nodeName === 'IFRAME' || node.nodeName === 'FRAME'), {});
+    return this.evaluateInUtility(([injected, node]) => node && (node.nodeName === 'IFRAME' || node.nodeName === 'FRAME' || node.nodeName === 'OBJECT'), {});
   }
 
   async contentFrame(): Promise<frames.Frame | null> {

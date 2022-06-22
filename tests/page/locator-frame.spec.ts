@@ -75,6 +75,22 @@ it('should work for iframe @smoke', async ({ page, server }) => {
   await button.click();
 });
 
+it('should work for object', async ({ page, server }) => {
+  await page.route('**/button.html', route => {
+    route.fulfill({
+      body: '<button>Hello from object</button>',
+      contentType: 'text/html'
+    }).catch(() => {});
+  });
+  await page.goto(server.EMPTY_PAGE);
+  await page.setContent(`<object data="button.html"></object>`);
+  const button = page.frameLocator('object').locator('button');
+  await button.waitFor();
+  expect(await button.innerText()).toBe('Hello from object');
+  await expect(button).toHaveText('Hello from object');
+  await button.click();
+});
+
 it('should work for nested iframe', async ({ page, server }) => {
   await routeIframe(page);
   await page.goto(server.EMPTY_PAGE);
