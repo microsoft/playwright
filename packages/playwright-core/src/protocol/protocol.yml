@@ -231,6 +231,11 @@ RecordHarOptions:
       - embed
       - attach
       - omit
+    mode:
+      type: enum?
+      literals:
+      - full
+      - minimal
     urlGlob: string?
     urlRegexSource: string?
     urlRegexFlags: string?

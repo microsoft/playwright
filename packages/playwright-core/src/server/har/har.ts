@@ -64,9 +64,8 @@ export type Entry = {
   timings: Timings;
   serverIPAddress?: string;
   connection?: string;
-  _requestref: string;
-  _frameref: string;
-  _monotonicTime: number;
+  _frameref?: string;
+  _monotonicTime?: number;
   _serverPort?: number;
   _securityDetails?: SecurityDetails;
 };
@@ -95,7 +94,7 @@ export type Response = {
   headersSize: number;
   bodySize: number;
   comment?: string;
-  _transferSize: number;
+  _transferSize?: number;
   _failureText?: string
 };
 
@@ -129,6 +128,7 @@ export type PostData = {
   text: string;
   comment?: string;
   _sha1?: string;
+  _file?: string;
 };
 
 export type Param = {
@@ -147,6 +147,7 @@ export type Content = {
   encoding?: string;
   comment?: string;
   _sha1?: string;
+  _file?: string;
 };
 
 export type Cache = {

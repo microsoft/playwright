@@ -255,7 +255,7 @@ it('should round-trip har.zip', async ({ contextFactory, isAndroid, server }, te
   it.fixme(isAndroid);
 
   const harPath = testInfo.outputPath('har.zip');
-  const context1 = await contextFactory({ recordHar: { path: harPath } });
+  const context1 = await contextFactory({ recordHar: { mode: 'minimal', path: harPath } });
   const page1 = await context1.newPage();
   await page1.goto(server.PREFIX + '/one-style.html');
   await context1.close();
@@ -272,7 +272,7 @@ it('should round-trip extracted har.zip', async ({ contextFactory, isAndroid, se
   it.fixme(isAndroid);
 
   const harPath = testInfo.outputPath('har.zip');
-  const context1 = await contextFactory({ recordHar: { path: harPath } });
+  const context1 = await contextFactory({ recordHar: { mode: 'minimal', path: harPath } });
   const page1 = await context1.newPage();
   await page1.goto(server.PREFIX + '/one-style.html');
   await context1.close();
@@ -296,7 +296,7 @@ it('should round-trip har with postData', async ({ contextFactory, isAndroid, se
   });
 
   const harPath = testInfo.outputPath('har.zip');
-  const context1 = await contextFactory({ recordHar: { path: harPath } });
+  const context1 = await contextFactory({ recordHar: { mode: 'minimal', path: harPath } });
   const page1 = await context1.newPage();
   await page1.goto(server.EMPTY_PAGE);
   const fetchFunction = async (body: string) => {
@@ -327,7 +327,7 @@ it('should disambiguate by header', async ({ contextFactory, isAndroid, server }
   });
 
   const harPath = testInfo.outputPath('har.zip');
-  const context1 = await contextFactory({ recordHar: { path: harPath } });
+  const context1 = await contextFactory({ recordHar: { mode: 'minimal', path: harPath } });
   const page1 = await context1.newPage();
   await page1.goto(server.EMPTY_PAGE);
 

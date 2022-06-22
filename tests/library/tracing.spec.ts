@@ -528,7 +528,6 @@ test('should store postData for global request', async ({ request, server }, tes
   const actions = trace.events.filter(e => e.type === 'resource-snapshot');
   expect(actions).toHaveLength(1);
   const req = actions[0].snapshot.request;
-  console.log(JSON.stringify(req, null, 2));
   expect(req.postData?._sha1).toBeTruthy();
   expect(req).toEqual(expect.objectContaining({
     method: 'POST',

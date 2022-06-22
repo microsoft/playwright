@@ -10677,6 +10677,12 @@ export interface BrowserType<Unused = {}> {
       path: string;
 
       /**
+       * When set to `minimal`, only record information necessary for routing from HAR. This omits sizes, timing, page, cookies,
+       * security and other types of HAR information that are not used when replaying from HAR. Defaults to `full`.
+       */
+      mode?: "full"|"minimal";
+
+      /**
        * A glob or regex pattern to filter requests that are stored in the HAR. When a `baseURL` via the context options was
        * provided and the passed URL is a path, it gets merged via the
        * [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
@@ -11862,6 +11868,12 @@ export interface AndroidDevice {
        * Path on the filesystem to write the HAR file to. If the file name ends with `.zip`, `attach` mode is used by default.
        */
       path: string;
+
+      /**
+       * When set to `minimal`, only record information necessary for routing from HAR. This omits sizes, timing, page, cookies,
+       * security and other types of HAR information that are not used when replaying from HAR. Defaults to `full`.
+       */
+      mode?: "full"|"minimal";
 
       /**
        * A glob or regex pattern to filter requests that are stored in the HAR. When a `baseURL` via the context options was
@@ -13434,6 +13446,12 @@ export interface Browser extends EventEmitter {
       path: string;
 
       /**
+       * When set to `minimal`, only record information necessary for routing from HAR. This omits sizes, timing, page, cookies,
+       * security and other types of HAR information that are not used when replaying from HAR. Defaults to `full`.
+       */
+      mode?: "full"|"minimal";
+
+      /**
        * A glob or regex pattern to filter requests that are stored in the HAR. When a `baseURL` via the context options was
        * provided and the passed URL is a path, it gets merged via the
        * [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
@@ -14218,6 +14236,12 @@ export interface Electron {
        * Path on the filesystem to write the HAR file to. If the file name ends with `.zip`, `attach` mode is used by default.
        */
       path: string;
+
+      /**
+       * When set to `minimal`, only record information necessary for routing from HAR. This omits sizes, timing, page, cookies,
+       * security and other types of HAR information that are not used when replaying from HAR. Defaults to `full`.
+       */
+      mode?: "full"|"minimal";
 
       /**
        * A glob or regex pattern to filter requests that are stored in the HAR. When a `baseURL` via the context options was
@@ -16037,6 +16061,12 @@ export interface BrowserContextOptions {
      * Path on the filesystem to write the HAR file to. If the file name ends with `.zip`, `attach` mode is used by default.
      */
     path: string;
+
+    /**
+     * When set to `minimal`, only record information necessary for routing from HAR. This omits sizes, timing, page, cookies,
+     * security and other types of HAR information that are not used when replaying from HAR. Defaults to `full`.
+     */
+    mode?: "full"|"minimal";
 
     /**
      * A glob or regex pattern to filter requests that are stored in the HAR. When a `baseURL` via the context options was

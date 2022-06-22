@@ -266,6 +266,7 @@ export type SerializedError = {
 export type RecordHarOptions = {
   path: string,
   content?: 'embed' | 'attach' | 'omit',
+  mode?: 'full' | 'minimal',
   urlGlob?: string,
   urlRegexSource?: string,
   urlRegexFlags?: string,
