@@ -282,9 +282,7 @@ export type FormField = {
 };
 
 // ----------- APIRequestContext -----------
-export type APIRequestContextInitializer = {
-  tracing: TracingChannel,
-};
+export type APIRequestContextInitializer = {};
 export interface APIRequestContextEventTarget {
 }
 export interface APIRequestContextChannel extends APIRequestContextEventTarget, Channel {

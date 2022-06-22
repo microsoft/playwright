@@ -251,9 +251,6 @@ FormField:
 APIRequestContext:
   type: interface
 
-  initializer:
-    tracing: Tracing
-
   commands:
 
     fetch:

@@ -30,7 +30,6 @@ import { RawHeaders } from './network';
 import type { FilePayload, Headers, StorageState } from './types';
 import type { Playwright } from './playwright';
 import { createInstrumentation } from './clientInstrumentation';
-import { Tracing } from './tracing';
 
 export type FetchOptions = {
   params?: { [key: string]: string; },
@@ -82,7 +81,6 @@ export class APIRequest implements api.APIRequest {
 
 export class APIRequestContext extends ChannelOwner<channels.APIRequestContextChannel> implements api.APIRequestContext {
   _request?: APIRequest;
-  readonly _tracing: Tracing;
 
   static from(channel: channels.APIRequestContextChannel): APIRequestContext {
     return (channel as any)._object;
@@ -90,7 +88,6 @@ export class APIRequestContext extends ChannelOwner<channels.APIRequestContextCh
 
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.APIRequestContextInitializer) {
     super(parent, type, guid, initializer, createInstrumentation());
-    this._tracing = Tracing.from(initializer.tracing);
   }
 
   async dispose(): Promise<void> {

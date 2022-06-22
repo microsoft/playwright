@@ -22,7 +22,6 @@ import { WebSocket } from '../network';
 import type { DispatcherScope } from './dispatcher';
 import { Dispatcher, existingDispatcher, lookupNullableDispatcher } from './dispatcher';
 import { FrameDispatcher } from './frameDispatcher';
-import { TracingDispatcher } from './tracingDispatcher';
 
 export class RequestDispatcher extends Dispatcher<Request, channels.RequestChannel> implements channels.RequestChannel {
   _type_Request: boolean;
@@ -171,9 +170,7 @@ export class APIRequestContextDispatcher extends Dispatcher<APIRequestContext, c
   }
 
   private constructor(scope: DispatcherScope, request: APIRequestContext) {
-    super(scope, request, 'APIRequestContext', {
-      tracing: TracingDispatcher.from(scope, request.tracing()),
-    }, true);
+    super(scope, request, 'APIRequestContext', {}, true);
     request.once(APIRequestContext.Events.Dispose, () => {
       if (!this._disposed)
         super._dispose();
