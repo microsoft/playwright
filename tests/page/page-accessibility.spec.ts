@@ -193,7 +193,7 @@ it('rich text editable fields with role should have children', async function({ 
     name: '',
     multiline: (browserName === 'chromium' && browserMajorVersion >= 92) ? true : undefined,
     value: 'Edit this image: ',
-    children: (chromiumVersionLessThan(browserVersion, '104.0.5106.0') && browserName === 'chromium') ? [{
+    children: (chromiumVersionLessThan(browserVersion, '104.0.1293.1') && browserName === 'chromium') ? [{
       role: 'text',
       name: 'Edit this image:'
     }, {
