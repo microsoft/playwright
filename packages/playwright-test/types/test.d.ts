@@ -2492,7 +2492,6 @@ type BrowserName = 'chromium' | 'firefox' | 'webkit';
 type BrowserChannel = Exclude<LaunchOptions['channel'], undefined>;
 type ColorScheme = Exclude<BrowserContextOptions['colorScheme'], undefined>;
 type ExtraHTTPHeaders = Exclude<BrowserContextOptions['extraHTTPHeaders'], undefined>;
-type HAROptions = Exclude<BrowserContextOptions['har'], undefined>;
 type Proxy = Exclude<BrowserContextOptions['proxy'], undefined>;
 type StorageState = Exclude<BrowserContextOptions['storageState'], undefined>;
 type ServiceWorkerPolicy = Exclude<BrowserContextOptions['serviceWorkers'], undefined>;
@@ -2700,15 +2699,6 @@ export interface PlaywrightTestOptions {
    */
   extraHTTPHeaders: ExtraHTTPHeaders | undefined;
   geolocation: Geolocation | undefined;
-  /**
-   * If specified the network requests that are made in the context will be served from the HAR file. Read more about
-   * [Replaying from HAR](https://playwright.dev/docs/network#replaying-from-har).
-   *
-   * > NOTE: Playwright will not serve requests intercepted by Service Worker from the HAR file. See
-   * [this](https://github.com/microsoft/playwright/issues/1090) issue. We recommend disabling Service Workers when using
-   * request interception by setting `Browser.newContext.serviceWorkers` to `'block'`.
-   */
-  har: HAROptions | undefined;
   /**
    * Specifies if viewport supports touch events. Defaults to false.
    */

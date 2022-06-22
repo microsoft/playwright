@@ -141,7 +141,6 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
   deviceScaleFactor: [ undefined, { option: true } ],
   extraHTTPHeaders: [ undefined, { option: true } ],
   geolocation: [ undefined, { option: true } ],
-  har: [undefined, { option: true }],
   hasTouch: [ undefined, { option: true } ],
   httpCredentials: [ undefined, { option: true } ],
   ignoreHTTPSErrors: [ undefined, { option: true } ],
@@ -169,7 +168,6 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
     colorScheme,
     deviceScaleFactor,
     extraHTTPHeaders,
-    har,
     hasTouch,
     geolocation,
     httpCredentials,
@@ -201,8 +199,6 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
       options.extraHTTPHeaders = extraHTTPHeaders;
     if (geolocation !== undefined)
       options.geolocation = geolocation;
-    if (har !== undefined)
-      options.har = har;
     if (hasTouch !== undefined)
       options.hasTouch = hasTouch;
     if (httpCredentials !== undefined)

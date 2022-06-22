@@ -780,60 +780,42 @@ await context.CloseAsync();
 
 ### Replaying from HAR
 
-Pass [`option: har`] option to the [`method: Browser.newContext`] method to use matching responses from the [HAR](http://www.softwareishard.com/blog/har-12-spec/) file.
+Use [`method: Page.routeFromHAR`] or [`method: BrowserContext.routeFromHAR`] to serve matching responses from the [HAR](http://www.softwareishard.com/blog/har-12-spec/) file.
 
 ```js
 // Replay API requests from HAR.
 // Either use a matching response from the HAR,
 // or abort the request if nothing matches.
-const context = await browser.newContext({ har: { path: 'example.har' } });
+await page.routeFromHAR('example.har');
 ```
 
 ```java
 // Either use a matching response from the HAR,
 // or abort the request if nothing matches.
-BrowserContext context = browser.newContext(new Browser.NewContextOptions().setHarPath(Paths.get("example.har")));
-Page page = context.newPage();
-page.navigate("https://example.com");
+page.routeFromHAR(Paths.get("example.har"));
 ```
 
 ```python async
 # Either use a matching response from the HAR,
 # or abort the request if nothing matches.
-context = await browser.new_context(
-    har_path = "example.har"
-)
-page = await context.new_page()
-await page.goto("https://example.com")
+await page.routeFromHAR("example.har")
 ```
 
 ```python sync
 # Either use a matching response from the HAR,
 # or abort the request if nothing matches.
-context = browser.new_context(
-    har_path="example.har"
-)
-page = context.new_page()
-page.goto("https://example.com")
+page.routeFromHAR("example.har")
 ```
 
 ```csharp
 // Either use a matching response from the HAR,
 // or abort the request if nothing matches.
-var context = await Browser.NewContextAsync(new () {
-    HarPath = "example.har"
-});
-var page = await context.NewPageAsync();
-await page.GotoAsync("https://example.com");
+await context.RouteFromHARAsync("example.har");
 ```
 
 HAR replay matches URL and HTTP method strictly. For POST requests, it also matches POST payloads strictly. If multiple recordings match a request, the one with the most matching headers is picked. An entry resulting in a redirect will be followed automatically.
 
 Similar to when recording, if given HAR file name ends with `.zip`, it is considered an archive containing the HAR file along with network payloads stored as separate entries. You can also extract this archive, edit payloads or HAR log manually and point to the extracted har file. All the payloads will be resolved relative to the extracted har file on the file system.
-
-### API reference
-- [`method: Browser.newContext`]
-- [`method: Route.fulfill`]
 
 <br/>
 
