@@ -24,7 +24,7 @@ import type { DispatcherScope } from './dispatcher';
 import { Dispatcher } from './dispatcher';
 import { yazl, yauzl } from '../../zipBundle';
 import { ZipFile } from '../../utils/zipFile';
-import type { HAREntry, HARFile, HARHeader } from '../../../types/har';
+import type * as har from '../har/har';
 import type { HeadersArray } from '../types';
 
 export class LocalUtilsDispatcher extends Dispatcher<{ guid: string }, channels.LocalUtilsChannel> implements channels.LocalUtilsChannel {
@@ -100,10 +100,10 @@ export class LocalUtilsDispatcher extends Dispatcher<{ guid: string }, channels.
       if (!harEntryName)
         return { error: 'Specified archive does not have a .har file' };
       const har = await zipFile.read(harEntryName);
-      const harFile = JSON.parse(har.toString()) as HARFile;
+      const harFile = JSON.parse(har.toString()) as har.HARFile;
       harBackend = new HarBackend(harFile, null, zipFile);
     } else {
-      const harFile = JSON.parse(await fs.promises.readFile(params.file, 'utf-8')) as HARFile;
+      const harFile = JSON.parse(await fs.promises.readFile(params.file, 'utf-8')) as har.HARFile;
       harBackend = new HarBackend(harFile, path.dirname(params.file), null);
     }
     this._harBakends.set(harBackend.id, harBackend);
@@ -130,11 +130,11 @@ const redirectStatus = [301, 302, 303, 307, 308];
 
 class HarBackend {
   readonly id = createGuid();
-  private _harFile: HARFile;
+  private _harFile: har.HARFile;
   private _zipFile: ZipFile | null;
   private _baseDir: string | null;
 
-  constructor(harFile: HARFile, baseDir: string | null, zipFile: ZipFile | null) {
+  constructor(harFile: har.HARFile, baseDir: string | null, zipFile: ZipFile | null) {
     this._harFile = harFile;
     this._baseDir = baseDir;
     this._zipFile = zipFile;
@@ -190,11 +190,11 @@ class HarBackend {
     return buffer;
   }
 
-  private async _harFindResponse(url: string, method: string, headers: HeadersArray, postData: Buffer | undefined): Promise<HAREntry | undefined> {
+  private async _harFindResponse(url: string, method: string, headers: HeadersArray, postData: Buffer | undefined): Promise<har.Entry | undefined> {
     const harLog = this._harFile.log;
-    const visited = new Set<HAREntry>();
+    const visited = new Set<har.Entry>();
     while (true) {
-      const entries: HAREntry[] = [];
+      const entries: har.Entry[] = [];
       for (const candidate of harLog.entries) {
         if (candidate.request.url !== url || candidate.request.method !== method)
           continue;
@@ -213,7 +213,7 @@ class HarBackend {
 
       // Disambiguate using headers - then one with most matching headers wins.
       if (entries.length > 1) {
-        const list: { candidate: HAREntry, matchingHeaders: number }[] = [];
+        const list: { candidate: har.Entry, matchingHeaders: number }[] = [];
         for (const candidate of entries) {
           const matchingHeaders = countMatchingHeaders(candidate.request.headers, headers);
           list.push({ candidate, matchingHeaders });
@@ -249,7 +249,7 @@ class HarBackend {
   }
 }
 
-function countMatchingHeaders(harHeaders: HARHeader[], headers: HeadersArray): number {
+function countMatchingHeaders(harHeaders: har.Header[], headers: HeadersArray): number {
   const set = new Set(headers.map(h => h.name.toLowerCase() + ':' + h.value));
   let matches = 0;
   for (const h of harHeaders) {
