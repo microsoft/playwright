@@ -45,6 +45,7 @@ import { exceptionToError, releaseObject, toConsoleMessageLocation } from './crP
 import { platformToFontFamilies } from './defaultFontFamilies';
 import type { Protocol } from './protocol';
 import { VideoRecorder } from './videoRecorder';
+import { BrowserContext } from '../browserContext';
 
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
@@ -122,12 +123,7 @@ export class CRPage implements PageDelegate {
   }
 
   private _reportAsNew(error?: Error) {
-    if (this._isBackgroundPage) {
-      if (!error)
-        this._browserContext.emit(CRBrowserContext.CREvents.BackgroundPage, this._page);
-    } else {
-      this._page.reportAsNew(error);
-    }
+    this._page.reportAsNew(error, this._isBackgroundPage ? CRBrowserContext.CREvents.BackgroundPage : BrowserContext.Events.Page);
   }
 
   private async _forAllFrameSessions(cb: (frame: FrameSession) => Promise<any>) {
