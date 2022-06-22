@@ -113,7 +113,7 @@ test('should truncate long test names', async ({ runInlineTest }) => {
     `,
     'a.test.ts': `
       const { test } = pwt;
-      test('fails very long name', async ({}) => {
+      test('failure in very long name', async ({}) => {
         expect(1).toBe(0);
       });
       test('passes', async ({}) => {
@@ -126,12 +126,12 @@ test('should truncate long test names', async ({ runInlineTest }) => {
   }, { reporter: 'list', retries: 0 }, { PWTEST_TTY_WIDTH: 50 });
   const text = stripAnsi(result.output);
 
-  expect(text).toContain(`${NEGATIVE_STATUS_MARK} [foo] › a.test.ts:6:7 › fails very`);
-  expect(text).not.toContain(`${NEGATIVE_STATUS_MARK} [foo] › a.test.ts:6:7 › fails very long name (`);
+  expect(text).toContain(`${NEGATIVE_STATUS_MARK} …st.ts:6:7 › failure in very long name (`);
+  expect(text).not.toContain(`${NEGATIVE_STATUS_MARK} …est.ts:6:7 › fails very long name (`);
   expect(text).toContain(`${POSITIVE_STATUS_MARK} [foo] › a.test.ts:9:7 › passes (`);
-  expect(text).toContain(`${POSITIVE_STATUS_MARK} [foo] › a.test.ts:11:7 › passes 2 long`);
-  expect(text).not.toContain(`${POSITIVE_STATUS_MARK} [foo] › a.test.ts:11:7 › passes 2 long name (`);
-  expect(text).toContain(`-  [foo] › a.test.ts:13:12 › skipped very long n`);
-  expect(text).not.toContain(`-  [foo] › a.test.ts:13:12 › skipped very long na`);
+  expect(text).toContain(`${POSITIVE_STATUS_MARK} … › a.test.ts:11:7 › passes 2 long name (`);
+  expect(text).not.toContain(`${POSITIVE_STATUS_MARK} …] › a.test.ts:11:7 › passes 2 long name (`);
+  expect(text).toContain(`-  …] › a.test.ts:13:12 › skipped very long nam`);
+  expect(text).not.toContain(`-  …o] › a.test.ts:13:12 › skipped very long nam`);
   expect(result.exitCode).toBe(1);
 });

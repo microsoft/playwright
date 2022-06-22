@@ -106,13 +106,13 @@ export class BaseReporter implements Reporter  {
     this.result = result;
   }
 
-  protected fitToScreen(line: string, suffix?: string): string {
+  protected fitToScreen(line: string, prefix?: string): string {
     const ttyWidth = this._ttyWidthForTest || process.stdout.columns || 0;
     if (!ttyWidth) {
       // Guard against the case where we cannot determine available width.
       return line;
     }
-    return fitToWidth(line, ttyWidth, suffix);
+    return fitToWidth(line, ttyWidth, prefix);
   }
 
   protected generateStartingMessage() {
@@ -428,26 +428,34 @@ function monotonicTime(): number {
   return seconds * 1000 + (nanoseconds / 1000000 | 0);
 }
 
-const ansiRegex = new RegExp('[\\u001B\\u009B][[\\]()#;?]*(?:(?:(?:[a-zA-Z\\d]*(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]*)*)?\\u0007)|(?:(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PR-TZcf-ntqry=><~]))', 'g');
+const ansiRegex = new RegExp('([\\u001B\\u009B][[\\]()#;?]*(?:(?:(?:[a-zA-Z\\d]*(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]*)*)?\\u0007)|(?:(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PR-TZcf-ntqry=><~])))', 'g');
 export function stripAnsiEscapes(str: string): string {
   return str.replace(ansiRegex, '');
 }
 
-// Leaves enough space for the "suffix" to also fit.
-function fitToWidth(line: string, width: number, suffix?: string): string {
-  const suffixLength = suffix ? stripAnsiEscapes(suffix).length : 0;
-  width -= suffixLength;
+// Leaves enough space for the "prefix" to also fit.
+function fitToWidth(line: string, width: number, prefix?: string): string {
+  const prefixLength = prefix ? stripAnsiEscapes(prefix).length : 0;
+  width -= prefixLength;
   if (line.length <= width)
     return line;
-  let m;
-  let ansiLen = 0;
-  ansiRegex.lastIndex = 0;
-  while ((m = ansiRegex.exec(line)) !== null) {
-    const visibleLen = m.index - ansiLen;
-    if (visibleLen >= width)
-      break;
-    ansiLen += m[0].length;
+
+  // Even items are plain text, odd items are control sequences.
+  const parts = line.split(ansiRegex);
+  const taken: string[] = [];
+  for (let i = parts.length - 1; i >= 0; i--) {
+    if (i % 2) {
+      // Include all control sequences to preserve formatting.
+      taken.push(parts[i]);
+    } else {
+      let part = parts[i].substring(parts[i].length - width);
+      if (part.length < parts[i].length && part.length > 0) {
+        // Add ellipsis if we are truncating.
+        part = '\u2026' + part.substring(1);
+      }
+      taken.push(part);
+      width -= part.length;
+    }
   }
-  // Truncate and reset all colors.
-  return line.substr(0, width + ansiLen) + '\u001b[0m';
+  return taken.reverse().join('');
 }
