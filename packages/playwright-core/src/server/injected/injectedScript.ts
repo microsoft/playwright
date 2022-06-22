@@ -715,7 +715,7 @@ export class InjectedScript {
     input.dispatchEvent(new Event('change', { 'bubbles': true }));
   }
 
-  private _expectHitTargetParent(hitElement: Element | undefined, targetElement: Element) {
+  expectHitTargetParent(hitElement: Element | undefined, targetElement: Element) {
     targetElement = targetElement.closest('button, [role=button], a, [role=link]') || targetElement;
     const hitParents: Element[] = [];
     while (hitElement && hitElement !== targetElement) {
@@ -782,7 +782,7 @@ export class InjectedScript {
     // First do a preliminary check, to reduce the possibility of some iframe
     // intercepting the action.
     const preliminaryHitElement = this.deepElementFromPoint(document, hitPoint.x, hitPoint.y);
-    const preliminaryResult = this._expectHitTargetParent(preliminaryHitElement, element);
+    const preliminaryResult = this.expectHitTargetParent(preliminaryHitElement, element);
     if (preliminaryResult !== 'done')
       return preliminaryResult.hitTargetDescription;
 
@@ -817,7 +817,7 @@ export class InjectedScript {
       // subsequent events will be fine.
       if (result === undefined && point) {
         const hitElement = this.deepElementFromPoint(document, point.clientX, point.clientY);
-        result = this._expectHitTargetParent(hitElement, element);
+        result = this.expectHitTargetParent(hitElement, element);
       }
 
       if (blockAllEvents || (result !== 'done' && result !== undefined)) {

@@ -436,9 +436,10 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       if ((options as any).__testHookBeforeHitTarget)
         await (options as any).__testHookBeforeHitTarget();
 
-      const hitPoint = await this._viewportPointToDocument(point);
-      if (hitPoint === 'error:notconnected')
-        return hitPoint;
+      const frameCheckResult = await this._checkFrameIsHitTarget(point);
+      if (frameCheckResult === 'error:notconnected' || ('hitTargetDescription' in frameCheckResult))
+        return frameCheckResult;
+      const hitPoint = frameCheckResult.framePoint;
       const actionType = actionName === 'move and up' ? 'drag' : ((actionName === 'hover' || actionName === 'tap') ? actionName : 'mouse');
       const handle = await this.evaluateHandleInUtility(([injected, node, { actionType, hitPoint, trial }]) => injected.setupHitTargetInterceptor(node, actionType, hitPoint, trial), { actionType, hitPoint, trial: !!options.trial } as const);
       if (handle === 'error:notconnected')
@@ -855,19 +856,34 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return result;
   }
 
-  async _viewportPointToDocument(point: types.Point): Promise<types.Point | 'error:notconnected'> {
-    if (!this._frame.parentFrame())
-      return point;
-    const frame = await this.ownerFrame();
-    if (frame && frame.parentFrame()) {
-      const element = await frame.frameElement();
-      const box = await element.boundingBox();
+  async _checkFrameIsHitTarget(point: types.Point): Promise<{ framePoint: types.Point } | 'error:notconnected' | { hitTargetDescription: string }> {
+    let frame = this._frame;
+    const data: { frame: frames.Frame, frameElement: ElementHandle<Element> | null, pointInFrame: types.Point }[] = [];
+    while (frame.parentFrame()) {
+      const frameElement = await frame.frameElement() as ElementHandle<Element>;
+      const box = await frameElement.boundingBox();
       if (!box)
         return 'error:notconnected';
       // Translate from viewport coordinates to frame coordinates.
-      point = { x: point.x - box.x, y: point.y - box.y };
+      const pointInFrame = { x: point.x - box.x, y: point.y - box.y };
+      data.push({ frame, frameElement, pointInFrame });
+      frame = frame.parentFrame()!;
     }
-    return point;
+    // Add main frame.
+    data.push({ frame, frameElement: null, pointInFrame: point });
+
+    for (let i = data.length - 1; i > 0; i--) {
+      const element = data[i - 1].frameElement!;
+      const point = data[i].pointInFrame;
+      // Hit target in the parent frame should hit the child frame element.
+      const hitTargetResult = await element.evaluateInUtility(([injected, element, hitPoint]) => {
+        const hitElement = injected.deepElementFromPoint(document, hitPoint.x, hitPoint.y);
+        return injected.expectHitTargetParent(hitElement, element);
+      }, point);
+      if (hitTargetResult !== 'done')
+        return hitTargetResult;
+    }
+    return { framePoint: data[0].pointInFrame };
   }
 }
 
