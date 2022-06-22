@@ -207,7 +207,7 @@ export class Page extends SdkObject {
       this._opener = openerPage;
   }
 
-  reportAsNew(error?: Error) {
+  reportAsNew(error: Error | undefined = undefined, contextEvent: string = BrowserContext.Events.Page) {
     if (error) {
       // Initialization error could have happened because of
       // context/browser closure. Just ignore the page.
@@ -216,7 +216,7 @@ export class Page extends SdkObject {
       this._setIsError(error);
     }
     this._initialized = true;
-    this.emitOnContext(BrowserContext.Events.Page, this);
+    this.emitOnContext(contextEvent, this);
     // I may happen that page initialization finishes after Close event has already been sent,
     // in that case we fire another Close event to ensure that each reported Page will have
     // corresponding Close event after it is reported on the context.
