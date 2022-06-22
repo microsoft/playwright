@@ -407,13 +407,13 @@ export class HarTracer {
       pages: Array.from(this._pageEntries.values()),
       entries: [],
     };
-    for (const pageEntry of log.pages) {
-      if (pageEntry.pageTimings.onContentLoad >= 0)
-        pageEntry.pageTimings.onContentLoad -= pageEntry.startedDateTime.valueOf();
+    for (const pageEntry of log.pages!) {
+      if (pageEntry.pageTimings.onContentLoad! >= 0)
+        pageEntry.pageTimings.onContentLoad! -= pageEntry.startedDateTime.valueOf();
       else
         pageEntry.pageTimings.onContentLoad = -1;
-      if (pageEntry.pageTimings.onLoad >= 0)
-        pageEntry.pageTimings.onLoad -= pageEntry.startedDateTime.valueOf();
+      if (pageEntry.pageTimings.onLoad! >= 0)
+        pageEntry.pageTimings.onLoad! -= pageEntry.startedDateTime.valueOf();
       else
         pageEntry.pageTimings.onLoad = -1;
     }
