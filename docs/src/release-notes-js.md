@@ -5,6 +5,118 @@ title: "Release notes"
 
 <!-- TOC -->
 
+## Version 1.23
+
+### Network Replay
+
+Now you can record network traffic into a HAR file and re-use this traffic in your tests.
+
+To record network into HAR file:
+
+```bash
+npx playwright open --save-har=github.har.zip https://github.com/microsoft
+```
+
+Alternatively, you can record HAR programmatically:
+
+```ts
+const context = await browser.newContext({
+  recordHar: { path: 'github.har.zip' }
+});
+// ... do stuff ...
+await context.close();
+```
+
+Use the new methods [`method: Page.routeFromHAR`] or [`method: BrowserContext.routeFromHAR`] to serve matching responses from the [HAR](http://www.softwareishard.com/blog/har-12-spec/) file:
+
+
+```ts
+await context.routeFromHAR('github.har.zip');
+```
+
+Read more in [our documentation](./network#record-and-replay-requests).
+
+
+### Advanced Routing
+
+You can now use [`method: Route.fallback`] to defer routing to other handlers.
+
+Consider the following example:
+
+```ts
+// Remove a header from all requests.
+test.beforeEach(async ({ page }) => {
+  await page.route('**/*', async route => {
+    const headers = await route.request().allHeaders();
+    delete headers['if-none-match'];
+    route.fallback({ headers });
+  });
+});
+
+test('should work', async ({ page }) => {
+  await page.route('**/*', route => {
+    if (route.request().resourceType() === 'image')
+      route.abort();
+    else
+      route.fallback();
+  });
+});
+```
+
+Note that the new methods [`method: Page.routeFromHAR`] and [`method: BrowserContext.routeFromHAR`] also participate in routing and could be deferred to.
+
+### Web-First Assertions Update
+
+* New method [`method: LocatorAssertions.toHaveValues`] that asserts all selected values of `<select multiple>` element.
+* Methods [`method: LocatorAssertions.toContainText`] and [`method: LocatorAssertions.toHaveText`] now accept `ignoreCase` option.
+
+### Component Tests Update
+
+* Support for Vue2 via the [`@playwright/experimental-ct-vue2`](https://www.npmjs.com/package/@playwright/experimental-ct-vue2) package.
+* Support for component tests for [create-react-app](https://www.npmjs.com/package/create-react-app) with components in `.js` files.
+
+Read more about [component testing with Playwright](./test-components).
+
+### Miscellaneous
+
+* If there's a service worker that's in your way, you can now easily disable it with a new context option `serviceWorkers`:
+  ```ts
+  // playwright.config.ts
+  export default {
+    use: {
+      serviceWorkers: 'block',
+    }
+  }
+  ```
+* Using `.zip` path for `recordHar` context option automatically zips the resulting HAR:
+  ```ts
+  const context = await browser.newContext({
+    recordHar: {
+      path: 'github.har.zip',
+    }
+  });
+  ```
+* If you intend to edit HAR by hand, consider using the `"minimal"` HAR recording mode 
+  that only records information that is essential for replaying:
+  ```ts
+  const context = await browser.newContext({
+    recordHar: {
+      path: 'github.har.zip',
+      mode: 'minimal',
+    }
+  });
+  ```
+* Playwright now runs on Ubuntu 22 amd64 and Ubuntu 22 arm64. We also publish new docker image `mcr.microsoft.com/playwright:v1.24.0-focal`.
+
+### ⚠️ Breaking Changes ⚠️
+
+WebServer is now considered "ready" if request to the specified port has any of the following HTTP status codes:
+
+* `200-299` 
+* `300-399` (new)
+* `400`, `401`, `402`, `403` (new)
+
+
 ## Version 1.22
 
 ### Highlights
