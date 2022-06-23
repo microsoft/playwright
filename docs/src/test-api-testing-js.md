@@ -394,7 +394,7 @@ There are two types of [APIRequestContext]:
 * associated with a [BrowserContext]
 * isolated instance, created via [`method: APIRequest.newContext`]
 
-The main difference is that [APIRequestConxtext] accessible via [`property: BrowserContext.request`] and
+The main difference is that [APIRequestContext] accessible via [`property: BrowserContext.request`] and
 [`property: Page.request`] will populate request's `Cookie` header from the browser context and will
 automatically update browser cookies if [APIResponse] has `Set-Cookie` header:
 
