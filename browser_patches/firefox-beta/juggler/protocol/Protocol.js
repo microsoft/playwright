@@ -149,7 +149,7 @@ axTypes.AXTree = {
   focused: t.Optional(t.Boolean),
   pressed: t.Optional(t.Boolean),
   focusable: t.Optional(t.Boolean),
-  haspopup: t.Optional(t.Boolean),
+  haspopup: t.Optional(t.String),
   required: t.Optional(t.Boolean),
   invalid: t.Optional(t.Boolean),
   modal: t.Optional(t.Boolean),

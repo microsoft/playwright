@@ -869,7 +869,6 @@ class PageAgent {
         'focused',
         'pressed',
         'focusable',
-        'haspopup',
         'required',
         'invalid',
         'modal',
@@ -906,7 +905,7 @@ class PageAgent {
         if (numericalProperty in attributes)
           tree[numericalProperty] = parseFloat(attributes[numericalProperty]);
       }
-      for (const stringProperty of ['tag', 'roledescription', 'valuetext', 'orientation', 'autocomplete', 'keyshortcuts']) {
+      for (const stringProperty of ['tag', 'roledescription', 'valuetext', 'orientation', 'autocomplete', 'keyshortcuts', 'haspopup']) {
         if (stringProperty in attributes)
           tree[stringProperty] = attributes[stringProperty];
       }
