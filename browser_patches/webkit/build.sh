@@ -53,7 +53,7 @@ fi
 
 if is_mac; then
   selectXcodeVersionOrDie $(node "$SCRIPT_FOLDER/../get_xcode_version.js" webkit)
-  ./Tools/Scripts/build-webkit --release --touch-events --orientation-events --no-use-workspace
+  ./Tools/Scripts/build-webkit --release --touch-events --orientation-events
 elif is_linux; then
   if [[ $# == 0 || (-z "$1") ]]; then
     echo
