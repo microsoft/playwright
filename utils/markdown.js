@@ -264,7 +264,10 @@ function innerRenderMdNode(indent, node, lastNode, result, maxColumns) {
 
   if (node.type === 'code') {
     newLine();
-    result.push(`${indent}\`\`\`${codeLangToHighlighter(node.codeLang)}`);
+    if (process.env.API_JSON_MODE)
+      result.push(`${indent}\`\`\`${node.codeLang}`);
+    else
+      result.push(`${indent}\`\`\`${codeLangToHighlighter(node.codeLang)}`);
     for (const line of node.lines)
       result.push(indent + line);
     result.push(`${indent}\`\`\``);
