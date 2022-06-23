@@ -11,7 +11,7 @@ on:
       - release-*
     paths:
       - "**android**"
-      - "utils/avd_*.js"
+      - "utils/avd_*"
       - ".github/workflows/tests_android.yml"
 
 env:
