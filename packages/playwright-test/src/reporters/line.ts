@@ -62,13 +62,14 @@ class LineReporter extends BaseReporter {
   override onTestEnd(test: TestCase, result: TestResult) {
     super.onTestEnd(test, result);
     ++this._current;
-    const retriesSuffix = this.totalTestCount < this._current ? ` (retries)` : ``;
-    const title = `[${this._current}/${this.totalTestCount}]${retriesSuffix} ${formatTestTitle(this.config, test)}`;
-    const suffix = result.retry ? ` (retry #${result.retry})` : '';
+    const retriesPrefix = this.totalTestCount < this._current ? ` (retries)` : ``;
+    const prefix = `[${this._current}/${this.totalTestCount}]${retriesPrefix} `;
+    const currentRetrySuffix = result.retry ? colors.yellow(` (retry #${result.retry})`) : '';
+    const title = formatTestTitle(this.config, test) + currentRetrySuffix;
     if (process.env.PW_TEST_DEBUG_REPORTERS)
-      process.stdout.write(`${title + suffix}\n`);
+      process.stdout.write(`${prefix + title}\n`);
     else
-      process.stdout.write(`\u001B[1A\u001B[2K${this.fitToScreen(title, suffix) + colors.yellow(suffix)}\n`);
+      process.stdout.write(`\u001B[1A\u001B[2K${prefix + this.fitToScreen(title, prefix)}\n`);
 
     if (!this.willRetry(test) && (test.outcome() === 'flaky' || test.outcome() === 'unexpected')) {
       if (!process.env.PW_TEST_DEBUG_REPORTERS)
