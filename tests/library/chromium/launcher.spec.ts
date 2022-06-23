@@ -118,6 +118,7 @@ it('should support request/response events when using backgroundPage()', async (
   const backgroundPage = backgroundPages.length
     ? backgroundPages[0]
     : await context.waitForEvent('backgroundpage');
+  await backgroundPage.waitForURL(/chrome-extension\:\/\/.*/);
   const [, request, response, contextRequest, contextResponse] = await Promise.all([
     backgroundPage.evaluate(url => fetch(url, {
       method: 'POST',
