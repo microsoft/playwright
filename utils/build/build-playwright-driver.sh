@@ -15,7 +15,7 @@ echo "Building playwright-core package"
 node ../../utils/pack_package.js playwright-core ./output/playwright-core.tgz
 
 echo "Building api.json and protocol.yml"
-node ../../utils/doclint/generateApiJson.js > ./output/api.json
+API_JSON_MODE=1 node ../../utils/doclint/generateApiJson.js > ./output/api.json
 cp ../../packages/playwright-core/src/protocol/protocol.yml ./output/
 
 function build {
