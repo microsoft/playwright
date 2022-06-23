@@ -1034,6 +1034,9 @@ export class WKPage implements PageDelegate {
       session.sendMayFail('Network.interceptRequestWithError', { errorType: 'Cancellation', requestId: event.requestId });
       return;
     }
+    // There is no point in waiting for the raw headers in Network.responseReceived when intercepting.
+    // Use provisional headers as raw headers, so that client can call allHeaders() from the route handler.
+    request.request.setRawRequestHeaders(null);
     if (!request._route) {
       // Intercepted, although we do not intend to allow interception.
       // Just continue.
@@ -1055,6 +1058,9 @@ export class WKPage implements PageDelegate {
       if (!headers['host'])
         headers['Host'] = new URL(request.request.url()).host;
       request.request.setRawRequestHeaders(headersObjectToArray(headers));
+    } else {
+      // No raw headers avaialable, use provisional ones.
+      request.request.setRawRequestHeaders(null);
     }
     this._page._frameManager.requestReceivedResponse(response);
 
