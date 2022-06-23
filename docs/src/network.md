@@ -457,7 +457,7 @@ await page.GotoAsync("https://example.com");
 ```js
 // Delete header
 await page.route('**/*', route => {
-  const headers = route.request().headers();
+  const headers = route.request().allHeaders();
   delete headers['X-Secret'];
   route.continue({headers});
 });
@@ -469,7 +469,7 @@ await page.route('**/*', route => route.continue({method: 'POST'}));
 ```java
 // Delete header
 page.route("**/*", route -> {
-  Map<String, String> headers = new HashMap<>(route.request().headers());
+  Map<String, String> headers = new HashMap<>(route.request().allHeaders());
   headers.remove("X-Secret");
     route.resume(new Route.ResumeOptions().setHeaders(headers));
 });
@@ -481,7 +481,7 @@ page.route("**/*", route -> route.resume(new Route.ResumeOptions().setMethod("PO
 ```python async
 # Delete header
 async def handle_route(route):
-    headers = route.request.headers
+    headers = route.request.all_headers()
     del headers["x-secret"]
     route.continue_(headers=headers)
 await page.route("**/*", handle_route)
@@ -493,7 +493,7 @@ await page.route("**/*", lambda route: route.continue_(method="POST"))
 ```python sync
 # Delete header
 def handle_route(route):
-    headers = route.request.headers
+    headers = route.request.all_headers()
     del headers["x-secret"]
     route.continue_(headers=headers)
 page.route("**/*", handle_route)
@@ -505,7 +505,7 @@ page.route("**/*", lambda route: route.continue_(method="POST"))
 ```csharp
 // Delete header
 await page.RouteAsync("**/*", async route => {
-    var headers = new Dictionary<string, string>(route.Request.Headers.ToDictionary(x => x.Key, x => x.Value));
+    var headers = new Dictionary<string, string>((await route.Request.Request.AllHeadersAsync()).ToDictionary(x => x.Key, x => x.Value));
     headers.Remove("X-Secret");
     await route.ContinueAsync(new RouteContinueOptions { Headers = headers });
 });
@@ -592,7 +592,7 @@ await page.route('**/title.html', async route => {
     body,
     // Force content type to be html.
     headers: {
-      ...response.headers(),
+      ...response.allHeaders(),
       'content-type': 'text/html'
     }
   });
@@ -606,7 +606,7 @@ page.route("**/title.html", route -> {
   // Add a prefix to the title.
   String body = response.text();
   body = body.replace("<title>", "<title>My prefix:");
-  Map<String, String> headers = response.headers();
+  Map<String, String> headers = response.allHeaders();
   headers.put("content-type": "text/html");
   route.fulfill(new Route.FulfillOptions()
     // Pass all fields from the response.
@@ -631,7 +631,7 @@ async def handle_route(route: Route) -> None:
         # Override response body.
         body=body,
         # Force content type to be html.
-        headers={**response.headers, "content-type": "text/html"},
+        headers={**response.all_headers(), "content-type": "text/html"},
     )
 
 await page.route("**/title.html", handle_route)
@@ -650,7 +650,7 @@ def handle_route(route: Route) -> None:
         # Override response body.
         body=body,
         # Force content type to be html.
-        headers={**response.headers, "content-type": "text/html"},
+        headers={**response.all_headers(), "content-type": "text/html"},
     )
 
 page.route("**/title.html", handle_route)
@@ -665,7 +665,7 @@ await Page.RouteAsync("**/title.html", async route =>
     var body = await response.TextAsync();
     body = body.Replace("<title>", "<title>My prefix:");
 
-    var headers = response.Headers;
+    var headers = await response.Request.AllHeadersAsync();
     headers.Add("Content-Type", "text/html");
 
     await route.FulfillAsync(new()
