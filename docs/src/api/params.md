@@ -588,13 +588,15 @@ Optional setting to control whether to omit request content from the HAR. Defaul
 
 ## context-option-recordhar-content
 * langs: csharp, java, python
-- `content` ?<[HarContentPolicy]<"omit"|"embed"|"attach">>
+  - alias-python: record_har_content
+- `recordHarContent` ?<[HarContentPolicy]<"omit"|"embed"|"attach">>
 
 Optional setting to control resource content management. If `omit` is specified, content is not persisted. If `attach` is specified, resources are persistet as separate files and all of these files are archived along with the HAR file. Defaults to `embed`, which stores content inline the HAR file as per HAR specification.
 
 ## context-option-recordhar-mode
 * langs: csharp, java, python
-- `mode` ?<[HarMode]<"full"|"minimal">>
+  - alias-python: record_har_mode
+- `recordHarMode` ?<[HarMode]<"full"|"minimal">>
 
 When set to `minimal`, only record information necessary for routing from HAR. This omits sizes, timing, page, cookies, security and other types of HAR information that are not used when replaying from HAR. Defaults to `full`.
 
