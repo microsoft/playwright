@@ -590,7 +590,7 @@ Optional setting to control whether to omit request content from the HAR. Defaul
 * langs: csharp, java, python
 - `content` ?<[HarContentPolicy]<"omit"|"embed"|"attach">>
 
-Optional setting to control resource content management. If `omit` is specified, content is not persisted. If `attach` is specified, resources are persistet as separate files and all of these files are archived along with the HAR file. Defaults to `embed`, which stores content inline the HAR file as per HAR specification
+Optional setting to control resource content management. If `omit` is specified, content is not persisted. If `attach` is specified, resources are persistet as separate files and all of these files are archived along with the HAR file. Defaults to `embed`, which stores content inline the HAR file as per HAR specification.
 
 ## context-option-recordhar-mode
 * langs: csharp, java, python
@@ -819,6 +819,8 @@ An acceptable perceived color difference in the [YIQ color space](https://en.wik
 - %%-context-option-recordhar-%%
 - %%-context-option-recordhar-path-%%
 - %%-context-option-recordhar-omit-content-%%
+- %%-context-option-recordhar-content-%%
+- %%-context-option-recordhar-mode-%%
 - %%-context-option-recordhar-url-filter-%%
 - %%-context-option-recordvideo-%%
 - %%-context-option-recordvideo-dir-%%
