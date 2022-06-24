@@ -1047,7 +1047,7 @@ Defaults to abort.
 ### option: BrowserContext.routeFromHAR.url
 - `url` <[string]|[RegExp]|[function]\([URL]\):[boolean]>
 
-A glob pattern, regular expression or predicate to match the request URL. Only requests with URL matching the pattern will be surved from the HAR file. If not specified, all requests are served from the HAR file.
+A glob pattern, regular expression or predicate to match the request URL. Only requests with URL matching the pattern will be served from the HAR file. If not specified, all requests are served from the HAR file.
 
 ## method: BrowserContext.serviceWorkers
 * langs: js, python
