@@ -586,6 +586,20 @@ call [`method: BrowserContext.close`] for the HAR to be saved.
 
 Optional setting to control whether to omit request content from the HAR. Defaults to `false`.
 
+## context-option-recordhar-content
+* langs: csharp, java, python
+  - alias-python: record_har_content
+- `recordHarContent` ?<[HarContentPolicy]<"omit"|"embed"|"attach">>
+
+Optional setting to control resource content management. If `omit` is specified, content is not persisted. If `attach` is specified, resources are persistet as separate files and all of these files are archived along with the HAR file. Defaults to `embed`, which stores content inline the HAR file as per HAR specification.
+
+## context-option-recordhar-mode
+* langs: csharp, java, python
+  - alias-python: record_har_mode
+- `recordHarMode` ?<[HarMode]<"full"|"minimal">>
+
+When set to `minimal`, only record information necessary for routing from HAR. This omits sizes, timing, page, cookies, security and other types of HAR information that are not used when replaying from HAR. Defaults to `full`.
+
 ## context-option-recordhar-url-filter
 * langs: csharp, java, python
   - alias-python: record_har_url_filter
@@ -807,6 +821,8 @@ An acceptable perceived color difference in the [YIQ color space](https://en.wik
 - %%-context-option-recordhar-%%
 - %%-context-option-recordhar-path-%%
 - %%-context-option-recordhar-omit-content-%%
+- %%-context-option-recordhar-content-%%
+- %%-context-option-recordhar-mode-%%
 - %%-context-option-recordhar-url-filter-%%
 - %%-context-option-recordvideo-%%
 - %%-context-option-recordvideo-dir-%%
