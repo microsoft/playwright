@@ -268,6 +268,26 @@ it('should chain fallback', async ({ context, page, server }) => {
   expect(intercepted).toEqual([3, 2, 1]);
 });
 
+it('should chain fallback w/ dynamic URL', async ({ context, page, server }) => {
+  const intercepted = [];
+  await context.route('**/bar', route => {
+    intercepted.push(1);
+    route.fallback({ url: server.EMPTY_PAGE });
+  });
+  await context.route('**/foo', route => {
+    intercepted.push(2);
+    route.fallback({ url: 'http://localhost/bar' });
+  });
+
+  await context.route('**/empty.html', route => {
+    intercepted.push(3);
+    route.fallback({ url: 'http://localhost/foo' });
+  });
+
+  await page.goto(server.EMPTY_PAGE);
+  expect(intercepted).toEqual([3, 2, 1]);
+});
+
 it('should not chain fulfill', async ({ context, page, server }) => {
   let failed = false;
   await context.route('**/empty.html', route => {
