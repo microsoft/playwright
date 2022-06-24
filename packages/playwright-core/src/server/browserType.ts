@@ -130,7 +130,7 @@ export abstract class BrowserType extends SdkObject {
     (browser as any)._userDataDirForTest = userDataDir;
     // We assume no control when using custom arguments, and do not prepare the default context in that case.
     if (persistent && !options.ignoreAllDefaultArgs)
-      await browser._defaultContext!._loadDefaultContext(progress);
+      await browser._defaultContext!._loadDefaultContextAsIs(progress);
     return browser;
   }
 

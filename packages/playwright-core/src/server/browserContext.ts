@@ -231,30 +231,13 @@ export abstract class BrowserContext extends SdkObject {
     this._timeoutSettings.setDefaultTimeout(timeout);
   }
 
-  async _loadDefaultContextAsIs(progress: Progress): Promise<Page[]> {
+  async _loadDefaultContextAsIs(progress: Progress) {
     if (!this.pages().length) {
       const waitForEvent = helper.waitForEvent(progress, this, BrowserContext.Events.Page);
       progress.cleanupWhenAborted(() => waitForEvent.dispose);
       const page = (await waitForEvent.promise) as Page;
       if (page._pageIsError)
         throw page._pageIsError;
-    }
-    const pages = this.pages();
-    if (pages[0]._pageIsError)
-      throw pages[0]._pageIsError;
-    await pages[0].mainFrame()._waitForLoadState(progress, 'load');
-    return pages;
-  }
-
-  async _loadDefaultContext(progress: Progress) {
-    const pages = await this._loadDefaultContextAsIs(progress);
-    if (this._options.isMobile || this._options.locale) {
-      // Workaround for:
-      // - chromium fails to change isMobile for existing page;
-      // - webkit fails to change locale for existing page.
-      const oldPage = pages[0];
-      await this.newPage(progress.metadata);
-      await oldPage.close(progress.metadata);
     }
   }
 
