@@ -107,11 +107,11 @@ export class TimeoutManager {
     let suffix = '';
     switch (this._runnable.type) {
       case 'test':
-        suffix = ''; break;
-      case 'beforeAll':
-      case 'beforeEach':
-      case 'afterAll':
       case 'afterEach':
+        suffix = ''; break;
+      case 'beforeEach':
+      case 'beforeAll':
+      case 'afterAll':
         suffix = ` in ${this._runnable.type} hook`; break;
       case 'teardown':
         suffix = ` in fixtures teardown`; break;
@@ -124,8 +124,6 @@ export class TimeoutManager {
     const fixtureWithSlot = this._fixture?.slot ? this._fixture : undefined;
     if (fixtureWithSlot)
       suffix = ` by ${fixtureWithSlot.title}`;
-    else if (this._fixture)
-      suffix = ` while running ${this._fixture.title}`;
     const message = colors.red(`Timeout of ${this._currentSlot().timeout}ms exceeded${suffix}.`);
     const location = (fixtureWithSlot || this._runnable).location;
     return {

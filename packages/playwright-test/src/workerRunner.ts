@@ -418,8 +418,9 @@ export class WorkerRunner extends EventEmitter {
         }
       }
 
-      // Teardown test-scoped fixtures.
-      testInfo._timeoutManager.setCurrentRunnable({ type: 'teardown', slot: afterHooksSlot });
+      // Teardown test-scoped fixtures. Attribute to 'test' so that users understand
+      // they should probably increate the test timeout to fix this issue.
+      testInfo._timeoutManager.setCurrentRunnable({ type: 'test', slot: afterHooksSlot });
       const testScopeError = await testInfo._runFn(() => this._fixtureRunner.teardownScope('test', testInfo._timeoutManager));
       firstAfterHooksError = firstAfterHooksError || testScopeError;
     });
@@ -439,9 +440,12 @@ export class WorkerRunner extends EventEmitter {
           firstAfterHooksError = firstAfterHooksError || afterAllError;
         }
         const teardownSlot = { timeout: this._project.timeout, elapsed: 0 };
-        testInfo._timeoutManager.setCurrentRunnable({ type: 'teardown', slot: teardownSlot });
+        // Attribute to 'test' so that users understand they should probably increate the test timeout to fix this issue.
+        testInfo._timeoutManager.setCurrentRunnable({ type: 'test', slot: teardownSlot });
         const testScopeError = await testInfo._runFn(() => this._fixtureRunner.teardownScope('test', testInfo._timeoutManager));
         firstAfterHooksError = firstAfterHooksError || testScopeError;
+        // Attribute to 'teardown' because worker fixtures are not perceived as a part of a test.
+        testInfo._timeoutManager.setCurrentRunnable({ type: 'teardown', slot: teardownSlot });
         const workerScopeError = await testInfo._runFn(() => this._fixtureRunner.teardownScope('worker', testInfo._timeoutManager));
         firstAfterHooksError = firstAfterHooksError || workerScopeError;
       });
