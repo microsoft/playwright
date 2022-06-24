@@ -193,11 +193,11 @@ it('should amend method', async ({ page, server }) => {
   await page.route('**/*', route => route.fallback({ method: 'POST' }));
 
   const [request] = await Promise.all([
-    server.waitForRequest('/sleep.zzz'),
+    page.waitForRequest('**/sleep.zzz'),
     page.evaluate(() => fetch('/sleep.zzz'))
   ]);
   expect(method).toBe('POST');
-  expect(request.method).toBe('POST');
+  expect(request.method()).toBe('POST');
   expect((await sRequest).method).toBe('POST');
 });
 
