@@ -179,8 +179,10 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   }
 
   private async _onRoute(route: Route, request: Request) {
-    const routeHandlers = this._routes.filter(r => r.matches(request.url()));
+    const routeHandlers = this._routes.slice();
     for (const routeHandler of routeHandlers) {
+      if (!routeHandler.matches(request.url()))
+        continue;
       if (routeHandler.willExpire())
         this._routes.splice(this._routes.indexOf(routeHandler), 1);
       const handled = await routeHandler.handle(route, request);

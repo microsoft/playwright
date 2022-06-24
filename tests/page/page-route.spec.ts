@@ -321,6 +321,26 @@ it('should not work with redirects', async ({ page, server }) => {
     expect(chain[i].redirectedTo()).toBe(i ? chain[i - 1] : null);
 });
 
+it('should chain fallback w/ dynamic URL', async ({ page, server }) => {
+  const intercepted = [];
+  await page.route('**/bar', route => {
+    intercepted.push(1);
+    route.fallback({ url: server.EMPTY_PAGE });
+  });
+  await page.route('**/foo', route => {
+    intercepted.push(2);
+    route.fallback({ url: 'http://localhost/bar' });
+  });
+
+  await page.route('**/empty.html', route => {
+    intercepted.push(3);
+    route.fallback({ url: 'http://localhost/foo' });
+  });
+
+  await page.goto(server.EMPTY_PAGE);
+  expect(intercepted).toEqual([3, 2, 1]);
+});
+
 it('should work with redirects for subresources', async ({ page, server }) => {
   const intercepted = [];
   await page.route('**/*', route => {

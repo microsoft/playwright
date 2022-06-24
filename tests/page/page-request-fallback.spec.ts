@@ -205,7 +205,7 @@ it('should override request url', async ({ page, server }) => {
   const request = server.waitForRequest('/global-var.html');
 
   let url: string;
-  await page.route('**/foo', route => {
+  await page.route('**/global-var.html', route => {
     url = route.request().url();
     route.continue();
   });
