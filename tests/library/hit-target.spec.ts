@@ -254,3 +254,22 @@ it('should not click iframe overlaying the target', async ({ page, server }) => 
   expect(await page.evaluate('window._clicked')).toBe(undefined);
   expect(error.message).toContain(`<iframe srcdoc="<body onclick='window.top._clicked=2' st…></iframe> from <div>…</div> subtree intercepts pointer events`);
 });
+
+it('should not click an element overlaying iframe with the target', async ({ page, server }) => {
+  await page.goto(server.EMPTY_PAGE);
+  await page.setContent(`
+    <div onclick='window.top._clicked=1'>padding</div>
+    <iframe width=600 height=600 srcdoc="<iframe srcdoc='<div onclick=&quot;window.top._clicked=2&quot;>padding</div><div onclick=&quot;window.top._clicked=3&quot;>inner</div>'></iframe><div onclick='window.top._clicked=4'>outer</div>"></iframe>
+    <div onclick='window.top._clicked=5' style="position: absolute; left: 0; right: 0; top: 0; bottom: 0; background: rgba(255, 0, 0, 0.1); padding: 200px;">PINK OVERLAY</div>
+  `);
+
+  const target = page.frameLocator('iframe').frameLocator('iframe').locator('text=inner');
+  const error = await target.click({ timeout: 500 }).catch(e => e);
+  expect(await page.evaluate('window._clicked')).toBe(undefined);
+  expect(error.message).toContain(`<div onclick="window.top._clicked=5">PINK OVERLAY</div> intercepts pointer events`);
+
+  await page.locator('text=overlay').evaluate(e => e.style.display = 'none');
+
+  await target.click();
+  expect(await page.evaluate('window._clicked')).toBe(3);
+});
