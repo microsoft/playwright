@@ -88,7 +88,10 @@ export class WKInterceptableRequest {
       responseStart: timingPayload ? wkMillisToRoundishMillis(timingPayload.responseStart) : -1,
     };
     const setCookieSeparator = process.platform === 'darwin' ? ',' : '\n';
-    return new network.Response(this.request, responsePayload.status, responsePayload.statusText, headersObjectToArray(responsePayload.headers, ',', setCookieSeparator), timing, getResponseBody, responsePayload.source === 'service-worker');
+    const response = new network.Response(this.request, responsePayload.status, responsePayload.statusText, headersObjectToArray(responsePayload.headers, ',', setCookieSeparator), timing, getResponseBody, responsePayload.source === 'service-worker');
+    // No raw response headers in WebKit, use "provisional" ones.
+    response.setRawResponseHeaders(null);
+    return response;
   }
 }
 

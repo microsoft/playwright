@@ -93,6 +93,30 @@ it('should get the same headers as the server', async ({ page, server, browserNa
   expect(headers).toEqual(serverRequest.headers);
 });
 
+it('should not return allHeaders() until they are available', async ({ page, server, browserName, platform }) => {
+  it.fail(browserName === 'webkit' && platform === 'win32', 'Curl does not show accept-encoding and accept-language');
+
+  let requestHeadersPromise;
+  page.on('request', request => requestHeadersPromise = request.allHeaders());
+  let responseHeadersPromise;
+  page.on('response', response => responseHeadersPromise = response.allHeaders());
+
+  let serverRequest;
+  server.setRoute('/empty.html', async (request, response) => {
+    serverRequest = request;
+    response.writeHead(200, { 'foo': 'bar' });
+    await new Promise(f => setTimeout(f, 3000));
+    response.end('done');
+  });
+
+  await page.goto(server.PREFIX + '/empty.html');
+  const requestHeaders = await requestHeadersPromise;
+  expect(requestHeaders).toEqual(serverRequest.headers);
+
+  const responseHeaders = await responseHeadersPromise;
+  expect(responseHeaders['foo']).toBe('bar');
+});
+
 it('should get the same headers as the server CORS', async ({ page, server, browserName, platform }) => {
   it.fail(browserName === 'webkit' && platform === 'win32', 'Curl does not show accept-encoding and accept-language');
 

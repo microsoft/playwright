@@ -113,6 +113,8 @@ export class FFNetworkManager {
       validFrom: event?.securityDetails?.validFrom,
       validTo: event?.securityDetails?.validTo,
     });
+    // "raw" headers are the same as "provisional" headers in Firefox.
+    response.setRawResponseHeaders(null);
     this._page._frameManager.requestReceivedResponse(response);
   }
 
@@ -194,6 +196,8 @@ class InterceptableRequest {
       postDataBuffer = Buffer.from(payload.postData, 'base64');
     this.request = new network.Request(frame, redirectedFrom ? redirectedFrom.request : null, payload.navigationId,
         payload.url, internalCauseToResourceType[payload.internalCause] || causeToResourceType[payload.cause] || 'other', payload.method, postDataBuffer, payload.headers);
+    // "raw" headers are the same as "provisional" headers in Firefox.
+    this.request.setRawRequestHeaders(null);
   }
 
   _finalRequest(): InterceptableRequest {
