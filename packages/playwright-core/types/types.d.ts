@@ -3187,7 +3187,7 @@ export interface Page {
 
     /**
      * A glob pattern, regular expression or predicate to match the request URL. Only requests with URL matching the pattern
-     * will be surved from the HAR file. If not specified, all requests are served from the HAR file.
+     * will be served from the HAR file. If not specified, all requests are served from the HAR file.
      */
     url?: string|RegExp|((url: URL) => boolean);
   }): Promise<void>;
@@ -7139,7 +7139,7 @@ export interface BrowserContext {
 
     /**
      * A glob pattern, regular expression or predicate to match the request URL. Only requests with URL matching the pattern
-     * will be surved from the HAR file. If not specified, all requests are served from the HAR file.
+     * will be served from the HAR file. If not specified, all requests are served from the HAR file.
      */
     url?: string|RegExp|((url: URL) => boolean);
   }): Promise<void>;
