@@ -222,7 +222,7 @@ mvn test
 ```
 
 ```bash tab=bash-bash lang=csharp
-PLAYWRIGHT_BROWSERS_PATH=$HOME/pw-browsers 
+PLAYWRIGHT_BROWSERS_PATH=$HOME/pw-browsers
 pwsh bin\Debug\netX\playwright.ps1 install
 ```
 
@@ -307,19 +307,20 @@ Developers can opt-in in this mode via exporting `PLAYWRIGHT_BROWSERS_PATH=$HOME
 
 You can opt into the hermetic install and place binaries in the local folder:
 
+
 ```bash tab=bash-bash
-# Places binaries to node_modules/@playwright/test
+# Places binaries to node_modules/playwright-core/.local-browsers
 PLAYWRIGHT_BROWSERS_PATH=0 npx playwright install
 ```
 
 ```batch tab=bash-batch
-# Places binaries to node_modules\@playwright\test
+# Places binaries to node_modules\playwright-core\.local-browsers
 set PLAYWRIGHT_BROWSERS_PATH=0
 npx playwright install
 ```
 
 ```powershell tab=bash-powershell
-# Places binaries to node_modules\@playwright\test
+# Places binaries to node_modules\playwright-core\.local-browsers
 $env:PLAYWRIGHT_BROWSERS_PATH=0
 npx playwright install
 ```
