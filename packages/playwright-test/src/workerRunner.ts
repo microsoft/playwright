@@ -385,6 +385,22 @@ export class WorkerRunner extends EventEmitter {
       // Note: do not wrap all teardown steps together, because failure in any of them
       // does not prevent further teardown steps from running.
 
+      // Run "immediately upon test failure" callbacks.
+      if (testInfo._isFailure()) {
+        const onFailureError = await testInfo._runFn(async () => {
+          testInfo._timeoutManager.setCurrentRunnable({ type: 'test', slot: afterHooksSlot });
+          for (const [fn, title] of testInfo._onTestFailureImmediateCallbacks) {
+            await testInfo._runAsStep(fn, {
+              category: 'hook',
+              title,
+              canHaveChildren: true,
+              forceNoParent: false,
+            });
+          }
+        });
+        firstAfterHooksError = firstAfterHooksError || onFailureError;
+      }
+
       // Run "afterEach" hooks, unless we failed at beforeAll stage.
       if (shouldRunAfterEachHooks) {
         const afterEachError = await testInfo._runFn(() => this._runEachHooksForSuites(reversedSuites, 'afterEach', testInfo, afterHooksSlot));
@@ -395,9 +411,8 @@ export class WorkerRunner extends EventEmitter {
       const nextSuites = new Set(getSuites(nextTest));
       // In case of failure the worker will be stopped and we have to make sure that afterAll
       // hooks run before test fixtures teardown.
-      const isFailure = testInfo.status !== 'skipped' && testInfo.status !== testInfo.expectedStatus;
       for (const suite of reversedSuites) {
-        if (!nextSuites.has(suite) || isFailure) {
+        if (!nextSuites.has(suite) || testInfo._isFailure()) {
           const afterAllError = await this._runAfterAllHooksForSuite(suite, testInfo);
           firstAfterHooksError = firstAfterHooksError || afterAllError;
         }
@@ -409,8 +424,7 @@ export class WorkerRunner extends EventEmitter {
       firstAfterHooksError = firstAfterHooksError || testScopeError;
     });
 
-    const isFailure = testInfo.status !== 'skipped' && testInfo.status !== testInfo.expectedStatus;
-    if (isFailure)
+    if (testInfo._isFailure())
       this._isStopped = true;
 
     if (this._isStopped) {
@@ -439,7 +453,7 @@ export class WorkerRunner extends EventEmitter {
     this.emit('testEnd', buildTestEndPayload(testInfo));
 
     const preserveOutput = this._loader.fullConfig().preserveOutput === 'always' ||
-      (this._loader.fullConfig().preserveOutput === 'failures-only' && isFailure);
+      (this._loader.fullConfig().preserveOutput === 'failures-only' && testInfo._isFailure());
     if (!preserveOutput)
       await removeFolderAsync(testInfo.outputDir).catch(e => {});
   }
