@@ -79,7 +79,8 @@ async function run() {
     for (const filePath of getAllMarkdownFiles(path.join(PROJECT_DIR, 'docs'))) {
       let content = fs.readFileSync(filePath).toString();
       content = content.replace(new RegExp('(mcr.microsoft.com/playwright[^:]*):([\\w\\d-.]+)', 'ig'), (match, imageName, imageVersion) => {
-        return `${imageName}:v${playwrightVersion}-focal`;
+        const [version, distroName] = imageVersion.split('-');
+        return `${imageName}:v${playwrightVersion}-${distroName ?? 'focal'}`;
       });
       writeAssumeNoop(filePath, content, dirtyFiles);
     }

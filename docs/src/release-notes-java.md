@@ -5,6 +5,93 @@ title: "Release notes"
 
 <!-- TOC -->
 
+## Version 1.23
+
+### Network Replay
+
+Now you can record network traffic into a HAR file and re-use this traffic in your tests.
+
+To record network into HAR file:
+
+```bash
+mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="open --save-har=example.har --save-har-glob='**/api/**' https://example.com"
+```
+
+Alternatively, you can record HAR programmatically:
+
+```java
+BrowserContext context = browser.newContext(new Browser.NewContextOptions()
+    .setRecordHarPath(Paths.get("example.har"))
+    .setRecordHarUrlFilter("**/api/**"));
+
+// ... Perform actions ...
+
+// Close context to ensure HAR is saved to disk.
+context.close();
+```
+
+Use the new methods [`method: Page.routeFromHAR`] or [`method: BrowserContext.routeFromHAR`] to serve matching responses from the [HAR](http://www.softwareishard.com/blog/har-12-spec/) file:
+
+
+```java
+context.routeFromHAR(Paths.get("example.har"));
+```
+
+Read more in [our documentation](./network#record-and-replay-requests).
+
+
+### Advanced Routing
+
+You can now use [`method: Route.fallback`] to defer routing to other handlers.
+
+Consider the following example:
+
+```java
+// Remove a header from all requests.
+page.route("**/*", route -> {
+  Map<String, String> headers = new HashMap<>(route.request().headers());
+  headers.remove("X-Secret");
+  route.resume(new Route.ResumeOptions().setHeaders(headers));
+});
+
+// Abort all images.
+page.route("**/*", route -> {
+  if ("image".equals(route.request().resourceType()))
+    route.abort();
+  else
+    route.fallback();
+});
+```
+
+Note that the new methods [`method: Page.routeFromHAR`] and [`method: BrowserContext.routeFromHAR`] also participate in routing and could be deferred to.
+
+### Web-First Assertions Update
+
+* New method [`method: LocatorAssertions.toHaveValues`] that asserts all selected values of `<select multiple>` element.
+* Methods [`method: LocatorAssertions.toContainText`] and [`method: LocatorAssertions.toHaveText`] now accept `ignoreCase` option.
+
+### Miscellaneous
+
+* If there's a service worker that's in your way, you can now easily disable it with a new context option `serviceWorkers`:
+  ```java
+  BrowserContext context = browser.newContext(new Browser.NewContextOptions()
+      .setServiceWorkers(ServiceWorkerPolicy.BLOCK));
+  ```
+* Using `.zip` path for `recordHar` context option automatically zips the resulting HAR:
+  ```java
+  BrowserContext context = browser.newContext(new Browser.NewContextOptions()
+      .setRecordHarPath(Paths.get("example.har.zip")));
+  ```
+* If you intend to edit HAR by hand, consider using the `"minimal"` HAR recording mode
+  that only records information that is essential for replaying:
+  ```java
+  BrowserContext context = browser.newContext(new Browser.NewContextOptions()
+      .setRecordHarPath(Paths.get("example.har.zip"))
+      .setRecordHarMode(HarMode.MINIMAL));
+  ```
+* Playwright now runs on Ubuntu 22 amd64 and Ubuntu 22 arm64. We also publish new docker image `mcr.microsoft.com/playwright/java:v1.24.0-jammy`.
+
+
 ## Version 1.22
 
 ### Highlights
