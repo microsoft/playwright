@@ -2,7 +2,7 @@
 * langs: java
 
 The [RequestOptions] allows to create form data to be sent via [APIRequestContext]. Playwright will automatically
-detemine content type of the request.
+determine content type of the request.
 
 ```java
 context.request().post(
