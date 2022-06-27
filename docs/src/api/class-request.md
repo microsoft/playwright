@@ -59,7 +59,9 @@ Returns the [Frame] that initiated this request.
 ## method: Request.headers
 - returns: <[Object]<[string], [string]>>
 
-**DEPRECATED** Incomplete list of headers as seen by the rendering engine. Use [`method: Request.allHeaders`] instead.
+An object with the request HTTP headers. The header names are lower-cased.
+Note that this method does not return security-related headers, including cookie-related ones.
+You can use [`method: Request.allHeaders`] for complete list of headers that include `cookie` information.
 
 ## async method: Request.headersArray
 - returns: <[Array]<[Object]>>

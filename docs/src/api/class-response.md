@@ -30,7 +30,9 @@ Indicates whether this Response was fullfilled by a Service Worker's Fetch Handl
 ## method: Response.headers
 - returns: <[Object]<[string], [string]>>
 
-**DEPRECATED** Incomplete list of headers as seen by the rendering engine. Use [`method: Response.allHeaders`] instead.
+An object with the response HTTP headers. The header names are lower-cased.
+Note that this method does not return security-related headers, including cookie-related ones.
+You can use [`method: Response.allHeaders`] for complete list of headers that include `cookie` information.
 
 ## async method: Response.headersArray
 - returns: <[Array]<[Object]>>

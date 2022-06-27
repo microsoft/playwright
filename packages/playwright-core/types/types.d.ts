@@ -14858,9 +14858,10 @@ export interface Request {
   frame(): Frame;
 
   /**
-   * **DEPRECATED** Incomplete list of headers as seen by the rendering engine. Use
-   * [request.allHeaders()](https://playwright.dev/docs/api/class-request#request-all-headers) instead.
-   * @deprecated
+   * An object with the request HTTP headers. The header names are lower-cased. Note that this method does not return
+   * security-related headers, including cookie-related ones. You can use
+   * [request.allHeaders()](https://playwright.dev/docs/api/class-request#request-all-headers) for complete list of headers
+   * that include `cookie` information.
    */
   headers(): { [key: string]: string; };
 
@@ -15095,9 +15096,10 @@ export interface Response {
   fromServiceWorker(): boolean;
 
   /**
-   * **DEPRECATED** Incomplete list of headers as seen by the rendering engine. Use
-   * [response.allHeaders()](https://playwright.dev/docs/api/class-response#response-all-headers) instead.
-   * @deprecated
+   * An object with the response HTTP headers. The header names are lower-cased. Note that this method does not return
+   * security-related headers, including cookie-related ones. You can use
+   * [response.allHeaders()](https://playwright.dev/docs/api/class-response#response-all-headers) for complete list of
+   * headers that include `cookie` information.
    */
   headers(): { [key: string]: string; };
 
