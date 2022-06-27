@@ -1,7 +1,8 @@
 # class: RequestOptions
 * langs: java
 
-The [RequestOptions] allows to create form data to be sent via [APIRequestContext].
+The [RequestOptions] allows to create form data to be sent via [APIRequestContext]. Playwright will automatically
+determine content type of the request.
 
 ```java
 context.request().post(
@@ -9,6 +10,33 @@ context.request().post(
   RequestOptions.create()
     .setQueryParam("page", 1)
     .setData("My data"));
+```
+
+**Uploading html form data**
+
+[FormData] class can be used to send a form to the server, by default the request will use `application/x-www-form-urlencoded` encoding:
+
+```java
+context.request().post("https://example.com/signup", RequestOptions.create().setForm(
+  FormData.create()
+    .set("firstName", "John")
+    .set("lastName", "Doe")));
+```
+
+You can also send files as fields of an html form. The data will be encoded using [`multipart/form-data`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/POST):
+
+```java
+Path path = Paths.get("members.csv");
+APIResponse response = context.request().post("https://example.com/upload_members",
+  RequestOptions.create().setMultipart(FormData.create().set("membersList", path)));
+```
+
+Alternatively, you can build the file payload manually:
+```java
+FilePayload filePayload = new FilePayload("members.csv", "text/csv",
+  "Alice, 33\nJohn, 35\n".getBytes(StandardCharsets.UTF_8));
+APIResponse response = context.request().post("https://example.com/upload_members",
+  RequestOptions.create().setMultipart(FormData.create().set("membersList", filePayload)));
 ```
 
 ## method: RequestOptions.create
