@@ -56,6 +56,9 @@ class LineReporter extends BaseReporter {
     }
 
     stream.write(chunk);
+    if (chunk[chunk.length - 1] !== '\n')
+      console.log();
+
     console.log();
   }
 
