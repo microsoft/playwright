@@ -126,8 +126,8 @@ it('should inherit viewport size from browser context', async function({ browser
   expect(size).toEqual({ width: 400, height: 500 });
 });
 
-it('should use viewport size from window features', async function({ browser, server, channel }) {
-  it.fixme(channel === 'chromium-tip-of-tree', 'https://github.com/microsoft/playwright/issues/14787');
+it('should use viewport size from window features', async function({ browser, server, browserName }) {
+  it.fixme(browserName === 'chromium', 'https://github.com/microsoft/playwright/issues/14787');
   const context = await browser.newContext({
     viewport: { width: 700, height: 700 }
   });
