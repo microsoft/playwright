@@ -22,7 +22,7 @@ Alternatively, you can record HAR programmatically:
 ```java
 BrowserContext context = browser.newContext(new Browser.NewContextOptions()
     .setRecordHarPath(Paths.get("example.har"))
-    .setRecordHarUrlFilter("**/api/**");
+    .setRecordHarUrlFilter("**/api/**"));
 
 // ... Perform actions ...
 
@@ -75,19 +75,19 @@ Note that the new methods [`method: Page.routeFromHAR`] and [`method: BrowserCon
 * If there's a service worker that's in your way, you can now easily disable it with a new context option `serviceWorkers`:
   ```java
   BrowserContext context = browser.newContext(new Browser.NewContextOptions()
-      .setServiceWorkers(ServiceWorkerPolicy.BLOCK);
+      .setServiceWorkers(ServiceWorkerPolicy.BLOCK));
   ```
 * Using `.zip` path for `recordHar` context option automatically zips the resulting HAR:
   ```java
   BrowserContext context = browser.newContext(new Browser.NewContextOptions()
-      .setRecordHarPath(Paths.get("example.har.zip"));
+      .setRecordHarPath(Paths.get("example.har.zip")));
   ```
 * If you intend to edit HAR by hand, consider using the `"minimal"` HAR recording mode
   that only records information that is essential for replaying:
   ```java
   BrowserContext context = browser.newContext(new Browser.NewContextOptions()
       .setRecordHarPath(Paths.get("example.har.zip"))
-      .setRecordHarMode(HarMode.MINIMAL);
+      .setRecordHarMode(HarMode.MINIMAL));
   ```
 * Playwright now runs on Ubuntu 22 amd64 and Ubuntu 22 arm64. We also publish new docker image `mcr.microsoft.com/playwright:v1.24.0-focal`.
 
