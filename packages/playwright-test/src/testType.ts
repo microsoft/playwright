@@ -19,7 +19,7 @@ import { currentlyLoadingFileSuite, currentTestInfo, setCurrentlyLoadingFileSuit
 import { TestCase, Suite } from './test';
 import { wrapFunctionWithLocation } from './transform';
 import type { Fixtures, FixturesWithLocation, Location, TestType } from './types';
-import { errorWithLocation, serializeError } from './util';
+import { errorWithLocation, filterUndefinedFixtures, serializeError } from './util';
 
 const testTypeSymbol = Symbol('testType');
 
@@ -196,7 +196,7 @@ export class TestTypeImpl {
 
   private _use(location: Location, fixtures: Fixtures) {
     const suite = this._ensureCurrentSuite(location, `test.use()`);
-    suite._use.push({ fixtures, location });
+    suite._use.push({ fixtures: filterUndefinedFixtures(fixtures) , location });
   }
 
   private async _step(location: Location, title: string, body: () => Promise<void>): Promise<void> {
@@ -222,7 +222,7 @@ export class TestTypeImpl {
   private _extend(location: Location, fixtures: Fixtures) {
     if ((fixtures as any)[testTypeSymbol])
       throw new Error(`test.extend() accepts fixtures object, not a test object.\nDid you mean to call test._extendTest()?`);
-    const fixturesWithLocation: FixturesWithLocation = { fixtures, location };
+    const fixturesWithLocation: FixturesWithLocation = { fixtures: filterUndefinedFixtures(fixtures), location };
     return new TestTypeImpl([...this.fixtures, fixturesWithLocation]).test;
   }
 
