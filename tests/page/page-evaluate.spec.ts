@@ -344,6 +344,39 @@ it('should properly serialize PerformanceMeasure object', async ({ page }) => {
   }]);
 });
 
+it('shuld properly serialize window.performance object', async ({ page }) => {
+  expect(await page.evaluate(() => performance)).toEqual({
+    'navigation': {
+      'redirectCount': 0,
+      'type': 0
+    },
+    'timeOrigin': expect.any(Number),
+    'timing': {
+      'connectEnd': expect.any(Number),
+      'connectStart': expect.any(Number),
+      'domComplete': expect.any(Number),
+      'domContentLoadedEventEnd': expect.any(Number),
+      'domContentLoadedEventStart': expect.any(Number),
+      'domInteractive': expect.any(Number),
+      'domLoading': expect.any(Number),
+      'domainLookupEnd': expect.any(Number),
+      'domainLookupStart': expect.any(Number),
+      'fetchStart': expect.any(Number),
+      'loadEventEnd': expect.any(Number),
+      'loadEventStart': expect.any(Number),
+      'navigationStart': expect.any(Number),
+      'redirectEnd': expect.any(Number),
+      'redirectStart': expect.any(Number),
+      'requestStart': expect.any(Number),
+      'responseEnd': expect.any(Number),
+      'responseStart': expect.any(Number),
+      'secureConnectionStart': expect.any(Number),
+      'unloadEventEnd': expect.any(Number),
+      'unloadEventStart': expect.any(Number),
+    }
+  });
+});
+
 it('should return undefined for non-serializable objects', async ({ page }) => {
   expect(await page.evaluate(() => function() {})).toBe(undefined);
 });
