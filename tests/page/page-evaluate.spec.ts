@@ -334,13 +334,14 @@ it('should properly serialize PerformanceMeasure object', async ({ page }) => {
   expect(await page.evaluate(() => {
     window.performance.mark('start');
     window.performance.mark('end');
-    return window.performance.measure('my-measure', 'start', 'end');
-  })).toEqual({
+    window.performance.measure('my-measure', 'start', 'end');
+    return performance.getEntriesByType('measure');
+  })).toEqual([{
     duration: expect.any(Number),
     entryType: 'measure',
     name: 'my-measure',
     startTime: expect.any(Number),
-  });
+  }]);
 });
 
 it('should return undefined for non-serializable objects', async ({ page }) => {
