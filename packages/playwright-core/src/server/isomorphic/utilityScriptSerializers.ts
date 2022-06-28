@@ -42,7 +42,11 @@ export function source() {
   }
 
   function isError(obj: any): obj is Error {
-    return obj instanceof Error || (obj && obj.__proto__ && obj.__proto__.name === 'Error');
+    try {
+      return obj instanceof Error || (obj && obj.__proto__ && obj.__proto__.name === 'Error');
+    } catch (error) {
+      return false;
+    }
   }
 
   function parseEvaluationResultValue(value: SerializedValue, handles: any[] = [], refs: Map<number, object> = new Map()): any {
@@ -177,6 +181,11 @@ export function source() {
         else
           o.push({ k: name, v: serialize(item, handleSerializer, visitorInfo) });
       }
+
+      // If Object.keys().length === 0 we fall back to toJSON if it exists
+      if (o.length === 0 && value.toJSON && typeof value.toJSON === 'function')
+        return innerSerialize(value.toJSON(), handleSerializer, visitorInfo);
+
       return { o, id };
     }
   }

@@ -330,6 +330,19 @@ it('should properly serialize null fields', async ({ page }) => {
   expect(await page.evaluate(() => ({ a: null }))).toEqual({ a: null });
 });
 
+it('should properly serialize PerformanceMeasure object', async ({ page }) => {
+  expect(await page.evaluate(() => {
+    window.performance.mark('start');
+    window.performance.mark('end');
+    return window.performance.measure('my-measure', 'start', 'end');
+  })).toEqual({
+    duration: expect.any(Number),
+    entryType: 'measure',
+    name: 'my-measure',
+    startTime: expect.any(Number),
+  });
+});
+
 it('should return undefined for non-serializable objects', async ({ page }) => {
   expect(await page.evaluate(() => function() {})).toBe(undefined);
 });
