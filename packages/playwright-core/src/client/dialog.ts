@@ -17,14 +17,19 @@
 import type * as channels from '../protocol/channels';
 import { ChannelOwner } from './channelOwner';
 import type * as api from '../../types/types';
+import { Page } from './page';
 
 export class Dialog extends ChannelOwner<channels.DialogChannel> implements api.Dialog {
+  private _page: Page;
+
   static from(dialog: channels.DialogChannel): Dialog {
     return (dialog as any)._object;
   }
 
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.DialogInitializer) {
     super(parent, type, guid, initializer);
+    this._page = parent as Page;
+    this._page._activeDialogs.add(this);
   }
 
   type(): string {
@@ -40,10 +45,12 @@ export class Dialog extends ChannelOwner<channels.DialogChannel> implements api.
   }
 
   async accept(promptText: string | undefined) {
+    this._page._activeDialogs.delete(this);
     await this._channel.accept({ promptText });
   }
 
   async dismiss() {
+    this._page._activeDialogs.delete(this);
     await this._channel.dismiss();
   }
 }

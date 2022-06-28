@@ -46,6 +46,8 @@ type TestFixtures = PlaywrightTestArgs & PlaywrightTestOptions & {
 };
 type WorkerFixtures = PlaywrightWorkerArgs & PlaywrightWorkerOptions & {
   _connectedBrowser: Browser | undefined,
+  _contextReuseEnabled: boolean,
+  _contextReuseInfo: { context: BrowserContext | undefined, hash: string },
   _browserOptions: LaunchOptions;
   _artifactsDir: () => string;
   _snapshotSuffix: string;
@@ -505,12 +507,50 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
       testInfo.errors.push({ message: prependToError });
   }, { scope: 'test',  _title: 'context' } as any],
 
-  context: async ({ _contextFactory }, use) => {
-    await use(await _contextFactory());
+  _contextReuseEnabled: [!!process.env.PW_REUSE_CONTEXT, { scope: 'worker' }],
+
+  _contextReuseInfo: [{ context: undefined, hash: '' }, { scope: 'worker' }],
+
+  context: async ({ playwright, browser, _contextReuseEnabled, _contextReuseInfo, _contextFactory, video, trace }, use, testInfo) => {
+    if (!_contextReuseEnabled) {
+      await use(await _contextFactory());
+      return;
+    }
+
+    const isolateThisTest = shouldCaptureVideo(normalizeVideoMode(video), testInfo) || shouldCaptureTrace(normalizeTraceMode(trace), testInfo);
+    const defaultContextOptions = (playwright.chromium as any)._defaultContextOptions as BrowserContextOptions;
+    const hash = contextHash(defaultContextOptions);
+
+    if (!_contextReuseInfo.context || _contextReuseInfo.hash !== hash || isolateThisTest || (_contextReuseInfo.context as any)._isClosed) {
+      if (_contextReuseInfo.context)
+        await _contextReuseInfo.context.close();
+      // Context factory sets up video so we want to use that for isolated contexts.
+      // However, it closes the context after the test, so we don't want to use it
+      // for shared contexts.
+      _contextReuseInfo.context = isolateThisTest ? await _contextFactory() : await browser.newContext();
+      _contextReuseInfo.hash = hash;
+    } else {
+      await (_contextReuseInfo.context as any)._resetForReuse(defaultContextOptions);
+    }
+
+    await use(_contextReuseInfo.context);
   },
 
-  page: async ({ context }, use) => {
-    await use(await context.newPage());
+  page: async ({ context, _contextReuseEnabled, playwright }, use) => {
+    if (!_contextReuseEnabled) {
+      await use(await context.newPage());
+      return;
+    }
+
+    let page = context.pages()[0];
+    if (!page || page.isClosed() || !(page as any)._canResetForReuse()) {
+      page = await context.newPage();
+    } else {
+      const defaultContextOptions = (playwright.chromium as any)._defaultContextOptions as BrowserContextOptions;
+      await (page as any)._resetForReuse(defaultContextOptions);
+    }
+
+    await use(page);
   },
 
   request: async ({ playwright, _combinedContextOptions }, use) => {
@@ -577,6 +617,30 @@ export function normalizeTraceMode(trace: TraceMode | 'retry-with-trace' | { mod
 
 export function shouldCaptureTrace(traceMode: TraceMode, testInfo: TestInfo) {
   return traceMode === 'on' || traceMode === 'retain-on-failure' || (traceMode === 'on-first-retry' && testInfo.retry === 1);
+}
+
+
+function contextHash(context: BrowserContextOptions): string {
+  const hash = {
+    acceptDownloads: context.acceptDownloads,
+    bypassCSP: context.bypassCSP,
+    geolocation: context.geolocation,
+    hasTouch: context.hasTouch,
+    httpCredentials: context.httpCredentials,
+    ignoreHTTPSErrors: context.ignoreHTTPSErrors,
+    isMobile: context.isMobile,
+    javaScriptEnabled: context.javaScriptEnabled,
+    locale: context.locale,
+    offline: context.offline,
+    permissions: context.permissions,
+    proxy: context.proxy,
+    storageState: context.storageState,
+    timezoneId: context.timezoneId,
+    userAgent: context.userAgent,
+    deviceScaleFactor: context.deviceScaleFactor,
+    serviceWorkers: context.serviceWorkers,
+  };
+  return JSON.stringify(hash);
 }
 
 const kTracingStarted = Symbol('kTracingStarted');

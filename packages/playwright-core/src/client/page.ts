@@ -49,7 +49,7 @@ import { assertMaxArguments, JSHandle, parseResult, serializeArgument } from './
 import type { FrameLocator, Locator, LocatorOptions } from './locator';
 import type { RouteHandlerCallback } from './network';
 import { Request, Response, Route, RouteHandler, validateHeaders, WebSocket } from './network';
-import type { FilePayload, Headers, LifecycleEvent, SelectOption, SelectOptionOptions, Size, URLMatch, WaitForEventOptions, WaitForFunctionOptions } from './types';
+import type { BrowserContextOptions, FilePayload, Headers, LifecycleEvent, SelectOption, SelectOptionOptions, Size, URLMatch, WaitForEventOptions, WaitForFunctionOptions } from './types';
 import { Video } from './video';
 import { Waiter } from './waiter';
 import { Worker } from './worker';
@@ -98,6 +98,10 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   readonly _timeoutSettings: TimeoutSettings;
   private _video: Video | null = null;
   readonly _opener: Page | null;
+  readonly _activeDialogs = new Set<Dialog>();
+  _didCrash = false;
+  private _emulatedMedia: channels.PageEmulateMediaParams | undefined;
+  private _hasExtraHTTPHeaders = false;
 
   static from(page: channels.PageChannel): Page {
     return (page as any)._object;
@@ -179,19 +183,24 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   }
 
   private async _onRoute(route: Route, request: Request) {
+    this._browserContext._routesInFlight.add(route);
     const routeHandlers = this._routes.slice();
-    for (const routeHandler of routeHandlers) {
-      if (!routeHandler.matches(request.url()))
-        continue;
-      if (routeHandler.willExpire())
-        this._routes.splice(this._routes.indexOf(routeHandler), 1);
-      const handled = await routeHandler.handle(route, request);
-      if (!this._routes.length)
-        this._wrapApiCall(() => this._disableInterception(), true).catch(() => {});
-      if (handled)
-        return;
+    try {
+      for (const routeHandler of routeHandlers) {
+        if (!routeHandler.matches(request.url()))
+          continue;
+        if (routeHandler.willExpire())
+          this._routes.splice(this._routes.indexOf(routeHandler), 1);
+        const handled = await routeHandler.handle(route, request);
+        if (!this._routes.length)
+          this._wrapApiCall(() => this._disableInterception(), true).catch(() => {});
+        if (handled)
+          return;
+      }
+      await this._browserContext._onRoute(route, request);
+    } finally {
+      this._browserContext._routesInFlight.delete(route);
     }
-    await this._browserContext._onRoute(route, request);
   }
 
   async _onBinding(bindingCall: BindingCall) {
@@ -217,6 +226,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   }
 
   private _onCrash() {
+    this._didCrash = true;
     this.emit(Events.Page.Crash, this);
   }
 
@@ -249,14 +259,14 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     return [...this._frames];
   }
 
-  setDefaultNavigationTimeout(timeout: number) {
+  setDefaultNavigationTimeout(timeout: number | undefined) {
     this._timeoutSettings.setDefaultNavigationTimeout(timeout);
     this._wrapApiCall(async () => {
       this._channel.setDefaultNavigationTimeoutNoReply({ timeout });
     }, true);
   }
 
-  setDefaultTimeout(timeout: number) {
+  setDefaultTimeout(timeout: number | undefined) {
     this._timeoutSettings.setDefaultTimeout(timeout);
     this._wrapApiCall(async () => {
       this._channel.setDefaultTimeoutNoReply({ timeout });
@@ -340,7 +350,15 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
 
   async setExtraHTTPHeaders(headers: Headers) {
     validateHeaders(headers);
+    this._hasExtraHTTPHeaders = true;
     await this._channel.setExtraHTTPHeaders({ headers: headersObjectToArray(headers) });
+  }
+
+  async _resetExtraHeadersForReuse() {
+    if (this._hasExtraHTTPHeaders) {
+      this._hasExtraHTTPHeaders = false;
+      await this.setExtraHTTPHeaders({});
+    }
   }
 
   url(): string {
@@ -431,11 +449,26 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   }
 
   async emulateMedia(options: { media?: 'screen' | 'print' | null, colorScheme?: 'dark' | 'light' | 'no-preference' | null, reducedMotion?: 'reduce' | 'no-preference' | null, forcedColors?: 'active' | 'none' | null } = {}) {
-    await this._channel.emulateMedia({
+    this._emulatedMedia = {
       media: options.media === null ? 'null' : options.media,
       colorScheme: options.colorScheme === null ? 'null' : options.colorScheme,
       reducedMotion: options.reducedMotion === null ? 'null' : options.reducedMotion,
       forcedColors: options.forcedColors === null ? 'null' : options.forcedColors,
+    };
+    await this._channel.emulateMedia(this._emulatedMedia);
+  }
+
+  async _resetMediaForReuse(contextOptions: BrowserContextOptions) {
+    const contextWantsEmulatedMedia = !!contextOptions.colorScheme || !!contextOptions.forcedColors || !!contextOptions.reducedMotion;
+    if (!this._emulatedMedia && !contextWantsEmulatedMedia)
+      return;
+    if (mediaMatch(contextOptions, this._emulatedMedia || {}))
+      return;
+    this.emulateMedia({
+      media: null,
+      colorScheme: contextOptions.colorScheme || null,
+      forcedColors: contextOptions.forcedColors || null,
+      reducedMotion: contextOptions.reducedMotion || null
     });
   }
 
@@ -446,6 +479,11 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
 
   viewportSize(): Size | null {
     return this._viewportSize;
+  }
+
+  async _resetViewportForReuse(contextOptions: BrowserContextOptions) {
+    if (!viewportsMatch(contextOptions, this._viewportSize))
+      await this.setViewportSize(contextOptions.viewport!);
   }
 
   async evaluate<R, Arg>(pageFunction: structs.PageFunction<Arg, R>, arg?: Arg): Promise<R> {
@@ -750,10 +788,28 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     return buffer;
   }
 
-  async _resetForReuse() {
-    await this._unrouteAll();
-    await this._removeInitScripts();
-    await this._removeExposedBindings();
+  _canResetForReuse(): boolean {
+    return !this._didCrash;
+  }
+
+  async _resetForReuse(contextOptions: BrowserContextOptions) {
+    await this._wrapApiCall(async () => {
+      for (const dialog of this._activeDialogs)
+        dialog.dismiss().catch(() => {});
+      this._activeDialogs.clear();
+      this.removeAllListeners();
+      this.setDefaultTimeout(undefined);
+      this.setDefaultNavigationTimeout(undefined);
+      await Promise.all([
+        this._unrouteAll(),
+        this._removeInitScripts(),
+        this._removeExposedBindings(),
+        this._resetExtraHeadersForReuse(),
+        this._resetViewportForReuse(contextOptions),
+        this._resetMediaForReuse(contextOptions),
+      ]);
+      await this.goto('about:blank');
+    }, true);
   }
 }
 
@@ -797,4 +853,25 @@ function trimUrl(param: any): string | undefined {
     return `/${trimEnd(param.source)}/${param.flags}`;
   if (isString(param))
     return `"${trimEnd(param)}"`;
+}
+function viewportsMatch(options: BrowserContextOptions, size: Size | null | undefined) {
+  const a = options.viewport;
+  const b = size;
+  if (a === b)
+    return true;
+  if (!a || !b)
+    return false;
+  return a.width === b.width && a.height === b.height;
+}
+
+function mediaMatch(contextOptions: BrowserContextOptions, media: channels.PageEmulateMediaParams) {
+  if (media.media)
+    return false;
+  if (contextOptions.colorScheme !== media.colorScheme)
+    return false;
+  if (contextOptions.reducedMotion !== media.reducedMotion)
+    return false;
+  if (contextOptions.forcedColors !== media.forcedColors)
+    return false;
+  return true;
 }

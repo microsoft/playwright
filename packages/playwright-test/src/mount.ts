@@ -14,52 +14,34 @@
  * limitations under the License.
  */
 
-import { normalizeTraceMode, normalizeVideoMode, shouldCaptureTrace, shouldCaptureVideo } from './index';
 import type { Fixtures, Locator, Page, BrowserContextOptions, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, BrowserContext } from './types';
 import type { Component, JsxComponent, ObjectComponentOptions } from '../types/component';
 
 let boundCallbacksForMount: Function[] = [];
+const initSymbol = Symbol('initSymbol');
 
 export const fixtures: Fixtures<
   PlaywrightTestArgs & PlaywrightTestOptions & { mount: (component: any, options: any) => Promise<Locator> },
-  PlaywrightWorkerArgs & PlaywrightWorkerOptions & { _ctWorker: { context: BrowserContext | undefined, hash: string } },
-  { _contextFactory: (options?: BrowserContextOptions) => Promise<BrowserContext> }> = {
+  PlaywrightWorkerArgs & PlaywrightWorkerOptions, { _contextFactory: (options?: BrowserContextOptions) => Promise<BrowserContext> }, {_contextReuseEnabled: boolean }> = {
 
-    _ctWorker: [{ context: undefined, hash: '' }, { scope: 'worker' }],
+    _contextReuseEnabled: [true, { scope: 'worker' }],
 
-    context: async ({ playwright, browser, _ctWorker, _contextFactory, video, trace }, use, testInfo) => {
-      const isolateTests = shouldCaptureVideo(normalizeVideoMode(video), testInfo) || shouldCaptureTrace(normalizeTraceMode(trace), testInfo);
-      const defaultContextOptions = (playwright.chromium as any)._defaultContextOptions as BrowserContextOptions;
-      const hash = contextHash(defaultContextOptions);
+    serviceWorkers: 'block',
 
-      if (!_ctWorker.context || _ctWorker.hash !== hash || isolateTests) {
-        if (_ctWorker.context)
-          await _ctWorker.context.close();
-        // Context factory sets up video so we want to use that for isolated contexts.
-        // However, it closes the context after the test, so we don't want to use it
-        // for shared contexts.
-        _ctWorker.context = isolateTests ? await _contextFactory() : await browser.newContext();
-        _ctWorker.hash = hash;
-        await _ctWorker.context.addInitScript('navigator.serviceWorker.register = () => {}');
-        await _ctWorker.context.exposeFunction('__pw_dispatch', (ordinal: number, args: any[]) => {
-          boundCallbacksForMount[ordinal](...args);
-        });
-      } else {
-        await (_ctWorker.context as any)._resetForReuse();
+    context: async ({context }, use) => {
+      if (!(context as any)[initSymbol]) {
+        (context as any)[initSymbol] = true;
+        await (context as any)._wrapApiCall(async () => {
+          await context.exposeFunction('__pw_dispatch', (ordinal: number, args: any[]) => {
+            boundCallbacksForMount[ordinal](...args);
+          });
+        }, true);
       }
-      await use(_ctWorker.context);
+      await use(context);
     },
 
-    page: async ({ context, viewport }, use) => {
-      let page = context.pages()[0];
-      await (context as any)._wrapApiCall(async () => {
-        if (!page) {
-          page = await context.newPage();
-        } else {
-          await (page as any)._resetForReuse();
-          await page.goto('about:blank');
-          await page.setViewportSize(viewport || { width: 1280, height: 800 });
-        }
+    page: async ({ page }, use) => {
+      await (page as any)._wrapApiCall(async () => {
         await page.goto(process.env.PLAYWRIGHT_VITE_COMPONENTS_BASE_URL!);
       }, true);
       await use(page);

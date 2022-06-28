@@ -41,6 +41,7 @@ import { APIRequestContext } from './fetch';
 import { createInstrumentation } from './clientInstrumentation';
 import { rewriteErrorMessage } from '../utils/stackTrace';
 import { HarRouter } from './harRouter';
+import { Route } from './network';
 
 export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel> implements api.BrowserContext {
   _pages = new Set<Page>();
@@ -59,6 +60,9 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   readonly _serviceWorkers = new Set<Worker>();
   readonly _isChromium: boolean;
   private _harRecorders = new Map<string, { path: string, content: 'embed' | 'attach' | 'omit' | undefined }>();
+  _isClosed = false;
+  private _extraHTTPHeaders: Headers = {};
+  readonly _routesInFlight = new Set<Route>();
 
   static from(context: channels.BrowserContextChannel): BrowserContext {
     return (context as any)._object;
@@ -148,19 +152,24 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   }
 
   async _onRoute(route: network.Route, request: network.Request) {
+    this._routesInFlight.add(route);
     const routeHandlers = this._routes.slice();
-    for (const routeHandler of routeHandlers) {
-      if (!routeHandler.matches(request.url()))
-        continue;
-      if (routeHandler.willExpire())
-        this._routes.splice(this._routes.indexOf(routeHandler), 1);
-      const handled = await routeHandler.handle(route, request);
-      if (!this._routes.length)
-        this._wrapApiCall(() => this._disableInterception(), true).catch(() => {});
-      if (handled)
-        return;
+    try {
+      for (const routeHandler of routeHandlers) {
+        if (!routeHandler.matches(request.url()))
+          continue;
+        if (routeHandler.willExpire())
+          this._routes.splice(this._routes.indexOf(routeHandler), 1);
+        const handled = await routeHandler.handle(route, request);
+        if (!this._routes.length)
+          this._wrapApiCall(() => this._disableInterception(), true).catch(() => {});
+        if (handled)
+          return;
+      }
+      await route._innerContinue(true);
+    } finally {
+      this._routesInFlight.delete(route);
     }
-    await route._innerContinue(true);
   }
 
   async _onBinding(bindingCall: BindingCall) {
@@ -170,14 +179,14 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     await bindingCall.call(func);
   }
 
-  setDefaultNavigationTimeout(timeout: number) {
+  setDefaultNavigationTimeout(timeout: number | undefined) {
     this._timeoutSettings.setDefaultNavigationTimeout(timeout);
     this._wrapApiCall(async () => {
       this._channel.setDefaultNavigationTimeoutNoReply({ timeout });
     }, true);
   }
 
-  setDefaultTimeout(timeout: number) {
+  setDefaultTimeout(timeout: number | undefined) {
     this._timeoutSettings.setDefaultTimeout(timeout);
     this._wrapApiCall(async () => {
       this._channel.setDefaultTimeoutNoReply({ timeout });
@@ -228,7 +237,14 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
 
   async setExtraHTTPHeaders(headers: Headers): Promise<void> {
     network.validateHeaders(headers);
+    this._extraHTTPHeaders = headers;
     await this._channel.setExtraHTTPHeaders({ headers: headersObjectToArray(headers) });
+  }
+
+  async _resetExtraHeadersForReuse(contextOptions: BrowserContextOptions) {
+    if (!contextOptions.extraHTTPHeaders && Object.keys(this._extraHTTPHeaders).length === 0)
+      return;
+    await this.setExtraHTTPHeaders(contextOptions.extraHTTPHeaders || {});
   }
 
   async setOffline(offline: boolean): Promise<void> {
@@ -303,6 +319,9 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
 
   async _unrouteAll() {
     this._routes = [];
+    for (const route of this._routesInFlight)
+      route.abort().catch(() => {});
+    this._routesInFlight.clear();
     await this._disableInterception();
   }
 
@@ -353,6 +372,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     if (this._browser)
       this._browser._contexts.delete(this);
     this._browserType?._contexts?.delete(this);
+    this._isClosed = true;
     this.emit(Events.BrowserContext.Close, this);
   }
 
@@ -396,10 +416,21 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     await this._channel.recorderSupplementEnable(params);
   }
 
-  async _resetForReuse() {
-    await this._unrouteAll();
-    await this._removeInitScripts();
-    await this._removeExposedBindings();
+  async _resetForReuse(contextOptions: BrowserContextOptions) {
+    await this._wrapApiCall(async () => {
+      this.removeAllListeners();
+      this.setDefaultTimeout(undefined);
+      this.setDefaultNavigationTimeout(undefined);
+      const pages = this.pages().slice(1);
+      for (const page of pages)
+        await page.close();
+      await Promise.all([
+        this._unrouteAll(),
+        this._removeInitScripts(),
+        this._removeExposedBindings(),
+        this._resetExtraHeadersForReuse(contextOptions),
+      ]);
+    }, true);
   }
 }
 
