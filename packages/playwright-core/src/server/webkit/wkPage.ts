@@ -18,7 +18,7 @@
 import path from 'path';
 import { PNG, jpegjs } from '../../utilsBundle';
 import { splitErrorMessage } from '../../utils/stackTrace';
-import { assert, createGuid, debugAssert, headersArrayToObject, headersObjectToArray } from '../../utils';
+import { assert, createGuid, debugAssert, headersArrayToObject } from '../../utils';
 import { hostPlatform } from '../../utils/hostPlatform';
 import type * as accessibility from '../accessibility';
 import * as dialog from '../dialog';
@@ -1022,6 +1022,8 @@ export class WKPage implements PageDelegate {
     const response = request.createResponse(responsePayload);
     response._securityDetailsFinished();
     response._serverAddrFinished();
+    response.setResponseHeadersSize(null);
+    response.setEncodedBodySize(null);
     response._requestFinished(responsePayload.timing ? helper.secondsToRoundishMillis(timestamp - request._timestamp) : -1);
     this._requestIdToRequest.delete(request._requestId);
     this._page._frameManager.requestReceivedResponse(response);
@@ -1053,15 +1055,6 @@ export class WKPage implements PageDelegate {
       return;
     this._requestIdToResponseReceivedPayloadEvent.set(request._requestId, event);
     const response = request.createResponse(event.response);
-    if (event.response.requestHeaders && Object.keys(event.response.requestHeaders).length) {
-      const headers = { ...event.response.requestHeaders };
-      if (!headers['host'])
-        headers['Host'] = new URL(request.request.url()).host;
-      request.request.setRawRequestHeaders(headersObjectToArray(headers));
-    } else {
-      // No raw headers avaialable, use provisional ones.
-      request.request.setRawRequestHeaders(null);
-    }
     this._page._frameManager.requestReceivedResponse(response);
 
     if (response.status() === 204) {
@@ -1094,12 +1087,13 @@ export class WKPage implements PageDelegate {
       });
       if (event.metrics?.protocol)
         response._setHttpVersion(event.metrics.protocol);
-      if (event.metrics?.responseBodyBytesReceived)
-        request.request.responseSize.encodedBodySize = event.metrics.responseBodyBytesReceived;
-      if (event.metrics?.responseHeaderBytesReceived)
-        request.request.responseSize.responseHeadersSize = event.metrics.responseHeaderBytesReceived;
+      response.setEncodedBodySize(event.metrics?.responseBodyBytesReceived ?? null);
+      response.setResponseHeadersSize(event.metrics?.responseHeaderBytesReceived ?? null);
 
       response._requestFinished(helper.secondsToRoundishMillis(event.timestamp - request._timestamp));
+    } else {
+      // Use provisional headers if we didn't have the response with raw headers.
+      request.request.setRawRequestHeaders(null);
     }
 
     this._requestIdToResponseReceivedPayloadEvent.delete(request._requestId);
@@ -1113,11 +1107,17 @@ export class WKPage implements PageDelegate {
     // @see https://crbug.com/750469
     if (!request)
       return;
+
     const response = request.request._existingResponse();
     if (response) {
       response._serverAddrFinished();
       response._securityDetailsFinished();
+      response.setResponseHeadersSize(null);
+      response.setEncodedBodySize(null);
       response._requestFinished(helper.secondsToRoundishMillis(event.timestamp - request._timestamp));
+    } else {
+      // Use provisional headers if we didn't have the response with raw headers.
+      request.request.setRawRequestHeaders(null);
     }
     this._requestIdToRequest.delete(request._requestId);
     request.request._setFailureText(event.errorText);
