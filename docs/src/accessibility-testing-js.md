@@ -39,8 +39,8 @@ This example demonstrates how to test an entire page for automatically detectabl
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright'; // 1
 
-test.describe('homepage', function() { // 2
-  test('should not have any automatically detectable accessibility issues', async function({ page }) {
+test.describe('homepage', () => { // 2
+  test('should not have any automatically detectable accessibility issues', async ({ page }) => {
     await page.goto('https://your-site.com/'); // 3
 
     const accessibilityScanResults = await new AxeBuilder({ page }).analyze(); // 4
@@ -54,8 +54,8 @@ test.describe('homepage', function() { // 2
 const { test, expect } = require('@playwright/test');
 const AxeBuilder = require('@axe-core/playwright').default; // 1
 
-test.describe('homepage', function() { // 2
-  test('should not have any automatically detectable accessibility issues', async function({ page }) {
+test.describe('homepage', () => { // 2
+  test('should not have any automatically detectable accessibility issues', async ({ page }) => {
     await page.goto('https://your-site.com/'); // 3
 
     const accessibilityScanResults = await new AxeBuilder({ page }).analyze(); // 4
@@ -74,7 +74,7 @@ For example, you can use [`AxeBuilder.include()`](https://github.com/dequelabs/a
 `AxeBuilder.analyze()` will scan the page *in its current state* when you call it. To scan parts of a page that are revealed based on UI interactions, use [Locators](./locators.md) to interact with the page before invoking `analyze()`:
 
 ```js
-test('navigation menu flyout should not have automatically detectable accessibility violations', async function({ page }) {
+test('navigation menu flyout should not have automatically detectable accessibility violations', async ({ page }) => {
   await page.goto('https://your-site.com/');
 
   await page.locator('button[aria-label="Navigation Menu"]').click();
@@ -98,7 +98,7 @@ You can constrain an accessibility scan to only run those rules which are "tagge
 Note that [automated testing cannot detect all types of WCAG violations](#disclaimer).
 
 ```js
-test('should not have any automatically detectable WCAG A or AA violations', async function({ page }) {
+test('should not have any automatically detectable WCAG A or AA violations', async ({ page }) => {
   await page.goto('https://your-site.com/');
 
   const accessibilityScanResults = await new AxeBuilder({ page })
@@ -126,7 +126,7 @@ This is usually the simplest option, but it has some important downsides:
 Here is an example of excluding one element from being scanned in one specific test:
 
 ```js
-test('should not have any accessibility violations outside of elements with known issues', async function({ page }) {
+test('should not have any accessibility violations outside of elements with known issues', async ({ page }) => {
   await page.goto('https://your-site.com/page-with-known-issues');
 
   const accessibilityScanResults = await new AxeBuilder({ page })
@@ -146,7 +146,7 @@ If your application contains many different pre-existing violations of a specifi
 You can find the rule IDs to pass to `disableRules()` in the `id` property of the violations you want to suppress. A [complete list of axe's rules](https://github.com/dequelabs/axe-core/blob/master/doc/rule-descriptions.md) can be found in `axe-core`'s documentation.
 
 ```js
-test('should not have any accessibility violations outside of rules with known issues', async function({ page }) {
+test('should not have any accessibility violations outside of rules with known issues', async ({ page }) => {
   await page.goto('https://your-site.com/page-with-known-issues');
 
   const accessibilityScanResults = await new AxeBuilder({ page })
@@ -197,7 +197,7 @@ The following example uses the [`axe-sarif-converter` package](http://npmjs.com/
 import { test, expect } from '@playwright/test';
 import { convertAxeToSarif } from 'axe-sarif-converter';
 
-test('example with SARIF report attachment', async function({ page }, testInfo) {
+test('example with SARIF report attachment', async ({ page }, testInfo) => {
   await page.goto('https://your-site.com/');
 
   const accessibilityScanResults = await new AxeBuilder({ page }).analyze();
@@ -278,7 +278,7 @@ To use the fixture, replace the earlier examples' `new AxeBuilder({ page })` wit
 ```js
 const { test, expect } = require('./axe-test');
 
-test('example using custom fixture', async function({ page, makeAxeBuilder }) {
+test('example using custom fixture', async ({ page, makeAxeBuilder }) => {
   await page.goto('https://your-site.com/');
 
   const accessibilityScanResults = await makeAxeBuilder()
