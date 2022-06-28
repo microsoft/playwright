@@ -143,5 +143,5 @@ test('should use source maps w/ ESM', async ({ runInlineTest, nodeVersion }) => 
   const output = stripAnsi(result.output);
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
-  expect(output).toContain('a.test.ts:7:7');
+  expect(output).toContain('[foo] › a.test.ts:7:7 › check project name');
 });
