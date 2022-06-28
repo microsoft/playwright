@@ -79,6 +79,9 @@ test('navigation menu flyout should not have automatically detectable accessibil
 
   await page.locator('button[aria-label="Navigation Menu"]').click();
 
+  // It is important to waitFor() the page to be in the desired
+  // state *before* running analyze(). Otherwise, axe might not
+  // find all the elements your test expects it to scan.
   await page.locator('#navigation-menu-flyout').waitFor();
 
   const accessibilityScanResults = await new AxeBuilder({ page })
