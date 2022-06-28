@@ -23106,3 +23106,42 @@ index 8b8ba5b934075fe53e231a418db17ddcf7ba92aa..08aba0aa37ffbbd5878befe05e2950ab
      </branch>
      <dependencies>
        <dep package="glib"/>
+diff --git a/WebKit.xcworkspace/contents.xcworkspacedata b/WebKit.xcworkspace/contents.xcworkspacedata
+index 8660306662de6faabab78662034958811e3e4a67..979c470d97950007ad990564eba18de965c295b2 100644
+--- a/WebKit.xcworkspace/contents.xcworkspacedata
++++ b/WebKit.xcworkspace/contents.xcworkspacedata
+@@ -1,6 +1,9 @@
+ <?xml version="1.0" encoding="UTF-8"?>
+ <Workspace
+    version = "1.0">
++   <FileRef
++      location = "group:Tools/Playwright/Playwright.xcodeproj">
++   </FileRef>
+    <FileRef
+       location = "group:Source/bmalloc/bmalloc.xcodeproj">
+    </FileRef>
+diff --git a/WebKit.xcworkspace/xcshareddata/xcschemes/All Modules.xcscheme b/WebKit.xcworkspace/xcshareddata/xcschemes/All Modules.xcscheme
+index 0a7672a9d18fead0f7c0b451683835beff4f94a1..87ccc0e4fcb4a386165392fe8df6acade41b755e 100644
+--- a/WebKit.xcworkspace/xcshareddata/xcschemes/All Modules.xcscheme	
++++ b/WebKit.xcworkspace/xcshareddata/xcschemes/All Modules.xcscheme	
+@@ -188,6 +188,20 @@
+                ReferencedContainer = "container:Tools/MiniBrowser/MiniBrowser.xcodeproj">
+             </BuildableReference>
+          </BuildActionEntry>
++         <BuildActionEntry
++            buildForTesting = "YES"
++            buildForRunning = "YES"
++            buildForProfiling = "YES"
++            buildForArchiving = "YES"
++            buildForAnalyzing = "YES">
++            <BuildableReference
++               BuildableIdentifier = "primary"
++               BlueprintIdentifier = "8D1107260486CEB800E47091"
++               BuildableName = "Playwright.app"
++               BlueprintName = "Playwright"
++               ReferencedContainer = "container:Tools/Playwright/Playwright.xcodeproj">
++            </BuildableReference>
++         </BuildActionEntry>
+          <BuildActionEntry
+             buildForTesting = "YES"
+             buildForRunning = "YES"
