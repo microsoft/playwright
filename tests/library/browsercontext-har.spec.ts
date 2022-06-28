@@ -209,8 +209,9 @@ it('should goBack to redirected navigation', async ({ context, isAndroid, asset,
   expect(await page.evaluate(() => location.href)).toBe('https://www.theverge.com/');
 });
 
-it('should goForward to redirected navigation', async ({ context, isAndroid, asset, server }) => {
+it('should goForward to redirected navigation', async ({ context, isAndroid, asset, server, browserName }) => {
   it.fixme(isAndroid);
+  it.fixme(browserName === 'firefox', 'Flaky in firefox');
 
   const path = asset('har-redirect.har');
   await context.routeFromHAR(path, { url: /.*theverge.*/ });
