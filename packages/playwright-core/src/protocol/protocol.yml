@@ -520,6 +520,11 @@ LocalUtils:
       parameters:
         harId: string
 
+    harUnzip:
+      parameters:
+        zipFile: string
+        harFile: string
+
 Root:
   type: interface
 

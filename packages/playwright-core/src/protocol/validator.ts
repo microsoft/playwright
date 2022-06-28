@@ -220,6 +220,10 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   scheme.LocalUtilsHarCloseParams = tObject({
     harId: tString,
   });
+  scheme.LocalUtilsHarUnzipParams = tObject({
+    zipFile: tString,
+    harFile: tString,
+  });
   scheme.RootInitializeParams = tObject({
     sdkLanguage: tString,
   });

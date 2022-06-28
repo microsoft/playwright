@@ -58,7 +58,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   readonly _backgroundPages = new Set<Page>();
   readonly _serviceWorkers = new Set<Worker>();
   readonly _isChromium: boolean;
-  private _harRecorders = new Map<string, { path: string }>();
+  private _harRecorders = new Map<string, { path: string, content: 'embed' | 'attach' | 'omit' | undefined }>();
 
   static from(context: channels.BrowserContextChannel): BrowserContext {
     return (context as any)._object;
@@ -102,7 +102,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     this._browserType = browserType;
     browserType._contexts.add(this);
     if (this._options.recordHar)
-      this._harRecorders.set('', { path: this._options.recordHar.path });
+      this._harRecorders.set('', { path: this._options.recordHar.path, content: this._options.recordHar.content });
   }
 
   private _onPage(page: Page): void {
@@ -283,7 +283,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
         urlFilter: options.url
       })!
     });
-    this._harRecorders.set(harId, { path: har });
+    this._harRecorders.set(harId, { path: har, content: 'attach' });
   }
 
   async routeFromHAR(har: string, options: { url?: string | RegExp, notFound?: 'abort' | 'fallback', update?: boolean } = {}): Promise<void> {
@@ -363,7 +363,15 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
         for (const [harId, harParams] of this._harRecorders) {
           const har = await this._channel.harExport({ harId });
           const artifact = Artifact.from(har.artifact);
-          await artifact.saveAs(harParams.path);
+          // Server side will compress artifact if content is attach or if file is .zip.
+          const isCompressed = harParams.content === 'attach' || harParams.path.endsWith('.zip');
+          const needCompressed = harParams.path.endsWith('.zip');
+          if (isCompressed && !needCompressed) {
+            await artifact.saveAs(harParams.path + '.tmp');
+            await this._connection.localUtils()._channel.harUnzip({ zipFile: harParams.path + '.tmp', harFile: harParams.path });
+          } else {
+            await artifact.saveAs(harParams.path);
+          }
           await artifact.delete();
         }
       }, true);

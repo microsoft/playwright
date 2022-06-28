@@ -382,6 +382,7 @@ export interface LocalUtilsChannel extends LocalUtilsEventTarget, Channel {
   harOpen(params: LocalUtilsHarOpenParams, metadata?: Metadata): Promise<LocalUtilsHarOpenResult>;
   harLookup(params: LocalUtilsHarLookupParams, metadata?: Metadata): Promise<LocalUtilsHarLookupResult>;
   harClose(params: LocalUtilsHarCloseParams, metadata?: Metadata): Promise<LocalUtilsHarCloseResult>;
+  harUnzip(params: LocalUtilsHarUnzipParams, metadata?: Metadata): Promise<LocalUtilsHarUnzipResult>;
 }
 export type LocalUtilsZipParams = {
   zipFile: string,
@@ -427,6 +428,14 @@ export type LocalUtilsHarCloseOptions = {
 
 };
 export type LocalUtilsHarCloseResult = void;
+export type LocalUtilsHarUnzipParams = {
+  zipFile: string,
+  harFile: string,
+};
+export type LocalUtilsHarUnzipOptions = {
+
+};
+export type LocalUtilsHarUnzipResult = void;
 
 export interface LocalUtilsEvents {
 }
