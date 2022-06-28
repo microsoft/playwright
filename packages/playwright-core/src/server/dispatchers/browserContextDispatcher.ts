@@ -213,8 +213,13 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     return { session: new CDPSessionDispatcher(this._scope, await crBrowserContext.newCDPSession((params.page ? params.page as PageDispatcher : params.frame as FrameDispatcher)._object)) };
   }
 
+  async harStart(params: channels.BrowserContextHarStartParams): Promise<channels.BrowserContextHarStartResult> {
+    const harId = await this._context._harStart(params.page ? (params.page as PageDispatcher)._object : null, params.options);
+    return { harId };
+  }
+
   async harExport(params: channels.BrowserContextHarExportParams): Promise<channels.BrowserContextHarExportResult> {
-    const artifact = await this._context._harRecorder?.export();
+    const artifact = await this._context._harExport(params.harId);
     if (!artifact)
       throw new Error('No HAR artifact. Ensure record.harPath is set.');
     return { artifact: new ArtifactDispatcher(this._scope, artifact) };

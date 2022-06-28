@@ -520,6 +520,11 @@ LocalUtils:
       parameters:
         harId: string
 
+    harUnzip:
+      parameters:
+        zipFile: string
+        harFile: string
+
 Root:
   type: interface
 
@@ -926,7 +931,16 @@ BrowserContext:
       returns:
         session: CDPSession
 
+    harStart:
+      parameters:
+        page: Page?
+        options: RecordHarOptions
+      returns:
+        harId: string
+
     harExport:
+      parameters:
+        harId: string?
       returns:
         artifact: Artifact
 

@@ -124,6 +124,20 @@ export class LocalUtilsDispatcher extends Dispatcher<{ guid: string }, channels.
       harBackend.dispose();
     }
   }
+
+  async harUnzip(params: channels.LocalUtilsHarUnzipParams, metadata?: channels.Metadata): Promise<void> {
+    const dir = path.dirname(params.zipFile);
+    const zipFile = new ZipFile(params.zipFile);
+    for (const entry of await zipFile.entries()) {
+      const buffer = await zipFile.read(entry);
+      if (entry === 'har.har')
+        await fs.promises.writeFile(params.harFile, buffer);
+      else
+        await fs.promises.writeFile(path.join(dir, entry), buffer);
+    }
+    zipFile.close();
+    await fs.promises.unlink(params.zipFile);
+  }
 }
 
 const redirectStatus = [301, 302, 303, 307, 308];

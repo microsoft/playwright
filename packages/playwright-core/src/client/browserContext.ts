@@ -58,6 +58,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   readonly _backgroundPages = new Set<Page>();
   readonly _serviceWorkers = new Set<Worker>();
   readonly _isChromium: boolean;
+  private _harRecorders = new Map<string, { path: string, content: 'embed' | 'attach' | 'omit' | undefined }>();
 
   static from(context: channels.BrowserContextChannel): BrowserContext {
     return (context as any)._object;
@@ -100,6 +101,8 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   _setBrowserType(browserType: BrowserType) {
     this._browserType = browserType;
     browserType._contexts.add(this);
+    if (this._options.recordHar)
+      this._harRecorders.set('', { path: this._options.recordHar.path, content: this._options.recordHar.content });
   }
 
   private _onPage(page: Page): void {
@@ -270,7 +273,24 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
       await this._channel.setNetworkInterceptionEnabled({ enabled: true });
   }
 
-  async routeFromHAR(har: string, options: { url?: URLMatch, notFound?: 'abort' | 'fallback' } = {}): Promise<void> {
+  async _recordIntoHAR(har: string, page: Page | null, options: { url?: string | RegExp, notFound?: 'abort' | 'fallback', update?: boolean } = {}): Promise<void> {
+    const { harId } = await this._channel.harStart({
+      page: page?._channel,
+      options: prepareRecordHarOptions({
+        path: har,
+        content: 'attach',
+        mode: 'minimal',
+        urlFilter: options.url
+      })!
+    });
+    this._harRecorders.set(harId, { path: har, content: 'attach' });
+  }
+
+  async routeFromHAR(har: string, options: { url?: string | RegExp, notFound?: 'abort' | 'fallback', update?: boolean } = {}): Promise<void> {
+    if (options.update) {
+      await this._recordIntoHAR(har, null, options);
+      return;
+    }
     const harRouter = await HarRouter.create(this._connection.localUtils(), har, options.notFound || 'abort', { urlMatch: options.url });
     harRouter.addContextRoute(this);
   }
@@ -340,10 +360,18 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     try {
       await this._wrapApiCall(async () => {
         await this._browserType?._onWillCloseContext?.(this);
-        if (this._options.recordHar)  {
-          const har = await this._channel.harExport();
+        for (const [harId, harParams] of this._harRecorders) {
+          const har = await this._channel.harExport({ harId });
           const artifact = Artifact.from(har.artifact);
-          await artifact.saveAs(this._options.recordHar.path);
+          // Server side will compress artifact if content is attach or if file is .zip.
+          const isCompressed = harParams.content === 'attach' || harParams.path.endsWith('.zip');
+          const needCompressed = harParams.path.endsWith('.zip');
+          if (isCompressed && !needCompressed) {
+            await artifact.saveAs(harParams.path + '.tmp');
+            await this._connection.localUtils()._channel.harUnzip({ zipFile: harParams.path + '.tmp', harFile: harParams.path });
+          } else {
+            await artifact.saveAs(harParams.path);
+          }
           await artifact.delete();
         }
       }, true);

@@ -382,6 +382,7 @@ export interface LocalUtilsChannel extends LocalUtilsEventTarget, Channel {
   harOpen(params: LocalUtilsHarOpenParams, metadata?: Metadata): Promise<LocalUtilsHarOpenResult>;
   harLookup(params: LocalUtilsHarLookupParams, metadata?: Metadata): Promise<LocalUtilsHarLookupResult>;
   harClose(params: LocalUtilsHarCloseParams, metadata?: Metadata): Promise<LocalUtilsHarCloseResult>;
+  harUnzip(params: LocalUtilsHarUnzipParams, metadata?: Metadata): Promise<LocalUtilsHarUnzipResult>;
 }
 export type LocalUtilsZipParams = {
   zipFile: string,
@@ -427,6 +428,14 @@ export type LocalUtilsHarCloseOptions = {
 
 };
 export type LocalUtilsHarCloseResult = void;
+export type LocalUtilsHarUnzipParams = {
+  zipFile: string,
+  harFile: string,
+};
+export type LocalUtilsHarUnzipOptions = {
+
+};
+export type LocalUtilsHarUnzipResult = void;
 
 export interface LocalUtilsEvents {
 }
@@ -1119,7 +1128,8 @@ export interface BrowserContextChannel extends BrowserContextEventTarget, EventT
   pause(params?: BrowserContextPauseParams, metadata?: Metadata): Promise<BrowserContextPauseResult>;
   recorderSupplementEnable(params: BrowserContextRecorderSupplementEnableParams, metadata?: Metadata): Promise<BrowserContextRecorderSupplementEnableResult>;
   newCDPSession(params: BrowserContextNewCDPSessionParams, metadata?: Metadata): Promise<BrowserContextNewCDPSessionResult>;
-  harExport(params?: BrowserContextHarExportParams, metadata?: Metadata): Promise<BrowserContextHarExportResult>;
+  harStart(params: BrowserContextHarStartParams, metadata?: Metadata): Promise<BrowserContextHarStartResult>;
+  harExport(params: BrowserContextHarExportParams, metadata?: Metadata): Promise<BrowserContextHarExportResult>;
   createTempFile(params: BrowserContextCreateTempFileParams, metadata?: Metadata): Promise<BrowserContextCreateTempFileResult>;
 }
 export type BrowserContextBindingCallEvent = {
@@ -1325,8 +1335,22 @@ export type BrowserContextNewCDPSessionOptions = {
 export type BrowserContextNewCDPSessionResult = {
   session: CDPSessionChannel,
 };
-export type BrowserContextHarExportParams = {};
-export type BrowserContextHarExportOptions = {};
+export type BrowserContextHarStartParams = {
+  page?: PageChannel,
+  options: RecordHarOptions,
+};
+export type BrowserContextHarStartOptions = {
+  page?: PageChannel,
+};
+export type BrowserContextHarStartResult = {
+  harId: string,
+};
+export type BrowserContextHarExportParams = {
+  harId?: string,
+};
+export type BrowserContextHarExportOptions = {
+  harId?: string,
+};
 export type BrowserContextHarExportResult = {
   artifact: ArtifactChannel,
 };
