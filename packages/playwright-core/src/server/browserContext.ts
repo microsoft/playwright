@@ -17,7 +17,7 @@
 
 import * as os from 'os';
 import { TimeoutSettings } from '../common/timeoutSettings';
-import { debugMode } from '../utils';
+import { createGuid, debugMode } from '../utils';
 import { mkdirIfNeeded } from '../utils/fileUtils';
 import type { Browser, BrowserOptions } from './browser';
 import type { Download } from './download';
@@ -40,6 +40,7 @@ import { HarRecorder } from './har/harRecorder';
 import { Recorder } from './recorder';
 import * as consoleApiSource from '../generated/consoleApiSource';
 import { BrowserContextAPIRequestContext } from './fetch';
+import type { Artifact } from './artifact';
 
 export abstract class BrowserContext extends SdkObject {
   static Events = {
@@ -67,7 +68,7 @@ export abstract class BrowserContext extends SdkObject {
   readonly _browserContextId: string | undefined;
   private _selectors?: Selectors;
   private _origins = new Set<string>();
-  readonly _harRecorder: HarRecorder | undefined;
+  readonly _harRecorders = new Map<string, HarRecorder>();
   readonly tracing: Tracing;
   readonly fetchRequest: BrowserContextAPIRequestContext;
   private _customCloseHandler?: () => Promise<any>;
@@ -87,7 +88,7 @@ export abstract class BrowserContext extends SdkObject {
     this.fetchRequest = new BrowserContextAPIRequestContext(this);
 
     if (this._options.recordHar)
-      this._harRecorder = new HarRecorder(this, this._options.recordHar);
+      this._harRecorders.set('', new HarRecorder(this, null, this._options.recordHar));
 
     this.tracing = new Tracing(this, browser.options.tracesDir);
   }
@@ -316,7 +317,8 @@ export abstract class BrowserContext extends SdkObject {
       this.emit(BrowserContext.Events.BeforeClose);
       this._closedStatus = 'closing';
 
-      await this._harRecorder?.flush();
+      for (const harRecorder of this._harRecorders.values())
+        await harRecorder.flush();
       await this.tracing.flush();
 
       // Cleanup.
@@ -441,6 +443,17 @@ export abstract class BrowserContext extends SdkObject {
     };
     this.on(BrowserContext.Events.Page, installInPage);
     return Promise.all(this.pages().map(installInPage));
+  }
+
+  async _harStart(page: Page | null, options: channels.RecordHarOptions): Promise<string> {
+    const harId = createGuid();
+    this._harRecorders.set(harId, new HarRecorder(this, page, options));
+    return harId;
+  }
+
+  async _harExport(harId: string | undefined): Promise<Artifact> {
+    const recorder = this._harRecorders.get(harId || '')!;
+    return recorder.export();
   }
 }
 

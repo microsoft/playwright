@@ -3186,10 +3186,15 @@ export interface Page {
     notFound?: "abort"|"fallback";
 
     /**
+     * If specified, updates the given HAR with the actual network information instead of serving from file.
+     */
+    update?: boolean;
+
+    /**
      * A glob pattern, regular expression or predicate to match the request URL. Only requests with URL matching the pattern
      * will be served from the HAR file. If not specified, all requests are served from the HAR file.
      */
-    url?: string|RegExp|((url: URL) => boolean);
+    url?: string|RegExp;
   }): Promise<void>;
 
   /**
@@ -7138,10 +7143,15 @@ export interface BrowserContext {
     notFound?: "abort"|"fallback";
 
     /**
+     * If specified, updates the given HAR with the actual network information instead of serving from file.
+     */
+    update?: boolean;
+
+    /**
      * A glob pattern, regular expression or predicate to match the request URL. Only requests with URL matching the pattern
      * will be served from the HAR file. If not specified, all requests are served from the HAR file.
      */
-    url?: string|RegExp|((url: URL) => boolean);
+    url?: string|RegExp;
   }): Promise<void>;
 
   /**

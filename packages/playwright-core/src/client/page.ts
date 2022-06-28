@@ -468,7 +468,11 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
       await this._channel.setNetworkInterceptionEnabled({ enabled: true });
   }
 
-  async routeFromHAR(har: string, options: { url?: URLMatch, notFound?: 'abort' | 'fallback' } = {}): Promise<void> {
+  async routeFromHAR(har: string, options: { url?: string | RegExp, notFound?: 'abort' | 'fallback', update?: boolean } = {}): Promise<void> {
+    if (options.update) {
+      await this._browserContext._recordIntoHAR(har, this, options);
+      return;
+    }
     const harRouter = await HarRouter.create(this._connection.localUtils(), har, options.notFound || 'abort', { urlMatch: options.url });
     harRouter.addPageRoute(this);
   }

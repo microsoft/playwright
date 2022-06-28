@@ -2751,8 +2751,13 @@ Path to a [HAR](http://www.softwareishard.com/blog/har-12-spec) file with prerec
 
 Defaults to abort.
 
+### option: Page.routeFromHAR.update
+- `update` ?<boolean>
+
+If specified, updates the given HAR with the actual network information instead of serving from file.
+
 ### option: Page.routeFromHAR.url
-- `url` <[string]|[RegExp]|[function]\([URL]\):[boolean]>
+- `url` <[string]|[RegExp]>
 
 A glob pattern, regular expression or predicate to match the request URL. Only requests with URL matching the pattern will be served from the HAR file. If not specified, all requests are served from the HAR file.
 

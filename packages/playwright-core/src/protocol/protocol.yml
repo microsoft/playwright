@@ -926,7 +926,16 @@ BrowserContext:
       returns:
         session: CDPSession
 
+    harStart:
+      parameters:
+        page: Page?
+        options: RecordHarOptions
+      returns:
+        harId: string
+
     harExport:
+      parameters:
+        harId: string?
       returns:
         artifact: Artifact
 

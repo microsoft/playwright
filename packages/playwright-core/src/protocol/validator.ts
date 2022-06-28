@@ -527,7 +527,13 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     page: tOptional(tChannel('Page')),
     frame: tOptional(tChannel('Frame')),
   });
-  scheme.BrowserContextHarExportParams = tOptional(tObject({}));
+  scheme.BrowserContextHarStartParams = tObject({
+    page: tOptional(tChannel('Page')),
+    options: tType('RecordHarOptions'),
+  });
+  scheme.BrowserContextHarExportParams = tObject({
+    harId: tOptional(tString),
+  });
   scheme.BrowserContextCreateTempFileParams = tObject({
     name: tString,
   });

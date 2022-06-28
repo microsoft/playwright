@@ -1119,7 +1119,8 @@ export interface BrowserContextChannel extends BrowserContextEventTarget, EventT
   pause(params?: BrowserContextPauseParams, metadata?: Metadata): Promise<BrowserContextPauseResult>;
   recorderSupplementEnable(params: BrowserContextRecorderSupplementEnableParams, metadata?: Metadata): Promise<BrowserContextRecorderSupplementEnableResult>;
   newCDPSession(params: BrowserContextNewCDPSessionParams, metadata?: Metadata): Promise<BrowserContextNewCDPSessionResult>;
-  harExport(params?: BrowserContextHarExportParams, metadata?: Metadata): Promise<BrowserContextHarExportResult>;
+  harStart(params: BrowserContextHarStartParams, metadata?: Metadata): Promise<BrowserContextHarStartResult>;
+  harExport(params: BrowserContextHarExportParams, metadata?: Metadata): Promise<BrowserContextHarExportResult>;
   createTempFile(params: BrowserContextCreateTempFileParams, metadata?: Metadata): Promise<BrowserContextCreateTempFileResult>;
 }
 export type BrowserContextBindingCallEvent = {
@@ -1325,8 +1326,22 @@ export type BrowserContextNewCDPSessionOptions = {
 export type BrowserContextNewCDPSessionResult = {
   session: CDPSessionChannel,
 };
-export type BrowserContextHarExportParams = {};
-export type BrowserContextHarExportOptions = {};
+export type BrowserContextHarStartParams = {
+  page?: PageChannel,
+  options: RecordHarOptions,
+};
+export type BrowserContextHarStartOptions = {
+  page?: PageChannel,
+};
+export type BrowserContextHarStartResult = {
+  harId: string,
+};
+export type BrowserContextHarExportParams = {
+  harId?: string,
+};
+export type BrowserContextHarExportOptions = {
+  harId?: string,
+};
 export type BrowserContextHarExportResult = {
   artifact: ArtifactChannel,
 };

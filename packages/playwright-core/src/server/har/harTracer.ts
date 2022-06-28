@@ -64,9 +64,11 @@ export class HarTracer {
   private _started = false;
   private _entrySymbol: symbol;
   private _baseURL: string | undefined;
+  private _page: Page | null;
 
-  constructor(context: BrowserContext | APIRequestContext, delegate: HarTracerDelegate, options: HarTracerOptions) {
+  constructor(context: BrowserContext | APIRequestContext, page: Page | null, delegate: HarTracerDelegate, options: HarTracerOptions) {
     this._context = context;
+    this._page = page;
     this._delegate = delegate;
     this._options = options;
     if (options.slimMode) {
@@ -92,7 +94,7 @@ export class HarTracer {
     ];
     if (this._context instanceof BrowserContext) {
       this._eventListeners.push(
-          eventsHelper.addEventListener(this._context, BrowserContext.Events.Page, (page: Page) => this._ensurePageEntry(page)),
+          eventsHelper.addEventListener(this._context, BrowserContext.Events.Page, (page: Page) => this._createPageEntryIfNeeded(page)),
           eventsHelper.addEventListener(this._context, BrowserContext.Events.Request, (request: network.Request) => this._onRequest(request)),
           eventsHelper.addEventListener(this._context, BrowserContext.Events.RequestFinished, ({ request, response }) => this._onRequestFinished(request, response).catch(() => {})),
           eventsHelper.addEventListener(this._context, BrowserContext.Events.RequestFailed, request => this._onRequestFailed(request)),
@@ -108,8 +110,10 @@ export class HarTracer {
     return (request as any)[this._entrySymbol];
   }
 
-  private _ensurePageEntry(page: Page): har.Page | undefined {
+  private _createPageEntryIfNeeded(page: Page): har.Page | undefined {
     if (this._options.omitPages)
+      return;
+    if (this._page && page !== this._page)
       return;
     let pageEntry = this._pageEntries.get(page);
     if (!pageEntry) {
@@ -228,11 +232,13 @@ export class HarTracer {
     if (!this._shouldIncludeEntryWithUrl(request.url()))
       return;
     const page = request.frame()._page;
+    if (this._page && page !== this._page)
+      return;
     const url = network.parsedURL(request.url());
     if (!url)
       return;
 
-    const pageEntry = this._ensurePageEntry(page);
+    const pageEntry = this._createPageEntryIfNeeded(page);
     const harEntry = createHarEntry(request.method(), url, request.frame().guid, this._options);
     if (pageEntry)
       harEntry.pageref = pageEntry.id;
@@ -252,10 +258,10 @@ export class HarTracer {
   private async _onRequestFinished(request: network.Request, response: network.Response | null) {
     if (!response)
       return;
-    const page = request.frame()._page;
     const harEntry = this._entryForRequest(request);
     if (!harEntry)
       return;
+    const page = request.frame()._page;
 
     const httpVersion = response.httpVersion();
     harEntry.request.httpVersion = httpVersion;
@@ -353,11 +359,11 @@ export class HarTracer {
   }
 
   private _onResponse(response: network.Response) {
-    const page = response.frame()._page;
-    const pageEntry = this._ensurePageEntry(page);
     const harEntry = this._entryForRequest(response.request());
     if (!harEntry)
       return;
+    const page = response.frame()._page;
+    const pageEntry = this._createPageEntryIfNeeded(page);
     const request = response.request();
 
     harEntry.response = {
