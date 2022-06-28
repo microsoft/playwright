@@ -740,7 +740,7 @@ await context.close();
 ```java
 BrowserContext context = browser.newContext(new Browser.NewContextOptions()
     .setRecordHarPath(Paths.get("example.har"))
-    .setRecordHarUrlFilter("**/api/**");
+    .setRecordHarUrlFilter("**/api/**"));
 
 // ... Perform actions ...
 
@@ -798,13 +798,13 @@ page.routeFromHAR(Paths.get("example.har"));
 ```python async
 # Either use a matching response from the HAR,
 # or abort the request if nothing matches.
-await page.routeFromHAR("example.har")
+await page.route_from_har("example.har")
 ```
 
 ```python sync
 # Either use a matching response from the HAR,
 # or abort the request if nothing matches.
-page.routeFromHAR("example.har")
+page.route_from_har("example.har")
 ```
 
 ```csharp
