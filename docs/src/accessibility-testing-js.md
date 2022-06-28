@@ -190,24 +190,22 @@ function violationFingerprints(accessibilityScanResults) {
 }
 ```
 
-## Exporting a report as a test attachment
+## Exporting scan results as a test attachment
 
-There are many tools and libraries which support generating standalone reports for axe scan results. You can use [`testInfo.attach()`](./api/class-testinfo#test-info-attach) to attach these reports to your test results, which [reporters](./test-reporters) can embed or link as part of your test output.
+Most accessibility tests are primarily concerned with the `violations` property of the axe scan results. However, the scan results contain more than just `violations`. For example, the results also contain information about rules which passed and about elements which axe found to have inconclusive results for some rules. This information can be useful for debugging tests that aren't detecting all the violations you expect them to.
 
-The following example uses the [`axe-sarif-converter` package](http://npmjs.com/package/axe-sarif-converter) to produce a [SARIF report](https://sarifweb.azurewebsites.net/) and attach it to the test result:
+To include *all* of the scan results as part of your test results for debugging purposes, you can add the scan results as a test attachment with [`testInfo.attach()`](./api/class-testinfo#test-info-attach). [Reporters](./test-reporters) can then embed or link the full results as part of your test output.
+
+The following example demonstrates attaching scan results to a test:
 
 ```js
-import { test, expect } from '@playwright/test';
-import { convertAxeToSarif } from 'axe-sarif-converter';
-
-test('example with SARIF report attachment', async ({ page }, testInfo) => {
+test('example with attachment', async ({ page }, testInfo) => {
   await page.goto('https://your-site.com/');
 
   const accessibilityScanResults = await new AxeBuilder({ page }).analyze();
 
-  const sarifReport = convertAxeToSarif(accessibilityScanResults);
-  await testInfo.attach('sarif-report', {
-    body: JSON.stringify(sarifReport),
+  await testInfo.attach('accessibility-scan-results', {
+    body: JSON.stringify(accessibilityScanResults, null, 2),
     contentType: 'application/json'
   });
 
