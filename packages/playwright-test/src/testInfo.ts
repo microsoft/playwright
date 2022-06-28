@@ -33,6 +33,7 @@ export class TestInfoImpl implements TestInfo {
   readonly _startWallTime: number;
   private _hasHardError: boolean = false;
   readonly _screenshotsDir: string;
+  readonly _onTestFailureImmediateCallbacks = new Map<() => Promise<void>, string>(); // fn -> title
 
   // ------------ TestInfo fields ------------
   readonly repeatEachIndex: number;
@@ -222,6 +223,10 @@ export class TestInfoImpl implements TestInfo {
       step.complete({ error: e instanceof SkipError ? undefined : serializeError(e) });
       throw e;
     }
+  }
+
+  _isFailure() {
+    return this.status !== 'skipped' && this.status !== this.expectedStatus;
   }
 
   // ------------ TestInfo methods ------------
