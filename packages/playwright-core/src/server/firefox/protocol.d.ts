@@ -972,7 +972,7 @@ export module Protocol {
       focused?: boolean;
       pressed?: boolean;
       focusable?: boolean;
-      haspopup?: boolean;
+      haspopup?: string;
       required?: boolean;
       invalid?: boolean;
       modal?: boolean;
@@ -1007,7 +1007,7 @@ export module Protocol {
         focused?: boolean;
         pressed?: boolean;
         focusable?: boolean;
-        haspopup?: boolean;
+        haspopup?: string;
         required?: boolean;
         invalid?: boolean;
         modal?: boolean;

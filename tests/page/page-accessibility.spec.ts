@@ -102,9 +102,10 @@ it('orientation', async ({ page }) => {
 });
 
 it('autocomplete', async ({ page }) => {
-  await page.setContent('<div role="textbox" aria-autocomplete="list">hi</div>');
+  await page.setContent('<div role="textbox" aria-autocomplete="list" aria-haspopup="menu">hi</div>');
   const snapshot = await page.accessibility.snapshot();
   expect(snapshot.children[0].autocomplete).toEqual('list');
+  expect(snapshot.children[0].haspopup).toEqual('menu');
 });
 
 it('multiselectable', async ({ page }) => {
