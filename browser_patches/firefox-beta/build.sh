@@ -104,6 +104,15 @@ if [[ $1 == "--full" || $2 == "--full" || $1 == "--bootstrap" ]]; then
   fi
 fi
 
+# Remove the cbindgen from mozbuild to rely on the one we install manually.
+# See https://github.com/microsoft/playwright/issues/15174
+if is_win; then
+  rm -rf "${USERPROFILE}\\.mozbuild\\cbindgen"
+else
+  rm -rf "${HOME}/.mozbuild/cbindgen"
+fi
+
+
 if [[ $1 == "--juggler" ]]; then
   ./mach build faster
 elif [[ $1 == "--bootstrap" ]]; then
