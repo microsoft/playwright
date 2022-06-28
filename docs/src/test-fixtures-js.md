@@ -219,6 +219,10 @@ export const test = base.extend<MyFixtures>({
 export { expect } from '@playwright/test';
 ```
 
+:::note
+Custom fixture names should start with a letter or underscore, and can contain only letters, numbers, underscores.
+:::
+
 ## Using a fixture
 
 Just mention fixture in your test function argument, and test runner will take care of it. Fixtures are also available in hooks and other fixtures. If you use TypeScript, fixtures will have the right type.
