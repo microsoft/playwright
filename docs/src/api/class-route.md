@@ -117,7 +117,7 @@ If set changes the request HTTP headers. Header values will be converted to a st
 ## async method: Route.fallback
 
 When several routes match the given pattern, they run in the order opposite to their registration.
-That way the last registered route can always override all the previos ones. In the example below,
+That way the last registered route can always override all the previous ones. In the example below,
 request will be handled by the bottom-most handler first, then it'll fall back to the previous one and
 in the end will be aborted by the first registered route.
 
