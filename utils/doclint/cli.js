@@ -91,7 +91,8 @@ async function run() {
       const introPath = path.join(PROJECT_DIR, 'docs', 'src', 'intro-java.md');
       const pomVersionRe = new RegExp('^(\\s*<artifactId>playwright<\\/artifactId>\\n\\s*<version>)(.*)(<\\/version>)$', 'gm');
       let content = fs.readFileSync(introPath).toString();
-      content = content.replace(pomVersionRe, '$1' + playwrightVersion + '$3');
+      const majorVersion = playwrightVersion.replace(new RegExp('((\\d+\\.){2})(\\d+)'), '$10')
+      content = content.replace(pomVersionRe, '$1' + majorVersion + '$3');
       writeAssumeNoop(introPath, content, dirtyFiles);
     }
   }
