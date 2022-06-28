@@ -31,6 +31,31 @@ test('should work', async ({ runInlineTest }) => {
   expect(results[0].status).toBe('passed');
 });
 
+test.only('should work with quotes', async ({ runInlineTest }) => {
+  const { results } = await runInlineTest({
+    'a.test.js': `
+      const test = pwt.test.extend({
+        "double-quote-me": async ({}, use) => await use('double'),
+        'single-quote-me': async ({}, use) => await use('single'),
+        " spaces in name ": async ({}, use) => await use('space'),
+      });
+
+      test('should work using double quotes', async ({ "double-quote-me": d, "single-quote-me": s, " spaces in name ": spaces }) => {
+        expect(d).toBe('double');
+        expect(s).toBe('single');
+        expect(spaces).toBe('space');
+      });
+
+      test('should work using single quotes', async ({ 'double-quote-me': d, 'single-quote-me': s, ' spaces in name ': spaces }) => {
+        expect(d).toBe('double');
+        expect(s).toBe('single');
+        expect(spaces).toBe('space');
+      });
+    `,
+  });
+  expect(results[0].status).toBe('passed');
+});
+
 test('should work with a sync test function', async ({ runInlineTest }) => {
   const { results } = await runInlineTest({
     'a.test.js': `
