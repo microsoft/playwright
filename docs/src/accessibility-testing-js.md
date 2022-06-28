@@ -137,7 +137,7 @@ test('should not have any accessibility violations outside of elements with know
 });
 ```
 
-If the element in question is used repeatedly in many pages, consider using a [using a test fixture](#using-a-test-fixture-for-common-axe-configuration) to reuse the same `AxeBuilder` configuration across multiple tests.
+If the element in question is used repeatedly in many pages, consider [using a test fixture](#using-a-test-fixture-for-common-axe-configuration) to reuse the same `AxeBuilder` configuration across multiple tests.
 
 ### Disabling individual scan rules
 
