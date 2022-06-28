@@ -26,6 +26,7 @@ import type { ZipFile } from '../../zipBundle';
 import { ManualPromise } from '../../utils/manualPromise';
 import type EventEmitter from 'events';
 import { createGuid } from '../../utils';
+import type { Page } from '../page';
 
 export class HarRecorder {
   private _artifact: Artifact;
@@ -35,12 +36,12 @@ export class HarRecorder {
   private _zipFile: ZipFile | null = null;
   private _writtenZipEntries = new Set<string>();
 
-  constructor(context: BrowserContext, options: channels.RecordHarOptions) {
+  constructor(context: BrowserContext, page: Page | null, options: channels.RecordHarOptions) {
     this._artifact = new Artifact(context, path.join(context._browser.options.artifactsDir, `${createGuid()}.har`));
     const urlFilterRe = options.urlRegexSource !== undefined && options.urlRegexFlags !== undefined ? new RegExp(options.urlRegexSource, options.urlRegexFlags) : undefined;
     const expectsZip = options.path.endsWith('.zip');
     const content = options.content || (expectsZip ? 'attach' : 'embed');
-    this._tracer = new HarTracer(context, this, {
+    this._tracer = new HarTracer(context, page, this, {
       content,
       slimMode: options.mode === 'minimal',
       includeTraceInfo: false,

@@ -269,6 +269,27 @@ it('should round-trip har.zip', async ({ contextFactory, isAndroid, server }, te
   await expect(page2.locator('body')).toHaveCSS('background-color', 'rgb(255, 192, 203)');
 });
 
+it('should produce extracted zip', async ({ contextFactory, isAndroid, server }, testInfo) => {
+  it.fixme(isAndroid);
+
+  const harPath = testInfo.outputPath('har.har');
+  const context1 = await contextFactory({ recordHar: { mode: 'minimal', path: harPath, content: 'attach' } });
+  const page1 = await context1.newPage();
+  await page1.goto(server.PREFIX + '/one-style.html');
+  await context1.close();
+
+  expect(fs.existsSync(harPath)).toBeTruthy();
+  const har = fs.readFileSync(harPath, 'utf-8');
+  expect(har).not.toContain('background-color');
+
+  const context2 = await contextFactory();
+  await context2.routeFromHAR(harPath, { notFound: 'abort' });
+  const page2 = await context2.newPage();
+  await page2.goto(server.PREFIX + '/one-style.html');
+  expect(await page2.content()).toContain('hello, world!');
+  await expect(page2.locator('body')).toHaveCSS('background-color', 'rgb(255, 192, 203)');
+});
+
 it('should round-trip extracted har.zip', async ({ contextFactory, isAndroid, server }, testInfo) => {
   it.fixme(isAndroid);
 
@@ -358,4 +379,58 @@ it('should disambiguate by header', async ({ contextFactory, isAndroid, server }
   expect(await page2.evaluate(fetchFunction, 'baz2')).toBe('baz2');
   expect(await page2.evaluate(fetchFunction, 'baz3')).toBe('baz3');
   expect(await page2.evaluate(fetchFunction, 'baz4')).toBe('baz1');
+});
+
+it('should update har.zip for context', async ({ contextFactory, isAndroid, server }, testInfo) => {
+  it.fixme(isAndroid);
+
+  const harPath = testInfo.outputPath('har.zip');
+  const context1 = await contextFactory();
+  await context1.routeFromHAR(harPath, { update: true });
+  const page1 = await context1.newPage();
+  await page1.goto(server.PREFIX + '/one-style.html');
+  await context1.close();
+
+  const context2 = await contextFactory();
+  await context2.routeFromHAR(harPath, { notFound: 'abort' });
+  const page2 = await context2.newPage();
+  await page2.goto(server.PREFIX + '/one-style.html');
+  expect(await page2.content()).toContain('hello, world!');
+  await expect(page2.locator('body')).toHaveCSS('background-color', 'rgb(255, 192, 203)');
+});
+
+it('should update har.zip for page', async ({ contextFactory, isAndroid, server }, testInfo) => {
+  it.fixme(isAndroid);
+
+  const harPath = testInfo.outputPath('har.zip');
+  const context1 = await contextFactory();
+  const page1 = await context1.newPage();
+  await page1.routeFromHAR(harPath, { update: true });
+  await page1.goto(server.PREFIX + '/one-style.html');
+  await context1.close();
+
+  const context2 = await contextFactory();
+  const page2 = await context2.newPage();
+  await page2.routeFromHAR(harPath, { notFound: 'abort' });
+  await page2.goto(server.PREFIX + '/one-style.html');
+  expect(await page2.content()).toContain('hello, world!');
+  await expect(page2.locator('body')).toHaveCSS('background-color', 'rgb(255, 192, 203)');
+});
+
+it('should update extracted har.zip for page', async ({ contextFactory, isAndroid, server }, testInfo) => {
+  it.fixme(isAndroid);
+
+  const harPath = testInfo.outputPath('har.har');
+  const context1 = await contextFactory();
+  const page1 = await context1.newPage();
+  await page1.routeFromHAR(harPath, { update: true });
+  await page1.goto(server.PREFIX + '/one-style.html');
+  await context1.close();
+
+  const context2 = await contextFactory();
+  const page2 = await context2.newPage();
+  await page2.routeFromHAR(harPath, { notFound: 'abort' });
+  await page2.goto(server.PREFIX + '/one-style.html');
+  expect(await page2.content()).toContain('hello, world!');
+  await expect(page2.locator('body')).toHaveCSS('background-color', 'rgb(255, 192, 203)');
 });

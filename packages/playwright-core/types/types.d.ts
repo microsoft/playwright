@@ -3186,10 +3186,15 @@ export interface Page {
     notFound?: "abort"|"fallback";
 
     /**
+     * If specified, updates the given HAR with the actual network information instead of serving from file.
+     */
+    update?: boolean;
+
+    /**
      * A glob pattern, regular expression or predicate to match the request URL. Only requests with URL matching the pattern
      * will be served from the HAR file. If not specified, all requests are served from the HAR file.
      */
-    url?: string|RegExp|((url: URL) => boolean);
+    url?: string|RegExp;
   }): Promise<void>;
 
   /**
@@ -7138,10 +7143,15 @@ export interface BrowserContext {
     notFound?: "abort"|"fallback";
 
     /**
+     * If specified, updates the given HAR with the actual network information instead of serving from file.
+     */
+    update?: boolean;
+
+    /**
      * A glob pattern, regular expression or predicate to match the request URL. Only requests with URL matching the pattern
      * will be served from the HAR file. If not specified, all requests are served from the HAR file.
      */
-    url?: string|RegExp|((url: URL) => boolean);
+    url?: string|RegExp;
   }): Promise<void>;
 
   /**
@@ -10666,13 +10676,15 @@ export interface BrowserType<Unused = {}> {
 
       /**
        * Optional setting to control resource content management. If `omit` is specified, content is not persisted. If `attach`
-       * is specified, resources are persistet as separate files and all of these files are archived along with the HAR file.
-       * Defaults to `embed`, which stores content inline the HAR file as per HAR specification.
+       * is specified, resources are persistet as separate files or entries in the ZIP archive. If `embed` is specified, content
+       * is stored inline the HAR file as per HAR specification. Defaults to `attach` for `.zip` output files and to `embed` for
+       * all other file extensions.
        */
       content?: "omit"|"embed"|"attach";
 
       /**
-       * Path on the filesystem to write the HAR file to. If the file name ends with `.zip`, `attach` mode is used by default.
+       * Path on the filesystem to write the HAR file to. If the file name ends with `.zip`, `content: 'attach'` is used by
+       * default.
        */
       path: string;
 
@@ -11859,13 +11871,15 @@ export interface AndroidDevice {
 
       /**
        * Optional setting to control resource content management. If `omit` is specified, content is not persisted. If `attach`
-       * is specified, resources are persistet as separate files and all of these files are archived along with the HAR file.
-       * Defaults to `embed`, which stores content inline the HAR file as per HAR specification.
+       * is specified, resources are persistet as separate files or entries in the ZIP archive. If `embed` is specified, content
+       * is stored inline the HAR file as per HAR specification. Defaults to `attach` for `.zip` output files and to `embed` for
+       * all other file extensions.
        */
       content?: "omit"|"embed"|"attach";
 
       /**
-       * Path on the filesystem to write the HAR file to. If the file name ends with `.zip`, `attach` mode is used by default.
+       * Path on the filesystem to write the HAR file to. If the file name ends with `.zip`, `content: 'attach'` is used by
+       * default.
        */
       path: string;
 
@@ -13435,13 +13449,15 @@ export interface Browser extends EventEmitter {
 
       /**
        * Optional setting to control resource content management. If `omit` is specified, content is not persisted. If `attach`
-       * is specified, resources are persistet as separate files and all of these files are archived along with the HAR file.
-       * Defaults to `embed`, which stores content inline the HAR file as per HAR specification.
+       * is specified, resources are persistet as separate files or entries in the ZIP archive. If `embed` is specified, content
+       * is stored inline the HAR file as per HAR specification. Defaults to `attach` for `.zip` output files and to `embed` for
+       * all other file extensions.
        */
       content?: "omit"|"embed"|"attach";
 
       /**
-       * Path on the filesystem to write the HAR file to. If the file name ends with `.zip`, `attach` mode is used by default.
+       * Path on the filesystem to write the HAR file to. If the file name ends with `.zip`, `content: 'attach'` is used by
+       * default.
        */
       path: string;
 
@@ -14227,13 +14243,15 @@ export interface Electron {
 
       /**
        * Optional setting to control resource content management. If `omit` is specified, content is not persisted. If `attach`
-       * is specified, resources are persistet as separate files and all of these files are archived along with the HAR file.
-       * Defaults to `embed`, which stores content inline the HAR file as per HAR specification.
+       * is specified, resources are persistet as separate files or entries in the ZIP archive. If `embed` is specified, content
+       * is stored inline the HAR file as per HAR specification. Defaults to `attach` for `.zip` output files and to `embed` for
+       * all other file extensions.
        */
       content?: "omit"|"embed"|"attach";
 
       /**
-       * Path on the filesystem to write the HAR file to. If the file name ends with `.zip`, `attach` mode is used by default.
+       * Path on the filesystem to write the HAR file to. If the file name ends with `.zip`, `content: 'attach'` is used by
+       * default.
        */
       path: string;
 
@@ -16054,13 +16072,15 @@ export interface BrowserContextOptions {
 
     /**
      * Optional setting to control resource content management. If `omit` is specified, content is not persisted. If `attach`
-     * is specified, resources are persistet as separate files and all of these files are archived along with the HAR file.
-     * Defaults to `embed`, which stores content inline the HAR file as per HAR specification.
+     * is specified, resources are persistet as separate files or entries in the ZIP archive. If `embed` is specified, content
+     * is stored inline the HAR file as per HAR specification. Defaults to `attach` for `.zip` output files and to `embed` for
+     * all other file extensions.
      */
     content?: "omit"|"embed"|"attach";
 
     /**
-     * Path on the filesystem to write the HAR file to. If the file name ends with `.zip`, `attach` mode is used by default.
+     * Path on the filesystem to write the HAR file to. If the file name ends with `.zip`, `content: 'attach'` is used by
+     * default.
      */
     path: string;
 
