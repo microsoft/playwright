@@ -631,7 +631,7 @@ async def handle_route(route: Route) -> None:
         # Override response body.
         body=body,
         # Force content type to be html.
-        headers={**response.headers(), "content-type": "text/html"},
+        headers={**response.headers, "content-type": "text/html"},
     )
 
 await page.route("**/title.html", handle_route)
@@ -650,7 +650,7 @@ def handle_route(route: Route) -> None:
         # Override response body.
         body=body,
         # Force content type to be html.
-        headers={**response.all_headers(), "content-type": "text/html"},
+        headers={**response.headers, "content-type": "text/html"},
     )
 
 page.route("**/title.html", handle_route)
