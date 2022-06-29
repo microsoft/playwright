@@ -162,7 +162,7 @@ test('should not have any accessibility violations outside of rules with known i
 
 ### Using snapshots to allow specific known issues
 
-If you would like to allow for a more granular set of known issues, you can use [Snapshots](./test-snapshots.md) to verify that a set of pre-existing violations has not changed. This approach avoids the downsides of using `AxeBuilder.exclude()` at the cost of slightly more complexity and fragility.
+If you would like to allow for a more granular set of known issues, you can use [Snapshots](./test-snapshots-js.md) to verify that a set of pre-existing violations has not changed. This approach avoids the downsides of using `AxeBuilder.exclude()` at the cost of slightly more complexity and fragility.
 
 Do not use a snapshot of the entire `accessibilityScanResults.violations` array. It contains implementation details of the elements in question, such as a snippet of their rendered HTML; if you include these in your snapshots, it will make your tests prone to breaking every time one of the components in question changes for an unrelated reason:
 
