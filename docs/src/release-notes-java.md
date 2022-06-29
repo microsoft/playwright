@@ -89,7 +89,7 @@ Note that the new methods [`method: Page.routeFromHAR`] and [`method: BrowserCon
       .setRecordHarPath(Paths.get("example.har.zip"))
       .setRecordHarMode(HarMode.MINIMAL));
   ```
-* Playwright now runs on Ubuntu 22 amd64 and Ubuntu 22 arm64. We also publish new docker image `mcr.microsoft.com/playwright/java:v1.23.0-jammy`.
+* Playwright now runs on Ubuntu 22 amd64 and Ubuntu 22 arm64. We also publish new docker image `mcr.microsoft.com/playwright/java:v1.23.1-jammy`.
 
 
 ## Version 1.22

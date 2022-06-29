@@ -106,7 +106,7 @@ Read more about [component testing with Playwright](./test-components).
     }
   });
   ```
-* Playwright now runs on Ubuntu 22 amd64 and Ubuntu 22 arm64. We also publish new docker image `mcr.microsoft.com/playwright:v1.23.0-jammy`.
+* Playwright now runs on Ubuntu 22 amd64 and Ubuntu 22 arm64. We also publish new docker image `mcr.microsoft.com/playwright:v1.23.1-jammy`.
 
 ### ⚠️ Breaking Changes ⚠️
 
