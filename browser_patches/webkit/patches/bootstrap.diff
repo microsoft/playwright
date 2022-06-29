@@ -2224,7 +2224,7 @@ diff --git a/Source/WebCore/Modules/speech/cocoa/WebSpeechRecognizerTask.mm b/So
 index a941d76a4f748718df1e3cff2a6c5e0827f48891..f62db5a27ac0e4c12430e7d19e60c83d768ace22 100644
 --- a/Source/WebCore/Modules/speech/cocoa/WebSpeechRecognizerTask.mm
 +++ b/Source/WebCore/Modules/speech/cocoa/WebSpeechRecognizerTask.mm
-@@ -198,6 +198,7 @@ NS_ASSUME_NONNULL_BEGIN
+@@ -198,6 +198,7 @@ - (void)sendEndIfNeeded
  
  - (void)speechRecognizer:(SFSpeechRecognizer *)speechRecognizer availabilityDidChange:(BOOL)available
  {
@@ -2232,7 +2232,7 @@ index a941d76a4f748718df1e3cff2a6c5e0827f48891..f62db5a27ac0e4c12430e7d19e60c83d
      ASSERT(isMainThread());
  
      if (available || !_task)
-@@ -211,6 +212,7 @@ NS_ASSUME_NONNULL_BEGIN
+@@ -211,6 +212,7 @@ - (void)speechRecognizer:(SFSpeechRecognizer *)speechRecognizer availabilityDidC
  
  - (void)speechRecognitionTask:(SFSpeechRecognitionTask *)task didHypothesizeTranscription:(SFTranscription *)transcription
  {
@@ -2240,7 +2240,7 @@ index a941d76a4f748718df1e3cff2a6c5e0827f48891..f62db5a27ac0e4c12430e7d19e60c83d
      ASSERT(isMainThread());
  
      [self sendSpeechStartIfNeeded];
-@@ -219,6 +221,7 @@ NS_ASSUME_NONNULL_BEGIN
+@@ -219,6 +221,7 @@ - (void)speechRecognitionTask:(SFSpeechRecognitionTask *)task didHypothesizeTran
  
  - (void)speechRecognitionTask:(SFSpeechRecognitionTask *)task didFinishRecognition:(SFSpeechRecognitionResult *)recognitionResult
  {
@@ -2248,7 +2248,7 @@ index a941d76a4f748718df1e3cff2a6c5e0827f48891..f62db5a27ac0e4c12430e7d19e60c83d
      ASSERT(isMainThread());
      [self callbackWithTranscriptions:recognitionResult.transcriptions isFinal:YES];
  
-@@ -230,6 +233,7 @@ NS_ASSUME_NONNULL_BEGIN
+@@ -230,6 +233,7 @@ - (void)speechRecognitionTask:(SFSpeechRecognitionTask *)task didFinishRecogniti
  
  - (void)speechRecognitionTaskWasCancelled:(SFSpeechRecognitionTask *)task
  {
@@ -8793,7 +8793,7 @@ diff --git a/Source/WebKit/NetworkProcess/cocoa/NetworkSessionCocoa.mm b/Source/
 index 1dc6df3e1145332a0aeb902c0f5d7d5d727593be..230d268489a52391f7d4f336d22311e35c9f8278 100644
 --- a/Source/WebKit/NetworkProcess/cocoa/NetworkSessionCocoa.mm
 +++ b/Source/WebKit/NetworkProcess/cocoa/NetworkSessionCocoa.mm
-@@ -720,7 +720,7 @@ void NetworkSessionCocoa::setClientAuditToken(const WebCore::AuthenticationChall
+@@ -720,7 +720,7 @@ - (void)URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task didRece
  
      if ([challenge.protectionSpace.authenticationMethod isEqualToString:NSURLAuthenticationMethodServerTrust]) {
          sessionCocoa->setClientAuditToken(challenge);
@@ -10203,7 +10203,7 @@ index b8bf936e2eb8ca4dc0f445099dfb899395950bdb..30a2af76de0daac450c7afbb8a2dfe81
  #import <WebCore/Credential.h>
  #import <WebCore/RegistrationDatabase.h>
  #import <WebCore/ServiceWorkerClientData.h>
-@@ -234,6 +235,11 @@ static WallTime toSystemClockTime(NSDate *date)
+@@ -234,6 +235,11 @@ - (void)removeDataOfTypes:(NSSet *)dataTypes modifiedSince:(NSDate *)date comple
      });
  }
  
@@ -10382,7 +10382,7 @@ diff --git a/Source/WebKit/UIProcess/API/Cocoa/_WKProcessPoolConfiguration.mm b/
 index 2e235bb880c638a0e74256b6d66cb0244ea0a3f1..3471eebb47e860f7c2071d0e7f2691c9f0a6355d 100644
 --- a/Source/WebKit/UIProcess/API/Cocoa/_WKProcessPoolConfiguration.mm
 +++ b/Source/WebKit/UIProcess/API/Cocoa/_WKProcessPoolConfiguration.mm
-@@ -257,6 +257,16 @@
+@@ -257,6 +257,16 @@ - (BOOL)processSwapsOnNavigation
      return _processPoolConfiguration->processSwapsOnNavigation();
  }
  
@@ -17085,6 +17085,21 @@ index bc758641100c9ab2bb70c878f7a10a6db198cf01..fa3764f7c417363a0da953552fb9b6ff
  #if ENABLE(DRAG_SUPPORT)
      DidPerformDragOperation(bool handled)
  #endif
+diff --git a/Source/WebKit/UIProcess/WebProcessCache.cpp b/Source/WebKit/UIProcess/WebProcessCache.cpp
+index d18d9e197f8a366cd5efeaa63600bec4e7f1d9d6..3c9db1f1cb5523923ec010f935d883932daa5f1a 100644
+--- a/Source/WebKit/UIProcess/WebProcessCache.cpp
++++ b/Source/WebKit/UIProcess/WebProcessCache.cpp
+@@ -81,6 +81,10 @@ bool WebProcessCache::canCacheProcess(WebProcessProxy& process) const
+         return false;
+     }
+ 
++    auto sessionID = process.websiteDataStore()->sessionID();
++    if (sessionID.isEphemeral() && !process.processPool().hasPagesUsingWebsiteDataStore(*process.websiteDataStore()))
++        return false;
++
+     return true;
+ }
+ 
 diff --git a/Source/WebKit/UIProcess/WebProcessPool.cpp b/Source/WebKit/UIProcess/WebProcessPool.cpp
 index abc6cbd41160f202bffd5b3c6854388151c59812..3d2229909eec35dc9ba88312e5c81068c46fe519 100644
 --- a/Source/WebKit/UIProcess/WebProcessPool.cpp
@@ -20614,7 +20629,7 @@ diff --git a/Source/WebKitLegacy/mac/WebView/WebHTMLView.mm b/Source/WebKitLegac
 index 44ef0c4d102fb1022205f41919442fe5ab703522..9ddc4fc93aa4b798b2f8edecaf87ee740ec48a10 100644
 --- a/Source/WebKitLegacy/mac/WebView/WebHTMLView.mm
 +++ b/Source/WebKitLegacy/mac/WebView/WebHTMLView.mm
-@@ -4189,7 +4189,7 @@ static BOOL currentScrollIsBlit(NSView *clipView)
+@@ -4189,7 +4189,7 @@ - (void)mouseDown:(WebEvent *)event
      _private->handlingMouseDownEvent = NO;
  }
  
@@ -20627,7 +20642,7 @@ diff --git a/Source/WebKitLegacy/mac/WebView/WebView.mm b/Source/WebKitLegacy/ma
 index 59cecf9242ab834dadc904ef295365e1476f47f9..ca4cc96e62df62e92c22c3535f5972cc1fdc4cba 100644
 --- a/Source/WebKitLegacy/mac/WebView/WebView.mm
 +++ b/Source/WebKitLegacy/mac/WebView/WebView.mm
-@@ -4039,7 +4039,7 @@ IGNORE_WARNINGS_END
+@@ -4039,7 +4039,7 @@ + (void)_doNotStartObservingNetworkReachability
  }
  #endif // PLATFORM(IOS_FAMILY)
  
@@ -20636,7 +20651,7 @@ index 59cecf9242ab834dadc904ef295365e1476f47f9..ca4cc96e62df62e92c22c3535f5972cc
  
  - (NSArray *)_touchEventRegions
  {
-@@ -4081,7 +4081,7 @@ IGNORE_WARNINGS_END
+@@ -4081,7 +4081,7 @@ - (NSArray *)_touchEventRegions
      }).autorelease();
  }
  
