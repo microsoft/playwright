@@ -128,3 +128,7 @@ it('should handle window', async ({ page, browserName, isElectron }) => {
   ]);
   expect(error.message).toBe(browserName === 'chromium' ? 'Window' : '[object Window]');
 });
+
+it('should remove a listener of a non-existing event handler', async ({ page }) => {
+  page.removeListener('pageerror', () => {});
+});
