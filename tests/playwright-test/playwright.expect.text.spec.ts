@@ -607,7 +607,7 @@ test('should print expected/received before timeout', async ({ runInlineTest }) 
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(0);
   expect(result.failed).toBe(1);
-  expect(result.output).toContain('Timeout of 2000ms exceeded.');
+  expect(result.output).toContain('Test timeout of 2000ms exceeded.');
   expect(stripAnsi(result.output)).toContain('Expected string: "Text 2"');
   expect(stripAnsi(result.output)).toContain('Received string: "Text content"');
 });

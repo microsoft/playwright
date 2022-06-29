@@ -104,27 +104,35 @@ export class TimeoutManager {
   }
 
   private _createTimeoutError(): TestError {
-    let suffix = '';
+    let message = '';
+    const timeout = this._currentSlot().timeout;
     switch (this._runnable.type) {
       case 'test':
+        const fixtureSuffix = this._fixture ? ` while ${this._fixture.title}` : '';
+        message = `Test timeout of ${timeout}ms exceeded${fixtureSuffix}.`;
+        break;
       case 'afterEach':
-        suffix = ''; break;
       case 'beforeEach':
+        message = `Test timeout of ${timeout}ms exceeded while running "${this._runnable.type}" hook.`;
+        break;
       case 'beforeAll':
       case 'afterAll':
-        suffix = ` in ${this._runnable.type} hook`; break;
+        message = `"${this._runnable.type}" hook timeout of ${timeout}ms exceeded.`;
+        break;
       case 'teardown':
-        suffix = ` in fixtures teardown`; break;
+        message = `Worker teardown timeout of ${timeout}ms exceeded.`;
+        break;
       case 'skip':
       case 'slow':
       case 'fixme':
       case 'fail':
-        suffix = ` in ${this._runnable.type} modifier`; break;
+        message = `"${this._runnable.type}" modifier timeout of ${timeout}ms exceeded.`;
+        break;
     }
     const fixtureWithSlot = this._fixture?.slot ? this._fixture : undefined;
     if (fixtureWithSlot)
-      suffix = ` by ${fixtureWithSlot.title}`;
-    const message = colors.red(`Timeout of ${this._currentSlot().timeout}ms exceeded${suffix}.`);
+      message = `${fixtureWithSlot.title} timeout of ${timeout}ms exceeded.`;
+    message = colors.red(message);
     const location = (fixtureWithSlot || this._runnable).location;
     return {
       message,

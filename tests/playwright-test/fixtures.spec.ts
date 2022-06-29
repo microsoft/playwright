@@ -627,7 +627,7 @@ test('should create a new worker for worker fixtures', async ({ runInlineTest })
   }, { workers: 1 });
   expect(result.output).toContain('foo-a');
   expect(result.output).toContain('bar-b');
-  const baseWorker = +result.output.match(/%%base-(\d)/)[1];
+  const baseWorker = +result.output.match(/%%base-(\d)/)![1];
   expect(result.output).toContain(`%%base-${baseWorker}`);
   expect(result.output).toContain(`%%a-${1 - baseWorker}`);
   expect(result.output).toContain(`%%b-${baseWorker}`);
@@ -709,7 +709,7 @@ test('worker teardown errors reflected in timed-out tests', async ({ runInlineTe
   }, { timeout: 1000 });
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
-  expect(result.output).toContain('Timeout of 1000ms exceeded.');
+  expect(result.output).toContain('Test timeout of 1000ms exceeded.');
   expect(result.output).toContain('Rejecting!');
 });
 

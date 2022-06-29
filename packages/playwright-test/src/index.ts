@@ -84,7 +84,7 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
     });
     if (dir)
       await removeFolders([dir]);
-  }, { scope: 'worker', _title: 'built-in playwright configuration' } as any],
+  }, { scope: 'worker', _title: 'playwright configuration' } as any],
 
   _browserOptions: [async ({ playwright, headless, channel, launchOptions }, use) => {
     const options: LaunchOptions = {
@@ -452,7 +452,7 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
       else
         await fs.promises.unlink(file).catch(() => {});
     }));
-  }, { auto: 'all-hooks-included',  _title: 'built-in playwright configuration' } as any],
+  }, { auto: 'all-hooks-included',  _title: 'playwright configuration' } as any],
 
   _contextFactory: [async ({ browser, video, _artifactsDir }, use, testInfo) => {
     const videoMode = normalizeVideoMode(video);

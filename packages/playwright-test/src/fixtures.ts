@@ -66,8 +66,9 @@ class Fixture {
     this.runner = runner;
     this.registration = registration;
     this.value = null;
+    const title = this.registration.customTitle || this.registration.name;
     this._runnableDescription = {
-      title: `fixture "${this.registration.customTitle || this.registration.name}" setup`,
+      title: this.registration.timeout !== undefined ? `Fixture "${title}"` : `setting up "${title}"`,
       location: registration.location,
       slot: this.registration.timeout === undefined ? undefined : {
         timeout: this.registration.timeout,
@@ -139,7 +140,8 @@ class Fixture {
       }
       if (this._useFuncFinished) {
         debugTest(`teardown ${this.registration.name}`);
-        this._runnableDescription.title = `fixture "${this.registration.customTitle || this.registration.name}" teardown`;
+        const title = this.registration.customTitle || this.registration.name;
+        this._runnableDescription.title = this.registration.timeout !== undefined ? `Fixture "${title}"` : `tearing down "${title}"`;
         timeoutManager.setCurrentFixture(this._runnableDescription);
         this._useFuncFinished.resolve();
         await this._selfTeardownComplete;
