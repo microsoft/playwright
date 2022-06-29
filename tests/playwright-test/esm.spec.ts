@@ -124,6 +124,8 @@ test('should respect path resolver in experimental mode', async ({ runInlineTest
 });
 
 test('should use source maps w/ ESM', async ({ runInlineTest, nodeVersion }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/15202' });
+  test.fail(true, "ESM source map support landed in https://github.com/microsoft/playwright/pull/14561/files, but it looks like it's not quite working");
   // We only support experimental esm mode on Node 16+
   test.skip(nodeVersion.major < 16);
   const result = await runInlineTest({
@@ -135,13 +137,22 @@ test('should use source maps w/ ESM', async ({ runInlineTest, nodeVersion }) => 
       const { test } = pwt;
 
       test('check project name', ({}, testInfo) => {
+        expect(1).toBe(2);
         expect(testInfo.project.name).toBe('foo');
       });
     `
   }, { reporter: 'list' });
 
   const output = stripAnsi(result.output);
-  expect(result.exitCode).toBe(0);
-  expect(result.passed).toBe(1);
-  expect(output).toContain('[foo] › a.test.ts:7:7 › check project name');
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  expect.soft(output, 'error carrot—via source maps—is positioned appropriately').toContain(
+      [
+        `    >  8 |         expect(1).toBe(2);`,
+        `         |                   ^`
+      ].join('\n'));
+  // FIXME: 7:7 is likely the wrong location. This assertion should be updated once the above is fixed and verified
+  // that it points to the correct location.
+  // NB: We check the whole line since it's also broken on Windows in a different way from posix-style
+  expect.soft(output).toContain('[foo] › a.test.ts:7:7 › check project name');
 });
