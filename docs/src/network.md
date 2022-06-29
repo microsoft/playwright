@@ -456,8 +456,8 @@ await page.GotoAsync("https://example.com");
 
 ```js
 // Delete header
-await page.route('**/*', route => {
-  const headers = route.request().allHeaders();
+await page.route('**/*', async route => {
+  const headers = await route.request().allHeaders();
   delete headers['X-Secret'];
   route.continue({headers});
 });
@@ -481,7 +481,7 @@ page.route("**/*", route -> route.resume(new Route.ResumeOptions().setMethod("PO
 ```python async
 # Delete header
 async def handle_route(route):
-    headers = route.request.all_headers()
+    headers = await route.request.all_headers()
     del headers["x-secret"]
     route.continue_(headers=headers)
 await page.route("**/*", handle_route)
@@ -592,7 +592,7 @@ await page.route('**/title.html', async route => {
     body,
     // Force content type to be html.
     headers: {
-      ...response.allHeaders(),
+      ...response.headers(),
       'content-type': 'text/html'
     }
   });
@@ -631,7 +631,7 @@ async def handle_route(route: Route) -> None:
         # Override response body.
         body=body,
         # Force content type to be html.
-        headers={**response.all_headers(), "content-type": "text/html"},
+        headers={**response.headers(), "content-type": "text/html"},
     )
 
 await page.route("**/title.html", handle_route)
