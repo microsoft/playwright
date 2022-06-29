@@ -36,6 +36,16 @@ export interface LanguageGenerator {
   generateFooter(saveStorage: string | undefined): string;
 }
 
+export function filterOutOptions(options: BrowserContextOptions, propertiesToRemove: String[]): BrowserContextOptions {
+  // Filter out all the properties from the device descriptor.
+  const cleanedOptions: Record<string, any> = {};
+  for (const property in options) {
+    if (!propertiesToRemove.includes(property))
+      cleanedOptions[property] = (options as any)[property];
+  }
+  return cleanedOptions;
+}
+
 export function sanitizeDeviceOptions(device: any, options: BrowserContextOptions): BrowserContextOptions {
   // Filter out all the properties from the device descriptor.
   const cleanedOptions: Record<string, any> = {};

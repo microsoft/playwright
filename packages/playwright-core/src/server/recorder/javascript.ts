@@ -16,7 +16,7 @@
 
 import type { BrowserContextOptions } from '../../..';
 import type { LanguageGenerator, LanguageGeneratorOptions } from './language';
-import { sanitizeDeviceOptions, toSignalMap } from './language';
+import { sanitizeDeviceOptions, filterOutOptions, toSignalMap } from './language';
 import type { ActionInContext } from './codeGenerator';
 import type { Action } from './recorderActions';
 import { actionTitle } from './recorderActions';
@@ -168,11 +168,19 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
 
   generateTestHeader(options: LanguageGeneratorOptions): string {
     const formatter = new JavaScriptFormatter();
-    const useText = formatContextOptions(options.contextOptions, options.deviceName);
+    const useText = formatContextOptions(filterOutOptions(options.contextOptions, ['recordHar']), options.deviceName);
     formatter.add(`
       import { test, expect${options.deviceName ? ', devices' : ''} } from '@playwright/test';
 ${useText ? '\ntest.use(' + useText + ');\n' : ''}
-      test('test', async ({ page }) => {`);
+      test('test', async ({ page }) => {`
+    );
+    if (options.contextOptions.recordHar && options.contextOptions.recordHar.urlFilter) {
+      formatter.add(`await page.routeFromHAR('${options.contextOptions.recordHar.path}', {
+          urlFilter: '${options.contextOptions.recordHar.urlFilter}',
+        });`);
+    } else if (options.contextOptions.recordHar) {
+      formatter.add(`    await page.routeFromHAR('${options.contextOptions.recordHar.path}');`);
+    }
     return formatter.format();
   }
 

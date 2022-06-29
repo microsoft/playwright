@@ -45,6 +45,23 @@ test('test', async ({ page }) => {`;
 });
 
 
+test('should properly handle save-har argument', async ({ browserName, channel, runCLI }) => {
+  const cli = runCLI(['--save-har=gh.tar.zip', '--save-har-glob="*"', emptyHTML]);
+  const expectedResult = `import { test, expect } from '@playwright/test';
+
+test.use({
+  serviceWorkers: 'block'
+});
+
+test('test', async ({ page }) => {
+  await page.routeFromHAR(`;
+  await cli.waitFor(expectedResult);
+  expect(cli.text()).toContain(expectedResult);
+  expect(cli.text()).toContain('gh.tar.zip');
+  expect(cli.text()).toContain('urlFilter');
+});
+
+
 test('should print the correct context options when using a device', async ({ browserName, channel, runCLI }) => {
   test.skip(browserName !== 'chromium');
 
