@@ -123,7 +123,8 @@ test('should respect path resolver in experimental mode', async ({ runInlineTest
   expect(result.exitCode).toBe(0);
 });
 
-test('should use source maps w/ ESM', async ({ runInlineTest, nodeVersion }) => {
+test('should use source maps', async ({ runInlineTest, nodeVersion }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/15202' });
   // We only support experimental esm mode on Node 16+
   test.skip(nodeVersion.major < 16);
   const result = await runInlineTest({
@@ -143,5 +144,55 @@ test('should use source maps w/ ESM', async ({ runInlineTest, nodeVersion }) => 
   const output = stripAnsi(result.output);
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
-  expect(output).toContain('a.test.ts:7:7');
+  expect(output).toContain('[foo] › a.test.ts:7:7 › check project name');
+});
+
+test('should show the codeframe in errors', async ({ runInlineTest, nodeVersion }) => {
+  test.fixme();
+  // We only support experimental esm mode on Node 16+
+  test.skip(nodeVersion.major < 16);
+  const result = await runInlineTest({
+    'package.json': `{ "type": "module" }`,
+    'playwright.config.ts': `
+      export default { projects: [{name: 'foo'}] };
+    `,
+    'a.test.ts': `
+      const { test } = pwt;
+
+      test('check project name', ({}, testInfo) => {
+        expect(1).toBe(2);
+        expect(testInfo.project.name).toBe('foo');
+      });
+    `
+  }, { reporter: 'list' });
+
+  const output = stripAnsi(result.output);
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(output, 'error carrot—via source maps—is positioned appropriately').toContain(
+      [
+        `    >  8 |         expect(1).toBe(2);`,
+        `         |                   ^`
+      ].join('\n'));
+});
+
+test('should filter by line', async ({ runInlineTest, nodeVersion }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/15200' });
+  // We only support experimental esm mode on Node 16+
+  test.skip(nodeVersion.major < 16);
+  const result = await runInlineTest({
+    'package.json': `{ "type": "module" }`,
+    'playwright.config.ts': `
+      export default { projects: [{name: 'foo'}] };
+    `,
+    'foo/x.spec.ts': `
+      pwt.test('one', () => { expect(1).toBe(2); });
+      pwt.test('two', () => { expect(1).toBe(2); });
+      pwt.test('three', () => { expect(1).toBe(2); });
+      `,
+    'foo/y.spec.ts': `pwt.test('fails', () => { expect(1).toBe(2); });`,
+  }, undefined, undefined, { additionalArgs: ['x.spec.ts:6'] });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.output).toMatch(/x\.spec\.ts.*two/);
 });
