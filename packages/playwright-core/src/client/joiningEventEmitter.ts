@@ -119,7 +119,8 @@ export class JoiningEventEmitter implements EventEmitter {
   }
 
   private _wrapper(listener: (...args: any[]) => void) {
-    return (listener as any)[wrapperListener];
+    // Fallback to original listener if not wrapped to ensure backwards compatibility Node.js's event emitter
+    return (listener as any)[wrapperListener] ?? listener;
   }
 
   private _original(wrapper: Function): Function {
