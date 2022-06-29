@@ -405,6 +405,20 @@ $env:HTTPS_PROXY="https://192.0.2.1"
 pwsh bin\Debug\netX\playwright.ps1 install
 ```
 
+If the requests of the proxy get intercepted with a custom untrusted certificate authority (CA) and it yields to `Error: self signed certificate in certificate chain` while downloading the browsers, you must set your custom root certificates via the [`NODE_EXTRA_CA_CERTS`](https://nodejs.org/api/cli.html#node_extra_ca_certsfile) environment variable before installing the browsers:
+
+```bash tab=bash-bash
+export NODE_EXTRA_CA_CERTS="/path/to/cert.pem"
+```
+
+```batch tab=bash-batch
+set NODE_EXTRA_CA_CERTS="C:\certs\root.crt"
+```
+
+```powershell tab=bash-powershell
+$env:NODE_EXTRA_CA_CERTS="C:\certs\root.crt"
+```
+
 ## Download from artifact repository
 
 By default, Playwright downloads browsers from Microsoft CDN.
