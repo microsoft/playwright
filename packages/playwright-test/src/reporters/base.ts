@@ -249,7 +249,7 @@ export function formatFailure(config: FullConfig, test: TestCase, options: {inde
     if (includeAttachments) {
       for (let i = 0; i < result.attachments.length; ++i) {
         const attachment = result.attachments[i];
-        const hasPrintableContent = attachment.contentType.startsWith('text/') && attachment.body;
+        const hasPrintableContent = attachment.contentType && attachment.contentType.startsWith('text/') && attachment.body;
         if (!attachment.path && !hasPrintableContent)
           continue;
         resultLines.push('');
