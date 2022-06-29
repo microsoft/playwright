@@ -870,7 +870,7 @@ index a9d9c2f2d0a1359fec5c4edfffd8f8fab3607525..ad6e19137bbd341414ffee670e3070d6
  
    static bool AutomaticStorageAccessPermissionCanBeGranted(
 diff --git a/dom/base/Navigator.cpp b/dom/base/Navigator.cpp
-index 6f5812f17a980be7c9823708853018868cbcd18f..094cd2d2528d72406833f71850a5c0a1b9b6279b 100644
+index 6f5812f17a980be7c9823708853018868cbcd18f..fa9a88eedb2b6a19dffbadd9dbdf3a2f48d60ca1 100644
 --- a/dom/base/Navigator.cpp
 +++ b/dom/base/Navigator.cpp
 @@ -326,14 +326,18 @@ void Navigator::GetAppName(nsAString& aAppName, CallerType aCallerType) const {
@@ -894,18 +894,22 @@ index 6f5812f17a980be7c9823708853018868cbcd18f..094cd2d2528d72406833f71850a5c0a1
  
    // Split values on commas.
    for (nsDependentSubstring lang :
-@@ -385,7 +389,9 @@ void Navigator::GetLanguage(nsAString& aLanguage) {
+@@ -385,7 +389,13 @@ void Navigator::GetLanguage(nsAString& aLanguage) {
  }
  
  void Navigator::GetLanguages(nsTArray<nsString>& aLanguages) {
 -  GetAcceptLanguages(aLanguages);
-+  nsString languageOverride;
-+  mWindow->GetDocShell()->GetLanguageOverride(languageOverride);
-+  GetAcceptLanguages(&languageOverride, aLanguages);
++  if (mWindow && mWindow->GetDocShell()) {
++    nsString languageOverride;
++    mWindow->GetDocShell()->GetLanguageOverride(languageOverride);
++    GetAcceptLanguages(&languageOverride, aLanguages);
++  } else {
++    GetAcceptLanguages(nullptr, aLanguages);
++  }
  
    // The returned value is cached by the binding code. The window listens to the
    // accept languages change and will clear the cache when needed. It has to
-@@ -564,7 +570,13 @@ bool Navigator::CookieEnabled() {
+@@ -564,7 +574,13 @@ bool Navigator::CookieEnabled() {
    return granted;
  }
  
@@ -2587,7 +2591,7 @@ diff --git a/widget/cocoa/NativeKeyBindings.mm b/widget/cocoa/NativeKeyBindings.
 index d3e5983259053175584254e7ac01ca9ce024f33a..97f5b851c402fea5477c0ee57af451c62b016eec 100644
 --- a/widget/cocoa/NativeKeyBindings.mm
 +++ b/widget/cocoa/NativeKeyBindings.mm
-@@ -492,6 +492,13 @@ void NativeKeyBindings::GetEditCommandsForTests(NativeKeyBindingsType aType,
+@@ -492,6 +492,13 @@
        break;
      case KEY_NAME_INDEX_ArrowLeft:
        if (aEvent.IsAlt()) {
@@ -2601,7 +2605,7 @@ index d3e5983259053175584254e7ac01ca9ce024f33a..97f5b851c402fea5477c0ee57af451c6
          break;
        }
        if (aEvent.IsMeta() || (aEvent.IsControl() && aEvent.IsShift())) {
-@@ -512,6 +519,13 @@ void NativeKeyBindings::GetEditCommandsForTests(NativeKeyBindingsType aType,
+@@ -512,6 +519,13 @@
        break;
      case KEY_NAME_INDEX_ArrowRight:
        if (aEvent.IsAlt()) {
@@ -2615,7 +2619,7 @@ index d3e5983259053175584254e7ac01ca9ce024f33a..97f5b851c402fea5477c0ee57af451c6
          break;
        }
        if (aEvent.IsMeta() || (aEvent.IsControl() && aEvent.IsShift())) {
-@@ -532,6 +546,10 @@ void NativeKeyBindings::GetEditCommandsForTests(NativeKeyBindingsType aType,
+@@ -532,6 +546,10 @@
        break;
      case KEY_NAME_INDEX_ArrowUp:
        if (aEvent.IsControl()) {
@@ -2626,7 +2630,7 @@ index d3e5983259053175584254e7ac01ca9ce024f33a..97f5b851c402fea5477c0ee57af451c6
          break;
        }
        if (aEvent.IsMeta()) {
-@@ -541,7 +559,7 @@ void NativeKeyBindings::GetEditCommandsForTests(NativeKeyBindingsType aType,
+@@ -541,7 +559,7 @@
          instance->AppendEditCommandsForSelector(
              !aEvent.IsShift()
                  ? ToObjcSelectorPtr(@selector(moveToBeginningOfDocument:))
@@ -2635,7 +2639,7 @@ index d3e5983259053175584254e7ac01ca9ce024f33a..97f5b851c402fea5477c0ee57af451c6
              aCommands);
          break;
        }
-@@ -564,6 +582,10 @@ void NativeKeyBindings::GetEditCommandsForTests(NativeKeyBindingsType aType,
+@@ -564,6 +582,10 @@
        break;
      case KEY_NAME_INDEX_ArrowDown:
        if (aEvent.IsControl()) {
