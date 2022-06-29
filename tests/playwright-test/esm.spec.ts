@@ -136,15 +136,14 @@ test('should use source maps', async ({ runInlineTest, nodeVersion }) => {
       const { test } = pwt;
 
       test('check project name', ({}, testInfo) => {
-        expect(1).toBe(2);
         expect(testInfo.project.name).toBe('foo');
       });
     `
   }, { reporter: 'list' });
 
   const output = stripAnsi(result.output);
-  expect(result.exitCode).toBe(1);
-  expect(result.failed).toBe(1);
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
   expect(output).toContain('[foo] › a.test.ts:7:7 › check project name');
 });
 
