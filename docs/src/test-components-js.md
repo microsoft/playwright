@@ -6,22 +6,25 @@ title: "Experimental: components"
 Playwright Test can now test your components.
 
 <!-- TOC -->
+<div className="embed-youtube">
+<iframe src="https://www.youtube.com/embed/y3YxX4sFJbM" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" width="750" height="563" allowfullscreen></iframe>
+</div>
 
 ## Example
 
 Here is what a typical component test looks like:
 
 ```js
-test('event should work', async ({ mount }) => {
+test("event should work", async ({ mount }) => {
   let clicked = false;
 
   // Mount a component. Returns locator pointing to the component.
-  const component = await mount(<Button title='Submit'
-    onClick={() => clicked = true}>
-  </Button>);
+  const component = await mount(
+    <Button title="Submit" onClick={() => (clicked = true)}></Button>
+  );
 
   // As with any Playwright test, assert locator text.
-  await expect(component).toContainText('Submit');
+  await expect(component).toContainText("Submit");
 
   // Perform locator click. This will trigger the event.
   await component.click();
@@ -70,14 +73,14 @@ component is mounted using this script. It can be either `.js` or `.ts` file.
 ### Step 2. Create a test file `src/App.spec.tsx`
 
 ```js
-import { test, expect } from '@playwright/experimental-ct-react';
-import App from './App';
+import { test, expect } from "@playwright/experimental-ct-react";
+import App from "./App";
 
 test.use({ viewport: { width: 500, height: 500 } });
 
-test('should work', async ({ mount }) => {
+test("should work", async ({ mount }) => {
   const component = await mount(<App></App>);
-  await expect(component).toContainText('Learn React');
+  await expect(component).toContainText("Learn React");
 });
 ```
 
