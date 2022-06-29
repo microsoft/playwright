@@ -615,8 +615,6 @@ class TypesGenerator {
     content = content.replace(/\r\n/g, '\n');
     if (removeTrailingWhiteSpace)
       content = content.replace(/( +)\n/g, '\n'); // remove trailing whitespace
-    if (os.platform() === 'win32')
-      content = content.replace(/\n/g, '\r\n');
     const existing = fs.readFileSync(filePath, 'utf8');
     if (existing === content)
       return;
