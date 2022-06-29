@@ -30,10 +30,10 @@ The following examples demonstrate a few basic accessibility testing scenarios.
 
 This example demonstrates how to test an entire page for automatically detectable accessibility violations. The test:
 1. Imports the `@axe-core/playwright` package
-2. Uses normal Playwright Test syntax to define a test case
-3. Uses normal Playwright syntax to navigate to the page under test
-4. Awaits `AxeBuilder.analyze()` to run the accessibility scan against the page
-5. Uses normal Playwright Test [expect] syntax to verify that there are no violations in the returned scan results
+1. Uses normal Playwright Test syntax to define a test case
+1. Uses normal Playwright syntax to navigate to the page under test
+1. Awaits `AxeBuilder.analyze()` to run the accessibility scan against the page
+1. Uses normal Playwright Test [assertions](./test-assertions) to verify that there are no violations in the returned scan results
 
 ```js tab=js-ts
 import { test, expect } from '@playwright/test';
