@@ -28,7 +28,6 @@ it('should work', async ({ page, server, browserName, headless, isLinux }) => {
   const box = await elementHandle.boundingBox();
   if (browserName === 'webkit') {
     // Upstream regression: https://bugs.webkit.org/show_bug.cgi?id=242079
-    expect(box.y).toBeGreaterThan(49);
     box.y = Math.ceil(box.y);
   }
   expect(box).toEqual({ x: 100, y: 50, width: 50, height: 50 });
