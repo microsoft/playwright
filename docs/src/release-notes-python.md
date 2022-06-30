@@ -42,7 +42,7 @@ You can now use [`method: Route.fallback`] to defer routing to other handlers.
 Consider the following example:
 
 ```py
-# Remover a header from all requests
+# Remove a header from all requests
 async def remove_header_handler(route: Route) -> None:
     headers = await route.request.all_headers()
     if "if-none-match" in headers:
