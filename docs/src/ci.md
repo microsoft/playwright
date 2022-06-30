@@ -118,7 +118,7 @@ jobs:
         PLAYWRIGHT_TEST_BASE_URL: ${{ github.event.deployment_status.target_url }}
 ```
 
-### Docker
+## Docker
 
 We have a [pre-built Docker image](./docker.md) which can either be used directly, or as a reference to update your existing Docker definitions.
 
@@ -129,6 +129,58 @@ Suggested configuration
    with `docker run --cap-add=SYS_ADMIN` when developing locally.
 1. Using `--init` Docker flag or [dumb-init](https://github.com/Yelp/dumb-init) is recommended to avoid special
    treatment for processes with PID=1. This is a common reason for zombie processes.
+
+### GitHub Actions
+
+GitHub Actions support [running jobs in a container](https://docs.github.com/en/actions/using-jobs/running-jobs-in-a-container) by using the [`jobs.<job_id>.container`](https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idcontainer) option.
+
+```yml js
+steps:
+  playwright:
+    name: 'Playwright Tests'
+    runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright:v1.24.0-focal
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+      - name: Install dependencies
+        run: npm ci
+      - name: Run your tests
+        run: npx playwright test
+```
+
+#### Sharding
+
+GitHub Actions supports [sharding tests between multiple jobs](https://docs.github.com/en/actions/using-jobs/using-a-matrix-for-your-jobs) using the  [`jobs.<job_id>.strategy.matrix`](https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idstrategymatrix) option. The `matrix` option will run a seperate job for every possible combination of the provided option. In the example below, we have 2 `project` values, 10 `shardIndex` values and 1 `shardTotal` value, resulting in a total of 20 jobs to be run.
+
+```yml js
+steps:
+  playwright:
+    name: 'Playwright Tests - ${{ matrix.project }} - Shard ${{ matrix.shardIndex }} of ${{ matrix.shardTotal }}'
+    runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright:v1.24.0-focal
+    strategy:
+      fail-fast: false
+      matrix:
+        project: [Chrome, Safari]
+        shardIndex: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+        shardTotal: [10]
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+      - name: Install dependencies
+        run: npm ci
+      - name: Run your tests
+        run: npx playwright test --project=${{ matrix.project }} --shard=${{ matrix.shardIndex }}/${{ matrix.shardTotal }}
+```
+
+> Note: The `${{ <expression> }}` is the [expression](https://docs.github.com/en/actions/learn-github-actions/expressions) syntax that allows accessing the current [context](https://docs.github.com/en/actions/learn-github-actions/contexts). In this example, we are using the [`matrix`](https://docs.github.com/en/actions/learn-github-actions/contexts#matrix-context) context to set the job variants.
 
 ### Azure Pipelines
 
@@ -190,6 +242,56 @@ pipeline {
    }
 }
 ```
+
+### Buildkite
+
+Buildkite supports [containerized builds with Docker](https://buildkite.com/docs/tutorials/docker-containerized-builds) using either their [Docker Compose plugin](https://github.com/buildkite-plugins/docker-compose-buildkite-plugin) or their [Docker plugin](https://github.com/buildkite-plugins/docker-buildkite-plugin).
+
+The simpler of the two approaches is to use the [Docker plugin](https://github.com/buildkite-plugins/docker-buildkite-plugin) which simply runs the command(s) within the docker container, similar to GitHub Actions and Jenkins.
+
+```yml
+steps:
+  - label: ':playwright: Playwright tests'
+    plugins:
+      - docker#v3.13.0:
+          image: mcr.microsoft.com/playwright:v1.24.0-focal
+          workdir: /app
+          propagate-environment: true
+          environment:
+            # list any non-buildkite env vars you want to propagate to the container
+            - MY_SPECIAL_TOKEN
+    artifact_paths:
+      - my/playwright/reports/*
+    key: playwright
+    commands:
+      - npx playwright test
+```
+
+> Note: The `:playwright:` syntax in the label is used to define [emojis](https://github.com/buildkite/emojis#emoji-reference).
+
+#### Sharding
+
+The [`parallelism`](https://buildkite.com/docs/tutorials/parallel-builds#parallel-jobs) option allows you to run playwright tests across multiple agents/jobs where you can use the provided environment variables `BUILDKITE_PARALLEL_JOB` and `BUILDKITE_PARALLEL_JOB_COUNT` to defined the `--shard` flag as shown below.
+
+```yml
+steps:
+  - label: ':playwright: Playwright tests'
+    plugins:
+      - docker#v3.13.0:
+          image: mcr.microsoft.com/playwright:v1.24.0-focal
+          workdir: /app
+          propagate-environment: true
+    parallelism: 10 # runs 10 jobs in parallel agents
+    key: playwright
+    command: |
+      jobIndex=$$BUILDKITE_PARALLEL_JOB
+      shardIndex=$$((jobIndex + 1))
+      jobCount=$$BUILDKITE_PARALLEL_JOB_COUNT
+
+      npx playwright test --shard=$$shardIndex/$$jobCount
+```
+
+> Note: The `$$` is used to escape the `$` and the `shardIndex` is incremented by one to convert the 0-based `jobIndex` to the 1-based `shardIndex`.
 
 ### Bitbucket Pipelines
 

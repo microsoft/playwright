@@ -302,6 +302,8 @@ Or if there is a custom folder name:
 npx playwright show-report my-report
 ```
 
+> The `html` reporter currently does not support merging reports generated across multple [`--shards`](./test-parallel.md#shard-tests-between-multiple-machines). In the meantime, the [`playwright-merge-html-reports`](https://www.npmjs.com/package/playwright-merge-html-reports) npm package can be used to merge any number of reports into one.
+
 
 ### JSON reporter
 
