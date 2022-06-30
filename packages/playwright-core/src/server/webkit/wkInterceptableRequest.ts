@@ -89,8 +89,21 @@ export class WKInterceptableRequest {
     };
     const setCookieSeparator = process.platform === 'darwin' ? ',' : '\n';
     const response = new network.Response(this.request, responsePayload.status, responsePayload.statusText, headersObjectToArray(responsePayload.headers, ',', setCookieSeparator), timing, getResponseBody, responsePayload.source === 'service-worker');
+
     // No raw response headers in WebKit, use "provisional" ones.
     response.setRawResponseHeaders(null);
+    // Transfer size is not available in WebKit.
+    response.setTransferSize(null);
+
+    if (responsePayload.requestHeaders && Object.keys(responsePayload.requestHeaders).length) {
+      const headers = { ...responsePayload.requestHeaders };
+      if (!headers['host'])
+        headers['Host'] = new URL(this.request.url()).host;
+      this.request.setRawRequestHeaders(headersObjectToArray(headers));
+    } else {
+      // No raw headers avaialable, use provisional ones.
+      this.request.setRawRequestHeaders(null);
+    }
     return response;
   }
 }

@@ -84,12 +84,6 @@ export function stripFragmentFromUrl(url: string): string {
   return url.substring(0, url.indexOf('#'));
 }
 
-type ResponseSize = {
-  encodedBodySize: number;
-  transferSize: number;
-  responseHeadersSize: number;
-};
-
 export class Request extends SdkObject {
   private _response: Response | null = null;
   private _redirectedFrom: Request | null;
@@ -107,7 +101,6 @@ export class Request extends SdkObject {
   private _frame: frames.Frame;
   private _waitForResponsePromise = new ManualPromise<Response | null>();
   _responseEndTiming = -1;
-  readonly responseSize: ResponseSize = { encodedBodySize: 0, transferSize: 0, responseHeadersSize: 0 };
 
   constructor(frame: frames.Frame, redirectedFrom: Request | null, documentId: string | undefined,
     url: string, resourceType: string, method: string, postData: Buffer | null, headers: types.HeadersArray) {
@@ -131,8 +124,6 @@ export class Request extends SdkObject {
   _setFailureText(failureText: string) {
     this._failureText = failureText;
     this._waitForResponsePromise.resolve(null);
-    // If we didn't get raw headers, declare them equal to provisional.
-    this.setRawRequestHeaders(null);
   }
 
   url(): string {
@@ -329,6 +320,7 @@ export type ResourceSizes = {
   requestHeadersSize: number,
   responseBodySize: number,
   responseHeadersSize: number,
+  transferSize: number,
 };
 
 export type RemoteAddr = {
@@ -360,6 +352,9 @@ export class Response extends SdkObject {
   private _rawResponseHeadersPromise = new ManualPromise<types.HeadersArray>();
   private _httpVersion: string | undefined;
   private _fromServiceWorker: boolean;
+  private _encodedBodySizePromise = new ManualPromise<number | null>();
+  private _transferSizePromise = new ManualPromise<number | null>();
+  private _responseHeadersSizePromise = new ManualPromise<number | null>();
 
   constructor(request: Request, status: number, statusText: string, headers: types.HeadersArray, timing: ResourceTiming, getResponseBodyCallback: GetResponseBodyCallback, fromServiceWorker: boolean, httpVersion?: string) {
     super(request.frame(), 'response');
@@ -386,9 +381,6 @@ export class Response extends SdkObject {
   }
 
   _requestFinished(responseEndTiming: number) {
-    // If we didn't get raw headers, declare them equal to provisional.
-    this.setRawResponseHeaders(null);
-    this._request.setRawRequestHeaders(null);
     this._request._responseEndTiming = Math.max(responseEndTiming, this._timing.responseStart);
     this._finishedPromise.resolve();
   }
@@ -425,6 +417,18 @@ export class Response extends SdkObject {
   setRawResponseHeaders(headers: types.HeadersArray | null) {
     if (!this._rawResponseHeadersPromise.isDone())
       this._rawResponseHeadersPromise.resolve(headers || this._headers);
+  }
+
+  setTransferSize(size: number | null) {
+    this._transferSizePromise.resolve(size);
+  }
+
+  setEncodedBodySize(size: number | null) {
+    this._encodedBodySizePromise.resolve(size);
+  }
+
+  setResponseHeadersSize(size: number | null) {
+    this._responseHeadersSizePromise.resolve(size);
   }
 
   timing(): ResourceTiming {
@@ -472,39 +476,47 @@ export class Response extends SdkObject {
     return this._fromServiceWorker;
   }
 
-  private async _responseHeadersSize(): Promise<number> {
-    if (this._request.responseSize.responseHeadersSize)
-      return this._request.responseSize.responseHeadersSize;
+  async responseHeadersSize(): Promise<number> {
+    const availableSize = await this._responseHeadersSizePromise;
+    if (availableSize !== null)
+      return availableSize;
+
+    // Fallback to calculating it manually.
     let headersSize = 4; // 4 = 2 spaces + 2 line breaks (HTTP/1.1 200 Ok\r\n)
     headersSize += 8; // httpVersion;
     headersSize += 3; // statusCode;
     headersSize += this.statusText().length;
-    const headers = await this._bestEffortResponseHeaders();
+    const headers = await this._rawResponseHeadersPromise;
     for (const header of headers)
       headersSize += header.name.length + header.value.length + 4; // 4 = ': ' + '\r\n'
     headersSize += 2; // '\r\n'
     return headersSize;
   }
 
-  private async _bestEffortResponseHeaders(): Promise<types.HeadersArray> {
-    return this._rawResponseHeadersPromise ? await this._rawResponseHeadersPromise : this._headers;
-  }
-
   async sizes(): Promise<ResourceSizes> {
-    await this._finishedPromise;
     const requestHeadersSize = await this._request.requestHeadersSize();
-    const responseHeadersSize = await this._responseHeadersSize();
-    let { encodedBodySize } = this._request.responseSize;
-    if (!encodedBodySize) {
-      const headers = await this._bestEffortResponseHeaders();
+    const responseHeadersSize = await this.responseHeadersSize();
+
+    let encodedBodySize = await this._encodedBodySizePromise;
+    if (encodedBodySize === null) {
+      // Fallback to calculating it manually.
+      const headers = await this._rawResponseHeadersPromise;
       const contentLength = headers.find(h => h.name.toLowerCase() === 'content-length')?.value;
       encodedBodySize = contentLength ? +contentLength : 0;
     }
+
+    let transferSize = await this._transferSizePromise;
+    if (transferSize === null) {
+      // Fallback to calculating it manually.
+      transferSize = responseHeadersSize + encodedBodySize;
+    }
+
     return {
       requestBodySize: this._request.bodySize(),
       requestHeadersSize,
       responseBodySize: encodedBodySize,
       responseHeadersSize,
+      transferSize,
     };
   }
 }

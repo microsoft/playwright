@@ -115,6 +115,8 @@ export class FFNetworkManager {
     });
     // "raw" headers are the same as "provisional" headers in Firefox.
     response.setRawResponseHeaders(null);
+    // Headers size are not available in Firefox.
+    response.setResponseHeadersSize(null);
     this._page._frameManager.requestReceivedResponse(response);
   }
 
@@ -123,7 +125,8 @@ export class FFNetworkManager {
     if (!request)
       return;
     const response = request.request._existingResponse()!;
-    request.request.responseSize.transferSize = event.transferSize;
+    response.setTransferSize(event.transferSize);
+    response.setEncodedBodySize(event.encodedBodySize);
 
     // Keep redirected requests in the map for future reference as redirectedFrom.
     const isRedirected = response.status() >= 300 && response.status() <= 399;
@@ -145,8 +148,11 @@ export class FFNetworkManager {
       return;
     this._requests.delete(request._id);
     const response = request.request._existingResponse();
-    if (response)
+    if (response) {
+      response.setTransferSize(null);
+      response.setEncodedBodySize(null);
       response._requestFinished(-1);
+    }
     request.request._setFailureText(event.errorCode);
     this._page._frameManager.requestFailed(request.request, event.errorCode === 'NS_BINDING_ABORTED');
   }

@@ -54,6 +54,7 @@ export class CRNetworkManager {
       eventsHelper.addEventListener(session, 'Fetch.authRequired', this._onAuthRequired.bind(this)),
       eventsHelper.addEventListener(session, 'Network.requestWillBeSent', this._onRequestWillBeSent.bind(this, workerFrame)),
       eventsHelper.addEventListener(session, 'Network.requestWillBeSentExtraInfo', this._onRequestWillBeSentExtraInfo.bind(this)),
+      eventsHelper.addEventListener(session, 'Network.requestServedFromCache', this._onRequestServedFromCache.bind(this)),
       eventsHelper.addEventListener(session, 'Network.responseReceived', this._onResponseReceived.bind(this)),
       eventsHelper.addEventListener(session, 'Network.responseReceivedExtraInfo', this._onResponseReceivedExtraInfo.bind(this)),
       eventsHelper.addEventListener(session, 'Network.loadingFinished', this._onLoadingFinished.bind(this)),
@@ -131,6 +132,10 @@ export class CRNetworkManager {
     } else {
       this._onRequest(workerFrame, event, null);
     }
+  }
+
+  _onRequestServedFromCache(event: Protocol.Network.requestServedFromCachePayload) {
+    this._responseExtraInfoTracker.requestServedFromCache(event);
   }
 
   _onRequestWillBeSentExtraInfo(event: Protocol.Network.requestWillBeSentExtraInfoPayload) {
@@ -324,18 +329,14 @@ export class CRNetworkManager {
       validFrom: responsePayload?.securityDetails?.validFrom,
       validTo: responsePayload?.securityDetails?.validTo,
     });
-    if (hasExtraInfo) {
-      this._responseExtraInfoTracker.processResponse(request._requestId, response);
-    } else {
-      // Use "provisional" headers as "raw" ones.
-      response.request().setRawRequestHeaders(null);
-      response.setRawResponseHeaders(null);
-    }
+    this._responseExtraInfoTracker.processResponse(request._requestId, response, hasExtraInfo);
     return response;
   }
 
   _handleRequestRedirect(request: InterceptableRequest, responsePayload: Protocol.Network.Response, timestamp: number, hasExtraInfo: boolean) {
     const response = this._createResponse(request, responsePayload, hasExtraInfo);
+    response.setTransferSize(null);
+    response.setEncodedBodySize(null);
     response._requestFinished((timestamp - request._timestamp) * 1000);
     this._requestIdToRequest.delete(request._requestId);
     if (request._interceptionId)
@@ -372,8 +373,8 @@ export class CRNetworkManager {
     // event from protocol. @see https://crbug.com/883475
     const response = request.request._existingResponse();
     if (response) {
-      request.request.responseSize.transferSize = event.encodedDataLength;
-      request.request.responseSize.encodedBodySize = event.encodedDataLength - request.request.responseSize.responseHeadersSize;
+      response.setTransferSize(event.encodedDataLength);
+      response.responseHeadersSize().then(size => response.setEncodedBodySize(event.encodedDataLength - size));
       response._requestFinished(helper.secondsToRoundishMillis(event.timestamp - request._timestamp));
     }
     this._requestIdToRequest.delete(request._requestId);
@@ -406,8 +407,11 @@ export class CRNetworkManager {
     if (!request)
       return;
     const response = request.request._existingResponse();
-    if (response)
+    if (response) {
+      response.setTransferSize(null);
+      response.setEncodedBodySize(null);
       response._requestFinished(helper.secondsToRoundishMillis(event.timestamp - request._timestamp));
+    }
     this._requestIdToRequest.delete(request._requestId);
     if (request._interceptionId)
       this._attemptedAuthentications.delete(request._interceptionId);
@@ -572,6 +576,7 @@ type RequestInfo = {
   responses: network.Response[],
   loadingFinished?: Protocol.Network.loadingFinishedPayload,
   loadingFailed?: Protocol.Network.loadingFailedPayload,
+  servedFromCache?: boolean,
 };
 
 // This class aligns responses with response headers from extra info:
@@ -598,6 +603,11 @@ class ResponseExtraInfoTracker {
     this._checkFinished(info);
   }
 
+  requestServedFromCache(event: Protocol.Network.requestServedFromCachePayload) {
+    const info = this._getOrCreateEntry(event.requestId);
+    info.servedFromCache = true;
+  }
+
   responseReceivedExtraInfo(event: Protocol.Network.responseReceivedExtraInfoPayload) {
     const info = this._getOrCreateEntry(event.requestId);
     info.responseReceivedExtraInfo.push(event);
@@ -605,8 +615,19 @@ class ResponseExtraInfoTracker {
     this._checkFinished(info);
   }
 
-  processResponse(requestId: string, response: network.Response) {
-    const info = this._getOrCreateEntry(requestId);
+  processResponse(requestId: string, response: network.Response, hasExtraInfo: boolean) {
+    let info = this._requests.get(requestId);
+    // Cached responses have erroneous "hasExtraInfo" flag.
+    // https://bugs.chromium.org/p/chromium/issues/detail?id=1340398
+    if (!hasExtraInfo || info?.servedFromCache) {
+      // Use "provisional" headers as "raw" ones.
+      response.request().setRawRequestHeaders(null);
+      response.setResponseHeadersSize(null);
+      response.setRawResponseHeaders(null);
+      return;
+    }
+
+    info = this._getOrCreateEntry(requestId);
     info.responses.push(response);
     this._patchHeaders(info, info.responses.length - 1);
   }
@@ -650,8 +671,8 @@ class ResponseExtraInfoTracker {
     }
     const responseExtraInfo = info.responseReceivedExtraInfo[index];
     if (response && responseExtraInfo) {
+      response.setResponseHeadersSize(responseExtraInfo.headersText?.length || 0);
       response.setRawResponseHeaders(headersObjectToArray(responseExtraInfo.headers, '\n'));
-      response.request().responseSize.responseHeadersSize = responseExtraInfo.headersText?.length || 0;
       info.responseReceivedExtraInfo[index] = undefined;
     }
   }

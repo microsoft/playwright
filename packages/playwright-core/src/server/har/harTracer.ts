@@ -310,8 +310,7 @@ export class HarTracer {
       this._addBarrier(page, response.sizes().then(sizes => {
         harEntry.response.bodySize = sizes.responseBodySize;
         harEntry.response.headersSize = sizes.responseHeadersSize;
-        // Fallback for WebKit by calculating it manually
-        harEntry.response._transferSize = response.request().responseSize.transferSize || (sizes.responseHeadersSize + sizes.responseBodySize);
+        harEntry.response._transferSize = sizes.transferSize;
         harEntry.request.headersSize = sizes.requestHeadersSize;
         compressionCalculationBarrier?.setEncodedBodySize(sizes.responseBodySize);
       }));
