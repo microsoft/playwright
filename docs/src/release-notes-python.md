@@ -19,17 +19,27 @@ npx playwright open --save-har=github.har.zip https://github.com/microsoft
 
 Alternatively, you can record HAR programmatically:
 
-```py
+```python async
 context = await browser.new_context(record_har_path="github.har.zip")
 # ... do stuff ...
 await context.close()
 ```
 
+```python sync
+context = browser.new_context(record_har_path="github.har.zip")
+# ... do stuff ...
+context.close()
+```
+
 Use the new methods [`method: Page.routeFromHAR`] or [`method: BrowserContext.routeFromHAR`] to serve matching responses from the [HAR](http://www.softwareishard.com/blog/har-12-spec/) file:
 
 
-```py
+```python async
 await context.route_from_har('github.har.zip')
+```
+
+```python sync
+context.route_from_har('github.har.zip')
 ```
 
 Read more in [our documentation](./network#record-and-replay-requests).
@@ -41,7 +51,7 @@ You can now use [`method: Route.fallback`] to defer routing to other handlers.
 
 Consider the following example:
 
-```py
+```python async
 # Remove a header from all requests
 async def remove_header_handler(route: Route) -> None:
     headers = await route.request.all_headers()
@@ -61,6 +71,26 @@ async def abort_images_handler(route: Route) -> None:
 await page.route("**/*", abort_images_handler)
 ```
 
+```python sync
+# Remove a header from all requests
+def remove_header_handler(route: Route) -> None:
+    headers = route.request.all_headers()
+    if "if-none-match" in headers:
+        del headers["if-none-match"]
+    route.fallback(headers=headers)
+
+page.route("**/*", remove_header_handler)
+
+# Abort all images
+def abort_images_handler(route: Route) -> None:
+    if route.request.resource_type == "image":
+        route.abort()
+    else:
+        route.fallback()
+
+page.route("**/*", abort_images_handler)
+```
+
 Note that the new methods [`method: Page.routeFromHAR`] and [`method: BrowserContext.routeFromHAR`] also participate in routing and could be deferred to.
 
 ### Web-First Assertions Update
@@ -71,19 +101,38 @@ Note that the new methods [`method: Page.routeFromHAR`] and [`method: BrowserCon
 ### Miscellaneous
 
 * If there's a service worker that's in your way, you can now easily disable it with a new context option `service_workers`:
-  ```py
+
+  ```python async
   context = await browser.new_context(service_workers="block")
   page = await context.new_page()
   ```
+
+  ```python sync
+  context = browser.new_context(service_workers="block")
+  page = context.new_page()
+  ```
+
 * Using `.zip` path for `recordHar` context option automatically zips the resulting HAR:
-  ```py
+
+  ```python async
   context = await browser.new_context(record_har_path="github.har.zip")
   ```
+
+  ```python sync
+  context = browser.new_context(record_har_path="github.har.zip")
+  ```
+
 * If you intend to edit HAR by hand, consider using the `"minimal"` HAR recording mode
   that only records information that is essential for replaying:
-  ```py
+
+  ```python async
   context = await browser.new_context(record_har_mode="minimal", record_har_path="har.har")
   ```
+
+  ```python sync
+  context = browser.new_context(record_har_mode="minimal", record_har_path="har.har")
+  ```
+
 * Playwright now runs on Ubuntu 22 amd64 and Ubuntu 22 arm64. We also publish new docker image `mcr.microsoft.com/playwright/python:v1.24.0-jammy`.
 
 
