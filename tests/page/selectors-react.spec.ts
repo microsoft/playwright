@@ -31,89 +31,88 @@ for (const [name, url] of Object.entries(reacts)) {
     });
 
     it('should work with single-root elements @smoke', async ({ page }) => {
-      expect(await page.$$eval(`_react=BookList`, els => els.length)).toBe(1);
-      expect(await page.$$eval(`_react=BookItem`, els => els.length)).toBe(3);
-      expect(await page.$$eval(`_react=BookList >> _react=BookItem`, els => els.length)).toBe(3);
-      expect(await page.$$eval(`_react=BookItem >> _react=BookList`, els => els.length)).toBe(0);
-
+      await expect(page.locator(`_react=BookList`)).toHaveCount(1);
+      await expect(page.locator(`_react=BookItem`)).toHaveCount(3);
+      await expect(page.locator(`_react=BookList >> _react=BookItem`)).toHaveCount(3);
+      await expect(page.locator(`_react=BookItem >> _react=BookList`)).toHaveCount(0);
     });
 
     it('should work with multi-root elements (fragments)', async ({ page }) => {
       it.skip(name === 'react15', 'React 15 does not support fragments');
-      expect(await page.$$eval(`_react=App`, els => els.length)).toBe(15);
-      expect(await page.$$eval(`_react=AppHeader`, els => els.length)).toBe(2);
-      expect(await page.$$eval(`_react=NewBook`, els => els.length)).toBe(2);
+      await expect(page.locator(`_react=App`)).toHaveCount(15);
+      await expect(page.locator(`_react=AppHeader`)).toHaveCount(2);
+      await expect(page.locator(`_react=NewBook`)).toHaveCount(2);
     });
 
     it('should not crash when there is no match', async ({ page }) => {
-      expect(await page.$$eval(`_react=Apps`, els => els.length)).toBe(0);
-      expect(await page.$$eval(`_react=BookLi`, els => els.length)).toBe(0);
+      await expect(page.locator(`_react=Apps`)).toHaveCount(0);
+      await expect(page.locator(`_react=BookLi`)).toHaveCount(0);
     });
 
     it('should compose', async ({ page }) => {
-      expect(await page.$eval(`_react=NewBook >> _react=button`, el => el.textContent)).toBe('new book');
+      await expect(page.locator(`_react=NewBook >> _react=button`)).toHaveText('new book');
       expect(await page.$eval(`_react=NewBook >> _react=input`, el => el.tagName)).toBe('INPUT');
-      expect(await page.$eval(`_react=BookItem >> text=Gatsby`, el => el.textContent)).toBe('The Great Gatsby');
+      await expect(page.locator(`_react=BookItem >> text=Gatsby`)).toHaveText('The Great Gatsby');
     });
 
     it('should query by props combinations', async ({ page }) => {
-      expect(await page.$$eval(`_react=BookItem[name="The Great Gatsby"]`, els => els.length)).toBe(1);
-      expect(await page.$$eval(`_react=BookItem[name="the great gatsby" i]`, els => els.length)).toBe(1);
-      expect(await page.$$eval(`_react=li[key="The Great Gatsby"]`, els => els.length)).toBe(1);
-      expect(await page.$$eval(`_react=ColorButton[nested.index = 0]`, els => els.length)).toBe(1);
-      expect(await page.$$eval(`_react=ColorButton[nested.nonexisting.index = 0]`, els => els.length)).toBe(0);
-      expect(await page.$$eval(`_react=ColorButton[nested.index.nonexisting = 0]`, els => els.length)).toBe(0);
-      expect(await page.$$eval(`_react=ColorButton[nested.index.nonexisting = 1]`, els => els.length)).toBe(0);
-      expect(await page.$$eval(`_react=ColorButton[nested.value = 4.1]`, els => els.length)).toBe(1);
-      expect(await page.$$eval(`_react=ColorButton[enabled = false]`, els => els.length)).toBe(4);
-      expect(await page.$$eval(`_react=ColorButton[enabled = true] `, els => els.length)).toBe(5);
-      expect(await page.$$eval(`_react=ColorButton[enabled = true][color = "red"]`, els => els.length)).toBe(2);
-      expect(await page.$$eval(`_react=ColorButton[enabled = true][color = "red"i][nested.index =  6]`, els => els.length)).toBe(1);
+      await expect(page.locator(`_react=BookItem[name="The Great Gatsby"]`)).toHaveCount(1);
+      await expect(page.locator(`_react=BookItem[name="the great gatsby" i]`)).toHaveCount(1);
+      await expect(page.locator(`_react=li[key="The Great Gatsby"]`)).toHaveCount(1);
+      await expect(page.locator(`_react=ColorButton[nested.index = 0]`)).toHaveCount(1);
+      await expect(page.locator(`_react=ColorButton[nested.nonexisting.index = 0]`)).toHaveCount(0);
+      await expect(page.locator(`_react=ColorButton[nested.index.nonexisting = 0]`)).toHaveCount(0);
+      await expect(page.locator(`_react=ColorButton[nested.index.nonexisting = 1]`)).toHaveCount(0);
+      await expect(page.locator(`_react=ColorButton[nested.value = 4.1]`)).toHaveCount(1);
+      await expect(page.locator(`_react=ColorButton[enabled = false]`)).toHaveCount(4);
+      await expect(page.locator(`_react=ColorButton[enabled = true] `)).toHaveCount(5);
+      await expect(page.locator(`_react=ColorButton[enabled = true][color = "red"]`)).toHaveCount(2);
+      await expect(page.locator(`_react=ColorButton[enabled = true][color = "red"i][nested.index =  6]`)).toHaveCount(1);
     });
 
     it('should exact match by props', async ({ page }) => {
-      expect(await page.$eval(`_react=BookItem[name = "The Great Gatsby"]`, el => el.textContent)).toBe('The Great Gatsby');
-      expect(await page.$$eval(`_react=BookItem[name = "The Great Gatsby"]`, els => els.length)).toBe(1);
+      await expect(page.locator(`_react=BookItem[name = "The Great Gatsby"]`)).toHaveText('The Great Gatsby');
+      await expect(page.locator(`_react=BookItem[name = "The Great Gatsby"]`)).toHaveCount(1);
       // case sensetive by default
-      expect(await page.$$eval(`_react=BookItem[name = "the great gatsby"]`, els => els.length)).toBe(0);
-      expect(await page.$$eval(`_react=BookItem[name = "the great gatsby" s]`, els => els.length)).toBe(0);
-      expect(await page.$$eval(`_react=BookItem[name = "the great gatsby" S]`, els => els.length)).toBe(0);
+      await expect(page.locator(`_react=BookItem[name = "the great gatsby"]`)).toHaveCount(0);
+      await expect(page.locator(`_react=BookItem[name = "the great gatsby" s]`)).toHaveCount(0);
+      await expect(page.locator(`_react=BookItem[name = "the great gatsby" S]`)).toHaveCount(0);
       // case insensetive with flag
-      expect(await page.$$eval(`_react=BookItem[name = "the great gatsby" i]`, els => els.length)).toBe(1);
-      expect(await page.$$eval(`_react=BookItem[name = "the great gatsby" I]`, els => els.length)).toBe(1);
-      expect(await page.$$eval(`_react=BookItem[name = "  The Great Gatsby  "]`, els => els.length)).toBe(0);
+      await expect(page.locator(`_react=BookItem[name = "the great gatsby" i]`)).toHaveCount(1);
+      await expect(page.locator(`_react=BookItem[name = "the great gatsby" I]`)).toHaveCount(1);
+      await expect(page.locator(`_react=BookItem[name = "  The Great Gatsby  "]`)).toHaveCount(0);
     });
 
     it('should partially match by props', async ({ page }) => {
       // Check partial matching
-      expect(await page.$eval(`_react=BookItem[name *= "Gatsby"]`, el => el.textContent)).toBe('The Great Gatsby');
-      expect(await page.$$eval(`_react=BookItem[name *= "Gatsby"]`, els => els.length)).toBe(1);
-      expect(await page.$$eval(`_react=[name *= "Gatsby"]`, els => els.length)).toBe(1);
+      await expect(page.locator(`_react=BookItem[name *= "Gatsby"]`)).toHaveText('The Great Gatsby');
+      await expect(page.locator(`_react=BookItem[name *= "Gatsby"]`)).toHaveCount(1);
+      await expect(page.locator(`_react=[name *= "Gatsby"]`)).toHaveCount(1);
 
-      expect(await page.$$eval(`_react=BookItem[name = "Gatsby"]`, els => els.length)).toBe(0);
+      await expect(page.locator(`_react=BookItem[name = "Gatsby"]`)).toHaveCount(0);
     });
 
     it('should support all string operators', async ({ page }) => {
-      expect(await page.$$eval(`_react=ColorButton[color = "red"]`, els => els.length)).toBe(3);
-      expect(await page.$$eval(`_react=ColorButton[color |= "red"]`, els => els.length)).toBe(3);
-      expect(await page.$$eval(`_react=ColorButton[color $= "ed"]`, els => els.length)).toBe(3);
-      expect(await page.$$eval(`_react=ColorButton[color ^= "gr"]`, els => els.length)).toBe(3);
-      expect(await page.$$eval(`_react=ColorButton[color ~= "e"]`, els => els.length)).toBe(0);
-      expect(await page.$$eval(`_react=BookItem[name ~= "gatsby" i]`, els => els.length)).toBe(1);
-      expect(await page.$$eval(`_react=BookItem[name *= " gatsby" i]`, els => els.length)).toBe(1);
+      await expect(page.locator(`_react=ColorButton[color = "red"]`)).toHaveCount(3);
+      await expect(page.locator(`_react=ColorButton[color |= "red"]`)).toHaveCount(3);
+      await expect(page.locator(`_react=ColorButton[color $= "ed"]`)).toHaveCount(3);
+      await expect(page.locator(`_react=ColorButton[color ^= "gr"]`)).toHaveCount(3);
+      await expect(page.locator(`_react=ColorButton[color ~= "e"]`)).toHaveCount(0);
+      await expect(page.locator(`_react=BookItem[name ~= "gatsby" i]`)).toHaveCount(1);
+      await expect(page.locator(`_react=BookItem[name *= " gatsby" i]`)).toHaveCount(1);
     });
 
     it('should support regex', async ({ page }) => {
-      expect(await page.$$eval(`_react=ColorButton[color = /red/]`, els => els.length)).toBe(3);
-      expect(await page.$$eval(`_react=ColorButton[color = /^red$/]`, els => els.length)).toBe(3);
-      expect(await page.$$eval(`_react=ColorButton[color = /RED/i]`, els => els.length)).toBe(3);
-      expect(await page.$$eval(`_react=ColorButton[color = /[pqr]ed/]`, els => els.length)).toBe(3);
-      expect(await page.$$eval(`_react=ColorButton[color = /[pq]ed/]`, els => els.length)).toBe(0);
-      expect(await page.$$eval(`_react=BookItem[name = /gat.by/i]`, els => els.length)).toBe(1);
+      await expect(page.locator(`_react=ColorButton[color = /red/]`)).toHaveCount(3);
+      await expect(page.locator(`_react=ColorButton[color = /^red$/]`)).toHaveCount(3);
+      await expect(page.locator(`_react=ColorButton[color = /RED/i]`)).toHaveCount(3);
+      await expect(page.locator(`_react=ColorButton[color = /[pqr]ed/]`)).toHaveCount(3);
+      await expect(page.locator(`_react=ColorButton[color = /[pq]ed/]`)).toHaveCount(0);
+      await expect(page.locator(`_react=BookItem[name = /gat.by/i]`)).toHaveCount(1);
     });
 
     it('should support truthy querying', async ({ page }) => {
-      expect(await page.$$eval(`_react=ColorButton[enabled]`, els => els.length)).toBe(5);
+      await expect(page.locator(`_react=ColorButton[enabled]`)).toHaveCount(5);
     });
 
     it('should support nested react trees', async ({ page }) => {
