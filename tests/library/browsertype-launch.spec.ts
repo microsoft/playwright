@@ -63,6 +63,7 @@ it('should reject if launched browser fails immediately', async ({ browserType, 
   let waitError = null;
   await browserType.launch({ executablePath: asset('dummy_bad_browser_executable.js') }).catch(e => waitError = e);
   expect(waitError.message).toContain('== logs ==');
+  expect(waitError.message).toContain('Browser process did exit unexpectedly: exitCode=1');
 });
 
 it('should reject if executable path is invalid', async ({ browserType }) => {
