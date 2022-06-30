@@ -119,6 +119,10 @@ WebServer is now considered "ready" if request to the specified port has any of 
 
 ## Version 1.22
 
+<div className="embed-youtube">
+  <iframe width="560" height="315" src="https://www.youtube.com/embed/keV2CIgtBlg" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</div>
+
 ### Highlights
 
 - Components Testing (preview)
@@ -189,6 +193,10 @@ WebServer is now considered "ready" if request to the specified port has any of 
 
 ## Version 1.21
 
+<div className="embed-youtube">
+  <iframe width="560" height="315" src="https://www.youtube.com/embed/45HZdbmgEw8" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</div>
+
 ### Highlights
 
 - New role selectors that allow selecting elements by their [ARIA role](https://www.w3.org/TR/wai-aria-1.2/#roles), [ARIA attributes](https://www.w3.org/TR/wai-aria-1.2/#aria-attributes) and [accessible name](https://w3c.github.io/accname/#dfn-accessible-name).
@@ -236,6 +244,10 @@ This version was also tested against the following stable channels:
 
 
 ## Version 1.20
+
+<div className="embed-youtube">
+  <iframe width="560" height="315" src="https://www.youtube.com/embed/6vV-XXKsrbA" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</div>
 
 ### Highlights
 
@@ -302,6 +314,10 @@ This version was also tested against the following stable channels:
 - Microsoft Edge 99
 
 ## Version 1.19
+
+<div className="embed-youtube">
+  <iframe width="560" height="315" src="https://www.youtube.com/embed/z0EOFvlf14U" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</div>
 
 ### Playwright Test Update
 
@@ -386,6 +402,10 @@ This version was also tested against the following stable channels:
 
 
 ## Version 1.18
+
+<div className="embed-youtube">
+ <iframe width="560" height="315" src="https://www.youtube.com/embed/ABLYpw2BN_g" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</div>
 
 ### Locator Improvements
 
@@ -488,6 +508,10 @@ This version was also tested against the following stable channels:
 
 ## Version 1.17
 
+<div className="embed-youtube">
+  <iframe width="560" height="315" src="https://www.youtube.com/embed/7iyIdeoAP04" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</div>
+
 ### Frame Locators
 
 Playwright 1.17 introduces [frame locators](./api/class-framelocator) - a locator to the iframe on the page. Frame locators capture the logic sufficient to retrieve the `iframe` and then locate elements in that iframe. Frame locators are strict by default, will wait for `iframe` to appear and can be used in Web-First assertions.
@@ -545,6 +569,10 @@ Playwright Trace Viewer is now **available online** at https://trace.playwright.
 
 
 ## Version 1.16
+
+<div className="embed-youtube">
+  <iframe width="560" height="315" src="https://www.youtube.com/embed/OQKwFDmY64g" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</div>
 
 ### 🎭 Playwright Test
 
@@ -676,6 +704,10 @@ This version of Playwright was also tested against the following stable channels
 
 ## Version 1.15
 
+<div className="embed-youtube">
+  <iframe width="560" height="315" src="https://www.youtube.com/embed/6RwzsDeEj7Y" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</div>
+
 ### 🎭 Playwright Library
 
 #### 🖱️ Mouse Wheel
@@ -732,6 +764,10 @@ By using `npx playwright test --debug` it will enable the [Playwright Inspector]
 - WebKit 15.0
 
 ## Version 1.14
+
+<div className="embed-youtube">
+  <iframe width="560" height="315" src="https://www.youtube.com/embed/LczBDR0gOhk" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</div>
 
 ### 🎭 Playwright Library
 
