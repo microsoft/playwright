@@ -193,7 +193,7 @@ async function repackageJuggler(browserName, buildInfo) {
     zip.writeZip(omniWithJugglerPath);
   }
 
-  const module = await import(path.join(__dirname, browserName, 'install-preferences.js'));
+  const module = await import(URL.pathToFileURL(path.join(__dirname, browserName, 'install-preferences.js')));
   await module.default.installFirefoxPreferences(path.join(BUILD_DIRECTORY, 'firefox'));
 
   // Output executable path to be used in test.
