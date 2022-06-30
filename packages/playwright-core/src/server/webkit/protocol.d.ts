@@ -538,6 +538,10 @@ export module Protocol {
      */
     export type PseudoId = "first-line"|"first-letter"|"highlight"|"marker"|"before"|"after"|"selection"|"backdrop"|"scrollbar"|"scrollbar-thumb"|"scrollbar-button"|"scrollbar-track"|"scrollbar-track-piece"|"scrollbar-corner"|"resizer";
     /**
+     * Pseudo-style identifier (see <code>enum PseudoId</code> in <code>RenderStyleConstants.h</code>).
+     */
+    export type ForceablePseudoClass = "active"|"focus"|"focus-visible"|"focus-within"|"hover"|"target"|"visited";
+    /**
      * CSS rule collection for a single pseudo style.
      */
     export interface PseudoIdMatches {
@@ -1167,7 +1171,7 @@ export module Protocol {
       /**
        * Element pseudo classes to force when computing the element's style.
        */
-      forcedPseudoClasses: "active"|"focus"|"hover"|"visited"[];
+      forcedPseudoClasses: ForceablePseudoClass[];
     }
     export type forcePseudoStateReturnValue = {
     }
@@ -5183,6 +5187,10 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
      */
     export type Walltime = number;
     /**
+     * Controls how much referrer information is sent with the request
+     */
+    export type ReferrerPolicy = "empty-string"|"no-referrer"|"no-referrer-when-downgrade"|"same-origin"|"origin"|"strict-origin"|"origin-when-cross-origin"|"strict-origin-when-cross-origin"|"unsafe-url";
+    /**
      * Request / response headers as keys / values of JSON object.
      */
     export type Headers = { [key: string]: string };
@@ -5259,6 +5267,14 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
        * HTTP POST request data.
        */
       postData?: string;
+      /**
+       * The level of included referrer information.
+       */
+      referrerPolicy?: ReferrerPolicy;
+      /**
+       * The base64 cryptographic hash of the resource.
+       */
+      integrity?: string;
     }
     /**
      * HTTP response data.
