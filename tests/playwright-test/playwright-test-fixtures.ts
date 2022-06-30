@@ -29,7 +29,7 @@ import { test as base } from './stable-test-runner';
 
 const removeFolderAsync = promisify(rimraf);
 
-type RunResult = {
+export type RunResult = {
   exitCode: number,
   output: string,
   passed: number,
