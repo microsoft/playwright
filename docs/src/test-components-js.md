@@ -17,7 +17,7 @@ Playwright Test can now test your components.
 Here is what a typical component test looks like:
 
 ```js
-test('should work', async ({ mount }) => {
+test('event should work', async ({ mount }) => {
   let clicked = false;
 
   // Mount a component. Returns locator pointing to the component.
