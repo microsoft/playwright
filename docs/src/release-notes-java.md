@@ -86,7 +86,7 @@ Note that the new methods [`method: Page.routeFromHAR`] and [`method: BrowserCon
   that only records information that is essential for replaying:
   ```java
   BrowserContext context = browser.newContext(new Browser.NewContextOptions()
-      .setRecordHarPath(Paths.get("example.har.zip"))
+      .setRecordHarPath(Paths.get("example.har"))
       .setRecordHarMode(HarMode.MINIMAL));
   ```
 * Playwright now runs on Ubuntu 22 amd64 and Ubuntu 22 arm64. We also publish new docker image `mcr.microsoft.com/playwright/java:v1.24.0-jammy`.

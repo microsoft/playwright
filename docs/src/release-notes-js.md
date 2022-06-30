@@ -96,12 +96,12 @@ Read more about [component testing with Playwright](./test-components).
     }
   });
   ```
-* If you intend to edit HAR by hand, consider using the `"minimal"` HAR recording mode 
+* If you intend to edit HAR by hand, consider using the `"minimal"` HAR recording mode
   that only records information that is essential for replaying:
   ```ts
   const context = await browser.newContext({
     recordHar: {
-      path: 'github.har.zip',
+      path: 'github.har',
       mode: 'minimal',
     }
   });
@@ -112,7 +112,7 @@ Read more about [component testing with Playwright](./test-components).
 
 WebServer is now considered "ready" if request to the specified port has any of the following HTTP status codes:
 
-* `200-299` 
+* `200-299`
 * `300-399` (new)
 * `400`, `401`, `402`, `403` (new)
 
