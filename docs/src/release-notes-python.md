@@ -5,6 +5,86 @@ title: "Release notes"
 
 <!-- TOC -->
 
+## Version 1.23
+
+### Network Replay
+
+Now you can record network traffic into a HAR file and re-use this traffic in your tests.
+
+To record network into HAR file:
+
+```bash
+npx playwright open --save-har=github.har.zip https://github.com/microsoft
+```
+
+Alternatively, you can record HAR programmatically:
+
+```py
+context = await browser.new_context(record_har_path="github.har.zip")
+# ... do stuff ...
+await context.close()
+```
+
+Use the new methods [`method: Page.routeFromHAR`] or [`method: BrowserContext.routeFromHAR`] to serve matching responses from the [HAR](http://www.softwareishard.com/blog/har-12-spec/) file:
+
+
+```py
+await context.route_from_har('github.har.zip')
+```
+
+Read more in [our documentation](./network#record-and-replay-requests).
+
+
+### Advanced Routing
+
+You can now use [`method: Route.fallback`] to defer routing to other handlers.
+
+Consider the following example:
+
+```py
+# Remove a header from all requests.
+async def remove_header_handler(route: Route) -> None:
+  headers = await route.request.all_headers()
+  if "if-none-match" in headers:
+   del headers["if-none-match"]
+  await route.fallback(headers=headers)
+await page.route('**/*', remove_header_handler)
+
+# Abort all images
+async def abort_images_handler(route: Route) -> None:
+  if route.request.resource_type == "image":
+    await route.abort()
+  else:
+    await route.fallback()
+await page.route('**/*', abort_images_handler)
+```
+
+Note that the new methods [`method: Page.routeFromHAR`] and [`method: BrowserContext.routeFromHAR`] also participate in routing and could be deferred to.
+
+### Web-First Assertions Update
+
+* New method [`method: LocatorAssertions.toHaveValues`] that asserts all selected values of `<select multiple>` element.
+* Methods [`method: LocatorAssertions.toContainText`] and [`method: LocatorAssertions.toHaveText`] now accept `ignore_case` option.
+
+### Miscellaneous
+
+* If there's a service worker that's in your way, you can now easily disable it with a new context option `service_workers`:
+  ```py
+  context = await browser.new_context(service_workers="block")
+  page = await context.new_page()
+  ```
+* Using `.zip` path for `recordHar` context option automatically zips the resulting HAR:
+  ```py
+  context = await browser.new_context(record_har_path="github.har.zip")
+  ```
+* If you intend to edit HAR by hand, consider using the `"minimal"` HAR recording mode
+  that only records information that is essential for replaying:
+  ```py
+  context = await browser.new_context(record_har_mode="minimal", record_har_path="har.har")
+  ```
+* Playwright now runs on Ubuntu 22 amd64 and Ubuntu 22 arm64. We also publish new docker image `mcr.microsoft.com/playwright/python:v1.24.0-jammy`.
+
+
 ## Version 1.22
 
 ### Highlights
