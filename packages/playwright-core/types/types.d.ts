@@ -13224,6 +13224,12 @@ export interface Browser extends EventEmitter {
    * In case this browser is connected to, clears all created contexts belonging to this browser and disconnects from the
    * browser server.
    *
+   * > NOTE: This is similar to force quitting the browser. Therefore, you should call
+   * [browserContext.close()](https://playwright.dev/docs/api/class-browsercontext#browser-context-close) on any
+   * [BrowserContext]'s you explicitly created earlier with
+   * [browser.newContext([options])](https://playwright.dev/docs/api/class-browser#browser-new-context) **before** calling
+   * [browser.close()](https://playwright.dev/docs/api/class-browser#browser-close).
+   *
    * The [Browser] object itself is considered to be disposed and cannot be used anymore.
    */
   close(): Promise<void>;
@@ -13257,6 +13263,12 @@ export interface Browser extends EventEmitter {
   /**
    * Creates a new browser context. It won't share cookies/cache with other browser contexts.
    *
+   * > NOTE: If directly using this method to create [BrowserContext]s, it is best practice to explicilty close the returned
+   * context via [browserContext.close()](https://playwright.dev/docs/api/class-browsercontext#browser-context-close) when
+   * your code is done with the [BrowserContext], and before calling
+   * [browser.close()](https://playwright.dev/docs/api/class-browser#browser-close). This will ensure the `context` is closed
+   * gracefully and any artifacts—like HARs and videos—are fully flushed and saved.
+   *
    * ```js
    * (async () => {
    *   const browser = await playwright.firefox.launch();  // Or 'chromium' or 'webkit'.
@@ -13265,6 +13277,10 @@ export interface Browser extends EventEmitter {
    *   // Create a new page in a pristine context.
    *   const page = await context.newPage();
    *   await page.goto('https://example.com');
+   *
+   *   // Gracefully close up everything
+   *   await context.close();
+   *   await browser.close();
    * })();
    * ```
    *
