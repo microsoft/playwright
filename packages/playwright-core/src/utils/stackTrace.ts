@@ -15,6 +15,7 @@
  */
 
 import path from 'path';
+import url from 'url';
 import { StackUtils } from '../utilsBundle';
 import { isUnderTest } from './';
 
@@ -87,12 +88,8 @@ export function captureStackTrace(rawStack?: string): ParsedStackTrace {
       return null;
     if (isInternalFileName(frame.file, frame.function))
       return null;
-    // Workaround for https://github.com/tapjs/stack-utils/issues/60
-    let fileName: string;
-    if (frame.file.startsWith('file://'))
-      fileName = new URL(frame.file).pathname;
-    else
-      fileName = path.resolve(process.cwd(), frame.file);
+    // ESM files return file:// URLs, see here: https://github.com/tapjs/stack-utils/issues/60
+    const fileName = frame.file.startsWith('file://') ? url.fileURLToPath(frame.file) : path.resolve(process.cwd(), frame.file);
     if (isTesting && fileName.includes(COVERAGE_PATH))
       return null;
     const inCore = fileName.startsWith(CORE_LIB) || fileName.startsWith(CORE_SRC);

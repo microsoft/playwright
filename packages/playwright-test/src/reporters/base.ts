@@ -16,6 +16,7 @@
 
 import { colors, ms as milliseconds } from 'playwright-core/lib/utilsBundle';
 import fs from 'fs';
+import url from 'url';
 import path from 'path';
 import { StackUtils } from 'playwright-core/lib/utilsBundle';
 import type { FullConfig, TestCase, Suite, TestResult, TestError, Reporter, FullResult, TestStep, Location } from '../../types/testReporter';
@@ -414,7 +415,8 @@ export function prepareErrorStack(stack: string, file?: string): {
     const parsed = stackUtils.parseLine(line);
     if (!parsed || !parsed.file)
       continue;
-    const resolvedFile = path.join(process.cwd(), parsed.file);
+    // ESM files return file:// URLs, see here: https://github.com/tapjs/stack-utils/issues/60
+    const resolvedFile = parsed.file.startsWith('file://') ? url.fileURLToPath(parsed.file) : path.resolve(process.cwd(), parsed.file);
     if (!file || resolvedFile === file) {
       location = { file: resolvedFile, column: parsed.column || 0, line: parsed.line || 0 };
       break;
