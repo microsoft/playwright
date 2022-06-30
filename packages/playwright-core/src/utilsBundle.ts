@@ -46,9 +46,10 @@ export function parseStackTraceLine(line: string): { frame: import('../bundles/u
   if (!frame)
     return { frame: null, fileName: null };
   let fileName = null;
-  if (frame.file)
+  if (frame.file) {
     // ESM files return file:// URLs, see here: https://github.com/tapjs/stack-utils/issues/60
     fileName = frame.file.startsWith('file://') ? url.fileURLToPath(frame.file) : path.resolve(process.cwd(), frame.file);
+  }
   return {
     frame,
     fileName,
