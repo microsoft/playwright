@@ -37,6 +37,7 @@ import JSONReporter from './reporters/json';
 import JUnitReporter from './reporters/junit';
 import EmptyReporter from './reporters/empty';
 import HtmlReporter from './reporters/html';
+import AzureDevOpsReporter from './reporters/azure';
 import type { Config, FullProjectInternal } from './types';
 import type { FullConfigInternal } from './types';
 import { raceAgainstTimeout } from 'playwright-core/lib/utils/timeoutRunner';
@@ -139,6 +140,7 @@ export class Runner {
       junit: JUnitReporter,
       null: EmptyReporter,
       html: HtmlReporter,
+      azure: AzureDevOpsReporter
     };
     const reporters: Reporter[] = [];
     for (const r of this._loader.fullConfig().reporter) {
@@ -789,5 +791,5 @@ function createStacklessError(message: string): TestError {
   return { message };
 }
 
-export const builtInReporters = ['list', 'line', 'dot', 'json', 'junit', 'null', 'github', 'html'] as const;
+export const builtInReporters = ['list', 'line', 'dot', 'json', 'junit', 'null', 'github', 'html', 'azure'] as const;
 export type BuiltInReporter = typeof builtInReporters[number];
