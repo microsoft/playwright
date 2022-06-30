@@ -38,6 +38,7 @@ import { helper } from './helper';
 import { RecentLogsCollector } from '../common/debugLogger';
 import type { CallMetadata } from './instrumentation';
 import { SdkObject } from './instrumentation';
+import { ManualPromise } from '../utils/manualPromise';
 
 export const kNoXServerRunningError = 'Looks like you launched a headed browser without having a XServer running.\n' +
   'Set either \'headless: true\' or use \'xvfb-run <your-playwright-app>\' before running Playwright.\n\n<3 Playwright Team';
@@ -186,9 +187,8 @@ export abstract class BrowserType extends SdkObject {
       await registryExecutable.validateHostRequirements(this._playwrightOptions.sdkLanguage);
     }
 
-    let wsEndpointCallback: ((wsEndpoint: string) => void) | undefined;
-    const shouldWaitForWSListening = options.useWebSocket || options.args?.some(a => a.startsWith('--remote-debugging-port'));
-    const waitForWSEndpoint = shouldWaitForWSListening ? new Promise<string>(f => wsEndpointCallback = f) : undefined;
+    const waitForWSEndpoint = (options.useWebSocket || options.args?.some(a => a.startsWith('--remote-debugging-port'))) ? new ManualPromise<string>() : undefined;
+    const waitForJuggler = this._name === 'firefox' ? new ManualPromise<void>() : undefined;
     // Note: it is important to define these variables before launchProcess, so that we don't get
     // "Cannot access 'browserServer' before initialization" if something went wrong.
     let transport: ConnectionTransport | undefined = undefined;
@@ -201,11 +201,13 @@ export abstract class BrowserType extends SdkObject {
       handleSIGTERM,
       handleSIGHUP,
       log: (message: string) => {
-        if (wsEndpointCallback) {
+        if (waitForWSEndpoint) {
           const match = message.match(/DevTools listening on (.*)/);
           if (match)
-            wsEndpointCallback(match[1]);
+            waitForWSEndpoint.resolve(match[1]);
         }
+        if (waitForJuggler && message.includes('Juggler listening to the pipe'))
+          waitForJuggler.resolve();
         progress.log(message);
         browserLogsCollector.log(message);
       },
@@ -220,6 +222,8 @@ export abstract class BrowserType extends SdkObject {
         this._attemptToGracefullyCloseBrowser(transport!);
       },
       onExit: (exitCode, signal) => {
+        // Unblock launch when browser prematurely exits.
+        waitForJuggler?.resolve();
         if (browserProcess && browserProcess.onclose)
           browserProcess.onclose(exitCode, signal);
       },
@@ -244,9 +248,8 @@ export abstract class BrowserType extends SdkObject {
       kill
     };
     progress.cleanupWhenAborted(() => closeOrKill(progress.timeUntilDeadline()));
-    let wsEndpoint: string | undefined;
-    if (shouldWaitForWSListening)
-      wsEndpoint = await waitForWSEndpoint;
+    const wsEndpoint = await waitForWSEndpoint;
+    await waitForJuggler;
     if (options.useWebSocket) {
       transport = await WebSocketTransport.connect(progress, wsEndpoint!);
     } else {

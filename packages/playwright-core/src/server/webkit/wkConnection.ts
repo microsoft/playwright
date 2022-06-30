@@ -47,14 +47,15 @@ export class WKConnection {
 
   constructor(transport: ConnectionTransport, onDisconnect: () => void, protocolLogger: ProtocolLogger, browserLogsCollector: RecentLogsCollector) {
     this._transport = transport;
-    this._transport.onmessage = this._dispatchMessage.bind(this);
-    this._transport.onclose = this._onClose.bind(this);
     this._onDisconnect = onDisconnect;
     this._protocolLogger = protocolLogger;
     this._browserLogsCollector = browserLogsCollector;
     this.browserSession = new WKSession(this, '', kBrowserClosedError, (message: any) => {
       this.rawSend(message);
     });
+    this._transport.onmessage = this._dispatchMessage.bind(this);
+    // onclose should be set last, since it can be immediately called.
+    this._transport.onclose = this._onClose.bind(this);
   }
 
   nextMessageId(): number {
