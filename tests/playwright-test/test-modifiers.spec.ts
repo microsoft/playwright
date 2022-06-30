@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-import type { JSONReportSuite, JSONReportTest } from '@playwright/test/reporter';
-import type { RunResult } from './playwright-test-fixtures';
-import { test, expect, stripAnsi } from './playwright-test-fixtures';
+import { test, expect, stripAnsi, expectTestHelper } from './playwright-test-fixtures';
 
 test('test modifiers should work', async ({ runInlineTest }) => {
   const result = await runInlineTest({
@@ -133,28 +131,6 @@ test('test modifiers should work', async ({ runInlineTest }) => {
 });
 
 test.describe('test modifier annotations', () => {
-  const expectTestHelper = (result: RunResult) => {
-    const allTests = (result: RunResult) => {
-      const tests: { title: string; expectedStatus: JSONReportTest['expectedStatus'], actualStatus: JSONReportTest['status'], annotations: string[] }[] = [];
-      const visit = (suite: JSONReportSuite) => {
-        for (const spec of suite.specs)
-          spec.tests.forEach(t => tests.push({ title: spec.title, expectedStatus: t.expectedStatus, actualStatus: t.status, annotations: t.annotations.map(a => a.type)  }));
-
-        suite.suites?.forEach(s => visit(s));
-      };
-      visit(result.report.suites[0]);
-      return tests;
-    };
-
-    return (title: string, expectedStatus: string, status: string, annotations: any) => {
-      const tests = allTests(result).filter(t => t.title === title);
-      expect(tests).toHaveLength(1);
-      expect(tests[0].expectedStatus).toBe(expectedStatus);
-      expect(tests[0].actualStatus).toBe(status);
-      expect(tests[0].annotations).toEqual(annotations);
-    };
-  };
-
   test('should work', async ({ runInlineTest }) => {
     const result = await runInlineTest({
       'a.test.ts': `
@@ -296,6 +272,39 @@ test.describe('test modifier annotations', () => {
     expect(result.skipped).toBe(2);
     expectTest('focused skip by suite', 'skipped', 'skipped', ['skip']);
     expectTest('focused fixme by suite', 'skipped', 'skipped', ['fixme']);
+  });
+
+  test('should not multiple on retry', async ({ runInlineTest }) => {
+    const result = await runInlineTest({
+      'a.test.ts': `
+        const { test } = pwt;
+        test('retry', () => {
+          test.info().annotations.push({ type: 'example' });
+          expect(1).toBe(2);
+        });
+      `,
+    }, { retries: 3 });
+    const expectTest = expectTestHelper(result);
+
+    expect(result.exitCode).toBe(1);
+    expect(result.passed).toBe(0);
+    expectTest('retry', 'passed', 'unexpected', ['example']);
+  });
+
+  test('should not multiply on repeat-each', async ({ runInlineTest }) => {
+    const result = await runInlineTest({
+      'a.test.ts': `
+        const { test } = pwt;
+        test('retry', () => {
+          test.info().annotations.push({ type: 'example' });
+        });
+      `,
+    }, { 'repeat-each': 3 });
+    const expectTest = expectTestHelper(result);
+
+    expect(result.exitCode).toBe(0);
+    expect(result.passed).toBe(3);
+    expectTest('retry', 'passed', 'expected', ['example']);
   });
 });
 
