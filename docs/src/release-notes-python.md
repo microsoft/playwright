@@ -35,11 +35,11 @@ Use the new methods [`method: Page.routeFromHAR`] or [`method: BrowserContext.ro
 
 
 ```python async
-await context.route_from_har('github.har.zip')
+await context.route_from_har("github.har.zip")
 ```
 
 ```python sync
-context.route_from_har('github.har.zip')
+context.route_from_har("github.har.zip")
 ```
 
 Read more in [our documentation](./network#record-and-replay-requests).
