@@ -1046,6 +1046,8 @@ export class InjectedScript {
       // JS property
       if (expression === 'to.have.property') {
         const received = (element as any)[options.expressionArg];
+        if (options.expectedValue === 'PLAYWRIGHT_ACCEPT_NULL_OR_UNDEFINED')
+          return { received, matches: received === null || received === undefined };
         const matches = deepEquals(received, options.expectedValue);
         return { received, matches };
       }

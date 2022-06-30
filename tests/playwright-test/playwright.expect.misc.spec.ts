@@ -116,6 +116,32 @@ test('should support toHaveJSProperty', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(1);
 });
 
+test('should support toHaveJSProperty and accept null/undefined for language bindings', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      const { test } = pwt;
+
+      test('pass', async ({ page }) => {
+        await page.setContent('<div></div>');
+        await page.$eval('div', e => {
+          e.iAmNull = null;
+          e.iAmUndefined = undefined;
+          e.iAmAString = 'foobar';
+          e.iAmAnObject = { a: 1 };
+        });
+        const locator = page.locator('div');
+        await expect(locator).toHaveJSProperty('iAmNull', 'PLAYWRIGHT_ACCEPT_NULL_OR_UNDEFINED');
+        await expect(locator).toHaveJSProperty('iAmUndefined', 'PLAYWRIGHT_ACCEPT_NULL_OR_UNDEFINED');
+        await expect(locator).toHaveJSProperty('iAmNotThere', 'PLAYWRIGHT_ACCEPT_NULL_OR_UNDEFINED');
+        await expect(locator).not.toHaveJSProperty('iAmAString', 'PLAYWRIGHT_ACCEPT_NULL_OR_UNDEFINED');
+        await expect(locator).not.toHaveJSProperty('iAmAnObject', 'PLAYWRIGHT_ACCEPT_NULL_OR_UNDEFINED');
+      });
+      `,
+  }, { workers: 1 });
+  expect(result.passed).toBe(1);
+  expect(result.failed).toBe(0);
+  expect(result.exitCode).toBe(0);
+});
 
 test('should support toHaveJSProperty with builtin types', async ({ runInlineTest }) => {
   const result = await runInlineTest({
