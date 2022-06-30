@@ -93,7 +93,7 @@ In case this browser is connected to, clears all created contexts belonging to t
 browser server.
 
 :::note
-This is similar to force quitting the browser. Therefore, you should call [`method: BrowserContext.close`] on any [`BrowserContext`]'s you explicitly created with [`method: Browser.newContext`] **before** calling [`method: BrowserContext.close`].
+This is similar to force quitting the browser. Therefore, you should call [`method: BrowserContext.close`] on any [BrowserContext]'s you explicitly created earlier with [`method: Browser.newContext`] **before** calling [`method: Browser.close`].
 :::
 
 The [Browser] object itself is considered to be disposed and cannot be used anymore.
@@ -161,8 +161,8 @@ Returns the newly created browser session.
 Creates a new browser context. It won't share cookies/cache with other browser contexts.
 
 :::note
-If directly using this method to create [`BrowserContext`]s, it is best practice to explicilty close the returned context via [`method: BrowserContext.close`] when your code is done with the [`BrowserContext`],
-and before calling [`method: Browser.close`]. This will ensure the `context` is closed gracefully and any artifacts—like HAR's—are fully flushed and saved.
+If directly using this method to create [BrowserContext]s, it is best practice to explicilty close the returned context via [`method: BrowserContext.close`] when your code is done with the [BrowserContext],
+and before calling [`method: Browser.close`]. This will ensure the `context` is closed gracefully and any artifacts—like HARs and videos—are fully flushed and saved.
 :::
 
 ```js

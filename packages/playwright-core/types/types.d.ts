@@ -13226,9 +13226,9 @@ export interface Browser extends EventEmitter {
    *
    * > NOTE: This is similar to force quitting the browser. Therefore, you should call
    * [browserContext.close()](https://playwright.dev/docs/api/class-browsercontext#browser-context-close) on any
-   * [`BrowserContext`]'s you explicitly created with
+   * [BrowserContext]'s you explicitly created earlier with
    * [browser.newContext([options])](https://playwright.dev/docs/api/class-browser#browser-new-context) **before** calling
-   * [browserContext.close()](https://playwright.dev/docs/api/class-browsercontext#browser-context-close).
+   * [browser.close()](https://playwright.dev/docs/api/class-browser#browser-close).
    *
    * The [Browser] object itself is considered to be disposed and cannot be used anymore.
    */
@@ -13263,12 +13263,11 @@ export interface Browser extends EventEmitter {
   /**
    * Creates a new browser context. It won't share cookies/cache with other browser contexts.
    *
-   * > NOTE: If directly using this method to create [`BrowserContext`]s, it is best practice to explicilty close the
-   * returned context via
-   * [browserContext.close()](https://playwright.dev/docs/api/class-browsercontext#browser-context-close) when your code is
-   * done with the [`BrowserContext`], and before calling
+   * > NOTE: If directly using this method to create [BrowserContext]s, it is best practice to explicilty close the returned
+   * context via [browserContext.close()](https://playwright.dev/docs/api/class-browsercontext#browser-context-close) when
+   * your code is done with the [BrowserContext], and before calling
    * [browser.close()](https://playwright.dev/docs/api/class-browser#browser-close). This will ensure the `context` is closed
-   * gracefully and any artifacts—like HAR's—are fully flushed and saved.
+   * gracefully and any artifacts—like HARs and videos—are fully flushed and saved.
    *
    * ```js
    * (async () => {
