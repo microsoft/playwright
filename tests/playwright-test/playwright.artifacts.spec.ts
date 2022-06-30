@@ -122,6 +122,8 @@ const testFiles = {
   `,
 };
 
+test.slow(true, 'Multiple browser launches in each test');
+
 test('should work with screenshot: on', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     ...testFiles,
