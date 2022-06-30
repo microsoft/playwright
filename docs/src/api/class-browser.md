@@ -173,6 +173,10 @@ and before calling [`method: Browser.close`]. This will ensure the `context` is 
   // Create a new page in a pristine context.
   const page = await context.newPage();
   await page.goto('https://example.com');
+
+  // Gracefully close up everything
+  await context.close();
+  await browser.close();
 })();
 ```
 
@@ -183,6 +187,10 @@ BrowserContext context = browser.newContext();
 // Create a new page in a pristine context.
 Page page = context.newPage();
 page.navigate('https://example.com');
+
+// Gracefull close up everything
+context.close();
+browser.close();
 ```
 
 ```python async
@@ -192,6 +200,10 @@ context = await browser.new_context()
 # create a new page in a pristine context.
 page = await context.new_page()
 await page.goto("https://example.com")
+
+# gracefully close up everything
+await context.close()
+await browser.close()
 ```
 
 ```python sync
@@ -201,6 +213,10 @@ context = browser.new_context()
 # create a new page in a pristine context.
 page = context.new_page()
 page.goto("https://example.com")
+
+# gracefully close up everything
+context.close()
+browser.close()
 ```
 
 ```csharp
@@ -211,6 +227,10 @@ var context = await browser.NewContextAsync();
 // Create a new page in a pristine context.
 var page = await context.NewPageAsync(); ;
 await page.GotoAsync("https://www.bing.com");
+
+// Gracefully close up everything
+await context.CloseAsync();
+await browser.CloseAsync();
 ```
 
 ### option: Browser.newContext.-inline- = %%-shared-context-params-list-%%
