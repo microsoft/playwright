@@ -42,21 +42,23 @@ You can now use [`method: Route.fallback`] to defer routing to other handlers.
 Consider the following example:
 
 ```py
-# Remove a header from all requests.
+# Remover a header from all requests
 async def remove_header_handler(route: Route) -> None:
-  headers = await route.request.all_headers()
-  if "if-none-match" in headers:
-   del headers["if-none-match"]
-  await route.fallback(headers=headers)
-await page.route('**/*', remove_header_handler)
+    headers = await route.request.all_headers()
+    if "if-none-match" in headers:
+        del headers["if-none-match"]
+    await route.fallback(headers=headers)
+
+await page.route("**/*", remove_header_handler)
 
 # Abort all images
 async def abort_images_handler(route: Route) -> None:
-  if route.request.resource_type == "image":
-    await route.abort()
-  else:
-    await route.fallback()
-await page.route('**/*', abort_images_handler)
+    if route.request.resource_type == "image":
+        await route.abort()
+    else:
+        await route.fallback()
+
+await page.route("**/*", abort_images_handler)
 ```
 
 Note that the new methods [`method: Page.routeFromHAR`] and [`method: BrowserContext.routeFromHAR`] also participate in routing and could be deferred to.
