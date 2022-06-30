@@ -68,7 +68,7 @@ it('should not select single option when some attributes do not match', async ({
   await page.goto(server.PREFIX + '/input/select.html');
   await page.$eval('select', s => s.value = undefined);
   try {
-    await page.selectOption('select', { value: 'green', label: 'Brown' }, { timeout: 300 });
+    await page.selectOption('select', { value: 'green', label: 'Brown' }, { timeout: 1000 });
   } catch (e) {
     expect(e.message).toContain('Timeout');
   }

@@ -74,19 +74,19 @@ test('should support toBeChecked w/ not', async ({ runInlineTest }) => {
       test('fail not', async ({ page }) => {
         await page.setContent('<input type=checkbox checked></input>');
         const locator = page.locator('input');
-        await expect(locator).not.toBeChecked({ timeout: 500 });
+        await expect(locator).not.toBeChecked({ timeout: 1000 });
       });
 
       test('fail 2', async ({ page }) => {
         await page.setContent('<input type=checkbox checked></input>');
         const locator = page.locator('input');
-        await expect(locator).toBeChecked({ checked: false, timeout: 500 });
+        await expect(locator).toBeChecked({ checked: false, timeout: 1000 });
       });
 
       test('fail missing', async ({ page }) => {
         await page.setContent('<div>no inputs here</div>');
         const locator2 = page.locator('input2');
-        await expect(locator2).not.toBeChecked({ timeout: 500 });
+        await expect(locator2).not.toBeChecked({ timeout: 1000 });
       });
       `,
   }, { workers: 1 });
@@ -123,7 +123,7 @@ test('should support toBeEditable, toBeEnabled, toBeDisabled, toBeEmpty', async 
       test('failed', async ({ page }) => {
         await page.setContent('<button disabled>Text</button>');
         const locator = page.locator('button');
-        await expect(locator).toBeEnabled({ timeout: 500 });
+        await expect(locator).toBeEnabled({ timeout: 1000 });
       });
 
       test('eventually enabled', async ({ page }) => {
@@ -173,7 +173,7 @@ test('should support toBeEditable, toBeEnabled, toBeDisabled, toBeEmpty', async 
   expect(result.failed).toBe(1);
   expect(result.exitCode).toBe(1);
   const output = stripAnsi(result.output);
-  expect(output).toContain('expect(locator).toBeEnabled({ timeout: 500 }');
+  expect(output).toContain('expect(locator).toBeEnabled({ timeout: 1000 }');
 });
 
 test('should support toBeDisabled,toBeChecked,toBeHidden w/ value', async ({ runInlineTest }) => {
@@ -303,31 +303,31 @@ test('should support toBeVisible, toBeHidden fail', async ({ runInlineTest }) =>
       test('visible', async ({ page }) => {
         await page.setContent('<button style="display: none"></button>');
         const locator = page.locator('button');
-        await expect(locator).toBeVisible({ timeout: 500 });
+        await expect(locator).toBeVisible({ timeout: 1000 });
       });
 
       test('not visible', async ({ page }) => {
         await page.setContent('<input></input>');
         const locator = page.locator('input');
-        await expect(locator).not.toBeVisible({ timeout: 500 });
+        await expect(locator).not.toBeVisible({ timeout: 1000 });
       });
 
       test('hidden', async ({ page }) => {
         await page.setContent('<input></input>');
         const locator = page.locator('input');
-        await expect(locator).toBeHidden({ timeout: 500 });
+        await expect(locator).toBeHidden({ timeout: 1000 });
       });
 
       test('not hidden', async ({ page }) => {
         await page.setContent('<button style="display: none"></button>');
         const locator = page.locator('button');
-        await expect(locator).not.toBeHidden({ timeout: 500 });
+        await expect(locator).not.toBeHidden({ timeout: 1000 });
       });
 
       test('not hidden 2', async ({ page }) => {
         await page.setContent('<div></div>');
         const locator = page.locator('button');
-        await expect(locator).not.toBeHidden({ timeout: 500 });
+        await expect(locator).not.toBeHidden({ timeout: 1000 });
       });
       `,
   }, { workers: 1 });
