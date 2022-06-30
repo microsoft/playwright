@@ -37,7 +37,7 @@ test('should support toHaveText w/ regex', async ({ runInlineTest }) => {
       test('fail', async ({ page }) => {
         await page.setContent('<div id=node>Text content</div>');
         const locator = page.locator('#node');
-        await expect(locator).toHaveText(/Text 2/, { timeout: 100 });
+        await expect(locator).toHaveText(/Text 2/, { timeout: 1000 });
       });
       `,
   }, { workers: 1 });
@@ -68,7 +68,7 @@ test('should support toContainText w/ regex', async ({ runInlineTest }) => {
       test('fail', async ({ page }) => {
         await page.setContent('<div id=node>Text content</div>');
         const locator = page.locator('#node');
-        await expect(locator).toContainText(/ex2/, { timeout: 100 });
+        await expect(locator).toContainText(/ex2/, { timeout: 1000 });
       });
       `,
   }, { workers: 1 });
@@ -115,7 +115,7 @@ test('should support toHaveText w/ text', async ({ runInlineTest }) => {
       test('fail', async ({ page }) => {
         await page.setContent('<div id=node>Text content</div>');
         const locator = page.locator('#node');
-        await expect(locator).toHaveText('Text', { timeout: 100 });
+        await expect(locator).toHaveText('Text', { timeout: 1000 });
       });
       `,
   }, { workers: 1 });
@@ -145,7 +145,7 @@ test('should support toHaveText w/ not', async ({ runInlineTest }) => {
       test('fail', async ({ page }) => {
         await page.setContent('<div id=node>Text content</div>');
         const locator = page.locator('#node');
-        await expect(locator).not.toHaveText('Text content', { timeout: 100 });
+        await expect(locator).not.toHaveText('Text content', { timeout: 1000 });
       });
       `,
   }, { workers: 1 });
