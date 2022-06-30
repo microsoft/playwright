@@ -18,6 +18,7 @@
 import { debugMode } from '../utils';
 
 export const DEFAULT_TIMEOUT = 30000;
+export const DEFAULT_LAUNCH_TIMEOUT = 3 * 60 * 1000; // 3 minutes
 
 export class TimeoutSettings {
   private _parent: TimeoutSettings | undefined;
@@ -68,5 +69,13 @@ export class TimeoutSettings {
     if (debugMode())
       return 0;
     return DEFAULT_TIMEOUT;
+  }
+
+  static launchTimeout(options: { timeout?: number }): number {
+    if (typeof options.timeout === 'number')
+      return options.timeout;
+    if (debugMode())
+      return 0;
+    return DEFAULT_LAUNCH_TIMEOUT;
   }
 }
