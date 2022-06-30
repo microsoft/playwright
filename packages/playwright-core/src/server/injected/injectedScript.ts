@@ -1071,7 +1071,7 @@ export class InjectedScript {
       if (expression === 'to.have.attribute') {
         received = element.getAttribute(options.expressionArg) || '';
       } else if (expression === 'to.have.class') {
-        received = element.className;
+        received = element.classList.toString();
       } else if (expression === 'to.have.css') {
         received = window.getComputedStyle(element).getPropertyValue(options.expressionArg);
       } else if (expression === 'to.have.id') {
@@ -1112,7 +1112,7 @@ export class InjectedScript {
     if (expression === 'to.have.text.array' || expression === 'to.contain.text.array')
       received = elements.map(e => options.useInnerText ? (e as HTMLElement).innerText : e.textContent || '');
     else if (expression === 'to.have.class.array')
-      received = elements.map(e => e.className);
+      received = elements.map(e => e.classList.toString());
 
     if (received && options.expectedText) {
       // "To match an array" is "to contain an array" + "equal length"

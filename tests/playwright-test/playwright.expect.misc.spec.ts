@@ -216,6 +216,11 @@ test('should support toHaveClass', async ({ runInlineTest }) => {
         await expect(locator).toHaveClass('foo bar baz');
       });
 
+      test('pass with SVGs', async ({ page }) => {
+        await page.setContent(\`<svg class="c1 c2" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"></svg>\`);
+        await expect(page.locator('svg')).toHaveClass(/c1/);
+      });
+
       test('fail', async ({ page }) => {
         await page.setContent('<div class="bar baz"></div>');
         const locator = page.locator('div');
@@ -226,7 +231,7 @@ test('should support toHaveClass', async ({ runInlineTest }) => {
   const output = stripAnsi(result.output);
   expect(output).toContain('expect(locator).toHaveClass');
   expect(output).toContain('Expected string: \"foo bar baz\"');
-  expect(result.passed).toBe(1);
+  expect(result.passed).toBe(2);
   expect(result.failed).toBe(1);
   expect(result.exitCode).toBe(1);
 });
