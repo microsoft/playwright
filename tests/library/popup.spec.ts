@@ -127,15 +127,22 @@ it('should inherit viewport size from browser context', async function({ browser
 });
 
 it('should use viewport size from window features', async function({ browser, server, browserName }) {
-  it.fixme(browserName === 'chromium', 'https://github.com/microsoft/playwright/issues/14787');
   const context = await browser.newContext({
     viewport: { width: 700, height: 700 }
   });
   const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);
   const [size, popup] = await Promise.all([
-    page.evaluate(() => {
+    page.evaluate(async () => {
       const win = window.open(window.location.href, 'Title', 'toolbar=no,location=no,directories=no,status=no,menubar=no,scrollbars=yes,resizable=yes,width=600,height=300,top=0,left=0');
+      await new Promise<void>(resolve => {
+        const interval = setInterval(() => {
+          if (win.innerWidth === 600 && win.innerHeight === 300) {
+            clearInterval(interval);
+            resolve();
+          }
+        }, 10);
+      });
       return { width: win.innerWidth, height: win.innerHeight };
     }),
     page.waitForEvent('popup'),
