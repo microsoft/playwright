@@ -14,15 +14,12 @@
  * limitations under the License.
  */
 
-import { colors, ms as milliseconds } from 'playwright-core/lib/utilsBundle';
+import { colors, ms as milliseconds, parseStackTraceLine } from 'playwright-core/lib/utilsBundle';
 import fs from 'fs';
-import url from 'url';
 import path from 'path';
-import { StackUtils } from 'playwright-core/lib/utilsBundle';
 import type { FullConfig, TestCase, Suite, TestResult, TestError, Reporter, FullResult, TestStep, Location } from '../../types/testReporter';
 import type { FullConfigInternal } from '../types';
 import { codeFrameColumns } from '../babelBundle';
-const stackUtils = new StackUtils();
 
 export type TestResultOutput = { chunk: string | Buffer, type: 'stdout' | 'stderr' };
 export const kOutputSymbol = Symbol('output');
@@ -412,11 +409,9 @@ export function prepareErrorStack(stack: string, file?: string): {
   const stackLines = lines.slice(firstStackLine);
   let location: Location | undefined;
   for (const line of stackLines) {
-    const parsed = stackUtils.parseLine(line);
-    if (!parsed || !parsed.file)
+    const { frame: parsed, fileName: resolvedFile } = parseStackTraceLine(line);
+    if (!parsed || !resolvedFile)
       continue;
-    // ESM files return file:// URLs, see here: https://github.com/tapjs/stack-utils/issues/60
-    const resolvedFile = parsed.file.startsWith('file://') ? url.fileURLToPath(parsed.file) : path.resolve(process.cwd(), parsed.file);
     if (!file || resolvedFile === file) {
       location = { file: resolvedFile, column: parsed.column || 0, line: parsed.line || 0 };
       break;

@@ -15,11 +15,8 @@
  */
 
 import path from 'path';
-import url from 'url';
-import { StackUtils } from '../utilsBundle';
+import { parseStackTraceLine } from '../utilsBundle';
 import { isUnderTest } from './';
-
-const stackUtils = new StackUtils();
 
 export function rewriteErrorMessage<E extends Error>(e: E, newMessage: string): E {
   const lines: string[] = (e.stack?.split('\n') || []).filter(l => l.startsWith('    at '));
@@ -83,13 +80,11 @@ export function captureStackTrace(rawStack?: string): ParsedStackTrace {
     inCore: boolean;
   };
   let parsedFrames = stack.split('\n').map(line => {
-    const frame = stackUtils.parseLine(line);
-    if (!frame || !frame.file)
+    const { frame, fileName } = parseStackTraceLine(line);
+    if (!frame || !frame.file || !fileName)
       return null;
     if (isInternalFileName(frame.file, frame.function))
       return null;
-    // ESM files return file:// URLs, see here: https://github.com/tapjs/stack-utils/issues/60
-    const fileName = frame.file.startsWith('file://') ? url.fileURLToPath(frame.file) : path.resolve(process.cwd(), frame.file);
     if (isTesting && fileName.includes(COVERAGE_PATH))
       return null;
     const inCore = fileName.startsWith(CORE_LIB) || fileName.startsWith(CORE_SRC);
