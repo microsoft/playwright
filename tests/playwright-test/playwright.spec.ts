@@ -67,8 +67,7 @@ test('should run in three browsers with --browser', async ({ runInlineTest }) =>
     `,
     'a.test.ts': `
       const { test } = pwt;
-      test('pass', async ({ page, browserName }) => {
-        expect(page.viewportSize()).toEqual({ width: 800, height: 800 });
+      test('pass', async ({ browserName }) => {
         console.log('\\n%%browser=' + browserName);
       });
     `,
@@ -90,8 +89,7 @@ test('should run in one browser with --browser', async ({ runInlineTest }) => {
     `,
     'a.test.ts': `
       const { test } = pwt;
-      test('pass', async ({ page, browserName }) => {
-        expect(page.viewportSize()).toEqual({ width: 800, height: 800 });
+      test('pass', async ({ browserName }) => {
         console.log('\\n%%browser=' + browserName);
       });
     `,
@@ -406,7 +404,7 @@ test('should not report waitForEventInfo as pending', async ({ runInlineTest }, 
         await page.click('text=Missing');
       });
     `,
-  }, { workers: 1, timeout: 2000 });
+  }, { workers: 1, timeout: 5000 });
 
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(0);
