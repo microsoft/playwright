@@ -149,6 +149,8 @@ class ListReporter extends BaseReporter {
     // Go down if needed.
     if (testRow !== this._lastRow)
       process.stdout.write(`\u001B[${this._lastRow - testRow}E`);
+    if (process.env.PWTEST_TTY_WIDTH)
+      process.stdout.write('\n');  // For testing.
   }
 
   private _retrySuffix(result: TestResult) {
