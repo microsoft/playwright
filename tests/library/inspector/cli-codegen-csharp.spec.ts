@@ -20,7 +20,7 @@ import { test, expect } from './inspectorTest';
 
 const emptyHTML = new URL('file://' + path.join(__dirname, '..', '..', 'assets', 'empty.html')).toString();
 const launchOptions = (channel: string) => {
-  return channel ? `Headless = false,\n            Channel = "${channel}",` : `Headless = false,`;
+  return channel ? `Channel = "${channel}",\n            Headless = false,` : `Headless = false,`;
 };
 
 function capitalize(browserName: string): string {
@@ -70,21 +70,21 @@ test('should print the correct context options for custom settings', async ({ br
         });
         var context = await browser.NewContextAsync(new BrowserNewContextOptions
         {
-            ViewportSize = new ViewportSize
-            {
-                Width = 1280,
-                Height = 720,
-            },
+            ColorScheme = ColorScheme.Dark,
             Geolocation = new Geolocation
             {
                 Latitude = 37.819722m,
                 Longitude = -122.478611m,
             },
-            Permissions = new[] { ContextPermission.Geolocation },
-            UserAgent = "hardkodemium",
             Locale = "es",
-            ColorScheme = ColorScheme.Dark,
+            Permissions = new[] { ContextPermission.Geolocation },
             TimezoneId = "Europe/Rome",
+            UserAgent = "hardkodemium",
+            ViewportSize = new ViewportSize
+            {
+                Height = 720,
+                Width = 1280,
+            },
         });`;
   await cli.waitFor(expectedResult);
   expect(cli.text()).toContain(expectedResult);
@@ -131,21 +131,21 @@ test('should print the correct context options when using a device and additiona
         });
         var context = await browser.NewContextAsync(new BrowserNewContextOptions(playwright.Devices["iPhone 11"])
         {
-            UserAgent = "hardkodemium",
-            ViewportSize = new ViewportSize
-            {
-                Width = 1280,
-                Height = 720,
-            },
+            ColorScheme = ColorScheme.Dark,
             Geolocation = new Geolocation
             {
                 Latitude = 37.819722m,
                 Longitude = -122.478611m,
             },
-            Permissions = new[] { ContextPermission.Geolocation },
             Locale = "es",
-            ColorScheme = ColorScheme.Dark,
+            Permissions = new[] { ContextPermission.Geolocation },
             TimezoneId = "Europe/Rome",
+            UserAgent = "hardkodemium",
+            ViewportSize = new ViewportSize
+            {
+                Height = 720,
+                Width = 1280,
+            },
         });`;
 
   await cli.waitFor(expectedResult);
@@ -175,4 +175,21 @@ test('should print load/save storageState', async ({ browserName, channel, runCL
         });
 `;
   await cli.waitFor(expectedResult2);
+});
+
+test('should work with --save-har', async ({ runCLI }, testInfo) => {
+  const harFileName = testInfo.outputPath('har.har');
+  const cli = runCLI(['--target=csharp', `--save-har=${harFileName}`]);
+  const expectedResult = `
+        var context = await browser.NewContextAsync(new BrowserNewContextOptions
+        {
+            RecordHarMode = HarMode.Minimal,
+            RecordHarPath = ${JSON.stringify(harFileName)},
+            ServiceWorkers = ServiceWorkerPolicy.Block,
+        });`;
+  await cli.waitFor(expectedResult).catch(e => e);
+  expect(cli.text()).toContain(expectedResult);
+  await cli.exited;
+  const json = JSON.parse(fs.readFileSync(harFileName, 'utf-8'));
+  expect(json.log.creator.name).toBe('Playwright');
 });

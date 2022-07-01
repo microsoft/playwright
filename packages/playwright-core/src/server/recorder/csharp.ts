@@ -161,14 +161,14 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
 
 function formatObject(value: any, indent = '    ', name = ''): string {
   if (typeof value === 'string') {
-    if (['permissions', 'colorScheme', 'modifiers', 'button'].includes(name))
+    if (['permissions', 'colorScheme', 'modifiers', 'button', 'recordHarContent', 'recordHarMode', 'serviceWorkers'].includes(name))
       return `${getClassName(name)}.${toPascal(value)}`;
     return quote(value);
   }
   if (Array.isArray(value))
     return `new[] { ${value.map(o => formatObject(o, indent, name)).join(', ')} }`;
   if (typeof value === 'object') {
-    const keys = Object.keys(value);
+    const keys = Object.keys(value).filter(key => value[key] !== undefined).sort();
     if (!keys.length)
       return name ? `new ${getClassName(name)}` : '';
     const tokens: string[] = [];
@@ -193,6 +193,9 @@ function getClassName(value: string): string {
     case 'permissions': return 'ContextPermission';
     case 'modifiers': return 'KeyboardModifier';
     case 'button': return 'MouseButton';
+    case 'recordHarMode': return 'HarMode';
+    case 'recordHarContent': return 'HarContentPolicy';
+    case 'serviceWorkers': return 'ServiceWorkerPolicy';
     default: return toPascal(value);
   }
 }
@@ -209,19 +212,32 @@ function toPascal(value: string): string {
   return value[0].toUpperCase() + value.slice(1);
 }
 
+function convertContextOptions(options: BrowserContextOptions): any {
+  const result: any = { ...options };
+  if (options.recordHar) {
+    result['recordHarPath'] = options.recordHar.path;
+    result['recordHarContent'] = options.recordHar.content;
+    result['recordHarMode'] = options.recordHar.mode;
+    result['recordHarOmitContent'] = options.recordHar.omitContent;
+    result['recordHarUrlFilter'] = options.recordHar.urlFilter;
+    delete result.recordHar;
+  }
+  return result;
+}
+
 function formatContextOptions(options: BrowserContextOptions, deviceName: string | undefined): string {
   const device = deviceName && deviceDescriptors[deviceName];
   if (!device) {
     if (!Object.entries(options).length)
       return '';
-    return formatObject(options, '    ', 'BrowserNewContextOptions');
+    return formatObject(convertContextOptions(options), '    ', 'BrowserNewContextOptions');
   }
 
   options = sanitizeDeviceOptions(device, options);
   if (!Object.entries(options).length)
     return `playwright.Devices[${quote(deviceName!)}]`;
 
-  return formatObject(options, '    ', `BrowserNewContextOptions(playwright.Devices[${quote(deviceName!)}])`);
+  return formatObject(convertContextOptions(options), '    ', `BrowserNewContextOptions(playwright.Devices[${quote(deviceName!)}])`);
 }
 
 class CSharpFormatter {
