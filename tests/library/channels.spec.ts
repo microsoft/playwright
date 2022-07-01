@@ -34,7 +34,7 @@ const it = playwrightTest.extend<{}, { expectScopeState: (object: any, golden: a
   }, { scope: 'worker' }],
 });
 
-it.skip(({ mode }) => mode === 'service');
+it.skip(({ mode }) => mode !== 'default');
 
 it('should scope context handles', async ({ browserType, server, expectScopeState }) => {
   const browser = await browserType.launch();
