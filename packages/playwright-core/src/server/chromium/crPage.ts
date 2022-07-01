@@ -406,7 +406,7 @@ class FrameSession {
     this._crPage = crPage;
     this._page = crPage._page;
     this._targetId = targetId;
-    this._networkManager = new CRNetworkManager(client, this._page, parentSession ? parentSession._networkManager : null);
+    this._networkManager = new CRNetworkManager(client, this._page, null, parentSession ? parentSession._networkManager : null);
     this._parentSession = parentSession;
     if (parentSession)
       parentSession._childSessions.add(this);
@@ -1077,7 +1077,7 @@ class FrameSession {
   }
 
   async _updateRequestInterception(): Promise<void> {
-    await this._networkManager.setRequestInterception(this._page._needsRequestInterception());
+    await this._networkManager.setRequestInterception(this._page.needsRequestInterception());
   }
 
   async _updateFileChooserInterception(initial: boolean) {

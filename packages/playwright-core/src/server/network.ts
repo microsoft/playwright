@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import type * as contexts from './browserContext';
+import type * as pages from './page';
 import type * as frames from './frames';
 import type * as types from './types';
 import type * as channels from '../protocol/channels';
@@ -97,16 +99,20 @@ export class Request extends SdkObject {
   private _postData: Buffer | null;
   readonly _headers: types.HeadersArray;
   private _headersMap = new Map<string, string>();
+  readonly _frame: frames.Frame | null = null;
+  readonly _serviceWorker: pages.Worker | null = null;
+  readonly _context: contexts.BrowserContext;
   private _rawRequestHeadersPromise = new ManualPromise<types.HeadersArray>();
-  private _frame: frames.Frame;
   private _waitForResponsePromise = new ManualPromise<Response | null>();
   _responseEndTiming = -1;
 
-  constructor(frame: frames.Frame, redirectedFrom: Request | null, documentId: string | undefined,
+  constructor(context: contexts.BrowserContext, frame: frames.Frame | null, serviceWorker: pages.Worker | null, redirectedFrom: Request | null, documentId: string | undefined,
     url: string, resourceType: string, method: string, postData: Buffer | null, headers: types.HeadersArray) {
-    super(frame, 'request');
+    super(frame || context, 'request');
     assert(!url.startsWith('data:'), 'Data urls should not fire requests');
+    this._context = context;
     this._frame = frame;
+    this._serviceWorker = serviceWorker;
     this._redirectedFrom = redirectedFrom;
     if (redirectedFrom)
       redirectedFrom._redirectedTo = this;
@@ -177,8 +183,12 @@ export class Request extends SdkObject {
     return this._redirectedTo ? this._redirectedTo._finalRequest() : this;
   }
 
-  frame(): frames.Frame {
+  frame(): frames.Frame | null {
     return this._frame;
+  }
+
+  serviceWorker(): pages.Worker | null {
+    return this._serviceWorker;
   }
 
   isNavigationRequest(): boolean {
@@ -219,7 +229,7 @@ export class Route extends SdkObject {
   private _handled = false;
 
   constructor(request: Request, delegate: RouteDelegate) {
-    super(request.frame(), 'route');
+    super(request._frame || request._context , 'route');
     this._request = request;
     this._delegate = delegate;
   }
@@ -236,7 +246,7 @@ export class Route extends SdkObject {
   async redirectNavigationRequest(url: string) {
     this._startHandling();
     assert(this._request.isNavigationRequest());
-    this._request.frame().redirectNavigation(url, this._request._documentId!, this._request.headerValue('referer'));
+    this._request.frame()!.redirectNavigation(url, this._request._documentId!, this._request.headerValue('referer'));
   }
 
   async fulfill(overrides: channels.RouteFulfillParams) {
@@ -245,8 +255,7 @@ export class Route extends SdkObject {
     let isBase64 = overrides.isBase64 || false;
     if (body === undefined) {
       if (overrides.fetchResponseUid) {
-        const context = this._request.frame()._page._browserContext;
-        const buffer = context.fetchRequest.fetchResponses.get(overrides.fetchResponseUid) || APIRequestContext.findResponseBody(overrides.fetchResponseUid);
+        const buffer = this._request._context.fetchRequest.fetchResponses.get(overrides.fetchResponseUid) || APIRequestContext.findResponseBody(overrides.fetchResponseUid);
         assert(buffer, 'Fetch response has been disposed');
         body = buffer.toString('base64');
         isBase64 = true;
@@ -357,7 +366,7 @@ export class Response extends SdkObject {
   private _responseHeadersSizePromise = new ManualPromise<number | null>();
 
   constructor(request: Request, status: number, statusText: string, headers: types.HeadersArray, timing: ResourceTiming, getResponseBodyCallback: GetResponseBodyCallback, fromServiceWorker: boolean, httpVersion?: string) {
-    super(request.frame(), 'response');
+    super(request.frame() || request._context, 'response');
     this._request = request;
     this._timing = timing;
     this._status = status;
@@ -458,7 +467,7 @@ export class Response extends SdkObject {
     return this._request;
   }
 
-  frame(): frames.Frame {
+  frame(): frames.Frame | null {
     return this._request.frame();
   }
 

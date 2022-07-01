@@ -23,6 +23,8 @@ import { removeFolders } from '../../packages/playwright-core/lib/utils/fileUtil
 import { baseTest } from './baseTest';
 import type { RemoteServerOptions } from './remoteServer';
 import { RemoteServer } from './remoteServer';
+import type { Log } from '../../packages/playwright-core/src/server/har/har';
+import { parseHar } from '../config/utils';
 
 export type BrowserTestWorkerFixtures = PageWorkerFixtures & {
   browserVersion: string;
@@ -38,6 +40,7 @@ type BrowserTestTestFixtures = PageTestFixtures & {
   launchPersistent: (options?: Parameters<BrowserType['launchPersistentContext']>[1]) => Promise<{ context: BrowserContext, page: Page }>;
   startRemoteServer: (options?: RemoteServerOptions) => Promise<RemoteServer>;
   contextFactory: (options?: BrowserContextOptions) => Promise<BrowserContext>;
+  pageWithHar(options?: { outputPath?: string, content?: 'embed' | 'attach' | 'omit', omitContent?: boolean }): Promise<{ context: BrowserContext, page: Page, getLog: () => Promise<Log>, getZip: () => Promise<Map<string, Buffer>> }>
 };
 
 const test = baseTest.extend<BrowserTestTestFixtures, BrowserTestWorkerFixtures>({
@@ -110,6 +113,26 @@ const test = baseTest.extend<BrowserTestTestFixtures, BrowserTestWorkerFixtures>
       await new Promise(f => setTimeout(f, 1000));
     }
   },
+  pageWithHar: async ({ contextFactory }, use, testInfo) => {
+    const pageWithHar = async (options: { outputPath?: string, content?: 'embed' | 'attach' | 'omit', omitContent?: boolean } = {}) => {
+      const harPath = testInfo.outputPath(options.outputPath || 'test.har');
+      const context = await contextFactory({ recordHar: { path: harPath, content: options.content, omitContent: options.omitContent }, ignoreHTTPSErrors: true });
+      const page = await context.newPage();
+      return {
+        page,
+        context,
+        getLog: async () => {
+          await context.close();
+          return JSON.parse(fs.readFileSync(harPath).toString())['log'] as Log;
+        },
+        getZip: async () => {
+          await context.close();
+          return parseHar(harPath);
+        },
+      };
+    };
+    await use(pageWithHar);
+  }
 });
 
 export const playwrightTest = test;

@@ -209,6 +209,15 @@ following: `document`, `stylesheet`, `image`, `media`, `font`, `script`, `texttr
 
 Returns the matching [Response] object, or `null` if the response was not received due to error.
 
+## method: Request.serviceWorker
+- returns: <[null]|[Worker]>
+
+:::note
+This field is Chromium only. It's safe to call when using other browsers, but it will always be `null`.
+:::
+
+The Service [Worker] that is performing the request.
+
 ## async method: Request.sizes
 - returns: <[Object]>
   - `requestBodySize` <[int]> Size of the request body (POST data payload) in bytes. Set to 0 if there was no body.
