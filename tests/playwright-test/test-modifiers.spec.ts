@@ -101,7 +101,7 @@ test('test modifiers should work', async ({ runInlineTest }) => {
 
   const expectTest = (title: string, expectedStatus: string, status: string, annotations: any) => {
     const spec = result.report.suites[0].specs.find(s => s.title === title) ||
-        result.report.suites[0].suites.find(s => s.specs[0].title === title).specs[0];
+        result.report.suites[0].suites!.find(s => s.specs[0].title === title)!.specs[0];
     const test = spec.tests[0];
     expect(test.expectedStatus).toBe(expectedStatus);
     expect(test.results[0].status).toBe(status);
@@ -263,8 +263,8 @@ test('test.skip with worker fixtures only should skip before hooks and tests', a
   expect(result.passed).toBe(1);
   expect(result.skipped).toBe(2);
   expect(result.report.suites[0].specs[0].tests[0].annotations).toEqual([]);
-  expect(result.report.suites[0].suites[0].specs[0].tests[0].annotations).toEqual([{ type: 'skip', description: 'reason' }]);
-  expect(result.report.suites[0].suites[0].suites[0].specs[0].tests[0].annotations).toEqual([{ type: 'skip', description: 'reason' }]);
+  expect(result.report.suites[0].suites![0].specs[0].tests[0].annotations).toEqual([{ type: 'skip', description: 'reason' }]);
+  expect(result.report.suites[0].suites![0].suites![0].specs[0].tests[0].annotations).toEqual([{ type: 'skip', description: 'reason' }]);
   expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
     '%%beforeEach',
     '%%passed',
@@ -297,7 +297,7 @@ test('test.skip without a callback in describe block should skip hooks', async (
   expect(result.exitCode).toBe(0);
   expect(result.skipped).toBe(2);
   expect(result.report.suites[0].specs[0].tests[0].annotations).toEqual([{ type: 'skip', description: 'reason' }]);
-  expect(result.report.suites[0].suites[0].specs[0].tests[0].annotations).toEqual([{ type: 'skip', description: 'reason' }]);
+  expect(result.report.suites[0].suites![0].specs[0].tests[0].annotations).toEqual([{ type: 'skip', description: 'reason' }]);
   expect(result.output).not.toContain('%%');
 });
 
@@ -330,7 +330,7 @@ test('modifier timeout should be reported', async ({ runInlineTest }) => {
   }, { timeout: 2000 });
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
-  expect(result.output).toContain('Timeout of 2000ms exceeded in skip modifier.');
+  expect(result.output).toContain('"skip" modifier timeout of 2000ms exceeded.');
   expect(stripAnsi(result.output)).toContain('6 |       test.skip(async () => new Promise(() => {}));');
 });
 

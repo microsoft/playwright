@@ -481,7 +481,7 @@ test('beforeAll timeout should be reported and prevent more tests', async ({ run
     '%%beforeAll',
     '%%afterAll',
   ]);
-  expect(result.output).toContain('Timeout of 1000ms exceeded in beforeAll hook.');
+  expect(result.output).toContain('"beforeAll" hook timeout of 1000ms exceeded.');
   expect(result.output).toContain(`a.test.js:6:12`);
   expect(stripAnsi(result.output)).toContain(`> 6 |       test.beforeAll(async () => {`);
 });
@@ -519,7 +519,7 @@ test('afterAll timeout should be reported, run other afterAll hooks, and continu
     '%%test2',
     '%%afterAll2',
   ]);
-  expect(result.output).toContain('Timeout of 1000ms exceeded in afterAll hook.');
+  expect(result.output).toContain('"afterAll" hook timeout of 1000ms exceeded.');
   expect(result.output).toContain(`a.test.js:7:14`);
   expect(stripAnsi(result.output)).toContain(`>  7 |         test.afterAll(async () => {`);
 });
@@ -547,7 +547,7 @@ test('beforeAll and afterAll timeouts at the same time should be reported', asyn
     '%%beforeAll',
     '%%afterAll',
   ]);
-  expect(result.output).toContain('Timeout of 1000ms exceeded in beforeAll hook.');
+  expect(result.output).toContain('"beforeAll" hook timeout of 1000ms exceeded.');
 });
 
 test('afterEach should get the test status and duration right away', async ({ runInlineTest }) => {
@@ -620,7 +620,7 @@ test('should report error from fixture teardown when beforeAll times out', async
   }, { timeout: 1000 });
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
-  expect(stripAnsi(result.output)).toContain('Timeout of 1000ms exceeded in beforeAll hook.');
+  expect(stripAnsi(result.output)).toContain('"beforeAll" hook timeout of 1000ms exceeded.');
   expect(stripAnsi(result.output)).toContain('Error: Oh my!');
 });
 

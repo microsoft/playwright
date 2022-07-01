@@ -225,7 +225,7 @@ test('should print flaky timeouts', async ({ runInlineTest }) => {
   }, { retries: '1', reporter: 'list', timeout: '1000' });
   expect(result.exitCode).toBe(0);
   expect(result.flaky).toBe(1);
-  expect(stripAnsi(result.output)).toContain('Timeout of 1000ms exceeded.');
+  expect(stripAnsi(result.output)).toContain('Test timeout of 1000ms exceeded.');
 });
 
 test('should print stack-less errors', async ({ runInlineTest }) => {

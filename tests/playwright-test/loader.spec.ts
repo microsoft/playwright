@@ -87,7 +87,7 @@ test('should allow export default form the config file', async ({ runInlineTest 
 
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
-  expect(result.output).toContain('Timeout of 1000ms exceeded.');
+  expect(result.output).toContain('Test timeout of 1000ms exceeded.');
 });
 
 test('should validate configuration object', async ({ runInlineTest }) => {

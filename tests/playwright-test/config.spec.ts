@@ -51,7 +51,7 @@ test('should prioritize project timeout', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(1);
   expect(result.failed).toBe(1);
-  expect(result.output).toContain('Timeout of 500ms exceeded.');
+  expect(result.output).toContain('Test timeout of 500ms exceeded.');
 });
 
 test('should prioritize command line timeout over project timeout', async ({ runInlineTest }) => {
@@ -69,7 +69,7 @@ test('should prioritize command line timeout over project timeout', async ({ run
 
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
-  expect(result.output).toContain('Timeout of 500ms exceeded.');
+  expect(result.output).toContain('Test timeout of 500ms exceeded.');
 });
 
 test('should read config from --config, resolve relative testDir', async ({ runInlineTest }) => {
