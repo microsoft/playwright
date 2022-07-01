@@ -116,9 +116,10 @@ it('should get multiple cookies', async ({ context, page, server, defaultSameSit
     document.cookie = 'password=1234';
     return document.cookie.split('; ').sort().join('; ');
   });
-  const cookies = new Set(await context.cookies());
+  const cookies = await context.cookies();
   expect(documentCookie).toBe('password=1234; username=John Doe');
-  expect(cookies).toEqual(new Set([
+  cookies.sort((c1, c2) => c1.name < c2.name ? -1 : 1);
+  expect(cookies).toEqual([
     {
       name: 'password',
       value: '1234',
@@ -139,7 +140,7 @@ it('should get multiple cookies', async ({ context, page, server, defaultSameSit
       secure: false,
       sameSite: defaultSameSiteCookieValue,
     },
-  ]));
+  ]);
 });
 
 it('should get cookies from multiple urls', async ({ context, browserName, isWindows }) => {
