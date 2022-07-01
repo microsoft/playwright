@@ -64,8 +64,8 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
       await use(require('playwright-core'));
     }
   }, { scope: 'worker' } ],
-  headless: [ true, { scope: 'worker', option: true } ],
-  channel: [ undefined, { scope: 'worker', option: true } ],
+  headless: [ ({ launchOptions }, use) => use(launchOptions.headless ?? true), { scope: 'worker', option: true } ],
+  channel: [ ({ launchOptions }, use) => use(launchOptions.channel), { scope: 'worker', option: true } ],
   launchOptions: [ {}, { scope: 'worker', option: true } ],
   connectOptions: [ undefined, { scope: 'worker', option: true } ],
   screenshot: [ 'off', { scope: 'worker', option: true } ],
