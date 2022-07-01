@@ -16,6 +16,7 @@
 
 import type { Page } from 'playwright-core';
 import { test as it, expect } from './inspectorTest';
+import { waitForTestLog } from '../../config/utils';
 
 
 it('should resume when closing inspector', async ({ page, recorderPageGetter, closeRecorder, mode }) => {
@@ -393,18 +394,6 @@ async function sanitizeLog(recorderPage: Page): Promise<string[]> {
     })));
   }
   return results;
-}
-
-function waitForTestLog<T>(page: Page, prefix: string): Promise<T> {
-  return new Promise<T>(resolve => {
-    page.on('console', message => {
-      const text = message.text();
-      if (text.startsWith(prefix)) {
-        const json = text.substring(prefix.length);
-        resolve(JSON.parse(json));
-      }
-    });
-  });
 }
 
 type Box = { x: number, y: number, width: number, height: number };

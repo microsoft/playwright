@@ -120,3 +120,15 @@ export async function parseHar(file: string): Promise<Map<string, Buffer>> {
   zipFS.close();
   return resources;
 }
+
+export function waitForTestLog<T>(page: Page, prefix: string): Promise<T> {
+  return new Promise<T>(resolve => {
+    page.on('console', message => {
+      const text = message.text();
+      if (text.startsWith(prefix)) {
+        const json = text.substring(prefix.length);
+        resolve(JSON.parse(json));
+      }
+    });
+  });
+}
