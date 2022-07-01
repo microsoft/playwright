@@ -15000,6 +15000,13 @@ export interface Request {
   response(): Promise<null|Response>;
 
   /**
+   * > NOTE: This field is Chromium only. It's safe to call when using other browsers, but it will always be `null`.
+   *
+   * The Service [Worker] that is performing the request.
+   */
+  serviceWorker(): null|Worker;
+
+  /**
    * Returns resource size information for given request.
    */
   sizes(): Promise<{

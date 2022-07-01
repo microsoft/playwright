@@ -182,7 +182,7 @@ export class WKPage implements PageDelegate {
       session.send('Network.enable'),
       this._workers.initializeSession(session)
     ];
-    if (this._page._needsRequestInterception()) {
+    if (this._page.needsRequestInterception()) {
       promises.push(session.send('Network.setInterceptionEnabled', { enabled: true }));
       promises.push(session.send('Network.addInterception', { url: '.*', stage: 'request', isRegex: true }));
     }
@@ -708,7 +708,7 @@ export class WKPage implements PageDelegate {
   }
 
   async updateRequestInterception(): Promise<void> {
-    const enabled = this._page._needsRequestInterception();
+    const enabled = this._page.needsRequestInterception();
     await Promise.all([
       this._updateState('Network.setInterceptionEnabled', { enabled }),
       this._updateState('Network.addInterception', { url: '.*', stage: 'request', isRegex: true }),
@@ -1011,7 +1011,7 @@ export class WKPage implements PageDelegate {
     const documentId = isNavigationRequest ? event.loaderId : undefined;
     let route = null;
     // We do not support intercepting redirects.
-    if (this._page._needsRequestInterception() && !redirectedFrom)
+    if (this._page.needsRequestInterception() && !redirectedFrom)
       route = new WKRouteImpl(session, event.requestId);
     const request = new WKInterceptableRequest(session, route, frame, event, redirectedFrom, documentId);
     this._requestIdToRequest.set(event.requestId, request);

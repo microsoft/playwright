@@ -1766,7 +1766,8 @@ scheme.ElementHandleWaitForSelectorResult = tObject({
   element: tOptional(tChannel(['ElementHandle'])),
 });
 scheme.RequestInitializer = tObject({
-  frame: tChannel(['Frame']),
+  frame: tOptional(tChannel(['Frame'])),
+  serviceWorker: tOptional(tChannel(['Worker'])),
   url: tString,
   resourceType: tString,
   method: tString,
