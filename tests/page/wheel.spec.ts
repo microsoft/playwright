@@ -128,10 +128,8 @@ it('should work when the event is canceled', async ({ page }) => {
     altKey: false,
     metaKey: false,
   });
-  // Give the page a chance to scroll.
-  await page.waitForTimeout(100);
-  // Ensure that it did not.
-  expect(await page.evaluate('window.scrollY')).toBe(0);
+
+  expect.poll(() => page.evaluate('window.scrollY')).toBe(0);
 });
 
 async function listenForWheelEvents(page: Page, selector: string) {
