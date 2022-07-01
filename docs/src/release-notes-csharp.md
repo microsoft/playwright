@@ -120,7 +120,7 @@ Note that the new methods [`method: Page.routeFromHAR`] and [`method: BrowserCon
   ```csharp
   var context = await Browser.NewContextAsync(new() { RecordHarPath = "example.har", RecordHarMode = HarMode.Minimal });
   ```
-* Playwright now runs on Ubuntu 22 amd64 and Ubuntu 22 arm64. We also publish new docker image `mcr.microsoft.com/playwright/dotnet:v1.24.0-jammy`.
+* Playwright now runs on Ubuntu 22 amd64 and Ubuntu 22 arm64. We also publish new docker image `mcr.microsoft.com/playwright/dotnet:v1.23.1-jammy`.
 * Playwright for .NET now supports **linux-arm64** and provides a **arm64 Ubuntu 20.04 Docker image** for it.
 
 ## Version 1.22

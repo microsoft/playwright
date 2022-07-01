@@ -133,7 +133,7 @@ Note that the new methods [`method: Page.routeFromHAR`] and [`method: BrowserCon
   context = browser.new_context(record_har_mode="minimal", record_har_path="har.har")
   ```
 
-* Playwright now runs on Ubuntu 22 amd64 and Ubuntu 22 arm64. We also publish new docker image `mcr.microsoft.com/playwright/python:v1.24.0-jammy`.
+* Playwright now runs on Ubuntu 22 amd64 and Ubuntu 22 arm64. We also publish new docker image `mcr.microsoft.com/playwright/python:v1.23.1-jammy`.
 
 
 ## Version 1.22
