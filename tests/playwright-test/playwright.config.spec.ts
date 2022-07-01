@@ -67,3 +67,120 @@ test('should override launchOptions', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
 });
+
+test('should respect contextOptions', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        use: {
+          contextOptions: {
+            acceptDownloads: false,
+            bypassCSP: true,
+            colorScheme: 'dark',
+            deviceScaleFactor: 2,
+            extraHTTPHeaders: {'foo': 'bar'},
+            hasTouch: true,
+            ignoreHTTPSErrors: true,
+            isMobile: true,
+            javaScriptEnabled: true,
+            locale: 'fr-FR',
+            offline: true,
+            permissions: ['geolocation'],
+            timezoneId: 'TIMEZONE',
+            userAgent: 'UA',
+            viewport: null
+          }
+        }
+      };
+    `,
+    'a.test.ts': `
+      const { test } = pwt;
+      test('pass', async ({ acceptDownloads, bypassCSP, colorScheme, deviceScaleFactor, extraHTTPHeaders, hasTouch, ignoreHTTPSErrors, isMobile, javaScriptEnabled, locale, offline, permissions, timezoneId, userAgent, viewport }) => {
+        expect.soft(acceptDownloads).toBe(false);
+        expect.soft(bypassCSP).toBe(true);
+        expect.soft(colorScheme).toBe('dark');
+        expect.soft(deviceScaleFactor).toBe(2);
+        expect.soft(extraHTTPHeaders).toEqual({'foo': 'bar'});
+        expect.soft(hasTouch).toBe(true);
+        expect.soft(ignoreHTTPSErrors).toBe(true);
+        expect.soft(isMobile).toBe(true);
+        expect.soft(javaScriptEnabled).toBe(true);
+        expect.soft(locale).toBe('fr-FR');
+        expect.soft(offline).toBe(true);
+        expect.soft(permissions).toEqual(['geolocation']);
+        expect.soft(timezoneId).toBe('TIMEZONE');
+        expect.soft(userAgent).toBe('UA');
+        expect.soft(viewport).toBe(null);
+      });
+    `,
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
+
+test('should override contextOptions', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        use: {
+        acceptDownloads: false,
+        bypassCSP: true,
+        colorScheme: 'dark',
+        deviceScaleFactor: 2,
+        extraHTTPHeaders: {'foo': 'bar'},
+        hasTouch: true,
+        ignoreHTTPSErrors: true,
+        isMobile: true,
+        javaScriptEnabled: true,
+        locale: 'fr-FR',
+        offline: true,
+        permissions: ['geolocation'],
+        timezoneId: 'TIMEZONE',
+        userAgent: 'UA',
+        viewport: null,
+        contextOptions: {
+            acceptDownloads: true,
+            bypassCSP: false,
+            colorScheme: 'light',
+            deviceScaleFactor: 1,
+            extraHTTPHeaders: {'foo': 'bar2'},
+            hasTouch: false,
+            ignoreHTTPSErrors: false,
+            isMobile: false,
+            javaScriptEnabled: false,
+            locale: 'en-US',
+            offline: false,
+            permissions: [],
+            timezoneId: 'TIMEZONE 2',
+            userAgent: 'UA 2',
+            viewport: { width: 500, height: 500 }
+          }
+        }
+      };
+    `,
+    'a.test.ts': `
+      const { test } = pwt;
+      test('pass', async ({ acceptDownloads, bypassCSP, colorScheme, deviceScaleFactor, extraHTTPHeaders, hasTouch, ignoreHTTPSErrors, isMobile, javaScriptEnabled, locale, offline, permissions, timezoneId, userAgent, viewport }) => {
+        expect.soft(acceptDownloads).toBe(false);
+        expect.soft(bypassCSP).toBe(true);
+        expect.soft(colorScheme).toBe('dark');
+        expect.soft(deviceScaleFactor).toBe(2);
+        expect.soft(extraHTTPHeaders).toEqual({'foo': 'bar'});
+        expect.soft(hasTouch).toBe(true);
+        expect.soft(ignoreHTTPSErrors).toBe(true);
+        expect.soft(isMobile).toBe(true);
+        expect.soft(javaScriptEnabled).toBe(true);
+        expect.soft(locale).toBe('fr-FR');
+        expect.soft(offline).toBe(true);
+        expect.soft(permissions).toEqual(['geolocation']);
+        expect.soft(timezoneId).toBe('TIMEZONE');
+        expect.soft(userAgent).toBe('UA');
+        expect.soft(viewport).toBe(null);
+      });
+    `,
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
