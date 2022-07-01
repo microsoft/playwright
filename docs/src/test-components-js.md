@@ -7,6 +7,11 @@ Playwright Test can now test your components.
 
 <!-- TOC -->
 
+<div className="embed-youtube">
+  <iframe src="https://www.youtube.com/embed/y3YxX4sFJbM" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" width="750" height="563" allowfullscreen></iframe>
+</div>
+
+
 ## Example
 
 Here is what a typical component test looks like:
