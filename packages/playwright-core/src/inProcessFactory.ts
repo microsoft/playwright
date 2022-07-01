@@ -42,7 +42,7 @@ export function createInProcessPlaywright(): PlaywrightAPI {
   dispatcherConnection.onmessage = message => setImmediate(() => clientConnection.dispatch(message));
   clientConnection.onmessage = message => setImmediate(() => dispatcherConnection.dispatch(message));
 
-  clientConnection.toImpl = (x: any) => dispatcherConnection._dispatchers.get(x._guid)!._object;
+  clientConnection.toImpl = (x: any) => x ? dispatcherConnection._dispatchers.get(x._guid)!._object : dispatcherConnection._dispatchers.get('');
   (playwrightAPI as any)._toImpl = clientConnection.toImpl;
   return playwrightAPI;
 }
