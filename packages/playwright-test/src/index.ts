@@ -134,7 +134,7 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
     const browser = await playwright[browserName].launch();
     await use(browser);
     await browser.close();
-  }, { scope: 'worker' } ],
+  }, { scope: 'worker', timeout: 0 } ],
 
   acceptDownloads: [ true, { option: true } ],
   bypassCSP: [ undefined, { option: true } ],

@@ -71,7 +71,7 @@ export abstract class BrowserType extends SdkObject {
       if (seleniumHubUrl)
         return this._launchWithSeleniumHub(progress, seleniumHubUrl, options);
       return this._innerLaunchWithRetries(progress, options, undefined, helper.debugProtocolLogger(protocolLogger)).catch(e => { throw this._rewriteStartupError(e); });
-    }, TimeoutSettings.timeout(options));
+    }, TimeoutSettings.launchTimeout(options));
     return browser;
   }
 
@@ -82,7 +82,7 @@ export abstract class BrowserType extends SdkObject {
     controller.setLogName('browser');
     const browser = await controller.run(progress => {
       return this._innerLaunchWithRetries(progress, options, persistent, helper.debugProtocolLogger(), userDataDir).catch(e => { throw this._rewriteStartupError(e); });
-    }, TimeoutSettings.timeout(options));
+    }, TimeoutSettings.launchTimeout(options));
     return browser._defaultContext!;
   }
 
