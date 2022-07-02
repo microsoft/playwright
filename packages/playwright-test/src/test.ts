@@ -177,9 +177,9 @@ export class TestCase extends Base implements reporterTypes.TestCase {
   }
 
   _annotateWithInheritence(annotations: Annotation[]) {
-    if (this._alreadyInheritedAnnotations)
+    if (this._alreadyInheritedAnnotations) {
       this.annotations = annotations;
-    else {
+    } else {
       this._alreadyInheritedAnnotations = true;
       this.annotations = [...this.annotations, ...annotations];
     }

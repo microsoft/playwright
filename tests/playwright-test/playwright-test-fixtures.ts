@@ -330,7 +330,7 @@ export function allTests(result: RunResult) {
   };
   visit(result.report.suites[0]);
   return tests;
-};
+}
 
 export function expectTestHelper(result: RunResult) {
   return (title: string, expectedStatus: string, status: string, annotations: any) => {
