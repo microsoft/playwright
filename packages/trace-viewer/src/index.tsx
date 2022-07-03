@@ -24,7 +24,7 @@ import '@web/common.css';
 (async () => {
   applyTheme();
   if (window.location.protocol !== 'file:') {
-    await new Promise(f => setTimeout(f, 100));
+    await new Promise(f => setTimeout(f, 500));
     navigator.serviceWorker.register('sw.bundle.js');
     if (!navigator.serviceWorker.controller) {
       await new Promise<void>(f => {
