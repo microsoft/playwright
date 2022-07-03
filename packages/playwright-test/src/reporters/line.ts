@@ -16,7 +16,7 @@
 
 import { colors } from 'playwright-core/lib/utilsBundle';
 import { BaseReporter, formatFailure, formatTestTitle } from './base';
-import type { FullConfig, TestCase, Suite, TestResult, FullResult } from '../../types/testReporter';
+import type { FullConfig, TestCase, Suite, TestResult, FullResult, TestStep } from '../../types/testReporter';
 
 class LineReporter extends BaseReporter {
   private _current = 0;
@@ -62,18 +62,23 @@ class LineReporter extends BaseReporter {
     console.log();
   }
 
+  onTestBegin(test: TestCase, result: TestResult) {
+    ++this._current;
+    this._updateLine(test, result, undefined);
+  }
+
+  onStepBegin(test: TestCase, result: TestResult, step: TestStep) {
+    if (step.category === 'test.step')
+      this._updateLine(test, result, step);
+  }
+
+  onStepEnd(test: TestCase, result: TestResult, step: TestStep) {
+    if (step.category === 'test.step')
+      this._updateLine(test, result, step.parent);
+  }
+
   override onTestEnd(test: TestCase, result: TestResult) {
     super.onTestEnd(test, result);
-    ++this._current;
-    const retriesPrefix = this.totalTestCount < this._current ? ` (retries)` : ``;
-    const prefix = `[${this._current}/${this.totalTestCount}]${retriesPrefix} `;
-    const currentRetrySuffix = result.retry ? colors.yellow(` (retry #${result.retry})`) : '';
-    const title = formatTestTitle(this.config, test) + currentRetrySuffix;
-    if (process.env.PW_TEST_DEBUG_REPORTERS)
-      process.stdout.write(`${prefix + title}\n`);
-    else
-      process.stdout.write(`\u001B[1A\u001B[2K${prefix + this.fitToScreen(title, prefix)}\n`);
-
     if (!this.willRetry(test) && (test.outcome() === 'flaky' || test.outcome() === 'unexpected')) {
       if (!process.env.PW_TEST_DEBUG_REPORTERS)
         process.stdout.write(`\u001B[1A\u001B[2K`);
@@ -82,6 +87,17 @@ class LineReporter extends BaseReporter {
       }).message);
       console.log();
     }
+  }
+
+  private _updateLine(test: TestCase, result: TestResult, step?: TestStep) {
+    const retriesPrefix = this.totalTestCount < this._current ? ` (retries)` : ``;
+    const prefix = `[${this._current}/${this.totalTestCount}]${retriesPrefix} `;
+    const currentRetrySuffix = result.retry ? colors.yellow(` (retry #${result.retry})`) : '';
+    const title = formatTestTitle(this.config, test, step) + currentRetrySuffix;
+    if (process.env.PW_TEST_DEBUG_REPORTERS)
+      process.stdout.write(`${prefix + title}\n`);
+    else
+      process.stdout.write(`\u001B[1A\u001B[2K${prefix + this.fitToScreen(title, prefix)}\n`);
   }
 
   override async onEnd(result: FullResult) {
