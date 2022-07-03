@@ -81,12 +81,16 @@ export async function showTraceViewer(traceUrls: string[], browserName: string, 
   if (traceViewerBrowser === 'chromium')
     await installAppIcon(page);
 
-  if (isUnderTest())
-    page.on('close', () => context.close(serverSideCallMetadata()).catch(() => {}));
-  else
-    page.on('close', () => process.exit());
 
-  const searchQuery = traceUrls.length ? '?' + traceUrls.map(t => `trace=${t}`).join('&') : '';
+  const params = traceUrls.map(t => `trace=${t}`);
+  if (isUnderTest()) {
+    params.push('isUnderTest=true');
+    page.on('close', () => context.close(serverSideCallMetadata()).catch(() => {}));
+  } else {
+    page.on('close', () => process.exit());
+  }
+
+  const searchQuery = params.length ? '?' + params.join('&') : '';
   await page.mainFrame().goto(serverSideCallMetadata(), urlPrefix + `/trace/index.html${searchQuery}`);
   return context;
 }
