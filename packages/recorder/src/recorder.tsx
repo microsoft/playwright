@@ -85,6 +85,27 @@ export const Recorder: React.FC<RecorderProps> = ({
     }
   }, [focusSelectorInput, selectorInputRef]);
 
+  React.useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      switch (event.key) {
+        case 'F8':
+          event.preventDefault();
+          if (paused)
+            window.dispatch({ event: 'resume' });
+          else
+            window.dispatch({ event: 'pause' });
+          break;
+        case 'F10':
+          event.preventDefault();
+          if (paused)
+            window.dispatch({ event: 'step' });
+          break;
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [paused]);
+
   return <div className='recorder'>
     <Toolbar>
       <ToolbarButton icon='record' title='Record' toggled={mode === 'recording'} onClick={() => {
@@ -93,13 +114,13 @@ export const Recorder: React.FC<RecorderProps> = ({
       <ToolbarButton icon='files' title='Copy' disabled={!source || !source.text} onClick={() => {
         copy(source.text);
       }}></ToolbarButton>
-      <ToolbarButton icon='debug-continue' title='Resume' disabled={!paused} onClick={() => {
+      <ToolbarButton icon='debug-continue' title='Resume (F8)' disabled={!paused} onClick={() => {
         window.dispatch({ event: 'resume' });
       }}></ToolbarButton>
-      <ToolbarButton icon='debug-pause' title='Pause' disabled={paused} onClick={() => {
+      <ToolbarButton icon='debug-pause' title='Pause (F8)' disabled={paused} onClick={() => {
         window.dispatch({ event: 'pause' });
       }}></ToolbarButton>
-      <ToolbarButton icon='debug-step-over' title='Step over' disabled={!paused} onClick={() => {
+      <ToolbarButton icon='debug-step-over' title='Step over (F10)' disabled={!paused} onClick={() => {
         window.dispatch({ event: 'step' });
       }}></ToolbarButton>
       <div style={{ flex: 'auto' }}></div>
