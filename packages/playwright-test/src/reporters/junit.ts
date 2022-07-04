@@ -192,8 +192,8 @@ class JUnitReporter implements Reporter {
               continue;
             try {
               const attachmentPath = path.relative(this.config.rootDir, attachment.path);
-              if (fs.existsSync(attachmentPath))
-                contents = fs.readFileSync(attachmentPath, { encoding: 'base64' });
+              if (fs.existsSync(attachment.path))
+                contents = fs.readFileSync(attachment.path, { encoding: 'base64' });
               else
                 systemErr.push(`\nWarning: attachment ${attachmentPath} is missing`);
             } catch (e) {
