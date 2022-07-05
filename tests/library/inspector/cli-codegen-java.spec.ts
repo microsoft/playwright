@@ -20,7 +20,7 @@ import { test, expect } from './inspectorTest';
 
 const emptyHTML = new URL('file://' + path.join(__dirname, '..', '..', 'assets', 'empty.html')).toString();
 const launchOptions = (channel: string) => {
-  return channel ? `.setHeadless(false)\n        .setChannel("${channel}")` : '.setHeadless(false)';
+  return channel ? `.setChannel("${channel}")\n        .setHeadless(false)` : '.setHeadless(false)';
 };
 
 test('should print the correct imports and context options', async ({ runCLI, channel, browserName }) => {
@@ -83,10 +83,24 @@ test('should print load/save storage_state', async ({ runCLI, browserName }, tes
   await fs.promises.writeFile(loadFileName, JSON.stringify({ cookies: [], origins: [] }), 'utf8');
   const cli = runCLI([`--load-storage=${loadFileName}`, `--save-storage=${saveFileName}`, '--target=java', emptyHTML]);
   const expectedResult1 = `BrowserContext context = browser.newContext(new Browser.NewContextOptions()
-        .setStorageStatePath(Paths.get("${loadFileName.replace(/\\/g, '\\\\')}")));`;
+        .setStorageStatePath(Paths.get(${JSON.stringify(loadFileName)})));`;
   await cli.waitFor(expectedResult1);
 
   const expectedResult2 = `
       context.storageState(new BrowserContext.StorageStateOptions().setPath("${saveFileName.replace(/\\/g, '\\\\')}"))`;
   await cli.waitFor(expectedResult2);
+});
+
+test('should work with --save-har', async ({ runCLI }, testInfo) => {
+  const harFileName = testInfo.outputPath('har.har');
+  const cli = runCLI(['--target=java', `--save-har=${harFileName}`]);
+  const expectedResult = `BrowserContext context = browser.newContext(new Browser.NewContextOptions()
+        .setRecordHarMode(HarMode.MINIMAL)
+        .setRecordHarPath(Paths.get(${JSON.stringify(harFileName)}))
+        .setServiceWorkers(ServiceWorkerPolicy.BLOCK));`;
+  await cli.waitFor(expectedResult).catch(e => e);
+  expect(cli.text()).toContain(expectedResult);
+  await cli.exited;
+  const json = JSON.parse(fs.readFileSync(harFileName, 'utf-8'));
+  expect(json.log.creator.name).toBe('Playwright');
 });
