@@ -173,6 +173,7 @@ export class TestCase extends Base implements reporterTypes.TestCase {
     test._requireFile = this._requireFile;
     test.expectedStatus = this.expectedStatus;
     test.annotations = this.annotations.slice();
+    test._annotateWithInheritence = this._annotateWithInheritence;
     return test;
   }
 
