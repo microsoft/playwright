@@ -83,7 +83,7 @@ test('test', async ({ page }) => {
 
 ## Running the Tests
 
-You can run a single test, all tests in a file or all tests in the tests folder. Tests can be run on one browser or multiple browser.
+You can run a single test, all tests in a file or all tests in the tests folder. Tests can be run on one browser or multiple browsers.
 
 ### Running a Single Test
 
