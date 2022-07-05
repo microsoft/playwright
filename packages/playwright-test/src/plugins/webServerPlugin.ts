@@ -206,18 +206,17 @@ export const webServerPluginsForConfig = (config: FullConfig, reporter: Reporter
   if (!config.webServer)
     return [];
 
-  const singletonMode = !Array.isArray(config.webServer);
+  const arrayMode = Array.isArray(config.webServer);
   const configs = Array.isArray(config.webServer) ? config.webServer : [config.webServer];
   const webServerPlugins = [];
-  for (let i = 0; i < configs.length; i++) {
-    const config = configs[i];
+  for (const config of configs) {
     if (config.port !== undefined && config.url !== undefined)
       throw new Error(`Exactly one of 'port' or 'url' is required in config.webServer.`);
 
     const url = config.url || `http://localhost:${config.port}`;
 
     // We only set base url when only the port is given. That's a legacy mode we have regrets about.
-    if (singletonMode && i === 0 && !config.url)
+    if (!arrayMode && !config.url)
       process.env.PLAYWRIGHT_TEST_BASE_URL = url;
 
     webServerPlugins.push(new WebServerPlugin({ ...config,  url }, config.port !== undefined, reporter));
