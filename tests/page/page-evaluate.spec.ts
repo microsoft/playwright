@@ -597,6 +597,22 @@ it('should jsonValue() date', async ({ page }) => {
   expect(await resultHandle.jsonValue()).toEqual({ date: new Date('2020-05-27T01:31:38.506Z') });
 });
 
+it('should evaluate url', async ({ page }) => {
+  const result = await page.evaluate(() => ({ url: new URL('https://example.com') }));
+  expect(result).toEqual({ url: new URL('https://example.com') });
+});
+
+it('should roundtrip url', async ({ page }) => {
+  const url = new URL('https://example.com');
+  const result = await page.evaluate(url => url, url);
+  expect(result.toString()).toEqual(url.toString());
+});
+
+it('should jsonValue() url', async ({ page }) => {
+  const resultHandle = await page.evaluateHandle(() => ({ url: new URL('https://example.com') }));
+  expect(await resultHandle.jsonValue()).toEqual({ url: new URL('https://example.com') });
+});
+
 it('should not use toJSON when evaluating', async ({ page }) => {
   const result = await page.evaluate(() => ({ toJSON: () => 'string', data: 'data' }));
   expect(result).toEqual({ data: 'data', toJSON: {} });

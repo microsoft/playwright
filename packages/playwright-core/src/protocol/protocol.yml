@@ -66,6 +66,8 @@ SerializedValue:
       - "-0"
     # String representation of the Date.
     d: string?
+    # String representation of the URL.
+    u: string?
     # Regular expression pattern and flags.
     r:
       type: object?
