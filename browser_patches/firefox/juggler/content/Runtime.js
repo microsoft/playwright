@@ -71,6 +71,7 @@ class Runtime {
     // Use plain callbacks instead.
     this.events = {
       onConsoleMessage: createEvent(),
+      onRuntimeError: createEvent(),
       onErrorFromWorker: createEvent(),
       onExecutionContextCreated: createEvent(),
       onExecutionContextDestroyed: createEvent(),
@@ -129,7 +130,7 @@ class Runtime {
 
       observe: message => {
         if (!(message instanceof Ci.nsIScriptError) || !message.outerWindowID ||
-            !message.category || disallowedMessageCategories.has(message.category) || message.hasException) {
+            !message.category || disallowedMessageCategories.has(message.category)) {
           return;
         }
         const errorWindow = Services.wm.getOuterWindowWithId(message.outerWindowID);
@@ -138,26 +139,35 @@ class Runtime {
           return;
         }
         const executionContext = this._windowToExecutionContext.get(errorWindow);
-        if (!executionContext)
+        if (!executionContext) {
           return;
+        }
         const typeNames = {
           [Ci.nsIConsoleMessage.debug]: 'debug',
           [Ci.nsIConsoleMessage.info]: 'info',
           [Ci.nsIConsoleMessage.warn]: 'warn',
           [Ci.nsIConsoleMessage.error]: 'error',
         };
-        emitEvent(this.events.onConsoleMessage, {
-          args: [{
-            value: message.message,
-          }],
-          type: typeNames[message.logLevel],
-          executionContextId: executionContext.id(),
-          location: {
-            lineNumber: message.lineNumber,
-            columnNumber: message.columnNumber,
-            url: message.sourceName,
-          },
-        });
+        if (!message.hasException) {
+          emitEvent(this.events.onConsoleMessage, {
+            args: [{
+              value: message.message,
+            }],
+            type: typeNames[message.logLevel],
+            executionContextId: executionContext.id(),
+            location: {
+              lineNumber: message.lineNumber,
+              columnNumber: message.columnNumber,
+              url: message.sourceName,
+            },
+          });
+        } else {
+          emitEvent(this.events.onRuntimeError, {
+            executionContext,
+            message: message.errorMessage,
+            stack: message.stack.toString(),
+          });
+        }
       },
     };
     Services.console.registerListener(consoleServiceListener);
