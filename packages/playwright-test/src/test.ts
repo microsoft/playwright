@@ -134,6 +134,9 @@ export class TestCase extends Base implements reporterTypes.TestCase {
   _workerHash = '';
   _pool: FixturePool | undefined;
   _projectIndex = 0;
+  // Annotations that are not added from within a test (like fixme and skip), should not
+  // be re-added each time we retry a test.
+  _alreadyInheritedAnnotations: boolean = false;
 
   constructor(title: string, fn: Function, testType: TestTypeImpl, location: Location) {
     super(title);
@@ -169,7 +172,18 @@ export class TestCase extends Base implements reporterTypes.TestCase {
     test._only = this._only;
     test._requireFile = this._requireFile;
     test.expectedStatus = this.expectedStatus;
+    test.annotations = this.annotations.slice();
+    test._annotateWithInheritence = this._annotateWithInheritence;
     return test;
+  }
+
+  _annotateWithInheritence(annotations: Annotation[]) {
+    if (this._alreadyInheritedAnnotations) {
+      this.annotations = annotations;
+    } else {
+      this._alreadyInheritedAnnotations = true;
+      this.annotations = [...this.annotations, ...annotations];
+    }
   }
 
   _appendTestResult(): reporterTypes.TestResult {

@@ -88,8 +88,10 @@ export class TestTypeImpl {
 
     if (type === 'only')
       test._only = true;
-    if (type === 'skip' || type === 'fixme')
+    if (type === 'skip' || type === 'fixme') {
+      test.annotations.push({ type });
       test.expectedStatus = 'skipped';
+    }
     for (let parent: Suite | undefined = suite; parent; parent = parent.parent) {
       if (parent._skipped)
         test.expectedStatus = 'skipped';
@@ -120,8 +122,10 @@ export class TestTypeImpl {
       child._parallelMode = 'serial';
     if (type === 'parallel' || type === 'parallel.only')
       child._parallelMode = 'parallel';
-    if (type === 'skip')
+    if (type === 'skip') {
       child._skipped = true;
+      child._annotations.push({ type: 'skip' });
+    }
 
     for (let parent: Suite | undefined = suite; parent; parent = parent.parent) {
       if (parent._parallelMode === 'serial' && child._parallelMode === 'parallel')

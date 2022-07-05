@@ -215,7 +215,7 @@ export class Dispatcher {
       }));
       result.status = params.status;
       test.expectedStatus = params.expectedStatus;
-      test.annotations = params.annotations;
+      test._annotateWithInheritence(params.annotations);
       test.timeout = params.timeout;
       const isFailure = result.status !== 'skipped' && result.status !== test.expectedStatus;
       if (isFailure)
