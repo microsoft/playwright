@@ -83,16 +83,28 @@ test('test', async ({ page }) => {
 
 ## Running the Tests
 
+You can run a single test, all tests in a file or all tests in the tests folder. Tests can be run on one browser or multiple browser.
+
+### Running a Single Test
+
 Click the triangle next to line 3 to run your tests.
 
 <img width="813" alt="image" src="https://user-images.githubusercontent.com/13063165/177201109-e0a17553-88cc-496e-a717-9a60247db935.png"></img>
 
-Playwright will quickily hover over each line of the test until it finishes running and you will then see a green tick on line 3. You will also see the time the the tests took to run. In the sidebar you can extend the tests by clicking on it. This will show you the tests for your generated test as well as the example test which has not been run therefore it is not in green. 
+Playwright will run through each line of the test and when it finishes you will see a green tick on line 3 as well as the time it took to run the test.
+
+### Viewing all Tests
+
+In the sidebar you can extend the tests by clicking on it. This will show you the tests for your generated test as well as the example test that came when installing Playwright. This test has not been run therefore it is not in green. 
 
 
 <img width="812" alt="image" src="https://user-images.githubusercontent.com/13063165/177201231-f26e11da-2860-43fa-9a31-b04bba55d52e.png" />
 
-You can rerun a single test or all tests by clicking on the triangle as you hover over each of the tests in the sidebar.
+
+### Running All Tests
+You can all tests by clicking on the white triangle as you hover over the tests in the sidebar.
+
+<img width="283" alt="image" src="https://user-images.githubusercontent.com/13063165/177324550-74d4ed66-9be1-4ee7-b316-43a9d09367c3.png"></img>
 
 ### Running Tests on multiple browsers
 
@@ -110,11 +122,13 @@ On line 9 of your test change the button text from "Getting Started" to "Hello" 
 
 <img width="880" alt="image" src="https://user-images.githubusercontent.com/13063165/177202555-fed3c9a8-215c-46b1-9545-dfc712a9e21c.png"></img>
 
-### Debugging Tests
+### Creating Breakpoints
 
 Create a breakpoint by clicking next to the line number so a red dot appears. To run the tests in debug mode click on the red circled x on line 3 and select "debug test" from the menu.
 
 <img width="880" alt="image" src="https://user-images.githubusercontent.com/13063165/177202631-114855cd-15ba-4040-997b-74ed5b8f0a2d.png"/>
+
+### Editing Code During Debugging
 
 The browser will open and be paused on 9 line. You can now change the text in your test file back to the word "Get Started" and you will see Playwright highlighting the text of the button in the browser as it can now find a text that exists on the page.
 
@@ -130,16 +144,20 @@ To remove the breakpoint click on the red dot next to line 9 so it disappears.
 
 To sort tests by browsers and see a rull report you will need to manually run your tests using the CLI.
 
-```bash	
+```bash
 npx playright test
 ```
 
-Once the tests have finished run the folling command to open the reporter.
+Once the tests have finished run the following command to open the reporter.
 
 ```bash
-npx playright report
+npx playright show-report
 ```
+
+You can then filter the report by browers, failed tests, skipped tests etc.
+
+<img width="741" alt="image" src="https://user-images.githubusercontent.com/13063165/177343600-eebc9d1c-e602-4a96-aac5-474b11035f3f.png"></img>
 
 ## Running on CI
 
-At the moment we are just running our tests locally but you can run your tests on CI on each pull request thanks to the GitHub actions we setup earlier. Tests can be run on a local machine or on a staging URL. For more info see...
+At the moment we are just running our tests locally but you can run your tests on CI on each pull request thanks to the GitHub actions we setup earlier. Tests can be run on a local dev enviorment or on a staging URL. For more info see...
