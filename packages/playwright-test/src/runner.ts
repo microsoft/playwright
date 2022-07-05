@@ -43,7 +43,7 @@ import { raceAgainstTimeout } from 'playwright-core/lib/utils/timeoutRunner';
 import { SigIntWatcher } from './sigIntWatcher';
 import type { TestRunnerPlugin } from './plugins';
 import { setRunnerToAddPluginsTo } from './plugins';
-import { webServerPluginForConfig } from './plugins/webServerPlugin';
+import { webServerPluginsForConfig } from './plugins/webServerPlugin';
 import { MultiMap } from 'playwright-core/lib/utils/multimap';
 
 const removeFolderAsync = promisify(rimraf);
@@ -458,7 +458,7 @@ export class Runner {
 
     // Legacy webServer support.
     if (config.webServer)
-      this._plugins.push(webServerPluginForConfig(config, this._reporter));
+      this._plugins.push(...webServerPluginsForConfig(config, this._reporter));
 
     await this._runAndReportError(async () => {
       // First run the plugins, if plugin is a web server we want it to run before the

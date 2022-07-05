@@ -202,18 +202,26 @@ export const webServer = (options: WebServerPluginOptions): TestRunnerPlugin => 
   return new WebServerPlugin(options, false, { onStdOut: d => console.log(d.toString()), onStdErr: d => console.error(d.toString()) });
 };
 
-export const webServerPluginForConfig = (config: FullConfig, reporter: Reporter): TestRunnerPlugin => {
-  const webServer = config.webServer!;
-  if (webServer.port !== undefined && webServer.url !== undefined)
-    throw new Error(`Exactly one of 'port' or 'url' is required in config.webServer.`);
+export const webServerPluginsForConfig = (config: FullConfig, reporter: Reporter): TestRunnerPlugin[] => {
+  if (!config.webServer)
+    return [];
 
-  const url = webServer.url || `http://localhost:${webServer.port}`;
+  const singletonMode = !Array.isArray(config.webServer);
+  const configs = Array.isArray(config.webServer) ? config.webServer : [config.webServer];
+  const webServerPlugins = [];
+  for (let i = 0; i < configs.length; i++) {
+    const config = configs[i];
+    if (config.port !== undefined && config.url !== undefined)
+      throw new Error(`Exactly one of 'port' or 'url' is required in config.webServer.`);
 
-  // We only set base url when only the port is given. That's a legacy mode we have regrets about.
-  if (!webServer.url)
-    process.env.PLAYWRIGHT_TEST_BASE_URL = url;
+    const url = config.url || `http://localhost:${config.port}`;
 
-  // TODO: replace with reporter once plugins are removed.
-  // eslint-disable-next-line no-console
-  return new WebServerPlugin({ ...webServer, url }, webServer.port !== undefined, reporter);
+    // We only set base url when only the port is given. That's a legacy mode we have regrets about.
+    if (singletonMode && i === 0 && !config.url)
+      process.env.PLAYWRIGHT_TEST_BASE_URL = url;
+
+    webServerPlugins.push(new WebServerPlugin({ ...config,  url }, config.port !== undefined, reporter));
+  }
+
+  return webServerPlugins;
 };
