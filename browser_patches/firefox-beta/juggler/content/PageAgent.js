@@ -101,7 +101,6 @@ class PageAgent {
       helper.addObserver(this._filePickerShown.bind(this), 'juggler-file-picker-shown'),
       helper.addEventListener(this._messageManager, 'DOMContentLoaded', this._onDOMContentLoaded.bind(this)),
       helper.addObserver(this._onDocumentOpenLoad.bind(this), 'juggler-document-open-loaded'),
-      helper.addEventListener(this._messageManager, 'error', this._onError.bind(this)),
       helper.on(this._frameTree, 'load', this._onLoad.bind(this)),
       helper.on(this._frameTree, 'frameattached', this._onFrameAttached.bind(this)),
       helper.on(this._frameTree, 'framedetached', this._onFrameDetached.bind(this)),
@@ -129,6 +128,7 @@ class PageAgent {
         });
       }),
       this._runtime.events.onConsoleMessage(msg => this._browserPage.emit('runtimeConsole', msg)),
+      this._runtime.events.onRuntimeError(this._onRuntimeError.bind(this)),
       this._runtime.events.onExecutionContextCreated(this._onExecutionContextCreated.bind(this)),
       this._runtime.events.onExecutionContextDestroyed(this._onExecutionContextDestroyed.bind(this)),
       this._runtime.events.onBindingCalled(this._onBindingCalled.bind(this)),
@@ -139,7 +139,6 @@ class PageAgent {
         describeNode: this._describeNode.bind(this),
         dispatchKeyEvent: this._dispatchKeyEvent.bind(this),
         dispatchMouseEvent: this._dispatchMouseEvent.bind(this),
-        dispatchWheelEvent: this._dispatchWheelEvent.bind(this),
         dispatchTouchEvent: this._dispatchTouchEvent.bind(this),
         dispatchTapEvent: this._dispatchTapEvent.bind(this),
         getContentQuads: this._getContentQuads.bind(this),
@@ -274,15 +273,11 @@ class PageAgent {
     });
   }
 
-  _onError(errorEvent) {
-    const docShell = errorEvent.target.ownerGlobal.docShell;
-    const frame = this._frameTree.frameForDocShell(docShell);
-    if (!frame)
-      return;
+  _onRuntimeError({ executionContext, message, stack }) {
     this._browserPage.emit('pageUncaughtError', {
-      frameId: frame.id(),
-      message: errorEvent.message,
-      stack: errorEvent.error && typeof errorEvent.error.stack === 'string' ? errorEvent.error.stack : '',
+      frameId: executionContext.auxData().frameId,
+      message: message.toString(),
+      stack: stack.toString(),
     });
   }
 
@@ -758,26 +753,6 @@ class PageAgent {
     } else {
       this._cancelDragIfNeeded();
     }
-  }
-
-  async _dispatchWheelEvent({x, y, button, deltaX, deltaY, deltaZ, modifiers }) {
-    const deltaMode = 0; // WheelEvent.DOM_DELTA_PIXEL
-    const lineOrPageDeltaX = deltaX > 0 ? Math.floor(deltaX) : Math.ceil(deltaX);
-    const lineOrPageDeltaY = deltaY > 0 ? Math.floor(deltaY) : Math.ceil(deltaY);
-
-    const frame = this._frameTree.mainFrame();
-
-    frame.domWindow().windowUtils.sendWheelEvent(
-      x,
-      y,
-      deltaX,
-      deltaY,
-      deltaZ,
-      deltaMode,
-      modifiers,
-      lineOrPageDeltaX,
-      lineOrPageDeltaY,
-      0 /* options */);
   }
 
   async _insertText({text}) {
