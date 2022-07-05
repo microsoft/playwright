@@ -58,7 +58,7 @@ export class HttpServer {
       this._activeSockets.add(socket);
       socket.once('close', () => this._activeSockets.delete(socket));
     });
-    this._server.listen(port);
+    this._server.listen(port, '127.0.0.1');
     await new Promise(cb => this._server!.once('listening', cb));
     const address = this._server.address();
     assert(address, 'Could not bind server socket');
