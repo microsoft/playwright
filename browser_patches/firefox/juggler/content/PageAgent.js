@@ -129,6 +129,7 @@ class PageAgent {
         });
       }),
       this._runtime.events.onConsoleMessage(msg => this._browserPage.emit('runtimeConsole', msg)),
+      this._runtime.events.onRuntimeError(this._onRuntimeError.bind(this)),
       this._runtime.events.onExecutionContextCreated(this._onExecutionContextCreated.bind(this)),
       this._runtime.events.onExecutionContextDestroyed(this._onExecutionContextDestroyed.bind(this)),
       this._runtime.events.onBindingCalled(this._onBindingCalled.bind(this)),
@@ -270,6 +271,14 @@ class PageAgent {
     this._browserPage.emit('pageEventFired', {
       frameId: frame.id(),
       name: 'DOMContentLoaded',
+    });
+  }
+
+  _onRuntimeError({ executionContext, message, stack }) {
+    this._browserPage.emit('pageUncaughtError', {
+      frameId: executionContext.auxData().frameId,
+      message: message.toString(),
+      stack: stack.toString(),
     });
   }
 
