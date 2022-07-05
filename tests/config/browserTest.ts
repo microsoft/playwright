@@ -53,7 +53,14 @@ const test = baseTest.extend<BrowserTestTestFixtures, BrowserTestWorkerFixtures>
   }, { scope: 'worker' } ],
 
   defaultSameSiteCookieValue: [async ({ browserName, browserMajorVersion }, run) => {
-    await run(browserName === 'chromium' || (browserName === 'firefox' && browserMajorVersion >= 96 && browserMajorVersion < 97) ? 'Lax' : 'None');
+    if (browserName === 'chromium')
+      await run('Lax');
+    else if (browserName === 'webkit')
+      await run('None');
+    else if (browserName === 'firefox')
+      await run(browserMajorVersion === 96 || browserMajorVersion >= 103 ? 'Lax' : 'None');
+    else
+      throw new Error('unknown browser - ' + browserName);
   }, { scope: 'worker' } ],
 
   browserMajorVersion: [async ({ browserVersion }, run) => {

@@ -8,6 +8,7 @@ const {EventEmitter} = ChromeUtils.import('resource://gre/modules/EventEmitter.j
 const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
 const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 const {NetUtil} = ChromeUtils.import('resource://gre/modules/NetUtil.jsm');
+const { ChannelEventSinkFactory } = ChromeUtils.import("chrome://remote/content/cdp/observers/ChannelEventSink.jsm");
 
 
 const Cc = Components.classes;
@@ -26,14 +27,6 @@ const StorageStream = CC('@mozilla.org/storagestream;1', 'nsIStorageStream', 'in
 
 // Cap response storage with 100Mb per tracked tab.
 const MAX_RESPONSE_STORAGE_SIZE = 100 * 1024 * 1024;
-
-/**
- * This is a nsIChannelEventSink implementation that monitors channel redirects.
- */
-const SINK_CLASS_DESCRIPTION = "Juggler NetworkMonitor Channel Event Sink";
-const SINK_CLASS_ID = Components.ID("{c2b4c83e-607a-405a-beab-0ef5dbfb7617}");
-const SINK_CONTRACT_ID = "@mozilla.org/network/monitor/channeleventsink;1";
-const SINK_CATEGORY_NAME = "net-channel-event-sinks";
 
 const pageNetworkSymbol = Symbol('PageNetwork');
 
@@ -620,21 +613,10 @@ class NetworkObserver {
     };
     protocolProxyService.registerChannelFilter(this._channelProxyFilter, 0 /* position */);
 
-    this._channelSink = {
-      QueryInterface: ChromeUtils.generateQI([Ci.nsIChannelEventSink]),
-      asyncOnChannelRedirect: (oldChannel, newChannel, flags, callback) => {
-        this._onRedirect(oldChannel, newChannel, flags);
-        callback.onRedirectVerifyCallback(Cr.NS_OK);
-      },
-    };
-    this._channelSinkFactory = {
-      QueryInterface: ChromeUtils.generateQI([Ci.nsIFactory]),
-      createInstance: (aOuter, aIID) => this._channelSink.QueryInterface(aIID),
-    };
     // Register self as ChannelEventSink to track redirects.
-    const registrar = Cm.QueryInterface(Ci.nsIComponentRegistrar);
-    registrar.registerFactory(SINK_CLASS_ID, SINK_CLASS_DESCRIPTION, SINK_CONTRACT_ID, this._channelSinkFactory);
-    Services.catMan.addCategoryEntry(SINK_CATEGORY_NAME, SINK_CONTRACT_ID, SINK_CONTRACT_ID, false, true);
+    ChannelEventSinkFactory.getService().registerCollector({
+      _onChannelRedirect: this._onRedirect.bind(this),
+    });
 
     this._eventListeners = [
       helper.addObserver(this._onRequest.bind(this), 'http-on-modify-request'),
@@ -716,9 +698,7 @@ class NetworkObserver {
 
   dispose() {
     this._activityDistributor.removeObserver(this);
-    const registrar = Cm.QueryInterface(Ci.nsIComponentRegistrar);
-    registrar.unregisterFactory(SINK_CLASS_ID, this._channelSinkFactory);
-    Services.catMan.deleteCategoryEntry(SINK_CATEGORY_NAME, SINK_CONTRACT_ID, false);
+    ChannelEventSinkFactory.unregister();
     helper.removeListeners(this._eventListeners);
   }
 }
