@@ -1,4 +1,5 @@
 # class: Keyboard
+* since: v1.8
 
 Keyboard provides an api for managing a virtual keyboard. The high level api is [`method: Keyboard.type`], which takes
 raw characters and generates proper keydown, keypress/input, and keyup events on your page.
@@ -138,6 +139,7 @@ await page.Keyboard.PressAsync("Meta+A");
 ```
 
 ## async method: Keyboard.down
+* since: v1.8
 
 Dispatches a `keydown` event.
 
@@ -168,11 +170,13 @@ Modifier keys DO influence `keyboard.down`. Holding down `Shift` will type the t
 :::
 
 ### param: Keyboard.down.key
+* since: v1.8
 - `key` <[string]>
 
 Name of the key to press or a character to generate, such as `ArrowLeft` or `a`.
 
 ## async method: Keyboard.insertText
+* since: v1.8
 
 Dispatches only `input` event, does not emit the `keydown`, `keyup` or `keypress` events.
 
@@ -201,11 +205,13 @@ Modifier keys DO NOT effect `keyboard.insertText`. Holding down `Shift` will not
 :::
 
 ### param: Keyboard.insertText.text
+* since: v1.8
 - `text` <[string]>
 
 Sets input to the specified text value.
 
 ## async method: Keyboard.press
+* since: v1.8
 
 [`param: key`] can specify the intended
 [keyboardEvent.key](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key) value or a single character to
@@ -287,16 +293,19 @@ await browser.CloseAsync();
 Shortcut for [`method: Keyboard.down`] and [`method: Keyboard.up`].
 
 ### param: Keyboard.press.key
+* since: v1.8
 - `key` <[string]>
 
 Name of the key to press or a character to generate, such as `ArrowLeft` or `a`.
 
 ### option: Keyboard.press.delay
+* since: v1.8
 - `delay` <[float]>
 
 Time to wait between `keydown` and `keyup` in milliseconds. Defaults to 0.
 
 ## async method: Keyboard.type
+* since: v1.8
 
 Sends a `keydown`, `keypress`/`input`, and `keyup` event for each character in the text.
 
@@ -338,20 +347,24 @@ For characters that are not on a US keyboard, only an `input` event will be sent
 :::
 
 ### param: Keyboard.type.text
+* since: v1.8
 - `text` <[string]>
 
 A text to type into a focused element.
 
 ### option: Keyboard.type.delay
+* since: v1.8
 - `delay` <[float]>
 
 Time to wait between key presses in milliseconds. Defaults to 0.
 
 ## async method: Keyboard.up
+* since: v1.8
 
 Dispatches a `keyup` event.
 
 ### param: Keyboard.up.key
+* since: v1.8
 - `key` <[string]>
 
 Name of the key to press or a character to generate, such as `ArrowLeft` or `a`.

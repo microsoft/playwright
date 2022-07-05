@@ -1,4 +1,5 @@
 # class: Tracing
+* since: v1.12
 
 API for collecting and saving Playwright traces. Playwright traces can be opened in [Trace Viewer](../trace-viewer.md) after Playwright script runs.
 
@@ -60,6 +61,7 @@ await context.Tracing.StopAsync(new TracingStopOptions
 ```
 
 ## async method: Tracing.start
+* since: v1.12
 
 Start tracing.
 
@@ -111,18 +113,21 @@ await context.Tracing.StopAsync(new TracingStopOptions
 ```
 
 ### option: Tracing.start.name
+* since: v1.12
 - `name` <[string]>
 
 If specified, the trace is going to be saved into the file with the
 given name inside the [`option: tracesDir`] folder specified in [`method: BrowserType.launch`].
 
 ### option: Tracing.start.screenshots
+* since: v1.12
 - `screenshots` <[boolean]>
 
 Whether to capture screenshots during tracing. Screenshots are used to build
 a timeline preview.
 
 ### option: Tracing.start.snapshots
+* since: v1.12
 - `snapshots` <[boolean]>
 
 If this option is true tracing will
@@ -130,12 +135,14 @@ If this option is true tracing will
 * record network activity
 
 ### option: Tracing.start.sources
+* since: v1.17
 * langs: js, csharp, python
 - `sources` <[boolean]>
 
 Whether to include source files for trace actions.
 
 ### option: Tracing.start.sources
+* since: v1.17
 * langs: java
 - `sources` <[boolean]>
 
@@ -144,11 +151,13 @@ must be provided via `PLAYWRIGHT_JAVA_SRC` environment variable (the paths shoul
 and by ':' on other platforms).
 
 ### option: Tracing.start.title
+* since: v1.17
 - `title` <[string]>
 
 Trace name to be shown in the Trace Viewer.
 
 ## async method: Tracing.startChunk
+* since: v1.15
 
 Start a new trace chunk. If you'd like to record multiple traces on the same [BrowserContext], use [`method: Tracing.start`] once, and then create multiple trace chunks with [`method: Tracing.startChunk`] and [`method: Tracing.stopChunk`].
 
@@ -249,16 +258,19 @@ await context.Tracing.StopChunkAsync(new TracingStopChunkOptions
 ```
 
 ### option: Tracing.startChunk.title
+* since: v1.17
 - `title` <[string]>
 
 Trace name to be shown in the Trace Viewer.
 
 
 ## async method: Tracing.stop
+* since: v1.12
 
 Stop tracing.
 
 ### option: Tracing.stop.path
+* since: v1.12
 - `path` <[path]>
 
 Export trace into the file with the given path.
@@ -266,10 +278,12 @@ Export trace into the file with the given path.
 
 
 ## async method: Tracing.stopChunk
+* since: v1.15
 
 Stop the trace chunk. See [`method: Tracing.startChunk`] for more details about multiple trace chunks.
 
 ### option: Tracing.stopChunk.path
+* since: v1.15
 - `path` <[path]>
 
 Export trace collected since the last [`method: Tracing.startChunk`] call into the file with the given path.

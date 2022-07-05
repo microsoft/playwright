@@ -1,4 +1,5 @@
 # class: TimeoutError
+* since: v1.8
 * extends: [Error]
 
 TimeoutError is emitted whenever certain operations are terminated due to timeout, e.g. [`method:

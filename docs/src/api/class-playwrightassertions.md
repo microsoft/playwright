@@ -1,4 +1,5 @@
 # class: PlaywrightAssertions
+* since: v1.17
 
 Playwright gives you Web-First Assertions with convenience methods for creating assertions that will wait and retry until the expected condition is met.
 
@@ -71,6 +72,7 @@ reached. You can pass this timeout as an option.
 By default, the timeout for assertions is set to 5 seconds.
 
 ## method: PlaywrightAssertions.expectAPIResponse
+* since: v1.18
 * langs: js, java, python
   - alias-java: assertThat
   - alias-python: expect
@@ -85,11 +87,13 @@ PlaywrightAssertions.assertThat(response).isOK();
 ```
 
 ### param: PlaywrightAssertions.expectAPIResponse.response
+* since: v1.18
 - `response` <[APIResponse]>
 
 [APIResponse] object to use for assertions.
 
 ## method: PlaywrightAssertions.expectLocator
+* since: v1.18
 * langs:
   - alias-java: assertThat
   - alias-python: expect
@@ -108,11 +112,13 @@ await Expect(locator).ToBeVisibleAsync();
 ```
 
 ### param: PlaywrightAssertions.expectLocator.locator
+* since: v1.18
 - `locator` <[Locator]>
 
 [Locator] object to use for assertions.
 
 ## method: PlaywrightAssertions.expectPage
+* since: v1.18
 * langs:
   - alias-java: assertThat
   - alias-python: expect
@@ -131,6 +137,7 @@ await Expect(page).ToHaveTitleAsync("News");
 ```
 
 ### param: PlaywrightAssertions.expectPage.page
+* since: v1.18
 - `page` <[Page]>
 
 [Page] object to use for assertions.

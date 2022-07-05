@@ -1,4 +1,5 @@
 # class: Test
+* since: v1.10
 * langs: js
 
 Playwright Test provides a `test` function to declare tests and [`expect` function](https://jestjs.io/docs/expect) to write assertions.
@@ -24,6 +25,7 @@ test('basic test', async ({ page }) => {
 ```
 
 ## method: Test.(call)
+* since: v1.10
 
 Declares a test.
 
@@ -48,11 +50,13 @@ test('basic test', async ({ page }) => {
 ```
 
 ### param: Test.(call).title
+* since: v1.10
 - `title` <[string]>
 
 Test title.
 
 ### param: Test.(call).testFunction
+* since: v1.10
 - `testFunction` <[function]\([Fixtures], [TestInfo]\)>
 
 Test function that takes one or two arguments: an object with fixtures and optional [TestInfo].
@@ -60,12 +64,14 @@ Test function that takes one or two arguments: an object with fixtures and optio
 
 
 ## method: Test.afterAll
+* since: v1.10
 
 Declares an `afterAll` hook that is executed once per worker after all tests. When called in the scope of a test file, runs after all tests in the file. When called inside a [`method: Test.describe`] group, runs after all tests in the group. If multiple `afterAll` hooks are added, they will run in the order of their registration.
 
 Note that worker process is restarted on test failures, and `afterAll` hook runs again in the new worker. Learn more about [workers and failures](../test-retries.md).
 
 ### param: Test.afterAll.hookFunction
+* since: v1.10
 - `hookFunction` <[function]\([Fixtures], [TestInfo]\)>
 
 Hook function that takes one or two arguments: an object with worker fixtures and optional [TestInfo].
@@ -73,6 +79,7 @@ Hook function that takes one or two arguments: an object with worker fixtures an
 
 
 ## method: Test.afterEach
+* since: v1.10
 
 Declares an `afterEach` hook that is executed after each test. When called in the scope of a test file, runs after each test in the file. When called inside a [`method: Test.describe`] group, runs after each test in the group. If multiple `afterEach` hooks are added, they will run in the order of their registration.
 
@@ -111,12 +118,14 @@ test('my test', async ({ page }) => {
 ```
 
 ### param: Test.afterEach.hookFunction
+* since: v1.10
 - `hookFunction` <[function]\([Fixtures], [TestInfo]\)>
 
 Hook function that takes one or two arguments: an object with fixtures and optional [TestInfo].
 
 
 ## method: Test.beforeAll
+* since: v1.10
 
 Declares a `beforeAll` hook that is executed once per worker process before all tests. When called in the scope of a test file, runs before all tests in the file. When called inside a [`method: Test.describe`] group, runs before all tests in the group. If multiple `beforeAll` hooks are added, they will run in the order of their registration.
 
@@ -159,6 +168,7 @@ Note that worker process is restarted on test failures, and `beforeAll` hook run
 You can use [`method: Test.afterAll`] to teardown any resources set up in `beforeAll`.
 
 ### param: Test.beforeAll.hookFunction
+* since: v1.10
 - `hookFunction` <[function]\([Fixtures], [TestInfo]\)>
 
 Hook function that takes one or two arguments: an object with worker fixtures and optional [TestInfo].
@@ -166,6 +176,7 @@ Hook function that takes one or two arguments: an object with worker fixtures an
 
 
 ## method: Test.beforeEach
+* since: v1.10
 
 Declares a `beforeEach` hook that is executed before each test. When called in the scope of a test file, runs before each test in the file. When called inside a [`method: Test.describe`] group, runs before each test in the group.  If multiple `beforeEach` hooks are added, they will run in the order of their registration.
 
@@ -202,6 +213,7 @@ test('my test', async ({ page }) => {
 You can use [`method: Test.afterEach`] to teardown any resources set up in `beforeEach`.
 
 ### param: Test.beforeEach.hookFunction
+* since: v1.10
 - `hookFunction` <[function]\([Fixtures], [TestInfo]\)>
 
 Hook function that takes one or two arguments: an object with fixtures and optional [TestInfo].
@@ -210,6 +222,7 @@ Hook function that takes one or two arguments: an object with fixtures and optio
 
 
 ## method: Test.describe
+* since: v1.10
 
 Declares a group of tests.
 
@@ -238,17 +251,20 @@ test.describe('two tests', () => {
 ```
 
 ### param: Test.describe.title
+* since: v1.10
 - `title` <[string]>
 
 Group title.
 
 ### param: Test.describe.callback
+* since: v1.10
 - `callback` <[function]>
 
 A callback that is run immediately when calling [`method: Test.describe`]. Any tests added in this callback will belong to the group.
 
 
 ## method: Test.describe.configure
+* since: v1.10
 
 Set execution mode of execution for the enclosing scope. Can be executed either on the top level or inside a describe. Configuration applies to the entire scope, regardless of whether it run before or after the test
 declaration.
@@ -288,11 +304,13 @@ test('runs second', async ({ page }) => {});
 ```
 
 ### option: Test.describe.configure.mode
+* since: v1.10
 - `mode` <[TestMode]<"parallel"|"serial">>
 
 
 
 ## method: Test.describe.only
+* since: v1.10
 
 Declares a focused group of tests. If there are some focused tests or suites, all of them will be run but nothing else.
 
@@ -319,11 +337,13 @@ test('not in the focused group', async ({ page }) => {
 ```
 
 ### param: Test.describe.only.title
+* since: v1.10
 - `title` <[string]>
 
 Group title.
 
 ### param: Test.describe.only.callback
+* since: v1.10
 - `callback` <[function]>
 
 A callback that is run immediately when calling [`method: Test.describe.only`]. Any tests added in this callback will belong to the group.
@@ -331,6 +351,7 @@ A callback that is run immediately when calling [`method: Test.describe.only`]. 
 
 
 ## method: Test.describe.parallel
+* since: v1.10
 
 Declares a group of tests that could be run in parallel. By default, tests in a single test file run one after another, but using [`method: Test.describe.parallel`] allows them to run in parallel.
 
@@ -355,11 +376,13 @@ test.describe.parallel('group', () => {
 Note that parallel tests are executed in separate processes and cannot share any state or global variables. Each of the parallel tests executes all relevant hooks.
 
 ### param: Test.describe.parallel.title
+* since: v1.10
 - `title` <[string]>
 
 Group title.
 
 ### param: Test.describe.parallel.callback
+* since: v1.10
 - `callback` <[function]>
 
 A callback that is run immediately when calling [`method: Test.describe.parallel`]. Any tests added in this callback will belong to the group.
@@ -367,15 +390,18 @@ A callback that is run immediately when calling [`method: Test.describe.parallel
 
 
 ## method: Test.describe.parallel.only
+* since: v1.10
 
 Declares a focused group of tests that could be run in parallel. This is similar to [`method: Test.describe.parallel`], but focuses the group. If there are some focused tests or suites, all of them will be run but nothing else.
 
 ### param: Test.describe.parallel.only.title
+* since: v1.10
 - `title` <[string]>
 
 Group title.
 
 ### param: Test.describe.parallel.only.callback
+* since: v1.10
 - `callback` <[function]>
 
 A callback that is run immediately when calling [`method: Test.describe.parallel.only`]. Any tests added in this callback will belong to the group.
@@ -383,6 +409,7 @@ A callback that is run immediately when calling [`method: Test.describe.parallel
 
 
 ## method: Test.describe.serial
+* since: v1.10
 
 Declares a group of tests that should always be run serially. If one of the tests fails, all subsequent tests are skipped. All tests in a group are retried together.
 
@@ -409,11 +436,13 @@ test.describe.serial('group', () => {
 ```
 
 ### param: Test.describe.serial.title
+* since: v1.10
 - `title` <[string]>
 
 Group title.
 
 ### param: Test.describe.serial.callback
+* since: v1.10
 - `callback` <[function]>
 
 A callback that is run immediately when calling [`method: Test.describe.serial`]. Any tests added in this callback will belong to the group.
@@ -421,6 +450,7 @@ A callback that is run immediately when calling [`method: Test.describe.serial`]
 
 
 ## method: Test.describe.serial.only
+* since: v1.10
 
 Declares a focused group of tests that should always be run serially. If one of the tests fails, all subsequent tests are skipped. All tests in a group are retried together. If there are some focused tests or suites, all of them will be run but nothing else.
 
@@ -447,11 +477,13 @@ test.describe.serial.only('group', () => {
 ```
 
 ### param: Test.describe.serial.only.title
+* since: v1.10
 - `title` <[string]>
 
 Group title.
 
 ### param: Test.describe.serial.only.callback
+* since: v1.10
 - `callback` <[function]>
 
 A callback that is run immediately when calling [`method: Test.describe.serial.only`]. Any tests added in this callback will belong to the group.
@@ -460,6 +492,7 @@ A callback that is run immediately when calling [`method: Test.describe.serial.o
 
 
 ## method: Test.describe.skip
+* since: v1.10
 
 Declares a skipped test group, similarly to [`method: Test.describe`]. Tests in the skipped group are never run.
 
@@ -480,11 +513,13 @@ test.describe.skip('skipped group', () => {
 ```
 
 ### param: Test.describe.skip.title
+* since: v1.10
 - `title` <[string]>
 
 Group title.
 
 ### param: Test.describe.skip.callback
+* since: v1.10
 - `callback` <[function]>
 
 A callback that is run immediately when calling [`method: Test.describe.skip`]. Any tests added in this callback will belong to the group, and will not be run.
@@ -492,6 +527,7 @@ A callback that is run immediately when calling [`method: Test.describe.skip`]. 
 
 
 ## property: Test.expect
+* since: v1.10
 - type: <[Object]>
 
 `expect` function can be used to create test assertions. Read [expect library documentation](https://jestjs.io/docs/expect) for more details.
@@ -501,6 +537,7 @@ A callback that is run immediately when calling [`method: Test.describe.skip`]. 
 
 
 ## method: Test.extend
+* since: v1.10
 - returns: <[Test]>
 
 Extends the `test` object by defining fixtures and/or options that can be used in the tests.
@@ -622,6 +659,7 @@ export default config;
 Learn more about [fixtures](../test-fixtures.md) and [parametrizing tests](../test-parameterize.md).
 
 ### param: Test.extend.fixtures
+* since: v1.10
 - `fixtures` <[Object]>
 
 An object containing fixtures and/or options. Learn more about [fixtures format](../test-fixtures.md).
@@ -631,6 +669,7 @@ An object containing fixtures and/or options. Learn more about [fixtures format]
 
 
 ## method: Test.fail#1
+* since: v1.10
 
 Unconditonally marks a test as "should fail". Playwright Test runs this test and ensures that it is actually failing. This is useful for documentation purposes to acknowledge that some functionality is broken until it is fixed.
 
@@ -653,6 +692,7 @@ test('not yet ready', async ({ page }) => {
 ```
 
 ## method: Test.fail#2
+* since: v1.10
 
 Conditionally mark a test as "should fail" with an optional description.
 
@@ -675,17 +715,20 @@ test('fail in WebKit', async ({ page, browserName }) => {
 ```
 
 ### param: Test.fail#2.condition
+* since: v1.10
 - `condition` <[boolean]>
 
 Test is marked as "should fail" when the condition is `true`.
 
 ### param: Test.fail#2.description
+* since: v1.10
 - `description` ?<[string]>
 
 Optional description that will be reflected in a test report.
 
 
 ## method: Test.fail#3
+* since: v1.10
 
 Conditionally mark all tests in a file or [`method: Test.describe`] group as "should fail".
 
@@ -716,17 +759,20 @@ test('fail in WebKit 2', async ({ page }) => {
 ```
 
 ### param: Test.fail#3.condition
+* since: v1.10
 - `callback` <[function]\([Fixtures]\):[boolean]>
 
 A function that returns whether to mark as "should fail", based on test fixtures. Test or tests are marked as "should fail" when the return value is `true`.
 
 ### param: Test.fail#3.description
+* since: v1.10
 - `description` ?<[string]>
 
 Optional description that will be reflected in a test report.
 
 
 ## method: Test.fixme#1
+* since: v1.10
 
 Declares a test to be fixed, similarly to [`method: Test.(call)`]. This test will not be run.
 
@@ -747,11 +793,13 @@ test.fixme('test to be fixed', async ({ page }) => {
 ```
 
 ### param: Test.fixme#1.title
+* since: v1.10
 - `title` <[string]>
 
 Test title.
 
 ### param: Test.fixme#1.testFunction
+* since: v1.10
 - `testFunction` <[function]\([Fixtures], [TestInfo]\)>
 
 Test function that takes one or two arguments: an object with fixtures and optional [TestInfo].
@@ -759,6 +807,7 @@ Test function that takes one or two arguments: an object with fixtures and optio
 
 
 ## method: Test.fixme#2
+* since: v1.10
 
 Mark a test as "fixme", with the intention to fix it. Test is immediately aborted when you call [`method: Test.fixme#2`].
 
@@ -810,6 +859,7 @@ test('test to be fixed 2', async ({ page }) => {
 
 
 ## method: Test.fixme#3
+* since: v1.10
 
 Conditionally mark a test as "fixme" with an optional description.
 
@@ -833,11 +883,13 @@ test('broken in WebKit', async ({ page, browserName }) => {
 
 
 ### param: Test.fixme#3.condition
+* since: v1.10
 - `condition` <[boolean]>
 
 Test is marked as "fixme" when the condition is `true`.
 
 ### param: Test.fixme#3.description
+* since: v1.10
 - `description` ?<[string]>
 
 Optional description that will be reflected in a test report.
@@ -846,6 +898,7 @@ Optional description that will be reflected in a test report.
 
 
 ## method: Test.fixme#4
+* since: v1.10
 
 Conditionally mark all tests in a file or [`method: Test.describe`] group as "fixme".
 
@@ -877,22 +930,26 @@ test('broken in WebKit 2', async ({ page }) => {
 
 
 ### param: Test.fixme#4.condition
+* since: v1.10
 - `callback` <[function]\([Fixtures]\):[boolean]>
 
 A function that returns whether to mark as "fixme", based on test fixtures. Test or tests are marked as "fixme" when the return value is `true`.
 
 ### param: Test.fixme#4.description
+* since: v1.10
 - `description` ?<[string]>
 
 Optional description that will be reflected in a test report.
 
 
 ## method: Test.info
+* since: v1.10
 - returns: <[TestInfo]>
 
 Returns information about the currently running test. This method can only be called during the test execution, otherwise it throws.
 
 ## method: Test.only
+* since: v1.10
 
 Declares a focused test. If there are some focused tests or suites, all of them will be run but nothing else.
 
@@ -909,11 +966,13 @@ test.only('focus this test', async ({ page }) => {
 ```
 
 ### param: Test.only.title
+* since: v1.10
 - `title` <[string]>
 
 Test title.
 
 ### param: Test.only.testFunction
+* since: v1.10
 - `testFunction` <[function]\([Fixtures], [TestInfo]\)>
 
 Test function that takes one or two arguments: an object with fixtures and optional [TestInfo].
@@ -922,6 +981,7 @@ Test function that takes one or two arguments: an object with fixtures and optio
 
 
 ## method: Test.setTimeout
+* since: v1.10
 
 Changes the timeout for the test. Zero means no timeout. Learn more about [various timeouts](../test-timeouts.md).
 
@@ -1014,6 +1074,7 @@ test.describe('group', () => {
 Timeout for the currently running test is available through [`property: TestInfo.timeout`].
 
 ### param: Test.setTimeout.timeout
+* since: v1.10
 - `timeout` <[int]>
 
 Timeout in milliseconds.
@@ -1021,6 +1082,7 @@ Timeout in milliseconds.
 
 
 ## method: Test.skip#1
+* since: v1.10
 
 Declares a skipped test, similarly to [`method: Test.(call)`]. Skipped test is never run.
 
@@ -1041,11 +1103,13 @@ test.skip('broken test', async ({ page }) => {
 ```
 
 ### param: Test.skip#1.title
+* since: v1.10
 - `title` <[string]>
 
 Test title.
 
 ### param: Test.skip#1.testFunction
+* since: v1.10
 - `testFunction` <[function]\([Fixtures], [TestInfo]\)>
 
 Test function that takes one or two arguments: an object with fixtures and optional [TestInfo].
@@ -1053,6 +1117,7 @@ Test function that takes one or two arguments: an object with fixtures and optio
 
 
 ## method: Test.skip#2
+* since: v1.10
 
 Unconditionally skip a test. Test is immediately aborted when you call [`method: Test.skip#2`].
 
@@ -1104,6 +1169,7 @@ test('skipped test 2', async ({ page }) => {
 
 
 ## method: Test.skip#3
+* since: v1.10
 
 Conditionally skip a test with an optional description.
 
@@ -1146,11 +1212,13 @@ test.beforeEach(async ({ page }) => {
 ```
 
 ### param: Test.skip#3.condition
+* since: v1.10
 - `condition` <[boolean]>
 
 A skip condition. Test is skipped when the condition is `true`.
 
 ### param: Test.skip#3.description
+* since: v1.10
 - `description` ?<[void]|[string]>
 
 Optional description that will be reflected in a test report.
@@ -1159,6 +1227,7 @@ Optional description that will be reflected in a test report.
 
 
 ## method: Test.skip#4
+* since: v1.10
 
 Conditionally skips all tests in a file or [`method: Test.describe`] group.
 
@@ -1190,11 +1259,13 @@ test('skip in WebKit 2', async ({ page }) => {
 
 
 ### param: Test.skip#4.condition
+* since: v1.10
 - `callback` <[function]\([Fixtures]\):[boolean]>
 
 A function that returns whether to skip, based on test fixtures. Test or tests are skipped when the return value is `true`.
 
 ### param: Test.skip#4.description
+* since: v1.10
 - `description` ?<[string]>
 
 Optional description that will be reflected in a test report.
@@ -1202,6 +1273,7 @@ Optional description that will be reflected in a test report.
 
 
 ## method: Test.slow#1
+* since: v1.10
 
 Unconditionally marks a test as "slow". Slow test will be given triple the default timeout.
 
@@ -1228,6 +1300,7 @@ test('slow test', async ({ page }) => {
 :::
 
 ## method: Test.slow#2
+* since: v1.10
 
 Conditionally mark a test as "slow" with an optional description. Slow test will be given triple the default timeout.
 
@@ -1250,17 +1323,20 @@ test('slow in WebKit', async ({ page, browserName }) => {
 ```
 
 ### param: Test.slow#2.condition
+* since: v1.10
 - `condition` <[boolean]>
 
 Test is marked as "slow" when the condition is `true`.
 
 ### param: Test.slow#2.description
+* since: v1.10
 - `description` ?<[string]>
 
 Optional description that will be reflected in a test report.
 
 
 ## method: Test.slow#3
+* since: v1.10
 
 Conditionally mark all tests in a file or [`method: Test.describe`] group as "slow". Slow tests will be given triple the default timeout.
 
@@ -1291,17 +1367,20 @@ test('fail in WebKit 2', async ({ page }) => {
 ```
 
 ### param: Test.slow#3.condition
+* since: v1.10
 - `callback` <[function]\([Fixtures]\):[boolean]>
 
 A function that returns whether to mark as "slow", based on test fixtures. Test or tests are marked as "slow" when the return value is `true`.
 
 ### param: Test.slow#3.description
+* since: v1.10
 - `description` ?<[string]>
 
 Optional description that will be reflected in a test report.
 
 
 ## async method: Test.step
+* since: v1.10
 
 Declares a test step.
 
@@ -1326,12 +1405,14 @@ test('test', async ({ page }) => {
 ```
 
 ### param: Test.step.title
+* since: v1.10
 - `title` <[string]>
 
 Step name.
 
 
 ### param: Test.step.body
+* since: v1.10
 - `body` <[function]\(\):[Promise]<[any]>>
 
 Step body.
@@ -1339,6 +1420,7 @@ Step body.
 
 
 ## method: Test.use
+* since: v1.10
 
 Specifies options or fixtures to use in a single test file or a [`method: Test.describe`] group. Most useful to set an option, for example set `locale` to configure `context` fixture. `test.use` can be called either in the global scope or inside `test.describe`, it's is an error to call it within `beforeEach` or `beforeAll`.
 
@@ -1397,6 +1479,7 @@ test('test with locale', async ({ page }) => {
 ```
 
 ### param: Test.use.fixtures
+* since: v1.10
 - `options` <[TestOptions]>
 
 An object with local options.

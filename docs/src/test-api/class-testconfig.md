@@ -1,4 +1,5 @@
 # class: TestConfig
+* since: v1.10
 * langs: js
 
 Playwright Test provides many options to configure how your tests are collected and executed, for example `timeout` or `testDir`. These options are described in the [TestConfig] object in the [configuration file](../test-configuration.md).
@@ -34,6 +35,7 @@ export default config;
 ```
 
 ## property: TestConfig.expect
+* since: v1.10
 - type: ?<[Object]>
   - `timeout` ?<[int]> Default timeout for async expect matchers in milliseconds, defaults to 5000ms.
   - `toHaveScreenshot` ?<[Object]> Configuration for the [`method: PageAssertions.toHaveScreenshot#1`] method.
@@ -83,6 +85,7 @@ export default config;
 ```
 
 ## property: TestConfig.forbidOnly
+* since: v1.10
 - type: ?<[boolean]>
 
 Whether to exit with an error if any tests or groups are marked as [`method: Test.only`] or [`method: Test.describe.only`]. Useful on CI.
@@ -110,6 +113,7 @@ export default config;
 ```
 
 ## property: TestConfig.fullyParallel
+* since: v1.10
 - type: ?<[boolean]>
 
 Playwright Test runs tests in parallel. In order to achieve that, it runs several worker processes that run at the same time.
@@ -118,6 +122,7 @@ By default, **test files** are run in parallel. Tests in a single file are run i
 You can configure entire test run to concurrently execute all tests in all files using this option.
 
 ## property: TestConfig.globalSetup
+* since: v1.10
 - type: ?<[string]>
 
 Path to the global setup file. This file will be required and run before all the tests. It must export a single function that takes a [`TestConfig`] argument.
@@ -147,6 +152,7 @@ export default config;
 ```
 
 ## property: TestConfig.globalTeardown
+* since: v1.10
 - type: ?<[string]>
 
 Path to the global teardown file. This file will be required and run after all the tests. It must export a single function. See also [`property: TestConfig.globalSetup`].
@@ -176,6 +182,7 @@ export default config;
 ```
 
 ## property: TestConfig.globalTimeout
+* since: v1.10
 - type: ?<[int]>
 
 Maximum time in milliseconds the whole test suite can run. Zero timeout (default) disables this behavior. Useful on CI to prevent broken setup from running too long and wasting resources. Learn more about [various timeouts](../test-timeouts.md).
@@ -203,6 +210,7 @@ export default config;
 ```
 
 ## property: TestConfig.grep
+* since: v1.10
 - type: ?<[RegExp]|[Array]<[RegExp]>>
 
 Filter to only run tests with a title matching one of the patterns. For example, passing `grep: /cart/` should only run tests with "cart" in the title. Also available in the [command line](../test-cli.md) with the `-g` option.
@@ -211,6 +219,7 @@ Filter to only run tests with a title matching one of the patterns. For example,
 
 
 ## property: TestConfig.grepInvert
+* since: v1.10
 - type: ?<[RegExp]|[Array]<[RegExp]>>
 
 Filter to only run tests with a title **not** matching one of the patterns. This is the opposite of [`property: TestConfig.grep`]. Also available in the [command line](../test-cli.md) with the `--grep-invert` option.
@@ -219,6 +228,7 @@ Filter to only run tests with a title **not** matching one of the patterns. This
 
 
 ## property: TestConfig.maxFailures
+* since: v1.10
 - type: ?<[int]>
 
 The maximum number of test failures for the whole test suite run. After reaching this number, testing will stop and exit with an error. Setting to zero (default) disables this behavior.
@@ -248,16 +258,19 @@ export default config;
 ```
 
 ## property: TestConfig.metadata
+* since: v1.10
 - type: ?<[Metadata]>
 
 Metadata that will be put directly to the test report serialized as JSON.
 
 ## property: TestConfig.name
+* since: v1.10
 - type: ?<[string]>
 
 Config name is visible in the report and during test execution, unless overridden by [`property: TestProject.name`].
 
 ## property: TestConfig.outputDir
+* since: v1.10
 - type: ?<[string]>
 
 The output directory for files created during test execution. Defaults to `<package.json-directory>/test-results`.
@@ -310,6 +323,7 @@ test('example test', async ({}, testInfo) => {
 
 
 ## property: TestConfig.snapshotDir
+* since: v1.10
 - type: ?<[string]>
 
 The base directory, relative to the config file, for snapshot files created with `toMatchSnapshot`. Defaults to [`property: TestConfig.testDir`].
@@ -319,6 +333,7 @@ The directory for each test can be accessed by [`property: TestInfo.snapshotDir`
 This path will serve as the base directory for each test file snapshot directory. Setting `snapshotDir` to `'snapshots'`, the [`property: TestInfo.snapshotDir`] would resolve to `snapshots/a.spec.js-snapshots`.
 
 ## property: TestConfig.preserveOutput
+* since: v1.10
 - type: ?<[PreserveOutput]<"always"|"never"|"failures-only">>
 
 Whether to preserve test output in the [`property: TestConfig.outputDir`]. Defaults to `'always'`.
@@ -328,22 +343,26 @@ Whether to preserve test output in the [`property: TestConfig.outputDir`]. Defau
 
 
 ## property: TestConfig.projects
+* since: v1.10
 - type: ?<[Array]<[TestProject]>>
 
 Playwright Test supports running multiple test projects at the same time. See [TestProject] for more information.
 
 
 ## property: TestConfig.quiet
+* since: v1.10
 - type: ?<[boolean]>
 
 Whether to suppress stdio and stderr output from the tests.
 
 ## property: TestConfig.repeatEach
+* since: v1.10
 - type: ?<[int]>
 
 The number of times to repeat each test, useful for debugging flaky tests.
 
 ## property: TestConfig.reporter
+* since: v1.10
 - type: ?<[string]|[Array]<[Object]>|[BuiltInReporter]<"list"|"dot"|"line"|"github"|"json"|"junit"|"null"|"html">>
   - `0` <[string]> Reporter name or module or file path
   - `1` <[Object]> An object with reporter options if any
@@ -380,6 +399,7 @@ export default config;
 ```
 
 ## property: TestConfig.reportSlowTests
+* since: v1.10
 - type: ?<[null]|[Object]>
   - `max` <[int]> The maximum number of slow test files to report. Defaults to `5`.
   - `threshold` <[float]> Test duration in milliseconds that is considered slow. Defaults to 15 seconds.
@@ -389,6 +409,7 @@ Whether to report slow test files. Pass `null` to disable this feature.
 Test files that took more than `threshold` milliseconds are considered slow, and the slowest ones are reported, no more than `max` number of them. Passing zero as `max` reports all test files that exceed the threshold.
 
 ## property: TestConfig.retries
+* since: v1.10
 - type: ?<[int]>
 
 The maximum number of retry attempts given to failed tests. By default failing tests are not retried. Learn more about [test retries](../test-retries.md#retries).
@@ -416,6 +437,7 @@ export default config;
 ```
 
 ## property: TestConfig.screenshotsDir
+* since: v1.10
 * experimental
 - type: ?<[string]>
 
@@ -452,6 +474,7 @@ where:
 * `Mobile Safari` and `Desktop Chrome` - project names
 
 ## property: TestConfig.shard
+* since: v1.10
 - type: ?<[null]|[Object]>
   - `total` <[int]> The total number of shards.
   - `current` <[int]> The index of the shard to execute, one-based.
@@ -461,6 +484,7 @@ Shard tests and execute only the selected shard. Specify in the one-based form l
 Learn more about [parallelism and sharding](../test-parallel.md) with Playwright Test.
 
 ## property: TestConfig.testDir
+* since: v1.10
 - type: ?<[string]>
 
 Directory that will be recursively scanned for test files. Defaults to the directory of the configuration file.
@@ -488,6 +512,7 @@ export default config;
 ```
 
 ## property: TestConfig.testIgnore
+* since: v1.10
 - type: ?<[string]|[RegExp]|[Array]<[string]|[RegExp]>>
 
 Files matching one of these patterns are not executed as test files. Matching is performed against the absolute file path. Strings are treated as glob patterns.
@@ -517,6 +542,7 @@ export default config;
 ```
 
 ## property: TestConfig.testMatch
+* since: v1.10
 - type: ?<[string]|[RegExp]|[Array]<[string]|[RegExp]>>
 
 Only the files matching one of these patterns are executed as test files. Matching is performed against the absolute file path. Strings are treated as glob patterns.
@@ -546,6 +572,7 @@ export default config;
 ```
 
 ## property: TestConfig.timeout
+* since: v1.10
 - type: ?<[int]>
 
 Timeout for each test in milliseconds. Defaults to 30 seconds.
@@ -575,6 +602,7 @@ export default config;
 ```
 
 ## property: TestConfig.updateSnapshots
+* since: v1.10
 - type: ?<[UpdateSnapshots]<"all"|"none"|"missing">>
 
 Whether to update expected snapshots with the actual results produced by the test run. Defaults to `'missing'`.
@@ -585,6 +613,7 @@ Whether to update expected snapshots with the actual results produced by the tes
 Learn more about [snapshots](../test-snapshots.md).
 
 ## property: TestConfig.use
+* since: v1.10
 - type: ?<[TestOptions]>
 
 Global options for all tests, for example [`property: TestOptions.browserName`]. Learn more about [configuration](../test-configuration.md) and see [available options][TestOptions].
@@ -616,6 +645,7 @@ export default config;
 ```
 
 ## property: TestConfig.webServer
+* since: v1.10
 - type: ?<[Object]>
   - `command` <[string]> Shell command to start. For example `npm run start`..
   - `port` ?<[int]> The port that your http server is expected to appear on. It does wait until it accepts connections. Exactly one of `port` or `url` is required.
@@ -696,6 +726,7 @@ test('test', async ({ page }) => {
 ```
 
 ## property: TestConfig.workers
+* since: v1.10
 - type: ?<[int]>
 
 The maximum number of concurrent worker processes to use for parallelizing tests.

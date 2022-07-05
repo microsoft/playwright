@@ -1,4 +1,5 @@
 # class: Worker
+* since: v1.8
 
 The Worker class represents a [WebWorker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API). `worker`
 event is emitted on the page object to signal a worker creation. `close` event is emitted on the worker object when the
@@ -52,11 +53,13 @@ foreach(var pageWorker in page.Workers)
 ```
 
 ## event: Worker.close
+* since: v1.8
 - argument: <[Worker]>
 
 Emitted when this dedicated [WebWorker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) is terminated.
 
 ## async method: Worker.evaluate
+* since: v1.8
 - returns: <[Serializable]>
 
 Returns the return value of [`param: expression`].
@@ -68,13 +71,16 @@ If the function passed to the [`method: Worker.evaluate`] returns a non-[Seriali
 additional values that are not serializable by `JSON`: `-0`, `NaN`, `Infinity`, `-Infinity`.
 
 ### param: Worker.evaluate.expression = %%-evaluate-expression-%%
+* since: v1.8
 
 ### param: Worker.evaluate.arg
+* since: v1.8
 - `arg` ?<[EvaluationArgument]>
 
 Optional argument to pass to [`param: expression`].
 
 ## async method: Worker.evaluateHandle
+* since: v1.8
 - returns: <[JSHandle]>
 
 Returns the return value of [`param: expression`] as a [JSHandle].
@@ -87,19 +93,24 @@ If the function passed to the [`method: Worker.evaluateHandle`] returns a [Promi
 the promise to resolve and return its value.
 
 ### param: Worker.evaluateHandle.expression = %%-evaluate-expression-%%
+* since: v1.8
 
 ### param: Worker.evaluateHandle.arg
+* since: v1.8
 - `arg` ?<[EvaluationArgument]>
 
 Optional argument to pass to [`param: expression`].
 
 ## method: Worker.url
+* since: v1.8
 - returns: <[string]>
 
 ## async method: Worker.waitForClose
+* since: v1.10
 * langs: java
 - returns: <[Worker]>
 
 Performs action and waits for the Worker to close.
 
 ### option: Worker.waitForClose.timeout = %%-wait-for-event-timeout-%%
+* since: v1.9

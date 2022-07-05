@@ -1,4 +1,5 @@
 # class: BrowserType
+* since: v1.8
 
 BrowserType provides methods to launch a specific browser instance or connect to an existing one. The following is a
 typical example of using Playwright to drive automation:
@@ -85,39 +86,46 @@ class BrowserTypeExamples
 ```
 
 ## async method: BrowserType.connect
+* since: v1.8
 - returns: <[Browser]>
 
 This method attaches Playwright to an existing browser instance.
 
 ### param: BrowserType.connect.wsEndpoint
+* since: v1.10
 - `wsEndpoint` <[string]>
 
 A browser websocket endpoint to connect to.
 
 ### option: BrowserType.connect.headers
+* since: v1.11
 - `headers` <[Object]<[string], [string]>>
 
 Additional HTTP headers to be sent with web socket connect request. Optional.
 
 ### option: BrowserType.connect.slowMo
+* since: v1.10
 - `slowMo` <[float]>
 
 Slows down Playwright operations by the specified amount of milliseconds. Useful so that you
 can see what is going on. Defaults to 0.
 
 ### option: BrowserType.connect.logger
+* since: v1.14
 * langs: js
 - `logger` <[Logger]>
 
 Logger sink for Playwright logging. Optional.
 
 ### option: BrowserType.connect.timeout
+* since: v1.10
 - `timeout` <[float]>
 
 Maximum time in milliseconds to wait for the connection to be established. Defaults to
 `0` (no timeout).
 
 ## async method: BrowserType.connectOverCDP
+* since: v1.9
 - returns: <[Browser]>
 
 This method attaches Playwright to an existing browser instance using the Chrome DevTools Protocol.
@@ -129,45 +137,53 @@ Connecting over the Chrome DevTools Protocol is only supported for Chromium-base
 :::
 
 ### param: BrowserType.connectOverCDP.endpointURL
+* since: v1.11
 - `endpointURL` <[string]>
 
 A CDP websocket endpoint or http url to connect to. For example `http://localhost:9222/` or `ws://127.0.0.1:9222/devtools/browser/387adf4c-243f-4051-a181-46798f4a46f4`.
 
 ### option: BrowserType.connectOverCDP.endpointURL
+* since: v1.14
 * langs: js
 - `endpointURL` <[string]>
 
 Deprecated, use the first argument instead. Optional.
 
 ### option: BrowserType.connectOverCDP.headers
+* since: v1.11
 - `headers` <[Object]<[string], [string]>>
 
 Additional HTTP headers to be sent with connect request. Optional.
 
 ### option: BrowserType.connectOverCDP.slowMo
+* since: v1.11
 - `slowMo` <[float]>
 
 Slows down Playwright operations by the specified amount of milliseconds. Useful so that you
 can see what is going on. Defaults to 0.
 
 ### option: BrowserType.connectOverCDP.logger
+* since: v1.14
 * langs: js
 - `logger` <[Logger]>
 
 Logger sink for Playwright logging. Optional.
 
 ### option: BrowserType.connectOverCDP.timeout
+* since: v1.11
 - `timeout` <[float]>
 
 Maximum time in milliseconds to wait for the connection to be established. Defaults to
 `30000` (30 seconds). Pass `0` to disable timeout.
 
 ## method: BrowserType.executablePath
+* since: v1.8
 - returns: <[string]>
 
 A path where Playwright expects to find a bundled browser executable.
 
 ## async method: BrowserType.launch
+* since: v1.8
 - returns: <[Browser]>
 
 Returns the browser instance.
@@ -216,16 +232,24 @@ option with extreme caution.
 [This article](https://chromium.googlesource.com/chromium/src/+/lkgr/docs/chromium_browser_vs_google_chrome.md)
 describes some differences for Linux users.
 
-### option: BrowserType.launch.-inline- = %%-shared-browser-options-list-%%
+### option: BrowserType.launch.-inline- = %%-shared-browser-options-list-v1.8-%%
+* since: v1.8
 ### option: BrowserType.launch.firefoxUserPrefs = %%-js-python-browser-option-firefoxuserprefs-%%
+* since: v1.8
 ### option: BrowserType.launch.firefoxUserPrefs2 = %%-csharp-java-browser-option-firefoxuserprefs-%%
+* since: v1.8
 ### option: BrowserType.launch.logger = %%-browser-option-logger-%%
+* since: v1.8
 ### option: BrowserType.launch.slowMo = %%-browser-option-slowmo-%%
+* since: v1.8
 ### option: BrowserType.launch.ignoreDefaultArgs = %%-csharp-java-browser-option-ignoredefaultargs-%%
+* since: v1.8
 ### option: BrowserType.launch.ignoreAllDefaultArgs = %%-csharp-java-browser-option-ignorealldefaultargs-%%
+* since: v1.9
 
 
 ## async method: BrowserType.launchPersistentContext
+* since: v1.8
 - returns: <[BrowserContext]>
 
 Returns the persistent browser context instance.
@@ -234,6 +258,7 @@ Launches browser that uses persistent storage located at [`param: userDataDir`] 
 this context will automatically close the browser.
 
 ### param: BrowserType.launchPersistentContext.userDataDir
+* since: v1.8
 - `userDataDir` <[path]>
 
 Path to a User Data Directory, which stores browser session data like cookies and local storage. More details for
@@ -242,13 +267,19 @@ Path to a User Data Directory, which stores browser session data like cookies an
 Note that Chromium's user data directory is the **parent** directory of the "Profile Path" seen at `chrome://version`. Pass an empty string to
 use a temporary directory instead.
 
-### option: BrowserType.launchPersistentContext.-inline- = %%-shared-browser-options-list-%%
+### option: BrowserType.launchPersistentContext.-inline- = %%-shared-browser-options-list-v1.8-%%
+* since: v1.8
 ### option: BrowserType.launchPersistentContext.slowMo = %%-browser-option-slowmo-%%
+* since: v1.8
 ### option: BrowserType.launchPersistentContext.ignoreDefaultArgs = %%-csharp-java-browser-option-ignoredefaultargs-%%
+* since: v1.8
 ### option: BrowserType.launchPersistentContext.ignoreAllDefaultArgs = %%-csharp-java-browser-option-ignorealldefaultargs-%%
-### option: BrowserType.launchPersistentContext.-inline- = %%-shared-context-params-list-%%
+* since: v1.9
+### option: BrowserType.launchPersistentContext.-inline- = %%-shared-context-params-list-v1.8-%%
+* since: v1.8
 
 ## async method: BrowserType.launchServer
+* since: v1.8
 * langs: js
 - returns: <[BrowserServer]>
 
@@ -270,17 +301,23 @@ const { chromium } = require('playwright');  // Or 'webkit' or 'firefox'.
 })();
 ```
 
-### option: BrowserType.launchServer.-inline- = %%-shared-browser-options-list-%%
+### option: BrowserType.launchServer.-inline- = %%-shared-browser-options-list-v1.8-%%
+* since: v1.8
 ### option: BrowserType.launchServer.firefoxUserPrefs = %%-js-python-browser-option-firefoxuserprefs-%%
+* since: v1.8
 ### option: BrowserType.launchServer.firefoxUserPrefs2 = %%-csharp-java-browser-option-firefoxuserprefs-%%
+* since: v1.8
 ### option: BrowserType.launchServer.logger = %%-browser-option-logger-%%
+* since: v1.8
 
 ### option: BrowserType.launchServer.port
+* since: v1.8
 - `port` <[int]>
 
 Port to use for the web socket. Defaults to 0 that picks any available port.
 
 ### option: BrowserType.launchServer.wsPath
+* since: v1.15
 - `wsPath` <[string]>
 
 Path at which to serve the Browser Server. For security, this defaults to an
@@ -293,6 +330,7 @@ use an unguessable token when using this option.
 :::
 
 ## method: BrowserType.name
+* since: v1.8
 - returns: <[string]>
 
 Returns browser name. For example: `'chromium'`, `'webkit'` or `'firefox'`.

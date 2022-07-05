@@ -1,4 +1,5 @@
 # class: PlaywrightException
+* since: v1.10
 * langs: java
 * extends: [RuntimeException]
 

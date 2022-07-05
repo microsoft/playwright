@@ -1,4 +1,5 @@
 # class: Reporter
+* since: v1.10
 * langs: js
 
 Test runner notifies the reporter about various events during test execution. All methods of the reporter are optional.
@@ -90,15 +91,18 @@ Additionally, [`method: Reporter.onStdOut`] and [`method: Reporter.onStdErr`] ar
 and [`method: Reporter.onError`] is called when something went wrong outside of the test execution.
 
 ## optional method: Reporter.onBegin
+* since: v1.10
 
 Called once before running tests. All tests have been already discovered and put into a hierarchy of [Suite]s.
 
 ### param: Reporter.onBegin.config
+* since: v1.10
 - `config` <[TestConfig]>
 
 Resolved configuration.
 
 ### param: Reporter.onBegin.suite
+* since: v1.10
 - `suite` <[Suite]>
 
 The root suite that contains all projects, files and test cases.
@@ -106,10 +110,12 @@ The root suite that contains all projects, files and test cases.
 
 
 ## optional async method: Reporter.onEnd
+* since: v1.10
 
 Called after all tests has been run, or testing has been interrupted. Note that this method may return a [Promise] and Playwright Test will await it.
 
 ### param: Reporter.onEnd.result
+* since: v1.10
 - `result` <[Object]>
   - `status` <[FullStatus]<"passed"|"failed"|"timedout"|"interrupted">>
 
@@ -123,123 +129,148 @@ Result of the full test run.
 
 
 ## optional method: Reporter.onError
+* since: v1.10
 
 Called on some global error, for example unhandled exception in the worker process.
 
 ### param: Reporter.onError.error
+* since: v1.10
 - `error` <[TestError]>
 
 The error.
 
 
 ## optional method: Reporter.onStdErr
+* since: v1.10
 
 Called when something has been written to the standard error in the worker process.
 
 ### param: Reporter.onStdErr.chunk
+* since: v1.10
 - `chunk` <[string]|[Buffer]>
 
 Output chunk.
 
 ### param: Reporter.onStdErr.test
+* since: v1.10
 - `test` <[void]|[TestCase]>
 
 Test that was running. Note that output may happen when no test is running, in which case this will be [void].
 
 ### param: Reporter.onStdErr.result
+* since: v1.10
 - `result` <[void]|[TestResult]>
 
 Result of the test run, this object gets populated while the test runs.
 
 
 ## optional method: Reporter.onStdOut
+* since: v1.10
 
 Called when something has been written to the standard output in the worker process.
 
 ### param: Reporter.onStdOut.chunk
+* since: v1.10
 - `chunk` <[string]|[Buffer]>
 
 Output chunk.
 
 ### param: Reporter.onStdOut.test
+* since: v1.10
 - `test` <[void]|[TestCase]>
 
 Test that was running. Note that output may happen when no test is running, in which case this will be [void].
 
 ### param: Reporter.onStdOut.result
+* since: v1.10
 - `result` <[void]|[TestResult]>
 
 Result of the test run, this object gets populated while the test runs.
 
 ## optional method: Reporter.onStepBegin
+* since: v1.10
 
 Called when a test step started in the worker process.
 
 ### param: Reporter.onStepBegin.test
+* since: v1.10
 - `test` <[TestCase]>
 
 Test that the step belongs to.
 
 ### param: Reporter.onStepBegin.result
+* since: v1.10
 - `result` <[TestResult]>
 
 Result of the test run, this object gets populated while the test runs.
 
 ### param: Reporter.onStepBegin.step
+* since: v1.10
 - `step` <[TestStep]>
 
 Test step instance that has started.
 
 ## optional method: Reporter.onStepEnd
+* since: v1.10
 
 Called when a test step finished in the worker process.
 
 ### param: Reporter.onStepEnd.test
+* since: v1.10
 - `test` <[TestCase]>
 
 Test that the step belongs to.
 
 ### param: Reporter.onStepEnd.result
+* since: v1.10
 - `result` <[TestResult]>
 
 Result of the test run.
 
 ### param: Reporter.onStepEnd.step
+* since: v1.10
 - `step` <[TestStep]>
 
 Test step instance that has finished.
 
 ## optional method: Reporter.onTestBegin
+* since: v1.10
 
 Called after a test has been started in the worker process.
 
 ### param: Reporter.onTestBegin.test
+* since: v1.10
 - `test` <[TestCase]>
 
 Test that has been started.
 
 ### param: Reporter.onTestBegin.result
+* since: v1.10
 - `result` <[TestResult]>
 
 Result of the test run, this object gets populated while the test runs.
 
 
 ## optional method: Reporter.onTestEnd
+* since: v1.10
 
 Called after a test has been finished in the worker process.
 
 ### param: Reporter.onTestEnd.test
+* since: v1.10
 - `test` <[TestCase]>
 
 Test that has been finished.
 
 ### param: Reporter.onTestEnd.result
+* since: v1.10
 - `result` <[TestResult]>
 
 Result of the test run.
 
 
 ## optional method: Reporter.printsToStdio
+* since: v1.10
 - returns: <[boolean]>
 
 Whether this reporter uses stdio for reporting. When it does not, Playwright Test could add some output to enhance user experience.

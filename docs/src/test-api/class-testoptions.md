@@ -1,4 +1,5 @@
 # class: TestOptions
+* since: v1.10
 * langs: js
 
 Playwright Test provides many options to configure test environment, [Browser], [BrowserContext] and more.
@@ -61,10 +62,13 @@ test('my portrait test', async ({ page }) => {
 ```
 
 ## property: TestOptions.acceptDownloads = %%-context-option-acceptdownloads-%%
+* since: v1.10
 
 ## property: TestOptions.baseURL = %%-context-option-baseURL-%%
+* since: v1.10
 
 ## property: TestOptions.browserName
+* since: v1.10
 - type: <[BrowserName]<"chromium"|"firefox"|"webkit">>
 
 Name of the browser that runs tests. Defaults to `'chromium'`. Most of the time you should set `browserName` in your [TestConfig]:
@@ -96,6 +100,7 @@ export default config;
 ```
 
 ## property: TestOptions.actionTimeout
+* since: v1.10
 - type: <[int]>
 
 Default timeout for each Playwright action in milliseconds, defaults to 0 (no timeout).
@@ -105,12 +110,16 @@ This is a default timeout for all Playwright actions, same as configured via [`m
 Learn more about [various timeouts](../test-timeouts.md).
 
 ## property: TestOptions.bypassCSP = %%-context-option-bypasscsp-%%
+* since: v1.10
 
 ## property: TestOptions.channel = %%-browser-option-channel-%%
+* since: v1.10
 
 ## property: TestOptions.colorScheme = %%-context-option-colorscheme-%%
+* since: v1.10
 
 ## property: TestOptions.connectOptions
+* since: v1.10
 - type: <[void]|[Object]>
   - `wsEndpoint` <[string]> A browser websocket endpoint to connect to.
   - `headers` ?<[void]|[Object]<[string], [string]>> Additional HTTP headers to be sent with web socket connect request. Optional.
@@ -119,36 +128,49 @@ Learn more about [various timeouts](../test-timeouts.md).
 When connect options are specified, default [`property: Fixtures.browser`], [`property: Fixtures.context`] and [`property: Fixtures.page`] use the remote browser instead of launching a browser locally, and any launch options like [`property: TestOptions.headless`] or [`property: TestOptions.channel`] are ignored.
 
 ## property: TestOptions.contextOptions
+* since: v1.10
 - type: <[Object]>
 
 Options used to create the context, as passed to [`method: Browser.newContext`]. Specific options like [`property: TestOptions.viewport`] take priority over this.
 
 ## property: TestOptions.deviceScaleFactor = %%-context-option-devicescalefactor-%%
+* since: v1.10
 
 ## property: TestOptions.extraHTTPHeaders = %%-context-option-extrahttpheaders-%%
+* since: v1.10
 
 ## property: TestOptions.geolocation = %%-context-option-geolocation-%%
+* since: v1.10
 
 ## property: TestOptions.hasTouch = %%-context-option-hastouch-%%
+* since: v1.10
 
 ## property: TestOptions.headless = %%-browser-option-headless-%%
+* since: v1.10
 
 ## property: TestOptions.httpCredentials = %%-context-option-httpcredentials-%%
+* since: v1.10
 
 ## property: TestOptions.ignoreHTTPSErrors = %%-context-option-ignorehttpserrors-%%
+* since: v1.10
 
 ## property: TestOptions.isMobile = %%-context-option-ismobile-%%
+* since: v1.10
 
 ## property: TestOptions.javaScriptEnabled = %%-context-option-javascriptenabled-%%
+* since: v1.10
 
 ## property: TestOptions.launchOptions
+* since: v1.10
 - type: <[Object]>
 
 Options used to launch the browser, as passed to [`method: BrowserType.launch`]. Specific options [`property: TestOptions.headless`] and [`property: TestOptions.channel`] take priority over this.
 
 ## property: TestOptions.locale = %%-context-option-locale-%%
+* since: v1.10
 
 ## property: TestOptions.navigationTimeout
+* since: v1.10
 - type: <[int]>
 
 Timeout for each navigation action in milliseconds. Defaults to 0 (no timeout).
@@ -158,12 +180,16 @@ This is a default navigation timeout, same as configured via [`method: Page.setD
 Learn more about [various timeouts](../test-timeouts.md).
 
 ## property: TestOptions.offline = %%-context-option-offline-%%
+* since: v1.10
 
 ## property: TestOptions.permissions = %%-context-option-permissions-%%
+* since: v1.10
 
 ## property: TestOptions.proxy = %%-browser-option-proxy-%%
+* since: v1.10
 
 ## property: TestOptions.screenshot
+* since: v1.10
 - type: <[Screenshot]<"off"|"on"|"only-on-failure">>
 
 Whether to automatically capture a screenshot after each test. Defaults to `'off'`.
@@ -174,10 +200,13 @@ Whether to automatically capture a screenshot after each test. Defaults to `'off
 Learn more about [automatic screenshots](../test-configuration.md#automatic-screenshots).
 
 ## property: TestOptions.storageState = %%-js-python-context-option-storage-state-%%
+* since: v1.10
 
 ## property: TestOptions.timezoneId = %%-context-option-timezoneid-%%
+* since: v1.10
 
 ## property: TestOptions.trace
+* since: v1.10
 - type: <[Object]|[TraceMode]<"off"|"on"|"retain-on-failure"|"on-first-retry">>
   - `mode` <[TraceMode]<"off"|"on"|"retain-on-failure"|"on-first-retry">> Trace recording mode.
   - `screenshots` ?<[boolean]> Whether to capture screenshots during tracing. Screenshots are used to build a timeline preview. Defaults to true. Optional.
@@ -195,8 +224,10 @@ For more control, pass an object that specifies `mode` and trace features to ena
 Learn more about [recording trace](../test-configuration.md#record-test-trace).
 
 ## property: TestOptions.userAgent = %%-context-option-useragent-%%
+* since: v1.10
 
 ## property: TestOptions.video
+* since: v1.10
 - type: <[Object]|[VideoMode]<"off"|"on"|"retain-on-failure"|"on-first-retry">>
   - `mode` <[VideoMode]<"off"|"on"|"retain-on-failure"|"on-first-retry">> Video recording mode.
   - `size` ?<[Object]> Size of the recorded video. Optional.
@@ -214,5 +245,7 @@ To control video size, pass an object with `mode` and `size` properties. If vide
 Learn more about [recording video](../test-configuration.md#record-video).
 
 ## property: TestOptions.viewport = %%-context-option-viewport-%%
+* since: v1.10
 
 ## property: TestOptions.serviceWorkers = %%-context-option-service-worker-policy-%%
+* since: v1.10
