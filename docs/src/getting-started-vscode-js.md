@@ -102,7 +102,7 @@ In the sidebar you can extend the tests by clicking on it. This will show you th
 
 
 ### Running All Tests
-You can all tests by clicking on the white triangle as you hover over the tests in the sidebar.
+You can run all tests by clicking on the white triangle as you hover over the tests in the sidebar.
 
 <img width="283" alt="image" src="https://user-images.githubusercontent.com/13063165/177324550-74d4ed66-9be1-4ee7-b316-43a9d09367c3.png"></img>
 
