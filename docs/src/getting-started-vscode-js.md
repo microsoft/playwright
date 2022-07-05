@@ -5,7 +5,7 @@ title: "Getting started (VSCode)"
 
 ## Installation
 
-This guide is for anyone who wants to use Playwright with the VS Code extension. If you prefer to install using the CLI then please see the [Getting Started (CLI)](/) docs.
+This guide is for anyone who wants to use Playwright with the VS Code extension. <!-- If you prefer to install using the CLI then please see the [Getting Started (CLI)](/) docs. -->
 
 ### Install the VS Code Extension
 
@@ -39,7 +39,7 @@ Codegen will auto generate your tests for you and is a great way to quickly get 
 
 ### Starting the Recording
 
-Clik on the Testing icon in the left menu. This will open the testing sidebar. Click on the record icon, the first icon at the top of the testing sidebar. This will create a `test-1.spec.ts` file with an import and a test block. As you record your user actions your test code will be generated here.
+Click on the Testing icon in the left menu. This will open the testing sidebar. Click on the record icon, the first icon at the top of the testing sidebar. This will create a `test-1.spec.ts` file with an import and a test block. As you record your user actions your test code will be generated here.
 
 <img width="810" alt="image" src="https://user-images.githubusercontent.com/13063165/177197869-40b32235-ae7c-4a6e-8b7e-e69aea17ea1b.png"></img>
 
@@ -114,7 +114,7 @@ The VS Code test runner runs your tests on the default browser of Chrome. To run
 
 ## Debugging Tests
 
-You can debug your tests right in VS Code. VS Code comes with some great error hanlding to help point you in the right direction when your tests fail.
+You can debug your tests right in VS Code. VS Code comes with some great error handling to help point you in the right direction when your tests fail.
 
 ### Failing Tests
 
@@ -142,16 +142,16 @@ To remove the breakpoint click on the red dot next to line 9 so it disappears.
 
 ## HTML Reporter
 
-To sort tests by browsers and see a rull report you will need to manually run your tests using the CLI.
+To sort tests by browsers and see a full report you will need to manually run your tests using the CLI.
 
 ```bash
-npx playright test
+npx playwright test
 ```
 
 Once the tests have finished run the following command to open the reporter.
 
 ```bash
-npx playright show-report
+npx playwright show-report
 ```
 
 You can then filter the report by browsers, failed tests, skipped tests etc.
@@ -160,4 +160,4 @@ You can then filter the report by browsers, failed tests, skipped tests etc.
 
 ## Running on CI
 
-At the moment we are just running our tests locally but you can run your tests on CI on each pull request thanks to the GitHub actions we setup earlier. Tests can be run on a local dev enviorment or on a staging URL. For more info see...
+At the moment we are just running our tests locally but you can run your tests on CI on each pull request thanks to the GitHub actions we setup earlier. Tests can be run on a local dev environment or on a staging URL.
