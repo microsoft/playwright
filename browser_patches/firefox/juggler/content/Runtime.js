@@ -65,7 +65,7 @@ class Runtime {
     } else {
       const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
       this._registerConsoleServiceListener(Services);
-      this._registerConsoleObserver(Services);
+      this._registerConsoleAPIListener(Services);
     }
     // We can't use event listener here to be compatible with Worker Global Context.
     // Use plain callbacks instead.
@@ -164,8 +164,11 @@ class Runtime {
     this._eventListeners.push(() => Services.console.unregisterListener(consoleServiceListener));
   }
 
-  _registerConsoleObserver(Services) {
-    const consoleObserver = ({wrappedJSObject}, topic, data) => {
+  _registerConsoleAPIListener(Services) {
+    const Ci = Components.interfaces;
+    const Cc = Components.classes;
+    const ConsoleAPIStorage = Cc["@mozilla.org/consoleAPI-storage;1"].getService(Ci.nsIConsoleAPIStorage);
+    const onMessage = ({ wrappedJSObject }) => {
       const executionContext = Array.from(this._executionContexts.values()).find(context => {
         // There is no easy way to determine isolated world context and we normally don't write
         // objects to console from utility worlds so we always return main world context here.
@@ -177,9 +180,12 @@ class Runtime {
       if (!executionContext)
         return;
       this._onConsoleMessage(executionContext, wrappedJSObject);
-    };
-    Services.obs.addObserver(consoleObserver, "console-api-log-event");
-    this._eventListeners.push(() => Services.obs.removeObserver(consoleObserver, "console-api-log-event"));
+    }
+    ConsoleAPIStorage.addLogEventListener(
+      onMessage,
+      Cc["@mozilla.org/systemprincipal;1"].createInstance(Ci.nsIPrincipal)
+    );
+    this._eventListeners.push(() => ConsoleAPIStorage.removeLogEventListener(onMessage));
   }
 
   _registerWorkerConsoleHandler() {

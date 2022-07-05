@@ -44,18 +44,6 @@ class BrowserHandler {
 
     for (const target of this._targetRegistry.targets())
       this._onTargetCreated(target);
-
-    // Wait to complete initialization of addon manager and search
-    // service before returning from this method. Failing to do so will result
-    // in a broken shutdown sequence and multiple errors in browser STDERR log.
-    //
-    // NOTE: we have to put this here as well as in the `Browser.close` handler
-    // since browser shutdown can be initiated when the last tab is closed, e.g.
-    // with persistent context.
-    await Promise.all([
-      waitForAddonManager(),
-      waitForSearchService(),
-    ]);
   }
 
   async ['Browser.createBrowserContext']({removeOnDetach}) {
@@ -146,12 +134,6 @@ class BrowserHandler {
         waitForWindowClosed(browserWindow),
       ]);
     }
-    // Try to fully initialize browser before closing.
-    // See comment in `Browser.enable`.
-    await Promise.all([
-      waitForAddonManager(),
-      waitForSearchService(),
-    ]);
     this._onclose();
     Services.startup.quit(Ci.nsIAppStartup.eForceQuit);
   }
@@ -281,26 +263,6 @@ class BrowserHandler {
                                 .userAgent;
     return {version: 'Firefox/' + version, userAgent};
   }
-}
-
-async function waitForSearchService() {
-  const searchService = Components.classes["@mozilla.org/browser/search-service;1"].getService(Components.interfaces.nsISearchService);
-  await searchService.init();
-}
-
-async function waitForAddonManager() {
-  if (AddonManager.isReady)
-    return;
-  await new Promise(resolve => {
-    let listener = {
-      onStartup() {
-        AddonManager.removeManagerListener(listener);
-        resolve();
-      },
-      onShutdown() { },
-    };
-    AddonManager.addManagerListener(listener);
-  });
 }
 
 async function waitForWindowClosed(browserWindow) {
