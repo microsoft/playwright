@@ -412,3 +412,18 @@ test('should work with cross-imports - 2', async ({ runInlineTest }) => {
   expect(result.output).toContain('TEST-1');
   expect(result.output).toContain('TEST-2');
 });
+
+test('should not crash with duplicate titles and .only', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'expect-test.spec.ts': `
+      const { test } = pwt;
+      test('non unique title', () => { console.log('do not run me'); });
+      test.skip('non unique title', () => { console.log('do not run me'); });
+      test.only('non unique title', () => { console.log('do run me'); });
+    `
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  expect(stripAnsi(result.output)).not.toContain('do not run me');
+  expect(stripAnsi(result.output)).toContain('do run me');
+});

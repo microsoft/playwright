@@ -354,9 +354,10 @@ class ProjectSuiteBuilder {
       } else {
         const test = entry._clone();
         test.retries = this._project.retries;
-        // We rely upon relative paths being unique.
-        // See `getClashingTestsPerSuite()` in `runner.ts`.
-        test._id = `${calculateSha1(relativeTitlePath + ' ' + entry.title)}@${entry._requireFile}#run${this._index}-repeat${repeatEachIndex}`;
+        // We rely upon relative paths being unique. See `getClashingTestsPerSuite()` in `runner.ts`.
+        // However, we allow duplicate titles when .only is present, so we additionally distinguish by non-source-mapped call location.
+        const uniqueTestCallId = `${relativeTitlePath} ${entry.title}@${test._jsLocation.file}:${test._jsLocation.line}:${test._jsLocation.column}`;
+        test._id = `${calculateSha1(uniqueTestCallId)}@${entry._requireFile}#run${this._index}-repeat${repeatEachIndex}`;
         test.repeatEachIndex = repeatEachIndex;
         test._projectIndex = this._index;
         to._addTest(test);

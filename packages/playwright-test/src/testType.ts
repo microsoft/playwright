@@ -79,10 +79,10 @@ export class TestTypeImpl {
     return suite;
   }
 
-  private _createTest(type: 'default' | 'only' | 'skip' | 'fixme', location: Location, title: string, fn: Function) {
+  private _createTest(type: 'default' | 'only' | 'skip' | 'fixme', location: Location, jsLocation: Location, title: string, fn: Function) {
     throwIfRunningInsideJest();
     const suite = this._ensureCurrentSuite(location, 'test()');
-    const test = new TestCase(title, fn, this, location);
+    const test = new TestCase(title, fn, this, location, jsLocation);
     test._requireFile = suite._requireFile;
     suite._addTest(test);
 
@@ -98,7 +98,7 @@ export class TestTypeImpl {
     }
   }
 
-  private _describe(type: 'default' | 'only' | 'serial' | 'serial.only' | 'parallel' | 'parallel.only' | 'skip', location: Location, title: string, fn: Function) {
+  private _describe(type: 'default' | 'only' | 'serial' | 'serial.only' | 'parallel' | 'parallel.only' | 'skip', location: Location, jsLocation: Location, title: string, fn: Function) {
     throwIfRunningInsideJest();
     const suite = this._ensureCurrentSuite(location, 'test.describe()');
     if (typeof title === 'function') {
@@ -137,12 +137,12 @@ export class TestTypeImpl {
     setCurrentlyLoadingFileSuite(suite);
   }
 
-  private _hook(name: 'beforeEach' | 'afterEach' | 'beforeAll' | 'afterAll', location: Location, fn: Function) {
+  private _hook(name: 'beforeEach' | 'afterEach' | 'beforeAll' | 'afterAll', location: Location, jsLocation: Location, fn: Function) {
     const suite = this._ensureCurrentSuite(location, `test.${name}()`);
     suite._hooks.push({ type: name, fn, location });
   }
 
-  private _configure(location: Location, options: { mode?: 'parallel' | 'serial' }) {
+  private _configure(location: Location, jsLocation: Location, options: { mode?: 'parallel' | 'serial' }) {
     throwIfRunningInsideJest();
     const suite = this._ensureCurrentSuite(location, `test.describe.configure()`);
     if (!options.mode)
@@ -157,12 +157,12 @@ export class TestTypeImpl {
     }
   }
 
-  private _modifier(type: 'skip' | 'fail' | 'fixme' | 'slow', location: Location, ...modifierArgs: [arg?: any | Function, description?: string]) {
+  private _modifier(type: 'skip' | 'fail' | 'fixme' | 'slow', location: Location, jsLocation: Location, ...modifierArgs: [arg?: any | Function, description?: string]) {
     const suite = currentlyLoadingFileSuite();
     if (suite) {
       if (typeof modifierArgs[0] === 'string' && typeof modifierArgs[1] === 'function' && (type === 'skip' || type === 'fixme')) {
         // Support for test.{skip,fixme}('title', () => {})
-        this._createTest(type, location, modifierArgs[0], modifierArgs[1]);
+        this._createTest(type, location, jsLocation, modifierArgs[0], modifierArgs[1]);
         return;
       }
 
@@ -185,7 +185,7 @@ export class TestTypeImpl {
     testInfo[type](...modifierArgs as [any, any]);
   }
 
-  private _setTimeout(location: Location, timeout: number) {
+  private _setTimeout(location: Location, jsLocation: Location, timeout: number) {
     const suite = currentlyLoadingFileSuite();
     if (suite) {
       suite._timeout = timeout;
@@ -198,12 +198,12 @@ export class TestTypeImpl {
     testInfo.setTimeout(timeout);
   }
 
-  private _use(location: Location, fixtures: Fixtures) {
+  private _use(location: Location, jsLocation: Location, fixtures: Fixtures) {
     const suite = this._ensureCurrentSuite(location, `test.use()`);
     suite._use.push({ fixtures: filterUndefinedFixtures(fixtures) , location });
   }
 
-  private async _step(location: Location, title: string, body: () => Promise<void>): Promise<void> {
+  private async _step(location: Location, jsLocation: Location, title: string, body: () => Promise<void>): Promise<void> {
     const testInfo = currentTestInfo();
     if (!testInfo)
       throw errorWithLocation(location, `test.step() can only be called from a test`);
@@ -223,14 +223,14 @@ export class TestTypeImpl {
     }
   }
 
-  private _extend(location: Location, fixtures: Fixtures) {
+  private _extend(location: Location, jsLocation: Location, fixtures: Fixtures) {
     if ((fixtures as any)[testTypeSymbol])
       throw new Error(`test.extend() accepts fixtures object, not a test object.\nDid you mean to call test._extendTest()?`);
     const fixturesWithLocation: FixturesWithLocation = { fixtures: filterUndefinedFixtures(fixtures), location };
     return new TestTypeImpl([...this.fixtures, fixturesWithLocation]).test;
   }
 
-  private _extendTest(location: Location, test: TestType<any, any>) {
+  private _extendTest(location: Location, jsLocation: Location, test: TestType<any, any>) {
     const testTypeImpl = (test as any)[testTypeSymbol] as TestTypeImpl;
     if (!testTypeImpl)
       throw new Error(`test._extendTest() accepts a single "test" parameter.\nDid you mean to call test.extend() with fixtures instead?`);

@@ -130,6 +130,7 @@ export class TestCase extends Base implements reporterTypes.TestCase {
   repeatEachIndex = 0;
 
   _testType: TestTypeImpl;
+  _jsLocation: Location;
   _id = '';
   _workerHash = '';
   _pool: FixturePool | undefined;
@@ -138,11 +139,12 @@ export class TestCase extends Base implements reporterTypes.TestCase {
   // be re-added each time we retry a test.
   _alreadyInheritedAnnotations: boolean = false;
 
-  constructor(title: string, fn: Function, testType: TestTypeImpl, location: Location) {
+  constructor(title: string, fn: Function, testType: TestTypeImpl, location: Location, jsLocation: Location) {
     super(title);
     this.fn = fn;
     this._testType = testType;
     this.location = location;
+    this._jsLocation = jsLocation;
   }
 
   titlePath(): string[] {
@@ -168,7 +170,7 @@ export class TestCase extends Base implements reporterTypes.TestCase {
   }
 
   _clone(): TestCase {
-    const test = new TestCase(this.title, this.fn, this._testType, this.location);
+    const test = new TestCase(this.title, this.fn, this._testType, this.location, this._jsLocation);
     test._only = this._only;
     test._requireFile = this._requireFile;
     test.expectedStatus = this.expectedStatus;

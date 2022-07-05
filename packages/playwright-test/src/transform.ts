@@ -225,26 +225,31 @@ export function installTransform(): () => void {
   };
 }
 
-export function wrapFunctionWithLocation<A extends any[], R>(func: (location: Location, ...args: A) => R): (...args: A) => R {
+function callSiteToLocation(frame: NodeJS.CallSite): Location {
+  const fileName = frame.getFileName();
+  // Node error stacks for modules use file:// urls instead of paths.
+  const file = (fileName && fileName.startsWith('file://')) ? url.fileURLToPath(fileName) : fileName;
+  return {
+    file: file!,
+    line: frame.getLineNumber() ?? 0,
+    column: frame.getColumnNumber() ?? 0,
+  };
+}
+
+export function wrapFunctionWithLocation<A extends any[], R>(func: (location: Location, jsLocation: Location, ...args: A) => R): (...args: A) => R {
   return (...args) => {
     const oldPrepareStackTrace = Error.prepareStackTrace;
     Error.prepareStackTrace = (error, stackFrames) => {
-      const frame: NodeJS.CallSite = sourceMapSupport.wrapCallSite(stackFrames[1]);
-      const fileName = frame.getFileName();
-      // Node error stacks for modules use file:// urls instead of paths.
-      const file = (fileName && fileName.startsWith('file://')) ? url.fileURLToPath(fileName) : fileName;
-      return {
-        file,
-        line: frame.getLineNumber(),
-        column: frame.getColumnNumber(),
-      };
+      const jsLocation = callSiteToLocation(stackFrames[1]);
+      const location = callSiteToLocation(sourceMapSupport.wrapCallSite(stackFrames[1]));
+      return { location, jsLocation };
     };
     Error.stackTraceLimit = 2;
-    const obj: { stack: Location } = {} as any;
+    const obj: { stack: { location: Location, jsLocation: Location } } = {} as any;
     Error.captureStackTrace(obj);
-    const location = obj.stack;
+    const stack = obj.stack;
     Error.stackTraceLimit = kStackTraceLimit;
     Error.prepareStackTrace = oldPrepareStackTrace;
-    return func(location, ...args);
+    return func(stack.location, stack.jsLocation, ...args);
   };
 }
