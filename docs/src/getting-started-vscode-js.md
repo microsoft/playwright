@@ -154,7 +154,7 @@ Once the tests have finished run the following command to open the reporter.
 npx playright show-report
 ```
 
-You can then filter the report by browers, failed tests, skipped tests etc.
+You can then filter the report by browsers, failed tests, skipped tests etc.
 
 <img width="741" alt="image" src="https://user-images.githubusercontent.com/13063165/177343600-eebc9d1c-e602-4a96-aac5-474b11035f3f.png"></img>
 
