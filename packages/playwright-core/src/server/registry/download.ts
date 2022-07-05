@@ -48,7 +48,6 @@ function downloadFile(url: string, destinationPath: string, options: DownloadFil
   }, response => {
     log(`-- response status code: ${response.statusCode}`);
     if (response.statusCode !== 200) {
-      let content = '';
       const handleError = () => {
         const error = new Error(`Download failed: server returned code ${response.statusCode} body '${content}'. URL: ${url}`);
         // consume response data to free up memory
@@ -56,7 +55,6 @@ function downloadFile(url: string, destinationPath: string, options: DownloadFil
         fulfill({ error });
       };
       response
-          .on('data', chunk => content += chunk)
           .on('end', handleError)
           .on('error', handleError);
       return;
