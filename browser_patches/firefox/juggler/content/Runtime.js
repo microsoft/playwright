@@ -65,7 +65,6 @@ class Runtime {
     } else {
       const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
       this._registerConsoleServiceListener(Services);
-      this._registerConsoleObserver(Services);
       this._registerConsoleAPIListener(Services);
     }
     // We can't use event listener here to be compatible with Worker Global Context.
@@ -163,24 +162,6 @@ class Runtime {
     };
     Services.console.registerListener(consoleServiceListener);
     this._eventListeners.push(() => Services.console.unregisterListener(consoleServiceListener));
-  }
-
-  _registerConsoleObserver(Services) {
-    const consoleObserver = ({wrappedJSObject}, topic, data) => {
-      const executionContext = Array.from(this._executionContexts.values()).find(context => {
-        // There is no easy way to determine isolated world context and we normally don't write
-        // objects to console from utility worlds so we always return main world context here.
-        if (context._isIsolatedWorldContext())
-          return false;
-        const domWindow = context._domWindow;
-        return domWindow && domWindow.windowGlobalChild.innerWindowId === wrappedJSObject.innerID;
-      });
-      if (!executionContext)
-        return;
-      this._onConsoleMessage(executionContext, wrappedJSObject);
-    };
-    Services.obs.addObserver(consoleObserver, "console-api-log-event");
-    this._eventListeners.push(() => Services.obs.removeObserver(consoleObserver, "console-api-log-event"));
   }
 
   _registerConsoleAPIListener(Services) {
