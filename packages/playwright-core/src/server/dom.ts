@@ -615,10 +615,15 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
 
   async _setInputFiles(progress: Progress, items: InputFilesItems, options: types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
     const { files, localPaths } = items;
+    let filePayloads: types.FilePayload[] | undefined;
     if (files) {
+      filePayloads = [];
       for (const payload of files) {
-        if (!payload.mimeType)
-          payload.mimeType = mime.getType(payload.name) || 'application/octet-stream';
+        filePayloads.push({
+          name: payload.name,
+          mimeType: payload.mimeType || mime.getType(payload.name) || 'application/octet-stream',
+          buffer: payload.buffer.toString('base64'),
+        });
       }
     }
     const multiple = files && files.length > 1 || localPaths && localPaths.length > 1;
@@ -641,7 +646,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       if (localPaths)
         await this._page._delegate.setInputFilePaths(retargeted, localPaths);
       else
-        await this._page._delegate.setInputFiles(retargeted, files as types.FilePayload[]);
+        await this._page._delegate.setInputFiles(retargeted, filePayloads!);
     });
     await this._page._doSlowMo();
     return 'done';

@@ -23,7 +23,7 @@ export function createInProcessPlaywright(): PlaywrightAPI {
   const playwright = createPlaywright('javascript');
 
   const clientConnection = new Connection();
-  const dispatcherConnection = new DispatcherConnection();
+  const dispatcherConnection = new DispatcherConnection(true /* local */);
 
   // Dispatch synchronously at first.
   dispatcherConnection.onmessage = message => clientConnection.dispatch(message);

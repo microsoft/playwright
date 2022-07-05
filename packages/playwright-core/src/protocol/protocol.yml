@@ -500,7 +500,7 @@ LocalUtils:
         headers:
           type: array
           items: NameValue
-        postData: string?
+        postData: binary?
         isNavigationRequest: boolean
       returns:
         action:
@@ -516,7 +516,7 @@ LocalUtils:
         headers:
           type: array?
           items: NameValue
-        body: string?
+        body: binary?
 
     harClose:
       parameters:

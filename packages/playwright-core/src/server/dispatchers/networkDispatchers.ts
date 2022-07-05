@@ -45,7 +45,7 @@ export class RequestDispatcher extends Dispatcher<Request, channels.RequestChann
       url: request.url(),
       resourceType: request.resourceType(),
       method: request.method(),
-      postData: postData === null ? undefined : postData.toString('base64'),
+      postData: postData === null ? undefined : postData,
       headers: request.headers(),
       isNavigationRequest: request.isNavigationRequest(),
       redirectedFrom: RequestDispatcher.fromNullable(scope, request.redirectedFrom()),
@@ -88,7 +88,7 @@ export class ResponseDispatcher extends Dispatcher<Response, channels.ResponseCh
   }
 
   async body(): Promise<channels.ResponseBodyResult> {
-    return { binary: (await this._object.body()).toString('base64') };
+    return { binary: await this._object.body() };
   }
 
   async securityDetails(): Promise<channels.ResponseSecurityDetailsResult> {
@@ -128,7 +128,7 @@ export class RouteDispatcher extends Dispatcher<Route, channels.RouteChannel> im
       url: params.url,
       method: params.method,
       headers: params.headers,
-      postData: params.postData !== undefined ? Buffer.from(params.postData, 'base64') : undefined,
+      postData: params.postData,
     });
   }
 
@@ -204,8 +204,7 @@ export class APIRequestContextDispatcher extends Dispatcher<APIRequestContext, c
   }
 
   async fetchResponseBody(params: channels.APIRequestContextFetchResponseBodyParams, metadata?: channels.Metadata): Promise<channels.APIRequestContextFetchResponseBodyResult> {
-    const buffer = this._object.fetchResponses.get(params.fetchUid);
-    return { binary: buffer ? buffer.toString('base64') : undefined };
+    return { binary: this._object.fetchResponses.get(params.fetchUid) };
   }
 
   async fetchLog(params: channels.APIRequestContextFetchLogParams, metadata?: channels.Metadata): Promise<channels.APIRequestContextFetchLogResult> {

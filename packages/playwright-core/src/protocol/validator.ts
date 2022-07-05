@@ -224,7 +224,7 @@ scheme.LocalUtilsHarLookupParams = tObject({
   url: tString,
   method: tString,
   headers: tArray(tType('NameValue')),
-  postData: tOptional(tString),
+  postData: tOptional(tBinary),
   isNavigationRequest: tBoolean,
 });
 scheme.LocalUtilsHarLookupResult = tObject({
@@ -233,7 +233,7 @@ scheme.LocalUtilsHarLookupResult = tObject({
   redirectURL: tOptional(tString),
   status: tOptional(tNumber),
   headers: tOptional(tArray(tType('NameValue'))),
-  body: tOptional(tString),
+  body: tOptional(tBinary),
 });
 scheme.LocalUtilsHarCloseParams = tObject({
   harId: tString,

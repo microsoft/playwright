@@ -167,23 +167,14 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel> imple
       frame: (params.locator.frame as FrameDispatcher)._object,
       selector: params.locator.selector,
     } : undefined;
-    const expected = params.expected ? Buffer.from(params.expected, 'base64') : undefined;
-    const result = await this._page.expectScreenshot(metadata, {
+    return await this._page.expectScreenshot(metadata, {
       ...params,
-      expected,
       locator,
       screenshotOptions: {
         ...params.screenshotOptions,
         mask,
       },
     });
-    return {
-      diff: result.diff?.toString('base64'),
-      errorMessage: result.errorMessage,
-      actual: result.actual?.toString('base64'),
-      previous: result.previous?.toString('base64'),
-      log: result.log,
-    };
   }
 
   async screenshot(params: channels.PageScreenshotParams, metadata: CallMetadata): Promise<channels.PageScreenshotResult> {
@@ -191,7 +182,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel> imple
       frame: (frame as FrameDispatcher)._object,
       selector,
     }));
-    return { binary: (await this._page.screenshot(metadata, { ...params, mask })).toString('base64') };
+    return { binary: await this._page.screenshot(metadata, { ...params, mask }) };
   }
 
   async close(params: channels.PageCloseParams, metadata: CallMetadata): Promise<void> {
@@ -258,7 +249,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel> imple
     if (!this._page.pdf)
       throw new Error('PDF generation is only supported for Headless Chromium');
     const buffer = await this._page.pdf(params);
-    return { pdf: buffer.toString('base64') };
+    return { pdf: buffer };
   }
 
   async bringToFront(params: channels.PageBringToFrontParams, metadata: CallMetadata): Promise<void> {

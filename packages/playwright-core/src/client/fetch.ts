@@ -189,13 +189,12 @@ export class APIRequestContext extends ChannelOwner<channels.APIRequestContextCh
       }
       if (postDataBuffer === undefined && jsonData === undefined && formData === undefined && multipartData === undefined)
         postDataBuffer = request?.postDataBuffer() || undefined;
-      const postData = (postDataBuffer ? postDataBuffer.toString('base64') : undefined);
       const result = await this._channel.fetch({
         url,
         params,
         method,
         headers,
-        postData,
+        postData: postDataBuffer,
         jsonData,
         formData,
         multipartData,
@@ -257,7 +256,7 @@ export class APIResponse implements api.APIResponse {
       const result = await this._request._channel.fetchResponseBody({ fetchUid: this._fetchUid() });
       if (result.binary === undefined)
         throw new Error('Response has been disposed');
-      return Buffer.from(result.binary!, 'base64');
+      return result.binary;
     } catch (e) {
       if (e.message.includes(kBrowserOrContextClosedError))
         throw new Error('Response has been disposed');
@@ -300,7 +299,7 @@ function filePayloadToJson(payload: FilePayload): ServerFilePayload {
   return {
     name: payload.name,
     mimeType: payload.mimeType,
-    buffer: payload.buffer.toString('base64'),
+    buffer: payload.buffer,
   };
 }
 
@@ -314,7 +313,7 @@ async function readStreamToJson(stream: fs.ReadStream): Promise<ServerFilePayloa
   const streamPath: string = Buffer.isBuffer(stream.path) ? stream.path.toString('utf8') : stream.path;
   return {
     name: path.basename(streamPath),
-    buffer: buffer.toString('base64'),
+    buffer,
   };
 }
 

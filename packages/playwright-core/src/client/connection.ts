@@ -133,7 +133,7 @@ export class Connection extends EventEmitter {
         callback.reject(parseError(error));
       } else {
         const validator = findValidator(callback.type, callback.method, 'Result');
-        callback.resolve(validator(result, '', { tChannelImpl: this._tChannelImplFromWire.bind(this) }));
+        callback.resolve(validator(result, '', { tChannelImpl: this._tChannelImplFromWire.bind(this), binary: this.isRemote() ? 'fromBase64' : 'buffer' }));
       }
       return;
     }
@@ -154,7 +154,7 @@ export class Connection extends EventEmitter {
     if (!object)
       throw new Error(`Cannot find object to emit "${method}": ${guid}`);
     const validator = findValidator(object._type, method, 'Event');
-    (object._channel as any).emit(method, validator(params, '', { tChannelImpl: this._tChannelImplFromWire.bind(this) }));
+    (object._channel as any).emit(method, validator(params, '', { tChannelImpl: this._tChannelImplFromWire.bind(this), binary: this.isRemote() ? 'fromBase64' : 'buffer' }));
   }
 
   close(errorMessage: string = 'Connection closed') {
@@ -181,7 +181,7 @@ export class Connection extends EventEmitter {
       throw new Error(`Cannot find parent object ${parentGuid} to create ${guid}`);
     let result: ChannelOwner<any>;
     const validator = findValidator(type, '', 'Initializer');
-    initializer = validator(initializer, '', { tChannelImpl: this._tChannelImplFromWire.bind(this) });
+    initializer = validator(initializer, '', { tChannelImpl: this._tChannelImplFromWire.bind(this), binary: this.isRemote() ? 'fromBase64' : 'buffer' });
     switch (type) {
       case 'Android':
         result = new Android(parent, type, guid, initializer);

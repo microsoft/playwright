@@ -191,7 +191,7 @@ export class ElementHandleDispatcher extends JSHandleDispatcher implements chann
       frame: (frame as FrameDispatcher)._object,
       selector,
     }));
-    return { binary: (await this._elementHandle.screenshot(metadata, { ...params, mask })).toString('base64') };
+    return { binary: await this._elementHandle.screenshot(metadata, { ...params, mask }) };
   }
 
   async querySelector(params: channels.ElementHandleQuerySelectorParams, metadata: CallMetadata): Promise<channels.ElementHandleQuerySelectorResult> {

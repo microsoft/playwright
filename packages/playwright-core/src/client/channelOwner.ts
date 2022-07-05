@@ -89,7 +89,7 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
                 apiZone.reported = true;
                 if (csi && stackTrace && stackTrace.apiName)
                   csi.onApiCallBegin(renderCallWithParams(stackTrace.apiName, params), stackTrace, callCookie);
-                return this._connection.sendMessageToServer(this, this._type, prop, validator(params, '', { tChannelImpl: tChannelImplToWire }), stackTrace);
+                return this._connection.sendMessageToServer(this, this._type, prop, validator(params, '', { tChannelImpl: tChannelImplToWire, binary: this._connection.isRemote() ? 'toBase64' : 'buffer' }), stackTrace);
               });
             };
           }
