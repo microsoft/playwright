@@ -112,6 +112,7 @@ for (const browserName of browserNames) {
     config.projects.push({
       name: browserName,
       testDir: path.join(testDir, folder),
+      testMatch: /.*cli-codegen.*/,
       testIgnore,
       use: {
         mode,
