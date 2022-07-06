@@ -24,8 +24,10 @@ let closed = false;
 
 sendMessageToParent('ready');
 
-if (process.env.FORCE_COLOR === '1')
+if (process.env.FORCE_COLOR === '1') {
   process.stdout.isTTY = true;
+  process.stderr.isTTY = true;
+}
 
 process.stdout.write = (chunk: string | Buffer) => {
   const outPayload: TestOutputPayload = {
