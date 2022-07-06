@@ -81,7 +81,9 @@ export class Suite extends Base implements reporterTypes.Suite {
 
   titlePath(): string[] {
     const titlePath = this.parent ? this.parent.titlePath() : [];
-    titlePath.push(this.title);
+    // Ignore anonymous describe blocks.
+    if (this.title || !this._isDescribe)
+      titlePath.push(this.title);
     return titlePath;
   }
 

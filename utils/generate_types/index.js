@@ -98,6 +98,13 @@ class TypesGenerator {
       handledClasses.add(className);
       return this.writeComment(docClass.comment) + '\n';
     }, (className, methodName, overloadIndex) => {
+      if (className === 'SuiteFunction' && methodName === '__call') {
+        console.log(className, methodName, overloadIndex);
+        const cls = this.documentation.classes.get('Test');
+        const method = cls.membersArray.find(m => m.alias === 'describe' && m.overloadIndex === overloadIndex);
+        return this.memberJSDOC(method, '  ').trimLeft();
+      }
+
       const docClass = this.docClassForName(className);
       let method;
       if (docClass) {

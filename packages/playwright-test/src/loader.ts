@@ -347,7 +347,9 @@ class ProjectSuiteBuilder {
       if (entry instanceof Suite) {
         const suite = entry._clone();
         to._addSuite(suite);
-        if (!this._cloneEntries(entry, suite, repeatEachIndex, filter, relativeTitlePath + ' ' + suite.title)) {
+        // Ignore empty titles, similar to Suite.titlePath().
+        const childTitlePath = relativeTitlePath + (suite.title ? ' ' + suite.title : '');
+        if (!this._cloneEntries(entry, suite, repeatEachIndex, filter, childTitlePath)) {
           to._entries.pop();
           to.suites.pop();
         }

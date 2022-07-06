@@ -1309,7 +1309,7 @@ export interface TestInfo {
   project: FullProject;
   /**
    * The list of annotations applicable to the current test. Includes annotations from the test, annotations from all
-   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) groups the test belongs to
+   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-1) groups the test belongs to
    * and file-level annotations for the test file.
    *
    * Learn more about [test annotations](https://playwright.dev/docs/test-annotations).
@@ -1706,7 +1706,48 @@ export interface TestInfo {
   workerIndex: number;}
 
 interface SuiteFunction {
+  /**
+   * Declares a group of tests.
+   *
+   * ```js
+   * test.describe('two tests', () => {
+   *   test('one', async ({ page }) => {
+   *     // ...
+   *   });
+   *
+   *   test('two', async ({ page }) => {
+   *     // ...
+   *   });
+   * });
+   * ```
+   *
+   * @param title Group title.
+   * @param callback A callback that is run immediately when calling [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-1). Any tests added in this
+   * callback will belong to the group.
+   */
   (title: string, callback: () => void): void;
+  /**
+   * Declares an anonymous group of tests. This is convenient to give a group of tests a common option with
+   * [test.use(options)](https://playwright.dev/docs/api/class-test#test-use).
+   *
+   * ```js
+   * test.describe(() => {
+   *   test.use({ colorScheme: 'dark' });
+   *
+   *   test('one', async ({ page }) => {
+   *     // ...
+   *   });
+   *
+   *   test('two', async ({ page }) => {
+   *     // ...
+   *   });
+   * });
+   * ```
+   *
+   * @param callback A callback that is run immediately when calling [test.describe(callback)](https://playwright.dev/docs/api/class-test#test-describe-2). Any tests added in this callback
+   * will belong to the group.
+   */
+  (callback: () => void): void;
 }
 
 interface TestFunction<TestArgs> {
@@ -1758,7 +1799,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * ```
    *
    * @param title Group title.
-   * @param callback A callback that is run immediately when calling [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe). Any tests added in this
+   * @param callback A callback that is run immediately when calling [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-1). Any tests added in this
    * callback will belong to the group.
    */
   describe: SuiteFunction & {
@@ -1783,7 +1824,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
   only: SuiteFunction;
     /**
    * Declares a skipped test group, similarly to
-   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe). Tests in the skipped group
+   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-1). Tests in the skipped group
    * are never run.
    *
    * ```js
@@ -1933,7 +1974,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * ```
    *
    * Unconditionally skip all tests in a file or
-   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) group:
+   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-1) group:
    *
    * ```js
    * import { test, expect } from '@playwright/test';
@@ -1979,7 +2020,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
   skip(condition: boolean, description?: string): void;
   /**
    * Conditionally skips all tests in a file or
-   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) group.
+   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-1) group.
    *
    * ```js
    * import { test, expect } from '@playwright/test';
@@ -2027,7 +2068,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * });
    * ```
    *
-   * Mark all tests in a file or [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe)
+   * Mark all tests in a file or [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-1)
    * group as "fixme".
    *
    * ```js
@@ -2063,7 +2104,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
   fixme(condition: boolean, description?: string): void;
   /**
    * Conditionally mark all tests in a file or
-   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) group as "fixme".
+   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-1) group as "fixme".
    *
    * ```js
    * import { test, expect } from '@playwright/test';
@@ -2115,7 +2156,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
   fail(condition: boolean, description?: string): void;
   /**
    * Conditionally mark all tests in a file or
-   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) group as "should fail".
+   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-1) group as "should fail".
    *
    * ```js
    * import { test, expect } from '@playwright/test';
@@ -2168,7 +2209,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
   slow(condition: boolean, description?: string): void;
   /**
    * Conditionally mark all tests in a file or
-   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) group as "slow". Slow tests
+   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-1) group as "slow". Slow tests
    * will be given triple the default timeout.
    *
    * ```js
@@ -2224,7 +2265,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * ```
    *
    * Changing timeout for all tests in a
-   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) group.
+   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-1) group.
    *
    * ```js
    * import { test, expect } from '@playwright/test';
@@ -2247,8 +2288,8 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
   /**
    * Declares a `beforeEach` hook that is executed before each test. When called in the scope of a test file, runs before
    * each test in the file. When called inside a
-   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) group, runs before each test
-   * in the group.  If multiple `beforeEach` hooks are added, they will run in the order of their registration.
+   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-1) group, runs before each
+   * test in the group.  If multiple `beforeEach` hooks are added, they will run in the order of their registration.
    *
    * You can access all the same [Fixtures] as the test function itself, and also the [TestInfo] object that gives a lot of
    * useful information. For example, you can navigate the page before starting the test.
@@ -2275,7 +2316,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
   /**
    * Declares an `afterEach` hook that is executed after each test. When called in the scope of a test file, runs after each
    * test in the file. When called inside a
-   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) group, runs after each test
+   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-1) group, runs after each test
    * in the group. If multiple `afterEach` hooks are added, they will run in the order of their registration.
    *
    * You can access all the same [Fixtures] as the test function itself, and also the [TestInfo] object that gives a lot of
@@ -2303,8 +2344,8 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
   /**
    * Declares a `beforeAll` hook that is executed once per worker process before all tests. When called in the scope of a
    * test file, runs before all tests in the file. When called inside a
-   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) group, runs before all tests
-   * in the group. If multiple `beforeAll` hooks are added, they will run in the order of their registration.
+   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-1) group, runs before all
+   * tests in the group. If multiple `beforeAll` hooks are added, they will run in the order of their registration.
    *
    * ```js
    * // example.spec.ts
@@ -2334,7 +2375,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
   /**
    * Declares an `afterAll` hook that is executed once per worker after all tests. When called in the scope of a test file,
    * runs after all tests in the file. When called inside a
-   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) group, runs after all tests
+   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-1) group, runs after all tests
    * in the group. If multiple `afterAll` hooks are added, they will run in the order of their registration.
    *
    * Note that worker process is restarted on test failures, and `afterAll` hook runs again in the new worker. Learn more
@@ -2344,9 +2385,9 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
   afterAll(inner: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<any> | any): void;
   /**
    * Specifies options or fixtures to use in a single test file or a
-   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) group. Most useful to set an
-   * option, for example set `locale` to configure `context` fixture. `test.use` can be called either in the global scope or
-   * inside `test.describe`, it's is an error to call it within `beforeEach` or `beforeAll`.
+   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-1) group. Most useful to set
+   * an option, for example set `locale` to configure `context` fixture. `test.use` can be called either in the global scope
+   * or inside `test.describe`, it's is an error to call it within `beforeEach` or `beforeAll`.
    *
    * ```js
    * import { test, expect } from '@playwright/test';
