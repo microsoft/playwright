@@ -857,7 +857,7 @@ const Page = {
     'screenshot': {
       params: {
         mimeType: t.Enum(['image/png', 'image/jpeg']),
-        clip: t.Optional(pageTypes.Clip),
+        clip: pageTypes.Clip,
         omitDeviceScaleFactor: t.Optional(t.Boolean),
       },
       returns: {

@@ -148,7 +148,6 @@ class PageAgent {
         insertText: this._insertText.bind(this),
         navigate: this._navigate.bind(this),
         reload: this._reload.bind(this),
-        screenshot: this._screenshot.bind(this),
         scrollIntoViewIfNeeded: this._scrollIntoViewIfNeeded.bind(this),
         setCacheDisabled: this._setCacheDisabled.bind(this),
         setFileInputFiles: this._setFileInputFiles.bind(this),
@@ -520,16 +519,6 @@ class PageAgent {
     return {x: x1, y: y1, width: x2 - x1, height: y2 - y1};
   }
 
-  async _screenshot({mimeType, clip, omitDeviceScaleFactor}) {
-    const content = this._messageManager.content;
-    if (clip) {
-      const data = takeScreenshot(content, clip.x, clip.y, clip.width, clip.height, mimeType, omitDeviceScaleFactor);
-      return {data};
-    }
-    const data = takeScreenshot(content, content.scrollX, content.scrollY, content.innerWidth, content.innerHeight, mimeType, omitDeviceScaleFactor);
-    return {data};
-  }
-
   async _dispatchKeyEvent({type, keyCode, code, key, repeat, location, text}) {
     // key events don't fire if we are dragging.
     if (this._dragging) {
@@ -899,31 +888,6 @@ class PageAgent {
     };
   }
 }
-
-function takeScreenshot(win, left, top, width, height, mimeType, omitDeviceScaleFactor) {
-  const MAX_SKIA_DIMENSIONS = 32767;
-
-  // `win.devicePixelRatio` returns a non-overriden value to priveleged code.
-  // See https://bugzilla.mozilla.org/show_bug.cgi?id=1761032
-  // See https://phabricator.services.mozilla.com/D141323
-  const devicePixelRatio = win.browsingContext.overrideDPPX || win.devicePixelRatio;
-  const scale = omitDeviceScaleFactor ? 1 : devicePixelRatio;
-  const canvasWidth = width * scale;
-  const canvasHeight = height * scale;
-
-  if (canvasWidth > MAX_SKIA_DIMENSIONS || canvasHeight > MAX_SKIA_DIMENSIONS)
-    throw new Error('Cannot take screenshot larger than ' + MAX_SKIA_DIMENSIONS);
-
-  const canvas = win.document.createElementNS('http://www.w3.org/1999/xhtml', 'canvas');
-  canvas.width = canvasWidth;
-  canvas.height = canvasHeight;
-
-  let ctx = canvas.getContext('2d');
-  ctx.scale(scale, scale);
-  ctx.drawWindow(win, left, top, width, height, 'rgb(255,255,255)', ctx.DRAWWINDOW_DRAW_CARET);
-  const dataURL = canvas.toDataURL(mimeType);
-  return dataURL.substring(dataURL.indexOf(',') + 1);
-};
 
 var EXPORTED_SYMBOLS = ['PageAgent'];
 this.PageAgent = PageAgent;

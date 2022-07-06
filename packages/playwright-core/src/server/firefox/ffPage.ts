@@ -433,8 +433,6 @@ export class FFPage implements PageDelegate {
         height: viewportRect!.height,
       };
     }
-    // TODO: remove fullPage option from Page.screenshot.
-    // TODO: remove Page.getBoundingBox method.
     progress.throwIfAborted();
     const { data } = await this._session.send('Page.screenshot', {
       mimeType: ('image/' + format) as ('image/png' | 'image/jpeg'),
