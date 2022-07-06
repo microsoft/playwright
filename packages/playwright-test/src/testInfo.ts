@@ -18,7 +18,7 @@ import fs from 'fs';
 import path from 'path';
 import type { TestError, TestInfo, TestStatus } from '../types/test';
 import type { FullConfigInternal, FullProjectInternal } from './types';
-import type { WorkerInitParams } from './ipc';
+import type { TtyDimension } from './ipc';
 import type { Loader } from './loader';
 import type { TestCase } from './test';
 import { TimeoutManager } from './timeoutManager';
@@ -85,7 +85,7 @@ export class TestInfoImpl implements TestInfo {
   constructor(
     loader: Loader,
     project: FullProjectInternal,
-    workerParams: WorkerInitParams,
+    workerParams: TtyDimension,
     test: TestCase,
     retry: number,
     addStepImpl: (data: Omit<TestStepInternal, 'complete'>) => TestStepInternal,
@@ -98,7 +98,7 @@ export class TestInfoImpl implements TestInfo {
     this.repeatEachIndex = workerParams.repeatEachIndex;
     this.retry = retry;
     this.workerIndex = workerParams.workerIndex;
-    this.parallelIndex =  workerParams.parallelIndex;
+    this.parallelIndex = workerParams.parallelIndex;
     this.project = project;
     this.config = loader.fullConfig();
     this.title = test.title;
@@ -235,7 +235,7 @@ export class TestInfoImpl implements TestInfo {
     this.attachments.push(await normalizeAndSaveAttachment(this.outputPath(), name, options));
   }
 
-  outputPath(...pathSegments: string[]){
+  outputPath(...pathSegments: string[]) {
     fs.mkdirSync(this.outputDir, { recursive: true });
     const joinedPath = path.join(...pathSegments);
     const outputPath = getContainedPath(this.outputDir, joinedPath);
@@ -252,7 +252,7 @@ export class TestInfoImpl implements TestInfo {
     if (this.snapshotSuffix)
       suffix += '-' + this.snapshotSuffix;
     const subPath = addSuffixToFilePath(path.join(...pathSegments), suffix);
-    const snapshotPath =  getContainedPath(this.snapshotDir, subPath);
+    const snapshotPath = getContainedPath(this.snapshotDir, subPath);
     if (snapshotPath)
       return snapshotPath;
     throw new Error(`The snapshotPath is not allowed outside of the parent directory. Please fix the defined path.\n\n\tsnapshotPath: ${subPath}`);

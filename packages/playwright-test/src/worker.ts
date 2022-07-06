@@ -24,18 +24,6 @@ let closed = false;
 
 sendMessageToParent('ready');
 
-// Make sure the output supports colors.
-process.stdout.isTTY = true;
-if (process.env.PWTEST_STDOUT_ROWS)
-  process.stdout.rows = parseInt(process.env.PWTEST_STDOUT_ROWS, 10);
-if (process.env.PWTEST_STDOUT_COLUMNS)
-  process.stdout.columns = parseInt(process.env.PWTEST_STDOUT_COLUMNS, 10);
-process.stderr.isTTY = true;
-if (process.env.PWTEST_STDERR_ROWS)
-  process.stderr.rows = parseInt(process.env.PWTEST_STDERR_ROWS, 10);
-if (process.env.PWTEST_STDERR_COLUMNS)
-  process.stderr.columns = parseInt(process.env.PWTEST_STDERR_COLUMNS, 10);
-
 process.stdout.write = (chunk: string | Buffer) => {
   const outPayload: TestOutputPayload = {
     testId: workerRunner?._currentTest?._test._id,
@@ -77,6 +65,7 @@ process.on('message', async message => {
   if (message.method === 'init') {
     const initParams = message.params as WorkerInitParams;
     workerIndex = initParams.workerIndex;
+    initConsoleParameters(initParams);
     startProfiling();
     workerRunner = new WorkerRunner(initParams);
     for (const event of ['testBegin', 'testEnd', 'stepBegin', 'stepEnd', 'done', 'teardownErrors'])
@@ -131,4 +120,18 @@ function chunkToParams(chunk: Buffer | string):  { text?: string, buffer?: strin
   if (typeof chunk !== 'string')
     return { text: util.inspect(chunk) };
   return { text: chunk };
+}
+
+function initConsoleParameters(initParams: WorkerInitParams) {
+  // Make sure the output supports colors.
+  process.stdout.isTTY = true;
+  process.stderr.isTTY = true;
+  if (initParams.stdoutDimension.rows)
+    process.stdout.rows = initParams.stdoutDimension.rows;
+  if (initParams.stdoutDimension.columns)
+    process.stdout.columns = initParams.stdoutDimension.columns;
+  if (initParams.stderrDimension.rows)
+    process.stderr.rows = initParams.stderrDimension.rows;
+  if (initParams.stderrDimension.columns)
+    process.stderr.columns = initParams.stderrDimension.columns;
 }

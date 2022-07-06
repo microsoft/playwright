@@ -169,7 +169,7 @@ export class Dispatcher {
   async _runJob(worker: Worker, testGroup: TestGroup) {
     worker.run(testGroup);
 
-    let doneCallback = () => { };
+    let doneCallback = () => {};
     const result = new Promise<void>(f => doneCallback = f);
     const doneWithJob = () => {
       worker.removeListener('testBegin', onTestBegin);
@@ -181,7 +181,7 @@ export class Dispatcher {
       doneCallback();
     };
 
-    const remainingByTestId = new Map(testGroup.tests.map(e => [e._id, e]));
+    const remainingByTestId = new Map(testGroup.tests.map(e => [ e._id, e ]));
     const failedTestIds = new Set<string>();
 
     const onTestBegin = (params: TestBeginPayload) => {
@@ -357,7 +357,7 @@ export class Dispatcher {
 
         let outermostSerialSuite: Suite | undefined;
         for (let parent: Suite | undefined = this._testById.get(failedTestId)!.test.parent; parent; parent = parent.parent) {
-          if (parent._parallelMode === 'serial')
+          if (parent._parallelMode ===  'serial')
             outermostSerialSuite = parent;
         }
         if (outermostSerialSuite)
@@ -467,7 +467,7 @@ export class Dispatcher {
     this._reporter.onTestEnd?.(test, result);
     const maxFailures = this._loader.fullConfig().maxFailures;
     if (maxFailures && this._failureCount === maxFailures)
-      this.stop().catch(e => { });
+      this.stop().catch(e => {});
   }
 
   hasWorkerErrors(): boolean {
@@ -498,10 +498,6 @@ class Worker extends EventEmitter {
       env: {
         FORCE_COLOR: '1',
         DEBUG_COLORS: '1',
-        PWTEST_STDOUT_ROWS: process.stdout.rows ? String(process.stdout.rows) : undefined,
-        PWTEST_STDOUT_COLUMNS: process.stdout.columns ? String(process.stdout.columns) : undefined,
-        PWTEST_STDERR_ROWS: process.stderr.rows ? String(process.stderr.rows) : undefined,
-        PWTEST_STDERR_COLUMNS: process.stderr.columns ? String(process.stderr.columns) : undefined,
         TEST_WORKER_INDEX: String(this.workerIndex),
         TEST_PARALLEL_INDEX: String(this.parallelIndex),
         ...process.env
@@ -513,7 +509,7 @@ class Worker extends EventEmitter {
       this.didExit = true;
       this.emit('exit', { unexpectedly: !this._didSendStop, code, signal } as WorkerExitData);
     });
-    this.process.on('error', e => { });  // do not yell at a send to dead process.
+    this.process.on('error', e => {});  // do not yell at a send to dead process.
     this.process.on('message', (message: any) => {
       const { method, params } = message;
       this.emit(method, params);
@@ -533,6 +529,14 @@ class Worker extends EventEmitter {
       repeatEachIndex: testGroup.repeatEachIndex,
       projectIndex: testGroup.projectIndex,
       loader: loaderData,
+      stdoutDimension: {
+        rows: process.stdout.rows,
+        columns: process.stdout.columns
+      },
+      stderrDimension: {
+        rows: process.stderr.rows,
+        columns: process.stderr.columns
+      },
     };
     this.send({ method: 'init', params });
   }
