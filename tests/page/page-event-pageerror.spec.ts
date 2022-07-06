@@ -144,5 +144,5 @@ it('should emit error from unhandled rejects', async ({ page, browserName }) => 
         </script>
     `),
   ]);
-  expect(error.message).toBe('sad :(');
+  expect(error.message).toContain('sad :(');
 });
