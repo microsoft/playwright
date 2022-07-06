@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import * as fs from 'fs';
 import { test, expect } from './playwright-test-fixtures';
 
 test('should get top level stdio', async ({ runInlineTest }) => {
@@ -76,3 +77,20 @@ test('should ignore stdio when quiet', async ({ runInlineTest }) => {
   }, { reporter: 'list' });
   expect(result.output).not.toContain('%%');
 });
+
+test('should support console colors', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.js': `
+      const { test } = pwt;
+      test('console log', () => {
+        console.log('process.stdout.isTTY = ' + process.stdout.isTTY);
+        console.log({ b: true, n: 123, s: 'abc' });
+        expect()
+      });
+    `
+  });
+  expect(result.output).toContain(`process.stdout.isTTY = true`);
+  // The output should have colors.
+  expect(result.output).toContain(`{ b: \x1b[33mtrue\x1b[39m, n: \x1b[33m123\x1b[39m, s: \x1b[32m'abc'\x1b[39m }`);
+});
+

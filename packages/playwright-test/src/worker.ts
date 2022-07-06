@@ -24,6 +24,9 @@ let closed = false;
 
 sendMessageToParent('ready');
 
+if (process.env.FORCE_COLOR === '1')
+  process.stdout.isTTY = true;
+
 process.stdout.write = (chunk: string | Buffer) => {
   const outPayload: TestOutputPayload = {
     testId: workerRunner?._currentTest?._test._id,
