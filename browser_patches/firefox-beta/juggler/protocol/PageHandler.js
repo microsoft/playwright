@@ -325,6 +325,7 @@ class PageHandler {
     let snapshot;
     while (!snapshot) {
       try {
+        //TODO(fission): browsingContext will change in case of cross-group navigation.
         snapshot = await browsingContext.currentWindowGlobal.drawSnapshot(
           rect,
           scale,
