@@ -21,7 +21,7 @@ import crypto from 'crypto';
 import type { Download } from 'playwright-core';
 
 it.describe('download event', () => {
-  it.skip(({ mode }) => mode === 'service', 'download.path() is not available in remote mode');
+  it.skip(({ mode }) => mode !== 'default', 'download.path() is not available in remote mode');
 
   it.beforeEach(async ({ server }) => {
     server.setRoute('/download', (req, res) => {
@@ -651,7 +651,7 @@ it('should save to user-specified path', async ({ browser, server, mode }, testI
     page.waitForEvent('download'),
     page.click('a')
   ]);
-  if (mode === 'service') {
+  if (mode !== 'default') {
     const error = await download.path().catch(e => e);
     expect(error.message).toContain('Path is not available when connecting remotely. Use saveAs() to save a local copy.');
   }
