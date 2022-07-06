@@ -5,7 +5,7 @@ title: "Getting started (VSCode)"
 
 ## Installation
 
-This guide is for anyone who wants to use Playwright with the VS Code extension. <!-- If you prefer to install using the CLI then please see the [Getting Started (CLI)](/) docs. -->
+This guide is for anyone who wants to use Playwright with the VS Code extension. If you prefer to install using the CLI then please see the [Getting Started (CLI)](./getting-started-cli.md) docs.
 
 ### Install the VS Code Extension
 
@@ -160,4 +160,12 @@ You can then filter the report by browsers, failed tests, skipped tests etc.
 
 ## Running on CI
 
-At the moment we are just running our tests locally but you can run your tests on CI on each pull request thanks to the GitHub actions we setup earlier. Tests can be run on a local dev environment or on a staging URL.
+At the moment we are just running our tests locally but you can run your tests on CI on each pull request thanks to the GitHub actions we setup earlier. Tests can be run on a local dev environment or on a staging URL. Checkout our guide for more options on [CI Configurations](./ci.md)
+
+## Trace Viewer
+
+Playwright Trace Viewer is a GUI tool that where you can explore recorded Playwright traces after the script ahs ran. Open traces locally or in your browser on [`trace.playwright.dev`](https://trace.playwright.dev).
+
+<img width="1212" alt="Playwright Trace Viewer" src="https://user-images.githubusercontent.com/883973/120585896-6a1bca80-c3e7-11eb-951a-bd84002480f5.png"></img>
+
+To learn more about the Trace Viewer please see the [Trace Viewer](./trace-viewer.md) docs.
