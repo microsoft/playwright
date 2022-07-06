@@ -200,6 +200,87 @@ async function globalSetup() {
 export default globalSetup;
 ```
 
+### Avoding multiple sessions per account at a time
+
+By default, Playwright Test runs tests in parallel. If you reuse a single signed-in state for all your tests, this usually leads to the same account being signed in from multiple tests at the same time. If this behavior is undesirable for your application, you can sign in with a different account in each [worker process](./test-parallel.md#worker-processes) created by Playwright Test.
+
+In this example we [override `storageState` fixture](./test-fixtures.md#overriding-fixtures) and ensure we only sign in once per worker, using [`property: TestInfo.workerIndex`] to differentiate between workers.
+
+```js tab=js-js
+// fixtures.js
+const { test: base } = require('@playwright/test');
+
+const users = [
+  { username: 'user-1', password: 'password-1' },
+  { username: 'user-2', password: 'password-2' },
+  // ... put your test users here ...
+];
+
+exports.test = base.extend({
+  storageState: async ({ browser }, use, testInfo) => {
+    // Override storage state, use worker index to look up logged-in info and generate it lazily.
+    const fileName = path.join(testInfo.project.outputDir, 'storage-' + testInfo.workerIndex);
+    if (!fs.existsSync(fileName)) {
+      // Make sure we are not using any other storage state.
+      const page = await browser.newPage({ storageState: undefined });
+      await page.goto('https://github.com/login');
+      await page.fill('input[name="login"]', users[testInfo.workerIndex].username);
+      await page.fill('input[name="password"]', users[testInfo.workerIndex].password);
+      await page.click('text=Sign in');
+      await page.context().storageState({ path: fileName });
+      await page.close();
+    }
+    await use(fileName);
+  },
+});
+exports.expect = base.expect;
+
+// example.spec.js
+const { test, expect } = require('./fixtures');
+
+test('test', async ({ page }) => {
+  // page is signed in.
+});
+```
+
+```js tab=js-ts
+// fixtures.ts
+import { test as baseTest } from '@playwright/test';
+export { expect } from '@playwright/test';
+
+const users = [
+  { username: 'user-1', password: 'password-1' },
+  { username: 'user-2', password: 'password-2' },
+  // ... put your test users here ...
+];
+
+export const test = baseTest.extend({
+  storageState: async ({ browser }, use, testInfo) => {
+    // Override storage state, use worker index to look up logged-in info and generate it lazily.
+    const fileName = path.join(testInfo.project.outputDir, 'storage-' + testInfo.workerIndex);
+    if (!fs.existsSync(fileName)) {
+      // Make sure we are not using any other storage state.
+      const page = await browser.newPage({ storageState: undefined });
+      await page.goto('https://github.com/login');
+      // Create a unique username for each worker.
+      await page.fill('input[name="login"]', users[testInfo.workerIndex].username);
+      await page.fill('input[name="password"]', users[testInfo.workerIndex].password);
+      await page.click('text=Sign in');
+      await page.context().storageState({ path: fileName });
+      await page.close();
+    }
+    await use(fileName);
+  },
+});
+
+// example.spec.ts
+import { test, expect } from './fixtures';
+
+test('test', async ({ page }) => {
+  // page is signed in.
+});
+```
+
 ## Multiple signed in roles
 
 Sometimes you have more than one signed-in user in your end to end tests. You can achieve that via logging in for these users multiple times in globalSetup and saving that state into different files.
