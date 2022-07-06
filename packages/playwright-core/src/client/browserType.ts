@@ -211,6 +211,8 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
       browser._contexts.add(BrowserContext.from(result.defaultContext));
     browser._logger = params.logger;
     browser._setBrowserType(this);
+    for (const context of browser.contexts())
+      await this._onDidCreateContext?.(context);
     return browser;
   }
 }
