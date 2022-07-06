@@ -20,7 +20,7 @@ import { test, expect } from './inspectorTest';
 
 const emptyHTML = new URL('file://' + path.join(__dirname, '..', '..', 'assets', 'empty.html')).toString();
 const launchOptions = (channel: string) => {
-  return channel ? `headless=False, channel="${channel}"` : 'headless=False';
+  return channel ? `channel="${channel}", headless=False` : 'headless=False';
 };
 
 test('should print the correct imports and context options', async ({ browserName, channel, runCLI }) => {
@@ -150,4 +150,15 @@ async def main() -> None:
 asyncio.run(main())
 `;
   await cli.waitFor(expectedResult2);
+});
+
+test('should work with --save-har', async ({ runCLI }, testInfo) => {
+  const harFileName = testInfo.outputPath('har.har');
+  const cli = runCLI(['--target=python-async', `--save-har=${harFileName}`]);
+  const expectedResult = `context = await browser.new_context(record_har_mode="minimal", record_har_path=${JSON.stringify(harFileName)}, service_workers="block")`;
+  await cli.waitFor(expectedResult).catch(e => e);
+  expect(cli.text()).toContain(expectedResult);
+  await cli.exited;
+  const json = JSON.parse(fs.readFileSync(harFileName, 'utf-8'));
+  expect(json.log.creator.name).toBe('Playwright');
 });

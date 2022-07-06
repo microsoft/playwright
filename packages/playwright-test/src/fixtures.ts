@@ -54,6 +54,7 @@ class Fixture {
   runner: FixtureRunner;
   registration: FixtureRegistration;
   value: any;
+  failed = false;
 
   _useFuncFinished: ManualPromise<void> | undefined;
   _selfTeardownComplete: Promise<void> | undefined;
@@ -94,6 +95,10 @@ class Fixture {
       // Otherwise worker-scope fixtures will retain test-scope fixtures forever.
       this._deps.add(dep);
       params[name] = dep.value;
+      if (dep.failed) {
+        this.failed = true;
+        return;
+      }
     }
 
     let called = false;
@@ -112,6 +117,7 @@ class Fixture {
     const info = this.registration.scope === 'worker' ? workerInfo : testInfo;
     testInfo._timeoutManager.setCurrentFixture(this._runnableDescription);
     this._selfTeardownComplete = Promise.resolve().then(() => this.registration.fn(params, useFunc, info)).catch((e: any) => {
+      this.failed = true;
       if (!useFuncStarted.isDone())
         useFuncStarted.reject(e);
       else
@@ -307,7 +313,7 @@ export class FixtureRunner {
       throw error;
   }
 
-  async resolveParametersForFunction(fn: Function, testInfo: TestInfoImpl, autoFixtures: 'worker' | 'test' | 'all-hooks-only'): Promise<object> {
+  async resolveParametersForFunction(fn: Function, testInfo: TestInfoImpl, autoFixtures: 'worker' | 'test' | 'all-hooks-only'): Promise<object | null> {
     // Install automatic fixtures.
     for (const registration of this.pool!.registrations.values()) {
       if (registration.auto === false)
@@ -317,8 +323,11 @@ export class FixtureRunner {
         shouldRun = registration.scope === 'worker' || registration.auto === 'all-hooks-included';
       else if (autoFixtures === 'worker')
         shouldRun = registration.scope === 'worker';
-      if (shouldRun)
-        await this.setupFixtureForRegistration(registration, testInfo);
+      if (shouldRun) {
+        const fixture = await this.setupFixtureForRegistration(registration, testInfo);
+        if (fixture.failed)
+          return null;
+      }
     }
 
     // Install used fixtures.
@@ -327,6 +336,8 @@ export class FixtureRunner {
     for (const name of names) {
       const registration = this.pool!.registrations.get(name)!;
       const fixture = await this.setupFixtureForRegistration(registration, testInfo);
+      if (fixture.failed)
+        return null;
       params[name] = fixture.value;
     }
     return params;
@@ -334,6 +345,10 @@ export class FixtureRunner {
 
   async resolveParametersAndRunFunction(fn: Function, testInfo: TestInfoImpl, autoFixtures: 'worker' | 'test' | 'all-hooks-only') {
     const params = await this.resolveParametersForFunction(fn, testInfo, autoFixtures);
+    if (params === null) {
+      // Do not run the function when fixture setup has already failed.
+      return null;
+    }
     return fn(params, testInfo);
   }
 

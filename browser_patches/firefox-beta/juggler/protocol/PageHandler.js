@@ -354,8 +354,26 @@ class PageHandler {
     return await this._contentPage.send('dispatchMouseEvent', options);
   }
 
-  async ['Page.dispatchWheelEvent'](options) {
-    return await this._contentPage.send('dispatchWheelEvent', options);
+  async ['Page.dispatchWheelEvent']({x, y, button, deltaX, deltaY, deltaZ, modifiers }) {
+    const boundingBox = this._pageTarget._linkedBrowser.getBoundingClientRect();
+    x += boundingBox.left;
+    y += boundingBox.top;
+    const deltaMode = 0; // WheelEvent.DOM_DELTA_PIXEL
+    const lineOrPageDeltaX = deltaX > 0 ? Math.floor(deltaX) : Math.ceil(deltaX);
+    const lineOrPageDeltaY = deltaY > 0 ? Math.floor(deltaY) : Math.ceil(deltaY);
+
+    const win = this._pageTarget._window;
+    win.windowUtils.sendWheelEvent(
+      x,
+      y,
+      deltaX,
+      deltaY,
+      deltaZ,
+      deltaMode,
+      modifiers,
+      lineOrPageDeltaX,
+      lineOrPageDeltaY,
+      0 /* options */);
   }
 
   async ['Page.insertText'](options) {

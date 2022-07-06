@@ -148,7 +148,8 @@ def test_example(page):
 
 ### Configure base-url
 
-Start Pytest with the `base-url` argument.
+Start Pytest with the `base-url` argument. The [`pytest-base-url`](https://github.com/pytest-dev/pytest-base-url) plugin is used
+for that which allows you to set the base url from the config, CLI arg or as a fixture.
 
 ```bash
 pytest --base-url http://localhost:8080

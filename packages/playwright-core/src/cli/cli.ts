@@ -68,7 +68,7 @@ Examples:
 commandWithOpenOptions('codegen [url]', 'open page and generate code for user actions',
     [
       ['-o, --output <file name>', 'saves the generated script to a file'],
-      ['--target <language>', `language to generate, one of javascript, test, python, python-async, csharp`, language()],
+      ['--target <language>', `language to generate, one of javascript, test, python, python-async, pytest, csharp, java`, language()],
     ]).action(function(url, options) {
   codegen(options, url, options.target, options.output).catch(logErrorAndExit);
 }).addHelpText('afterAll', `

@@ -351,6 +351,10 @@ export class WorkerRunner extends EventEmitter {
         testInfo._timeoutManager.setCurrentRunnable({ type: 'test' });
         const params = await this._fixtureRunner.resolveParametersForFunction(test.fn, testInfo, 'test');
         beforeHooksStep.complete({}); // Report fixture hooks step as completed.
+        if (params === null) {
+          // Fixture setup failed, we should not run the test now.
+          return;
+        }
 
         // Now run the test itself.
         const fn = test.fn; // Extract a variable to get a better stack trace ("myTest" vs "TestCase.myTest [as fn]").

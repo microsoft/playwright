@@ -1,4 +1,5 @@
 # class: ElementHandle
+* since: v1.8
 * extends: [JSHandle]
 
 ElementHandle represents an in-page DOM element. ElementHandles can be created with the [`method: Page.querySelector`] method.
@@ -106,6 +107,7 @@ await locator.ClickAsync();
 ```
 
 ## async method: ElementHandle.boundingBox
+* since: v1.8
 - returns: <[null]|[Object]>
   - `x` <[float]> the x coordinate of the element in pixels.
   - `y` <[float]> the y coordinate of the element in pixels.
@@ -151,6 +153,7 @@ await page.Mouse.ClickAsync(box.X + box.Width / 2, box.Y + box.Height / 2);
 ```
 
 ## async method: ElementHandle.check
+* since: v1.8
 
 This method checks the element by performing the following steps:
 1. Ensure that element is a checkbox or a radio input. If not, this method throws. If the element is already
@@ -167,16 +170,22 @@ When all steps combined have not finished during the specified [`option: timeout
 [TimeoutError]. Passing zero timeout disables this.
 
 ### option: ElementHandle.check.position = %%-input-position-%%
+* since: v1.11
 
 ### option: ElementHandle.check.force = %%-input-force-%%
+* since: v1.8
 
 ### option: ElementHandle.check.noWaitAfter = %%-input-no-wait-after-%%
+* since: v1.8
 
 ### option: ElementHandle.check.timeout = %%-input-timeout-%%
+* since: v1.8
 
 ### option: ElementHandle.check.trial = %%-input-trial-%%
+* since: v1.11
 
 ## async method: ElementHandle.click
+* since: v1.8
 
 This method clicks the element by performing the following steps:
 1. Wait for [actionability](../actionability.md) checks on the element, unless [`option: force`] option is set.
@@ -190,29 +199,40 @@ When all steps combined have not finished during the specified [`option: timeout
 [TimeoutError]. Passing zero timeout disables this.
 
 ### option: ElementHandle.click.button = %%-input-button-%%
+* since: v1.8
 
 ### option: ElementHandle.click.clickCount = %%-input-click-count-%%
+* since: v1.8
 
 ### option: ElementHandle.click.delay = %%-input-down-up-delay-%%
+* since: v1.8
 
 ### option: ElementHandle.click.position = %%-input-position-%%
+* since: v1.8
 
 ### option: ElementHandle.click.modifiers = %%-input-modifiers-%%
+* since: v1.8
 
 ### option: ElementHandle.click.force = %%-input-force-%%
+* since: v1.8
 
 ### option: ElementHandle.click.noWaitAfter = %%-input-no-wait-after-%%
+* since: v1.8
 
 ### option: ElementHandle.click.timeout = %%-input-timeout-%%
+* since: v1.8
 
 ### option: ElementHandle.click.trial = %%-input-trial-%%
+* since: v1.11
 
 ## async method: ElementHandle.contentFrame
+* since: v1.8
 - returns: <[null]|[Frame]>
 
 Returns the content frame for element handles referencing iframe nodes, or `null` otherwise
 
 ## async method: ElementHandle.dblclick
+* since: v1.8
 * langs:
   - alias-csharp: DblClickAsync
 
@@ -233,22 +253,31 @@ When all steps combined have not finished during the specified [`option: timeout
 :::
 
 ### option: ElementHandle.dblclick.button = %%-input-button-%%
+* since: v1.8
 
 ### option: ElementHandle.dblclick.delay = %%-input-down-up-delay-%%
+* since: v1.8
 
 ### option: ElementHandle.dblclick.position = %%-input-position-%%
+* since: v1.8
 
 ### option: ElementHandle.dblclick.modifiers = %%-input-modifiers-%%
+* since: v1.8
 
 ### option: ElementHandle.dblclick.force = %%-input-force-%%
+* since: v1.8
 
 ### option: ElementHandle.dblclick.noWaitAfter = %%-input-no-wait-after-%%
+* since: v1.8
 
 ### option: ElementHandle.dblclick.timeout = %%-input-timeout-%%
+* since: v1.8
 
 ### option: ElementHandle.dblclick.trial = %%-input-trial-%%
+* since: v1.11
 
 ## async method: ElementHandle.dispatchEvent
+* since: v1.8
 
 The snippet below dispatches the `click` event on the element. Regardless of the visibility state of the element, `click`
 is dispatched. This is equivalent to calling
@@ -325,16 +354,19 @@ await elementHandle.DispatchEventAsync("dragstart", new Dictionary<string, objec
 ```
 
 ### param: ElementHandle.dispatchEvent.type
+* since: v1.8
 - `type` <[string]>
 
 DOM event type: `"click"`, `"dragstart"`, etc.
 
 ### param: ElementHandle.dispatchEvent.eventInit
+* since: v1.8
 - `eventInit` ?<[EvaluationArgument]>
 
 Optional event-specific initialization properties.
 
 ## async method: ElementHandle.evalOnSelector
+* since: v1.9
 * langs:
   - alias-python: eval_on_selector
   - alias-js: $eval
@@ -382,15 +414,19 @@ Assert.AreEqual("10", await tweetHandle.EvalOnSelectorAsync(".retweets", "node =
 ```
 
 ### param: ElementHandle.evalOnSelector.selector = %%-query-selector-%%
+* since: v1.9
 
 ### param: ElementHandle.evalOnSelector.expression = %%-evaluate-expression-%%
+* since: v1.9
 
 ### param: ElementHandle.evalOnSelector.arg
+* since: v1.9
 - `arg` ?<[EvaluationArgument]>
 
 Optional argument to pass to [`param: expression`].
 
 ## async method: ElementHandle.evalOnSelectorAll
+* since: v1.9
 * langs:
   - alias-python: eval_on_selector_all
   - alias-js: $$eval
@@ -440,15 +476,19 @@ Assert.AreEqual(new [] { "Hello!", "Hi!" }, await feedHandle.EvalOnSelectorAllAs
 ```
 
 ### param: ElementHandle.evalOnSelectorAll.selector = %%-query-selector-%%
+* since: v1.9
 
 ### param: ElementHandle.evalOnSelectorAll.expression = %%-evaluate-expression-%%
+* since: v1.9
 
 ### param: ElementHandle.evalOnSelectorAll.arg
+* since: v1.9
 - `arg` ?<[EvaluationArgument]>
 
 Optional argument to pass to [`param: expression`].
 
 ## async method: ElementHandle.fill
+* since: v1.8
 
 This method waits for [actionability](../actionability.md) checks, focuses the element, fills it and triggers an `input` event after filling. Note that you can pass an empty string to clear the input field.
 
@@ -457,29 +497,37 @@ If the target element is not an `<input>`, `<textarea>` or `[contenteditable]` e
 To send fine-grained keyboard events, use [`method: ElementHandle.type`].
 
 ### param: ElementHandle.fill.value
+* since: v1.8
 - `value` <[string]>
 
 Value to set for the `<input>`, `<textarea>` or `[contenteditable]` element.
 
 ### option: ElementHandle.fill.force = %%-input-force-%%
+* since: v1.13
 ### option: ElementHandle.fill.noWaitAfter = %%-input-no-wait-after-%%
+* since: v1.8
 ### option: ElementHandle.fill.timeout = %%-input-timeout-%%
+* since: v1.8
 
 ## async method: ElementHandle.focus
+* since: v1.8
 
 Calls [focus](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/focus) on the element.
 
 ## async method: ElementHandle.getAttribute
+* since: v1.8
 - returns: <[null]|[string]>
 
 Returns element attribute value.
 
 ### param: ElementHandle.getAttribute.name
+* since: v1.8
 - `name` <[string]>
 
 Attribute name to get the value for.
 
 ## async method: ElementHandle.hover
+* since: v1.8
 
 This method hovers over the element by performing the following steps:
 1. Wait for [actionability](../actionability.md) checks on the element, unless [`option: force`] option is set.
@@ -493,26 +541,34 @@ When all steps combined have not finished during the specified [`option: timeout
 [TimeoutError]. Passing zero timeout disables this.
 
 ### option: ElementHandle.hover.position = %%-input-position-%%
+* since: v1.8
 
 ### option: ElementHandle.hover.modifiers = %%-input-modifiers-%%
+* since: v1.8
 
 ### option: ElementHandle.hover.force = %%-input-force-%%
+* since: v1.8
 
 ### option: ElementHandle.hover.timeout = %%-input-timeout-%%
+* since: v1.8
 
 ### option: ElementHandle.hover.trial = %%-input-trial-%%
+* since: v1.11
 
 ## async method: ElementHandle.innerHTML
+* since: v1.8
 - returns: <[string]>
 
 Returns the `element.innerHTML`.
 
 ## async method: ElementHandle.innerText
+* since: v1.8
 - returns: <[string]>
 
 Returns the `element.innerText`.
 
 ## async method: ElementHandle.inputValue
+* since: v1.13
 - returns: <[string]>
 
 Returns `input.value` for the selected `<input>` or `<textarea>` or `<select>` element.
@@ -520,43 +576,52 @@ Returns `input.value` for the selected `<input>` or `<textarea>` or `<select>` e
 Throws for non-input elements. However, if the element is inside the `<label>` element that has an associated [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), returns the value of the control.
 
 ### option: ElementHandle.inputValue.timeout = %%-input-timeout-%%
+* since: v1.13
 
 ## async method: ElementHandle.isChecked
+* since: v1.8
 - returns: <[boolean]>
 
 Returns whether the element is checked. Throws if the element is not a checkbox or radio input.
 
 ## async method: ElementHandle.isDisabled
+* since: v1.8
 - returns: <[boolean]>
 
 Returns whether the element is disabled, the opposite of [enabled](../actionability.md#enabled).
 
 ## async method: ElementHandle.isEditable
+* since: v1.8
 - returns: <[boolean]>
 
 Returns whether the element is [editable](../actionability.md#editable).
 
 ## async method: ElementHandle.isEnabled
+* since: v1.8
 - returns: <[boolean]>
 
 Returns whether the element is [enabled](../actionability.md#enabled).
 
 ## async method: ElementHandle.isHidden
+* since: v1.8
 - returns: <[boolean]>
 
 Returns whether the element is hidden, the opposite of [visible](../actionability.md#visible).
 
 ## async method: ElementHandle.isVisible
+* since: v1.8
 - returns: <[boolean]>
 
 Returns whether the element is [visible](../actionability.md#visible).
 
 ## async method: ElementHandle.ownerFrame
+* since: v1.8
 - returns: <[null]|[Frame]>
 
 Returns the frame containing the given element.
 
 ## async method: ElementHandle.press
+* since: v1.8
 
 Focuses the element, and then uses [`method: Keyboard.down`] and [`method: Keyboard.up`].
 
@@ -579,20 +644,25 @@ Shortcuts such as `key: "Control+o"` or `key: "Control+Shift+T"` are supported a
 modifier, modifier is pressed and being held while the subsequent key is being pressed.
 
 ### param: ElementHandle.press.key
+* since: v1.8
 - `key` <[string]>
 
 Name of the key to press or a character to generate, such as `ArrowLeft` or `a`.
 
 ### option: ElementHandle.press.delay
+* since: v1.8
 - `delay` <[float]>
 
 Time to wait between `keydown` and `keyup` in milliseconds. Defaults to 0.
 
 ### option: ElementHandle.press.noWaitAfter = %%-input-no-wait-after-%%
+* since: v1.8
 
 ### option: ElementHandle.press.timeout = %%-input-timeout-%%
+* since: v1.8
 
 ## async method: ElementHandle.querySelector
+* since: v1.9
 * langs:
   - alias-python: query_selector
   - alias-js: $
@@ -603,8 +673,10 @@ The method finds an element matching the specified selector in the `ElementHandl
 returns `null`.
 
 ### param: ElementHandle.querySelector.selector = %%-query-selector-%%
+* since: v1.9
 
 ## async method: ElementHandle.querySelectorAll
+* since: v1.9
 * langs:
   - alias-python: query_selector_all
   - alias-js: $$
@@ -615,8 +687,10 @@ The method finds all elements matching the specified selector in the `ElementHan
 returns empty array.
 
 ### param: ElementHandle.querySelectorAll.selector = %%-query-selector-%%
+* since: v1.9
 
 ## async method: ElementHandle.screenshot
+* since: v1.8
 - returns: <[Buffer]>
 
 This method captures a screenshot of the page, clipped to the size and position of this particular element. If the element is covered by other elements, it will not be actually visible on the screenshot. If the element is a scrollable container, only the currently scrolled content will be visible on the screenshot.
@@ -626,9 +700,11 @@ screenshot. If the element is detached from DOM, the method throws an error.
 
 Returns the buffer with the captured screenshot.
 
-### option: ElementHandle.screenshot.-inline- = %%-screenshot-options-common-list-%%
+### option: ElementHandle.screenshot.-inline- = %%-screenshot-options-common-list-v1.8-%%
+* since: v1.8
 
 ## async method: ElementHandle.scrollIntoViewIfNeeded
+* since: v1.8
 
 This method waits for [actionability](../actionability.md) checks, then tries to scroll element into view, unless it is
 completely visible as defined by
@@ -638,8 +714,10 @@ Throws when `elementHandle` does not point to an element
 [connected](https://developer.mozilla.org/en-US/docs/Web/API/Node/isConnected) to a Document or a ShadowRoot.
 
 ### option: ElementHandle.scrollIntoViewIfNeeded.timeout = %%-input-timeout-%%
+* since: v1.8
 
 ## async method: ElementHandle.selectOption
+* since: v1.8
 - returns: <[Array]<[string]>>
 
 This method waits for [actionability](../actionability.md) checks, waits until all specified options are present in the `<select>` element and selects these options.
@@ -703,11 +781,16 @@ await handle.SelectOptionAsync(new[] {
 ```
 
 ### param: ElementHandle.selectOption.values = %%-select-options-values-%%
+* since: v1.8
 ### option: ElementHandle.selectOption.force = %%-input-force-%%
+* since: v1.13
 ### option: ElementHandle.selectOption.noWaitAfter = %%-input-no-wait-after-%%
+* since: v1.8
 ### option: ElementHandle.selectOption.timeout = %%-input-timeout-%%
+* since: v1.8
 
 ## async method: ElementHandle.selectText
+* since: v1.8
 
 This method waits for [actionability](../actionability.md) checks, then focuses the element and selects all its text
 content.
@@ -715,9 +798,12 @@ content.
 If the element is inside the `<label>` element that has an associated [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), focuses and selects text in the control instead.
 
 ### option: ElementHandle.selectText.force = %%-input-force-%%
+* since: v1.13
 ### option: ElementHandle.selectText.timeout = %%-input-timeout-%%
+* since: v1.8
 
 ## async method: ElementHandle.setChecked
+* since: v1.15
 
 This method checks or unchecks an element by performing the following steps:
 1. Ensure that element is a checkbox or a radio input. If not, this method throws.
@@ -733,13 +819,20 @@ When all steps combined have not finished during the specified [`option: timeout
 [TimeoutError]. Passing zero timeout disables this.
 
 ### param: ElementHandle.setChecked.checked = %%-input-checked-%%
+* since: v1.15
 ### option: ElementHandle.setChecked.force = %%-input-force-%%
+* since: v1.15
 ### option: ElementHandle.setChecked.noWaitAfter = %%-input-no-wait-after-%%
+* since: v1.15
 ### option: ElementHandle.setChecked.position = %%-input-position-%%
+* since: v1.15
 ### option: ElementHandle.setChecked.timeout = %%-input-timeout-%%
+* since: v1.15
 ### option: ElementHandle.setChecked.trial = %%-input-trial-%%
+* since: v1.15
 
 ## async method: ElementHandle.setInputFiles
+* since: v1.8
 
 Sets the value of the file input to these file paths or files. If some of the `filePaths` are relative paths, then they
 are resolved relative to the current working directory. For empty array, clears the selected files.
@@ -749,12 +842,16 @@ This method expects [ElementHandle] to point to an
 
 
 ### param: ElementHandle.setInputFiles.files = %%-input-files-%%
+* since: v1.8
 
 ### option: ElementHandle.setInputFiles.noWaitAfter = %%-input-no-wait-after-%%
+* since: v1.8
 
 ### option: ElementHandle.setInputFiles.timeout = %%-input-timeout-%%
+* since: v1.8
 
 ## async method: ElementHandle.tap
+* since: v1.8
 
 This method taps the element by performing the following steps:
 1. Wait for [actionability](../actionability.md) checks on the element, unless [`option: force`] option is set.
@@ -772,23 +869,31 @@ When all steps combined have not finished during the specified [`option: timeout
 :::
 
 ### option: ElementHandle.tap.position = %%-input-position-%%
+* since: v1.8
 
 ### option: ElementHandle.tap.modifiers = %%-input-modifiers-%%
+* since: v1.8
 
 ### option: ElementHandle.tap.force = %%-input-force-%%
+* since: v1.8
 
 ### option: ElementHandle.tap.noWaitAfter = %%-input-no-wait-after-%%
+* since: v1.8
 
 ### option: ElementHandle.tap.timeout = %%-input-timeout-%%
+* since: v1.8
 
 ### option: ElementHandle.tap.trial = %%-input-trial-%%
+* since: v1.11
 
 ## async method: ElementHandle.textContent
+* since: v1.8
 - returns: <[null]|[string]>
 
 Returns the `node.textContent`.
 
 ## async method: ElementHandle.type
+* since: v1.8
 
 Focuses the element, and then sends a `keydown`, `keypress`/`input`, and `keyup` event for each character in the text.
 
@@ -852,20 +957,25 @@ await elementHandle.PressAsync("Enter");
 ```
 
 ### param: ElementHandle.type.text
+* since: v1.8
 - `text` <[string]>
 
 A text to type into a focused element.
 
 ### option: ElementHandle.type.delay
+* since: v1.8
 - `delay` <[float]>
 
 Time to wait between key presses in milliseconds. Defaults to 0.
 
 ### option: ElementHandle.type.noWaitAfter = %%-input-no-wait-after-%%
+* since: v1.8
 
 ### option: ElementHandle.type.timeout = %%-input-timeout-%%
+* since: v1.8
 
 ## async method: ElementHandle.uncheck
+* since: v1.8
 
 This method checks the element by performing the following steps:
 1. Ensure that element is a checkbox or a radio input. If not, this method throws. If the element is already
@@ -882,16 +992,22 @@ When all steps combined have not finished during the specified [`option: timeout
 [TimeoutError]. Passing zero timeout disables this.
 
 ### option: ElementHandle.uncheck.position = %%-input-position-%%
+* since: v1.11
 
 ### option: ElementHandle.uncheck.force = %%-input-force-%%
+* since: v1.8
 
 ### option: ElementHandle.uncheck.noWaitAfter = %%-input-no-wait-after-%%
+* since: v1.8
 
 ### option: ElementHandle.uncheck.timeout = %%-input-timeout-%%
+* since: v1.8
 
 ### option: ElementHandle.uncheck.trial = %%-input-trial-%%
+* since: v1.11
 
 ## async method: ElementHandle.waitForElementState
+* since: v1.8
 
 Returns when the element satisfies the [`param: state`].
 
@@ -909,13 +1025,16 @@ to pass. This method throws when the element is detached while waiting, unless w
 If the element does not satisfy the condition for the [`option: timeout`] milliseconds, this method will throw.
 
 ### param: ElementHandle.waitForElementState.state
+* since: v1.8
 - `state` <[ElementState]<"visible"|"hidden"|"stable"|"enabled"|"disabled"|"editable">>
 
 A state to wait for, see below for more details.
 
 ### option: ElementHandle.waitForElementState.timeout = %%-input-timeout-%%
+* since: v1.8
 
 ## async method: ElementHandle.waitForSelector
+* since: v1.8
 - returns: <[null]|[ElementHandle]>
 
 Returns element specified by selector when it satisfies [`option: state`] option. Returns `null` if waiting for `hidden`
@@ -967,9 +1086,13 @@ This method does not work across navigations, use [`method: Page.waitForSelector
 :::
 
 ### param: ElementHandle.waitForSelector.selector = %%-query-selector-%%
+* since: v1.8
 
 ### option: ElementHandle.waitForSelector.state = %%-wait-for-selector-state-%%
+* since: v1.8
 
 ### option: ElementHandle.waitForSelector.timeout = %%-input-timeout-%%
+* since: v1.8
 
 ### option: ElementHandle.waitForSelector.strict = %%-input-strict-%%
+* since: v1.15

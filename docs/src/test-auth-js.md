@@ -156,6 +156,8 @@ test('test', async ({ page }) => {
 :::note
 If you can log in once and commit the `storageState.json` into the repository, you won't need the global
 setup at all, just specify the `storageState.json` in Playwright Config as above and it'll be picked up.
+
+However, periodically, you may need to update the `storageState.json` file if your app requires you to re-authenticate after some amount of time. For example, if your app prompts you to sign in every week even if you're on the same computer/browser, you'll need to update `storageState.json` at least this often.
 :::
 
 ### Sign in via API request

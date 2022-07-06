@@ -240,7 +240,7 @@ function toSnakeCase(name: string): string {
 }
 
 function formatOptions(value: any, hasArguments: boolean, asDict?: boolean): string {
-  const keys = Object.keys(value);
+  const keys = Object.keys(value).filter(key => value[key] !== undefined).sort();
   if (!keys.length)
     return '';
   return (hasArguments ? ', ' : '') + keys.map(key => {
@@ -250,11 +250,24 @@ function formatOptions(value: any, hasArguments: boolean, asDict?: boolean): str
   }).join(', ');
 }
 
+function convertContextOptions(options: BrowserContextOptions): any {
+  const result: any = { ...options };
+  if (options.recordHar) {
+    result['record_har_path'] = options.recordHar.path;
+    result['record_har_content'] = options.recordHar.content;
+    result['record_har_mode'] = options.recordHar.mode;
+    result['record_har_omit_content'] = options.recordHar.omitContent;
+    result['record_har_url_filter'] = options.recordHar.urlFilter;
+    delete result.recordHar;
+  }
+  return result;
+}
+
 function formatContextOptions(options: BrowserContextOptions, deviceName: string | undefined, asDict?: boolean): string {
   const device = deviceName && deviceDescriptors[deviceName];
   if (!device)
-    return formatOptions(options, false, asDict);
-  return `**playwright.devices[${quote(deviceName!)}]` + formatOptions(sanitizeDeviceOptions(device, options), true, asDict);
+    return formatOptions(convertContextOptions(options), false, asDict);
+  return `**playwright.devices[${quote(deviceName!)}]` + formatOptions(convertContextOptions(sanitizeDeviceOptions(device, options)), true, asDict);
 }
 
 class PythonFormatter {

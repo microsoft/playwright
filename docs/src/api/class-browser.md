@@ -1,4 +1,5 @@
 # class: Browser
+* since: v1.8
 * extends: [EventEmitter]
 
 A Browser is created via [`method: BrowserType.launch`]. An example of using a [Browser] to create a [Page]:
@@ -73,6 +74,7 @@ await browser.CloseAsync();
 ```
 
 ## event: Browser.disconnected
+* since: v1.8
 - argument: <[Browser]>
 
 Emitted when Browser gets disconnected from the browser application. This might happen because of one of the following:
@@ -80,11 +82,13 @@ Emitted when Browser gets disconnected from the browser application. This might 
 * The [`method: Browser.close`] method was called.
 
 ## method: Browser.browserType
+* since: v1.23
 - returns: <[BrowserType]>
 
 Get the browser type (chromium, firefox or webkit) that the browser belongs to.
 
 ## async method: Browser.close
+* since: v1.8
 
 In case this browser is obtained using [`method: BrowserType.launch`], closes the browser and all of its pages (if any
 were opened).
@@ -99,6 +103,7 @@ This is similar to force quitting the browser. Therefore, you should call [`meth
 The [Browser] object itself is considered to be disposed and cannot be used anymore.
 
 ## method: Browser.contexts
+* since: v1.8
 - returns: <[Array]<[BrowserContext]>>
 
 Returns an array of all open browser contexts. In a newly created browser, this will return zero browser contexts.
@@ -141,11 +146,13 @@ System.Console.WriteLine(browser.Contexts.Count); // prints "1"
 ```
 
 ## method: Browser.isConnected
+* since: v1.8
 - returns: <[boolean]>
 
 Indicates that the browser is connected.
 
 ## async method: Browser.newBrowserCDPSession
+* since: v1.11
 * langs: js, python
 - returns: <[CDPSession]>
 
@@ -156,6 +163,7 @@ CDP Sessions are only supported on Chromium-based browsers.
 Returns the newly created browser session.
 
 ## async method: Browser.newContext
+* since: v1.8
 - returns: <[BrowserContext]>
 
 Creates a new browser context. It won't share cookies/cache with other browser contexts.
@@ -233,17 +241,23 @@ await context.CloseAsync();
 await browser.CloseAsync();
 ```
 
-### option: Browser.newContext.-inline- = %%-shared-context-params-list-%%
+### option: Browser.newContext.-inline- = %%-shared-context-params-list-v1.8-%%
+* since: v1.8
 
 ### option: Browser.newContext.proxy = %%-context-option-proxy-%%
+* since: v1.8
 
 ### option: Browser.newContext.storageState = %%-js-python-context-option-storage-state-%%
+* since: v1.8
 
 ### option: Browser.newContext.storageState = %%-csharp-java-context-option-storage-state-%%
+* since: v1.8
 
 ### option: Browser.newContext.storageStatePath = %%-csharp-java-context-option-storage-state-path-%%
+* since: v1.9
 
 ## async method: Browser.newPage
+* since: v1.8
 - returns: <[Page]>
 
 Creates a new page in a new browser context. Closing this page will close the context as well.
@@ -252,17 +266,23 @@ This is a convenience API that should only be used for the single-page scenarios
 testing frameworks should explicitly create [`method: Browser.newContext`] followed by the
 [`method: BrowserContext.newPage`] to control their exact life times.
 
-### option: Browser.newPage.-inline- = %%-shared-context-params-list-%%
+### option: Browser.newPage.-inline- = %%-shared-context-params-list-v1.8-%%
+* since: v1.8
 
 ### option: Browser.newPage.proxy = %%-context-option-proxy-%%
+* since: v1.8
 
 ### option: Browser.newPage.storageState = %%-js-python-context-option-storage-state-%%
+* since: v1.8
 
 ### option: Browser.newPage.storageState = %%-csharp-java-context-option-storage-state-%%
+* since: v1.8
 
 ### option: Browser.newPage.storageStatePath = %%-csharp-java-context-option-storage-state-path-%%
+* since: v1.9
 
 ## async method: Browser.startTracing
+* since: v1.11
 * langs: java, js, python
 
 :::note
@@ -298,26 +318,31 @@ browser.stop_tracing()
 ```
 
 ### param: Browser.startTracing.page
+* since: v1.11
 - `page` ?<[Page]>
 
 Optional, if specified, tracing includes screenshots of the given page.
 
 ### option: Browser.startTracing.path
+* since: v1.11
 - `path` <[path]>
 
 A path to write the trace file to.
 
 ### option: Browser.startTracing.screenshots
+* since: v1.11
 - `screenshots` <[boolean]>
 
 captures screenshots in the trace.
 
 ### option: Browser.startTracing.categories
+* since: v1.11
 - `categories` <[Array]<[string]>>
 
 specify custom categories to use instead of default.
 
 ## async method: Browser.stopTracing
+* since: v1.11
 * langs: java, js, python
 - returns: <[Buffer]>
 
@@ -328,6 +353,7 @@ This API controls [Chromium Tracing](https://www.chromium.org/developers/how-tos
 Returns the buffer with trace data.
 
 ## method: Browser.version
+* since: v1.8
 - returns: <[string]>
 
 Returns the browser version.

@@ -21,15 +21,15 @@
     },
     {
       "name": "firefox",
-      "revision": "1333",
+      "revision": "1334",
       "installByDefault": true,
       "browserVersion": "102.0"
     },
     {
       "name": "firefox-beta",
-      "revision": "1333",
+      "revision": "1334",
       "installByDefault": false,
-      "browserVersion": "101.0b8"
+      "browserVersion": "103.0b5"
     },
     {
       "name": "webkit",

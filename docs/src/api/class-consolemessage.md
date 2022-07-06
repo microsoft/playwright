@@ -1,4 +1,5 @@
 # class: ConsoleMessage
+* since: v1.8
 
 [ConsoleMessage] objects are dispatched by page via the [`event: Page.console`] event.
 For each console messages logged in the page there will be corresponding event in the Playwright
@@ -106,11 +107,13 @@ await message.Args.ElementAt(1).JsonValueAsync<int>(); // 42
 ```
 
 ## method: ConsoleMessage.args
+* since: v1.8
 - returns: <[Array]<[JSHandle]>>
 
 List of arguments passed to a `console` function call. See also [`event: Page.console`].
 
 ## method: ConsoleMessage.location
+* since: v1.8
 * langs: js, python
 - returns: <[Object]>
   - `url` <[string]> URL of the resource.
@@ -118,17 +121,20 @@ List of arguments passed to a `console` function call. See also [`event: Page.co
   - `columnNumber` <[int]> 0-based column number in the resource.
 
 ## method: ConsoleMessage.location
+* since: v1.8
 * langs: csharp, java
 - returns: <[string]>
 
 URL of the resource followed by 0-based line and column numbers in the resource formatted as `URL:line:column`.
 
 ## method: ConsoleMessage.text
+* since: v1.8
 - returns: <[string]>
 
 The text of the console message.
 
 ## method: ConsoleMessage.type
+* since: v1.8
 - returns: <[string]>
 
 One of the following values: `'log'`, `'debug'`, `'info'`, `'error'`, `'warning'`, `'dir'`, `'dirxml'`, `'table'`,

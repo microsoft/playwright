@@ -101,7 +101,6 @@ class PageAgent {
       helper.addObserver(this._filePickerShown.bind(this), 'juggler-file-picker-shown'),
       helper.addEventListener(this._messageManager, 'DOMContentLoaded', this._onDOMContentLoaded.bind(this)),
       helper.addObserver(this._onDocumentOpenLoad.bind(this), 'juggler-document-open-loaded'),
-      helper.addEventListener(this._messageManager, 'error', this._onError.bind(this)),
       helper.on(this._frameTree, 'load', this._onLoad.bind(this)),
       helper.on(this._frameTree, 'frameattached', this._onFrameAttached.bind(this)),
       helper.on(this._frameTree, 'framedetached', this._onFrameDetached.bind(this)),
@@ -129,6 +128,7 @@ class PageAgent {
         });
       }),
       this._runtime.events.onConsoleMessage(msg => this._browserPage.emit('runtimeConsole', msg)),
+      this._runtime.events.onRuntimeError(this._onRuntimeError.bind(this)),
       this._runtime.events.onExecutionContextCreated(this._onExecutionContextCreated.bind(this)),
       this._runtime.events.onExecutionContextDestroyed(this._onExecutionContextDestroyed.bind(this)),
       this._runtime.events.onBindingCalled(this._onBindingCalled.bind(this)),
@@ -273,15 +273,11 @@ class PageAgent {
     });
   }
 
-  _onError(errorEvent) {
-    const docShell = errorEvent.target.ownerGlobal.docShell;
-    const frame = this._frameTree.frameForDocShell(docShell);
-    if (!frame)
-      return;
+  _onRuntimeError({ executionContext, message, stack }) {
     this._browserPage.emit('pageUncaughtError', {
-      frameId: frame.id(),
-      message: errorEvent.message,
-      stack: errorEvent.error && typeof errorEvent.error.stack === 'string' ? errorEvent.error.stack : '',
+      frameId: executionContext.auxData().frameId,
+      message: message.toString(),
+      stack: stack.toString(),
     });
   }
 
