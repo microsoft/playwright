@@ -170,7 +170,7 @@ test('should use the first occurring error when an unhandled exception was throw
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(0);
   expect(result.failed).toBe(1);
-  expect(result.report.suites[0].specs[0].tests[0].results[0].error.message).toBe('first error');
+  expect(result.report.suites[0].specs[0].tests[0].results[0].error!.message).toBe('first error');
 });
 
 test('worker interrupt should report errors', async ({ runInlineTest }) => {
@@ -303,7 +303,7 @@ test('should not hang if test suites in worker are inconsistent with runner', as
   expect(result.passed).toBe(1);
   expect(result.failed).toBe(1);
   expect(result.skipped).toBe(1);
-  expect(result.report.suites[0].specs[1].tests[0].results[0].error.message).toBe('Unknown test(s) in worker:\nproject-name > a.spec.js > Test 1 - bar\nproject-name > a.spec.js > Test 2 - baz');
+  expect(result.report.suites[0].specs[1].tests[0].results[0].error!.message).toBe('Unknown test(s) in worker:\nproject-name > a.spec.js > Test 1 - bar\nproject-name > a.spec.js > Test 2 - baz');
 });
 
 test('sigint should stop global setup', async ({ runInlineTest }) => {
@@ -422,4 +422,42 @@ test('sigint should stop plugins 2', async ({ runInlineTest }) => {
   expect(output).toContain('Plugin2 setup');
   expect(output).toContain('Plugin1 teardown');
   expect(output).not.toContain('Plugin2 teardown');
+});
+
+test('should not crash with duplicate titles and .only', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'example.spec.ts': `
+      const { test } = pwt;
+      test('non unique title', () => { console.log('do not run me'); });
+      test.skip('non unique title', () => { console.log('do not run me'); });
+      test.only('non unique title', () => { console.log('do run me'); });
+    `
+  });
+  expect(result.exitCode).toBe(1);
+  expect(stripAnsi(result.output)).toContain([
+    ` duplicate test titles are not allowed.`,
+    ` - title: non unique title`,
+    `   - example.spec.ts:6`,
+    `   - example.spec.ts:7`,
+    `   - example.spec.ts:8`,
+  ].join('\n'));
+});
+
+test('should not crash with duplicate titles and line filter', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'example.spec.ts': `
+      const { test } = pwt;
+      test('non unique title', () => { console.log('do not run me'); });
+      test.skip('non unique title', () => { console.log('do not run me'); });
+      test('non unique title', () => { console.log('do run me'); });
+    `
+  }, {}, {}, { additionalArgs: ['example.spec.ts:8'] });
+  expect(result.exitCode).toBe(1);
+  expect(stripAnsi(result.output)).toContain([
+    ` duplicate test titles are not allowed.`,
+    ` - title: non unique title`,
+    `   - example.spec.ts:6`,
+    `   - example.spec.ts:7`,
+    `   - example.spec.ts:8`,
+  ].join('\n'));
 });
