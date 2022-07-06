@@ -51,13 +51,13 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel> im
       loadStates: Array.from(frame._subtreeLifecycleEvents),
     });
     this._frame = frame;
-    frame.on(Frame.Events.AddLifecycle, lifecycleEvent => {
+    this.addObjectListener(Frame.Events.AddLifecycle, lifecycleEvent => {
       this._dispatchEvent('loadstate', { add: lifecycleEvent });
     });
-    frame.on(Frame.Events.RemoveLifecycle, lifecycleEvent => {
+    this.addObjectListener(Frame.Events.RemoveLifecycle, lifecycleEvent => {
       this._dispatchEvent('loadstate', { remove: lifecycleEvent });
     });
-    frame.on(Frame.Events.InternalNavigation, (event: NavigationEvent) => {
+    this.addObjectListener(Frame.Events.InternalNavigation, (event: NavigationEvent) => {
       if (!event.isPublic)
         return;
       const params = { url: event.url, name: event.name, error: event.error ? event.error.message : undefined };

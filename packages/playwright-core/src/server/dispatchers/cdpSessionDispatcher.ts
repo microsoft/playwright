@@ -28,7 +28,7 @@ export class CDPSessionDispatcher extends Dispatcher<CRSession, channels.CDPSess
     crSession._eventListener = (method, params) => {
       this._dispatchEvent('event', { method, params });
     };
-    crSession.on(CRSessionEvents.Disconnected, () => this._dispose());
+    this.addObjectListener(CRSessionEvents.Disconnected, () => this._dispose());
   }
 
   async send(params: channels.CDPSessionSendParams): Promise<channels.CDPSessionSendResult> {

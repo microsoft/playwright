@@ -24,6 +24,8 @@ import type { CallMetadata } from '../instrumentation';
 import { SdkObject } from '../instrumentation';
 import { rewriteErrorMessage } from '../../utils/stackTrace';
 import type { PlaywrightDispatcher } from './playwrightDispatcher';
+import { eventsHelper } from '../..//utils/eventsHelper';
+import type { RegisteredListener } from '../..//utils/eventsHelper';
 
 export const dispatcherSymbol = Symbol('dispatcher');
 const metadataValidator = createMetadataValidator();
@@ -50,6 +52,7 @@ export class Dispatcher<Type extends { guid: string }, ChannelType> extends Even
   // Only "isScope" channel owners have registered dispatchers inside.
   private _dispatchers = new Map<string, Dispatcher<any, any>>();
   protected _disposed = false;
+  protected _eventListeners: RegisteredListener[] = [];
 
   readonly _guid: string;
   readonly _type: string;
@@ -81,6 +84,10 @@ export class Dispatcher<Type extends { guid: string }, ChannelType> extends Even
       this._connection.sendCreate(this._parent, type, guid, initializer, this._parent._object);
   }
 
+  addObjectListener(eventName: (string | symbol), handler: (...args: any[]) => void) {
+    this._eventListeners.push(eventsHelper.addEventListener(this._object as unknown as EventEmitter, eventName, handler));
+  }
+
   _dispatchEvent<T extends keyof channels.EventsTraits<ChannelType>>(method: T, params?: channels.EventsTraits<ChannelType>[T]) {
     if (this._disposed) {
       if (isUnderTest())
@@ -95,6 +102,7 @@ export class Dispatcher<Type extends { guid: string }, ChannelType> extends Even
   protected _dispose() {
     assert(!this._disposed);
     this._disposed = true;
+    eventsHelper.removeEventListeners(this._eventListeners);
 
     // Clean up from parent and connection.
     if (this._parent)
