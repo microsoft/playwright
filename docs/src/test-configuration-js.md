@@ -60,7 +60,7 @@ npx playwright test --config=tests/my.config.js
 
 ## Local configuration
 
-With [`method: Test.use`] you can override some options for a file or a [`method: Test.describe`] block.
+With [`method: Test.use`] you can override some options for a file or a [`method: Test.describe#1`] block.
 
 ```js tab=js-js
 // example.spec.js

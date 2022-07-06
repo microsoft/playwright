@@ -66,7 +66,7 @@ Test function that takes one or two arguments: an object with fixtures and optio
 ## method: Test.afterAll
 * since: v1.10
 
-Declares an `afterAll` hook that is executed once per worker after all tests. When called in the scope of a test file, runs after all tests in the file. When called inside a [`method: Test.describe`] group, runs after all tests in the group. If multiple `afterAll` hooks are added, they will run in the order of their registration.
+Declares an `afterAll` hook that is executed once per worker after all tests. When called in the scope of a test file, runs after all tests in the file. When called inside a [`method: Test.describe#1`] group, runs after all tests in the group. If multiple `afterAll` hooks are added, they will run in the order of their registration.
 
 Note that worker process is restarted on test failures, and `afterAll` hook runs again in the new worker. Learn more about [workers and failures](../test-retries.md).
 
@@ -81,7 +81,7 @@ Hook function that takes one or two arguments: an object with worker fixtures an
 ## method: Test.afterEach
 * since: v1.10
 
-Declares an `afterEach` hook that is executed after each test. When called in the scope of a test file, runs after each test in the file. When called inside a [`method: Test.describe`] group, runs after each test in the group. If multiple `afterEach` hooks are added, they will run in the order of their registration.
+Declares an `afterEach` hook that is executed after each test. When called in the scope of a test file, runs after each test in the file. When called inside a [`method: Test.describe#1`] group, runs after each test in the group. If multiple `afterEach` hooks are added, they will run in the order of their registration.
 
 You can access all the same [Fixtures] as the test function itself, and also the [TestInfo] object that gives a lot of useful information. For example, you can check whether the test succeeded or failed.
 
@@ -127,7 +127,7 @@ Hook function that takes one or two arguments: an object with fixtures and optio
 ## method: Test.beforeAll
 * since: v1.10
 
-Declares a `beforeAll` hook that is executed once per worker process before all tests. When called in the scope of a test file, runs before all tests in the file. When called inside a [`method: Test.describe`] group, runs before all tests in the group. If multiple `beforeAll` hooks are added, they will run in the order of their registration.
+Declares a `beforeAll` hook that is executed once per worker process before all tests. When called in the scope of a test file, runs before all tests in the file. When called inside a [`method: Test.describe#1`] group, runs before all tests in the group. If multiple `beforeAll` hooks are added, they will run in the order of their registration.
 
 ```js tab=js-js
 // example.spec.js
@@ -178,7 +178,7 @@ Hook function that takes one or two arguments: an object with worker fixtures an
 ## method: Test.beforeEach
 * since: v1.10
 
-Declares a `beforeEach` hook that is executed before each test. When called in the scope of a test file, runs before each test in the file. When called inside a [`method: Test.describe`] group, runs before each test in the group.  If multiple `beforeEach` hooks are added, they will run in the order of their registration.
+Declares a `beforeEach` hook that is executed before each test. When called in the scope of a test file, runs before each test in the file. When called inside a [`method: Test.describe#1`] group, runs before each test in the group.  If multiple `beforeEach` hooks are added, they will run in the order of their registration.
 
 You can access all the same [Fixtures] as the test function itself, and also the [TestInfo] object that gives a lot of useful information. For example, you can navigate the page before starting the test.
 
@@ -221,7 +221,7 @@ Hook function that takes one or two arguments: an object with fixtures and optio
 
 
 
-## method: Test.describe
+## method: Test.describe#1
 * since: v1.10
 
 Declares a group of tests.
@@ -250,17 +250,58 @@ test.describe('two tests', () => {
 });
 ```
 
-### param: Test.describe.title
+### param: Test.describe#1.title
 * since: v1.10
 - `title` <[string]>
 
 Group title.
 
-### param: Test.describe.callback
+### param: Test.describe#1.callback
 * since: v1.10
 - `callback` <[function]>
 
-A callback that is run immediately when calling [`method: Test.describe`]. Any tests added in this callback will belong to the group.
+A callback that is run immediately when calling [`method: Test.describe#1`]. Any tests added in this callback will belong to the group.
+
+
+## method: Test.describe#2
+* since: v1.24
+
+Declares an anonymous group of tests. This is convenient to give a group of tests a common option with [`method: Test.use`].
+
+```js tab=js-js
+test.describe(() => {
+  test.use({ colorScheme: 'dark' });
+
+  test('one', async ({ page }) => {
+    // ...
+  });
+
+  test('two', async ({ page }) => {
+    // ...
+  });
+});
+```
+
+```js tab=js-ts
+test.describe(() => {
+  test.use({ colorScheme: 'dark' });
+
+  test('one', async ({ page }) => {
+    // ...
+  });
+
+  test('two', async ({ page }) => {
+    // ...
+  });
+});
+```
+
+### param: Test.describe#2.callback
+* since: v1.24
+- `callback` <[function]>
+
+A callback that is run immediately when calling [`method: Test.describe#2`]. Any tests added in this callback will belong to the group.
+
 
 
 ## method: Test.describe.configure
@@ -494,7 +535,7 @@ A callback that is run immediately when calling [`method: Test.describe.serial.o
 ## method: Test.describe.skip
 * since: v1.10
 
-Declares a skipped test group, similarly to [`method: Test.describe`]. Tests in the skipped group are never run.
+Declares a skipped test group, similarly to [`method: Test.describe#1`]. Tests in the skipped group are never run.
 
 ```js tab=js-js
 test.describe.skip('skipped group', () => {
@@ -730,7 +771,7 @@ Optional description that will be reflected in a test report.
 ## method: Test.fail#3
 * since: v1.10
 
-Conditionally mark all tests in a file or [`method: Test.describe`] group as "should fail".
+Conditionally mark all tests in a file or [`method: Test.describe#1`] group as "should fail".
 
 ```js tab=js-js
 const { test, expect } = require('@playwright/test');
@@ -829,7 +870,7 @@ test('test to be fixed', async ({ page }) => {
 });
 ```
 
-Mark all tests in a file or [`method: Test.describe`] group as "fixme".
+Mark all tests in a file or [`method: Test.describe#1`] group as "fixme".
 
 ```js tab=js-js
 const { test, expect } = require('@playwright/test');
@@ -900,7 +941,7 @@ Optional description that will be reflected in a test report.
 ## method: Test.fixme#4
 * since: v1.10
 
-Conditionally mark all tests in a file or [`method: Test.describe`] group as "fixme".
+Conditionally mark all tests in a file or [`method: Test.describe#1`] group as "fixme".
 
 ```js tab=js-js
 const { test, expect } = require('@playwright/test');
@@ -1043,7 +1084,7 @@ test.beforeAll(async () => {
 });
 ```
 
-Changing timeout for all tests in a [`method: Test.describe`] group.
+Changing timeout for all tests in a [`method: Test.describe#1`] group.
 
 ```js tab=js-js
 const { test, expect } = require('@playwright/test');
@@ -1139,7 +1180,7 @@ test('skipped test', async ({ page }) => {
 });
 ```
 
-Unconditionally skip all tests in a file or [`method: Test.describe`] group:
+Unconditionally skip all tests in a file or [`method: Test.describe#1`] group:
 
 ```js tab=js-js
 const { test, expect } = require('@playwright/test');
@@ -1229,7 +1270,7 @@ Optional description that will be reflected in a test report.
 ## method: Test.skip#4
 * since: v1.10
 
-Conditionally skips all tests in a file or [`method: Test.describe`] group.
+Conditionally skips all tests in a file or [`method: Test.describe#1`] group.
 
 ```js tab=js-js
 const { test, expect } = require('@playwright/test');
@@ -1338,7 +1379,7 @@ Optional description that will be reflected in a test report.
 ## method: Test.slow#3
 * since: v1.10
 
-Conditionally mark all tests in a file or [`method: Test.describe`] group as "slow". Slow tests will be given triple the default timeout.
+Conditionally mark all tests in a file or [`method: Test.describe#1`] group as "slow". Slow tests will be given triple the default timeout.
 
 ```js tab=js-js
 const { test, expect } = require('@playwright/test');
@@ -1422,7 +1463,7 @@ Step body.
 ## method: Test.use
 * since: v1.10
 
-Specifies options or fixtures to use in a single test file or a [`method: Test.describe`] group. Most useful to set an option, for example set `locale` to configure `context` fixture. `test.use` can be called either in the global scope or inside `test.describe`, it's is an error to call it within `beforeEach` or `beforeAll`.
+Specifies options or fixtures to use in a single test file or a [`method: Test.describe#1`] group. Most useful to set an option, for example set `locale` to configure `context` fixture. `test.use` can be called either in the global scope or inside `test.describe`, it's is an error to call it within `beforeEach` or `beforeAll`.
 
 ```js tab=js-js
 const { test, expect } = require('@playwright/test');

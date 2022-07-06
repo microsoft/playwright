@@ -10,7 +10,7 @@
   - `type` <[string]> Annotation type, for example `'skip'` or `'fail'`.
   - `description` ?<[string]> Optional description.
 
-The list of annotations applicable to the current test. Includes annotations from the test, annotations from all [`method: Test.describe`] groups the test belongs to and file-level annotations for the test file.
+The list of annotations applicable to the current test. Includes annotations from the test, annotations from all [`method: Test.describe#1`] groups the test belongs to and file-level annotations for the test file.
 
 Annotations are available during test execution through [`property: TestInfo.annotations`].
 

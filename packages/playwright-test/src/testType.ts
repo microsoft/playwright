@@ -98,16 +98,13 @@ export class TestTypeImpl {
     }
   }
 
-  private _describe(type: 'default' | 'only' | 'serial' | 'serial.only' | 'parallel' | 'parallel.only' | 'skip', location: Location, title: string, fn: Function) {
+  private _describe(type: 'default' | 'only' | 'serial' | 'serial.only' | 'parallel' | 'parallel.only' | 'skip', location: Location, title: string | Function, fn?: Function) {
     throwIfRunningInsideJest();
     const suite = this._ensureCurrentSuite(location, 'test.describe()');
+
     if (typeof title === 'function') {
-      throw errorWithLocation(location, [
-        'It looks like you are calling describe() without the title. Pass the title as a first argument:',
-        `test.describe('my test group', () => {`,
-        `  // Declare tests here`,
-        `});`,
-      ].join('\n'));
+      fn = title;
+      title = '';
     }
 
     const child = new Suite(title);
@@ -133,7 +130,7 @@ export class TestTypeImpl {
     }
 
     setCurrentlyLoadingFileSuite(child);
-    fn();
+    fn!();
     setCurrentlyLoadingFileSuite(suite);
   }
 

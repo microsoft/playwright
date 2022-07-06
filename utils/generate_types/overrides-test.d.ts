@@ -109,6 +109,7 @@ export interface TestInfo {
 
 interface SuiteFunction {
   (title: string, callback: () => void): void;
+  (callback: () => void): void;
 }
 
 interface TestFunction<TestArgs> {
