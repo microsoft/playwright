@@ -54,7 +54,7 @@ export class JoiningEventEmitter implements EventEmitter {
   }
 
   removeAllListeners(event?: string | symbol | undefined): this {
-    this._emitterDelegate.removeAllListeners();
+    this._emitterDelegate.removeAllListeners(event);
     return this;
   }
 
