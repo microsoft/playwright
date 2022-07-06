@@ -1,4 +1,5 @@
 # class: Frame
+* since: v1.8
 
 At every point of time, page exposes its current frame tree via the [`method: Page.mainFrame`] and
 [`method: Frame.childFrames`] methods.
@@ -124,6 +125,7 @@ class FrameExamples
 ```
 
 ## async method: Frame.addScriptTag
+* since: v1.8
 - returns: <[ElementHandle]>
 
 Returns the added tag when the script's onload fires or when the script content was injected into frame.
@@ -131,28 +133,33 @@ Returns the added tag when the script's onload fires or when the script content 
 Adds a `<script>` tag into the page with the desired url or content.
 
 ### option: Frame.addScriptTag.url
+* since: v1.8
 - `url` <[string]>
 
 URL of a script to be added.
 
 ### option: Frame.addScriptTag.path
+* since: v1.8
 - `path` <[path]>
 
 Path to the JavaScript file to be injected into frame. If `path` is a relative path, then it is resolved relative to the
 current working directory.
 
 ### option: Frame.addScriptTag.content
+* since: v1.8
 - `content` <[string]>
 
 Raw JavaScript content to be injected into frame.
 
 ### option: Frame.addScriptTag.type
+* since: v1.8
 - `type` <[string]>
 
 Script type. Use 'module' in order to load a Javascript ES6 module. See
 [script](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script) for more details.
 
 ## async method: Frame.addStyleTag
+* since: v1.8
 - returns: <[ElementHandle]>
 
 Returns the added tag when the stylesheet's onload fires or when the CSS content was injected into frame.
@@ -161,22 +168,26 @@ Adds a `<link rel="stylesheet">` tag into the page with the desired url or a `<s
 content.
 
 ### option: Frame.addStyleTag.url
+* since: v1.8
 - `url` <[string]>
 
 URL of the `<link>` tag.
 
 ### option: Frame.addStyleTag.path
+* since: v1.8
 - `path` <[path]>
 
 Path to the CSS file to be injected into frame. If `path` is a relative path, then it is resolved relative to the
 current working directory.
 
 ### option: Frame.addStyleTag.content
+* since: v1.8
 - `content` <[string]>
 
 Raw CSS content to be injected into frame.
 
 ## async method: Frame.check
+* since: v1.8
 
 This method checks an element matching [`param: selector`] by performing the following steps:
 1. Find an element matching [`param: selector`]. If there is none, wait until a matching element is attached to
@@ -194,18 +205,27 @@ When all steps combined have not finished during the specified [`option: timeout
 [TimeoutError]. Passing zero timeout disables this.
 
 ### param: Frame.check.selector = %%-input-selector-%%
+* since: v1.8
 
 ### option: Frame.check.force = %%-input-force-%%
+* since: v1.8
 ### option: Frame.check.noWaitAfter = %%-input-no-wait-after-%%
+* since: v1.8
 ### option: Frame.check.position = %%-input-position-%%
+* since: v1.11
 ### option: Frame.check.strict = %%-input-strict-%%
+* since: v1.14
 ### option: Frame.check.timeout = %%-input-timeout-%%
+* since: v1.8
 ### option: Frame.check.trial = %%-input-trial-%%
+* since: v1.11
 
 ## method: Frame.childFrames
+* since: v1.8
 - returns: <[Array]<[Frame]>>
 
 ## async method: Frame.click
+* since: v1.8
 
 This method clicks an element matching [`param: selector`] by performing the following steps:
 1. Find an element matching [`param: selector`]. If there is none, wait until a matching element is attached to
@@ -220,24 +240,37 @@ When all steps combined have not finished during the specified [`option: timeout
 [TimeoutError]. Passing zero timeout disables this.
 
 ### param: Frame.click.selector = %%-input-selector-%%
+* since: v1.8
 
 ### option: Frame.click.button = %%-input-button-%%
+* since: v1.8
 ### option: Frame.click.clickCount = %%-input-click-count-%%
+* since: v1.8
 ### option: Frame.click.delay = %%-input-down-up-delay-%%
+* since: v1.8
 ### option: Frame.click.force = %%-input-force-%%
+* since: v1.8
 ### option: Frame.click.modifiers = %%-input-modifiers-%%
+* since: v1.8
 ### option: Frame.click.noWaitAfter = %%-input-no-wait-after-%%
+* since: v1.8
 ### option: Frame.click.position = %%-input-position-%%
+* since: v1.8
 ### option: Frame.click.strict = %%-input-strict-%%
+* since: v1.14
 ### option: Frame.click.timeout = %%-input-timeout-%%
+* since: v1.8
 ### option: Frame.click.trial = %%-input-trial-%%
+* since: v1.11
 
 ## async method: Frame.content
+* since: v1.8
 - returns: <[string]>
 
 Gets the full HTML contents of the frame, including the doctype.
 
 ## async method: Frame.dblclick
+* since: v1.8
 * langs:
   - alias-csharp: DblClickAsync
 
@@ -259,18 +292,29 @@ When all steps combined have not finished during the specified [`option: timeout
 :::
 
 ### param: Frame.dblclick.selector = %%-input-selector-%%
+* since: v1.8
 
 ### option: Frame.dblclick.button = %%-input-button-%%
+* since: v1.8
 ### option: Frame.dblclick.force = %%-input-force-%%
+* since: v1.8
 ### option: Frame.dblclick.delay = %%-input-down-up-delay-%%
+* since: v1.8
 ### option: Frame.dblclick.modifiers = %%-input-modifiers-%%
+* since: v1.8
 ### option: Frame.dblclick.noWaitAfter = %%-input-no-wait-after-%%
+* since: v1.8
 ### option: Frame.dblclick.position = %%-input-position-%%
+* since: v1.8
 ### option: Frame.dblclick.strict = %%-input-strict-%%
+* since: v1.14
 ### option: Frame.dblclick.timeout = %%-input-timeout-%%
+* since: v1.8
 ### option: Frame.dblclick.trial = %%-input-trial-%%
+* since: v1.11
 
 ## async method: Frame.dispatchEvent
+* since: v1.8
 
 The snippet below dispatches the `click` event on the element. Regardless of the visibility state of the element, `click`
 is dispatched. This is equivalent to calling
@@ -345,37 +389,53 @@ await frame.DispatchEventAsync("#source", "dragstart", new { dataTransfer });
 ```
 
 ### param: Frame.dispatchEvent.selector = %%-input-selector-%%
+* since: v1.8
 
 ### param: Frame.dispatchEvent.type
+* since: v1.8
 - `type` <[string]>
 
 DOM event type: `"click"`, `"dragstart"`, etc.
 
 ### param: Frame.dispatchEvent.eventInit
+* since: v1.8
 - `eventInit` ?<[EvaluationArgument]>
 
 Optional event-specific initialization properties.
 
 ### option: Frame.dispatchEvent.strict = %%-input-strict-%%
+* since: v1.14
 ### option: Frame.dispatchEvent.timeout = %%-input-timeout-%%
+* since: v1.8
 
 ## async method: Frame.dragAndDrop
+* since: v1.13
 
 ### param: Frame.dragAndDrop.source = %%-input-source-%%
+* since: v1.13
 
 ### param: Frame.dragAndDrop.target = %%-input-target-%%
+* since: v1.13
 
 ### option: Frame.dragAndDrop.force = %%-input-force-%%
+* since: v1.13
 ### option: Frame.dragAndDrop.noWaitAfter = %%-input-no-wait-after-%%
+* since: v1.13
 ### option: Frame.dragAndDrop.strict = %%-input-strict-%%
+* since: v1.14
 ### option: Frame.dragAndDrop.timeout = %%-input-timeout-%%
+* since: v1.13
 ### option: Frame.dragAndDrop.trial = %%-input-trial-%%
+* since: v1.13
 
 ### option: Frame.dragAndDrop.sourcePosition = %%-input-source-position-%%
+* since: v1.14
 
 ### option: Frame.dragAndDrop.targetPosition = %%-input-target-position-%%
+* since: v1.14
 
 ## async method: Frame.evalOnSelector
+* since: v1.9
 * langs:
   - alias-python: eval_on_selector
   - alias-js: $eval
@@ -428,15 +488,20 @@ var html = await frame.EvalOnSelectorAsync(".main-container", "(e, suffix) => e.
 ```
 
 ### param: Frame.evalOnSelector.selector = %%-query-selector-%%
+* since: v1.9
 ### param: Frame.evalOnSelector.expression = %%-evaluate-expression-%%
+* since: v1.9
 ### param: Frame.evalOnSelector.arg
+* since: v1.9
 - `arg` ?<[EvaluationArgument]>
 
 Optional argument to pass to [`param: expression`].
 
 ### option: Frame.evalOnSelector.strict = %%-input-strict-%%
+* since: v1.14
 
 ## async method: Frame.evalOnSelectorAll
+* since: v1.9
 * langs:
   - alias-python: eval_on_selector_all
   - alias-js: $$eval
@@ -478,14 +543,18 @@ var divsCount = await frame.EvalOnSelectorAllAsync<bool>("div", "(divs, min) => 
 ```
 
 ### param: Frame.evalOnSelectorAll.selector = %%-query-selector-%%
+* since: v1.9
 ### param: Frame.evalOnSelectorAll.expression = %%-evaluate-expression-%%
+* since: v1.9
 
 ### param: Frame.evalOnSelectorAll.arg
+* since: v1.9
 - `arg` ?<[EvaluationArgument]>
 
 Optional argument to pass to [`param: expression`].
 
 ## async method: Frame.evaluate
+* since: v1.8
 - returns: <[Serializable]>
 
 Returns the return value of [`param: expression`].
@@ -585,13 +654,16 @@ await bodyHandle.DisposeAsync();
 ```
 
 ### param: Frame.evaluate.expression = %%-evaluate-expression-%%
+* since: v1.8
 
 ### param: Frame.evaluate.arg
+* since: v1.8
 - `arg` ?<[EvaluationArgument]>
 
 Optional argument to pass to [`param: expression`].
 
 ## async method: Frame.evaluateHandle
+* since: v1.8
 - returns: <[JSHandle]>
 
 Returns the return value of [`param: expression`] as a [JSHandle].
@@ -687,13 +759,16 @@ await resultHandle.DisposeAsync();
 ```
 
 ### param: Frame.evaluateHandle.expression = %%-evaluate-expression-%%
+* since: v1.8
 
 ### param: Frame.evaluateHandle.arg
+* since: v1.8
 - `arg` ?<[EvaluationArgument]>
 
 Optional argument to pass to [`param: expression`].
 
 ## async method: Frame.fill
+* since: v1.8
 
 This method waits for an element matching [`param: selector`], waits for [actionability](../actionability.md) checks, focuses the element, fills it and triggers an `input` event after filling. Note that you can pass an empty string to clear the input field.
 
@@ -702,28 +777,39 @@ If the target element is not an `<input>`, `<textarea>` or `[contenteditable]` e
 To send fine-grained keyboard events, use [`method: Frame.type`].
 
 ### param: Frame.fill.selector = %%-input-selector-%%
+* since: v1.8
 
 ### param: Frame.fill.value
+* since: v1.8
 - `value` <[string]>
 
 Value to fill for the `<input>`, `<textarea>` or `[contenteditable]` element.
 
 ### option: Frame.fill.force = %%-input-force-%%
+* since: v1.13
 ### option: Frame.fill.noWaitAfter = %%-input-no-wait-after-%%
+* since: v1.8
 ### option: Frame.fill.strict = %%-input-strict-%%
+* since: v1.14
 ### option: Frame.fill.timeout = %%-input-timeout-%%
+* since: v1.8
 
 ## async method: Frame.focus
+* since: v1.8
 
 This method fetches an element with [`param: selector`] and focuses it. If there's no element matching
 [`param: selector`], the method waits until a matching element appears in the DOM.
 
 ### param: Frame.focus.selector = %%-input-selector-%%
+* since: v1.8
 
 ### option: Frame.focus.strict = %%-input-strict-%%
+* since: v1.14
 ### option: Frame.focus.timeout = %%-input-timeout-%%
+* since: v1.8
 
 ## async method: Frame.frameElement
+* since: v1.8
 - returns: <[ElementHandle]>
 
 Returns the `frame` or `iframe` element handle which corresponds to this frame.
@@ -765,6 +851,7 @@ Console.WriteLine(frame == contentFrame); // -> True
 
 
 ## method: Frame.frameLocator
+* since: v1.17
 - returns: <[FrameLocator]>
 
 When working with iframes, you can create a frame locator that will enter the iframe and allow selecting elements
@@ -797,24 +884,31 @@ await locator.ClickAsync();
 ```
 
 ### param: Frame.frameLocator.selector = %%-find-selector-%%
+* since: v1.17
 
 
 ## async method: Frame.getAttribute
+* since: v1.8
 - returns: <[null]|[string]>
 
 Returns element attribute value.
 
 ### param: Frame.getAttribute.selector = %%-input-selector-%%
+* since: v1.8
 
 ### param: Frame.getAttribute.name
+* since: v1.8
 - `name` <[string]>
 
 Attribute name to get the value for.
 
 ### option: Frame.getAttribute.strict = %%-input-strict-%%
+* since: v1.14
 ### option: Frame.getAttribute.timeout = %%-input-timeout-%%
+* since: v1.8
 
 ## async method: Frame.goto
+* since: v1.8
 * langs:
   - alias-java: navigate
 - returns: <[null]|[Response]>
@@ -844,21 +938,26 @@ Headless mode doesn't support navigation to a PDF document. See the
 :::
 
 ### param: Frame.goto.url
+* since: v1.8
 - `url` <[string]>
 
 URL to navigate frame to. The url should include scheme, e.g. `https://`.
 
 ### option: Frame.goto.waitUntil = %%-navigation-wait-until-%%
+* since: v1.8
 
 ### option: Frame.goto.timeout = %%-navigation-timeout-%%
+* since: v1.8
 
 ### option: Frame.goto.referer
+* since: v1.8
 - `referer` <[string]>
 
 Referer header value. If provided it will take preference over the referer header value set by
 [`method: Page.setExtraHTTPHeaders`].
 
 ## async method: Frame.hover
+* since: v1.8
 
 This method hovers over an element matching [`param: selector`] by performing the following steps:
 1. Find an element matching [`param: selector`]. If there is none, wait until a matching element is attached to
@@ -873,35 +972,51 @@ When all steps combined have not finished during the specified [`option: timeout
 [TimeoutError]. Passing zero timeout disables this.
 
 ### param: Frame.hover.selector = %%-input-selector-%%
+* since: v1.8
 
 ### option: Frame.hover.position = %%-input-position-%%
+* since: v1.8
 ### option: Frame.hover.modifiers = %%-input-modifiers-%%
+* since: v1.8
 ### option: Frame.hover.force = %%-input-force-%%
+* since: v1.8
 ### option: Frame.hover.strict = %%-input-strict-%%
+* since: v1.14
 ### option: Frame.hover.timeout = %%-input-timeout-%%
+* since: v1.8
 ### option: Frame.hover.trial = %%-input-trial-%%
+* since: v1.11
 
 ## async method: Frame.innerHTML
+* since: v1.8
 - returns: <[string]>
 
 Returns `element.innerHTML`.
 
 ### param: Frame.innerHTML.selector = %%-input-selector-%%
+* since: v1.8
 
 ### option: Frame.innerHTML.strict = %%-input-strict-%%
+* since: v1.14
 ### option: Frame.innerHTML.timeout = %%-input-timeout-%%
+* since: v1.8
 
 ## async method: Frame.innerText
+* since: v1.8
 - returns: <[string]>
 
 Returns `element.innerText`.
 
 ### param: Frame.innerText.selector = %%-input-selector-%%
+* since: v1.8
 
 ### option: Frame.innerText.strict = %%-input-strict-%%
+* since: v1.14
 ### option: Frame.innerText.timeout = %%-input-timeout-%%
+* since: v1.8
 
 ## async method: Frame.inputValue
+* since: v1.13
 - returns: <[string]>
 
 Returns `input.value` for the selected `<input>` or `<textarea>` or `<select>` element.
@@ -909,82 +1024,111 @@ Returns `input.value` for the selected `<input>` or `<textarea>` or `<select>` e
 Throws for non-input elements. However, if the element is inside the `<label>` element that has an associated [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), returns the value of the control.
 
 ### param: Frame.inputValue.selector = %%-input-selector-%%
+* since: v1.13
 
 ### option: Frame.inputValue.strict = %%-input-strict-%%
+* since: v1.14
 ### option: Frame.inputValue.timeout = %%-input-timeout-%%
+* since: v1.13
 
 ## async method: Frame.isChecked
+* since: v1.8
 - returns: <[boolean]>
 
 Returns whether the element is checked. Throws if the element is not a checkbox or radio input.
 
 ### param: Frame.isChecked.selector = %%-input-selector-%%
+* since: v1.8
 
 ### option: Frame.isChecked.strict = %%-input-strict-%%
+* since: v1.14
 ### option: Frame.isChecked.timeout = %%-input-timeout-%%
+* since: v1.8
 
 ## method: Frame.isDetached
+* since: v1.8
 - returns: <[boolean]>
 
 Returns `true` if the frame has been detached, or `false` otherwise.
 
 ## async method: Frame.isDisabled
+* since: v1.8
 - returns: <[boolean]>
 
 Returns whether the element is disabled, the opposite of [enabled](../actionability.md#enabled).
 
 ### param: Frame.isDisabled.selector = %%-input-selector-%%
+* since: v1.8
 
 ### option: Frame.isDisabled.strict = %%-input-strict-%%
+* since: v1.14
 ### option: Frame.isDisabled.timeout = %%-input-timeout-%%
+* since: v1.8
 
 ## async method: Frame.isEditable
+* since: v1.8
 - returns: <[boolean]>
 
 Returns whether the element is [editable](../actionability.md#editable).
 
 ### param: Frame.isEditable.selector = %%-input-selector-%%
+* since: v1.8
 
 ### option: Frame.isEditable.strict = %%-input-strict-%%
+* since: v1.14
 ### option: Frame.isEditable.timeout = %%-input-timeout-%%
+* since: v1.8
 
 ## async method: Frame.isEnabled
+* since: v1.8
 - returns: <[boolean]>
 
 Returns whether the element is [enabled](../actionability.md#enabled).
 
 ### param: Frame.isEnabled.selector = %%-input-selector-%%
+* since: v1.8
 
 ### option: Frame.isEnabled.strict = %%-input-strict-%%
+* since: v1.14
 ### option: Frame.isEnabled.timeout = %%-input-timeout-%%
+* since: v1.8
 
 ## async method: Frame.isHidden
+* since: v1.8
 - returns: <[boolean]>
 
 Returns whether the element is hidden, the opposite of [visible](../actionability.md#visible).  [`option: selector`] that does not match any elements is considered hidden.
 
 ### param: Frame.isHidden.selector = %%-input-selector-%%
+* since: v1.8
 
 ### option: Frame.isHidden.strict = %%-input-strict-%%
+* since: v1.14
 ### option: Frame.isHidden.timeout
+* since: v1.8
 - `timeout` <[float]>
 
 **DEPRECATED** This option is ignored. [`method: Frame.isHidden`] does not wait for the element to become hidden and returns immediately.
 
 ## async method: Frame.isVisible
+* since: v1.8
 - returns: <[boolean]>
 
 Returns whether the element is [visible](../actionability.md#visible). [`option: selector`] that does not match any elements is considered not visible.
 
 ### param: Frame.isVisible.selector = %%-input-selector-%%
+* since: v1.8
 
 ### option: Frame.isVisible.strict = %%-input-strict-%%
+* since: v1.14
 ### option: Frame.isVisible.timeout
+* since: v1.8
 - `timeout` <[float]>
 
 **DEPRECATED** This option is ignored. [`method: Frame.isVisible`] does not wait for the element to become visible and returns immediately.
 
 ## method: Frame.locator
+* since: v1.14
 - returns: <[Locator]>
 
 The method returns an element locator that can be used to perform actions in the frame.
@@ -993,9 +1137,12 @@ Locator is resolved to the element immediately before performing an action, so a
 [Learn more about locators](../locators.md).
 
 ### param: Frame.locator.selector = %%-find-selector-%%
-### option: Frame.locator.-inline- = %%-locator-options-list-%%
+* since: v1.14
+### option: Frame.locator.-inline- = %%-locator-options-list-v1.14-%%
+* since: v1.14
 
 ## method: Frame.name
+* since: v1.8
 - returns: <[string]>
 
 Returns frame's name attribute as specified in the tag.
@@ -1007,16 +1154,19 @@ This value is calculated once when the frame is created, and will not update if 
 :::
 
 ## method: Frame.page
+* since: v1.8
 - returns: <[Page]>
 
 Returns the page containing this frame.
 
 ## method: Frame.parentFrame
+* since: v1.8
 - returns: <[null]|[Frame]>
 
 Parent frame, if any. Detached frames and main frames return `null`.
 
 ## async method: Frame.press
+* since: v1.8
 
 [`param: key`] can specify the intended
 [keyboardEvent.key](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key) value or a single character to
@@ -1037,22 +1187,29 @@ Shortcuts such as `key: "Control+o"` or `key: "Control+Shift+T"` are supported a
 modifier, modifier is pressed and being held while the subsequent key is being pressed.
 
 ### param: Frame.press.selector = %%-input-selector-%%
+* since: v1.8
 
 ### param: Frame.press.key
+* since: v1.8
 - `key` <[string]>
 
 Name of the key to press or a character to generate, such as `ArrowLeft` or `a`.
 
 ### option: Frame.press.delay
+* since: v1.8
 - `delay` <[float]>
 
 Time to wait between `keydown` and `keyup` in milliseconds. Defaults to 0.
 
 ### option: Frame.press.noWaitAfter = %%-input-no-wait-after-%%
+* since: v1.8
 ### option: Frame.press.strict = %%-input-strict-%%
+* since: v1.14
 ### option: Frame.press.timeout = %%-input-timeout-%%
+* since: v1.8
 
 ## async method: Frame.querySelector
+* since: v1.9
 * langs:
   - alias-python: query_selector
   - alias-js: $
@@ -1069,10 +1226,13 @@ The method finds an element matching the specified selector within the frame. Se
 returns `null`.
 
 ### param: Frame.querySelector.selector = %%-query-selector-%%
+* since: v1.9
 
 ### option: Frame.querySelector.strict = %%-input-strict-%%
+* since: v1.14
 
 ## async method: Frame.querySelectorAll
+* since: v1.9
 * langs:
   - alias-python: query_selector_all
   - alias-js: $$
@@ -1089,8 +1249,10 @@ The method finds all elements matching the specified selector within the frame. 
 returns empty array.
 
 ### param: Frame.querySelectorAll.selector = %%-query-selector-%%
+* since: v1.9
 
 ## async method: Frame.selectOption
+* since: v1.8
 - returns: <[Array]<[string]>>
 
 This method waits for an element matching [`param: selector`], waits for [actionability](../actionability.md) checks, waits until all specified options are present in the `<select>` element and selects these options.
@@ -1149,14 +1311,21 @@ await frame.SelectOptionAsync("select#colors", new[] { "red", "green", "blue" })
 ```
 
 ### param: Frame.selectOption.selector = %%-query-selector-%%
+* since: v1.8
 ### param: Frame.selectOption.values = %%-select-options-values-%%
+* since: v1.8
 ### option: Frame.selectOption.force = %%-input-force-%%
+* since: v1.13
 ### option: Frame.selectOption.noWaitAfter = %%-input-no-wait-after-%%
+* since: v1.8
 ### option: Frame.selectOption.strict = %%-input-strict-%%
+* since: v1.14
 ### option: Frame.selectOption.timeout = %%-input-timeout-%%
+* since: v1.8
 
 
 ## async method: Frame.setChecked
+* since: v1.15
 
 This method checks or unchecks an element matching [`param: selector`] by performing the following steps:
 1. Find an element matching [`param: selector`]. If there is none, wait until a matching element is attached to
@@ -1174,27 +1343,40 @@ When all steps combined have not finished during the specified [`option: timeout
 [TimeoutError]. Passing zero timeout disables this.
 
 ### param: Frame.setChecked.selector = %%-input-selector-%%
+* since: v1.15
 ### param: Frame.setChecked.checked = %%-input-checked-%%
+* since: v1.15
 ### option: Frame.setChecked.force = %%-input-force-%%
+* since: v1.15
 ### option: Frame.setChecked.noWaitAfter = %%-input-no-wait-after-%%
+* since: v1.15
 ### option: Frame.setChecked.position = %%-input-position-%%
+* since: v1.15
 ### option: Frame.setChecked.strict = %%-input-strict-%%
+* since: v1.15
 ### option: Frame.setChecked.timeout = %%-input-timeout-%%
+* since: v1.15
 ### option: Frame.setChecked.trial = %%-input-trial-%%
+* since: v1.15
 
 
 ## async method: Frame.setContent
+* since: v1.8
 
 ### param: Frame.setContent.html
+* since: v1.8
 - `html` <[string]>
 
 HTML markup to assign to the page.
 
 ### option: Frame.setContent.timeout = %%-navigation-timeout-%%
+* since: v1.8
 
 ### option: Frame.setContent.waitUntil = %%-navigation-wait-until-%%
+* since: v1.8
 
 ## async method: Frame.setInputFiles
+* since: v1.8
 
 Sets the value of the file input to these file paths or files. If some of the `filePaths` are relative paths, then they
 are resolved relative to the current working directory. For empty array, clears the selected files.
@@ -1203,12 +1385,18 @@ This method expects [`param: selector`] to point to an
 [input element](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input). However, if the element is inside the `<label>` element that has an associated [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), targets the control instead.
 
 ### param: Frame.setInputFiles.selector = %%-input-selector-%%
+* since: v1.8
 ### param: Frame.setInputFiles.files = %%-input-files-%%
+* since: v1.8
 ### option: Frame.setInputFiles.noWaitAfter = %%-input-no-wait-after-%%
+* since: v1.8
 ### option: Frame.setInputFiles.strict = %%-input-strict-%%
+* since: v1.14
 ### option: Frame.setInputFiles.timeout = %%-input-timeout-%%
+* since: v1.8
 
 ## async method: Frame.tap
+* since: v1.8
 
 This method taps an element matching [`param: selector`] by performing the following steps:
 1. Find an element matching [`param: selector`]. If there is none, wait until a matching element is attached to
@@ -1227,31 +1415,45 @@ When all steps combined have not finished during the specified [`option: timeout
 :::
 
 ### param: Frame.tap.selector = %%-input-selector-%%
+* since: v1.8
 
 ### option: Frame.tap.force = %%-input-force-%%
+* since: v1.8
 ### option: Frame.tap.modifiers = %%-input-modifiers-%%
+* since: v1.8
 ### option: Frame.tap.noWaitAfter = %%-input-no-wait-after-%%
+* since: v1.8
 ### option: Frame.tap.position = %%-input-position-%%
+* since: v1.8
 ### option: Frame.tap.strict = %%-input-strict-%%
+* since: v1.14
 ### option: Frame.tap.timeout = %%-input-timeout-%%
+* since: v1.8
 ### option: Frame.tap.trial = %%-input-trial-%%
+* since: v1.11
 
 ## async method: Frame.textContent
+* since: v1.8
 - returns: <[null]|[string]>
 
 Returns `element.textContent`.
 
 ### param: Frame.textContent.selector = %%-input-selector-%%
+* since: v1.8
 
 ### option: Frame.textContent.strict = %%-input-strict-%%
+* since: v1.14
 ### option: Frame.textContent.timeout = %%-input-timeout-%%
+* since: v1.8
 
 ## async method: Frame.title
+* since: v1.8
 - returns: <[string]>
 
 Returns the page title.
 
 ## async method: Frame.type
+* since: v1.8
 
 Sends a `keydown`, `keypress`/`input`, and `keyup` event for each character in the text. `frame.type` can be used to
 send fine-grained keyboard events. To fill values in form fields, use [`method: Frame.fill`].
@@ -1286,22 +1488,29 @@ await frame.TypeAsync("#mytextarea", "world", delay: 100); // types slower, like
 ```
 
 ### param: Frame.type.selector = %%-input-selector-%%
+* since: v1.8
 
 ### param: Frame.type.text
+* since: v1.8
 - `text` <[string]>
 
 A text to type into a focused element.
 
 ### option: Frame.type.delay
+* since: v1.8
 - `delay` <[float]>
 
 Time to wait between key presses in milliseconds. Defaults to 0.
 
 ### option: Frame.type.noWaitAfter = %%-input-no-wait-after-%%
+* since: v1.8
 ### option: Frame.type.strict = %%-input-strict-%%
+* since: v1.14
 ### option: Frame.type.timeout = %%-input-timeout-%%
+* since: v1.8
 
 ## async method: Frame.uncheck
+* since: v1.8
 
 This method checks an element matching [`param: selector`] by performing the following steps:
 1. Find an element matching [`param: selector`]. If there is none, wait until a matching element is attached to
@@ -1319,20 +1528,29 @@ When all steps combined have not finished during the specified [`option: timeout
 [TimeoutError]. Passing zero timeout disables this.
 
 ### param: Frame.uncheck.selector = %%-input-selector-%%
+* since: v1.8
 
 ### option: Frame.uncheck.force = %%-input-force-%%
+* since: v1.8
 ### option: Frame.uncheck.noWaitAfter = %%-input-no-wait-after-%%
+* since: v1.8
 ### option: Frame.uncheck.position = %%-input-position-%%
+* since: v1.11
 ### option: Frame.uncheck.strict = %%-input-strict-%%
+* since: v1.14
 ### option: Frame.uncheck.timeout = %%-input-timeout-%%
+* since: v1.8
 ### option: Frame.uncheck.trial = %%-input-trial-%%
+* since: v1.11
 
 ## method: Frame.url
+* since: v1.8
 - returns: <[string]>
 
 Returns frame's url.
 
 ## async method: Frame.waitForFunction
+* since: v1.8
 - returns: <[JSHandle]>
 
 Returns when the [`param: expression`] returns a truthy value, returns that value.
@@ -1447,19 +1665,25 @@ await page.MainFrame.WaitForFunctionAsync("selector => !!document.querySelector(
 ```
 
 ### param: Frame.waitForFunction.expression = %%-evaluate-expression-%%
+* since: v1.8
 
 ### param: Frame.waitForFunction.arg
+* since: v1.8
 - `arg` ?<[EvaluationArgument]>
 
 Optional argument to pass to [`param: expression`].
 
 ### option: Frame.waitForFunction.polling = %%-js-python-wait-for-function-polling-%%
+* since: v1.8
 
 ### option: Frame.waitForFunction.polling = %%-csharp-java-wait-for-function-polling-%%
+* since: v1.8
 
 ### option: Frame.waitForFunction.timeout = %%-wait-for-timeout-%%
+* since: v1.8
 
 ## async method: Frame.waitForLoadState
+* since: v1.8
 
 Waits for the required load state to be reached.
 
@@ -1492,10 +1716,13 @@ await frame.WaitForLoadStateAsync(); // Defaults to LoadState.Load
 ```
 
 ### param: Frame.waitForLoadState.state = %%-wait-for-load-state-state-%%
+* since: v1.8
 
 ### option: Frame.waitForLoadState.timeout = %%-navigation-timeout-%%
+* since: v1.8
 
 ## async method: Frame.waitForNavigation
+* since: v1.8
 * langs:
   * alias-python: expect_navigation
   * alias-csharp: RunAndWaitForNavigation
@@ -1551,12 +1778,16 @@ a navigation.
 :::
 
 ### option: Frame.waitForNavigation.url = %%-wait-for-navigation-url-%%
+* since: v1.8
 
 ### option: Frame.waitForNavigation.waitUntil = %%-navigation-wait-until-%%
+* since: v1.8
 
 ### option: Frame.waitForNavigation.timeout = %%-navigation-timeout-%%
+* since: v1.8
 
 ## async method: Frame.waitForSelector
+* since: v1.8
 - returns: <[null]|[ElementHandle]>
 
 Returns when element specified by selector satisfies [`option: state`] option. Returns `null` if waiting for `hidden` or
@@ -1670,11 +1901,16 @@ class FrameExamples
 ```
 
 ### param: Frame.waitForSelector.selector = %%-query-selector-%%
+* since: v1.8
 ### option: Frame.waitForSelector.state = %%-wait-for-selector-state-%%
+* since: v1.8
 ### option: Frame.waitForSelector.strict = %%-input-strict-%%
+* since: v1.14
 ### option: Frame.waitForSelector.timeout = %%-input-timeout-%%
+* since: v1.8
 
 ## async method: Frame.waitForTimeout
+* since: v1.8
 
 Waits for the given [`param: timeout`] in milliseconds.
 
@@ -1682,11 +1918,13 @@ Note that `frame.waitForTimeout()` should only be used for debugging. Tests usin
 be flaky. Use signals such as network events, selectors becoming visible and others instead.
 
 ### param: Frame.waitForTimeout.timeout
+* since: v1.8
 - `timeout` <[float]>
 
 A timeout to wait for
 
 ## async method: Frame.waitForURL
+* since: v1.11
 
 Waits for the frame to navigate to the given URL.
 
@@ -1716,5 +1954,8 @@ await frame.WaitForURLAsync("**/target.html");
 ```
 
 ### param: Frame.waitForURL.url = %%-wait-for-navigation-url-%%
+* since: v1.11
 ### option: Frame.waitForURL.timeout = %%-navigation-timeout-%%
+* since: v1.11
 ### option: Frame.waitForURL.waitUntil = %%-navigation-wait-until-%%
+* since: v1.11

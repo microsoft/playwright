@@ -790,7 +790,7 @@ An acceptable ratio of pixels that are different to the total amount of pixels, 
 
 An acceptable perceived color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between the same pixel in compared images, between zero (strict) and one (lax), default is configurable with `TestConfig.expect`. Defaults to `0.2`.
 
-## shared-context-params-list
+## shared-context-params-list-v1.8
 - %%-context-option-acceptdownloads-%%
 - %%-context-option-ignorehttpserrors-%%
 - %%-context-option-bypasscsp-%%
@@ -926,7 +926,7 @@ If specified, traces are saved into this directory.
 
 Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on.
 
-## shared-browser-options-list
+## shared-browser-options-list-v1.8
 - %%-browser-option-args-%%
 - %%-browser-option-channel-%%
 - %%-browser-option-chromiumsandbox-%%
@@ -958,7 +958,7 @@ For example, `article` that has `text=Playwright` matches `<article><div>Playwri
 
 Note that outer and inner locators must belong to the same frame. Inner locator must not contain [FrameLocator]s.
 
-## locator-options-list
+## locator-options-list-v1.14
 - %%-locator-option-has-text-%%
 - %%-locator-option-has-%%
 
@@ -1043,7 +1043,7 @@ Defaults to `"css"`.
 
 When set to `"hide"`, screenshot will hide text caret. When set to `"initial"`, text caret behavior will not be changed.  Defaults to `"hide"`.
 
-## screenshot-options-common-list
+## screenshot-options-common-list-v1.8
 - %%-screenshot-option-animations-%%
 - %%-screenshot-option-omit-background-%%
 - %%-screenshot-option-quality-%%

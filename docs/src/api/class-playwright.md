@@ -1,4 +1,5 @@
 # class: Playwright
+* since: v1.8
 
 Playwright module provides a method to launch a browser instance. The following is a typical example of using Playwright
 to drive automation:
@@ -84,11 +85,13 @@ class PlaywrightExample
 ```
 
 ## property: Playwright.chromium
+* since: v1.8
 - type: <[BrowserType]>
 
 This object can be used to launch or connect to Chromium, returning instances of [Browser].
 
 ## property: Playwright.devices
+* since: v1.8
 * langs: js, python
 - type: <[Object]>
 
@@ -148,6 +151,7 @@ with sync_playwright() as playwright:
 ```
 
 ## property: Playwright.devices
+* since: v1.8
 * langs: csharp
 - type: <[IReadOnlyDictionary<string, BrowserNewContextOptions>]>
 
@@ -173,6 +177,7 @@ class PlaywrightExample
 ```
 
 ## property: Playwright.errors
+* since: v1.8
 * langs: js
 - type: <[Object]>
   - `TimeoutError` <[function]> A class of [TimeoutError].
@@ -210,11 +215,13 @@ except TimeoutError as e:
 ```
 
 ## property: Playwright.firefox
+* since: v1.8
 - type: <[BrowserType]>
 
 This object can be used to launch or connect to Firefox, returning instances of [Browser].
 
 ## property: Playwright.request
+* since: v1.16
 * langs:
   - alias-csharp: APIRequest
 - type: <[APIRequest]>
@@ -222,12 +229,14 @@ This object can be used to launch or connect to Firefox, returning instances of 
 Exposes API that can be used for the Web API testing.
 
 ## property: Playwright.selectors
+* since: v1.8
 - type: <[Selectors]>
 
 Selectors can be used to install custom selector engines. See
 [Working with selectors](../selectors.md) for more information.
 
 ## property: Playwright.webkit
+* since: v1.8
 - type: <[BrowserType]>
 
 This object can be used to launch or connect to WebKit, returning instances of [Browser].

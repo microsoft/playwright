@@ -1,4 +1,5 @@
 # class: BrowserContext
+* since: v1.8
 * extends: [EventEmitter]
 
 BrowserContexts provide a way to operate multiple independent browser sessions.
@@ -62,6 +63,7 @@ await context.CloseAsync();
 ```
 
 ## event: BrowserContext.backgroundPage
+* since: v1.11
 * langs: js, python
 - argument: <[Page]>
 
@@ -85,6 +87,7 @@ background_page = context.wait_for_event("backgroundpage")
 ```
 
 ## event: BrowserContext.close
+* since: v1.8
 - argument: <[BrowserContext]>
 
 Emitted when Browser context gets closed. This might happen because of one of the following:
@@ -93,6 +96,7 @@ Emitted when Browser context gets closed. This might happen because of one of th
 * The [`method: Browser.close`] method was called.
 
 ## event: BrowserContext.page
+* since: v1.8
 - argument: <[Page]>
 
 The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event will
@@ -145,6 +149,7 @@ cases).
 :::
 
 ## event: BrowserContext.request
+* since: v1.12
 - argument: <[Request]>
 
 Emitted when a request is issued from any pages created through this context.
@@ -155,6 +160,7 @@ In order to intercept and mutate requests, see [`method: BrowserContext.route`]
 or [`method: Page.route`].
 
 ## event: BrowserContext.requestFailed
+* since: v1.12
 - argument: <[Request]>
 
 Emitted when a request fails, for example by timing out. To only listen for
@@ -166,6 +172,7 @@ with [`event: BrowserContext.requestFinished`] event and not with [`event: Brows
 :::
 
 ## event: BrowserContext.requestFinished
+* since: v1.12
 - argument: <[Request]>
 
 Emitted when a request finishes successfully after downloading the response body. For a successful response, the
@@ -173,6 +180,7 @@ sequence of events is `request`, `response` and `requestfinished`. To listen for
 successful requests from a particular page, use [`event: Page.requestFinished`].
 
 ## event: BrowserContext.response
+* since: v1.12
 - argument: <[Response]>
 
 Emitted when [response] status and headers are received for a request. For a successful response, the sequence of events
@@ -180,6 +188,7 @@ is `request`, `response` and `requestfinished`. To listen for response events
 from a particular page, use [`event: Page.response`].
 
 ## event: BrowserContext.serviceWorker
+* since: v1.11
 * langs: js, python
 - argument: <[Worker]>
 
@@ -190,6 +199,7 @@ Service workers are only supported on Chromium-based browsers.
 Emitted when new service worker is created in the context.
 
 ## async method: BrowserContext.addCookies
+* since: v1.8
 
 Adds cookies into this browser context. All pages within this context will have these cookies installed. Cookies can be
 obtained via [`method: BrowserContext.cookies`].
@@ -215,6 +225,7 @@ await context.AddCookiesAsync(new[] { cookie1, cookie2 });
 ```
 
 ### param: BrowserContext.addCookies.cookies
+* since: v1.8
 - `cookies` <[Array]<[Object]>>
   - `name` <[string]>
   - `value` <[string]>
@@ -227,6 +238,7 @@ await context.AddCookiesAsync(new[] { cookie1, cookie2 });
   - `sameSite` ?<[SameSiteAttribute]<"Strict"|"Lax"|"None">> Optional.
 
 ## async method: BrowserContext.addInitScript
+* since: v1.8
 
 Adds a script which would be evaluated in one of the following scenarios:
 * Whenever a page is created in the browser context or is navigated.
@@ -275,6 +287,7 @@ The order of evaluation of multiple scripts installed via [`method: BrowserConte
 :::
 
 ### param: BrowserContext.addInitScript.script
+* since: v1.8
 * langs: js
 - `script` <[function]|[string]|[Object]>
   - `path` ?<[path]> Path to the JavaScript file. If `path` is a relative path, then it is resolved relative to the
@@ -284,18 +297,21 @@ The order of evaluation of multiple scripts installed via [`method: BrowserConte
 Script to be evaluated in all pages in the browser context.
 
 ### param: BrowserContext.addInitScript.script
+* since: v1.8
 * langs: csharp, java
 - `script` <[string]|[path]>
 
 Script to be evaluated in all pages in the browser context.
 
 ### param: BrowserContext.addInitScript.arg
+* since: v1.8
 * langs: js
 - `arg` ?<[Serializable]>
 
 Optional argument to pass to [`param: script`] (only supported when passing a function).
 
 ## method: BrowserContext.backgroundPages
+* since: v1.11
 * langs: js, python
 - returns: <[Array]<[Page]>>
 
@@ -306,15 +322,18 @@ Background pages are only supported on Chromium-based browsers.
 All existing background pages in the context.
 
 ## method: BrowserContext.browser
+* since: v1.8
 - returns: <[null]|[Browser]>
 
 Returns the browser instance of the context. If it was launched as a persistent context null gets returned.
 
 ## async method: BrowserContext.clearCookies
+* since: v1.8
 
 Clears context cookies.
 
 ## async method: BrowserContext.clearPermissions
+* since: v1.8
 
 Clears all permission overrides for the browser context.
 
@@ -356,6 +375,7 @@ await context.ClearPermissionsAsync();
 ```
 
 ## async method: BrowserContext.close
+* since: v1.8
 
 Closes the browser context. All the pages that belong to the browser context will be closed.
 
@@ -364,6 +384,7 @@ The default browser context cannot be closed.
 :::
 
 ## async method: BrowserContext.cookies
+* since: v1.8
 - returns: <[Array]<[Object]>>
   - `name` <[string]>
   - `value` <[string]>
@@ -378,11 +399,13 @@ If no URLs are specified, this method returns all cookies. If URLs are specified
 are returned.
 
 ### param: BrowserContext.cookies.urls
+* since: v1.8
 - `urls` ?<[string]|[Array]<[string]>>
 
 Optional list of URLs.
 
 ## async method: BrowserContext.exposeBinding
+* since: v1.8
 
 The method adds a function called [`param: name`] on the `window` object of every frame in every page in the context.
 When called, the function executes [`param: callback`] and returns a [Promise] which resolves to the return value of
@@ -588,22 +611,26 @@ Assert.AreEqual("Click me", await result.Task);
 ```
 
 ### param: BrowserContext.exposeBinding.name
+* since: v1.8
 - `name` <[string]>
 
 Name of the function on the window object.
 
 ### param: BrowserContext.exposeBinding.callback
+* since: v1.8
 - `callback` <[function]>
 
 Callback function that will be called in the Playwright's context.
 
 ### option: BrowserContext.exposeBinding.handle
+* since: v1.8
 - `handle` <[boolean]>
 
 Whether to pass the argument as a handle, instead of passing by value. When passing a handle, only one argument is
 supported. When passing by value, multiple arguments are supported.
 
 ## async method: BrowserContext.exposeFunction
+* since: v1.8
 
 The method adds a function called [`param: name`] on the `window` object of every frame in every page in the context.
 When called, the function executes [`param: callback`] and returns a [Promise] which resolves to the return value of
@@ -776,21 +803,25 @@ class BrowserContextExamples
 ```
 
 ### param: BrowserContext.exposeFunction.name
+* since: v1.8
 - `name` <[string]>
 
 Name of the function on the window object.
 
 ### param: BrowserContext.exposeFunction.callback
+* since: v1.8
 - `callback` <[function]>
 
 Callback function that will be called in the Playwright's context.
 
 ## async method: BrowserContext.grantPermissions
+* since: v1.8
 
 Grants specified permissions to the browser context. Only grants corresponding permissions to the given origin if
 specified.
 
 ### param: BrowserContext.grantPermissions.permissions
+* since: v1.8
 - `permissions` <[Array]<[string]>>
 
 A permission or an array of permissions to grant. Permissions can be one of the following values:
@@ -811,11 +842,13 @@ A permission or an array of permissions to grant. Permissions can be one of the 
 * `'payment-handler'`
 
 ### option: BrowserContext.grantPermissions.origin
+* since: v1.8
 - `origin` <[string]>
 
 The [origin] to grant permissions to, e.g. "https://example.com".
 
 ## async method: BrowserContext.newCDPSession
+* since: v1.11
 * langs: js, python
 - returns: <[CDPSession]>
 
@@ -826,22 +859,26 @@ CDP sessions are only supported on Chromium-based browsers.
 Returns the newly created session.
 
 ### param: BrowserContext.newCDPSession.page
+* since: v1.11
 - `page` <[Page]|[Frame]>
 
 Target to create new session for. For backwards-compatibility, this parameter is
 named `page`, but it can be a `Page` or `Frame` type.
 
 ## async method: BrowserContext.newPage
+* since: v1.8
 - returns: <[Page]>
 
 Creates a new page in the browser context.
 
 ## method: BrowserContext.pages
+* since: v1.8
 - returns: <[Array]<[Page]>>
 
 Returns all open pages in the context.
 
 ## property: BrowserContext.request
+* since: v1.16
 * langs:
   - alias-csharp: APIRequest
 - type: <[APIRequestContext]>
@@ -849,6 +886,7 @@ Returns all open pages in the context.
 API testing helper associated with this context. Requests made with this API will use context cookies.
 
 ## async method: BrowserContext.route
+* since: v1.8
 
 Routing provides the capability to modify network requests that are made by any page in the browser context. Once route
 is enabled, every request matching the url pattern will stall unless it's continued, fulfilled or aborted.
@@ -1002,6 +1040,7 @@ Enabling routing disables http cache.
 :::
 
 ### param: BrowserContext.route.url
+* since: v1.8
 - `url` <[string]|[RegExp]|[function]\([URL]\):[boolean]>
 
 A glob pattern, regex pattern or predicate receiving [URL] to match while routing.
@@ -1009,34 +1048,40 @@ When a [`option: baseURL`] via the context options was provided and the passed U
 it gets merged via the [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
 
 ### param: BrowserContext.route.handler
+* since: v1.8
 * langs: js, python
 - `handler` <[function]\([Route], [Request]\)>
 
 handler function to route the request.
 
 ### param: BrowserContext.route.handler
+* since: v1.8
 * langs: csharp, java
 - `handler` <[function]\([Route]\)>
 
 handler function to route the request.
 
 ### option: BrowserContext.route.times
+* since: v1.15
 - `times` <[int]>
 
 How often a route should be used. By default it will be used every time.
 
 ## async method: BrowserContext.routeFromHAR
+* since: v1.23
 
 If specified the network requests that are made in the context will be served from the HAR file. Read more about [Replaying from HAR](../network.md#replaying-from-har).
 
 Playwright will not serve requests intercepted by Service Worker from the HAR file. See [this](https://github.com/microsoft/playwright/issues/1090) issue. We recommend disabling Service Workers when using request interception by setting [`option: Browser.newContext.serviceWorkers`] to `'block'`.
 
 ### param: BrowserContext.routeFromHAR.har
+* since: v1.23
 - `har` <[path]>
 
 Path to a [HAR](http://www.softwareishard.com/blog/har-12-spec) file with prerecorded network data. If `path` is a relative path, then it is resolved relative to the current working directory.
 
 ### option: BrowserContext.routeFromHAR.notFound
+* since: v1.23
 - `notFound` ?<[HarNotFound]<"abort"|"fallback">>
 
 * If set to 'abort' any request not found in the HAR file will be aborted.
@@ -1045,16 +1090,19 @@ Path to a [HAR](http://www.softwareishard.com/blog/har-12-spec) file with prerec
 Defaults to abort.
 
 ### option: BrowserContext.routeFromHAR.update
+* since: v1.23
 - `update` ?<boolean>
 
 If specified, updates the given HAR with the actual network information instead of serving from file.
 
 ### option: BrowserContext.routeFromHAR.url
+* since: v1.23
 - `url` <[string]|[RegExp]>
 
 A glob pattern, regular expression or predicate to match the request URL. Only requests with URL matching the pattern will be served from the HAR file. If not specified, all requests are served from the HAR file.
 
 ## method: BrowserContext.serviceWorkers
+* since: v1.11
 * langs: js, python
 - returns: <[Array]<[Worker]>>
 
@@ -1065,6 +1113,7 @@ Service workers are only supported on Chromium-based browsers.
 All existing service workers in the context.
 
 ## method: BrowserContext.setDefaultNavigationTimeout
+* since: v1.8
 
 This setting will change the default maximum navigation time for the following methods and related shortcuts:
 * [`method: Page.goBack`]
@@ -1080,11 +1129,13 @@ This setting will change the default maximum navigation time for the following m
 :::
 
 ### param: BrowserContext.setDefaultNavigationTimeout.timeout
+* since: v1.8
 - `timeout` <[float]>
 
 Maximum navigation time in milliseconds
 
 ## method: BrowserContext.setDefaultTimeout
+* since: v1.8
 
 This setting will change the default maximum time for all the methods accepting [`param: timeout`] option.
 
@@ -1094,11 +1145,13 @@ This setting will change the default maximum time for all the methods accepting 
 :::
 
 ### param: BrowserContext.setDefaultTimeout.timeout
+* since: v1.8
 - `timeout` <[float]>
 
 Maximum time in milliseconds
 
 ## async method: BrowserContext.setExtraHTTPHeaders
+* since: v1.8
 
 The extra HTTP headers will be sent with every request initiated by any page in the context. These headers are merged
 with page-specific extra HTTP headers set with [`method: Page.setExtraHTTPHeaders`]. If page overrides a particular
@@ -1109,11 +1162,13 @@ header, page-specific header value will be used instead of the browser context h
 :::
 
 ### param: BrowserContext.setExtraHTTPHeaders.headers
+* since: v1.8
 - `headers` <[Object]<[string], [string]>>
 
 An object containing additional HTTP headers to be sent with every request. All header values must be strings.
 
 ## async method: BrowserContext.setGeolocation
+* since: v1.8
 
 Sets the context's geolocation. Passing `null` or `undefined` emulates position unavailable.
 
@@ -1147,29 +1202,35 @@ its geolocation.
 :::
 
 ### param: BrowserContext.setGeolocation.geolocation
+* since: v1.8
 - `geolocation` <[null]|[Object]>
   - `latitude` <[float]> Latitude between -90 and 90.
   - `longitude` <[float]> Longitude between -180 and 180.
   - `accuracy` ?<[float]> Non-negative accuracy value. Defaults to `0`.
 
 ## async method: BrowserContext.setHTTPCredentials
+* since: v1.8
 * langs: js
 
 **DEPRECATED** Browsers may cache credentials after successful authentication. Create a new browser context instead.
 
 ### param: BrowserContext.setHTTPCredentials.httpCredentials
+* since: v1.8
 - `httpCredentials` <[null]|[Object]>
   - `username` <[string]>
   - `password` <[string]>
 
 ## async method: BrowserContext.setOffline
+* since: v1.8
 
 ### param: BrowserContext.setOffline.offline
+* since: v1.8
 - `offline` <[boolean]>
 
 Whether to emulate network being offline for the browser context.
 
 ## async method: BrowserContext.storageState
+* since: v1.8
 - returns: <[Object]>
   - `cookies` <[Array]<[Object]>>
     - `name` <[string]>
@@ -1189,38 +1250,46 @@ Whether to emulate network being offline for the browser context.
 Returns storage state for this browser context, contains current cookies and local storage snapshot.
 
 ## async method: BrowserContext.storageState
+* since: v1.8
 * langs: csharp, java
 - returns: <[string]>
 
 ### option: BrowserContext.storageState.path = %%-storagestate-option-path-%%
+* since: v1.8
 
 ## property: BrowserContext.tracing
+* since: v1.12
 - type: <[Tracing]>
 
 ## async method: BrowserContext.unroute
+* since: v1.8
 
 Removes a route created with [`method: BrowserContext.route`]. When [`param: handler`] is not specified, removes all
 routes for the [`param: url`].
 
 ### param: BrowserContext.unroute.url
+* since: v1.8
 - `url` <[string]|[RegExp]|[function]\([URL]\):[boolean]>
 
 A glob pattern, regex pattern or predicate receiving [URL] used to register a routing with
 [`method: BrowserContext.route`].
 
 ### param: BrowserContext.unroute.handler
+* since: v1.8
 * langs: js, python
 - `handler` ?<[function]\([Route], [Request]\)>
 
 Optional handler function used to register a routing with [`method: BrowserContext.route`].
 
 ### param: BrowserContext.unroute.handler
+* since: v1.8
 * langs: csharp, java
 - `handler` ?<[function]\([Route]\)>
 
 Optional handler function used to register a routing with [`method: BrowserContext.route`].
 
 ## async method: BrowserContext.waitForEvent
+* since: v1.8
 * langs: js, python
   - alias-python: expect_event
 - returns: <[any]>
@@ -1259,11 +1328,13 @@ var page = await context.RunAndWaitForPageAsync(async () =>
 ```
 
 ### param: BrowserContext.waitForEvent.event
+* since: v1.8
 - `event` <[string]>
 
 Event name, same one would pass into `browserContext.on(event)`.
 
 ### param: BrowserContext.waitForEvent.optionsOrPredicate
+* since: v1.8
 * langs: js
 - `optionsOrPredicate` ?<[function]|[Object]>
   - `predicate` <[function]> receives the event data and resolves to truthy value when the waiting should resolve.
@@ -1273,6 +1344,7 @@ Event name, same one would pass into `browserContext.on(event)`.
 Either a predicate that receives an event or an options object. Optional.
 
 ## async method: BrowserContext.waitForPage
+* since: v1.9
 * langs: java, python, csharp
   - alias-python: expect_page
   - alias-csharp: RunAndWaitForPage
@@ -1283,14 +1355,17 @@ Performs action and waits for a new [Page] to be created in the context. If pred
 Will throw an error if the context closes before new [Page] is created.
 
 ### option: BrowserContext.waitForPage.predicate =
+* since: v1.9
 * langs: csharp, java, python
 - `predicate` <[function]\([Page]\):[boolean]>
 
 Receives the [Page] object and resolves to truthy value when the waiting should resolve.
 
 ### option: BrowserContext.waitForPage.timeout = %%-wait-for-event-timeout-%%
+* since: v1.9
 
 ## async method: BrowserContext.waitForEvent2
+* since: v1.8
 * langs: python
   - alias-python: wait_for_event
 - returns: <[any]>
@@ -1304,5 +1379,8 @@ event's value into the `predicate` function and waits for `predicate(event)` to 
 Will throw an error if the browser context is closed before the `event` is fired.
 
 ### param: BrowserContext.waitForEvent2.event = %%-wait-for-event-event-%%
+* since: v1.8
 ### option: BrowserContext.waitForEvent2.predicate = %%-wait-for-event-predicate-%%
+* since: v1.8
 ### option: BrowserContext.waitForEvent2.timeout = %%-wait-for-event-timeout-%%
+* since: v1.8

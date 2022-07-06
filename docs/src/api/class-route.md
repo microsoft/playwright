@@ -1,4 +1,5 @@
 # class: Route
+* since: v1.8
 
 Whenever a network route is set up with [`method: Page.route`] or [`method: BrowserContext.route`], the `Route` object
 allows to handle the route.
@@ -6,10 +7,12 @@ allows to handle the route.
 Learn more about [networking](../network.md).
 
 ## async method: Route.abort
+* since: v1.8
 
 Aborts the route's request.
 
 ### param: Route.abort.errorCode
+* since: v1.8
 - `errorCode` ?<[string]>
 
 Optional error code. Defaults to `failed`, could be one of the following:
@@ -31,6 +34,7 @@ Optional error code. Defaults to `failed`, could be one of the following:
 * `'failed'` - A generic failure occurred.
 
 ## async method: Route.continue
+* since: v1.8
 * langs:
   - alias-java: resume
   - alias-python: continue_
@@ -95,26 +99,31 @@ await page.RouteAsync("**/*", route =>
 ```
 
 ### option: Route.continue.url
+* since: v1.8
 - `url` <[string]>
 
 If set changes the request URL. New URL must have same protocol as original one.
 
 ### option: Route.continue.method
+* since: v1.8
 - `method` <[string]>
 
 If set changes the request method (e.g. GET or POST)
 
 ### option: Route.continue.postData
+* since: v1.8
 - `postData` <[string]|[Buffer]>
 
 If set changes the post data of request
 
 ### option: Route.continue.headers
+* since: v1.8
 - `headers` <[Object]<[string], [string]>>
 
 If set changes the request HTTP headers. Header values will be converted to a string.
 
 ## async method: Route.fallback
+* since: v1.23
 
 When several routes match the given pattern, they run in the order opposite to their registration.
 That way the last registered route can always override all the previous ones. In the example below,
@@ -355,27 +364,32 @@ await page.RouteAsync("**/*", route =>
 ```
 
 ### option: Route.fallback.url
+* since: v1.23
 - `url` <[string]>
 
 If set changes the request URL. New URL must have same protocol as original one. Changing the URL won't
 affect the route matching, all the routes are matched using the original request URL.
 
 ### option: Route.fallback.method
+* since: v1.23
 - `method` <[string]>
 
 If set changes the request method (e.g. GET or POST)
 
 ### option: Route.fallback.postData
+* since: v1.23
 - `postData` <[string]|[Buffer]>
 
 If set changes the post data of request
 
 ### option: Route.fallback.headers
+* since: v1.23
 - `headers` <[Object]<[string], [string]>>
 
 If set changes the request HTTP headers. Header values will be converted to a string.
 
 ## async method: Route.fulfill
+* since: v1.8
 
 Fulfills route's request with given response.
 
@@ -445,50 +459,59 @@ await page.RouteAsync("**/xhr_endpoint", route => route.FulfillAsync(new RouteFu
 ```
 
 ### option: Route.fulfill.status
+* since: v1.8
 - `status` <[int]>
 
 Response status code, defaults to `200`.
 
 ### option: Route.fulfill.headers
+* since: v1.8
 - `headers` <[Object]<[string], [string]>>
 
 Response headers. Header values will be converted to a string.
 
 ### option: Route.fulfill.contentType
+* since: v1.8
 - `contentType` <[string]>
 
 If set, equals to setting `Content-Type` response header.
 
 ### option: Route.fulfill.body
+* since: v1.8
 * langs: js, python
 - `body` <[string]|[Buffer]>
 
 Response body.
 
 ### option: Route.fulfill.body
+* since: v1.8
 * langs: csharp, java
 - `body` <[string]>
 
 Optional response body as text.
 
 ### option: Route.fulfill.bodyBytes
+* since: v1.9
 * langs: csharp, java
 - `bodyBytes` <[Buffer]>
 
 Optional response body as raw bytes.
 
 ### option: Route.fulfill.path
+* since: v1.8
 - `path` <[path]>
 
 File path to respond with. The content type will be inferred from file extension. If `path` is a relative path, then it
 is resolved relative to the current working directory.
 
 ### option: Route.fulfill.response
+* since: v1.15
 - `response` <[APIResponse]>
 
 [APIResponse] to fulfill route's request with. Individual fields of the response (such as headers) can be overridden using fulfill options.
 
 ## method: Route.request
+* since: v1.8
 - returns: <[Request]>
 
 A request to be routed.
