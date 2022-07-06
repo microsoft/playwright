@@ -24,10 +24,17 @@ let closed = false;
 
 sendMessageToParent('ready');
 
-if (process.env.FORCE_COLOR === '1') {
-  process.stdout.isTTY = true;
-  process.stderr.isTTY = true;
-}
+// Make sure the output supports colors.
+process.stdout.isTTY = true;
+if (process.env.PWTEST_STDOUT_ROWS)
+  process.stdout.rows = parseInt(process.env.PWTEST_STDOUT_ROWS, 10);
+if (process.env.PWTEST_STDOUT_COLUMNS)
+  process.stdout.columns = parseInt(process.env.PWTEST_STDOUT_COLUMNS, 10);
+process.stderr.isTTY = true;
+if (process.env.PWTEST_STDERR_ROWS)
+  process.stderr.rows = parseInt(process.env.PWTEST_STDERR_ROWS, 10);
+if (process.env.PWTEST_STDERR_COLUMNS)
+  process.stderr.columns = parseInt(process.env.PWTEST_STDERR_COLUMNS, 10);
 
 process.stdout.write = (chunk: string | Buffer) => {
   const outPayload: TestOutputPayload = {
