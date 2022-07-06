@@ -27,7 +27,7 @@ import { assert, calculateSha1 } from 'playwright-core/lib/utils';
 import type { AddressInfo } from 'net';
 
 let previewServer: PreviewServer;
-const VERSION = 4;
+const VERSION = 5;
 
 type CtConfig = {
   ctPort?: number;
@@ -37,6 +37,7 @@ type CtConfig = {
 };
 
 const importReactRE = /(^|\n)import\s+(\*\s+as\s+)?React(,|\s+)/;
+const compiledReactRE = /(const|var)\s+React\s*=/;
 
 export function createPlugin(
   registerSourceFile: string,
@@ -275,7 +276,7 @@ function vitePlugin(registerSource: string, relativeTemplateDir: string, buildIn
       }
 
       // Vite React plugin will do this for .jsx files, but not .js files.
-      if (id.endsWith('.js') && content.includes('React.createElement') && !content.match(importReactRE)) {
+      if (id.endsWith('.js') && content.includes('React.createElement') && !content.match(importReactRE) && !content.match(compiledReactRE)) {
         const code = `import React from 'react';\n${content}`;
         return { code, map: { mappings: '' } };
       }
