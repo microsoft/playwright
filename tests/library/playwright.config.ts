@@ -108,6 +108,7 @@ for (const browserName of browserNames) {
     console.error(`Using executable at ${executablePath}`);
   const devtools = process.env.DEVTOOLS === '1';
   const testIgnore: RegExp[] = browserNames.filter(b => b !== browserName).map(b => new RegExp(b));
+  testIgnore.push(/.*cli-codegen.*/);
   for (const folder of ['library', 'page']) {
     config.projects.push({
       name: browserName,
