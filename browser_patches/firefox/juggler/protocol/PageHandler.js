@@ -8,6 +8,7 @@ const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
 const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 const {NetworkObserver, PageNetwork} = ChromeUtils.import('chrome://juggler/content/NetworkObserver.js');
 const {PageTarget} = ChromeUtils.import('chrome://juggler/content/TargetRegistry.js');
+const {setTimeout} = ChromeUtils.import('resource://gre/modules/Timer.jsm');
 
 const Cc = Components.classes;
 const Ci = Components.interfaces;
@@ -302,8 +303,51 @@ class PageHandler {
     return await this._contentPage.send('adoptNode', options);
   }
 
-  async ['Page.screenshot'](options) {
-    return await this._contentPage.send('screenshot', options);
+  async ['Page.screenshot']({ mimeType, clip, omitDeviceScaleFactor }) {
+    const rect = new DOMRect(clip.x, clip.y, clip.width, clip.height);
+
+    const browsingContext = this._pageTarget.linkedBrowser().browsingContext;
+    // `win.devicePixelRatio` returns a non-overriden value to priveleged code.
+    // See https://bugzilla.mozilla.org/show_bug.cgi?id=1761032
+    // See https://phabricator.services.mozilla.com/D141323
+    const devicePixelRatio = browsingContext.overrideDPPX || this._pageTarget._window.devicePixelRatio;
+    const scale = omitDeviceScaleFactor ? 1 : devicePixelRatio;
+    const canvasWidth = rect.width * scale;
+    const canvasHeight = rect.height * scale;
+
+    const MAX_CANVAS_DIMENSIONS = 32767;
+    const MAX_CANVAS_AREA = 472907776;
+    if (canvasWidth > MAX_CANVAS_DIMENSIONS || canvasHeight > MAX_CANVAS_DIMENSIONS)
+      throw new Error('Cannot take screenshot larger than ' + MAX_CANVAS_DIMENSIONS);
+    if (canvasWidth * canvasHeight > MAX_CANVAS_AREA)
+      throw new Error('Cannot take screenshot with more than ' + MAX_CANVAS_AREA + ' pixels');
+
+    let snapshot;
+    while (!snapshot) {
+      try {
+        //TODO(fission): browsingContext will change in case of cross-group navigation.
+        snapshot = await browsingContext.currentWindowGlobal.drawSnapshot(
+          rect,
+          scale,
+          "rgb(255,255,255)"
+        );
+      } catch (e) {
+        // The currentWindowGlobal.drawSnapshot might throw
+        // NS_ERROR_LOSS_OF_SIGNIFICANT_DATA if called during navigation.
+        // wait a little and re-try.
+        await new Promise(x => setTimeout(x, 50));
+      }
+    }
+
+    const win = browsingContext.topChromeWindow.ownerGlobal;
+    const canvas = win.document.createElementNS('http://www.w3.org/1999/xhtml', 'canvas');
+    canvas.width = canvasWidth;
+    canvas.height = canvasHeight;
+    let ctx = canvas.getContext('2d');
+    ctx.drawImage(snapshot, 0, 0);
+    snapshot.close();
+    const dataURL = canvas.toDataURL(mimeType);
+    return { data: dataURL.substring(dataURL.indexOf(',') + 1) };
   }
 
   async ['Page.getContentQuads'](options) {
