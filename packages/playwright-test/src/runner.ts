@@ -273,24 +273,24 @@ export class Runner {
       preprocessRoot._addSuite(fileSuite);
     }
 
-    // 2. Filter tests to respect line/column filter.
+    // 2. Complain about duplicate titles.
+    const duplicateTitlesError = createDuplicateTitlesError(config, preprocessRoot);
+    if (duplicateTitlesError)
+      fatalErrors.push(duplicateTitlesError);
+
+    // 3. Filter tests to respect line/column filter.
     filterByFocusedLine(preprocessRoot, testFileReFilters);
 
-    // 3. Complain about only.
+    // 4. Complain about only.
     if (config.forbidOnly) {
       const onlyTestsAndSuites = preprocessRoot._getOnlyItems();
       if (onlyTestsAndSuites.length > 0)
         fatalErrors.push(createForbidOnlyError(config, onlyTestsAndSuites));
     }
 
-    // 4. Filter only
+    // 5. Filter only.
     if (!list)
       filterOnly(preprocessRoot);
-
-    // 5. Complain about clashing.
-    const duplicateTitlesError = createDuplicateTitlesError(config, preprocessRoot);
-    if (duplicateTitlesError)
-      fatalErrors.push(duplicateTitlesError);
 
     // 6. Generate projects.
     const fileSuites = new Map<string, Suite>();
