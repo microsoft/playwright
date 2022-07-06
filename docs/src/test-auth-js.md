@@ -200,7 +200,7 @@ async function globalSetup() {
 export default globalSetup;
 ```
 
-### Avoding multiple sessions per account at a time
+### Avoiding multiple sessions per account at a time
 
 By default, Playwright Test runs tests in parallel. If you reuse a single signed-in state for all your tests, this usually leads to the same account being signed in from multiple tests at the same time. If this behavior is undesirable for your application, you can sign in with a different account in each [worker process](./test-parallel.md#worker-processes) created by Playwright Test.
 
