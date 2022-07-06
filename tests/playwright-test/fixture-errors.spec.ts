@@ -532,3 +532,55 @@ test('should report worker fixture teardown with debug info', async ({ runInline
     'Worker teardown timeout of 1000ms exceeded.',
   ].join('\n'));
 });
+
+test('should not run user fn when require fixture has failed', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      const test = pwt.test.extend({
+        foo: [ async ({ }, use) => {
+          console.log('\\n%%foo');
+          throw new Error('A test error!');
+          await use();
+        }, { scope: 'test' } ],
+        bar: [ async ({ foo }, use) => {
+          console.log('\\n%%bar-' + foo);
+          await use();
+        }, { scope: 'test' } ],
+      });
+
+      test.skip(({ foo }) => {
+        console.log('\\n%%skip-' + foo);
+        return true;
+      });
+
+      test.beforeEach(({ foo }) => {
+        console.log('\\n%%beforeEach1-' + foo);
+      });
+
+      test.beforeEach(({ foo }) => {
+        console.log('\\n%%beforeEach2-' + foo);
+      });
+
+      test.beforeEach(({ bar }) => {
+        console.log('\\n%%beforeEach3-' + bar);
+      });
+
+      test.afterEach(({ foo }) => {
+        console.log('\\n%%afterEach1-' + foo);
+      });
+
+      test.afterEach(({ bar }) => {
+        console.log('\\n%%afterEach2-' + bar);
+      });
+
+      test('should not run', async ({ bar }) => {
+        console.log('\\n%%test-' + bar);
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
+    '%%foo',
+  ]);
+});
