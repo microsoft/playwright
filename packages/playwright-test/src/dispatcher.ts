@@ -493,8 +493,6 @@ class Worker extends EventEmitter {
     this._hash = hash;
     this.parallelIndex = parallelIndex;
 
-
-
     this.process = child_process.fork(path.join(__dirname, 'worker.js'), {
       detached: false,
       env: {
