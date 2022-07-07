@@ -142,8 +142,14 @@ export class Loader {
     this._fullConfig.updateSnapshots = takeFirst(config.updateSnapshots, baseFullConfig.updateSnapshots);
     this._fullConfig.workers = takeFirst(config.workers, baseFullConfig.workers);
     const webServers = takeFirst(config.webServer, baseFullConfig.webServer);
-    this._fullConfig.webServer = Array.isArray(webServers) ? null : webServers;
-    this._fullConfig._webServers = Array.isArray(webServers) ? webServers : webServers ? [webServers] : [];
+    if (Array.isArray(webServers)) { // multiple web server mode
+      // Due to previous choices, this value shows up to the user in globalSetup as part of FullConfig. Arrays are not supported by the old type.
+      this._fullConfig.webServer = null;
+      this._fullConfig._webServers = webServers;
+    } else if (webServers) { // legacy singleton mode
+      this._fullConfig.webServer = webServers;
+      this._fullConfig._webServers = [webServers];
+    }
     this._fullConfig.metadata = takeFirst(config.metadata, baseFullConfig.metadata);
     this._fullConfig.projects = (config.projects || [config]).map(p => this._resolveProject(config, this._fullConfig, p, throwawayArtifactsPath));
   }
