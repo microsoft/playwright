@@ -30,7 +30,7 @@ export class TracingDispatcher extends Dispatcher<Tracing, channels.TracingChann
 
   constructor(scope: DispatcherScope, tracing: Tracing) {
     super(scope, tracing, 'Tracing', {}, true);
-    tracing.on(Tracing.Events.Dispose, () => this._dispose());
+    this.addObjectListener(Tracing.Events.Dispose, () => this._dispose());
   }
 
   async tracingStart(params: channels.TracingTracingStartParams): Promise<channels.TracingTracingStartResult> {

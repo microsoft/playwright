@@ -59,26 +59,26 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel> imple
       opener: PageDispatcher.fromNullable(scope, page.opener())
     }, true);
     this._page = page;
-    page.on(Page.Events.Close, () => {
+    this.addObjectListener(Page.Events.Close, () => {
       this._dispatchEvent('close');
       this._dispose();
     });
-    page.on(Page.Events.Console, message => this._dispatchEvent('console', { message: new ConsoleMessageDispatcher(this._scope, message) }));
-    page.on(Page.Events.Crash, () => this._dispatchEvent('crash'));
-    page.on(Page.Events.Dialog, dialog => this._dispatchEvent('dialog', { dialog: new DialogDispatcher(this._scope, dialog) }));
-    page.on(Page.Events.Download, (download: Download) => {
+    this.addObjectListener(Page.Events.Console, message => this._dispatchEvent('console', { message: new ConsoleMessageDispatcher(this._scope, message) }));
+    this.addObjectListener(Page.Events.Crash, () => this._dispatchEvent('crash'));
+    this.addObjectListener(Page.Events.Dialog, dialog => this._dispatchEvent('dialog', { dialog: new DialogDispatcher(this._scope, dialog) }));
+    this.addObjectListener(Page.Events.Download, (download: Download) => {
       this._dispatchEvent('download', { url: download.url, suggestedFilename: download.suggestedFilename(), artifact: new ArtifactDispatcher(scope, download.artifact) });
     });
-    this._page.on(Page.Events.FileChooser, (fileChooser: FileChooser) => this._dispatchEvent('fileChooser', {
+    this.addObjectListener(Page.Events.FileChooser, (fileChooser: FileChooser) => this._dispatchEvent('fileChooser', {
       element: ElementHandleDispatcher.from(this._scope, fileChooser.element()),
       isMultiple: fileChooser.isMultiple()
     }));
-    page.on(Page.Events.FrameAttached, frame => this._onFrameAttached(frame));
-    page.on(Page.Events.FrameDetached, frame => this._onFrameDetached(frame));
-    page.on(Page.Events.PageError, error => this._dispatchEvent('pageError', { error: serializeError(error) }));
-    page.on(Page.Events.WebSocket, webSocket => this._dispatchEvent('webSocket', { webSocket: new WebSocketDispatcher(this._scope, webSocket) }));
-    page.on(Page.Events.Worker, worker => this._dispatchEvent('worker', { worker: new WorkerDispatcher(this._scope, worker) }));
-    page.on(Page.Events.Video, (artifact: Artifact) => this._dispatchEvent('video', { artifact: existingDispatcher<ArtifactDispatcher>(artifact) }));
+    this.addObjectListener(Page.Events.FrameAttached, frame => this._onFrameAttached(frame));
+    this.addObjectListener(Page.Events.FrameDetached, frame => this._onFrameDetached(frame));
+    this.addObjectListener(Page.Events.PageError, error => this._dispatchEvent('pageError', { error: serializeError(error) }));
+    this.addObjectListener(Page.Events.WebSocket, webSocket => this._dispatchEvent('webSocket', { webSocket: new WebSocketDispatcher(this._scope, webSocket) }));
+    this.addObjectListener(Page.Events.Worker, worker => this._dispatchEvent('worker', { worker: new WorkerDispatcher(this._scope, worker) }));
+    this.addObjectListener(Page.Events.Video, (artifact: Artifact) => this._dispatchEvent('video', { artifact: existingDispatcher<ArtifactDispatcher>(artifact) }));
     if (page._video)
       this._dispatchEvent('video', { artifact: existingDispatcher<ArtifactDispatcher>(page._video) });
     // Ensure client knows about all frames.
@@ -299,7 +299,7 @@ export class WorkerDispatcher extends Dispatcher<Worker, channels.WorkerChannel>
     super(scope, worker, 'Worker', {
       url: worker.url()
     });
-    worker.on(Worker.Events.Close, () => this._dispatchEvent('close'));
+    this.addObjectListener(Worker.Events.Close, () => this._dispatchEvent('close'));
   }
 
   async evaluateExpression(params: channels.WorkerEvaluateExpressionParams, metadata: CallMetadata): Promise<channels.WorkerEvaluateExpressionResult> {

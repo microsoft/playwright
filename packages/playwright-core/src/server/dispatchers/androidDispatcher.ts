@@ -56,8 +56,8 @@ export class AndroidDeviceDispatcher extends Dispatcher<AndroidDevice, channels.
     }, true);
     for (const webView of device.webViews())
       this._dispatchEvent('webViewAdded', { webView });
-    device.on(AndroidDevice.Events.WebViewAdded, webView => this._dispatchEvent('webViewAdded', { webView }));
-    device.on(AndroidDevice.Events.WebViewRemoved, socketName => this._dispatchEvent('webViewRemoved', { socketName }));
+    this.addObjectListener(AndroidDevice.Events.WebViewAdded, webView => this._dispatchEvent('webViewAdded', { webView }));
+    this.addObjectListener(AndroidDevice.Events.WebViewRemoved, socketName => this._dispatchEvent('webViewRemoved', { socketName }));
   }
 
   async wait(params: channels.AndroidDeviceWaitParams) {
@@ -179,8 +179,8 @@ export class AndroidSocketDispatcher extends Dispatcher<SocketBackend, channels.
 
   constructor(scope: DispatcherScope, socket: SocketBackend) {
     super(scope, socket, 'AndroidSocket', {}, true);
-    socket.on('data', (data: Buffer) => this._dispatchEvent('data', { data }));
-    socket.on('close', () => {
+    this.addObjectListener('data', (data: Buffer) => this._dispatchEvent('data', { data }));
+    this.addObjectListener('close', () => {
       this._dispatchEvent('close');
       this._dispose();
     });
