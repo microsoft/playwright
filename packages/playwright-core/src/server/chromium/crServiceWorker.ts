@@ -84,7 +84,9 @@ export class CRServiceWorker extends Worker {
     if (!this._isNetworkInspectionEnabled())
       return Promise.resolve();
 
-    return this._networkManager.setRequestInterception(this.needsRequestInterception()).catch(e => { });
+    return this._networkManager.setRequestInterception(this.needsRequestInterception()).catch(e => { 
+      console.error(e);
+    });
   }
 
   needsRequestInterception(): boolean {
