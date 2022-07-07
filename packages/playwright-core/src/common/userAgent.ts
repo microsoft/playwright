@@ -57,9 +57,13 @@ function determineUserAgent(): string {
       osIdentifier = 'linux';
     }
   }
+  const additionalTokens = [];
+  if (process.env.CI)
+    additionalTokens.push('CI/1');
+  const serializedTokens = additionalTokens.length ? ' ' + additionalTokens.join(' ') : '';
 
   const { langName, langVersion } = getClientLanguage();
-  return `Playwright/${getPlaywrightVersion()} (${os.arch()}; ${osIdentifier} ${osVersion}) ${langName}/${langVersion}`;
+  return `Playwright/${getPlaywrightVersion()} (${os.arch()}; ${osIdentifier} ${osVersion}) ${langName}/${langVersion}${serializedTokens}`;
 }
 
 export function getClientLanguage(): { langName: string, langVersion: string } {
