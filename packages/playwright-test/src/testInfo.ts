@@ -23,7 +23,8 @@ import type { Loader } from './loader';
 import type { TestCase } from './test';
 import { TimeoutManager } from './timeoutManager';
 import type { Annotation, TestStepInternal } from './types';
-import { addSuffixToFilePath, getContainedPath, monotonicTime, normalizeAndSaveAttachment, sanitizeForFilePath, serializeError, trimLongString } from './util';
+import { addSuffixToFilePath, getContainedPath, normalizeAndSaveAttachment, sanitizeForFilePath, serializeError, trimLongString } from './util';
+import { monotonicTime } from 'playwright-core/lib/utils';
 
 export class TestInfoImpl implements TestInfo {
   private _addStepImpl: (data: Omit<TestStepInternal, 'complete'>) => TestStepInternal;
@@ -177,7 +178,7 @@ export class TestInfoImpl implements TestInfo {
       this.status = 'timedOut';
       this.errors.push(timeoutError);
     }
-    this.duration = monotonicTime() - this._startTime;
+    this.duration = (monotonicTime() - this._startTime) | 0;
   }
 
   async _runFn(fn: Function, skips?: 'allowSkips'): Promise<TestError | undefined> {
