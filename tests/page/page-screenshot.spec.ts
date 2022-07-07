@@ -33,7 +33,8 @@ it.describe('page screenshot', () => {
     expect(screenshot).toMatchSnapshot('screenshot-sanity.png');
   });
 
-  it('should not capture blinking caret by default', async ({ page, server }) => {
+  it('should not capture blinking caret by default', async ({ page, server, browserName }) => {
+    it.fixme(browserName === 'chromium' && process.platform === 'darwin', 'https://crbug.com/1342540');
     await page.setContent(`
       <!-- Refer to stylesheet from other origin. Accessing this
            stylesheet rules will throw.

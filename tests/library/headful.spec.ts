@@ -261,6 +261,7 @@ it.skip('should click bottom row w/ infobar in OOPIF', async ({ browserType, cre
 it('headless and headful should use same default fonts', async ({ page, headless, browserName, browserType, platform }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/11177' });
   it.fixme(browserName === 'firefox', 'Text is misaligned in headed vs headless');
+  it.fixme(browserName === 'chromium' && process.platform === 'darwin', 'https://crbug.com/1342540');
   const genericFontFamilies = [
     'standard',
     'serif',
