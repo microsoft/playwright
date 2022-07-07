@@ -192,8 +192,6 @@ export class FFBrowserContext extends BrowserContext {
       promises.push(this._browser._connection.send('Browser.setLocaleOverride', { browserContextId, locale: this._options.locale }));
     if (this._options.timezoneId)
       promises.push(this._browser._connection.send('Browser.setTimezoneOverride', { browserContextId, timezoneId: this._options.timezoneId }));
-    if (this._options.permissions)
-      promises.push(this.grantPermissions(this._options.permissions));
     if (this._options.extraHTTPHeaders || this._options.locale)
       promises.push(this.setExtraHTTPHeaders(this._options.extraHTTPHeaders || []));
     if (this._options.httpCredentials)

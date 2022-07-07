@@ -225,8 +225,6 @@ export class WKBrowserContext extends BrowserContext {
       promises.push(this._browser._browserSession.send('Playwright.setIgnoreCertificateErrors', { browserContextId, ignore: true }));
     if (this._options.locale)
       promises.push(this._browser._browserSession.send('Playwright.setLanguages', { browserContextId, languages: [this._options.locale] }));
-    if (this._options.permissions)
-      promises.push(this.grantPermissions(this._options.permissions));
     if (this._options.geolocation)
       promises.push(this.setGeolocation(this._options.geolocation));
     if (this._options.offline)

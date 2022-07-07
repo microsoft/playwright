@@ -331,8 +331,6 @@ export class CRBrowserContext extends BrowserContext {
         eventsEnabled: true,
       }));
     }
-    if (this._options.permissions)
-      promises.push(this.grantPermissions(this._options.permissions));
     await Promise.all(promises);
   }
 
