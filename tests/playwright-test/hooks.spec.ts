@@ -631,7 +631,7 @@ test('should not hang and report results when worker process suddenly exits duri
       test('failing due to afterall', () => {});
       test.afterAll(() => { process.exit(0); });
     `
-  }, { reporter: 'line' });
+  }, { reporter: 'line' }, { PLAYWRIGHT_LIVE_TERMINAL: '1' });
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(0);
   expect(result.failed).toBe(1);

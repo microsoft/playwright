@@ -14,73 +14,203 @@
  * limitations under the License.
  */
 
-import { test, expect, stripAnsi } from './playwright-test-fixtures';
+import { test, expect, stripAnsi, trimLineEnds } from './playwright-test-fixtures';
 
-test('render unexpected after retry', async ({ runInlineTest }) => {
+test('should work with tty', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'a.test.js': `
       const { test } = pwt;
-      test('one', async ({}) => {
-        expect(1).toBe(0);
+      test.skip('skipped test', async ({}) => {
       });
-    `,
-  }, { retries: 3, reporter: 'line' });
-  const text = stripAnsi(result.output);
-  expect(text).toContain('[1/1] a.test.js:6:7 › one');
-  expect(text).toContain('[2/1] (retries) a.test.js:6:7 › one (retry #1)');
-  expect(text).toContain('[3/1] (retries) a.test.js:6:7 › one (retry #2)');
-  expect(text).toContain('[4/1] (retries) a.test.js:6:7 › one (retry #3)');
-  expect(text).toContain('1 failed');
-  expect(text).toContain('1) a.test');
-  expect(text).not.toContain('2) a.test');
-  expect(text).toContain('Retry #1 ----');
-  expect(text).toContain('Retry #2 ----');
-  expect(text).toContain('Retry #3 ----');
-  expect(result.exitCode).toBe(1);
-});
-
-test('render flaky', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    'a.test.js': `
-      const { test } = pwt;
-      test('one', async ({}, testInfo) => {
-        expect(testInfo.retry).toBe(3);
-      });
-    `,
-  }, { retries: 3, reporter: 'line' });
-  const text = stripAnsi(result.output);
-  expect(text).toContain('1 flaky');
-  expect(result.exitCode).toBe(0);
-});
-
-test('should print flaky failures', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    'a.spec.ts': `
-      const { test } = pwt;
-      test('foobar', async ({}, testInfo) => {
+      test('flaky test', async ({}, testInfo) => {
         expect(testInfo.retry).toBe(1);
       });
-    `
-  }, { retries: '1', reporter: 'line' });
-  expect(result.exitCode).toBe(0);
-  expect(result.flaky).toBe(1);
-  expect(stripAnsi(result.output)).toContain('expect(testInfo.retry).toBe(1)');
-});
-
-test('should work on CI', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    'a.test.js': `
-      const { test } = pwt;
-      test('one', async ({}) => {
+      test('passing test', async ({}) => {
+      });
+      test('failing test', async ({}) => {
         expect(1).toBe(0);
       });
     `,
-  }, { reporter: 'line' }, { CI: '1' });
-  const text = stripAnsi(result.output);
-  expect(text).toContain('[1/1] a.test.js:6:7 › one');
-  expect(text).toContain('1 failed');
-  expect(text).toContain('1) a.test');
+  }, { retries: '1', reporter: 'line', workers: '1' }, {
+    PLAYWRIGHT_LIVE_TERMINAL: '1',
+    FORCE_COLOR: '0',
+    PW_TEST_DEBUG_REPORTERS: '1',
+  });
   expect(result.exitCode).toBe(1);
+  expect(trimLineEnds(result.output)).toContain(trimLineEnds(`Running 4 tests using 1 worker
+
+<lineup><erase>[1/4] a.test.js:6:12 › skipped test
+<lineup><erase>[2/4] a.test.js:8:7 › flaky test
+<lineup><erase>[3/4] a.test.js:8:7 › flaky test (retry #1)
+<lineup><erase>  1) a.test.js:8:7 › flaky test ====================================================================
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: 1
+    Received: 0
+
+       7 |       });
+       8 |       test('flaky test', async ({}, testInfo) => {
+    >  9 |         expect(testInfo.retry).toBe(1);
+         |                                ^
+      10 |       });
+      11 |       test('passing test', async ({}) => {
+      12 |       });
+
+        at ${testInfo.outputPath('a.test.js')}:9:32
+
+
+<lineup><erase>[4/4] a.test.js:11:7 › passing test
+<lineup><erase>[5/4] (retries) a.test.js:13:7 › failing test
+<lineup><erase>[6/4] (retries) a.test.js:13:7 › failing test (retry #1)
+<lineup><erase>  2) a.test.js:13:7 › failing test =================================================================
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: 0
+    Received: 1
+
+      12 |       });
+      13 |       test('failing test', async ({}) => {
+    > 14 |         expect(1).toBe(0);
+         |                   ^
+      15 |       });
+      16 |
+
+        at ${testInfo.outputPath('a.test.js')}:14:19
+
+    Retry #1 ---------------------------------------------------------------------------------------
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: 0
+    Received: 1
+
+      12 |       });
+      13 |       test('failing test', async ({}) => {
+    > 14 |         expect(1).toBe(0);
+         |                   ^
+      15 |       });
+      16 |
+
+        at ${testInfo.outputPath('a.test.js')}:14:19
+
+
+<lineup><erase>
+  1 failed
+    a.test.js:13:7 › failing test ==================================================================
+  1 flaky
+    a.test.js:8:7 › flaky test =====================================================================
+  1 skipped
+  1 passed`));
+});
+
+test('should work with non-tty', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      const { test } = pwt;
+      test.skip('skipped test', async ({}) => {
+      });
+      test('flaky test', async ({}, testInfo) => {
+        expect(testInfo.retry).toBe(1);
+      });
+      test('passing test', async ({}) => {
+      });
+      test('failing test', async ({}) => {
+        expect(1).toBe(0);
+      });
+    `,
+  }, { retries: '1', reporter: 'line', workers: '1' }, {
+    FORCE_COLOR: '0',
+    PW_TEST_DEBUG_REPORTERS: '1',
+  });
+  expect(result.exitCode).toBe(1);
+  expect(trimLineEnds(result.output)).toContain(trimLineEnds(`Running 4 tests using 1 worker
+[25%] a.test.js:6:12 › skipped test
+[50%] a.test.js:8:7 › flaky test
+[75%] a.test.js:8:7 › flaky test (retry #1)
+  1) a.test.js:8:7 › flaky test ====================================================================
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: 1
+    Received: 0
+
+       7 |       });
+       8 |       test('flaky test', async ({}, testInfo) => {
+    >  9 |         expect(testInfo.retry).toBe(1);
+         |                                ^
+      10 |       });
+      11 |       test('passing test', async ({}) => {
+      12 |       });
+
+        at ${testInfo.outputPath('a.test.js')}:9:32
+
+
+[99%] a.test.js:11:7 › passing test
+  2) a.test.js:13:7 › failing test =================================================================
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: 0
+    Received: 1
+
+      12 |       });
+      13 |       test('failing test', async ({}) => {
+    > 14 |         expect(1).toBe(0);
+         |                   ^
+      15 |       });
+      16 |
+
+        at ${testInfo.outputPath('a.test.js')}:14:19
+
+    Retry #1 ---------------------------------------------------------------------------------------
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: 0
+    Received: 1
+
+      12 |       });
+      13 |       test('failing test', async ({}) => {
+    > 14 |         expect(1).toBe(0);
+         |                   ^
+      15 |       });
+      16 |
+
+        at ${testInfo.outputPath('a.test.js')}:14:19
+
+
+[100%]
+
+  1 failed
+    a.test.js:13:7 › failing test ==================================================================
+  1 flaky
+    a.test.js:8:7 › flaky test =====================================================================
+  1 skipped
+  1 passed`));
+});
+
+test('should spare status updates in non-tty mode', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      const { test } = pwt;
+      for (let i = 0; i < 300; i++) {
+        test('test' + i, () => {});
+      }
+    `,
+  }, { reporter: 'line', workers: '1' }, {
+    FORCE_COLOR: '0',
+    PW_TEST_DEBUG_REPORTERS: '1',
+  });
+  expect(result.exitCode).toBe(0);
+  const lines = [`Running 300 tests using 1 worker`, `[0%] a.test.js:7:9 › test0`];
+  for (let i = 1; i <= 99; i++)
+    lines.push(`[${i}%] a.test.js:7:9 › test${3 * i - 2}`);
+  lines.push('[100%]');
+  lines.push('');
+  lines.push('  300 passed');
+  expect(trimLineEnds(result.output)).toContain(lines.join('\n'));
 });
 
 test('should print output', async ({ runInlineTest }) => {
