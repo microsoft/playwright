@@ -99,7 +99,7 @@ export class Dispatcher<Type extends { guid: string }, ChannelType> extends Even
     this._connection.sendEvent(this, method as string, params, sdkObject);
   }
 
-  protected _dispose() {
+  _dispose() {
     assert(!this._disposed);
     this._disposed = true;
     eventsHelper.removeEventListeners(this._eventListeners);
@@ -116,6 +116,7 @@ export class Dispatcher<Type extends { guid: string }, ChannelType> extends Even
 
     if (this._isScope)
       this._connection.sendDispose(this);
+    delete (this._object as any)[dispatcherSymbol];
   }
 
   _debugScopeState(): any {

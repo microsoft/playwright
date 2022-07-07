@@ -761,6 +761,28 @@ Browser:
       returns:
         context: BrowserContext
 
+    newContextForReuse:
+      parameters:
+        $mixin: ContextOptions
+        proxy:
+          type: object?
+          properties:
+            server: string
+            bypass: string?
+            username: string?
+            password: string?
+        storageState:
+          type: object?
+          properties:
+            cookies:
+              type: array?
+              items: SetNetworkCookie
+            origins:
+              type: array?
+              items: OriginStorage
+      returns:
+        context: BrowserContext
+
     newBrowserCDPSession:
       returns:
         session: CDPSession
@@ -777,6 +799,7 @@ Browser:
     stopTracing:
       returns:
         binary: binary
+
 
   events:
 

@@ -18,6 +18,7 @@ import { Browser } from '../browser';
 import type * as channels from '../../protocol/channels';
 import { BrowserContextDispatcher } from './browserContextDispatcher';
 import { CDPSessionDispatcher } from './cdpSessionDispatcher';
+import { existingDispatcher } from './dispatcher';
 import type { DispatcherScope } from './dispatcher';
 import { Dispatcher } from './dispatcher';
 import type { CRBrowser } from '../chromium/crBrowser';
@@ -29,6 +30,8 @@ import { Selectors } from '../selectors';
 
 export class BrowserDispatcher extends Dispatcher<Browser, channels.BrowserChannel> implements channels.BrowserChannel {
   _type_Browser = true;
+  private _contextForReuse: { context: BrowserContext, hash: string } | undefined;
+
   constructor(scope: DispatcherScope, browser: Browser) {
     super(scope, browser, 'Browser', { version: browser.version(), name: browser.options.name }, true);
     this.addObjectListener(Browser.Events.Disconnected, () => this._didClose());
@@ -42,6 +45,24 @@ export class BrowserDispatcher extends Dispatcher<Browser, channels.BrowserChann
   async newContext(params: channels.BrowserNewContextParams, metadata: CallMetadata): Promise<channels.BrowserNewContextResult> {
     const context = await this._object.newContext(metadata, params);
     return { context: new BrowserContextDispatcher(this._scope, context) };
+  }
+
+  /**
+   * Used for inner loop scenarios where user would like to preserve the browser window, opened page and devtools instance.
+   */
+  async newContextForReuse(params: channels.BrowserNewContextForReuseParams, metadata: CallMetadata): Promise<channels.BrowserNewContextForReuseResult> {
+    const hash = JSON.stringify(params);
+    if (!this._contextForReuse || hash !== this._contextForReuse.hash || !this._contextForReuse.context.canResetForReuse()) {
+      if (this._contextForReuse)
+        await this._contextForReuse.context.close(metadata);
+      this._contextForReuse = { context: await this._object.newContext(metadata, params), hash };
+    } else {
+      const oldContextDispatcher = existingDispatcher<BrowserContextDispatcher>(this._contextForReuse.context);
+      oldContextDispatcher._dispose();
+      await this._contextForReuse.context.resetForReuse(metadata);
+    }
+    const context = new BrowserContextDispatcher(this._scope, this._contextForReuse.context);
+    return { context };
   }
 
   async close(): Promise<void> {
@@ -95,6 +116,10 @@ export class ConnectedBrowserDispatcher extends Dispatcher<Browser, channels.Bro
     context.setSelectors(this.selectors);
     context.on(BrowserContext.Events.Close, () => this._contexts.delete(context));
     return { context: new BrowserContextDispatcher(this._scope, context) };
+  }
+
+  newContextForReuse(params: channels.BrowserNewContextForReuseParams, metadata?: channels.Metadata | undefined): Promise<channels.BrowserNewContextForReuseResult> {
+    throw new Error('Method not implemented.');
   }
 
   async close(): Promise<void> {

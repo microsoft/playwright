@@ -381,8 +381,9 @@ export class FFPage implements PageDelegate {
     await this._networkManager.setRequestInterception(this._page.needsRequestInterception());
   }
 
-  async updateFileChooserInterception(enabled: boolean) {
-    await this._session.send('Page.setInterceptFileChooserDialog', { enabled }).catch(e => {}); // target can be closed.
+  async updateFileChooserInterception() {
+    const enabled = this._page.fileChooserIntercepted();
+    await this._session.send('Page.setInterceptFileChooserDialog', { enabled }).catch(() => {}); // target can be closed.
   }
 
   async reload(): Promise<void> {

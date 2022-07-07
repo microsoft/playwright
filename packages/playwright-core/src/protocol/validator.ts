@@ -546,6 +546,66 @@ scheme.BrowserNewContextParams = tObject({
 scheme.BrowserNewContextResult = tObject({
   context: tChannel(['BrowserContext']),
 });
+scheme.BrowserNewContextForReuseParams = tObject({
+  noDefaultViewport: tOptional(tBoolean),
+  viewport: tOptional(tObject({
+    width: tNumber,
+    height: tNumber,
+  })),
+  screen: tOptional(tObject({
+    width: tNumber,
+    height: tNumber,
+  })),
+  ignoreHTTPSErrors: tOptional(tBoolean),
+  javaScriptEnabled: tOptional(tBoolean),
+  bypassCSP: tOptional(tBoolean),
+  userAgent: tOptional(tString),
+  locale: tOptional(tString),
+  timezoneId: tOptional(tString),
+  geolocation: tOptional(tObject({
+    longitude: tNumber,
+    latitude: tNumber,
+    accuracy: tOptional(tNumber),
+  })),
+  permissions: tOptional(tArray(tString)),
+  extraHTTPHeaders: tOptional(tArray(tType('NameValue'))),
+  offline: tOptional(tBoolean),
+  httpCredentials: tOptional(tObject({
+    username: tString,
+    password: tString,
+  })),
+  deviceScaleFactor: tOptional(tNumber),
+  isMobile: tOptional(tBoolean),
+  hasTouch: tOptional(tBoolean),
+  colorScheme: tOptional(tEnum(['dark', 'light', 'no-preference'])),
+  reducedMotion: tOptional(tEnum(['reduce', 'no-preference'])),
+  forcedColors: tOptional(tEnum(['active', 'none'])),
+  acceptDownloads: tOptional(tBoolean),
+  baseURL: tOptional(tString),
+  recordVideo: tOptional(tObject({
+    dir: tString,
+    size: tOptional(tObject({
+      width: tNumber,
+      height: tNumber,
+    })),
+  })),
+  recordHar: tOptional(tType('RecordHarOptions')),
+  strictSelectors: tOptional(tBoolean),
+  serviceWorkers: tOptional(tEnum(['allow', 'block'])),
+  proxy: tOptional(tObject({
+    server: tString,
+    bypass: tOptional(tString),
+    username: tOptional(tString),
+    password: tOptional(tString),
+  })),
+  storageState: tOptional(tObject({
+    cookies: tOptional(tArray(tType('SetNetworkCookie'))),
+    origins: tOptional(tArray(tType('OriginStorage'))),
+  })),
+});
+scheme.BrowserNewContextForReuseResult = tObject({
+  context: tChannel(['BrowserContext']),
+});
 scheme.BrowserNewBrowserCDPSessionParams = tOptional(tObject({}));
 scheme.BrowserNewBrowserCDPSessionResult = tObject({
   session: tChannel(['CDPSession']),

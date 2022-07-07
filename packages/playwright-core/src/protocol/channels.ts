@@ -905,6 +905,7 @@ export interface BrowserChannel extends BrowserEventTarget, Channel {
   close(params?: BrowserCloseParams, metadata?: Metadata): Promise<BrowserCloseResult>;
   killForTests(params?: BrowserKillForTestsParams, metadata?: Metadata): Promise<BrowserKillForTestsResult>;
   newContext(params: BrowserNewContextParams, metadata?: Metadata): Promise<BrowserNewContextResult>;
+  newContextForReuse(params: BrowserNewContextForReuseParams, metadata?: Metadata): Promise<BrowserNewContextForReuseResult>;
   newBrowserCDPSession(params?: BrowserNewBrowserCDPSessionParams, metadata?: Metadata): Promise<BrowserNewBrowserCDPSessionResult>;
   startTracing(params: BrowserStartTracingParams, metadata?: Metadata): Promise<BrowserStartTracingResult>;
   stopTracing(params?: BrowserStopTracingParams, metadata?: Metadata): Promise<BrowserStopTracingResult>;
@@ -1031,6 +1032,123 @@ export type BrowserNewContextOptions = {
   },
 };
 export type BrowserNewContextResult = {
+  context: BrowserContextChannel,
+};
+export type BrowserNewContextForReuseParams = {
+  noDefaultViewport?: boolean,
+  viewport?: {
+    width: number,
+    height: number,
+  },
+  screen?: {
+    width: number,
+    height: number,
+  },
+  ignoreHTTPSErrors?: boolean,
+  javaScriptEnabled?: boolean,
+  bypassCSP?: boolean,
+  userAgent?: string,
+  locale?: string,
+  timezoneId?: string,
+  geolocation?: {
+    longitude: number,
+    latitude: number,
+    accuracy?: number,
+  },
+  permissions?: string[],
+  extraHTTPHeaders?: NameValue[],
+  offline?: boolean,
+  httpCredentials?: {
+    username: string,
+    password: string,
+  },
+  deviceScaleFactor?: number,
+  isMobile?: boolean,
+  hasTouch?: boolean,
+  colorScheme?: 'dark' | 'light' | 'no-preference',
+  reducedMotion?: 'reduce' | 'no-preference',
+  forcedColors?: 'active' | 'none',
+  acceptDownloads?: boolean,
+  baseURL?: string,
+  recordVideo?: {
+    dir: string,
+    size?: {
+      width: number,
+      height: number,
+    },
+  },
+  recordHar?: RecordHarOptions,
+  strictSelectors?: boolean,
+  serviceWorkers?: 'allow' | 'block',
+  proxy?: {
+    server: string,
+    bypass?: string,
+    username?: string,
+    password?: string,
+  },
+  storageState?: {
+    cookies?: SetNetworkCookie[],
+    origins?: OriginStorage[],
+  },
+};
+export type BrowserNewContextForReuseOptions = {
+  noDefaultViewport?: boolean,
+  viewport?: {
+    width: number,
+    height: number,
+  },
+  screen?: {
+    width: number,
+    height: number,
+  },
+  ignoreHTTPSErrors?: boolean,
+  javaScriptEnabled?: boolean,
+  bypassCSP?: boolean,
+  userAgent?: string,
+  locale?: string,
+  timezoneId?: string,
+  geolocation?: {
+    longitude: number,
+    latitude: number,
+    accuracy?: number,
+  },
+  permissions?: string[],
+  extraHTTPHeaders?: NameValue[],
+  offline?: boolean,
+  httpCredentials?: {
+    username: string,
+    password: string,
+  },
+  deviceScaleFactor?: number,
+  isMobile?: boolean,
+  hasTouch?: boolean,
+  colorScheme?: 'dark' | 'light' | 'no-preference',
+  reducedMotion?: 'reduce' | 'no-preference',
+  forcedColors?: 'active' | 'none',
+  acceptDownloads?: boolean,
+  baseURL?: string,
+  recordVideo?: {
+    dir: string,
+    size?: {
+      width: number,
+      height: number,
+    },
+  },
+  recordHar?: RecordHarOptions,
+  strictSelectors?: boolean,
+  serviceWorkers?: 'allow' | 'block',
+  proxy?: {
+    server: string,
+    bypass?: string,
+    username?: string,
+    password?: string,
+  },
+  storageState?: {
+    cookies?: SetNetworkCookie[],
+    origins?: OriginStorage[],
+  },
+};
+export type BrowserNewContextForReuseResult = {
   context: BrowserContextChannel,
 };
 export type BrowserNewBrowserCDPSessionParams = {};

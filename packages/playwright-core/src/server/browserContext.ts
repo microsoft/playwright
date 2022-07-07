@@ -137,6 +137,40 @@ export abstract class BrowserContext extends SdkObject {
       await mkdirIfNeeded(path.join(this._options.recordVideo.dir, 'dummy'));
   }
 
+  canResetForReuse(): boolean {
+    if (this._closedStatus !== 'open')
+      return false;
+    if (this.pages().length < 1)
+      return false;
+    return true;
+  }
+
+  async resetForReuse(metadata: CallMetadata) {
+    this.setDefaultNavigationTimeout(undefined);
+    this.setDefaultTimeout(undefined);
+
+    await this._cancelAllRoutesInFlight();
+
+    const [page, ...otherPages] = this.pages();
+    for (const page of otherPages)
+      await page.close(metadata);
+    // Unless I do this early, setting extra http headers below does not respond.
+    await page._frameManager.closeOpenDialogs();
+    await page.mainFrame().goto(metadata, 'about:blank', { timeout: 0 });
+    await this.removeExposedBindings();
+    await this.removeInitScripts();
+    // TODO: following can be optimized to not perform noops.
+    if (this._options.permissions)
+      await this.grantPermissions(this._options.permissions);
+    else
+      await this.clearPermissions();
+    await this.setExtraHTTPHeaders(this._options.extraHTTPHeaders || []);
+    await this.setGeolocation(this._options.geolocation);
+    await this.setOffline(!!this._options.offline);
+
+    await page.resetForReuse(metadata);
+  }
+
   _browserClosed() {
     for (const page of this.pages())
       page._didClose();

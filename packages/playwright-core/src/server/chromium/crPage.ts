@@ -208,7 +208,7 @@ export class CRPage implements PageDelegate {
   }
 
   async updateEmulateMedia(): Promise<void> {
-    await this._forAllFrameSessions(frame => frame._updateEmulateMedia(false));
+    await this._forAllFrameSessions(frame => frame._updateEmulateMedia());
   }
 
   async updateRequestInterception(): Promise<void> {
@@ -554,7 +554,7 @@ class FrameSession {
       promises.push(this._updateRequestInterception());
       promises.push(this._updateOffline(true));
       promises.push(this._updateHttpCredentials(true));
-      promises.push(this._updateEmulateMedia(true));
+      promises.push(this._updateEmulateMedia());
       promises.push(this._updateFileChooserInterception(true));
       for (const binding of this._crPage._page.allBindings())
         promises.push(this._initBinding(binding));
@@ -1057,7 +1057,7 @@ class FrameSession {
     });
   }
 
-  async _updateEmulateMedia(initial: boolean): Promise<void> {
+  async _updateEmulateMedia(): Promise<void> {
     const emulatedMedia = this._page.emulatedMedia();
     const colorScheme = emulatedMedia.colorScheme === null ? '' : emulatedMedia.colorScheme;
     const reducedMotion = emulatedMedia.reducedMotion === null ? '' : emulatedMedia.reducedMotion;
@@ -1084,7 +1084,7 @@ class FrameSession {
     const enabled = this._page.fileChooserIntercepted();
     if (initial && !enabled)
       return;
-    await this._client.send('Page.setInterceptFileChooserDialog', { enabled }).catch(e => {}); // target can be closed.
+    await this._client.send('Page.setInterceptFileChooserDialog', { enabled }).catch(() => {}); // target can be closed.
   }
 
   async _evaluateOnNewDocument(source: string, world: types.World): Promise<void> {

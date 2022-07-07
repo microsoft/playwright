@@ -283,6 +283,11 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel> imple
   _onFrameDetached(frame: Frame) {
     this._dispatchEvent('frameDetached', { frame: lookupDispatcher<FrameDispatcher>(frame) });
   }
+
+  override _dispose() {
+    super._dispose();
+    this._page.setClientRequestInterceptor(undefined).catch(() => {});
+  }
 }
 
 
