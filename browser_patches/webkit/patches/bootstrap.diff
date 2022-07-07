@@ -337,11 +337,42 @@ index 4b95964db4d902b4b7f4b0b4c40afea51654ff2f..653842a82ed7a7be8603c9ef88ff48d1
      WTF::Function<void()> m_resumeCallback;
      bool m_isPaused { false };
  };
+diff --git a/Source/JavaScriptCore/inspector/JSGlobalObjectConsoleClient.cpp b/Source/JavaScriptCore/inspector/JSGlobalObjectConsoleClient.cpp
+index f06ff03be0fe272e08a46c84b0e81323ac06f90b..cf7b13aabfd13b7e8b258b4795933268c9e90c08 100644
+--- a/Source/JavaScriptCore/inspector/JSGlobalObjectConsoleClient.cpp
++++ b/Source/JavaScriptCore/inspector/JSGlobalObjectConsoleClient.cpp
+@@ -218,6 +218,14 @@ void JSGlobalObjectConsoleClient::screenshot(JSGlobalObject*, Ref<ScriptArgument
+     warnUnimplemented("console.screenshot"_s);
+ }
+ 
++void JSGlobalObjectConsoleClient::bindingCalled(JSGlobalObject*, const String&, const String&)
++{
++    if (LIKELY(!m_consoleAgent->developerExtrasEnabled()))
++        return;
++
++    warnUnimplemented("console.bindingCalled"_s);
++}
++
+ void JSGlobalObjectConsoleClient::warnUnimplemented(const String& method)
+ {
+     String message = method + " is currently ignored in JavaScript context inspection.";
+diff --git a/Source/JavaScriptCore/inspector/JSGlobalObjectConsoleClient.h b/Source/JavaScriptCore/inspector/JSGlobalObjectConsoleClient.h
+index 6e573c4dfd1f356b76ef9b46dcee4254e9a28f27..8855604064f5130211baab6caa89318c685cb46c 100644
+--- a/Source/JavaScriptCore/inspector/JSGlobalObjectConsoleClient.h
++++ b/Source/JavaScriptCore/inspector/JSGlobalObjectConsoleClient.h
+@@ -63,6 +63,7 @@ private:
+     void record(JSC::JSGlobalObject*, Ref<ScriptArguments>&&) final;
+     void recordEnd(JSC::JSGlobalObject*, Ref<ScriptArguments>&&) final;
+     void screenshot(JSC::JSGlobalObject*, Ref<ScriptArguments>&&) final;
++    void bindingCalled(JSC::JSGlobalObject*, const String&, const String&) final;
+ 
+     void warnUnimplemented(const String& method);
+     void internalAddMessage(MessageType, MessageLevel, JSC::JSGlobalObject*, Ref<ScriptArguments>&&);
 diff --git a/Source/JavaScriptCore/inspector/agents/InspectorRuntimeAgent.cpp b/Source/JavaScriptCore/inspector/agents/InspectorRuntimeAgent.cpp
-index 6e976621186326be53aedeeda618a441d7bea6a6..ab46b5e2d1688ab538ebac0f5b908dc5a49a365a 100644
+index 6e976621186326be53aedeeda618a441d7bea6a6..17bb59df54bb58782c3d5988736d4976794a412d 100644
 --- a/Source/JavaScriptCore/inspector/agents/InspectorRuntimeAgent.cpp
 +++ b/Source/JavaScriptCore/inspector/agents/InspectorRuntimeAgent.cpp
-@@ -177,41 +177,38 @@ void InspectorRuntimeAgent::awaitPromise(const Protocol::Runtime::RemoteObjectId
+@@ -177,41 +177,43 @@ void InspectorRuntimeAgent::awaitPromise(const Protocol::Runtime::RemoteObjectId
      });
  }
  
@@ -391,28 +422,33 @@ index 6e976621186326be53aedeeda618a441d7bea6a6..ab46b5e2d1688ab538ebac0f5b908dc5
  
      if (pauseAndMute)
          unmuteConsole();
--
++}
+ 
 -    if (!result)
 -        return makeUnexpected(errorString);
 -
 -    return { { result.releaseNonNull(), WTFMove(wasThrown) } };
++Protocol::ErrorStringOr<void> InspectorRuntimeAgent::addBinding(const String&)
++{
++    return makeUnexpected("Not implemented in this type of agent."_s);
  }
  
  Protocol::ErrorStringOr<Ref<Protocol::Runtime::ObjectPreview>> InspectorRuntimeAgent::getPreview(const Protocol::Runtime::RemoteObjectId& objectId)
 diff --git a/Source/JavaScriptCore/inspector/agents/InspectorRuntimeAgent.h b/Source/JavaScriptCore/inspector/agents/InspectorRuntimeAgent.h
-index 1db64831b835df816130be4e7d42b7b213625656..5c3488200ab2df6dfc914ff780f05eba7ffd92a2 100644
+index 1db64831b835df816130be4e7d42b7b213625656..11e6a6a9b027f2e4ea904e796019ee2a698509cf 100644
 --- a/Source/JavaScriptCore/inspector/agents/InspectorRuntimeAgent.h
 +++ b/Source/JavaScriptCore/inspector/agents/InspectorRuntimeAgent.h
-@@ -62,7 +62,7 @@ public:
+@@ -62,7 +62,8 @@ public:
      Protocol::ErrorStringOr<std::tuple<Protocol::Runtime::SyntaxErrorType, String /* message */, RefPtr<Protocol::Runtime::ErrorRange>>> parse(const String& expression) final;
      Protocol::ErrorStringOr<std::tuple<Ref<Protocol::Runtime::RemoteObject>, std::optional<bool> /* wasThrown */, std::optional<int> /* savedResultIndex */>> evaluate(const String& expression, const String& objectGroup, std::optional<bool>&& includeCommandLineAPI, std::optional<bool>&& doNotPauseOnExceptionsAndMuteConsole, std::optional<Protocol::Runtime::ExecutionContextId>&&, std::optional<bool>&& returnByValue, std::optional<bool>&& generatePreview, std::optional<bool>&& saveResult, std::optional<bool>&& emulateUserGesture) override;
      void awaitPromise(const Protocol::Runtime::RemoteObjectId&, std::optional<bool>&& returnByValue, std::optional<bool>&& generatePreview, std::optional<bool>&& saveResult, Ref<AwaitPromiseCallback>&&) final;
 -    Protocol::ErrorStringOr<std::tuple<Ref<Protocol::Runtime::RemoteObject>, std::optional<bool> /* wasThrown */>> callFunctionOn(const Protocol::Runtime::RemoteObjectId&, const String& functionDeclaration, RefPtr<JSON::Array>&& arguments, std::optional<bool>&& doNotPauseOnExceptionsAndMuteConsole, std::optional<bool>&& returnByValue, std::optional<bool>&& generatePreview, std::optional<bool>&& emulateUserGesture) override;
 +    void callFunctionOn(const Protocol::Runtime::RemoteObjectId&, const String& functionDeclaration, RefPtr<JSON::Array>&& arguments, std::optional<bool>&& doNotPauseOnExceptionsAndMuteConsole, std::optional<bool>&& returnByValue, std::optional<bool>&& generatePreview, std::optional<bool>&& emulateUserGesture, std::optional<bool>&& awaitPromise, Ref<CallFunctionOnCallback>&&) override;
++    Protocol::ErrorStringOr<void> addBinding(const String& name) override;
      Protocol::ErrorStringOr<void> releaseObject(const Protocol::Runtime::RemoteObjectId&) final;
      Protocol::ErrorStringOr<Ref<Protocol::Runtime::ObjectPreview>> getPreview(const Protocol::Runtime::RemoteObjectId&) final;
      Protocol::ErrorStringOr<std::tuple<Ref<JSON::ArrayOf<Protocol::Runtime::PropertyDescriptor>>, RefPtr<JSON::ArrayOf<Protocol::Runtime::InternalPropertyDescriptor>>>> getProperties(const Protocol::Runtime::RemoteObjectId&, std::optional<bool>&& ownProperties, std::optional<int>&& fetchStart, std::optional<int>&& fetchCount, std::optional<bool>&& generatePreview) final;
-@@ -82,7 +82,7 @@ protected:
+@@ -82,7 +83,7 @@ protected:
      InspectorRuntimeAgent(AgentContext&);
  
      Protocol::ErrorStringOr<std::tuple<Ref<Protocol::Runtime::RemoteObject>, std::optional<bool> /* wasThrown */, std::optional<int> /* savedResultIndex */>> evaluate(InjectedScript&, const String& expression, const String& objectGroup, std::optional<bool>&& includeCommandLineAPI, std::optional<bool>&& doNotPauseOnExceptionsAndMuteConsole, std::optional<bool>&& returnByValue, std::optional<bool>&& generatePreview, std::optional<bool>&& saveResult, std::optional<bool>&& emulateUserGesture);
@@ -1588,10 +1624,10 @@ index 0000000000000000000000000000000000000000..91bdeadaeb77d223cd4dc47b8bb90850
 +    ]
 +}
 diff --git a/Source/JavaScriptCore/inspector/protocol/Runtime.json b/Source/JavaScriptCore/inspector/protocol/Runtime.json
-index 274b01596d490fb81b48cf89bf668e0634e8b423..d08a9ddd745c748767ba8055907daa7beeffc219 100644
+index 274b01596d490fb81b48cf89bf668e0634e8b423..357aad51bbdc1768efba89b736bb2964ebc4b30e 100644
 --- a/Source/JavaScriptCore/inspector/protocol/Runtime.json
 +++ b/Source/JavaScriptCore/inspector/protocol/Runtime.json
-@@ -261,12 +261,14 @@
+@@ -261,12 +261,21 @@
                  { "name": "doNotPauseOnExceptionsAndMuteConsole", "type": "boolean", "optional": true, "description": "Specifies whether function call should stop on exceptions and mute console. Overrides setPauseOnException state." },
                  { "name": "returnByValue", "type": "boolean", "optional": true, "description": "Whether the result is expected to be a JSON object which should be sent by value." },
                  { "name": "generatePreview", "type": "boolean", "optional": true, "description": "Whether preview should be generated for the result." },
@@ -1605,9 +1641,33 @@ index 274b01596d490fb81b48cf89bf668e0634e8b423..d08a9ddd745c748767ba8055907daa7b
 -            ]
 +            ],
 +            "async": true
++        },
++        {
++          "name": "addBinding",
++          "description": "Adds binding with the given name on the global objects of all inspected contexts. Each binding function call produces Runtime.bindingCalled event.",
++          "parameters": [
++              { "name": "name", "type": "string", "description": "Name of the bound function." }
++          ]
          },
          {
              "name": "getPreview",
+@@ -404,6 +413,15 @@
+             "parameters": [
+                 { "name": "context", "$ref": "ExecutionContextDescription", "description": "A newly created execution context." }
+             ]
+-        }
++        },
++        {
++          "name": "bindingCalled",
++          "description": "Issued when new execution context is created.",
++          "parameters": [
++              { "name": "contextId", "$ref": "ExecutionContextId", "description": "Id of the execution context where the binding was called." },
++              { "name": "name", "type": "string", "description": "Name of the bound function." },
++              { "name": "argument", "type": "string", "description": "String argument passed to the function." }
++          ]
++      }
+     ]
+ }
 diff --git a/Source/JavaScriptCore/inspector/protocol/Screencast.json b/Source/JavaScriptCore/inspector/protocol/Screencast.json
 new file mode 100644
 index 0000000000000000000000000000000000000000..73a4e53ced3acc41316bb8d4c787306d3f28a27e
@@ -1746,6 +1806,18 @@ index 638612413466efc87b737e8a81042ed07ca12703..6f9e518ff0bfa2a6228675d25b6b785f
              ]
          },
          {
+diff --git a/Source/JavaScriptCore/runtime/ConsoleClient.h b/Source/JavaScriptCore/runtime/ConsoleClient.h
+index 72c81757450ad5ebacd5fd20d2a16095514802ec..b7d8ab1e04d3850180079870468b28eff504626a 100644
+--- a/Source/JavaScriptCore/runtime/ConsoleClient.h
++++ b/Source/JavaScriptCore/runtime/ConsoleClient.h
+@@ -69,6 +69,7 @@ public:
+     virtual void record(JSGlobalObject*, Ref<Inspector::ScriptArguments>&&) = 0;
+     virtual void recordEnd(JSGlobalObject*, Ref<Inspector::ScriptArguments>&&) = 0;
+     virtual void screenshot(JSGlobalObject*, Ref<Inspector::ScriptArguments>&&) = 0;
++    virtual void bindingCalled(JSGlobalObject*, const String& name, const String& arg) = 0;
+ 
+ private:
+     enum ArgumentRequirement { ArgumentRequired, ArgumentNotRequired };
 diff --git a/Source/ThirdParty/libwebrtc/CMakeLists.txt b/Source/ThirdParty/libwebrtc/CMakeLists.txt
 index 0d42c17c6a85b2a9f6af319431332f7f8a709188..8899c8e85b11db81d1da14c7f27814883f75da50 100644
 --- a/Source/ThirdParty/libwebrtc/CMakeLists.txt
@@ -2224,7 +2296,7 @@ diff --git a/Source/WebCore/Modules/speech/cocoa/WebSpeechRecognizerTask.mm b/So
 index a941d76a4f748718df1e3cff2a6c5e0827f48891..f62db5a27ac0e4c12430e7d19e60c83d768ace22 100644
 --- a/Source/WebCore/Modules/speech/cocoa/WebSpeechRecognizerTask.mm
 +++ b/Source/WebCore/Modules/speech/cocoa/WebSpeechRecognizerTask.mm
-@@ -198,6 +198,7 @@ NS_ASSUME_NONNULL_BEGIN
+@@ -198,6 +198,7 @@ - (void)sendEndIfNeeded
  
  - (void)speechRecognizer:(SFSpeechRecognizer *)speechRecognizer availabilityDidChange:(BOOL)available
  {
@@ -2232,7 +2304,7 @@ index a941d76a4f748718df1e3cff2a6c5e0827f48891..f62db5a27ac0e4c12430e7d19e60c83d
      ASSERT(isMainThread());
  
      if (available || !_task)
-@@ -211,6 +212,7 @@ NS_ASSUME_NONNULL_BEGIN
+@@ -211,6 +212,7 @@ - (void)speechRecognizer:(SFSpeechRecognizer *)speechRecognizer availabilityDidC
  
  - (void)speechRecognitionTask:(SFSpeechRecognitionTask *)task didHypothesizeTranscription:(SFTranscription *)transcription
  {
@@ -2240,7 +2312,7 @@ index a941d76a4f748718df1e3cff2a6c5e0827f48891..f62db5a27ac0e4c12430e7d19e60c83d
      ASSERT(isMainThread());
  
      [self sendSpeechStartIfNeeded];
-@@ -219,6 +221,7 @@ NS_ASSUME_NONNULL_BEGIN
+@@ -219,6 +221,7 @@ - (void)speechRecognitionTask:(SFSpeechRecognitionTask *)task didHypothesizeTran
  
  - (void)speechRecognitionTask:(SFSpeechRecognitionTask *)task didFinishRecognition:(SFSpeechRecognitionResult *)recognitionResult
  {
@@ -2248,7 +2320,7 @@ index a941d76a4f748718df1e3cff2a6c5e0827f48891..f62db5a27ac0e4c12430e7d19e60c83d
      ASSERT(isMainThread());
      [self callbackWithTranscriptions:recognitionResult.transcriptions isFinal:YES];
  
-@@ -230,6 +233,7 @@ NS_ASSUME_NONNULL_BEGIN
+@@ -230,6 +233,7 @@ - (void)speechRecognitionTask:(SFSpeechRecognitionTask *)task didFinishRecogniti
  
  - (void)speechRecognitionTaskWasCancelled:(SFSpeechRecognitionTask *)task
  {
@@ -2966,7 +3038,7 @@ index 4d5a3859ec6a46d07d45c80a3b5870ee2ef13d36..75eb55a024a6ae3892a4fedc535bf6a6
  
  } // namespace WebCore
 diff --git a/Source/WebCore/inspector/InspectorInstrumentation.cpp b/Source/WebCore/inspector/InspectorInstrumentation.cpp
-index 1dcecd878be6ea8bcfee6765f9d38eec9afa51f5..38e224ae0abeee1987412fa2ee04b380a2dcc3cb 100644
+index 1dcecd878be6ea8bcfee6765f9d38eec9afa51f5..00a73f00758fb89758732e3d102dc3236ef50ddd 100644
 --- a/Source/WebCore/inspector/InspectorInstrumentation.cpp
 +++ b/Source/WebCore/inspector/InspectorInstrumentation.cpp
 @@ -572,6 +572,13 @@ void InspectorInstrumentation::applyUserAgentOverrideImpl(InstrumentingAgents& i
@@ -3046,7 +3118,20 @@ index 1dcecd878be6ea8bcfee6765f9d38eec9afa51f5..38e224ae0abeee1987412fa2ee04b380
  #if ENABLE(DARK_MODE_CSS) || HAVE(OS_DARK_MODE_SUPPORT)
  void InspectorInstrumentation::defaultAppearanceDidChangeImpl(InstrumentingAgents& instrumentingAgents, bool useDarkAppearance)
  {
-@@ -1301,6 +1311,36 @@ void InspectorInstrumentation::renderLayerDestroyedImpl(InstrumentingAgents& ins
+@@ -1001,6 +1011,12 @@ void InspectorInstrumentation::consoleStopRecordingCanvasImpl(InstrumentingAgent
+         canvasAgent->consoleStopRecordingCanvas(context);
+ }
+ 
++void InspectorInstrumentation::bindingCalledImpl(InstrumentingAgents& instrumentingAgents, JSC::JSGlobalObject* globalObject, const String& name, const String& arg)
++{
++    if (auto* pageRuntimeAgent = instrumentingAgents.enabledPageRuntimeAgent())
++        pageRuntimeAgent->bindingCalled(globalObject, name, arg);
++}
++
+ void InspectorInstrumentation::didOpenDatabaseImpl(InstrumentingAgents& instrumentingAgents, Database& database)
+ {
+     if (auto* databaseAgent = instrumentingAgents.enabledDatabaseAgent())
+@@ -1301,6 +1317,36 @@ void InspectorInstrumentation::renderLayerDestroyedImpl(InstrumentingAgents& ins
          layerTreeAgent->renderLayerDestroyed(renderLayer);
  }
  
@@ -3083,7 +3168,7 @@ index 1dcecd878be6ea8bcfee6765f9d38eec9afa51f5..38e224ae0abeee1987412fa2ee04b380
  InstrumentingAgents& InspectorInstrumentation::instrumentingAgents(WorkerOrWorkletGlobalScope& globalScope)
  {
      return globalScope.inspectorController().m_instrumentingAgents;
-@@ -1312,6 +1352,13 @@ InstrumentingAgents& InspectorInstrumentation::instrumentingAgents(Page& page)
+@@ -1312,6 +1358,13 @@ InstrumentingAgents& InspectorInstrumentation::instrumentingAgents(Page& page)
      return page.inspectorController().m_instrumentingAgents.get();
  }
  
@@ -3098,7 +3183,7 @@ index 1dcecd878be6ea8bcfee6765f9d38eec9afa51f5..38e224ae0abeee1987412fa2ee04b380
  {
      if (is<Document>(context))
 diff --git a/Source/WebCore/inspector/InspectorInstrumentation.h b/Source/WebCore/inspector/InspectorInstrumentation.h
-index 4b44709392749f24351f86ea97535b5eeee086b9..f4546646d1dcff84fafd740f36155f93ab755c3f 100644
+index 4b44709392749f24351f86ea97535b5eeee086b9..27cfa7f7ef15c6745e85dea7fb34a405766e57b1 100644
 --- a/Source/WebCore/inspector/InspectorInstrumentation.h
 +++ b/Source/WebCore/inspector/InspectorInstrumentation.h
 @@ -31,6 +31,7 @@
@@ -3154,7 +3239,15 @@ index 4b44709392749f24351f86ea97535b5eeee086b9..f4546646d1dcff84fafd740f36155f93
  #if ENABLE(DARK_MODE_CSS) || HAVE(OS_DARK_MODE_SUPPORT)
      static void defaultAppearanceDidChange(Page&, bool useDarkAppearance);
  #endif
-@@ -318,6 +323,12 @@ public:
+@@ -263,6 +268,7 @@ public:
+     static void stopProfiling(Page&, JSC::JSGlobalObject*, const String& title);
+     static void consoleStartRecordingCanvas(CanvasRenderingContext&, JSC::JSGlobalObject&, JSC::JSObject* options);
+     static void consoleStopRecordingCanvas(CanvasRenderingContext&);
++    static void bindingCalled(Page& , JSC::JSGlobalObject*, const String& name, const String& arg);
+ 
+     static void didRequestAnimationFrame(Document&, int callbackId);
+     static void didCancelAnimationFrame(Document&, int callbackId);
+@@ -318,6 +324,12 @@ public:
      static void layerTreeDidChange(Page*);
      static void renderLayerDestroyed(Page*, const RenderLayer&);
  
@@ -3167,7 +3260,7 @@ index 4b44709392749f24351f86ea97535b5eeee086b9..f4546646d1dcff84fafd740f36155f93
      static void frontendCreated();
      static void frontendDeleted();
      static bool hasFrontends() { return InspectorInstrumentationPublic::hasFrontends(); }
-@@ -334,6 +345,8 @@ public:
+@@ -334,6 +346,8 @@ public:
      static void registerInstrumentingAgents(InstrumentingAgents&);
      static void unregisterInstrumentingAgents(InstrumentingAgents&);
  
@@ -3176,7 +3269,7 @@ index 4b44709392749f24351f86ea97535b5eeee086b9..f4546646d1dcff84fafd740f36155f93
  private:
      static void didClearWindowObjectInWorldImpl(InstrumentingAgents&, Frame&, DOMWrapperWorld&);
      static bool isDebuggerPausedImpl(InstrumentingAgents&);
-@@ -411,6 +424,7 @@ private:
+@@ -411,6 +425,7 @@ private:
      static void didRecalculateStyleImpl(InstrumentingAgents&);
      static void didScheduleStyleRecalculationImpl(InstrumentingAgents&, Document&);
      static void applyUserAgentOverrideImpl(InstrumentingAgents&, String&);
@@ -3184,7 +3277,7 @@ index 4b44709392749f24351f86ea97535b5eeee086b9..f4546646d1dcff84fafd740f36155f93
      static void applyEmulatedMediaImpl(InstrumentingAgents&, String&);
  
      static void flexibleBoxRendererBeganLayoutImpl(InstrumentingAgents&, const RenderObject&);
-@@ -425,6 +439,7 @@ private:
+@@ -425,6 +440,7 @@ private:
      static void didReceiveDataImpl(InstrumentingAgents&, ResourceLoaderIdentifier, const SharedBuffer*, int encodedDataLength);
      static void didFinishLoadingImpl(InstrumentingAgents&, ResourceLoaderIdentifier, DocumentLoader*, const NetworkLoadMetrics&, ResourceLoader*);
      static void didFailLoadingImpl(InstrumentingAgents&, ResourceLoaderIdentifier, DocumentLoader*, const ResourceError&);
@@ -3192,7 +3285,7 @@ index 4b44709392749f24351f86ea97535b5eeee086b9..f4546646d1dcff84fafd740f36155f93
      static void willLoadXHRSynchronouslyImpl(InstrumentingAgents&);
      static void didLoadXHRSynchronouslyImpl(InstrumentingAgents&);
      static void scriptImportedImpl(InstrumentingAgents&, ResourceLoaderIdentifier, const String& sourceString);
-@@ -435,11 +450,11 @@ private:
+@@ -435,11 +451,11 @@ private:
      static void frameDetachedFromParentImpl(InstrumentingAgents&, Frame&);
      static void didCommitLoadImpl(InstrumentingAgents&, Frame&, DocumentLoader*);
      static void frameDocumentUpdatedImpl(InstrumentingAgents&, Frame&);
@@ -3205,7 +3298,15 @@ index 4b44709392749f24351f86ea97535b5eeee086b9..f4546646d1dcff84fafd740f36155f93
  #if ENABLE(DARK_MODE_CSS) || HAVE(OS_DARK_MODE_SUPPORT)
      static void defaultAppearanceDidChangeImpl(InstrumentingAgents&, bool useDarkAppearance);
  #endif
-@@ -521,6 +536,12 @@ private:
+@@ -466,6 +482,7 @@ private:
+     static void stopProfilingImpl(InstrumentingAgents&, JSC::JSGlobalObject*, const String& title);
+     static void consoleStartRecordingCanvasImpl(InstrumentingAgents&, CanvasRenderingContext&, JSC::JSGlobalObject&, JSC::JSObject* options);
+     static void consoleStopRecordingCanvasImpl(InstrumentingAgents&, CanvasRenderingContext&);
++    static void bindingCalledImpl(InstrumentingAgents&, JSC::JSGlobalObject*, const String& name, const String& arg);
+ 
+     static void didRequestAnimationFrameImpl(InstrumentingAgents&, int callbackId, Document&);
+     static void didCancelAnimationFrameImpl(InstrumentingAgents&, int callbackId, Document&);
+@@ -521,6 +538,12 @@ private:
      static void layerTreeDidChangeImpl(InstrumentingAgents&);
      static void renderLayerDestroyedImpl(InstrumentingAgents&, const RenderLayer&);
  
@@ -3218,7 +3319,7 @@ index 4b44709392749f24351f86ea97535b5eeee086b9..f4546646d1dcff84fafd740f36155f93
      static InstrumentingAgents& instrumentingAgents(Page&);
      static InstrumentingAgents& instrumentingAgents(WorkerOrWorkletGlobalScope&);
  
-@@ -1039,6 +1060,13 @@ inline void InspectorInstrumentation::applyUserAgentOverride(Frame& frame, Strin
+@@ -1039,6 +1062,13 @@ inline void InspectorInstrumentation::applyUserAgentOverride(Frame& frame, Strin
          applyUserAgentOverrideImpl(*agents, userAgent);
  }
  
@@ -3232,7 +3333,7 @@ index 4b44709392749f24351f86ea97535b5eeee086b9..f4546646d1dcff84fafd740f36155f93
  inline void InspectorInstrumentation::applyEmulatedMedia(Frame& frame, String& media)
  {
      FAST_RETURN_IF_NO_FRONTENDS(void());
-@@ -1141,6 +1169,13 @@ inline void InspectorInstrumentation::didFailLoading(WorkerOrWorkletGlobalScope&
+@@ -1141,6 +1171,13 @@ inline void InspectorInstrumentation::didFailLoading(WorkerOrWorkletGlobalScope&
      didFailLoadingImpl(instrumentingAgents(globalScope), identifier, nullptr, error);
  }
  
@@ -3246,7 +3347,7 @@ index 4b44709392749f24351f86ea97535b5eeee086b9..f4546646d1dcff84fafd740f36155f93
  inline void InspectorInstrumentation::continueAfterXFrameOptionsDenied(Frame& frame, ResourceLoaderIdentifier identifier, DocumentLoader& loader, const ResourceResponse& response)
  {
      // Treat the same as didReceiveResponse.
-@@ -1231,13 +1266,6 @@ inline void InspectorInstrumentation::frameDocumentUpdated(Frame& frame)
+@@ -1231,13 +1268,6 @@ inline void InspectorInstrumentation::frameDocumentUpdated(Frame& frame)
          frameDocumentUpdatedImpl(*agents, frame);
  }
  
@@ -3260,7 +3361,7 @@ index 4b44709392749f24351f86ea97535b5eeee086b9..f4546646d1dcff84fafd740f36155f93
  inline void InspectorInstrumentation::frameStartedLoading(Frame& frame)
  {
      FAST_RETURN_IF_NO_FRONTENDS(void());
-@@ -1266,6 +1294,13 @@ inline void InspectorInstrumentation::frameClearedScheduledNavigation(Frame& fra
+@@ -1266,6 +1296,13 @@ inline void InspectorInstrumentation::frameClearedScheduledNavigation(Frame& fra
          frameClearedScheduledNavigationImpl(*agents, frame);
  }
  
@@ -3274,7 +3375,19 @@ index 4b44709392749f24351f86ea97535b5eeee086b9..f4546646d1dcff84fafd740f36155f93
  #if ENABLE(DARK_MODE_CSS) || HAVE(OS_DARK_MODE_SUPPORT)
  inline void InspectorInstrumentation::defaultAppearanceDidChange(Page& page, bool useDarkAppearance)
  {
-@@ -1696,6 +1731,42 @@ inline void InspectorInstrumentation::renderLayerDestroyed(Page* page, const Ren
+@@ -1640,6 +1677,11 @@ inline void InspectorInstrumentation::consoleStopRecordingCanvas(CanvasRendering
+         consoleStopRecordingCanvasImpl(*agents, context);
+ }
+ 
++inline void InspectorInstrumentation::bindingCalled(Page& page, JSC::JSGlobalObject* globalObject, const String& name, const String& arg)
++{
++    bindingCalledImpl(instrumentingAgents(page), globalObject, name, arg);
++}
++
+ inline void InspectorInstrumentation::didRequestAnimationFrame(Document& document, int callbackId)
+ {
+     FAST_RETURN_IF_NO_FRONTENDS(void());
+@@ -1696,6 +1738,42 @@ inline void InspectorInstrumentation::renderLayerDestroyed(Page* page, const Ren
          renderLayerDestroyedImpl(*agents, renderLayer);
  }
  
@@ -5159,7 +5272,7 @@ index 31ca79d6410560456c89a5be62560fc33e082cee..4a1e4dbc2ff3c13761014ae614ebf4b7
  }
  
 diff --git a/Source/WebCore/inspector/agents/page/PageRuntimeAgent.cpp b/Source/WebCore/inspector/agents/page/PageRuntimeAgent.cpp
-index 5e7a1214da060ba3a168cf21b22e6c398c0e07f7..ef38546315e7e88f09738b18d44a0268a009307c 100644
+index 5e7a1214da060ba3a168cf21b22e6c398c0e07f7..942c4e79e713908e428adc5aec89ce42844e220f 100644
 --- a/Source/WebCore/inspector/agents/page/PageRuntimeAgent.cpp
 +++ b/Source/WebCore/inspector/agents/page/PageRuntimeAgent.cpp
 @@ -35,6 +35,7 @@
@@ -5178,7 +5291,83 @@ index 5e7a1214da060ba3a168cf21b22e6c398c0e07f7..ef38546315e7e88f09738b18d44a0268
  #include "SecurityOrigin.h"
  #include "UserGestureEmulationScope.h"
  #include <JavaScriptCore/InjectedScript.h>
-@@ -103,6 +105,15 @@ void PageRuntimeAgent::didClearWindowObjectInWorld(Frame& frame, DOMWrapperWorld
+@@ -85,6 +87,8 @@ Protocol::ErrorStringOr<void> PageRuntimeAgent::disable()
+ {
+     m_instrumentingAgents.setEnabledPageRuntimeAgent(nullptr);
+ 
++    m_bindingNames.clear();
++
+     return InspectorRuntimeAgent::disable();
+ }
+ 
+@@ -94,8 +98,66 @@ void PageRuntimeAgent::frameNavigated(Frame& frame)
+     mainWorldGlobalObject(frame);
+ }
+ 
++static JSC_DECLARE_HOST_FUNCTION(bindingCallback);
++
++JSC_DEFINE_HOST_FUNCTION(bindingCallback, (JSC::JSGlobalObject * globalObject, JSC::CallFrame* callFrame))
++{
++    auto result = JSC::JSValue::encode(JSC::jsUndefined());
++    if (!callFrame->jsCallee())
++        return result;
++    String bindingName;
++    if (auto* function = JSC::jsDynamicCast<JSC::JSFunction*>(callFrame->jsCallee()))
++        bindingName = function->name(globalObject->vm());
++    auto client = globalObject->consoleClient();
++    if (!client)
++        return result;
++    if (callFrame->argumentCount() < 1)
++        return result;
++    auto value = callFrame->argument(0);
++    if (value.isUndefined())
++        return result;
++    String stringArg = value.toWTFString(globalObject);
++    client->bindingCalled(globalObject, bindingName, stringArg);
++    return result;
++}
++
++static void addBindingToFrame(Frame& frame, const String& name)
++{
++    JSC::JSGlobalObject* globalObject = frame.script().globalObject(mainThreadNormalWorld());
++    auto& vm = globalObject->vm();
++    globalObject->putDirectNativeFunction(vm, globalObject, JSC::Identifier::fromString(vm, name), 1, bindingCallback, JSC::NoIntrinsic, JSC::attributesForStructure(static_cast<unsigned>(JSC::PropertyAttribute::Function)));
++}
++
++Protocol::ErrorStringOr<void> PageRuntimeAgent::addBinding(const String& name)
++{
++    if (!m_bindingNames.add(name).isNewEntry)
++        return {};
++
++    m_inspectedPage.forEachFrame([&](Frame& frame) {
++        if (!frame.script().canExecuteScripts(NotAboutToExecuteScript))
++            return;
++
++        addBindingToFrame(frame, name);
++    });
++
++    return {};
++}
++
++void PageRuntimeAgent::bindingCalled(JSC::JSGlobalObject* globalObject, const String& name, const String& arg)
++{
++    auto injectedScript = injectedScriptManager().injectedScriptFor(globalObject);
++    if (injectedScript.hasNoValue())
++        return;
++    m_frontendDispatcher->bindingCalled(injectedScriptManager().injectedScriptIdFor(globalObject), name, arg);
++}
++
+ void PageRuntimeAgent::didClearWindowObjectInWorld(Frame& frame, DOMWrapperWorld& world)
+ {
++    if (world.isNormal()) {
++        for (const auto& name : m_bindingNames)
++            addBindingToFrame(frame, name);
++    }
++
+     auto* pageAgent = m_instrumentingAgents.enabledPageAgent();
+     if (!pageAgent)
+         return;
+@@ -103,6 +165,15 @@ void PageRuntimeAgent::didClearWindowObjectInWorld(Frame& frame, DOMWrapperWorld
      notifyContextCreated(pageAgent->frameId(&frame), frame.script().globalObject(world), world);
  }
  
@@ -5194,7 +5383,7 @@ index 5e7a1214da060ba3a168cf21b22e6c398c0e07f7..ef38546315e7e88f09738b18d44a0268
  InjectedScript PageRuntimeAgent::injectedScriptForEval(Protocol::ErrorString& errorString, std::optional<Protocol::Runtime::ExecutionContextId>&& executionContextId)
  {
      if (!executionContextId) {
-@@ -196,18 +207,24 @@ Protocol::ErrorStringOr<std::tuple<Ref<Protocol::Runtime::RemoteObject>, std::op
+@@ -196,18 +267,24 @@ Protocol::ErrorStringOr<std::tuple<Ref<Protocol::Runtime::RemoteObject>, std::op
      if (injectedScript.hasNoValue())
          return makeUnexpected(errorString);
  
@@ -5226,10 +5415,18 @@ index 5e7a1214da060ba3a168cf21b22e6c398c0e07f7..ef38546315e7e88f09738b18d44a0268
  
  } // namespace WebCore
 diff --git a/Source/WebCore/inspector/agents/page/PageRuntimeAgent.h b/Source/WebCore/inspector/agents/page/PageRuntimeAgent.h
-index 6aba3a2c6e8bbb7a0bca4f07824cf4de8ce36f8e..537e3b34d6405e412bf0e2350909c9afda06bed8 100644
+index 6aba3a2c6e8bbb7a0bca4f07824cf4de8ce36f8e..38684b33e3b1cfc0c565297d1942f21c7d87967e 100644
 --- a/Source/WebCore/inspector/agents/page/PageRuntimeAgent.h
 +++ b/Source/WebCore/inspector/agents/page/PageRuntimeAgent.h
-@@ -54,25 +54,25 @@ public:
+@@ -37,6 +37,7 @@
+ 
+ namespace JSC {
+ class CallFrame;
++class JSGlobalObject;
+ }
+ 
+ namespace WebCore {
+@@ -54,28 +55,31 @@ public:
      ~PageRuntimeAgent();
  
      // RuntimeBackendDispatcherHandler
@@ -5241,11 +5438,13 @@ index 6aba3a2c6e8bbb7a0bca4f07824cf4de8ce36f8e..537e3b34d6405e412bf0e2350909c9af
 +    Inspector::Protocol::ErrorStringOr<void> disable() override;
 +    Inspector::Protocol::ErrorStringOr<std::tuple<Ref<Inspector::Protocol::Runtime::RemoteObject>, std::optional<bool> /* wasThrown */, std::optional<int> /* savedResultIndex */>> evaluate(const String& expression, const String& objectGroup, std::optional<bool>&& includeCommandLineAPI, std::optional<bool>&& doNotPauseOnExceptionsAndMuteConsole, std::optional<Inspector::Protocol::Runtime::ExecutionContextId>&&, std::optional<bool>&& returnByValue, std::optional<bool>&& generatePreview, std::optional<bool>&& saveResult, std::optional<bool>&& emulateUserGesture) override;
 +    void callFunctionOn(const Inspector::Protocol::Runtime::RemoteObjectId&, const String& functionDeclaration, RefPtr<JSON::Array>&& arguments, std::optional<bool>&& doNotPauseOnExceptionsAndMuteConsole, std::optional<bool>&& returnByValue, std::optional<bool>&& generatePreview, std::optional<bool>&& emulateUserGesture, std::optional<bool>&& awaitPromise, Ref<CallFunctionOnCallback>&&) override;
++    Inspector::Protocol::ErrorStringOr<void> addBinding(const String& name) final;
  
      // InspectorInstrumentation
      void frameNavigated(Frame&);
      void didClearWindowObjectInWorld(Frame&, DOMWrapperWorld&);
 +    void didReceiveMainResourceError(Frame&);
++    void bindingCalled(JSC::JSGlobalObject* globalObject, const String& name, const String& arg);
  
  private:
 -    Inspector::InjectedScript injectedScriptForEval(Inspector::Protocol::ErrorString&, std::optional<Inspector::Protocol::Runtime::ExecutionContextId>&&);
@@ -5263,6 +5462,10 @@ index 6aba3a2c6e8bbb7a0bca4f07824cf4de8ce36f8e..537e3b34d6405e412bf0e2350909c9af
      InstrumentingAgents& m_instrumentingAgents;
  
      Page& m_inspectedPage;
++    HashSet<String> m_bindingNames;
+ };
+ 
+ } // namespace WebCore
 diff --git a/Source/WebCore/loader/CookieJar.h b/Source/WebCore/loader/CookieJar.h
 index 21e33e46bdb1af8434527747e3c308cbe53f60f0..c17c4de17f439c04d27caa532771934cb2f62abd 100644
 --- a/Source/WebCore/loader/CookieJar.h
@@ -6373,6 +6576,33 @@ index 46b7e4b9f3a0034f5a98939ba0dd8798d1102a50..600af3524de15a3cf7b8cc8a229eff0e
  
  #if ENABLE(DEVICE_ORIENTATION) && PLATFORM(IOS_FAMILY)
      RefPtr<DeviceOrientationUpdateProvider> m_deviceOrientationUpdateProvider;
+diff --git a/Source/WebCore/page/PageConsoleClient.cpp b/Source/WebCore/page/PageConsoleClient.cpp
+index 0c51d8cac09c17b5d1bb05847410a873a4eb503b..ad35630d5a519d2f82ac0d509a04639b4d7838b2 100644
+--- a/Source/WebCore/page/PageConsoleClient.cpp
++++ b/Source/WebCore/page/PageConsoleClient.cpp
+@@ -447,4 +447,10 @@ void PageConsoleClient::screenshot(JSC::JSGlobalObject* lexicalGlobalObject, Ref
+     addMessage(makeUnique<Inspector::ConsoleMessage>(MessageSource::ConsoleAPI, MessageType::Image, MessageLevel::Log, dataURL, WTFMove(arguments), lexicalGlobalObject, 0, timestamp));
+ }
+ 
++void PageConsoleClient::bindingCalled(JSC::JSGlobalObject* globalObject, const String& name, const String& arg)
++{
++    InspectorInstrumentation::bindingCalled(m_page, globalObject, name, arg);
++}
++
++
+ } // namespace WebCore
+diff --git a/Source/WebCore/page/PageConsoleClient.h b/Source/WebCore/page/PageConsoleClient.h
+index 9a6549a792bf95f6d5671289bc58be259ec73732..03a6ceb14a18b3b74e8544a98fb858416b645e71 100644
+--- a/Source/WebCore/page/PageConsoleClient.h
++++ b/Source/WebCore/page/PageConsoleClient.h
+@@ -81,6 +81,7 @@ private:
+     void record(JSC::JSGlobalObject*, Ref<Inspector::ScriptArguments>&&) override;
+     void recordEnd(JSC::JSGlobalObject*, Ref<Inspector::ScriptArguments>&&) override;
+     void screenshot(JSC::JSGlobalObject*, Ref<Inspector::ScriptArguments>&&) override;
++    void bindingCalled(JSC::JSGlobalObject*, const String& name, const String& arg) override;
+ 
+     Page& m_page;
+ };
 diff --git a/Source/WebCore/page/PointerCaptureController.cpp b/Source/WebCore/page/PointerCaptureController.cpp
 index 88c3ca9610ca27e2bfa8d548597170b990990897..21de65f197804a31bbc0bf1a1098579c5dc2bfd7 100644
 --- a/Source/WebCore/page/PointerCaptureController.cpp
@@ -8621,6 +8851,29 @@ index fac9402820702989bf72ed2425678bfb82bd6523..40b5a6441d22714fd370ce1a7c2f534e
      // Returns the line height of the inner renderer.
      int innerLineHeight() const override;
  #endif
+diff --git a/Source/WebCore/workers/WorkerConsoleClient.cpp b/Source/WebCore/workers/WorkerConsoleClient.cpp
+index 7b429300affcb05189d4816059f405d6686c4f51..a2a160ea608c719ce2b714cd32510248ef404390 100644
+--- a/Source/WebCore/workers/WorkerConsoleClient.cpp
++++ b/Source/WebCore/workers/WorkerConsoleClient.cpp
+@@ -99,4 +99,6 @@ void WorkerConsoleClient::recordEnd(JSC::JSGlobalObject*, Ref<ScriptArguments>&&
+ 
+ void WorkerConsoleClient::screenshot(JSC::JSGlobalObject*, Ref<ScriptArguments>&&) { }
+ 
++void WorkerConsoleClient::bindingCalled(JSC::JSGlobalObject*, const String&, const String&) { }
++
+ } // namespace WebCore
+diff --git a/Source/WebCore/workers/WorkerConsoleClient.h b/Source/WebCore/workers/WorkerConsoleClient.h
+index 1d8488e0d36288e09cd5662bd7f770ade95dfee3..dee07f87b47d62d4ef8ede45824bdb2f6a39ad0a 100644
+--- a/Source/WebCore/workers/WorkerConsoleClient.h
++++ b/Source/WebCore/workers/WorkerConsoleClient.h
+@@ -57,6 +57,7 @@ private:
+     void record(JSC::JSGlobalObject*, Ref<Inspector::ScriptArguments>&&) override;
+     void recordEnd(JSC::JSGlobalObject*, Ref<Inspector::ScriptArguments>&&) override;
+     void screenshot(JSC::JSGlobalObject*, Ref<Inspector::ScriptArguments>&&) override;
++    void bindingCalled(JSC::JSGlobalObject*, const String& name, const String& arg) override;
+ 
+     WorkerOrWorkletGlobalScope& m_globalScope;
+ };
 diff --git a/Source/WebKit/NetworkProcess/Cookies/WebCookieManager.messages.in b/Source/WebKit/NetworkProcess/Cookies/WebCookieManager.messages.in
 index 2081154f90fac8f7b9f7c6061cf5dc6da1af44b5..e7c6071a6f2e05e76e0fd1cb4661ebd32a5bb3fd 100644
 --- a/Source/WebKit/NetworkProcess/Cookies/WebCookieManager.messages.in
@@ -8793,7 +9046,7 @@ diff --git a/Source/WebKit/NetworkProcess/cocoa/NetworkSessionCocoa.mm b/Source/
 index 1dc6df3e1145332a0aeb902c0f5d7d5d727593be..230d268489a52391f7d4f336d22311e35c9f8278 100644
 --- a/Source/WebKit/NetworkProcess/cocoa/NetworkSessionCocoa.mm
 +++ b/Source/WebKit/NetworkProcess/cocoa/NetworkSessionCocoa.mm
-@@ -720,7 +720,7 @@ void NetworkSessionCocoa::setClientAuditToken(const WebCore::AuthenticationChall
+@@ -720,7 +720,7 @@ - (void)URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task didRece
  
      if ([challenge.protectionSpace.authenticationMethod isEqualToString:NSURLAuthenticationMethodServerTrust]) {
          sessionCocoa->setClientAuditToken(challenge);
@@ -10203,7 +10456,7 @@ index b8bf936e2eb8ca4dc0f445099dfb899395950bdb..30a2af76de0daac450c7afbb8a2dfe81
  #import <WebCore/Credential.h>
  #import <WebCore/RegistrationDatabase.h>
  #import <WebCore/ServiceWorkerClientData.h>
-@@ -234,6 +235,11 @@ static WallTime toSystemClockTime(NSDate *date)
+@@ -234,6 +235,11 @@ - (void)removeDataOfTypes:(NSSet *)dataTypes modifiedSince:(NSDate *)date comple
      });
  }
  
@@ -10382,7 +10635,7 @@ diff --git a/Source/WebKit/UIProcess/API/Cocoa/_WKProcessPoolConfiguration.mm b/
 index 2e235bb880c638a0e74256b6d66cb0244ea0a3f1..3471eebb47e860f7c2071d0e7f2691c9f0a6355d 100644
 --- a/Source/WebKit/UIProcess/API/Cocoa/_WKProcessPoolConfiguration.mm
 +++ b/Source/WebKit/UIProcess/API/Cocoa/_WKProcessPoolConfiguration.mm
-@@ -257,6 +257,16 @@
+@@ -257,6 +257,16 @@ - (BOOL)processSwapsOnNavigation
      return _processPoolConfiguration->processSwapsOnNavigation();
  }
  
@@ -20631,7 +20884,7 @@ diff --git a/Source/WebKitLegacy/mac/WebView/WebHTMLView.mm b/Source/WebKitLegac
 index 294e83317c044f75927ab868cf5b821b4f1fe157..08fcf9bd9d064fa78ac32d9808ffc3bce6c8dbbe 100644
 --- a/Source/WebKitLegacy/mac/WebView/WebHTMLView.mm
 +++ b/Source/WebKitLegacy/mac/WebView/WebHTMLView.mm
-@@ -4189,7 +4189,7 @@ static BOOL currentScrollIsBlit(NSView *clipView)
+@@ -4189,7 +4189,7 @@ - (void)mouseDown:(WebEvent *)event
      _private->handlingMouseDownEvent = NO;
  }
  
@@ -20644,7 +20897,7 @@ diff --git a/Source/WebKitLegacy/mac/WebView/WebView.mm b/Source/WebKitLegacy/ma
 index f57ff1862f7bc2d2e88710c7b43d62b78b1765a0..fdcf7866546515473fe579333184d9400d1f6bb6 100644
 --- a/Source/WebKitLegacy/mac/WebView/WebView.mm
 +++ b/Source/WebKitLegacy/mac/WebView/WebView.mm
-@@ -4038,7 +4038,7 @@ IGNORE_WARNINGS_END
+@@ -4038,7 +4038,7 @@ + (void)_doNotStartObservingNetworkReachability
  }
  #endif // PLATFORM(IOS_FAMILY)
  
@@ -20653,7 +20906,7 @@ index f57ff1862f7bc2d2e88710c7b43d62b78b1765a0..fdcf7866546515473fe579333184d940
  
  - (NSArray *)_touchEventRegions
  {
-@@ -4080,7 +4080,7 @@ IGNORE_WARNINGS_END
+@@ -4080,7 +4080,7 @@ - (NSArray *)_touchEventRegions
      }).autorelease();
  }
  
