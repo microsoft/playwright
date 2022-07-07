@@ -583,7 +583,7 @@ export module Protocol {
     };
     export type screenshotParameters = {
       mimeType: ("image/png"|"image/jpeg");
-      clip?: {
+      clip: {
         x: number;
         y: number;
         width: number;
