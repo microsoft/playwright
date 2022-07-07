@@ -232,6 +232,7 @@ export class Route extends SdkObject {
     super(request._frame || request._context , 'route');
     this._request = request;
     this._delegate = delegate;
+    this._request._context.addRouteInFlight(this);
   }
 
   request(): Request {
@@ -241,6 +242,7 @@ export class Route extends SdkObject {
   async abort(errorCode: string = 'failed') {
     this._startHandling();
     await this._delegate.abort(errorCode);
+    this._endHandling();
   }
 
   async redirectNavigationRequest(url: string) {
@@ -272,6 +274,7 @@ export class Route extends SdkObject {
       body,
       isBase64,
     });
+    this._endHandling();
   }
 
   // See https://github.com/microsoft/playwright/issues/12929
@@ -301,11 +304,16 @@ export class Route extends SdkObject {
         throw new Error('New URL must have same protocol as overridden URL');
     }
     await this._delegate.continue(this._request, overrides);
+    this._endHandling();
   }
 
   private _startHandling() {
     assert(!this._handled, 'Route is already handled!');
     this._handled = true;
+  }
+
+  private _endHandling() {
+    this._request._context.removeRouteInFlight(this);
   }
 }
 
