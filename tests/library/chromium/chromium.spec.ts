@@ -40,16 +40,11 @@ test('should create a worker from service worker with noop routing', async ({ co
 });
 
 test('serviceWorker(), and fromServiceWorker() work', async ({ context, page, server }) => {
-  const [worker, html, main, inWorker] = await Promise.all([
+  const [worker, html, main] = await Promise.all([
     context.waitForEvent('serviceworker'),
     context.waitForEvent('request', r => r.url().endsWith('/sw.html')),
     context.waitForEvent('request', r => r.url().endsWith('/sw.js')),
-    context.waitForEvent('request', r => r.url().endsWith('/request-from-within-worker.txt')),
     page.goto(server.PREFIX + '/serviceworkers/fetch/sw.html')
-  ]);
-  const [inner] = await Promise.all([
-    context.waitForEvent('request', r => r.url().endsWith('/inner.txt')),
-    page.evaluate(() => fetch('/inner.txt')),
   ]);
   expect(html.frame()).toBeTruthy();
   expect(html.serviceWorker()).toBe(null);
@@ -58,14 +53,6 @@ test('serviceWorker(), and fromServiceWorker() work', async ({ context, page, se
   expect(main.frame).toThrow();
   expect(main.serviceWorker()).toBe(worker);
   expect((await main.response()).fromServiceWorker()).toBe(false);
-
-  expect(inner.frame()).toBeTruthy();
-  expect(inner.serviceWorker()).toBe(null);
-  expect((await inner.response()).fromServiceWorker()).toBe(true);
-
-  expect(inWorker.frame).toThrow();
-  expect(inWorker.serviceWorker()).toBe(worker);
-  expect((await inWorker.response()).fromServiceWorker()).toBe(false);
 
   await page.evaluate(() => window['activationPromise']);
   const [innerSW, innerPage] = await Promise.all([
@@ -104,7 +91,7 @@ test('should intercept service worker requests (main and within)', async ({ cont
     page.goto(server.PREFIX + '/serviceworkers/empty/sw.html'),
   ]);
 
-  await expect(sw.evaluate(() => self['contentPromise'])).resolves.toBe('intercepted!');
+  expect(await sw.evaluate(() => self['contentPromise'])).toBe('intercepted!');
 });
 
 test('should report failure (due to content-type) of main service worker request', async ({ server, page, context, browserMajorVersion }) => {
