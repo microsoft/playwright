@@ -457,7 +457,7 @@ export class Runner {
     };
 
     // Legacy webServer support.
-    if (config.webServer)
+    if (config._webServers)
       this._plugins.push(...webServerPluginsForConfig(config, this._reporter));
 
     await this._runAndReportError(async () => {

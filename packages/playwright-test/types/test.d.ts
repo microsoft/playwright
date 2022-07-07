@@ -1291,7 +1291,7 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    * ```
    *
    */
-  webServer: TestConfigWebServer | TestConfigWebServer[] | null;
+  webServer: TestConfigWebServer | null;
 }
 
 export type TestStatus = 'passed' | 'failed' | 'timedOut' | 'skipped';

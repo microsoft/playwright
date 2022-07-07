@@ -24,6 +24,7 @@ import { launchProcess } from 'playwright-core/lib/utils/processLauncher';
 
 import type { FullConfig, Reporter } from '../../types/testReporter';
 import type { TestRunnerPlugin } from '.';
+import type { FullConfigInternal } from '../types';
 
 
 export type WebServerPluginOptions = {
@@ -202,12 +203,12 @@ export const webServer = (options: WebServerPluginOptions): TestRunnerPlugin => 
   return new WebServerPlugin(options, false, { onStdOut: d => console.log(d.toString()), onStdErr: d => console.error(d.toString()) });
 };
 
-export const webServerPluginsForConfig = (config: FullConfig, reporter: Reporter): TestRunnerPlugin[] => {
-  if (!config.webServer)
+export const webServerPluginsForConfig = (config: FullConfigInternal, reporter: Reporter): TestRunnerPlugin[] => {
+  if (!config._webServers)
     return [];
 
-  const shouldSetBaseUrl = !Array.isArray(config.webServer);
-  const configs = Array.isArray(config.webServer) ? config.webServer : [config.webServer];
+  const shouldSetBaseUrl = !!config.webServer;
+  const configs = Array.isArray(config._webServers) ? config._webServers : [config._webServers];
   const webServerPlugins = [];
   for (const config of configs) {
     if (config.port !== undefined && config.url !== undefined)
