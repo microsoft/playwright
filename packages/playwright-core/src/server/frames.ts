@@ -653,7 +653,7 @@ export class Frame extends SdkObject {
   private async _gotoAction(progress: Progress, url: string, options: types.GotoOptions): Promise<network.Response | null> {
     const waitUntil = verifyLifecycle('waitUntil', options.waitUntil === undefined ? 'load' : options.waitUntil);
     progress.log(`navigating to "${url}", waiting until "${waitUntil}"`);
-    const headers = this._page._state.extraHTTPHeaders || [];
+    const headers = this._page.extraHTTPHeaders() || [];
     const refererHeader = headers.find(h => h.name.toLowerCase() === 'referer');
     let referer = refererHeader ? refererHeader.value : undefined;
     if (options.referer !== undefined) {
