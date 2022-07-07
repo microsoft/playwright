@@ -426,7 +426,8 @@ class TypesGenerator {
       const name = namespace.map(n => n[0].toUpperCase() + n.substring(1)).join('');
       const shouldExport = exported[name];
       const properties = namespace[namespace.length - 1] === 'options' ? type.sortedProperties() : type.properties;
-      this.objectDefinitions.push({ name, properties });
+      if (!this.objectDefinitions.some(o => o.name === name))
+        this.objectDefinitions.push({ name, properties });
       if (shouldExport) {
         out = name;
       } else {

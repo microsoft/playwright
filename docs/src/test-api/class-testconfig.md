@@ -646,7 +646,7 @@ export default config;
 
 ## property: TestConfig.webServer
 * since: v1.10
-- type: ?<[Object]>
+- type: ?<[Object]|[Array]<[Object]>>
   - `command` <[string]> Shell command to start. For example `npm run start`..
   - `port` ?<[int]> The port that your http server is expected to appear on. It does wait until it accepts connections. Exactly one of `port` or `url` is required.
   - `url` ?<[string]> The url on your http server that is expected to return a 2xx, 3xx, 400, 401, 402, or 403 status code when the server is ready to accept connections. Exactly one of `port` or `url` is required.
@@ -656,13 +656,13 @@ export default config;
   - `cwd` ?<[string]> Current working directory of the spawned process, defaults to the directory of the configuration file.
   - `env` ?<[Object]<[string], [string]>> Environment variables to set for the command, `process.env` by default.
 
-Launch a development web server during the tests.
+Launch a development web server (or multiple) during the tests.
 
-If the port is specified, the server will wait for it to be available on `127.0.0.1` or `::1`, before running the tests. If the url is specified, the server will wait for the URL to return a 2xx status code before running the tests.
+If the port is specified, Playwright Test will wait for it to be available on `127.0.0.1` or `::1`, before running the tests. If the url is specified, Playwright Test will wait for the URL to return a 2xx, 3xx, 400, 401, 402, or 403 status code before running the tests.
 
 For continuous integration, you may want to use the `reuseExistingServer: !process.env.CI` option which does not use an existing server on the CI. To see the stdout, you can set the `DEBUG=pw:webserver` environment variable.
 
-The `port` (but not the `url`) gets passed over to Playwright as a [`property: TestOptions.baseURL`]. For example port `8080` produces `baseURL` equal `http://localhost:8080`.
+The `port` (but not the `url`) gets passed over to Playwright as a [`property: TestOptions.baseURL`]. For example port `8080` produces `baseURL` equal `http://localhost:8080`. If `webServer` is specified as an array, you must explicitly configure the `baseURL` (even if it only has one entry).
 
 :::note
 It is also recommended to specify [`property: TestOptions.baseURL`] in the config, so that tests could use relative urls.
@@ -723,6 +723,59 @@ test('test', async ({ page }) => {
   // This will result in http://localhost:3000/foo
   await page.goto('/foo');
 });
+```
+
+Multiple web servers (or background processes) can be launched:
+
+```js tab=js-ts
+// playwright.config.ts
+import type { PlaywrightTestConfig } from '@playwright/test';
+const config: PlaywrightTestConfig = {
+  webServer: [
+    {
+      command: 'npm run start',
+      port: 3000,
+      timeout: 120 * 1000,
+      reuseExistingServer: !process.env.CI,
+    },
+    {
+      command: 'npm run backend',
+      port: 3333,
+      timeout: 120 * 1000,
+      reuseExistingServer: !process.env.CI,
+    }
+  ],
+  use: {
+    baseURL: 'http://localhost:3000/',
+  },
+};
+export default config;
+```
+
+```js tab=js-js
+// playwright.config.js
+// @ts-check
+/** @type {import('@playwright/test').PlaywrightTestConfig} */
+const config = {
+  webServer: [
+    {
+      command: 'npm run start',
+      port: 3000,
+      timeout: 120 * 1000,
+      reuseExistingServer: !process.env.CI,
+    },
+    {
+      command: 'npm run backend',
+      port: 3333,
+      timeout: 120 * 1000,
+      reuseExistingServer: !process.env.CI,
+    }
+  ],
+  use: {
+    baseURL: 'http://localhost:3000/',
+  },
+};
+module.exports = config;
 ```
 
 ## property: TestConfig.workers

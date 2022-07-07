@@ -207,6 +207,8 @@ test('test', async ({ page }) => {
 });
 ```
 
+Multiple web servers (or background processes) can be launched simultaneously by providing an array of `webServer` configurations. See [`property: TestConfig.webServer`] for additional examples and documentation.
+
 ## Global setup and teardown
 
 To set something up once before running all tests, use `globalSetup` option in the [configuration file](#configuration-object). Global setup file must export a single function that takes a config object. This function will be run once before all the tests.
