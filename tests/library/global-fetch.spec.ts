@@ -191,7 +191,7 @@ it('should set playwright as user-agent', async ({ playwright, server, isWindows
 
   const tokens = [];
   if (process.env.CI)
-    tokens.push('CI/1');
+    tokens.push('CI/X');
   const suffix = tokens.length ? ` ${tokens.join(' ')}` : '';
 
   if (isWindows)
