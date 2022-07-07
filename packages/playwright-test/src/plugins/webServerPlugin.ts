@@ -206,7 +206,7 @@ export const webServerPluginsForConfig = (config: FullConfig, reporter: Reporter
   if (!config.webServer)
     return [];
 
-  const shouldSetBaseUrl = Array.isArray(config.webServer);
+  const shouldSetBaseUrl = !Array.isArray(config.webServer);
   const configs = Array.isArray(config.webServer) ? config.webServer : [config.webServer];
   const webServerPlugins = [];
   for (const config of configs) {
@@ -216,7 +216,7 @@ export const webServerPluginsForConfig = (config: FullConfig, reporter: Reporter
     const url = config.url || `http://localhost:${config.port}`;
 
     // We only set base url when only the port is given. That's a legacy mode we have regrets about.
-    if (!shouldSetBaseUrl && !config.url)
+    if (shouldSetBaseUrl && !config.url)
       process.env.PLAYWRIGHT_TEST_BASE_URL = url;
 
     webServerPlugins.push(new WebServerPlugin({ ...config,  url }, config.port !== undefined, reporter));
