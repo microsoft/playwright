@@ -134,7 +134,6 @@ it('should remove a listener of a non-existing event handler', async ({ page }) 
 });
 
 it('should emit error from unhandled rejects', async ({ page, browserName }) => {
-  it.fixme(browserName === 'firefox', 'see https://github.com/microsoft/playwright/issues/14165');
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/14165' });
   const [error] = await Promise.all([
     page.waitForEvent('pageerror'),
