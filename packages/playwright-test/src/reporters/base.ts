@@ -20,6 +20,7 @@ import path from 'path';
 import type { FullConfig, TestCase, Suite, TestResult, TestError, Reporter, FullResult, TestStep, Location } from '../../types/testReporter';
 import type { FullConfigInternal } from '../types';
 import { codeFrameColumns } from '../babelBundle';
+import { getAsBooleanFromENV } from 'playwright-core/lib/utils';
 
 export type TestResultOutput = { chunk: string | Buffer, type: 'stdout' | 'stderr' };
 export const kOutputSymbol = Symbol('output');
@@ -54,10 +55,12 @@ export class BaseReporter implements Reporter  {
   private monotonicStartTime: number = 0;
   private _omitFailures: boolean;
   private readonly _ttyWidthForTest: number;
+  readonly liveTerminal: boolean;
 
   constructor(options: { omitFailures?: boolean } = {}) {
     this._omitFailures = options.omitFailures || false;
     this._ttyWidthForTest = parseInt(process.env.PWTEST_TTY_WIDTH || '', 10);
+    this.liveTerminal = process.stdout.isTTY || getAsBooleanFromENV('PLAYWRIGHT_LIVE_TERMINAL');
   }
 
   onBegin(config: FullConfig, suite: Suite) {

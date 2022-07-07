@@ -28,11 +28,9 @@ class ListReporter extends BaseReporter {
   private _lastRow = 0;
   private _testRows = new Map<TestCase, number>();
   private _needNewLine = false;
-  private readonly _liveTerminal: string | boolean | undefined;
 
   constructor(options: { omitFailures?: boolean } = {}) {
     super(options);
-    this._liveTerminal = process.stdout.isTTY || !!process.env.PWTEST_TTY_WIDTH;
   }
 
   printsToStdio() {
@@ -46,7 +44,7 @@ class ListReporter extends BaseReporter {
   }
 
   onTestBegin(test: TestCase, result: TestResult) {
-    if (this._liveTerminal) {
+    if (this.liveTerminal) {
       if (this._needNewLine) {
         this._needNewLine = false;
         process.stdout.write('\n');
@@ -70,7 +68,7 @@ class ListReporter extends BaseReporter {
   }
 
   onStepBegin(test: TestCase, result: TestResult, step: TestStep) {
-    if (!this._liveTerminal)
+    if (!this.liveTerminal)
       return;
     if (step.category !== 'test.step')
       return;
@@ -78,7 +76,7 @@ class ListReporter extends BaseReporter {
   }
 
   onStepEnd(test: TestCase, result: TestResult, step: TestStep) {
-    if (!this._liveTerminal)
+    if (!this.liveTerminal)
       return;
     if (step.category !== 'test.step')
       return;
@@ -90,7 +88,7 @@ class ListReporter extends BaseReporter {
       return;
     const text = chunk.toString('utf-8');
     this._needNewLine = text[text.length - 1] !== '\n';
-    if (this._liveTerminal) {
+    if (this.liveTerminal) {
       const newLineCount = text.split('\n').length - 1;
       this._lastRow += newLineCount;
     }
@@ -119,7 +117,7 @@ class ListReporter extends BaseReporter {
       text += this._retrySuffix(result) + colors.dim(` (${milliseconds(result.duration)})`);
     }
 
-    if (this._liveTerminal) {
+    if (this.liveTerminal) {
       this._updateTestLine(test, text, prefix);
     } else {
       if (this._needNewLine) {
