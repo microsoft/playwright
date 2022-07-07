@@ -20,7 +20,6 @@ import * as dom from '../dom';
 import type * as frames from '../frames';
 import type { RegisteredListener } from '../../utils/eventsHelper';
 import { eventsHelper } from '../../utils/eventsHelper';
-import { assert } from '../../utils';
 import type { PageBinding, PageDelegate } from '../page';
 import { Page, Worker } from '../page';
 import type * as types from '../types';
@@ -352,17 +351,12 @@ export class FFPage implements PageDelegate {
   }
 
   async updateExtraHTTPHeaders(): Promise<void> {
-    await this._session.send('Network.setExtraHTTPHeaders', { headers: this._page._state.extraHTTPHeaders || [] });
+    await this._session.send('Network.setExtraHTTPHeaders', { headers: this._page.extraHTTPHeaders() || [] });
   }
 
-  async setEmulatedSize(emulatedSize: types.EmulatedSize): Promise<void> {
-    assert(this._page._state.emulatedSize === emulatedSize);
-    await this._session.send('Page.setViewportSize', {
-      viewportSize: {
-        width: emulatedSize.viewport.width,
-        height: emulatedSize.viewport.height,
-      },
-    });
+  async updateEmulatedViewportSize(): Promise<void> {
+    const viewportSize = this._page.viewportSize();
+    await this._session.send('Page.setViewportSize', { viewportSize });
   }
 
   async bringToFront(): Promise<void> {
@@ -370,12 +364,13 @@ export class FFPage implements PageDelegate {
   }
 
   async updateEmulateMedia(): Promise<void> {
-    const colorScheme = this._page._state.colorScheme === null ? undefined : this._page._state.colorScheme;
-    const reducedMotion = this._page._state.reducedMotion === null ? undefined : this._page._state.reducedMotion;
-    const forcedColors = this._page._state.forcedColors === null ? undefined : this._page._state.forcedColors;
+    const emulatedMedia = this._page.emulatedMedia();
+    const colorScheme = emulatedMedia.colorScheme ?? undefined;
+    const reducedMotion = emulatedMedia.reducedMotion ?? undefined;
+    const forcedColors = emulatedMedia.forcedColors ?? undefined;
     await this._session.send('Page.setEmulatedMedia', {
       // Empty string means reset.
-      type: this._page._state.mediaType === null ? '' : this._page._state.mediaType,
+      type: emulatedMedia.media === null ? '' : emulatedMedia.media,
       colorScheme,
       reducedMotion,
       forcedColors,

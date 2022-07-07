@@ -98,7 +98,7 @@ export class CRPage implements PageDelegate {
       const features = opener._nextWindowOpenPopupFeatures.shift() || [];
       const viewportSize = helper.getViewportSizeFromWindowFeatures(features);
       if (viewportSize)
-        this._page._state.emulatedSize = { viewport: viewportSize, screen: viewportSize };
+        this._page._emulatedSize = { viewport: viewportSize, screen: viewportSize };
     }
     // Note: it is important to call |reportAsNew| before resolving pageOrError promise,
     // so that anyone who awaits pageOrError got a ready and reported page.
@@ -199,8 +199,7 @@ export class CRPage implements PageDelegate {
     await this._forAllFrameSessions(frame => frame._updateHttpCredentials(false));
   }
 
-  async setEmulatedSize(emulatedSize: types.EmulatedSize): Promise<void> {
-    assert(this._page._state.emulatedSize === emulatedSize);
+  async updateEmulatedViewportSize(): Promise<void> {
     await this._mainFrameSession._updateViewport();
   }
 
@@ -972,7 +971,7 @@ class FrameSession {
   async _updateExtraHTTPHeaders(initial: boolean): Promise<void> {
     const headers = network.mergeHeaders([
       this._crPage._browserContext._options.extraHTTPHeaders,
-      this._page._state.extraHTTPHeaders
+      this._page.extraHTTPHeaders()
     ]);
     if (!initial || headers.length)
       await this._client.send('Network.setExtraHTTPHeaders', { headers: headersArrayToObject(headers, false /* lowerCase */) });
@@ -1001,7 +1000,7 @@ class FrameSession {
       return;
     assert(this._isMainFrame());
     const options = this._crPage._browserContext._options;
-    const emulatedSize = this._page._state.emulatedSize;
+    const emulatedSize = this._page.emulatedSize();
     if (emulatedSize === null)
       return;
     const viewportSize = emulatedSize.viewport;
@@ -1059,16 +1058,17 @@ class FrameSession {
   }
 
   async _updateEmulateMedia(initial: boolean): Promise<void> {
-    const colorScheme = this._page._state.colorScheme === null ? '' : this._page._state.colorScheme;
-    const reducedMotion = this._page._state.reducedMotion === null ? '' : this._page._state.reducedMotion;
-    const forcedColors = this._page._state.forcedColors === null ? '' : this._page._state.forcedColors;
+    const emulatedMedia = this._page.emulatedMedia();
+    const colorScheme = emulatedMedia.colorScheme === null ? '' : emulatedMedia.colorScheme;
+    const reducedMotion = emulatedMedia.reducedMotion === null ? '' : emulatedMedia.reducedMotion;
+    const forcedColors = emulatedMedia.forcedColors === null ? '' : emulatedMedia.forcedColors;
     const features = [
       { name: 'prefers-color-scheme', value: colorScheme },
       { name: 'prefers-reduced-motion', value: reducedMotion },
       { name: 'forced-colors', value: forcedColors },
     ];
     // Empty string disables the override.
-    await this._client.send('Emulation.setEmulatedMedia', { media: this._page._state.mediaType || '', features });
+    await this._client.send('Emulation.setEmulatedMedia', { media: emulatedMedia.media || '', features });
   }
 
   private async _setDefaultFontFamilies(session: CRSession) {
@@ -1081,7 +1081,7 @@ class FrameSession {
   }
 
   async _updateFileChooserInterception(initial: boolean) {
-    const enabled = this._page._state.interceptFileChooser;
+    const enabled = this._page.fileChooserIntercepted();
     if (initial && !enabled)
       return;
     await this._client.send('Page.setInterceptFileChooserDialog', { enabled }).catch(e => {}); // target can be closed.
