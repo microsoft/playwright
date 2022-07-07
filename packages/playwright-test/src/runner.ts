@@ -457,8 +457,7 @@ export class Runner {
     };
 
     // Legacy webServer support.
-    if (config._webServers)
-      this._plugins.push(...webServerPluginsForConfig(config, this._reporter));
+    this._plugins.push(...webServerPluginsForConfig(config, this._reporter));
 
     await this._runAndReportError(async () => {
       // First run the plugins, if plugin is a web server we want it to run before the

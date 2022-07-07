@@ -204,23 +204,19 @@ export const webServer = (options: WebServerPluginOptions): TestRunnerPlugin => 
 };
 
 export const webServerPluginsForConfig = (config: FullConfigInternal, reporter: Reporter): TestRunnerPlugin[] => {
-  if (!config._webServers)
-    return [];
-
   const shouldSetBaseUrl = !!config.webServer;
-  const configs = Array.isArray(config._webServers) ? config._webServers : [config._webServers];
   const webServerPlugins = [];
-  for (const config of configs) {
-    if (config.port !== undefined && config.url !== undefined)
+  for (const webServerConfig of config._webServers) {
+    if (webServerConfig.port !== undefined && webServerConfig.url !== undefined)
       throw new Error(`Exactly one of 'port' or 'url' is required in config.webServer.`);
 
-    const url = config.url || `http://localhost:${config.port}`;
+    const url = webServerConfig.url || `http://localhost:${webServerConfig.port}`;
 
     // We only set base url when only the port is given. That's a legacy mode we have regrets about.
-    if (shouldSetBaseUrl && !config.url)
+    if (shouldSetBaseUrl && !webServerConfig.url)
       process.env.PLAYWRIGHT_TEST_BASE_URL = url;
 
-    webServerPlugins.push(new WebServerPlugin({ ...config,  url }, config.port !== undefined, reporter));
+    webServerPlugins.push(new WebServerPlugin({ ...webServerConfig,  url }, webServerConfig.port !== undefined, reporter));
   }
 
   return webServerPlugins;
