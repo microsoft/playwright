@@ -7,6 +7,10 @@ title: "Release notes"
 
 ## Version 1.23
 
+<div className="embed-youtube">
+  <iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/NRGOV46P3kU" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</div>
+
 ### Network Replay
 
 Now you can record network traffic into a HAR file and re-use this traffic in your tests.
@@ -120,7 +124,7 @@ WebServer is now considered "ready" if request to the specified port has any of 
 ## Version 1.22
 
 <div className="embed-youtube">
-  <iframe width="560" height="315" src="https://www.youtube.com/embed/keV2CIgtBlg" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+  <iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/keV2CIgtBlg" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 </div>
 
 ### Highlights
@@ -194,7 +198,7 @@ WebServer is now considered "ready" if request to the specified port has any of 
 ## Version 1.21
 
 <div className="embed-youtube">
-  <iframe width="560" height="315" src="https://www.youtube.com/embed/45HZdbmgEw8" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+  <iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/45HZdbmgEw8" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 </div>
 
 ### Highlights
@@ -246,7 +250,7 @@ This version was also tested against the following stable channels:
 ## Version 1.20
 
 <div className="embed-youtube">
-  <iframe width="560" height="315" src="https://www.youtube.com/embed/6vV-XXKsrbA" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+  <iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/6vV-XXKsrbA" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 </div>
 
 ### Highlights
@@ -316,7 +320,7 @@ This version was also tested against the following stable channels:
 ## Version 1.19
 
 <div className="embed-youtube">
-  <iframe width="560" height="315" src="https://www.youtube.com/embed/z0EOFvlf14U" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+  <iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/z0EOFvlf14U" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 </div>
 
 ### Playwright Test Update
@@ -404,7 +408,7 @@ This version was also tested against the following stable channels:
 ## Version 1.18
 
 <div className="embed-youtube">
- <iframe width="560" height="315" src="https://www.youtube.com/embed/ABLYpw2BN_g" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+ <iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/ABLYpw2BN_g" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 </div>
 
 ### Locator Improvements
@@ -509,7 +513,7 @@ This version was also tested against the following stable channels:
 ## Version 1.17
 
 <div className="embed-youtube">
-  <iframe width="560" height="315" src="https://www.youtube.com/embed/7iyIdeoAP04" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+  <iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/7iyIdeoAP04" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 </div>
 
 ### Frame Locators
@@ -571,7 +575,7 @@ Playwright Trace Viewer is now **available online** at https://trace.playwright.
 ## Version 1.16
 
 <div className="embed-youtube">
-  <iframe width="560" height="315" src="https://www.youtube.com/embed/OQKwFDmY64g" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+  <iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/OQKwFDmY64g" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 </div>
 
 ### 🎭 Playwright Test
@@ -705,7 +709,7 @@ This version of Playwright was also tested against the following stable channels
 ## Version 1.15
 
 <div className="embed-youtube">
-  <iframe width="560" height="315" src="https://www.youtube.com/embed/6RwzsDeEj7Y" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+  <iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/6RwzsDeEj7Y" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 </div>
 
 ### 🎭 Playwright Library
@@ -766,7 +770,7 @@ By using `npx playwright test --debug` it will enable the [Playwright Inspector]
 ## Version 1.14
 
 <div className="embed-youtube">
-  <iframe width="560" height="315" src="https://www.youtube.com/embed/LczBDR0gOhk" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+  <iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/LczBDR0gOhk" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 </div>
 
 ### 🎭 Playwright Library
