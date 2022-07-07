@@ -146,6 +146,8 @@ For continuous integration, you may want to use the `reuseExistingServer: !proce
 
 The `port` (but not the `url`) gets passed over to Playwright as a [`property: TestOptions.baseURL`]. For example port `8080` produces `baseURL` equal `http://localhost:8080`.
 
+Multiple web servers can be launched simultaneously by providing an array of `webServer` configurations. See [`property: TestConfig.webServer`] for additional examples and documentation.
+
 :::note
 It is also recommended to specify [`property: TestOptions.baseURL`] in the config, so that tests could use relative urls.
 :::

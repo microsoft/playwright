@@ -424,7 +424,7 @@ interface TestConfig {
    * The `port` (but not the `url`) gets passed over to Playwright as a
    * [testOptions.baseURL](https://playwright.dev/docs/api/class-testoptions#test-options-base-url). For example port `8080`
    * produces `baseURL` equal `http://localhost:8080`. If `webServer` is specified as an array, you must explicitly configure
-   * the `baseURL`—even if it only has one entry.
+   * the `baseURL` (even if it only has one entry).
    *
    * > NOTE: It is also recommended to specify
    * [testOptions.baseURL](https://playwright.dev/docs/api/class-testoptions#test-options-base-url) in the config, so that
@@ -1228,7 +1228,7 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    * The `port` (but not the `url`) gets passed over to Playwright as a
    * [testOptions.baseURL](https://playwright.dev/docs/api/class-testoptions#test-options-base-url). For example port `8080`
    * produces `baseURL` equal `http://localhost:8080`. If `webServer` is specified as an array, you must explicitly configure
-   * the `baseURL`—even if it only has one entry.
+   * the `baseURL` (even if it only has one entry).
    *
    * > NOTE: It is also recommended to specify
    * [testOptions.baseURL](https://playwright.dev/docs/api/class-testoptions#test-options-base-url) in the config, so that
