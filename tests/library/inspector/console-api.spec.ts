@@ -29,9 +29,9 @@ it.beforeEach(async ({ page, recorderPageGetter }) => {
 
 it.afterEach(async ({ recorderPageGetter }) => {
   const recorderPage = await recorderPageGetter();
-  recorderPage.click('[title=Resume]').catch(() => {});
+  recorderPage.click('[title="Resume (F8)"]').catch(() => {});
   await scriptPromise;
-  recorderPage.click('[title=Resume]').catch(() => {});
+  recorderPage.click('[title="Resume (F8)"]').catch(() => {});
 });
 
 it('should support playwright.$, playwright.$$', async ({ page }) => {

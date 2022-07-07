@@ -146,7 +146,7 @@ If actionability can't be reached, it'll show action as pending:
 
 <img width="712" alt="Pending action" src="https://user-images.githubusercontent.com/883973/108614840-e6e3e500-73b2-11eb-998f-0cf31b2aa9a2.png"></img>
 
-You can step over each action using the "Step over" action or resume script without further pauses:
+You can step over each action using the "Step over" action (keyboard shortcut: `F10`) or resume script without further pauses (`F8`):
 
 <center><img width="98" alt="Stepping toolbar" src="https://user-images.githubusercontent.com/883973/108614389-f9f4b600-73ae-11eb-8df2-8d9ce9da5d5c.png"></img></center>
 
