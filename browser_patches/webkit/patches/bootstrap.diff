@@ -7980,6 +7980,110 @@ index a724f126f8f389d46ba5c1a941eef76fdc59c94c..aa40f6c3ee81213074639cce1d18eb21
  String PlatformKeyboardEvent::singleCharacterString(unsigned val)
  {
      switch (val) {
+diff --git a/Source/WebCore/platform/libwpe/PlatformPasteboardLibWPE.cpp b/Source/WebCore/platform/libwpe/PlatformPasteboardLibWPE.cpp
+index 93db57fd75b8fcac1a745f62294e27c97e040ab0..02411ac6bb361c2677c269945f665e0a92ccb902 100644
+--- a/Source/WebCore/platform/libwpe/PlatformPasteboardLibWPE.cpp
++++ b/Source/WebCore/platform/libwpe/PlatformPasteboardLibWPE.cpp
+@@ -31,10 +31,18 @@
+ #include "Pasteboard.h"
+ #include <wpe/wpe.h>
+ #include <wtf/Assertions.h>
++#include <wtf/HashMap.h>
++#include <wtf/NeverDestroyed.h>
+ #include <wtf/text/WTFString.h>
+ 
+ namespace WebCore {
+ 
++static HashMap<String, String>& sharedPasteboard()
++{
++    static NeverDestroyed<HashMap<String, String>> pasteboard;
++    return pasteboard.get();
++}
++
+ PlatformPasteboard::PlatformPasteboard(const String&)
+     : m_pasteboard(wpe_pasteboard_get_singleton())
+ {
+@@ -54,72 +62,26 @@ void PlatformPasteboard::performAsDataOwner(DataOwnerType, Function<void()>&& ac
+ 
+ void PlatformPasteboard::getTypes(Vector<String>& types) const
+ {
+-    struct wpe_pasteboard_string_vector pasteboardTypes = { nullptr, 0 };
+-    wpe_pasteboard_get_types(m_pasteboard, &pasteboardTypes);
+-
+-    for (unsigned i = 0; i < pasteboardTypes.length; ++i) {
+-        auto& typeString = pasteboardTypes.strings[i];
+-        types.append(String(typeString.data, typeString.length));
+-    }
+-
+-    wpe_pasteboard_string_vector_free(&pasteboardTypes);
++    for (const auto& type : sharedPasteboard().keys())
++        types.append(type);
+ }
+ 
+ String PlatformPasteboard::readString(size_t, const String& type) const
+ {
+-    struct wpe_pasteboard_string string = { nullptr, 0 };
+-    wpe_pasteboard_get_string(m_pasteboard, type.utf8().data(), &string);
+-    if (!string.length)
+-        return String();
+-
+-    String returnValue(string.data, string.length);
+-
+-    wpe_pasteboard_string_free(&string);
+-    return returnValue;
++    return sharedPasteboard().get(type);
+ }
+ 
+ void PlatformPasteboard::write(const PasteboardWebContent& content)
+ {
+-    static const char plainText[] = "text/plain;charset=utf-8";
+-    static const char htmlText[] = "text/html;charset=utf-8";
+-
+-    CString textString = content.text.utf8();
+-    CString markupString = content.markup.utf8();
+-
+-    struct wpe_pasteboard_string_pair pairs[] = {
+-        { { nullptr, 0 }, { nullptr, 0 } },
+-        { { nullptr, 0 }, { nullptr, 0 } },
+-    };
+-    wpe_pasteboard_string_initialize(&pairs[0].type, plainText, strlen(plainText));
+-    wpe_pasteboard_string_initialize(&pairs[0].string, textString.data(), textString.length());
+-    wpe_pasteboard_string_initialize(&pairs[1].type, htmlText, strlen(htmlText));
+-    wpe_pasteboard_string_initialize(&pairs[1].string, markupString.data(), markupString.length());
+-    struct wpe_pasteboard_string_map map = { pairs, 2 };
+-
+-    wpe_pasteboard_write(m_pasteboard, &map);
+-
+-    wpe_pasteboard_string_free(&pairs[0].type);
+-    wpe_pasteboard_string_free(&pairs[0].string);
+-    wpe_pasteboard_string_free(&pairs[1].type);
+-    wpe_pasteboard_string_free(&pairs[1].string);
++    String plainText = "text/plain;charset=utf-8"_s;
++    String htmlText = "text/html;charset=utf-8"_s;
++    sharedPasteboard().set(plainText, content.text);
++    sharedPasteboard().set(htmlText, content.markup);
+ }
+ 
+ void PlatformPasteboard::write(const String& type, const String& string)
+ {
+-    struct wpe_pasteboard_string_pair pairs[] = {
+-        { { nullptr, 0 }, { nullptr, 0 } },
+-    };
+-
+-    auto typeUTF8 = type.utf8();
+-    auto stringUTF8 = string.utf8();
+-    wpe_pasteboard_string_initialize(&pairs[0].type, typeUTF8.data(), typeUTF8.length());
+-    wpe_pasteboard_string_initialize(&pairs[0].string, stringUTF8.data(), stringUTF8.length());
+-    struct wpe_pasteboard_string_map map = { pairs, 1 };
+-
+-    wpe_pasteboard_write(m_pasteboard, &map);
+-
+-    wpe_pasteboard_string_free(&pairs[0].type);
+-    wpe_pasteboard_string_free(&pairs[0].string);
++    sharedPasteboard().set(type, string);
+ }
+ 
+ Vector<String> PlatformPasteboard::typesSafeForDOMToReadAndWrite(const String&) const
 diff --git a/Source/WebCore/platform/network/HTTPHeaderMap.cpp b/Source/WebCore/platform/network/HTTPHeaderMap.cpp
 index f169677e661510b225b899c79b68d040179a097a..420e101c7bb7a49b5c644076a8a2ffab2282d758 100644
 --- a/Source/WebCore/platform/network/HTTPHeaderMap.cpp
