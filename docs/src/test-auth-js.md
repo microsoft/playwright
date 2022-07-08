@@ -418,7 +418,7 @@ class AdminPage {
     this.page = page;
   }
 
-  async create(browser: Browser) {
+  static async create(browser: Browser) {
     const context = await browser.newContext({ storageState: 'adminStorageState.json' });
     const page = await context.newPage();
     return new AdminPage(page);
@@ -439,7 +439,7 @@ class UserPage {
     this.greeting = page.locator('#greeting');
   }
 
-  async create(browser: Browser) {
+  static async create(browser: Browser) {
     const context = await browser.newContext({ storageState: 'userStorageState.json' });
     const page = await context.newPage();
     return new UserPage(page);
@@ -488,7 +488,7 @@ class AdminPage {
     this.page = page;
   }
 
-  async create(browser) {
+  static async create(browser) {
     const context = await browser.newContext({ storageState: 'adminStorageState.json' });
     const page = await context.newPage();
     return new AdminPage(page);
@@ -505,7 +505,7 @@ class UserPage {
     this.greeting = page.locator('#greeting');
   }
 
-  async create(browser) {
+  static async create(browser) {
     const context = await browser.newContext({ storageState: 'userStorageState.json' });
     const page = await context.newPage();
     return new UserPage(page);
