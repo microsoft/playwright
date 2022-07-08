@@ -76,7 +76,7 @@ export const fixtures: Fixtures<
     },
   };
 
-async function innerMount(page: Page, jsxOrType: JsxComponent | string, options?: ObjectComponentOptions): Promise<string> {
+async function innerMount(page: Page, jsxOrType: JsxComponent | string, options: ObjectComponentOptions = {}): Promise<string> {
   let component: Component;
   if (typeof jsxOrType === 'string')
     component = { kind: 'object', type: jsxOrType, options };
