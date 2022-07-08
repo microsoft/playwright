@@ -16,7 +16,7 @@ Playwright Test was created specifically to accommodate the needs of end-to-end 
 
 ## Installation
 
-Install the [VS Code extension from the marketplace](https://marketplace.visualstudio.com/items?itemName=ms-playwright.playwright). or from the Extensions icon and search for Playwright. Once the extension is installed, open the command panel in VSCode (cmd/ctrl + shift + p) and type "Install Playwright" and select "Test: Install Playwright". Choose the browsers you would like to run your tests on. These can be later configured in the `playwright.config.ts` file.
+Install the [VS Code extension from the marketplace](https://marketplace.visualstudio.com/items?itemName=ms-playwright.playwright). Once installed, open the command panel and type "Install Playwright" and select "Test: Install Playwright". Choose the browsers you would like to run your tests on. These can be later configured in the `playwright.config.ts` file.
 
 
 <!-- <img width="535" alt="image" src="https://user-images.githubusercontent.com/13063165/177198887-de49ec12-a7a9-48c2-8d02-ad53ea312c91.png"></img> -->
