@@ -29,6 +29,7 @@ Install Playwright and follow the instructions to get started choosing either Ty
   npm init playwright@latest new-project
   ```
 
+For installing using the VS Code Extension see the [Getting Started (VS Code)](./codegen.md) guide.
 ## Generating Tests with Codegen
 
 [CodeGen](./codegen.md) will auto generate your tests for you and is a great way to quickly get started. It will open two windows, a browser window where you interact with the website you wish to test and the Playwright Inspector window where you can record your tests, copy the tests, clear your tests as well as change the language of your tests. The Playwright inspector is also used for debugging your tests.
@@ -44,12 +45,6 @@ Install Playwright and follow the instructions to get started choosing either Ty
   ```bash
   npx playwright codegen playwright.dev
   ```
-
-<!-- <img width="961" alt="image" src="https://user-images.githubusercontent.com/13063165/177549951-0fbfa00d-257b-4719-a5ea-53b518989339.png" />
-
-### Recording User Actions
-
-Tests are generated in the Playwright Inspector as you interact with the browser. -->
 
 <img width="1916" alt="image" src="https://user-images.githubusercontent.com/13063165/177550119-4e202a56-7d8e-43ac-ad91-bf2f7b2579bd.png"/>
 
