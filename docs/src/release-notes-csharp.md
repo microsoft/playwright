@@ -327,7 +327,7 @@ Playwright Trace Viewer is now **available online** at https://trace.playwright.
 
 ![image](https://user-images.githubusercontent.com/746130/141877402-e486643d-72c7-4db3-8844-ed2072c5d676.png)
 
-## Ubuntu ARM64 support + more
+### Ubuntu ARM64 support + more
 
 - Playwright now supports **Ubuntu 20.04 ARM64**. You can now run Playwright tests inside Docker on Apple M1 and on Raspberry Pi.
 - You can now use Playwright to install stable version of Edge on Linux:
