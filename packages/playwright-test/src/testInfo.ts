@@ -76,7 +76,7 @@ export class TestInfoImpl implements TestInfo {
   }
 
   get timeout(): number {
-    return this._timeoutManager.defaultTimeout();
+    return this._timeoutManager.defaultSlotTimings().timeout;
   }
 
   set timeout(timeout: number) {
@@ -178,7 +178,7 @@ export class TestInfoImpl implements TestInfo {
       this.status = 'timedOut';
       this.errors.push(timeoutError);
     }
-    this.duration = (monotonicTime() - this._startTime) | 0;
+    this.duration = this._timeoutManager.defaultSlotTimings().elapsed | 0;
   }
 
   async _runFn(fn: Function, skips?: 'allowSkips'): Promise<TestError | undefined> {

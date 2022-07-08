@@ -340,3 +340,41 @@ test('test timeout should still run hooks before fixtures teardown', async ({ ru
     '%%after-auto',
   ]);
 });
+
+test('should not include fixtures with own timeout and beforeAll in test duration', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'c.spec.ts': `
+      const test = pwt.test.extend({
+        foo: [async ({}, use) => {
+          await new Promise(f => setTimeout(f, 1000));
+          await use('foo');
+        }, { timeout: 0 }],
+
+        bar: async ({}, use) => {
+          await new Promise(f => setTimeout(f, 300));
+          await use('bar');
+        },
+      });
+
+      test.beforeAll(async () => {
+        await new Promise(f => setTimeout(f, 1000));
+      });
+
+      test.beforeEach(async () => {
+        await new Promise(f => setTimeout(f, 300));
+      });
+
+      test.afterEach(async () => {
+        await new Promise(f => setTimeout(f, 300));
+      });
+
+      test('works', async ({ foo, bar }) => {
+        await new Promise(f => setTimeout(f, 300));
+      });
+    `
+  }, { timeout: 5000 });
+  expect(result.exitCode).toBe(0);
+  const duration = result.results[0].duration;
+  expect(duration).toBeGreaterThanOrEqual(300 * 4);  // Includes test, beforeEach, afterEach and bar.
+  expect(duration).toBeLessThan(300 * 4 + 1000);  // Does not include beforeAll and foo.
+});

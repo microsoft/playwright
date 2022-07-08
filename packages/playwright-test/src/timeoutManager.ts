@@ -60,8 +60,10 @@ export class TimeoutManager {
     this._updateRunnables(this._runnable, fixture);
   }
 
-  defaultTimeout() {
-    return this._defaultSlot.timeout;
+  defaultSlotTimings() {
+    const slot = this._currentSlot();
+    slot.elapsed = this._timeoutRunner.elapsed();
+    return this._defaultSlot;
   }
 
   slow() {
