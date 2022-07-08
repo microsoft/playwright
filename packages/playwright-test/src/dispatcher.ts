@@ -529,6 +529,14 @@ class Worker extends EventEmitter {
       repeatEachIndex: testGroup.repeatEachIndex,
       projectIndex: testGroup.projectIndex,
       loader: loaderData,
+      stdoutDimension: {
+        rows: process.stdout.rows,
+        columns: process.stdout.columns
+      },
+      stderrDimension: {
+        rows: process.stderr.rows,
+        columns: process.stderr.columns
+      },
     };
     this.send({ method: 'init', params });
   }
