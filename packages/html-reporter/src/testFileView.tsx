@@ -14,14 +14,15 @@
   limitations under the License.
 */
 
-import type { HTMLReport, TestFileSummary } from '@playwright-test/reporters/html';
+import type { HTMLReport, TestCaseSummary, TestFileSummary } from '@playwright-test/reporters/html';
 import * as React from 'react';
 import { msToString } from './uiUtils';
 import { Chip } from './chip';
 import type { Filter } from './filter';
-import { Link, ProjectLink } from './links';
+import { generateTraceUrl, Link, ProjectLink } from './links';
 import { statusIcon } from './statusIcon';
 import './testFileView.css';
+import { video, image, trace } from './icons';
 
 export const TestFileView: React.FC<React.PropsWithChildren<{
   report: HTMLReport;
@@ -40,15 +41,37 @@ export const TestFileView: React.FC<React.PropsWithChildren<{
     </span>}>
     {file.tests.filter(t => filter.matches(t)).map(test =>
       <div key={`test-${test.testId}`} className={'test-file-test test-file-test-outcome-' + test.outcome}>
-        <span style={{ float: 'right' }}>{msToString(test.duration)}</span>
-        {report.projectNames.length > 1 && !!test.projectName &&
-          <span style={{ float: 'right' }}><ProjectLink projectNames={report.projectNames} projectName={test.projectName}></ProjectLink></span>}
-        {statusIcon(test.outcome)}
         <Link href={`#?testId=${test.testId}`} title={[...test.path, test.title].join(' › ')}>
-          {[...test.path, test.title].join(' › ')}
-          <span className='test-file-path'>— {test.location.file}:{test.location.line}</span>
+          <span style={{ float: 'right', minWidth: '50px', textAlign: 'right' }}>{msToString(test.duration)}</span>
+          {report.projectNames.length > 1 && !!test.projectName &&
+              <span style={{ float: 'right' }}><ProjectLink projectNames={report.projectNames} projectName={test.projectName}></ProjectLink></span>}
+          {statusIcon(test.outcome)}
+          <span className='test-file-title'>{[...test.path, test.title].join(' › ')}</span>
+          <div className='test-file-details-row'>
+            <span className='test-file-path'>{test.location.file}:{test.location.line}</span>
+            {imageDiffBadge(test)}
+            {videoBadge(test)}
+            {traceBadge(test)}
+          </div>
         </Link>
       </div>
     )}
   </Chip>;
 };
+
+function imageDiffBadge(test: TestCaseSummary): JSX.Element | undefined {
+  const resultWithImageDiff = test.results.find(result => result.attachments.some(attachment => {
+    return attachment.contentType.startsWith('image/') && !!attachment.name.match(/-(expected|actual|diff)/);
+  }));
+  return resultWithImageDiff ? <Link href={`#?testId=${test.testId}&anchor=diff&run=${test.results.indexOf(resultWithImageDiff)}`} title='View images' className='test-file-badge'>{image()}</Link> : undefined;
+}
+
+function videoBadge(test: TestCaseSummary): JSX.Element | undefined {
+  const resultWithVideo = test.results.find(result => result.attachments.some(attachment => attachment.name === 'video'));
+  return resultWithVideo ? <Link href={`#?testId=${test.testId}&anchor=video&run=${test.results.indexOf(resultWithVideo)}`} title='View video' className='test-file-badge'>{video()}</Link> : undefined;
+}
+
+function traceBadge(test: TestCaseSummary): JSX.Element | undefined {
+  const firstTraces = test.results.map(result => result.attachments.filter(attachment => attachment.name === 'trace')).filter(traces => traces.length > 0)[0];
+  return firstTraces ? <Link href={generateTraceUrl(firstTraces)} title='View trace' className='test-file-badge'>{trace()}</Link> : undefined;
+}
