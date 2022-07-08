@@ -51,7 +51,7 @@ export class BrowserDispatcher extends Dispatcher<Browser, channels.BrowserChann
    * Used for inner loop scenarios where user would like to preserve the browser window, opened page and devtools instance.
    */
   async newContextForReuse(params: channels.BrowserNewContextForReuseParams, metadata: CallMetadata): Promise<channels.BrowserNewContextForReuseResult> {
-    const hash = JSON.stringify(params);
+    const hash = BrowserContext.reusableContextHash(params);
     if (!this._contextForReuse || hash !== this._contextForReuse.hash || !this._contextForReuse.context.canResetForReuse()) {
       if (this._contextForReuse)
         await this._contextForReuse.context.close(metadata);
@@ -59,7 +59,7 @@ export class BrowserDispatcher extends Dispatcher<Browser, channels.BrowserChann
     } else {
       const oldContextDispatcher = existingDispatcher<BrowserContextDispatcher>(this._contextForReuse.context);
       oldContextDispatcher._dispose();
-      await this._contextForReuse.context.resetForReuse(metadata);
+      await this._contextForReuse.context.resetForReuse(metadata, params);
     }
     const context = new BrowserContextDispatcher(this._scope, this._contextForReuse.context);
     return { context };
