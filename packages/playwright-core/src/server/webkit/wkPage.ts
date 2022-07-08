@@ -46,7 +46,6 @@ import { debugLogger } from '../../common/debugLogger';
 import { ManualPromise } from '../../utils/manualPromise';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
-const BINDING_CALL_MESSAGE = '__playwright_binding_call__';
 
 export class WKPage implements PageDelegate {
   readonly rawMouse: RawMouseImpl;
@@ -197,6 +196,8 @@ export class WKPage implements PageDelegate {
     const emulatedMedia = this._page.emulatedMedia();
     if (emulatedMedia.media || emulatedMedia.colorScheme || emulatedMedia.reducedMotion)
       promises.push(WKPage._setEmulateMedia(session, emulatedMedia.media, emulatedMedia.colorScheme, emulatedMedia.reducedMotion));
+    for (const binding of this._page.allBindings())
+      promises.push(session.send('Runtime.addBinding', { name: binding.name }));
     const bootstrapScript = this._calculateBootstrapScript();
     if (bootstrapScript.length)
       promises.push(session.send('Page.setBootstrapScript', { source: bootstrapScript }));
@@ -383,6 +384,7 @@ export class WKPage implements PageDelegate {
       eventsHelper.addEventListener(this._session, 'Page.loadEventFired', event => this._onLifecycleEvent(event.frameId, 'load')),
       eventsHelper.addEventListener(this._session, 'Page.domContentEventFired', event => this._onLifecycleEvent(event.frameId, 'domcontentloaded')),
       eventsHelper.addEventListener(this._session, 'Runtime.executionContextCreated', event => this._onExecutionContextCreated(event.context)),
+      eventsHelper.addEventListener(this._session, 'Runtime.bindingCalled', event => this._onBindingCalled(event.contextId, event.argument)),
       eventsHelper.addEventListener(this._session, 'Console.messageAdded', event => this._onConsoleMessage(event)),
       eventsHelper.addEventListener(this._session, 'Console.messageRepeatCountUpdated', event => this._onConsoleRepeatCountUpdated(event)),
       eventsHelper.addEventListener(this._pageProxySession, 'Dialog.javascriptDialogOpening', event => this._onDialog(event)),
@@ -522,6 +524,15 @@ export class WKPage implements PageDelegate {
     this._contextIdToContext.set(contextPayload.id, context);
   }
 
+  private async _onBindingCalled(contextId: Protocol.Runtime.ExecutionContextId, argument: string) {
+    const pageOrError = await this.pageOrError();
+    if (!(pageOrError instanceof Error)) {
+      const context = this._contextIdToContext.get(contextId);
+      if (context)
+        await this._page._onBindingCalled(argument, context);
+    }
+  }
+
   async navigateFrame(frame: frames.Frame, url: string, referrer: string | undefined): Promise<frames.GotoResult> {
     if (this._pageProxySession.isDisposed())
       throw new Error('Target closed');
@@ -534,15 +545,6 @@ export class WKPage implements PageDelegate {
     // Note: do no introduce await in this function, otherwise we lose the ordering.
     // For example, frame.setContent relies on this.
     const { type, level, text, parameters, url, line: lineNumber, column: columnNumber, source } = event.message;
-    if (level === 'debug' && parameters && parameters[0].value === BINDING_CALL_MESSAGE) {
-      const parsedObjectId = JSON.parse(parameters[1].objectId!);
-      this.pageOrError().then(pageOrError => {
-        const context = this._contextIdToContext.get(parsedObjectId.injectedScriptId);
-        if (!(pageOrError instanceof Error) && context)
-          this._page._onBindingCalled(parameters[2].value, context);
-      });
-      return;
-    }
     if (level === 'error' && source === 'javascript') {
       const { name, message } = splitErrorMessage(text);
 
@@ -752,17 +754,13 @@ export class WKPage implements PageDelegate {
   }
 
   async exposeBinding(binding: PageBinding): Promise<void> {
+    this._session.send('Runtime.addBinding', { name: binding.name });
     await this._updateBootstrapScript();
-    await this._evaluateBindingScript(binding);
+    await Promise.all(this._page.frames().map(frame => frame.evaluateExpression(binding.source, false, {}).catch(e => {})));
   }
 
   async removeExposedBindings(): Promise<void> {
     await this._updateBootstrapScript();
-  }
-
-  private async _evaluateBindingScript(binding: PageBinding): Promise<void> {
-    const script = this._bindingToScript(binding);
-    await Promise.all(this._page.frames().map(frame => frame.evaluateExpression(script, false, {}).catch(e => {})));
   }
 
   async addInitScript(script: string): Promise<void> {
@@ -773,10 +771,6 @@ export class WKPage implements PageDelegate {
     await this._updateBootstrapScript();
   }
 
-  private _bindingToScript(binding: PageBinding): string {
-    return `self.${binding.name} = (param) => console.debug('${BINDING_CALL_MESSAGE}', {}, param); ${binding.source}`;
-  }
-
   private _calculateBootstrapScript(): string {
     const scripts: string[] = [];
     if (!this._page.context()._options.isMobile) {
@@ -785,7 +779,7 @@ export class WKPage implements PageDelegate {
       scripts.push('delete window.ondeviceorientation');
     }
     for (const binding of this._page.allBindings())
-      scripts.push(this._bindingToScript(binding));
+      scripts.push(binding.source);
     scripts.push(...this._browserContext.initScripts);
     scripts.push(...this._page.initScripts);
     return scripts.join(';\n');

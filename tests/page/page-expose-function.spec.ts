@@ -300,3 +300,10 @@ it('should serialize cycles', async ({ page }) => {
   a.b = a;
   expect(object).toEqual(a);
 });
+
+it('should work with overridden console object', async ({ page }) => {
+  await page.evaluate(() => window.console = null);
+  expect(page.evaluate(() => window.console === null)).toBeTruthy();
+  await page.exposeFunction('add', (a, b) => a + b);
+  expect(await page.evaluate('add(5, 6)')).toBe(11);
+});
