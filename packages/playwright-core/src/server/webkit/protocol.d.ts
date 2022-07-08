@@ -7858,6 +7858,23 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
        */
       context: ExecutionContextDescription;
     }
+    /**
+     * Issued when new execution context is created.
+     */
+    export type bindingCalledPayload = {
+      /**
+       * Id of the execution context where the binding was called.
+       */
+      contextId: ExecutionContextId;
+      /**
+       * Name of the bound function.
+       */
+      name: string;
+      /**
+       * String argument passed to the function.
+       */
+      argument: string;
+    }
     
     /**
      * Parses JavaScript source code for errors.
@@ -8018,6 +8035,17 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
        * True if the result was thrown during the evaluation.
        */
       wasThrown?: boolean;
+    }
+    /**
+     * Adds binding with the given name on the global objects of all inspected contexts. Each binding function call produces Runtime.bindingCalled event.
+     */
+    export type addBindingParameters = {
+      /**
+       * Name of the bound function.
+       */
+      name: string;
+    }
+    export type addBindingReturnValue = {
     }
     /**
      * Returns a preview for the given object.
@@ -8870,6 +8898,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Playwright.downloadFinished": Playwright.downloadFinishedPayload;
     "Playwright.screencastFinished": Playwright.screencastFinishedPayload;
     "Runtime.executionContextCreated": Runtime.executionContextCreatedPayload;
+    "Runtime.bindingCalled": Runtime.bindingCalledPayload;
     "Screencast.screencastFrame": Screencast.screencastFramePayload;
     "ScriptProfiler.trackingStart": ScriptProfiler.trackingStartPayload;
     "ScriptProfiler.trackingUpdate": ScriptProfiler.trackingUpdatePayload;
@@ -9148,6 +9177,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Runtime.evaluate": Runtime.evaluateParameters;
     "Runtime.awaitPromise": Runtime.awaitPromiseParameters;
     "Runtime.callFunctionOn": Runtime.callFunctionOnParameters;
+    "Runtime.addBinding": Runtime.addBindingParameters;
     "Runtime.getPreview": Runtime.getPreviewParameters;
     "Runtime.getProperties": Runtime.getPropertiesParameters;
     "Runtime.getDisplayableProperties": Runtime.getDisplayablePropertiesParameters;
@@ -9450,6 +9480,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Runtime.evaluate": Runtime.evaluateReturnValue;
     "Runtime.awaitPromise": Runtime.awaitPromiseReturnValue;
     "Runtime.callFunctionOn": Runtime.callFunctionOnReturnValue;
+    "Runtime.addBinding": Runtime.addBindingReturnValue;
     "Runtime.getPreview": Runtime.getPreviewReturnValue;
     "Runtime.getProperties": Runtime.getPropertiesReturnValue;
     "Runtime.getDisplayableProperties": Runtime.getDisplayablePropertiesReturnValue;
