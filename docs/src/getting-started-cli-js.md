@@ -3,7 +3,8 @@ id: getting-started-cli
 title: "Getting started (CLI)"
 ---
 
-Playwright Test was created specifically to accommodate the needs of end-to-end testing. It does everything you would expect from a regular test runner, and more. Here you will learn how to 
+Playwright Test was created specifically to accommodate the needs of end-to-end testing. It does everything you would expect from a regular test runner, and more. Here you will learn how to:
+
 - [Install Playwright using the CLI](#installation)
 - [Generate tests though user actions with Codegen](#generating-tests-with-codegen)
 - [Write assertions, use fixtures and test hooks](#writing-assertions)
@@ -29,7 +30,7 @@ Install Playwright and follow the instructions to get started choosing either Ty
   npm init playwright@latest new-project
   ```
 
-For installing using the VS Code Extension see the [Getting Started (VS Code)](./codegen.md) guide.
+For installing using the CLI see the [Getting Started (VS Code)](./getting-started-vscode.md) guide.
 ## Generating Tests with Codegen
 
 [CodeGen](./codegen.md) will auto generate your tests for you and is a great way to quickly get started. It will open two windows, a browser window where you interact with the website you wish to test and the Playwright Inspector window where you can record your tests, copy the tests, clear your tests as well as change the language of your tests. The Playwright inspector is also used for debugging your tests.
