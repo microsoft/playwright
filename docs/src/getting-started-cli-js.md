@@ -3,10 +3,18 @@ id: getting-started-cli
 title: "Getting started (CLI)"
 ---
 
-Playwright Test was created specifically to accommodate the needs of end-to-end testing. It does everything you would expect from a regular test runner, and more. In this guide you will learn how to install Playwright using the CLI, generate tests though user actions with Codegen, learn how to write tests, run tests, debug tests, see a report of your tests, run tests on CI and see a trace view of your tests.
+Playwright Test was created specifically to accommodate the needs of end-to-end testing. It does everything you would expect from a regular test runner, and more. Here you will learn how to 
+- [Install Playwright using the CLI](#installation)
+- [Generate tests though user actions with Codegen](#generating-tests-with-codegen)
+- [Write assertions, use fixtures and test hooks](#writing-assertions)
+- [Run tests](#running-tests)
+- [Debug tests using the Playwright Explorer](#debugging-tests)
+- [See a detailed HTML report of your tests](#test-reports)
+- [Run tests on CI](#running-tests-on-ci)
+- [See a trace view of your test with DOM snapshots](#viewing-test-traces)
 ## Installation
 
-This guide is for getting started with Playwright using the CLI. If you prefer to use the VS Code Extension then please see the [Getting Started (VS Code)](./getting-started-vscode.md) doc.
+Install Playwright and follow the instructions to get started choosing either TypeScript or JavaScript, what name you would like your tests folder to be called and if you would like GitHub Actions to be set up.
 
 - Install Playwright in project's root directory
 
@@ -20,8 +28,6 @@ This guide is for getting started with Playwright using the CLI. If you prefer t
   ```bash
   npm init playwright@latest new-project
   ```
-
-Playwright will ask you 3 questions to help you get started quickly. Here you can choose to use JavaScript or TypeScript, what name you would like your tests folder to be called and if you would like GitHub Actions to be set up.
 
 ## Generating Tests with Codegen
 
@@ -225,8 +231,6 @@ The Playwright inspector is a great tool to help with debugging. It opens up a b
   npx playwright test test-1 --debug
   ```
 
-Step through your test until you come to the line where the test is failing. Click the Explore button to hover over elements in the screen and click them to automatically generate [selectors](./selectors.md). Copy the new selector and paste it in to your test and then re run the test to see it pass.
-
 <img width="1904" alt="image" src="https://user-images.githubusercontent.com/13063165/177560786-c561f428-3a81-415f-a3d4-9ba889ead99e.png"></img>
 
 To learn more about the Playwright Inspector please see the [Playwright Inspector](./inspector.md) docs.
@@ -234,23 +238,23 @@ To learn more about the Playwright Inspector please see the [Playwright Inspecto
 
 ## Test Reports
 
-The Playwright report shows you a full report of your tests allowing you to filter the report by browsers, failed tests, skipped tests etc.
+The [HTML Reporter](./html-reporter.md) shows you a full report of your tests allowing you to filter the report by browsers, passed tests, failed tests, skipped tests and flaky tests. You can click on each test and explore the tests errors as well as each step of the test. By default, the HTML report is opened automatically if some of the tests failed.
 
 ```bash
 npx playwright show-report
 ```
 
-<img width="741" alt="image" src="https://user-images.githubusercontent.com/13063165/177343600-eebc9d1c-e602-4a96-aac5-474b11035f3f.png"></img>
+<img width="739" alt="image" src="https://user-images.githubusercontent.com/13063165/178003817-3bd2f088-4173-406c-a9e9-74c89181f381.png" />
 
 To learn more about the HTML Reporter please see the [HTML Reporter](./html-reporter.md) docs.
 
 ## Running Tests on CI
 
-Run your tests locally or on CI on each pull request with GitHub actions. Tests can be run on a local dev environment or on a staging URL. Checkout our guide for more options on [CI Configurations](./ci.md)
+Run your tests locally or on CI on each pull request with GitHub actions. Tests can be run on a local dev environment or on a staging URL. Checkout our guide for more options on [CI Configurations](./ci.md).
 
 ## Viewing Test Traces
 
-Playwright Trace Viewer is a GUI tool that where you can explore recorded Playwright traces after the script ahs ran. Open traces locally or in your browser on [`trace.playwright.dev`](https://trace.playwright.dev).
+Playwright Trace Viewer is a GUI tool where you can explore recorded Playwright traces after the script has ran. See your test's DOM snapshot before and after the action item. View the test's timeline, log, source, network and console. Open traces locally or in your browser on [`trace.playwright.dev`](https://trace.playwright.dev).
 
 <img width="1212" alt="Playwright Trace Viewer" src="https://user-images.githubusercontent.com/883973/120585896-6a1bca80-c3e7-11eb-951a-bd84002480f5.png"></img>
 
