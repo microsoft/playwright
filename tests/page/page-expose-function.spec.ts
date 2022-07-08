@@ -304,9 +304,6 @@ it('should serialize cycles', async ({ page }) => {
 it('should work with overridden console object', async ({ page }) => {
   await page.evaluate(() => window.console = null);
   expect(page.evaluate(() => window.console === null)).toBeTruthy();
-  await page.exposeFunction('__pw_add', function(a, b) {
-    return Promise.resolve(a + b);
-  });
-  await (page as any)._removeExposedBindings();
-  expect(await page.evaluate('__pw_add(5, 6)')).toBe(11);
+  await page.exposeFunction('add', (a, b) => a + b);
+  expect(await page.evaluate('add(5, 6)')).toBe(11);
 });
