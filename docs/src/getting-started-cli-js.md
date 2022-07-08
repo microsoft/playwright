@@ -3,121 +3,57 @@ id: getting-started-cli
 title: "Getting started (CLI)"
 ---
 
-Playwright Test was created specifically to accommodate the needs of end-to-end testing. It does everything you would expect from a regular test runner, and more. Playwright test allows you to:
-
-- Run tests across all browsers.
-- Execute tests in parallel.
-- Enjoy context isolation out of the box.
-- Capture videos, screenshots and other artifacts on failure.
-- Integrate your POMs as extensible fixtures.
-
+Playwright Test was created specifically to accommodate the needs of end-to-end testing. It does everything you would expect from a regular test runner, and more. In this guide you will learn how to install Playwright using the CLI, generate tests though user actions with Codegen, learn how to write tests, run tests, debug tests, see a report of your tests, run tests on CI and see a trace view of your tests.
 ## Installation
 
 This guide is for getting started with Playwright using the CLI. If you prefer to use the VS Code Extension then please see the [Getting Started (VS Code)](./getting-started-vscode.md) doc.
 
-### Install Playwright in project's root directory
+- Install Playwright in project's root directory
 
-```bash
-npm init playwright@latest
-```
+  ```bash
+  npm init playwright@latest
+  ```
 
-```bash
-yarn create playwright@latest
-```
 
-### Install Playwright in a new project
+- Install Playwright in a new project
 
-```bash
-npm init playwright@latest new-project
-```
+  ```bash
+  npm init playwright@latest new-project
+  ```
 
-```bash
-yarn create playwright@latest new-project
-```
-
-Playwright will now ask you 3 questions to help you get started quickly.
+Playwright will ask you 3 questions to help you get started quickly. Here you can choose to use JavaScript or TypeScript, what name you would like your tests folder to be called and if you would like GitHub Actions to be set up.
 
 ## Generating Tests with Codegen
 
-[CodeGen](./codegen.md) will auto generate your tests for you and is a great way to quickly get started. You can also write your tests manually if you prefer.
+[CodeGen](./codegen.md) will auto generate your tests for you and is a great way to quickly get started. It will open two windows, a browser window where you interact with the website you wish to test and the Playwright Inspector window where you can record your tests, copy the tests, clear your tests as well as change the language of your tests. The Playwright inspector is also used for debugging your tests.
 
-```bash
-npx playwright codegen playwright.dev
-```
+- Open Codegen
 
-This will launch a browser window as well as the Playwright inspector. The inspector will record and write your tests based on your user actions in the browser.
+  ```bash
+  npx playwright codegen
+  ```
 
-<img width="961" alt="image" src="https://user-images.githubusercontent.com/13063165/177549951-0fbfa00d-257b-4719-a5ea-53b518989339.png" />
+- Open Codegen on a specific URL
+
+  ```bash
+  npx playwright codegen playwright.dev
+  ```
+
+<!-- <img width="961" alt="image" src="https://user-images.githubusercontent.com/13063165/177549951-0fbfa00d-257b-4719-a5ea-53b518989339.png" />
 
 ### Recording User Actions
 
-Tests are generated in the Playwright Inspector as you interact with the browser.
+Tests are generated in the Playwright Inspector as you interact with the browser. -->
 
 <img width="1916" alt="image" src="https://user-images.githubusercontent.com/13063165/177550119-4e202a56-7d8e-43ac-ad91-bf2f7b2579bd.png"/>
 
 To learn more about codegen please see the [Playwright Inspector](./codegen.md) docs.
 
-## Running the Tests
-
-You can run a single test, all tests in a file or all tests in the tests folder. Tests can be run on one browser or multiple browsers.
-
-### Running a Single Test
-
-Run tests in a headless manner, meaning it will not open up a browser window.
-
-```bash
-npx playwright test test-1.spec.ts
-```
-
-### Running Tests - Headed
-
-Run tests in a headed manner, meaning it will open up a browser window for each browser being tested and run through the tests.
-
-```bash
-npx playwright test test-1.spec.ts --headed
-```
-
-Test output can be seen in the terminal. While the tests are being run it will output which browser Playwright is testing.
-
-### Running All Tests
-
-Run all tests in your tests folder.
-
-```bash
-npx playwright test
-```
-
-### Running Tests on Specific Browsers
-
-Use the `--project` flag to run your test only on a specific browser.
-
-```bash
-npx playwright test test-1.spec.ts --project=chromium
-```
-
-## Debugging Tests
-
-Playwright comes with an inspector to help with debugging. You can step through each line of the test as well as explore other available [selectors](./selectors.md).
-
-### Using the Playwright Inspector
-
-You can debug your tests by running your tests using the `--debug` flag. This will open up a browser window as well as the Playwright inspector.
-
-```bash
-npx playwright test test-1.spec.ts --debug
-```
-
-Step through your test until you come to the line where the test is failing. Click the Explore button to hover over elements in the screen and click them to automatically generate [selectors](./selectors.md). Copy the new selector and paste it in to your test and then re run the test to see it pass.
-
-<img width="1904" alt="image" src="https://user-images.githubusercontent.com/13063165/177560786-c561f428-3a81-415f-a3d4-9ba889ead99e.png"></img>
-
-To learn more about the Playwright Inspector please see the [Playwright Inspector](./inspector.md) docs.
-
 ## Writing Assertions
 
 Playwright Test uses the [expect](https://jestjs.io/docs/expect) library for test assertions. It extends it with the Playwright-specific matchers to achieve greater testing ergonomics.
 
-Learn more about [test assertions here](./test-assertions.md).
+Learn more about [test assertions](./test-assertions.md).
 
 Here is a quick example of using them:
 
@@ -192,8 +128,7 @@ Here is a list of the pre-defined fixtures that you are likely to use most of th
 
 ## Using test hooks
 
-You can use `test.beforeAll` and `test.afterAll` hooks to set up and tear down resources shared between tests.
-And you can use `test.beforeEach` and `test.afterEach` hooks to set up and tear down resources for each test individually.
+You can use `test.beforeAll` and `test.afterAll` hooks to set up and tear down resources shared between tests. And you can use `test.beforeEach` and `test.afterEach` hooks to set up and tear down resources for each test individually.
 
 ```js tab=js-js
 // example.spec.js
@@ -229,7 +164,75 @@ test.describe("feature foo", () => {
 });
 ```
 
-## HTML Reporter
+## Running Tests
+
+You can run a single test, a set of tests or all tests. Tests can be run on one browser or multiple browsers. By default tests are run in a headless manner meaning no browser window will be opened while running the tests and results will be seen in the terminal. If you prefer you can run your tests in headed mode by using the `--headed` flag.
+
+- Running all tests
+
+  ```bash
+  npx playwright test
+  ```
+
+- Running a single test file
+
+  ```bash
+  npx playwright test test-1
+  ```
+
+- Run a set of test files
+
+  ```bash
+  npx playwright test tests/todo-page/ tests/landing-page/
+  ```
+
+- Run files that have `my-spec` or `my-spec-2` in the file name
+
+  ```bash
+  npx playwright test my-spec my-spec-2
+  ```
+
+- Run the test with the title
+
+  ```bash
+  npx playwright test -g "add a todo item"
+  ```
+
+- Running tests in headed mode
+
+  ```bash
+  npx playwright test test-1 --headed
+  ```
+
+- Running Tests on specific browsers
+
+  ```bash
+  npx playwright test test-1.spec.ts --project=chromium
+  ```
+
+## Debugging Tests
+
+The Playwright inspector is a great tool to help with debugging. It opens up a browser window highlighting the selectors as you step through each line of the test. You can also use the explore button to find other available [selectors](./selectors.md) which you can then copy into your test file and rerun your tests to see if it passes.
+
+- Debugging all Tests
+
+  ```bash
+  npx playwright test --debug
+  ```
+- Debugging one test
+
+  ```bash
+  npx playwright test test-1 --debug
+  ```
+
+Step through your test until you come to the line where the test is failing. Click the Explore button to hover over elements in the screen and click them to automatically generate [selectors](./selectors.md). Copy the new selector and paste it in to your test and then re run the test to see it pass.
+
+<img width="1904" alt="image" src="https://user-images.githubusercontent.com/13063165/177560786-c561f428-3a81-415f-a3d4-9ba889ead99e.png"></img>
+
+To learn more about the Playwright Inspector please see the [Playwright Inspector](./inspector.md) docs.
+
+
+## Test Reports
 
 The Playwright report shows you a full report of your tests allowing you to filter the report by browsers, failed tests, skipped tests etc.
 
@@ -241,11 +244,11 @@ npx playwright show-report
 
 To learn more about the HTML Reporter please see the [HTML Reporter](./html-reporter.md) docs.
 
-## Running on CI
+## Running Tests on CI
 
 Run your tests locally or on CI on each pull request with GitHub actions. Tests can be run on a local dev environment or on a staging URL. Checkout our guide for more options on [CI Configurations](./ci.md)
 
-## Trace Viewer
+## Viewing Test Traces
 
 Playwright Trace Viewer is a GUI tool that where you can explore recorded Playwright traces after the script ahs ran. Open traces locally or in your browser on [`trace.playwright.dev`](https://trace.playwright.dev).
 
