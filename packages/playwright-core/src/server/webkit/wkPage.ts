@@ -384,7 +384,7 @@ export class WKPage implements PageDelegate {
       eventsHelper.addEventListener(this._session, 'Page.loadEventFired', event => this._onLifecycleEvent(event.frameId, 'load')),
       eventsHelper.addEventListener(this._session, 'Page.domContentEventFired', event => this._onLifecycleEvent(event.frameId, 'domcontentloaded')),
       eventsHelper.addEventListener(this._session, 'Runtime.executionContextCreated', event => this._onExecutionContextCreated(event.context)),
-      eventsHelper.addEventListener(this._session, 'Runtime.bindingCalled', event => this._onBindingCalled(event.contextId, event.name, event.argument)),
+      eventsHelper.addEventListener(this._session, 'Runtime.bindingCalled', event => this._onBindingCalled(event.contextId, event.argument)),
       eventsHelper.addEventListener(this._session, 'Console.messageAdded', event => this._onConsoleMessage(event)),
       eventsHelper.addEventListener(this._session, 'Console.messageRepeatCountUpdated', event => this._onConsoleRepeatCountUpdated(event)),
       eventsHelper.addEventListener(this._pageProxySession, 'Dialog.javascriptDialogOpening', event => this._onDialog(event)),
@@ -524,7 +524,7 @@ export class WKPage implements PageDelegate {
     this._contextIdToContext.set(contextPayload.id, context);
   }
 
-  private async _onBindingCalled(contextId: any, name: any, argument: any) {
+  private async _onBindingCalled(contextId: Protocol.Runtime.ExecutionContextId, argument: string) {
     const pageOrError = await this.pageOrError();
     if (!(pageOrError instanceof Error)) {
       const context = this._contextIdToContext.get(contextId);
