@@ -26,10 +26,6 @@ it('should work', async ({ page, server, browserName, headless, isLinux }) => {
   await page.goto(server.PREFIX + '/grid.html');
   const elementHandle = await page.$('.box:nth-of-type(13)');
   const box = await elementHandle.boundingBox();
-  if (browserName === 'webkit') {
-    // Upstream regression: https://bugs.webkit.org/show_bug.cgi?id=242079
-    box.y = Math.ceil(box.y);
-  }
   expect(box).toEqual({ x: 100, y: 50, width: 50, height: 50 });
 });
 
