@@ -306,6 +306,13 @@ elif [[ "$BUILD_FLAVOR" == "firefox-beta-win64" ]]; then
 # ===========================
 #    WEBKIT COMPILATION
 # ===========================
+elif [[ "$BUILD_FLAVOR" == "webkit-universal" ]]; then
+  BROWSER_NAME="webkit"
+  EXTRA_BUILD_ARGS="--full --universal"
+  EXTRA_ARCHIVE_ARGS="--universal"
+  EXPECTED_HOST_OS="Ubuntu"
+  EXPECTED_HOST_OS_VERSION="20.04"
+  BUILD_BLOB_NAME="webkit-linux-universal.zip"
 elif [[ "$BUILD_FLAVOR" == "webkit-ubuntu-18.04" ]]; then
   BROWSER_NAME="webkit"
   EXTRA_BUILD_ARGS="--full"

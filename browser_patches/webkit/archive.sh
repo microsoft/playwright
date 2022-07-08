@@ -3,7 +3,7 @@ set -e
 set +x
 
 if [[ ("$1" == "-h") || ("$1" == "--help") ]]; then
-  echo "usage: $(basename "$0") [output-absolute-path]"
+  echo "usage: $(basename "$0") [output-absolute-path] [--universal]"
   echo
   echo "Generate distributable .zip archive from ./checkout folder that was previously built."
   echo
@@ -26,6 +26,11 @@ fi
 if ! [[ -d $(dirname "$ZIP_PATH") ]]; then
   echo "ERROR: folder for path $($ZIP_PATH) does not exist."
   exit 1
+fi
+
+IS_UNIVERSAL=""
+if [[ $2 == "--universal" ]]; then
+  IS_UNIVERSAL=1
 fi
 
 main() {
@@ -52,7 +57,7 @@ main() {
 
 createZipForLinux() {
   # create a TMP directory to copy all necessary files
-  local tmpdir=$(mktemp -d -t webkit-deploy-XXXXXXXXXX)
+  local tmpdir=$(mktemp -d -p "$(pwd)/WebKitBuild" -t webkit-deploy-XXXXXXXXXX)
   mkdir -p "$tmpdir"
 
   # copy runner
@@ -62,15 +67,27 @@ createZipForLinux() {
 
   # Generate and unpack MiniBrowser bundles for each port
   for port in gtk wpe; do
-    WEBKIT_OUTPUTDIR=$(pwd)/WebKitBuild/${port^^} Tools/Scripts/generate-bundle \
-        --bundle=MiniBrowser --release \
-        --platform=${port} --destination="${tmpdir}"
-     unzip "${tmpdir}"/MiniBrowser_${port}_release.zip -d "${tmpdir}"/minibrowser-${port}
-     rm -f "${tmpdir}"/MiniBrowser_${port}_release.zip
+    if [[ -n "${IS_UNIVERSAL}" ]]; then
+      Tools/Scripts/generate-bundle \
+          --syslibs=bundle-all \
+          --bundle=MiniBrowser --release \
+          --platform=${port} --destination="${tmpdir}"
+    else
+      WEBKIT_OUTPUTDIR=$(pwd)/WebKitBuild/${port^^} \
+      Tools/Scripts/generate-bundle \
+          --bundle=MiniBrowser --release \
+          --platform=${port} --destination="${tmpdir}"
+    fi
+
+    unzip "${tmpdir}"/MiniBrowser_${port}_release.zip -d "${tmpdir}"/minibrowser-${port}
+    rm -f "${tmpdir}"/MiniBrowser_${port}_release.zip
   done
 
-  # tar resulting directory and cleanup TMP.
   cd "$tmpdir"
+  # de-duplicate common files: convert to relative symlinks identical files (same hash)
+  rdfind -deterministic true -makesymlinks true -makehardlinks false -makeresultsfile false .
+  symlinks -rc .
+  # zip resulting directory and cleanup TMP.
   zip --symlinks -r "$ZIP_PATH" ./
   cd -
   rm -rf "$tmpdir"
