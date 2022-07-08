@@ -55,7 +55,7 @@ test('should handle worker fixture timeout', async ({ runInlineTest }) => {
     `
   }, { timeout: 500 });
   expect(result.exitCode).toBe(1);
-  expect(result.output).toContain('Worker teardown timeout of 500ms exceeded.');
+  expect(result.output).toContain('Worker teardown timeout of 500ms exceeded while tearing down "timeout".');
 });
 
 test('should handle worker fixture error', async ({ runInlineTest }) => {
@@ -529,7 +529,7 @@ test('should report worker fixture teardown with debug info', async ({ runInline
     'a.spec.ts:12:9 › good18',
     'a.spec.ts:12:9 › good19',
     '',
-    'Worker teardown timeout of 1000ms exceeded.',
+    'Worker teardown timeout of 1000ms exceeded while tearing down "fixture".',
   ].join('\n'));
 });
 
