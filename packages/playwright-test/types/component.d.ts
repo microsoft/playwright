@@ -25,6 +25,7 @@ export type ObjectComponentOptions = {
   props?: { [key: string]: any },
   slots?: { [key: string]: any },
   on?: { [key: string]: Function },
+  config?: any,
 };
 
 export type ObjectComponent = {

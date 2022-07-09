@@ -11,6 +11,9 @@ test('props should work', async ({ mount }) => {
   const component = await mount(Button, {
     props: {
       title: 'Submit'
+    },
+    config: {
+      route: 'A'
     }
   })
   await expect(component).toContainText('Submit')

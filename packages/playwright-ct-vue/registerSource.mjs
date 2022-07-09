@@ -159,6 +159,9 @@ window.playwrightMount = (component, rootElement) => {
   const app = createApp({
     render: () => render(component)
   });
+  const win = /** @type {any} */(window);
+  if (win.configureApp && component.kind === 'object')
+    win.configureApp(app, component.options?.config);
   setDevtoolsHook(createDevTools(), {});
   app.mount(rootElement);
 };
