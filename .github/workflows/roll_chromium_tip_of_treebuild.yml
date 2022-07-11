@@ -1,4 +1,4 @@
-name: "PR: bump //browser_patches/chromium-tip-of-tree/BUILD_NUMBER"
+name: "PR: bump chromium-tip-of-tree/BUILD_NUMBER"
 on:
   workflow_dispatch:
   schedule:
@@ -20,7 +20,7 @@ jobs:
           fi
           echo "::set-output name=HAS_CHANGES::1"
           CURRENT_DATE=$(date +%Y-%b-%d)
-          BRANCH_NAME="roll-chromium/${CURRENT_DATE}"
+          BRANCH_NAME="roll-tip-of-tree-chromium/${CURRENT_DATE}"
           echo "::set-output name=BRANCH_NAME::$BRANCH_NAME"
           echo "::set-output name=CURRENT_DATE::$CURRENT_DATE"
           git config --global user.name github-actions
