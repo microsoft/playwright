@@ -47,10 +47,7 @@ test('serviceWorker(), and fromServiceWorker() work', async ({ context, page, se
     context.waitForEvent('request', r => r.url().endsWith('/request-from-within-worker.txt')),
     page.goto(server.PREFIX + '/serviceworkers/fetch/sw.html')
   ]);
-  const [inner] = await Promise.all([
-    context.waitForEvent('request', r => r.url().endsWith('/inner.txt')),
-    page.evaluate(() => fetch('/inner.txt')),
-  ]);
+
   expect(html.frame()).toBeTruthy();
   expect(html.serviceWorker()).toBe(null);
   expect((await html.response()).fromServiceWorker()).toBe(false);
@@ -58,10 +55,6 @@ test('serviceWorker(), and fromServiceWorker() work', async ({ context, page, se
   expect(main.frame).toThrow();
   expect(main.serviceWorker()).toBe(worker);
   expect((await main.response()).fromServiceWorker()).toBe(false);
-
-  expect(inner.frame()).toBeTruthy();
-  expect(inner.serviceWorker()).toBe(null);
-  expect((await inner.response()).fromServiceWorker()).toBe(true);
 
   expect(inWorker.frame).toThrow();
   expect(inWorker.serviceWorker()).toBe(worker);
@@ -101,6 +94,7 @@ test('should intercept service worker requests (main and within)', async ({ cont
 
   const [ sw ] = await Promise.all([
     context.waitForEvent('serviceworker'),
+    context.waitForEvent('response', r => r.url().endsWith('/request-from-within-worker')),
     page.goto(server.PREFIX + '/serviceworkers/empty/sw.html'),
   ]);
 
@@ -158,6 +152,7 @@ test('should intercept service worker importScripts', async ({ context, page, se
 
   const [ sw ] = await Promise.all([
     context.waitForEvent('serviceworker'),
+    context.waitForEvent('response', r => r.url().endsWith('/import.js')),
     page.goto(server.PREFIX + '/serviceworkers/empty/sw.html'),
   ]);
 
@@ -192,6 +187,7 @@ test('should report intercepted service worker requests in HAR', async ({ pageWi
 
   const [ sw ] = await Promise.all([
     context.waitForEvent('serviceworker'),
+    context.waitForEvent('response', r => r.url().endsWith('/request-from-within-worker')),
     page.goto(server.PREFIX + '/serviceworkers/empty/sw.html'),
   ]);
 
