@@ -42,24 +42,18 @@ namespace PlaywrightTests;
 public class MyTest : PageTest
 {
     [Test]
-    async public Task ShouldBeAbleToDoFoo()
+    async public Task ShouldHaveTheCorrectSlogan()
     {
         await Page.GotoAsync("https://playwright.dev");
         await Expect(Page.Locator("text=enables reliable end-to-end testing for modern web apps")).ToBeVisibleAsync();
     }
 
     [Test]
-    public async Task ShouldAdd()
+    public async Task ShouldHaveTheCorrectTitle()
     {
-        var result = await Page.EvaluateAsync<int>("() => 7 + 3");
-        Assert.AreEqual(10, result);
-    }
-
-    [Test]
-    public async Task ShouldMultiply()
-    {
-        var result = await Page.EvaluateAsync<int>("() => 7 * 3");
-        Assert.AreEqual(21, result);
+        await Page.GotoAsync("https://playwright.dev");
+        var title = Page.Locator(".navbar__inner .navbar__title");
+        await Expect(title).ToHaveTextAsync("Playwright");
     }
 }
 ```
@@ -159,7 +153,7 @@ There are few base classes available to you in `Microsoft.Playwright.NUnit` name
 
 ## MSTest
 
-Playwright also provides base classes to write tests with MSTest via the [`Microsoft.Playwright.MSTest`](https://www.nuget.org/packages/Microsoft.Playwright.MSTest) package.
+Playwright provides base classes to write tests with MSTest via the [`Microsoft.Playwright.MSTest`](https://www.nuget.org/packages/Microsoft.Playwright.MSTest) package.
 
 ### Creating an MSTest project
 
@@ -174,7 +168,7 @@ dotnet build
 pwsh bin\Debug\netX\playwright.ps1 install --with-deps
 ```
 
-Create a PageTests.cs file.
+Modify the UnitTest1.cs:
 
 ```csharp
 using Microsoft.Playwright.MSTest;
@@ -185,24 +179,18 @@ namespace PlaywrightTests;
 public class UnitTest1: PageTest
 {
     [TestMethod]
-    async public Task ShouldBeAbleToDoFoo()
+    async public Task ShouldHaveTheCorrectSlogan()
     {
         await Page.GotoAsync("https://playwright.dev");
         await Expect(Page.Locator("text=enables reliable end-to-end testing for modern web apps")).ToBeVisibleAsync();
     }
 
     [TestMethod]
-    async public Task ShouldAdd()
+    async public Task ShouldHaveTheCorrectTitle()
     {
-        var result = await Page.EvaluateAsync<int>("() => 7 + 3");
-        Assert.AreEqual(10, result);
-    }
-
-    [TestMethod]
-    async public Task ShouldMultiply()
-    {
-        var result = await Page.EvaluateAsync<int>("() => 7 * 3");
-        Assert.AreEqual(21, result);
+        await Page.GotoAsync("https://playwright.dev");
+        var title = Page.Locator(".navbar__inner .navbar__title");
+        await Expect(title).ToHaveTextAsync("Playwright");
     }
 }
 ```
