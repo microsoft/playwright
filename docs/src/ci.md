@@ -244,8 +244,6 @@ pipeline {
 }
 ```
 
-> Note: The `$$` is used to escape the `$` and the `shardIndex` is incremented by one to convert the 0-based `jobIndex` to the 1-based `shardIndex`.
-
 ### Bitbucket Pipelines
 
 Bitbucket Pipelines can use public [Docker images as build environments](https://confluence.atlassian.com/bitbucket/use-docker-images-as-build-environments-792298897.html). To run Playwright tests on Bitbucket, use our public Docker image ([see Dockerfile](./docker.md)).
