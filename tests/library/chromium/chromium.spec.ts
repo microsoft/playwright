@@ -250,6 +250,70 @@ test('setOffline', async ({ context, page, server }) => {
   expect(error).toMatch(/REJECTED.*Failed to fetch/);
 });
 
+test('should emit page-level request event for respondWith', async ({ page, server}) => {
+  await page.goto(server.PREFIX + '/serviceworkers/fetchdummy/sw.html');
+  await page.evaluate(() => window['activationPromise']);
+
+  // Sanity check.
+  const [pageReq, swResponse] = await Promise.all([
+    page.waitForEvent('request'),
+    page.evaluate(() => window['fetchDummy']('foo')),
+  ]);
+  expect(swResponse).toBe('responseFromServiceWorker:foo');
+  expect(pageReq.url()).toMatch(/fetchdummy\/foo$/);
+  expect(pageReq.serviceWorker()).toBe(null);
+  expect((await pageReq.response()).fromServiceWorker()).toBe(true);
+});
+
+test.only('should emit page-level request event for respondWith from SW cache', async ({ context, page, server }) => {
+  await context.route('**/entry.html', route => {
+    route.fulfill({
+      contentType: 'text/html',
+      status: 200,
+      body: `
+        <!DOCTYPE html>
+        <html>
+        <body>
+          <script>
+            window.serviceWorkerPromise = navigator.serviceWorker.register('/sw.js');
+            window.activationPromise = navigator.serviceWorker.ready;
+          </script>
+        </body>
+        </html>
+      `,
+    })
+  })
+
+  await context.route('**/page-script.js', route => route.fulfill({
+    contentType: 'text/javascript',
+    status: 200,
+    body: 'window.PW_DATA = 47;',
+  }));
+
+  await context.route('**/sw.js', route => route.fulfill({
+    contentType: 'text/javascript',
+    status: 200,
+    body: '',
+  }));
+
+  const [sw] = await Promise.all([
+    context.waitForEvent('serviceworker'),
+    page.goto(server.PREFIX + '/entry.html'),
+  ])
+  await page.evaluate(() => window['activationPromise']);
+  const pageScriptRequest = page.waitForEvent('request');
+  await page.evaluate(() => {
+    return new Promise(res => {
+      const script = document.createElement('script');
+      script.src = '/page-script.js';
+      script.onload = res;
+      document.body.appendChild(script);
+    })
+  });
+
+  await expect.poll(() => page.evaluate(() => window['PW_DATA'])).toBe(47);
+  await pageScriptRequest;
+});
 
 test('setExtraHTTPHeaders', async ({ context, page, server }) => {
   const [worker] = await Promise.all([
