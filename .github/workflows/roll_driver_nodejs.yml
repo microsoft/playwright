@@ -1,16 +1,19 @@
-name: "PR: bump chromium/BUILD_NUMBER"
+name: "PR: bump driver Node.js"
 on:
   workflow_dispatch:
   schedule:
-    # At 10:00am UTC  (3AM PST) every day to build every new Chromium beta
-    - cron: "0 10 * * *"
+    # At 10:00am UTC  (3AM PST) every tuesday and thursday to roll to new Node.js driver
+    - cron: "0 10 * * 2,4"
 jobs:
-  trigger-chromium-build:
-    name: Trigger Build
-    runs-on: ubuntu-20.04
+  trigger-nodejs-roll:
+    name: Trigger Roll
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v2
-      - run: ./browser_patches/chromium/roll_to_current_beta.sh
+      - uses: actions/setup-node@v2
+        with:
+          node-version: 16
+      - run: node utils/build/update-playwright-driver-version.mjs
       - name: Prepare branch
         id: prepare-branch
         run: |
@@ -19,15 +22,13 @@ jobs:
               exit 0;
           fi
           echo "::set-output name=HAS_CHANGES::1"
-          CURRENT_DATE=$(date +%Y-%b-%d)
-          BRANCH_NAME="roll-chromium/${CURRENT_DATE}"
+          BRANCH_NAME="roll-driver-nodejs/$(date +%Y-%b-%d)"
           echo "::set-output name=BRANCH_NAME::$BRANCH_NAME"
-          echo "::set-output name=CURRENT_DATE::$CURRENT_DATE"
           git config --global user.name github-actions
           git config --global user.email 41898282+github-actions[bot]@users.noreply.github.com
           git checkout -b "$BRANCH_NAME"
           git add .
-          git commit -m "browser(chromium): roll to $CURRENT_DATE"
+          git commit -m "chore(driver): roll driver to recent Node.js LTS version"
           git push origin $BRANCH_NAME
       - name: Create Pull Request
         if: ${{ steps.prepare-branch.outputs.HAS_CHANGES == '1' }}
@@ -39,5 +40,5 @@ jobs:
               repo: 'playwright',
               head: 'microsoft:${{ steps.prepare-branch.outputs.BRANCH_NAME }}',
               base: 'main',
-              title: 'browser(chromium): roll to ${{ steps.prepare-branch.outputs.CURRENT_DATE }}',
+              title: 'chore(driver): roll driver to recent Node.js LTS version',
             });
