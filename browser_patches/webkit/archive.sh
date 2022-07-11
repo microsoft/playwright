@@ -84,8 +84,16 @@ createZipForLinux() {
   done
 
   cd "$tmpdir"
-  # de-duplicate common files: convert to relative symlinks identical files (same hash)
-  rdfind -deterministic true -makesymlinks true -makehardlinks false -makeresultsfile false .
+
+  # De-duplicate common files: convert to relative symlinks identical files (same hash).
+  # Note: ubuntu 18.04 does not support "deterministic" argument.
+  local CURRENT_HOST_OS="$(bash -c 'source /etc/os-release && echo $NAME')"
+  local CURRENT_HOST_OS_VERSION="$(bash -c 'source /etc/os-release && echo $VERSION_ID')"
+  if [[ "${CURRENT_HOST_OS}" == "Ubuntu" && "${CURRENT_HOST_OS_VERSION}" == "18.04" ]]; then
+    rdfind -makesymlinks true -makehardlinks false -makeresultsfile false .
+  else
+    rdfind -deterministic true -makesymlinks true -makehardlinks false -makeresultsfile false .
+  fi
   symlinks -rc .
   # zip resulting directory and cleanup TMP.
   zip --symlinks -r "$ZIP_PATH" ./
