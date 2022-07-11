@@ -68,6 +68,6 @@ function render(component) {
   }));
 }
 
-window.playwrightMount = component => {
+window.playwrightMount = async component => {
   ReactDOM.render(render(component), document.getElementById('root'));
 };

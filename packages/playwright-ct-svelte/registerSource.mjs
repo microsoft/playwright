@@ -32,7 +32,7 @@ export function register(components) {
     registry.set(name, value);
 }
 
-window.playwrightMount = (component, rootElement) => {
+window.playwrightMount = async (component, rootElement) => {
   let componentCtor = registry.get(component.type);
   if (!componentCtor) {
     // Lookup by shorthand.

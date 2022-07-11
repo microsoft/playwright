@@ -66,3 +66,17 @@ test('optionless should work', async ({ mount }) => {
   const component = await mount(Component)
   await expect(component).toContainText('test')
 })
+
+test('should configure app', async ({ page, mount }) => {
+  const messages = []
+  page.on('console', m => messages.push(m.text()))
+  const component = await mount(Button, {
+    props: {
+      title: 'Submit'
+    },
+    appConfig: {
+      route: 'A'
+    }
+  })
+  expect(messages).toEqual(['App true configured with config: {\"route\":\"A\"}'])
+})
