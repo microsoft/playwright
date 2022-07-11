@@ -43,7 +43,8 @@ class ListReporter extends BaseReporter {
     console.log();
   }
 
-  onTestBegin(test: TestCase, result: TestResult) {
+  override onTestBegin(test: TestCase, result: TestResult) {
+    super.onTestBegin(test, result);
     if (this.liveTerminal) {
       if (this._needNewLine) {
         this._needNewLine = false;
