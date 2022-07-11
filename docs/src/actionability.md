@@ -35,7 +35,7 @@ Here is the complete list of actionability checks performed for each action:
 | innerHTML | Yes | - | - | - | - | - |
 | press | Yes | - | - | - | - | - |
 | setInputFiles | Yes | - | - | - | - | - |
-| selectOption | Yes | - | - | - | - | - |
+| selectOption | Yes | Yes | - | - | Yes | - |
 | textContent | Yes | - | - | - | - | - |
 | type | Yes | - | - | - | - | - |
 
