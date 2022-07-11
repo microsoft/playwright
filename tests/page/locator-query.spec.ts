@@ -90,6 +90,13 @@ it('should filter by regex and regexp flags', async ({ page }) => {
   await expect(page.locator('div', { hasText: /hElLo "world"/i })).toHaveText('Hello "world"');
 });
 
+it('should filter by case-insensitive regex in a child', async ({ page }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/15348' });
+  it.fixme();
+  await page.setContent(`<div class="test"><h5>Title Text</h5></div>`);
+  await expect(page.locator('div', { hasText: /^title text$/i })).toHaveText('Title Text');
+});
+
 it('should support has:locator', async ({ page, trace }) => {
   it.skip(trace === 'on');
 
