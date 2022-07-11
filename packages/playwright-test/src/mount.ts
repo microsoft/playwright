@@ -88,7 +88,7 @@ async function innerMount(page: Page, jsxOrType: JsxComponent | string, options:
   // WebKit does not wait for deferred scripts.
   await page.waitForFunction(() => !!window.playwrightMount);
 
-  const selector = await page.evaluate(async ({ component }) => {
+  const selector = await page.evaluate(async ({ component, hooksConfig }) => {
     const unwrapFunctions = (object: any) => {
       for (const [key, value] of Object.entries(object)) {
         if (typeof value === 'string' && (value as string).startsWith('__pw_func_')) {
@@ -110,11 +110,11 @@ async function innerMount(page: Page, jsxOrType: JsxComponent | string, options:
       document.body.appendChild(rootElement);
     }
 
-    await window.playwrightMount(component, rootElement);
+    await window.playwrightMount(component, rootElement, hooksConfig);
 
     // When mounting fragments, return selector pointing to the root element.
     return rootElement.childNodes.length > 1 ? '#root' : '#root > *';
-  }, { component });
+  }, { component, hooksConfig: options.hooksConfig });
   return selector;
 }
 

@@ -155,14 +155,15 @@ function createDevTools() {
   };
 }
 
-window.playwrightMount = async (component, rootElement) => {
+window.playwrightMount = async (component, rootElement, hooksConfig) => {
   const app = createApp({
     render: () => render(component)
   });
   setDevtoolsHook(createDevTools(), {});
-  if (component.kind === 'object') {
-    for (const onAppCallback of /** @type {any} */(window).__pw_hooks_on_app || [])
-      await onAppCallback(app, /** @type {any} */(component.options)?.appConfig)
-  }
-  app.mount(rootElement);
+
+  for (const hook of /** @type {any} */(window).__pw_hooks_before_mount || [])
+    await hook({ app, hooksConfig });
+  const instance = app.mount(rootElement);
+  for (const hook of /** @type {any} */(window).__pw_hooks_after_mount || [])
+    await hook({ app, hooksConfig, instance });
 };

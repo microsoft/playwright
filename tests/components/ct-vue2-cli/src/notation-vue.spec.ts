@@ -60,3 +60,15 @@ test('named slots should work', async ({ mount }) => {
   await expect(component).toContainText('Main Content')
   await expect(component).toContainText('Footer')
 })
+
+test('should run hooks', async ({ page, mount }) => {
+  const messages = []
+  page.on('console', m => messages.push(m.text()))
+  await mount(Button, {
+    props: {
+      title: 'Submit'
+    },
+    hooksConfig: { route: 'A' }
+  })
+  expect(messages).toEqual(['Before mount: {\"route\":\"A\"}', 'After mount el: HTMLButtonElement'])
+})

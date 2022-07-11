@@ -33,3 +33,17 @@ test('should work', async ({ mount }) => {
   await component.click();
   expect(values).toEqual([{ count: 1 }]);
 });
+
+test('should configure app', async ({ page, mount }) => {
+  const messages: string[] = [];
+  page.on('console', m => messages.push(m.text()));
+  await mount(Counter, {
+    props: {
+      units: 's',
+    },
+    hooksConfig: {
+      route: 'A'
+    }
+  });
+  expect(messages).toEqual(['Before mount: {\"route\":\"A\"}', 'After mount']);
+});
