@@ -101,6 +101,8 @@ test('should intercept service worker requests (main and within)', async ({ cont
 
   const [ sw ] = await Promise.all([
     context.waitForEvent('serviceworker'),
+    context.waitForEvent('request', r => r.url().endsWith('sw.js') && !!r.serviceWorker()),
+    context.waitForEvent('response', r => r.url().endsWith('sw.js') && !r.fromServiceWorker()),
     page.goto(server.PREFIX + '/serviceworkers/empty/sw.html'),
   ]);
 
