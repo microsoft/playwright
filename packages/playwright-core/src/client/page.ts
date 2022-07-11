@@ -251,14 +251,14 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   setDefaultNavigationTimeout(timeout: number) {
     this._timeoutSettings.setDefaultNavigationTimeout(timeout);
     this._wrapApiCall(async () => {
-      this._channel.setDefaultNavigationTimeoutNoReply({ timeout });
+      this._channel.setDefaultNavigationTimeoutNoReply({ timeout }).catch(() => {});
     }, true);
   }
 
   setDefaultTimeout(timeout: number) {
     this._timeoutSettings.setDefaultTimeout(timeout);
     this._wrapApiCall(async () => {
-      this._channel.setDefaultTimeoutNoReply({ timeout });
+      this._channel.setDefaultTimeoutNoReply({ timeout }).catch(() => {});
     }, true);
   }
 

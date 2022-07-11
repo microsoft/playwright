@@ -41,6 +41,7 @@ if ((process as any)['__pw_initiator__']) {
 
 type TestFixtures = PlaywrightTestArgs & PlaywrightTestOptions & {
   _combinedContextOptions: BrowserContextOptions,
+  _contextReuseEnabled: boolean,
   _setupContextOptionsAndArtifacts: void;
   _contextFactory: (options?: BrowserContextOptions) => Promise<BrowserContext>;
 };
@@ -249,7 +250,6 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
     const captureTrace = shouldCaptureTrace(traceMode, testInfo);
     const temporaryTraceFiles: string[] = [];
     const temporaryScreenshots: string[] = [];
-    const createdContexts = new Set<BrowserContext>();
     const testInfoImpl = testInfo as TestInfoImpl;
 
     const createInstrumentationListener = (context?: BrowserContext) => {
@@ -288,13 +288,14 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
           await tracing.startChunk({ title });
         }
       } else {
-        (tracing as any)[kTracingStarted] = false;
-        await tracing.stop();
+        if ((tracing as any)[kTracingStarted]) {
+          (tracing as any)[kTracingStarted] = false;
+          await tracing.stop();
+        }
       }
     };
 
     const onDidCreateBrowserContext = async (context: BrowserContext) => {
-      createdContexts.add(context);
       context.setDefaultTimeout(actionTimeout || 0);
       context.setDefaultNavigationTimeout(navigationTimeout || actionTimeout || 0);
       await startTracing(context.tracing);
@@ -505,12 +506,33 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
       testInfo.errors.push({ message: prependToError });
   }, { scope: 'test',  _title: 'context' } as any],
 
-  context: async ({ _contextFactory }, use) => {
-    await use(await _contextFactory());
+  _contextReuseEnabled: async ({ video, trace }, use, testInfo) => {
+    const reuse = !!process.env.PW_REUSE_CONTEXT && !shouldCaptureVideo(normalizeVideoMode(video), testInfo) && !shouldCaptureTrace(normalizeTraceMode(trace), testInfo);
+    await use(reuse);
   },
 
-  page: async ({ context }, use) => {
-    await use(await context.newPage());
+  context: async ({ playwright, browser, _contextReuseEnabled, _contextFactory }, use, testInfo) => {
+    if (!_contextReuseEnabled) {
+      await use(await _contextFactory());
+      return;
+    }
+
+    const defaultContextOptions = (playwright.chromium as any)._defaultContextOptions as BrowserContextOptions;
+    const context = await (browser as any)._newContextForReuse(defaultContextOptions);
+    await use(context);
+  },
+
+  page: async ({ context, _contextReuseEnabled }, use) => {
+    if (!_contextReuseEnabled) {
+      await use(await context.newPage());
+      return;
+    }
+
+    // First time we are reusing the context, we should create the page.
+    let [page] = context.pages();
+    if (!page)
+      page = await context.newPage();
+    await use(page);
   },
 
   request: async ({ playwright, _combinedContextOptions }, use) => {

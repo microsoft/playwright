@@ -59,9 +59,23 @@ export class Browser extends ChannelOwner<channels.BrowserChannel> implements ap
   }
 
   async newContext(options: BrowserContextOptions = {}): Promise<BrowserContext> {
+    return await this._innerNewContext(options, false);
+  }
+
+  async _newContextForReuse(options: BrowserContextOptions = {}): Promise<BrowserContext> {
+    for (const context of this._contexts) {
+      await this._browserType._onWillCloseContext?.(context);
+      context._onClose();
+    }
+    this._contexts.clear();
+    return await this._innerNewContext(options, true);
+  }
+
+  async _innerNewContext(options: BrowserContextOptions = {}, forReuse: boolean): Promise<BrowserContext> {
     options = { ...this._browserType._defaultContextOptions, ...options };
     const contextOptions = await prepareBrowserContextParams(options);
-    const context = BrowserContext.from((await this._channel.newContext(contextOptions)).context);
+    const response = forReuse ? await this._channel.newContextForReuse(contextOptions) : await this._channel.newContext(contextOptions);
+    const context = BrowserContext.from(response.context);
     context._options = contextOptions;
     this._contexts.add(context);
     context._logger = options.logger || this._logger;

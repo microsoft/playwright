@@ -730,7 +730,7 @@ export class WKPage implements PageDelegate {
 
   async updateFileChooserInterception() {
     const enabled = this._page.fileChooserIntercepted();
-    await this._session.send('Page.setInterceptFileChooserDialog', { enabled }).catch(e => {}); // target can be closed.
+    await this._session.send('Page.setInterceptFileChooserDialog', { enabled }).catch(() => {}); // target can be closed.
   }
 
   async reload(): Promise<void> {

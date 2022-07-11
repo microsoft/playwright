@@ -224,4 +224,9 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
       throw new Error('No HAR artifact. Ensure record.harPath is set.');
     return { artifact: new ArtifactDispatcher(this._scope, artifact) };
   }
+
+  override _dispose() {
+    super._dispose();
+    this._context.setRequestInterceptor(undefined).catch(() => {});
+  }
 }

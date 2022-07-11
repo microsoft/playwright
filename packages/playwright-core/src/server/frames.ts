@@ -359,6 +359,11 @@ export class FrameManager {
     this._openedDialogs.delete(dialog);
   }
 
+  async closeOpenDialogs() {
+    await Promise.all([...this._openedDialogs].map(dialog => dialog.dismiss())).catch(() => {});
+    this._openedDialogs.clear();
+  }
+
   removeChildFramesRecursively(frame: Frame) {
     for (const child of frame.childFrames())
       this._removeFramesRecursively(child);

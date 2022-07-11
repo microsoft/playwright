@@ -68,7 +68,7 @@ export interface PageDelegate {
   updateEmulatedViewportSize(): Promise<void>;
   updateEmulateMedia(): Promise<void>;
   updateRequestInterception(): Promise<void>;
-  updateFileChooserInterception(enabled: boolean): Promise<void>;
+  updateFileChooserInterception(): Promise<void>;
   bringToFront(): Promise<void>;
 
   setBackgroundColor(color?: { r: number; g: number; b: number; a: number; }): Promise<void>;
@@ -225,6 +225,29 @@ export class Page extends SdkObject {
     if (this._isServerSideOnly)
       return;
     this._browserContext.emit(event, ...args);
+  }
+
+  async resetForReuse(metadata: CallMetadata) {
+    this.setDefaultNavigationTimeout(undefined);
+    this.setDefaultTimeout(undefined);
+
+    // To this first in order to unfreeze evaluates.
+    await this._frameManager.closeOpenDialogs();
+
+    await this.removeExposedBindings();
+    await this.removeInitScripts();
+    await this._setServerRequestInterceptor(undefined);
+    await this.setFileChooserIntercepted(false);
+    await this.mainFrame().goto(metadata, 'about:blank');
+    this._emulatedSize = undefined;
+    this._emulatedMedia = {};
+    this._extraHTTPHeaders = undefined;
+    this._interceptFileChooser = false;
+
+    await this._delegate.updateEmulatedViewportSize();
+    await this._delegate.updateEmulateMedia();
+    await this._delegate.updateExtraHTTPHeaders();
+    await this._delegate.updateFileChooserInterception();
   }
 
   async _doSlowMo() {
@@ -619,7 +642,7 @@ export class Page extends SdkObject {
 
   async setFileChooserIntercepted(enabled: boolean): Promise<void> {
     this._interceptFileChooser = enabled;
-    await this._delegate.updateFileChooserInterception(enabled);
+    await this._delegate.updateFileChooserInterception();
   }
 
   fileChooserIntercepted() {
