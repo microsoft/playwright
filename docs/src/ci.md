@@ -244,54 +244,6 @@ pipeline {
 }
 ```
 
-### Buildkite
-
-Buildkite supports [containerized builds with Docker](https://buildkite.com/docs/tutorials/docker-containerized-builds) using either their [Docker Compose plugin](https://github.com/buildkite-plugins/docker-compose-buildkite-plugin) or their [Docker plugin](https://github.com/buildkite-plugins/docker-buildkite-plugin).
-
-The simpler of the two approaches is to use the [Docker plugin](https://github.com/buildkite-plugins/docker-buildkite-plugin) which simply runs the command(s) within the docker container, similar to GitHub Actions and Jenkins.
-
-```yml
-steps:
-  - label: ':playwright: Playwright tests'
-    plugins:
-      - docker#v3.13.0:
-          image: mcr.microsoft.com/playwright:v1.24.0-focal
-          workdir: /app
-          propagate-environment: true
-          environment:
-            # list any non-buildkite env vars you want to propagate to the container
-            - MY_SPECIAL_TOKEN
-    artifact_paths:
-      - my/playwright/reports/*
-    key: playwright
-    commands:
-      - npx playwright test
-```
-
-> Note: The `:playwright:` syntax in the label is used to define [emojis](https://github.com/buildkite/emojis#emoji-reference).
-
-#### Sharding
-
-The [`parallelism`](https://buildkite.com/docs/tutorials/parallel-builds#parallel-jobs) option allows you to run playwright tests across multiple agents/jobs where you can use the provided environment variables `BUILDKITE_PARALLEL_JOB` and `BUILDKITE_PARALLEL_JOB_COUNT` to defined the `--shard` flag as shown below.
-
-```yml
-steps:
-  - label: ':playwright: Playwright tests'
-    plugins:
-      - docker#v3.13.0:
-          image: mcr.microsoft.com/playwright:v1.24.0-focal
-          workdir: /app
-          propagate-environment: true
-    parallelism: 10 # runs 10 jobs in parallel agents
-    key: playwright
-    command: |
-      jobIndex=$$BUILDKITE_PARALLEL_JOB
-      shardIndex=$$((jobIndex + 1))
-      jobCount=$$BUILDKITE_PARALLEL_JOB_COUNT
-
-      npx playwright test --shard=$$shardIndex/$$jobCount
-```
-
 > Note: The `$$` is used to escape the `$` and the `shardIndex` is incremented by one to convert the 0-based `jobIndex` to the 1-based `shardIndex`.
 
 ### Bitbucket Pipelines
