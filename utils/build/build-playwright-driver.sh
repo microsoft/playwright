@@ -4,7 +4,7 @@ set -x
 
 trap "cd $(pwd -P)" EXIT
 SCRIPT_PATH="$(cd "$(dirname "$0")" ; pwd -P)"
-NODE_VERSION="16.13.0"
+NODE_VERSION="16.16.0"
 
 cd "$(dirname "$0")"
 PACKAGE_VERSION=$(node -p "require('../../package.json').version")
