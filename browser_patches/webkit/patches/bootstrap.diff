@@ -2215,18 +2215,6 @@ index e9da69939ce7a62192eade02a76fb08d34ec7b8d..9f22d3dc4f1b9efb77298bed17290c5c
  #define ENABLE_DEVICE_ORIENTATION 1
  #endif
  
-diff --git a/Source/WTF/wtf/PlatformGTK.cmake b/Source/WTF/wtf/PlatformGTK.cmake
-index bb01bfeeac63f854fa656ec6b8d262fafc4c9df5..f8376ea8aada69d2e53734ba8fd234c2455c2b09 100644
---- a/Source/WTF/wtf/PlatformGTK.cmake
-+++ b/Source/WTF/wtf/PlatformGTK.cmake
-@@ -79,6 +79,7 @@ list(APPEND WTF_LIBRARIES
-     ${GLIB_LIBRARIES}
-     Threads::Threads
-     ZLIB::ZLIB
-+    stdc++fs
- )
- 
- if (Journald_FOUND)
 diff --git a/Source/WTF/wtf/PlatformHave.h b/Source/WTF/wtf/PlatformHave.h
 index 7aa4768eff3e9ecb7d508454ee1c219d6580d03c..7eddd4f90e78f80b6c01b8b387729caf2c0387cb 100644
 --- a/Source/WTF/wtf/PlatformHave.h
@@ -2240,18 +2228,6 @@ index 7aa4768eff3e9ecb7d508454ee1c219d6580d03c..7eddd4f90e78f80b6c01b8b387729caf
  #define HAVE_OS_DARK_MODE_SUPPORT 1
  #endif
  
-diff --git a/Source/WTF/wtf/PlatformWPE.cmake b/Source/WTF/wtf/PlatformWPE.cmake
-index 09d4af604a835c7c6be1e43c249565bd1053aff4..0d6112342480454ce41a6b56dd925e1d41880e0b 100644
---- a/Source/WTF/wtf/PlatformWPE.cmake
-+++ b/Source/WTF/wtf/PlatformWPE.cmake
-@@ -52,6 +52,7 @@ list(APPEND WTF_LIBRARIES
-     ${GLIB_LIBRARIES}
-     Threads::Threads
-     ZLIB::ZLIB
-+    stdc++fs
- )
- 
- if (Journald_FOUND)
 diff --git a/Source/WebCore/DerivedSources.make b/Source/WebCore/DerivedSources.make
 index 9beb572a6bfdeb66d8b9fd162fd4743be7b86a71..7489dc76b793a1b6257971c5bb0a88d7c0da0f59 100644
 --- a/Source/WebCore/DerivedSources.make
@@ -23073,18 +23049,10 @@ index 0000000000000000000000000000000000000000..fb739f862252dcdda61aa08e8e4861f8
 +
 +#endif // !USE(ATSPI) && !USE(ATK)
 diff --git a/Tools/WebKitTestRunner/PlatformGTK.cmake b/Tools/WebKitTestRunner/PlatformGTK.cmake
-index 8e434fbb2d6c04528922d50b3e1dd36bf945557e..35231da4eb73a9d99e004b3e1d649fc9fa30ec6f 100644
+index 8e434fbb2d6c04528922d50b3e1dd36bf945557e..aa021b3f97769a7f4e4b32001430b54f20e55c0e 100644
 --- a/Tools/WebKitTestRunner/PlatformGTK.cmake
 +++ b/Tools/WebKitTestRunner/PlatformGTK.cmake
-@@ -25,6 +25,7 @@ list(APPEND WebKitTestRunner_LIBRARIES
-     ${GLIB_LIBRARIES}
-     Cairo::Cairo
-     GTK::GTK
-+    stdc++fs
- )
- 
- list(APPEND WebKitTestRunnerInjectedBundle_LIBRARIES
-@@ -38,6 +39,9 @@ list(APPEND WebKitTestRunnerInjectedBundle_SOURCES
+@@ -38,6 +38,9 @@ list(APPEND WebKitTestRunnerInjectedBundle_SOURCES
      InjectedBundle/atspi/AccessibilityNotificationHandler.cpp
      InjectedBundle/atspi/AccessibilityUIElementAtspi.cpp
  
@@ -23095,18 +23063,10 @@ index 8e434fbb2d6c04528922d50b3e1dd36bf945557e..35231da4eb73a9d99e004b3e1d649fc9
      InjectedBundle/gtk/InjectedBundleGtk.cpp
      InjectedBundle/gtk/InjectedBundleUtilities.cpp
 diff --git a/Tools/WebKitTestRunner/PlatformWPE.cmake b/Tools/WebKitTestRunner/PlatformWPE.cmake
-index 4f3640a8b93897d69604ee8ba38cd07561720ad2..00b657a8a585d104afc346dc1126fb718564be3e 100644
+index 4f3640a8b93897d69604ee8ba38cd07561720ad2..eafdffd4196008949287344534400b0f7a6ad845 100644
 --- a/Tools/WebKitTestRunner/PlatformWPE.cmake
 +++ b/Tools/WebKitTestRunner/PlatformWPE.cmake
-@@ -30,6 +30,7 @@ list(APPEND WebKitTestRunner_LIBRARIES
-     ${WPEBACKEND_FDO_LIBRARIES}
-     Cairo::Cairo
-     WebKit::WPEToolingBackends
-+    stdc++fs
- )
- 
- list(APPEND WebKitTestRunnerInjectedBundle_LIBRARIES
-@@ -43,6 +44,9 @@ list(APPEND WebKitTestRunnerInjectedBundle_SOURCES
+@@ -43,6 +43,9 @@ list(APPEND WebKitTestRunnerInjectedBundle_SOURCES
      InjectedBundle/atspi/AccessibilityNotificationHandler.cpp
      InjectedBundle/atspi/AccessibilityUIElementAtspi.cpp
  
