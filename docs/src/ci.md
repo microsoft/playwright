@@ -43,7 +43,7 @@ configurations for common CI providers.
    pytest
    ```
    ```bash java
-   mvn compile exec:java -Dexec.mainClass="org.example.Example"
+   mvn test
    ```
    ```bash csharp
    dotnet test
@@ -105,7 +105,7 @@ steps:
   - name: Install Playwright
     run: mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install --with-deps"
   - name: Run tests
-    run: mvn test --no-transfer-progress --fail-at-end
+    run: mvn test
 ```
 
 ```yml csharp
@@ -230,7 +230,7 @@ steps:
       - name: Install Playwright
         run: mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install --with-deps"
       - name: Run tests
-        run: mvn test --no-transfer-progress --fail-at-end
+        run: mvn test
 ```
 
 ```yml csharp
