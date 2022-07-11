@@ -326,7 +326,6 @@ test('should emit page-level request event for respondWith for cached resource',
       await cache.add('scripts/resource-1.js');
     })
   ]);
-  console.info('wait for request from window intercepted by service-worker');
   await Promise.all([
     // currently times out here
     page.waitForRequest('**/scripts/resource-1.js'),
