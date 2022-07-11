@@ -265,6 +265,25 @@ test('should emit page-level request event for respondWith', async ({ page, serv
   expect((await pageReq.response()).fromServiceWorker()).toBe(true);
 });
 
+test('should emit page-level request event for respondWith when interception enabled', async ({ page, server, context }) => {
+  test.fixme();
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/15474' });
+
+  await context.route('**', route => route.continue());
+  await page.goto(server.PREFIX + '/serviceworkers/fetchdummy/sw.html');
+  await page.evaluate(() => window['activationPromise']);
+
+  // Sanity check.
+  const [pageReq, swResponse] = await Promise.all([
+    page.waitForEvent('request'),
+    page.evaluate(() => window['fetchDummy']('foo')),
+  ]);
+  expect(swResponse).toBe('responseFromServiceWorker:foo');
+  expect(pageReq.url()).toMatch(/fetchdummy\/foo$/);
+  expect(pageReq.serviceWorker()).toBe(null);
+  expect((await pageReq.response()).fromServiceWorker()).toBe(true);
+});
+
 test('should emit page-level request event for respondWith for cached resource', async ({ context, page, server }) => {
   test.fixme();
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/15474' });
