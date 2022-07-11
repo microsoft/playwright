@@ -85,7 +85,7 @@ steps:
   - name: Install dependencies
     run: |
       python -m pip install --upgrade pip
-      pip install playwright
+      pip install -r local-requirements.txt
       pip install -e .
   - name: Ensure browsers are installed
     run: python -m playwright install --with-deps
@@ -204,7 +204,7 @@ steps:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install playwright
+          pip install -r local-requirements.txt
           pip install -e .
       - name: Ensure browsers are installed
         run: python -m playwright install --with-deps
