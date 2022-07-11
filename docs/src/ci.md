@@ -42,6 +42,12 @@ configurations for common CI providers.
    ```bash python
    pytest
    ```
+   ```bash java
+   mvn test
+   ```
+   ```bash csharp
+   dotnet test
+   ```
 
 ## CI configurations
 
@@ -51,7 +57,7 @@ The [Command line tools](./cli.md#install-system-dependencies) can be used to in
 
 ```yml js
 steps:
-  - uses: actions/checkout@v2
+  - uses: actions/checkout@v3
   - uses: actions/setup-node@v2
     with:
       node-version: '14'
@@ -71,19 +77,49 @@ steps:
 
 ```yml python
 steps:
+  - uses: actions/checkout@v3
   - name: Set up Python
-    uses: actions/setup-python@v2
+    uses: actions/setup-python@v4
     with:
-      python-version: 3.8
+      python-version: '3.10'
   - name: Install dependencies
     run: |
       python -m pip install --upgrade pip
-      pip install playwright
+      pip install -r local-requirements.txt
       pip install -e .
   - name: Ensure browsers are installed
     run: python -m playwright install --with-deps
   - name: Run your tests
     run: pytest
+```
+
+```yml java
+steps:
+  - uses: actions/checkout@v3
+  - uses: actions/setup-java@v3
+    with:
+      distribution: 'temurin'
+      java-version: '17'
+  - name: Build & Install
+    run: mvn -B install -D skipTests --no-transfer-progress
+  - name: Install Playwright
+    run: mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install --with-deps"
+  - name: Run tests
+    run: mvn test
+```
+
+```yml csharp
+steps:
+  - uses: actions/checkout@v3
+  - name: Setup dotnet
+    uses: actions/setup-dotnet@v2
+    with:
+      dotnet-version: 6.0.x
+  - run: dotnet build
+  - name: Ensure browsers are installed
+    run: pwsh bin\Debug\net6.0\playwright.ps1 install --with-deps
+  - name: Run your tests
+    run: dotnet test
 ```
 
 We run [our tests](https://github.com/microsoft/playwright/blob/main/.github/workflows/tests_secondary.yml) on GitHub Actions, across a matrix of 3 platforms (Windows, Linux, macOS) and 3 browsers (Chromium, Firefox, WebKit).
@@ -103,7 +139,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event.deployment_status.state == 'success'
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - uses: actions/setup-node@v2
       with:
         node-version: '14.x'
@@ -142,7 +178,7 @@ steps:
     container:
       image: mcr.microsoft.com/playwright:v1.24.0-focal
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: actions/setup-node@v2
         with:
           node-version: '14'
@@ -150,6 +186,71 @@ steps:
         run: npm ci
       - name: Run your tests
         run: npx playwright test
+```
+
+```yml python
+steps:
+  playwright:
+    name: 'Playwright Tests'
+    runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright:v1.24.0-focal
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r local-requirements.txt
+          pip install -e .
+      - name: Ensure browsers are installed
+        run: python -m playwright install --with-deps
+      - name: Run your tests
+        run: pytest
+```
+
+```yml java
+steps:
+  playwright:
+    name: 'Playwright Tests'
+    runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright:v1.24.0-focal
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+      - name: Build & Install
+        run: mvn -B install -D skipTests --no-transfer-progress
+      - name: Install Playwright
+        run: mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install --with-deps"
+      - name: Run tests
+        run: mvn test
+```
+
+```yml csharp
+steps:
+  playwright:
+    name: 'Playwright Tests'
+    runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright:v1.24.0-focal
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup dotnet
+        uses: actions/setup-dotnet@v2
+        with:
+          dotnet-version: 6.0.x
+      - run: dotnet build
+      - name: Ensure browsers are installed
+        run: pwsh bin\Debug\net6.0\playwright.ps1 install --with-deps
+      - name: Run your tests
+        run: dotnet test
 ```
 
 #### Sharding
@@ -171,7 +272,7 @@ steps:
         shardIndex: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
         shardTotal: [10]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: actions/setup-node@v2
         with:
           node-version: '14'
@@ -236,6 +337,7 @@ pipeline {
    stages {
       stage('e2e-tests') {
          steps {
+            // Depends on your language / test framework
             sh 'npm install'
             sh 'npm run test'
          }
