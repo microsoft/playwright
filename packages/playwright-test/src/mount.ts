@@ -110,7 +110,7 @@ async function innerMount(page: Page, jsxOrType: JsxComponent | string, options:
       document.body.appendChild(rootElement);
     }
 
-    window.playwrightMount(component, rootElement);
+    await window.playwrightMount(component, rootElement);
 
     // When mounting fragments, return selector pointing to the root element.
     return rootElement.childNodes.length > 1 ? '#root' : '#root > *';

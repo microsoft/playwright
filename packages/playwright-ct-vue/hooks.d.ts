@@ -14,29 +14,6 @@
  * limitations under the License.
  */
 
-export type JsxComponent = {
-  kind: 'jsx',
-  type: string,
-  props: {[key: string]: any},
-  children: (Component | string)[],
-};
+import { App } from 'vue';
 
-export type ObjectComponentOptions = {
-  props?: { [key: string]: any },
-  slots?: { [key: string]: any },
-  on?: { [key: string]: Function },
-};
-
-export type ObjectComponent = {
-  kind: 'object',
-  type: string,
-  options?: ObjectComponentOptions
-};
-
-export type Component = JsxComponent | ObjectComponent;
-
-declare global {
-  interface Window {
-    playwrightMount(component: Component, rootElement: Element): Promise<void>;
-  }
-}
+export declare function onApp(callback: (app: App, appConfig: any) => Promise<void>): void;

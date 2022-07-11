@@ -134,7 +134,7 @@ function render(component, h) {
   return wrapper;
 }
 
-window.playwrightMount = (component, rootElement) => {
+window.playwrightMount = async (component, rootElement) => {
   const mounted = new Vue({
     render: h => render(component, h),
   }).$mount();
