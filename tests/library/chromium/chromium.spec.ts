@@ -250,7 +250,7 @@ test('setOffline', async ({ context, page, server }) => {
   expect(error).toMatch(/REJECTED.*Failed to fetch/);
 });
 
-test('should emit page-level request event for respondWith', async ({ page, server}) => {
+test('should emit page-level request event for respondWith', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/serviceworkers/fetchdummy/sw.html');
   await page.evaluate(() => window['activationPromise']);
 
@@ -265,54 +265,83 @@ test('should emit page-level request event for respondWith', async ({ page, serv
   expect((await pageReq.response()).fromServiceWorker()).toBe(true);
 });
 
-test.only('should emit page-level request event for respondWith from SW cache', async ({ context, page, server }) => {
-  await context.route('**/entry.html', route => {
-    route.fulfill({
-      contentType: 'text/html',
-      status: 200,
-      body: `
+test('should emit page-level request event for respondWith for cached resource', async ({ context, page, server }) => {
+  test.fixme();
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/15474' });
+
+  await context.route(/service-worker\.js/, route => route.fulfill({
+    status: 200,
+    contentType: 'application/javascript',
+    body: `
+        self.addEventListener("activate", event => {
+          event.waitUntil(clients.claim());
+        });
+        self.addEventListener("fetch", async (event) => {
+          event.respondWith((async () => {
+            const cachedResponse = await caches.match(event.request);
+            if (cachedResponse) {
+                return cachedResponse;
+            }
+            return new Response(JSON.stringify({ message: 'Hello from service-worker!' }), { status: 200, headers: { 'content-type': 'application/json' } });
+          })());
+        });
+          `
+  }));
+  await context.route(/\/test-page.html/, route => route.fulfill({
+    status: 200,
+    contentType: 'text/html',
+    body: `
         <!DOCTYPE html>
         <html>
-        <body>
-          <script>
-            window.serviceWorkerPromise = navigator.serviceWorker.register('/sw.js');
-            window.activationPromise = navigator.serviceWorker.ready;
-          </script>
-        </body>
+          <body>
+            <script>
+              window.serviceWorkerPromise = navigator.serviceWorker.register('/service-worker.js');
+              window.activationPromise = navigator.serviceWorker.ready;
+            </script>
+          </body>
         </html>
-      `,
-    })
-  })
-
-  await context.route('**/page-script.js', route => route.fulfill({
-    contentType: 'text/javascript',
-    status: 200,
-    body: 'window.PW_DATA = 47;',
+      `
   }));
-
-  await context.route('**/sw.js', route => route.fulfill({
-    contentType: 'text/javascript',
-    status: 200,
-    body: '',
-  }));
-
-  const [sw] = await Promise.all([
-    context.waitForEvent('serviceworker'),
-    page.goto(server.PREFIX + '/entry.html'),
-  ])
-  await page.evaluate(() => window['activationPromise']);
-  const pageScriptRequest = page.waitForEvent('request');
-  await page.evaluate(() => {
-    return new Promise(res => {
-      const script = document.createElement('script');
-      script.src = '/page-script.js';
-      script.onload = res;
-      document.body.appendChild(script);
-    })
+  await context.route(/scripts\/resource-1.js/, (route, request) => {
+    if (request.serviceWorker()) {
+      route.fulfill({
+        status: 200,
+        contentType: 'application/javascript',
+        body: 'window.PW_VALUE_FROM_LOADED_RESOURCE = true;',
+      });
+    } else {
+      route.continue();
+    }
   });
+  const [ sw ] = await Promise.all([
+    context.waitForEvent('serviceworker'),
+    page.goto(server.PREFIX + '/test-page.html'),
+    page.waitForFunction('activationPromise'),
+  ]);
 
-  await expect.poll(() => page.evaluate(() => window['PW_DATA'])).toBe(47);
-  await pageScriptRequest;
+  await Promise.all([
+    context.waitForEvent('request', request => !!request.serviceWorker()),
+    sw.evaluate(async () => {
+      const cache = await caches.open('v1');
+      await cache.add('scripts/resource-1.js');
+    })
+  ]);
+  console.info('wait for request from window intercepted by service-worker');
+  await Promise.all([
+    // currently times out here
+    page.waitForRequest('**/scripts/resource-1.js'),
+    page.evaluate(() => {
+      return new Promise(resolve => {
+        const script = document.createElement('script');
+        script.src = 'scripts/resource-1.js';
+        script.onload = resolve;
+        document.body.appendChild(script);
+      });
+    })
+  ]);
+  expect(await page.evaluate('window.PW_VALUE_FROM_LOADED_RESOURCE')).toBe(true);
+  const resultInterceptedBySw = await page.evaluate(() => window.fetch('/test-data').then(x => x.json()));
+  expect(resultInterceptedBySw.message).toBe('Hello from service-worker!');
 });
 
 test('setExtraHTTPHeaders', async ({ context, page, server }) => {
