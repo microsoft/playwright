@@ -256,6 +256,23 @@ import type { Suite } from '@playwright/test/types/testReporter';
 
 type AsymmetricMatcher = Record<string, any>;
 
+type AsymmetricMatchers = {
+  any(sample: unknown): AsymmetricMatcher;
+  anything(): AsymmetricMatcher;
+  arrayContaining(sample: Array<unknown>): AsymmetricMatcher;
+  closeTo(sample: number, precision?: number): AsymmetricMatcher;
+  objectContaining(sample: Record<string, unknown>): AsymmetricMatcher;
+  stringContaining(sample: string): AsymmetricMatcher;
+  stringMatching(sample: string | RegExp): AsymmetricMatcher;
+}
+
+type Inverse<Matchers> = {
+  /**
+   * Inverse next matcher. If you know how to test something, `.not` lets you test its opposite.
+   */
+  not: Matchers;
+};
+
 type IfAny<T, Y, N> = 0 extends (1 & T) ? Y : N;
 type ExtraMatchers<T, Type, Matchers> = T extends Type ? Matchers : IfAny<T, Matchers, {}>;
 
@@ -281,6 +298,16 @@ type MakeMatchers<R, T> = BaseMatchers<R, T> & {
   ExtraMatchers<T, Locator, LocatorAssertions> &
   ExtraMatchers<T, APIResponse, APIResponseAssertions>;
 
+type BaseExpect = {
+  // Removed following methods because they rely on a test-runner integration from Jest which we don't support:
+  // assertions(numberOfAssertions: number): void;
+  // extractExpectedAssertionsErrors(): ExpectedAssertionsErrors;
+  // hasAssertions(): void;
+  extend(matchers: any): void;
+  getState(): expectType.MatcherState;
+  setState(state: Partial<expectType.MatcherState>): void;
+}
+
 export type Expect = {
   <T = unknown>(actual: T, messageOrOptions?: string | { message?: string }): MakeMatchers<void, T>;
   soft: <T = unknown>(actual: T, messageOrOptions?: string | { message?: string }) => MakeMatchers<void, T>;
@@ -290,23 +317,9 @@ export type Expect = {
      */
      not: BaseMatchers<Promise<void>, T>;
   };
-
-  extend(arg0: any): void;
-  getState(): expectType.MatcherState;
-  setState(state: Partial<expectType.MatcherState>): void;
-  any(expectedObject: any): AsymmetricMatcher;
-  anything(): AsymmetricMatcher;
-  arrayContaining(sample: Array<unknown>): AsymmetricMatcher;
-  objectContaining(sample: Record<string, unknown>): AsymmetricMatcher;
-  stringContaining(expected: string): AsymmetricMatcher;
-  stringMatching(expected: string | RegExp): AsymmetricMatcher;
-  /**
-   * Removed following methods because they rely on a test-runner integration from Jest which we don't support:
-   * - assertions()
-   * - extractExpectedAssertionsErrors()
-   * – hasAssertions()
-   */
-};
+} & BaseExpect &
+  AsymmetricMatchers &
+  Inverse<Omit<AsymmetricMatchers, 'any' | 'anything'>>;
 
 type Awaited<T> = T extends PromiseLike<infer U> ? U : T;
 
