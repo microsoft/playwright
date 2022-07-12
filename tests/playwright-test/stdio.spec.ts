@@ -95,3 +95,21 @@ test('should support console colors', async ({ runInlineTest }) => {
   expect(result.output).toContain(`{ b: \x1b[33mtrue\x1b[39m, n: \x1b[33m123\x1b[39m, s: \x1b[32m'abc'\x1b[39m }`);
   expect(result.output).toContain(`{ b: \x1b[33mfalse\x1b[39m, n: \x1b[33m123\x1b[39m, s: \x1b[32m'abc'\x1b[39m }`);
 });
+
+test('should override hasColors and getColorDepth', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.js': `
+      const { test } = pwt;
+      test('console log', () => {
+        console.log('process.stdout.hasColors(1) = ' + process.stdout.hasColors(1));
+        console.log('process.stderr.hasColors(1) = ' + process.stderr.hasColors(1));
+        console.log('process.stdout.getColorDepth() > 0 = ' + (process.stdout.getColorDepth() > 0));
+        console.log('process.stderr.getColorDepth() > 0 = ' + (process.stderr.getColorDepth() > 0));
+      });
+    `
+  });
+  expect(result.output).toContain(`process.stdout.hasColors(1) = true`);
+  expect(result.output).toContain(`process.stderr.hasColors(1) = true`);
+  expect(result.output).toContain(`process.stdout.getColorDepth() > 0 = true`);
+  expect(result.output).toContain(`process.stderr.getColorDepth() > 0 = true`);
+});

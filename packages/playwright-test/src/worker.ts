@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { WriteStream } from 'tty';
 import * as util from 'util';
 import type { RunPayload, TeardownErrorsPayload, TestOutputPayload, WorkerInitParams } from './ipc';
 import { startProfiling, stopProfiling } from './profiler';
@@ -126,12 +127,24 @@ function initConsoleParameters(initParams: WorkerInitParams) {
   // Make sure the output supports colors.
   process.stdout.isTTY = true;
   process.stderr.isTTY = true;
-  if (initParams.stdoutDimension.rows)
-    process.stdout.rows = initParams.stdoutDimension.rows;
-  if (initParams.stdoutDimension.columns)
-    process.stdout.columns = initParams.stdoutDimension.columns;
-  if (initParams.stderrDimension.rows)
-    process.stderr.rows = initParams.stderrDimension.rows;
-  if (initParams.stderrDimension.columns)
-    process.stderr.columns = initParams.stderrDimension.columns;
+  if (initParams.stdoutParams.rows)
+    process.stdout.rows = initParams.stdoutParams.rows;
+  if (initParams.stdoutParams.columns)
+    process.stdout.columns = initParams.stdoutParams.columns;
+  setColorDepthMethods(process.stdout, initParams.stdoutParams.colorDepth);
+  if (initParams.stderrParams.rows)
+    process.stderr.rows = initParams.stderrParams.rows;
+  if (initParams.stderrParams.columns)
+    process.stderr.columns = initParams.stderrParams.columns;
+  setColorDepthMethods(process.stderr, initParams.stderrParams.colorDepth);
+}
+
+function setColorDepthMethods(stream: WriteStream, depth: number) {
+  stream.getColorDepth = () => depth;
+  stream.hasColors = ((count = 16) => {
+    // count is optional and the first argument may actually be env.
+    if (typeof count !== 'number')
+      count = 16;
+    return count <= 2 ** depth;
+  })as any;
 }

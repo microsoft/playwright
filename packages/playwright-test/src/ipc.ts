@@ -24,9 +24,10 @@ export type SerializedLoaderData = {
   configCLIOverrides: ConfigCLIOverrides;
 };
 
-export type TtyDimension = {
+export type TtyParams = {
   rows: number | undefined;
   columns: number | undefined;
+  colorDepth: number;
 };
 
 export type WorkerInitParams = {
@@ -35,8 +36,8 @@ export type WorkerInitParams = {
   repeatEachIndex: number;
   projectIndex: number;
   loader: SerializedLoaderData;
-  stdoutDimension: TtyDimension;
-  stderrDimension: TtyDimension;
+  stdoutParams: TtyParams;
+  stderrParams: TtyParams;
 };
 
 export type TestBeginPayload = {
