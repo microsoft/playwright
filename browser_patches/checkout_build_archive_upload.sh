@@ -230,6 +230,12 @@ elif [[ "$BUILD_FLAVOR" == "firefox-ubuntu-22.04-arm64" ]]; then
   EXPECTED_HOST_OS="Ubuntu"
   EXPECTED_HOST_OS_VERSION="22.04"
   BUILD_BLOB_NAME="firefox-ubuntu-22.04-arm64.zip"
+elif [[ "$BUILD_FLAVOR" == "firefox-debian-11" ]]; then
+  BROWSER_NAME="firefox"
+  EXTRA_BUILD_ARGS="--full"
+  EXPECTED_HOST_OS="Debian"
+  EXPECTED_HOST_OS_VERSION="11"
+  BUILD_BLOB_NAME="firefox-debian-11.zip"
 elif [[ "$BUILD_FLAVOR" == "firefox-mac-11" ]]; then
   BROWSER_NAME="firefox"
   EXTRA_BUILD_ARGS="--full"
@@ -281,6 +287,12 @@ elif [[ "$BUILD_FLAVOR" == "firefox-beta-ubuntu-22.04-arm64" ]]; then
   EXPECTED_HOST_OS="Ubuntu"
   EXPECTED_HOST_OS_VERSION="22.04"
   BUILD_BLOB_NAME="firefox-beta-ubuntu-22.04-arm64.zip"
+elif [[ "$BUILD_FLAVOR" == "firefox-beta-debian-11" ]]; then
+  BROWSER_NAME="firefox-beta"
+  EXTRA_BUILD_ARGS="--full"
+  EXPECTED_HOST_OS="Debian"
+  EXPECTED_HOST_OS_VERSION="11"
+  BUILD_BLOB_NAME="firefox-beta-debian-11.zip"
 elif [[ "$BUILD_FLAVOR" == "firefox-beta-mac-11" ]]; then
   BROWSER_NAME="firefox-beta"
   EXTRA_BUILD_ARGS="--full"
