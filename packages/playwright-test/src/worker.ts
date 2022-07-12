@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { WriteStream } from 'tty';
+import type { WriteStream } from 'tty';
 import * as util from 'util';
 import type { RunPayload, TeardownErrorsPayload, TestOutputPayload, TtyParams, WorkerInitParams } from './ipc';
 import { startProfiling, stopProfiling } from './profiler';
