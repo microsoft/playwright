@@ -130,6 +130,13 @@ export class BaseReporter implements Reporter  {
     return fitToWidth(line, ttyWidth, prefix);
   }
 
+  protected fillsEntireScreen(line: string) {
+    const ttyWidth = this._ttyWidthForTest || process.stdout.columns || 0;
+    if (!ttyWidth)
+      return false;
+    return stripAnsiEscapes(line).length >= ttyWidth;
+  }
+
   protected generateStartingMessage() {
     const jobs = Math.min(this.config.workers, this.config._testGroupsCount);
     const shardDetails = this.config.shard ? `, shard ${this.config.shard.current} of ${this.config.shard.total}` : '';
@@ -145,11 +152,11 @@ export class BaseReporter implements Reporter  {
     const message = [
       `[${count}/${this.stats.total}${retriesSuffix}]`,
       `${(this.stats.passed ? colors.green : colors.gray)('Passed: ' + this.stats.passed)}`,
-      `${(this.stats.flaky ? colors.red : colors.gray)('Flaky: ' + this.stats.flaky)}`,
+      `${(this.stats.flaky ? colors.yellow : colors.gray)('Flaky: ' + this.stats.flaky)}`,
       `${(this.stats.failed ? colors.red : colors.gray)('Failed: ' + this.stats.failed)}`,
       `${(this.stats.skipped ? colors.yellow : colors.gray)('Skipped: ' + this.stats.skipped)}`,
       colors.gray(process.env.PW_TEST_DEBUG_REPORTERS ? `(XXms)` : `(${milliseconds((monotonicTime() - this.monotonicStartTime) | 0)})`),
-    ].join(' ');
+    ].join('  ');
     return { percent, message };
   }
 

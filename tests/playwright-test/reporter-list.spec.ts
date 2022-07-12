@@ -14,41 +14,214 @@
  * limitations under the License.
  */
 
-import { test, expect, stripAnsi } from './playwright-test-fixtures';
+import { test, expect, stripAnsi, trimLineEnds } from './playwright-test-fixtures';
 
-const DOES_NOT_SUPPORT_UTF8_IN_TERMINAL = process.platform === 'win32' && process.env.TERM_PROGRAM !== 'vscode' && !process.env.WT_SESSION;
-const POSITIVE_STATUS_MARK = DOES_NOT_SUPPORT_UTF8_IN_TERMINAL ? 'ok' : '✓ ';
-const NEGATIVE_STATUS_MARK = DOES_NOT_SUPPORT_UTF8_IN_TERMINAL ? 'x ' : '✘ ';
-
-test('render each test with project name', async ({ runInlineTest }) => {
+test('should work with tty', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
-    'playwright.config.ts': `
-      module.exports = { projects: [
-        { name: 'foo' },
-        { name: 'bar' },
-      ] };
-    `,
-    'a.test.ts': `
+    'a.test.js': `
       const { test } = pwt;
-      test('fails', async ({}) => {
+      test.skip('skipped test', async ({}) => {
+      });
+      test('flaky test', async ({}, testInfo) => {
+        expect(testInfo.retry).toBe(1);
+      });
+      test('passing test', async ({}) => {
+      });
+      test('failing test', async ({}) => {
         expect(1).toBe(0);
       });
-      test('passes', async ({}) => {
-        expect(0).toBe(0);
+    `,
+  }, { retries: '1', reporter: 'list', workers: '1' }, {
+    PLAYWRIGHT_LIVE_TERMINAL: '1',
+    FORCE_COLOR: '0',
+    PW_TEST_DEBUG_REPORTERS: '1',
+  });
+  expect(result.exitCode).toBe(1);
+  expect(trimLineEnds(result.output)).toContain(trimLineEnds(`Running 4 tests using 1 worker
+
+<erase stats>
+     a.test.js:6:12 › skipped test
+[0/4]  Passed: 0  Flaky: 0  Failed: 0  Skipped: 0  (XXms)
+<erase stats>
+0 :   -  a.test.js:6:12 › skipped test
+[1/4]  Passed: 0  Flaky: 0  Failed: 0  Skipped: 1  (XXms)
+<erase stats>
+     a.test.js:8:7 › flaky test
+[1/4]  Passed: 0  Flaky: 0  Failed: 0  Skipped: 1  (XXms)
+<erase stats>
+1 :   x  a.test.js:8:7 › flaky test (XXms)
+[2/4]  Passed: 0  Flaky: 0  Failed: 0  Skipped: 1  (XXms)
+<erase stats>
+     a.test.js:8:7 › flaky test (retry #1)
+[2/4]  Passed: 0  Flaky: 0  Failed: 0  Skipped: 1  (XXms)
+<erase stats>
+2 :   ok a.test.js:8:7 › flaky test (retry #1) (XXms)
+[3/4]  Passed: 0  Flaky: 1  Failed: 0  Skipped: 1  (XXms)
+<erase stats>
+     a.test.js:11:7 › passing test
+[3/4]  Passed: 0  Flaky: 1  Failed: 0  Skipped: 1  (XXms)
+<erase stats>
+3 :   ok a.test.js:11:7 › passing test (XXms)
+[4/4+retries]  Passed: 1  Flaky: 1  Failed: 0  Skipped: 1  (XXms)
+<erase stats>
+     a.test.js:13:7 › failing test
+[4/4+retries]  Passed: 1  Flaky: 1  Failed: 0  Skipped: 1  (XXms)
+<erase stats>
+4 :   x  a.test.js:13:7 › failing test (XXms)
+[5/4+retries]  Passed: 1  Flaky: 1  Failed: 0  Skipped: 1  (XXms)
+<erase stats>
+     a.test.js:13:7 › failing test (retry #1)
+[5/4+retries]  Passed: 1  Flaky: 1  Failed: 0  Skipped: 1  (XXms)
+<erase stats>
+5 :   x  a.test.js:13:7 › failing test (retry #1) (XXms)
+[6/4+retries]  Passed: 1  Flaky: 1  Failed: 1  Skipped: 1  (XXms)
+<erase stats>
+
+
+  1) a.test.js:13:7 › failing test =================================================================
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: 0
+    Received: 1
+
+      12 |       });
+      13 |       test('failing test', async ({}) => {
+    > 14 |         expect(1).toBe(0);
+         |                   ^
+      15 |       });
+      16 |
+
+        at ${testInfo.outputPath('a.test.js')}:14:19
+
+    Retry #1 ---------------------------------------------------------------------------------------
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: 0
+    Received: 1
+
+      12 |       });
+      13 |       test('failing test', async ({}) => {
+    > 14 |         expect(1).toBe(0);
+         |                   ^
+      15 |       });
+      16 |
+
+        at ${testInfo.outputPath('a.test.js')}:14:19
+
+  2) a.test.js:8:7 › flaky test ====================================================================
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: 1
+    Received: 0
+
+       7 |       });
+       8 |       test('flaky test', async ({}, testInfo) => {
+    >  9 |         expect(testInfo.retry).toBe(1);
+         |                                ^
+      10 |       });
+      11 |       test('passing test', async ({}) => {
+      12 |       });
+
+        at ${testInfo.outputPath('a.test.js')}:9:32
+
+
+  1 failed
+    a.test.js:13:7 › failing test ==================================================================
+  1 flaky
+    a.test.js:8:7 › flaky test =====================================================================
+  1 skipped
+  1 passed`));
+});
+
+test('should work with non-tty', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      const { test } = pwt;
+      test.skip('skipped test', async ({}) => {
       });
-      test.skip('skipped', async () => {
+      test('flaky test', async ({}, testInfo) => {
+        expect(testInfo.retry).toBe(1);
+      });
+      test('passing test', async ({}) => {
+      });
+      test('failing test', async ({}) => {
+        expect(1).toBe(0);
       });
     `,
-  }, { reporter: 'list' });
-  const text = stripAnsi(result.output);
-
-  expect(text).toContain(`${NEGATIVE_STATUS_MARK} [foo] › a.test.ts:6:7 › fails`);
-  expect(text).toContain(`${NEGATIVE_STATUS_MARK} [bar] › a.test.ts:6:7 › fails`);
-  expect(text).toContain(`${POSITIVE_STATUS_MARK} [foo] › a.test.ts:9:7 › passes`);
-  expect(text).toContain(`${POSITIVE_STATUS_MARK} [bar] › a.test.ts:9:7 › passes`);
-  expect(text).toContain(`-  [foo] › a.test.ts:12:12 › skipped`);
-  expect(text).toContain(`-  [bar] › a.test.ts:12:12 › skipped`);
+  }, { retries: '1', reporter: 'list', workers: '1' }, {
+    FORCE_COLOR: '0',
+    PW_TEST_DEBUG_REPORTERS: '1',
+  });
   expect(result.exitCode).toBe(1);
+  expect(trimLineEnds(result.output)).toContain(trimLineEnds(`Running 4 tests using 1 worker
+
+  -  a.test.js:6:12 › skipped test
+  x  a.test.js:8:7 › flaky test (XXms)
+  ok a.test.js:8:7 › flaky test (retry #1) (XXms)
+  ok a.test.js:11:7 › passing test (XXms)
+  x  a.test.js:13:7 › failing test (XXms)
+  x  a.test.js:13:7 › failing test (retry #1) (XXms)
+
+
+  1) a.test.js:13:7 › failing test =================================================================
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: 0
+    Received: 1
+
+      12 |       });
+      13 |       test('failing test', async ({}) => {
+    > 14 |         expect(1).toBe(0);
+         |                   ^
+      15 |       });
+      16 |
+
+        at ${testInfo.outputPath('a.test.js')}:14:19
+
+    Retry #1 ---------------------------------------------------------------------------------------
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: 0
+    Received: 1
+
+      12 |       });
+      13 |       test('failing test', async ({}) => {
+    > 14 |         expect(1).toBe(0);
+         |                   ^
+      15 |       });
+      16 |
+
+        at ${testInfo.outputPath('a.test.js')}:14:19
+
+  2) a.test.js:8:7 › flaky test ====================================================================
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: 1
+    Received: 0
+
+       7 |       });
+       8 |       test('flaky test', async ({}, testInfo) => {
+    >  9 |         expect(testInfo.retry).toBe(1);
+         |                                ^
+      10 |       });
+      11 |       test('passing test', async ({}) => {
+      12 |       });
+
+        at ${testInfo.outputPath('a.test.js')}:9:32
+
+
+  1 failed
+    a.test.js:13:7 › failing test ==================================================================
+  1 flaky
+    a.test.js:8:7 › flaky test =====================================================================
+  1 skipped
+  1 passed`));
 });
 
 test('render steps', async ({ runInlineTest }) => {
@@ -86,24 +259,6 @@ test('render steps', async ({ runInlineTest }) => {
   ]);
 });
 
-test('render retries', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    'a.test.ts': `
-      const { test } = pwt;
-      test('flaky', async ({}, testInfo) => {
-        expect(testInfo.retry).toBe(1);
-      });
-    `,
-  }, { reporter: 'list', retries: '1' }, { PW_TEST_DEBUG_REPORTERS: '1', PLAYWRIGHT_LIVE_TERMINAL: '1' });
-  const text = stripAnsi(result.output);
-  const lines = text.split('\n').filter(l => l.startsWith('0 :') || l.startsWith('1 :')).map(l => l.replace(/[\dm]+s/, 'XXms'));
-
-  expect(lines).toEqual([
-    `0 :   ${NEGATIVE_STATUS_MARK} a.test.ts:6:7 › flaky (XXms)`,
-    `1 :   ${POSITIVE_STATUS_MARK} a.test.ts:6:7 › flaky (retry #1) (XXms)`,
-  ]);
-});
-
 test('should truncate long test names', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
@@ -123,29 +278,39 @@ test('should truncate long test names', async ({ runInlineTest }) => {
       test.skip('skipped very long name', async () => {
       });
     `,
-  }, { reporter: 'list', retries: 0 }, { PLAYWRIGHT_LIVE_TERMINAL: '1', PWTEST_TTY_WIDTH: 50 });
+  }, { reporter: 'list', retries: 0 }, {
+    PLAYWRIGHT_LIVE_TERMINAL: '1',
+    FORCE_COLOR: '0',
+    PWTEST_TTY_WIDTH: 30,
+    PW_TEST_DEBUG_REPORTERS: '1'
+  });
   expect(result.exitCode).toBe(1);
 
-  const lines = stripAnsi(result.output).split('\n').slice(3, 11);
-  expect(lines.every(line => line.length <= 50)).toBe(true);
+  expect(trimLineEnds(result.output)).toContain(trimLineEnds(`Running 4 tests using 1 worker
 
-  expect(lines[0]).toBe(`     … › a.test.ts:6:7 › failure in very long name`);
-
-  expect(lines[1]).toContain(`${NEGATIVE_STATUS_MARK} …`);
-  expect(lines[1]).toContain(`ts:6:7 › failure in very long name (`);
-  expect(lines[1].length).toBe(50);
-
-  expect(lines[2]).toBe(`     [foo] › a.test.ts:9:7 › passes`);
-
-  expect(lines[3]).toContain(`${POSITIVE_STATUS_MARK} [foo] › a.test.ts:9:7 › passes (`);
-
-  expect(lines[4]).toBe(`     [foo] › a.test.ts:11:7 › passes 2 long name`);
-
-  expect(lines[5]).toContain(`${POSITIVE_STATUS_MARK} …`);
-  expect(lines[5]).toContain(`a.test.ts:11:7 › passes 2 long name (`);
-  expect(lines[5].length).toBe(50);
-
-  expect(lines[6]).toBe(`     …] › a.test.ts:13:12 › skipped very long name`);
-
-  expect(lines[7]).toBe(`  -  …] › a.test.ts:13:12 › skipped very long name`);
+<erase stats>
+     …ailure in very long name
+…Failed: 0  Skipped: 0  (XXms)
+<erase stats>
+0 :   x  …in very long name (XXms)
+…Failed: 1  Skipped: 0  (XXms)
+<erase stats>
+     …› a.test.ts:9:7 › passes
+…Failed: 1  Skipped: 0  (XXms)
+<erase stats>
+1 :   ok …t.ts:9:7 › passes (XXms)
+…Failed: 1  Skipped: 0  (XXms)
+<erase stats>
+     …1:7 › passes 2 long name
+…Failed: 1  Skipped: 0  (XXms)
+<erase stats>
+2 :   ok …asses 2 long name (XXms)
+…Failed: 1  Skipped: 0  (XXms)
+<erase stats>
+     …› skipped very long name
+…Failed: 1  Skipped: 0  (XXms)
+<erase stats>
+3 :   -  …› skipped very long name
+…Failed: 1  Skipped: 1  (XXms)
+<erase stats>`));
 });
