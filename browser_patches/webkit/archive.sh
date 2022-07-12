@@ -28,9 +28,9 @@ if ! [[ -d $(dirname "$ZIP_PATH") ]]; then
   exit 1
 fi
 
-IS_UNIVERSAL=""
+IS_UNIVERSAL_BUILD=""
 if [[ $2 == "--universal" ]]; then
-  IS_UNIVERSAL=1
+  IS_UNIVERSAL_BUILD=1
 fi
 
 main() {
@@ -67,7 +67,7 @@ createZipForLinux() {
 
   # Generate and unpack MiniBrowser bundles for each port
   for port in gtk wpe; do
-    if [[ -n "${IS_UNIVERSAL}" ]]; then
+    if [[ -n "${IS_UNIVERSAL_BUILD}" ]]; then
       Tools/Scripts/generate-bundle \
           --syslibs=bundle-all \
           --bundle=MiniBrowser --release \
@@ -85,16 +85,14 @@ createZipForLinux() {
 
   cd "$tmpdir"
 
-  # De-duplicate common files: convert to relative symlinks identical files (same hash).
-  # Note: ubuntu 18.04 does not support "deterministic" argument.
-  local CURRENT_HOST_OS="$(bash -c 'source /etc/os-release && echo $NAME')"
-  local CURRENT_HOST_OS_VERSION="$(bash -c 'source /etc/os-release && echo $VERSION_ID')"
-  if [[ "${CURRENT_HOST_OS}" == "Ubuntu" && "${CURRENT_HOST_OS_VERSION}" == "18.04" ]]; then
-    rdfind -makesymlinks true -makehardlinks false -makeresultsfile false .
-  else
+  if [[ -n "${IS_UNIVERSAL_BUILD}" ]]; then
+    # De-duplicate common files: convert to relative symlinks identical files (same hash).
+    # We apply this algorithm only to unified build since in JHBuild WPE/Minibrowser
+    # and GTK/Minibrowser executables are identical and should not be symlinked.
     rdfind -deterministic true -makesymlinks true -makehardlinks false -makeresultsfile false .
+    symlinks -rc .
   fi
-  symlinks -rc .
+
   # zip resulting directory and cleanup TMP.
   zip --symlinks -r "$ZIP_PATH" ./
   cd -
