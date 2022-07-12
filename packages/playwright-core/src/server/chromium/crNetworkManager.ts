@@ -373,6 +373,7 @@ export class CRNetworkManager {
       if (requestWillBeSentEvent && frame) {
         this._onRequest(frame, requestWillBeSentEvent, null /* requestPausedPayload */);
         request = this._requestIdToRequest.get(event.requestId);
+        this._requestIdToRequestWillBeSentEvent.delete(event.requestId);
       }
     }
     // FileUpload sends a response without a matching request.
