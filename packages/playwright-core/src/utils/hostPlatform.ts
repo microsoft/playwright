@@ -15,7 +15,7 @@
  */
 
 import os from 'os';
-import { getUbuntuVersionSync } from './ubuntuVersion';
+import { getLinuxDistributionInfoSync } from './linuxUtils';
 
 export type HostPlatform = 'win64' |
                            'mac10.13' |
@@ -25,6 +25,7 @@ export type HostPlatform = 'win64' |
                            'mac12' | 'mac12-arm64' |
                            'ubuntu18.04' | 'ubuntu18.04-arm64' |
                            'ubuntu20.04' | 'ubuntu20.04-arm64' |
+                           'debian11' |
                            'generic-linux' | 'generic-linux-arm64' |
                            '<unknown>';
 
@@ -53,14 +54,19 @@ export const hostPlatform = ((): HostPlatform => {
   }
   if (platform === 'linux') {
     const archSuffix = os.arch() === 'arm64' ? '-arm64' : '';
-    const ubuntuVersion = getUbuntuVersionSync();
-    if (!ubuntuVersion)
-      return ('generic-linux' + archSuffix) as HostPlatform;
-    if (parseInt(ubuntuVersion, 10) <= 19)
-      return ('ubuntu18.04' + archSuffix) as HostPlatform;
-    if (parseInt(ubuntuVersion, 10) <= 21)
-      return ('ubuntu20.04' + archSuffix) as HostPlatform;
-    return ('ubuntu22.04' + archSuffix) as HostPlatform;
+    const distroInfo = getLinuxDistributionInfoSync();
+
+    // Pop!_OS is ubuntu-based and has the same versions.
+    if (distroInfo?.id === 'ubuntu' || distroInfo?.id === 'pop') {
+      if (parseInt(distroInfo.version, 10) <= 19)
+        return ('ubuntu18.04' + archSuffix) as HostPlatform;
+      if (parseInt(distroInfo.version, 10) <= 21)
+        return ('ubuntu20.04' + archSuffix) as HostPlatform;
+      return ('ubuntu22.04' + archSuffix) as HostPlatform;
+    }
+    if (distroInfo?.id === 'debian' && distroInfo?.version === '11' && !archSuffix)
+      return 'debian11';
+    return ('generic-linux' + archSuffix) as HostPlatform;
   }
   if (platform === 'win32')
     return 'win64';
