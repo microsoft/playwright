@@ -3,6 +3,10 @@ self.addEventListener('fetch', event => {
     event.respondWith(fetch(event.request));
     return;
   }
+  if (event.request.url.includes('error')) {
+    event.respondWith(Promise.reject(new Error('uh oh')));
+    return;
+  }
   const slash = event.request.url.lastIndexOf('/');
   const name = event.request.url.substring(slash + 1);
   const blob = new Blob(["responseFromServiceWorker:" + name], {type : 'text/css'});

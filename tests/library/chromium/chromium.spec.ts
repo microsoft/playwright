@@ -358,38 +358,92 @@ test('setOffline', async ({ context, page, server }) => {
   expect(error).toMatch(/REJECTED.*Failed to fetch/);
 });
 
-test('should emit page-level request event for respondWith', async ({ page, server }) => {
-  await page.goto(server.PREFIX + '/serviceworkers/fetchdummy/sw.html');
-  await page.evaluate(() => window['activationPromise']);
+test.describe('should emit page-level network events with service worker fetch handler', () => {
+  test.describe('when not using routing', () => {
+    test('successful request', async ({ page, server }) => {
+      await page.goto(server.PREFIX + '/serviceworkers/fetchdummy/sw.html');
+      await page.evaluate(() => window['activationPromise']);
 
-  // Sanity check.
-  const [pageReq, swResponse] = await Promise.all([
-    page.waitForEvent('request'),
-    page.evaluate(() => window['fetchDummy']('foo')),
-  ]);
-  expect(swResponse).toBe('responseFromServiceWorker:foo');
-  expect(pageReq.url()).toMatch(/fetchdummy\/foo$/);
-  expect(pageReq.serviceWorker()).toBe(null);
-  expect((await pageReq.response()).fromServiceWorker()).toBe(true);
-});
+      const [pageReq, pageResp, /* pageFinished */, swResponse] = await Promise.all([
+        page.waitForEvent('request'),
+        page.waitForEvent('response'),
+        page.waitForEvent('requestfinished'),
+        page.evaluate(() => window['fetchDummy']('foo')),
+      ]);
+      expect(swResponse).toBe('responseFromServiceWorker:foo');
+      expect(pageReq.url()).toMatch(/fetchdummy\/foo$/);
+      expect(pageReq.serviceWorker()).toBe(null);
+      expect(pageResp.fromServiceWorker()).toBe(true);
+      expect(pageResp).toBe(await pageReq.response());
+      expect((await pageReq.response()).fromServiceWorker()).toBe(true);
+    });
 
-test('should emit page-level request event for respondWith when interception enabled', async ({ page, server, context }) => {
-  test.fixme();
-  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/15474' });
+    test('failed request', async ({ page, server }) => {
+      await page.goto(server.PREFIX + '/serviceworkers/fetchdummy/sw.html');
+      await page.evaluate(() => window['activationPromise']);
 
-  await context.route('**', route => route.continue());
-  await page.goto(server.PREFIX + '/serviceworkers/fetchdummy/sw.html');
-  await page.evaluate(() => window['activationPromise']);
+      const [pageReq] = await Promise.all([
+        page.waitForEvent('request'),
+        page.waitForEvent('requestfailed'),
+        page.evaluate(() => window['fetchDummy']('error')).catch(e => e),
+      ]);
+      expect(pageReq.url()).toMatch(/fetchdummy\/error$/);
+      expect(pageReq.failure().errorText).toMatch(/net::ERR_FAILED/);
+      expect(pageReq.serviceWorker()).toBe(null);
+      expect(await pageReq.response()).toBe(null);
+    });
+  });
 
-  // Sanity check.
-  const [pageReq, swResponse] = await Promise.all([
-    page.waitForEvent('request'),
-    page.evaluate(() => window['fetchDummy']('foo')),
-  ]);
-  expect(swResponse).toBe('responseFromServiceWorker:foo');
-  expect(pageReq.url()).toMatch(/fetchdummy\/foo$/);
-  expect(pageReq.serviceWorker()).toBe(null);
-  expect((await pageReq.response()).fromServiceWorker()).toBe(true);
+  test.describe('when routing', () => {
+    test('successful request', async ({ page, server, context }) => {
+      await context.route('**', route => route.continue());
+      let markFailureIfPageRoutesARequestAlreadyHandledByServiceWorker = false;
+      await page.route('**', route => {
+        if (route.request().url().endsWith('foo'))
+          markFailureIfPageRoutesARequestAlreadyHandledByServiceWorker = true;
+        route.continue();
+      });
+      await page.goto(server.PREFIX + '/serviceworkers/fetchdummy/sw.html');
+      await page.evaluate(() => window['activationPromise']);
+
+      const [pageReq, pageResp, /* pageFinished */, swResponse] = await Promise.all([
+        page.waitForEvent('request'),
+        page.waitForEvent('response'),
+        page.waitForEvent('requestfinished'),
+        page.evaluate(() => window['fetchDummy']('foo')),
+      ]);
+      expect(swResponse).toBe('responseFromServiceWorker:foo');
+      expect(pageReq.url()).toMatch(/fetchdummy\/foo$/);
+      expect(pageReq.serviceWorker()).toBe(null);
+      expect(pageResp.fromServiceWorker()).toBe(true);
+      expect(pageResp).toBe(await pageReq.response());
+      expect((await pageReq.response()).fromServiceWorker()).toBe(true);
+      expect(markFailureIfPageRoutesARequestAlreadyHandledByServiceWorker).toBe(false);
+    });
+
+    test('failed request', async ({ page, server, context }) => {
+      await context.route('**', route => route.continue());
+      let markFailureIfPageRoutesARequestAlreadyHandledByServiceWorker = false;
+      await page.route('**', route => {
+        if (route.request().url().endsWith('foo'))
+          markFailureIfPageRoutesARequestAlreadyHandledByServiceWorker = true;
+        route.continue();
+      });
+      await page.goto(server.PREFIX + '/serviceworkers/fetchdummy/sw.html');
+      await page.evaluate(() => window['activationPromise']);
+
+      const [pageReq] = await Promise.all([
+        page.waitForEvent('request'),
+        page.waitForEvent('requestfailed'),
+        page.evaluate(() => window['fetchDummy']('error')).catch(e => e),
+      ]);
+      expect(pageReq.url()).toMatch(/fetchdummy\/error$/);
+      expect(pageReq.failure().errorText).toMatch(/net::ERR_FAILED/);
+      expect(pageReq.serviceWorker()).toBe(null);
+      expect(await pageReq.response()).toBe(null);
+      expect(markFailureIfPageRoutesARequestAlreadyHandledByServiceWorker).toBe(false);
+    });
+  });
 });
 
 test('setExtraHTTPHeaders', async ({ context, page, server }) => {
