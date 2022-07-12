@@ -113,3 +113,17 @@ test('should override hasColors and getColorDepth', async ({ runInlineTest }) =>
   expect(result.output).toContain(`process.stdout.getColorDepth() > 0 = true`);
   expect(result.output).toContain(`process.stderr.getColorDepth() > 0 = true`);
 });
+
+test('should not throw type error when using assert', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.js': `
+      const { test } = pwt;
+      const assert = require('assert');
+      test('assert no type error', () => {
+        assert.strictEqual(1, 2);
+      });
+    `
+  });
+  expect(result.output).not.toContain(`TypeError: process.stderr.hasColors is not a function`);
+  expect(result.output).toContain(`AssertionError`);
+});
