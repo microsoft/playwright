@@ -1201,6 +1201,7 @@ const eventType = new Map<string, 'mouse' | 'keyboard' | 'touch' | 'pointer' | '
   ['dragenter', 'drag'],
   ['dragleave', 'drag'],
   ['dragexit', 'drag'],
+  ['drop', 'drag'],
 
   ['wheel', 'wheel'],
 ]);
