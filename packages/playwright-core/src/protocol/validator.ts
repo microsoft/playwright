@@ -695,8 +695,6 @@ scheme.BrowserContextAddInitScriptParams = tObject({
   source: tString,
 });
 scheme.BrowserContextAddInitScriptResult = tOptional(tObject({}));
-scheme.BrowserContextRemoveInitScriptsParams = tOptional(tObject({}));
-scheme.BrowserContextRemoveInitScriptsResult = tOptional(tObject({}));
 scheme.BrowserContextClearCookiesParams = tOptional(tObject({}));
 scheme.BrowserContextClearCookiesResult = tOptional(tObject({}));
 scheme.BrowserContextClearPermissionsParams = tOptional(tObject({}));
@@ -714,8 +712,6 @@ scheme.BrowserContextExposeBindingParams = tObject({
   needsHandle: tOptional(tBoolean),
 });
 scheme.BrowserContextExposeBindingResult = tOptional(tObject({}));
-scheme.BrowserContextRemoveExposedBindingsParams = tOptional(tObject({}));
-scheme.BrowserContextRemoveExposedBindingsResult = tOptional(tObject({}));
 scheme.BrowserContextGrantPermissionsParams = tObject({
   permissions: tArray(tString),
   origin: tOptional(tString),
@@ -871,8 +867,6 @@ scheme.PageAddInitScriptParams = tObject({
   source: tString,
 });
 scheme.PageAddInitScriptResult = tOptional(tObject({}));
-scheme.PageRemoveInitScriptsParams = tOptional(tObject({}));
-scheme.PageRemoveInitScriptsResult = tOptional(tObject({}));
 scheme.PageCloseParams = tObject({
   runBeforeUnload: tOptional(tBoolean),
 });
@@ -889,8 +883,6 @@ scheme.PageExposeBindingParams = tObject({
   needsHandle: tOptional(tBoolean),
 });
 scheme.PageExposeBindingResult = tOptional(tObject({}));
-scheme.PageRemoveExposedBindingsParams = tOptional(tObject({}));
-scheme.PageRemoveExposedBindingsResult = tOptional(tObject({}));
 scheme.PageGoBackParams = tObject({
   timeout: tOptional(tNumber),
   waitUntil: tOptional(tType('LifecycleEvent')),

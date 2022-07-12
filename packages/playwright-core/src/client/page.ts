@@ -329,14 +329,6 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     this._bindings.set(name, callback);
   }
 
-  async _removeExposedBindings() {
-    for (const key of this._bindings.keys()) {
-      if (!key.startsWith('__pw_'))
-        this._bindings.delete(key);
-    }
-    await this._channel.removeExposedBindings();
-  }
-
   async setExtraHTTPHeaders(headers: Headers) {
     validateHeaders(headers);
     await this._channel.setExtraHTTPHeaders({ headers: headersObjectToArray(headers) });
@@ -457,10 +449,6 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     await this._channel.addInitScript({ source });
   }
 
-  async _removeInitScripts() {
-    await this._channel.removeInitScripts();
-  }
-
   async route(url: URLMatch, handler: RouteHandlerCallback, options: { times?: number } = {}): Promise<void> {
     this._routes.unshift(new RouteHandler(this._browserContext._options.baseURL, url, handler, options.times));
     if (this._routes.length === 1)
@@ -480,11 +468,6 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     this._routes = this._routes.filter(route => route.url !== url || (handler && route.handler !== handler));
     if (!this._routes.length)
       await this._disableInterception();
-  }
-
-  async _unrouteAll() {
-    this._routes = [];
-    await this._disableInterception();
   }
 
   private async _disableInterception() {
@@ -735,12 +718,6 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
       await fs.promises.writeFile(options.path, result.pdf);
     }
     return result.pdf;
-  }
-
-  async _resetForReuse() {
-    await this._unrouteAll();
-    await this._removeInitScripts();
-    await this._removeExposedBindings();
   }
 }
 

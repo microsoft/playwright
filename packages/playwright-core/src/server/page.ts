@@ -231,11 +231,14 @@ export class Page extends SdkObject {
     this.setDefaultNavigationTimeout(undefined);
     this.setDefaultTimeout(undefined);
 
-    // To this first in order to unfreeze evaluates.
+    // Do this first in order to unfreeze evaluates.
     await this._frameManager.closeOpenDialogs();
 
-    await this.removeExposedBindings();
-    await this.removeInitScripts();
+    await this._removeExposedBindings();
+    await this._removeInitScripts();
+
+    // TODO: handle pending routes.
+    await this.setClientRequestInterceptor(undefined);
     await this._setServerRequestInterceptor(undefined);
     await this.setFileChooserIntercepted(false);
     await this.mainFrame().goto(metadata, 'about:blank');
@@ -334,7 +337,7 @@ export class Page extends SdkObject {
     await this._delegate.exposeBinding(binding);
   }
 
-  async removeExposedBindings() {
+  async _removeExposedBindings() {
     for (const key of this._pageBindings.keys()) {
       if (!key.startsWith('__pw'))
         this._pageBindings.delete(key);
@@ -431,6 +434,7 @@ export class Page extends SdkObject {
       this._emulatedMedia.reducedMotion = options.reducedMotion;
     if (options.forcedColors !== undefined)
       this._emulatedMedia.forcedColors = options.forcedColors;
+
     await this._delegate.updateEmulateMedia();
     await this._doSlowMo();
   }
@@ -471,7 +475,7 @@ export class Page extends SdkObject {
     await this._delegate.addInitScript(source);
   }
 
-  async removeInitScripts() {
+  async _removeInitScripts() {
     this.initScripts.splice(0, this.initScripts.length);
     await this._delegate.removeInitScripts();
   }
