@@ -66,13 +66,12 @@ build_wpe() {
 }
 
 ensure_linux_deps() {
-  SUDO="" ; [ $UID -ne 0 ] && SUDO="sudo"
-
-  # These two packages are needed to de-duplicate files on the GTK+WPE bundle and reduce its size.
-  DEBIAN_FRONTEND=noninteractive ${SUDO} apt-get install -y symlinks rdfind
 
   if [[ -n "${IS_UNIVERSAL_BUILD}" ]]; then
-    DEBIAN_FRONTEND=noninteractive ${SUDO} apt-get install -y flatpak
+    SUDO="" ; [ $UID -ne 0 ] && SUDO="sudo"
+    # - flatpak drives the build
+    # - symlinks and rdfind are needed to de-duplicate files on the GTK+WPE bundle to reduce its size.
+    DEBIAN_FRONTEND=noninteractive ${SUDO} apt-get install -y flatpak symlinks rdfind
   fi
 
   yes | DEBIAN_FRONTEND=noninteractive ./Tools/gtk/install-dependencies
