@@ -367,7 +367,7 @@ export class CRNetworkManager {
     // For frame-level Requests that are handled by a Service Worker's fetch handler, we'll never get a requestPaused event, so we need to
     // manually create the request. In an ideal world, crNetworkManager would be able to know this on Network.requestWillBeSent, but there
     // is not enough metadata there.
-    if (this._protocolRequestInterceptionEnabled && event.response.fromServiceWorker) {
+    if (!request && event.response.fromServiceWorker) {
       const requestWillBeSentEvent = this._requestIdToRequestWillBeSentEvent.get(event.requestId);
       const frame = requestWillBeSentEvent?.frameId ? this._page?._frameManager.frame(requestWillBeSentEvent.frameId) : null;
       if (requestWillBeSentEvent && frame) {
