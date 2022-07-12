@@ -636,7 +636,7 @@ test('should not hang and report results when worker process suddenly exits duri
   expect(result.passed).toBe(0);
   expect(result.failed).toBe(1);
   expect(result.output).toContain('Worker process exited unexpectedly');
-  expect(stripAnsi(result.output)).toContain('[1/1] a.spec.js:6:7 › failing due to afterall');
+  expect(stripAnsi(result.output)).toContain('a.spec.js:6:7 › failing due to afterall');
 });
 
 test('unhandled rejection during beforeAll should be reported and prevent more tests', async ({ runInlineTest }) => {

@@ -49,13 +49,13 @@ export class BaseReporter implements Reporter  {
   duration = 0;
   config!: FullConfigInternal;
   suite!: Suite;
-  totalTestCount = 0;
   result!: FullResult;
   private fileDurations = new Map<string, number>();
   private monotonicStartTime: number = 0;
   private _omitFailures: boolean;
   private readonly _ttyWidthForTest: number;
   readonly liveTerminal: boolean;
+  readonly stats = { started: 0, skipped: 0, completed: 0, total: 0, passed: 0, failed: 0, flaky: 0 };
 
   constructor(options: { omitFailures?: boolean } = {}) {
     this._omitFailures = options.omitFailures || false;
@@ -67,7 +67,7 @@ export class BaseReporter implements Reporter  {
     this.monotonicStartTime = monotonicTime();
     this.config = config as FullConfigInternal;
     this.suite = suite;
-    this.totalTestCount = suite.allTests().length;
+    this.stats.total = suite.allTests().length;
   }
 
   onStdOut(chunk: string | Buffer, test?: TestCase, result?: TestResult) {
@@ -85,7 +85,21 @@ export class BaseReporter implements Reporter  {
     (result as any)[kOutputSymbol].push(output);
   }
 
+  onTestBegin(test: TestCase, result: TestResult) {
+    this.stats.started++;
+  }
+
   onTestEnd(test: TestCase, result: TestResult) {
+    this.stats.completed++;
+    if (!this.willRetry(test)) {
+      switch (test.outcome()) {
+        case 'skipped': this.stats.skipped++; break;
+        case 'expected': this.stats.passed++; break;
+        case 'unexpected': this.stats.failed++; break;
+        case 'flaky': this.stats.flaky++; break;
+      }
+    }
+
     // Ignore any tests that are run in parallel.
     for (let suite: Suite | undefined = test.parent; suite; suite = suite.parent) {
       if ((suite as any)._parallelMode === 'parallel')
@@ -119,7 +133,24 @@ export class BaseReporter implements Reporter  {
   protected generateStartingMessage() {
     const jobs = Math.min(this.config.workers, this.config._testGroupsCount);
     const shardDetails = this.config.shard ? `, shard ${this.config.shard.current} of ${this.config.shard.total}` : '';
-    return `\nRunning ${this.totalTestCount} test${this.totalTestCount > 1 ? 's' : ''} using ${jobs} worker${jobs > 1 ? 's' : ''}${shardDetails}`;
+    return `\nRunning ${this.stats.total} test${this.stats.total > 1 ? 's' : ''} using ${jobs} worker${jobs > 1 ? 's' : ''}${shardDetails}`;
+  }
+
+  protected generateStatsMessage(mode: 'started' | 'completed', done: boolean) {
+    // Do not report 100% until done.
+    const count = this.stats[mode];
+    const percent = Math.min(done ? 100 : 99, Math.round(count / this.stats.total * 100));
+    const maxExpected = done ? this.stats.total : this.stats.total - (mode === 'started' ? 0 : 1);
+    const retriesSuffix = count > maxExpected ? `+retries` : ``;
+    const message = [
+      `[${count}/${this.stats.total}${retriesSuffix}]`,
+      `${(this.stats.passed ? colors.green : colors.gray)('Passed: ' + this.stats.passed)}`,
+      `${(this.stats.flaky ? colors.red : colors.gray)('Flaky: ' + this.stats.flaky)}`,
+      `${(this.stats.failed ? colors.red : colors.gray)('Failed: ' + this.stats.failed)}`,
+      `${(this.stats.skipped ? colors.yellow : colors.gray)('Skipped: ' + this.stats.skipped)}`,
+      colors.gray(process.env.PW_TEST_DEBUG_REPORTERS ? `(XXms)` : `(${milliseconds((monotonicTime() - this.monotonicStartTime) | 0)})`),
+    ].join(' ');
+    return { percent, message };
   }
 
   protected getSlowTests(): [string, number][] {

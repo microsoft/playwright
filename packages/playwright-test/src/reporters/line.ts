@@ -22,7 +22,6 @@ const lineUp = process.env.PW_TEST_DEBUG_REPORTERS ? '<lineup>' : '\u001B[1A';
 const erase = process.env.PW_TEST_DEBUG_REPORTERS ? '<erase>' : '\u001B[2K';
 
 class LineReporter extends BaseReporter {
-  private _current = 0;
   private _failures = 0;
   private _lastTest: TestCase | undefined;
   private _lastPercent = -1;
@@ -35,27 +34,31 @@ class LineReporter extends BaseReporter {
     super.onBegin(config, suite);
     console.log(this.generateStartingMessage());
     if (this.liveTerminal)
-      console.log();
+      console.log('\n');
   }
 
   override onStdOut(chunk: string | Buffer, test?: TestCase, result?: TestResult) {
     super.onStdOut(chunk, test, result);
-    this._dumpToStdio(test, chunk, process.stdout);
+    this._dumpToStdio(test, result, chunk, process.stdout);
   }
 
   override onStdErr(chunk: string | Buffer, test?: TestCase, result?: TestResult) {
     super.onStdErr(chunk, test, result);
-    this._dumpToStdio(test, chunk, process.stderr);
+    this._dumpToStdio(test, result, chunk, process.stderr);
   }
 
-  private _dumpToStdio(test: TestCase | undefined, chunk: string | Buffer, stream: NodeJS.WriteStream) {
+  private _retrySuffix(result: TestResult | undefined) {
+    return result?.retry ? colors.yellow(` (retry #${result.retry})`) : '';
+  }
+
+  private _dumpToStdio(test: TestCase | undefined, result: TestResult | undefined, chunk: string | Buffer, stream: NodeJS.WriteStream) {
     if (this.config.quiet)
       return;
     if (this.liveTerminal)
-      stream.write(lineUp + erase);
+      stream.write(lineUp + erase + lineUp + erase);
     if (test && this._lastTest !== test) {
       // Write new header for the output.
-      const title = colors.gray(formatTestTitle(this.config, test));
+      const title = colors.gray(formatTestTitle(this.config, test)) + this._retrySuffix(result);
       stream.write(this.fitToScreen(title) + `\n`);
       this._lastTest = test;
     }
@@ -64,11 +67,12 @@ class LineReporter extends BaseReporter {
     if (chunk[chunk.length - 1] !== '\n')
       console.log();
 
-    console.log();
+    if (this.liveTerminal)
+      console.log('\n');
   }
 
-  onTestBegin(test: TestCase, result: TestResult) {
-    ++this._current;
+  override onTestBegin(test: TestCase, result: TestResult) {
+    super.onTestBegin(test, result);
     this._updateLine(test, result, undefined);
   }
 
@@ -86,36 +90,34 @@ class LineReporter extends BaseReporter {
     super.onTestEnd(test, result);
     if (!this.willRetry(test) && (test.outcome() === 'flaky' || test.outcome() === 'unexpected')) {
       if (this.liveTerminal)
-        process.stdout.write(lineUp + erase);
+        process.stdout.write(lineUp + erase + lineUp + erase);
       console.log(formatFailure(this.config, test, {
         index: ++this._failures
       }).message);
       console.log();
+      if (this.liveTerminal)
+        process.stdout.write(this.fitToScreen(this.generateStatsMessage('started', false).message) + '\n');
     }
   }
 
   private _updateLine(test: TestCase, result: TestResult, step?: TestStep) {
-    // Do not report 100% until done.
-    const percent = Math.min(99, Math.round(this._current / this.totalTestCount * 100));
-    const retriesPrefix = this.totalTestCount < this._current ? ` (retries)` : ``;
-    const prefix = `[${this._current}/${this.totalTestCount}]${retriesPrefix} `;
-    const currentRetrySuffix = result.retry ? colors.yellow(` (retry #${result.retry})`) : '';
-    const title = formatTestTitle(this.config, test, step) + currentRetrySuffix;
+    const stats = this.generateStatsMessage('started', false);
+    const title = formatTestTitle(this.config, test, step) + this._retrySuffix(result);
     if (this.liveTerminal) {
-      process.stdout.write(lineUp + erase + prefix + this.fitToScreen(title, prefix) + '\n');
+      process.stdout.write(lineUp + erase + lineUp + erase + this.fitToScreen(title) + '\n' + this.fitToScreen(stats.message) + '\n');
     } else {
-      if (percent !== this._lastPercent)
-        process.stdout.write(`[${percent}%] ${title}\n`);
+      if (stats.percent !== this._lastPercent)
+        process.stdout.write(this.fitToScreen(stats.message) + '\n');
     }
-    this._lastPercent = percent;
+    this._lastPercent = stats.percent;
   }
 
   override async onEnd(result: FullResult) {
     await super.onEnd(result);
     if (this.liveTerminal)
-      process.stdout.write(lineUp + erase);
+      process.stdout.write(lineUp + erase + lineUp + erase);
     else
-      process.stdout.write(`[100%]\n`);
+      process.stdout.write(this.fitToScreen(this.generateStatsMessage('started', true).message) + '\n');
     this.epilogue(false);
   }
 }
