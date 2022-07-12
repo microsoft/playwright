@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { App, ComponentPublicInstance } from 'vue';
+import { CombinedVueInstance, Vue } from 'vue/types/vue';
 
-export declare function beforeMount(callback: (params: { app: App, hooksConfig: any }) => Promise<void>): void;
-export declare function afterMount(callback: (params: { app: App, hooksConfig: any, instance: ComponentPublicInstance }) => Promise<void>): void;
+export declare function beforeMount(callback: (params: { hooksConfig: any }) => Promise<void>): void;
+export declare function afterMount(callback: (params: { hooksConfig: any, instance: CombinedVueInstance<Vue, object, object, object, Record<never, any>> }) => Promise<void>): void;

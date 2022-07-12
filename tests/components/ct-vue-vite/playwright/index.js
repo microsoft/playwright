@@ -1,5 +1,10 @@
-import { onApp } from '@playwright/experimental-ct-vue/hooks';
+//@ts-check
+import { beforeMount, afterMount } from '@playwright/experimental-ct-vue/hooks';
 
-onApp(async (app, addConfig) => {
-  console.log(`App ${!!app} configured with config: ${JSON.stringify(addConfig)}`);
+beforeMount(async ({ app, hooksConfig }) => {
+  console.log(`Before mount: ${JSON.stringify(hooksConfig)}, app: ${!!app}`);
+});
+
+afterMount(async ({ instance }) => {
+  console.log(`After mount el: ${instance.$el.constructor.name}`);
 });

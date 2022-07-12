@@ -40,7 +40,7 @@ interface ComponentFixtures {
     props?: Props,
     slots?: { [key: string]: any },
     on?: { [key: string]: Function },
-    appConfig?: any,
+    hooksConfig?: any,
   }): Promise<Locator>;
 }
 

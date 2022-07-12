@@ -19,6 +19,10 @@
     "./register": {
       "types": "./register.d.ts",
       "default": "./register.mjs"
+    },
+    "./hooks": {
+      "types": "./hooks.d.ts",
+      "default": "./hooks.mjs"
     }
   },
   "dependencies": {
