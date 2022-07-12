@@ -72,7 +72,6 @@ scheme.ExpectedTextValue = tObject({
   matchSubstring: tOptional(tBoolean),
   ignoreCase: tOptional(tBoolean),
   normalizeWhiteSpace: tOptional(tBoolean),
-  classList: tOptional(tString),
 });
 scheme.AXNode = tObject({
   role: tString,

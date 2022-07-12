@@ -112,7 +112,6 @@ ExpectedTextValue:
     matchSubstring: boolean?
     ignoreCase: boolean?
     normalizeWhiteSpace: boolean?
-    classList: string?
 
 
 AXNode:

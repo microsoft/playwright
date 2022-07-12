@@ -1068,13 +1068,10 @@ export class InjectedScript {
     {
       // Single text value.
       let received: string | undefined;
-      let receivedClassList: string[] | undefined;
       if (expression === 'to.have.attribute') {
         received = element.getAttribute(options.expressionArg) || '';
-      } else if (expression === 'to.have.class') {
+      } else if (expression === 'to.have.class' || expression === 'to.contain.class') {
         received = element.classList.toString();
-      } else if (expression === 'to.contain.class') {
-        receivedClassList = [...element.classList];
       } else if (expression === 'to.have.css') {
         received = window.getComputedStyle(element).getPropertyValue(options.expressionArg);
       } else if (expression === 'to.have.id') {
@@ -1094,11 +1091,9 @@ export class InjectedScript {
 
       if (received !== undefined && options.expectedText) {
         const matcher = new ExpectedTextMatcher(options.expectedText[0]);
-        return { received, matches: matcher.matches(received) };
-      }
-      if (receivedClassList !== undefined && options.expectedText) {
-        const matcher = new ExpectedTextMatcher(options.expectedText[0]);
-        return { received: receivedClassList.join(' '), matches: matcher.matchesClassList(receivedClassList) };
+        return { received, matches: matcher.matches(received, {
+          toContainClass: expression === 'to.contain.class',
+        }) };
       }
     }
 
@@ -1116,39 +1111,29 @@ export class InjectedScript {
 
     // List of values.
     let received: string[] | undefined;
-    let receivedClassList: string[][] | undefined;
     if (expression === 'to.have.text.array' || expression === 'to.contain.text.array')
       received = elements.map(e => options.useInnerText ? (e as HTMLElement).innerText : e.textContent || '');
-    else if (expression === 'to.have.class.array')
+    else if (expression === 'to.have.class.array' || expression === 'to.contain.class.array')
       received = elements.map(e => e.classList.toString());
-    else if (expression === 'to.contain.class.array')
-      receivedClassList = elements.map(e => [...e.classList]);
 
-    if ((received || receivedClassList) && options.expectedText) {
+    if (received && options.expectedText) {
       // "To match an array" is "to contain an array" + "equal length"
       const lengthShouldMatch = expression !== 'to.contain.text.array';
-      const matchesLength = (received || receivedClassList)!.length === options.expectedText.length || !lengthShouldMatch;
+      const matchesLength = received.length === options.expectedText.length || !lengthShouldMatch;
       if (!matchesLength)
         return { received, matches: false };
+
       // Each matcher should get a "received" that matches it, in order.
       const matchers = options.expectedText.map(e => new ExpectedTextMatcher(e));
       let mIndex = 0, rIndex = 0;
-      if (received) {
-        while (mIndex < matchers.length && rIndex < received.length) {
-          if (matchers[mIndex].matches(received[rIndex]))
-            ++mIndex;
-          ++rIndex;
-        }
-        return { received, matches: mIndex === matchers.length };
+      while (mIndex < matchers.length && rIndex < received.length) {
+        if (matchers[mIndex].matches(received[rIndex], {
+          toContainClass: expression === 'to.contain.class.array',
+        }))
+          ++mIndex;
+        ++rIndex;
       }
-      if (receivedClassList) {
-        while (mIndex < matchers.length && rIndex < receivedClassList.length) {
-          if (matchers[mIndex].matchesClassList(receivedClassList[rIndex]))
-            ++mIndex;
-          ++rIndex;
-        }
-        return { received: receivedClassList.map(clist => clist.join(' ')), matches: mIndex === matchers.length };
-      }
+      return { received, matches: mIndex === matchers.length };
     }
     throw this.createStacklessError('Unknown expect matcher: ' + expression);
   }
@@ -1261,7 +1246,6 @@ class ExpectedTextMatcher {
   private _regex: RegExp | undefined;
   private _normalizeWhiteSpace: boolean | undefined;
   private _ignoreCase: boolean | undefined;
-  private _classList: string[] | undefined;
 
   constructor(expected: channels.ExpectedTextValue) {
     this._normalizeWhiteSpace = expected.normalizeWhiteSpace;
@@ -1276,10 +1260,11 @@ class ExpectedTextMatcher {
         flags.add('i');
       this._regex = new RegExp(expected.regexSource, [...flags].join(''));
     }
-    this._classList = expected.classList ? expected.classList.trim().split(/\s+/) : undefined;
   }
 
-  matches(text: string): boolean {
+  matches(text: string, { toContainClass }: { toContainClass?: boolean } = {}): boolean {
+    if (toContainClass)
+      return this.matchesClassList(text);
     if (!this._regex)
       text = this.normalize(text)!;
     if (this._string !== undefined)
@@ -1291,13 +1276,16 @@ class ExpectedTextMatcher {
     return false;
   }
 
-  matchesClassList(received: string[]): boolean {
-    if (!this._classList)
-      throw new Error('matchesClassList called on ExpectedTextMatcher with no classList');
-    const normalizedReceived = received.map(r => this.normalize(r));
-    return this._classList.every(classListEntry =>
+  private matchesClassList(received: string): boolean {
+    const expected = this.splitClassList(this._string || '');
+    const normalizedReceived = this.splitClassList(received).map(r => this.normalize(r));
+    return expected.every(classListEntry =>
       normalizedReceived.includes(this.normalize(classListEntry))
     );
+  }
+
+  private splitClassList(classList: string): string[] {
+    return classList.split(/\s+/g);
   }
 
   private normalize(s: string | undefined): string | undefined {
