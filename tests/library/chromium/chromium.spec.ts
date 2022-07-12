@@ -374,10 +374,13 @@ test('should emit page-level request event for respondWith', async ({ page, serv
 });
 
 test('should emit page-level request event for respondWith when interception enabled', async ({ page, server, context }) => {
-  test.fixme();
-  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/15474' });
-
   await context.route('**', route => route.continue());
+  let markFailureIfPageRoutesARequestAlreadyHandledByServiceWorker = false;
+  await page.route('**', route => {
+    if (route.request().url().endsWith('foo'))
+      markFailureIfPageRoutesARequestAlreadyHandledByServiceWorker = true;
+    route.continue();
+  });
   await page.goto(server.PREFIX + '/serviceworkers/fetchdummy/sw.html');
   await page.evaluate(() => window['activationPromise']);
 
@@ -390,6 +393,7 @@ test('should emit page-level request event for respondWith when interception ena
   expect(pageReq.url()).toMatch(/fetchdummy\/foo$/);
   expect(pageReq.serviceWorker()).toBe(null);
   expect((await pageReq.response()).fromServiceWorker()).toBe(true);
+  expect(markFailureIfPageRoutesARequestAlreadyHandledByServiceWorker).toBe(false);
 });
 
 test('setExtraHTTPHeaders', async ({ context, page, server }) => {
