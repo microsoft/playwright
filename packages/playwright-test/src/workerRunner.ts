@@ -286,7 +286,9 @@ export class WorkerRunner extends EventEmitter {
     setCurrentTestInfo(testInfo);
     this.emit('testBegin', buildTestBeginPayload(testInfo));
 
-    if (testInfo.expectedStatus === 'skipped') {
+    const isSkipped = testInfo.expectedStatus === 'skipped';
+    if (isSkipped && nextTest) {
+      // Fast path - this test and skipped, and there are more tests that will handle cleanup.
       testInfo.status = 'skipped';
       this.emit('testEnd', buildTestEndPayload(testInfo));
       return;
@@ -300,9 +302,11 @@ export class WorkerRunner extends EventEmitter {
     let shouldRunAfterEachHooks = false;
 
     await testInfo._runWithTimeout(async () => {
-      if (this._isStopped) {
-        // Getting here means that worker is requested to stop, but was not able to
-        // run full cleanup yet. Skip the test, but run the cleanup.
+      if (this._isStopped || isSkipped) {
+        // Two reasons to get here:
+        // - Last test is skipped, so we should not run the test, but run the cleanup.
+        // - Worker is requested to stop, but was not able to run full cleanup yet.
+        //   We should skip the test, but run the cleanup.
         testInfo.status = 'skipped';
         didFailBeforeAllForSuite = undefined;
         return;

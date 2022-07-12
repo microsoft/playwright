@@ -783,3 +783,33 @@ test('beforeAll failure should only prevent tests that are affected', async ({ r
     '%%test3',
   ]);
 });
+
+test('afterAll should run if last test was skipped', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      const { test } = pwt;
+      test.afterAll(() => console.log('after-all'));
+      test('test1', () => {});
+      test.skip('test2', () => {});
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.skipped).toBe(1);
+  expect(result.passed).toBe(1);
+  expect(result.output).toContain('after-all');
+});
+
+test('afterAll should run if last test was skipped 2', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      const { test } = pwt;
+      test.afterAll(() => console.log('after-all'));
+      test('test1', () => {});
+      test('test2', () => { test.skip(); });
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.skipped).toBe(1);
+  expect(result.passed).toBe(1);
+  expect(result.output).toContain('after-all');
+});
