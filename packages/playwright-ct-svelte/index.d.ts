@@ -34,7 +34,7 @@ export type PlaywrightTestConfig = Omit<BasePlaywrightTestConfig, 'use'> & {
   }
 };
 
-interface ComponentFixtures {
+export interface ComponentFixtures {
   mount<Props = { [key: string]: any }>(component: any, options?: {
     props?: Props,
     slots?: { [key: string]: any },
