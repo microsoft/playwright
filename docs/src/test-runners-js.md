@@ -96,7 +96,7 @@ it('should work', async () => {
 
 Vitest looks very similar to the Jest/Jasmine setup, and functions in the same way.
 
-```
+```js
 import { chromium } from 'playwright';
 import { afterAll, afterEach, beforeAll, beforeEach, expect, test } from 'vitest';
 let browser;
