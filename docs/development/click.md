@@ -62,7 +62,7 @@ These are some of the corner cases that Playwright aims to support.
 
     ```html
     <style>
-    @keyframes move { from { marign-left: 0; } to { margin-left: 100px; } }
+    @keyframes move { from { margin-left: 0; } to { margin-left: 100px; } }
     </style>
     <button style="animation: 3s linear move forwards;">Click me</button>
     ```
@@ -100,7 +100,7 @@ These are some of the corner cases that Playwright aims to support.
 
     ```html
     <style>
-    @keyframes move { from { marign-left: 0; } to { margin-left: 100px; } }
+    @keyframes move { from { margin-left: 0; } to { margin-left: 100px; } }
     </style>
     <button style="animation: 3s linear move forwards;">Click me</button>
     <script>
@@ -161,7 +161,7 @@ Other scenarios are perfectly fine, but Playwright cannot support them, and we u
 
     ```html
     <style>
-    @keyframes move { from { marign-left: 0; } to { margin-left: 100px; } }
+    @keyframes move { from { margin-left: 0; } to { margin-left: 100px; } }
     200px; } }
     </style>
     <button style="animation: 3s linear move infinite;">Click me</button>
@@ -173,7 +173,7 @@ Other scenarios are perfectly fine, but Playwright cannot support them, and we u
 
     ```html
     <style>
-    @keyframes move { 0% { marign-left: 0; } 25% { margin-left: 100px; } 50% { margin-left: 100px;} 100% { margin-left: 200px; } }
+    @keyframes move { 0% { margin-left: 0; } 25% { margin-left: 100px; } 50% { margin-left: 100px;} 100% { margin-left: 200px; } }
     </style>
     <button style="animation: 3s linear move forwards;">Click me</button>
     ```
