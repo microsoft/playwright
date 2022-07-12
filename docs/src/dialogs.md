@@ -13,27 +13,27 @@ By default, dialogs are auto-dismissed by Playwright, so you don't have to handl
 
 ```js
 page.on('dialog', dialog => dialog.accept());
-await page.click('button');
+await page.locator('button').click();
 ```
 
 ```java
 page.onDialog(dialog -> dialog.accept());
-page.click("button");
+page.locator("button").click();
 ```
 
 ```python async
 page.on("dialog", lambda dialog: dialog.accept())
-await page.click("button")
+await page.locator("button".click())
 ```
 
 ```python sync
 page.on("dialog", lambda dialog: dialog.accept())
-page.click("button")
+page.locator("button").click()
 ```
 
 ```csharp
 page.Dialog += (_, dialog) => dialog.AcceptAsync();
-await page.ClickAsync("button");
+await page.Locator("button").ClickAsync();
 ```
 
 :::note
@@ -48,27 +48,27 @@ WRONG!
 
 ```js
 page.on('dialog', dialog => console.log(dialog.message()));
-await page.click('button'); // Will hang here
+await page.locator('button').click(); // Will hang here
 ```
 
 ```java
 page.onDialog(dialog -> System.out.println(dialog.message()));
-page.click("button"); // Will hang here
+page.locator("button").click(); // Will hang here
 ```
 
 ```python async
 page.on("dialog", lambda dialog: print(dialog.message))
-await page.click("button") # Will hang here
+await page.locator("button").click() # Will hang here
 ```
 
 ```python sync
 page.on("dialog", lambda dialog: print(dialog.message))
-page.click("button") # Will hang here
+page.locator("button").click() # Will hang here
 ```
 
 ```csharp
 page.Dialog += (_, dialog) => Console.WriteLine(dialog.Message);
-await page.ClickAsync("button"); // Will hang here
+await page.Locator("button").ClickAsync(); // Will hang here
 ```
 
 :::note
@@ -92,7 +92,7 @@ page.on('dialog', async dialog => {
   assert(dialog.type() === 'beforeunload');
   await dialog.dismiss();
 });
-await page.close({runBeforeUnload: true});
+await page.close({ runBeforeUnload: true });
 ```
 
 ```java

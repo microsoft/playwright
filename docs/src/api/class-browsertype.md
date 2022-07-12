@@ -78,7 +78,7 @@ class BrowserTypeExamples
         var chromium = playwright.Chromium;
         var browser = await chromium.LaunchAsync();
         var page = await browser.NewPageAsync();
-        await page.GoToAsync("https://www.bing.com");
+        await page.GotoAsync("https://www.bing.com");
         // other actions
         await browser.CloseAsync();
     }
