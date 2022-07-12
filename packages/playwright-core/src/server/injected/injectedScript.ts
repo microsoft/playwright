@@ -1122,18 +1122,14 @@ export class InjectedScript {
         return { received, matches: false };
 
       // Each matcher should get a "received" that matches it, in order.
-      let i = 0;
       const matchers = options.expectedText.map(e => new ExpectedTextMatcher(e));
-      let allMatchesFound = true;
-      for (const matcher of matchers) {
-        while (i < received.length && !matcher.matches(received[i]))
-          i++;
-        if (i >= received.length) {
-          allMatchesFound = false;
-          break;
-        }
+      let mIndex = 0, rIndex = 0;
+      while (mIndex < matchers.length && rIndex < received.length) {
+        if (matchers[mIndex].matches(received[rIndex]))
+          ++mIndex;
+        ++rIndex;
       }
-      return { received, matches: allMatchesFound };
+      return { received, matches: mIndex === matchers.length };
     }
     throw this.createStacklessError('Unknown expect matcher: ' + expression);
   }
