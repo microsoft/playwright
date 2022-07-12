@@ -48,6 +48,11 @@ if [[ $1 == "--linux-arm64" || $2 == "--linux-arm64" ]]; then
   echo "ac_add_options --target=aarch64-linux-gnu" >> .mozconfig
 fi
 
+if is_linux "debian" 11; then
+  # There's no pre-built wasi sysroot for Debian 11.
+  echo "ac_add_options --without-wasm-sandboxed-libraries" >> .mozconfig
+fi
+
 OBJ_FOLDER="obj-build-playwright"
 echo "mk_add_options MOZ_OBJDIR=@TOPSRCDIR@/${OBJ_FOLDER}" >> .mozconfig
 echo "ac_add_options --disable-crashreporter" >> .mozconfig
