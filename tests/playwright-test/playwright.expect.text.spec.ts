@@ -226,7 +226,7 @@ test('should support toHaveText w/ array', async ({ runInlineTest }) => {
       test('fail on repeating array matchers', async ({ page }) => {
         await page.setContent('<div>KekFoo</div>');
         const locator = page.locator('div');
-        await expect(locator).toContainText(['KekFoo', 'KekFoo', 'KekFoo']);
+        await expect(locator).toContainText(['KekFoo', 'KekFoo', 'KekFoo'], { timeout: 1000 });
       });
       `,
   }, { workers: 1 });
