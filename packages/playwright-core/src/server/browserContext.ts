@@ -140,14 +140,22 @@ export abstract class BrowserContext extends SdkObject {
   canResetForReuse(): boolean {
     if (this._closedStatus !== 'open')
       return false;
-    if (this.pages().length < 1)
-      return false;
     return true;
   }
 
-  async resetForReuse(metadata: CallMetadata) {
+  static reusableContextHash(params: channels.BrowserNewContextForReuseParams): string {
+    const paramsCopy = { ...params };
+    for (const key of paramsThatAllowContextReuse)
+      delete paramsCopy[key];
+    return JSON.stringify(paramsCopy);
+  }
+
+  async resetForReuse(metadata: CallMetadata, params: channels.BrowserNewContextForReuseParams) {
     this.setDefaultNavigationTimeout(undefined);
     this.setDefaultTimeout(undefined);
+
+    for (const key of paramsThatAllowContextReuse)
+      (this._options as any)[key] = params[key];
 
     await this._cancelAllRoutesInFlight();
 
@@ -155,10 +163,10 @@ export abstract class BrowserContext extends SdkObject {
     for (const page of otherPages)
       await page.close(metadata);
     // Unless I do this early, setting extra http headers below does not respond.
-    await page._frameManager.closeOpenDialogs();
-    await page.mainFrame().goto(metadata, 'about:blank', { timeout: 0 });
-    await this.removeExposedBindings();
-    await this.removeInitScripts();
+    await page?._frameManager.closeOpenDialogs();
+    await page?.mainFrame().goto(metadata, 'about:blank', { timeout: 0 });
+    await this._removeExposedBindings();
+    await this._removeInitScripts();
     // TODO: following can be optimized to not perform noops.
     if (this._options.permissions)
       await this.grantPermissions(this._options.permissions);
@@ -168,7 +176,7 @@ export abstract class BrowserContext extends SdkObject {
     await this.setGeolocation(this._options.geolocation);
     await this.setOffline(!!this._options.offline);
 
-    await page.resetForReuse(metadata);
+    await page?.resetForReuse(metadata);
   }
 
   _browserClosed() {
@@ -236,7 +244,7 @@ export abstract class BrowserContext extends SdkObject {
     await this.doExposeBinding(binding);
   }
 
-  async removeExposedBindings() {
+  async _removeExposedBindings() {
     for (const key of this._pageBindings.keys()) {
       if (!key.startsWith('__pw'))
         this._pageBindings.delete(key);
@@ -324,7 +332,7 @@ export abstract class BrowserContext extends SdkObject {
     await this.doAddInitScript(script);
   }
 
-  async removeInitScripts(): Promise<void> {
+  async _removeInitScripts(): Promise<void> {
     this.initScripts.splice(0, this.initScripts.length);
     await this.doRemoveInitScripts();
   }
@@ -586,3 +594,11 @@ export function normalizeProxySettings(proxy: types.ProxySettings): types.ProxyS
     bypass = bypass.split(',').map(t => t.trim()).join(',');
   return { ...proxy, server, bypass };
 }
+
+const paramsThatAllowContextReuse: (keyof channels.BrowserNewContextForReuseParams)[] = [
+  'colorScheme',
+  'forcedColors',
+  'reducedMotion',
+  'screen',
+  'viewport'
+];
