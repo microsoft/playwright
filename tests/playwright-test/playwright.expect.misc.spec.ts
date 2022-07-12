@@ -276,6 +276,10 @@ test('should support toContainClass', async ({ runInlineTest }) => {
         \`);
         const locator = page.locator('div');
         await expect(locator).toContainClass('foo');
+        // Leading/trailing whitespace
+        await expect(locator).toContainClass('   foo    ');
+        // empty should not pass
+        await expect(locator).not.toContainClass('');
         await expect(locator).toContainClass('bar');
         await expect(locator).toContainClass('baz');
         await expect(locator).toContainClass('foo baz');

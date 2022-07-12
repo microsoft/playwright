@@ -1277,15 +1277,15 @@ class ExpectedTextMatcher {
   }
 
   private matchesClassList(received: string): boolean {
-    const expected = this.splitClassList(this._string || '');
-    const normalizedReceived = this.splitClassList(received).map(r => this.normalize(r));
-    return expected.every(classListEntry =>
-      normalizedReceived.includes(this.normalize(classListEntry))
-    );
+    const expected = this.normalizeClassList(this._string || '');
+    if (expected.length === 0)
+      return false;
+    const normalizedReceived = this.normalizeClassList(received);
+    return expected.every(classListEntry => normalizedReceived.includes(classListEntry));
   }
 
-  private splitClassList(classList: string): string[] {
-    return classList.split(/\s+/g);
+  private normalizeClassList(classList: string): string[] {
+    return classList.trim().split(/\s+/g).map(c => this.normalize(c)).filter(c => c) as string[];
   }
 
   private normalize(s: string | undefined): string | undefined {
