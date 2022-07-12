@@ -79,7 +79,7 @@ export class InjectedScript {
   private _highlight: Highlight | undefined;
   readonly isUnderTest: boolean;
 
-  constructor(isUnderTest: boolean, stableRafCount: number, browserName: string, customEngines: { name: string, engine: SelectorEngine}[]) {
+  constructor(isUnderTest: boolean, stableRafCount: number, browserName: string, customEngines: { name: string, engine: SelectorEngine }[]) {
     this.isUnderTest = isUnderTest;
     this._evaluator = new SelectorEvaluatorImpl(new Map());
 
@@ -445,7 +445,7 @@ export class InjectedScript {
       element = element.closest('button, [role=button], [role=checkbox], [role=radio]') || element;
     if (behavior === 'follow-label') {
       if (!element.matches('input, textarea, button, select, [role=button], [role=checkbox], [role=radio]') &&
-          !(element as any).isContentEditable) {
+        !(element as any).isContentEditable) {
         // Go up to the label that might be connected to the input/textarea.
         element = element.closest('label') || element;
       }
@@ -1070,7 +1070,7 @@ export class InjectedScript {
       let received: string | undefined;
       if (expression === 'to.have.attribute') {
         received = element.getAttribute(options.expressionArg) || '';
-      } else if (expression === 'to.have.class') {
+      } else if (expression === 'to.have.class' || expression === 'to.contain.class') {
         received = element.classList.toString();
       } else if (expression === 'to.have.css') {
         received = window.getComputedStyle(element).getPropertyValue(options.expressionArg);
@@ -1091,7 +1091,9 @@ export class InjectedScript {
 
       if (received !== undefined && options.expectedText) {
         const matcher = new ExpectedTextMatcher(options.expectedText[0]);
-        return { received, matches: matcher.matches(received) };
+        return { received, matches: matcher.matches(received, {
+          toContainClass: expression === 'to.contain.class',
+        }) };
       }
     }
 
@@ -1111,7 +1113,7 @@ export class InjectedScript {
     let received: string[] | undefined;
     if (expression === 'to.have.text.array' || expression === 'to.contain.text.array')
       received = elements.map(e => options.useInnerText ? (e as HTMLElement).innerText : e.textContent || '');
-    else if (expression === 'to.have.class.array')
+    else if (expression === 'to.have.class.array' || expression === 'to.contain.class.array')
       received = elements.map(e => e.classList.toString());
 
     if (received && options.expectedText) {
@@ -1125,7 +1127,9 @@ export class InjectedScript {
       const matchers = options.expectedText.map(e => new ExpectedTextMatcher(e));
       let mIndex = 0, rIndex = 0;
       while (mIndex < matchers.length && rIndex < received.length) {
-        if (matchers[mIndex].matches(received[rIndex]))
+        if (matchers[mIndex].matches(received[rIndex], {
+          toContainClass: expression === 'to.contain.class.array',
+        }))
           ++mIndex;
         ++rIndex;
       }
@@ -1151,11 +1155,11 @@ function oneLine(s: string): string {
   return s.replace(/\n/g, '↵').replace(/\t/g, '⇆');
 }
 
-const eventType = new Map<string, 'mouse'|'keyboard'|'touch'|'pointer'|'focus'|'drag'>([
+const eventType = new Map<string, 'mouse' | 'keyboard' | 'touch' | 'pointer' | 'focus' | 'drag'>([
   ['auxclick', 'mouse'],
   ['click', 'mouse'],
   ['dblclick', 'mouse'],
-  ['mousedown','mouse'],
+  ['mousedown', 'mouse'],
   ['mouseeenter', 'mouse'],
   ['mouseleave', 'mouse'],
   ['mousemove', 'mouse'],
@@ -1258,7 +1262,9 @@ class ExpectedTextMatcher {
     }
   }
 
-  matches(text: string): boolean {
+  matches(text: string, { toContainClass }: { toContainClass?: boolean } = {}): boolean {
+    if (toContainClass)
+      return this.matchesClassList(text);
     if (!this._regex)
       text = this.normalize(text)!;
     if (this._string !== undefined)
@@ -1268,6 +1274,18 @@ class ExpectedTextMatcher {
     if (this._regex)
       return !!this._regex.test(text);
     return false;
+  }
+
+  private matchesClassList(received: string): boolean {
+    const expected = this.normalizeClassList(this._string || '');
+    if (expected.length === 0)
+      return false;
+    const normalizedReceived = this.normalizeClassList(received);
+    return expected.every(classListEntry => normalizedReceived.includes(classListEntry));
+  }
+
+  private normalizeClassList(classList: string): string[] {
+    return classList.trim().split(/\s+/g).map(c => this.normalize(c)).filter(c => c) as string[];
   }
 
   private normalize(s: string | undefined): string | undefined {
