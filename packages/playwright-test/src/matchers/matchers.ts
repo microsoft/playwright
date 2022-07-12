@@ -23,6 +23,7 @@ import { toBeTruthy } from './toBeTruthy';
 import { toEqual } from './toEqual';
 import { toExpectedTextValues, toMatchText } from './toMatchText';
 import type { ParsedStackTrace } from 'playwright-core/lib/utils/stackTrace';
+import type { ExpectedTextValue } from 'playwright-core/lib/protocol/channels';
 
 interface LocatorEx extends Locator {
   _expect(customStackTrace: ParsedStackTrace, expression: string, options: Omit<FrameExpectOptions, 'expectedValue'> & { expectedValue?: any }): Promise<{ matches: boolean, received?: any, log?: string[] }>;
@@ -160,6 +161,25 @@ export function toHaveClass(
     return toMatchText.call(this, 'toHaveClass', locator, 'Locator', async (isNot, timeout, customStackTrace) => {
       const expectedText = toExpectedTextValues([expected]);
       return await locator._expect(customStackTrace, 'to.have.class', { expectedText, isNot, timeout });
+    }, expected, options);
+  }
+}
+
+export function toContainClass(
+  this: ReturnType<Expect['getState']>,
+  locator: LocatorEx,
+  expected: string | string[],
+  options?: { timeout?: number, ignoreCase?: boolean },
+) {
+  if (Array.isArray(expected)) {
+    return toEqual.call(this, 'toContainClass', locator, 'Locator', async (isNot, timeout, customStackTrace) => {
+      const expectedText: ExpectedTextValue[] = expected.map(expected => ({ classList: expected, ignoreCase: options?.ignoreCase }));
+      return await locator._expect(customStackTrace, 'to.contain.class.array', { expectedText, isNot, timeout });
+    }, expected, options);
+  } else {
+    return toMatchText.call(this, 'toContainClass', locator, 'Locator', async (isNot, timeout, customStackTrace) => {
+      const expectedText: ExpectedTextValue[] = [{ classList: expected, ignoreCase: options?.ignoreCase }];
+      return await locator._expect(customStackTrace, 'to.contain.class', { expectedText, isNot, timeout });
     }, expected, options);
   }
 }

@@ -190,6 +190,7 @@ export type ExpectedTextValue = {
   matchSubstring?: boolean,
   ignoreCase?: boolean,
   normalizeWhiteSpace?: boolean,
+  classList?: string,
 };
 
 export type AXNode = {
