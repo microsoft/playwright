@@ -21,7 +21,7 @@ import { TreeItem } from './treeItem';
 import { msToString } from './uiUtils';
 import { AutoChip } from './chip';
 import { traceImage } from './images';
-import { AttachmentLink } from './links';
+import { AttachmentLink, generateTraceUrl } from './links';
 import { statusIcon } from './statusIcon';
 import type { ImageDiff } from './imageDiffView';
 import { ImageDiffView } from './imageDiffView';
@@ -64,7 +64,8 @@ function groupImageDiffs(screenshots: Set<TestAttachment>): ImageDiff[] {
 export const TestResultView: React.FC<{
   test: TestCase,
   result: TestResult,
-}> = ({ result }) => {
+  anchor: 'video' | 'diff' | '',
+}> = ({ result, anchor }) => {
 
   const { screenshots, videos, traces, otherAttachments, diffs } = React.useMemo(() => {
     const attachments = result?.attachments || [];
@@ -77,6 +78,20 @@ export const TestResultView: React.FC<{
     return { screenshots: [...screenshots], videos, traces, otherAttachments, diffs };
   }, [ result ]);
 
+  const videoRef = React.useRef<HTMLDivElement>(null);
+  const imageDiffRef = React.useRef<HTMLDivElement>(null);
+
+  const [scrolled, setScrolled] = React.useState(false);
+  React.useEffect(() => {
+    if (scrolled)
+      return;
+    setScrolled(true);
+    if (anchor === 'video')
+      videoRef.current?.scrollIntoView({ block: 'start', inline: 'start' });
+    if (anchor === 'diff')
+      imageDiffRef.current?.scrollIntoView({ block: 'start', inline: 'start' });
+  }, [scrolled, anchor, setScrolled, videoRef]);
+
   return <div className='test-result'>
     {!!result.errors.length && <AutoChip header='Errors'>
       {result.errors.map((error, index) => <ErrorMessage key={'test-result-error-message-' + index} error={error}></ErrorMessage>)}
@@ -86,7 +101,7 @@ export const TestResultView: React.FC<{
     </AutoChip>}
 
     {diffs.map((diff, index) =>
-      <AutoChip key={`diff-${index}`} header={`Image mismatch: ${diff.name}`}>
+      <AutoChip key={`diff-${index}`} header={`Image mismatch: ${diff.name}`} targetRef={imageDiffRef}>
         <ImageDiffView key='image-diff' imageDiff={diff}></ImageDiffView>
       </AutoChip>
     )}
@@ -102,14 +117,14 @@ export const TestResultView: React.FC<{
 
     {!!traces.length && <AutoChip header='Traces'>
       {<div>
-        <a href={`trace/index.html?${traces.map((a, i) => `trace=${new URL(a.path!, window.location.href)}`).join('&')}`}>
+        <a href={generateTraceUrl(traces)}>
           <img src={traceImage} style={{ width: 192, height: 117, marginLeft: 20 }} />
         </a>
         {traces.map((a, i) => <AttachmentLink key={`trace-${i}`} attachment={a} linkName={traces.length === 1 ? 'trace' : `trace-${i + 1}`}></AttachmentLink>)}
       </div>}
     </AutoChip>}
 
-    {!!videos.length && <AutoChip header='Videos'>
+    {!!videos.length && <AutoChip header='Videos' targetRef={videoRef}>
       {videos.map((a, i) => <div key={`video-${i}`}>
         <video controls>
           <source src={a.path} type={a.contentType}/>

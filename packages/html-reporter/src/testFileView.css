@@ -15,8 +15,7 @@
 */
 
 .test-file-test {
-  height: 38px;
-  line-height: 38px;
+  line-height: 32px;
   align-items: center;
   padding: 0 10px;
   white-space: nowrap;
@@ -28,9 +27,24 @@
   background-color: var(--color-canvas-subtle);
 }
 
-.test-file-path {
+.test-file-title {
+  font-weight: 500;
+}
+
+.test-file-details-row {
   padding: 0 0 0 8px;
-  color: var(--color-fg-muted);
+  margin-left: 15px;
+  margin-top: -11px;
+  font-weight: normal;
+  color: var(--color-fg-subtle);
+}
+
+.test-file-path {
+  margin-right: 7px;
+}
+
+.test-file-badge {
+  margin-left: 7px;
 }
 
 .test-file-test-outcome-skipped {

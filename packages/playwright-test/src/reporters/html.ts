@@ -79,9 +79,14 @@ export type TestCaseSummary = {
   outcome: 'skipped' | 'expected' | 'unexpected' | 'flaky';
   duration: number;
   ok: boolean;
+  results: TestResultSummary[];
 };
 
-export type TestCase = TestCaseSummary & {
+export type TestResultSummary = {
+  attachments: { name: string, contentType: string, path?: string }[];
+};
+
+export type TestCase = Omit<TestCaseSummary, 'results'> & {
   results: TestResult[];
 };
 
@@ -91,7 +96,6 @@ export type TestAttachment = {
   path?: string;
   contentType: string;
 };
-
 
 export type TestResult = {
   retry: number;
@@ -399,6 +403,8 @@ class HtmlBuilder {
     path = [...path.slice(1)];
     this._testPath.set(test.testId, path);
 
+    const results = test.results.map(r => this._createTestResult(r));
+
     return {
       testCase: {
         testId: test.testId,
@@ -409,7 +415,7 @@ class HtmlBuilder {
         annotations: test.annotations,
         outcome: test.outcome,
         path,
-        results: test.results.map(r => this._createTestResult(r)),
+        results,
         ok: test.outcome === 'expected' || test.outcome === 'flaky',
       },
       testCaseSummary: {
@@ -422,6 +428,9 @@ class HtmlBuilder {
         outcome: test.outcome,
         path,
         ok: test.outcome === 'expected' || test.outcome === 'flaky',
+        results: results.map(result => {
+          return { attachments: result.attachments.map(a => ({ name: a.name, contentType: a.contentType, path: a.path })) };
+        }),
       },
     };
   }
