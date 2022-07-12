@@ -27,7 +27,7 @@ import { assert, calculateSha1 } from 'playwright-core/lib/utils';
 import type { AddressInfo } from 'net';
 
 let previewServer: PreviewServer;
-const VERSION = 5;
+const VERSION = 6;
 
 type CtConfig = {
   ctPort?: number;
@@ -88,7 +88,6 @@ export function createPlugin(
       const sourcesDirty = !buildExists || hasNewComponents || await checkSources(buildInfo);
 
       viteConfig.root = rootDir;
-      viteConfig.publicDir = false;
       viteConfig.preview = { port };
       viteConfig.build = {
         outDir
