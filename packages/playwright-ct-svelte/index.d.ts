@@ -34,9 +34,15 @@ export type PlaywrightTestConfig = Omit<BasePlaywrightTestConfig, 'use'> & {
   }
 };
 
-export interface ComponentFixtures {
-  mount<Props = { [key: string]: any }>(component: any, options?: {
-    props?: Props,
+interface ComponentFixtures {
+  mount(component: any, options?: {
+    props?: { [key: string]: any },
+    slots?: { [key: string]: any },
+    on?: { [key: string]: Function },
+    hooksConfig: any,
+  }): Promise<Locator>;
+  mount<Props>(component: any, options: {
+    props: Props,
     slots?: { [key: string]: any },
     on?: { [key: string]: Function },
     hooksConfig: any,
