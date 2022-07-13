@@ -105,34 +105,39 @@ And a Page that simply registers the Service Worker:
 </script>
 ```
 
-On the first visit to the page via [`method: Page.goto`], there would be the following events emitted:
+On the first visit to the page via [`method: Page.goto`], the following Request/Response events would be emitted:
 
-| URL | Association |[`event: BrowserContext.request`] | [`event: Page.request`] | Routeable |
-| - | - | - | - | - |
-| `/index.html` | Frame | Yes | Yes | Yes |
-| `/sevice-worker-main.js` | Service Worker | Yes | No | Yes |
-| `/addressbook.json` | Service Worker | Yes | No | Yes | 
+| Scope   | Target         | URL                       | Routed | fromServiceWorker |
+| -       | -              | -                         | -      | -                 |
+| Context | Frame          | index.html                | Yes    |                   |
+| Page    | Frame          | index.html                | Yes    |                   |
+| Context | Service Worker | service-worker-main.js    | Yes    |                   |
+| Context | Service Worker | addressbook.json          | Yes    |                   |
 
 
 Once the Service Worker is activated and handling FetchEvents, if the page makes the following requests:
 
 ```js
 await page.evaluate(() => fetch('./addressbook.json'));
-await page.evaluate(() => fetch('./example.jpg'));
+await page.evaluate(() => fetch('./foo'));
 await page.evaluate(() => fetch('./tracker.js'));
 await page.evaluate(() => fetch('./fallthrough.txt'));
 ```
 
-The following events would be emitted:
+The following Request/Response events would be emitted:
 
-| URL | Association |[`event: BrowserContext.request`] | [`event: Page.request`] | Routeable |
-| - | - | - | - | - |
-| `/addressbook.json` | Frame |  Yes | Yes | No |
-| `/example.jpg` | Frame | Yes | Yes | No |
-| `/example.png` | Service Worker | Yes | No | Yes |
-| `/tracker.js` | Frame | Yes | Yes | No |
-| `/fallthrough.txt` | Frame | Yes | Yes | No |
-| `/fallthrough.txt` | Service Worker | Yes | No | Yes |
+| Scope   | Target         | URL                       | Routed | fromServiceWorker |
+| -       | -              | -                         | -      | -                 |
+| Context | Frame          | addressbook.json          |        | Yes               |
+| Page    | Frame          | addressbook.json          |        | Yes               |
+| Context | Service Worker | bar                       | Yes    |                   |
+| Context | Frame          | foo                       |        | Yes               |
+| Page    | Frame          | foo                       |        | Yes               |
+| Context | Frame          | tracker.js                |        | Yes               |
+| Page    | Frame          | tracker.js                |        | Yes               |
+| Context | Service Worker | fallthrough.txt           | Yes    |                   |
+| Context | Frame          | fallthrough.txt           |        | Yes               |
+| Page    | Frame          | fallthrough.txt           |        | Yes               |
 
 ## Routing Service Worker Requests Only
 

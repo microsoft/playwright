@@ -234,21 +234,19 @@ test('should intercept only serviceworker request, not page', async ({ context, 
 });
 
 test('doc claims should be accurate', async ({ page, context, server }) => {
-  const formatRequest = async (r: any) => `[${r.serviceWorker() ? 'SW   ' : 'FRAME'}] ${r.url().split('/').pop().padEnd(25, ' ')} fromServiceWorker: ${(await r.response()).fromServiceWorker()}`;
-  const contextRouted = [];
-  const pageRouted = [];
+  const routed = [];
+  const formatRequest = async ([scope, r]: ['Page' | 'Context', any]) => `| ${scope.padEnd(7, ' ')} | ${r.serviceWorker() ? 'Service Worker' : 'Frame         '} | ${r.url().split('/').pop().padEnd(25, ' ')} | ${(routed.includes(r) ? 'Yes' : '').padEnd('Routed'.length, ' ')} | ${((await r.response()).fromServiceWorker() ? 'Yes' : '').padEnd('fromServiceWorker'.length, ' ')} |`;
   await context.route('**', async route => {
-    contextRouted.push(formatRequest(route.request()));
+    routed.push(route.request());
     await route.continue();
   });
   await page.route('**', async route => {
-    pageRouted.push(formatRequest(route.request()));
+    routed.push(route.request());
     await route.continue();
   });
-  const contextRequests = [];
-  const pageRequests = [];
-  context.on('request', r => contextRequests.push(formatRequest(r)));
-  page.on('request', r => pageRequests.push(formatRequest(r)));
+  const requests = [];
+  page.on('request', r => requests.push(['Page', r]));
+  context.on('request', r => requests.push(['Context', r]));
 
   const [ sw ] = await Promise.all([
     context.waitForEvent('serviceworker'),
@@ -262,33 +260,26 @@ test('doc claims should be accurate', async ({ page, context, server }) => {
   await page.evaluate(() => fetch('./tracker.js'));
   await page.evaluate(() => fetch('./fallthrough.txt'));
 
-  expect(await Promise.all(contextRequests)).toEqual([
-    '[FRAME] index.html                fromServiceWorker: false',
-    '[SW   ] service-worker-main.js    fromServiceWorker: false',
-    '[SW   ] addressbook.json          fromServiceWorker: false',
-    '[FRAME] addressbook.json          fromServiceWorker: true',
-    '[SW   ] bar                       fromServiceWorker: false',
-    '[FRAME] foo                       fromServiceWorker: true',
-    '[FRAME] tracker.js                fromServiceWorker: true',
-    '[SW   ] fallthrough.txt           fromServiceWorker: false',
-    '[FRAME] fallthrough.txt           fromServiceWorker: true',
-  ]);
-  expect(await Promise.all(pageRequests)).toEqual([
-    '[FRAME] index.html                fromServiceWorker: false',
-    '[FRAME] addressbook.json          fromServiceWorker: true',
-    '[FRAME] foo                       fromServiceWorker: true',
-    '[FRAME] tracker.js                fromServiceWorker: true',
-    '[FRAME] fallthrough.txt           fromServiceWorker: true',
-  ]);
-  expect(await Promise.all(contextRouted)).toEqual([
-    '[SW   ] service-worker-main.js    fromServiceWorker: false',
-    '[SW   ] addressbook.json          fromServiceWorker: false',
-    '[SW   ] bar                       fromServiceWorker: false',
-    '[SW   ] fallthrough.txt           fromServiceWorker: false',
-  ]);
-  expect(await Promise.all(pageRouted)).toEqual([
-    '[FRAME] index.html                fromServiceWorker: false',
-  ]);
+  expect([
+    '| Scope   | Target         | URL                       | Routed | fromServiceWorker |',
+    ...await Promise.all(requests.map(formatRequest))])
+      .toEqual([
+        '| Scope   | Target         | URL                       | Routed | fromServiceWorker |',
+        '| Context | Frame          | index.html                | Yes    |                   |',
+        '| Page    | Frame          | index.html                | Yes    |                   |',
+        '| Context | Service Worker | service-worker-main.js    | Yes    |                   |',
+        '| Context | Service Worker | addressbook.json          | Yes    |                   |',
+        '| Context | Frame          | addressbook.json          |        | Yes               |',
+        '| Page    | Frame          | addressbook.json          |        | Yes               |',
+        '| Context | Service Worker | bar                       | Yes    |                   |',
+        '| Context | Frame          | foo                       |        | Yes               |',
+        '| Page    | Frame          | foo                       |        | Yes               |',
+        '| Context | Frame          | tracker.js                |        | Yes               |',
+        '| Page    | Frame          | tracker.js                |        | Yes               |',
+        '| Context | Service Worker | fallthrough.txt           | Yes    |                   |',
+        '| Context | Frame          | fallthrough.txt           |        | Yes               |',
+        '| Page    | Frame          | fallthrough.txt           |        | Yes               |',
+      ]);
 });
 
 test('should emit new service worker on update', async ({ context, page, server }) => {
