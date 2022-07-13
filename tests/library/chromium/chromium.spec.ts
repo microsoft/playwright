@@ -233,6 +233,172 @@ test('should intercept only serviceworker request, not page', async ({ context, 
   expect(response).toBe('from sw');
 });
 
+test('should produce network events, routing, and annotations for Service Worker', async ({ page, context, server }) => {
+  server.setRoute('/index.html', (req, res) => {
+    res.write(`
+      <script>
+        window.registrationPromise = navigator.serviceWorker.register('/transparent-service-worker.js');
+      </script>    
+    `);
+    res.end();
+  });
+  server.setRoute('/transparent-service-worker.js', (req, res) => {
+    res.writeHead(200, 'OK', { 'Content-Type': 'text/javascript' });
+    res.write(`
+      self.addEventListener("fetch", (event) => {
+        // actually make the request
+        const responsePromise = fetch(event.request); 
+        // send it back to the page
+        event.respondWith(responsePromise);
+      });
+      
+      self.addEventListener("activate", (event) => {
+        event.waitUntil(clients.claim());
+      });
+    `);
+    res.end();
+  });
+
+  const routed = [];
+  const formatRequest = async ([scope, r]: ['page' | 'context', any]) => `| ${(scope === 'page' ? '[`event: Page.request`]' : '[`event: BrowserContext.request`]').padEnd('[`event: BrowserContext.request`]'.length, ' ')} | ${r.serviceWorker() ? 'Service [Worker]' : '[Frame]'.padEnd('Service [Worker]'.length, ' ')} | ${r.url().split('/').pop().padEnd(30, ' ')} | ${(routed.includes(r) ? 'Yes' : '').padEnd('Routed'.length, ' ')} | ${((await r.response()).fromServiceWorker() ? 'Yes' : '').padEnd('[`method: Response.fromServiceWorker`]'.length, ' ')} |`;
+  await context.route('**', async route => {
+    routed.push(route.request());
+    await route.continue();
+  });
+  await page.route('**', async route => {
+    routed.push(route.request());
+    await route.continue();
+  });
+  const requests = [];
+  page.on('request', r => requests.push(['page', r]));
+  context.on('request', r => requests.push(['context', r]));
+
+  const [ sw ] = await Promise.all([
+    context.waitForEvent('serviceworker'),
+    page.goto(server.PREFIX + '/index.html'),
+  ]);
+
+  await expect.poll(() => sw.evaluate(() => (self as any).registration.active?.state)).toBe('activated');
+
+  await page.evaluate(() => fetch('/data.json'));
+
+  expect([
+    '| Event                             | Owner            | URL                            | Routed | [`method: Response.fromServiceWorker`] |',
+    ...await Promise.all(requests.map(formatRequest))])
+      .toEqual([
+        '| Event                             | Owner            | URL                            | Routed | [`method: Response.fromServiceWorker`] |',
+        '| [`event: BrowserContext.request`] | [Frame]          | index.html                     | Yes    |                                        |',
+        '| [`event: Page.request`]           | [Frame]          | index.html                     | Yes    |                                        |',
+        '| [`event: BrowserContext.request`] | Service [Worker] | transparent-service-worker.js  | Yes    |                                        |',
+        '| [`event: BrowserContext.request`] | Service [Worker] | data.json                      | Yes    |                                        |',
+        '| [`event: BrowserContext.request`] | [Frame]          | data.json                      |        | Yes                                    |',
+        '| [`event: Page.request`]           | [Frame]          | data.json                      |        | Yes                                    |',
+      ]);
+});
+
+test('should produce network events, routing, and annotations for Service Worker (advanced)', async ({ page, context, server }) => {
+  server.setRoute('/index.html', (req, res) => {
+    res.write(`
+      <script>
+        window.registrationPromise = navigator.serviceWorker.register('/complex-service-worker.js');
+      </script>    
+    `);
+    res.end();
+  });
+  server.setRoute('/complex-service-worker.js', (req, res) => {
+    res.writeHead(200, 'OK', { 'Content-Type': 'text/javascript' });
+    res.write(`
+      self.addEventListener("install", function (event) {
+        event.waitUntil(
+          caches.open("v1").then(function (cache) {
+            // 1. Pre-fetches and caches /addressbook.json
+            return cache.add("/addressbook.json");
+          })
+        );
+      });
+      
+      // Opt to handle FetchEvent's from the page
+      self.addEventListener("fetch", (event) => {
+        event.respondWith(
+          (async () => {
+            // 1. Try to first serve directly from caches
+            let response = await caches.match(event.request);
+            if (response) return response;
+      
+            // 2. Re-write request for /foo to /bar
+            if (event.request.url.endsWith("foo")) return fetch("./bar");
+      
+            // 3. Prevent tracker.js from being retrieved, and returns a placeholder response
+            if (event.request.url.endsWith("tracker.js"))
+              return new Response('conosole.log("no trackers!")', {
+                status: 200,
+                headers: { "Content-Type": "text/javascript" },
+              });
+      
+            // 4. Otherwise, fallthrough, perform the fetch and respond
+            return fetch(event.request);
+          })()
+        );
+      });
+      
+      self.addEventListener("activate", (event) => {
+        event.waitUntil(clients.claim());
+      });
+    `);
+    res.end();
+  });
+  server.setRoute('/addressbook.json', (req, res) => {
+    res.write('{}');
+    res.end();
+  });
+
+  const routed = [];
+  const formatRequest = async ([scope, r]: ['page' | 'context', any]) => `| ${(scope === 'page' ? '[`event: Page.request`]' : '[`event: BrowserContext.request`]').padEnd('[`event: BrowserContext.request`]'.length, ' ')} | ${r.serviceWorker() ? 'Service [Worker]' : '[Frame]'.padEnd('Service [Worker]'.length, ' ')} | ${r.url().split('/').pop().padEnd(30, ' ')} | ${(routed.includes(r) ? 'Yes' : '').padEnd('Routed'.length, ' ')} | ${((await r.response()).fromServiceWorker() ? 'Yes' : '').padEnd('[`method: Response.fromServiceWorker`]'.length, ' ')} |`;
+  await context.route('**', async route => {
+    routed.push(route.request());
+    await route.continue();
+  });
+  await page.route('**', async route => {
+    routed.push(route.request());
+    await route.continue();
+  });
+  const requests = [];
+  page.on('request', r => requests.push(['page', r]));
+  context.on('request', r => requests.push(['context', r]));
+
+  const [ sw ] = await Promise.all([
+    context.waitForEvent('serviceworker'),
+    page.goto(server.PREFIX + '/index.html'),
+  ]);
+
+  await expect.poll(() => sw.evaluate(() => (self as any).registration.active?.state)).toBe('activated');
+
+  await page.evaluate(() => fetch('/addressbook.json'));
+  await page.evaluate(() => fetch('/foo'));
+  await page.evaluate(() => fetch('/tracker.js'));
+  await page.evaluate(() => fetch('/fallthrough.txt'));
+
+  expect([
+    '| Event                             | Owner            | URL                            | Routed | [`method: Response.fromServiceWorker`] |',
+    ...await Promise.all(requests.map(formatRequest))])
+      .toEqual([
+        '| Event                             | Owner            | URL                            | Routed | [`method: Response.fromServiceWorker`] |',
+        '| [`event: BrowserContext.request`] | [Frame]          | index.html                     | Yes    |                                        |',
+        '| [`event: Page.request`]           | [Frame]          | index.html                     | Yes    |                                        |',
+        '| [`event: BrowserContext.request`] | Service [Worker] | complex-service-worker.js      | Yes    |                                        |',
+        '| [`event: BrowserContext.request`] | Service [Worker] | addressbook.json               | Yes    |                                        |',
+        '| [`event: BrowserContext.request`] | [Frame]          | addressbook.json               |        | Yes                                    |',
+        '| [`event: Page.request`]           | [Frame]          | addressbook.json               |        | Yes                                    |',
+        '| [`event: BrowserContext.request`] | Service [Worker] | bar                            | Yes    |                                        |',
+        '| [`event: BrowserContext.request`] | [Frame]          | foo                            |        | Yes                                    |',
+        '| [`event: Page.request`]           | [Frame]          | foo                            |        | Yes                                    |',
+        '| [`event: BrowserContext.request`] | [Frame]          | tracker.js                     |        | Yes                                    |',
+        '| [`event: Page.request`]           | [Frame]          | tracker.js                     |        | Yes                                    |',
+        '| [`event: BrowserContext.request`] | Service [Worker] | fallthrough.txt                | Yes    |                                        |',
+        '| [`event: BrowserContext.request`] | [Frame]          | fallthrough.txt                |        | Yes                                    |',
+        '| [`event: Page.request`]           | [Frame]          | fallthrough.txt                |        | Yes                                    |'  ]);
+});
+
 test('should emit new service worker on update', async ({ context, page, server }) => {
   let version = 0;
   server.setRoute('/worker.js', (req, res) => {
