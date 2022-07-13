@@ -16,7 +16,7 @@
 
 import fs from 'fs';
 import url from 'url';
-import { transformHook, resolveHook } from './transform';
+import { transformHook, resolveHook, belongsToNodeModules } from './transform';
 
 async function resolve(specifier: string, context: { parentURL: string }, defaultResolve: any) {
   if (context.parentURL && context.parentURL.startsWith('file://')) {
@@ -29,13 +29,27 @@ async function resolve(specifier: string, context: { parentURL: string }, defaul
 }
 
 async function load(moduleUrl: string, context: any, defaultLoad: any) {
-  if (moduleUrl.startsWith('file://') && (moduleUrl.endsWith('.ts') || moduleUrl.endsWith('.tsx'))) {
-    const filename = url.fileURLToPath(moduleUrl);
-    const code = fs.readFileSync(filename, 'utf-8');
-    const source = transformHook(code, filename, moduleUrl);
-    return { format: 'module', source };
-  }
-  return defaultLoad(moduleUrl, context, defaultLoad);
+  // Bail out for wasm, json, etc.
+  // non-js files have context.format === undefined
+  if (context.format !== 'commonjs' && context.format !== 'module' && context.format !== undefined)
+    return defaultLoad(moduleUrl, context, defaultLoad);
+
+  // Bail for built-in modules.
+  if (!moduleUrl.startsWith('file://'))
+    return defaultLoad(moduleUrl, context, defaultLoad);
+
+  if (!moduleUrl.startsWith('file://'))
+    return defaultLoad(moduleUrl, context, defaultLoad);
+
+  const filename = url.fileURLToPath(moduleUrl);
+  // Bail for node_modules.
+  if (belongsToNodeModules(filename))
+    return defaultLoad(moduleUrl, context, defaultLoad);
+
+  const code = fs.readFileSync(filename, 'utf-8');
+  const source = transformHook(code, filename, moduleUrl);
+  // Output format is always the same as input format, if it was unknown, we always report modules.
+  return { format: context.format || 'module', source };
 }
 
 module.exports = { resolve, load };

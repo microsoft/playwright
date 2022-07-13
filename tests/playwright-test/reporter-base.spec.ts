@@ -261,8 +261,9 @@ test('should print errors with inconsistent message/stack', async ({ runInlineTe
   });
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
-  expect(result.output).toContain('hi!Error: Hello');
-  expect(result.output).toContain('at myTest');
+  const output = stripAnsi(result.output);
+  expect(output).toContain('hi!Error: Hello');
+  expect(output).toContain('function myTest');
 });
 
 test('should print "no tests found" error', async ({ runInlineTest }) => {
