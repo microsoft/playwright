@@ -68,30 +68,27 @@ self.addEventListener("install", function (event) {
 });
 
 // Opt to handle FetchEvent's from the page
-self.addEventListener("fetch", async (event) => {
-  // 1. Serves requests directly from the cache
-  let response = await caches.match(event.request);
-  if (response) return event.respondWith(response);
+self.addEventListener("fetch", (event) => {
+  event.respondWith(
+    (async () => {
+      // 1. Try to first serve directly from caches
+      let response = await caches.match(event.request);
+      if (response) return response;
 
-  // 2. Re-write any requests ending with `.jpg` to `.png` before `fetch`ing them
-  if (event.request.url.endsWith(".jpg")) {
-    const rewritten = event.request.clone();
-    rewritten.url = rewritten.url.replace(".jpg", ".png");
-    const response = fetch(rewritten);
-    return event.respondWith(response);
-  }
+      // 2. Re-write request for /foo to /bar
+      if (event.request.url.endsWith("foo")) return fetch("./bar");
 
-  // 3. Prevent `tracker.js` from being retrieved, and returns a placeholder response
-  if (event.request.url.endsWith("tracker.js"))
-    return event.respondWith(
-      new Response('conosole.log("no trackers!")', {
-        status: 200,
-        headers: { "Content-Type": "text/javascript" },
-      })
-    );
+      // 3. Prevent `tracker.js` from being retrieved, and returns a placeholder response
+      if (event.request.url.endsWith("tracker.js"))
+        return new Response('conosole.log("no trackers!")', {
+          status: 200,
+          headers: { "Content-Type": "text/javascript" },
+        });
 
-  // 4. Otherwise, fallthrough, perform the fetch and respond
-  event.respondWith(fetch(event.request));
+      // 4. Otherwise, fallthrough, perform the fetch and respond
+      return fetch(event.request);
+    })()
+  );
 });
 
 self.addEventListener("activate", (event) => {

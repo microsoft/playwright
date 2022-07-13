@@ -238,17 +238,17 @@ test('doc claims should be accurate', async ({ page, context, server }) => {
   const contextRouted = [];
   const pageRouted = [];
   await context.route('**', async route => {
-    contextRouted.push(route.request());
+    contextRouted.push(formatRequest(route.request()));
     await route.continue();
   });
   await page.route('**', async route => {
-    pageRouted.push(route.request());
+    pageRouted.push(formatRequest(route.request()));
     await route.continue();
   });
   const contextRequests = [];
   const pageRequests = [];
-  context.on('request', r => contextRequests.push(r));
-  page.on('request', r => pageRequests.push(r));
+  context.on('request', r => contextRequests.push(formatRequest(r)));
+  page.on('request', r => pageRequests.push(formatRequest(r)));
 
   const [ sw ] = await Promise.all([
     context.waitForEvent('serviceworker'),
@@ -258,40 +258,36 @@ test('doc claims should be accurate', async ({ page, context, server }) => {
   await expect.poll(() => sw.evaluate(() => (self as any).registration.active?.state)).toBe('activated');
 
   await page.evaluate(() => fetch('./addressbook.json'));
-  await page.evaluate(() => fetch('./example.jpg'));
+  await page.evaluate(() => fetch('./foo'));
   await page.evaluate(() => fetch('./tracker.js'));
   await page.evaluate(() => fetch('./fallthrough.txt'));
 
-  expect(await Promise.all(contextRequests.map(formatRequest))).toEqual([
+  expect(await Promise.all(contextRequests)).toEqual([
     '[FRAME] index.html                fromServiceWorker: false',
     '[SW   ] service-worker-main.js    fromServiceWorker: false',
     '[SW   ] addressbook.json          fromServiceWorker: false',
-    '[FRAME] addressbook.json          fromServiceWorker: false',
-    '[FRAME] example.jpg               fromServiceWorker: false',
-    '[SW   ] example.jpg               fromServiceWorker: false',
-    '[FRAME] tracker.js                fromServiceWorker: false',
-    '[FRAME] fallthrough.txt           fromServiceWorker: false',
+    '[FRAME] addressbook.json          fromServiceWorker: true',
+    '[SW   ] bar                       fromServiceWorker: false',
+    '[FRAME] foo                       fromServiceWorker: true',
+    '[FRAME] tracker.js                fromServiceWorker: true',
     '[SW   ] fallthrough.txt           fromServiceWorker: false',
+    '[FRAME] fallthrough.txt           fromServiceWorker: true',
   ]);
-  expect(await Promise.all(pageRequests.map(formatRequest))).toEqual([
+  expect(await Promise.all(pageRequests)).toEqual([
     '[FRAME] index.html                fromServiceWorker: false',
-    '[FRAME] addressbook.json          fromServiceWorker: false',
-    '[FRAME] example.jpg               fromServiceWorker: false',
-    '[FRAME] tracker.js                fromServiceWorker: false',
-    '[FRAME] fallthrough.txt           fromServiceWorker: false',
+    '[FRAME] addressbook.json          fromServiceWorker: true',
+    '[FRAME] foo                       fromServiceWorker: true',
+    '[FRAME] tracker.js                fromServiceWorker: true',
+    '[FRAME] fallthrough.txt           fromServiceWorker: true',
   ]);
-  expect(await Promise.all(contextRouted.map(formatRequest))).toEqual([
+  expect(await Promise.all(contextRouted)).toEqual([
     '[SW   ] service-worker-main.js    fromServiceWorker: false',
     '[SW   ] addressbook.json          fromServiceWorker: false',
-    '[SW   ] example.jpg               fromServiceWorker: false',
+    '[SW   ] bar                       fromServiceWorker: false',
     '[SW   ] fallthrough.txt           fromServiceWorker: false',
   ]);
-  expect(await Promise.all(pageRouted.map(formatRequest))).toEqual([
+  expect(await Promise.all(pageRouted)).toEqual([
     '[FRAME] index.html                fromServiceWorker: false',
-    '[FRAME] addressbook.json          fromServiceWorker: false',
-    '[FRAME] example.jpg               fromServiceWorker: false',
-    '[FRAME] tracker.js                fromServiceWorker: false',
-    '[FRAME] fallthrough.txt           fromServiceWorker: false',
   ]);
 });
 
