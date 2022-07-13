@@ -17,10 +17,6 @@ Many sites that use Service Workers simply use them as a transparent optimizatio
 1. Listen for and route network traffic via Playwright, whether it comes from a Service Worker or not. In Firefox and WebKit, set [`option: Browser.newContext.serviceWorkers`] to `'block'` to avoid Service Worker network traffic entirely. In Chromium, either block Service Workers or use [`method: BrowserContext.route`].
 1. (Chromium-only) Test your Service Worker implementation itself. Use [`method: BrowserContext.serviceWorkers`] to get access to the Service Worker and evaluate there.
 
-## Disabling Service Workers
-
-Set [`option: Browser.newContext.serviceWorkers`] to `'block'`.
-
 
 ## Service Worker Fetch
 
