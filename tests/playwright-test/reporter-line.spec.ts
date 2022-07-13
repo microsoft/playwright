@@ -37,13 +37,12 @@ test('should work with tty', async ({ runInlineTest }, testInfo) => {
     PW_TEST_DEBUG_REPORTERS: '1',
   });
   expect(result.exitCode).toBe(1);
-  expect(trimLineEnds(result.output)).toContain(trimLineEnds(`<lineup><erase><lineup><erase>a.test.js:6:12 › skipped test
-[1/4] Passed: 0 Flaky: 0 Failed: 0 Skipped: 0 (XXms)
-<lineup><erase><lineup><erase>a.test.js:8:7 › flaky test
-[2/4] Passed: 0 Flaky: 0 Failed: 0 Skipped: 1 (XXms)
-<lineup><erase><lineup><erase>a.test.js:8:7 › flaky test (retry #1)
-[3/4] Passed: 0 Flaky: 0 Failed: 0 Skipped: 1 (XXms)
-<lineup><erase><lineup><erase>  1) a.test.js:8:7 › flaky test ====================================================================
+  expect(trimLineEnds(result.output)).toContain(trimLineEnds(`Running 4 tests using 1 worker
+
+<lineup><erase>[1/4] a.test.js:6:12 › skipped test
+<lineup><erase>[2/4] a.test.js:8:7 › flaky test
+<lineup><erase>[3/4] a.test.js:8:7 › flaky test (retry #1)
+<lineup><erase>  1) a.test.js:8:7 › flaky test ====================================================================
 
     Error: expect(received).toBe(expected) // Object.is equality
 
@@ -61,14 +60,10 @@ test('should work with tty', async ({ runInlineTest }, testInfo) => {
         at ${testInfo.outputPath('a.test.js')}:9:32
 
 
-[3/4] Passed: 0 Flaky: 1 Failed: 0 Skipped: 1 (XXms)
-<lineup><erase><lineup><erase>a.test.js:11:7 › passing test
-[4/4] Passed: 0 Flaky: 1 Failed: 0 Skipped: 1 (XXms)
-<lineup><erase><lineup><erase>a.test.js:13:7 › failing test
-[5/4+retries] Passed: 1 Flaky: 1 Failed: 0 Skipped: 1 (XXms)
-<lineup><erase><lineup><erase>a.test.js:13:7 › failing test (retry #1)
-[6/4+retries] Passed: 1 Flaky: 1 Failed: 0 Skipped: 1 (XXms)
-<lineup><erase><lineup><erase>  2) a.test.js:13:7 › failing test =================================================================
+<lineup><erase>[4/4] a.test.js:11:7 › passing test
+<lineup><erase>[5/4] (retries) a.test.js:13:7 › failing test
+<lineup><erase>[6/4] (retries) a.test.js:13:7 › failing test (retry #1)
+<lineup><erase>  2) a.test.js:13:7 › failing test =================================================================
 
     Error: expect(received).toBe(expected) // Object.is equality
 
@@ -101,8 +96,7 @@ test('should work with tty', async ({ runInlineTest }, testInfo) => {
         at ${testInfo.outputPath('a.test.js')}:14:19
 
 
-[6/4+retries] Passed: 1 Flaky: 1 Failed: 1 Skipped: 1 (XXms)
-<lineup><erase><lineup><erase>
+<lineup><erase>
   1 failed
     a.test.js:13:7 › failing test ==================================================================
   1 flaky
@@ -132,9 +126,9 @@ test('should work with non-tty', async ({ runInlineTest }, testInfo) => {
   });
   expect(result.exitCode).toBe(1);
   expect(trimLineEnds(result.output)).toContain(trimLineEnds(`Running 4 tests using 1 worker
-[1/4] Passed: 0 Flaky: 0 Failed: 0 Skipped: 0 (XXms)
-[2/4] Passed: 0 Flaky: 0 Failed: 0 Skipped: 1 (XXms)
-[3/4] Passed: 0 Flaky: 0 Failed: 0 Skipped: 1 (XXms)
+[25%] a.test.js:6:12 › skipped test
+[50%] a.test.js:8:7 › flaky test
+[75%] a.test.js:8:7 › flaky test (retry #1)
   1) a.test.js:8:7 › flaky test ====================================================================
 
     Error: expect(received).toBe(expected) // Object.is equality
@@ -153,7 +147,7 @@ test('should work with non-tty', async ({ runInlineTest }, testInfo) => {
         at ${testInfo.outputPath('a.test.js')}:9:32
 
 
-[4/4] Passed: 0 Flaky: 1 Failed: 0 Skipped: 1 (XXms)
+[99%] a.test.js:11:7 › passing test
   2) a.test.js:13:7 › failing test =================================================================
 
     Error: expect(received).toBe(expected) // Object.is equality
@@ -187,7 +181,7 @@ test('should work with non-tty', async ({ runInlineTest }, testInfo) => {
         at ${testInfo.outputPath('a.test.js')}:14:19
 
 
-[6/4+retries] Passed: 1 Flaky: 1 Failed: 1 Skipped: 1 (XXms)
+[100%]
 
   1 failed
     a.test.js:13:7 › failing test ==================================================================
@@ -210,10 +204,10 @@ test('should spare status updates in non-tty mode', async ({ runInlineTest }) =>
     PW_TEST_DEBUG_REPORTERS: '1',
   });
   expect(result.exitCode).toBe(0);
-  const lines = [`Running 300 tests using 1 worker`, `[1/300] Passed: 0 Flaky: 0 Failed: 0 Skipped: 0 (XXms)`];
-  for (let i = 0; i < 99; i++)
-    lines.push(`[${3 * i + 2}/300] Passed: ${3 * i + 1} Flaky: 0 Failed: 0 Skipped: 0 (XXms)`);
-  lines.push('[300/300] Passed: 300 Flaky: 0 Failed: 0 Skipped: 0 (XXms)');
+  const lines = [`Running 300 tests using 1 worker`, `[0%] a.test.js:7:9 › test0`];
+  for (let i = 1; i <= 99; i++)
+    lines.push(`[${i}%] a.test.js:7:9 › test${3 * i - 2}`);
+  lines.push('[100%]');
   lines.push('');
   lines.push('  300 passed');
   expect(trimLineEnds(result.output)).toContain(lines.join('\n'));
@@ -228,21 +222,15 @@ test('should print output', async ({ runInlineTest }) => {
         process.stdout.write('two');
         console.log('full-line');
       });
-      test('one more', async ({}, testInfo) => {
-        console.log('yay');
-      });
     `
-  }, { reporter: 'line' }, { PW_TEST_DEBUG_REPORTERS: '1' });
+  }, { reporter: 'line' });
   expect(result.exitCode).toBe(0);
   expect(stripAnsi(result.output)).toContain([
-    '[1/2] Passed: 0 Flaky: 0 Failed: 0 Skipped: 0 (XXms)',
     'a.spec.ts:6:7 › foobar',
     'one',
+    '',
     'two',
+    '',
     'full-line',
-    '[2/2] Passed: 1 Flaky: 0 Failed: 0 Skipped: 0 (XXms)',
-    'a.spec.ts:11:7 › one more',
-    'yay',
-    '[2/2] Passed: 2 Flaky: 0 Failed: 0 Skipped: 0 (XXms)',
   ].join('\n'));
 });

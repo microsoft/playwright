@@ -151,7 +151,7 @@ Running 124 tests using 6 workers
 
 ### Line reporter
 
-Line reporter is more concise than the list reporter. It uses two lines to report currently running test and testing progress, and prints failures when they occur. Line reporter is useful for large test suites where it shows the progress but does not spam the output by listing all the tests.
+Line reporter is more concise than the list reporter. It uses a single line to report last finished test, and prints failures when they occur. Line reporter is useful for large test suites where it shows the progress but does not spam the output by listing all the tests.
 
 ```bash
 npx playwright test --reporter=line
@@ -190,8 +190,7 @@ Running 124 tests using 6 workers
     Expected: 1
     Received: 0
 
-example.spec.ts:8:3 › should navigate to playwright.dev
-[23/124] Passed: 20 Flaky: 0 Failed: 0 Skipped: 2 (12s)
+[23/124] gitignore.spec.ts - should respect nested .gitignore
 ```
 
 ### Dot reporter
