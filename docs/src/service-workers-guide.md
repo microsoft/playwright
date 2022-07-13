@@ -46,6 +46,24 @@ const [ serviceworker ] = await Promise.all([
 ]);
 ```
 
+```python async
+async with context.expect_event("serviceworker") as event_info:
+    await page.goto('/example-with-a-service-worker.html')
+serviceworker = await event_info.value
+```
+
+```python sync
+with context.expect_event("serviceworker") as event_info:
+    page.goto('/example-with-a-service-worker.html')
+serviceworker = event_info.value
+```
+
+```csharp
+var waitForServiceWorkerTask = page.WaitForServiceWorkerAsync();
+await page.GotoAsync('/example-with-a-service-worker.html');
+var request = await waitForServiceWorkerTask;
+```
+
 [`event: BrowserContext.serviceWorker`] is fired ***before*** the Service Worker's main script has been evaluated, so ***before*** calling service[`method: Worker.evaluate`] you should wait on its activation:
 
 ```js tab=js-ts
@@ -54,6 +72,18 @@ await expect.poll(() => serviceWorker.evaluate(() => (self as any).registration.
 
 ```js tab=js-js
 await expect.poll(() => serviceWorker.evaluate(() => self.registration.active?.state)).toBe('activated');
+```
+
+```python async
+FIXME
+```
+
+```python sync
+FIXME
+```
+
+```csharp
+FIXME
 ```
 
 ### Network Events and Routing
@@ -191,11 +221,39 @@ It's important to note that [`cache.add`](https://developer.mozilla.org/en-US/do
 
 Once the Service Worker is activated and handling FetchEvents, if the page makes the following requests:
 
-```js
+```js tab=js-ts
 await page.evaluate(() => fetch('/addressbook.json'));
 await page.evaluate(() => fetch('/foo'));
 await page.evaluate(() => fetch('/tracker.js'));
 await page.evaluate(() => fetch('/fallthrough.txt'));
+```
+
+```js tab=js-js
+await page.evaluate(() => fetch('/addressbook.json'));
+await page.evaluate(() => fetch('/foo'));
+await page.evaluate(() => fetch('/tracker.js'));
+await page.evaluate(() => fetch('/fallthrough.txt'));
+```
+
+```python async
+await page.evaluate("fetch('/addressbook.json')")
+await page.evaluate("fetch('/foo')")
+await page.evaluate("fetch('/tracker.js')")
+await page.evaluate("fetch('/fallthrough.txt')")
+```
+
+```python sync
+page.evaluate("fetch('/addressbook.json')")
+page.evaluate("fetch('/foo')")
+page.evaluate("fetch('/tracker.js')")
+page.evaluate("fetch('/fallthrough.txt')")
+```
+
+```csharp
+await page.EvaluateAsync("fetch('/addressbook.json')");
+await page.EvaluateAsync("fetch('/foo')");
+await page.EvaluateAsync("fetch('/tracker.js')");
+await page.EvaluateAsync("fetch('/fallthrough.txt')");
 ```
 
 The following Request/Response events would be emitted:
