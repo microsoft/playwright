@@ -135,7 +135,7 @@ export function resolveHook(filename: string, specifier: string): string | undef
         if (value.includes('*'))
           candidate = candidate.replace('*', matchedPartOfSpecifier);
         candidate = path.resolve(tsconfig.absoluteBaseUrl, candidate.replace(/\//g, path.sep));
-        for (const ext of ['', '.js', '.ts', '.mjs', '.cjs', '.jsx', '.tsx']) {
+        for (const ext of ['', '.js', '.ts', '.mjs', '.cjs', '.jsx', '.tsx', '.cjs', '.mts', '.cts']) {
           if (fs.existsSync(candidate + ext)) {
             if (keyPrefix.length > longestPrefixLength) {
               longestPrefixLength = keyPrefix.length;
@@ -162,14 +162,10 @@ export function transformHook(code: string, filename: string, moduleUrl?: string
   // If we are not TypeScript and there is no applicable preprocessor - bail out.
   const isModule = !!moduleUrl;
   const isTypeScript = filename.endsWith('.ts') || filename.endsWith('.tsx');
-  const isJSX = filename.endsWith('.jsx');
   const hasPreprocessor =
       process.env.PW_TEST_SOURCE_TRANSFORM &&
       process.env.PW_TEST_SOURCE_TRANSFORM_SCOPE &&
       process.env.PW_TEST_SOURCE_TRANSFORM_SCOPE.split(pathSeparator).some(f => filename.startsWith(f));
-
-  if (!isTypeScript && !isJSX && !hasPreprocessor)
-    return code;
 
   const cachePath = calculateCachePath(code, filename, isModule);
   const codePath = cachePath + '.js';
@@ -212,11 +208,11 @@ export function installTransform(): () => void {
   }
   (Module as any)._resolveFilename = resolveFilename;
 
-  const exts = ['.ts', '.tsx', '.jsx'];
-  // When script preprocessor is engaged, we transpile JS as well.
-  if (scriptPreprocessor)
-    exts.push('.js', '.mjs');
-  const revertPirates = pirates.addHook((code: string, filename: string) => transformHook(code, filename), { exts });
+  const revertPirates = pirates.addHook((code: string, filename: string) => {
+    if (belongsToNodeModules(filename))
+      return code;
+    return transformHook(code, filename);
+  }, { exts: ['.ts', '.tsx', '.js', '.jsx', '.mjs'] });
 
   return () => {
     reverted = true;
@@ -247,4 +243,14 @@ export function wrapFunctionWithLocation<A extends any[], R>(func: (location: Lo
     Error.prepareStackTrace = oldPrepareStackTrace;
     return func(location, ...args);
   };
+}
+
+export function belongsToNodeModules(file: string) {
+  if (file.includes(`${path.sep}node_modules${path.sep}`))
+    return true;
+  if (file.includes(`${path.sep}playwright${path.sep}packages${path.sep}playwright`))
+    return true;
+  if (file.includes(`${path.sep}playwright${path.sep}tests${path.sep}config${path.sep}coverage.js`))
+    return true;
+  return false;
 }
