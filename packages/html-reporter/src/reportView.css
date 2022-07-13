@@ -34,7 +34,7 @@ body {
 }
 
 @media only screen and (max-width: 600px) {
-  .report {
+  .htmlreport {
     padding: 0 !important;
   }
 }

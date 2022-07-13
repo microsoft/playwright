@@ -273,4 +273,9 @@ article, aside, details, figcaption, figure, footer, header, main, menu, nav, se
     padding: 5px 3px;
     border: none;
   }
+
+  .subnav-search-input {
+    border-left: 0;
+    border-right: 0;
+  }
 }
