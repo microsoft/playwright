@@ -86,20 +86,20 @@ export const commit = () => {
 };
 
 export const image = () => {
-  return <svg className='octicon' style={{ color: 'var(--color-fg-subtle)' }} viewBox='0 0 16 16' version='1.1' width='16' height='16' aria-hidden='true'>
-    <path fillRule='evenodd' d='M1.75 2.5a.25.25 0 00-.25.25v10.5c0 .138.112.25.25.25h.94a.76.76 0 01.03-.03l6.077-6.078a1.75 1.75 0 012.412-.06L14.5 10.31V2.75a.25.25 0 00-.25-.25H1.75zm12.5 11H4.81l5.048-5.047a.25.25 0 01.344-.009l4.298 3.889v.917a.25.25 0 01-.25.25zm1.75-.25V2.75A1.75 1.75 0 0014.25 1H1.75A1.75 1.75 0 000 2.75v10.5C0 14.216.784 15 1.75 15h12.5A1.75 1.75 0 0016 13.25zM5.5 6a.5.5 0 11-1 0 .5.5 0 011 0zM7 6a2 2 0 11-4 0 2 2 0 014 0z'></path>
+  return <svg className='octicon' viewBox='0 0 48 48' version='1.1' width='20' height='20' aria-hidden='true'>
+    <path xmlns="http://www.w3.org/2000/svg" d="M11.85 32H36.2l-7.35-9.95-6.55 8.7-4.6-6.45ZM7 40q-1.2 0-2.1-.9Q4 38.2 4 37V11q0-1.2.9-2.1Q5.8 8 7 8h34q1.2 0 2.1.9.9.9.9 2.1v26q0 1.2-.9 2.1-.9.9-2.1.9Zm0-29v26-26Zm34 26V11H7v26Z"/>
   </svg>;
 };
 
 export const video = () => {
-  return <svg className='octicon' style={{ color: 'var(--color-fg-subtle)' }} viewBox='0 0 16 16' version='1.1' width='16' height='16' aria-hidden='true'>
-    <path fill-rule='evenodd' d='M1.5 8a6.5 6.5 0 1113 0 6.5 6.5 0 01-13 0zM8 0a8 8 0 100 16A8 8 0 008 0zM6.379 5.227A.25.25 0 006 5.442v5.117a.25.25 0 00.379.214l4.264-2.559a.25.25 0 000-.428L6.379 5.227z'></path>
+  return <svg className='octicon' viewBox='0 0 48 48' version='1.1' width='20' height='20' aria-hidden='true'>
+    <path xmlns="http://www.w3.org/2000/svg" d="m19.6 32.35 13-8.45-13-8.45ZM7 40q-1.2 0-2.1-.9Q4 38.2 4 37V11q0-1.2.9-2.1Q5.8 8 7 8h34q1.2 0 2.1.9.9.9.9 2.1v26q0 1.2-.9 2.1-.9.9-2.1.9Zm0-3h34V11H7v26Zm0 0V11v26Z"/>
   </svg>;
 };
 
 export const trace = () => {
-  return <svg className='octicon' style={{ color: 'var(--color-fg-subtle)' }} viewBox='0 0 16 16' version='1.1' width='16' height='16' aria-hidden='true'>
-    <path fill-rule='evenodd' d='M1.679 7.932c.412-.621 1.242-1.75 2.366-2.717C5.175 4.242 6.527 3.5 8 3.5c1.473 0 2.824.742 3.955 1.715 1.124.967 1.954 2.096 2.366 2.717a.119.119 0 010 .136c-.412.621-1.242 1.75-2.366 2.717C10.825 11.758 9.473 12.5 8 12.5c-1.473 0-2.824-.742-3.955-1.715C2.92 9.818 2.09 8.69 1.679 8.068a.119.119 0 010-.136zM8 2c-1.981 0-3.67.992-4.933 2.078C1.797 5.169.88 6.423.43 7.1a1.619 1.619 0 000 1.798c.45.678 1.367 1.932 2.637 3.024C4.329 13.008 6.019 14 8 14c1.981 0 3.67-.992 4.933-2.078 1.27-1.091 2.187-2.345 2.637-3.023a1.619 1.619 0 000-1.798c-.45-.678-1.367-1.932-2.637-3.023C11.671 2.992 9.981 2 8 2zm0 8a2 2 0 100-4 2 2 0 000 4z'></path>
+  return <svg className='octicon' viewBox='0 0 48 48' version='1.1' width='20' height='20' aria-hidden='true'>
+    <path xmlns="http://www.w3.org/2000/svg" d="M7 37h9.35V11H7v26Zm12.35 0h9.3V11h-9.3v26Zm12.3 0H41V11h-9.35v26ZM7 40q-1.2 0-2.1-.9Q4 38.2 4 37V11q0-1.2.9-2.1Q5.8 8 7 8h34q1.2 0 2.1.9.9.9.9 2.1v26q0 1.2-.9 2.1-.9.9-2.1.9Z"/>
   </svg>;
 };
 

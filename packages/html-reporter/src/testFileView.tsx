@@ -41,19 +41,23 @@ export const TestFileView: React.FC<React.PropsWithChildren<{
     </span>}>
     {file.tests.filter(t => filter.matches(t)).map(test =>
       <div key={`test-${test.testId}`} className={'test-file-test test-file-test-outcome-' + test.outcome}>
-        <Link href={`#?testId=${test.testId}`} title={[...test.path, test.title].join(' › ')}>
+        <div style={{ textOverflow: 'ellipsis', overflow: 'hidden' }}>
           <span style={{ float: 'right', minWidth: '50px', textAlign: 'right' }}>{msToString(test.duration)}</span>
           {report.projectNames.length > 1 && !!test.projectName &&
               <span style={{ float: 'right' }}><ProjectLink projectNames={report.projectNames} projectName={test.projectName}></ProjectLink></span>}
           {statusIcon(test.outcome)}
-          <span className='test-file-title'>{[...test.path, test.title].join(' › ')}</span>
-          <div className='test-file-details-row'>
+          <Link href={`#?testId=${test.testId}`} title={[...test.path, test.title].join(' › ')}>
+            <span className='test-file-title'>{[...test.path, test.title].join(' › ')}</span>
+          </Link>
+        </div>
+        <div className='test-file-details-row'>
+          <Link href={`#?testId=${test.testId}`} title={[...test.path, test.title].join(' › ')} className='test-file-path-link'>
             <span className='test-file-path'>{test.location.file}:{test.location.line}</span>
-            {imageDiffBadge(test)}
-            {videoBadge(test)}
-            {traceBadge(test)}
-          </div>
-        </Link>
+          </Link>
+          {imageDiffBadge(test)}
+          {videoBadge(test)}
+          {traceBadge(test)}
+        </div>
       </div>
     )}
   </Chip>;

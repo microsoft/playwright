@@ -32,19 +32,34 @@
 }
 
 .test-file-details-row {
-  padding: 0 0 0 8px;
-  margin-left: 15px;
-  margin-top: -11px;
-  font-weight: normal;
+  padding: 0 0 6px 8px;
+  margin: -4px 0 0 15px;
+  line-height: 16px;
+  font-weight: 400;
   color: var(--color-fg-subtle);
+  display: flex;
+  align-items: center;
 }
 
 .test-file-path {
-  margin-right: 7px;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.test-file-path-link {
+  margin-right: 10px;
 }
 
 .test-file-badge {
-  margin-left: 7px;
+  flex: none;
+}
+
+.test-file-badge svg {
+  fill: var(--color-fg-subtle);
+}
+
+.test-file-badge:hover svg {
+  fill: var(--color-fg-muted);
 }
 
 .test-file-test-outcome-skipped {
