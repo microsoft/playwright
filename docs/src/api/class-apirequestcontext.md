@@ -16,7 +16,7 @@ values from the browser context. If the API response contains `Set-Cookie` heade
 [BrowserContext] cookies and requests made from the page will pick them up. This means that if you log in using
 this API, your e2e test will be logged in and vice versa.
 
-If you want API requests to not interfere with the browser cookies you shoud create a new [APIRequestContext] by
+If you want API requests to not interfere with the browser cookies you should create a new [APIRequestContext] by
 calling [`method: APIRequest.newContext`]. Such `APIRequestContext` object will have its own isolated cookie
 storage.
 
