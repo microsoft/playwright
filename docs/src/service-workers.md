@@ -68,7 +68,7 @@ Worker serviceWorker = page.waitForRequest(() -> {
 
 [`event: BrowserContext.serviceWorker`] is fired ***before*** the Service Worker's main script has been evaluated, so ***before*** calling service[`method: Worker.evaluate`] you should wait on its activation.
 
-There are more iodiomatic methods of waiting for a Service Worker to be activated, but the following is an implementation agnostic method (which will be replaced by the [Playwright feature](https://github.com/microsoft/playwright/issues/15636)):
+There are more iodiomatic methods of waiting for a Service Worker to be activated, but the following is an implementation agnostic method:
 
 ```js tab=js-ts
 await page.evaluate(async () => {
