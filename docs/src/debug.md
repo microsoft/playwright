@@ -50,7 +50,7 @@ chromium.launch(headless=False, slow_mo=100) # or firefox, webkit
 
 ```csharp
 // Chromium, Firefox, or Webkit
-await using var browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
+await using var browser = await playwright.Chromium.LaunchAsync(new()
 {
     Headless = false,
     SlowMo = 100
@@ -89,7 +89,7 @@ chromium.launch(devtools=True)
 ```
 
 ```csharp
-await using var browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
+await using var browser = await playwright.Chromium.LaunchAsync(new()
 {
     Devtools: true
 });

@@ -135,13 +135,13 @@ context = browser.new_context(storage_state="state.json")
 
 ```csharp
 // Save storage state into the file.
-await context.StorageStateAsync(new BrowserContextStorageStateOptions
+await context.StorageStateAsync(new()
 {
     Path = "state.json"
 });
 
 // Create a new context with the saved storage state.
-var context = await browser.NewContextAsync(new BrowserNewContextOptions
+var context = await browser.NewContextAsync(new()
 {
     StorageStatePath = "state.json"
 });
@@ -332,7 +332,7 @@ class Program
     {
         using var playwright = await Playwright.CreateAsync();
         var chromium = playwright.Chromium;
-        var context = chromium.LaunchPersistentContextAsync(@"C:\path\to\directory\", new BrowserTypeLaunchPersistentContextOptions
+        var context = chromium.LaunchPersistentContextAsync(@"C:\path\to\directory\", new()
         {
             Headless = false
         });

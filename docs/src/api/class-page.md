@@ -1654,7 +1654,7 @@ class PageExamples
     public static async Task Main()
     {
         using var playwright = await Playwright.CreateAsync();
-        await using var browser = await playwright.Webkit.LaunchAsync(new BrowserTypeLaunchOptions
+        await using var browser = await playwright.Webkit.LaunchAsync(new()
         {
             Headless: false
         });
@@ -1916,7 +1916,7 @@ class PageExamples
     public static async Task Main()
     {
         using var playwright = await Playwright.CreateAsync();
-        await using var browser = await playwright.Webkit.LaunchAsync(new BrowserTypeLaunchOptions
+        await using var browser = await playwright.Webkit.LaunchAsync(new()
         {
             Headless: false
         });

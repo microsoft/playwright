@@ -8,7 +8,7 @@ import { test, expect } from '@playwright/test';
 
 test('status becomes submitted', async ({ page }) => {
   // ...
-  await page.click('#submit-button');
+  await page.locator('#submit-button').click();
   await expect(page.locator('.status')).toHaveText('Submitted');
 });
 ```
@@ -22,7 +22,7 @@ public class TestLocator {
   @Test
   void statusBecomesSubmitted() {
     ...
-    page.click("#submit-button");
+    page.locator("#submit-button").click();
     assertThat(page.locator(".status")).hasText("Submitted");
   }
 }
@@ -33,7 +33,7 @@ from playwright.async_api import Page, expect
 
 async def test_status_becomes_submitted(page: Page) -> None:
     # ..
-    await page.click("#submit-button")
+    await page.locator("#submit-button").click()
     await expect(page.locator(".status")).to_have_text("Submitted")
 ```
 
@@ -42,7 +42,7 @@ from playwright.sync_api import Page, expect
 
 def test_status_becomes_submitted(page: Page) -> None:
     # ..
-    page.click("#submit-button")
+    page.locator("#submit-button").click()
     expect(page.locator(".status")).to_have_text("Submitted")
 ```
 
@@ -60,7 +60,7 @@ public class ExampleTests : PageTest
     public async Task StatusBecomesSubmitted()
     {
         // ..
-        await Page.ClickAsync("#submit-button");
+        await Page.Locator("#submit-button").ClickAsync();
         await Expect(Page.Locator(".status")).ToHaveTextAsync("Submitted");
     }
 }

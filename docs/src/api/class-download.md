@@ -23,7 +23,7 @@ const path = await download.path();
 
 ```java
 // wait for download to start
-Download download  = page.waitForDownload(() -> page.click("a"));
+Download download  = page.waitForDownload(() -> page.locator("a").click());
 // wait for download to complete
 Path path = download.path();
 ```
@@ -31,7 +31,7 @@ Path path = download.path();
 ```java
 // wait for download to start
 Download download = page.waitForDownload(() -> {
-  page.click("a");
+  page.locator("a").click();
 });
 // wait for download to complete
 Path path = download.path();
@@ -39,7 +39,7 @@ Path path = download.path();
 
 ```python async
 async with page.expect_download() as download_info:
-    await page.click("a")
+    await page.locator("a").click()
 download = await download_info.value
 # waits for download to complete
 path = await download.path()
@@ -47,7 +47,7 @@ path = await download.path()
 
 ```python sync
 with page.expect_download() as download_info:
-    page.click("a")
+    page.locator("a").click()
 download = download_info.value
 # wait for download to complete
 path = download.path()
@@ -56,7 +56,7 @@ path = download.path()
 ```csharp
 var download = await page.RunAndWaitForDownloadAsync(async () =>
 {
-    await page.ClickAsync("#downloadButton");
+    await page.Locator("#downloadButton").ClickAsync();
 });
 Console.WriteLine(await download.PathAsync());
 ```

@@ -165,7 +165,7 @@ WebServer is now considered "ready" if request to the specified port has any of 
 
   ```js
   // Click a button with accessible name "log in"
-  await page.click('role=button[name="log in"]')
+  await page.locator('role=button[name="log in"]').click()
   ```
 
   Read more in [our documentation](./selectors#role-selector).
@@ -207,7 +207,7 @@ WebServer is now considered "ready" if request to the specified port has any of 
 
   ```js
   // Click a button with accessible name "log in"
-  await page.click('role=button[name="log in"]')
+  await page.locator('role=button[name="log in"]').click()
   ```
 
   Read more in [our documentation](./selectors#role-selector).
@@ -807,8 +807,8 @@ Learn more in the [documentation](./api/class-locator).
 React and Vue selectors allow selecting elements by its component name and/or property values. The syntax is very similar to [attribute selectors](https://developer.mozilla.org/en-US/docs/Web/CSS/Attribute_selectors) and supports all attribute selector operators.
 
 ```js
-await page.click('_react=SubmitButton[enabled=true]');
-await page.click('_vue=submit-button[enabled=true]');
+await page.locator('_react=SubmitButton[enabled=true]').click();
+await page.locator('_vue=submit-button[enabled=true]').click();
 ```
 
 Learn more in the [react selectors documentation](./selectors#react-selectors) and the [vue selectors documentation](./selectors#vue-selectors).

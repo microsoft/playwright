@@ -16,20 +16,20 @@ await fileChooser.setFiles('myfile.pdf');
 ```
 
 ```java
-FileChooser fileChooser = page.waitForFileChooser(() -> page.click("upload"));
+FileChooser fileChooser = page.waitForFileChooser(() -> page.locator("upload").click());
 fileChooser.setFiles(Paths.get("myfile.pdf"));
 ```
 
 ```python async
 async with page.expect_file_chooser() as fc_info:
-    await page.click("upload")
+    await page.locator("upload").click()
 file_chooser = await fc_info.value
 await file_chooser.set_files("myfile.pdf")
 ```
 
 ```python sync
 with page.expect_file_chooser() as fc_info:
-    page.click("upload")
+    page.locator("upload").click()
 file_chooser = fc_info.value
 file_chooser.set_files("myfile.pdf")
 ```
@@ -37,7 +37,7 @@ file_chooser.set_files("myfile.pdf")
 ```csharp
 var fileChooser = await page.RunAndWaitForFileChooserAsync(async () =>
 {
-    await page.ClickAsync("upload");
+    await page.Locator("upload").ClickAsync();
 });
 await fileChooser.SetFilesAsync("temp.txt");
 ```

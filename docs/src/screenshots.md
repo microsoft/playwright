@@ -17,6 +17,18 @@ await page.screenshot(path="screenshot.png")
 page.screenshot(path="screenshot.png")
 ```
 
+```java
+page.screenshot(new Page.ScreenshotOptions()
+      .setPath(Paths.get("screenshot.png")))
+```
+
+```csharp
+await Page.ScreenshotAsync(new()
+{
+    Path = "screenshot.png",
+});
+```
+
 Screenshots API accepts many parameters for image format, clip area, quality, etc. Make sure to check them out.
 
 <!-- TOC -->
@@ -44,6 +56,14 @@ await page.screenshot(path="screenshot.png", full_page=True)
 page.screenshot(path="screenshot.png", full_page=True)
 ```
 
+```csharp
+await Page.ScreenshotAsync(new()
+{
+    Path = "screenshot.png",
+    FullPage = true,
+});
+```
+
 ## Capture into buffer
 
 Rather than writing into a file, you can get a buffer with the image and post-process it or pass it to a third party pixel diff facility.
@@ -61,16 +81,17 @@ System.out.println(Base64.getEncoder().encode(buffer));
 ```python async
 # Capture into Image
 screenshot_bytes = await page.screenshot()
-image = Image.open(io.BytesIO(screenshot_bytes))
+print(base64.b64encode(screenshot_bytes).decode())
 ```
 
 ```python sync
 screenshot_bytes = page.screenshot()
-image = Image.open(io.BytesIO(screenshot_bytes))
+print(base64.b64encode(screenshot_bytes).decode())
 ```
 
 ```csharp
 var bytes = await page.ScreenshotAsync();
+Console.WriteLine(Convert.ToBase64String(bytes));
 ```
 
 
@@ -95,5 +116,5 @@ page.locator(".header").screenshot(path="screenshot.png")
 ```
 
 ```csharp
-await page.Locator(".header").ScreenshotAsync(new LocatorScreenshotOptions { Path = "screenshot.png" });
+await page.Locator(".header").ScreenshotAsync(new() { Path = "screenshot.png" });
 ```

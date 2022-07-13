@@ -33,7 +33,7 @@ context.close()
 ```
 
 ```csharp
-var context = await browser.NewContextAsync(new BrowserNewContextOptions
+var context = await browser.NewContextAsync(new()
 {
     RecordVideoDir = "videos/"
 });
@@ -73,7 +73,7 @@ context = browser.new_context(
 ```
 
 ```csharp
-var context = await browser.NewContextAsync(new BrowserNewContextOptions
+var context = await browser.NewContextAsync(new()
 {
     RecordVideoDir = "videos/",
     RecordVideoSize = new RecordVideoSize() { Width = 640, Height = 480 }

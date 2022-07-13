@@ -63,7 +63,7 @@ namespace Playwright.TestingHarnessTest.NUnit
             // Assuming personal access token available in the environment.
             headers.Add("Authorization", "token " + API_TOKEN);
 
-            Request = await this.Playwright.APIRequest.NewContextAsync(new () {
+            Request = await this.Playwright.APIRequest.NewContextAsync(new() {
                 // All requests we send go to this API endpoint.
                 BaseURL = "https://api.github.com",
                 ExtraHTTPHeaders = headers,

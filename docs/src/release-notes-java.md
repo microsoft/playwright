@@ -100,7 +100,7 @@ Note that the new methods [`method: Page.routeFromHAR`] and [`method: BrowserCon
 
   ```java
   // Click a button with accessible name "log in"
-  page.click("role=button[name='log in']")
+  page.locator("role=button[name='log in']").click();
   ```
 
   Read more in [our documentation](./selectors#role-selector).
@@ -126,7 +126,7 @@ Note that the new methods [`method: Page.routeFromHAR`] and [`method: BrowserCon
 
   ```java
   // Click a button with accessible name "log in"
-  page.click("role=button[name='log in']")
+  page.locator("role=button[name='log in']").click();
   ```
 
   Read more in [our documentation](./selectors#role-selector).
@@ -237,7 +237,7 @@ public class TestExample {
   @Test
   void statusBecomesSubmitted() {
     ...
-    page.click("#submit-button");
+    page.locator("#submit-button").click();
     assertThat(page.locator(".status")).hasText("Submitted");
   }
 }
@@ -441,8 +441,8 @@ Learn more in the [documentation](./api/class-locator).
 React and Vue selectors allow selecting elements by its component name and/or property values. The syntax is very similar to [attribute selectors](https://developer.mozilla.org/en-US/docs/Web/CSS/Attribute_selectors) and supports all attribute selector operators.
 
 ```java
-page.click("_react=SubmitButton[enabled=true]");
-page.click("_vue=submit-button[enabled=true]");
+page.locator("_react=SubmitButton[enabled=true]").click();
+page.locator("_vue=submit-button[enabled=true]").click();
 ```
 
 Learn more in the [react selectors documentation](./selectors#react-selectors) and the [vue selectors documentation](./selectors#vue-selectors).

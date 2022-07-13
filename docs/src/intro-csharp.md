@@ -47,7 +47,7 @@ dotnet run
 By default, Playwright runs the browsers in headless mode. To see the browser UI, pass the `Headless = false` flag while launching the browser. You can also use [`option: slowMo`] to slow down execution. Learn more in the debugging tools [section](./debug.md).
 
 ```csharp
-await playwright.Firefox.LaunchAsync(new BrowserTypeLaunchOptions
+await playwright.Firefox.LaunchAsync(new()
 {
     Headless = false,
     SlowMo = 50,
@@ -87,17 +87,25 @@ namespace PlaywrightTests;
 public class Tests : PageTest
 {
     [Test]
-    public async Task ShouldAdd()
+    async public Task ShouldHaveTheCorrectSlogan()
     {
-        int result = await Page.EvaluateAsync<int>("() => 7 + 3");
-        Assert.AreEqual(10, result);
+        await Page.GotoAsync("https://playwright.dev");
+        await Expect(Page.Locator("text=enables reliable end-to-end testing for modern web apps")).ToBeVisibleAsync();
     }
 
     [Test]
-    public async Task ShouldMultiply()
+    public async Task ShouldHaveTheCorrectTitle()
     {
-        int result = await Page.EvaluateAsync<int>("() => 7 * 3");
-        Assert.AreEqual(21, result);
+        await Page.GotoAsync("https://playwright.dev");
+        var title = Page.Locator(".navbar__inner .navbar__title");
+        await Expect(title).ToHaveTextAsync("Playwright");
+    }
+
+    [Test]
+    public async Task ShouldAdd()
+    {
+        var result = await Page.EvaluateAsync<int>("() => 7 + 3");
+        Assert.AreEqual(10, result);
     }
 }
 ```

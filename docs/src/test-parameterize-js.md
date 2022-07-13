@@ -146,7 +146,7 @@ exports.test = base.test.extend({
     await page.goto('/chat');
     // We use "person" parameter as a "name" for the chat room.
     await page.locator('#name').fill(person);
-    await page.click('text=Enter chat room');
+    await page.locator('text=Enter chat room').click();
     // Each test will get a "page" that already has the person name.
     await use(page);
   },
@@ -171,7 +171,7 @@ export const test = base.test.extend<TestOptions>({
     await page.goto('/chat');
     // We use "person" parameter as a "name" for the chat room.
     await page.locator('#name').fill(person);
-    await page.click('text=Enter chat room');
+    await page.locator('text=Enter chat room').click();
     // Each test will get a "page" that already has the person name.
     await use(page);
   },
