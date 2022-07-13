@@ -853,6 +853,7 @@ export class InjectedScript {
       case 'pointer': event = new PointerEvent(type, eventInit); break;
       case 'focus': event = new FocusEvent(type, eventInit); break;
       case 'drag': event = new DragEvent(type, eventInit); break;
+      case 'wheel': event = new WheelEvent(type, eventInit); break;
       default: event = new Event(type, eventInit); break;
     }
     node.dispatchEvent(event);
@@ -1155,7 +1156,7 @@ function oneLine(s: string): string {
   return s.replace(/\n/g, '↵').replace(/\t/g, '⇆');
 }
 
-const eventType = new Map<string, 'mouse' | 'keyboard' | 'touch' | 'pointer' | 'focus' | 'drag'>([
+const eventType = new Map<string, 'mouse' | 'keyboard' | 'touch' | 'pointer' | 'focus' | 'drag' | 'wheel'>([
   ['auxclick', 'mouse'],
   ['click', 'mouse'],
   ['dblclick', 'mouse'],
@@ -1201,6 +1202,8 @@ const eventType = new Map<string, 'mouse' | 'keyboard' | 'touch' | 'pointer' | '
   ['dragleave', 'drag'],
   ['dragexit', 'drag'],
   ['drop', 'drag'],
+
+  ['wheel', 'wheel'],
 ]);
 
 const kHoverHitTargetInterceptorEvents = new Set(['mousemove']);
