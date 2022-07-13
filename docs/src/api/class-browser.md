@@ -196,7 +196,7 @@ BrowserContext context = browser.newContext();
 Page page = context.newPage();
 page.navigate('https://example.com');
 
-// Gracefull close up everything
+// Gracefully close up everything
 context.close();
 browser.close();
 ```
