@@ -233,6 +233,68 @@ test('should intercept only serviceworker request, not page', async ({ context, 
   expect(response).toBe('from sw');
 });
 
+test('doc claims should be accurate', async ({ page, context, server }) => {
+  const formatRequest = async (r: any) => `[${r.serviceWorker() ? 'SW   ' : 'FRAME'}] ${r.url().split('/').pop().padEnd(25, ' ')} fromServiceWorker: ${(await r.response()).fromServiceWorker()}`;
+  const contextRouted = [];
+  const pageRouted = [];
+  await context.route('**', async route => {
+    contextRouted.push(route.request());
+    await route.continue();
+  });
+  await page.route('**', async route => {
+    pageRouted.push(route.request());
+    await route.continue();
+  });
+  const contextRequests = [];
+  const pageRequests = [];
+  context.on('request', r => contextRequests.push(r));
+  page.on('request', r => pageRequests.push(r));
+
+  const [ sw ] = await Promise.all([
+    context.waitForEvent('serviceworker'),
+    page.goto(server.PREFIX + '/serviceworkers/doc-example/index.html'),
+  ]);
+
+  await expect.poll(() => sw.evaluate(() => (self as any).registration.active?.state)).toBe('activated');
+
+  await page.evaluate(() => fetch('./addressbook.json'));
+  await page.evaluate(() => fetch('./example.jpg'));
+  await page.evaluate(() => fetch('./tracker.js'));
+  await page.evaluate(() => fetch('./fallthrough.txt'));
+
+  expect(await Promise.all(contextRequests.map(formatRequest))).toEqual([
+    '[FRAME] index.html                fromServiceWorker: false',
+    '[SW   ] service-worker-main.js    fromServiceWorker: false',
+    '[SW   ] addressbook.json          fromServiceWorker: false',
+    '[FRAME] addressbook.json          fromServiceWorker: false',
+    '[FRAME] example.jpg               fromServiceWorker: false',
+    '[SW   ] example.jpg               fromServiceWorker: false',
+    '[FRAME] tracker.js                fromServiceWorker: false',
+    '[FRAME] fallthrough.txt           fromServiceWorker: false',
+    '[SW   ] fallthrough.txt           fromServiceWorker: false',
+  ]);
+  expect(await Promise.all(pageRequests.map(formatRequest))).toEqual([
+    '[FRAME] index.html                fromServiceWorker: false',
+    '[FRAME] addressbook.json          fromServiceWorker: false',
+    '[FRAME] example.jpg               fromServiceWorker: false',
+    '[FRAME] tracker.js                fromServiceWorker: false',
+    '[FRAME] fallthrough.txt           fromServiceWorker: false',
+  ]);
+  expect(await Promise.all(contextRouted.map(formatRequest))).toEqual([
+    '[SW   ] service-worker-main.js    fromServiceWorker: false',
+    '[SW   ] addressbook.json          fromServiceWorker: false',
+    '[SW   ] example.jpg               fromServiceWorker: false',
+    '[SW   ] fallthrough.txt           fromServiceWorker: false',
+  ]);
+  expect(await Promise.all(pageRouted.map(formatRequest))).toEqual([
+    '[FRAME] index.html                fromServiceWorker: false',
+    '[FRAME] addressbook.json          fromServiceWorker: false',
+    '[FRAME] example.jpg               fromServiceWorker: false',
+    '[FRAME] tracker.js                fromServiceWorker: false',
+    '[FRAME] fallthrough.txt           fromServiceWorker: false',
+  ]);
+});
+
 test('should emit new service worker on update', async ({ context, page, server }) => {
   let version = 0;
   server.setRoute('/worker.js', (req, res) => {
