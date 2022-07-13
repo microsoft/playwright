@@ -62,6 +62,53 @@ var serviceworker = await waitForServiceWorkerTask;
 
 [`event: BrowserContext.serviceWorker`] is fired ***before*** the Service Worker's main script has been evaluated, so ***before*** calling service[`method: Worker.evaluate`] you should wait on its activation.
 
+There are more iodiomatic methods of waiting for a Service Worker to be activated, but the following is an implementation agnostic method (which will be replaced by the [Playwright feature](https://github.com/microsoft/playwright/issues/15636)):
+
+```js tab=js-ts
+await page.evaluate(async () => {
+  const registration = await window.navigator.serviceWorker.getRegistration();
+  if (registration.active?.state === 'activated')
+    return;
+  await new Promise(res => window.navigator.serviceWorker.addEventListener('controllerchange', res));
+});
+```
+
+```js tab=js-js
+await page.evaluate(async () => {
+  const registration = await window.navigator.serviceWorker.getRegistration();
+  if (registration.active?.state === 'activated')
+    return;
+  await new Promise(res => window.navigator.serviceWorker.addEventListener('controllerchange', res));
+});
+```
+
+```python async
+await page.evaluate("""async () => {
+  const registration = await window.navigator.serviceWorker.getRegistration();
+  if (registration.active?.state === 'activated')
+    return;
+  await new Promise(res => window.navigator.serviceWorker.addEventListener('controllerchange', res));
+}""")
+```
+
+```python sync
+page.evaluate("""async () => {
+  const registration = await window.navigator.serviceWorker.getRegistration();
+  if (registration.active?.state === 'activated')
+    return;
+  await new Promise(res => window.navigator.serviceWorker.addEventListener('controllerchange', res));
+}""")
+```
+
+```csharp
+await page.EvaluateAsync(@"async () => {
+  const registration = await window.navigator.serviceWorker.getRegistration();
+  if (registration.active?.state === 'activated')
+    return;
+  await new Promise(res => window.navigator.serviceWorker.addEventListener('controllerchange', res));
+}");
+```
+
 ### Network Events and Routing
 
 Any network request made by the **Service Worker** will have:
