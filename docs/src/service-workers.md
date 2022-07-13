@@ -60,6 +60,12 @@ await page.GotoAsync('/example-with-a-service-worker.html');
 var serviceworker = await waitForServiceWorkerTask;
 ```
 
+```java
+Worker serviceWorker = page.waitForRequest(() -> {
+  page.navigate('/example-with-a-service-worker.html');
+});
+```
+
 [`event: BrowserContext.serviceWorker`] is fired ***before*** the Service Worker's main script has been evaluated, so ***before*** calling service[`method: Worker.evaluate`] you should wait on its activation.
 
 There are more iodiomatic methods of waiting for a Service Worker to be activated, but the following is an implementation agnostic method (which will be replaced by the [Playwright feature](https://github.com/microsoft/playwright/issues/15636)):
@@ -107,6 +113,17 @@ await page.EvaluateAsync(@"async () => {
     return;
   await new Promise(res => window.navigator.serviceWorker.addEventListener('controllerchange', res));
 }");
+```
+
+```java
+page.evaluate(
+  "async () => {"
+  "  const registration = await window.navigator.serviceWorker.getRegistration();" +
+  "  if (registration.active?.state === 'activated')" +
+  "    return;" +
+  "  await new Promise(res => window.navigator.serviceWorker.addEventListener('controllerchange', res));" +
+  "}"
+)
 ```
 
 ### Network Events and Routing
@@ -278,6 +295,13 @@ await page.EvaluateAsync("fetch('/tracker.js')");
 await page.EvaluateAsync("fetch('/fallthrough.txt')");
 ```
 
+```java
+page.evaluate("fetch('/addressbook.json')")
+page.evaluate("fetch('/foo')")
+page.evaluate("fetch('/tracker.js')")
+page.evaluate("fetch('/fallthrough.txt')")
+```
+
 The following Request/Response events would be emitted:
 
 | Event                             | Owner            | URL                            | Routed | [`method: Response.fromServiceWorker`] |
@@ -353,6 +377,7 @@ context.route('**', handle)
 ```csharp
 await context.RouteAsync("**", async route => {
   if (route.request().serviceWorker() != null) {
+    // NB: calling route.request.frame here would THROW
     await route.FulfillAsync(
       contentType: "text/plain",
       status: 200,
@@ -360,6 +385,20 @@ await context.RouteAsync("**", async route => {
     );
   } else {
     await route.Continue()Async();
+  }
+});
+```
+
+```java
+browserContext.route("**", route -> {
+  if (route.request()) {
+    // calling route.request().frame() here would THROW
+    route.fulfill(new Route.FulfillOptions()
+      .setStatus(200)
+      .setContentType("text/plain")
+      .setBody("from sw"));
+  } else {
+    route.resume();
   }
 });
 ```
