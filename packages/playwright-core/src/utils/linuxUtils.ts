@@ -16,7 +16,6 @@
  */
 
 import fs from 'fs';
-import * as os from 'os';
 
 let osRelease: {
   id: string,
