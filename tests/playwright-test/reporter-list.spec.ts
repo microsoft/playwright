@@ -66,7 +66,7 @@ test('render steps', async ({ runInlineTest }) => {
         });
       });
     `,
-  }, { reporter: 'list' }, { PW_TEST_DEBUG_REPORTERS: '1', PLAYWRIGHT_LIVE_TERMINAL: '1' });
+  }, { reporter: 'list' }, { PW_TEST_DEBUG_REPORTERS: '1', PWTEST_TTY_WIDTH: '80' });
   const text = stripAnsi(result.output);
   const lines = text.split('\n').filter(l => l.startsWith('0 :'));
   lines.pop(); // Remove last item that contains [v] and time in ms.
@@ -94,7 +94,7 @@ test('render retries', async ({ runInlineTest }) => {
         expect(testInfo.retry).toBe(1);
       });
     `,
-  }, { reporter: 'list', retries: '1' }, { PW_TEST_DEBUG_REPORTERS: '1', PLAYWRIGHT_LIVE_TERMINAL: '1' });
+  }, { reporter: 'list', retries: '1' }, { PW_TEST_DEBUG_REPORTERS: '1', PWTEST_TTY_WIDTH: '80' });
   const text = stripAnsi(result.output);
   const lines = text.split('\n').filter(l => l.startsWith('0 :') || l.startsWith('1 :')).map(l => l.replace(/[\dm]+s/, 'XXms'));
 
@@ -123,7 +123,7 @@ test('should truncate long test names', async ({ runInlineTest }) => {
       test.skip('skipped very long name', async () => {
       });
     `,
-  }, { reporter: 'list', retries: 0 }, { PLAYWRIGHT_LIVE_TERMINAL: '1', PWTEST_TTY_WIDTH: 50 });
+  }, { reporter: 'list', retries: 0 }, { PWTEST_TTY_WIDTH: 50 });
   expect(result.exitCode).toBe(1);
 
   const lines = stripAnsi(result.output).split('\n').slice(3, 11);
