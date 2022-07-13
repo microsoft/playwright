@@ -262,6 +262,60 @@ test('should support toHaveClass w/ array', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(1);
 });
 
+test('should support toContainClass', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      const { test } = pwt;
+
+      test('pass', async ({ page }) => {
+        await page.setContent(\`
+          <div class="foo bar baz">
+            <span class="alice item baz"></span>
+            <span class="bob item baz"></span>
+          </div>
+        \`);
+        const locator = page.locator('div');
+        await expect(locator).toContainClass('foo');
+        // Leading/trailing whitespace
+        await expect(locator).toContainClass('   foo    ');
+        // empty should not pass
+        await expect(locator).not.toContainClass('');
+        await expect(locator).toContainClass('bar');
+        await expect(locator).toContainClass('baz');
+        await expect(locator).toContainClass('foo baz');
+        await expect(locator).toContainClass('baz foo');
+        await expect(locator).not.toContainClass('ba');
+
+        await expect(locator).toContainClass('BAZ FoO', { ignoreCase: true });
+        await expect(locator).not.toContainClass('BAZ');
+
+        const locatorSpan = page.locator('div span');
+        await expect(locatorSpan).toContainClass(['alice baz', 'bob']);
+        await expect(locatorSpan).not.toContainClass(['alice', 'alice']);
+      });
+
+      test('fail', async ({ page }) => {
+        await page.setContent('<div class="bar baz"></div>');
+        const locator = page.locator('div');
+        await expect(locator).toContainClass('foo', { timeout: 1000 });
+      });
+
+      test('fail length mismatch', async ({ page }) => {
+        await page.setContent('<div><span class="alice"></span><span class="bob"></span></div>');
+        const locator = page.locator('div span');
+        await expect(locator).toContainClass('alice', { timeout: 1000 });
+      });
+      `,
+  }, { workers: 1 });
+  const output = stripAnsi(result.output);
+  expect(output).toContain('expect(locator).toContainClass');
+  expect(output).toContain('Expected string: \"foo\"');
+  expect(output).toContain('Received string: \"bar baz\"');
+  expect(result.passed).toBe(1);
+  expect(result.failed).toBe(2);
+  expect(result.exitCode).toBe(1);
+});
+
 test('should support toHaveTitle', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `

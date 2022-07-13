@@ -11,94 +11,94 @@ This is the easiest way to fill out the form fields. It focuses the element and 
 
 ```js
 // Text input
-await page.fill('#name', 'Peter');
+await page.locator('#name').fill('Peter');
 
 // Date input
-await page.fill('#date', '2020-02-02');
+await page.locator('#date').fill('2020-02-02');
 
 // Time input
-await page.fill('#time', '13:15');
+await page.locator('#time').fill('13:15');
 
 // Local datetime input
-await page.fill('#local', '2020-03-02T05:15');
+await page.locator('#local').fill('2020-03-02T05:15');
 
 // Input through label
-await page.fill('text=First Name', 'Peter');
+await page.locator('text=First Name').fill('Peter');
 ```
 
 ```java
 // Text input
-page.fill("#name", "Peter");
+page.locator("#name").fill("Peter");
 
 // Date input
-page.fill("#date", "2020-02-02");
+page.locator("#date").fill("2020-02-02");
 
 // Time input
-page.fill("#time", "13-15");
+page.locator("#time").fill("13-15");
 
 // Local datetime input
-page.fill("#local", "2020-03-02T05:15");
+page.locator("#local").fill("2020-03-02T05:15");
 
 // Input through label
-page.fill("text=First Name", "Peter");
+page.locator("text=First Name").fill("Peter");
 ```
 
 ```python async
 # Text input
-await page.fill('#name', 'Peter')
+await page.locator('#name').fill('Peter')
 
 # Date input
-await page.fill('#date', '2020-02-02')
+await page.locator('#date').fill('2020-02-02')
 
 # Time input
-await page.fill('#time', '13:15')
+await page.locator('#time').fill('13:15')
 
 # Local datetime input
-await page.fill('#local', '2020-03-02T05:15')
+await page.locator('#local').fill('2020-03-02T05:15')
 
 # Input through label
-await page.fill('text=First Name', 'Peter')
+await page.locator('text=First Name').fill('Peter')
 ```
 
 ```python sync
 # Text input
-page.fill('#name', 'Peter')
+page.locator('#name').fill('Peter')
 
 # Date input
-page.fill('#date', '2020-02-02')
+page.locator('#date').fill('2020-02-02')
 
 # Time input
-page.fill('#time', '13:15')
+page.locator('#time').fill('13:15')
 
 # Local datetime input
-page.fill('#local', '2020-03-02T05:15')
+page.locator('#local').fill('2020-03-02T05:15')
 
 # Input through label
-page.fill('text=First Name', 'Peter')
+page.locator('text=First Name').fill('Peter')
 ```
 
 ```csharp
 // Text input
-await page.FillAsync("#name", "Peter");
+await page.Locator("#name").FillAsync("Peter");
 
 // Date input
-await page.FillAsync("#date", "2020-02-02");
+await page.Locator("#date").FillAsync("2020-02-02");
 
 // Time input
-await page.FillAsync("#time", "13-15");
+await page.Locator("#time").FillAsync("13-15");
 
 // Local datetime input
-await page.FillAsync("#local", "2020-03-02T05:15");
+await page.Locator("#local").FillAsync("2020-03-02T05:15");
 
 // Input through label
-await page.FillAsync("text=First Name", "Peter");
+await page.Locator("text=First Name").FillAsync("Peter");
 ```
 
 ### API reference
 
+- [`method: Locator.fill`]
 - [`method: Page.fill`]
 - [`method: Frame.fill`]
-- [`method: ElementHandle.fill`]
 
 <br/>
 
@@ -108,170 +108,150 @@ This is the easiest way to check and uncheck a checkbox or a radio button. This 
 
 ```js
 // Check the checkbox
-await page.check('#agree');
+await page.locator('#agree').check();
 
 // Assert the checked state
-expect(await page.isChecked('#agree')).toBeTruthy()
+expect(await page.locator('#agree').isChecked()).toBeTruthy()
 
 // Uncheck by input <label>.
-await page.uncheck('#subscribe-label');
+await page.locator('#subscribe-label').uncheck();
 
 // Select the radio button
-await page.check('text=XL');
+await page.locator('text=XL').check();
 ```
 
 ```java
 // Check the checkbox
-page.check("#agree");
+page.locator("#agree").check();
 
 // Assert the checked state
-assertTrue(page.isChecked("#agree"));
+assertTrue(page.locator("#agree").isChecked());
 
 // Uncheck by input <label>.
-page.uncheck("#subscribe-label");
+page.locator("#subscribe-label").uncheck();
 
 // Select the radio button
-page.check("text=XL");
+page.locator("text=XL").check();
 ```
 
 ```python async
 # Check the checkbox
-await page.check('#agree')
+await page.locator('#agree').check()
 
 # Assert the checked state
-assert await page.is_checked('#agree') is True
+assert await page.locator('#agree').is_checked() is True
 
 # Uncheck by input <label>.
-await page.uncheck('#subscribe-label')
+await page.locator('#subscribe-label').uncheck()
 
 # Select the radio button
-await page.check('text=XL')
+await page.locator('text=XL').check()
 ```
 
 ```python sync
 # Check the checkbox
-page.check('#agree')
+page.locator('#agree').check()
 
 # Assert the checked state
-assert page.is_checked('#agree') is True
+assert page.locator('#agree').is_checked() is True
 
 # Uncheck by input <label>.
-page.uncheck('#subscribe-label')
+page.locator('#subscribe-label').uncheck()
 
 # Select the radio button
-page.check('text=XL')
+page.locator('text=XL').check()
 ```
 
 ```csharp
 // Check the checkbox
-await page.CheckAsync("#agree");
+await page.Locator("#agree").CheckAsync();
 
 // Assert the checked state
-Assert.True(await page.IsCheckedAsync("#agree"));
+Assert.True(await page.Locator("#agree").IsCheckedAsync());
 
 // Uncheck by input <label>.
-await page.UncheckAsync("#subscribe-label");
+await page.Locator("#subscribe-label").UncheckAsync();
 
 // Select the radio button
-await page.CheckAsync("text=XL");
+await page.Locator("text=XL").CheckAsync();
 ```
 
 ### API reference
 
-- [`method: Page.check`]
-- [`method: Page.isChecked`]
-- [`method: Page.uncheck`]
 - [`method: Locator.check`]
 - [`method: Locator.isChecked`]
 - [`method: Locator.uncheck`]
+- [`method: Page.check`]
+- [`method: Page.isChecked`]
+- [`method: Page.uncheck`]
 
 <br/>
 
 ## Select options
 
 Selects one or multiple options in the `<select>` element.
-You can specify option `value`, `label` or `elementHandle` to select. Multiple options can be selected.
+You can specify option `value`, or `label` to select. Multiple options can be selected.
 
 ```js
 // Single selection matching the value
-await page.selectOption('select#colors', 'blue');
+await page.locator('select#colors').selectOption('blue');
 
 // Single selection matching the label
-await page.selectOption('select#colors', { label: 'Blue' });
+await page.locator('select#colors').selectOption({ label: 'Blue' });
 
 // Multiple selected items
-await page.selectOption('select#colors', ['red', 'green', 'blue']);
-
-// Select the option via element handle
-const option = await page.$('#best-option');
-await page.selectOption('select#colors', option);
+await page.locator('select#colors').selectOption(['red', 'green', 'blue']);
 ```
 
 ```java
 // Single selection matching the value
-page.selectOption("select#colors", "blue");
+page.locator("select#colors").selectOption("blue");
 
 // Single selection matching the label
-page.selectOption("select#colors", new SelectOption().setLabel("Blue"));
+page.locator("select#colors").selectOption(new SelectOption().setLabel("Blue"));
 
 // Multiple selected items
-page.selectOption("select#colors", new String[] {"red", "green", "blue"});
-
-// Select the option via element handle
-ElementHandle option = page.querySelector("#best-option");
-page.selectOption("select#colors", option);
+page.locator("select#colors").selectOption(new String[] {"red", "green", "blue"});
 ```
 
 ```python async
 # Single selection matching the value
-await page.select_option('select#colors', 'blue')
+await page.locator('select#colors').select_option('blue')
 
 # Single selection matching the label
-await page.select_option('select#colors', label='Blue')
+await page.locator('select#colors').select_option(label='Blue')
 
 # Multiple selected items
-await page.select_option('select#colors', ['red', 'green', 'blue'])
-
-# Select the option via element handle
-option = await page.query_selector('#best-option')
-await page.select_option('select#colors', option)
+await page.locator('select#colors').select_option(['red', 'green', 'blue'])
 ```
 
 ```python sync
 # Single selection matching the value
-page.select_option('select#colors', 'blue')
+page.locator('select#colors').select_option('blue')
 
 # Single selection matching the label
-page.select_option('select#colors', label='Blue')
+page.locator('select#colors').select_option(label='Blue')
 
 # Multiple selected items
-page.select_option('select#colors', ['red', 'green', 'blue'])
-
-# Select the option via element handle
-option = page.query_selector('#best-option')
-page.select_option('select#colors', option)
+page.locator('select#colors').select_option(['red', 'green', 'blue'])
 ```
 
 ```csharp
 // Single selection matching the value
-await page.SelectOptionAsync("select#colors", "blue");
+await page.Locator("select#colors").SelectOptionAsync("blue");
 
 // Single selection matching the label
-await page.SelectOptionAsync("select#colors", new SelectOptionValue { Label = "blue" }));
+await page.Locator("select#colors").SelectOptionAsync(new SelectOptionValue { Label = "blue" }));
 
 // Multiple selected items
-await page.SelectOptionAsync("select#colors", new[] { "blue", "green", "red" });
-
-// Select the option via element handle
-var option = await page.QuerySelectorAsync("#best-option");
-await page.SelectOptionAsync("select#colors", option);
+await page.Locator("select#colors").SelectOptionAsync(new[] { "blue", "green", "red" });
 ```
 
 ### API reference
 
+- [`method: Locator.selectOption`]
 - [`method: Page.selectOption`]
 - [`method: Frame.selectOption`]
-- [`method: ElementHandle.selectOption`]
 
 <br/>
 
@@ -281,102 +261,102 @@ Performs a simple human click.
 
 ```js
 // Generic click
-await page.click('button#submit');
+await page.locator('button#submit').click();
 
 // Double click
-await page.dblclick('#item');
+await page.locator('#item').dblclick();
 
 // Right click
-await page.click('#item', { button: 'right' });
+await page.locator('#item').click({ button: 'right' });
 
 // Shift + click
-await page.click('#item', { modifiers: ['Shift'] });
+await page.locator('#item').click({ modifiers: ['Shift'] });
 
 // Hover over element
-await page.hover('#item');
+await page.locator('#item').hover();
 
 // Click the top left corner
-await page.click('#item', { position: { x: 0, y: 0} });
+await page.locator('#item').click({ position: { x: 0, y: 0} });
 ```
 
 ```java
 // Generic click
-page.click("button#submit");
+page.locator("button#submit").click();
 
 // Double click
-page.dblclick("#item");
+page.locator("#item").dblclick();
 
 // Right click
-page.click("#item", new Page.ClickOptions().setButton(MouseButton.RIGHT));
+page.locator("#item").click(new Locator.ClickOptions().setButton(MouseButton.RIGHT));
 
 // Shift + click
-page.click("#item", new Page.ClickOptions().setModifiers(Arrays.asList(KeyboardModifier.SHIFT)));
+page.locator("#item").click(new Locator.ClickOptions().setModifiers(Arrays.asList(KeyboardModifier.SHIFT)));
 
 // Hover over element
-page.hover("#item");
+page.locator("#item").hover();
 
 // Click the top left corner
-page.click("#item", new Page.ClickOptions().setPosition(0, 0));
+page.locator("#item").click(new Locator.ClickOptions().setPosition(0, 0));
 ```
 
 ```python async
 # Generic click
-await page.click('button#submit')
+await page.locator('button#submit').click()
 
 # Double click
-await page.dblclick('#item')
+await page.locator('#item').dblclick()
 
 # Right click
-await page.click('#item', button='right')
+await page.locator('#item').click(button='right')
 
 # Shift + click
-await page.click('#item', modifiers=['Shift'])
+await page.locator('#item').click(modifiers=['Shift'])
 
 # Hover over element
-await page.hover('#item')
+await page.locator('#item').hover()
 
 # Click the top left corner
-await page.click('#item', position={ 'x': 0, 'y': 0})
+await page.locator('#item').click(position={ 'x': 0, 'y': 0})
 ```
 
 ```python sync
 # Generic click
-page.click('button#submit')
+page.locator('button#submit').click()
 
 # Double click
-page.dblclick('#item')
+page.locator('#item').dblclick()
 
 # Right click
-page.click('#item', button='right')
+page.locator('#item').click(button='right')
 
 # Shift + click
-page.click('#item', modifiers=['Shift'])
+page.locator('#item').click(modifiers=['Shift'])
 
 # Hover over element
-page.hover('#item')
+page.locator('#item').hover()
 
 # Click the top left corner
-page.click('#item', position={ 'x': 0, 'y': 0})
+page.locator('#item').click(position={ 'x': 0, 'y': 0})
 ```
 
 ```csharp
 // Generic click
-await page.ClickAsync("button#submit");
+await page.Locator("button#submit").ClickAsync();
 
 // Double click
-await page.DblClickAsync("#item");
+await page.Locator("#item").DblClickAsync();
 
 // Right click
-await page.ClickAsync("#item", new PageClickOptions { Button = MouseButton.Right });
+await page.Locator("#item").ClickAsync(new() { Button = MouseButton.Right });
 
 // Shift + click
-await page.ClickAsync("#item", new PageClickOptions { Modifiers = new[] { KeyboardModifier.Shift } });
+await page.Locator("#item").ClickAsync(new() { Modifiers = new[] { KeyboardModifier.Shift } });
 
 // Hover over element
-await page.HoverAsync("#item");
+await page.Locator("#item").HoverAsync();
 
 // Click the top left corner
-await page.ClickAsync("#item", new PageClickOptions { position = new Position { X = 0, Y = 0 } });
+await page.Locator("#item").ClickAsync(new() { position = new Position { X = 0, Y = 0 } });
 ```
 
 Under the hood, this and other pointer-related methods:
@@ -393,23 +373,23 @@ Under the hood, this and other pointer-related methods:
 Sometimes, apps use non-trivial logic where hovering the element overlays it with another element that intercepts the click. This behavior is indistinguishable from a bug where element gets covered and the click is dispatched elsewhere. If you know this is taking place, you can bypass the [actionability](./actionability.md) checks and force the click:
 
 ```js
-await page.click('button#submit', { force: true });
+await page.locator('button#submit').click({ force: true });
 ```
 
 ```java
-page.click("button#submit", new Page.ClickOptions().setForce(true));
+page.locator("button#submit").click(new Locator.ClickOptions().setForce(true));
 ```
 
 ```python async
-await page.click('button#submit', force=True)
+await page.locator('button#submit').click(force=True)
 ```
 
 ```python sync
-page.click('button#submit', force=True)
+page.locator('button#submit').click(force=True)
 ```
 
 ```csharp
-await page.ClickAsync("button#submit", new PageClickOptions { Force = true });
+await page.Locator("button#submit").ClickAsync(new() { Force = true });
 ```
 
 #### Programmatic click
@@ -417,39 +397,39 @@ await page.ClickAsync("button#submit", new PageClickOptions { Force = true });
 If you are not interested in testing your app under the real conditions and want to simulate the click by any means possible, you can trigger the [`HTMLElement.click()`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/click) behavior via simply dispatching a click event on the element:
 
 ```js
-await page.dispatchEvent('button#submit', 'click');
+await page.locator('button#submit').dispatchEvent('click');
 ```
 
 ```java
-page.dispatchEvent("button#submit", "click");
+page.locator("button#submit").dispatchEvent("click");
 ```
 
 ```python async
-await page.dispatch_event('button#submit', 'click')
+await page.locator('button#submit').dispatch_event('click')
 ```
 
 ```python sync
-page.dispatch_event('button#submit', 'click')
+page.locator('button#submit').dispatch_event('click')
 ```
 
 ```csharp
-await page.DispatchEventAsync("button#submit", "click");
+await page.Locator("button#submit").DispatchEventAsync("click");
 ```
 
 ### API reference
 
+- [`method: Locator.click`]
 - [`method: Page.click`]
 - [`method: Frame.click`]
-- [`method: ElementHandle.click`]
+- [`method: Locator.dblclick`]
 - [`method: Page.dblclick`]
 - [`method: Frame.dblclick`]
-- [`method: ElementHandle.dblclick`]
+- [`method: Locator.hover`]
 - [`method: Page.hover`]
 - [`method: Frame.hover`]
-- [`method: ElementHandle.hover`]
+- [`method: Locator.dispatchEvent`]
 - [`method: Page.dispatchEvent`]
 - [`method: Frame.dispatchEvent`]
-- [`method: ElementHandle.dispatchEvent`]
 
 <br/>
 
@@ -459,27 +439,27 @@ Type into the field character by character, as if it was a user with a real keyb
 
 ```js
 // Type character by character
-await page.type('#area', 'Hello World!');
+await page.locator('#area').type('Hello World!');
 ```
 
 ```java
 // Type character by character
-page.type("#area", "Hello World!");
+page.locator("#area").type("Hello World!");
 ```
 
 ```python async
 # Type character by character
-await page.type('#area', 'Hello World!')
+await page.locator('#area').type('Hello World!')
 ```
 
 ```python sync
 # Type character by character
-page.type('#area', 'Hello World!')
+page.locator('#area').type('Hello World!')
 ```
 
 ```csharp
 // Type character by character
-await page.TypeAsync("#area", "Hello World!");
+await page.Locator("#area").TypeAsync("Hello World!");
 ```
 
 This method will emit all the necessary keyboard events, with all the `keydown`, `keyup`, `keypress` events in place. You can even specify the optional `delay` between the key presses to simulate real user behavior.
@@ -490,9 +470,9 @@ Most of the time, [`method: Page.fill`] will just work. You only need to type ch
 
 ### API reference
 
+- [`method: Locator.type`]
 - [`method: Page.type`]
 - [`method: Frame.type`]
-- [`method: ElementHandle.type`]
 - [`method: Keyboard.type`]
 
 <br/>
@@ -501,57 +481,57 @@ Most of the time, [`method: Page.fill`] will just work. You only need to type ch
 
 ```js
 // Hit Enter
-await page.press('#submit', 'Enter');
+await page.locator('#submit').press('Enter');
 
 // Dispatch Control+Right
-await page.press('#name', 'Control+ArrowRight');
+await page.locator('#name').press('Control+ArrowRight');
 
 // Press $ sign on keyboard
-await page.press('#value', '$');
+await page.locator('#value').press('$');
 ```
 
 ```java
 // Hit Enter
-page.press("#submit", "Enter");
+page.locator("#submit").press("Enter");
 
 // Dispatch Control+Right
-page.press("#name", "Control+ArrowRight");
+page.locator("#name").press("Control+ArrowRight");
 
 // Press $ sign on keyboard
-page.press("#value", "$");
+page.locator("#value").press("$");
 ```
 
 ```python async
 # Hit Enter
-await page.press('#submit', 'Enter')
+await page.locator('#submit').press('Enter')
 
 # Dispatch Control+Right
-await page.press('#name', 'Control+ArrowRight')
+await page.locator('#name').press('Control+ArrowRight')
 
 # Press $ sign on keyboard
-await page.press('#value', '$')
+await page.locator('#value').press('$')
 ```
 
 ```python sync
 # Hit Enter
-page.press('#submit', 'Enter')
+page.locator('#submit').press('Enter')
 
 # Dispatch Control+Right
-page.press('#name', 'Control+ArrowRight')
+page.locator('#name').press('Control+ArrowRight')
 
 # Press $ sign on keyboard
-page.press('#value', '$')
+page.locator('#value').press('$')
 ```
 
 ```csharp
 // Hit Enter
-await page.PressAsync("#submit", "Enter");
+await page.Locator("#submit").PressAsync("Enter");
 
 // Dispatch Control+Right
-await page.PressAsync("#name", "Control+ArrowRight");
+await page.Locator("#name").PressAsync("Control+ArrowRight");
 
 // Press $ sign on keyboard
-await page.PressAsync("#value", "$");
+await page.Locator("#value").PressAsync("$");
 ```
 
 This method focuses the selected element and produces a single keystroke. It accepts the logical key names that are emitted in the [keyboardEvent.key](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key) property of the keyboard events:
@@ -571,42 +551,42 @@ Simple version produces a single character. This character is case-sensitive, so
 
 ```js
 // <input id=name>
-await page.press('#name', 'Shift+A');
+await page.locator('#name').press('Shift+A');
 
 // <input id=name>
-await page.press('#name', 'Shift+ArrowLeft');
+await page.locator('#name').press('Shift+ArrowLeft');
 ```
 
 ```java
 // <input id=name>
-page.press("#name", "Shift+A");
+page.locator("#name").press("Shift+A");
 
 // <input id=name>
-page.press("#name", "Shift+ArrowLeft");
+page.locator("#name").press("Shift+ArrowLeft");
 ```
 
 ```python async
 # <input id=name>
-await page.press('#name', 'Shift+A')
+await page.locator('#name').press('Shift+A')
 
 # <input id=name>
-await page.press('#name', 'Shift+ArrowLeft')
+await page.locator('#name').press('Shift+ArrowLeft')
 ```
 
 ```python sync
 # <input id=name>
-page.press('#name', 'Shift+A')
+page.locator('#name').press('Shift+A')
 
 # <input id=name>
-page.press('#name', 'Shift+ArrowLeft')
+page.locator('#name').press('Shift+ArrowLeft')
 ```
 
 ```csharp
 // <input id=name>
-await page.PressAsync("#name", "Shift+A");
+await page.Locator("#name").PressAsync("Shift+A");
 
 // <input id=name>
-await page.PressAsync("#name", "Shift+ArrowLeft");
+await page.Locator("#name").PressAsync("Shift+ArrowLeft");
 ```
 
 Shortcuts such as `"Control+o"` or `"Control+Shift+T"` are supported as well. When specified with the modifier, modifier is pressed and being held while the subsequent key is being pressed.
@@ -616,9 +596,9 @@ Note that you still need to specify the capital `A` in `Shift-A` to produce the 
 
 ### API reference
 
+- [`method: Locator.press`]
 - [`method: Page.press`]
 - [`method: Frame.press`]
-- [`method: ElementHandle.press`]
 - [`method: Keyboard.press`]
 
 <br/>
@@ -629,16 +609,16 @@ You can select input files for upload using the [`method: Page.setInputFiles`] m
 
 ```js
 // Select one file
-await page.setInputFiles('input#upload', 'myfile.pdf');
+await page.locator('input#upload').setInputFiles('myfile.pdf');
 
 // Select multiple files
-await page.setInputFiles('input#upload', ['file1.txt', 'file2.txt']);
+await page.locator('input#upload').setInputFiles(['file1.txt', 'file2.txt']);
 
 // Remove all the selected files
-await page.setInputFiles('input#upload', []);
+await page.locator('input#upload').setInputFiles([]);
 
 // Upload buffer from memory
-await page.setInputFiles('input#upload', {
+await page.locator('input#upload').setInputFiles({
   name: 'file.txt',
   mimeType: 'text/plain',
   buffer: Buffer.from('this is test')
@@ -647,32 +627,31 @@ await page.setInputFiles('input#upload', {
 
 ```java
 // Select one file
-page.setInputFiles("input#upload", Paths.get("myfile.pdf"));
+page.locator("input#upload").setInputFiles(Paths.get("myfile.pdf"));
 
 // Select multiple files
-page.setInputFiles("input#upload", new Path[] {Paths.get("file1.txt"), Paths.get("file2.txt")});
+page.locator("input#upload").setInputFiles(new Path[] {Paths.get("file1.txt"), Paths.get("file2.txt")});
 
 // Remove all the selected files
-page.setInputFiles("input#upload", new Path[0]);
+page.locator("input#upload").setInputFiles(new Path[0]);
 
 // Upload buffer from memory
-page.setInputFiles("input#upload", new FilePayload(
+page.locator("input#upload").setInputFiles(new FilePayload(
   "file.txt", "text/plain", "this is test".getBytes(StandardCharsets.UTF_8)));
 ```
 
 ```python async
 # Select one file
-await page.set_input_files('input#upload', 'myfile.pdf')
+await page.locator('input#upload').set_input_files('myfile.pdf')
 
 # Select multiple files
-await page.set_input_files('input#upload', ['file1.txt', 'file2.txt'])
+await page.locator('input#upload').set_input_files(['file1.txt', 'file2.txt'])
 
 # Remove all the selected files
-await page.set_input_files('input#upload', [])
+await page.locator('input#upload').set_input_files([])
 
 # Upload buffer from memory
-await page.set_input_files(
-    "input#upload",
+await page.locator("input#upload").set_input_files(
     files=[
         {"name": "test.txt", "mimeType": "text/plain", "buffer": b"this is a test"}
     ],
@@ -681,17 +660,16 @@ await page.set_input_files(
 
 ```python sync
 # Select one file
-page.set_input_files('input#upload', 'myfile.pdf')
+page.locator('input#upload').set_input_files('myfile.pdf')
 
 # Select multiple files
-page.set_input_files('input#upload', ['file1.txt', 'file2.txt'])
+page.locator('input#upload').set_input_files(['file1.txt', 'file2.txt'])
 
 # Remove all the selected files
-page.set_input_files('input#upload', [])
+page.locator('input#upload').set_input_files([])
 
 # Upload buffer from memory
-page.set_input_files(
-    "input#upload",
+page.locator("input#upload").set_input_files(
     files=[
         {"name": "test.txt", "mimeType": "text/plain", "buffer": b"this is a test"}
     ],
@@ -700,16 +678,16 @@ page.set_input_files(
 
 ```csharp
 // Select one file
-await page.SetInputFilesAsync("input#upload", "myfile.pdf");
+await page.Locator("input#upload").SetInputFilesAsync("myfile.pdf");
 
 // Select multiple files
-await page.SetInputFilesAsync("input#upload", new[] { "file1.txt", "file12.txt" });
+await page.Locator("input#upload").SetInputFilesAsync(new[] { "file1.txt", "file12.txt" });
 
 // Remove all the selected files
-await page.SetInputFilesAsync("input#upload", new[] {});
+await page.Locator("input#upload").SetInputFilesAsync(new[] {});
 
 // Upload buffer from memory
-await page.SetInputFilesAsync("input#upload", new FilePayload
+await page.Locator("input#upload").SetInputFilesAsync(new FilePayload
 {
     Name = "file.txt",
     MimeType = "text/plain",
@@ -733,21 +711,21 @@ await fileChooser.setFiles('myfile.pdf');
 
 ```java
 FileChooser fileChooser = page.waitForFileChooser(() -> {
-  page.click("upload");
+  page.locator("upload").click();
 });
 fileChooser.setFiles(Paths.get("myfile.pdf"));
 ```
 
 ```python async
 async with page.expect_file_chooser() as fc_info:
-    await page.click("upload")
+    await page.locator("upload").click()
 file_chooser = await fc_info.value
 await file_chooser.set_files("myfile.pdf")
 ```
 
 ```python sync
 with page.expect_file_chooser() as fc_info:
-    page.click("upload")
+    page.locator("upload").click()
 file_chooser = fc_info.value
 file_chooser.set_files("myfile.pdf")
 ```
@@ -755,16 +733,16 @@ file_chooser.set_files("myfile.pdf")
 ```csharp
 var fileChooser = page.RunAndWaitForFileChooserAsync(async () =>
 {
-    await page.ClickAsync("upload");
+    await page.Locator("upload").ClickAsync();
 });
 await fileChooser.SetFilesAsync("myfile.pdf");
 ```
 
 ### API reference
 - [FileChooser]
+- [`method: Locator.setInputFiles`]
 - [`method: Page.setInputFiles`]
 - [`method: Frame.setInputFiles`]
-- [`method: ElementHandle.setInputFiles`]
 
 <br/>
 
@@ -773,28 +751,28 @@ await fileChooser.SetFilesAsync("myfile.pdf");
 For the dynamic pages that handle focus events, you can focus the given element.
 
 ```js
-await page.focus('input#name');
+await page.locator('input#name').focus();
 ```
 
 ```java
-page.focus("input#name");
+page.locator("input#name").focus();
 ```
 
 ```python async
-await page.focus('input#name')
+await page.locator('input#name').focus()
 ```
 
 ```python sync
-page.focus('input#name')
+page.locator('input#name').focus()
 ```
 
 ```csharp
-await page.FocusAsync("input#name");
+await page.Locator("input#name").FocusAsync();
 ```
 
 ### API reference
 
+- [`method: Locator.focus`]
 - [`method: Page.focus`]
 - [`method: Frame.focus`]
-- [`method: ElementHandle.focus`]
 <br/>

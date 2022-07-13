@@ -42,6 +42,7 @@ if ((process as any)['__pw_initiator__']) {
 type TestFixtures = PlaywrightTestArgs & PlaywrightTestOptions & {
   _combinedContextOptions: BrowserContextOptions,
   _contextReuseEnabled: boolean,
+  _reuseContext: boolean,
   _setupContextOptionsAndArtifacts: void;
   _contextFactory: (options?: BrowserContextOptions) => Promise<BrowserContext>;
 };
@@ -506,13 +507,15 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
       testInfo.errors.push({ message: prependToError });
   }, { scope: 'test',  _title: 'context' } as any],
 
-  _contextReuseEnabled: async ({ video, trace }, use, testInfo) => {
-    const reuse = !!process.env.PW_REUSE_CONTEXT && !shouldCaptureVideo(normalizeVideoMode(video), testInfo) && !shouldCaptureTrace(normalizeTraceMode(trace), testInfo);
+  _contextReuseEnabled: !!process.env.PW_REUSE_CONTEXT,
+
+  _reuseContext: async ({ video, trace, _contextReuseEnabled }, use, testInfo) => {
+    const reuse = _contextReuseEnabled && !shouldCaptureVideo(normalizeVideoMode(video), testInfo) && !shouldCaptureTrace(normalizeTraceMode(trace), testInfo);
     await use(reuse);
   },
 
-  context: async ({ playwright, browser, _contextReuseEnabled, _contextFactory }, use, testInfo) => {
-    if (!_contextReuseEnabled) {
+  context: async ({ playwright, browser, _reuseContext, _contextFactory }, use, testInfo) => {
+    if (!_reuseContext) {
       await use(await _contextFactory());
       return;
     }
@@ -522,8 +525,8 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
     await use(context);
   },
 
-  page: async ({ context, _contextReuseEnabled }, use) => {
-    if (!_contextReuseEnabled) {
+  page: async ({ context, _reuseContext }, use) => {
+    if (!_reuseContext) {
       await use(await context.newPage());
       return;
     }

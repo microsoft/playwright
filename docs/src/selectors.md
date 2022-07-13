@@ -491,7 +491,7 @@ Locators support an option to only select elements that have some text somewhere
   page.locator("button", has_text="Click me").click()
   ```
   ```csharp
-  await page.Locator("button", new PageLocatorOptions { HasText = "Click me" }).ClickAsync();
+  await page.Locator("button", new() { HasText = "Click me" }).ClickAsync();
   ```
 
 You can also pass a regular expression.
@@ -513,7 +513,7 @@ Locators support an option to only select elements that have a descendant matchi
   page.locator("article", has=page.locator("button.subscribe"))
   ```
   ```csharp
-  page.Locator("article", new PageLocatorOptions { Has = page.Locator("button.subscribe") })
+  page.Locator("article", new() { Has = page.Locator("button.subscribe") })
   ```
 
 Note that inner locator is matched starting from the outer one, not from the document root.
@@ -572,7 +572,7 @@ You can add filtering to any locator by passing `:scope` selector to [`method: L
   ```csharp
   var locator = page.Locator(".row");
   // ... later on ...
-  await locator.Locator(":scope", new LocatorLocatorOptions { HasText = "Hello" }).ClickAsync();
+  await locator.Locator(":scope", new() { HasText = "Hello" }).ClickAsync();
   ```
 
 ## Selecting elements matching one of the conditions
@@ -795,27 +795,27 @@ For example, consider the following DOM structure: `<label for="password">Passwo
 
 ```js
 // Fill the input by targeting the label.
-await page.fill('text=Password', 'secret');
+await page.locator('text=Password').fill('secret');
 ```
 
 ```java
 // Fill the input by targeting the label.
-page.fill("text=Password", "secret");
+page.locator("text=Password").fill("secret");
 ```
 
 ```python async
 # Fill the input by targeting the label.
-await page.fill('text=Password', 'secret')
+await page.locator('text=Password').fill('secret')
 ```
 
 ```python sync
 # Fill the input by targeting the label.
-page.fill('text=Password', 'secret')
+page.locator('text=Password').fill('secret')
 ```
 
 ```csharp
 // Fill the input by targeting the label.
-await page.FillAsync("text=Password", "secret");
+await page.Locator("text=Password").FillAsync("secret");
 ```
 
 However, other methods will target the label itself, for example `textContent` will return the text content of the label, not the input field.

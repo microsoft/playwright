@@ -109,28 +109,28 @@ done and its response has started loading in the popup.
 ```js
 const [newPage] = await Promise.all([
   context.waitForEvent('page'),
-  page.click('a[target=_blank]'),
+  page.locator('a[target=_blank]').click(),
 ]);
 console.log(await newPage.evaluate('location.href'));
 ```
 
 ```java
 Page newPage = context.waitForPage(() -> {
-  page.click("a[target=_blank]");
+  page.locator("a[target=_blank]").click();
 });
 System.out.println(newPage.evaluate("location.href"));
 ```
 
 ```python async
 async with context.expect_page() as page_info:
-    await page.click("a[target=_blank]"),
+    await page.locator("a[target=_blank]").click(),
 page = await page_info.value
 print(await page.evaluate("location.href"))
 ```
 
 ```python sync
 with context.expect_page() as page_info:
-    page.click("a[target=_blank]"),
+    page.locator("a[target=_blank]").click(),
 page = page_info.value
 print(page.evaluate("location.href"))
 ```
@@ -138,7 +138,7 @@ print(page.evaluate("location.href"))
 ```csharp
 var popup = await context.RunAndWaitForPageAsync(async =>
 {
-    await page.ClickAsync("a");
+    await page.Locator("a").ClickAsync();
 });
 Console.WriteLine(await popup.EvaluateAsync<string>("location.href"));
 ```
@@ -189,7 +189,6 @@ from a particular page, use [`event: Page.response`].
 
 ## event: BrowserContext.serviceWorker
 * since: v1.11
-* langs: js, python
 - argument: <[Worker]>
 
 :::note
@@ -435,7 +434,7 @@ const { webkit } = require('playwright');  // Or 'chromium' or 'firefox'.
     <button onclick="onClick()">Click me</button>
     <div></div>
   `);
-  await page.click('button');
+  await page.locator('button').click();
 })();
 ```
 
@@ -457,7 +456,7 @@ public class Example {
         "</script>\n" +
         "<button onclick=\"onClick()\">Click me</button>\n" +
         "<div></div>");
-      page.click("button");
+      page.locator("button").click();
     }
   }
 }
@@ -482,7 +481,7 @@ async def run(playwright):
     <button onclick="onClick()">Click me</button>
     <div></div>
     """)
-    await page.click("button")
+    await page.locator("button").click()
 
 async def main():
     async with async_playwright() as playwright:
@@ -508,7 +507,7 @@ def run(playwright):
     <button onclick="onClick()">Click me</button>
     <div></div>
     """)
-    page.click("button")
+    page.locator("button").click()
 
 with sync_playwright() as playwright:
     run(playwright)
@@ -530,7 +529,7 @@ await page.SetContentAsync("<script>\n" +
 "</script>\n" +
 "<button onclick=\"onClick()\">Click me</button>\n" +
 "<div></div>");
-await page.ClickAsync("button");
+await page.Locator("button").ClickAsync();
 ```
 
 An example of passing an element handle:
@@ -660,7 +659,7 @@ const crypto = require('crypto');
     <button onclick="onClick()">Click me</button>
     <div></div>
   `);
-  await page.click('button');
+  await page.locator('button').click();
 })();
 ```
 
@@ -696,7 +695,7 @@ public class Example {
         "</script>\n" +
         "<button onclick=\"onClick()\">Click me</button>\n" +
         "<div></div>\n");
-      page.click("button");
+      page.locator("button").click();
     }
   }
 }
@@ -728,7 +727,7 @@ async def run(playwright):
         <button onclick="onClick()">Click me</button>
         <div></div>
     """)
-    await page.click("button")
+    await page.locator("button").click()
 
 async def main():
     async with async_playwright() as playwright:
@@ -761,7 +760,7 @@ def run(playwright):
         <button onclick="onClick()">Click me</button>
         <div></div>
     """)
-    page.click("button")
+    page.locator("button").click()
 
 with sync_playwright() as playwright:
     run(playwright)
@@ -796,7 +795,7 @@ class BrowserContextExamples
         "<button onclick=\"onClick()\">Click me</button>\n" +
         "<div></div>");
 
-        await page.ClickAsync("button");
+        await page.Locator("button").ClickAsync();
         Console.WriteLine(await page.TextContentAsync("div"));
     }
 }
@@ -1300,30 +1299,30 @@ value. Will throw an error if the context closes before the event is fired. Retu
 ```js
 const [page, _] = await Promise.all([
   context.waitForEvent('page'),
-  page.click('button')
+  page.locator('button').click()
 ]);
 ```
 
 ```java
-Page newPage = context.waitForPage(() -> page.click("button"));
+Page newPage = context.waitForPage(() -> page.locator("button").click());
 ```
 
 ```python async
 async with context.expect_event("page") as event_info:
-    await page.click("button")
+    await page.locator("button").click()
 page = await event_info.value
 ```
 
 ```python sync
 with context.expect_event("page") as event_info:
-    page.click("button")
+    page.locator("button").click()
 page = event_info.value
 ```
 
 ```csharp
 var page = await context.RunAndWaitForPageAsync(async () =>
 {
-    await page.ClickAsync("button");
+    await page.Locator("button").ClickAsync();
 });
 ```
 

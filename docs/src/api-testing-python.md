@@ -254,10 +254,10 @@ it was created:
 ```python
 def test_last_created_issue_should_be_on_the_server(api_request_context: APIRequestContext, page: Page) -> None:
     page.goto(f"https://github.com/{GITHUB_USER}/{GITHUB_REPO}/issues")
-    page.click("text=New issue")
-    page.fill("[aria-label='Title']", "Bug report 1")
-    page.fill("[aria-label='Comment body']", "Bug description")
-    page.click("text=Submit new issue")
+    page.locator("text=New issue").click()
+    page.locator("[aria-label='Title']").fill("Bug report 1")
+    page.locator("[aria-label='Comment body']").fill("Bug description")
+    page.locator("text=Submit new issue").click()
     issue_id = page.url.split("/")[-1]
 
     new_issue = api_request_context.get(f"https://github.com/{GITHUB_USER}/{GITHUB_REPO}/issues/{issue_id}")

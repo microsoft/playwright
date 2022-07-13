@@ -154,3 +154,20 @@ it('should dispatch click event via ElementHandles', async ({ page, server }) =>
   await button.dispatchEvent('click');
   expect(await page.evaluate(() => window['result'])).toBe('Clicked');
 });
+
+it('should dispatch wheel event', async ({ page, server }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/15562' });
+  await page.goto(server.PREFIX + '/input/scrollable.html');
+  const eventsHandle = await page.locator('body').evaluateHandle(e => {
+    const events = [];
+    e.addEventListener('wheel', event => {
+      events.push(event);
+      console.log(event);
+    });
+    return events;
+  });
+  await page.locator('body').dispatchEvent('wheel', { deltaX: 100, deltaY: 200 });
+  expect(await eventsHandle.evaluate(e => e.length)).toBe(1);
+  expect(await eventsHandle.evaluate(e => e[0] instanceof WheelEvent)).toBeTruthy();
+  expect(await eventsHandle.evaluate(e => ({ deltaX: e[0].deltaX, deltaY: e[0].deltaY }))).toEqual({ deltaX: 100, deltaY: 200 });
+});

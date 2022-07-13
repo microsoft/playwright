@@ -470,7 +470,7 @@ with sync_playwright() as p:
 using Microsoft.Playwright;
 
 using var playwright = await Playwright.CreateAsync();
-await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
+await playwright.Chromium.LaunchAsync(new()
 {
     Headless = false
 });

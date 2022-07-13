@@ -529,13 +529,15 @@ class Worker extends EventEmitter {
       repeatEachIndex: testGroup.repeatEachIndex,
       projectIndex: testGroup.projectIndex,
       loader: loaderData,
-      stdoutDimension: {
+      stdoutParams: {
         rows: process.stdout.rows,
-        columns: process.stdout.columns
+        columns: process.stdout.columns,
+        colorDepth: process.stdout.getColorDepth?.() || 8
       },
-      stderrDimension: {
+      stderrParams: {
         rows: process.stderr.rows,
-        columns: process.stderr.columns
+        columns: process.stderr.columns,
+        colorDepth: process.stderr.getColorDepth?.() || 8
       },
     };
     this.send({ method: 'init', params });

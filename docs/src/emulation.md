@@ -72,7 +72,7 @@ class Program
     public static async Task Main()
     {
         using var playwright = await Playwright.CreateAsync();
-        await using var browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
+        await using var browser = await playwright.Chromium.LaunchAsync(new()
         {
             Headless: False
         });
@@ -193,7 +193,7 @@ context = browser.new_context(
 
 ```csharp
 // Create context with given viewport
-await using var context = await browser.NewContextAsync(new BrowserNewContextOptions
+await using var context = await browser.NewContextAsync(new()
 {
     ViewportSize = new ViewportSize() { Width = 1280, Height = 1024 }
 });
@@ -202,7 +202,7 @@ await using var context = await browser.NewContextAsync(new BrowserNewContextOpt
 await page.SetViewportSizeAsync(1600, 1200);
 
 // Emulate high-DPI
-await using var context = await browser.NewContextAsync(new BrowserNewContextOptions
+await using var context = await browser.NewContextAsync(new()
 {
     ViewportSize = new ViewportSize() { Width = 2560, Height = 1440 },
     DeviceScaleFactor = 2
@@ -249,7 +249,7 @@ context = browser.new_context(
 ```
 
 ```csharp
-await using var context = await browser.NewContextAsync(new BrowserNewContextOptions
+await using var context = await browser.NewContextAsync(new()
 {
     Locale = "de-DE",
     TimezoneId = "Europe/Berlin"
@@ -394,7 +394,7 @@ context = browser.new_context(
 ```
 
 ```csharp
-await using var context = await browser.NewContextAsync(new BrowserNewContextOptions
+await using var context = await browser.NewContextAsync(new()
 {
     Permissions = new[] { "geolocation" },
     Geolocation = new Geolocation() { Longitude = 48.858455f, Latitude = 2.294474f }
@@ -507,25 +507,25 @@ page.emulate_media(media='print')
 
 ```csharp
 // Create context with dark mode
-await using var context = await browser.NewContextAsync(new BrowserNewContextOptions
+await using var context = await browser.NewContextAsync(new()
 {
     ColorScheme = ColorScheme.Dark
 });
 
 // Create page with dark mode
-var page = await browser.NewPageAsync(new BrowserNewPageOptions
+var page = await browser.NewPageAsync(new()
 {
     ColorScheme = ColorScheme.Dark
 });
 
 // Change color scheme for the page
-await page.EmulateMediaAsync(new PageEmulateMediaOptions
+await page.EmulateMediaAsync(new()
 {
     ColorScheme = ColorScheme.Dark
 });
 
 // Change media for page
-await page.EmulateMediaAsync(new PageEmulateMediaOptions
+await page.EmulateMediaAsync(new()
 {
     Media = Media.Print
 });

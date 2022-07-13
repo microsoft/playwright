@@ -8,7 +8,7 @@ import { test, expect } from '@playwright/test';
 
 test('status becomes submitted', async ({ page }) => {
   // ...
-  await page.click('#submit-button');
+  await page.locator('#submit-button').click();
   await expect(page.locator('.status')).toHaveText('Submitted');
 });
 ```
@@ -22,7 +22,7 @@ public class TestLocator {
   @Test
   void statusBecomesSubmitted() {
     ...
-    page.click("#submit-button");
+    page.locator("#submit-button").click();
     assertThat(page.locator(".status")).hasText("Submitted");
   }
 }
@@ -33,7 +33,7 @@ from playwright.async_api import Page, expect
 
 async def test_status_becomes_submitted(page: Page) -> None:
     # ..
-    await page.click("#submit-button")
+    await page.locator("#submit-button").click()
     await expect(page.locator(".status")).to_have_text("Submitted")
 ```
 
@@ -42,7 +42,7 @@ from playwright.sync_api import Page, expect
 
 def test_status_becomes_submitted(page: Page) -> None:
     # ..
-    page.click("#submit-button")
+    page.locator("#submit-button").click()
     expect(page.locator(".status")).to_have_text("Submitted")
 ```
 
@@ -60,7 +60,7 @@ public class ExampleTests : PageTest
     public async Task StatusBecomesSubmitted()
     {
         // ..
-        await Page.ClickAsync("#submit-button");
+        await Page.Locator("#submit-button").ClickAsync();
         await Expect(Page.Locator(".status")).ToHaveTextAsync("Submitted");
     }
 }
@@ -721,6 +721,99 @@ await Expect(locator).ToBeVisibleAsync();
 ### option: LocatorAssertions.toBeVisible.timeout = %%-csharp-java-python-assertions-timeout-%%
 * since: v1.18
 
+## async method: LocatorAssertions.toContainClass
+* since: v1.24
+* langs:
+  - alias-java: containsClass
+
+Ensures the [Locator] points to an element that contains the given CSS class (or multiple).
+In contrast to [`method: LocatorAssertions.toHaveClass`] which requires that the [Locator] has exactly the provided classes, `toContainClass` verifies that the [Locator] has a subset (or all) of the given CSS classes.
+
+```html
+<div class='foo bar baz' id='component'>
+  <div class='item alice'></div>
+  <div class='item bob'></div>
+</div>
+```
+
+```js
+const locator = page.locator('#component');
+await expect(locator).toContainClass('bar baz'); // pass, both classes are on element
+await expect(locator).toContainClass('ba'); // fail, element has no 'ba' class
+
+const itemLocator = page.locator('#component .item');
+await expect(itemLocator).toContainClass(['alice', 'bob']); // pass, first element has alice, second bob
+await expect(itemLocator).toContainClass(['alice', 'bob carl']); // no carl class found on second item element
+await expect(itemLocator).toContainClass(['alice', 'bob', 'foobar']); // we expect 3 elements with the item class, but there are only 2
+```
+
+```java
+Locator locator = page.locator("#component");
+assertThat(locator).containsClass("bar baz"); // pass, both classes are on element
+assertThat(locator).containsClass("ba"); // fail, element has no 'ba' class
+
+Locator itemLocator = page.locator("#component .item");
+assertThat(itemLocator).toContainClass(new String[] {"alice", "bob"}); // pass, first element has alice, second bob
+assertThat(itemLocator).toContainClass(new String[] {"alice", "bob carl"}); // no carl class found on second item element
+assertThat(itemLocator).toContainClass(new String[] {"alice", "bob", "foobar"}); // we expect 3 elements with the item class, but there are only 2
+```
+
+```python async
+from playwright.async_api import expect
+
+locator = page.locator('#component')
+expect(locator).to_contain_class('bar baz') # pass, both classes are on element
+expect(locator).to_contain_class('ba') # fail, element has no 'ba' class
+
+item_locator = page.locator('#component .item')
+expect(item_locator).to_contain_class(['alice', 'bob']) # pass, first element has alice, second bob
+expect(item_locator).to_contain_class(['alice', 'bob carl']) # no carl class found on second item element
+expect(item_locator).to_contain_class(['alice', 'bob', 'foobar']) # we expect 3 elements with the item class, but there are only 2
+```
+
+```python sync
+from playwright.sync_api import expect
+
+locator = page.locator('#component')
+await expect(locator).to_contain_class('bar baz') # pass, both classes are on element
+await expect(locator).to_contain_class('ba') # fail, element has no 'ba' class
+
+item_locator = page.locator('#component .item')
+await expect(item_locator).to_contain_class(['alice', 'bob']) # pass, first element has alice, second bob
+await expect(item_locator).to_contain_class(['alice', 'bob carl']) # no carl class found on second item element
+await expect(item_locator).to_contain_class(['alice', 'bob', 'foobar']) # we expect 3 elements with the item class, but there are only 2
+```
+
+```csharp
+var locator = Page.Locator("#component");
+await Expect(locator).ToContainClassAsync("bar baz"); // pass, both classes are on element
+await Expect(locator).ToContainClassAsync("ba"); // fail, element has no "ba" class
+
+var itemLocator = page.locator("#component .item");
+await Expect(itemLocator).ToContainClassAsync(new string[]{"alice", "bob"}); // pass, first element has alice, second bob
+await Expect(itemLocator).ToContainClassAsync(new string[]{"alice", "bob carl"}); // no carl class found on second item element
+await Expect(itemLocator).ToContainClassAsync(new string[]{"alice", "bob", "foobar"}); // we expect 3 elements with the item class, but there are only 2
+```
+
+Note that locator must point to a single element when passing a string or to multiple elements when passing an array.
+
+### param: LocatorAssertions.toContainClass.expected
+* since: v1.24
+- `expected` <[string]|[Array]<[string]>>
+
+Expected classnames, whitespace separated. When passing an array, the given classes must be present on the locator elements.
+
+### option: LocatorAssertions.toContainClass.ignoreCase
+* since: v1.24
+- `ignoreCase` <[boolean]>
+
+Whether to perform case-insensitive match.
+
+### option: LocatorAssertions.toContainClass.timeout = %%-js-assertions-timeout-%%
+* since: v1.24
+### option: LocatorAssertions.toContainClass.timeout = %%-csharp-java-python-assertions-timeout-%%
+* since: v1.24
+
 ## async method: LocatorAssertions.toContainText
 * since: v1.20
 * langs:
@@ -883,15 +976,22 @@ Expected attribute value.
 * langs:
   - alias-java: hasClass
 
-Ensures the [Locator] points to an element with given CSS class.
+Ensures the [Locator] points to an element with given CSS classes. This needs to be a full match
+or using a relaxed regular expression. For matching partial class names, use [`method: LocatorAssertions.toContainClass`].
+
+```html
+<div class='selected row' id='component'></div>
+```
 
 ```js
 const locator = page.locator('#component');
 await expect(locator).toHaveClass(/selected/);
+await expect(locator).toHaveClass('selected row');
 ```
 
 ```java
 assertThat(page.locator("#component")).hasClass(Pattern.compile("selected"));
+assertThat(page.locator("#component")).hasClass("selected row");
 ```
 
 ```python async
@@ -899,6 +999,7 @@ from playwright.async_api import expect
 
 locator = page.locator("#component")
 await expect(locator).to_have_class(re.compile(r"selected"))
+await expect(locator).to_have_class("selected row")
 ```
 
 ```python sync
@@ -906,11 +1007,13 @@ from playwright.sync_api import expect
 
 locator = page.locator("#component")
 expect(locator).to_have_class(re.compile(r"selected"))
+expect(locator).to_have_class("selected row")
 ```
 
 ```csharp
 var locator = Page.Locator("#component");
 await Expect(locator).ToHaveClassAsync(new Regex("selected"));
+await Expect(locator).ToHaveClassAsync("selected row");
 ```
 
 Note that if array is passed as an expected value, entire lists of elements can be asserted:

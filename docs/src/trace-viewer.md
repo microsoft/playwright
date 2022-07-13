@@ -117,7 +117,7 @@ await using var browser = playwright.Chromium.LaunchAsync();
 await using var context = await browser.NewContextAsync();
 
 // Start tracing before creating / navigating a page.
-await context.Tracing.StartAsync(new TracingStartOptions
+await context.Tracing.StartAsync(new()
 {
   Screenshots = true,
   Snapshots = true,
@@ -128,7 +128,7 @@ var page = context.NewPageAsync();
 await page.GotoAsync("https://playwright.dev");
 
 // Stop tracing and export it into a zip archive.
-await context.Tracing.StopAsync(new TracingStopOptions
+await context.Tracing.StopAsync(new()
 {
   Path = "trace.zip"
 });

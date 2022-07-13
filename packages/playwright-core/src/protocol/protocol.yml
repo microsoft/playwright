@@ -850,8 +850,6 @@ BrowserContext:
       parameters:
         source: string
 
-    removeInitScripts:
-
     clearCookies:
 
     clearPermissions:
@@ -872,8 +870,6 @@ BrowserContext:
       parameters:
         name: string
         needsHandle: boolean?
-
-    removeExposedBindings:
 
     grantPermissions:
       parameters:
@@ -1061,8 +1057,6 @@ Page:
       parameters:
         source: string
 
-    removeInitScripts:
-
     close:
       parameters:
         runBeforeUnload: boolean?
@@ -1103,8 +1097,6 @@ Page:
       parameters:
         name: string
         needsHandle: boolean?
-
-    removeExposedBindings:
 
     goBack:
       parameters:

@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
+import type { WriteStream } from 'tty';
 import * as util from 'util';
-import type { RunPayload, TeardownErrorsPayload, TestOutputPayload, WorkerInitParams } from './ipc';
+import type { RunPayload, TeardownErrorsPayload, TestOutputPayload, TtyParams, WorkerInitParams } from './ipc';
 import { startProfiling, stopProfiling } from './profiler';
 import { serializeError } from './util';
 import { WorkerRunner } from './workerRunner';
@@ -124,14 +125,21 @@ function chunkToParams(chunk: Buffer | string):  { text?: string, buffer?: strin
 
 function initConsoleParameters(initParams: WorkerInitParams) {
   // Make sure the output supports colors.
-  process.stdout.isTTY = true;
-  process.stderr.isTTY = true;
-  if (initParams.stdoutDimension.rows)
-    process.stdout.rows = initParams.stdoutDimension.rows;
-  if (initParams.stdoutDimension.columns)
-    process.stdout.columns = initParams.stdoutDimension.columns;
-  if (initParams.stderrDimension.rows)
-    process.stderr.rows = initParams.stderrDimension.rows;
-  if (initParams.stderrDimension.columns)
-    process.stderr.columns = initParams.stderrDimension.columns;
+  setTtyParams(process.stdout, initParams.stdoutParams);
+  setTtyParams(process.stderr, initParams.stderrParams);
+}
+
+function setTtyParams(stream: WriteStream, params: TtyParams) {
+  stream.isTTY = true;
+  if (params.rows)
+    stream.rows = params.rows;
+  if (params.columns)
+    stream.columns = params.columns;
+  stream.getColorDepth = () => params.colorDepth;
+  stream.hasColors = ((count = 16) => {
+    // count is optional and the first argument may actually be env.
+    if (typeof count !== 'number')
+      count = 16;
+    return count <= 2 ** params.colorDepth;
+  })as any;
 }
