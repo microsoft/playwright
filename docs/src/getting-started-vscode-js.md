@@ -61,7 +61,7 @@ test("my test", async ({ page }) => {
     "/docs/intro"
   );
 
-  await page.click("text=Get Started");
+  await page.locator("text=Get Started").click();
   // Expect some text to be visible on the page.
   await expect(page.locator("text=Introduction").first()).toBeVisible();
 });
@@ -83,7 +83,7 @@ test("my test", async ({ page }) => {
     "/docs/intro"
   );
 
-  await page.click("text=Get Started");
+  await page.locator("text=Get Started").click();
   // Expect some text to be visible on the page.
   await expect(page.locator("text=Introduction").first()).toBeVisible();
 });

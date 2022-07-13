@@ -144,7 +144,7 @@ Note that the new methods [`method: Page.routeFromHAR`] and [`method: BrowserCon
 
   ```py
   # Click a button with accessible name "log in"
-  page.click("role=button[name='log in']")
+  page.locator("role=button[name='log in']").click()
   ```
 
   Read more in [our documentation](./selectors#role-selector).
@@ -172,12 +172,12 @@ Note that the new methods [`method: Page.routeFromHAR`] and [`method: BrowserCon
 
   ```python async
   # Click a button with accessible name "log in"
-  await page.click("role=button[name='log in']")
+  await page.locator("role=button[name='log in']").click()
   ```
 
   ```python sync
   # Click a button with accessible name "log in"
-  page.click("role=button[name='log in']")
+  page.locator("role=button[name='log in']").click()
   ```
 
   Read more in [our documentation](./selectors#role-selector).
@@ -297,7 +297,7 @@ from playwright.async_api import Page, expect
 
 async def test_status_becomes_submitted(page: Page) -> None:
     # ..
-    await page.click("#submit-button")
+    await page.locator("#submit-button").click()
     await expect(page.locator(".status")).to_have_text("Submitted")
 ```
 
@@ -306,7 +306,7 @@ from playwright.sync_api import Page, expect
 
 def test_status_becomes_submitted(page: Page) -> None:
     # ..
-    page.click("#submit-button")
+    page.locator("#submit-button").click()
     expect(page.locator(".status")).to_have_text("Submitted")
 ```
 
@@ -490,7 +490,7 @@ Pass `strict=true` into your action calls to opt in.
 
 ```py
 # This will throw if you have more than one button!
-page.click("button", strict=true)
+page.click("button", strict=True)
 ```
 
 #### 📍 New [**Locators API**](./api/class-locator)
@@ -513,8 +513,8 @@ Learn more in the [documentation](./api/class-locator).
 React and Vue selectors allow selecting elements by its component name and/or property values. The syntax is very similar to [attribute selectors](https://developer.mozilla.org/en-US/docs/Web/CSS/Attribute_selectors) and supports all attribute selector operators.
 
 ```py
-page.click("_react=SubmitButton[enabled=true]");
-page.click("_vue=submit-button[enabled=true]");
+page.locator("_react=SubmitButton[enabled=true]").click()
+page.locator("_vue=submit-button[enabled=true]").click()
 ```
 
 Learn more in the [react selectors documentation](./selectors#react-selectors) and the [vue selectors documentation](./selectors#vue-selectors).

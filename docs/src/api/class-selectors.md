@@ -36,7 +36,7 @@ const { selectors, firefox } = require('playwright');  // Or 'chromium' or 'webk
   // Use the selector prefixed with its name.
   const button = page.locator('tag=button');
   // Combine it with other selector engines.
-  await page.click('tag=div >> text="Click me"');
+  await page.locator('tag=div >> text="Click me"').click();
   // Can use it in any methods supporting selectors.
   const buttonCount = await page.locator('tag=button').count();
 
@@ -64,7 +64,7 @@ page.setContent("<div><button>Click me</button></div>");
 // Use the selector prefixed with its name.
 Locator button = page.locator("tag=button");
 // Combine it with other selector engines.
-page.click("tag=div >> text=\"Click me\"");
+page.locator("tag=div >> text=\"Click me\"").click();
 // Can use it in any methods supporting selectors.
 int buttonCount = (int) page.locator("tag=button").count();
 browser.close();
@@ -96,7 +96,7 @@ async def run(playwright):
     # Use the selector prefixed with its name.
     button = await page.query_selector('tag=button')
     # Combine it with other selector engines.
-    await page.click('tag=div >> text="Click me"')
+    await page.locator('tag=div >> text="Click me"').click()
     # Can use it in any methods supporting selectors.
     button_count = await page.locator('tag=button').count()
     print(button_count)
@@ -134,7 +134,7 @@ def run(playwright):
     # Use the selector prefixed with its name.
     button = page.locator('tag=button')
     # Combine it with other selector engines.
-    page.click('tag=div >> text="Click me"')
+    page.locator('tag=div >> text="Click me"').click()
     # Can use it in any methods supporting selectors.
     button_count = page.locator('tag=button').count()
     print(button_count)
@@ -164,7 +164,7 @@ await page.SetContentAsync("<div><button>Click me</button></div>");
 // Use the selector prefixed with its name.
 var button = page.Locator("tag=button");
 // Combine it with other selector engines.
-await page.ClickAsync("tag=div >> text=\"Click me\"");
+await page.Locator("tag=div >> text=\"Click me\"").ClickAsync();
 // Can use it in any methods supporting selectors.
 int buttonCount = await page.Locator("tag=button").CountAsync();
 ```

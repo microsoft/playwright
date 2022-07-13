@@ -6377,7 +6377,7 @@ export interface BrowserContext {
    *     <button onclick="onClick()">Click me</button>
    *     <div></div>
    *   `);
-   *   await page.click('button');
+   *   await page.locator('button').click();
    * })();
    * ```
    *
@@ -6431,7 +6431,7 @@ export interface BrowserContext {
    *     <button onclick="onClick()">Click me</button>
    *     <div></div>
    *   `);
-   *   await page.click('button');
+   *   await page.locator('button').click();
    * })();
    * ```
    *
@@ -6487,7 +6487,7 @@ export interface BrowserContext {
    * ```js
    * const [newPage] = await Promise.all([
    *   context.waitForEvent('page'),
-   *   page.click('a[target=_blank]'),
+   *   page.locator('a[target=_blank]').click(),
    * ]);
    * console.log(await newPage.evaluate('location.href'));
    * ```
@@ -6614,7 +6614,7 @@ export interface BrowserContext {
    * ```js
    * const [newPage] = await Promise.all([
    *   context.waitForEvent('page'),
-   *   page.click('a[target=_blank]'),
+   *   page.locator('a[target=_blank]').click(),
    * ]);
    * console.log(await newPage.evaluate('location.href'));
    * ```
@@ -6781,7 +6781,7 @@ export interface BrowserContext {
    * ```js
    * const [newPage] = await Promise.all([
    *   context.waitForEvent('page'),
-   *   page.click('a[target=_blank]'),
+   *   page.locator('a[target=_blank]').click(),
    * ]);
    * console.log(await newPage.evaluate('location.href'));
    * ```
@@ -7003,7 +7003,7 @@ export interface BrowserContext {
    *     <button onclick="onClick()">Click me</button>
    *     <div></div>
    *   `);
-   *   await page.click('button');
+   *   await page.locator('button').click();
    * })();
    * ```
    *
@@ -7336,7 +7336,7 @@ export interface BrowserContext {
    * ```js
    * const [newPage] = await Promise.all([
    *   context.waitForEvent('page'),
-   *   page.click('a[target=_blank]'),
+   *   page.locator('a[target=_blank]').click(),
    * ]);
    * console.log(await newPage.evaluate('location.href'));
    * ```
@@ -11066,7 +11066,7 @@ export namespace errors {
  *   const context = await browser.newContext();
  *   const page = await context.newPage();
  *   try {
- *     await page.click("text=Foo", {
+ *     await page.locator("text=Foo").click({
  *       timeout: 100,
  *     })
  *   } catch (error) {
@@ -15510,7 +15510,7 @@ export interface Selectors {
    *   // Use the selector prefixed with its name.
    *   const button = page.locator('tag=button');
    *   // Combine it with other selector engines.
-   *   await page.click('tag=div >> text="Click me"');
+   *   await page.locator('tag=div >> text="Click me"').click();
    *   // Can use it in any methods supporting selectors.
    *   const buttonCount = await page.locator('tag=button').count();
    *
@@ -15627,7 +15627,7 @@ export interface Tracing {
    * await page.goto('https://playwright.dev');
    *
    * await context.tracing.startChunk();
-   * await page.click('text=Get Started');
+   * await page.locator('text=Get Started').click();
    * // Everything between startChunk and stopChunk will be recorded in the trace.
    * await context.tracing.stopChunk({ path: 'trace1.zip' });
    *
