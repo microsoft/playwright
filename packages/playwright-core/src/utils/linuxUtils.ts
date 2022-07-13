@@ -17,6 +17,7 @@
 
 import fs from 'fs';
 
+let didFailToReadOSRelease = false;
 let osRelease: {
   id: string,
   version: string,
@@ -25,7 +26,7 @@ let osRelease: {
 export async function getLinuxDistributionInfo(): Promise<{ id: string, version: string } | undefined> {
   if (process.platform !== 'linux')
     return undefined;
-  if (!osRelease) {
+  if (!osRelease && !didFailToReadOSRelease) {
     try {
       // List of /etc/os-release values for different distributions could be
       // found here: https://gist.github.com/aslushnikov/8ceddb8288e4cf9db3039c02e0f4fb75
@@ -36,7 +37,7 @@ export async function getLinuxDistributionInfo(): Promise<{ id: string, version:
         version: fields.get('version_id') ?? '',
       };
     } catch (e) {
-      return undefined;
+      didFailToReadOSRelease = true;
     }
   }
   return osRelease;
@@ -45,7 +46,7 @@ export async function getLinuxDistributionInfo(): Promise<{ id: string, version:
 export function getLinuxDistributionInfoSync(): { id: string, version: string } | undefined {
   if (process.platform !== 'linux')
     return undefined;
-  if (!osRelease) {
+  if (!osRelease && !didFailToReadOSRelease) {
     try {
       // List of /etc/os-release values for different distributions could be
       // found here: https://gist.github.com/aslushnikov/8ceddb8288e4cf9db3039c02e0f4fb75
@@ -56,7 +57,7 @@ export function getLinuxDistributionInfoSync(): { id: string, version: string } 
         version: fields.get('version_id') ?? '',
       };
     } catch (e) {
-      return undefined;
+      didFailToReadOSRelease = true;
     }
   }
   return osRelease;

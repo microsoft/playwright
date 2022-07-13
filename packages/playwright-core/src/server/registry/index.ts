@@ -620,7 +620,10 @@ export class Registry {
 
     // Skip dependency validation for WebKit on non-ubuntu distributions since it takes
     // forever and is not needed due to universal build.
-    if (os.platform() === 'linux' && (distributionInfo?.id === 'ubuntu' || browserName !== 'webkit'))
+    if (os.platform() === 'linux' && browserName === 'webkit' && distributionInfo?.id !== 'ubuntu')
+      return;
+
+    if (os.platform() === 'linux')
       return await validateDependenciesLinux(sdkLanguage, linuxLddDirectories.map(d => path.join(browserDirectory, d)), dlOpenLibraries);
     if (os.platform() === 'win32' && os.arch() === 'x64')
       return await validateDependenciesWindows(windowsExeAndDllDirectories.map(d => path.join(browserDirectory, d)));

@@ -45,7 +45,7 @@ function determineUserAgent(): string {
   } else if (process.platform === 'linux') {
     const distroInfo = getLinuxDistributionInfoSync();
     if (distroInfo) {
-      osIdentifier = distroInfo.id || 'unknown';
+      osIdentifier = distroInfo.id || 'linux';
       osVersion = distroInfo.version || 'unknown';
     } else {
       // Linux distribution without /etc/os-release.
