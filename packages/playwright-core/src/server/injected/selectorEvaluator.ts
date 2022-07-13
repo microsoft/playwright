@@ -64,6 +64,7 @@ export class SelectorEvaluatorImpl implements SelectorEvaluator {
     this._engines.set('text-is', textIsEngine);
     this._engines.set('text-matches', textMatchesEngine);
     this._engines.set('has-text', hasTextEngine);
+    this._engines.set('has-text-matches', hasTextMatchesEngine);
     this._engines.set('right-of', createLayoutEngine('right-of'));
     this._engines.set('left-of', createLayoutEngine('left-of'));
     this._engines.set('above', createLayoutEngine('above'));
@@ -461,6 +462,15 @@ const hasTextEngine: SelectorEngine = {
     if (shouldSkipForTextMatching(element))
       return false;
     const matcher = createLaxTextMatcher(args[0]);
+    return matcher(elementText((evaluator as SelectorEvaluatorImpl)._cacheText, element));
+  },
+};
+
+const hasTextMatchesEngine: SelectorEngine = {
+  matches(element: Element, args: (string | number | Selector)[], context: QueryContext, evaluator: SelectorEvaluator): boolean {
+    if (args.length === 0 || typeof args[0] !== 'string' || args.length > 2 || (args.length === 2 && typeof args[1] !== 'string'))
+      throw new Error(`"text-matches" engine expects a regexp body and optional regexp flags`);
+    const matcher = createRegexTextMatcher(args[0], args.length === 2 ? args[1] : undefined);
     return matcher(elementText((evaluator as SelectorEvaluatorImpl)._cacheText, element));
   },
 };
