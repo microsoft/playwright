@@ -17,7 +17,7 @@
 .test-file-test {
   line-height: 32px;
   align-items: center;
-  padding: 0 10px;
+  padding: 2px 10px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -28,12 +28,13 @@
 }
 
 .test-file-title {
-  font-weight: 500;
+  font-weight: 600;
+  font-size: 16px;
 }
 
 .test-file-details-row {
   padding: 0 0 6px 8px;
-  margin: -4px 0 0 15px;
+  margin: 0 0 0 15px;
   line-height: 16px;
   font-weight: 400;
   color: var(--color-fg-subtle);
@@ -44,6 +45,7 @@
 .test-file-path {
   text-overflow: ellipsis;
   overflow: hidden;
+  color: var(--color-fg-subtle);
 }
 
 .test-file-path-link {
