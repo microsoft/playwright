@@ -1102,7 +1102,6 @@ A glob pattern, regular expression or predicate to match the request URL. Only r
 
 ## method: BrowserContext.serviceWorkers
 * since: v1.11
-* langs: js, python
 - returns: <[Array]<[Worker]>>
 
 :::note
