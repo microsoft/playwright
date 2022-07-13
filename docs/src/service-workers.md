@@ -61,29 +61,17 @@ serviceworker = event_info.value
 ```csharp
 var waitForServiceWorkerTask = page.WaitForServiceWorkerAsync();
 await page.GotoAsync('/example-with-a-service-worker.html');
-var request = await waitForServiceWorkerTask;
+var serviceworker = await waitForServiceWorkerTask;
 ```
 
 [`event: BrowserContext.serviceWorker`] is fired ***before*** the Service Worker's main script has been evaluated, so ***before*** calling service[`method: Worker.evaluate`] you should wait on its activation:
 
 ```js tab=js-ts
-await expect.poll(() => serviceWorker.evaluate(() => (self as any).registration.active?.state)).toBe('activated');
+await expect.poll(() => serviceworker.evaluate(() => (self as any).registration.active?.state)).toBe('activated');
 ```
 
 ```js tab=js-js
-await expect.poll(() => serviceWorker.evaluate(() => self.registration.active?.state)).toBe('activated');
-```
-
-```python async
-FIXME
-```
-
-```python sync
-FIXME
-```
-
-```csharp
-FIXME
+await expect.poll(() => serviceworker.evaluate(() => self.registration.active?.state)).toBe('activated');
 ```
 
 ### Network Events and Routing
@@ -308,7 +296,52 @@ await context.route('**', async route => {
 });
 ```
 
+```python async
+async def handle(route: Route):
+  if route.request.service_worker:
+    # NB: calling route.request.frame here would THROW
+    await route.fulfill(content_type='text/plain', status=200, body='from sw');
+  else:
+    await route.continue_()
+await context.route('**', handle)
+```
 
+```python sync
+def handle(route: Route):
+  if route.request.service_worker:
+    # NB: calling route.request.frame here would THROW
+    route.fulfill(content_type='text/plain', status=200, body='from sw');
+  else:
+    route.continue_()
+context.route('**', handle)
+```
+
+```csharp
+await context.route('**', async route => {
+  if (route.request().serviceWorker()) {
+    // NB: calling route.request().frame() here would THROW
+    return route.fulfill({
+      contentType: 'text/plain',
+      status: 200,
+      body: 'from sw',
+    });
+  } else {
+    return route.continue();
+  }
+});
+
+await context.RouteAsync("**", async route => {
+  if (route.request().serviceWorker() != null) {
+    await route.FulfillAsync(
+      contentType: "text/plain",
+      status: 200,
+      body: "from sw"
+    );
+  } else {
+    await route.Continue()Async();
+  }
+});
+```
 
 ## Known Limitations
 
