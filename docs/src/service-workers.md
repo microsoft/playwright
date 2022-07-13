@@ -64,15 +64,7 @@ await page.GotoAsync('/example-with-a-service-worker.html');
 var serviceworker = await waitForServiceWorkerTask;
 ```
 
-[`event: BrowserContext.serviceWorker`] is fired ***before*** the Service Worker's main script has been evaluated, so ***before*** calling service[`method: Worker.evaluate`] you should wait on its activation:
-
-```js tab=js-ts
-await expect.poll(() => serviceworker.evaluate(() => (self as any).registration.active?.state)).toBe('activated');
-```
-
-```js tab=js-js
-await expect.poll(() => serviceworker.evaluate(() => self.registration.active?.state)).toBe('activated');
-```
+[`event: BrowserContext.serviceWorker`] is fired ***before*** the Service Worker's main script has been evaluated, so ***before*** calling service[`method: Worker.evaluate`] you should wait on its activation.
 
 ### Network Events and Routing
 
@@ -129,10 +121,10 @@ On the first visit to the page via [`method: Page.goto`], the following Request/
 
 
 
-It's important to note that, since the example Service Worker just acts a basic transparent "proxy":
+Since the example Service Worker just acts a basic transparent "proxy":
 
 * There's 2 [`event: BrowserContext.request`] events for `data.json`; one [Frame]-owned, the other Service [Worker]-owned.
-* Only the Service [Worker]-owned request for the resource was routable via [`method: BrowserContext.route`]; The [Frame]-owned events for `data.json` are not routeable, as they would not have even had the possibility to hit the external network since the Service Worker has a fetch handler registered.
+* Only the Service [Worker]-owned request for the resource was routable via [`method: BrowserContext.route`]; the [Frame]-owned events for `data.json` are not routeable, as they would not have even had the possibility to hit the external network since the Service Worker has a fetch handler registered.
 
 :::caution
 It's important to note: calling [`method: Request.frame`] or [`method: Response.frame`] will **throw** an exception, if called on a [Request]/[Response] that has a non-null [`method: Request.serviceWorker`].
@@ -145,7 +137,6 @@ When a Service Worker handles a page's request, the Service Worker can make 0 to
 
 Consider the code snippets below to understand Playwright's view into the Request/Responses and how it impacts routing in some of these cases.
 
-Consider the following Service Worker Main Script:
 
 ```js
 // filename: complex-service-worker.js
@@ -317,19 +308,6 @@ context.route('**', handle)
 ```
 
 ```csharp
-await context.route('**', async route => {
-  if (route.request().serviceWorker()) {
-    // NB: calling route.request().frame() here would THROW
-    return route.fulfill({
-      contentType: 'text/plain',
-      status: 200,
-      body: 'from sw',
-    });
-  } else {
-    return route.continue();
-  }
-});
-
 await context.RouteAsync("**", async route => {
   if (route.request().serviceWorker() != null) {
     await route.FulfillAsync(
