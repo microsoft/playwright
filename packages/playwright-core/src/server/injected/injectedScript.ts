@@ -1071,7 +1071,7 @@ export class InjectedScript {
       let received: string | undefined;
       if (expression === 'to.have.attribute') {
         received = element.getAttribute(options.expressionArg) || '';
-      } else if (expression === 'to.have.class' || expression === 'to.contain.class') {
+      } else if (expression === 'to.have.class') {
         received = element.classList.toString();
       } else if (expression === 'to.have.css') {
         received = window.getComputedStyle(element).getPropertyValue(options.expressionArg);
@@ -1092,9 +1092,7 @@ export class InjectedScript {
 
       if (received !== undefined && options.expectedText) {
         const matcher = new ExpectedTextMatcher(options.expectedText[0]);
-        return { received, matches: matcher.matches(received, {
-          toContainClass: expression === 'to.contain.class',
-        }) };
+        return { received, matches: matcher.matches(received) };
       }
     }
 
@@ -1114,7 +1112,7 @@ export class InjectedScript {
     let received: string[] | undefined;
     if (expression === 'to.have.text.array' || expression === 'to.contain.text.array')
       received = elements.map(e => options.useInnerText ? (e as HTMLElement).innerText : e.textContent || '');
-    else if (expression === 'to.have.class.array' || expression === 'to.contain.class.array')
+    else if (expression === 'to.have.class.array')
       received = elements.map(e => e.classList.toString());
 
     if (received && options.expectedText) {
@@ -1128,9 +1126,7 @@ export class InjectedScript {
       const matchers = options.expectedText.map(e => new ExpectedTextMatcher(e));
       let mIndex = 0, rIndex = 0;
       while (mIndex < matchers.length && rIndex < received.length) {
-        if (matchers[mIndex].matches(received[rIndex], {
-          toContainClass: expression === 'to.contain.class.array',
-        }))
+        if (matchers[mIndex].matches(received[rIndex]))
           ++mIndex;
         ++rIndex;
       }
@@ -1265,9 +1261,7 @@ class ExpectedTextMatcher {
     }
   }
 
-  matches(text: string, { toContainClass }: { toContainClass?: boolean } = {}): boolean {
-    if (toContainClass)
-      return this.matchesClassList(text);
+  matches(text: string): boolean {
     if (!this._regex)
       text = this.normalize(text)!;
     if (this._string !== undefined)
@@ -1277,18 +1271,6 @@ class ExpectedTextMatcher {
     if (this._regex)
       return !!this._regex.test(text);
     return false;
-  }
-
-  private matchesClassList(received: string): boolean {
-    const expected = this.normalizeClassList(this._string || '');
-    if (expected.length === 0)
-      return false;
-    const normalizedReceived = this.normalizeClassList(received);
-    return expected.every(classListEntry => normalizedReceived.includes(classListEntry));
-  }
-
-  private normalizeClassList(classList: string): string[] {
-    return classList.trim().split(/\s+/g).map(c => this.normalize(c)).filter(c => c) as string[];
   }
 
   private normalize(s: string | undefined): string | undefined {

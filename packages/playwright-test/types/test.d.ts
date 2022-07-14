@@ -3328,46 +3328,6 @@ interface LocatorAssertions {
   }): Promise<void>;
 
   /**
-   * Ensures the [Locator] points to an element that contains the given CSS class (or multiple). In contrast to
-   * [locatorAssertions.toHaveClass(expected[, options])](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-have-class)
-   * which requires that the [Locator] has exactly the provided classes, `toContainClass` verifies that the [Locator] has a
-   * subset (or all) of the given CSS classes.
-   *
-   * ```html
-   * <div class='foo bar baz' id='component'>
-   *   <div class='item alice'></div>
-   *   <div class='item bob'></div>
-   * </div>
-   * ```
-   *
-   * ```js
-   * const locator = page.locator('#component');
-   * await expect(locator).toContainClass('bar baz'); // pass, both classes are on element
-   * await expect(locator).toContainClass('ba'); // fail, element has no 'ba' class
-   *
-   * const itemLocator = page.locator('#component .item');
-   * await expect(itemLocator).toContainClass(['alice', 'bob']); // pass, first element has alice, second bob
-   * await expect(itemLocator).toContainClass(['alice', 'bob carl']); // no carl class found on second item element
-   * await expect(itemLocator).toContainClass(['alice', 'bob', 'foobar']); // we expect 3 elements with the item class, but there are only 2
-   * ```
-   *
-   * Note that locator must point to a single element when passing a string or to multiple elements when passing an array.
-   * @param expected Expected classnames, whitespace separated. When passing an array, the given classes must be present on the locator elements.
-   * @param options
-   */
-  toContainClass(expected: string|Array<string>, options?: {
-    /**
-     * Whether to perform case-insensitive match.
-     */
-    ignoreCase?: boolean;
-
-    /**
-     * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
-     */
-    timeout?: number;
-  }): Promise<void>;
-
-  /**
    * Ensures the [Locator] points to an element that contains the given text. You can use regular expressions for the value
    * as well.
    *
@@ -3426,8 +3386,7 @@ interface LocatorAssertions {
 
   /**
    * Ensures the [Locator] points to an element with given CSS classes. This needs to be a full match or using a relaxed
-   * regular expression. For matching partial class names, use
-   * [locatorAssertions.toContainClass(expected[, options])](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-contain-class).
+   * regular expression.
    *
    * ```html
    * <div class='selected row' id='component'></div>
