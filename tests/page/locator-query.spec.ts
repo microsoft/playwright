@@ -102,6 +102,12 @@ it('should filter by case-insensitive regex in multiple children', async ({ page
   await expect(page.locator('div', { hasText: /^title text$/i })).toHaveClass('test');
 });
 
+it('should filter by regex with special symbols', async ({ page }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/15348' });
+  await page.setContent(`<div class="test"><h5>First/"and"</h5><h2><i>Second\\</i></h2></div>`);
+  await expect(page.locator('div', { hasText: /^first\/".*"second\\$/si })).toHaveClass('test');
+});
+
 it('should support has:locator', async ({ page, trace }) => {
   it.skip(trace === 'on');
 
