@@ -1,6 +1,6 @@
 ---
 id: service-workers
-title: "Service Workers Guide"
+title: "Service Workers"
 ---
 
 
