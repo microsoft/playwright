@@ -318,6 +318,12 @@ elif [[ "$BUILD_FLAVOR" == "firefox-beta-win64" ]]; then
 # ===========================
 #    WEBKIT COMPILATION
 # ===========================
+elif [[ "$BUILD_FLAVOR" == "webkit-debian-11" ]]; then
+  BROWSER_NAME="webkit"
+  EXTRA_BUILD_ARGS="--full"
+  EXPECTED_HOST_OS="Debian"
+  EXPECTED_HOST_OS_VERSION="11"
+  BUILD_BLOB_NAME="webkit-debian-11.zip"
 elif [[ "$BUILD_FLAVOR" == "webkit-universal" ]]; then
   BROWSER_NAME="webkit"
   EXTRA_BUILD_ARGS="--full --universal"
