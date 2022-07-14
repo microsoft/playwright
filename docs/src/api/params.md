@@ -56,11 +56,13 @@ A selector to search for an element. If there are multiple elements satisfying t
 
 ## input-source
 - `source` <[string]>
+
 A selector to search for an element to drag. If there are multiple elements satisfying the selector, the first will be used. See
 [working with selectors](../selectors.md) for more details.
 
 ## input-target
 - `target` <[string]>
+
 A selector to search for an element to drop onto. If there are multiple elements satisfying the selector, the first will be used. See
 [working with selectors](../selectors.md) for more details.
 
