@@ -23145,10 +23145,22 @@ index b0a503013185f29feeca47e4313b27e349973c02..ee1f87780a99b2b626b1ada984d63109
 +
  } // namespace WTR
 diff --git a/Tools/glib/dependencies/apt b/Tools/glib/dependencies/apt
-index dbf1d28ab1e501e26af3a188465267e3b1d521a6..a4302f944a1e288ab912da89ee587b78a581eed1 100644
+index dbf1d28ab1e501e26af3a188465267e3b1d521a6..7f9221377839579a9c6bf57a84c7cb164691a1f4 100644
 --- a/Tools/glib/dependencies/apt
 +++ b/Tools/glib/dependencies/apt
-@@ -11,7 +11,7 @@ aptIfElse() {
+@@ -1,17 +1,17 @@
+ #!/usr/bin/env bash
+ 
+-# If the package $1 is available, prints it. Otherwise prints $2.
++# If the package $1 is available, prints it. Otherwise if package $2 is available, prints $2.
+ # Useful for handling when a package is renamed on new versions of Debian/Ubuntu.
+ aptIfElse() {
+     if apt-cache show $1 &>/dev/null; then
+         echo $1
+-    else
++    elif apt-cache show $2 &>/dev/null; then
+         echo $2
+     fi
  }
  
  aptIfExists() {
@@ -23171,15 +23183,15 @@ index dbf1d28ab1e501e26af3a188465267e3b1d521a6..a4302f944a1e288ab912da89ee587b78
  
      # These are dependencies necessary for running tests.
 diff --git a/Tools/gtk/dependencies/apt b/Tools/gtk/dependencies/apt
-index 8edc8d8119c729959fec7e4ddf762e2aeeb5f1f0..6333c339d4c1b62ce2d15c08d1c7933142a2c00d 100644
+index 8edc8d8119c729959fec7e4ddf762e2aeeb5f1f0..5c93e4c8f3ef2c8978f4e9b9290e713fe2e68797 100644
 --- a/Tools/gtk/dependencies/apt
 +++ b/Tools/gtk/dependencies/apt
-@@ -35,6 +35,8 @@ PACKAGES+=(
+@@ -34,7 +34,7 @@ PACKAGES+=(
+     libxtst-dev
      nasm
      xfonts-utils
-     $(aptIfExists libenchant-dev)
-+    # This is available on Debian 11
-+    $(aptIfExists libenchant-2-dev)
+-    $(aptIfExists libenchant-dev)
++    $(aptIfElse libenchant-dev libenchant-2-dev)
  
      # These are dependencies necessary for running tests.
      cups-daemon
