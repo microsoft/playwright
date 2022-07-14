@@ -184,7 +184,7 @@ const DOWNLOAD_PATHS = {
     'ubuntu18.04-arm64': undefined,
     'ubuntu20.04-arm64': 'builds/webkit/%s/webkit-ubuntu-20.04-arm64.zip',
     'ubuntu22.04-arm64': 'builds/webkit/%s/webkit-ubuntu-22.04-arm64.zip',
-    'debian11': 'builds/webkit/%s/webkit-linux-universal.zip',
+    'debian11': 'builds/webkit/%s/webkit-debian-11.zip',
     'mac10.13': undefined,
     'mac10.14': 'builds/deprecated-webkit-mac-10.14/%s/deprecated-webkit-mac-10.14.zip',
     'mac10.15': 'builds/webkit/%s/webkit-mac-10.15.zip',
@@ -617,11 +617,6 @@ export class Registry {
     const distributionInfo = await getLinuxDistributionInfo();
     if (browserName === 'firefox' && distributionInfo?.id === 'ubuntu' && distributionInfo?.version === '16.04')
       throw new Error(`Cannot launch Firefox on Ubuntu 16.04! Minimum required Ubuntu version for Firefox browser is 18.04`);
-
-    // Skip dependency validation for WebKit on non-ubuntu distributions since it takes
-    // forever and is not needed due to universal build.
-    if (os.platform() === 'linux' && browserName === 'webkit' && distributionInfo?.id !== 'ubuntu')
-      return;
 
     if (os.platform() === 'linux')
       return await validateDependenciesLinux(sdkLanguage, linuxLddDirectories.map(d => path.join(browserDirectory, d)), dlOpenLibraries);
