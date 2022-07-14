@@ -23145,9 +23145,18 @@ index b0a503013185f29feeca47e4313b27e349973c02..ee1f87780a99b2b626b1ada984d63109
 +
  } // namespace WTR
 diff --git a/Tools/glib/dependencies/apt b/Tools/glib/dependencies/apt
-index dbf1d28ab1e501e26af3a188465267e3b1d521a6..bd1cafa256c45521aa8e3ffa8fb0474f4a6b37cb 100644
+index dbf1d28ab1e501e26af3a188465267e3b1d521a6..a4302f944a1e288ab912da89ee587b78a581eed1 100644
 --- a/Tools/glib/dependencies/apt
 +++ b/Tools/glib/dependencies/apt
+@@ -11,7 +11,7 @@ aptIfElse() {
+ }
+ 
+ aptIfExists() {
+-    local ret=$(apt show "$1" 2>/dev/null)
++    ret=$(apt show "$1" 2>/dev/null)
+     if [[ $? -ne 0 ]]; then
+         return
+     fi
 @@ -56,9 +56,12 @@ PACKAGES=(
      libwayland-dev
      libwebp-dev
@@ -23161,6 +23170,19 @@ index dbf1d28ab1e501e26af3a188465267e3b1d521a6..bd1cafa256c45521aa8e3ffa8fb0474f
      ruby
  
      # These are dependencies necessary for running tests.
+diff --git a/Tools/gtk/dependencies/apt b/Tools/gtk/dependencies/apt
+index 8edc8d8119c729959fec7e4ddf762e2aeeb5f1f0..6333c339d4c1b62ce2d15c08d1c7933142a2c00d 100644
+--- a/Tools/gtk/dependencies/apt
++++ b/Tools/gtk/dependencies/apt
+@@ -35,6 +35,8 @@ PACKAGES+=(
+     nasm
+     xfonts-utils
+     $(aptIfExists libenchant-dev)
++    # This is available on Debian 11
++    $(aptIfExists libenchant-2-dev)
+ 
+     # These are dependencies necessary for running tests.
+     cups-daemon
 diff --git a/Tools/gtk/jhbuild.modules b/Tools/gtk/jhbuild.modules
 index 3eb911ba48eca35de2de9ee671cb577a0a96ec27..916b45a541486e59380d66b524a004a77d955ed8 100644
 --- a/Tools/gtk/jhbuild.modules
