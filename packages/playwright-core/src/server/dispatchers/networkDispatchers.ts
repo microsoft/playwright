@@ -15,7 +15,7 @@
  */
 
 import type * as channels from '../../protocol/channels';
-import { APIRequestContext } from '../fetch';
+import type { APIRequestContext } from '../fetch';
 import type { CallMetadata } from '../instrumentation';
 import type { Request, Response, Route } from '../network';
 import { WebSocket } from '../network';
@@ -172,14 +172,15 @@ export class APIRequestContextDispatcher extends Dispatcher<APIRequestContext, c
     return request ? APIRequestContextDispatcher.from(scope, request) : undefined;
   }
 
-  private constructor(scope: DispatcherScope, request: APIRequestContext) {
-    super(scope, request, 'APIRequestContext', {
-      tracing: TracingDispatcher.from(scope, request.tracing()),
+  private constructor(parentScope: DispatcherScope, request: APIRequestContext) {
+    // We will reparent these to the context below.
+    const tracing = TracingDispatcher.from(parentScope, request.tracing());
+
+    super(parentScope, request, 'APIRequestContext', {
+      tracing,
     }, true);
-    request.once(APIRequestContext.Events.Dispose, () => {
-      if (!this._disposed)
-        super._dispose();
-    });
+
+    this.adopt(tracing);
   }
 
   async storageState(params?: channels.APIRequestContextStorageStateParams): Promise<channels.APIRequestContextStorageStateResult> {

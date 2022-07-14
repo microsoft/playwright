@@ -42,22 +42,29 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel> imple
   _type_Page = true;
   private _page: Page;
 
-  static fromNullable(scope: DispatcherScope, page: Page | undefined): PageDispatcher | undefined {
+  static fromNullable(parentScope: DispatcherScope, page: Page | undefined): PageDispatcher | undefined {
     if (!page)
       return undefined;
     const result = existingDispatcher<PageDispatcher>(page);
-    return result || new PageDispatcher(scope, page);
+    return result || new PageDispatcher(parentScope, page);
   }
 
-  constructor(scope: DispatcherScope, page: Page) {
+  constructor(parentScope: DispatcherScope, page: Page) {
     // TODO: theoretically, there could be more than one frame already.
     // If we split pageCreated and pageReady, there should be no main frame during pageCreated.
-    super(scope, page, 'Page', {
-      mainFrame: FrameDispatcher.from(scope, page.mainFrame()),
+
+    // We will reparent it to the page below using adopt.
+    const mainFrame = FrameDispatcher.from(parentScope, page.mainFrame());
+
+    super(parentScope, page, 'Page', {
+      mainFrame,
       viewportSize: page.viewportSize() || undefined,
       isClosed: page.isClosed(),
-      opener: PageDispatcher.fromNullable(scope, page.opener())
+      opener: PageDispatcher.fromNullable(parentScope, page.opener())
     }, true);
+
+    this.adopt(mainFrame);
+
     this._page = page;
     this.addObjectListener(Page.Events.Close, () => {
       this._dispatchEvent('close');
@@ -67,7 +74,8 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel> imple
     this.addObjectListener(Page.Events.Crash, () => this._dispatchEvent('crash'));
     this.addObjectListener(Page.Events.Dialog, dialog => this._dispatchEvent('dialog', { dialog: new DialogDispatcher(this._scope, dialog) }));
     this.addObjectListener(Page.Events.Download, (download: Download) => {
-      this._dispatchEvent('download', { url: download.url, suggestedFilename: download.suggestedFilename(), artifact: new ArtifactDispatcher(scope, download.artifact) });
+      // Artifact can outlive the page, so bind to the context scope.
+      this._dispatchEvent('download', { url: download.url, suggestedFilename: download.suggestedFilename(), artifact: new ArtifactDispatcher(parentScope, download.artifact) });
     });
     this.addObjectListener(Page.Events.FileChooser, (fileChooser: FileChooser) => this._dispatchEvent('fileChooser', {
       element: ElementHandleDispatcher.from(this._scope, fileChooser.element()),

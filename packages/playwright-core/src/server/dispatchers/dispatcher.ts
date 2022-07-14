@@ -88,6 +88,15 @@ export class Dispatcher<Type extends { guid: string }, ChannelType> extends Even
     this._eventListeners.push(eventsHelper.addEventListener(this._object as unknown as EventEmitter, eventName, handler));
   }
 
+  adopt(child: Dispatcher<any, any>) {
+    assert(this._isScope);
+    const oldParent = child._parent!;
+    oldParent._dispatchers.delete(child._guid);
+    this._dispatchers.set(child._guid, child);
+    child._parent = this;
+    this._connection.sendAdopt(this, child);
+  }
+
   _dispatchEvent<T extends keyof channels.EventsTraits<ChannelType>>(method: T, params?: channels.EventsTraits<ChannelType>[T]) {
     if (this._disposed) {
       if (isUnderTest())
@@ -100,7 +109,7 @@ export class Dispatcher<Type extends { guid: string }, ChannelType> extends Even
   }
 
   _dispose() {
-    assert(!this._disposed);
+    assert(!this._disposed, `${this._guid} is disposed more than once`);
     this._disposed = true;
     eventsHelper.removeEventListeners(this._eventListeners);
 
@@ -169,6 +178,10 @@ export class DispatcherConnection {
     const validator = findValidator(type, '', 'Initializer');
     initializer = validator(initializer, '', { tChannelImpl: this._tChannelImplToWire.bind(this), binary: this._isLocal ? 'buffer' : 'toBase64' });
     this._sendMessageToClient(parent._guid, type, '__create__', { type, initializer, guid }, sdkObject);
+  }
+
+  sendAdopt(parent: Dispatcher<any, any>, dispatcher: Dispatcher<any, any>) {
+    this._sendMessageToClient(parent._guid, dispatcher._type, '__adopt__', { guid: dispatcher._guid });
   }
 
   sendDispose(dispatcher: Dispatcher<any, any>) {

@@ -835,7 +835,7 @@ BrowserContext:
 
   initializer:
     isChromium: boolean
-    APIRequestContext: APIRequestContext
+    requestContext: APIRequestContext
     tracing: Tracing
 
   commands:

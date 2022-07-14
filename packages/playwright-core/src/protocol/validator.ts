@@ -644,7 +644,7 @@ scheme.ElectronApplicationWaitForEventInfoResult = tType('EventTargetWaitForEven
 scheme.AndroidDeviceWaitForEventInfoResult = tType('EventTargetWaitForEventInfoResult');
 scheme.BrowserContextInitializer = tObject({
   isChromium: tBoolean,
-  APIRequestContext: tChannel(['APIRequestContext']),
+  requestContext: tChannel(['APIRequestContext']),
   tracing: tChannel(['Tracing']),
 });
 scheme.BrowserContextBindingCallEvent = tObject({

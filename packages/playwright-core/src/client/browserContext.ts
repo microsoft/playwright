@@ -74,7 +74,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
       this._browser = parent;
     this._isChromium = this._browser?._name === 'chromium';
     this.tracing = Tracing.from(initializer.tracing);
-    this.request = APIRequestContext.from(initializer.APIRequestContext);
+    this.request = APIRequestContext.from(initializer.requestContext);
 
     this._channel.on('bindingCall', ({ binding }) => this._onBinding(BindingCall.from(binding)));
     this._channel.on('close', () => this._onClose());
