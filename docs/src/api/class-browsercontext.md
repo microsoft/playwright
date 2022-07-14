@@ -10,6 +10,8 @@ context.
 Playwright allows creating "incognito" browser contexts with [`method: Browser.newContext`] method. "Incognito" browser
 contexts don't write any browsing data to disk.
 
+:::note Attention! There would be memory consuming/leak around 150 MiB per 1 hour when using same context for a long time for operations page.goto(). Closing context would free memory. :::
+
 ```js
 // Create a new incognito browser context
 const context = await browser.newContext();
