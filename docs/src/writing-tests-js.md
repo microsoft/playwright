@@ -60,7 +60,7 @@ Add `// @ts-check` at the start of each test file when using JavaScript in VS Co
 
 ### Assertions
 
-Playwright Test uses the [expect](https://jestjs.io/docs/expect) library for [test assertions](./test-assertions.md) which provides matchers like `toEqual`, `toContain`, `toMatch`, `toMatchSnapshot` and many more. Playwright also extends this library with convenience async matchers that will wait until the expected condition is met.
+Playwright Test uses the [expect](https://jestjs.io/docs/expect) library for [test assertions](./test-assertions.md) which provides matchers like `toEqual`, `toContain`, `toMatch`, `toBe` and many more. Playwright also extends this library with convenience async matchers that will wait until the expected condition is met.
 
 ```js
 await expect(page).toHaveTitle(/Playwright/);
