@@ -25,7 +25,7 @@ npm init playwright@latest
 <TabItem value="yarn">
 
 ```bash
-yarn create playwright@latest
+yarn create playwright
 ```
 
 </TabItem>
@@ -37,7 +37,6 @@ Run the install command and select the following to get started:
  - Name of your Tests folder (default is tests or e2e if you already have a tests folder in your project)
  - Add a GitHub Actions workflow to easily run tests on CI
 
-<!-- For installing using the CLI see the [Getting Started (VS Code)](./getting-started-vscode.mdx) guide. -->
 
 ## What's Installed
 
@@ -49,7 +48,7 @@ package.json
 package-lock.json
 tests/
   example.spec.ts
-tests-demos/
+tests-examples/
   demo-todo-app.spec.ts
 ```
 
