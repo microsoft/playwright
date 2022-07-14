@@ -39,8 +39,8 @@ export class CRServiceWorker extends Worker {
       this._createExecutionContext(new CRExecutionContext(session, event.context));
     });
 
-    if (this._isNetworkInspectionEnabled()) {
-      this._networkManager!.initialize().catch(() => {});
+    if (this._networkManager && this._isNetworkInspectionEnabled()) {
+      this._networkManager.initialize().catch(() => {});
       this.updateRequestInterception();
       this.updateExtraHTTPHeaders(true);
       this.updateHttpCredentials(true);
@@ -82,10 +82,10 @@ export class CRServiceWorker extends Worker {
   }
 
   updateRequestInterception(): Promise<void> {
-    if (!this._isNetworkInspectionEnabled())
+    if (!this._networkManager || !this._isNetworkInspectionEnabled())
       return Promise.resolve();
 
-    return this._networkManager!.setRequestInterception(this.needsRequestInterception()).catch(e => { });
+    return this._networkManager.setRequestInterception(this.needsRequestInterception()).catch(e => { });
   }
 
   needsRequestInterception(): boolean {
@@ -117,6 +117,6 @@ export class CRServiceWorker extends Worker {
   }
 
   private _isNetworkInspectionEnabled(): boolean {
-    return !!process.env.PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS && this._browserContext._options.serviceWorkers === 'allow';
+    return this._browserContext._options.serviceWorkers === 'allow';
   }
 }
