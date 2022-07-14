@@ -717,6 +717,10 @@ export const deps: any = {
       'libxtst6'
     ],
     webkit: [
+      'gstreamer1.0-libav',
+      'gstreamer1.0-plugins-bad',
+      'gstreamer1.0-plugins-base',
+      'gstreamer1.0-plugins-good',
       'libatk-bridge2.0-0',
       'libatk1.0-0',
       'libcairo2',
