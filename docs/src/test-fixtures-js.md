@@ -238,7 +238,7 @@ test.beforeEach(async ({ settingsPage }) => {
 
 test('basic test', async ({ todoPage, page }) => {
   await todoPage.addToDo('something nice');
-  await expect(page.locator('.todo-item')).toContainText(['something nice']);
+  await expect(page.locator('.todo-item')).toHaveText(['something nice']);
 });
 ```
 
@@ -251,7 +251,7 @@ test.beforeEach(async ({ settingsPage }) => {
 
 test('basic test', async ({ todoPage, page }) => {
   await todoPage.addToDo('something nice');
-  await expect(page.locator('.todo-item')).toContainText(['something nice']);
+  await expect(page.locator('.todo-item')).toHaveText(['something nice']);
 });
 ```
 

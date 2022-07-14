@@ -117,17 +117,17 @@ export function toContainText(
   this: ReturnType<Expect['getState']>,
   locator: LocatorEx,
   expected: string | RegExp | (string | RegExp)[],
-  options: { timeout?: number, useInnerText?: boolean, ignoreCase?: boolean } = {},
+  options: { timeout?: number, useInnerText?: boolean, subset?: boolean, ignoreCase?: boolean } = {},
 ) {
   if (Array.isArray(expected)) {
     return toEqual.call(this, 'toContainText', locator, 'Locator', async (isNot, timeout, customStackTrace) => {
       const expectedText = toExpectedTextValues(expected, { matchSubstring: true, normalizeWhiteSpace: true, ignoreCase: options.ignoreCase });
-      return await locator._expect(customStackTrace, 'to.contain.text.array', { expectedText, isNot, useInnerText: options.useInnerText, timeout });
+      return await locator._expect(customStackTrace, 'to.contain.text.array', { expectedText, isNot, useInnerText: options.useInnerText, subset: options.subset, timeout });
     }, expected, { ...options, contains: true });
   } else {
     return toMatchText.call(this, 'toContainText', locator, 'Locator', async (isNot, timeout, customStackTrace) => {
       const expectedText = toExpectedTextValues([expected], { matchSubstring: true, normalizeWhiteSpace: true, ignoreCase: options.ignoreCase });
-      return await locator._expect(customStackTrace, 'to.have.text', { expectedText, isNot, useInnerText: options.useInnerText, timeout });
+      return await locator._expect(customStackTrace, 'to.have.text', { expectedText, isNot, useInnerText: options.useInnerText, subset: options.subset, timeout });
     }, expected, options);
   }
 }
@@ -216,17 +216,17 @@ export function toHaveText(
   this: ReturnType<Expect['getState']>,
   locator: LocatorEx,
   expected: string | RegExp | (string | RegExp)[],
-  options: { timeout?: number, useInnerText?: boolean, ignoreCase?: boolean } = {},
+  options: { timeout?: number, useInnerText?: boolean, subset?: boolean, ignoreCase?: boolean } = {},
 ) {
   if (Array.isArray(expected)) {
     return toEqual.call(this, 'toHaveText', locator, 'Locator', async (isNot, timeout, customStackTrace) => {
       const expectedText = toExpectedTextValues(expected, { normalizeWhiteSpace: true, ignoreCase: options.ignoreCase });
-      return await locator._expect(customStackTrace, 'to.have.text.array', { expectedText, isNot, useInnerText: options?.useInnerText, timeout });
+      return await locator._expect(customStackTrace, 'to.have.text.array', { expectedText, isNot, useInnerText: options.useInnerText, subset: options.subset, timeout });
     }, expected, options);
   } else {
     return toMatchText.call(this, 'toHaveText', locator, 'Locator', async (isNot, timeout, customStackTrace) => {
       const expectedText = toExpectedTextValues([expected], { normalizeWhiteSpace: true, ignoreCase: options.ignoreCase });
-      return await locator._expect(customStackTrace, 'to.have.text', { expectedText, isNot, useInnerText: options?.useInnerText, timeout });
+      return await locator._expect(customStackTrace, 'to.have.text', { expectedText, isNot, useInnerText: options.useInnerText, subset: options.subset, timeout });
     }, expected, options);
   }
 }

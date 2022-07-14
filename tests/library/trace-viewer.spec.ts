@@ -554,7 +554,7 @@ test('should show action source', async ({ showTraceViewer }) => {
   await expect(page.locator('.source-line')).toContainText([
     /async.*function.*doClick/,
     /page\.click/
-  ]);
+  ], { subset: true });
   await expect(page.locator('.source-line-running')).toContainText('page.click');
   await expect(page.locator('.stack-trace-frame.selected')).toHaveText(/doClick.*trace-viewer\.spec\.ts:[\d]+/);
 });

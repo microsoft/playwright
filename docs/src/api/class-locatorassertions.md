@@ -192,6 +192,9 @@ Expected substring or RegExp or a list of those.
 
 Whether to perform case-insensitive match. [`option: ignoreCase`] option takes precedence over the corresponding regular expression flag if specified.
 
+### option: LocatorAssertions.NotToContainText.subset = %%-assertions-subset-%%
+* since: v1.24
+
 ### option: LocatorAssertions.NotToContainText.useInnerText
 * since: v1.18
 - `useInnerText` <[boolean]>
@@ -340,6 +343,9 @@ Expected substring or RegExp or a list of those.
 - `ignoreCase` <[boolean]>
 
 Whether to perform case-insensitive match. [`option: ignoreCase`] option takes precedence over the corresponding regular expression flag if specified.
+
+### option: LocatorAssertions.NotToHaveText.subset = %%-assertions-subset-%%
+* since: v1.24
 
 ### option: LocatorAssertions.NotToHaveText.useInnerText
 * since: v1.18
@@ -813,6 +819,9 @@ Expected substring or RegExp or a list of those.
 - `ignoreCase` <[boolean]>
 
 Whether to perform case-insensitive match. [`option: ignoreCase`] option takes precedence over the corresponding regular expression flag if specified.
+
+### option: LocatorAssertions.toContainText.subset = %%-assertions-subset-%%
+* since: v1.24
 
 ### option: LocatorAssertions.toContainText.useInnerText
 * since: v1.18
@@ -1316,6 +1325,40 @@ var locator = Page.Locator("list > .component");
 await Expect(locator).toHaveTextAsync(new string[]{ "Text 1", "Text 2", "Text 3" });
 ```
 
+You can also check just a subset of the elements matching the [Locator]. For example, in the list of ten items from `Item 1` to `Item 10`, only check the text of `Item 2`, `Item 4` and `Item 5`:
+
+```js
+const locator = page.locator('list > .component');
+await expect(locator).toHaveText(['Item 2', 'Item 4', 'Item 5'], { subset: true });
+```
+
+```java
+assertThat(page.locator("list > .component")).hasText(
+    new String[] {"Item 2", "Item 4", "Item 5"},
+    new LocatorAssertions.HasTextOptions().setSubset(true));
+```
+
+```python async
+from playwright.async_api import expect
+
+locator = page.locator("list > .component")
+await expect(locator).to_have_text(["Item 2", "Item 4", "Item 5"], subset=True)
+```
+
+```python sync
+from playwright.sync_api import expect
+
+locator = page.locator("list > .component")
+expect(locator).to_have_text(["Item 2", "Item 4", "Item 5"], subset=True)
+```
+
+```csharp
+var locator = Page.Locator("list > .component");
+await Expect(locator).toHaveTextAsync(
+    new string[]{ "Item 2", "Item 4", "Item 5" },
+    new LocatorAssertionsToHaveTextOptions() { Subset = true });
+```
+
 ### param: LocatorAssertions.toHaveText.expected
 * since: v1.18
 * langs: python, js
@@ -1335,6 +1378,9 @@ Expected substring or RegExp or a list of those.
 - `ignoreCase` <[boolean]>
 
 Whether to perform case-insensitive match. [`option: ignoreCase`] option takes precedence over the corresponding regular expression flag if specified.
+
+### option: LocatorAssertions.toHaveText.subset = %%-assertions-subset-%%
+* since: v1.24
 
 ### option: LocatorAssertions.toHaveText.useInnerText
 * since: v1.18

@@ -3355,6 +3355,13 @@ interface LocatorAssertions {
     ignoreCase?: boolean;
 
     /**
+     * Only applies when `expected` is a list. When set to `false`, the list of elements found by the locator must contain the
+     * same number of items as `expected`. When set to `true`, the list of elements may be larger, but it must contain the
+     * items matching `expected` in the same order as listed. Defaults to `true`.
+     */
+    subset?: boolean;
+
+    /**
      * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.
      */
     timeout?: number;
@@ -3655,6 +3662,14 @@ interface LocatorAssertions {
    * await expect(locator).toHaveText(['Text 1', 'Text 2', 'Text 3']);
    * ```
    *
+   * You can also check just a subset of the elements matching the [Locator]. For example, in the list of ten items from
+   * `Item 1` to `Item 10`, only check the text of `Item 2`, `Item 4` and `Item 5`:
+   *
+   * ```js
+   * const locator = page.locator('list > .component');
+   * await expect(locator).toHaveText(['Item 2', 'Item 4', 'Item 5'], { subset: true });
+   * ```
+   *
    * @param expected Expected substring or RegExp or a list of those.
    * @param options
    */
@@ -3664,6 +3679,13 @@ interface LocatorAssertions {
      * expression flag if specified.
      */
     ignoreCase?: boolean;
+
+    /**
+     * Only applies when `expected` is a list. When set to `false`, the list of elements found by the locator must contain the
+     * same number of items as `expected`. When set to `true`, the list of elements may be larger, but it must contain the
+     * items matching `expected` in the same order as listed. Defaults to `true`.
+     */
+    subset?: boolean;
 
     /**
      * Time to retry the assertion for. Defaults to `timeout` in `TestConfig.expect`.

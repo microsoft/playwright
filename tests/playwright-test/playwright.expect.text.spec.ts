@@ -223,12 +223,18 @@ test('should support toHaveText w/ array', async ({ runInlineTest }) => {
         await expect(locator).toHaveText(['Text 1', /Text \\d/, 'Extra'], { timeout: 1000 });
       });
 
-      test('fail on repeating array matchers', async ({ page }) => {
-        await page.setContent('<div>KekFoo</div>');
+      test('pass with subset', async ({ page }) => {
+        await page.setContent('<div>Text 0</div><div>Text 1</div><div>Text 2</div><div>Text 3</div>');
         const locator = page.locator('div');
-        await expect(locator).toContainText(['KekFoo', 'KekFoo', 'KekFoo'], { timeout: 1000 });
+        await expect(locator).toHaveText(['Text 1', /Text 3/], { subset: true });
       });
-      `,
+
+      test('fail without subset', async ({ page }) => {
+        await page.setContent('<div>Text 0</div><div>Text 1</div><div>Text 2</div><div>Text 3</div>');
+        const locator = page.locator('div');
+        await expect(locator).toHaveText(['Text 1', /Text 3/], { timeout: 1000 });
+      });
+    `,
   }, { workers: 1 });
   const output = stripAnsi(result.output);
   expect(output).toContain('Error: expect(received).toHaveText(expected) // deep equality');
@@ -236,7 +242,7 @@ test('should support toHaveText w/ array', async ({ runInlineTest }) => {
   expect(output).toContain('-   "Extra"');
   expect(output).toContain('waiting for selector "div"');
   expect(output).toContain('selector resolved to 2 elements');
-  expect(result.passed).toBe(6);
+  expect(result.passed).toBe(7);
   expect(result.failed).toBe(3);
   expect(result.exitCode).toBe(1);
 });
@@ -249,9 +255,15 @@ test('should support toContainText w/ array', async ({ runInlineTest }) => {
       test('pass', async ({ page }) => {
         await page.setContent('<div>Text \\n1</div><div>Text2</div><div>Text3</div>');
         const locator = page.locator('div');
-        await expect(locator).toContainText(['ext     1', /ext3/]);
-        // Should support ignoreCase.
-        await expect(locator).toContainText(['EXT 1', 'eXt3'], { ignoreCase: true });
+        await expect(locator).toContainText(['ext     1', 'Text2', /ext3/]);
+        await expect(locator).toContainText(['EXT 1', 'exT2', 'eXt3'], { ignoreCase: true });
+      });
+
+      test('pass with subset', async ({ page }) => {
+        await page.setContent('<div>Text \\n1</div><div>Text2</div><div>Text3</div>');
+        const locator = page.locator('div');
+        await expect(locator).toContainText(['ext     1', /ext3/], { subset: true });
+        await expect(locator).toContainText(['EXT 1', 'eXt3'], { ignoreCase: true, subset: true });
       });
 
       test('fail', async ({ page }) => {
@@ -259,14 +271,26 @@ test('should support toContainText w/ array', async ({ runInlineTest }) => {
         const locator = page.locator('div');
         await expect(locator).toContainText(['Text 2'], { timeout: 1000 });
       });
-      `,
+
+      test('fail on repeating array matchers', async ({ page }) => {
+        await page.setContent('<div>KekFoo</div>');
+        const locator = page.locator('div');
+        await expect(locator).toContainText(['KekFoo', 'KekFoo', 'KekFoo'], { timeout: 1000 });
+      });
+
+      test('fail on repeating array matchers with subset', async ({ page }) => {
+        await page.setContent('<div>KekFoo</div>');
+        const locator = page.locator('div');
+        await expect(locator).toContainText(['KekFoo', 'KekFoo', 'KekFoo'], { subset: true, timeout: 1000 });
+      });
+    `,
   }, { workers: 1 });
   const output = stripAnsi(result.output);
   expect(output).toContain('Error: expect(received).toContainText(expected)');
   expect(output).toContain('await expect(locator).toContainText');
   expect(output).toContain('-   "Text 2"');
-  expect(result.passed).toBe(1);
-  expect(result.failed).toBe(1);
+  expect(result.passed).toBe(2);
+  expect(result.failed).toBe(3);
   expect(result.exitCode).toBe(1);
 });
 

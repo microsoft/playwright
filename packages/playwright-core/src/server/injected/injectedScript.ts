@@ -1117,7 +1117,7 @@ export class InjectedScript {
 
     if (received && options.expectedText) {
       // "To match an array" is "to contain an array" + "equal length"
-      const lengthShouldMatch = expression !== 'to.contain.text.array';
+      const lengthShouldMatch = !options.subset;
       const matchesLength = received.length === options.expectedText.length || !lengthShouldMatch;
       if (!matchesLength)
         return { received, matches: false };

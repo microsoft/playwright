@@ -792,6 +792,11 @@ An acceptable ratio of pixels that are different to the total amount of pixels, 
 
 An acceptable perceived color difference in the [YIQ color space](https://en.wikipedia.org/wiki/YIQ) between the same pixel in compared images, between zero (strict) and one (lax), default is configurable with `TestConfig.expect`. Defaults to `0.2`.
 
+## assertions-subset
+- `subset` <[boolean]>
+
+Only applies when [`param: expected`] is a list. When set to `false`, the list of elements found by the locator must contain the same number of items as [`param: expected`]. When set to `true`, the list of elements may be larger, but it must contain the items matching [`param: expected`] in the same order as listed. Defaults to `true`.
+
 ## shared-context-params-list-v1.8
 - %%-context-option-acceptdownloads-%%
 - %%-context-option-ignorehttpserrors-%%

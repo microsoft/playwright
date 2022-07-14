@@ -2674,6 +2674,7 @@ export type FrameExpectParams = {
   expectedNumber?: number,
   expectedValue?: SerializedArgument,
   useInnerText?: boolean,
+  subset?: boolean,
   isNot: boolean,
   timeout?: number,
 };
@@ -2683,6 +2684,7 @@ export type FrameExpectOptions = {
   expectedNumber?: number,
   expectedValue?: SerializedArgument,
   useInnerText?: boolean,
+  subset?: boolean,
   timeout?: number,
 };
 export type FrameExpectResult = {
