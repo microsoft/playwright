@@ -39,13 +39,17 @@ test('should collect trace with resources, but no js', async ({ context, page, s
 
   const { events } = await parseTrace(testInfo.outputPath('trace.zip'));
   expect(events[0].type).toBe('context-options');
-  expect(events.find(e => e.metadata?.apiName === 'page.goto')).toBeTruthy();
-  expect(events.find(e => e.metadata?.apiName === 'page.setContent')).toBeTruthy();
-  expect(events.find(e => e.metadata?.apiName === 'page.click')).toBeTruthy();
-  expect(events.find(e => e.metadata?.apiName === 'mouse.move')).toBeTruthy();
-  expect(events.find(e => e.metadata?.apiName === 'mouse.dblclick')).toBeTruthy();
-  expect(events.find(e => e.metadata?.apiName === 'keyboard.insertText')).toBeTruthy();
-  expect(events.find(e => e.metadata?.apiName === 'page.close')).toBeTruthy();
+  expect(eventsToActions(events)).toEqual([
+    'page.goto',
+    'page.setContent',
+    'page.click',
+    'mouse.move',
+    'mouse.dblclick',
+    'keyboard.insertText',
+    'page.waitForTimeout',
+    'page.close',
+    'tracing.stop',
+  ]);
 
   expect(events.some(e => e.type === 'frame-snapshot')).toBeTruthy();
   expect(events.some(e => e.type === 'screencast-frame')).toBeTruthy();
@@ -55,6 +59,39 @@ test('should collect trace with resources, but no js', async ({ context, page, s
   const script = events.find(e => e.type === 'resource-snapshot' && e.snapshot.request.url.endsWith('script.js'));
   expect(script).toBeTruthy();
   expect(script.snapshot.response.content._sha1).toBe(undefined);
+});
+
+test('should use the correct apiName for event driven callbacks', async ({ context, page, server }, testInfo) => {
+  await context.tracing.start();
+  await page.route('**/empty.html', route => route.continue());
+  // page.goto -> page.route should be included in the trace since its handled.
+  await page.goto(server.PREFIX + '/empty.html');
+  // page.route -> internalContinue should not be included in the trace since it was handled by Playwright internally.
+  await page.goto(server.PREFIX + '/grid.html');
+
+  // The default internal dialog handler should not provide an action.
+  await page.evaluate(() => alert('yo'));
+  await page.reload();
+  // now we do it again with a dialog event listener attached which should produce an action.
+  page.on('dialog', dialog => {
+    dialog.accept('answer!');
+  });
+  await page.evaluate(() => alert('yo'));
+
+  await context.tracing.stop({ path: testInfo.outputPath('trace.zip') });
+  const { events } = await parseTrace(testInfo.outputPath('trace.zip'));
+  expect(events[0].type).toBe('context-options');
+  expect(eventsToActions(events)).toEqual([
+    'page.route',
+    'page.goto',
+    'route.continue',
+    'page.goto',
+    'page.evaluate',
+    'page.reload',
+    'page.evaluate',
+    'dialog.accept',
+    'tracing.stop',
+  ]);
 });
 
 test('should not collect snapshots by default', async ({ context, page, server }, testInfo) => {
@@ -117,21 +154,22 @@ test('should collect two traces', async ({ context, page, server }, testInfo) =>
   {
     const { events } = await parseTrace(testInfo.outputPath('trace1.zip'));
     expect(events[0].type).toBe('context-options');
-    expect(events.find(e => e.metadata?.apiName === 'page.goto')).toBeTruthy();
-    expect(events.find(e => e.metadata?.apiName === 'page.setContent')).toBeTruthy();
-    expect(events.find(e => e.metadata?.apiName === 'page.click')).toBeTruthy();
-    expect(events.find(e => e.metadata?.apiName === 'page.dblclick')).toBeFalsy();
-    expect(events.find(e => e.metadata?.apiName === 'page.close')).toBeFalsy();
+    expect(eventsToActions(events)).toEqual([
+      'page.goto',
+      'page.setContent',
+      'page.click',
+      'tracing.stop',
+    ]);
   }
 
   {
     const { events } = await parseTrace(testInfo.outputPath('trace2.zip'));
     expect(events[0].type).toBe('context-options');
-    expect(events.find(e => e.metadata?.apiName === 'page.goto')).toBeFalsy();
-    expect(events.find(e => e.metadata?.apiName === 'page.setContent')).toBeFalsy();
-    expect(events.find(e => e.metadata?.apiName === 'page.click')).toBeFalsy();
-    expect(events.find(e => e.metadata?.apiName === 'page.dblclick')).toBeTruthy();
-    expect(events.find(e => e.metadata?.apiName === 'page.close')).toBeTruthy();
+    expect(eventsToActions(events)).toEqual([
+      'page.dblclick',
+      'page.close',
+      'tracing.stop',
+    ]);
   }
 });
 
@@ -345,20 +383,23 @@ test('should work with multiple chunks', async ({ context, page, server }, testI
 
   const trace1 = await parseTrace(testInfo.outputPath('trace.zip'));
   expect(trace1.events[0].type).toBe('context-options');
-  expect(trace1.events.find(e => e.metadata?.apiName === 'page.goto')).toBeFalsy();
-  expect(trace1.events.find(e => e.metadata?.apiName === 'page.setContent')).toBeTruthy();
+  expect(eventsToActions(trace1.events)).toEqual([
+    'page.setContent',
+    'page.click',
+    'page.click',
+    'tracing.stopChunk',
+  ]);
   expect(trace1.events.find(e => e.metadata?.apiName === 'page.click' && !!e.metadata.error)).toBeTruthy();
-  expect(trace1.events.find(e => e.metadata?.apiName === 'page.hover')).toBeFalsy();
   expect(trace1.events.find(e => e.metadata?.apiName === 'page.click' && e.metadata?.error?.error?.message === 'Action was interrupted')).toBeTruthy();
   expect(trace1.events.some(e => e.type === 'frame-snapshot')).toBeTruthy();
   expect(trace1.events.some(e => e.type === 'resource-snapshot' && e.snapshot.request.url.endsWith('style.css'))).toBeTruthy();
 
   const trace2 = await parseTrace(testInfo.outputPath('trace2.zip'));
   expect(trace2.events[0].type).toBe('context-options');
-  expect(trace2.events.find(e => e.metadata?.apiName === 'page.goto')).toBeFalsy();
-  expect(trace2.events.find(e => e.metadata?.apiName === 'page.setContent')).toBeFalsy();
-  expect(trace2.events.find(e => e.metadata?.apiName === 'page.click')).toBeFalsy();
-  expect(trace2.events.find(e => e.metadata?.apiName === 'page.hover')).toBeTruthy();
+  expect(eventsToActions(trace2.events)).toEqual([
+    'page.hover',
+    'tracing.stopChunk',
+  ]);
   expect(trace2.events.some(e => e.type === 'frame-snapshot')).toBeTruthy();
   expect(trace2.events.some(e => e.type === 'resource-snapshot' && e.snapshot.request.url.endsWith('style.css'))).toBeTruthy();
 });
@@ -405,7 +446,10 @@ test('should ignore iframes in head', async ({ context, page, server }, testInfo
   await context.tracing.stopChunk({ path: testInfo.outputPath('trace.zip') });
 
   const trace = await parseTrace(testInfo.outputPath('trace.zip'));
-  expect(trace.events.find(e => e.metadata?.apiName === 'page.click')).toBeTruthy();
+  expect(eventsToActions(trace.events)).toEqual([
+    'page.click',
+    'tracing.stopChunk',
+  ]);
   expect(trace.events.find(e => e.type === 'frame-snapshot')).toBeTruthy();
   expect(trace.events.find(e => e.type === 'frame-snapshot' && JSON.stringify(e.snapshot.html).includes('IFRAME'))).toBeFalsy();
 });
@@ -560,4 +604,10 @@ function expectBlue(pixels: Buffer, offset: number) {
 
 function relativeStack(action: any): string[] {
   return action.metadata.stack.map(f => f.file.replace(__dirname + path.sep, ''));
+}
+
+function eventsToActions(events: any[]): string[] {
+  return events.filter(e => e.type === 'action' && !e.metadata.internal)
+      .sort((a, b) => a.metadata.startTime - b.metadata.startTime)
+      .map(e => e.metadata.apiName);
 }
