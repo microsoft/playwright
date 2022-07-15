@@ -189,6 +189,7 @@ from a particular page, use [`event: Page.response`].
 
 ## event: BrowserContext.serviceWorker
 * since: v1.11
+* langs: js, python
 - argument: <[Worker]>
 
 :::note
@@ -1102,6 +1103,7 @@ A glob pattern, regular expression or predicate to match the request URL. Only r
 
 ## method: BrowserContext.serviceWorkers
 * since: v1.11
+* langs: js, python
 - returns: <[Array]<[Worker]>>
 
 :::note
