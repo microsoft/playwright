@@ -164,25 +164,6 @@ export function toHaveClass(
   }
 }
 
-export function toContainClass(
-  this: ReturnType<Expect['getState']>,
-  locator: LocatorEx,
-  expected: string | string[],
-  options?: { timeout?: number, ignoreCase?: boolean },
-) {
-  if (Array.isArray(expected)) {
-    return toEqual.call(this, 'toContainClass', locator, 'Locator', async (isNot, timeout, customStackTrace) => {
-      const expectedText = toExpectedTextValues(expected, { ignoreCase: options?.ignoreCase });
-      return await locator._expect(customStackTrace, 'to.contain.class.array', { expectedText, isNot, timeout });
-    }, expected, options);
-  } else {
-    return toMatchText.call(this, 'toContainClass', locator, 'Locator', async (isNot, timeout, customStackTrace) => {
-      const expectedText = toExpectedTextValues([expected], { ignoreCase: options?.ignoreCase });
-      return await locator._expect(customStackTrace, 'to.contain.class', { expectedText, isNot, timeout });
-    }, expected, options);
-  }
-}
-
 export function toHaveCount(
   this: ReturnType<Expect['getState']>,
   locator: LocatorEx,
