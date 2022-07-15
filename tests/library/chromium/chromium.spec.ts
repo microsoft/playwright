@@ -639,6 +639,7 @@ test.describe('should emit page-level network events with service worker fetch h
 });
 
 test.describe('PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS=1', () => {
+  test.skip(({ mode }) => mode !== 'default', 'Cannot set env variables in non-default');
   test.beforeAll(() => process.env.PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS = '1');
   test.afterAll(() => delete process.env.PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS);
 
@@ -841,7 +842,7 @@ test.describe('PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS=1', () => {
       res.write(`
         <script>
           window.registrationPromise = navigator.serviceWorker.register('/transparent-service-worker.js');
-        </script>    
+        </script>
       `);
       res.end();
     });
@@ -850,11 +851,11 @@ test.describe('PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS=1', () => {
       res.write(`
         self.addEventListener("fetch", (event) => {
           // actually make the request
-          const responsePromise = fetch(event.request); 
+          const responsePromise = fetch(event.request);
           // send it back to the page
           event.respondWith(responsePromise);
         });
-        
+
         self.addEventListener("activate", (event) => {
           event.waitUntil(clients.claim());
         });
@@ -904,7 +905,7 @@ test.describe('PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS=1', () => {
       res.write(`
         <script>
           window.registrationPromise = navigator.serviceWorker.register('/complex-service-worker.js');
-        </script>    
+        </script>
       `);
       res.end();
     });
@@ -919,7 +920,7 @@ test.describe('PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS=1', () => {
             })
           );
         });
-        
+
         // Opt to handle FetchEvent's from the page
         self.addEventListener("fetch", (event) => {
           event.respondWith(
@@ -927,23 +928,23 @@ test.describe('PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS=1', () => {
               // 1. Try to first serve directly from caches
               let response = await caches.match(event.request);
               if (response) return response;
-        
+
               // 2. Re-write request for /foo to /bar
               if (event.request.url.endsWith("foo")) return fetch("./bar");
-        
+
               // 3. Prevent tracker.js from being retrieved, and returns a placeholder response
               if (event.request.url.endsWith("tracker.js"))
                 return new Response('conosole.log("no trackers!")', {
                   status: 200,
                   headers: { "Content-Type": "text/javascript" },
                 });
-        
+
               // 4. Otherwise, fallthrough, perform the fetch and respond
               return fetch(event.request);
             })()
           );
         });
-        
+
         self.addEventListener("activate", (event) => {
           event.waitUntil(clients.claim());
         });
@@ -1028,7 +1029,7 @@ test.describe('PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS=1', () => {
                 evt.preventDefault();
                 registration.then(r => r.update());
               });
-  
+
               const registration = new Promise(r => navigator.serviceWorker.register('/worker.js').then(r));
               registration.then(() => updateBtn.disabled = false);
             </script>
