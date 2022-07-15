@@ -228,6 +228,7 @@ Returns the matching [Response] object, or `null` if the response was not receiv
 
 ## method: Request.serviceWorker
 * since: v1.24
+* langs: js
 - returns: <[null]|[Worker]>
 
 :::note
