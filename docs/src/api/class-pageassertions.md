@@ -116,7 +116,7 @@ The opposite of [`method: PageAssertions.toHaveURL`].
 * since: v1.18
 - `urlOrRegExp` <[string]|[RegExp]>
 
-Expected substring or RegExp.
+Expected URL string or RegExp.
 
 ### option: PageAssertions.NotToHaveURL.timeout = %%-js-assertions-timeout-%%
 * since: v1.18
@@ -285,7 +285,7 @@ await Expect(page).ToHaveURL(new Regex(".*checkout"));
 * since: v1.18
 - `urlOrRegExp` <[string]|[RegExp]>
 
-Expected substring or RegExp.
+Expected URL string or RegExp.
 
 ### option: PageAssertions.toHaveURL.timeout = %%-js-assertions-timeout-%%
 * since: v1.18

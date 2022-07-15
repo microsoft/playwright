@@ -3987,7 +3987,7 @@ interface PageAssertions {
    * await expect(page).toHaveURL(/.*checkout/);
    * ```
    *
-   * @param urlOrRegExp Expected substring or RegExp.
+   * @param urlOrRegExp Expected URL string or RegExp.
    * @param options
    */
   toHaveURL(urlOrRegExp: string|RegExp, options?: {
