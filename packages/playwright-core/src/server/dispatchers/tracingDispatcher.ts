@@ -15,7 +15,7 @@
  */
 
 import type * as channels from '../../protocol/channels';
-import { Tracing } from '../trace/recorder/tracing';
+import type { Tracing } from '../trace/recorder/tracing';
 import { ArtifactDispatcher } from './artifactDispatcher';
 import type { DispatcherScope } from './dispatcher';
 import { Dispatcher, existingDispatcher } from './dispatcher';
@@ -30,7 +30,6 @@ export class TracingDispatcher extends Dispatcher<Tracing, channels.TracingChann
 
   constructor(scope: DispatcherScope, tracing: Tracing) {
     super(scope, tracing, 'Tracing', {}, true);
-    this.addObjectListener(Tracing.Events.Dispose, () => this._dispose());
   }
 
   async tracingStart(params: channels.TracingTracingStartParams): Promise<channels.TracingTracingStartResult> {

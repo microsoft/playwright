@@ -89,7 +89,7 @@ export abstract class APIRequestContext extends SdkObject {
   }
 
   constructor(parent: SdkObject) {
-    super(parent, 'fetchRequest');
+    super(parent, 'request-context');
     APIRequestContext.allInstances.add(this);
   }
 

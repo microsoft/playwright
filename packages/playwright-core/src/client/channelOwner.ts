@@ -57,6 +57,12 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
     this._initializer = initializer;
   }
 
+  _adopt(child: ChannelOwner<any>) {
+    child._parent!._objects.delete(child._guid);
+    this._objects.set(child._guid, child);
+    child._parent = this;
+  }
+
   _dispose() {
     // Clean up from parent and connection.
     if (this._parent)

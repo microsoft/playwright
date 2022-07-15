@@ -143,16 +143,24 @@ export class Connection extends EventEmitter {
       this._createRemoteObject(guid, params.type, params.guid, params.initializer);
       return;
     }
+
+    const object = this._objects.get(guid);
+    if (!object)
+      throw new Error(`Cannot find object to "${method}": ${guid}`);
+
+    if (method === '__adopt__') {
+      const child = this._objects.get(params.guid);
+      if (!child)
+        throw new Error(`Unknown new child: ${params.guid}`);
+      object._adopt(child);
+      return;
+    }
+
     if (method === '__dispose__') {
-      const object = this._objects.get(guid);
-      if (!object)
-        throw new Error(`Cannot find object to dispose: ${guid}`);
       object._dispose();
       return;
     }
-    const object = this._objects.get(guid);
-    if (!object)
-      throw new Error(`Cannot find object to emit "${method}": ${guid}`);
+
     const validator = findValidator(object._type, method, 'Event');
     (object._channel as any).emit(method, validator(params, '', { tChannelImpl: this._tChannelImplFromWire.bind(this), binary: this.isRemote() ? 'fromBase64' : 'buffer' }));
   }
@@ -166,8 +174,10 @@ export class Connection extends EventEmitter {
   }
 
   private _tChannelImplFromWire(names: '*' | string[], arg: any, path: string, context: ValidatorContext) {
-    if (arg && typeof arg === 'object' && typeof arg.guid === 'string' && this._objects.has(arg.guid)) {
+    if (arg && typeof arg === 'object' && typeof arg.guid === 'string') {
       const object = this._objects.get(arg.guid)!;
+      if (!object)
+        throw new Error(`Object with guid ${arg.guid} was not bound in the connection`);
       if (names !== '*' && !names.includes(object._type))
         throw new ValidationError(`${path}: expected channel ${names.toString()}`);
       return object._channel;
