@@ -1,0 +1,5 @@
+{
+    "port": 3333,
+    "wsPath": "/",
+    "headless": false
+}

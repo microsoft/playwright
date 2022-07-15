@@ -69,6 +69,7 @@ export abstract class Browser extends SdkObject {
   _defaultContext: BrowserContext | null = null;
   private _startedClosing = false;
   readonly _idToVideo = new Map<string, { context: BrowserContext, artifact: Artifact }>();
+  private _contextForReuse: { context: BrowserContext, hash: string } | undefined;
 
   constructor(options: BrowserOptions) {
     super(options.rootSdkObject, 'browser');
@@ -88,6 +89,17 @@ export abstract class Browser extends SdkObject {
     if (options.storageState)
       await context.setStorageState(metadata, options.storageState);
     return context;
+  }
+
+  async newContextForReuse(params: channels.BrowserNewContextForReuseParams, metadata: CallMetadata): Promise<{ context: BrowserContext, needsReset: boolean }> {
+    const hash = BrowserContext.reusableContextHash(params);
+    if (!this._contextForReuse || hash !== this._contextForReuse.hash || !this._contextForReuse.context.canResetForReuse()) {
+      if (this._contextForReuse)
+        await this._contextForReuse.context.close(metadata);
+      this._contextForReuse = { context: await this.newContext(metadata, params), hash };
+      return { context: this._contextForReuse.context, needsReset: false };
+    }
+    return { context: this._contextForReuse.context, needsReset: true };
   }
 
   _downloadCreated(page: Page, uuid: string, url: string, suggestedFilename?: string) {

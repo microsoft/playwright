@@ -40,7 +40,8 @@
     "test-types": "node utils/generate_types/ && npx -p typescript@3.7.5 tsc -p utils/generate_types/test/tsconfig.json && tsc -p ./tests/",
     "roll": "node utils/roll_browser.js",
     "check-deps": "node utils/check_deps.js",
-    "build-android-driver": "./utils/build_android_driver.sh"
+    "build-android-driver": "./utils/build_android_driver.sh",
+    "innerloop": "playwright launch-server --browser=chromium --config=utils/innerloop-server.config.json"
   },
   "workspaces": [
     "packages/*"
