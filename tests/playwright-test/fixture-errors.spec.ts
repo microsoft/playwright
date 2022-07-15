@@ -474,7 +474,7 @@ test('should not report fixture teardown timeout twice', async ({ runInlineTest 
   expect(result.output).toContain('Test timeout of 1000ms exceeded while tearing down "fixture".');
   expect(stripAnsi(result.output)).not.toContain('pwt.test.extend'); // Should not point to the location.
   // TODO: this should be "not.toContain" actually.
-  expect(result.output).toContain('Worker teardown timeout of 1000ms exceeded.');
+  expect(result.output).toContain('Worker teardown timeout of 1000ms exceeded while tearing down "fixture".');
 });
 
 test('should handle fixture teardown error after test timeout and continue', async ({ runInlineTest }) => {
