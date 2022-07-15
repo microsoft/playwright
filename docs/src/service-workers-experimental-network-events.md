@@ -1,8 +1,11 @@
 ---
-id: service-workers
-title: "Service Workers"
+id: service-workers-experimental
+title: "(Experimental) Service Worker Network Events"
 ---
 
+:::warning
+If you're looking to do general network mocking, routing, and interception, please see the [Network Guide](./network.md) first. Playwright provides built-in APIs for this use case that don't require the information below. However, if you're interested in requests made by Service Workers themselves, please read below.
+:::
 
 [Service Workers](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API) provide a browser-native method of handling requests made by a page with the native [Fetch API (`fetch`)](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API) along with other network-requested assets (like scripts, css, and images).
 
@@ -10,19 +13,15 @@ They can act as a **network proxy** between the page and the external network to
 
 Many sites that use Service Workers simply use them as a transparent optimization technique. While users might notice a faster experience, the app's implementation is unaware of their existence. Running the app with or without Service Workers enabled appears functionally equivalent.
 
-**If your app uses Service Workers**, here's the scenarios that Playwright supports:
+## How to Enable
 
-1. Testing the page exactly like a user would experience it. This works out of the box in all supported browsers.
-1. Test your page without a Service Worker. Set [`option: Browser.newContext.serviceWorkers`] to `'block'`. You can test your page as if no Service Worker was registered.
-1. Listen for and route network traffic via Playwright, whether it comes from a Service Worker or not. In Firefox and WebKit, set [`option: Browser.newContext.serviceWorkers`] to `'block'` to avoid Service Worker network traffic entirely. In Chromium, either block Service Workers or use [`method: BrowserContext.route`].
-1. (Chromium-only) Test your Service Worker implementation itself. Use [`method: BrowserContext.serviceWorkers`] to get access to the Service Worker and evaluate there.
+Playwright's inspection and routing of requests made by Service Workers are **experimental** and disabled by default.
 
+Set the `PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS` environment variable to `1` (or any other value) to enable the feature. Only Chrome/Chromium are currently supported.
+
+If you're using (or are interested in using this this feature), please comment on [this issue](https://github.com/microsoft/playwright/issues/15684) letting us know your use case.
 
 ## Service Worker Fetch
-
-:::note
-The next sections are only currently supported when using Playwright with Chrome/Chromium. In Firefox and WebKit, if a Service Worker has a FetchEvent handler, Playwright will **not** emit Network events for all network traffic.
-:::
 
 ### Accessing Service Workers and Waiting for Activation
 
