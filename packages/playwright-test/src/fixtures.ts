@@ -128,9 +128,23 @@ class Fixture {
   }
 
   async teardown(timeoutManager: TimeoutManager) {
-    if (!this._teardownWithDepsComplete)
-      this._teardownWithDepsComplete = this._teardownInternal(timeoutManager);
+    if (this._teardownWithDepsComplete) {
+      // When we are waiting for the teardown for the second time,
+      // most likely after the first time did timeout, annotate current fixture
+      // for better error messages.
+      this._setTeardownDescription(timeoutManager);
+      await this._teardownWithDepsComplete;
+      timeoutManager.setCurrentFixture(undefined);
+      return;
+    }
+    this._teardownWithDepsComplete = this._teardownInternal(timeoutManager);
     await this._teardownWithDepsComplete;
+  }
+
+  private _setTeardownDescription(timeoutManager: TimeoutManager) {
+    const title = this.registration.customTitle || this.registration.name;
+    this._runnableDescription.title = this.registration.timeout !== undefined ? `Fixture "${title}"` : `tearing down "${title}"`;
+    timeoutManager.setCurrentFixture(this._runnableDescription);
   }
 
   private async _teardownInternal(timeoutManager: TimeoutManager) {
@@ -146,9 +160,7 @@ class Fixture {
       }
       if (this._useFuncFinished) {
         debugTest(`teardown ${this.registration.name}`);
-        const title = this.registration.customTitle || this.registration.name;
-        this._runnableDescription.title = this.registration.timeout !== undefined ? `Fixture "${title}"` : `tearing down "${title}"`;
-        timeoutManager.setCurrentFixture(this._runnableDescription);
+        this._setTeardownDescription(timeoutManager);
         this._useFuncFinished.resolve();
         await this._selfTeardownComplete;
         timeoutManager.setCurrentFixture(undefined);
