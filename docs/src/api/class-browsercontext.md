@@ -189,6 +189,7 @@ from a particular page, use [`event: Page.response`].
 
 ## event: BrowserContext.serviceWorker
 * since: v1.11
+* langs: js, python
 - argument: <[Worker]>
 
 :::note
