@@ -18,7 +18,9 @@ import fs from 'fs';
 import url from 'url';
 import { transformHook, resolveHook, belongsToNodeModules } from './transform';
 
-async function resolve(specifier: string, context: { parentURL: string }, defaultResolve: any) {
+// Node < 18.6: defaultResolve takes 3 arguments.
+// Node >= 18.6: nextResolve from the chain takes 2 arguments.
+async function resolve(specifier: string, context: { parentURL?: string }, defaultResolve: Function) {
   if (context.parentURL && context.parentURL.startsWith('file://')) {
     const filename = url.fileURLToPath(context.parentURL);
     const resolved = resolveHook(filename, specifier);
@@ -28,7 +30,9 @@ async function resolve(specifier: string, context: { parentURL: string }, defaul
   return defaultResolve(specifier, context, defaultResolve);
 }
 
-async function load(moduleUrl: string, context: any, defaultLoad: any) {
+// Node < 18.6: defaultLoad takes 3 arguments.
+// Node >= 18.6: nextLoad from the chain takes 2 arguments.
+async function load(moduleUrl: string, context: { format?: string }, defaultLoad: Function) {
   // Bail out for wasm, json, etc.
   // non-js files have context.format === undefined
   if (context.format !== 'commonjs' && context.format !== 'module' && context.format !== undefined)
@@ -49,7 +53,8 @@ async function load(moduleUrl: string, context: any, defaultLoad: any) {
   const code = fs.readFileSync(filename, 'utf-8');
   const source = transformHook(code, filename, moduleUrl);
   // Output format is always the same as input format, if it was unknown, we always report modules.
-  return { format: context.format || 'module', source };
+  // shortCurcuit is required by Node >= 18.6 to designate no more loaders should be called.
+  return { format: context.format || 'module', source, shortCircuit: true };
 }
 
 module.exports = { resolve, load };
