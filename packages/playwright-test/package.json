@@ -1,6 +1,6 @@
 {
   "name": "@playwright/test",
-  "version": "1.23.3",
+  "version": "1.23.4",
   "description": "A high-level API to automate web browsers",
   "repository": "github:Microsoft/playwright",
   "homepage": "https://playwright.dev",
@@ -33,6 +33,6 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@types/node": "*",
-    "playwright-core": "1.23.3"
+    "playwright-core": "1.23.4"
   }
 }
