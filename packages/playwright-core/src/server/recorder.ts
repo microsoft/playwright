@@ -394,7 +394,10 @@ class ContextRecorder extends EventEmitter {
       });
       this._pageAliases.delete(page);
     });
-    frame.on(Frame.Events.Navigation, () => this._onFrameNavigated(frame, page));
+    frame.on(Frame.Events.InternalNavigation, event => {
+      if (event.isPublic)
+        this._onFrameNavigated(frame, page);
+    });
     page.on(Page.Events.Download, () => this._onDownload(page));
     page.on(Page.Events.Dialog, () => this._onDialog(page));
     const suffix = this._pageAliases.size ? String(++this._lastPopupOrdinal) : '';

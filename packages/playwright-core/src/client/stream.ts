@@ -42,8 +42,8 @@ class StreamImpl extends Readable {
 
   override async _read(size: number) {
     const result = await this._channel.read({ size });
-    if (result.binary)
-      this.push(Buffer.from(result.binary, 'base64'));
+    if (result.binary.byteLength)
+      this.push(result.binary);
     else
       this.push(null);
   }

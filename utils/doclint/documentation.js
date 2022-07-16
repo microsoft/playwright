@@ -43,12 +43,20 @@ const md = require('../markdown');
 
 /**
  * @typedef {function({
-  *   clazz?: Documentation.Class,
-  *   member?: Documentation.Member,
-  *   param?: string,
-  *   option?: string
-  * }): string} Renderer
-  */
+ *   clazz?: Documentation.Class,
+ *   member?: Documentation.Member,
+ *   param?: string,
+ *   option?: string
+ * }): string} Renderer
+ */
+
+/**
+ * @typedef {{
+ *   langs: Langs,
+ *   since: string,
+ *   experimental: boolean
+ * }} Metainfo
+ */
 
 class Documentation {
   /**
@@ -168,16 +176,16 @@ class Documentation {
 
 Documentation.Class = class {
   /**
-   * @param {Langs} langs
-   * @param {boolean} experimental
+   * @param {Metainfo} metainfo
    * @param {string} name
    * @param {!Array<!Documentation.Member>} membersArray
    * @param {?string=} extendsName
    * @param {MarkdownNode[]=} spec
    */
-  constructor(langs, experimental, name, membersArray, extendsName = null, spec = undefined) {
-    this.langs = langs;
-    this.experimental = experimental;
+  constructor(metainfo, name, membersArray, extendsName = null, spec = undefined) {
+    this.langs = metainfo.langs;
+    this.experimental = metainfo.experimental;
+    this.since = metainfo.since;
     this.name = name;
     this.membersArray = membersArray;
     this.spec = spec;
@@ -222,7 +230,7 @@ Documentation.Class = class {
   }
 
   clone() {
-    const cls = new Documentation.Class(this.langs, this.experimental, this.name, this.membersArray.map(m => m.clone()), this.extends, this.spec);
+    const cls = new Documentation.Class({ langs: this.langs, experimental: this.experimental, since: this.since }, this.name, this.membersArray.map(m => m.clone()), this.extends, this.spec);
     cls.comment = this.comment;
     return cls;
   }
@@ -313,18 +321,18 @@ Documentation.Class = class {
 Documentation.Member = class {
   /**
    * @param {string} kind
-   * @param {Langs} langs
-   * @param {boolean} experimental
+   * @param {Metainfo} metainfo
    * @param {string} name
    * @param {?Documentation.Type} type
    * @param {!Array<!Documentation.Member>} argsArray
    * @param {MarkdownNode[]=} spec
    * @param {boolean=} required
    */
-  constructor(kind, langs, experimental, name, type, argsArray, spec = undefined, required = true) {
+  constructor(kind, metainfo, name, type, argsArray, spec = undefined, required = true) {
     this.kind = kind;
-    this.langs = langs;
-    this.experimental = experimental;
+    this.langs = metainfo.langs;
+    this.experimental = metainfo.experimental;
+    this.since = metainfo.since;
     this.name = name;
     this.type = type;
     this.spec = spec;
@@ -410,7 +418,7 @@ Documentation.Member = class {
   }
 
   clone() {
-    const result = new Documentation.Member(this.kind, this.langs, this.experimental, this.name, this.type.clone(), this.argsArray.map(arg => arg.clone()), this.spec, this.required);
+    const result = new Documentation.Member(this.kind, { langs: this.langs, experimental: this.experimental, since: this.since }, this.name, this.type.clone(), this.argsArray.map(arg => arg.clone()), this.spec, this.required);
     result.alias = this.alias;
     result.async = this.async;
     result.paramOrOption = this.paramOrOption;
@@ -418,41 +426,38 @@ Documentation.Member = class {
   }
 
   /**
-   * @param {Langs} langs
-   * @param {boolean} experimental
+   * @param {Metainfo} metainfo
    * @param {string} name
    * @param {!Array<!Documentation.Member>} argsArray
    * @param {?Documentation.Type} returnType
    * @param {MarkdownNode[]=} spec
    * @return {!Documentation.Member}
    */
-  static createMethod(langs, experimental, name, argsArray, returnType, spec) {
-    return new Documentation.Member('method', langs, experimental, name, returnType, argsArray, spec);
+  static createMethod(metainfo, name, argsArray, returnType, spec) {
+    return new Documentation.Member('method', metainfo, name, returnType, argsArray, spec);
   }
 
   /**
-   * @param {!Langs} langs
-   * @param {boolean} experimental
+   * @param {Metainfo} metainfo
    * @param {!string} name
    * @param {!Documentation.Type} type
    * @param {!MarkdownNode[]=} spec
    * @param {boolean=} required
    * @return {!Documentation.Member}
    */
-  static createProperty(langs, experimental, name, type, spec, required) {
-    return new Documentation.Member('property', langs, experimental, name, type, [], spec, required);
+  static createProperty(metainfo, name, type, spec, required) {
+    return new Documentation.Member('property', metainfo, name, type, [], spec, required);
   }
 
   /**
-   * @param {Langs} langs
-   * @param {boolean} experimental
+   * @param {Metainfo} metainfo
    * @param {string} name
    * @param {?Documentation.Type=} type
    * @param {MarkdownNode[]=} spec
    * @return {!Documentation.Member}
    */
-  static createEvent(langs, experimental, name, type = null, spec) {
-    return new Documentation.Member('event', langs, experimental, name, type, [], spec);
+  static createEvent(metainfo, name, type = null, spec) {
+    return new Documentation.Member('event', metainfo, name, type, [], spec);
   }
 
   /**
@@ -790,6 +795,8 @@ function patchLinks(classOrMember, spec, classesMap, membersMap, linkRenderer) {
 function generateSourceCodeComment(spec) {
   const comments = (spec || []).filter(n => !n.type.startsWith('h') && (n.type !== 'li' ||  n.liType !== 'default')).map(c => md.clone(c));
   md.visitAll(comments, node => {
+    if (node.codeLang && node.codeLang.includes('tab=js-js'))
+      node.type = 'null';
     if (node.liType === 'bullet')
       node.liType = 'default';
     if (node.type === 'note') {

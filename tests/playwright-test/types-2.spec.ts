@@ -32,6 +32,9 @@ test('basics should work', async ({ runTSC }) => {
         test.skip('my test', async () => {});
         test.fixme('my test', async () => {});
       });
+      test.describe(() => {
+        test('my test', () => {});
+      });
       test.describe.parallel('suite', () => {});
       test.describe.parallel.only('suite', () => {});
       test.describe.serial('suite', () => {});

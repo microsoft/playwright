@@ -3,7 +3,7 @@ set -e
 set +x
 
 RUST_VERSION="1.59.0"
-CBINDGEN_VERSION="0.23.0"
+CBINDGEN_VERSION="0.24.3"
 
 trap "cd $(pwd -P)" EXIT
 
@@ -46,6 +46,11 @@ fi
 
 if [[ $1 == "--linux-arm64" || $2 == "--linux-arm64" ]]; then
   echo "ac_add_options --target=aarch64-linux-gnu" >> .mozconfig
+fi
+
+if is_linux "debian" 11; then
+  # There's no pre-built wasi sysroot for Debian 11.
+  echo "ac_add_options --without-wasm-sandboxed-libraries" >> .mozconfig
 fi
 
 OBJ_FOLDER="obj-build-playwright"
@@ -103,6 +108,15 @@ if [[ $1 == "--full" || $2 == "--full" || $1 == "--bootstrap" ]]; then
     echo "export WIN32_REDIST_DIR=\"$WIN32_REDIST_DIR\"" >> .mozconfig
   fi
 fi
+
+# Remove the cbindgen from mozbuild to rely on the one we install manually.
+# See https://github.com/microsoft/playwright/issues/15174
+if is_win; then
+  rm -rf "${USERPROFILE}\\.mozbuild\\cbindgen"
+else
+  rm -rf "${HOME}/.mozbuild/cbindgen"
+fi
+
 
 if [[ $1 == "--juggler" ]]; then
   ./mach build faster

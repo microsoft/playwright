@@ -1,4 +1,5 @@
 # class: TimeoutError
+* since: v1.8
 * extends: [Error]
 
 TimeoutError is emitted whenever certain operations are terminated due to timeout, e.g. [`method:
@@ -12,7 +13,7 @@ const playwright = require('playwright');
   const context = await browser.newContext();
   const page = await context.newPage();
   try {
-    await page.click("text=Foo", {
+    await page.locator("text=Foo").click({
       timeout: 100,
     })
   } catch (error) {
@@ -31,7 +32,7 @@ async def run(playwright):
     browser = await playwright.chromium.launch()
     page = await browser.new_page()
     try:
-      await page.click("text=Example", timeout=100)
+      await page.locator("text=Example").click(timeout=100)
     except PlaywrightTimeoutError:
       print("Timeout!")
     await browser.close()
@@ -50,7 +51,7 @@ with sync_playwright() as p:
     browser = p.chromium.launch()
     page = browser.new_page()
     try:
-      page.click("text=Example", timeout=100)
+      page.locator("text=Example").click(timeout=100)
     except PlaywrightTimeoutError:
       print("Timeout!")
     browser.close()
@@ -68,7 +69,7 @@ public class TimeoutErrorExample {
       BrowserContext context = browser.newContext();
       Page page = context.newPage();
       try {
-        page.click("text=Example", new Page.ClickOptions().setTimeout(100));
+        page.locator("text=Example").click(new Locator.ClickOptions().setTimeout(100));
       } catch (TimeoutError e) {
         System.out.println("Timeout!");
       }

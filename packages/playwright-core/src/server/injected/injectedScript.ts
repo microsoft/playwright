@@ -79,7 +79,7 @@ export class InjectedScript {
   private _highlight: Highlight | undefined;
   readonly isUnderTest: boolean;
 
-  constructor(isUnderTest: boolean, stableRafCount: number, browserName: string, customEngines: { name: string, engine: SelectorEngine}[]) {
+  constructor(isUnderTest: boolean, stableRafCount: number, browserName: string, customEngines: { name: string, engine: SelectorEngine }[]) {
     this.isUnderTest = isUnderTest;
     this._evaluator = new SelectorEvaluatorImpl(new Map());
 
@@ -445,7 +445,7 @@ export class InjectedScript {
       element = element.closest('button, [role=button], [role=checkbox], [role=radio]') || element;
     if (behavior === 'follow-label') {
       if (!element.matches('input, textarea, button, select, [role=button], [role=checkbox], [role=radio]') &&
-          !(element as any).isContentEditable) {
+        !(element as any).isContentEditable) {
         // Go up to the label that might be connected to the input/textarea.
         element = element.closest('label') || element;
       }
@@ -715,7 +715,7 @@ export class InjectedScript {
     input.dispatchEvent(new Event('change', { 'bubbles': true }));
   }
 
-  private _expectHitTargetParent(hitElement: Element | undefined, targetElement: Element) {
+  expectHitTargetParent(hitElement: Element | undefined, targetElement: Element) {
     targetElement = targetElement.closest('button, [role=button], a, [role=link]') || targetElement;
     const hitParents: Element[] = [];
     while (hitElement && hitElement !== targetElement) {
@@ -782,7 +782,7 @@ export class InjectedScript {
     // First do a preliminary check, to reduce the possibility of some iframe
     // intercepting the action.
     const preliminaryHitElement = this.deepElementFromPoint(document, hitPoint.x, hitPoint.y);
-    const preliminaryResult = this._expectHitTargetParent(preliminaryHitElement, element);
+    const preliminaryResult = this.expectHitTargetParent(preliminaryHitElement, element);
     if (preliminaryResult !== 'done')
       return preliminaryResult.hitTargetDescription;
 
@@ -817,7 +817,7 @@ export class InjectedScript {
       // subsequent events will be fine.
       if (result === undefined && point) {
         const hitElement = this.deepElementFromPoint(document, point.clientX, point.clientY);
-        result = this._expectHitTargetParent(hitElement, element);
+        result = this.expectHitTargetParent(hitElement, element);
       }
 
       if (blockAllEvents || (result !== 'done' && result !== undefined)) {
@@ -853,6 +853,7 @@ export class InjectedScript {
       case 'pointer': event = new PointerEvent(type, eventInit); break;
       case 'focus': event = new FocusEvent(type, eventInit); break;
       case 'drag': event = new DragEvent(type, eventInit); break;
+      case 'wheel': event = new WheelEvent(type, eventInit); break;
       default: event = new Event(type, eventInit); break;
     }
     node.dispatchEvent(event);
@@ -1071,7 +1072,7 @@ export class InjectedScript {
       if (expression === 'to.have.attribute') {
         received = element.getAttribute(options.expressionArg) || '';
       } else if (expression === 'to.have.class') {
-        received = element.className;
+        received = element.classList.toString();
       } else if (expression === 'to.have.css') {
         received = window.getComputedStyle(element).getPropertyValue(options.expressionArg);
       } else if (expression === 'to.have.id') {
@@ -1112,7 +1113,7 @@ export class InjectedScript {
     if (expression === 'to.have.text.array' || expression === 'to.contain.text.array')
       received = elements.map(e => options.useInnerText ? (e as HTMLElement).innerText : e.textContent || '');
     else if (expression === 'to.have.class.array')
-      received = elements.map(e => e.className);
+      received = elements.map(e => e.classList.toString());
 
     if (received && options.expectedText) {
       // "To match an array" is "to contain an array" + "equal length"
@@ -1122,18 +1123,14 @@ export class InjectedScript {
         return { received, matches: false };
 
       // Each matcher should get a "received" that matches it, in order.
-      let i = 0;
       const matchers = options.expectedText.map(e => new ExpectedTextMatcher(e));
-      let allMatchesFound = true;
-      for (const matcher of matchers) {
-        while (i < received.length && !matcher.matches(received[i]))
-          i++;
-        if (i >= received.length) {
-          allMatchesFound = false;
-          break;
-        }
+      let mIndex = 0, rIndex = 0;
+      while (mIndex < matchers.length && rIndex < received.length) {
+        if (matchers[mIndex].matches(received[rIndex]))
+          ++mIndex;
+        ++rIndex;
       }
-      return { received, matches: allMatchesFound };
+      return { received, matches: mIndex === matchers.length };
     }
     throw this.createStacklessError('Unknown expect matcher: ' + expression);
   }
@@ -1155,11 +1152,11 @@ function oneLine(s: string): string {
   return s.replace(/\n/g, '↵').replace(/\t/g, '⇆');
 }
 
-const eventType = new Map<string, 'mouse'|'keyboard'|'touch'|'pointer'|'focus'|'drag'>([
+const eventType = new Map<string, 'mouse' | 'keyboard' | 'touch' | 'pointer' | 'focus' | 'drag' | 'wheel'>([
   ['auxclick', 'mouse'],
   ['click', 'mouse'],
   ['dblclick', 'mouse'],
-  ['mousedown','mouse'],
+  ['mousedown', 'mouse'],
   ['mouseeenter', 'mouse'],
   ['mouseleave', 'mouse'],
   ['mousemove', 'mouse'],
@@ -1201,6 +1198,8 @@ const eventType = new Map<string, 'mouse'|'keyboard'|'touch'|'pointer'|'focus'|'
   ['dragleave', 'drag'],
   ['dragexit', 'drag'],
   ['drop', 'drag'],
+
+  ['wheel', 'wheel'],
 ]);
 
 const kHoverHitTargetInterceptorEvents = new Set(['mousemove']);

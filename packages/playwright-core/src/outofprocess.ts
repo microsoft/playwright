@@ -48,6 +48,7 @@ class PlaywrightClient {
     this._driverProcess.on('exit', this._onExit.bind(this));
 
     const connection = new Connection();
+    connection.markAsRemote();
     this._transport = new IpcTransport(this._driverProcess);
     connection.onmessage = message => this._transport.send(JSON.stringify(message));
     this._transport.onmessage = message => connection.dispatch(JSON.parse(message));

@@ -1,4 +1,4 @@
-name: "PR: bump //browser_patches/chromium/BUILD_NUMBER"
+name: "PR: bump chromium/BUILD_NUMBER"
 on:
   workflow_dispatch:
   schedule:

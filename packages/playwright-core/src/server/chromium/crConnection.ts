@@ -49,10 +49,11 @@ export class CRConnection extends EventEmitter {
     this._transport = transport;
     this._protocolLogger = protocolLogger;
     this._browserLogsCollector = browserLogsCollector;
-    this._transport.onmessage = this._onMessage.bind(this);
-    this._transport.onclose = this._onClose.bind(this);
     this.rootSession = new CRSession(this, '', 'browser', '');
     this._sessions.set('', this.rootSession);
+    this._transport.onmessage = this._onMessage.bind(this);
+    // onclose should be set last, since it can be immediately called.
+    this._transport.onclose = this._onClose.bind(this);
   }
 
   static fromSession(session: CRSession): CRConnection {

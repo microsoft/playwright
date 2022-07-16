@@ -15,30 +15,41 @@
  */
 
 import fs from 'fs';
-import type { APIRequestContext } from '../fetch';
+import path from 'path';
 import { Artifact } from '../artifact';
 import type { BrowserContext } from '../browserContext';
 import type * as har from './har';
 import { HarTracer } from './harTracer';
-import type { HarOptions } from '../types';
+import type * as channels from '../../protocol/channels';
+import { yazl } from '../../zipBundle';
+import type { ZipFile } from '../../zipBundle';
+import { ManualPromise } from '../../utils/manualPromise';
+import type EventEmitter from 'events';
+import { createGuid } from '../../utils';
+import type { Page } from '../page';
 
 export class HarRecorder {
   private _artifact: Artifact;
   private _isFlushed: boolean = false;
-  private _options: HarOptions;
   private _tracer: HarTracer;
   private _entries: har.Entry[] = [];
+  private _zipFile: ZipFile | null = null;
+  private _writtenZipEntries = new Set<string>();
 
-  constructor(context: BrowserContext | APIRequestContext, options: HarOptions) {
-    this._artifact = new Artifact(context, options.path);
-    this._options = options;
+  constructor(context: BrowserContext, page: Page | null, options: channels.RecordHarOptions) {
+    this._artifact = new Artifact(context, path.join(context._browser.options.artifactsDir, `${createGuid()}.har`));
     const urlFilterRe = options.urlRegexSource !== undefined && options.urlRegexFlags !== undefined ? new RegExp(options.urlRegexSource, options.urlRegexFlags) : undefined;
-    this._tracer = new HarTracer(context, this, {
-      content: options.omitContent ? 'omit' : 'embedded',
+    const expectsZip = options.path.endsWith('.zip');
+    const content = options.content || (expectsZip ? 'attach' : 'embed');
+    this._tracer = new HarTracer(context, page, this, {
+      content,
+      slimMode: options.mode === 'minimal',
+      includeTraceInfo: false,
       waitForContentOnStop: true,
       skipScripts: false,
       urlFilter: urlFilterRe ?? options.urlGlob,
     });
+    this._zipFile = content === 'attach' || expectsZip ? new yazl.ZipFile() : null;
     this._tracer.start();
   }
 
@@ -50,6 +61,10 @@ export class HarRecorder {
   }
 
   onContentBlob(sha1: string, buffer: Buffer) {
+    if (!this._zipFile || this._writtenZipEntries.has(sha1))
+      return;
+    this._writtenZipEntries.add(sha1);
+    this._zipFile!.addBuffer(buffer, sha1);
   }
 
   async flush() {
@@ -57,9 +72,24 @@ export class HarRecorder {
       return;
     this._isFlushed = true;
     await this._tracer.flush();
+
     const log = this._tracer.stop();
     log.entries = this._entries;
-    await fs.promises.writeFile(this._options.path, JSON.stringify({ log }, undefined, 2));
+
+    const harFileContent = jsonStringify({ log });
+
+    if (this._zipFile) {
+      const result = new ManualPromise<void>();
+      (this._zipFile as unknown as EventEmitter).on('error', error => result.reject(error));
+      this._zipFile.addBuffer(Buffer.from(harFileContent, 'utf-8'), 'har.har');
+      this._zipFile.end();
+      this._zipFile.outputStream.pipe(fs.createWriteStream(this._artifact.localPath())).on('close', () => {
+        result.resolve();
+      });
+      await result;
+    } else {
+      await fs.promises.writeFile(this._artifact.localPath(), harFileContent);
+    }
   }
 
   async export(): Promise<Artifact> {
@@ -67,4 +97,51 @@ export class HarRecorder {
     this._artifact.reportFinished();
     return this._artifact;
   }
+}
+
+function jsonStringify(object: any): string {
+  const tokens: string[] = [];
+  innerJsonStringify(object, tokens, '', false, undefined);
+  return tokens.join('');
+}
+
+function innerJsonStringify(object: any, tokens: string[], indent: string, flat: boolean, parentKey: string | undefined) {
+  if (typeof object !== 'object' || object === null) {
+    tokens.push(JSON.stringify(object));
+    return;
+  }
+
+  const isArray = Array.isArray(object);
+  if (!isArray && object.constructor.name !== 'Object') {
+    tokens.push(JSON.stringify(object));
+    return;
+  }
+
+  const entries = isArray ? object : Object.entries(object).filter(e => e[1] !== undefined);
+  if (!entries.length) {
+    tokens.push(isArray ? `[]` : `{}`);
+    return;
+  }
+
+  const childIndent = `${indent}  `;
+  let brackets: { open: string, close: string };
+  if (isArray)
+    brackets = flat ? { open: '[', close: ']' } : { open: `[\n${childIndent}`, close: `\n${indent}]` };
+  else
+    brackets = flat ? { open: '{ ', close: ' }' } : { open: `{\n${childIndent}`, close: `\n${indent}}` };
+
+  tokens.push(brackets.open);
+
+  for (let i = 0; i < entries.length; ++i) {
+    const entry = entries[i];
+    if (i)
+      tokens.push(flat ? `, ` : `,\n${childIndent}`);
+    if (!isArray)
+      tokens.push(`${JSON.stringify(entry[0])}: `);
+    const key = isArray ? undefined : entry[0];
+    const flatten = flat || key === 'timings' || parentKey === 'headers';
+    innerJsonStringify(isArray ? entry : entry[1], tokens, childIndent, flatten, key);
+  }
+
+  tokens.push(brackets.close);
 }

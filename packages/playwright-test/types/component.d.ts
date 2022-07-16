@@ -25,6 +25,7 @@ export type ObjectComponentOptions = {
   props?: { [key: string]: any },
   slots?: { [key: string]: any },
   on?: { [key: string]: Function },
+  hooksConfig?: any,
 };
 
 export type ObjectComponent = {
@@ -37,6 +38,6 @@ export type Component = JsxComponent | ObjectComponent;
 
 declare global {
   interface Window {
-    playwrightMount(component: Component, rootElement: Element): void;
+    playwrightMount(component: Component, rootElement: Element, hooksConfig: any): Promise<void>;
   }
 }

@@ -30,6 +30,7 @@ import { CRDevTools } from './crDevTools';
 import type { BrowserOptions, BrowserProcess, PlaywrightOptions } from '../browser';
 import { Browser } from '../browser';
 import type * as types from '../types';
+import type * as channels from '../../protocol/channels';
 import type { HTTPRequestParams } from '../../common/netUtils';
 import { fetchData } from '../../common/netUtils';
 import { getUserAgent } from '../../common/userAgent';
@@ -45,6 +46,7 @@ import http from 'http';
 import https from 'https';
 import { registry } from '../registry';
 import { ManualPromise } from '../../utils/manualPromise';
+import { validateBrowserContextOptions } from '../browserContext';
 
 const ARTIFACTS_FOLDER = path.join(os.tmpdir(), 'playwright-artifacts-');
 
@@ -93,12 +95,13 @@ export class Chromium extends BrowserType {
       await cleanedUp;
     };
     const browserProcess: BrowserProcess = { close: doClose, kill: doClose };
+    const persistent: channels.BrowserNewContextParams = { noDefaultViewport: true };
     const browserOptions: BrowserOptions = {
       ...this._playwrightOptions,
       slowMo: options.slowMo,
       name: 'chromium',
       isChromium: true,
-      persistent: { noDefaultViewport: true },
+      persistent,
       browserProcess,
       protocolLogger: helper.debugProtocolLogger(),
       browserLogsCollector: new RecentLogsCollector(),
@@ -112,6 +115,7 @@ export class Chromium extends BrowserType {
       // does not work at all with proxies on Windows.
       proxy: { server: 'per-context' },
     };
+    validateBrowserContextOptions(persistent, browserOptions);
     progress.throwIfAborted();
     const browser = await CRBrowser.connect(chromeTransport, browserOptions);
     browser.on(Browser.Events.Disconnected, doCleanup);
@@ -325,6 +329,7 @@ const DEFAULT_ARGS = [
   '--enable-features=NetworkService,NetworkServiceInProcess',
   '--disable-background-timer-throttling',
   '--disable-backgrounding-occluded-windows',
+  '--disable-back-forward-cache', // Avoids surprises like main request not being intercepted during page.goBack().
   '--disable-breakpad',
   '--disable-client-side-phishing-detection',
   '--disable-component-extensions-with-background-pages',

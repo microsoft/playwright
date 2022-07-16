@@ -20,7 +20,7 @@ Use the `page` fixture to write a basic test. See [more examples](#examples).
 def test_example_is_working(page):
     page.goto("https://example.com")
     assert page.inner_text('h1') == 'Example Domain'
-    page.click("text=More information")
+    page.locator("text=More information").click()
 ```
 
 To run your tests, use pytest CLI.
@@ -148,7 +148,8 @@ def test_example(page):
 
 ### Configure base-url
 
-Start Pytest with the `base-url` argument.
+Start Pytest with the `base-url` argument. The [`pytest-base-url`](https://github.com/pytest-dev/pytest-base-url) plugin is used
+for that which allows you to set the base url from the config, CLI arg or as a fixture.
 
 ```bash
 pytest --base-url http://localhost:8080
@@ -254,7 +255,7 @@ class MyTest(unittest.TestCase):
 
     def test_foobar(self):
         self.page.goto("https://microsoft.com")
-        self.page.click("#foobar")
+        self.page.locator("#foobar").click()
         assert self.page.evaluate("1 + 1") == 2
 ```
 

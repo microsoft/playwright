@@ -30,7 +30,7 @@
 		51E244F811EFCE07008228D2 /* MBToolbarItem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MBToolbarItem.h; sourceTree = "<group>"; };
 		51E244F911EFCE07008228D2 /* MBToolbarItem.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MBToolbarItem.m; sourceTree = "<group>"; };
 		5C9332AE24C1349C0036DECF /* SecurityInterface.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SecurityInterface.framework; path = System/Library/Frameworks/SecurityInterface.framework; sourceTree = SDKROOT; };
-		7A8E843D26858D80008EC0B1 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = Images.xcassets; sourceTree = "<group>"; };
+		7A8E843D26858D80008EC0B1 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
 		8D1107320486CEB800E47091 /* Playwright.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Playwright.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A1B89B95221E027A00EB4CEB /* SDKVariant.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = SDKVariant.xcconfig; sourceTree = "<group>"; };
 		BC329486116A92E2008635D1 /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = main.m; path = mac/main.m; sourceTree = "<group>"; };
@@ -41,6 +41,7 @@
 		BCA8CBDD11E578A000812FB8 /* Base.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = Base.xcconfig; sourceTree = "<group>"; };
 		BCA8CBDE11E578A000812FB8 /* DebugRelease.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = DebugRelease.xcconfig; sourceTree = "<group>"; };
 		BCA8CBDF11E578A000812FB8 /* Playwright.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = Playwright.xcconfig; sourceTree = "<group>"; };
+		F393B1A6286A71AE007B8F61 /* WebKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = WebKit.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -60,14 +61,14 @@
 			children = (
 				256AC3D80F4B6AC300CF336A /* AppDelegate.h */,
 				256AC3D90F4B6AC300CF336A /* AppDelegate.m */,
+				BC329496116A941B008635D1 /* BrowserWindowController.h */,
+				BC329497116A941B008635D1 /* BrowserWindowController.m */,
+				7A8E843D26858D80008EC0B1 /* Images.xcassets */,
 				BC72B89A11E57E8A001EB4EB /* Info.plist */,
 				BC329486116A92E2008635D1 /* main.m */,
 				51E244F811EFCE07008228D2 /* MBToolbarItem.h */,
 				51E244F911EFCE07008228D2 /* MBToolbarItem.m */,
 				37BAF90620218053000EA87A /* Playwright.entitlements */,
-				BC329496116A941B008635D1 /* BrowserWindowController.h */,
-				BC329497116A941B008635D1 /* BrowserWindowController.m */,
-				7A8E843D26858D80008EC0B1 /* Images.xcassets */,
 			);
 			name = Playwright;
 			sourceTree = "<group>";
@@ -118,6 +119,7 @@
 				1058C7A2FEA54F0111CA2CBC /* Other Frameworks */,
 				1AFFEF761860EE6800DA465F /* Cocoa.framework */,
 				5C9332AE24C1349C0036DECF /* SecurityInterface.framework */,
+				F393B1A6286A71AE007B8F61 /* WebKit.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -193,8 +195,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				7A8E843E26858D80008EC0B1 /* Images.xcassets in Resources */,
 				BC72B89611E57E0F001EB4EB /* BrowserWindow.xib in Resources */,
+				7A8E843E26858D80008EC0B1 /* Images.xcassets in Resources */,
 				BC72B89511E57E07001EB4EB /* MainMenu.xib in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -207,9 +209,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				256AC3DA0F4B6AC300CF336A /* AppDelegate.m in Sources */,
+				BC329498116A941B008635D1 /* BrowserWindowController.m in Sources */,
 				BC329487116A92E2008635D1 /* main.m in Sources */,
 				51E244FA11EFCE07008228D2 /* MBToolbarItem.m in Sources */,
-				BC329498116A941B008635D1 /* BrowserWindowController.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

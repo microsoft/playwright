@@ -41,7 +41,7 @@ export class MultipartFormData {
     this._chunks.push(Buffer.from(`; filename="${value.name}"`));
     this._chunks.push(Buffer.from(`\r\ncontent-type: ${value.mimeType || mime.getType(value.name) || 'application/octet-stream'}`));
     this._finishMultiPartHeader();
-    this._chunks.push(Buffer.from(value.buffer, 'base64'));
+    this._chunks.push(value.buffer);
     this._finishMultiPartField();
   }
 

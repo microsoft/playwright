@@ -1,61 +1,243 @@
 ---
 id: debug
-title: "Debugging tools"
+title: "Debugging Tests"
 ---
 
-Playwright scripts work with existing debugging tools, like Node.js debuggers
-and browser developer tools. Playwright also introduces new debugging features
-for browser automation.
+The Playwright inspector is a great tool to help with debugging. It opens up a browser window highlighting the selectors as you step through each line of the test. You can also use the explore button to find other available [selectors](./selectors.md) which you can then copy into your test file and rerun your tests to see if it passes.
 
-<!-- TOC -->
 
 ## Playwright Inspector
 
-[Playwright Inspector](./inspector.md) is a GUI tool that helps authoring and debugging Playwright scripts. That's our default recommended tool for scripts troubleshooting.
+Playwright Inspector is a GUI tool that helps authoring and debugging Playwright scripts. That's our default recommended tool for scripts troubleshooting.
 
 <img width="712" alt="Playwright Inspector" src="https://user-images.githubusercontent.com/883973/108614092-8c478a80-73ac-11eb-9597-67dfce110e00.png"></img>
 
+There are several ways of opening Playwright Inspector:
 
-## Playwright Trace Viewer
+### Using --debug
+* langs: js
 
-[Playwright Trace Viewer](./trace-viewer.md) is a GUI tool that helps troubleshooting test runs in a post-mortem manner.
+- Debugging all Tests
 
-<img width="1212" alt="Playwright Trace Viewer" src="https://user-images.githubusercontent.com/883973/120585896-6a1bca80-c3e7-11eb-951a-bd84002480f5.png"></img>
+  ```bash
+  npx playwright test --debug
+  ```
+- Debugging one test
 
-## Run in headed mode
+  ```bash
+  npx playwright test example --debug
+  ```
 
-Playwright runs browsers in headless mode by default. To change this behavior,
-use `headless: false` as a launch option. You can also use the [`option: slowMo`] option
-to slow down execution and follow along while debugging.
+### Using PWDEBUG
 
-```js
-await chromium.launch({ headless: false, slowMo: 100 }); // or firefox, webkit
+Set the `PWDEBUG` environment variable to run your scripts in debug mode. This
+configures Playwright for debugging and opens the inspector.
+
+  ```bash tab=bash-bash lang=js
+  PWDEBUG=1 npm run test
+  ```
+
+  ```batch tab=bash-batch lang=js
+  set PWDEBUG=1
+  npm run test
+  ```
+
+  ```powershell tab=bash-powershell lang=js
+  $env:PWDEBUG=1
+  npm run test
+  ```
+
+  ```bash tab=bash-bash lang=java
+  # Source directories in the list are separated by : on macos and linux and by ; on win.
+  PWDEBUG=1 PLAYWRIGHT_JAVA_SRC=<java source dirs> mvn test
+  ```
+
+  ```batch tab=bash-batch lang=java
+  # Source directories in the list are separated by : on macos and linux and by ; on win.
+  set PLAYWRIGHT_JAVA_SRC=<java source dirs>
+  set PWDEBUG=1
+  mvn test
+  ```
+
+  ```powershell tab=bash-powershell lang=java
+  # Source directories in the list are separated by : on macos and linux and by ; on win.
+  $env:PLAYWRIGHT_JAVA_SRC="<java source dirs>"
+  $env:PWDEBUG=1
+  mvn test
+  ```
+
+  ```bash tab=bash-bash lang=python
+  PWDEBUG=1 pytest -s
+  ```
+
+  ```batch tab=bash-batch lang=python
+  set PWDEBUG=1
+  pytest -s
+  ```
+
+  ```powershell tab=bash-powershell lang=python
+  $env:PWDEBUG=1
+  pytest -s
+  ```
+
+  ```bash tab=bash-bash lang=csharp
+  PWDEBUG=1 dotnet test
+  ```
+
+  ```batch tab=bash-batch lang=csharp
+  set PWDEBUG=1
+  dotnet test
+  ```
+
+  ```powershell tab=bash-powershell lang=csharp
+  $env:PWDEBUG=1
+  dotnet test
+  ```
+
+  Additional useful defaults are configured when `PWDEBUG=1` is set:
+  - Browsers launch in the headed mode
+  - Default timeout is set to 0 (= no timeout)
+
+Using `PWDEBUG=console` will configure the browser for debugging in Developer tools console:
+* **Runs headed**: Browsers always launch in headed mode
+* **Disables timeout**: Sets default timeout to 0 (= no timeout)
+* **Console helper**: Configures a `playwright` object in the browser to generate and highlight
+[Playwright selectors](./selectors.md). This can be used to verify text or
+composite selectors.
+
+```bash tab=bash-bash lang=js
+PWDEBUG=console npm run test
 ```
 
-```java
-chromium.launch(new BrowserType.LaunchOptions() // or firefox, webkit
-  .setHeadless(false)
-  .setSlowMo(100));
+```batch tab=bash-batch lang=js
+set PWDEBUG=console
+npm run test
 ```
 
-```python async
-await chromium.launch(headless=False, slow_mo=100) # or firefox, webkit
-
+```powershell tab=bash-powershell lang=js
+$env:PWDEBUG="console"
+npm run test
 ```
 
-```python sync
-chromium.launch(headless=False, slow_mo=100) # or firefox, webkit
-
+```bash tab=bash-bash lang=java
+PWDEBUG=console mvn test
 ```
 
-```csharp
-// Chromium, Firefox, or Webkit
-await using var browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
-{
-    Headless = false,
-    SlowMo = 100
-});
+```batch tab=bash-batch lang=java
+set PWDEBUG=console
+mvn test
 ```
+
+```powershell tab=bash-powershell lang=java
+$env:PWDEBUG="console"
+mvn test
+```
+
+```bash tab=bash-bash lang=python
+PWDEBUG=console pytest -s
+```
+
+```batch tab=bash-batch lang=python
+set PWDEBUG=console
+pytest -s
+```
+
+```powershell tab=bash-powershell lang=python
+$env:PWDEBUG="console"
+pytest -s
+```
+
+#### Selectors in Developer Tools Console
+
+When running in Debug Mode with `PWDEBUG=console`, a `playwright` object is available in Developer tools console.
+
+1. Run with `PWDEBUG=console`
+1. Setup a breakpoint to pause the execution
+1. Open the console panel in browser developer tools
+1. Use the `playwright` API
+    * `playwright.$(selector)`: Highlight the first occurrence of the selector. This reflects
+      how `page.$` would see the page.
+    * `playwright.$$(selector)`: Highlight all occurrences of the selector. This reflects
+      how `page.$$` would see the page.
+    * `playwright.inspect(selector)`: Inspect the selector in the Elements panel.
+    * `playwright.locator(selector)`: Highlight the first occurrence of the locator.
+    * `playwright.clear()`: Clear existing highlights.
+    * `playwright.selector(element)`: Generate a selector that points to the element.
+
+<a href="https://user-images.githubusercontent.com/284612/86857345-299abc00-c073-11ea-9e31-02923a9f0d4b.png"><img src="https://user-images.githubusercontent.com/284612/86857345-299abc00-c073-11ea-9e31-02923a9f0d4b.png" width="500" alt="Highlight selectors"></img></a>
+
+
+### Using page.pause
+
+Call [`method: Page.pause`] method from your script when running in headed browser.
+
+  ```js
+  // Pause on the following line.
+  await page.pause();
+  ```
+
+  ```java
+  // Pause on the following line.
+  page.pause();
+  ```
+
+  ```python async
+  # Pause on the following line.
+  await page.pause()
+  ```
+
+  ```python sync
+  # Pause on the following line.
+  page.pause()
+  ```
+
+  ```csharp
+  // Pause on the following line.
+  await page.PauseAsync();
+  ```
+
+
+- Use `open` or `codegen` commands in the Playwright [CLI](./cli.md):
+  ```bash js
+  npx playwright codegen wikipedia.org
+  ```
+
+  ```bash java
+  mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="codegen wikipedia.org"
+  ```
+
+  ```bash python
+  playwright codegen wikipedia.org
+  ```
+
+  ```bash csharp
+  pwsh bin\Debug\netX\playwright.ps1 codegen wikipedia.org
+  ```
+
+## Stepping through the Playwright script
+
+When `PWDEBUG=1` is set, Playwright Inspector window will be opened and the script will be
+paused on the first Playwright statement:
+
+<img width="557" alt="Paused on line" src="https://user-images.githubusercontent.com/883973/108614337-71761580-73ae-11eb-9f61-3d29c52c9520.png"></img>
+
+Now we know what action is about to be performed and we can look into the details on that
+action. For example, when stopped on an input action such as `click`, the exact point Playwright is about to click is highlighted with the large red dot on the inspected page:
+
+<img width="344" alt="Red dot on inspected page" src="https://user-images.githubusercontent.com/883973/108614363-b69a4780-73ae-11eb-8f5e-51f9c91ec9b4.png"></img>
+
+By the time Playwright has paused on that click action, it has already performed actionability checks that can be found in the log:
+
+<img width="712" alt="Action log" src="https://user-images.githubusercontent.com/883973/108614564-72a84200-73b0-11eb-9de2-828b28d78b36.png"></img>
+
+If actionability can't be reached, it'll show action as pending:
+
+<img width="712" alt="Pending action" src="https://user-images.githubusercontent.com/883973/108614840-e6e3e500-73b2-11eb-998f-0cf31b2aa9a2.png"></img>
+
+You can step over each action using the "Step over" action (keyboard shortcut: `F10`) or resume script without further pauses (`F8`):
+
+<center><img width="98" alt="Stepping toolbar" src="https://user-images.githubusercontent.com/883973/108614389-f9f4b600-73ae-11eb-8df2-8d9ce9da5d5c.png"></img></center>
+
 
 ## Browser Developer Tools
 
@@ -89,9 +271,9 @@ chromium.launch(devtools=True)
 ```
 
 ```csharp
-await using var browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
+await using var browser = await playwright.Chromium.LaunchAsync(new()
 {
-    Devtools: true
+  Devtools: true
 });
 ```
 
@@ -100,152 +282,174 @@ await using var browser = await playwright.Chromium.LaunchAsync(new BrowserTypeL
   prevent the Playwright script from executing any further.
 :::
 
-## Run in Debug Mode
+## Debugging Selectors
 
-Set the `PWDEBUG` environment variable to run your scripts in debug mode. Using `PWDEBUG=1` will open [Playwright Inspector](./inspector.md).
+- Click the Explore button to hover over elements in the screen and click them to
+automatically generate selectors for those elements.
+- To verify where selector points, paste it into the inspector input field:
 
-Using `PWDEBUG=console` will configure the browser for debugging in Developer tools console:
-* **Runs headed**: Browsers always launch in headed mode
-* **Disables timeout**: Sets default timeout to 0 (= no timeout)
-* **Console helper**: Configures a `playwright` object in the browser to generate and highlight
-[Playwright selectors](./selectors.md). This can be used to verify text or
-composite selectors.
+<img width="602" alt="Selectors toolbar" src="https://user-images.githubusercontent.com/883973/108614696-ad5eaa00-73b1-11eb-81f5-9eebe62543a2.png"></img>
 
-```bash bash-flavor=bash lang=js
-PWDEBUG=console npm run test
+You can also use the following API inside the Developer Tools Console of any browser.
+
+<img src="https://user-images.githubusercontent.com/284612/92536317-37dd9380-f1ee-11ea-875d-daf1b206dd56.png"></img>
+
+#### playwright.$(selector)
+
+Query Playwright selector, using the actual Playwright query engine, for example:
+
+```js
+> playwright.$('.auth-form >> text=Log in');
+
+<button>Log in</button>
 ```
 
-```bash bash-flavor=batch lang=js
-set PWDEBUG=console
-npm run test
+#### playwright.$$(selector)
+
+Same as `playwright.$`, but returns all matching elements.
+
+```js
+> playwright.$$('li >> text=John')
+
+> [<li>, <li>, <li>, <li>]
 ```
 
-```bash bash-flavor=powershell lang=js
-$env:PWDEBUG="console"
-npm run test
+#### playwright.inspect(selector)
+
+Reveal element in the Elements panel (if DevTools of the respective browser supports it).
+
+```js
+> playwright.inspect('text=Log in')
 ```
 
-```bash bash-flavor=bash lang=java
-PWDEBUG=console mvn test
+#### playwright.locator(selector)
+
+Query Playwright element using the actual Playwright query engine, for example:
+
+```js
+> playwright.locator('.auth-form', { hasText: 'Log in' });
+
+> Locator ()
+>   - element: button
+>   - elements: [button]
 ```
 
-```bash bash-flavor=batch lang=java
-set PWDEBUG=console
-mvn test
+#### playwright.selector(element)
+
+Generates selector for the given element.
+
+```js
+> playwright.selector($0)
+
+"div[id="glow-ingress-block"] >> text=/.*Hello.*/"
 ```
 
-```bash bash-flavor=powershell lang=java
-$env:PWDEBUG="console"
-mvn test
+<!-- ## Recording scripts
+
+At any moment, clicking Record action enables [codegen mode](./codegen.md).
+Every action on the target page is turned into the generated script:
+
+<img width="712" alt="Recorded script" src="https://user-images.githubusercontent.com/883973/108614897-85704600-73b3-11eb-8bcd-f2e129786c49.png"></img>
+
+You can copy entire generated script or clear it using toolbar actions. -->
+
+
+## Run Tests in headed mode
+
+Playwright runs browsers in headless mode by default. To change this behavior,
+use `headless: false` as a launch option. You can also use the [`option: slowMo`] option
+to slow down execution and follow along while debugging.
+
+```js
+await chromium.launch({ headless: false, slowMo: 100 }); // or firefox, webkit
 ```
 
-```bash bash-flavor=bash lang=python
-PWDEBUG=console pytest -s
+```java
+chromium.launch(new BrowserType.LaunchOptions() // or firefox, webkit
+  .setHeadless(false)
+  .setSlowMo(100));
 ```
 
-```bash bash-flavor=batch lang=python
-set PWDEBUG=console
-pytest -s
+```python async
+await chromium.launch(headless=False, slow_mo=100) # or firefox, webkit
+
 ```
 
-```bash bash-flavor=powershell lang=python
-$env:PWDEBUG="console"
-pytest -s
+```python sync
+chromium.launch(headless=False, slow_mo=100) # or firefox, webkit
+
 ```
 
-## Selectors in Developer Tools Console
-
-When running in Debug Mode with `PWDEBUG=console`, a `playwright` object is available in Developer tools console.
-
-1. Run with `PWDEBUG=console`
-1. Setup a breakpoint to pause the execution
-1. Open the console panel in browser developer tools
-1. Use the `playwright` API
-    * `playwright.$(selector)`: Highlight the first occurrence of the selector. This reflects
-      how `page.$` would see the page.
-    * `playwright.$$(selector)`: Highlight all occurrences of the selector. This reflects
-      how `page.$$` would see the page.
-    * `playwright.inspect(selector)`: Inspect the selector in the Elements panel.
-    * `playwright.locator(selector)`: Highlight the first occurrence of the locator.
-    * `playwright.clear()`: Clear existing highlights.
-    * `playwright.selector(element)`: Generate a selector that points to the element.
-
-<a href="https://user-images.githubusercontent.com/284612/86857345-299abc00-c073-11ea-9e31-02923a9f0d4b.png"><img src="https://user-images.githubusercontent.com/284612/86857345-299abc00-c073-11ea-9e31-02923a9f0d4b.png" width="500" alt="Highlight selectors"></img></a>
-
-## Visual Studio Code debugger (Node.js)
-
-The VS Code debugger can be used to pause and resume execution of Playwright
-scripts with breakpoints. The debugger can be configured in two ways.
-
-### Use launch config
-
-Setup [`launch.json` configuration](https://code.visualstudio.com/docs/nodejs/nodejs-debugging)
-for your Node.js project. Once configured launch the scripts with F5 and use
-breakpoints.
-
-### Use the JavaScript Debug Terminal
-
-1. Open [JavaScript Debug Terminal](https://code.visualstudio.com/docs/nodejs/nodejs-debugging#_javascript-debug-terminal)
-1. Set a breakpoint in VS Code
-    * Use the `debugger` keyword or set a breakpoint in the VS Code UI
-1. Run your Node.js script from the terminal
+```csharp
+// Chromium, Firefox, or Webkit
+await using var browser = await playwright.Chromium.LaunchAsync(new()
+{
+    Headless = false,
+    SlowMo = 100
+});
+```
 
 ## Verbose API logs
 
 Playwright supports verbose logging with the `DEBUG` environment variable.
 
-```bash bash-flavor=bash lang=js
+```bash tab=bash-bash lang=js
 DEBUG=pw:api npm run test
 ```
 
-```bash bash-flavor=batch lang=js
+```batch tab=bash-batch lang=js
 set DEBUG=pw:api
 npm run test
 ```
 
-```bash bash-flavor=powershell lang=js
+```powershell tab=bash-powershell lang=js
 $env:DEBUG="pw:api"
 npm run test
 ```
 
-```bash bash-flavor=bash lang=java
+```bash tab=bash-bash lang=java
 DEBUG=pw:api mvn test
 ```
 
-```bash bash-flavor=batch lang=java
+```batch tab=bash-batch lang=java
 set DEBUG=pw:api
 mvn test
 ```
 
-```bash bash-flavor=powershell lang=java
+```powershell tab=bash-powershell lang=java
 $env:DEBUG="pw:api"
 mvn test
 ```
 
-```bash bash-flavor=bash lang=python
+```bash tab=bash-bash lang=python
 DEBUG=pw:api pytest -s
 ```
 
-```bash bash-flavor=batch lang=python
+```batch tab=bash-batch lang=python
 set DEBUG=pw:api
 pytest -s
 ```
 
-```bash bash-flavor=powershell lang=python
+```powershell tab=bash-powershell lang=python
 $env:DEBUG="pw:api"
 pytest -s
 ```
 
-```bash bash-flavor=bash lang=csharp
+```bash tab=bash-bash lang=csharp
 DEBUG=pw:api dotnet run
 ```
 
-```bash bash-flavor=batch lang=csharp
+```batch tab=bash-batch lang=csharp
 set DEBUG=pw:api
 dotnet run
 ```
 
-```bash bash-flavor=powershell lang=csharp
+```powershell tab=bash-powershell lang=csharp
 $env:DEBUG="pw:api"
 dotnet run
 ```
+
+## What's Next
+
+- [Generate tests with Codegen](./codegen.md)
+- [See a trace of your tests](./trace-viewer.md)

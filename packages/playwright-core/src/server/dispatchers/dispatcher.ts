@@ -17,17 +17,18 @@
 import { EventEmitter } from 'events';
 import type * as channels from '../../protocol/channels';
 import { serializeError } from '../../protocol/serializers';
-import type { Validator } from '../../protocol/validator';
-import { createScheme, ValidationError } from '../../protocol/validator';
+import { findValidator, ValidationError, createMetadataValidator, type ValidatorContext } from '../../protocol/validator';
 import { assert, debugAssert, isUnderTest, monotonicTime } from '../../utils';
-import { tOptional } from '../../protocol/validatorPrimitives';
 import { kBrowserOrContextClosedError } from '../../common/errors';
 import type { CallMetadata } from '../instrumentation';
 import { SdkObject } from '../instrumentation';
 import { rewriteErrorMessage } from '../../utils/stackTrace';
 import type { PlaywrightDispatcher } from './playwrightDispatcher';
+import { eventsHelper } from '../..//utils/eventsHelper';
+import type { RegisteredListener } from '../..//utils/eventsHelper';
 
 export const dispatcherSymbol = Symbol('dispatcher');
+const metadataValidator = createMetadataValidator();
 
 export function lookupDispatcher<DispatcherType>(object: any): DispatcherType {
   const result = object[dispatcherSymbol];
@@ -51,6 +52,7 @@ export class Dispatcher<Type extends { guid: string }, ChannelType> extends Even
   // Only "isScope" channel owners have registered dispatchers inside.
   private _dispatchers = new Map<string, Dispatcher<any, any>>();
   protected _disposed = false;
+  protected _eventListeners: RegisteredListener[] = [];
 
   readonly _guid: string;
   readonly _type: string;
@@ -79,7 +81,20 @@ export class Dispatcher<Type extends { guid: string }, ChannelType> extends Even
 
     (object as any)[dispatcherSymbol] = this;
     if (this._parent)
-      this._connection.sendMessageToClient(this._parent._guid, type, '__create__', { type, initializer, guid }, this._parent._object);
+      this._connection.sendCreate(this._parent, type, guid, initializer, this._parent._object);
+  }
+
+  addObjectListener(eventName: (string | symbol), handler: (...args: any[]) => void) {
+    this._eventListeners.push(eventsHelper.addEventListener(this._object as unknown as EventEmitter, eventName, handler));
+  }
+
+  adopt(child: Dispatcher<any, any>) {
+    assert(this._isScope);
+    const oldParent = child._parent!;
+    oldParent._dispatchers.delete(child._guid);
+    this._dispatchers.set(child._guid, child);
+    child._parent = this;
+    this._connection.sendAdopt(this, child);
   }
 
   _dispatchEvent<T extends keyof channels.EventsTraits<ChannelType>>(method: T, params?: channels.EventsTraits<ChannelType>[T]) {
@@ -90,12 +105,13 @@ export class Dispatcher<Type extends { guid: string }, ChannelType> extends Even
       return;
     }
     const sdkObject = this._object instanceof SdkObject ? this._object : undefined;
-    this._connection.sendMessageToClient(this._guid, this._type, method as string, params, sdkObject);
+    this._connection.sendEvent(this, method as string, params, sdkObject);
   }
 
-  protected _dispose() {
-    assert(!this._disposed);
+  _dispose() {
+    assert(!this._disposed, `${this._guid} is disposed more than once`);
     this._disposed = true;
+    eventsHelper.removeEventListeners(this._eventListeners);
 
     // Clean up from parent and connection.
     if (this._parent)
@@ -108,7 +124,8 @@ export class Dispatcher<Type extends { guid: string }, ChannelType> extends Even
     this._dispatchers.clear();
 
     if (this._isScope)
-      this._connection.sendMessageToClient(this._guid, this._type, '__dispose__', {});
+      this._connection.sendDispose(this);
+    delete (this._object as any)[dispatcherSymbol];
   }
 
   _debugScopeState(): any {
@@ -144,12 +161,34 @@ export class Root extends Dispatcher<{ guid: '' }, any> {
 export class DispatcherConnection {
   readonly _dispatchers = new Map<string, Dispatcher<any, any>>();
   onmessage = (message: object) => {};
-  private _validateParams: (type: string, method: string, params: any) => any;
-  private _validateMetadata: (metadata: any) => { stack?: channels.StackFrame[] };
   private _waitOperations = new Map<string, CallMetadata>();
+  private _isLocal: boolean;
 
-  sendMessageToClient(guid: string, type: string, method: string, params: any, sdkObject?: SdkObject) {
-    params = this._replaceDispatchersWithGuids(params);
+  constructor(isLocal?: boolean) {
+    this._isLocal = !!isLocal;
+  }
+
+  sendEvent(dispatcher: Dispatcher<any, any>, event: string, params: any, sdkObject?: SdkObject) {
+    const validator = findValidator(dispatcher._type, event, 'Event');
+    params = validator(params, '', { tChannelImpl: this._tChannelImplToWire.bind(this), binary: this._isLocal ? 'buffer' : 'toBase64' });
+    this._sendMessageToClient(dispatcher._guid, dispatcher._type, event, params, sdkObject);
+  }
+
+  sendCreate(parent: Dispatcher<any, any>, type: string, guid: string, initializer: any, sdkObject?: SdkObject) {
+    const validator = findValidator(type, '', 'Initializer');
+    initializer = validator(initializer, '', { tChannelImpl: this._tChannelImplToWire.bind(this), binary: this._isLocal ? 'buffer' : 'toBase64' });
+    this._sendMessageToClient(parent._guid, type, '__create__', { type, initializer, guid }, sdkObject);
+  }
+
+  sendAdopt(parent: Dispatcher<any, any>, dispatcher: Dispatcher<any, any>) {
+    this._sendMessageToClient(parent._guid, dispatcher._type, '__adopt__', { guid: dispatcher._guid });
+  }
+
+  sendDispose(dispatcher: Dispatcher<any, any>) {
+    this._sendMessageToClient(dispatcher._guid, dispatcher._type, '__dispose__', {});
+  }
+
+  private _sendMessageToClient(guid: string, type: string, method: string, params: any, sdkObject?: SdkObject) {
     if (sdkObject) {
       const eventMetadata: CallMetadata = {
         id: `event@${++lastEventId}`,
@@ -170,31 +209,26 @@ export class DispatcherConnection {
     this.onmessage({ guid, method, params });
   }
 
-  constructor() {
-    const tChannel = (name: string): Validator => {
-      return (arg: any, path: string) => {
-        if (arg && typeof arg === 'object' && typeof arg.guid === 'string') {
-          const guid = arg.guid;
-          const dispatcher = this._dispatchers.get(guid);
-          if (!dispatcher)
-            throw new ValidationError(`${path}: no object with guid ${guid}`);
-          if (name !== '*' && dispatcher._type !== name)
-            throw new ValidationError(`${path}: object with guid ${guid} has type ${dispatcher._type}, expected ${name}`);
-          return dispatcher;
-        }
-        throw new ValidationError(`${path}: expected ${name}`);
-      };
-    };
-    const scheme = createScheme(tChannel);
-    this._validateParams = (type: string, method: string, params: any): any => {
-      const name = type + method[0].toUpperCase() + method.substring(1) + 'Params';
-      if (!scheme[name])
-        throw new ValidationError(`Unknown scheme for ${type}.${method}`);
-      return scheme[name](params, '');
-    };
-    this._validateMetadata = (metadata: any): any => {
-      return tOptional(scheme['Metadata'])(metadata, '');
-    };
+  private _tChannelImplFromWire(names: '*' | string[], arg: any, path: string, context: ValidatorContext): any {
+    if (arg && typeof arg === 'object' && typeof arg.guid === 'string') {
+      const guid = arg.guid;
+      const dispatcher = this._dispatchers.get(guid);
+      if (!dispatcher)
+        throw new ValidationError(`${path}: no object with guid ${guid}`);
+      if (names !== '*' && !names.includes(dispatcher._type))
+        throw new ValidationError(`${path}: object with guid ${guid} has type ${dispatcher._type}, expected ${names.toString()}`);
+      return dispatcher;
+    }
+    throw new ValidationError(`${path}: expected guid for ${names.toString()}`);
+  }
+
+  private _tChannelImplToWire(names: '*' | string[], arg: any, path: string, context: ValidatorContext): any {
+    if (arg instanceof Dispatcher)  {
+      if (names !== '*' && !names.includes(arg._type))
+        throw new ValidationError(`${path}: dispatcher with guid ${arg._guid} has type ${arg._type}, expected ${names.toString()}`);
+      return { guid: arg._guid };
+    }
+    throw new ValidationError(`${path}: expected dispatcher ${names.toString()}`);
   }
 
   async dispatch(message: object) {
@@ -204,17 +238,13 @@ export class DispatcherConnection {
       this.onmessage({ id, error: serializeError(new Error(kBrowserOrContextClosedError)) });
       return;
     }
-    if (method === 'debugScopeState') {
-      const rootDispatcher = this._dispatchers.get('')!;
-      this.onmessage({ id, result: rootDispatcher._debugScopeState() });
-      return;
-    }
 
     let validParams: any;
     let validMetadata: channels.Metadata;
     try {
-      validParams = this._validateParams(dispatcher._type, method, params);
-      validMetadata = this._validateMetadata(metadata);
+      const validator = findValidator(dispatcher._type, method, 'Params');
+      validParams = validator(params, '', { tChannelImpl: this._tChannelImplFromWire.bind(this), binary: this._isLocal ? 'buffer' : 'fromBase64' });
+      validMetadata = metadataValidator(metadata, '', { tChannelImpl: this._tChannelImplFromWire.bind(this), binary: this._isLocal ? 'buffer' : 'fromBase64' });
       if (typeof (dispatcher as any)[method] !== 'function')
         throw new Error(`Mismatching dispatcher: "${dispatcher._type}" does not implement "${method}"`);
     } catch (e) {
@@ -273,7 +303,8 @@ export class DispatcherConnection {
     await sdkObject?.instrumentation.onBeforeCall(sdkObject, callMetadata);
     try {
       const result = await (dispatcher as any)[method](validParams, callMetadata);
-      callMetadata.result = this._replaceDispatchersWithGuids(result);
+      const validator = findValidator(dispatcher._type, method, 'Result');
+      callMetadata.result = validator(result, '', { tChannelImpl: this._tChannelImplToWire.bind(this), binary: this._isLocal ? 'buffer' : 'toBase64' });
     } catch (e) {
       // Dispatching error
       // We want original, unmodified error in metadata.
@@ -292,22 +323,6 @@ export class DispatcherConnection {
     if (error)
       response.error = error;
     this.onmessage(response);
-  }
-
-  private _replaceDispatchersWithGuids(payload: any): any {
-    if (!payload)
-      return payload;
-    if (payload instanceof Dispatcher)
-      return { guid: payload._guid };
-    if (Array.isArray(payload))
-      return payload.map(p => this._replaceDispatchersWithGuids(p));
-    if (typeof payload === 'object') {
-      const result: any = {};
-      for (const key of Object.keys(payload))
-        result[key] = this._replaceDispatchersWithGuids(payload[key]);
-      return result;
-    }
-    return payload;
   }
 }
 

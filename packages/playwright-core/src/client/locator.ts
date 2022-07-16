@@ -42,7 +42,7 @@ export class Locator implements api.Locator {
     if (options?.hasText) {
       const text = options.hasText;
       if (isRegExp(text))
-        this._selector += ` >> :scope:text-matches(${escapeWithQuotes(text.source, '"')}, "${text.flags}")`;
+        this._selector += ` >> has=${JSON.stringify('text=' + text.toString())}`;
       else
         this._selector += ` >> :scope:has-text(${escapeWithQuotes(text, '"')})`;
     }

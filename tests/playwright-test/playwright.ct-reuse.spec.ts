@@ -26,21 +26,21 @@ test('should reuse context', async ({ runInlineTest }) => {
     'src/reuse.test.tsx': `
       //@no-header
       import { test, expect } from '@playwright/experimental-ct-react';
-      let lastContext;
+      let lastContextGuid;
 
       test('one', async ({ context }) => {
-        lastContext = context;
+        lastContextGuid = context._guid;
       });
 
       test('two', async ({ context }) => {
-        expect(context).toBe(lastContext);
+        expect(context._guid).toBe(lastContextGuid);
       });
 
       test.describe('Dark', () => {
-        test.use({ colorScheme: 'dark' });
+        test.use({ userAgent: 'dark' });
 
         test('three', async ({ context }) => {
-          expect(context).not.toBe(lastContext);
+          expect(context._guid).not.toBe(lastContextGuid);
         });
       });
     `,

@@ -1,4 +1,5 @@
 # class: ElectronApplication
+* since: v1.9
 * langs: js
 
 Electron application representation. You can use [`method: Electron.launch`] to
@@ -36,35 +37,42 @@ const { _electron: electron } = require('playwright');
 ```
 
 ## event: ElectronApplication.close
+* since: v1.9
 
 This event is issued when the application closes.
 
 ## event: ElectronApplication.window
+* since: v1.9
 - argument: <[Page]>
 
 This event is issued for every window that is created **and loaded** in Electron. It contains a [Page] that can
 be used for Playwright automation.
 
 ## async method: ElectronApplication.browserWindow
+* since: v1.11
 - returns: <[JSHandle]>
 
 Returns the BrowserWindow object that corresponds to the given Playwright page.
 
 ### param: ElectronApplication.browserWindow.page
+* since: v1.11
 - `page` <[Page]>
 
 Page to retrieve the window for.
 
 ## async method: ElectronApplication.close
+* since: v1.9
 
 Closes Electron application.
 
 ## method: ElectronApplication.context
+* since: v1.9
 - returns: <[BrowserContext]>
 
 This method returns browser context that can be used for setting up context-wide routing, etc.
 
 ## async method: ElectronApplication.evaluate
+* since: v1.9
 - returns: <[Serializable]>
 
 Returns the return value of [`param: expression`].
@@ -77,13 +85,16 @@ If the function passed to the [`method: ElectronApplication.evaluate`] returns a
 some additional values that are not serializable by `JSON`: `-0`, `NaN`, `Infinity`, `-Infinity`.
 
 ### param: ElectronApplication.evaluate.expression = %%-evaluate-expression-%%
+* since: v1.9
 
 ### param: ElectronApplication.evaluate.arg
+* since: v1.9
 - `arg` ?<[EvaluationArgument]>
 
 Optional argument to pass to [`param: expression`].
 
 ## async method: ElectronApplication.evaluateHandle
+* since: v1.9
 - returns: <[JSHandle]>
 
 Returns the return value of [`param: expression`] as a [JSHandle].
@@ -94,13 +105,16 @@ If the function passed to the [`method: ElectronApplication.evaluateHandle`] ret
 [`method: ElectronApplication.evaluateHandle`] would wait for the promise to resolve and return its value.
 
 ### param: ElectronApplication.evaluateHandle.expression = %%-evaluate-expression-%%
+* since: v1.9
 
 ### param: ElectronApplication.evaluateHandle.arg
+* since: v1.9
 - `arg` ?<[EvaluationArgument]>
 
 Optional argument to pass to [`param: expression`].
 
 ## async method: ElectronApplication.firstWindow
+* since: v1.9
 - returns: <[Page]>
 
 Convenience method that waits for the first application window to be opened.
@@ -115,11 +129,13 @@ Typically your script will start with:
 ```
 
 ## method: ElectronApplication.process
+* since: v1.21
 - returns: <[ChildProcess]>
 
 Returns the main process for this Electron Application.
 
 ## async method: ElectronApplication.waitForEvent
+* since: v1.9
 - returns: <[any]>
 
 Waits for event to fire and passes its value into the predicate function. Returns when the predicate returns truthy value. Will throw an error if the application is closed before the event is fired. Returns the event data value.
@@ -132,8 +148,10 @@ const [window] = await Promise.all([
 ```
 
 ### param: ElectronApplication.waitForEvent.event = %%-wait-for-event-event-%%
+* since: v1.9
 
 ### param: ElectronApplication.waitForEvent.optionsOrPredicate
+* since: v1.9
 * langs: js
 - `optionsOrPredicate` ?<[function]|[Object]>
   - `predicate` <[function]> receives the event data and resolves to truthy value when the waiting should resolve.
@@ -143,6 +161,7 @@ const [window] = await Promise.all([
 Either a predicate that receives an event or an options object. Optional.
 
 ## method: ElectronApplication.windows
+* since: v1.9
 - returns: <[Array]<[Page]>>
 
 Convenience method that returns all the opened windows.

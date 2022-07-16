@@ -1,4 +1,5 @@
 # class: Mouse
+* since: v1.8
 
 The Mouse class operates in main-frame CSS pixels relative to the top-left corner of the viewport.
 
@@ -58,22 +59,29 @@ await Page.Mouse.MoveAsync(0, 0);
 await Page.Mouse.UpAsync();
 ```
 ## async method: Mouse.click
+* since: v1.8
 
 Shortcut for [`method: Mouse.move`], [`method: Mouse.down`], [`method: Mouse.up`].
 
 ### param: Mouse.click.x
+* since: v1.8
 - `x` <[float]>
 
 ### param: Mouse.click.y
+* since: v1.8
 - `y` <[float]>
 
 ### option: Mouse.click.button = %%-input-button-%%
+* since: v1.8
 
 ### option: Mouse.click.clickCount = %%-input-click-count-%%
+* since: v1.8
 
 ### option: Mouse.click.delay = %%-input-down-up-delay-%%
+* since: v1.8
 
 ## async method: Mouse.dblclick
+* since: v1.8
 * langs:
   - alias-csharp: DblClickAsync
 
@@ -81,47 +89,62 @@ Shortcut for [`method: Mouse.move`], [`method: Mouse.down`], [`method: Mouse.up`
 [`method: Mouse.up`].
 
 ### param: Mouse.dblclick.x
+* since: v1.8
 - `x` <[float]>
 
 ### param: Mouse.dblclick.y
+* since: v1.8
 - `y` <[float]>
 
 ### option: Mouse.dblclick.button = %%-input-button-%%
+* since: v1.8
 
 ### option: Mouse.dblclick.delay = %%-input-down-up-delay-%%
+* since: v1.8
 
 ## async method: Mouse.down
+* since: v1.8
 
 Dispatches a `mousedown` event.
 
 ### option: Mouse.down.button = %%-input-button-%%
+* since: v1.8
 
 ### option: Mouse.down.clickCount = %%-input-click-count-%%
+* since: v1.8
 
 ## async method: Mouse.move
+* since: v1.8
 
 Dispatches a `mousemove` event.
 
 ### param: Mouse.move.x
+* since: v1.8
 - `x` <[float]>
 
 ### param: Mouse.move.y
+* since: v1.8
 - `y` <[float]>
 
 ### option: Mouse.move.steps
+* since: v1.8
 - `steps` <[int]>
 
 Defaults to 1. Sends intermediate `mousemove` events.
 
 ## async method: Mouse.up
+* since: v1.8
 
 Dispatches a `mouseup` event.
 
 ### option: Mouse.up.button = %%-input-button-%%
+* since: v1.8
 
 ### option: Mouse.up.clickCount = %%-input-click-count-%%
+* since: v1.8
 
 ## async method: Mouse.wheel
+* since: v1.15
 
 Dispatches a `wheel` event.
 
@@ -131,11 +154,13 @@ wait for the scrolling to finish before returning.
 :::
 
 ### param: Mouse.wheel.deltaX
+* since: v1.15
 - `deltaX` <[float]>
 
 Pixels to scroll horizontally.
 
 ### param: Mouse.wheel.deltaY
+* since: v1.15
 - `deltaY` <[float]>
 
 Pixels to scroll vertically.

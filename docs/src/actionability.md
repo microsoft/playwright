@@ -35,7 +35,7 @@ Here is the complete list of actionability checks performed for each action:
 | innerHTML | Yes | - | - | - | - | - |
 | press | Yes | - | - | - | - | - |
 | setInputFiles | Yes | - | - | - | - | - |
-| selectOption | Yes | - | - | - | - | - |
+| selectOption | Yes | Yes | - | - | Yes | - |
 | textContent | Yes | - | - | - | - | - |
 | type | Yes | - | - | - | - | - |
 
@@ -65,6 +65,12 @@ actionable state:
 - [`method: Page.isEnabled`]
 - [`method: Page.isHidden`]
 - [`method: Page.isVisible`]
+- [`method: Locator.isChecked`]
+- [`method: Locator.isDisabled`]
+- [`method: Locator.isEditable`]
+- [`method: Locator.isEnabled`]
+- [`method: Locator.isHidden`]
+- [`method: Locator.isVisible`]
 
 <br/>
 

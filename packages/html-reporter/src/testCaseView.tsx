@@ -27,8 +27,10 @@ import { TestResultView } from './testResultView';
 export const TestCaseView: React.FC<{
   projectNames: string[],
   test: TestCase | undefined,
-}> = ({ projectNames, test }) => {
-  const [selectedResultIndex, setSelectedResultIndex] = React.useState(0);
+  anchor: 'video' | 'diff' | '',
+  run: number,
+}> = ({ projectNames, test, run, anchor }) => {
+  const [selectedResultIndex, setSelectedResultIndex] = React.useState(run);
 
   return <div className='test-case-column vbox'>
     {test && <div className='test-case-path'>{test.path.join(' › ')}</div>}
@@ -45,7 +47,7 @@ export const TestCaseView: React.FC<{
       test.results.map((result, index) => ({
         id: String(index),
         title: <div style={{ display: 'flex', alignItems: 'center' }}>{statusIcon(result.status)} {retryLabel(index)}</div>,
-        render: () => <TestResultView test={test!} result={result}></TestResultView>
+        render: () => <TestResultView test={test!} result={result} anchor={anchor}></TestResultView>
       })) || []} selectedTab={String(selectedResultIndex)} setSelectedTab={id => setSelectedResultIndex(+id)} />}
   </div>;
 };

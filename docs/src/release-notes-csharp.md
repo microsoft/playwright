@@ -5,6 +5,124 @@ title: "Release notes"
 
 <!-- TOC -->
 
+## Version 1.23
+
+### API Testing
+
+Playwright for .NET 1.23 introduces new [API Testing](./api/class-apirequestcontext) that lets you send requests to the server directly from .NET!
+Now you can:
+
+- test your server API
+- prepare server side state before visiting the web application in a test
+- validate server side post-conditions after running some actions in the browser
+
+To do a request on behalf of Playwright's Page, use **new [`property: Page.request`] API**:
+
+```csharp
+// Do a GET request on behalf of page
+var response = await Page.APIRequest.GetAsync("http://example.com/foo.json");
+Console.WriteLine(response.Status);
+Console.WriteLine(response.StatusText);
+Console.WriteLine(response.Ok);
+Console.WriteLine(response.Headers["Content-Type"]);
+Console.WriteLine(await response.TextAsync());
+Console.WriteLine((await response.JsonAsync())?.GetProperty("foo").GetString());
+```
+
+Read more about it in our [API testing guide](./api-testing).
+
+### Network Replay
+
+Now you can record network traffic into a HAR file and re-use this traffic in your tests.
+
+To record network into HAR file:
+
+```bash
+pwsh bin\Debug\netX\playwright.ps1 open --save-har=example.har --save-har-glob="**/api/**" https://example.com
+```
+
+Alternatively, you can record HAR programmatically:
+
+```csharp
+var context = await browser.NewContextAsync(new()
+{
+  RecordHarPath = harPath,
+  RecordHarUrlFilterString = "**/api/**",
+});
+
+// ... Perform actions ...
+
+// Close context to ensure HAR is saved to disk.
+context.CloseAsync();
+```
+
+Use the new methods [`method: Page.routeFromHAR`] or [`method: BrowserContext.routeFromHAR`] to serve matching responses from the [HAR](http://www.softwareishard.com/blog/har-12-spec/) file:
+
+
+```csharp
+await context.RouteFromHARAsync("example.har");
+```
+
+Read more in [our documentation](./network#record-and-replay-requests).
+
+
+### Advanced Routing
+
+You can now use [`method: Route.fallback`] to defer routing to other handlers.
+
+Consider the following example:
+
+```csharp
+// Remove a header from all requests.
+await page.RouteAsync("**/*", async route =>
+{
+    var headers = route.Request.Headers;
+    headers.Remove("X-Secret");
+    await route.ContinueAsync(new() { Headers = headers });
+});
+
+// Abort all images.
+await page.RouteAsync("**/*", async route =>
+{
+    if (route.Request.ResourceType == "image")
+    {
+        await route.AbortAsync();
+    }
+    else
+    {
+        await route.FallbackAsync();
+    }
+});
+```
+
+Note that the new methods [`method: Page.routeFromHAR`] and [`method: BrowserContext.routeFromHAR`] also participate in routing and could be deferred to.
+
+### Web-First Assertions Update
+
+* New method [`method: LocatorAssertions.toHaveValues`] that asserts all selected values of `<select multiple>` element.
+* Methods [`method: LocatorAssertions.toContainText`] and [`method: LocatorAssertions.toHaveText`] now accept `ignoreCase` option.
+
+### Miscellaneous
+
+* If there's a service worker that's in your way, you can now easily disable it with a new context option `serviceWorkers`:
+  ```csharp
+  var context = await Browser.NewContextAsync(new()
+  {
+      ServiceWorkers = ServiceWorkerPolicy.Block
+  });
+  ```
+* Using `.zip` path for `recordHar` context option automatically zips the resulting HAR:
+  ```csharp
+  var context = await Browser.NewContextAsync(new() { RecordHarPath = "example.har.zip" });
+  ```
+* If you intend to edit HAR by hand, consider using the `"minimal"` HAR recording mode
+  that only records information that is essential for replaying:
+  ```csharp
+  var context = await Browser.NewContextAsync(new() { RecordHarPath = "example.har", RecordHarMode = HarMode.Minimal });
+  ```
+* Playwright now runs on Ubuntu 22 amd64 and Ubuntu 22 arm64.
+* Playwright for .NET now supports **linux-arm64** and provides a **arm64 Ubuntu 20.04 Docker image** for it.
+
 ## Version 1.22
 
 ### Highlights
@@ -13,7 +131,7 @@ title: "Release notes"
 
   ```csharp
   // Click a button with accessible name "log in"
-  await page.ClickAsync("role=button[name='log in']")
+  await page.Locator("role=button[name='log in']").ClickAsync();
   ```
 
   Read more in [our documentation](./selectors#role-selector).
@@ -35,7 +153,7 @@ title: "Release notes"
 
   ```csharp
   // Click a button with accessible name "log in"
-  await page.ClickAsync("role=button[name='log in']")
+  await page.Locator("role=button[name='log in']").ClickAsync();
   ```
 
   Read more in [our documentation](./selectors#role-selector).
@@ -120,7 +238,7 @@ This version was also tested against the following stable channels:
 - Locator now supports a `has` option that makes sure it contains another locator inside:
 
   ```csharp
-  await Page.Locator("article", new () { Has = Page.Locator(".highlight") }).ClickAsync();
+  await Page.Locator("article", new() { Has = Page.Locator(".highlight") }).ClickAsync();
   ```
 
   Read more in [locator documentation](./api/class-locator#locator-locator-option-has)
@@ -148,7 +266,7 @@ This version was also tested against the following stable channels:
 - [`method: Locator.dragTo`]
 - Each locator can now be optionally filtered by the text it contains:
     ```csharp
-    await Page.Locator("li", new () { HasTextString = "My Item" })
+    await Page.Locator("li", new() { HasTextString = "My Item" })
               .Locator("button").click();
     ```
     Read more in [locator documentation](./api/class-locator#locator-locator-option-has-text)
@@ -209,7 +327,7 @@ Playwright Trace Viewer is now **available online** at https://trace.playwright.
 
 ![image](https://user-images.githubusercontent.com/746130/141877402-e486643d-72c7-4db3-8844-ed2072c5d676.png)
 
-## Ubuntu ARM64 support + more
+### Ubuntu ARM64 support + more
 
 - Playwright now supports **Ubuntu 20.04 ARM64**. You can now run Playwright tests inside Docker on Apple M1 and on Raspberry Pi.
 - You can now use Playwright to install stable version of Edge on Linux:
@@ -308,7 +426,7 @@ Set `setStrict(true)` in your action calls to opt in.
 
 ```csharp
 // This will throw if you have more than one button!
-await page.ClickAsync("button", new Page.ClickOptions().setStrict(true));
+await page.Locator("button", new() { Strict = true });
 ```
 
 #### 📍 New [**Locators API**](./api/class-locator)
@@ -331,8 +449,8 @@ Learn more in the [documentation](./api/class-locator).
 React and Vue selectors allow selecting elements by its component name and/or property values. The syntax is very similar to [attribute selectors](https://developer.mozilla.org/en-US/docs/Web/CSS/Attribute_selectors) and supports all attribute selector operators.
 
 ```csharp
-await page.ClickAsync("_react=SubmitButton[enabled=true]");
-await page.ClickAsync("_vue=submit-button[enabled=true]");
+await page.Locator("_react=SubmitButton[enabled=true]").ClickAsync();
+await page.Locator("_vue=submit-button[enabled=true]").ClickAsync();
 ```
 
 Learn more in the [react selectors documentation](./selectors#react-selectors) and the [vue selectors documentation](./selectors#vue-selectors).

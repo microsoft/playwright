@@ -23,7 +23,8 @@ import type { Loader } from './loader';
 import type { TestCase } from './test';
 import { TimeoutManager } from './timeoutManager';
 import type { Annotation, TestStepInternal } from './types';
-import { addSuffixToFilePath, getContainedPath, monotonicTime, normalizeAndSaveAttachment, sanitizeForFilePath, serializeError, trimLongString } from './util';
+import { addSuffixToFilePath, getContainedPath, normalizeAndSaveAttachment, sanitizeForFilePath, serializeError, trimLongString } from './util';
+import { monotonicTime } from 'playwright-core/lib/utils';
 
 export class TestInfoImpl implements TestInfo {
   private _addStepImpl: (data: Omit<TestStepInternal, 'complete'>) => TestStepInternal;
@@ -33,6 +34,7 @@ export class TestInfoImpl implements TestInfo {
   readonly _startWallTime: number;
   private _hasHardError: boolean = false;
   readonly _screenshotsDir: string;
+  readonly _onTestFailureImmediateCallbacks = new Map<() => Promise<void>, string>(); // fn -> title
 
   // ------------ TestInfo fields ------------
   readonly repeatEachIndex: number;
@@ -74,7 +76,7 @@ export class TestInfoImpl implements TestInfo {
   }
 
   get timeout(): number {
-    return this._timeoutManager.defaultTimeout();
+    return this._timeoutManager.defaultSlotTimings().timeout;
   }
 
   set timeout(timeout: number) {
@@ -176,7 +178,7 @@ export class TestInfoImpl implements TestInfo {
       this.status = 'timedOut';
       this.errors.push(timeoutError);
     }
-    this.duration = monotonicTime() - this._startTime;
+    this.duration = this._timeoutManager.defaultSlotTimings().elapsed | 0;
   }
 
   async _runFn(fn: Function, skips?: 'allowSkips'): Promise<TestError | undefined> {
@@ -222,6 +224,10 @@ export class TestInfoImpl implements TestInfo {
       step.complete({ error: e instanceof SkipError ? undefined : serializeError(e) });
       throw e;
     }
+  }
+
+  _isFailure() {
+    return this.status !== 'skipped' && this.status !== this.expectedStatus;
   }
 
   // ------------ TestInfo methods ------------

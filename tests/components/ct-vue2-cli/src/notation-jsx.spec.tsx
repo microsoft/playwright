@@ -60,3 +60,12 @@ test('slot should emit events', async ({ mount }) => {
   await component.locator('text=Main Content').click();
   expect(clickFired).toBeTruthy();
 })
+
+test('should run hooks', async ({ page, mount }) => {
+  const messages = []
+  page.on('console', m => messages.push(m.text()))
+  await mount(<Button title='Submit'></Button>, {
+    hooksConfig: { route: 'A' }
+  })
+  expect(messages).toEqual(['Before mount: {\"route\":\"A\"}', 'After mount el: HTMLButtonElement'])
+})

@@ -1,4 +1,5 @@
 # class: Dialog
+* since: v1.8
 
 [Dialog] objects are dispatched by page via the [`event: Page.dialog`] event.
 
@@ -109,29 +110,35 @@ When listener is present, it **must** either [`method: Dialog.accept`] or [`meth
 :::
 
 ## async method: Dialog.accept
+* since: v1.8
 
 Returns when the dialog has been accepted.
 
 ### param: Dialog.accept.promptText
+* since: v1.8
 - `promptText` ?<[string]>
 
 A text to enter in prompt. Does not cause any effects if the dialog's `type` is not prompt. Optional.
 
 ## method: Dialog.defaultValue
+* since: v1.8
 - returns: <[string]>
 
 If dialog is prompt, returns default prompt value. Otherwise, returns empty string.
 
 ## async method: Dialog.dismiss
+* since: v1.8
 
 Returns when the dialog has been dismissed.
 
 ## method: Dialog.message
+* since: v1.8
 - returns: <[string]>
 
 A message displayed in the dialog.
 
 ## method: Dialog.type
+* since: v1.8
 - returns: <[string]>
 
 Returns dialog's type, can be one of `alert`, `beforeunload`, `confirm` or `prompt`.

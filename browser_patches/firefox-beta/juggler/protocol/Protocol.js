@@ -149,7 +149,7 @@ axTypes.AXTree = {
   focused: t.Optional(t.Boolean),
   pressed: t.Optional(t.Boolean),
   focusable: t.Optional(t.Boolean),
-  haspopup: t.Optional(t.Boolean),
+  haspopup: t.Optional(t.String),
   required: t.Optional(t.Boolean),
   invalid: t.Optional(t.Boolean),
   modal: t.Optional(t.Boolean),
@@ -857,7 +857,7 @@ const Page = {
     'screenshot': {
       params: {
         mimeType: t.Enum(['image/png', 'image/jpeg']),
-        clip: t.Optional(pageTypes.Clip),
+        clip: pageTypes.Clip,
         omitDeviceScaleFactor: t.Optional(t.Boolean),
       },
       returns: {

@@ -70,13 +70,13 @@ test('should support toHaveCount', async ({ runInlineTest }) => {
       test('fail zero', async ({ page }) => {
         await page.setContent('<div><span></span></div>');
         const locator = page.locator('span');
-        await expect(locator).toHaveCount(0, { timeout: 500 });
+        await expect(locator).toHaveCount(0, { timeout: 1000 });
       });
 
       test('fail zero 2', async ({ page }) => {
         await page.setContent('<div><span></span></div>');
         const locator = page.locator('span');
-        await expect(locator).not.toHaveCount(1, { timeout: 500 });
+        await expect(locator).not.toHaveCount(1, { timeout: 1000 });
       });
       `,
   }, { workers: 1 });
@@ -86,7 +86,7 @@ test('should support toHaveCount', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(1);
   expect(output).toContain('Expected: 0');
   expect(output).toContain('Received: 1');
-  expect(output).toContain('expect.toHaveCount with timeout 500ms');
+  expect(output).toContain('expect.toHaveCount with timeout 1000ms');
 });
 
 test('should support toHaveJSProperty', async ({ runInlineTest }) => {
@@ -216,6 +216,11 @@ test('should support toHaveClass', async ({ runInlineTest }) => {
         await expect(locator).toHaveClass('foo bar baz');
       });
 
+      test('pass with SVGs', async ({ page }) => {
+        await page.setContent(\`<svg class="c1 c2" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"></svg>\`);
+        await expect(page.locator('svg')).toHaveClass(/c1/);
+      });
+
       test('fail', async ({ page }) => {
         await page.setContent('<div class="bar baz"></div>');
         const locator = page.locator('div');
@@ -226,7 +231,7 @@ test('should support toHaveClass', async ({ runInlineTest }) => {
   const output = stripAnsi(result.output);
   expect(output).toContain('expect(locator).toHaveClass');
   expect(output).toContain('Expected string: \"foo bar baz\"');
-  expect(result.passed).toBe(1);
+  expect(result.passed).toBe(2);
   expect(result.failed).toBe(1);
   expect(result.exitCode).toBe(1);
 });
@@ -269,7 +274,7 @@ test('should support toHaveTitle', async ({ runInlineTest }) => {
 
       test('fail', async ({ page }) => {
         await page.setContent('<title>Bye</title>');
-        await expect(page).toHaveTitle('Hello', { timeout: 100 });
+        await expect(page).toHaveTitle('Hello', { timeout: 1000 });
       });
       `,
   }, { workers: 1 });
@@ -293,7 +298,7 @@ test('should support toHaveURL', async ({ runInlineTest }) => {
 
       test('fail', async ({ page }) => {
         await page.goto('data:text/html,<div>B</div>');
-        await expect(page).toHaveURL('wrong', { timeout: 100 });
+        await expect(page).toHaveURL('wrong', { timeout: 1000 });
       });
       `,
   }, { workers: 1 });
@@ -319,7 +324,7 @@ test('should support toHaveURL with baseURL from webServer', async ({ runInlineT
 
       test('fail', async ({ page }) => {
         await page.goto('/foobar');
-        await expect(page).toHaveURL('/kek', { timeout: 100 });
+        await expect(page).toHaveURL('/kek', { timeout: 1000 });
       });
       `,
     'playwright.config.ts': `

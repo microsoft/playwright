@@ -25,14 +25,15 @@ import * as network from '../network';
 import type { Page, PageBinding, PageDelegate } from '../page';
 import type { ConnectionTransport } from '../transport';
 import type * as types from '../types';
+import type * as channels from '../../protocol/channels';
 import type { Protocol } from './protocol';
 import type { PageProxyMessageReceivedPayload } from './wkConnection';
 import { kPageProxyMessageReceived, WKConnection, WKSession } from './wkConnection';
 import { WKPage } from './wkPage';
 import { kBrowserClosedError } from '../../common/errors';
 
-const DEFAULT_USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.4 Safari/605.1.15';
-const BROWSER_VERSION = '15.4';
+const DEFAULT_USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Safari/605.1.15';
+const BROWSER_VERSION = '16.0';
 
 export class WKBrowser extends Browser {
   private readonly _connection: WKConnection;
@@ -82,7 +83,7 @@ export class WKBrowser extends Browser {
     this._didClose();
   }
 
-  async doCreateNewContext(options: types.BrowserContextOptions): Promise<BrowserContext> {
+  async doCreateNewContext(options: channels.BrowserNewContextParams): Promise<BrowserContext> {
     const createOptions = options.proxy ? {
       proxyServer: options.proxy.server,
       proxyBypassList: options.proxy.bypass
@@ -206,7 +207,7 @@ export class WKBrowser extends Browser {
 export class WKBrowserContext extends BrowserContext {
   declare readonly _browser: WKBrowser;
 
-  constructor(browser: WKBrowser, browserContextId: string | undefined, options: types.BrowserContextOptions) {
+  constructor(browser: WKBrowser, browserContextId: string | undefined, options: channels.BrowserNewContextParams) {
     super(browser, options, browserContextId);
     this._authenticateProxyViaHeader();
   }
@@ -224,8 +225,6 @@ export class WKBrowserContext extends BrowserContext {
       promises.push(this._browser._browserSession.send('Playwright.setIgnoreCertificateErrors', { browserContextId, ignore: true }));
     if (this._options.locale)
       promises.push(this._browser._browserSession.send('Playwright.setLanguages', { browserContextId, languages: [this._options.locale] }));
-    if (this._options.permissions)
-      promises.push(this.grantPermissions(this._options.permissions));
     if (this._options.geolocation)
       promises.push(this.setGeolocation(this._options.geolocation));
     if (this._options.offline)
@@ -249,17 +248,17 @@ export class WKBrowserContext extends BrowserContext {
     return this._browser._wkPages.get(pageProxyId)!;
   }
 
-  async doGetCookies(urls: string[]): Promise<types.NetworkCookie[]> {
+  async doGetCookies(urls: string[]): Promise<channels.NetworkCookie[]> {
     const { cookies } = await this._browser._browserSession.send('Playwright.getAllCookies', { browserContextId: this._browserContextId });
-    return network.filterCookies(cookies.map((c: types.NetworkCookie) => {
+    return network.filterCookies(cookies.map((c: channels.NetworkCookie) => {
       const copy: any = { ... c };
       copy.expires = c.expires === -1 ? -1 : c.expires / 1000;
       delete copy.session;
-      return copy as types.NetworkCookie;
+      return copy as channels.NetworkCookie;
     }), urls);
   }
 
-  async addCookies(cookies: types.SetNetworkCookieParam[]) {
+  async addCookies(cookies: channels.SetNetworkCookie[]) {
     const cc = network.rewriteCookies(cookies).map(c => ({
       ...c,
       session: c.expires === -1 || c.expires === undefined,

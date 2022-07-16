@@ -1,4 +1,5 @@
 # class: ScreenshotAssertions
+* since: v1.20
 * langs: js
 
 Playwright provides methods for comparing page and element screenshots with
@@ -9,6 +10,7 @@ expect(screenshot).toMatchSnapshot('landing-page.png');
 ```
 
 ## method: ScreenshotAssertions.toMatchSnapshot#1
+* since: v1.22
 
 Ensures that passed value, either a [string] or a [Buffer], matches the expected snapshot stored in the test snapshots directory.
 
@@ -32,19 +34,24 @@ expect(await page.screenshot()).toMatchSnapshot(['landing', 'step3.png']);
 Learn more about [visual comparisons](./test-snapshots.md).
 
 ### param: ScreenshotAssertions.toMatchSnapshot#1.name
+* since: v1.22
 - `name` <[string]|[Array]<[string]>>
 
 Snapshot name.
 
 ### option: ScreenshotAssertions.toMatchSnapshot#1.maxDiffPixels = %%-assertions-max-diff-pixels-%%
+* since: v1.22
 
 ### option: ScreenshotAssertions.toMatchSnapshot#1.maxDiffPixelRatio = %%-assertions-max-diff-pixel-ratio-%%
+* since: v1.22
 
 ### option: ScreenshotAssertions.toMatchSnapshot#1.threshold = %%-assertions-threshold-%%
+* since: v1.22
 
 
 
 ## method: ScreenshotAssertions.toMatchSnapshot#2
+* since: v1.22
 
 Ensures that passed value, either a [string] or a [Buffer], matches the expected snapshot stored in the test snapshots directory.
 
@@ -67,13 +74,17 @@ expect(await page.screenshot()).toMatchSnapshot({
 Learn more about [visual comparisons](./test-snapshots.md).
 
 ### option: ScreenshotAssertions.toMatchSnapshot#2.maxDiffPixels = %%-assertions-max-diff-pixels-%%
+* since: v1.22
 
 ### option: ScreenshotAssertions.toMatchSnapshot#2.maxDiffPixelRatio = %%-assertions-max-diff-pixel-ratio-%%
+* since: v1.22
 
 ### option: ScreenshotAssertions.toMatchSnapshot#2.name
+* since: v1.22
 - `name` <[string]|[Array]<[string]>>
 
 Snapshot name. If not passed, the test name and ordinals are used when called multiple times.
 
 ### option: ScreenshotAssertions.toMatchSnapshot#2.threshold = %%-assertions-threshold-%%
+* since: v1.22
 

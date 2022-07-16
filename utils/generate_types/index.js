@@ -98,6 +98,12 @@ class TypesGenerator {
       handledClasses.add(className);
       return this.writeComment(docClass.comment) + '\n';
     }, (className, methodName, overloadIndex) => {
+      if (className === 'SuiteFunction' && methodName === '__call') {
+        const cls = this.documentation.classes.get('Test');
+        const method = cls.membersArray.find(m => m.alias === 'describe' && m.overloadIndex === overloadIndex);
+        return this.memberJSDOC(method, '  ').trimLeft();
+      }
+
       const docClass = this.docClassForName(className);
       let method;
       if (docClass) {
@@ -109,7 +115,7 @@ class TypesGenerator {
         return '';
       this.handledMethods.add(`${className}.${methodName}#${overloadIndex}`);
       if (!method) {
-        if (new Set(['on', 'addListener', 'off', 'removeListener', 'once']).has(methodName))
+        if (new Set(['on', 'addListener', 'off', 'removeListener', 'once', 'prependListener']).has(methodName))
           return '';
         throw new Error(`Unknown override method "${className}.${methodName}"`);
       }
@@ -269,9 +275,9 @@ class TypesGenerator {
       once: 'Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.'
     }
     const indent = exportMembersAsGlobals ? '' : '  ';
-    for (const method of ['on', 'once', 'addListener', 'removeListener', 'off']) {
+    for (const method of ['on', 'once', 'addListener', 'removeListener', 'off', 'prependListener']) {
       for (const { eventName, params, comment } of eventDescriptions) {
-        if ((method === 'on' || method === 'addListener') && comment)
+        if ((method === 'on' || method === 'addListener' || method === 'prependListener') && comment)
           parts.push(this.writeComment(comment, indent));
         else
           parts.push(this.writeComment(commentForMethod[method], indent));
@@ -344,13 +350,13 @@ class TypesGenerator {
     };
     let skipExample = false;
     for (let line of comment.split('\n')) {
-      const match = line.match(/```(\w+)(\s+js-flavor=(\w+))?/);
+      const match = line.match(/```(\w+)(\s+tab=js-(\w+))?/);
       if (match) {
         const lang = match[1];
         let flavor = 'ts';
         if (match[3]) {
           flavor = match[3];
-          line = line.replace(/js-flavor=\w+/, '').replace(/```\w+/, '```ts');
+          line = line.replace(/tab=js-\w+/, '').replace(/```\w+/, '```ts');
         }
         skipExample = !["html", "yml", "bash", "js"].includes(lang) || flavor !== 'ts';
       } else if (skipExample && line.trim().startsWith('```')) {
@@ -419,7 +425,8 @@ class TypesGenerator {
       const name = namespace.map(n => n[0].toUpperCase() + n.substring(1)).join('');
       const shouldExport = exported[name];
       const properties = namespace[namespace.length - 1] === 'options' ? type.sortedProperties() : type.properties;
-      this.objectDefinitions.push({ name, properties });
+      if (!this.objectDefinitions.some(o => o.name === name))
+        this.objectDefinitions.push({ name, properties });
       if (shouldExport) {
         out = name;
       } else {
@@ -615,8 +622,6 @@ class TypesGenerator {
     content = content.replace(/\r\n/g, '\n');
     if (removeTrailingWhiteSpace)
       content = content.replace(/( +)\n/g, '\n'); // remove trailing whitespace
-    if (os.platform() === 'win32')
-      content = content.replace(/\n/g, '\r\n');
     const existing = fs.readFileSync(filePath, 'utf8');
     if (existing === content)
       return;

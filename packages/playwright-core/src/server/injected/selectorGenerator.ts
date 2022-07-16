@@ -260,7 +260,7 @@ function cssFallback(injectedScript: InjectedScript, targetElement: Element, str
     // Combine class names until unique.
     const classes = [...element.classList];
     for (let i = 0; i < classes.length; ++i) {
-      const token = '.' + classes.slice(0, i + 1).join('.');
+      const token = '.' + cssEscape(classes.slice(0, i + 1).join('.'));
       const selector = uniqueCSSSelector(token);
       if (selector)
         return makeStrict(selector);

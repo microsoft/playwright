@@ -15,10 +15,9 @@
 */
 
 .test-file-test {
-  height: 38px;
-  line-height: 38px;
+  line-height: 32px;
   align-items: center;
-  padding: 0 10px;
+  padding: 2px 10px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -28,9 +27,41 @@
   background-color: var(--color-canvas-subtle);
 }
 
+.test-file-title {
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.test-file-details-row {
+  padding: 0 0 6px 8px;
+  margin: 0 0 0 15px;
+  line-height: 16px;
+  font-weight: 400;
+  color: var(--color-fg-subtle);
+  display: flex;
+  align-items: center;
+}
+
 .test-file-path {
-  padding: 0 0 0 8px;
-  color: var(--color-fg-muted);
+  text-overflow: ellipsis;
+  overflow: hidden;
+  color: var(--color-fg-subtle);
+}
+
+.test-file-path-link {
+  margin-right: 10px;
+}
+
+.test-file-badge {
+  flex: none;
+}
+
+.test-file-badge svg {
+  fill: var(--color-fg-subtle);
+}
+
+.test-file-badge:hover svg {
+  fill: var(--color-fg-muted);
 }
 
 .test-file-test-outcome-skipped {

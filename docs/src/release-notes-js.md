@@ -5,7 +5,127 @@ title: "Release notes"
 
 <!-- TOC -->
 
+## Version 1.23
+
+<div className="embed-youtube">
+  <iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/NRGOV46P3kU" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</div>
+
+### Network Replay
+
+Now you can record network traffic into a HAR file and re-use this traffic in your tests.
+
+To record network into HAR file:
+
+```bash
+npx playwright open --save-har=github.har.zip https://github.com/microsoft
+```
+
+Alternatively, you can record HAR programmatically:
+
+```ts
+const context = await browser.newContext({
+  recordHar: { path: 'github.har.zip' }
+});
+// ... do stuff ...
+await context.close();
+```
+
+Use the new methods [`method: Page.routeFromHAR`] or [`method: BrowserContext.routeFromHAR`] to serve matching responses from the [HAR](http://www.softwareishard.com/blog/har-12-spec/) file:
+
+
+```ts
+await context.routeFromHAR('github.har.zip');
+```
+
+Read more in [our documentation](./network#record-and-replay-requests).
+
+
+### Advanced Routing
+
+You can now use [`method: Route.fallback`] to defer routing to other handlers.
+
+Consider the following example:
+
+```ts
+// Remove a header from all requests.
+test.beforeEach(async ({ page }) => {
+  await page.route('**/*', async route => {
+    const headers = await route.request().allHeaders();
+    delete headers['if-none-match'];
+    route.fallback({ headers });
+  });
+});
+
+test('should work', async ({ page }) => {
+  await page.route('**/*', route => {
+    if (route.request().resourceType() === 'image')
+      route.abort();
+    else
+      route.fallback();
+  });
+});
+```
+
+Note that the new methods [`method: Page.routeFromHAR`] and [`method: BrowserContext.routeFromHAR`] also participate in routing and could be deferred to.
+
+### Web-First Assertions Update
+
+* New method [`method: LocatorAssertions.toHaveValues`] that asserts all selected values of `<select multiple>` element.
+* Methods [`method: LocatorAssertions.toContainText`] and [`method: LocatorAssertions.toHaveText`] now accept `ignoreCase` option.
+
+### Component Tests Update
+
+* Support for Vue2 via the [`@playwright/experimental-ct-vue2`](https://www.npmjs.com/package/@playwright/experimental-ct-vue2) package.
+* Support for component tests for [create-react-app](https://www.npmjs.com/package/create-react-app) with components in `.js` files.
+
+Read more about [component testing with Playwright](./test-components).
+
+### Miscellaneous
+
+* If there's a service worker that's in your way, you can now easily disable it with a new context option `serviceWorkers`:
+  ```ts
+  // playwright.config.ts
+  export default {
+    use: {
+      serviceWorkers: 'block',
+    }
+  }
+  ```
+* Using `.zip` path for `recordHar` context option automatically zips the resulting HAR:
+  ```ts
+  const context = await browser.newContext({
+    recordHar: {
+      path: 'github.har.zip',
+    }
+  });
+  ```
+* If you intend to edit HAR by hand, consider using the `"minimal"` HAR recording mode
+  that only records information that is essential for replaying:
+  ```ts
+  const context = await browser.newContext({
+    recordHar: {
+      path: 'github.har',
+      mode: 'minimal',
+    }
+  });
+  ```
+* Playwright now runs on Ubuntu 22 amd64 and Ubuntu 22 arm64. We also publish new docker image `mcr.microsoft.com/playwright:v1.25.0-jammy`.
+
+### ⚠️ Breaking Changes ⚠️
+
+WebServer is now considered "ready" if request to the specified port has any of the following HTTP status codes:
+
+* `200-299`
+* `300-399` (new)
+* `400`, `401`, `402`, `403` (new)
+
+
 ## Version 1.22
+
+<div className="embed-youtube">
+  <iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/keV2CIgtBlg" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</div>
 
 ### Highlights
 
@@ -45,7 +165,7 @@ title: "Release notes"
 
   ```js
   // Click a button with accessible name "log in"
-  await page.click('role=button[name="log in"]')
+  await page.locator('role=button[name="log in"]').click()
   ```
 
   Read more in [our documentation](./selectors#role-selector).
@@ -77,13 +197,17 @@ title: "Release notes"
 
 ## Version 1.21
 
+<div className="embed-youtube">
+  <iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/45HZdbmgEw8" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</div>
+
 ### Highlights
 
 - New role selectors that allow selecting elements by their [ARIA role](https://www.w3.org/TR/wai-aria-1.2/#roles), [ARIA attributes](https://www.w3.org/TR/wai-aria-1.2/#aria-attributes) and [accessible name](https://w3c.github.io/accname/#dfn-accessible-name).
 
   ```js
   // Click a button with accessible name "log in"
-  await page.click('role=button[name="log in"]')
+  await page.locator('role=button[name="log in"]').click()
   ```
 
   Read more in [our documentation](./selectors#role-selector).
@@ -124,6 +248,10 @@ This version was also tested against the following stable channels:
 
 
 ## Version 1.20
+
+<div className="embed-youtube">
+  <iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/6vV-XXKsrbA" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</div>
 
 ### Highlights
 
@@ -190,6 +318,10 @@ This version was also tested against the following stable channels:
 - Microsoft Edge 99
 
 ## Version 1.19
+
+<div className="embed-youtube">
+  <iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/z0EOFvlf14U" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</div>
 
 ### Playwright Test Update
 
@@ -274,6 +406,10 @@ This version was also tested against the following stable channels:
 
 
 ## Version 1.18
+
+<div className="embed-youtube">
+ <iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/ABLYpw2BN_g" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</div>
 
 ### Locator Improvements
 
@@ -376,6 +512,10 @@ This version was also tested against the following stable channels:
 
 ## Version 1.17
 
+<div className="embed-youtube">
+  <iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/7iyIdeoAP04" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</div>
+
 ### Frame Locators
 
 Playwright 1.17 introduces [frame locators](./api/class-framelocator) - a locator to the iframe on the page. Frame locators capture the logic sufficient to retrieve the `iframe` and then locate elements in that iframe. Frame locators are strict by default, will wait for `iframe` to appear and can be used in Web-First assertions.
@@ -433,6 +573,10 @@ Playwright Trace Viewer is now **available online** at https://trace.playwright.
 
 
 ## Version 1.16
+
+<div className="embed-youtube">
+  <iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/OQKwFDmY64g" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</div>
 
 ### 🎭 Playwright Test
 
@@ -564,6 +708,10 @@ This version of Playwright was also tested against the following stable channels
 
 ## Version 1.15
 
+<div className="embed-youtube">
+  <iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/6RwzsDeEj7Y" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</div>
+
 ### 🎭 Playwright Library
 
 #### 🖱️ Mouse Wheel
@@ -621,6 +769,10 @@ By using `npx playwright test --debug` it will enable the [Playwright Inspector]
 
 ## Version 1.14
 
+<div className="embed-youtube">
+  <iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/LczBDR0gOhk" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</div>
+
 ### 🎭 Playwright Library
 
 #### ⚡️ New "strict" mode
@@ -655,8 +807,8 @@ Learn more in the [documentation](./api/class-locator).
 React and Vue selectors allow selecting elements by its component name and/or property values. The syntax is very similar to [attribute selectors](https://developer.mozilla.org/en-US/docs/Web/CSS/Attribute_selectors) and supports all attribute selector operators.
 
 ```js
-await page.click('_react=SubmitButton[enabled=true]');
-await page.click('_vue=submit-button[enabled=true]');
+await page.locator('_react=SubmitButton[enabled=true]').click();
+await page.locator('_vue=submit-button[enabled=true]').click();
 ```
 
 Learn more in the [react selectors documentation](./selectors#react-selectors) and the [vue selectors documentation](./selectors#vue-selectors).

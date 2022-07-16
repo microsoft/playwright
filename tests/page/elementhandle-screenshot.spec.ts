@@ -51,7 +51,8 @@ it.describe('element screenshot', () => {
     expect(screenshot).toMatchSnapshot('screenshot-element-padding-border.png');
   });
 
-  it('should capture full element when larger than viewport in parallel', async ({ page }) => {
+  it('should capture full element when larger than viewport in parallel', async ({ page, browserName }) => {
+    it.fixme(browserName === 'chromium' && process.platform === 'darwin', 'https://crbug.com/1342540');
     await page.setViewportSize({ width: 500, height: 500 });
 
     await page.setContent(`

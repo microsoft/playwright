@@ -67,10 +67,6 @@ type RecordingState = {
 const kScreencastOptions = { width: 800, height: 600, quality: 90 };
 
 export class Tracing extends SdkObject implements InstrumentationListener, SnapshotterDelegate, HarTracerDelegate {
-  static Events = {
-    Dispose: 'dispose',
-  };
-
   private _writeChain = Promise.resolve();
   private _snapshotter?: Snapshotter;
   private _harTracer: HarTracer;
@@ -85,11 +81,12 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
   private _contextCreatedEvent: trace.ContextCreatedTraceEvent;
 
   constructor(context: BrowserContext | APIRequestContext, tracesDir: string | undefined) {
-    super(context, 'Tracing');
+    super(context, 'tracing');
     this._context = context;
     this._precreatedTracesDir = tracesDir;
-    this._harTracer = new HarTracer(context, this, {
-      content: 'sha1',
+    this._harTracer = new HarTracer(context, null, this, {
+      content: 'attach',
+      includeTraceInfo: true,
       waitForContentOnStop: false,
       skipScripts: true,
     });
@@ -210,7 +207,6 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
 
   async dispose() {
     this._snapshotter?.dispose();
-    this.emit(Tracing.Events.Dispose);
   }
 
   async stopChunk(params: TracingTracingStopChunkParams): Promise<{ artifact: Artifact | null, sourceEntries: NameValue[] | undefined }> {

@@ -76,3 +76,54 @@ test('should ignore stdio when quiet', async ({ runInlineTest }) => {
   }, { reporter: 'list' });
   expect(result.output).not.toContain('%%');
 });
+
+test('should support console colors', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.js': `
+      const { test } = pwt;
+      test('console log', () => {
+        console.log('process.stdout.isTTY = ' + process.stdout.isTTY);
+        console.log('process.stderr.isTTY = ' + process.stderr.isTTY);
+        console.log({ b: true, n: 123, s: 'abc' });
+        console.error({ b: false, n: 123, s: 'abc' });
+      });
+    `
+  });
+  expect(result.output).toContain(`process.stdout.isTTY = true`);
+  expect(result.output).toContain(`process.stderr.isTTY = true`);
+  // The output should have colors.
+  expect(result.output).toContain(`{ b: \x1b[33mtrue\x1b[39m, n: \x1b[33m123\x1b[39m, s: \x1b[32m'abc'\x1b[39m }`);
+  expect(result.output).toContain(`{ b: \x1b[33mfalse\x1b[39m, n: \x1b[33m123\x1b[39m, s: \x1b[32m'abc'\x1b[39m }`);
+});
+
+test('should override hasColors and getColorDepth', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.js': `
+      const { test } = pwt;
+      test('console log', () => {
+        console.log('process.stdout.hasColors(1) = ' + process.stdout.hasColors(1));
+        console.log('process.stderr.hasColors(1) = ' + process.stderr.hasColors(1));
+        console.log('process.stdout.getColorDepth() > 0 = ' + (process.stdout.getColorDepth() > 0));
+        console.log('process.stderr.getColorDepth() > 0 = ' + (process.stderr.getColorDepth() > 0));
+      });
+    `
+  });
+  expect(result.output).toContain(`process.stdout.hasColors(1) = true`);
+  expect(result.output).toContain(`process.stderr.hasColors(1) = true`);
+  expect(result.output).toContain(`process.stdout.getColorDepth() > 0 = true`);
+  expect(result.output).toContain(`process.stderr.getColorDepth() > 0 = true`);
+});
+
+test('should not throw type error when using assert', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.js': `
+      const { test } = pwt;
+      const assert = require('assert');
+      test('assert no type error', () => {
+        assert.strictEqual(1, 2);
+      });
+    `
+  });
+  expect(result.output).not.toContain(`TypeError: process.stderr.hasColors is not a function`);
+  expect(result.output).toContain(`AssertionError`);
+});

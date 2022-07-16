@@ -75,10 +75,20 @@ export type NavigationEvent = {
   // Error for cross-document navigations if any. When error is present,
   // the navigation did not commit.
   error?: Error,
+  // Wether this event should be visible to the clients via the public APIs.
+  isPublic?: boolean;
 };
 
 export type SchedulableTask<T> = (injectedScript: js.JSHandle<InjectedScript>) => Promise<js.JSHandle<InjectedScriptPoll<T>>>;
 export type DomTaskBody<T, R, E> = (progress: InjectedScriptProgress, element: E, data: T, elements: Element[]) => R | symbol;
+
+export class NavigationAbortedError extends Error {
+  readonly documentId?: string;
+  constructor(documentId: string | undefined, message: string) {
+    super(message);
+    this.documentId = documentId;
+  }
+}
 
 type SelectorInFrame = {
   frame: Frame;
@@ -228,8 +238,8 @@ export class FrameManager {
     }
 
     frame._onClearLifecycle();
-    const navigationEvent: NavigationEvent = { url, name, newDocument: frame._currentDocument };
-    frame.emit(Frame.Events.Navigation, navigationEvent);
+    const navigationEvent: NavigationEvent = { url, name, newDocument: frame._currentDocument, isPublic: true };
+    frame.emit(Frame.Events.InternalNavigation, navigationEvent);
     if (!initial) {
       debugLogger.log('api', `  navigated to "${url}"`);
       this._page.frameNavigatedToNewDocument(frame);
@@ -243,8 +253,8 @@ export class FrameManager {
     if (!frame)
       return;
     frame._url = url;
-    const navigationEvent: NavigationEvent = { url, name: frame._name };
-    frame.emit(Frame.Events.Navigation, navigationEvent);
+    const navigationEvent: NavigationEvent = { url, name: frame._name, isPublic: true };
+    frame.emit(Frame.Events.InternalNavigation, navigationEvent);
     debugLogger.log('api', `  navigated to "${url}"`);
   }
 
@@ -258,10 +268,11 @@ export class FrameManager {
       url: frame._url,
       name: frame._name,
       newDocument: frame.pendingDocument(),
-      error: new Error(errorText),
+      error: new NavigationAbortedError(documentId, errorText),
+      isPublic: !(documentId && frame._redirectedNavigations.has(documentId)),
     };
     frame.setPendingDocument(undefined);
-    frame.emit(Frame.Events.Navigation, navigationEvent);
+    frame.emit(Frame.Events.InternalNavigation, navigationEvent);
   }
 
   frameDetached(frameId: string) {
@@ -282,7 +293,7 @@ export class FrameManager {
   }
 
   requestStarted(request: network.Request, route?: network.RouteDelegate) {
-    const frame = request.frame();
+    const frame = request.frame()!;
     this._inflightRequestStarted(request);
     if (request._documentId)
       frame.setPendingDocument({ documentId: request._documentId, request });
@@ -292,8 +303,22 @@ export class FrameManager {
       return;
     }
     this._page.emitOnContext(BrowserContext.Events.Request, request);
-    if (route)
-      this._page._requestStarted(request, route);
+    if (route) {
+      const r = new network.Route(request, route);
+      if (this._page._serverRequestInterceptor) {
+        this._page._serverRequestInterceptor(r, request);
+        return;
+      }
+      if (this._page._clientRequestInterceptor) {
+        this._page._clientRequestInterceptor(r, request);
+        return;
+      }
+      if (this._page._browserContext._requestInterceptor) {
+        this._page._browserContext._requestInterceptor(r, request);
+        return;
+      }
+      r.continue();
+    }
   }
 
   requestReceivedResponse(response: network.Response) {
@@ -310,7 +335,7 @@ export class FrameManager {
   }
 
   requestFailed(request: network.Request, canceled: boolean) {
-    const frame = request.frame();
+    const frame = request.frame()!;
     this._inflightRequestFinished(request);
     if (frame.pendingDocument() && frame.pendingDocument()!.request === request) {
       let errorText = request.failure()!.errorText;
@@ -334,6 +359,11 @@ export class FrameManager {
     this._openedDialogs.delete(dialog);
   }
 
+  async closeOpenDialogs() {
+    await Promise.all([...this._openedDialogs].map(dialog => dialog.dismiss())).catch(() => {});
+    this._openedDialogs.clear();
+  }
+
   removeChildFramesRecursively(frame: Frame) {
     for (const child of frame.childFrames())
       this._removeFramesRecursively(child);
@@ -348,7 +378,7 @@ export class FrameManager {
   }
 
   private _inflightRequestFinished(request: network.Request) {
-    const frame = request.frame();
+    const frame = request.frame()!;
     if (request._isFavicon)
       return;
     if (!frame._inflightRequests.has(request))
@@ -359,7 +389,7 @@ export class FrameManager {
   }
 
   private _inflightRequestStarted(request: network.Request) {
-    const frame = request.frame();
+    const frame = request.frame()!;
     if (request._isFavicon)
       return;
     frame._inflightRequests.add(request);
@@ -433,7 +463,7 @@ export class FrameManager {
 
 export class Frame extends SdkObject {
   static Events = {
-    Navigation: 'navigation',
+    InternalNavigation: 'internalnavigation',
     AddLifecycle: 'addlifecycle',
     RemoveLifecycle: 'removelifecycle',
   };
@@ -456,6 +486,7 @@ export class Frame extends SdkObject {
   readonly _detachedPromise: Promise<void>;
   private _detachedCallback = () => {};
   private _raceAgainstEvaluationStallingEventsPromises = new Set<ManualPromise<any>>();
+  readonly _redirectedNavigations = new Map<string, { url: string, gotoPromise: Promise<network.Response | null> }>(); // documentId -> data
 
   constructor(page: Page, id: string, parentFrame: Frame | null) {
     super(page, 'frame');
@@ -577,10 +608,6 @@ export class Frame extends SdkObject {
         this.emit(Frame.Events.AddLifecycle, event);
         if (this === mainFrame && this._url !== 'about:blank')
           debugLogger.log('api', `  "${event}" event fired`);
-        if (this === mainFrame && event === 'load')
-          this._page.emit(Page.Events.Load);
-        if (this === mainFrame && event === 'domcontentloaded')
-          this._page.emit(Page.Events.DOMContentLoaded);
       }
     }
     for (const event of this._subtreeLifecycleEvents) {
@@ -590,13 +617,32 @@ export class Frame extends SdkObject {
     this._subtreeLifecycleEvents = events;
   }
 
-  async raceNavigationAction<T>(action: () => Promise<T>): Promise<T> {
+  async raceNavigationAction(progress: Progress, options: types.GotoOptions, action: () => Promise<network.Response | null>): Promise<network.Response | null> {
     return Promise.race([
       this._page._disconnectedPromise.then(() => { throw new Error('Navigation failed because page was closed!'); }),
       this._page._crashedPromise.then(() => { throw new Error('Navigation failed because page crashed!'); }),
       this._detachedPromise.then(() => { throw new Error('Navigating frame was detached!'); }),
-      action(),
+      action().catch(e => {
+        if (e instanceof NavigationAbortedError && e.documentId) {
+          const data = this._redirectedNavigations.get(e.documentId);
+          if (data) {
+            progress.log(`waiting for redirected navigation to "${data.url}"`);
+            return data.gotoPromise;
+          }
+        }
+        throw e;
+      }),
     ]);
+  }
+
+  redirectNavigation(url: string, documentId: string, referer: string | undefined) {
+    const controller = new ProgressController(serverSideCallMetadata(), this);
+    const data = {
+      url,
+      gotoPromise: controller.run(progress => this._gotoAction(progress, url, { referer }), 0),
+    };
+    this._redirectedNavigations.set(documentId, data);
+    data.gotoPromise.finally(() => this._redirectedNavigations.delete(documentId));
   }
 
   async goto(metadata: CallMetadata, url: string, options: types.GotoOptions = {}): Promise<network.Response | null> {
@@ -606,57 +652,59 @@ export class Frame extends SdkObject {
   }
 
   private async _goto(progress: Progress, url: string, options: types.GotoOptions): Promise<network.Response | null> {
-    return this.raceNavigationAction(async () => {
-      const waitUntil = verifyLifecycle('waitUntil', options.waitUntil === undefined ? 'load' : options.waitUntil);
-      progress.log(`navigating to "${url}", waiting until "${waitUntil}"`);
-      const headers = this._page._state.extraHTTPHeaders || [];
-      const refererHeader = headers.find(h => h.name.toLowerCase() === 'referer');
-      let referer = refererHeader ? refererHeader.value : undefined;
-      if (options.referer !== undefined) {
-        if (referer !== undefined && referer !== options.referer)
-          throw new Error('"referer" is already specified as extra HTTP header');
-        referer = options.referer;
+    return this.raceNavigationAction(progress, options, async () => this._gotoAction(progress, url, options));
+  }
+
+  private async _gotoAction(progress: Progress, url: string, options: types.GotoOptions): Promise<network.Response | null> {
+    const waitUntil = verifyLifecycle('waitUntil', options.waitUntil === undefined ? 'load' : options.waitUntil);
+    progress.log(`navigating to "${url}", waiting until "${waitUntil}"`);
+    const headers = this._page.extraHTTPHeaders() || [];
+    const refererHeader = headers.find(h => h.name.toLowerCase() === 'referer');
+    let referer = refererHeader ? refererHeader.value : undefined;
+    if (options.referer !== undefined) {
+      if (referer !== undefined && referer !== options.referer)
+        throw new Error('"referer" is already specified as extra HTTP header');
+      referer = options.referer;
+    }
+    url = helper.completeUserURL(url);
+
+    const sameDocument = helper.waitForEvent(progress, this, Frame.Events.InternalNavigation, (e: NavigationEvent) => !e.newDocument);
+    const navigateResult = await this._page._delegate.navigateFrame(this, url, referer);
+
+    let event: NavigationEvent;
+    if (navigateResult.newDocumentId) {
+      sameDocument.dispose();
+      event = await helper.waitForEvent(progress, this, Frame.Events.InternalNavigation, (event: NavigationEvent) => {
+        // We are interested either in this specific document, or any other document that
+        // did commit and replaced the expected document.
+        return event.newDocument && (event.newDocument.documentId === navigateResult.newDocumentId || !event.error);
+      }).promise;
+
+      if (event.newDocument!.documentId !== navigateResult.newDocumentId) {
+        // This is just a sanity check. In practice, new navigation should
+        // cancel the previous one and report "request cancelled"-like error.
+        throw new NavigationAbortedError(navigateResult.newDocumentId, 'Navigation interrupted by another one');
       }
-      url = helper.completeUserURL(url);
+      if (event.error)
+        throw event.error;
+    } else {
+      event = await sameDocument.promise;
+    }
 
-      const sameDocument = helper.waitForEvent(progress, this, Frame.Events.Navigation, (e: NavigationEvent) => !e.newDocument);
-      const navigateResult = await this._page._delegate.navigateFrame(this, url, referer);
+    if (!this._subtreeLifecycleEvents.has(waitUntil))
+      await helper.waitForEvent(progress, this, Frame.Events.AddLifecycle, (e: types.LifecycleEvent) => e === waitUntil).promise;
 
-      let event: NavigationEvent;
-      if (navigateResult.newDocumentId) {
-        sameDocument.dispose();
-        event = await helper.waitForEvent(progress, this, Frame.Events.Navigation, (event: NavigationEvent) => {
-          // We are interested either in this specific document, or any other document that
-          // did commit and replaced the expected document.
-          return event.newDocument && (event.newDocument.documentId === navigateResult.newDocumentId || !event.error);
-        }).promise;
-
-        if (event.newDocument!.documentId !== navigateResult.newDocumentId) {
-          // This is just a sanity check. In practice, new navigation should
-          // cancel the previous one and report "request cancelled"-like error.
-          throw new Error('Navigation interrupted by another one');
-        }
-        if (event.error)
-          throw event.error;
-      } else {
-        event = await sameDocument.promise;
-      }
-
-      if (!this._subtreeLifecycleEvents.has(waitUntil))
-        await helper.waitForEvent(progress, this, Frame.Events.AddLifecycle, (e: types.LifecycleEvent) => e === waitUntil).promise;
-
-      const request = event.newDocument ? event.newDocument.request : undefined;
-      const response = request ? request._finalRequest().response() : null;
-      await this._page._doSlowMo();
-      return response;
-    });
+    const request = event.newDocument ? event.newDocument.request : undefined;
+    const response = request ? request._finalRequest().response() : null;
+    await this._page._doSlowMo();
+    return response;
   }
 
   async _waitForNavigation(progress: Progress, options: types.NavigateOptions): Promise<network.Response | null> {
     const waitUntil = verifyLifecycle('waitUntil', options.waitUntil === undefined ? 'load' : options.waitUntil);
     progress.log(`waiting for navigation until "${waitUntil}"`);
 
-    const navigationEvent: NavigationEvent = await helper.waitForEvent(progress, this, Frame.Events.Navigation, (event: NavigationEvent) => {
+    const navigationEvent: NavigationEvent = await helper.waitForEvent(progress, this, Frame.Events.InternalNavigation, (event: NavigationEvent) => {
       // Any failed navigation results in a rejection.
       if (event.error)
         return true;
@@ -839,28 +887,31 @@ export class Frame extends SdkObject {
 
   async setContent(metadata: CallMetadata, html: string, options: types.NavigateOptions = {}): Promise<void> {
     const controller = new ProgressController(metadata, this);
-    return controller.run(progress => this.raceNavigationAction(async () => {
-      const waitUntil = options.waitUntil === undefined ? 'load' : options.waitUntil;
-      progress.log(`setting frame content, waiting until "${waitUntil}"`);
-      const tag = `--playwright--set--content--${this._id}--${++this._setContentCounter}--`;
-      const context = await this._utilityContext();
-      const lifecyclePromise = new Promise((resolve, reject) => {
-        this._page._frameManager._consoleMessageTags.set(tag, () => {
-          // Clear lifecycle right after document.open() - see 'tag' below.
-          this._onClearLifecycle();
-          this._waitForLoadState(progress, waitUntil).then(resolve).catch(reject);
+    return controller.run(async progress => {
+      await this.raceNavigationAction(progress, options, async () => {
+        const waitUntil = options.waitUntil === undefined ? 'load' : options.waitUntil;
+        progress.log(`setting frame content, waiting until "${waitUntil}"`);
+        const tag = `--playwright--set--content--${this._id}--${++this._setContentCounter}--`;
+        const context = await this._utilityContext();
+        const lifecyclePromise = new Promise((resolve, reject) => {
+          this._page._frameManager._consoleMessageTags.set(tag, () => {
+            // Clear lifecycle right after document.open() - see 'tag' below.
+            this._onClearLifecycle();
+            this._waitForLoadState(progress, waitUntil).then(resolve).catch(reject);
+          });
         });
+        const contentPromise = context.evaluate(({ html, tag }) => {
+          window.stop();
+          document.open();
+          console.debug(tag);  // eslint-disable-line no-console
+          document.write(html);
+          document.close();
+        }, { html, tag });
+        await Promise.all([contentPromise, lifecyclePromise]);
+        await this._page._doSlowMo();
+        return null;
       });
-      const contentPromise = context.evaluate(({ html, tag }) => {
-        window.stop();
-        document.open();
-        console.debug(tag);  // eslint-disable-line no-console
-        document.write(html);
-        document.close();
-      }, { html, tag });
-      await Promise.all([contentPromise, lifecyclePromise]);
-      await this._page._doSlowMo();
-    }), this._page._timeoutSettings.navigationTimeout(options));
+    }, this._page._timeoutSettings.navigationTimeout(options));
   }
 
   name(): string {
@@ -1716,7 +1767,9 @@ class SignalBarrier {
     if (frame.parentFrame())
       return;
     this.retain();
-    const waiter = helper.waitForEvent(null, frame, Frame.Events.Navigation, (e: NavigationEvent) => {
+    const waiter = helper.waitForEvent(null, frame, Frame.Events.InternalNavigation, (e: NavigationEvent) => {
+      if (!e.isPublic)
+        return false;
       if (!e.error && this._progress)
         this._progress.log(`  navigated to "${frame._url}"`);
       return true;

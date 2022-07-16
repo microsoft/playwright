@@ -1,6 +1,6 @@
 {
   "name": "@playwright/experimental-ct-svelte",
-  "version": "1.23.0-next",
+  "version": "1.25.0-next",
   "description": "Playwright Component Testing for Svelte",
   "repository": "github:Microsoft/playwright",
   "homepage": "https://playwright.dev",
@@ -19,11 +19,15 @@
     "./register": {
       "types": "./register.d.ts",
       "default": "./register.mjs"
+    },
+    "./hooks": {
+      "types": "./hooks.d.ts",
+      "default": "./hooks.mjs"
     }
   },
   "dependencies": {
-    "@sveltejs/vite-plugin-svelte": "^1.0.0-next.30",
-    "@playwright/test": "1.23.0-next",
-    "vite": "^2.9.5"
+    "@sveltejs/vite-plugin-svelte": "^1.0.1",
+    "@playwright/test": "1.25.0-next",
+    "vite": "^3.0.0"
   }
 }

@@ -1,4 +1,5 @@
 # class: PlaywrightAssertions
+* since: v1.17
 
 Playwright gives you Web-First Assertions with convenience methods for creating assertions that will wait and retry until the expected condition is met.
 
@@ -9,7 +10,7 @@ import { test, expect } from '@playwright/test';
 
 test('status becomes submitted', async ({ page }) => {
   // ...
-  await page.click('#submit-button')
+  await page.locator('#submit-button').click()
   await expect(page.locator('.status')).toHaveText('Submitted');
 });
 ```
@@ -19,7 +20,7 @@ from playwright.async_api import Page, expect
 
 async def test_status_becomes_submitted(page: Page) -> None:
     # ..
-    await page.click("#submit-button")
+    await page.locator("#submit-button").click()
     await expect(page.locator(".status")).to_have_text("Submitted")
 ```
 
@@ -28,7 +29,7 @@ from playwright.sync_api import Page, expect
 
 def test_status_becomes_submitted(page: Page) -> None:
     # ..
-    page.click("#submit-button")
+    page.locator("#submit-button").click()
     expect(page.locator(".status")).to_have_text("Submitted")
 ```
 
@@ -41,7 +42,7 @@ public class TestExample {
   @Test
   void statusBecomesSubmitted() {
     ...
-    page.click("#submit-button");
+    page.locator("#submit-button").click();
     assertThat(page.locator(".status")).hasText("Submitted");
   }
 }
@@ -59,6 +60,7 @@ public class ExampleTests : PageTest
     [Test]
     public async Task StatusBecomesSubmitted()
     {
+        await Page.Locator("#submit-button").ClickAsync();
         await Expect(Page.Locator(".status")).ToHaveTextAsync("Submitted");
     }
 }
@@ -71,6 +73,7 @@ reached. You can pass this timeout as an option.
 By default, the timeout for assertions is set to 5 seconds.
 
 ## method: PlaywrightAssertions.expectAPIResponse
+* since: v1.18
 * langs: js, java, python
   - alias-java: assertThat
   - alias-python: expect
@@ -85,11 +88,13 @@ PlaywrightAssertions.assertThat(response).isOK();
 ```
 
 ### param: PlaywrightAssertions.expectAPIResponse.response
+* since: v1.18
 - `response` <[APIResponse]>
 
 [APIResponse] object to use for assertions.
 
 ## method: PlaywrightAssertions.expectLocator
+* since: v1.18
 * langs:
   - alias-java: assertThat
   - alias-python: expect
@@ -108,11 +113,13 @@ await Expect(locator).ToBeVisibleAsync();
 ```
 
 ### param: PlaywrightAssertions.expectLocator.locator
+* since: v1.18
 - `locator` <[Locator]>
 
 [Locator] object to use for assertions.
 
 ## method: PlaywrightAssertions.expectPage
+* since: v1.18
 * langs:
   - alias-java: assertThat
   - alias-python: expect
@@ -131,6 +138,7 @@ await Expect(page).ToHaveTitleAsync("News");
 ```
 
 ### param: PlaywrightAssertions.expectPage.page
+* since: v1.18
 - `page` <[Page]>
 
 [Page] object to use for assertions.

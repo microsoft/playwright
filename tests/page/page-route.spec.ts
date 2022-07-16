@@ -43,28 +43,28 @@ it('should unroute', async ({ page, server }) => {
   let intercepted = [];
   await page.route('**/*', route => {
     intercepted.push(1);
-    route.continue();
+    route.fallback();
   });
   await page.route('**/empty.html', route => {
     intercepted.push(2);
-    route.continue();
+    route.fallback();
   });
   await page.route('**/empty.html', route => {
     intercepted.push(3);
-    route.continue();
+    route.fallback();
   });
   const handler4 = route => {
     intercepted.push(4);
-    route.continue();
+    route.fallback();
   };
   await page.route('**/empty.html', handler4);
   await page.goto(server.EMPTY_PAGE);
-  expect(intercepted).toEqual([4]);
+  expect(intercepted).toEqual([4, 3, 2, 1]);
 
   intercepted = [];
   await page.unroute('**/empty.html', handler4);
   await page.goto(server.EMPTY_PAGE);
-  expect(intercepted).toEqual([3]);
+  expect(intercepted).toEqual([3, 2, 1]);
 
   intercepted = [];
   await page.unroute('**/empty.html');
@@ -86,6 +86,7 @@ it('should work when POST is redirected with 302', async ({ page, server }) => {
     page.waitForNavigation()
   ]);
 });
+
 // @see https://github.com/GoogleChrome/puppeteer/issues/3973
 it('should work when header manipulation headers with redirect', async ({ page, server }) => {
   server.setRedirect('/rrredirect', '/empty.html');
@@ -97,6 +98,7 @@ it('should work when header manipulation headers with redirect', async ({ page, 
   });
   await page.goto(server.PREFIX + '/rrredirect');
 });
+
 // @see https://github.com/GoogleChrome/puppeteer/issues/4743
 it('should be able to remove headers', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
@@ -149,6 +151,7 @@ it('should show custom HTTP headers', async ({ page, server }) => {
   const response = await page.goto(server.EMPTY_PAGE);
   expect(response.ok()).toBe(true);
 });
+
 // @see https://github.com/GoogleChrome/puppeteer/issues/4337
 it('should work with redirect inside sync XHR', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
@@ -316,6 +319,26 @@ it('should not work with redirects', async ({ page, server }) => {
   expect(chain[4].url()).toContain('/non-existing-page.html');
   for (let i = 0; i < chain.length; i++)
     expect(chain[i].redirectedTo()).toBe(i ? chain[i - 1] : null);
+});
+
+it('should chain fallback w/ dynamic URL', async ({ page, server }) => {
+  const intercepted = [];
+  await page.route('**/bar', route => {
+    intercepted.push(1);
+    route.fallback({ url: server.EMPTY_PAGE });
+  });
+  await page.route('**/foo', route => {
+    intercepted.push(2);
+    route.fallback({ url: 'http://localhost/bar' });
+  });
+
+  await page.route('**/empty.html', route => {
+    intercepted.push(3);
+    route.fallback({ url: 'http://localhost/foo' });
+  });
+
+  await page.goto(server.EMPTY_PAGE);
+  expect(intercepted).toEqual([3, 2, 1]);
 });
 
 it('should work with redirects for subresources', async ({ page, server }) => {
@@ -825,13 +848,13 @@ it('should contain raw response header after fulfill', async ({ page, server }) 
   expect(headers['content-type']).toBeTruthy();
 });
 
-for (const method of ['fulfill', 'continue', 'abort'] as const) {
+for (const method of ['fulfill', 'continue', 'fallback', 'abort'] as const) {
   it(`route.${method} should throw if called twice`, async ({ page, server }) => {
-    const routePromise = new Promise<Route>(async resove => {
-      await page.route('**/*', resove);
-    });
+    let resolve;
+    const resolvePromise = new Promise<Route>(f => resolve = f);
+    await page.route('**/*', resolve);
     page.goto(server.PREFIX + '/empty.html').catch(() => {});
-    const route = await routePromise;
+    const route = await resolvePromise;
     await route[method]();
     const e = await route[method]().catch(e => e);
     expect(e.message).toContain('Route is already handled!');

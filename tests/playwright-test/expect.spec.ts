@@ -114,6 +114,7 @@ test('should work with default expect prototype functions', async ({ runTSC, run
       );
       expect('foo').toEqual(expect.any(String));
       expect('foo').toEqual(expect.anything());
+      expect('hello world').toEqual(expect.not.stringContaining('text'));
     });
   `;
   {

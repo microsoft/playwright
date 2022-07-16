@@ -330,6 +330,53 @@ it('should properly serialize null fields', async ({ page }) => {
   expect(await page.evaluate(() => ({ a: null }))).toEqual({ a: null });
 });
 
+it('should properly serialize PerformanceMeasure object', async ({ page }) => {
+  expect(await page.evaluate(() => {
+    window.performance.mark('start');
+    window.performance.mark('end');
+    window.performance.measure('my-measure', 'start', 'end');
+    return performance.getEntriesByType('measure');
+  })).toEqual([{
+    duration: expect.any(Number),
+    entryType: 'measure',
+    name: 'my-measure',
+    startTime: expect.any(Number),
+  }]);
+});
+
+it('shuld properly serialize window.performance object', async ({ page }) => {
+  expect(await page.evaluate(() => performance)).toEqual({
+    'navigation': {
+      'redirectCount': 0,
+      'type': 0
+    },
+    'timeOrigin': expect.any(Number),
+    'timing': {
+      'connectEnd': expect.any(Number),
+      'connectStart': expect.any(Number),
+      'domComplete': expect.any(Number),
+      'domContentLoadedEventEnd': expect.any(Number),
+      'domContentLoadedEventStart': expect.any(Number),
+      'domInteractive': expect.any(Number),
+      'domLoading': expect.any(Number),
+      'domainLookupEnd': expect.any(Number),
+      'domainLookupStart': expect.any(Number),
+      'fetchStart': expect.any(Number),
+      'loadEventEnd': expect.any(Number),
+      'loadEventStart': expect.any(Number),
+      'navigationStart': expect.any(Number),
+      'redirectEnd': expect.any(Number),
+      'redirectStart': expect.any(Number),
+      'requestStart': expect.any(Number),
+      'responseEnd': expect.any(Number),
+      'responseStart': expect.any(Number),
+      'secureConnectionStart': expect.any(Number),
+      'unloadEventEnd': expect.any(Number),
+      'unloadEventStart': expect.any(Number),
+    }
+  });
+});
+
 it('should return undefined for non-serializable objects', async ({ page }) => {
   expect(await page.evaluate(() => function() {})).toBe(undefined);
 });
@@ -548,6 +595,22 @@ it('should roundtrip regex', async ({ page }) => {
 it('should jsonValue() date', async ({ page }) => {
   const resultHandle = await page.evaluateHandle(() => ({ date: new Date('2020-05-27T01:31:38.506Z') }));
   expect(await resultHandle.jsonValue()).toEqual({ date: new Date('2020-05-27T01:31:38.506Z') });
+});
+
+it('should evaluate url', async ({ page }) => {
+  const result = await page.evaluate(() => ({ url: new URL('https://example.com') }));
+  expect(result).toEqual({ url: new URL('https://example.com') });
+});
+
+it('should roundtrip url', async ({ page }) => {
+  const url = new URL('https://example.com');
+  const result = await page.evaluate(url => url, url);
+  expect(result.toString()).toEqual(url.toString());
+});
+
+it('should jsonValue() url', async ({ page }) => {
+  const resultHandle = await page.evaluateHandle(() => ({ url: new URL('https://example.com') }));
+  expect(await resultHandle.jsonValue()).toEqual({ url: new URL('https://example.com') });
 });
 
 it('should not use toJSON when evaluating', async ({ page }) => {

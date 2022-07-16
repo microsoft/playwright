@@ -1,6 +1,6 @@
 {
   "name": "@playwright/experimental-ct-vue2",
-  "version": "1.23.0-next",
+  "version": "1.25.0-next",
   "description": "Playwright Component Testing for Vue2",
   "repository": "github:Microsoft/playwright",
   "homepage": "https://playwright.dev",
@@ -19,10 +19,14 @@
     "./register": {
       "types": "./register.d.ts",
       "default": "./register.mjs"
+    },
+    "./hooks": {
+      "types": "./hooks.d.ts",
+      "default": "./hooks.mjs"
     }
   },
   "dependencies": {
-    "@playwright/test": "1.23.0-next",
+    "@playwright/test": "1.25.0-next",
     "vite": "^2.9.5",
     "vite-plugin-vue2": "^2.0.1"
   },

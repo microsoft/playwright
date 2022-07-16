@@ -15,7 +15,8 @@
  */
 
 import fs from 'fs';
-import { test as baseTest, expect, createImage } from './playwright-test-fixtures';
+import path from 'path';
+import { test as baseTest, expect, createImage, stripAnsi } from './playwright-test-fixtures';
 import type { HttpServer } from '../../packages/playwright-core/lib/utils/httpServer';
 import { startHtmlReportServer } from '../../packages/playwright-test/lib/reporters/html';
 import { spawnAsync } from 'playwright-core/lib/utils/spawnAsync';
@@ -591,6 +592,33 @@ test('should render text attachments as text', async ({ runInlineTest, page, sho
   await expect(page.locator('.attachment-body')).toHaveText(['foo', '{"foo":1}', 'utf16 encoded']);
 });
 
+test('should use file-browser friendly extensions for buffer attachments based on contentType', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      const { test } = pwt;
+      test('passing', async ({ page }, testInfo) => {
+        await testInfo.attach('screenshot', { body: await page.screenshot(), contentType: 'image/png' });
+        await testInfo.attach('some-pdf', { body: Buffer.from('foo'), contentType: 'application/pdf' });
+        await testInfo.attach('madeup-contentType', { body: Buffer.from('bar'), contentType: 'madeup' });
+
+        await testInfo.attach('screenshot-that-already-has-an-extension-with-madeup.png', { body: Buffer.from('a'), contentType: 'madeup' });
+        await testInfo.attach('screenshot-that-already-has-an-extension-with-correct-contentType.png', { body: Buffer.from('c'), contentType: 'image/png' });
+        await testInfo.attach('example.ext with spaces', { body: Buffer.from('b'), contentType: 'madeup' });
+      });
+    `,
+  }, { reporter: 'dot,html' }, { PW_TEST_HTML_REPORT_OPEN: 'never' });
+  expect(result.exitCode).toBe(0);
+  const files = await fs.promises.readdir(path.join(testInfo.outputPath('playwright-report'), 'data'));
+  expect(new Set(files)).toEqual(new Set([
+    'f6aa9785bc9c7b8fd40c3f6ede6f59112a939527.png', // screenshot
+    '0beec7b5ea3f0fdbc95d0dd47f3c5bc275da8a33.pdf', // some-pdf
+    '62cdb7020ff920e5aa642c3d4066950dd1f01f4d.dat', // madeup-contentType
+    '86f7e437faa5a7fce15d1ddcb9eaeaea377667b8.png', // screenshot-that-already-has-an-extension-with-madeup.png
+    '84a516841ba77a5b4648de2cd0dfcb30ea46dbb4.png', // screenshot-that-already-has-an-extension-with-correct-contentType.png
+    'e9d71f5ee7c92d6dc9e92ffdad17b8bd49418f98.ext-with-spaces', // example.ext with spaces
+  ]));
+});
+
 test('should strikethough textual diff', async ({ runInlineTest, showReport, page }) => {
   const result = await runInlineTest({
     'helper.ts': `
@@ -831,4 +859,23 @@ test.describe('gitCommitInfo plugin', () => {
     await expect.soft(page.locator('data-test-id=metadata-error')).toBeVisible();
     await expect.soft(page.locator('data-test-id=metadata-chip')).not.toBeVisible();
   });
+});
+
+test('should report clashing folders', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: [['html', { outputFolder: 'test-results/html-report' }]]
+      }
+    `,
+    'a.test.js': `
+      const { test } = pwt;
+      test('passes', async ({}) => {
+      });
+    `,
+  },  {}, {}, { usesCustomReporters: true });
+  expect(result.exitCode).toBe(0);
+  const output = stripAnsi(result.output);
+  expect(output).toContain('Configuration Error');
+  expect(output).toContain('html-report');
 });

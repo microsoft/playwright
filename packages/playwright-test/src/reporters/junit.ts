@@ -17,7 +17,7 @@
 import fs from 'fs';
 import path from 'path';
 import type { FullConfig, FullResult, Reporter, Suite, TestCase } from '../../types/testReporter';
-import { monotonicTime } from '../util';
+import { monotonicTime } from 'playwright-core/lib/utils';
 import { formatFailure, formatTestTitle, stripAnsiEscapes } from './base';
 
 class JUnitReporter implements Reporter {
@@ -191,11 +191,10 @@ class JUnitReporter implements Reporter {
             if (!attachment.path)
               continue;
             try {
-              const attachmentPath = path.relative(this.config.rootDir, attachment.path);
-              if (fs.existsSync(attachmentPath))
-                contents = fs.readFileSync(attachmentPath, { encoding: 'base64' });
+              if (fs.existsSync(attachment.path))
+                contents = fs.readFileSync(attachment.path, { encoding: 'base64' });
               else
-                systemErr.push(`\nWarning: attachment ${attachmentPath} is missing`);
+                systemErr.push(`\nWarning: attachment ${attachment.path} is missing`);
             } catch (e) {
             }
           }

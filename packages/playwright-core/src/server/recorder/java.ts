@@ -175,13 +175,13 @@ function formatSelectOption(options: string | string[]): string {
 
 function formatLaunchOptions(options: any): string {
   const lines = [];
-  if (!Object.keys(options).length)
+  if (!Object.keys(options).filter(key => options[key] !== undefined).length)
     return '';
   lines.push('new BrowserType.LaunchOptions()');
-  if (typeof options.headless === 'boolean')
-    lines.push(`  .setHeadless(false)`);
   if (options.channel)
     lines.push(`  .setChannel(${quote(options.channel)})`);
+  if (typeof options.headless === 'boolean')
+    lines.push(`  .setHeadless(false)`);
   return lines.join('\n');
 }
 
@@ -210,6 +210,18 @@ function formatContextOptions(contextOptions: BrowserContextOptions, deviceName:
     lines.push(`  .setLocale(${quote(options.locale)})`);
   if (options.proxy)
     lines.push(`  .setProxy(new Proxy(${quote(options.proxy.server)}))`);
+  if (options.recordHar?.content)
+    lines.push(`  .setRecordHarContent(HarContentPolicy.${options.recordHar?.content.toUpperCase()})`);
+  if (options.recordHar?.mode)
+    lines.push(`  .setRecordHarMode(HarMode.${options.recordHar?.mode.toUpperCase()})`);
+  if (options.recordHar?.omitContent)
+    lines.push(`  .setRecordHarOmitContent(true)`);
+  if (options.recordHar?.path)
+    lines.push(`  .setRecordHarPath(Paths.get(${quote(options.recordHar.path)}))`);
+  if (options.recordHar?.urlFilter)
+    lines.push(`  .setRecordHarUrlFilter(${quote(options.recordHar.urlFilter as string)})`);
+  if (options.serviceWorkers)
+    lines.push(`  .setServiceWorkers(ServiceWorkerPolicy.${options.serviceWorkers.toUpperCase()})`);
   if (options.storageState)
     lines.push(`  .setStorageStatePath(Paths.get(${quote(options.storageState as string)}))`);
   if (options.timezoneId)

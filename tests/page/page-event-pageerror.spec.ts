@@ -128,3 +128,20 @@ it('should handle window', async ({ page, browserName, isElectron }) => {
   ]);
   expect(error.message).toBe(browserName === 'chromium' ? 'Window' : '[object Window]');
 });
+
+it('should remove a listener of a non-existing event handler', async ({ page }) => {
+  page.removeListener('pageerror', () => {});
+});
+
+it('should emit error from unhandled rejects', async ({ page, browserName }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/14165' });
+  const [error] = await Promise.all([
+    page.waitForEvent('pageerror'),
+    page.setContent(`
+        <script>
+          Promise.reject(new Error('sad :('));
+        </script>
+    `),
+  ]);
+  expect(error.message).toContain('sad :(');
+});

@@ -31,6 +31,7 @@ export function bundle() {
       transform(html, ctx) {
         if (!ctx || !ctx.bundle)
           return html;
+        html = html.replace(/(?=<!--)([\s\S]*?)-->/, '');
         for (const [, value] of Object.entries(ctx.bundle)) {
           if (value.code)
             html = html.replace(/<script type="module".*<\/script>/, () => `<script type="module">${value.code}</script>`);

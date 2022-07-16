@@ -29,10 +29,10 @@ const page = await context.newPage();
 await page.goto('https://github.com/login');
 
 // Interact with login form
-await page.click('text=Login');
-await page.fill('input[name="login"]', USERNAME);
-await page.fill('input[name="password"]', PASSWORD);
-await page.click('text=Submit');
+await page.locator('text=Login').click();
+await page.locator('input[name="login"]').fill(USERNAME);
+await page.locator('input[name="password"]').fill(PASSWORD);
+await page.locator('text=Submit').click();
 // Verify app is logged in
 ```
 
@@ -40,10 +40,10 @@ await page.click('text=Submit');
 Page page = context.newPage();
 page.navigate("https://github.com/login");
 // Interact with login form
-page.click("text=Login");
-page.fill("input[name='login']", USERNAME);
-page.fill("input[name='password']", PASSWORD);
-page.click("text=Submit");
+page.locator("text=Login").click();
+page.locator("input[name='login']").fill(USERNAME);
+page.locator("input[name='password']").fill(PASSWORD);
+page.locator("text=Submit").click();
 // Verify app is logged in
 ```
 
@@ -52,10 +52,10 @@ page = await context.new_page()
 await page.goto('https://github.com/login')
 
 # Interact with login form
-await page.click('text=Login')
-await page.fill('input[name="login"]', USERNAME)
-await page.fill('input[name="password"]', PASSWORD)
-await page.click('text=Submit')
+await page.locator('text=Login').click()
+await page.locator('input[name="login"]').fill(USERNAME)
+await page.locator('input[name="password"]').fill(PASSWORD)
+await page.locator('text=Submit').click()
 # Verify app is logged in
 ```
 
@@ -64,21 +64,21 @@ page = context.new_page()
 page.goto('https://github.com/login')
 
 # Interact with login form
-page.click('text=Login')
-page.fill('input[name="login"]', USERNAME)
-page.fill('input[name="password"]', PASSWORD)
-page.click('text=Submit')
+page.locator('text=Login').click()
+page.locator('input[name="login"]').fill(USERNAME)
+page.locator('input[name="password"]').fill(PASSWORD)
+page.locator('text=Submit').click()
 # Verify app is logged in
 ```
 
 ```csharp
 var page = await context.NewPageAsync();
-await page.NavigateAsync("https://github.com/login");
+await page.GotoAsync("https://github.com/login");
 // Interact with login form
-await page.ClickAsync("text=Login");
-await page.FillAsync("input[name='login']", USERNAME);
-await page.FillAsync("input[name='password']", PASSWORD);
-await page.ClickAsync("text=Submit");
+await page.Locator("text=Login").ClickAsync();
+await page.Locator("input[name='login']").FillAsync(USERNAME);
+await page.Locator("input[name='password']").FillAsync(PASSWORD);
+await page.Locator("text=Submit").ClickAsync();
 // Verify app is logged in
 ```
 
@@ -135,13 +135,13 @@ context = browser.new_context(storage_state="state.json")
 
 ```csharp
 // Save storage state into the file.
-await context.StorageStateAsync(new BrowserContextStorageStateOptions
+await context.StorageStateAsync(new()
 {
     Path = "state.json"
 });
 
 // Create a new context with the saved storage state.
-var context = await browser.NewContextAsync(new BrowserNewContextOptions
+var context = await browser.NewContextAsync(new()
 {
     StorageStatePath = "state.json"
 });
@@ -332,7 +332,7 @@ class Program
     {
         using var playwright = await Playwright.CreateAsync();
         var chromium = playwright.Chromium;
-        var context = chromium.LaunchPersistentContextAsync(@"C:\path\to\directory\", new BrowserTypeLaunchPersistentContextOptions
+        var context = chromium.LaunchPersistentContextAsync(@"C:\path\to\directory\", new()
         {
             Headless = false
         });

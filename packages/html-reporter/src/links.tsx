@@ -27,20 +27,16 @@ export function navigate(href: string) {
 }
 
 export const Route: React.FunctionComponent<{
-  params: string,
+  predicate: (params: URLSearchParams) => boolean,
   children: any
-}> = ({ params, children }) => {
-  const initialParams = [...new URLSearchParams(window.location.hash.slice(1)).keys()].join('&');
-  const [currentParams, setCurrentParam] = React.useState(initialParams);
+}> = ({ predicate, children }) => {
+  const [matches, setMatches] = React.useState(predicate(new URLSearchParams(window.location.hash.slice(1))));
   React.useEffect(() => {
-    const listener = () => {
-      const newParams = [...new URLSearchParams(window.location.hash.slice(1)).keys()].join('&');
-      setCurrentParam(newParams);
-    };
+    const listener = () => setMatches(predicate(new URLSearchParams(window.location.hash.slice(1))));
     window.addEventListener('popstate', listener);
     return () => window.removeEventListener('popstate', listener);
-  }, []);
-  return currentParams === params ? children : null;
+  }, [predicate]);
+  return matches ? children : null;
 };
 
 export const Link: React.FunctionComponent<{
@@ -78,5 +74,9 @@ export const AttachmentLink: React.FunctionComponent<{
     return [<div className='attachment-body'>{attachment.body}</div>];
   } : undefined} depth={0} style={{ lineHeight: '32px' }}></TreeItem>;
 };
+
+export function generateTraceUrl(traces: TestAttachment[]) {
+  return `trace/index.html?${traces.map((a, i) => `trace=${new URL(a.path!, window.location.href)}`).join('&')}`;
+}
 
 const kMissingContentType = 'x-playwright/missing';

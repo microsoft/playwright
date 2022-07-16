@@ -5,6 +5,137 @@ title: "Release notes"
 
 <!-- TOC -->
 
+## Version 1.23
+
+### Network Replay
+
+Now you can record network traffic into a HAR file and re-use this traffic in your tests.
+
+To record network into HAR file:
+
+```bash
+npx playwright open --save-har=github.har.zip https://github.com/microsoft
+```
+
+Alternatively, you can record HAR programmatically:
+
+```python async
+context = await browser.new_context(record_har_path="github.har.zip")
+# ... do stuff ...
+await context.close()
+```
+
+```python sync
+context = browser.new_context(record_har_path="github.har.zip")
+# ... do stuff ...
+context.close()
+```
+
+Use the new methods [`method: Page.routeFromHAR`] or [`method: BrowserContext.routeFromHAR`] to serve matching responses from the [HAR](http://www.softwareishard.com/blog/har-12-spec/) file:
+
+
+```python async
+await context.route_from_har("github.har.zip")
+```
+
+```python sync
+context.route_from_har("github.har.zip")
+```
+
+Read more in [our documentation](./network#record-and-replay-requests).
+
+
+### Advanced Routing
+
+You can now use [`method: Route.fallback`] to defer routing to other handlers.
+
+Consider the following example:
+
+```python async
+# Remove a header from all requests
+async def remove_header_handler(route: Route) -> None:
+    headers = await route.request.all_headers()
+    if "if-none-match" in headers:
+        del headers["if-none-match"]
+    await route.fallback(headers=headers)
+
+await page.route("**/*", remove_header_handler)
+
+# Abort all images
+async def abort_images_handler(route: Route) -> None:
+    if route.request.resource_type == "image":
+        await route.abort()
+    else:
+        await route.fallback()
+
+await page.route("**/*", abort_images_handler)
+```
+
+```python sync
+# Remove a header from all requests
+def remove_header_handler(route: Route) -> None:
+    headers = route.request.all_headers()
+    if "if-none-match" in headers:
+        del headers["if-none-match"]
+    route.fallback(headers=headers)
+
+page.route("**/*", remove_header_handler)
+
+# Abort all images
+def abort_images_handler(route: Route) -> None:
+    if route.request.resource_type == "image":
+        route.abort()
+    else:
+        route.fallback()
+
+page.route("**/*", abort_images_handler)
+```
+
+Note that the new methods [`method: Page.routeFromHAR`] and [`method: BrowserContext.routeFromHAR`] also participate in routing and could be deferred to.
+
+### Web-First Assertions Update
+
+* New method [`method: LocatorAssertions.toHaveValues`] that asserts all selected values of `<select multiple>` element.
+* Methods [`method: LocatorAssertions.toContainText`] and [`method: LocatorAssertions.toHaveText`] now accept `ignore_case` option.
+
+### Miscellaneous
+
+* If there's a service worker that's in your way, you can now easily disable it with a new context option `service_workers`:
+
+  ```python async
+  context = await browser.new_context(service_workers="block")
+  page = await context.new_page()
+  ```
+
+  ```python sync
+  context = browser.new_context(service_workers="block")
+  page = context.new_page()
+  ```
+
+* Using `.zip` path for `recordHar` context option automatically zips the resulting HAR:
+
+  ```python async
+  context = await browser.new_context(record_har_path="github.har.zip")
+  ```
+
+  ```python sync
+  context = browser.new_context(record_har_path="github.har.zip")
+  ```
+
+* If you intend to edit HAR by hand, consider using the `"minimal"` HAR recording mode
+  that only records information that is essential for replaying:
+
+  ```python async
+  context = await browser.new_context(record_har_mode="minimal", record_har_path="har.har")
+  ```
+
+  ```python sync
+  context = browser.new_context(record_har_mode="minimal", record_har_path="har.har")
+  ```
+
+* Playwright now runs on Ubuntu 22 amd64 and Ubuntu 22 arm64.
+
+
 ## Version 1.22
 
 ### Highlights
@@ -13,7 +144,7 @@ title: "Release notes"
 
   ```py
   # Click a button with accessible name "log in"
-  page.click("role=button[name='log in']")
+  page.locator("role=button[name='log in']").click()
   ```
 
   Read more in [our documentation](./selectors#role-selector).
@@ -41,12 +172,12 @@ title: "Release notes"
 
   ```python async
   # Click a button with accessible name "log in"
-  await page.click("role=button[name='log in']")
+  await page.locator("role=button[name='log in']").click()
   ```
 
   ```python sync
   # Click a button with accessible name "log in"
-  page.click("role=button[name='log in']")
+  page.locator("role=button[name='log in']").click()
   ```
 
   Read more in [our documentation](./selectors#role-selector).
@@ -166,7 +297,7 @@ from playwright.async_api import Page, expect
 
 async def test_status_becomes_submitted(page: Page) -> None:
     # ..
-    await page.click("#submit-button")
+    await page.locator("#submit-button").click()
     await expect(page.locator(".status")).to_have_text("Submitted")
 ```
 
@@ -175,7 +306,7 @@ from playwright.sync_api import Page, expect
 
 def test_status_becomes_submitted(page: Page) -> None:
     # ..
-    page.click("#submit-button")
+    page.locator("#submit-button").click()
     expect(page.locator(".status")).to_have_text("Submitted")
 ```
 
@@ -359,7 +490,7 @@ Pass `strict=true` into your action calls to opt in.
 
 ```py
 # This will throw if you have more than one button!
-page.click("button", strict=true)
+page.click("button", strict=True)
 ```
 
 #### 📍 New [**Locators API**](./api/class-locator)
@@ -382,8 +513,8 @@ Learn more in the [documentation](./api/class-locator).
 React and Vue selectors allow selecting elements by its component name and/or property values. The syntax is very similar to [attribute selectors](https://developer.mozilla.org/en-US/docs/Web/CSS/Attribute_selectors) and supports all attribute selector operators.
 
 ```py
-page.click("_react=SubmitButton[enabled=true]");
-page.click("_vue=submit-button[enabled=true]");
+page.locator("_react=SubmitButton[enabled=true]").click()
+page.locator("_vue=submit-button[enabled=true]").click()
 ```
 
 Learn more in the [react selectors documentation](./selectors#react-selectors) and the [vue selectors documentation](./selectors#vue-selectors).

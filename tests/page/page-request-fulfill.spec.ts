@@ -17,6 +17,7 @@
 
 import { test as base, expect } from './pageTest';
 import fs from 'fs';
+import type * as har from 'playwright-core/lib/server/har/har';
 
 const it = base.extend<{
   // We access test servers at 10.0.2.2 from inside the browser on Android,
@@ -322,43 +323,36 @@ it('headerValue should return set-cookie from intercepted response', async ({ pa
   expect(await response.headerValue('Set-Cookie')).toBe('a=b');
 });
 
-it('should complain about bad har', async ({ page, server, isElectron, isAndroid }, testInfo) => {
-  it.fixme(isElectron, 'error: Browser context management is not supported.');
+it('should fulfill with har response', async ({ page, isAndroid, asset }) => {
   it.fixme(isAndroid);
-  const harPath = testInfo.outputPath('test.har');
-  fs.writeFileSync(harPath, JSON.stringify({ log: {} }), 'utf-8');
-  let error;
-  await page.route('**/*.css', async route => {
-    error = await route.fulfill({ har: harPath }).catch(e => e);
-    await route.continue();
+
+  const harPath = asset('har-fulfill.har');
+  const har = JSON.parse(await fs.promises.readFile(harPath, 'utf-8')) as har.HARFile;
+  await page.route('**/*', async route => {
+    const response = findResponse(har, route.request().url());
+    const headers = {};
+    for (const { name, value } of response.headers)
+      headers[name] = value;
+    await route.fulfill({
+      status: response.status,
+      headers,
+      body: Buffer.from(response.content.text || '', (response.content.encoding as 'base64' | undefined) || 'utf-8'),
+    });
   });
-  await page.goto(server.PREFIX + '/one-style.html');
-  expect(error.message).toContain(`Error reading HAR file ${harPath}: Cannot read`);
+  await page.goto('http://no.playwright/');
+  // HAR contains a redirect for the script.
+  expect(await page.evaluate('window.value')).toBe('foo');
+  // HAR contains a POST for the css file but we match ignoring the method, so the file should be served.
+  await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(0, 255, 255)');
 });
 
-it('should complain about no entry found in har', async ({ page, server, isElectron, isAndroid }, testInfo) => {
-  it.fixme(isElectron, 'error: Browser context management is not supported.');
-  it.fixme(isAndroid);
-  const harPath = testInfo.outputPath('test.har');
-  fs.writeFileSync(harPath, JSON.stringify({ log: { entries: [] } }), 'utf-8');
-  let error;
-  await page.route('**/*.css', async route => {
-    error = await route.fulfill({ har: harPath }).catch(e => e);
-    await route.continue();
-  });
-  await page.goto(server.PREFIX + '/one-style.html');
-  expect(error.message).toBe(`Error reading HAR file ${harPath}: No entry matching ${server.PREFIX + '/one-style.css'}`);
-});
-
-it('should complain about har + response options', async ({ page, server, isElectron, isAndroid }) => {
-  it.fixme(isElectron, 'error: Browser context management is not supported.');
-  it.fixme(isAndroid);
-  let error;
-  await page.route('**/*.css', async route => {
-    const response = await page.request.fetch(route.request());
-    error = await route.fulfill({ har: 'har', response }).catch(e => e);
-    await route.continue();
-  });
-  await page.goto(server.PREFIX + '/one-style.html');
-  expect(error.message).toBe(`At most one of "har" and "response" options should be present`);
-});
+function findResponse(har: har.HARFile, url: string): har.Response {
+  let entry;
+  const originalUrl = url;
+  while (url.trim()) {
+    entry = har.log.entries.find(entry => entry.request.url === url);
+    url = entry?.response.redirectURL;
+  }
+  expect(entry, originalUrl).toBeTruthy();
+  return entry?.response;
+}

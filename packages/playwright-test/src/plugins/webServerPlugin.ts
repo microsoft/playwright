@@ -24,6 +24,7 @@ import { launchProcess } from 'playwright-core/lib/utils/processLauncher';
 
 import type { FullConfig, Reporter } from '../../types/testReporter';
 import type { TestRunnerPlugin } from '.';
+import type { FullConfigInternal } from '../types';
 
 
 export type WebServerPluginOptions = {
@@ -153,7 +154,7 @@ async function isURLAvailable(url: URL, ignoreHTTPSErrors: boolean, onStdErr: Re
     indexUrl.pathname = '/index.html';
     statusCode = await httpStatusCode(indexUrl, ignoreHTTPSErrors, onStdErr);
   }
-  return statusCode >= 200 && statusCode < 300;
+  return statusCode >= 200 && statusCode < 404;
 }
 
 async function httpStatusCode(url: URL, ignoreHTTPSErrors: boolean, onStdErr: Reporter['onStdErr']): Promise<number> {
@@ -202,18 +203,21 @@ export const webServer = (options: WebServerPluginOptions): TestRunnerPlugin => 
   return new WebServerPlugin(options, false, { onStdOut: d => console.log(d.toString()), onStdErr: d => console.error(d.toString()) });
 };
 
-export const webServerPluginForConfig = (config: FullConfig, reporter: Reporter): TestRunnerPlugin => {
-  const webServer = config.webServer!;
-  if (webServer.port !== undefined && webServer.url !== undefined)
-    throw new Error(`Exactly one of 'port' or 'url' is required in config.webServer.`);
+export const webServerPluginsForConfig = (config: FullConfigInternal, reporter: Reporter): TestRunnerPlugin[] => {
+  const shouldSetBaseUrl = !!config.webServer;
+  const webServerPlugins = [];
+  for (const webServerConfig of config._webServers) {
+    if (webServerConfig.port !== undefined && webServerConfig.url !== undefined)
+      throw new Error(`Exactly one of 'port' or 'url' is required in config.webServer.`);
 
-  const url = webServer.url || `http://localhost:${webServer.port}`;
+    const url = webServerConfig.url || `http://localhost:${webServerConfig.port}`;
 
-  // We only set base url when only the port is given. That's a legacy mode we have regrets about.
-  if (!webServer.url)
-    process.env.PLAYWRIGHT_TEST_BASE_URL = url;
+    // We only set base url when only the port is given. That's a legacy mode we have regrets about.
+    if (shouldSetBaseUrl && !webServerConfig.url)
+      process.env.PLAYWRIGHT_TEST_BASE_URL = url;
 
-  // TODO: replace with reporter once plugins are removed.
-  // eslint-disable-next-line no-console
-  return new WebServerPlugin({ ...webServer, url }, webServer.port !== undefined, reporter);
+    webServerPlugins.push(new WebServerPlugin({ ...webServerConfig,  url }, webServerConfig.port !== undefined, reporter));
+  }
+
+  return webServerPlugins;
 };

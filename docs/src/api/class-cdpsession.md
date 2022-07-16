@@ -1,4 +1,5 @@
 # class: CDPSession
+* since: v1.8
 * langs: js, python
 * extends: [EventEmitter]
 
@@ -46,19 +47,23 @@ client.send("Animation.setPlaybackRate", {
 ```
 
 ## async method: CDPSession.detach
+* since: v1.8
 
 Detaches the CDPSession from the target. Once detached, the CDPSession object won't emit any events and can't be used to
 send messages.
 
 ## async method: CDPSession.send
+* since: v1.8
 - returns: <[Object]>
 
 ### param: CDPSession.send.method
+* since: v1.8
 - `method` <[string]>
 
 Protocol method name.
 
 ### param: CDPSession.send.params
+* since: v1.8
 - `params` ?<[Object]>
 
 Optional method parameters.

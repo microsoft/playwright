@@ -26,7 +26,6 @@ test('should work with TSX', async ({ runInlineTest }) => {
       //@no-header
       export const Button = () => <button>Button</button>;
     `,
-
     'src/button.test.tsx': `
       //@no-header
       import { test, expect } from '@playwright/experimental-ct-react';
@@ -290,6 +289,66 @@ test('should return root locator for fragments', async ({ runInlineTest }) => {
         const component = await mount(<Button></Button>);
         await expect(component).toContainText('Header');
         await expect(component).toContainText('Button');
+      });
+    `,
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
+
+test('should respect default property values', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright/index.html': `<script type="module" src="/playwright/index.ts"></script>`,
+    'playwright/index.ts': `//@no-header`,
+    'src/label.tsx': `//@no-header
+      export const Label = ({ checked }) => <div>type:{typeof checked} value:{String(checked)}</div>;
+    `,
+
+    'src/label.test.tsx': `
+      //@no-header
+      import { test, expect } from '@playwright/experimental-ct-react';
+      import { Label } from './label';
+
+      test('boolean shorthand', async ({ mount }) => {
+        const component = await mount(<Label checked></Label>);
+        await expect(component).toHaveText('type:boolean value:true');
+      });
+    `,
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
+
+test('should bundle public folder', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright/index.html': `<script type="module" src="/playwright/index.ts"></script>`,
+    'playwright/index.ts': `
+      //@no-header
+    `,
+    'public/logo.svg': `
+      //@no-header
+      <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="50" cy="50" r="50"/>
+      </svg>`,
+    'src/image.tsx': `
+      //@no-header
+      export const Image = () => <img src='/logo.svg' className="App-logo" alt="logo" />;
+    `,
+    'src/image.test.tsx': `
+      //@no-header
+      import { test, expect } from '@playwright/experimental-ct-react';
+      import { Image } from './image';
+
+      test('pass', async ({ mount, page }) => {
+        const urls = [];
+        const [response] = await Promise.all([
+          page.waitForResponse('**/*.svg'),
+          mount(<Image></Image>)
+        ]);
+        const data = await response.body();
+        await expect(data.toString()).toContain('</svg>');
       });
     `,
   }, { workers: 1 });

@@ -63,7 +63,7 @@ namespace Playwright.TestingHarnessTest.NUnit
             // Assuming personal access token available in the environment.
             headers.Add("Authorization", "token " + API_TOKEN);
 
-            Request = await this.Playwright.APIRequest.NewContextAsync(new () {
+            Request = await this.Playwright.APIRequest.NewContextAsync(new() {
                 // All requests we send go to this API endpoint.
                 BaseURL = "https://api.github.com",
                 ExtraHTTPHeaders = headers,
@@ -368,10 +368,10 @@ it was created:
   public async Task LastCreatedIssueShouldBeOnTheServer()
   {
       await Page.GotoAsync("https://github.com/" + USER + "/" + REPO + "/issues");
-      await Page.ClickAsync("text=New Issue");
-      await Page.FillAsync("[aria-label='Title']", "Bug report 1");
-      await Page.FillAsync("[aria-label='Comment body']", "Bug description");
-      await Page.ClickAsync("text=Submit new issue");
+      await Page.Locator("text=New Issue").ClickAsync();
+      await Page.Locator("[aria-label='Title']").FillAsync("Bug report 1");
+      await Page.Locator("[aria-label='Comment body']").FillAsync("Bug description");
+      await Page.Locator("text=Submit new issue").ClickAsync();
       String issueId = Page.Url.Substring(Page.Url.LastIndexOf('/'));
 
       var newIssue = await Request.GetAsync("https://github.com/" + USER + "/" + REPO + "/issues/" + issueId);

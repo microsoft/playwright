@@ -68,7 +68,7 @@ Examples:
 commandWithOpenOptions('codegen [url]', 'open page and generate code for user actions',
     [
       ['-o, --output <file name>', 'saves the generated script to a file'],
-      ['--target <language>', `language to generate, one of javascript, test, python, python-async, csharp`, language()],
+      ['--target <language>', `language to generate, one of javascript, test, python, python-async, pytest, csharp, java`, language()],
     ]).action(function(url, options) {
   codegen(options, url, options.target, options.output).catch(logErrorAndExit);
 }).addHelpText('afterAll', `
@@ -352,6 +352,7 @@ type Options = {
   loadStorage?: string;
   proxyServer?: string;
   proxyBypass?: string;
+  blockServiceWorkers?: boolean;
   saveHar?: string;
   saveHarGlob?: string;
   saveStorage?: string;
@@ -393,6 +394,9 @@ async function launchContext(options: Options, headless: boolean, executablePath
 
   if (contextOptions.isMobile && browserType.name() === 'firefox')
     contextOptions.isMobile = undefined;
+
+  if (options.blockServiceWorkers)
+    contextOptions.serviceWorkers = 'block';
 
   // Proxy
 
@@ -464,9 +468,10 @@ async function launchContext(options: Options, headless: boolean, executablePath
   // HAR
 
   if (options.saveHar) {
-    contextOptions.recordHar = { path: path.resolve(process.cwd(), options.saveHar) };
+    contextOptions.recordHar = { path: path.resolve(process.cwd(), options.saveHar), mode: 'minimal' };
     if (options.saveHarGlob)
       contextOptions.recordHar.urlFilter = options.saveHarGlob;
+    contextOptions.serviceWorkers = 'block';
   }
 
   // Close app when the last window closes.
@@ -639,6 +644,7 @@ function commandWithOpenOptions(command: string, description: string, options: a
     result = result.option(option[0], ...option.slice(1));
   return result
       .option('-b, --browser <browserType>', 'browser to use, one of cr, chromium, ff, firefox, wk, webkit', 'chromium')
+      .option('--block-service-workers', 'block service workers')
       .option('--channel <channel>', 'Chromium distribution channel, "chrome", "chrome-beta", "msedge-dev", etc')
       .option('--color-scheme <scheme>', 'emulate preferred color scheme, "light" or "dark"')
       .option('--device <deviceName>', 'emulate device, for example  "iPhone 11"')

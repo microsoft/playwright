@@ -26,7 +26,7 @@ export type { FullConfig, TestStatus, TestError } from '@playwright/test';
  *       - [TestCase] #1
  *       - [TestCase] #2
  *       - Suite corresponding to a
- *         [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) group
+ *         [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-1) group
  *         - [TestCase] #1 in a group
  *         - [TestCase] #2 in a group
  *       - < more test cases ... >
@@ -66,8 +66,8 @@ export interface Suite {
 
   /**
    * Test cases in the suite. Note that only test cases defined directly in this suite are in the list. Any test cases
-   * defined in nested [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) groups are
-   * listed in the child [suite.suites](https://playwright.dev/docs/api/class-suite#suite-suites).
+   * defined in nested [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-1) groups
+   * are listed in the child [suite.suites](https://playwright.dev/docs/api/class-suite#suite-suites).
    */
   tests: Array<TestCase>;
 
@@ -76,7 +76,7 @@ export interface Suite {
    * - Empty for root suite.
    * - Project name for project suite.
    * - File path for file suite.
-   * - Title passed to [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) for a
+   * - Title passed to [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-1) for a
    *   group suite.
    */
   title: string;
@@ -106,7 +106,7 @@ export interface TestCase {
   expectedStatus: TestStatus;
   /**
    * The list of annotations applicable to the current test. Includes annotations from the test, annotations from all
-   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe) groups the test belongs to
+   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-1) groups the test belongs to
    * and file-level annotations for the test file.
    *
    * Annotations are available during test execution through
@@ -294,7 +294,7 @@ export interface FullResult {
  * You can create a custom reporter by implementing a class with some of the reporter methods. Make sure to export this
  * class as default.
  *
- * ```ts
+ * ```js
  * // my-awesome-reporter.ts
  * import { Reporter } from '@playwright/test/reporter';
  *
@@ -321,7 +321,7 @@ export interface FullResult {
  * Now use this reporter with [testConfig.reporter](https://playwright.dev/docs/api/class-testconfig#test-config-reporter).
  * Learn more about [using reporters](https://playwright.dev/docs/test-reporters).
  *
- * ```ts
+ * ```js
  * // playwright.config.ts
  * import type { PlaywrightTestConfig } from '@playwright/test';
  *

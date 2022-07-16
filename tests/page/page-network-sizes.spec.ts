@@ -20,6 +20,8 @@ import zlib from 'zlib';
 
 import { test as it, expect } from './pageTest';
 
+it.skip(({ isElectron, browserMajorVersion }) => isElectron && browserMajorVersion < 17, 'This needs Chromium >= 99');
+
 it('should set bodySize and headersSize', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   const [request] = await Promise.all([

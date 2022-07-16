@@ -215,7 +215,7 @@ export class Dispatcher {
       }));
       result.status = params.status;
       test.expectedStatus = params.expectedStatus;
-      test.annotations = params.annotations;
+      test._annotateWithInheritence(params.annotations);
       test.timeout = params.timeout;
       const isFailure = result.status !== 'skipped' && result.status !== test.expectedStatus;
       if (isFailure)
@@ -529,6 +529,16 @@ class Worker extends EventEmitter {
       repeatEachIndex: testGroup.repeatEachIndex,
       projectIndex: testGroup.projectIndex,
       loader: loaderData,
+      stdoutParams: {
+        rows: process.stdout.rows,
+        columns: process.stdout.columns,
+        colorDepth: process.stdout.getColorDepth?.() || 8
+      },
+      stderrParams: {
+        rows: process.stderr.rows,
+        columns: process.stderr.columns,
+        colorDepth: process.stderr.getColorDepth?.() || 8
+      },
     };
     this.send({ method: 'init', params });
   }

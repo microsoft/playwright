@@ -65,12 +65,13 @@ class Runtime {
     } else {
       const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
       this._registerConsoleServiceListener(Services);
-      this._registerConsoleObserver(Services);
+      this._registerConsoleAPIListener(Services);
     }
     // We can't use event listener here to be compatible with Worker Global Context.
     // Use plain callbacks instead.
     this.events = {
       onConsoleMessage: createEvent(),
+      onRuntimeError: createEvent(),
       onErrorFromWorker: createEvent(),
       onExecutionContextCreated: createEvent(),
       onExecutionContextDestroyed: createEvent(),
@@ -129,7 +130,7 @@ class Runtime {
 
       observe: message => {
         if (!(message instanceof Ci.nsIScriptError) || !message.outerWindowID ||
-            !message.category || disallowedMessageCategories.has(message.category) || message.hasException) {
+            !message.category || disallowedMessageCategories.has(message.category)) {
           return;
         }
         const errorWindow = Services.wm.getOuterWindowWithId(message.outerWindowID);
@@ -138,34 +139,46 @@ class Runtime {
           return;
         }
         const executionContext = this._windowToExecutionContext.get(errorWindow);
-        if (!executionContext)
+        if (!executionContext) {
           return;
+        }
         const typeNames = {
           [Ci.nsIConsoleMessage.debug]: 'debug',
           [Ci.nsIConsoleMessage.info]: 'info',
           [Ci.nsIConsoleMessage.warn]: 'warn',
           [Ci.nsIConsoleMessage.error]: 'error',
         };
-        emitEvent(this.events.onConsoleMessage, {
-          args: [{
-            value: message.message,
-          }],
-          type: typeNames[message.logLevel],
-          executionContextId: executionContext.id(),
-          location: {
-            lineNumber: message.lineNumber,
-            columnNumber: message.columnNumber,
-            url: message.sourceName,
-          },
-        });
+        if (!message.hasException) {
+          emitEvent(this.events.onConsoleMessage, {
+            args: [{
+              value: message.message,
+            }],
+            type: typeNames[message.logLevel],
+            executionContextId: executionContext.id(),
+            location: {
+              lineNumber: message.lineNumber,
+              columnNumber: message.columnNumber,
+              url: message.sourceName,
+            },
+          });
+        } else {
+          emitEvent(this.events.onRuntimeError, {
+            executionContext,
+            message: message.errorMessage,
+            stack: message.stack.toString(),
+          });
+        }
       },
     };
     Services.console.registerListener(consoleServiceListener);
     this._eventListeners.push(() => Services.console.unregisterListener(consoleServiceListener));
   }
 
-  _registerConsoleObserver(Services) {
-    const consoleObserver = ({wrappedJSObject}, topic, data) => {
+  _registerConsoleAPIListener(Services) {
+    const Ci = Components.interfaces;
+    const Cc = Components.classes;
+    const ConsoleAPIStorage = Cc["@mozilla.org/consoleAPI-storage;1"].getService(Ci.nsIConsoleAPIStorage);
+    const onMessage = ({ wrappedJSObject }) => {
       const executionContext = Array.from(this._executionContexts.values()).find(context => {
         // There is no easy way to determine isolated world context and we normally don't write
         // objects to console from utility worlds so we always return main world context here.
@@ -177,9 +190,12 @@ class Runtime {
       if (!executionContext)
         return;
       this._onConsoleMessage(executionContext, wrappedJSObject);
-    };
-    Services.obs.addObserver(consoleObserver, "console-api-log-event");
-    this._eventListeners.push(() => Services.obs.removeObserver(consoleObserver, "console-api-log-event"));
+    }
+    ConsoleAPIStorage.addLogEventListener(
+      onMessage,
+      Cc["@mozilla.org/systemprincipal;1"].createInstance(Ci.nsIPrincipal)
+    );
+    this._eventListeners.push(() => ConsoleAPIStorage.removeLogEventListener(onMessage));
   }
 
   _registerWorkerConsoleHandler() {

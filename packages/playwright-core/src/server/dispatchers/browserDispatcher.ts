@@ -18,6 +18,7 @@ import { Browser } from '../browser';
 import type * as channels from '../../protocol/channels';
 import { BrowserContextDispatcher } from './browserContextDispatcher';
 import { CDPSessionDispatcher } from './cdpSessionDispatcher';
+import { existingDispatcher } from './dispatcher';
 import type { DispatcherScope } from './dispatcher';
 import { Dispatcher } from './dispatcher';
 import type { CRBrowser } from '../chromium/crBrowser';
@@ -29,9 +30,10 @@ import { Selectors } from '../selectors';
 
 export class BrowserDispatcher extends Dispatcher<Browser, channels.BrowserChannel> implements channels.BrowserChannel {
   _type_Browser = true;
+
   constructor(scope: DispatcherScope, browser: Browser) {
     super(scope, browser, 'Browser', { version: browser.version(), name: browser.options.name }, true);
-    browser.on(Browser.Events.Disconnected, () => this._didClose());
+    this.addObjectListener(Browser.Events.Disconnected, () => this._didClose());
   }
 
   _didClose() {
@@ -42,6 +44,10 @@ export class BrowserDispatcher extends Dispatcher<Browser, channels.BrowserChann
   async newContext(params: channels.BrowserNewContextParams, metadata: CallMetadata): Promise<channels.BrowserNewContextResult> {
     const context = await this._object.newContext(metadata, params);
     return { context: new BrowserContextDispatcher(this._scope, context) };
+  }
+
+  async newContextForReuse(params: channels.BrowserNewContextForReuseParams, metadata: CallMetadata): Promise<channels.BrowserNewContextForReuseResult> {
+    return newContextForReuse(this._object, this._scope, params, metadata);
   }
 
   async close(): Promise<void> {
@@ -70,8 +76,7 @@ export class BrowserDispatcher extends Dispatcher<Browser, channels.BrowserChann
     if (!this._object.options.isChromium)
       throw new Error(`Tracing is only available in Chromium`);
     const crBrowser = this._object as CRBrowser;
-    const buffer = await crBrowser.stopTracing();
-    return { binary: buffer.toString('base64') };
+    return { binary: await crBrowser.stopTracing() };
   }
 }
 
@@ -96,6 +101,10 @@ export class ConnectedBrowserDispatcher extends Dispatcher<Browser, channels.Bro
     context.setSelectors(this.selectors);
     context.on(BrowserContext.Events.Close, () => this._contexts.delete(context));
     return { context: new BrowserContextDispatcher(this._scope, context) };
+  }
+
+  async newContextForReuse(params: channels.BrowserNewContextForReuseParams, metadata: CallMetadata): Promise<channels.BrowserNewContextForReuseResult> {
+    return newContextForReuse(this._object, this._scope, params, metadata);
   }
 
   async close(): Promise<void> {
@@ -124,11 +133,21 @@ export class ConnectedBrowserDispatcher extends Dispatcher<Browser, channels.Bro
     if (!this._object.options.isChromium)
       throw new Error(`Tracing is only available in Chromium`);
     const crBrowser = this._object as CRBrowser;
-    const buffer = await crBrowser.stopTracing();
-    return { binary: buffer.toString('base64') };
+    return { binary: await crBrowser.stopTracing() };
   }
 
   async cleanupContexts() {
     await Promise.all(Array.from(this._contexts).map(context => context.close(serverSideCallMetadata())));
   }
+}
+
+async function newContextForReuse(browser: Browser, scope: DispatcherScope, params: channels.BrowserNewContextForReuseParams, metadata: CallMetadata): Promise<channels.BrowserNewContextForReuseResult> {
+  const { context, needsReset } = await browser.newContextForReuse(params, metadata);
+  if (needsReset) {
+    const oldContextDispatcher = existingDispatcher<BrowserContextDispatcher>(context);
+    oldContextDispatcher._dispose();
+    await context.resetForReuse(metadata, params);
+  }
+  const contextDispatcher = new BrowserContextDispatcher(scope, context);
+  return { context: contextDispatcher };
 }

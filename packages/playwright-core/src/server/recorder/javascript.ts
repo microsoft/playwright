@@ -222,7 +222,7 @@ function formatObject(value: any, indent = '  '): string {
   if (Array.isArray(value))
     return `[${value.map(o => formatObject(o)).join(', ')}]`;
   if (typeof value === 'object') {
-    const keys = Object.keys(value);
+    const keys = Object.keys(value).filter(key => value[key] !== undefined).sort();
     if (!keys.length)
       return '{}';
     const tokens: string[] = [];

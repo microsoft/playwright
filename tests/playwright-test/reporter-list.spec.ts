@@ -113,7 +113,7 @@ test('should truncate long test names', async ({ runInlineTest }) => {
     `,
     'a.test.ts': `
       const { test } = pwt;
-      test('fails very long name', async ({}) => {
+      test('failure in very long name', async ({}) => {
         expect(1).toBe(0);
       });
       test('passes', async ({}) => {
@@ -124,14 +124,28 @@ test('should truncate long test names', async ({ runInlineTest }) => {
       });
     `,
   }, { reporter: 'list', retries: 0 }, { PWTEST_TTY_WIDTH: 50 });
-  const text = stripAnsi(result.output);
-
-  expect(text).toContain(`${NEGATIVE_STATUS_MARK} [foo] › a.test.ts:6:7 › fails very`);
-  expect(text).not.toContain(`${NEGATIVE_STATUS_MARK} [foo] › a.test.ts:6:7 › fails very long name (`);
-  expect(text).toContain(`${POSITIVE_STATUS_MARK} [foo] › a.test.ts:9:7 › passes (`);
-  expect(text).toContain(`${POSITIVE_STATUS_MARK} [foo] › a.test.ts:11:7 › passes 2 long`);
-  expect(text).not.toContain(`${POSITIVE_STATUS_MARK} [foo] › a.test.ts:11:7 › passes 2 long name (`);
-  expect(text).toContain(`-  [foo] › a.test.ts:13:12 › skipped very long n`);
-  expect(text).not.toContain(`-  [foo] › a.test.ts:13:12 › skipped very long na`);
   expect(result.exitCode).toBe(1);
+
+  const lines = stripAnsi(result.output).split('\n').slice(3, 11);
+  expect(lines.every(line => line.length <= 50)).toBe(true);
+
+  expect(lines[0]).toBe(`     … › a.test.ts:6:7 › failure in very long name`);
+
+  expect(lines[1]).toContain(`${NEGATIVE_STATUS_MARK} …`);
+  expect(lines[1]).toContain(`ts:6:7 › failure in very long name (`);
+  expect(lines[1].length).toBe(50);
+
+  expect(lines[2]).toBe(`     [foo] › a.test.ts:9:7 › passes`);
+
+  expect(lines[3]).toContain(`${POSITIVE_STATUS_MARK} [foo] › a.test.ts:9:7 › passes (`);
+
+  expect(lines[4]).toBe(`     [foo] › a.test.ts:11:7 › passes 2 long name`);
+
+  expect(lines[5]).toContain(`${POSITIVE_STATUS_MARK} …`);
+  expect(lines[5]).toContain(`a.test.ts:11:7 › passes 2 long name (`);
+  expect(lines[5].length).toBe(50);
+
+  expect(lines[6]).toBe(`     …] › a.test.ts:13:12 › skipped very long name`);
+
+  expect(lines[7]).toBe(`  -  …] › a.test.ts:13:12 › skipped very long name`);
 });

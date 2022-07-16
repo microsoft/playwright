@@ -155,10 +155,15 @@ function createDevTools() {
   };
 }
 
-window.playwrightMount = (component, rootElement) => {
+window.playwrightMount = async (component, rootElement, hooksConfig) => {
   const app = createApp({
     render: () => render(component)
   });
   setDevtoolsHook(createDevTools(), {});
-  app.mount(rootElement);
+
+  for (const hook of /** @type {any} */(window).__pw_hooks_before_mount || [])
+    await hook({ app, hooksConfig });
+  const instance = app.mount(rootElement);
+  for (const hook of /** @type {any} */(window).__pw_hooks_after_mount || [])
+    await hook({ app, hooksConfig, instance });
 };

@@ -35,6 +35,10 @@ declare global {
   }
 }
 
+// These are extracted to preserve the function identity between renders to avoid re-triggering effects.
+const testFilesRoutePredicate = (params: URLSearchParams) => !params.has('testId');
+const testCaseRoutePredicate = (params: URLSearchParams) => params.has('testId');
+
 export const ReportView: React.FC<{
   report: LoadedReport | undefined,
 }> = ({ report }) => {
@@ -48,13 +52,10 @@ export const ReportView: React.FC<{
     <main>
       {report?.json() && <HeaderView stats={report.json().stats} filterText={filterText} setFilterText={setFilterText}></HeaderView>}
       {report?.json().metadata && <MetadataView {...report?.json().metadata as Metainfo} />}
-      <Route params=''>
+      <Route predicate={testFilesRoutePredicate}>
         <TestFilesView report={report?.json()} filter={filter} expandedFiles={expandedFiles} setExpandedFiles={setExpandedFiles}></TestFilesView>
       </Route>
-      <Route params='q'>
-        <TestFilesView report={report?.json()} filter={filter} expandedFiles={expandedFiles} setExpandedFiles={setExpandedFiles}></TestFilesView>
-      </Route>
-      <Route params='testId'>
+      <Route predicate={testCaseRoutePredicate}>
         {!!report && <TestCaseViewLoader report={report}></TestCaseViewLoader>}
       </Route>
     </main>
@@ -67,6 +68,8 @@ const TestCaseViewLoader: React.FC<{
   const searchParams = new URLSearchParams(window.location.hash.slice(1));
   const [test, setTest] = React.useState<TestCase | undefined>();
   const testId = searchParams.get('testId');
+  const anchor = (searchParams.get('anchor') || '') as 'video' | 'diff' | '';
+  const run = +(searchParams.get('run') || '0');
   React.useEffect(() => {
     (async () => {
       if (!testId || testId === test?.testId)
@@ -83,5 +86,5 @@ const TestCaseViewLoader: React.FC<{
       }
     })();
   }, [test, report, testId]);
-  return <TestCaseView projectNames={report.json().projectNames} test={test}></TestCaseView>;
+  return <TestCaseView projectNames={report.json().projectNames} test={test} anchor={anchor} run={run}></TestCaseView>;
 };

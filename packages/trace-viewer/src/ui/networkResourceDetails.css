@@ -96,3 +96,7 @@
   margin: 3px 0;
   font-weight: bold;
 }
+
+.network-request-details-time {
+  float: right;
+}

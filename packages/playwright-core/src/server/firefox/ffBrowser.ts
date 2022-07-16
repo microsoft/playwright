@@ -24,6 +24,7 @@ import * as network from '../network';
 import type { Page, PageBinding, PageDelegate } from '../page';
 import type { ConnectionTransport } from '../transport';
 import type * as types from '../types';
+import type * as channels from '../../protocol/channels';
 import { ConnectionEvents, FFConnection } from './ffConnection';
 import { FFPage } from './ffPage';
 import type { Protocol } from './protocol';
@@ -77,7 +78,7 @@ export class FFBrowser extends Browser {
     return !this._connection._closed;
   }
 
-  async doCreateNewContext(options: types.BrowserContextOptions): Promise<BrowserContext> {
+  async doCreateNewContext(options: channels.BrowserNewContextParams): Promise<BrowserContext> {
     if (options.isMobile)
       throw new Error('options.isMobile is not supported in Firefox');
     const { browserContextId } = await this._connection.send('Browser.createBrowserContext', { removeOnDetach: true });
@@ -155,7 +156,7 @@ export class FFBrowser extends Browser {
 export class FFBrowserContext extends BrowserContext {
   declare readonly _browser: FFBrowser;
 
-  constructor(browser: FFBrowser, browserContextId: string | undefined, options: types.BrowserContextOptions) {
+  constructor(browser: FFBrowser, browserContextId: string | undefined, options: channels.BrowserNewContextParams) {
     super(browser, options, browserContextId);
   }
 
@@ -191,8 +192,6 @@ export class FFBrowserContext extends BrowserContext {
       promises.push(this._browser._connection.send('Browser.setLocaleOverride', { browserContextId, locale: this._options.locale }));
     if (this._options.timezoneId)
       promises.push(this._browser._connection.send('Browser.setTimezoneOverride', { browserContextId, timezoneId: this._options.timezoneId }));
-    if (this._options.permissions)
-      promises.push(this.grantPermissions(this._options.permissions));
     if (this._options.extraHTTPHeaders || this._options.locale)
       promises.push(this.setExtraHTTPHeaders(this._options.extraHTTPHeaders || []));
     if (this._options.httpCredentials)
@@ -255,17 +254,17 @@ export class FFBrowserContext extends BrowserContext {
     return this._browser._ffPages.get(targetId)!;
   }
 
-  async doGetCookies(urls: string[]): Promise<types.NetworkCookie[]> {
+  async doGetCookies(urls: string[]): Promise<channels.NetworkCookie[]> {
     const { cookies } = await this._browser._connection.send('Browser.getCookies', { browserContextId: this._browserContextId });
     return network.filterCookies(cookies.map(c => {
       const copy: any = { ... c };
       delete copy.size;
       delete copy.session;
-      return copy as types.NetworkCookie;
+      return copy as channels.NetworkCookie;
     }), urls);
   }
 
-  async addCookies(cookies: types.SetNetworkCookieParam[]) {
+  async addCookies(cookies: channels.SetNetworkCookie[]) {
     const cc = network.rewriteCookies(cookies).map(c => ({
       ...c,
       expires: c.expires && c.expires !== -1 ? c.expires : undefined,

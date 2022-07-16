@@ -23,6 +23,7 @@ import * as https from 'https';
 import * as os from 'os';
 import * as util from 'util';
 import * as child_process from 'child_process';
+import AdmZip from 'adm-zip';
 
 const existsAsync = path => new Promise(resolve => fs.stat(path, err => resolve(!err)));
 
@@ -49,7 +50,7 @@ if (process.argv[2] === 'firefox' || process.argv[2] === 'ff') {
 // Path to jar.mn in the juggler
 const JARMN_PATH = path.join(__dirname, browserName, 'juggler', 'jar.mn');
 // Workdir for Firefox repackaging
-const BUILD_DIRECTORY = `/tmp/repackaged-firefox`;
+const BUILD_DIRECTORY = os.platform() === 'win32' ? path.join(__dirname, '__repackaged_firefox__') : `/tmp/repackaged-firefox`;
 // Information about currently downloaded build
 const BUILD_INFO_PATH = path.join(BUILD_DIRECTORY, 'build-info.json');
 // Backup OMNI.JA - the original one before repackaging.
@@ -108,27 +109,48 @@ async function ensureFirefoxBuild(browserName, buildNumber, buildPlatform) {
     throw new Error(`ERROR: repack-juggler does not support ${buildPlatform}`);
   const url = util.format(urlTemplate, buildNumber);
   console.log(`Downloading ${browserName} r${buildNumber} for ${buildPlatform} - it might take a few minutes`);
-  await downloadFile(url, buildZipPath);
-  await spawnAsync('unzip', [ buildZipPath ], { cwd: BUILD_DIRECTORY });
+  let downloadedPercentage = 0;
+  await downloadFile(url, buildZipPath, (downloaded, total) => {
+    const percentage = Math.round(downloaded / total * 10) * 10;
+    if (percentage === downloadedPercentage)
+      return;
+    downloadedPercentage = percentage;
+    console.log(`Downloaded: ${downloadedPercentage}%`);
+  });
+
+  const zip = new AdmZip(buildZipPath);
+  zip.extractAllTo(BUILD_DIRECTORY, false /* overwrite */, true /* keepOriginalPermission */);
+
   const buildInfo = { buildNumber, buildPlatform, browserName };
   await fs.promises.writeFile(BUILD_INFO_PATH, JSON.stringify(buildInfo), 'utf8');
   return buildInfo;
+}
+
+async function listFiles(aPath, files = []) {
+  const stat = await fs.promises.lstat(aPath);
+  if (stat.isDirectory()) {
+    const entries = await fs.promises.readdir(aPath);
+    await Promise.all(entries.map(entry => listFiles(path.join(aPath, entry), files)));
+  } else {
+    files.push(aPath);
+  }
+  return files;
 }
 
 async function repackageJuggler(browserName, buildInfo) {
   const { buildNumber, buildPlatform } = buildInfo;
 
   // Find all omni.ja files in the Firefox build.
-  const omniPaths = await spawnAsync('find', ['.', '-name', 'omni.ja'], {
-    cwd: BUILD_DIRECTORY,
-  }).then(({ stdout }) => stdout.trim().split('\n').map(aPath => path.join(BUILD_DIRECTORY, aPath)));
+  const omniPaths = (await listFiles(BUILD_DIRECTORY)).filter(filePath => filePath.endsWith('omni.ja'));
 
   // Iterate over all omni.ja files and find one that has juggler inside.
   const omniWithJugglerPath = await (async () => {
     for (const omniPath of omniPaths) {
-      const { stdout } = await spawnAsync('unzip', ['-Z1', omniPath], { cwd: BUILD_DIRECTORY });
-      if (stdout.includes('chrome/juggler'))
-        return omniPath;
+      const zip = new AdmZip(omniPath);
+      for (const zipEntry of zip.getEntries()) {
+        if (zipEntry.toString().includes('chrome/juggler'))
+          return omniPath;
+      }
     }
     return null;
   })();
@@ -145,7 +167,12 @@ async function repackageJuggler(browserName, buildInfo) {
   await fs.promises.rm(OMNI_EXTRACT_DIR, { recursive: true }).catch(e => {});
   await fs.promises.mkdir(OMNI_EXTRACT_DIR);
 
-  await spawnAsync('unzip', [OMNI_BACKUP_PATH], { cwd: OMNI_EXTRACT_DIR });
+  {
+    // Unzip omni
+    const zip = new AdmZip(OMNI_BACKUP_PATH);
+    zip.extractAllTo(OMNI_EXTRACT_DIR, false /* overwrite */, true /* keepOriginalPermission */);
+  }
+
   // Remove current juggler directory
   await fs.promises.rm(OMNI_JUGGLER_DIR, { recursive: true });
   // Repopulate with tip-of-tree juggler files
@@ -160,9 +187,13 @@ async function repackageJuggler(browserName, buildInfo) {
   }
 
   await fs.promises.unlink(omniWithJugglerPath);
-  await spawnAsync('zip', ['-0', '-qr9XD', omniWithJugglerPath, '.'], { cwd: OMNI_EXTRACT_DIR, stdio: 'inherit' });
+  {
+    const zip = new AdmZip();
+    zip.addLocalFolder(OMNI_EXTRACT_DIR);
+    zip.writeZip(omniWithJugglerPath);
+  }
 
-  const module = await import(path.join(__dirname, browserName, 'install-preferences.js'));
+  const module = await import(URL.pathToFileURL(path.join(__dirname, browserName, 'install-preferences.js')));
   await module.default.installFirefoxPreferences(path.join(BUILD_DIRECTORY, 'firefox'));
 
   // Output executable path to be used in test.
@@ -222,22 +253,6 @@ function downloadFile(url, destinationPath, progressCallback) {
     downloadedBytes += chunk.length;
     progressCallback(downloadedBytes, totalBytes);
   }
-}
-
-function spawnAsync(cmd, args, options) {
-  // console.log(cmd, ...args, 'CWD:', options.cwd);
-  const process = child_process.spawn(cmd, args, options);
-
-  return new Promise(resolve => {
-    let stdout = '';
-    let stderr = '';
-    if (process.stdout)
-      process.stdout.on('data', data => stdout += data);
-    if (process.stderr)
-      process.stderr.on('data', data => stderr += data);
-    process.on('close', code => resolve({ stdout, stderr, code }));
-    process.on('error', error => resolve({ stdout, stderr, code: 0, error }));
-  });
 }
 
 function getUbuntuVersionSync() {

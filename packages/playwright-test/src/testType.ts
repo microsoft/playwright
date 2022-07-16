@@ -19,7 +19,7 @@ import { currentlyLoadingFileSuite, currentTestInfo, setCurrentlyLoadingFileSuit
 import { TestCase, Suite } from './test';
 import { wrapFunctionWithLocation } from './transform';
 import type { Fixtures, FixturesWithLocation, Location, TestType } from './types';
-import { errorWithLocation, serializeError } from './util';
+import { errorWithLocation, filterUndefinedFixtures, serializeError } from './util';
 
 const testTypeSymbol = Symbol('testType');
 
@@ -88,24 +88,23 @@ export class TestTypeImpl {
 
     if (type === 'only')
       test._only = true;
-    if (type === 'skip' || type === 'fixme')
+    if (type === 'skip' || type === 'fixme') {
+      test.annotations.push({ type });
       test.expectedStatus = 'skipped';
+    }
     for (let parent: Suite | undefined = suite; parent; parent = parent.parent) {
       if (parent._skipped)
         test.expectedStatus = 'skipped';
     }
   }
 
-  private _describe(type: 'default' | 'only' | 'serial' | 'serial.only' | 'parallel' | 'parallel.only' | 'skip', location: Location, title: string, fn: Function) {
+  private _describe(type: 'default' | 'only' | 'serial' | 'serial.only' | 'parallel' | 'parallel.only' | 'skip', location: Location, title: string | Function, fn?: Function) {
     throwIfRunningInsideJest();
     const suite = this._ensureCurrentSuite(location, 'test.describe()');
+
     if (typeof title === 'function') {
-      throw errorWithLocation(location, [
-        'It looks like you are calling describe() without the title. Pass the title as a first argument:',
-        `test.describe('my test group', () => {`,
-        `  // Declare tests here`,
-        `});`,
-      ].join('\n'));
+      fn = title;
+      title = '';
     }
 
     const child = new Suite(title);
@@ -120,8 +119,10 @@ export class TestTypeImpl {
       child._parallelMode = 'serial';
     if (type === 'parallel' || type === 'parallel.only')
       child._parallelMode = 'parallel';
-    if (type === 'skip')
+    if (type === 'skip') {
       child._skipped = true;
+      child._annotations.push({ type: 'skip' });
+    }
 
     for (let parent: Suite | undefined = suite; parent; parent = parent.parent) {
       if (parent._parallelMode === 'serial' && child._parallelMode === 'parallel')
@@ -129,7 +130,7 @@ export class TestTypeImpl {
     }
 
     setCurrentlyLoadingFileSuite(child);
-    fn();
+    fn!();
     setCurrentlyLoadingFileSuite(suite);
   }
 
@@ -196,7 +197,7 @@ export class TestTypeImpl {
 
   private _use(location: Location, fixtures: Fixtures) {
     const suite = this._ensureCurrentSuite(location, `test.use()`);
-    suite._use.push({ fixtures, location });
+    suite._use.push({ fixtures: filterUndefinedFixtures(fixtures) , location });
   }
 
   private async _step(location: Location, title: string, body: () => Promise<void>): Promise<void> {
@@ -222,7 +223,7 @@ export class TestTypeImpl {
   private _extend(location: Location, fixtures: Fixtures) {
     if ((fixtures as any)[testTypeSymbol])
       throw new Error(`test.extend() accepts fixtures object, not a test object.\nDid you mean to call test._extendTest()?`);
-    const fixturesWithLocation: FixturesWithLocation = { fixtures, location };
+    const fixturesWithLocation: FixturesWithLocation = { fixtures: filterUndefinedFixtures(fixtures), location };
     return new TestTypeImpl([...this.fixtures, fixturesWithLocation]).test;
   }
 

@@ -7,3 +7,5 @@
 !registerSource.mjs
 !index.d.ts
 !index.js
+!hooks.d.ts
+!hooks.js

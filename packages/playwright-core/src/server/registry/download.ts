@@ -48,10 +48,17 @@ function downloadFile(url: string, destinationPath: string, options: DownloadFil
   }, response => {
     log(`-- response status code: ${response.statusCode}`);
     if (response.statusCode !== 200) {
-      const error = new Error(`Download failed: server returned code ${response.statusCode}. URL: ${url}`);
-      // consume response data to free up memory
-      response.resume();
-      fulfill({ error });
+      let content = '';
+      const handleError = () => {
+        const error = new Error(`Download failed: server returned code ${response.statusCode} body '${content}'. URL: ${url}`);
+        // consume response data to free up memory
+        response.resume();
+        fulfill({ error });
+      };
+      response
+          .on('data', chunk => content += chunk)
+          .on('end', handleError)
+          .on('error', handleError);
       return;
     }
     const file = fs.createWriteStream(destinationPath);
@@ -79,7 +86,7 @@ type DownloadOptions = {
 };
 
 export async function download(
-  url: string,
+  urls: string | string[],
   destination: string,
   options: DownloadOptions = {}
 ) {
@@ -88,6 +95,9 @@ export async function download(
     log(
         `downloading ${progressBarName} - attempt #${attempt}`
     );
+    if (!Array.isArray(urls))
+      urls = [urls];
+    const url = urls[(attempt - 1) % urls.length];
     const { error } = await downloadFile(url, destination, {
       progressCallback: getDownloadProgress(progressBarName),
       log,
@@ -99,18 +109,8 @@ export async function download(
     }
     const errorMessage = error?.message || '';
     log(`attempt #${attempt} - ERROR: ${errorMessage}`);
-    if (
-      attempt < retryCount &&
-      (errorMessage.includes('ECONNRESET') ||
-        errorMessage.includes('ETIMEDOUT'))
-    ) {
-      // Maximum default delay is 3rd retry: 1337.5ms
-      const millis = Math.random() * 200 + 250 * Math.pow(1.5, attempt);
-      log(`sleeping ${millis}ms before retry...`);
-      await new Promise(c => setTimeout(c, millis));
-    } else {
+    if (attempt >= retryCount)
       throw error;
-    }
   }
 }
 

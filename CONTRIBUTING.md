@@ -114,6 +114,12 @@ To run the documentation linter, use:
 npm run doc
 ```
 
+To build the documentation site locally and test how your changes will look in practice:
+
+1. Clone the [microsoft/playwright.dev](https://github.com/microsoft/playwright.dev) repo
+1. Follow [the playwright.dev README instructions to "roll docs"](https://github.com/microsoft/playwright.dev/#roll-docs) against your local `playwright` repo with your changes in progress
+1. Follow [the playwright.dev README instructions to "run dev server"](https://github.com/microsoft/playwright.dev/#run-dev-server) to view your changes
+
 ### Adding New Dependencies
 
 For all dependencies (both installation and development):
