@@ -22,7 +22,7 @@ import path from 'path';
  * @param {string} number - The number of reporter to test. Format is: 01, 02, etc.
  */
 const reporterPath = (number: string) => {
-  return path.join(__dirname, '.', 'assets', 'azure-reporter', `reporter-azure.intercept.${number}.ts`);
+  return path.join(__dirname, '.', 'assets', 'azure-reporter', `reporter-azure.intercept.${number}.ts`).replace(/\\/g, '/');
 };
 
 test("'orgUrl' in config expected @azure", async ({ runInlineTest }) => {
