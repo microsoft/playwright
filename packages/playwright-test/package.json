@@ -33,6 +33,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@types/node": "*",
+    "azure-devops-node-api": "^11.2.0",
     "playwright-core": "1.23.0-next"
   }
 }
