@@ -108,7 +108,7 @@ export class SnapshotRenderer {
 
     // First try locating exact resource belonging to this frame.
     for (const resource of this._resources) {
-      if (resource._monotonicTime >= snapshot.timestamp)
+      if (typeof resource._monotonicTime === 'number' && resource._monotonicTime >= snapshot.timestamp)
         break;
       if (resource._frameref !== snapshot.frameId)
         continue;
@@ -121,7 +121,7 @@ export class SnapshotRenderer {
     if (!result) {
       // Then fall back to resource with this URL to account for memory cache.
       for (const resource of this._resources) {
-        if (resource._monotonicTime >= snapshot.timestamp)
+        if (typeof resource._monotonicTime === 'number' && resource._monotonicTime >= snapshot.timestamp)
           break;
         if (resource.request.url === url)
           return resource;

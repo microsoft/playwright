@@ -47,8 +47,8 @@ it('should work with :visible', async ({ page }) => {
   `);
   expect(await page.$('div:visible')).toBe(null);
 
-  const error = await page.waitForSelector(`div:visible`, { timeout: 100 }).catch(e => e);
-  expect(error.message).toContain('100ms');
+  const error = await page.waitForSelector(`div:visible`, { timeout: 1000 }).catch(e => e);
+  expect(error.message).toContain('1000ms');
 
   const promise = page.waitForSelector(`div:visible`, { state: 'attached' });
   await page.$eval('#target2', div => div.textContent = 'Now visible');
@@ -67,8 +67,8 @@ it('should work with >> visible=', async ({ page }) => {
   `);
   expect(await page.$('div >> visible=true')).toBe(null);
 
-  const error = await page.waitForSelector(`div >> visible=true`, { timeout: 100 }).catch(e => e);
-  expect(error.message).toContain('100ms');
+  const error = await page.waitForSelector(`div >> visible=true`, { timeout: 1000 }).catch(e => e);
+  expect(error.message).toContain('1000ms');
 
   const promise = page.waitForSelector(`div >> visible=true`, { state: 'attached' });
   await page.$eval('#target2', div => div.textContent = 'Now visible');

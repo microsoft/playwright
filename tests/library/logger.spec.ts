@@ -24,10 +24,9 @@ it('should log @smoke', async ({ browserType }) => {
   } });
   await browser.newContext();
   await browser.close();
-  expect(log.length > 0).toBeTruthy();
-  expect(log.filter(item => item.severity === 'info').length > 0).toBeTruthy();
-  expect(log.filter(item => item.message.includes('browser.newContext started')).length > 0).toBeTruthy();
-  expect(log.filter(item => item.message.includes('browser.newContext succeeded')).length > 0).toBeTruthy();
+  expect(log.find(item => item.severity === 'info')).toBeTruthy();
+  expect(log.find(item => item.message.includes('browser.newContext started'))).toBeTruthy();
+  expect(log.find(item => item.message.includes('browser.newContext succeeded'))).toBeTruthy();
 });
 
 it('should log context-level', async ({ browserType }) => {

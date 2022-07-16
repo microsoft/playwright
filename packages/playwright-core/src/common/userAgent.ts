@@ -15,9 +15,8 @@
  */
 
 import { execSync } from 'child_process';
-import fs from 'fs';
 import os from 'os';
-import { parseOSReleaseText } from '../utils/ubuntuVersion';
+import { getLinuxDistributionInfoSync } from '../utils/linuxUtils';
 
 let cachedUserAgent: string | undefined;
 
@@ -44,22 +43,23 @@ function determineUserAgent(): string {
     osIdentifier = 'macOS';
     osVersion = `${version[0]}.${version[1]}`;
   } else if (process.platform === 'linux') {
-    try {
-      // List of /etc/os-release values for different distributions could be
-      // found here: https://gist.github.com/aslushnikov/8ceddb8288e4cf9db3039c02e0f4fb75
-      const osReleaseText = fs.readFileSync('/etc/os-release', 'utf8');
-      const fields = parseOSReleaseText(osReleaseText);
-      osIdentifier = fields.get('id') || 'unknown';
-      osVersion = fields.get('version_id') || 'unknown';
-    } catch (e) {
+    const distroInfo = getLinuxDistributionInfoSync();
+    if (distroInfo) {
+      osIdentifier = distroInfo.id || 'linux';
+      osVersion = distroInfo.version || 'unknown';
+    } else {
       // Linux distribution without /etc/os-release.
       // Default to linux/unknown.
       osIdentifier = 'linux';
     }
   }
+  const additionalTokens = [];
+  if (process.env.CI)
+    additionalTokens.push('CI/1');
+  const serializedTokens = additionalTokens.length ? ' ' + additionalTokens.join(' ') : '';
 
   const { langName, langVersion } = getClientLanguage();
-  return `Playwright/${getPlaywrightVersion()} (${os.arch()}; ${osIdentifier} ${osVersion}) ${langName}/${langVersion}`;
+  return `Playwright/${getPlaywrightVersion()} (${os.arch()}; ${osIdentifier} ${osVersion}) ${langName}/${langVersion}${serializedTokens}`;
 }
 
 export function getClientLanguage(): { langName: string, langVersion: string } {

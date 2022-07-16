@@ -62,7 +62,7 @@ it('should respect default timeout', async ({ page, playwright }) => {
 });
 
 it('should log the url', async ({ page }) => {
-  const error = await page.waitForRequest('long-long-long-long-long-long-long-long-long-long-long-long-long-long.css', { timeout: 100 }).catch(e => e);
+  const error = await page.waitForRequest('long-long-long-long-long-long-long-long-long-long-long-long-long-long.css', { timeout: 1000 }).catch(e => e);
   expect(error.message).toContain('waiting for request "long-long-long-long-long-long-long-long-long-long-…"');
 });
 

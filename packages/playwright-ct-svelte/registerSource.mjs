@@ -32,7 +32,7 @@ export function register(components) {
     registry.set(name, value);
 }
 
-window.playwrightMount = (component, rootElement) => {
+window.playwrightMount = async (component, rootElement, hooksConfig) => {
   let componentCtor = registry.get(component.type);
   if (!componentCtor) {
     // Lookup by shorthand.
@@ -50,10 +50,18 @@ window.playwrightMount = (component, rootElement) => {
   if (component.kind !== 'object')
     throw new Error('JSX mount notation is not supported');
 
+
+  for (const hook of /** @type {any} */(window).__pw_hooks_before_mount || [])
+    await hook({ hooksConfig });
+
   const wrapper = new componentCtor({
     target: rootElement,
     props: component.options?.props,
   });
+
+  for (const hook of /** @type {any} */(window).__pw_hooks_after_mount || [])
+    await hook({ hooksConfig });
+
   for (const [key, listener] of Object.entries(component.options?.on || {}))
     wrapper.$on(key, event => listener(event.detail));
 };

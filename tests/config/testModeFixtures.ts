@@ -24,7 +24,7 @@ export type TestModeWorkerOptions = {
 
 export type TestModeWorkerFixtures = {
   playwright: typeof import('@playwright/test');
-  toImpl: (rpcObject: any) => any;
+  toImpl: (rpcObject?: any) => any;
 };
 
 export const testModeTest = test.extend<{}, TestModeWorkerOptions & TestModeWorkerFixtures>({

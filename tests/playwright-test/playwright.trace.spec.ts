@@ -15,7 +15,7 @@
  */
 
 import { test, expect } from './playwright-test-fixtures';
-import { ZipFileSystem } from '../config/vfs';
+import { ZipFile } from '../../packages/playwright-core/lib/utils/zipFile';
 import fs from 'fs';
 
 test('should stop tracing with trace: on-first-retry, when not retrying', async ({ runInlineTest }, testInfo) => {
@@ -243,7 +243,7 @@ test('should not override trace file in afterAll', async ({ runInlineTest, serve
 
 
 async function parseTrace(file: string): Promise<Map<string, Buffer>> {
-  const zipFS = new ZipFileSystem(file);
+  const zipFS = new ZipFile(file);
   const resources = new Map<string, Buffer>();
   for (const entry of await zipFS.entries())
     resources.set(entry, await zipFS.read(entry));

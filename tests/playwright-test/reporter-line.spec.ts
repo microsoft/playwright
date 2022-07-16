@@ -82,3 +82,25 @@ test('should work on CI', async ({ runInlineTest }) => {
   expect(text).toContain('1) a.test');
   expect(result.exitCode).toBe(1);
 });
+
+test('should print output', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      const { test } = pwt;
+      test('foobar', async ({}, testInfo) => {
+        process.stdout.write('one');
+        process.stdout.write('two');
+        console.log('full-line');
+      });
+    `
+  }, { reporter: 'line' });
+  expect(result.exitCode).toBe(0);
+  expect(stripAnsi(result.output)).toContain([
+    'a.spec.ts:6:7 › foobar',
+    'one',
+    '',
+    'two',
+    '',
+    'full-line',
+  ].join('\n'));
+});

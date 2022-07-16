@@ -1,9 +1,11 @@
 # class: Selectors
+* since: v1.8
 
 Selectors can be used to install custom selector engines. See [Working with selectors](../selectors.md) for more
 information.
 
 ## async method: Selectors.register
+* since: v1.8
 
 An example of registering selector engine that queries elements based on a tag name:
 
@@ -34,7 +36,7 @@ const { selectors, firefox } = require('playwright');  // Or 'chromium' or 'webk
   // Use the selector prefixed with its name.
   const button = page.locator('tag=button');
   // Combine it with other selector engines.
-  await page.click('tag=div >> text="Click me"');
+  await page.locator('tag=div >> text="Click me"').click();
   // Can use it in any methods supporting selectors.
   const buttonCount = await page.locator('tag=button').count();
 
@@ -62,7 +64,7 @@ page.setContent("<div><button>Click me</button></div>");
 // Use the selector prefixed with its name.
 Locator button = page.locator("tag=button");
 // Combine it with other selector engines.
-page.click("tag=div >> text=\"Click me\"");
+page.locator("tag=div >> text=\"Click me\"").click();
 // Can use it in any methods supporting selectors.
 int buttonCount = (int) page.locator("tag=button").count();
 browser.close();
@@ -94,7 +96,7 @@ async def run(playwright):
     # Use the selector prefixed with its name.
     button = await page.query_selector('tag=button')
     # Combine it with other selector engines.
-    await page.click('tag=div >> text="Click me"')
+    await page.locator('tag=div >> text="Click me"').click()
     # Can use it in any methods supporting selectors.
     button_count = await page.locator('tag=button').count()
     print(button_count)
@@ -132,7 +134,7 @@ def run(playwright):
     # Use the selector prefixed with its name.
     button = page.locator('tag=button')
     # Combine it with other selector engines.
-    page.click('tag=div >> text="Click me"')
+    page.locator('tag=div >> text="Click me"').click()
     # Can use it in any methods supporting selectors.
     button_count = page.locator('tag=button').count()
     print(button_count)
@@ -162,18 +164,20 @@ await page.SetContentAsync("<div><button>Click me</button></div>");
 // Use the selector prefixed with its name.
 var button = page.Locator("tag=button");
 // Combine it with other selector engines.
-await page.ClickAsync("tag=div >> text=\"Click me\"");
+await page.Locator("tag=div >> text=\"Click me\"").ClickAsync();
 // Can use it in any methods supporting selectors.
 int buttonCount = await page.Locator("tag=button").CountAsync();
 ```
 
 ### param: Selectors.register.name
+* since: v1.8
 - `name` <[string]>
 
 Name that is used in selectors as a prefix, e.g. `{name: 'foo'}` enables `foo=myselectorbody` selectors. May only
 contain `[a-zA-Z0-9_]` characters.
 
 ### param: Selectors.register.script
+* since: v1.8
 * langs: js
 - `script` <[function]|[string]|[Object]>
   - `path` ?<[path]> Path to the JavaScript file. If `path` is a relative path, then it is resolved relative to the
@@ -183,24 +187,28 @@ contain `[a-zA-Z0-9_]` characters.
 Script that evaluates to a selector engine instance.
 
 ### param: Selectors.register.script
+* since: v1.8
 * langs: java
 - `script` <[string]|[path]>
 
 Script that evaluates to a selector engine instance.
 
 ### option: Selectors.register.script
+* since: v1.8
 * langs: csharp
 - `script` <[string]>
 
 Script that evaluates to a selector engine instance.
 
 ### option: Selectors.register.path
+* since: v1.8
 * langs: csharp
 - `path` <[path]>
 
 Script that evaluates to a selector engine instance.
 
 ### option: Selectors.register.contentScript
+* since: v1.8
 - `contentScript` <[boolean]>
 
 Whether to run this selector engine in isolated JavaScript environment. This environment has access to the same DOM, but

@@ -145,17 +145,17 @@ function findReactRoots(root: Document | ShadowRoot, roots: ReactVNode[] = []): 
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT);
   do {
     const node = walker.currentNode;
-    // ReactDOM Legacy client API:
-    // @see https://github.com/baruchvlz/resq/blob/5c15a5e04d3f7174087248f5a158c3d6dcc1ec72/src/utils.js#L329
-    if (node.hasOwnProperty('_reactRootContainer')) {
+
+    // React 17+
+    // React sets rootKey when mounting
+    // @see https://github.com/facebook/react/blob/a724a3b578dce77d427bef313102a4d0e978d9b4/packages/react-dom/src/client/ReactDOMComponentTree.js#L62-L64
+    const rootKey = Object.keys(node).find(key => key.startsWith('__reactContainer'));
+    if (rootKey) {
+      roots.push((node as any)[rootKey].stateNode.current);
+    } else if (node.hasOwnProperty('_reactRootContainer')) {
+      // ReactDOM Legacy client API:
+      // @see https://github.com/baruchvlz/resq/blob/5c15a5e04d3f7174087248f5a158c3d6dcc1ec72/src/utils.js#L329
       roots.push((node as any)._reactRootContainer._internalRoot.current);
-    } else {
-      // React 17+
-      // React sets rootKey when mounting
-      // @see https://github.com/facebook/react/blob/a724a3b578dce77d427bef313102a4d0e978d9b4/packages/react-dom/src/client/ReactDOMComponentTree.js#L62-L64
-      const rootKey = Object.keys(node).find(key => key.startsWith('__reactContainer'));
-      if (rootKey)
-        roots.push((node as any)[rootKey].stateNode.current);
     }
 
     // Pre-react 16: rely on `data-reactroot`

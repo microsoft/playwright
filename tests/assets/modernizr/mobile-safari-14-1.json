@@ -292,7 +292,7 @@
   "cssresize": true,
   "scrollsnappoints": true,
   "shapes": true,
-  "textalignlast": false,
+  "textalignlast": true,
   "csstransforms": true,
   "csstransforms3d": true,
   "csstransformslevel2": true,

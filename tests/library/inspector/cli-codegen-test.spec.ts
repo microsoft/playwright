@@ -90,3 +90,18 @@ test('test', async ({ page }) => {`;
 
   await cli.waitFor(expectedResult);
 });
+
+test('should work with --save-har', async ({ runCLI }, testInfo) => {
+  const harFileName = testInfo.outputPath('har.har');
+  const cli = runCLI(['--target=test', `--save-har=${harFileName}`]);
+  const expectedResult = `
+  recordHar: {
+    mode: 'minimal',
+    path: '${harFileName.replace(/\\/g, '\\\\')}'
+  }`;
+  await cli.waitFor(expectedResult).catch(e => e);
+  expect(cli.text()).toContain(expectedResult);
+  await cli.exited;
+  const json = JSON.parse(fs.readFileSync(harFileName, 'utf-8'));
+  expect(json.log.creator.name).toBe('Playwright');
+});

@@ -1,0 +1,44 @@
+name: "PR: bump driver Node.js"
+on:
+  workflow_dispatch:
+  schedule:
+    # At 10:00am UTC  (3AM PST) every tuesday and thursday to roll to new Node.js driver
+    - cron: "0 10 * * 2,4"
+jobs:
+  trigger-nodejs-roll:
+    name: Trigger Roll
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: 16
+      - run: node utils/build/update-playwright-driver-version.mjs
+      - name: Prepare branch
+        id: prepare-branch
+        run: |
+          if [[ "$(git status --porcelain)" == "" ]]; then
+              echo "there are no changes";
+              exit 0;
+          fi
+          echo "::set-output name=HAS_CHANGES::1"
+          BRANCH_NAME="roll-driver-nodejs/$(date +%Y-%b-%d)"
+          echo "::set-output name=BRANCH_NAME::$BRANCH_NAME"
+          git config --global user.name github-actions
+          git config --global user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git checkout -b "$BRANCH_NAME"
+          git add .
+          git commit -m "chore(driver): roll driver to recent Node.js LTS version"
+          git push origin $BRANCH_NAME
+      - name: Create Pull Request
+        if: ${{ steps.prepare-branch.outputs.HAS_CHANGES == '1' }}
+        uses: actions/github-script@v4
+        with:
+          script: |
+            await github.pulls.create({
+              owner: 'microsoft',
+              repo: 'playwright',
+              head: 'microsoft:${{ steps.prepare-branch.outputs.BRANCH_NAME }}',
+              base: 'main',
+              title: 'chore(driver): roll driver to recent Node.js LTS version',
+            });

@@ -122,6 +122,8 @@ const testFiles = {
   `,
 };
 
+test.slow(true, 'Multiple browser launches in each test');
+
 test('should work with screenshot: on', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     ...testFiles,
@@ -277,4 +279,27 @@ test('should work with trace: on-first-retry', async ({ runInlineTest }, testInf
     '  trace.zip',
     'report.json',
   ]);
+});
+
+test('should take screenshot when page is closed in afterEach', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { use: { screenshot: 'on' } };
+    `,
+    'a.spec.ts': `
+      const { test } = pwt;
+
+      test.afterEach(async ({ page }) => {
+        await page.close();
+      });
+
+      test('fails', async ({ page }) => {
+        expect(1).toBe(2);
+      });
+    `,
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(fs.existsSync(testInfo.outputPath('test-results', 'a-fails', 'test-failed-1.png'))).toBeTruthy();
 });

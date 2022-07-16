@@ -70,18 +70,30 @@ async function run() {
     writeAssumeNoop(path.join(PROJECT_DIR, 'README.md'), content, dirtyFiles);
   }
 
+  let playwrightVersion = require(path.join(PROJECT_DIR, 'package.json')).version;
+  if (playwrightVersion.endsWith('-next'))
+    playwrightVersion = playwrightVersion.substring(0, playwrightVersion.indexOf('-next'));
+
   // Patch docker version in docs
   {
-    let playwrightVersion = require(path.join(PROJECT_DIR, 'package.json')).version;
-    if (playwrightVersion.endsWith('-next'))
-      playwrightVersion = playwrightVersion.substring(0, playwrightVersion.indexOf('-next'));
     const regex = new RegExp("(mcr.microsoft.com/playwright[^: ]*):?([^ ]*)");
     for (const filePath of getAllMarkdownFiles(path.join(PROJECT_DIR, 'docs'))) {
       let content = fs.readFileSync(filePath).toString();
       content = content.replace(new RegExp('(mcr.microsoft.com/playwright[^:]*):([\\w\\d-.]+)', 'ig'), (match, imageName, imageVersion) => {
-        return `${imageName}:v${playwrightVersion}-focal`;
+        const [version, distroName] = imageVersion.split('-');
+        return `${imageName}:v${playwrightVersion}-${distroName ?? 'focal'}`;
       });
       writeAssumeNoop(filePath, content, dirtyFiles);
+    }
+
+    // Patch pom.xml
+    {
+      const introPath = path.join(PROJECT_DIR, 'docs', 'src', 'intro-java.md');
+      const pomVersionRe = new RegExp('^(\\s*<artifactId>playwright<\\/artifactId>\\n\\s*<version>)(.*)(<\\/version>)$', 'gm');
+      let content = fs.readFileSync(introPath).toString();
+      const majorVersion = playwrightVersion.replace(new RegExp('((\\d+\\.){2})(\\d+)'), '$10')
+      content = content.replace(pomVersionRe, '$1' + majorVersion + '$3');
+      writeAssumeNoop(introPath, content, dirtyFiles);
     }
   }
 

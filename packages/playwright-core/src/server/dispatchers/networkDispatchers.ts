@@ -15,13 +15,14 @@
  */
 
 import type * as channels from '../../protocol/channels';
-import { APIRequestContext } from '../fetch';
+import type { APIRequestContext } from '../fetch';
 import type { CallMetadata } from '../instrumentation';
 import type { Request, Response, Route } from '../network';
 import { WebSocket } from '../network';
 import type { DispatcherScope } from './dispatcher';
 import { Dispatcher, existingDispatcher, lookupNullableDispatcher } from './dispatcher';
 import { FrameDispatcher } from './frameDispatcher';
+import { WorkerDispatcher } from './pageDispatcher';
 import { TracingDispatcher } from './tracingDispatcher';
 
 export class RequestDispatcher extends Dispatcher<Request, channels.RequestChannel> implements channels.RequestChannel {
@@ -39,11 +40,12 @@ export class RequestDispatcher extends Dispatcher<Request, channels.RequestChann
   private constructor(scope: DispatcherScope, request: Request) {
     const postData = request.postDataBuffer();
     super(scope, request, 'Request', {
-      frame: FrameDispatcher.from(scope, request.frame()),
+      frame: FrameDispatcher.fromNullable(scope, request.frame()),
+      serviceWorker: WorkerDispatcher.fromNullable(scope, request.serviceWorker()),
       url: request.url(),
       resourceType: request.resourceType(),
       method: request.method(),
-      postData: postData === null ? undefined : postData.toString('base64'),
+      postData: postData === null ? undefined : postData,
       headers: request.headers(),
       isNavigationRequest: request.isNavigationRequest(),
       redirectedFrom: RequestDispatcher.fromNullable(scope, request.redirectedFrom()),
@@ -86,7 +88,7 @@ export class ResponseDispatcher extends Dispatcher<Response, channels.ResponseCh
   }
 
   async body(): Promise<channels.ResponseBodyResult> {
-    return { binary: (await this._object.body()).toString('base64') };
+    return { binary: await this._object.body() };
   }
 
   async securityDetails(): Promise<channels.ResponseSecurityDetailsResult> {
@@ -126,7 +128,7 @@ export class RouteDispatcher extends Dispatcher<Route, channels.RouteChannel> im
       url: params.url,
       method: params.method,
       headers: params.headers,
-      postData: params.postData !== undefined ? Buffer.from(params.postData, 'base64') : undefined,
+      postData: params.postData,
     });
   }
 
@@ -136,6 +138,10 @@ export class RouteDispatcher extends Dispatcher<Route, channels.RouteChannel> im
 
   async abort(params: channels.RouteAbortParams): Promise<void> {
     await this._object.abort(params.errorCode || 'failed');
+  }
+
+  async redirectNavigationRequest(params: channels.RouteRedirectNavigationRequestParams): Promise<void> {
+    await this._object.redirectNavigationRequest(params.url);
   }
 }
 
@@ -147,10 +153,10 @@ export class WebSocketDispatcher extends Dispatcher<WebSocket, channels.WebSocke
     super(scope, webSocket, 'WebSocket', {
       url: webSocket.url(),
     });
-    webSocket.on(WebSocket.Events.FrameSent, (event: { opcode: number, data: string }) => this._dispatchEvent('frameSent', event));
-    webSocket.on(WebSocket.Events.FrameReceived, (event: { opcode: number, data: string }) => this._dispatchEvent('frameReceived', event));
-    webSocket.on(WebSocket.Events.SocketError, (error: string) => this._dispatchEvent('socketError', { error }));
-    webSocket.on(WebSocket.Events.Close, () => this._dispatchEvent('close', {}));
+    this.addObjectListener(WebSocket.Events.FrameSent, (event: { opcode: number, data: string }) => this._dispatchEvent('frameSent', event));
+    this.addObjectListener(WebSocket.Events.FrameReceived, (event: { opcode: number, data: string }) => this._dispatchEvent('frameReceived', event));
+    this.addObjectListener(WebSocket.Events.SocketError, (error: string) => this._dispatchEvent('socketError', { error }));
+    this.addObjectListener(WebSocket.Events.Close, () => this._dispatchEvent('close', {}));
   }
 }
 
@@ -166,14 +172,15 @@ export class APIRequestContextDispatcher extends Dispatcher<APIRequestContext, c
     return request ? APIRequestContextDispatcher.from(scope, request) : undefined;
   }
 
-  private constructor(scope: DispatcherScope, request: APIRequestContext) {
-    super(scope, request, 'APIRequestContext', {
-      tracing: TracingDispatcher.from(scope, request.tracing()),
+  private constructor(parentScope: DispatcherScope, request: APIRequestContext) {
+    // We will reparent these to the context below.
+    const tracing = TracingDispatcher.from(parentScope, request.tracing());
+
+    super(parentScope, request, 'APIRequestContext', {
+      tracing,
     }, true);
-    request.once(APIRequestContext.Events.Dispose, () => {
-      if (!this._disposed)
-        super._dispose();
-    });
+
+    this.adopt(tracing);
   }
 
   async storageState(params?: channels.APIRequestContextStorageStateParams): Promise<channels.APIRequestContextStorageStateResult> {
@@ -198,8 +205,7 @@ export class APIRequestContextDispatcher extends Dispatcher<APIRequestContext, c
   }
 
   async fetchResponseBody(params: channels.APIRequestContextFetchResponseBodyParams, metadata?: channels.Metadata): Promise<channels.APIRequestContextFetchResponseBodyResult> {
-    const buffer = this._object.fetchResponses.get(params.fetchUid);
-    return { binary: buffer ? buffer.toString('base64') : undefined };
+    return { binary: this._object.fetchResponses.get(params.fetchUid) };
   }
 
   async fetchLog(params: channels.APIRequestContextFetchLogParams, metadata?: channels.Metadata): Promise<channels.APIRequestContextFetchLogResult> {

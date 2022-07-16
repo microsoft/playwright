@@ -91,6 +91,35 @@ it('should work', async () => {
   assert.equal(await page.title(), 'Example Domain');
 });
 ```
+
+## Vitest
+
+Vitest looks very similar to the Jest/Jasmine setup, and functions in the same way.
+
+```js
+import { chromium } from 'playwright';
+import { afterAll, afterEach, beforeAll, beforeEach, expect, test } from 'vitest';
+let browser;
+let page;
+beforeAll(async () => {
+  browser = await chromium.launch();
+});
+afterAll(async () => {
+  await browser.close();
+});
+beforeEach(async () => {
+  page = await browser.newPage();
+});
+afterEach(async () => {
+  await page.close();
+});
+
+test('should work', async () => {
+  await page.goto('https://www.example.com/');
+  expect(await page.title()).toBe('Example Domain');
+});
+```
+
 ## Multiple Browsers
 
 These simple examples can be extended to support multiple browsers using an environment variable.

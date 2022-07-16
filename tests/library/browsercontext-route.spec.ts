@@ -47,28 +47,28 @@ it('should unroute', async ({ browser, server }) => {
   let intercepted = [];
   await context.route('**/*', route => {
     intercepted.push(1);
-    route.continue();
+    route.fallback();
   });
   await context.route('**/empty.html', route => {
     intercepted.push(2);
-    route.continue();
+    route.fallback();
   });
   await context.route('**/empty.html', route => {
     intercepted.push(3);
-    route.continue();
+    route.fallback();
   });
   const handler4 = route => {
     intercepted.push(4);
-    route.continue();
+    route.fallback();
   };
   await context.route('**/empty.html', handler4);
   await page.goto(server.EMPTY_PAGE);
-  expect(intercepted).toEqual([4]);
+  expect(intercepted).toEqual([4, 3, 2, 1]);
 
   intercepted = [];
   await context.unroute('**/empty.html', handler4);
   await page.goto(server.EMPTY_PAGE);
-  expect(intercepted).toEqual([3]);
+  expect(intercepted).toEqual([3, 2, 1]);
 
   intercepted = [];
   await context.unroute('**/empty.html');
@@ -248,4 +248,126 @@ it('should overwrite post body with empty string', async ({ context, server, pag
 
   const body = (await req.postBody).toString();
   expect(body).toBe('');
+});
+
+it('should chain fallback', async ({ context, page, server }) => {
+  const intercepted = [];
+  await context.route('**/empty.html', route => {
+    intercepted.push(1);
+    route.fallback();
+  });
+  await context.route('**/empty.html', route => {
+    intercepted.push(2);
+    route.fallback();
+  });
+  await context.route('**/empty.html', route => {
+    intercepted.push(3);
+    route.fallback();
+  });
+  await page.goto(server.EMPTY_PAGE);
+  expect(intercepted).toEqual([3, 2, 1]);
+});
+
+it('should chain fallback w/ dynamic URL', async ({ context, page, server }) => {
+  const intercepted = [];
+  await context.route('**/bar', route => {
+    intercepted.push(1);
+    route.fallback({ url: server.EMPTY_PAGE });
+  });
+  await context.route('**/foo', route => {
+    intercepted.push(2);
+    route.fallback({ url: 'http://localhost/bar' });
+  });
+
+  await context.route('**/empty.html', route => {
+    intercepted.push(3);
+    route.fallback({ url: 'http://localhost/foo' });
+  });
+
+  await page.goto(server.EMPTY_PAGE);
+  expect(intercepted).toEqual([3, 2, 1]);
+});
+
+it('should not chain fulfill', async ({ context, page, server }) => {
+  let failed = false;
+  await context.route('**/empty.html', route => {
+    failed = true;
+  });
+  await context.route('**/empty.html', route => {
+    route.fulfill({ status: 200, body: 'fulfilled' });
+  });
+  await context.route('**/empty.html', route => {
+    route.fallback();
+  });
+  const response = await page.goto(server.EMPTY_PAGE);
+  const body = await response.body();
+  expect(body.toString()).toEqual('fulfilled');
+  expect(failed).toBeFalsy();
+});
+
+it('should not chain abort', async ({ context, page, server }) => {
+  let failed = false;
+  await context.route('**/empty.html', route => {
+    failed = true;
+  });
+  await context.route('**/empty.html', route => {
+    route.abort();
+  });
+  await context.route('**/empty.html', route => {
+    route.fallback();
+  });
+  const e = await page.goto(server.EMPTY_PAGE).catch(e => e);
+  expect(e).toBeTruthy();
+  expect(failed).toBeFalsy();
+});
+
+it('should chain fallback into page', async ({ context, page, server }) => {
+  const intercepted = [];
+  await context.route('**/empty.html', route => {
+    intercepted.push(1);
+    route.fallback();
+  });
+  await context.route('**/empty.html', route => {
+    intercepted.push(2);
+    route.fallback();
+  });
+  await context.route('**/empty.html', route => {
+    intercepted.push(3);
+    route.fallback();
+  });
+  await page.route('**/empty.html', route => {
+    intercepted.push(4);
+    route.fallback();
+  });
+  await page.route('**/empty.html', route => {
+    intercepted.push(5);
+    route.fallback();
+  });
+  await page.route('**/empty.html', route => {
+    intercepted.push(6);
+    route.fallback();
+  });
+  await page.goto(server.EMPTY_PAGE);
+  expect(intercepted).toEqual([6, 5, 4, 3, 2, 1]);
+});
+
+it('should fall back async', async ({ page, context, server }) => {
+  const intercepted = [];
+  await context.route('**/empty.html', async route => {
+    intercepted.push(1);
+    await new Promise(r => setTimeout(r, 100));
+    route.fallback();
+  });
+  await context.route('**/empty.html', async route => {
+    intercepted.push(2);
+    await new Promise(r => setTimeout(r, 100));
+    route.fallback();
+  });
+  await context.route('**/empty.html', async route => {
+    intercepted.push(3);
+    await new Promise(r => setTimeout(r, 100));
+    route.fallback();
+  });
+  await page.goto(server.EMPTY_PAGE);
+  expect(intercepted).toEqual([3, 2, 1]);
 });

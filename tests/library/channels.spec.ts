@@ -16,19 +16,27 @@
  */
 
 import domain from 'domain';
-import { playwrightTest as it, expect } from '../config/browserTest';
+import { playwrightTest, expect } from '../config/browserTest';
 
-// Use something worker-scoped (e.g. launch args) to force a new worker for this file.
+// Use something worker-scoped (e.g. expectScopeState) forces a new worker for this file.
 // Otherwise, a browser launched for other tests in this worker will affect the expectations.
-it.use({
-  launchOptions: async ({ launchOptions }, use) => {
-    await use({ ...launchOptions, args: [] });
-  }
+const it = playwrightTest.extend<{}, { expectScopeState: (object: any, golden: any) => void }>({
+  expectScopeState: [ async ({ toImpl }, use) => {
+    await use((object, golden) => {
+      golden = trimGuids(golden);
+      const remoteRoot = toImpl();
+      const remoteState = trimGuids(remoteRoot._debugScopeState());
+      const localRoot = object._connection._rootObject;
+      const localState = trimGuids(localRoot._debugScopeState());
+      expect(localState).toEqual(golden);
+      expect(remoteState).toEqual(golden);
+    });
+  }, { scope: 'worker' }],
 });
 
-it.skip(({ mode }) => mode === 'service');
+it.skip(({ mode }) => mode !== 'default');
 
-it('should scope context handles', async ({ browserType, server }) => {
+it('should scope context handles', async ({ browserType, server, expectScopeState }) => {
   const browser = await browserType.launch();
   const GOLDEN_PRECONDITION = {
     _guid: '',
@@ -61,13 +69,14 @@ it('should scope context handles', async ({ browserType, server }) => {
       { _guid: 'browser-type', objects: [
         { _guid: 'browser', objects: [
           { _guid: 'browser-context', objects: [
-            { _guid: 'frame', objects: [] },
-            { _guid: 'page', objects: [] },
+            { _guid: 'page', objects: [
+              { _guid: 'frame', objects: [] },
+            ] },
             { _guid: 'request', objects: [] },
+            { _guid: 'request-context', objects: [] },
             { _guid: 'response', objects: [] },
+            { _guid: 'tracing', objects: [] }
           ] },
-          { _guid: 'fetchRequest', objects: [] },
-          { _guid: 'Tracing', objects: [] }
         ] },
       ] },
       { _guid: 'electron', objects: [] },
@@ -82,7 +91,7 @@ it('should scope context handles', async ({ browserType, server }) => {
   await browser.close();
 });
 
-it('should scope CDPSession handles', async ({ browserType, browserName }) => {
+it('should scope CDPSession handles', async ({ browserType, browserName, expectScopeState }) => {
   it.skip(browserName !== 'chromium');
 
   const browser = await browserType.launch();
@@ -128,7 +137,7 @@ it('should scope CDPSession handles', async ({ browserType, browserName }) => {
   await browser.close();
 });
 
-it('should scope browser handles', async ({ browserType }) => {
+it('should scope browser handles', async ({ browserType, expectScopeState }) => {
   const GOLDEN_PRECONDITION = {
     _guid: '',
     objects: [
@@ -155,9 +164,10 @@ it('should scope browser handles', async ({ browserType }) => {
       { _guid: 'browser-type', objects: [
         {
           _guid: 'browser', objects: [
-            { _guid: 'browser-context', objects: [] },
-            { _guid: 'fetchRequest', objects: [] },
-            { _guid: 'Tracing', objects: [] }
+            { _guid: 'browser-context', objects: [
+              { _guid: 'request-context', objects: [] },
+              { _guid: 'tracing', objects: [] },
+            ] },
           ]
         },
       ]
@@ -203,14 +213,6 @@ it('should work with the domain module', async ({ browserType, server, browserNa
   if (err)
     throw err;
 });
-
-async function expectScopeState(object, golden) {
-  golden = trimGuids(golden);
-  const remoteState = trimGuids(await object._channel.debugScopeState());
-  const localState = trimGuids(object._connection._debugScopeState());
-  expect(localState).toEqual(golden);
-  expect(remoteState).toEqual(golden);
-}
 
 function compareObjects(a, b) {
   if (a._guid !== b._guid)

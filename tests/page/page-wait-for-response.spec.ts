@@ -47,9 +47,9 @@ it('should respect default timeout', async ({ page, playwright }) => {
 });
 
 it('should log the url', async ({ page }) => {
-  const error1 = await page.waitForResponse('foo.css', { timeout: 100 }).catch(e => e);
+  const error1 = await page.waitForResponse('foo.css', { timeout: 1000 }).catch(e => e);
   expect(error1.message).toContain('waiting for response "foo.css"');
-  const error2 = await page.waitForResponse(/foo.css/i, { timeout: 100 }).catch(e => e);
+  const error2 = await page.waitForResponse(/foo.css/i, { timeout: 1000 }).catch(e => e);
   expect(error2.message).toContain('waiting for response /foo.css/i');
 });
 

@@ -64,6 +64,7 @@ it('should fulfill response with empty body', async ({ page, server, isAndroid, 
     const response = await page.request.fetch(route.request());
     await route.fulfill({
       response,
+      headers: { 'content-length': '0' },
       status: 201,
       body: ''
     });

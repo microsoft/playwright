@@ -15,15 +15,17 @@
  */
 
 import { test as it, expect } from './pageTest';
+import { waitForTestLog } from '../config/utils';
 
 it.skip(({ mode }) => mode !== 'default', 'Highlight element has a closed shadow-root on != default');
 
 it('should highlight locator', async ({ page }) => {
   await page.setContent(`<input type='text' />`);
+  const textPromise = waitForTestLog<string>(page, 'Highlight text for test: ');
+  const boxPromise = waitForTestLog<{ x: number, y: number, width: number, height: number }>(page, 'Highlight box for test: ');
   await page.locator('input').highlight();
-  await expect(page.locator('x-pw-tooltip')).toHaveText('input');
-  await expect(page.locator('x-pw-highlight')).toBeVisible();
+  expect(await textPromise).toBe('input');
   const box1 = await page.locator('input').boundingBox();
-  const box2 = await page.locator('x-pw-highlight').boundingBox();
+  const box2 = await boxPromise;
   expect(box1).toEqual(box2);
 });

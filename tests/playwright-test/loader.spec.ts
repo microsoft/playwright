@@ -28,7 +28,8 @@ test('should return the location of a syntax error', async ({ runInlineTest }) =
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(0);
   expect(result.failed).toBe(0);
-  expect(result.output).toContain('error.spec.js:6');
+  expect(result.output).toContain('error.spec.js');
+  expect(result.output).toContain('(6:18)');
 });
 
 test('should print an improper error', async ({ runInlineTest }) => {
@@ -87,7 +88,7 @@ test('should allow export default form the config file', async ({ runInlineTest 
 
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
-  expect(result.output).toContain('Timeout of 1000ms exceeded.');
+  expect(result.output).toContain('Test timeout of 1000ms exceeded.');
 });
 
 test('should validate configuration object', async ({ runInlineTest }) => {
@@ -163,19 +164,17 @@ test('should load an mjs file', async ({ runInlineTest }) => {
   expect(exitCode).toBe(0);
 });
 
-test('should throw a nice error if a js file uses import', async ({ runInlineTest }) => {
-  const { exitCode, output } = await runInlineTest({
+test('should allow using import', async ({ runInlineTest }) => {
+  const { exitCode } = await runInlineTest({
     'a.spec.js': `
         import fs from 'fs';
-        const { test } = folio;
+        const { test } = pwt;
         test('succeeds', () => {
           expect(1 + 1).toBe(2);
         });
       `
   });
-  expect(exitCode).toBe(1);
-  expect(output).toContain('a.spec.js');
-  expect(output).toContain('Cannot use import statement outside a module');
+  expect(exitCode).toBe(0);
 });
 
 test('should load esm when package.json has type module', async ({ runInlineTest }) => {
@@ -238,7 +237,7 @@ test('should fail to load ts from esm when package.json has type module', async 
   });
 
   expect(result.exitCode).toBe(1);
-  expect(result.output).toContain('Cannot import a typescript file from an esmodule');
+  expect(result.output).toContain('Unknown file extension ".ts"');
 });
 
 test('should filter stack trace for simple expect', async ({ runInlineTest }) => {

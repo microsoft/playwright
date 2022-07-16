@@ -19,7 +19,7 @@ import type * as accessibility from '../accessibility';
 import type { FFSession } from './ffConnection';
 import type { Protocol } from './protocol';
 import type * as dom from '../dom';
-import type * as types from '../types';
+import type * as channels from '../../protocol/channels';
 
 export async function getAccessibilityTree(session: FFSession, needle?: dom.ElementHandle): Promise<{tree: accessibility.AXNode, needle: accessibility.AXNode | null}> {
   const objectId = needle ? needle._objectId : undefined;
@@ -198,12 +198,12 @@ class FFAXNode implements accessibility.AXNode {
     return this.isLeafNode() && !!this._name.trim();
   }
 
-  serialize(): types.SerializedAXNode {
-    const node: {[x in keyof types.SerializedAXNode]: any} = {
+  serialize(): channels.AXNode {
+    const node: {[x in keyof channels.AXNode]: any} = {
       role: FFRoleToARIARole.get(this._role) || this._role,
       name: this._name || '',
     };
-    const userStringProperties: Array<keyof types.SerializedAXNode & keyof Protocol.Accessibility.AXTree> = [
+    const userStringProperties: Array<keyof channels.AXNode & keyof Protocol.Accessibility.AXTree> = [
       'name',
       'description',
       'roledescription',
@@ -215,7 +215,7 @@ class FFAXNode implements accessibility.AXNode {
         continue;
       node[userStringProperty] = this._payload[userStringProperty];
     }
-    const booleanProperties: Array<keyof types.SerializedAXNode & keyof Protocol.Accessibility.AXTree> = [
+    const booleanProperties: Array<keyof channels.AXNode & keyof Protocol.Accessibility.AXTree> = [
       'disabled',
       'expanded',
       'focused',
@@ -234,7 +234,7 @@ class FFAXNode implements accessibility.AXNode {
         continue;
       node[booleanProperty] = value;
     }
-    const numericalProperties: Array<keyof types.SerializedAXNode & keyof Protocol.Accessibility.AXTree> = [
+    const numericalProperties: Array<keyof channels.AXNode & keyof Protocol.Accessibility.AXTree> = [
       'level'
     ];
     for (const numericalProperty of numericalProperties) {
@@ -242,7 +242,7 @@ class FFAXNode implements accessibility.AXNode {
         continue;
       node[numericalProperty] = this._payload[numericalProperty];
     }
-    const tokenProperties: Array<keyof types.SerializedAXNode & keyof Protocol.Accessibility.AXTree> = [
+    const tokenProperties: Array<keyof channels.AXNode & keyof Protocol.Accessibility.AXTree> = [
       'autocomplete',
       'haspopup',
       'invalid',
@@ -255,7 +255,7 @@ class FFAXNode implements accessibility.AXNode {
       node[tokenProperty] = value;
     }
 
-    const axNode = node as types.SerializedAXNode;
+    const axNode = node as channels.AXNode;
     axNode.valueString = this._payload.value;
     if ('checked' in this._payload)
       axNode.checked = this._payload.checked === true ? 'checked' : this._payload.checked === 'mixed' ? 'mixed' : 'unchecked';

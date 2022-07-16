@@ -15,7 +15,6 @@
  */
 
 import { debug } from '../../utilsBundle';
-import type * as types from '../types';
 import { EventEmitter } from 'events';
 import fs from 'fs';
 import os from 'os';
@@ -34,13 +33,13 @@ import { PipeTransport } from '../../protocol/transport';
 import { RecentLogsCollector } from '../../common/debugLogger';
 import { gracefullyCloseSet } from '../../utils/processLauncher';
 import { TimeoutSettings } from '../../common/timeoutSettings';
-import type { AndroidWebView } from '../../protocol/channels';
+import type * as channels from '../../protocol/channels';
 import { SdkObject, serverSideCallMetadata } from '../instrumentation';
 
 const ARTIFACTS_FOLDER = path.join(os.tmpdir(), 'playwright-artifacts-');
 
 export interface Backend {
-  devices(options: types.AndroidDeviceOptions): Promise<DeviceBackend[]>;
+  devices(options: channels.AndroidDevicesOptions): Promise<DeviceBackend[]>;
 }
 
 export interface DeviceBackend {
@@ -75,7 +74,7 @@ export class Android extends SdkObject {
     this._timeoutSettings.setDefaultTimeout(timeout);
   }
 
-  async devices(options: types.AndroidDeviceOptions): Promise<AndroidDevice[]> {
+  async devices(options: channels.AndroidDevicesOptions): Promise<AndroidDevice[]> {
     const devices = (await this._backend.devices(options)).filter(d => d.status === 'device');
     const newSerials = new Set<string>();
     for (const d of devices) {
@@ -101,13 +100,13 @@ export class AndroidDevice extends SdkObject {
   readonly _backend: DeviceBackend;
   readonly model: string;
   readonly serial: string;
-  private _options: types.AndroidDeviceOptions;
+  private _options: channels.AndroidDevicesOptions;
   private _driverPromise: Promise<PipeTransport> | undefined;
   private _lastId = 0;
   private _callbacks = new Map<number, { fulfill: (result: any) => void, reject: (error: Error) => void }>();
   private _pollingWebViews: NodeJS.Timeout | undefined;
   readonly _timeoutSettings: TimeoutSettings;
-  private _webViews = new Map<string, AndroidWebView>();
+  private _webViews = new Map<string, channels.AndroidWebView>();
 
   static Events = {
     WebViewAdded: 'webViewAdded',
@@ -119,7 +118,7 @@ export class AndroidDevice extends SdkObject {
   private _android: Android;
   private _isClosed = false;
 
-  constructor(android: Android, backend: DeviceBackend, model: string, options: types.AndroidDeviceOptions) {
+  constructor(android: Android, backend: DeviceBackend, model: string, options: channels.AndroidDevicesOptions) {
     super(android, 'android-device');
     this._android = android;
     this._backend = backend;
@@ -129,7 +128,7 @@ export class AndroidDevice extends SdkObject {
     this._timeoutSettings = new TimeoutSettings(android._timeoutSettings);
   }
 
-  static async create(android: Android, backend: DeviceBackend, options: types.AndroidDeviceOptions): Promise<AndroidDevice> {
+  static async create(android: Android, backend: DeviceBackend, options: channels.AndroidDevicesOptions): Promise<AndroidDevice> {
     await backend.init();
     const model = await backend.runCommand('shell:getprop ro.product.model');
     const device = new AndroidDevice(android, backend, model.toString().trim(), options);
@@ -244,7 +243,7 @@ export class AndroidDevice extends SdkObject {
     this.emit(AndroidDevice.Events.Closed);
   }
 
-  async launchBrowser(pkg: string = 'com.android.chrome', options: types.BrowserContextOptions): Promise<BrowserContext> {
+  async launchBrowser(pkg: string = 'com.android.chrome', options: channels.BrowserNewContextParams): Promise<BrowserContext> {
     debug('pw:android')('Force-stopping', pkg);
     await this._backend.runCommand(`shell:am force-stop ${pkg}`);
     const socketName = isUnderTest() ? 'webview_devtools_remote_playwright_test' : ('playwright-' + createGuid());
@@ -262,7 +261,7 @@ export class AndroidDevice extends SdkObject {
     return await this._connectToBrowser(socketName);
   }
 
-  private async _connectToBrowser(socketName: string, options: types.BrowserContextOptions = {}): Promise<BrowserContext> {
+  private async _connectToBrowser(socketName: string, options: channels.BrowserNewContextParams = {}): Promise<BrowserContext> {
     const socket = await this._waitForLocalAbstract(socketName);
     const androidBrowser = new AndroidBrowser(this, socket);
     await androidBrowser._init();
@@ -304,7 +303,7 @@ export class AndroidDevice extends SdkObject {
     return defaultContext;
   }
 
-  webViews(): AndroidWebView[] {
+  webViews(): channels.AndroidWebView[] {
     return [...this._webViews.values()];
   }
 

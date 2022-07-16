@@ -69,6 +69,8 @@ function innerParseSerializedValue(value: SerializedValue, handles: any[] | unde
   }
   if (value.d !== undefined)
     return new Date(value.d);
+  if (value.u !== undefined)
+    return new URL(value.u);
   if (value.r !== undefined)
     return new RegExp(value.r.p, value.r.f);
 
@@ -141,6 +143,8 @@ function innerSerializeValue(value: any, handleSerializer: (value: any) => Handl
   }
   if (isDate(value))
     return { d: value.toJSON() };
+  if (isURL(value))
+    return { u: value.toJSON() };
   if (isRegExp(value))
     return { r: { p: value.source, f: value.flags } };
 
@@ -173,6 +177,10 @@ function isRegExp(obj: any): obj is RegExp {
 
 function isDate(obj: any): obj is Date {
   return obj instanceof Date || Object.prototype.toString.call(obj) === '[object Date]';
+}
+
+function isURL(obj: any): obj is URL {
+  return obj instanceof URL || Object.prototype.toString.call(obj) === '[object URL]';
 }
 
 function isError(obj: any): obj is Error {

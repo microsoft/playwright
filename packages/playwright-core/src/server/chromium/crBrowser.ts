@@ -20,19 +20,20 @@ import { Browser } from '../browser';
 import { assertBrowserContextIsNotOwned, BrowserContext, verifyGeolocation } from '../browserContext';
 import { assert } from '../../utils';
 import * as network from '../network';
-import type { PageBinding, PageDelegate } from '../page';
-import { Page, Worker } from '../page';
+import type { PageBinding, PageDelegate , Worker } from '../page';
+import { Page } from '../page';
 import { Frame } from '../frames';
 import type { Dialog } from '../dialog';
 import type { ConnectionTransport } from '../transport';
 import type * as types from '../types';
+import type * as channels from '../../protocol/channels';
 import type { CRSession } from './crConnection';
 import { ConnectionEvents, CRConnection } from './crConnection';
 import { CRPage } from './crPage';
 import { readProtocolStream } from './crProtocolHelper';
 import type { Protocol } from './protocol';
-import { CRExecutionContext } from './crExecutionContext';
 import type { CRDevTools } from './crDevTools';
+import { CRServiceWorker } from './crServiceWorker';
 
 export class CRBrowser extends Browser {
   readonly _connection: CRConnection;
@@ -95,7 +96,7 @@ export class CRBrowser extends Browser {
     this._session.on('Browser.downloadProgress', this._onDownloadProgress.bind(this));
   }
 
-  async doCreateNewContext(options: types.BrowserContextOptions): Promise<BrowserContext> {
+  async doCreateNewContext(options: channels.BrowserNewContextParams): Promise<BrowserContext> {
     let proxyBypassList = undefined;
     if (options.proxy) {
       if (process.env.PLAYWRIGHT_DISABLE_FORCED_CHROMIUM_PROXIED_LOOPBACK)
@@ -160,7 +161,9 @@ export class CRBrowser extends Browser {
       return;
     }
 
-    if (targetInfo.type === 'other' || !context) {
+    const treatOtherAsPage = targetInfo.type === 'other' && process.env.PW_CHROMIUM_ATTACH_TO_OTHER;
+
+    if (!context || (targetInfo.type === 'other' && !treatOtherAsPage)) {
       if (waitingForDebugger) {
         // Ideally, detaching should resume any target, but there is a bug in the backend.
         session._sendMayFail('Runtime.runIfWaitingForDebugger').then(() => {
@@ -180,9 +183,9 @@ export class CRBrowser extends Browser {
       return;
     }
 
-    if (targetInfo.type === 'page') {
+    if (targetInfo.type === 'page' || treatOtherAsPage) {
       const opener = targetInfo.openerId ? this._crPages.get(targetInfo.openerId) || null : null;
-      const crPage = new CRPage(session, targetInfo.targetId, context, opener, { hasUIWindow: true, isBackgroundPage: false });
+      const crPage = new CRPage(session, targetInfo.targetId, context, opener, { hasUIWindow: targetInfo.type === 'page', isBackgroundPage: false });
       this._crPages.set(targetInfo.targetId, crPage);
       return;
     }
@@ -304,21 +307,6 @@ export class CRBrowser extends Browser {
   }
 }
 
-class CRServiceWorker extends Worker {
-  readonly _browserContext: CRBrowserContext;
-
-  constructor(browserContext: CRBrowserContext, session: CRSession, url: string) {
-    super(browserContext, url);
-    this._browserContext = browserContext;
-    session.once('Runtime.executionContextCreated', event => {
-      this._createExecutionContext(new CRExecutionContext(session, event.context));
-    });
-    // This might fail if the target is closed before we receive all execution contexts.
-    session.send('Runtime.enable', {}).catch(e => {});
-    session.send('Runtime.runIfWaitingForDebugger').catch(e => {});
-  }
-}
-
 export class CRBrowserContext extends BrowserContext {
   static CREvents = {
     BackgroundPage: 'backgroundpage',
@@ -327,7 +315,7 @@ export class CRBrowserContext extends BrowserContext {
 
   declare readonly _browser: CRBrowser;
 
-  constructor(browser: CRBrowser, browserContextId: string | undefined, options: types.BrowserContextOptions) {
+  constructor(browser: CRBrowser, browserContextId: string | undefined, options: channels.BrowserNewContextParams) {
     super(browser, options, browserContextId);
     this._authenticateProxyViaCredentials();
   }
@@ -343,8 +331,6 @@ export class CRBrowserContext extends BrowserContext {
         eventsEnabled: true,
       }));
     }
-    if (this._options.permissions)
-      promises.push(this.grantPermissions(this._options.permissions));
     await Promise.all(promises);
   }
 
@@ -383,7 +369,7 @@ export class CRBrowserContext extends BrowserContext {
     return this._browser._crPages.get(targetId)!;
   }
 
-  async doGetCookies(urls: string[]): Promise<types.NetworkCookie[]> {
+  async doGetCookies(urls: string[]): Promise<channels.NetworkCookie[]> {
     const { cookies } = await this._browser._session.send('Storage.getCookies', { browserContextId: this._browserContextId });
     return network.filterCookies(cookies.map(c => {
       const copy: any = { sameSite: 'Lax', ...c };
@@ -393,11 +379,11 @@ export class CRBrowserContext extends BrowserContext {
       delete copy.sameParty;
       delete copy.sourceScheme;
       delete copy.sourcePort;
-      return copy as types.NetworkCookie;
+      return copy as channels.NetworkCookie;
     }), urls);
   }
 
-  async addCookies(cookies: types.SetNetworkCookieParam[]) {
+  async addCookies(cookies: channels.SetNetworkCookie[]) {
     await this._browser._session.send('Storage.setCookies', { cookies: network.rewriteCookies(cookies), browserContextId: this._browserContextId });
   }
 
@@ -448,18 +434,24 @@ export class CRBrowserContext extends BrowserContext {
     this._options.extraHTTPHeaders = headers;
     for (const page of this.pages())
       await (page._delegate as CRPage).updateExtraHTTPHeaders();
+    for (const sw of this.serviceWorkers())
+      await (sw as CRServiceWorker).updateExtraHTTPHeaders(false);
   }
 
   async setOffline(offline: boolean): Promise<void> {
     this._options.offline = offline;
     for (const page of this.pages())
       await (page._delegate as CRPage).updateOffline();
+    for (const sw of this.serviceWorkers())
+      await (sw as CRServiceWorker).updateOffline(false);
   }
 
   async doSetHTTPCredentials(httpCredentials?: types.Credentials): Promise<void> {
     this._options.httpCredentials = httpCredentials;
     for (const page of this.pages())
       await (page._delegate as CRPage).updateHttpCredentials();
+    for (const sw of this.serviceWorkers())
+      await (sw as CRServiceWorker).updateHttpCredentials(false);
   }
 
   async doAddInitScript(source: string) {
@@ -485,6 +477,8 @@ export class CRBrowserContext extends BrowserContext {
   async doUpdateRequestInterception(): Promise<void> {
     for (const page of this.pages())
       await (page._delegate as CRPage).updateRequestInterception();
+    for (const sw of this.serviceWorkers())
+      await (sw as CRServiceWorker).updateRequestInterception();
   }
 
   async doClose() {

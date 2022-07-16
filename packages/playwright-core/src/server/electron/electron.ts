@@ -41,7 +41,6 @@ import * as readline from 'readline';
 import { RecentLogsCollector } from '../../common/debugLogger';
 import { serverSideCallMetadata, SdkObject } from '../instrumentation';
 import type * as channels from '../../protocol/channels';
-import type { BrowserContextOptions } from '../types';
 
 const ARTIFACTS_FOLDER = path.join(os.tmpdir(), 'playwright-artifacts-');
 
@@ -211,7 +210,7 @@ export class Electron extends SdkObject {
         close: gracefullyClose,
         kill
       };
-      const contextOptions: BrowserContextOptions = {
+      const contextOptions: channels.BrowserNewContextParams = {
         ...options,
         noDefaultViewport: true,
       };

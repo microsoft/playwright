@@ -19,7 +19,7 @@ import type { CRSession } from './crConnection';
 import type { Protocol } from './protocol';
 import type * as dom from '../dom';
 import type * as accessibility from '../accessibility';
-import type * as types from '../types';
+import type * as channels from '../../protocol/channels';
 
 export async function getAccessibilityTree(client: CRSession, needle?: dom.ElementHandle): Promise<{tree: accessibility.AXNode, needle: accessibility.AXNode | null}> {
   const { nodes } = await client.send('Accessibility.getFullAXTree');
@@ -210,19 +210,19 @@ class CRAXNode implements accessibility.AXNode {
     }
   }
 
-  serialize(): types.SerializedAXNode {
+  serialize(): channels.AXNode {
     const properties: Map<string, number | string | boolean> = new Map();
     for (const property of this._payload.properties || [])
       properties.set(property.name.toLowerCase(), property.value.value);
     if (this._payload.description)
       properties.set('description', this._payload.description.value);
 
-    const node: {[x in keyof types.SerializedAXNode]: any} = {
+    const node: {[x in keyof channels.AXNode]: any} = {
       role: this.normalizedRole(),
       name: this._payload.name ? (this._payload.name.value || '') : '',
     };
 
-    const userStringProperties: Array<keyof types.SerializedAXNode> = [
+    const userStringProperties: Array<keyof channels.AXNode> = [
       'description',
       'keyshortcuts',
       'roledescription',
@@ -233,7 +233,7 @@ class CRAXNode implements accessibility.AXNode {
         continue;
       node[userStringProperty] = properties.get(userStringProperty);
     }
-    const booleanProperties: Array<keyof types.SerializedAXNode> = [
+    const booleanProperties: Array<keyof channels.AXNode> = [
       'disabled',
       'expanded',
       'focused',
@@ -254,7 +254,7 @@ class CRAXNode implements accessibility.AXNode {
         continue;
       node[booleanProperty] = value;
     }
-    const numericalProperties: Array<keyof types.SerializedAXNode> = [
+    const numericalProperties: Array<keyof channels.AXNode> = [
       'level',
       'valuemax',
       'valuemin',
@@ -264,7 +264,7 @@ class CRAXNode implements accessibility.AXNode {
         continue;
       node[numericalProperty] = properties.get(numericalProperty);
     }
-    const tokenProperties: Array<keyof types.SerializedAXNode> = [
+    const tokenProperties: Array<keyof channels.AXNode> = [
       'autocomplete',
       'haspopup',
       'invalid',
@@ -277,7 +277,7 @@ class CRAXNode implements accessibility.AXNode {
       node[tokenProperty] = value;
     }
 
-    const axNode = node as types.SerializedAXNode;
+    const axNode = node as channels.AXNode;
     if (this._payload.value) {
       if (typeof this._payload.value.value === 'string')
         axNode.valueString = this._payload.value.value;

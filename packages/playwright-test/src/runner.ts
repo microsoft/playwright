@@ -44,7 +44,7 @@ import { raceAgainstTimeout } from 'playwright-core/lib/utils/timeoutRunner';
 import { SigIntWatcher } from './sigIntWatcher';
 import type { TestRunnerPlugin } from './plugins';
 import { setRunnerToAddPluginsTo } from './plugins';
-import { webServerPluginForConfig } from './plugins/webServerPlugin';
+import { webServerPluginsForConfig } from './plugins/webServerPlugin';
 import { MultiMap } from 'playwright-core/lib/utils/multimap';
 
 const removeFolderAsync = promisify(rimraf);
@@ -275,24 +275,24 @@ export class Runner {
       preprocessRoot._addSuite(fileSuite);
     }
 
-    // 2. Filter tests to respect line/column filter.
+    // 2. Complain about duplicate titles.
+    const duplicateTitlesError = createDuplicateTitlesError(config, preprocessRoot);
+    if (duplicateTitlesError)
+      fatalErrors.push(duplicateTitlesError);
+
+    // 3. Filter tests to respect line/column filter.
     filterByFocusedLine(preprocessRoot, testFileReFilters);
 
-    // 3. Complain about only.
+    // 4. Complain about only.
     if (config.forbidOnly) {
       const onlyTestsAndSuites = preprocessRoot._getOnlyItems();
       if (onlyTestsAndSuites.length > 0)
         fatalErrors.push(createForbidOnlyError(config, onlyTestsAndSuites));
     }
 
-    // 4. Filter only
+    // 5. Filter only.
     if (!list)
       filterOnly(preprocessRoot);
-
-    // 5. Complain about clashing.
-    const duplicateTitlesError = createDuplicateTitlesError(config, preprocessRoot);
-    if (duplicateTitlesError)
-      fatalErrors.push(duplicateTitlesError);
 
     // 6. Generate projects.
     const fileSuites = new Map<string, Suite>();
@@ -399,11 +399,10 @@ export class Runner {
     }
 
     // 13. Run Global setup.
-    const globalTearDown = await this._performGlobalSetup(config, rootSuite);
-    if (!globalTearDown)
-      return { status: 'failed' };
-
     const result: FullResult = { status: 'passed' };
+    const globalTearDown = await this._performGlobalSetup(config, rootSuite, result);
+    if (result.status !== 'passed')
+      return result;
 
     // 14. Run tests.
     try {
@@ -435,9 +434,10 @@ export class Runner {
     return result;
   }
 
-  private async _performGlobalSetup(config: FullConfigInternal, rootSuite: Suite): Promise<(() => Promise<void>) | undefined> {
-    const result: FullResult = { status: 'passed' };
+  private async _performGlobalSetup(config: FullConfigInternal, rootSuite: Suite, result: FullResult): Promise<(() => Promise<void>) | undefined> {
     let globalSetupResult: any;
+    const pluginsThatWereSetUp: TestRunnerPlugin[] = [];
+    const sigintWatcher = new SigIntWatcher();
 
     const tearDown = async () => {
       // Reverse to setup.
@@ -447,34 +447,48 @@ export class Runner {
       }, result);
 
       await this._runAndReportError(async () => {
-        if (config.globalTeardown)
+        if (globalSetupResult && config.globalTeardown)
           await (await this._loader.loadGlobalHook(config.globalTeardown, 'globalTeardown'))(this._loader.fullConfig());
       }, result);
 
-      for (const plugin of [...this._plugins].reverse()) {
+      for (const plugin of pluginsThatWereSetUp.reverse()) {
         await this._runAndReportError(async () => {
           await plugin.teardown?.();
         }, result);
       }
     };
 
-    await this._runAndReportError(async () => {
-      // Legacy webServer support.
-      if (config.webServer)
-        this._plugins.push(webServerPluginForConfig(config, this._reporter));
+    // Legacy webServer support.
+    this._plugins.push(...webServerPluginsForConfig(config, this._reporter));
 
+    await this._runAndReportError(async () => {
       // First run the plugins, if plugin is a web server we want it to run before the
       // config's global setup.
-      for (const plugin of this._plugins)
-        await plugin.setup?.(config, config._configDir, rootSuite);
+      for (const plugin of this._plugins) {
+        await Promise.race([
+          plugin.setup?.(config, config._configDir, rootSuite),
+          sigintWatcher.promise(),
+        ]);
+        if (sigintWatcher.hadSignal())
+          break;
+        pluginsThatWereSetUp.push(plugin);
+      }
 
       // The do global setup.
-      if (config.globalSetup)
-        globalSetupResult = await (await this._loader.loadGlobalHook(config.globalSetup, 'globalSetup'))(this._loader.fullConfig());
+      if (!sigintWatcher.hadSignal() && config.globalSetup) {
+        const hook = await this._loader.loadGlobalHook(config.globalSetup, 'globalSetup');
+        await Promise.race([
+          Promise.resolve().then(() => hook(this._loader.fullConfig())).then((r: any) => globalSetupResult = r || '<noop>'),
+          sigintWatcher.promise(),
+        ]);
+      }
     }, result);
 
-    if (result.status !== 'passed') {
+    sigintWatcher.disarm();
+
+    if (result.status !== 'passed' || sigintWatcher.hadSignal()) {
       await tearDown();
+      result.status = sigintWatcher.hadSignal() ? 'interrupted' : 'failed';
       return;
     }
 

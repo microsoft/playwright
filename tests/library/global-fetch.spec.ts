@@ -189,14 +189,19 @@ it('should set playwright as user-agent', async ({ playwright, server, isWindows
       .replace(getPlaywrightVersion(), 'X.X.X')
       .replace(/\d+/g, 'X');
 
+  const tokens = [];
+  if (process.env.CI)
+    tokens.push('CI/X');
+  const suffix = tokens.length ? ` ${tokens.join(' ')}` : '';
+
   if (isWindows)
-    expect(userAgentMasked).toBe('Playwright/X.X.X (<ARCH>; windows X.X) node/X.X');
+    expect(userAgentMasked).toBe('Playwright/X.X.X (<ARCH>; windows X.X) node/X.X' + suffix);
   else if (isLinux)
     // on ubuntu: distro is 'ubuntu' and version is 'X.X'
     // on manjaro: distro is 'Manjaro' and version is 'unknown'
-    expect(userAgentMasked.replace(/<ARCH>; \w+ [^)]+/, '<ARCH>; distro version')).toBe('Playwright/X.X.X (<ARCH>; distro version) node/X.X');
+    expect(userAgentMasked.replace(/<ARCH>; \w+ [^)]+/, '<ARCH>; distro version')).toBe('Playwright/X.X.X (<ARCH>; distro version) node/X.X' + suffix);
   else if (isMac)
-    expect(userAgentMasked).toBe('Playwright/X.X.X (<ARCH>; macOS X.X) node/X.X');
+    expect(userAgentMasked).toBe('Playwright/X.X.X (<ARCH>; macOS X.X) node/X.X' + suffix);
 });
 
 it('should be able to construct with context options', async ({ playwright, browserType, server }) => {

@@ -133,11 +133,11 @@ test('should show steps', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(1);
   expect(result.report.suites.length).toBe(1);
   expect(result.report.suites[0].specs.length).toBe(1);
-  expect(result.report.suites[0].specs[0].tests[0].results[0].steps[0].title).toBe('math works in a step');
-  expect(result.report.suites[0].specs[0].tests[0].results[0].steps[0].steps[0].title).toBe('nested step');
-  expect(result.report.suites[0].specs[0].tests[0].results[0].steps[0].steps[0].steps[0].title).toBe('deeply nested step');
-  expect(result.report.suites[0].specs[0].tests[0].results[0].steps[0].steps[0].steps[0].steps).toBeUndefined();
-  expect(result.report.suites[0].specs[0].tests[0].results[0].steps[1].error).not.toBeUndefined();
+  expect(result.report.suites[0].specs[0].tests[0].results[0].steps![0].title).toBe('math works in a step');
+  expect(result.report.suites[0].specs[0].tests[0].results[0].steps![0].steps![0].title).toBe('nested step');
+  expect(result.report.suites[0].specs[0].tests[0].results[0].steps![0].steps![0].steps![0].title).toBe('deeply nested step');
+  expect(result.report.suites[0].specs[0].tests[0].results[0].steps![0].steps![0].steps![0].steps).toBeUndefined();
+  expect(result.report.suites[0].specs[0].tests[0].results[0].steps![1].error).not.toBeUndefined();
 });
 
 test('should display tags separately from title', async ({ runInlineTest }) => {
@@ -198,8 +198,8 @@ test('should have error position in results', async ({
   });
   expect(result.exitCode).toBe(1);
   expect(result.report.suites[0].specs[0].file).toBe('a.test.js');
-  expect(result.report.suites[0].specs[0].tests[0].results[0].errorLocation.line).toBe(7);
-  expect(result.report.suites[0].specs[0].tests[0].results[0].errorLocation.column).toBe(23);
+  expect(result.report.suites[0].specs[0].tests[0].results[0].errorLocation!.line).toBe(7);
+  expect(result.report.suites[0].specs[0].tests[0].results[0].errorLocation!.column).toBe(23);
 });
 
 test('should add dot in addition to file json with CI', async ({ runInlineTest }, testInfo) => {

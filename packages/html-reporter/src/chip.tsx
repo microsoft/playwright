@@ -27,8 +27,9 @@ export const Chip: React.FC<{
   setExpanded?: (expanded: boolean) => void,
   children?: any,
   dataTestId?: string,
-}> = ({ header, expanded, setExpanded, children, noInsets, dataTestId }) => {
-  return <div className='chip' data-test-id={dataTestId}>
+  targetRef?: React.RefObject<HTMLDivElement>,
+}> = ({ header, expanded, setExpanded, children, noInsets, dataTestId, targetRef }) => {
+  return <div className='chip' data-test-id={dataTestId} ref={targetRef}>
     <div
       className={'chip-header' + (setExpanded ? ' expanded-' + expanded : '')}
       onClick={() => setExpanded?.(!expanded)}
@@ -47,7 +48,8 @@ export const AutoChip: React.FC<{
   noInsets?: boolean,
   children?: any,
   dataTestId?: string,
-}> = ({ header, initialExpanded, noInsets, children, dataTestId }) => {
+  targetRef?: React.RefObject<HTMLDivElement>,
+}> = ({ header, initialExpanded, noInsets, children, dataTestId, targetRef }) => {
   const [expanded, setExpanded] = React.useState(initialExpanded || initialExpanded === undefined);
   return <Chip
     header={header}
@@ -55,6 +57,7 @@ export const AutoChip: React.FC<{
     setExpanded={setExpanded}
     noInsets={noInsets}
     dataTestId={dataTestId}
+    targetRef={targetRef}
   >
     {children}
   </Chip>;

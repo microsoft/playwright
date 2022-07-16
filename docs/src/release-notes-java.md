@@ -5,6 +5,93 @@ title: "Release notes"
 
 <!-- TOC -->
 
+## Version 1.23
+
+### Network Replay
+
+Now you can record network traffic into a HAR file and re-use this traffic in your tests.
+
+To record network into HAR file:
+
+```bash
+mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="open --save-har=example.har --save-har-glob='**/api/**' https://example.com"
+```
+
+Alternatively, you can record HAR programmatically:
+
+```java
+BrowserContext context = browser.newContext(new Browser.NewContextOptions()
+    .setRecordHarPath(Paths.get("example.har"))
+    .setRecordHarUrlFilter("**/api/**"));
+
+// ... Perform actions ...
+
+// Close context to ensure HAR is saved to disk.
+context.close();
+```
+
+Use the new methods [`method: Page.routeFromHAR`] or [`method: BrowserContext.routeFromHAR`] to serve matching responses from the [HAR](http://www.softwareishard.com/blog/har-12-spec/) file:
+
+
+```java
+context.routeFromHAR(Paths.get("example.har"));
+```
+
+Read more in [our documentation](./network#record-and-replay-requests).
+
+
+### Advanced Routing
+
+You can now use [`method: Route.fallback`] to defer routing to other handlers.
+
+Consider the following example:
+
+```java
+// Remove a header from all requests.
+page.route("**/*", route -> {
+  Map<String, String> headers = new HashMap<>(route.request().headers());
+  headers.remove("X-Secret");
+  route.resume(new Route.ResumeOptions().setHeaders(headers));
+});
+
+// Abort all images.
+page.route("**/*", route -> {
+  if ("image".equals(route.request().resourceType()))
+    route.abort();
+  else
+    route.fallback();
+});
+```
+
+Note that the new methods [`method: Page.routeFromHAR`] and [`method: BrowserContext.routeFromHAR`] also participate in routing and could be deferred to.
+
+### Web-First Assertions Update
+
+* New method [`method: LocatorAssertions.toHaveValues`] that asserts all selected values of `<select multiple>` element.
+* Methods [`method: LocatorAssertions.toContainText`] and [`method: LocatorAssertions.toHaveText`] now accept `ignoreCase` option.
+
+### Miscellaneous
+
+* If there's a service worker that's in your way, you can now easily disable it with a new context option `serviceWorkers`:
+  ```java
+  BrowserContext context = browser.newContext(new Browser.NewContextOptions()
+      .setServiceWorkers(ServiceWorkerPolicy.BLOCK));
+  ```
+* Using `.zip` path for `recordHar` context option automatically zips the resulting HAR:
+  ```java
+  BrowserContext context = browser.newContext(new Browser.NewContextOptions()
+      .setRecordHarPath(Paths.get("example.har.zip")));
+  ```
+* If you intend to edit HAR by hand, consider using the `"minimal"` HAR recording mode
+  that only records information that is essential for replaying:
+  ```java
+  BrowserContext context = browser.newContext(new Browser.NewContextOptions()
+      .setRecordHarPath(Paths.get("example.har"))
+      .setRecordHarMode(HarMode.MINIMAL));
+  ```
+* Playwright now runs on Ubuntu 22 amd64 and Ubuntu 22 arm64.
+
+
 ## Version 1.22
 
 ### Highlights
@@ -13,7 +100,7 @@ title: "Release notes"
 
   ```java
   // Click a button with accessible name "log in"
-  page.click("role=button[name='log in']")
+  page.locator("role=button[name='log in']").click();
   ```
 
   Read more in [our documentation](./selectors#role-selector).
@@ -39,7 +126,7 @@ title: "Release notes"
 
   ```java
   // Click a button with accessible name "log in"
-  page.click("role=button[name='log in']")
+  page.locator("role=button[name='log in']").click();
   ```
 
   Read more in [our documentation](./selectors#role-selector).
@@ -150,7 +237,7 @@ public class TestExample {
   @Test
   void statusBecomesSubmitted() {
     ...
-    page.click("#submit-button");
+    page.locator("#submit-button").click();
     assertThat(page.locator(".status")).hasText("Submitted");
   }
 }
@@ -354,8 +441,8 @@ Learn more in the [documentation](./api/class-locator).
 React and Vue selectors allow selecting elements by its component name and/or property values. The syntax is very similar to [attribute selectors](https://developer.mozilla.org/en-US/docs/Web/CSS/Attribute_selectors) and supports all attribute selector operators.
 
 ```java
-page.click("_react=SubmitButton[enabled=true]");
-page.click("_vue=submit-button[enabled=true]");
+page.locator("_react=SubmitButton[enabled=true]").click();
+page.locator("_vue=submit-button[enabled=true]").click();
 ```
 
 Learn more in the [react selectors documentation](./selectors#react-selectors) and the [vue selectors documentation](./selectors#vue-selectors).

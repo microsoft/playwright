@@ -20,19 +20,19 @@ import type * as structs from '../../types/structs';
 import type * as api from '../../types/types';
 import type * as channels from '../protocol/channels';
 import { TimeoutSettings } from '../common/timeoutSettings';
-import { headersObjectToArray } from '../utils';
-import { BrowserContext } from './browserContext';
+import { BrowserContext, prepareBrowserContextParams } from './browserContext';
 import { ChannelOwner } from './channelOwner';
 import { envObjectToArray } from './clientHelper';
 import { Events } from './events';
 import { JSHandle, parseResult, serializeArgument } from './jsHandle';
 import type { Page } from './page';
-import type { Env, WaitForEventOptions, Headers } from './types';
+import type { Env, WaitForEventOptions, Headers, BrowserContextOptions } from './types';
 import { Waiter } from './waiter';
 
-type ElectronOptions = Omit<channels.ElectronLaunchOptions, 'env'|'extraHTTPHeaders'> & {
+type ElectronOptions = Omit<channels.ElectronLaunchOptions, 'env'|'extraHTTPHeaders'|'recordHar'> & {
   env?: Env,
   extraHTTPHeaders?: Headers,
+  recordHar?: BrowserContextOptions['recordHar'],
 };
 
 type ElectronAppType = typeof import('electron');
@@ -48,8 +48,7 @@ export class Electron extends ChannelOwner<channels.ElectronChannel> implements 
 
   async launch(options: ElectronOptions = {}): Promise<ElectronApplication> {
     const params: channels.ElectronLaunchParams = {
-      ...options,
-      extraHTTPHeaders: options.extraHTTPHeaders && headersObjectToArray(options.extraHTTPHeaders),
+      ...await prepareBrowserContextParams(options),
       env: envObjectToArray(options.env ? options.env : process.env),
     };
     const app = ElectronApplication.from((await this._channel.launch(params)).electronApplication);

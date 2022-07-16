@@ -91,6 +91,8 @@ export default declare((api: BabelAPI) => {
               props.push(t.objectProperty(t.stringLiteral(attrName), jsxAttribute.value));
             else if (t.isJSXExpressionContainer(jsxAttribute.value) && t.isExpression(jsxAttribute.value.expression))
               props.push(t.objectProperty(t.stringLiteral(attrName), jsxAttribute.value.expression));
+            else if (jsxAttribute.value === null)
+              props.push(t.objectProperty(t.stringLiteral(attrName), t.booleanLiteral(true)));
             else
               props.push(t.objectProperty(t.stringLiteral(attrName), t.nullLiteral()));
           } else if (t.isJSXSpreadAttribute(jsxAttribute)) {

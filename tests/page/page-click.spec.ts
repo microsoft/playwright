@@ -515,7 +515,7 @@ it('should wait for becoming hit target with trial run', async ({ page, server }
 it('trial run should work with short timeout', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/button.html');
   await page.$eval('button', button => button.disabled = true);
-  const error = await page.click('button', { trial: true, timeout: 500 }).catch(e => e);
+  const error = await page.click('button', { trial: true, timeout: 2000 }).catch(e => e);
   expect(error.message).toContain('click action (trial run)');
   expect(await page.evaluate(() => window['result'])).toBe('Was not clicked');
 });

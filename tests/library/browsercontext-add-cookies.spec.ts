@@ -63,8 +63,7 @@ it('should add cookies with empty value', async ({ context, page, server }) => {
   expect(await page.evaluate(() => document.cookie)).toEqual('marker=');
 });
 
-it('should roundtrip cookie', async ({ context, page, server, channel }) => {
-  it.fixme(channel === 'chromium-tip-of-tree', 'https://github.com/microsoft/playwright/issues/14725');
+it('should roundtrip cookie', async ({ context, page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   // @see https://en.wikipedia.org/wiki/Year_2038_problem
   const date = +(new Date('1/1/2038'));
@@ -367,7 +366,7 @@ it('should(not) block third party cookies', async ({ context, page, server, brow
   }, server.CROSS_PROCESS_PREFIX + '/grid.html');
   await page.frames()[1].evaluate(`document.cookie = 'username=John Doe'`);
   await page.waitForTimeout(2000);
-  const allowsThirdParty = browserName === 'firefox' && browserMajorVersion >= 97;
+  const allowsThirdParty = browserName === 'firefox' && (browserMajorVersion >= 97 && browserMajorVersion < 103);
   const cookies = await context.cookies(server.CROSS_PROCESS_PREFIX + '/grid.html');
   if (allowsThirdParty) {
     expect(cookies).toEqual([

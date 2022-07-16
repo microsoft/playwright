@@ -34,7 +34,7 @@ const path = await download.path();
 // Wait for the download to start
 Download download = page.waitForDownload(() -> {
     // Perform the action that initiates download
-    page.click("button#delayed-download");
+    page.locator("button#delayed-download").click();
 });
 // Wait for the download process to complete
 Path path = download.path();
@@ -44,7 +44,7 @@ Path path = download.path();
 # Start waiting for the download
 async with page.expect_download() as download_info:
     # Perform the action that initiates download
-    await page.click("button#delayed-download")
+    await page.locator("button#delayed-download").click()
 download = await download_info.value
 # Wait for the download process to complete
 path = await download.path()
@@ -54,7 +54,7 @@ path = await download.path()
 # Start waiting for the download
 with page.expect_download() as download_info:
     # Perform the action that initiates download
-    page.click("button#delayed-download")
+    page.locator("button#delayed-download").click()
 download = download_info.value
 # Wait for the download process to complete
 path = download.path()
@@ -64,7 +64,7 @@ path = download.path()
 // Start the task of waiting for the download
 var waitForDownloadTask = page.WaitForDownloadAsync();
 // Perform the action that initiates download
-await page.ClickAsync("#downloadButton");
+await page.Locator("#downloadButton").ClickAsync();
 // Wait for the download process to complete
 var download = await waitForDownloadTask;
 var path = await download.PathAsync();

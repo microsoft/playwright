@@ -19,7 +19,7 @@ import type { CRSession } from './crConnection';
 import type { RegisteredListener } from '../../utils/eventsHelper';
 import { eventsHelper } from '../../utils/eventsHelper';
 import type { Protocol } from './protocol';
-import type * as types from '../types';
+import type * as channels from '../../protocol/channels';
 import { assert } from '../../utils';
 
 export class CRCoverage {
@@ -31,19 +31,19 @@ export class CRCoverage {
     this._cssCoverage = new CSSCoverage(client);
   }
 
-  async startJSCoverage(options?: types.JSCoverageOptions) {
+  async startJSCoverage(options: channels.PageStartJSCoverageParams) {
     return await this._jsCoverage.start(options);
   }
 
-  async stopJSCoverage(): Promise<types.JSCoverageEntry[]> {
+  async stopJSCoverage(): Promise<channels.PageStopJSCoverageResult> {
     return await this._jsCoverage.stop();
   }
 
-  async startCSSCoverage(options?: types.CSSCoverageOptions) {
+  async startCSSCoverage(options: channels.PageStartCSSCoverageParams) {
     return await this._cssCoverage.start(options);
   }
 
-  async stopCSSCoverage(): Promise<types.CSSCoverageEntry[]> {
+  async stopCSSCoverage(): Promise<channels.PageStopCSSCoverageResult> {
     return await this._cssCoverage.stop();
   }
 }
@@ -66,7 +66,7 @@ class JSCoverage {
     this._resetOnNavigation = false;
   }
 
-  async start(options: types.JSCoverageOptions = {}) {
+  async start(options: channels.PageStartJSCoverageParams) {
     assert(!this._enabled, 'JSCoverage is already enabled');
     const {
       resetOnNavigation = true,
@@ -112,7 +112,7 @@ class JSCoverage {
       this._scriptSources.set(event.scriptId, response.scriptSource);
   }
 
-  async stop(): Promise<types.JSCoverageEntry[]> {
+  async stop(): Promise<channels.PageStopJSCoverageResult> {
     assert(this._enabled, 'JSCoverage is not enabled');
     this._enabled = false;
     const [profileResponse] = await Promise.all([
@@ -123,7 +123,7 @@ class JSCoverage {
     ] as const);
     eventsHelper.removeEventListeners(this._eventListeners);
 
-    const coverage: types.JSCoverageEntry[] = [];
+    const coverage: channels.PageStopJSCoverageResult = { entries: [] };
     for (const entry of profileResponse.result) {
       if (!this._scriptIds.has(entry.scriptId))
         continue;
@@ -131,9 +131,9 @@ class JSCoverage {
         continue;
       const source = this._scriptSources.get(entry.scriptId);
       if (source)
-        coverage.push({ ...entry, source });
+        coverage.entries.push({ ...entry, source });
       else
-        coverage.push(entry);
+        coverage.entries.push(entry);
     }
     return coverage;
   }
@@ -156,7 +156,7 @@ class CSSCoverage {
     this._resetOnNavigation = false;
   }
 
-  async start(options: types.CSSCoverageOptions = {}) {
+  async start(options: channels.PageStartCSSCoverageParams) {
     assert(!this._enabled, 'CSSCoverage is already enabled');
     const { resetOnNavigation = true } = options;
     this._resetOnNavigation = resetOnNavigation;
@@ -194,7 +194,7 @@ class CSSCoverage {
     }
   }
 
-  async stop(): Promise<types.CSSCoverageEntry[]> {
+  async stop(): Promise<channels.PageStopCSSCoverageResult> {
     assert(this._enabled, 'CSSCoverage is not enabled');
     this._enabled = false;
     const ruleTrackingResponse = await this._client.send('CSS.stopRuleUsageTracking');
@@ -219,12 +219,12 @@ class CSSCoverage {
       });
     }
 
-    const coverage: types.CSSCoverageEntry[] = [];
+    const coverage: channels.PageStopCSSCoverageResult = { entries: [] };
     for (const styleSheetId of this._stylesheetURLs.keys()) {
       const url = this._stylesheetURLs.get(styleSheetId)!;
       const text = this._stylesheetSources.get(styleSheetId)!;
       const ranges = convertToDisjointRanges(styleSheetIdToCoverage.get(styleSheetId) || []);
-      coverage.push({ url, ranges, text });
+      coverage.entries.push({ url, ranges, text });
     }
 
     return coverage;

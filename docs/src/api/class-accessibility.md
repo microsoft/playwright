@@ -1,4 +1,5 @@
 # class: Accessibility
+* since: v1.8
 * langs: csharp, js, python
 
 The Accessibility class provides methods for inspecting Chromium's accessibility tree. The accessibility tree is used by
@@ -16,6 +17,7 @@ assistive technologies themselves. By default, Playwright tries to approximate t
 "interesting" nodes of the tree.
 
 ## async method: Accessibility.snapshot
+* since: v1.8
 - returns: <[null]|[Object]>
   - `role` <[string]> The [role](https://www.w3.org/TR/wai-aria/#usage_intro).
   - `name` <[string]> A human readable name for the node.
@@ -141,19 +143,23 @@ if node:
 ```
 
 ## async method: Accessibility.snapshot
+* since: v1.8
 * langs: java
 - returns: <[null]|[string]>
 
 ## async method: Accessibility.snapshot
+* since: v1.8
 * langs: csharp
 - returns: <[null]|[JsonElement]>
 
 ### option: Accessibility.snapshot.interestingOnly
+* since: v1.8
 - `interestingOnly` <[boolean]>
 
 Prune uninteresting nodes from the tree. Defaults to `true`.
 
 ### option: Accessibility.snapshot.root
+* since: v1.8
 - `root` <[ElementHandle]>
 
 The root DOM element for the snapshot. Defaults to the whole page.

@@ -43,7 +43,7 @@ test('should timeout', async ({ runInlineTest }) => {
   expect(exitCode).toBe(1);
   expect(passed).toBe(0);
   expect(failed).toBe(1);
-  expect(output).toContain('Timeout of 100ms exceeded.');
+  expect(output).toContain('Test timeout of 100ms exceeded.');
 });
 
 test('should succeed', async ({ runInlineTest }) => {
@@ -351,19 +351,21 @@ test('should work with test helper', async ({ runInlineTest }) => {
   ]);
 });
 
-test('should help with describe() misuse', async ({ runInlineTest }) => {
+test('should support describe() without a title', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.js': `
-      pwt.test.describe(() => {});
+      pwt.test.describe('suite1', () => {
+        pwt.test.describe(() => {
+          pwt.test.describe('suite2', () => {
+            pwt.test('my test', () => {});
+          });
+        });
+      });
     `,
-  });
-  expect(result.exitCode).toBe(1);
-  expect(result.output).toContain([
-    'Error: a.spec.js:5:16: It looks like you are calling describe() without the title. Pass the title as a first argument:',
-    `test.describe('my test group', () => {`,
-    `  // Declare tests here`,
-    `});`,
-  ].join('\n'));
+  }, { reporter: 'list' });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  expect(stripAnsi(result.output)).toContain('a.spec.js:8:17 › suite1 › suite2 › my test');
 });
 
 test('test.{skip,fixme} should define a skipped test', async ({ runInlineTest }) => {

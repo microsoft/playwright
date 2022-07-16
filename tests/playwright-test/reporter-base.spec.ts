@@ -225,7 +225,7 @@ test('should print flaky timeouts', async ({ runInlineTest }) => {
   }, { retries: '1', reporter: 'list', timeout: '1000' });
   expect(result.exitCode).toBe(0);
   expect(result.flaky).toBe(1);
-  expect(stripAnsi(result.output)).toContain('Timeout of 1000ms exceeded.');
+  expect(stripAnsi(result.output)).toContain('Test timeout of 1000ms exceeded.');
 });
 
 test('should print stack-less errors', async ({ runInlineTest }) => {
@@ -261,8 +261,9 @@ test('should print errors with inconsistent message/stack', async ({ runInlineTe
   });
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
-  expect(result.output).toContain('hi!Error: Hello');
-  expect(result.output).toContain('at myTest');
+  const output = stripAnsi(result.output);
+  expect(output).toContain('hi!Error: Hello');
+  expect(output).toContain('function myTest');
 });
 
 test('should print "no tests found" error', async ({ runInlineTest }) => {

@@ -99,6 +99,53 @@ it('should return background pages when recording video', async ({ browserType, 
   await context.close();
 });
 
+it('should support request/response events when using backgroundPage()', async ({ browserType, createUserDataDir, asset, server }) => {
+  server.setRoute('/empty.html', (req, res) => {
+    res.writeHead(200, { 'Content-Type': 'text/html', 'x-response-foobar': 'BarFoo' });
+    res.end(`<span>hello world!</span>`);
+  });
+  const userDataDir = await createUserDataDir();
+  const extensionPath = asset('simple-extension');
+  const extensionOptions = {
+    headless: false,
+    args: [
+      `--disable-extensions-except=${extensionPath}`,
+      `--load-extension=${extensionPath}`,
+    ],
+  };
+  const context = await browserType.launchPersistentContext(userDataDir, extensionOptions);
+  const backgroundPages = context.backgroundPages();
+  const backgroundPage = backgroundPages.length
+    ? backgroundPages[0]
+    : await context.waitForEvent('backgroundpage');
+  await backgroundPage.waitForURL(/chrome-extension\:\/\/.*/);
+  const [, request, response, contextRequest, contextResponse] = await Promise.all([
+    backgroundPage.evaluate(url => fetch(url, {
+      method: 'POST',
+      body: 'foobar',
+      headers: { 'X-FOOBAR': 'KEKBAR' }
+    }), server.EMPTY_PAGE),
+    backgroundPage.waitForEvent('request'),
+    backgroundPage.waitForEvent('response'),
+    context.waitForEvent('request'),
+    context.waitForEvent('response'),
+  ]);
+  expect(request).toBe(contextRequest);
+  expect(response).toBe(contextResponse);
+  expect(request.url()).toBe(server.EMPTY_PAGE);
+  expect(request.method()).toBe('POST');
+  expect(await request.allHeaders()).toEqual(expect.objectContaining({ 'x-foobar': 'KEKBAR' }));
+  expect(request.postData()).toBe('foobar');
+
+  expect(response.status()).toBe(200);
+  expect(response.url()).toBe(server.EMPTY_PAGE);
+  expect(response.request()).toBe(request);
+  expect(await response.text()).toBe('<span>hello world!</span>');
+  expect(await response.allHeaders()).toEqual(expect.objectContaining({ 'x-response-foobar': 'BarFoo' }));
+
+  await context.close();
+});
+
 it('should not create pages automatically', async ({ browserType }) => {
   const browser = await browserType.launch();
   const browserSession = await browser.newBrowserCDPSession();

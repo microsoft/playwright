@@ -33,7 +33,8 @@ it.describe('page screenshot', () => {
     expect(screenshot).toMatchSnapshot('screenshot-sanity.png');
   });
 
-  it('should not capture blinking caret by default', async ({ page, server }) => {
+  it('should not capture blinking caret by default', async ({ page, server, browserName }) => {
+    it.fixme(browserName === 'chromium' && process.platform === 'darwin', 'https://crbug.com/1342540');
     await page.setContent(`
       <!-- Refer to stylesheet from other origin. Accessing this
            stylesheet rules will throw.
@@ -60,7 +61,8 @@ it.describe('page screenshot', () => {
     }
   });
 
-  it('should capture blinking caret if explicitly asked for', async ({ page, server }) => {
+  it('should capture blinking caret if explicitly asked for', async ({ page, server, browserName }) => {
+    it.fixme(browserName === 'firefox', 'browser-level screenshot API in firefox does not capture caret');
     await page.setContent(`
       <!-- Refer to stylesheet from other origin. Accessing this
            stylesheet rules will throw.

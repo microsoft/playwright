@@ -20,7 +20,7 @@ import path from 'path';
 import * as util from 'util';
 import * as fs from 'fs';
 import { lockfile } from '../../utilsBundle';
-import { getUbuntuVersion } from '../../utils/ubuntuVersion';
+import { getLinuxDistributionInfo } from '../../utils/linuxUtils';
 import { fetchData } from '../../common/netUtils';
 import { getClientLanguage } from '../../common/userAgent';
 import { getFromENV, getAsBooleanFromENV, calculateSha1, wrapInASCIIBox } from '../../utils';
@@ -35,6 +35,20 @@ export { writeDockerVersion } from './dependencies';
 
 const PACKAGE_PATH = path.join(__dirname, '..', '..', '..');
 const BIN_PATH = path.join(__dirname, '..', '..', '..', 'bin');
+
+const PLAYWRIGHT_CDN_MIRRORS = [
+  'https://playwright.azureedge.net',
+  'https://playwright-akamai.azureedge.net',
+  'https://playwright-verizon.azureedge.net',
+];
+
+if (process.env.PW_TEST_CDN_THAT_SHOULD_WORK) {
+  for (let i = 0; i < PLAYWRIGHT_CDN_MIRRORS.length; i++) {
+    const cdn = PLAYWRIGHT_CDN_MIRRORS[i];
+    if (cdn !== process.env.PW_TEST_CDN_THAT_SHOULD_WORK)
+      PLAYWRIGHT_CDN_MIRRORS[i] = cdn + '.does-not-resolve.playwright.dev';
+  }
+}
 
 const EXECUTABLE_PATHS = {
   'chromium': {
@@ -70,6 +84,7 @@ const DOWNLOAD_PATHS = {
     'ubuntu18.04-arm64': 'builds/chromium/%s/chromium-linux-arm64.zip',
     'ubuntu20.04-arm64': 'builds/chromium/%s/chromium-linux-arm64.zip',
     'ubuntu22.04-arm64': 'builds/chromium/%s/chromium-linux-arm64.zip',
+    'debian11': 'builds/chromium/%s/chromium-linux.zip',
     'mac10.13': 'builds/chromium/%s/chromium-mac.zip',
     'mac10.14': 'builds/chromium/%s/chromium-mac.zip',
     'mac10.15': 'builds/chromium/%s/chromium-mac.zip',
@@ -89,6 +104,7 @@ const DOWNLOAD_PATHS = {
     'ubuntu18.04-arm64': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-linux-arm64.zip',
     'ubuntu20.04-arm64': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-linux-arm64.zip',
     'ubuntu22.04-arm64': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-linux-arm64.zip',
+    'debian11': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-linux.zip',
     'mac10.13': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-mac.zip',
     'mac10.14': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-mac.zip',
     'mac10.15': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-mac.zip',
@@ -108,6 +124,7 @@ const DOWNLOAD_PATHS = {
     'ubuntu18.04-arm64': 'builds/chromium/%s/chromium-with-symbols-linux-arm64.zip',
     'ubuntu20.04-arm64': 'builds/chromium/%s/chromium-with-symbols-linux-arm64.zip',
     'ubuntu22.04-arm64': 'builds/chromium/%s/chromium-with-symbols-linux-arm64.zip',
+    'debian11': 'builds/chromium/%s/chromium-with-symbols-linux.zip',
     'mac10.13': 'builds/chromium/%s/chromium-with-symbols-mac.zip',
     'mac10.14': 'builds/chromium/%s/chromium-with-symbols-mac.zip',
     'mac10.15': 'builds/chromium/%s/chromium-with-symbols-mac.zip',
@@ -127,6 +144,7 @@ const DOWNLOAD_PATHS = {
     'ubuntu18.04-arm64': undefined,
     'ubuntu20.04-arm64': 'builds/firefox/%s/firefox-ubuntu-20.04-arm64.zip',
     'ubuntu22.04-arm64': 'builds/firefox/%s/firefox-ubuntu-22.04-arm64.zip',
+    'debian11': 'builds/firefox/%s/firefox-debian-11.zip',
     'mac10.13': 'builds/firefox/%s/firefox-mac-11.zip',
     'mac10.14': 'builds/firefox/%s/firefox-mac-11.zip',
     'mac10.15': 'builds/firefox/%s/firefox-mac-11.zip',
@@ -146,6 +164,7 @@ const DOWNLOAD_PATHS = {
     'ubuntu18.04-arm64': undefined,
     'ubuntu20.04-arm64': undefined,
     'ubuntu22.04-arm64': 'builds/firefox-beta/%s/firefox-beta-ubuntu-22.04-arm64.zip',
+    'debian11': 'builds/firefox-beta/%s/firefox-beta-debian-11.zip',
     'mac10.13': 'builds/firefox-beta/%s/firefox-beta-mac-11.zip',
     'mac10.14': 'builds/firefox-beta/%s/firefox-beta-mac-11.zip',
     'mac10.15': 'builds/firefox-beta/%s/firefox-beta-mac-11.zip',
@@ -165,6 +184,7 @@ const DOWNLOAD_PATHS = {
     'ubuntu18.04-arm64': undefined,
     'ubuntu20.04-arm64': 'builds/webkit/%s/webkit-ubuntu-20.04-arm64.zip',
     'ubuntu22.04-arm64': 'builds/webkit/%s/webkit-ubuntu-22.04-arm64.zip',
+    'debian11': 'builds/webkit/%s/webkit-debian-11.zip',
     'mac10.13': undefined,
     'mac10.14': 'builds/deprecated-webkit-mac-10.14/%s/deprecated-webkit-mac-10.14.zip',
     'mac10.15': 'builds/webkit/%s/webkit-mac-10.15.zip',
@@ -184,6 +204,7 @@ const DOWNLOAD_PATHS = {
     'ubuntu18.04-arm64': 'builds/ffmpeg/%s/ffmpeg-linux-arm64.zip',
     'ubuntu20.04-arm64': 'builds/ffmpeg/%s/ffmpeg-linux-arm64.zip',
     'ubuntu22.04-arm64': 'builds/ffmpeg/%s/ffmpeg-linux-arm64.zip',
+    'debian11': 'builds/ffmpeg/%s/ffmpeg-linux.zip',
     'mac10.13': 'builds/ffmpeg/%s/ffmpeg-mac.zip',
     'mac10.14': 'builds/ffmpeg/%s/ffmpeg-mac.zip',
     'mac10.15': 'builds/ffmpeg/%s/ffmpeg-mac.zip',
@@ -307,11 +328,11 @@ export class Registry {
     const descriptors = readDescriptors(browsersJSON);
     const findExecutablePath = (dir: string, name: keyof typeof EXECUTABLE_PATHS) => {
       let tokens = undefined;
-      if (hostPlatform.startsWith('ubuntu') || hostPlatform.startsWith('generic-linux'))
+      if (process.platform === 'linux')
         tokens = EXECUTABLE_PATHS[name]['linux'];
-      else if (hostPlatform.startsWith('mac'))
+      else if (process.platform === 'darwin')
         tokens = EXECUTABLE_PATHS[name]['mac'];
-      else if (hostPlatform.startsWith('win'))
+      else if (process.platform === 'win32')
         tokens = EXECUTABLE_PATHS[name]['win'];
       return tokens ? path.join(dir, ...tokens) : undefined;
     };
@@ -593,8 +614,8 @@ export class Registry {
       process.stdout.write('Skipping host requirements validation logic because `PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS` env variable is set.\n');
       return;
     }
-    const ubuntuVersion = await getUbuntuVersion();
-    if (browserName === 'firefox' && ubuntuVersion === '16.04')
+    const distributionInfo = await getLinuxDistributionInfo();
+    if (browserName === 'firefox' && distributionInfo?.id === 'ubuntu' && distributionInfo?.version === '16.04')
       throw new Error(`Cannot launch Firefox on Ubuntu 16.04! Minimum required Ubuntu version for Firefox browser is 18.04`);
 
     if (os.platform() === 'linux')
@@ -700,13 +721,13 @@ export class Registry {
     if (!downloadPathTemplate || !executablePath)
       throw new Error(`ERROR: Playwright does not support ${descriptor.name} on ${hostPlatform}`);
     if (hostPlatform === 'generic-linux' || hostPlatform === 'generic-linux-arm64')
-      logPolitely('BEWARE: your OS is not officially supported by Playwright; downloading Ubuntu build as a fallback.');
-    const downloadHost =
-        (downloadHostEnv && getFromENV(downloadHostEnv)) ||
-        getFromENV('PLAYWRIGHT_DOWNLOAD_HOST') ||
-        'https://playwright.azureedge.net';
+      logPolitely('BEWARE: your OS is not officially supported by Playwright; downloading fallback build.');
     const downloadPath = util.format(downloadPathTemplate, descriptor.revision);
-    const downloadURL = `${downloadHost}/${downloadPath}`;
+
+    let downloadURLs = PLAYWRIGHT_CDN_MIRRORS.map(mirror => `${mirror}/${downloadPath}`) ;
+    const customHostOverride = (downloadHostEnv && getFromENV(downloadHostEnv)) || getFromENV('PLAYWRIGHT_DOWNLOAD_HOST');
+    if (customHostOverride)
+      downloadURLs = [`${customHostOverride}/${downloadPath}`];
 
     const displayName = descriptor.name.split('-').map(word => {
       return word === 'ffmpeg' ? 'FFMPEG' : word.charAt(0).toUpperCase() + word.slice(1);
@@ -716,7 +737,7 @@ export class Registry {
       : `${displayName} playwright build v${descriptor.revision}`;
 
     const downloadFileName = `playwright-download-${descriptor.name}-${hostPlatform}-${descriptor.revision}.zip`;
-    await downloadBrowserWithProgressBar(title, descriptor.dir, executablePath, downloadURL, downloadFileName).catch(e => {
+    await downloadBrowserWithProgressBar(title, descriptor.dir, executablePath, downloadURLs, downloadFileName).catch(e => {
       throw new Error(`Failed to download ${title}, caused by\n${e.stack}`);
     });
     await fs.promises.writeFile(markerFilePath(descriptor.dir), '');

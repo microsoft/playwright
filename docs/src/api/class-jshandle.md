@@ -1,4 +1,5 @@
 # class: JSHandle
+* since: v1.8
 
 JSHandle represents an in-page JavaScript object. JSHandles can be created with the [`method: Page.evaluateHandle`]
 method.
@@ -35,15 +36,18 @@ JSHandle instances can be used as an argument in [`method: Page.evalOnSelector`]
 [`method: Page.evaluateHandle`] methods.
 
 ## method: JSHandle.asElement
+* since: v1.8
 - returns: <[null]|[ElementHandle]>
 
 Returns either `null` or the object handle itself, if the object handle is an instance of [ElementHandle].
 
 ## async method: JSHandle.dispose
+* since: v1.8
 
 The `jsHandle.dispose` method stops referencing the element handle.
 
 ## async method: JSHandle.evaluate
+* since: v1.8
 - returns: <[Serializable]>
 
 Returns the return value of [`param: expression`].
@@ -81,13 +85,16 @@ Assert.AreEqual("10 retweets", await tweetHandle.EvaluateAsync("node => node.inn
 ```
 
 ### param: JSHandle.evaluate.expression = %%-evaluate-expression-%%
+* since: v1.8
 
 ### param: JSHandle.evaluate.arg
+* since: v1.8
 - `arg` ?<[EvaluationArgument]>
 
 Optional argument to pass to [`param: expression`].
 
 ## async method: JSHandle.evaluateHandle
+* since: v1.8
 - returns: <[JSHandle]>
 
 Returns the return value of [`param: expression`] as a [JSHandle].
@@ -102,13 +109,16 @@ for the promise to resolve and return its value.
 See [`method: Page.evaluateHandle`] for more details.
 
 ### param: JSHandle.evaluateHandle.expression = %%-evaluate-expression-%%
+* since: v1.8
 
 ### param: JSHandle.evaluateHandle.arg
+* since: v1.8
 - `arg` ?<[EvaluationArgument]>
 
 Optional argument to pass to [`param: expression`].
 
 ## async method: JSHandle.getProperties
+* since: v1.8
 - returns: <[Map]<[string], [JSHandle]>>
 
 The method returns a map with **own property names** as keys and JSHandle instances for the property values.
@@ -154,16 +164,19 @@ await handle.DisposeAsync();
 ```
 
 ## async method: JSHandle.getProperty
+* since: v1.8
 - returns: <[JSHandle]>
 
 Fetches a single property from the referenced object.
 
 ### param: JSHandle.getProperty.propertyName
+* since: v1.8
 - `propertyName` <[string]>
 
 property to get
 
 ## async method: JSHandle.jsonValue
+* since: v1.8
 - returns: <[Serializable]>
 
 Returns a JSON representation of the object. If the object has a `toJSON` function, it **will not be called**.

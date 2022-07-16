@@ -24,12 +24,20 @@ export type SerializedLoaderData = {
   configCLIOverrides: ConfigCLIOverrides;
 };
 
+export type TtyParams = {
+  rows: number | undefined;
+  columns: number | undefined;
+  colorDepth: number;
+};
+
 export type WorkerInitParams = {
   workerIndex: number;
   parallelIndex: number;
   repeatEachIndex: number;
   projectIndex: number;
   loader: SerializedLoaderData;
+  stdoutParams: TtyParams;
+  stderrParams: TtyParams;
 };
 
 export type TestBeginPayload = {

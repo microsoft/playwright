@@ -54,6 +54,7 @@ class Fixture {
   runner: FixtureRunner;
   registration: FixtureRegistration;
   value: any;
+  failed = false;
 
   _useFuncFinished: ManualPromise<void> | undefined;
   _selfTeardownComplete: Promise<void> | undefined;
@@ -66,8 +67,9 @@ class Fixture {
     this.runner = runner;
     this.registration = registration;
     this.value = null;
+    const title = this.registration.customTitle || this.registration.name;
     this._runnableDescription = {
-      title: `fixture "${this.registration.customTitle || this.registration.name}" setup`,
+      title: this.registration.timeout !== undefined ? `Fixture "${title}"` : `setting up "${title}"`,
       location: registration.location,
       slot: this.registration.timeout === undefined ? undefined : {
         timeout: this.registration.timeout,
@@ -93,6 +95,10 @@ class Fixture {
       // Otherwise worker-scope fixtures will retain test-scope fixtures forever.
       this._deps.add(dep);
       params[name] = dep.value;
+      if (dep.failed) {
+        this.failed = true;
+        return;
+      }
     }
 
     let called = false;
@@ -111,6 +117,7 @@ class Fixture {
     const info = this.registration.scope === 'worker' ? workerInfo : testInfo;
     testInfo._timeoutManager.setCurrentFixture(this._runnableDescription);
     this._selfTeardownComplete = Promise.resolve().then(() => this.registration.fn(params, useFunc, info)).catch((e: any) => {
+      this.failed = true;
       if (!useFuncStarted.isDone())
         useFuncStarted.reject(e);
       else
@@ -121,9 +128,23 @@ class Fixture {
   }
 
   async teardown(timeoutManager: TimeoutManager) {
-    if (!this._teardownWithDepsComplete)
-      this._teardownWithDepsComplete = this._teardownInternal(timeoutManager);
+    if (this._teardownWithDepsComplete) {
+      // When we are waiting for the teardown for the second time,
+      // most likely after the first time did timeout, annotate current fixture
+      // for better error messages.
+      this._setTeardownDescription(timeoutManager);
+      await this._teardownWithDepsComplete;
+      timeoutManager.setCurrentFixture(undefined);
+      return;
+    }
+    this._teardownWithDepsComplete = this._teardownInternal(timeoutManager);
     await this._teardownWithDepsComplete;
+  }
+
+  private _setTeardownDescription(timeoutManager: TimeoutManager) {
+    const title = this.registration.customTitle || this.registration.name;
+    this._runnableDescription.title = this.registration.timeout !== undefined ? `Fixture "${title}"` : `tearing down "${title}"`;
+    timeoutManager.setCurrentFixture(this._runnableDescription);
   }
 
   private async _teardownInternal(timeoutManager: TimeoutManager) {
@@ -139,8 +160,7 @@ class Fixture {
       }
       if (this._useFuncFinished) {
         debugTest(`teardown ${this.registration.name}`);
-        this._runnableDescription.title = `fixture "${this.registration.customTitle || this.registration.name}" teardown`;
-        timeoutManager.setCurrentFixture(this._runnableDescription);
+        this._setTeardownDescription(timeoutManager);
         this._useFuncFinished.resolve();
         await this._selfTeardownComplete;
         timeoutManager.setCurrentFixture(undefined);
@@ -305,7 +325,7 @@ export class FixtureRunner {
       throw error;
   }
 
-  async resolveParametersForFunction(fn: Function, testInfo: TestInfoImpl, autoFixtures: 'worker' | 'test' | 'all-hooks-only'): Promise<object> {
+  async resolveParametersForFunction(fn: Function, testInfo: TestInfoImpl, autoFixtures: 'worker' | 'test' | 'all-hooks-only'): Promise<object | null> {
     // Install automatic fixtures.
     for (const registration of this.pool!.registrations.values()) {
       if (registration.auto === false)
@@ -315,8 +335,11 @@ export class FixtureRunner {
         shouldRun = registration.scope === 'worker' || registration.auto === 'all-hooks-included';
       else if (autoFixtures === 'worker')
         shouldRun = registration.scope === 'worker';
-      if (shouldRun)
-        await this.setupFixtureForRegistration(registration, testInfo);
+      if (shouldRun) {
+        const fixture = await this.setupFixtureForRegistration(registration, testInfo);
+        if (fixture.failed)
+          return null;
+      }
     }
 
     // Install used fixtures.
@@ -325,6 +348,8 @@ export class FixtureRunner {
     for (const name of names) {
       const registration = this.pool!.registrations.get(name)!;
       const fixture = await this.setupFixtureForRegistration(registration, testInfo);
+      if (fixture.failed)
+        return null;
       params[name] = fixture.value;
     }
     return params;
@@ -332,6 +357,10 @@ export class FixtureRunner {
 
   async resolveParametersAndRunFunction(fn: Function, testInfo: TestInfoImpl, autoFixtures: 'worker' | 'test' | 'all-hooks-only') {
     const params = await this.resolveParametersForFunction(fn, testInfo, autoFixtures);
+    if (params === null) {
+      // Do not run the function when fixture setup has already failed.
+      return null;
+    }
     return fn(params, testInfo);
   }
 

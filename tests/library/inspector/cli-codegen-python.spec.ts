@@ -20,7 +20,7 @@ import { test, expect } from './inspectorTest';
 
 const emptyHTML = new URL('file://' + path.join(__dirname, '..', '..', 'assets', 'empty.html')).toString();
 const launchOptions = (channel: string) => {
-  return channel ? `headless=False, channel="${channel}"` : 'headless=False';
+  return channel ? `channel="${channel}", headless=False` : 'headless=False';
 };
 
 test('should print the correct imports and context options', async ({ runCLI, channel, browserName }) => {

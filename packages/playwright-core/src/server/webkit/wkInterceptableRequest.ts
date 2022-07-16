@@ -60,7 +60,7 @@ export class WKInterceptableRequest {
     this._wallTime = event.walltime * 1000;
     if (event.request.postData)
       postDataBuffer = Buffer.from(event.request.postData, 'base64');
-    this.request = new network.Request(frame, redirectedFrom?.request || null, documentId, event.request.url,
+    this.request = new network.Request(frame._page._browserContext, frame, null, redirectedFrom?.request || null, documentId, event.request.url,
         resourceType, event.request.method, postDataBuffer, headersObjectToArray(event.request.headers));
   }
 
@@ -88,7 +88,23 @@ export class WKInterceptableRequest {
       responseStart: timingPayload ? wkMillisToRoundishMillis(timingPayload.responseStart) : -1,
     };
     const setCookieSeparator = process.platform === 'darwin' ? ',' : '\n';
-    return new network.Response(this.request, responsePayload.status, responsePayload.statusText, headersObjectToArray(responsePayload.headers, ',', setCookieSeparator), timing, getResponseBody, responsePayload.source === 'service-worker');
+    const response = new network.Response(this.request, responsePayload.status, responsePayload.statusText, headersObjectToArray(responsePayload.headers, ',', setCookieSeparator), timing, getResponseBody, responsePayload.source === 'service-worker');
+
+    // No raw response headers in WebKit, use "provisional" ones.
+    response.setRawResponseHeaders(null);
+    // Transfer size is not available in WebKit.
+    response.setTransferSize(null);
+
+    if (responsePayload.requestHeaders && Object.keys(responsePayload.requestHeaders).length) {
+      const headers = { ...responsePayload.requestHeaders };
+      if (!headers['host'])
+        headers['Host'] = new URL(this.request.url()).host;
+      this.request.setRawRequestHeaders(headersObjectToArray(headers));
+    } else {
+      // No raw headers avaialable, use provisional ones.
+      this.request.setRawRequestHeaders(null);
+    }
+    return response;
   }
 }
 

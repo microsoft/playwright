@@ -189,6 +189,11 @@ else
   git remote rename origin $REMOTE_BROWSER_UPSTREAM
 fi
 
+# Since we do a single-branch checkout by default, we might need to add a new remote base branch.
+if ! git show-branch "remotes/$REMOTE_BROWSER_UPSTREAM/${BASE_BRANCH}" 2>&1 >/dev/null; then
+  git remote set-branches --add "$REMOTE_BROWSER_UPSTREAM" "${BASE_BRANCH}"
+fi
+
 # if our remote branch does not contains "BASE_REVISION" - then fetch more stuff.
 if [[ -z $(git branch -r --contains "${BASE_REVISION}" --list "${REMOTE_BROWSER_UPSTREAM}/${BASE_BRANCH}") ]]; then
   # Detach git head so that we can fetch into branch.

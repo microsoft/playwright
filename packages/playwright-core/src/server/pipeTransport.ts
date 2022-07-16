@@ -20,26 +20,37 @@ import { makeWaitForNextTask } from '../utils';
 import { debugLogger } from '../common/debugLogger';
 
 export class PipeTransport implements ConnectionTransport {
+  private _pipeRead: NodeJS.ReadableStream;
   private _pipeWrite: NodeJS.WritableStream;
   private _pendingMessage = '';
   private _waitForNextTask = makeWaitForNextTask();
   private _closed = false;
+  private _onclose?: () => void;
 
   onmessage?: (message: ProtocolResponse) => void;
-  onclose?: () => void;
 
   constructor(pipeWrite: NodeJS.WritableStream, pipeRead: NodeJS.ReadableStream) {
+    this._pipeRead = pipeRead;
     this._pipeWrite = pipeWrite;
     pipeRead.on('data', buffer => this._dispatch(buffer));
     pipeRead.on('close', () => {
       this._closed = true;
-      if (this.onclose)
-        this.onclose.call(null);
+      if (this._onclose)
+        this._onclose.call(null);
     });
     pipeRead.on('error', e => debugLogger.log('error', e));
     pipeWrite.on('error', e => debugLogger.log('error', e));
     this.onmessage = undefined;
-    this.onclose = undefined;
+  }
+
+  get onclose() {
+    return this._onclose;
+  }
+
+  set onclose(onclose: undefined | (() => void)) {
+    this._onclose = onclose;
+    if (onclose && !this._pipeRead.readable)
+      onclose();
   }
 
   send(message: ProtocolRequest) {
