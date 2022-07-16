@@ -1,0 +1,35 @@
+{
+  "value":[
+    {
+      "id":"00d9565f-ed9c-4a06-9a50-00e7896ccab4",
+      "area":"Location",
+      "resourceName":"ConnectionData",
+      "routeTemplate":"_apis/{resource}",
+      "resourceVersion":1,
+      "minVersion":"1.0",
+      "maxVersion":"7.1",
+      "releasedVersion":"0.0"
+    },
+    {
+      "id":"e81700f7-3be2-46de-8624-2eb35882fcaa",
+      "area":"Location",
+      "resourceName":"ResourceAreas",
+      "routeTemplate":"_apis/{resource}/{areaId}",
+      "resourceVersion":1,
+      "minVersion":"3.2",
+      "maxVersion":"7.1",
+      "releasedVersion":"0.0"
+    },
+    {
+      "id":"d810a47d-f4f4-4a62-a03f-fa1860585c4c",
+      "area":"Location",
+      "resourceName":"ServiceDefinitions",
+      "routeTemplate":"_apis/{resource}/{serviceType}/{identifier}",
+      "resourceVersion":1,
+      "minVersion":"1.0",
+      "maxVersion":"7.1",
+      "releasedVersion":"0.0"
+    }
+  ],
+  "count":3
+}
