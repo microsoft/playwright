@@ -174,8 +174,7 @@ test('06 correct orgUrl config, incorrect token @azure', async ({ runInlineTest 
 test('01 correct orgUrl config, correct token, incorrect testCaseId @azure', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = { 
-        timeout: 10_000,
+      module.exports = {
         reporter: [
           ['${reporterPath('01')}'],
           ['azure', { 
@@ -207,7 +206,6 @@ test('02 correct orgUrl config, correct token, correct testCaseId @azure', async
   const result = await runInlineTest({
     'playwright.config.ts': `
       module.exports = { 
-        timeout: 10_000,
         reporter: [
           ['list'],
           ['${reporterPath('02')}'],
@@ -240,7 +238,6 @@ test('02 disable logging @azure', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       module.exports = { 
-        timeout: 10_000,
         reporter: [
           ['list'],
           ['${reporterPath('02')}'],
@@ -270,7 +267,6 @@ test('03 testCaseId not specified @azure', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       module.exports = { 
-        timeout: 10_000,
         reporter: [
           ['list'],
           ['${reporterPath('03')}'],
@@ -303,7 +299,6 @@ test('04 incorrect planId @azure', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       module.exports = { 
-        timeout: 10_000,
         reporter: [
           ['list'],
           ['${reporterPath('04')}'],
@@ -338,7 +333,6 @@ test('05 upload attachments, attachmentsType in not defined @azure', async ({ ru
   const result = await runInlineTest({
     'playwright.config.ts': `
       module.exports = { 
-        timeout: 10_000,
         use: {
           screenshot: 'only-on-failure',
           trace: 'retain-on-failure',
@@ -390,7 +384,6 @@ test('05 upload attachments with attachments type @azure', async ({ runInlineTes
   const result = await runInlineTest({
     'playwright.config.ts': `
       module.exports = { 
-        timeout: 10_000,
         use: {
           screenshot: 'only-on-failure',
           trace: 'retain-on-failure',
@@ -442,7 +435,6 @@ test('07 incorrect project name @azure', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       module.exports = { 
-        timeout: 10_000,
         reporter: [
           ['list'],
           ['${reporterPath('07')}'],
@@ -475,7 +467,6 @@ test('disabled reporter @azure', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       module.exports = { 
-        timeout: 10_000,
         reporter: [
           ['list'],
           ['azure', { 
