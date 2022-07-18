@@ -69,7 +69,7 @@ await expect(page).toHaveTitle(/Playwright/);
 
 ### Locators
 
-[Locators](./locators.md) are the central piece of Playwright's auto-waiting and retry-ability. Locators represent a way to find element(s) on the page at any moment and are used to perform actions on elements such as .click. fill etc. Custom locators can be created with the [`method: Page.locator`] method.
+[Locators](./locators.md) are the central piece of Playwright's auto-waiting and retry-ability. Locators represent a way to find element(s) on the page at any moment and are used to perform actions on elements such as .click .fill etc. Custom locators can be created with the [`method: Page.locator`] method.
 
 ```js
 const getStarted = page.locator('text=Get Started');
