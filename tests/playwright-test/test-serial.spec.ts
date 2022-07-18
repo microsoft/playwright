@@ -330,22 +330,41 @@ test('test.describe.serial should work inside test.describe.parallel', async ({ 
       test.describe.parallel('parallel suite', () => {
         test.describe.serial('serial suite', () => {
           test('one', async ({}) => {
-            await new Promise(f => setTimeout(f, 1000));
-            console.log('\\n%%one');
+            await new Promise(f => setTimeout(f, 2000));
+            console.log('\\n%%1-one');
           });
           test('two', async ({}) => {
-            await new Promise(f => setTimeout(f, 500));
-            console.log('\\n%%two');
+            await new Promise(f => setTimeout(f, 1000));
+            console.log('\\n%%1-two');
+          });
+        });
+
+        test.describe.serial('serial suite 2', () => {
+          test('one', async ({}) => {
+            await new Promise(f => setTimeout(f, 2000));
+            console.log('\\n%%2-one');
+          });
+          test('two', async ({}) => {
+            await new Promise(f => setTimeout(f, 1000));
+            console.log('\\n%%2-two');
           });
         });
       });
     `,
   }, { workers: 2 });
   expect(result.exitCode).toBe(0);
-  expect(result.passed).toBe(2);
-  expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
-    '%%one',
-    '%%two',
+  expect(result.passed).toBe(4);
+  expect(result.output).toContain('Running 4 tests using 2 workers');
+  const lines = result.output.split('\n').filter(line => line.startsWith('%%'));
+  // First test in each worker started before the second test in the other.
+  // This means they were actually running in parallel.
+  expect(lines.indexOf('%%1-one')).toBeLessThan(lines.indexOf('%%2-two'));
+  expect(lines.indexOf('%%2-one')).toBeLessThan(lines.indexOf('%%1-two'));
+  expect(lines.sort()).toEqual([
+    '%%1-one',
+    '%%1-two',
+    '%%2-one',
+    '%%2-two',
   ]);
 });
 

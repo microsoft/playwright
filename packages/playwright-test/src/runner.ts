@@ -653,10 +653,16 @@ function createTestGroups(rootSuite: Suite, workers: number): TestGroup[] {
   const groups = new Map<string, Map<string, {
     // Tests that must be run in order are in the same group.
     general: TestGroup,
-    // Tests that may be run independently each has a dedicated group with a single test.
-    parallel: TestGroup[],
-    // Tests that are marked as parallel but have beforeAll/afterAll hooks should be grouped
-    // as much as possible. We split them into equally sized groups, one per worker.
+
+    // There are 3 kinds of parallel tests:
+    // - Tests belonging to parallel suites, without beforeAll/afterAll hooks.
+    //   These can be run independently, they are put into their own group, key === test.
+    // - Tests belonging to parallel suites, with beforeAll/afterAll hooks.
+    //   These should share the worker as much as possible, put into single parallelWithHooks group.
+    //   We'll divide them into equally-sized groups later.
+    // - Tests belonging to serial suites inside parallel suites.
+    //   These should run as a serial group, each group is independent, key === serial suite.
+    parallel: Map<Suite | TestCase, TestGroup>,
     parallelWithHooks: TestGroup,
   }>>();
 
@@ -681,29 +687,34 @@ function createTestGroups(rootSuite: Suite, workers: number): TestGroup[] {
       if (!withRequireFile) {
         withRequireFile = {
           general: createGroup(test),
-          parallel: [],
+          parallel: new Map(),
           parallelWithHooks: createGroup(test),
         };
         withWorkerHash.set(test._requireFile, withRequireFile);
       }
 
+      // Note that a parallel suite cannot be inside a serial suite. This is enforced in TestType.
       let insideParallel = false;
-      let insideSerial = false;
+      let outerMostSerialSuite: Suite | undefined;
       let hasAllHooks = false;
       for (let parent: Suite | undefined = test.parent; parent; parent = parent.parent) {
-        insideSerial = insideSerial || parent._parallelMode === 'serial';
-        // Serial cancels out any enclosing parallel.
-        insideParallel = insideParallel || (!insideSerial && parent._parallelMode === 'parallel');
+        if (parent._parallelMode === 'serial')
+          outerMostSerialSuite = parent;
+        insideParallel = insideParallel || parent._parallelMode === 'parallel';
         hasAllHooks = hasAllHooks || parent._hooks.some(hook => hook.type === 'beforeAll' || hook.type === 'afterAll');
       }
 
       if (insideParallel) {
-        if (hasAllHooks) {
+        if (hasAllHooks && !outerMostSerialSuite) {
           withRequireFile.parallelWithHooks.tests.push(test);
         } else {
-          const group = createGroup(test);
+          const key = outerMostSerialSuite || test;
+          let group = withRequireFile.parallel.get(key);
+          if (!group) {
+            group = createGroup(test);
+            withRequireFile.parallel.set(key, group);
+          }
           group.tests.push(test);
-          withRequireFile.parallel.push(group);
         }
       } else {
         withRequireFile.general.tests.push(test);
@@ -714,10 +725,14 @@ function createTestGroups(rootSuite: Suite, workers: number): TestGroup[] {
   const result: TestGroup[] = [];
   for (const withWorkerHash of groups.values()) {
     for (const withRequireFile of withWorkerHash.values()) {
+      // Tests without parallel mode should run serially as a single group.
       if (withRequireFile.general.tests.length)
         result.push(withRequireFile.general);
-      result.push(...withRequireFile.parallel);
 
+      // Parallel test groups without beforeAll/afterAll can be run independently.
+      result.push(...withRequireFile.parallel.values());
+
+      // Tests with beforeAll/afterAll should try to share workers as much as possible.
       const parallelWithHooksGroupSize = Math.ceil(withRequireFile.parallelWithHooks.tests.length / workers);
       let lastGroup: TestGroup | undefined;
       for (const test of withRequireFile.parallelWithHooks.tests) {
