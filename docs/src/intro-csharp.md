@@ -186,6 +186,13 @@ dotnet test -- MSTest.Parallelize.Workers=5
 pwsh bin\Debug\netX\playwright.ps1 codegen
 ```
 
+## What's next
+
+- [Writing tests using the Page and Context base classes](./test-runners.md)
+- [Debug tests with the Playwright Debugger](./debug.md)
+- [Generate tests with Codegen](./codegen.md)
+- [See a trace of your tests](./trace-viewer.md)
+
 ## Using Playwright as a library
 
 Create a console project and add the Playwright dependency.
