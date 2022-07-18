@@ -472,7 +472,7 @@ rowLocator
     .screenshot();
 ```
 ```python async
-row_locator = page.lsocator("tr")
+row_locator = page.locator("tr")
 # ...
 await row_locator
     .filter(has_text="text in column 1")
@@ -480,7 +480,7 @@ await row_locator
     .screenshot()
 ```
 ```python sync
-row_locator = page.lsocator("tr")
+row_locator = page.locator("tr")
 # ...
 row_locator
     .filter(has_text="text in column 1")
