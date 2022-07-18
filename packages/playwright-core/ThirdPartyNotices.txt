@@ -25,7 +25,7 @@ This project incorporates components from the projects listed below. The origina
 -	https-proxy-agent@5.0.0 (https://github.com/TooTallNate/node-https-proxy-agent)
 -	inflight@1.0.6 (https://github.com/npm/inflight)
 -	inherits@2.0.4 (https://github.com/isaacs/inherits)
--	ip@1.1.5 (https://github.com/indutny/node-ip)
+-	ip@2.0.0 (https://github.com/indutny/node-ip)
 -	jpeg-js@0.4.4 (https://github.com/eugeneware/jpeg-js)
 -	mime@3.0.0 (https://github.com/broofa/mime)
 -	minimatch@3.1.2 (https://github.com/isaacs/minimatch)
@@ -43,7 +43,7 @@ This project incorporates components from the projects listed below. The origina
 -	signal-exit@3.0.7 (https://github.com/tapjs/signal-exit)
 -	smart-buffer@4.2.0 (https://github.com/JoshGlazebrook/smart-buffer)
 -	socks-proxy-agent@6.1.1 (https://github.com/TooTallNate/node-socks-proxy-agent)
--	socks@2.6.2 (https://github.com/JoshGlazebrook/socks)
+-	socks@2.7.0 (https://github.com/JoshGlazebrook/socks)
 -	stack-utils@2.0.5 (https://github.com/tapjs/stack-utils)
 -	wrappy@1.0.2 (https://github.com/npm/wrappy)
 -	ws@8.4.2 (https://github.com/websockets/ws)
@@ -816,7 +816,7 @@ PERFORMANCE OF THIS SOFTWARE.
 =========================================
 END OF inherits@2.0.4 AND INFORMATION
 
-%% ip@1.1.5 NOTICES AND INFORMATION BEGIN HERE
+%% ip@2.0.0 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 # IP  
 [![](https://badge.fury.io/js/ip.svg)](https://www.npmjs.com/package/ip)  
@@ -909,7 +909,7 @@ DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
 USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
-END OF ip@1.1.5 AND INFORMATION
+END OF ip@2.0.0 AND INFORMATION
 
 %% jpeg-js@0.4.4 NOTICES AND INFORMATION BEGIN HERE
 =========================================
@@ -1465,7 +1465,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
 END OF socks-proxy-agent@6.1.1 AND INFORMATION
 
-%% socks@2.6.2 NOTICES AND INFORMATION BEGIN HERE
+%% socks@2.7.0 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 The MIT License (MIT)
 
@@ -1488,7 +1488,7 @@ COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
 IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
-END OF socks@2.6.2 AND INFORMATION
+END OF socks@2.7.0 AND INFORMATION
 
 %% stack-utils@2.0.5 NOTICES AND INFORMATION BEGIN HERE
 =========================================
