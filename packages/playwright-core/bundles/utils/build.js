@@ -16,35 +16,19 @@
 
 // @ts-check
 const path = require('path');
-const fs = require('fs');
 const esbuild = require('esbuild');
-
-// Can be removed once https://github.com/JoshGlazebrook/socks/pull/85 is fixed.
-/** @type{import('esbuild').Plugin} */
-let patchIpToHideBufferDeprecationWarning = {
-  name: 'patch-ip-deprecation',
-  setup(build) {
-    build.onResolve({ filter: /^ip$/ }, () => {
-      const originalPath = require.resolve('ip');
-      const patchedPath = path.join(path.dirname(originalPath), path.basename(originalPath, '.js') + '.pw-patched.js');
-      let sourceFileContent = fs.readFileSync(originalPath, 'utf8')
-      // all use-cases of new Buffer() pass the length as an arg
-      sourceFileContent = sourceFileContent.replace(/new Buffer\(/g, 'Buffer.alloc(');
-      fs.writeFileSync(patchedPath, sourceFileContent);
-      return { path: patchedPath }
-    });
-  },
-}
 
 esbuild.build({
   entryPoints: [path.join(__dirname, 'src/utilsBundleImpl.ts')],
   bundle: true,
   outdir: path.join(__dirname, '../../lib'),
-  plugins: [patchIpToHideBufferDeprecationWarning],
   format: 'cjs',
   platform: 'node',
   target: 'ES2019',
   watch: process.argv.includes('--watch'),
   sourcemap: process.argv.includes('--sourcemap'),
   minify: process.argv.includes('--minify'),
-}).catch(() => process.exit(1));
+}).catch((error) => {
+  console.error(error);
+  process.exit(1);
+});
