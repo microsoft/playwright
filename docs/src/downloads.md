@@ -27,7 +27,9 @@ const [ download ] = await Promise.all([
   page.locator('button#delayed-download').click(),
 ]);
 // Wait for the download process to complete
-const path = await download.path();
+console.log(await download.path());
+// Save downloaded file somewhere
+await download.saveAs('/path/to/save/download/at.txt');
 ```
 
 ```java
@@ -38,6 +40,9 @@ Download download = page.waitForDownload(() -> {
 });
 // Wait for the download process to complete
 Path path = download.path();
+System.out.println(download.path());
+// Save downloaded file somewhere
+download.saveAs(Paths.get("/path/to/save/download/at.txt"));
 ```
 
 ```python async
@@ -47,7 +52,9 @@ async with page.expect_download() as download_info:
     await page.locator("button#delayed-download").click()
 download = await download_info.value
 # Wait for the download process to complete
-path = await download.path()
+print(await download.path())
+# Save downloaded file somewhere
+download.save_as("/path/to/save/download/at.txt")
 ```
 
 ```python sync
@@ -57,7 +64,9 @@ with page.expect_download() as download_info:
     page.locator("button#delayed-download").click()
 download = download_info.value
 # Wait for the download process to complete
-path = download.path()
+print(download.path())
+# Save downloaded file somewhere
+download.save_as("/path/to/save/download/at.txt")
 ```
 
 ```csharp
@@ -67,7 +76,9 @@ var waitForDownloadTask = page.WaitForDownloadAsync();
 await page.Locator("#downloadButton").ClickAsync();
 // Wait for the download process to complete
 var download = await waitForDownloadTask;
-var path = await download.PathAsync();
+Console.WriteLine(await download.PathAsync());
+// Save downloaded file somewhere
+await download.SaveAsAsync("/path/to/save/download/at.txt");
 ```
 
 #### Variations
