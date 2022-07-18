@@ -3,10 +3,190 @@ id: intro
 title: "Getting started"
 ---
 
-<!-- TOC -->
-- [Release notes](./release-notes.md)
+## Writing end-to-end tests with Playwright
 
-## First project
+You can choose to use [NUnit base classes](./test-runners.md#nunit) or [MSTest base classes](./test-runners.md#nunit) that Playwright provides to write end-to-end tests. These classes support running tests on multiple browser engines, parallelizing tests, adjusting launch/context options and getting a [Page]/[BrowserContext] instance per test out of the box. Learn more about them in the [Test Runners](./test-runners.md) section.
+
+In the following walkthrough we'll setup a test project and run our first end-to-end test with Playwright:
+
+<Tabs
+  defaultValue="nunit"
+  values={[
+    {label: 'NUnit', value: 'nunit'},
+    {label: 'MSTest', value: 'mstest'}
+  ]
+}>
+<TabItem value="nunit">
+
+```bash
+# Create new project.
+dotnet new nunit -n PlaywrightTests
+cd PlaywrightTests
+```
+
+</TabItem>
+<TabItem value="mstest">
+
+```bash
+# Create new project.
+dotnet new mstest -n PlaywrightTests
+cd PlaywrightTests
+```
+
+</TabItem>
+</Tabs>
+
+Install dependencies, build project and download necessary browsers. This is only done once per project.
+
+<Tabs
+  defaultValue="nunit"
+  values={[
+    {label: 'NUnit', value: 'nunit'},
+    {label: 'MSTest', value: 'mstest'}
+  ]
+}>
+<TabItem value="nunit">
+
+```bash
+# Add project dependency
+dotnet add package Microsoft.Playwright.NUnit
+# Build the project
+dotnet build
+# Install required browsers - replace netX with actual output folder name, f.ex. net6.0.
+pwsh bin\Debug\netX\playwright.ps1 install
+```
+
+</TabItem>
+<TabItem value="mstest">
+
+```bash
+# Add project dependency
+dotnet add package Microsoft.Playwright.MSTest
+# Build the project
+dotnet build
+# Install required browsers - replace netX with actual output folder name, f.ex. net6.0.
+pwsh bin\Debug\netX\playwright.ps1 install
+```
+
+</TabItem>
+</Tabs>
+
+Edit UnitTest1.cs file.
+
+<Tabs
+  defaultValue="nunit"
+  values={[
+    {label: 'NUnit', value: 'nunit'},
+    {label: 'MSTest', value: 'mstest'}
+  ]
+}>
+<TabItem value="nunit">
+
+```csharp
+using System.Threading.Tasks;
+using Microsoft.Playwright.NUnit;
+using NUnit.Framework;
+
+namespace PlaywrightTests;
+
+[Parallelizable(ParallelScope.Self)]
+public class Tests : PageTest
+{
+    [Test]
+    async public Task ShouldHaveTheCorrectSlogan()
+    {
+        await Page.GotoAsync("https://playwright.dev");
+        await Expect(Page.Locator("text=enables reliable end-to-end testing for modern web apps")).ToBeVisibleAsync();
+    }
+
+    [Test]
+    public async Task ShouldHaveTheCorrectTitle()
+    {
+        await Page.GotoAsync("https://playwright.dev");
+        var title = Page.Locator(".navbar__inner .navbar__title");
+        await Expect(title).ToHaveTextAsync("Playwright");
+    }
+
+    [Test]
+    public async Task ShouldAdd()
+    {
+        var result = await Page.EvaluateAsync<int>("() => 7 + 3");
+        Assert.AreEqual(10, result);
+    }
+}
+```
+
+</TabItem>
+<TabItem value="mstest">
+
+```csharp
+using Microsoft.Playwright.MSTest;
+
+namespace PlaywrightTests;
+
+public class UnitTest1 : PageTest
+{
+    [TestMethod]
+    async public Task ShouldHaveTheCorrectSlogan()
+    {
+        await Page.GotoAsync("https://playwright.dev");
+        await Expect(Page.Locator("text=enables reliable end-to-end testing for modern web apps")).ToBeVisibleAsync();
+    }
+
+    [TestMethod]
+    public async Task ShouldHaveTheCorrectTitle()
+    {
+        await Page.GotoAsync("https://playwright.dev");
+        var title = Page.Locator(".navbar__inner .navbar__title");
+        await Expect(title).ToHaveTextAsync("Playwright");
+    }
+
+    [TestMethod]
+    public async Task ShouldAdd()
+    {
+        var result = await Page.EvaluateAsync<int>("() => 7 + 3");
+        Assert.AreEqual(10, result);
+    }
+}
+```
+
+</TabItem>
+</Tabs>
+
+Running the tests:
+
+<Tabs
+  defaultValue="nunit"
+  values={[
+    {label: 'NUnit', value: 'nunit'},
+    {label: 'MSTest', value: 'mstest'}
+  ]
+}>
+<TabItem value="nunit">
+
+```bash
+dotnet test -- NUnit.NumberOfTestWorkers=5
+```
+
+</TabItem>
+<TabItem value="mstest">
+
+```bash
+dotnet test -- MSTest.Parallelize.Workers=5
+```
+
+</TabItem>
+</Tabs>
+
+## Record scripts
+
+[Command line tools](./cli.md) can be used to record user interactions and generate C# code.
+
+```bash
+pwsh bin\Debug\netX\playwright.ps1 codegen
+```
+
+## Using Playwright as a library
 
 Create a console project and add the Playwright dependency.
 
@@ -52,74 +232,6 @@ await playwright.Firefox.LaunchAsync(new()
     Headless = false,
     SlowMo = 50,
 });
-```
-
-## First test
-
-You can choose to use NUnit test fixtures that come bundled with Playwright. These fixtures support running tests on multiple browser engines in parallel, out of the box. Learn more about [Playwright with NUnit](./test-runners.md).
-
-```bash
-# Create new project.
-dotnet new nunit -n PlaywrightTests
-cd PlaywrightTests
-```
-
-Install dependencies, build project and download necessary browsers. This is only done once per project.
-
-```bash
-# Add project dependency
-dotnet add package Microsoft.Playwright.NUnit
-# Build the project
-dotnet build
-# Install required browsers - replace netX with actual output folder name, f.ex. net6.0.
-pwsh bin\Debug\netX\playwright.ps1 install
-```
-
-Edit UnitTest1.cs file.
-```csharp
-using System.Threading.Tasks;
-using Microsoft.Playwright.NUnit;
-using NUnit.Framework;
-
-namespace PlaywrightTests;
-
-[Parallelizable(ParallelScope.Self)]
-public class Tests : PageTest
-{
-    [Test]
-    async public Task ShouldHaveTheCorrectSlogan()
-    {
-        await Page.GotoAsync("https://playwright.dev");
-        await Expect(Page.Locator("text=enables reliable end-to-end testing for modern web apps")).ToBeVisibleAsync();
-    }
-
-    [Test]
-    public async Task ShouldHaveTheCorrectTitle()
-    {
-        await Page.GotoAsync("https://playwright.dev");
-        var title = Page.Locator(".navbar__inner .navbar__title");
-        await Expect(title).ToHaveTextAsync("Playwright");
-    }
-
-    [Test]
-    public async Task ShouldAdd()
-    {
-        var result = await Page.EvaluateAsync<int>("() => 7 + 3");
-        Assert.AreEqual(10, result);
-    }
-}
-```
-
-```bash
-dotnet test -- NUnit.NumberOfTestWorkers=5
-```
-
-## Record scripts
-
-[Command line tools](./cli.md) can be used to record user interactions and generate C# code.
-
-```bash
-pwsh bin\Debug\netX\playwright.ps1 codegen
 ```
 
 ## Install browsers via API
