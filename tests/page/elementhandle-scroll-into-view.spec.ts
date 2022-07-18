@@ -60,9 +60,21 @@ it('should wait for display:none to become visible', async ({ page, server }) =>
   await testWaiting(page, div => div.style.display = 'block');
 });
 
-it('should wait for display:contents to become visible', async ({ page, server }) => {
-  await page.setContent('<div style="display:contents">Hello</div>');
-  await testWaiting(page, div => div.style.display = 'block');
+it.fixme('should scroll display:contents into view', async ({ page, server }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/15034' });
+
+  await page.setContent(`
+    <div id=container style="width:200px;height:200px;overflow:scroll;border:1px solid black;">
+      <div style="margin-top:500px;background:red;">
+        <div style="height:50px;width:100px;background:cyan;">
+          <div id=target style="display:contents">Hello</div>
+        </div>
+      <div>
+    </div>
+  `);
+  const div = await page.$('#target');
+  await div.scrollIntoViewIfNeeded();
+  expect(await page.$eval('#container', e => e.scrollTop)).toBe(350);
 });
 
 it('should work for visibility:hidden element', async ({ page }) => {
