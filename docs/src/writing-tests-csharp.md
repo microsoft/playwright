@@ -166,7 +166,7 @@ public class UnitTest1 : PageTest
 
 ### Using Test Hooks
 
-You can use `SetUp` and `TearDown` (or `TestInitialize` and `TestCleanup` in MSTest) as usual to prepare and clean up your test environment:
+You can use `SetUp`/`TearDown` in NUnit or `TestInitialize`/`TestCleanup` in MSTest to prepare and clean up your test environment:
 
 <Tabs
   defaultValue="nunit"

@@ -110,7 +110,7 @@ For CPU-bound tests, we recommend using as many workers as there are cores on yo
 
 ### Customizing [BrowserContext] options
 
-To override the context options, you can override the `ContextOptions` method inside the `Page` or `BrowserContext` base class which you get from `Microsoft.Playwright.NUnit`. See the following example:
+To customize context options, you can override the `ContextOptions` method of your test class derived from `Microsoft.Playwright.MSTest.PageTest` or `Microsoft.Playwright.MSTest.ContextTest`. See the following example:
 
 ```csharp
 using Microsoft.Playwright.NUnit;
@@ -152,7 +152,7 @@ CLI. See the following example:
 <?xml version="1.0" encoding="utf-8"?>
 <RunSettings>
   <TestRunParameters>
-    <Parameter name="browser" value="webkit" />
+    <Parameter name="browser" value="chromium" />
     <Parameter name="headless" value="false" />
     <Parameter name="channel" value="msedge" />
   </TestRunParameters>
@@ -160,15 +160,15 @@ CLI. See the following example:
 ```
 
 ```bash tab=bash-bash
-dotnet test -- TestRunParameters.Parameter\(name=\"browser\", value=\"webkit\"\) TestRunParameters.Parameter\(name=\"headless\", value=\"false\"\) TestRunParameters.Parameter\(name=\"channel\", value=\"msedge\"\)
+dotnet test -- TestRunParameters.Parameter\(name=\"browser\", value=\"chromium\"\) TestRunParameters.Parameter\(name=\"headless\", value=\"false\"\) TestRunParameters.Parameter\(name=\"channel\", value=\"msedge\"\)
 ```
 
 ```batch tab=bash-batch
-dotnet test -- TestRunParameters.Parameter(name=\"browser\", value=\"webkit\") TestRunParameters.Parameter(name=\"headless\", value=\"false\") TestRunParameters.Parameter(name=\"channel\", value=\"msedge\")
+dotnet test -- TestRunParameters.Parameter(name=\"browser\", value=\"chromium\") TestRunParameters.Parameter(name=\"headless\", value=\"false\") TestRunParameters.Parameter(name=\"channel\", value=\"msedge\")
 ```
 
 ```powershell tab=bash-powershell
-dotnet test -- TestRunParameters.Parameter(name=\"browser\", value=\"webkit\") TestRunParameters.Parameter(name=\"headless\", value=\"false\") TestRunParameters.Parameter(name=\"channel\", value=\"msedge\")
+dotnet test -- TestRunParameters.Parameter(name=\"browser\", value=\"chromium\") TestRunParameters.Parameter(name=\"headless\", value=\"false\") TestRunParameters.Parameter(name=\"channel\", value=\"msedge\")
 ```
 
 ### Using Verbose API Logs
@@ -312,7 +312,7 @@ dotnet test --settings:.runsettings -- MSTest.Parallelize.Workers=4
 
 ### Customizing [BrowserContext] options
 
-To override the context options, you can override the `ContextOptions` method inside the `Page` or `BrowserContext` base class which you get from `Microsoft.Playwright.MSTest`. See the following example:
+To customize context options, you can override the `ContextOptions` method of your test class derived from `Microsoft.Playwright.MSTest.PageTest` or `Microsoft.Playwright.MSTest.ContextTest`. See the following example:
 
 ```csharp
 using System.Threading.Tasks;
@@ -358,7 +358,7 @@ CLI. See the following example:
 <?xml version="1.0" encoding="utf-8"?>
 <RunSettings>
   <TestRunParameters>
-    <Parameter name="browser" value="webkit" />
+    <Parameter name="browser" value="chromium" />
     <Parameter name="headless" value="false" />
     <Parameter name="channel" value="msedge" />
   </TestRunParameters>
@@ -366,15 +366,15 @@ CLI. See the following example:
 ```
 
 ```bash tab=bash-bash
-dotnet test -- TestRunParameters.Parameter\(name=\"browser\", value=\"webkit\"\) TestRunParameters.Parameter\(name=\"headless\", value=\"false\"\) TestRunParameters.Parameter\(name=\"channel\", value=\"msedge\"\)
+dotnet test -- TestRunParameters.Parameter\(name=\"browser\", value=\"chromium\"\) TestRunParameters.Parameter\(name=\"headless\", value=\"false\"\) TestRunParameters.Parameter\(name=\"channel\", value=\"msedge\"\)
 ```
 
 ```batch tab=bash-batch
-dotnet test -- TestRunParameters.Parameter(name=\"browser\", value=\"webkit\") TestRunParameters.Parameter(name=\"headless\", value=\"false\") TestRunParameters.Parameter(name=\"channel\", value=\"msedge\")
+dotnet test -- TestRunParameters.Parameter(name=\"browser\", value=\"chromium\") TestRunParameters.Parameter(name=\"headless\", value=\"false\") TestRunParameters.Parameter(name=\"channel\", value=\"msedge\")
 ```
 
 ```powershell tab=bash-powershell
-dotnet test -- TestRunParameters.Parameter(name=\"browser\", value=\"webkit\") TestRunParameters.Parameter(name=\"headless\", value=\"false\") TestRunParameters.Parameter(name=\"channel\", value=\"msedge\")
+dotnet test -- TestRunParameters.Parameter(name=\"browser\", value=\"chromium\") TestRunParameters.Parameter(name=\"headless\", value=\"false\") TestRunParameters.Parameter(name=\"channel\", value=\"msedge\")
 ```
 
 ### Using Verbose API Logs
