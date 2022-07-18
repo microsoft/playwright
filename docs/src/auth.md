@@ -172,7 +172,7 @@ Logging in via the UI and then reusing authentication state can be combined to i
 This approach will also **work in CI environments**, since it does not rely on any external state.
 
 ### Code generation
-* langs: dotnet
+* langs: csharp
 
 Logging in via the UI and then reusing authentication state can be combined to implement **login once and run multiple scenarios**. The lifecycle looks like:
 
