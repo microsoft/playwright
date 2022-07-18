@@ -45,6 +45,26 @@ You can run a single test, a set of tests or all tests. Tests can be run on diff
   dotnet test
   ```
 
+- Running Tests on multiple browsers
+  
+  To run your test on multiple browsers or configurations you need to invoke the `dotnet test` command multiple times. There you can then either specify the `BROWSER` environment variable (like the previous) or pass the `browser` via the runsettings file:
+
+  ```bash
+  dotnet test --settings:chromium.runsettings
+  dotnet test --settings:firefox.runsettings
+  dotnet test --settings:webkit.runsettings
+  ```
+
+  ```xml
+  <?xml version="1.0" encoding="utf-8"?>
+  <RunSettings>
+    <TestRunParameters>
+      <Parameter name="browser" value="chromium" />
+      <Parameter name="headless" value="false" />
+    </TestRunParameters>
+  </RunSettings>
+  ```
+
 For more information see [selective unit tests](https://docs.microsoft.com/en-us/dotnet/core/testing/selective-unit-tests?pivots=mstest) in the Microsoft docs.
 
 ## What's Next
