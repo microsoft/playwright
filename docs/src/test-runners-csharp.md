@@ -108,6 +108,69 @@ By default NUnit will run all test files in parallel, while running tests inside
 
 For CPU-bound tests, we recommend using as many workers as there are cores on your system, divided by 2. For IO-bound tests you can use as many workers as you have cores.
 
+### Customizing [BrowserContext] options
+
+To customize context options, you can override the `ContextOptions` method of your test class derived from `Microsoft.Playwright.MSTest.PageTest` or `Microsoft.Playwright.MSTest.ContextTest`. See the following example:
+
+```csharp
+using Microsoft.Playwright.NUnit;
+
+namespace PlaywrightTests;
+
+[Parallelizable(ParallelScope.Self)]
+public class MyTest : PageTest
+{
+    [Test]
+    public async Task TestWithCustomContextOptions()
+    {
+        // The following Page (and BrowserContext) instance has the custom colorScheme, viewport and baseURL set:
+        await Page.GotoAsync("/login");
+    }
+
+    public override BrowserNewContextOptions ContextOptions()
+    {
+        return new BrowserNewContextOptions()
+        {
+            ColorScheme = ColorScheme.Light,
+            ViewportSize = new()
+            {
+                Width = 1920,
+                Height = 1080
+            },
+            BaseURL = "https://github.com",
+        };
+    }
+}
+```
+
+### Customizing [Browser]/launch options
+
+[Browser]/launch options can be override either using a run settings file or by setting the run settings options directly via the
+CLI. See the following example:
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<RunSettings>
+  <TestRunParameters>
+    <Parameter name="browser" value="chromium" />
+    <Parameter name="headless" value="false" />
+    <Parameter name="channel" value="msedge" />
+  </TestRunParameters>
+</RunSettings>
+```
+
+```bash tab=bash-bash
+dotnet test -- TestRunParameters.Parameter\(name=\"browser\", value=\"chromium\"\) TestRunParameters.Parameter\(name=\"headless\", value=\"false\"\) TestRunParameters.Parameter\(name=\"channel\", value=\"msedge\"\)
+```
+
+```batch tab=bash-batch
+dotnet test -- TestRunParameters.Parameter(name=\"browser\", value=\"chromium\") TestRunParameters.Parameter(name=\"headless\", value=\"false\") TestRunParameters.Parameter(name=\"channel\", value=\"msedge\")
+```
+
+```powershell tab=bash-powershell
+dotnet test -- TestRunParameters.Parameter(name=\"browser\", value=\"chromium\") TestRunParameters.Parameter(name=\"headless\", value=\"false\") TestRunParameters.Parameter(name=\"channel\", value=\"msedge\")
+```
+
 ### Using Verbose API Logs
 
 When you have enabled the [verbose API log](./debug.md#verbose-api-logs), via the `DEBUG` environment variable, you will see the messages in the standard error stream. In NUnit, within Visual Studio, that will be the `Tests` pane of the `Output` window. It will also be displayed in the `Test Log` for each test.
@@ -245,6 +308,73 @@ By default MSTest will run all classes in parallel, while running tests inside e
 
 ```bash
 dotnet test --settings:.runsettings -- MSTest.Parallelize.Workers=4
+```
+
+### Customizing [BrowserContext] options
+
+To customize context options, you can override the `ContextOptions` method of your test class derived from `Microsoft.Playwright.MSTest.PageTest` or `Microsoft.Playwright.MSTest.ContextTest`. See the following example:
+
+```csharp
+using System.Threading.Tasks;
+using Microsoft.Playwright;
+using Microsoft.Playwright.MSTest;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+
+namespace PlaywrightTests;
+
+[TestClass]
+public class UnitTest1 : PageTest
+{
+    [TestMethod]
+    public async Task TestWithCustomContextOptions()
+    {
+        // The following Page (and BrowserContext) instance has the custom colorScheme, viewport and baseURL set:
+        await Page.GotoAsync("/login");
+    }
+
+    public override BrowserNewContextOptions ContextOptions()
+    {
+        return new BrowserNewContextOptions()
+        {
+            ColorScheme = ColorScheme.Light,
+            ViewportSize = new()
+            {
+                Width = 1920,
+                Height = 1080
+            },
+            BaseURL = "https://github.com",
+        };
+    }
+}
+
+```
+
+### Customizing [Browser]/launch options
+
+[Browser]/launch options can be override either using a run settings file or by setting the run settings options directly via the
+CLI. See the following example:
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<RunSettings>
+  <TestRunParameters>
+    <Parameter name="browser" value="chromium" />
+    <Parameter name="headless" value="false" />
+    <Parameter name="channel" value="msedge" />
+  </TestRunParameters>
+</RunSettings>
+```
+
+```bash tab=bash-bash
+dotnet test -- TestRunParameters.Parameter\(name=\"browser\", value=\"chromium\"\) TestRunParameters.Parameter\(name=\"headless\", value=\"false\"\) TestRunParameters.Parameter\(name=\"channel\", value=\"msedge\"\)
+```
+
+```batch tab=bash-batch
+dotnet test -- TestRunParameters.Parameter(name=\"browser\", value=\"chromium\") TestRunParameters.Parameter(name=\"headless\", value=\"false\") TestRunParameters.Parameter(name=\"channel\", value=\"msedge\")
+```
+
+```powershell tab=bash-powershell
+dotnet test -- TestRunParameters.Parameter(name=\"browser\", value=\"chromium\") TestRunParameters.Parameter(name=\"headless\", value=\"false\") TestRunParameters.Parameter(name=\"channel\", value=\"msedge\")
 ```
 
 ### Using Verbose API Logs
