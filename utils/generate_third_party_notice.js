@@ -34,6 +34,10 @@ This project incorporates components from the projects listed below. The origina
     const bundlesDir = path.join(projectDir, 'bundles');
     for (const bundle of fs.readdirSync(bundlesDir)) {
       const dir = path.join(bundlesDir, bundle);
+      console.log('==== dir ==== \n', dir)
+      if (dir.endsWith('.DS_Store')) {
+        continue;
+      }
       execSync('npm ci', { cwd: dir });
       const packages = await new Promise((f, r) => {
         checker.init({

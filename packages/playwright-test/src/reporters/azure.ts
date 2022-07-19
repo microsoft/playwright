@@ -124,7 +124,7 @@ class AzureDevOpsReporter implements Reporter {
   private isDisabled = false;
   private testRunTitle = '';
   private uploadAttachments = false;
-  private attachmentsType?: TAttachmentType = ['screenshot'];
+  private attachmentsType?: TAttachmentType;
   private token: string = '';
 
   public constructor(options: AzureReporterOptions = {} as AzureReporterOptions) {
@@ -163,8 +163,8 @@ class AzureDevOpsReporter implements Reporter {
     }
     if (this.uploadAttachments) {
       if (!this.attachmentsType) {
-        this.log(colors.yellow("'attachmentsType' is not set. Attachments will not be uploaded."));
-        this.uploadAttachments = false;
+        this.log(colors.yellow("'attachmentsType' is not set. Attachments Type will be set to 'screenshot' by default."));
+        this.attachmentsType = ['screenshot'];
       }
     }
     this.connection = new azdev.WebApi(this.orgUrl, azdev.getPersonalAccessTokenHandler(this.token));

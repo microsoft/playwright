@@ -329,7 +329,7 @@ test('04 incorrect planId @azure', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
 });
 
-test('05 upload attachments, attachmentsType in not defined @azure', async ({ runInlineTest }) => {
+test('05 upload attachments, attachmentsType in not defined - default "screenshot" @azure', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       module.exports = { 
@@ -365,13 +365,13 @@ test('05 upload attachments, attachmentsType in not defined @azure', async ({ ru
   }, { reporter: '' });
 
   expect(stripAnsi(result.output)).not.toContain('Failed request: (401)');
-  expect(stripAnsi(result.output)).toContain("azure: 'attachmentsType' is not set. Attachments will not be uploaded.");
+  expect(stripAnsi(result.output)).toContain("azure: 'attachmentsType' is not set. Attachments Type will be set to 'screenshot' by default.");
   expect(stripAnsi(result.output)).toContain('azure: Using run 150 to publish test results');
   expect(stripAnsi(result.output)).toContain('azure: Test [3] foobar - passed');
   expect(stripAnsi(result.output)).toContain('azure: Test [7] with screenshot - failed');
   expect(stripAnsi(result.output)).toContain('azure: Start publishing: [3] foobar');
   expect(stripAnsi(result.output)).toContain('azure: Start publishing: [7] with screenshot');
-  expect(stripAnsi(result.output)).not.toContain('azure: Start upload attachments for test case [7]');
+  expect(stripAnsi(result.output)).toContain('azure: Start upload attachments for test case [7]');
   expect(stripAnsi(result.output)).toContain('azure: Result published: [3] foobar');
   expect(stripAnsi(result.output)).toContain('azure: Result published: [7] with screenshot');
   expect(stripAnsi(result.output)).toContain('azure: Run 150 - Completed');
