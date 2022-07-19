@@ -563,7 +563,7 @@ const config: PlaywrightTestConfig = {
 export default config;
 ```
 
-```js tab=js-ts
+```js tab=js-js
 // @ts-check
 // example.spec.js
 
