@@ -241,6 +241,30 @@ test('should not override trace file in afterAll', async ({ runInlineTest, serve
   expect(fs.existsSync(testInfo.outputPath('test-results', 'a-test-1', 'trace-1.zip'))).toBeTruthy();
 });
 
+test.fixme('should not retain traces for interrupted tests', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { use: { trace: 'retain-on-failure' }, maxFailures: 1 };
+    `,
+    'a.spec.ts': `
+      pwt.test('test 1', async ({ page }) => {
+        expect(1).toBe(2);
+      });
+    `,
+    'b.spec.ts': `
+      pwt.test('test 2', async ({ page }) => {
+        await page.goto('about:blank');
+        await page.waitForTimeout(1000);
+      });
+    `,
+  }, { workers: 2 });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.skipped).toBe(1);
+  expect(fs.existsSync(testInfo.outputPath('test-results', 'a-test-1', 'trace.zip'))).toBeTruthy();
+  expect(fs.existsSync(testInfo.outputPath('test-results', 'b-test-2', 'trace.zip'))).toBeFalsy();
+});
 
 async function parseTrace(file: string): Promise<Map<string, Buffer>> {
   const zipFS = new ZipFile(file);
