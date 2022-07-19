@@ -1,42 +1,16 @@
 ---
 id: test-runners
-title: "Pytest plugin"
+title: "Pytest Plugin Reference"
 ---
 
-Write end-to-end tests for your web apps with [Pytest](https://docs.pytest.org/en/stable/).
-
-<!-- TOC -->
+Playwright provides a [Pytest](https://docs.pytest.org/en/stable/) plugin to write end-to-end tests. To get started with it, refer to the [getting started guide](./intro.md).
 
 ## Usage
 
-```bash
-pip install pytest-playwright
-```
-
-Use the `page` fixture to write a basic test. See [more examples](#examples).
-
-```py
-# test_my_application.py
-def test_example_is_working(page):
-    page.goto("https://example.com")
-    assert page.inner_text('h1') == 'Example Domain'
-    page.locator("text=More information").click()
-```
-
-To run your tests, use pytest CLI.
+To run your tests, use [Pytest](https://docs.pytest.org/en/stable/) CLI.
 
 ```bash
-# Run tests (Chromium and headless by default)
-pytest
-
-# Run tests in headed mode
-pytest --headed
-
-# Run tests in a different browser (chromium, firefox, webkit)
-pytest --browser firefox
-
-# Run tests in multiple browsers
-pytest --browser chromium --browser webkit
+pytest --browser webkit --headedd
 ```
 
 If you want to add the CLI arguments automatically without specifying them, you can use the [pytest.ini](https://docs.pytest.org/en/stable/reference.html#ini-options-ref) file:
