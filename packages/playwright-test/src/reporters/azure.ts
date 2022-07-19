@@ -209,7 +209,7 @@ class AzureDevOpsReporter implements Reporter {
       // need wait all results to be published
       if (prevCount > this.resultsToBePublished.length) {
         this.log(
-          colors.gray(`Waiting for all results to be published. Remaining ${this.resultsToBePublished.length} results`)
+            colors.gray(`Waiting for all results to be published. Remaining ${this.resultsToBePublished.length} results`)
         );
         prevCount--;
       }
@@ -324,8 +324,8 @@ class AzureDevOpsReporter implements Reporter {
         if (!this.testApi)
           this.testApi = await this.connection.getTestApi();
         const pointsQueryResult: TestInterfaces.TestPointsQuery = await this.testApi.getPointsByQuery(
-          pointsQuery,
-          this.projectName
+            pointsQuery,
+            this.projectName
         );
         const pointsIds: number[] = [];
         if (pointsQueryResult.points) {
@@ -346,7 +346,7 @@ class AzureDevOpsReporter implements Reporter {
 
   private addReportingOverride = (api: Test.ITestApi): Test.ITestApi => {
     // https://github.com/microsoft/azure-devops-node-api/issues/318#issuecomment-498802402
-    api.addTestResultsToTestRun = function (results, projectName, runId) {
+    api.addTestResultsToTestRun = function(results, projectName, runId) {
       return new Promise(async (resolve, reject) => {
         const routeValues = {
           project: projectName,
@@ -355,10 +355,10 @@ class AzureDevOpsReporter implements Reporter {
 
         try {
           const verData = await this.vsoClient.getVersioningData(
-            '5.0-preview.5',
-            'Test',
-            '4637d869-3a76-4468-8057-0bb02aa385cf',
-            routeValues
+              '5.0-preview.5',
+              'Test',
+              '4637d869-3a76-4468-8057-0bb02aa385cf',
+              routeValues
           );
           const url = verData.requestUrl;
           const options = this.createRequestOptions('application/json', verData.apiVersion);
@@ -375,27 +375,27 @@ class AzureDevOpsReporter implements Reporter {
   private async uploadAttachmentsFunc(testResult: TestResult, caseId: number, testCaseId: string): Promise<string[]> {
     this.log(colors.gray(`Start upload attachments for test case [${testCaseId}]`));
     return await Promise.all(
-      testResult.attachments.map(async (attachment, i) => {
-        if (this.attachmentsType!.includes((attachment.name as TAttachmentType[number]))) {
-          const attachments: TestInterfaces.TestAttachmentRequestModel = {
-            attachmentType: 'GeneralAttachment',
-            fileName: `${attachment.name}-${createGuid()}.${attachment.contentType.split('/')[1]}`,
-            stream: readFileSync(attachment.path!, { encoding: 'base64' })
-          };
+        testResult.attachments.map(async (attachment, i) => {
+          if (this.attachmentsType!.includes((attachment.name as TAttachmentType[number]))) {
+            const attachments: TestInterfaces.TestAttachmentRequestModel = {
+              attachmentType: 'GeneralAttachment',
+              fileName: `${attachment.name}-${createGuid()}.${attachment.contentType.split('/')[1]}`,
+              stream: readFileSync(attachment.path!, { encoding: 'base64' })
+            };
 
-          if (!this.testApi)
-            this.testApi = await this.connection.getTestApi();
-          const response = await this.testApi.createTestResultAttachment(
-            attachments,
-            this.projectName,
+            if (!this.testApi)
+              this.testApi = await this.connection.getTestApi();
+            const response = await this.testApi.createTestResultAttachment(
+                attachments,
+                this.projectName,
             this.runId!,
             caseId
-          );
-          return response.url;
-        } else {
-          return '';
-        }
-      })
+            );
+            return response.url;
+          } else {
+            return '';
+          }
+        })
     );
   }
 
