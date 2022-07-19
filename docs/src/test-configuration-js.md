@@ -545,6 +545,72 @@ export default config;
 
 However, most common ones like `headless` or `viewport` are available directly in the `use` section - see [basic options](#basic-options), [emulation](#emulation) or [network](#network).
 
+## Explicit Context Creation and Option Inheritance
+
+If using the built-in `browser` fixture, calling [`method: Browser.newContext`] will create a context with options inherted from the config:
+
+```js tab=js-ts
+// playwright.config.ts
+import type { PlaywrightTestConfig } from "@playwright/test";
+
+const config: PlaywrightTestConfig = {
+  use: {
+    userAgent: 'some custom ua',
+    viewport: { width: 100, height: 100 },
+  },
+};
+
+export default config;
+```
+
+```js tab=js-js
+// @ts-check
+// example.spec.js
+
+/** @type {import('@playwright/test').PlaywrightTestConfig} */
+const config = {
+  use: {
+    userAgent: 'some custom ua',
+    viewport: { width: 100, height: 100 },
+  },
+};
+
+module.exports = config;
+```
+
+An example test illustrating the initial context options are set:
+
+```js tab=js-ts
+// example.spec.ts
+import { test, expect } from "@playwright/test";
+
+test('should inherit use options on context when using built-in browser fixture', async ({
+  browser,
+}) => {
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  expect(await page.evaluate(() => navigator.userAgent)).toBe('some custom ua');
+  expect(await page.evaluate(() => window.innerWidth)).toBe(100);
+  await context.close();
+});
+```
+
+```js tab=js-js
+// @ts-check
+// example.spec.ts
+const { test, expect } = require("@playwright/test");
+
+test('should inherit use options on context when using built-in browser fixture', async ({
+  browser,
+}) => {
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  expect(await page.evaluate(() => navigator.userAgent)).toBe('some custom ua');
+  expect(await page.evaluate(() => window.innerWidth)).toBe(100);
+  await context.close();
+});
+```
+
 ## Testing options
 
 In addition to configuring [Browser] or [BrowserContext], videos or screenshots, Playwright Test has many options to configure how your tests are run. Below are the most common ones, see [TestConfig] for the full list.
