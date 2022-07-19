@@ -17,6 +17,10 @@
 import net from 'net';
 import { androidTest as test, expect } from './androidTest';
 
+test.afterAll(async ({ androidDevice }) => {
+  await androidDevice.shell('am force-stop com.android.chrome');
+});
+
 test('androidDevice.model', async function({ androidDevice }) {
   expect(androidDevice.model()).toBe('sdk_gphone64_x86_64');
 });
@@ -55,6 +59,7 @@ test('should be able to send CDP messages', async ({ androidDevice }) => {
   await client.send('Runtime.enable');
   const evalResponse = await client.send('Runtime.evaluate', { expression: '1 + 2', returnByValue: true });
   expect(evalResponse.result.value).toBe(3);
+  await context.close();
 });
 
 test('should be able to use a custom port', async function({ playwright }) {
@@ -102,4 +107,5 @@ test('should be able to pass context options', async ({ androidDevice, httpsServ
 
   expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches)).toBe(true);
   expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: light)').matches)).toBe(false);
+  await context.close();
 });
