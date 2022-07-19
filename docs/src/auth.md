@@ -167,7 +167,7 @@ Logging in via the UI and then reusing authentication state can be combined to i
 
 1. Run tests (for example, with `pytest`).
 2. Login via UI and retrieve authentication state.
-3. In each test, load authentication state using `autouse=True` fixture with `scope=module` or `scope=function`.
+3. In each test, load authentication state using `autouse=True` fixture with `scope=function`.
 
 This approach will also **work in CI environments**, since it does not rely on any external state.
 
@@ -178,7 +178,7 @@ Logging in via the UI and then reusing authentication state can be combined to i
 
 1. Run tests (for example, with `dotnet test`).
 2. Login via UI and retrieve authentication state.
-3. In each test, load authentication state in `SetUp` or a `TestFixture` with `SetUp`.
+3. In each test, load authentication state in `SetUp`.
 
 This approach will also **work in CI environments**, since it does not rely on any external state.
 
