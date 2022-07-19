@@ -578,6 +578,8 @@ const config = {
 module.exports = config;
 ```
 
+An example test illustrating the initial context options are set:
+
 ```js tab=js-ts
 // example.spec.ts
 import { test, expect } from "@playwright/test";
