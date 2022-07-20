@@ -36,8 +36,7 @@ const TELEGRAM_CHAT_ID = "-1001225613794";
   await sendTelegramMessage(TELEGRAM_BOT_KEY, text);
   console.log('Telegram message sent successfully!');
 })().catch(error => {
-  console.log(`Failed to send Telegram message. Error: ${error}`);
-  process.exit(1);
+  console.error(`Failed to send Telegram message. Error: ${error}`);
 })
 
 /**
