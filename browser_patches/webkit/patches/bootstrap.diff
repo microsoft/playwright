@@ -2272,7 +2272,7 @@ diff --git a/Source/WebCore/Modules/speech/cocoa/WebSpeechRecognizerTask.mm b/So
 index a941d76a4f748718df1e3cff2a6c5e0827f48891..f62db5a27ac0e4c12430e7d19e60c83d768ace22 100644
 --- a/Source/WebCore/Modules/speech/cocoa/WebSpeechRecognizerTask.mm
 +++ b/Source/WebCore/Modules/speech/cocoa/WebSpeechRecognizerTask.mm
-@@ -198,6 +198,7 @@ NS_ASSUME_NONNULL_BEGIN
+@@ -198,6 +198,7 @@ - (void)sendEndIfNeeded
  
  - (void)speechRecognizer:(SFSpeechRecognizer *)speechRecognizer availabilityDidChange:(BOOL)available
  {
@@ -2280,7 +2280,7 @@ index a941d76a4f748718df1e3cff2a6c5e0827f48891..f62db5a27ac0e4c12430e7d19e60c83d
      ASSERT(isMainThread());
  
      if (available || !_task)
-@@ -211,6 +212,7 @@ NS_ASSUME_NONNULL_BEGIN
+@@ -211,6 +212,7 @@ - (void)speechRecognizer:(SFSpeechRecognizer *)speechRecognizer availabilityDidC
  
  - (void)speechRecognitionTask:(SFSpeechRecognitionTask *)task didHypothesizeTranscription:(SFTranscription *)transcription
  {
@@ -2288,7 +2288,7 @@ index a941d76a4f748718df1e3cff2a6c5e0827f48891..f62db5a27ac0e4c12430e7d19e60c83d
      ASSERT(isMainThread());
  
      [self sendSpeechStartIfNeeded];
-@@ -219,6 +221,7 @@ NS_ASSUME_NONNULL_BEGIN
+@@ -219,6 +221,7 @@ - (void)speechRecognitionTask:(SFSpeechRecognitionTask *)task didHypothesizeTran
  
  - (void)speechRecognitionTask:(SFSpeechRecognitionTask *)task didFinishRecognition:(SFSpeechRecognitionResult *)recognitionResult
  {
@@ -2296,7 +2296,7 @@ index a941d76a4f748718df1e3cff2a6c5e0827f48891..f62db5a27ac0e4c12430e7d19e60c83d
      ASSERT(isMainThread());
      [self callbackWithTranscriptions:recognitionResult.transcriptions isFinal:YES];
  
-@@ -230,6 +233,7 @@ NS_ASSUME_NONNULL_BEGIN
+@@ -230,6 +233,7 @@ - (void)speechRecognitionTask:(SFSpeechRecognitionTask *)task didFinishRecogniti
  
  - (void)speechRecognitionTaskWasCancelled:(SFSpeechRecognitionTask *)task
  {
@@ -9122,7 +9122,7 @@ diff --git a/Source/WebKit/NetworkProcess/cocoa/NetworkSessionCocoa.mm b/Source/
 index 1dc6df3e1145332a0aeb902c0f5d7d5d727593be..230d268489a52391f7d4f336d22311e35c9f8278 100644
 --- a/Source/WebKit/NetworkProcess/cocoa/NetworkSessionCocoa.mm
 +++ b/Source/WebKit/NetworkProcess/cocoa/NetworkSessionCocoa.mm
-@@ -720,7 +720,7 @@ void NetworkSessionCocoa::setClientAuditToken(const WebCore::AuthenticationChall
+@@ -720,7 +720,7 @@ - (void)URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task didRece
  
      if ([challenge.protectionSpace.authenticationMethod isEqualToString:NSURLAuthenticationMethodServerTrust]) {
          sessionCocoa->setClientAuditToken(challenge);
@@ -10568,7 +10568,7 @@ index 65e8eb74725e8b87f0ee14b1a9be9d25412a7102..958cb747889508a1096f43eeb68f24ce
  #import <WebCore/Credential.h>
  #import <WebCore/RegistrationDatabase.h>
  #import <WebCore/ServiceWorkerClientData.h>
-@@ -234,6 +235,11 @@ static WallTime toSystemClockTime(NSDate *date)
+@@ -234,6 +235,11 @@ - (void)removeDataOfTypes:(NSSet *)dataTypes modifiedSince:(NSDate *)date comple
      });
  }
  
@@ -10747,7 +10747,7 @@ diff --git a/Source/WebKit/UIProcess/API/Cocoa/_WKProcessPoolConfiguration.mm b/
 index 2e235bb880c638a0e74256b6d66cb0244ea0a3f1..3471eebb47e860f7c2071d0e7f2691c9f0a6355d 100644
 --- a/Source/WebKit/UIProcess/API/Cocoa/_WKProcessPoolConfiguration.mm
 +++ b/Source/WebKit/UIProcess/API/Cocoa/_WKProcessPoolConfiguration.mm
-@@ -257,6 +257,16 @@
+@@ -257,6 +257,16 @@ - (BOOL)processSwapsOnNavigation
      return _processPoolConfiguration->processSwapsOnNavigation();
  }
  
@@ -15748,6 +15748,21 @@ index 7a14cfba15c103a2d4fe263fa49d25af3c396ec2..3ee0e154349661632799057c71f1d1f1
      PROCESS_INFORMATION processInformation { };
      BOOL result = ::CreateProcess(0, commandLine.data(), 0, 0, true, 0, 0, 0, &startupInfo, &processInformation);
  
+diff --git a/Source/WebKit/UIProcess/MediaPermissionUtilities.h b/Source/WebKit/UIProcess/MediaPermissionUtilities.h
+index 175c25c044932fa5b6aa6571299339a12a16119e..820cb81e29bd5ea36fd38348e93a4a46c552cc48 100644
+--- a/Source/WebKit/UIProcess/MediaPermissionUtilities.h
++++ b/Source/WebKit/UIProcess/MediaPermissionUtilities.h
+@@ -29,6 +29,10 @@
+ #include <wtf/CompletionHandler.h>
+ #include <wtf/Vector.h>
+ 
++#if PLATFORM(COCOA)
++OBJC_CLASS NSString;
++#endif
++
+ namespace WebCore {
+ class SecurityOrigin;
+ }
 diff --git a/Source/WebKit/UIProcess/PageClient.h b/Source/WebKit/UIProcess/PageClient.h
 index ffc917d8bcabc32cd5db24fcc454d743b59763dc..e6d36eaf5bca4f19de66fe5640102037d8637c0d 100644
 --- a/Source/WebKit/UIProcess/PageClient.h
@@ -21070,7 +21085,7 @@ diff --git a/Source/WebKitLegacy/mac/WebView/WebHTMLView.mm b/Source/WebKitLegac
 index 81093dca5a3f4cf8fa7a71551b9d7b11d7513d9e..0e62bc13f72397239c80bfbc3a272286d1fcb39f 100644
 --- a/Source/WebKitLegacy/mac/WebView/WebHTMLView.mm
 +++ b/Source/WebKitLegacy/mac/WebView/WebHTMLView.mm
-@@ -4205,7 +4205,7 @@ static BOOL currentScrollIsBlit(NSView *clipView)
+@@ -4205,7 +4205,7 @@ - (void)mouseDown:(WebEvent *)event
      _private->handlingMouseDownEvent = NO;
  }
  
@@ -21083,7 +21098,7 @@ diff --git a/Source/WebKitLegacy/mac/WebView/WebView.mm b/Source/WebKitLegacy/ma
 index f57ff1862f7bc2d2e88710c7b43d62b78b1765a0..fdcf7866546515473fe579333184d9400d1f6bb6 100644
 --- a/Source/WebKitLegacy/mac/WebView/WebView.mm
 +++ b/Source/WebKitLegacy/mac/WebView/WebView.mm
-@@ -4038,7 +4038,7 @@ IGNORE_WARNINGS_END
+@@ -4038,7 +4038,7 @@ + (void)_doNotStartObservingNetworkReachability
  }
  #endif // PLATFORM(IOS_FAMILY)
  
@@ -21092,7 +21107,7 @@ index f57ff1862f7bc2d2e88710c7b43d62b78b1765a0..fdcf7866546515473fe579333184d940
  
  - (NSArray *)_touchEventRegions
  {
-@@ -4080,7 +4080,7 @@ IGNORE_WARNINGS_END
+@@ -4080,7 +4080,7 @@ - (NSArray *)_touchEventRegions
      }).autorelease();
  }
  
@@ -21997,23 +22012,6 @@ index a57650013a47b4c8beaa9cfeefb7cd3728ddfbe7..34fe866ba2308ae8cf4db2b303a9e336
  
              # WebInspectorUI must come after JavaScriptCore and WebCore but before WebKit and WebKit2
              my $webKitIndex = first { $projects[$_] eq "Source/WebKitLegacy" } 0..$#projects;
-diff --git a/Tools/Scripts/libraries/webkitscmpy/webkitscmpy/local/git.py b/Tools/Scripts/libraries/webkitscmpy/webkitscmpy/local/git.py
-index 6081a66f2bc433f84916ba11c45f0dae7c42320a..5ac17fca4330cbea74225754295623fd0b60a0f4 100644
---- a/Tools/Scripts/libraries/webkitscmpy/webkitscmpy/local/git.py
-+++ b/Tools/Scripts/libraries/webkitscmpy/webkitscmpy/local/git.py
-@@ -74,10 +74,8 @@ class Git(Scm):
- 
-         def _fill(self, branch):
-             default_branch = self.repo.default_branch
--            if branch == default_branch:
--                branch_point = None
--            else:
--                branch_point = int(self._hash_to_identifiers[self._ordered_commits[branch][0]].split('@')[0])
-+
-+            branch_point = None
- 
-             index = len(self._ordered_commits[branch]) - 1
-             while index:
 diff --git a/Tools/WebKitTestRunner/InjectedBundle/empty/AccessibilityControllerEmpty.cpp b/Tools/WebKitTestRunner/InjectedBundle/empty/AccessibilityControllerEmpty.cpp
 new file mode 100644
 index 0000000000000000000000000000000000000000..3618075f10824beb0bc6cd8070772ab88f4e51c8
