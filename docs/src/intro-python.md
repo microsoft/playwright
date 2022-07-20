@@ -5,7 +5,7 @@ title: "Installation"
 
 Playwright was created specifically to accommodate the needs of end-to-end testing. Playwright supports all modern rendering engines including Chromium, WebKit, and Firefox. Test on Windows, Linux, and macOS, locally or on CI, headless or headed with native mobile emulation. 
 
-You can choose to use the [Playwright Pytest plugin](./test-runners.md) to write end-to-end tests. It provides context isolation, running it on multiple browser configurations out of the box. Alternatively you can use the [library](./library.md) to manually write the testing infrastructure with your preferred test-runner.
+Playwright recommends using the official [Playwright Pytest plugin](./test-runners.md) to write end-to-end tests. It provides context isolation, running it on multiple browser configurations out of the box. Alternatively you can use the [library](./library.md) to manually write the testing infrastructure with your preferred test-runner.
 
 Get started by installing Playwright and running the example test to see it in action.
 
