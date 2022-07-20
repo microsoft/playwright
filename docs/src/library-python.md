@@ -83,7 +83,7 @@ firefox.launch(headless=False, slow_mo=50)
 
 ## Interactive mode (REPL)
 
-Blocking REPL, as in CLI via Python directly:
+You can launch the interactive python REPL:
 
 ```bash
 python
