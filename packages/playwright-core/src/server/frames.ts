@@ -277,8 +277,11 @@ export class FrameManager {
 
   frameDetached(frameId: string) {
     const frame = this._frames.get(frameId);
-    if (frame)
+    if (frame) {
       this._removeFramesRecursively(frame);
+      // Recalculate subtree lifecycle for the whole tree - it should not be that big.
+      this._page.mainFrame()._recalculateLifecycle();
+    }
   }
 
   frameStoppedLoading(frameId: string) {
@@ -590,7 +593,7 @@ export class Frame extends SdkObject {
     });
   }
 
-  private _recalculateLifecycle() {
+  _recalculateLifecycle() {
     const events = new Set<types.LifecycleEvent>(this._firedLifecycleEvents);
     for (const child of this._childFrames) {
       child._recalculateLifecycle();

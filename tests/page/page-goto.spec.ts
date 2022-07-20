@@ -663,3 +663,35 @@ it('should return when navigation is committed if commit is specified', async ({
   const response = await page.goto(server.EMPTY_PAGE, { waitUntil: 'commit' });
   expect(response.status()).toBe(200);
 });
+
+it('should wait for load when iframe attaches and detaches', async ({ page, server }) => {
+  server.setRoute('/empty.html', (req, res) => {
+    res.writeHead(200, { 'content-type': 'text/html' });
+    res.end(`
+      <body>
+        <script>
+          const iframe = document.createElement('iframe');
+          iframe.src = './iframe.html';
+          document.body.appendChild(iframe);
+          setTimeout(() => iframe.remove(), 1000);
+        </script>
+      </body>
+    `);
+  });
+
+  server.setRoute('/iframe.html', (req, res) => {
+    res.writeHead(200, { 'content-type': 'text/html' });
+    res.end(`
+      <link rel="stylesheet" href="./style2.css">
+    `);
+  });
+
+  // Stall the css so that 'load' does not fire.
+  server.setRoute('/style2.css', () => {});
+
+  const frameDetached = page.waitForEvent('framedetached');
+  const done = page.goto(server.EMPTY_PAGE, { waitUntil: 'load' });
+  await frameDetached; // Make sure that iframe is gone.
+  await done;
+  expect(await page.$('iframe')).toBe(null);
+});
