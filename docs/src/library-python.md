@@ -90,6 +90,7 @@ python
 ```
 
 and then launch Playwright within it for quick experimentation:
+
 ```py
 >>> from playwright.sync_api import sync_playwright
 >>> playwright = sync_playwright().start()
@@ -164,7 +165,7 @@ It is recommended to only bundle the browsers you use.
 
 ### `time.sleep()` leads to outdated state
 
-You should use `page.wait_for_timeout(5000)` instead of `time.sleep(5)` and it is better to not wait for a timeout at all, but sometimes it is useful for debugging. In these cases, use our wait method instead of the `time` module. This is because we internally rely on asynchronous operations and when using `time.sleep(5)` they can't get processed correctly.
+Most likely you don't need to wait manually, since Playwright has [auto-waiting](./actionability.md). If you still rely on it, you should use `page.wait_for_timeout(5000)` instead of `time.sleep(5)` and it is better to not wait for a timeout at all, but sometimes it is useful for debugging. In these cases, use our wait (`wait_for_timeout`) method instead of the `time` module. This is because we internally rely on asynchronous operations and when using `time.sleep(5)` they can't get processed correctly.
 
 
 ### incompatible with `SelectorEventLoop` of `asyncio` on Windows

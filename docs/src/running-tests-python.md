@@ -47,7 +47,7 @@ You can run a single test, a set of tests or all tests. Tests can be run on one 
   pytest test_login.py --browser webkit --browser firefox
   ```
 
-For more information see [Playwright Pytest usage](./test-runners.md) or the Pytest documentation for [general CLI usage](https://docs.pytest.org/en/6.2.x/usage.html).
+For more information see [Playwright Pytest usage](./test-runners.md) or the Pytest documentation for [general CLI usage](https://docs.pytest.org/en/stable/usage.html).
 
 ## What's Next
 

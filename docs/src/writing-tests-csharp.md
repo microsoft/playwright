@@ -3,7 +3,7 @@ id: writing-tests
 title: "Writing Tests"
 ---
 
-Playwright assertions are created specifically for the dynamic web. Checks are automatically retried until the necessary conditions are met. Playwright comes with auto-wait built in meaning it waits for elements to be actionable prior to performing actions. Playwright provides the [Expect](./test-assertions) function to write assertions.
+Playwright assertions are created specifically for the dynamic web. Checks are automatically retried until the necessary conditions are met. Playwright comes with [auto-wait](./actionability.md) built in meaning it waits for elements to be actionable prior to performing actions. Playwright provides the [Expect](./test-assertions) function to write assertions.
 
 Take a look at the example test below to see how to write a test using web first assertions, locators and selectors.
 
@@ -96,7 +96,7 @@ await Expect(Page).ToHaveTitleAsync(new Regex("Playwright"));
 
 ### Locators
 
-[Locators](./locators.md) are the central piece of Playwright's auto-waiting and retry-ability. Locators represent a way to find element(s) on the page at any moment and are used to perform actions on elements such as .click .fill etc. Custom locators can be created with the [`method: Page.locator`] method.
+[Locators](./locators.md) are the central piece of Playwright's auto-waiting and retry-ability. Locators represent a way to find element(s) on the page at any moment and are used to perform actions on elements such as `.ClickAsync` `.FillAsync` etc. Custom locators can be created with the [`method: Page.locator`] method.
 
 ```csharp
 var getStarted = Page.Locator("text=Get Started");
