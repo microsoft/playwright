@@ -114,7 +114,7 @@ def test_should_create_feature_request(api_request_context: APIRequestContext) -
 
 ### Setup and teardown
 
-These tests assume that repository exists. You probably want to create a new one before running tests and delete it afterwards. Use a [session fixture](https://docs.pytest.org/en/6.2.x/fixture.html#fixture-scopes) for that. The part before `yield` is the before all and after is the after all.
+These tests assume that repository exists. You probably want to create a new one before running tests and delete it afterwards. Use a [session fixture](https://docs.pytest.org/en/stable/fixture.html#fixture-scopes) for that. The part before `yield` is the before all and after is the after all.
 
 ```python
 # ...

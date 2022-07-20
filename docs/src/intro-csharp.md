@@ -5,9 +5,9 @@ title: "Installation"
 
 Playwright was created specifically to accommodate the needs of end-to-end testing. Playwright supports all modern rendering engines including Chromium, WebKit, and Firefox. Test on Windows, Linux, and macOS, locally or on CI, headless or headed with native mobile emulation.
 
-You can choose to use [NUnit base classes](./test-runners.md#nunit) or [MSTest base classes](./test-runners.md#nunit) that Playwright provides to write end-to-end tests. These classes support running tests on multiple browser engines, parallelizing tests, adjusting launch/context options and getting a [Page]/[BrowserContext] instance per test out of the box.
+You can choose to use [NUnit base classes](./test-runners.md#nunit) or [MSTest base classes](./test-runners.md#nunit) that Playwright provides to write end-to-end tests. These classes support running tests on multiple browser engines, parallelizing tests, adjusting launch/context options and getting a [Page]/[BrowserContext] instance per test out of the box. Alternatively you can use the [library](./library.md) to manually write the testing infrastructure.
 
-Start by creating a new project with `dotnet new`. This will create the `PlaywrightTests` directory which includes a `UnitTest1.cs` file:
+1. Start by creating a new project with `dotnet new`. This will create the `PlaywrightTests` directory which includes a `UnitTest1.cs` file:
 
 <Tabs
   defaultValue="nunit"
@@ -34,7 +34,7 @@ cd PlaywrightTests
 </TabItem>
 </Tabs>
 
-Install the necessary Playwright dependencies:
+2. Install the necessary Playwright dependencies:
 
 <Tabs
   defaultValue="nunit"
@@ -59,13 +59,13 @@ dotnet add package Microsoft.Playwright.MSTest
 </TabItem>
 </Tabs>
 
-Build the project so the `playwright.ps1` is available inside the `bin` directory:
+3. Build the project so the `playwright.ps1` is available inside the `bin` directory:
 
 ```bash
 dotnet build
 ```
 
-Install required browsers by replacing `netX` with the actual output folder name, e.g. `net6.0`:
+4. Install required browsers by replacing `netX` with the actual output folder name, e.g. `net6.0`:
 
 ```bash
 pwsh bin\Debug\netX\playwright.ps1 install
@@ -95,25 +95,24 @@ namespace PlaywrightTests;
 public class Tests : PageTest
 {
     [Test]
-    async public Task ShouldHaveTheCorrectSlogan()
+    async public Task HomepageHasPlaywrightInTitleAndGetStartedLinkLinkingtoTheIntroPage()
     {
         await Page.GotoAsync("https://playwright.dev");
-        await Expect(Page.Locator("text=enables reliable end-to-end testing for modern web apps")).ToBeVisibleAsync();
-    }
 
-    [Test]
-    public async Task ShouldHaveTheCorrectTitle()
-    {
-        await Page.GotoAsync("https://playwright.dev");
-        var title = Page.Locator(".navbar__inner .navbar__title");
-        await Expect(title).ToHaveTextAsync("Playwright");
-    }
+        // Expect a title "to contain" a substring.
+        await Expect(Page).ToHaveTitleAsync(new Regex("Playwright"));
 
-    [Test]
-    public async Task ShouldAdd()
-    {
-        var result = await Page.EvaluateAsync<int>("() => 7 + 3");
-        Assert.AreEqual(10, result);
+        // create a locator
+        var getStarted = Page.Locator("text=Get Started");
+
+        // Expect an attribute "to be strictly equal" to the value.
+        await Expect(getStarted).ToHaveAttributeAsync("href", "/docs/intro");
+
+        // Click the get started link.
+        await getStarted.ClickAsync();
+
+        // Expects the URL to contain intro.
+        await Expect(Page).ToHaveURLAsync(new Regex(".*intro"));
     }
 }
 ```
@@ -129,25 +128,24 @@ namespace PlaywrightTests;
 public class UnitTest1 : PageTest
 {
     [TestMethod]
-    async public Task ShouldHaveTheCorrectSlogan()
+    async public Task HomepageHasPlaywrightInTitleAndGetStartedLinkLinkingtoTheIntroPage()
     {
         await Page.GotoAsync("https://playwright.dev");
-        await Expect(Page.Locator("text=enables reliable end-to-end testing for modern web apps")).ToBeVisibleAsync();
-    }
 
-    [TestMethod]
-    public async Task ShouldHaveTheCorrectTitle()
-    {
-        await Page.GotoAsync("https://playwright.dev");
-        var title = Page.Locator(".navbar__inner .navbar__title");
-        await Expect(title).ToHaveTextAsync("Playwright");
-    }
+        // Expect a title "to contain" a substring.
+        await Expect(Page).ToHaveTitleAsync(new Regex("Playwright"));
 
-    [TestMethod]
-    public async Task ShouldAdd()
-    {
-        var result = await Page.EvaluateAsync<int>("() => 7 + 3");
-        Assert.AreEqual(10, result);
+        // create a locator
+        var getStarted = Page.Locator("text=Get Started");
+
+        // Expect an attribute "to be strictly equal" to the value.
+        await Expect(getStarted).ToHaveAttributeAsync("href", "/docs/intro");
+
+        // Click the get started link.
+        await getStarted.ClickAsync();
+
+        // Expects the URL to contain intro.
+        await Expect(Page).ToHaveURLAsync(new Regex(".*intro"));
     }
 }
 ```
