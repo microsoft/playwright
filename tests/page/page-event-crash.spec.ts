@@ -45,7 +45,11 @@ it.describe('', () => {
     await page.waitForEvent('crash');
     const err = await page.evaluate(() => {}).then(() => null, e => e);
     expect(err).toBeTruthy();
-    expect(err.message).toContain('Target crashed');
+    // In Firefox, crashed page is sometimes "closed".
+    if (browserName === 'firefox')
+      expect(err.message.includes('Target page, context or browser has been closed') || err.message.includes('Target crashed'), err.message).toBe(true);
+    else
+      expect(err.message).toContain('Target crashed');
   });
 
   it('should cancel waitForEvent when page crashes', async ({ page, toImpl, browserName, platform, mode }) => {
