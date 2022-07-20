@@ -53,7 +53,7 @@ def test_homepage_has_Playwright_in_title_and_get_started_link_linking_to_the_in
 
 ## Running the Example Test
 
-By default tests will be run on chromium. This can be configured via the CLI options. Tests are run in headless mode meaning no browser will open up when running the tests. Results of the tests and test logs will be shown in the terminal.
+By default tests will be run on chromium. This can be configured via the CLI options. Tests are run in headless mode meaning no browser UI will open up when running the tests. Results of the tests and test logs will be shown in the terminal.
 
 ```bash
 pytest
