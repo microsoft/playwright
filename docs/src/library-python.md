@@ -89,6 +89,7 @@ You can launch the interactive python REPL:
 python
 ```
 
+and then launch Playwright within it for quick experimentation:
 ```py
 >>> from playwright.sync_api import sync_playwright
 >>> playwright = sync_playwright().start()
