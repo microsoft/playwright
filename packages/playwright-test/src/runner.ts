@@ -473,12 +473,17 @@ export class Runner {
       }
 
       // The do global setup.
-      if (!sigintWatcher.hadSignal() && config.globalSetup) {
-        const hook = await this._loader.loadGlobalHook(config.globalSetup, 'globalSetup');
-        await Promise.race([
-          Promise.resolve().then(() => hook(this._loader.fullConfig())).then((r: any) => globalSetupResult = r || '<noop>'),
-          sigintWatcher.promise(),
-        ]);
+      if (!sigintWatcher.hadSignal()) {
+        if (config.globalSetup) {
+          const hook = await this._loader.loadGlobalHook(config.globalSetup, 'globalSetup');
+          await Promise.race([
+            Promise.resolve().then(() => hook(this._loader.fullConfig())).then((r: any) => globalSetupResult = r || '<noop>'),
+            sigintWatcher.promise(),
+          ]);
+        } else {
+          // Make sure we run globalTeardown.
+          globalSetupResult = '<noop>';
+        }
       }
     }, result);
 
