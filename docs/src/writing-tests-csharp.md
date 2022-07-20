@@ -5,7 +5,7 @@ title: "Writing Tests"
 
 Playwright assertions are created specifically for the dynamic web. Checks are automatically retried until the necessary conditions are met. Playwright comes with auto-wait built in meaning it waits for elements to be actionable prior to performing actions. Playwright provides the [Expect](./test-assertions) function to write assertions.
 
-Take a look at the example test to see how to write a test using web first assertions, locators and selectors.
+Take a look at the example test below to see how to write a test using web first assertions, locators and selectors.
 
 <Tabs
   defaultValue="nunit"
