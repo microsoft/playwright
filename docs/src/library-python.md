@@ -1,6 +1,6 @@
 ---
 id: library
-title: "Library"
+title: "Getting started - Library"
 ---
 
 ## Installation
