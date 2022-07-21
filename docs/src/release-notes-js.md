@@ -103,7 +103,7 @@ test.describe(() => {
 
 ### 🌍 Multiple Web Servers in `playwright.config.ts`
 
-Launch multiple web servers by passing an array of configurations:
+Launch multiple web servers, databases, or other processes by passing an array of configurations:
 
 ```ts
 // playwright.config.ts
