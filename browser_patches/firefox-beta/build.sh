@@ -111,7 +111,7 @@ if is_mac || is_win; then
   echo "ac_add_options --disable-update-agent" >> .mozconfig
 fi
 
-if [[ -n "${IS_JUGGLER}" ]]; then
+if [[ -z "${IS_JUGGLER}" ]]; then
   # TODO: rustup is not in the PATH on Windows
   if command -v rustup >/dev/null; then
     # We manage Rust version ourselves.
