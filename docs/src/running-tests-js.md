@@ -14,7 +14,7 @@ You can run a single test, a set of tests or all tests. Tests can be run on one 
 - Running a single test file
 
   ```bash
-  npx playwright test test-1
+  npx playwright test landing-page.spec.ts
   ```
 
 - Run a set of test files
@@ -23,10 +23,10 @@ You can run a single test, a set of tests or all tests. Tests can be run on one 
   npx playwright test tests/todo-page/ tests/landing-page/
   ```
 
-- Run files that have `my-spec` or `my-spec-2` in the file name
+- Run files that have `landing` or `login` in the file name
 
   ```bash
-  npx playwright test my-spec my-spec-2
+  npx playwright test landing login
   ```
 
 - Run the test with the title
@@ -38,13 +38,13 @@ You can run a single test, a set of tests or all tests. Tests can be run on one 
 - Running tests in headed mode
 
   ```bash
-  npx playwright test test-1 --headed
+  npx playwright test landing-page.spec.ts --headed
   ```
 
 - Running Tests on specific browsers
 
   ```bash
-  npx playwright test test-1.spec.ts --project=chromium
+  npx playwright test landing-page.ts --project=chromium
   ```
 
 ## Test Reports
@@ -56,7 +56,6 @@ npx playwright show-report
 ```
 
 <img width="739" alt="image" src="https://user-images.githubusercontent.com/13063165/178003817-3bd2f088-4173-406c-a9e9-74c89181f381.png" />
-
 
 ## What's Next
 

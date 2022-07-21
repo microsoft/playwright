@@ -3,7 +3,7 @@ id: selectors
 title: "Selectors"
 ---
 
-Selectors are strings that are used to create [Locator]s. Locators are used to perform actions on the elements by means of methods such as [`method: Locator.click`], [`method: Locator.fill`] and alike.
+Selectors are strings that are used to create [Locator]s. Locators are used to perform actions on the elements by means of methods such as [`method: Locator.click`], [`method: Locator.fill`] and alike. For debugging selectors, see [here](./debug-selectors).
 
 <!-- TOC -->
 
