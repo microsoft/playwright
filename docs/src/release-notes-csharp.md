@@ -22,7 +22,7 @@ Linux support looks like this:
 
 ### New introduction docs
 
-We rewrote our docs to be more end-to-end testing focused. Check them out on [playwright.dev](https://playwright.dev/dotnet/docs/intro).
+We rewrote our Getting Started docs to be more end-to-end testing focused. Check them out on [playwright.dev](https://playwright.dev/dotnet/docs/intro).
 
 ## Version 1.23
 
