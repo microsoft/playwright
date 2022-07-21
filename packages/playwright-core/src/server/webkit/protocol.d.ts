@@ -30,7 +30,7 @@ export module Protocol {
       /**
        * Backtrace that was captured when this `WebAnimation` was created.
        */
-      backtrace?: Console.CallFrame[];
+      stackTrace?: Console.StackTrace;
     }
     export interface Effect {
       startDelay?: number;
@@ -908,9 +908,9 @@ export module Protocol {
       defaultValue: number;
     }
     /**
-     * The layout context type of a node.
+     * Relevant layout information about the node. Things not in this list are not important to Web Inspector.
      */
-    export type LayoutContextType = "flex"|"grid";
+    export type LayoutFlag = "rendered"|"flex"|"grid";
     /**
      * The mode for how layout context type changes are handled (default: <code>Observed</code>). <code>Observed</code> limits handling to those nodes already known to the frontend by other means (generally, this means the node is a visible item in the Elements tab). <code>All</code> informs the frontend of all layout context type changes and all nodes with a known layout context are sent to the frontend.
      */
@@ -945,17 +945,17 @@ export module Protocol {
       styleSheetId: StyleSheetId;
     }
     /**
-     * Called when a node's layout context type has changed.
+     * Called when the layout of a node changes in a way that is important to Web Inspector.
      */
-    export type nodeLayoutContextTypeChangedPayload = {
+    export type nodeLayoutFlagsChangedPayload = {
       /**
-       * Identifier of the node whose layout context type changed.
+       * Identifier of the node whose layout changed.
        */
       nodeId: DOM.NodeId;
       /**
-       * The new layout context type of the node. When not provided, the <code>LayoutContextType</code> of the node is not a context for which Web Inspector has specific functionality.
+       * Relevant information about the layout of the node. When not provided, the layout of the node is not important to Web Inspector.
        */
-      layoutContextType?: LayoutContextType;
+      layoutFlags?: string[];
     }
     
     /**
@@ -1283,7 +1283,7 @@ export module Protocol {
       /**
        * Backtrace that was captured when this canvas context was created.
        */
-      backtrace?: Console.CallFrame[];
+      stackTrace?: Console.StackTrace;
     }
     /**
      * Information about a WebGL/WebGL2 shader program.
@@ -1558,7 +1558,7 @@ export module Protocol {
       /**
        * JavaScript stack trace for assertions and error messages.
        */
-      stackTrace?: CallFrame[];
+      stackTrace?: StackTrace;
       /**
        * Identifier of the network request associated with this message.
        */
@@ -1827,9 +1827,9 @@ export module Protocol {
        */
       contentSecurityPolicyHash?: string;
       /**
-       * The layout context type of the node. When not provided, the <code>LayoutContextType</code> of the node is not a context for which Web Inspector has specific functionality.
+       * Relevant information about the layout of the node. When not provided, the layout of the node is not important to Web Inspector.
        */
-      layoutContextType?: CSS.LayoutContextType;
+      layoutFlags?: string[];
     }
     /**
      * Relationship between data that is associated with a node and the node itself.
@@ -5453,7 +5453,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
       /**
        * Initiator JavaScript stack trace, set for Script only.
        */
-      stackTrace?: Console.CallFrame[];
+      stackTrace?: Console.StackTrace;
       /**
        * Initiator URL, set for Parser type only.
        */
@@ -6061,6 +6061,17 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
       errorType: ResourceErrorType;
     }
     export type interceptRequestWithErrorReturnValue = {
+    }
+    /**
+     * Emulate various network conditions (e.g. bytes per second, latency, etc.).
+     */
+    export type setEmulatedConditionsParameters = {
+      /**
+       * Limits the bytes per second of requests if positive. Removes any limits if zero or not provided.
+       */
+      bytesPerSecondLimit?: number;
+    }
+    export type setEmulatedConditionsReturnValue = {
     }
     /**
      * Emulate offline state overriding the actual state.
@@ -7439,7 +7450,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
      */
     export interface Frame {
       /**
-       * Information about an action made to the recorded object. Follows the structure [name, parameters, swizzleTypes, trace, snapshot], where name is a string, parameters is an array, swizzleTypes is an array, trace is an array, and snapshot is a data URL image of the current contents after this action.
+       * Information about an action made to the recorded object. Follows the structure [name, parameters, swizzleTypes, stackTrace, snapshot], where name is a string, parameters is an array, swizzleTypes is an array, stackTrace is a Console.StackTrace, and snapshot is a data URL image of the current contents after this action.
        */
       actions: any[];
       /**
@@ -8801,7 +8812,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "CSS.styleSheetChanged": CSS.styleSheetChangedPayload;
     "CSS.styleSheetAdded": CSS.styleSheetAddedPayload;
     "CSS.styleSheetRemoved": CSS.styleSheetRemovedPayload;
-    "CSS.nodeLayoutContextTypeChanged": CSS.nodeLayoutContextTypeChangedPayload;
+    "CSS.nodeLayoutFlagsChanged": CSS.nodeLayoutFlagsChangedPayload;
     "Canvas.canvasAdded": Canvas.canvasAddedPayload;
     "Canvas.canvasRemoved": Canvas.canvasRemovedPayload;
     "Canvas.canvasMemoryChanged": Canvas.canvasMemoryChangedPayload;
@@ -9117,6 +9128,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Network.interceptWithResponse": Network.interceptWithResponseParameters;
     "Network.interceptRequestWithResponse": Network.interceptRequestWithResponseParameters;
     "Network.interceptRequestWithError": Network.interceptRequestWithErrorParameters;
+    "Network.setEmulatedConditions": Network.setEmulatedConditionsParameters;
     "Network.setEmulateOfflineState": Network.setEmulateOfflineStateParameters;
     "Page.enable": Page.enableParameters;
     "Page.disable": Page.disableParameters;
@@ -9420,6 +9432,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Network.interceptWithResponse": Network.interceptWithResponseReturnValue;
     "Network.interceptRequestWithResponse": Network.interceptRequestWithResponseReturnValue;
     "Network.interceptRequestWithError": Network.interceptRequestWithErrorReturnValue;
+    "Network.setEmulatedConditions": Network.setEmulatedConditionsReturnValue;
     "Network.setEmulateOfflineState": Network.setEmulateOfflineStateReturnValue;
     "Page.enable": Page.enableReturnValue;
     "Page.disable": Page.disableReturnValue;
