@@ -5,6 +5,8 @@ title: "Selectors"
 
 Selectors are strings that are used to create [Locator]s. Locators are used to perform actions on the elements by means of methods such as [`method: Locator.click`], [`method: Locator.fill`] and alike.
 
+Writing good selectors is part art, part science so be sure to checkout the [Best Practices](#best-practices) section.
+
 <!-- TOC -->
 
 ## Quick guide

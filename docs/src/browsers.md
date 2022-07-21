@@ -157,6 +157,19 @@ See all supported browsers:
 pwsh bin\Debug\netX\playwright.ps1 install --help
 ```
 
+## Install browsers via API
+* langs: csharp
+
+It's possible to run [Command line tools](./cli.md) commands via the .NET API:
+
+```csharp
+var exitCode = Microsoft.Playwright.Program.Main(new[] {"install"});
+if (exitCode != 0)
+{
+    throw new Exception($"Playwright exited with code {exitCode}");
+}
+```
+
 ## Managing browser binaries
 
 Playwright downloads Chromium, WebKit and Firefox browsers into the OS-specific cache folders:
