@@ -172,9 +172,9 @@ else
   fi
   ./mach build
   if is_mac; then
-    node "${SCRIPT_FOLDER}"/install-preferences.js "$PWD"/${OBJ_FOLDER}/dist
+    FF_DEBUG_BUILD="${IS_DEBUG}" node "${SCRIPT_FOLDER}"/install-preferences.js "$PWD"/${OBJ_FOLDER}/dist
   else
-    node "${SCRIPT_FOLDER}"/install-preferences.js "$PWD"/${OBJ_FOLDER}/dist/bin
+    FF_DEBUG_BUILD="${IS_DEBUG}" node "${SCRIPT_FOLDER}"/install-preferences.js "$PWD"/${OBJ_FOLDER}/dist/bin
   fi
 fi
 
