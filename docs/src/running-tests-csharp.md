@@ -69,6 +69,6 @@ For more information see [selective unit tests](https://docs.microsoft.com/en-us
 
 ## What's Next
 
-- [Debug tests with the Playwright Debugger](./debug.md)
+- [Debug tests with the Playwright Debugger](./debug-intro.md)
 - [Generate tests with Codegen](./codegen.md)
 - [See a trace of your tests](./trace-viewer.md)
