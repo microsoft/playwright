@@ -59,7 +59,8 @@ expect(get_started).to_have_attribute("href", "/docs/installation")
 get_started.click()
 ```
 
-[Selectors](./selectors.md) are strings that are used to create Locators. Playwright supports many different selectors like [Text](./selectors.md#text-selector), [CSS](./selectors.md#css-selector), [XPath](./selectors.md#xpath-selectors) and many more.
+[Selectors](./selectors.md) are strings that are used to create Locators. Playwright supports many different selectors like [Text](./selectors.md#text-selector), [CSS](./selectors.md#css-selector), [XPath](./selectors.md#xpath-selectors) and many more. Learn more about available selectors and how to pick one in this [in-depth guide](./selectors.md).
+
 
 ```python
 from playwright.sync_api import expect
