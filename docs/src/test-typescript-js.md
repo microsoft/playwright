@@ -67,6 +67,10 @@ test('example', async ({ page }) => {
 });
 ```
 
+:::note
+TypeScript with ESM requires Node.js 16 or higher.
+:::
+
 ## TypeScript path mapping
 
 If you use [path mapping](https://www.typescriptlang.org/docs/handbook/module-resolution.html#path-mapping) in your `tsconfig.json`, Playwright Test will pick it up. Make sure that `baseUrl` is also set.
