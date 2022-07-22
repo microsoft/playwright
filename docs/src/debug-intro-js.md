@@ -3,11 +3,11 @@ id: debug-intro
 title: "Debugging Tests"
 ---
 
-Since Playwright runs in Node.js, you can debug it with your debugger of choice e.g. inside your IDE. Playwright comes with the Playwright Inspector which allows you to step through Playwright API calls, see their debug logs and explore [selectors](./selectors.md). You can also use [Browser Developer Tools](./debug.md#browser-developer-tools) to debug your scripts.
+Since Playwright runs in Node.js, you can debug it with your debugger of choice e.g. inside your IDE. Playwright comes with the Playwright Inspector which allows you to step through Playwright API calls, see their debug logs and explore [selectors](./selectors.md). 
 
 ## Playwright Inspector
 
-We recommend using `--debug` to open the Playwright Inspector and debug your tests. Alternatively can also use [PWDEBUG](./debug.md#PWDEBUG) or [page.pause](./debug.md#page.pause) to open the Playwright Inspector and debug.
+We recommend using `--debug` to open the Playwright Inspector and debug your tests. However there are other ways including with [Browser Developer Tools](./debug.md#browser-developer-tools), [PWDEBUG](./debug.md#PWDEBUG), and [page.pause](./debug.md#page.pause)
 
 - Debugging all tests:
 
@@ -57,6 +57,14 @@ If actionability can't be reached, it'll show action as pending:
 ### Exploring selectors
 
 Use the Explore button to hover over an element on the page and explore it's selector by clicking on it. You can then copy this selector into your tests and rerun your tests to see if they now pass with this selector. You can also debug selectors, checkout our [debugging selectors](./debug-selectors.md) guide for more details.
+
+### Advanced Debugging
+
+For more advanced debugging check out out our guides on:
+- [Browser Developer Tools](./debug.md#browser-developer-tools)
+- [PWDEBUG](./debug.md#PWDEBUG)
+- [page.pause](./debug.md#page.pause)
+- [debugging selectors](./debug-selectors.md)
 
 ## What's Next
 
