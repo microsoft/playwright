@@ -6,7 +6,12 @@ title: "Playwright Test vs. Library"
 
 Playwright Library provides unified APIs for launching and interacting with browsers, while Playwright Test provides all this plus a fully managed end-to-end Test Runner and experience.
 
-Under most circumstances, for end-to-end testing, you'll want to use `@playwright/test` (Playwright Test), and not `playwright` (Playwright Library) directly. If you are integrating Playwright with a third-party test runner, or are working on scraping/automation, you will use Playwright Library directly.
+Under most circumstances, for end-to-end testing, you'll want to use `@playwright/test` (Playwright Test), and not `playwright` (Playwright Library) directly.
+
+## When Should Playwright Library Be Used Directly?
+
+- creating an integration for a third party test runner (e.g. the third-party runner plugins listed [here](./test-runners.md) are built on top of Playwright Library)
+- automation and scraping
 
 ## Differences
 
