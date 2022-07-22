@@ -85,6 +85,7 @@ Edit the `UnitTest1.cs` file with the code below to create an example end-to-end
 <TabItem value="nunit">
 
 ```csharp
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.Playwright.NUnit;
 using NUnit.Framework;
@@ -121,6 +122,7 @@ public class Tests : PageTest
 <TabItem value="mstest">
 
 ```csharp
+using System.Text.RegularExpressions;
 using Microsoft.Playwright.MSTest;
 
 namespace PlaywrightTests;
