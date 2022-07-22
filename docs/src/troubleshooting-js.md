@@ -30,7 +30,11 @@ await page.evaluate(`(async() => {
 
 ### ReferenceError: URL is not defined
 
-Playwright requires Node.js 14 or higher. Node.js 8 is not supported, and will cause you to receive this error.
+Playwright requires Node.js 14 or higher.
+
+### Unknown file extension ".ts"
+
+Running TypeScript tests in `"type": "module"` project requires Node.js 16 or higher.
 
 # Please file an issue
 
