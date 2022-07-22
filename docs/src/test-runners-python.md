@@ -10,7 +10,7 @@ Playwright provides a [Pytest](https://docs.pytest.org/en/stable/) plugin to wri
 To run your tests, use [Pytest](https://docs.pytest.org/en/stable/) CLI.
 
 ```bash
-pytest --browser webkit --headedd
+pytest --browser webkit --headed
 ```
 
 If you want to add the CLI arguments automatically without specifying them, you can use the [pytest.ini](https://docs.pytest.org/en/stable/reference.html#ini-options-ref) file:
