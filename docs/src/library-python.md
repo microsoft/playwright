@@ -177,30 +177,3 @@ On Windows Python 3.7, Playwright sets the default event loop to `ProactorEventL
 ### Threading
 
 Playwright's API is not thread-safe. If you are using Playwright in a multi-threaded environment, you should create a playwright instance per thread. See [threading issue](https://github.com/microsoft/playwright-python/issues/623) for more details.
-
-
-## System requirements
-
-Playwright requires Python 3.7 or above. The browser binaries for Chromium,
-Firefox and WebKit work across the 3 platforms (Windows, macOS, Linux):
-
-### Windows
-
-Works with Windows and Windows Subsystem for Linux (WSL).
-
-### macOS
-
-Requires 11 (Big Sur) or above.
-
-### Linux
-
-Depending on your Linux distribution, you might need to install additional
-dependencies to run the browsers.
-
-:::note
-Only Ubuntu 18.04, 20.04, and 22.04 are officially supported.
-:::
-
-See also in the [Command line tools](./cli.md#install-system-dependencies)
-which has a command to install all necessary dependencies automatically for Ubuntu
-LTS releases.

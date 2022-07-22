@@ -10,7 +10,7 @@ Playwright can either be used as a part of the [Playwright Test](./intro.md), or
 
 ## Usage
 
-Use npm or Yarn to install Playwright library in your Node.js project. See [system requirements](#system-requirements).
+Use npm or Yarn to install Playwright library in your Node.js project. See [system requirements](./troubleshooting.md#system-requirements).
 
 ```bash
 npm i -D playwright
@@ -94,29 +94,3 @@ TypeScript support will work out-of-the-box. Types can also be imported explicit
 ```js
 let page: import('playwright').Page;
 ```
-
-## System requirements
-
-Playwright requires Node.js version 14 or above. The browser binaries for Chromium,
-Firefox and WebKit work across the 3 platforms (Windows, macOS, Linux):
-
-### Windows
-
-Works with Windows and Windows Subsystem for Linux (WSL).
-
-### macOS
-
-Requires 11 (Big Sur) or above.
-
-### Linux
-
-Depending on your Linux distribution, you might need to install additional
-dependencies to run the browsers.
-
-:::note
-Only Ubuntu 18.04, 20.04, and 22.04 are officially supported.
-:::
-
-See also in the [Command line tools](./cli.md#install-system-dependencies)
-which has a command to install all necessary dependencies automatically for Ubuntu
-LTS releases.
