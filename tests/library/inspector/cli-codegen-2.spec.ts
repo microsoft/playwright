@@ -537,7 +537,7 @@ test.describe('cli codegen', () => {
     expect(sources.get('JavaScript').text).toContain(`page.waitForURL('${server.EMPTY_PAGE}')`);
   });
 
-  test.only('should --save-trace', async ({ runCLI }, testInfo) => {
+  test('should --save-trace', async ({ runCLI }, testInfo) => {
     const traceFileName = testInfo.outputPath('trace.zip');
     const cli = runCLI([`--save-trace=${traceFileName}`]);
     await cli.exited;
