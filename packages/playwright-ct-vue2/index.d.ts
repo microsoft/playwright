@@ -40,13 +40,13 @@ export interface ComponentFixtures {
     props?: { [key: string]: any },
     slots?: { [key: string]: any },
     on?: { [key: string]: Function },
-    hooksConfig: any,
+    hooksConfig?: any,
   }): Promise<Locator>;
   mount<Props>(component: any, options: {
     props: Props,
     slots?: { [key: string]: any },
     on?: { [key: string]: Function },
-    hooksConfig: any,
+    hooksConfig?: any,
   }): Promise<Locator>;
 }
 
