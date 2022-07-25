@@ -137,6 +137,7 @@ class HtmlReporter implements Reporter {
   private _options: HtmlReporterOptions;
   private _outputFolder!: string;
   private _open: string | undefined;
+  private _buildResult: { ok: boolean, singleTestId: string | undefined } | undefined;
 
   constructor(options: HtmlReporterOptions = {}) {
     this._options = options;
@@ -189,12 +190,14 @@ class HtmlReporter implements Reporter {
     });
     await removeFolders([this._outputFolder]);
     const builder = new HtmlBuilder(this._outputFolder);
-    const { ok, singleTestId } = await builder.build(this.config.metadata, reports);
+    this._buildResult = await builder.build(this.config.metadata, reports);
+  }
 
+  async onExit() {
     if (process.env.CI)
       return;
 
-
+    const { ok, singleTestId } = this._buildResult!;
     const shouldOpen = this._open === 'always' || (!ok && this._open === 'on-failure');
     if (shouldOpen) {
       await showHTMLReport(this._outputFolder, singleTestId);
