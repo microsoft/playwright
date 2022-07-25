@@ -190,6 +190,7 @@ export class Runner {
     await new Promise<void>(resolve => process.stdout.write('', () => resolve()));
     await new Promise<void>(resolve => process.stderr.write('', () => resolve()));
 
+    await this._reporter.onExit?.();
     return fullResult;
   }
 
