@@ -63,12 +63,14 @@ commandWithOpenOptions('open [url]', 'open page in browser specified via -b, --b
     .addHelpText('afterAll', `
 Examples:
 
-  $ open  $ open -b webkit https://example.com`);
+  $ open
+  $ open -b webkit https://example.com`);
 
 commandWithOpenOptions('codegen [url]', 'open page and generate code for user actions',
     [
       ['-o, --output <file name>', 'saves the generated script to a file'],
       ['--target <language>', `language to generate, one of javascript, test, python, python-async, pytest, csharp, java`, language()],
+      ['--save-trace <filename>', 'record a trace for the session and save it to a file'],
     ]).action(function(url, options) {
   codegen(options, url, options.target, options.output).catch(logErrorAndExit);
 }).addHelpText('afterAll', `
@@ -674,7 +676,6 @@ function commandWithOpenOptions(command: string, description: string, options: a
       .option('--save-har <filename>', 'save HAR file with all network activity at the end')
       .option('--save-har-glob <glob pattern>', 'filter entries in the HAR by matching url against this glob pattern')
       .option('--save-storage <filename>', 'save context storage state at the end, for later use with --load-storage')
-      .option('--save-trace <filename>', 'record a trace for the session and save it to a file')
       .option('--timezone <time zone>', 'time zone to emulate, for example "Europe/Rome"')
       .option('--timeout <timeout>', 'timeout for Playwright actions in milliseconds, no timeout by default')
       .option('--user-agent <ua string>', 'specify user agent string')
