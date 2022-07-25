@@ -48,6 +48,29 @@ test('globalSetup and globalTeardown should work', async ({ runInlineTest }) => 
   expect(output).toContain('teardown=42');
 });
 
+test('standalone globalTeardown should work', async ({ runInlineTest }) => {
+  const { results, output } = await runInlineTest({
+    'playwright.config.ts': `
+      import * as path from 'path';
+      module.exports = {
+        globalTeardown: './globalTeardown.ts',
+      };
+    `,
+    'globalTeardown.ts': `
+      module.exports = async () => {
+        console.log('got my teardown');
+      };
+    `,
+    'a.test.js': `
+      const { test } = pwt;
+      test('should work', async ({}, testInfo) => {
+      });
+    `,
+  });
+  expect(results[0].status).toBe('passed');
+  expect(output).toContain('got my teardown');
+});
+
 test('globalTeardown runs after failures', async ({ runInlineTest }) => {
   const { results, output } = await runInlineTest({
     'playwright.config.ts': `

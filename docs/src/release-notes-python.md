@@ -5,6 +5,25 @@ title: "Release notes"
 
 <!-- TOC -->
 
+## Version 1.24
+
+### 🐂 Debian 11 Bullseye Support
+
+Playwright now supports Debian 11 Bullseye on x86_64 for Chromium, Firefox and WebKit. Let us know
+if you encounter any issues!
+
+Linux support looks like this:
+
+|          | Ubuntu 18.04 | Ubuntu 20.04 | Ubuntu 22.04 | Debian 11
+| :--- | :---: | :---: | :---: | :---: | 
+| Chromium | ✅ | ✅ | ✅ | ✅ |
+| WebKit | ✅ | ✅ | ✅ | ✅ |
+| Firefox | ✅ | ✅ | ✅ | ✅ |
+
+### New introduction docs
+
+We rewrote our Getting Started docs to be more end-to-end testing focused. Check them out on [playwright.dev](https://playwright.dev/python/docs/intro).
+
 ## Version 1.23
 
 ### Network Replay

@@ -60,7 +60,7 @@ export const test = contextTest.extend<CLITestArgs>({
       return cli;
     });
     if (cli)
-      await cli.exited;
+      await cli.exited.catch(() => {});
   },
 
   openRecorder: async ({ page, recorderPageGetter }, run) => {
@@ -199,6 +199,7 @@ class CLIMock {
         PWTEST_CLI_EXIT: '1',
         PWTEST_CLI_HEADLESS: headless ? '1' : undefined,
         PWTEST_CLI_EXECUTABLE_PATH: executablePath,
+        DEBUG: (process.env.DEBUG ?? '') + ',pw:browser*',
       },
     });
     this.process.onOutput = () => {

@@ -5,6 +5,130 @@ title: "Release notes"
 
 <!-- TOC -->
 
+## Version 1.24
+
+### 🌍 Multiple Web Servers in `playwright.config.ts`
+
+Launch multiple web servers, databases, or other processes by passing an array of configurations:
+
+```ts
+// playwright.config.ts
+import type { PlaywrightTestConfig } from '@playwright/test';
+const config: PlaywrightTestConfig = {
+  webServer: [
+    {
+      command: 'npm run start',
+      port: 3000,
+      timeout: 120 * 1000,
+      reuseExistingServer: !process.env.CI,
+    },
+    {
+      command: 'npm run backend',
+      port: 3333,
+      timeout: 120 * 1000,
+      reuseExistingServer: !process.env.CI,
+    }
+  ],
+  use: {
+    baseURL: 'http://localhost:3000/',
+  },
+};
+export default config;
+```
+
+### 🐂 Debian 11 Bullseye Support
+
+Playwright now supports Debian 11 Bullseye on x86_64 for Chromium, Firefox and WebKit. Let us know
+if you encounter any issues!
+
+Linux support looks like this:
+
+|          | Ubuntu 18.04 | Ubuntu 20.04 | Ubuntu 22.04 | Debian 11
+| :--- | :---: | :---: | :---: | :---: | 
+| Chromium | ✅ | ✅ | ✅ | ✅ |
+| WebKit | ✅ | ✅ | ✅ | ✅ |
+| Firefox | ✅ | ✅ | ✅ | ✅ |
+
+### 🕵️ Anonymous Describe
+
+It is now possible to call [`method: Test.describe#2`] to create suites without a title. This is useful for giving a group of tests a common option with [`method: Test.use`].
+
+```ts
+test.describe(() => {
+  test.use({ colorScheme: 'dark' });
+
+  test('one', async ({ page }) => {
+    // ...
+  });
+
+  test('two', async ({ page }) => {
+    // ...
+  });
+});
+```
+
+### 🧩 Component Tests Update 
+
+Playwright 1.24 Component Tests introduce `beforeMount` and `afterMount` hooks.
+Use these to configure your app for tests.
+
+For example, this could be used to setup App router in Vue.js:
+
+```js
+// src/component.spec.ts
+import { test } from '@playwright/experimental-ct-vue';
+import { Component } from './mycomponent';
+
+test('should work', async ({ mount }) => {
+  const component = await mount(Component, {
+    hooksConfig: {
+      /* anything to configure your app */
+    }
+  });
+});
+```
+
+```js
+// playwright/index.ts
+import { router } from '../router';
+import { beforeMount } from '@playwright/experimental-ct-vue/hooks';
+
+beforeMount(async ({ app, hooksConfig }) => {
+  app.use(router);
+});
+```
+
+A similar configuration in Next.js would look like this:
+
+```js
+// src/component.spec.jsx
+import { test } from '@playwright/experimental-ct-react';
+import { Component } from './mycomponent';
+
+test('should work', async ({ mount }) => {
+  const component = await mount(<Component></Component>, {
+    // Pass mock value from test into `beforeMount`.
+    hooksConfig: {
+      router: {
+        query: { page: 1, per_page: 10 },
+        asPath: '/posts'
+      }
+    }
+  });
+});
+```
+
+```js
+// playwright/index.js
+import router from 'next/router';
+import { beforeMount } from '@playwright/experimental-ct-react/hooks';
+
+beforeMount(async ({ hooksConfig }) => {
+  // Before mount, redefine useRouter to return mock value from test.
+  router.useRouter = () => hooksConfig.router;
+});
+```
+
 ## Version 1.23
 
 <div className="embed-youtube">

@@ -18,6 +18,47 @@ else
   cd "$HOME/firefox"
 fi
 
+args=("$@")
+IS_FULL=""
+IS_JUGGLER=""
+IS_LINUX_ARM64=""
+IS_DEBUG=""
+for ((i="${#args[@]}"-1; i >= 0; --i)); do
+    case ${args[i]} in
+        --full) IS_FULL="1"; unset args[i]; ;;
+        --juggler) IS_JUGGLER="1"; unset args[i]; ;;
+        --linux-arm64) IS_LINUX_ARM64="1"; unset args[i]; ;;
+        --debug) IS_DEBUG="1"; unset args[i]; ;;
+    esac
+done
+
+if [[ -n "${IS_JUGGLER}" && -n "${IS_FULL}" ]]; then
+  echo "ERROR: either --full or --juggler is allowed"
+  exit 1
+fi
+
+echo "== BUILD CONFIGURATION =="
+if [[ -n "${IS_FULL}" ]]; then
+  echo "- build type: FULL"
+elif [[ -n "${IS_JUGGLER}" ]]; then
+  echo "- build type: JUGGLER"
+else
+  echo "- build type: INCREMENTAL"
+fi
+
+if [[ -n "${IS_DEBUG}" ]]; then
+  echo "- debug: YES"
+else
+  echo "- debug: NO"
+fi
+
+if [[ -n "${IS_LINUX_ARM64}" ]]; then
+  echo "- linux aarch64: YES"
+else
+  echo "- linux aarch64: NO"
+fi
+echo "========================="
+
 rm -rf .mozconfig
 
 if is_mac; then
@@ -44,7 +85,7 @@ else
   exit 1;
 fi
 
-if [[ $1 == "--linux-arm64" || $2 == "--linux-arm64" ]]; then
+if [[ -n "${IS_LINUX_ARM64}" ]]; then
   echo "ac_add_options --target=aarch64-linux-gnu" >> .mozconfig
 fi
 
@@ -58,7 +99,7 @@ echo "mk_add_options MOZ_OBJDIR=@TOPSRCDIR@/${OBJ_FOLDER}" >> .mozconfig
 echo "ac_add_options --disable-crashreporter" >> .mozconfig
 echo "ac_add_options --disable-backgroundtasks" >> .mozconfig
 
-if [[ -n $FF_DEBUG_BUILD ]]; then
+if [[ -n "${IS_DEBUG}" ]]; then
   echo "ac_add_options --enable-debug" >> .mozconfig
   echo "ac_add_options --enable-debug-symbols" >> .mozconfig
 else
@@ -70,7 +111,7 @@ if is_mac || is_win; then
   echo "ac_add_options --disable-update-agent" >> .mozconfig
 fi
 
-if [[ $1 != "--juggler" ]]; then
+if [[ -z "${IS_JUGGLER}" ]]; then
   # TODO: rustup is not in the PATH on Windows
   if command -v rustup >/dev/null; then
     # We manage Rust version ourselves.
@@ -86,7 +127,7 @@ if [[ $1 != "--juggler" ]]; then
   fi
 fi
 
-if [[ $1 == "--full" || $2 == "--full" || $1 == "--bootstrap" ]]; then
+if [[ -n "${IS_FULL}" ]]; then
   # This is a slow but sure way to get all the necessary toolchains.
   # However, it will not work if tree is dirty.
   # Bail out if git repo is dirty.
@@ -118,10 +159,8 @@ else
 fi
 
 
-if [[ $1 == "--juggler" ]]; then
+if [[ -n "${IS_JUGGLER}" ]]; then
   ./mach build faster
-elif [[ $1 == "--bootstrap" ]]; then
-  ./mach configure
 else
   export MOZ_AUTOMATION=1
   # Use winpaths instead of unix paths on Windows.
@@ -133,9 +172,9 @@ else
   fi
   ./mach build
   if is_mac; then
-    node "${SCRIPT_FOLDER}"/install-preferences.js "$PWD"/${OBJ_FOLDER}/dist
+    FF_DEBUG_BUILD="${IS_DEBUG}" node "${SCRIPT_FOLDER}"/install-preferences.js "$PWD"/${OBJ_FOLDER}/dist
   else
-    node "${SCRIPT_FOLDER}"/install-preferences.js "$PWD"/${OBJ_FOLDER}/dist/bin
+    FF_DEBUG_BUILD="${IS_DEBUG}" node "${SCRIPT_FOLDER}"/install-preferences.js "$PWD"/${OBJ_FOLDER}/dist/bin
   fi
 fi
 

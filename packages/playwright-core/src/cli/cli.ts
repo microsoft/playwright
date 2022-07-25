@@ -410,6 +410,23 @@ async function launchContext(options: Options, headless: boolean, executablePath
 
   const browser = await browserType.launch(launchOptions);
 
+  if (process.env.PWTEST_CLI_EXIT) {
+    const logs: string[] = [];
+    require('playwright-core/lib/utilsBundle').debug.log = (...args: any[]) => {
+      const line = require('util').format(...args) + '\n';
+      logs.push(line);
+      process.stderr.write(line);
+    };
+    browser.on('disconnected', () => {
+      const hasCrashLine = logs.some(line => line.includes('process did exit:') && !line.includes('process did exit: exitCode=0, signal=null'));
+      if (hasCrashLine) {
+        process.stderr.write('Detected browser crash.\n');
+        // Make sure we exit abnormally when browser crashes.
+        process.exit(1);
+      }
+    });
+  }
+
   // Viewport size
   if (options.viewportSize) {
     try {

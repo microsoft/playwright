@@ -137,7 +137,7 @@ given selector.
 await page.locator('button').click();
 
 // Works because we explicitly tell locator to pick the first element:
-await page.locator('button').first().click();
+await page.locator('button').first().click(); // ⚠️ using first disables strictness
 
 // Works because count knows what to do with multiple matches:
 await page.locator('button').count();
@@ -148,7 +148,7 @@ await page.locator('button').count();
 await page.locator('button').click()
 
 # Works because we explicitly tell locator to pick the first element:
-await page.locator('button').first.click()
+await page.locator('button').first.click() # ⚠️ using first disables strictness
 
 # Works because count knows what to do with multiple matches:
 await page.locator('button').count()
@@ -159,7 +159,7 @@ await page.locator('button').count()
 page.locator('button').click()
 
 # Works because we explicitly tell locator to pick the first element:
-page.locator('button').first.click()
+page.locator('button').first.click() # ⚠️ using first disables strictness
 
 # Works because count knows what to do with multiple matches:
 page.locator('button').count()
@@ -170,7 +170,7 @@ page.locator('button').count()
 page.locator("button").click();
 
 // Works because we explicitly tell locator to pick the first element:
-page.locator("button").first().click();
+page.locator("button").first().click(); // ⚠️ using first disables strictness
 
 // Works because count knows what to do with multiple matches:
 page.locator("button").count();
@@ -181,11 +181,15 @@ page.locator("button").count();
 await page.Locator("button").ClickAsync();
 
 // Works because we explicitly tell locator to pick the first element:
-await page.Locator("button").First.ClickAsync();
+await page.Locator("button").First.ClickAsync(); // ⚠️ using First disables strictness
 
 // Works because Count knows what to do with multiple matches:
 await page.Locator("button").CountAsync();
 ```
+
+:::caution
+Using [`method: Locator.first`], [`method: Locator.last`], and [`method: Locator.nth`] is discouraged since it disables the concept of strictness, and as your page changes, Playwright may click on an element you did not intend. It's better to make your locator more specific. Learn more below in [Filtering Locators](#filtering-locators) and the [selectors guide](./selectors.md).
+:::
 
 ## Lists
 
