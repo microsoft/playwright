@@ -5,6 +5,13 @@ title: "Debugging Tests"
 
 Since Playwright runs in Node.js, you can debug it with your debugger of choice e.g. inside your IDE. Playwright comes with the Playwright Inspector which allows you to step through Playwright API calls, see their debug logs and explore [selectors](./selectors.md). 
 
+There are many ways to debug Playwright:
+
+- Use `console.log`
+- In VS Code with the VS Code Extension
+- [Browser Developer Tools](./debug.md#browser-developer-tools)
+- [PWDEBUG](./debug.md#PWDEBUG)
+- [page.pause](./debug.md#page.pause)
 ## Playwright Inspector
 
 We recommend using `--debug` to open the Playwright Inspector and debug your tests. However there are other ways including with [Browser Developer Tools](./debug.md#browser-developer-tools), [PWDEBUG](./debug.md#PWDEBUG), and [page.pause](./debug.md#page.pause)
