@@ -270,3 +270,29 @@ test('should respect complex path resolver', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
   expect(result.output).not.toContain(`Could not`);
 });
+
+test('should not use baseurl for relative imports', async ({ runInlineTest }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/15891' });
+  const result = await runInlineTest({
+    'frontend/tsconfig.json': `{
+      "compilerOptions": {
+        "baseUrl": "src",
+      },
+    }`,
+    'frontend/playwright/utils.ts': `
+      export const foo = 42;
+    `,
+    'frontend/playwright/tests/forms_cms_standard.spec.ts': `
+      // This relative import should not use baseUrl
+      import { foo } from '../utils';
+      const { test } = pwt;
+      test('test', ({}, testInfo) => {
+        expect(foo).toBe(42);
+      });
+    `,
+  });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  expect(result.output).not.toContain(`Could not`);
+});
