@@ -50,7 +50,7 @@ class LineReporter extends BaseReporter {
       stream.write(`\u001B[1A\u001B[2K`);
     if (test && this._lastTest !== test) {
       // Write new header for the output.
-      const title = colors.gray(formatTestTitle(this.config, test));
+      const title = colors.dim(formatTestTitle(this.config, test));
       stream.write(this.fitToScreen(title) + `\n`);
       this._lastTest = test;
     }
