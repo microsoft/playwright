@@ -912,13 +912,16 @@ export function findChromiumChannel(sdkLanguage: string): string | undefined {
 function lowercaseAllKeys(json: any): any {
   if (typeof json !== 'object')
     return json;
-  const result: any = Array.isArray(json) ? [] : {};
-  for (const [key, value] of Object.entries(json)) {
-    if (typeof key === 'string')
-      result[key.toLowerCase()] = lowercaseAllKeys(value);
-    else
-      result[key] = lowercaseAllKeys(value);
+
+  if (Array.isArray(json)) {
+    const result = [];
+    for (const entry of json)
+      result.push(lowercaseAllKeys(entry));
+    return result;
   }
+  const result: any = {};
+  for (const [key, value] of Object.entries(json))
+    result[key.toLowerCase()] = lowercaseAllKeys(value);
   return result;
 }
 
