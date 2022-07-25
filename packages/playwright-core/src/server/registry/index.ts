@@ -746,21 +746,22 @@ export class Registry {
   private async _installMSEdgeChannel(channel: 'msedge'|'msedge-beta'|'msedge-dev', scripts: Record<'linux' | 'darwin' | 'win32', string>) {
     const scriptArgs: string[] = [];
     if (process.platform !== 'linux') {
-      const products = JSON.parse(await fetchData({ url: 'https://edgeupdates.microsoft.com/api/products' }));
+      const products = lowercaseAllKeys(JSON.parse(await fetchData({ url: 'https://edgeupdates.microsoft.com/api/products' })));
+
       const productName = {
         'msedge': 'Stable',
         'msedge-beta': 'Beta',
         'msedge-dev': 'Dev',
       }[channel];
-      const product = products.find((product: any) => product.Product === productName);
+      const product = products.find((product: any) => product.product === productName);
       const searchConfig = ({
         darwin: { platform: 'MacOS', arch: 'universal', artifact: 'pkg' },
         win32: { platform: 'Windows', arch: 'x64', artifact: 'msi' },
       } as any)[process.platform];
-      const release = searchConfig ? product.Releases.find((release: any) => release.Platform === searchConfig.platform && release.Architecture === searchConfig.arch) : null;
-      const artifact = release ? release.Artifacts.find((artifact: any) => artifact.ArtifactName === searchConfig.artifact) : null;
+      const release = searchConfig ? product.releases.find((release: any) => release.platform === searchConfig.platform && release.architecture === searchConfig.arch) : null;
+      const artifact = release ? release.artifacts.find((artifact: any) => artifact.artifactname === searchConfig.artifact) : null;
       if (artifact)
-        scriptArgs.push(artifact.Location /* url */);
+        scriptArgs.push(artifact.location /* url */);
       else
         throw new Error(`Cannot install ${channel} on ${process.platform}`);
     }
@@ -906,6 +907,19 @@ export function findChromiumChannel(sdkLanguage: string): string | undefined {
     throw new Error('\n' + wrapInASCIIBox(prettyMessage, 1));
   }
   return channel;
+}
+
+function lowercaseAllKeys(json: any): any {
+  if (typeof json !== 'object' || !json)
+    return json;
+
+  if (Array.isArray(json))
+    return json.map(lowercaseAllKeys);
+
+  const result: any = {};
+  for (const [key, value] of Object.entries(json))
+    result[key.toLowerCase()] = lowercaseAllKeys(value);
+  return result;
 }
 
 export const registry = new Registry(require('../../../browsers.json'));
