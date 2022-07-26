@@ -23,7 +23,7 @@ import type { Reporter, TestCase, TestResult } from '@playwright/test/reporter';
 import type { TestPoint } from 'azure-devops-node-api/interfaces/TestInterfaces';
 import type { WebApi } from 'azure-devops-node-api';
 import { colors } from 'playwright-core/lib/utilsBundle';
-import { readFileSync } from 'fs';
+import { existsSync, readFileSync } from 'fs';
 import type { ICoreApi } from 'azure-devops-node-api/CoreApi';
 import type { TeamProject } from 'azure-devops-node-api/interfaces/CoreInterfaces';
 import { createGuid } from 'playwright-core/lib/utils';
@@ -377,21 +377,26 @@ class AzureDevOpsReporter implements Reporter {
     return await Promise.all(
         testResult.attachments.map(async (attachment, i) => {
           if (this.attachmentsType!.includes((attachment.name as TAttachmentType[number]))) {
-            const attachments: TestInterfaces.TestAttachmentRequestModel = {
-              attachmentType: 'GeneralAttachment',
-              fileName: `${attachment.name}-${createGuid()}.${attachment.contentType.split('/')[1]}`,
-              stream: readFileSync(attachment.path!, { encoding: 'base64' })
-            };
+            if (existsSync(attachment.path!)) {
+              const attachments: TestInterfaces.TestAttachmentRequestModel = {
+                attachmentType: 'GeneralAttachment',
+                fileName: `${attachment.name}-${createGuid()}.${attachment.contentType.split('/')[1]}`,
+                stream: readFileSync(attachment.path!, { encoding: 'base64' })
+              };
 
-            if (!this.testApi)
-              this.testApi = await this.connection.getTestApi();
-            const response = await this.testApi.createTestResultAttachment(
-                attachments,
-                this.projectName,
-            this.runId!,
-            caseId
-            );
-            return response.url;
+              if (!this.testApi)
+                this.testApi = await this.connection.getTestApi();
+              const response = await this.testApi.createTestResultAttachment(
+                  attachments,
+                  this.projectName,
+                  this.runId!,
+                  caseId
+              );
+              return response.url;
+            } else {
+              this.log(colors.red(`Attachment ${attachment.path} does not exist.`));
+              return '';
+            }
           } else {
             return '';
           }
