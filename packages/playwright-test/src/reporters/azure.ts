@@ -142,7 +142,7 @@ class AzureDevOpsReporter implements Reporter {
     this.attachmentsType = this._options.attachmentsType;
     this.token = this._options.token;
 
-    if (!this.orgUrl || this.orgUrl.length === 0) {
+    if (!this.orgUrl) {
       this.log(colors.yellow("'orgUrl' is not set. Reporting is disabled."));
       this.isDisabled = true;
       return;
