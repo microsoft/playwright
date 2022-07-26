@@ -47,6 +47,39 @@ You can run a single test, a set of tests or all tests. Tests can be run on one 
   npx playwright test landing-page.ts --project=chromium
   ```
 
+## Debugging Tests
+
+Since Playwright runs in Node.js, you can debug it with your debugger of choice e.g. using `console.log` or inside your IDE. Playwright comes with the Playwright Inspector which allows you to step through Playwright API calls, see their debug logs and explore [selectors](./selectors.md).
+
+:::note
+For a better debugging experience check out the [VS Code Extension](./getting-started-vscode.md#debugging-tests) for Playwright where you can add breakpoints and debug your tests right from the VS Code editor.
+:::
+
+
+- Debugging all tests:
+
+  ```bash
+  npx playwright test --debug
+  ```
+
+- Debugging one test file:
+
+  ```bash
+  npx playwright test example.spec.ts --debug
+  ```
+
+- Debugging a test from the line number where the `test(..` is defined:
+
+  ```bash
+  npx playwright test example.spec.ts:42 --debug
+  ```
+
+
+<img width="712" alt="Playwright Inspector" src="https://user-images.githubusercontent.com/883973/108614092-8c478a80-73ac-11eb-9597-67dfce110e00.png"></img>
+
+Check out our [debugging guide](./debug.md) to learn more about the [Playwright Inspector](./debug.md#playwright-inspector) as well as debugging with [Browser Developer tools](./debug.md#browser-developer-tools).
+
+
 ## Test Reports
 
 The [HTML Reporter](./html-reporter.md) shows you a full report of your tests allowing you to filter the report by browsers, passed tests, failed tests, skipped tests and flaky tests. You can click on each test and explore the tests errors as well as each step of the test. By default, the HTML report is opened automatically if some of the tests failed.
@@ -59,6 +92,5 @@ npx playwright show-report
 
 ## What's Next
 
-- [Debug tests with the Playwright Debugger](./debug-intro.md)
 - [Generate tests with Codegen](./codegen.md)
 - [See a trace of your tests](./trace-viewer.md)

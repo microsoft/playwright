@@ -14,8 +14,7 @@ Playwright Inspector is a GUI tool that helps authoring and debugging Playwright
 There are several ways of opening Playwright Inspector:
 
 ### --debug
-
-- langs: js
+* langs: js
 
 * Debugging all Tests
 
