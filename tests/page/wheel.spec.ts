@@ -67,21 +67,20 @@ it('should dispatch wheel events @smoke', async ({ page, server }) => {
 it('should dispatch wheel event on svg element', async ({ page, browserName, headless, isLinux }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/15566' });
   it.fixme(browserName === 'webkit' && headless && isLinux);
-  await page.setContent(`  <body>
-  <svg class="scroll-box"></svg>
-</body>
-<style>
-  .scroll-box {
-    position: absolute;
-    top: 0px;
-    left: 0px;
-    background-color: brown;
-    width: 200px;
-    height: 200px;
-  }
-</style>`);
-
-  page.on('console', msg => console.log('console: ' + msg.text()));
+  await page.setContent(`
+    <body>
+      <svg class="scroll-box"></svg>
+    </body>
+    <style>
+      .scroll-box {
+        position: absolute;
+        top: 0px;
+        left: 0px;
+        background-color: brown;
+        width: 200px;
+        height: 200px;
+      }
+    </style>`);
   await listenForWheelEvents(page, 'svg');
   await page.mouse.move(100, 100);
   await page.mouse.wheel(0, 100);
