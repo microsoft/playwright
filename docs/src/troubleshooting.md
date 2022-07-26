@@ -39,7 +39,7 @@ Playwright requires Node.js 14 or higher.
 Running TypeScript tests in `"type": "module"` project requires Node.js 16 or higher.
 
 ## .NET requirements
-* langs: js
+* langs: csharp
 
 Playwright is distributed as a **.NET Standard 2.0** library. We recommend .NET 6 or newer.
 
@@ -77,9 +77,4 @@ Only Ubuntu 18.04, 20.04, and 22.04 are officially supported.
 See also in the [Command line tools](./cli.md#install-system-dependencies)
 which has a command to install all necessary dependencies automatically for Ubuntu
 LTS releases.
-
-
-## Please file an issue
-
-Playwright is a new project, and we are watching the issues very closely. As we solve common issues, this document will grow to include the common answers.
 
