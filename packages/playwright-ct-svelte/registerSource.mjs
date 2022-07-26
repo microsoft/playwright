@@ -20,6 +20,7 @@
 
 /** @typedef {import('../playwright-test/types/component').Component} Component */
 /** @typedef {any} FrameworkComponent */
+/** @typedef {import('svelte').SvelteComponent} SvelteComponent */
 
 /** @type {Map<string, FrameworkComponent>} */
 const registry = new Map();
@@ -54,14 +55,24 @@ window.playwrightMount = async (component, rootElement, hooksConfig) => {
   for (const hook of /** @type {any} */(window).__pw_hooks_before_mount || [])
     await hook({ hooksConfig });
 
-  const wrapper = new componentCtor({
+  const svelteComponent = /** @type {SvelteComponent} */ (new componentCtor({
     target: rootElement,
     props: component.options?.props,
-  });
+  }));
+  rootElement[svelteComponentKey] = svelteComponent;
 
   for (const hook of /** @type {any} */(window).__pw_hooks_after_mount || [])
-    await hook({ hooksConfig });
+    await hook({ hooksConfig, svelteComponent });
 
   for (const [key, listener] of Object.entries(component.options?.on || {}))
-    wrapper.$on(key, event => listener(event.detail));
+    svelteComponent.$on(key, event => listener(event.detail));
 };
+
+window.playwrightUnmount = async (element, rootElement) => {
+  const svelteComponent = /** @type {SvelteComponent} */ (rootElement[svelteComponentKey]);
+  if (!svelteComponent)
+    throw new Error('Component was not mounted');
+  svelteComponent.$destroy();
+};
+
+const svelteComponentKey = Symbol('svelteComponent');

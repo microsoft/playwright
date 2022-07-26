@@ -72,3 +72,14 @@ test('should run hooks', async ({ page, mount }) => {
   })
   expect(messages).toEqual(['Before mount: {\"route\":\"A\"}', 'After mount el: HTMLButtonElement'])
 })
+
+test('should unmount', async ({ page, mount, unmount }) => {
+  const component = await mount(Button, {
+    props: {
+      title: 'Submit'
+    }
+  })
+  await expect(page.locator('#root')).toContainText('Submit')
+  await unmount(component);
+  await expect(page.locator('#root')).not.toContainText('Submit');
+});

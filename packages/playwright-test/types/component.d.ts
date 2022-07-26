@@ -39,5 +39,6 @@ export type Component = JsxComponent | ObjectComponent;
 declare global {
   interface Window {
     playwrightMount(component: Component, rootElement: Element, hooksConfig: any): Promise<void>;
+    playwrightUnmount(element: Element, rootElement: Element): Promise<void>;
   }
 }
