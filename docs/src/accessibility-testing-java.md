@@ -29,40 +29,36 @@ The following examples demonstrate a few basic accessibility testing scenarios.
 ### Example 1: Scanning an entire page
 
 This example demonstrates how to test an entire page for automatically detectable accessibility violations. The test:
-1. Imports the `@axe-core/playwright` package
-1. Uses normal Playwright Test syntax to define a test case
-1. Uses normal Playwright syntax to navigate to the page under test
-1. Awaits `AxeBuilder.analyze()` to run the accessibility scan against the page
-1. Uses normal Playwright Test [assertions](./test-assertions) to verify that there are no violations in the returned scan results
+1. Imports the `com.deque.html.axecore.playwright` package
+1. Uses normal JUnit 5 `@Test` syntax to define a test case
+1. Uses normal Playwright syntax to open a browser and navigate to the page under test
+1. Invokes `AxeBuilder.analyze()` to run the accessibility scan against the page
+1. Uses normal JUnit 5 test assertions to verify that there are no violations in the returned scan results
 
-```js tab=js-ts
-import { test, expect } from '@playwright/test';
-import AxeBuilder from '@axe-core/playwright'; // 1
+```java
+import com.deque.html.axecore.playwright.*; // 1
+import com.deque.html.axecore.utilities.axeresults.*;
 
-test.describe('homepage', () => { // 2
-  test('should not have any automatically detectable accessibility issues', async ({ page }) => {
-    await page.goto('https://your-site.com/'); // 3
+import org.junit.jupiter.api.*;
+import com.microsoft.playwright.*;
 
-    const accessibilityScanResults = await new AxeBuilder({ page }).analyze(); // 4
+import static org.junit.jupiter.api.Assertions.*;
 
-    expect(accessibilityScanResults.violations).toEqual([]); // 5
-  });
-});
-```
+public class HomepageTests {
+  @Test // 2
+  void shouldNotHaveAutomaticallyDetectableAccessibilityIssues() throws Exception {
+    Playwright playwright = Playwright.create();
+    Browser browser = playwright.chromium().launch();
+    BrowserContext context = browser.newContext();
+    Page page = context.newPage(); // 2
 
-```js tab=js-js
-const { test, expect } = require('@playwright/test');
-const AxeBuilder = require('@axe-core/playwright').default; // 1
+    page.navigate("https://your-site.com/"); // 3
 
-test.describe('homepage', () => { // 2
-  test('should not have any automatically detectable accessibility issues', async ({ page }) => {
-    await page.goto('https://your-site.com/'); // 3
+    AxeResults accessibilityScanResults = new AxeBuilder(page).analyze(); // 4
 
-    const accessibilityScanResults = await new AxeBuilder({ page }).analyze(); // 4
-
-    expect(accessibilityScanResults.violations).toEqual([]); // 5
-  });
-});
+    assertTrue(axeResults.violationFree()); // 5
+  }
+}
 ```
 
 ### Example 2: Configuring axe to scan a specific part of a page
@@ -73,23 +69,24 @@ For example, you can use [`AxeBuilder.include()`](https://github.com/dequelabs/a
 
 `AxeBuilder.analyze()` will scan the page *in its current state* when you call it. To scan parts of a page that are revealed based on UI interactions, use [Locators](./locators.md) to interact with the page before invoking `analyze()`:
 
-```js
-test('navigation menu flyout should not have automatically detectable accessibility violations', async ({ page }) => {
-  await page.goto('https://your-site.com/');
+```java
+@Test
+void navigationMenuFlyoutShouldNotHaveAutomaticallyDetectableAccessibilityViolations() throws Exception {
+  page.navigate("https://your-site.com/");
 
-  await page.locator('button[aria-label="Navigation Menu"]').click();
+  page.locator("button[aria-label=\"Navigation Menu\"]").click();
 
   // It is important to waitFor() the page to be in the desired
   // state *before* running analyze(). Otherwise, axe might not
   // find all the elements your test expects it to scan.
-  await page.locator('#navigation-menu-flyout').waitFor();
+  page.locator("#navigation-menu-flyout").waitFor();
 
-  const accessibilityScanResults = await new AxeBuilder({ page })
-    .include('#navigation-menu-flyout')
+  AxeResults accessibilityScanResults = new AxeBuilder(page)
+    .include(Arrays.asList("#navigation-menu-flyout"))
     .analyze();
 
-  expect(accessibilityScanResults.violations).toEqual([]);
-});
+  assertTrue(axeResults.violationFree());
+}
 ```
 
 ### Example 3: Scanning for WCAG violations
@@ -100,16 +97,17 @@ You can constrain an accessibility scan to only run those rules which are "tagge
 
 Note that [automated testing cannot detect all types of WCAG violations](#disclaimer).
 
-```js
-test('should not have any automatically detectable WCAG A or AA violations', async ({ page }) => {
-  await page.goto('https://your-site.com/');
+```java
+@Test
+void navigationMenuFlyoutShouldNotHaveAutomaticallyDetectableAccessibilityViolations() throws Exception {
+  page.navigate("https://your-site.com/");
 
-  const accessibilityScanResults = await new AxeBuilder({ page })
-    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+  AxeResults accessibilityScanResults = new AxeBuilder(page)
+    .withTags(Arrays.asList("wcag2a", "wcag2aa", "wcag21a", "wcag21aa"))
     .analyze();
 
-  expect(accessibilityScanResults.violations).toEqual([]);
-});
+  assertTrue(axeResults.violationFree());
+}
 ```
 
 You can find a complete listing of the rule tags axe-core supports in [the "Axe-core Tags" section of the axe API documentation](https://www.deque.com/axe/core-documentation/api-documentation/#axe-core-tags).
@@ -128,16 +126,17 @@ This is usually the simplest option, but it has some important downsides:
 
 Here is an example of excluding one element from being scanned in one specific test:
 
-```js
-test('should not have any accessibility violations outside of elements with known issues', async ({ page }) => {
-  await page.goto('https://your-site.com/page-with-known-issues');
+```java
+@Test
+void shouldNotHaveAccessibilityViolationsOutsideOfElementsWithKnownIssues() throws Exception {
+  page.navigate("https://your-site.com/");
 
-  const accessibilityScanResults = await new AxeBuilder({ page })
-    .exclude('#element-with-known-issue')
+  AxeResults accessibilityScanResults = new AxeBuilder(page)
+    .exclude(Arrays.asList("#element-with-known-issue"))
     .analyze();
 
-  expect(accessibilityScanResults.violations).toEqual([]);
-});
+  assertTrue(axeResults.violationFree());
+}
 ```
 
 If the element in question is used repeatedly in many pages, consider [using a test fixture](#using-a-test-fixture-for-common-axe-configuration) to reuse the same `AxeBuilder` configuration across multiple tests.
@@ -148,146 +147,107 @@ If your application contains many different pre-existing violations of a specifi
 
 You can find the rule IDs to pass to `disableRules()` in the `id` property of the violations you want to suppress. A [complete list of axe's rules](https://github.com/dequelabs/axe-core/blob/master/doc/rule-descriptions.md) can be found in `axe-core`'s documentation.
 
-```js
-test('should not have any accessibility violations outside of rules with known issues', async ({ page }) => {
-  await page.goto('https://your-site.com/page-with-known-issues');
+```java
+@Test
+void shouldNotHaveAccessibilityViolationsOutsideOfRulesWithKnownIssues() throws Exception {
+  page.navigate("https://your-site.com/");
 
-  const accessibilityScanResults = await new AxeBuilder({ page })
-    .disableRules(['duplicate-id'])
+  AxeResults accessibilityScanResults = new AxeBuilder(page)
+    .disableRules(Arrays.asList("duplicate-id"))
     .analyze();
 
-  expect(accessibilityScanResults.violations).toEqual([]);
-});
-```
-
-### Using snapshots to allow specific known issues
-
-If you would like to allow for a more granular set of known issues, you can use [Snapshots](./test-snapshots.md) to verify that a set of pre-existing violations has not changed. This approach avoids the downsides of using `AxeBuilder.exclude()` at the cost of slightly more complexity and fragility.
-
-Do not use a snapshot of the entire `accessibilityScanResults.violations` array. It contains implementation details of the elements in question, such as a snippet of their rendered HTML; if you include these in your snapshots, it will make your tests prone to breaking every time one of the components in question changes for an unrelated reason:
-
-```js
-// Don't do this! This is fragile.
-expect(accessibilityScanResults.violations).toMatchSnapshot();
-```
-
-Instead, create a *fingerprint* of the violation(s) in question that contains only enough information to uniquely identify the issue, and use a snapshot of the fingerprint:
-
-```js
-// This is less fragile than snapshotting the entire violations array.
-expect(violationFingerprints(accessibilityScanResults)).toMatchSnapshot();
-
-// my-test-utils.js
-function violationFingerprints(accessibilityScanResults) {
-    const violationFingerprints = accessibilityScanResults.violations.map(violation => ({
-        rule: violation.id,
-        // These are CSS selectors which uniquely identify each element with
-        // a violation of the rule in question.
-        targets: violation.nodes.map(node => node.target),
-    }));
-
-    return JSON.stringify(violationFingerprints, null, 2);
+  assertTrue(axeResults.violationFree());
 }
 ```
 
-## Exporting scan results as a test attachment
+### Using violation fingerprints to specific known issues
 
-Most accessibility tests are primarily concerned with the `violations` property of the axe scan results. However, the scan results contain more than just `violations`. For example, the results also contain information about rules which passed and about elements which axe found to have inconclusive results for some rules. This information can be useful for debugging tests that aren't detecting all the violations you expect them to.
+If you would like to allow for a more granular set of known issues, you can use the following pattern:
 
-To include *all* of the scan results as part of your test results for debugging purposes, you can add the scan results as a test attachment with [`testInfo.attach()`](./api/class-testinfo#test-info-attach). [Reporters](./test-reporters) can then embed or link the full results as part of your test output.
+1. Perform an accessibility scan which is expected to find some known violations
+1. Convert the violations into "violation fingerprint" objects
+1. Assert that the set of fingerprints is equivalent to the expected ones
 
-The following example demonstrates attaching scan results to a test:
+This approach avoids the downsides of using `AxeBuilder.exclude()` at the cost of slightly more complexity and fragility.
 
-```js
-test('example with attachment', async ({ page }, testInfo) => {
-  await page.goto('https://your-site.com/');
+Here is an example of using fingerprints based on only rule IDs and "target" selectors pointing to each violation:
 
-  const accessibilityScanResults = await new AxeBuilder({ page }).analyze();
+```java
+@Test
+shouldOnlyHaveAccessibilityViolationsMatchingKnownFingerprints() throws Exception {
+  page.navigate("https://your-site.com/");
 
-  await testInfo.attach('accessibility-scan-results', {
-    body: JSON.stringify(accessibilityScanResults, null, 2),
-    contentType: 'application/json'
-  });
+  AxeResults accessibilityScanResults = new AxeBuilder(page).analyze();
 
-  expect(accessibilityScanResults.violations).toEqual([]);
-});
+  List<ViolationFingerprint> violationFingerprints = fingerprintsFromScanResults(accessibilityScanResults);
+          
+  assertEquals(Arrays.asList(
+    new ViolationFingerprint("aria-roles", "[span[role=\"invalid\"]]"),
+    new ViolationFingerprint("color-contrast", "[li:nth-child(2) > span]"),
+    new ViolationFingerprint("label", "[input]")
+  ), violationFingerprints);
+}
+
+// You can make your "fingerprint" as specific as you like. This one considers a violation to be
+// "the same" if it corresponds the same Axe rule on the same element.
+//
+// Using a record type makes it easy to compare fingerprints with assertEquals
+public record ViolationFingerprint(String ruleId, String target) { }
+
+public static List<ViolationFingerprint> fingerprintsFromScanResults(AxeResults results) {
+  return accessibilityScanResults.getViolations().stream()
+    // Each violation refers to one rule and multiple "nodes" which violate it
+    .flatMap(violation -> violation.getNodes().stream()
+      .map(node -> new ViolationFingerprint(
+        violation.getId(),
+        // Each node contains a "target", which is a CSS selector that uniquely identifies it
+        // If the page involves iframes or shadow DOMs, it may be a chain of CSS selectors
+        node.getTarget().toString()
+      )))
+    .collect(Collectors.toList());
+}
 ```
 
 ## Using a test fixture for common axe configuration
 
-[Test fixtures](./test-fixtures) are a good way to share common `AxeBuilder` configuration across many tests. Some scenarios where this might be useful include:
+A [`TestFixtures` class](./test-runners#running-tests-in-parallel) is a good way to share common `AxeBuilder` configuration across many tests. Some scenarios where this might be useful include:
 * Using a common set of rules among all of your tests
 * Suppressing a known violation in a common element which appears in many different pages
 * Attaching standalone accessibility reports consistently for many scans
 
-The following example demonstrates creating and using a test fixture that covers each of those scenarios.
+The following example demonstrates extending the `TestFixtures` class from the [Test Runners example](./test-runners#running-tests-in-parallel) with a new fixture that contains some common `AxeBuilder` configuration.
 
 ### Creating a fixture
 
 This example fixture creates an `AxeBuilder` object which is pre-configured with shared `withTags()` and `exclude()` configuration.
 
-```js tab=js-ts
-// axe-test.ts
-import { test as base } from '@playwright/test';
-import AxeBuilder from '@axe-core/playwright';
-
-type AxeFixture = {
-  makeAxeBuilder: () => AxeBuilder;
-};
-
-// Extend base test by providing "makeAxeBuilder"
-//
-// This new "test" can be used in multiple test files, and each of them will get
-// a consistently configured AxeBuilder instance.
-export const test = base.extend<AxeFixture>({
-  makeAxeBuilder: async ({ page }, use, testInfo) => {
-    const makeAxeBuilder = () => new AxeBuilder({ page })
+```java
+class AxeTestFixtures extends TestFixtures {
+  AxeBuilder makeAxeBuilder() {
+    return new AxeBuilder(page)
       .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
       .exclude('#commonly-reused-element-with-known-issue');
-
-    await use(makeAxeBuilder);
   }
-});
-export { expect } from '@playwright/test';
-```
-
-```js tab=js-js
-// axe-test.js
-const base = require('@playwright/test');
-const AxeBuilder = require('@axe-core/playwright').default;
-
-// Extend base test by providing "makeAxeBuilder"
-//
-// This new "test" can be used in multiple test files, and each of them will get
-// a consistently configured AxeBuilder instance.
-exports.test = base.test.extend({
-  makeAxeBuilder: async ({ page }, use, testInfo) => {
-    const makeAxeBuilder = () => new AxeBuilder({ page })
-      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
-      .exclude('#commonly-reused-element-with-known-issue');
-
-    await use(makeAxeBuilder);
-  }
-});
-exports.expect = base.expect;
+}
 ```
 
 ### Using a fixture
 
-To use the fixture, replace the earlier examples' `new AxeBuilder({ page })` with the newly defined `makeAxeBuilder` fixture:
+To use the fixture, replace the earlier examples' `new AxeBuilder(page)` with the newly defined `makeAxeBuilder` fixture:
 
-```js
-const { test, expect } = require('./axe-test');
+```java
+public class HomepageTests extends AxeTestFixtures {
+  @Test
+  void exampleUsingCustomFixture() throws Exception {
+    page.navigate("https://your-site.com/");
 
-test('example using custom fixture', async ({ page, makeAxeBuilder }) => {
-  await page.goto('https://your-site.com/');
+    AxeResults accessibilityScanResults = makeAxeBuilder()
+      // Automatically uses the shared AxeBuilder configuration,
+      // but supports additional test-specific configuration too
+      .include('#specific-element-under-test')
+      .analyze();
 
-  const accessibilityScanResults = await makeAxeBuilder()
-     // Automatically uses the shared AxeBuilder configuration,
-     // but supports additional test-specific configuration too
-    .include('#specific-element-under-test')
-    .analyze();
-
-  expect(accessibilityScanResults.violations).toEqual([]);
-});
+    assertTrue(axeResults.violationFree());
+  }
+}
 ```
