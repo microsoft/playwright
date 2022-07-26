@@ -2216,7 +2216,7 @@ index f2b30930c44473be6bf087fde5fd75b074b190c7..fcdfd21fc73ce584f7976d381d91bae4
  #endif
  
 diff --git a/Source/WTF/wtf/PlatformHave.h b/Source/WTF/wtf/PlatformHave.h
-index 30078593883c7440a90add36e762555587a69136..27f478a69b045c33b4b293f2c16752581e889ee2 100644
+index 30078593883c7440a90add36e762555587a69136..19e9495403f77f1866e92f1560d1033895c33536 100644
 --- a/Source/WTF/wtf/PlatformHave.h
 +++ b/Source/WTF/wtf/PlatformHave.h
 @@ -430,7 +430,7 @@
@@ -2228,6 +2228,16 @@ index 30078593883c7440a90add36e762555587a69136..27f478a69b045c33b4b293f2c1675258
  #define HAVE_OS_DARK_MODE_SUPPORT 1
  #endif
  
+@@ -1310,7 +1310,8 @@
+ #endif
+ 
+ #if PLATFORM(MAC)
+-#define HAVE_GPU_AVAILABILITY_CHECK 1
++// Playwright: disable the check to make WebGL always work.
++#define HAVE_GPU_AVAILABILITY_CHECK 0
+ #endif
+ 
+ #if (!defined(HAVE_LOCKDOWN_MODE_PDF_ADDITIONS) && \
 diff --git a/Source/WebCore/DerivedSources.make b/Source/WebCore/DerivedSources.make
 index 8e0fa01deda72cb7abde61793297f8073077f93a..441d7c0fca693c5c187f1d129e7d5bdcaa280f14 100644
 --- a/Source/WebCore/DerivedSources.make
