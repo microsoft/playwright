@@ -300,8 +300,14 @@ export class FixtureRunner {
   setPool(pool: FixturePool) {
     if (!this.testScopeClean)
       throw new Error('Did not teardown test scope');
-    if (this.pool && pool.digest !== this.pool.digest)
-      throw new Error('Digests do not match');
+    if (this.pool && pool.digest !== this.pool.digest) {
+      throw new Error([
+        `Playwright detected inconsistent test.use() options.`,
+        `Most common mistakes that lead to this issue:`,
+        `  - Calling test.use() outside of the test file, for example in a common helper.`,
+        `  - One test file imports from another test file.`,
+      ].join('\n'));
+    }
     this.pool = pool;
   }
 
