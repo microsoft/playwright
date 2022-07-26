@@ -3,7 +3,13 @@ id: running-tests
 title: "Running Tests"
 ---
 
-You can run a single test, a set of tests or all tests. Tests can be run on one browser or multiple browsers. By default tests are run in a headless manner meaning no browser window will be opened while running the tests and results will be seen in the terminal. If you prefer you can run your tests in headed mode by using the `--headed` flag.
+You can run a single test, a set of tests or all tests. Tests can be run on one browser or multiple browsers. By default tests are run in a headless manner meaning no browser window will be opened while running the tests and results will be seen in the terminal.
+
+:::note
+For a better debugging experience check out the [VS Code Extension](./getting-started-vscode.md) for Playwright where you can run tests, add breakpoints and debug your tests right from the VS Code editor.
+:::
+
+## Command Line
 
 - Running all tests
 
@@ -49,11 +55,7 @@ You can run a single test, a set of tests or all tests. Tests can be run on one 
 
 ## Debugging Tests
 
-Since Playwright runs in Node.js, you can debug it with your debugger of choice e.g. using `console.log` or inside your IDE. Playwright comes with the Playwright Inspector which allows you to step through Playwright API calls, see their debug logs and explore [selectors](./selectors.md).
-
-:::note
-For a better debugging experience check out the [VS Code Extension](./getting-started-vscode.md#debugging-tests) for Playwright where you can add breakpoints and debug your tests right from the VS Code editor.
-:::
+Since Playwright runs in Node.js, you can debug it with your debugger of choice e.g. using `console.log` or inside your IDE or directly in VS Code with the [VS Code Extension](./getting-started-vscode.md). Playwright comes with the [Playwright Inspector](./debug.md#playwright-inspector) which allows you to step through Playwright API calls, see their debug logs and explore [selectors](./selectors.md).
 
 
 - Debugging all tests:
