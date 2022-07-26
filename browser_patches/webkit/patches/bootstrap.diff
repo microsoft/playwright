@@ -3419,7 +3419,7 @@ index 07103c35e0a9193a010a85cf2ea8017b2ad59212..338d158be5a6f35adc6817dc94d6084b
  class UserGestureEmulationScope {
      WTF_MAKE_NONCOPYABLE(UserGestureEmulationScope);
 diff --git a/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp b/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp
-index f71765fd92ec340a8a34cf280671296e7f855890..6e9c9413018c906e474393a34b7281f190e73be7 100644
+index f71765fd92ec340a8a34cf280671296e7f855890..f91b86c0fe3c7eab81f81ec4ca0746cf3d5b22c1 100644
 --- a/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp
 +++ b/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp
 @@ -62,12 +62,16 @@
@@ -3473,7 +3473,28 @@ index f71765fd92ec340a8a34cf280671296e7f855890..6e9c9413018c906e474393a34b7281f1
  }
  
  static bool parseQuad(Ref<JSON::Array>&& quadArray, FloatQuad* quad)
-@@ -451,6 +458,20 @@ Node* InspectorDOMAgent::assertNode(Protocol::ErrorString& errorString, Protocol
+@@ -176,6 +183,20 @@ static bool parseQuad(Ref<JSON::Array>&& quadArray, FloatQuad* quad)
+     return true;
+ }
+ 
++static void CollectQuads(Node* node, Vector<FloatQuad>& quads)
++{
++    Element* element = dynamicDowncast<Element>(node);
++    if (element && element->hasDisplayContents()) {
++        // display:contents elements do not render themselves, so we look into children.
++        for (auto& child : composedTreeChildren(*element))
++            CollectQuads(&child, quads);
++        return;
++    }
++    RenderObject* renderer = node->renderer();
++    if (renderer)
++        renderer->absoluteQuads(quads);
++}
++
+ class RevalidateStyleAttributeTask {
+     WTF_MAKE_FAST_ALLOCATED;
+ public:
+@@ -451,6 +472,20 @@ Node* InspectorDOMAgent::assertNode(Protocol::ErrorString& errorString, Protocol
      return node;
  }
  
@@ -3494,7 +3515,7 @@ index f71765fd92ec340a8a34cf280671296e7f855890..6e9c9413018c906e474393a34b7281f1
  Document* InspectorDOMAgent::assertDocument(Protocol::ErrorString& errorString, Protocol::DOM::NodeId nodeId)
  {
      Node* node = assertNode(errorString, nodeId);
-@@ -1442,16 +1463,7 @@ Protocol::ErrorStringOr<void> InspectorDOMAgent::highlightSelector(Ref<JSON::Obj
+@@ -1442,16 +1477,7 @@ Protocol::ErrorStringOr<void> InspectorDOMAgent::highlightSelector(Ref<JSON::Obj
  Protocol::ErrorStringOr<void> InspectorDOMAgent::highlightNode(Ref<JSON::Object>&& highlightInspectorObject, std::optional<Protocol::DOM::NodeId>&& nodeId, const Protocol::Runtime::RemoteObjectId& objectId)
  {
      Protocol::ErrorString errorString;
@@ -3512,7 +3533,7 @@ index f71765fd92ec340a8a34cf280671296e7f855890..6e9c9413018c906e474393a34b7281f1
      if (!node)
          return makeUnexpected(errorString);
  
-@@ -1689,15 +1701,136 @@ Protocol::ErrorStringOr<void> InspectorDOMAgent::setInspectedNode(Protocol::DOM:
+@@ -1689,15 +1715,141 @@ Protocol::ErrorStringOr<void> InspectorDOMAgent::setInspectedNode(Protocol::DOM:
      return { };
  }
  
@@ -3592,6 +3613,16 @@ index f71765fd92ec340a8a34cf280671296e7f855890..6e9c9413018c906e474393a34b7281f1
 +        return makeUnexpected("Node is detached from document"_s);
 +
 +    RenderObject* renderer = node->renderer();
++    auto* containerNode = dynamicDowncast<ContainerNode>(*node);
++    if (!renderer && containerNode) {
++        // Find the first descendant with a renderer, to account for
++        // containers without a renderer like display:contents elements.
++        for (auto& descendant : composedTreeDescendants(*containerNode)) {
++            renderer = descendant.renderer();
++            if (renderer)
++                break;
++        }
++    }
 +    if (!renderer)
 +        return makeUnexpected("Node does not have a layout object"_s);
 +
@@ -3622,20 +3653,15 @@ index f71765fd92ec340a8a34cf280671296e7f855890..6e9c9413018c906e474393a34b7281f1
 +    if (!node)
 +        return makeUnexpected("Node not found"_s);
 +
-+    RenderObject* renderer = node->renderer();
-+    if (!renderer)
-+        return makeUnexpected("Node doesn't have renderer"_s);
-+
 +    // Ensure quads are up to date.
 +    m_inspectedPage.isolatedUpdateRendering();
 +
-+    Frame* containingFrame = renderer->document().frame();
-+    FrameView* containingView = containingFrame ? containingFrame->view() : nullptr;
++    FrameView* containingView = node->document().view();
 +    if (!containingView)
 +        return makeUnexpected("Internal error: no containing view"_s);
 +
 +    Vector<FloatQuad> quads;
-+    renderer->absoluteQuads(quads);
++    CollectQuads(node, quads);
 +    for (auto& quad : quads)
 +        frameQuadToViewport(*containingView, quad, m_inspectedPage.pageScaleFactor());
 +    return buildArrayOfQuads(quads);
@@ -3653,7 +3679,7 @@ index f71765fd92ec340a8a34cf280671296e7f855890..6e9c9413018c906e474393a34b7281f1
      if (!object)
          return makeUnexpected("Missing injected script for given nodeId"_s);
  
-@@ -2952,7 +3085,7 @@ Protocol::ErrorStringOr<Protocol::DOM::NodeId> InspectorDOMAgent::pushNodeByPath
+@@ -2952,7 +3104,7 @@ Protocol::ErrorStringOr<Protocol::DOM::NodeId> InspectorDOMAgent::pushNodeByPath
      return makeUnexpected("Missing node for given path"_s);
  }
  
@@ -3662,7 +3688,7 @@ index f71765fd92ec340a8a34cf280671296e7f855890..6e9c9413018c906e474393a34b7281f1
  {
      Document* document = &node->document();
      if (auto* templateHost = document->templateDocumentHost())
-@@ -2961,12 +3094,18 @@ RefPtr<Protocol::Runtime::RemoteObject> InspectorDOMAgent::resolveNode(Node* nod
+@@ -2961,12 +3113,18 @@ RefPtr<Protocol::Runtime::RemoteObject> InspectorDOMAgent::resolveNode(Node* nod
      if (!frame)
          return nullptr;
  
@@ -3684,7 +3710,7 @@ index f71765fd92ec340a8a34cf280671296e7f855890..6e9c9413018c906e474393a34b7281f1
  }
  
  Node* InspectorDOMAgent::scriptValueAsNode(JSC::JSValue value)
-@@ -2989,4 +3128,57 @@ Protocol::ErrorStringOr<void> InspectorDOMAgent::setAllowEditingUserAgentShadowT
+@@ -2989,4 +3147,57 @@ Protocol::ErrorStringOr<void> InspectorDOMAgent::setAllowEditingUserAgentShadowT
      return { };
  }
  
