@@ -99,7 +99,9 @@ async function gracefullyCloseAndExit() {
       await stopProfiling(workerIndex);
   } catch (e) {
     try {
-      const payload: TeardownErrorsPayload = { fatalErrors: [serializeError(e)] };
+      const error = serializeError(e);
+      workerRunner.appendWorkerTeardownDiagnostics(error);
+      const payload: TeardownErrorsPayload = { fatalErrors: [error] };
       process.send!({ method: 'teardownErrors', params: payload });
     } catch {
     }

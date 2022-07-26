@@ -42,6 +42,7 @@ type TestSummary = {
   unexpected: TestCase[];
   flaky: TestCase[];
   failuresToPrint: TestCase[];
+  fatalErrors: TestError[];
 };
 
 export class BaseReporter implements Reporter  {
@@ -54,6 +55,7 @@ export class BaseReporter implements Reporter  {
   private monotonicStartTime: number = 0;
   private _omitFailures: boolean;
   private readonly _ttyWidthForTest: number;
+  private _fatalErrors: TestError[] = [];
 
   constructor(options: { omitFailures?: boolean } = {}) {
     this._omitFailures = options.omitFailures || false;
@@ -96,7 +98,7 @@ export class BaseReporter implements Reporter  {
   }
 
   onError(error: TestError) {
-    console.log('\n' + formatError(this.config, error, colors.enabled).message);
+    this._fatalErrors.push(error);
   }
 
   async onEnd(result: FullResult) {
@@ -116,7 +118,7 @@ export class BaseReporter implements Reporter  {
   protected generateStartingMessage() {
     const jobs = Math.min(this.config.workers, this.config._testGroupsCount);
     const shardDetails = this.config.shard ? `, shard ${this.config.shard.current} of ${this.config.shard.total}` : '';
-    return `\nRunning ${this.totalTestCount} test${this.totalTestCount > 1 ? 's' : ''} using ${jobs} worker${jobs > 1 ? 's' : ''}${shardDetails}`;
+    return `\nRunning ${this.totalTestCount} test${this.totalTestCount !== 1 ? 's' : ''} using ${jobs} worker${jobs !== 1 ? 's' : ''}${shardDetails}`;
   }
 
   protected getSlowTests(): [string, number][] {
@@ -129,8 +131,10 @@ export class BaseReporter implements Reporter  {
     return fileDurations.filter(([,duration]) => duration > threshold).slice(0, count);
   }
 
-  protected generateSummaryMessage({ skipped, expected, unexpected, flaky }: TestSummary) {
+  protected generateSummaryMessage({ skipped, expected, unexpected, flaky, fatalErrors }: TestSummary) {
     const tokens: string[] = [];
+    if (fatalErrors.length)
+      tokens.push(colors.red(`  ${fatalErrors.length} fatal ${fatalErrors.length === 1 ? 'error' : 'errors'}`));
     if (unexpected.length) {
       tokens.push(colors.red(`  ${unexpected.length} failed`));
       for (const test of unexpected)
@@ -179,7 +183,8 @@ export class BaseReporter implements Reporter  {
       skippedWithError,
       unexpected,
       flaky,
-      failuresToPrint
+      failuresToPrint,
+      fatalErrors: this._fatalErrors,
     };
   }
 

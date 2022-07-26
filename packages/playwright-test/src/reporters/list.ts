@@ -16,8 +16,8 @@
 
 /* eslint-disable no-console */
 import { colors, ms as milliseconds } from 'playwright-core/lib/utilsBundle';
-import { BaseReporter, formatTestTitle, stripAnsiEscapes } from './base';
-import type { FullConfig, FullResult, Suite, TestCase, TestResult, TestStep } from '../../types/testReporter';
+import { BaseReporter, formatError, formatTestTitle, stripAnsiEscapes } from './base';
+import type { FullConfig, FullResult, Suite, TestCase, TestError, TestResult, TestStep } from '../../types/testReporter';
 
 // Allow it in the Visual Studio Code Terminal and the new Windows Terminal
 const DOES_NOT_SUPPORT_UTF8_IN_TERMINAL = process.platform === 'win32' && process.env.TERM_PROGRAM !== 'vscode' && !process.env.WT_SESSION;
@@ -47,11 +47,8 @@ class ListReporter extends BaseReporter {
   }
 
   onTestBegin(test: TestCase, result: TestResult) {
-    if (this._liveTerminal && this._needNewLine) {
-      this._needNewLine = false;
-      process.stdout.write('\n');
-      this._lastRow++;
-    }
+    if (this._liveTerminal)
+      this._maybeWriteNewLine();
     this._resultIndex.set(result, this._resultIndex.size + 1);
     this._testRows.set(test, this._lastRow++);
     if (this._liveTerminal) {
@@ -87,15 +84,26 @@ class ListReporter extends BaseReporter {
     this._updateTestLine(test, colors.dim(formatTestTitle(this.config, test, step.parent)) + this._retrySuffix(result), this._testPrefix(result, ''));
   }
 
-  private _dumpToStdio(test: TestCase | undefined, chunk: string | Buffer, stream: NodeJS.WriteStream) {
-    if (this.config.quiet)
-      return;
-    const text = chunk.toString('utf-8');
+  private _maybeWriteNewLine() {
+    if (this._needNewLine) {
+      this._needNewLine = false;
+      process.stdout.write('\n');
+    }
+  }
+
+  private _updateLineCountAndNewLineFlagForOutput(text: string) {
     this._needNewLine = text[text.length - 1] !== '\n';
     if (this._liveTerminal) {
       const newLineCount = text.split('\n').length - 1;
       this._lastRow += newLineCount;
     }
+  }
+
+  private _dumpToStdio(test: TestCase | undefined, chunk: string | Buffer, stream: NodeJS.WriteStream) {
+    if (this.config.quiet)
+      return;
+    const text = chunk.toString('utf-8');
+    this._updateLineCountAndNewLineFlagForOutput(text);
     stream.write(chunk);
   }
 
@@ -124,10 +132,7 @@ class ListReporter extends BaseReporter {
     if (this._liveTerminal) {
       this._updateTestLine(test, text, prefix);
     } else {
-      if (this._needNewLine) {
-        this._needNewLine = false;
-        process.stdout.write('\n');
-      }
+      this._maybeWriteNewLine();
       process.stdout.write(prefix + text);
       process.stdout.write('\n');
     }
@@ -168,6 +173,14 @@ class ListReporter extends BaseReporter {
   private _updateTestLineForTest(test: TestCase, line: string, prefix: string) {
     const testRow = this._testRows.get(test)!;
     process.stdout.write(testRow + ' : ' + prefix + line + '\n');
+  }
+
+  override onError(error: TestError): void {
+    super.onError(error);
+    this._maybeWriteNewLine();
+    const message = formatError(this.config, error, colors.enabled).message + '\n';
+    this._updateLineCountAndNewLineFlagForOutput(message);
+    process.stdout.write(message);
   }
 
   override async onEnd(result: FullResult) {

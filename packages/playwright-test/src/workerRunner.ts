@@ -86,15 +86,13 @@ export class WorkerRunner extends EventEmitter {
     await this._loadIfNeeded();
     await this._teardownScopes();
     if (this._fatalErrors.length) {
-      const diagnostics = this._createWorkerTeardownDiagnostics();
-      if (diagnostics)
-        this._fatalErrors.unshift(diagnostics);
+      this.appendWorkerTeardownDiagnostics(this._fatalErrors[this._fatalErrors.length - 1]);
       const payload: TeardownErrorsPayload = { fatalErrors: this._fatalErrors };
       this.emit('teardownErrors', payload);
     }
   }
 
-  private _createWorkerTeardownDiagnostics(): TestError | undefined {
+  appendWorkerTeardownDiagnostics(error: TestError) {
     if (!this._lastRunningTests.length)
       return;
     const count = this._totalRunningTests === 1 ? '1 test' : `${this._totalRunningTests} tests`;
@@ -102,10 +100,23 @@ export class WorkerRunner extends EventEmitter {
     if (this._lastRunningTests.length < this._totalRunningTests)
       lastMessage = `, last ${this._lastRunningTests.length} tests were`;
     const message = [
-      colors.red(`Worker teardown error. This worker ran ${count}${lastMessage}:`),
+      '',
+      '',
+      colors.red(`Failed worker ran ${count}${lastMessage}:`),
       ...this._lastRunningTests.map(testInfo => formatTestTitle(testInfo._test, testInfo.project.name)),
     ].join('\n');
-    return { message };
+    if (error.message) {
+      if (error.stack) {
+        let index = error.stack.indexOf(error.message);
+        if (index !== -1) {
+          index += error.message.length;
+          error.stack = error.stack.substring(0, index) + message + error.stack.substring(index);
+        }
+      }
+      error.message += message;
+    } else if (error.value) {
+      error.value += message;
+    }
   }
 
   private async _teardownScopes() {
