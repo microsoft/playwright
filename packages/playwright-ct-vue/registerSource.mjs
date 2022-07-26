@@ -164,6 +164,7 @@ window.playwrightMount = async (component, rootElement, hooksConfig) => {
   for (const hook of /** @type {any} */(window).__pw_hooks_before_mount || [])
     await hook({ app, hooksConfig });
   const instance = app.mount(rootElement);
-  for (const hook of /** @type {any} */(window).__pw_hooks_after_mount || [])
+  const afterMount = (/** @type {any} */(window).__pw_hooks_after_mount || []).slice().reverse();
+  for (const hook of afterMount)
     await hook({ app, hooksConfig, instance });
 };

@@ -72,8 +72,11 @@ window.playwrightMount = async (component, rootElement, hooksConfig) => {
   for (const hook of /** @type {any} */(window).__pw_hooks_before_mount || [])
     await hook({ hooksConfig });
 
-  ReactDOM.render(render(component), rootElement);
+  const wrapper = (/** @type {any} */(window).__pw_hooks_wrappers || [])[0];
+  const cc = wrapper ? await wrapper({ hooksConfig, render: () => render(component) }) : render(component);
+  ReactDOM.render(cc, rootElement);
 
-  for (const hook of /** @type {any} */(window).__pw_hooks_after_mount || [])
+  const afterMount = (/** @type {any} */(window).__pw_hooks_after_mount || []).slice().reverse();
+  for (const hook of afterMount)
     await hook({ hooksConfig });
 };

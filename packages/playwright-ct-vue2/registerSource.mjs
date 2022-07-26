@@ -135,8 +135,6 @@ function render(component, h) {
 }
 
 window.playwrightMount = async (component, rootElement, hooksConfig) => {
-  const config = hooksConfig || /** @type {any} */(component).options?.hooksConfig;
-
   for (const hook of /** @type {any} */(window).__pw_hooks_before_mount || [])
     await hook({ hooksConfig });
 
@@ -145,6 +143,7 @@ window.playwrightMount = async (component, rootElement, hooksConfig) => {
   }).$mount();
   rootElement.appendChild(instance.$el);
 
-  for (const hook of /** @type {any} */(window).__pw_hooks_after_mount || [])
+  const afterMount = (/** @type {any} */(window).__pw_hooks_after_mount || []).slice().reverse();
+  for (const hook of afterMount)
     await hook({ hooksConfig, instance });
 };

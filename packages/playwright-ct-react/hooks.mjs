@@ -16,9 +16,11 @@
 
 const __pw_hooks_before_mount = [];
 const __pw_hooks_after_mount = [];
+const __pw_hooks_wrappers = [];
 
 window.__pw_hooks_before_mount = __pw_hooks_before_mount;
 window.__pw_hooks_after_mount = __pw_hooks_after_mount;
+window.__pw_hooks_wrappers = __pw_hooks_wrappers;
 
 export const beforeMount = callback => {
   __pw_hooks_before_mount.push(callback);
@@ -27,3 +29,9 @@ export const beforeMount = callback => {
 export const afterMount = callback => {
   __pw_hooks_after_mount.push(callback);
 };
+
+export const wrapComponent = callback => {
+  if (__pw_hooks_wrappers.length)
+    throw new Error('Can only provide single wrapper');
+  __pw_hooks_wrappers.push(callback);
+}

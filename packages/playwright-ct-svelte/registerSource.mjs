@@ -59,7 +59,8 @@ window.playwrightMount = async (component, rootElement, hooksConfig) => {
     props: component.options?.props,
   });
 
-  for (const hook of /** @type {any} */(window).__pw_hooks_after_mount || [])
+  const afterMount = (/** @type {any} */(window).__pw_hooks_after_mount || []).slice().reverse();
+  for (const hook of afterMount)
     await hook({ hooksConfig });
 
   for (const [key, listener] of Object.entries(component.options?.on || {}))

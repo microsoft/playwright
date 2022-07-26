@@ -18,3 +18,12 @@ test('should configure app', async ({ page, mount }) => {
   });
   expect(messages).toEqual(['Before mount: {\"route\":\"A\"}', 'After mount']);
 });
+
+test('should wrap component', async ({ page, mount }) => {
+  const component = await mount(<App></App>, {
+    hooksConfig: {
+      wrapperId: 'wrapperA'
+    }
+  });
+  await expect(component).toHaveAttribute('id', 'wrapperA');
+});

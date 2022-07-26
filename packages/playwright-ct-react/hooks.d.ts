@@ -16,3 +16,4 @@
 
 export declare function beforeMount(callback: (params: { hooksConfig: any }) => Promise<void>): void;
 export declare function afterMount(callback: (params: { hooksConfig: any }) => Promise<void>): void;
+export declare function wrapComponent(callback: (params: { hooksConfig: any, render: () => JSX.Element }) => JSX.Element | Promise<JSX.Element>): void;
