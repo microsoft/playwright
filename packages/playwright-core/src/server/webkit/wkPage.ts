@@ -550,7 +550,7 @@ export class WKPage implements PageDelegate {
 
       let stack: string;
       if (event.message.stackTrace) {
-        stack = text + '\n' + event.message.stackTrace.map(callFrame => {
+        stack = text + '\n' + event.message.stackTrace.callFrames.map(callFrame => {
           return `    at ${callFrame.functionName || 'unknown'} (${callFrame.url}:${callFrame.lineNumber}:${callFrame.columnNumber})`;
         }).join('\n');
       } else {
