@@ -64,6 +64,40 @@ it('should dispatch wheel events @smoke', async ({ page, server }) => {
   });
 });
 
+it('should dispatch wheel event on svg element', async ({ page, browserName, headless, isLinux }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/15566' });
+  it.fixme(browserName === 'webkit' && headless && isLinux);
+  await page.setContent(`
+    <body>
+      <svg class="scroll-box"></svg>
+    </body>
+    <style>
+      .scroll-box {
+        position: absolute;
+        top: 0px;
+        left: 0px;
+        background-color: brown;
+        width: 200px;
+        height: 200px;
+      }
+    </style>`);
+  await listenForWheelEvents(page, 'svg');
+  await page.mouse.move(100, 100);
+  await page.mouse.wheel(0, 100);
+  await page.waitForFunction('!!window.lastEvent');
+  await expectEvent(page, {
+    deltaX: 0,
+    deltaY: 100,
+    clientX: 100,
+    clientY: 100,
+    deltaMode: 0,
+    ctrlKey: false,
+    shiftKey: false,
+    altKey: false,
+    metaKey: false,
+  });
+});
+
 it('should scroll when nobody is listening', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/scrollable.html');
   await page.mouse.move(50, 60);
