@@ -78,8 +78,3 @@ See also in the [Command line tools](./cli.md#install-system-dependencies)
 which has a command to install all necessary dependencies automatically for Ubuntu
 LTS releases.
 
-
-## Please file an issue
-
-Playwright is a new project, and we are watching the [issues](https://github.com/microsoft/playwright/issues) very closely. As we solve common issues, this document will grow to include the common answers.
-
