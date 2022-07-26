@@ -10,7 +10,7 @@ A few examples of problems this can catch include:
 - UI controls and form elements without labels that a screen reader could identify
 - Interactive elements with duplicate IDs which can confuse assistive technologies
 
-The following examples rely on the [`@axe-core/playwright`](https://npmjs.org/@axe-core/playwright) package which adds support for running the [axe accessibility testing engine](https://www.deque.com/axe/) as part of your Playwright tests.
+The following examples rely on the [`com.deque.html.axe-core/playwright`](https://mvnrepository.com/artifact/com.deque.html.axe-core/playwright) Maven package which adds support for running the [axe accessibility testing engine](https://www.deque.com/axe/) as part of your Playwright tests.
 
 <!-- TOC -->
 
@@ -18,7 +18,7 @@ The following examples rely on the [`@axe-core/playwright`](https://npmjs.org/@a
 
 Automated accessibility tests can detect some common accessibility problems such as missing or invalid properties. But many accessibility problems can only be discovered through manual testing. We recommend using a combination of automated testing, manual accessibility assessments, and inclusive user testing.
 
-For manual assessments, we recommend [Accessibility Insights for Web](https://accessibilityinsights.io/docs/web/overview/?referrer=playwright-accessibility-testing-js), a free and open source dev tool that walks you through assessing a website for [WCAG 2.1 AA](https://www.w3.org/WAI/WCAG21/quickref/?currentsidebar=%23col_customize&levels=aa) coverage.
+For manual assessments, we recommend [Accessibility Insights for Web](https://accessibilityinsights.io/docs/web/overview/?referrer=playwright-accessibility-testing-java), a free and open source dev tool that walks you through assessing a website for [WCAG 2.1 AA](https://www.w3.org/WAI/WCAG21/quickref/?currentsidebar=%23col_customize&levels=aa) coverage.
 
 ## Example accessibility tests
 
@@ -29,7 +29,7 @@ The following examples demonstrate a few basic accessibility testing scenarios.
 ### Example 1: Scanning an entire page
 
 This example demonstrates how to test an entire page for automatically detectable accessibility violations. The test:
-1. Imports the `com.deque.html.axecore.playwright` package
+1. Imports the `com.deque.html.axe-core/playwright` package
 1. Uses normal JUnit 5 `@Test` syntax to define a test case
 1. Uses normal Playwright syntax to open a browser and navigate to the page under test
 1. Invokes `AxeBuilder.analyze()` to run the accessibility scan against the page
@@ -50,7 +50,7 @@ public class HomepageTests {
     Playwright playwright = Playwright.create();
     Browser browser = playwright.chromium().launch();
     BrowserContext context = browser.newContext();
-    Page page = context.newPage(); // 2
+    Page page = context.newPage();
 
     page.navigate("https://your-site.com/"); // 3
 
@@ -63,9 +63,9 @@ public class HomepageTests {
 
 ### Example 2: Configuring axe to scan a specific part of a page
 
-`@axe-core/playwright` supports many configuration options for axe. You can specify these options by using a Builder pattern with the `AxeBuilder` class.
+`com.deque.html.axe-core/playwright` supports many configuration options for axe. You can specify these options by using a Builder pattern with the `AxeBuilder` class.
 
-For example, you can use [`AxeBuilder.include()`](https://github.com/dequelabs/axe-core-npm/blob/develop/packages/playwright/README.md#axebuilderincludeselector-string--string) to constrain an accessibility scan to only run against one specific part of a page.
+For example, you can use [`AxeBuilder.include()`](https://github.com/dequelabs/axe-core-maven-html/blob/develop/playwright/README.md#axebuilderincludeliststring-selector) to constrain an accessibility scan to only run against one specific part of a page.
 
 `AxeBuilder.analyze()` will scan the page *in its current state* when you call it. To scan parts of a page that are revealed based on UI interactions, use [Locators](./locators.md) to interact with the page before invoking `analyze()`:
 
@@ -93,21 +93,16 @@ void navigationMenuFlyoutShouldNotHaveAutomaticallyDetectableAccessibilityViolat
 
 By default, axe checks against a wide variety of accessibility rules. Some of these rules correspond to specific success criteria from the [Web Content Accessibility Guidelines (WCAG)](https://www.w3.org/TR/WCAG21/), and others are "best practice" rules that are not specifically required by any WCAG criteron.
 
-You can constrain an accessibility scan to only run those rules which are "tagged" as corresponding to specific WCAG success criteria by using [`AxeBuilder.withTags()`](https://github.com/dequelabs/axe-core-npm/blob/develop/packages/playwright/README.md#axebuilderwithtagstags-stringarray). For example, [Accessibility Insights for Web's Automated Checks](https://accessibilityinsights.io/docs/web/getstarted/fastpass/?referrer=playwright-accessibility-testing-js) only include axe rules that test for violations of WCAG A and AA success criteria; to match that behavior, you would use the tags `wcag2a`, `wcag2aa`, `wcag21a`, and `wcag21aa`.
+You can constrain an accessibility scan to only run those rules which are "tagged" as corresponding to specific WCAG success criteria by using [`AxeBuilder.withTags()`](https://github.com/dequelabs/axe-core-maven-html/blob/develop/playwright/README.md#axebuilderwithtagsliststring-rules). For example, [Accessibility Insights for Web's Automated Checks](https://accessibilityinsights.io/docs/web/getstarted/fastpass/?referrer=playwright-accessibility-testing-java) only include axe rules that test for violations of WCAG A and AA success criteria; to match that behavior, you would use the tags `wcag2a`, `wcag2aa`, `wcag21a`, and `wcag21aa`.
 
 Note that [automated testing cannot detect all types of WCAG violations](#disclaimer).
 
 ```java
-@Test
-void navigationMenuFlyoutShouldNotHaveAutomaticallyDetectableAccessibilityViolations() throws Exception {
-  page.navigate("https://your-site.com/");
+AxeResults accessibilityScanResults = new AxeBuilder(page)
+  .withTags(Arrays.asList("wcag2a", "wcag2aa", "wcag21a", "wcag21aa"))
+  .analyze();
 
-  AxeResults accessibilityScanResults = new AxeBuilder(page)
-    .withTags(Arrays.asList("wcag2a", "wcag2aa", "wcag21a", "wcag21aa"))
-    .analyze();
-
-  assertTrue(axeResults.violationFree());
-}
+assertTrue(axeResults.violationFree());
 ```
 
 You can find a complete listing of the rule tags axe-core supports in [the "Axe-core Tags" section of the axe API documentation](https://www.deque.com/axe/core-documentation/api-documentation/#axe-core-tags).
@@ -118,7 +113,7 @@ A common question when adding accessibility tests to an application is "how do I
 
 ### Excluding individual elements from a scan
 
-If your application contains a few specific elements with known issues, you can use [`AxeBuilder.exclude()`](https://github.com/dequelabs/axe-core-npm/blob/develop/packages/playwright/README.md#axebuilderexcludeselector-string--string) to exclude them from being scanned until you're able to fix the issues.
+If your application contains a few specific elements with known issues, you can use [`AxeBuilder.exclude()`](https://github.com/dequelabs/axe-core-maven-html/blob/develop/playwright/README.md#axebuilderexcludeliststring-selector) to exclude them from being scanned until you're able to fix the issues.
 
 This is usually the simplest option, but it has some important downsides:
 * `exclude()` will exclude the specified elements *and all of their descendants*. Avoid using it with components that contain many children.
@@ -127,37 +122,27 @@ This is usually the simplest option, but it has some important downsides:
 Here is an example of excluding one element from being scanned in one specific test:
 
 ```java
-@Test
-void shouldNotHaveAccessibilityViolationsOutsideOfElementsWithKnownIssues() throws Exception {
-  page.navigate("https://your-site.com/");
+AxeResults accessibilityScanResults = new AxeBuilder(page)
+  .exclude(Arrays.asList("#element-with-known-issue"))
+  .analyze();
 
-  AxeResults accessibilityScanResults = new AxeBuilder(page)
-    .exclude(Arrays.asList("#element-with-known-issue"))
-    .analyze();
-
-  assertTrue(axeResults.violationFree());
-}
+assertTrue(axeResults.violationFree());
 ```
 
 If the element in question is used repeatedly in many pages, consider [using a test fixture](#using-a-test-fixture-for-common-axe-configuration) to reuse the same `AxeBuilder` configuration across multiple tests.
 
 ### Disabling individual scan rules
 
-If your application contains many different pre-existing violations of a specific rule, you can use [`AxeBuilder.disableRules()`](https://github.com/dequelabs/axe-core-npm/blob/develop/packages/playwright/README.md#axebuilderdisablerulesrules-stringarray) to temporarily disable individual rules until you're able to fix the issues.
+If your application contains many different pre-existing violations of a specific rule, you can use [`AxeBuilder.disableRules()`](https://github.com/dequelabs/axe-core-maven-html/blob/develop/playwright/README.md#axebuilderdisablerulesliststring-rules) to temporarily disable individual rules until you're able to fix the issues.
 
 You can find the rule IDs to pass to `disableRules()` in the `id` property of the violations you want to suppress. A [complete list of axe's rules](https://github.com/dequelabs/axe-core/blob/master/doc/rule-descriptions.md) can be found in `axe-core`'s documentation.
 
 ```java
-@Test
-void shouldNotHaveAccessibilityViolationsOutsideOfRulesWithKnownIssues() throws Exception {
-  page.navigate("https://your-site.com/");
+AxeResults accessibilityScanResults = new AxeBuilder(page)
+  .disableRules(Arrays.asList("duplicate-id"))
+  .analyze();
 
-  AxeResults accessibilityScanResults = new AxeBuilder(page)
-    .disableRules(Arrays.asList("duplicate-id"))
-    .analyze();
-
-  assertTrue(axeResults.violationFree());
-}
+assertTrue(axeResults.violationFree());
 ```
 
 ### Using violation fingerprints to specific known issues
@@ -194,8 +179,8 @@ shouldOnlyHaveAccessibilityViolationsMatchingKnownFingerprints() throws Exceptio
 // Using a record type makes it easy to compare fingerprints with assertEquals
 public record ViolationFingerprint(String ruleId, String target) { }
 
-public static List<ViolationFingerprint> fingerprintsFromScanResults(AxeResults results) {
-  return accessibilityScanResults.getViolations().stream()
+public List<ViolationFingerprint> fingerprintsFromScanResults(AxeResults results) {
+  return results.getViolations().stream()
     // Each violation refers to one rule and multiple "nodes" which violate it
     .flatMap(violation -> violation.getNodes().stream()
       .map(node -> new ViolationFingerprint(
