@@ -584,3 +584,39 @@ test('should not run user fn when require fixture has failed', async ({ runInlin
     '%%foo',
   ]);
 });
+
+test('should provide helpful error message when digests do not match', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'helper.ts': `
+      export const test = pwt.test.extend({
+        foo: [ async ({}, use) => use(), { scope: 'worker' } ],
+      });
+
+      test.use({ foo: 'foo' });
+    `,
+    'a.spec.ts': `
+      import { test } from './helper';
+
+      test('test-a', ({ foo }) => {
+        expect(foo).toBe('foo');
+      });
+    `,
+    'b.spec.ts': `
+      import { test } from './helper';
+
+      test('test-b', ({ foo }) => {
+        expect(foo).toBe('foo');
+      });
+    `,
+    'c.spec.ts': `
+      import { test } from './helper';
+
+      test('test-c', ({ foo }) => {
+        expect(foo).toBe('foo');
+      });
+    `,
+  }, { workers: 1 });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(stripAnsi(result.output)).toContain('Playwright detected inconsistent test.use() options.');
+});
