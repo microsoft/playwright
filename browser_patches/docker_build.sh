@@ -13,7 +13,7 @@ if [[ ($1 == '--help') || ($1 == '-h') ]]; then
   exit 0
 fi
 
-BUILD_FLAVOR="${1}"
+export BUILD_FLAVOR="${1}"
 
 DOCKER_PLATFORM="linux/amd64"
 DOCKER_IMAGE_NAME=""
@@ -99,34 +99,31 @@ else
 fi
 
 DOCKER_CONTAINER_NAME="build-${BUILD_FLAVOR}"
+DOCKER_ARGS=$(echo \
+  --env CI \
+  --env BUILD_FLAVOR \
+  --env TELEGRAM_BOT_KEY \
+  --env AZ_ACCOUNT_NAME \
+  --env AZ_ACCOUNT_KEY \
+  --env GITHUB_SERVER_URL \
+  --env GITHUB_REPOSITORY \
+  --env GITHUB_RUN_ID \
+  --env GH_TOKEN \
+  --env DEBIAN_FRONTEND=noninteractive \
+  --env TZ="America/Los_Angeles"
+)
 
 function ensure_docker_container {
   if docker ps | grep "${DOCKER_CONTAINER_NAME}" 2>&1 1>/dev/null; then
     return;
   fi
-  EXTRA_FLAGS=""
   if [[ "${BUILD_FLAVOR}" == "webkit-universal" ]]; then
     # NOTE: WebKit Linux Universal build is run in PRIVILEGED container due to Flatpak!
-    EXTRA_FLAGS="--privileged"
+    DOCKER_ARGS="${DOCKER_ARGS} --privileged"
   fi
-  docker pull --platform "${DOCKER_PLATFORM}" "${DOCKER_IMAGE_NAME}" && docker run \
-      --rm \
-      ${EXTRA_FLAGS} \
-      --name "${DOCKER_CONTAINER_NAME}" \
-      --platform "${DOCKER_PLATFORM}" \
-      --env CI \
-      --env BUILD_FLAVOR \
-      --env TELEGRAM_BOT_KEY \
-      --env AZ_ACCOUNT_NAME \
-      --env AZ_ACCOUNT_KEY \
-      --env GITHUB_SERVER_URL \
-      --env GITHUB_REPOSITORY \
-      --env GITHUB_RUN_ID \
-      --env GH_TOKEN \
-      --env DEBIAN_FRONTEND=noninteractive \
-      --env TZ="America/Los_Angeles" \
-      -d -t "${DOCKER_IMAGE_NAME}" /bin/bash
-  docker exec "${DOCKER_CONTAINER_NAME}" /bin/bash -c '
+  docker pull --platform "${DOCKER_PLATFORM}" "${DOCKER_IMAGE_NAME}"
+  docker run --rm ${DOCKER_ARGS} --name "${DOCKER_CONTAINER_NAME}" --platform "${DOCKER_PLATFORM}" -d -t "${DOCKER_IMAGE_NAME}" /bin/bash
+  docker exec ${DOCKER_ARGS} "${DOCKER_CONTAINER_NAME}" /bin/bash -c '
     set -e
     arch
     if [[ "${BUILD_FLAVOR}" == webkit-debian-11 ]]; then
@@ -191,11 +188,12 @@ function ensure_docker_container {
   '
 }
 
-if [[ "$2" == "prepare" ]]; then
+if [[ "$2" == "prepare" || "$2" == "start" ]]; then
   ensure_docker_container
 elif [[ "$2" == "compile" ]]; then
   ensure_docker_container
-  docker exec --user pwuser --workdir "/home/pwuser/playwright" "${DOCKER_CONTAINER_NAME}" /bin/bash -c '
+  echo "BUILD FLAVOR: ${BUILD_FLAVOR}"
+  docker exec --user pwuser --workdir "/home/pwuser/playwright" ${DOCKER_ARGS} "${DOCKER_CONTAINER_NAME}" /bin/bash -c '
     if [[ "${BUILD_FLAVOR}" == "webkit-ubuntu-18.04" ]]; then
       export CC=/usr/bin/gcc-8
       export CXX=/usr/bin/gcc++-8
@@ -204,7 +202,7 @@ elif [[ "$2" == "compile" ]]; then
   '
 elif [[ "$2" == "enter" || -z "$2" ]]; then
   ensure_docker_container
-  docker exec --user pwuser --workdir "/home/pwuser/playwright" -it "${DOCKER_CONTAINER_NAME}" /bin/bash
+  docker exec --user pwuser --workdir "/home/pwuser/playwright" ${DOCKER_ARGS} -it "${DOCKER_CONTAINER_NAME}" /bin/bash
 elif [[ "$2" == "kill" || "$2" == "stop" ]]; then
   docker kill "${DOCKER_CONTAINER_NAME}"
 else
