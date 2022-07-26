@@ -158,9 +158,11 @@ function ensure_docker_container {
     fi
 
     if [[ "${BUILD_FLAVOR}" == "firefox-"* ]]; then
-      # install rust
+      # install rust as a pwuser
+      su pwuser
       curl --proto "=https" --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-      export PATH="${PATH}:/home/pwuser/.cargo/bin"
+      exit
+      echo "PATH=\"${PATH}:/home/pwuser/.cargo/bin\"" > /etc/environment
     elif [[ "${BUILD_FLAVOR}" == "webkit-ubuntu-18.04" ]]; then
       # Ubuntu 18.04 specific: update CMake. Default CMake on Ubuntu 18.04 is 3.10, whereas WebKit requires 3.12+.
       apt purge --auto-remove cmake
@@ -173,17 +175,17 @@ function ensure_docker_container {
       apt-get install -y gcc-8 g++-8
     fi
 
-    su pwuser
-    cd /home/pwuser
-    git config --global user.email "you@example.com"
-    git config --global user.name "Your Name"
+    git config --system user.email "you@example.com"
+    git config --system user.name "Your Name"
 
     # mitigate git clone issues on CI.
     # See https://stdworkflow.com/877/error-rpc-failed-curl-56-gnutls-recv-error-54-error-in-the-pull-function
-    git config --global http.postBuffer 524288000
-    git config --global http.lowSpeedLimit 0
-    git config --global http.lowSpeedTime 999999
+    git config --system http.postBuffer 524288000
+    git config --system http.lowSpeedLimit 0
+    git config --system http.lowSpeedTime 999999
 
+    su pwuser
+    cd /home/pwuser
     git clone --depth=1 https://github.com/microsoft/playwright
   '
 }
