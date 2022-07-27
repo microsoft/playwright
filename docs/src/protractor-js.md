@@ -152,7 +152,7 @@ Once you're on Playwright Test, you get a lot!
 - Built-in test artifact collection: [video recording](./test-configuration#record-video), [screenshots](./test-configuration#automatic-screenshots) and [playwright traces](./test-configuration#record-test-trace)
 
 Also you get all these ✨ awesome tools ✨ that come bundled with Playwright Test:
-- [Playwright Inspector](./inspector)
+- [Playwright Inspector](./debug.md)
 - [Playwright Test Code generation](./auth#code-generation)
 - [Playwright Tracing](./trace-viewer) for post-mortem debugging
 
