@@ -247,7 +247,7 @@ export function wrapFunctionWithLocation<A extends any[], R>(func: (location: Lo
 
 // This will catch the playwright-test package as well
 const kPlaywrightInternalPrefix = path.resolve(__dirname, '../../playwright');
-const kPlaywrightCoveragePrefix = path.resolve(__dirname, '../../../../tests/config/coverage.js');
+const kPlaywrightCoveragePrefix = path.resolve(__dirname, '../../../tests/config/coverage.js');
 
 export function belongsToNodeModules(file: string) {
   if (file.includes(`${path.sep}node_modules${path.sep}`))
