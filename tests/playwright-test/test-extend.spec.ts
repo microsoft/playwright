@@ -226,11 +226,11 @@ test('test._extendTest should print nice message when used as extend', async ({ 
   expect(result.output).toContain('Did you mean to call test.extend() with fixtures instead?');
 });
 
-test('fixture options should ignore undefined value', async ({ runInlineTest }) => {
+test('test.use() with undefined should not be ignored', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       module.exports = {
-        use: { option: undefined },
+        use: { option: 'config' },
       };
     `,
     'a.test.js': `
@@ -238,13 +238,11 @@ test('fixture options should ignore undefined value', async ({ runInlineTest }) 
       test('test1', async ({ option }) => {
         console.log('test1-' + option);
       });
-
       test.describe('', () => {
         test.use({ option: 'foo' });
         test('test2', async ({ option }) => {
           console.log('test2-' + option);
         });
-
         test.describe('', () => {
           test.use({ option: undefined });
           test('test3', async ({ option }) => {
@@ -252,7 +250,6 @@ test('fixture options should ignore undefined value', async ({ runInlineTest }) 
           });
         });
       });
-
       test.extend({ option: undefined })('test4', async ({ option }) => {
         console.log('test4-' + option);
       });
@@ -260,8 +257,8 @@ test('fixture options should ignore undefined value', async ({ runInlineTest }) 
   });
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(4);
-  expect(result.output).toContain('test1-default');
+  expect(result.output).toContain('test1-config');
   expect(result.output).toContain('test2-foo');
-  expect(result.output).toContain('test3-foo');
-  expect(result.output).toContain('test4-default');
+  expect(result.output).toContain('test3-undefined');
+  expect(result.output).toContain('test4-undefined');
 });
