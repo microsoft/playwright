@@ -26,7 +26,7 @@ import { tsConfigLoader } from './third_party/tsconfig-loader';
 import Module from 'module';
 import type { BabelTransformFunction } from './babelBundle';
 
-const version = 13;
+const version = 14;
 const cacheDir = process.env.PWTEST_CACHE_DIR || path.join(os.tmpdir(), 'playwright-transform-cache');
 const sourceMaps: Map<string, string> = new Map();
 
@@ -245,12 +245,15 @@ export function wrapFunctionWithLocation<A extends any[], R>(func: (location: Lo
   };
 }
 
+const kPlaywrightInternalPrefix = path.resolve(__dirname, '../../playwright');
+const kPlaywrightCoveragePrefix = path.resolve(__dirname, '../../../../tests/config/coverage.js');
+
 export function belongsToNodeModules(file: string) {
   if (file.includes(`${path.sep}node_modules${path.sep}`))
     return true;
-  if (file.includes(`${path.sep}playwright${path.sep}packages${path.sep}playwright`))
+  if (file.startsWith(kPlaywrightInternalPrefix))
     return true;
-  if (file.includes(`${path.sep}playwright${path.sep}tests${path.sep}config${path.sep}coverage.js`))
+  if (file.startsWith(kPlaywrightCoveragePrefix))
     return true;
   return false;
 }
