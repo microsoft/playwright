@@ -16,7 +16,7 @@
 
 import { installTransform } from './transform';
 import type { Config, Project, ReporterDescription, FullProjectInternal, FullConfigInternal, Fixtures, FixturesWithLocation } from './types';
-import { getPackageJsonPath, filterUndefinedFixtures, errorWithFile } from './util';
+import { getPackageJsonPath, mergeObjects, errorWithFile } from './util';
 import { setCurrentlyLoadingFileSuite } from './globals';
 import { Suite, type TestCase } from './test';
 import type { SerializedLoaderData } from './ipc';
@@ -98,7 +98,7 @@ export class Loader {
       throw new Error(`Cannot use --browser option when configuration file defines projects. Specify browserName in the projects instead.`);
     config.projects = takeFirst(this._configCLIOverrides.projects, config.projects as any);
     config.workers = takeFirst(this._configCLIOverrides.workers, config.workers);
-    config.use = { ...filterUndefinedFixtures(config.use), ...filterUndefinedFixtures(this._configCLIOverrides.use) };
+    config.use = mergeObjects(config.use, this._configCLIOverrides.use);
     for (const project of config.projects || [])
       this._applyCLIOverridesToProject(project);
 
@@ -232,7 +232,7 @@ export class Loader {
     projectConfig.repeatEach = takeFirst(this._configCLIOverrides.repeatEach, projectConfig.repeatEach);
     projectConfig.retries = takeFirst(this._configCLIOverrides.retries, projectConfig.retries);
     projectConfig.timeout = takeFirst(this._configCLIOverrides.timeout, projectConfig.timeout);
-    projectConfig.use = { ...filterUndefinedFixtures(projectConfig.use), ...filterUndefinedFixtures(this._configCLIOverrides.use) };
+    projectConfig.use = mergeObjects(projectConfig.use, this._configCLIOverrides.use);
   }
 
   private _resolveProject(config: Config, fullConfig: FullConfigInternal, projectConfig: Project, throwawayArtifactsPath: string): FullProjectInternal {
@@ -271,7 +271,7 @@ export class Loader {
       testIgnore: takeFirst(projectConfig.testIgnore, config.testIgnore, []),
       testMatch: takeFirst(projectConfig.testMatch, config.testMatch, '**/?(*.)@(spec|test).*'),
       timeout: takeFirst(projectConfig.timeout, config.timeout, defaultTimeout),
-      use: { ...filterUndefinedFixtures(config.use), ...filterUndefinedFixtures(projectConfig.use) },
+      use: mergeObjects(config.use, projectConfig.use),
     };
   }
 

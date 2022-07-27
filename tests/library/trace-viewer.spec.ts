@@ -55,18 +55,6 @@ test.beforeAll(async function recordTrace({ browser, browserName, browserType, s
   }
   await doClick();
 
-  // Make sure resources arrive in a predictable order.
-  const htmlDone = page.waitForEvent('requestfinished', request => request.url().includes('frame.html'));
-  const styleDone = page.waitForEvent('requestfinished', request => request.url().includes('style.css'));
-  await page.route(server.PREFIX + '/frames/style.css', async route => {
-    await htmlDone;
-    await route.continue();
-  });
-  await page.route(server.PREFIX + '/frames/script.js', async route => {
-    await styleDone;
-    await route.continue();
-  });
-
   await Promise.all([
     page.waitForNavigation(),
     page.waitForTimeout(200).then(() => page.goto(server.PREFIX + '/frames/frame.html'))
@@ -99,14 +87,9 @@ test('should open simple trace viewer', async ({ showTraceViewer }) => {
     /page.evaluate/,
     /page.evaluate/,
     /page.click"Click"/,
-    /page.waitForEvent/,
-    /page.waitForEvent/,
-    /page.route/,
     /page.waitForNavigation/,
     /page.waitForTimeout/,
     /page.gotohttp:\/\/localhost:\d+\/frames\/frame.html/,
-    /route.continue/,
-    /route.continue/,
     /page.setViewportSize/,
   ]);
 });
@@ -200,11 +183,9 @@ test('should have network requests', async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer([traceFile]);
   await traceViewer.selectAction('http://localhost');
   await traceViewer.showNetworkTab();
-  await expect(traceViewer.networkRequests).toHaveText([
-    '200GETframe.htmltext/html',
-    '200GETstyle.csstext/css',
-    '200GETscript.jsapplication/javascript',
-  ]);
+  await expect(traceViewer.networkRequests).toContainText(['200GETframe.htmltext/html']);
+  await expect(traceViewer.networkRequests).toContainText(['200GETstyle.csstext/css']);
+  await expect(traceViewer.networkRequests).toContainText(['200GETscript.jsapplication/javascript']);
 });
 
 test('should show snapshot URL', async ({ page, runAndTrace, server }) => {

@@ -154,14 +154,15 @@ function ensure_docker_container {
 
     # Install AZ CLI on CI only
     if [[ -n "${CI}" ]]; then
-      curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+      # Install AZ CLI with Python since they do not ship
+      # aarch64 to APT: https://github.com/Azure/azure-cli/issues/7368
+      # Pin so future releases dont break us.
+      pip install azure-cli==2.38.0
     fi
 
     if [[ "${BUILD_FLAVOR}" == "firefox-"* ]]; then
       # install rust as a pwuser
-      su pwuser
-      curl --proto "=https" --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-      exit
+      su -l pwuser -c "curl --proto \"=https\" --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y"
       echo "PATH=\"${PATH}:/home/pwuser/.cargo/bin\"" > /etc/environment
     elif [[ "${BUILD_FLAVOR}" == "webkit-ubuntu-18.04" ]]; then
       # Ubuntu 18.04 specific: update CMake. Default CMake on Ubuntu 18.04 is 3.10, whereas WebKit requires 3.12+.
@@ -173,6 +174,8 @@ function ensure_docker_container {
 
       # Ubuntu 18.04 specific: install GCC-8. WebKit requires gcc 8.3+ to compile.
       apt-get install -y gcc-8 g++-8
+    elif [[ "${BUILD_FLAVOR}" == webkit-*-arm64 ]]; then
+      apt-get install -y clang-12
     fi
 
     git config --system user.email "you@example.com"
@@ -198,7 +201,10 @@ elif [[ "$2" == "compile" ]]; then
   docker exec --user pwuser --workdir "/home/pwuser/playwright" ${DOCKER_ARGS} "${DOCKER_CONTAINER_NAME}" /bin/bash -c '
     if [[ "${BUILD_FLAVOR}" == "webkit-ubuntu-18.04" ]]; then
       export CC=/usr/bin/gcc-8
-      export CXX=/usr/bin/gcc++-8
+      export CXX=/usr/bin/g++-8
+    elif [[ "${BUILD_FLAVOR}" == webkit-*-arm64 ]]; then
+      export CC=/usr/bin/clang-12
+      export CXX=/usr/bin/clang++-12
     fi
     ./browser_patches/checkout_build_archive_upload.sh "${BUILD_FLAVOR}"
   '

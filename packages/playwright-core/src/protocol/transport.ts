@@ -106,17 +106,18 @@ export class PipeTransport {
 
 export class IpcTransport {
   private _process: NodeJS.Process | ChildProcess;
+  private _waitForNextTask = makeWaitForNextTask();
   onmessage?: (message: string) => void;
   onclose?: () => void;
 
   constructor(process: NodeJS.Process | ChildProcess) {
     this._process = process;
-    this._process.on('message', message => {
+    this._process.on('message', message => this._waitForNextTask(() => {
       if (message === '<eof>')
         this.onclose?.();
       else
         this.onmessage?.(message);
-    });
+    }));
   }
 
   send(message: string) {

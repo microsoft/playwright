@@ -140,12 +140,18 @@ it('watchPosition should be notified', async ({ server, contextFactory }) => {
       console.log(`lat=${coords.latitude} lng=${coords.longitude}`);
     }, err => {});
   });
-  await context.setGeolocation({ latitude: 0, longitude: 10 });
-  await page.waitForEvent('console', message => message.text().includes('lat=0 lng=10'));
-  await context.setGeolocation({ latitude: 20, longitude: 30 });
-  await page.waitForEvent('console', message => message.text().includes('lat=20 lng=30'));
-  await context.setGeolocation({ latitude: 40, longitude: 50 });
-  await page.waitForEvent('console', message => message.text().includes('lat=40 lng=50'));
+  await Promise.all([
+    page.waitForEvent('console', message => message.text().includes('lat=0 lng=10')),
+    context.setGeolocation({ latitude: 0, longitude: 10 }),
+  ]);
+  await Promise.all([
+    page.waitForEvent('console', message => message.text().includes('lat=20 lng=30')),
+    context.setGeolocation({ latitude: 20, longitude: 30 }),
+  ]);
+  await Promise.all([
+    page.waitForEvent('console', message => message.text().includes('lat=40 lng=50')),
+    context.setGeolocation({ latitude: 40, longitude: 50 }),
+  ]);
 
   const allMessages = messages.join('|');
   expect(allMessages).toContain('lat=0 lng=10');

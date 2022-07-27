@@ -79,7 +79,7 @@ it('should have pages', async ({ contextFactory, server }, testInfo) => {
   expect(pageEntry.pageTimings.onLoad).toBeGreaterThan(0);
 });
 
-it('should have pages in persistent context', async ({ launchPersistent }, testInfo) => {
+it('should have pages in persistent context', async ({ launchPersistent, browserName }, testInfo) => {
   const harPath = testInfo.outputPath('test.har');
   const { context, page } = await launchPersistent({ recordHar: { path: harPath } });
   await page.goto('data:text/html,<title>Hello</title>');
@@ -87,11 +87,17 @@ it('should have pages in persistent context', async ({ launchPersistent }, testI
   await page.waitForLoadState('domcontentloaded');
   await context.close();
   const log = JSON.parse(fs.readFileSync(harPath).toString())['log'];
+  let pageEntry;
+  if (browserName === 'webkit') {
   // Explicit locale emulation forces a new page creation when
   // doing a new context.
   // See https://github.com/microsoft/playwright/blob/13dd41c2e36a63f35ddef5dc5dec322052d670c6/packages/playwright-core/src/server/browserContext.ts#L232-L242
-  expect(log.pages.length).toBe(2);
-  const pageEntry = log.pages[1];
+    expect(log.pages.length).toBe(2);
+    pageEntry = log.pages[1];
+  } else {
+    expect(log.pages.length).toBe(1);
+    pageEntry = log.pages[0];
+  }
   expect(pageEntry.id).toBeTruthy();
   expect(pageEntry.title).toBe('Hello');
 });

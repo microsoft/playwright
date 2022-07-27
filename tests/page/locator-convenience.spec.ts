@@ -228,3 +228,29 @@ it('should return page', async ({ page, server }) => {
   const inFrame = page.frames()[1].locator('div');
   expect(inFrame.page()).toBe(page);
 });
+
+it('isVisible inside a button', async ({ page }) => {
+  await page.setContent(`<button><span></span>a button</button>`);
+  const span = page.locator('span');
+  expect(await span.isVisible()).toBe(false);
+  expect(await span.isHidden()).toBe(true);
+  expect(await page.isVisible('span')).toBe(false);
+  expect(await page.isHidden('span')).toBe(true);
+  await expect(span).not.toBeVisible();
+  await expect(span).toBeHidden();
+  await span.waitFor({ state: 'hidden' });
+  await page.locator('button').waitFor({ state: 'visible' });
+});
+
+it('isVisible inside a role=button', async ({ page }) => {
+  await page.setContent(`<div role=button><span></span>a button</div>`);
+  const span = page.locator('span');
+  expect(await span.isVisible()).toBe(false);
+  expect(await span.isHidden()).toBe(true);
+  expect(await page.isVisible('span')).toBe(false);
+  expect(await page.isHidden('span')).toBe(true);
+  await expect(span).not.toBeVisible();
+  await expect(span).toBeHidden();
+  await span.waitFor({ state: 'hidden' });
+  await page.locator('[role=button]').waitFor({ state: 'visible' });
+});
