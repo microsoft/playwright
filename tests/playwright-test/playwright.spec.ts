@@ -145,7 +145,7 @@ test('should not override use:browserName without projects', async ({ runInlineT
     `,
     'a.test.ts': `
       const { test } = pwt;
-      test('pass', async ({ page, browserName }) => {
+      test('pass', async ({ browserName }) => {
         console.log('\\n%%browser=' + browserName);
       });
     `,
@@ -165,7 +165,7 @@ test('should override use:browserName with --browser', async ({ runInlineTest })
     `,
     'a.test.ts': `
       const { test } = pwt;
-      test('pass', async ({ page, browserName }) => {
+      test('pass', async ({ browserName }) => {
         console.log('\\n%%browser=' + browserName);
       });
     `,

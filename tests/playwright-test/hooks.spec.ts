@@ -719,10 +719,10 @@ test('test.setTimeout should work separately in beforeAll', async ({ runInlineTe
       });
       test('passed', async () => {
         console.log('\\n%%test');
-        await new Promise(f => setTimeout(f, 800));
+        await new Promise(f => setTimeout(f, 500));
       });
     `,
-  }, { timeout: '1000' });
+  }, { timeout: 2000 });
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
   expect(result.output.split('\n').filter(line => line.startsWith('%%'))).toEqual([
