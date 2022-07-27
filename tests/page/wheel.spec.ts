@@ -66,7 +66,6 @@ it('should dispatch wheel events @smoke', async ({ page, server }) => {
 
 it('should dispatch wheel event on svg element', async ({ page, browserName, headless, isLinux }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/15566' });
-  it.fixme(browserName === 'webkit' && headless && isLinux);
   await page.setContent(`
     <body>
       <svg class="scroll-box"></svg>
