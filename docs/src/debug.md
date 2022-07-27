@@ -302,7 +302,4 @@ await using var browser = await playwright.Chromium.LaunchAsync(new()
 });
 ```
 
-## What's Next
 
-- [Generate tests with Codegen](./codegen.md)
-- [See a trace of your tests](./trace-viewer.md)
