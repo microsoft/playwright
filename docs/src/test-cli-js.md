@@ -59,7 +59,7 @@ Here are the most common options available in the command line.
   npx playwright test --reporter=dot
   ```
 
-- Run in debug mode with [Playwright Inspector](./inspector.md)
+- Run in debug mode with [Playwright Inspector](./debug.md)
   ```bash
   npx playwright test --debug
   ```

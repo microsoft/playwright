@@ -233,6 +233,5 @@ public class UnitTest1 : PageTest
 ## What's Next
 
 - [Run single tests, multiple tests, headed mode](./running-tests.md)
-- [Debug tests with the Playwright Debugger](./debug.md)
 - [Generate tests with Codegen](./codegen.md)
 - [See a trace of your tests](./trace-viewer.md)
