@@ -1256,8 +1256,13 @@ export class Frame extends SdkObject {
       const pair = await this.resolveFrameForSelectorNoWait(selector, options);
       if (!pair)
         return false;
-      const element = await this._page.selectors.query(pair.frame, pair.info);
-      return element ? await element.isVisible() : false;
+      const context = await pair.frame._context(pair.info.world);
+      const injectedScript = await context.injectedScript();
+      return await injectedScript.evaluate((injected, { parsed, strict }) => {
+        const element = injected.querySelector(parsed, document, strict);
+        const state = element ? injected.elementState(element, 'visible') : false;
+        return state === 'error:notconnected' ? false : state;
+      }, { parsed: pair.info.parsed, strict: pair.info.strict });
     }, this._page._timeoutSettings.timeout({}));
   }
 
