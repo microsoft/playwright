@@ -173,6 +173,8 @@ function ensure_docker_container {
 
       # Ubuntu 18.04 specific: install GCC-8. WebKit requires gcc 8.3+ to compile.
       apt-get install -y gcc-8 g++-8
+    elif [[ "${BUILD_FLAVOR}" == webkit-*-arm64 ]]; then
+      apt-get install -y clang-12
     fi
 
     git config --system user.email "you@example.com"
@@ -198,7 +200,10 @@ elif [[ "$2" == "compile" ]]; then
   docker exec --user pwuser --workdir "/home/pwuser/playwright" ${DOCKER_ARGS} "${DOCKER_CONTAINER_NAME}" /bin/bash -c '
     if [[ "${BUILD_FLAVOR}" == "webkit-ubuntu-18.04" ]]; then
       export CC=/usr/bin/gcc-8
-      export CXX=/usr/bin/gcc++-8
+      export CXX=/usr/bin/g++-8
+    elif [[ "${BUILD_FLAVOR}" == webkit-*-arm64 ]]; then
+      export CC=/usr/bin/clang-12
+      export CXX=/usr/bin/clang++-12
     fi
     ./browser_patches/checkout_build_archive_upload.sh "${BUILD_FLAVOR}"
   '
