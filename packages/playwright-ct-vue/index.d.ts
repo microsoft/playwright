@@ -48,6 +48,7 @@ export interface ComponentFixtures {
     on?: { [key: string]: Function },
     hooksConfig?: any,
   }): Promise<Locator>;
+  unmount(locator: Locator): Promise<void>;
 }
 
 export const test: TestType<

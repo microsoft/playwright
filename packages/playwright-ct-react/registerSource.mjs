@@ -77,3 +77,8 @@ window.playwrightMount = async (component, rootElement, hooksConfig) => {
   for (const hook of /** @type {any} */(window).__pw_hooks_after_mount || [])
     await hook({ hooksConfig });
 };
+
+window.playwrightUnmount = async (element, rootElement) => {  
+  if (!ReactDOM.unmountComponentAtNode(rootElement))
+    throw new Error('Component was not mounted');
+};

@@ -20,7 +20,10 @@ import type { Component, JsxComponent, ObjectComponentOptions } from '../types/c
 let boundCallbacksForMount: Function[] = [];
 
 export const fixtures: Fixtures<
-  PlaywrightTestArgs & PlaywrightTestOptions & { mount: (component: any, options: any) => Promise<Locator> },
+  PlaywrightTestArgs & PlaywrightTestOptions & {
+    mount: (component: any, options: any) => Promise<Locator>;
+    unmount: (locator: Locator) => Promise<void>;
+  },
   PlaywrightWorkerArgs & PlaywrightWorkerOptions & { _ctWorker: { context: BrowserContext | undefined, hash: string } },
   { _contextFactory: (options?: BrowserContextOptions) => Promise<BrowserContext>, _contextReuseEnabled: boolean }> = {
 
@@ -48,6 +51,15 @@ export const fixtures: Fixtures<
         return page.locator(selector);
       });
       boundCallbacksForMount = [];
+    },
+
+    unmount: async ({}, use) => {
+      await use(async (locator: Locator) => {
+        await locator.evaluate(async element => {
+          const rootElement = document.getElementById('root')!;
+          await window.playwrightUnmount(element, rootElement);
+        });
+      });
     },
   };
 
