@@ -154,14 +154,17 @@ function ensure_docker_container {
 
     # Install AZ CLI on CI only
     if [[ -n "${CI}" ]]; then
-      curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+      # Install AZ CLI with Python since they do not ship
+      # aarch64 to APT: https://github.com/Azure/azure-cli/issues/7368
+      #
+      # NOTE: 2.34.0 fails to upload with --content-md5: https://github.com/Azure/azure-cli/issues/21494
+      # So pin to 2.33.1
+      pip install azure-cli==2.33.1
     fi
 
     if [[ "${BUILD_FLAVOR}" == "firefox-"* ]]; then
       # install rust as a pwuser
-      su pwuser
-      curl --proto "=https" --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-      exit
+      su -l pwuser -c 'curl --proto "=https" --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y'
       echo "PATH=\"${PATH}:/home/pwuser/.cargo/bin\"" > /etc/environment
     elif [[ "${BUILD_FLAVOR}" == "webkit-ubuntu-18.04" ]]; then
       # Ubuntu 18.04 specific: update CMake. Default CMake on Ubuntu 18.04 is 3.10, whereas WebKit requires 3.12+.
