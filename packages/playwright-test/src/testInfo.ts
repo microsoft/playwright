@@ -113,20 +113,13 @@ export class TestInfoImpl implements TestInfo {
     this._timeoutManager = new TimeoutManager(this.project.timeout);
 
     this.outputDir = (() => {
-      const sameName = loader.fullConfig().projects.filter(project => project.name === this.project.name);
-      let uniqueProjectNamePathSegment: string;
-      if (sameName.length > 1)
-        uniqueProjectNamePathSegment = this.project.name + (sameName.indexOf(this.project) + 1);
-      else
-        uniqueProjectNamePathSegment = this.project.name;
-
       const relativeTestFilePath = path.relative(this.project.testDir, test._requireFile.replace(/\.(spec|test)\.(js|ts|mjs)$/, ''));
       const sanitizedRelativePath = relativeTestFilePath.replace(process.platform === 'win32' ? new RegExp('\\\\', 'g') : new RegExp('/', 'g'), '-');
       const fullTitleWithoutSpec = test.titlePath().slice(1).join(' ');
 
       let testOutputDir = trimLongString(sanitizedRelativePath + '-' + sanitizeForFilePath(fullTitleWithoutSpec));
-      if (uniqueProjectNamePathSegment)
-        testOutputDir += '-' + sanitizeForFilePath(uniqueProjectNamePathSegment);
+      if (project._id)
+        testOutputDir += '-' + sanitizeForFilePath(project._id);
       if (this.retry)
         testOutputDir += '-retry' + this.retry;
       if (this.repeatEachIndex)

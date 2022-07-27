@@ -27,7 +27,7 @@ sendMessageToParent('ready');
 
 process.stdout.write = (chunk: string | Buffer) => {
   const outPayload: TestOutputPayload = {
-    testId: workerRunner?._currentTest?._test._id,
+    testId: workerRunner?._currentTest?._test.id,
     ...chunkToParams(chunk)
   };
   sendMessageToParent('stdOut', outPayload);
@@ -37,7 +37,7 @@ process.stdout.write = (chunk: string | Buffer) => {
 if (!process.env.PW_RUNNER_DEBUG) {
   process.stderr.write = (chunk: string | Buffer) => {
     const outPayload: TestOutputPayload = {
-      testId: workerRunner?._currentTest?._test._id,
+      testId: workerRunner?._currentTest?._test.id,
       ...chunkToParams(chunk)
     };
     sendMessageToParent('stdErr', outPayload);

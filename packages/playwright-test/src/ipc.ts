@@ -34,7 +34,7 @@ export type WorkerInitParams = {
   workerIndex: number;
   parallelIndex: number;
   repeatEachIndex: number;
-  projectIndex: number;
+  projectId: string;
   loader: SerializedLoaderData;
   stdoutParams: TtyParams;
   stderrParams: TtyParams;

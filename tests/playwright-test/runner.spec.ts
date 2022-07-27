@@ -31,23 +31,6 @@ test('it should not allow multiple tests with the same name per suite', async ({
   expect(result.output).toContain(`  - tests${path.sep}example.spec.js:7`);
 });
 
-test('it should enforce unique test names based on the describe block name', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    'tests/example.spec.js': `
-      const { test } = pwt;
-      test.describe('hello', () => { test('my world', () => {}) });
-      test.describe('hello my', () => { test('world', () => {}) });
-      test('hello my world', () => {});
-    `
-  });
-  expect(result.exitCode).toBe(1);
-  expect(result.output).toContain('duplicate test titles are not allowed');
-  expect(result.output).toContain(`- title: hello my world`);
-  expect(result.output).toContain(`  - tests${path.sep}example.spec.js:6`);
-  expect(result.output).toContain(`  - tests${path.sep}example.spec.js:7`);
-  expect(result.output).toContain(`  - tests${path.sep}example.spec.js:8`);
-});
-
 test('it should not allow multiple tests with the same name in multiple files', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'tests/example1.spec.js': `
