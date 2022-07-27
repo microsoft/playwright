@@ -187,6 +187,9 @@ function ensure_docker_container {
     git config --system http.lowSpeedLimit 0
     git config --system http.lowSpeedTime 999999
 
+    # set git safe directory
+    git config --system --add safe.directory /home/pwuser/playwright
+
     su pwuser
     cd /home/pwuser
     git clone --depth=1 https://github.com/microsoft/playwright
