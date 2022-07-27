@@ -156,10 +156,8 @@ function ensure_docker_container {
     if [[ -n "${CI}" ]]; then
       # Install AZ CLI with Python since they do not ship
       # aarch64 to APT: https://github.com/Azure/azure-cli/issues/7368
-      #
-      # NOTE: 2.34.0 fails to upload with --content-md5: https://github.com/Azure/azure-cli/issues/21494
-      # So pin to 2.33.1
-      pip install azure-cli==2.33.1
+      # Pin so future releases dont break us.
+      pip install azure-cli==2.38.0
     fi
 
     if [[ "${BUILD_FLAVOR}" == "firefox-"* ]]; then
