@@ -162,7 +162,7 @@ function ensure_docker_container {
 
     if [[ "${BUILD_FLAVOR}" == "firefox-"* ]]; then
       # install rust as a pwuser
-      su -l pwuser -c 'curl --proto "=https" --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y'
+      su -l pwuser -c "curl --proto \"=https\" --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y"
       echo "PATH=\"${PATH}:/home/pwuser/.cargo/bin\"" > /etc/environment
     elif [[ "${BUILD_FLAVOR}" == "webkit-ubuntu-18.04" ]]; then
       # Ubuntu 18.04 specific: update CMake. Default CMake on Ubuntu 18.04 is 3.10, whereas WebKit requires 3.12+.
