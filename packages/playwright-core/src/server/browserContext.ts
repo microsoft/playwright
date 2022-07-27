@@ -295,7 +295,8 @@ export abstract class BrowserContext extends SdkObject {
 
   async _loadDefaultContext(progress: Progress) {
     const pages = await this._loadDefaultContextAsIs(progress);
-    if (this._options.isMobile || this._options.locale) {
+    const browserName = this._browser.options.name;
+    if ((this._options.isMobile && browserName === 'chromium') || (this._options.locale && browserName === 'webkit')) {
       // Workaround for:
       // - chromium fails to change isMobile for existing page;
       // - webkit fails to change locale for existing page.
