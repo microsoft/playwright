@@ -198,7 +198,7 @@ elif [[ "$2" == "compile" ]]; then
   docker exec --user pwuser --workdir "/home/pwuser/playwright" ${DOCKER_ARGS} "${DOCKER_CONTAINER_NAME}" /bin/bash -c '
     if [[ "${BUILD_FLAVOR}" == "webkit-ubuntu-18.04" ]]; then
       export CC=/usr/bin/gcc-8
-      export CXX=/usr/bin/gcc++-8
+      export CXX=/usr/bin/g++-8
     elif [[ "${BUILD_FLAVOR}" == webkit-*-arm64 ]]; then
       export CC=/usr/bin/clang-12
       export CXX=/usr/bin/clang++-12
