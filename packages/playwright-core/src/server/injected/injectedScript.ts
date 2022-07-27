@@ -437,10 +437,12 @@ export class InjectedScript {
     return { left: parseInt(style.borderLeftWidth || '', 10), top: parseInt(style.borderTopWidth || '', 10) };
   }
 
-  retarget(node: Node, behavior: 'follow-label' | 'no-follow-label'): Element | null {
+  retarget(node: Node, behavior: 'none' | 'follow-label' | 'no-follow-label'): Element | null {
     let element = node.nodeType === Node.ELEMENT_NODE ? node as Element : node.parentElement;
     if (!element)
       return null;
+    if (behavior === 'none')
+      return element;
     if (!element.matches('input, textarea, select'))
       element = element.closest('button, [role=button], [role=checkbox], [role=radio]') || element;
     if (behavior === 'follow-label') {
@@ -517,7 +519,7 @@ export class InjectedScript {
   }
 
   elementState(node: Node, state: ElementStateWithoutStable): boolean | 'error:notconnected' {
-    const element = this.retarget(node, ['stable', 'visible', 'hidden'].includes(state) ? 'no-follow-label' : 'follow-label');
+    const element = this.retarget(node, ['stable', 'visible', 'hidden'].includes(state) ? 'none' : 'follow-label');
     if (!element || !element.isConnected) {
       if (state === 'hidden')
         return true;
