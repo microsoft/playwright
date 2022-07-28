@@ -89,10 +89,8 @@ if [[ -n "${IS_LINUX_ARM64}" ]]; then
   echo "ac_add_options --target=aarch64-linux-gnu" >> .mozconfig
 fi
 
-if is_linux "debian" 11; then
-  # There's no pre-built wasi sysroot for Debian 11.
-  echo "ac_add_options --without-wasm-sandboxed-libraries" >> .mozconfig
-fi
+# There's no pre-built wasi sysroot on certain platforms.
+echo "ac_add_options --without-wasm-sandboxed-libraries" >> .mozconfig
 
 OBJ_FOLDER="obj-build-playwright"
 echo "mk_add_options MOZ_OBJDIR=@TOPSRCDIR@/${OBJ_FOLDER}" >> .mozconfig
@@ -143,6 +141,7 @@ if [[ -n "${IS_FULL}" ]]; then
   git checkout browser_upstream/master
   SHELL=/bin/sh ./mach --no-interactive bootstrap --application-choice=browser
   git checkout -
+  rm -rf "${OBJ_FOLDER}"
 
   if [[ ! -z "${WIN32_REDIST_DIR}" ]]; then
     # Having this option in .mozconfig kills incremental compilation.
