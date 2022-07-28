@@ -463,8 +463,13 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
 
     await use(async options => {
       const hook = hookType(testInfo);
-      if (hook)
-        throw new Error(`"context" and "page" fixtures are not supported in ${hook}. Use browser.newContext() instead.`);
+      if (hook) {
+        throw new Error([
+          `"context" and "page" fixtures are not supported in "${hook}" since they are created on a per-test basis (test fixtures).`,
+          `Either use "${hook.replace('All', 'Each')}" or create a new context/page instance inside "${hook}" by using the "browser" fixture (browser.newContext() and context.newPage())`,
+          'Please see https://playwright.dev/docs/test-retries#reuse-single-page-between-tests for more information.',
+        ].join('\n'));
+      }
       const videoOptions: BrowserContextOptions = captureVideo ? {
         recordVideo: {
           dir: _artifactsDir(),
