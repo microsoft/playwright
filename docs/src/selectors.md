@@ -1323,7 +1323,7 @@ await page.Locator("data-test-id=directions").ClickAsync();
 ### Avoid selectors tied to implementation
 
 [xpath] and [css] can be tied to the DOM structure or implementation. These selectors can break when
-the DOM structure changes.
+the DOM structure changes. Similarly, [`method: Locator.nth`], [`method: Locator.first`], and [`method: Locator.last`] are tied to implementation and the structure of the DOM, and will target the incorrect element if the DOM changes.
 
 ```js
 // avoid long css or xpath chains
@@ -1354,6 +1354,48 @@ page.locator('//*[@id="tsf"]/div[2]/div[1]/div[1]/div/div[2]/input').click()
 await page.Locator("#tsf > div:nth-child(2) > div.A8SBwf > div.RNNXgb > div > div.a4bIc > input").ClickAsync();
 await page.Locator("//*[@id='tsf']/div[2]/div[1]/div[1]/div/div[2]/input").ClickAsync();
 ```
+
+### Example
+
+The best selector to use is dependent on the context and the app under test. Here's some questions to keep in mind when authoring selectors:
+
+* Does the selector capture how a user interacts with the page and represent the spirit of the test? In other words, a feature test should fail if the feature is broken, not becuause Playwright was told to click on an unintended element as the app's strucuture changes.
+* Is the selector readable?
+* Will the selector continue to work in the future as other parts of the app change?
+
+Given the following form:
+
+```html
+<form>
+  <label>
+    Email
+    <input name="email" type="email" required/>
+  </label>
+  <label>
+    Additional Comments
+    <input name="comments" type="text" />
+  </label>
+  <button id="submit" type="submit">Submit</button>
+</form>
+```
+
+Let's look at a few possible attempts to fill in the Email address:
+
+```js tab=js-js
+await page.locator("input").fill("jordan@example.com"); // 👎 locator.fill: Error: strict mode violation: "input" resolved to 2 elements:
+await page.locator("input").first().fill("jordan@example.com"); // 👎 works today, BUT easily breaks in the future (e.g. an input to capture name, or a search bar is added at the top of the page)
+await page.locator("xpath=/html/body/div/main/form/label/input").fill("jordan@example.com"); // 👎 works today, BUT breaks in the future with any small DOM change, hard to read (i.e. what input is this locator trying to target?) 
+await page.locator("form >> text=Email").fill("jordan@example.com"); // 👌 OK: readable and captures how a user will know what to click and fill. Specific enough to avoid strict violation.
+```
+
+```js tab=js-ts
+await page.locator("input").fill("jordan@example.com"); // 👎 locator.fill: Error: strict mode violation: "input" resolved to 2 elements:
+await page.locator("input").first().fill("jordan@example.com"); // 👎 works today, BUT easily breaks in the future (e.g. an input to capture name, or a search bar is added at the top of the page)
+await page.locator("xpath=/html/body/div/main/form/label/input").fill("jordan@example.com"); // 👎 works today, BUT breaks in the future with any small DOM change, hard to read (i.e. what input is this locator trying to target?) 
+await page.locator("form >> text=Email").fill("jordan@example.com"); // 👌 OK: readable and captures how a user will know what to click and fill. Specific enough to avoid strict violation.
+```
+
+When a strict violation occurrs (`locator.fill: Error: strict mode violation: "input" resolved to 2 elements:`), it may be tempting to "fix" it by using [`method: Locator.nth`], [`method: Locator.first`], and [`method: Locator.last`], but this completely disables strictness now and in the future. So, a test may start to fail—not because the feature under test is broken, but because Playwright was told to start clicking on the wrong thing as the DOM structure changed with future releases of the application under test.
 
 [text]: #text-selector
 [css]: #css-selector
