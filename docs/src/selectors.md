@@ -1323,7 +1323,7 @@ await page.Locator("data-test-id=directions").ClickAsync();
 ### Avoid selectors tied to implementation
 
 [xpath] and [css] can be tied to the DOM structure or implementation. These selectors can break when
-the DOM structure changes.
+the DOM structure changes. Similarly, [`method: Locator.nth`], [`method: Locator.first`], and [`method: Locator.last`] are tied to implementation and the structure of the DOM, and will target the incorrect element if the DOM changes.
 
 ```js
 // avoid long css or xpath chains
