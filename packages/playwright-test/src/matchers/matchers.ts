@@ -16,6 +16,7 @@
 
 import type { Locator, Page, APIResponse } from 'playwright-core';
 import type { FrameExpectOptions } from 'playwright-core/lib/client/types';
+import { colors } from 'playwright-core/lib/utilsBundle';
 import { constructURLBasedOnBaseURL } from 'playwright-core/lib/utils';
 import type { Expect } from '../types';
 import { expectTypes, callLogText } from '../util';
@@ -289,8 +290,13 @@ export async function toBeOK(
 ) {
   const matcherName = 'toBeOK';
   expectTypes(response, ['APIResponse'], matcherName);
-  const log = (this.isNot === response.ok()) ? await response._fetchLog() : [];
-  const message = () => this.utils.matcherHint(matcherName, undefined, '', { isNot: this.isNot }) + callLogText(log);
+  const [log, text] = (this.isNot === response.ok()) ? await Promise.all([
+    response._fetchLog(),
+    response.text()
+  ]) : [];
+  const message = () => this.utils.matcherHint(matcherName, undefined, '', { isNot: this.isNot }) +
+    callLogText(log) +
+    `\nResponse text:\n${colors.dim(text?.substring(0, 1000) || '')}`;
   const pass = response.ok();
   return { message, pass };
 }

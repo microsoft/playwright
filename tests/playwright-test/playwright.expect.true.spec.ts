@@ -417,3 +417,22 @@ test('should support toBeOK', async ({ runInlineTest, server }) => {
   expect(result.output).toContain(`← 404 Not Found`);
   expect(result.output).toContain(`Error: toBeOK can be only used with APIResponse object`);
 });
+
+test('should print response text if toBeOK fails', async ({ runInlineTest, server }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      const { test } = pwt;
+
+      test('fail', async ({ page }) => {
+        const res = await page.request.get('${server.PREFIX}/unknown');
+        await expect(res).toBeOK();
+      });
+      `,
+  }, { workers: 1 });
+  expect(result.failed).toBe(1);
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain(`→ GET ${server.PREFIX}/unknown`);
+  expect(result.output).toContain(`← 404 Not Found`);
+  expect(result.output).toContain(`Response text:`);
+  expect(result.output).toContain(`File not found`);
+});
