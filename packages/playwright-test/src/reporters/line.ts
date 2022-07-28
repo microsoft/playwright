@@ -15,8 +15,8 @@
  */
 
 import { colors } from 'playwright-core/lib/utilsBundle';
-import { BaseReporter, formatFailure, formatTestTitle } from './base';
-import type { FullConfig, TestCase, Suite, TestResult, FullResult, TestStep } from '../../types/testReporter';
+import { BaseReporter, formatError, formatFailure, formatTestTitle } from './base';
+import type { FullConfig, TestCase, Suite, TestResult, FullResult, TestStep, TestError } from '../../types/testReporter';
 
 class LineReporter extends BaseReporter {
   private _current = 0;
@@ -98,6 +98,16 @@ class LineReporter extends BaseReporter {
       process.stdout.write(`${prefix + title}\n`);
     else
       process.stdout.write(`\u001B[1A\u001B[2K${prefix + this.fitToScreen(title, prefix)}\n`);
+  }
+
+  override onError(error: TestError): void {
+    super.onError(error);
+
+    const message = formatError(this.config, error, colors.enabled).message + '\n\n';
+    if (!process.env.PW_TEST_DEBUG_REPORTERS)
+      process.stdout.write(`\u001B[1A\u001B[2K`);
+    process.stdout.write(message);
+    console.log();
   }
 
   override async onEnd(result: FullResult) {

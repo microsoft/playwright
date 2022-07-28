@@ -15,8 +15,8 @@
  */
 
 import { colors } from 'playwright-core/lib/utilsBundle';
-import { BaseReporter } from './base';
-import type { FullResult, TestCase, TestResult, FullConfig, Suite } from '../../types/testReporter';
+import { BaseReporter, formatError } from './base';
+import type { FullResult, TestCase, TestResult, FullConfig, Suite, TestError } from '../../types/testReporter';
 
 class DotReporter extends BaseReporter {
   private _counter = 0;
@@ -62,6 +62,12 @@ class DotReporter extends BaseReporter {
       case 'unexpected': process.stdout.write(colors.red(result.status === 'timedOut' ? 'T' : 'F')); break;
       case 'flaky': process.stdout.write(colors.yellow('±')); break;
     }
+  }
+
+  override onError(error: TestError): void {
+    super.onError(error);
+    console.log('\n' + formatError(this.config, error, colors.enabled).message);
+    this._counter = 0;
   }
 
   override async onEnd(result: FullResult) {

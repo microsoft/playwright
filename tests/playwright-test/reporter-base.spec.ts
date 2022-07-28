@@ -290,3 +290,31 @@ test('should not crash on undefined body with manual attachments', async ({ runI
   expect(result.failed).toBe(1);
   expect(result.exitCode).toBe(1);
 });
+
+test('should report fatal errors at the end', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      const test = pwt.test.extend({
+        fixture: [async ({ }, use) => {
+          await use();
+          throw new Error('oh my!');
+        }, { scope: 'worker' }],
+      });
+      test('good', async ({ fixture }) => {
+      });
+    `,
+    'b.spec.ts': `
+      const test = pwt.test.extend({
+        fixture: [async ({ }, use) => {
+          await use();
+          throw new Error('oh my!');
+        }, { scope: 'worker' }],
+      });
+      test('good', async ({ fixture }) => {
+      });
+    `,
+  }, { reporter: 'list' });
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(2);
+  expect(stripAnsi(result.output)).toContain('2 fatal errors');
+});
