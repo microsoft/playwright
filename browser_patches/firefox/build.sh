@@ -126,24 +126,28 @@ if [[ -z "${IS_JUGGLER}" ]]; then
 fi
 
 if [[ -n "${IS_FULL}" ]]; then
-  # This is a slow but sure way to get all the necessary toolchains.
-  # However, it will not work if tree is dirty.
-  # Bail out if git repo is dirty.
-  if [[ -n $(git status -s --untracked-files=no) ]]; then
-    echo "ERROR: dirty GIT state - commit everything and re-run the script."
-    exit 1
+  if is_mac; then
+    echo "ac_add_options --enable-bootstrap" >> .mozconfig
+  else
+    # This is a slow but sure way to get all the necessary toolchains.
+    # However, it will not work if tree is dirty.
+    # Bail out if git repo is dirty.
+    if [[ -n $(git status -s --untracked-files=no) ]]; then
+      echo "ERROR: dirty GIT state - commit everything and re-run the script."
+      exit 1
+    fi
+
+    # 1. We have a --single-branch checkout, so we have to add a "master" branch and fetch it
+    git remote set-branches --add browser_upstream master
+    git fetch browser_upstream master
+    # 2. Checkout the master branch and run bootstrap from it.
+    git checkout browser_upstream/master
+    SHELL=/bin/sh ./mach --no-interactive bootstrap --application-choice=browser
+    git checkout -
+    rm -rf "${OBJ_FOLDER}"
   fi
 
-  # 1. We have a --single-branch checkout, so we have to add a "master" branch and fetch it
-  git remote set-branches --add browser_upstream master
-  git fetch browser_upstream master
-  # 2. Checkout the master branch and run bootstrap from it.
-  git checkout browser_upstream/master
-  SHELL=/bin/sh ./mach --no-interactive bootstrap --application-choice=browser
-  git checkout -
-  rm -rf "${OBJ_FOLDER}"
-
-  if [[ ! -z "${WIN32_REDIST_DIR}" ]]; then
+  if [[ -n "${WIN32_REDIST_DIR}" ]]; then
     # Having this option in .mozconfig kills incremental compilation.
     echo "export WIN32_REDIST_DIR=\"$WIN32_REDIST_DIR\"" >> .mozconfig
   fi
