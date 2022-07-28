@@ -308,3 +308,25 @@ it('isChecked should work', async ({ page }) => {
   const error = await page.isChecked('div').catch(e => e);
   expect(error.message).toContain('Not a checkbox or radio button');
 });
+
+it('isVisible should be atomic', async ({ playwright, page }) => {
+  const createDummySelector = () => ({
+    query(root, selector) {
+      const result = root.querySelector(selector);
+      if (result)
+        Promise.resolve().then(() => result.style.display = 'none');
+      return result;
+    },
+    queryAll(root: HTMLElement, selector: string) {
+      const result = Array.from(root.querySelectorAll(selector));
+      for (const e of result)
+        Promise.resolve().then(() => (e as HTMLElement).style.display = 'none');
+      return result;
+    }
+  });
+  await playwright.selectors.register('isVisible', createDummySelector);
+  await page.setContent(`<div>Hello</div>`);
+  const result = await page.isVisible('isVisible=div');
+  expect(result).toBe(true);
+  expect(await page.evaluate(() => document.querySelector('div').style.display)).toBe('none');
+});
