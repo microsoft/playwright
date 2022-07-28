@@ -26,7 +26,7 @@ public:
     static RefPtr<ScreencastEncoder> create(nsCString& errorString, const nsCString& filePath, int width, int height, const gfx::IntMargin& margin);
 
     class VPXCodec;
-    ScreencastEncoder(std::unique_ptr<VPXCodec>&&, const gfx::IntMargin& margin);
+    ScreencastEncoder(std::unique_ptr<VPXCodec>, const gfx::IntMargin& margin);
 
     void encodeFrame(const webrtc::VideoFrame& videoFrame);
 
