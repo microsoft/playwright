@@ -193,7 +193,7 @@ export class CRSession extends EventEmitter {
     } else if (object.id && object.error?.code === -32001) {
       // Message to a closed session, just ignore it.
     } else {
-      assert(!object.id);
+      assert(!object.id, object?.error?.message || undefined);
       Promise.resolve().then(() => {
         if (this._eventListener)
           this._eventListener(object.method!, object.params);
