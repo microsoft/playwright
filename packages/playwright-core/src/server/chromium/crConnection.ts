@@ -192,6 +192,12 @@ export class CRSession extends EventEmitter {
         callback.resolve(object.result);
     } else if (object.id && object.error?.code === -32001) {
       // Message to a closed session, just ignore it.
+    } else if (
+      !!object.error &&
+      !!object.error.message &&
+      /Session with given id not found/i.test(object.error.message)
+    ) {
+      // Ignore the error as the session was closed by the user
     } else {
       assert(!object.id, object?.error?.message || undefined);
       Promise.resolve().then(() => {
