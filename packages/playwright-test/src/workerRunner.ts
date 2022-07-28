@@ -18,7 +18,7 @@ import { colors, rimraf } from 'playwright-core/lib/utilsBundle';
 import util from 'util';
 import { EventEmitter } from 'events';
 import { relativeFilePath, serializeError } from './util';
-import type { TestBeginPayload, TestEndPayload, RunPayload, DonePayload, WorkerInitParams, StepBeginPayload, StepEndPayload, TeardownErrorsPayload } from './ipc';
+import type { TestBeginPayload, TestEndPayload, RunPayload, DonePayload, WorkerInitParams, StepBeginPayload, StepEndPayload, TeardownErrorsPayload, TestServerTestResolvedPayload } from './ipc';
 import { setCurrentTestInfo } from './globals';
 import { Loader } from './loader';
 import type { Suite, TestCase } from './test';
@@ -161,6 +161,15 @@ export class WorkerRunner extends EventEmitter {
       await this._loadIfNeeded();
       const fileSuite = await this._loader.loadTestFile(runPayload.file, 'worker');
       const suite = this._loader.buildFileSuiteForProject(this._project, fileSuite, this._params.repeatEachIndex, test => {
+        if (test.location.line === runPayload.testServerTestLine) {
+          const testResolvedPayload: TestServerTestResolvedPayload = {
+            testId: test.id,
+            title: test.title,
+            location: test.location
+          };
+          this.emit('testServer:testResolved', testResolvedPayload);
+          entries.set(test.id, { testId: test.id, retry: 0 });
+        }
         if (!entries.has(test.id))
           return false;
         return true;
@@ -169,7 +178,7 @@ export class WorkerRunner extends EventEmitter {
         this._extraSuiteAnnotations = new Map();
         this._activeSuites = new Set();
         this._didRunFullCleanup = false;
-        const tests = suite.allTests().filter(test => entries.has(test.id));
+        const tests = suite.allTests();
         for (let i = 0; i < tests.length; i++) {
           // Do not run tests after full cleanup, because we are entirely done.
           if (this._isStopped && this._didRunFullCleanup)

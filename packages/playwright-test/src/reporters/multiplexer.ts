@@ -76,6 +76,14 @@ export class Multiplexer implements Reporter {
     for (const reporter of this._reporters)
       (reporter as any).onStepEnd?.(test, result, step);
   }
+
+  _nextTest(): Promise<any | null> {
+    for (const reporter of this._reporters) {
+      if ((reporter as any)._nextTest)
+        return (reporter as any)._nextTest();
+    }
+    return Promise.resolve(null);
+  }
 }
 
 function wrap(callback: () => void) {
