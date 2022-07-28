@@ -56,7 +56,7 @@ public class HomepageTests {
 
     AxeResults accessibilityScanResults = new AxeBuilder(page).analyze(); // 4
 
-    assertTrue(accessibilityScanResults.violationFree()); // 5
+    assertEquals(Collections.emptyList(), accessibilityScanResults.getViolations()); // 5
   }
 }
 ```
@@ -85,7 +85,7 @@ void navigationMenuFlyoutShouldNotHaveAutomaticallyDetectableAccessibilityViolat
     .include(Arrays.asList("#navigation-menu-flyout"))
     .analyze();
 
-  assertTrue(accessibilityScanResults.violationFree());
+  assertEquals(Collections.emptyList(), accessibilityScanResults.getViolations());
 }
 ```
 
@@ -102,7 +102,7 @@ AxeResults accessibilityScanResults = new AxeBuilder(page)
   .withTags(Arrays.asList("wcag2a", "wcag2aa", "wcag21a", "wcag21aa"))
   .analyze();
 
-assertTrue(accessibilityScanResults.violationFree());
+assertEquals(Collections.emptyList(), accessibilityScanResults.getViolations());
 ```
 
 You can find a complete listing of the rule tags axe-core supports in [the "Axe-core Tags" section of the axe API documentation](https://www.deque.com/axe/core-documentation/api-documentation/#axe-core-tags).
@@ -126,7 +126,7 @@ AxeResults accessibilityScanResults = new AxeBuilder(page)
   .exclude(Arrays.asList("#element-with-known-issue"))
   .analyze();
 
-assertTrue(accessibilityScanResults.violationFree());
+assertEquals(Collections.emptyList(), accessibilityScanResults.getViolations());
 ```
 
 If the element in question is used repeatedly in many pages, consider [using a test fixture](#using-a-test-fixture-for-common-axe-configuration) to reuse the same `AxeBuilder` configuration across multiple tests.
@@ -142,7 +142,7 @@ AxeResults accessibilityScanResults = new AxeBuilder(page)
   .disableRules(Arrays.asList("duplicate-id"))
   .analyze();
 
-assertTrue(accessibilityScanResults.violationFree());
+assertEquals(Collections.emptyList(), accessibilityScanResults.getViolations());
 ```
 
 ### Using violation fingerprints to specific known issues
@@ -232,7 +232,7 @@ public class HomepageTests extends AxeTestFixtures {
       .include('#specific-element-under-test')
       .analyze();
 
-    assertTrue(accessibilityScanResults.violationFree());
+    assertEquals(Collections.emptyList(), accessibilityScanResults.getViolations());
   }
 }
 ```
