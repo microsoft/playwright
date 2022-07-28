@@ -466,7 +466,7 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
       if (hook) {
         throw new Error([
           `"context" and "page" fixtures are not supported in "${hook}" since they are created on a per-test basis.`,
-          `If you would like to reuse a single page between tests, create context manually with browser.newContext(). See https://playwright.dev/docs/test-retries#reuse-single-page-between-tests for details.`,
+          `If you would like to reuse a single page between tests, create context manually with browser.newContext(). See https://aka.ms/playwright/reuse-page for details.`,
           `If you would like to configure your page before each test, do that in beforeEach hook instead.`,
         ].join('\n'));
       }
