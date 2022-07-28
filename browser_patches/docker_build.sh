@@ -187,12 +187,8 @@ function ensure_docker_container {
     git config --system http.lowSpeedLimit 0
     git config --system http.lowSpeedTime 999999
 
-    # set git safe directory
-    git config --system --add safe.directory /home/pwuser/playwright
-
-    su pwuser
     cd /home/pwuser
-    git clone --depth=1 https://github.com/microsoft/playwright
+    su -l pwuser -c "git clone --depth=1 https://github.com/microsoft/playwright"
   '
 }
 
@@ -216,6 +212,8 @@ elif [[ "$2" == "enter" || -z "$2" ]]; then
   docker exec --user pwuser --workdir "/home/pwuser/playwright" ${DOCKER_ARGS} -it "${DOCKER_CONTAINER_NAME}" /bin/bash
 elif [[ "$2" == "kill" || "$2" == "stop" ]]; then
   docker kill "${DOCKER_CONTAINER_NAME}"
+  # Wait for container to stop
+  docker wait "${DOCKER_CONTAINER_NAME}" || true
 else
   echo "ERROR: unknown command - $2"
   exit 1
