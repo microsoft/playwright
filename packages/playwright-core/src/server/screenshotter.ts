@@ -140,6 +140,9 @@ export class Screenshotter {
   }
 
   async _preparePageForScreenshot(progress: Progress, hideCaret: boolean, disableAnimations: boolean) {
+    if (!hideCaret && !disableAnimations)
+      return;
+
     if (disableAnimations)
       progress.log('  disabled all CSS animations');
     await Promise.all(this._page.frames().map(async frame => {
