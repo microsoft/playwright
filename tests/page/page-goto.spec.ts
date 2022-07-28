@@ -629,14 +629,13 @@ it('should properly wait for load', async ({ page, server, browserName }) => {
   ]);
 });
 
-it('should properly report window.stop()', async ({ page, server, browserName }) => {
+it('should properly report window.stop()', async ({ page, server }) => {
   server.setRoute('/module.js', async (req, res) => void 0);
   await page.goto(server.PREFIX + '/window-stop.html');
 });
 
-it('should return from goto if new navigation is started', async ({ page, server, browserName, isElectron, isAndroid }) => {
+it('should return from goto if new navigation is started', async ({ page, server, browserName, isAndroid }) => {
   it.fixme(browserName === 'webkit', 'WebKit has a bug where Page.frameStoppedLoading is sent too early.');
-  it.fixme(isElectron, 'Fails on Electron');
   it.fail(isAndroid, 'Navigation gets aborted on Android');
   server.setRoute('/slow.js', async (req, res) => void 0);
   let finished = false;

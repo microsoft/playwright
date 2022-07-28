@@ -16,15 +16,14 @@
 import type { Page } from 'playwright-core';
 import { test as it, expect } from './pageTest';
 
-it.skip(({ isElectron, browserMajorVersion, isAndroid }) => {
-  // Old Electron has flaky wheel events.
-  return (isElectron && browserMajorVersion <= 11) || isAndroid;
+it.skip(({ isAndroid }) => {
+  return isAndroid;
 });
 
 let ignoreDelta = false;
 
-it.beforeAll(async ({ browserMajorVersion, browserName, platform }) => {
-  if (browserName === 'chromium' && browserMajorVersion >= 102 && platform === 'darwin') {
+it.beforeAll(async ({ browserMajorVersion, browserName, isElectron, platform }) => {
+  if (((browserName === 'chromium' && browserMajorVersion >= 102) || isElectron) && platform === 'darwin') {
     // Chromium reports deltaX/deltaY scaled by host device scale factor.
     // https://bugs.chromium.org/p/chromium/issues/detail?id=1324819
     // https://github.com/microsoft/playwright/issues/7362

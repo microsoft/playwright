@@ -180,7 +180,7 @@ it('should return status text', async ({ page, server }) => {
 });
 
 it('should report all headers', async ({ page, server, browserName, platform, isElectron, browserMajorVersion }) => {
-  it.skip(isElectron && browserMajorVersion < 17, 'This needs Chromium >= 99');
+  it.skip(isElectron && browserMajorVersion < 99, 'This needs Chromium >= 99');
   it.fixme(browserName === 'webkit' && platform === 'win32', 'libcurl does not support non-set-cookie multivalue headers');
 
   const expectedHeaders = {
@@ -216,7 +216,7 @@ it('should report all headers', async ({ page, server, browserName, platform, is
 });
 
 it('should report multiple set-cookie headers', async ({ page, server, isElectron, browserMajorVersion }) => {
-  it.skip(isElectron && browserMajorVersion < 17, 'This needs Chromium >= 99');
+  it.skip(isElectron && browserMajorVersion < 99, 'This needs Chromium >= 99');
 
   server.setRoute('/headers', (req, res) => {
     res.writeHead(200, {
