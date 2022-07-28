@@ -107,9 +107,8 @@ export class TestTypeImpl {
       title = '';
     }
 
-    const child = new Suite(title);
+    const child = new Suite(title, 'describe');
     child._requireFile = suite._requireFile;
-    child._isDescribe = true;
     child.location = location;
     suite._addSuite(child);
 

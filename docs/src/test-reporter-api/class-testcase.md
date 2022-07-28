@@ -27,6 +27,12 @@ Expected test status.
 
 See also [`property: TestResult.status`] for the actual status.
 
+## property: TestCase.id
+* since: v1.25
+- type: <[string]>
+
+Unique test ID that is computed based on the test file name, test title and project name. Test ID can be used as a history ID.
+
 ## property: TestCase.location
 * since: v1.10
 - type: <[Location]>

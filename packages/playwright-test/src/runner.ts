@@ -266,7 +266,7 @@ export class Runner {
     const fatalErrors: TestError[] = [];
 
     // 1. Add all tests.
-    const preprocessRoot = new Suite('');
+    const preprocessRoot = new Suite('', 'root');
     for (const file of allTestFiles) {
       const fileSuite = await this._loader.loadTestFile(file, 'runner');
       if (fileSuite._loadError)
@@ -299,11 +299,11 @@ export class Runner {
       fileSuites.set(fileSuite._requireFile, fileSuite);
 
     const outputDirs = new Set<string>();
-    const rootSuite = new Suite('');
+    const rootSuite = new Suite('', 'root');
     for (const [project, files] of filesByProject) {
       const grepMatcher = createTitleMatcher(project.grep);
       const grepInvertMatcher = project.grepInvert ? createTitleMatcher(project.grepInvert) : null;
-      const projectSuite = new Suite(project.name);
+      const projectSuite = new Suite(project.name, 'project');
       projectSuite._projectConfig = project;
       if (project._fullyParallel)
         projectSuite._parallelMode = 'parallel';
@@ -671,7 +671,7 @@ function createTestGroups(rootSuite: Suite, workers: number): TestGroup[] {
       workerHash: test._workerHash,
       requireFile: test._requireFile,
       repeatEachIndex: test.repeatEachIndex,
-      projectIndex: test._projectIndex,
+      projectId: test._projectId,
       tests: [],
     };
   };
@@ -794,7 +794,7 @@ function createDuplicateTitlesError(config: FullConfigInternal, rootSuite: Suite
   for (const fileSuite of rootSuite.suites) {
     const testsByFullTitle = new MultiMap<string, TestCase>();
     for (const test of fileSuite.allTests()) {
-      const fullTitle = test.titlePath().slice(2).join(' ');
+      const fullTitle = test.titlePath().slice(2).join('\x1e');
       testsByFullTitle.set(fullTitle, test);
     }
     for (const fullTitle of testsByFullTitle.keys()) {

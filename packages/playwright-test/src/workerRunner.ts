@@ -150,7 +150,7 @@ export class WorkerRunner extends EventEmitter {
       return;
 
     this._loader = await Loader.deserialize(this._params.loader);
-    this._project = this._loader.fullConfig().projects[this._params.projectIndex];
+    this._project = this._loader.fullConfig().projects.find(p => p._id === this._params.projectId)!;
   }
 
   async runTestGroup(runPayload: RunPayload) {
@@ -161,7 +161,7 @@ export class WorkerRunner extends EventEmitter {
       await this._loadIfNeeded();
       const fileSuite = await this._loader.loadTestFile(runPayload.file, 'worker');
       const suite = this._loader.buildFileSuiteForProject(this._project, fileSuite, this._params.repeatEachIndex, test => {
-        if (!entries.has(test._id))
+        if (!entries.has(test.id))
           return false;
         return true;
       });
@@ -169,13 +169,13 @@ export class WorkerRunner extends EventEmitter {
         this._extraSuiteAnnotations = new Map();
         this._activeSuites = new Set();
         this._didRunFullCleanup = false;
-        const tests = suite.allTests().filter(test => entries.has(test._id));
+        const tests = suite.allTests().filter(test => entries.has(test.id));
         for (let i = 0; i < tests.length; i++) {
           // Do not run tests after full cleanup, because we are entirely done.
           if (this._isStopped && this._didRunFullCleanup)
             break;
-          const entry = entries.get(tests[i]._id)!;
-          entries.delete(tests[i]._id);
+          const entry = entries.get(tests[i].id)!;
+          entries.delete(tests[i].id);
           await this._runTest(tests[i], entry.retry, tests[i + 1]);
         }
       } else {
@@ -194,8 +194,8 @@ export class WorkerRunner extends EventEmitter {
         fatalUnknownTestIds
       };
       for (const test of this._skipRemainingTestsInSuite?.allTests() || []) {
-        if (entries.has(test._id))
-          donePayload.skipTestsDueToSetupFailure.push(test._id);
+        if (entries.has(test.id))
+          donePayload.skipTestsDueToSetupFailure.push(test.id);
       }
       this.emit('done', donePayload);
       this._fatalErrors = [];
@@ -217,7 +217,7 @@ export class WorkerRunner extends EventEmitter {
           callbackHandled = true;
           const error = result.error instanceof Error ? serializeError(result.error) : result.error;
           const payload: StepEndPayload = {
-            testId: test._id,
+            testId: test.id,
             refinedTitle: step.refinedTitle,
             stepId,
             wallTime: Date.now(),
@@ -230,7 +230,7 @@ export class WorkerRunner extends EventEmitter {
       // Sanitize location that comes from user land, it might have extra properties.
       const location = data.location && hasLocation ? { file: data.location.file, line: data.location.line, column: data.location.column } : undefined;
       const payload: StepBeginPayload = {
-        testId: test._id,
+        testId: test.id,
         stepId,
         ...data,
         location,
@@ -567,14 +567,14 @@ export class WorkerRunner extends EventEmitter {
 
 function buildTestBeginPayload(testInfo: TestInfoImpl): TestBeginPayload {
   return {
-    testId: testInfo._test._id,
+    testId: testInfo._test.id,
     startWallTime: testInfo._startWallTime,
   };
 }
 
 function buildTestEndPayload(testInfo: TestInfoImpl): TestEndPayload {
   return {
-    testId: testInfo._test._id,
+    testId: testInfo._test.id,
     duration: testInfo.duration,
     status: testInfo.status!,
     errors: testInfo.errors,

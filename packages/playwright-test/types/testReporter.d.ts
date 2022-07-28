@@ -127,6 +127,12 @@ export interface TestCase {
   }>;
 
   /**
+   * Unique test ID that is computed based on the test file name, test title and project name. Test ID can be used as a
+   * history ID.
+   */
+  id: string;
+
+  /**
    * Location in the source where the test is defined.
    */
   location: Location;
