@@ -73,9 +73,7 @@ it('should work for detached elements', async ({ page, server }) => {
   expect(await divHandle.ownerFrame()).toBe(page.mainFrame());
 });
 
-it('should work for adopted elements', async ({ page, server, isElectron }) => {
-  it.fixme(isElectron);
-
+it('should work for adopted elements', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   const [popup] = await Promise.all([
     page.waitForEvent('popup'),

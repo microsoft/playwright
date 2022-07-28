@@ -132,9 +132,7 @@ it('should fail with error upon disconnect', async ({ page, isAndroid }) => {
   expect(error.message).toContain('Page closed');
 });
 
-it('page.url should work', async ({ page, server, isElectron }) => {
-  it.fixme(isElectron);
-
+it('page.url should work', async ({ page, server }) => {
   expect(page.url()).toBe('about:blank');
   await page.goto(server.EMPTY_PAGE);
   expect(page.url()).toBe(server.EMPTY_PAGE);

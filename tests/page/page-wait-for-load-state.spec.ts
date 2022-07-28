@@ -132,7 +132,7 @@ it('should work with clicking target=_blank', async ({ page, server }) => {
   expect(await popup.evaluate(() => document.readyState)).toBe('complete');
 });
 
-it('should wait for load state of newPage', async ({ page, server, isElectron }) => {
+it('should wait for load state of newPage', async ({ page, isElectron }) => {
   it.fixme(isElectron, 'BrowserContext.newPage does not work in Electron');
 
   const [newPage] = await Promise.all([

@@ -23,8 +23,7 @@ it('clicking on links which do not commit navigation', async ({ page, server, ht
   await page.click('a');
 });
 
-it('calling window.stop async', async ({ page, server, isElectron }) => {
-  it.fixme(isElectron);
+it('calling window.stop async', async ({ page, server }) => {
   server.setRoute('/empty.html', async (req, res) => {});
   await page.evaluate(url => {
     window.location.href = url;

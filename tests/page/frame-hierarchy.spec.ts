@@ -154,9 +154,7 @@ it('should report frame from-inside shadow DOM', async ({ page, server }) => {
   expect(page.frames()[1].url()).toBe(server.EMPTY_PAGE);
 });
 
-it('should report frame.name()', async ({ page, server, isElectron }) => {
-  it.fixme(isElectron);
-
+it('should report frame.name()', async ({ page, server }) => {
   await attachFrame(page, 'theFrameId', server.EMPTY_PAGE);
   await page.evaluate(url => {
     const frame = document.createElement('iframe');
@@ -178,8 +176,7 @@ it('should report frame.parent()', async ({ page, server }) => {
   expect(page.frames()[2].parentFrame()).toBe(page.mainFrame());
 });
 
-it('should report different frame instance when frame re-attaches', async ({ page, server, isElectron }) => {
-  it.fixme(isElectron);
+it('should report different frame instance when frame re-attaches', async ({ page, server }) => {
 
   const frame1 = await attachFrame(page, 'frame1', server.EMPTY_PAGE);
   await page.evaluate(() => {

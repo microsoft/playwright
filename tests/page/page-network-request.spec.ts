@@ -82,7 +82,7 @@ it('should return headers', async ({ page, server, browserName }) => {
 });
 
 it('should get the same headers as the server', async ({ page, server, browserName, platform, isElectron, browserMajorVersion }) => {
-  it.skip(isElectron && browserMajorVersion < 17, 'This needs Chromium >= 99');
+  it.skip(isElectron && browserMajorVersion < 99, 'This needs Chromium >= 99');
   it.fail(browserName === 'webkit' && platform === 'win32', 'Curl does not show accept-encoding and accept-language');
   let serverRequest;
   server.setRoute('/empty.html', (request, response) => {
@@ -95,7 +95,7 @@ it('should get the same headers as the server', async ({ page, server, browserNa
 });
 
 it('should not return allHeaders() until they are available', async ({ page, server, browserName, platform, isElectron, browserMajorVersion }) => {
-  it.skip(isElectron && browserMajorVersion < 17, 'This needs Chromium >= 99');
+  it.skip(isElectron && browserMajorVersion < 99, 'This needs Chromium >= 99');
   it.fail(browserName === 'webkit' && platform === 'win32', 'Curl does not show accept-encoding and accept-language');
 
   let requestHeadersPromise;
@@ -120,7 +120,7 @@ it('should not return allHeaders() until they are available', async ({ page, ser
 });
 
 it('should get the same headers as the server CORS', async ({ page, server, browserName, platform, isElectron, browserMajorVersion }) => {
-  it.skip(isElectron && browserMajorVersion < 17, 'This needs Chromium >= 99');
+  it.skip(isElectron && browserMajorVersion < 99, 'This needs Chromium >= 99');
   it.fail(browserName === 'webkit' && platform === 'win32', 'Curl does not show accept-encoding and accept-language');
 
   await page.goto(server.PREFIX + '/empty.html');
@@ -353,7 +353,7 @@ it('should return navigation bit when navigating to image', async ({ page, serve
 });
 
 it('should report raw headers', async ({ page, server, browserName, platform, isElectron, browserMajorVersion }) => {
-  it.skip(isElectron && browserMajorVersion < 17, 'This needs Chromium >= 99');
+  it.skip(isElectron && browserMajorVersion < 99, 'This needs Chromium >= 99');
 
   let expectedHeaders: { name: string, value: string }[];
   server.setRoute('/headers', (req, res) => {
@@ -421,7 +421,7 @@ it('should report raw response headers in redirects', async ({ page, server, bro
 });
 
 it('should report all cookies in one header', async ({ page, server, isElectron, browserMajorVersion }) => {
-  it.skip(isElectron && browserMajorVersion < 17, 'This needs Chromium >= 99');
+  it.skip(isElectron && browserMajorVersion < 99, 'This needs Chromium >= 99');
 
   const expectedHeaders = {};
   server.setRoute('/headers', (req, res) => {
