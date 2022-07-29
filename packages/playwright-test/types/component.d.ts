@@ -40,5 +40,6 @@ declare global {
   interface Window {
     playwrightMount(component: Component, rootElement: Element, hooksConfig: any): Promise<void>;
     playwrightUnmount(element: Element, rootElement: Element): Promise<void>;
+    playwrightSetProps(props: { [key:string]: any }): Promise<void>;
   }
 }

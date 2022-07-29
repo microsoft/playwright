@@ -23,6 +23,7 @@ export const fixtures: Fixtures<
   PlaywrightTestArgs & PlaywrightTestOptions & {
     mount: (component: any, options: any) => Promise<Locator>;
     unmount: (locator: Locator) => Promise<void>;
+    setProps: (locator: Locator, props: { [key: string]: any }) => Promise<void>;
   },
   PlaywrightWorkerArgs & PlaywrightWorkerOptions & { _ctWorker: { context: BrowserContext | undefined, hash: string } },
   { _contextFactory: (options?: BrowserContextOptions) => Promise<BrowserContext>, _contextReuseEnabled: boolean }> = {
@@ -61,6 +62,14 @@ export const fixtures: Fixtures<
         });
       });
     },
+
+    setProps: async ({}, use) => {
+      await use(async (locator: Locator, props: { [key: string]: any }) => {
+        return await locator.evaluate(async (element, props) => {
+          return await window.playwrightSetProps(props);
+        }, props);
+      });
+    }
   };
 
 async function innerMount(page: Page, jsxOrType: JsxComponent | string, options: ObjectComponentOptions = {}): Promise<string> {
