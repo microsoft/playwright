@@ -16,6 +16,17 @@ test('props should work', async ({ mount }) => {
   await expect(component).toContainText('Submit')
 })
 
+test('update props should work', async ({ mount, setProps }) => {
+  const component = await mount(Button, {
+    props: { 
+      title: 'Submit'
+    }
+  });
+  await expect(component).toContainText('Submit')
+  await setProps(component, { title: 'Loading' });
+  await expect(component).toContainText('Loading');
+})
+
 test('event should work', async ({ mount }) => {
   const messages = []
   const component = await mount(Button, {
