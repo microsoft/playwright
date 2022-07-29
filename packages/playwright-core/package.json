@@ -28,6 +28,7 @@
     "./lib/utils/httpServer": "./lib/utils/httpServer.js",
     "./lib/utils/hostPlatform": "./lib/utils/hostPlatform.js",
     "./lib/utils/manualPromise": "./lib/utils/manualPromise.js",
+    "./lib/utils/mimeType": "./lib/utils/mimeType.js",
     "./lib/utils/multimap": "./lib/utils/multimap.js",
     "./lib/utils/processLauncher": "./lib/utils/processLauncher.js",
     "./lib/utils/processLauncherCleanupEntrypoint": "./lib/utils/processLauncherCleanupEntrypoint.js",
