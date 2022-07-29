@@ -5,7 +5,7 @@ import DefaultSlot from './components/DefaultSlot.vue'
 import NamedSlots from './components/NamedSlots.vue'
 import Component from './components/Component.vue'
 
-test.use({ viewport: { width: 500, height: 500 } })
+test.use({ viewport: { width: 1200, height: 500 } })
 
 test('props should work', async ({ mount }) => {
   const component = await mount(Button, {
@@ -14,6 +14,16 @@ test('props should work', async ({ mount }) => {
     }
   })
   await expect(component).toContainText('Submit')
+})
+
+test('update props should work', async ({ mount, setProps }) => {
+  const component = await mount(Button, {
+    props: { title: 'Submit' }
+  });
+
+  await setProps(component, { title: 'Loading' });
+
+  await expect(component).toContainText('Loading');
 })
 
 test('event should work', async ({ mount }) => {
