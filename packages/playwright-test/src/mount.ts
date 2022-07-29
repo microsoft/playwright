@@ -19,11 +19,14 @@ import type { Component, JsxComponent, ObjectComponentOptions } from '../types/c
 
 let boundCallbacksForMount: Function[] = [];
 
+interface MountResult extends Locator {
+  unmount: (locator: Locator) => Promise<void>;
+  updateProps: (props: { [key: string]: any }) => Promise<void>;
+}
+
 export const fixtures: Fixtures<
   PlaywrightTestArgs & PlaywrightTestOptions & {
-    mount: (component: any, options: any) => Promise<Locator>;
-    unmount: (locator: Locator) => Promise<void>;
-    setProps: (locator: Locator, props: { [key: string]: any }) => Promise<void>;
+    mount: (component: any, options: any) => Promise<MountResult>;
   },
   PlaywrightWorkerArgs & PlaywrightWorkerOptions & { _ctWorker: { context: BrowserContext | undefined, hash: string } },
   { _contextFactory: (options?: BrowserContextOptions) => Promise<BrowserContext>, _contextReuseEnabled: boolean }> = {
@@ -49,27 +52,23 @@ export const fixtures: Fixtures<
         const selector = await (page as any)._wrapApiCall(async () => {
           return await innerMount(page, component, options);
         }, true);
-        return page.locator(selector);
+        const locator = page.locator(selector);
+        return Object.assign(locator, {
+          unmount: async () => {
+            await locator.evaluate(async element => {
+              const rootElement = document.getElementById('root')!;
+              await window.playwrightUnmount(element, rootElement);
+            });
+          },
+          updateProps: async (props: { [key: string]: any }) => {
+            await locator.evaluate(async (element, props) => {
+              return await window.playwrightUpdateProps(element, props);
+            }, props);
+          }
+        });
       });
       boundCallbacksForMount = [];
     },
-
-    unmount: async ({}, use) => {
-      await use(async (locator: Locator) => {
-        await locator.evaluate(async element => {
-          const rootElement = document.getElementById('root')!;
-          await window.playwrightUnmount(element, rootElement);
-        });
-      });
-    },
-
-    setProps: async ({}, use) => {
-      await use(async (locator: Locator, props: { [key: string]: any }) => {
-        return await locator.evaluate(async (element, props) => {
-          return await window.playwrightSetProps(element, props);
-        }, props);
-      });
-    }
   };
 
 async function innerMount(page: Page, jsxOrType: JsxComponent | string, options: ObjectComponentOptions = {}): Promise<string> {

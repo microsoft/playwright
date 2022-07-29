@@ -181,7 +181,7 @@ window.playwrightUnmount = async element => {
   app.unmount();
 };
 
-window.playwrightSetProps = async (element, props) => {
+window.playwrightUpdateProps = async (element, props) => {
   const component = element[componentKey].component;
   if (!component)
     throw new Error('Component was not mounted');
