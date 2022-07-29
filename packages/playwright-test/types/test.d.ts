@@ -2512,7 +2512,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * @param title Step name.
    * @param body Step body.
    */
-  step(title: string, body: () => Promise<any>): Promise<any>;
+  step<T>(title: string, body: () => Promise<T>): Promise<T>;
   /**
    * `expect` function can be used to create test assertions. Read
    * [expect library documentation](https://jestjs.io/docs/expect) for more details.
