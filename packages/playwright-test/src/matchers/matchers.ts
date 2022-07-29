@@ -24,6 +24,7 @@ import { toBeTruthy } from './toBeTruthy';
 import { toEqual } from './toEqual';
 import { toExpectedTextValues, toMatchText } from './toMatchText';
 import type { ParsedStackTrace } from 'playwright-core/lib/utils/stackTrace';
+import { isTextualMimeType } from 'playwright-core/lib/utils/mimeType';
 
 interface LocatorEx extends Locator {
   _expect(customStackTrace: ParsedStackTrace, expression: string, options: Omit<FrameExpectOptions, 'expectedValue'> & { expectedValue?: any }): Promise<{ matches: boolean, received?: any, log?: string[] }>;
@@ -292,7 +293,7 @@ export async function toBeOK(
   expectTypes(response, ['APIResponse'], matcherName);
 
   const contentType = response.headers()['content-type'];
-  const isTextEncoding = contentType && /^text\/|^application\/.*json/.test(contentType);
+  const isTextEncoding = contentType && isTextualMimeType(contentType);
   const [log, text] = (this.isNot === response.ok()) ? await Promise.all([
     response._fetchLog(),
     isTextEncoding ? response.text() : null
