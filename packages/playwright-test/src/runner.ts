@@ -216,7 +216,7 @@ export class Runner {
     const rootSuite = new Suite('', 'root');
     this._reporter.onBegin?.(config, rootSuite);
     const result: FullResult = { status: 'passed' };
-    const globalTearDown = await this._performGlobalSetup(config, rootSuite, result);
+    const globalTearDown = await this._performGlobalAndProjectSetup(config, rootSuite, config.projects, result);
     if (result.status !== 'passed')
       return;
 
@@ -330,7 +330,6 @@ export class Runner {
     for (const fileSuite of preprocessRoot.suites)
       fileSuites.set(fileSuite._requireFile, fileSuite);
 
-    const outputDirs = new Set<string>();
     const rootSuite = new Suite('', 'root');
     for (const [project, files] of filesByProject) {
       const grepMatcher = createTitleMatcher(project.grep);
@@ -355,7 +354,6 @@ export class Runner {
             projectSuite._addSuite(builtSuite);
         }
       }
-      outputDirs.add(project.outputDir);
     }
 
     // 7. Fail when no tests.
@@ -413,6 +411,7 @@ export class Runner {
 
     // 12. Remove output directores.
     try {
+      const outputDirs = new Set([...filesByProject.keys()].map(project => project.outputDir));
       await Promise.all(Array.from(outputDirs).map(outputDir => removeFolderAsync(outputDir).catch(async error => {
         if ((error as any).code === 'EBUSY') {
           // We failed to remove folder, might be due to the whole folder being mounted inside a container:
@@ -431,7 +430,7 @@ export class Runner {
 
     // 13. Run Global setup.
     const result: FullResult = { status: 'passed' };
-    const globalTearDown = await this._performGlobalSetup(config, rootSuite, result);
+    const globalTearDown = await this._performGlobalAndProjectSetup(config, rootSuite, [...filesByProject.keys()], result);
     if (result.status !== 'passed')
       return result;
 
@@ -465,22 +464,43 @@ export class Runner {
     return result;
   }
 
-  private async _performGlobalSetup(config: FullConfigInternal, rootSuite: Suite, result: FullResult): Promise<(() => Promise<void>) | undefined> {
-    let globalSetupResult: any;
+  private async _performGlobalAndProjectSetup(config: FullConfigInternal, rootSuite: Suite, projects: FullProjectInternal[], result: FullResult): Promise<(() => Promise<void>) | undefined> {
+    type SetupData = {
+      setupFile?: string | null;
+      teardownFile?: string | null;
+      setupResult?: any;
+    };
+
+    const setups: SetupData[] = [];
+    setups.push({
+      setupFile: config.globalSetup,
+      teardownFile: config.globalTeardown,
+      setupResult: undefined,
+    });
+    for (const project of projects) {
+      setups.push({
+        setupFile: project._projectSetup,
+        teardownFile: project._projectTeardown,
+        setupResult: undefined,
+      });
+    }
+
     const pluginsThatWereSetUp: TestRunnerPlugin[] = [];
     const sigintWatcher = new SigIntWatcher();
 
     const tearDown = async () => {
-      // Reverse to setup.
-      await this._runAndReportError(async () => {
-        if (globalSetupResult && typeof globalSetupResult === 'function')
-          await globalSetupResult(this._loader.fullConfig());
-      }, result);
+      setups.reverse();
+      for (const setup of setups) {
+        await this._runAndReportError(async () => {
+          if (setup.setupResult && typeof setup.setupResult === 'function')
+            await setup.setupResult(this._loader.fullConfig());
+        }, result);
 
-      await this._runAndReportError(async () => {
-        if (globalSetupResult && config.globalTeardown)
-          await (await this._loader.loadGlobalHook(config.globalTeardown, 'globalTeardown'))(this._loader.fullConfig());
-      }, result);
+        await this._runAndReportError(async () => {
+          if (setup.setupResult && setup.teardownFile)
+            await (await this._loader.loadGlobalHook(setup.teardownFile))(this._loader.fullConfig());
+        }, result);
+      }
 
       for (const plugin of pluginsThatWereSetUp.reverse()) {
         await this._runAndReportError(async () => {
@@ -505,17 +525,19 @@ export class Runner {
         pluginsThatWereSetUp.push(plugin);
       }
 
-      // The do global setup.
-      if (!sigintWatcher.hadSignal()) {
-        if (config.globalSetup) {
-          const hook = await this._loader.loadGlobalHook(config.globalSetup, 'globalSetup');
-          await Promise.race([
-            Promise.resolve().then(() => hook(this._loader.fullConfig())).then((r: any) => globalSetupResult = r || '<noop>'),
-            sigintWatcher.promise(),
-          ]);
-        } else {
-          // Make sure we run globalTeardown.
-          globalSetupResult = '<noop>';
+      // Then do global setup and project setups.
+      for (const setup of setups) {
+        if (!sigintWatcher.hadSignal()) {
+          if (setup.setupFile) {
+            const hook = await this._loader.loadGlobalHook(setup.setupFile);
+            await Promise.race([
+              Promise.resolve().then(() => hook(this._loader.fullConfig())).then((r: any) => setup.setupResult = r || '<noop>'),
+              sigintWatcher.promise(),
+            ]);
+          } else {
+            // Make sure we run the teardown.
+            setup.setupResult = '<noop>';
+          }
         }
       }
     }, result);
