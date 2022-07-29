@@ -17,7 +17,7 @@
 
 // This file is injected into the registry as text, no dependencies are allowed.
 
-import { createApp, setDevtoolsHook, h } from 'vue';
+import { createApp, setDevtoolsHook, h, reactive, defineComponent } from 'vue';
 
 /** @typedef {import('@playwright/test/types/component').Component} Component */
 /** @typedef {import('vue').Component} FrameworkComponent */
@@ -34,20 +34,21 @@ export function register(components) {
 }
 
 const allListeners = [];
+const allProps = reactive({});
 
 /**
  * @param {Component | string} child
- * @returns {import('vue').VNode | string}
+ * @returns {import('vue').Component | string}
  */
 function renderChild(child) {
-  return typeof child === 'string' ? child : render(child);
+  return typeof child === 'string' ? child : createWrapper(child);
 }
 
 /**
  * @param {Component} component
- * @returns {import('vue').VNode}
+ * @returns {import('vue').Component}
  */
-function render(component) {
+function createWrapper(component) {
   if (typeof component === 'string')
     return component;
 
@@ -73,14 +74,13 @@ function render(component) {
   const isVueComponent = componentFunc !== component.type;
 
   /**
-   * @type {(import('vue').VNode | string)[]}
+   * @type {(import('vue').Component | string)[]}
    */
   const children = [];
   /** @type {{[key: string]: any}} */
   const slots = {};
   const listeners = {};
   /** @type {{[key: string]: any}} */
-  let props = {};
 
   if (component.kind === 'jsx') {
     for (const child of component.children || []) {
@@ -99,23 +99,26 @@ function render(component) {
         if (isVueComponent)
           listeners[event] = value;
         else
-          props[`on${event[0].toUpperCase()}${event.substring(1)}`] = value;
+          allProps[`on${event[0].toUpperCase()}${event.substring(1)}`] = value;
       } else {
-        props[key] = value;
+        allProps[key] = value;
       }
     }
   }
 
   if (component.kind === 'object') {
     // Vue test util syntax.
-    for (const [key, value] of Object.entries(component.options.slots || {})) {
+    for (const [key, value] of Object.entries(component.options?.slots || {})) {
       if (key === 'default')
         children.push(value);
       else
         slots[key] = value;
     }
-    props = component.options.props || {};
-    for (const [key, value] of Object.entries(component.options.on || {}))
+
+    for (const [key, value] of Object.entries(component.options?.props || {}))
+      allProps[key] = value;
+
+    for (const [key, value] of Object.entries(component.options?.on || {}))
       listeners[key] = value;
   }
 
@@ -127,9 +130,13 @@ function render(component) {
   } else if (children.length) {
     lastArg = children;
   }
-
-  // @ts-ignore
-  const wrapper = h(componentFunc, props, lastArg);
+  const wrapper = defineComponent({
+    name: 'PLAYWRIGHT_ROOT',
+    render() {
+      // @ts-ignore
+      return h(componentFunc, allProps, lastArg);
+    }
+  });
   allListeners.push([wrapper, listeners]);
   return wrapper;
 }
@@ -143,8 +150,8 @@ function createDevTools() {
       if (eventType === 'component:emit') {
         const [, componentVM, event, eventArgs] = payload;
         for (const [wrapper, listeners] of allListeners) {
-          if (wrapper.component !== componentVM)
-            continue;
+          // if (wrapper.component !== componentVM)
+          //   continue;
           const listener = listeners[event];
           if (!listener)
             return;
@@ -155,10 +162,11 @@ function createDevTools() {
   };
 }
 
+const appKey = Symbol('appKey');
+
 window.playwrightMount = async (component, rootElement, hooksConfig) => {
-  const app = createApp({
-    render: () => render(component)
-  });
+  const wrapper = createWrapper(component);
+  const app = createApp(wrapper);
   setDevtoolsHook(createDevTools(), {});
 
   for (const hook of /** @type {any} */(window).__pw_hooks_before_mount || [])
@@ -169,11 +177,14 @@ window.playwrightMount = async (component, rootElement, hooksConfig) => {
     await hook({ app, hooksConfig, instance });
 };
 
-window.playwrightUnmount = async element => { 
+window.playwrightUnmount = async element => {
   const app = /** @type {import('vue').App} */ (element[appKey]);
   if (!app)
     throw new Error('Component was not mounted');
   app.unmount();
 };
 
-const appKey = Symbol('appKey');
+window.playwrightSetProps = async props => {
+  for (const [key, value] of Object.entries(props))
+    allProps[key] = value;
+};
