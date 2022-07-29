@@ -697,9 +697,9 @@ test.only('should match on script and style contents depending on useInnerText s
   `);
 
   // These first two may be surprising, but unless users report this unexpected behavior, they are intended for now.
-  await expect(page.locator("body")).toContainText("text in css");
-  await expect(page.locator("body")).toContainText("text in script");
+  await expect(page.locator('body')).toContainText('text in css');
+  await expect(page.locator('body')).toContainText('text in script');
 
-  await expect(page.locator("body")).not.toContainText("text in css", { useInnerText: true });
-  await expect(page.locator("body")).not.toContainText("text in script", { useInnerText: true });
+  await expect(page.locator('body')).not.toContainText('text in css', { useInnerText: true });
+  await expect(page.locator('body')).not.toContainText('text in script', { useInnerText: true });
 });
