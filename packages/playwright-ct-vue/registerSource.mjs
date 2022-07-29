@@ -35,7 +35,6 @@ export function register(components) {
 
 const allListeners = [];
 
-
 /**
  * @param {Component | string} child
  * @returns {import('vue').VNode | string}
@@ -130,6 +129,7 @@ function render(component) {
   } else if (children.length) {
     lastArg = children;
   }
+
   // @ts-ignore
   const wrapper = h(componentFunc, props, lastArg);
   allListeners.push([wrapper, listeners]);
