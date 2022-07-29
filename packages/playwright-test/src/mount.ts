@@ -66,7 +66,7 @@ export const fixtures: Fixtures<
     setProps: async ({}, use) => {
       await use(async (locator: Locator, props: { [key: string]: any }) => {
         return await locator.evaluate(async (element, props) => {
-          return await window.playwrightSetProps(props);
+          return await window.playwrightSetProps(element, props);
         }, props);
       });
     }

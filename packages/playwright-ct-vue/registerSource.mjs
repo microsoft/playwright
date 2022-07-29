@@ -17,7 +17,7 @@
 
 // This file is injected into the registry as text, no dependencies are allowed.
 
-import { createApp, setDevtoolsHook, h, reactive, defineComponent } from 'vue';
+import { createApp, setDevtoolsHook, h } from 'vue';
 
 /** @typedef {import('@playwright/test/types/component').Component} Component */
 /** @typedef {import('vue').Component} FrameworkComponent */
@@ -34,21 +34,21 @@ export function register(components) {
 }
 
 const allListeners = [];
-const allProps = reactive({});
+
 
 /**
  * @param {Component | string} child
- * @returns {import('vue').Component | string}
+ * @returns {import('vue').VNode | string}
  */
 function renderChild(child) {
-  return typeof child === 'string' ? child : createWrapper(child);
+  return typeof child === 'string' ? child : render(child);
 }
 
 /**
  * @param {Component} component
- * @returns {import('vue').Component}
+ * @returns {import('vue').VNode}
  */
-function createWrapper(component) {
+function render(component) {
   if (typeof component === 'string')
     return component;
 
@@ -74,13 +74,14 @@ function createWrapper(component) {
   const isVueComponent = componentFunc !== component.type;
 
   /**
-   * @type {(import('vue').Component | string)[]}
+   * @type {(import('vue').VNode | string)[]}
    */
   const children = [];
   /** @type {{[key: string]: any}} */
   const slots = {};
   const listeners = {};
   /** @type {{[key: string]: any}} */
+  let props = {};
 
   if (component.kind === 'jsx') {
     for (const child of component.children || []) {
@@ -99,9 +100,9 @@ function createWrapper(component) {
         if (isVueComponent)
           listeners[event] = value;
         else
-          allProps[`on${event[0].toUpperCase()}${event.substring(1)}`] = value;
+          props[`on${event[0].toUpperCase()}${event.substring(1)}`] = value;
       } else {
-        allProps[key] = value;
+        props[key] = value;
       }
     }
   }
@@ -115,8 +116,7 @@ function createWrapper(component) {
         slots[key] = value;
     }
 
-    for (const [key, value] of Object.entries(component.options?.props || {}))
-      allProps[key] = value;
+    props = component.options?.props || {};
 
     for (const [key, value] of Object.entries(component.options?.on || {}))
       listeners[key] = value;
@@ -130,13 +130,8 @@ function createWrapper(component) {
   } else if (children.length) {
     lastArg = children;
   }
-  const wrapper = defineComponent({
-    name: 'PLAYWRIGHT_ROOT',
-    render() {
-      // @ts-ignore
-      return h(componentFunc, allProps, lastArg);
-    }
-  });
+  // @ts-ignore
+  const wrapper = h(componentFunc, props, lastArg);
   allListeners.push([wrapper, listeners]);
   return wrapper;
 }
@@ -150,8 +145,8 @@ function createDevTools() {
       if (eventType === 'component:emit') {
         const [, componentVM, event, eventArgs] = payload;
         for (const [wrapper, listeners] of allListeners) {
-          // if (wrapper.component !== componentVM)
-          //   continue;
+          if (wrapper.component !== componentVM)
+            continue;
           const listener = listeners[event];
           if (!listener)
             return;
@@ -163,16 +158,20 @@ function createDevTools() {
 }
 
 const appKey = Symbol('appKey');
+const componentKey = Symbol('componentKey');
 
 window.playwrightMount = async (component, rootElement, hooksConfig) => {
-  const wrapper = createWrapper(component);
-  const app = createApp(wrapper);
+  const wrapper = render(component);
+  const app = createApp({
+    render: () => wrapper
+  });
   setDevtoolsHook(createDevTools(), {});
 
   for (const hook of /** @type {any} */(window).__pw_hooks_before_mount || [])
     await hook({ app, hooksConfig });
   const instance = app.mount(rootElement);
   instance.$el[appKey] = app;
+  instance.$el[componentKey] = wrapper;
   for (const hook of /** @type {any} */(window).__pw_hooks_after_mount || [])
     await hook({ app, hooksConfig, instance });
 };
@@ -184,7 +183,11 @@ window.playwrightUnmount = async element => {
   app.unmount();
 };
 
-window.playwrightSetProps = async props => {
+window.playwrightSetProps = async (element, props) => {
+  const component = element[componentKey].component;
+  if (!component)
+    throw new Error('Component was not mounted');
+
   for (const [key, value] of Object.entries(props))
-    allProps[key] = value;
+    component.props[key] = value;
 };
