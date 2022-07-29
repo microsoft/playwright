@@ -384,7 +384,7 @@ test('should return value from step', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
       const { test } = pwt;
-      test('timeout', async ({ page }) => {
+      test('steps with return values', async ({ page }) => {
         const v1 = await test.step('my step', () => {
           //await new Promise(() => {});
           return 10;
@@ -397,6 +397,8 @@ test('should return value from step', async ({ runInlineTest }) => {
       });
     `
   }, { reporter: '', workers: 1 });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
   expect(result.output).toContain('v1 = 10');
   expect(result.output).toContain('v2 = 20');
 });
