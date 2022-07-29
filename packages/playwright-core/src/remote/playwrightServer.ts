@@ -16,9 +16,12 @@
 
 import { debug, wsServer } from '../utilsBundle';
 import type { WebSocketServer } from '../utilsBundle';
-import * as http from 'http';
+import http from 'http';
 import type { Browser } from '../server/browser';
+import type { Playwright } from '../server/playwright';
+import { createPlaywright } from '../server/playwright';
 import { PlaywrightConnection } from './playwrightConnection';
+import { assert } from '../utils';
 
 const debugLog = debug('pw:server');
 
@@ -30,24 +33,31 @@ function newLogger() {
   return (message: string) => debugLog(`[id=${id}] ${message}`);
 }
 
+export type Mode = 'use-pre-launched-browser' | 'reuse-browser' | 'auto';
+
+type ServerOptions = {
+  path: string;
+  maxClients: number;
+  enableSocksProxy: boolean;
+  preLaunchedBrowser?: Browser
+};
+
 export class PlaywrightServer {
-  private _path: string;
-  private _maxClients: number;
-  private _enableSocksProxy: boolean;
-  private _browser: Browser | undefined;
+  private _preLaunchedPlaywright: Playwright | null = null;
   private _wsServer: WebSocketServer | undefined;
   private _clientsCount = 0;
+  private _mode: Mode;
+  private _options: ServerOptions;
 
-  static async startDefault(options: { path?: string, maxClients?: number, enableSocksProxy?: boolean } = {}): Promise<PlaywrightServer> {
-    const { path = '/ws', maxClients = 1, enableSocksProxy = true } = options;
-    return new PlaywrightServer(path, maxClients, enableSocksProxy);
-  }
-
-  constructor(path: string, maxClients: number, enableSocksProxy: boolean, browser?: Browser) {
-    this._path = path;
-    this._maxClients = maxClients;
-    this._enableSocksProxy = enableSocksProxy;
-    this._browser = browser;
+  constructor(mode: Mode, options: ServerOptions) {
+    this._mode = mode;
+    this._options = options;
+    if (mode === 'use-pre-launched-browser') {
+      assert(options.preLaunchedBrowser);
+      this._preLaunchedPlaywright = options.preLaunchedBrowser.options.rootSdkObject as Playwright;
+    }
+    if (mode === 'reuse-browser')
+      this._preLaunchedPlaywright = createPlaywright('javascript');
   }
 
   async listen(port: number = 0): Promise<string> {
@@ -63,33 +73,37 @@ export class PlaywrightServer {
           reject(new Error('Could not bind server socket'));
           return;
         }
-        const wsEndpoint = typeof address === 'string' ? `${address}${this._path}` : `ws://127.0.0.1:${address.port}${this._path}`;
+        const wsEndpoint = typeof address === 'string' ? `${address}${this._options.path}` : `ws://127.0.0.1:${address.port}${this._options.path}`;
         resolve(wsEndpoint);
       }).on('error', reject);
     });
 
     debugLog('Listening at ' + wsEndpoint);
 
-    this._wsServer = new wsServer({ server, path: this._path });
+    this._wsServer = new wsServer({ server, path: this._options.path });
     const originalShouldHandle = this._wsServer.shouldHandle.bind(this._wsServer);
-    this._wsServer.shouldHandle = request => originalShouldHandle(request) && this._clientsCount < this._maxClients;
+    this._wsServer.shouldHandle = request => originalShouldHandle(request) && this._clientsCount < this._options.maxClients;
     this._wsServer.on('connection', async (ws, request) => {
-      if (this._clientsCount >= this._maxClients) {
+      if (this._clientsCount >= this._options.maxClients) {
         ws.close(1013, 'Playwright Server is busy');
         return;
       }
       const url = new URL('http://localhost' + (request.url || ''));
       const browserHeader = request.headers['x-playwright-browser'];
-      const browserAlias = url.searchParams.get('browser') || (Array.isArray(browserHeader) ? browserHeader[0] : browserHeader);
+      const browserAlias = url.searchParams.get('browser') || (Array.isArray(browserHeader) ? browserHeader[0] : browserHeader) || null;
       const headlessHeader = request.headers['x-playwright-headless'];
       const headlessValue = url.searchParams.get('headless') || (Array.isArray(headlessHeader) ? headlessHeader[0] : headlessHeader);
       const proxyHeader = request.headers['x-playwright-proxy'];
       const proxyValue = url.searchParams.get('proxy') || (Array.isArray(proxyHeader) ? proxyHeader[0] : proxyHeader);
-      const enableSocksProxy = this._enableSocksProxy && proxyValue === '*';
+      const enableSocksProxy = this._options.enableSocksProxy && proxyValue === '*';
       this._clientsCount++;
       const log = newLogger();
       log(`serving connection: ${request.url}`);
-      const connection = new PlaywrightConnection(ws, enableSocksProxy, browserAlias, headlessValue !== '0', this._browser, log, () => this._clientsCount--);
+      const connection = new PlaywrightConnection(
+          this._mode, ws,
+          { enableSocksProxy, browserAlias, headless: headlessValue !== '0' },
+          { playwright: this._preLaunchedPlaywright, browser: this._options.preLaunchedBrowser || null },
+          log, () => this._clientsCount--);
       (ws as any)[kConnectionSymbol] = connection;
     });
 

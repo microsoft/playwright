@@ -18,8 +18,7 @@ import { contextTest, expect } from '../config/browserTest';
 import { InMemorySnapshotter } from '../../packages/playwright-core/lib/server/trace/test/inMemorySnapshotter';
 
 const it = contextTest.extend<{ snapshotter: InMemorySnapshotter }>({
-  snapshotter: async ({ mode, toImpl, context }, run, testInfo) => {
-    testInfo.skip(mode !== 'default');
+  snapshotter: async ({ toImpl, context }, run) => {
     const snapshotter = new InMemorySnapshotter(toImpl(context));
     await snapshotter.initialize();
     await run(snapshotter);
