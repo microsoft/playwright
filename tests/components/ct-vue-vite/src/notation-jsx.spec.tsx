@@ -12,9 +12,8 @@ test('props should work', async ({ mount }) => {
 
 test('update props should work', async ({ mount, setProps }) => {
   const component = await mount(<Button title='Submit'></Button>);
-
+  await expect(component).toContainText('Submit');
   await setProps(component, { title: 'Loading' });
-
   await expect(component).toContainText('Loading');
 })
 

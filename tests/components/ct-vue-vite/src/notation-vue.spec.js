@@ -1,6 +1,5 @@
 import { test, expect } from '@playwright/experimental-ct-vue'
 
-import has from 'has'
 import Button from './components/Button.vue'
 import DefaultSlot from './components/DefaultSlot.vue'
 import NamedSlots from './components/NamedSlots.vue'
@@ -23,9 +22,8 @@ test('update props should work', async ({ mount, setProps }) => {
       title: 'Submit'
     }
   });
-
+  await expect(component).toContainText('Submit');
   await setProps(component, { title: 'Loading' });
-
   await expect(component).toContainText('Loading');
 })
 
