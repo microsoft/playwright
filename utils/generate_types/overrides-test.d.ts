@@ -121,6 +121,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
   describe: SuiteFunction & {
     only: SuiteFunction;
     skip: SuiteFunction;
+    fixme: SuiteFunction;
     serial: SuiteFunction & {
       only: SuiteFunction;
     };
