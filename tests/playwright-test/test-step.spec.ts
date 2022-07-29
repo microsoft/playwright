@@ -386,7 +386,6 @@ test('should return value from step', async ({ runInlineTest }) => {
       const { test } = pwt;
       test('steps with return values', async ({ page }) => {
         const v1 = await test.step('my step', () => {
-          //await new Promise(() => {});
           return 10;
         });
         console.log('v1 = ' + v1);

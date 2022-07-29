@@ -135,3 +135,26 @@ test('test.extend options should check types', async ({ runTSC }) => {
   });
   expect(result.exitCode).toBe(0);
 });
+
+test('step should inherit return type from its callback ', async ({ runTSC }) => {
+  const result = await runTSC({
+    'a.spec.ts': `
+      const { test } = pwt;
+      test('my test', async ({ }) => {
+        // @ts-expect-error
+        const bad1: string = await test.step('my step', () => {
+          return 10;
+        });
+        // @ts-expect-error
+        const bad2: string = await test.step('my step', async () => {
+          return 10;
+        });
+        const good: string = await test.step('my step', async () => {
+          return 'foo';
+        });
+        await test.step('my step', async () => { });
+      });
+    `
+  });
+  expect(result.exitCode).toBe(0);
+});
