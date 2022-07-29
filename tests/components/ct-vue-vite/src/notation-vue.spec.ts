@@ -5,7 +5,7 @@ import DefaultSlot from './components/DefaultSlot.vue'
 import NamedSlots from './components/NamedSlots.vue'
 import Component from './components/Component.vue'
 
-test.use({ viewport: { width: 1200, height: 500 } })
+test.use({ viewport: { width: 500, height: 500 } })
 
 test('props should work', async ({ mount }) => {
   const component = await mount(Button, {
