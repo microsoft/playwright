@@ -1846,10 +1846,10 @@ index 0d42c17c6a85b2a9f6af319431332f7f8a709188..8899c8e85b11db81d1da14c7f2781488
      Source/third_party/opus/src/celt
      Source/third_party/opus/src/include
 diff --git a/Source/ThirdParty/libwebrtc/Configurations/libwebrtc.mac.exp b/Source/ThirdParty/libwebrtc/Configurations/libwebrtc.mac.exp
-index 4157c0a95fa332ac85a295814fda2fb61f3da434..6edd90d2c5fc3b16d19f4d73edacf8b3c776bb9e 100644
+index 4157c0a95fa332ac85a295814fda2fb61f3da434..f77a990c1a52f3ab2943a02a4375bb71d91c1656 100644
 --- a/Source/ThirdParty/libwebrtc/Configurations/libwebrtc.mac.exp
 +++ b/Source/ThirdParty/libwebrtc/Configurations/libwebrtc.mac.exp
-@@ -338,3 +338,23 @@ __ZN6webrtc32createPixelBufferFromFrameBufferERNS_16VideoFrameBufferERKNSt3__18f
+@@ -338,3 +338,24 @@ __ZN6webrtc32createPixelBufferFromFrameBufferERNS_16VideoFrameBufferERKNSt3__18f
  __ZN6webrtc25CreateTaskQueueGcdFactoryEv
  __ZN6webrtc27CreatePeerConnectionFactoryEPN3rtc6ThreadES2_S2_NS0_13scoped_refptrINS_17AudioDeviceModuleEEENS3_INS_19AudioEncoderFactoryEEENS3_INS_19AudioDecoderFactoryEEENSt3__110unique_ptrINS_19VideoEncoderFactoryENSA_14default_deleteISC_EEEENSB_INS_19VideoDecoderFactoryENSD_ISG_EEEENS3_INS_10AudioMixerEEENS3_INS_15AudioProcessingEEEPNS_19AudioFrameProcessorENSB_INS_16TaskQueueFactoryENSD_ISP_EEEE
  __ZN6webrtc16convertBGRAToYUVEP10__CVBufferS1_
@@ -1864,6 +1864,7 @@ index 4157c0a95fa332ac85a295814fda2fb61f3da434..6edd90d2c5fc3b16d19f4d73edacf8b3
 +__ZN8mkvmuxer7SegmentD1Ev
 +__ZN8mkvmuxer9MkvWriterC1EP7__sFILE
 +_ARGBToI420
++_vpx_codec_destroy
 +_vpx_codec_enc_config_default
 +_vpx_codec_enc_init_ver
 +_vpx_codec_encode
