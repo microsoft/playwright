@@ -40,6 +40,7 @@ test('basics should work', async ({ runTSC }) => {
       test.describe.serial('suite', () => {});
       test.describe.serial.only('suite', () => {});
       test.describe.skip('suite', () => {});
+      test.describe.fixme('suite', () => {});
       // @ts-expect-error
       test.foo();
     `
