@@ -307,6 +307,7 @@ class TestServer {
       return;
     if (err) {
       response.statusCode = 404;
+      response.setHeader('Content-Type', 'text/plain');
       response.end(`File not found: ${filePath}`);
       return;
     }

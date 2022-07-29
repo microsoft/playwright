@@ -290,13 +290,18 @@ export async function toBeOK(
 ) {
   const matcherName = 'toBeOK';
   expectTypes(response, ['APIResponse'], matcherName);
+
+  const contentType = response.headers()['content-type'];
+  const isTextEncoding = contentType && /^text\/|^application\/.*json/.test(contentType);
   const [log, text] = (this.isNot === response.ok()) ? await Promise.all([
     response._fetchLog(),
-    response.text()
+    isTextEncoding ? response.text() : null
   ]) : [];
+
   const message = () => this.utils.matcherHint(matcherName, undefined, '', { isNot: this.isNot }) +
     callLogText(log) +
-    `\nResponse text:\n${colors.dim(text?.substring(0, 1000) || '')}`;
+    (text === null ? '' : `\nResponse text:\n${colors.dim(text?.substring(0, 1000) || '')}`);
+
   const pass = response.ok();
   return { message, pass };
 }
