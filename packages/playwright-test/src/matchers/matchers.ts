@@ -16,6 +16,7 @@
 
 import type { Locator, Page, APIResponse } from 'playwright-core';
 import type { FrameExpectOptions } from 'playwright-core/lib/client/types';
+import { colors } from 'playwright-core/lib/utilsBundle';
 import { constructURLBasedOnBaseURL } from 'playwright-core/lib/utils';
 import type { Expect } from '../types';
 import { expectTypes, callLogText } from '../util';
@@ -23,6 +24,7 @@ import { toBeTruthy } from './toBeTruthy';
 import { toEqual } from './toEqual';
 import { toExpectedTextValues, toMatchText } from './toMatchText';
 import type { ParsedStackTrace } from 'playwright-core/lib/utils/stackTrace';
+import { isTextualMimeType } from 'playwright-core/lib/utils/mimeType';
 
 interface LocatorEx extends Locator {
   _expect(customStackTrace: ParsedStackTrace, expression: string, options: Omit<FrameExpectOptions, 'expectedValue'> & { expectedValue?: any }): Promise<{ matches: boolean, received?: any, log?: string[] }>;
@@ -289,8 +291,18 @@ export async function toBeOK(
 ) {
   const matcherName = 'toBeOK';
   expectTypes(response, ['APIResponse'], matcherName);
-  const log = (this.isNot === response.ok()) ? await response._fetchLog() : [];
-  const message = () => this.utils.matcherHint(matcherName, undefined, '', { isNot: this.isNot }) + callLogText(log);
+
+  const contentType = response.headers()['content-type'];
+  const isTextEncoding = contentType && isTextualMimeType(contentType);
+  const [log, text] = (this.isNot === response.ok()) ? await Promise.all([
+    response._fetchLog(),
+    isTextEncoding ? response.text() : null
+  ]) : [];
+
+  const message = () => this.utils.matcherHint(matcherName, undefined, '', { isNot: this.isNot }) +
+    callLogText(log) +
+    (text === null ? '' : `\nResponse text:\n${colors.dim(text?.substring(0, 1000) || '')}`);
+
   const pass = response.ok();
   return { message, pass };
 }
