@@ -45,6 +45,7 @@ import type { TestRunnerPlugin } from './plugins';
 import { setRunnerToAddPluginsTo } from './plugins';
 import { webServerPluginsForConfig } from './plugins/webServerPlugin';
 import { MultiMap } from 'playwright-core/lib/utils/multimap';
+import { createGuid } from 'playwright-core/lib/utils';
 
 const removeFolderAsync = promisify(rimraf);
 const readDirAsync = promisify(fs.readdir);
@@ -207,6 +208,37 @@ export class Runner {
       });
     }
     return report;
+  }
+
+  async runTestServer(): Promise<void> {
+    const config = this._loader.fullConfig();
+    this._reporter = await this._createReporter(false);
+    const rootSuite = new Suite('', 'root');
+    this._reporter.onBegin?.(config, rootSuite);
+    const result: FullResult = { status: 'passed' };
+    const globalTearDown = await this._performGlobalSetup(config, rootSuite, result);
+    if (result.status !== 'passed')
+      return;
+
+    while (true) {
+      const nextTest = await (this._reporter as any)._nextTest!();
+      if (!nextTest)
+        break;
+      const { projectId, file, line } = nextTest;
+      const testGroup: TestGroup = {
+        workerHash: createGuid(), // Create new worker for each test.
+        requireFile: file,
+        repeatEachIndex: 0,
+        projectId,
+        tests: [],
+        testServerTestLine: line,
+      };
+      const dispatcher = new Dispatcher(this._loader, [testGroup], this._reporter);
+      await dispatcher.run();
+    }
+
+    await globalTearDown?.();
+    await this._reporter.onEnd?.(result);
   }
 
   private async _run(list: boolean, testFileReFilters: FilePatternFilter[], projectNames?: string[]): Promise<FullResult> {
