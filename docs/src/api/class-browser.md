@@ -96,11 +96,13 @@ were opened).
 In case this browser is connected to, clears all created contexts belonging to this browser and disconnects from the
 browser server.
 
-:::note
-This is similar to force quitting the browser. Therefore, you should call [`method: BrowserContext.close`] on any [BrowserContext]'s you explicitly created earlier with [`method: Browser.newContext`] **before** calling [`method: Browser.close`].
-:::
-
 The [Browser] object itself is considered to be disposed and cannot be used anymore.
+
+### option: Browser.close.force
+* since: v1.25
+- `force` <boolean>
+
+Whether to bypass the closure of the contexts. Defaults to `false`.
 
 ## method: Browser.contexts
 * since: v1.8
@@ -168,11 +170,6 @@ Returns the newly created browser session.
 
 Creates a new browser context. It won't share cookies/cache with other browser contexts.
 
-:::note
-If directly using this method to create [BrowserContext]s, it is best practice to explicilty close the returned context via [`method: BrowserContext.close`] when your code is done with the [BrowserContext],
-and before calling [`method: Browser.close`]. This will ensure the `context` is closed gracefully and any artifacts—like HARs and videos—are fully flushed and saved.
-:::
-
 ```js
 (async () => {
   const browser = await playwright.firefox.launch();  // Or 'chromium' or 'webkit'.
@@ -181,9 +178,6 @@ and before calling [`method: Browser.close`]. This will ensure the `context` is 
   // Create a new page in a pristine context.
   const page = await context.newPage();
   await page.goto('https://example.com');
-
-  // Gracefully close up everything
-  await context.close();
   await browser.close();
 })();
 ```
@@ -195,9 +189,6 @@ BrowserContext context = browser.newContext();
 // Create a new page in a pristine context.
 Page page = context.newPage();
 page.navigate('https://example.com');
-
-// Gracefull close up everything
-context.close();
 browser.close();
 ```
 
@@ -208,9 +199,6 @@ context = await browser.new_context()
 # create a new page in a pristine context.
 page = await context.new_page()
 await page.goto("https://example.com")
-
-# gracefully close up everything
-await context.close()
 await browser.close()
 ```
 
@@ -221,9 +209,6 @@ context = browser.new_context()
 # create a new page in a pristine context.
 page = context.new_page()
 page.goto("https://example.com")
-
-# gracefully close up everything
-context.close()
 browser.close()
 ```
 
@@ -235,9 +220,6 @@ var context = await browser.NewContextAsync();
 // Create a new page in a pristine context.
 var page = await context.NewPageAsync(); ;
 await page.GotoAsync("https://www.bing.com");
-
-// Gracefully close up everything
-await context.CloseAsync();
 await browser.CloseAsync();
 ```
 

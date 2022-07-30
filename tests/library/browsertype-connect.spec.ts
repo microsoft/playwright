@@ -253,6 +253,20 @@ test('should reject navigation when browser closes', async ({ browserType, start
   await server.waitForRequest('/one-style.css');
   await browser.close();
   const error = await navigationPromise;
+  console.log(error.message);
+  expect(error.message).toContain('was closed');
+});
+
+test('should reject navigation when browser closes forced', async ({ browserType, startRemoteServer, server }) => {
+  const remoteServer = await startRemoteServer();
+  server.setRoute('/one-style.css', () => {});
+  const browser = await browserType.connect({ wsEndpoint: remoteServer.wsEndpoint() });
+  const page = await browser.newPage();
+  const navigationPromise = page.goto(server.PREFIX + '/one-style.html', { timeout: 60000 }).catch(e => e);
+  await server.waitForRequest('/one-style.css');
+  await browser.close({ force: true });
+  const error = await navigationPromise;
+  console.log(error.message);
   expect(error.message).toContain('has been closed');
 });
 
@@ -267,6 +281,21 @@ test('should reject waitForSelector when browser closes', async ({ browserType, 
   await page.waitForSelector('body', { state: 'attached' });
 
   await browser.close();
+  const error = await watchdog;
+  expect(error.message).toContain('closed');
+});
+
+test('should reject waitForSelector when browser closes forced', async ({ browserType, startRemoteServer, server }) => {
+  const remoteServer = await startRemoteServer();
+  server.setRoute('/empty.html', () => {});
+  const browser = await browserType.connect({ wsEndpoint: remoteServer.wsEndpoint() });
+  const page = await browser.newPage();
+  const watchdog = page.waitForSelector('div', { state: 'attached', timeout: 60000 }).catch(e => e);
+
+  // Make sure the previous waitForSelector has time to make it to the browser before we disconnect.
+  await page.waitForSelector('body', { state: 'attached' });
+
+  await browser.close({ force: true });
   const error = await watchdog;
   expect(error.message).toContain('has been closed');
 });

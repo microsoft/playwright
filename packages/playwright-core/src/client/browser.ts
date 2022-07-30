@@ -116,8 +116,13 @@ export class Browser extends ChannelOwner<channels.BrowserChannel> implements ap
     return (await this._channel.stopTracing()).binary;
   }
 
-  async close(): Promise<void> {
+  async close(options: { force?: boolean; } = {}): Promise<void> {
     try {
+      if (!options.force) {
+        for (const context of this._contexts)
+          await context.close();
+      }
+
       if (this._shouldCloseConnectionOnClose)
         this._connection.close(kBrowserClosedError);
       else
