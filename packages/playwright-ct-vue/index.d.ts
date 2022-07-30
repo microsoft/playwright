@@ -36,7 +36,7 @@ export type PlaywrightTestConfig = Omit<BasePlaywrightTestConfig, 'use'> & {
 
 interface MountResult<Props = { [key: string]: any }> extends Locator {
   unmount(): Promise<void>;
-  updateProps(props: Partial<Props>): Promise<void>
+  setProps(props: Partial<Props>): Promise<void>
 }
 
 export interface ComponentFixtures {

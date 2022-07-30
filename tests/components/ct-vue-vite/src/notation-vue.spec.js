@@ -22,7 +22,7 @@ test('update props should work', async ({ mount }) => {
     }
   });
   await expect(component).toContainText('Submit');
-  await component.updateProps({ title: 'Loading' });
+  await component.setProps({ title: 'Loading' });
   await expect(component).toContainText('Loading');
 })
 
