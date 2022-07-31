@@ -78,7 +78,7 @@ test("'planId' in config expected @azure", async ({ runInlineTest }) => {
           ['azure', { 
             orgUrl: 'http://azure.devops.com',
             projectName: 'test',
-            }]
+          }]
         ]
       };
     `,
@@ -128,7 +128,8 @@ test('correct orgUrl config expected @azure', async ({ runInlineTest }) => {
             orgUrl: 'http://azure.devops.com',
             projectName: 'test',
             planId: 231,
-            token: 'token'
+            token: 'token',
+            logging: true,
           }]
         ]
       };
@@ -147,15 +148,16 @@ test('correct orgUrl config expected @azure', async ({ runInlineTest }) => {
 test('06 correct orgUrl config, incorrect token @azure', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = { 
+      module.exports = {
         reporter: [
           ['list'],
           ['${reporterPath('06')}'],
-          ['azure', { 
+          ['azure', {
             orgUrl: 'https://dev.azure.com/alex-alex',
             projectName: 'test',
             planId: 231,
-            token: 'token'
+            token: 'token',
+            logging: true,
           }]
         ]
       };
@@ -168,6 +170,7 @@ test('06 correct orgUrl config, incorrect token @azure', async ({ runInlineTest 
       `
   }, { reporter: '' });
   expect(stripAnsi(result.output)).toContain('Failed request: (401)');
+  expect(stripAnsi(result.output)).toContain('azure: Failed to create test run: Failed request: (401). Check your token and orgUrl. Reporting is disabled.');
   expect(result.exitCode).toBe(1);
 });
 
@@ -181,7 +184,8 @@ test('01 correct orgUrl config, correct token, incorrect testCaseId @azure', asy
             orgUrl: 'https://dev.azure.com/alex-alex',
             projectName: 'SampleSample',
             planId: 4,
-            token: 'token'
+            token: 'token',
+            logging: true,
           }]
         ]
       };
@@ -213,7 +217,8 @@ test('02 correct orgUrl config, correct token, correct testCaseId @azure', async
             orgUrl: 'https://dev.azure.com/alex-alex',
             projectName: 'SampleSample',
             planId: 4,
-            token: 'token'
+            token: 'token',
+            logging: true,
           }]
         ]
       };
@@ -234,7 +239,7 @@ test('02 correct orgUrl config, correct token, correct testCaseId @azure', async
   expect(result.exitCode).toBe(0);
 });
 
-test('02 disable logging @azure', async ({ runInlineTest }) => {
+test('02 logging default is disabled @azure', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       module.exports = { 
@@ -245,8 +250,7 @@ test('02 disable logging @azure', async ({ runInlineTest }) => {
             orgUrl: 'https://dev.azure.com/alex-alex',
             projectName: 'SampleSample',
             planId: 4,
-            token: 'token',
-            logging: false
+            token: 'token'
           }]
         ]
       };
@@ -274,7 +278,8 @@ test('03 testCaseId not specified @azure', async ({ runInlineTest }) => {
             orgUrl: 'https://dev.azure.com/alex-alex',
             projectName: 'SampleSample',
             planId: 4,
-            token: 'token'
+            token: 'token',
+            logging: true,
           }]
         ]
       };
@@ -306,7 +311,8 @@ test('04 incorrect planId @azure', async ({ runInlineTest }) => {
             orgUrl: 'https://dev.azure.com/alex-alex',
             projectName: 'SampleSample',
             planId: 44,
-            token: 'token'
+            token: 'token',
+            logging: true,
           }]
         ]
       };
@@ -322,7 +328,6 @@ test('04 incorrect planId @azure', async ({ runInlineTest }) => {
   expect(stripAnsi(result.output)).toContain('azure: Using run 150 to publish test results');
   expect(stripAnsi(result.output)).toContain('azure: Test [3] foobar - passed');
   expect(stripAnsi(result.output)).toContain('azure: Start publishing: [3] foobar');
-  expect(stripAnsi(result.output)).toContain('azure: While getting test point ids, by test cases ids.');
   expect(stripAnsi(result.output)).toContain('Could not find test point for test case [3] associated with test plan 44. Check, maybe testPlanId, what you specifiyed, is incorrect');
   expect(stripAnsi(result.output)).not.toContain('azure: Result published: [3] foobar');
   expect(stripAnsi(result.output)).toContain('azure: Run 150 - Completed');
@@ -347,6 +352,7 @@ test('05 upload attachments, attachmentsType in not defined - default "screensho
             planId: 4,
             token: 'token',
             uploadAttachments: true,
+            logging: true,
           }]
         ]
       };
@@ -398,7 +404,8 @@ test('05 upload attachments with attachments type @azure', async ({ runInlineTes
             planId: 4,
             token: 'token',
             uploadAttachments: true,
-            attachmentsType: ['screenshot', 'trace', 'video']
+            attachmentsType: ['screenshot', 'trace', 'video'],
+            logging: true,
           }]
         ]
       };
@@ -443,6 +450,7 @@ test('07 incorrect project name @azure', async ({ runInlineTest }) => {
             projectName: 'SampleSample',
             planId: 4,
             token: 'token',
+            logging: true,
           }]
         ]
       };
@@ -474,7 +482,8 @@ test('disabled reporter @azure', async ({ runInlineTest }) => {
             projectName: 'SampleSample',
             planId: 4,
             token: 'token',
-            isDisabled: true
+            isDisabled: true,
+            logging: true,
           }]
         ]
       };
