@@ -21,10 +21,10 @@ import { playwrightTest, expect } from '../config/browserTest';
 // Use something worker-scoped (e.g. expectScopeState) forces a new worker for this file.
 // Otherwise, a browser launched for other tests in this worker will affect the expectations.
 const it = playwrightTest.extend<{}, { expectScopeState: (object: any, golden: any) => void }>({
-  expectScopeState: [ async ({ toImpl }, use) => {
+  expectScopeState: [ async ({ toImplInWorkerScope }, use) => {
     await use((object, golden) => {
       golden = trimGuids(golden);
-      const remoteRoot = toImpl();
+      const remoteRoot = toImplInWorkerScope();
       const remoteState = trimGuids(remoteRoot._debugScopeState());
       const localRoot = object._connection._rootObject;
       const localState = trimGuids(localRoot._debugScopeState());

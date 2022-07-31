@@ -70,7 +70,7 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
   headless: [ ({ launchOptions }, use) => use(launchOptions.headless ?? true), { scope: 'worker', option: true } ],
   channel: [ ({ launchOptions }, use) => use(launchOptions.channel), { scope: 'worker', option: true } ],
   launchOptions: [ {}, { scope: 'worker', option: true } ],
-  connectOptions: [ undefined, { scope: 'worker', option: true } ],
+  connectOptions: [ process.env.PW_TEST_CONNECT_WS_ENDPOINT ? { wsEndpoint: process.env.PW_TEST_CONNECT_WS_ENDPOINT } : undefined, { scope: 'worker', option: true } ],
   screenshot: [ 'off', { scope: 'worker', option: true } ],
   video: [ 'off', { scope: 'worker', option: true } ],
   trace: [ 'off', { scope: 'worker', option: true } ],
@@ -512,7 +512,7 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
       testInfo.errors.push({ message: prependToError });
   }, { scope: 'test',  _title: 'context' } as any],
 
-  _contextReuseEnabled: !!process.env.PW_REUSE_CONTEXT,
+  _contextReuseEnabled: !!process.env.PW_TEST_REUSE_CONTEXT,
 
   _reuseContext: async ({ video, trace, _contextReuseEnabled }, use, testInfo) => {
     const reuse = _contextReuseEnabled && !shouldCaptureVideo(normalizeVideoMode(video), testInfo) && !shouldCaptureTrace(normalizeTraceMode(trace), testInfo);

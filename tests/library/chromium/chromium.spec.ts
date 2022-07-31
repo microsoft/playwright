@@ -186,8 +186,6 @@ playwrightTest('should connect to an existing cdp session', async ({ browserType
 });
 
 playwrightTest('should cleanup artifacts dir after connectOverCDP disconnects due to ws close', async ({ browserType, toImpl, mode }, testInfo) => {
-  playwrightTest.skip(mode !== 'default');
-
   const port = 9339 + testInfo.workerIndex;
   const browserServer = await browserType.launch({
     args: ['--remote-debugging-port=' + port]
@@ -207,8 +205,6 @@ playwrightTest('should cleanup artifacts dir after connectOverCDP disconnects du
 });
 
 playwrightTest('should connectOverCDP and manage downloads in default context', async ({ browserType, toImpl, mode, server }, testInfo) => {
-  playwrightTest.skip(mode !== 'default');
-
   server.setRoute('/downloadWithFilename', (req, res) => {
     res.setHeader('Content-Type', 'application/octet-stream');
     res.setHeader('Content-Disposition', 'attachment; filename=file.txt');
