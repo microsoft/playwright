@@ -2110,7 +2110,7 @@ index 704adf1bb71721cebd3e20341e3e625511bfd0dd..9bb4573b65d2c6f80661687f3e446786
    type: bool
    humanReadableName: "Private Click Measurement"
 diff --git a/Source/WTF/Scripts/Preferences/WebPreferencesExperimental.yaml b/Source/WTF/Scripts/Preferences/WebPreferencesExperimental.yaml
-index 2f1830cf87a7d8037663957a2e0fbd97e83d9c06..b26803e0a22e94afc3ad5a00b847de21e3796e14 100644
+index 2f1830cf87a7d8037663957a2e0fbd97e83d9c06..b991d64670c31b3e681c066d011d3a9a9f2a7ca5 100644
 --- a/Source/WTF/Scripts/Preferences/WebPreferencesExperimental.yaml
 +++ b/Source/WTF/Scripts/Preferences/WebPreferencesExperimental.yaml
 @@ -527,7 +527,7 @@ CrossOriginOpenerPolicyEnabled:
@@ -2122,7 +2122,27 @@ index 2f1830cf87a7d8037663957a2e0fbd97e83d9c06..b26803e0a22e94afc3ad5a00b847de21
      WebCore:
        default: false
  
-@@ -905,9 +905,9 @@ MaskWebGLStringsEnabled:
+@@ -836,6 +836,7 @@ IsThirdPartyCookieBlockingDisabled:
+     WebCore:
+       default: false
+ 
++# Playwright: disable loading=lazy
+ LazyIframeLoadingEnabled:
+   type: bool
+   humanReadableName: "Lazy iframe loading"
+@@ -844,9 +845,9 @@ LazyIframeLoadingEnabled:
+     WebKitLegacy:
+       default: true
+     WebKit:
+-      default: true
++      default: false
+     WebCore:
+-      default: true
++      default: false
+ 
+ LazyImageLoadingEnabled:
+   type: bool
+@@ -905,9 +906,9 @@ MaskWebGLStringsEnabled:
      WebKitLegacy:
        default: true
      WebKit:
@@ -2134,7 +2154,7 @@ index 2f1830cf87a7d8037663957a2e0fbd97e83d9c06..b26803e0a22e94afc3ad5a00b847de21
  
  # FIXME: This is on by default in WebKit2. Perhaps we should consider turning it on for WebKitLegacy as well.
  MediaCapabilitiesExtensionsEnabled:
-@@ -1415,7 +1415,7 @@ SpeechRecognitionEnabled:
+@@ -1415,7 +1416,7 @@ SpeechRecognitionEnabled:
      WebKitLegacy:
        default: false
      WebKit:
@@ -2143,7 +2163,7 @@ index 2f1830cf87a7d8037663957a2e0fbd97e83d9c06..b26803e0a22e94afc3ad5a00b847de21
        default: false
      WebCore:
        default: false
-@@ -1530,6 +1530,7 @@ UseGPUProcessForDisplayCapture:
+@@ -1530,6 +1531,7 @@ UseGPUProcessForDisplayCapture:
      WebKit:
        default: true
  
@@ -2151,7 +2171,7 @@ index 2f1830cf87a7d8037663957a2e0fbd97e83d9c06..b26803e0a22e94afc3ad5a00b847de21
  UseGPUProcessForWebGLEnabled:
    type: bool
    humanReadableName: "GPU Process: WebGL"
-@@ -1540,7 +1541,7 @@ UseGPUProcessForWebGLEnabled:
+@@ -1540,7 +1542,7 @@ UseGPUProcessForWebGLEnabled:
        default: false
      WebKit:
        "ENABLE(GPU_PROCESS_BY_DEFAULT) && PLATFORM(IOS_FAMILY) && !HAVE(UIKIT_WEBKIT_INTERNALS)": true
