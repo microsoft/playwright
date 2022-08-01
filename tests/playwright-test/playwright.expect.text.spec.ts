@@ -682,7 +682,7 @@ test('should support not.toHaveText when selector does not match', async ({ runI
   expect(output).toContain('waiting for selector "span"');
 });
 
-test.only('should match on script and style contents depending on useInnerText settings', async ({ page }) => {
+test('should match on script and style contents depending on useInnerText settings', async ({ page }) => {
   await page.setContent(`
     <body>
       <style>
