@@ -29,15 +29,13 @@ elif [[ "${BUILD_FLAVOR}" == "firefox-ubuntu-20.04" ]]; then
   DOCKER_PLATFORM="linux/amd64"
   DOCKER_IMAGE_NAME="ubuntu:20.04"
 elif [[ "${BUILD_FLAVOR}" == "firefox-ubuntu-20.04-arm64" ]]; then
-  # We cross-compile from x86_64 to aarch64.
-  DOCKER_PLATFORM="linux/amd64"
+  DOCKER_PLATFORM="linux/arm64"
   DOCKER_IMAGE_NAME="ubuntu:20.04"
 elif [[ "${BUILD_FLAVOR}" == "firefox-ubuntu-22.04" ]]; then
   DOCKER_PLATFORM="linux/amd64"
   DOCKER_IMAGE_NAME="ubuntu:22.04"
 elif [[ "${BUILD_FLAVOR}" == "firefox-ubuntu-22.04-arm64" ]]; then
-  # We cross-compile from x86_64 to aarch64.
-  DOCKER_PLATFORM="linux/amd64"
+  DOCKER_PLATFORM="linux/arm64"
   DOCKER_IMAGE_NAME="ubuntu:22.04"
 elif [[ "${BUILD_FLAVOR}" == "firefox-debian-11" ]]; then
   DOCKER_PLATFORM="linux/amd64"
@@ -174,7 +172,9 @@ function ensure_docker_container {
 
       # Ubuntu 18.04 specific: install GCC-8. WebKit requires gcc 8.3+ to compile.
       apt-get install -y gcc-8 g++-8
-    elif [[ "${BUILD_FLAVOR}" == webkit-*-arm64 ]]; then
+    fi
+
+    if [[ "${BUILD_FLAVOR}" == *"-arm64" ]]; then
       apt-get install -y clang-12
     fi
 
@@ -201,7 +201,7 @@ elif [[ "$2" == "compile" ]]; then
     if [[ "${BUILD_FLAVOR}" == "webkit-ubuntu-18.04" ]]; then
       export CC=/usr/bin/gcc-8
       export CXX=/usr/bin/g++-8
-    elif [[ "${BUILD_FLAVOR}" == webkit-*-arm64 ]]; then
+    elif [[ "${BUILD_FLAVOR}" == "*-arm64" ]]; then
       export CC=/usr/bin/clang-12
       export CXX=/usr/bin/clang++-12
     fi
