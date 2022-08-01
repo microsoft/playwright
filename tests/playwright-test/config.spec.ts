@@ -410,8 +410,18 @@ test('should have correct types for the config', async ({ runTSC }) => {
             port: 8082,
           },
         ],
+        globalSetup: './globalSetup',
+        // @ts-expect-error
+        globalTeardown: null,
+        projects: [
+          {
+            name: 'project name',
+            projectSetup: './projectSetup',
+            projectTeardown: './projectTeardown',
+          }
+        ],
       };
-      
+
       export default config;
   `
   });

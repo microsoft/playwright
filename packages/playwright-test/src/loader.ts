@@ -212,7 +212,7 @@ export class Loader {
     return suite;
   }
 
-  async loadGlobalHook(file: string, name: string): Promise<(config: FullConfigInternal) => any> {
+  async loadGlobalHook(file: string): Promise<(config: FullConfigInternal) => any> {
     return this._requireOrImportDefaultFunction(path.resolve(this._fullConfig.rootDir, file), false);
   }
 
@@ -257,6 +257,10 @@ export class Loader {
       projectConfig.testDir = path.resolve(this._configDir, projectConfig.testDir);
     if (projectConfig.outputDir !== undefined)
       projectConfig.outputDir = path.resolve(this._configDir, projectConfig.outputDir);
+    if (projectConfig.projectSetup)
+      projectConfig.projectSetup = resolveScript(projectConfig.projectSetup, this._configDir);
+    if (projectConfig.projectTeardown)
+      projectConfig.projectTeardown = resolveScript(projectConfig.projectTeardown, this._configDir);
     if ((projectConfig as any).screenshotsDir !== undefined)
       (projectConfig as any).screenshotsDir = path.resolve(this._configDir, (projectConfig as any).screenshotsDir);
     if (projectConfig.snapshotDir !== undefined)
@@ -281,6 +285,8 @@ export class Loader {
       retries: takeFirst(projectConfig.retries, config.retries, 0),
       metadata: takeFirst(projectConfig.metadata, config.metadata, undefined),
       name,
+      _projectSetup: projectConfig.projectSetup,
+      _projectTeardown: projectConfig.projectTeardown,
       testDir,
       _respectGitIgnore: respectGitIgnore,
       snapshotDir,

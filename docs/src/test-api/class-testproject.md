@@ -163,6 +163,63 @@ Metadata that will be put directly to the test report serialized as JSON.
 Project name is visible in the report and during test execution.
 
 
+## property: TestProject.projectSetup
+* since: v1.25
+- type: ?<[string]>
+
+Path to the project-specifc setup file. This file will be required and run before all the tests from this project. It must export a single function that takes a [`TestConfig`] argument.
+
+Project setup is similar to [`property: TestConfig.globalSetup`], but it is only executed if at least one test from this particular project should be run. Learn more about [global setup and teardown](../test-advanced.md#global-setup-and-teardown).
+
+```js tab=js-js
+// playwright.config.js
+// @ts-check
+
+/** @type {import('@playwright/test').PlaywrightTestConfig} */
+const config = {
+  projects: [
+    {
+      name: 'Admin Portal',
+      projectSetup: './setup-admin',
+    },
+    {
+      name: 'Customer Portal',
+      projectSetup: './setup-customer',
+    },
+  ],
+};
+
+module.exports = config;
+```
+
+```js tab=js-ts
+// playwright.config.ts
+import { type PlaywrightTestConfig } from '@playwright/test';
+
+const config: PlaywrightTestConfig = {
+  projects: [
+    {
+      name: 'Admin Portal',
+      projectSetup: './setup-admin',
+    },
+    {
+      name: 'Customer Portal',
+      projectSetup: './setup-customer',
+    },
+  ],
+};
+export default config;
+```
+
+## property: TestProject.projectTeardown
+* since: v1.25
+- type: ?<[string]>
+
+Path to the project-specifc teardown file. This file will be required and run after all the tests from this project. It must export a single function. See also [`property: TestProject.projectSetup`].
+
+Project teardown is similar to [`property: TestConfig.globalTeardown`], but it is only executed if at least one test from this particular project did run. Learn more about [global setup and teardown](../test-advanced.md#global-setup-and-teardown).
+
+
 ## property: TestProject.screenshotsDir
 * since: v1.10
 * experimental

@@ -17,35 +17,65 @@
 import { test, expect, stripAnsi } from './playwright-test-fixtures';
 
 test('globalSetup and globalTeardown should work', async ({ runInlineTest }) => {
-  const { results, output } = await runInlineTest({
-    'playwright.config.ts': `
+  const result = await runInlineTest({
+    'dir/playwright.config.ts': `
       import * as path from 'path';
       module.exports = {
+        testDir: '..',
         globalSetup: './globalSetup',
         globalTeardown: path.join(__dirname, 'globalTeardown.ts'),
+        projects: [
+          { name: 'p1', projectSetup: './projectSetup1', projectTeardown: './projectTeardown1' },
+          { name: 'p2', projectSetup: './projectSetup2', projectTeardown: './projectTeardown2' },
+        ]
       };
     `,
-    'globalSetup.ts': `
+    'dir/globalSetup.ts': `
       module.exports = async () => {
-        await new Promise(f => setTimeout(f, 100));
-        global.value = 42;
-        process.env.FOO = String(global.value);
+        console.log('\\n%%from-global-setup');
       };
     `,
-    'globalTeardown.ts': `
+    'dir/globalTeardown.ts': `
       module.exports = async () => {
-        console.log('teardown=' + global.value);
+        console.log('\\n%%from-global-teardown');
+      };
+    `,
+    'dir/projectSetup1.ts': `
+      module.exports = async () => {
+        console.log('\\n%%from-project-setup-1');
+      };
+    `,
+    'dir/projectTeardown1.ts': `
+      module.exports = async () => {
+        console.log('\\n%%from-project-teardown-1');
+      };
+    `,
+    'dir/projectSetup2.ts': `
+      module.exports = async () => {
+        console.log('\\n%%from-project-setup-2');
+      };
+    `,
+    'dir/projectTeardown2.ts': `
+      module.exports = async () => {
+        console.log('\\n%%from-project-teardown-2');
       };
     `,
     'a.test.js': `
       const { test } = pwt;
       test('should work', async ({}, testInfo) => {
-        expect(process.env.FOO).toBe('42');
+        console.log('\\n%%from-test');
       });
     `,
-  });
-  expect(results[0].status).toBe('passed');
-  expect(output).toContain('teardown=42');
+  }, { 'project': 'p2', 'config': 'dir' });
+  expect(result.passed).toBe(1);
+  expect(result.failed).toBe(0);
+  expect(stripAnsi(result.output).split('\n').filter(line => line.startsWith('%%'))).toEqual([
+    '%%from-global-setup',
+    '%%from-project-setup-2',
+    '%%from-test',
+    '%%from-project-teardown-2',
+    '%%from-global-teardown',
+  ]);
 });
 
 test('standalone globalTeardown should work', async ({ runInlineTest }) => {

@@ -4315,6 +4315,49 @@ interface TestProject {
   name?: string;
 
   /**
+   * Path to the project-specifc setup file. This file will be required and run before all the tests from this project. It
+   * must export a single function that takes a [`TestConfig`] argument.
+   *
+   * Project setup is similar to
+   * [testConfig.globalSetup](https://playwright.dev/docs/api/class-testconfig#test-config-global-setup), but it is only
+   * executed if at least one test from this particular project should be run. Learn more about
+   * [global setup and teardown](https://playwright.dev/docs/test-advanced#global-setup-and-teardown).
+   *
+   * ```js
+   * // playwright.config.ts
+   * import { type PlaywrightTestConfig } from '@playwright/test';
+   *
+   * const config: PlaywrightTestConfig = {
+   *   projects: [
+   *     {
+   *       name: 'Admin Portal',
+   *       projectSetup: './setup-admin',
+   *     },
+   *     {
+   *       name: 'Customer Portal',
+   *       projectSetup: './setup-customer',
+   *     },
+   *   ],
+   * };
+   * export default config;
+   * ```
+   *
+   */
+  projectSetup?: string;
+
+  /**
+   * Path to the project-specifc teardown file. This file will be required and run after all the tests from this project. It
+   * must export a single function. See also
+   * [testProject.projectSetup](https://playwright.dev/docs/api/class-testproject#test-project-project-setup).
+   *
+   * Project teardown is similar to
+   * [testConfig.globalTeardown](https://playwright.dev/docs/api/class-testconfig#test-config-global-teardown), but it is
+   * only executed if at least one test from this particular project did run. Learn more about
+   * [global setup and teardown](https://playwright.dev/docs/test-advanced#global-setup-and-teardown).
+   */
+  projectTeardown?: string;
+
+  /**
    * The base directory, relative to the config file, for snapshot files created with `toMatchSnapshot`. Defaults to
    * [testProject.testDir](https://playwright.dev/docs/api/class-testproject#test-project-test-dir).
    *

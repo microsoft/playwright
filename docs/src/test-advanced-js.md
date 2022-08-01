@@ -359,6 +359,8 @@ test('test', async ({ page }) => {
 });
 ```
 
+You can also have project-specific setup with [`property: TestProject.projectSetup`]. It will only be executed if at least one test from a specific project should be run, while global setup is always executed at the start of the test session.
+
 ### Capturing trace of failures during global setup
 
 In some instances, it may be useful to capture a trace of failures encountered during the global setup. In order to do this, you must [start tracing](./api/class-tracing.md#tracing-start) in your setup, and you must ensure that you [stop tracing](./api/class-tracing.md#tracing-stop) if an error occurs before that error is thrown. This can be achieved by wrapping your setup in a `try...catch` block.  Here is an example that expands the global setup example to capture a trace.
