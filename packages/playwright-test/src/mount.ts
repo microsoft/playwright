@@ -19,10 +19,14 @@ import type { Component, JsxComponent, ObjectComponentOptions } from '../types/c
 
 let boundCallbacksForMount: Function[] = [];
 
+interface MountResult extends Locator {
+  unmount: (locator: Locator) => Promise<void>;
+  setProps: (props: { [key: string]: any }) => Promise<void>;
+}
+
 export const fixtures: Fixtures<
   PlaywrightTestArgs & PlaywrightTestOptions & {
-    mount: (component: any, options: any) => Promise<Locator>;
-    unmount: (locator: Locator) => Promise<void>;
+    mount: (component: any, options: any) => Promise<MountResult>;
   },
   PlaywrightWorkerArgs & PlaywrightWorkerOptions & { _ctWorker: { context: BrowserContext | undefined, hash: string } },
   { _contextFactory: (options?: BrowserContextOptions) => Promise<BrowserContext>, _contextReuseEnabled: boolean }> = {
@@ -48,18 +52,22 @@ export const fixtures: Fixtures<
         const selector = await (page as any)._wrapApiCall(async () => {
           return await innerMount(page, component, options);
         }, true);
-        return page.locator(selector);
-      });
-      boundCallbacksForMount = [];
-    },
-
-    unmount: async ({}, use) => {
-      await use(async (locator: Locator) => {
-        await locator.evaluate(async element => {
-          const rootElement = document.getElementById('root')!;
-          await window.playwrightUnmount(element, rootElement);
+        const locator = page.locator(selector);
+        return Object.assign(locator, {
+          unmount: async () => {
+            await locator.evaluate(async element => {
+              const rootElement = document.getElementById('root')!;
+              await window.playwrightUnmount(element, rootElement);
+            });
+          },
+          setProps: async (props: { [key: string]: any }) => {
+            await locator.evaluate(async (element, props) => {
+              return await window.playwrightSetProps(element, props);
+            }, props);
+          }
         });
       });
+      boundCallbacksForMount = [];
     },
   };
 

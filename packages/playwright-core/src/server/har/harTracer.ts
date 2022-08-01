@@ -31,6 +31,7 @@ import { getPlaywrightVersion } from '../../common/userAgent';
 import { urlMatches } from '../../common/netUtils';
 import { Frame } from '../frames';
 import type { LifecycleEvent } from '../types';
+import { isTextualMimeType } from '../../utils/mimeType';
 
 const FALLBACK_HTTP_VERSION = 'HTTP/1.1';
 
@@ -598,8 +599,4 @@ function parseCookie(c: string): har.Cookie {
       cookie.secure = true;
   }
   return cookie;
-}
-
-function isTextualMimeType(mimeType: string) {
-  return !!mimeType.match(/^(text\/.*?|application\/(json|(x-)?javascript|xml.*?|ecmascript|graphql|x-www-form-urlencoded)|image\/svg(\+xml)?|application\/.*?(\+json|\+xml))(;\s*charset=.*)?$/);
 }

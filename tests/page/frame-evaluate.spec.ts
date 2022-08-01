@@ -42,8 +42,7 @@ function expectContexts(pageImpl, count, browserName) {
     expect(pageImpl._delegate._contextIdToContext.size).toBe(count);
 }
 
-it('should dispose context on navigation', async ({ page, server, toImpl, browserName, mode, isElectron }) => {
-  it.skip(mode !== 'default');
+it('should dispose context on navigation', async ({ page, server, toImpl, browserName, isElectron }) => {
   it.skip(isElectron);
 
   await page.goto(server.PREFIX + '/frames/one-frame.html');
@@ -53,8 +52,7 @@ it('should dispose context on navigation', async ({ page, server, toImpl, browse
   expectContexts(toImpl(page), 2, browserName);
 });
 
-it('should dispose context on cross-origin navigation', async ({ page, server, toImpl, browserName, mode, isElectron }) => {
-  it.skip(mode !== 'default');
+it('should dispose context on cross-origin navigation', async ({ page, server, toImpl, browserName, isElectron }) => {
   it.skip(isElectron);
 
   await page.goto(server.PREFIX + '/frames/one-frame.html');

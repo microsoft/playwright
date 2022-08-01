@@ -1899,6 +1899,24 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    */
   skip: SuiteFunction;
     /**
+   * Declares a test group similarly to
+   * [test.describe(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-1). Tests in this group are
+   * maked as "fixme" and will not be executed.
+   *
+   * ```js
+   * test.describe.fixme('broken tests', () => {
+   *   test('example', async ({ page }) => {
+   *     // This test will not run
+   *   });
+   * });
+   * ```
+   *
+   * @param title Group title.
+   * @param callback A callback that is run immediately when calling [test.describe.fixme(title, callback)](https://playwright.dev/docs/api/class-test#test-describe-fixme). Any tests added
+   * in this callback will belong to the group, and will not be run.
+   */
+  fixme: SuiteFunction;
+    /**
    * Declares a group of tests that should always be run serially. If one of the tests fails, all subsequent tests are
    * skipped. All tests in a group are retried together.
    *
@@ -2494,7 +2512,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * @param title Step name.
    * @param body Step body.
    */
-  step(title: string, body: () => Promise<any>): Promise<any>;
+  step<T>(title: string, body: () => Promise<T>): Promise<T>;
   /**
    * `expect` function can be used to create test assertions. Read
    * [expect library documentation](https://jestjs.io/docs/expect) for more details.

@@ -148,6 +148,9 @@ it('should work when the event is canceled', async ({ page }) => {
   await page.evaluate(() => {
     document.querySelector('div').addEventListener('wheel', e => e.preventDefault());
   });
+  // Give wheel listener a chance to propagate through all the layers in Firefox.
+  for (let i = 0; i < 10; i++)
+    await page.evaluate(() => new Promise(x => requestAnimationFrame(() => requestAnimationFrame(x))));
   await page.mouse.wheel(0, 100);
   await expectEvent(page, {
     deltaX: 0,

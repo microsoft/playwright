@@ -27,7 +27,14 @@ import type { FilePatternFilter } from './util';
 import { showHTMLReport } from './reporters/html';
 import { baseFullConfig, defaultTimeout, fileIsModule } from './loader';
 
-export function addTestCommand(program: Command) {
+export function addTestCommands(program: Command) {
+  addTestCommand(program);
+  addShowReportCommand(program);
+  addListFilesCommand(program);
+  addTestServerCommand(program);
+}
+
+function addTestCommand(program: Command) {
   const command = program.command('test [test-filter...]');
   command.description('Run tests with Playwright Test');
   command.option('--browser <browser>', `Browser to use for tests, one of "all", "chromium", "firefox" or "webkit" (default: "chromium")`);
@@ -71,7 +78,7 @@ Examples:
   $ npx playwright test --browser=webkit`);
 }
 
-export function addListFilesCommand(program: Command) {
+function addListFilesCommand(program: Command) {
   const command = program.command('list-files [file-filter...]', { hidden: true });
   command.description('List files with Playwright Test tests');
   command.option('-c, --config <file>', `Configuration file, or a test directory with optional ${kDefaultConfigFiles.map(file => `"${file}"`).join('/')}`);
@@ -86,7 +93,21 @@ export function addListFilesCommand(program: Command) {
   });
 }
 
-export function addShowReportCommand(program: Command) {
+function addTestServerCommand(program: Command) {
+  const command = program.command('test-server', { hidden: true });
+  command.option('-c, --config <file>', `Configuration file, or a test directory with optional ${kDefaultConfigFiles.map(file => `"${file}"`).join('/')}`);
+  command.option('--reporter <reporter>', `Reporter to use, comma-separated, can be ${builtInReporters.map(name => `"${name}"`).join(', ')} (default: "${baseFullConfig.reporter[0]}")`);
+  command.action(async opts => {
+    try {
+      await runTestServer(opts);
+    } catch (e) {
+      console.error(e);
+      process.exit(1);
+    }
+  });
+}
+
+function addShowReportCommand(program: Command) {
   const command = program.command('show-report [report]');
   command.description('show HTML report');
   command.action(report => showHTMLReport(report));
@@ -174,6 +195,25 @@ async function listTestFiles(opts: { [key: string]: any }) {
   write(JSON.stringify(report), () => {
     process.exit(0);
   });
+}
+
+async function runTestServer(opts: { [key: string]: any }) {
+  const overrides = overridesFromOptions(opts);
+
+  overrides.use = { headless: false };
+  overrides.maxFailures = 1;
+  overrides.timeout = 0;
+  overrides.workers = 1;
+
+  // When no --config option is passed, let's look for the config file in the current directory.
+  const configFileOrDirectory = opts.config ? path.resolve(process.cwd(), opts.config) : process.cwd();
+  const resolvedConfigFile = Runner.resolveConfigFile(configFileOrDirectory)!;
+  if (restartWithExperimentalTsEsm(resolvedConfigFile))
+    return;
+
+  const runner = new Runner(overrides);
+  await runner.loadConfigFromResolvedFile(resolvedConfigFile);
+  await runner.runTestServer();
 }
 
 function forceRegExp(pattern: string): RegExp {

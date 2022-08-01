@@ -75,6 +75,7 @@ export abstract class Browser extends SdkObject {
     super(options.rootSdkObject, 'browser');
     this.attribution.browser = this;
     this.options = options;
+    this.instrumentation.onBrowserOpen(this);
   }
 
   abstract doCreateNewContext(options: channels.BrowserNewContextParams): Promise<BrowserContext>;
@@ -146,6 +147,7 @@ export abstract class Browser extends SdkObject {
     if (this._defaultContext)
       this._defaultContext._browserClosed();
     this.emit(Browser.Events.Disconnected);
+    this.instrumentation.onBrowserClose(this);
   }
 
   async close() {

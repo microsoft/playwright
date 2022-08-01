@@ -159,9 +159,15 @@ export abstract class BrowserContext extends SdkObject {
 
     await this._cancelAllRoutesInFlight();
 
-    const [page, ...otherPages] = this.pages();
-    for (const page of otherPages)
+    let page: Page | undefined = this.pages()[0];
+    const [, ...otherPages] = this.pages();
+    for (const p of otherPages)
+      await p.close(metadata);
+    if (page && page._crashedPromise.isDone()) {
       await page.close(metadata);
+      page = undefined;
+    }
+
     // Unless I do this early, setting extra http headers below does not respond.
     await page?._frameManager.closeOpenDialogs();
     await page?.mainFrame().goto(metadata, 'about:blank', { timeout: 0 });

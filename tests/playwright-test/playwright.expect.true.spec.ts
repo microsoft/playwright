@@ -417,3 +417,65 @@ test('should support toBeOK', async ({ runInlineTest, server }) => {
   expect(result.output).toContain(`← 404 Not Found`);
   expect(result.output).toContain(`Error: toBeOK can be only used with APIResponse object`);
 });
+
+test('should print response text if toBeOK fails', async ({ runInlineTest, server }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      const { test } = pwt;
+
+      test('fail', async ({ page }) => {
+        const res = await page.request.get('${server.PREFIX}/unknown');
+        await expect(res).toBeOK();
+      });
+      `,
+  }, { workers: 1 });
+  expect(result.failed).toBe(1);
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain(`→ GET ${server.PREFIX}/unknown`);
+  expect(result.output).toContain(`← 404 Not Found`);
+  expect(result.output).toContain(`Response text:`);
+  expect(result.output).toContain(`File not found`);
+});
+
+test('should only print response with text content type if toBeOK fails', async ({ runInlineTest, server }) => {
+  server.setRoute('/text-content-type', (req, res) => {
+    res.statusCode = 404;
+    res.setHeader('Content-type', 'text/plain');
+    res.end('Text error');
+  });
+  server.setRoute('/no-content-type', (req, res) => {
+    res.statusCode = 404;
+    res.end('No content type error');
+  });
+  server.setRoute('/binary-content-type', (req, res) => {
+    res.statusCode = 404;
+    res.setHeader('Content-type', 'image/bmp');
+    res.end('Image content type error');
+  });
+  const result = await runInlineTest({
+    'a.test.ts': `
+      const { test } = pwt;
+
+      test('text content type', async ({ page }) => {
+        const res = await page.request.get('${server.PREFIX}/text-content-type');
+        await expect(res).toBeOK();
+      });
+
+      test('no content type', async ({ page }) => {
+        const res = await page.request.get('${server.PREFIX}/no-content-type');
+        await expect(res).toBeOK();
+      });
+
+      test('image content type', async ({ page }) => {
+        const res = await page.request.get('${server.PREFIX}/image-content-type');
+        await expect(res).toBeOK();
+      });
+      `,
+  }, { workers: 1 });
+  expect(result.failed).toBe(3);
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain(`← 404 Not Found`);
+  expect(result.output).toContain(`Text error`);
+  expect(result.output).not.toContain(`No content type error`);
+  expect(result.output).not.toContain(`Image content type error`);
+});

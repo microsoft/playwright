@@ -22,11 +22,9 @@ function crash({ page, toImpl, browserName, platform, mode }: any) {
   if (browserName === 'chromium') {
     page.goto('chrome://crash').catch(e => {});
   } else if (browserName === 'webkit') {
-    it.skip(mode !== 'default');
     it.fixme(platform === 'darwin' && parseInt(os.release(), 10) >= 20, 'Timing out after roll on BigSur');
     toImpl(page)._delegate._session.send('Page.crash', {}).catch(e => {});
   } else if (browserName === 'firefox') {
-    it.skip(mode !== 'default');
     toImpl(page)._delegate._session.send('Page.crash', {}).catch(e => {});
   }
 }

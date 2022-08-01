@@ -267,12 +267,13 @@ program
 
 program
     .command('run-server', { hidden: true })
+    .option('--reuse-browser', 'Whether to reuse the browser instance')
     .option('--port <port>', 'Server port')
     .option('--path <path>', 'Endpoint Path', '/')
     .option('--max-clients <maxClients>', 'Maximum clients')
     .option('--no-socks-proxy', 'Disable Socks Proxy')
     .action(function(options) {
-      runServer(options.port ? +options.port : undefined,  options.path, options.maxClients ? +options.maxClients : Infinity, options.socksProxy).catch(logErrorAndExit);
+      runServer(options.port ? +options.port : undefined,  options.path, options.maxClients ? +options.maxClients : Infinity, options.socksProxy, options.reuseBrowser).catch(logErrorAndExit);
     });
 
 program
@@ -315,9 +316,7 @@ if (!process.env.PW_LANG_NAME) {
   } catch {}
 
   if (playwrightTestPackagePath) {
-    require(playwrightTestPackagePath).addTestCommand(program);
-    require(playwrightTestPackagePath).addShowReportCommand(program);
-    require(playwrightTestPackagePath).addListFilesCommand(program);
+    require(playwrightTestPackagePath).addTestCommands(program);
   } else {
     {
       const command = program.command('test').allowUnknownOption(true);

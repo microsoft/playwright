@@ -6,24 +6,24 @@ title: "Test Generator"
 Playwright comes with the ability to generate tests out of the box and is a great way to quickly get started with testing. It will open two windows, a browser window where you interact with the website you wish to test and the Playwright Inspector window where you can record your tests, copy the tests, clear your tests as well as change the language of your tests.
 
 ```bash js
-npx playwright codegen wikipedia.org
+npx playwright codegen playwright.dev
 ```
 
 ```bash java
-mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="codegen wikipedia.org"
+mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="codegen playwright.dev"
 ```
 
 ```bash python
-playwright codegen wikipedia.org
+playwright codegen playwright.dev
 ```
 
 ```bash csharp
-pwsh bin\Debug\netX\playwright.ps1 codegen wikipedia.org
+pwsh bin\Debug\netX\playwright.ps1 codegen playwright.dev
 ```
 
 Run `codegen` and perform actions in the browser. Playwright will generate the code for the user interactions. `codegen` will attempt to generate resilient text-based selectors.
 
-<img width="1916" alt="image" src="https://user-images.githubusercontent.com/13063165/177550119-4e202a56-7d8e-43ac-ad91-bf2f7b2579bd.png"/>
+<img width="1183" alt="Screenshot 2022-07-30 at 00 19 06" src="https://user-images.githubusercontent.com/13063165/181852815-971c10da-0b55-4e54-8a73-77e1e825193c.png" />
 
 ## Preserve authenticated state
 

@@ -17,11 +17,13 @@
 import child_process from 'child_process';
 import path from 'path';
 import { EventEmitter } from 'events';
-import type { RunPayload, TestBeginPayload, TestEndPayload, DonePayload, TestOutputPayload, WorkerInitParams, StepBeginPayload, StepEndPayload, SerializedLoaderData, TeardownErrorsPayload } from './ipc';
+import type { RunPayload, TestBeginPayload, TestEndPayload, DonePayload, TestOutputPayload, WorkerInitParams, StepBeginPayload, StepEndPayload, SerializedLoaderData, TeardownErrorsPayload, TestServerTestResolvedPayload } from './ipc';
 import type { TestResult, Reporter, TestStep, TestError } from '../types/testReporter';
-import type { Suite, TestCase } from './test';
+import type { Suite } from './test';
 import type { Loader } from './loader';
+import { TestCase } from './test';
 import { ManualPromise } from 'playwright-core/lib/utils/manualPromise';
+import { TestTypeImpl } from './testType';
 
 export type TestGroup = {
   workerHash: string;
@@ -29,6 +31,7 @@ export type TestGroup = {
   repeatEachIndex: number;
   projectId: string;
   tests: TestCase[];
+  testServerTestLine?: number;
 };
 
 type TestResultData = {
@@ -172,6 +175,7 @@ export class Dispatcher {
     let doneCallback = () => {};
     const result = new Promise<void>(f => doneCallback = f);
     const doneWithJob = () => {
+      worker.removeListener('testServer:testResolved', onTestServerTestResolved);
       worker.removeListener('testBegin', onTestBegin);
       worker.removeListener('testEnd', onTestEnd);
       worker.removeListener('stepBegin', onStepBegin);
@@ -183,6 +187,12 @@ export class Dispatcher {
 
     const remainingByTestId = new Map(testGroup.tests.map(e => [ e.id, e ]));
     const failedTestIds = new Set<string>();
+
+    const onTestServerTestResolved = (params: TestServerTestResolvedPayload) => {
+      const test = new TestCase(params.title, () => {}, new TestTypeImpl([]), params.location);
+      this._testById.set(params.testId, { test, resultByWorkerIndex: new Map() });
+    };
+    worker.addListener('testServer:testResolved', onTestServerTestResolved);
 
     const onTestBegin = (params: TestBeginPayload) => {
       const data = this._testById.get(params.testId)!;
@@ -549,6 +559,7 @@ class Worker extends EventEmitter {
       entries: testGroup.tests.map(test => {
         return { testId: test.id, retry: test.results.length };
       }),
+      testServerTestLine: testGroup.testServerTestLine,
     };
     this.send({ method: 'run', params: runPayload });
   }
