@@ -150,8 +150,8 @@ function ensure_docker_container {
     fi
 
     curl -sSL https://bootstrap.pypa.io/get-pip.py -o get-pip.py && \
-    python3 get-pip.py && \
-    rm get-pip.py && \
+        python3 get-pip.py && \
+        rm get-pip.py
 
     # Create the pwuser and make it passwordless sudoer.
     adduser --disabled-password --gecos "" pwuser
