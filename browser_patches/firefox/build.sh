@@ -129,7 +129,7 @@ if [[ -n "${IS_FULL}" ]]; then
 
   # 1. We have a --single-branch checkout, so we have to add a "master" branch and fetch it
   git remote set-branches --add browser_upstream master
-  git fetch browser_upstream master
+  git fetch --depth 1 browser_upstream master
   # 2. Checkout the master branch and run bootstrap from it.
   git checkout browser_upstream/master
   echo "ac_add_options --enable-bootstrap" >> .mozconfig
