@@ -50,11 +50,7 @@ if ! [[ -d "$OBJ_FOLDER/dist/firefox" ]]; then
   exit 1;
 fi
 
-# Copy the libstdc++ version we linked against.
-# TODO(aslushnikov): this won't be needed with official builds.
-if is_linux; then
-  cp /usr/lib/x86_64-linux-gnu/libstdc++.so.6 "${OBJ_FOLDER}/dist/firefox/libstdc++.so.6"
-elif is_win; then
+if is_win; then
   # Bundle vcruntime14_1.dll - see https://github.com/microsoft/playwright/issues/9974
   cd "$(printMSVCRedistDir)"
   cp -t "${OBJ_FOLDER}/dist/firefox" vcruntime140_1.dll
