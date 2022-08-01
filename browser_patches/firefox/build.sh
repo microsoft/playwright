@@ -68,7 +68,7 @@ elif is_win; then
   echo "ac_add_options --target=x86_64-pc-mingw32" >> .mozconfig
   echo "ac_add_options --host=x86_64-pc-mingw32" >> .mozconfig
   DLL_FILE=$("C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe" -latest -find '**\Redist\MSVC\*\x64\**\vcruntime140.dll')
-  WIN32_REDIST_DIR=$(dirname "$DLL_FILE")
+  WIN32_REDIST_DIR=$(dirname "$DLL_FILE" | tail -n 1)
   if ! [[ -d $WIN32_REDIST_DIR ]]; then
     echo "ERROR: cannot find MS VS C++ redistributable $WIN32_REDIST_DIR"
     exit 1;
