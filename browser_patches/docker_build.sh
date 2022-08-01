@@ -210,7 +210,7 @@ elif [[ "$2" == "compile" ]]; then
     if [[ "${BUILD_FLAVOR}" == "webkit-ubuntu-18.04" ]]; then
       export CC=/usr/bin/gcc-8
       export CXX=/usr/bin/g++-8
-    elif [[ "${BUILD_FLAVOR}" == "*-arm64" ]]; then
+    elif [[ "${BUILD_FLAVOR}" == *"-arm64" ]]; then
       export CC=/usr/bin/clang-12
       export CXX=/usr/bin/clang++-12
     fi
