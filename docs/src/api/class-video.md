@@ -51,7 +51,7 @@ Saves the video to a user-specified path. This must be called after [`method: pa
 * langs: python
 * since: v1.11
 
-Saves the video to a user-specified path. If using the sync API, This must be called after [`method: page.close`], otherwise an error will be thrown. If using the async API, it is safe to call this method while the video is still in progress, or after the page has closed. This method waits until the page is closed and the video is fully saved.
+Saves the video to a user-specified path. If using the sync API, this must be called after [`method: page.close`], otherwise an error will be thrown. If using the async API, it is safe to call this method while the video is still in progress, or after the page has closed. This method waits until the page is closed and the video is fully saved.
 
 ### param: Video.saveAs.path
 * since: v1.11
