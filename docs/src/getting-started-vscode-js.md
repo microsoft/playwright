@@ -21,7 +21,7 @@ Install Playwright
 
 <img width="538" alt="image" src="https://user-images.githubusercontent.com/13063165/177199115-ce90eb84-f12a-4b95-bd3a-17ff870fcec2.png"></img>
 
-Select "Test: Install Playwright" and Choose the browsers you would like to run your tests on. These can be later configured in the [playwright.config file](./test-configuration.md) file. You can also choose if you would like to have a GitHub Actions setup to run your tests on CI.
+Select "Test: Install Playwright" and Choose the browsers you would like to run your tests on. These can be later configured in the [playwright.config](./test-configuration.md) file. You can also choose if you would like to have a GitHub Actions setup to run your tests on CI.
 
 
 
