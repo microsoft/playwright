@@ -35,6 +35,9 @@ const EXPECT_PATH_IMPL = require.resolve('./expectBundleImpl');
 const PLAYWRIGHT_TEST_PATH = path.join(__dirname, '..');
 
 function filterStackTrace(e: Error) {
+  if (process.env.PWDEBUGIMPL)
+    return;
+
   // This method filters internal stack frames using Error.prepareStackTrace
   // hook. Read more about the hook: https://v8.dev/docs/stack-trace-api
   //
