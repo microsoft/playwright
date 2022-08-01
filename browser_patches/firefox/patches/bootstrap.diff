@@ -1132,13 +1132,29 @@ index 70cea10edfd5445c93900c876dbbcaa07dccf23b..814f29ac5fbd08e4b5b458995aa7ed17
    // Outer windows only.
    virtual void EnsureSizeAndPositionUpToDate() override;
 diff --git a/dom/base/nsINode.cpp b/dom/base/nsINode.cpp
-index 88e24213ce8f052d1bbe00c4fcb385aa70496552..23a463c943e630ad93cc780fb4b7b894ce76f7b9 100644
+index 88e24213ce8f052d1bbe00c4fcb385aa70496552..1810403a058c8eee5e7c2ec2ccaa387a28f6b13a 100644
 --- a/dom/base/nsINode.cpp
 +++ b/dom/base/nsINode.cpp
-@@ -1324,6 +1324,49 @@ void nsINode::GetBoxQuadsFromWindowOrigin(const BoxQuadOptions& aOptions,
+@@ -1324,6 +1324,62 @@ void nsINode::GetBoxQuadsFromWindowOrigin(const BoxQuadOptions& aOptions,
    mozilla::GetBoxQuadsFromWindowOrigin(this, aOptions, aResult, aRv);
  }
  
++static nsIFrame* GetFirstFrame(nsINode* aNode) {
++  if (!aNode->IsContent())
++    return nullptr;
++  nsIFrame* frame = aNode->AsContent()->GetPrimaryFrame(FlushType::Frames);
++  if (!frame) {
++    FlattenedChildIterator iter(aNode->AsContent());
++    for (nsIContent* child = iter.GetNextChild(); child; child = iter.GetNextChild()) {
++      frame = child->GetPrimaryFrame(FlushType::Frames);
++      if (frame) {
++        break;
++      }
++    }
++  }
++  return frame;
++}
++
 +void nsINode::ScrollRectIntoViewIfNeeded(int32_t x, int32_t y,
 +                                         int32_t w, int32_t h,
 +                                         ErrorResult& aRv) {
@@ -1151,14 +1167,11 @@ index 88e24213ce8f052d1bbe00c4fcb385aa70496552..23a463c943e630ad93cc780fb4b7b894
 +  if (!presShell) {
 +    return aRv.ThrowNotFoundError("Node is detached from document");
 +  }
-+  if (!IsContent()) {
-+    return aRv.ThrowNotFoundError("Node does not have a layout object");
-+  }
-+  aRv = NS_OK;
-+  nsIFrame* primaryFrame = AsContent()->GetPrimaryFrame(FlushType::Frames);
++  nsIFrame* primaryFrame = GetFirstFrame(this);
 +  if (!primaryFrame) {
 +    return aRv.ThrowNotFoundError("Node does not have a layout object");
 +  }
++  aRv = NS_OK;
 +  nsRect rect;
 +  if (x == -1 && y == -1 && w == -1 && h == -1) {
 +    rect = primaryFrame->GetRectRelativeToSelf();
@@ -1632,10 +1645,19 @@ index b31ca1000cb1d7b8ca1af74b9ac0313aba053875..54abd38a35fc2b4906760c370d9f96d7
        nsContentUtils::TrimWhitespace<nsContentUtils::IsHTMLWhitespace>(
            aPolicyStr));
 diff --git a/dom/webidl/GeometryUtils.webidl b/dom/webidl/GeometryUtils.webidl
-index 2f71b284ee5f7e11f117c447834b48355784448c..d996e0a3cbbb19c1dc320c305c6d74037bffa0d3 100644
+index 2f71b284ee5f7e11f117c447834b48355784448c..ddcc545da1efec5784273b032efa00ad8b89fec0 100644
 --- a/dom/webidl/GeometryUtils.webidl
 +++ b/dom/webidl/GeometryUtils.webidl
-@@ -27,6 +27,9 @@ interface mixin GeometryUtils {
+@@ -16,6 +16,8 @@ dictionary BoxQuadOptions {
+   GeometryNode relativeTo;
+   [ChromeOnly]
+   boolean createFramesForSuppressedWhitespace = true;
++  [ChromeOnly]
++  boolean recurseWhenNoFrame = false;
+ };
+ 
+ dictionary ConvertCoordinateOptions {
+@@ -27,6 +29,9 @@ interface mixin GeometryUtils {
    [Throws, Func="nsINode::HasBoxQuadsSupport", NeedsCallerType]
    sequence<DOMQuad> getBoxQuads(optional BoxQuadOptions options = {});
  
@@ -1968,6 +1990,56 @@ index 3ce936fe3a4a83f9161eddc9e5289322d6a363e3..6b1c34244d8b2f2102ec423e2d96812f
    void updateTimeZone();
  
    void internalResyncICUDefaultTimeZone();
+diff --git a/layout/base/GeometryUtils.cpp b/layout/base/GeometryUtils.cpp
+index dac899f7558b26d6848da8b98ed8a93555c8751a..2a07d67fa1c2840b25085566e84dc3b2d9b789cf 100644
+--- a/layout/base/GeometryUtils.cpp
++++ b/layout/base/GeometryUtils.cpp
+@@ -23,6 +23,7 @@
+ #include "nsContentUtils.h"
+ #include "nsCSSFrameConstructor.h"
+ #include "nsLayoutUtils.h"
++#include "ChildIterator.h"
+ 
+ using namespace mozilla;
+ using namespace mozilla::dom;
+@@ -261,11 +262,27 @@ static bool CheckFramesInSameTopLevelBrowsingContext(nsIFrame* aFrame1,
+   return false;
+ }
+ 
++static nsIFrame* GetFrameForNode(nsINode* aNode,
++                                 bool aCreateFramesForSuppressedWhitespace,
++                                 bool aRecurseWhenNoFrame) {
++  nsIFrame* frame = GetFrameForNode(aNode, aCreateFramesForSuppressedWhitespace);
++  if (!frame && aRecurseWhenNoFrame && aNode->IsContent()) {
++    dom::FlattenedChildIterator iter(aNode->AsContent());
++    for (nsIContent* child = iter.GetNextChild(); child; child = iter.GetNextChild()) {
++      frame = GetFrameForNode(child, aCreateFramesForSuppressedWhitespace, aRecurseWhenNoFrame);
++      if (frame) {
++        break;
++      }
++    }
++  }
++  return frame;
++}
++
+ void GetBoxQuads(nsINode* aNode, const dom::BoxQuadOptions& aOptions,
+                  nsTArray<RefPtr<DOMQuad> >& aResult, CallerType aCallerType,
+                  ErrorResult& aRv) {
+   nsIFrame* frame =
+-      GetFrameForNode(aNode, aOptions.mCreateFramesForSuppressedWhitespace);
++      GetFrameForNode(aNode, aOptions.mCreateFramesForSuppressedWhitespace, aOptions.mRecurseWhenNoFrame);
+   if (!frame) {
+     // No boxes to return
+     return;
+@@ -280,7 +297,7 @@ void GetBoxQuads(nsINode* aNode, const dom::BoxQuadOptions& aOptions,
+   // when that happens and re-check it.
+   if (!weakFrame.IsAlive()) {
+     frame =
+-        GetFrameForNode(aNode, aOptions.mCreateFramesForSuppressedWhitespace);
++        GetFrameForNode(aNode, aOptions.mCreateFramesForSuppressedWhitespace, aOptions.mRecurseWhenNoFrame);
+     if (!frame) {
+       // No boxes to return
+       return;
 diff --git a/layout/base/PresShell.cpp b/layout/base/PresShell.cpp
 index 8cd1cee03620a33e3301373bb0ba3f1f0cfa062b..7100faf245bf35af3da20dba3dc49d4f65fcb8a5 100644
 --- a/layout/base/PresShell.cpp
@@ -2566,7 +2638,7 @@ diff --git a/widget/cocoa/NativeKeyBindings.mm b/widget/cocoa/NativeKeyBindings.
 index d3e5983259053175584254e7ac01ca9ce024f33a..97f5b851c402fea5477c0ee57af451c62b016eec 100644
 --- a/widget/cocoa/NativeKeyBindings.mm
 +++ b/widget/cocoa/NativeKeyBindings.mm
-@@ -492,6 +492,13 @@ void NativeKeyBindings::GetEditCommandsForTests(NativeKeyBindingsType aType,
+@@ -492,6 +492,13 @@
        break;
      case KEY_NAME_INDEX_ArrowLeft:
        if (aEvent.IsAlt()) {
@@ -2580,7 +2652,7 @@ index d3e5983259053175584254e7ac01ca9ce024f33a..97f5b851c402fea5477c0ee57af451c6
          break;
        }
        if (aEvent.IsMeta() || (aEvent.IsControl() && aEvent.IsShift())) {
-@@ -512,6 +519,13 @@ void NativeKeyBindings::GetEditCommandsForTests(NativeKeyBindingsType aType,
+@@ -512,6 +519,13 @@
        break;
      case KEY_NAME_INDEX_ArrowRight:
        if (aEvent.IsAlt()) {
@@ -2594,7 +2666,7 @@ index d3e5983259053175584254e7ac01ca9ce024f33a..97f5b851c402fea5477c0ee57af451c6
          break;
        }
        if (aEvent.IsMeta() || (aEvent.IsControl() && aEvent.IsShift())) {
-@@ -532,6 +546,10 @@ void NativeKeyBindings::GetEditCommandsForTests(NativeKeyBindingsType aType,
+@@ -532,6 +546,10 @@
        break;
      case KEY_NAME_INDEX_ArrowUp:
        if (aEvent.IsControl()) {
@@ -2605,7 +2677,7 @@ index d3e5983259053175584254e7ac01ca9ce024f33a..97f5b851c402fea5477c0ee57af451c6
          break;
        }
        if (aEvent.IsMeta()) {
-@@ -541,7 +559,7 @@ void NativeKeyBindings::GetEditCommandsForTests(NativeKeyBindingsType aType,
+@@ -541,7 +559,7 @@
          instance->AppendEditCommandsForSelector(
              !aEvent.IsShift()
                  ? ToObjcSelectorPtr(@selector(moveToBeginningOfDocument:))
@@ -2614,7 +2686,7 @@ index d3e5983259053175584254e7ac01ca9ce024f33a..97f5b851c402fea5477c0ee57af451c6
              aCommands);
          break;
        }
-@@ -564,6 +582,10 @@ void NativeKeyBindings::GetEditCommandsForTests(NativeKeyBindingsType aType,
+@@ -564,6 +582,10 @@
        break;
      case KEY_NAME_INDEX_ArrowDown:
        if (aEvent.IsControl()) {
