@@ -142,11 +142,11 @@ function ensure_docker_container {
     # fails to run Firefox build scripts.
     # Install Python3.8 instead on Ubuntu 18.04 as Python3.
     if [[ "${BUILD_FLAVOR}" == *ubuntu-18.04* ]]; then
-      apt-get install -y python3.8 python3.8-distutils
+      apt-get install -y python3.8 python3.8-dev python3.8-distutils
       # Point python3 to python3.8
       update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.8 2
     else
-      apt-get install -y python3 python3-distutils
+      apt-get install -y python3 python3-dev python3-distutils
     fi
 
     curl -sSL https://bootstrap.pypa.io/get-pip.py -o get-pip.py && \
