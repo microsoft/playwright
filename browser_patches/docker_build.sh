@@ -52,15 +52,13 @@ elif [[ "${BUILD_FLAVOR}" == "firefox-beta-ubuntu-20.04" ]]; then
   DOCKER_PLATFORM="linux/amd64"
   DOCKER_IMAGE_NAME="ubuntu:20.04"
 elif [[ "${BUILD_FLAVOR}" == "firefox-beta-ubuntu-20.04-arm64" ]]; then
-  # We cross-compile from x86_64 to aarch64.
-  DOCKER_PLATFORM="linux/amd64"
+  DOCKER_PLATFORM="linux/arm64"
   DOCKER_IMAGE_NAME="ubuntu:20.04"
 elif [[ "${BUILD_FLAVOR}" == "firefox-beta-ubuntu-22.04" ]]; then
   DOCKER_PLATFORM="linux/amd64"
   DOCKER_IMAGE_NAME="ubuntu:22.04"
 elif [[ "${BUILD_FLAVOR}" == "firefox-beta-ubuntu-22.04-arm64" ]]; then
-  # We cross-compile from x86_64 to aarch64.
-  DOCKER_PLATFORM="linux/amd64"
+  DOCKER_PLATFORM="linux/arm64"
   DOCKER_IMAGE_NAME="ubuntu:22.04"
 elif [[ "${BUILD_FLAVOR}" == "firefox-beta-debian-11" ]]; then
   DOCKER_PLATFORM="linux/amd64"

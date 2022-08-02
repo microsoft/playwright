@@ -282,8 +282,8 @@ elif [[ "$BUILD_FLAVOR" == "firefox-beta-ubuntu-22.04" ]]; then
   BUILD_BLOB_NAME="firefox-beta-ubuntu-22.04.zip"
 elif [[ "$BUILD_FLAVOR" == "firefox-beta-ubuntu-22.04-arm64" ]]; then
   BROWSER_NAME="firefox-beta"
-  EXTRA_BUILD_ARGS="--full --linux-arm64"
-  EXTRA_ARCHIVE_ARGS="--linux-arm64"
+  EXTRA_BUILD_ARGS="--full"
+  EXPECTED_ARCH="aarch64"
   EXPECTED_HOST_OS="Ubuntu"
   EXPECTED_HOST_OS_VERSION="22.04"
   BUILD_BLOB_NAME="firefox-beta-ubuntu-22.04-arm64.zip"
