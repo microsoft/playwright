@@ -136,6 +136,7 @@ function ensure_docker_container {
                                          tzdata \
                                          sudo \
                                          zip \
+                                         gcc \
                                          unzip
 
     # We will use clang-12 for all arm64 native builds.
@@ -143,6 +144,7 @@ function ensure_docker_container {
       apt-get install -y clang-12
     fi
 
+    # Install Python3.
     # Firefox build on Ubuntu 18.04 requires Python3.8 to run its build scripts.
     # WebKit build on Ubuntu 18.04 fails with the Python 3.8 installation but works
     # with Python 3.6 that is shipped as default python3 on Ubuntu 18.
@@ -150,32 +152,24 @@ function ensure_docker_container {
       apt-get install -y python3.8 python3.8-dev python3.8-distutils
       # Point python3 to python3.8
       update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.8 2
+      curl -sSL https://bootstrap.pypa.io/get-pip.py -o get-pip.py && \
+          python3 get-pip.py && \
+          rm get-pip.py
     else
-      apt-get install -y python3 python3-dev python3-distutils
+      apt-get install -y python3 python3-dev python3-pip python3-distutils
     fi
 
-    curl -sSL https://bootstrap.pypa.io/get-pip.py -o get-pip.py && \
-        python3 get-pip.py && \
-        rm get-pip.py
+    # Install AZ CLI with Python since they do not ship
+    # aarch64 to APT: https://github.com/Azure/azure-cli/issues/7368
+    # Pin so future releases dont break us.
+    pip3 install azure-cli==2.38.0
 
     # Create the pwuser and make it passwordless sudoer.
     adduser --disabled-password --gecos "" pwuser
     echo "ALL            ALL = (ALL) NOPASSWD: ALL" >> /etc/sudoers
 
     # Install node16
-    apt-get install -y curl && \
-      curl -sL https://deb.nodesource.com/setup_16.x | bash - && \
-      apt-get install -y nodejs
-
-    # Install AZ CLI on CI only
-    if [[ -n "${CI}" ]]; then
-      # Install AZ CLI with Python since they do not ship
-      # aarch64 to APT: https://github.com/Azure/azure-cli/issues/7368
-      # Pin so future releases dont break us.
-      # Note: azure-cli requires gcc to be installed on arm64 ubuntu.
-      apt-get install -y gcc
-      pip3 install azure-cli==2.38.0
-    fi
+    curl -sL https://deb.nodesource.com/setup_16.x | bash - && apt-get install -y nodejs
 
     if [[ "${BUILD_FLAVOR}" == "firefox-"* ]]; then
       # install rust as a pwuser
