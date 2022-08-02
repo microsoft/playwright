@@ -98,7 +98,7 @@ test('max-failures should stop workers', async ({ runInlineTest }) => {
       test('passed short', async () => {
         await new Promise(f => setTimeout(f, 1));
       });
-      test('interrupted counts as skipped', async () => {
+      test('interrupted reported as interrupted', async () => {
         console.log('\\n%%interrupted');
         await new Promise(f => setTimeout(f, 5000));
       });
@@ -110,7 +110,8 @@ test('max-failures should stop workers', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(2);
   expect(result.failed).toBe(1);
-  expect(result.skipped).toBe(2);
+  expect(result.interrupted).toBe(1);
+  expect(result.skipped).toBe(1);
   expect(result.output).toContain('%%interrupted');
   expect(result.output).not.toContain('%%skipped');
 });
