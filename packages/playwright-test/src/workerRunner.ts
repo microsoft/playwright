@@ -278,7 +278,11 @@ export class WorkerRunner extends EventEmitter {
     };
 
     if (!this._isStopped) {
-      // Update the fixture pool - it may differ between tests, but only in test-scoped fixtures.
+      // Update the fixture pool - it may differ between tests.
+      // - In case of isolate-pools worker isolation, only test-scoped fixtures may differ.
+      // - In case of isolate-projects, worker fixtures can differ too, tear down worker fixture scope if they differ.
+      if (this._params.workerIsolation === 'isolate-projects' && this._fixtureRunner.pool && this._fixtureRunner.pool.digest !== test._pool!.digest)
+        await this._teardownScopes();
       this._fixtureRunner.setPool(test._pool!);
     }
 

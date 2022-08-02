@@ -30,7 +30,13 @@ export type TtyParams = {
   colorDepth: number;
 };
 
+export type WorkerIsolation =
+  'isolate-projects' |  // create new worker for new project type
+  'isolate-pools';      // create new worker for new worker fixture pool digest
+
+
 export type WorkerInitParams = {
+  workerIsolation: WorkerIsolation;
   workerIndex: number;
   parallelIndex: number;
   repeatEachIndex: number;
