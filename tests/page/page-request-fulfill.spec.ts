@@ -121,9 +121,8 @@ it('should allow mocking svg with charset', async ({ page, server, browserName, 
   expect(await img.screenshot()).toMatchSnapshot('mock-svg.png');
 });
 
-it('should work with file path', async ({ page, server, asset, isAndroid, mode }) => {
+it('should work with file path', async ({ page, server, asset, mode }) => {
   it.skip(mode === 'service');
-  it.skip(isAndroid);
 
   await page.route('**/*', route => route.fulfill({ contentType: 'shouldBeIgnored', path: asset('pptr.png') }));
   await page.evaluate(PREFIX => {
@@ -270,9 +269,8 @@ it('should fetch original request and fulfill', async ({ page, server, isElectro
   expect(await page.title()).toEqual('Woof-Woof');
 });
 
-it('should fulfill with multiple set-cookie', async ({ page, server, isAndroid, isElectron }) => {
+it('should fulfill with multiple set-cookie', async ({ page, server, isElectron }) => {
   it.fixme(isElectron, 'Electron 14+ is required');
-  it.fixme(isAndroid);
   const cookies = ['a=b', 'c=d'];
   await page.route('**/empty.html', async route => {
     route.fulfill({
@@ -291,8 +289,7 @@ it('should fulfill with multiple set-cookie', async ({ page, server, isAndroid, 
   expect(await response.headerValue('X-Header-2')).toBe('v2');
 });
 
-it('should fulfill with fetch response that has multiple set-cookie', async ({ playwright, page, server, isAndroid }) => {
-  it.fixme(isAndroid);
+it('should fulfill with fetch response that has multiple set-cookie', async ({ playwright, page, server }) => {
   server.setRoute('/empty.html', (req, res) => {
     res.setHeader('Set-Cookie', ['a=b', 'c=d']);
     res.setHeader('Content-Type', 'text/html');
@@ -324,9 +321,7 @@ it('headerValue should return set-cookie from intercepted response', async ({ pa
   expect(await response.headerValue('Set-Cookie')).toBe('a=b');
 });
 
-it('should fulfill with har response', async ({ page, isAndroid, asset }) => {
-  it.fixme(isAndroid);
-
+it('should fulfill with har response', async ({ page, asset }) => {
   const harPath = asset('har-fulfill.har');
   const har = JSON.parse(await fs.promises.readFile(harPath, 'utf-8')) as har.HARFile;
   await page.route('**/*', async route => {

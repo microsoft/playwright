@@ -200,9 +200,7 @@ it('should not get preflight CORS requests when intercepting', async ({ page, se
   }
 });
 
-it('should return postData', async ({ page, server, isAndroid }) => {
-  it.fixme(isAndroid, 'Post data does not work');
-
+it('should return postData', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   server.setRoute('/post', (req, res) => res.end());
   let request = null;
@@ -212,9 +210,7 @@ it('should return postData', async ({ page, server, isAndroid }) => {
   expect(request.postData()).toBe('{"foo":"bar"}');
 });
 
-it('should work with binary post data', async ({ page, server, isAndroid }) => {
-  it.fixme(isAndroid, 'Post data does not work');
-
+it('should work with binary post data', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   server.setRoute('/post', (req, res) => res.end());
   let request = null;
@@ -229,9 +225,7 @@ it('should work with binary post data', async ({ page, server, isAndroid }) => {
     expect(buffer[i]).toBe(i);
 });
 
-it('should work with binary post data and interception', async ({ page, server, isAndroid }) => {
-  it.fixme(isAndroid, 'Post data does not work');
-
+it('should work with binary post data and interception', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   server.setRoute('/post', (req, res) => res.end());
   let request = null;
@@ -247,9 +241,7 @@ it('should work with binary post data and interception', async ({ page, server, 
     expect(buffer[i]).toBe(i);
 });
 
-it('should override post data content type', async ({ page, server, isAndroid }) => {
-  it.fixme(isAndroid, 'Post data does not work');
-
+it('should override post data content type', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   let request = null;
   server.setRoute('/post', (req, res) => {
@@ -271,16 +263,12 @@ it('should override post data content type', async ({ page, server, isAndroid })
   expect(request.headers['content-type']).toBe('application/x-www-form-urlencoded; charset=UTF-8');
 });
 
-it('should get |undefined| with postData() when there is no post data', async ({ page, server, isAndroid }) => {
-  it.fixme(isAndroid, 'Post data does not work');
-
+it('should get |undefined| with postData() when there is no post data', async ({ page, server }) => {
   const response = await page.goto(server.EMPTY_PAGE);
   expect(response.request().postData()).toBe(null);
 });
 
-it('should parse the json post data', async ({ page, server, isAndroid }) => {
-  it.fixme(isAndroid, 'Post data does not work');
-
+it('should parse the json post data', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   server.setRoute('/post', (req, res) => res.end());
   let request = null;
@@ -290,9 +278,7 @@ it('should parse the json post data', async ({ page, server, isAndroid }) => {
   expect(request.postDataJSON()).toEqual({ 'foo': 'bar' });
 });
 
-it('should parse the data if content-type is application/x-www-form-urlencoded', async ({ page, server, isAndroid }) => {
-  it.fixme(isAndroid, 'Post data does not work');
-
+it('should parse the data if content-type is application/x-www-form-urlencoded', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   server.setRoute('/post', (req, res) => res.end());
   let request = null;

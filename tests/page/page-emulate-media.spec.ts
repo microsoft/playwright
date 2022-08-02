@@ -17,8 +17,6 @@
 
 import { test as it, expect } from './pageTest';
 
-it.skip(({ isAndroid }) => isAndroid);
-
 it('should emulate type @smoke', async ({ page }) => {
   expect(await page.evaluate(() => matchMedia('screen').matches)).toBe(true);
   expect(await page.evaluate(() => matchMedia('print').matches)).toBe(false);

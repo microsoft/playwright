@@ -16,8 +16,7 @@
 
 import { test as it, expect } from './pageTest';
 
-it('should outlive frame navigation', async ({ page, server, isAndroid }) => {
-  it.fixme(isAndroid, 'Should be fixed when rolling the emulator');
+it('should outlive frame navigation', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   setTimeout(async () => {
     await page.goto(server.PREFIX + '/grid.html').catch(() => {});

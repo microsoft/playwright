@@ -19,7 +19,6 @@ import { test as it, expect } from './pageTest';
 import { attachFrame } from '../config/utils';
 
 it.describe('Drag and drop', () => {
-  it.skip(({ isAndroid }) => isAndroid);
   it.skip(({ browserName, browserMajorVersion }) => browserName === 'chromium' && browserMajorVersion < 91);
 
   it('should work @smoke', async ({ page, server }) => {
@@ -202,7 +201,9 @@ it.describe('Drag and drop', () => {
     expect(await page.$eval('#target', target => target.contains(document.querySelector('#source')))).toBe(true);
   });
 
-  it('should be able to drag the mouse in a frame', async ({ page, server }) => {
+  it('should be able to drag the mouse in a frame', async ({ page, server, isAndroid }) => {
+    it.fixme(isAndroid);
+
     await page.goto(server.PREFIX + '/frames/one-frame.html');
     const eventsHandle = await trackEvents(await page.frames()[1].$('html'));
     await page.mouse.move(30, 30);
