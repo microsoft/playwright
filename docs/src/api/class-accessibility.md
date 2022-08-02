@@ -48,7 +48,7 @@ assistive technologies themselves. By default, Playwright tries to approximate t
   - `orientation` <[string]> Whether the node is oriented horizontally or vertically, if applicable.
   - `children` <[Array]<[Object]>> Child nodes, if any, if applicable.
 
- **DEPRECATED** This method is deprecated. Please follow our [accessbility testing](../accessibility-testing.md)guide if you need to test page accessibility.
+ **DEPRECATED** This method is deprecated. Please follow our [accessbility testing](../accessibility-testing.md) guide if you need to test page accessibility.
 
 Captures the current state of the accessibility tree. The returned object represents the root accessible node of the
 page.
