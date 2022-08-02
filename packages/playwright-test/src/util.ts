@@ -101,8 +101,9 @@ export function serializeError(error: Error | any): TestError {
 
 export type Matcher = (value: string) => boolean;
 
-export type FilePatternFilter = {
-  re: RegExp;
+export type TestFileFilter = {
+  re?: RegExp;
+  exact?: string;
   line: number | null;
   column: number | null;
 };

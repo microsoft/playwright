@@ -46,7 +46,7 @@ export type WorkerInitParams = {
   stderrParams: TtyParams;
 };
 
-export type TestServerTestResolvedPayload = {
+export type WatchTestResolvedPayload = {
   testId: string;
   title: string;
   location: { file: string, line: number, column: number };
@@ -95,7 +95,7 @@ export type TestEntry = {
 export type RunPayload = {
   file: string;
   entries: TestEntry[];
-  testServerTestLine?: number;
+  watchMode: boolean;
 };
 
 export type DonePayload = {

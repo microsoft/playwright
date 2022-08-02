@@ -21,7 +21,7 @@ import * as path from 'path';
 import { promisify } from 'util';
 import type { TestGroup } from './dispatcher';
 import { Dispatcher } from './dispatcher';
-import type { FilePatternFilter } from './util';
+import type { TestFileFilter } from './util';
 import { createFileMatcher, createTitleMatcher, serializeError } from './util';
 import type { TestCase } from './test';
 import { Suite } from './test';
@@ -45,7 +45,6 @@ import type { TestRunnerPlugin } from './plugins';
 import { setRunnerToAddPluginsTo } from './plugins';
 import { webServerPluginsForConfig } from './plugins/webServerPlugin';
 import { MultiMap } from 'playwright-core/lib/utils/multimap';
-import { createGuid } from 'playwright-core/lib/utils';
 
 const removeFolderAsync = promisify(rimraf);
 const readDirAsync = promisify(fs.readdir);
@@ -54,8 +53,9 @@ export const kDefaultConfigFiles = ['playwright.config.ts', 'playwright.config.j
 
 type RunOptions = {
   listOnly?: boolean;
-  filePatternFilter?: FilePatternFilter[];
+  testFileFilters?: TestFileFilter[];
   projectFilter?: string[];
+  watchMode?: boolean;
 };
 
 export type ConfigCLIOverrides = {
@@ -78,10 +78,17 @@ export type ConfigCLIOverrides = {
   use?: any;
 };
 
+type WatchProgress = {
+  canceled: boolean;
+  dispatcher: Dispatcher | undefined;
+};
+
 export class Runner {
   private _loader: Loader;
   private _reporter!: Reporter;
   private _plugins: TestRunnerPlugin[] = [];
+  private _watchRepeatEachIndex = 0;
+  private _watchJobsQueue = Promise.resolve();
 
   constructor(configCLIOverrides?: ConfigCLIOverrides) {
     this._loader = new Loader(configCLIOverrides);
@@ -174,8 +181,13 @@ export class Runner {
   async runAllTests(options: RunOptions = {}): Promise<FullResult> {
     this._reporter = await this._createReporter(!!options.listOnly);
     const config = this._loader.fullConfig();
+    if (options.watchMode) {
+      config._watchMode = true;
+      config._workerIsolation = 'isolate-projects';
+      return await this._watch(options);
+    }
 
-    const result = await raceAgainstTimeout(() => this._run(!!options.listOnly, options.filePatternFilter || [], options.projectFilter), config.globalTimeout);
+    const result = await raceAgainstTimeout(() => this._run(options), config.globalTimeout);
     let fullResult: FullResult;
     if (result.timedOut) {
       this._reporter.onError?.(createStacklessError(`Timed out waiting ${config.globalTimeout / 1000}s for the entire test run`));
@@ -210,44 +222,8 @@ export class Runner {
     return report;
   }
 
-  async runTestServer(): Promise<void> {
-    const config = this._loader.fullConfig();
-    this._reporter = await this._createReporter(false);
-    const rootSuite = new Suite('', 'root');
-    this._reporter.onBegin?.(config, rootSuite);
-    const result: FullResult = { status: 'passed' };
-    const globalTearDown = await this._performGlobalAndProjectSetup(config, rootSuite, config.projects, result);
-    if (result.status !== 'passed')
-      return;
-
-    while (true) {
-      const nextTest = await (this._reporter as any)._nextTest!();
-      if (!nextTest)
-        break;
-      const { projectId, file, line } = nextTest;
-      const testGroup: TestGroup = {
-        workerHash: createGuid(), // Create new worker for each test.
-        requireFile: file,
-        repeatEachIndex: 0,
-        projectId,
-        tests: [],
-        testServerTestLine: line,
-      };
-      const dispatcher = new Dispatcher(this._loader, [testGroup], this._reporter);
-      await dispatcher.run();
-    }
-
-    await globalTearDown?.();
-    await this._reporter.onEnd?.(result);
-  }
-
-  private async _run(list: boolean, testFileReFilters: FilePatternFilter[], projectNames?: string[]): Promise<FullResult> {
-    const filesByProject = await this._collectFiles(testFileReFilters, projectNames);
-    return await this._runFiles(list, filesByProject, testFileReFilters);
-  }
-
-  private async _collectFiles(testFileReFilters: FilePatternFilter[], projectNames?: string[]): Promise<Map<FullProjectInternal, string[]>> {
-    const testFileFilter = testFileReFilters.length ? createFileMatcher(testFileReFilters.map(e => e.re)) : () => true;
+  private async _collectFiles(testFileFilters: TestFileFilter[], projectNames?: string[]): Promise<Map<FullProjectInternal, string[]>> {
+    const testFileFilter = testFileFilters.length ? createFileMatcher(testFileFilters.map(e => e.re || e.exact || '')) : () => true;
     let projectsToFind: Set<string> | undefined;
     let unknownProjects: Map<string, string> | undefined;
     if (projectNames) {
@@ -288,7 +264,10 @@ export class Runner {
     return files;
   }
 
-  private async _runFiles(list: boolean, filesByProject: Map<FullProjectInternal, string[]>, testFileReFilters: FilePatternFilter[]): Promise<FullResult> {
+  private async _run(options: RunOptions): Promise<FullResult> {
+    const testFileFilters = options.testFileFilters || [];
+    const filesByProject = await this._collectFiles(testFileFilters, options.projectFilter);
+
     const allTestFiles = new Set<string>();
     for (const files of filesByProject.values())
       files.forEach(file => allTestFiles.add(file));
@@ -312,7 +291,7 @@ export class Runner {
       fatalErrors.push(duplicateTitlesError);
 
     // 3. Filter tests to respect line/column filter.
-    filterByFocusedLine(preprocessRoot, testFileReFilters);
+    filterByFocusedLine(preprocessRoot, testFileFilters);
 
     // 4. Complain about only.
     if (config.forbidOnly) {
@@ -322,7 +301,7 @@ export class Runner {
     }
 
     // 5. Filter only.
-    if (!list)
+    if (!options.listOnly)
       filterOnly(preprocessRoot);
 
     // 6. Generate projects.
@@ -406,27 +385,12 @@ export class Runner {
     }
 
     // 11. Bail out if list mode only, don't do any work.
-    if (list)
+    if (options.listOnly)
       return { status: 'passed' };
 
     // 12. Remove output directores.
-    try {
-      const outputDirs = new Set([...filesByProject.keys()].map(project => project.outputDir));
-      await Promise.all(Array.from(outputDirs).map(outputDir => removeFolderAsync(outputDir).catch(async error => {
-        if ((error as any).code === 'EBUSY') {
-          // We failed to remove folder, might be due to the whole folder being mounted inside a container:
-          //   https://github.com/microsoft/playwright/issues/12106
-          // Do a best-effort to remove all files inside of it instead.
-          const entries = await readDirAsync(outputDir).catch(e => []);
-          await Promise.all(entries.map(entry => removeFolderAsync(path.join(outputDir, entry))));
-        } else {
-          throw error;
-        }
-      })));
-    } catch (e) {
-      this._reporter.onError?.(serializeError(e));
+    if (!this._removeOutputDirs(options))
       return { status: 'failed' };
-    }
 
     // 13. Run Global setup.
     const result: FullResult = { status: 'passed' };
@@ -462,6 +426,154 @@ export class Runner {
       await globalTearDown?.();
     }
     return result;
+  }
+
+  private async _watch(options: RunOptions): Promise<FullResult> {
+    const config = this._loader.fullConfig();
+
+    // 1. Create empty suite.
+    const rootSuite = new Suite('', 'root');
+
+    // 2. Report begin.
+    this._reporter.onBegin?.(config, rootSuite);
+
+    // 3. Remove output directores.
+    if (!this._removeOutputDirs(options))
+      return { status: 'failed' };
+
+    // 4. Run Global setup.
+    const result: FullResult = { status: 'passed' };
+    const globalTearDown = await this._performGlobalAndProjectSetup(config, rootSuite, config.projects.filter(p => !options.projectFilter || options.projectFilter.includes(p.name)), result);
+    if (result.status !== 'passed')
+      return result;
+
+    const progress: WatchProgress = { canceled: false, dispatcher: undefined };
+
+    const runAndWatch = async () => {
+      // 5. Collect all files.
+      const testFileFilters = options.testFileFilters || [];
+      const filesByProject = await this._collectFiles(testFileFilters, options.projectFilter);
+
+      const allTestFiles = new Set<string>();
+      for (const files of filesByProject.values())
+        files.forEach(file => allTestFiles.add(file));
+
+      // 6. Trigger 'all files changed'.
+      await this._runAndReportError(async () => {
+        await this._runModifiedTestFilesForWatch(progress, options, allTestFiles);
+      }, result);
+
+      // 7. Start watching the filesystem for modifications.
+      await this._watchTestFiles(progress, options);
+    };
+
+    try {
+      const sigintWatcher = new SigIntWatcher();
+      await Promise.race([runAndWatch(), sigintWatcher.promise()]);
+      if (!sigintWatcher.hadSignal())
+        sigintWatcher.disarm();
+      progress.canceled = true;
+      await progress.dispatcher?.stop();
+    } finally {
+      await globalTearDown?.();
+    }
+    return result;
+  }
+
+  private async _runModifiedTestFilesForWatch(progress: WatchProgress, options: RunOptions, testFiles: Set<string>): Promise<void> {
+    if (progress.canceled)
+      return;
+
+    const testFileFilters: TestFileFilter[] = [...testFiles].map(f => ({
+      exact: f,
+      line: null,
+      column: null,
+    }));
+    const filesByProject = await this._collectFiles(testFileFilters, options.projectFilter);
+
+    if (progress.canceled)
+      return;
+
+    const testGroups: TestGroup[] = [];
+    const repeatEachIndex = ++this._watchRepeatEachIndex;
+    for (const [project, files] of filesByProject) {
+      for (const file of files) {
+        const group: TestGroup = {
+          workerHash: `run${project._id}-repeat${repeatEachIndex}`,
+          requireFile: file,
+          repeatEachIndex,
+          projectId: project._id,
+          tests: [],
+          watchMode: true,
+        };
+        testGroups.push(group);
+      }
+    }
+
+    const dispatcher = new Dispatcher(this._loader, testGroups, this._reporter);
+    progress.dispatcher = dispatcher;
+    await dispatcher.run();
+    await dispatcher.stop();
+    progress.dispatcher = undefined;
+  }
+
+  private async _watchTestFiles(progress: WatchProgress, options: RunOptions): Promise<void> {
+    const folders = new Set<string>();
+    const config = this._loader.fullConfig();
+    for (const project of config.projects) {
+      if (options.projectFilter && !options.projectFilter.includes(project.name))
+        continue;
+      folders.add(project.testDir);
+    }
+
+    for (const folder of folders) {
+      const changedFiles = new Set<string>();
+      let throttleTimer: NodeJS.Timeout | undefined;
+      fs.watch(folder, (event, filename) => {
+        if (event !== 'change')
+          return;
+
+        const fullName = path.join(folder, filename);
+        changedFiles.add(fullName);
+        if (throttleTimer)
+          clearTimeout(throttleTimer);
+
+        throttleTimer = setTimeout(() => {
+          const copy = new Set(changedFiles);
+          changedFiles.clear();
+          this._watchJobsQueue = this._watchJobsQueue.then(() => this._runModifiedTestFilesForWatch(progress, options, copy));
+        }, 250);
+      });
+    }
+
+    await new Promise(() => {});
+  }
+
+  private async _removeOutputDirs(options: RunOptions): Promise<boolean> {
+    const config = this._loader.fullConfig();
+    const outputDirs = new Set<string>();
+    for (const p of config.projects) {
+      if (!options.projectFilter || options.projectFilter.includes(p.name))
+        outputDirs.add(p.outputDir);
+    }
+
+    try {
+      await Promise.all(Array.from(outputDirs).map(outputDir => removeFolderAsync(outputDir).catch(async (error: any) => {
+        if ((error as any).code === 'EBUSY') {
+          // We failed to remove folder, might be due to the whole folder being mounted inside a container:
+          //   https://github.com/microsoft/playwright/issues/12106
+          // Do a best-effort to remove all files inside of it instead.
+          const entries = await readDirAsync(outputDir).catch(e => []);
+          await Promise.all(entries.map(entry => removeFolderAsync(path.join(outputDir, entry))));
+        } else {
+          throw error;
+        }
+      })));
+    } catch (e) {
+      this._reporter.onError?.(serializeError(e));
+      return false;
+    }
+    return true;
   }
 
   private async _performGlobalAndProjectSetup(config: FullConfigInternal, rootSuite: Suite, projects: FullProjectInternal[], result: FullResult): Promise<(() => Promise<void>) | undefined> {
@@ -569,14 +681,20 @@ function filterOnly(suite: Suite) {
   return filterSuiteWithOnlySemantics(suite, suiteFilter, testFilter);
 }
 
-function filterByFocusedLine(suite: Suite, focusedTestFileLines: FilePatternFilter[]) {
+function filterByFocusedLine(suite: Suite, focusedTestFileLines: TestFileFilter[]) {
   const filterWithLine = !!focusedTestFileLines.find(f => f.line !== null);
   if (!filterWithLine)
     return;
 
-  const testFileLineMatches = (testFileName: string, testLine: number, testColumn: number) => focusedTestFileLines.some(({ re, line, column }) => {
-    re.lastIndex = 0;
-    return re.test(testFileName) && (line === testLine || line === null) && (column === testColumn || column === null);
+  const testFileLineMatches = (testFileName: string, testLine: number, testColumn: number) => focusedTestFileLines.some(({ re, exact, line, column }) => {
+    const lineColumnOk = (line === testLine || line === null) && (column === testColumn || column === null);
+    if (!lineColumnOk)
+      return false;
+    if (re) {
+      re.lastIndex = 0;
+      return re.test(testFileName);
+    }
+    return testFileName === exact;
   });
   const suiteFilter = (suite: Suite) => {
     return !!suite.location && testFileLineMatches(suite.location.file, suite.location.line, suite.location.column);
@@ -727,6 +845,7 @@ function createTestGroups(rootSuite: Suite, workers: number): TestGroup[] {
       repeatEachIndex: test.repeatEachIndex,
       projectId: test._projectId,
       tests: [],
+      watchMode: false,
     };
   };
 
