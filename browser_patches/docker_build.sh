@@ -212,6 +212,11 @@ elif [[ "$2" == "compile" ]]; then
       export CC=/usr/bin/clang-12
       export CXX=/usr/bin/clang++-12
     fi
+    # For non-login non-interactive shells, we have to source
+    # cargo env explicitly since /env/environment is not read.
+    if [[ -f "$HOME/.cargo/env" ]]; then
+      source "$HOME/.cargo/env"
+    fi
     ./browser_patches/checkout_build_archive_upload.sh "${BUILD_FLAVOR}"
   '
 elif [[ "$2" == "enter" || -z "$2" ]]; then
