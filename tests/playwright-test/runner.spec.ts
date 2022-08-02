@@ -112,7 +112,8 @@ test('sigint should stop workers', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(130);
   expect(result.passed).toBe(0);
   expect(result.failed).toBe(0);
-  expect(result.skipped).toBe(4);
+  expect(result.skipped).toBe(2);
+  expect(result.interrupted).toBe(2);
   expect(result.output).toContain('%%SEND-SIGINT%%1');
   expect(result.output).toContain('%%SEND-SIGINT%%2');
   expect(result.output).not.toContain('%%skipped1');
@@ -177,7 +178,7 @@ test('worker interrupt should report errors', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(130);
   expect(result.passed).toBe(0);
   expect(result.failed).toBe(0);
-  expect(result.skipped).toBe(1);
+  expect(result.interrupted).toBe(1);
   expect(result.output).toContain('%%SEND-SIGINT%%');
   expect(result.output).toContain('Error: INTERRUPT');
 });

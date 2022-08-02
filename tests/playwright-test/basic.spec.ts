@@ -424,7 +424,7 @@ test('should not reuse worker after unhandled rejection in test.fail', async ({ 
   }, { workers: 1 });
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
-  expect(result.skipped).toBe(1);
+  expect(result.interrupted).toBe(1);
   expect(result.output).toContain(`Error: Oh my!`);
   expect(result.output).not.toContain(`Did not teardown test scope`);
 });

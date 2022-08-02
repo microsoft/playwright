@@ -159,7 +159,7 @@ export class TestCase extends Base implements reporterTypes.TestCase {
   }
 
   outcome(): 'skipped' | 'expected' | 'unexpected' | 'flaky' {
-    const nonSkipped = this.results.filter(result => result.status !== 'skipped');
+    const nonSkipped = this.results.filter(result => result.status !== 'skipped' && result.status !== 'interrupted');
     if (!nonSkipped.length)
       return 'skipped';
     if (nonSkipped.every(result => result.status === this.expectedStatus))

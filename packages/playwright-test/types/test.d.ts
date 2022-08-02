@@ -1294,7 +1294,7 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
   webServer: TestConfigWebServer | null;
 }
 
-export type TestStatus = 'passed' | 'failed' | 'timedOut' | 'skipped';
+export type TestStatus = 'passed' | 'failed' | 'timedOut' | 'skipped' | 'interrupted';
 
 /**
  * `WorkerInfo` contains information about the worker that is running tests. It is available to
@@ -1506,7 +1506,7 @@ export interface TestInfo {
    * ```
    *
    */
-  expectedStatus: "passed"|"failed"|"timedOut"|"skipped";
+  expectedStatus: "passed"|"failed"|"timedOut"|"skipped"|"interrupted";
 
   /**
    * Marks the currently running test as "should fail". Playwright Test runs this test and ensures that it is actually
@@ -1714,7 +1714,7 @@ export interface TestInfo {
    * ```
    *
    */
-  status?: "passed"|"failed"|"timedOut"|"skipped";
+  status?: "passed"|"failed"|"timedOut"|"skipped"|"interrupted";
 
   /**
    * Output written to `process.stderr` or `console.error` during the test execution.

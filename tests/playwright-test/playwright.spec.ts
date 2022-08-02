@@ -450,7 +450,7 @@ test('should report click error on sigint', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(130);
   expect(result.passed).toBe(0);
   expect(result.failed).toBe(0);
-  expect(result.skipped).toBe(1);
+  expect(result.interrupted).toBe(1);
   expect(stripAnsi(result.output)).toContain(`8 |         const promise = page.click('text=Missing');`);
 });
 
