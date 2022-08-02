@@ -1723,6 +1723,11 @@ export interface Page {
    */
   prependListener(event: 'worker', listener: (worker: Worker) => void): this;
 
+  /**
+   * **DEPRECATED** This property is deprecated. Please follow our [accessbility testing](https://playwright.dev/docs/accessibility-testing) guide
+   * if you need to test page accessibility.
+   * @deprecated
+   */
   accessibility: Accessibility;
 
   /**
@@ -11089,6 +11094,9 @@ class TimeoutError extends Error {}
 }
 
 /**
+ * **DEPRECATED** This class is deprecated. Please follow our [accessbility testing](https://playwright.dev/docs/accessibility-testing) guide if
+ * you need to test page accessibility.
+ *
  * The Accessibility class provides methods for inspecting Chromium's accessibility tree. The accessibility tree is used by
  * assistive technology such as [screen readers](https://en.wikipedia.org/wiki/Screen_reader) or
  * [switches](https://en.wikipedia.org/wiki/Switch_access).
