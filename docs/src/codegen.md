@@ -23,7 +23,7 @@ pwsh bin\Debug\netX\playwright.ps1 codegen playwright.dev
 
 Run `codegen` and perform actions in the browser. Playwright will generate the code for the user interactions. `codegen` will attempt to generate resilient text-based selectors.
 
-<img width="1183" alt="Screenshot 2022-07-30 at 00 19 06" src="https://user-images.githubusercontent.com/13063165/181852815-971c10da-0b55-4e54-8a73-77e1e825193c.png" />
+<img width="1183" alt="Codegen generating code for tests for playwright.dev website" src="https://user-images.githubusercontent.com/13063165/181852815-971c10da-0b55-4e54-8a73-77e1e825193c.png" />
 
 
 ## Emulate viewport size
@@ -48,7 +48,7 @@ pwsh bin\Debug\netX\playwright.ps1 codegen --viewport-size=800,600 playwright.de
 
 
 
-<img width="1409" alt="Screenshot 2022-08-02 at 12 51 43" src="https://user-images.githubusercontent.com/13063165/182360039-6db79ad6-fe82-4fd6-900a-b5e25f7f720f.png" />
+<img width="1409" alt="Codegen generating code for tests for playwright.dev website with a specific viewport" src="https://user-images.githubusercontent.com/13063165/182360039-6db79ad6-fe82-4fd6-900a-b5e25f7f720f.png" />
 
 ## Emulate devices
 
@@ -70,7 +70,7 @@ playwright codegen --device="iPhone 11" playwright.dev
 pwsh bin\Debug\netX\playwright.ps1 codegen --device="iPhone 11" playwright.dev
 ```
 
-<img width="1239" alt="Screenshot 2022-08-02 at 12 49 03" src="https://user-images.githubusercontent.com/13063165/182360089-9dc6d33d-480e-4bb2-86a3-fec51c1c228e.png" />
+<img width="1239" alt="Codegen generating code for tests for playwright.dev website emulated for iPhone 11" src="https://user-images.githubusercontent.com/13063165/182360089-9dc6d33d-480e-4bb2-86a3-fec51c1c228e.png" />
 
 
 ## Emulate color scheme
@@ -93,14 +93,13 @@ playwright codegen --color-scheme=dark playwright.dev
 pwsh bin\Debug\netX\playwright.ps1 codegen --color-scheme=dark playwright.dev
 ```
 
-<img width="1258" alt="Screenshot 2022-08-02 at 12 53 27" src="https://user-images.githubusercontent.com/13063165/182359371-0bb4a7a2-abbb-4f73-8550-d67e0101f0ad.png" />
+<img width="1258" alt="Codegen generating code for tests for playwright.dev website in dark mode" src="https://user-images.githubusercontent.com/13063165/182359371-0bb4a7a2-abbb-4f73-8550-d67e0101f0ad.png" />
 
 ## Emulate geolocation, language and timezone
 
 Record scripts and tests while emulating timezone, language & location using the `--timezone`, `--geolocation` and `--lang` options. Once page opens, click the "my location" button to see geolocation in action.
 
 ```bash js
-
 npx playwright codegen --timezone="Europe/Rome" --geolocation="41.890221,12.492348" --lang="it-IT" maps.google.com
 ```
 
@@ -116,7 +115,7 @@ playwright codegen --timezone="Europe/Rome" --geolocation="41.890221,12.492348" 
 pwsh bin\Debug\netX\playwright.ps1 codegen --timezone="Europe/Rome" --geolocation="41.890221,12.492348" --lang="it-IT" maps.google.com
 ```
 
-<img width="1276" alt="Screenshot 2022-08-02 at 16 01 52" src="https://user-images.githubusercontent.com/13063165/182394434-73e1c2a8-767e-411a-94e4-0912c1c50ecc.png" />
+<img width="1276" alt="Codegen generating code for tests for google maps showing timezone, geoloation as Rome, Italy and in Italian language" src="https://user-images.githubusercontent.com/13063165/182394434-73e1c2a8-767e-411a-94e4-0912c1c50ecc.png" />
 
 ## Preserve authenticated state
 
@@ -255,3 +254,6 @@ var page = await context.NewPageAsync();
 await page.PauseAsync();
 ```
 
+## What's Next
+
+- [See a trace of your tests](./trace-viewer.md)
