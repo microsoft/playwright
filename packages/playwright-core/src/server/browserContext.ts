@@ -170,6 +170,9 @@ export abstract class BrowserContext extends SdkObject {
 
     // Unless I do this early, setting extra http headers below does not respond.
     await page?._frameManager.closeOpenDialogs();
+    // This should be before the navigation to about:blank so that we could save on
+    // a navigation as we clear local storage.
+    await this._clearLocalStorage();
     await page?.mainFrame().goto(metadata, 'about:blank', { timeout: 0 });
     await this._removeExposedBindings();
     await this._removeInitScripts();
@@ -181,6 +184,7 @@ export abstract class BrowserContext extends SdkObject {
     await this.setExtraHTTPHeaders(this._options.extraHTTPHeaders || []);
     await this.setGeolocation(this._options.geolocation);
     await this.setOffline(!!this._options.offline);
+    await this.clearCookies();
 
     await page?.resetForReuse(metadata);
   }
@@ -455,6 +459,32 @@ export abstract class BrowserContext extends SdkObject {
       await page.close(internalMetadata);
     }
     return result;
+  }
+
+  async _clearLocalStorage() {
+    if (!this._origins.size)
+      return;
+    let page = this.pages()[0];
+    const originArray = [...this._origins];
+
+    // Fast path.
+    if (page && originArray.length === 1 && page.mainFrame().url().startsWith(originArray[0])) {
+      await page.mainFrame().evaluateExpression(`localStorage.clear()`, false, undefined, 'utility');
+      return;
+    }
+
+    // Slow path.
+    const internalMetadata = serverSideCallMetadata();
+    page = page || await this.newPage(internalMetadata);
+    await page._setServerRequestInterceptor(handler => {
+      handler.fulfill({ body: '<html></html>' }).catch(() => {});
+    });
+    for (const origin of this._origins) {
+      const frame = page.mainFrame();
+      await frame.goto(internalMetadata, origin);
+      await frame.evaluateExpression(`localStorage.clear()`, false, undefined, 'utility');
+    }
+    await page._setServerRequestInterceptor(undefined);
   }
 
   isSettingStorageState(): boolean {
