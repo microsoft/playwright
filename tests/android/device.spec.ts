@@ -67,7 +67,7 @@ test('androidDevice.options.omitDriverInstall', async function({ playwright }) {
   await androidDevice.shell(`cmd package uninstall com.microsoft.playwright.androiddriver`);
   await androidDevice.shell(`cmd package uninstall com.microsoft.playwright.androiddriver.test`);
 
-  await androidDevice.shell('am start -n com.android.chrome/com.google.android.apps.chrome.Main about:blank');
+  await androidDevice.shell('am start -a android.intent.action.VIEW -d about:blank com.android.chrome');
 
   let fillStatus = '';
   androidDevice.fill({ res: 'com.android.chrome:id/url_bar' }, 'Hello').then(() => {

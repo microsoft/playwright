@@ -16,7 +16,7 @@ if [[ -n "${GITHUB_ACTIONS}" ]]; then
 fi
 
 echo "Starting emulator"
-nohup ${ANDROID_HOME}/emulator/emulator -avd android32 -no-audio -no-window -gpu ${EMULATOR_GPU} -no-boot-anim &
+nohup ${ANDROID_HOME}/emulator/emulator -avd android33 -no-audio -no-window -gpu ${EMULATOR_GPU} -no-boot-anim &
 ${ANDROID_HOME}/platform-tools/adb wait-for-device shell 'while [[ -z $(getprop sys.boot_completed | tr -d '\r') ]]; do sleep 1; done; input keyevent 82'
 ${ANDROID_HOME}/platform-tools/adb devices
 echo "Emulator started"
