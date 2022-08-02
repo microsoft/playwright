@@ -138,14 +138,15 @@ function ensure_docker_container {
                                          zip \
                                          unzip
 
+    # We will use clang-12 for all arm64 native builds.
     if [[ "${BUILD_FLAVOR}" == *"-arm64" ]]; then
       apt-get install -y clang-12
     fi
 
-    # Ubuntu 18 installs Python 3.6 as Python3 by default; this, however,
-    # fails to run Firefox build scripts.
-    # Install Python3.8 instead on Ubuntu 18.04 as Python3.
-    if [[ "${BUILD_FLAVOR}" == *ubuntu-18.04* ]]; then
+    # Firefox build on Ubuntu 18.04 requires Python3.8 to run its build scripts.
+    # WebKit build on Ubuntu 18.04 fails with the Python 3.8 installation but works
+    # with Python 3.6 that is shipped as default python3 on Ubuntu 18.
+    if [[ "${BUILD_FLAVOR}" == "firefox-ubuntu-18.04" ]]; then
       apt-get install -y python3.8 python3.8-dev python3.8-distutils
       # Point python3 to python3.8
       update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.8 2
