@@ -138,6 +138,10 @@ function ensure_docker_container {
                                          zip \
                                          unzip
 
+    if [[ "${BUILD_FLAVOR}" == *"-arm64" ]]; then
+      apt-get install -y clang-12
+    fi
+
     # Ubuntu 18 installs Python 3.6 as Python3 by default; this, however,
     # fails to run Firefox build scripts.
     # Install Python3.8 instead on Ubuntu 18.04 as Python3.
@@ -167,6 +171,8 @@ function ensure_docker_container {
       # Install AZ CLI with Python since they do not ship
       # aarch64 to APT: https://github.com/Azure/azure-cli/issues/7368
       # Pin so future releases dont break us.
+      # Note: azure-cli requires gcc to be installed on arm64 ubuntu.
+      apt-get install -y gcc
       pip3 install azure-cli==2.38.0
     fi
 
@@ -184,10 +190,6 @@ function ensure_docker_container {
 
       # Ubuntu 18.04 specific: install GCC-8. WebKit requires gcc 8.3+ to compile.
       apt-get install -y gcc-8 g++-8
-    fi
-
-    if [[ "${BUILD_FLAVOR}" == *"-arm64" ]]; then
-      apt-get install -y clang-12
     fi
 
     git config --system user.email "you@example.com"
