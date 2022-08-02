@@ -145,12 +145,20 @@ await Expect(page).ToHaveTitleAsync("News");
 
 ## method: PlaywrightAssertions.setDefaultTimeout
 * since: v1.25
-* langs: java
+* langs: java, python, csharp
 
 Changes default timeout for Playwright assertions from 5 seconds to the speicified value.
 
 ```java
 PlaywrightAssertions.setDefaultTimeout(30_000);
+```
+
+```csharp
+Assertions.SetDefaultTimeout(30_000);
+```
+
+```python
+expect_set_default_timeout(30_000)
 ```
 
 ### param: PlaywrightAssertions.setDefaultTimeout.timeout
