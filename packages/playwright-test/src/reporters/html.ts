@@ -104,7 +104,7 @@ export type TestResult = {
   steps: TestStep[];
   errors: string[];
   attachments: TestAttachment[];
-  status: 'passed' | 'failed' | 'timedOut' | 'skipped';
+  status: 'passed' | 'failed' | 'timedOut' | 'skipped' | 'interrupted';
 };
 
 export type TestStep = {

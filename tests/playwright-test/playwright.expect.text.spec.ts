@@ -657,7 +657,7 @@ test('should print expected/received on Ctrl+C', async ({ runInlineTest }) => {
   }, { workers: 1 }, {}, { sendSIGINTAfter: 1 });
   expect(result.exitCode).toBe(130);
   expect(result.passed).toBe(0);
-  expect(result.skipped).toBe(1);
+  expect(result.interrupted).toBe(1);
   expect(stripAnsi(result.output)).toContain('Expected string: "Text 2"');
   expect(stripAnsi(result.output)).toContain('Received string: "Text content"');
 });

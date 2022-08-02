@@ -74,9 +74,8 @@ export class WorkerRunner extends EventEmitter {
       // Interrupt current action.
       this._currentTest?._timeoutManager.interrupt();
 
-      // TODO: mark test as 'interrupted' instead.
       if (this._currentTest && this._currentTest.status === 'passed')
-        this._currentTest.status = 'skipped';
+        this._currentTest.status = 'interrupted';
     }
     return this._runFinished;
   }

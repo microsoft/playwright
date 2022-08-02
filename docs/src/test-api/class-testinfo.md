@@ -162,7 +162,7 @@ Errors thrown during test execution, if any.
 
 ## property: TestInfo.expectedStatus
 * since: v1.10
-- type: <[TestStatus]<"passed"|"failed"|"timedOut"|"skipped">>
+- type: <[TestStatus]<"passed"|"failed"|"timedOut"|"skipped"|"interrupted">>
 
 Expected status for the currently running test. This is usually `'passed'`, except for a few cases:
 * `'skipped'` for skipped tests, e.g. with [`method: Test.skip#2`];
@@ -461,7 +461,7 @@ Suffix used to differentiate snapshots between multiple test configurations. For
 
 ## property: TestInfo.status
 * since: v1.10
-- type: ?<[TestStatus]<"passed"|"failed"|"timedOut"|"skipped">>
+- type: ?<[TestStatus]<"passed"|"failed"|"timedOut"|"skipped"|"interrupted">>
 
 Actual status for the currently running test. Available after the test has finished in [`method: Test.afterEach`] hook and fixtures.
 

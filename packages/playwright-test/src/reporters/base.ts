@@ -38,7 +38,7 @@ type ErrorDetails = {
 type TestSummary = {
   skipped: number;
   expected: number;
-  skippedWithError: TestCase[];
+  interrupted: TestCase[];
   unexpected: TestCase[];
   flaky: TestCase[];
   failuresToPrint: TestCase[];
@@ -131,13 +131,18 @@ export class BaseReporter implements Reporter  {
     return fileDurations.filter(([,duration]) => duration > threshold).slice(0, count);
   }
 
-  protected generateSummaryMessage({ skipped, expected, unexpected, flaky, fatalErrors }: TestSummary) {
+  protected generateSummaryMessage({ skipped, expected, interrupted, unexpected, flaky, fatalErrors }: TestSummary) {
     const tokens: string[] = [];
     if (fatalErrors.length)
       tokens.push(colors.red(`  ${fatalErrors.length} fatal ${fatalErrors.length === 1 ? 'error' : 'errors'}`));
     if (unexpected.length) {
       tokens.push(colors.red(`  ${unexpected.length} failed`));
       for (const test of unexpected)
+        tokens.push(colors.red(formatTestHeader(this.config, test, '    ')));
+    }
+    if (interrupted.length) {
+      tokens.push(colors.red(`  ${interrupted.length} interrupted`));
+      for (const test of interrupted)
         tokens.push(colors.red(formatTestHeader(this.config, test, '    ')));
     }
     if (flaky.length) {
@@ -158,16 +163,21 @@ export class BaseReporter implements Reporter  {
   protected generateSummary(): TestSummary {
     let skipped = 0;
     let expected = 0;
-    const skippedWithError: TestCase[] = [];
+    const interrupted: TestCase[] = [];
+    const interruptedToPrint: TestCase[] = [];
     const unexpected: TestCase[] = [];
     const flaky: TestCase[] = [];
 
     this.suite.allTests().forEach(test => {
       switch (test.outcome()) {
         case 'skipped': {
-          ++skipped;
-          if (test.results.some(result => !!result.error))
-            skippedWithError.push(test);
+          if (test.results.some(result => result.status === 'interrupted')) {
+            if (test.results.some(result => !!result.error))
+              interruptedToPrint.push(test);
+            interrupted.push(test);
+          } else {
+            ++skipped;
+          }
           break;
         }
         case 'expected': ++expected; break;
@@ -176,11 +186,11 @@ export class BaseReporter implements Reporter  {
       }
     });
 
-    const failuresToPrint = [...unexpected, ...flaky, ...skippedWithError];
+    const failuresToPrint = [...unexpected, ...flaky, ...interruptedToPrint];
     return {
       skipped,
       expected,
-      skippedWithError,
+      interrupted,
       unexpected,
       flaky,
       failuresToPrint,
@@ -311,6 +321,11 @@ export function formatResultFailure(config: FullConfig, test: TestCase, result: 
   if (result.status === 'passed' && test.expectedStatus === 'failed') {
     errorDetails.push({
       message: indent(colors.red(`Expected to fail, but passed.`), initialIndent),
+    });
+  }
+  if (result.status === 'interrupted') {
+    errorDetails.push({
+      message: indent(colors.red(`Test was interrupted.`), initialIndent),
     });
   }
 

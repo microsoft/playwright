@@ -29,7 +29,7 @@ test('should lead in uncaughtException when page.route raises', async ({ runInli
       });
     `,
   }, { workers: 1 });
-  expect(result.skipped).toBe(1);
+  expect(result.interrupted).toBe(1);
   expect(result.output).toContain('foobar');
 });
 
@@ -46,7 +46,7 @@ test('should lead in unhandledRejection when page.route raises', async ({ runInl
       });
     `,
   }, { workers: 1 });
-  expect(result.skipped).toBe(1);
+  expect(result.interrupted).toBe(1);
   expect(result.output).toContain('foobar');
 });
 
@@ -63,7 +63,7 @@ test('should lead in uncaughtException when context.route raises', async ({ runI
       });
     `,
   }, { workers: 1 });
-  expect(result.skipped).toBe(1);
+  expect(result.interrupted).toBe(1);
   expect(result.output).toContain('foobar');
 });
 
@@ -80,6 +80,6 @@ test('should lead in unhandledRejection when context.route raises', async ({ run
       });
     `,
   }, { workers: 1 });
-  expect(result.skipped).toBe(1);
+  expect(result.interrupted).toBe(1);
   expect(result.output).toContain('foobar');
 });

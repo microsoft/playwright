@@ -18,7 +18,7 @@ Learn more about [test annotations](../test-annotations.md).
 
 ## property: TestCase.expectedStatus
 * since: v1.10
-- type: <[TestStatus]<"passed"|"failed"|"timedOut"|"skipped">>
+- type: <[TestStatus]<"passed"|"failed"|"timedOut"|"skipped"|"interrupted">>
 
 Expected test status.
 * Tests marked as [`method: Test.skip#1`] or [`method: Test.fixme#1`] are expected to be `'skipped'`.
