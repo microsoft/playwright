@@ -10379,7 +10379,9 @@ export interface BrowserType<Unused = {}> {
    */
   connectOverCDP(options: ConnectOverCDPOptions & { wsEndpoint?: string }): Promise<Browser>;
   /**
-   * This method attaches Playwright to an existing browser instance.
+   * This method attaches Playwright to an existing browser instance. When connecting to another browser launched via
+   * `BrowserType.launchServer` in Node.js, the major and minor version needs to match the client version (1.2.3 → is
+   * compatible with 1.2.x).
    * @param wsEndpoint A browser websocket endpoint to connect to.
    * @param options
    */
@@ -10391,7 +10393,9 @@ export interface BrowserType<Unused = {}> {
    * @deprecated
    */
   /**
-   * This method attaches Playwright to an existing browser instance.
+   * This method attaches Playwright to an existing browser instance. When connecting to another browser launched via
+   * `BrowserType.launchServer` in Node.js, the major and minor version needs to match the client version (1.2.3 → is
+   * compatible with 1.2.x).
    * @param wsEndpoint A browser websocket endpoint to connect to.
    * @param options
    */
@@ -10835,7 +10839,9 @@ export interface BrowserType<Unused = {}> {
   }): Promise<BrowserContext>;
 
   /**
-   * Returns the browser app instance.
+   * Returns the browser app instance. You can connect to it via
+   * [browserType.connect(wsEndpoint[, options])](https://playwright.dev/docs/api/class-browsertype#browser-type-connect),
+   * which requires the major/minor client/server version to match (1.2.3 → is compatible with 1.2.x).
    *
    * Launches browser server that client can connect to. An example of launching a browser executable and connecting to it
    * later:
