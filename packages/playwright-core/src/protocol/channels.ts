@@ -379,12 +379,29 @@ export interface LocalUtilsEventTarget {
 }
 export interface LocalUtilsChannel extends LocalUtilsEventTarget, Channel {
   _type_LocalUtils: boolean;
+  connectToWebSocket(params: LocalUtilsConnectToWebSocketParams, metadata?: Metadata): Promise<LocalUtilsConnectToWebSocketResult>;
   zip(params: LocalUtilsZipParams, metadata?: Metadata): Promise<LocalUtilsZipResult>;
   harOpen(params: LocalUtilsHarOpenParams, metadata?: Metadata): Promise<LocalUtilsHarOpenResult>;
   harLookup(params: LocalUtilsHarLookupParams, metadata?: Metadata): Promise<LocalUtilsHarLookupResult>;
   harClose(params: LocalUtilsHarCloseParams, metadata?: Metadata): Promise<LocalUtilsHarCloseResult>;
   harUnzip(params: LocalUtilsHarUnzipParams, metadata?: Metadata): Promise<LocalUtilsHarUnzipResult>;
 }
+export type LocalUtilsConnectToWebSocketParams = {
+  wsEndpoint: string,
+  headers?: any,
+  slowMo?: number,
+  timeout?: number,
+  socksProxyRedirectPortForTest?: number,
+};
+export type LocalUtilsConnectToWebSocketOptions = {
+  headers?: any,
+  slowMo?: number,
+  timeout?: number,
+  socksProxyRedirectPortForTest?: number,
+};
+export type LocalUtilsConnectToWebSocketResult = {
+  pipe: JsonPipeChannel,
+};
 export type LocalUtilsZipParams = {
   zipFile: string,
   entries: NameValue[],
@@ -657,27 +674,10 @@ export interface BrowserTypeEventTarget {
 }
 export interface BrowserTypeChannel extends BrowserTypeEventTarget, Channel {
   _type_BrowserType: boolean;
-  connect(params: BrowserTypeConnectParams, metadata?: Metadata): Promise<BrowserTypeConnectResult>;
   launch(params: BrowserTypeLaunchParams, metadata?: Metadata): Promise<BrowserTypeLaunchResult>;
   launchPersistentContext(params: BrowserTypeLaunchPersistentContextParams, metadata?: Metadata): Promise<BrowserTypeLaunchPersistentContextResult>;
   connectOverCDP(params: BrowserTypeConnectOverCDPParams, metadata?: Metadata): Promise<BrowserTypeConnectOverCDPResult>;
 }
-export type BrowserTypeConnectParams = {
-  wsEndpoint: string,
-  headers?: any,
-  slowMo?: number,
-  timeout?: number,
-  socksProxyRedirectPortForTest?: number,
-};
-export type BrowserTypeConnectOptions = {
-  headers?: any,
-  slowMo?: number,
-  timeout?: number,
-  socksProxyRedirectPortForTest?: number,
-};
-export type BrowserTypeConnectResult = {
-  pipe: JsonPipeChannel,
-};
 export type BrowserTypeLaunchParams = {
   channel?: string,
   executablePath?: string,

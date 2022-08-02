@@ -207,6 +207,16 @@ scheme.APIResponse = tObject({
 });
 scheme.LifecycleEvent = tEnum(['load', 'domcontentloaded', 'networkidle', 'commit']);
 scheme.LocalUtilsInitializer = tOptional(tObject({}));
+scheme.LocalUtilsConnectToWebSocketParams = tObject({
+  wsEndpoint: tString,
+  headers: tOptional(tAny),
+  slowMo: tOptional(tNumber),
+  timeout: tOptional(tNumber),
+  socksProxyRedirectPortForTest: tOptional(tNumber),
+});
+scheme.LocalUtilsConnectToWebSocketResult = tObject({
+  pipe: tChannel(['JsonPipe']),
+});
 scheme.LocalUtilsZipParams = tObject({
   zipFile: tString,
   entries: tArray(tType('NameValue')),
@@ -355,16 +365,6 @@ scheme.SelectorsRegisterResult = tOptional(tObject({}));
 scheme.BrowserTypeInitializer = tObject({
   executablePath: tString,
   name: tString,
-});
-scheme.BrowserTypeConnectParams = tObject({
-  wsEndpoint: tString,
-  headers: tOptional(tAny),
-  slowMo: tOptional(tNumber),
-  timeout: tOptional(tNumber),
-  socksProxyRedirectPortForTest: tOptional(tNumber),
-});
-scheme.BrowserTypeConnectResult = tObject({
-  pipe: tChannel(['JsonPipe']),
 });
 scheme.BrowserTypeLaunchParams = tObject({
   channel: tOptional(tString),

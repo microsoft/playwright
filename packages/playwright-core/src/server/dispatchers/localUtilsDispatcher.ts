@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type EventEmitter from 'events';
+import EventEmitter from 'events';
 import fs from 'fs';
 import path from 'path';
 import type * as channels from '../../protocol/channels';
@@ -26,13 +26,26 @@ import { yazl, yauzl } from '../../zipBundle';
 import { ZipFile } from '../../utils/zipFile';
 import type * as har from '../har/har';
 import type { HeadersArray } from '../types';
+import { JsonPipeDispatcher } from '../dispatchers/jsonPipeDispatcher';
+import { getUserAgent } from '../../common/userAgent';
+import { ProgressController } from '../progress';
+import * as socks from '../../common/socksProxy';
+import { WebSocketTransport } from '../transport';
+import { findValidator, ValidationError, type ValidatorContext } from '../../protocol/validator';
+import { type CallMetadata, SdkObject } from '../instrumentation';
 
-export class LocalUtilsDispatcher extends Dispatcher<{ guid: string }, channels.LocalUtilsChannel> implements channels.LocalUtilsChannel {
+class LocalUtilsSdkObject extends SdkObject {
+  constructor(parent: SdkObject) {
+    super(parent, 'localUtils');
+  }
+}
+
+export class LocalUtilsDispatcher extends Dispatcher<LocalUtilsSdkObject, channels.LocalUtilsChannel> implements channels.LocalUtilsChannel {
   _type_LocalUtils: boolean;
   private _harBakends = new Map<string, HarBackend>();
 
-  constructor(scope: DispatcherScope) {
-    super(scope, { guid: 'localUtils@' + createGuid() }, 'LocalUtils', {});
+  constructor(scope: DispatcherScope, parentSdkObject: SdkObject) {
+    super(scope, new LocalUtilsSdkObject(parentSdkObject), 'LocalUtils', {});
     this._type_LocalUtils = true;
   }
 
@@ -137,6 +150,43 @@ export class LocalUtilsDispatcher extends Dispatcher<{ guid: string }, channels.
     }
     zipFile.close();
     await fs.promises.unlink(params.zipFile);
+  }
+
+  async connectToWebSocket(params: channels.LocalUtilsConnectToWebSocketParams, metadata: CallMetadata): Promise<channels.LocalUtilsConnectToWebSocketResult> {
+    const controller = new ProgressController(metadata, this._object);
+    controller.setLogName('browser');
+    return await controller.run(async progress => {
+      const paramsHeaders = Object.assign({ 'User-Agent': getUserAgent() }, params.headers || {});
+      const transport = await WebSocketTransport.connect(progress, params.wsEndpoint, paramsHeaders, true);
+      let socksInterceptor: SocksInterceptor | undefined;
+      const pipe = new JsonPipeDispatcher(this._scope);
+      transport.onmessage = json => {
+        if (json.method === '__create__' && json.params.type === 'SocksSupport')
+          socksInterceptor = new SocksInterceptor(transport, params.socksProxyRedirectPortForTest, json.params.guid);
+        if (socksInterceptor?.interceptMessage(json))
+          return;
+        const cb = () => {
+          try {
+            pipe.dispatch(json);
+          } catch (e) {
+            transport.close();
+          }
+        };
+        if (params.slowMo)
+          setTimeout(cb, params.slowMo);
+        else
+          cb();
+      };
+      pipe.on('message', message => {
+        transport.send(message);
+      });
+      transport.onclose = () => {
+        socksInterceptor?.cleanup();
+        pipe.wasClosed();
+      };
+      pipe.on('close', () => transport.close());
+      return { pipe };
+    }, params.timeout || 0);
   }
 }
 
@@ -272,3 +322,63 @@ function countMatchingHeaders(harHeaders: har.Header[], headers: HeadersArray): 
   return matches;
 }
 
+
+class SocksInterceptor {
+  private _handler: socks.SocksProxyHandler;
+  private _channel: channels.SocksSupportChannel & EventEmitter;
+  private _socksSupportObjectGuid: string;
+  private _ids = new Set<number>();
+
+  constructor(transport: WebSocketTransport, redirectPortForTest: number | undefined, socksSupportObjectGuid: string) {
+    this._handler = new socks.SocksProxyHandler(redirectPortForTest);
+    this._socksSupportObjectGuid = socksSupportObjectGuid;
+
+    let lastId = -1;
+    this._channel = new Proxy(new EventEmitter(), {
+      get: (obj: any, prop) => {
+        if ((prop in obj) || obj[prop] !== undefined || typeof prop !== 'string')
+          return obj[prop];
+        return (params: any) => {
+          try {
+            const id = --lastId;
+            this._ids.add(id);
+            const validator = findValidator('SocksSupport', prop, 'Params');
+            params = validator(params, '', { tChannelImpl: tChannelForSocks, binary: 'toBase64' });
+            transport.send({ id, guid: socksSupportObjectGuid, method: prop, params, metadata: { stack: [], apiName: '', internal: true } } as any);
+          } catch (e) {
+          }
+        };
+      },
+    }) as channels.SocksSupportChannel & EventEmitter;
+    this._handler.on(socks.SocksProxyHandler.Events.SocksConnected, (payload: socks.SocksSocketConnectedPayload) => this._channel.socksConnected(payload));
+    this._handler.on(socks.SocksProxyHandler.Events.SocksData, (payload: socks.SocksSocketDataPayload) => this._channel.socksData(payload));
+    this._handler.on(socks.SocksProxyHandler.Events.SocksError, (payload: socks.SocksSocketErrorPayload) => this._channel.socksError(payload));
+    this._handler.on(socks.SocksProxyHandler.Events.SocksFailed, (payload: socks.SocksSocketFailedPayload) => this._channel.socksFailed(payload));
+    this._handler.on(socks.SocksProxyHandler.Events.SocksEnd, (payload: socks.SocksSocketEndPayload) => this._channel.socksEnd(payload));
+    this._channel.on('socksRequested', payload => this._handler.socketRequested(payload));
+    this._channel.on('socksClosed', payload => this._handler.socketClosed(payload));
+    this._channel.on('socksData', payload => this._handler.sendSocketData(payload));
+  }
+
+  cleanup() {
+    this._handler.cleanup();
+  }
+
+  interceptMessage(message: any): boolean {
+    if (this._ids.has(message.id)) {
+      this._ids.delete(message.id);
+      return true;
+    }
+    if (message.guid === this._socksSupportObjectGuid) {
+      const validator = findValidator('SocksSupport', message.method, 'Event');
+      const params = validator(message.params, '', { tChannelImpl: tChannelForSocks, binary: 'fromBase64' });
+      this._channel.emit(message.method, params);
+      return true;
+    }
+    return false;
+  }
+}
+
+function tChannelForSocks(names: '*' | string[], arg: any, path: string, context: ValidatorContext) {
+  throw new ValidationError(`${path}: channels are not expected in SocksSupport`);
+}

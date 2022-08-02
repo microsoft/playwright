@@ -478,6 +478,16 @@ LocalUtils:
 
   commands:
 
+    connectToWebSocket:
+      parameters:
+        wsEndpoint: string
+        headers: json?
+        slowMo: number?
+        timeout: number?
+        socksProxyRedirectPortForTest: number?
+      returns:
+        pipe: JsonPipe
+
     zip:
       parameters:
         zipFile: string
@@ -686,16 +696,6 @@ BrowserType:
     name: string
 
   commands:
-
-    connect:
-      parameters:
-        wsEndpoint: string
-        headers: json?
-        slowMo: number?
-        timeout: number?
-        socksProxyRedirectPortForTest: number?
-      returns:
-        pipe: JsonPipe
 
     launch:
       parameters:

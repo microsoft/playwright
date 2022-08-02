@@ -127,10 +127,10 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
       const deadline = params.timeout ? monotonicTime() + params.timeout : 0;
       let browser: Browser;
       const headers = { 'x-playwright-browser': this.name(), ...params.headers };
-      const connectParams: channels.BrowserTypeConnectParams = { wsEndpoint, headers, slowMo: params.slowMo, timeout: params.timeout };
+      const connectParams: channels.LocalUtilsConnectToWebSocketParams = { wsEndpoint, headers, slowMo: params.slowMo, timeout: params.timeout };
       if ((params as any).__testHookRedirectPortForwarding)
         connectParams.socksProxyRedirectPortForTest = (params as any).__testHookRedirectPortForwarding;
-      const { pipe } = await this._channel.connect(connectParams);
+      const { pipe } = await this._connection.localUtils()._channel.connectToWebSocket(connectParams);
       const closePipe = () => pipe.close().catch(() => {});
       const connection = new Connection(this._connection.localUtils());
       connection.markAsRemote();
