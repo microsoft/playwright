@@ -27,9 +27,8 @@ it('should work for open shadow roots', async ({ page, server }) => {
   expect(await page.$$(`data-testid:light=foo`)).toEqual([]);
 });
 
-it('should click on links in shadow dom', async ({ page, server, browserName, browserMajorVersion, isAndroid }) => {
+it('should click on links in shadow dom', async ({ page, server, browserName, browserMajorVersion }) => {
   it.fixme(browserName === 'chromium' && browserMajorVersion < 91, 'Remove when crrev.com/864024 gets to the stable channel');
-  it.fixme(isAndroid);
 
   await page.goto(server.PREFIX + '/shadow-dom-link.html');
   expect(await page.evaluate(() => (window as any).clickCount)).toBe(0);

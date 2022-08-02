@@ -392,8 +392,7 @@ it('should click the button with em border with offset', async ({ page, server, 
   expect(await page.evaluate('offsetY')).toBe(browserName === 'webkit' ? 12 * 2 + 10 : 10);
 });
 
-it('should click a very large button with offset', async ({ page, server, browserName, isAndroid }) => {
-  it.fixme(isAndroid);
+it('should click a very large button with offset', async ({ page, server, browserName }) => {
 
   await page.goto(server.PREFIX + '/input/button.html');
   await page.$eval('button', button => button.style.borderWidth = '8px');
@@ -405,8 +404,7 @@ it('should click a very large button with offset', async ({ page, server, browse
   expect(await page.evaluate('offsetY')).toBe(browserName === 'webkit' ? 1910 + 8 : 1910);
 });
 
-it('should click a button in scrolling container with offset', async ({ page, server, browserName, isAndroid }) => {
-  it.fixme(isAndroid);
+it('should click a button in scrolling container with offset', async ({ page, server, browserName }) => {
 
   await page.goto(server.PREFIX + '/input/button.html');
   await page.$eval('button', button => {
@@ -840,8 +838,8 @@ it('should not throw protocol error when navigating during the click', async ({ 
   expect(await page.evaluate('result')).toBe('Clicked');
 });
 
-it('should retry when navigating during the click', async ({ page, server, mode, isAndroid }) => {
-  it.skip(mode !== 'default' || isAndroid);
+it('should retry when navigating during the click', async ({ page, server, mode }) => {
+  it.skip(mode !== 'default');
 
   await page.goto(server.PREFIX + '/input/button.html');
   let firstTime = true;

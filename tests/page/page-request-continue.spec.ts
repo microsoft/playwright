@@ -161,8 +161,6 @@ it('should amend method on main request', async ({ page, server }) => {
 });
 
 it.describe('post data', () => {
-  it.fixme(({ isAndroid }) => isAndroid, 'Post data does not work');
-
   it('should amend post data', async ({ page, server }) => {
     await page.goto(server.EMPTY_PAGE);
     await page.route('**/*', route => {

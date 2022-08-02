@@ -351,8 +351,7 @@ it('should accept single file', async ({ page, asset }) => {
   expect(await page.$eval('input', input => input.files[0].name)).toBe('file-to-upload.txt');
 });
 
-it('should detect mime type', async ({ page, server, asset, isAndroid }) => {
-  it.fixme(isAndroid);
+it('should detect mime type', async ({ page, server, asset }) => {
 
   let files: Record<string, formidable.File>;
   server.setRoute('/upload', async (req, res) => {
@@ -387,8 +386,7 @@ it('should detect mime type', async ({ page, server, asset, isAndroid }) => {
 });
 
 // @see https://github.com/microsoft/playwright/issues/4704
-it('should not trim big uploaded files', async ({ page, server, asset, isAndroid }) => {
-  it.fixme(isAndroid);
+it('should not trim big uploaded files', async ({ page, server }) => {
 
   let files: Record<string, formidable.File>;
   server.setRoute('/upload', async (req, res) => {

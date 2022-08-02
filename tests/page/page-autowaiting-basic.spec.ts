@@ -28,8 +28,6 @@ function initServer(server: TestServer): string[] {
   return messages;
 }
 
-it.skip(({ isAndroid }) => isAndroid, 'Too flaky on Android');
-
 it('should await navigation when clicking anchor', async ({ page, server }) => {
   const messages = initServer(server);
   await page.setContent(`<a id="anchor" href="${server.EMPTY_PAGE}">empty.html</a>`);

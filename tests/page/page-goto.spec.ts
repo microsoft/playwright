@@ -634,9 +634,8 @@ it('should properly report window.stop()', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/window-stop.html');
 });
 
-it('should return from goto if new navigation is started', async ({ page, server, browserName, isAndroid }) => {
+it('should return from goto if new navigation is started', async ({ page, server, browserName }) => {
   it.fixme(browserName === 'webkit', 'WebKit has a bug where Page.frameStoppedLoading is sent too early.');
-  it.fail(isAndroid, 'Navigation gets aborted on Android');
   server.setRoute('/slow.js', async (req, res) => void 0);
   let finished = false;
   const navigation = page.goto(server.PREFIX + '/load-event/load-event.html').then(r => {

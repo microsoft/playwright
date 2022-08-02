@@ -94,9 +94,7 @@ it('should not chain abort', async ({ page, server }) => {
   expect(failed).toBeFalsy();
 });
 
-it('should fall back after exception', async ({ page, server, isAndroid }) => {
-  it.fixme(isAndroid);
-
+it('should fall back after exception', async ({ page, server }) => {
   await page.route('**/empty.html', route => {
     route.continue();
   });
@@ -222,8 +220,6 @@ it('should override request url', async ({ page, server }) => {
 });
 
 it.describe('post data', () => {
-  it.fixme(({ isAndroid }) => isAndroid, 'Post data does not work');
-
   it('should amend post data', async ({ page, server }) => {
     await page.goto(server.EMPTY_PAGE);
     let postData: string;

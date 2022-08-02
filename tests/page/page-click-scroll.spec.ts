@@ -16,10 +16,9 @@
 
 import { test as it } from './pageTest';
 
-it('should not hit scroll bar', async ({ page, isAndroid, browserName, platform }) => {
+it('should not hit scroll bar', async ({ page, browserName, platform }) => {
   it.fixme(browserName === 'webkit' && platform === 'darwin');
   it.fixme(browserName === 'webkit' && platform === 'linux', 'Fails in headless and in headful on Ubuntu 22.04');
-  it.skip(isAndroid);
 
   await page.setContent(`
     <style>
