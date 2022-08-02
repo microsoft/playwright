@@ -560,6 +560,8 @@ page.
 * langs: csharp, js, python
 - type: <[Accessibility]>
 
+**DEPRECATED** This property is deprecated. Please follow our [accessbility testing](../accessibility-testing.md) guide if you need to test page accessibility.
+
 ## async method: Page.addInitScript
 * since: v1.8
 
