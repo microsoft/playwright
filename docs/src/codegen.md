@@ -97,7 +97,7 @@ pwsh bin\Debug\netX\playwright.ps1 codegen --color-scheme=dark playwright.dev
 
 ## Emulate geolocation, language and timezone
 
-Record scripts and tests while emulating timezone, language & location using the `--timezone`, `--geolocation` and `--lang` options. Once page opens, click the "my location" button to see geolocation in action.
+Record scripts and tests while emulating timezone, language & location using the `--timezone`, `--geolocation` and `--lang` options. Once page opens, click the "show your location" icon at them bottom right corner of the map to see geolocation in action.
 
 ```bash js
 npx playwright codegen --timezone="Europe/Rome" --geolocation="41.890221,12.492348" --lang="it-IT" maps.google.com
