@@ -31,22 +31,18 @@ Run `codegen` and perform actions in the browser. Playwright will generate the c
 Playwright opens a browser window with it's viewport set to a specific width and height and is not responsive as tests need to be run under the same conditions. Use the `--viewport` option to generate tests with a different viewport size.
 
 ```bash js
-# Emulate screen size and color scheme.
 npx playwright codegen --viewport-size=800,600 playwright.dev
 ```
 
 ```bash java
-# Emulate screen size and color scheme.
 mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="codegen --viewport-size=800,600 playwright.dev"
 ```
 
 ```bash python
-# Emulate screen size and color scheme.
 playwright codegen --viewport-size=800,600 playwright.dev
 ```
 
 ```bash csharp
-# Emulate screen size and color scheme.
 pwsh bin\Debug\netX\playwright.ps1 codegen --viewport-size=800,600 playwright.dev
 ```
 
@@ -56,7 +52,7 @@ pwsh bin\Debug\netX\playwright.ps1 codegen --viewport-size=800,600 playwright.de
 
 ## Emulate devices
 
-Record scripts and tests while emulating a mobile device using the `--device` option.
+Record scripts and tests while emulating a mobile device using the `--device` option which sets the viewport size and user agent among others.
 
 ```bash js
 npx playwright codegen --device="iPhone 11" playwright.dev
@@ -119,6 +115,9 @@ playwright codegen --timezone="Europe/Rome" --geolocation="41.890221,12.492348" 
 ```bash csharp
 pwsh bin\Debug\netX\playwright.ps1 codegen --timezone="Europe/Rome" --geolocation="41.890221,12.492348" --lang="it-IT" maps.google.com
 ```
+
+<img width="1276" alt="Screenshot 2022-08-02 at 16 01 52" src="https://user-images.githubusercontent.com/13063165/182394434-73e1c2a8-767e-411a-94e4-0912c1c50ecc.png" />
+
 ## Preserve authenticated state
 
 Run `codegen` with `--save-storage` to save [cookies](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies) and [localStorage](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage) at the end of the session. This is useful to separately record an authentication step and reuse it later in the tests. After performing authentication and exiting auth.json will contain the storage state. 
