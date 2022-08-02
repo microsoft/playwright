@@ -17,7 +17,7 @@
 import child_process from 'child_process';
 import path from 'path';
 import { EventEmitter } from 'events';
-import type { RunPayload, TestBeginPayload, TestEndPayload, DonePayload, TestOutputPayload, WorkerInitParams, StepBeginPayload, StepEndPayload, SerializedLoaderData, TeardownErrorsPayload, TestServerTestResolvedPayload } from './ipc';
+import type { RunPayload, TestBeginPayload, TestEndPayload, DonePayload, TestOutputPayload, WorkerInitParams, StepBeginPayload, StepEndPayload, SerializedLoaderData, TeardownErrorsPayload, TestServerTestResolvedPayload, WorkerIsolation } from './ipc';
 import type { TestResult, Reporter, TestStep, TestError } from '../types/testReporter';
 import type { Suite } from './test';
 import type { Loader } from './loader';
@@ -428,7 +428,7 @@ export class Dispatcher {
   }
 
   _createWorker(hash: string, parallelIndex: number) {
-    const worker = new Worker(hash, parallelIndex);
+    const worker = new Worker(hash, parallelIndex, this._loader.fullConfig()._workerIsolation);
     const handleOutput = (params: TestOutputPayload) => {
       const chunk = chunkFromParams(params);
       if (worker.didFail()) {
@@ -496,12 +496,14 @@ class Worker extends EventEmitter {
   private _didFail = false;
   private didExit = false;
   private _ready: Promise<void>;
+  workerIsolation: WorkerIsolation;
 
-  constructor(hash: string, parallelIndex: number) {
+  constructor(hash: string, parallelIndex: number, workerIsolation: WorkerIsolation) {
     super();
     this.workerIndex = lastWorkerIndex++;
     this._hash = hash;
     this.parallelIndex = parallelIndex;
+    this.workerIsolation = workerIsolation;
 
     this.process = child_process.fork(path.join(__dirname, 'worker.js'), {
       detached: false,
@@ -534,6 +536,7 @@ class Worker extends EventEmitter {
   async init(testGroup: TestGroup, loaderData: SerializedLoaderData) {
     await this._ready;
     const params: WorkerInitParams = {
+      workerIsolation: this.workerIsolation,
       workerIndex: this.workerIndex,
       parallelIndex: this.parallelIndex,
       repeatEachIndex: testGroup.repeatEachIndex,
