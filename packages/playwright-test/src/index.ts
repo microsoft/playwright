@@ -100,10 +100,10 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
       options.channel = channel;
 
     for (const browserType of [playwright.chromium, playwright.firefox, playwright.webkit])
-      (browserType as any)._defaultLaunchOptions = options;
+      browserType.setDefaultLaunchOptions(options);
     await use(options);
     for (const browserType of [playwright.chromium, playwright.firefox, playwright.webkit])
-      (browserType as any)._defaultLaunchOptions = undefined;
+      browserType.setDefaultLaunchOptions({});
   }, { scope: 'worker', auto: true }],
 
   _connectedBrowser: [async ({ playwright, browserName, channel, headless, connectOptions }, use) => {
@@ -358,7 +358,7 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
     for (const browserType of [playwright.chromium, playwright.firefox, playwright.webkit]) {
       (browserType as any)._onDidCreateContext = onDidCreateBrowserContext;
       (browserType as any)._onWillCloseContext = onWillCloseContext;
-      (browserType as any)._defaultContextOptions = _combinedContextOptions;
+      browserType.setDefaultContextOptions(_combinedContextOptions);
       const existingContexts = Array.from((browserType as any)._contexts) as BrowserContext[];
       await Promise.all(existingContexts.map(onDidCreateBrowserContext));
     }
@@ -401,7 +401,7 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
       leftoverContexts.push(...(browserType as any)._contexts);
       (browserType as any)._onDidCreateContext = undefined;
       (browserType as any)._onWillCloseContext = undefined;
-      (browserType as any)._defaultContextOptions = undefined;
+      browserType.setDefaultContextOptions({});
     }
     leftoverContexts.forEach(context => (context as any)._instrumentation.removeAllListeners());
     for (const context of (playwright.request as any)._contexts)

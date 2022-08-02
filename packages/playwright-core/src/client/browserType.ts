@@ -45,10 +45,10 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
   _serverLauncher?: BrowserServerLauncher;
   _contexts = new Set<BrowserContext>();
   _playwright!: Playwright;
+  _defaultContextOptions: BrowserContextOptions = {};
+  _defaultLaunchOptions: LaunchOptions = {};
 
   // Instrumentation.
-  _defaultContextOptions?: BrowserContextOptions;
-  _defaultLaunchOptions?: LaunchOptions;
   _onDidCreateContext?: (context: BrowserContext) => Promise<void>;
   _onWillCloseContext?: (context: BrowserContext) => Promise<void>;
 
@@ -64,6 +64,14 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
 
   name(): string {
     return this._initializer.name;
+  }
+
+  setDefaultContextOptions(options: BrowserContextOptions = {}) {
+    this._defaultContextOptions = options;
+  }
+
+  setDefaultLaunchOptions(options: LaunchOptions = {}) {
+    this._defaultLaunchOptions = options;
   }
 
   async launch(options: LaunchOptions = {}): Promise<Browser> {

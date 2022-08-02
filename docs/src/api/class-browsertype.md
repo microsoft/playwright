@@ -334,3 +334,46 @@ use an unguessable token when using this option.
 - returns: <[string]>
 
 Returns browser name. For example: `'chromium'`, `'webkit'` or `'firefox'`.
+
+
+## method: BrowserType.setDefaultContextOptions
+* since: v1.25
+
+Sets default context options that will be used for subsequent [`method: Browser.newContext`], [`method: Browser.newPage`] and [`method: BrowserType.launchPersistentContext`].
+
+### option: BrowserType.setDefaultContextOptions.-inline- = %%-shared-context-params-list-v1.8-%%
+* since: v1.25
+
+### option: BrowserType.setDefaultContextOptions.proxy = %%-context-option-proxy-%%
+* since: v1.25
+
+### option: BrowserType.setDefaultContextOptions.storageState = %%-js-python-context-option-storage-state-%%
+* since: v1.25
+
+### option: BrowserType.setDefaultContextOptions.storageState = %%-csharp-java-context-option-storage-state-%%
+* since: v1.25
+
+### option: BrowserType.setDefaultContextOptions.storageStatePath = %%-csharp-java-context-option-storage-state-path-%%
+* since: v1.25
+
+
+## method: BrowserType.setDefaultLaunchOptions
+* since: v1.25
+
+Sets default launch options that will be used for subsequent [`method: BrowserType.launch`] and [`method: BrowserType.launchPersistentContext`].
+
+### option: BrowserType.setDefaultLaunchOptions.-inline- = %%-shared-browser-options-list-v1.8-%%
+* since: v1.25
+### option: BrowserType.setDefaultLaunchOptions.firefoxUserPrefs = %%-js-python-browser-option-firefoxuserprefs-%%
+* since: v1.25
+### option: BrowserType.setDefaultLaunchOptions.firefoxUserPrefs2 = %%-csharp-java-browser-option-firefoxuserprefs-%%
+* since: v1.25
+### option: BrowserType.setDefaultLaunchOptions.logger = %%-browser-option-logger-%%
+* since: v1.25
+### option: BrowserType.setDefaultLaunchOptions.slowMo = %%-browser-option-slowmo-%%
+* since: v1.25
+### option: BrowserType.setDefaultLaunchOptions.ignoreDefaultArgs = %%-csharp-java-browser-option-ignoredefaultargs-%%
+* since: v1.25
+### option: BrowserType.setDefaultLaunchOptions.ignoreAllDefaultArgs = %%-csharp-java-browser-option-ignorealldefaultargs-%%
+* since: v1.25
+
