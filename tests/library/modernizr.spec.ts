@@ -71,9 +71,8 @@ it('safari-14-1', async ({ browser, browserName, platform, server, headless, isM
     expected.inputtypes.time = false;
   }
 
-  if (isMac && parseInt(os.release(), 10) > 20) {
+  if (isMac && parseInt(os.release(), 10) > 20)
     expected.applicationcache = false;
-  }
 
   expect(actual).toEqual(expected);
 });
@@ -130,9 +129,8 @@ it('mobile-safari-14-1', async ({ playwright, browser, browserName, platform, is
     expected.inputtypes.time = false;
   }
 
-  if (isMac && parseInt(os.release(), 10) > 20) {
+  if (isMac && parseInt(os.release(), 10) > 20)
     expected.applicationcache = false;
-  }
 
   expect(actual).toEqual(expected);
 });
