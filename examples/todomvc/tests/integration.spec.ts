@@ -233,7 +233,6 @@ test.describe('Editing', () => {
     await todoItems.nth(1).locator('.edit').fill('');
     await todoItems.nth(1).locator('.edit').press('Enter');
 
-    await page.pause();
     await expect(todoItems).toHaveText([
       TODO_ITEMS[0],
       TODO_ITEMS[2],
