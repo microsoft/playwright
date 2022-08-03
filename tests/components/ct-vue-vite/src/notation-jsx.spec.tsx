@@ -81,11 +81,11 @@ test('should run hooks', async ({ page, mount }) => {
 test('unmount a multi root component should work', async ({ mount }) => {
   const component = await mount(<MultiRoot />)
 
-  expect(component).toContainText('root 1')
-  expect(component).toContainText('root 2')
+  await expect(component).toContainText('root 1')
+  await expect(component).toContainText('root 2')
 
   await component.unmount()
 
-  expect(component).not.toContainText('root 1')
-  expect(component).not.toContainText('root 2')
+  await expect(component).not.toContainText('root 1')
+  await expect(component).not.toContainText('root 2')
 })
