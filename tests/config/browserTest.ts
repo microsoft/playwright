@@ -29,6 +29,7 @@ import { parseHar } from '../config/utils';
 export type BrowserTestWorkerFixtures = PageWorkerFixtures & {
   browserVersion: string;
   defaultSameSiteCookieValue: string;
+  allowsThirdParty
   browserMajorVersion: number;
   browserType: BrowserType;
   isAndroid: boolean;
@@ -52,13 +53,24 @@ const test = baseTest.extend<BrowserTestTestFixtures, BrowserTestWorkerFixtures>
     await run(playwright[browserName]);
   }, { scope: 'worker' } ],
 
-  defaultSameSiteCookieValue: [async ({ browserName, browserMajorVersion }, run) => {
+  allowsThirdParty: [async ({ browserName, browserMajorVersion, channel }, run) => {
+    if (browserName !== 'firefox')
+      await run(false);
+    else if (channel === 'firefox-beta' && (browserMajorVersion >= 97 && browserMajorVersion < 103))
+      await run(true);
+    else if (browserMajorVersion >= 103)
+      await run(true);
+  }, { scope: 'worker' } ],
+
+  defaultSameSiteCookieValue: [async ({ browserName, browserMajorVersion, channel }, run) => {
     if (browserName === 'chromium')
       await run('Lax');
     else if (browserName === 'webkit')
       await run('None');
-    else if (browserName === 'firefox')
+    else if (browserName === 'firefox' && channel === 'firefox-beta')
       await run(browserMajorVersion === 96 || browserMajorVersion >= 103 ? 'Lax' : 'None');
+    else if (browserName === 'firefox' && channel !== 'firefox-beta')
+      await run(browserMajorVersion >= 103 ? 'None' : 'Lax');
     else
       throw new Error('unknown browser - ' + browserName);
   }, { scope: 'worker' } ],
