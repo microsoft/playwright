@@ -231,7 +231,7 @@ it.describe('page screenshot', () => {
   });
 
   it('should capture canvas changes', async ({ page, isElectron, browserName, isMac }) => {
-    it.fixme(browserName === 'webkit' && isMac && parseInt(os.release(), 10) < 20, 'https://github.com/microsoft/playwright/issues/8796');
+    it.fixme(browserName === 'webkit' && isMac && parseInt(os.release(), 10) < 21, 'https://github.com/microsoft/playwright/issues/8796,https://github.com/microsoft/playwright/issues/16180');
     it.skip(isElectron);
     await page.goto('data:text/html,<canvas></canvas>');
     await page.evaluate(() => {
