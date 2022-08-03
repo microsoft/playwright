@@ -144,7 +144,7 @@ window.playwrightMount = async (component, rootElement, hooksConfig) => {
     render: h => render(component, h),
   }).$mount();
   rootElement.appendChild(instance.$el);
-  /** @type {any} */ (instance.$el)[instanceKey] = instance;
+  /** @type {any} */ (rootElement)[instanceKey] = instance;
 
   for (const hook of /** @type {any} */(window).__pw_hooks_after_mount || [])
     await hook({ hooksConfig, instance });
@@ -155,5 +155,5 @@ window.playwrightUnmount = async rootElement => {
   if (!component)
     throw new Error('Component was not mounted');
   component.$destroy();
-  rootElement.remove();
+  component.$el.remove();
 };
