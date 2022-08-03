@@ -22,6 +22,7 @@ import type { Playwright } from '../server/playwright';
 import { createPlaywright } from '../server/playwright';
 import { PlaywrightConnection } from './playwrightConnection';
 import { assert } from '../utils';
+import { serverSideCallMetadata } from '../server/instrumentation';
 
 const debugLog = debug('pw:server');
 
@@ -61,6 +62,27 @@ export class PlaywrightServer {
   }
 
   async listen(port: number = 0): Promise<string> {
+    if (this._mode === 'reuse-browser') {
+      const callMetadata = serverSideCallMetadata();
+      const browser = await this._preLaunchedPlaywright!.chromium.launch(callMetadata, { headless: false });
+      const { context } = await browser.newContextForReuse({ viewport: { width: 800, height: 600 } }, callMetadata);
+      const page = await context.newPage(callMetadata);
+      await page.mainFrame().setContent(callMetadata, `
+        <style>
+        html, body {
+          width: 100%;
+          height: 100%;
+        }
+        body {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+        }
+        </style>
+        <div>Playwright will use this page to run tests</div>`);
+    }
+
     const server = http.createServer((request, response) => {
       response.end('Running');
     });

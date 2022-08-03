@@ -121,8 +121,8 @@ it('should allow mocking svg with charset', async ({ page, server, browserName, 
   expect(await img.screenshot()).toMatchSnapshot('mock-svg.png');
 });
 
-it('should work with file path', async ({ page, server, asset, mode }) => {
-  it.skip(mode === 'service');
+it('should work with file path', async ({ page, server, asset, mode, isAndroid }) => {
+  it.skip(mode === 'service' || isAndroid);
 
   await page.route('**/*', route => route.fulfill({ contentType: 'shouldBeIgnored', path: asset('pptr.png') }));
   await page.evaluate(PREFIX => {
@@ -289,7 +289,8 @@ it('should fulfill with multiple set-cookie', async ({ page, server, isElectron 
   expect(await response.headerValue('X-Header-2')).toBe('v2');
 });
 
-it('should fulfill with fetch response that has multiple set-cookie', async ({ playwright, page, server }) => {
+it('should fulfill with fetch response that has multiple set-cookie', async ({ playwright, page, server, isAndroid }) => {
+  it.fixme(isAndroid);
   server.setRoute('/empty.html', (req, res) => {
     res.setHeader('Set-Cookie', ['a=b', 'c=d']);
     res.setHeader('Content-Type', 'text/html');
