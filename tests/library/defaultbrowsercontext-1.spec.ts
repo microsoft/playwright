@@ -80,7 +80,7 @@ it('context.clearCookies() should work', async ({ server, launchPersistent }) =>
   expect(await page.evaluate('document.cookie')).toBe('');
 });
 
-it('should(not) block third party cookies', async ({ server, launchPersistent, browserName, browserMajorVersion }) => {
+it('should(not) block third party cookies', async ({ server, launchPersistent, browserName, allowsThirdParty }) => {
   const { page, context } = await launchPersistent();
   await page.goto(server.EMPTY_PAGE);
   await page.evaluate(src => {
@@ -97,7 +97,6 @@ it('should(not) block third party cookies', async ({ server, launchPersistent, b
     return document.cookie;
   });
   await page.waitForTimeout(2000);
-  const allowsThirdParty = browserName === 'firefox' && (browserMajorVersion >= 97 && browserMajorVersion < 103);
   expect(documentCookie).toBe(allowsThirdParty ? 'username=John Doe' : '');
   const cookies = await context.cookies(server.CROSS_PROCESS_PREFIX + '/grid.html');
   if (allowsThirdParty) {
