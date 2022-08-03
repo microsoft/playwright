@@ -23,34 +23,118 @@ pwsh bin\Debug\netX\playwright.ps1 codegen playwright.dev
 
 Run `codegen` and perform actions in the browser. Playwright will generate the code for the user interactions. `codegen` will attempt to generate resilient text-based selectors.
 
-<img width="1183" alt="Screenshot 2022-07-30 at 00 19 06" src="https://user-images.githubusercontent.com/13063165/181852815-971c10da-0b55-4e54-8a73-77e1e825193c.png" />
+<img width="1183" alt="Codegen generating code for tests for playwright.dev website" src="https://user-images.githubusercontent.com/13063165/181852815-971c10da-0b55-4e54-8a73-77e1e825193c.png" />
+
+
+## Emulate viewport size
+
+Playwright opens a browser window with it's viewport set to a specific width and height and is not responsive as tests need to be run under the same conditions. Use the `--viewport` option to generate tests with a different viewport size.
+
+```bash js
+npx playwright codegen --viewport-size=800,600 playwright.dev
+```
+
+```bash java
+mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="codegen --viewport-size=800,600 playwright.dev"
+```
+
+```bash python
+playwright codegen --viewport-size=800,600 playwright.dev
+```
+
+```bash csharp
+pwsh bin\Debug\netX\playwright.ps1 codegen --viewport-size=800,600 playwright.dev
+```
+
+
+
+<img width="1409" alt="Codegen generating code for tests for playwright.dev website with a specific viewport" src="https://user-images.githubusercontent.com/13063165/182360039-6db79ad6-fe82-4fd6-900a-b5e25f7f720f.png" />
+
+## Emulate devices
+
+Record scripts and tests while emulating a mobile device using the `--device` option which sets the viewport size and user agent among others.
+
+```bash js
+npx playwright codegen --device="iPhone 11" playwright.dev
+```
+
+```bash java
+mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args='codegen --device="iPhone 11" playwright.dev'
+```
+
+```bash python
+playwright codegen --device="iPhone 11" playwright.dev
+```
+
+```bash csharp
+pwsh bin\Debug\netX\playwright.ps1 codegen --device="iPhone 11" playwright.dev
+```
+
+<img width="1239" alt="Codegen generating code for tests for playwright.dev website emulated for iPhone 11" src="https://user-images.githubusercontent.com/13063165/182360089-9dc6d33d-480e-4bb2-86a3-fec51c1c228e.png" />
+
+
+## Emulate color scheme
+
+Record scripts and tests while emulating the color scheme with the `--color-scheme` option.
+
+```bash js
+npx playwright codegen --color-scheme=dark playwright.dev
+```
+
+```bash java
+mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="codegen --color-scheme=dark playwright.dev"
+```
+
+```bash python
+playwright codegen --color-scheme=dark playwright.dev
+```
+
+```bash csharp
+pwsh bin\Debug\netX\playwright.ps1 codegen --color-scheme=dark playwright.dev
+```
+
+<img width="1258" alt="Codegen generating code for tests for playwright.dev website in dark mode" src="https://user-images.githubusercontent.com/13063165/182359371-0bb4a7a2-abbb-4f73-8550-d67e0101f0ad.png" />
+
+## Emulate geolocation, language and timezone
+
+Record scripts and tests while emulating timezone, language & location using the `--timezone`, `--geolocation` and `--lang` options. Once page opens, click the "show your location" icon at them bottom right corner of the map to see geolocation in action.
+
+```bash js
+npx playwright codegen --timezone="Europe/Rome" --geolocation="41.890221,12.492348" --lang="it-IT" maps.google.com
+```
+
+```bash java
+mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args='codegen --timezone="Europe/Rome" --geolocation="41.890221,12.492348" --lang="it-IT" maps.google.com'
+```
+
+```bash python
+playwright codegen --timezone="Europe/Rome" --geolocation="41.890221,12.492348" --lang="it-IT" maps.google.com
+```
+
+```bash csharp
+pwsh bin\Debug\netX\playwright.ps1 codegen --timezone="Europe/Rome" --geolocation="41.890221,12.492348" --lang="it-IT" maps.google.com
+```
+
+<img width="1276" alt="Codegen generating code for tests for google maps showing timezone, geoloation as Rome, Italy and in Italian language" src="https://user-images.githubusercontent.com/13063165/182394434-73e1c2a8-767e-411a-94e4-0912c1c50ecc.png" />
 
 ## Preserve authenticated state
 
-Run `codegen` with `--save-storage` to save [cookies](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies) and [localStorage](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage) at the end of the session. This is useful to separately record authentication step and reuse it later in the tests.
+Run `codegen` with `--save-storage` to save [cookies](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies) and [localStorage](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage) at the end of the session. This is useful to separately record an authentication step and reuse it later in the tests. After performing authentication and exiting auth.json will contain the storage state. 
 
 ```bash js
 npx playwright codegen --save-storage=auth.json
-# Perform authentication and exit.
-# auth.json will contain the storage state.
 ```
 
 ```bash java
 mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="codegen  --save-storage=auth.json"
-# Perform authentication and exit.
-# auth.json will contain the storage state.
 ```
 
 ```bash python
 playwright codegen --save-storage=auth.json
-# Perform authentication and exit.
-# auth.json will contain the storage state.
 ```
 
 ```bash csharp
 pwsh bin\Debug\netX\playwright.ps1 codegen --save-storage=auth.json
-# Perform authentication and exit.
-# auth.json will contain the storage state.
 ```
 
 Run with `--load-storage` to consume previously loaded storage. This way, all [cookies](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies) and [localStorage](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage) will be restored, bringing most web apps to the authenticated state.
@@ -58,27 +142,23 @@ Run with `--load-storage` to consume previously loaded storage. This way, all [c
 ```bash js
 npx playwright open --load-storage=auth.json my.web.app
 npx playwright codegen --load-storage=auth.json my.web.app
-# Perform actions in authenticated state.
 ```
 
 ```bash java
 mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="open --load-storage=auth.json my.web.app"
 mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="codegen --load-storage=auth.json my.web.app"
-# Perform authentication and exit.
-# auth.json will contain the storage state.
 ```
 
 ```bash python
 playwright open --load-storage=auth.json my.web.app
 playwright codegen --load-storage=auth.json my.web.app
-# Perform actions in authenticated state.
 ```
 
 ```bash csharp
 pwsh bin\Debug\netX\playwright.ps1 open --load-storage=auth.json my.web.app
 pwsh bin\Debug\netX\playwright.ps1 codegen --load-storage=auth.json my.web.app
-# Perform actions in authenticated state.
 ```
+
 
 ## Record using custom setup
 
@@ -174,76 +254,6 @@ var page = await context.NewPageAsync();
 await page.PauseAsync();
 ```
 
-## Emulate devices
+## What's Next
 
-You can record scripts and tests while emulating a device.
-
-```bash js
-# Emulate iPhone 11.
-npx playwright codegen --device="iPhone 11" wikipedia.org
-```
-
-```bash java
-# Emulate iPhone 11.
-mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args='codegen --device="iPhone 11" wikipedia.org'
-```
-
-```bash python
-# Emulate iPhone 11.
-playwright codegen --device="iPhone 11" wikipedia.org
-```
-
-```bash csharp
-# Emulate iPhone 11.
-pwsh bin\Debug\netX\playwright.ps1 codegen --device="iPhone 11" wikipedia.org
-```
-
-## Emulate color scheme and viewport size
-
-You can also record scripts and tests while emulating various browser properties.
-
-```bash js
-# Emulate screen size and color scheme.
-npx playwright codegen --viewport-size=800,600 --color-scheme=dark twitter.com
-```
-
-```bash java
-# Emulate screen size and color scheme.
-mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="codegen --viewport-size=800,600 --color-scheme=dark twitter.com"
-```
-
-```bash python
-# Emulate screen size and color scheme.
-playwright codegen --viewport-size=800,600 --color-scheme=dark twitter.com
-```
-
-```bash csharp
-# Emulate screen size and color scheme.
-pwsh bin\Debug\netX\playwright.ps1 codegen --viewport-size=800,600 --color-scheme=dark twitter.com
-```
-
-## Emulate geolocation, language and timezone
-
-```bash js
-# Emulate timezone, language & location
-# Once page opens, click the "my location" button to see geolocation in action
-npx playwright codegen --timezone="Europe/Rome" --geolocation="41.890221,12.492348" --lang="it-IT" maps.google.com
-```
-
-```bash java
-# Emulate timezone, language & location
-# Once page opens, click the "my location" button to see geolocation in action
-mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args='codegen --timezone="Europe/Rome" --geolocation="41.890221,12.492348" --lang="it-IT" maps.google.com'
-```
-
-```bash python
-# Emulate timezone, language & location
-# Once page opens, click the "my location" button to see geolocation in action
-playwright codegen --timezone="Europe/Rome" --geolocation="41.890221,12.492348" --lang="it-IT" maps.google.com
-```
-
-```bash csharp
-# Emulate timezone, language & location
-# Once page opens, click the "my location" button to see geolocation in action
-pwsh bin\Debug\netX\playwright.ps1 codegen --timezone="Europe/Rome" --geolocation="41.890221,12.492348" --lang="it-IT" maps.google.com
-```
+- [See a trace of your tests](./trace-viewer.md)
