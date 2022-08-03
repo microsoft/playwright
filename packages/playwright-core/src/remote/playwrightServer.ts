@@ -23,6 +23,7 @@ import { createPlaywright } from '../server/playwright';
 import { PlaywrightConnection } from './playwrightConnection';
 import { assert } from '../utils';
 import { serverSideCallMetadata } from '../server/instrumentation';
+import type  { LaunchOptions } from '../server/types';
 
 const debugLog = debug('pw:server');
 
@@ -120,17 +121,28 @@ export class PlaywrightServer {
       const url = new URL('http://localhost' + (request.url || ''));
       const browserHeader = request.headers['x-playwright-browser'];
       const browserAlias = url.searchParams.get('browser') || (Array.isArray(browserHeader) ? browserHeader[0] : browserHeader) || null;
-      const headlessHeader = request.headers['x-playwright-headless'];
-      const headlessValue = url.searchParams.get('headless') || (Array.isArray(headlessHeader) ? headlessHeader[0] : headlessHeader);
       const proxyHeader = request.headers['x-playwright-proxy'];
       const proxyValue = url.searchParams.get('proxy') || (Array.isArray(proxyHeader) ? proxyHeader[0] : proxyHeader);
       const enableSocksProxy = this._options.enableSocksProxy && proxyValue === '*';
+
+      const launchOptionsHeader = request.headers['x-playwright-launch-options'] || '';
+      let launchOptions: LaunchOptions = {};
+      try {
+        launchOptions = JSON.parse(Array.isArray(launchOptionsHeader) ? launchOptionsHeader[0] : launchOptionsHeader);
+      } catch (e) {
+      }
+
+      const headlessHeader = request.headers['x-playwright-headless'];
+      const headlessValue = url.searchParams.get('headless') || (Array.isArray(headlessHeader) ? headlessHeader[0] : headlessHeader);
+      if (headlessValue && headlessValue !== '0')
+        launchOptions.headless = true;
+
       this._clientsCount++;
       const log = newLogger();
       log(`serving connection: ${request.url}`);
       const connection = new PlaywrightConnection(
           this._mode, ws,
-          { enableSocksProxy, browserAlias, headless: headlessValue !== '0' },
+          { enableSocksProxy, browserAlias, launchOptions },
           { playwright: this._preLaunchedPlaywright, browser: this._options.preLaunchedBrowser || null },
           log, () => this._clientsCount--);
       (ws as any)[kConnectionSymbol] = connection;

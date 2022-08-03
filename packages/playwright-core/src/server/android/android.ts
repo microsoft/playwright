@@ -290,7 +290,8 @@ export class AndroidDevice extends SdkObject {
       browserProcess: new ClankBrowserProcess(androidBrowser),
       proxy: options.proxy,
       protocolLogger: helper.debugProtocolLogger(),
-      browserLogsCollector: new RecentLogsCollector()
+      browserLogsCollector: new RecentLogsCollector(),
+      originalLaunchOptions: {},
     };
     validateBrowserContextOptions(options, browserOptions);
 

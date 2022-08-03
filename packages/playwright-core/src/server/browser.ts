@@ -57,6 +57,7 @@ export type BrowserOptions = PlaywrightOptions & {
   browserLogsCollector: RecentLogsCollector,
   slowMo?: number;
   wsEndpoint?: string;  // Only there when connected over web socket.
+  originalLaunchOptions: types.LaunchOptions;
 };
 
 export abstract class Browser extends SdkObject {

@@ -114,6 +114,7 @@ export class Chromium extends BrowserType {
       // users in normal (launch/launchServer) mode since otherwise connectOverCDP
       // does not work at all with proxies on Windows.
       proxy: { server: 'per-context' },
+      originalLaunchOptions: {},
     };
     validateBrowserContextOptions(persistent, browserOptions);
     progress.throwIfAborted();
