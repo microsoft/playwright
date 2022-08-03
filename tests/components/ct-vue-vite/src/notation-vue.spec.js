@@ -90,7 +90,7 @@ test('should run hooks', async ({ page, mount }) => {
   expect(messages).toEqual(['Before mount: {\"route\":\"A\"}, app: true', 'After mount el: HTMLButtonElement'])
 })
 
-test('multi root should work', async ({ mount }) => {
+test('unmount a multi root component should work', async ({ mount }) => {
   const component = await mount(MultiRoot);
 
   expect(component).toContainText('root 1');
