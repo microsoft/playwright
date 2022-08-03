@@ -17,13 +17,13 @@
 export type JsxComponent = {
   kind: 'jsx',
   type: string,
-  props: Record<string, unknown>,
+  props: Record<string, any>,
   children: (Component | string)[],
 };
 
 export type MountOptions = {
-  props?: Record<string, unknown>,
-  slots?: Record<string, unknown>,
+  props?: Record<string, any>,
+  slots?: Record<string, any>,
   on?: { [key: string]: Function },
   hooksConfig?: any,
 };
