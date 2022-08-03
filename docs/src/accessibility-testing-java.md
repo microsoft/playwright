@@ -29,7 +29,7 @@ The following examples demonstrate a few basic accessibility testing scenarios.
 ### Example 1: Scanning an entire page
 
 This example demonstrates how to test an entire page for automatically detectable accessibility violations. The test:
-1. Imports the `com.deque.html.axe-core/playwright` package
+1. Imports the [`com.deque.html.axe-core/playwright`](https://mvnrepository.com/artifact/com.deque.html.axe-core/playwright) package
 1. Uses normal JUnit 5 `@Test` syntax to define a test case
 1. Uses normal Playwright syntax to open a browser and navigate to the page under test
 1. Invokes `AxeBuilder.analyze()` to run the accessibility scan against the page
