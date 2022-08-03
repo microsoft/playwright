@@ -3,66 +3,174 @@ id: selenium-grid
 title: "Selenium Grid"
 ---
 
-## Selenium 4
+Playwright can connect to [Selenium Grid Hub](https://www.selenium.dev/documentation/grid/) that runs Selenium 4 to launch **Google Chrome** or **Microsoft Edge** browser, instead of running browser on the local machine.
 
-Playwright can connect to [Selenium Grid Hub](https://www.selenium.dev/documentation/grid/) that runs Selenium 4 to launch **Chrome** or **Microsoft Edge** browser, instead of running browser on the local machine. To enable this mode, set `SELENIUM_REMOTE_URL` environment variable pointing to your Selenium Grid Hub.
+:::note
+Before connecting Playwright to your Selenium Grid, make sure that grid works with [Selenium WebDriver](https://www.selenium.dev/documentation/webdriver/). For example, run [one of the examples](https://github.com/SeleniumHQ/selenium/tree/trunk/javascript/node/selenium-webdriver/example) and pass `SELENIUM_REMOTE_URL` environment variable.
+
+If webdriver example does not work, look for any errors at your Selenium hub/node/standalone output and search [Selenium issues](https://github.com/SeleniumHQ/selenium/issues) for a possible solution.
+:::
+
+## Starting Selenium Grid
+
+If you run distributed Selenium Grid, Playwright needs selenium nodes to be registered with an accessible address, so that it could connect to the browsers. To make sure it works as expected, set `SE_NODE_GRID_URL` environment variable pointing to the hub when running selenium nodes.
+
+```bash
+# Start selenium node
+SE_NODE_GRID_URL="http://<selenium-hub-ip>:4444/wd/hub" java -jar selenium-server-<version>.jar node
+```
+
+## Connecting Playwright to Selenium Grid
+
+To connect Playwright to **Selenium Grid 4**, set `SELENIUM_REMOTE_URL` environment variable pointing to your Selenium Grid Hub. Note that this only works for Google Chrome and Microsoft Edge.
 
 ```bash js
-# Playwright Test
-SELENIUM_REMOTE_URL=http://internal.grid:4444/wd/hub npx playwright test
-
-# Playwright Library
-SELENIUM_REMOTE_URL=http://internal.grid:4444/wd/hub node script.js
+SELENIUM_REMOTE_URL=http://<selenium-hub-ip>:4444/wd/hub npx playwright test
 ```
 
 ```bash python
-# With Pytest
-SELENIUM_REMOTE_URL=http://internal.grid:4444/wd/hub pytest --browser chromium
-
-# Plain Python
-SELENIUM_REMOTE_URL=http://internal.grid:4444/wd/hub python script.py
+SELENIUM_REMOTE_URL=http://<selenium-hub-ip>:4444/wd/hub pytest --browser chromium
 ```
 
 ```bash java
-SELENIUM_REMOTE_URL=http://internal.grid:4444/wd/hub mvn test
+SELENIUM_REMOTE_URL=http://<selenium-hub-ip>:4444/wd/hub mvn test
 ```
 
 ```bash csharp
-SELENIUM_REMOTE_URL=http://internal.grid:4444/wd/hub dotnet test
+SELENIUM_REMOTE_URL=http://<selenium-hub-ip>:4444/wd/hub dotnet test
 ```
 
-You don't have to change your code, just use [`method: BrowserType.launch`] as usual.
+You don't have to change your code, just use your testing harness or [`method: BrowserType.launch`] as usual.
 
 When using Selenium Grid Hub, you can [skip browser downloads](./browsers.md#skip-browser-downloads).
 
-If your grid requires additional capabilities to be set (for example, you use an external service), you can use `SELENIUM_REMOTE_CAPABILITIES` environment variable to provide JSON-serialized capabilities.
+### Passing additional capabilities
+
+If your grid requires additional capabilities to be set (for example, you use an external service), you can set `SELENIUM_REMOTE_CAPABILITIES` environment variable to provide JSON-serialized capabilities.
 
 ```bash js
-# Playwright Test
-SELENIUM_REMOTE_URL=http://internal.grid:4444/wd/hub SELENIUM_REMOTE_CAPABILITIES="{'mygrid:options':{os:'windows',username:'John',password:'secure'}}" npx playwright test
-
-# Playwright Library
-SELENIUM_REMOTE_URL=http://internal.grid:4444/wd/hub SELENIUM_REMOTE_CAPABILITIES="{'mygrid:options':{os:'windows',username:'John',password:'secure'}}" node script.js
+SELENIUM_REMOTE_URL=http://<selenium-hub-ip>:4444/wd/hub SELENIUM_REMOTE_CAPABILITIES="{'mygrid:options':{os:'windows',username:'John',password:'secure'}}" npx playwright test
 ```
 
 ```bash python
-# With Pytest
-SELENIUM_REMOTE_URL=http://internal.grid:4444/wd/hub SELENIUM_REMOTE_CAPABILITIES="{'mygrid:options':{os:'windows',username:'John',password:'secure'}}" pytest --browser chromium
-
-# Plain Python
-SELENIUM_REMOTE_URL=http://internal.grid:4444/wd/hub SELENIUM_REMOTE_CAPABILITIES="{'mygrid:options':{os:'windows',username:'John',password:'secure'}}" python script.py
+SELENIUM_REMOTE_URL=http://<selenium-hub-ip>:4444/wd/hub SELENIUM_REMOTE_CAPABILITIES="{'mygrid:options':{os:'windows',username:'John',password:'secure'}}" pytest --browser chromium
 ```
 
 ```bash java
-SELENIUM_REMOTE_URL=http://internal.grid:4444/wd/hub SELENIUM_REMOTE_CAPABILITIES="{'mygrid:options':{os:'windows',username:'John',password:'secure'}}" mvn test
+SELENIUM_REMOTE_URL=http://<selenium-hub-ip>:4444/wd/hub SELENIUM_REMOTE_CAPABILITIES="{'mygrid:options':{os:'windows',username:'John',password:'secure'}}" mvn test
 ```
 
 ```bash csharp
-SELENIUM_REMOTE_URL=http://internal.grid:4444/wd/hub SELENIUM_REMOTE_CAPABILITIES="{'mygrid:options':{os:'windows',username:'John',password:'secure'}}" dotnet test
+SELENIUM_REMOTE_URL=http://<selenium-hub-ip>:4444/wd/hub SELENIUM_REMOTE_CAPABILITIES="{'mygrid:options':{os:'windows',username:'John',password:'secure'}}" dotnet test
 ```
+
+### Detailed logs
+
+Run with `DEBUG=pw:browser*` environment variable to see how Playwright is connecting to Selenium Grid.
+
+```bash js
+DEBUG=pw:browser* SELENIUM_REMOTE_URL=http://internal.grid:4444/wd/hub npx playwright test
+```
+
+```bash python
+DEBUG=pw:browser* SELENIUM_REMOTE_URL=http://internal.grid:4444/wd/hub pytest --browser chromium
+```
+
+```bash java
+DEBUG=pw:browser* SELENIUM_REMOTE_URL=http://internal.grid:4444/wd/hub mvn test
+```
+
+```bash csharp
+DEBUG=pw:browser* SELENIUM_REMOTE_URL=http://internal.grid:4444/wd/hub dotnet test
+```
+
+If you file an issue, please include this log.
+
+
+
+## Using Selenium Docker
+
+One easy way to use Selenium Grid is to run official docker containers. Read more in [selenium docker images](https://github.com/SeleniumHQ/docker-selenium) documentation. For experimental arm images, see [docker-seleniarm](https://github.com/seleniumhq-community/docker-seleniarm).
+
+### Standalone mode
+
+Here is an example of running selenium standalone and connecting Playwright to it. Note that hub and node are on the same `localhost`, and we pass `SE_NODE_GRID_URL` environment variable pointing to it.
+
+First start Selenium.
+
+```bash
+docker run -d -p 4444:4444 --shm-size="2g" -e SE_NODE_GRID_URL="http://localhost:4444/wd/hub" selenium/standalone-chrome:4.3.0-20220726
+
+# Alternatively for arm architecture
+docker run -d -p 4444:4444 --shm-size="2g" -e SE_NODE_GRID_URL="http://localhost:4444/wd/hub" seleniarm/standalone-chromium:103.0
+```
+
+Then run Playwright.
+
+```bash js
+SELENIUM_REMOTE_URL=http://localhost:4444/wd/hub npx playwright test
+```
+
+```bash python
+SELENIUM_REMOTE_URL=http://localhost:4444/wd/hub pytest --browser chromium
+```
+
+```bash java
+SELENIUM_REMOTE_URL=http://localhost:4444/wd/hub mvn test
+```
+
+```bash csharp
+SELENIUM_REMOTE_URL=http://localhost:4444/wd/hub dotnet test
+```
+
+### Hub and nodes mode
+
+Here is an example of running selenium hub and a single selenium node, and connecting Playwright to the hub. Note that hub and node have different IPs, and we pass `SE_NODE_GRID_URL` environment variable pointing to the hub when starting node containers.
+
+First start the hub container and one or more node containers.
+
+```bash
+docker run -d -p 4442-4444:4442-4444 --name selenium-hub selenium/hub:4.3.0-20220726
+docker run -d -p 5555:5555 \
+    --shm-size="2g" \
+    -e SE_EVENT_BUS_HOST=<selenium-hub-ip> \
+    -e SE_EVENT_BUS_PUBLISH_PORT=4442 \
+    -e SE_EVENT_BUS_SUBSCRIBE_PORT=4443 \
+    -e SE_NODE_GRID_URL="http://<selenium-hub-ip>:4444/wd/hub"
+    selenium/node-chrome:4.3.0-20220726
+
+# Alternatively for arm architecture
+docker run -d -p 4442-4444:4442-4444 --name selenium-hub seleniarm/hub:4.3.0-20220728
+docker run -d -p 5555:5555 \
+    --shm-size="2g" \
+    -e SE_EVENT_BUS_HOST=<selenium-hub-ip> \
+    -e SE_EVENT_BUS_PUBLISH_PORT=4442 \
+    -e SE_EVENT_BUS_SUBSCRIBE_PORT=4443 \
+    -e SE_NODE_GRID_URL="http://<selenium-hub-ip>:4444/wd/hub"
+    seleniarm/node-chromium:103.0
+```
+
+Then run Playwright.
+
+```bash js
+SELENIUM_REMOTE_URL=http://<selenium-hub-ip>:4444/wd/hub npx playwright test
+```
+
+```bash python
+SELENIUM_REMOTE_URL=http://<selenium-hub-ip>:4444/wd/hub pytest --browser chromium
+```
+
+```bash java
+SELENIUM_REMOTE_URL=http://<selenium-hub-ip>:4444/wd/hub mvn test
+```
+
+```bash csharp
+SELENIUM_REMOTE_URL=http://<selenium-hub-ip>:4444/wd/hub dotnet test
+```
+
 
 ## Selenium 3
 
-Internally, Playwright connects to the browser using [Chrome DevTools Protocol](https://chromedevtools.github.io/devtools-protocol/) websocket. Selenium 4 hub exposes this capability, while Selenium 3 does not.
+Internally, Playwright connects to the browser using [Chrome DevTools Protocol](https://chromedevtools.github.io/devtools-protocol/) websocket. Selenium 4 exposes this capability, while Selenium 3 does not.
 
 This means that Selenium 3 is supported in a best-effort manner, where Playwright tries to connect to the grid node directly. Grid nodes must be directly accessible from the machine that runs Playwright.
