@@ -12,11 +12,7 @@ test('props should work', async ({ mount }) => {
 })
 
 test('renderer and keep the component instance intact', async ({ mount }) => {
-  const component = await mount<{ count: number }>(Counter, {
-    props: { 
-      count: 9001
-    }
-  });
+  const component = await mount(<Counter count={9001} />);
   await expect(component.locator('#rerender-count')).toContainText('9001')
   
   await component.rerender({ props: { count: 1337 } })
