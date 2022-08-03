@@ -65,7 +65,7 @@ export interface PageDelegate {
   navigateFrame(frame: frames.Frame, url: string, referrer: string | undefined): Promise<frames.GotoResult>;
 
   updateExtraHTTPHeaders(): Promise<void>;
-  updateEmulatedViewportSize(): Promise<void>;
+  updateEmulatedViewportSize(preserveWindowBoundaries?: boolean): Promise<void>;
   updateEmulateMedia(): Promise<void>;
   updateRequestInterception(): Promise<void>;
   updateFileChooserInterception(): Promise<void>;
@@ -247,10 +247,11 @@ export class Page extends SdkObject {
     this._extraHTTPHeaders = undefined;
     this._interceptFileChooser = false;
 
-    await this._delegate.updateEmulatedViewportSize();
-    await this._delegate.updateEmulateMedia();
-    await this._delegate.updateExtraHTTPHeaders();
-    await this._delegate.updateFileChooserInterception();
+    await Promise.all([
+      this._delegate.updateEmulatedViewportSize(true),
+      this._delegate.updateEmulateMedia(),
+      this._delegate.updateFileChooserInterception(),
+    ]);
   }
 
   async _doSlowMo() {

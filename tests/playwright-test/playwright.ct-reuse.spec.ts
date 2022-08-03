@@ -36,10 +36,23 @@ test('should reuse context', async ({ runInlineTest }) => {
         expect(context._guid).toBe(lastContextGuid);
       });
 
-      test.describe('Dark', () => {
-        test.use({ userAgent: 'dark' });
+      test.describe(() => {
+        test.use({ colorScheme: 'dark' });
+        test('dark', async ({ context }) => {
+          expect(context._guid).toBe(lastContextGuid);
+        });
+      });
 
-        test('three', async ({ context }) => {
+      test.describe(() => {
+        test.use({ userAgent: 'UA' });
+        test('UA', async ({ context }) => {
+          expect(context._guid).toBe(lastContextGuid);
+        });
+      });
+
+      test.describe(() => {
+        test.use({ timezoneId: 'Europe/Berlin' });
+        test('tz', async ({ context }) => {
           expect(context._guid).not.toBe(lastContextGuid);
         });
       });
@@ -47,7 +60,7 @@ test('should reuse context', async ({ runInlineTest }) => {
   }, { workers: 1 });
 
   expect(result.exitCode).toBe(0);
-  expect(result.passed).toBe(3);
+  expect(result.passed).toBe(5);
 });
 
 test('should not reuse context with video', async ({ runInlineTest }) => {
