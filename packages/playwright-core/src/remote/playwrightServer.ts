@@ -65,7 +65,14 @@ export class PlaywrightServer {
     if (this._mode === 'reuse-browser') {
       const callMetadata = serverSideCallMetadata();
       const browser = await this._preLaunchedPlaywright!.chromium.launch(callMetadata, { headless: false });
-      const { context } = await browser.newContextForReuse({ viewport: { width: 800, height: 600 } }, callMetadata);
+      const { context } = await browser.newContextForReuse({
+        viewport: {
+          width: 800,
+          height: 600
+        },
+        locale: 'en-US',
+        deviceScaleFactor: process.platform === 'darwin' ? 2 : 1
+      }, callMetadata);
       const page = await context.newPage(callMetadata);
       await page.mainFrame().setContent(callMetadata, `
         <style>

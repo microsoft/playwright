@@ -145,6 +145,13 @@ export abstract class BrowserContext extends SdkObject {
 
   static reusableContextHash(params: channels.BrowserNewContextForReuseParams): string {
     const paramsCopy = { ...params };
+
+    for (const k of Object.keys(paramsCopy)) {
+      const key = k as keyof channels.BrowserNewContextForReuseParams;
+      if (paramsCopy[key] === defaultNewContextParamValues[key])
+        delete paramsCopy[key];
+    }
+
     for (const key of paramsThatAllowContextReuse)
       delete paramsCopy[key];
     return JSON.stringify(paramsCopy);
@@ -159,6 +166,7 @@ export abstract class BrowserContext extends SdkObject {
 
     await this._cancelAllRoutesInFlight();
 
+    // Close extra pages early.
     let page: Page | undefined = this.pages()[0];
     const [, ...otherPages] = this.pages();
     for (const p of otherPages)
@@ -184,6 +192,7 @@ export abstract class BrowserContext extends SdkObject {
     await this.setExtraHTTPHeaders(this._options.extraHTTPHeaders || []);
     await this.setGeolocation(this._options.geolocation);
     await this.setOffline(!!this._options.offline);
+    await this.setUserAgent(this._options.userAgent);
     await this.clearCookies();
 
     await page?.resetForReuse(metadata);
@@ -218,6 +227,7 @@ export abstract class BrowserContext extends SdkObject {
   abstract clearCookies(): Promise<void>;
   abstract setGeolocation(geolocation?: types.Geolocation): Promise<void>;
   abstract setExtraHTTPHeaders(headers: types.HeadersArray): Promise<void>;
+  abstract setUserAgent(userAgent: string | undefined): Promise<void>;
   abstract setOffline(offline: boolean): Promise<void>;
   abstract cancelDownload(uuid: string): Promise<void>;
   protected abstract doGetCookies(urls: string[]): Promise<channels.NetworkCookie[]>;
@@ -637,5 +647,19 @@ const paramsThatAllowContextReuse: (keyof channels.BrowserNewContextForReusePara
   'forcedColors',
   'reducedMotion',
   'screen',
-  'viewport'
+  'userAgent',
+  'viewport',
 ];
+
+const defaultNewContextParamValues: channels.BrowserNewContextForReuseParams = {
+  noDefaultViewport: false,
+  ignoreHTTPSErrors: false,
+  javaScriptEnabled: true,
+  bypassCSP: false,
+  offline: false,
+  isMobile: false,
+  hasTouch: false,
+  acceptDownloads: true,
+  strictSelectors: false,
+  serviceWorkers: 'allow',
+};
