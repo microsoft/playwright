@@ -119,7 +119,9 @@ pwsh bin\Debug\netX\playwright.ps1 codegen --timezone="Europe/Rome" --geolocatio
 
 ## Preserve authenticated state
 
-Run `codegen` with `--save-storage` to save [cookies](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies) and [localStorage](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage) at the end of the session. This is useful to separately record an authentication step and reuse it later in the tests. After performing authentication and exiting auth.json will contain the storage state. 
+Run `codegen` with `--save-storage` to save [cookies](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies) and [localStorage](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage) at the end of the session. This is useful to separately record an authentication step and reuse it later in the tests. 
+
+After performing authentication and closing the browser, `auth.json` will contain the storage state. 
 
 ```bash js
 npx playwright codegen --save-storage=auth.json
@@ -137,26 +139,44 @@ playwright codegen --save-storage=auth.json
 pwsh bin\Debug\netX\playwright.ps1 codegen --save-storage=auth.json
 ```
 
-Run with `--load-storage` to consume previously loaded storage. This way, all [cookies](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies) and [localStorage](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage) will be restored, bringing most web apps to the authenticated state.
+<img width="1264" alt="Screenshot 2022-08-03 at 13 28 02" src="https://user-images.githubusercontent.com/13063165/182599605-df2fbd05-622b-4cd7-8a32-0abdfea7d38d.png" />
+
+Run with `--load-storage` to consume previously loaded storage. This way, all [cookies](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies) and [localStorage](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage) will be restored, bringing most web apps to the authenticated state without the need to login again.
 
 ```bash js
-npx playwright open --load-storage=auth.json my.web.app
-npx playwright codegen --load-storage=auth.json my.web.app
+npx playwright codegen --load-storage=auth.json github.com/microsoft/playwright
 ```
 
 ```bash java
-mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="open --load-storage=auth.json my.web.app"
-mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="codegen --load-storage=auth.json my.web.app"
+mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="codegen --load-storage=auth.json github.com/microsoft/playwright"
 ```
 
 ```bash python
-playwright open --load-storage=auth.json my.web.app
-playwright codegen --load-storage=auth.json my.web.app
+playwright codegen --load-storage=auth.json github.com/microsoft/playwright
 ```
 
 ```bash csharp
-pwsh bin\Debug\netX\playwright.ps1 open --load-storage=auth.json my.web.app
-pwsh bin\Debug\netX\playwright.ps1 codegen --load-storage=auth.json my.web.app
+pwsh bin\Debug\netX\playwright.ps1 codegen --load-storage=auth.json github.com/microsoft/playwright
+```
+
+<img width="1261" alt="Screenshot 2022-08-03 at 13 33 40" src="https://user-images.githubusercontent.com/13063165/182599680-05297b4e-c258-4416-8daa-b8637c1db120.png" />
+
+Use the `open` command with `--load-storage` to open the saved `auth.json`.
+
+```bash js
+npx playwright open --load-storage=auth.json github.com/microsoft/playwright
+```
+
+```bash java
+mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="open --load-storage=auth.json github.com/microsoft/playwright"
+```
+
+```bash python
+playwright open --load-storage=auth.json github.com/microsoft/playwright
+```
+
+```bash csharp
+pwsh bin\Debug\netX\playwright.ps1 open --load-storage=auth.json github.com/microsoft/playwright
 ```
 
 
