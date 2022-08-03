@@ -8,6 +8,7 @@ Playwright assertions are created specifically for the dynamic web. Checks are a
 Take a look at the example test below to see how to write a test using web first assertions, locators and selectors.
 
 <Tabs
+  groupId="test-runners"
   defaultValue="nunit"
   values={[
     {label: 'NUnit', value: 'nunit'},
@@ -117,6 +118,7 @@ await Expect(Page.Locator("text=Installation")).ToBeVisibleAsync();
 The Playwright NUnit and MSTest test framework base classes will isolate each test from each other by providing a separate `Page` instance. Pages are isolated between tests due to the Browser Context, which is equivalent to a brand new browser profile, where every test gets a fresh environment, even when multiple tests run in a single Browser.
 
 <Tabs
+  groupId="test-runners"
   defaultValue="nunit"
   values={[
     {label: 'NUnit', value: 'nunit'},
@@ -169,6 +171,7 @@ public class UnitTest1 : PageTest
 You can use `SetUp`/`TearDown` in NUnit or `TestInitialize`/`TestCleanup` in MSTest to prepare and clean up your test environment:
 
 <Tabs
+  groupId="test-runners"
   defaultValue="nunit"
   values={[
     {label: 'NUnit', value: 'nunit'},
