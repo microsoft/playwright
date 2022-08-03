@@ -55,14 +55,15 @@ export const fixtures: Fixtures<
         const locator = page.locator(selector);
         return Object.assign(locator, {
           unmount: async () => {
-            await locator.evaluate(async element => {
+            await locator.evaluate(async () => {
               const rootElement = document.getElementById('root')!;
-              await window.playwrightUnmount(element, rootElement);
+              await window.playwrightUnmount(rootElement);
             });
           },
           setProps: async (props: { [key: string]: any }) => {
             await locator.evaluate(async (element, props) => {
-              return await window.playwrightSetProps(element, props);
+              const rootElement = document.getElementById('root')!;
+              return await window.playwrightSetProps(rootElement, props);
             }, props);
           }
         });

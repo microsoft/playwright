@@ -134,6 +134,8 @@ function render(component, h) {
   return wrapper;
 }
 
+const instanceKey = Symbol('instanceKey');
+
 window.playwrightMount = async (component, rootElement, hooksConfig) => {
   for (const hook of /** @type {any} */(window).__pw_hooks_before_mount || [])
     await hook({ hooksConfig });
@@ -148,12 +150,10 @@ window.playwrightMount = async (component, rootElement, hooksConfig) => {
     await hook({ hooksConfig, instance });
 };
 
-window.playwrightUnmount = async element => {
-  const component = /** @type {any} */(element)[instanceKey];
+window.playwrightUnmount = async rootElement => {
+  const component = /** @type {any} */(rootElement)[instanceKey];
   if (!component)
     throw new Error('Component was not mounted');
   component.$destroy();
-  element.remove();
+  rootElement.remove();
 };
-
-const instanceKey = Symbol('instanceKey');
