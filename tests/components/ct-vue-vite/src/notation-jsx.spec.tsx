@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/experimental-ct-vue'
 import Button from './components/Button.vue'
 import DefaultSlot from './components/DefaultSlot.vue'
 import NamedSlots from './components/NamedSlots.vue'
+import MultiRoot from './components/MultiRoot.vue'
 
 test.use({ viewport: { width: 500, height: 500 } })
 
@@ -75,4 +76,16 @@ test('should run hooks', async ({ page, mount }) => {
     hooksConfig: { route: 'A' }
   })
   expect(messages).toEqual(['Before mount: {\"route\":\"A\"}, app: true', 'After mount el: HTMLButtonElement'])
+})
+
+test('unmount a multi root component should work', async ({ mount }) => {
+  const component = await mount(<MultiRoot />)
+
+  expect(component).toContainText('root 1')
+  expect(component).toContainText('root 2')
+
+  await component.unmount()
+
+  expect(component).not.toContainText('root 1')
+  expect(component).not.toContainText('root 2')
 })

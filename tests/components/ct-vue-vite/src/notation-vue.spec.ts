@@ -3,6 +3,7 @@ import { test, expect } from '@playwright/experimental-ct-vue'
 import Button from './components/Button.vue'
 import DefaultSlot from './components/DefaultSlot.vue'
 import NamedSlots from './components/NamedSlots.vue'
+import MultiRoot from './components/MultiRoot.vue'
 import Component from './components/Component.vue'
 
 test.use({ viewport: { width: 500, height: 500 } })
@@ -100,3 +101,15 @@ test('should unmount', async ({ page, mount }) => {
   await component.unmount();
   await expect(page.locator('#root')).not.toContainText('Submit');
 });
+
+test('unmount a multi root component should work', async ({ mount }) => {
+  const component = await mount(MultiRoot)
+
+  expect(component).toContainText('root 1')
+  expect(component).toContainText('root 2')
+
+  await component.unmount()
+
+  expect(component).not.toContainText('root 1')
+  expect(component).not.toContainText('root 2')
+})
