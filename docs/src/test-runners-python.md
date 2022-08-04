@@ -74,7 +74,7 @@ pip install pytest-xdist
 pytest --numprocesses auto
 ```
 
-Depending on the hardware and nature of your tests, you can set `numprocesses` to be anywhere from `2` to the number of CPUs on the machine. If set too high, you may notice random flakes in your tests.
+Depending on the hardware and nature of your tests, you can set `numprocesses` to be anywhere from `2` to the number of CPUs on the machine. If set too high, you may notice unexpected behavior.
 
 See [Running Tests](./running-tests.md) for general information on `pytest` options.
 
