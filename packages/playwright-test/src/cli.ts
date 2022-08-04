@@ -23,7 +23,7 @@ import path from 'path';
 import { Runner, builtInReporters, kDefaultConfigFiles } from './runner';
 import type { ConfigCLIOverrides } from './runner';
 import { stopProfiling, startProfiling } from './profiler';
-import type { FilePatternFilter } from './util';
+import type { TestFileFilter } from './util';
 import { showHTMLReport } from './reporters/html';
 import { baseFullConfig, defaultTimeout, fileIsModule } from './loader';
 
@@ -31,7 +31,6 @@ export function addTestCommands(program: Command) {
   addTestCommand(program);
   addShowReportCommand(program);
   addListFilesCommand(program);
-  addTestServerCommand(program);
 }
 
 function addTestCommand(program: Command) {
@@ -93,20 +92,6 @@ function addListFilesCommand(program: Command) {
   });
 }
 
-function addTestServerCommand(program: Command) {
-  const command = program.command('test-server', { hidden: true });
-  command.option('-c, --config <file>', `Configuration file, or a test directory with optional ${kDefaultConfigFiles.map(file => `"${file}"`).join('/')}`);
-  command.option('--reporter <reporter>', `Reporter to use, comma-separated, can be ${builtInReporters.map(name => `"${name}"`).join(', ')} (default: "${baseFullConfig.reporter[0]}")`);
-  command.action(async opts => {
-    try {
-      await runTestServer(opts);
-    } catch (e) {
-      console.error(e);
-      process.exit(1);
-    }
-  });
-}
-
 function addShowReportCommand(program: Command) {
   const command = program.command('show-report [report]');
   command.description('show HTML report');
@@ -158,7 +143,7 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
   else
     await runner.loadEmptyConfig(configFileOrDirectory);
 
-  const filePatternFilter: FilePatternFilter[] = args.map(arg => {
+  const testFileFilters: TestFileFilter[] = args.map(arg => {
     const match = /^(.*?):(\d+):?(\d+)?$/.exec(arg);
     return {
       re: forceRegExp(match ? match[1] : arg),
@@ -169,8 +154,9 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
 
   const result = await runner.runAllTests({
     listOnly: !!opts.list,
-    filePatternFilter,
+    testFileFilters,
     projectFilter: opts.project || undefined,
+    watchMode: !!process.env.PW_TEST_WATCH,
   });
   await stopProfiling(undefined);
 
@@ -195,25 +181,6 @@ async function listTestFiles(opts: { [key: string]: any }) {
   write(JSON.stringify(report), () => {
     process.exit(0);
   });
-}
-
-async function runTestServer(opts: { [key: string]: any }) {
-  const overrides = overridesFromOptions(opts);
-
-  overrides.use = { headless: false };
-  overrides.maxFailures = 1;
-  overrides.timeout = 0;
-  overrides.workers = 1;
-
-  // When no --config option is passed, let's look for the config file in the current directory.
-  const configFileOrDirectory = opts.config ? path.resolve(process.cwd(), opts.config) : process.cwd();
-  const resolvedConfigFile = Runner.resolveConfigFile(configFileOrDirectory)!;
-  if (restartWithExperimentalTsEsm(resolvedConfigFile))
-    return;
-
-  const runner = new Runner(overrides);
-  await runner.loadConfigFromResolvedFile(resolvedConfigFile);
-  await runner.runTestServer();
 }
 
 function forceRegExp(pattern: string): RegExp {

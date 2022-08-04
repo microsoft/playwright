@@ -18,7 +18,7 @@ import { colors, rimraf } from 'playwright-core/lib/utilsBundle';
 import util from 'util';
 import { EventEmitter } from 'events';
 import { relativeFilePath, serializeError } from './util';
-import type { TestBeginPayload, TestEndPayload, RunPayload, DonePayload, WorkerInitParams, StepBeginPayload, StepEndPayload, TeardownErrorsPayload, TestServerTestResolvedPayload } from './ipc';
+import type { TestBeginPayload, TestEndPayload, RunPayload, DonePayload, WorkerInitParams, StepBeginPayload, StepEndPayload, TeardownErrorsPayload, WatchTestResolvedPayload } from './ipc';
 import { setCurrentTestInfo } from './globals';
 import { Loader } from './loader';
 import type { Suite, TestCase } from './test';
@@ -171,13 +171,13 @@ export class WorkerRunner extends EventEmitter {
       await this._loadIfNeeded();
       const fileSuite = await this._loader.loadTestFile(runPayload.file, 'worker');
       const suite = this._loader.buildFileSuiteForProject(this._project, fileSuite, this._params.repeatEachIndex, test => {
-        if (test.location.line === runPayload.testServerTestLine) {
-          const testResolvedPayload: TestServerTestResolvedPayload = {
+        if (runPayload.watchMode) {
+          const testResolvedPayload: WatchTestResolvedPayload = {
             testId: test.id,
             title: test.title,
             location: test.location
           };
-          this.emit('testServer:testResolved', testResolvedPayload);
+          this.emit('watchTestResolved', testResolvedPayload);
           entries.set(test.id, { testId: test.id, retry: 0 });
         }
         if (!entries.has(test.id))

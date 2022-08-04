@@ -69,7 +69,7 @@ process.on('message', async message => {
     initConsoleParameters(initParams);
     startProfiling();
     workerRunner = new WorkerRunner(initParams);
-    for (const event of ['testServer:testResolved', 'testBegin', 'testEnd', 'stepBegin', 'stepEnd', 'done', 'teardownErrors'])
+    for (const event of ['watchTestResolved', 'testBegin', 'testEnd', 'stepBegin', 'stepEnd', 'done', 'teardownErrors'])
       workerRunner.on(event, sendMessageToParent.bind(null, event));
     return;
   }
