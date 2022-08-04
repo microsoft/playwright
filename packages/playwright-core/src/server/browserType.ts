@@ -123,6 +123,7 @@ export abstract class BrowserType extends SdkObject {
       protocolLogger,
       browserLogsCollector,
       wsEndpoint: options.useWebSocket ? (transport as WebSocketTransport).wsEndpoint : undefined,
+      originalLaunchOptions: options,
     };
     if (persistent)
       validateBrowserContextOptions(persistent, browserOptions);

@@ -23,6 +23,8 @@ import { createPlaywright } from '../server/playwright';
 import { PlaywrightConnection } from './playwrightConnection';
 import { assert } from '../utils';
 import { serverSideCallMetadata } from '../server/instrumentation';
+import type  { LaunchOptions } from '../server/types';
+import { ManualPromise } from '../utils/manualPromise';
 
 const debugLog = debug('pw:server');
 
@@ -38,7 +40,8 @@ export type Mode = 'use-pre-launched-browser' | 'reuse-browser' | 'auto';
 
 type ServerOptions = {
   path: string;
-  maxClients: number;
+  maxIncomingConnections: number;
+  maxConcurrentConnections: number;
   enableSocksProxy: boolean;
   preLaunchedBrowser?: Browser
 };
@@ -46,7 +49,6 @@ type ServerOptions = {
 export class PlaywrightServer {
   private _preLaunchedPlaywright: Playwright | null = null;
   private _wsServer: WebSocketServer | undefined;
-  private _clientsCount = 0;
   private _mode: Mode;
   private _options: ServerOptions;
 
@@ -65,7 +67,14 @@ export class PlaywrightServer {
     if (this._mode === 'reuse-browser') {
       const callMetadata = serverSideCallMetadata();
       const browser = await this._preLaunchedPlaywright!.chromium.launch(callMetadata, { headless: false });
-      const { context } = await browser.newContextForReuse({ viewport: { width: 800, height: 600 } }, callMetadata);
+      const { context } = await browser.newContextForReuse({
+        viewport: {
+          width: 800,
+          height: 600
+        },
+        locale: 'en-US',
+        deviceScaleFactor: process.platform === 'darwin' ? 2 : 1
+      }, callMetadata);
       const page = await context.newPage(callMetadata);
       await page.mainFrame().setContent(callMetadata, `
         <style>
@@ -103,29 +112,39 @@ export class PlaywrightServer {
     debugLog('Listening at ' + wsEndpoint);
 
     this._wsServer = new wsServer({ server, path: this._options.path });
-    const originalShouldHandle = this._wsServer.shouldHandle.bind(this._wsServer);
-    this._wsServer.shouldHandle = request => originalShouldHandle(request) && this._clientsCount < this._options.maxClients;
-    this._wsServer.on('connection', async (ws, request) => {
-      if (this._clientsCount >= this._options.maxClients) {
+    const semaphore = new Semaphore(this._options.maxConcurrentConnections);
+    this._wsServer.on('connection', (ws, request) => {
+      if (semaphore.requested() >= this._options.maxIncomingConnections) {
         ws.close(1013, 'Playwright Server is busy');
         return;
       }
       const url = new URL('http://localhost' + (request.url || ''));
       const browserHeader = request.headers['x-playwright-browser'];
       const browserAlias = url.searchParams.get('browser') || (Array.isArray(browserHeader) ? browserHeader[0] : browserHeader) || null;
-      const headlessHeader = request.headers['x-playwright-headless'];
-      const headlessValue = url.searchParams.get('headless') || (Array.isArray(headlessHeader) ? headlessHeader[0] : headlessHeader);
       const proxyHeader = request.headers['x-playwright-proxy'];
       const proxyValue = url.searchParams.get('proxy') || (Array.isArray(proxyHeader) ? proxyHeader[0] : proxyHeader);
       const enableSocksProxy = this._options.enableSocksProxy && proxyValue === '*';
-      this._clientsCount++;
+
+      const launchOptionsHeader = request.headers['x-playwright-launch-options'] || '';
+      let launchOptions: LaunchOptions = {};
+      try {
+        launchOptions = JSON.parse(Array.isArray(launchOptionsHeader) ? launchOptionsHeader[0] : launchOptionsHeader);
+      } catch (e) {
+      }
+
+      const headlessHeader = request.headers['x-playwright-headless'];
+      const headlessValue = url.searchParams.get('headless') || (Array.isArray(headlessHeader) ? headlessHeader[0] : headlessHeader);
+      if (headlessValue && headlessValue !== '0')
+        launchOptions.headless = true;
+
       const log = newLogger();
       log(`serving connection: ${request.url}`);
       const connection = new PlaywrightConnection(
+          semaphore.aquire(),
           this._mode, ws,
-          { enableSocksProxy, browserAlias, headless: headlessValue !== '0' },
+          { enableSocksProxy, browserAlias, launchOptions },
           { playwright: this._preLaunchedPlaywright, browser: this._options.preLaunchedBrowser || null },
-          log, () => this._clientsCount--);
+          log, () => semaphore.release());
       (ws as any)[kConnectionSymbol] = connection;
     });
 
@@ -153,5 +172,37 @@ export class PlaywrightServer {
     await new Promise(f => server.options.server!.close(f));
     this._wsServer = undefined;
     debugLog('closed server');
+  }
+}
+
+export class Semaphore {
+  private _max: number;
+  private _aquired = 0;
+  private _queue: ManualPromise[] = [];
+  constructor(max: number) {
+    this._max = max;
+  }
+
+  aquire(): Promise<void> {
+    const lock = new ManualPromise();
+    this._queue.push(lock);
+    this._flush();
+    return lock;
+  }
+
+  requested() {
+    return this._aquired + this._queue.length;
+  }
+
+  release() {
+    --this._aquired;
+    this._flush();
+  }
+
+  private _flush() {
+    while (this._aquired < this._max && this._queue.length) {
+      ++this._aquired;
+      this._queue.shift()!.resolve();
+    }
   }
 }

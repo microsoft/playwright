@@ -106,7 +106,7 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
       (browserType as any)._defaultLaunchOptions = undefined;
   }, { scope: 'worker', auto: true }],
 
-  _connectedBrowser: [async ({ playwright, browserName, channel, headless, connectOptions }, use) => {
+  _connectedBrowser: [async ({ playwright, browserName, channel, headless, connectOptions, launchOptions }, use) => {
     if (!connectOptions) {
       await use(undefined);
       return;
@@ -117,6 +117,7 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
       headers: {
         'x-playwright-browser': channel || browserName,
         'x-playwright-headless': headless ? '1' : '0',
+        'x-playwright-launch-options': JSON.stringify(launchOptions),
         ...connectOptions.headers,
       },
       timeout: connectOptions.timeout ?? 3 * 60 * 1000, // 3 minutes

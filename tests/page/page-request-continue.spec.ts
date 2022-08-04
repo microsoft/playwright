@@ -173,9 +173,8 @@ it.describe('post data', () => {
     expect((await serverRequest.postBody).toString('utf8')).toBe('doggo');
   });
 
-  it('should compute content-length from post data', async ({ page, server, browserName }) => {
+  it('should compute content-length from post data', async ({ page, server }) => {
     it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/16027' });
-    it.fixme(browserName === 'firefox');
     await page.goto(server.EMPTY_PAGE);
     const data = 'a'.repeat(7500);
     await page.route('**/*', route => {

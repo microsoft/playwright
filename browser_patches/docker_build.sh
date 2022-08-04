@@ -137,8 +137,9 @@ function ensure_docker_container {
                                          gcc \
                                          unzip
 
-    # We will use clang-12 for all arm64 native builds.
-    if [[ "${BUILD_FLAVOR}" == *"-arm64" ]]; then
+    if [[ "${BUILD_FLAVOR}" == "firefox-ubuntu-22.04-arm64" || "${BUILD_FLAVOR}" == "firefox-beta-ubuntu-22.04-arm64" ]]; then
+      apt-get install -y clang-14
+    elif [[ "${BUILD_FLAVOR}" == *"-arm64" ]]; then
       apt-get install -y clang-12
     fi
 
@@ -208,6 +209,9 @@ elif [[ "$2" == "compile" ]]; then
     if [[ "${BUILD_FLAVOR}" == "webkit-ubuntu-18.04" ]]; then
       export CC=/usr/bin/gcc-8
       export CXX=/usr/bin/g++-8
+    elif [[ "${BUILD_FLAVOR}" == "firefox-ubuntu-22.04-arm64" || "${BUILD_FLAVOR}" == "firefox-beta-ubuntu-22.04-arm64" ]]; then
+      export CC=/usr/bin/clang-14
+      export CXX=/usr/bin/clang++-14
     elif [[ "${BUILD_FLAVOR}" == *"-arm64" ]]; then
       export CC=/usr/bin/clang-12
       export CXX=/usr/bin/clang++-12

@@ -438,6 +438,13 @@ export class CRBrowserContext extends BrowserContext {
       await (sw as CRServiceWorker).updateExtraHTTPHeaders(false);
   }
 
+  async setUserAgent(userAgent: string | undefined): Promise<void> {
+    this._options.userAgent = userAgent;
+    for (const page of this.pages())
+      await (page._delegate as CRPage).updateUserAgent();
+    // TODO: service workers don't have Emulation domain?
+  }
+
   async setOffline(offline: boolean): Promise<void> {
     this._options.offline = offline;
     for (const page of this.pages())

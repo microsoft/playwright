@@ -31,16 +31,16 @@ jobs:
       fail-fast: false
       matrix:
         browser: [chromium, firefox, webkit]
-        os: [ubuntu-20.04, ubuntu-22.04]
+        os: [ubuntu-22.04]
         node-version: [14]
         include:
-          - os: ubuntu-20.04
+          - os: ubuntu-22.04
             node-version: 12
             browser: chromium
-          - os: ubuntu-20.04
+          - os: ubuntu-22.04
             node-version: 16
             browser: chromium
-          - os: ubuntu-20.04
+          - os: ubuntu-22.04
             node-version: 18
             browser: chromium
     runs-on: ${{ matrix.os }}

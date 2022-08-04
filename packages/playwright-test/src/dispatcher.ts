@@ -196,8 +196,6 @@ export class Dispatcher {
 
     const onTestBegin = (params: TestBeginPayload) => {
       const data = this._testById.get(params.testId)!;
-      if (this._hasReachedMaxFailures())
-        return;
       const result = data.test._appendTestResult();
       data.resultByWorkerIndex.set(worker.workerIndex, { result, stepStack: new Set(), steps: new Map() });
       result.workerIndex = worker.workerIndex;
@@ -208,8 +206,12 @@ export class Dispatcher {
 
     const onTestEnd = (params: TestEndPayload) => {
       remainingByTestId.delete(params.testId);
-      if (this._hasReachedMaxFailures())
-        return;
+      if (this._hasReachedMaxFailures()) {
+        // Do not show more than one error to avoid confusion, but report
+        // as interrupted to indicate that we did actually start the test.
+        params.status = 'interrupted';
+        params.errors = [];
+      }
       const data = this._testById.get(params.testId)!;
       const test = data.test;
       const { result } = data.resultByWorkerIndex.get(worker.workerIndex)!;
