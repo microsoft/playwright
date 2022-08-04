@@ -71,10 +71,12 @@ If your tests are running on a machine with a lot of CPUs, you can speed up the 
 # install dependency
 pip install pytest-xdist
 # use the --numprocesses flag
-pytest --numprocesses=auto
+pytest --numprocesses auto
 ```
 
 Depending on the hardware and nature of your tests, you can set `numprocesses` to be anywhere from `2` to the number of CPUs on the machine. If set too high, you may notice random flakes in your tests.
+
+See [Running Tests](./running-tests.md) for general information on `pytest` options.
 
 ## Examples
 
