@@ -1167,6 +1167,36 @@ document
 
 If a selector needs to include `>>` in the body, it should be escaped inside a string to not be confused with chaining separator, e.g. `text="some >> text"`.
 
+## Parent selector
+
+The parent could be selected with `..`.
+
+For example,
+
+```js
+const parentLocator = elementLocator.locator('..');
+```
+
+```java
+Locator parentLocator = elementLocator.locator("..");
+```
+
+```python async
+parentLocator = elementLocator.locator('..')
+
+```
+
+```python sync
+parentLocator = elementLocator.locator('..')
+```
+
+```csharp
+var parentLocator = elementLocator.Locator("..");
+```
+
+If a selector needs to include `>>` in the body, it should be escaped inside a string to not be confused with chaining separator, e.g. `text="some >> text"`.
+
+
 ### Intermediate matches
 
 By default, chained selectors resolve to an element queried by the last selector. A selector can be prefixed with `*` to capture elements that are queried by an intermediate selector.
