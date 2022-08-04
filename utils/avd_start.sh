@@ -11,7 +11,8 @@ fi
 bash $PWD/utils/avd_stop.sh
 
 EMULATOR_GPU="host"
-if [[ -n "${GITHUB_ACTIONS}" ]]; then
+# On GitHub Actions and if AVD_USE_HOST is not set we fall back to virtual gpu.
+if [[ -z "${AVD_USE_HOST}" ]] && [[ -n "${GITHUB_ACTIONS}" ]]; then
     EMULATOR_GPU="swiftshader_indirect"
 fi
 
