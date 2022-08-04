@@ -10,13 +10,10 @@ fi
 
 bash $PWD/utils/avd_stop.sh
 
-EMULATOR_GPU="host"
-if [[ -n "${GITHUB_ACTIONS}" ]]; then
-    EMULATOR_GPU="swiftshader_indirect"
-fi
-
 echo "Starting emulator"
-nohup ${ANDROID_HOME}/emulator/emulator -avd android33 -no-audio -no-window -gpu ${EMULATOR_GPU} -no-boot-anim &
+# On normal macOS GitHub Action runners, the host GPU is not available. So 'swiftshader_indirect' would have to be used.
+# Since we (Playwright) run our tests on a selfhosted mac, the host GPU is available, so we use it.
+nohup ${ANDROID_HOME}/emulator/emulator -avd android33 -no-audio -no-window -gpu host -no-boot-anim &
 ${ANDROID_HOME}/platform-tools/adb wait-for-device shell 'while [[ -z $(getprop sys.boot_completed | tr -d '\r') ]]; do sleep 1; done; input keyevent 82'
 ${ANDROID_HOME}/platform-tools/adb devices
 echo "Emulator started"
