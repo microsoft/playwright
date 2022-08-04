@@ -267,6 +267,20 @@ test('should retain traces for interrupted tests', async ({ runInlineTest }, tes
   expect(fs.existsSync(testInfo.outputPath('test-results', 'b-test-2', 'trace.zip'))).toBeTruthy();
 });
 
+test('should respect --trace', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      pwt.test('test 1', async ({ page }) => {
+        await page.goto('about:blank');
+      });
+    `,
+  }, { trace: 'on' });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  expect(fs.existsSync(testInfo.outputPath('test-results', 'a-test-1', 'trace.zip'))).toBeTruthy();
+});
+
 async function parseTrace(file: string): Promise<Map<string, Buffer>> {
   const zipFS = new ZipFile(file);
   const resources = new Map<string, Buffer>();
