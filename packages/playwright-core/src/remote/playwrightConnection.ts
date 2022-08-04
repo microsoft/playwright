@@ -24,11 +24,12 @@ import { registry } from '../server';
 import { SocksProxy } from '../common/socksProxy';
 import type { Mode } from './playwrightServer';
 import { assert } from '../utils';
+import type { LaunchOptions } from '../server/types';
 
 type Options = {
   enableSocksProxy: boolean,
   browserAlias: string | null,
-  headless: boolean,
+  launchOptions: LaunchOptions,
 };
 
 type PreLaunched = {
@@ -99,7 +100,7 @@ export class PlaywrightConnection {
     const socksProxy = this._options.enableSocksProxy ? await this._enableSocksProxy(playwright) : undefined;
     const browser = await playwright[executable.browserName!].launch(serverSideCallMetadata(), {
       channel: executable.type === 'browser' ? undefined : executable.name,
-      headless: this._options.headless,
+      headless: this._options.launchOptions?.headless,
     });
 
     // Close the browser on disconnect.
@@ -132,15 +133,18 @@ export class PlaywrightConnection {
     this._debugLog(`engaged reuse browsers mode for ${this._options.browserAlias}`);
     const executable = this._executableForBrowerAlias(this._options.browserAlias!);
     const playwright = this._preLaunched.playwright!;
-
-    let browser = playwright.allBrowsers().find(b => b.options.name === executable.browserName);
+    const requestedOptions = launchOptionsHash(this._options.launchOptions);
+    let browser = playwright.allBrowsers().find(b => {
+      const existingOptions = launchOptionsHash(b.options.originalLaunchOptions);
+      return existingOptions === requestedOptions;
+    });
     const remaining = playwright.allBrowsers().filter(b => b !== browser);
     for (const r of remaining)
       await r.close();
 
     if (!browser) {
       browser = await playwright[executable.browserName!].launch(serverSideCallMetadata(), {
-        channel: executable.type === 'browser' ? undefined : executable.name,
+        ...this._options.launchOptions,
         headless: false,
       });
       browser.on(Browser.Events.Disconnected, () => {
@@ -189,3 +193,28 @@ export class PlaywrightConnection {
     return executable;
   }
 }
+
+function launchOptionsHash(options: LaunchOptions) {
+  const copy = { ...options };
+  for (const k of Object.keys(copy)) {
+    const key = k as keyof LaunchOptions;
+    if (copy[key] === defaultLaunchOptions[key])
+      delete copy[key];
+  }
+  for (const key of optionsThatAllowBrowserReuse)
+    delete copy[key];
+  return JSON.stringify(copy);
+}
+
+const defaultLaunchOptions: LaunchOptions = {
+  ignoreAllDefaultArgs: false,
+  handleSIGINT: false,
+  handleSIGTERM: false,
+  handleSIGHUP: false,
+  headless: true,
+  devtools: false,
+};
+
+const optionsThatAllowBrowserReuse: (keyof LaunchOptions)[] = [
+  'headless',
+];
