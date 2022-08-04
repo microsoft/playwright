@@ -120,7 +120,7 @@ export class PlaywrightServer {
       }
       const url = new URL('http://localhost' + (request.url || ''));
       const browserHeader = request.headers['x-playwright-browser'];
-      const browserAlias = url.searchParams.get('browser') || (Array.isArray(browserHeader) ? browserHeader[0] : browserHeader) || null;
+      const browserName = url.searchParams.get('browser') || (Array.isArray(browserHeader) ? browserHeader[0] : browserHeader) || null;
       const proxyHeader = request.headers['x-playwright-proxy'];
       const proxyValue = url.searchParams.get('proxy') || (Array.isArray(proxyHeader) ? proxyHeader[0] : proxyHeader);
       const enableSocksProxy = this._options.enableSocksProxy && proxyValue === '*';
@@ -132,17 +132,12 @@ export class PlaywrightServer {
       } catch (e) {
       }
 
-      const headlessHeader = request.headers['x-playwright-headless'];
-      const headlessValue = url.searchParams.get('headless') || (Array.isArray(headlessHeader) ? headlessHeader[0] : headlessHeader);
-      if (headlessValue && headlessValue !== '0')
-        launchOptions.headless = true;
-
       const log = newLogger();
       log(`serving connection: ${request.url}`);
       const connection = new PlaywrightConnection(
           semaphore.aquire(),
           this._mode, ws,
-          { enableSocksProxy, browserAlias, launchOptions },
+          { enableSocksProxy, browserName, launchOptions },
           { playwright: this._preLaunchedPlaywright, browser: this._options.preLaunchedBrowser || null },
           log, () => semaphore.release());
       (ws as any)[kConnectionSymbol] = connection;

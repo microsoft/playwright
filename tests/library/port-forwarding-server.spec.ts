@@ -66,7 +66,8 @@ const it = contextTest.extend<{ pageFactory: (redirectPortForTest?: number) => P
       const server = new OutOfProcessPlaywrightServer(0, 3200 + testInfo.workerIndex);
       playwrightServers.push(server);
       const browser = await browserType.connect({
-        wsEndpoint: await server.wsEndpoint() + '?proxy=*&browser=' + (channel || browserName),
+        wsEndpoint: await server.wsEndpoint() + '?proxy=*&browser=' + browserName,
+        headers: { 'x-playwright-launch-options': JSON.stringify({ channel }) },
         __testHookRedirectPortForwarding: redirectPortForTest,
       } as any);
       browsers.push(browser);

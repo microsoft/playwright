@@ -115,8 +115,7 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>({
       throw new Error(`Unexpected browserName "${browserName}", must be one of "chromium", "firefox" or "webkit"`);
     const browser = await playwright[browserName].connect(connectOptions.wsEndpoint, {
       headers: {
-        'x-playwright-browser': channel || browserName,
-        'x-playwright-headless': headless ? '1' : '0',
+        'x-playwright-browser': browserName,
         'x-playwright-launch-options': JSON.stringify(launchOptions),
         ...connectOptions.headers,
       },
