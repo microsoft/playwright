@@ -167,7 +167,7 @@ export class TestInfoImpl implements TestInfo {
   async _runWithTimeout(cb: () => Promise<any>): Promise<void> {
     const timeoutError = await this._timeoutManager.runWithTimeout(cb);
     // Do not overwrite existing failure upon hook/teardown timeout.
-    if (timeoutError && this.status === 'passed') {
+    if (timeoutError && (this.status === 'passed' || this.status === 'skipped')) {
       this.status = 'timedOut';
       this.errors.push(timeoutError);
     }
@@ -202,7 +202,7 @@ export class TestInfoImpl implements TestInfo {
       return;
     if (isHardError)
       this._hasHardError = true;
-    if (this.status === 'passed')
+    if (this.status === 'passed' || this.status === 'skipped')
       this.status = 'failed';
     this.errors.push(error);
   }

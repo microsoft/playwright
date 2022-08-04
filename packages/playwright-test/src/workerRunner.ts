@@ -17,7 +17,7 @@
 import { colors, rimraf } from 'playwright-core/lib/utilsBundle';
 import util from 'util';
 import { EventEmitter } from 'events';
-import { relativeFilePath, serializeError } from './util';
+import { debugTest, formatLocation, relativeFilePath, serializeError } from './util';
 import type { TestBeginPayload, TestEndPayload, RunPayload, DonePayload, WorkerInitParams, StepBeginPayload, StepEndPayload, TeardownErrorsPayload, WatchTestResolvedPayload } from './ipc';
 import { setCurrentTestInfo } from './globals';
 import { Loader } from './loader';
@@ -195,7 +195,9 @@ export class WorkerRunner extends EventEmitter {
             break;
           const entry = entries.get(tests[i].id)!;
           entries.delete(tests[i].id);
+          debugTest(`test started "${tests[i].title}"`);
           await this._runTest(tests[i], entry.retry, tests[i + 1]);
+          debugTest(`test finished "${tests[i].title}"`);
         }
       } else {
         fatalUnknownTestIds = runPayload.entries.map(e => e.testId);
@@ -384,8 +386,10 @@ export class WorkerRunner extends EventEmitter {
         }
 
         // Now run the test itself.
+        debugTest(`test function started`);
         const fn = test.fn; // Extract a variable to get a better stack trace ("myTest" vs "TestCase.myTest [as fn]").
         await fn(params, testInfo);
+        debugTest(`test function finished`);
       }, 'allowSkips');
 
       beforeHooksStep.complete({ error: maybeError }); // Second complete is a no-op.
@@ -498,6 +502,7 @@ export class WorkerRunner extends EventEmitter {
       const actualScope = this._fixtureRunner.dependsOnWorkerFixturesOnly(modifier.fn, modifier.location) ? 'worker' : 'test';
       if (actualScope !== scope)
         continue;
+      debugTest(`modifier at "${formatLocation(modifier.location)}" started`);
       testInfo._timeoutManager.setCurrentRunnable({ type: modifier.type, location: modifier.location, slot: timeSlot });
       const result = await testInfo._runAsStep(() => this._fixtureRunner.resolveParametersAndRunFunction(modifier.fn, testInfo, scope), {
         category: 'hook',
@@ -506,6 +511,7 @@ export class WorkerRunner extends EventEmitter {
         forceNoParent: false,
         location: modifier.location,
       });
+      debugTest(`modifier at "${formatLocation(modifier.location)}" finished`);
       if (result && extraAnnotations)
         extraAnnotations.push({ type: modifier.type, description: modifier.description });
       testInfo[modifier.type](!!result, modifier.description);
@@ -520,6 +526,7 @@ export class WorkerRunner extends EventEmitter {
     for (const hook of suite._hooks) {
       if (hook.type !== 'beforeAll')
         continue;
+      debugTest(`${hook.type} hook at "${formatLocation(hook.location)}" started`);
       try {
         // Separate time slot for each "beforeAll" hook.
         const timeSlot = { timeout: this._project.timeout, elapsed: 0 };
@@ -535,6 +542,7 @@ export class WorkerRunner extends EventEmitter {
         // Always run all the hooks, and capture the first error.
         beforeAllError = beforeAllError || e;
       }
+      debugTest(`${hook.type} hook at "${formatLocation(hook.location)}" finished`);
     }
     if (beforeAllError)
       throw beforeAllError;
@@ -548,6 +556,7 @@ export class WorkerRunner extends EventEmitter {
     for (const hook of suite._hooks) {
       if (hook.type !== 'afterAll')
         continue;
+      debugTest(`${hook.type} hook at "${formatLocation(hook.location)}" started`);
       const afterAllError = await testInfo._runFn(async () => {
         // Separate time slot for each "afterAll" hook.
         const timeSlot = { timeout: this._project.timeout, elapsed: 0 };
@@ -561,6 +570,7 @@ export class WorkerRunner extends EventEmitter {
         });
       });
       firstError = firstError || afterAllError;
+      debugTest(`${hook.type} hook at "${formatLocation(hook.location)}" finished`);
     }
     return firstError;
   }
