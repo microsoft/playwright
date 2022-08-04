@@ -69,7 +69,7 @@ You can also click on the test file and then click the 'Retry #1' tab which will
 <img width="747" alt="image" src="https://user-images.githubusercontent.com/13063165/182853567-d7267b7d-4627-4f18-9384-b6ad2da5db80.png" />
 
 
-## Viewing a trace
+## Viewing the trace
 
 View traces of your test by clicking through each action or hovering using the timeline and see the state of the page before and after the action. Inspect the log, source and network during each step of the test. The trace viewer creates a DOM snapshot so you can fully interact with it, open devtools etc.
 
