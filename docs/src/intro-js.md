@@ -76,13 +76,12 @@ Once your test has finished running a [HTML Reporter](./html-reporter.md) will h
 npx playwright show-report
 ```
 
-<img width="739" alt="image" src="https://user-images.githubusercontent.com/13063165/178003817-3bd2f088-4173-406c-a9e9-74c89181f381.png" />
+<img width="739" alt="image" src="https://user-images.githubusercontent.com/13063165/181803518-1f554349-f72a-4ad3-a7aa-4d3d1b4cad13.png" />
 
 
 ## What's next
 
 - [Write tests using web first assertions, page fixtures and locators](./writing-tests.md)
 - [Run single tests, multiple tests, headed mode](./running-tests.md)
-- [Debug tests with the Playwright Debugger](./debug.md)
 - [Generate tests with Codegen](./codegen.md)
 - [See a trace of your tests](./trace-viewer.md)

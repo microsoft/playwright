@@ -3,7 +3,7 @@ id: selectors
 title: "Selectors"
 ---
 
-Selectors are strings that are used to create [Locator]s. Locators are used to perform actions on the elements by means of methods such as [`method: Locator.click`], [`method: Locator.fill`] and alike.
+Selectors are strings that are used to create [Locator]s. Locators are used to perform actions on the elements by means of methods such as [`method: Locator.click`], [`method: Locator.fill`] and alike. For debugging selectors, see [here](./debug-selectors).
 
 Writing good selectors is part art, part science so be sure to checkout the [Best Practices](#best-practices) section.
 
@@ -1323,7 +1323,7 @@ await page.Locator("data-test-id=directions").ClickAsync();
 ### Avoid selectors tied to implementation
 
 [xpath] and [css] can be tied to the DOM structure or implementation. These selectors can break when
-the DOM structure changes.
+the DOM structure changes. Similarly, [`method: Locator.nth`], [`method: Locator.first`], and [`method: Locator.last`] are tied to implementation and the structure of the DOM, and will target the incorrect element if the DOM changes.
 
 ```js
 // avoid long css or xpath chains

@@ -49,8 +49,30 @@ You can run a single test, a set of tests or all tests. Tests can be run on one 
 
 For more information see [Playwright Pytest usage](./test-runners.md) or the Pytest documentation for [general CLI usage](https://docs.pytest.org/en/stable/usage.html).
 
+## Running Tests
+
+Since Playwright runs in Python, you can debug it with your debugger of choice with e.g. the [Python extension](https://code.visualstudio.com/docs/python/python-tutorial) in Visual Studio Code. Playwright comes with the Playwright Inspector which allows you to step through Playwright API calls, see their debug logs and explore [selectors](./selectors.md).
+
+
+```bash tab=bash-bash lang=python
+PWDEBUG=1 pytest -s
+```
+
+```batch tab=bash-batch lang=python
+set PWDEBUG=1
+pytest -s
+```
+
+```powershell tab=bash-powershell lang=python
+$env:PWDEBUG=1
+pytest -s
+```
+<img width="712" alt="Playwright Inspector" src="https://user-images.githubusercontent.com/883973/108614092-8c478a80-73ac-11eb-9597-67dfce110e00.png"></img>
+
+Check out our [debugging guide](./debug.md) to learn more about the [Playwright Inspector](./debug.md#playwright-inspector) as well as debugging with [Browser Developer tools](./debug.md#browser-developer-tools).
+
+
 ## What's Next
 
-- [Debug tests with the Playwright Debugger](./debug.md)
 - [Generate tests with Codegen](./codegen.md)
 - [See a trace of your tests](./trace-viewer.md)

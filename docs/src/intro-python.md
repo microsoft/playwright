@@ -30,9 +30,7 @@ import re
 from playwright.sync_api import Page, expect
 
 
-def test_homepage_has_Playwright_in_title_and_get_started_link_linking_to_the_intro_page(
-    page: Page, foo
-):
+def test_homepage_has_Playwright_in_title_and_get_started_link_linking_to_the_intro_page(page: Page):
     page.goto("https://playwright.dev/")
 
     # Expect a title "to contain" a substring.
@@ -65,6 +63,5 @@ See our doc on [Running Tests](./running-tests.md) to learn more about running t
 
 - [Write tests using web first assertions, page fixtures and locators](./writing-tests.md)
 - [Run single tests, multiple tests, headed mode](./running-tests.md)
-- [Debug tests with the Playwright Debugger](./debug.md)
 - [Generate tests with Codegen](./codegen.md)
 - [See a trace of your tests](./trace-viewer.md)

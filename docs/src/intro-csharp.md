@@ -10,6 +10,7 @@ You can choose to use [NUnit base classes](./test-runners.md#nunit) or [MSTest b
 1. Start by creating a new project with `dotnet new`. This will create the `PlaywrightTests` directory which includes a `UnitTest1.cs` file:
 
 <Tabs
+  groupId="test-runners"
   defaultValue="nunit"
   values={[
     {label: 'NUnit', value: 'nunit'},
@@ -37,6 +38,7 @@ cd PlaywrightTests
 2. Install the necessary Playwright dependencies:
 
 <Tabs
+  groupId="test-runners"
   defaultValue="nunit"
   values={[
     {label: 'NUnit', value: 'nunit'},
@@ -76,6 +78,7 @@ pwsh bin\Debug\netX\playwright.ps1 install
 Edit the `UnitTest1.cs` file with the code below to create an example end-to-end test:
 
 <Tabs
+  groupId="test-runners"
   defaultValue="nunit"
   values={[
     {label: 'NUnit', value: 'nunit'},
@@ -160,6 +163,7 @@ public class UnitTest1 : PageTest
 By default tests will be run on Chromium. This can be configured via the `BROWSER` environment variable, or by adjusting the [launch configuration options](./test-runners.md). Tests are run in headless mode meaning no browser will open up when running the tests. Results of the tests and test logs will be shown in the terminal.
 
 <Tabs
+  groupId="test-runners"
   defaultValue="nunit"
   values={[
     {label: 'NUnit', value: 'nunit'},
@@ -189,7 +193,6 @@ See our doc on [Test Runners](./test-runners.md) to learn more about running tes
 - [Write tests using web first assertions, page fixtures and locators](./writing-tests.md)
 - [Run single tests, multiple tests, headed mode](./running-tests.md)
 - [Learn more about the NUnit and MSTest base classes](./test-runners.md)
-- [Debug tests with the Playwright Debugger](./debug.md)
 - [Generate tests with Codegen](./codegen.md)
 - [See a trace of your tests](./trace-viewer.md)
 - [Using Playwright as library](./library.md)

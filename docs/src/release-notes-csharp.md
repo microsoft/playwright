@@ -209,7 +209,7 @@ using System.Threading.Tasks;
 using Microsoft.Playwright.NUnit;
 using NUnit.Framework;
 
-namespace Playwright.TestingHarnessTest.NUnit;
+namespace PlaywrightTests;
 
 public class ExampleTests : PageTest
 {
