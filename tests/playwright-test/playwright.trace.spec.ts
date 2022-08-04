@@ -248,13 +248,14 @@ test('should retain traces for interrupted tests', async ({ runInlineTest }, tes
     `,
     'a.spec.ts': `
       pwt.test('test 1', async ({ page }) => {
+        await page.waitForTimeout(2000);
         expect(1).toBe(2);
       });
     `,
     'b.spec.ts': `
       pwt.test('test 2', async ({ page }) => {
         await page.goto('about:blank');
-        await page.waitForTimeout(1000);
+        await page.waitForTimeout(5000);
       });
     `,
   }, { workers: 2 });
