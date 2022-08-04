@@ -119,5 +119,4 @@ test('unmount a multi root component should work', async ({ mount, page }) => {
 
   await expect(page.locator('#root')).not.toContainText('root 1')
   await expect(page.locator('#root')).not.toContainText('root 2')
-  
 })
