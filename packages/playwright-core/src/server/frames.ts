@@ -1699,6 +1699,26 @@ export class Frame extends SdkObject {
       throw new Error(`Error: frame navigated while waiting for selector "${selector}"`);
     }
   }
+
+  async clearStorageForCurrentOriginBestEffort() {
+    const context = await this._utilityContext();
+    await context.evaluate(async () => {
+      // Clean DOMStorage
+      sessionStorage.clear();
+      localStorage.clear();
+
+      // Clean Service Workers
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(registrations.map(r => r.unregister()));
+
+      // Clean IndexedDB
+      for (const db of await indexedDB.databases?.() || []) {
+        // Do not wait for the callback - it is called on timer in Chromium (slow).
+        if (db.name)
+          indexedDB.deleteDatabase(db.name!);
+      }
+    });
+  }
 }
 
 class RerunnableTask<T> {

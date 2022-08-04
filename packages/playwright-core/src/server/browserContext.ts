@@ -180,7 +180,7 @@ export abstract class BrowserContext extends SdkObject {
     await page?._frameManager.closeOpenDialogs();
     // This should be before the navigation to about:blank so that we could save on
     // a navigation as we clear local storage.
-    await this._clearLocalStorage();
+    await this._clearStorage();
     await page?.mainFrame().goto(metadata, 'about:blank', { timeout: 0 });
     await this._removeExposedBindings();
     await this._removeInitScripts();
@@ -471,7 +471,7 @@ export abstract class BrowserContext extends SdkObject {
     return result;
   }
 
-  async _clearLocalStorage() {
+  async _clearStorage() {
     if (!this._origins.size)
       return;
     let page = this.pages()[0];
@@ -479,7 +479,7 @@ export abstract class BrowserContext extends SdkObject {
 
     // Fast path.
     if (page && originArray.length === 1 && page.mainFrame().url().startsWith(originArray[0])) {
-      await page.mainFrame().evaluateExpression(`localStorage.clear()`, false, undefined, 'utility');
+      await page.mainFrame().clearStorageForCurrentOriginBestEffort();
       return;
     }
 
@@ -492,7 +492,7 @@ export abstract class BrowserContext extends SdkObject {
     for (const origin of this._origins) {
       const frame = page.mainFrame();
       await frame.goto(internalMetadata, origin);
-      await frame.evaluateExpression(`localStorage.clear()`, false, undefined, 'utility');
+      await frame.clearStorageForCurrentOriginBestEffort();
     }
     await page._setServerRequestInterceptor(undefined);
   }
