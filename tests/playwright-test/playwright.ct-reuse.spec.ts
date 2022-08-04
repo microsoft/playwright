@@ -184,10 +184,14 @@ test('should clean storage', async ({ runInlineTest }) => {
       test('one', async ({ context, page }) => {
         lastContextGuid = context._guid;
 
-        await page.evaluate(async () => {
-          localStorage.foo = 'bar';
-          sessionStorage.foo = 'bar';
-        });
+        // Spam local storage.
+        page.evaluate(async () => {
+          while (true) {
+            localStorage.foo = 'bar';
+            sessionStorage.foo = 'bar';
+            await new Promise(f => setTimeout(f, 0));
+          }
+        }).catch(() => {});
 
         const local = await page.evaluate('localStorage.foo');
         const session = await page.evaluate('sessionStorage.foo');

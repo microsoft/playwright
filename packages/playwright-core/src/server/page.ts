@@ -231,16 +231,12 @@ export class Page extends SdkObject {
     this.setDefaultNavigationTimeout(undefined);
     this.setDefaultTimeout(undefined);
 
-    // Do this first in order to unfreeze evaluates.
-    await this._frameManager.closeOpenDialogs();
-
     await this._removeExposedBindings();
     await this._removeInitScripts();
-
-    // TODO: handle pending routes.
     await this.setClientRequestInterceptor(undefined);
     await this._setServerRequestInterceptor(undefined);
     await this.setFileChooserIntercepted(false);
+    // Re-navigate once init scripts are gone.
     await this.mainFrame().goto(metadata, 'about:blank');
     this._emulatedSize = undefined;
     this._emulatedMedia = {};
