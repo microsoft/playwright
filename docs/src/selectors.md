@@ -1171,7 +1171,7 @@ If a selector needs to include `>>` in the body, it should be escaped inside a s
 
 The parent could be selected with `..`.
 
-For example,
+For example:
 
 ```js
 const parentLocator = elementLocator.locator('..');
@@ -1192,8 +1192,6 @@ parentLocator = elementLocator.locator('..')
 ```csharp
 var parentLocator = elementLocator.Locator("..");
 ```
-
-If a selector needs to include `>>` in the body, it should be escaped inside a string to not be confused with chaining separator, e.g. `text="some >> text"`.
 
 ### Intermediate matches
 
