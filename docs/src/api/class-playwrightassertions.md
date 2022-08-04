@@ -143,17 +143,17 @@ await Expect(page).ToHaveTitleAsync("News");
 
 [Page] object to use for assertions.
 
-## method: PlaywrightAssertions.setDefaultTimeout
+## method: PlaywrightAssertions.setDefaultAssertionTimeout
 * since: v1.25
 * langs: java
 
 Changes default timeout for Playwright assertions from 5 seconds to the speicified value.
 
 ```java
-PlaywrightAssertions.setDefaultTimeout(30_000);
+PlaywrightAssertions.setDefaultAssertionTimeout(30_000);
 ```
 
-### param: PlaywrightAssertions.setDefaultTimeout.timeout
+### param: PlaywrightAssertions.setDefaultAssertionTimeout.timeout
 * since: v1.25
 - `timeout` <[float]>
 
