@@ -276,4 +276,4 @@ await page.PauseAsync();
 
 ## What's Next
 
-- [See a trace of your tests](./trace-viewer.md)
+- [See a trace of your tests](./trace-viewer-intro.md)

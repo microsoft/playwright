@@ -237,4 +237,4 @@ public class UnitTest1 : PageTest
 
 - [Run single tests, multiple tests, headed mode](./running-tests.md)
 - [Generate tests with Codegen](./codegen.md)
-- [See a trace of your tests](./trace-viewer.md)
+- [See a trace of your tests](./trace-viewer-intro.md)
