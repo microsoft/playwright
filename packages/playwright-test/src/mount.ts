@@ -15,13 +15,13 @@
  */
 
 import type { Fixtures, Locator, Page, BrowserContextOptions, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, BrowserContext } from './types';
-import type { Component, JsxComponent, ObjectComponentOptions } from '../types/component';
+import type { Component, JsxComponent, MountOptions } from '../types/component';
 
 let boundCallbacksForMount: Function[] = [];
 
 interface MountResult extends Locator {
-  unmount: (locator: Locator) => Promise<void>;
-  setProps: (props: { [key: string]: any }) => Promise<void>;
+  unmount(locator: Locator): Promise<void>;
+  rerender(options: Omit<MountOptions, 'hooksConfig'>): Promise<void>;
 }
 
 export const fixtures: Fixtures<
@@ -48,7 +48,7 @@ export const fixtures: Fixtures<
     },
 
     mount: async ({ page }, use) => {
-      await use(async (component: JsxComponent | string, options?: ObjectComponentOptions) => {
+      await use(async (component: JsxComponent | string, options?: MountOptions) => {
         const selector = await (page as any)._wrapApiCall(async () => {
           return await innerMount(page, component, options);
         }, true);
@@ -60,11 +60,11 @@ export const fixtures: Fixtures<
               await window.playwrightUnmount(rootElement);
             });
           },
-          setProps: async (props: { [key: string]: any }) => {
-            await locator.evaluate(async (element, props) => {
+          rerender: async (options: Omit<MountOptions, 'hooksConfig'>) => {
+            await locator.evaluate(async (element, options) => {
               const rootElement = document.getElementById('root')!;
-              return await window.playwrightSetProps(rootElement, props);
-            }, props);
+              return await window.playwrightRerender(rootElement, options);
+            }, options);
           }
         });
       });
@@ -72,7 +72,7 @@ export const fixtures: Fixtures<
     },
   };
 
-async function innerMount(page: Page, jsxOrType: JsxComponent | string, options: ObjectComponentOptions = {}): Promise<string> {
+async function innerMount(page: Page, jsxOrType: JsxComponent | string, options: MountOptions = {}): Promise<string> {
   let component: Component;
   if (typeof jsxOrType === 'string')
     component = { kind: 'object', type: jsxOrType, options };

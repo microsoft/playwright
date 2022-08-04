@@ -310,6 +310,10 @@ export class FFBrowserContext extends BrowserContext {
     await this._browser._connection.send('Browser.setExtraHTTPHeaders', { browserContextId: this._browserContextId, headers: allHeaders });
   }
 
+  async setUserAgent(userAgent: string | undefined): Promise<void> {
+    await this._browser._connection.send('Browser.setUserAgentOverride', { browserContextId: this._browserContextId, userAgent: userAgent || null });
+  }
+
   async setOffline(offline: boolean): Promise<void> {
     this._options.offline = offline;
     await this._browser._connection.send('Browser.setOnlineOverride', { browserContextId: this._browserContextId, override: offline ? 'offline' : 'online' });

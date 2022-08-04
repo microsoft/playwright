@@ -34,25 +34,22 @@ export type PlaywrightTestConfig = Omit<BasePlaywrightTestConfig, 'use'> & {
   }
 };
 
-interface MountResult<Props = { [key: string]: any }> extends Locator {
+export interface MountOptions<Props = Record<string, unknown>> {
+  props?: Props,
+  slots?: Record<string, unknown>,
+  on?: Record<string, Function>,
+  hooksConfig?: any,
+}
+
+interface MountResult<Props = Record<string, unknown>> extends Locator {
   unmount(): Promise<void>;
-  setProps(props: Partial<Props>): Promise<void>
+  rerender(options: { props: Props }): Promise<void>
 }
 
 export interface ComponentFixtures {
   mount(component: JSX.Element): Promise<MountResult>;
-  mount(component: any, options?: {
-    props?: { [key: string]: any },
-    slots?: { [key: string]: any },
-    on?: { [key: string]: Function },
-    hooksConfig?: any,
-  }): Promise<MountResult>;
-  mount<Props>(component: any, options: {
-    props: Props,
-    slots?: { [key: string]: any },
-    on?: { [key: string]: Function },
-    hooksConfig?: any,
-  }): Promise<MountResult<Props>>;
+  mount(component: any, options?: MountOptions): Promise<MountResult>;
+  mount<Props>(component: any, options: MountOptions<Required<Props>>): Promise<MountResult<Props>>;
 }
 
 export const test: TestType<

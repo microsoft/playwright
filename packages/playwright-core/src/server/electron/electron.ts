@@ -226,6 +226,7 @@ export class Electron extends SdkObject {
         artifactsDir,
         downloadsPath: artifactsDir,
         tracesDir: artifactsDir,
+        originalLaunchOptions: {},
       };
       validateBrowserContextOptions(contextOptions, browserOptions);
       const browser = await CRBrowser.connect(chromeTransport, browserOptions);

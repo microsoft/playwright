@@ -199,8 +199,8 @@ export class CRPage implements PageDelegate {
     await this._forAllFrameSessions(frame => frame._updateHttpCredentials(false));
   }
 
-  async updateEmulatedViewportSize(): Promise<void> {
-    await this._mainFrameSession._updateViewport();
+  async updateEmulatedViewportSize(preserveWindowBoundaries?: boolean): Promise<void> {
+    await this._mainFrameSession._updateViewport(preserveWindowBoundaries);
   }
 
   async bringToFront(): Promise<void> {
@@ -209,6 +209,10 @@ export class CRPage implements PageDelegate {
 
   async updateEmulateMedia(): Promise<void> {
     await this._forAllFrameSessions(frame => frame._updateEmulateMedia());
+  }
+
+  async updateUserAgent(): Promise<void> {
+    await this._forAllFrameSessions(frame => frame._updateUserAgent());
   }
 
   async updateRequestInterception(): Promise<void> {
@@ -399,6 +403,7 @@ class FrameSession {
   private _screencastClients = new Set<any>();
   private _evaluateOnNewDocumentIdentifiers: string[] = [];
   private _exposedBindingNames: string[] = [];
+  private _metricsOverride: Protocol.Emulation.setDeviceMetricsOverrideParameters | undefined;
 
   constructor(crPage: CRPage, client: CRSession, targetId: string, parentSession: FrameSession | null) {
     this._client = client;
@@ -542,7 +547,7 @@ class FrameSession {
       if (options.javaScriptEnabled === false)
         promises.push(this._client.send('Emulation.setScriptExecutionDisabled', { value: true }));
       if (options.userAgent || options.locale)
-        promises.push(this._client.send('Emulation.setUserAgentOverride', { userAgent: options.userAgent || '', acceptLanguage: options.locale }));
+        promises.push(this._updateUserAgent());
       if (options.locale)
         promises.push(emulateLocale(this._client, options.locale));
       if (options.timezoneId)
@@ -995,7 +1000,7 @@ class FrameSession {
       await this._networkManager.authenticate(credentials);
   }
 
-  async _updateViewport(): Promise<void> {
+  async _updateViewport(preserveWindowBoundaries?: boolean): Promise<void> {
     if (this._crPage._browserContext._browser.isClank())
       return;
     assert(this._isMainFrame());
@@ -1006,18 +1011,22 @@ class FrameSession {
     const viewportSize = emulatedSize.viewport;
     const screenSize = emulatedSize.screen;
     const isLandscape = viewportSize.width > viewportSize.height;
+    const metricsOverride: Protocol.Emulation.setDeviceMetricsOverrideParameters = {
+      mobile: !!options.isMobile,
+      width: viewportSize.width,
+      height: viewportSize.height,
+      screenWidth: screenSize.width,
+      screenHeight: screenSize.height,
+      deviceScaleFactor: options.deviceScaleFactor || 1,
+      screenOrientation: isLandscape ? { angle: 90, type: 'landscapePrimary' } : { angle: 0, type: 'portraitPrimary' },
+      dontSetVisibleSize: preserveWindowBoundaries
+    };
+    if (JSON.stringify(this._metricsOverride) === JSON.stringify(metricsOverride))
+      return;
     const promises = [
-      this._client.send('Emulation.setDeviceMetricsOverride', {
-        mobile: !!options.isMobile,
-        width: viewportSize.width,
-        height: viewportSize.height,
-        screenWidth: screenSize.width,
-        screenHeight: screenSize.height,
-        deviceScaleFactor: options.deviceScaleFactor || 1,
-        screenOrientation: isLandscape ? { angle: 90, type: 'landscapePrimary' } : { angle: 0, type: 'portraitPrimary' },
-      }),
+      this._client.send('Emulation.setDeviceMetricsOverride', metricsOverride),
     ];
-    if (this._windowId) {
+    if (!preserveWindowBoundaries && this._windowId) {
       let insets = { width: 0, height: 0 };
       if (this._crPage._browserContext._browser.options.headful) {
         // TODO: popup windows have their own insets.
@@ -1041,6 +1050,7 @@ class FrameSession {
       }));
     }
     await Promise.all(promises);
+    this._metricsOverride = metricsOverride;
   }
 
   async windowBounds(): Promise<WindowBounds> {
@@ -1069,6 +1079,11 @@ class FrameSession {
     ];
     // Empty string disables the override.
     await this._client.send('Emulation.setEmulatedMedia', { media: emulatedMedia.media || '', features });
+  }
+
+  async _updateUserAgent(): Promise<void> {
+    const options = this._crPage._browserContext._options;
+    await this._client.send('Emulation.setUserAgentOverride', { userAgent: options.userAgent || '', acceptLanguage: options.locale });
   }
 
   private async _setDefaultFontFamilies(session: CRSession) {

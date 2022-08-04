@@ -26,7 +26,7 @@ jobs:
       fail-fast: false
       matrix:
         browser: [chromium, firefox, webkit]
-        os: [ubuntu-18.04]
+        os: [ubuntu-18.04, ubuntu-20.04]
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v2
@@ -55,7 +55,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-10.15, macos-11.0]
+        os: [macos-10.15, macos-11, macos-12]
         browser: [chromium, firefox, webkit]
     runs-on: ${{ matrix.os }}
     steps:
@@ -293,7 +293,7 @@ jobs:
 
   chrome_stable_mac:
     name: "Chrome Stable (Mac)"
-    runs-on: macos-10.15
+    runs-on: macos-latest
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v2
@@ -322,8 +322,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # note: unbuntu-latest is covered in tests_primary
-        os: [ubuntu-18.04, macos-10.15, macos-11.0, windows-latest]
+        os: [ubuntu-18.04, macos-12, windows-latest]
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v2
@@ -441,7 +440,7 @@ jobs:
 
   firefox_beta_mac:
     name: "Firefox Beta (Mac)"
-    runs-on: macos-10.15
+    runs-on: macos-latest
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v2
@@ -466,7 +465,7 @@ jobs:
 
   edge_stable_mac:
     name: "Edge Stable (Mac)"
-    runs-on: macos-10.15
+    runs-on: macos-latest
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v2
@@ -541,7 +540,7 @@ jobs:
 
   edge_beta_mac:
     name: "Edge Beta (Mac)"
-    runs-on: macos-10.15
+    runs-on: macos-latest
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v2
@@ -615,7 +614,7 @@ jobs:
 
   edge_dev_mac:
     name: "Edge Dev (Mac)"
-    runs-on: macos-10.15
+    runs-on: macos-latest
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v2
@@ -741,7 +740,7 @@ jobs:
 
   chrome_beta_mac:
     name: "Chrome Beta (Mac)"
-    runs-on: macos-10.15
+    runs-on: macos-latest
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v2

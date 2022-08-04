@@ -17,13 +17,13 @@
 export type JsxComponent = {
   kind: 'jsx',
   type: string,
-  props: {[key: string]: any},
+  props: Record<string, any>,
   children: (Component | string)[],
 };
 
-export type ObjectComponentOptions = {
-  props?: { [key: string]: any },
-  slots?: { [key: string]: any },
+export type MountOptions = {
+  props?: Record<string, any>,
+  slots?: Record<string, any>,
   on?: { [key: string]: Function },
   hooksConfig?: any,
 };
@@ -31,7 +31,7 @@ export type ObjectComponentOptions = {
 export type ObjectComponent = {
   kind: 'object',
   type: string,
-  options?: ObjectComponentOptions
+  options?: MountOptions
 };
 
 export type Component = JsxComponent | ObjectComponent;
@@ -40,6 +40,6 @@ declare global {
   interface Window {
     playwrightMount(component: Component, rootElement: Element, hooksConfig: any): Promise<void>;
     playwrightUnmount(rootElement: Element): Promise<void>;
-    playwrightSetProps(rootElement: Element, props: { [key: string]: any }): Promise<void>;
+    playwrightRerender(rootElement: Element, options: Omit<MountOptions, 'hooksConfig'>): Promise<void>;
   }
 }
