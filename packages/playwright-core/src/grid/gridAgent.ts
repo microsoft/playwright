@@ -30,16 +30,16 @@ export function launchGridAgent(agentId: string, gridURL: string, runId: string 
   const ws = new WebSocket(gridURL.replace('http://', 'ws://') + `/registerAgent?` + params.toString());
   ws.on('message', (message: string) => {
     log('worker requested ' + message);
-    const { workerId, browserAlias } = JSON.parse(message);
+    const { workerId, browserName } = JSON.parse(message);
     if (!workerId) {
       log('workerId not specified');
       return;
     }
-    if (!browserAlias) {
-      log('browserAlias not specified');
+    if (!browserName) {
+      log('browserName not specified');
       return;
     }
-    fork(require.resolve('./gridBrowserWorker.js'), [gridURL, agentId, workerId, browserAlias], { detached: true });
+    fork(require.resolve('./gridBrowserWorker.js'), [gridURL, agentId, workerId, browserName], { detached: true });
   });
   ws.on('close', () => process.exit(0));
 }

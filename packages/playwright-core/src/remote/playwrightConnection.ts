@@ -15,12 +15,11 @@
  */
 
 import type { WebSocket } from '../utilsBundle';
-import type { Playwright, DispatcherScope, Executable } from '../server';
+import type { Playwright, DispatcherScope } from '../server';
 import { createPlaywright, DispatcherConnection, Root, PlaywrightDispatcher } from '../server';
 import { Browser } from '../server/browser';
 import { serverSideCallMetadata } from '../server/instrumentation';
 import { gracefullyCloseAll } from '../utils/processLauncher';
-import { registry } from '../server';
 import { SocksProxy } from '../common/socksProxy';
 import type { Mode } from './playwrightServer';
 import { assert } from '../utils';
@@ -28,7 +27,7 @@ import type { LaunchOptions } from '../server/types';
 
 type Options = {
   enableSocksProxy: boolean,
-  browserAlias: string | null,
+  browserName: string | null,
   launchOptions: LaunchOptions,
 };
 
@@ -78,7 +77,7 @@ export class PlaywrightConnection {
         return await this._initReuseBrowsersMode(scope);
       if (mode === 'use-pre-launched-browser')
         return await this._initPreLaunchedBrowserMode(scope);
-      if (!options.browserAlias)
+      if (!options.browserName)
         return await this._initPlaywrightConnectMode(scope);
       return await this._initLaunchBrowserMode(scope);
     });
@@ -95,15 +94,11 @@ export class PlaywrightConnection {
   }
 
   private async _initLaunchBrowserMode(scope: DispatcherScope) {
-    this._debugLog(`engaged launch mode for "${this._options.browserAlias}"`);
-    const executable = this._executableForBrowerAlias(this._options.browserAlias!);
+    this._debugLog(`engaged launch mode for "${this._options.browserName}"`);
 
     const playwright = createPlaywright('javascript');
     const socksProxy = this._options.enableSocksProxy ? await this._enableSocksProxy(playwright) : undefined;
-    const browser = await playwright[executable.browserName!].launch(serverSideCallMetadata(), {
-      channel: executable.type === 'browser' ? undefined : executable.name,
-      headless: this._options.launchOptions?.headless,
-    });
+    const browser = await playwright[this._options.browserName as 'chromium'].launch(serverSideCallMetadata(), this._options.launchOptions);
 
     // Close the browser on disconnect.
     // TODO: it is technically possible to launch more browsers over protocol.
@@ -132,20 +127,26 @@ export class PlaywrightConnection {
   }
 
   private async _initReuseBrowsersMode(scope: DispatcherScope) {
-    this._debugLog(`engaged reuse browsers mode for ${this._options.browserAlias}`);
-    const executable = this._executableForBrowerAlias(this._options.browserAlias!);
+    this._debugLog(`engaged reuse browsers mode for ${this._options.browserName}`);
     const playwright = this._preLaunched.playwright!;
     const requestedOptions = launchOptionsHash(this._options.launchOptions);
     let browser = playwright.allBrowsers().find(b => {
+      if (b.options.name !== this._options.browserName)
+        return false;
       const existingOptions = launchOptionsHash(b.options.originalLaunchOptions);
       return existingOptions === requestedOptions;
     });
-    const remaining = playwright.allBrowsers().filter(b => b !== browser);
-    for (const r of remaining)
-      await r.close();
+
+    // Close remaining browsers of this type+channel. Keep different browser types for the speed.
+    for (const b of playwright.allBrowsers()) {
+      if (b === browser)
+        continue;
+      if (b.options.name === this._options.browserName && b.options.channel === this._options.launchOptions.channel)
+        await b.close();
+    }
 
     if (!browser) {
-      browser = await playwright[executable.browserName!].launch(serverSideCallMetadata(), {
+      browser = await playwright[this._options.browserName as 'chromium'].launch(serverSideCallMetadata(), {
         ...this._options.launchOptions,
         headless: false,
       });
@@ -186,13 +187,6 @@ export class PlaywrightConnection {
       this._ws.close(reason?.code, reason?.reason);
     } catch (e) {
     }
-  }
-
-  private _executableForBrowerAlias(browserAlias: string): Executable {
-    const executable = registry.findExecutable(browserAlias);
-    if (!executable || !executable.browserName)
-      throw new Error(`Unsupported browser "${browserAlias}`);
-    return executable;
   }
 }
 

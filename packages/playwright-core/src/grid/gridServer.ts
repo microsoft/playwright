@@ -64,8 +64,7 @@ const WSErrors = {
 
 
 type GridWorkerParams = {
-  browserAlias?: string;
-  headless?: boolean;
+  browserName?: string;
 };
 
 class GridWorker extends EventEmitter {
@@ -284,8 +283,7 @@ export class GridServer {
         }
 
         agent.createWorker(ws, {
-          browserAlias: request.headers['x-playwright-browser'] as string | undefined,
-          headless: request.headers['x-playwright-headless'] !== '0',
+          browserName: request.headers['x-playwright-browser'] as string,
         });
         return;
       }
